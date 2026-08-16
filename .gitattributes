@@ -1,0 +1,13 @@
+# The sources are LF in the repository regardless of the checkout platform.
+# This project is developed on Windows; without this, every file round-trips
+# through CRLF and the first commit from a Linux machine rewrites the tree.
+* text=auto eol=lf
+
+# The Gradle wrapper script is executed by sh and MUST keep LF even on Windows.
+gradlew text eol=lf
+# ...and its Windows counterpart must keep CRLF, or cmd.exe mis-parses it.
+gradlew.bat text eol=crlf
+
+# Binaries git must not touch.
+*.png  binary
+*.jar  binary

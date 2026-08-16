@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "open=false": {
+      "model": "bwr:block/safety_relief_valve_closed"
+    },
+    "open=true": {
+      "model": "bwr:block/safety_relief_valve_open"
+    }
+  }
+}

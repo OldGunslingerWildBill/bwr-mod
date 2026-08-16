@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "open=false": {
+      "model": "bwr:block/msiv_closed"
+    },
+    "open=true": {
+      "model": "bwr:block/msiv_open"
+    }
+  }
+}

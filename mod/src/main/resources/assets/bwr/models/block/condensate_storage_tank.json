@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "bwr:block/condensate_storage_tank_top",
+    "side": "bwr:block/condensate_storage_tank_side",
+    "bottom": "bwr:block/machine_casing"
+  }
+}

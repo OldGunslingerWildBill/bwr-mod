@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "bwr:block/safety_relief_valve_top_closed",
+    "side": "bwr:block/safety_relief_valve_side_closed",
+    "bottom": "bwr:block/machine_casing"
+  }
+}

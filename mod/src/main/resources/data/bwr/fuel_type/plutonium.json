@@ -1,0 +1,11 @@
+{
+  "k_inf_base":              1.3,
+  "beta":                    0.002099,
+  "prompt_lifetime_seconds": 2.0E-5,
+  "depletion_rate":          5.0E-6,
+  "doppler_coeff_per_c":     -1.4E-5,
+  "gad_content":             0.02,
+  "heat_per_fission_mev":    211.5,
+  "nominal_enrichment":      0.06,
+  "conversion_gain_k_inf":   0.0
+}

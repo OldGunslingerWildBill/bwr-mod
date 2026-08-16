@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "bwr:block/reactor_controller_top",
+    "side": "bwr:block/reactor_controller_side",
+    "bottom": "bwr:block/machine_casing"
+  }
+}

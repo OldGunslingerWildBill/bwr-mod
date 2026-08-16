@@ -1,0 +1,27 @@
+{
+  "values": [
+    "bwr:reactor_controller",
+    "bwr:control_rod_drive",
+    "bwr:recirculation_pump",
+    "bwr:jet_pump",
+    "bwr:safety_relief_valve",
+    "bwr:msiv",
+    "bwr:suppression_pool_controller",
+    {
+      "id": "bwr:turbine_steam_outlet",
+      "required": false
+    },
+    {
+      "id": "bwr:fuel_fabricator",
+      "required": false
+    },
+    "bwr:rcic_turbine_pump",
+    "bwr:hpci_turbine_pump",
+    "bwr:hpcs_pump",
+    "bwr:lpcs_pump",
+    "bwr:rhr_pump",
+    "bwr:slc_pump",
+    "bwr:ads_controller",
+    "bwr:condensate_storage_tank"
+  ]
+}

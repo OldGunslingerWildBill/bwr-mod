@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "bwr:block/rcic_turbine_pump"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "${modLicense}"
+issueTrackerURL = "https://github.com/"
+
+[[mods]]
+modId = "${modId}"
+version = "${modVersion}"
+displayName = "${modName}"
+authors = "the Realistic BWR contributors"
+description = '''
+A physically-modelled boiling water reactor. Power is emergent from neutronics:
+you set rod position and recirculation flow, and the physics decides what the
+reactor does. There is no commanded burn rate.
+
+The mod provides hardware and physics. You provide the control logic. There is
+deliberately no built-in scram, no automatic ECCS actuation and no trip
+setpoints anywhere -- every protection scheme is yours to write in CC:Tweaked.
+'''
+
+[[dependencies.${modId}]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforgeVersion},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${modId}]]
+modId = "minecraft"
+type = "required"
+versionRange = "[${minecraftVersion},1.22)"
+ordering = "NONE"
+side = "BOTH"
+
+# Mekanism will supply the fuel-crafting and steam-turbine boundaries.
+#
+# It stays "optional" permanently. Both boundaries degrade honestly with
+# Mekanism absent: the fabricator falls back to FuelFeed.NONE and accepts no
+# chemical, and the turbine outlet fills its buffer and delivers nothing, which
+# is exactly the behaviour of a plant with its stop valves shut. Every
+# Mekanism-facing class is reached only through a
+# ModList.get().isLoaded("mekanism") branch in dev.bwr.mod.BwrMod, so a
+# Mekanism-less JVM never resolves a mekanism.* type.
+#
+# Verified by running: gradle :mod:runData -PbwrNoMekanism
+[[dependencies.${modId}]]
+modId = "mekanism"
+type = "optional"
+versionRange = "[10.7,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# CC:Tweaked is optional: without it the plant still runs, you just have no way
+# to control it beyond redstone. The API is compileOnly and never bundled.
+[[dependencies.${modId}]]
+modId = "computercraft"
+type = "optional"
+versionRange = "[1.111,)"
+ordering = "AFTER"
+side = "BOTH"

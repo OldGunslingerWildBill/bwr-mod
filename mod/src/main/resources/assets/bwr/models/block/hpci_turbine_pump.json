@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "bwr:block/hpci_turbine_pump_top",
+    "side": "bwr:block/hpci_turbine_pump_side",
+    "bottom": "bwr:block/machine_casing"
+  }
+}

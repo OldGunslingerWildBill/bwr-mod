@@ -1,0 +1,38 @@
+{
+  "textures": {
+    "particle": "bwr:block/pressurised_tube",
+    "tube": "bwr:block/pressurised_tube"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        4,
+        0
+      ],
+      "to": [
+        12,
+        12,
+        4
+      ],
+      "faces": {
+        "north": {
+          "texture": "#tube",
+          "cullface": "north"
+        },
+        "east": {
+          "texture": "#tube"
+        },
+        "west": {
+          "texture": "#tube"
+        },
+        "up": {
+          "texture": "#tube"
+        },
+        "down": {
+          "texture": "#tube"
+        }
+      }
+    }
+  ]
+}

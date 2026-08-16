@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "bwr:block/ads_controller_top",
+    "side": "bwr:block/ads_controller_side",
+    "bottom": "bwr:block/machine_casing"
+  }
+}

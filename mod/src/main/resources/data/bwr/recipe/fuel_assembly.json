@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "S": {
+      "tag": "c:ingots/steel"
+    },
+    "Y": {
+      "item": "mekanism:yellow_cake_uranium"
+    }
+  },
+  "pattern": [
+    "SYS",
+    "SYS",
+    "SYS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:fuel_assembly"
+  }
+}

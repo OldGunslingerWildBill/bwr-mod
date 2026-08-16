@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "S": {
+      "tag": "c:ingots/steel"
+    },
+    "C": {
+      "item": "mekanism:advanced_control_circuit"
+    },
+    "A": {
+      "item": "mekanism:alloy_infused"
+    },
+    "K": {
+      "item": "mekanism:steel_casing"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    }
+  },
+  "pattern": [
+    "SCS",
+    "AKA",
+    "SVS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:fuel_fabricator"
+  }
+}

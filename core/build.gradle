@@ -1,0 +1,58 @@
+// Pure-Java physics module. No Minecraft, no NeoForge, no mod loader.
+// Licensed MIT so the reactor model is reusable outside this mod.
+plugins {
+    id 'java-library'
+}
+
+group = project.property('group')
+version = project.property('version')
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(project.property('javaVersion') as int)
+    }
+    withSourcesJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+// No test dependencies, deliberately. The acceptance suite is plain Java with
+// its own assertions and runner (dev.bwr.core.AcceptanceTests), so this module
+// builds and its physics is verifiable with nothing but a JDK — including from a
+// bare javac/java invocation with no network and no Gradle:
+//
+//   javac -d out $(find core/src/main/java -name '*.java')
+//   javac -cp out -d testout $(find core/src/test/java -name '*.java')
+//   java -cp out:testout dev.bwr.core.AcceptanceTests
+//
+// Every test is a public static void test*() method; the runner finds them by
+// reflection, prints the value each one measured, and exits non-zero on failure.
+dependencies {
+}
+
+// The stock 'test' task has nothing to run — there are no JUnit tests — so the
+// acceptance suite is what 'check' actually depends on.
+tasks.named('test') {
+    enabled = false
+}
+
+tasks.register('acceptance', JavaExec) {
+    group = 'verification'
+    description = 'Run the reactor physics acceptance suite. Fails the build on any failure.'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.bwr.core.AcceptanceTests'
+}
+
+tasks.named('check') {
+    dependsOn 'acceptance'
+}
+
+// Runs the standalone transient harness and writes CSV, per SPEC section 0.
+tasks.register('transient', JavaExec) {
+    group = 'verification'
+    description = 'Run a standalone reactor transient and dump CSV for inspection.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'dev.bwr.core.harness.TransientHarness'
+}

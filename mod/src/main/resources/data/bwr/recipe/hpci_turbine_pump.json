@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "T": {
+      "item": "bwr:pressurised_tube"
+    },
+    "R": {
+      "item": "bwr:rcic_turbine_pump"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "C": {
+      "item": "minecraft:copper_block"
+    }
+  },
+  "pattern": [
+    "TTT",
+    "CRC",
+    "VVV"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:hpci_turbine_pump"
+  }
+}

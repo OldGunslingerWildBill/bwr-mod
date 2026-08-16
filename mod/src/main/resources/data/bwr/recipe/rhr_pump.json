@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "T": {
+      "item": "bwr:pressurised_tube"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    "TIT",
+    "VRV",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:rhr_pump"
+  }
+}

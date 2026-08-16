@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "size=small": {
+      "model": "bwr:block/jet_pump_small"
+    },
+    "size=large": {
+      "model": "bwr:block/jet_pump_large"
+    }
+  }
+}

@@ -1,0 +1,61 @@
+Realistic BWR — licensing
+=========================
+
+This project is open source under a two-module split. The boundary is the same
+one the architecture already draws: physics that has nothing to do with
+Minecraft, versus the mod that embeds it.
+
+  core/  — MIT.        See core/LICENSE
+  mod/   — MPL-2.0.    See mod/LICENSE
+
+Why the split
+-------------
+
+core/ is a pure-Java boiling water reactor model with zero Minecraft imports.
+It is independently useful outside this mod, so MIT keeps it maximally
+reusable — anyone can take the reactor physics for a simulator, a teaching
+tool, or another game.
+
+mod/ is the NeoForge integration. MPL-2.0 is file-level copyleft: improvements
+to these files come back, but the licence does not reach players' Lua scripts
+or other mods sharing a pack. That matters because stronger copyleft creates
+real friction in modpack distribution. It is also what CC:Tweaked chose for its
+own newer code.
+
+Player-written code
+-------------------
+
+This mod deliberately ships no control logic. Every scram channel, setpoint,
+protection scheme, and emergency-system actuation sequence is written by the
+player in CC:Tweaked Lua.
+
+Lua programs written by players are the players' own work. They are not
+derivative works of this mod, and neither licence above applies to them.
+Players own what they write, without condition.
+
+Third-party dependencies
+------------------------
+
+CC:Tweaked — compile-time only, and deliberately never bundled. Parts of its
+API remain under LicenseRef-CCPL, which permits redistribution only
+"unmodified and in full"; IPeripheral.java still carries that header. This
+project therefore depends on it via compileOnly and players install
+CC:Tweaked themselves. Do not vendor, shade, or copy CC:Tweaked source into
+this tree.
+
+Mekanism — MIT. A hard runtime dependency, used for the fuel-crafting and
+steam-turbine boundaries.
+
+NeoForge — LGPL-2.1. Linking against it does not affect this project's
+licensing.
+
+Reference data
+--------------
+
+Plant constants in REFERENCE-DATA.md are drawn from the U.S. Nuclear
+Regulatory Commission's Boiling Water Reactor Systems Manual, BWR/6 Design
+(ADAMS accession ML20090J537), a public United States Government document.
+Physical facts — pressures, flow rates, geometry, delayed neutron data — are
+not subject to copyright. The source document itself is deliberately not
+committed to this repository; it is cited by accession number so anyone can
+retrieve it from the NRC directly.

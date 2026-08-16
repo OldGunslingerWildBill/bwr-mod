@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "T": {
+      "item": "bwr:pressurised_tube"
+    }
+  },
+  "pattern": [
+    "VTV",
+    "T T",
+    "VTV"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:turbine_steam_outlet"
+  }
+}

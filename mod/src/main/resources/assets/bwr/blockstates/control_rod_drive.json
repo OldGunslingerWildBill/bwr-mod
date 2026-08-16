@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "bwr:block/control_rod_drive"
+    }
+  }
+}

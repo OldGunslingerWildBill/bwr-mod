@@ -1,0 +1,28 @@
+# Build output
+build/
+*/build/
+.gradle/
+logs/
+run/
+*/run/
+
+# The wrapper jar IS committed on purpose — it is what makes the project
+# self-bootstrapping on a machine with no Gradle installed. Do not add it here.
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.eclipse/
+bin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Never commit the NRC source document. REFERENCE-DATA.md cites it by ADAMS
+# accession number (ML20090J537) so anyone can retrieve it themselves; the
+# facts in that file are not copyrightable but the document is not ours to
+# redistribute.
+*.pdf

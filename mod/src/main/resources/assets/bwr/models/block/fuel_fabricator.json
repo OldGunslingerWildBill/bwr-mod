@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "bwr:block/fuel_fabricator_top",
+    "side": "bwr:block/fuel_fabricator_side",
+    "bottom": "bwr:block/machine_casing"
+  }
+}

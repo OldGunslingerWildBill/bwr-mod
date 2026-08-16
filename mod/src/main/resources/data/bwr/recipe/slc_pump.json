@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "B": {
+      "tag": "c:dusts/redstone"
+    }
+  },
+  "pattern": [
+    " P ",
+    "IBI",
+    "IVI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:slc_pump"
+  }
+}

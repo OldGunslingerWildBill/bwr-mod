@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "S": {
+      "item": "bwr:safety_relief_valve"
+    },
+    "R": {
+      "item": "minecraft:redstone_block"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "C": {
+      "item": "minecraft:comparator"
+    }
+  },
+  "pattern": [
+    "SCS",
+    "IRI",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:ads_controller"
+  }
+}

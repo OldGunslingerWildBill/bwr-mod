@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "loop=hpcs": {
+      "model": "bwr:block/core_spray_sparger_hpcs"
+    },
+    "loop=lpcs": {
+      "model": "bwr:block/core_spray_sparger_lpcs"
+    }
+  }
+}

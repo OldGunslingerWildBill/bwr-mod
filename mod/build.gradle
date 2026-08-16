@@ -1,0 +1,223 @@
+// NeoForge mod module. Depends on :core for all physics.
+// Licensed MPL-2.0.
+plugins {
+    id 'net.neoforged.moddev' version '2.0.143'
+}
+
+group = project.property('group')
+version = project.property('version')
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(project.property('javaVersion') as int)
+    }
+}
+
+neoForge {
+    version = project.property('neoforgeVersion')
+
+    parchment {
+        minecraftVersion = '1.21.1'
+        mappingsVersion = '2024.11.17'
+    }
+
+    runs {
+        client { client() }
+        server { server() }
+        data { data() }
+
+        // Builds a reactor, a suppression pool and a turbine outlet in a real
+        // world, looks their peripherals up through the real CC:Tweaked
+        // capability, calls every @LuaFunction on both a formed and an
+        // unformed plant, then halts the server. See
+        // dev.bwr.mod.devtest.PeripheralRuntimeCheck. Inert without the
+        // system property, and the whole devtest package is stripped from the
+        // published jar below.
+        peripheralCheck {
+            server()
+            gameDirectory = file('run/peripheralCheck')
+            jvmArguments.add('-Dbwr.peripheralRuntimeCheck=true')
+            programArguments.addAll('--nogui')
+        }
+    }
+
+    mods {
+        bwr {
+            sourceSet sourceSets.main
+            // :core travels inside the mod jar as a jarJar nested jar, so in a
+            // production install FML loads it as part of this mod. A dev run has
+            // no nested jars: without this line the physics module lands on the
+            // boot module path as a plain automatic module, the game layer
+            // cannot see it, and the first registration-time reference to a
+            // dev.bwr.core class dies with NoClassDefFoundError. Declaring it as
+            // part of the mod puts it in the same layer in dev as in production.
+            sourceSet project(':core').sourceSets.main
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        // CC:Tweaked's own maven. Note the host: the older https://squiddev.cc/maven/
+        // stops at the MC 1.21 branch (1.111.0), whose neoforge dependency range is
+        // "[21.0.21-beta,21.1)" and therefore cannot load against the 21.1.248 this
+        // project pins. maven.squiddev.cc carries the 1.21.1 branch.
+        name = 'squiddev'
+        url = 'https://maven.squiddev.cc/'
+        content { includeGroup 'cc.tweaked' }
+    }
+    maven {
+        name = 'modmaven'
+        url = 'https://modmaven.dev/'
+        // modmaven publishes bare jars with no POM alongside them, so Gradle has
+        // to be told that the artifact itself is the only metadata it will find.
+        // Without this it looks for a .pom, gets a 404, and fails resolution.
+        metadataSources { artifact() }
+        content { includeGroup 'mekanism' }
+    }
+}
+
+dependencies {
+    // Physics core travels with the mod jar.
+    implementation project(':core')
+    jarJar project(':core')
+
+    // CC:Tweaked — NEVER bundled. Do not shade, do not vendor the API source, do
+    // not add it to jarJar. IPeripheral.java is LicenseRef-CCPL and permits
+    // redistribution only unmodified and in full. Players install CC:Tweaked.
+    compileOnly "cc.tweaked:cc-tweaked-${project.property('ccTweakedMcBranch')}-core-api:${project.property('ccTweakedVersion')}"
+    compileOnly "cc.tweaked:cc-tweaked-${project.property('ccTweakedMcBranch')}-forge-api:${project.property('ccTweakedVersion')}"
+
+    // ...but the full mod jar goes on the DEV RUNTIME classpath, exactly as
+    // Mekanism does below. Without this, ModList.get().isLoaded("computercraft")
+    // is false in every run, BwrMod never registers BwrPeripheralSupport, and the
+    // peripheral surface — which is the entire control interface of this mod —
+    // is never once constructed. runtimeOnly is not a publishing configuration:
+    // it affects run* tasks only and puts nothing in the jar, so the CCPL
+    // position is unchanged. Verified after every build by tools-check-jar.py.
+    //
+    // CC:Tweaked is a SOFT dependency. Run any run* task with -PbwrNoCC to drop
+    // it and prove the CC-less path still boots.
+    if (!project.hasProperty('bwrNoCC')) {
+        runtimeOnly "cc.tweaked:cc-tweaked-${project.property('ccTweakedMcBranch')}-forge:${project.property('ccTweakedVersion')}"
+    }
+
+    // Mekanism (MIT). Compile against the api classifier only; the full jar goes
+    // on the dev runtime so integration can actually be exercised in-game.
+    // Not bundled — players install Mekanism themselves.
+    // The @jar suffix is required: modmaven publishes these jars with no POM,
+    // so Gradle must be told to fetch the artifact directly and not look for
+    // module metadata it will never find.
+    compileOnly "mekanism:Mekanism:${project.property('mekanismVersion')}:api@jar"
+    // Mekanism is a SOFT dependency: the mod must load and run with it absent.
+    // Run any of the run* tasks with -PbwrNoMekanism to leave it off the runtime
+    // classpath and prove that. Everything Mekanism-facing is guarded behind
+    // ModList.get().isLoaded("mekanism") in dev.bwr.mod.BwrMod, so a Mekanism-less
+    // JVM never resolves a single mekanism.* type.
+    if (!project.hasProperty('bwrNoMekanism')) {
+        runtimeOnly "mekanism:Mekanism:${project.property('mekanismVersion')}@jar"
+    }
+}
+
+// ---------------------------------------------------------------------------
+// dev.bwr.mod.devtest is a dev-runtime harness, not part of the mod. It is
+// compiled (so it cannot rot) and it is on the dev runtime classpath (so
+// runPeripheralCheck can use it), but it is stripped from the published jar.
+// It is also the only place in the tree that names a CC:Tweaked type outside
+// the peripheral package, which would otherwise change the "4 classes
+// reference dan200.*" figure in BUILD-STATUS.md.
+// ---------------------------------------------------------------------------
+tasks.named('jar', Jar).configure {
+    exclude 'dev/bwr/mod/devtest/**'
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    def props = [
+            modId          : project.property('modId'),
+            modName        : project.property('modName'),
+            modVersion     : project.version,
+            modLicense     : project.property('modLicense'),
+            neoforgeVersion: project.property('neoforgeVersion'),
+            minecraftVersion: project.property('minecraftVersion')
+    ]
+    inputs.properties props
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand props
+    }
+}
+
+// ---------------------------------------------------------------------------
+// THE NON-NEGOTIABLE DESIGN RULE, enforced by the build.
+//
+// The mod provides hardware and physics; the player provides control logic.
+// No scram logic, no trip setpoints, no automatic ECCS actuation, no protection
+// system, anywhere. Players write all of it in CC:Tweaked Lua from scratch.
+// Expose MEASUREMENTS and ACTUATORS, never judgements.
+//
+// :core already enforces this by reflection in
+// dev.bwr.core.ReactorCoreTickTest.test07_noProtectionLogicAnywhereInThePhysics,
+// which scans every method on the physics classes. That test cannot see this
+// module -- :mod has no test source set, and giving it one would mean standing
+// up the whole Minecraft classpath just to read method names. So this module is
+// checked at the source level instead: comments are stripped, then any surviving
+// mention of a banned name is a failure whether it is a declaration or a call.
+//
+// Javadoc that PROHIBITS such a method is fine and is expected to stay -- that
+// is why comments are stripped before scanning rather than after.
+// ---------------------------------------------------------------------------
+tasks.register('checkNoProtectionLogic') {
+    group = 'verification'
+    description = 'Fail the build if any protection-system logic appears in :mod.'
+
+    def javaDir = file('src/main/java')
+    inputs.dir javaDir
+    // No real output; this marker just lets Gradle cache a clean result.
+    def marker = layout.buildDirectory.file('checkNoProtectionLogic.txt')
+    outputs.file marker
+
+    doLast {
+        // Names that assert a judgement the player is supposed to own.
+        def banned = [
+                'shouldScram', 'autoScram', 'checkTrip', 'checkTrips',
+                'isSafe', 'isUnsafe', 'isHighPressure', 'isLowLevel',
+                'autoStart', 'mustScram', 'needsScram', 'scramIfNeeded',
+                'tripOnHighPressure', 'protectionSystem',
+        ]
+        def pattern = ~/\b(${banned.join('|')})\s*\(/
+
+        def violations = []
+        int scanned = 0
+        javaDir.eachFileRecurse { f ->
+            if (!f.name.endsWith('.java')) return
+            scanned++
+            def src = f.text
+            // Strip block comments, then line comments. Javadoc that forbids
+            // these names is documentation, not behaviour.
+            def code = src.replaceAll(/(?s)\/\*.*?\*\//, '')
+                          .replaceAll(/\/\/[^\n]*/, '')
+            code.eachLine { line, i ->
+                def m = pattern.matcher(line)
+                while (m.find()) {
+                    violations << "${f.name}: ${m.group(1)}(  --  ${line.trim()}"
+                }
+            }
+        }
+
+        marker.get().asFile.parentFile.mkdirs()
+        marker.get().asFile.text = "scanned ${scanned} files, ${violations.size()} violations\n"
+
+        if (violations) {
+            throw new GradleException(
+                    "Protection logic found in :mod. The mod provides hardware and\n" +
+                    "physics; the player provides control logic. Expose measurements\n" +
+                    "and actuators, never judgements.\n\n  " +
+                    violations.join('\n  '))
+        }
+        logger.lifecycle("checkNoProtectionLogic: scanned ${scanned} files in :mod, no protection logic present")
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'checkNoProtectionLogic'
+}

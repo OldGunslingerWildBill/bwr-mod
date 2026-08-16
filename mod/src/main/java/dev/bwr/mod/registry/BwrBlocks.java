@@ -1,0 +1,210 @@
+package dev.bwr.mod.registry;
+
+import dev.bwr.core.eccs.EccsDesign;
+import dev.bwr.mod.BwrMod;
+import dev.bwr.mod.eccs.AdsControllerBlock;
+import dev.bwr.mod.eccs.CondensateStorageTankBlock;
+import dev.bwr.mod.eccs.EccsPumpBlock;
+import dev.bwr.mod.flow.JetPumpBlock;
+import dev.bwr.mod.flow.RecirculationPumpBlock;
+import dev.bwr.mod.fuel.FuelFabricatorBlock;
+import dev.bwr.mod.reactor.CoreSpraySpargerBlock;
+import dev.bwr.mod.reactor.ReactorControllerBlock;
+import dev.bwr.mod.reactor.ReactorVesselBlock;
+import dev.bwr.mod.rods.ControlRodDriveBlock;
+import dev.bwr.mod.steam.MainSteamIsolationValveBlock;
+import dev.bwr.mod.steam.PressurisedTubeBlock;
+import dev.bwr.mod.steam.SafetyReliefValveBlock;
+import dev.bwr.mod.steam.TurbineSteamOutletBlock;
+import dev.bwr.mod.suppression.SuppressionPoolControllerBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
+import net.neoforged.neoforge.registries.DeferredBlock;
+import net.neoforged.neoforge.registries.DeferredRegister;
+
+/**
+ * Block registry. Every block here is hardware — a vessel wall, a valve body, a
+ * pump casing. None of them make decisions.
+ */
+public final class BwrBlocks {
+
+    private BwrBlocks() {
+    }
+
+    public static final DeferredRegister.Blocks BLOCKS =
+            DeferredRegister.createBlocks(BwrMod.MOD_ID);
+
+    /** Heavy steel-ish properties shared by the pressure boundary. */
+    private static BlockBehaviour.Properties vesselSteel() {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_LIGHT_GRAY)
+                .strength(5.0F, 1200.0F)
+                .sound(SoundType.NETHERITE_BLOCK)
+                .requiresCorrectToolForDrops();
+    }
+
+    private static BlockBehaviour.Properties machine() {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(4.0F, 60.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops();
+    }
+
+    // --- Reactor multiblock ------------------------------------------
+
+    /** Owns the ReactorCore instance and ticks the physics. One per reactor. */
+    public static final DeferredBlock<ReactorControllerBlock> REACTOR_CONTROLLER =
+            BLOCKS.register("reactor_controller", () -> new ReactorControllerBlock(machine()));
+
+    /** Reactor pressure vessel shell. Forms the pressure boundary. */
+    public static final DeferredBlock<ReactorVesselBlock> REACTOR_VESSEL =
+            BLOCKS.register("reactor_vessel", () -> new ReactorVesselBlock(vesselSteel()));
+
+    /**
+     * One per control rod, mounted on the vessel bottom head directly beneath
+     * its rod. A missing drive means the multiblock does not form.
+     */
+    public static final DeferredBlock<ControlRodDriveBlock> CONTROL_ROD_DRIVE =
+            BLOCKS.register("control_rod_drive", () -> new ControlRodDriveBlock(machine()));
+
+    /**
+     * Core spray sparger segment. Assembled into a ring around the core
+     * perimeter; spray capacity scales with how complete that ring is.
+     */
+    public static final DeferredBlock<CoreSpraySpargerBlock> CORE_SPRAY_SPARGER =
+            BLOCKS.register("core_spray_sparger", () -> new CoreSpraySpargerBlock(machine()));
+
+    // --- Flow ---------------------------------------------------------
+
+    /** External recirculation pump. A satellite block: announces itself to the controller. */
+    public static final DeferredBlock<RecirculationPumpBlock> RECIRCULATION_PUMP =
+            BLOCKS.register("recirculation_pump", () -> new RecirculationPumpBlock(machine()));
+
+    /** Jet pump, placed in the downcomer annulus. */
+    public static final DeferredBlock<JetPumpBlock> JET_PUMP =
+            BLOCKS.register("jet_pump", () -> new JetPumpBlock(machine()));
+
+    // --- Steam --------------------------------------------------------
+
+    /**
+     * Safety/relief valve. Player-actuated via CC:Tweaked or redstone — it does
+     * NOT self-open on pressure. Must be validated as discharging underwater
+     * into the suppression pool.
+     */
+    public static final DeferredBlock<SafetyReliefValveBlock> SAFETY_RELIEF_VALVE =
+            BLOCKS.register("safety_relief_valve", () -> new SafetyReliefValveBlock(machine()));
+
+    /** Main steam isolation valve. Also player-actuated. */
+    public static final DeferredBlock<MainSteamIsolationValveBlock> MSIV =
+            BLOCKS.register("msiv", () -> new MainSteamIsolationValveBlock(machine()));
+
+    /**
+     * Pressurised steam tube. Provides connectivity and validation only — the
+     * pressure model uses two lumped volumes, never per-segment solving.
+     */
+    public static final DeferredBlock<PressurisedTubeBlock> PRESSURISED_TUBE =
+            BLOCKS.register("pressurised_tube", () -> new PressurisedTubeBlock(machine()));
+
+    /**
+     * Turbine steam outlet — the boundary where our physics hands steam to
+     * Mekanism (SPEC section 13). The only place in the mod where Mekanism steam
+     * exists; everything upstream is kg/s of ours. Registers and works fine with
+     * Mekanism absent, it just has nothing to hand steam to.
+     */
+    public static final DeferredBlock<TurbineSteamOutletBlock> TURBINE_STEAM_OUTLET =
+            BLOCKS.register("turbine_steam_outlet", () -> new TurbineSteamOutletBlock(machine()));
+
+    // --- Fuel cycle -----------------------------------------------------
+
+    /**
+     * Turns Mekanism's enrichment products into fuel assemblies. The enrichment
+     * of the bundle is whatever ratio the player's plumbing supplied, so LEU and
+     * HEU come out of the same machine with nothing configured differently.
+     */
+    public static final DeferredBlock<FuelFabricatorBlock> FUEL_FABRICATOR =
+            BLOCKS.register("fuel_fabricator", () -> new FuelFabricatorBlock(machine()));
+
+    // --- Emergency core cooling (SPEC section 9) ------------------------
+    //
+    // Six injection machines, all the same block class carrying a different
+    // nameplate, because everything that separates them is a number: a pump
+    // curve, a drive, a motor rating, a delivery path. None of them start
+    // themselves and none of them contain a setpoint.
+
+    /**
+     * Reactor Core Isolation Cooling. Steam turbine driven, needs no AC at all,
+     * 700 gpm. Enough to hold level against decay heat boiloff, nowhere near
+     * enough for a large break. The station blackout workhorse.
+     */
+    public static final DeferredBlock<EccsPumpBlock> RCIC_TURBINE_PUMP =
+            BLOCKS.register("rcic_turbine_pump",
+                    () -> new EccsPumpBlock(machine(), EccsDesign.RCIC));
+
+    /**
+     * High Pressure Coolant Injection. Also turbine driven and also AC-free,
+     * seven times the flow — and it takes an order of magnitude more steam out
+     * of the vessel to do it, so running it moves the pressure.
+     */
+    public static final DeferredBlock<EccsPumpBlock> HPCI_TURBINE_PUMP =
+            BLOCKS.register("hpci_turbine_pump",
+                    () -> new EccsPumpBlock(machine(), EccsDesign.HPCI));
+
+    /**
+     * High Pressure Core Spray. Motor driven at 2.6 MW, so it is scrap metal in
+     * a blackout unless emergency power was built and starts.
+     */
+    public static final DeferredBlock<EccsPumpBlock> HPCS_PUMP =
+            BLOCKS.register("hpcs_pump", () -> new EccsPumpBlock(machine(), EccsDesign.HPCS));
+
+    /**
+     * Low Pressure Core Spray. Enormous volume, 300 psi of shutoff head. Useless
+     * until the vessel has been blown down.
+     */
+    public static final DeferredBlock<EccsPumpBlock> LPCS_PUMP =
+            BLOCKS.register("lpcs_pump", () -> new EccsPumpBlock(machine(), EccsDesign.LPCS));
+
+    /**
+     * Residual Heat Removal, in LPCI mode. The largest flow and the softest
+     * pump in the plant, and the same loop is the only suppression pool cooling
+     * there is — it cannot do both at once.
+     */
+    public static final DeferredBlock<EccsPumpBlock> RHR_PUMP =
+            BLOCKS.register("rhr_pump", () -> new EccsPumpBlock(machine(), EccsDesign.RHR));
+
+    /**
+     * Standby Liquid Control. Positive displacement, 43 gpm of sodium
+     * pentaborate, about three quarters of an hour to a shutdown concentration.
+     * The answer to an ATWS, and slow on purpose.
+     */
+    public static final DeferredBlock<EccsPumpBlock> SLC_PUMP =
+            BLOCKS.register("slc_pump", () -> new EccsPumpBlock(machine(), EccsDesign.SLC));
+
+    /**
+     * Automatic Depressurisation System — automatic in name only. Holds the
+     * relief valves open on command so the low pressure systems can inject.
+     */
+    public static final DeferredBlock<AdsControllerBlock> ADS_CONTROLLER =
+            BLOCKS.register("ads_controller", () -> new AdsControllerBlock(machine()));
+
+    /**
+     * Condensate storage tank: the cold, finite alternative to pool suction.
+     * One millibucket is one kilogram, so it holds 2000 tonnes.
+     */
+    public static final DeferredBlock<CondensateStorageTankBlock> CONDENSATE_STORAGE_TANK =
+            BLOCKS.register("condensate_storage_tank",
+                    () -> new CondensateStorageTankBlock(vesselSteel()));
+
+    // --- Suppression pool ---------------------------------------------
+
+    /** Owns the SuppressionPool model and validates the water volume around it. */
+    public static final DeferredBlock<SuppressionPoolControllerBlock> SUPPRESSION_POOL_CONTROLLER =
+            BLOCKS.register("suppression_pool_controller",
+                    () -> new SuppressionPoolControllerBlock(machine()));
+
+    /** Structural wall of the suppression pool. */
+    public static final DeferredBlock<Block> SUPPRESSION_POOL_WALL =
+            BLOCKS.register("suppression_pool_wall", () -> new Block(vesselSteel()));
+}

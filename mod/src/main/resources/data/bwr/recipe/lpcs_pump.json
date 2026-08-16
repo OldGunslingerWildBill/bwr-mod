@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "S": {
+      "item": "bwr:core_spray_sparger"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    "SIS",
+    "VRV",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:lpcs_pump"
+  }
+}
