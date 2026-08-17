@@ -4,6 +4,7 @@ import dev.bwr.core.PhysicalConstants;
 import dev.bwr.core.ReactorCore;
 import dev.bwr.mod.eccs.PlantActuators;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
+import dev.bwr.mod.reactor.RpvSteamOutletBlockEntity;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.registry.BwrBlocks;
 import net.minecraft.core.BlockPos;
@@ -49,6 +50,43 @@ import java.util.WeakHashMap;
  * the pipes actually take, and the reactor sees that reduction as the pressure
  * rise it physically is. That coupling is the whole reason for the buffer to be
  * small rather than generous.
+ *
+ * <h2>Fed by a nozzle, or drawing on its own: the two modes and why there are two</h2>
+ * This outlet used to be a <b>parallel</b> steam path off the vessel rather than
+ * the downstream end of one. It found a reactor controller by looking in a
+ * 25-block cube around itself and wrote its own figure into
+ * {@code ReactorCore.setTurbineSteamFlowKgPerS}, while
+ * {@code RpvSteamOutletBlockEntity} — the actual vessel penetration, welded into
+ * the shell — removed steam quite separately through
+ * {@code setSteamLeakKgPerS}. A player who built both got steam leaving the
+ * vessel twice by two independent routes, and needed no pipe between them: an
+ * outlet parked in the turbine hall with nothing but air between it and the
+ * reactor drew exactly as hard as one welded to a nozzle.
+ *
+ * <p><b>Nozzle-fed.</b> When {@link SteamLineNetwork} can follow joined steam
+ * hardware from this block back to an RPV steam nozzle, this outlet is what it
+ * physically is: the far end of that line. The nozzle has already taken the
+ * steam out of the vessel this tick, so the outlet <i>claims a share of it</i>
+ * through {@code RpvSteamOutletBlockEntity.claimFlowKgPerS} and contributes
+ * <b>zero</b> to the turbine channel — the same steam is not removed twice. Its
+ * reactor is found by following the pipe rather than by proximity, and its
+ * isolation valves are the ones actually <i>in</i> its line rather than any MSIV
+ * that happens to be within twelve blocks. The valves throttle at the nozzle
+ * where they belong, so they are deliberately not applied a second time here.
+ *
+ * <p><b>Unfed.</b> When no nozzle is reachable along a line, nothing changes at
+ * all: the outlet binds by proximity and draws directly on the vessel exactly as
+ * it always has. That is not a grudging compatibility shim, it is the only
+ * honest thing to do — every plant built before the nozzle existed has an outlet
+ * with no line to a nozzle, those plants work today, and quietly cutting their
+ * steam off would be a far worse bug than the one being fixed. The mode is
+ * reported in {@link #statusLines()} so a player can see which one they are in
+ * and run a pipe if they want the other.
+ *
+ * <p>The keying is per-outlet and per-line, not per-vessel. An outlet that can
+ * reach a nozzle is fed by it; one that cannot is not, even on a vessel that has
+ * four nozzles on the other side of it. That is the answer that never breaks a
+ * working plant and never silently changes one either.
  */
 public class TurbineSteamOutletBlockEntity extends BlockEntity {
 
@@ -182,6 +220,18 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
     private final List<BlockPos> msivPositions = new ArrayList<>();
     private int ticksSinceScan = REBIND_INTERVAL_TICKS;
 
+    /**
+     * RPV steam nozzles this outlet's line runs back to, refound on the same
+     * timer. Empty means unfed — see the class javadoc for the two modes.
+     */
+    private final List<BlockPos> feedNozzles = new ArrayList<>();
+
+    /** True while at least one nozzle is reachable along the steam line. */
+    private volatile boolean nozzleFed;
+
+    /** Steam the nozzles actually handed over on the last tick, kg/s. */
+    private volatile double nozzleSupplyKgPerS;
+
     public TurbineSteamOutletBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.TURBINE_STEAM_OUTLET.get(), pos, state);
     }
@@ -216,23 +266,53 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
         // Nothing in this class compares it to anything.
         steamProductionKgPerS = core.getSteamGenerationKgPerS();
 
+        // A zero or non-finite tick length would turn every rate below into an
+        // infinity and hand it to the vessel. It is a compile-time 0.05 today;
+        // it is read through a config object, so it is checked once here rather
+        // than assumed four times.
         double dtSeconds = core.getConfig().tickSeconds;
+        if (!(dtSeconds > 0.0) || !Double.isFinite(dtSeconds)) {
+            deliveredFlowKgPerS = 0.0;
+            return;
+        }
 
-        // Draw down what the pipes took since last tick, then fill from the
-        // vessel to the commanded rate, as far as the buffer has room. The
-        // headroom limit IS the back-pressure: an outlet nobody is draining
-        // stops passing steam, and the reactor feels that as pressure.
-        //
-        // The isolation valves throttle the demand before the buffer sees it. A
-        // shut MSIV is a shut pipe: the commanded flow is irrelevant, nothing
-        // leaves, and the vessel expresses that as the pressurisation transient
-        // of SPEC section 6.3 — pressure up, voids collapse, moderation up,
-        // power surges. None of that sequence is scripted anywhere; it is the
-        // consequence of this one multiplication.
+        // Draw down what the pipes took since last tick, then fill to the
+        // commanded rate, as far as the buffer has room. The headroom limit IS
+        // the back-pressure: an outlet nobody is draining stops passing steam,
+        // and the reactor feels that as pressure.
         long headroomMb = Math.max(0L, BUFFER_CAPACITY_MB - bufferedMilliBuckets);
-        double wantMb = Math.max(0.0, commandedFlowKgPerS) * mainSteamLineOpenFraction
-                * dtSeconds * MILLIBUCKETS_PER_KILOGRAM;
-        long deliverMb = (long) Math.min(headroomMb, Math.floor(wantMb));
+        double headroomKgPerS = (headroomMb / MILLIBUCKETS_PER_KILOGRAM) / dtSeconds;
+        // Capped by headroom before anything else, so that a backed-up outlet
+        // does not reserve steam at a shared nozzle that it cannot actually take
+        // and thereby starve a second outlet on the same line.
+        double wantKgPerS = Math.min(Math.max(0.0, commandedFlowKgPerS), headroomKgPerS);
+
+        if (nozzleFed) {
+            // Series. The nozzle has already removed this steam from the vessel
+            // on the controller's tick, so all that happens here is that some of
+            // it is caught on the way past instead of being lost to the
+            // condenser. The isolation valves are NOT applied again: they are in
+            // the line upstream of this point and the nozzle has already
+            // throttled by them, so multiplying here would count one shut valve
+            // twice and a half-shut one as a quarter.
+            wantKgPerS = claimFromNozzles(level, wantKgPerS);
+            nozzleSupplyKgPerS = wantKgPerS;
+        } else {
+            // No nozzle upstream: the outlet is its own vessel penetration, the
+            // way every outlet was before nozzles existed. Here the isolation
+            // valves are the only restriction there is, so they throttle the
+            // demand before the buffer sees it. A shut MSIV is a shut pipe: the
+            // commanded flow is irrelevant, nothing leaves, and the vessel
+            // expresses that as the pressurisation transient of SPEC section 6.3
+            // — pressure up, voids collapse, moderation up, power surges. None
+            // of that sequence is scripted anywhere; it is the consequence of
+            // this one multiplication.
+            wantKgPerS *= mainSteamLineOpenFraction;
+            nozzleSupplyKgPerS = 0.0;
+        }
+
+        double wantMb = wantKgPerS * dtSeconds * MILLIBUCKETS_PER_KILOGRAM;
+        long deliverMb = wantMb > 0.0 ? (long) Math.min(headroomMb, Math.floor(wantMb)) : 0L;
 
         bufferedMilliBuckets += deliverMb;
 
@@ -241,26 +321,80 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
         // steam to the last millibucket.
         deliveredFlowKgPerS = (deliverMb / MILLIBUCKETS_PER_KILOGRAM) / dtSeconds;
 
+        // Zero when nozzle-fed. The vessel has already lost this steam down the
+        // steam-leak channel the controller owns, and writing it here as well is
+        // exactly the double removal this whole arrangement exists to end. The
+        // contribution is still recorded, at zero, so that the pool's staleness
+        // bookkeeping and any unfed outlet sharing the same reactor keep working.
+        double contribution = nozzleFed ? 0.0 : deliveredFlowKgPerS;
         core.setTurbineSteamFlowKgPerS(
-                pooledFlowKgPerS(controller, level.getGameTime(), getBlockPos(), deliveredFlowKgPerS));
+                pooledFlowKgPerS(controller, level.getGameTime(), getBlockPos(), contribution));
 
         setChanged();
     }
 
     /**
-     * Refind the controller and the isolation valves, at most every
+     * Take as much of {@code wantKgPerS} as the nozzles upstream are actually
+     * passing, kg/s.
+     *
+     * <p>Round-robin in survey order, each nozzle answering with whatever no
+     * other consumer has claimed on this tick. A nozzle in an unloaded chunk, or
+     * one whose vessel has come apart, hands over nothing — it is
+     * {@code RpvSteamOutletBlockEntity.claimFlowKgPerS} that refuses, on the
+     * grounds that a nozzle nobody has polled this tick is not passing steam
+     * whatever its last reading said.
+     *
+     * <p>Entries are pruned when the block behind them has gone, exactly as the
+     * valve list is. They are re-found on the next survey either way.
+     */
+    private double claimFromNozzles(Level level, double wantKgPerS) {
+        if (!(wantKgPerS > 0.0)) {
+            return 0.0;
+        }
+        long gameTime = level.getGameTime();
+        double got = 0.0;
+        var it = feedNozzles.iterator();
+        while (it.hasNext()) {
+            BlockPos p = it.next();
+            if (!level.isLoaded(p)) {
+                continue;
+            }
+            if (!(level.getBlockEntity(p) instanceof RpvSteamOutletBlockEntity nozzle)) {
+                it.remove(); // the nozzle was broken or replaced
+                continue;
+            }
+            got += nozzle.claimFlowKgPerS(gameTime, wantKgPerS - got);
+            if (!(wantKgPerS - got > 0.0)) {
+                break;
+            }
+        }
+        return got;
+    }
+
+    /**
+     * Refind the nozzles, the controller and the isolation valves, at most every
      * {@link #REBIND_INTERVAL_TICKS}.
      *
-     * <p>The controller half exists because binding used to happen once, in
-     * {@code setPlacedBy}, and nowhere else — so an outlet placed before the
-     * reactor controller was orphaned permanently, and so was one whose
-     * controller block was broken and replaced. The scan only runs when there is
-     * no live controller to be found at {@code controllerPos}.
+     * <p>The line is walked first, because what it finds decides everything
+     * else. A line that runs back to an RPV steam nozzle gives this outlet both
+     * its reactor — through the nozzle, which the controller stamps on every one
+     * of its own ticks — and its isolation valves, which are the ones genuinely
+     * in the pipe rather than merely nearby. That is the whole difference between
+     * a steam path and two blocks that happen to be within twelve blocks of each
+     * other.
      *
-     * <p>The valve half is a plain position cache. Positions only change when
+     * <p>The neighbourhood scan is kept for the outlet that has no nozzle behind
+     * it. It exists because binding used to happen once, in {@code setPlacedBy},
+     * and nowhere else — so an outlet placed before the reactor controller was
+     * orphaned permanently, and so was one whose controller block was broken and
+     * replaced. It also runs when a nozzle-fed outlet cannot yet name its
+     * controller, which is the case for the tick or two after a chunk loads and
+     * before the controller has polled its nozzles.
+     *
+     * <p>Either way it is a plain position cache. Positions only change when
      * blocks are placed or broken, so refinding them twice a second is ample;
-     * the valve <i>stroke</i> is read live from the cached block entities on
-     * every tick, so closing an MSIV takes effect immediately.
+     * the valve <i>stroke</i> is read live from the positions on every tick, so
+     * closing an MSIV takes effect immediately.
      */
     private void maybeRescan(Level level) {
         if (ticksSinceScan < Integer.MAX_VALUE) {
@@ -271,17 +405,81 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
         }
         ticksSinceScan = 0;
 
+        SteamLineNetwork.Survey survey = SteamLineNetwork.survey(level, getBlockPos());
+        feedNozzles.clear();
+        feedNozzles.addAll(survey.nozzles());
+        nozzleFed = !feedNozzles.isEmpty();
+
         msivPositions.clear();
+        if (nozzleFed) {
+            msivPositions.addAll(survey.isolationValves());
+            BlockPos throughTheLine = controllerFromNozzles(level);
+            if (throughTheLine != null) {
+                controllerPos = throughTheLine;
+                setChanged();
+                return;
+            }
+        }
+        scanNeighbourhood(level, !nozzleFed);
+    }
+
+    /**
+     * The controller of the reactor whose shell these nozzles are welded into.
+     *
+     * <p>The nozzles do not look it up; the controller stamps itself on them as
+     * it walks them, so this only reads back a fact a formed reactor has already
+     * published. A nozzle in a vessel that has come apart has no controller to
+     * offer, which is the correct answer rather than a missing one.
+     */
+    private BlockPos controllerFromNozzles(Level level) {
+        for (BlockPos p : feedNozzles) {
+            if (!level.isLoaded(p)) {
+                continue;
+            }
+            if (!(level.getBlockEntity(p) instanceof RpvSteamOutletBlockEntity nozzle)) {
+                continue;
+            }
+            BlockPos candidate = nozzle.getControllerPos();
+            if (candidate != null && level.isLoaded(candidate)
+                    && level.getBlockEntity(candidate) instanceof ReactorControllerBlockEntity) {
+                return candidate.immutable();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The proximity scan an unfed outlet has always used.
+     *
+     * <p>{@code BlockPos.betweenClosed} hands out one recycled cursor, so every
+     * position that goes into {@code msivPositions} is copied with
+     * {@code immutable()} on the way in. Storing the cursor would fill the list
+     * with as many references to the last block of the sweep as there are valves.
+     *
+     * @param collectValves whether to gather isolation valves as well; false when
+     *                      the line survey has already answered that question
+     *                      better than a box around the outlet can
+     */
+    private void scanNeighbourhood(Level level, boolean collectValves) {
         boolean needController = controller(level) == null;
         if (needController) {
             controllerPos = null;
+        }
+        if (!needController && !collectValves) {
+            return;
         }
 
         int r = SEARCH_RADIUS;
         BlockPos from = getBlockPos();
         for (BlockPos p : BlockPos.betweenClosed(from.offset(-r, -r, -r), from.offset(r, r, r))) {
+            // Never read a block out of an unloaded chunk: Level.getBlockState
+            // will generate terrain to answer, and a 25-block cube around an
+            // outlet reaches into four chunk columns.
+            if (!level.isLoaded(p)) {
+                continue;
+            }
             BlockState s = level.getBlockState(p);
-            if (s.is(BwrBlocks.MSIV.get())) {
+            if (collectValves && s.is(BwrBlocks.MSIV.get())) {
                 msivPositions.add(p.immutable());
             } else if (needController && controllerPos == null
                     && s.is(BwrBlocks.REACTOR_CONTROLLER.get())
@@ -300,17 +498,32 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
      * would make a second, fully open valve halve the line, which is not what a
      * second valve does. No MSIV on the line at all means an unisolable line,
      * which is exactly what a plant built without them has.
+     *
+     * <p>A valve whose chunk is not loaded is skipped, not dropped.
+     * {@code Level.getBlockEntity} answers null for an unloaded chunk exactly as
+     * it does for a broken block, and treating the two the same made a valve
+     * across a chunk border deregister itself — the failure
+     * {@code ReactorControllerBlockEntity.gatherPumpFlow} documents at length for
+     * the pumps.
      */
     private double isolationValveOpenFraction(Level level) {
         double fraction = 1.0;
         var it = msivPositions.iterator();
         while (it.hasNext()) {
             BlockPos p = it.next();
+            if (!level.isLoaded(p)) {
+                continue;
+            }
             if (!(level.getBlockEntity(p) instanceof MainSteamIsolationValveBlockEntity valve)) {
                 it.remove();
                 continue;
             }
-            fraction = Math.min(fraction, Math.max(0.0, Math.min(1.0, valve.getPosition())));
+            double open = valve.getPosition();
+            // Clamped rather than trusted: a stroke read out of a hand-edited
+            // save could be anything, and a NaN here would propagate into the
+            // vessel's steam balance through the multiplication in tick().
+            fraction = Math.min(fraction,
+                    Double.isFinite(open) ? Math.max(0.0, Math.min(1.0, open)) : 0.0);
         }
         return fraction;
     }
@@ -323,6 +536,54 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
     /** Isolation valves this outlet has found on its line. */
     public int getIsolationValveCount() {
         return msivPositions.size();
+    }
+
+    /**
+     * True when this outlet's steam line runs back to an RPV steam nozzle, and
+     * it is therefore the downstream end of one steam path rather than a
+     * separate draw on the vessel. See the class javadoc for the two modes.
+     */
+    public boolean isNozzleFed() {
+        return nozzleFed;
+    }
+
+    /** RPV steam nozzles this outlet's line reaches. */
+    public int getFeedNozzleCount() {
+        return feedNozzles.size();
+    }
+
+    /**
+     * Steam the nozzles upstream actually handed <i>this outlet</i> on the last
+     * tick, kg/s — what it claimed, not what they were passing. Zero for an
+     * unfed outlet, which has no nozzles to hand it anything.
+     */
+    public double getNozzleSupplyKgPerS() {
+        return nozzleSupplyKgPerS;
+    }
+
+    /**
+     * Steam every nozzle upstream is passing, kg/s — the ceiling on this outlet
+     * rather than the part of it that was taken.
+     *
+     * <p>Computed on demand rather than cached, because the only caller is a
+     * player right-clicking the block and a per-tick figure nobody reads twenty
+     * times a second is the dead wiring this codebase keeps finding in itself.
+     */
+    public double nozzleFlowKgPerS() {
+        if (level == null || feedNozzles.isEmpty()) {
+            return 0.0;
+        }
+        double total = 0.0;
+        for (BlockPos p : feedNozzles) {
+            if (!level.isLoaded(p)) {
+                continue;
+            }
+            if (level.getBlockEntity(p) instanceof RpvSteamOutletBlockEntity nozzle
+                    && nozzle.isPartOfFormedReactor()) {
+                total += nozzle.getLastFlowKgPerS();
+            }
+        }
+        return total;
     }
 
     /**
@@ -518,9 +779,28 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
                 commandedFlowKgPerS, deliveredFlowKgPerS));
         out.add(String.format("Core boiling %.1f kg/s; buffer %d/%d mB",
                 steamProductionKgPerS, bufferedMilliBuckets, BUFFER_CAPACITY_MB));
-        if (!msivPositions.isEmpty()) {
-            out.add(String.format("%d isolation valve(s) on the line, %.0f%% open",
-                    msivPositions.size(), mainSteamLineOpenFraction * 100.0));
+        // Which of the two modes this outlet is in, because it decides where its
+        // steam comes from and it is not visible from outside the block.
+        if (isNozzleFed()) {
+            // Two different numbers, and the difference between them is the whole
+            // diagnosis. What the nozzles are passing is the ceiling on this
+            // outlet; what it took is how much of that ceiling the commanded flow
+            // and the buffer actually reached. A player whose turbine is starved
+            // needs to know which of the two is short.
+            out.add(String.format(
+                    "Fed by %d RPV steam nozzle(s) along the steam line, which are passing"
+                            + " %.1f kg/s; took %.1f kg/s of it. Open the nozzles further or"
+                            + " fit more of them to raise the ceiling.",
+                    getFeedNozzleCount(), nozzleFlowKgPerS(), getNozzleSupplyKgPerS()));
+        } else {
+            out.add("No RPV steam nozzle on this outlet's steam line, so it draws on the"
+                    + " vessel directly. Run pressurised steam tube from a nozzle in the"
+                    + " vessel shell to put the two in series.");
+        }
+        if (getIsolationValveCount() > 0) {
+            out.add(String.format("%d isolation valve(s) on the line, %.0f%% open%s",
+                    getIsolationValveCount(), getMainSteamLineOpenFraction() * 100.0,
+                    isNozzleFed() ? " (throttling at the nozzle, upstream of here)" : ""));
         }
         out.add(String.format("Exchange rate %.0f mB per kg (%.0f mB/t per kg/s)",
                 MILLIBUCKETS_PER_KILOGRAM, MILLIBUCKETS_PER_TICK_PER_KG_PER_S));
@@ -548,9 +828,23 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        commandedFlowKgPerS = tag.getDouble("Commanded");
+        // Clamped the same way the setter clamps. A commanded flow read straight
+        // out of NBT is the one path into this field that does not go through
+        // setCommandedFlowKgPerS, so a hand-edited or corrupted save was the one
+        // way to get a NaN or a negative demand into the steam balance.
+        double commanded = tag.getDouble("Commanded");
+        commandedFlowKgPerS = Double.isFinite(commanded) ? Math.max(0.0, commanded) : 0.0;
         computerControlled = tag.getBoolean("ComputerControlled");
         bufferedMilliBuckets = Math.min(BUFFER_CAPACITY_MB, Math.max(0L, tag.getLong("BufferMb")));
         controllerPos = tag.contains("Controller") ? BlockPos.of(tag.getLong("Controller")) : null;
+        // What the line looks like is a fact about the world, and the world has
+        // not been asked yet. Until the first survey the outlet is unfed, which
+        // is the direction that draws no steam it has not earned.
+        feedNozzles.clear();
+        msivPositions.clear();
+        nozzleFed = false;
+        nozzleSupplyKgPerS = 0.0;
+        deliveredFlowKgPerS = 0.0;
+        ticksSinceScan = REBIND_INTERVAL_TICKS;
     }
 }

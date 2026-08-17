@@ -468,17 +468,15 @@ public final class CoreLoading {
     /**
      * Flux-weighted recoverable energy per fission, MeV.
      *
-     * <p><b>Nothing in the thermal path multiplies by this yet, and a pack author
-     * needs to know that.</b> SPEC 2.1's parameter table lists
-     * {@code heat_per_fission_mev} as controlling thermal output and
-     * {@link FuelTypeSpec#REQUIRED_FIELDS} refuses an entry that omits it, but
-     * every thermal power figure in the model is presently
-     * {@code powerFraction * ratedThermalMW} — the fission rate is normalised to
-     * rated, so the MeV per fission cancels out and a fuel quoting double the
-     * energy per fission produces a bit-identical core. The missing step is one
-     * multiplication at the single place power fraction becomes megawatts, and
-     * {@link #heatPerFissionScaleFactor()} is that multiplier, sitting here ready
-     * for it. Until it is wired, treat this as informational.
+     * <p>SPEC 2.1's parameter table lists {@code heat_per_fission_mev} as
+     * controlling thermal output and {@link FuelTypeSpec#REQUIRED_FIELDS} refuses
+     * an entry that omits it. It reaches the thermal path as a ratio —
+     * {@link #heatPerFissionScaleFactor()} — which {@code ReactorCore} multiplies
+     * into the fission rate at the one point that rate becomes heat. A pack author
+     * doubling this figure doubles the megawatts a given flux produces, and
+     * therefore the steam, the fuel temperature, the void and the burnup rate;
+     * the neutron instruments go on reading flux, because that is what they
+     * measure.
      */
     public double effectiveHeatPerFissionMeV() {
         return weightedAverage(FuelAssembly::heatPerFissionMeV, EMPTY_CORE_HEAT_PER_FISSION_MEV);
@@ -493,14 +491,20 @@ public final class CoreLoading {
      * <p>This is the factor SPEC 2.1 promises when it says
      * {@code heat_per_fission_mev} controls thermal output: at a given fission
      * rate a core of fuel releasing more energy per fission makes proportionally
-     * more heat. It belongs multiplied into the one place a power <i>fraction</i>
-     * becomes megawatts, so that fuel temperature, void, decay heat and the APRM
-     * all follow from it rather than each needing to know about it.
+     * more heat. {@code ReactorCore.getNeutronPowerFraction()} and
+     * {@code getDecayHeatFraction()} multiply by it and nothing else does, so fuel
+     * temperature, void, the vessel energy balance and burnup all follow from it
+     * without any of them needing to know it exists.
      *
      * <p>Published as a plain ratio rather than applied here because
      * {@code CoreLoading} owns the fuel, not the plant's power rating, and
      * because a scale factor is the smallest thing that can be handed across that
      * boundary.
+     *
+     * <p>Exactly 1.0, bit for bit, whenever every loaded assembly quotes the
+     * reference figure — {@code x / x} is exact — and that includes an empty core,
+     * which falls back to the reference. Both shipped uranium fuels do quote it,
+     * so no default loading moves.
      */
     public double heatPerFissionScaleFactor() {
         double reference = EMPTY_CORE_HEAT_PER_FISSION_MEV;

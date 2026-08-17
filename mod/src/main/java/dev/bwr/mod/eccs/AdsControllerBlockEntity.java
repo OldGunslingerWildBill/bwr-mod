@@ -75,6 +75,28 @@ public class AdsControllerBlockEntity extends BlockEntity {
     /** Shortest interval between full neighbourhood scans, ticks. */
     private static final int REBIND_INTERVAL_TICKS = 40;
 
+    /**
+     * Interval between rescans once the controller has a reactor and a valve
+     * bank, ticks.
+     *
+     * <p>There has to be one. Binding was previously refreshed only when
+     * something set {@link #bindingDirty} — placement, and a neighbour change
+     * against this block — or while the controller had nothing bound at all.
+     * Neither fires for work done anywhere else in the search radius, and
+     * everything a player does to an ADS bank after the first valve is exactly
+     * that: stacking a second and third relief valve onto the bank, draining
+     * the pool out from under one, digging the discharge deeper. A controller
+     * bound to one valve went on commanding one valve forever, so
+     * {@code getValveCount()} — the number a blowdown program sizes its demand
+     * from — was frozen at whatever happened to be there when the ADS was
+     * dropped, and the extra valves the player had welded on did nothing.
+     *
+     * <p>Same value and same reasoning as the suppression pool's formed
+     * revalidation interval, and the same cost: a 49-cube of block states plus
+     * a short downward walk per valve, once every thirty seconds.
+     */
+    private static final int BOUND_REBIND_INTERVAL_TICKS = 600;
+
     private final MachineEnergy energy = new MachineEnergy();
 
     // Volatile because Lua reads them from a CC computer thread; the matching
@@ -270,19 +292,22 @@ public class AdsControllerBlockEntity extends BlockEntity {
     }
 
     /**
-     * Re-find the reactor and the valve bank, at most every
-     * {@link #REBIND_INTERVAL_TICKS}. The scan is a 49-cube and it walks
-     * downward from every relief valve looking for water, so doing it on every
-     * redstone edge would be expensive for no gain.
+     * Re-find the reactor and the valve bank.
+     *
+     * <p>Two intervals. {@link #REBIND_INTERVAL_TICKS} is the floor while
+     * something is missing or something has said the binding changed: the scan
+     * is a 49-cube and it walks downward from every relief valve looking for
+     * water, so running it on every redstone edge would be expensive for no
+     * gain. {@link #BOUND_REBIND_INTERVAL_TICKS} is the slow sweep that runs
+     * even when the controller is perfectly happy, and it is the one that lets
+     * a valve added to the bank later be noticed at all.
      */
     private void maybeRebind(Level level) {
         if (ticksSinceRebind < Integer.MAX_VALUE) {
             ticksSinceRebind++;
         }
-        if (!bindingDirty && reactorPos != null && !valves.isEmpty()) {
-            return;
-        }
-        if (ticksSinceRebind < REBIND_INTERVAL_TICKS) {
+        boolean settled = !bindingDirty && reactorPos != null && !valves.isEmpty();
+        if (ticksSinceRebind < (settled ? BOUND_REBIND_INTERVAL_TICKS : REBIND_INTERVAL_TICKS)) {
             return;
         }
         rebind(level);
@@ -459,6 +484,22 @@ public class AdsControllerBlockEntity extends BlockEntity {
         return out;
     }
 
+    /**
+     * A stored fraction as a usable 0..1, with a non-finite value replaced by
+     * {@code fallback} rather than propagated.
+     *
+     * @param fallback what a hardware fraction reads as when nothing sensible
+     *                 was saved — full, for both of the fields that use this,
+     *                 because a fresh nitrogen bottle is full and an ADS with no
+     *                 demand recorded is one that will open its whole bank
+     */
+    private static double clampFraction(double value, double fallback) {
+        if (!Double.isFinite(value)) {
+            return fallback;
+        }
+        return Math.min(1.0, Math.max(0.0, value));
+    }
+
     // --- Persistence -----------------------------------------------------
 
     @Override
@@ -483,8 +524,24 @@ public class AdsControllerBlockEntity extends BlockEntity {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         open = tag.getBoolean("Open");
-        valveDemandFraction = tag.contains("ValveDemand") ? tag.getDouble("ValveDemand") : 1.0;
-        nitrogenCharge = tag.contains("Nitrogen") ? tag.getDouble("Nitrogen") : 1.0;
+        // Sanitised on the way in, for the reason the suppression pool's load
+        // path spells out: clamping with Math.min/Math.max does not stop a
+        // non-finite value, it propagates one. Both of these fields are only
+        // ever clamped that way at their point of use, so a NaN read off disk
+        // stays NaN for the life of the world — and a NaN here does not fail
+        // loudly, it fails silent and permanent. `nitrogenCharge > 0.0` is
+        // false against NaN, so `wanted` is zero and the bank never opens
+        // however hard the player pulls the lever; the recharge line then
+        // writes NaN straight back over itself, so no amount of compressor
+        // power recovers it. A NaN valve demand rounds to zero and does the
+        // same thing one layer down. Either way the readouts say 0% and there
+        // is nothing anywhere to say why. Neither field has a live writer that
+        // can produce one, which is exactly why this is the load path's job:
+        // it is old saves and hand-edited NBT this is standing under.
+        valveDemandFraction = tag.contains("ValveDemand")
+                ? clampFraction(tag.getDouble("ValveDemand"), 1.0) : 1.0;
+        nitrogenCharge = tag.contains("Nitrogen")
+                ? clampFraction(tag.getDouble("Nitrogen"), 1.0) : 1.0;
         computerControlled = tag.getBoolean("ComputerControlled");
         energy.setStored(tag.getInt("Energy"));
         reactorPos = tag.contains("Reactor") ? BlockPos.of(tag.getLong("Reactor")) : null;

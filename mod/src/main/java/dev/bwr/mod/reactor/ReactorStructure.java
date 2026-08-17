@@ -501,9 +501,10 @@ public final class ReactorStructure {
                                            ValidationResult result) {
         if (steamOutlets.isEmpty()) {
             result.degrade("no RPV steam outlet in the vessel shell; the only steam paths off"
-                    + " this vessel are the relief valves and a turbine steam outlet bound to"
-                    + " the controller. " + RpvSteamOutletBlockEntity.MAIN_STEAM_LINES
-                    + " nozzles pass rated steam flow");
+                    + " this vessel are the relief valves and a turbine steam outlet drawing"
+                    + " on the vessel directly. " + RpvSteamOutletBlockEntity.MAIN_STEAM_LINES
+                    + " nozzles pass rated steam flow, and a turbine steam outlet piped back"
+                    + " to one takes its steam through it instead of separately");
             return;
         }
         int unconnected = 0;

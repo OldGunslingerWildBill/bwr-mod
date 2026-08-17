@@ -60,4 +60,31 @@ public class ControlRodDriveBlock extends BaseEntityBlock {
         return createTickerHelper(type, BwrBlockEntities.CONTROL_ROD_DRIVE.get(),
                 ControlRodDriveBlockEntity::serverTick);
     }
+
+    /**
+     * Report this drive's condition, the way every other machine block in the
+     * mod does on a plain right-click.
+     *
+     * <p>It is the only way to find out which drive is the dry one. The panel
+     * counts operable, powered and water-supplied drives across the whole core,
+     * so a player sees "174 of 177" and then has 177 blocks under the vessel and
+     * no way to tell them apart. See
+     * {@code ControlRodDriveBlockEntity.statusLines()}.
+     */
+    @Override
+    protected net.minecraft.world.InteractionResult useWithoutItem(
+            BlockState state, Level level, BlockPos pos,
+            net.minecraft.world.entity.player.Player player,
+            net.minecraft.world.phys.BlockHitResult hit) {
+        if (level.isClientSide()) {
+            return net.minecraft.world.InteractionResult.SUCCESS;
+        }
+        if (level.getBlockEntity(pos) instanceof ControlRodDriveBlockEntity be) {
+            for (String line : be.statusLines()) {
+                player.displayClientMessage(
+                        net.minecraft.network.chat.Component.literal(line), false);
+            }
+        }
+        return net.minecraft.world.InteractionResult.CONSUME;
+    }
 }

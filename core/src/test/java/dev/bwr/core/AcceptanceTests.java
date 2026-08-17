@@ -7,8 +7,10 @@ import dev.bwr.core.accident.QuenchSpikeRefloodTest;
 import dev.bwr.core.accident.SevereAccidentEscalationTest;
 import dev.bwr.core.boundary.BoundaryStressTest;
 import dev.bwr.core.fuel.FuelTypeSpecTest;
+import dev.bwr.core.fuel.HeatPerFissionTest;
 import dev.bwr.core.fuel.MixedCoreTest;
 import dev.bwr.core.harness.TransientHarnessTest;
+import dev.bwr.core.instrument.AveragePowerRangePeriodTest;
 import dev.bwr.core.instrument.SourceRangeMonitorTest;
 import dev.bwr.core.kinetics.PointKineticsTest;
 import dev.bwr.core.nodal.NodalFluxSolverTest;
@@ -67,6 +69,7 @@ public final class AcceptanceTests {
             PointKineticsTest.class,
             SaturationTest.class,
             SourceRangeMonitorTest.class,
+            AveragePowerRangePeriodTest.class,
             SubcriticalSourceTest.class,
             ColdStartTest.class,
             ReactorCoreScramTest.class,
@@ -82,6 +85,7 @@ public final class AcceptanceTests {
             NodalFluxSolverTest.class,
             FuelTypeSpecTest.class,
             MixedCoreTest.class,
+            HeatPerFissionTest.class,
     };
 
     public static void main(String[] args) {

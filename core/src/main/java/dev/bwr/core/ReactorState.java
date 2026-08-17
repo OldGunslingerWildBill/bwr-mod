@@ -256,12 +256,28 @@ public record ReactorState(
         return intermediateRangeMonitorRanges.clone();
     }
 
-    /** Total thermal power as a fraction of rated: fission plus decay heat. */
+    /**
+     * Total normalised fission rate: the kinetics term plus decay heat.
+     *
+     * <p><b>Not the same as {@code ReactorCore.getTotalPowerFractionOfRated()} on
+     * fuel that is not ordinary uranium.</b> Both components here are recorded
+     * straight off the kinetics and the decay heat inventory, which are normalised
+     * to fission rate; turning that into thermal power takes the loaded fuel's
+     * recoverable energy per fission, and the record does not carry the fuel —
+     * the assemblies are item-side state (SPEC 2.3), deliberately. Ask the core if
+     * you want megawatts.
+     */
     public double totalPowerFraction() {
         return neutronPower + decayHeatFraction;
     }
 
-    /** Total thermal power in megawatts. */
+    /**
+     * Total thermal power in megawatts, on the assumption that the fuel releases
+     * the reference energy per fission. Exact for both shipped uranium fuels and
+     * an underestimate of a few per cent for plutonium; see
+     * {@link #totalPowerFraction()}. {@code ReactorCore.getThermalPowerMW()} knows
+     * the fuel and this cannot.
+     */
     public double thermalPowerMW() {
         return totalPowerFraction() * PhysicalConstants.RATED_THERMAL_MW;
     }

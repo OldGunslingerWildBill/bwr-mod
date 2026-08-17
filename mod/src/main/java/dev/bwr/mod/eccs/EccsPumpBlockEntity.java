@@ -55,6 +55,27 @@ public class EccsPumpBlockEntity extends BlockEntity {
     /** Shortest interval between full neighbourhood scans, ticks. */
     private static final int REBIND_INTERVAL_TICKS = 40;
 
+    /**
+     * Interval between rescans once the machine has its reactor, ticks.
+     *
+     * <p>The binding was refreshed only while the <b>reactor</b> was missing or
+     * something had set {@link #bindingDirty}, and neither of those notices the
+     * two bindings a player almost always makes second. A suppression pool
+     * controller or a condensate storage tank placed twenty blocks away fires no
+     * neighbour change here, so an ECCS machine that found its reactor first —
+     * which is the ordinary build order, because the reactor is the thing you
+     * build around — held {@code poolPos} and {@code tankPos} at null forever.
+     * {@link #availableSuctionKg} then returns zero from a pool that is full,
+     * the pump delivers nothing with every readout saying it is running, and the
+     * only way out is to break and replace the machine. The same silence hid the
+     * reverse case: a pool controller broken and rebuilt one block over left
+     * every machine on the plant bound to a position with nothing in it.
+     *
+     * <p>Thirty seconds, matching the suppression pool's own formed
+     * revalidation, and it costs the same 49-cube of block states.
+     */
+    private static final int BOUND_REBIND_INTERVAL_TICKS = 600;
+
     /** What an RHR loop is lined up to do. Only RHR has a choice. */
     public enum Mode {
         /** Take suction and put water in the vessel. */
@@ -293,24 +314,26 @@ public class EccsPumpBlockEntity extends BlockEntity {
      *
      * <p>The scan is a 49-cube, and a neighbour change fires on every redstone
      * edge. Rescanning on each of those would be tens of thousands of block
-     * reads a tick for a machine whose neighbours simply blinked. So a rescan
-     * happens only when something is actually unbound or has been replaced, and
-     * never more than once every {@link #REBIND_INTERVAL_TICKS}.
+     * reads a tick for a machine whose neighbours simply blinked. So there are
+     * two intervals: {@link #REBIND_INTERVAL_TICKS} while the reactor is missing
+     * or something has said the binding changed, and the slow
+     * {@link #BOUND_REBIND_INTERVAL_TICKS} sweep otherwise — which is what
+     * eventually finds a suppression pool or a storage tank built after the
+     * machine was placed.
+     *
+     * <p>The interval applies unconditionally, and especially when the machine
+     * is NOT bound. Testing {@code bound &&} here meant an unbound pump — the
+     * default state of every pump placed before its reactor exists — ran the
+     * full 117,649-position scan on every one of the twenty ticks a second,
+     * which is exactly the case the throttle was written to prevent.
      */
     private void maybeRebind(Level level) {
         if (ticksSinceRebind < Integer.MAX_VALUE) {
             ticksSinceRebind++;
         }
-        boolean bound = isStillBound(level, reactorPos, BwrBlocks.REACTOR_CONTROLLER.get());
-        if (!bindingDirty && bound) {
-            return;
-        }
-        // The interval applies unconditionally, and especially when the machine
-        // is NOT bound. Testing `bound &&` here meant an unbound pump — the
-        // default state of every pump placed before its reactor exists — ran the
-        // full 117,649-position scan on every one of the twenty ticks a second,
-        // which is exactly the case the throttle was written to prevent.
-        if (ticksSinceRebind < REBIND_INTERVAL_TICKS) {
+        boolean settled = !bindingDirty
+                && isStillBound(level, reactorPos, BwrBlocks.REACTOR_CONTROLLER.get());
+        if (ticksSinceRebind < (settled ? BOUND_REBIND_INTERVAL_TICKS : REBIND_INTERVAL_TICKS)) {
             return;
         }
         rebind(level);
@@ -394,7 +417,12 @@ public class EccsPumpBlockEntity extends BlockEntity {
 
     /**
      * Start or stop the machine. Bare, like every other actuator in this mod:
-     * it checks nothing, and nothing in the mod ever calls it.
+     * it checks nothing.
+     *
+     * <p>Its callers are the two things that carry a command the player gave —
+     * {@code EccsPumpBlock.neighborChanged} following a redstone level, and the
+     * peripheral following Lua. Nothing in the mod calls it off its own bat, and
+     * nothing that calls it looks at a plant parameter first.
      *
      * <p>Every setter below is marshalled onto the server thread. Lua reaches
      * them from a CC computer thread, and {@code setChanged()} dispatches

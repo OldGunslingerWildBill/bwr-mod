@@ -36,11 +36,29 @@ import java.util.Map;
  * would read {@code hasNeighborSignal() == false} and slam it shut.
  * {@link #releaseControl()} hands it back to redstone.
  *
- * <p>An ADS controller within range still commands the valves in its bank every
- * tick regardless of this flag — it is the bank controller and it does not
- * consult {@code isComputerControlled()}. So a valve inside an ADS bank answers
- * the ADS, and a program that wants to work that valve directly should either
- * be outside a bank or command the bank through {@code bwr_ads}.
+ * <p><b>An ADS controller in range takes and gives back the same flag.</b>
+ * {@code AdsControllerBlockEntity.setValve} writes {@code setComputerControlled}
+ * itself, so the claim is shared rather than exclusive, and the interaction is
+ * worth being precise about because it decides whether a program's command
+ * survives:
+ *
+ * <ul>
+ *   <li>An ADS that is <i>idle</i> only ever touches valves it is holding or has
+ *       just released — {@code commandValves} takes the release branch on
+ *       {@code held.remove(vp)} — so a valve this peripheral opened in an idle
+ *       bank is left alone and the Lua command stands.</li>
+ *   <li>An ADS that <i>fires</i> drives every valve it can see, so it will
+ *       reopen or reseat a valve a program is working, and it does not consult
+ *       {@code isComputerControlled()} before doing it.</li>
+ *   <li>When the ADS releases a valve — the bank shuts, the valve leaves the
+ *       bank, or the controller is broken — it clears the claim as well as the
+ *       position, so a Lua claim made before that point is gone and the valve is
+ *       answering redstone again.</li>
+ * </ul>
+ *
+ * <p>So a program working a valve directly should either keep it outside an ADS
+ * bank or command the bank through {@code bwr_ads}, and in either case should
+ * read {@link #isComputerControlled()} back rather than assume the claim held.
  *
  * <h2>Everything here runs on the server thread</h2>
  * Every method is {@code @LuaFunction(mainThread = true)} and must stay that
@@ -160,17 +178,28 @@ public class SafetyReliefValvePeripheral implements IPeripheral {
     }
 
     /**
-     * Steam this valve passed, kg/s, the last time anything computed it.
+     * Steam this valve is passing, kg/s.
      *
      * <p>Computed by whichever controller is metering the valve — the
      * suppression pool for its heat balance, the ADS controller for the relief
-     * channel. A valve with neither in range is not being metered by anything
-     * and reads zero regardless of whether it is open, which is also the honest
-     * answer: nothing is accounting for its steam.
+     * channel. Those two are the only callers of
+     * {@code SafetyReliefValveBlockEntity.flowKgPerS} in the mod, so a valve with
+     * neither in range is not metered at all and reads zero: nothing is
+     * accounting for its steam.
+     *
+     * <p><b>A shut valve reads zero without waiting to be re-metered.</b> The
+     * stored figure is only refreshed while something is metering the valve, so
+     * a valve that was open and passing when its suppression pool was broken —
+     * or when the chunk holding the pool controller unloaded — would otherwise go
+     * on quoting 42 kg/s of relief that is not happening, for as long as nobody
+     * rebuilt the pool. That is the most misleading thing a readout can tell a
+     * program trying to work out where its steam went. Restating "a shut valve
+     * passes nothing" is not a threshold and not a judgement: it is the first
+     * line of {@code flowKgPerS} itself.
      */
     @LuaFunction(mainThread = true)
     public final double getFlow() {
-        return be.getLastFlowKgPerS();
+        return be.isOpen() ? be.getLastFlowKgPerS() : 0.0;
     }
 
     /** Flow one fully open valve passes at rated dome pressure, kg/s. Nameplate. */
@@ -185,7 +214,9 @@ public class SafetyReliefValvePeripheral implements IPeripheral {
         m.put("open", be.isOpen());
         m.put("computerControlled", be.isComputerControlled());
         m.put("dischargeSubmerged", be.isDischargeSubmerged());
-        m.put("flow", be.getLastFlowKgPerS());
+        // Same rule as getFlow(): a shut valve passes nothing, and the stored
+        // figure is only refreshed while something is metering the valve.
+        m.put("flow", be.isOpen() ? be.getLastFlowKgPerS() : 0.0);
         m.put("capacity", SafetyReliefValveBlockEntity.CAPACITY_KG_PER_S);
         return m;
     }

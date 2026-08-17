@@ -193,8 +193,37 @@ public class RecirculationPumpBlockEntity extends BlockEntity {
 
     /** Single authoritative demand, written by both the slider and Lua. */
     public void setTargetSpeedFraction(double fraction) {
-        this.targetSpeedFraction = Math.min(1.0, Math.max(0.0, fraction));
+        this.targetSpeedFraction = clampFraction(fraction);
         setChanged();
+    }
+
+    /**
+     * A speed demand as a usable 0..1, with a non-finite value taken as zero
+     * rather than propagated.
+     *
+     * <p>{@code Math.min(1, Math.max(0, NaN))} is NaN — both comparisons fail
+     * and the argument comes straight back out — so the clamp this used to be
+     * was not a guard at all. A NaN reaching {@link #targetSpeedFraction} does
+     * not sit there quietly either: {@link #tickPump} takes
+     * {@code Math.min(target, achievable)}, which is NaN, drives
+     * {@code actualSpeedFraction} to NaN on the next step, and that figure is
+     * summed into the core's flow demand by the controller. From there NaN is in
+     * the thermal hydraulics, and every reading downstream of core flow —
+     * quality, void fraction, the void coefficient's contribution to
+     * reactivity — is NaN with it. One bad number turns a running plant into a
+     * panel of dashes with nothing to say where it started.
+     *
+     * <p>{@code RecirculationPumpPeripheral.setSpeed} refuses a non-finite
+     * demand with a {@code LuaException} and must go on doing so; a silent zero
+     * would leave a player whose control loop divided by zero watching a pump
+     * coast down for no visible reason. This is the floor under every other way
+     * in — the load path below, and any caller added later.
+     */
+    private static double clampFraction(double fraction) {
+        if (!Double.isFinite(fraction)) {
+            return 0.0;
+        }
+        return Math.min(1.0, Math.max(0.0, fraction));
     }
 
     public double getActualSpeedFraction() {
@@ -320,9 +349,19 @@ public class RecirculationPumpBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        targetSpeedFraction = tag.getDouble("Target");
-        actualSpeedFraction = tag.getDouble("Actual");
-        energyStoredFe = tag.getDouble("EnergyFe");
+        // Sanitised on the way in, not merely on the way out. The Lua entry
+        // point rejects a non-finite demand and clampFraction is the floor under
+        // the rest, but neither of those helps a value that is already on disk:
+        // a NaN written by an older build reloads as NaN and poisons core flow
+        // the moment the controller next gathers pump flow. Speeds are
+        // fractions and clamp; the energy buffer is a quantity, so it is only
+        // required to be finite and non-negative — the buffer is allowed to
+        // hold more than one tick's draw, which is the whole point of it.
+        targetSpeedFraction = clampFraction(tag.getDouble("Target"));
+        actualSpeedFraction = clampFraction(tag.getDouble("Actual"));
+        double savedEnergy = tag.getDouble("EnergyFe");
+        energyStoredFe = Double.isFinite(savedEnergy)
+                ? Math.max(0.0, Math.min(energyCapacityFe, savedEnergy)) : 0.0;
         computerControlled = tag.getBoolean("ComputerControlled");
         controllerPos = tag.contains("Controller") ? BlockPos.of(tag.getLong("Controller")) : null;
     }

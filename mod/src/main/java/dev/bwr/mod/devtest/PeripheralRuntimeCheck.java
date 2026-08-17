@@ -86,7 +86,27 @@ public final class PeripheralRuntimeCheck {
     // Layout. Everything sits inside chunks (0,0)..(2,2), which the harness
     // force-loads so the block entities actually tick.
     private static final BlockPos INTERIOR_MIN = new BlockPos(8, 150, 8);
-    private static final BlockPos INTERIOR_MAX = new BlockPos(12, 156, 12);
+    /**
+     * 5x8x5 of interior, and the 8 is the part that is not free to change.
+     *
+     * <p>It was 7 ({@code y=156}), which is what {@code ReactorStructure} accepted
+     * when this harness was written. It does not any more:
+     * {@code MIN_INTERIOR_HEIGHT} is 8 and {@code DOME_BLOCKS_ABOVE_ACTIVE_FUEL}
+     * is 5, so a 7-tall interior now fails validation twice over — on the height
+     * floor, and again on "no room for active fuel between the lower plenum and
+     * the steam dome". The harness went on building the same vessel and the
+     * reactor quietly stopped forming.
+     *
+     * <p>Nothing here noticed, because the probe pass never asked whether the
+     * plant it had built was assembled: a peripheral on an unformed reactor still
+     * answers, still returns a clean value and still passes every check the probe
+     * makes, so the run reported PASS on a plant that was not there. That is the
+     * same shape of hole as a harness that exits 0 on failure, and it is why
+     * {@link #reportStructures} now prints the nozzle's own formed answer as well
+     * as the controller's — see the structure lines it emits, which are the first
+     * place a reader should look.
+     */
+    private static final BlockPos INTERIOR_MAX = new BlockPos(12, 157, 12);
     /**
      * On the EAST wall, and that is not arbitrary. {@code ReactorStructure
      * .findInteriorSeed} takes the first neighbour of the controller that is not
@@ -117,6 +137,82 @@ public final class PeripheralRuntimeCheck {
     private static final BlockPos RECIRCULATION_PUMP = new BlockPos(16, 150, 10);
 
     /**
+     * The RPV main steam nozzle, and it is <b>in the vessel wall</b>, not beside
+     * it.
+     *
+     * <p>That is the whole difference between this block and every other satellite
+     * the harness stands up. {@code ReactorStructure.isShell} accepts an
+     * {@code rpv_steam_outlet} as pressure boundary and
+     * {@code ReactorStructure.isInteriorBlock} refuses it as open space, so the
+     * nozzle is a wall block in both directions: put one next to the reactor and
+     * the shell it should have been part of has a hole in it, and the plant fails
+     * to form with "gap in the reactor vessel shell". It therefore goes on top of
+     * a {@code reactor_vessel} block that {@link #fillShell} has already written,
+     * exactly as {@link #CONTROLLER} does.
+     *
+     * <p>Where in the wall, and why here:
+     * <ul>
+     *   <li><b>West face</b> ({@code x = INTERIOR_MIN.getX() - 1 = 7}),
+     *       deliberately the opposite wall from the controller on the east face.
+     *       {@code ReactorStructure.findInteriorSeed} walks the controller's own
+     *       six neighbours and the order it walks them in is load-bearing — see
+     *       the note on {@link #CONTROLLER} — so a second shell substitution is
+     *       kept well away from those six rather than left to interact with
+     *       them.</li>
+     *   <li><b>y=156</b>, one row below the top of the interior and four above
+     *       the top of active fuel, which for this vessel is
+     *       {@code INTERIOR_MAX.getY() - 5 = 152}. That puts the penetration in
+     *       the steam dome, where a real main steam nozzle is. It is also, as it
+     *       happens, the elevation {@code checkSpargerRings} wants HPCS segments
+     *       at, and that costs nothing: both sparger passes walk {@code x} and
+     *       {@code z} strictly <i>inside</i> the interior — 8..12 here — and this
+     *       block is at {@code x=7}, in the wall.</li>
+     *   <li><b>z=10</b>, the middle of the face, so it is a face block and never
+     *       an edge or a corner: {@code checkShellClosed} only requires the six
+     *       faces to be shell and skips the outer corners entirely, so a nozzle
+     *       parked on one would never be found and would never join
+     *       {@code steamOutletPositions()}.</li>
+     * </ul>
+     */
+    private static final BlockPos STEAM_OUTLET = new BlockPos(7, 156, 10);
+
+    /**
+     * One pressurised tube welded onto the nozzle's outer face, in open air
+     * outside the vessel.
+     *
+     * <p>For the reason {@link #RELIEF_VALVE} sits over standing water rather
+     * than over air: a nozzle with nothing on its flange is a hole with no pipe,
+     * it passes nothing, {@code isSteamLineAttached()} answers false and
+     * {@code ReactorStructure.reportSteamOutlets} degrades the plant. Welding one
+     * tube on exercises the connected path — the peripheral's
+     * {@code isSteamLineAttached} and the block entity's line survey — instead of
+     * only its disconnected one.
+     *
+     * <p>It cannot be mistaken for part of the shell. {@code checkShellClosed}
+     * only ever visits {@code x} in {@code [7, 13]}, and this is at {@code x=6}.
+     */
+    private static final BlockPos STEAM_OUTLET_TUBE = new BlockPos(6, 156, 10);
+
+    /**
+     * A nozzle in mid-air with no vessel round it, out among the other unattached
+     * satellites and inside the force-loaded chunks.
+     *
+     * <p>The unformed half of the pair, in the same sense as
+     * {@link #LONE_CONTROLLER} and {@link #LONE_POOL_CONTROLLER}, and it is not
+     * ceremony. Only the controller of a vessel that has actually assembled walks
+     * its nozzles, so {@code lastPolledGameTime} on this one is never written and
+     * stays at its {@code Long.MIN_VALUE} sentinel — which is precisely the input
+     * that used to break {@code isPartOfFormedReactor()}. The test was a
+     * subtraction, {@code getGameTime() - lastPolledGameTime}, and that overflows
+     * for any ordinary game time and wraps to a large negative number, so the
+     * never-polled case answered <i>true</i> and a nozzle lying on the floor
+     * claimed to be part of a formed reactor and went on quoting the last flow it
+     * ever passed. It is a test now, and a probe of a never-polled nozzle is what
+     * would catch it coming back.
+     */
+    private static final BlockPos LONE_STEAM_OUTLET = new BlockPos(36, 150, 40);
+
+    /**
      * Everything that gets probed, and what to call it in the log. One list, in
      * one place: these used to be written out three times — once for the
      * structure report and twice for the probe call — and a list that exists
@@ -126,6 +222,7 @@ public final class PeripheralRuntimeCheck {
             CONTROLLER, LONE_CONTROLLER, POOL_CONTROLLER, LONE_POOL_CONTROLLER,
             TURBINE_OUTLET, ECCS_PUMP, ADS_CONTROLLER, CONDENSATE_TANK,
             RELIEF_VALVE, MSIV, RECIRCULATION_PUMP,
+            STEAM_OUTLET, LONE_STEAM_OUTLET,
     };
 
     private static final String[] PROBE_LABELS = {
@@ -135,6 +232,8 @@ public final class PeripheralRuntimeCheck {
             "ADS controller (unattached)", "condensate storage tank (unattached)",
             "safety relief valve (over the pool)", "MSIV (unattached)",
             "recirculation pump (bound to the formed reactor)",
+            "RPV steam nozzle (in the formed vessel shell, steam line welded on)",
+            "RPV steam nozzle (NEVER FORMED, no vessel and no line)",
     };
 
     static {
@@ -461,6 +560,14 @@ public final class PeripheralRuntimeCheck {
      * Multiblock state before any peripheral is touched, so that a peripheral
      * reporting "not formed" can be told apart from a harness that built the
      * plant wrong.
+     *
+     * <p>These lines are the harness's only statement about the world it built,
+     * as opposed to about the peripherals hanging off it, and the probe pass does
+     * not read them: a peripheral on an unformed multiblock answers perfectly
+     * cleanly and passes every check the probe makes. So an unformed plant here
+     * is not a failure the run will count — it is a run that proved less than it
+     * looks like it did, and it has to be read rather than assumed. See
+     * {@link #INTERIOR_MAX} for the time that mattered.
      */
     private static void reportStructures(ServerLevel level) {
         for (BlockPos p : PROBE_POSITIONS) {
@@ -471,8 +578,27 @@ public final class PeripheralRuntimeCheck {
                     be == null ? "MISSING" : be.getClass().getSimpleName());
             if (be instanceof dev.bwr.mod.reactor.ReactorControllerBlockEntity r) {
                 LOGGER.info("   formed={} status={}", r.isFormed(), r.statusLines());
+                // Whether the nozzle welded into the wall was read as pressure
+                // boundary or as a hole in it. A nozzle only reaches
+                // steamOutletPositions() by surviving the shell walk, so a count
+                // of zero on a formed vessel means it was put somewhere the walk
+                // does not visit — an outer corner, or outside the six faces —
+                // and the "in the formed vessel shell" probe below is quietly
+                // probing a nozzle that is part of nothing.
+                if (r.structure() != null) {
+                    LOGGER.info("   RPV steam nozzles in this shell: {} at {}",
+                            r.structure().steamOutletCount(),
+                            r.structure().steamOutletPositions());
+                }
             } else if (be instanceof dev.bwr.mod.suppression.SuppressionPoolBlockEntity s) {
                 LOGGER.info("   formed={} status={}", s.isFormed(), s.statusLines());
+            } else if (be instanceof dev.bwr.mod.reactor.RpvSteamOutletBlockEntity n) {
+                // The nozzle's own answer, and the two halves of the pair are
+                // supposed to disagree: true for the one in the shell, false for
+                // the one lying on the floor. Both true is the signed-overflow
+                // defect described on LONE_STEAM_OUTLET coming back.
+                LOGGER.info("   partOfFormedReactor={} steamLineAttached={} status={}",
+                        n.isPartOfFormedReactor(), n.isSteamLineAttached(), n.statusLines());
             }
         }
     }
@@ -498,6 +624,20 @@ public final class PeripheralRuntimeCheck {
         // One shell block becomes the controller.
         level.setBlock(CONTROLLER, BwrBlocks.REACTOR_CONTROLLER.get().defaultBlockState(), 3);
 
+        // ...and one more becomes the main steam nozzle, written straight over
+        // the vessel block fillShell has just put there. A nozzle IS the wall —
+        // see STEAM_OUTLET — so this is the only way to build one into a plant;
+        // standing it off beside the reactor leaves the hole it should have
+        // filled and validation rejects the whole vessel.
+        //
+        // Then a tube on its outer face, so the connected path is the one that
+        // gets probed. Placed second and with the neighbour-update flag, which is
+        // what fires RpvSteamOutletBlock.neighborChanged on the nozzle and gets
+        // isSteamLineAttached() answered before the first tick rather than up to
+        // a second later.
+        level.setBlock(STEAM_OUTLET, BwrBlocks.RPV_STEAM_OUTLET.get().defaultBlockState(), 3);
+        level.setBlock(STEAM_OUTLET_TUBE, BwrBlocks.PRESSURISED_TUBE.get().defaultBlockState(), 3);
+
         // One control rod drive under every rod. The lattice rule puts a rod at
         // every odd offset from the interior minimum, and the drive two below
         // the interior floor, i.e. one below the vessel bottom.
@@ -517,6 +657,11 @@ public final class PeripheralRuntimeCheck {
         // around it. Every readback has to behave on this one.
         level.setBlock(LONE_CONTROLLER,
                 BwrBlocks.REACTOR_CONTROLLER.get().defaultBlockState(), 3);
+
+        // ...and a nozzle in mid-air, which nothing will ever poll. See
+        // LONE_STEAM_OUTLET for the overflow this one is standing guard over.
+        level.setBlock(LONE_STEAM_OUTLET,
+                BwrBlocks.RPV_STEAM_OUTLET.get().defaultBlockState(), 3);
 
         // Suppression pool: a walled box of water plus its controller outside.
         BlockState wall = BwrBlocks.SUPPRESSION_POOL_WALL.get().defaultBlockState();
@@ -562,9 +707,12 @@ public final class PeripheralRuntimeCheck {
 
         LOGGER.info("built: reactor controller at {}, unformed controller at {}, "
                         + "pool controller at {}, unformed pool controller at {}, outlet at {}, "
-                        + "relief valve at {}, MSIV at {}, recirculation pump at {}",
+                        + "relief valve at {}, MSIV at {}, recirculation pump at {}, "
+                        + "RPV steam nozzle in the vessel wall at {} with a tube on {}, "
+                        + "lone RPV steam nozzle at {}",
                 CONTROLLER, LONE_CONTROLLER, POOL_CONTROLLER, LONE_POOL_CONTROLLER,
-                TURBINE_OUTLET, RELIEF_VALVE, MSIV, RECIRCULATION_PUMP);
+                TURBINE_OUTLET, RELIEF_VALVE, MSIV, RECIRCULATION_PUMP,
+                STEAM_OUTLET, STEAM_OUTLET_TUBE, LONE_STEAM_OUTLET);
     }
 
     private static void fill(ServerLevel level, BlockPos min, BlockPos max, BlockState state) {

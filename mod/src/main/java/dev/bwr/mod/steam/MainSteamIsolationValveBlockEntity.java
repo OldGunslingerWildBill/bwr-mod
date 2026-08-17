@@ -106,7 +106,16 @@ public class MainSteamIsolationValveBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        position = tag.contains("Position") ? tag.getDouble("Position") : 1.0;
+        // Clamped, because this is the one path into the stroke that does not go
+        // through tickValve. A NaN out of a hand-edited save is not merely a bad
+        // reading: tickValve compares against its target with < and >, both of
+        // which are false for NaN, so the stroke sticks at NaN for ever and every
+        // consumer that multiplies by it — the nozzles and the turbine outlet
+        // both do — gets a NaN steam flow. Clamping here costs nothing and the
+        // consumers guard as well, on the principle that a value crossing a
+        // boundary is checked on both sides of it.
+        double saved = tag.contains("Position") ? tag.getDouble("Position") : 1.0;
+        position = Double.isFinite(saved) ? Math.max(0.0, Math.min(1.0, saved)) : 1.0;
         demandOpen = !tag.contains("DemandOpen") || tag.getBoolean("DemandOpen");
         computerControlled = tag.getBoolean("ComputerControlled");
     }

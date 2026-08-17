@@ -71,7 +71,16 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     private static final int SEARCH_RADIUS = 24;
     /** Litres of pool water represented by one water block. */
     private static final double KG_PER_WATER_BLOCK = 1000.0;
-    /** Below this many water blocks it is a puddle, not a suppression pool. */
+    /**
+     * Below this many water blocks it is a puddle, not a suppression pool.
+     *
+     * <p>Applied twice, and both are load bearing. {@link #surveyBasin} uses it
+     * to decide that a body it has walked is not worth being the pool, so the
+     * survey keeps looking instead of stopping at the first stray source block
+     * near the controller; {@link #revalidate} applies it to whatever the survey
+     * finally handed back and writes the message. The second is where the rule
+     * is <i>stated</i> to the player.
+     */
     private static final int MIN_WATER_BLOCKS = 64;
 
     /**
@@ -470,7 +479,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      * that could absorb a full-power blowdown without warming measurably. The
      * pool has to be the pool the player built.
      *
-     * <p>Three things bound it, and each of them is a property of the
+     * <p>Four things bound it, and each of them is a property of the
      * structure rather than a rule about the plant:
      *
      * <ul>
@@ -485,14 +494,52 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      *       before the box; the sea is not. This is also what stops the
      *       cheapest cheese there is — cutting a one-block channel from a
      *       small pool to the ocean.</li>
-     *   <li><b>Size.</b> {@link #MAX_WATER_BLOCKS}, above which it is not a
-     *       basin anyone dug.</li>
+     *   <li><b>Size, above.</b> {@link #MAX_WATER_BLOCKS}, above which it is
+     *       not a basin anyone dug.</li>
+     *   <li><b>Size, below.</b> {@link #MIN_WATER_BLOCKS}, below which it is a
+     *       puddle and the survey keeps looking. See the next paragraph — this
+     *       one is not cosmetic.</li>
      * </ul>
      *
      * <p>Seeds are tried nearest first. That matters for the case this exists
      * to handle well: a legitimate pool built on a shoreline seeds both its own
      * basin and the sea, and the sea being refused must not take the basin down
      * with it.
+     *
+     * <p><b>A body too small to be a pool is not a pool, and finding one must
+     * not end the survey.</b> The minimum was tested only by the caller, on
+     * whatever body this method happened to return first — and since seeds are
+     * tried nearest first, "first" means "nearest the controller", not
+     * "largest". So a single stray source block within {@link #SEED_RADIUS} —
+     * a bucket set down while plumbing the valves, a rained-in footprint, a
+     * one-block spring in the rim wall — was walked, came back clean at a size
+     * of one, and was handed to the caller as <i>the</i> basin. The controller
+     * then reported "needs at least 64 water blocks, found 1" while standing on
+     * the four thousand block pool the player had just finished digging, and
+     * nothing about the message pointed at the puddle. Water is placed by
+     * bucket, so spilled sources next to the controller are not an exotic case;
+     * they are how the pool gets built. A body under the minimum is therefore
+     * refused the same way an oversize one is and the walk moves to the next
+     * seed, with the largest such body remembered so the caller's message still
+     * names the biggest thing there actually was.
+     *
+     * <p><b>What is deliberately still accepted: a natural pond.</b> A body of
+     * water the world generated, small enough to sit entirely inside the survey
+     * box, passes every test here, and it is left passing them. Every rule that
+     * would catch it is a rule about <i>provenance</i> — who put the water
+     * there — and nothing in a {@code BlockState} records that. A material
+     * requirement on the basin walls and strict controller adjacency were both
+     * considered and both break ordinary builds: people line basins in whatever
+     * they have, and people put the controller where the wiring reaches. What
+     * is left is the observation that the physics is already right about this
+     * case. The pool is sized from the count, so a 300-block pond is 300 tonnes
+     * of heat sink and behaves like 300 tonnes: it heats about twelve times
+     * faster than a BWR/6 pool, loses its subcooling early, stops condensing,
+     * and hits the {@code SuppressionPool} suction floor while the low pressure
+     * pumps are still calling for water. A player who takes the free pond gets
+     * a pool that is worth exactly what it is, which is the outcome a provenance
+     * test would be trying to produce anyway — without a heuristic that tells
+     * someone who built a real basin that they did not.
      *
      * <p><b>Each attempt gets its own set of walked positions, and the ones a
      * refused body walked are never reused as though they were solid.</b> They
@@ -544,22 +591,49 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         seeds.sort(Comparator.comparingDouble(p -> p.distSqr(origin)));
 
         LongOpenHashSet refused = new LongOpenHashSet();
+        // Positions of bodies that were walked all the way to their own walls
+        // and turned out to be too small to be a pool.
+        //
+        // Remembering these is sound in a way that remembering a refused body
+        // is NOT, and the difference is the whole reason they are two sets. A
+        // walk that gave up part way visited an arbitrary blob, so treating its
+        // positions as walls would let a later seed flood fill the rest of the
+        // sea bounded by that blob — the three-block ocean pool this method's
+        // javadoc describes, and the reason `refused` only ever skips seeds.
+        // A walk that finished enumerated its body exactly, so every later seed inside it
+        // is guaranteed to reproduce the identical answer and skipping it
+        // changes nothing but the work. That is what keeps the survey linear in
+        // the water present: completed bodies are disjoint, each is walked once,
+        // so all of them together cost at most one pass over the water in the
+        // box — no more than the hardware scan above already spends.
+        LongOpenHashSet completed = new LongOpenHashSet();
         // One body set, cleared between attempts rather than reallocated. The
         // previous attempt's contents have already been folded into `refused`
-        // by the bottom of the loop, so clearing is exactly equivalent to a
-        // fresh set, and it means a shoreline build that walks the sea several
-        // times grows the backing table once instead of once per seed.
+        // or `completed` by the bottom of the loop, so clearing is exactly
+        // equivalent to a fresh set, and it means a shoreline build that walks
+        // the sea several times grows the backing table once instead of once
+        // per seed.
         LongOpenHashSet body = new LongOpenHashSet();
         String firstProblem = null;
+        int largestSmall = 0;
         int walked = 0;
         for (BlockPos seed : seeds) {
-            if (refused.contains(seed.asLong())) {
+            long packed = seed.asLong();
+            if (refused.contains(packed) || completed.contains(packed)) {
                 continue;
             }
             body.clear();
             Basin basin = fillBasin(level, origin, seed, body);
             if (basin.problem() == null) {
-                return basin;
+                if (basin.waterBlocks() >= MIN_WATER_BLOCKS) {
+                    return basin;
+                }
+                // A complete body, and too small to be anybody's suppression
+                // pool. Keep looking; the caller still gets the largest of them
+                // so its "found N" message names the biggest water there was.
+                completed.addAll(body);
+                largestSmall = Math.max(largestSmall, basin.waterBlocks());
+                continue;
             }
             if (firstProblem == null) {
                 firstProblem = basin.problem();
@@ -570,7 +644,11 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
                 return new Basin(0, tooMuchWaterMessage());
             }
         }
-        return new Basin(0, firstProblem);
+        // A refusal names something the player can act on — open water, or a
+        // flooded cave — so it wins over "that was too small". With no refusal
+        // at all the count goes back and the caller's minimum check writes the
+        // message, which keeps the size rule stated in exactly one place.
+        return firstProblem != null ? new Basin(0, firstProblem) : new Basin(largestSmall, null);
     }
 
     /**

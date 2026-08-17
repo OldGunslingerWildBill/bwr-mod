@@ -650,6 +650,17 @@ public final class PressureVessel {
      * the water is above the upper tap — +60 in with the default geometry — the
      * reading stops moving no matter how much further the vessel is overfilled.
      * A level controller written against this has to notice that for itself.
+     *
+     * <p><b>Where it pegs is not where the tap is</b>, and a cold vessel is where
+     * that shows. What the cell actually measures is a pressure difference, and
+     * what it reports is that difference divided by the density it was calibrated
+     * for. A full 380 in column of 99 degC water weighs 31% more than the same
+     * column of 287 degC water the calibration assumed, so an overfilled cold
+     * vessel reads its maximum at about +178 in rather than at +60. That is the
+     * instrument being consistently wrong in the direction its calibration makes
+     * it wrong, not the model failing to clamp: the clamp belongs on the column
+     * the cell can see, which is where it is, and clamping the indication as well
+     * would be inventing a second, more honest instrument.
      */
     public double getIndicatedLevelIn() {
         return indicatedLevelIn;

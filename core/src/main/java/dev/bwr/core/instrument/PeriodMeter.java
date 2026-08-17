@@ -229,7 +229,7 @@ public final class PeriodMeter {
      * Where the pointer is.
      *
      * <p>{@link NeutronDetector.DetectorStatus#INOPERATIVE} when no channel is
-     * selected or the selected channel has lost high voltage;
+     * selected or the selected channel declares <i>itself</i> inoperative;
      * {@link NeutronDetector.DetectorStatus#UPSCALE} when the period is shorter
      * than the scale can show, in either direction, because both ends of this
      * movement are its extremes; otherwise
@@ -240,7 +240,19 @@ public final class PeriodMeter {
      * that is not an omission: there is no bottom of this scale to fall off.
      */
     public NeutronDetector.DetectorStatus getStatus() {
-        if (source == null || !source.isEnergised()) {
+        // Asks the channel what it thinks of itself rather than testing its high
+        // voltage directly. For a SourceRangeMonitor or an IntermediateRangeMonitor
+        // those are the same question — neither overrides getStatus(), so its only
+        // INOPERATIVE case is exactly the de-energised one this used to test — but
+        // an AveragePowerRangeMonitor widens INOPERATIVE to cover an averaging
+        // network with every LPRM bypassed. Such a channel is energised and
+        // produces no signal, so the amplifier settles on its bottom rail and this
+        // meter would otherwise report a serenely infinite period ON SCALE for a
+        // channel that has nothing to average. A period meter reading calm is not
+        // the same statement as a period meter reading nothing, and on the one
+        // instrument that can tell them apart it must not conflate them.
+        if (source == null
+                || source.getStatus() == NeutronDetector.DetectorStatus.INOPERATIVE) {
             return NeutronDetector.DetectorStatus.INOPERATIVE;
         }
         if (Math.abs(inversePeriodPerSecond) > 1.0 / SCALE_SHORTEST_PERIOD_SECONDS) {

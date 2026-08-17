@@ -797,6 +797,34 @@ public class ReactorPeripheral implements IPeripheral {
     // Steam and feedwater
     // =================================================================
 
+    /**
+     * Steam leaving the vessel through the RPV main steam nozzles, kg/s — the
+     * total the controller summed on its last tick.
+     *
+     * <p>The nozzles are the principal steam path out of a vessel, and until now
+     * their total was computed every tick, written into the core's discharge
+     * scalar and quoted in the controller's status text without ever being
+     * published to Lua. A program running pressure on the nozzles had to poll
+     * every {@code bwr_rpv_steam_outlet} peripheral and add them up itself, at a
+     * tick of latency each, to learn a number the controller already had.
+     *
+     * <p>This is only the nozzle path. It does not include the relief valves
+     * ({@code bwr_safety_relief_valve}), the turbine outlet
+     * ({@link #setTurbineSteamFlow(double)} or {@code bwr_turbine_steam_outlet}),
+     * boundary breaks ({@link #getBreakSteamFlow()}), or an open vessel head —
+     * the controller folds the last of those into the same core channel, and
+     * separating the two is not something the vessel model can do.
+     */
+    @LuaFunction(mainThread = true)
+    public final double getSteamOutletFlow() throws LuaException {
+        // core() only to make an unformed reactor fail the way every other
+        // reading here does. The controller stops refreshing this figure the
+        // moment the vessel comes apart, so quoting it on an unformed plant
+        // would be quoting whatever the plant was doing when it broke.
+        core();
+        return be.steamOutletFlowKgPerS();
+    }
+
     @LuaFunction(mainThread = true)
     public final void setTurbineSteamFlow(double kgPerS) throws LuaException {
         core().setTurbineSteamFlowKgPerS(finite("turbine steam flow", kgPerS));

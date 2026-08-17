@@ -100,6 +100,14 @@ import java.util.List;
  * rated sits at about 93.8% fission and 6.6% decay heat, not 100% and 6.6%. See
  * {@link #initialiseAtTotalPowerFraction}.
  *
+ * <p>{@code n} is strictly a fission <i>rate</i>, and turning a rate into a power
+ * takes the loaded fuel's recoverable energy per fission. That multiplication
+ * happens in exactly two methods, {@link #getNeutronPowerFraction()} and
+ * {@link #getDecayHeatFraction()}, which every thermal consumer inside and
+ * outside this class reads through; the neutron instruments and the fission
+ * product inventories deliberately see the unscaled rate instead. Read
+ * {@link #getNeutronPowerFraction()} before moving any of it.
+ *
  * <p>Not thread safe. One instance per reactor, stepped from the server thread.
  */
 public final class ReactorCore {
@@ -216,6 +224,7 @@ public final class ReactorCore {
     private final AveragePowerRangeMonitor[] averagePowerRangeMonitors;
     private final PeriodMeter[] sourceRangePeriodMeters;
     private final PeriodMeter[] intermediateRangePeriodMeters;
+    private final PeriodMeter[] averagePowerRangePeriodMeters;
 
     // ---------------------------------------------------------------
     // Control rod drive state
@@ -272,6 +281,23 @@ public final class ReactorCore {
     private double secondsSinceAggregateRefresh;
     private boolean burnupEnabled = true;
     private double cachedAggregateBeta = Double.NaN;
+
+    /**
+     * Thermal power per unit fission rate, relative to the
+     * {@value CoreLoading#EMPTY_CORE_HEAT_PER_FISSION_MEV} MeV the plant's rated
+     * thermal power is quoted against. Exactly 1.0 for any core of ordinary
+     * uranium fuel, which is every shipped default.
+     *
+     * <p>This is the one number that separates <i>fission rate</i> from
+     * <i>thermal power</i> in this model, and it is cached rather than read
+     * because it is a fission-rate-weighted average over the assemblies and so is
+     * an output of the nodal solve, exactly like {@code beta_eff} and the prompt
+     * lifetime beside it. {@link #refreshFuelAggregates()} refreshes all of them
+     * together, once per {@link CoreConfig#nodalSolveIntervalTicks}; between
+     * refreshes it is a frozen constant, which is what lets the tick multiply by
+     * it without paying for a solve.
+     */
+    private double heatPerFissionScale = 1.0;
 
     // ---------------------------------------------------------------
     // Construction
@@ -343,8 +369,16 @@ public final class ReactorCore {
                     new PeriodMeter("PERIOD IRM " + (char) ('A' + i), intermediateRangeMonitors[i]);
         }
         this.averagePowerRangeMonitors = new AveragePowerRangeMonitor[AVERAGE_POWER_RANGE_CHANNELS];
+        this.averagePowerRangePeriodMeters = new PeriodMeter[AVERAGE_POWER_RANGE_CHANNELS];
         for (int i = 0; i < AVERAGE_POWER_RANGE_CHANNELS; i++) {
             averagePowerRangeMonitors[i] = new AveragePowerRangeMonitor("APRM " + (i + 1));
+            // A period meter on every power range channel, for the same reason
+            // the source and intermediate ranges have one: above IRM range there
+            // was no rate-of-change indication anywhere, which is the whole of
+            // the operating band. See getAveragePowerRangePeriodMeter for why
+            // the same instrument is the right one on a percent-of-rated channel.
+            averagePowerRangePeriodMeters[i] =
+                    new PeriodMeter("PERIOD APRM " + (i + 1), averagePowerRangeMonitors[i]);
         }
 
         // The spatial half of the neutronics ({@code SPEC.md} section 1.3).
@@ -530,7 +564,16 @@ public final class ReactorCore {
 
         refreshNodalShape();
         double rho = closeReactivityBalance();
-        kinetics.initialiseSubcritical(Math.min(rho, -1.0e-9));
+        // Math.min(NaN, x) is NaN, and initialiseSubcritical throws on one. This
+        // method runs on the mod's multiblock formation path, where an exception
+        // means a vessel that will not weld rather than a plant that reads oddly,
+        // so a non-finite balance is floored to the same negligible negative
+        // reactivity a zero balance would be. Bit-identical for every finite rho,
+        // which is every rho a real core produces — the only routes to NaN here
+        // are a datapack or a config with a NaN in it, and refusing to build the
+        // reactor is the worst of the available answers to that.
+        double subcriticalRho = Double.isFinite(rho) ? Math.min(rho, -1.0e-9) : -1.0e-9;
+        kinetics.initialiseSubcritical(subcriticalRho);
 
         elapsedSeconds = 0.0;
         tickCount = 0L;
@@ -554,11 +597,22 @@ public final class ReactorCore {
      * within one rod-notch of critical. A real plant has the same problem and
      * answers it the same way, by trimming.
      *
+     * <p>The figure asked for is <b>thermal</b> power, so on fuel that does not
+     * release {@value CoreLoading#EMPTY_CORE_HEAT_PER_FISSION_MEV} MeV per fission
+     * the fission rate this settles at is not the same number. Dividing by
+     * {@link #getHeatPerFissionScaleFactor()} is what makes "rated" mean rated
+     * megawatts rather than rated fissions: a core of plutonium fuel reaches the
+     * same 3579 MW at about 4% less flux, and its APRMs say so.
+     *
      * @param totalPowerFractionOfRated total core thermal power, fraction of rated
      */
     public void initialiseAtTotalPowerFraction(double totalPowerFractionOfRated) {
         double total = Math.max(0.0, totalPowerFractionOfRated);
-        double fission = total / (1.0 + DecayHeat.SATURATED_FRACTION_OF_RATED);
+        // The requested figure is thermal; the kinetics, the decay heat inventory
+        // and the xenon inventory all want the fission rate that produces it.
+        double heatScale = (heatPerFissionScale > 0.0 && Double.isFinite(heatPerFissionScale))
+                ? heatPerFissionScale : 1.0;
+        double fission = total / heatScale / (1.0 + DecayHeat.SATURATED_FRACTION_OF_RATED);
 
         scramActive = false;
         Arrays.fill(accumulatorCharge, 1.0);
@@ -752,13 +806,23 @@ public final class ReactorCore {
         // --- 5. Decay heat from fission power alone (feeding total power back
         //        into it would make the inventory chase itself), then the fuel
         //        and clad nodes, which see both.
+        //
+        //        DecayHeat is handed the raw fission rate, not the scaled heat:
+        //        its correlation is a fraction of the operating fission power and
+        //        its inventory is a fission product inventory. The scale factor
+        //        goes on afterwards, once, on the way out — see
+        //        getNeutronPowerFraction() for why this is the only place fission
+        //        rate becomes thermal power.
         double decayFraction = decayHeat.step(fissionPower, dtSeconds);
+        double heatScale = heatPerFissionScale;
+        double fissionHeatFraction = fissionPower * heatScale;
+        double decayHeatFraction = decayFraction * heatScale;
         fuelThermal.setCoveredFuelFraction(vessel.getCoveredFuelFraction());
         fuelThermal.setSteamCoolingFlowKgPerS(vessel.getSteamGenerationKgPerS());
         fuelThermal.setSteamSupplyKgPerS(Math.max(0.0, vessel.getSteamGenerationKgPerS())
                 + fuelThermal.getSprayEvaporationKgPerS());
         fuelThermal.setCoreSprayFlowKgPerS(coreSprayFlowKgPerS);
-        fuelThermal.step(fissionPower, decayFraction, vessel.getPressurePsig(), dtSeconds);
+        fuelThermal.step(fissionHeatFraction, decayHeatFraction, vessel.getPressurePsig(), dtSeconds);
 
         // --- 6. Pressure and inventory, ONCE per tick. This is what produces the
         //        pressure the next tick's void solve will see.
@@ -769,7 +833,7 @@ public final class ReactorCore {
         //        therefore starts discharging on the following tick, which is
         //        50 ms of latency and keeps the vessel solve consistent with the
         //        boundary state it was handed.
-        double totalPower = fissionPower + decayFraction;
+        double totalPower = fissionHeatFraction + decayHeatFraction;
         double breakPressurePsig = vessel.getPressurePsig();
         vessel.setFeedwaterFlowKgPerS(feedwaterFlowKgPerS * boundary.feedwaterDeliveredFraction());
 
@@ -817,7 +881,11 @@ public final class ReactorCore {
                 reliefSteamFlowKgPerS,
                 dtSeconds);
 
-        // --- 7. Slow states and instruments.
+        // --- 7. Slow states and instruments. Both take the RAW fission rate:
+        //        xenon is bred per fission and a fission chamber measures flux, so
+        //        neither has any business seeing how much energy each fission
+        //        happened to release. Burnup does — MWd/tonne is an energy — so
+        //        the aggregate refresh gets the scaled total.
         xenon.tick(fissionPower, dtSeconds);
         stepAggregateRefresh(totalPower, dtSeconds);
         stepInstruments(fissionPower, dtSeconds);
@@ -1099,6 +1167,12 @@ public final class ReactorCore {
         kinetics.setPromptLifetimeSeconds(loading.effectivePromptLifetimeSeconds());
         reactivity.setFuelExcessReactivityDkOverK(loading.excessReactivityAllRodsOutDkK());
         reactivity.setDopplerCoefficientPerCAtAnchor(loading.effectiveDopplerCoeffPerC());
+        // The fifth fission-rate-weighted aggregate, refreshed on the same cadence
+        // as the four above and for the same reason: it is an output of the same
+        // spatial solve. This is the multiplication SPEC 2.1 promises when it says
+        // heat_per_fission_mev controls thermal output, and it is applied in
+        // exactly one place — see getNeutronPowerFraction().
+        heatPerFissionScale = loading.heatPerFissionScaleFactor();
     }
 
     /**
@@ -1127,8 +1201,9 @@ public final class ReactorCore {
             intermediateRangeMonitors[i].update(fissionPowerFraction, dtSeconds);
             intermediateRangePeriodMeters[i].update(dtSeconds);
         }
-        for (AveragePowerRangeMonitor aprm : averagePowerRangeMonitors) {
-            aprm.update(fissionPowerFraction, dtSeconds);
+        for (int i = 0; i < averagePowerRangeMonitors.length; i++) {
+            averagePowerRangeMonitors[i].update(fissionPowerFraction, dtSeconds);
+            averagePowerRangePeriodMeters[i].update(dtSeconds);
         }
     }
 
@@ -1159,8 +1234,9 @@ public final class ReactorCore {
             intermediateRangeMonitors[i].update(n, settle);
             intermediateRangePeriodMeters[i].reset();
         }
-        for (AveragePowerRangeMonitor aprm : averagePowerRangeMonitors) {
-            aprm.update(n, settle);
+        for (int i = 0; i < averagePowerRangeMonitors.length; i++) {
+            averagePowerRangeMonitors[i].update(n, settle);
+            averagePowerRangePeriodMeters[i].reset();
         }
     }
 
@@ -1560,19 +1636,58 @@ public final class ReactorCore {
     // Measurements — power and neutronics
     // ---------------------------------------------------------------
 
-    /** Fission power, fraction of rated. Excludes decay heat. */
+    /**
+     * Fission <b>thermal power</b>, fraction of rated. Excludes decay heat.
+     *
+     * <h2>Where fission rate becomes heat</h2>
+     * The point kinetics solve is scale free: {@code n} is a normalised fission
+     * <i>rate</i>, and 1.0 means "the fission rate that makes rated thermal power
+     * on the fuel the rating was quoted against" — 202.5 MeV per fission, U-235's
+     * figure, {@link CoreLoading#EMPTY_CORE_HEAT_PER_FISSION_MEV}. Load fuel that
+     * releases more energy per fission and the same fission rate makes
+     * proportionally more heat, so <b>this getter and
+     * {@link #getDecayHeatFraction()} are where {@code n} is multiplied by
+     * {@link #getHeatPerFissionScaleFactor()} and nowhere else</b>. Everything
+     * that consumes thermal power — the void model, the fuel and clad nodes, the
+     * vessel energy balance, burnup, {@link #getThermalPowerMW()} and every
+     * consumer in the mod layer — reaches it through these two, so the wiring is
+     * one multiplication and not a scale factor sprinkled through five classes.
+     *
+     * <p>Two things deliberately do <b>not</b> get it, and both are correct.
+     * <ul>
+     *   <li><b>The neutron instruments.</b> {@link SourceRangeMonitor},
+     *       {@link IntermediateRangeMonitor} and {@link AveragePowerRangeMonitor}
+     *       are fed the raw {@code n} from the kinetics, because a fission chamber
+     *       measures flux and flux follows fission rate, not energy release. So a
+     *       core of high-energy fuel makes more heat than its APRMs indicate, and
+     *       the cure is the one a real plant uses:
+     *       {@link AveragePowerRangeMonitor#setGainAdjustmentFactor} is the
+     *       calibration an operator sets from a heat balance, and refuelling to a
+     *       different fuel is exactly when a heat balance stops agreeing with the
+     *       chambers. Nothing recalibrates it here.</li>
+     *   <li><b>Xenon and the delayed neutron precursors.</b> Both are produced per
+     *       fission, so both are driven by the unscaled fission rate. Feeding them
+     *       a thermal power would make a high-energy fuel breed fission products
+     *       it never fissioned for.</li>
+     * </ul>
+     */
     public double getNeutronPowerFraction() {
-        return kinetics.getNeutronPowerFraction();
+        return kinetics.getNeutronPowerFraction() * heatPerFissionScale;
     }
 
-    /** Decay heat, fraction of rated. */
+    /**
+     * Decay heat, fraction of rated. Carries the same
+     * {@link #getHeatPerFissionScaleFactor()} as the fission term above: decay
+     * heat is the delayed part of the recoverable energy per fission, so it is
+     * quoted against the same denominator and scales with it.
+     */
     public double getDecayHeatFraction() {
-        return decayHeat.getFractionOfRated();
+        return decayHeat.getFractionOfRated() * heatPerFissionScale;
     }
 
     /** Total thermal power, fraction of rated: fission plus decay heat. */
     public double getTotalPowerFractionOfRated() {
-        return kinetics.getNeutronPowerFraction() + decayHeat.getFractionOfRated();
+        return getNeutronPowerFraction() + getDecayHeatFraction();
     }
 
     /** Total thermal power, MW. */
@@ -1582,7 +1697,26 @@ public final class ReactorCore {
 
     /** Decay heat, MW. */
     public double getDecayHeatMW() {
-        return decayHeat.getThermalMW(config.ratedThermalMW);
+        return getDecayHeatFraction() * config.ratedThermalMW;
+    }
+
+    /**
+     * Thermal power the loaded fuel makes per unit fission rate, relative to the
+     * {@value CoreLoading#EMPTY_CORE_HEAT_PER_FISSION_MEV} MeV the plant's rated
+     * thermal power is quoted against. Dimensionless, exactly 1.0 for a core of
+     * ordinary uranium fuel.
+     *
+     * <p>A measurement of what is loaded, and the number that explains an APRM
+     * disagreeing with a heat balance after a refuelling — 1.0444 for a full
+     * plutonium core, 1.0173 for MOX, 0.9862 for thorium, and exactly 1 for both
+     * uranium fuels. Published so a control program can see the discrepancy it is
+     * looking at rather than having to infer it.
+     *
+     * <p>Frozen between nodal refreshes like {@link #getBetaEffective()}, for the
+     * same reason: it is a fission-rate-weighted average over the assemblies.
+     */
+    public double getHeatPerFissionScaleFactor() {
+        return heatPerFissionScale;
     }
 
     /** Net reactivity this tick, dk/k. */
@@ -2001,6 +2135,68 @@ public final class ReactorCore {
         return sourceRangePeriodMeters[channel].getStartupRateDecadesPerMinute();
     }
 
+    /**
+     * Period meter watching one average power range monitor — the rate-of-change
+     * indication for the whole operating band.
+     *
+     * <p><b>Why the same instrument works on a percent-of-rated channel.</b> A
+     * {@link PeriodMeter} is a log-derivative amplifier: it forms
+     * {@code d(ln S)/dt} of whatever signal it is handed, and a logarithmic
+     * derivative is blind to the units and to any constant multiplier. An APRM's
+     * signal is {@code 100 * gain * (mean local flux) * n + gamma}, so the gain and
+     * the percent scaling cancel in the ratio and the meter reads the same period
+     * a count-rate channel would. Nothing about it needed rewriting for power
+     * range, and building a second class would have been building the same
+     * amplifier twice.
+     *
+     * <p>What does <i>not</i> cancel is the additive gamma background, and that is
+     * a feature rather than a rounding error. A constant term in the numerator's
+     * denominator drags the indicated inverse period down by a factor of
+     * {@code (S - gamma)/S}: negligible at power, total at a few per cent of
+     * rated, where the fission signal is smaller than the fission-product gamma
+     * the chambers see. So an APRM period meter reads a period that is too long
+     * exactly where {@link AveragePowerRangeMonitor} already documents itself as
+     * worthless, and reads true where the channel is trustworthy. That is what
+     * the real instrument does, for the same physical reason, and it is why the
+     * intermediate range exists.
+     *
+     * <p>Two failure modes come with it, both preserved on purpose and neither
+     * signalled. A channel pegged at
+     * {@link AveragePowerRangeMonitor#METER_PEG_PERCENT} has a constant
+     * indication, so its period meter reads <b>infinity while the core is
+     * doubling</b> — the same lie a pegged IRM tells, arriving in the band where a
+     * player is most likely to be flying on one channel. And an APRM whose LPRM
+     * inputs have all been bypassed produces no signal at all, which shows up here
+     * as {@link NeutronDetector.DetectorStatus#INOPERATIVE} rather than as a calm
+     * infinite period. Cross-checking channels is the player's job, as everywhere
+     * else in this package.
+     *
+     * <p>No setpoints, no short-period rod block, no thermal-hydraulic stability
+     * detector. This is a number on a panel.
+     */
+    public PeriodMeter getAveragePowerRangePeriodMeter(int channel) {
+        return averagePowerRangePeriodMeters[channel];
+    }
+
+    /**
+     * Indicated period from one average power range channel, seconds. Positive
+     * while indicated power is rising, negative while it is falling, and
+     * {@link Double#POSITIVE_INFINITY} when it is steady — including when it is
+     * steady because the movement is against its peg.
+     */
+    public double getAveragePowerRangePeriodSeconds(int channel) {
+        return averagePowerRangePeriodMeters[channel].getPeriodSeconds();
+    }
+
+    /**
+     * Indicated startup rate from one average power range channel, decades per
+     * minute. Finite and continuous through the steady-flux centre of the scale,
+     * which the period itself is not.
+     */
+    public double getAveragePowerRangeStartupRateDecadesPerMinute(int channel) {
+        return averagePowerRangePeriodMeters[channel].getStartupRateDecadesPerMinute();
+    }
+
     // ---------------------------------------------------------------
     // Component access, for the mod layer and for tests
     // ---------------------------------------------------------------
@@ -2401,6 +2597,21 @@ public final class ReactorCore {
         if (!restorePersistedRodFluxWeights(state.rodFluxWeights())) {
             installRodFluxWeights();
         }
+
+        // The heat-per-fission scale is the fifth frozen aggregate and the one
+        // that is recomputed here rather than restored, because {@link ReactorState}
+        // has no component for it and adding one would change a canonical record
+        // constructor the mod layer's NBT reader is compiled against. Recomputing
+        // is exact for any core of one fuel — CoreLoading.weightedAverage
+        // short-circuits a property identical in every assembly, so the answer does
+        // not depend on the solve at all — which covers every shipped loading and
+        // every core in the acceptance suite. A genuinely mixed core can come back
+        // an ulp or two out, the same class of thing the excess reactivity and
+        // Doppler components were made components to fix, and it is worth recording
+        // that it is the remaining one. It cannot compound: unlike those two it
+        // does not enter the reactivity balance, it only scales the heat, and
+        // stepAggregateRefresh re-derives it from the loaded fuel a second later.
+        heatPerFissionScale = loading.heatPerFissionScaleFactor();
 
         // The last two frozen aggregates, restored verbatim for the same reason as
         // the three above rather than recomputed from the fuel. Both are

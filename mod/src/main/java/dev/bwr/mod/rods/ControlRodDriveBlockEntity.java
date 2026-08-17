@@ -286,9 +286,16 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
      * while the FE buffer reads 100%, which is the exact failure mode the drive
      * model exists to make visible.
      *
-     * <p>An unbound drive reports 1.0, which is correct rather than a
-     * placeholder: a drive sitting in an unformed structure with power and water
-     * really does hold a charged accumulator. {@link #energyStoredFe()} and
+     * <p>A drive that has never been bound reports 1.0, which is correct rather
+     * than a placeholder: a drive sitting in an unformed structure with power
+     * and water really does hold a charged accumulator. A drive that <i>was</i>
+     * bound and has been unbound — the multiblock broke around it — keeps the
+     * last figure the core mirrored into it, which is also right: the
+     * accumulator does not refill because the structure stopped validating.
+     * That value is not persisted, so across a save it comes back at 1.0; the
+     * core owns the real charge and restores its own, and the moment the
+     * structure forms again {@link ControlRodDriveNetwork#postStep()} overwrites
+     * this with it on the first tick. {@link #energyStoredFe()} and
      * {@link #energyCapacityFe()} publish the FE buffer for anyone who wants it.
      */
     @Override
@@ -331,9 +338,30 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
         return hardware.getEnergyCapacityFe();
     }
 
+    /**
+     * What the drive actually spent on its last step, FE.
+     *
+     * <p>This returned {@code IDLE_DRAW_FE_PER_SECOND / 20}, a compile-time
+     * constant of 5 FE/t, while {@link ControlRodDriveAccess#energyDrawFePerTick()}
+     * promises a figure that is "higher while the accumulator is charging" —
+     * which is the only part of a drive's electrical behaviour worth publishing.
+     * A drive recharging after a scram draws nine times its idle figure
+     * ({@link ControlRodDriveHardware#CHARGING_DRAW_FE_PER_SECOND} is 800 FE/s
+     * against 100 idle), and it is 177 of them doing it at once that browns out
+     * a bus shared with the recirculation pumps. A constant 5 FE/t reports the
+     * one number that is never interesting and hides the one that is.
+     *
+     * <p>{@link ControlRodDriveHardware#tickHardware} has been computing the
+     * real figure every tick all along and storing it in
+     * {@code lastEnergyDrawFePerTick}, where it had no readers at all. This is
+     * that field, which is a measurement of the drive rather than a restatement
+     * of a constant. It reads zero for the one tick between a drive being
+     * constructed and first ticking, which is honest: it has not drawn anything
+     * yet.
+     */
     @Override
     public double energyDrawFePerTick() {
-        return ControlRodDriveHardware.IDLE_DRAW_FE_PER_SECOND / 20.0;
+        return hardware.getLastEnergyDrawFe();
     }
 
     @Override
@@ -351,11 +379,71 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
         if (controllerPos == null || level == null || rodIndex < 0) {
             return 0;
         }
+        // Same rule as notifyController: never reach into an unloaded chunk.
+        // getBlockEntity drags the controller's chunk back in to answer, and
+        // this is a readout — a player right-clicking a drive, or a peripheral
+        // polling one, must not be able to load chunks by asking questions.
+        if (!level.isLoaded(controllerPos)) {
+            return 0;
+        }
         if (level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity c
                 && c.core() != null) {
             return c.core().getRodNotchIndex(rodIndex);
         }
         return 0;
+    }
+
+    // --- Readout ------------------------------------------------------
+
+    /**
+     * The drive's condition, for the right-click readout — {@code SPEC.md}
+     * section 3.3's per-drive supply and wear figures.
+     *
+     * <p>This exists because none of them were reachable. Every measurement on
+     * {@link ControlRodDriveAccess} was implemented and then read by nothing at
+     * all: the panel gets its four aggregate counts straight off
+     * {@link ControlRodDriveNetwork}, and there is no drive peripheral and no
+     * drive screen. So the entire mechanic the drive model was built for — a
+     * water supply you can lose without noticing, an accumulator that quietly
+     * stops recharging when you do, a collet you can grind flat by dry
+     * stroking — was invisible one drive at a time. A player could see that 3
+     * of 177 drives were inoperable and had no way whatsoever to find out
+     * <i>which</i> three or why. Right-clicking the drive is how every other
+     * machine block in this mod answers that question, and now this one does
+     * too.
+     *
+     * <p>Measurements only. It reports what the hardware is, never whether that
+     * is acceptable: there is no line here that says a drive is unsafe, that
+     * scram capability is short, or that the player ought to do anything. The
+     * one derived statement, "cannot index a notch under normal control", is the
+     * hardware fact {@link ControlRodDriveAccess#canPerformNormalMotion()}
+     * already defines and is exactly as much of an opinion as an ammeter is.
+     */
+    public java.util.List<String> statusLines() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        if (rodIndex < 0) {
+            out.add("Control rod drive: not bound to a rod. "
+                    + "It still spends its supplies and still holds its charge.");
+        } else {
+            out.add(String.format(java.util.Locale.ROOT,
+                    "Control rod drive for rod %d, at notch %02d", rodIndex, notchLabel()));
+        }
+        out.add(String.format(java.util.Locale.ROOT,
+                "Accumulator %.0f%% charged", accumulatorCharge() * 100.0));
+        out.add(String.format(java.util.Locale.ROOT,
+                "Power %s: %,.0f / %,.0f FE, drawing %.1f FE/t",
+                powered() ? "supplied" : "LOST", energyStoredFe(), energyCapacityFe(),
+                energyDrawFePerTick()));
+        out.add(String.format(java.util.Locale.ROOT,
+                "Water %s: %,.0f / %,.0f mB",
+                waterSupplied() ? "supplied" : "DRY", waterStoredMb(), waterCapacityMb()));
+        out.add(String.format(java.util.Locale.ROOT,
+                "Mechanism %.0f%%%s", health() * 100.0, failed() ? " — seized" : ""));
+        if (!canPerformNormalMotion()) {
+            out.add("This drive cannot index a notch under normal control. "
+                    + "Scram insertion is a separate hydraulic path and is not affected.");
+        }
+        return out;
     }
 
     @Override

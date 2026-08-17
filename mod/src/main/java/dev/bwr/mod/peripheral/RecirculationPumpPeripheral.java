@@ -4,6 +4,9 @@ import dan200.computercraft.api.lua.LuaException;
 import dan200.computercraft.api.lua.LuaFunction;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.bwr.mod.flow.RecirculationPumpBlockEntity;
+import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -149,10 +152,40 @@ public class RecirculationPumpPeripheral implements IPeripheral {
         return RecirculationPumpBlockEntity.MAX_FE_PER_TICK;
     }
 
-    /** True when this pump found a reactor controller to report its flow to. */
+    /**
+     * True when this pump has a live reactor controller to report its flow to.
+     * A pump that has none turns, draws power and moves no core flow at all.
+     *
+     * <p>The stored controller position is not the answer on its own. The pump
+     * only re-examines its binding every two seconds — see
+     * {@code RecirculationPumpBlockEntity.maybeRebind} — so between those checks
+     * {@code getControllerPos()} goes on naming a controller that has been
+     * broken, and a program that gates its flow manoeuvre on this would spend up
+     * to forty ticks commanding a pump that is attached to nothing. Looking the
+     * block entity up here costs one map lookup and answers on the tick it is
+     * asked.
+     *
+     * <p>An unloaded chunk is reported as still attached, which is the same
+     * distinction {@code maybeRebind} draws before it drops a binding:
+     * {@code Level.getBlockEntity} answers null for an unloaded chunk exactly as
+     * it does for a broken block, and a plant whose controller is simply out of
+     * render distance has not lost anything.
+     */
     @LuaFunction(mainThread = true)
     public final boolean isAttached() {
-        return be.getControllerPos() != null;
+        return attached();
+    }
+
+    private boolean attached() {
+        BlockPos controllerPos = be.getControllerPos();
+        if (controllerPos == null) {
+            return false;
+        }
+        Level level = be.getLevel();
+        if (level == null || !level.isLoaded(controllerPos)) {
+            return true;
+        }
+        return level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity;
     }
 
     @LuaFunction(mainThread = true)
@@ -166,7 +199,7 @@ public class RecirculationPumpPeripheral implements IPeripheral {
         m.put("energyCapacity", be.getEnergyCapacityFe());
         m.put("ratedPowerDraw", RecirculationPumpBlockEntity.MAX_FE_PER_TICK);
         m.put("computerControlled", be.isComputerControlled());
-        m.put("attached", be.getControllerPos() != null);
+        m.put("attached", attached());
         return m;
     }
 }

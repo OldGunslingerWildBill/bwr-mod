@@ -303,9 +303,19 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * leak into one {@code steamOut} term and its own javadoc says it "does not
      * care which is which" — so routing the nozzles through the channel this
      * class already owns costs nothing physically and keeps the single-writer
-     * rule intact. Folding the two into one properly wants a shared aggregator
-     * for the whole main steam path, which is a change to
-     * {@code dev.bwr.mod.steam} rather than to this file.
+     * rule intact.
+     *
+     * <p>The two used to be genuinely parallel: a plant with a nozzle <i>and</i>
+     * a turbine outlet lost steam twice, once down each channel, with no pipe
+     * required between them and no relationship at all. They are in series now,
+     * and the series runs the other way round — an outlet that can follow a steam
+     * line back to a nozzle claims a share of what that nozzle is already passing
+     * through {@code RpvSteamOutletBlockEntity.claimFlowKgPerS} and contributes
+     * <b>zero</b> to the turbine channel, because the steam it hands to Mekanism
+     * came out of the vessel here. {@code setTurbineSteamFlowKgPerS} is left for
+     * the outlets that have no nozzle upstream of them, which is every outlet
+     * built before nozzles existed. See {@code TurbineSteamOutletBlockEntity} for
+     * why those keep working exactly as they did.
      *
      * <h2>Why this exists, and why it is a leak rather than a pressure clamp</h2>
      * {@link VesselState#canHoldPressure()} had no consumer at all, so removing
@@ -368,6 +378,15 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * the same would make a nozzle in a neighbouring chunk read as shut, which
      * on a plant running at power is a step change in steam removal caused by
      * nothing the player did.
+     *
+     * <p>Each nozzle is also told which controller polled it. That is what lets
+     * a {@code TurbineSteamOutletBlockEntity} on the far end of a steam line find
+     * its reactor <b>by following the pipe</b> rather than by looking for any
+     * controller within twelve blocks of itself, which is how the two ends of one
+     * steam path became two independent draws on one vessel in the first place.
+     * The controller is the right place to say it because the controller is the
+     * only thing that knows a nozzle is genuinely in its shell, and it is already
+     * standing here holding the list.
      */
     private double gatherSteamOutletFlow(Level level) {
         if (structure == null || structure.steamOutletCount() == 0) {
@@ -382,6 +401,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             }
             if (level.getBlockEntity(p) instanceof RpvSteamOutletBlockEntity nozzle) {
                 nozzle.refreshAttachmentPeriodically(level);
+                nozzle.noteController(getBlockPos());
                 total += nozzle.flowKgPerS(domePressurePsig);
             }
         }

@@ -5,6 +5,14 @@ import dev.bwr.core.harness.TransientHarness;
 import dev.bwr.core.thermal.PressureVessel;
 import dev.bwr.core.thermal.Saturation;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
 /**
  * A reactor that has just been built, and the heat-up out of it.
  *
@@ -350,5 +358,135 @@ public final class ColdStartTest {
         Check.greaterThan(hot.getReactivityDkOverK(), cold.getReactivityDkOverK(),
                 "a cold core is the more reactive of the two, and both are far subcritical");
         Check.lessThan(0.0, cold.getReactivityDkOverK(), "still shut down");
+    }
+
+    /**
+     * <b>Nothing published goes NaN, and nothing that cannot be negative is.</b>
+     *
+     * <p>Every correlation in the thermal model is a power law fitted around the
+     * operating point, and the cold path runs all of them at a seventieth of the
+     * pressure they were fitted at, with the fuel and the coolant at the same
+     * temperature and a boiling boundary at neither end of the core. That is a
+     * corner nothing else in the suite visits, and it is exactly the shape of
+     * corner where a {@code 0/0}, a {@code log(0)} or a square root of a small
+     * negative gets in — quietly, because a NaN in a lagged state propagates for
+     * a while before it reaches a panel.
+     *
+     * <p>So this sweeps the published surface rather than a chosen handful of it:
+     * every no-argument {@code double} getter on {@link ReactorCore}, found by
+     * reflection so a measurement added tomorrow is covered today, sampled through
+     * a whole heat-up from atmospheric to rated. A hand-written list of getters
+     * would eventually stop matching the class, which is the failure mode the
+     * persistence comparator was rewritten to avoid.
+     *
+     * <p>NaN is the universal assertion — no reading may ever be one. Infinity is
+     * <i>not</i> a failure: an indicated period of positive infinity is a period
+     * meter sitting on the centre of its scale and is the correct reading for a
+     * steady core. Sign is asserted only for the quantities that physically have
+     * one, named individually below.
+     */
+    public static void test06_noPublishedMeasurementGoesNaNThroughAHeatUp() {
+        ReactorCore core = coldCore();
+        TransientHarness.RodSequencer sequencer = new TransientHarness.RodSequencer(core);
+
+        List<Method> readings = new ArrayList<>();
+        for (Method method : ReactorCore.class.getMethods()) {
+            if (method.getParameterCount() == 0
+                    && method.getReturnType() == double.class
+                    && method.getName().startsWith("get")
+                    && !Modifier.isStatic(method.getModifiers())) {
+                readings.add(method);
+            }
+        }
+        readings.sort(Comparator.comparing(Method::getName));
+        Check.isTrue(readings.size() > 20,
+                "reflection must have found the published measurement surface, found %d"
+                        + " — a sweep over nothing passes trivially", readings.size());
+
+        // Quantities with a physical floor of zero. Everything absent from this
+        // set is legitimately signed — reactivity, levels, rates of change, the
+        // period meters — and is only checked for NaN.
+        Set<String> mustNotBeNegative = new TreeSet<>(List.of(
+                "getPressurePsia", "getLiquidMassKg", "getCoolantTemperatureC",
+                "getFuelTemperatureC", "getCladTemperatureC", "getPeakCladTemperatureC",
+                "getPeakFuelTemperatureC", "getOxidationFraction", "getHydrogenGeneratedKg",
+                "getZirconiumReactionPowerMW", "getVoidFraction", "getExitVoidFraction",
+                "getExitQuality", "getBoilingBoundaryFraction", "getCoreInletSubcoolingKJPerKg",
+                "getNeutronPowerFraction", "getDecayHeatFraction", "getTotalPowerFractionOfRated",
+                "getThermalPowerMW", "getDecayHeatMW", "getBoronPpm", "getXenonAtomsPerCm3",
+                "getIodineAtomsPerCm3", "getXenonFractionOfRatedEquilibrium",
+                "getAverageBurnupMwdPerTonne", "getAggregateKInfinity", "getKEffectiveAllRodsOut",
+                "getCoreFlowFraction", "getCoreFlowKgPerS", "getUncoveredFuelFraction",
+                "getBreakSteamFlowKgPerS", "getBreakLiquidFlowKgPerS",
+                "getDeliveredFeedwaterFlowKgPerS", "getHeatPerFissionScaleFactor",
+                "getPromptLifetimeSeconds", "getBetaEffective", "getElapsedSeconds"));
+        // Every name in that set has to still be a method, or the set is quietly
+        // asserting nothing about a getter that has been renamed.
+        Set<String> found = new TreeSet<>();
+        for (Method method : readings) {
+            found.add(method.getName());
+        }
+        List<String> stale = new ArrayList<>(mustNotBeNegative);
+        stale.removeAll(found);
+        Check.isTrue(stale.isEmpty(),
+                "these are asserted non-negative but are no longer getters on ReactorCore, so "
+                        + "the assertion covers nothing: %s", stale);
+
+        double bottomTapIn = core.getPressureVessel().getBottomTapIn();
+        int samples = 0;
+        for (int i = 0; i < 20 * 2400; i++) { // up to 40 minutes of heat-up
+            if (i % 20 == 0) {
+                double power = core.getTotalPowerFractionOfRated();
+                if (power < 0.08) {
+                    sequencer.withdrawOneNotch(power < 1.0e-8 ? 6 : 3);
+                } else if (power > 0.084) {
+                    sequencer.insertOneNotch(8);
+                }
+            }
+            core.step();
+
+            if (i % 20 != 0) {
+                continue;
+            }
+            samples++;
+            for (Method method : readings) {
+                double value = invoke(method, core);
+                Check.isFalse(Double.isNaN(value),
+                        "%s went NaN %.1f s into a heat-up at %.1f psig",
+                        method.getName(), core.getElapsedSeconds(), core.getPressurePsig());
+                if (mustNotBeNegative.contains(method.getName())) {
+                    Check.isTrue(value >= 0.0,
+                            "%s went negative (%.6g) %.1f s into a heat-up at %.1f psig",
+                            method.getName(), value, core.getElapsedSeconds(),
+                            core.getPressurePsig());
+                }
+            }
+            // The level instrument cannot read below its own lower tap: the
+            // variable leg has no column left to lose. It can and does read above
+            // the upper tap on a cold vessel, because the water in the leg is
+            // denser than the calibration assumed — see PressureVessel.
+            Check.isTrue(core.getIndicatedLevelIn() >= bottomTapIn,
+                    "indicated level %.2f in is below the instrument's own lower tap at %.2f in",
+                    core.getIndicatedLevelIn(), bottomTapIn);
+            if (core.getPressurePsig() >= PhysicalConstants.RATED_DOME_PRESSURE_PSIG) {
+                break;
+            }
+        }
+
+        Check.note("swept %d measurements at %d points from 0 psig to %.1f psig; "
+                        + "coolant %.2f degC, void %.4f, indicated level %.2f in at the end",
+                readings.size(), samples, core.getPressurePsig(), core.getCoolantTemperatureC(),
+                core.getVoidFraction(), core.getIndicatedLevelIn());
+        Check.greaterThan(100, samples, "the sweep must actually have run a heat-up");
+        Check.greaterThan(PressureVessel.COLD_SHUTDOWN_PRESSURE_PSIG, core.getPressurePsig(),
+                "the plant must have heated up during the sweep");
+    }
+
+    private static double invoke(Method method, ReactorCore core) {
+        try {
+            return (double) method.invoke(core);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("cannot read ReactorCore." + method.getName(), e);
+        }
     }
 }

@@ -142,14 +142,19 @@ public class PressurisedTubeBlock extends PipeBlock implements SteamLinePort {
      * its pipe lands than a list in a datapack does, and a tag cannot express
      * "this face only" at all.
      *
+     * <p>The rule itself lives in {@link SteamLineNetwork#acceptsLineOn} rather
+     * than here, and that is deliberate. {@code SteamLineNetwork} walks the line
+     * to answer where a nozzle's steam actually goes; this method decides which
+     * arms are drawn. Two copies of "is this steam hardware" would eventually
+     * disagree, and the day they did, the line a player can see and the line the
+     * physics uses would be different lines — the worst possible bug in a build
+     * the player debugs by looking at it.
+     *
      * @param neighbour        the state of the block being connected to
      * @param towardsNeighbour direction from the tube to that block
      */
     protected boolean connectsTo(BlockState neighbour, Direction towardsNeighbour) {
-        if (neighbour.getBlock() instanceof SteamLinePort port) {
-            return port.acceptsSteamLineOn(neighbour, towardsNeighbour.getOpposite());
-        }
-        return neighbour.is(STEAM_LINE);
+        return SteamLineNetwork.acceptsLineOn(neighbour, towardsNeighbour.getOpposite());
     }
 
     /**

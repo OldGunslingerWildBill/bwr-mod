@@ -79,9 +79,12 @@ public class RpvSteamOutletBlock extends BaseEntityBlock implements SteamLinePor
         }
         // Answer "is there a line on me" straight away rather than leaving the
         // player looking at a nozzle that reports no steam line for up to a
-        // second after they have plainly just built one.
+        // second after they have plainly just built one. The line survey goes
+        // with it: a nozzle welded onto an already-built plant should know what
+        // is downstream of it the moment it exists, not two seconds later.
         if (level.getBlockEntity(pos) instanceof RpvSteamOutletBlockEntity nozzle) {
             nozzle.refreshAttachment(level);
+            nozzle.refreshLine(level);
         }
     }
 
@@ -134,7 +137,12 @@ public class RpvSteamOutletBlock extends BaseEntityBlock implements SteamLinePor
             return InteractionResult.SUCCESS;
         }
         if (level.getBlockEntity(pos) instanceof RpvSteamOutletBlockEntity nozzle) {
+            // A player asking for a report gets a current one, line and all. One
+            // walk of one line on one deliberate click is not a cost worth
+            // rationing, and a stale answer here is the kind that sends somebody
+            // looking for a fault in a pipe they have just finished building.
             nozzle.refreshAttachment(level);
+            nozzle.refreshLine(level);
             if (!player.isShiftKeyDown()) {
                 nozzle.setPosition(nozzle.getPosition() > 0.0 ? 0.0 : 1.0);
             }

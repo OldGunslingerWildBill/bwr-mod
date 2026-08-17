@@ -160,7 +160,15 @@ public final class CoreMapSnapshot {
         map.relativeFlux = new double[n];
 
         for (int i = 0; i < n; i++) {
-            int type = buf.readByte();
+            // Unsigned, because writeByte writes the low eight bits and the
+            // index it carries is 1 + a position in the per-packet name table.
+            // Reading it back signed meant the 128th distinct fuel type in one
+            // core and everything after it came out negative, which isOccupied
+            // reads as an empty slot — a loaded bundle drawn as a hole in the
+            // map. The byte on the wire is unchanged, so this is a decode fix,
+            // not a format change. The ceiling is 255 fuel types in one core;
+            // above that the name table would need a varint.
+            int type = buf.readUnsignedByte();
             if (type == 0) {
                 map.fuelTypeIndex[i] = -1;
                 continue;
