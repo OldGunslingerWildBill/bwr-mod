@@ -4,6 +4,10 @@
 This file is the entry point for an agent starting cold. Read it before touching anything; it
 exists to stop you rediscovering things that already cost hours.
 
+The repository is public at <https://github.com/OldGunslingerWildBill/bwr-mod>, so this file and
+the ones beside it are the project's front door. Keep them true; a reader must be able to finish
+them knowing exactly what is proven and what is not.
+
 `README.md` is the *design* handoff written before any code existed. This file is the *codebase*
 handoff. Both are current — they answer different questions.
 
@@ -16,9 +20,28 @@ because you cannot tell your breakage from pre-existing breakage otherwise.
 
 ```bash
 cd <repo root>
-./gradlew clean build          # expect BUILD SUCCESSFUL, 117 tests passed
-python tools-audit-assets.py   # expect PROBLEMS: 0
-./gradlew :mod:runData         # expect BUILD SUCCESSFUL, mod loads in a real MC runtime
+./gradlew clean build          # BUILD SUCCESSFUL; 124 tests, 124 passed, 0 failed
+python tools-audit-assets.py   # PROBLEMS: 0
+python tools-check-jar.py      # OK: nothing forbidden is bundled
+```
+
+Two lines inside that build are worth reading rather than scrolling past, because they are the
+project checking itself. Verbatim, on this machine:
+
+```
+124 tests, 124 passed, 0 failed, 784.7 s
+checkNoProtectionLogic: scanned 98 files in :mod, no protection logic present
+```
+
+The counts are the load-bearing part; the elapsed time is not.
+
+Those three commands are offline and need nothing but a JDK and the Gradle cache. The run tasks
+need the NeoForge, CC:Tweaked and Mekanism artifacts already resolved, and they are the ones
+section 5 says have **not** been re-run since the last round of fixes:
+
+```bash
+./gradlew :mod:runData              # mod loads in a real MC runtime
+./gradlew :mod:runPeripheralCheck   # builds a plant on a dedicated server, calls every @LuaFunction
 ```
 
 There is a Gradle wrapper, so you need nothing installed but a JDK 21.
@@ -39,7 +62,13 @@ The physics module needs **no Gradle at all** — useful when you want a fast lo
 javac -d out $(find core/src/main/java -name '*.java')
 javac -cp out -d testout $(find core/src/test/java -name '*.java')
 java -cp "out;testout" dev.bwr.core.AcceptanceTests     # ';' on Windows, ':' on POSIX
+java -cp "out;testout" dev.bwr.core.AcceptanceTests NodalFluxSolverTest   # one class
 ```
+
+The runner takes test-class names as arguments, which matters: the full suite is 13 minutes, while
+`SaturationTest` is 0.1 s and `ReactorCoreTickTest` — the slowest of the short ones — is 30.6 s.
+If you put an **absolute** path in that `-cp` under Git Bash, read the `cygpath` trap in section 6
+first; it will not do what you think.
 
 ---
 
@@ -56,15 +85,20 @@ negative-tested to confirm they actually fail:
 
 | Check | Scope | Run it |
 |---|---|---|
-| `ReactorCoreTickTest.test07` | 976 methods across all 37 `core/` classes, discovered by reflection | `./gradlew :core:acceptance` |
-| `checkNoProtectionLogic` | 90 `mod/` source files, comments stripped first | `./gradlew :mod:checkNoProtectionLogic` |
+| `ReactorCoreTickTest.test07` | 1066 methods and 747 fields across 46 classes in 11 packages, discovered by reflection at runtime | `./gradlew :core:acceptance` |
+| `checkNoProtectionLogic` | 98 `mod/` source files, comments stripped first | `./gradlew :mod:checkNoProtectionLogic` |
 
-Banned name fragments: `shouldScram`, `autoScram`, `checkTrip(s)`, `isSafe`, `isHighPressure`,
-`isLowLevel`, `autoStart`, `mustScram`, `needsScram`, `scramIfNeeded`, `tripOnHighPressure`,
-`protectionSystem`.
+Banned name fragments in `:mod`: `shouldScram`, `autoScram`, `checkTrip(s)`, `isSafe`, `isUnsafe`,
+`isHighPressure`, `isLowLevel`, `autoStart`, `mustScram`, `needsScram`, `scramIfNeeded`,
+`tripOnHighPressure`, `protectionSystem`. The `:core` guard bans those **and** a word list —
+`high`, `low`, `trip`, `permissive`, `setpoint`, `interlock`, `alarm`, `unsafe`, `acceptable`,
+`violation` — across methods *and fields*, because a setpoint is far likelier to arrive as a
+constant than as a method. It carries exactly three exemptions, each named and justified in the
+test and each asserted to still exist so a stale exemption cannot sit there quietly widening.
 
 Javadoc that *prohibits* such a name is fine and should stay — comments are stripped before
-scanning, deliberately.
+scanning, deliberately. So is "protective", as in the protective oxide layer on the cladding:
+that is a film of zirconia, not a protection system, and the distinction is the whole point.
 
 **`scram()` exists and is correct.** It is a bare, unconditional actuator with no checks. The
 rule is not "no scram", it is "nothing in the mod decides *when* to scram."
@@ -79,6 +113,9 @@ Corollaries that are easy to violate by accident:
 - **Pump shutoff head is physics; an injection permissive is not.** Model the head so flow goes
   to zero. Do not implement the real plant's 500 psig interlock — that is a chosen setpoint and
   belongs in the player's Lua.
+- **A period meter indicates; it does not conclude.** Twelve of them are now on the Lua surface
+  (section 5). Nothing in the mod says what a period *means*. A short-period alarm, a rod block
+  or a period trip are all chosen numbers and all the player's.
 
 ---
 
@@ -88,13 +125,18 @@ Two Gradle modules, and the split is enforced by the compiler rather than by dis
 
 ```
 core/   pure Java physics. ZERO Minecraft on the classpath. MIT licensed.
-        37 main + 19 test files.
+        37 main + 20 test files; 46 classes once named member types are counted.
         boundary  eccs  fuel  harness  instrument  kinetics  nodal  poison  pool  thermal
 
-mod/    NeoForge integration. MPL-2.0 licensed. 90 files.
-        damage  devtest  eccs  flow  fuel  gui  mekanism  peripheral  reactor
-        registry  rods  steam  suppression
+mod/    NeoForge integration. MPL-2.0 licensed. 98 files, and NO test source set —
+        mod/src/ contains 'main' and nothing else.
+        damage  devtest  eccs  flow  fuel  gui (+ gui/client, gui/net)  mekanism
+        peripheral  reactor  registry  rods  steam  suppression
 ```
+
+`mod/` has grown: the GUI split into `gui/client` (screens and widgets) and `gui/net` (the menu
+sync and command payloads), and `devtest/` holds the two-class peripheral runtime harness that is
+stripped from the published jar.
 
 `core/` cannot import Minecraft because Minecraft is not on its classpath. Verify with:
 
@@ -106,6 +148,14 @@ grep -rn "^import net\.minecraft\|^import net\.neoforged" core/src   # must retu
 single snapshot serves NBT persistence, client sync and the CC peripheral readout. The core never
 touches NBT — `mod/reactor/ReactorStateNbt.java` does the conversion.
 
+`ReactorState` is **33 record components with exactly one constructor, the canonical one.** A
+shorter compatibility overload used to live beside it so the tree kept compiling while the
+persistence layer caught up; it was a landmine, because any caller that bound to it — the NBT
+reader above all — silently defaulted the newest components and un-scrammed a saved reactor. It
+has been deleted on purpose. **Adding a component is supposed to break every call site**, and a
+call site that still compiles after you add one is a call site that has quietly stopped
+persisting something.
+
 Tick order inside `ReactorControllerBlockEntity` matters and is load-bearing:
 
 ```java
@@ -116,14 +166,17 @@ rodNetwork.postStep();    // hardware condition written back
 
 Pressure is updated once per tick and frozen inside the kinetics sub-steps. That timescale
 separation is what keeps the pressure → void → reactivity positive feedback loop stable. **Do not
-"fix" it by updating pressure mid-tick.**
+"fix" it by updating pressure mid-tick.** The same reasoning governs the nodal flux shape, which
+is solved at 1 Hz and frozen in between — see section 5 on why that solve must stay a pure
+function of its inputs.
 
 ---
 
 ## 4. The integrations, and the licensing constraint on them
 
-Both are **soft**: the mod must load and run correctly with either absent. Both are verified by
-running, not asserted.
+Both are **soft**: the mod must load and run correctly with either absent. That is verified by
+running rather than asserted — though the last such run predates the current tree, so see
+section 5 before you treat it as fresh.
 
 ```bash
 ./gradlew :mod:runData                    # both present
@@ -133,16 +186,23 @@ running, not asserted.
 
 Every foreign type is reached only through a `ModList.get().isLoaded(...)` branch in `BwrMod`'s
 constructor, and because the check and the reference live in *different classes*, a JVM without
-the mod never resolves the type.
+the mod never resolves the type. `PeripheralRuntimeCheck` / `PeripheralRuntimeCheckCC` is split
+the same way for the same reason, so running the peripheral check with `-PbwrNoCC` also proves
+the guard.
 
 **CC:Tweaked must never be bundled.** Parts of its API — `IPeripheral` among them — are still
 `LicenseRef-CCPL`, which permits redistribution only "unmodified and in full". It is `compileOnly`
 for publishing, `runtimeOnly` for the dev runtime only, and never in `jarJar`. Verify with
-`python tools-check-jar.py`; the answer must be zero CC classes.
+`python tools-check-jar.py`; the answer must be zero CC classes. It currently reports 172 class
+files scanned in the jar, **0** bundled `dan200/computercraft` classes (10 of our own merely
+reference them), **0** bundled `mekanism/` classes, and **0** entries under `dev/bwr/mod/devtest/`.
 
 Mekanism is MIT, so bundling would be *legal*, but it is still not bundled — players install it.
 Note `metadataSources { artifact() }` on the modmaven repository: modmaven publishes bare jars
-with **no POM**, and without that line Gradle 404s looking for module metadata.
+with **no POM**, and without that line Gradle 404s looking for module metadata. That same pinned
+Mekanism jar is now opened by `tools-audit-assets.py`, which cross-checks every foreign item id
+our recipes name against what is actually in it — 4 used, 4 verified. Section 6 explains what that
+check exists to catch.
 
 Pinned versions live in `gradle.properties`: NeoForge 21.1.248, ModDevGradle 2.0.143,
 CC:Tweaked 1.120.2, Mekanism 1.21.1-10.7.19.85.
@@ -151,26 +211,141 @@ CC:Tweaked 1.120.2, Mekanism 1.21.1-10.7.19.85.
 
 ## 5. Where the project actually stands
 
-`BUILD-STATUS.md` is the authoritative, freshly-verified status with real command output. Summary:
+`BUILD-STATUS.md` is the detailed status with full command output. This is the summary.
 
-- **`gradle clean build` green**, 117 acceptance tests passing
-- **Mod loads** in a real MC 1.21.1 runtime, four dependency combinations
-- **21 blocks** with complete assets, audit reports 0 problems
-- **10 of 12** SPEC §14 build-order steps done
+### Verified on the current tree
 
-The two incomplete steps are both blocked on the same fact: **nothing has ever run in a world or
-a client.** No model, texture or GUI has been rendered, and **no `@LuaFunction` has ever
-executed** — CC:Tweaked now loads, but nothing has called into the peripheral.
+- `./gradlew clean build` — **BUILD SUCCESSFUL**
+- `124 tests, 124 passed, 0 failed, 784.7 s` — all of them `core/`
+- `checkNoProtectionLogic: scanned 98 files in :mod, no protection logic present`
+- `python tools-audit-assets.py` — `PROBLEMS: 0`, exit 0. 21 blocks; blockstate, block model, item
+  model, loot table and recipe all 21/21
+- `python tools-check-jar.py` — `OK: nothing forbidden is bundled`, exit 0
+- The mod jar builds at `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`
 
-That makes the highest-value next action clear and cheap: **launch a client, build a small core,
-and take it critical from a Lua console.** It exercises the peripheral, structure validation, CRD
-binding, ticking and NBT together, and will expose more real defects than any further building.
+### The plant is now operable, and it was not before
 
-Other genuine gaps, all recorded in `BUILD-STATUS.md`: no `BlockEntityRenderer` exists so head-off
-core rendering is absent; partial core uncovery is not representable because the thermal model
-uses two lumped nodes; SPEC §8.1 stages 4, 6 and 7 have no implementation; containment does not
-exist, so the hydrogen the model generates has nowhere to go. Textures are flat-colour
-placeholders — the project owner is doing real art separately.
+An audit of ~37k lines found 102 defects. All but one are fixed. The ones that mattered most were
+not the subtle ones — they were the ones that made the mod unplayable:
+
+- repairing a broken vessel deleted all the fuel, the running transient and the boundary damage
+  record
+- every chunk reload drove all rods fully in
+- the recirculation pump had no energy capability, so core flow was permanently zero
+- rods and recirculation flow could not be commanded from Lua **at all**
+- the mod never installed a calibrated startup source, so the SRMs read 0.015 cps against a scale
+  bottom of `SourceRangeMonitor.SCALE_BOTTOM_CPS = 3.0` — a startup with no visible beginning
+
+Then the physics that was written but not wired:
+
+- **Rod worth is position-dependent.** The nodal solve computed per-rod flux weights and discarded
+  them. They now reach `RodWorth.rodFluxWeights`, and a centre rod is worth **7.13x** an edge rod
+  — `-2.00e-03` against `-2.81e-04` dk/k, where both used to read `6.34e-05`.
+- **Rod indices agree.** The solver ranked rods by radius while the multiblock rastered them, and
+  `setRodLatticeMap` had zero callers. Structure validation now builds a real map. Measured
+  before: **0 of 16** drives shadowed their own bundles. After: the drive's own four positions are
+  the top four by flux rise for **9 of 16**, worst rank 9 of 81.
+- **The nodal solve is deterministic.** The warm start is gone. With per-rod weights reaching
+  reactivity, a history-dependent flux shape made a restored core disagree with a running one, and
+  the round-trip test holds persistence to bit-for-bit equality. `solve()` is now a pure function
+  of its inputs, with an exact memo for a core whose problem has not moved.
+  **This costs real time and the figures in `BUILD-STATUS.md` are the old ones.** Measured now:
+  memo hit (unchanged core) **1.23 ms**; one rod moved one notch **21.7 ms**; void creeping, i.e.
+  a running plant, **25.1 ms** — once per second per reactor against a 50 ms tick budget. The
+  "24 ms cold / 9.8 ms warm" pair is wrong twice over: cold is ~25 ms and there is no warm path
+  any more. This is an **open performance decision**. The lever that does not reintroduce history
+  dependence is solving less often than 1 Hz. Reinstating the warm start is not a lever; the class
+  comment on `seedFluxFromGeometry()` records the two obvious repairs and why both were measured
+  and rejected.
+- **Seven components were added to `ReactorState`, taking it to 33**: `scramActive`,
+  `peakFuelTempC`, `intermediateRangeMonitorRanges`, `coreInletEnthalpyKJPerKg`, `rodFluxWeights`,
+  `fuelExcessReactivityDkOverK`, `dopplerCoefficientPerCAtAnchor`. A save previously lost 72% of
+  the axial void profile mid-transient, cancelled an in-progress scram, and on a mixed-fuel core
+  got excess reactivity wrong by 5.0e-06 dk/k. See section 3 on the deleted compatibility
+  constructor.
+- **CC:Tweaked threading is fixed.** 194 of 205 `@LuaFunction` methods declare
+  `mainThread = true` — every one that touches block-entity, level or core state. The other eleven
+  return compile-time constants. **None** of them declared it before, and one re-entered the nodal
+  solver from the computer thread mid-reallocation.
+- **Steam-table correlations reach below their fitted band.** Saturated vapour density went from
+  −46% to **+0.00%** at 14.7 psia; liquid enthalpy from −10.35% to **−0.71%**. Everything at and
+  above 800 psia is bit-identical — see section 7.
+- **Suppression pool capacity follows the structure the player built**, via a bounded flood fill
+  that refuses open water, replacing a universal hardcoded 3,400,000 kg.
+- **The fuel assembly recipe works at last.** It named `mekanism:pellet_fissile_fuel`, an id that
+  has never existed in Mekanism 10.7, so `RecipeManager` dropped the entire recipe at datapack
+  load and there was no crafting route to a fuel assembly at all. It is `mekanism:yellow_cake_uranium`
+  now. The pre-fix `runPeripheralCheck` log still carries the evidence:
+  `[ERROR] [RecipeManager]: Parsing error loading recipe bwr:fuel_assembly`.
+- **Twelve period meters are on the Lua surface**, not one. Four SRM and eight IRM channels, as
+  raw measurements. The single reachable one was on an SRM, which rolls over and stops indicating
+  long before the plant reaches a power anyone operates at — so a player was being asked to fly a
+  startup on period with no period.
+- **`VesselState.canHoldPressure()` has a consumer.** An open head is a steam discharge path.
+  Measured: head on, 20.0 → 29.5 psig over ten minutes; head off, pinned at 0.0 psig.
+
+### What has actually run, and what has not
+
+Read this part twice. It is where an estimate of this project usually goes wrong, in both
+directions.
+
+**No Minecraft client has ever launched.** No model, texture, GUI or screen has ever been
+rendered. Every log under `mod/run/logs/` is a `forgedatadev` run; there is no `runClient` log.
+
+**A dedicated server has run, and the peripheral surface has been called.**
+`./gradlew :mod:runPeripheralCheck` built a reactor, a suppression pool, a turbine outlet, ECCS
+pumps and an ADS controller in a real world, force-loaded the chunks, ticked the block entities,
+formed the multiblocks (`formed=true status=[Reactor formed: 25 assemblies, 4 control rods ...]`),
+and invoked **every `@LuaFunction` on every peripheral** through the real CC:Tweaked capability
+lookup — once with CC:Tweaked loaded and once without it, taking the guarded path. The transcripts
+are in `mod/run/peripheralCheck/logs/`; read them before you write anything peripheral-facing.
+The earlier claim in this file that "no `@LuaFunction` has ever executed" was wrong.
+
+**But that run predates the fix pass, and the harness it ran under could not fail.** It counted
+problems, logged them, called `server.halt(false)` exactly as it does on a pass, and exited 0
+either way — so its green result proved only that the JVM reached the end. That is fixed: the
+failing exit status is now armed by a shutdown hook installed at class load and cleared only by a
+run that reaches `finish()` with nothing wrong, so a crash during plant construction still exits
+non-zero. The harness also gained an off-thread probe pass that checks the `mainThread`
+marshalling actually marshals. **Neither of those has been exercised.** The newest run directory
+is a day older than the fixes.
+
+So: **re-running `:mod:runPeripheralCheck` is the cheapest real verification available**, and
+`:mod:runData` after it. Do that before you believe anything in this section that is not a test
+count.
+
+**`:mod` has no test source set at all.** `mod/src/` contains `main` and nothing else; the 124
+tests are exclusively `core/`. Every mod-side change in the fix pass is verified by **compile and
+by reading only**. That is the weakest link in this project and you should treat it as one.
+
+**Taking a core critical from a Lua console is still the highest-value next action.** What has
+changed is that it is now *possible* — before the fix pass the rods and the recirculation flow
+could not be commanded from Lua, the flow was pinned at zero, and the SRMs were below scale, so
+there was no startup to fly. It exercises the peripheral, structure validation, CRD binding,
+ticking and NBT together and will expose more real defects than any further building.
+
+### Still short, and honestly so
+
+- **No `BlockEntityRenderer` exists**, so head-off core rendering is absent. That is the only
+  reason SPEC §14 step 10 is not done.
+- **Textures are flat-colour placeholders.** The project owner is doing real art separately.
+- **Partial core uncovery is not representable** — the thermal model uses two lumped nodes.
+- **SPEC §8.1 stages 4, 6 and 7 have no implementation.**
+- **Containment does not exist**, so the hydrogen the model generates has nowhere to go.
+- **`CoreLoading.heatPerFissionScaleFactor()` is defined and never called.** A datapack's
+  `heat_per_fission_mev` therefore still does not reach thermal output. It is one wiring job in
+  `core/`, deliberately left out of scope for the fix pass.
+- **There are no APRM period meters.** `ReactorCore` builds `PeriodMeter`s for the 4 SRM and 8 IRM
+  channels only, so above IRM range there is no period reading anywhere.
+- **The suppression pool basin survey counts contiguous water.** It refuses a body that escapes
+  the survey box and caps the total, which is what stops an ocean or a one-block channel to one —
+  but a natural pond that fits inside the box and under the cap still counts as a basin somebody
+  dug.
+
+`BUILD-STATUS.md` carries the SPEC §14 step table and the per-step evidence. The two steps it
+scores short are **8, `IPeripheral` exposure** and **10, refuelling**. Neither is short on physics:
+step 10 wants a `BlockEntityRenderer` so the head visibly comes off, and step 8 wants the
+peripheral surface run again on the tree as it stands now.
 
 ---
 
@@ -178,9 +353,24 @@ placeholders — the project owner is doing real art separately.
 
 Each of these cost real time. They will bite you the same way.
 
+**Git Bash does not path-translate inside a semicolon-joined `-cp`.** Write
+`javac -cp "/tmp/out;$(cat modcp.txt)"` and the first entry is silently discarded: the whole
+string stops looking like a lone POSIX path, so nothing is converted, and `javac` compiles against
+whatever stale prebuilt classes are on the rest of the path. The symptom is *phantom errors about
+code that no longer exists*, which sends you hunting a compiler bug. Use
+`javac -cp "$(cygpath -w /tmp/out);$(cat modcp.txt)"`. This cost real time **twice** during the
+fix work. Relative entries (`-cp "out;testout"`) are safe because there is nothing to translate.
+
 **Never trust a piped exit code.** `gradle ... | tail -20` gives you `tail`'s exit code. This
 produced a confident report of "BUILD SUCCESSFUL" on a build that had failed with 40 errors.
 Always redirect to a file, check `$?`, *then* grep the file.
+
+**A harness that halts the server exits 0 whatever it found.** `PeripheralRuntimeCheck` counted
+failures, logged "FAIL with N problem(s)", then called `server.halt(false)` — and
+`DedicatedServer.onServerExit()` sets no status, so the process ended 0. `runPeripheralCheck` is a
+`JavaExec`, so Gradle passed the task, and the project's status documents cited that green run as
+evidence. The fix is to make the status **failing from class load** and clear it only on a clean
+finish, which is also the only shape that survives a crash during setup.
 
 **A test that measures a defect is not a test that catches it.** A round-trip test quantified that
 41% of an in-progress quench spike was lost across a save, and filed it as a "finding" rather than
@@ -188,39 +378,63 @@ failing. The bug survived. If you measure something wrong, fail on it.
 
 **Hand-written field lists rot silently.** `assertStatesIdentical` enumerated 26 record components
 by hand, so when `hydrogenKg` was added nothing compared it. There is now a reflective test that
-perturbs every component and requires the comparator to notice. Prefer reflection over hand lists
-for anything that must stay exhaustive.
+perturbs every component and requires the comparator to notice, and the record's compatibility
+constructor is gone so a new component breaks every call site at compile time. Prefer reflection
+over hand lists for anything that must stay exhaustive.
 
 **Hardcoded scan lists rot the same way.** The `:core` design-rule guard scanned a hardcoded 23
 classes while `core/` had grown to 37 — four whole packages were invisible to the project's most
-important rule. It now discovers classes at runtime.
+important rule. It now discovers classes at runtime, and the floor assertion is a number
+(currently 40) that discovery must clear, not the length of the hardcoded list, because
+`discovered.size() >= physics.length` is implied by the assertions above it and can never fire.
+
+**A cached shape makes a function of history out of a function of inputs.** The nodal solver warm
+started from the previous second's flux. Once per-rod flux weights reached reactivity, a running
+core and a restored one settled on answers a few ulps apart, and the persistence round trip is
+held to bit-for-bit equality. Driving the iteration to a tighter tolerance does not fix it — at
+1e-15 it never converges, and after 4000 iterations from two histories 590 of 961 weights still
+disagree in their last bits. If a result must round-trip exactly, it cannot depend on what ran
+before it.
+
+**An unknown item id deletes the whole recipe, not the ingredient.** `mekanism:pellet_fissile_fuel`
+does not exist in Mekanism 10.7, so `RecipeManager` logged one line at datapack load and dropped
+`bwr:fuel_assembly` entirely — no crafting route to fuel, no crash, no test failure.
+`tools-audit-assets.py` now opens the pinned Mekanism jar out of the Gradle cache and cross-checks
+every foreign id our recipes name. Do the same for any new foreign dependency.
 
 API details that are easy to get wrong on this stack:
 
 - `CompoundTag` has int, long and byte arrays but **no double array**. Use `ListTag` of `DoubleTag`
   (`ReactorStateNbt.putDoubles` / `getDoubles`).
 - `registerSimpleBlockItem` returns `DeferredItem<BlockItem>`, not `DeferredItem<Item>`.
-- ModDevGradle run types are exactly `[client, data, gameTestServer, server, junit]`. There is no
-  `clientData()`.
+- ModDevGradle run *types* are exactly `[client, data, gameTestServer, server, junit]`. There is no
+  `clientData()`. A named run config can still be anything you like — `peripheralCheck` is a
+  `server()` with a system property and its own game directory.
 - Minecraft 1.21 renamed the data folders to **singular**: `data/<ns>/recipe/`, `loot_table/`,
   `advancement/`. Getting it wrong silently loads nothing.
-- 1.21 recipe results use `"id"`, not `"item"`.
+- 1.21 recipe **results** use `"id"`; ingredients still use `"item"` (or `"tag"`).
 - A block registered `requiresCorrectToolForDrops()` with **no** `mineable/pickaxe` tag can never
   be harvested by anything. Both are required.
 - Mekanism 10.7 (1.21) **unified** gas/infusion/pigment/slurry into one `Chemical` type. There is
   no `GasStack` any more.
 - `PipeBlock` declares an abstract `codec()` you must override.
+- Lua has one number type and produces NaN and infinity trivially. The physics sanitises silently,
+  so an unguarded `0/0` in a control program used to turn into a quiet zero demand with nothing to
+  debug against. `ReactorPeripheral.finite()` rejects a non-finite *argument* by name — a judgement
+  about the argument, never about the plant.
 
 ---
 
 ## 7. Domain facts worth not re-deriving
 
 - **Rod position is 25 discrete notches labelled 00–48 in steps of two**, as the Full Core Display
-  reads them. Not a 0–100% float.
+  reads them. Not a 0–100% float. (`ROD_NOTCH_POSITIONS = 25`, `ROD_NOTCH_MAX_LABEL = 48`,
+  `ROD_NOTCH_STEP = 2`.) Rods are 1-based on the Lua surface and 0-based in the arrays.
 - **Point kinetics needs a source term.** Without `+ S`, `n = 0` is an equilibrium, a shutdown core
   decays to exactly zero and source range monitors read nothing. With it, the subcritical
   equilibrium `n = Λ·S/|ρ|` gives both the count-rate floor and the hyperbolic approach to
-  criticality that makes 1/M plots work.
+  criticality that makes 1/M plots work. The *mod* must also install a source in the built plant,
+  which for a long time it did not — section 5.
 - **The integrator is implicit, not explicit.** The Jacobian is an arrowhead matrix, so backward
   Euler collapses to one scalar equation — no linear algebra library. Guard the denominator: it
   can cross zero when `ρ > β`, exactly during a super-prompt excursion.
@@ -231,7 +445,14 @@ API details that are easy to get wrong on this stack:
   but ~3.45% at 70%. A flat coefficient understates feedback where BWR behaviour actually lives.
 - **The Pu/MOX danger is emergent from β**, never a hardcoded penalty. Keepin totals: U-235
   0.006502, Pu-239 0.002099, U-233 0.00266.
-- `T_sat(°F) = 115.1 · P(psia)^0.225` — under 0.4 °F error across 800–1400 psia.
+- `T_sat(°F) = 115.1 · P(psia)^0.225` — under 0.4 °F error across 800–1400 psia, +0.02 °F at 1000.
+- **The other steam properties are no longer that power law below 800 psia.** Liquid density and
+  liquid enthalpy blend to a low-pressure form over a 400–800 psia smoothstep (so a blowdown
+  crossing it puts no step in the level), and latent heat uses a Watson relation below 800 and
+  again above 1400. The power law was out by up to 64% on density and +2740% on vapour density at
+  the 0.1 psia floor, and the vessel does not stay in the 800–1400 band — ADS, the SRVs and every
+  blowdown take it out. Everything at and above 800 psia is unchanged, so calibrations quoted
+  against the rated band still hold.
 - Rated dome pressure is **1025 psig**, not 1150. Design 1250, ASME limit 1375.
 
 `REFERENCE-DATA.md` has all of these with citations to the NRC BWR/6 Systems Manual
@@ -250,7 +471,7 @@ copyrightable, but the PDF is not ours to redistribute.
 | `REFERENCE-DATA.md` | Real BWR/6 constants with NRC citations, and the corrections applied to SPEC. |
 | `BUILD-STATUS.md` | Verified current state, SPEC §14 progress table, known defects. |
 | `spec-v1-draft.md` | Superseded earlier draft. **Do not implement from it.** |
-| `tools-audit-assets.py` | Asset integrity check. Exits non-zero on any gap. |
+| `tools-audit-assets.py` | Asset integrity check, plus the foreign-item-id cross-check. Exits non-zero on any gap. |
 | `tools-check-jar.py` | Confirms no soft-dependency classes are bundled. |
 
 ## 9. Before you claim anything is done
@@ -258,14 +479,21 @@ copyrightable, but the PDF is not ours to redistribute.
 Run these, and quote the real output rather than describing it:
 
 ```bash
-./gradlew clean build                  # 117 tests, 0 failed
-./gradlew :mod:runData                 # loads in a real runtime
-./gradlew :mod:runData -PbwrNoCC       # still loads without CC:Tweaked
-./gradlew :mod:runData -PbwrNoMekanism # still loads without Mekanism
-python tools-audit-assets.py           # PROBLEMS: 0
-python tools-check-jar.py              # no bundled soft dependencies
+./gradlew clean build                       # 124 tests, 124 passed, 0 failed
+./gradlew :mod:runData                      # loads in a real runtime
+./gradlew :mod:runData -PbwrNoCC            # still loads without CC:Tweaked
+./gradlew :mod:runData -PbwrNoMekanism      # still loads without Mekanism
+./gradlew :mod:runPeripheralCheck           # plant built and probed on a server; must exit 0
+./gradlew :mod:runPeripheralCheck -PbwrNoCC # proves the CC-less guard, must also exit 0
+python tools-audit-assets.py                # PROBLEMS: 0
+python tools-check-jar.py                   # OK: nothing forbidden is bundled
 ```
+
+**None of the five `run*` lines has been executed since the last round of fixes** — the newest run
+directory under `mod/run/` is older than the newest source file. The three offline commands have.
+`runPeripheralCheck` is the only one in this list that puts the mod in a world and ticks it.
 
 If you add a guard, **negative-test it** — inject a violation, confirm the build fails, remove it,
 confirm it passes. A guard that cannot fail is decoration, and this project has already shipped
-one of those.
+two of those: a design-rule scan that could not see four packages, and a runtime harness that
+exited 0 on failure.
