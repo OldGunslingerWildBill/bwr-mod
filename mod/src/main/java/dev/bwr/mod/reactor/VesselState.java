@@ -14,8 +14,11 @@ import net.minecraft.util.StringRepresentable;
  *
  * <h2>The head is wired to the physics, and this is where it enters</h2>
  * {@link #canHoldPressure()} is read by
- * {@code ReactorControllerBlockEntity.applyVesselHeadDischarge}, which pushes a
- * steam discharge into the core every tick while the head is off. It had no
+ * {@code ReactorControllerBlockEntity.applyVesselSteamDischarge}, which pushes a
+ * steam discharge into the core every tick while the head is off — summed there
+ * with whatever the RPV steam nozzles are passing, because the core holds one
+ * scalar for discharge out of the steam space and it can only have one writer.
+ * It had no
  * consumer at all for a long time, and the consequence was that removing the
  * head was a refuelling gate and nothing else: a vessel with no head on it went
  * on holding 1025 psig indefinitely, and the pressure, void and reactivity loop

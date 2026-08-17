@@ -14,8 +14,19 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 
-/** MSIV block. Redstone or Lua closes it; nothing else does. */
-public class MainSteamIsolationValveBlock extends BaseEntityBlock {
+/**
+ * MSIV block. Redstone or Lua closes it; nothing else does.
+ *
+ * <p>A {@link SteamLinePort} on all six faces. A real isolation valve is an
+ * in-line body with steam entering one end and leaving the other, so restricting
+ * connection to a single axis would be the more faithful thing — but this block
+ * has no {@code FACING} property and its model is an unoriented cube, so there
+ * is no axis to restrict to. Inventing one would refuse pipes on the strength of
+ * an orientation the player has no way to see or choose. If the valve ever gains
+ * a facing and a modelled body, override
+ * {@link SteamLinePort#acceptsSteamLineOn} here and the tubes follow.
+ */
+public class MainSteamIsolationValveBlock extends BaseEntityBlock implements SteamLinePort {
 
     public static final MapCodec<MainSteamIsolationValveBlock> CODEC =
             simpleCodec(MainSteamIsolationValveBlock::new);

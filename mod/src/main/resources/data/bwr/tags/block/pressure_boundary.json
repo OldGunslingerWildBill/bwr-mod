@@ -3,6 +3,7 @@
     "bwr:reactor_vessel",
     "bwr:suppression_pool_wall",
     "bwr:pressurised_tube",
-    "bwr:core_spray_sparger"
+    "bwr:core_spray_sparger",
+    "bwr:rpv_steam_outlet"
   ]
 }

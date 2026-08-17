@@ -86,7 +86,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     /**
      * Steam discharged through an open vessel head, kg/s per psi of gauge
-     * pressure. See {@link #applyVesselHeadDischarge}.
+     * pressure. See {@link #applyVesselSteamDischarge}.
      *
      * <p>Sized as choked flow through the head opening rather than picked to
      * taste. A BWR/6 vessel is about 6.4 m across, so the open head is roughly
@@ -143,10 +143,18 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private long rodLatticeMapSignature = Long.MIN_VALUE;
 
     /**
-     * Steam this controller last discharged through an open head, kg/s.
-     * See {@link #applyVesselHeadDischarge}.
+     * Steam this controller last discharged out of the vessel by the paths it
+     * owns — an open head plus every RPV steam nozzle in the shell, kg/s.
+     * See {@link #applyVesselSteamDischarge}.
      */
-    private double lastHeadDischargeKgPerS;
+    private double lastVesselDischargeKgPerS;
+
+    /**
+     * Of that, the part passing through the RPV steam nozzles, kg/s. Kept
+     * separately only so the status text can quote it; nothing reads it to make
+     * a decision.
+     */
+    private double lastSteamOutletFlowKgPerS;
 
     /**
      * Overpressure damage, held across a rebuild of the core object. Damage is
@@ -193,7 +201,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
 
         gatherPumpFlow(level);
-        applyVesselHeadDischarge();
+        applyVesselSteamDischarge(level);
 
         // Order matters. The drive network moves rods and spends accumulator
         // charge before the physics steps, then writes hardware condition back
@@ -271,7 +279,33 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     }
 
     /**
-     * A vessel with its head off vents to containment.
+     * Every path steam leaves this vessel by that the controller itself owns:
+     * an open head, and the RPV steam nozzles welded into the shell.
+     *
+     * <h2>Why one method and one write</h2>
+     * The core holds a single scalar for discharge out of the steam space, so
+     * there can be exactly one writer of it — the same rule that makes
+     * {@code ControlRodDriveNetwork} the only caller of {@code setRodNotchDemand}
+     * and {@code ReactorEccsBus} the only caller of
+     * {@code setReliefSteamFlowKgPerS}. Two per-tick writers on one scalar do
+     * not average, they alternate: whichever ticked last that tick wins, and the
+     * other's steam disappears from the pressure balance for 50 ms at a time.
+     * So the head and the nozzles are summed here and written once.
+     *
+     * <h2>Why the nozzles are not on the turbine channel</h2>
+     * Physically the main steam nozzles are where turbine steam leaves, and
+     * {@code setTurbineSteamFlowKgPerS} would be the natural home for them. It
+     * is taken: {@code TurbineSteamOutletBlockEntity} writes the pooled total of
+     * every outlet on this reactor into it on every one of its own ticks, and a
+     * nozzle contribution written there would be erased by the next outlet tick
+     * or would erase it. The vessel model does not distinguish the four steam
+     * sinks anyway — {@code PressureVessel.step} adds turbine, bypass, relief and
+     * leak into one {@code steamOut} term and its own javadoc says it "does not
+     * care which is which" — so routing the nozzles through the channel this
+     * class already owns costs nothing physically and keeps the single-writer
+     * rule intact. Folding the two into one properly wants a shared aggregator
+     * for the whole main steam path, which is a change to
+     * {@code dev.bwr.mod.steam} rather than to this file.
      *
      * <h2>Why this exists, and why it is a leak rather than a pressure clamp</h2>
      * {@link VesselState#canHoldPressure()} had no consumer at all, so removing
@@ -298,23 +332,66 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * for the same reason. Anything added later that wants to stage a leak —
      * a scenario command, a peripheral actuator — must add its flow to what this
      * method computes rather than writing the core directly, or it will survive
-     * exactly one tick. The write is skipped entirely while the head is on and
-     * nothing is being discharged, so a value written from elsewhere is at least
-     * not stamped on every tick of normal operation.
+     * exactly one tick. The write is skipped entirely while nothing at all is
+     * being discharged, so a value written from elsewhere is at least not
+     * stamped on every tick of normal operation.
      */
-    private void applyVesselHeadDischarge() {
-        double discharge = vesselState.canHoldPressure()
+    private void applyVesselSteamDischarge(Level level) {
+        double head = vesselState.canHoldPressure()
                 ? 0.0
                 // Flow stops when the vessel reaches containment pressure, which
                 // is where an open vessel sits. Keying on gauge pressure is what
                 // keeps this from dragging the dome down to the pressure model's
                 // numerical floor, some 14 psi below atmospheric.
                 : OPEN_HEAD_DISCHARGE_KG_PER_S_PER_PSI * Math.max(0.0, core.getPressurePsig());
-        if (discharge == 0.0 && lastHeadDischargeKgPerS == 0.0) {
+        double discharge = head + gatherSteamOutletFlow(level);
+        if (discharge == 0.0 && lastVesselDischargeKgPerS == 0.0) {
             return;
         }
         core.setSteamLeakKgPerS(discharge);
-        lastHeadDischargeKgPerS = discharge;
+        lastVesselDischargeKgPerS = discharge;
+    }
+
+    /**
+     * Ask every RPV steam nozzle in the shell what it is passing, and total it.
+     *
+     * <p>The nozzles are pure hardware: each one answers with its stop position
+     * times its choked-flow capacity at the pressure it is being handed, and
+     * nothing here or there looks at whether that flow is a good idea. Wide open
+     * on a cold vessel and the plant depressurises; shut at power and pressure
+     * climbs. This method only adds up.
+     *
+     * <p>{@code isLoaded} rather than a null check on the block entity, for the
+     * reason {@link #gatherPumpFlow} spells out: a vessel 21 blocks across
+     * straddles chunk borders, and {@code Level.getBlockEntity} answers null for
+     * an unloaded chunk exactly as it does for a broken block. Treating the two
+     * the same would make a nozzle in a neighbouring chunk read as shut, which
+     * on a plant running at power is a step change in steam removal caused by
+     * nothing the player did.
+     */
+    private double gatherSteamOutletFlow(Level level) {
+        if (structure == null || structure.steamOutletCount() == 0) {
+            lastSteamOutletFlowKgPerS = 0.0;
+            return 0.0;
+        }
+        double domePressurePsig = core.getPressurePsig();
+        double total = 0.0;
+        for (BlockPos p : structure.steamOutletPositions()) {
+            if (!level.isLoaded(p)) {
+                continue;
+            }
+            if (level.getBlockEntity(p) instanceof RpvSteamOutletBlockEntity nozzle) {
+                nozzle.refreshAttachmentPeriodically(level);
+                total += nozzle.flowKgPerS(domePressurePsig);
+            }
+        }
+        lastSteamOutletFlowKgPerS = total;
+        return total;
+    }
+
+    /** Steam leaving through the RPV steam nozzles on the last tick, kg/s. */
+    public double steamOutletFlowKgPerS() {
+        return lastSteamOutletFlowKgPerS;
     }
 
     // -----------------------------------------------------------------
@@ -337,7 +414,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * a single vessel block and putting it straight back therefore ran
      * {@code new ReactorCore(config)}: every loaded fuel assembly was discarded
      * with no item drop and no message, the running transient and its decay heat
-     * inventory went with it, and {@code initialiseHotShutdown()} reset the
+     * inventory went with it, and the shutdown initialisation reset the
      * boundary damage model, healing accumulated overpressure stress and even
      * repairing broken lines. The next autosave wrote the empty lattice and made
      * all of it permanent. It was a free full repair of a wrecked plant, and a
@@ -395,10 +472,19 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             // Before any restore: fromState carries the source strength the
             // reactor was saved with, and a saved reactor's source is its own.
             core.setNeutronSourceStrengthPerSecond(INSTALLED_NEUTRON_SOURCE_PER_SECOND);
-            // Before the hot shutdown initialisation, because the fuel decides
+            // Before the shutdown initialisation, because the fuel decides
             // what the reactivity balance it settles is.
             applyCoreFuel();
-            core.initialiseHotShutdown();
+            // COLD, not hot. Welding a vessel together must not hand the player
+            // 190 GJ of stored heat that nothing in the model produced: the
+            // first playtest formed an empty vessel and the panel read
+            // 1,025 psig and 287 C with no fuel in the lattice and no candidate
+            // source for any of it. Hot standby is a state the operator
+            // achieves, not an initial condition. initialiseHotShutdown() still
+            // exists and is still correct — the test harness and the acceptance
+            // suite legitimately want a hot core to start from — but a plant
+            // that has never run starts cold and the player heats it up.
+            core.initialiseCold();
             rodNetwork = new ControlRodDriveNetwork(core, found.controlRodCount());
             if (pendingRestore != null) {
                 tryRestore(pendingRestore);
@@ -423,9 +509,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             // The pumps have to re-establish their claim on the flow demand
             // against a core that has never heard from them.
             lastPumpFlowFraction = Double.NaN;
-            // After the core is built and restored, because
-            // initialiseHotShutdown() deliberately resets the damage model to a
-            // pristine plant and this puts the plant's real history back.
+            // After the core is built and restored, because initialiseCold()
+            // deliberately resets the damage model to a pristine plant and this
+            // puts the plant's real history back.
             BoundaryDamageNbt.seedFrom(core.getBoundaryStress(), getBlockPos());
             if (pendingBoundaryRestore != null) {
                 BoundaryDamageNbt.read(pendingBoundaryRestore, core.getBoundaryStress());
@@ -729,6 +815,13 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                     core.getPressurePsig(),
                     core.getChargedAccumulatorCount(),
                     core.getControlRodCount()));
+            // What the vessel's own steam penetrations are doing. A measurement,
+            // and the one a player standing at the reactor wants while they are
+            // working out why pressure is going the way it is.
+            out.add(String.format("%d RPV steam outlet(s) fitted, passing %.1f kg/s;"
+                            + " core boiling %.1f kg/s",
+                    structure.steamOutletCount(), lastSteamOutletFlowKgPerS,
+                    core.getSteamGenerationKgPerS()));
             out.addAll(BoundaryDamageReadout.statusLines(core.getBoundaryStress()));
         }
         out.addAll(lastValidation.messages());

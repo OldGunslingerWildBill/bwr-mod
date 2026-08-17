@@ -191,6 +191,21 @@ public final class PressureVessel {
     public static final double MAXIMUM_PRESSURE_PSIG = 5000.0;
 
     // ---------------------------------------------------------------
+    // Initial conditions
+    // ---------------------------------------------------------------
+
+    /**
+     * Dome pressure of a vessel that has never been heated, psig — atmospheric,
+     * which is zero on a gauge.
+     *
+     * <p>Not a guard and not a floor: {@link #MINIMUM_PRESSURE_PSIG} is 14.6 psi
+     * below this and the plant can be driven there. This is where
+     * {@link #initialiseCold()} starts, and the whole of its significance is that
+     * a psig scale reads zero when the vessel is holding nothing.
+     */
+    public static final double COLD_SHUTDOWN_PRESSURE_PSIG = 0.0;
+
+    // ---------------------------------------------------------------
     // Configuration
     // ---------------------------------------------------------------
 
@@ -850,6 +865,65 @@ public final class PressureVessel {
      */
     public void initialiseToNormalLevel() {
         this.pressurePsig = PhysicalConstants.RATED_DOME_PRESSURE_PSIG;
+        this.liquidMassKg = config.coolantMassKg;
+        recomputeLevels();
+    }
+
+    /**
+     * Put the vessel where a plant that has never operated actually is:
+     * atmospheric pressure, holding the coolant inventory it was filled with.
+     *
+     * <p>{@link #initialiseToNormalLevel()} is the far end of the same road and
+     * the two are not interchangeable. Rated pressure is a condition an operator
+     * <i>reaches</i>, by making heat and holding it in — about 190 GJ of it for
+     * this vessel, which is 53 s at rated power or half an hour at a few per cent.
+     * Starting a vessel there hands over all of that for nothing, and on a core
+     * with no fuel in it there is not even a candidate source for it.
+     *
+     * <h2>Why the water is at 99 degC and not at 20</h2>
+     * This class has no bulk liquid temperature to put at 20 degC. The vessel is
+     * a saturated system — {@code SPEC.md} section 6.1 fixes pressure and
+     * temperature to each other, {@link #getSaturationTemperatureC()} reads the
+     * one off the other, and that is what a BWR <i>is</i>. So the coldest state a
+     * saturated vessel has is atmospheric pressure with the water at the boiling
+     * point for atmospheric pressure: 99.3 degC on {@link Saturation}'s
+     * correlation, near enough the 100 degC boundary of cold shutdown.
+     *
+     * <p>Genuinely ambient water would need two states this model does not have:
+     * a subcooled bulk liquid temperature, and a non-condensible partial pressure
+     * to hold the dome up while the water sits below its own boiling point. Only
+     * the pair is any use — without the nitrogen the saturation curve puts a
+     * 20 degC vessel at 0.1 psia, which is simultaneously a hard vacuum, a
+     * nonsense reading on a gauge calibrated in psig, and the exact floor
+     * {@link Saturation#MINIMUM_PRESSURE_PSIA} guards every correlation with.
+     * What that omission costs is the first 80 degC of a heat-up, about a quarter
+     * of it. The other three quarters are modelled properly and for free, because
+     * the liquid term of the pressure capacity in {@link #step} is precisely the
+     * whole inventory's sensible heat: feeding core power to a vessel at 0 psig
+     * raises pressure at exactly the rate {@code M dh_f/dt = Q} allows, so a
+     * player heats this plant up by making heat and shutting the valves, which is
+     * how it is done.
+     *
+     * <h2>Why the same inventory as hot, standing 127 in lower</h2>
+     * {@link CoreConfig#coolantMassKg} is the mass that reads
+     * {@link #NORMAL_COLLAPSED_LEVEL_IN} <i>once the plant is hot</i>. Cold water
+     * is denser — 959 kg/m3 against 732 — so the same mass in the same vessel
+     * stands about 119 in below instrument zero, and rises through the normal band
+     * on its own as the plant heats and the water expands. That is simply what
+     * constant mass does, and it is the forgiving direction to be wrong in: this
+     * plant has no drain, so a vessel filled cold to the hot normal level would
+     * have nowhere to put the 68 tonnes of swell and would finish its heat-up
+     * water-solid into the steam lines with only a hand-staged leak to fix it.
+     *
+     * <p>The level instrument disagrees with all of that, and is right to. The
+     * variable leg is full of cold dense water while the cell was calibrated at
+     * {@link #CALIBRATION_PRESSURE_PSIG}, so {@link #getIndicatedLevelIn()} reads
+     * about 62 in above the collapsed level it is actually looking at. A DP cell
+     * on a cold vessel reading high is real [TTC 3.1.2.1.1] — the same
+     * calibration error the class comment describes, pointing the other way.
+     */
+    public void initialiseCold() {
+        this.pressurePsig = COLD_SHUTDOWN_PRESSURE_PSIG;
         this.liquidMassKg = config.coolantMassKg;
         recomputeLevels();
     }

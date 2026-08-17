@@ -35,9 +35,23 @@ public final class ValidationResult {
     private final List<Problem> failures = new ArrayList<>();
     private final List<Problem> degradations = new ArrayList<>();
 
-    /** A hard failure: the multiblock will not form. */
+    /**
+     * A hard failure: the multiblock will not form.
+     *
+     * <p>The position is <b>copied</b>, and that copy is load-bearing.
+     * {@link ReactorStructure}'s scans walk the vessel with a single
+     * {@link BlockPos.MutableBlockPos} cursor rather than allocating a position
+     * per block — a 21x21x21 interior is nine thousand of them per sweep, several
+     * times a minute — and a {@link Problem} outlives the loop that produced it:
+     * the controller holds the whole result in {@code lastValidation} and prints
+     * it whenever a player right-clicks. Storing the cursor itself would make
+     * every problem in the list report whichever block the walk happened to
+     * finish on. {@link BlockPos#immutable()} returns {@code this} for a position
+     * that is already immutable, so this costs nothing for callers that hand over
+     * a real one.
+     */
     public ValidationResult fail(BlockPos where, String message) {
-        failures.add(new Problem(where, message));
+        failures.add(new Problem(where == null ? null : where.immutable(), message));
         return this;
     }
 
@@ -45,9 +59,12 @@ public final class ValidationResult {
         return fail(null, message);
     }
 
-    /** A degradation: the multiblock forms, but something works less well. */
+    /**
+     * A degradation: the multiblock forms, but something works less well. The
+     * position is copied for the reason {@link #fail(BlockPos, String)} gives.
+     */
     public ValidationResult degrade(BlockPos where, String message) {
-        degradations.add(new Problem(where, message));
+        degradations.add(new Problem(where == null ? null : where.immutable(), message));
         return this;
     }
 

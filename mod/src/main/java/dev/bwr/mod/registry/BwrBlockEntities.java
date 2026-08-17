@@ -7,6 +7,7 @@ import dev.bwr.mod.eccs.EccsPumpBlockEntity;
 import dev.bwr.mod.flow.RecirculationPumpBlockEntity;
 import dev.bwr.mod.fuel.FuelFabricatorBlockEntity;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
+import dev.bwr.mod.reactor.RpvSteamOutletBlockEntity;
 import dev.bwr.mod.rods.ControlRodDriveBlockEntity;
 import dev.bwr.mod.steam.MainSteamIsolationValveBlockEntity;
 import dev.bwr.mod.steam.SafetyReliefValveBlockEntity;
@@ -50,6 +51,15 @@ public final class BwrBlockEntities {
             MSIV = BLOCK_ENTITIES.register("msiv",
             () -> BlockEntityType.Builder.of(MainSteamIsolationValveBlockEntity::new,
                     BwrBlocks.MSIV.get()).build(null));
+
+    /**
+     * The RPV main steam nozzle. It carries a stop position, so it needs state;
+     * it carries no ticker, because the controller walks its own nozzles.
+     */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RpvSteamOutletBlockEntity>>
+            RPV_STEAM_OUTLET = BLOCK_ENTITIES.register("rpv_steam_outlet",
+            () -> BlockEntityType.Builder.of(RpvSteamOutletBlockEntity::new,
+                    BwrBlocks.RPV_STEAM_OUTLET.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TurbineSteamOutletBlockEntity>>
             TURBINE_STEAM_OUTLET = BLOCK_ENTITIES.register("turbine_steam_outlet",

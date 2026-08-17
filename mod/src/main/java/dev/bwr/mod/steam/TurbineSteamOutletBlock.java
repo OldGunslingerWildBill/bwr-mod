@@ -32,8 +32,15 @@ import net.minecraft.world.phys.BlockHitResult;
  * <p>Deliberately carries no blockstate properties. The outlet's condition is a
  * continuous flow, not an on/off pose, and a state property would only be
  * something an asset has to model for no visual gain.
+ *
+ * <p>A {@link SteamLinePort} on all six faces, which is the connection that
+ * makes "is the turbine actually connected" a question a build can answer: this
+ * is the downstream end of the main steam line, and a run of tube from the
+ * vessel that lands on it visibly terminates rather than running into a wall.
+ * All six faces because the block has no {@code FACING} and its model is
+ * symmetric on four sides; there is no nozzle drawn anywhere to honour.
  */
-public class TurbineSteamOutletBlock extends BaseEntityBlock {
+public class TurbineSteamOutletBlock extends BaseEntityBlock implements SteamLinePort {
 
     public static final MapCodec<TurbineSteamOutletBlock> CODEC =
             simpleCodec(TurbineSteamOutletBlock::new);

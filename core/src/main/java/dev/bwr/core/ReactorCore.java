@@ -283,6 +283,17 @@ public final class ReactorCore {
     }
 
     /**
+     * <p>A newly constructed core is left at <b>hot shutdown</b>, and that is a
+     * default rather than a claim about where a reactor starts. The constructor
+     * has to leave every component in some self-consistent state, and every real
+     * caller immediately says which one it wants: the harness and the acceptance
+     * suite call {@link #initialiseHotShutdown()} or
+     * {@link #initialiseAtTotalPowerFraction} because they are staging a plant
+     * that is already running, and the mod calls {@link #initialiseCold()} on
+     * formation and {@link #fromState} on a chunk load, either of which overwrites
+     * all of this. Nothing is meant to read a core between construction and one of
+     * those calls; if anything ever does, it is looking at a placeholder.
+     *
      * @param config  tunables and core sizing; the reference is retained, so
      *                retuning it takes effect on the next tick
      * @param loading the fuel actually in the core. Supplies the aggregate
@@ -390,15 +401,83 @@ public final class ReactorCore {
      * <p>That last part is what puts a finite count rate on the source range
      * monitors before the first rod moves, and it is the starting condition an
      * approach to critical is run from.
+     *
+     * <p><b>This is a state an operator achieves, not a state a plant is in.</b>
+     * A vessel at 1025 psig is holding 190 GJ that something had to put there, so
+     * this is the right starting point for a scenario that begins with the plant
+     * already hot — the acceptance suite and {@code TransientHarness} both want
+     * exactly that, and get it — and the wrong one for a reactor that has just
+     * been built. Use {@link #initialiseCold()} for that.
      */
     public void initialiseHotShutdown() {
+        vessel.initialiseToNormalLevel();
+        initialiseShutdownAtVesselConditions();
+    }
+
+    /**
+     * Cold shutdown: atmospheric dome pressure, water and fuel at the boiling
+     * point for it, every rod fully inserted, accumulators charged, no irradiation
+     * history — a reactor as it comes out of the shipyard, before anybody has
+     * heated it.
+     *
+     * <p>Identical to {@link #initialiseHotShutdown()} in every respect except
+     * where the vessel is put, which is the only difference there should be
+     * between the two: both are shut-down plants with a full complement of charged
+     * accumulators, an empty fission product inventory and the flux sitting at the
+     * source-driven subcritical equilibrium. See
+     * {@link PressureVessel#initialiseCold()} for what "cold" can and cannot mean
+     * in a vessel model whose temperature <i>is</i> its pressure, and for why the
+     * water stands 127 in below where it will sit once the plant is hot.
+     *
+     * <p><b>Nothing here heats the plant, and nothing may be added that does.</b>
+     * The heat-up is the player's to run, with the actuators that already exist:
+     * withdraw rods until the core is critical, hold the turbine, bypass and
+     * relief valves shut, and the pressure capacity term in
+     * {@link PressureVessel#step} turns core power into dome pressure at exactly
+     * the rate the inventory's sensible heat allows. An automatic warm-up would be
+     * the model deciding on the player's behalf what condition the plant ought to
+     * be in, which is the one thing this codebase does not do.
+     *
+     * <h2>What a freshly built plant therefore reads</h2>
+     * 0 psig, 99 degC, no power, no decay heat, no pressure rise, and — on a
+     * vessel with no fuel in it — a reactivity of many dollars negative, because
+     * an empty lattice has no k-infinity to be reactive with. Those are all
+     * measurements of a plant in which nothing has happened yet, which is the
+     * point: the first playtest formed an unfuelled core and found it at 1025 psig
+     * and 287 degC, hot standby with no candidate heat source anywhere in the
+     * model, because formation ran the hot initialiser.
+     *
+     * <p>The recirculation pumps are left on their low-speed detent exactly as
+     * hot shutdown leaves them, and that is a deliberate choice rather than a
+     * copied line. Real BWR practice is to run recirculation in slow speed
+     * <i>through</i> the startup, and this model has a stronger reason:
+     * {@code SPEC.md} section 4.5 defers natural circulation, so
+     * {@link VoidModel#MINIMUM_FLOW_FRACTION} — one per cent of rated — is all a
+     * core with its pumps stopped gets, and one per cent of flow against any real
+     * power drives quality to one and void to its ceiling. Handing a player a
+     * plant parked in the least physical corner of the flow model would be a trap
+     * with no exit; the low-speed detent is both the real lineup and out of it.
+     */
+    public void initialiseCold() {
+        vessel.initialiseCold();
+        initialiseShutdownAtVesselConditions();
+    }
+
+    /**
+     * Everything a shut-down plant is, given a vessel that has already been put
+     * where it belongs. Shared by {@link #initialiseHotShutdown()} and
+     * {@link #initialiseCold()} so the two cannot drift apart: the difference
+     * between a hot plant and a cold one is the dome pressure and the water
+     * standing in the vessel, and nothing else about a shut-down reactor has any
+     * business differing between them.
+     */
+    private void initialiseShutdownAtVesselConditions() {
         Arrays.fill(rodNotchIndex, RodWorth.NOTCH_INDEX_FULLY_INSERTED);
         Arrays.fill(rodNotchDemand, RodWorth.NOTCH_INDEX_FULLY_INSERTED);
         Arrays.fill(rodDriveTimerSeconds, 0.0);
         Arrays.fill(accumulatorCharge, 1.0);
         scramActive = false;
 
-        vessel.initialiseToNormalLevel();
         double pressurePsig = vessel.getPressurePsig();
         double saturationC = Saturation.temperatureCelsiusFromPsig(pressurePsig);
 
@@ -407,6 +486,28 @@ public final class ReactorCore {
         boronPpm = 0.0;
         fuelThermal.initialiseToSteadyState(0.0, pressurePsig);
         fuelThermal.restoreTemperatures(saturationC, saturationC);
+        // The fuel damage record is history too, and this method is describing a
+        // plant that has none — the decay heat inventory, the xenon and the
+        // pressure boundary's accumulated wear are all cleared within a few lines
+        // of here for exactly the same reason.
+        //
+        // It has to be cleared explicitly because peak clad and peak fuel
+        // temperature are monotonic and initialiseToSteadyState above can only
+        // raise them. So a core initialised twice kept the hotter of the two
+        // conditions: constructed at hot shutdown and then initialised cold, it
+        // sat at 99 degC reporting a peak clad temperature of 287.44 — the rated
+        // saturation temperature, on a vessel that had never been within 900 psi
+        // of rated pressure. That is the same 287 degC the first in-world playtest
+        // found on the panel of an unfuelled core, arriving by a second route, and
+        // fixing only the vessel would have left it there.
+        //
+        // Bit-identical for every existing caller. All three of them — this
+        // class's own constructor, TransientHarness.shutdownCore() and the mod's
+        // formation path — call an initialiser on a core built moments earlier,
+        // whose record is pristine anyway, and at zero power the two temperatures
+        // written here are the same doubles initialiseToSteadyState just derived
+        // from the same pressure.
+        fuelThermal.restoreDamageState(saturationC, saturationC, 0.0, 0.0);
 
         recirculationFlowFractionDemand = PhysicalConstants.RECIRC_LOW_SPEED_FRACTION;
         coreFlowFraction = PhysicalConstants.RECIRC_LOW_SPEED_FRACTION;

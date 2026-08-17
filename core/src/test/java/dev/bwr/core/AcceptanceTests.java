@@ -68,6 +68,7 @@ public final class AcceptanceTests {
             SaturationTest.class,
             SourceRangeMonitorTest.class,
             SubcriticalSourceTest.class,
+            ColdStartTest.class,
             ReactorCoreScramTest.class,
             ReactorCoreTickTest.class,
             ReactorStateRoundTripTest.class,

@@ -43,6 +43,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.MSIV);
     public static final DeferredItem<BlockItem> PRESSURISED_TUBE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.PRESSURISED_TUBE);
+    public static final DeferredItem<BlockItem> RPV_STEAM_OUTLET =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.RPV_STEAM_OUTLET);
     public static final DeferredItem<BlockItem> TURBINE_STEAM_OUTLET =
             ITEMS.registerSimpleBlockItem(BwrBlocks.TURBINE_STEAM_OUTLET);
     public static final DeferredItem<BlockItem> FUEL_FABRICATOR =
@@ -93,6 +95,7 @@ public final class BwrItems {
                         output.accept(SAFETY_RELIEF_VALVE.get());
                         output.accept(MSIV.get());
                         output.accept(PRESSURISED_TUBE.get());
+                        output.accept(RPV_STEAM_OUTLET.get());
                         output.accept(TURBINE_STEAM_OUTLET.get());
                         output.accept(FUEL_FABRICATOR.get());
                         output.accept(SUPPRESSION_POOL_CONTROLLER.get());

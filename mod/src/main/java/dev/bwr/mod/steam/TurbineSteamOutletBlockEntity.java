@@ -133,6 +133,16 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
      * <p>Weakly keyed on the controller block entity, so an unloaded reactor
      * takes its pool with it. Entries whose stamp has gone stale — an outlet
      * broken, unloaded or no longer bound — drop out on their own.
+     *
+     * <p><b>Nothing reachable from a pool may reference the controller it is
+     * keyed on.</b> A {@link WeakHashMap} holds its values strongly, so a value
+     * with a path back to its own key keeps that key permanently alive and the
+     * weak keying becomes decoration — the whole reactor, its {@link Level} and
+     * every loaded chunk stay reachable from a static field for the life of the
+     * JVM. Today the pool is {@code BlockPos} to a record of two primitives, and
+     * that is the property to preserve: if a contribution ever needs to know
+     * which outlet or which reactor it came from, it stores a position, never a
+     * block entity.
      */
     private static final Map<ReactorControllerBlockEntity, Map<BlockPos, Contribution>>
             CONTRIBUTIONS = Collections.synchronizedMap(new WeakHashMap<>());

@@ -13,6 +13,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Finds the {@link ReactorEccsBus} for a reactor, and drives every bus once per
@@ -34,23 +35,44 @@ public final class EccsNetwork {
     private EccsNetwork() {
     }
 
+    /**
+     * One bus per reactor. Only ever touched from the server thread: every
+     * caller of {@link #busFor}, {@link #existingBusFor} and {@link #withdraw}
+     * is a block-entity tick or a block removal, and both of those are the
+     * server's. That is why a plain {@link HashMap} is enough — do not add a
+     * caller on the computer thread without changing this.
+     */
     private static final Map<GlobalPos, ReactorEccsBus> BUSES = new HashMap<>();
 
-    private static boolean listenerRegistered;
+    /**
+     * Whether the server-tick driver has been attached.
+     *
+     * <p>Atomic, and it has to be. This is reached from the constructor of
+     * every ECCS block entity, and a block entity is constructed on the
+     * <b>client</b> as well as on the server — the client builds one for every
+     * pool controller, ECCS pump and ADS controller that arrives in a chunk
+     * packet. So in single player the render thread and the server thread both
+     * run this, and with a plain boolean both could read false before either
+     * wrote true. The loser's write is lost, both threads call
+     * {@code addListener}, and the handler is now on the bus twice with no way
+     * to ever take it off again: nothing in this class unregisters, so a
+     * duplicate is permanent for the life of the JVM and the whole
+     * {@link #BUSES} sweep runs twice per tick from then on.
+     */
+    private static final AtomicBoolean LISTENER_REGISTERED = new AtomicBoolean();
 
     /**
      * Attach the server-tick driver, once per JVM.
      *
      * <p>Called from the constructor of every ECCS block entity rather than
      * from mod setup, so that an install where nobody has built an emergency
-     * system never registers a handler at all. Idempotent, and only ever
-     * reached from the server thread.
+     * system never registers a handler at all. Idempotent, and reached from
+     * both the client and the server thread — see {@link #LISTENER_REGISTERED}.
      */
     public static void ensureListenerRegistered() {
-        if (listenerRegistered) {
+        if (!LISTENER_REGISTERED.compareAndSet(false, true)) {
             return;
         }
-        listenerRegistered = true;
         NeoForge.EVENT_BUS.addListener(EccsNetwork::onServerTickPost);
         NeoForge.EVENT_BUS.addListener(EccsNetwork::onServerStopped);
     }

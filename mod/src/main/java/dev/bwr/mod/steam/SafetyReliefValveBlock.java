@@ -13,8 +13,15 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 
 /**
  * Safety/relief valve block. Redstone opens it; so does Lua. Physics never does.
+ *
+ * <p>A {@link SteamLinePort} on all six faces, including the bottom. The
+ * discharge does leave downwards — {@link SafetyReliefValveBlockEntity} looks
+ * straight down for the pool surface — but that search reads fluid states and
+ * walks past solid blocks, so a tube underneath neither helps nor hinders it.
+ * Refusing the connection would only mean a player who chooses to run the tailpipe
+ * in tube gets a stub instead, over a distinction the model does not make.
  */
-public class SafetyReliefValveBlock extends BaseEntityBlock {
+public class SafetyReliefValveBlock extends BaseEntityBlock implements SteamLinePort {
 
     public static final MapCodec<SafetyReliefValveBlock> CODEC =
             simpleCodec(SafetyReliefValveBlock::new);

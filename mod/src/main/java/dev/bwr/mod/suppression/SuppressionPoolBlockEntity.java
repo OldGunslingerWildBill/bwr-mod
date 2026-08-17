@@ -19,15 +19,15 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 
-import java.util.ArrayDeque;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The suppression pool multiblock — {@code SPEC.md} section 12.
@@ -505,6 +505,26 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      * an ocean. What stops the re-walking now is {@code refused}, which only
      * ever skips a seed already known to sit in a refused body, and
      * {@link #SURVEY_WORK_LIMIT}, which bounds the total work outright.
+     *
+     * <h2>Why the walked positions are held as primitive longs</h2>
+     * These two sets used to be {@code HashSet<Long>}, and every position the
+     * survey touched was boxed into a {@code Long} on the heap —
+     * {@code Long.valueOf} only caches -128..127 and a packed {@code BlockPos}
+     * is nowhere near that range, so every single one was a fresh allocation,
+     * plus a {@code HashMap.Node} to hold it. {@link #SURVEY_WORK_LIMIT} allows
+     * 65,536 walked positions before the survey gives up, and each of them was
+     * boxed twice over — once into {@code body} and again when {@code body} was
+     * copied into {@code refused} — so a controller sitting beside open water
+     * produced several megabytes of immediately-dead objects, and did it again
+     * every {@link #UNFORMED_REVALIDATE_INTERVAL_TICKS} for as long as the pool
+     * stayed unformed. That is a controller the player set down and walked away
+     * from quietly running the garbage collector for them.
+     *
+     * <p>{@code LongOpenHashSet} stores the packed positions in a primitive
+     * array, so the walk allocates nothing per position at all. It is fastutil,
+     * which Minecraft already ships and depends on heavily; this adds no
+     * dependency. The traversal itself is unchanged — same seeds, same order,
+     * same answers.
      */
     private Basin surveyBasin(Level level) {
         BlockPos origin = getBlockPos();
@@ -523,14 +543,20 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         }
         seeds.sort(Comparator.comparingDouble(p -> p.distSqr(origin)));
 
-        Set<Long> refused = new HashSet<>();
+        LongOpenHashSet refused = new LongOpenHashSet();
+        // One body set, cleared between attempts rather than reallocated. The
+        // previous attempt's contents have already been folded into `refused`
+        // by the bottom of the loop, so clearing is exactly equivalent to a
+        // fresh set, and it means a shoreline build that walks the sea several
+        // times grows the backing table once instead of once per seed.
+        LongOpenHashSet body = new LongOpenHashSet();
         String firstProblem = null;
         int walked = 0;
         for (BlockPos seed : seeds) {
             if (refused.contains(seed.asLong())) {
                 continue;
             }
-            Set<Long> body = new HashSet<>();
+            body.clear();
             Basin basin = fillBasin(level, origin, seed, body);
             if (basin.problem() == null) {
                 return basin;
@@ -561,25 +587,38 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      * there is no problem, and how far the walk got before giving up when there
      * is. Only {@link #surveyBasin} sees the second kind, and only to charge it
      * against the work limit.
+     *
+     * <p>The stack holds packed positions rather than {@code BlockPos} objects,
+     * for the same reason {@code body} does — see {@link #surveyBasin}. Every
+     * position that went on it used to be a {@code next.immutable()} copy, so a
+     * full 32,768-block basin allocated 32,768 {@code BlockPos} on top of the
+     * boxing. Two mutable cursors do the whole walk now: one for the position
+     * being expanded and one for the six neighbour probes.
      */
-    private Basin fillBasin(Level level, BlockPos origin, BlockPos seed, Set<Long> body) {
-        ArrayDeque<BlockPos> stack = new ArrayDeque<>();
-        stack.push(seed);
+    private Basin fillBasin(Level level, BlockPos origin, BlockPos seed, LongOpenHashSet body) {
+        LongArrayList stack = new LongArrayList();
+        stack.push(seed.asLong());
         body.add(seed.asLong());
         int found = 0;
-        // One cursor for the six neighbour probes. Most of them are not water,
-        // and a basin this size would otherwise throw away a couple of hundred
-        // thousand BlockPos objects per survey to find that out.
+        // One cursor for the position being expanded, one for the six neighbour
+        // probes. Most of the probes are not water, and a basin this size would
+        // otherwise throw away a couple of hundred thousand BlockPos objects per
+        // survey to find that out.
+        BlockPos.MutableBlockPos current = new BlockPos.MutableBlockPos();
         BlockPos.MutableBlockPos next = new BlockPos.MutableBlockPos();
 
         while (!stack.isEmpty()) {
-            BlockPos p = stack.pop();
+            // LongArrayList.push/popLong append and remove at the end, so this
+            // is the same last-in-first-out order ArrayDeque.push/pop gave and
+            // the walk stays depth first, which the paragraph above depends on.
+            long packed = stack.popLong();
+            current.set(BlockPos.getX(packed), BlockPos.getY(packed), BlockPos.getZ(packed));
             found++;
             if (found > MAX_WATER_BLOCKS) {
                 return new Basin(found, tooMuchWaterMessage());
             }
             for (Direction d : DIRECTIONS) {
-                next.setWithOffset(p, d);
+                next.setWithOffset(current, d);
                 if (!isPoolWater(level, next)) {
                     continue;
                 }
@@ -591,8 +630,9 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
                             + " a suppression pool has to be an enclosed basin, not an ocean,"
                             + " a lake or a flooded cave");
                 }
-                if (body.add(next.asLong())) {
-                    stack.push(next.immutable());
+                long neighbour = next.asLong();
+                if (body.add(neighbour)) {
+                    stack.push(neighbour);
                 }
             }
         }

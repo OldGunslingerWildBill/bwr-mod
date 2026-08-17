@@ -11,6 +11,7 @@ import dev.bwr.mod.fuel.FuelFabricatorBlock;
 import dev.bwr.mod.reactor.CoreSpraySpargerBlock;
 import dev.bwr.mod.reactor.ReactorControllerBlock;
 import dev.bwr.mod.reactor.ReactorVesselBlock;
+import dev.bwr.mod.reactor.RpvSteamOutletBlock;
 import dev.bwr.mod.rods.ControlRodDriveBlock;
 import dev.bwr.mod.steam.MainSteamIsolationValveBlock;
 import dev.bwr.mod.steam.PressurisedTubeBlock;
@@ -107,6 +108,22 @@ public final class BwrBlocks {
      */
     public static final DeferredBlock<PressurisedTubeBlock> PRESSURISED_TUBE =
             BLOCKS.register("pressurised_tube", () -> new PressurisedTubeBlock(machine()));
+
+    /**
+     * RPV main steam nozzle — the penetration steam actually leaves the vessel
+     * through, and part of the pressure boundary rather than a satellite of it.
+     *
+     * <p>Not to be confused with the turbine steam outlet below, which is a
+     * different piece of plant at the other end of the steam line: this one is
+     * welded into the vessel wall and is where the line starts, that one is
+     * where the line ends and hands its steam to Mekanism. A plant wants both,
+     * and four of these, per SPEC section 6.4's split between the RPV steam dome
+     * and the main steam header.
+     *
+     * <p>Vessel steel rather than machine casing, because that is what it is.
+     */
+    public static final DeferredBlock<RpvSteamOutletBlock> RPV_STEAM_OUTLET =
+            BLOCKS.register("rpv_steam_outlet", () -> new RpvSteamOutletBlock(vesselSteel()));
 
     /**
      * Turbine steam outlet — the boundary where our physics hands steam to

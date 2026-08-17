@@ -64,17 +64,20 @@ public final class ReactorStructure {
     private final BlockPos interiorMax;
     private final List<BlockPos> rodPositions;
     private final List<BlockPos> crdPositions;
+    private final List<BlockPos> steamOutletPositions;
     private final int topOfActiveFuelY;
     private final int assemblyCount;
     private double sprayRingCompleteness = 1.0;
 
     private ReactorStructure(BlockPos interiorMin, BlockPos interiorMax,
                              List<BlockPos> rodPositions, List<BlockPos> crdPositions,
+                             List<BlockPos> steamOutletPositions,
                              int topOfActiveFuelY, int assemblyCount) {
         this.interiorMin = interiorMin;
         this.interiorMax = interiorMax;
         this.rodPositions = Collections.unmodifiableList(rodPositions);
         this.crdPositions = Collections.unmodifiableList(crdPositions);
+        this.steamOutletPositions = Collections.unmodifiableList(steamOutletPositions);
         this.topOfActiveFuelY = topOfActiveFuelY;
         this.assemblyCount = assemblyCount;
     }
@@ -95,6 +98,25 @@ public final class ReactorStructure {
     /** The drive beneath each rod, parallel to {@link #rodPositions()}. */
     public List<BlockPos> crdPositions() {
         return crdPositions;
+    }
+
+    /**
+     * Every RPV main steam nozzle welded into this vessel's shell, in the order
+     * the shell walk found them.
+     *
+     * <p>This is the plant's steam penetration list, and
+     * {@link ReactorControllerBlockEntity} walks it once a tick to work out how
+     * much steam is leaving. Empty is a perfectly valid answer: a vessel with no
+     * nozzles is a sealed one, and sealing a reactor is a thing a player is
+     * allowed to do to themselves.
+     */
+    public List<BlockPos> steamOutletPositions() {
+        return steamOutletPositions;
+    }
+
+    /** How many RPV steam nozzles this vessel has, however many are open. */
+    public int steamOutletCount() {
+        return steamOutletPositions.size();
     }
 
     public int controlRodCount() {
@@ -194,11 +216,15 @@ public final class ReactorStructure {
             return null;
         }
 
-        // Shell must be closed all the way round.
-        checkShellClosed(level, min, max, result);
+        // Shell must be closed all the way round. The same walk is the only
+        // pass that visits every wall block, so it is also where the vessel's
+        // steam penetrations are picked up.
+        List<BlockPos> steamOutlets = new ArrayList<>();
+        checkShellClosed(level, min, max, steamOutlets, result);
         if (result.hasEnoughFailures()) {
             return null;
         }
+        reportSteamOutlets(level, steamOutlets, result);
 
         // Active fuel occupies the middle of the vessel; the dome is above it,
         // and the dome has to be deep enough to hold both sparger rings —
@@ -261,7 +287,7 @@ public final class ReactorStructure {
         }
 
         ReactorStructure structure =
-                new ReactorStructure(min, max, rods, crds, activeFuelTopY, assemblies);
+                new ReactorStructure(min, max, rods, crds, steamOutlets, activeFuelTopY, assemblies);
         structure.sprayRingCompleteness = ringCompleteness;
         return structure;
     }
@@ -320,16 +346,40 @@ public final class ReactorStructure {
         return true;
     }
 
-    /** Interior space is anything that is not part of the shell. */
+    /**
+     * Interior space is anything that is not part of the wall itself.
+     *
+     * <p>The list here is shorter than {@link #isShell} on purpose and the two
+     * are not complements. A sparger segment is legal shell where the ring meets
+     * the wall and is also legal <i>inside</i> the vessel, where most of the ring
+     * lives, so it has to read as open space; the same is true of a tube or a
+     * jet pump in the downcomer. The blocks named below are the ones that can
+     * only ever be wall, and naming one here is what stops
+     * {@link #measureInterior} walking straight through it and out of the plant.
+     *
+     * <p>An RPV steam nozzle belongs on that shorter list. It is a hole in the
+     * vessel with a valve in it, never a thing standing in the water, and a
+     * nozzle sitting on the seed block's ray would otherwise be counted as
+     * interior — sending the interior walk out through the wall until its
+     * runaway guard stopped it and the plant was rejected as "not a closed
+     * rectangular volume". Which is precisely the failure mode
+     * {@link #findInteriorSeed} was written to kill.
+     */
     private static boolean isInteriorBlock(Level level, BlockPos pos) {
         BlockState s = level.getBlockState(pos);
         return !s.is(BwrBlocks.REACTOR_VESSEL.get())
-                && !s.is(BwrBlocks.REACTOR_CONTROLLER.get());
+                && !s.is(BwrBlocks.REACTOR_CONTROLLER.get())
+                && !s.is(BwrBlocks.RPV_STEAM_OUTLET.get());
     }
 
     /**
      * Expand from a seed to the largest axis-aligned box of interior space.
      * Returns {minX, minY, minZ, maxX, maxY, maxZ}, or null if it runs away.
+     *
+     * <p>One cursor for all six rays. Nothing here keeps a position past the
+     * test it was made for — the answer is six {@code int}s — so there is no
+     * reason to allocate one per step. See {@link #checkShellClosed} for the
+     * rule that governs when a cursor may and may not be used.
      */
     private static int[] measureInterior(Level level, BlockPos seed) {
         int minX = seed.getX();
@@ -339,28 +389,29 @@ public final class ReactorStructure {
         int minZ = seed.getZ();
         int maxZ = seed.getZ();
 
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         int guard = MAX_INTERIOR + 4;
-        while (isInteriorBlock(level, new BlockPos(minX - 1, seed.getY(), seed.getZ()))
+        while (isInteriorBlock(level, cursor.set(minX - 1, seed.getY(), seed.getZ()))
                 && seed.getX() - minX < guard) {
             minX--;
         }
-        while (isInteriorBlock(level, new BlockPos(maxX + 1, seed.getY(), seed.getZ()))
+        while (isInteriorBlock(level, cursor.set(maxX + 1, seed.getY(), seed.getZ()))
                 && maxX - seed.getX() < guard) {
             maxX++;
         }
-        while (isInteriorBlock(level, new BlockPos(seed.getX(), seed.getY(), minZ - 1))
+        while (isInteriorBlock(level, cursor.set(seed.getX(), seed.getY(), minZ - 1))
                 && seed.getZ() - minZ < guard) {
             minZ--;
         }
-        while (isInteriorBlock(level, new BlockPos(seed.getX(), seed.getY(), maxZ + 1))
+        while (isInteriorBlock(level, cursor.set(seed.getX(), seed.getY(), maxZ + 1))
                 && maxZ - seed.getZ() < guard) {
             maxZ++;
         }
-        while (isInteriorBlock(level, new BlockPos(seed.getX(), minY - 1, seed.getZ()))
+        while (isInteriorBlock(level, cursor.set(seed.getX(), minY - 1, seed.getZ()))
                 && seed.getY() - minY < INTERIOR_HEIGHT_GUARD) {
             minY--;
         }
-        while (isInteriorBlock(level, new BlockPos(seed.getX(), maxY + 1, seed.getZ()))
+        while (isInteriorBlock(level, cursor.set(seed.getX(), maxY + 1, seed.getZ()))
                 && maxY - seed.getY() < INTERIOR_HEIGHT_GUARD) {
             maxY++;
         }
@@ -371,9 +422,33 @@ public final class ReactorStructure {
         return new int[]{minX, minY, minZ, maxX, maxY, maxZ};
     }
 
-    /** Every block of the six faces surrounding the interior must be shell. */
+    /**
+     * Every block of the six faces surrounding the interior must be shell.
+     *
+     * @param steamOutlets collects every RPV steam nozzle found in the wall, in
+     *                     walk order. This pass is the only one that visits the
+     *                     whole shell, so gathering them here costs nothing;
+     *                     doing it in a second sweep would double a scan that is
+     *                     already bounded by the 21x21x21 maximum interior.
+     *
+     * <h2>One cursor, and the rule for using it</h2>
+     * The walk carries a single {@link BlockPos.MutableBlockPos} instead of
+     * allocating a position per block. The sweep runs on the controller's
+     * five-second revalidation timer as well as on every neighbour change, so the
+     * allocating form produced a couple of thousand short-lived {@code BlockPos}
+     * per pass per reactor, for ever, on a plant where nothing was changing.
+     *
+     * <p><b>A cursor may never be handed to anything that keeps it.</b> The one
+     * position that outlives this loop is a nozzle going into {@code steamOutlets}
+     * — that list becomes {@link #steamOutletPositions()} and the controller walks
+     * it once a tick — so it is copied with {@code immutable()} on the way in, as
+     * it always was. {@link ValidationResult#fail(BlockPos, String)} makes the
+     * same copy for itself, because the problems it records outlive the walk too.
+     */
     private static void checkShellClosed(Level level, BlockPos min, BlockPos max,
+                                         List<BlockPos> steamOutlets,
                                          ValidationResult result) {
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
         for (int x = min.getX() - 1; x <= max.getX() + 1; x++) {
             for (int y = min.getY() - 1; y <= max.getY() + 1; y++) {
                 for (int z = min.getZ() - 1; z <= max.getZ() + 1; z++) {
@@ -388,26 +463,99 @@ public final class ReactorStructure {
                     if (outside != 1) {
                         continue;
                     }
-                    BlockPos p = new BlockPos(x, y, z);
-                    if (!isShell(level, p)) {
+                    p.set(x, y, z);
+                    // Fetched once and asked twice. isShell used to take the
+                    // position and look the state up for itself, and then the
+                    // nozzle test looked the same state up again, which is two
+                    // chunk lookups per shell block for one question about one
+                    // block.
+                    BlockState state = level.getBlockState(p);
+                    if (!isShell(state)) {
                         if (result.hasEnoughFailures()) {
                             return;
                         }
                         result.fail(p, "gap in the reactor vessel shell");
+                        continue;
+                    }
+                    if (state.is(BwrBlocks.RPV_STEAM_OUTLET.get())) {
+                        steamOutlets.add(p.immutable());
                     }
                 }
             }
         }
     }
 
-    private static boolean isShell(Level level, BlockPos pos) {
-        BlockState s = level.getBlockState(pos);
+    /**
+     * Say what the vessel's steam penetrations amount to.
+     *
+     * <p>Both of these are degradations rather than failures, and neither is a
+     * judgement about whether the plant should be run. A sealed vessel is a
+     * legal vessel — it simply has nowhere for its steam to go, which the player
+     * will discover as pressure — and a nozzle with no pipe on it is a legal
+     * nozzle that passes nothing, exactly as a relief valve venting into air is
+     * a legal valve that suppresses nothing. Both are reported because a number
+     * a player cannot see is a number they cannot act on, and the controller's
+     * status text is where they are already looking.
+     */
+    private static void reportSteamOutlets(Level level, List<BlockPos> steamOutlets,
+                                           ValidationResult result) {
+        if (steamOutlets.isEmpty()) {
+            result.degrade("no RPV steam outlet in the vessel shell; the only steam paths off"
+                    + " this vessel are the relief valves and a turbine steam outlet bound to"
+                    + " the controller. " + RpvSteamOutletBlockEntity.MAIN_STEAM_LINES
+                    + " nozzles pass rated steam flow");
+            return;
+        }
+        int unconnected = 0;
+        BlockPos first = null;
+        for (BlockPos p : steamOutlets) {
+            if (!RpvSteamOutletBlockEntity.steamLineAttached(level, p)) {
+                unconnected++;
+                if (first == null) {
+                    first = p;
+                }
+            }
+        }
+        if (unconnected > 0) {
+            result.degrade(first, unconnected + " of " + steamOutlets.size()
+                    + " RPV steam outlet(s) have no main steam line welded to any face and pass"
+                    + " nothing; the first is");
+        }
+    }
+
+    /**
+     * Blocks that count as pressure boundary when they appear in one of the six
+     * faces around the interior.
+     *
+     * <h2>Why the RPV steam outlet is on this list</h2>
+     * It was not, and until the first playtest neither was anything else that
+     * carries steam out: the list was vessel, controller, sparger, tube,
+     * recirculation pump and jet pump, and a player who put a turbine steam
+     * outlet in the wall — the obvious thing to try — got "gap in the reactor
+     * vessel shell" and a plant that would not form. There was no penetration
+     * for steam anywhere in the multiblock, which is exactly what the playtest
+     * reported: "there's no way to get steam out of the reactor".
+     *
+     * <p>The turbine steam outlet is deliberately still <b>not</b> on this list.
+     * It is the Mekanism boundary at the far end of the steam line (SPEC section
+     * 13) and it documents itself as a satellite that never invalidates the
+     * multiblock; welding it into the vessel wall would collapse the whole main
+     * steam line out of existence and make a lie of its own javadoc. What goes
+     * in the wall is {@link RpvSteamOutletBlock}, the nozzle, and the line runs
+     * from there.
+     *
+     * @param s the state already read at the position being tested; the caller
+     *          has it in hand and reading it again would double the block lookups
+     *          of the shell walk
+     */
+    private static boolean isShell(BlockState s) {
         return s.is(BwrBlocks.REACTOR_VESSEL.get())
                 || s.is(BwrBlocks.REACTOR_CONTROLLER.get())
                 || s.is(BwrBlocks.CORE_SPRAY_SPARGER.get())
                 || s.is(BwrBlocks.PRESSURISED_TUBE.get())
                 || s.is(BwrBlocks.RECIRCULATION_PUMP.get())
-                || s.is(BwrBlocks.JET_PUMP.get());
+                || s.is(BwrBlocks.JET_PUMP.get())
+                || s.is(BwrBlocks.RPV_STEAM_OUTLET.get());
     }
 
     /**
@@ -415,12 +563,21 @@ public final class ReactorStructure {
      * proportion; a segment at the wrong elevation is a hard failure, because
      * that one is a build mistake worth teaching rather than battle damage.
      *
+     * <p>Both passes walk on one shared cursor. The second of them visits the
+     * <b>whole interior</b> — 21x21x21 is 9,261 positions on a maximum vessel —
+     * and it ran on every five-second revalidation of every loaded reactor, so it
+     * was by a wide margin the largest source of short-lived allocation in the
+     * mod. Nothing here retains a position: the only one that escapes is the
+     * argument to {@code result.fail}, and {@link ValidationResult} copies that
+     * for itself. See {@link #checkShellClosed} for the rule.
+     *
      * @return ring completeness across both loops, 0..1
      */
     private static double checkSpargerRings(Level level, BlockPos min, BlockPos max,
                                             int topOfActiveFuelY, ValidationResult result) {
         int present = 0;
         int expected = 0;
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
 
         for (CoreSpraySpargerBlock.Loop loop : CoreSpraySpargerBlock.Loop.values()) {
             int y = CoreSpraySpargerBlock.requiredY(loop, topOfActiveFuelY);
@@ -435,8 +592,7 @@ public final class ReactorStructure {
                         continue;
                     }
                     loopExpected++;
-                    BlockPos p = new BlockPos(x, y, z);
-                    BlockState s = level.getBlockState(p);
+                    BlockState s = level.getBlockState(p.set(x, y, z));
                     // The segment has to belong to the loop being counted, not
                     // merely be a sparger. Counting any sparger at the right
                     // elevation let a ring of LPCS segments sitting at the HPCS
@@ -469,8 +625,7 @@ public final class ReactorStructure {
         for (int x = min.getX(); x <= max.getX(); x++) {
             for (int z = min.getZ(); z <= max.getZ(); z++) {
                 for (int y = min.getY(); y <= max.getY(); y++) {
-                    BlockPos p = new BlockPos(x, y, z);
-                    BlockState s = level.getBlockState(p);
+                    BlockState s = level.getBlockState(p.set(x, y, z));
                     if (!s.is(BwrBlocks.CORE_SPRAY_SPARGER.get())) {
                         continue;
                     }

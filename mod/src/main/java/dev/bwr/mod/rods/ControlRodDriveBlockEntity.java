@@ -68,7 +68,19 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
         be.setChanged();
     }
 
-    /** Called by the controller during validation to claim this drive. */
+    /**
+     * Called by the controller during validation to claim this drive.
+     *
+     * <p><b>The controller is taken for its position and never stored.</b> What
+     * this drive keeps is a {@code BlockPos}, resolved back through
+     * {@link Level#getBlockEntity} at the moment it is needed, exactly as
+     * {@code TurbineSteamOutletBlockEntity} keeps its controller. Holding the
+     * block entity itself would be the more convenient field and it is the wrong
+     * one: a removed {@code BlockEntity} that is still strongly referenced keeps
+     * its {@link Level} — and therefore every loaded chunk and entity in it —
+     * reachable, and a 177-rod core would hand out 177 such references on every
+     * revalidation. Keep it a position.
+     */
     public void attach(ReactorControllerBlockEntity controller, int index) {
         BlockPos pos = controller.getBlockPos();
         if (pos.equals(controllerPos) && index == rodIndex) {
