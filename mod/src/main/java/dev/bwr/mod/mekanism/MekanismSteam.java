@@ -23,7 +23,25 @@ final class MekanismSteam {
     private MekanismSteam() {
     }
 
-    /** Mekanism's steam chemical. Unified {@code Chemical} in 10.7; there is no {@code Gas} any more. */
+    /**
+     * Mekanism's steam chemical. Unified {@code Chemical} in 10.7; there is no
+     * {@code Gas} any more.
+     *
+     * <p>Checked against the bytecode of Mekanism 1.21.1-10.7.19.85 rather than
+     * from memory, because handing over the wrong chemical produces exactly the
+     * symptom a wrong pipe does — a turbine that quietly refuses everything —
+     * and nothing in this project has ever run in a world to catch it.
+     * {@code MekanismChemicals} registers this one under the plain name
+     * {@code "steam"} in the {@code mekanism} namespace, and
+     * {@code BoilerMultiblockData} fills its steam tank with that same
+     * {@code MekanismChemicals.STEAM}. A Thermoelectric Boiler and this outlet
+     * therefore produce the identical chemical, which is the only test that
+     * matters: whatever an Industrial Turbine accepts from one, it accepts from
+     * the other.
+     *
+     * <p>Not to be confused with {@code mekanism:water_vapor}, which is
+     * registered right beside it and is a different chemical entirely.
+     */
     static final ResourceLocation STEAM_ID =
             ResourceLocation.fromNamespaceAndPath("mekanism", "steam");
 
@@ -37,6 +55,13 @@ final class MekanismSteam {
      * type matches, so building one with the same name and the same interface
      * hands back the very instance Mekanism registered — pipes and turbines see
      * one capability, not two.
+     *
+     * <p>Verified in the bytecode of 1.21.1-10.7.19.85:
+     * {@code Capabilities.CHEMICAL} is a {@code MultiTypeCapability} built from
+     * {@code Mekanism.rl("chemical_handler")} — namespace {@code mekanism} — and
+     * that constructor calls {@code BlockCapability.createSided(name,
+     * IChemicalHandler.class)}. Name, context type and handler class all match
+     * what is built here, so this is the same instance and not a look-alike.
      *
      * <p>If a future Mekanism renames this capability, steam will simply stop
      * being offered: no crash, no wrong behaviour, just an outlet nothing can

@@ -3,16 +3,22 @@ package dev.bwr.mod.devtest;
 import com.mojang.logging.LogUtils;
 import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.registry.BwrBlocks;
+import dev.bwr.mod.steam.TurbineSteamOutletBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -35,6 +41,20 @@ import java.util.concurrent.atomic.AtomicInteger;
  * through a {@code BwrMod.isComputerCraftPresent()} branch, so a CC-less JVM
  * never resolves a {@code dan200.*} class. Running the check with
  * {@code -PbwrNoCC} therefore also proves the guard works.
+ *
+ * <h2>No Mekanism types here either, and that is the point</h2>
+ * {@code dev.bwr.mod.mekanism} is the only package in this project permitted to
+ * name a {@code mekanism.*} type, and this package is not it. So
+ * {@link #reportMekanismBoundary} asks its questions entirely by <i>name</i> —
+ * a {@link ResourceLocation}, a {@link BlockCapability} held as a wildcard, and
+ * a handler that never leaves the {@code Object} it came back as. Nothing here
+ * so much as mentions a Mekanism class, let alone loads one.
+ *
+ * <p>That constraint is not an obstacle, it is what makes the check worth
+ * running. {@code :mod:runPeripheralCheck} is executed twice — once with
+ * Mekanism on the runtime classpath and once with {@code -PbwrNoMekanism} —
+ * and the boundary report is the one place where those two runs are supposed to
+ * print visibly different things. See its verdict line.
  *
  * <h2>The exit status is the result</h2>
  * {@code :mod:runPeripheralCheck} is a {@code JavaExec}, so Gradle fails the
@@ -82,6 +102,28 @@ public final class PeripheralRuntimeCheck {
 
     /** Ticks to let the multiblocks validate and settle before probing. */
     private static final int SETTLE_TICKS = 60;
+
+    /**
+     * The name of Mekanism's own block chemical-handler capability, and the only
+     * thing this class knows about Mekanism.
+     *
+     * <p>Verified against {@code Mekanism-1.21.1-10.7.19.85.jar}: the static
+     * initialiser of {@code mekanism.common.capabilities.Capabilities} builds
+     * {@code CHEMICAL} as {@code new MultiTypeCapability<>(Mekanism.rl(
+     * "chemical_handler"), IChemicalHandler.class)}, and that constructor calls
+     * {@code BlockCapability.createSided(name, type)} with the name unchanged.
+     * So the block capability really is registered under exactly this
+     * {@link ResourceLocation}, which is what
+     * {@code dev.bwr.mod.mekanism.MekanismSteam.CHEMICAL_HANDLER} recreates in
+     * order to get the very instance Mekanism registered rather than a second
+     * one nothing looks at.
+     *
+     * <p>A string, not a class reference, so a JVM with no Mekanism on it can
+     * still ask the question and get the honest answer "there is no such
+     * capability here".
+     */
+    private static final ResourceLocation MEKANISM_CHEMICAL_HANDLER =
+            ResourceLocation.fromNamespaceAndPath("mekanism", "chemical_handler");
 
     // Layout. Everything sits inside chunks (0,0)..(2,2), which the harness
     // force-loads so the block entities actually tick.
@@ -313,6 +355,20 @@ public final class PeripheralRuntimeCheck {
     private static void startProbes(MinecraftServer server) {
         reportStructures(server.overworld());
 
+        // The soft-dependency split, exercised on whichever side of it this run
+        // is on. Kept in its own try so that a throw here costs one counted
+        // problem instead of aborting the peripheral pass that follows it — the
+        // two are independent and losing the second to a fault in the first
+        // would report far less than the run actually proved.
+        int boundaryFailures;
+        try {
+            boundaryFailures = reportMekanismBoundary(server.overworld());
+        } catch (Throwable t) {
+            LOGGER.error("=== BWR PERIPHERAL RUNTIME CHECK: THE MEKANISM BOUNDARY REPORT ITSELF "
+                    + "FAILED ===", t);
+            boundaryFailures = 1;
+        }
+
         try {
             if (BwrMod.isComputerCraftPresent()) {
                 onThreadFailures = PeripheralRuntimeCheckCC.probeAll(
@@ -333,6 +389,13 @@ public final class PeripheralRuntimeCheck {
             // "9 problems" into "1 problem" in the banner.
             onThreadFailures++;
         }
+
+        // Added after the block above, never before it: onThreadFailures is
+        // ASSIGNED in there, so a boundary finding folded in earlier would be
+        // overwritten and the run would report a clean pass on a dead steam
+        // boundary. The catch increments rather than assigns, so this is correct
+        // on both paths.
+        onThreadFailures += boundaryFailures;
 
         if (offThread == null) {
             finish(server, onThreadFailures);
@@ -601,6 +664,250 @@ public final class PeripheralRuntimeCheck {
                         n.isPartOfFormedReactor(), n.isSteamLineAttached(), n.statusLines());
             }
         }
+    }
+
+    // -----------------------------------------------------------------
+    // The Mekanism steam boundary
+    // -----------------------------------------------------------------
+
+    /**
+     * What the turbine steam outlet looks like from Mekanism's side, and the one
+     * part of this harness whose output is supposed to differ between the two
+     * runs it is executed in.
+     *
+     * <p>Three questions, in the order a player who says "the steam line isn't
+     * connecting" needs them answered:
+     *
+     * <ol>
+     *   <li><b>Is Mekanism loaded?</b> {@code BwrMod.isMekanismPresent()} — the
+     *       {@code ModList} answer taken at mod construction, which is the flag
+     *       every Mekanism-facing branch in the mod is gated on.</li>
+     *   <li><b>Did the chemical capability actually resolve on the block
+     *       entity?</b> Not "is it registered" — resolved, at the outlet's own
+     *       position, through the real capability lookup, from every side. That
+     *       is the only thing that proves {@code BwrMekanismSupport
+     *       .registerCapabilities} both ran and attached to the right block
+     *       entity type. A registration that silently missed would leave the
+     *       outlet looking perfect from Lua and invisible to every pipe in the
+     *       world, which is precisely the failure that was reported.</li>
+     *   <li><b>Is an acceptor attached?</b> Every neighbour of the outlet is
+     *       asked for the same capability from the face that looks back at us.
+     *       A Mekanism pressurized tube or turbine valve answers; our own
+     *       pressurised tube does not, and is not meant to.</li>
+     * </ol>
+     *
+     * <h2>What counts as a failure and what does not</h2>
+     * The capability being absent with Mekanism absent is the <i>correct</i>
+     * result and is reported as the guarded path, not as a problem. The two
+     * genuine failures are the two ways the soft-dependency split can be wrong:
+     * Mekanism present and the capability not resolving (the boundary is dead
+     * and nothing can ever connect to it), or Mekanism absent and a
+     * {@code mekanism:}-named capability existing anyway (something loaded
+     * {@code dev.bwr.mod.mekanism} without Mekanism, which on a player's install
+     * is a {@code NoClassDefFoundError} waiting for the first tick).
+     *
+     * <p>Finding <i>no</i> acceptor is not a failure. The harness deliberately
+     * places no Mekanism block: doing so would mean naming one, and this package
+     * may not. The scan is here so that a human who runs the harness world and
+     * puts a real pipe on the outlet by hand gets a straight answer, and so that
+     * the count is stated rather than assumed.
+     *
+     * @return problems found, to be added to the run's failure count
+     */
+    private static int reportMekanismBoundary(ServerLevel level) {
+        LOGGER.info("=== BWR PERIPHERAL RUNTIME CHECK: the Mekanism steam boundary at {} ===",
+                TURBINE_OUTLET);
+
+        boolean loaded = BwrMod.isMekanismPresent();
+        LOGGER.info("  ModList says mekanism is loaded: {}", loaded);
+
+        // Our side of the boundary first, so that a dead capability can be told
+        // apart from an outlet that was never built or never bound. None of these
+        // are Mekanism types; they are plain kilograms and millibuckets.
+        if (level.getBlockEntity(TURBINE_OUTLET) instanceof TurbineSteamOutletBlockEntity outlet) {
+            LOGGER.info("  outlet: attached={} commanded={} kg/s delivered={} kg/s "
+                            + "buffer={}/{} mB",
+                    outlet.isAttached(), outlet.getCommandedFlowKgPerS(),
+                    outlet.getDeliveredFlowKgPerS(), outlet.getBufferedMilliBuckets(),
+                    outlet.getBufferCapacityMilliBuckets());
+        } else {
+            LOGGER.error("FAIL Mekanism boundary: there is no turbine steam outlet block entity "
+                    + "at {}, so there is nothing for the capability to attach to", TURBINE_OUTLET);
+            return 1;
+        }
+
+        BlockCapability<?, ?> capability = findChemicalHandlerCapability();
+
+        if (capability == null) {
+            if (loaded) {
+                LOGGER.error("FAIL Mekanism boundary: mekanism is loaded but no block capability "
+                        + "named '{}' exists in this JVM. Mekanism renames it, or its "
+                        + "Capabilities class never initialised; either way nothing this mod "
+                        + "offers steam through can ever be found by a pipe",
+                        MEKANISM_CHEMICAL_HANDLER);
+                return 1;
+            }
+            LOGGER.info("  no block capability named '{}' exists in this JVM, which is correct: "
+                            + "nothing created one, so dev.bwr.mod.mekanism was never loaded and "
+                            + "no mekanism.* type was ever resolved",
+                    MEKANISM_CHEMICAL_HANDLER);
+            LOGGER.info("  VERDICT: Mekanism ABSENT -- this is the -PbwrNoMekanism run and the "
+                    + "guarded path held. The outlet places, ticks, binds and reports; its "
+                    + "buffer fills and nothing drains it, so the plant behaves exactly as it "
+                    + "would with the turbine stop valves shut. That is the designed behaviour, "
+                    + "not a fault.");
+            return 0;
+        }
+
+        LOGGER.info("  block capability '{}' exists, declared over {} with context {}",
+                capability.name(), capability.typeClass().getName(),
+                capability.contextClass().getName());
+
+        if (!loaded) {
+            LOGGER.error("FAIL Mekanism boundary: ModList says mekanism is NOT loaded, yet a "
+                    + "capability named '{}' has been created in this JVM. Creating it requires "
+                    + "resolving {}, so something outside the isMekanismPresent() branch has "
+                    + "touched a Mekanism type. On a player's install that is a "
+                    + "NoClassDefFoundError, not a warning",
+                    MEKANISM_CHEMICAL_HANDLER, capability.typeClass().getName());
+            return 1;
+        }
+
+        if (capability.contextClass() != Direction.class) {
+            LOGGER.error("FAIL Mekanism boundary: '{}' is not a sided capability -- its context "
+                    + "type is {}, not Direction -- so the sided lookup this mod registers "
+                    + "against it cannot be the same capability",
+                    MEKANISM_CHEMICAL_HANDLER, capability.contextClass().getName());
+            return 1;
+        }
+
+        int failures = 0;
+
+        // Every side, plus the null "no particular side" context, because that is
+        // the set BwrMekanismSupport claims to answer on and a registration that
+        // quietly covered only some of them would still look right from Lua.
+        List<Direction> sides = sidesIncludingNull();
+        List<String> missing = new ArrayList<>();
+        String handlerClass = null;
+        for (Direction side : sides) {
+            Object handler = resolveChemicalHandler(level, capability, TURBINE_OUTLET, side);
+            if (handler == null) {
+                missing.add(side == null ? "no side" : side.getName());
+            } else if (handlerClass == null) {
+                handlerClass = handler.getClass().getName();
+            }
+        }
+        int resolved = sides.size() - missing.size();
+        if (missing.isEmpty()) {
+            LOGGER.info("  the chemical capability RESOLVED on the outlet from all {} side(s), "
+                    + "handler = {}", sides.size(), handlerClass);
+        } else {
+            LOGGER.error("FAIL Mekanism boundary: the chemical capability resolved on the outlet "
+                            + "at {} from only {} of {} side(s); it returned nothing for: {}. A "
+                            + "pipe on one of those faces sees no tank at all and the steam never "
+                            + "leaves the plant",
+                    TURBINE_OUTLET, resolved, sides.size(), missing);
+            failures++;
+        }
+
+        // ...and now the other half of the player's question: is anything there
+        // to take it? The neighbour is asked from the face that looks back at the
+        // outlet, which is the side a pipe presents to us.
+        int acceptors = 0;
+        for (Direction side : Direction.values()) {
+            BlockPos neighbour = TURBINE_OUTLET.relative(side);
+            // Never ask about a block in an unloaded chunk: the lookup would go
+            // through getBlockState and generate terrain to answer. Everything
+            // this harness builds is inside chunks it force-loads, so this is
+            // belt and braces against a future layout change rather than a case
+            // that arises today.
+            if (!level.isLoaded(neighbour)) {
+                continue;
+            }
+            Object handler =
+                    resolveChemicalHandler(level, capability, neighbour, side.getOpposite());
+            if (handler != null) {
+                acceptors++;
+                LOGGER.info("  acceptor on the {} face: {} at {} exposes {}",
+                        side.getName(), level.getBlockState(neighbour).getBlock(), neighbour,
+                        handler.getClass().getName());
+            }
+        }
+        LOGGER.info("  acceptors adjacent to the outlet: {}", acceptors);
+        if (acceptors == 0) {
+            LOGGER.info("  ...which is expected here and is NOT counted as a problem: this "
+                    + "harness places no Mekanism block, because naming one is not permitted "
+                    + "outside dev.bwr.mod.mekanism. It is also, note, exactly the state a "
+                    + "player is in when they report that the steam line will not connect -- "
+                    + "our pressurised tube is structural and exposes no chemical handler, so "
+                    + "running one at a turbine leaves this count at zero. A Mekanism "
+                    + "pressurized tube has to touch this block itself.");
+        }
+
+        LOGGER.info("  VERDICT: Mekanism PRESENT -- the chemical capability resolved on the "
+                        + "outlet from {} of {} side(s), handler = {}, with {} acceptor(s) "
+                        + "adjacent. Compare this whole block against the -PbwrNoMekanism run, "
+                        + "where none of it exists.",
+                resolved, sides.size(), handlerClass, acceptors);
+        return failures;
+    }
+
+    /**
+     * Mekanism's block chemical-handler capability if anything in this JVM has
+     * created it, else null.
+     *
+     * <p>Found by walking the capability registry and comparing names, which is
+     * the only way to get hold of it without naming {@code IChemicalHandler} —
+     * see the class comment. {@code BlockCapability.create*} is memoised per
+     * name, so there is at most one entry to find.
+     */
+    private static BlockCapability<?, ?> findChemicalHandlerCapability() {
+        for (BlockCapability<?, ?> capability : BlockCapability.getAll()) {
+            if (MEKANISM_CHEMICAL_HANDLER.equals(capability.name())) {
+                return capability;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resolve a wildcard-typed sided capability at a position, keeping the result
+     * as a bare {@link Object}.
+     *
+     * <p>The cast is unchecked and erased: at run time it compiles to a
+     * {@code checkcast} against {@code BlockCapability} itself, so this method
+     * never names, references or loads the {@code mekanism.api} interface the
+     * capability is declared over. Callers must have established that the
+     * context type really is {@link Direction} — {@link #reportMekanismBoundary}
+     * does, and reports it as a failure when it is not.
+     *
+     * <p>The value that comes back is the mod's own
+     * {@code TurbineSteamOutletChemicalHandler} on our block, or somebody else's
+     * handler on a neighbour. It is only ever asked for its class name, so
+     * nothing here has to know what it can do.
+     */
+    @SuppressWarnings("unchecked")
+    private static Object resolveChemicalHandler(ServerLevel level, BlockCapability<?, ?> capability,
+                                                 BlockPos pos, Direction side) {
+        BlockCapability<Object, Direction> sided = (BlockCapability<Object, Direction>) capability;
+        return level.getCapability(sided, pos, side);
+    }
+
+    /**
+     * The six faces plus the null context, in one list.
+     *
+     * <p>Null is a real and distinct argument to a sided capability lookup — it
+     * means "no particular side" — and {@code BwrMekanismSupport} registers a
+     * provider that ignores the side entirely, so all seven have to answer. A
+     * plain {@code Direction[]} cannot carry the null, hence the list.
+     */
+    private static List<Direction> sidesIncludingNull() {
+        List<Direction> sides = new ArrayList<>();
+        sides.add(null);
+        for (Direction d : Direction.values()) {
+            sides.add(d);
+        }
+        return sides;
     }
 
     // -----------------------------------------------------------------

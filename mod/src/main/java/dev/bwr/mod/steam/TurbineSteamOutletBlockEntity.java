@@ -36,6 +36,15 @@ import java.util.WeakHashMap;
  * places, ticks, saves and answers its peripheral; nothing drains its buffer, so
  * the buffer fills, delivered flow falls to zero and the outlet is simply inert.
  *
+ * <p>Steam leaves the buffer two ways, and both of them go through
+ * {@link #drainMilliBuckets}. Something adjacent may extract — that is the
+ * chemical handler, and it is all there used to be — or this block may push into
+ * an adjacent acceptor on its own tick, through {@link SteamExport}. The push
+ * exists because extraction alone left the two commonest builds silently dead: a
+ * Mekanism turbine valve never extracts from anything, and a freshly placed
+ * Mekanism tube only pulls on a face the player has explicitly configured to
+ * pull. {@code SteamExport} carries the argument in full.
+ *
  * <h2>Flow is commanded, never chosen</h2>
  * The outlet does not decide how much steam to send to the turbine. It passes
  * exactly what it is told, by Lua or by an analogue redstone signal, and the
@@ -232,6 +241,45 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
     /** Steam the nozzles actually handed over on the last tick, kg/s. */
     private volatile double nozzleSupplyKgPerS;
 
+    // -----------------------------------------------------------------
+    // What the Mekanism side of the boundary looked like on the last tick
+    // -----------------------------------------------------------------
+    //
+    // Measurements, and nothing reads them but the status text. They exist
+    // because the only symptom a player can report from outside this block is
+    // "it isn't connecting", and that one sentence covers at least four
+    // unrelated faults. Volatile for the same reason as the flows above: every
+    // published measurement on this class has ended up being read from a
+    // computer thread sooner or later.
+
+    /** Adjacent blocks offering Mekanism's chemical handler towards this one. */
+    private volatile int adjacentAcceptors;
+
+    /** How many of those would take steam. The rest are full, or holding something else. */
+    private volatile int acceptorsTakingSteam;
+
+    /** Millibuckets pushed into them on the last tick. */
+    private volatile long pushedMilliBuckets;
+
+    /** False when Mekanism is installed but no chemical is registered as its steam. */
+    private volatile boolean mekanismSteamKnown;
+
+    /**
+     * Millibuckets that left the buffer over the last tick by <i>any</i> route:
+     * the push, and anything that extracted between ticks. The single number
+     * that answers "is something actually taking this steam", which neither the
+     * push figure nor the buffer level answers on its own — a tube configured to
+     * pull empties this outlet without the push moving a millibucket.
+     */
+    private volatile long drainedLastTickMb;
+
+    /**
+     * The accumulator behind it. Server thread only, and
+     * {@link #drainMilliBuckets} is its only writer, because that method is the
+     * only way steam leaves this block.
+     */
+    private long drainedThisTickMb;
+
     public TurbineSteamOutletBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.TURBINE_STEAM_OUTLET.get(), pos, state);
     }
@@ -246,6 +294,30 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
     }
 
     private void tick(Level level) {
+        // Offer the buffer to whatever is bolted on, before anything else.
+        //
+        // Before, for the same reason the class comment gives for drawing the
+        // buffer down and then filling it: what has already left decides how
+        // much room there is for more, so an acceptor that takes steam relieves
+        // the vessel in this tick rather than the next one. Ahead of every early
+        // return below, too — a buffer left standing by a reactor that has come
+        // apart is still steam that belongs to whatever is piped to it, and
+        // extraction has always worked in that state, so pushing must as well.
+        //
+        // With Mekanism absent this is one null check. See SteamExport.
+        SteamExport.Push pushed = SteamExport.push(this);
+        adjacentAcceptors = pushed.acceptors();
+        acceptorsTakingSteam = pushed.taking();
+        pushedMilliBuckets = pushed.movedMilliBuckets();
+        mekanismSteamKnown = pushed.steamKnown();
+
+        // Everything that has left the buffer since this was last read: the push
+        // immediately above, plus anything that extracted between ticks.
+        // Snapshotted after the push so the two figures describe the same
+        // instant instead of being a tick out of step with each other.
+        drainedLastTickMb = drainedThisTickMb;
+        drainedThisTickMb = 0L;
+
         maybeRescan(level);
         mainSteamLineOpenFraction = isolationValveOpenFraction(level);
 
@@ -725,8 +797,15 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
     }
 
     /**
-     * Take steam out of the buffer. Called by the Mekanism chemical handler, and
+     * Take steam out of the buffer. Called by the Mekanism chemical handler when
+     * something extracts, and by the push when something adjacent will accept;
      * by nothing else.
+     *
+     * <p>That it is the only way out is what keeps the two paths honest. Steam
+     * pushed to a neighbour has left the buffer by the time anything can extract
+     * it, and steam extracted has left before the next push can offer it, so no
+     * millibucket is ever handed over twice however many consumers are bolted to
+     * the block.
      *
      * @return millibuckets actually removed
      */
@@ -737,6 +816,7 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
         long drained = Math.min(requested, bufferedMilliBuckets);
         if (!simulate) {
             bufferedMilliBuckets -= drained;
+            drainedThisTickMb += drained;
             setChanged();
         }
         return drained;
@@ -773,6 +853,11 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
         List<String> out = new ArrayList<>();
         if (!isAttached()) {
             out.add("Turbine steam outlet: not attached to a formed reactor.");
+            // The downstream half is still worth reporting. An outlet with no
+            // reactor behind it and an outlet with no pipe in front of it are
+            // different problems with the same symptom, and a player who has
+            // just built both ends deserves to be told which one they have.
+            out.addAll(mekanismBoundaryLines());
             return out;
         }
         out.add(String.format("Turbine steam outlet: commanded %.1f kg/s, delivering %.1f kg/s",
@@ -802,11 +887,77 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
                     getIsolationValveCount(), getMainSteamLineOpenFraction() * 100.0,
                     isNozzleFed() ? " (throttling at the nozzle, upstream of here)" : ""));
         }
+        // Whether the reactor end is doing anything at all, which is the half of
+        // "it isn't connecting" that has nothing to do with Mekanism. Only the
+        // case that is actually in front of the player is printed; the figures
+        // that separate the causes are all on the lines above.
+        if (!(commandedFlowKgPerS > 0.0)) {
+            out.add("Commanded flow is zero, so nothing is being asked of this outlet."
+                    + " Give it a redstone signal, or command a flow from a computer.");
+        } else if (!(deliveredFlowKgPerS > 0.0)) {
+            out.add("Commanded steam is not reaching the buffer: either the buffer is full"
+                    + " because nothing downstream is taking any, or the isolation valves"
+                    + " are shut, or the nozzles on this line are passing nothing."
+                    + " The figures above say which.");
+        }
         out.add(String.format("Exchange rate %.0f mB per kg (%.0f mB/t per kg/s)",
                 MILLIBUCKETS_PER_KILOGRAM, MILLIBUCKETS_PER_TICK_PER_KG_PER_S));
+        out.addAll(mekanismBoundaryLines());
+        return out;
+    }
+
+    /**
+     * The Mekanism side of the boundary, as measured on the last tick.
+     *
+     * <p>Written for one specific bug report — "the steam line isn't connecting"
+     * — which is everything a player can see from outside this block and which
+     * covers at least four unrelated faults. The lines below separate them in
+     * the order they have to be eliminated: is Mekanism installed, does it have
+     * the chemical we hand over, is anything bolted to the outlet, would that
+     * thing take steam, and is any steam actually crossing. Every one of them is
+     * a measurement of what happened; not one of them decides anything.
+     */
+    private List<String> mekanismBoundaryLines() {
+        List<String> out = new ArrayList<>();
         if (!dev.bwr.mod.BwrMod.isMekanismPresent()) {
             out.add("Mekanism is not installed; this outlet is inert.");
+            return out;
         }
+        if (!mekanismSteamKnown) {
+            // Nothing has pushed yet, or this Mekanism registers no steam. Either
+            // way the boundary cannot name what it would hand over, and saying so
+            // is far better than the "nothing is connected" the counts below
+            // would otherwise report.
+            out.add("Mekanism is installed but this outlet has not yet found a chemical"
+                    + " registered as mekanism:steam, so it has nothing it can hand over.");
+            return out;
+        }
+        if (adjacentAcceptors == 0) {
+            out.add("No Mekanism chemical acceptor on any of the six faces. Put a Mekanism"
+                    + " pressurised tube or a turbine valve flat against this block — our own"
+                    + " pressurised steam tube is structural and carries nothing, so it is the"
+                    + " wrong pipe for this end of the line.");
+        } else if (acceptorsTakingSteam == 0) {
+            // Deliberately "will not accept a push" rather than "is not taking
+            // steam". Something that only ever extracts would be counted here
+            // and would still be emptying the buffer, so the claim is kept to
+            // what was actually measured and the next line settles it.
+            out.add(String.format(
+                    "%d Mekanism acceptor(s) against this block, none of which will accept a"
+                            + " push right now: full, holding something that is not steam, or"
+                            + " built to extract rather than be fed.",
+                    adjacentAcceptors));
+        } else {
+            out.add(String.format(
+                    "%d of %d Mekanism acceptor(s) accepting a push; pushed %d mB last tick.",
+                    acceptorsTakingSteam, adjacentAcceptors, pushedMilliBuckets));
+        }
+        // Push and extraction drain the same buffer, so this one figure covers a
+        // tube set to pull just as well as it covers what the outlet pushed out.
+        // It is the line that answers "is any steam actually crossing", and it
+        // is the only one of these that cannot be fooled by how it crossed.
+        out.add(String.format("Steam leaving the buffer %d mB/t (%.1f kg/s).",
+                drainedLastTickMb, drainedLastTickMb / MILLIBUCKETS_PER_TICK_PER_KG_PER_S));
         return out;
     }
 

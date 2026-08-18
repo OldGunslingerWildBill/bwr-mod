@@ -22,6 +22,15 @@ import net.minecraft.core.Holder;
  * is upstream of this point and there is no path back into a pressure vessel
  * through a turbine stop valve.
  *
+ * <p>This class is therefore only half of the boundary, and for a long time it
+ * was mistaken for all of it. Extraction is a path something else has to walk
+ * down, and most Mekanism hardware never does: a turbine valve expects to be fed
+ * and a newly placed tube only pulls on a face the player has configured to
+ * pull. {@link TurbineSteamOutletPusher} is the other half, offering the same
+ * buffer to the neighbours once a tick. Both drain through
+ * {@link TurbineSteamOutletBlockEntity#drainMilliBuckets}, so a millibucket
+ * given away by one is gone from the other.
+ *
  * <p>This class references Mekanism types directly and must never be loaded
  * without Mekanism installed. {@link BwrMekanismSupport} is the guard.
  */

@@ -1,10 +1,12 @@
 package dev.bwr.mod.mekanism;
 
 import dev.bwr.mod.registry.BwrBlockEntities;
+import dev.bwr.mod.steam.SteamExport;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
 /**
- * Attaches the Mekanism chemical handler to the turbine steam outlet.
+ * Attaches the Mekanism chemical handler to the turbine steam outlet, and the
+ * push that empties it.
  *
  * <h2>Soft dependency, deliberately</h2>
  * Every class in this package references {@code mekanism.*} types, so none of
@@ -28,10 +30,24 @@ public final class BwrMekanismSupport {
     private BwrMekanismSupport() {
     }
 
+    /**
+     * Both halves of the steam boundary: the tank Mekanism may extract from, and
+     * the push that offers the same tank to the neighbours.
+     *
+     * <p>The push is installed here rather than from its own entry point because
+     * this method is already the one thing {@code BwrMod} calls behind the
+     * {@code isLoaded("mekanism")} guard, it runs once during mod construction
+     * long before any level exists, and keeping the pull and the push side by
+     * side is the only way a reader finds both. They are one boundary; a future
+     * change to either has to consider the other, and code that has to be
+     * considered together should be read together.
+     */
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(
                 MekanismSteam.CHEMICAL_HANDLER,
                 BwrBlockEntities.TURBINE_STEAM_OUTLET.get(),
                 (be, side) -> new TurbineSteamOutletChemicalHandler(be));
+
+        SteamExport.install(new TurbineSteamOutletPusher());
     }
 }
