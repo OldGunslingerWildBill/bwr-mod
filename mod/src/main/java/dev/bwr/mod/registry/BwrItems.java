@@ -53,6 +53,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.SUPPRESSION_POOL_CONTROLLER);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_WALL =
             ITEMS.registerSimpleBlockItem(BwrBlocks.SUPPRESSION_POOL_WALL);
+    public static final DeferredItem<BlockItem> SUPPRESSION_POOL_QUENCHER =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.SUPPRESSION_POOL_QUENCHER);
     public static final DeferredItem<BlockItem> RCIC_TURBINE_PUMP =
             ITEMS.registerSimpleBlockItem(BwrBlocks.RCIC_TURBINE_PUMP);
     public static final DeferredItem<BlockItem> HPCI_TURBINE_PUMP =
@@ -100,6 +102,7 @@ public final class BwrItems {
                         output.accept(FUEL_FABRICATOR.get());
                         output.accept(SUPPRESSION_POOL_CONTROLLER.get());
                         output.accept(SUPPRESSION_POOL_WALL.get());
+                        output.accept(SUPPRESSION_POOL_QUENCHER.get());
                         output.accept(RCIC_TURBINE_PUMP.get());
                         output.accept(HPCI_TURBINE_PUMP.get());
                         output.accept(HPCS_PUMP.get());

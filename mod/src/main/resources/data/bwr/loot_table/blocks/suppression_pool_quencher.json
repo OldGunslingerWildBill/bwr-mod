@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "bwr:suppression_pool_quencher"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "bwr:blocks/suppression_pool_quencher"
+}

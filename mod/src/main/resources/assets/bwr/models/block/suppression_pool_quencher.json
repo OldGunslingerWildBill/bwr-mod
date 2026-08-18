@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "bwr:block/suppression_pool_quencher_top",
+    "side": "bwr:block/suppression_pool_quencher_side",
+    "bottom": "bwr:block/machine_casing"
+  }
+}

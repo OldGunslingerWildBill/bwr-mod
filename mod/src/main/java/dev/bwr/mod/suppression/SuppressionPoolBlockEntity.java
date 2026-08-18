@@ -10,6 +10,7 @@ import dev.bwr.mod.reactor.ValidationResult;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.registry.BwrBlocks;
 import dev.bwr.mod.steam.SafetyReliefValveBlockEntity;
+import dev.bwr.mod.steam.SteamLineNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -25,9 +26,12 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The suppression pool multiblock — {@code SPEC.md} section 12.
@@ -58,12 +62,41 @@ import java.util.Map;
  * ocean, a lake or a flooded cave is metering a heat sink with tens of
  * thousands of tonnes in it that the player never built.
  *
+ * <h2>Steam gets in through an inlet, and there are two of them</h2>
+ * Relief steam reaches this water by one of two routes and the pool separates
+ * them, because they are not equally good at putting steam into water.
+ *
+ * <ul>
+ *   <li>A <b>quencher</b> — {@link SuppressionPoolQuencherBlock} submerged in
+ *       the basin with a pressurised tube run from the valve down to it. This
+ *       is the real plant: the discharge is split across the quencher's holes
+ *       and condenses in full, so everything the valve passes is admitted.</li>
+ *   <li><b>Open water</b> — the valve simply standing above the pool, which is
+ *       how this mod worked before quenchers existed and how every plant built
+ *       so far is plumbed. A single unbroken jet out of one pipe bore, so only
+ *       {@link #BARE_DISCHARGE_ADMISSION} of it is taken up by the water and
+ *       the rest reaches the containment airspace uncondensed.</li>
+ * </ul>
+ *
+ * <p><b>The bare route is not being taken away and is not deprecated.</b> A
+ * plant already built goes on relieving, goes on depressurising at exactly the
+ * rate it did, and goes on heating its pool — it simply does less of the last
+ * one, and {@link #statusLines()} says so in as many words, names the block
+ * that fixes it, and says so from the structure alone rather than waiting for a
+ * transient to make it visible. What the de-rating costs is not free: steam
+ * that is not condensed is water the pool does not get back, so a plant riding
+ * out a long transient on pool suction with bare discharges will watch its own
+ * level run down towards the pump intake. That is the honest consequence of
+ * discharging into open water and it is exactly why the hardware exists.
+ *
  * <h2>What it does not do</h2>
  * There is no heat capacity temperature limit here, no alarm, and no automatic
  * RHR start. Pool temperature, subcooling and condensation effectiveness are
  * published; what counts as too hot is a number a real plant sets
  * administratively, so in this mod it is the player's to choose and act on in
- * Lua.
+ * Lua. Nothing here decides when steam should flow either: a quencher is a
+ * perforated pipe under water and the admission figures below are properties of
+ * that pipework, not permissives.
  */
 public class SuppressionPoolBlockEntity extends BlockEntity {
 
@@ -154,6 +187,31 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     /** Reports older than this are treated as gone, ticks. Matches the ECCS bus. */
     private static final long STALE_TICKS = 3L;
 
+    /**
+     * Fraction of a bare open-water discharge the pool actually takes up.
+     *
+     * <p>A model calibration constant in the same sense as
+     * {@code SuppressionPool.FULL_CONDENSATION_SUBCOOLING_C}, not a plant
+     * setpoint and not a threshold anybody chose to protect anything.
+     *
+     * <p>What it stands for: a discharge with no quencher on it leaves one pipe
+     * bore as a single coherent steam jet, and a coherent jet condenses at its
+     * own surface only. A T-quencher splits the identical mass flow across
+     * hundreds of small holes spread along two arms, which is roughly an order
+     * of magnitude more steam-water interface, and that is the entire reason
+     * real plants have them — early Mark I units discharged through plain
+     * straight pipes and were retrofitted with quenchers after the containment
+     * loads programme.
+     *
+     * <p>0.40 is deliberately generous to the bare case. The physically honest
+     * figure for a bare jet at a full valve lift would be harsher, but this
+     * path is what every plant built before this block existed is using, and a
+     * degradation a player is told about should leave their plant recognisable
+     * rather than crippled. Steam relieved at 42 kg/s through a bare discharge
+     * still puts about 45 MW into the water.
+     */
+    private static final double BARE_DISCHARGE_ADMISSION = 0.40;
+
     private final SuppressionPool pool = new SuppressionPool();
 
     private ValidationResult lastValidation = new ValidationResult();
@@ -171,6 +229,33 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     private volatile double machineRhrDuty;
 
     private final List<BlockPos> dischargingValves = new ArrayList<>();
+
+    /**
+     * Which of {@link #dischargingValves} arrive through a quencher of this
+     * pool's, rather than by falling into open water.
+     *
+     * <p>A subset of that list and never a separate population of valves, so
+     * {@link #dischargingValveCount()} goes on meaning what the GUI and the
+     * peripheral have always shown it meaning: how many valves discharge into
+     * this pool at all.
+     */
+    private final Set<BlockPos> quencheredValves = new HashSet<>();
+
+    /** Submerged quenchers found in this pool's search box. */
+    private final List<BlockPos> quenchers = new ArrayList<>();
+
+    /**
+     * Relief steam that reached the pool this tick but was not taken up by the
+     * water, kg/s — the shortfall of the bare discharges.
+     *
+     * <p>Distinct from {@code SuppressionPool.getUncondensedSteamKgPerS()},
+     * which is steam the water refused for want of subcooling. This is steam
+     * the <i>inlet</i> never got into the water in the first place, and the two
+     * add up: a hot pool fed through bare discharges is losing steam at both
+     * ends of the same path.
+     */
+    private double bypassedSteamKgPerS;
+
     private BlockPos reactorPos;
 
     /** Steam a machine says it is discharging into this pool. */
@@ -218,12 +303,26 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
 
         // Everything the SRVs are passing arrives here as steam to condense —
         // and leaves the vessel by the same accounting, see the class comment.
-        double srvKgPerS = 0.0;
+        // How much of it the water actually takes up depends on what it arrived
+        // through, so the two inlets are summed apart.
+        double quencheredKgPerS = 0.0;
+        double bareKgPerS = 0.0;
         var it = dischargingValves.iterator();
         while (it.hasNext()) {
             BlockPos vp = it.next();
+            // A valve reached through a quencher's line can be a long way from
+            // this controller and therefore in a chunk that is not loaded.
+            // Skipping is not the same as dropping: getBlockEntity answers null
+            // for an unloaded chunk exactly as it does for a broken block, and
+            // removing on that answer is how a valve across a chunk border
+            // deregisters itself for good. It stays on the list and is looked
+            // at again when its chunk comes back.
+            if (!level.isLoaded(vp)) {
+                continue;
+            }
             if (!(level.getBlockEntity(vp) instanceof SafetyReliefValveBlockEntity srv)) {
                 it.remove();
+                quencheredValves.remove(vp);
                 continue;
             }
             // With no reactor domePressurePsig is 0.0, which is at or below
@@ -237,11 +336,21 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             // controllers can sit within range of one valve, and without this
             // each would put the whole flow into its own water.
             if (flow > 0.0 && srv.claimCondensation(getBlockPos(), gameTime)) {
-                srvKgPerS += flow;
+                if (quencheredValves.contains(vp)) {
+                    quencheredKgPerS += flow;
+                } else {
+                    bareKgPerS += flow;
+                }
             }
         }
 
-        condense(srvKgPerS, domePressurePsig, gameTime, dt);
+        // The inlet takes all of a quenchered discharge and part of a bare one.
+        // Written every tick including the zero case, so the reading cannot
+        // latch at its last value the way the uncondensed figure once did.
+        double admittedKgPerS = quencheredKgPerS + bareKgPerS * BARE_DISCHARGE_ADMISSION;
+        bypassedSteamKgPerS = bareKgPerS * (1.0 - BARE_DISCHARGE_ADMISSION);
+
+        condense(admittedKgPerS, domePressurePsig, gameTime, dt);
 
         machineRhrDuty = expireAndSumDuties(gameTime);
         double duty = getEffectiveRhrDuty();
@@ -274,8 +383,9 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      * is a far smaller error than publishing a steam reading that is not the
      * total.
      */
-    private void condense(double srvKgPerS, double domePressurePsig, long gameTime, double dt) {
-        double total = Math.max(0.0, srvKgPerS);
+    private void condense(double admittedSrvKgPerS, double domePressurePsig, long gameTime,
+                          double dt) {
+        double total = Math.max(0.0, admittedSrvKgPerS);
         double pressureMoment = total * domePressurePsig;
 
         Iterator<Map.Entry<BlockPos, SteamReport>> reports = steamReports.entrySet().iterator();
@@ -362,6 +472,32 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     }
 
     /**
+     * Re-survey now, because somebody has just asked this controller what it
+     * can see.
+     *
+     * <p>A formed pool rescans on {@link #FORMED_REVALIDATE_INTERVAL_TICKS},
+     * which is half a minute, and nothing about laying a discharge line fires a
+     * neighbour change here — the quencher goes in the basin, the tube runs
+     * away towards the valve, and not one of those blocks need touch the
+     * controller. So a player who has just finished plumbing a quencher and
+     * walks over to read the board would, without this, be told for the next
+     * thirty seconds that their valves still discharge into open water. That is
+     * the one message this class most needs to get right, and a stale answer
+     * here is exactly the kind that sends somebody looking for a fault in
+     * pipework they have just finished building.
+     *
+     * <p>Routed through {@link #maybeRevalidate} rather than calling
+     * {@link #revalidate} directly, so the existing
+     * {@link #MIN_REVALIDATE_INTERVAL_TICKS} floor still applies and a player
+     * leaning on the use key cannot run the full structure scan faster than the
+     * tick path would.
+     */
+    public void refreshForReport(Level level) {
+        markStructureDirty();
+        maybeRevalidate(level);
+    }
+
+    /**
      * Rescan the structure when something says it changed, and on an interval
      * regardless.
      *
@@ -393,6 +529,8 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     private void revalidate(Level level) {
         ValidationResult result = new ValidationResult();
         dischargingValves.clear();
+        quencheredValves.clear();
+        quenchers.clear();
         // Cleared before the scan, like every other binding in the mod. Leaving
         // the old value meant a broken reactor controller left a stale position
         // behind that resolved to nothing, which is the state that used to make
@@ -408,20 +546,31 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         // test the fluid first and reach the valve and controller tests only
         // through an else-if, so any position holding water was never examined
         // for a block at all.
+        //
+        // The valves are only gathered here, not judged: a valve piped to a
+        // quencher may be well outside this box and is found below instead, and
+        // until the quenchers are known there is no way to tell which of the
+        // ones standing in the box are the far end of somebody else's line.
+        List<BlockPos> boxValves = new ArrayList<>();
         for (BlockPos p : BlockPos.betweenClosed(min, max)) {
             BlockState found = level.getBlockState(p);
             if (found.is(BwrBlocks.SAFETY_RELIEF_VALVE.get())
-                    && level.getBlockEntity(p) instanceof SafetyReliefValveBlockEntity srv) {
-                if (srv.revalidateDischarge(level)) {
-                    dischargingValves.add(p.immutable());
+                    && level.getBlockEntity(p) instanceof SafetyReliefValveBlockEntity) {
+                boxValves.add(p.immutable());
+            } else if (found.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get())) {
+                if (SuppressionPoolQuencherBlock.isSubmerged(level, p)) {
+                    quenchers.add(p.immutable());
                 } else {
                     result.degrade(p.immutable(),
-                            "this relief valve does not discharge underwater, so it suppresses nothing");
+                            "this quencher has no water above it, so it admits steam to the"
+                                    + " containment airspace rather than to the pool");
                 }
             } else if (found.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
                 reactorPos = p.immutable();
             }
         }
+
+        gatherDischarges(level, boxValves, result);
 
         Basin basin = surveyBasin(level);
         waterBlocks = basin.waterBlocks();
@@ -454,6 +603,75 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         pool.resizeToDesignMassKg(structureMassKg(), SuppressionPool.DEFAULT_TEMPERATURE_C);
         formed = true;
         lastValidation = result;
+    }
+
+    /**
+     * Work out which relief valves discharge into this pool, and by which
+     * route.
+     *
+     * <h2>Why the valves cannot all be found by looking around the controller</h2>
+     * A quenchered valve is meant to be nowhere near this block. That is the
+     * point of running a discharge line: the relief valves belong up on the
+     * main steam line at vessel elevation, and the tube carries what they pass
+     * down to the water. Gathering valves by proximity alone — which is all
+     * this class could do while the only discharge was a search for water
+     * underneath — would have made the new hardware useless for exactly the
+     * builds it exists to allow, because a valve on the vessel is routinely
+     * further than {@link #SEARCH_RADIUS} from a controller standing at the
+     * pool.
+     *
+     * <p>So the pipework is followed instead, from each of this pool's own
+     * quenchers outwards, which is what {@link SteamLineNetwork} is for. That
+     * also settles ownership without any extra rule: a valve is this pool's
+     * business if it can be reached along the line from a quencher submerged in
+     * this pool. A valve piped to a quencher in somebody else's basin is not
+     * reached, is not counted here, and is left to the controller that is
+     * standing at the water it actually discharges into.
+     *
+     * <p>The walk from a quencher and the walk from a valve are the same walk
+     * over the same connectivity — {@code SteamLineNetwork.joined} is symmetric
+     * and both stop at the same kinds of end — so "this quencher reaches that
+     * valve" and "that valve reaches this quencher" are one fact, and no
+     * agreement has to be negotiated between the two block entities.
+     */
+    private void gatherDischarges(Level level, List<BlockPos> boxValves, ValidationResult result) {
+        // Valves on the discharge lines of this pool's own submerged quenchers.
+        Set<BlockPos> quencherFed = new LinkedHashSet<>();
+        for (BlockPos q : quenchers) {
+            quencherFed.addAll(SteamLineNetwork.survey(level, q).reliefValves());
+        }
+
+        // Both populations, deduplicated, in an order that does not vary
+        // between runs — these positions end up in a list the status text
+        // reports from.
+        Set<BlockPos> candidates = new LinkedHashSet<>(boxValves);
+        candidates.addAll(quencherFed);
+
+        for (BlockPos vp : candidates) {
+            if (!(level.getBlockEntity(vp) instanceof SafetyReliefValveBlockEntity srv)) {
+                continue;
+            }
+            srv.revalidateDischarge(level);
+            switch (srv.dischargePath()) {
+                case QUENCHER -> {
+                    if (quencherFed.contains(vp)) {
+                        dischargingValves.add(vp);
+                        quencheredValves.add(vp);
+                    } else {
+                        // Piped to a quencher, but not to one of this pool's.
+                        // Condensing it here would put another basin's steam
+                        // into this water.
+                        result.degrade(vp, "this relief valve discharges through a quencher"
+                                + " that is not submerged in this basin, so its steam is not"
+                                + " condensed here");
+                    }
+                }
+                case OPEN_WATER -> dischargingValves.add(vp);
+                case NONE -> result.degrade(vp, "this relief valve has no discharge path:"
+                        + " no water below it and no submerged quencher on its steam line,"
+                        + " so it suppresses nothing");
+            }
+        }
     }
 
     // --- Finding the basin ------------------------------------------------
@@ -838,6 +1056,53 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         return rhrCapacityMW;
     }
 
+    /**
+     * What the pool's steam inlets are, and — if any of them is a bare
+     * discharge — what that is costing.
+     *
+     * <p>This is the whole of the mod's obligation to a plant that was built
+     * before quenchers existed, so it is written to be read by somebody who has
+     * never heard of one. It reports from the <b>structure</b>, not from flow:
+     * a player whose valves are all shut still gets told, at the moment they
+     * next look at the controller, that their discharges are bare and what to
+     * build. Waiting for a transient to reveal it would be exactly the silent
+     * degradation this must not be.
+     */
+    private List<String> inletLines() {
+        List<String> out = new ArrayList<>();
+        int quenchered = quencheredValves.size();
+        int bare = dischargingValves.size() - quenchered;
+        if (quenchered > 0) {
+            out.add(String.format(
+                    "%d valve(s) discharge through a quencher and condense in full"
+                            + " (%d submerged quencher(s) in this basin).",
+                    quenchered, quenchers.size()));
+        } else if (!quenchers.isEmpty()) {
+            // Built but not plumbed. Saying nothing here would leave a player
+            // who has just set the quenchers in the water with a board that
+            // does not acknowledge them at all.
+            out.add(String.format(
+                    "%d submerged quencher(s) in this basin, with no relief valve piped to any"
+                            + " of them. Run pressurised tube from the valve to the quencher.",
+                    quenchers.size()));
+        }
+        if (bare > 0) {
+            out.add(String.format(
+                    "%d valve(s) discharge into open water with no quencher. A bare discharge is"
+                            + " one coherent jet, so only %.0f%% of what it passes is taken up by"
+                            + " the water; the rest reaches containment uncondensed and does not"
+                            + " return to the pool as inventory.",
+                    bare, BARE_DISCHARGE_ADMISSION * 100.0));
+            out.add("To fix: place a Suppression Pool Quencher in the basin with water directly"
+                    + " above it, and run pressurised tube from the relief valve to it.");
+        }
+        if (bypassedSteamKgPerS > 0.0) {
+            out.add(String.format("%.1f kg/s is bypassing the water through bare discharges.",
+                    bypassedSteamKgPerS));
+        }
+        return out;
+    }
+
     public List<String> statusLines() {
         List<String> out = new ArrayList<>();
         if (!formed) {
@@ -847,6 +1112,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         }
         out.add(String.format("Pool formed: %d water blocks, %d relief valves discharging",
                 waterBlocks, dischargingValves.size()));
+        out.addAll(inletLines());
         // The basin size is physics now, not decoration, so it is on the board:
         // a small pool really does heat faster and lose suction sooner.
         out.add(String.format("%,.0f kg of %,.0f kg design inventory (%.0f%% level), "

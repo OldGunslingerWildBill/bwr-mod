@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "bwr:block/suppression_pool_quencher"
+    }
+  }
+}

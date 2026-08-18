@@ -61,6 +61,12 @@ public class SuppressionPoolControllerBlock extends BaseEntityBlock {
             return InteractionResult.SUCCESS;
         }
         if (level.getBlockEntity(pos) instanceof SuppressionPoolBlockEntity be) {
+            // A player asking for a report gets a current one. Neither the
+            // quencher nor the tube run that reaches it is next to this block,
+            // so nothing about building a discharge line makes this controller
+            // rescan; without this the board would go on describing the plant
+            // as it stood up to half a minute ago.
+            be.refreshForReport(level);
             // Panel on a plain right-click, the build-time status text on a
             // sneak-click, same convention as the reactor controller.
             if (player.isShiftKeyDown()

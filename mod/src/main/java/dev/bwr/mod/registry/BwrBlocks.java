@@ -18,6 +18,7 @@ import dev.bwr.mod.steam.PressurisedTubeBlock;
 import dev.bwr.mod.steam.SafetyReliefValveBlock;
 import dev.bwr.mod.steam.TurbineSteamOutletBlock;
 import dev.bwr.mod.suppression.SuppressionPoolControllerBlock;
+import dev.bwr.mod.suppression.SuppressionPoolQuencherBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -224,4 +225,19 @@ public final class BwrBlocks {
     /** Structural wall of the suppression pool. */
     public static final DeferredBlock<Block> SUPPRESSION_POOL_WALL =
             BLOCKS.register("suppression_pool_wall", () -> new Block(vesselSteel()));
+
+    /**
+     * T-quencher — the submerged termination of a relief valve discharge line,
+     * and the pool's inlet. The counterpart at the pool end of what
+     * {@link #RPV_STEAM_OUTLET} is at the vessel end: before it there was no
+     * built path between the two, only a search for water underneath the valve.
+     *
+     * <p>Machine casing rather than vessel steel. A quencher sits in the pool
+     * at containment pressure with water on both sides of it; it is not part of
+     * the reactor pressure boundary and nothing about it should read as though
+     * it were.
+     */
+    public static final DeferredBlock<SuppressionPoolQuencherBlock> SUPPRESSION_POOL_QUENCHER =
+            BLOCKS.register("suppression_pool_quencher",
+                    () -> new SuppressionPoolQuencherBlock(machine()));
 }

@@ -45,15 +45,21 @@ import java.util.Set;
  * same connectivity — a line that looks joined is joined, and one that looks
  * broken is broken.
  *
- * <h2>Nozzles and turbine outlets are ends of a line, not middles of one</h2>
+ * <h2>Nozzles, turbine outlets and quenchers are ends of a line</h2>
  * The walk records them and does not continue through them. A nozzle is a hole
  * in the pressure vessel, so routing <i>through</i> one would let a line pass in
  * at one penetration and out at another and make two separate steam systems read
  * as one; a turbine outlet is where the mod hands steam to Mekanism, which is
- * the end of our side of it. Real plants do cross-tie their main steam lines, and
- * a player who wants that runs the tube around the outside — which this walk
- * follows perfectly well, because tube is a conduit and a cross-tie is made of
- * tube.
+ * the end of our side of it; a quencher is submerged in the pool with its holes
+ * open to the water, which is where a discharge line stops being a pipe. Real
+ * plants do cross-tie their main steam lines, and a player who wants that runs
+ * the tube around the outside — which this walk follows perfectly well, because
+ * tube is a conduit and a cross-tie is made of tube.
+ *
+ * <p>Relief valves are the opposite case and are recorded <i>without</i> ending
+ * the walk. A safety/relief valve is mounted in the line and is a piece of it,
+ * so a discharge line with two valves teed into it is one line; stopping at the
+ * first would hide the second from the quencher it discharges through.
  *
  * <h2>Bounded, and it never loads a chunk</h2>
  * {@link #MAX_LINE_BLOCKS} caps the walk, so a player who builds a tube maze
@@ -79,7 +85,7 @@ public final class SteamLineNetwork {
 
     /** Nothing found. Shared, because it is immutable and surveys often fail. */
     private static final Survey EMPTY = new Survey(
-            List.of(), List.of(), List.of(), 0, false);
+            List.of(), List.of(), List.of(), List.of(), List.of(), 0, false);
 
     private SteamLineNetwork() {
     }
@@ -89,13 +95,17 @@ public final class SteamLineNetwork {
      *
      * @param nozzles         RPV steam nozzles reachable along the line
      * @param isolationValves MSIVs in the line itself, not merely nearby
+     * @param reliefValves    safety/relief valves in the line itself
      * @param turbineOutlets  turbine steam outlets reachable along the line
+     * @param quenchers       suppression pool quenchers the line terminates in
      * @param lineBlocks      pieces of line walked through, excluding the ends
      * @param truncated       true when {@link #MAX_LINE_BLOCKS} stopped the walk
      */
     public record Survey(List<BlockPos> nozzles,
                          List<BlockPos> isolationValves,
+                         List<BlockPos> reliefValves,
                          List<BlockPos> turbineOutlets,
+                         List<BlockPos> quenchers,
                          int lineBlocks,
                          boolean truncated) {
     }
@@ -118,7 +128,9 @@ public final class SteamLineNetwork {
 
         List<BlockPos> nozzles = new ArrayList<>();
         List<BlockPos> valves = new ArrayList<>();
+        List<BlockPos> reliefValves = new ArrayList<>();
         List<BlockPos> outlets = new ArrayList<>();
+        List<BlockPos> quenchers = new ArrayList<>();
         int lineBlocks = 0;
         boolean truncated = false;
 
@@ -160,9 +172,16 @@ public final class SteamLineNetwork {
                     outlets.add(next);
                     continue; // likewise
                 }
+                if (isQuencher(nextState)) {
+                    quenchers.add(next);
+                    continue; // likewise: the line ends in the water
+                }
                 lineBlocks++;
                 if (nextState.is(BwrBlocks.MSIV.get())) {
                     valves.add(next);
+                }
+                if (nextState.is(BwrBlocks.SAFETY_RELIEF_VALVE.get())) {
+                    reliefValves.add(next);
                 }
                 if (lineBlocks >= MAX_LINE_BLOCKS) {
                     truncated = true;
@@ -175,7 +194,9 @@ public final class SteamLineNetwork {
 
         return new Survey(Collections.unmodifiableList(nozzles),
                 Collections.unmodifiableList(valves),
+                Collections.unmodifiableList(reliefValves),
                 Collections.unmodifiableList(outlets),
+                Collections.unmodifiableList(quenchers),
                 lineBlocks, truncated);
     }
 
@@ -218,6 +239,11 @@ public final class SteamLineNetwork {
     /** The Mekanism boundary: the far end of a line. */
     private static boolean isTurbineOutlet(BlockState state) {
         return state.is(BwrBlocks.TURBINE_STEAM_OUTLET.get());
+    }
+
+    /** A suppression pool quencher: the far end of a relief discharge line. */
+    private static boolean isQuencher(BlockState state) {
+        return state.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get());
     }
 
     /**
