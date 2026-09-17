@@ -1,5 +1,56 @@
 # Build Status
 
+## 2026-09-17 — pump model pack and connected recirculation
+
+Implemented the seven supplied models, shared controller/capability access, sided
+water ports, live pump circuits and jet-count flow limits. The RIP has a recipe,
+bottom-head rim mounting and the existing speed-control screen. Existing IDs and
+saved compact machines remain readable. See [PUMP-MODELS.md](PUMP-MODELS.md).
+
+Verified with Minecraft 1.21.1 / NeoForge 21.1.248:
+
+```text
+build (full physics suite)
+153 tests, 153 passed, 0 failed, 865.8 s
+BUILD SUCCESSFUL in 14m 32s
+
+:mod:runTurbineGameTest :mod:build
+Turbine assembly runtime checks: 0 failure(s)
+Turbine plumbing PASS: rcic
+Turbine plumbing PASS: hpci
+PUMP RUNTIME CHECK: 34 scenarios passed, 0 failure(s)
+All 1 required tests passed
+checkNoProtectionLogic: scanned 122 files in :mod, no protection logic present
+BUILD SUCCESSFUL
+
+:mod:runTurbineModelCheck
+PUMP MODEL CHECK PASS: 1236 occupied cell states, seven inventory and seven compact models
+TURBINE MODEL CHECK PASS: 312 cell states and both inventory models
+BUILD SUCCESSFUL
+
+tools-audit-assets.py
+573 valid JSON files; 28/28 blocks have models, blockstates, items, loot and recipes
+PROBLEMS: 0
+
+tools-check-jar.py
+209 class files including the nested physics jar
+0 bundled CC:Tweaked classes, 0 bundled Mekanism classes, 0 devtest entries
+OK: nothing forbidden is bundled.
+```
+
+The new scenarios cover all seven machines in four rotations, occupied-footprint
+rejection, collision bounds, flange/tube arms, shared FE, suction-only fluid
+access, root loot and removal, saved-state migration, an isolated closed valve
+branch alongside an open suction header, live motor feedwater and
+three ECCS pump circuits, RFPT water/steam accounting, lost suction/discharge/
+exhaust, paired-jet count and disconnected drive lines, and a formed vessel with
+an internal pump and usable control menu. External pumps and RIPs are also checked
+for automatic association through their pipe or mount. Earlier RCIC/HPCI cases still run.
+
+The supplied geometry uses approximate equipment envelopes. Tests do not include
+a long-running player-world/chunk-unload soak or an interactive performance
+benchmark with many machines. No condenser or future spray-nozzle model is added.
+
 ## 2026-09-14 — RCIC TWL and HPCI placeable assemblies
 
 Added `bwr:rcic_twl` and `bwr:hpci_turbine`, imported from the supplied estimated

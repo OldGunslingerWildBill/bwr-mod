@@ -1,0 +1,546 @@
+{
+  "id": "motor_feed_pump",
+  "status": "PREPARED RESOURCES; not installed or registered in the inspected mod",
+  "width": 6,
+  "height": 2,
+  "depth": 2,
+  "controller_cell": [
+    0,
+    0,
+    0
+  ],
+  "anchor_in_assembly_grid": [
+    3.0,
+    0,
+    1.0
+  ],
+  "anchor_from_controller": [
+    3.0,
+    0,
+    1.0
+  ],
+  "cells": [
+    {
+      "index": 0,
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "bounds": [
+        0.3499999,
+        0,
+        0.16,
+        1,
+        1,
+        1
+      ],
+      "triangles": 372
+    },
+    {
+      "index": 1,
+      "offset": [
+        1,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.16,
+        1,
+        1,
+        1
+      ],
+      "triangles": 311
+    },
+    {
+      "index": 2,
+      "offset": [
+        2,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.16,
+        1,
+        1,
+        1
+      ],
+      "triangles": 515
+    },
+    {
+      "index": 3,
+      "offset": [
+        3,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.16,
+        1,
+        1,
+        1
+      ],
+      "triangles": 789
+    },
+    {
+      "index": 4,
+      "offset": [
+        4,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.16,
+        1,
+        1,
+        1
+      ],
+      "triangles": 557
+    },
+    {
+      "index": 5,
+      "offset": [
+        5,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.16,
+        0.6500001,
+        1,
+        1
+      ],
+      "triangles": 745
+    },
+    {
+      "index": 6,
+      "offset": [
+        0,
+        0,
+        1
+      ],
+      "bounds": [
+        0.3499999,
+        0,
+        0,
+        1,
+        1,
+        0.84
+      ],
+      "triangles": 374
+    },
+    {
+      "index": 7,
+      "offset": [
+        1,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0.84
+      ],
+      "triangles": 277
+    },
+    {
+      "index": 8,
+      "offset": [
+        2,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0.84
+      ],
+      "triangles": 517
+    },
+    {
+      "index": 9,
+      "offset": [
+        3,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0.84
+      ],
+      "triangles": 757
+    },
+    {
+      "index": 10,
+      "offset": [
+        4,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0.84
+      ],
+      "triangles": 482
+    },
+    {
+      "index": 11,
+      "offset": [
+        5,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        0.6500001,
+        1,
+        0.84
+      ],
+      "triangles": 747
+    },
+    {
+      "index": 12,
+      "offset": [
+        0,
+        1,
+        0
+      ],
+      "bounds": [
+        0.825,
+        0,
+        0.50885,
+        1,
+        0.9442559,
+        1
+      ],
+      "triangles": 258
+    },
+    {
+      "index": 13,
+      "offset": [
+        1,
+        1,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.499,
+        1,
+        1,
+        1
+      ],
+      "triangles": 461
+    },
+    {
+      "index": 14,
+      "offset": [
+        2,
+        1,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.50885,
+        1,
+        1,
+        1
+      ],
+      "triangles": 685
+    },
+    {
+      "index": 15,
+      "offset": [
+        3,
+        1,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.44,
+        1,
+        0.9649999999999999,
+        1
+      ],
+      "triangles": 789
+    },
+    {
+      "index": 16,
+      "offset": [
+        4,
+        1,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.3419,
+        1,
+        0.755,
+        1
+      ],
+      "triangles": 573
+    },
+    {
+      "index": 17,
+      "offset": [
+        5,
+        1,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.3745,
+        0.426,
+        0.7487342,
+        1
+      ],
+      "triangles": 587
+    },
+    {
+      "index": 18,
+      "offset": [
+        0,
+        1,
+        1
+      ],
+      "bounds": [
+        0.825,
+        0,
+        0,
+        1,
+        0.9442559,
+        0.49115
+      ],
+      "triangles": 258
+    },
+    {
+      "index": 19,
+      "offset": [
+        1,
+        1,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0.605
+      ],
+      "triangles": 423
+    },
+    {
+      "index": 20,
+      "offset": [
+        2,
+        1,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0.605
+      ],
+      "triangles": 569
+    },
+    {
+      "index": 21,
+      "offset": [
+        3,
+        1,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0.605
+      ],
+      "triangles": 789
+    },
+    {
+      "index": 22,
+      "offset": [
+        4,
+        1,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        0.755,
+        0.6255
+      ],
+      "triangles": 463
+    },
+    {
+      "index": 23,
+      "offset": [
+        5,
+        1,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        0.426,
+        0.7487342,
+        0.6255
+      ],
+      "triangles": 577
+    }
+  ],
+  "ports": [
+    {
+      "name": "water_suction",
+      "role": "water_suction",
+      "position_blender": [
+        -1.8285000324249268,
+        0.0,
+        1.9299999475479126
+      ],
+      "outward_blender": [
+        0,
+        0,
+        1
+      ],
+      "position_minecraft": [
+        -1.8285000324249268,
+        1.9299999475479126,
+        0.0
+      ],
+      "outward_minecraft": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "visual_diameter_m": 0.36,
+      "game_connection": null,
+      "role_basis": "Proposed integration role; not a manufacturer rating.",
+      "assembly_position": [
+        1.1714999675750732,
+        1.9299999475479126,
+        1.0
+      ],
+      "proposed_connection_cell": [
+        1,
+        1,
+        1
+      ],
+      "connection_status": "UNWIRED: adapter to block-grid face and existing capability mapping require integration"
+    },
+    {
+      "name": "water_discharge",
+      "role": "water_discharge",
+      "position_blender": [
+        -0.8715000152587891,
+        0.0,
+        1.9299999475479126
+      ],
+      "outward_blender": [
+        0,
+        0,
+        1
+      ],
+      "position_minecraft": [
+        -0.8715000152587891,
+        1.9299999475479126,
+        0.0
+      ],
+      "outward_minecraft": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "visual_diameter_m": 0.3,
+      "game_connection": null,
+      "role_basis": "Proposed integration role; not a manufacturer rating.",
+      "assembly_position": [
+        2.128499984741211,
+        1.9299999475479126,
+        1.0
+      ],
+      "proposed_connection_cell": [
+        2,
+        1,
+        1
+      ],
+      "connection_status": "UNWIRED: adapter to block-grid face and existing capability mapping require integration"
+    }
+  ],
+  "placement_clearance": "All listed cells must be loaded, replaceable, inside border/build-height, and unobstructed.",
+  "removal_behavior": "Proposed: one controller; mine any part to remove its owned cells and drop exactly one item.",
+  "access_faces": [
+    "north",
+    "south"
+  ],
+  "maintenance_clearance_m": 1.0,
+  "culling": "Per-cell OBJ geometry is clipped within its own block; chunk baking can use normal bounds.",
+  "validation": {
+    "source_triangles": 8448,
+    "clipped_triangles": 12875,
+    "source_surface_area_m2": 81.41750159073864,
+    "clipped_surface_area_m2": 81.41750163149302,
+    "area_error_m2": 4.075438653217134e-08,
+    "cell_bounds_pass": true
+  },
+  "game_ports": [
+    {
+      "role": "WATER_SUCTION",
+      "cell": [
+        1,
+        1,
+        1
+      ],
+      "face": "up"
+    },
+    {
+      "role": "WATER_DISCHARGE",
+      "cell": [
+        3,
+        1,
+        1
+      ],
+      "face": "up"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "loader": "neoforge:obj",
+  "model": "bwr:models/block/pumps/rhr_pump/assembled.obj",
+  "automatic_culling": false,
+  "flip_v": true,
+  "ambientocclusion": false,
+  "render_type": "minecraft:solid",
+  "textures": {
+    "particle": "bwr:block/pumps/pump_atlas"
+  },
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        135,
+        0
+      ],
+      "translation": [
+        0,
+        -3.3101057433396255,
+        0
+      ],
+      "scale": [
+        0.16237368973227628,
+        0.16237368973227628,
+        0.16237368973227628
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        2,
+        0
+      ],
+      "scale": [
+        0.08118684486613814,
+        0.08118684486613814,
+        0.08118684486613814
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.16237368973227628,
+        0.16237368973227628,
+        0.16237368973227628
+      ]
+    }
+  }
+}

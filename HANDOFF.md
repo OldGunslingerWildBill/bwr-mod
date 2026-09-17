@@ -1,5 +1,30 @@
 # Agent Handoff
 
+## 2026-09-17 update: supplied pump model pack
+
+Seven supplied textured models are integrated. HPCS, LPCS, RHR/LPCI, motor
+feedwater, turbine feedwater and paired jets replace their matching placeholders;
+`rip_pump` adds a reactor internal pump. See [PUMP-MODELS.md](PUMP-MODELS.md) for
+the complete placement/port guide, compatibility behavior and source archive hash.
+
+`PumpAssemblyBlock` reserves the full footprint with one controller. Saved old
+blockstates load a compact mesh without expanding into adjacent builds; pick up
+and replace to use full-size physical connections. `ProcessAssembly` shares
+flange routing with the previous RCIC/HPCI machines. Motor/ECCS water flow follows
+real pipe circuits. The feedwater turbine's shared nozzle claim is exported as
+exhaust through the existing Mekanism boundary, without a second vessel debit.
+
+`RecirculationNetwork` caps connected circuits by both paired-jet capacity and
+external drive-pump output. A pair contributes 10%; an external drive contributes
+50% times actual speed. RIPs contribute 10% times actual speed and mount at the
+bottom-head rim, clear of the CRDs. Block/cell removal and disconnected pipes
+withdraw capacity. Flow commands remain manual and the existing coastdown remains.
+
+The GameTest now includes 34 new pump scenarios as well as the original turbine
+cases. The actual client model check covers 1,236 pump cell orientations and seven
+inventory/compact models, plus the earlier RCIC/HPCI checks. Results are recorded
+in the newest [BUILD-STATUS.md](BUILD-STATUS.md) section.
+
 ## 2026-09-14 update: placeable RCIC and HPCI CAD assemblies
 
 The new blocks are `bwr:rcic_twl` (3 × 3 × 2) and `bwr:hpci_turbine`

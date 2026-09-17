@@ -164,7 +164,7 @@ public final class SteamLineNetwork {
                     continue;
                 }
                 seen.add(next);
-                if (nextState.getBlock() instanceof dev.bwr.mod.eccs.TurbineAssemblyBlock) {
+                if (nextState.getBlock() instanceof dev.bwr.mod.eccs.ProcessAssembly) {
                     continue; // each machine port terminates its own circuit
                 }
                 if (isVesselNozzle(nextState)) {
@@ -263,11 +263,11 @@ public final class SteamLineNetwork {
     }
 
     private static boolean acceptsSteamOn(BlockState state, Direction face) {
-        if (state.getBlock() instanceof dev.bwr.mod.eccs.TurbineAssemblyBlock assembly) {
+        if (state.getBlock() instanceof dev.bwr.mod.eccs.ProcessAssembly assembly) {
             var port = assembly.portAt(state, face);
             return port != null && port.isSteam();
         }
-        return !dev.bwr.mod.eccs.AssemblyPlumbing.isWaterEndpoint(state) && acceptsLineOn(state, face);
+        return !state.is(BwrBlocks.RECIRCULATION_PUMP.get()) && !dev.bwr.mod.eccs.AssemblyPlumbing.isWaterEndpoint(state) && acceptsLineOn(state, face);
     }
 
     /**

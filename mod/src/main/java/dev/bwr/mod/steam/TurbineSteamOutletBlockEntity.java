@@ -219,6 +219,37 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
     private volatile double steamProductionKgPerS;
 
     private volatile long bufferedMilliBuckets;
+    // Persistent physical mode: disconnecting an exhaust pipe must not turn this
+    // receiver into a second independent vessel steam source.
+    private boolean pumpExhaustReceiver;
+    private double pendingExhaustMb;
+    private long exhaustTick=Long.MIN_VALUE;
+    private double acceptedExhaustKgPerS;
+
+    public void connectPumpExhaust() {
+        if(pumpExhaustReceiver) return;
+        pumpExhaustReceiver=true;
+        if(level!=null) {
+            var old=controller(level);
+            if(old!=null && old.core()!=null) old.core().setTurbineSteamFlowKgPerS(pooledFlowKgPerS(old,level.getGameTime(),getBlockPos(),0));
+        }
+        setChanged();
+    }
+    public double pumpExhaustCapacityKgPerS(long tick) {
+        double received=tick==exhaustTick?acceptedExhaustKgPerS:0;
+        return Math.max(0,Math.min(commandedFlowKgPerS-received,
+                (BUFFER_CAPACITY_MB-bufferedMilliBuckets-pendingExhaustMb)/MILLIBUCKETS_PER_TICK_PER_KG_PER_S));
+    }
+    public void receivePumpExhaustKgPerS(long tick,double flow) {
+        if(!(flow>0) || !Double.isFinite(flow)) return;
+        if(flow>pumpExhaustCapacityKgPerS(tick)+1e-8) throw new IllegalStateException("Exhaust exceeded reserved receiver capacity");
+        if(exhaustTick!=tick) { exhaustTick=tick; acceptedExhaustKgPerS=0; }
+        acceptedExhaustKgPerS+=flow;
+        pendingExhaustMb+=flow*MILLIBUCKETS_PER_TICK_PER_KG_PER_S;
+        long whole=(long)Math.floor(pendingExhaustMb);
+        bufferedMilliBuckets+=whole; pendingExhaustMb-=whole;
+        setChanged();
+    }
 
     /** Fraction of the line the isolation valves are leaving open, 0..1. */
     private volatile double mainSteamLineOpenFraction = 1.0;
@@ -318,6 +349,14 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
         drainedLastTickMb = drainedThisTickMb;
         drainedThisTickMb = 0L;
 
+        if(pumpExhaustReceiver) {
+            ReactorControllerBlockEntity old=controller(level);
+            if(old!=null && old.core()!=null) old.core().setTurbineSteamFlowKgPerS(pooledFlowKgPerS(old,level.getGameTime(),getBlockPos(),0));
+            deliveredFlowKgPerS=level.getGameTime()-exhaustTick<=1?acceptedExhaustKgPerS:0;
+            nozzleSupplyKgPerS=0;
+            steamProductionKgPerS=0;
+            return;
+        }
         maybeRescan(level);
         mainSteamLineOpenFraction = isolationValveOpenFraction(level);
 
@@ -851,6 +890,13 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
     /** Lines shown when a player right-clicks the outlet. */
     public List<String> statusLines() {
         List<String> out = new ArrayList<>();
+        if(pumpExhaustReceiver) {
+            out.add(String.format("Feed-pump exhaust receiver: commanded %.1f kg/s, received %.1f kg/s; buffer %d/%d mB",
+                    commandedFlowKgPerS,deliveredFlowKgPerS,bufferedMilliBuckets,BUFFER_CAPACITY_MB));
+            out.add("Receives only piped pump exhaust. Pick up and place again to return this outlet to main-steam service.");
+            out.addAll(mekanismBoundaryLines());
+            return out;
+        }
         if (!isAttached()) {
             out.add("Turbine steam outlet: not attached to a formed reactor.");
             // The downstream half is still worth reporting. An outlet with no
@@ -968,6 +1014,8 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
+        tag.putBoolean("PumpExhaustReceiver",pumpExhaustReceiver);
+        tag.putDouble("PendingExhaustMb",pendingExhaustMb);
         tag.putDouble("Commanded", commandedFlowKgPerS);
         tag.putBoolean("ComputerControlled", computerControlled);
         tag.putLong("BufferMb", bufferedMilliBuckets);
@@ -979,6 +1027,9 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        pumpExhaustReceiver=tag.getBoolean("PumpExhaustReceiver");
+        double pending=tag.getDouble("PendingExhaustMb");
+        pendingExhaustMb=Double.isFinite(pending)?Math.max(0,Math.min(.999999999,pending)):0;
         // Clamped the same way the setter clamps. A commanded flow read straight
         // out of NBT is the one path into this field that does not go through
         // setCommandedFlowKgPerS, so a hand-edited or corrupted save was the one

@@ -25,7 +25,8 @@ import net.minecraft.world.level.block.state.BlockState;
  * broken and replaced under a pump that is already there, both leave the pump
  * orphaned and the core flow at zero with nothing to say so.
  */
-public class RecirculationPumpBlock extends BaseEntityBlock {
+public class RecirculationPumpBlock extends BaseEntityBlock implements dev.bwr.mod.steam.SteamLinePort {
+    @Override public boolean acceptsSteamLineOn(BlockState state, net.minecraft.core.Direction face) { return true; }
 
     public static final MapCodec<RecirculationPumpBlock> CODEC =
             simpleCodec(RecirculationPumpBlock::new);

@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "#bwr:reactor_blocks"
+    "#bwr:reactor_blocks",
+    "bwr:rip_pump"
   ]
 }

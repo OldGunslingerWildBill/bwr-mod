@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "#bwr:machines"
+    "#bwr:machines",
+    "bwr:rip_pump"
   ]
 }

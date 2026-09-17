@@ -66,6 +66,10 @@ public class EccsPumpBlock extends BaseEntityBlock {
 
     /** The design of whichever ECCS machine a block state belongs to. */
     public static EccsDesign designOf(BlockState state) {
+        if (state.getBlock() instanceof PumpAssemblyBlock p) return switch(p.kind()) {
+            case HPCS -> EccsDesign.HPCS; case LPCS -> EccsDesign.LPCS; case RHR -> EccsDesign.RHR;
+            default -> throw new IllegalArgumentException("Not an ECCS pump");
+        };
         return state.getBlock() instanceof EccsPumpBlock b ? b.design() : EccsDesign.RCIC;
     }
 

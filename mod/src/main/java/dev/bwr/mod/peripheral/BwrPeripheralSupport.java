@@ -29,6 +29,13 @@ public final class BwrPeripheralSupport {
     }
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlock(PeripheralCapability.get(), (level,pos,state,unused,side) -> {
+            var be=dev.bwr.mod.eccs.PumpAssemblyCapabilities.controller(level,pos,state);
+            if(be instanceof dev.bwr.mod.eccs.EccsPumpBlockEntity p) return new EccsPumpPeripheral(p);
+            if(be instanceof dev.bwr.mod.feedwater.FeedwaterPumpBlockEntity p) return new FeedwaterPumpPeripheral(p);
+            if(be instanceof dev.bwr.mod.flow.RecirculationPumpBlockEntity p) return new RecirculationPumpPeripheral(p);
+            return null;
+        }, dev.bwr.mod.eccs.PumpAssemblyCapabilities.blocks());
         // Deliberately at INFO. This branch was dead for the whole life of the
         // project — CC:Tweaked was compileOnly and on no run configuration, so
         // nothing here had ever executed. The one line is how anyone confirms,

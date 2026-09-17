@@ -1,0 +1,5 @@
+newmtl pump_atlas
+Kd 1 1 1
+Ka 0 0 0
+d 1
+map_Kd bwr:block/pumps/pump_atlas

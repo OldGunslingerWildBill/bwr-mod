@@ -369,6 +369,7 @@ public final class ReactorStructure {
         BlockState s = level.getBlockState(pos);
         return !s.is(BwrBlocks.REACTOR_VESSEL.get())
                 && !s.is(BwrBlocks.REACTOR_CONTROLLER.get())
+                && !(s.is(BwrBlocks.RIP_PUMP.get()) && s.getValue(dev.bwr.mod.eccs.PumpAssemblyBlock.CELL)/4==3)
                 && !s.is(BwrBlocks.RPV_STEAM_OUTLET.get());
     }
 
@@ -555,7 +556,8 @@ public final class ReactorStructure {
                 || s.is(BwrBlocks.CORE_SPRAY_SPARGER.get())
                 || s.is(BwrBlocks.PRESSURISED_TUBE.get())
                 || s.is(BwrBlocks.RECIRCULATION_PUMP.get())
-                || s.is(BwrBlocks.JET_PUMP.get())
+                || (s.is(BwrBlocks.JET_PUMP.get()) && !s.getValue(dev.bwr.mod.eccs.PumpAssemblyBlock.ASSEMBLED))
+                || (s.is(BwrBlocks.RIP_PUMP.get()) && s.getValue(dev.bwr.mod.eccs.PumpAssemblyBlock.CELL)/4>=3)
                 || s.is(BwrBlocks.RPV_STEAM_OUTLET.get());
     }
 

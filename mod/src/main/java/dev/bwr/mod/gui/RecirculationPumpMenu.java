@@ -63,13 +63,15 @@ public class RecirculationPumpMenu extends BwrMenu {
 
     public RecirculationPumpMenu(int containerId, Inventory inventory, BlockPos pos) {
         super(BwrMenus.RECIRCULATION_PUMP.get(), containerId, inventory, pos,
-                BwrBlocks.RECIRCULATION_PUMP.get());
+                inventory.player.level().getBlockState(pos).is(BwrBlocks.RIP_PUMP.get())
+                        ? BwrBlocks.RIP_PUMP.get() : BwrBlocks.RECIRCULATION_PUMP.get());
     }
 
     public static void open(ServerPlayer player, RecirculationPumpBlockEntity be) {
         player.openMenu(new SimpleMenuProvider(
                         (id, inventory, who) -> new RecirculationPumpMenu(id, inventory, be.getBlockPos()),
-                        Component.translatable("menu.bwr.recirculation_pump")),
+                        Component.translatable(be.getBlockState().is(BwrBlocks.RIP_PUMP.get())
+                                ? "block.bwr.rip_pump" : "menu.bwr.recirculation_pump")),
                 be.getBlockPos());
     }
 

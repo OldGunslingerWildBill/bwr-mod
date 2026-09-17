@@ -1,6 +1,8 @@
 package dev.bwr.mod.feedwater;
 
 import dev.bwr.core.ReactorCore;
+import dev.bwr.mod.eccs.*;
+import dev.bwr.mod.steam.TurbineSteamOutletBlockEntity;
 import dev.bwr.core.eccs.EccsPump;
 import dev.bwr.core.eccs.PumpDesign;
 import dev.bwr.core.feedwater.FeedwaterDesign;
@@ -45,7 +47,8 @@ import java.util.Locale;
  * the Mekanism turbine <b>is</b> the condenser, it already receives this plant's
  * steam through the turbine steam outlet, and the water it gives back is exactly
  * the water that belongs in the feedwater line. So the pump exposes a plain
- * NeoForge fluid tank on every face and anything that moves water can fill it.
+ * NeoForge fluid tank at the model's suction flange. Saved compact machines
+ * retain their original all-face access.
  *
  * <p>A condensate storage tank within reach is used as well, after the pump's
  * own buffer runs dry. That is not a fallback bolted on for convenience — it is
@@ -145,6 +148,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
     private volatile double deliveredFlowKgPerS;
     private volatile double suctionShortfallKgPerS;
     private volatile double steamDrawKgPerS;
+    private volatile String assemblyConnections = "Awaiting pipe survey";
 
     public FeedwaterPumpBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.FEEDWATER_PUMP.get(), pos, state);
@@ -164,6 +168,10 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
     // -----------------------------------------------------------------
 
     private void tick(Level level) {
+        if(getBlockState().getBlock() instanceof PumpAssemblyBlock assembly && assembly.isFull(getBlockState())) {
+            tickAssembly(level,assembly);
+            return;
+        }
         maybeRebind(level);
 
         final double dt = 0.05;
@@ -218,6 +226,61 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
         }
 
         setChanged();
+    }
+
+    private void tickAssembly(Level level, PumpAssemblyBlock assembly) {
+        final double dt=.05;
+        var state=getBlockState();
+        boolean complete=assembly.complete(level,getBlockPos(),state);
+        var inlet=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_SUCTION);
+        var discharge=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_DISCHARGE);
+        var tank=complete ? AssemblyPlumbing.endpoint(level,inlet,CondensateStorageTankBlockEntity.class) : null;
+        var delivery=complete ? AssemblyPlumbing.endpoint(level,discharge,ReactorControllerBlockEntity.class) : null;
+        if(delivery!=null && !delivery.isFormed()) delivery=null;
+        BlockPos next=delivery==null?null:delivery.getBlockPos();
+        if(reactorPos!=null && !reactorPos.equals(next)) EccsNetwork.withdraw(level,reactorPos,getBlockPos());
+        reactorPos=next; tankPos=tank==null?null:tank.getBlockPos();
+        pump.setVesselPressurePsig(delivery==null?0:delivery.core().getPressurePsig());
+        pump.setSuctionPressurePsig(0);
+        double temperature=CondensateStorageTankBlockEntity.STORED_TEMPERATURE_C;
+        pump.setSuctionTemperatureC(temperature);
+        pump.setSuctionFlowLimitKgPerS(delivery==null || !inlet.valid()?0:
+                Math.min(availableSuctionKg(tank)/dt,design.ratedFlowKgPerS()*Math.min(inlet.opening(),discharge.opening())));
+        pump.setElectricalPowerAvailableWatts(Math.min(EccsPower.wattsFromFePerTick(energy.getEnergyStored()),design.motorRatingWatts()));
+        steamDrawKgPerS=0;
+        if(design.drive()==PumpDesign.Drive.STEAM_TURBINE) {
+            var admission=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.STEAM_INLET);
+            var exhaust=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.STEAM_EXHAUST);
+            var nozzles=AssemblyPlumbing.nozzles(level,admission);
+            var source=AssemblyPlumbing.source(level,nozzles);
+            var sink=complete?AssemblyPlumbing.endpoint(level,exhaust,TurbineSteamOutletBlockEntity.class):null;
+            if(sink!=null) sink.connectPumpExhaust();
+            double available=complete && source!=null && sink!=null && pump.isRunning()
+                    ? Math.min(nozzles.stream().mapToDouble(n -> n.getLastFlowKgPerS()).sum(),
+                        Math.min(design.maximumSteamKgPerS()*Math.min(admission.opening(),exhaust.opening()),sink.pumpExhaustCapacityKgPerS(level.getGameTime()))) : 0;
+            pump.setSteamInletPressurePsig(source==null?0:source.core().getPressurePsig());
+            pump.setExhaustPressurePsig(Saturation.psigFromPsia(FeedwaterDesign.DRIVE_EXHAUST_PSIA));
+            pump.setSteamSupplyLimitKgPerS(available);
+            double[] before=pump.toArray(); pump.step(dt);
+            double wanted=pump.getSteamDemandKgPerS();
+            for(var nozzle:nozzles) if(steamDrawKgPerS<wanted)
+                steamDrawKgPerS+=nozzle.claimFlowKgPerS(level.getGameTime(),wanted-steamDrawKgPerS);
+            if(steamDrawKgPerS+1e-12<wanted) { pump.fromArray(before); pump.setSteamSupplyLimitKgPerS(steamDrawKgPerS); pump.step(dt); }
+            if(sink!=null) sink.receivePumpExhaustKgPerS(level.getGameTime(),steamDrawKgPerS);
+        } else pump.step(dt);
+        energy.drain(EccsPower.fePerTickFromWatts(pump.getElectricalDemandWatts()));
+        double wanted=delivery==null?0:pump.getFlowKgPerS();
+        deliveredFlowKgPerS=drawSuction(tank,wanted,dt)/dt;
+        suctionShortfallKgPerS=Math.max(0,wanted-deliveredFlowKgPerS);
+        if(delivery!=null) EccsNetwork.busFor(level,reactorPos).reportFeedwater(getBlockPos(),level.getGameTime(),deliveredFlowKgPerS,temperature,0,false);
+        assemblyConnections="Discharge: "+(delivery==null?"no connected reactor":"connected")
+                +"; water: "+(tank==null?"suction buffer":"connected storage tank and suction buffer");
+        setChanged();
+    }
+
+    @Override public void setRemoved() {
+        if(level!=null && !level.isClientSide() && reactorPos!=null) EccsNetwork.withdraw(level,reactorPos,getBlockPos());
+        super.setRemoved();
     }
 
     /** Water the pump could take this tick from every source it has, kg. */
@@ -467,6 +530,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
 
     public List<String> statusLines() {
         List<String> out = new ArrayList<>();
+        if(getBlockState().getBlock() instanceof PumpAssemblyBlock b && b.isFull(getBlockState())) out.add(assemblyConnections);
         out.add(String.format(Locale.ROOT, "%s: %s, demand %.0f%%, delivering %.1f kg/s of %.0f rated",
                 design.displayName(), pump.isRunning() ? "running" : "stopped",
                 pump.getFlowDemandFraction() * 100.0, deliveredFlowKgPerS,
@@ -494,7 +558,9 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
             out.add("Vessel pressure is above this pump's shutoff head. No water is entering.");
         }
         if (!isAttached()) {
-            out.add("No reactor controller within " + SEARCH_RADIUS + " blocks. Delivering nothing.");
+            out.add(getBlockState().getBlock() instanceof PumpAssemblyBlock b && b.isFull(getBlockState())
+                    ? "No formed reactor connected to the water discharge port."
+                    : "No reactor controller within " + SEARCH_RADIUS + " blocks. Delivering nothing.");
         }
         return out;
     }

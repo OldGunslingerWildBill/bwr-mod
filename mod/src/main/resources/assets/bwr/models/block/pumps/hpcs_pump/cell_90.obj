@@ -1,0 +1,4 @@
+# metre = block; Y up; per-cell coordinates; atlas UVs preserved
+mtllib materials.mtl
+o cell_90
+usemtl pump_atlas

@@ -70,6 +70,9 @@ public class FeedwaterPumpBlock extends BaseEntityBlock {
 
     /** The design of whichever feed pump a block state belongs to. */
     public static FeedwaterDesign designOf(BlockState state) {
+        if (state.getBlock() instanceof dev.bwr.mod.eccs.PumpAssemblyBlock p)
+            return p.kind()==dev.bwr.mod.eccs.PumpAssemblyBlock.Kind.TURBINE_FEED
+                    ? FeedwaterDesign.TURBINE_FEED_PUMP : FeedwaterDesign.MOTOR_FEED_PUMP;
         return state.getBlock() instanceof FeedwaterPumpBlock b
                 ? b.design() : FeedwaterDesign.MOTOR_FEED_PUMP;
     }

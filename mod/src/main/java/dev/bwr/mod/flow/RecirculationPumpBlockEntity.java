@@ -44,9 +44,6 @@ public class RecirculationPumpBlockEntity extends BlockEntity {
     /** Shortest interval between attempts to (re)find a controller, ticks. */
     private static final int REBIND_INTERVAL_TICKS = 40;
 
-    /** How far a pump will look for a controller to attach to. */
-    static final int SEARCH_RADIUS = 12;
-
     private double targetSpeedFraction;
     private double actualSpeedFraction;
     private double energyStoredFe;
@@ -264,6 +261,9 @@ public class RecirculationPumpBlockEntity extends BlockEntity {
     // --- Controller association ---------------------------------------
 
     public void bindController(ReactorControllerBlockEntity controller) {
+        if(level!=null && controllerPos!=null && !controllerPos.equals(controller.getBlockPos())
+                && level.isLoaded(controllerPos) && level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity old)
+            old.removePump(getBlockPos());
         this.controllerPos = controller.getBlockPos();
         controller.addPump(getBlockPos());
         setChanged();
@@ -290,9 +290,8 @@ public class RecirculationPumpBlockEntity extends BlockEntity {
      *
      * <p>The re-announcement is deliberately unconditional while bound:
      * {@code addPump} is a set insert, so repeating it is free, and it is what
-     * repopulates a freshly placed controller without anyone scanning anything.
-     * The 25-cube scan only runs when there is no live controller at
-     * {@code controllerPos} at all.
+     * repopulates a freshly placed controller. External pumps follow their
+     * drive pipe to installed jet pairs; internal pumps use the vessel mount.
      */
     private void maybeRebind(Level level) {
         if (ticksSinceRebind < Integer.MAX_VALUE) {
@@ -303,31 +302,32 @@ public class RecirculationPumpBlockEntity extends BlockEntity {
         }
         ticksSinceRebind = 0;
 
-        ReactorControllerBlockEntity controller = null;
-        if (controllerPos != null && level.isLoaded(controllerPos)
-                && level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity c) {
-            controller = c;
+        if(getBlockState().is(BwrBlocks.RIP_PUMP.get())) {
+            ReactorControllerBlockEntity mounted=null;
+            for(var candidate:RecirculationNetwork.controllers(level))
+                if(candidate.isFormed() && RecirculationNetwork.installedRip(level,candidate.structure(),getBlockPos())) {
+                    if(mounted!=null) { mounted=null; break; }
+                    mounted=candidate;
+                }
+            if(mounted!=null) bindController(mounted);
+            else detachController();
+            return;
         }
-        if (controller == null) {
-            controllerPos = null;
-            controller = findController(level, getBlockPos());
-        }
-        if (controller != null) {
-            bindController(controller);
-        }
+        ReactorControllerBlockEntity controller=findController(level,getBlockPos());
+        if(controller!=null) bindController(controller); else detachController();
     }
 
-    /** Nearest reactor controller within {@link #SEARCH_RADIUS}, or null. */
-    static ReactorControllerBlockEntity findController(Level level, BlockPos from) {
-        for (BlockPos p : BlockPos.betweenClosed(
-                from.offset(-SEARCH_RADIUS, -SEARCH_RADIUS, -SEARCH_RADIUS),
-                from.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS))) {
-            if (level.getBlockState(p).is(BwrBlocks.REACTOR_CONTROLLER.get())
-                    && level.getBlockEntity(p) instanceof ReactorControllerBlockEntity c) {
-                return c;
-            }
-        }
-        return null;
+    static ReactorControllerBlockEntity findController(Level level,BlockPos from) {
+        return RecirculationNetwork.connectedController(level,from);
+    }
+    private void detachController() {
+        if(level!=null && controllerPos!=null && level.isLoaded(controllerPos)
+                && level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity old) old.removePump(getBlockPos());
+        controllerPos=null;
+    }
+    @Override public void setRemoved() {
+        if(level!=null && !level.isClientSide()) detachController();
+        super.setRemoved();
     }
 
     // --- Persistence ---------------------------------------------------

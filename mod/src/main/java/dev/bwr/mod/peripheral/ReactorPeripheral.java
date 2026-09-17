@@ -82,6 +82,15 @@ public class ReactorPeripheral implements IPeripheral {
         this.be = be;
     }
 
+    @LuaFunction(mainThread = true)
+    public double getRecirculationCapacity() { return be.getRecirculationCapacityFraction(); }
+
+    @LuaFunction(mainThread = true)
+    public int getConnectedJetPairs() { return be.getConnectedJetPairs(); }
+
+    @LuaFunction(mainThread = true)
+    public int getInstalledInternalPumps() { return be.getInstalledInternalPumps(); }
+
     @Override
     public String getType() {
         return "bwr_reactor";

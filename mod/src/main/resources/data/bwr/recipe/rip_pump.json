@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [" V ", "VPV", " C "],
+  "key": {
+    "V": {"item": "bwr:reactor_vessel"},
+    "P": {"item": "bwr:recirculation_pump"},
+    "C": {"item": "minecraft:copper_block"}
+  },
+  "result": {"id": "bwr:rip_pump", "count": 1}
+}

@@ -2,20 +2,25 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "bonus_rolls": 0.0,
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        }
-      ],
+      "rolls": 1,
       "entries": [
         {
           "type": "minecraft:item",
           "name": "bwr:lpcs_pump"
         }
       ],
-      "rolls": 1.0
+      "conditions": [
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "bwr:lpcs_pump",
+          "properties": {
+            "cell": "0"
+          }
+        },
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
     }
-  ],
-  "random_sequence": "bwr:blocks/lpcs_pump"
+  ]
 }

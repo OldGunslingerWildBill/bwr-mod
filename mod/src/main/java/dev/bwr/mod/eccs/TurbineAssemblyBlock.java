@@ -39,7 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.EnumMap;
 
 /** One placeable item reserves the CAD assembly's volume; only cell zero owns physics. */
-public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLinePort {
+public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLinePort, ProcessAssembly {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final IntegerProperty CELL = IntegerProperty.create("cell", 0, 59);
     public static final MapCodec<TurbineAssemblyBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(

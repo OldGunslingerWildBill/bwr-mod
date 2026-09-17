@@ -22,6 +22,7 @@ public final class TurbineModelCheck {
     @SubscribeEvent
     public static void baked(ModelEvent.BakingCompleted event) {
         if (!Boolean.getBoolean("bwr.turbineModelCheck")) return;
+        PumpModelCheck.run(event);
         int checked = 0;
         for (TurbineAssemblyBlock block : new TurbineAssemblyBlock[]{BwrBlocks.RCIC_TWL.get(), BwrBlocks.HPCI_TURBINE.get()}) {
             int faces = 0;

@@ -35,6 +35,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.CORE_SPRAY_SPARGER);
     public static final DeferredItem<BlockItem> RECIRCULATION_PUMP =
             ITEMS.registerSimpleBlockItem(BwrBlocks.RECIRCULATION_PUMP);
+    public static final DeferredItem<BlockItem> RIP_PUMP =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.RIP_PUMP);
     public static final DeferredItem<BlockItem> JET_PUMP =
             ITEMS.registerSimpleBlockItem(BwrBlocks.JET_PUMP);
     public static final DeferredItem<BlockItem> SAFETY_RELIEF_VALVE =
@@ -102,6 +104,7 @@ public final class BwrItems {
                         output.accept(CORE_SPRAY_SPARGER.get());
                         output.accept(RECIRCULATION_PUMP.get());
                         output.accept(JET_PUMP.get());
+                        output.accept(RIP_PUMP.get());
                         output.accept(SAFETY_RELIEF_VALVE.get());
                         output.accept(MSIV.get());
                         output.accept(PRESSURISED_TUBE.get());

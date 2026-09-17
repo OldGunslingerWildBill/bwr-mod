@@ -117,6 +117,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     /** Satellite recirculation pumps that have announced themselves. */
     private final Set<BlockPos> pumpPositions = new LinkedHashSet<>();
+    private volatile double recirculationCapacityFraction;
+    private volatile int connectedJetPairs,installedInternalPumps;
+    public double getRecirculationCapacityFraction() { return recirculationCapacityFraction; }
+    public int getConnectedJetPairs() { return connectedJetPairs; }
+    public int getInstalledInternalPumps() { return installedInternalPumps; }
 
     private int sinceSync;
     private ReactorState pendingRestore;
@@ -224,7 +229,6 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * the multiblock or stops the reactor ({@code SPEC.md} section 4.2).
      */
     private void gatherPumpFlow(Level level) {
-        double total = 0.0;
         var iterator = pumpPositions.iterator();
         while (iterator.hasNext()) {
             BlockPos p = iterator.next();
@@ -245,17 +249,18 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 continue;
             }
             pump.tickPump(config.tickSeconds);
-            total += pump.getActualSpeedFraction();
         }
-        // Pumps ADD capacity: flow scales with pump count times speed
-        // ({@code SPEC.md} section 4.2 and 4.4), clamped because rated flow is
-        // rated flow. It used to be the arithmetic mean over the registered
-        // pumps, which meant placing a second, not-yet-spinning pump next to a
-        // running one instantly halved core flow — void rose, power fell about
-        // 30%, all from putting a block down. A mean also makes recirculation
-        // capacity independent of how many pumps you built, which is the
-        // opposite of the intended mechanic.
-        double fraction = Math.min(1.0, total);
+        // Each connected circuit shares its external drive rating between its
+        // installed paired jets. Internal pumps add their own direct capacity.
+        var hardware = dev.bwr.mod.flow.RecirculationNetwork.measure(level,this,pumpPositions);
+        double fraction = hardware.fraction();
+        recirculationCapacityFraction=hardware.maximum();
+        connectedJetPairs=hardware.pairedJets();
+        installedInternalPumps=hardware.internalPumps();
+        core.getBoundaryStress().setPlantConfiguration(BoundaryDamageNbt.configurationFor(installedInternalPumps));
+        // A direct Lua demand is still manual, but cannot exceed installed hardware.
+        if(core.getRecirculationFlowFractionDemand()>recirculationCapacityFraction)
+            core.setRecirculationFlowFraction(recirculationCapacityFraction);
 
         // Two writers, one field. The pumps are the plant's own hardware, and
         // ReactorPeripheral.setRecirculationFlow is a player actuator that
@@ -541,10 +546,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             // configuration the plant had when it was saved, and the structure
             // in front of us now is the authority on the one it has today.
             //
-            // Zero reactor internal pumps, because the RIP block of
-            // SPEC section 4.4 has not been built yet. This one call is the
-            // whole wiring that upgrade needs — the damage model already
-            // handles both configurations and is tested on both.
+            // Initial geometry is refreshed from the actual mounted RIPs by
+            // gatherPumpFlow, including after a saved core is restored.
             core.getBoundaryStress().setPlantConfiguration(
                     BoundaryDamageNbt.configurationFor(0));
         }
@@ -819,6 +822,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     /** Human-readable status, shown when a player right-clicks the controller. */
     public List<String> statusLines() {
         List<String> out = new ArrayList<>();
+        out.add(String.format("Connected jet pairs: %d; internal pumps: %d; maximum forced flow: %.0f%%",
+                connectedJetPairs,installedInternalPumps,100*recirculationCapacityFraction));
         if (structure == null) {
             out.add("Reactor not formed.");
             out.addAll(lastValidation.messages());

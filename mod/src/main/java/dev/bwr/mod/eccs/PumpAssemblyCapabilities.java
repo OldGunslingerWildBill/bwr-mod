@@ -1,0 +1,39 @@
+package dev.bwr.mod.eccs;
+
+import dev.bwr.mod.feedwater.FeedwaterPumpBlockEntity;
+import dev.bwr.mod.flow.RecirculationPumpBlockEntity;
+import dev.bwr.mod.registry.BwrBlocks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.capabilities.*;
+
+/** All part cells address their one controller; fluid is exposed only at suction. */
+public final class PumpAssemblyCapabilities {
+    private PumpAssemblyCapabilities() {}
+    public static Block[] blocks() { return new Block[]{BwrBlocks.LPCS_PUMP.get(),BwrBlocks.HPCS_PUMP.get(),BwrBlocks.RHR_PUMP.get(),
+            BwrBlocks.MOTOR_FEED_PUMP.get(),BwrBlocks.TURBINE_FEED_PUMP.get(),BwrBlocks.RIP_PUMP.get()}; }
+    public static BlockEntity controller(Level level,BlockPos pos,BlockState state) {
+        if(!(state.getBlock() instanceof PumpAssemblyBlock b)) return null;
+        BlockPos root=b.origin(pos,state);
+        return b.complete(level,root,state)?b.controller(level,pos,state):null;
+    }
+    public static boolean waterFace(BlockState state,Direction side) {
+        return !(state.getBlock() instanceof PumpAssemblyBlock b) || !b.isFull(state)
+                || side!=null && b.portAt(state,side)==AssemblyPort.WATER_SUCTION;
+    }
+    public static void register(RegisterCapabilitiesEvent event) {
+        event.registerBlock(Capabilities.EnergyStorage.BLOCK,(level,pos,state,unused,side) -> {
+            BlockEntity be=controller(level,pos,state);
+            if(be instanceof EccsPumpBlockEntity p) return p.energy();
+            if(be instanceof FeedwaterPumpBlockEntity p) return p.energy();
+            if(be instanceof RecirculationPumpBlockEntity p) return p.energy();
+            return null;
+        },blocks());
+        event.registerBlock(Capabilities.FluidHandler.BLOCK,(level,pos,state,unused,side) ->
+                waterFace(state,side) && controller(level,pos,state) instanceof FeedwaterPumpBlockEntity p ? p.suction():null,blocks());
+    }
+}

@@ -60,5 +60,6 @@
   "block.bwr.rcic_twl": "RCIC TWL Assembly",
   "item.bwr.rcic_twl": "RCIC TWL Assembly",
   "block.bwr.hpci_turbine": "HPCI Turbine Assembly",
-  "item.bwr.hpci_turbine": "HPCI Turbine Assembly"
+  "item.bwr.hpci_turbine": "HPCI Turbine Assembly",
+  "block.bwr.rip_pump": "Reactor Internal Pump"
 }

@@ -1,0 +1,1553 @@
+{
+  "id": "hpcs_pump",
+  "status": "PREPARED RESOURCES; not installed or registered in the inspected mod",
+  "width": 8,
+  "height": 4,
+  "depth": 3,
+  "controller_cell": [
+    0,
+    0,
+    0
+  ],
+  "anchor_in_assembly_grid": [
+    4.0,
+    0,
+    1.5
+  ],
+  "anchor_from_controller": [
+    4.0,
+    0,
+    1.5
+  ],
+  "cells": [
+    {
+      "index": 0,
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "bounds": [
+        0.2599998,
+        0,
+        0.0700001,
+        1,
+        0.3487,
+        1
+      ],
+      "triangles": 122
+    },
+    {
+      "index": 1,
+      "offset": [
+        1,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.0700001,
+        1,
+        1,
+        1
+      ],
+      "triangles": 237
+    },
+    {
+      "index": 2,
+      "offset": [
+        2,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.0700001,
+        1,
+        1,
+        1
+      ],
+      "triangles": 241
+    },
+    {
+      "index": 3,
+      "offset": [
+        3,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.0700001,
+        1,
+        0.286,
+        1
+      ],
+      "triangles": 74
+    },
+    {
+      "index": 4,
+      "offset": [
+        4,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.0700001,
+        1,
+        1,
+        1
+      ],
+      "triangles": 265
+    },
+    {
+      "index": 5,
+      "offset": [
+        5,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.0700001,
+        1,
+        1,
+        1
+      ],
+      "triangles": 200
+    },
+    {
+      "index": 6,
+      "offset": [
+        6,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.0700001,
+        1,
+        1,
+        1
+      ],
+      "triangles": 289
+    },
+    {
+      "index": 7,
+      "offset": [
+        7,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.0700001,
+        0.7400002,
+        1,
+        1
+      ],
+      "triangles": 134
+    },
+    {
+      "index": 8,
+      "offset": [
+        0,
+        0,
+        1
+      ],
+      "bounds": [
+        0.3369999,
+        0.044,
+        0,
+        1,
+        0.264,
+        1
+      ],
+      "triangles": 48
+    },
+    {
+      "index": 9,
+      "offset": [
+        1,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0.187,
+        0,
+        1,
+        1,
+        1
+      ],
+      "triangles": 203
+    },
+    {
+      "index": 10,
+      "offset": [
+        2,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0.187,
+        0,
+        1,
+        1,
+        1
+      ],
+      "triangles": 205
+    },
+    {
+      "index": 11,
+      "offset": [
+        3,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0.044,
+        0,
+        1,
+        1,
+        1
+      ],
+      "triangles": 142
+    },
+    {
+      "index": 12,
+      "offset": [
+        4,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0.044,
+        0,
+        1,
+        1,
+        1
+      ],
+      "triangles": 365
+    },
+    {
+      "index": 13,
+      "offset": [
+        5,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0.187,
+        0,
+        1,
+        0.7727626,
+        1
+      ],
+      "triangles": 128
+    },
+    {
+      "index": 14,
+      "offset": [
+        6,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0.187,
+        0,
+        1,
+        1,
+        1
+      ],
+      "triangles": 316
+    },
+    {
+      "index": 15,
+      "offset": [
+        7,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0.044,
+        0,
+        0.6630001,
+        1,
+        1
+      ],
+      "triangles": 157
+    },
+    {
+      "index": 16,
+      "offset": [
+        0,
+        0,
+        2
+      ],
+      "bounds": [
+        0.2599998,
+        0,
+        0,
+        1,
+        0.3487,
+        0.9299999
+      ],
+      "triangles": 124
+    },
+    {
+      "index": 17,
+      "offset": [
+        1,
+        0,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0.9299999
+      ],
+      "triangles": 249
+    },
+    {
+      "index": 18,
+      "offset": [
+        2,
+        0,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0.9299999
+      ],
+      "triangles": 251
+    },
+    {
+      "index": 19,
+      "offset": [
+        3,
+        0,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        0.286,
+        0.9299999
+      ],
+      "triangles": 76
+    },
+    {
+      "index": 20,
+      "offset": [
+        4,
+        0,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0.9299999
+      ],
+      "triangles": 267
+    },
+    {
+      "index": 21,
+      "offset": [
+        5,
+        0,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0.9299999
+      ],
+      "triangles": 198
+    },
+    {
+      "index": 22,
+      "offset": [
+        6,
+        0,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0.9299999
+      ],
+      "triangles": 291
+    },
+    {
+      "index": 23,
+      "offset": [
+        7,
+        0,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        0.7400002,
+        1,
+        0.9299999
+      ],
+      "triangles": 134
+    },
+    {
+      "index": 24,
+      "offset": [
+        0,
+        1,
+        0
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 25,
+      "offset": [
+        1,
+        1,
+        0
+      ],
+      "bounds": [
+        0.0574999,
+        0,
+        0.4654499,
+        1,
+        1,
+        1
+      ],
+      "triangles": 248
+    },
+    {
+      "index": 26,
+      "offset": [
+        2,
+        1,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.4654499,
+        0.8724999,
+        1,
+        1
+      ],
+      "triangles": 254
+    },
+    {
+      "index": 27,
+      "offset": [
+        3,
+        1,
+        0
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 28,
+      "offset": [
+        4,
+        1,
+        0
+      ],
+      "bounds": [
+        0.5225,
+        0,
+        0.4819499,
+        1,
+        1,
+        1
+      ],
+      "triangles": 348
+    },
+    {
+      "index": 29,
+      "offset": [
+        5,
+        1,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.4796729,
+        1,
+        1,
+        0.93174
+      ],
+      "triangles": 284
+    },
+    {
+      "index": 30,
+      "offset": [
+        6,
+        1,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.4819499,
+        1,
+        1,
+        1
+      ],
+      "triangles": 424
+    },
+    {
+      "index": 31,
+      "offset": [
+        7,
+        1,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.5830638,
+        0.1086001,
+        1,
+        1
+      ],
+      "triangles": 124
+    },
+    {
+      "index": 32,
+      "offset": [
+        0,
+        1,
+        1
+      ],
+      "bounds": [
+        0,
+        0.0938399,
+        0.02084,
+        1,
+        1,
+        0.97916
+      ],
+      "triangles": 550
+    },
+    {
+      "index": 33,
+      "offset": [
+        1,
+        1,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        0.2774997,
+        1,
+        1
+      ],
+      "triangles": 328
+    },
+    {
+      "index": 34,
+      "offset": [
+        2,
+        1,
+        1
+      ],
+      "bounds": [
+        0.702,
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "triangles": 275
+    },
+    {
+      "index": 35,
+      "offset": [
+        3,
+        1,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0.0553359,
+        1,
+        1,
+        0.92075
+      ],
+      "triangles": 1416
+    },
+    {
+      "index": 36,
+      "offset": [
+        4,
+        1,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        0.6985,
+        1,
+        1
+      ],
+      "triangles": 1052
+    },
+    {
+      "index": 37,
+      "offset": [
+        5,
+        1,
+        1
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 38,
+      "offset": [
+        6,
+        1,
+        1
+      ],
+      "bounds": [
+        0.7995002,
+        0,
+        0,
+        0.9974999,
+        1,
+        1
+      ],
+      "triangles": 140
+    },
+    {
+      "index": 39,
+      "offset": [
+        7,
+        1,
+        1
+      ],
+      "bounds": [
+        0.0745001,
+        0,
+        0,
+        0.1086001,
+        1,
+        1
+      ],
+      "triangles": 284
+    },
+    {
+      "index": 40,
+      "offset": [
+        0,
+        1,
+        2
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 41,
+      "offset": [
+        1,
+        1,
+        2
+      ],
+      "bounds": [
+        0.0574999,
+        0,
+        0,
+        1,
+        1,
+        0.5345501
+      ],
+      "triangles": 272
+    },
+    {
+      "index": 42,
+      "offset": [
+        2,
+        1,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        0.8724999,
+        1,
+        0.5345501
+      ],
+      "triangles": 268
+    },
+    {
+      "index": 43,
+      "offset": [
+        3,
+        1,
+        2
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 44,
+      "offset": [
+        4,
+        1,
+        2
+      ],
+      "bounds": [
+        0.5225,
+        0,
+        0,
+        1,
+        1,
+        0.5180501
+      ],
+      "triangles": 362
+    },
+    {
+      "index": 45,
+      "offset": [
+        5,
+        1,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0.074772,
+        1,
+        1,
+        0.5180501
+      ],
+      "triangles": 170
+    },
+    {
+      "index": 46,
+      "offset": [
+        6,
+        1,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0.5180501
+      ],
+      "triangles": 424
+    },
+    {
+      "index": 47,
+      "offset": [
+        7,
+        1,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        0.1086001,
+        1,
+        0.4169362
+      ],
+      "triangles": 168
+    },
+    {
+      "index": 48,
+      "offset": [
+        0,
+        2,
+        0
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 49,
+      "offset": [
+        1,
+        2,
+        0
+      ],
+      "bounds": [
+        0.0732571,
+        0,
+        0.560821,
+        1,
+        0.4731596,
+        1
+      ],
+      "triangles": 95
+    },
+    {
+      "index": 50,
+      "offset": [
+        2,
+        2,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.560821,
+        0.8724999,
+        0.4731596,
+        1
+      ],
+      "triangles": 101
+    },
+    {
+      "index": 51,
+      "offset": [
+        3,
+        2,
+        0
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 52,
+      "offset": [
+        4,
+        2,
+        0
+      ],
+      "bounds": [
+        0.5225,
+        0,
+        0.6607432,
+        1,
+        0.4069645,
+        1
+      ],
+      "triangles": 131
+    },
+    {
+      "index": 53,
+      "offset": [
+        5,
+        2,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.50879,
+        1,
+        0.4069645,
+        1
+      ],
+      "triangles": 122
+    },
+    {
+      "index": 54,
+      "offset": [
+        6,
+        2,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.50879,
+        1,
+        0.4069645,
+        1
+      ],
+      "triangles": 199
+    },
+    {
+      "index": 55,
+      "offset": [
+        7,
+        2,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.6928755,
+        0.0745001,
+        0.3352214,
+        1
+      ],
+      "triangles": 12
+    },
+    {
+      "index": 56,
+      "offset": [
+        0,
+        2,
+        1
+      ],
+      "bounds": [
+        0.2599998,
+        0,
+        0.2894757,
+        0.3425,
+        0.05216,
+        0.7105243
+      ],
+      "triangles": 26
+    },
+    {
+      "index": 57,
+      "offset": [
+        1,
+        2,
+        1
+      ],
+      "bounds": [
+        0.0574999,
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "triangles": 441
+    },
+    {
+      "index": 58,
+      "offset": [
+        2,
+        2,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "triangles": 458
+    },
+    {
+      "index": 59,
+      "offset": [
+        3,
+        2,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0.0463936,
+        0.2458862,
+        0.051204,
+        0.0973946
+      ],
+      "triangles": 48
+    },
+    {
+      "index": 60,
+      "offset": [
+        4,
+        2,
+        1
+      ],
+      "bounds": [
+        0.5225,
+        0,
+        0,
+        1,
+        0.6803768,
+        1
+      ],
+      "triangles": 293
+    },
+    {
+      "index": 61,
+      "offset": [
+        5,
+        2,
+        1
+      ],
+      "bounds": [
+        0,
+        0.3732374,
+        0,
+        1,
+        0.7335,
+        1
+      ],
+      "triangles": 258
+    },
+    {
+      "index": 62,
+      "offset": [
+        6,
+        2,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        0.7335,
+        1
+      ],
+      "triangles": 442
+    },
+    {
+      "index": 63,
+      "offset": [
+        7,
+        2,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        0.1086001,
+        0.4899363,
+        1
+      ],
+      "triangles": 159
+    },
+    {
+      "index": 64,
+      "offset": [
+        0,
+        2,
+        2
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 65,
+      "offset": [
+        1,
+        2,
+        2
+      ],
+      "bounds": [
+        0.0732571,
+        0,
+        0,
+        1,
+        0.4731596,
+        0.439179
+      ],
+      "triangles": 111
+    },
+    {
+      "index": 66,
+      "offset": [
+        2,
+        2,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        0.8724999,
+        0.4731596,
+        0.439179
+      ],
+      "triangles": 117
+    },
+    {
+      "index": 67,
+      "offset": [
+        3,
+        2,
+        2
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 68,
+      "offset": [
+        4,
+        2,
+        2
+      ],
+      "bounds": [
+        0.5225,
+        0,
+        0,
+        1,
+        0.4069645,
+        0.3392568
+      ],
+      "triangles": 139
+    },
+    {
+      "index": 69,
+      "offset": [
+        5,
+        2,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        0.4069645,
+        0.3392568
+      ],
+      "triangles": 80
+    },
+    {
+      "index": 70,
+      "offset": [
+        6,
+        2,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        1,
+        0.4069645,
+        0.3636934
+      ],
+      "triangles": 161
+    },
+    {
+      "index": 71,
+      "offset": [
+        7,
+        2,
+        2
+      ],
+      "bounds": [
+        0,
+        0,
+        0,
+        0.0745001,
+        0.3352214,
+        0.3071245
+      ],
+      "triangles": 16
+    },
+    {
+      "index": 72,
+      "offset": [
+        0,
+        3,
+        0
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 73,
+      "offset": [
+        1,
+        3,
+        0
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 74,
+      "offset": [
+        2,
+        3,
+        0
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 75,
+      "offset": [
+        3,
+        3,
+        0
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 76,
+      "offset": [
+        4,
+        3,
+        0
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 77,
+      "offset": [
+        5,
+        3,
+        0
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 78,
+      "offset": [
+        6,
+        3,
+        0
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 79,
+      "offset": [
+        7,
+        3,
+        0
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 80,
+      "offset": [
+        0,
+        3,
+        1
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 81,
+      "offset": [
+        1,
+        3,
+        1
+      ],
+      "bounds": [
+        0.395,
+        0,
+        0.12248,
+        1,
+        1,
+        0.87752
+      ],
+      "triangles": 308
+    },
+    {
+      "index": 82,
+      "offset": [
+        2,
+        3,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0.1270879,
+        0.3425199,
+        0.9649999999999999,
+        0.8729121
+      ],
+      "triangles": 276
+    },
+    {
+      "index": 83,
+      "offset": [
+        3,
+        3,
+        1
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 84,
+      "offset": [
+        4,
+        3,
+        1
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 85,
+      "offset": [
+        5,
+        3,
+        1
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 86,
+      "offset": [
+        6,
+        3,
+        1
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 87,
+      "offset": [
+        7,
+        3,
+        1
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 88,
+      "offset": [
+        0,
+        3,
+        2
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 89,
+      "offset": [
+        1,
+        3,
+        2
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 90,
+      "offset": [
+        2,
+        3,
+        2
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 91,
+      "offset": [
+        3,
+        3,
+        2
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 92,
+      "offset": [
+        4,
+        3,
+        2
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 93,
+      "offset": [
+        5,
+        3,
+        2
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 94,
+      "offset": [
+        6,
+        3,
+        2
+      ],
+      "bounds": [],
+      "triangles": 0
+    },
+    {
+      "index": 95,
+      "offset": [
+        7,
+        3,
+        2
+      ],
+      "bounds": [],
+      "triangles": 0
+    }
+  ],
+  "ports": [
+    {
+      "name": "water_suction",
+      "role": "water_suction",
+      "position_blender": [
+        -3.7400002479553223,
+        0.0,
+        1.5729999542236328
+      ],
+      "outward_blender": [
+        -1,
+        0,
+        0
+      ],
+      "position_minecraft": [
+        -3.7400002479553223,
+        1.5729999542236328,
+        0.0
+      ],
+      "outward_minecraft": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "visual_diameter_m": 0.7260000000000001,
+      "game_connection": null,
+      "role_basis": "Proposed integration role; not a manufacturer rating.",
+      "assembly_position": [
+        0.25999975204467773,
+        1.5729999542236328,
+        1.5
+      ],
+      "proposed_connection_cell": [
+        0,
+        1,
+        1
+      ],
+      "connection_status": "UNWIRED: adapter to block-grid face and existing capability mapping require integration"
+    },
+    {
+      "name": "water_discharge",
+      "role": "water_discharge",
+      "position_blender": [
+        -2.0350000858306885,
+        0.0,
+        3.0799999237060547
+      ],
+      "outward_blender": [
+        0,
+        0,
+        1
+      ],
+      "position_minecraft": [
+        -2.0350000858306885,
+        3.0799999237060547,
+        0.0
+      ],
+      "outward_minecraft": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "visual_diameter_m": 0.5720000000000001,
+      "game_connection": null,
+      "role_basis": "Proposed integration role; not a manufacturer rating.",
+      "assembly_position": [
+        1.9649999141693115,
+        3.0799999237060547,
+        1.5
+      ],
+      "proposed_connection_cell": [
+        1,
+        3,
+        1
+      ],
+      "connection_status": "UNWIRED: adapter to block-grid face and existing capability mapping require integration"
+    }
+  ],
+  "placement_clearance": "All listed cells must be loaded, replaceable, inside border/build-height, and unobstructed.",
+  "removal_behavior": "Proposed: one controller; mine any part to remove its owned cells and drop exactly one item.",
+  "access_faces": [
+    "north",
+    "south"
+  ],
+  "maintenance_clearance_m": 1.0,
+  "culling": "Per-cell OBJ geometry is clipped within its own block; chunk baking can use normal bounds.",
+  "validation": {
+    "source_triangles": 8438,
+    "clipped_triangles": 16100,
+    "source_surface_area_m2": 183.59646713336315,
+    "clipped_surface_area_m2": 183.59646713336213,
+    "area_error_m2": 1.0231815394945443e-12,
+    "cell_bounds_pass": true
+  },
+  "game_ports": [
+    {
+      "role": "WATER_SUCTION",
+      "cell": [
+        0,
+        1,
+        1
+      ],
+      "face": "west"
+    },
+    {
+      "role": "WATER_DISCHARGE",
+      "cell": [
+        1,
+        3,
+        1
+      ],
+      "face": "up"
+    }
+  ]
+}

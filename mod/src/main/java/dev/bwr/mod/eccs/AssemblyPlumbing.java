@@ -27,7 +27,8 @@ public final class AssemblyPlumbing {
         return s.is(BwrBlocks.PRESSURISED_TUBE.get()) || s.is(BwrBlocks.MSIV.get());
     }
     public static Line trace(Level level, BlockPos root, BlockState state, AssemblyPort role) {
-        TurbineAssemblyBlock block=(TurbineAssemblyBlock)state.getBlock();
+        ProcessAssembly block=(ProcessAssembly)state.getBlock();
+        boolean jet=state.getBlock() instanceof dev.bwr.mod.flow.JetPumpBlock;
         if (!block.hasPort(role)) return new Line(List.of(),Set.of(),false,0);
         BlockPos start=block.portPosition(root,state,role);
         Direction outward=block.portFace(state,role);
@@ -49,27 +50,29 @@ public final class AssemblyPlumbing {
                         || !SteamLineNetwork.acceptsLineOn(s,d.getOpposite())) continue;
                 seen.add(next);
                 if(seen.size()>SteamLineNetwork.MAX_LINE_BLOCKS) return new Line(List.of(),Set.copyOf(seen),false,0);
-                if(s.getBlock() instanceof TurbineAssemblyBlock assembly) {
+                if(s.getBlock() instanceof ProcessAssembly assembly) {
                     // A tee feeding like ports is allowed. Joining incompatible roles is not.
-                    if(assembly.portAt(s,d.getOpposite())!=role) valid=false;
+                    if(assembly.portAt(s,d.getOpposite())!=role || (s.getBlock() instanceof dev.bwr.mod.flow.JetPumpBlock)!=jet) valid=false;
                     continue;
                 }
                 if(conduit(s) || (role.isSteam() && s.is(BwrBlocks.SAFETY_RELIEF_VALVE.get()))) {
                     if(level.getBlockEntity(next) instanceof MainSteamIsolationValveBlockEntity valve) {
                         double aperture=valve.getPosition();
-                        opening=Math.min(opening,aperture);
+                        // A shut side branch is isolated; it must not close an
+                        // otherwise open route to a source on the same header.
                         if(aperture<=0) continue;
+                        opening=Math.min(opening,aperture);
                     }
                     queue.add(next); continue;
                 }
                 boolean accepted=switch(role) {
                     case STEAM_INLET -> s.is(BwrBlocks.RPV_STEAM_OUTLET.get());
-                    case STEAM_EXHAUST -> s.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get());
-                    case WATER_SUCTION -> s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get()) || s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
-                    case WATER_DISCHARGE -> s.is(BwrBlocks.REACTOR_CONTROLLER.get());
+                    case STEAM_EXHAUST -> s.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get()) || s.is(BwrBlocks.TURBINE_STEAM_OUTLET.get());
+                    case WATER_SUCTION -> jet ? s.is(BwrBlocks.RECIRCULATION_PUMP.get()) : s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get()) || s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
+                    case WATER_DISCHARGE -> s.is(BwrBlocks.REACTOR_CONTROLLER.get()) || s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
                 };
                 if(accepted) ends.add(next);
-                else if(isWaterEndpoint(s) || s.is(BwrBlocks.RPV_STEAM_OUTLET.get())
+                else if(s.is(BwrBlocks.RECIRCULATION_PUMP.get()) || isWaterEndpoint(s) || s.is(BwrBlocks.RPV_STEAM_OUTLET.get())
                         || s.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get())
                         || s.is(BwrBlocks.SAFETY_RELIEF_VALVE.get())
                         || (s.is(BwrBlocks.TURBINE_STEAM_OUTLET.get()) && role!=AssemblyPort.STEAM_INLET)) valid=false;

@@ -132,6 +132,10 @@ public class EccsPumpBlockEntity extends BlockEntity {
             tickAssembly(level, assembly);
             return;
         }
+        if (getBlockState().getBlock() instanceof PumpAssemblyBlock assembly && assembly.isFull(getBlockState())) {
+            tickMotorAssembly(level,assembly);
+            return;
+        }
         maybeRebind(level);
 
         final double dt = 0.05;
@@ -215,6 +219,46 @@ public class EccsPumpBlockEntity extends BlockEntity {
                     design.drive() == EccsDesign.Drive.STEAM_TURBINE);
         }
 
+        setChanged();
+    }
+
+    private void tickMotorAssembly(Level level, PumpAssemblyBlock assembly) {
+        final double dt=.05;
+        var state=getBlockState();
+        boolean complete=assembly.complete(level,getBlockPos(),state);
+        var suction=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_SUCTION);
+        var outlet=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_DISCHARGE);
+        var tank=complete ? AssemblyPlumbing.endpoint(level,suction,CondensateStorageTankBlockEntity.class) : null;
+        var pool=complete ? AssemblyPlumbing.endpoint(level,suction,SuppressionPoolBlockEntity.class) : null;
+        var delivery=complete ? AssemblyPlumbing.endpoint(level,outlet,ReactorControllerBlockEntity.class) : null;
+        if(delivery!=null && !delivery.isFormed()) delivery=null;
+        if(pool!=null && !pool.isFormed()) pool=null;
+        boolean cooling=isPoolCooling() && pool!=null && suctionSource==SuctionSource.SUPPRESSION_POOL
+                && AssemblyPlumbing.endpoint(level,outlet,SuppressionPoolBlockEntity.class)==pool;
+        BlockPos next=delivery==null || isPoolCooling() ? null : delivery.getBlockPos();
+        if(!java.util.Objects.equals(reactorPos,next) || !java.util.Objects.equals(poolPos,pool==null?null:pool.getBlockPos())) detach();
+        reactorPos=next; poolPos=pool==null?null:pool.getBlockPos(); tankPos=tank==null?null:tank.getBlockPos();
+        double opening=Math.min(suction.opening(),outlet.opening());
+        boolean path=complete && suction.valid() && outlet.valid() && (isPoolCooling()?cooling:delivery!=null);
+        double temperature=suctionTemperatureC(pool);
+        pump.setVesselPressurePsig(isPoolCooling()?POOL_COOLING_LOOP_PSI:delivery==null?0:delivery.core().getPressurePsig());
+        pump.setSuctionPressurePsig(0); pump.setSuctionTemperatureC(temperature);
+        pump.setSuctionFlowLimitKgPerS(path?Math.min(availableSuctionKg(pool,tank)/dt,design.ratedFlowKgPerS()*opening):0);
+        pump.setElectricalPowerAvailableWatts(Math.min(EccsPower.wattsFromFePerTick(energy.getEnergyStored()),design.motorRatingWatts()));
+        pump.step(dt);
+        energy.drain(EccsPower.fePerTickFromWatts(pump.getElectricalDemandWatts()));
+        boolean spray=design.delivery()==EccsDesign.Delivery.CORE_SPRAY;
+        double wanted=path && !isPoolCooling()?pump.getFlowKgPerS()*(spray?delivery.sprayRingCompleteness():1):0;
+        deliveredFlowKgPerS=drawSuction(pool,tank,wanted,dt)/dt;
+        suctionShortfallKgPerS=Math.max(0,wanted-deliveredFlowKgPerS);
+        if(reactorPos!=null) EccsNetwork.busFor(level,reactorPos).report(getBlockPos(),level.getGameTime(),
+                spray?0:deliveredFlowKgPerS,temperature,spray?deliveredFlowKgPerS:0,temperature,0,0,true,false);
+        // A closed valve or dry source cannot reject heat through an absent water circuit.
+        if(cooling && pump.getFlowKgPerS()>0) {
+            pool.reportRhrDuty(getBlockPos(),level.getGameTime(),Math.min(pump.getSpeedFraction(),pump.getFlowKgPerS()/design.ratedFlowKgPerS()));
+            wasCoolingPool=true;
+        } else applyPoolCoolingDuty(pool,false);
+        assemblyConnectionStatus=path?"Water circuit connected":"Water circuit incomplete, crossed, or missing its selected source";
         setChanged();
     }
 
@@ -602,7 +646,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
     public double getAssemblySteamDrawKgPerS() { return assemblySteamDrawKgPerS; }
 
     @Override public void setRemoved() {
-        if (level != null && !level.isClientSide() && getBlockState().getBlock() instanceof TurbineAssemblyBlock) detach();
+        if (level != null && !level.isClientSide() && getBlockState().getBlock() instanceof ProcessAssembly) detach();
         super.setRemoved();
     }
 
@@ -634,7 +678,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
 
     public List<String> statusLines() {
         List<String> out = new ArrayList<>();
-        if (getBlockState().getBlock() instanceof TurbineAssemblyBlock) {
+        if (getBlockState().getBlock() instanceof ProcessAssembly) {
             out.add(assemblyConnectionStatus);
             out.add(String.format(Locale.ROOT,"Physical steam admission/exhaust: %.3f kg/s",assemblySteamDrawKgPerS));
         }
@@ -673,7 +717,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
             out.add(String.format(Locale.ROOT, "Suction source is short by %.1f kg/s.",
                     suctionShortfallKgPerS));
         }
-        if (reactorPos == null && !(getBlockState().getBlock() instanceof TurbineAssemblyBlock)) {
+        if (reactorPos == null && !(getBlockState().getBlock() instanceof ProcessAssembly)) {
             out.add("No reactor controller found within " + SEARCH_RADIUS + " blocks.");
         }
         return out;

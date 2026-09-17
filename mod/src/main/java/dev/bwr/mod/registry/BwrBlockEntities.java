@@ -41,7 +41,7 @@ public final class BwrBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RecirculationPumpBlockEntity>>
             RECIRCULATION_PUMP = BLOCK_ENTITIES.register("recirculation_pump",
             () -> BlockEntityType.Builder.of(RecirculationPumpBlockEntity::new,
-                    BwrBlocks.RECIRCULATION_PUMP.get()).build(null));
+                    BwrBlocks.RECIRCULATION_PUMP.get(), BwrBlocks.RIP_PUMP.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SafetyReliefValveBlockEntity>>
             SAFETY_RELIEF_VALVE = BLOCK_ENTITIES.register("safety_relief_valve",

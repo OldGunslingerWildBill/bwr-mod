@@ -6,6 +6,7 @@ import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.eccs.AdsControllerBlock;
 import dev.bwr.mod.eccs.CondensateStorageTankBlock;
 import dev.bwr.mod.eccs.EccsPumpBlock;
+import dev.bwr.mod.eccs.PumpAssemblyBlock;
 import dev.bwr.mod.eccs.TurbineAssemblyBlock;
 import dev.bwr.mod.feedwater.FeedwaterPumpBlock;
 import dev.bwr.mod.flow.JetPumpBlock;
@@ -92,6 +93,9 @@ public final class BwrBlocks {
     public static final DeferredBlock<JetPumpBlock> JET_PUMP =
             BLOCKS.register("jet_pump", () -> new JetPumpBlock(machine()));
 
+    public static final DeferredBlock<PumpAssemblyBlock> RIP_PUMP =
+            BLOCKS.register("rip_pump", () -> new PumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.RIP));
+
     // --- Steam --------------------------------------------------------
 
     /**
@@ -177,23 +181,23 @@ public final class BwrBlocks {
      * High Pressure Core Spray. Motor driven at 2.6 MW, so it is scrap metal in
      * a blackout unless emergency power was built and starts.
      */
-    public static final DeferredBlock<EccsPumpBlock> HPCS_PUMP =
-            BLOCKS.register("hpcs_pump", () -> new EccsPumpBlock(machine(), EccsDesign.HPCS));
+    public static final DeferredBlock<PumpAssemblyBlock> HPCS_PUMP =
+            BLOCKS.register("hpcs_pump", () -> new PumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.HPCS));
 
     /**
      * Low Pressure Core Spray. Enormous volume, 300 psi of shutoff head. Useless
      * until the vessel has been blown down.
      */
-    public static final DeferredBlock<EccsPumpBlock> LPCS_PUMP =
-            BLOCKS.register("lpcs_pump", () -> new EccsPumpBlock(machine(), EccsDesign.LPCS));
+    public static final DeferredBlock<PumpAssemblyBlock> LPCS_PUMP =
+            BLOCKS.register("lpcs_pump", () -> new PumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.LPCS));
 
     /**
      * Residual Heat Removal, in LPCI mode. The largest flow and the softest
      * pump in the plant, and the same loop is the only suppression pool cooling
      * there is — it cannot do both at once.
      */
-    public static final DeferredBlock<EccsPumpBlock> RHR_PUMP =
-            BLOCKS.register("rhr_pump", () -> new EccsPumpBlock(machine(), EccsDesign.RHR));
+    public static final DeferredBlock<PumpAssemblyBlock> RHR_PUMP =
+            BLOCKS.register("rhr_pump", () -> new PumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.RHR));
 
     /**
      * Standby Liquid Control. Positive displacement, 43 gpm of sodium
@@ -233,9 +237,9 @@ public final class BwrBlocks {
      * electrical load in the mod, roughly two recirculation pumps. In a station
      * blackout it is scrap metal.
      */
-    public static final DeferredBlock<FeedwaterPumpBlock> MOTOR_FEED_PUMP =
+    public static final DeferredBlock<PumpAssemblyBlock> MOTOR_FEED_PUMP =
             BLOCKS.register("motor_feed_pump",
-                    () -> new FeedwaterPumpBlock(machine(), FeedwaterDesign.MOTOR_FEED_PUMP));
+                    () -> new PumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.MOTOR_FEED));
 
     /**
      * Turbine-driven reactor feed pump — the RFPT. No electrical load at all,
@@ -245,9 +249,9 @@ public final class BwrBlocks {
      * fades as the vessel depressurises. That coupling between level control and
      * steam production is the point of the whole system.
      */
-    public static final DeferredBlock<FeedwaterPumpBlock> TURBINE_FEED_PUMP =
+    public static final DeferredBlock<PumpAssemblyBlock> TURBINE_FEED_PUMP =
             BLOCKS.register("turbine_feed_pump",
-                    () -> new FeedwaterPumpBlock(machine(), FeedwaterDesign.TURBINE_FEED_PUMP));
+                    () -> new PumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.TURBINE_FEED));
 
     /** Full-size exterior assemblies imported from the supplied STEP files. */
     public static final DeferredBlock<TurbineAssemblyBlock> RCIC_TWL =

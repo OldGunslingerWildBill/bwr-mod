@@ -84,6 +84,21 @@ def javafile(cls):
 for m in re.finditer(r'BLOCKS\.register\(\s*"([a-z0-9_]+)",\s*\(\)\s*->\s*new ([A-Za-z0-9_]+)\(', src):
     name, cls = m.group(1), m.group(2)
     body = javafile(cls)
+    # Registry classes can inherit blockstate properties (e.g. paired jet pumps).
+    seen_classes = {cls}
+    ancestry = body
+    while True:
+        parent = re.search(r'\bclass\s+\w+\s+extends\s+([\w.]+)', ancestry)
+        if not parent:
+            break
+        parent_name = parent.group(1).split('.')[-1]
+        if parent_name in seen_classes:
+            break
+        seen_classes.add(parent_name)
+        ancestry = javafile(parent_name)
+        if not ancestry:
+            break
+        body += '\n' + ancestry
     pr = {}
     for pm in re.finditer(r'BooleanProperty\s+([A-Z_]+)\s*=\s*BooleanProperty\.create\("([a-z_]+)"\)', body):
         pr[pm.group(2)] = ["false", "true"]

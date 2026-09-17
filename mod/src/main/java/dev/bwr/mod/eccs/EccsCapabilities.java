@@ -28,6 +28,7 @@ public final class EccsCapabilities {
     }
 
     public static void register(RegisterCapabilitiesEvent event) {
+        PumpAssemblyCapabilities.register(event);
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 BwrBlockEntities.ECCS_PUMP.get(),
@@ -64,6 +65,6 @@ public final class EccsCapabilities {
         event.registerBlockEntity(
                 Capabilities.FluidHandler.BLOCK,
                 BwrBlockEntities.FEEDWATER_PUMP.get(),
-                (be, side) -> be.suction());
+                (be, side) -> PumpAssemblyCapabilities.waterFace(be.getBlockState(),side) ? be.suction() : null);
     }
 }
