@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "B": {
+      "item": "minecraft:blue_dye"
+    }
+  },
+  "pattern": [
+    "III",
+    " B ",
+    "III"
+  ],
+  "result": {
+    "count": 8,
+    "id": "bwr:high_pressure_water_pipe"
+  }
+}

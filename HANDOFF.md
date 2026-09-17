@@ -1,5 +1,32 @@
 # Agent Handoff
 
+## 2026-09-17 update: dedicated water pipes and vessel injection
+
+Current guide: [WATER-PLUMBING.md](WATER-PLUMBING.md). Keep the RCP cube available:
+the user explicitly chose to retain it until its model is supplied. Only the
+old RCIC/HPCI cubes are hidden from crafting/creative; their registry IDs and
+saved behavior remain. The modeled turbine recipes now use ordinary materials.
+
+`high_pressure_water_pipe` is a blue-banded water-only block. Its block capability
+forwards pushed NeoForge condensate to actual CST/pump buffers, with bounded
+loaded-chunk traversal and no per-pipe inventory. ECCS suction buffers carry
+fractional draw debt across saves. Select condensate-tank suction to use them.
+`pressurised_tube` retains its ID but is now named High-Pressure Steam Pipe and
+cannot join water flanges, RCPs, tanks, water pipes, or injection ports.
+
+`rpv_water_injection_port` is a six-way orientable pressure-boundary block. Formed
+reactor validation assigns its owner; discharge routing checks the owner's shell
+list and an outward-facing flange. Full modeled machines discharge to these ports,
+not reactor controllers. Existing worlds need manual water-line replacement and
+rerouting; there is no destructive automatic conversion. The HPCI STEP is still
+turbine-only, so its two blue skid fittings are explicitly labeled as gameplay
+adapters for the associated pump, at (3,0,0) east and (3,0,2) east in north pose.
+
+Runtime plumbing checks, client model baking, asset audit, deterministic STEP
+import comparison and jar packaging checks pass. See [BUILD-STATUS.md](BUILD-STATUS.md)
+for the exact results and final artifact hash. This update follows the pump-model
+integration committed as `e7631ee` on `main`.
+
 ## 2026-09-17 update: supplied pump model pack
 
 Seven supplied textured models are integrated. HPCS, LPCS, RHR/LPCI, motor

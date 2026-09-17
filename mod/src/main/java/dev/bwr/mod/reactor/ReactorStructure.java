@@ -65,19 +65,21 @@ public final class ReactorStructure {
     private final List<BlockPos> rodPositions;
     private final List<BlockPos> crdPositions;
     private final List<BlockPos> steamOutletPositions;
+    private final List<BlockPos> waterInjectionPositions;
     private final int topOfActiveFuelY;
     private final int assemblyCount;
     private double sprayRingCompleteness = 1.0;
 
     private ReactorStructure(BlockPos interiorMin, BlockPos interiorMax,
                              List<BlockPos> rodPositions, List<BlockPos> crdPositions,
-                             List<BlockPos> steamOutletPositions,
+                             List<BlockPos> steamOutletPositions, List<BlockPos> waterInjectionPositions,
                              int topOfActiveFuelY, int assemblyCount) {
         this.interiorMin = interiorMin;
         this.interiorMax = interiorMax;
         this.rodPositions = Collections.unmodifiableList(rodPositions);
         this.crdPositions = Collections.unmodifiableList(crdPositions);
         this.steamOutletPositions = Collections.unmodifiableList(steamOutletPositions);
+        this.waterInjectionPositions = List.copyOf(waterInjectionPositions);
         this.topOfActiveFuelY = topOfActiveFuelY;
         this.assemblyCount = assemblyCount;
     }
@@ -115,6 +117,8 @@ public final class ReactorStructure {
     }
 
     /** How many RPV steam nozzles this vessel has, however many are open. */
+    public List<BlockPos> waterInjectionPositions() { return waterInjectionPositions; }
+
     public int steamOutletCount() {
         return steamOutletPositions.size();
     }
@@ -220,7 +224,8 @@ public final class ReactorStructure {
         // pass that visits every wall block, so it is also where the vessel's
         // steam penetrations are picked up.
         List<BlockPos> steamOutlets = new ArrayList<>();
-        checkShellClosed(level, min, max, steamOutlets, result);
+        List<BlockPos> waterPorts = new ArrayList<>();
+        checkShellClosed(level, min, max, steamOutlets, waterPorts, result);
         if (result.hasEnoughFailures()) {
             return null;
         }
@@ -287,7 +292,7 @@ public final class ReactorStructure {
         }
 
         ReactorStructure structure =
-                new ReactorStructure(min, max, rods, crds, steamOutlets, activeFuelTopY, assemblies);
+                new ReactorStructure(min, max, rods, crds, steamOutlets, waterPorts, activeFuelTopY, assemblies);
         structure.sprayRingCompleteness = ringCompleteness;
         return structure;
     }
@@ -370,7 +375,8 @@ public final class ReactorStructure {
         return !s.is(BwrBlocks.REACTOR_VESSEL.get())
                 && !s.is(BwrBlocks.REACTOR_CONTROLLER.get())
                 && !(s.is(BwrBlocks.RIP_PUMP.get()) && s.getValue(dev.bwr.mod.eccs.PumpAssemblyBlock.CELL)/4==3)
-                && !s.is(BwrBlocks.RPV_STEAM_OUTLET.get());
+                && !s.is(BwrBlocks.RPV_STEAM_OUTLET.get())
+                && !s.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get());
     }
 
     /**
@@ -447,7 +453,7 @@ public final class ReactorStructure {
      * same copy for itself, because the problems it records outlive the walk too.
      */
     private static void checkShellClosed(Level level, BlockPos min, BlockPos max,
-                                         List<BlockPos> steamOutlets,
+                                         List<BlockPos> steamOutlets, List<BlockPos> waterPorts,
                                          ValidationResult result) {
         BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
         for (int x = min.getX() - 1; x <= max.getX() + 1; x++) {
@@ -478,6 +484,7 @@ public final class ReactorStructure {
                         result.fail(p, "gap in the reactor vessel shell");
                         continue;
                     }
+                    if (state.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get())) waterPorts.add(p.immutable());
                     if (state.is(BwrBlocks.RPV_STEAM_OUTLET.get())) {
                         steamOutlets.add(p.immutable());
                     }
@@ -555,10 +562,12 @@ public final class ReactorStructure {
                 || s.is(BwrBlocks.REACTOR_CONTROLLER.get())
                 || s.is(BwrBlocks.CORE_SPRAY_SPARGER.get())
                 || s.is(BwrBlocks.PRESSURISED_TUBE.get())
+                || s.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get())
                 || s.is(BwrBlocks.RECIRCULATION_PUMP.get())
                 || (s.is(BwrBlocks.JET_PUMP.get()) && !s.getValue(dev.bwr.mod.eccs.PumpAssemblyBlock.ASSEMBLED))
                 || (s.is(BwrBlocks.RIP_PUMP.get()) && s.getValue(dev.bwr.mod.eccs.PumpAssemblyBlock.CELL)/4>=3)
-                || s.is(BwrBlocks.RPV_STEAM_OUTLET.get());
+                || s.is(BwrBlocks.RPV_STEAM_OUTLET.get())
+                || s.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get());
     }
 
     /**

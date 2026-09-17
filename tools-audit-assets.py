@@ -117,6 +117,8 @@ for m in re.finditer(r'BLOCKS\.register\(\s*"([a-z0-9_]+)",\s*\(\)\s*->\s*new ([
         pr[pm.group(1)] = [str(v) for v in range(int(pm.group(2)), int(pm.group(3)) + 1)]
     if "BlockStateProperties.HORIZONTAL_FACING" in body:
         pr["facing"] = ["north", "east", "south", "west"]
+    if re.search(r"BlockStateProperties\.FACING\b", body):
+        pr["facing"] = ["north", "east", "south", "west", "up", "down"]
     if "extends PipeBlock" in body:
         pr = {d: ["false", "true"] for d in
               ["north", "east", "south", "west", "up", "down"]}
@@ -449,7 +451,7 @@ for b in blocks:
         missing["itemmodel"].append(b)
     if f"data/bwr/loot_table/blocks/{b}.json" not in jsons:
         missing["loot"].append(b)
-    if f"data/bwr/recipe/{b}.json" not in jsons:
+    if b not in {"rcic_turbine_pump", "hpci_turbine_pump"} and f"data/bwr/recipe/{b}.json" not in jsons:
         missing["recipe"].append(b)
 
 # Check 3 reaches the exit code. It used to accumulate into `missing`, print a
@@ -509,7 +511,15 @@ FOREIGN_ITEM_IDS = {
 valid_ids = {"bwr:" + n for n in blocks} | {"bwr:" + n for n in extra_items}
 recipes = {k: v for k, v in jsons.items() if k.startswith("data/bwr/recipe")}
 foreign_ids_used = set()
+RETIRED_BLOCKS = {"rcic_turbine_pump", "hpci_turbine_pump"}
+creative_source = open(os.path.join(ROOT, "mod/src/main/java/dev/bwr/mod/registry/BwrItems.java"), encoding="utf-8").read()
+for retired in RETIRED_BLOCKS:
+    if re.search(r"output\.accept\(" + retired.upper() + r"\.get\(\)\)", creative_source):
+        bad("RETIRED", f"{retired}: still in the creative tab")
 for rel, r in recipes.items():
+    for retired in RETIRED_BLOCKS:
+        if '"bwr:' + retired + '"' in json.dumps(r):
+            bad("RETIRED", f"{rel}: uses or produces retired block {retired}")
     if "type" not in r:
         bad("RECIPE", f"{rel}: no 'type'")
     res = r.get("result")

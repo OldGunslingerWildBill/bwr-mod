@@ -235,7 +235,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
         var inlet=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_SUCTION);
         var discharge=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_DISCHARGE);
         var tank=complete ? AssemblyPlumbing.endpoint(level,inlet,CondensateStorageTankBlockEntity.class) : null;
-        var delivery=complete ? AssemblyPlumbing.endpoint(level,discharge,ReactorControllerBlockEntity.class) : null;
+        var delivery=complete ? AssemblyPlumbing.waterReceiver(level,discharge) : null;
         if(delivery!=null && !delivery.isFormed()) delivery=null;
         BlockPos next=delivery==null?null:delivery.getBlockPos();
         if(reactorPos!=null && !reactorPos.equals(next)) EccsNetwork.withdraw(level,reactorPos,getBlockPos());

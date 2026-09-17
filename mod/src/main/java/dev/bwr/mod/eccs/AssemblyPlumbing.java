@@ -19,12 +19,17 @@ public final class AssemblyPlumbing {
     private AssemblyPlumbing() {}
     public record Line(List<BlockPos> ends, Set<BlockPos> nodes, boolean valid, double opening) {}
     public static boolean isWaterEndpoint(BlockState state) {
-        return state.is(BwrBlocks.REACTOR_CONTROLLER.get())
+        return state.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get())
                 || state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())
                 || state.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
     }
-    private static boolean conduit(BlockState s) {
-        return s.is(BwrBlocks.PRESSURISED_TUBE.get()) || s.is(BwrBlocks.MSIV.get());
+    private static boolean conduit(BlockState s, AssemblyPort role) {
+        return role.isSteam() ? s.is(BwrBlocks.PRESSURISED_TUBE.get()) || s.is(BwrBlocks.MSIV.get())
+                : s.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get());
+    }
+    private static boolean accepts(BlockState s, Direction face, AssemblyPort role) {
+        return role.isSteam() ? SteamLineNetwork.acceptsLineOn(s, face)
+                : dev.bwr.mod.water.WaterLineNetwork.acceptsLineOn(s, face);
     }
     public static Line trace(Level level, BlockPos root, BlockState state, AssemblyPort role) {
         ProcessAssembly block=(ProcessAssembly)state.getBlock();
@@ -46,8 +51,8 @@ public final class AssemblyPlumbing {
                 BlockPos next=here.relative(d);
                 if(seen.contains(next) || !level.isLoaded(next)) continue;
                 BlockState s=level.getBlockState(next);
-                if(!SteamLineNetwork.acceptsLineOn(current,d)
-                        || !SteamLineNetwork.acceptsLineOn(s,d.getOpposite())) continue;
+                if(!accepts(current,d,role)
+                        || !accepts(s,d.getOpposite(),role)) continue;
                 seen.add(next);
                 if(seen.size()>SteamLineNetwork.MAX_LINE_BLOCKS) return new Line(List.of(),Set.copyOf(seen),false,0);
                 if(s.getBlock() instanceof ProcessAssembly assembly) {
@@ -55,7 +60,7 @@ public final class AssemblyPlumbing {
                     if(assembly.portAt(s,d.getOpposite())!=role || (s.getBlock() instanceof dev.bwr.mod.flow.JetPumpBlock)!=jet) valid=false;
                     continue;
                 }
-                if(conduit(s) || (role.isSteam() && s.is(BwrBlocks.SAFETY_RELIEF_VALVE.get()))) {
+                if(conduit(s,role) || (role.isSteam() && s.is(BwrBlocks.SAFETY_RELIEF_VALVE.get()))) {
                     if(level.getBlockEntity(next) instanceof MainSteamIsolationValveBlockEntity valve) {
                         double aperture=valve.getPosition();
                         // A shut side branch is isolated; it must not close an
@@ -69,7 +74,7 @@ public final class AssemblyPlumbing {
                     case STEAM_INLET -> s.is(BwrBlocks.RPV_STEAM_OUTLET.get());
                     case STEAM_EXHAUST -> s.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get()) || s.is(BwrBlocks.TURBINE_STEAM_OUTLET.get());
                     case WATER_SUCTION -> jet ? s.is(BwrBlocks.RECIRCULATION_PUMP.get()) : s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get()) || s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
-                    case WATER_DISCHARGE -> s.is(BwrBlocks.REACTOR_CONTROLLER.get()) || s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
+                    case WATER_DISCHARGE -> s.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get()) || s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
                 };
                 if(accepted) ends.add(next);
                 else if(s.is(BwrBlocks.RECIRCULATION_PUMP.get()) || isWaterEndpoint(s) || s.is(BwrBlocks.RPV_STEAM_OUTLET.get())
@@ -87,6 +92,18 @@ public final class AssemblyPlumbing {
             T next=type.cast(level.getBlockEntity(p));
             if(found!=null && found!=next) return null;
             found=next;
+        }
+        return found;
+    }
+    /** Several injection nozzles on one vessel are legal; two recipient vessels are ambiguous. */
+    public static ReactorControllerBlockEntity waterReceiver(Level level, Line line) {
+        if (!line.valid()) return null;
+        ReactorControllerBlockEntity found = null;
+        for (BlockPos p : line.ends()) {
+            if (!level.isLoaded(p) || !(level.getBlockEntity(p) instanceof dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity port)) return null;
+            var next = port.controller();
+            if (next == null || found != null && found != next) return null;
+            found = next;
         }
         return found;
     }

@@ -57,6 +57,9 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
         if (hpci) {
             ports.put(AssemblyPort.STEAM_INLET, new BlockPos(2, 4, 1));
             ports.put(AssemblyPort.STEAM_EXHAUST, new BlockPos(0, 1, 1));
+            // Grid adapters for the associated HPCI pump; not nozzles claimed to exist in the turbine STEP.
+            ports.put(AssemblyPort.WATER_SUCTION, new BlockPos(3, 0, 0));
+            ports.put(AssemblyPort.WATER_DISCHARGE, new BlockPos(3, 0, 2));
         } else {
             ports.put(AssemblyPort.STEAM_INLET, new BlockPos(0, 2, 1));
             ports.put(AssemblyPort.STEAM_EXHAUST, new BlockPos(1, 1, 1));
@@ -93,7 +96,8 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
     }
     public Direction portFace(BlockState state, AssemblyPort port) {
         Direction d = switch (port) {
-            case STEAM_INLET, WATER_DISCHARGE -> Direction.UP;
+            case STEAM_INLET -> Direction.UP;
+            case WATER_DISCHARGE -> hpci ? Direction.EAST : Direction.UP;
             case WATER_SUCTION -> Direction.EAST;
             case STEAM_EXHAUST -> hpci ? Direction.WEST : Direction.SOUTH;
         };
@@ -104,7 +108,7 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
         for (var e : ports.entrySet()) if (e.getValue().equals(local) && portFace(state, e.getKey()) == face) return e.getKey();
         return null;
     }
-    @Override public boolean acceptsSteamLineOn(BlockState state, Direction face) { return portAt(state, face) != null; }
+    @Override public boolean acceptsSteamLineOn(BlockState state, Direction face) { var port = portAt(state, face); return port != null && port.isSteam(); }
     public boolean complete(Level level, BlockPos root, BlockState state) {
         for (int i = 0; i < cellCount(); i++) {
             BlockPos p = root.offset(turn(cellOffset(i), state.getValue(FACING)));

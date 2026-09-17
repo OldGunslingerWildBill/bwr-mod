@@ -189,6 +189,80 @@
       "connector_width": 0.32,
       "closed_source_cover_removed": true,
       "note": "Source exhaust blanking cover omitted to expose the connected port."
+    },
+    {
+      "name": "Associated_pump_suction",
+      "cell": 3,
+      "offset": [
+        3,
+        0,
+        0
+      ],
+      "face": "EAST",
+      "source_parts": [],
+      "face_center": [
+        4.0,
+        0.5,
+        0.5
+      ],
+      "cell_local_face_center": [
+        1.0,
+        0.5,
+        0.5
+      ],
+      "adapter_centerline": [
+        [
+          3.12,
+          0.5,
+          0.5
+        ],
+        [
+          4.0,
+          0.5,
+          0.5
+        ]
+      ],
+      "adapter_width": 0.32,
+      "connector_width": 0.5,
+      "closed_source_cover_removed": false,
+      "note": "Gameplay adapter for the associated pump; not a nozzle from the turbine-only STEP."
+    },
+    {
+      "name": "Associated_pump_discharge",
+      "cell": 11,
+      "offset": [
+        3,
+        0,
+        2
+      ],
+      "face": "EAST",
+      "source_parts": [],
+      "face_center": [
+        4.0,
+        0.5,
+        2.5
+      ],
+      "cell_local_face_center": [
+        1.0,
+        0.5,
+        0.5
+      ],
+      "adapter_centerline": [
+        [
+          3.12,
+          0.5,
+          2.5
+        ],
+        [
+          4.0,
+          0.5,
+          2.5
+        ]
+      ],
+      "adapter_width": 0.32,
+      "connector_width": 0.5,
+      "closed_source_cover_removed": false,
+      "note": "Gameplay adapter for the associated pump; not a nozzle from the turbine-only STEP."
     }
   ],
   "omitted_source_parts": [
@@ -263,7 +337,7 @@
         0.00625,
         0.0,
         1.0,
-        0.453125,
+        0.75,
         1
       ]
     },
@@ -1049,7 +1123,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Skid_flange_1",
@@ -1068,7 +1142,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Skid_flange_2",
@@ -1087,7 +1161,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Skid_web_3",
@@ -1106,7 +1180,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Skid_flange_4",
@@ -1125,7 +1199,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Skid_flange_5",
@@ -1144,7 +1218,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Cross_beam_6",
@@ -1163,7 +1237,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Cross_beam_7",
@@ -1182,7 +1256,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Cross_beam_8",
@@ -1201,7 +1275,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Cross_beam_9",
@@ -1220,7 +1294,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Cross_beam_10",
@@ -1239,7 +1313,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Reservoir_base_11",
@@ -1258,7 +1332,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Anchor_foot_12",
@@ -1277,7 +1351,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Anchor_bolt_13",
@@ -1296,7 +1370,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Anchor_foot_14",
@@ -1315,7 +1389,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Anchor_bolt_15",
@@ -1334,7 +1408,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Anchor_foot_16",
@@ -1353,7 +1427,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Anchor_bolt_17",
@@ -1372,7 +1446,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Anchor_foot_18",
@@ -1391,7 +1465,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Anchor_bolt_19",
@@ -1410,7 +1484,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Turbine_saddle_20",
@@ -1429,7 +1503,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Turbine_saddle_21",
@@ -1448,7 +1522,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Turbine_saddle_22",
@@ -1467,7 +1541,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Turbine_saddle_23",
@@ -1486,7 +1560,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Main_turbine_shell_00_24",
@@ -1505,7 +1579,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Main_turbine_shell_01_25",
@@ -1524,7 +1598,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Main_turbine_shell_02_26",
@@ -1543,7 +1617,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Main_turbine_shell_03_27",
@@ -1562,7 +1636,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Main_turbine_shell_04_28",
@@ -1581,7 +1655,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Main_turbine_shell_05_29",
@@ -1600,7 +1674,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Main_turbine_shell_06_30",
@@ -1619,7 +1693,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Main_turbine_shell_07_31",
@@ -1638,7 +1712,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Rear_tapered_section_00_32",
@@ -1657,7 +1731,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Rear_tapered_section_01_33",
@@ -1676,7 +1750,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Rear_tapered_section_02_34",
@@ -1695,7 +1769,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Rear_tapered_section_03_35",
@@ -1714,7 +1788,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Rear_tapered_section_04_36",
@@ -1733,7 +1807,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Rear_tapered_section_05_37",
@@ -1752,7 +1826,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Rear_tapered_section_06_38",
@@ -1771,7 +1845,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Rear_tapered_section_07_39",
@@ -1790,7 +1864,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Rear_bearing_pedestal_00_40",
@@ -1809,7 +1883,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Rear_bearing_pedestal_01_41",
@@ -1828,7 +1902,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Rear_bearing_pedestal_02_42",
@@ -1847,7 +1921,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Rear_bearing_pedestal_03_43",
@@ -1866,7 +1940,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Rear_bearing_pedestal_04_44",
@@ -1885,7 +1959,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Rear_bearing_pedestal_05_45",
@@ -1904,7 +1978,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Rear_bearing_pedestal_06_46",
@@ -1923,7 +1997,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Rear_bearing_pedestal_07_47",
@@ -1942,7 +2016,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Output_coupling_cover_00_48",
@@ -1961,7 +2035,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Output_coupling_cover_01_49",
@@ -1980,7 +2054,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Output_coupling_cover_02_50",
@@ -1999,7 +2073,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Output_coupling_cover_03_51",
@@ -2018,7 +2092,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Output_coupling_cover_04_52",
@@ -2037,7 +2111,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Output_coupling_cover_05_53",
@@ -2056,7 +2130,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Output_coupling_cover_06_54",
@@ -2075,7 +2149,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Output_coupling_cover_07_55",
@@ -2094,7 +2168,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Horizontal_casing_split_56",
@@ -2113,7 +2187,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Split_line_stud_57",
@@ -2132,7 +2206,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Split_line_stud_58",
@@ -2151,7 +2225,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Split_line_stud_59",
@@ -2170,7 +2244,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Split_line_stud_60",
@@ -2189,7 +2263,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Split_line_stud_61",
@@ -2208,7 +2282,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Split_line_stud_62",
@@ -2227,7 +2301,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Split_line_stud_63",
@@ -2246,7 +2320,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Split_line_stud_64",
@@ -2265,7 +2339,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Split_line_stud_65",
@@ -2284,7 +2358,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Split_line_stud_66",
@@ -2303,7 +2377,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Split_line_stud_67",
@@ -2322,7 +2396,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Split_line_stud_68",
@@ -2341,7 +2415,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_neck_00_69",
@@ -2360,7 +2434,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_neck_01_70",
@@ -2379,7 +2453,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_neck_02_71",
@@ -2398,7 +2472,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_neck_03_72",
@@ -2417,7 +2491,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_neck_04_73",
@@ -2436,7 +2510,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_neck_05_74",
@@ -2455,7 +2529,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_neck_06_75",
@@ -2474,7 +2548,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_neck_07_76",
@@ -2493,7 +2567,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_front_flange_00_77",
@@ -2512,7 +2586,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Exhaust_front_flange_01_78",
@@ -2531,7 +2605,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Exhaust_front_flange_02_79",
@@ -2550,7 +2624,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Exhaust_front_flange_03_80",
@@ -2569,7 +2643,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Exhaust_front_flange_04_81",
@@ -2588,7 +2662,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Exhaust_front_flange_05_82",
@@ -2607,7 +2681,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Exhaust_front_flange_06_83",
@@ -2626,7 +2700,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Exhaust_front_flange_07_84",
@@ -2645,7 +2719,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Exhaust_closed_cover_00_85",
@@ -2664,7 +2738,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_closed_cover_01_86",
@@ -2683,7 +2757,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_closed_cover_02_87",
@@ -2702,7 +2776,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_closed_cover_03_88",
@@ -2721,7 +2795,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_closed_cover_04_89",
@@ -2740,7 +2814,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_closed_cover_05_90",
@@ -2759,7 +2833,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_closed_cover_06_91",
@@ -2778,7 +2852,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_closed_cover_07_92",
@@ -2797,7 +2871,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Exhaust_flange_bolt_93",
@@ -2816,7 +2890,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_94",
@@ -2835,7 +2909,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_95",
@@ -2854,7 +2928,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_96",
@@ -2873,7 +2947,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_97",
@@ -2892,7 +2966,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_98",
@@ -2911,7 +2985,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_99",
@@ -2930,7 +3004,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_100",
@@ -2949,7 +3023,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_101",
@@ -2968,7 +3042,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_102",
@@ -2987,7 +3061,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_103",
@@ -3006,7 +3080,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_104",
@@ -3025,7 +3099,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_105",
@@ -3044,7 +3118,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_106",
@@ -3063,7 +3137,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_107",
@@ -3082,7 +3156,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Exhaust_flange_bolt_108",
@@ -3101,7 +3175,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Upper_steam_chest_00_109",
@@ -3120,7 +3194,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Upper_steam_chest_01_110",
@@ -3139,7 +3213,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Upper_steam_chest_02_111",
@@ -3158,7 +3232,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Upper_steam_chest_03_112",
@@ -3177,7 +3251,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Upper_steam_chest_04_113",
@@ -3196,7 +3270,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Upper_steam_chest_05_114",
@@ -3215,7 +3289,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Upper_steam_chest_06_115",
@@ -3234,7 +3308,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Upper_steam_chest_07_116",
@@ -3253,7 +3327,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_chest_cover_flange_00_117",
@@ -3272,7 +3346,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_chest_cover_flange_01_118",
@@ -3291,7 +3365,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_chest_cover_flange_02_119",
@@ -3310,7 +3384,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_chest_cover_flange_03_120",
@@ -3329,7 +3403,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_chest_cover_flange_04_121",
@@ -3348,7 +3422,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_chest_cover_flange_05_122",
@@ -3367,7 +3441,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_chest_cover_flange_06_123",
@@ -3386,7 +3460,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_chest_cover_flange_07_124",
@@ -3405,7 +3479,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_chest_blind_cover_00_125",
@@ -3424,7 +3498,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_chest_blind_cover_01_126",
@@ -3443,7 +3517,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_chest_blind_cover_02_127",
@@ -3462,7 +3536,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_chest_blind_cover_03_128",
@@ -3481,7 +3555,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_chest_blind_cover_04_129",
@@ -3500,7 +3574,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_chest_blind_cover_05_130",
@@ -3519,7 +3593,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_chest_blind_cover_06_131",
@@ -3538,7 +3612,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_chest_blind_cover_07_132",
@@ -3557,7 +3631,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Chest_cover_bolt_133",
@@ -3576,7 +3650,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_134",
@@ -3595,7 +3669,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_135",
@@ -3614,7 +3688,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_136",
@@ -3633,7 +3707,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_137",
@@ -3652,7 +3726,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_138",
@@ -3671,7 +3745,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_139",
@@ -3690,7 +3764,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_140",
@@ -3709,7 +3783,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_141",
@@ -3728,7 +3802,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_142",
@@ -3747,7 +3821,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_143",
@@ -3766,7 +3840,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_144",
@@ -3785,7 +3859,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_145",
@@ -3804,7 +3878,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_146",
@@ -3823,7 +3897,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_147",
@@ -3842,7 +3916,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Chest_cover_bolt_148",
@@ -3861,7 +3935,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_bonnet_00_149",
@@ -3880,7 +3954,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Valve_bonnet_01_150",
@@ -3899,7 +3973,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Valve_bonnet_02_151",
@@ -3918,7 +3992,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Valve_bonnet_03_152",
@@ -3937,7 +4011,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Valve_bonnet_04_153",
@@ -3956,7 +4030,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Valve_bonnet_05_154",
@@ -3975,7 +4049,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Valve_bonnet_06_155",
@@ -3994,7 +4068,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Valve_bonnet_07_156",
@@ -4013,7 +4087,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Bonnet_bolts_rim_00_157",
@@ -4032,7 +4106,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Bonnet_bolts_bolt_00_158",
@@ -4051,7 +4125,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Bonnet_bolts_rim_01_159",
@@ -4070,7 +4144,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Bonnet_bolts_rim_02_160",
@@ -4089,7 +4163,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Bonnet_bolts_bolt_02_161",
@@ -4108,7 +4182,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Bonnet_bolts_rim_03_162",
@@ -4127,7 +4201,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Bonnet_bolts_rim_04_163",
@@ -4146,7 +4220,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Bonnet_bolts_bolt_04_164",
@@ -4165,7 +4239,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Bonnet_bolts_rim_05_165",
@@ -4184,7 +4258,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Bonnet_bolts_rim_06_166",
@@ -4203,7 +4277,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Bonnet_bolts_bolt_06_167",
@@ -4222,7 +4296,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Bonnet_bolts_rim_07_168",
@@ -4241,7 +4315,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Bonnet_bolts_rim_08_169",
@@ -4260,7 +4334,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Bonnet_bolts_bolt_08_170",
@@ -4279,7 +4353,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Bonnet_bolts_rim_09_171",
@@ -4298,7 +4372,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Bonnet_bolts_rim_10_172",
@@ -4317,7 +4391,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Bonnet_bolts_bolt_10_173",
@@ -4336,7 +4410,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Bonnet_bolts_rim_11_174",
@@ -4355,7 +4429,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_valve_body_00_175",
@@ -4374,7 +4448,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_inlet_valve_body_01_176",
@@ -4393,7 +4467,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_inlet_valve_body_02_177",
@@ -4412,7 +4486,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_inlet_valve_body_03_178",
@@ -4431,7 +4505,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_inlet_valve_body_04_179",
@@ -4450,7 +4524,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_inlet_valve_body_05_180",
@@ -4469,7 +4543,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_inlet_valve_body_06_181",
@@ -4488,7 +4562,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_inlet_valve_body_07_182",
@@ -4507,7 +4581,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Inlet_riser_00_183",
@@ -4526,7 +4600,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Inlet_riser_01_184",
@@ -4545,7 +4619,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Inlet_riser_02_185",
@@ -4564,7 +4638,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Inlet_riser_03_186",
@@ -4583,7 +4657,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Inlet_riser_04_187",
@@ -4602,7 +4676,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Inlet_riser_05_188",
@@ -4621,7 +4695,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Inlet_riser_06_189",
@@ -4640,7 +4714,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Inlet_riser_07_190",
@@ -4659,7 +4733,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_inlet_flange_00_191",
@@ -4678,7 +4752,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_flange_01_192",
@@ -4697,7 +4771,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_flange_02_193",
@@ -4716,7 +4790,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_flange_03_194",
@@ -4735,7 +4809,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_flange_04_195",
@@ -4754,7 +4828,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_flange_05_196",
@@ -4773,7 +4847,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_flange_06_197",
@@ -4792,7 +4866,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_flange_07_198",
@@ -4811,7 +4885,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_inset_00_199",
@@ -4830,7 +4904,7 @@
         0.176470590079,
         0.164705883709
       ],
-      "material": "step_color_000"
+      "material": "step_color_001"
     },
     {
       "name": "Steam_inlet_inset_01_200",
@@ -4849,7 +4923,7 @@
         0.176470590079,
         0.164705883709
       ],
-      "material": "step_color_000"
+      "material": "step_color_001"
     },
     {
       "name": "Steam_inlet_inset_02_201",
@@ -4868,7 +4942,7 @@
         0.176470590079,
         0.164705883709
       ],
-      "material": "step_color_000"
+      "material": "step_color_001"
     },
     {
       "name": "Steam_inlet_inset_03_202",
@@ -4887,7 +4961,7 @@
         0.176470590079,
         0.164705883709
       ],
-      "material": "step_color_000"
+      "material": "step_color_001"
     },
     {
       "name": "Steam_inlet_inset_04_203",
@@ -4906,7 +4980,7 @@
         0.176470590079,
         0.164705883709
       ],
-      "material": "step_color_000"
+      "material": "step_color_001"
     },
     {
       "name": "Steam_inlet_inset_05_204",
@@ -4925,7 +4999,7 @@
         0.176470590079,
         0.164705883709
       ],
-      "material": "step_color_000"
+      "material": "step_color_001"
     },
     {
       "name": "Steam_inlet_inset_06_205",
@@ -4944,7 +5018,7 @@
         0.176470590079,
         0.164705883709
       ],
-      "material": "step_color_000"
+      "material": "step_color_001"
     },
     {
       "name": "Steam_inlet_inset_07_206",
@@ -4963,7 +5037,7 @@
         0.176470590079,
         0.164705883709
       ],
-      "material": "step_color_000"
+      "material": "step_color_001"
     },
     {
       "name": "Steam_inlet_bolts_rim_00_207",
@@ -4982,7 +5056,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_bolts_bolt_00_208",
@@ -5001,7 +5075,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Steam_inlet_bolts_rim_01_209",
@@ -5020,7 +5094,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_bolts_rim_02_210",
@@ -5039,7 +5113,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_bolts_bolt_02_211",
@@ -5058,7 +5132,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Steam_inlet_bolts_rim_03_212",
@@ -5077,7 +5151,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_bolts_rim_04_213",
@@ -5096,7 +5170,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_bolts_bolt_04_214",
@@ -5115,7 +5189,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Steam_inlet_bolts_rim_05_215",
@@ -5134,7 +5208,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_bolts_rim_06_216",
@@ -5153,7 +5227,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_bolts_bolt_06_217",
@@ -5172,7 +5246,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Steam_inlet_bolts_rim_07_218",
@@ -5191,7 +5265,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_bolts_rim_08_219",
@@ -5210,7 +5284,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_bolts_bolt_08_220",
@@ -5229,7 +5303,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Steam_inlet_bolts_rim_09_221",
@@ -5248,7 +5322,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_bolts_rim_10_222",
@@ -5267,7 +5341,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_inlet_bolts_bolt_10_223",
@@ -5286,7 +5360,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Steam_inlet_bolts_rim_11_224",
@@ -5305,7 +5379,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Steam_side_elbow0_2_378",
@@ -5324,7 +5398,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_side_elbow1_1_379",
@@ -5343,7 +5417,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_side_elbow2_1_380",
@@ -5362,7 +5436,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_side_elbow3_0_381",
@@ -5381,7 +5455,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Steam_side_elbow4_2_382",
@@ -5400,7 +5474,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Side_elbow_flange_00_383",
@@ -5419,7 +5493,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_01_384",
@@ -5438,7 +5512,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_02_385",
@@ -5457,7 +5531,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_03_386",
@@ -5476,7 +5550,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_04_387",
@@ -5495,7 +5569,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_05_388",
@@ -5514,7 +5588,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_06_389",
@@ -5533,7 +5607,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_07_390",
@@ -5552,7 +5626,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Elbow_studs_rim_00_391",
@@ -5571,7 +5645,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_bolt_00_392",
@@ -5590,7 +5664,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_01_393",
@@ -5609,7 +5683,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_02_394",
@@ -5628,7 +5702,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_bolt_02_395",
@@ -5647,7 +5721,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_03_396",
@@ -5666,7 +5740,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_04_397",
@@ -5685,7 +5759,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_bolt_04_398",
@@ -5704,7 +5778,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_05_399",
@@ -5723,7 +5797,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_06_400",
@@ -5742,7 +5816,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_bolt_06_401",
@@ -5761,7 +5835,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_07_402",
@@ -5780,7 +5854,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_08_403",
@@ -5799,7 +5873,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_bolt_08_404",
@@ -5818,7 +5892,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_09_405",
@@ -5837,7 +5911,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_10_406",
@@ -5856,7 +5930,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_bolt_10_407",
@@ -5875,7 +5949,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_11_408",
@@ -5894,7 +5968,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Side_elbow_flange_00_409",
@@ -5913,7 +5987,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_01_410",
@@ -5932,7 +6006,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_02_411",
@@ -5951,7 +6025,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_03_412",
@@ -5970,7 +6044,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_04_413",
@@ -5989,7 +6063,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_05_414",
@@ -6008,7 +6082,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_06_415",
@@ -6027,7 +6101,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Side_elbow_flange_07_416",
@@ -6046,7 +6120,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Elbow_studs_rim_00_417",
@@ -6065,7 +6139,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_bolt_00_418",
@@ -6084,7 +6158,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_01_419",
@@ -6103,7 +6177,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_02_420",
@@ -6122,7 +6196,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_bolt_02_421",
@@ -6141,7 +6215,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_03_422",
@@ -6160,7 +6234,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_04_423",
@@ -6179,7 +6253,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_bolt_04_424",
@@ -6198,7 +6272,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_05_425",
@@ -6217,7 +6291,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_06_426",
@@ -6236,7 +6310,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_bolt_06_427",
@@ -6255,7 +6329,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_07_428",
@@ -6274,7 +6348,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_08_429",
@@ -6293,7 +6367,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_bolt_08_430",
@@ -6312,7 +6386,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_09_431",
@@ -6331,7 +6405,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_10_432",
@@ -6350,7 +6424,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_bolt_10_433",
@@ -6369,7 +6443,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Elbow_studs_rim_11_434",
@@ -6388,7 +6462,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Yoke_upright_225",
@@ -6407,7 +6481,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Yoke_upright_226",
@@ -6426,7 +6500,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Yoke_upper_crossbar_227",
@@ -6445,7 +6519,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Yoke_lower_bridge_228",
@@ -6464,7 +6538,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Spring_core_229",
@@ -6483,7 +6557,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_230",
@@ -6502,7 +6576,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_231",
@@ -6521,7 +6595,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_232",
@@ -6540,7 +6614,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_233",
@@ -6559,7 +6633,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_234",
@@ -6578,7 +6652,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_235",
@@ -6597,7 +6671,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_236",
@@ -6616,7 +6690,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_237",
@@ -6635,7 +6709,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_238",
@@ -6654,7 +6728,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_239",
@@ -6673,7 +6747,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_240",
@@ -6692,7 +6766,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_241",
@@ -6711,7 +6785,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_242",
@@ -6730,7 +6804,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_243",
@@ -6749,7 +6823,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_244",
@@ -6768,7 +6842,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_245",
@@ -6787,7 +6861,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_246",
@@ -6806,7 +6880,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_247",
@@ -6825,7 +6899,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_248",
@@ -6844,7 +6918,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_249",
@@ -6863,7 +6937,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_250",
@@ -6882,7 +6956,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_251",
@@ -6901,7 +6975,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_252",
@@ -6920,7 +6994,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_253",
@@ -6939,7 +7013,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_254",
@@ -6958,7 +7032,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_255",
@@ -6977,7 +7051,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_256",
@@ -6996,7 +7070,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_257",
@@ -7015,7 +7089,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_258",
@@ -7034,7 +7108,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_259",
@@ -7053,7 +7127,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_260",
@@ -7072,7 +7146,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_261",
@@ -7091,7 +7165,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_262",
@@ -7110,7 +7184,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_263",
@@ -7129,7 +7203,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_264",
@@ -7148,7 +7222,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_265",
@@ -7167,7 +7241,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_266",
@@ -7186,7 +7260,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_267",
@@ -7205,7 +7279,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_268",
@@ -7224,7 +7298,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_269",
@@ -7243,7 +7317,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_270",
@@ -7262,7 +7336,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_271",
@@ -7281,7 +7355,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_272",
@@ -7300,7 +7374,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_273",
@@ -7319,7 +7393,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_274",
@@ -7338,7 +7412,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_275",
@@ -7357,7 +7431,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_276",
@@ -7376,7 +7450,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_277",
@@ -7395,7 +7469,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_278",
@@ -7414,7 +7488,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_279",
@@ -7433,7 +7507,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_280",
@@ -7452,7 +7526,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_281",
@@ -7471,7 +7545,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_282",
@@ -7490,7 +7564,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_283",
@@ -7509,7 +7583,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_284",
@@ -7528,7 +7602,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_285",
@@ -7547,7 +7621,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_286",
@@ -7566,7 +7640,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_287",
@@ -7585,7 +7659,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_288",
@@ -7604,7 +7678,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_289",
@@ -7623,7 +7697,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_290",
@@ -7642,7 +7716,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_291",
@@ -7661,7 +7735,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_292",
@@ -7680,7 +7754,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_293",
@@ -7699,7 +7773,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_294",
@@ -7718,7 +7792,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_295",
@@ -7737,7 +7811,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_296",
@@ -7756,7 +7830,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_297",
@@ -7775,7 +7849,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_298",
@@ -7794,7 +7868,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_299",
@@ -7813,7 +7887,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_300",
@@ -7832,7 +7906,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_301",
@@ -7851,7 +7925,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_core_302",
@@ -7870,7 +7944,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_303",
@@ -7889,7 +7963,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_304",
@@ -7908,7 +7982,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_305",
@@ -7927,7 +8001,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_306",
@@ -7946,7 +8020,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_307",
@@ -7965,7 +8039,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_308",
@@ -7984,7 +8058,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_309",
@@ -8003,7 +8077,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_310",
@@ -8022,7 +8096,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_311",
@@ -8041,7 +8115,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_312",
@@ -8060,7 +8134,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_313",
@@ -8079,7 +8153,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_314",
@@ -8098,7 +8172,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_315",
@@ -8117,7 +8191,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_316",
@@ -8136,7 +8210,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_317",
@@ -8155,7 +8229,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_318",
@@ -8174,7 +8248,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_319",
@@ -8193,7 +8267,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_320",
@@ -8212,7 +8286,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_321",
@@ -8231,7 +8305,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_322",
@@ -8250,7 +8324,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_323",
@@ -8269,7 +8343,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_324",
@@ -8288,7 +8362,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_325",
@@ -8307,7 +8381,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_326",
@@ -8326,7 +8400,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_327",
@@ -8345,7 +8419,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_328",
@@ -8364,7 +8438,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_329",
@@ -8383,7 +8457,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_330",
@@ -8402,7 +8476,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_331",
@@ -8421,7 +8495,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_332",
@@ -8440,7 +8514,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_333",
@@ -8459,7 +8533,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_334",
@@ -8478,7 +8552,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_335",
@@ -8497,7 +8571,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_336",
@@ -8516,7 +8590,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_337",
@@ -8535,7 +8609,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_338",
@@ -8554,7 +8628,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_339",
@@ -8573,7 +8647,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_340",
@@ -8592,7 +8666,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_341",
@@ -8611,7 +8685,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_342",
@@ -8630,7 +8704,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_343",
@@ -8649,7 +8723,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_344",
@@ -8668,7 +8742,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_345",
@@ -8687,7 +8761,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_346",
@@ -8706,7 +8780,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_347",
@@ -8725,7 +8799,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_348",
@@ -8744,7 +8818,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_349",
@@ -8763,7 +8837,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_350",
@@ -8782,7 +8856,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_351",
@@ -8801,7 +8875,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_352",
@@ -8820,7 +8894,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_353",
@@ -8839,7 +8913,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_354",
@@ -8858,7 +8932,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_355",
@@ -8877,7 +8951,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_356",
@@ -8896,7 +8970,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_357",
@@ -8915,7 +8989,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_358",
@@ -8934,7 +9008,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_359",
@@ -8953,7 +9027,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_360",
@@ -8972,7 +9046,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_361",
@@ -8991,7 +9065,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_362",
@@ -9010,7 +9084,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_363",
@@ -9029,7 +9103,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_364",
@@ -9048,7 +9122,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_365",
@@ -9067,7 +9141,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_366",
@@ -9086,7 +9160,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_00_367",
@@ -9105,7 +9179,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_01_368",
@@ -9124,7 +9198,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_02_369",
@@ -9143,7 +9217,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_03_370",
@@ -9162,7 +9236,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_04_371",
@@ -9181,7 +9255,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_05_372",
@@ -9200,7 +9274,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_06_373",
@@ -9219,7 +9293,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Spring_coil_07_374",
@@ -9238,7 +9312,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_lever_375",
@@ -9257,7 +9331,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Long_side_linkage_rod_376",
@@ -9276,7 +9350,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Linkage_foot_crank_377",
@@ -9295,7 +9369,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Auxiliary_canister_00_435",
@@ -9314,7 +9388,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Auxiliary_canister_01_436",
@@ -9333,7 +9407,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Auxiliary_canister_02_437",
@@ -9352,7 +9426,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Auxiliary_canister_03_438",
@@ -9371,7 +9445,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Auxiliary_canister_04_439",
@@ -9390,7 +9464,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Auxiliary_canister_05_440",
@@ -9409,7 +9483,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Auxiliary_canister_06_441",
@@ -9428,7 +9502,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Auxiliary_canister_07_442",
@@ -9447,7 +9521,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Auxiliary_canister_flange_00_443",
@@ -9466,7 +9540,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_01_444",
@@ -9485,7 +9559,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_02_445",
@@ -9504,7 +9578,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_03_446",
@@ -9523,7 +9597,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_04_447",
@@ -9542,7 +9616,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_05_448",
@@ -9561,7 +9635,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_06_449",
@@ -9580,7 +9654,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_07_450",
@@ -9599,7 +9673,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Canister_studs_rim_00_451",
@@ -9618,7 +9692,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_bolt_00_452",
@@ -9637,7 +9711,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_01_453",
@@ -9656,7 +9730,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_02_454",
@@ -9675,7 +9749,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_bolt_02_455",
@@ -9694,7 +9768,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_03_456",
@@ -9713,7 +9787,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_04_457",
@@ -9732,7 +9806,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_bolt_04_458",
@@ -9751,7 +9825,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_05_459",
@@ -9770,7 +9844,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_06_460",
@@ -9789,7 +9863,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_bolt_06_461",
@@ -9808,7 +9882,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_07_462",
@@ -9827,7 +9901,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_08_463",
@@ -9846,7 +9920,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_bolt_08_464",
@@ -9865,7 +9939,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_09_465",
@@ -9884,7 +9958,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_10_466",
@@ -9903,7 +9977,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_bolt_10_467",
@@ -9922,7 +9996,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_11_468",
@@ -9941,7 +10015,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Auxiliary_canister_flange_00_469",
@@ -9960,7 +10034,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_01_470",
@@ -9979,7 +10053,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_02_471",
@@ -9998,7 +10072,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_03_472",
@@ -10017,7 +10091,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_04_473",
@@ -10036,7 +10110,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_05_474",
@@ -10055,7 +10129,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_06_475",
@@ -10074,7 +10148,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_canister_flange_07_476",
@@ -10093,7 +10167,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Canister_studs_rim_00_477",
@@ -10112,7 +10186,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_bolt_00_478",
@@ -10131,7 +10205,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_01_479",
@@ -10150,7 +10224,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_02_480",
@@ -10169,7 +10243,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_bolt_02_481",
@@ -10188,7 +10262,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_03_482",
@@ -10207,7 +10281,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_04_483",
@@ -10226,7 +10300,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_bolt_04_484",
@@ -10245,7 +10319,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_05_485",
@@ -10264,7 +10338,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_06_486",
@@ -10283,7 +10357,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_bolt_06_487",
@@ -10302,7 +10376,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_07_488",
@@ -10321,7 +10395,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_08_489",
@@ -10340,7 +10414,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_bolt_08_490",
@@ -10359,7 +10433,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_09_491",
@@ -10378,7 +10452,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_10_492",
@@ -10397,7 +10471,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_bolt_10_493",
@@ -10416,7 +10490,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Canister_studs_rim_11_494",
@@ -10435,7 +10509,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Control_actuator_00_495",
@@ -10454,7 +10528,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_01_496",
@@ -10473,7 +10547,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_02_497",
@@ -10492,7 +10566,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_03_498",
@@ -10511,7 +10585,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_04_499",
@@ -10530,7 +10604,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_05_500",
@@ -10549,7 +10623,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_06_501",
@@ -10568,7 +10642,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_07_502",
@@ -10587,7 +10661,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Actuator_collar_00_503",
@@ -10606,7 +10680,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_01_504",
@@ -10625,7 +10699,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_02_505",
@@ -10644,7 +10718,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_03_506",
@@ -10663,7 +10737,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_04_507",
@@ -10682,7 +10756,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_05_508",
@@ -10701,7 +10775,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_06_509",
@@ -10720,7 +10794,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_07_510",
@@ -10739,7 +10813,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_00_511",
@@ -10758,7 +10832,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_01_512",
@@ -10777,7 +10851,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_02_513",
@@ -10796,7 +10870,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_03_514",
@@ -10815,7 +10889,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_04_515",
@@ -10834,7 +10908,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_05_516",
@@ -10853,7 +10927,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_06_517",
@@ -10872,7 +10946,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_07_518",
@@ -10891,7 +10965,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_pushrod_519",
@@ -10910,7 +10984,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Control_actuator_00_520",
@@ -10929,7 +11003,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_01_521",
@@ -10948,7 +11022,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_02_522",
@@ -10967,7 +11041,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_03_523",
@@ -10986,7 +11060,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_04_524",
@@ -11005,7 +11079,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_05_525",
@@ -11024,7 +11098,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_06_526",
@@ -11043,7 +11117,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Control_actuator_07_527",
@@ -11062,7 +11136,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Actuator_collar_00_528",
@@ -11081,7 +11155,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_01_529",
@@ -11100,7 +11174,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_02_530",
@@ -11119,7 +11193,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_03_531",
@@ -11138,7 +11212,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_04_532",
@@ -11157,7 +11231,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_05_533",
@@ -11176,7 +11250,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_06_534",
@@ -11195,7 +11269,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_07_535",
@@ -11214,7 +11288,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_00_536",
@@ -11233,7 +11307,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_01_537",
@@ -11252,7 +11326,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_02_538",
@@ -11271,7 +11345,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_03_539",
@@ -11290,7 +11364,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_04_540",
@@ -11309,7 +11383,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_05_541",
@@ -11328,7 +11402,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_06_542",
@@ -11347,7 +11421,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_collar_07_543",
@@ -11366,7 +11440,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Actuator_pushrod_544",
@@ -11385,7 +11459,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Governor_housing_545",
@@ -11404,7 +11478,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Horizontal_auxiliary_vessel_00_546",
@@ -11423,7 +11497,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Horizontal_auxiliary_vessel_01_547",
@@ -11442,7 +11516,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Horizontal_auxiliary_vessel_02_548",
@@ -11461,7 +11535,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Horizontal_auxiliary_vessel_03_549",
@@ -11480,7 +11554,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Horizontal_auxiliary_vessel_04_550",
@@ -11499,7 +11573,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Horizontal_auxiliary_vessel_05_551",
@@ -11518,7 +11592,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Horizontal_auxiliary_vessel_06_552",
@@ -11537,7 +11611,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Horizontal_auxiliary_vessel_07_553",
@@ -11556,7 +11630,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Aux_vessel_end_flange_00_554",
@@ -11575,7 +11649,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_01_555",
@@ -11594,7 +11668,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_02_556",
@@ -11613,7 +11687,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_03_557",
@@ -11632,7 +11706,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_04_558",
@@ -11651,7 +11725,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_05_559",
@@ -11670,7 +11744,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_06_560",
@@ -11689,7 +11763,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_07_561",
@@ -11708,7 +11782,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_studs_rim_00_562",
@@ -11727,7 +11801,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_bolt_00_563",
@@ -11746,7 +11820,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_01_564",
@@ -11765,7 +11839,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_02_565",
@@ -11784,7 +11858,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_bolt_02_566",
@@ -11803,7 +11877,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_03_567",
@@ -11822,7 +11896,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_04_568",
@@ -11841,7 +11915,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_bolt_04_569",
@@ -11860,7 +11934,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_05_570",
@@ -11879,7 +11953,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_06_571",
@@ -11898,7 +11972,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_bolt_06_572",
@@ -11917,7 +11991,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_07_573",
@@ -11936,7 +12010,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_08_574",
@@ -11955,7 +12029,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_bolt_08_575",
@@ -11974,7 +12048,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_09_576",
@@ -11993,7 +12067,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_10_577",
@@ -12012,7 +12086,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_bolt_10_578",
@@ -12031,7 +12105,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_11_579",
@@ -12050,7 +12124,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_end_flange_00_580",
@@ -12069,7 +12143,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_01_581",
@@ -12088,7 +12162,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_02_582",
@@ -12107,7 +12181,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_03_583",
@@ -12126,7 +12200,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_04_584",
@@ -12145,7 +12219,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_05_585",
@@ -12164,7 +12238,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_06_586",
@@ -12183,7 +12257,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_end_flange_07_587",
@@ -12202,7 +12276,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_studs_rim_00_588",
@@ -12221,7 +12295,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_bolt_00_589",
@@ -12240,7 +12314,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_01_590",
@@ -12259,7 +12333,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_02_591",
@@ -12278,7 +12352,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_bolt_02_592",
@@ -12297,7 +12371,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_03_593",
@@ -12316,7 +12390,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_04_594",
@@ -12335,7 +12409,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_bolt_04_595",
@@ -12354,7 +12428,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_05_596",
@@ -12373,7 +12447,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_06_597",
@@ -12392,7 +12466,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_bolt_06_598",
@@ -12411,7 +12485,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_07_599",
@@ -12430,7 +12504,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_08_600",
@@ -12449,7 +12523,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_bolt_08_601",
@@ -12468,7 +12542,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_09_602",
@@ -12487,7 +12561,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_10_603",
@@ -12506,7 +12580,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_bolt_10_604",
@@ -12525,7 +12599,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_studs_rim_11_605",
@@ -12544,7 +12618,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Aux_vessel_top_nozzle_00_606",
@@ -12563,7 +12637,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_01_607",
@@ -12582,7 +12656,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_02_608",
@@ -12601,7 +12675,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_03_609",
@@ -12620,7 +12694,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_04_610",
@@ -12639,7 +12713,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_05_611",
@@ -12658,7 +12732,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_06_612",
@@ -12677,7 +12751,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_07_613",
@@ -12696,7 +12770,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_top_flange_00_614",
@@ -12715,7 +12789,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_01_615",
@@ -12734,7 +12808,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_02_616",
@@ -12753,7 +12827,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_03_617",
@@ -12772,7 +12846,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_04_618",
@@ -12791,7 +12865,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_05_619",
@@ -12810,7 +12884,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_06_620",
@@ -12829,7 +12903,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_07_621",
@@ -12848,7 +12922,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_vessel_top_nozzle_00_622",
@@ -12867,7 +12941,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_01_623",
@@ -12886,7 +12960,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_02_624",
@@ -12905,7 +12979,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_03_625",
@@ -12924,7 +12998,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_04_626",
@@ -12943,7 +13017,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_05_627",
@@ -12962,7 +13036,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_06_628",
@@ -12981,7 +13055,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_vessel_top_nozzle_07_629",
@@ -13000,7 +13074,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Aux_top_flange_00_630",
@@ -13019,7 +13093,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_01_631",
@@ -13038,7 +13112,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_02_632",
@@ -13057,7 +13131,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_03_633",
@@ -13076,7 +13150,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_04_634",
@@ -13095,7 +13169,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_05_635",
@@ -13114,7 +13188,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_06_636",
@@ -13133,7 +13207,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Aux_top_flange_07_637",
@@ -13152,7 +13226,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_support_638",
@@ -13171,7 +13245,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Auxiliary_support_639",
@@ -13190,7 +13264,7 @@
         0.741176476869,
         0.713725498821
       ],
-      "material": "step_color_005"
+      "material": "step_color_006"
     },
     {
       "name": "Low_service_line_00_0_640",
@@ -13209,7 +13283,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Low_service_line_01_1_641",
@@ -13228,7 +13302,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Low_service_line_02_0_642",
@@ -13247,7 +13321,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Low_service_line_10_0_643",
@@ -13266,7 +13340,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Low_service_line_11_1_644",
@@ -13285,7 +13359,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Low_service_line_12_0_645",
@@ -13304,7 +13378,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Low_service_line_20_0_646",
@@ -13323,7 +13397,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Low_service_line_21_1_647",
@@ -13342,7 +13416,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Low_service_line_22_0_648",
@@ -13361,7 +13435,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Low_service_line_30_0_649",
@@ -13380,7 +13454,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Low_service_line_31_1_650",
@@ -13399,7 +13473,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Low_service_line_32_0_651",
@@ -13418,7 +13492,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Oil_control_line_00_1_652",
@@ -13437,7 +13511,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Oil_control_line_01_0_653",
@@ -13456,7 +13530,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Oil_control_line_02_1_654",
@@ -13475,7 +13549,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Oil_control_line_03_2_655",
@@ -13494,7 +13568,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Oil_control_line_10_1_656",
@@ -13513,7 +13587,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Oil_control_line_11_0_657",
@@ -13532,7 +13606,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Oil_control_line_12_1_658",
@@ -13551,7 +13625,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Oil_control_line_13_2_659",
@@ -13570,7 +13644,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Oil_control_line_20_1_660",
@@ -13589,7 +13663,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Oil_control_line_21_0_661",
@@ -13608,7 +13682,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Oil_control_line_22_1_662",
@@ -13627,7 +13701,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Oil_control_line_23_2_663",
@@ -13646,7 +13720,7 @@
         0.878431359152,
         0.843137261657
       ],
-      "material": "step_color_006"
+      "material": "step_color_007"
     },
     {
       "name": "Auxiliary_vessel_feed0_1_664",
@@ -13665,7 +13739,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Auxiliary_vessel_feed1_0_665",
@@ -13684,7 +13758,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Rear_control_line0_1_666",
@@ -13703,7 +13777,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Rear_control_line1_0_667",
@@ -13722,7 +13796,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Rear_control_line2_1_668",
@@ -13741,7 +13815,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Hand_valve_body_669",
@@ -13760,7 +13834,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Hand_valve_stem_670",
@@ -13779,7 +13853,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_00_671",
@@ -13798,7 +13872,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_01_672",
@@ -13817,7 +13891,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_02_673",
@@ -13836,7 +13910,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_03_674",
@@ -13855,7 +13929,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_04_675",
@@ -13874,7 +13948,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_05_676",
@@ -13893,7 +13967,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_06_677",
@@ -13912,7 +13986,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_07_678",
@@ -13931,7 +14005,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_08_679",
@@ -13950,7 +14024,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_09_680",
@@ -13969,7 +14043,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_10_681",
@@ -13988,7 +14062,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_11_682",
@@ -14007,7 +14081,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Hand_valve_body_683",
@@ -14026,7 +14100,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Hand_valve_stem_684",
@@ -14045,7 +14119,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_00_685",
@@ -14064,7 +14138,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_01_686",
@@ -14083,7 +14157,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_02_687",
@@ -14102,7 +14176,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_03_688",
@@ -14121,7 +14195,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_04_689",
@@ -14140,7 +14214,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_05_690",
@@ -14159,7 +14233,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_06_691",
@@ -14178,7 +14252,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_07_692",
@@ -14197,7 +14271,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_08_693",
@@ -14216,7 +14290,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_09_694",
@@ -14235,7 +14309,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_10_695",
@@ -14254,7 +14328,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_11_696",
@@ -14273,7 +14347,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Hand_valve_body_697",
@@ -14292,7 +14366,7 @@
         0.392156863511,
         0.333333332236
       ],
-      "material": "step_color_001"
+      "material": "step_color_002"
     },
     {
       "name": "Hand_valve_stem_698",
@@ -14311,7 +14385,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_00_699",
@@ -14330,7 +14404,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_01_700",
@@ -14349,7 +14423,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_02_701",
@@ -14368,7 +14442,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_03_702",
@@ -14387,7 +14461,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_04_703",
@@ -14406,7 +14480,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_05_704",
@@ -14425,7 +14499,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_06_705",
@@ -14444,7 +14518,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_07_706",
@@ -14463,7 +14537,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_08_707",
@@ -14482,7 +14556,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_09_708",
@@ -14501,7 +14575,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_10_709",
@@ -14520,7 +14594,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Valve_wheel_rim_11_710",
@@ -14539,7 +14613,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_00_711",
@@ -14558,7 +14632,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_01_712",
@@ -14577,7 +14651,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_02_713",
@@ -14596,7 +14670,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_03_714",
@@ -14615,7 +14689,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_04_715",
@@ -14634,7 +14708,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_05_716",
@@ -14653,7 +14727,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_06_717",
@@ -14672,7 +14746,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_07_718",
@@ -14691,7 +14765,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_dial_00_719",
@@ -14710,7 +14784,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_01_720",
@@ -14729,7 +14803,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_02_721",
@@ -14748,7 +14822,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_03_722",
@@ -14767,7 +14841,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_04_723",
@@ -14786,7 +14860,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_05_724",
@@ -14805,7 +14879,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_06_725",
@@ -14824,7 +14898,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_07_726",
@@ -14843,7 +14917,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_needle_727",
@@ -14862,7 +14936,7 @@
         0.176470590079,
         0.164705883709
       ],
-      "material": "step_color_000"
+      "material": "step_color_001"
     },
     {
       "name": "Gauge_bezel_00_728",
@@ -14881,7 +14955,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_01_729",
@@ -14900,7 +14974,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_02_730",
@@ -14919,7 +14993,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_03_731",
@@ -14938,7 +15012,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_04_732",
@@ -14957,7 +15031,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_05_733",
@@ -14976,7 +15050,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_06_734",
@@ -14995,7 +15069,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_07_735",
@@ -15014,7 +15088,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_dial_00_736",
@@ -15033,7 +15107,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_01_737",
@@ -15052,7 +15126,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_02_738",
@@ -15071,7 +15145,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_03_739",
@@ -15090,7 +15164,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_04_740",
@@ -15109,7 +15183,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_05_741",
@@ -15128,7 +15202,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_06_742",
@@ -15147,7 +15221,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_07_743",
@@ -15166,7 +15240,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_needle_744",
@@ -15185,7 +15259,7 @@
         0.176470590079,
         0.164705883709
       ],
-      "material": "step_color_000"
+      "material": "step_color_001"
     },
     {
       "name": "Gauge_bezel_00_745",
@@ -15204,7 +15278,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_01_746",
@@ -15223,7 +15297,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_02_747",
@@ -15242,7 +15316,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_03_748",
@@ -15261,7 +15335,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_04_749",
@@ -15280,7 +15354,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_05_750",
@@ -15299,7 +15373,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_06_751",
@@ -15318,7 +15392,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_bezel_07_752",
@@ -15337,7 +15411,7 @@
         0.356862747468,
         0.341176475329
       ],
-      "material": "step_color_002"
+      "material": "step_color_003"
     },
     {
       "name": "Gauge_dial_00_753",
@@ -15356,7 +15430,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_01_754",
@@ -15375,7 +15449,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_02_755",
@@ -15394,7 +15468,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_03_756",
@@ -15413,7 +15487,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_04_757",
@@ -15432,7 +15506,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_05_758",
@@ -15451,7 +15525,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_06_759",
@@ -15470,7 +15544,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_dial_07_760",
@@ -15489,7 +15563,7 @@
         0.909803911811,
         0.792156867455
       ],
-      "material": "step_color_007"
+      "material": "step_color_008"
     },
     {
       "name": "Gauge_needle_761",
@@ -15508,7 +15582,7 @@
         0.176470590079,
         0.164705883709
       ],
-      "material": "step_color_000"
+      "material": "step_color_001"
     },
     {
       "name": "Service_tag_762",
@@ -15527,12 +15601,21 @@
         0.301960791261,
         0.239215688916
       ],
-      "material": "step_color_003"
+      "material": "step_color_004"
     }
   ],
   "materials": [
     {
       "name": "step_color_000",
+      "kd": [
+        0.08,
+        0.48,
+        0.7
+      ],
+      "texture": "minecraft:block/white_concrete"
+    },
+    {
+      "name": "step_color_001",
       "kd": [
         0.125490196231,
         0.176470590079,
@@ -15541,7 +15624,7 @@
       "texture": "minecraft:block/white_concrete"
     },
     {
-      "name": "step_color_001",
+      "name": "step_color_002",
       "kd": [
         0.290196072577,
         0.392156863511,
@@ -15550,7 +15633,7 @@
       "texture": "minecraft:block/white_concrete"
     },
     {
-      "name": "step_color_002",
+      "name": "step_color_003",
       "kd": [
         0.325490189449,
         0.356862747468,
@@ -15559,7 +15642,7 @@
       "texture": "minecraft:block/white_concrete"
     },
     {
-      "name": "step_color_003",
+      "name": "step_color_004",
       "kd": [
         0.639215690656,
         0.301960791261,
@@ -15568,7 +15651,7 @@
       "texture": "minecraft:block/white_concrete"
     },
     {
-      "name": "step_color_004",
+      "name": "step_color_005",
       "kd": [
         0.64,
         0.68,
@@ -15577,7 +15660,7 @@
       "texture": "minecraft:block/white_concrete"
     },
     {
-      "name": "step_color_005",
+      "name": "step_color_006",
       "kd": [
         0.721568617591,
         0.741176476869,
@@ -15586,7 +15669,7 @@
       "texture": "minecraft:block/white_concrete"
     },
     {
-      "name": "step_color_006",
+      "name": "step_color_007",
       "kd": [
         0.870588247378,
         0.878431359152,
@@ -15595,7 +15678,7 @@
       "texture": "minecraft:block/white_concrete"
     },
     {
-      "name": "step_color_007",
+      "name": "step_color_008",
       "kd": [
         0.933333342953,
         0.909803911811,
@@ -15622,9 +15705,9 @@
   },
   "validation": {
     "source_faces": 4578,
-    "adapter_faces": 60,
-    "clipped_faces": 6108,
-    "surface_area_blocks2": 226.973566427,
+    "adapter_faces": 84,
+    "clipped_faces": 6132,
+    "surface_area_blocks2": 230.722366427,
     "winding": "outward; source signed volumes and serialized normals checked",
     "degenerate_faces": 0,
     "cell_bbox": "all OBJ vertices in [0,1]^3",

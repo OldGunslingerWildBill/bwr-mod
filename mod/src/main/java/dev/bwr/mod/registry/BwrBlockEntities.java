@@ -53,6 +53,11 @@ public final class BwrBlockEntities {
             () -> BlockEntityType.Builder.of(MainSteamIsolationValveBlockEntity::new,
                     BwrBlocks.MSIV.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity>>
+            RPV_WATER_INJECTION_PORT = BLOCK_ENTITIES.register("rpv_water_injection_port",
+            () -> BlockEntityType.Builder.of(dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity::new,
+                    BwrBlocks.RPV_WATER_INJECTION_PORT.get()).build(null));
+
     /**
      * The RPV main steam nozzle. It carries a stop position, so it needs state;
      * it carries no ticker, because the controller walks its own nozzles.

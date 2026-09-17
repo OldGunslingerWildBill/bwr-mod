@@ -17,71 +17,8 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 
-/**
- * Pressurised steam tube — {@code SPEC.md} section 6.4.
- *
- * <p>Mekanism's pipes move gas by amount and have no concept of pressure, so a
- * custom tube is needed. But this tube deliberately does <b>not</b> solve
- * pressure per segment: a per-block pressure network is heavy, prone to
- * oscillation, and buys almost no visible fidelity.
- *
- * <p>Instead the pressure model uses two lumped volumes — the RPV steam dome
- * and the main steam header — and these blocks provide <b>connectivity and
- * validation only</b>. Their job is to answer structural questions: is this SRV
- * on a valid steam line, is the turbine actually connected, does this discharge
- * reach water.
- *
- * <h2>The connections used to never happen</h2>
- * This class declared the six directional booleans of {@link PipeBlock} and
- * registered a default state with every one of them false, and that was all it
- * did. Vanilla {@code PipeBlock} is only a shape and a property set — it
- * contains no connection logic whatsoever, which is why
- * {@code ChorusPlantBlock} and the fence/pane family each write their own. With
- * neither {@link #getStateForPlacement} nor {@link #updateShape} overridden,
- * every tube in the world was placed all-false and stayed all-false forever: the
- * multipart blockstate had seven complete parts and six of them could never be
- * selected, so a line of tubes rendered as a row of disconnected stubs and no
- * structural question about the steam line could be answered at all. The first
- * in-world playtest found it immediately; nothing static could, because the
- * assets and the state definition were both correct in isolation.
- *
- * <h2>What a tube connects to, and why that list is short</h2>
- * Tube to tube, always — that is block identity and needs no data behind it.
- * Beyond that, the rule is the {@link SteamLinePort} interface with the
- * {@code #bwr:steam_line} block tag as a data-driven fallback, so that steam
- * hardware declares itself rather than the tube enumerating it. Today that set
- * is the MSIV, the safety/relief valve and the turbine steam outlet: the main
- * steam system and nothing else.
- *
- * <p>Three near misses were considered and rejected on purpose.
- *
- * <p><b>The reactor vessel shell.</b> Tempting, because the steam has to leave
- * the vessel somehow — but {@code ReactorStructure.isShell} already accepts a
- * pressurised tube <i>as</i> shell material, so a tube built into the wall is
- * surrounded by vessel blocks on up to five sides. Connecting to the shell would
- * make that tube sprout arms into solid steel in every direction, and worse, it
- * would assert that any point on a two-hundred-block vessel wall is a steam tap.
- * The vessel gets one defined tap point instead, and that is what a dedicated
- * outlet block is for.
- *
- * <p><b>The condensate storage tank.</b> It holds water for emergency pump
- * suction and it talks to the world through NeoForge fluid handlers and buckets.
- * A steam tube landing on it would draw a path that nothing implements.
- *
- * <p><b>The turbine-driven emergency pumps, RCIC and HPCI.</b> A real plant runs
- * a steam line to both of them, and one day this mod might require it. It does
- * not today: their drive steam is bookkeeping through {@code ReactorEccsBus},
- * with no structural requirement anywhere, so connecting to them would be
- * decoration that looks like a claim. When that changes it is one line each in
- * the tag file, which is the point of having the tag.
- *
- * <h2>No waterlogging, deliberately</h2>
- * Nothing in this mod is waterloggable and the tube is the worst possible place
- * to start. It is a pressure boundary component that doubles as reactor vessel
- * shell material, so a waterloggable tube would put a water source block inside
- * the wall of the pressure vessel. It would also add a seventh property that no
- * part of the multipart blockstate consumes, doubling the state count to 128 for
- * no visual gain.
+/** High-pressure steam piping. Both rendered arms and flow routing accept steam ports only.
+ * Pressure remains a lumped vessel/header model, not a per-segment solver.
  */
 public class PressurisedTubeBlock extends PipeBlock implements SteamLinePort {
 

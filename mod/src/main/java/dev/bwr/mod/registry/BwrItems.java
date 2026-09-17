@@ -45,6 +45,10 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.MSIV);
     public static final DeferredItem<BlockItem> PRESSURISED_TUBE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.PRESSURISED_TUBE);
+    public static final DeferredItem<BlockItem> HIGH_PRESSURE_WATER_PIPE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.HIGH_PRESSURE_WATER_PIPE);
+    public static final DeferredItem<BlockItem> RPV_WATER_INJECTION_PORT =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.RPV_WATER_INJECTION_PORT);
     public static final DeferredItem<BlockItem> RPV_STEAM_OUTLET =
             ITEMS.registerSimpleBlockItem(BwrBlocks.RPV_STEAM_OUTLET);
     public static final DeferredItem<BlockItem> TURBINE_STEAM_OUTLET =
@@ -108,14 +112,14 @@ public final class BwrItems {
                         output.accept(SAFETY_RELIEF_VALVE.get());
                         output.accept(MSIV.get());
                         output.accept(PRESSURISED_TUBE.get());
+                        output.accept(HIGH_PRESSURE_WATER_PIPE.get());
+                        output.accept(RPV_WATER_INJECTION_PORT.get());
                         output.accept(RPV_STEAM_OUTLET.get());
                         output.accept(TURBINE_STEAM_OUTLET.get());
                         output.accept(FUEL_FABRICATOR.get());
                         output.accept(SUPPRESSION_POOL_CONTROLLER.get());
                         output.accept(SUPPRESSION_POOL_WALL.get());
                         output.accept(SUPPRESSION_POOL_QUENCHER.get());
-                        output.accept(RCIC_TURBINE_PUMP.get());
-                        output.accept(HPCI_TURBINE_PUMP.get());
                         output.accept(HPCS_PUMP.get());
                         output.accept(LPCS_PUMP.get());
                         output.accept(RHR_PUMP.get());

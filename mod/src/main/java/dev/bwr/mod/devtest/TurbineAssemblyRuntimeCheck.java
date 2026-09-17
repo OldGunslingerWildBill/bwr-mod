@@ -323,7 +323,9 @@ public final class TurbineAssemblyRuntimeCheck {
         Port[] specifications() {
             return hpci ? new Port[]{
                     new Port(AssemblyPort.STEAM_INLET, new BlockPos(2, 4, 1), Direction.UP),
-                    new Port(AssemblyPort.STEAM_EXHAUST, new BlockPos(0, 1, 1), Direction.WEST)
+                    new Port(AssemblyPort.STEAM_EXHAUST, new BlockPos(0, 1, 1), Direction.WEST),
+                    new Port(AssemblyPort.WATER_SUCTION, new BlockPos(3, 0, 0), Direction.EAST),
+                    new Port(AssemblyPort.WATER_DISCHARGE, new BlockPos(3, 0, 2), Direction.EAST)
             } : new Port[]{
                     new Port(AssemblyPort.STEAM_INLET, new BlockPos(0, 2, 1), Direction.UP),
                     new Port(AssemblyPort.STEAM_EXHAUST, new BlockPos(1, 1, 1), Direction.SOUTH),
@@ -336,8 +338,7 @@ public final class TurbineAssemblyRuntimeCheck {
             BlockState state = place();
             Port[] specs = specifications();
             for (AssemblyPort role : AssemblyPort.values()) {
-                boolean expected = !hpci || role == AssemblyPort.STEAM_INLET
-                        || role == AssemblyPort.STEAM_EXHAUST;
+                boolean expected = true;
                 check(block.hasPort(role) == expected, "hasPort " + role);
             }
             for (Port port : specs) {
@@ -359,16 +360,20 @@ public final class TurbineAssemblyRuntimeCheck {
                     }
                     check(block.portAt(cellState, face) == expected,
                             "portAt cell " + i + " face " + face);
-                    check(block.acceptsSteamLineOn(cellState, face) == (expected != null),
+                    check(block.acceptsSteamLineOn(cellState, face) == (expected != null && expected.isSteam()),
                             "physical port acceptance cell " + i + " face " + face);
                     BlockPos tubePos = cellPos.relative(face);
                     if (!level.getBlockState(tubePos).isAir()) continue;
                     level.setBlock(tubePos, tube.stateWithConnections(level, tubePos), 3);
                     check(level.getBlockState(tubePos)
                                     .getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(face.getOpposite()))
-                                    == (expected != null),
+                                    == (expected != null && expected.isSteam()),
                             "tube arm cell " + i + " face " + face);
                     level.removeBlock(tubePos, false);
+                    level.setBlock(tubePos, BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get().stateWithConnections(level,tubePos),3);
+                    check(level.getBlockState(tubePos).getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(face.getOpposite()))
+                            == (expected != null && !expected.isSteam()), "water arm cell " + i + " face " + face);
+                    level.removeBlock(tubePos,false);
                 }
             }
             Port inlet = specs[0];

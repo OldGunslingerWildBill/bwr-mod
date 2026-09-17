@@ -55,6 +55,8 @@ public final class PumpAssemblyRuntimeCheck {
             clear(l);
             try { circuits(l); checks++; } catch(RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Pump circuit FAIL",e); }
             clear(l);
+            try { waterBoundary(l); checks++; } catch(RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Water boundary FAIL",e); }
+            clear(l);
             try { recirculation(l); checks++; } catch(RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Jet recirculation FAIL",e); }
             clear(l);
             try { turbineFeed(l); checks++; } catch(RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Turbine feedwater FAIL",e); }
@@ -83,8 +85,14 @@ public final class PumpAssemblyRuntimeCheck {
             BlockPos p=ROOT.offset(TurbineAssemblyBlock.turn(port.cell(),d));
             Direction face=TurbineAssemblyBlock.turn(port.face(),d);
             check(b.portAt(l.getBlockState(p),face)==port.role(),"wrong port role");
-            BlockPos tube=p.relative(face); l.setBlock(tube,BwrBlocks.PRESSURISED_TUBE.get().stateWithConnections(l,tube),3);
+            BlockPos tube=p.relative(face);
+            var correct=port.role().isSteam()?BwrBlocks.PRESSURISED_TUBE.get().stateWithConnections(l,tube):BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get().stateWithConnections(l,tube);
+            l.setBlock(tube,correct,3);
             check(l.getBlockState(tube).getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(face.getOpposite())),"tube does not connect to flange");
+            l.removeBlock(tube,false);
+            var wrong=port.role().isSteam()?BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get().stateWithConnections(l,tube):BwrBlocks.PRESSURISED_TUBE.get().stateWithConnections(l,tube);
+            l.setBlock(tube,wrong,3);
+            check(!l.getBlockState(tube).getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(face.getOpposite())),"wrong pipe connected to flange");
             l.removeBlock(tube,false);
         }
         if(b.kind()!=PumpAssemblyBlock.Kind.JET) {
@@ -122,17 +130,20 @@ public final class PumpAssemblyRuntimeCheck {
             boolean wall=p.getX()==158 || p.getX()==170 || p.getY()==194 || p.getY()==204 || p.getZ()==127 || p.getZ()==139;
             l.setBlock(p,(wall?BwrBlocks.REACTOR_VESSEL.get():Blocks.AIR).defaultBlockState(),3);
         }
-        BlockPos controller=new BlockPos(170,199,133);
+        BlockPos controller=new BlockPos(170,200,133);
+        l.setBlock(new BlockPos(170,199,133),BwrBlocks.RPV_WATER_INJECTION_PORT.get().defaultBlockState().setValue(RpvWaterInjectionPortBlock.FACING,Direction.EAST),3);
         l.setBlock(controller,BwrBlocks.REACTOR_CONTROLLER.get().defaultBlockState(),3);
         for(int x=160;x<=168;x+=2) for(int z=129;z<=137;z+=2) l.setBlock(new BlockPos(x,193,z),BwrBlocks.CONTROL_ROD_DRIVE.get().defaultBlockState(),3);
         var be=(ReactorControllerBlockEntity)l.getBlockEntity(controller);
         ReactorControllerBlockEntity.serverTick(l,controller,be.getBlockState(),be);
         check(be.isFormed(),"test vessel not formed: "+be.statusLines()); return be;
     }
-    private static void pipe(ServerLevel l,BlockPos a,BlockPos b) {
+    private static void pipe(ServerLevel l,BlockPos a,BlockPos b) { pipe(l,a,b,BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get()); }
+    private static void steamPipe(ServerLevel l,BlockPos a,BlockPos b) { pipe(l,a,b,BwrBlocks.PRESSURISED_TUBE.get()); }
+    private static void pipe(ServerLevel l,BlockPos a,BlockPos b,Block material) {
         int dx=Integer.signum(b.getX()-a.getX()),dy=Integer.signum(b.getY()-a.getY()),dz=Integer.signum(b.getZ()-a.getZ());
         check(Math.abs(dx)+Math.abs(dy)+Math.abs(dz)<=1,"bad fixture pipe segment");
-        for(BlockPos p=a;;p=p.offset(dx,dy,dz)) { l.setBlock(p,BwrBlocks.PRESSURISED_TUBE.get().defaultBlockState(),3); if(p.equals(b))break; }
+        for(BlockPos p=a;;p=p.offset(dx,dy,dz)) { l.setBlock(p,material.defaultBlockState(),3); if(p.equals(b))break; }
     }
     private static void circuits(ServerLevel l) {
         var reactor=vessel(l); var b=BwrBlocks.MOTOR_FEED_PUMP.get(); var s=place(l,b,ROOT,Direction.NORTH);
@@ -149,7 +160,7 @@ public final class PumpAssemblyRuntimeCheck {
         l.setBlock(branch,BwrBlocks.MSIV.get().defaultBlockState(),3);
         var valve=(dev.bwr.mod.steam.MainSteamIsolationValveBlockEntity)l.getBlockEntity(branch);
         valve.setDemandOpen(false);valve.tickValve(10);
-        check(AssemblyPlumbing.trace(l,ROOT,s,AssemblyPort.WATER_SUCTION).opening()>0,"closed side branch blocked the open suction header");
+        check(AssemblyPlumbing.trace(l,ROOT,s,AssemblyPort.WATER_SUCTION).opening()>0,"steam valve affected the water header");
         var pump=(FeedwaterPumpBlockEntity)l.getBlockEntity(ROOT);pump.setComputerControlled(true);pump.setRunning(true);
         double before=t.storedKg(),mass=0;
         for(int i=0;i<800;i++) {
@@ -198,6 +209,75 @@ public final class PumpAssemblyRuntimeCheck {
         flow=RecirculationNetwork.measure(l,reactor,List.of(drive,mount));
         check(flow.internalPumps()==1 && Math.abs(flow.fraction()-.1)<1e-6,"mounted internal pump missing from flow: "+flow);
     }
+    private static void waterBoundary(ServerLevel l) {
+        var reactor=vessel(l);
+        var b=BwrBlocks.MOTOR_FEED_PUMP.get(); var s=place(l,b,ROOT,Direction.NORTH);
+        waterDischarge(l,b,s);
+        BlockPos suction=ROOT.offset(1,2,1), entry=ROOT.offset(1,4,1);
+        pipe(l,suction,entry);
+        var inlet=l.getCapability(Capabilities.FluidHandler.BLOCK,entry,Direction.UP);
+        check(inlet!=null,"water pipe exposes no NeoForge inlet for turbine condensate");
+        var pump=(FeedwaterPumpBlockEntity)l.getBlockEntity(ROOT);
+        var water=new FluidStack(Fluids.WATER,1500);
+        check(inlet.fill(water,IFluidHandler.FluidAction.SIMULATE)==1500 && pump.suction().isEmpty(),"simulated fill changed inventory");
+        check(inlet.fill(new FluidStack(Fluids.LAVA,1000),IFluidHandler.FluidAction.EXECUTE)==0,"water pipe accepted lava");
+        check(inlet.fill(water,IFluidHandler.FluidAction.EXECUTE)==1500 && pump.suction().getFluidAmount()==1500,"condensate did not reach the modeled suction port");
+        check(inlet.fill(water,IFluidHandler.FluidAction.SIMULATE)==500 && pump.suction().getFluidAmount()==1500,"fill ignored destination capacity");
+        check(inlet.drain(1000,IFluidHandler.FluidAction.EXECUTE).isEmpty(),"water inlet fabricated extractable contents");
+        // Adjoining steam must neither sprout a connecting arm nor join the water traversal.
+        BlockPos steam=entry.east();
+        l.setBlock(steam,BwrBlocks.PRESSURISED_TUBE.get().stateWithConnections(l,steam),3);
+        check(!l.getBlockState(steam).getValue(PipeBlock.WEST),"steam pipe connected to water pipe");
+        check(!BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get().stateWithConnections(l,entry).getValue(PipeBlock.EAST),"water pipe connected to steam pipe");
+        check(l.getCapability(Capabilities.FluidHandler.BLOCK,steam,Direction.WEST)==null,"steam pipe exposes water capability");
+        var line=AssemblyPlumbing.trace(l,ROOT,s,AssemblyPort.WATER_DISCHARGE);
+        check(AssemblyPlumbing.waterReceiver(l,line)==reactor,"injection port bound to wrong reactor");
+        BlockPos portPos=new BlockPos(170,199,133);
+        var portState=l.getBlockState(portPos);
+        l.setBlock(portPos,portState.setValue(RpvWaterInjectionPortBlock.FACING,Direction.WEST),3);
+        check(AssemblyPlumbing.waterReceiver(l,AssemblyPlumbing.trace(l,ROOT,s,AssemblyPort.WATER_DISCHARGE))==null,"back-facing injection flange accepted water");
+        l.setBlock(portPos,portState,3);
+        // Filled through the same public boundary used by Mekanism; all water must then be paid from that buffer.
+        pump.setComputerControlled(true);pump.setRunning(true);
+        double mass=0;
+        for(int i=0;i<800;i++) {
+            pump.energy().receiveEnergy(Integer.MAX_VALUE,false);
+            FeedwaterPumpBlockEntity.serverTick(l,ROOT,s,pump);
+            mass+=pump.getDeliveredFlowKgPerS()*.05;
+        }
+        check(mass>100 && mass<=1500+1e-7 && Math.abs(1500-pump.suction().getFluidAmount()-mass)<1.01,"condensate-to-vessel mass balance failed: "+mass);
+        var bus=EccsNetwork.existingBusFor(l,reactor.getBlockPos());
+        check(bus!=null,"pumped condensate was not reported to vessel");
+        // Replacing one discharge segment with steam interrupts water immediately.
+        inlet.fill(water,IFluidHandler.FluidAction.EXECUTE);
+        BlockPos wrong=ROOT.offset(3,4,1);
+        l.setBlock(wrong,BwrBlocks.PRESSURISED_TUBE.get().defaultBlockState(),3);
+        FeedwaterPumpBlockEntity.serverTick(l,ROOT,s,pump);
+        check(pump.getDeliveredFlowKgPerS()==0 && pump.isRunning(),"steam segment carried pumped water or changed controls");
+        // A cached capability re-resolves its path after a break; it must not fill a disconnected pump.
+        l.removeBlock(suction,false);
+        int before=pump.suction().getFluidAmount();
+        check(inlet.fill(water,IFluidHandler.FluidAction.EXECUTE)==0 && before==pump.suction().getFluidAmount(),"cached water route survived a broken pipe");
+        l.removeBlock(entry,false);
+        check(inlet.fill(water,IFluidHandler.FluidAction.EXECUTE)==0,"removed pipe retained its capability");
+        // A port set down next to the vessel, or an unformed vessel, is not a reactor inlet.
+        BlockPos loose=new BlockPos(173,199,133);
+        l.setBlock(loose,portState,3);
+        var loosePort=(RpvWaterInjectionPortBlockEntity)l.getBlockEntity(loose);
+        loosePort.noteController(reactor.getBlockPos());
+        check(loosePort.controller()==null,"free-standing injection port claimed a nearby vessel");
+        l.removeBlock(new BlockPos(158,200,132),false);
+        reactor.markStructureDirty();ReactorControllerBlockEntity.serverTick(l,reactor.getBlockPos(),reactor.getBlockState(),reactor);
+        check(!reactor.isFormed() && ((RpvWaterInjectionPortBlockEntity)l.getBlockEntity(portPos)).controller()==null,"unformed vessel accepted injection");
+        // Fractional water usage remains finite across save/reload and external draining.
+        var buffer=new dev.bwr.mod.water.WaterSuctionBuffer(() -> {});
+        buffer.tank().fill(new FluidStack(Fluids.WATER,1),IFluidHandler.FluidAction.EXECUTE);
+        check(Math.abs(buffer.drawKg(.4)-.4)<1e-9,"fractional buffer draw failed");
+        var restored=new dev.bwr.mod.water.WaterSuctionBuffer(() -> {});
+        restored.load(l.registryAccess(),buffer.save(l.registryAccess()));
+        check(restored.tank().drain(1,IFluidHandler.FluidAction.EXECUTE).isEmpty(),"external drain removed owed water");
+        check(Math.abs(restored.drawKg(10)-.6)<1e-9 && restored.drawKg(10)==0,"reloaded buffer created fractional water");
+    }
     private static void waterDischarge(ServerLevel l,PumpAssemblyBlock b,BlockState s) {
         BlockPos start=b.portPosition(ROOT,s,AssemblyPort.WATER_DISCHARGE).relative(b.portFace(s,AssemblyPort.WATER_DISCHARGE));
         if(b.portFace(s,AssemblyPort.WATER_DISCHARGE)==Direction.EAST) {
@@ -216,13 +296,13 @@ public final class PumpAssemblyRuntimeCheck {
         waterDischarge(l,b,s);
         BlockPos nozzlePos=new BlockPos(164,201,127);
         l.setBlock(nozzlePos,BwrBlocks.RPV_STEAM_OUTLET.get().defaultBlockState(),3);
-        pipe(l,new BlockPos(164,201,126),new BlockPos(164,216,126));
-        pipe(l,new BlockPos(164,216,126),new BlockPos(180,216,126));
-        pipe(l,new BlockPos(180,216,126),new BlockPos(180,216,141));
-        pipe(l,new BlockPos(180,216,141),new BlockPos(180,213,141));
+        steamPipe(l,new BlockPos(164,201,126),new BlockPos(164,216,126));
+        steamPipe(l,new BlockPos(164,216,126),new BlockPos(180,216,126));
+        steamPipe(l,new BlockPos(180,216,126),new BlockPos(180,216,141));
+        steamPipe(l,new BlockPos(180,216,141),new BlockPos(180,213,141));
         BlockPos export=new BlockPos(180,211,146);
         l.setBlock(export,BwrBlocks.TURBINE_STEAM_OUTLET.get().defaultBlockState(),3);
-        pipe(l,new BlockPos(180,211,143),new BlockPos(180,211,145));
+        steamPipe(l,new BlockPos(180,211,143),new BlockPos(180,211,145));
         var outlet=(dev.bwr.mod.steam.TurbineSteamOutletBlockEntity)l.getBlockEntity(export);outlet.setCommandedFlowKgPerS(500);
         var nozzle=(RpvSteamOutletBlockEntity)l.getBlockEntity(nozzlePos);
         nozzle.noteController(reactor.getBlockPos());nozzle.setPosition(1);nozzle.refreshAttachment(l);nozzle.refreshLine(l);

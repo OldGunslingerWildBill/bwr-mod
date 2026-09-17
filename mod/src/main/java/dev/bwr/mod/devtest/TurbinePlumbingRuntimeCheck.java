@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.Blocks;
 /** Real pipe networks and tank/nozzle bookkeeping in the isolated GameTest world. */
 public final class TurbinePlumbingRuntimeCheck {
     private static final BlockPos ROOT=new BlockPos(160,200,140);
-    private static final BlockPos CONTROLLER=new BlockPos(151,197,132);
+    private static final BlockPos CONTROLLER=new BlockPos(151,198,132);
     private static final BlockPos NOZZLE=new BlockPos(145,200,132);
     private static final BlockPos TANK=new BlockPos(165,201,141);
     private static final BlockPos POOL=new BlockPos(164,195,147);
@@ -36,13 +36,15 @@ public final class TurbinePlumbingRuntimeCheck {
             set(l,p,boundary?wall:inside);
         }
     }
-    private static void pipe(ServerLevel l,BlockPos... points) {
+    private static void pipe(ServerLevel l,BlockPos... points) { pipe(l,BwrBlocks.PRESSURISED_TUBE.get(),points); }
+    private static void water(ServerLevel l,BlockPos... points) { pipe(l,BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(),points); }
+    private static void pipe(ServerLevel l,Block material,BlockPos... points) {
         for(int i=1;i<points.length;i++) {
             BlockPos a=points[i-1], b=points[i];
             int dx=Integer.signum(b.getX()-a.getX()),dy=Integer.signum(b.getY()-a.getY()),dz=Integer.signum(b.getZ()-a.getZ());
             check(Math.abs(dx)+Math.abs(dy)+Math.abs(dz)<=1,"test pipe must be axis aligned");
             for(BlockPos p=a;;p=p.offset(dx,dy,dz)) {
-                set(l,p,BwrBlocks.PRESSURISED_TUBE.get());
+                set(l,p,material);
                 if(p.equals(b)) break;
             }
         }
@@ -64,6 +66,8 @@ public final class TurbinePlumbingRuntimeCheck {
     private static void plant(ServerLevel level,TurbineAssemblyBlock block) {
         box(level,new BlockPos(145,193,129),new BlockPos(151,202,135),BwrBlocks.REACTOR_VESSEL.get(),Blocks.AIR);
         set(level,CONTROLLER,BwrBlocks.REACTOR_CONTROLLER.get());
+        level.setBlock(new BlockPos(151,197,132),BwrBlocks.RPV_WATER_INJECTION_PORT.get().defaultBlockState()
+                .setValue(RpvWaterInjectionPortBlock.FACING,net.minecraft.core.Direction.EAST),3);
         set(level,NOZZLE,BwrBlocks.RPV_STEAM_OUTLET.get());
         for(int x:new int[]{147,149}) for(int z:new int[]{131,133}) set(level,new BlockPos(x,192,z),BwrBlocks.CONTROL_ROD_DRIVE.get());
         box(level,new BlockPos(157,193,144),new BlockPos(163,197,150),BwrBlocks.SUPPRESSION_POOL_WALL.get(),Blocks.WATER);
@@ -79,10 +83,15 @@ public final class TurbinePlumbingRuntimeCheck {
         pipe(level,exhaust,new BlockPos(exhaust.getX(),192,exhaust.getZ()),
                 new BlockPos(exhaust.getX(),192,147),new BlockPos(160,192,147));
         if(!block.isHpci()) {
-            pipe(level,new BlockPos(163,201,141),new BlockPos(164,201,141));
-            pipe(level,new BlockPos(162,203,141),new BlockPos(163,203,141),new BlockPos(163,203,138),
-                    new BlockPos(153,203,138),new BlockPos(153,197,138),new BlockPos(153,197,132),new BlockPos(152,197,132));
+            water(level,new BlockPos(163,201,141),new BlockPos(164,201,141));
+            water(level,new BlockPos(162,203,141),new BlockPos(163,203,141),new BlockPos(163,203,138));
+        } else {
+            water(level,new BlockPos(164,200,140),new BlockPos(164,201,140),new BlockPos(164,201,141));
+            water(level,new BlockPos(164,200,142),new BlockPos(164,199,142),new BlockPos(166,199,142),
+                    new BlockPos(166,203,142),new BlockPos(166,203,138),new BlockPos(163,203,138));
         }
+        water(level,new BlockPos(163,203,138),new BlockPos(153,203,138),new BlockPos(153,197,138),
+                new BlockPos(153,197,132),new BlockPos(152,197,132));
         var receiver=(ReactorControllerBlockEntity)level.getBlockEntity(CONTROLLER);
         ReactorControllerBlockEntity.serverTick(level,CONTROLLER,receiver.getBlockState(),receiver);
         check(receiver.isFormed(),"test reactor failed to form: "+receiver.statusLines());
@@ -121,7 +130,8 @@ public final class TurbinePlumbingRuntimeCheck {
                     CondensateStorageTankBlockEntity.class)==null,"ambiguous suction chose an arbitrary tank");
             level.removeBlock(waterTube.north(),false);
             set(level,waterTube.north(),BwrBlocks.TURBINE_STEAM_OUTLET.get());
-            check(!AssemblyPlumbing.trace(level,ROOT,state,AssemblyPort.WATER_SUCTION).valid(),"water accepted a steam export branch");
+            check(AssemblyPlumbing.trace(level,ROOT,state,AssemblyPort.WATER_SUCTION).valid()
+                    && !AssemblyPlumbing.trace(level,ROOT,state,AssemblyPort.WATER_SUCTION).nodes().contains(waterTube.north()),"water accepted a steam export branch");
             level.removeBlock(waterTube.north(),false);
             level.removeBlock(new BlockPos(153,200,138),false);
             EccsPumpBlockEntity.serverTick(level,ROOT,state,pump);

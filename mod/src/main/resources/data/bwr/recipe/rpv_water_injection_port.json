@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "III",
+    "VPV",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    }
+  },
+  "result": {
+    "id": "bwr:rpv_water_injection_port",
+    "count": 1
+  }
+}

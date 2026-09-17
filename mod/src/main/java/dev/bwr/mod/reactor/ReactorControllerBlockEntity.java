@@ -472,6 +472,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
 
         structure = found;
+        for (BlockPos portPos : found.waterInjectionPositions())
+            if (level.isLoaded(portPos) && level.getBlockEntity(portPos) instanceof RpvWaterInjectionPortBlockEntity port)
+                port.noteController(getBlockPos());
         boolean rebuild = core == null || core.getControlRodCount() != found.controlRodCount();
 
         // Kept truthful whether or not a rebuild follows. Both are copied into

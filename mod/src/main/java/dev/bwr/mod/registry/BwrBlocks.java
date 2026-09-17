@@ -3,6 +3,8 @@ package dev.bwr.mod.registry;
 import dev.bwr.core.eccs.EccsDesign;
 import dev.bwr.core.feedwater.FeedwaterDesign;
 import dev.bwr.mod.BwrMod;
+import dev.bwr.mod.water.HighPressureWaterPipeBlock;
+import dev.bwr.mod.reactor.RpvWaterInjectionPortBlock;
 import dev.bwr.mod.eccs.AdsControllerBlock;
 import dev.bwr.mod.eccs.CondensateStorageTankBlock;
 import dev.bwr.mod.eccs.EccsPumpBlock;
@@ -95,6 +97,11 @@ public final class BwrBlocks {
 
     public static final DeferredBlock<PumpAssemblyBlock> RIP_PUMP =
             BLOCKS.register("rip_pump", () -> new PumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.RIP));
+
+    public static final DeferredBlock<HighPressureWaterPipeBlock> HIGH_PRESSURE_WATER_PIPE =
+            BLOCKS.register("high_pressure_water_pipe", () -> new HighPressureWaterPipeBlock(machine()));
+    public static final DeferredBlock<RpvWaterInjectionPortBlock> RPV_WATER_INJECTION_PORT =
+            BLOCKS.register("rpv_water_injection_port", () -> new RpvWaterInjectionPortBlock(vesselSteel()));
 
     // --- Steam --------------------------------------------------------
 

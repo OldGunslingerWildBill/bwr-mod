@@ -91,6 +91,8 @@ public class EccsPumpBlockEntity extends BlockEntity {
     // from a CC computer thread. Writes are marshalled onto the server thread by
     // PlantActuators; these give the reads the matching visibility guarantee.
     private volatile SuctionSource suctionSource = SuctionSource.SUPPRESSION_POOL;
+    private final dev.bwr.mod.water.WaterSuctionBuffer incomingWater = new dev.bwr.mod.water.WaterSuctionBuffer(this::setChanged);
+    public net.neoforged.neoforge.fluids.capability.IFluidHandler waterInlet() { return incomingWater.tank(); }
     private volatile Mode mode = Mode.INJECTION;
 
     /** When true, redstone is ignored and Lua owns the start command. */
@@ -230,7 +232,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
         var outlet=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_DISCHARGE);
         var tank=complete ? AssemblyPlumbing.endpoint(level,suction,CondensateStorageTankBlockEntity.class) : null;
         var pool=complete ? AssemblyPlumbing.endpoint(level,suction,SuppressionPoolBlockEntity.class) : null;
-        var delivery=complete ? AssemblyPlumbing.endpoint(level,outlet,ReactorControllerBlockEntity.class) : null;
+        var delivery=complete ? AssemblyPlumbing.waterReceiver(level,outlet) : null;
         if(delivery!=null && !delivery.isFormed()) delivery=null;
         if(pool!=null && !pool.isFormed()) pool=null;
         boolean cooling=isPoolCooling() && pool!=null && suctionSource==SuctionSource.SUPPRESSION_POOL
@@ -283,23 +285,12 @@ public class EccsPumpBlockEntity extends BlockEntity {
         var source=AssemblyPlumbing.source(level,nozzles);
         if (source!=null) nozzles.removeIf(n -> !source.getBlockPos().equals(n.getControllerPos()));
         var exhaustPool=AssemblyPlumbing.exhaustPool(level,exhaust);
-        ReactorControllerBlockEntity delivery=source;
-        CondensateStorageTankBlockEntity suctionTank=null;
-        SuppressionPoolBlockEntity suctionPool=exhaustPool;
-        double waterOpening=1;
-        if (!assembly.isHpci()) {
-            var suction=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_SUCTION);
-            var discharge=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_DISCHARGE);
-            suctionTank=AssemblyPlumbing.endpoint(level,suction,CondensateStorageTankBlockEntity.class);
-            suctionPool=AssemblyPlumbing.endpoint(level,suction,SuppressionPoolBlockEntity.class);
-            delivery=AssemblyPlumbing.endpoint(level,discharge,ReactorControllerBlockEntity.class);
-            waterOpening=Math.min(suction.opening(),discharge.opening());
-        } else {
-            // This supplied exterior represents the HPCI turbine only. Its existing
-            // associated pump still selects a local tank or the connected pool.
-            suctionTank=AssemblyPlumbing.nearby(level,getBlockPos(),CondensateStorageTankBlockEntity.class)
-                    .stream().min(java.util.Comparator.comparingDouble(t -> t.getBlockPos().distSqr(getBlockPos()))).orElse(null);
-        }
+        var suction=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_SUCTION);
+        var discharge=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_DISCHARGE);
+        var suctionTank=AssemblyPlumbing.endpoint(level,suction,CondensateStorageTankBlockEntity.class);
+        var suctionPool=AssemblyPlumbing.endpoint(level,suction,SuppressionPoolBlockEntity.class);
+        var delivery=AssemblyPlumbing.waterReceiver(level,discharge);
+        double waterOpening=suction.valid() ? Math.min(suction.opening(),discharge.opening()) : 0;
         if (delivery!=null && !delivery.isFormed()) delivery=null;
         if (suctionPool!=null && !suctionPool.isFormed()) suctionPool=null;
         BlockPos newReactor=delivery==null ? null : delivery.getBlockPos();
@@ -413,7 +404,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
             // never draw a drop however full its pool was.
             return poolBe.pool().getAvailableSuctionKg();
         }
-        return tankBe != null ? tankBe.storedKg() : 0.0;
+        return incomingWater.availableKg() + (tankBe != null ? tankBe.storedKg() : 0.0);
     }
 
     private double drawSuction(SuppressionPoolBlockEntity poolBe,
@@ -425,7 +416,8 @@ public class EccsPumpBlockEntity extends BlockEntity {
         if (suctionSource == SuctionSource.SUPPRESSION_POOL) {
             return poolBe != null ? poolBe.pool().drawSuctionKg(kgPerS, dt) : 0.0;
         }
-        return tankBe != null ? tankBe.drawKg(kgPerS * dt) : 0.0;
+        double fromBuffer = incomingWater.drawKg(kgPerS * dt);
+        return fromBuffer + (tankBe != null ? tankBe.drawKg(Math.max(0, kgPerS * dt - fromBuffer)) : 0);
     }
 
     // -----------------------------------------------------------------
@@ -732,6 +724,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
         super.saveAdditional(tag, registries);
         dev.bwr.mod.reactor.ReactorStateNbt.putDoubles(tag, "Pump", pump.toArray());
         tag.putString("Suction", suctionSource.getSerializedName());
+        tag.put("IncomingWater", incomingWater.save(registries));
         tag.putString("Mode", mode.name());
         tag.putBoolean("ComputerControlled", computerControlled);
         tag.putInt("Energy", energy.getEnergyStored());
@@ -753,6 +746,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
             pump.fromArray(dev.bwr.mod.reactor.ReactorStateNbt.getDoubles(tag, "Pump"));
         }
         suctionSource = SuctionSource.byName(tag.getString("Suction"));
+        incomingWater.load(registries, tag.getCompound("IncomingWater"));
         try {
             mode = Mode.valueOf(tag.getString("Mode"));
         } catch (IllegalArgumentException e) {

@@ -37,6 +37,8 @@ CONFIG = {
         "file": "HPCI_Turbine_Exterior.step", "size": (4, 5, 3), "parts": 763,
         "source_max_mm": (4000, 4162.5, 3000),
         "ports": {"Steam_inlet_flange": "UP", "Exhaust_front_flange": "WEST"},
+        "water_adapters": [("Associated_pump_suction", [3, 0, 0]),
+                           ("Associated_pump_discharge", [3, 0, 2])],
     },
 }
 DIRECTIONS = {"UP": (1, 1), "DOWN": (1, -1), "EAST": (0, 1),
@@ -404,6 +406,23 @@ def adapters(solids, config):
                 else "Adapter added for centered Minecraft tube connection."
             ),
         })
+    # These are gameplay connections for the associated HPCI pump, explicitly
+    # separate from the turbine-only STEP's real steam nozzles.
+    for name, cell in config.get("water_adapters", []):
+        x, y, z = cell
+        pipe = [x+.12, y+.34, z+.34, x+.94, y+.66, z+.66]
+        collar = [x+.94, y+.25, z+.25, x+1., y+.75, z+.75]
+        boxes.extend([pipe, collar])
+        faces.extend(box_faces(pipe, (.64, .68, .72), name + "_pipe"))
+        faces.extend(box_faces(collar, (.08, .48, .70), name + "_collar"))
+        end = [x+1., y+.5, z+.5]
+        ports.append({"name": name, "cell": x+size[0]*(z+size[2]*y),
+                      "offset": cell, "face": "EAST", "source_parts": [],
+                      "face_center": end, "cell_local_face_center": [1., .5, .5],
+                      "adapter_centerline": [[x+.12, y+.5, z+.5], end],
+                      "adapter_width": .32, "connector_width": .50,
+                      "closed_source_cover_removed": False,
+                      "note": "Gameplay adapter for the associated pump; not a nozzle from the turbine-only STEP."})
     return faces, boxes, ports
 
 

@@ -1,12 +1,13 @@
 # RCIC TWL and HPCI turbine assemblies
 
-These are additional placeable machines. Existing RCIC/HPCI cube blocks and the
-feedwater pumps retain their block IDs and behavior.
+These are the placeable RCIC/HPCI machines available in crafting and the creative
+tab. Old RCIC/HPCI cube IDs remain loadable for existing worlds but have no recipe
+or creative-tab entry. The RCP cube remains available until its model is ready.
 
 | Item | Reserved space (width × height × depth) | Process ports |
 | --- | --- | --- |
 | `bwr:rcic_twl` | 3 × 3 × 2 blocks | Steam inlet, exhaust, water suction, water discharge |
-| `bwr:hpci_turbine` | 4 × 5 × 3 blocks | Steam inlet and exhaust |
+| `bwr:hpci_turbine` | 4 × 5 × 3 blocks | Steam inlet, exhaust, associated-pump water suction and discharge |
 
 One item places the entire assembly. All reserved cells must be loaded and clear,
 including the space above the skid. Rotation follows the player's facing when
@@ -15,38 +16,35 @@ one item. The cells share one controller, one pump state, and one steam draw.
 
 ## Build and connect
 
-Find both items in the BWR creative tab. In survival, craft the assembly from its
-existing RCIC or HPCI pump, reactor vessel blocks, iron blocks, and a pressurised
-tube. The recipe is available through the game's recipe system.
+Find both items in the BWR creative tab. Both can be crafted directly from iron
+blocks, vessel blocks, steam pipe and water pipe, with a piston for RCIC or a
+diamond for HPCI. No retired cube is required.
 
-Use BWR pressurised tubes at the visible adapters. Right-click a port face to see
-its role. Tube arms connect only at those faces and rotate with the machine.
-The other exterior fittings are the parts represented by the supplied CAD model;
-they do not create interchangeable steam or water connections.
+Right-click an adapter face to see its role. The other exterior fittings are CAD
+details, not additional interchangeable connections.
 
-- **Steam inlet:** connect to a formed reactor's RPV steam outlet. Open the nozzle
-  and any isolation valves manually or with your control program.
-- **Steam exhaust:** run a separate line to a suppression pool quencher.
-  The quencher must have source water above it in the basin measured by a formed
-  suppression pool controller. Exhaust-valve opening limits admission capacity.
-- **RCIC water suction:** pipe to the selected condensate tank or suppression pool.
-- **RCIC water discharge:** pipe to the reactor controller.
+- **Steam inlet:** High-Pressure Steam Pipe to a formed reactor's RPV steam nozzle.
+  Open the nozzle and any MSIVs manually or through your control program.
+- **Steam exhaust:** a separate steam pipe to a submerged suppression-pool quencher.
+- **Water suction:** High-Pressure Water Pipe to the selected condensate tank or
+  pool controller. Incoming NeoForge/Mekanism water can also fill the suction
+  buffer; select condensate-tank suction to use it.
+- **Water discharge:** High-Pressure Water Pipe to an outward-facing RPV Water
+  Injection Port in the recipient vessel wall. A reactor controller is not a port.
 
-Keep these four circuits separate. Connecting steam and water branches into one
-pipe network does not turn them into a valid circuit.
-The two RCIC upward adapters have one empty grid column between them so their
-first tube blocks stay separate. Use tubes and player-operated MSIVs to route
-water to the tank/pool controller and reactor controller; these endpoints accept
-the water tube on any face. Each route is limited to 256 loaded blocks.
-Use one receiver and one selected source per water line, and one pool per exhaust
-line. Multiple nozzles on the same reactor can share the steam supply. Ambiguous
-connections to different reactors, tanks, or pools provide no usable route.
+Keep suction and discharge separate. Water pipes and steam pipes do not join.
+MSIVs are steam-only. Each physical route is bounded to 256 loaded blocks; none
+forces chunks to load. Multiple injection ports on one vessel may share a header,
+but connections to multiple recipient vessels are ambiguous and deliver nothing.
 
-The supplied HPCI file models the turbine exterior, with no labeled pump-water
-flanges. Its water side uses the existing HPCI pump association and suction-source
-selection. Its associated pump injects into the reactor supplying its steam,
-draws from the connected exhaust pool or a condensate tank within 24 blocks,
-and does not gain water ports on the turbine casing.
+The HPCI source STEP contains only turbine geometry. Two blue gameplay adapters
+now expose its associated pump's water circuit on the east edge of the skid:
+suction at (3,0,0) east and discharge at (3,0,2) east, relative to a north-facing
+placement origin. These are added game fittings, not claims about the source CAD.
+HPCI now needs explicit water piping; it no longer takes water from a nearby tank
+or injects automatically into whichever reactor supplies its drive steam.
+
+See [WATER-PLUMBING.md](WATER-PLUMBING.md) for existing-world upgrade instructions.
 
 The controller is the placement-origin cell at the skid corner. Redstone at that
 cell commands running when computer control is disabled. CC:Tweaked exposes the

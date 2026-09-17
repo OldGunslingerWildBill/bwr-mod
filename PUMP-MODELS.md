@@ -32,8 +32,8 @@ replaced by full paired jets to contribute to the new recirculation circuit.
 
 ## Ports
 
-Right-click a flange to read its role. BWR pressurised tubes connect only to
-defined flange faces. Short visible adapters bridge the model's original nozzle
+Right-click a flange to read its role. Water pipes connect to water flanges, and
+steam pipes connect to steam flanges. Short visible adapters bridge the model's original nozzle
 to the Minecraft grid. Feedwater suction and discharge adapters have a gap between
 their risers so the two circuits can be built separately.
 
@@ -63,19 +63,19 @@ listed machine cell.
 
 - **LPCS/HPCS/RHR suction:** pipe to a condensate storage tank or formed
   suppression-pool controller. Select that source with the existing pump controls.
-- **Water discharge:** pipe to the reactor controller. The existing spray rings
+- **Water discharge:** use High-Pressure Water Pipe to an outward-facing RPV Water Injection Port in the vessel wall. The existing spray rings
   still determine core-spray delivery; future sprayer models can replace their
   appearance later.
 - **RHR pool cooling:** select pool suction and pool-cooling mode, and connect the
   discharge back to that same pool controller. It cannot inject and cool at once.
-- **Feedwater suction:** pipe to a storage tank, or connect a NeoForge water pipe
-  directly to the suction flange. This fills the existing 2,000 mB buffer, suitable
+- **Feedwater suction:** use High-Pressure Water Pipe to a storage tank, or return
+  Mekanism water through High-Pressure Water Pipe into the suction flange. This fills the existing 2,000 mB buffer, suitable
   for water returned by a Mekanism turbine. Discharge never exposes this buffer.
 - FE cables and CC:Tweaked peripherals on a machine's part cells address its
   shared controller. Powered machines still require FE. Turbine drives refuse FE.
   Use the controller cell for redstone start commands.
 - A crossed steam/water circuit, incompatible port connection or ambiguous
-  endpoint cannot deliver. MSIVs in the actual circuit throttle it. Surveys stop
+  endpoint cannot deliver. MSIVs throttle steam circuits only. Surveys stop
   at 256 loaded blocks and never load chunks.
 
 ### Turbine feedwater steam
@@ -94,6 +94,10 @@ Once connected to pump exhaust, an outlet remembers that role across saves.
 Disconnecting the pipe does not make it draw steam directly from a nearby reactor.
 Pick up and replace that outlet to return it to main-steam service. Its right-click
 status identifies exhaust service. No condenser block is added.
+
+Use the blue water pipe for every water circuit, including the RCP-to-jet drive
+line. Use High-Pressure Steam Pipe (`bwr:pressurised_tube`) for steam inlet and
+exhaust only. See [WATER-PLUMBING.md](WATER-PLUMBING.md) for upgrade instructions.
 
 ## Jet count and recirculation
 

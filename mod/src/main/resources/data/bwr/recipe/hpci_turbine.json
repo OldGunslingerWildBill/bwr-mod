@@ -4,7 +4,7 @@
   "pattern": [
     "IPI",
     "VCV",
-    "III"
+    "IWI"
   ],
   "key": {
     "I": {
@@ -17,7 +17,10 @@
       "item": "bwr:reactor_vessel"
     },
     "C": {
-      "item": "bwr:hpci_turbine_pump"
+      "item": "minecraft:diamond"
+    },
+    "W": {
+      "item": "bwr:high_pressure_water_pipe"
     }
   },
   "result": {

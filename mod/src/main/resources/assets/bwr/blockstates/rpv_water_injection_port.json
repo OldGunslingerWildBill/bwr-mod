@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/rpv_water_injection_port"
+    },
+    "facing=east": {
+      "model": "bwr:block/rpv_water_injection_port",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/rpv_water_injection_port",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/rpv_water_injection_port",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "bwr:block/rpv_water_injection_port",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "bwr:block/rpv_water_injection_port",
+      "x": 90
+    }
+  }
+}

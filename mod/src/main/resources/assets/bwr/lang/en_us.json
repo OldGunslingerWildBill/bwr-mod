@@ -8,7 +8,7 @@
   "block.bwr.jet_pump": "Jet Pump",
   "block.bwr.safety_relief_valve": "Safety/Relief Valve",
   "block.bwr.msiv": "Main Steam Isolation Valve",
-  "block.bwr.pressurised_tube": "Pressurised Steam Tube",
+  "block.bwr.pressurised_tube": "High-Pressure Steam Pipe",
   "block.bwr.rpv_steam_outlet": "RPV Steam Outlet",
   "block.bwr.suppression_pool_controller": "Suppression Pool Controller",
   "block.bwr.suppression_pool_wall": "Suppression Pool Wall",
@@ -37,9 +37,9 @@
   "menu.bwr.suppression_pool": "Suppression Pool",
   "menu.bwr.fuel_fabricator": "Fuel Fabricator",
   "gui.bwr.core_map": "Core map",
-  "block.bwr.rcic_turbine_pump": "RCIC Turbine Pump",
+  "block.bwr.rcic_turbine_pump": "RCIC Turbine Pump (Legacy)",
   "item.bwr.rcic_turbine_pump": "RCIC Turbine Pump",
-  "block.bwr.hpci_turbine_pump": "HPCI Turbine Pump",
+  "block.bwr.hpci_turbine_pump": "HPCI Turbine Pump (Legacy)",
   "item.bwr.hpci_turbine_pump": "HPCI Turbine Pump",
   "block.bwr.hpcs_pump": "HPCS Pump",
   "item.bwr.hpcs_pump": "HPCS Pump",
@@ -61,5 +61,10 @@
   "item.bwr.rcic_twl": "RCIC TWL Assembly",
   "block.bwr.hpci_turbine": "HPCI Turbine Assembly",
   "item.bwr.hpci_turbine": "HPCI Turbine Assembly",
-  "block.bwr.rip_pump": "Reactor Internal Pump"
+  "block.bwr.rip_pump": "Reactor Internal Pump",
+  "block.bwr.high_pressure_water_pipe": "High-Pressure Water Pipe",
+  "block.bwr.rpv_water_injection_port": "RPV Water Injection Port",
+  "tooltip.bwr.water_pipe.rating": "ASME B31.1-inspired | Design pressure: 2,500 psi (simulation)",
+  "tooltip.bwr.water_pipe.service": "Water only. Connect condensate to pump suction; pump discharge to an RPV injection port.",
+  "tooltip.bwr.water_injection_port": "Replace a vessel wall block; face the blue flange outward. Receives pumped water."
 }

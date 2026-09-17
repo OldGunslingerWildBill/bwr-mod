@@ -29,6 +29,9 @@ public final class EccsCapabilities {
 
     public static void register(RegisterCapabilitiesEvent event) {
         PumpAssemblyCapabilities.register(event);
+        event.registerBlock(Capabilities.FluidHandler.BLOCK,
+                (level, pos, state, unused, side) -> dev.bwr.mod.water.WaterLineNetwork.inlet(level, pos),
+                dev.bwr.mod.registry.BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get());
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 BwrBlockEntities.ECCS_PUMP.get(),

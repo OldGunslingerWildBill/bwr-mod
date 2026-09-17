@@ -259,15 +259,7 @@ public final class SteamLineNetwork {
      * an arm for, so the line the physics walks is the line the player can see.
      */
     private static boolean joined(BlockState from, BlockState to, Direction towards) {
-        return acceptsSteamOn(from, towards) && acceptsSteamOn(to, towards.getOpposite());
-    }
-
-    private static boolean acceptsSteamOn(BlockState state, Direction face) {
-        if (state.getBlock() instanceof dev.bwr.mod.eccs.ProcessAssembly assembly) {
-            var port = assembly.portAt(state, face);
-            return port != null && port.isSteam();
-        }
-        return !state.is(BwrBlocks.RECIRCULATION_PUMP.get()) && !dev.bwr.mod.eccs.AssemblyPlumbing.isWaterEndpoint(state) && acceptsLineOn(state, face);
+        return acceptsLineOn(from, towards) && acceptsLineOn(to, towards.getOpposite());
     }
 
     /**
@@ -279,7 +271,12 @@ public final class SteamLineNetwork {
      * does, and a tag cannot express "this face only" at all.
      */
     public static boolean acceptsLineOn(BlockState state, Direction face) {
-        if (dev.bwr.mod.eccs.AssemblyPlumbing.isWaterEndpoint(state)) return true;
+        if (state.getBlock() instanceof dev.bwr.mod.eccs.ProcessAssembly assembly) {
+            var port = assembly.portAt(state, face);
+            return port != null && port.isSteam();
+        }
+        if (state.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get()) || state.is(BwrBlocks.RECIRCULATION_PUMP.get())
+                || state.is(BwrBlocks.REACTOR_CONTROLLER.get()) || dev.bwr.mod.eccs.AssemblyPlumbing.isWaterEndpoint(state)) return false;
         if (state.getBlock() instanceof SteamLinePort port) {
             return port.acceptsSteamLineOn(state, face);
         }

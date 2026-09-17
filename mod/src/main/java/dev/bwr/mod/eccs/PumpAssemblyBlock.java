@@ -106,7 +106,7 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
         for(var p:ports) if(p.cell().equals(cellOffset(s.getValue(CELL))) && TurbineAssemblyBlock.turn(p.face(),s.getValue(FACING))==face) return p.role();
         return null;
     }
-    @Override public boolean acceptsSteamLineOn(BlockState s,Direction d) { return portAt(s,d)!=null; }
+    @Override public boolean acceptsSteamLineOn(BlockState s,Direction d) { var port=portAt(s,d); return port!=null && port.isSteam(); }
     @Override public boolean complete(Level level,BlockPos root,BlockState s) {
         if(!isFull(s)) return true;
         for(int i=0;i<cellCount();i++) {

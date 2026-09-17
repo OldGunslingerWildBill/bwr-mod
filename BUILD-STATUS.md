@@ -1,5 +1,56 @@
 # Build Status
 
+## 2026-09-17 — separate water piping and RPV injection
+
+Added High-Pressure Water Pipe, outward-facing RPV Water Injection Port,
+NeoForge condensate return, and strict separation of steam/water flange routing.
+Kept RCP available as requested. Retired the old RCIC/HPCI cubes from recipes and
+the creative tab while preserving their IDs. Modeled HPCI now has two blue
+associated-pump water adapters and requires real suction/discharge piping.
+See [WATER-PLUMBING.md](WATER-PLUMBING.md) for the required existing-world rewiring.
+
+Verified on Minecraft 1.21.1 / NeoForge 21.1.248:
+
+```text
+:mod:runTurbineGameTest :mod:build
+Turbine assembly runtime checks: 0 failure(s)
+Turbine plumbing PASS: rcic
+Turbine plumbing PASS: hpci
+PUMP RUNTIME CHECK: 35 scenarios passed, 0 failure(s)
+All 1 required tests passed
+checkNoProtectionLogic: scanned 127 files; no protection logic present
+BUILD SUCCESSFUL in 41s
+
+:mod:runTurbineModelCheck :mod:build
+WATER MODEL CHECK PASS: 70 block states and two inventory models
+PUMP MODEL CHECK PASS: 1236 occupied cell states, seven inventory and seven compact models
+TURBINE MODEL CHECK PASS: 312 cell states and both inventory models
+BUILD SUCCESSFUL in 38s
+
+tools-audit-assets.py
+583 valid JSON; 30 blocks; 29 recipes (two legacy blocks intentionally uncraftable)
+PROBLEMS: 0
+
+tools-import-turbines.py --check
+172 deterministic text assets verified
+
+tools-check-jar.py
+216 classes including nested physics jar
+0 bundled CC:Tweaked classes, 0 bundled Mekanism classes, 0 devtest entries
+OK: nothing forbidden is bundled.
+```
+
+The condensate test pushes actual NeoForge water through a real pipe network into
+a modeled feed pump and checks finite water delivery. It also checks wrong fluids,
+capacity/simulation semantics, broken cached routes, wrong pipe types, backwards
+ports, freestanding ports, unformed vessels, and fractional ECCS-buffer persistence.
+The fixture does not build a complete Mekanism Generators turbine. The unchanged
+153-test physics suite was already run for the preceding update below; this update
+changes the Minecraft integration and uses its runtime, model, asset, and build gates.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar` — 6,805,610 bytes.
+SHA-256: `EDC72D430CDBD4896CA47543F2B441A62C0A11C9FD8BF1E02CCAA9E9D193C7BF`.
+
 ## 2026-09-17 — pump model pack and connected recirculation
 
 Implemented the seven supplied models, shared controller/capability access, sided
