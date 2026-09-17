@@ -52,5 +52,13 @@
   "block.bwr.ads_controller": "ADS Controller",
   "item.bwr.ads_controller": "ADS Controller",
   "block.bwr.condensate_storage_tank": "Condensate Storage Tank",
-  "item.bwr.condensate_storage_tank": "Condensate Storage Tank"
+  "item.bwr.condensate_storage_tank": "Condensate Storage Tank",
+  "block.bwr.motor_feed_pump": "Motor-Driven Reactor Feed Pump",
+  "item.bwr.motor_feed_pump": "Motor-Driven Reactor Feed Pump",
+  "block.bwr.turbine_feed_pump": "Turbine-Driven Reactor Feed Pump",
+  "item.bwr.turbine_feed_pump": "Turbine-Driven Reactor Feed Pump",
+  "block.bwr.rcic_twl": "RCIC TWL Assembly",
+  "item.bwr.rcic_twl": "RCIC TWL Assembly",
+  "block.bwr.hpci_turbine": "HPCI Turbine Assembly",
+  "item.bwr.hpci_turbine": "HPCI Turbine Assembly"
 }

@@ -98,6 +98,10 @@ for m in re.finditer(r'BLOCKS\.register\(\s*"([a-z0-9_]+)",\s*\(\)\s*->\s*new ([
             if not vals:
                 vals = [v.strip().lower() for v in em.group(1).split(",") if v.strip()]
         pr[pname] = vals
+    for pm in re.finditer(r'IntegerProperty\s+[A-Z_]+\s*=\s*IntegerProperty\.create\("([a-z_]+)",\s*(\d+),\s*(\d+)\)', body):
+        pr[pm.group(1)] = [str(v) for v in range(int(pm.group(2)), int(pm.group(3)) + 1)]
+    if "BlockStateProperties.HORIZONTAL_FACING" in body:
+        pr["facing"] = ["north", "east", "south", "west"]
     if "extends PipeBlock" in body:
         pr = {d: ["false", "true"] for d in
               ["north", "east", "south", "west", "up", "down"]}
@@ -134,6 +138,31 @@ referenced_textures = set()
 models = {k: v for k, v in jsons.items() if k.startswith("assets/bwr/models/")}
 tex_refs = 0
 for rel, m in models.items():
+    if m.get("loader") == "neoforge:obj":
+        # Mesh models have resource dependencies outside the usual JSON tree.
+        obj_ref = m.get("model", "")
+        obj_ns, _, obj_path = obj_ref.partition(":")
+        obj_file = os.path.join(RES, "assets", obj_ns, obj_path)
+        if not obj_path or not os.path.isfile(obj_file):
+            bad("MISSING-OBJ", f"{rel}: missing mesh {obj_ref}")
+        else:
+            mesh = open(obj_file, encoding="utf-8").read()
+            libraries = re.findall(r'^mtllib\s+(.+)$', mesh, re.M)
+            if m.get("mtl_override"):
+                libraries = [m["mtl_override"]]
+            for library in libraries:
+                if ":" in library:
+                    mat_ns, mat_path = library.strip().split(":", 1)
+                    material = os.path.join(RES, "assets", mat_ns, mat_path)
+                else:
+                    material = os.path.join(os.path.dirname(obj_file), library.strip())
+                if not os.path.isfile(material):
+                    bad("MISSING-MTL", f"{rel}: missing material {library}")
+                    continue
+                for texture in re.findall(r'^map_Kd\s+(.+)$', open(material, encoding="utf-8").read(), re.M):
+                    texture = texture.strip()
+                    if not texture.startswith("#") and not tex_exists(texture):
+                        bad("MISSING-TEXTURE", f"{rel}: material texture {texture} is missing")
     for k, v in (m.get("textures") or {}).items():
         if not isinstance(v, str):
             bad("MODEL", f"{rel}: texture '{k}' is not a string")

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "IPI",
+    "VCV",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "P": {
+      "item": "bwr:pressurised_tube"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "C": {
+      "item": "bwr:hpci_turbine_pump"
+    }
+  },
+  "result": {
+    "id": "bwr:hpci_turbine",
+    "count": 1
+  }
+}

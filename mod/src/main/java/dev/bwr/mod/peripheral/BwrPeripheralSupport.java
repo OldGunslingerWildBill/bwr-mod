@@ -36,7 +36,8 @@ public final class BwrPeripheralSupport {
         LOGGER.info("BwrPeripheralSupport: CC:Tweaked detected, attaching peripherals to "
                 + "reactor_controller, suppression_pool, turbine_steam_outlet, "
                 + "eccs_pump, ads_controller, condensate_storage_tank, "
-                + "safety_relief_valve, msiv, recirculation_pump, rpv_steam_outlet");
+                + "safety_relief_valve, msiv, recirculation_pump, rpv_steam_outlet, "
+                + "feedwater_pump");
 
         event.registerBlockEntity(
                 PeripheralCapability.get(),
@@ -117,5 +118,16 @@ public final class BwrPeripheralSupport {
                 PeripheralCapability.get(),
                 BwrBlockEntities.RPV_STEAM_OUTLET.get(),
                 (be, side) -> new RpvSteamOutletPeripheral(be));
+
+        // Feedwater (SPEC section 15). The normal level control path, and the
+        // surface a player's level control program is written against — because
+        // the mod ships no level control at all. One block entity type covers
+        // both feed pumps; the peripheral type string carries the drive, so
+        // peripheral.find("bwr_turbine_feed_pump") finds the pumps that survive
+        // a blackout and not the ones that do not.
+        event.registerBlockEntity(
+                PeripheralCapability.get(),
+                BwrBlockEntities.FEEDWATER_PUMP.get(),
+                (be, side) -> new FeedwaterPumpPeripheral(be));
     }
 }

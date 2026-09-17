@@ -15,7 +15,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.energy.EnergyStorage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,9 +61,9 @@ public class EccsPumpBlockEntity extends BlockEntity {
      * something had set {@link #bindingDirty}, and neither of those notices the
      * two bindings a player almost always makes second. A suppression pool
      * controller or a condensate storage tank placed twenty blocks away fires no
-     * neighbour change here, so an ECCS machine that found its reactor first —
+     * neighbour change here, so an ECCS machine that found its reactor first â€”
      * which is the ordinary build order, because the reactor is the thing you
-     * build around — held {@code poolPos} and {@code tankPos} at null forever.
+     * build around â€” held {@code poolPos} and {@code tankPos} at null forever.
      * {@link #availableSuctionKg} then returns zero from a pool that is full,
      * the pump delivers nothing with every readout saying it is running, and the
      * only way out is to break and replace the machine. The same silence hid the
@@ -100,6 +99,9 @@ public class EccsPumpBlockEntity extends BlockEntity {
     private BlockPos reactorPos;
     private BlockPos poolPos;
     private BlockPos tankPos;
+    private BlockPos assemblyExhaustPoolPos;
+    private volatile String assemblyConnectionStatus = "Awaiting pipe survey";
+    private volatile double assemblySteamDrawKgPerS;
     private boolean bindingDirty = true;
     private int ticksSinceRebind = REBIND_INTERVAL_TICKS;
     private boolean wasCoolingPool;
@@ -107,26 +109,6 @@ public class EccsPumpBlockEntity extends BlockEntity {
     /** Last tick's delivered figures, kept for the panel and the peripheral. */
     private volatile double deliveredFlowKgPerS;
     private volatile double suctionShortfallKgPerS;
-
-    /**
-     * Accepts energy and never gives it back. Sized from the machine's real
-     * motor rating through {@link EccsPower}, so a turbine-driven machine
-     * genuinely refuses electricity rather than politely not needing it.
-     */
-    private static final class MachineEnergy extends EnergyStorage {
-
-        MachineEnergy(int fePerTick) {
-            super(Math.max(1, fePerTick * 20), Math.max(0, fePerTick), 0);
-        }
-
-        void drain(int amount) {
-            this.energy = Math.max(0, this.energy - amount);
-        }
-
-        void setStored(int stored) {
-            this.energy = Math.max(0, Math.min(this.capacity, stored));
-        }
-    }
 
     public EccsPumpBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.ECCS_PUMP.get(), pos, state);
@@ -146,6 +128,10 @@ public class EccsPumpBlockEntity extends BlockEntity {
     // -----------------------------------------------------------------
 
     private void tick(Level level) {
+        if (getBlockState().getBlock() instanceof TurbineAssemblyBlock assembly) {
+            tickAssembly(level, assembly);
+            return;
+        }
         maybeRebind(level);
 
         final double dt = 0.05;
@@ -204,7 +190,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
         //
         // Reported to the pool rather than condensed here. SuppressionPool
         // publishes one uncondensed-steam figure per condenseSteam call, so two
-        // callers in the same tick — this exhaust and the relief valves — would
+        // callers in the same tick â€” this exhaust and the relief valves â€” would
         // each overwrite the other's reading and the published number would
         // never be the total. The pool sums every source and condenses once.
         double steamKgPerS = pump.getSteamDemandKgPerS();
@@ -232,6 +218,103 @@ public class EccsPumpBlockEntity extends BlockEntity {
         setChanged();
     }
 
+    private void tickAssembly(Level level, TurbineAssemblyBlock assembly) {
+        final double dt=.05;
+        BlockState state=getBlockState();
+        if (!assembly.complete(level,getBlockPos(),state)) {
+            detach();
+            reactorPos=null; poolPos=null; tankPos=null;
+            pump.setSteamSupplyLimitKgPerS(0);
+            pump.setSuctionFlowLimitKgPerS(0);
+            pump.step(dt);
+            deliveredFlowKgPerS=0;
+            suctionShortfallKgPerS=0;
+            assemblyConnectionStatus="Assembly incomplete or a required chunk is unloaded";
+            setChanged();
+            return;
+        }
+        var inlet=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.STEAM_INLET);
+        var exhaust=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.STEAM_EXHAUST);
+        var nozzles=AssemblyPlumbing.nozzles(level,inlet);
+        var source=AssemblyPlumbing.source(level,nozzles);
+        if (source!=null) nozzles.removeIf(n -> !source.getBlockPos().equals(n.getControllerPos()));
+        var exhaustPool=AssemblyPlumbing.exhaustPool(level,exhaust);
+        ReactorControllerBlockEntity delivery=source;
+        CondensateStorageTankBlockEntity suctionTank=null;
+        SuppressionPoolBlockEntity suctionPool=exhaustPool;
+        double waterOpening=1;
+        if (!assembly.isHpci()) {
+            var suction=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_SUCTION);
+            var discharge=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_DISCHARGE);
+            suctionTank=AssemblyPlumbing.endpoint(level,suction,CondensateStorageTankBlockEntity.class);
+            suctionPool=AssemblyPlumbing.endpoint(level,suction,SuppressionPoolBlockEntity.class);
+            delivery=AssemblyPlumbing.endpoint(level,discharge,ReactorControllerBlockEntity.class);
+            waterOpening=Math.min(suction.opening(),discharge.opening());
+        } else {
+            // This supplied exterior represents the HPCI turbine only. Its existing
+            // associated pump still selects a local tank or the connected pool.
+            suctionTank=AssemblyPlumbing.nearby(level,getBlockPos(),CondensateStorageTankBlockEntity.class)
+                    .stream().min(java.util.Comparator.comparingDouble(t -> t.getBlockPos().distSqr(getBlockPos()))).orElse(null);
+        }
+        if (delivery!=null && !delivery.isFormed()) delivery=null;
+        if (suctionPool!=null && !suctionPool.isFormed()) suctionPool=null;
+        BlockPos newReactor=delivery==null ? null : delivery.getBlockPos();
+        if (reactorPos!=null && !reactorPos.equals(newReactor)) EccsNetwork.withdraw(level,reactorPos,getBlockPos());
+        reactorPos=newReactor;
+        poolPos=suctionPool==null ? null : suctionPool.getBlockPos();
+        tankPos=suctionTank==null ? null : suctionTank.getBlockPos();
+        BlockPos newExhaust=exhaustPool==null ? null : exhaustPool.getBlockPos();
+        if (assemblyExhaustPoolPos!=null && !assemblyExhaustPoolPos.equals(newExhaust)
+                && level.isLoaded(assemblyExhaustPoolPos)
+                && level.getBlockEntity(assemblyExhaustPoolPos) instanceof SuppressionPoolBlockEntity oldPool)
+            oldPool.withdrawSteam(getBlockPos());
+        assemblyExhaustPoolPos=newExhaust;
+
+        double inletPressure=source==null ? 0 : source.core().getPressurePsig();
+        double exhaustPressure=exhaustPool==null ? inletPressure
+                : Saturation.psigFromPsia(exhaustPool.pool().getContainmentPressurePsia());
+        pump.setSteamInletPressurePsig(inletPressure);
+        pump.setExhaustPressurePsig(exhaustPressure);
+        pump.setVesselPressurePsig(delivery==null ? 0 : delivery.core().getPressurePsig());
+        pump.setSuctionPressurePsig(0);
+        double temperature=suctionTemperatureC(suctionPool);
+        pump.setSuctionTemperatureC(temperature);
+        pump.setSuctionFlowLimitKgPerS(delivery==null ? 0
+                : Math.min(availableSuctionKg(suctionPool,suctionTank)/dt, design.ratedFlowKgPerS()*waterOpening));
+
+        // Predict demand using the physically available nozzle flow, then claim
+        // that steam from the shared ledger. Only re-step if another consumer
+        // already took a share. The controller already debited the source vessel.
+        double available=source==null || exhaustPool==null || !pump.isRunning() ? 0
+                : Math.min(nozzles.stream().mapToDouble(n -> n.getLastFlowKgPerS()).sum(),
+                        design.maximumSteamKgPerS()*exhaust.opening());
+        pump.setSteamSupplyLimitKgPerS(available);
+        double[] before=pump.toArray();
+        pump.step(dt);
+        double wantedSteam=pump.getSteamDemandKgPerS();
+        double claimedSteam=0;
+        for (var nozzle:nozzles) {
+            if (claimedSteam>=wantedSteam) break;
+            claimedSteam+=nozzle.claimFlowKgPerS(level.getGameTime(),wantedSteam-claimedSteam);
+        }
+        if (claimedSteam+1e-12<wantedSteam) {
+            pump.fromArray(before);
+            pump.setSteamSupplyLimitKgPerS(claimedSteam);
+            pump.step(dt);
+        }
+        double wantedWater=delivery==null ? 0 : pump.getFlowKgPerS();
+        deliveredFlowKgPerS=drawSuction(suctionPool,suctionTank,wantedWater,dt)/dt;
+        suctionShortfallKgPerS=Math.max(0,wantedWater-deliveredFlowKgPerS);
+        if (delivery!=null) EccsNetwork.busFor(level,reactorPos).report(getBlockPos(),level.getGameTime(),
+                deliveredFlowKgPerS,temperature,0,temperature,0,0,true,false);
+        if (exhaustPool!=null) exhaustPool.reportSteamKgPerS(getBlockPos(),level.getGameTime(),claimedSteam,exhaustPressure);
+        assemblySteamDrawKgPerS=claimedSteam;
+        assemblyConnectionStatus="Steam inlet: "+(source!=null ? "connected" : "no live reactor nozzle")
+                +"; exhaust: "+(exhaustPool!=null ? "connected" : "no submerged pool quencher")
+                +"; water discharge: "+(delivery!=null ? "connected" : "disconnected");
+        setChanged();
+    }
+
     /**
      * Publish this loop's pool-cooling duty to the pool.
      *
@@ -239,7 +322,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
      * pool was the pattern {@link EccsNetwork}'s javadoc calls out as wrong: the
      * clearing write only happens on a later tick of <i>this</i> machine, so a
      * pump that was broken or whose chunk unloaded left the pool rejecting up to
-     * 30 MW through a heat exchanger that no longer exists — persisted to NBT
+     * 30 MW through a heat exchanger that no longer exists â€” persisted to NBT
      * and restored on reload. Assignment also meant two loops lined up for pool
      * cooling produced whichever ticked last instead of their sum.
      *
@@ -282,7 +365,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
             // This used to be `mass - DEFAULT_MASS_KG * 0.05`, a floor fixed at
             // the BWR/6 figure, which is now wrong twice over: the pool is sized
             // to the basin the player built, so any basin under 3400 blocks
-            // reported a negative volume and clamped to zero — a pump that could
+            // reported a negative volume and clamped to zero â€” a pump that could
             // never draw a drop however full its pool was.
             return poolBe.pool().getAvailableSuctionKg();
         }
@@ -317,13 +400,13 @@ public class EccsPumpBlockEntity extends BlockEntity {
      * reads a tick for a machine whose neighbours simply blinked. So there are
      * two intervals: {@link #REBIND_INTERVAL_TICKS} while the reactor is missing
      * or something has said the binding changed, and the slow
-     * {@link #BOUND_REBIND_INTERVAL_TICKS} sweep otherwise — which is what
+     * {@link #BOUND_REBIND_INTERVAL_TICKS} sweep otherwise â€” which is what
      * eventually finds a suppression pool or a storage tank built after the
      * machine was placed.
      *
      * <p>The interval applies unconditionally, and especially when the machine
-     * is NOT bound. Testing {@code bound &&} here meant an unbound pump — the
-     * default state of every pump placed before its reactor exists — ran the
+     * is NOT bound. Testing {@code bound &&} here meant an unbound pump â€” the
+     * default state of every pump placed before its reactor exists â€” ran the
      * full 117,649-position scan on every one of the twenty ticks a second,
      * which is exactly the case the throttle was written to prevent.
      */
@@ -362,6 +445,13 @@ public class EccsPumpBlockEntity extends BlockEntity {
         if (reactorPos != null) {
             EccsNetwork.withdraw(level, reactorPos, getBlockPos());
         }
+        if (assemblyExhaustPoolPos != null && level.isLoaded(assemblyExhaustPoolPos)
+                && level.getBlockEntity(assemblyExhaustPoolPos) instanceof SuppressionPoolBlockEntity exhaustPool) {
+            exhaustPool.withdrawSteam(getBlockPos());
+        }
+        assemblyExhaustPoolPos = null;
+        assemblySteamDrawKgPerS = 0;
+        deliveredFlowKgPerS = 0;
         if (wasCoolingPool) {
             SuppressionPoolBlockEntity poolBe = pool(level);
             if (poolBe != null) {
@@ -419,14 +509,14 @@ public class EccsPumpBlockEntity extends BlockEntity {
      * Start or stop the machine. Bare, like every other actuator in this mod:
      * it checks nothing.
      *
-     * <p>Its callers are the two things that carry a command the player gave —
+     * <p>Its callers are the two things that carry a command the player gave â€”
      * {@code EccsPumpBlock.neighborChanged} following a redstone level, and the
      * peripheral following Lua. Nothing in the mod calls it off its own bat, and
      * nothing that calls it looks at a plant parameter first.
      *
      * <p>Every setter below is marshalled onto the server thread. Lua reaches
      * them from a CC computer thread, and {@code setChanged()} dispatches
-     * neighbour updates into the world — see {@link PlantActuators}.
+     * neighbour updates into the world â€” see {@link PlantActuators}.
      */
     public void setRunning(boolean running) {
         PlantActuators.run(this, () -> {
@@ -505,8 +595,15 @@ public class EccsPumpBlockEntity extends BlockEntity {
         return pump;
     }
 
-    public EnergyStorage energy() {
+    public MachineEnergy energy() {
         return energy;
+    }
+
+    public double getAssemblySteamDrawKgPerS() { return assemblySteamDrawKgPerS; }
+
+    @Override public void setRemoved() {
+        if (level != null && !level.isClientSide() && getBlockState().getBlock() instanceof TurbineAssemblyBlock) detach();
+        super.setRemoved();
     }
 
     /** Water this machine actually put into the vessel or onto the fuel, kg/s. */
@@ -537,7 +634,11 @@ public class EccsPumpBlockEntity extends BlockEntity {
 
     public List<String> statusLines() {
         List<String> out = new ArrayList<>();
-        out.add(design.displayName() + " — " + design.drive() + ", "
+        if (getBlockState().getBlock() instanceof TurbineAssemblyBlock) {
+            out.add(assemblyConnectionStatus);
+            out.add(String.format(Locale.ROOT,"Physical steam admission/exhaust: %.3f kg/s",assemblySteamDrawKgPerS));
+        }
+        out.add(design.displayName() + " â€” " + design.drive() + ", "
                 + design.delivery() + ", rated "
                 + String.format(Locale.ROOT, "%.0f kg/s", design.ratedFlowKgPerS()));
         out.add(String.format(Locale.ROOT,
@@ -572,7 +673,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
             out.add(String.format(Locale.ROOT, "Suction source is short by %.1f kg/s.",
                     suctionShortfallKgPerS));
         }
-        if (reactorPos == null) {
+        if (reactorPos == null && !(getBlockState().getBlock() instanceof TurbineAssemblyBlock)) {
             out.add("No reactor controller found within " + SEARCH_RADIUS + " blocks.");
         }
         return out;

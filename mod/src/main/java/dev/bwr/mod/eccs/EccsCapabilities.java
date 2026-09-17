@@ -47,5 +47,23 @@ public final class EccsCapabilities {
                 Capabilities.FluidHandler.BLOCK,
                 BwrBlockEntities.CONDENSATE_STORAGE_TANK.get(),
                 (be, side) -> be.tank());
+
+        // The reactor feed pumps. Energy on both, because the turbine-driven one
+        // refuses every joule offered through a motor rating of zero and that is
+        // more useful than not registering it: a cable run to it visibly does
+        // nothing, which is the correct lesson.
+        event.registerBlockEntity(
+                Capabilities.EnergyStorage.BLOCK,
+                BwrBlockEntities.FEEDWATER_PUMP.get(),
+                (be, side) -> be.energy());
+
+        // And water on both, on every face. This is the condensate return: the
+        // player's Mekanism turbine condenses this plant's steam and gives the
+        // water back, and this is where it goes. There is no condenser block in
+        // this mod because the turbine already is one.
+        event.registerBlockEntity(
+                Capabilities.FluidHandler.BLOCK,
+                BwrBlockEntities.FEEDWATER_PUMP.get(),
+                (be, side) -> be.suction());
     }
 }

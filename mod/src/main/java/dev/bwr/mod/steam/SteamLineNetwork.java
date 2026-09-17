@@ -164,6 +164,9 @@ public final class SteamLineNetwork {
                     continue;
                 }
                 seen.add(next);
+                if (nextState.getBlock() instanceof dev.bwr.mod.eccs.TurbineAssemblyBlock) {
+                    continue; // each machine port terminates its own circuit
+                }
                 if (isVesselNozzle(nextState)) {
                     nozzles.add(next);
                     continue; // an end of the line, not a way through it
@@ -256,7 +259,15 @@ public final class SteamLineNetwork {
      * an arm for, so the line the physics walks is the line the player can see.
      */
     private static boolean joined(BlockState from, BlockState to, Direction towards) {
-        return acceptsLineOn(from, towards) && acceptsLineOn(to, towards.getOpposite());
+        return acceptsSteamOn(from, towards) && acceptsSteamOn(to, towards.getOpposite());
+    }
+
+    private static boolean acceptsSteamOn(BlockState state, Direction face) {
+        if (state.getBlock() instanceof dev.bwr.mod.eccs.TurbineAssemblyBlock assembly) {
+            var port = assembly.portAt(state, face);
+            return port != null && port.isSteam();
+        }
+        return !dev.bwr.mod.eccs.AssemblyPlumbing.isWaterEndpoint(state) && acceptsLineOn(state, face);
     }
 
     /**
@@ -268,6 +279,7 @@ public final class SteamLineNetwork {
      * does, and a tag cannot express "this face only" at all.
      */
     public static boolean acceptsLineOn(BlockState state, Direction face) {
+        if (dev.bwr.mod.eccs.AssemblyPlumbing.isWaterEndpoint(state)) return true;
         if (state.getBlock() instanceof SteamLinePort port) {
             return port.acceptsSteamLineOn(state, face);
         }

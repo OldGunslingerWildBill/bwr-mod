@@ -3,6 +3,8 @@ build/
 */build/
 .gradle/
 logs/
+*.log
+tmp/
 run/
 */run/
 

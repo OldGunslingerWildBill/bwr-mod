@@ -1,0 +1,48 @@
+# Source STEP COLOUR_RGB -> MTL Kd; neutral metal adapter collars.
+newmtl step_color_000
+Kd 0.125490196 0.176470590 0.164705884
+Ka 0 0 0
+d 1
+map_Kd minecraft:block/white_concrete
+
+newmtl step_color_001
+Kd 0.290196073 0.392156864 0.333333332
+Ka 0 0 0
+d 1
+map_Kd minecraft:block/white_concrete
+
+newmtl step_color_002
+Kd 0.325490189 0.356862747 0.341176475
+Ka 0 0 0
+d 1
+map_Kd minecraft:block/white_concrete
+
+newmtl step_color_003
+Kd 0.639215691 0.301960791 0.239215689
+Ka 0 0 0
+d 1
+map_Kd minecraft:block/white_concrete
+
+newmtl step_color_004
+Kd 0.640000000 0.680000000 0.720000000
+Ka 0 0 0
+d 1
+map_Kd minecraft:block/white_concrete
+
+newmtl step_color_005
+Kd 0.721568618 0.741176477 0.713725499
+Ka 0 0 0
+d 1
+map_Kd minecraft:block/white_concrete
+
+newmtl step_color_006
+Kd 0.870588247 0.878431359 0.843137262
+Ka 0 0 0
+d 1
+map_Kd minecraft:block/white_concrete
+
+newmtl step_color_007
+Kd 0.933333343 0.909803912 0.792156867
+Ka 0 0 0
+d 1
+map_Kd minecraft:block/white_concrete

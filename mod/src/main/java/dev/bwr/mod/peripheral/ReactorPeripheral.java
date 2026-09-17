@@ -835,6 +835,28 @@ public class ReactorPeripheral implements IPeripheral {
         core().setBypassSteamFlowKgPerS(finite("bypass steam flow", kgPerS));
     }
 
+    /**
+     * Command feedwater flow directly, kg/s.
+     *
+     * <h2>Read this before wondering why your write did nothing</h2>
+     * On a plant with <b>no feed pumps built</b>, this is the feedwater system:
+     * the number written here is what the vessel receives, and it holds. That is
+     * how the plant behaved before {@code SPEC.md} section 15's hardware existed,
+     * and it goes on behaving that way for players who have not built any.
+     *
+     * <p>The moment a {@code bwr:motor_feed_pump} or {@code bwr:turbine_feed_pump}
+     * is within reach of this reactor, the pumps own the channel and overwrite
+     * this every tick, exactly as the ECCS machines own the injection channel.
+     * That is the right answer — what reaches the vessel should be what the pumps
+     * actually delivered, against the head they were actually working into — but
+     * it means a feedwater manoeuvre that has to <i>hold</i> is written against
+     * the pump peripherals and not against this method. Command them, do not race
+     * them.
+     *
+     * <p>Feedwater temperature moves with the pumps too, and is not settable from
+     * here at all: the heater string is driven by total plant feedwater flow, so
+     * it is computed where that total is known.
+     */
     @LuaFunction(mainThread = true)
     public final void setFeedwaterFlow(double kgPerS) throws LuaException {
         core().setFeedwaterFlowKgPerS(finite("feedwater flow", kgPerS));

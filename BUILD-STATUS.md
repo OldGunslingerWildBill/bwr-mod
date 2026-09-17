@@ -1,5 +1,102 @@
 # Build Status
 
+## 2026-09-14 — RCIC TWL and HPCI placeable assemblies
+
+Added `bwr:rcic_twl` and `bwr:hpci_turbine`, imported from the supplied estimated
+STEP exteriors, with full-footprint placement, recipes, one-item harvesting,
+individual process ports and BWR pressurised tube routing. See
+[TURBINE-ASSEMBLIES.md](TURBINE-ASSEMBLIES.md) for the port guide and approximations.
+
+Verified in this pass:
+
+```text
+./gradlew.bat build
+153 tests, 153 passed, 0 failed, 901.0 s
+BUILD SUCCESSFUL in 15m 10s
+
+./gradlew.bat :mod:runTurbineGameTest :mod:build
+Turbine assembly runtime checks: 0 failure(s)
+Turbine plumbing PASS: rcic
+Turbine plumbing PASS: hpci
+All 1 required tests passed
+checkNoProtectionLogic: scanned 116 files in :mod, no protection logic present
+
+./gradlew.bat :mod:runTurbineModelCheck
+TURBINE MODEL CHECK PASS: 312 cell states and both inventory models
+```
+
+The single GameTest runs 96 placement/harvesting/port/persistence cases across the
+two machines and four rotations, plus connected-plant and shared-flow regressions.
+In controlled 80-second pump runs, RCIC delivered 2475.58 kg and HPCI 18940.49 kg
+from their tank; tank inventory agreed within its sub-kilogram remainder.
+Steam claims shared the nozzle ledger, with no second steam debit via the ECCS bus.
+
+The deterministic STEP importer verified 172 text assets; the asset audit reports
+238 valid JSON files, all 27 blocks covered and zero problems. The jar audit finds
+no bundled CC:Tweaked/Mekanism classes or development harness classes.
+`tools-render-turbines.py` produced a visually inspected preview from the exported
+cell meshes. Compiler output includes deprecated Minecraft API notes.
+
+The four new pure-Java tests cover empty/restricted steam supplies, independent
+steam and water pressures, and coastdown after supply loss. The shared ECCS bus
+also now clears its last owned channel on withdrawal/expiry; the game fixture tests
+that regression and leaves unowned manually controlled channels alone.
+
+The HPCI input models a turbine exterior only, so its pump-water association
+remains abstract as documented. These checks do not include a long-running player
+world or an actual chunk-unload soak test. Source dimensions are estimates.
+
+Older counts and limitations below refer to their dated passes.
+
+## 2026-08-25 — feedwater pumps, and a warning about the rest of this file
+
+**Everything below this section dates from 2026-08-16 and its counts are stale.** They were
+already stale before the feedwater work: this file says `124 tests` and `scanned 98 files in :mod`,
+but the close-out and playtest passes of 17–18 August took those to 142 and 106 without refreshing
+it. They have not been corrected wholesale here, because doing so would mean quoting figures for
+other people's work that this pass did not re-derive. Trust `HANDOFF.md` §5 and the commands below
+over any number further down.
+
+Run in this pass, `./gradlew clean build` from clean, each exit status captured with `$?` rather
+than through a pipe:
+
+```
+checkNoProtectionLogic: scanned 110 files in :mod, no protection logic present
+149 tests, 149 passed, 0 failed, 864.2 s
+BUILD SUCCESSFUL in 14m 32s
+PROBLEMS: 0
+OK: nothing forbidden is bundled.
+```
+
+`GRADLE_EXIT=0  ASSETS_EXIT=0  JAR_EXIT=0`. Zero compiler warnings across both modules; `:core`
+also compiles clean under `-Xlint:all -Werror`.
+
+What changed: the two reactor feed pumps of SPEC §15 now exist as hardware
+(`bwr:motor_feed_pump`, `bwr:turbine_feed_pump`), 7 new tests in
+`core/src/test/.../feedwater/FeedwaterPumpTest.java` take the suite from 142 to 149, and both pumps
+were added to the `runPeripheralCheck` harness so their Lua surface is actually invoked. Full
+description in `HANDOFF.md` §5 and `SPEC.md` §15.1.
+
+Three defects were found and fixed *in the course of writing this*, and two of them were in code
+that predates it:
+
+- `EccsPump.fromArray` restored `flowDemandFraction` and `speedFraction` raw from NBT, so a
+  non-finite value on disk reloaded as itself and went straight into the vessel's mass balance.
+  This affected the six existing ECCS machines, not only the new pumps. Both fields clamp now.
+  Same shape as the two NaN-on-restore defects the August audit confirmed.
+- The feedwater suction draw floored to whole millibuckets, which delivers **nothing at all** below
+  20 kg/s — feedwater would have worked at full demand and silently failed during a startup. The
+  sub-kilogram remainder is carried between ticks, as `CondensateStorageTankBlockEntity` already
+  did.
+- A turbine feed pump claimed the relief channel only while its drive steam was non-zero, so a pump
+  coasting to a stop stopped claiming and left the core holding its last relief flow forever. It
+  claims on drive type now, which is why the emergency machines never had this bug.
+
+**Not run in this pass:** none of the five `run*` tasks. `runPeripheralCheck` in particular now has
+two new probe targets that have never executed. See `HANDOFF.md` §9.
+
+---
+
 Last updated: 2026-08-16, immediately after the audit-fix pass. **The previous version of this
 file described the tree as it stood on 2026-08-15 and is wrong in most of its details** — an audit
 found 102 defects across the tree (37.5k lines of production Java, 45.5k with the tests), all but

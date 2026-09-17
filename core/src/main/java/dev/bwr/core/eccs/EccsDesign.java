@@ -32,30 +32,13 @@ package dev.bwr.core.eccs;
  * <p>Pure data and pure Java. Immutable, so the catalogue constants can be
  * shared freely.
  */
-public final class EccsDesign {
+public final class EccsDesign implements PumpDesign {
 
-    /** Litres, and therefore kilograms of cold water, per US gallon. */
-    public static final double KG_PER_GALLON = 3.785411784;
-
-    /** Convert a pump rating in US gallons per minute to kg/s of cold water. */
-    public static double kgPerSecondFromGpm(double gpm) {
-        return gpm * KG_PER_GALLON / 60.0;
-    }
-
-    /** What turns the shaft. This is the single most consequential property here. */
-    public enum Drive {
-        /**
-         * A steam turbine fed from the reactor itself. Needs no electrical
-         * supply of any kind, consumes steam, and loses power as the vessel
-         * depressurises.
-         */
-        STEAM_TURBINE,
-        /**
-         * An electric motor. Simple, controllable, indifferent to reactor
-         * pressure — and completely dead without a bus behind it.
-         */
-        ELECTRIC_MOTOR
-    }
+    // The Drive enum used to be declared here. It now lives on PumpDesign,
+    // because a reactor feed pump makes exactly the same choice between a motor
+    // and a steam turbine and there is no reason for two enums to say so. It is
+    // inherited, so EccsDesign.Drive still names it and every existing call site
+    // is untouched.
 
     /** Where the water goes, which decides what it does for an uncovered core. */
     public enum Delivery {
@@ -125,7 +108,7 @@ public final class EccsDesign {
     public static final EccsDesign RCIC = new Builder("rcic", "RCIC")
             .drive(Drive.STEAM_TURBINE)
             .delivery(Delivery.VESSEL_INJECTION)
-            .curve(new PumpCurve(1500.0, kgPerSecondFromGpm(700.0), 1025.0))
+            .curve(new PumpCurve(1500.0, PumpDesign.kgPerSecondFromGpm(700.0), 1025.0))
             .turbine(6.0, 0.15)
             .startup(30.0)
             .build();
@@ -138,7 +121,7 @@ public final class EccsDesign {
     public static final EccsDesign HPCI = new Builder("hpci", "HPCI")
             .drive(Drive.STEAM_TURBINE)
             .delivery(Delivery.VESSEL_INJECTION)
-            .curve(new PumpCurve(1500.0, kgPerSecondFromGpm(5000.0), 1025.0))
+            .curve(new PumpCurve(1500.0, PumpDesign.kgPerSecondFromGpm(5000.0), 1025.0))
             .turbine(25.0, 0.25)
             .startup(25.0)
             .build();
@@ -155,7 +138,7 @@ public final class EccsDesign {
     public static final EccsDesign HPCS = new Builder("hpcs", "HPCS")
             .drive(Drive.ELECTRIC_MOTOR)
             .delivery(Delivery.CORE_SPRAY)
-            .curve(new PumpCurve(1207.0, kgPerSecondFromGpm(6350.0), 200.0))
+            .curve(new PumpCurve(1207.0, PumpDesign.kgPerSecondFromGpm(6350.0), 200.0))
             .motorWatts(2.6e6)
             .startup(27.0)
             .build();
@@ -168,7 +151,7 @@ public final class EccsDesign {
     public static final EccsDesign LPCS = new Builder("lpcs", "LPCS")
             .drive(Drive.ELECTRIC_MOTOR)
             .delivery(Delivery.CORE_SPRAY)
-            .curve(new PumpCurve(300.0, kgPerSecondFromGpm(6350.0), 122.0))
+            .curve(new PumpCurve(300.0, PumpDesign.kgPerSecondFromGpm(6350.0), 122.0))
             .motorWatts(0.7e6)
             .startup(40.0)
             .build();
@@ -185,7 +168,7 @@ public final class EccsDesign {
     public static final EccsDesign RHR = new Builder("rhr", "RHR / LPCI")
             .drive(Drive.ELECTRIC_MOTOR)
             .delivery(Delivery.VESSEL_INJECTION)
-            .curve(new PumpCurve(230.0, kgPerSecondFromGpm(7100.0), 20.0))
+            .curve(new PumpCurve(230.0, PumpDesign.kgPerSecondFromGpm(7100.0), 20.0))
             .motorWatts(0.6e6)
             .startup(40.0)
             .poolCooling(true)
@@ -209,7 +192,7 @@ public final class EccsDesign {
     public static final EccsDesign SLC = new Builder("slc", "SLC")
             .drive(Drive.ELECTRIC_MOTOR)
             .delivery(Delivery.VESSEL_INJECTION)
-            .constantDisplacement(kgPerSecondFromGpm(43.0), 1400.0)
+            .constantDisplacement(PumpDesign.kgPerSecondFromGpm(43.0), 1400.0)
             .motorWatts(40.0e3)
             .startup(5.0)
             .boronPpmPerMinute(14.0)
@@ -330,19 +313,7 @@ public final class EccsDesign {
      */
     public double ratedShaftPowerWatts() {
         double dpPsi = curve != null ? curve.ratedHeadPsi() : maximumDischargePsi;
-        return hydraulicPowerWatts(ratedFlowKgPerS(), dpPsi) / pumpEfficiency;
-    }
-
-    /**
-     * Hydraulic power delivered by moving a mass flow of cold water across a
-     * pressure difference, watts. {@code P = Q_volumetric * dp}.
-     */
-    public static double hydraulicPowerWatts(double flowKgPerS, double differentialPsi) {
-        if (!(flowKgPerS > 0.0) || !(differentialPsi > 0.0)) {
-            return 0.0;
-        }
-        final double coldWaterDensityKgPerM3 = 1000.0;
-        return (flowKgPerS / coldWaterDensityKgPerM3) * differentialPsi * SteamTurbineDrive.PA_PER_PSI;
+        return PumpDesign.hydraulicPowerWatts(ratedFlowKgPerS(), dpPsi) / pumpEfficiency;
     }
 
     @Override

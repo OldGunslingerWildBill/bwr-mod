@@ -530,7 +530,22 @@ Two buildable options, mirroring the ECCS tradeoff so the choice feels consisten
 
 **The coupling worth building:** turbine-driven feedwater ties level control to steam production. A pressure transient disturbs feed flow → disturbs level → disturbs power. That coupled loop is where a lot of plant "personality" comes from, and it means the two feedwater options genuinely play differently rather than being a cosmetic choice.
 
-**Level control** should be a PID-style three-element scheme (level + steam flow + feed flow) if you want realism, or simple level-error control for v1. Note that level *swell and shrink* on pressure transients — a pressure drop flashes water to steam and level rises even as inventory falls — which is a classic operator trap worth reproducing.
+**Level control is the player's, not the mod's.** An earlier draft of this section said level control "should be a PID-style three-element scheme (level + steam flow + feed flow) if you want realism, or simple level-error control for v1." That line predates section 0's rule and directly contradicts it: a three-element controller is exactly the judgement the mod does not make. It is corrected here rather than deleted, because it is the sort of eminently reasonable thing a fresh reader will propose again. The mod ships the pumps; the player writes the loop in Lua, against `bwr_motor_feed_pump` and `bwr_turbine_feed_pump`.
+
+Note that level *swell and shrink* on pressure transients — a pressure drop flashes water to steam and level rises even as inventory falls — which is a classic operator trap worth reproducing.
+
+### 15.1 As built
+
+Both pumps exist, as `bwr:motor_feed_pump` and `bwr:turbine_feed_pump`. They are two registered blocks sharing one block class and one block entity, carrying different `FeedwaterDesign` nameplates — the same pattern the six ECCS machines use, and for the same reason: everything separating them is a number.
+
+- **They run on the shared pump model.** `EccsPump`, `PumpCurve` and `SteamTurbineDrive` were written for emergency cooling and named for it, but nothing in them is about emergency cooling. `EccsPump` now takes a `PumpDesign` interface that both `EccsDesign` and `FeedwaterDesign` implement. There is one pump model in this codebase and it is meant to stay one.
+- **Half capacity each,** 15,400 gpm, so two make a plant and losing one halves feedwater rather than ending it. Shutoff head 1400 psi against a 1025 psig dome, so a feed pump genuinely stops delivering into an over-pressurised vessel with nothing refusing anything.
+- **The motor is 13 MW** — derived from the duty point, not chosen — which is a little under 1 MFE/t per pump and makes feedwater the largest electrical load in the mod. That is correct: it is the largest load in a real plant, and it is the entire reason the turbine-driven alternative exists.
+- **The turbine takes 24 kg/s of admission steam,** about 1.2% of rated steam flow, and fades to nothing as the vessel depressurises because the wheel stops making enough work to overcome its own windage. No cutoff pressure is written anywhere.
+
+**There is no condenser block and there is not going to be one.** The player's Mekanism turbine is the condenser: it already receives this plant's steam through the turbine steam outlet, and the water it hands back is the condensate. A feed pump exposes a plain NeoForge fluid tank on every face, so anything that moves water can fill it, and falls back to a condensate storage tank within 24 blocks — which is also how a real plant starts up, on CST suction before there is any steam to condense. The turbine-driven pump's drive steam leaves the vessel through the same channel and condenses in the same place; unlike RCIC and HPCI it is deliberately **not** dumped into the suppression pool, because those run for minutes into a heat sink sized for it and a feed pump turbine runs continuously at power.
+
+**Feedwater heating is modelled, not built.** There is no heater block, so `FeedwaterHeating` interpolates final feedwater temperature between the condensate temperature at no flow and 215.6 °C at rated flow, on the grounds that extraction steam scales with turbine load and therefore with feedwater flow. This is load-bearing rather than cosmetic: feeding 32 °C condensate at rated flow costs roughly a quarter of rated thermal power in heating duty alone, so a plant with no heater string cannot reach rated power — which is why every real plant has one. It also produces **loss of feedwater heating** for free, where cutting feedwater flow cuts feedwater temperature, adds subcooling, and takes power *up*. A heater block would make this explicit hardware later.
 
 ---
 

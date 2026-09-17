@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "T": {
+      "item": "bwr:pressurised_tube"
+    },
+    "C": {
+      "item": "minecraft:copper_block"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    }
+  },
+  "pattern": [
+    "TCT",
+    "VPV",
+    "TIT"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:turbine_feed_pump"
+  }
+}

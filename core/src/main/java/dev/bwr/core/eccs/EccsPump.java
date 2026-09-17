@@ -5,7 +5,7 @@ import dev.bwr.core.thermal.Saturation;
 /**
  * One emergency core cooling pump, as a piece of machinery.
  *
- * <p>Give it a {@link EccsDesign}, tell it each tick what the vessel pressure
+ * <p>Give it a {@link PumpDesign}, tell it each tick what the vessel pressure
  * is, what its drive has available and how much water its suction can supply,
  * and it reports what it actually delivers. All of the interesting behaviour is
  * a consequence of the numbers rather than of a rule:
@@ -40,7 +40,7 @@ public final class EccsPump {
     /** Below this the pump is treated as stopped rather than crawling. */
     private static final double SPEED_DEADBAND = 1.0e-4;
 
-    private final EccsDesign design;
+    private final PumpDesign design;
 
     // --- commanded state ---------------------------------------------
     private boolean running;
@@ -53,6 +53,8 @@ public final class EccsPump {
     private double suctionTemperatureC = 32.0;
     private double electricalPowerAvailableWatts;
     private double suctionFlowLimitKgPerS = Double.MAX_VALUE;
+    private double steamSupplyLimitKgPerS = Double.MAX_VALUE;
+    private double steamInletPressurePsig = Double.NaN;
 
     // --- state -------------------------------------------------------
     private double speedFraction;
@@ -64,14 +66,14 @@ public final class EccsPump {
     private double electricalDemandWatts;
     private double achievableSpeedFraction;
 
-    public EccsPump(EccsDesign design) {
+    public EccsPump(PumpDesign design) {
         if (design == null) {
             throw new IllegalArgumentException("design must not be null");
         }
         this.design = design;
     }
 
-    public EccsDesign design() {
+    public PumpDesign design() {
         return design;
     }
 
@@ -164,6 +166,20 @@ public final class EccsPump {
         this.suctionFlowLimitKgPerS = Math.max(0.0, kgPerS);
     }
 
+    /** Physical supply at a piped turbine inlet. Older machines retain the design limit. */
+    public void setSteamSupplyLimitKgPerS(double kgPerS) {
+        steamSupplyLimitKgPerS = Double.isFinite(kgPerS) ? Math.max(0.0, kgPerS) : 0.0;
+    }
+
+    /** Independent drive pressure; water discharge pressure still sets the pump load. */
+    public void setSteamInletPressurePsig(double psig) {
+        steamInletPressurePsig = Double.isFinite(psig) ? Math.max(0.0, psig) : 0.0;
+    }
+
+    private double driveInletPressurePsig() {
+        return Double.isNaN(steamInletPressurePsig) ? vesselPressurePsig : steamInletPressurePsig;
+    }
+
     // -----------------------------------------------------------------
     // The step
     // -----------------------------------------------------------------
@@ -200,13 +216,13 @@ public final class EccsPump {
         // steam a turbine drive is charged for -- cannot disagree.
         shaftPowerWatts = (speedFraction > 0.0) ? shaftPowerAtSpeed(dp, speedFraction) : 0.0;
 
-        if (design.drive() == EccsDesign.Drive.STEAM_TURBINE) {
+        if (design.drive() == PumpDesign.Drive.STEAM_TURBINE) {
             double demand = SteamTurbineDrive.steamDemandKgPerS(shaftPowerWatts,
-                    Saturation.psiaFromPsig(vesselPressurePsig),
+                    Saturation.psiaFromPsig(driveInletPressurePsig()),
                     Saturation.psiaFromPsig(exhaustPressurePsig),
                     design.turbineEfficiency());
             steamDemandKgPerS = Double.isFinite(demand)
-                    ? Math.min(demand, design.maximumSteamKgPerS()) : 0.0;
+                    ? Math.min(demand, Math.min(design.maximumSteamKgPerS(), steamSupplyLimitKgPerS)) : 0.0;
             electricalDemandWatts = 0.0;
         } else {
             steamDemandKgPerS = 0.0;
@@ -254,9 +270,9 @@ public final class EccsPump {
      * being tested, and is deliberately not deducted here.
      */
     private double availableShaftPowerWatts() {
-        if (design.drive() == EccsDesign.Drive.STEAM_TURBINE) {
-            return SteamTurbineDrive.shaftPowerWatts(design.maximumSteamKgPerS(),
-                    Saturation.psiaFromPsig(vesselPressurePsig),
+        if (design.drive() == PumpDesign.Drive.STEAM_TURBINE) {
+            return SteamTurbineDrive.shaftPowerWatts(Math.min(design.maximumSteamKgPerS(), steamSupplyLimitKgPerS),
+                    Saturation.psiaFromPsig(driveInletPressurePsig()),
                     Saturation.psiaFromPsig(exhaustPressurePsig),
                     design.turbineEfficiency());
         }
@@ -309,7 +325,7 @@ public final class EccsPump {
      */
     private double shaftPowerAtSpeed(double dp, double speed) {
         double q = deliveredFlowKgPerS(dp, speed);
-        return EccsDesign.hydraulicPowerWatts(q, workingDifferentialPsi(dp, q, speed))
+        return PumpDesign.hydraulicPowerWatts(q, workingDifferentialPsi(dp, q, speed))
                 / design.pumpEfficiency()
                 + windagePowerWatts(speed);
     }
@@ -493,13 +509,39 @@ public final class EccsPump {
         return new double[]{running ? 1.0 : 0.0, flowDemandFraction, speedFraction};
     }
 
-    /** Restore from {@link #toArray()}. */
+    /**
+     * Restore from {@link #toArray()}.
+     *
+     * <p><b>Sanitised on the way in, not merely on the way out.</b>
+     * {@link #setFlowDemandFraction} refuses a non-finite demand and clamps the
+     * rest, but that is no help at all to a value that is already on disk: this
+     * method is the other door into the same two fields, and it used to assign
+     * both of them raw. A NaN written by an older build — or a fraction outside
+     * 0..1 from a hand-edited save — came back as itself, and from there it is
+     * one step into the plant. {@code step} takes
+     * {@code min(flowDemandFraction, ...)}, which is NaN, drives
+     * {@code speedFraction} to NaN, and the flow that reaches the vessel's mass
+     * balance is NaN with it: level, pressure and every reading downstream of
+     * them become dashes with nothing to say where it started.
+     *
+     * <p>Both fields are fractions, so both clamp. A non-finite value is taken
+     * as zero rather than propagated — a pump that reloads stopped is a visible,
+     * recoverable problem, and a pump that reloads poisoned is neither.
+     */
     public void fromArray(double[] a) {
         if (a == null || a.length < 3) {
             return;
         }
         running = a[0] != 0.0;
-        flowDemandFraction = a[1];
-        speedFraction = a[2];
+        flowDemandFraction = clampFraction(a[1]);
+        speedFraction = clampFraction(a[2]);
+    }
+
+    /** A saved fraction as a usable 0..1, with a non-finite value taken as zero. */
+    private static double clampFraction(double value) {
+        if (!Double.isFinite(value)) {
+            return 0.0;
+        }
+        return Math.min(1.0, Math.max(0.0, value));
     }
 }

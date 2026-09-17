@@ -1,5 +1,34 @@
 # Agent Handoff
 
+## 2026-09-14 update: placeable RCIC and HPCI CAD assemblies
+
+The new blocks are `bwr:rcic_twl` (3 × 3 × 2) and `bwr:hpci_turbine`
+(4 × 5 × 3). Each item places its full footprint; only the origin cell owns the
+pump and peripheral. Existing ECCS and feedwater block IDs are preserved.
+Read [TURBINE-ASSEMBLIES.md](TURBINE-ASSEMBLIES.md) for placement, port routing,
+source provenance, the turbine-only HPCI water association, and verification commands.
+
+Geometry is generated from the supplied estimated STEP exteriors by
+`tools-import-turbines.py`, including source colors, individual parts, per-cell OBJ
+models, collision manifests, and blockstates. The RCIC water discharge uses the
+outer upward grid cell so its tube does not join the adjacent steam riser.
+The supplied HPCI exhaust blanking cover is omitted in the connected configuration.
+
+`AssemblyPlumbing` follows separate, bounded tube circuits. Assemblies claim steam
+already discharged through a live RPV nozzle and report zero additional steam draw
+to the ECCS bus. RCIC takes water through its physical suction/discharge ports.
+Exhaust must reach a quencher in the basin actually owned by a formed pool controller.
+All operation still follows the player's redstone/Lua commands.
+
+The shared ECCS bus now clears the final rate when its last contributor disconnects
+or expires; previously it could leave injection/feedwater/relief latched in the core.
+New GameTest coverage includes this regression, physical connections, tank mass,
+shared nozzle claims, placement, obstruction, harvesting, rotation and NBT restoration.
+`runTurbineModelCheck` checks 312 cell states and both inventory models in the client.
+
+For current results, use the newest section of `BUILD-STATUS.md`; numerical counts
+in the older handoff sections below are historical.
+
 **You are picking up a Minecraft 1.21.1 / NeoForge mod that simulates a boiling water reactor.**
 This file is the entry point for an agent starting cold. Read it before touching anything; it
 exists to stop you rediscovering things that already cost hours.
@@ -125,14 +154,25 @@ Two Gradle modules, and the split is enforced by the compiler rather than by dis
 
 ```
 core/   pure Java physics. ZERO Minecraft on the classpath. MIT licensed.
-        37 main + 20 test files; 46 classes once named member types are counted.
-        boundary  eccs  fuel  harness  instrument  kinetics  nodal  poison  pool  thermal
+        40 main + 24 test files.
+        boundary  eccs  feedwater  fuel  harness  instrument  kinetics  nodal
+        poison  pool  thermal
 
-mod/    NeoForge integration. MPL-2.0 licensed. 98 files, and NO test source set —
+mod/    NeoForge integration. MPL-2.0 licensed. 110 files, and NO test source set —
         mod/src/ contains 'main' and nothing else.
-        damage  devtest  eccs  flow  fuel  gui (+ gui/client, gui/net)  mekanism
-        peripheral  reactor  registry  rods  steam  suppression
+        damage  devtest  eccs  feedwater  flow  fuel  gui (+ gui/client, gui/net)
+        mekanism  peripheral  reactor  registry  rods  steam  suppression
 ```
+
+**There is one pump model, and it is meant to stay one.** `core/eccs/` holds
+`PumpCurve`, `SteamTurbineDrive` and `EccsPump` — a general centrifugal pump with
+a head-flow curve and a choice of motor or steam-turbine drive. Nothing in
+`EccsPump` is about emergency cooling; it was simply written for it first and
+named accordingly. It takes a `PumpDesign` interface, and both `EccsDesign` (the
+six emergency machines) and `feedwater/FeedwaterDesign` (the two reactor feed
+pumps) implement it. If you are adding another pump, add a nameplate. Do not fork
+the model: two copies drift, and the second copy is always the one that misses
+the fix.
 
 `mod/` has grown: the GUI split into `gui/client` (screens and widgets) and `gui/net` (the menu
 sync and command payloads), and `devtest/` holds the two-class peripheral runtime harness that is
@@ -283,6 +323,46 @@ Then the physics that was written but not wired:
   startup on period with no period.
 - **`VesselState.canHoldPressure()` has a consumer.** An open head is a steam discharge path.
   Measured: head on, 20.0 → 29.5 psig over ten minutes; head off, pinned at 0.0 psig.
+
+### Feedwater is hardware now, and it was not
+
+`ReactorCore` has taken a feedwater flow and a feedwater temperature since it was
+written, and until now nothing in the world drove either: a Lua program set a
+kg/s number on the reactor peripheral and the vessel believed it. The normal
+level control path — the one whose loss starts most level transients — had no
+pump anywhere. That is the same shape as the defects section 5 lists above, in
+reverse: physics with no hardware attached to it.
+
+Two blocks now exist, `bwr:motor_feed_pump` and `bwr:turbine_feed_pump`, half
+capacity each so two make a plant. They report into `ReactorEccsBus` on a new
+feedwater channel, which — like every other channel there — is only written if
+some machine has claimed it, so `ReactorPeripheral.setFeedwaterFlow` still works
+exactly as before for a player who has not built any of this.
+
+Three things about it are worth knowing before you change anything:
+
+- **There is no condenser block, deliberately.** The player's Mekanism turbine is
+  the condenser. Feed pumps expose a fluid tank on every face for the condensate
+  return, and fall back to a condensate storage tank within 24 blocks. The
+  turbine-driven pump's drive steam leaves the vessel and condenses in the same
+  place the main steam does — it is **not** dumped into the suppression pool the
+  way the RCIC and HPCI exhausts are, because those run for minutes into a heat
+  sink sized for it and a feed pump turbine runs continuously at power.
+- **Feedwater heating is modelled rather than built.** `FeedwaterHeating`
+  interpolates final feedwater temperature from the condensate temperature at no
+  flow to 215.6 °C at rated flow. This is load-bearing: feeding 32 °C condensate
+  at rated flow costs about a quarter of rated thermal power in heating duty, so
+  without it a plant simply cannot reach rated power. It also gives loss of
+  feedwater heating for free — a transient where power goes *up*.
+- **The motor-driven pump is 13 MW, a little under 1 MFE/t.** That is derived
+  from the duty point rather than chosen, and it makes feedwater comfortably the
+  largest electrical load in the mod. It is supposed to be. That cost is the
+  whole reason the turbine-driven pump is worth building.
+
+Nothing in any of it controls level. There is no level element, no steam flow
+element, no three-element scheme, no feed pump trip and no runback. SPEC §15 used
+to ask for a three-element controller; §15 now records why that line was wrong
+and left the loop to the player.
 
 ### What has actually run, and what has not
 

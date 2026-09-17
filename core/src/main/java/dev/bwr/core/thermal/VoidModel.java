@@ -167,7 +167,8 @@ public final class VoidModel {
      * therefore where boiling starts.
      */
     public static final double DEFAULT_FEEDWATER_ENTHALPY_KJ_PER_KG =
-            Saturation.subcooledLiquidEnthalpyKJPerKg(215.6);
+            Saturation.subcooledLiquidEnthalpyKJPerKg(
+                    PhysicalConstants.RATED_FEEDWATER_TEMPERATURE_C);
 
     /**
      * Default recirculation loop transit time, seconds. Water leaving the core

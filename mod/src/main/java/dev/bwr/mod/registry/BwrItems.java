@@ -67,10 +67,18 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.RHR_PUMP);
     public static final DeferredItem<BlockItem> SLC_PUMP =
             ITEMS.registerSimpleBlockItem(BwrBlocks.SLC_PUMP);
+    public static final DeferredItem<BlockItem> RCIC_TWL =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.RCIC_TWL);
+    public static final DeferredItem<BlockItem> HPCI_TURBINE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.HPCI_TURBINE);
     public static final DeferredItem<BlockItem> ADS_CONTROLLER =
             ITEMS.registerSimpleBlockItem(BwrBlocks.ADS_CONTROLLER);
     public static final DeferredItem<BlockItem> CONDENSATE_STORAGE_TANK =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONDENSATE_STORAGE_TANK);
+    public static final DeferredItem<BlockItem> MOTOR_FEED_PUMP =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.MOTOR_FEED_PUMP);
+    public static final DeferredItem<BlockItem> TURBINE_FEED_PUMP =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.TURBINE_FEED_PUMP);
 
     /**
      * One fuel bundle. Not a block: assemblies live in inventories and get
@@ -109,8 +117,12 @@ public final class BwrItems {
                         output.accept(LPCS_PUMP.get());
                         output.accept(RHR_PUMP.get());
                         output.accept(SLC_PUMP.get());
+                        output.accept(RCIC_TWL.get());
+                        output.accept(HPCI_TURBINE.get());
                         output.accept(ADS_CONTROLLER.get());
                         output.accept(CONDENSATE_STORAGE_TANK.get());
+                        output.accept(MOTOR_FEED_PUMP.get());
+                        output.accept(TURBINE_FEED_PUMP.get());
                         // A fresh bundle of every fuel the install knows, each
                         // at its own nominal enrichment. Creative-mode players
                         // get the whole fuel table without having to build the

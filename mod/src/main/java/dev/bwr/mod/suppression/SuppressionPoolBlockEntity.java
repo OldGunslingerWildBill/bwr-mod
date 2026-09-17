@@ -243,6 +243,17 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
 
     /** Submerged quenchers found in this pool's search box. */
     private final List<BlockPos> quenchers = new ArrayList<>();
+    private final LongOpenHashSet basinWater = new LongOpenHashSet();
+
+    /** Membership of the basin this controller actually measured. */
+    public boolean ownsQuencher(BlockPos pos) {
+        return formed && level != null && level.isLoaded(pos) && level.isLoaded(pos.above())
+                && basinWater.contains(pos.above().asLong())
+                && SuppressionPoolQuencherBlock.isSubmerged(level, pos);
+    }
+
+    /** Remove a disconnected machine's exhaust without waiting for report expiry. */
+    public void withdrawSteam(BlockPos source) { steamReports.remove(source); }
 
     /**
      * Relief steam that reached the pool this tick but was not taken up by the
@@ -792,6 +803,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      * same answers.
      */
     private Basin surveyBasin(Level level) {
+        basinWater.clear();
         BlockPos origin = getBlockPos();
         List<BlockPos> seeds = new ArrayList<>();
         for (BlockPos p : BlockPos.betweenClosed(
@@ -844,6 +856,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             Basin basin = fillBasin(level, origin, seed, body);
             if (basin.problem() == null) {
                 if (basin.waterBlocks() >= MIN_WATER_BLOCKS) {
+                    basinWater.addAll(body);
                     return basin;
                 }
                 // A complete body, and too small to be anybody's suppression

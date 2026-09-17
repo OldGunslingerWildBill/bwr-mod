@@ -167,6 +167,27 @@ public final class PeripheralRuntimeCheck {
     private static final BlockPos ECCS_PUMP = new BlockPos(40, 150, 48);
     private static final BlockPos ADS_CONTROLLER = new BlockPos(44, 150, 40);
     private static final BlockPos CONDENSATE_TANK = new BlockPos(44, 150, 44);
+
+    /**
+     * The two reactor feed pumps, out among the other unattached satellites.
+     *
+     * <p>Unattached for the same reason {@link #ECCS_PUMP} is: the question the
+     * probe pass asks is whether every {@code @LuaFunction} on the surface can
+     * actually be invoked through the real capability lookup and answer without
+     * throwing, and a pump with no reactor behind it has to manage that too. A
+     * feed pump that has not found a reactor turns, draws power and delivers
+     * nothing, and every readout on it still has to be a number.
+     *
+     * <p>Both drives are probed rather than one. They share a block entity class
+     * and differ only in a nameplate, but that nameplate decides which branch of
+     * the drive model runs — the motor one divides by an electrical supply, the
+     * turbine one by an expansion ratio that is zero on a cold vessel — and a
+     * cold, unattached plant is exactly the state that makes both denominators
+     * zero at once. Probing only one would leave the other's arithmetic never
+     * having executed.
+     */
+    private static final BlockPos MOTOR_FEED_PUMP = new BlockPos(44, 150, 48);
+    private static final BlockPos TURBINE_FEED_PUMP = new BlockPos(48, 150, 48);
     /**
      * Above the suppression pool, so {@code revalidateDischarge} walks down and
      * finds standing water — the valve reports itself submerged and the happy
@@ -265,6 +286,7 @@ public final class PeripheralRuntimeCheck {
             TURBINE_OUTLET, ECCS_PUMP, ADS_CONTROLLER, CONDENSATE_TANK,
             RELIEF_VALVE, MSIV, RECIRCULATION_PUMP,
             STEAM_OUTLET, LONE_STEAM_OUTLET,
+            MOTOR_FEED_PUMP, TURBINE_FEED_PUMP,
     };
 
     private static final String[] PROBE_LABELS = {
@@ -276,6 +298,8 @@ public final class PeripheralRuntimeCheck {
             "recirculation pump (bound to the formed reactor)",
             "RPV steam nozzle (in the formed vessel shell, steam line welded on)",
             "RPV steam nozzle (NEVER FORMED, no vessel and no line)",
+            "motor-driven feed pump (unattached)",
+            "turbine-driven feed pump (unattached, cold vessel)",
     };
 
     static {
@@ -994,6 +1018,13 @@ public final class PeripheralRuntimeCheck {
         level.setBlock(CONDENSATE_TANK,
                 BwrBlocks.CONDENSATE_STORAGE_TANK.get().defaultBlockState(), 3);
 
+        // Feedwater, also unattached. These are the normal level control path
+        // rather than an emergency system, but the probe pass does not care what
+        // a machine is for — only that every method on its Lua surface answers.
+        level.setBlock(MOTOR_FEED_PUMP, BwrBlocks.MOTOR_FEED_PUMP.get().defaultBlockState(), 3);
+        level.setBlock(TURBINE_FEED_PUMP,
+                BwrBlocks.TURBINE_FEED_PUMP.get().defaultBlockState(), 3);
+
         // The two player-actuated valves. Both had a documented Lua path and no
         // peripheral registered for it until now, so neither had ever been
         // constructed once.
@@ -1016,10 +1047,11 @@ public final class PeripheralRuntimeCheck {
                         + "pool controller at {}, unformed pool controller at {}, outlet at {}, "
                         + "relief valve at {}, MSIV at {}, recirculation pump at {}, "
                         + "RPV steam nozzle in the vessel wall at {} with a tube on {}, "
-                        + "lone RPV steam nozzle at {}",
+                        + "lone RPV steam nozzle at {}, feed pumps at {} and {}",
                 CONTROLLER, LONE_CONTROLLER, POOL_CONTROLLER, LONE_POOL_CONTROLLER,
                 TURBINE_OUTLET, RELIEF_VALVE, MSIV, RECIRCULATION_PUMP,
-                STEAM_OUTLET, STEAM_OUTLET_TUBE, LONE_STEAM_OUTLET);
+                STEAM_OUTLET, STEAM_OUTLET_TUBE, LONE_STEAM_OUTLET,
+                MOTOR_FEED_PUMP, TURBINE_FEED_PUMP);
     }
 
     private static void fill(ServerLevel level, BlockPos min, BlockPos max, BlockState state) {

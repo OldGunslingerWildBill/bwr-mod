@@ -1,0 +1,8629 @@
+{
+  "schema_version": 1,
+  "id": "rcic_twl",
+  "width": 3,
+  "height": 3,
+  "depth": 2,
+  "root": [
+    0,
+    0,
+    0
+  ],
+  "cell_count": 18,
+  "state_cell_count": 60,
+  "index_formula": "x + width * (z + depth * y)",
+  "coordinates": {
+    "units": "blocks (1 block = 1000 mm)",
+    "x": "EAST",
+    "y": "UP",
+    "z": "SOUTH",
+    "source_origin_mm": [
+      0,
+      0,
+      0
+    ],
+    "north_rotation": 0,
+    "east_rotation": 90,
+    "south_rotation": 180,
+    "west_rotation": 270,
+    "east_offset_transform": "(-z, y, x)"
+  },
+  "source": {
+    "file": "RCIC_TWL_Exterior.step",
+    "sha256": "a6d411160b4a633fd7681ffad49aef27990e8938864beb3c850ed71010f05f66",
+    "product": "RCIC_TWL_Exterior_ESTIMATED_3000mm_skid",
+    "parts": 405,
+    "units": "mm",
+    "bounds_mm": [
+      0.0,
+      6.25,
+      0.0,
+      3000.0,
+      2345.9375,
+      2000.0
+    ],
+    "estimated_scale": true,
+    "scale_provenance": "Supplied STEP product is explicitly ESTIMATED; dimensions are visualization estimates, not verified engineering measurements. Absolute millimetres converted at 1000 mm per block without rescaling.",
+    "transform": "identity; absolute BREP vertices, including 6.25 mm bottom clearance"
+  },
+  "port_selection": "Nearest projected exterior face center, clamped to envelope; RCIC discharge uses x=2 to leave a gap between auto-connecting water and steam risers.",
+  "ports": [
+    {
+      "name": "Steam_inlet_flange",
+      "cell": 15,
+      "offset": [
+        0,
+        2,
+        1
+      ],
+      "face": "UP",
+      "source_parts": [
+        "Steam_inlet_flange_00_123",
+        "Steam_inlet_flange_01_124",
+        "Steam_inlet_flange_02_125",
+        "Steam_inlet_flange_03_126",
+        "Steam_inlet_flange_04_127",
+        "Steam_inlet_flange_05_128",
+        "Steam_inlet_flange_06_129",
+        "Steam_inlet_flange_07_130"
+      ],
+      "source_center_mm": [
+        687.5,
+        2250.0,
+        1000.0
+      ],
+      "source_surface_center_mm": [
+        687.5,
+        2281.25,
+        1000.0
+      ],
+      "face_center": [
+        0.5,
+        3,
+        1.5
+      ],
+      "cell_local_face_center": [
+        0.5,
+        1,
+        0.5
+      ],
+      "adapter_centerline": [
+        [
+          0.6875,
+          2.25,
+          1.0
+        ],
+        [
+          0.6875,
+          2.640625,
+          1.0
+        ],
+        [
+          0.5,
+          2.640625,
+          1.0
+        ],
+        [
+          0.5,
+          2.640625,
+          1.5
+        ],
+        [
+          0.5,
+          3,
+          1.5
+        ]
+      ],
+      "adapter_width": 0.18,
+      "connector_width": 0.32,
+      "closed_source_cover_removed": false,
+      "note": "Adapter added for centered Minecraft tube connection."
+    },
+    {
+      "name": "Pump_discharge_flange",
+      "cell": 17,
+      "offset": [
+        2,
+        2,
+        1
+      ],
+      "face": "UP",
+      "source_parts": [
+        "Pump_discharge_flange_00_81",
+        "Pump_discharge_flange_01_82",
+        "Pump_discharge_flange_02_83",
+        "Pump_discharge_flange_03_84",
+        "Pump_discharge_flange_04_85",
+        "Pump_discharge_flange_05_86",
+        "Pump_discharge_flange_06_87",
+        "Pump_discharge_flange_07_88"
+      ],
+      "source_center_mm": [
+        1937.5,
+        2156.25,
+        1000.0
+      ],
+      "source_surface_center_mm": [
+        1937.5,
+        2187.5,
+        1000.0
+      ],
+      "face_center": [
+        2.5,
+        3,
+        1.5
+      ],
+      "cell_local_face_center": [
+        0.5,
+        1,
+        0.5
+      ],
+      "adapter_centerline": [
+        [
+          1.9375,
+          2.15625,
+          1.0
+        ],
+        [
+          1.9375,
+          2.59375,
+          1.0
+        ],
+        [
+          2.5,
+          2.59375,
+          1.0
+        ],
+        [
+          2.5,
+          2.59375,
+          1.5
+        ],
+        [
+          2.5,
+          3,
+          1.5
+        ]
+      ],
+      "adapter_width": 0.18,
+      "connector_width": 0.32,
+      "closed_source_cover_removed": false,
+      "note": "Adapter added for centered Minecraft tube connection."
+    },
+    {
+      "name": "Pump_suction_flange",
+      "cell": 11,
+      "offset": [
+        2,
+        1,
+        1
+      ],
+      "face": "EAST",
+      "source_parts": [
+        "Pump_suction_flange_00_165",
+        "Pump_suction_flange_01_166",
+        "Pump_suction_flange_02_167",
+        "Pump_suction_flange_03_168",
+        "Pump_suction_flange_04_169",
+        "Pump_suction_flange_05_170",
+        "Pump_suction_flange_06_171",
+        "Pump_suction_flange_07_172"
+      ],
+      "source_center_mm": [
+        2656.25,
+        1375.0,
+        1000.0
+      ],
+      "source_surface_center_mm": [
+        2687.5,
+        1375.0,
+        1000.0
+      ],
+      "face_center": [
+        3,
+        1.5,
+        1.5
+      ],
+      "cell_local_face_center": [
+        1,
+        0.5,
+        0.5
+      ],
+      "adapter_centerline": [
+        [
+          2.65625,
+          1.375,
+          1.0
+        ],
+        [
+          2.84375,
+          1.375,
+          1.0
+        ],
+        [
+          2.84375,
+          1.5,
+          1.0
+        ],
+        [
+          2.84375,
+          1.5,
+          1.5
+        ],
+        [
+          3,
+          1.5,
+          1.5
+        ]
+      ],
+      "adapter_width": 0.18,
+      "connector_width": 0.32,
+      "closed_source_cover_removed": false,
+      "note": "Adapter added for centered Minecraft tube connection."
+    },
+    {
+      "name": "Turbine_exhaust_flange",
+      "cell": 10,
+      "offset": [
+        1,
+        1,
+        1
+      ],
+      "face": "SOUTH",
+      "source_parts": [
+        "Turbine_exhaust_flange_00_207",
+        "Turbine_exhaust_flange_01_208",
+        "Turbine_exhaust_flange_02_209",
+        "Turbine_exhaust_flange_03_210",
+        "Turbine_exhaust_flange_04_211",
+        "Turbine_exhaust_flange_05_212",
+        "Turbine_exhaust_flange_06_213",
+        "Turbine_exhaust_flange_07_214"
+      ],
+      "source_center_mm": [
+        1250.0,
+        1000.0,
+        1843.75
+      ],
+      "source_surface_center_mm": [
+        1250.0,
+        1000.0,
+        1875.0
+      ],
+      "face_center": [
+        1.5,
+        1.5,
+        2
+      ],
+      "cell_local_face_center": [
+        0.5,
+        0.5,
+        1
+      ],
+      "adapter_centerline": [
+        [
+          1.25,
+          1.0,
+          1.84375
+        ],
+        [
+          1.25,
+          1.0,
+          1.9375
+        ],
+        [
+          1.5,
+          1.0,
+          1.9375
+        ],
+        [
+          1.5,
+          1.5,
+          1.9375
+        ],
+        [
+          1.5,
+          1.5,
+          2
+        ]
+      ],
+      "adapter_width": 0.18,
+      "connector_width": 0.32,
+      "closed_source_cover_removed": false,
+      "note": "Adapter added for centered Minecraft tube connection."
+    }
+  ],
+  "omitted_source_parts": [],
+  "omission_reason": "Remove the HPCI exhaust blanking cover for its connected in-game configuration.",
+  "cells": [
+    {
+      "index": 0,
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "bounds": [
+        0.0,
+        0.00625,
+        0.0,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "index": 1,
+      "offset": [
+        1,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0.0421875,
+        0.0125,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "index": 2,
+      "offset": [
+        2,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0.00625,
+        0.0,
+        1.0,
+        1,
+        1
+      ]
+    },
+    {
+      "index": 3,
+      "offset": [
+        0,
+        0,
+        1
+      ],
+      "bounds": [
+        0.0,
+        0.00625,
+        0,
+        1,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "index": 4,
+      "offset": [
+        1,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0.0421875,
+        0,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "index": 5,
+      "offset": [
+        2,
+        0,
+        1
+      ],
+      "bounds": [
+        0,
+        0.00625,
+        0,
+        1.0,
+        1,
+        1.0
+      ]
+    },
+    {
+      "index": 6,
+      "offset": [
+        0,
+        1,
+        0
+      ],
+      "bounds": [
+        0.282300811,
+        0,
+        0.5484375,
+        0.985147022,
+        1,
+        1.0
+      ]
+    },
+    {
+      "index": 7,
+      "offset": [
+        1,
+        1,
+        0
+      ],
+      "bounds": [
+        0.0,
+        0,
+        0.35,
+        1,
+        1,
+        1.0
+      ]
+    },
+    {
+      "index": 8,
+      "offset": [
+        2,
+        1,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.5,
+        0.93375,
+        1,
+        1.0
+      ]
+    },
+    {
+      "index": 9,
+      "offset": [
+        0,
+        1,
+        1
+      ],
+      "bounds": [
+        0.257181387,
+        0.0,
+        0.0,
+        1,
+        1,
+        0.9396875
+      ]
+    },
+    {
+      "index": 10,
+      "offset": [
+        1,
+        1,
+        1
+      ],
+      "bounds": [
+        0.0,
+        0,
+        0.0,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "index": 11,
+      "offset": [
+        2,
+        1,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0.0,
+        1,
+        1,
+        0.849375
+      ]
+    },
+    {
+      "index": 12,
+      "offset": [
+        0,
+        2,
+        0
+      ],
+      "bounds": [
+        0.241740183,
+        0.0,
+        0.5484375,
+        1,
+        0.730625,
+        1.0
+      ]
+    },
+    {
+      "index": 13,
+      "offset": [
+        1,
+        2,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.5484375,
+        1,
+        0.68375,
+        1.0
+      ]
+    },
+    {
+      "index": 14,
+      "offset": [
+        2,
+        2,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.5484375,
+        0.59,
+        0.68375,
+        1.0
+      ]
+    },
+    {
+      "index": 15,
+      "offset": [
+        0,
+        2,
+        1
+      ],
+      "bounds": [
+        0.232377468,
+        0.0,
+        0.0,
+        1,
+        1,
+        0.66
+      ]
+    },
+    {
+      "index": 16,
+      "offset": [
+        1,
+        2,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0.0,
+        1,
+        0.68375,
+        0.449375
+      ]
+    },
+    {
+      "index": 17,
+      "offset": [
+        2,
+        2,
+        1
+      ],
+      "bounds": [
+        0,
+        0,
+        0.0,
+        0.66,
+        1,
+        0.66
+      ]
+    },
+    {
+      "index": 18,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 19,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 20,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 21,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 22,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 23,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 24,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 25,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 26,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 27,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 28,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 29,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 30,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 31,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 32,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 33,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 34,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 35,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 36,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 37,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 38,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 39,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 40,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 41,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 42,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 43,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 44,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 45,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 46,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 47,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 48,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 49,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 50,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 51,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 52,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 53,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 54,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 55,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 56,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 57,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 58,
+      "offset": null,
+      "bounds": []
+    },
+    {
+      "index": 59,
+      "offset": null,
+      "bounds": []
+    }
+  ],
+  "parts": [
+    {
+      "name": "Skid_rail_web_0",
+      "brep_entity": 148,
+      "product_entity": 144,
+      "bounds_mm": [
+        0.0,
+        62.5,
+        93.75,
+        3000.0,
+        312.5,
+        156.25
+      ],
+      "color": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "material": "step_color_002"
+    },
+    {
+      "name": "Rail_flange_1",
+      "brep_entity": 497,
+      "product_entity": 493,
+      "bounds_mm": [
+        0.0,
+        42.1875,
+        12.5,
+        3000.0,
+        82.8125,
+        237.5
+      ],
+      "color": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "material": "step_color_002"
+    },
+    {
+      "name": "Rail_flange_2",
+      "brep_entity": 846,
+      "product_entity": 842,
+      "bounds_mm": [
+        0.0,
+        292.1875,
+        12.5,
+        3000.0,
+        332.8125,
+        237.5
+      ],
+      "color": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "material": "step_color_002"
+    },
+    {
+      "name": "Skid_rail_web_3",
+      "brep_entity": 1195,
+      "product_entity": 1191,
+      "bounds_mm": [
+        0.0,
+        62.5,
+        1843.75,
+        3000.0,
+        312.5,
+        1906.25
+      ],
+      "color": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "material": "step_color_002"
+    },
+    {
+      "name": "Rail_flange_4",
+      "brep_entity": 1544,
+      "product_entity": 1540,
+      "bounds_mm": [
+        0.0,
+        42.1875,
+        1762.5,
+        3000.0,
+        82.8125,
+        1987.5
+      ],
+      "color": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "material": "step_color_002"
+    },
+    {
+      "name": "Rail_flange_5",
+      "brep_entity": 1893,
+      "product_entity": 1889,
+      "bounds_mm": [
+        0.0,
+        292.1875,
+        1762.5,
+        3000.0,
+        332.8125,
+        1987.5
+      ],
+      "color": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "material": "step_color_002"
+    },
+    {
+      "name": "Cross_member_6",
+      "brep_entity": 2242,
+      "product_entity": 2238,
+      "bounds_mm": [
+        62.5,
+        62.5,
+        125.0,
+        187.5,
+        312.5,
+        1875.0
+      ],
+      "color": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "material": "step_color_002"
+    },
+    {
+      "name": "Cross_member_7",
+      "brep_entity": 2591,
+      "product_entity": 2587,
+      "bounds_mm": [
+        937.5,
+        62.5,
+        125.0,
+        1062.5,
+        312.5,
+        1875.0
+      ],
+      "color": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "material": "step_color_002"
+    },
+    {
+      "name": "Cross_member_8",
+      "brep_entity": 2940,
+      "product_entity": 2936,
+      "bounds_mm": [
+        1937.5,
+        62.5,
+        125.0,
+        2062.5,
+        312.5,
+        1875.0
+      ],
+      "color": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "material": "step_color_002"
+    },
+    {
+      "name": "Cross_member_9",
+      "brep_entity": 3289,
+      "product_entity": 3285,
+      "bounds_mm": [
+        2812.5,
+        62.5,
+        125.0,
+        2937.5,
+        312.5,
+        1875.0
+      ],
+      "color": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "material": "step_color_002"
+    },
+    {
+      "name": "Deck_10",
+      "brep_entity": 3638,
+      "product_entity": 3634,
+      "bounds_mm": [
+        31.25,
+        318.75,
+        125.0,
+        2968.75,
+        368.75,
+        1875.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Anchor_pad_11",
+      "brep_entity": 3987,
+      "product_entity": 3983,
+      "bounds_mm": [
+        31.25,
+        6.25,
+        0.0,
+        343.75,
+        50.0,
+        250.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Anchor_bolt_12",
+      "brep_entity": 4336,
+      "product_entity": 4332,
+      "bounds_mm": [
+        162.5,
+        37.5,
+        100.0,
+        212.5,
+        87.5,
+        150.0
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Anchor_pad_13",
+      "brep_entity": 4685,
+      "product_entity": 4681,
+      "bounds_mm": [
+        31.25,
+        6.25,
+        1750.0,
+        343.75,
+        50.0,
+        2000.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Anchor_bolt_14",
+      "brep_entity": 5034,
+      "product_entity": 5030,
+      "bounds_mm": [
+        162.5,
+        37.5,
+        1850.0,
+        212.5,
+        87.5,
+        1900.0
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Anchor_pad_15",
+      "brep_entity": 5383,
+      "product_entity": 5379,
+      "bounds_mm": [
+        2656.25,
+        6.25,
+        0.0,
+        2968.75,
+        50.0,
+        250.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Anchor_bolt_16",
+      "brep_entity": 5732,
+      "product_entity": 5728,
+      "bounds_mm": [
+        2787.5,
+        37.5,
+        100.0,
+        2837.5,
+        87.5,
+        150.0
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Anchor_pad_17",
+      "brep_entity": 6081,
+      "product_entity": 6077,
+      "bounds_mm": [
+        2656.25,
+        6.25,
+        1750.0,
+        2968.75,
+        50.0,
+        2000.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Anchor_bolt_18",
+      "brep_entity": 6430,
+      "product_entity": 6426,
+      "bounds_mm": [
+        2787.5,
+        37.5,
+        1850.0,
+        2837.5,
+        87.5,
+        1900.0
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Casing_support_19",
+      "brep_entity": 7066,
+      "product_entity": 7062,
+      "bounds_mm": [
+        1078.125,
+        343.75,
+        593.75,
+        1296.875,
+        906.25,
+        781.25
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Casing_support_20",
+      "brep_entity": 7415,
+      "product_entity": 7411,
+      "bounds_mm": [
+        1078.125,
+        343.75,
+        1218.75,
+        1296.875,
+        906.25,
+        1406.25
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Casing_support_21",
+      "brep_entity": 7764,
+      "product_entity": 7760,
+      "bounds_mm": [
+        1890.625,
+        343.75,
+        593.75,
+        2109.375,
+        906.25,
+        781.25
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Casing_support_22",
+      "brep_entity": 8113,
+      "product_entity": 8109,
+      "bounds_mm": [
+        1890.625,
+        343.75,
+        1218.75,
+        2109.375,
+        906.25,
+        1406.25
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_housing_00_23",
+      "brep_entity": 8462,
+      "product_entity": 8458,
+      "bounds_mm": [
+        1000.0,
+        1072.423176078,
+        375.0,
+        1625.0,
+        1677.576823922,
+        531.25
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_housing_01_24",
+      "brep_entity": 8811,
+      "product_entity": 8807,
+      "bounds_mm": [
+        1000.0,
+        887.109531375,
+        531.25,
+        1625.0,
+        1862.890468625,
+        687.5
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_housing_02_25",
+      "brep_entity": 9160,
+      "product_entity": 9156,
+      "bounds_mm": [
+        1000.0,
+        795.609493196,
+        687.5,
+        1625.0,
+        1954.390506804,
+        843.75
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_housing_03_26",
+      "brep_entity": 9509,
+      "product_entity": 9505,
+      "bounds_mm": [
+        1000.0,
+        754.902036469,
+        843.75,
+        1625.0,
+        1995.097963531,
+        1000.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_housing_04_27",
+      "brep_entity": 9858,
+      "product_entity": 9854,
+      "bounds_mm": [
+        1000.0,
+        754.902036469,
+        1000.0,
+        1625.0,
+        1995.097963531,
+        1156.25
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_housing_05_28",
+      "brep_entity": 10207,
+      "product_entity": 10203,
+      "bounds_mm": [
+        1000.0,
+        795.609493196,
+        1156.25,
+        1625.0,
+        1954.390506804,
+        1312.5
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_housing_06_29",
+      "brep_entity": 10556,
+      "product_entity": 10552,
+      "bounds_mm": [
+        1000.0,
+        887.109531375,
+        1312.5,
+        1625.0,
+        1862.890468625,
+        1468.75
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_housing_07_30",
+      "brep_entity": 10905,
+      "product_entity": 10901,
+      "bounds_mm": [
+        1000.0,
+        1072.423176078,
+        1468.75,
+        1625.0,
+        1677.576823922,
+        1625.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_seam_00_31",
+      "brep_entity": 11254,
+      "product_entity": 11250,
+      "bounds_mm": [
+        1409.375,
+        1060.320103121,
+        350.0,
+        1465.625,
+        1689.679896879,
+        512.5
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_seam_01_32",
+      "brep_entity": 11603,
+      "product_entity": 11599,
+      "bounds_mm": [
+        1409.375,
+        867.59391263,
+        512.5,
+        1465.625,
+        1882.40608737,
+        675.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_seam_02_33",
+      "brep_entity": 11952,
+      "product_entity": 11948,
+      "bounds_mm": [
+        1409.375,
+        772.433872923,
+        675.0,
+        1465.625,
+        1977.566127077,
+        837.5
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_seam_03_34",
+      "brep_entity": 12301,
+      "product_entity": 12297,
+      "bounds_mm": [
+        1409.375,
+        730.098117928,
+        837.5,
+        1465.625,
+        2019.901882072,
+        1000.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_seam_04_35",
+      "brep_entity": 12650,
+      "product_entity": 12646,
+      "bounds_mm": [
+        1409.375,
+        730.098117928,
+        1000.0,
+        1465.625,
+        2019.901882072,
+        1162.5
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_seam_05_36",
+      "brep_entity": 12999,
+      "product_entity": 12995,
+      "bounds_mm": [
+        1409.375,
+        772.433872923,
+        1162.5,
+        1465.625,
+        1977.566127077,
+        1325.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_seam_06_37",
+      "brep_entity": 13348,
+      "product_entity": 13344,
+      "bounds_mm": [
+        1409.375,
+        867.59391263,
+        1325.0,
+        1465.625,
+        1882.40608737,
+        1487.5
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_seam_07_38",
+      "brep_entity": 13697,
+      "product_entity": 13693,
+      "bounds_mm": [
+        1409.375,
+        1060.320103121,
+        1487.5,
+        1465.625,
+        1689.679896879,
+        1650.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_casing_00_39",
+      "brep_entity": 14046,
+      "product_entity": 14042,
+      "bounds_mm": [
+        1625.0,
+        1132.938540862,
+        500.0,
+        2250.0,
+        1617.061459138,
+        625.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_casing_01_40",
+      "brep_entity": 14395,
+      "product_entity": 14391,
+      "bounds_mm": [
+        1625.0,
+        984.6876251,
+        625.0,
+        2250.0,
+        1765.3123749,
+        750.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_casing_02_41",
+      "brep_entity": 14744,
+      "product_entity": 14740,
+      "bounds_mm": [
+        1625.0,
+        911.487594557,
+        750.0,
+        2250.0,
+        1838.512405443,
+        875.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_casing_03_42",
+      "brep_entity": 15093,
+      "product_entity": 15089,
+      "bounds_mm": [
+        1625.0,
+        878.921629175,
+        875.0,
+        2250.0,
+        1871.078370825,
+        1000.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_casing_04_43",
+      "brep_entity": 15442,
+      "product_entity": 15438,
+      "bounds_mm": [
+        1625.0,
+        878.921629175,
+        1000.0,
+        2250.0,
+        1871.078370825,
+        1125.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_casing_05_44",
+      "brep_entity": 15791,
+      "product_entity": 15787,
+      "bounds_mm": [
+        1625.0,
+        911.487594557,
+        1125.0,
+        2250.0,
+        1838.512405443,
+        1250.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_casing_06_45",
+      "brep_entity": 16140,
+      "product_entity": 16136,
+      "bounds_mm": [
+        1625.0,
+        984.6876251,
+        1250.0,
+        2250.0,
+        1765.3123749,
+        1375.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_casing_07_46",
+      "brep_entity": 16489,
+      "product_entity": 16485,
+      "bounds_mm": [
+        1625.0,
+        1132.938540862,
+        1375.0,
+        2250.0,
+        1617.061459138,
+        1500.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_end_cover_00_47",
+      "brep_entity": 16838,
+      "product_entity": 16834,
+      "bounds_mm": [
+        2221.875,
+        1154.118918537,
+        543.75,
+        2315.625,
+        1595.881081463,
+        657.8125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_end_cover_01_48",
+      "brep_entity": 17187,
+      "product_entity": 17183,
+      "bounds_mm": [
+        2221.875,
+        1018.839957904,
+        657.8125,
+        2315.625,
+        1731.160042096,
+        771.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_end_cover_02_49",
+      "brep_entity": 17536,
+      "product_entity": 17532,
+      "bounds_mm": [
+        2221.875,
+        952.044930033,
+        771.875,
+        2315.625,
+        1797.955069967,
+        885.9375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_end_cover_03_50",
+      "brep_entity": 17885,
+      "product_entity": 17881,
+      "bounds_mm": [
+        2221.875,
+        922.328486623,
+        885.9375,
+        2315.625,
+        1827.671513377,
+        1000.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_end_cover_04_51",
+      "brep_entity": 18234,
+      "product_entity": 18230,
+      "bounds_mm": [
+        2221.875,
+        922.328486623,
+        1000.0,
+        2315.625,
+        1827.671513377,
+        1114.0625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_end_cover_05_52",
+      "brep_entity": 18583,
+      "product_entity": 18579,
+      "bounds_mm": [
+        2221.875,
+        952.044930033,
+        1114.0625,
+        2315.625,
+        1797.955069967,
+        1228.125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_end_cover_06_53",
+      "brep_entity": 18932,
+      "product_entity": 18928,
+      "bounds_mm": [
+        2221.875,
+        1018.839957904,
+        1228.125,
+        2315.625,
+        1731.160042096,
+        1342.1875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_end_cover_07_54",
+      "brep_entity": 19281,
+      "product_entity": 19277,
+      "bounds_mm": [
+        2221.875,
+        1154.118918537,
+        1342.1875,
+        2315.625,
+        1595.881081463,
+        1456.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Casing_fasteners_rim_00_55",
+      "brep_entity": 19630,
+      "product_entity": 19626,
+      "bounds_mm": [
+        2293.75,
+        1759.375,
+        965.625,
+        2356.25,
+        1828.125,
+        1034.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Casing_fasteners_bolt_00_56",
+      "brep_entity": 19979,
+      "product_entity": 19975,
+      "bounds_mm": [
+        2351.5625,
+        1776.5625,
+        982.8125,
+        2385.9375,
+        1810.9375,
+        1017.1875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Casing_fasteners_rim_01_57",
+      "brep_entity": 20328,
+      "product_entity": 20324,
+      "bounds_mm": [
+        2293.75,
+        1703.273137835,
+        1175.0,
+        2356.25,
+        1772.023137835,
+        1243.75
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Casing_fasteners_rim_02_58",
+      "brep_entity": 20677,
+      "product_entity": 20673,
+      "bounds_mm": [
+        2293.75,
+        1550.0,
+        1328.273137835,
+        2356.25,
+        1618.75,
+        1397.023137835
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Casing_fasteners_bolt_02_59",
+      "brep_entity": 21026,
+      "product_entity": 21022,
+      "bounds_mm": [
+        2351.5625,
+        1567.1875,
+        1345.460637835,
+        2385.9375,
+        1601.5625,
+        1379.835637835
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Casing_fasteners_rim_03_60",
+      "brep_entity": 21375,
+      "product_entity": 21371,
+      "bounds_mm": [
+        2293.75,
+        1340.625,
+        1384.375,
+        2356.25,
+        1409.375,
+        1453.125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Casing_fasteners_rim_04_61",
+      "brep_entity": 21724,
+      "product_entity": 21720,
+      "bounds_mm": [
+        2293.75,
+        1131.25,
+        1328.273137835,
+        2356.25,
+        1200.0,
+        1397.023137835
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Casing_fasteners_bolt_04_62",
+      "brep_entity": 22073,
+      "product_entity": 22069,
+      "bounds_mm": [
+        2351.5625,
+        1148.4375,
+        1345.460637835,
+        2385.9375,
+        1182.8125,
+        1379.835637835
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Casing_fasteners_rim_05_63",
+      "brep_entity": 22422,
+      "product_entity": 22418,
+      "bounds_mm": [
+        2293.75,
+        977.976862165,
+        1175.0,
+        2356.25,
+        1046.726862165,
+        1243.75
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Casing_fasteners_rim_06_64",
+      "brep_entity": 22771,
+      "product_entity": 22767,
+      "bounds_mm": [
+        2293.75,
+        921.875,
+        965.625,
+        2356.25,
+        990.625,
+        1034.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Casing_fasteners_bolt_06_65",
+      "brep_entity": 23120,
+      "product_entity": 23116,
+      "bounds_mm": [
+        2351.5625,
+        939.0625,
+        982.8125,
+        2385.9375,
+        973.4375,
+        1017.1875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Casing_fasteners_rim_07_66",
+      "brep_entity": 23469,
+      "product_entity": 23465,
+      "bounds_mm": [
+        2293.75,
+        977.976862165,
+        756.25,
+        2356.25,
+        1046.726862165,
+        825.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Casing_fasteners_rim_08_67",
+      "brep_entity": 23818,
+      "product_entity": 23814,
+      "bounds_mm": [
+        2293.75,
+        1131.25,
+        602.976862165,
+        2356.25,
+        1200.0,
+        671.726862165
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Casing_fasteners_bolt_08_68",
+      "brep_entity": 24167,
+      "product_entity": 24163,
+      "bounds_mm": [
+        2351.5625,
+        1148.4375,
+        620.164362165,
+        2385.9375,
+        1182.8125,
+        654.539362165
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Casing_fasteners_rim_09_69",
+      "brep_entity": 24516,
+      "product_entity": 24512,
+      "bounds_mm": [
+        2293.75,
+        1340.625,
+        546.875,
+        2356.25,
+        1409.375,
+        615.625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Casing_fasteners_rim_10_70",
+      "brep_entity": 24865,
+      "product_entity": 24861,
+      "bounds_mm": [
+        2293.75,
+        1550.0,
+        602.976862165,
+        2356.25,
+        1618.75,
+        671.726862165
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Casing_fasteners_bolt_10_71",
+      "brep_entity": 25214,
+      "product_entity": 25210,
+      "bounds_mm": [
+        2351.5625,
+        1567.1875,
+        620.164362165,
+        2385.9375,
+        1601.5625,
+        654.539362165
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Casing_fasteners_rim_11_72",
+      "brep_entity": 25563,
+      "product_entity": 25559,
+      "bounds_mm": [
+        2293.75,
+        1703.273137835,
+        756.25,
+        2356.25,
+        1772.023137835,
+        825.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lifting_eye_rim_00_392",
+      "brep_entity": 25912,
+      "product_entity": 25908,
+      "bounds_mm": [
+        1425.0,
+        2028.125,
+        968.75,
+        1493.75,
+        2096.875,
+        1031.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lifting_eye_rim_01_393",
+      "brep_entity": 26261,
+      "product_entity": 26257,
+      "bounds_mm": [
+        1413.695893444,
+        2070.3125,
+        968.75,
+        1482.445893444,
+        2139.0625,
+        1031.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lifting_eye_rim_02_394",
+      "brep_entity": 26610,
+      "product_entity": 26606,
+      "bounds_mm": [
+        1382.8125,
+        2101.195893444,
+        968.75,
+        1451.5625,
+        2169.945893444,
+        1031.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lifting_eye_rim_03_395",
+      "brep_entity": 26959,
+      "product_entity": 26955,
+      "bounds_mm": [
+        1340.625,
+        2112.5,
+        968.75,
+        1409.375,
+        2181.25,
+        1031.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lifting_eye_rim_04_396",
+      "brep_entity": 27308,
+      "product_entity": 27304,
+      "bounds_mm": [
+        1298.4375,
+        2101.195893444,
+        968.75,
+        1367.1875,
+        2169.945893444,
+        1031.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lifting_eye_rim_05_397",
+      "brep_entity": 27657,
+      "product_entity": 27653,
+      "bounds_mm": [
+        1267.554106556,
+        2070.3125,
+        968.75,
+        1336.304106556,
+        2139.0625,
+        1031.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lifting_eye_rim_06_398",
+      "brep_entity": 28006,
+      "product_entity": 28002,
+      "bounds_mm": [
+        1256.25,
+        2028.125,
+        968.75,
+        1325.0,
+        2096.875,
+        1031.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lifting_eye_rim_07_399",
+      "brep_entity": 28355,
+      "product_entity": 28351,
+      "bounds_mm": [
+        1267.554106556,
+        1985.9375,
+        968.75,
+        1336.304106556,
+        2054.6875,
+        1031.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lifting_eye_rim_08_400",
+      "brep_entity": 28704,
+      "product_entity": 28700,
+      "bounds_mm": [
+        1298.4375,
+        1955.054106556,
+        968.75,
+        1367.1875,
+        2023.804106556,
+        1031.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lifting_eye_rim_09_401",
+      "brep_entity": 29053,
+      "product_entity": 29049,
+      "bounds_mm": [
+        1340.625,
+        1943.75,
+        968.75,
+        1409.375,
+        2012.5,
+        1031.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lifting_eye_rim_10_402",
+      "brep_entity": 29402,
+      "product_entity": 29398,
+      "bounds_mm": [
+        1382.8125,
+        1955.054106556,
+        968.75,
+        1451.5625,
+        2023.804106556,
+        1031.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lifting_eye_rim_11_403",
+      "brep_entity": 29751,
+      "product_entity": 29747,
+      "bounds_mm": [
+        1413.695893444,
+        1985.9375,
+        968.75,
+        1482.445893444,
+        2054.6875,
+        1031.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lug_foot_404",
+      "brep_entity": 30100,
+      "product_entity": 30096,
+      "bounds_mm": [
+        1281.25,
+        1937.5,
+        937.5,
+        1468.75,
+        2000.0,
+        1062.5
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_discharge_neck_00_73",
+      "brep_entity": 31140,
+      "product_entity": 31136,
+      "bounds_mm": [
+        1853.565189044,
+        1843.75,
+        826.625,
+        2021.434810956,
+        2156.25,
+        869.96875
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_discharge_neck_01_74",
+      "brep_entity": 31489,
+      "product_entity": 31485,
+      "bounds_mm": [
+        1802.159184003,
+        1843.75,
+        869.96875,
+        2072.840815997,
+        2156.25,
+        913.3125
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_discharge_neck_02_75",
+      "brep_entity": 31838,
+      "product_entity": 31834,
+      "bounds_mm": [
+        1776.777073412,
+        1843.75,
+        913.3125,
+        2098.222926588,
+        2156.25,
+        956.65625
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_discharge_neck_03_76",
+      "brep_entity": 32187,
+      "product_entity": 32183,
+      "bounds_mm": [
+        1765.484824917,
+        1843.75,
+        956.65625,
+        2109.515175083,
+        2156.25,
+        1000.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_discharge_neck_04_77",
+      "brep_entity": 32536,
+      "product_entity": 32532,
+      "bounds_mm": [
+        1765.484824917,
+        1843.75,
+        1000.0,
+        2109.515175083,
+        2156.25,
+        1043.34375
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_discharge_neck_05_78",
+      "brep_entity": 32885,
+      "product_entity": 32881,
+      "bounds_mm": [
+        1776.777073412,
+        1843.75,
+        1043.34375,
+        2098.222926588,
+        2156.25,
+        1086.6875
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_discharge_neck_06_79",
+      "brep_entity": 33234,
+      "product_entity": 33230,
+      "bounds_mm": [
+        1802.159184003,
+        1843.75,
+        1086.6875,
+        2072.840815997,
+        2156.25,
+        1130.03125
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_discharge_neck_07_80",
+      "brep_entity": 33583,
+      "product_entity": 33579,
+      "bounds_mm": [
+        1853.565189044,
+        1843.75,
+        1130.03125,
+        2021.434810956,
+        2156.25,
+        1173.375
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_discharge_flange_00_81",
+      "brep_entity": 33932,
+      "product_entity": 33928,
+      "bounds_mm": [
+        1822.520806909,
+        2125.0,
+        762.5,
+        2052.479193091,
+        2187.5,
+        821.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_flange_01_82",
+      "brep_entity": 34281,
+      "product_entity": 34277,
+      "bounds_mm": [
+        1752.101621923,
+        2125.0,
+        821.875,
+        2122.898378077,
+        2187.5,
+        881.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_flange_02_83",
+      "brep_entity": 34630,
+      "product_entity": 34626,
+      "bounds_mm": [
+        1717.331607414,
+        2125.0,
+        881.25,
+        2157.668392586,
+        2187.5,
+        940.625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_flange_03_84",
+      "brep_entity": 34979,
+      "product_entity": 34975,
+      "bounds_mm": [
+        1701.862773858,
+        2125.0,
+        940.625,
+        2173.137226142,
+        2187.5,
+        1000.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_flange_04_85",
+      "brep_entity": 35328,
+      "product_entity": 35324,
+      "bounds_mm": [
+        1701.862773858,
+        2125.0,
+        1000.0,
+        2173.137226142,
+        2187.5,
+        1059.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_flange_05_86",
+      "brep_entity": 35677,
+      "product_entity": 35673,
+      "bounds_mm": [
+        1717.331607414,
+        2125.0,
+        1059.375,
+        2157.668392586,
+        2187.5,
+        1118.75
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_flange_06_87",
+      "brep_entity": 36026,
+      "product_entity": 36022,
+      "bounds_mm": [
+        1752.101621923,
+        2125.0,
+        1118.75,
+        2122.898378077,
+        2187.5,
+        1178.125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_flange_07_88",
+      "brep_entity": 36375,
+      "product_entity": 36371,
+      "bounds_mm": [
+        1822.520806909,
+        2125.0,
+        1178.125,
+        2052.479193091,
+        2187.5,
+        1237.5
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_bore_00_89",
+      "brep_entity": 36724,
+      "product_entity": 36720,
+      "bounds_mm": [
+        1862.763524491,
+        2187.5,
+        845.625,
+        2012.236475509,
+        2195.0,
+        884.21875
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_discharge_bore_01_90",
+      "brep_entity": 37073,
+      "product_entity": 37069,
+      "bounds_mm": [
+        1816.99105425,
+        2187.5,
+        884.21875,
+        2058.00894575,
+        2195.0,
+        922.8125
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_discharge_bore_02_91",
+      "brep_entity": 37422,
+      "product_entity": 37418,
+      "bounds_mm": [
+        1794.390544819,
+        2187.5,
+        922.8125,
+        2080.609455181,
+        2195.0,
+        961.40625
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_discharge_bore_03_92",
+      "brep_entity": 37771,
+      "product_entity": 37767,
+      "bounds_mm": [
+        1784.335803008,
+        2187.5,
+        961.40625,
+        2090.664196992,
+        2195.0,
+        1000.0
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_discharge_bore_04_93",
+      "brep_entity": 38120,
+      "product_entity": 38116,
+      "bounds_mm": [
+        1784.335803008,
+        2187.5,
+        1000.0,
+        2090.664196992,
+        2195.0,
+        1038.59375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_discharge_bore_05_94",
+      "brep_entity": 38469,
+      "product_entity": 38465,
+      "bounds_mm": [
+        1794.390544819,
+        2187.5,
+        1038.59375,
+        2080.609455181,
+        2195.0,
+        1077.1875
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_discharge_bore_06_95",
+      "brep_entity": 38818,
+      "product_entity": 38814,
+      "bounds_mm": [
+        1816.99105425,
+        2187.5,
+        1077.1875,
+        2058.00894575,
+        2195.0,
+        1115.78125
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_discharge_bore_07_96",
+      "brep_entity": 39167,
+      "product_entity": 39163,
+      "bounds_mm": [
+        1862.763524491,
+        2187.5,
+        1115.78125,
+        2012.236475509,
+        2195.0,
+        1154.375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_discharge_rim_00_97",
+      "brep_entity": 39516,
+      "product_entity": 39512,
+      "bounds_mm": [
+        2112.125,
+        2160.0,
+        965.625,
+        2180.875,
+        2222.5,
+        1034.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_bolt_00_98",
+      "brep_entity": 39865,
+      "product_entity": 39861,
+      "bounds_mm": [
+        2129.3125,
+        2217.8125,
+        982.8125,
+        2163.6875,
+        2252.1875,
+        1017.1875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Pump_discharge_rim_01_99",
+      "brep_entity": 40214,
+      "product_entity": 40210,
+      "bounds_mm": [
+        2084.124309391,
+        2160.0,
+        1070.125,
+        2152.874309391,
+        2222.5,
+        1138.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_rim_02_100",
+      "brep_entity": 40563,
+      "product_entity": 40559,
+      "bounds_mm": [
+        2007.625,
+        2160.0,
+        1146.624309391,
+        2076.375,
+        2222.5,
+        1215.374309391
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_bolt_02_101",
+      "brep_entity": 40912,
+      "product_entity": 40908,
+      "bounds_mm": [
+        2024.8125,
+        2217.8125,
+        1163.811809391,
+        2059.1875,
+        2252.1875,
+        1198.186809391
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Pump_discharge_rim_03_102",
+      "brep_entity": 41261,
+      "product_entity": 41257,
+      "bounds_mm": [
+        1903.125,
+        2160.0,
+        1174.625,
+        1971.875,
+        2222.5,
+        1243.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_rim_04_103",
+      "brep_entity": 41610,
+      "product_entity": 41606,
+      "bounds_mm": [
+        1798.625,
+        2160.0,
+        1146.624309391,
+        1867.375,
+        2222.5,
+        1215.374309391
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_bolt_04_104",
+      "brep_entity": 41959,
+      "product_entity": 41955,
+      "bounds_mm": [
+        1815.8125,
+        2217.8125,
+        1163.811809391,
+        1850.1875,
+        2252.1875,
+        1198.186809391
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Pump_discharge_rim_05_105",
+      "brep_entity": 42308,
+      "product_entity": 42304,
+      "bounds_mm": [
+        1722.125690609,
+        2160.0,
+        1070.125,
+        1790.875690609,
+        2222.5,
+        1138.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_rim_06_106",
+      "brep_entity": 42657,
+      "product_entity": 42653,
+      "bounds_mm": [
+        1694.125,
+        2160.0,
+        965.625,
+        1762.875,
+        2222.5,
+        1034.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_bolt_06_107",
+      "brep_entity": 43006,
+      "product_entity": 43002,
+      "bounds_mm": [
+        1711.3125,
+        2217.8125,
+        982.8125,
+        1745.6875,
+        2252.1875,
+        1017.1875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Pump_discharge_rim_07_108",
+      "brep_entity": 43355,
+      "product_entity": 43351,
+      "bounds_mm": [
+        1722.125690609,
+        2160.0,
+        861.125,
+        1790.875690609,
+        2222.5,
+        929.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_rim_08_109",
+      "brep_entity": 43704,
+      "product_entity": 43700,
+      "bounds_mm": [
+        1798.625,
+        2160.0,
+        784.625690609,
+        1867.375,
+        2222.5,
+        853.375690609
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_bolt_08_110",
+      "brep_entity": 44053,
+      "product_entity": 44049,
+      "bounds_mm": [
+        1815.8125,
+        2217.8125,
+        801.813190609,
+        1850.1875,
+        2252.1875,
+        836.188190609
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Pump_discharge_rim_09_111",
+      "brep_entity": 44402,
+      "product_entity": 44398,
+      "bounds_mm": [
+        1903.125,
+        2160.0,
+        756.625,
+        1971.875,
+        2222.5,
+        825.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_rim_10_112",
+      "brep_entity": 44751,
+      "product_entity": 44747,
+      "bounds_mm": [
+        2007.625,
+        2160.0,
+        784.625690609,
+        2076.375,
+        2222.5,
+        853.375690609
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_discharge_bolt_10_113",
+      "brep_entity": 45100,
+      "product_entity": 45096,
+      "bounds_mm": [
+        2024.8125,
+        2217.8125,
+        801.813190609,
+        2059.1875,
+        2252.1875,
+        836.188190609
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Pump_discharge_rim_11_114",
+      "brep_entity": 45449,
+      "product_entity": 45445,
+      "bounds_mm": [
+        2084.124309391,
+        2160.0,
+        861.125,
+        2152.874309391,
+        2222.5,
+        929.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_neck_00_115",
+      "brep_entity": 45798,
+      "product_entity": 45794,
+      "bounds_mm": [
+        619.026864746,
+        2000.0,
+        858.5625,
+        755.973135254,
+        2250.0,
+        893.921875
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Steam_inlet_neck_01_116",
+      "brep_entity": 46147,
+      "product_entity": 46143,
+      "bounds_mm": [
+        577.09038695,
+        2000.0,
+        893.921875,
+        797.90961305,
+        2250.0,
+        929.28125
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Steam_inlet_neck_02_117",
+      "brep_entity": 46496,
+      "product_entity": 46492,
+      "bounds_mm": [
+        556.38392831,
+        2000.0,
+        929.28125,
+        818.61607169,
+        2250.0,
+        964.640625
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Steam_inlet_neck_03_118",
+      "brep_entity": 46845,
+      "product_entity": 46841,
+      "bounds_mm": [
+        547.171830853,
+        2000.0,
+        964.640625,
+        827.828169147,
+        2250.0,
+        1000.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Steam_inlet_neck_04_119",
+      "brep_entity": 47194,
+      "product_entity": 47190,
+      "bounds_mm": [
+        547.171830853,
+        2000.0,
+        1000.0,
+        827.828169147,
+        2250.0,
+        1035.359375
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Steam_inlet_neck_05_120",
+      "brep_entity": 47543,
+      "product_entity": 47539,
+      "bounds_mm": [
+        556.38392831,
+        2000.0,
+        1035.359375,
+        818.61607169,
+        2250.0,
+        1070.71875
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Steam_inlet_neck_06_121",
+      "brep_entity": 47892,
+      "product_entity": 47888,
+      "bounds_mm": [
+        577.09038695,
+        2000.0,
+        1070.71875,
+        797.90961305,
+        2250.0,
+        1106.078125
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Steam_inlet_neck_07_122",
+      "brep_entity": 48241,
+      "product_entity": 48237,
+      "bounds_mm": [
+        619.026864746,
+        2000.0,
+        1106.078125,
+        755.973135254,
+        2250.0,
+        1141.4375
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Steam_inlet_flange_00_123",
+      "brep_entity": 48590,
+      "product_entity": 48586,
+      "bounds_mm": [
+        593.701184584,
+        2218.75,
+        806.25,
+        781.298815416,
+        2281.25,
+        854.6875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_flange_01_124",
+      "brep_entity": 48939,
+      "product_entity": 48935,
+      "bounds_mm": [
+        536.253954726,
+        2218.75,
+        854.6875,
+        838.746045274,
+        2281.25,
+        903.125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_flange_02_125",
+      "brep_entity": 49288,
+      "product_entity": 49284,
+      "bounds_mm": [
+        507.888942891,
+        2218.75,
+        903.125,
+        867.111057109,
+        2281.25,
+        951.5625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_flange_03_126",
+      "brep_entity": 49637,
+      "product_entity": 49633,
+      "bounds_mm": [
+        495.269631305,
+        2218.75,
+        951.5625,
+        879.730368695,
+        2281.25,
+        1000.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_flange_04_127",
+      "brep_entity": 49986,
+      "product_entity": 49982,
+      "bounds_mm": [
+        495.269631305,
+        2218.75,
+        1000.0,
+        879.730368695,
+        2281.25,
+        1048.4375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_flange_05_128",
+      "brep_entity": 50335,
+      "product_entity": 50331,
+      "bounds_mm": [
+        507.888942891,
+        2218.75,
+        1048.4375,
+        867.111057109,
+        2281.25,
+        1096.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_flange_06_129",
+      "brep_entity": 50684,
+      "product_entity": 50680,
+      "bounds_mm": [
+        536.253954726,
+        2218.75,
+        1096.875,
+        838.746045274,
+        2281.25,
+        1145.3125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_flange_07_130",
+      "brep_entity": 51033,
+      "product_entity": 51029,
+      "bounds_mm": [
+        593.701184584,
+        2218.75,
+        1145.3125,
+        781.298815416,
+        2281.25,
+        1193.75
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_bore_00_131",
+      "brep_entity": 51382,
+      "product_entity": 51378,
+      "bounds_mm": [
+        626.53076998,
+        2281.25,
+        874.0625,
+        748.46923002,
+        2288.75,
+        905.546875
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Steam_inlet_bore_01_132",
+      "brep_entity": 51731,
+      "product_entity": 51727,
+      "bounds_mm": [
+        589.190070572,
+        2281.25,
+        905.546875,
+        785.809929428,
+        2288.75,
+        937.03125
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Steam_inlet_bore_02_133",
+      "brep_entity": 52080,
+      "product_entity": 52076,
+      "bounds_mm": [
+        570.752812879,
+        2281.25,
+        937.03125,
+        804.247187121,
+        2288.75,
+        968.515625
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Steam_inlet_bore_03_134",
+      "brep_entity": 52429,
+      "product_entity": 52425,
+      "bounds_mm": [
+        562.550260349,
+        2281.25,
+        968.515625,
+        812.449739651,
+        2288.75,
+        1000.0
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Steam_inlet_bore_04_135",
+      "brep_entity": 52778,
+      "product_entity": 52774,
+      "bounds_mm": [
+        562.550260349,
+        2281.25,
+        1000.0,
+        812.449739651,
+        2288.75,
+        1031.484375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Steam_inlet_bore_05_136",
+      "brep_entity": 53127,
+      "product_entity": 53123,
+      "bounds_mm": [
+        570.752812879,
+        2281.25,
+        1031.484375,
+        804.247187121,
+        2288.75,
+        1062.96875
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Steam_inlet_bore_06_137",
+      "brep_entity": 53476,
+      "product_entity": 53472,
+      "bounds_mm": [
+        589.190070572,
+        2281.25,
+        1062.96875,
+        785.809929428,
+        2288.75,
+        1094.453125
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Steam_inlet_bore_07_138",
+      "brep_entity": 53825,
+      "product_entity": 53821,
+      "bounds_mm": [
+        626.53076998,
+        2281.25,
+        1094.453125,
+        748.46923002,
+        2288.75,
+        1125.9375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Steam_inlet_rim_00_139",
+      "brep_entity": 54174,
+      "product_entity": 54170,
+      "bounds_mm": [
+        823.625,
+        2253.75,
+        965.625,
+        892.375,
+        2316.25,
+        1034.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_bolt_00_140",
+      "brep_entity": 54523,
+      "product_entity": 54519,
+      "bounds_mm": [
+        840.8125,
+        2311.5625,
+        982.8125,
+        875.1875,
+        2345.9375,
+        1017.1875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Steam_inlet_rim_01_141",
+      "brep_entity": 54872,
+      "product_entity": 54868,
+      "bounds_mm": [
+        800.782331345,
+        2253.75,
+        1050.875,
+        869.532331345,
+        2316.25,
+        1119.625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_rim_02_142",
+      "brep_entity": 55221,
+      "product_entity": 55217,
+      "bounds_mm": [
+        738.375,
+        2253.75,
+        1113.282331345,
+        807.125,
+        2316.25,
+        1182.032331345
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_bolt_02_143",
+      "brep_entity": 55570,
+      "product_entity": 55566,
+      "bounds_mm": [
+        755.5625,
+        2311.5625,
+        1130.469831345,
+        789.9375,
+        2345.9375,
+        1164.844831345
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Steam_inlet_rim_03_144",
+      "brep_entity": 55919,
+      "product_entity": 55915,
+      "bounds_mm": [
+        653.125,
+        2253.75,
+        1136.125,
+        721.875,
+        2316.25,
+        1204.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_rim_04_145",
+      "brep_entity": 56268,
+      "product_entity": 56264,
+      "bounds_mm": [
+        567.875,
+        2253.75,
+        1113.282331345,
+        636.625,
+        2316.25,
+        1182.032331345
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_bolt_04_146",
+      "brep_entity": 56617,
+      "product_entity": 56613,
+      "bounds_mm": [
+        585.0625,
+        2311.5625,
+        1130.469831345,
+        619.4375,
+        2345.9375,
+        1164.844831345
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Steam_inlet_rim_05_147",
+      "brep_entity": 56966,
+      "product_entity": 56962,
+      "bounds_mm": [
+        505.467668655,
+        2253.75,
+        1050.875,
+        574.217668655,
+        2316.25,
+        1119.625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_rim_06_148",
+      "brep_entity": 57315,
+      "product_entity": 57311,
+      "bounds_mm": [
+        482.625,
+        2253.75,
+        965.625,
+        551.375,
+        2316.25,
+        1034.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_bolt_06_149",
+      "brep_entity": 57664,
+      "product_entity": 57660,
+      "bounds_mm": [
+        499.8125,
+        2311.5625,
+        982.8125,
+        534.1875,
+        2345.9375,
+        1017.1875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Steam_inlet_rim_07_150",
+      "brep_entity": 58013,
+      "product_entity": 58009,
+      "bounds_mm": [
+        505.467668655,
+        2253.75,
+        880.375,
+        574.217668655,
+        2316.25,
+        949.125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_rim_08_151",
+      "brep_entity": 58362,
+      "product_entity": 58358,
+      "bounds_mm": [
+        567.875,
+        2253.75,
+        817.967668655,
+        636.625,
+        2316.25,
+        886.717668655
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_bolt_08_152",
+      "brep_entity": 58711,
+      "product_entity": 58707,
+      "bounds_mm": [
+        585.0625,
+        2311.5625,
+        835.155168655,
+        619.4375,
+        2345.9375,
+        869.530168655
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Steam_inlet_rim_09_153",
+      "brep_entity": 59060,
+      "product_entity": 59056,
+      "bounds_mm": [
+        653.125,
+        2253.75,
+        795.125,
+        721.875,
+        2316.25,
+        863.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_rim_10_154",
+      "brep_entity": 59409,
+      "product_entity": 59405,
+      "bounds_mm": [
+        738.375,
+        2253.75,
+        817.967668655,
+        807.125,
+        2316.25,
+        886.717668655
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Steam_inlet_bolt_10_155",
+      "brep_entity": 59758,
+      "product_entity": 59754,
+      "bounds_mm": [
+        755.5625,
+        2311.5625,
+        835.155168655,
+        789.9375,
+        2345.9375,
+        869.530168655
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Steam_inlet_rim_11_156",
+      "brep_entity": 60107,
+      "product_entity": 60103,
+      "bounds_mm": [
+        800.782331345,
+        2253.75,
+        880.375,
+        869.532331345,
+        2316.25,
+        949.125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_neck_00_157",
+      "brep_entity": 60456,
+      "product_entity": 60452,
+      "bounds_mm": [
+        2343.75,
+        1297.691621488,
+        840.3125,
+        2656.25,
+        1452.308378512,
+        880.234375
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_suction_neck_01_158",
+      "brep_entity": 60805,
+      "product_entity": 60801,
+      "bounds_mm": [
+        2343.75,
+        1250.343985266,
+        880.234375,
+        2656.25,
+        1499.656014734,
+        920.15625
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_suction_neck_02_159",
+      "brep_entity": 61154,
+      "product_entity": 61150,
+      "bounds_mm": [
+        2343.75,
+        1226.965725511,
+        920.15625,
+        2656.25,
+        1523.034274489,
+        960.078125
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_suction_neck_03_160",
+      "brep_entity": 61503,
+      "product_entity": 61499,
+      "bounds_mm": [
+        2343.75,
+        1216.564970318,
+        960.078125,
+        2656.25,
+        1533.435029682,
+        1000.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_suction_neck_04_161",
+      "brep_entity": 61852,
+      "product_entity": 61848,
+      "bounds_mm": [
+        2343.75,
+        1216.564970318,
+        1000.0,
+        2656.25,
+        1533.435029682,
+        1039.921875
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_suction_neck_05_162",
+      "brep_entity": 62201,
+      "product_entity": 62197,
+      "bounds_mm": [
+        2343.75,
+        1226.965725511,
+        1039.921875,
+        2656.25,
+        1523.034274489,
+        1079.84375
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_suction_neck_06_163",
+      "brep_entity": 62550,
+      "product_entity": 62546,
+      "bounds_mm": [
+        2343.75,
+        1250.343985266,
+        1079.84375,
+        2656.25,
+        1499.656014734,
+        1119.765625
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_suction_neck_07_164",
+      "brep_entity": 62899,
+      "product_entity": 62895,
+      "bounds_mm": [
+        2343.75,
+        1297.691621488,
+        1119.765625,
+        2656.25,
+        1452.308378512,
+        1159.6875
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Pump_suction_flange_00_165",
+      "brep_entity": 63248,
+      "product_entity": 63244,
+      "bounds_mm": [
+        2625.0,
+        1269.098111627,
+        781.25,
+        2687.5,
+        1480.901888373,
+        835.9375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_flange_01_166",
+      "brep_entity": 63597,
+      "product_entity": 63593,
+      "bounds_mm": [
+        2625.0,
+        1204.238335981,
+        835.9375,
+        2687.5,
+        1545.761664019,
+        890.625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_flange_02_167",
+      "brep_entity": 63946,
+      "product_entity": 63942,
+      "bounds_mm": [
+        2625.0,
+        1172.213322618,
+        890.625,
+        2687.5,
+        1577.786677382,
+        945.3125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_flange_03_168",
+      "brep_entity": 64295,
+      "product_entity": 64291,
+      "bounds_mm": [
+        2625.0,
+        1157.965712764,
+        945.3125,
+        2687.5,
+        1592.034287236,
+        1000.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_flange_04_169",
+      "brep_entity": 64644,
+      "product_entity": 64640,
+      "bounds_mm": [
+        2625.0,
+        1157.965712764,
+        1000.0,
+        2687.5,
+        1592.034287236,
+        1054.6875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_flange_05_170",
+      "brep_entity": 64993,
+      "product_entity": 64989,
+      "bounds_mm": [
+        2625.0,
+        1172.213322618,
+        1054.6875,
+        2687.5,
+        1577.786677382,
+        1109.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_flange_06_171",
+      "brep_entity": 65342,
+      "product_entity": 65338,
+      "bounds_mm": [
+        2625.0,
+        1204.238335981,
+        1109.375,
+        2687.5,
+        1545.761664019,
+        1164.0625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_flange_07_172",
+      "brep_entity": 65691,
+      "product_entity": 65687,
+      "bounds_mm": [
+        2625.0,
+        1269.098111627,
+        1164.0625,
+        2687.5,
+        1480.901888373,
+        1218.75
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_bore_00_173",
+      "brep_entity": 66040,
+      "product_entity": 66036,
+      "bounds_mm": [
+        2687.5,
+        1306.163772558,
+        857.8125,
+        2695.0,
+        1443.836227442,
+        893.359375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_suction_bore_01_174",
+      "brep_entity": 66389,
+      "product_entity": 66385,
+      "bounds_mm": [
+        2687.5,
+        1264.004918388,
+        893.359375,
+        2695.0,
+        1485.995081612,
+        928.90625
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_suction_bore_02_175",
+      "brep_entity": 66738,
+      "product_entity": 66734,
+      "bounds_mm": [
+        2687.5,
+        1243.188659702,
+        928.90625,
+        2695.0,
+        1506.811340298,
+        964.453125
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_suction_bore_03_176",
+      "brep_entity": 67087,
+      "product_entity": 67083,
+      "bounds_mm": [
+        2687.5,
+        1233.927713297,
+        964.453125,
+        2695.0,
+        1516.072286703,
+        1000.0
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_suction_bore_04_177",
+      "brep_entity": 67436,
+      "product_entity": 67432,
+      "bounds_mm": [
+        2687.5,
+        1233.927713297,
+        1000.0,
+        2695.0,
+        1516.072286703,
+        1035.546875
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_suction_bore_05_178",
+      "brep_entity": 67785,
+      "product_entity": 67781,
+      "bounds_mm": [
+        2687.5,
+        1243.188659702,
+        1035.546875,
+        2695.0,
+        1506.811340298,
+        1071.09375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_suction_bore_06_179",
+      "brep_entity": 68134,
+      "product_entity": 68130,
+      "bounds_mm": [
+        2687.5,
+        1264.004918388,
+        1071.09375,
+        2695.0,
+        1485.995081612,
+        1106.640625
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_suction_bore_07_180",
+      "brep_entity": 68483,
+      "product_entity": 68479,
+      "bounds_mm": [
+        2687.5,
+        1306.163772558,
+        1106.640625,
+        2695.0,
+        1443.836227442,
+        1142.1875
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Pump_suction_rim_00_181",
+      "brep_entity": 68832,
+      "product_entity": 68828,
+      "bounds_mm": [
+        2660.0,
+        1533.125,
+        965.625,
+        2722.5,
+        1601.875,
+        1034.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_bolt_00_182",
+      "brep_entity": 69181,
+      "product_entity": 69177,
+      "bounds_mm": [
+        2717.8125,
+        1550.3125,
+        982.8125,
+        2752.1875,
+        1584.6875,
+        1017.1875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Pump_suction_rim_01_183",
+      "brep_entity": 69530,
+      "product_entity": 69526,
+      "bounds_mm": [
+        2660.0,
+        1507.334890229,
+        1061.875,
+        2722.5,
+        1576.084890229,
+        1130.625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_rim_02_184",
+      "brep_entity": 69879,
+      "product_entity": 69875,
+      "bounds_mm": [
+        2660.0,
+        1436.875,
+        1132.334890229,
+        2722.5,
+        1505.625,
+        1201.084890229
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_bolt_02_185",
+      "brep_entity": 70228,
+      "product_entity": 70224,
+      "bounds_mm": [
+        2717.8125,
+        1454.0625,
+        1149.522390229,
+        2752.1875,
+        1488.4375,
+        1183.897390229
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Pump_suction_rim_03_186",
+      "brep_entity": 70577,
+      "product_entity": 70573,
+      "bounds_mm": [
+        2660.0,
+        1340.625,
+        1158.125,
+        2722.5,
+        1409.375,
+        1226.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_rim_04_187",
+      "brep_entity": 70926,
+      "product_entity": 70922,
+      "bounds_mm": [
+        2660.0,
+        1244.375,
+        1132.334890229,
+        2722.5,
+        1313.125,
+        1201.084890229
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_bolt_04_188",
+      "brep_entity": 71275,
+      "product_entity": 71271,
+      "bounds_mm": [
+        2717.8125,
+        1261.5625,
+        1149.522390229,
+        2752.1875,
+        1295.9375,
+        1183.897390229
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Pump_suction_rim_05_189",
+      "brep_entity": 71624,
+      "product_entity": 71620,
+      "bounds_mm": [
+        2660.0,
+        1173.915109771,
+        1061.875,
+        2722.5,
+        1242.665109771,
+        1130.625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_rim_06_190",
+      "brep_entity": 71973,
+      "product_entity": 71969,
+      "bounds_mm": [
+        2660.0,
+        1148.125,
+        965.625,
+        2722.5,
+        1216.875,
+        1034.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_bolt_06_191",
+      "brep_entity": 72322,
+      "product_entity": 72318,
+      "bounds_mm": [
+        2717.8125,
+        1165.3125,
+        982.8125,
+        2752.1875,
+        1199.6875,
+        1017.1875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Pump_suction_rim_07_192",
+      "brep_entity": 72671,
+      "product_entity": 72667,
+      "bounds_mm": [
+        2660.0,
+        1173.915109771,
+        869.375,
+        2722.5,
+        1242.665109771,
+        938.125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_rim_08_193",
+      "brep_entity": 73020,
+      "product_entity": 73016,
+      "bounds_mm": [
+        2660.0,
+        1244.375,
+        798.915109771,
+        2722.5,
+        1313.125,
+        867.665109771
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_bolt_08_194",
+      "brep_entity": 73369,
+      "product_entity": 73365,
+      "bounds_mm": [
+        2717.8125,
+        1261.5625,
+        816.102609771,
+        2752.1875,
+        1295.9375,
+        850.477609771
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Pump_suction_rim_09_195",
+      "brep_entity": 73718,
+      "product_entity": 73714,
+      "bounds_mm": [
+        2660.0,
+        1340.625,
+        773.125,
+        2722.5,
+        1409.375,
+        841.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_rim_10_196",
+      "brep_entity": 74067,
+      "product_entity": 74063,
+      "bounds_mm": [
+        2660.0,
+        1436.875,
+        798.915109771,
+        2722.5,
+        1505.625,
+        867.665109771
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Pump_suction_bolt_10_197",
+      "brep_entity": 74416,
+      "product_entity": 74412,
+      "bounds_mm": [
+        2717.8125,
+        1454.0625,
+        816.102609771,
+        2752.1875,
+        1488.4375,
+        850.477609771
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Pump_suction_rim_11_198",
+      "brep_entity": 74765,
+      "product_entity": 74761,
+      "bounds_mm": [
+        2660.0,
+        1507.334890229,
+        869.375,
+        2722.5,
+        1576.084890229,
+        938.125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_neck_00_199",
+      "brep_entity": 75114,
+      "product_entity": 75110,
+      "bounds_mm": [
+        1143.977080898,
+        781.0,
+        1531.25,
+        1356.022919102,
+        835.75,
+        1843.75
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_exhaust_neck_01_200",
+      "brep_entity": 75463,
+      "product_entity": 75459,
+      "bounds_mm": [
+        1079.043179794,
+        835.75,
+        1531.25,
+        1420.956820206,
+        890.5,
+        1843.75
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_exhaust_neck_02_201",
+      "brep_entity": 75812,
+      "product_entity": 75808,
+      "bounds_mm": [
+        1046.981566416,
+        890.5,
+        1531.25,
+        1453.018433584,
+        945.25,
+        1843.75
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_exhaust_neck_03_202",
+      "brep_entity": 76161,
+      "product_entity": 76157,
+      "bounds_mm": [
+        1032.717673579,
+        945.25,
+        1531.25,
+        1467.282326421,
+        1000.0,
+        1843.75
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_exhaust_neck_04_203",
+      "brep_entity": 76510,
+      "product_entity": 76506,
+      "bounds_mm": [
+        1032.717673579,
+        1000.0,
+        1531.25,
+        1467.282326421,
+        1054.75,
+        1843.75
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_exhaust_neck_05_204",
+      "brep_entity": 76859,
+      "product_entity": 76855,
+      "bounds_mm": [
+        1046.981566416,
+        1054.75,
+        1531.25,
+        1453.018433584,
+        1109.5,
+        1843.75
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_exhaust_neck_06_205",
+      "brep_entity": 77208,
+      "product_entity": 77204,
+      "bounds_mm": [
+        1079.043179794,
+        1109.5,
+        1531.25,
+        1420.956820206,
+        1164.25,
+        1843.75
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_exhaust_neck_07_206",
+      "brep_entity": 77557,
+      "product_entity": 77553,
+      "bounds_mm": [
+        1143.977080898,
+        1164.25,
+        1531.25,
+        1356.022919102,
+        1219.0,
+        1843.75
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Turbine_exhaust_flange_00_207",
+      "brep_entity": 77906,
+      "product_entity": 77902,
+      "bounds_mm": [
+        1104.763124517,
+        700.0,
+        1812.5,
+        1395.236875483,
+        775.0,
+        1875.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_flange_01_208",
+      "brep_entity": 78255,
+      "product_entity": 78251,
+      "bounds_mm": [
+        1015.81257506,
+        775.0,
+        1812.5,
+        1484.18742494,
+        850.0,
+        1875.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_flange_02_209",
+      "brep_entity": 78604,
+      "product_entity": 78600,
+      "bounds_mm": [
+        971.892556734,
+        850.0,
+        1812.5,
+        1528.107443266,
+        925.0,
+        1875.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_flange_03_210",
+      "brep_entity": 78953,
+      "product_entity": 78949,
+      "bounds_mm": [
+        952.352977505,
+        925.0,
+        1812.5,
+        1547.647022495,
+        1000.0,
+        1875.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_flange_04_211",
+      "brep_entity": 79302,
+      "product_entity": 79298,
+      "bounds_mm": [
+        952.352977505,
+        1000.0,
+        1812.5,
+        1547.647022495,
+        1075.0,
+        1875.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_flange_05_212",
+      "brep_entity": 79651,
+      "product_entity": 79647,
+      "bounds_mm": [
+        971.892556734,
+        1075.0,
+        1812.5,
+        1528.107443266,
+        1150.0,
+        1875.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_flange_06_213",
+      "brep_entity": 80000,
+      "product_entity": 79996,
+      "bounds_mm": [
+        1015.81257506,
+        1150.0,
+        1812.5,
+        1484.18742494,
+        1225.0,
+        1875.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_flange_07_214",
+      "brep_entity": 80349,
+      "product_entity": 80345,
+      "bounds_mm": [
+        1104.763124517,
+        1225.0,
+        1812.5,
+        1395.236875483,
+        1300.0,
+        1875.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_bore_00_215",
+      "brep_entity": 80698,
+      "product_entity": 80694,
+      "bounds_mm": [
+        1155.596030936,
+        805.0,
+        1875.0,
+        1344.403969064,
+        853.75,
+        1882.5
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Turbine_exhaust_bore_01_216",
+      "brep_entity": 81047,
+      "product_entity": 81043,
+      "bounds_mm": [
+        1097.778173789,
+        853.75,
+        1875.0,
+        1402.221826211,
+        902.5,
+        1882.5
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Turbine_exhaust_bore_02_217",
+      "brep_entity": 81396,
+      "product_entity": 81392,
+      "bounds_mm": [
+        1069.230161877,
+        902.5,
+        1875.0,
+        1430.769838123,
+        951.25,
+        1882.5
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Turbine_exhaust_bore_03_218",
+      "brep_entity": 81745,
+      "product_entity": 81741,
+      "bounds_mm": [
+        1056.529435378,
+        951.25,
+        1875.0,
+        1443.470564622,
+        1000.0,
+        1882.5
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Turbine_exhaust_bore_04_219",
+      "brep_entity": 82094,
+      "product_entity": 82090,
+      "bounds_mm": [
+        1056.529435378,
+        1000.0,
+        1875.0,
+        1443.470564622,
+        1048.75,
+        1882.5
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Turbine_exhaust_bore_05_220",
+      "brep_entity": 82443,
+      "product_entity": 82439,
+      "bounds_mm": [
+        1069.230161877,
+        1048.75,
+        1875.0,
+        1430.769838123,
+        1097.5,
+        1882.5
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Turbine_exhaust_bore_06_221",
+      "brep_entity": 82792,
+      "product_entity": 82788,
+      "bounds_mm": [
+        1097.778173789,
+        1097.5,
+        1875.0,
+        1402.221826211,
+        1146.25,
+        1882.5
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Turbine_exhaust_bore_07_222",
+      "brep_entity": 83141,
+      "product_entity": 83137,
+      "bounds_mm": [
+        1155.596030936,
+        1146.25,
+        1875.0,
+        1344.403969064,
+        1195.0,
+        1882.5
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Turbine_exhaust_rim_00_223",
+      "brep_entity": 83490,
+      "product_entity": 83486,
+      "bounds_mm": [
+        1479.625,
+        965.625,
+        1847.5,
+        1548.375,
+        1034.375,
+        1910.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_bolt_00_224",
+      "brep_entity": 83839,
+      "product_entity": 83835,
+      "bounds_mm": [
+        1496.8125,
+        982.8125,
+        1905.3125,
+        1531.1875,
+        1017.1875,
+        1939.6875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Turbine_exhaust_rim_01_225",
+      "brep_entity": 84188,
+      "product_entity": 84184,
+      "bounds_mm": [
+        1444.255706599,
+        1097.625,
+        1847.5,
+        1513.005706599,
+        1166.375,
+        1910.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_rim_02_226",
+      "brep_entity": 84537,
+      "product_entity": 84533,
+      "bounds_mm": [
+        1347.625,
+        1194.255706599,
+        1847.5,
+        1416.375,
+        1263.005706599,
+        1910.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_bolt_02_227",
+      "brep_entity": 84886,
+      "product_entity": 84882,
+      "bounds_mm": [
+        1364.8125,
+        1211.443206599,
+        1905.3125,
+        1399.1875,
+        1245.818206599,
+        1939.6875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Turbine_exhaust_rim_03_228",
+      "brep_entity": 85235,
+      "product_entity": 85231,
+      "bounds_mm": [
+        1215.625,
+        1229.625,
+        1847.5,
+        1284.375,
+        1298.375,
+        1910.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_rim_04_229",
+      "brep_entity": 85584,
+      "product_entity": 85580,
+      "bounds_mm": [
+        1083.625,
+        1194.255706599,
+        1847.5,
+        1152.375,
+        1263.005706599,
+        1910.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_bolt_04_230",
+      "brep_entity": 85933,
+      "product_entity": 85929,
+      "bounds_mm": [
+        1100.8125,
+        1211.443206599,
+        1905.3125,
+        1135.1875,
+        1245.818206599,
+        1939.6875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Turbine_exhaust_rim_05_231",
+      "brep_entity": 86282,
+      "product_entity": 86278,
+      "bounds_mm": [
+        986.994293401,
+        1097.625,
+        1847.5,
+        1055.744293401,
+        1166.375,
+        1910.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_rim_06_232",
+      "brep_entity": 86631,
+      "product_entity": 86627,
+      "bounds_mm": [
+        951.625,
+        965.625,
+        1847.5,
+        1020.375,
+        1034.375,
+        1910.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_bolt_06_233",
+      "brep_entity": 86980,
+      "product_entity": 86976,
+      "bounds_mm": [
+        968.8125,
+        982.8125,
+        1905.3125,
+        1003.1875,
+        1017.1875,
+        1939.6875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Turbine_exhaust_rim_07_234",
+      "brep_entity": 87329,
+      "product_entity": 87325,
+      "bounds_mm": [
+        986.994293401,
+        833.625,
+        1847.5,
+        1055.744293401,
+        902.375,
+        1910.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_rim_08_235",
+      "brep_entity": 87678,
+      "product_entity": 87674,
+      "bounds_mm": [
+        1083.625,
+        736.994293401,
+        1847.5,
+        1152.375,
+        805.744293401,
+        1910.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_bolt_08_236",
+      "brep_entity": 88027,
+      "product_entity": 88023,
+      "bounds_mm": [
+        1100.8125,
+        754.181793401,
+        1905.3125,
+        1135.1875,
+        788.556793401,
+        1939.6875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Turbine_exhaust_rim_09_237",
+      "brep_entity": 88376,
+      "product_entity": 88372,
+      "bounds_mm": [
+        1215.625,
+        701.625,
+        1847.5,
+        1284.375,
+        770.375,
+        1910.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_rim_10_238",
+      "brep_entity": 88725,
+      "product_entity": 88721,
+      "bounds_mm": [
+        1347.625,
+        736.994293401,
+        1847.5,
+        1416.375,
+        805.744293401,
+        1910.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Turbine_exhaust_bolt_10_239",
+      "brep_entity": 89074,
+      "product_entity": 89070,
+      "bounds_mm": [
+        1364.8125,
+        754.181793401,
+        1905.3125,
+        1399.1875,
+        788.556793401,
+        1939.6875
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Turbine_exhaust_rim_11_240",
+      "brep_entity": 89423,
+      "product_entity": 89419,
+      "bounds_mm": [
+        1444.255706599,
+        833.625,
+        1847.5,
+        1513.005706599,
+        902.375,
+        1910.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Governor_body_00_241",
+      "brep_entity": 89943,
+      "product_entity": 89939,
+      "bounds_mm": [
+        557.391965713,
+        1187.5,
+        731.25,
+        817.608034287,
+        1812.5,
+        798.4375
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Governor_body_01_242",
+      "brep_entity": 90292,
+      "product_entity": 90288,
+      "bounds_mm": [
+        477.707098491,
+        1187.5,
+        798.4375,
+        897.292901509,
+        1812.5,
+        865.625
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Governor_body_02_243",
+      "brep_entity": 90641,
+      "product_entity": 90637,
+      "bounds_mm": [
+        438.362082074,
+        1187.5,
+        865.625,
+        936.637917926,
+        1812.5,
+        932.8125
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Governor_body_03_244",
+      "brep_entity": 90990,
+      "product_entity": 90986,
+      "bounds_mm": [
+        420.857875682,
+        1187.5,
+        932.8125,
+        954.142124318,
+        1812.5,
+        1000.0
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Governor_body_04_245",
+      "brep_entity": 91339,
+      "product_entity": 91335,
+      "bounds_mm": [
+        420.857875682,
+        1187.5,
+        1000.0,
+        954.142124318,
+        1812.5,
+        1067.1875
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Governor_body_05_246",
+      "brep_entity": 91688,
+      "product_entity": 91684,
+      "bounds_mm": [
+        438.362082074,
+        1187.5,
+        1067.1875,
+        936.637917926,
+        1812.5,
+        1134.375
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Governor_body_06_247",
+      "brep_entity": 92037,
+      "product_entity": 92033,
+      "bounds_mm": [
+        477.707098491,
+        1187.5,
+        1134.375,
+        897.292901509,
+        1812.5,
+        1201.5625
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Governor_body_07_248",
+      "brep_entity": 92386,
+      "product_entity": 92382,
+      "bounds_mm": [
+        557.391965713,
+        1187.5,
+        1201.5625,
+        817.608034287,
+        1812.5,
+        1268.75
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Governor_cap_00_249",
+      "brep_entity": 92735,
+      "product_entity": 92731,
+      "bounds_mm": [
+        542.263124517,
+        1781.25,
+        700.0,
+        832.736875483,
+        1843.75,
+        775.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Governor_cap_01_250",
+      "brep_entity": 93084,
+      "product_entity": 93080,
+      "bounds_mm": [
+        453.31257506,
+        1781.25,
+        775.0,
+        921.68742494,
+        1843.75,
+        850.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Governor_cap_02_251",
+      "brep_entity": 93433,
+      "product_entity": 93429,
+      "bounds_mm": [
+        409.392556734,
+        1781.25,
+        850.0,
+        965.607443266,
+        1843.75,
+        925.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Governor_cap_03_252",
+      "brep_entity": 93782,
+      "product_entity": 93778,
+      "bounds_mm": [
+        389.852977505,
+        1781.25,
+        925.0,
+        985.147022495,
+        1843.75,
+        1000.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Governor_cap_04_253",
+      "brep_entity": 94131,
+      "product_entity": 94127,
+      "bounds_mm": [
+        389.852977505,
+        1781.25,
+        1000.0,
+        985.147022495,
+        1843.75,
+        1075.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Governor_cap_05_254",
+      "brep_entity": 94480,
+      "product_entity": 94476,
+      "bounds_mm": [
+        409.392556734,
+        1781.25,
+        1075.0,
+        965.607443266,
+        1843.75,
+        1150.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Governor_cap_06_255",
+      "brep_entity": 94829,
+      "product_entity": 94825,
+      "bounds_mm": [
+        453.31257506,
+        1781.25,
+        1150.0,
+        921.68742494,
+        1843.75,
+        1225.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Governor_cap_07_256",
+      "brep_entity": 95178,
+      "product_entity": 95174,
+      "bounds_mm": [
+        542.263124517,
+        1781.25,
+        1225.0,
+        832.736875483,
+        1843.75,
+        1300.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Throttle_chest_257",
+      "brep_entity": 95527,
+      "product_entity": 95523,
+      "bounds_mm": [
+        531.25,
+        1812.5,
+        843.75,
+        843.75,
+        2062.5,
+        1156.25
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Actuator_00_258",
+      "brep_entity": 95876,
+      "product_entity": 95872,
+      "bounds_mm": [
+        317.510403455,
+        1437.5,
+        943.75,
+        432.489596545,
+        2062.5,
+        973.4375
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Actuator_01_259",
+      "brep_entity": 96225,
+      "product_entity": 96221,
+      "bounds_mm": [
+        282.300810961,
+        1437.5,
+        973.4375,
+        467.699189039,
+        2062.5,
+        1003.125
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Actuator_02_260",
+      "brep_entity": 96574,
+      "product_entity": 96570,
+      "bounds_mm": [
+        264.915803707,
+        1437.5,
+        1003.125,
+        485.084196293,
+        2062.5,
+        1032.8125
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Actuator_03_261",
+      "brep_entity": 96923,
+      "product_entity": 96919,
+      "bounds_mm": [
+        257.181386929,
+        1437.5,
+        1032.8125,
+        492.818613071,
+        2062.5,
+        1062.5
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Actuator_04_262",
+      "brep_entity": 97272,
+      "product_entity": 97268,
+      "bounds_mm": [
+        257.181386929,
+        1437.5,
+        1062.5,
+        492.818613071,
+        2062.5,
+        1092.1875
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Actuator_05_263",
+      "brep_entity": 97621,
+      "product_entity": 97617,
+      "bounds_mm": [
+        264.915803707,
+        1437.5,
+        1092.1875,
+        485.084196293,
+        2062.5,
+        1121.875
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Actuator_06_264",
+      "brep_entity": 97970,
+      "product_entity": 97966,
+      "bounds_mm": [
+        282.300810961,
+        1437.5,
+        1121.875,
+        467.699189039,
+        2062.5,
+        1151.5625
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Actuator_07_265",
+      "brep_entity": 98319,
+      "product_entity": 98315,
+      "bounds_mm": [
+        317.510403455,
+        1437.5,
+        1151.5625,
+        432.489596545,
+        2062.5,
+        1181.25
+      ],
+      "color": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "material": "step_color_003"
+    },
+    {
+      "name": "Actuator_cap_00_266",
+      "brep_entity": 98668,
+      "product_entity": 98664,
+      "bounds_mm": [
+        305.407330498,
+        2031.25,
+        918.75,
+        444.592669502,
+        2093.75,
+        954.6875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Actuator_cap_01_267",
+      "brep_entity": 99017,
+      "product_entity": 99013,
+      "bounds_mm": [
+        262.785192216,
+        2031.25,
+        954.6875,
+        487.214807784,
+        2093.75,
+        990.625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Actuator_cap_02_268",
+      "brep_entity": 99366,
+      "product_entity": 99362,
+      "bounds_mm": [
+        241.740183435,
+        2031.25,
+        990.625,
+        508.259816565,
+        2093.75,
+        1026.5625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Actuator_cap_03_269",
+      "brep_entity": 99715,
+      "product_entity": 99711,
+      "bounds_mm": [
+        232.377468388,
+        2031.25,
+        1026.5625,
+        517.622531612,
+        2093.75,
+        1062.5
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Actuator_cap_04_270",
+      "brep_entity": 100064,
+      "product_entity": 100060,
+      "bounds_mm": [
+        232.377468388,
+        2031.25,
+        1062.5,
+        517.622531612,
+        2093.75,
+        1098.4375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Actuator_cap_05_271",
+      "brep_entity": 100413,
+      "product_entity": 100409,
+      "bounds_mm": [
+        241.740183435,
+        2031.25,
+        1098.4375,
+        508.259816565,
+        2093.75,
+        1134.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Actuator_cap_06_272",
+      "brep_entity": 100762,
+      "product_entity": 100758,
+      "bounds_mm": [
+        262.785192216,
+        2031.25,
+        1134.375,
+        487.214807784,
+        2093.75,
+        1170.3125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Actuator_cap_07_273",
+      "brep_entity": 101111,
+      "product_entity": 101107,
+      "bounds_mm": [
+        305.407330498,
+        2031.25,
+        1170.3125,
+        444.592669502,
+        2093.75,
+        1206.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Governor_linkage0_274",
+      "brep_entity": 101460,
+      "product_entity": 101456,
+      "bounds_mm": [
+        375.0,
+        1793.75,
+        1231.25,
+        687.5,
+        1831.25,
+        1268.75
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Governor_linkage1_275",
+      "brep_entity": 101809,
+      "product_entity": 101805,
+      "bounds_mm": [
+        668.75,
+        1562.5,
+        1231.25,
+        706.25,
+        1812.5,
+        1268.75
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Governor_linkage2_276",
+      "brep_entity": 102158,
+      "product_entity": 102154,
+      "bounds_mm": [
+        687.5,
+        1543.75,
+        1231.25,
+        1062.5,
+        1581.25,
+        1268.75
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Governor_bracket_277",
+      "brep_entity": 102507,
+      "product_entity": 102503,
+      "bounds_mm": [
+        456.25,
+        375.0,
+        906.25,
+        543.75,
+        1125.0,
+        1093.75
+      ],
+      "color": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "material": "step_color_002"
+    },
+    {
+      "name": "Governor_bracket_278",
+      "brep_entity": 102856,
+      "product_entity": 102852,
+      "bounds_mm": [
+        831.25,
+        375.0,
+        906.25,
+        918.75,
+        1125.0,
+        1093.75
+      ],
+      "color": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "material": "step_color_002"
+    },
+    {
+      "name": "Instrument_panel_279",
+      "brep_entity": 103480,
+      "product_entity": 103476,
+      "bounds_mm": [
+        1843.75,
+        406.25,
+        1725.0,
+        2531.25,
+        1343.75,
+        1775.0
+      ],
+      "color": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "material": "step_color_002"
+    },
+    {
+      "name": "Gauge_bezel_00_280",
+      "brep_entity": 103829,
+      "product_entity": 103825,
+      "bounds_mm": [
+        1957.639244651,
+        1037.5,
+        1787.5,
+        2042.360755349,
+        1059.375,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_01_281",
+      "brep_entity": 104178,
+      "product_entity": 104174,
+      "bounds_mm": [
+        1931.695334393,
+        1059.375,
+        1787.5,
+        2068.304665607,
+        1081.25,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_02_282",
+      "brep_entity": 104527,
+      "product_entity": 104523,
+      "bounds_mm": [
+        1918.885329047,
+        1081.25,
+        1787.5,
+        2081.114670953,
+        1103.125,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_03_283",
+      "brep_entity": 104876,
+      "product_entity": 104872,
+      "bounds_mm": [
+        1913.186285106,
+        1103.125,
+        1787.5,
+        2086.813714894,
+        1125.0,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_04_284",
+      "brep_entity": 105225,
+      "product_entity": 105221,
+      "bounds_mm": [
+        1913.186285106,
+        1125.0,
+        1787.5,
+        2086.813714894,
+        1146.875,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_05_285",
+      "brep_entity": 105574,
+      "product_entity": 105570,
+      "bounds_mm": [
+        1918.885329047,
+        1146.875,
+        1787.5,
+        2081.114670953,
+        1168.75,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_06_286",
+      "brep_entity": 105923,
+      "product_entity": 105919,
+      "bounds_mm": [
+        1931.695334393,
+        1168.75,
+        1787.5,
+        2068.304665607,
+        1190.625,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_07_287",
+      "brep_entity": 106272,
+      "product_entity": 106268,
+      "bounds_mm": [
+        1957.639244651,
+        1190.625,
+        1787.5,
+        2042.360755349,
+        1212.5,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_face_00_288",
+      "brep_entity": 106621,
+      "product_entity": 106617,
+      "bounds_mm": [
+        1966.716549369,
+        1056.25,
+        1836.875,
+        2033.283450631,
+        1073.4375,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_01_289",
+      "brep_entity": 106970,
+      "product_entity": 106966,
+      "bounds_mm": [
+        1946.332048451,
+        1073.4375,
+        1836.875,
+        2053.667951549,
+        1090.625,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_02_290",
+      "brep_entity": 107319,
+      "product_entity": 107315,
+      "bounds_mm": [
+        1936.267044252,
+        1090.625,
+        1836.875,
+        2063.732955748,
+        1107.8125,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_03_291",
+      "brep_entity": 107668,
+      "product_entity": 107664,
+      "bounds_mm": [
+        1931.789224012,
+        1107.8125,
+        1836.875,
+        2068.210775988,
+        1125.0,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_04_292",
+      "brep_entity": 108017,
+      "product_entity": 108013,
+      "bounds_mm": [
+        1931.789224012,
+        1125.0,
+        1836.875,
+        2068.210775988,
+        1142.1875,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_05_293",
+      "brep_entity": 108366,
+      "product_entity": 108362,
+      "bounds_mm": [
+        1936.267044252,
+        1142.1875,
+        1836.875,
+        2063.732955748,
+        1159.375,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_06_294",
+      "brep_entity": 108715,
+      "product_entity": 108711,
+      "bounds_mm": [
+        1946.332048451,
+        1159.375,
+        1836.875,
+        2053.667951549,
+        1176.5625,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_07_295",
+      "brep_entity": 109064,
+      "product_entity": 109060,
+      "bounds_mm": [
+        1966.716549369,
+        1176.5625,
+        1836.875,
+        2033.283450631,
+        1193.75,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_needle_296",
+      "brep_entity": 109413,
+      "product_entity": 109409,
+      "bounds_mm": [
+        1981.465727024,
+        1100.995580746,
+        1844.375,
+        2037.284272976,
+        1174.004419254,
+        1849.375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Gauge_tick_297",
+      "brep_entity": 109762,
+      "product_entity": 109758,
+      "bounds_mm": [
+        1945.0,
+        1120.0,
+        1844.375,
+        1955.0,
+        1130.0,
+        1849.375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Gauge_tick_298",
+      "brep_entity": 110111,
+      "product_entity": 110107,
+      "bounds_mm": [
+        2045.0,
+        1120.0,
+        1844.375,
+        2055.0,
+        1130.0,
+        1849.375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Gauge_tick_299",
+      "brep_entity": 110460,
+      "product_entity": 110456,
+      "bounds_mm": [
+        1995.0,
+        1170.0,
+        1844.375,
+        2005.0,
+        1180.0,
+        1849.375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Instrument_valve_303",
+      "brep_entity": 110809,
+      "product_entity": 110805,
+      "bounds_mm": [
+        1943.75,
+        614.0625,
+        1801.5625,
+        2056.25,
+        635.9375,
+        1823.4375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Gauge_bezel_00_304",
+      "brep_entity": 111158,
+      "product_entity": 111154,
+      "bounds_mm": [
+        2332.639244651,
+        1037.5,
+        1787.5,
+        2417.360755349,
+        1059.375,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_01_305",
+      "brep_entity": 111507,
+      "product_entity": 111503,
+      "bounds_mm": [
+        2306.695334393,
+        1059.375,
+        1787.5,
+        2443.304665607,
+        1081.25,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_02_306",
+      "brep_entity": 111856,
+      "product_entity": 111852,
+      "bounds_mm": [
+        2293.885329047,
+        1081.25,
+        1787.5,
+        2456.114670953,
+        1103.125,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_03_307",
+      "brep_entity": 112205,
+      "product_entity": 112201,
+      "bounds_mm": [
+        2288.186285106,
+        1103.125,
+        1787.5,
+        2461.813714894,
+        1125.0,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_04_308",
+      "brep_entity": 112554,
+      "product_entity": 112550,
+      "bounds_mm": [
+        2288.186285106,
+        1125.0,
+        1787.5,
+        2461.813714894,
+        1146.875,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_05_309",
+      "brep_entity": 112903,
+      "product_entity": 112899,
+      "bounds_mm": [
+        2293.885329047,
+        1146.875,
+        1787.5,
+        2456.114670953,
+        1168.75,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_06_310",
+      "brep_entity": 113252,
+      "product_entity": 113248,
+      "bounds_mm": [
+        2306.695334393,
+        1168.75,
+        1787.5,
+        2443.304665607,
+        1190.625,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_07_311",
+      "brep_entity": 113601,
+      "product_entity": 113597,
+      "bounds_mm": [
+        2332.639244651,
+        1190.625,
+        1787.5,
+        2417.360755349,
+        1212.5,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_face_00_312",
+      "brep_entity": 113950,
+      "product_entity": 113946,
+      "bounds_mm": [
+        2341.716549369,
+        1056.25,
+        1836.875,
+        2408.283450631,
+        1073.4375,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_01_313",
+      "brep_entity": 114299,
+      "product_entity": 114295,
+      "bounds_mm": [
+        2321.332048451,
+        1073.4375,
+        1836.875,
+        2428.667951549,
+        1090.625,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_02_314",
+      "brep_entity": 114648,
+      "product_entity": 114644,
+      "bounds_mm": [
+        2311.267044252,
+        1090.625,
+        1836.875,
+        2438.732955748,
+        1107.8125,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_03_315",
+      "brep_entity": 114997,
+      "product_entity": 114993,
+      "bounds_mm": [
+        2306.789224012,
+        1107.8125,
+        1836.875,
+        2443.210775988,
+        1125.0,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_04_316",
+      "brep_entity": 115346,
+      "product_entity": 115342,
+      "bounds_mm": [
+        2306.789224012,
+        1125.0,
+        1836.875,
+        2443.210775988,
+        1142.1875,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_05_317",
+      "brep_entity": 115695,
+      "product_entity": 115691,
+      "bounds_mm": [
+        2311.267044252,
+        1142.1875,
+        1836.875,
+        2438.732955748,
+        1159.375,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_06_318",
+      "brep_entity": 116044,
+      "product_entity": 116040,
+      "bounds_mm": [
+        2321.332048451,
+        1159.375,
+        1836.875,
+        2428.667951549,
+        1176.5625,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_07_319",
+      "brep_entity": 116393,
+      "product_entity": 116389,
+      "bounds_mm": [
+        2341.716549369,
+        1176.5625,
+        1836.875,
+        2408.283450631,
+        1193.75,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_needle_320",
+      "brep_entity": 116742,
+      "product_entity": 116738,
+      "bounds_mm": [
+        2356.465727024,
+        1100.995580746,
+        1844.375,
+        2412.284272976,
+        1174.004419254,
+        1849.375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Gauge_tick_321",
+      "brep_entity": 117091,
+      "product_entity": 117087,
+      "bounds_mm": [
+        2320.0,
+        1120.0,
+        1844.375,
+        2330.0,
+        1130.0,
+        1849.375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Gauge_tick_322",
+      "brep_entity": 117440,
+      "product_entity": 117436,
+      "bounds_mm": [
+        2420.0,
+        1120.0,
+        1844.375,
+        2430.0,
+        1130.0,
+        1849.375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Gauge_tick_323",
+      "brep_entity": 117789,
+      "product_entity": 117785,
+      "bounds_mm": [
+        2370.0,
+        1170.0,
+        1844.375,
+        2380.0,
+        1180.0,
+        1849.375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Instrument_valve_327",
+      "brep_entity": 118138,
+      "product_entity": 118134,
+      "bounds_mm": [
+        2318.75,
+        614.0625,
+        1801.5625,
+        2431.25,
+        635.9375,
+        1823.4375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Gauge_bezel_00_328",
+      "brep_entity": 118487,
+      "product_entity": 118483,
+      "bounds_mm": [
+        2145.139244651,
+        787.5,
+        1787.5,
+        2229.860755349,
+        809.375,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_01_329",
+      "brep_entity": 118836,
+      "product_entity": 118832,
+      "bounds_mm": [
+        2119.195334393,
+        809.375,
+        1787.5,
+        2255.804665607,
+        831.25,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_02_330",
+      "brep_entity": 119185,
+      "product_entity": 119181,
+      "bounds_mm": [
+        2106.385329047,
+        831.25,
+        1787.5,
+        2268.614670953,
+        853.125,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_03_331",
+      "brep_entity": 119534,
+      "product_entity": 119530,
+      "bounds_mm": [
+        2100.686285106,
+        853.125,
+        1787.5,
+        2274.313714894,
+        875.0,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_04_332",
+      "brep_entity": 119883,
+      "product_entity": 119879,
+      "bounds_mm": [
+        2100.686285106,
+        875.0,
+        1787.5,
+        2274.313714894,
+        896.875,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_05_333",
+      "brep_entity": 120232,
+      "product_entity": 120228,
+      "bounds_mm": [
+        2106.385329047,
+        896.875,
+        1787.5,
+        2268.614670953,
+        918.75,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_06_334",
+      "brep_entity": 120581,
+      "product_entity": 120577,
+      "bounds_mm": [
+        2119.195334393,
+        918.75,
+        1787.5,
+        2255.804665607,
+        940.625,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_bezel_07_335",
+      "brep_entity": 120930,
+      "product_entity": 120926,
+      "bounds_mm": [
+        2145.139244651,
+        940.625,
+        1787.5,
+        2229.860755349,
+        962.5,
+        1837.5
+      ],
+      "color": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "material": "step_color_001"
+    },
+    {
+      "name": "Gauge_face_00_336",
+      "brep_entity": 121279,
+      "product_entity": 121275,
+      "bounds_mm": [
+        2154.216549369,
+        806.25,
+        1836.875,
+        2220.783450631,
+        823.4375,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_01_337",
+      "brep_entity": 121628,
+      "product_entity": 121624,
+      "bounds_mm": [
+        2133.832048451,
+        823.4375,
+        1836.875,
+        2241.167951549,
+        840.625,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_02_338",
+      "brep_entity": 121977,
+      "product_entity": 121973,
+      "bounds_mm": [
+        2123.767044252,
+        840.625,
+        1836.875,
+        2251.232955748,
+        857.8125,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_03_339",
+      "brep_entity": 122326,
+      "product_entity": 122322,
+      "bounds_mm": [
+        2119.289224012,
+        857.8125,
+        1836.875,
+        2255.710775988,
+        875.0,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_04_340",
+      "brep_entity": 122675,
+      "product_entity": 122671,
+      "bounds_mm": [
+        2119.289224012,
+        875.0,
+        1836.875,
+        2255.710775988,
+        892.1875,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_05_341",
+      "brep_entity": 123024,
+      "product_entity": 123020,
+      "bounds_mm": [
+        2123.767044252,
+        892.1875,
+        1836.875,
+        2251.232955748,
+        909.375,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_06_342",
+      "brep_entity": 123373,
+      "product_entity": 123369,
+      "bounds_mm": [
+        2133.832048451,
+        909.375,
+        1836.875,
+        2241.167951549,
+        926.5625,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_face_07_343",
+      "brep_entity": 123722,
+      "product_entity": 123718,
+      "bounds_mm": [
+        2154.216549369,
+        926.5625,
+        1836.875,
+        2220.783450631,
+        943.75,
+        1844.375
+      ],
+      "color": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "material": "step_color_006"
+    },
+    {
+      "name": "Gauge_needle_344",
+      "brep_entity": 124071,
+      "product_entity": 124067,
+      "bounds_mm": [
+        2168.965727024,
+        850.995580746,
+        1844.375,
+        2224.784272976,
+        924.004419254,
+        1849.375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Gauge_tick_345",
+      "brep_entity": 124420,
+      "product_entity": 124416,
+      "bounds_mm": [
+        2132.5,
+        870.0,
+        1844.375,
+        2142.5,
+        880.0,
+        1849.375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Gauge_tick_346",
+      "brep_entity": 124769,
+      "product_entity": 124765,
+      "bounds_mm": [
+        2232.5,
+        870.0,
+        1844.375,
+        2242.5,
+        880.0,
+        1849.375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Gauge_tick_347",
+      "brep_entity": 125118,
+      "product_entity": 125114,
+      "bounds_mm": [
+        2182.5,
+        920.0,
+        1844.375,
+        2192.5,
+        930.0,
+        1849.375
+      ],
+      "color": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "material": "step_color_000"
+    },
+    {
+      "name": "Instrument_valve_351",
+      "brep_entity": 125467,
+      "product_entity": 125463,
+      "bounds_mm": [
+        2131.25,
+        614.0625,
+        1801.5625,
+        2243.75,
+        635.9375,
+        1823.4375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Gauge_line0_300",
+      "brep_entity": 126031,
+      "product_entity": 126027,
+      "bounds_mm": [
+        1992.1875,
+        500.0,
+        1785.9375,
+        2007.8125,
+        1031.25,
+        1801.5625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Gauge_line1_301",
+      "brep_entity": 126380,
+      "product_entity": 126376,
+      "bounds_mm": [
+        1875.0,
+        492.1875,
+        1785.9375,
+        2000.0,
+        507.8125,
+        1801.5625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Gauge_line2_302",
+      "brep_entity": 126729,
+      "product_entity": 126725,
+      "bounds_mm": [
+        1867.1875,
+        492.1875,
+        1437.5,
+        1882.8125,
+        507.8125,
+        1793.75
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Gauge_line0_324",
+      "brep_entity": 127078,
+      "product_entity": 127074,
+      "bounds_mm": [
+        2367.1875,
+        500.0,
+        1785.9375,
+        2382.8125,
+        1031.25,
+        1801.5625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Gauge_line1_325",
+      "brep_entity": 127427,
+      "product_entity": 127423,
+      "bounds_mm": [
+        2250.0,
+        492.1875,
+        1785.9375,
+        2375.0,
+        507.8125,
+        1801.5625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Gauge_line2_326",
+      "brep_entity": 127776,
+      "product_entity": 127772,
+      "bounds_mm": [
+        2242.1875,
+        492.1875,
+        1437.5,
+        2257.8125,
+        507.8125,
+        1793.75
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Gauge_line0_348",
+      "brep_entity": 128125,
+      "product_entity": 128121,
+      "bounds_mm": [
+        2179.6875,
+        500.0,
+        1785.9375,
+        2195.3125,
+        781.25,
+        1801.5625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Gauge_line1_349",
+      "brep_entity": 128474,
+      "product_entity": 128470,
+      "bounds_mm": [
+        2062.5,
+        492.1875,
+        1785.9375,
+        2187.5,
+        507.8125,
+        1801.5625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Gauge_line2_350",
+      "brep_entity": 128823,
+      "product_entity": 128819,
+      "bounds_mm": [
+        2054.6875,
+        492.1875,
+        1437.5,
+        2070.3125,
+        507.8125,
+        1793.75
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Upper_tube_0_0_352",
+      "brep_entity": 129172,
+      "product_entity": 129168,
+      "bounds_mm": [
+        488.125,
+        1375.0,
+        1300.625,
+        511.875,
+        2000.0,
+        1324.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Upper_tube_0_1_353",
+      "brep_entity": 129521,
+      "product_entity": 129517,
+      "bounds_mm": [
+        500.0,
+        1988.125,
+        1300.625,
+        1562.5,
+        2011.875,
+        1324.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Upper_tube_0_2_354",
+      "brep_entity": 129870,
+      "product_entity": 129866,
+      "bounds_mm": [
+        1550.625,
+        1562.5,
+        1300.625,
+        1574.375,
+        2000.0,
+        1324.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lower_tube_0_0_355",
+      "brep_entity": 130219,
+      "product_entity": 130215,
+      "bounds_mm": [
+        437.5,
+        1112.5,
+        1425.0,
+        750.0,
+        1137.5,
+        1450.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lower_tube_0_1_356",
+      "brep_entity": 130568,
+      "product_entity": 130564,
+      "bounds_mm": [
+        425.0,
+        500.0,
+        1425.0,
+        450.0,
+        1125.0,
+        1450.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lower_tube_0_2_357",
+      "brep_entity": 130917,
+      "product_entity": 130913,
+      "bounds_mm": [
+        437.5,
+        487.5,
+        1425.0,
+        1625.0,
+        512.5,
+        1450.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lower_tube_0_3_358",
+      "brep_entity": 131266,
+      "product_entity": 131262,
+      "bounds_mm": [
+        1612.5,
+        500.0,
+        1425.0,
+        1637.5,
+        937.5,
+        1450.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Upper_tube_1_0_359",
+      "brep_entity": 131615,
+      "product_entity": 131611,
+      "bounds_mm": [
+        550.625,
+        1375.0,
+        1363.125,
+        574.375,
+        2062.5,
+        1386.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Upper_tube_1_1_360",
+      "brep_entity": 131964,
+      "product_entity": 131960,
+      "bounds_mm": [
+        562.5,
+        2050.625,
+        1363.125,
+        1625.0,
+        2074.375,
+        1386.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Upper_tube_1_2_361",
+      "brep_entity": 132313,
+      "product_entity": 132309,
+      "bounds_mm": [
+        1613.125,
+        1562.5,
+        1363.125,
+        1636.875,
+        2062.5,
+        1386.875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lower_tube_1_0_362",
+      "brep_entity": 132662,
+      "product_entity": 132658,
+      "bounds_mm": [
+        375.0,
+        987.5,
+        1468.75,
+        750.0,
+        1012.5,
+        1493.75
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lower_tube_1_1_363",
+      "brep_entity": 133011,
+      "product_entity": 133007,
+      "bounds_mm": [
+        362.5,
+        562.5,
+        1468.75,
+        387.5,
+        1000.0,
+        1493.75
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lower_tube_1_2_364",
+      "brep_entity": 133360,
+      "product_entity": 133356,
+      "bounds_mm": [
+        375.0,
+        550.0,
+        1468.75,
+        1625.0,
+        575.0,
+        1493.75
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lower_tube_1_3_365",
+      "brep_entity": 133709,
+      "product_entity": 133705,
+      "bounds_mm": [
+        1612.5,
+        562.5,
+        1468.75,
+        1637.5,
+        937.5,
+        1493.75
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Upper_tube_2_0_366",
+      "brep_entity": 134058,
+      "product_entity": 134054,
+      "bounds_mm": [
+        613.125,
+        1375.0,
+        1425.625,
+        636.875,
+        2125.0,
+        1449.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Upper_tube_2_1_367",
+      "brep_entity": 134407,
+      "product_entity": 134403,
+      "bounds_mm": [
+        625.0,
+        2113.125,
+        1425.625,
+        1687.5,
+        2136.875,
+        1449.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Upper_tube_2_2_368",
+      "brep_entity": 134756,
+      "product_entity": 134752,
+      "bounds_mm": [
+        1675.625,
+        1562.5,
+        1425.625,
+        1699.375,
+        2125.0,
+        1449.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lower_tube_2_0_369",
+      "brep_entity": 135105,
+      "product_entity": 135101,
+      "bounds_mm": [
+        312.5,
+        862.5,
+        1512.5,
+        750.0,
+        887.5,
+        1537.5
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lower_tube_2_1_370",
+      "brep_entity": 135454,
+      "product_entity": 135450,
+      "bounds_mm": [
+        300.0,
+        625.0,
+        1512.5,
+        325.0,
+        875.0,
+        1537.5
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lower_tube_2_2_371",
+      "brep_entity": 135803,
+      "product_entity": 135799,
+      "bounds_mm": [
+        312.5,
+        612.5,
+        1512.5,
+        1625.0,
+        637.5,
+        1537.5
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Lower_tube_2_3_372",
+      "brep_entity": 136152,
+      "product_entity": 136148,
+      "bounds_mm": [
+        1612.5,
+        625.0,
+        1512.5,
+        1637.5,
+        937.5,
+        1537.5
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Rear_service_line0_373",
+      "brep_entity": 136501,
+      "product_entity": 136497,
+      "bounds_mm": [
+        735.9375,
+        1437.5,
+        548.4375,
+        764.0625,
+        2062.5,
+        576.5625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Rear_service_line1_374",
+      "brep_entity": 136850,
+      "product_entity": 136846,
+      "bounds_mm": [
+        750.0,
+        2048.4375,
+        548.4375,
+        2062.5,
+        2076.5625,
+        576.5625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Rear_service_line2_375",
+      "brep_entity": 137199,
+      "product_entity": 137195,
+      "bounds_mm": [
+        2048.4375,
+        1562.5,
+        548.4375,
+        2076.5625,
+        2062.5,
+        576.5625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_00_376",
+      "brep_entity": 137548,
+      "product_entity": 137544,
+      "bounds_mm": [
+        1585.66501289,
+        437.5,
+        543.75,
+        1664.33498711,
+        937.5,
+        564.0625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_01_377",
+      "brep_entity": 137897,
+      "product_entity": 137893,
+      "bounds_mm": [
+        1561.574239079,
+        437.5,
+        564.0625,
+        1688.425760921,
+        937.5,
+        584.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_02_378",
+      "brep_entity": 138246,
+      "product_entity": 138242,
+      "bounds_mm": [
+        1549.679234115,
+        437.5,
+        584.375,
+        1700.320765885,
+        937.5,
+        604.6875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_03_379",
+      "brep_entity": 138595,
+      "product_entity": 138591,
+      "bounds_mm": [
+        1544.387264741,
+        437.5,
+        604.6875,
+        1705.612735259,
+        937.5,
+        625.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_04_380",
+      "brep_entity": 138944,
+      "product_entity": 138940,
+      "bounds_mm": [
+        1544.387264741,
+        437.5,
+        625.0,
+        1705.612735259,
+        937.5,
+        645.3125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_05_381",
+      "brep_entity": 139293,
+      "product_entity": 139289,
+      "bounds_mm": [
+        1549.679234115,
+        437.5,
+        645.3125,
+        1700.320765885,
+        937.5,
+        665.625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_06_382",
+      "brep_entity": 139642,
+      "product_entity": 139638,
+      "bounds_mm": [
+        1561.574239079,
+        437.5,
+        665.625,
+        1688.425760921,
+        937.5,
+        685.9375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_07_383",
+      "brep_entity": 139991,
+      "product_entity": 139987,
+      "bounds_mm": [
+        1585.66501289,
+        437.5,
+        685.9375,
+        1664.33498711,
+        937.5,
+        706.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_00_384",
+      "brep_entity": 140340,
+      "product_entity": 140336,
+      "bounds_mm": [
+        1773.16501289,
+        437.5,
+        543.75,
+        1851.83498711,
+        937.5,
+        564.0625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_01_385",
+      "brep_entity": 140689,
+      "product_entity": 140685,
+      "bounds_mm": [
+        1749.074239079,
+        437.5,
+        564.0625,
+        1875.925760921,
+        937.5,
+        584.375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_02_386",
+      "brep_entity": 141038,
+      "product_entity": 141034,
+      "bounds_mm": [
+        1737.179234115,
+        437.5,
+        584.375,
+        1887.820765885,
+        937.5,
+        604.6875
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_03_387",
+      "brep_entity": 141387,
+      "product_entity": 141383,
+      "bounds_mm": [
+        1731.887264741,
+        437.5,
+        604.6875,
+        1893.112735259,
+        937.5,
+        625.0
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_04_388",
+      "brep_entity": 141736,
+      "product_entity": 141732,
+      "bounds_mm": [
+        1731.887264741,
+        437.5,
+        625.0,
+        1893.112735259,
+        937.5,
+        645.3125
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_05_389",
+      "brep_entity": 142085,
+      "product_entity": 142081,
+      "bounds_mm": [
+        1737.179234115,
+        437.5,
+        645.3125,
+        1887.820765885,
+        937.5,
+        665.625
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_06_390",
+      "brep_entity": 142434,
+      "product_entity": 142430,
+      "bounds_mm": [
+        1749.074239079,
+        437.5,
+        665.625,
+        1875.925760921,
+        937.5,
+        685.9375
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    },
+    {
+      "name": "Service_cylinder_07_391",
+      "brep_entity": 142783,
+      "product_entity": 142779,
+      "bounds_mm": [
+        1773.16501289,
+        437.5,
+        685.9375,
+        1851.83498711,
+        937.5,
+        706.25
+      ],
+      "color": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "material": "step_color_004"
+    }
+  ],
+  "materials": [
+    {
+      "name": "step_color_000",
+      "kd": [
+        0.06666666728316,
+        0.109803919806,
+        0.125490196231
+      ],
+      "texture": "minecraft:block/white_concrete"
+    },
+    {
+      "name": "step_color_001",
+      "kd": [
+        0.145098038775,
+        0.196078429142,
+        0.219607846375
+      ],
+      "texture": "minecraft:block/white_concrete"
+    },
+    {
+      "name": "step_color_002",
+      "kd": [
+        0.203921572143,
+        0.266666666558,
+        0.282352937581
+      ],
+      "texture": "minecraft:block/white_concrete"
+    },
+    {
+      "name": "step_color_003",
+      "kd": [
+        0.407843128401,
+        0.482352940689,
+        0.482352940689
+      ],
+      "texture": "minecraft:block/white_concrete"
+    },
+    {
+      "name": "step_color_004",
+      "kd": [
+        0.611764694186,
+        0.662745088828,
+        0.647058827698
+      ],
+      "texture": "minecraft:block/white_concrete"
+    },
+    {
+      "name": "step_color_005",
+      "kd": [
+        0.64,
+        0.68,
+        0.72
+      ],
+      "texture": "minecraft:block/white_concrete"
+    },
+    {
+      "name": "step_color_006",
+      "kd": [
+        0.874509794016,
+        0.874509794016,
+        0.776470591567
+      ],
+      "texture": "minecraft:block/white_concrete"
+    }
+  ],
+  "item": {
+    "scale": 0.3,
+    "source_center_blocks": [
+      1.5,
+      1.503125,
+      1.0
+    ],
+    "normalized_bounds": [
+      0.05,
+      0.0509375,
+      0.2,
+      0.95,
+      0.9490625,
+      0.8
+    ]
+  },
+  "validation": {
+    "source_faces": 2430,
+    "adapter_faces": 120,
+    "clipped_faces": 3446,
+    "surface_area_blocks2": 98.548650527,
+    "winding": "outward; source signed volumes and serialized normals checked",
+    "degenerate_faces": 0,
+    "cell_bbox": "all OBJ vertices in [0,1]^3",
+    "collision": "envelope of source solid and adapter intersections per cell",
+    "blockstate_variants": 240,
+    "source_unit_conversion": 0.001,
+    "runtime_bake_check": "./gradlew.bat :mod:runTurbineModelCheck"
+  }
+}

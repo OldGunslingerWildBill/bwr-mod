@@ -22,6 +22,10 @@
     "bwr:rhr_pump",
     "bwr:slc_pump",
     "bwr:ads_controller",
-    "bwr:condensate_storage_tank"
+    "bwr:condensate_storage_tank",
+    "bwr:motor_feed_pump",
+    "bwr:turbine_feed_pump",
+    "bwr:rcic_twl",
+    "bwr:hpci_turbine"
   ]
 }

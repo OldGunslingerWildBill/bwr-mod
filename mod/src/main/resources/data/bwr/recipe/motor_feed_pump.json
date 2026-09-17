@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "T": {
+      "item": "bwr:pressurised_tube"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "R": {
+      "item": "minecraft:redstone_block"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    }
+  },
+  "pattern": [
+    "TIT",
+    "VRV",
+    "IPI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:motor_feed_pump"
+  }
+}

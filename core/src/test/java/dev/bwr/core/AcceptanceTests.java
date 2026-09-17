@@ -6,6 +6,7 @@ import dev.bwr.core.accident.DamageBookkeepingTest;
 import dev.bwr.core.accident.QuenchSpikeRefloodTest;
 import dev.bwr.core.accident.SevereAccidentEscalationTest;
 import dev.bwr.core.boundary.BoundaryStressTest;
+import dev.bwr.core.feedwater.FeedwaterPumpTest;
 import dev.bwr.core.fuel.FuelTypeSpecTest;
 import dev.bwr.core.fuel.HeatPerFissionTest;
 import dev.bwr.core.fuel.MixedCoreTest;
@@ -86,6 +87,8 @@ public final class AcceptanceTests {
             FuelTypeSpecTest.class,
             MixedCoreTest.class,
             HeatPerFissionTest.class,
+            FeedwaterPumpTest.class,
+            dev.bwr.core.eccs.PipedTurbineTest.class,
     };
 
     public static void main(String[] args) {

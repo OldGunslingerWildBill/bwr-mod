@@ -4,6 +4,7 @@ import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.eccs.AdsControllerBlockEntity;
 import dev.bwr.mod.eccs.CondensateStorageTankBlockEntity;
 import dev.bwr.mod.eccs.EccsPumpBlockEntity;
+import dev.bwr.mod.feedwater.FeedwaterPumpBlockEntity;
 import dev.bwr.mod.flow.RecirculationPumpBlockEntity;
 import dev.bwr.mod.fuel.FuelFabricatorBlockEntity;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
@@ -84,6 +85,8 @@ public final class BwrBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EccsPumpBlockEntity>>
             ECCS_PUMP = BLOCK_ENTITIES.register("eccs_pump",
             () -> BlockEntityType.Builder.of(EccsPumpBlockEntity::new,
+                    BwrBlocks.RCIC_TWL.get(),
+                    BwrBlocks.HPCI_TURBINE.get(),
                     BwrBlocks.RCIC_TURBINE_PUMP.get(),
                     BwrBlocks.HPCI_TURBINE_PUMP.get(),
                     BwrBlocks.HPCS_PUMP.get(),
@@ -100,4 +103,15 @@ public final class BwrBlockEntities {
             CONDENSATE_STORAGE_TANK = BLOCK_ENTITIES.register("condensate_storage_tank",
             () -> BlockEntityType.Builder.of(CondensateStorageTankBlockEntity::new,
                     BwrBlocks.CONDENSATE_STORAGE_TANK.get()).build(null));
+
+    /**
+     * One type for both reactor feed pumps. They differ only in the
+     * {@code FeedwaterDesign} their block carries, which the block entity reads
+     * off its own block state, so there is nothing per-machine to register.
+     */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FeedwaterPumpBlockEntity>>
+            FEEDWATER_PUMP = BLOCK_ENTITIES.register("feedwater_pump",
+            () -> BlockEntityType.Builder.of(FeedwaterPumpBlockEntity::new,
+                    BwrBlocks.MOTOR_FEED_PUMP.get(),
+                    BwrBlocks.TURBINE_FEED_PUMP.get()).build(null));
 }

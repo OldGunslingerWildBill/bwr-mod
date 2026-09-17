@@ -69,6 +69,18 @@ public final class PhysicalConstants {
     /** Rated steam flow, lb/hr. */
     public static final double RATED_STEAM_FLOW_LB_PER_HR = 15.4e6;
 
+    /**
+     * Final feedwater temperature at rated power, degrees C — 420 °F.
+     *
+     * <p>This is the temperature the feedwater heater string delivers, not the
+     * temperature of the condensate underneath it, and the difference between
+     * the two is worth a quarter of rated thermal power in heating duty. It was
+     * an unnamed 215.6 in three places before {@code core/feedwater} needed to
+     * interpolate towards it; see
+     * {@code dev.bwr.core.feedwater.FeedwaterHeating}.
+     */
+    public static final double RATED_FEEDWATER_TEMPERATURE_C = 215.6;
+
     // ---------------------------------------------------------------
     // Control rod drives [TTC 2.3]
     // ---------------------------------------------------------------

@@ -1,10 +1,13 @@
 package dev.bwr.mod.registry;
 
 import dev.bwr.core.eccs.EccsDesign;
+import dev.bwr.core.feedwater.FeedwaterDesign;
 import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.eccs.AdsControllerBlock;
 import dev.bwr.mod.eccs.CondensateStorageTankBlock;
 import dev.bwr.mod.eccs.EccsPumpBlock;
+import dev.bwr.mod.eccs.TurbineAssemblyBlock;
+import dev.bwr.mod.feedwater.FeedwaterPumpBlock;
 import dev.bwr.mod.flow.JetPumpBlock;
 import dev.bwr.mod.flow.RecirculationPumpBlock;
 import dev.bwr.mod.fuel.FuelFabricatorBlock;
@@ -214,6 +217,43 @@ public final class BwrBlocks {
     public static final DeferredBlock<CondensateStorageTankBlock> CONDENSATE_STORAGE_TANK =
             BLOCKS.register("condensate_storage_tank",
                     () -> new CondensateStorageTankBlock(vesselSteel()));
+
+    // --- Feedwater (SPEC section 15) ------------------------------------
+    //
+    // The normal level control path, and a different system from the emergency
+    // machines above: feedwater is what holds inventory every second the plant
+    // is running, and losing it is how most level transients start. Two pumps,
+    // the same block class carrying a different nameplate, half capacity each so
+    // that losing one halves feedwater rather than ending it. Neither of them
+    // contains a level element, a setpoint or a trip.
+
+    /**
+     * Motor-driven reactor feed pump. Simple, controllable and indifferent to
+     * what the reactor is doing — and at 13 MW it is the largest single
+     * electrical load in the mod, roughly two recirculation pumps. In a station
+     * blackout it is scrap metal.
+     */
+    public static final DeferredBlock<FeedwaterPumpBlock> MOTOR_FEED_PUMP =
+            BLOCKS.register("motor_feed_pump",
+                    () -> new FeedwaterPumpBlock(machine(), FeedwaterDesign.MOTOR_FEED_PUMP));
+
+    /**
+     * Turbine-driven reactor feed pump — the RFPT. No electrical load at all,
+     * because its motive force is the reactor's own steam, which is exactly why
+     * real plants use them: feed pumping is an enormous parasitic load. In
+     * exchange it is hostage to the reactor, cannot start on a cold plant, and
+     * fades as the vessel depressurises. That coupling between level control and
+     * steam production is the point of the whole system.
+     */
+    public static final DeferredBlock<FeedwaterPumpBlock> TURBINE_FEED_PUMP =
+            BLOCKS.register("turbine_feed_pump",
+                    () -> new FeedwaterPumpBlock(machine(), FeedwaterDesign.TURBINE_FEED_PUMP));
+
+    /** Full-size exterior assemblies imported from the supplied STEP files. */
+    public static final DeferredBlock<TurbineAssemblyBlock> RCIC_TWL =
+            BLOCKS.register("rcic_twl", () -> new TurbineAssemblyBlock(machine(), false));
+    public static final DeferredBlock<TurbineAssemblyBlock> HPCI_TURBINE =
+            BLOCKS.register("hpci_turbine", () -> new TurbineAssemblyBlock(machine(), true));
 
     // --- Suppression pool ---------------------------------------------
 

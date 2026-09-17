@@ -253,7 +253,7 @@ public final class ReactorCore {
     private double reliefSteamFlowKgPerS;
 
     private double feedwaterFlowKgPerS;
-    private double feedwaterTemperatureC = 215.6;
+    private double feedwaterTemperatureC = PhysicalConstants.RATED_FEEDWATER_TEMPERATURE_C;
     private double injectionFlowKgPerS;
     private double coreSprayFlowKgPerS;
 
@@ -388,7 +388,7 @@ public final class ReactorCore {
         loading.setPowerWeightSource(nodalFlux);
 
         refreshFuelAggregates();
-        this.feedwaterTemperatureC = 215.6;
+        this.feedwaterTemperatureC = PhysicalConstants.RATED_FEEDWATER_TEMPERATURE_C;
         applyFeedwaterTemperature();
         initialiseHotShutdown();
     }

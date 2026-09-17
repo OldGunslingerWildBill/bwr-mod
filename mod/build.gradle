@@ -25,6 +25,16 @@ neoForge {
         client { client() }
         server { server() }
         data { data() }
+        turbineGameTest {
+            type = 'gameTestServer'
+            gameDirectory = file('run/turbineGameTest')
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'bwr'
+        }
+        turbineModelCheck {
+            client()
+            gameDirectory = file('run/turbineModelCheck')
+            jvmArguments.add('-Dbwr.turbineModelCheck=true')
+        }
 
         // Builds a reactor, a suppression pool and a turbine outlet in a real
         // world, looks their peripherals up through the real CC:Tweaked
@@ -130,6 +140,7 @@ dependencies {
 // ---------------------------------------------------------------------------
 tasks.named('jar', Jar).configure {
     exclude 'dev/bwr/mod/devtest/**'
+    exclude 'data/bwr/structure/empty.nbt'
 }
 
 tasks.named('processResources', ProcessResources).configure {

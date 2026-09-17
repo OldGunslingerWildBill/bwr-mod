@@ -1,0 +1,964 @@
+{
+  "variants": {
+    "cell=0,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_0",
+      "y": 0
+    },
+    "cell=0,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_0",
+      "y": 90
+    },
+    "cell=0,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_0",
+      "y": 180
+    },
+    "cell=0,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_0",
+      "y": 270
+    },
+    "cell=1,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_1",
+      "y": 0
+    },
+    "cell=1,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_1",
+      "y": 90
+    },
+    "cell=1,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_1",
+      "y": 180
+    },
+    "cell=1,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_1",
+      "y": 270
+    },
+    "cell=2,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_2",
+      "y": 0
+    },
+    "cell=2,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_2",
+      "y": 90
+    },
+    "cell=2,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_2",
+      "y": 180
+    },
+    "cell=2,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_2",
+      "y": 270
+    },
+    "cell=3,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_3",
+      "y": 0
+    },
+    "cell=3,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_3",
+      "y": 90
+    },
+    "cell=3,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_3",
+      "y": 180
+    },
+    "cell=3,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_3",
+      "y": 270
+    },
+    "cell=4,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_4",
+      "y": 0
+    },
+    "cell=4,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_4",
+      "y": 90
+    },
+    "cell=4,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_4",
+      "y": 180
+    },
+    "cell=4,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_4",
+      "y": 270
+    },
+    "cell=5,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_5",
+      "y": 0
+    },
+    "cell=5,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_5",
+      "y": 90
+    },
+    "cell=5,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_5",
+      "y": 180
+    },
+    "cell=5,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_5",
+      "y": 270
+    },
+    "cell=6,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_6",
+      "y": 0
+    },
+    "cell=6,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_6",
+      "y": 90
+    },
+    "cell=6,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_6",
+      "y": 180
+    },
+    "cell=6,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_6",
+      "y": 270
+    },
+    "cell=7,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_7",
+      "y": 0
+    },
+    "cell=7,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_7",
+      "y": 90
+    },
+    "cell=7,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_7",
+      "y": 180
+    },
+    "cell=7,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_7",
+      "y": 270
+    },
+    "cell=8,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_8",
+      "y": 0
+    },
+    "cell=8,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_8",
+      "y": 90
+    },
+    "cell=8,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_8",
+      "y": 180
+    },
+    "cell=8,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_8",
+      "y": 270
+    },
+    "cell=9,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_9",
+      "y": 0
+    },
+    "cell=9,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_9",
+      "y": 90
+    },
+    "cell=9,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_9",
+      "y": 180
+    },
+    "cell=9,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_9",
+      "y": 270
+    },
+    "cell=10,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_10",
+      "y": 0
+    },
+    "cell=10,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_10",
+      "y": 90
+    },
+    "cell=10,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_10",
+      "y": 180
+    },
+    "cell=10,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_10",
+      "y": 270
+    },
+    "cell=11,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_11",
+      "y": 0
+    },
+    "cell=11,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_11",
+      "y": 90
+    },
+    "cell=11,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_11",
+      "y": 180
+    },
+    "cell=11,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_11",
+      "y": 270
+    },
+    "cell=12,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_12",
+      "y": 0
+    },
+    "cell=12,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_12",
+      "y": 90
+    },
+    "cell=12,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_12",
+      "y": 180
+    },
+    "cell=12,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_12",
+      "y": 270
+    },
+    "cell=13,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_13",
+      "y": 0
+    },
+    "cell=13,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_13",
+      "y": 90
+    },
+    "cell=13,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_13",
+      "y": 180
+    },
+    "cell=13,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_13",
+      "y": 270
+    },
+    "cell=14,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_14",
+      "y": 0
+    },
+    "cell=14,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_14",
+      "y": 90
+    },
+    "cell=14,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_14",
+      "y": 180
+    },
+    "cell=14,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_14",
+      "y": 270
+    },
+    "cell=15,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_15",
+      "y": 0
+    },
+    "cell=15,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_15",
+      "y": 90
+    },
+    "cell=15,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_15",
+      "y": 180
+    },
+    "cell=15,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_15",
+      "y": 270
+    },
+    "cell=16,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_16",
+      "y": 0
+    },
+    "cell=16,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_16",
+      "y": 90
+    },
+    "cell=16,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_16",
+      "y": 180
+    },
+    "cell=16,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_16",
+      "y": 270
+    },
+    "cell=17,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_17",
+      "y": 0
+    },
+    "cell=17,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_17",
+      "y": 90
+    },
+    "cell=17,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_17",
+      "y": 180
+    },
+    "cell=17,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_17",
+      "y": 270
+    },
+    "cell=18,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_18",
+      "y": 0
+    },
+    "cell=18,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_18",
+      "y": 90
+    },
+    "cell=18,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_18",
+      "y": 180
+    },
+    "cell=18,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_18",
+      "y": 270
+    },
+    "cell=19,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_19",
+      "y": 0
+    },
+    "cell=19,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_19",
+      "y": 90
+    },
+    "cell=19,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_19",
+      "y": 180
+    },
+    "cell=19,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_19",
+      "y": 270
+    },
+    "cell=20,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_20",
+      "y": 0
+    },
+    "cell=20,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_20",
+      "y": 90
+    },
+    "cell=20,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_20",
+      "y": 180
+    },
+    "cell=20,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_20",
+      "y": 270
+    },
+    "cell=21,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_21",
+      "y": 0
+    },
+    "cell=21,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_21",
+      "y": 90
+    },
+    "cell=21,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_21",
+      "y": 180
+    },
+    "cell=21,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_21",
+      "y": 270
+    },
+    "cell=22,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_22",
+      "y": 0
+    },
+    "cell=22,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_22",
+      "y": 90
+    },
+    "cell=22,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_22",
+      "y": 180
+    },
+    "cell=22,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_22",
+      "y": 270
+    },
+    "cell=23,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_23",
+      "y": 0
+    },
+    "cell=23,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_23",
+      "y": 90
+    },
+    "cell=23,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_23",
+      "y": 180
+    },
+    "cell=23,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_23",
+      "y": 270
+    },
+    "cell=24,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_24",
+      "y": 0
+    },
+    "cell=24,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_24",
+      "y": 90
+    },
+    "cell=24,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_24",
+      "y": 180
+    },
+    "cell=24,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_24",
+      "y": 270
+    },
+    "cell=25,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_25",
+      "y": 0
+    },
+    "cell=25,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_25",
+      "y": 90
+    },
+    "cell=25,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_25",
+      "y": 180
+    },
+    "cell=25,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_25",
+      "y": 270
+    },
+    "cell=26,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_26",
+      "y": 0
+    },
+    "cell=26,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_26",
+      "y": 90
+    },
+    "cell=26,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_26",
+      "y": 180
+    },
+    "cell=26,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_26",
+      "y": 270
+    },
+    "cell=27,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_27",
+      "y": 0
+    },
+    "cell=27,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_27",
+      "y": 90
+    },
+    "cell=27,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_27",
+      "y": 180
+    },
+    "cell=27,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_27",
+      "y": 270
+    },
+    "cell=28,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_28",
+      "y": 0
+    },
+    "cell=28,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_28",
+      "y": 90
+    },
+    "cell=28,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_28",
+      "y": 180
+    },
+    "cell=28,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_28",
+      "y": 270
+    },
+    "cell=29,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_29",
+      "y": 0
+    },
+    "cell=29,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_29",
+      "y": 90
+    },
+    "cell=29,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_29",
+      "y": 180
+    },
+    "cell=29,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_29",
+      "y": 270
+    },
+    "cell=30,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_30",
+      "y": 0
+    },
+    "cell=30,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_30",
+      "y": 90
+    },
+    "cell=30,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_30",
+      "y": 180
+    },
+    "cell=30,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_30",
+      "y": 270
+    },
+    "cell=31,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_31",
+      "y": 0
+    },
+    "cell=31,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_31",
+      "y": 90
+    },
+    "cell=31,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_31",
+      "y": 180
+    },
+    "cell=31,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_31",
+      "y": 270
+    },
+    "cell=32,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_32",
+      "y": 0
+    },
+    "cell=32,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_32",
+      "y": 90
+    },
+    "cell=32,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_32",
+      "y": 180
+    },
+    "cell=32,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_32",
+      "y": 270
+    },
+    "cell=33,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_33",
+      "y": 0
+    },
+    "cell=33,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_33",
+      "y": 90
+    },
+    "cell=33,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_33",
+      "y": 180
+    },
+    "cell=33,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_33",
+      "y": 270
+    },
+    "cell=34,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_34",
+      "y": 0
+    },
+    "cell=34,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_34",
+      "y": 90
+    },
+    "cell=34,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_34",
+      "y": 180
+    },
+    "cell=34,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_34",
+      "y": 270
+    },
+    "cell=35,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_35",
+      "y": 0
+    },
+    "cell=35,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_35",
+      "y": 90
+    },
+    "cell=35,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_35",
+      "y": 180
+    },
+    "cell=35,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_35",
+      "y": 270
+    },
+    "cell=36,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_36",
+      "y": 0
+    },
+    "cell=36,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_36",
+      "y": 90
+    },
+    "cell=36,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_36",
+      "y": 180
+    },
+    "cell=36,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_36",
+      "y": 270
+    },
+    "cell=37,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_37",
+      "y": 0
+    },
+    "cell=37,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_37",
+      "y": 90
+    },
+    "cell=37,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_37",
+      "y": 180
+    },
+    "cell=37,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_37",
+      "y": 270
+    },
+    "cell=38,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_38",
+      "y": 0
+    },
+    "cell=38,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_38",
+      "y": 90
+    },
+    "cell=38,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_38",
+      "y": 180
+    },
+    "cell=38,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_38",
+      "y": 270
+    },
+    "cell=39,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_39",
+      "y": 0
+    },
+    "cell=39,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_39",
+      "y": 90
+    },
+    "cell=39,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_39",
+      "y": 180
+    },
+    "cell=39,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_39",
+      "y": 270
+    },
+    "cell=40,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_40",
+      "y": 0
+    },
+    "cell=40,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_40",
+      "y": 90
+    },
+    "cell=40,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_40",
+      "y": 180
+    },
+    "cell=40,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_40",
+      "y": 270
+    },
+    "cell=41,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_41",
+      "y": 0
+    },
+    "cell=41,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_41",
+      "y": 90
+    },
+    "cell=41,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_41",
+      "y": 180
+    },
+    "cell=41,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_41",
+      "y": 270
+    },
+    "cell=42,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_42",
+      "y": 0
+    },
+    "cell=42,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_42",
+      "y": 90
+    },
+    "cell=42,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_42",
+      "y": 180
+    },
+    "cell=42,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_42",
+      "y": 270
+    },
+    "cell=43,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_43",
+      "y": 0
+    },
+    "cell=43,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_43",
+      "y": 90
+    },
+    "cell=43,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_43",
+      "y": 180
+    },
+    "cell=43,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_43",
+      "y": 270
+    },
+    "cell=44,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_44",
+      "y": 0
+    },
+    "cell=44,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_44",
+      "y": 90
+    },
+    "cell=44,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_44",
+      "y": 180
+    },
+    "cell=44,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_44",
+      "y": 270
+    },
+    "cell=45,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_45",
+      "y": 0
+    },
+    "cell=45,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_45",
+      "y": 90
+    },
+    "cell=45,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_45",
+      "y": 180
+    },
+    "cell=45,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_45",
+      "y": 270
+    },
+    "cell=46,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_46",
+      "y": 0
+    },
+    "cell=46,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_46",
+      "y": 90
+    },
+    "cell=46,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_46",
+      "y": 180
+    },
+    "cell=46,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_46",
+      "y": 270
+    },
+    "cell=47,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_47",
+      "y": 0
+    },
+    "cell=47,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_47",
+      "y": 90
+    },
+    "cell=47,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_47",
+      "y": 180
+    },
+    "cell=47,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_47",
+      "y": 270
+    },
+    "cell=48,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_48",
+      "y": 0
+    },
+    "cell=48,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_48",
+      "y": 90
+    },
+    "cell=48,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_48",
+      "y": 180
+    },
+    "cell=48,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_48",
+      "y": 270
+    },
+    "cell=49,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_49",
+      "y": 0
+    },
+    "cell=49,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_49",
+      "y": 90
+    },
+    "cell=49,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_49",
+      "y": 180
+    },
+    "cell=49,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_49",
+      "y": 270
+    },
+    "cell=50,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_50",
+      "y": 0
+    },
+    "cell=50,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_50",
+      "y": 90
+    },
+    "cell=50,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_50",
+      "y": 180
+    },
+    "cell=50,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_50",
+      "y": 270
+    },
+    "cell=51,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_51",
+      "y": 0
+    },
+    "cell=51,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_51",
+      "y": 90
+    },
+    "cell=51,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_51",
+      "y": 180
+    },
+    "cell=51,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_51",
+      "y": 270
+    },
+    "cell=52,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_52",
+      "y": 0
+    },
+    "cell=52,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_52",
+      "y": 90
+    },
+    "cell=52,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_52",
+      "y": 180
+    },
+    "cell=52,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_52",
+      "y": 270
+    },
+    "cell=53,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_53",
+      "y": 0
+    },
+    "cell=53,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_53",
+      "y": 90
+    },
+    "cell=53,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_53",
+      "y": 180
+    },
+    "cell=53,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_53",
+      "y": 270
+    },
+    "cell=54,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_54",
+      "y": 0
+    },
+    "cell=54,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_54",
+      "y": 90
+    },
+    "cell=54,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_54",
+      "y": 180
+    },
+    "cell=54,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_54",
+      "y": 270
+    },
+    "cell=55,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_55",
+      "y": 0
+    },
+    "cell=55,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_55",
+      "y": 90
+    },
+    "cell=55,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_55",
+      "y": 180
+    },
+    "cell=55,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_55",
+      "y": 270
+    },
+    "cell=56,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_56",
+      "y": 0
+    },
+    "cell=56,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_56",
+      "y": 90
+    },
+    "cell=56,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_56",
+      "y": 180
+    },
+    "cell=56,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_56",
+      "y": 270
+    },
+    "cell=57,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_57",
+      "y": 0
+    },
+    "cell=57,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_57",
+      "y": 90
+    },
+    "cell=57,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_57",
+      "y": 180
+    },
+    "cell=57,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_57",
+      "y": 270
+    },
+    "cell=58,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_58",
+      "y": 0
+    },
+    "cell=58,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_58",
+      "y": 90
+    },
+    "cell=58,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_58",
+      "y": 180
+    },
+    "cell=58,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_58",
+      "y": 270
+    },
+    "cell=59,facing=north": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_59",
+      "y": 0
+    },
+    "cell=59,facing=east": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_59",
+      "y": 90
+    },
+    "cell=59,facing=south": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_59",
+      "y": 180
+    },
+    "cell=59,facing=west": {
+      "model": "bwr:block/turbines/hpci_turbine/cell_59",
+      "y": 270
+    }
+  }
+}
