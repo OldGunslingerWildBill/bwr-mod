@@ -7,8 +7,6 @@ physically-modelled boiling water reactor. Power is **emergent** from neutronics
 you set rod position and recirculation flow, and the physics decides what the reactor
 does. There is no commanded "burn rate."
 
-This is a design package, not a codebase. No code has been written yet. The spec is
-complete enough to start implementing.
 
 ## Files
 
