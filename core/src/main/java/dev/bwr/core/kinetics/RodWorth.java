@@ -23,8 +23,8 @@ import dev.bwr.core.PhysicalConstants;
  * there are few neutrons to absorb, so the integral is the classic S-curve:
  * shallow at the extremes, steep in the middle. This is exactly how the NRC
  * manual builds an integral worth curve — by summing per-notch differential
- * worths [TTC 1.7.2.2] — so notch quantisation is the natural representation
- * rather than an approximation of a continuous one.
+ * worths [TTC 1.7.2.2]. Commands and latched indications use these notches;
+ * during travel the physical absorber position lies between them.
  *
  * <p>The density shape is the two-parameter family
  * <pre>   w(z) = z^(a-1) * (1-z)^(b-1),   a = 1 + s*p,  b = 1 + s*(1-p)</pre>
@@ -173,6 +173,30 @@ public final class RodWorth {
     public double integralWorthShape(int notchIndex) {
         checkNotchIndex(notchIndex);
         return cumulativeWorthShape[NOTCH_INDEX_FULLY_WITHDRAWN - notchIndex];
+    }
+
+    /** Continuous worth during travel, preserving every tabulated notch exactly. */
+    public double integralWorthShape(double positionNotches) {
+        if (!Double.isFinite(positionNotches) || positionNotches < 0.0
+                || positionNotches > NOTCH_INDEX_FULLY_WITHDRAWN) {
+            throw new IllegalArgumentException("rod position out of range: " + positionNotches);
+        }
+        int lower = (int) Math.floor(positionNotches);
+        double fraction = positionNotches - lower;
+        double a = integralWorthShape(lower);
+        return fraction == 0.0 ? a : a + (integralWorthShape(lower + 1) - a) * fraction;
+    }
+
+    /** The same integral-worth curve evaluated at physical, fractional positions. */
+    public double totalInsertedWorthDkOverK(double[] positions) {
+        if (positions == null || positions.length != controlRodCount) {
+            throw new IllegalArgumentException("one physical position is required per rod");
+        }
+        double sum = 0.0;
+        for (int r = 0; r < controlRodCount; r++) {
+            sum += rodFullWorthDkOverK(r) * integralWorthShape(positions[r]);
+        }
+        return sum;
     }
 
     // ---------------------------------------------------------------

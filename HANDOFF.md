@@ -1,9 +1,115 @@
 # Agent Handoff
 
+## 2026-09-19: rod travel and narrow, same-row jet pairs
+
+`ReactorCore.rodPositionNotches` now holds continuous physical position, while
+the integer notch remains the last latch crossed. Normal motion keeps its old
+speed; continuous scram consumes charge in proportion to distance. Rod worth
+interpolates its original notch values and nodal absorption uses fractional
+positions. Per-drive availability holds a failed drive without changing demand.
+`ReactorState`/NBT append `rodPositionsNotches`; empty arrays restore old notches.
+The core holds restored positions until a command is supplied, and the mod
+continues to restore operator demand through `ControlRodDriveNetwork`.
+See [ROD-MOTION.md](ROD-MOTION.md).
+
+`JetPumpBlock.NARROW` defaults false for old saves and is true on new placements.
+The new layout reserves six cells (1 × 6 × 1), while `jet_pump_legacy` preserves
+the original twelve cells. `tools-narrow-jet.py` merges the old column meshes and
+scales X by 0.85, preserving height, depth, materials and UVs. The pack importer
+calls it after regenerating the original models; `--check` verifies 47 assets.
+
+`RecirculationNetwork` tries reflection across each vessel axis while retaining
+the transverse row, opposite walls and facing, and equal height. It then tries
+the prior 180-degree footprint reflection for existing layouts. Same-wall pairs
+are explicitly rejected. Flow balance and the weak no-jet loop are unchanged.
+See [RECIRCULATION.md](RECIRCULATION.md) for placement. Existing wide jets need
+pickup/replacement to shrink; loading a save does not alter their occupied cells.
+
+Validation: 160 core acceptance tests passed; the final restore refinement also
+passed all 12 targeted motion/save tests. All 50 pump runtime scenarios, model
+baking, live panel/world previews, asset audit, JAR audit and build pass. The
+in-world opposing narrow pair reports 2 matched and 0 unmatched. The newest
+[BUILD-STATUS.md](BUILD-STATUS.md) entry records the artifact and test details.
+The README now documents the implemented systems, installation, migration,
+recirculation examples, and code-derived vessel size limits for publication.
+
+## 2026-09-18 follow-up: larger DVSS and lower pipe repair
+
+New DVSS placements now occupy **5 × 10 × 5** (width × height × depth), with a
+single swept suction-elbow mesh underneath the pump. Coordinates are uniformly
+scaled 5/3; rear suction is at (0,0,2) relative to the controller, facing south,
+and front discharge at (0,2,-2), facing north before rotation.
+
+`PumpAssemblyBlock.Layout` contains manifest dimensions, ports and shapes. Its
+state-aware methods let `RecirculationPumpBlock` select the previous 54-cell
+layout when `enlarged=false`; new `placementState()` sets true and controller 12
+for the 250-cell layout. Legacy controller 4, child offsets, saved controls and
+flange positions survive. No automatic expansion touches neighboring blocks.
+The CELL property now ranges 0..255; all seven other pump state mappings cover
+the extra unused cells. Ownership also checks `enlarged` for RCP parts.
+
+`tools-export-dvss.py --check` checks both current and legacy source meshes and
+all 620 generated assets. Current editable source and two render previews live
+in `art/models/dvss/`. The original gallery file has not been overwritten.
+
+Validation: 48 pump scenarios (including four legacy assembled-save cases),
+2,452 client pump states, all water/turbine models, five GUI screens and the
+enlarged pump's in-world placement. Build, asset audit and JAR audit pass.
+See the newest entry in [BUILD-STATUS.md](BUILD-STATUS.md) for the artifact hash.
+The original core flow behavior and supplied jet geometry remain unchanged.
+
+## 2026-09-18 update: DVSS model, opposing jets, reactor INFO
+
+See [RECIRCULATION.md](RECIRCULATION.md) for current placement and balance.
+`RecirculationPumpBlock` now extends `PumpAssemblyBlock` with kind RCP. Its old id
+and compact-save port positions survive; new placements are 54-cell DVSS models.
+`RecirculationCircuit` resolves real rotated flange cells and verifies both
+headers reach the same formed vessel. Per-part FE/CC access forwards to one root.
+
+`RecirculationNetwork` matches jet footprints under a 180-degree turn through
+the vessel centre, at either of the two lowest interior elevations. No-jet
+loops contribute 5% per RCP; each normal matched assembly contributes 10% capacity.
+Independent drives sum before the shared cap, so stopped pumps do not dilute
+working ones. RIP behavior and the core thermal solver are unchanged.
+
+`ReactorConfigurationInfo` is a read-only serialized planning snapshot for the
+new INFO tab. Reference power is unchanged; estimates do not actuate the reactor.
+The Blender source, portable mesh export and preview live under `art/models/dvss`;
+`tools-export-dvss.py --check` checks generated resources. The connected original
+Blender gallery file was not overwritten.
+
+The older notes below describe the preceding update.
+
+## 2026-09-17 update: pump panels and vessel recirculation
+
+See [WATER-PLUMBING.md](WATER-PLUMBING.md) for current build instructions.
+Powered pumps use `PumpControlMenu`/`PumpControlScreen`; speed is a persisted shaft
+demand separate from the flow throttle. Three-value saved arrays default to 100%
+target speed. Manual panel ownership persists; computer ownership disables panel
+commands until explicitly handed back. All powered pump blocks open this screen.
+ECCS/feedwater Lua now provides `setSpeed(0..1)` and `getTargetSpeed()`.
+
+The finite CST has a tank model, level screen and fractional-debt-aware external
+fluid handler. Suction accepts direct Mekanism Mechanical Pipes; assembly placement
+invalidates capability caches on completion. Electric status only reports motor
+drive. The RPV injection port has a full cube shell to eliminate the visible gap.
+
+External RCPs have front discharge / rear suction. `RecirculationCircuit` requires
+separate water headers connecting top outlet and bottom inlet of one formed vessel.
+`RecirculationNetwork` pools installed jet capacity and complete external loops;
+jets use the supplied mesh with no added adapters or ports. Each pair caps flow at
+10%, each RCP at 50% times speed. RIP mounting is unchanged. Existing external
+recirculation lines need manual rewiring. No automatic control or world conversion.
+
+Client QA: `:mod:runTurbineModelCheck -PbwrPumpPanelCheck` creates a new disposable
+flat world, opens server-backed screens, saves images under
+`mod/run/turbineModelCheck/panel-check/`, and exits. Devtest is excluded from the jar.
+
 ## 2026-09-17 update: dedicated water pipes and vessel injection
 
-Current guide: [WATER-PLUMBING.md](WATER-PLUMBING.md). Keep the RCP cube available:
-the user explicitly chose to retain it until its model is supplied. Only the
+Current guide: [WATER-PLUMBING.md](WATER-PLUMBING.md). At this stage the user chose
+to retain the RCP until its model was supplied; the September 18 DVSS update above
+fulfills that replacement while retaining the id and compact saves. Only the
 old RCIC/HPCI cubes are hidden from crafting/creative; their registry IDs and
 saved behavior remain. The modeled turbine recipes now use ordinary materials.
 

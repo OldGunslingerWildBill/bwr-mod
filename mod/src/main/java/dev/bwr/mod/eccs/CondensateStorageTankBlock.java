@@ -26,7 +26,7 @@ public class CondensateStorageTankBlock extends BaseEntityBlock {
             simpleCodec(CondensateStorageTankBlock::new);
 
     public CondensateStorageTankBlock(Properties properties) {
-        super(properties);
+        super(properties.noOcclusion());
     }
 
     @Override
@@ -50,11 +50,7 @@ public class CondensateStorageTankBlock extends BaseEntityBlock {
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         }
-        if (level.getBlockEntity(pos) instanceof CondensateStorageTankBlockEntity be) {
-            for (String line : be.statusLines()) {
-                player.displayClientMessage(Component.literal(line), false);
-            }
-        }
+        if (player instanceof net.minecraft.server.level.ServerPlayer sp) dev.bwr.mod.gui.CondensateTankMenu.open(sp,pos);
         return InteractionResult.CONSUME;
     }
 
@@ -63,7 +59,7 @@ public class CondensateStorageTankBlock extends BaseEntityBlock {
                                               BlockPos pos, Player player, InteractionHand hand,
                                               BlockHitResult hit) {
         if (level.getBlockEntity(pos) instanceof CondensateStorageTankBlockEntity be
-                && FluidUtil.interactWithFluidHandler(player, hand, be.tank())) {
+                && FluidUtil.interactWithFluidHandler(player, hand, be.fluidHandler())) {
             return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
         return super.useItemOn(stack, state, level, pos, player, hand, hit);

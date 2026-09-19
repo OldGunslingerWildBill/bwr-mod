@@ -101,6 +101,7 @@ public final class ReactorStateNbt {
         t.putDouble("boron", s.boronPpm());
         t.putDouble("burnup", s.burnupMwdPerTonne());
         t.putIntArray("notches", s.rodNotches());
+        putDoubles(t,"rodPositionsNotches",s.rodPositionsNotches());
         putDoubles(t, "accum", s.accumulatorCharge());
         t.putDouble("rho", s.reactivityTotal());
         t.putDouble("beta", s.betaEff());
@@ -200,7 +201,8 @@ public final class ReactorStateNbt {
                 // only honest reading: inventing detent 1 for a channel the
                 // record says nothing about is the auto-ranging this component
                 // exists to stop.
-                t.getIntArray("irmRanges")
+                t.getIntArray("irmRanges"),
+                getDoubles(t,"rodPositionsNotches")
         );
     }
 }

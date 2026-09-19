@@ -53,6 +53,15 @@ public class EccsPumpPeripheral implements IPeripheral {
         this.be = be;
     }
 
+    @LuaFunction(mainThread = true)
+    public void setSpeed(double fraction) throws LuaException {
+        if (!Double.isFinite(fraction) || fraction < 0 || fraction > 1) throw new LuaException("Speed must be 0..1");
+        be.setComputerControlled(true);
+        be.setSpeedDemandFraction(fraction);
+    }
+    @LuaFunction(mainThread = true)
+    public double getTargetSpeed() { return be.pump().getSpeedDemandFraction(); }
+
     @Override
     public String getType() {
         return "bwr_" + be.design().id();

@@ -134,7 +134,7 @@ public class EccsPumpBlock extends BaseEntityBlock {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof EccsPumpBlockEntity be) {
             be.markBindingDirty();
-            if (!be.isComputerControlled()) {
+            if (!be.isComputerControlled() && !be.isPanelControlled()) {
                 boolean powered = level.hasNeighborSignal(pos);
                 if (powered != be.isRunning()) {
                     be.setRunning(powered);
@@ -149,11 +149,8 @@ public class EccsPumpBlock extends BaseEntityBlock {
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         }
-        if (level.getBlockEntity(pos) instanceof EccsPumpBlockEntity be) {
-            for (String line : be.statusLines()) {
-                player.displayClientMessage(Component.literal(line), false);
-            }
-        }
+        if (player instanceof net.minecraft.server.level.ServerPlayer sp)
+            dev.bwr.mod.gui.PumpControlMenu.open(sp, pos, pos);
         return InteractionResult.CONSUME;
     }
 }

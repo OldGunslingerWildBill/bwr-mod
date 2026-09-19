@@ -97,6 +97,17 @@ public class EccsPumpBlockEntity extends BlockEntity {
 
     /** When true, redstone is ignored and Lua owns the start command. */
     private volatile boolean computerControlled;
+    private boolean panelControlled;
+    public boolean isPanelControlled() { return panelControlled; }
+    public void setPanelControlled(boolean enabled) {
+        panelControlled = enabled;
+        if (enabled) computerControlled = false;
+        setChanged();
+    }
+    public void setSpeedDemandFraction(double fraction) {
+        PlantActuators.run(this, () -> {pump.setSpeedDemandFraction(fraction); setChanged();});
+    }
+
 
     private BlockPos reactorPos;
     private BlockPos poolPos;
@@ -615,6 +626,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
     public void setComputerControlled(boolean computerControlled) {
         PlantActuators.run(this, () -> {
             this.computerControlled = computerControlled;
+            if (computerControlled) panelControlled = false;
             setChanged();
         });
     }
@@ -668,13 +680,21 @@ public class EccsPumpBlockEntity extends BlockEntity {
         return tankPos != null;
     }
 
+    public String connectionStatus() {
+        if(getBlockState().getBlock() instanceof TurbineAssemblyBlock
+                || getBlockState().getBlock() instanceof PumpAssemblyBlock a && a.isFull(getBlockState())) return assemblyConnectionStatus;
+        if(isPoolCooling()) return poolPos==null?"Pool disconnected":"Pool connected";
+        return reactorPos==null?"Water discharge disconnected":"Water discharge connected";
+    }
+
     public List<String> statusLines() {
         List<String> out = new ArrayList<>();
         if (getBlockState().getBlock() instanceof ProcessAssembly) {
             out.add(assemblyConnectionStatus);
-            out.add(String.format(Locale.ROOT,"Physical steam admission/exhaust: %.3f kg/s",assemblySteamDrawKgPerS));
+            if (design.drive() == EccsDesign.Drive.STEAM_TURBINE)
+                out.add(String.format(Locale.ROOT,"Physical steam admission/exhaust: %.3f kg/s",assemblySteamDrawKgPerS));
         }
-        out.add(design.displayName() + " â€” " + design.drive() + ", "
+        out.add(design.displayName() + ": " + design.drive() + ", "
                 + design.delivery() + ", rated "
                 + String.format(Locale.ROOT, "%.0f kg/s", design.ratedFlowKgPerS()));
         out.add(String.format(Locale.ROOT,
@@ -727,6 +747,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
         tag.put("IncomingWater", incomingWater.save(registries));
         tag.putString("Mode", mode.name());
         tag.putBoolean("ComputerControlled", computerControlled);
+        tag.putBoolean("PanelControlled", panelControlled);
         tag.putInt("Energy", energy.getEnergyStored());
         if (reactorPos != null) {
             tag.putLong("Reactor", reactorPos.asLong());
@@ -753,6 +774,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
             mode = Mode.INJECTION;
         }
         computerControlled = tag.getBoolean("ComputerControlled");
+        panelControlled = !computerControlled && tag.getBoolean("PanelControlled");
         energy.setStored(tag.getInt("Energy"));
         reactorPos = tag.contains("Reactor") ? BlockPos.of(tag.getLong("Reactor")) : null;
         poolPos = tag.contains("Pool") ? BlockPos.of(tag.getLong("Pool")) : null;

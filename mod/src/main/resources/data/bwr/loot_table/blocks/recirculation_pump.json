@@ -2,20 +2,39 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "bonus_rolls": 0.0,
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        }
-      ],
+      "rolls": 1,
       "entries": [
         {
           "type": "minecraft:item",
           "name": "bwr:recirculation_pump"
         }
       ],
-      "rolls": 1.0
+      "conditions": [
+        {
+          "condition": "minecraft:any_of",
+          "terms": [
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "bwr:recirculation_pump",
+              "properties": {
+                "cell": "4",
+                "enlarged": "false"
+              }
+            },
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "bwr:recirculation_pump",
+              "properties": {
+                "cell": "12",
+                "enlarged": "true"
+              }
+            }
+          ]
+        },
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
     }
-  ],
-  "random_sequence": "bwr:blocks/recirculation_pump"
+  ]
 }

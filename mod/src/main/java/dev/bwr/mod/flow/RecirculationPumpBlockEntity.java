@@ -124,6 +124,11 @@ public class RecirculationPumpBlockEntity extends BlockEntity {
         }
     };
 
+    private double coreFlowContribution;
+    void reportCoreFlowFraction(double fraction) { coreFlowContribution=fraction; }
+    void scaleCoreFlowReport(double scale) { coreFlowContribution*=scale; }
+    public double getCoreFlowContributionKgPerS() { return coreFlowContribution*dev.bwr.core.PhysicalConstants.RATED_CORE_FLOW_LB_PER_HR*.45359237/3600; }
+
     public RecirculationPumpBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.RECIRCULATION_PUMP.get(), pos, state);
     }
@@ -291,7 +296,7 @@ public class RecirculationPumpBlockEntity extends BlockEntity {
      * <p>The re-announcement is deliberately unconditional while bound:
      * {@code addPump} is a set insert, so repeating it is free, and it is what
      * repopulates a freshly placed controller. External pumps follow their
-     * drive pipe to installed jet pairs; internal pumps use the vessel mount.
+     * suction and return pipes to vessel ports; internal pumps use the vessel mount.
      */
     private void maybeRebind(Level level) {
         if (ticksSinceRebind < Integer.MAX_VALUE) {
@@ -323,7 +328,7 @@ public class RecirculationPumpBlockEntity extends BlockEntity {
     private void detachController() {
         if(level!=null && controllerPos!=null && level.isLoaded(controllerPos)
                 && level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity old) old.removePump(getBlockPos());
-        controllerPos=null;
+        controllerPos=null;coreFlowContribution=0;
     }
     @Override public void setRemoved() {
         if(level!=null && !level.isClientSide()) detachController();

@@ -121,6 +121,17 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
 
     /** When true, redstone is ignored and Lua owns the start command. */
     private volatile boolean computerControlled;
+    private boolean panelControlled;
+    public boolean isPanelControlled() { return panelControlled; }
+    public void setPanelControlled(boolean enabled) {
+        panelControlled = enabled;
+        if (enabled) computerControlled = false;
+        setChanged();
+    }
+    public void setSpeedDemandFraction(double fraction) {
+        pump.setSpeedDemandFraction(fraction); setChanged();
+    }
+
 
     private BlockPos reactorPos;
     private BlockPos tankPos;
@@ -450,6 +461,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
 
     public void setComputerControlled(boolean computerControlled) {
         this.computerControlled = computerControlled;
+            if (computerControlled) panelControlled = false;
         setChanged();
     }
 
@@ -576,6 +588,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
         // mid-coastdown resumes mid-coastdown rather than restarting from rest.
         ReactorStateNbt.putDoubles(tag, "Pump", pump.toArray());
         tag.putBoolean("ComputerControlled", computerControlled);
+        tag.putBoolean("PanelControlled", panelControlled);
         tag.putInt("Energy", energy.getEnergyStored());
         tag.put("Suction", suction.writeToNBT(registries, new CompoundTag()));
         // A real debt against the buffer, so forgiving it on reload would create
@@ -596,6 +609,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
             pump.fromArray(ReactorStateNbt.getDoubles(tag, "Pump"));
         }
         computerControlled = tag.getBoolean("ComputerControlled");
+        panelControlled = !computerControlled && tag.getBoolean("PanelControlled");
         energy.setStored(tag.getInt("Energy"));
         if (tag.contains("Suction")) {
             suction.readFromNBT(registries, tag.getCompound("Suction"));

@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/recirculation_inlet"
+    },
+    "facing=east": {
+      "model": "bwr:block/recirculation_inlet",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/recirculation_inlet",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/recirculation_inlet",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "bwr:block/recirculation_inlet",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "bwr:block/recirculation_inlet",
+      "x": 90
+    }
+  }
+}

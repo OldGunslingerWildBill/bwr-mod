@@ -49,6 +49,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.HIGH_PRESSURE_WATER_PIPE);
     public static final DeferredItem<BlockItem> RPV_WATER_INJECTION_PORT =
             ITEMS.registerSimpleBlockItem(BwrBlocks.RPV_WATER_INJECTION_PORT);
+    public static final DeferredItem<BlockItem> RECIRCULATION_OUTLET = ITEMS.registerSimpleBlockItem(BwrBlocks.RECIRCULATION_OUTLET);
+    public static final DeferredItem<BlockItem> RECIRCULATION_INLET = ITEMS.registerSimpleBlockItem(BwrBlocks.RECIRCULATION_INLET);
     public static final DeferredItem<BlockItem> RPV_STEAM_OUTLET =
             ITEMS.registerSimpleBlockItem(BwrBlocks.RPV_STEAM_OUTLET);
     public static final DeferredItem<BlockItem> TURBINE_STEAM_OUTLET =
@@ -114,6 +116,8 @@ public final class BwrItems {
                         output.accept(PRESSURISED_TUBE.get());
                         output.accept(HIGH_PRESSURE_WATER_PIPE.get());
                         output.accept(RPV_WATER_INJECTION_PORT.get());
+                        output.accept(RECIRCULATION_OUTLET.get());
+                        output.accept(RECIRCULATION_INLET.get());
                         output.accept(RPV_STEAM_OUTLET.get());
                         output.accept(TURBINE_STEAM_OUTLET.get());
                         output.accept(FUEL_FABRICATOR.get());

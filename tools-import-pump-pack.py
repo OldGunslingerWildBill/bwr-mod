@@ -21,8 +21,7 @@ PORTS = {
     'motor_feed_pump': [('WATER_SUCTION', [1,1,1], 'up'), ('WATER_DISCHARGE', [3,1,1], 'up')],
     'turbine_feed_pump': [('WATER_SUCTION', [1,2,1], 'up'), ('WATER_DISCHARGE', [3,2,1], 'up'),
                           ('STEAM_INLET', [5,2,1], 'up'), ('STEAM_EXHAUST', [5,1,2], 'south')],
-    'jet_pump': [('WATER_DISCHARGE', [0,0,0], 'down'), ('WATER_DISCHARGE', [1,0,0], 'down'),
-                 ('WATER_SUCTION', [1,0,0], 'north')],
+    'jet_pump': [],  # Preserve the supplied mesh; vessel recirculation ports feed the internal manifold.
     'rip_pump': [],  # Internal wet end and vessel mounting flange, not external pipe sockets.
 }
 VECTORS = dict(west=(-1,0,0), east=(1,0,0), up=(0,1,0), down=(0,-1,0), north=(0,0,-1), south=(0,0,1))
@@ -110,7 +109,7 @@ def import_pack(archive):
                 'ground':{'scale':[.3,.3,.3]},'fixed':{'scale':[.7,.7,.7]}}})
             variants = {}
             for facing,rotation in zip(('north','east','south','west'),(0,90,180,270)):
-                for n in range(96):
+                for n in range(256):
                     for assembled in (False,True):
                         model = f'bwr:block/pumps/{id}/cell_{n}' if assembled and n<w*h*d else f'bwr:block/pumps/{id}/compact' if not assembled else 'bwr:block/pumps/empty'
                         key = f'assembled={str(assembled).lower()},cell={n},facing={facing}'
@@ -124,6 +123,9 @@ def import_pack(archive):
                               {'condition':'minecraft:survives_explosion'}]}]})
             dump(ROOT/f'data/bwr/pump_models/{id}.json',manifest)
         dump(ROOT/'assets/bwr/models/block/pumps/empty.json',{'textures':{'particle':'bwr:block/pumps/pump_atlas'},'elements':[]})
+    # Keep the source-size layout for saves and regenerate the one-column jet.
+    import runpy
+    runpy.run_path(str(Path(__file__).with_name('tools-narrow-jet.py')))['narrow_jet'](ROOT,refresh_legacy=True)
     print('Imported seven pump assemblies; source SHA256:',hashlib.sha256(Path(archive).read_bytes()).hexdigest())
 
 if __name__ == '__main__': import_pack(sys.argv[1])

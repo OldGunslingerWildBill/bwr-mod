@@ -1,114 +1,61 @@
 package dev.bwr.mod.flow;
 
 import com.mojang.serialization.MapCodec;
+import dev.bwr.mod.eccs.AssemblyPort;
+import dev.bwr.mod.eccs.PumpAssemblyBlock;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
-import dev.bwr.mod.registry.BwrBlockEntities;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
-import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 
-/**
- * Recirculation pump block. Uses the satellite pattern: on placement it looks
- * for a nearby controller and registers itself, and on removal it deregisters.
- * Neither event invalidates the reactor.
- *
- * <p>It also carries a server ticker, which does binding only — the speed
- * integration belongs to the controller's tick. Placement is not a reliable
- * moment to bind: a pump placed before the reactor exists, or a controller
- * broken and replaced under a pump that is already there, both leave the pump
- * orphaned and the core flow at zero with nothing to say so.
- */
-public class RecirculationPumpBlock extends BaseEntityBlock implements dev.bwr.mod.steam.SteamLinePort {
-    @Override public boolean acceptsSteamLineOn(BlockState state, net.minecraft.core.Direction face) { return true; }
-
-    public static final MapCodec<RecirculationPumpBlock> CODEC =
-            simpleCodec(RecirculationPumpBlock::new);
-
+/** DVSS-inspired exterior; the original id, speed state and compact-save ports survive. */
+public class RecirculationPumpBlock extends PumpAssemblyBlock {
+    // Missing on existing saves: preserve the original 3x6x3 footprint and ports.
+    public static final BooleanProperty ENLARGED=BooleanProperty.create("enlarged");
+    public static final MapCodec<RecirculationPumpBlock> CODEC=simpleCodec(RecirculationPumpBlock::new);
+    private final Layout legacy;
     public RecirculationPumpBlock(Properties properties) {
-        super(properties);
+        super(properties,Kind.RCP);
+        legacy=loadLayout("recirculation_pump_legacy");
+        var saved=defaultBlockState().setValue(ENLARGED,false);
+        registerDefaultState(saved.setValue(CELL,controllerCell(saved)));
     }
-
-    @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
+    @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> b) {
+        super.createBlockStateDefinition(b);b.add(ENLARGED);
     }
-
-    @Override
-    protected RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+    @Override protected Layout layout(BlockState s) { return s.getValue(ENLARGED)?super.layout(s):legacy; }
+    @Override public BlockState placementState() {
+        return super.placementState().setValue(ENLARGED,true).setValue(CELL,controllerCell());
     }
-
-    @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new RecirculationPumpBlockEntity(pos, state);
+    @Override protected boolean owned(BlockState actual,BlockState s,int cell) {
+        return super.owned(actual,s,cell) && actual.getValue(ENLARGED)==s.getValue(ENLARGED);
     }
-
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
-                                                                  BlockEntityType<T> type) {
-        if (level.isClientSide()) {
-            return null;
-        }
-        return createTickerHelper(type, BwrBlockEntities.RECIRCULATION_PUMP.get(),
-                RecirculationPumpBlockEntity::serverTick);
+    @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
+    @Override public AssemblyPort portAt(BlockState state,Direction face) {
+        if(isFull(state)) return super.portAt(state,face);
+        var front=state.getValue(FACING);
+        return face==front?AssemblyPort.WATER_DISCHARGE:face==front.getOpposite()?AssemblyPort.WATER_SUCTION:null;
     }
-
-    /**
-     * Opens the pump's own screen: the speed slider, the CC control toggle and
-     * the power limit, per {@code SPEC.md} section 4.2.
-     */
-    @Override
-    protected net.minecraft.world.InteractionResult useWithoutItem(
-            BlockState state, Level level, BlockPos pos,
-            net.minecraft.world.entity.player.Player player,
-            net.minecraft.world.phys.BlockHitResult hit) {
-        if (level.isClientSide()) {
-            return net.minecraft.world.InteractionResult.SUCCESS;
-        }
-        if (player instanceof net.minecraft.server.level.ServerPlayer sp
-                && level.getBlockEntity(pos) instanceof RecirculationPumpBlockEntity pump) {
-            dev.bwr.mod.gui.RecirculationPumpMenu.open(sp, pump);
-        }
-        return net.minecraft.world.InteractionResult.CONSUME;
+    public AssemblyPort waterPortAt(BlockState state,Direction face) { return portAt(state,face); }
+    @Override public void appendHoverText(net.minecraft.world.item.ItemStack stack,net.minecraft.world.item.Item.TooltipContext context,
+            java.util.List<net.minecraft.network.chat.Component> lines,net.minecraft.world.item.TooltipFlag flag) {
+        for(String key:new String[]{"size","suction","discharge","drive"})lines.add(net.minecraft.network.chat.Component.translatable("tooltip.bwr.dvss."+key));
     }
-
-    @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer,
-                            ItemStack stack) {
-        super.setPlacedBy(level, pos, state, placer, stack);
-        if (level.isClientSide()) {
-            return;
-        }
-        if (level.getBlockEntity(pos) instanceof RecirculationPumpBlockEntity pump) {
-            // A convenience only: it makes a pump placed next to an existing
-            // plant join on the same tick instead of within two seconds. The
-            // ticker is what actually guarantees binding.
-            ReactorControllerBlockEntity controller =
-                    RecirculationPumpBlockEntity.findController(level, pos);
-            if (controller != null) {
-                pump.bindController(controller);
-            }
-        }
+    @Override public BlockPos portPosition(BlockPos root,BlockState state,AssemblyPort role) {
+        return isFull(state)?super.portPosition(root,state,role):root;
     }
-
-    @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState,
-                            boolean movedByPiston) {
-        if (!state.is(newState.getBlock())
-                && level.getBlockEntity(pos) instanceof RecirculationPumpBlockEntity pump) {
-            BlockPos controllerPos = pump.getControllerPos();
-            if (controllerPos != null
-                    && level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity c) {
-                c.removePump(pos);
-            }
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
+    @Override public Direction portFace(BlockState state,AssemblyPort role) {
+        return isFull(state)?super.portFace(state,role):role==AssemblyPort.WATER_SUCTION?state.getValue(FACING).getOpposite():state.getValue(FACING);
+    }
+    @Override protected void onRemove(BlockState state,Level level,BlockPos pos,BlockState replacement,boolean moving) {
+        if(!state.is(replacement.getBlock()) && level.getBlockEntity(pos) instanceof RecirculationPumpBlockEntity pump
+                && pump.getControllerPos()!=null && level.isLoaded(pump.getControllerPos())
+                && level.getBlockEntity(pump.getControllerPos()) instanceof ReactorControllerBlockEntity owner) owner.removePump(pos);
+        super.onRemove(state,level,pos,replacement,moving);
     }
 }

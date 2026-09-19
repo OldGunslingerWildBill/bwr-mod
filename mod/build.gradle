@@ -34,6 +34,7 @@ neoForge {
             client()
             gameDirectory = file('run/turbineModelCheck')
             jvmArguments.add('-Dbwr.turbineModelCheck=true')
+            if (project.hasProperty('bwrPumpPanelCheck')) jvmArguments.add('-Dbwr.pumpPanelCheck=true')
         }
 
         // Builds a reactor, a suppression pool and a turbine outlet in a real

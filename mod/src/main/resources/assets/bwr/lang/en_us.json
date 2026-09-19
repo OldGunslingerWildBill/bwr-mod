@@ -4,7 +4,7 @@
   "block.bwr.reactor_vessel": "Reactor Pressure Vessel",
   "block.bwr.control_rod_drive": "Control Rod Drive",
   "block.bwr.core_spray_sparger": "Core Spray Sparger",
-  "block.bwr.recirculation_pump": "Recirculation Pump",
+  "block.bwr.recirculation_pump": "DVSS Recirculation Pump",
   "block.bwr.jet_pump": "Jet Pump",
   "block.bwr.safety_relief_valve": "Safety/Relief Valve",
   "block.bwr.msiv": "Main Steam Isolation Valve",
@@ -66,5 +66,15 @@
   "block.bwr.rpv_water_injection_port": "RPV Water Injection Port",
   "tooltip.bwr.water_pipe.rating": "ASME B31.1-inspired | Design pressure: 2,500 psi (simulation)",
   "tooltip.bwr.water_pipe.service": "Water only. Connect condensate to pump suction; pump discharge to an RPV injection port.",
-  "tooltip.bwr.water_injection_port": "Replace a vessel wall block; face the blue flange outward. Receives pumped water."
+  "tooltip.bwr.water_injection_port": "Replace a vessel wall block; face the blue flange outward. Receives pumped water.",
+  "block.bwr.recirculation_outlet": "RPV Recirculation Top Outlet",
+  "block.bwr.recirculation_inlet": "RPV Recirculation Bottom Inlet",
+  "tooltip.bwr.recirculation_outlet": "Upper half of vessel side wall. Orange flange faces outward; connect to RCP orange inlet.",
+  "tooltip.bwr.recirculation_inlet": "Lowest two interior elevations on vessel side wall. Green flange faces outward; connect RCP green outlet.",
+  "tooltip.bwr.dvss.size": "5 x 5 footprint; 10 blocks tall. Place from the centre of the base.",
+  "tooltip.bwr.dvss.suction": "Blue rear lower flange: suction from the RPV top outlet.",
+  "tooltip.bwr.dvss.discharge": "Teal front flange: return to the RPV bottom inlet.",
+  "tooltip.bwr.dvss.drive": "High-pressure water pipes; FE power. Right-click for speed control.",
+  "tooltip.bwr.jet_pair.mount": "1 x 6 x 1; base 1 or 2 blocks above the vessel bottom shell.",
+  "tooltip.bwr.jet_pair.match": "Align at the same height across opposite walls, facing each other."
 }

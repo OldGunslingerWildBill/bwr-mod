@@ -56,7 +56,7 @@ public final class BwrBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity>>
             RPV_WATER_INJECTION_PORT = BLOCK_ENTITIES.register("rpv_water_injection_port",
             () -> BlockEntityType.Builder.of(dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity::new,
-                    BwrBlocks.RPV_WATER_INJECTION_PORT.get()).build(null));
+                    BwrBlocks.RPV_WATER_INJECTION_PORT.get(), BwrBlocks.RECIRCULATION_OUTLET.get(), BwrBlocks.RECIRCULATION_INLET.get()).build(null));
 
     /**
      * The RPV main steam nozzle. It carries a stop position, so it needs state;

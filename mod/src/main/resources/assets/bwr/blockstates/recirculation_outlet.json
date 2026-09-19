@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/recirculation_outlet"
+    },
+    "facing=east": {
+      "model": "bwr:block/recirculation_outlet",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/recirculation_outlet",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/recirculation_outlet",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "bwr:block/recirculation_outlet",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "bwr:block/recirculation_outlet",
+      "x": 90
+    }
+  }
+}

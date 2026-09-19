@@ -30,8 +30,8 @@ public class RpvWaterInjectionPortBlock extends BaseEntityBlock {
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof RpvWaterInjectionPortBlockEntity port) {
             var owner = port.controller();
-            player.displayClientMessage(Component.literal(owner == null ? "Water injection: install in a formed vessel wall with the flange facing outward."
-                    : "Water injection: connected to reactor at " + owner.getBlockPos().toShortString()), false);
+            player.displayClientMessage(Component.literal(owner == null ? "Port disconnected: use a formed vessel wall, outward flange, and the required elevation."
+                    : "Water port connected to reactor at " + owner.getBlockPos().toShortString()), false);
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
     }

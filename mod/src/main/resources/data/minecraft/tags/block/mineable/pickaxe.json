@@ -4,6 +4,8 @@
     "#bwr:reactor_blocks",
     "bwr:rip_pump",
     "bwr:high_pressure_water_pipe",
-    "bwr:rpv_water_injection_port"
+    "bwr:rpv_water_injection_port",
+    "bwr:recirculation_outlet",
+    "bwr:recirculation_inlet"
   ]
 }

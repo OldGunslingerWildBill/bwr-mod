@@ -148,6 +148,7 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
             if (!level.setBlock(p, state.setValue(CELL, i), 3)) { level.removeBlock(pos, false); return; }
         }
         super.setPlacedBy(level, pos, state, placer, stack);
+        for(int i=0;i<cellCount();i++) level.invalidateCapabilities(pos.offset(turn(cellOffset(i),state.getValue(FACING))));
     }
     @Override protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState old, boolean moving) {
         super.onPlace(state, level, pos, old, moving);
@@ -174,6 +175,7 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
     }
     @Override protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moving) {
         super.onRemove(state, level, pos, replacement, moving);
+        if(!level.isClientSide() && !state.equals(replacement)) level.invalidateCapabilities(pos);
         if (replacement.is(this) || level.isClientSide() || REMOVING.get()) return;
         REMOVING.set(true);
         try {
@@ -191,15 +193,12 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
         BlockPos root = origin(pos, state);
         if (!level.isLoaded(root) || !(level.getBlockEntity(root) instanceof EccsPumpBlockEntity pump)) return;
         pump.markBindingDirty();
-        if (state.getValue(CELL) == 0 && !pump.isComputerControlled()) pump.setRunning(level.hasNeighborSignal(root));
+        if (state.getValue(CELL) == 0 && !pump.isComputerControlled() && !pump.isPanelControlled()) pump.setRunning(level.hasNeighborSignal(root));
     }
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
-        AssemblyPort port = portAt(state, hit.getDirection());
-        if (port != null) player.displayClientMessage(Component.literal("Port: " + port.name().toLowerCase().replace('_', ' ')), false);
-        BlockPos root = origin(pos, state);
-        if (level.isLoaded(root) && level.getBlockEntity(root) instanceof EccsPumpBlockEntity pump)
-            for (String line : pump.statusLines()) player.displayClientMessage(Component.literal(line), false);
+        if (player instanceof net.minecraft.server.level.ServerPlayer sp)
+            dev.bwr.mod.gui.PumpControlMenu.open(sp, origin(pos,state), pos);
         return InteractionResult.CONSUME;
     }
     @Override protected BlockState rotate(BlockState state, Rotation rotation) { return state.setValue(FACING, rotation.rotate(state.getValue(FACING))); }

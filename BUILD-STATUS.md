@@ -1,5 +1,179 @@
 # Build Status
 
+## 2026-09-19 — continuous rod travel and one-column jet assemblies
+
+Rod commands retain discrete notch labels, while absorber position and integral
+worth advance each simulation tick. A normal label 24→28 move takes about 4.17 s
+at the existing drive speed. Nodal absorption uses fractional positions too.
+Drive outages hold the physical position; reversal and scram start there. The
+fractional position survives NBT saves, with a notch-based fallback for old saves.
+See [ROD-MOTION.md](ROD-MOTION.md).
+
+New jet placements occupy **1 × 6 × 1** blocks. Only mesh width changes: the
+original 1.111-block-wide geometry is scaled horizontally by 0.85 and centered in
+one column; height, depth, materials and UVs are retained. Opposite-wall pairs
+can share the same row instead of requiring a diagonal reflection through the
+vessel center. Same-wall, same-facing, shifted-row and wrong-height pairs are
+rejected. Saved two-column assemblies and their old pairing rule remain valid;
+pick up and replace them to use the narrow layout.
+
+Validation:
+
+- Full core acceptance run: **160 tests passed, zero failed**, 880.9 s.
+- After the final hold-until-demand-is-restored refinement, all **five rod-motion
+  tests and seven state round-trip tests** passed again. The 34 snapshot fields
+  are covered. The subsequent packaging cleanup changed formatting/comments and
+  removed an unused local; no additional behavior changed.
+- Label 24→28 changes worth on every 50 ms tick. A near-critical withdrawal test
+  raises power on 80 consecutive ticks, with a largest step of 0.6241% and a
+  finite positive SRM period. Original notch-worth endpoints remain exact.
+- **50 pump runtime scenarios passed** with Mekanism and CC:Tweaked, including
+  both opposite-wall axes, invalid pairs, six-cell occupancy, legacy-save
+  pairing and real mod NBT round trips. All 96 RCIC/HPCI assembly scenarios and
+  both turbine-plumbing scenarios also pass.
+- Client baking: **2,476 pump cell states**, eight inventory/compact models,
+  83 water states and 312 RCIC/HPCI states. Five GUI screens, the connected DVSS,
+  and an off-center opposing jet pair rendered in the test world. The jet pair
+  reports **2 matched, 0 unmatched**; its screenshot was visually inspected.
+- Narrow-model reproduction: **47 current/legacy assets** verified. Asset audit:
+  **916 JSON files, zero problems**. JAR audit: **224 classes**, no bundled
+  optional-mod classes or dev-test package. Final `:mod:build` passes.
+
+Preview: `mod/run/turbineModelCheck/panel-check/jet-pair-in-vessel.png`.
+Playable artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **8,625,083 bytes**.
+SHA-256: `24B1492027351CE54523146E978566A0493560C7D2840639667EF80097BC9279`.
+
+## 2026-09-18 — enlarged DVSS and continuous suction elbow
+
+The current DVSS reserves **5 × 10 × 5 blocks** (width × height × depth), with
+uniform 5/3 enlargement and 250 owned cells. One continuous mesh now joins the
+rear suction flange to the axial inlet underneath the casing. Suction is centered
+0.5 blocks above the floor; discharge is centered 2.5 blocks above it.
+
+The shared pump CELL range supports 256 cells. State-dependent layouts preserve
+both saved compact RCPs and the previous 3 × 6 × 3 assembled DVSS. Missing
+`enlarged` loads false; new item placements set it true. Existing pumps keep
+their original controller, controls, occupancy and flange positions. Pick up
+and replace a pump to enlarge it, then reconnect the headers.
+
+Validation for this revision:
+
+- **48 pump runtime scenarios passed**, including four rotations of the new
+  model and four legacy-save cases (54 cells, one owner, pipe connections,
+  preserved speed, root loot and neighboring-block protection).
+- The connected loop still reaches the reactor flow solver. Existing jet
+  matching, pump speed, crossed-header and broken-loop tests pass.
+- Client baking: **2,452 pump cell states**, eight inventory/compact models,
+  83 water states and 312 RCIC/HPCI cell states pass. Both DVSS sizes are checked.
+- Five real GUI screens and the enlarged DVSS with connected pipes were rendered
+  in a disposable Minecraft world; the world screenshot was visually checked.
+- **620 generated DVSS assets** reproduce from the current and legacy source
+  meshes, with conserved area and validated OBJ bounds/normals. Current mesh:
+  7,880 triangles, 414.788 square block units of surface area.
+- Asset audit: **901 JSON files, zero problems**. JAR audit: **224 classes**,
+  no bundled optional-mod classes or dev-test package. `:mod:build` passes.
+
+Blender source: `art/models/dvss/dvss_recirculation_pump.blend`.
+Preview/detail: `art/models/dvss/dvss_preview.png`, `dvss_suction_detail.png`.
+Playable artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **7,784,127 bytes**.
+SHA-256: `BB250F95CE89FB0D080F72870F688D806740708E55A8CC6CEA154FBD44BBA7D5`.
+
+The entries below describe earlier revisions.
+
+## 2026-09-18 — DVSS recirculation pump and reactor INFO
+
+Added the Blender-built DVSS exterior on the existing recirculation-pump id:
+3 × 6 × 3 blocks, one controller, rear lower suction and front elevated discharge.
+The 54 clipped OBJ cells render through NeoForge. Existing placed RCPs keep
+compact occupancy, orientation, same-height ports and saved controls.
+
+The closed vessel loop now resolves model flange cells. It supplies weak
+no-jet flow, matches jet assemblies across the vessel centre at the lowest two
+interior elevations, and shares capacity without diluting a running pump when
+a stopped parallel pump is connected. The supplied jet meshes are unchanged.
+The reactor INFO tab adds configuration, matched/unmatched jets, installed flow
+capacity, live output and explicitly labeled planning estimates. No core thermal
+solver, automatic control, reactor scaling or new cooling source was added.
+
+Validation on Minecraft 1.21.1 / NeoForge 21.1.248:
+
+- **44 pump scenarios passed** with Mekanism and CC:Tweaked; **40 passed without
+  either optional mod**, plus all 96 RCIC/HPCI assembly scenarios and both live
+  turbine-plumbing cases. Includes four DVSS orientations, shared capabilities,
+  compact migration, core-solver flow with no jets, mirrored versus same-side jets,
+  elevated/too-high jets, crossed/broken loops, half speed, stopped parallel pump,
+  conserved water/temperature and populated configuration snapshot round trips.
+- Client baking: **1,452 occupied pump cell states**, eight inventory/compact
+  models, **83 water block states**, five water items and **312 RCIC/HPCI states**.
+  The DVSS alone has 42,292 baked quads across four rotations.
+- Integrated-client QA opens five real server-backed screens, including reactor
+  INFO, and places the DVSS model with water pipes in an isolated world. Images
+  live in `mod/run/turbineModelCheck/panel-check/`.
+- `tools-export-dvss.py --check`: **116 assets** reproduced from **6,912 source
+  triangles**, preserved surface area and validated per-cell bounds/normals.
+- `tools-import-turbines.py --check`: **172 existing assets** remain reproducible.
+- Asset audit: **649 JSON files, 32 registered blocks, 31 recipes, zero problems**.
+- Final JAR audit: **223 classes**, no bundled CC/Mekanism classes or dev-test
+  package. `:mod:build` and the no-protection-logic check pass.
+- The previous core acceptance results below still apply: this update changes
+  mod-side hardware derivation and readouts, not core physics.
+
+Player instructions and model provenance: [RECIRCULATION.md](RECIRCULATION.md).
+Blender source: `art/models/dvss/dvss_recirculation_pump.blend`.
+Playable artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`.
+JAR size: **7,152,672 bytes**. SHA-256:
+`19552FD4595134558026D22CDFEF1741CE64224B3617323463E1314917D5CE03`.
+
+## 2026-09-17 — pump panels, condensate tank, and vessel recirculation
+
+Implemented the shared 0–100% speed/Start/Stop panel for powered pumps, with
+live flow, pressure, temperature and drive readouts. Panel/computer ownership
+persists; ECCS suction and RHR operating mode are selectable in the panel.
+Electric status no longer prints steam admission/exhaust. The finite CST now has
+a tank model, level panel, and an external fluid handler that honors fractional
+water already delivered to pumps. The RPV injection face now fills the shell.
+
+Restored all twelve jet-pump cell meshes to the supplied archive geometry, with
+no added green adapters or game ports. New top-outlet/bottom-inlet vessel ports
+close an external water-pipe loop through the RCP's separate inlet/outlet faces.
+Installed jet count and connected drive capacity limit recirculation; internal
+manifold piping is implicit. See [WATER-PLUMBING.md](WATER-PLUMBING.md).
+
+Verification on Minecraft 1.21.1 / NeoForge 21.1.248:
+
+- **39 pump scenarios passed** with Mekanism and CC:Tweaked, plus the existing
+  RCIC/HPCI placement and physical steam/water plumbing checks. Four scenarios
+  exercise the actual Mekanism Mechanical Pipe network delivering water into
+  LPCS, HPCS, RHR and motor-feed suction. They caught and verified a fix for stale
+  capabilities on removed multipart cells, including pipes placed before pumps.
+- **35 pump scenarios passed without either optional mod**, plus both turbine
+  plumbing fixtures. GameTest exits successfully in both configurations.
+- Client baking: **87 water/tank/RCP block states and six inventory models**,
+  **1,236 pump cell states**, seven inventory/compact models, and **312 RCIC/HPCI
+  cell states** with both inventory models.
+- Real integrated-client GUI check: electric, steam, recirculation and tank
+  screens opened, received server snapshots and rendered successfully. Images
+  under `mod/run/turbineModelCheck/panel-check/` were visually inspected.
+- Core: **all 153 existing tests passed** in the full 867-second run. The two
+  new speed/persistence tests pass on the final fixture. The first run's speed
+  assertion used an overly tight tolerance for finite-time spin-up (1e-8 at
+  200 seconds); it was corrected to 1e-6 and the two new tests rerun successfully.
+  Production core code did not change after the full run.
+- Asset audit: **593 valid JSON, 32 blocks, 31 recipes, zero problems**.
+  All twelve restored jet cell OBJ files match the supplied archive after
+  normalizing line endings. `git diff --check` passes.
+- Final `:mod:build` succeeds; the no-protection-logic check scans 134 files.
+  Packaging audit finds 222 classes including the nested physics jar, with
+  **zero bundled Mekanism, CC:Tweaked or devtest classes**.
+
+The GUI uses the existing suction/vessel temperature model. Stored condensate
+remains 32°C; no new water-temperature solver is introduced. The runtime fixture
+does not construct a complete Mekanism Generators turbine or perform a long
+player-world soak. Existing RCP loops require the rewiring documented in the guide.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar` — **6,829,027 bytes**.
+SHA-256: `7E533E52C0E97BB79B981B766537B055524AE4D66DD2994472B017B9E6F16727`.
+
 ## 2026-09-17 — separate water piping and RPV injection
 
 Added High-Pressure Water Pipe, outward-facing RPV Water Injection Port,

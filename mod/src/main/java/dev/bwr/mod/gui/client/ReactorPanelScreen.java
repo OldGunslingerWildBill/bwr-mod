@@ -57,7 +57,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
     private static final int READOUT_STEP = 9;
 
     private enum Overlay {
-        FLUX, RODS
+        FLUX, RODS, INFO
     }
 
     private Overlay overlay = Overlay.FLUX;
@@ -65,6 +65,8 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
     private LatticeGridWidget grid;
     private Button fluxTab;
     private Button rodTab;
+    private Button infoTab;
+    private List<Component> infoTooltip=List.of();
     private Button headButton;
 
     /** Rod the player last clicked on the rod overlay, or -1 for "all rods". */
@@ -82,6 +84,8 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 .bounds(leftPos + 6, topPos + 14, 44, 12).build());
         rodTab = addRenderableWidget(Button.builder(Component.literal("RODS"), b -> setOverlay(Overlay.RODS))
                 .bounds(leftPos + 52, topPos + 14, 44, 12).build());
+        infoTab = addRenderableWidget(Button.builder(Component.literal("INFO"), b -> setOverlay(Overlay.INFO))
+                .bounds(leftPos + 98, topPos + 14, 44, 12).build());
 
         grid = addRenderableWidget(new LatticeGridWidget(
                 leftPos + GRID_X, topPos + GRID_Y, GRID_W, GRID_H, this::onCellClicked));
@@ -117,6 +121,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
 
     private void setOverlay(Overlay next) {
         overlay = next;
+        grid.visible=menu.formed && next!=Overlay.INFO;
         grid.setSelected(-1);
         selectedRod = -1;
     }
@@ -139,10 +144,11 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
         super.containerTick();
         fluxTab.active = overlay != Overlay.FLUX;
         rodTab.active = overlay != Overlay.RODS;
+        infoTab.active = overlay != Overlay.INFO;
         headButton.setMessage(Component.literal(
                 menu.vesselState == VesselState.REFUELING ? "HEAD ON" : "HEAD OFF"));
         grid.setCells(overlay == Overlay.FLUX ? fluxCells() : rodCells());
-        grid.visible = menu.formed;
+        grid.visible = menu.formed && overlay!=Overlay.INFO;
     }
 
     @Override
@@ -157,7 +163,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
 
     @Override
     protected List<Component> hoverTooltip() {
-        return menu.formed ? grid.hoverTooltip() : List.of();
+        return !menu.formed?List.of():overlay==Overlay.INFO?infoTooltip:grid.hoverTooltip();
     }
 
     @Override
@@ -172,8 +178,50 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
             return;
         }
 
+        if(overlay==Overlay.INFO) { information(graphics,mouseX,mouseY);return; }
         readouts(graphics);
         secondary(graphics);
+    }
+
+    private void information(GuiGraphics g,int mouseX,int mouseY) {
+        g.fill(leftPos+5,topPos+28,leftPos+251,topPos+188,0xFF1C222A);
+        var c=menu.configuration;
+        text(g,"FUEL & CONFIGURATION",12,33,ACCENT);
+        readout(g,"Fuel bundles",menu.loadedAssemblies+" / "+menu.assemblyCount,12,46,244,TEXT_BRIGHT);
+        readout(g,"Fuel-loaded rating*",big(c.fuelLoadedRatingMW())+" MWth",12,58,244,TEXT_BRIGHT);
+        readout(g,"Flow-supported power*",big(c.flowSupportedMW())+" MWth",12,70,244,TEXT_BRIGHT);
+        readout(g,"Steam equivalent*",big(c.steamEquivalentKgPerS())+" kg/s",12,82,244,TEXT_BRIGHT);
+        text(g,"RECIRCULATION",12,96,ACCENT);
+        readout(g,"Matched / unmatched jets",c.matchedJetAssemblies()+" / "+c.unmatchedJetAssemblies(),12,108,244,TEXT_BRIGHT);
+        readout(g,"External / internal pumps",c.externalPumps()+" / "+c.internalPumps(),12,120,244,TEXT_BRIGHT);
+        readout(g,"Flow ceiling",pct(c.flowCeilingFraction())+" | "+big(c.flowCeilingKgPerS())+" kg/s",12,132,244,TEXT_BRIGHT);
+        readout(g,"Water / subcooling",big(menu.coolantTemperatureC)+" C / "+big(c.inletSubcoolingKJPerKg())+" kJ/kg",12,144,244,TEXT_BRIGHT);
+        text(g,"LIVE OUTPUT",12,158,ACCENT);
+        readout(g,"MWth / steam kg/s",big(menu.thermalMW)+" / "+big(menu.steamKgPerS),12,170,244,GOOD);
+        text(g,"* Planning estimates; hover for basis",12,181,TEXT_DIM);
+        int x=mouseX-leftPos,y=mouseY-topPos;infoTooltip=List.of();
+        if(x<8 || x>248)return;
+        if(y>=44 && y<57 && menu.map!=null) {
+            var counts=new java.util.LinkedHashMap<String,Integer>();
+            for(int i=0;i<menu.map.coreSlotCount;i++)if(menu.map.isOccupied(i))counts.merge(menu.map.fuelTypeName(i),1,Integer::sum);
+            List<Component> lines=new ArrayList<>();lines.add(Component.literal("Loaded fuel; FLUX shows each bundle"));
+            counts.forEach((name,count)->lines.add(Component.literal(count+" x "+name)));infoTooltip=lines;
+        } else if(y>=57 && y<93 || y>=180)infoTooltip=List.of(
+                Component.literal("Fuel rating = reference MW x loaded-slot fraction."),
+                Component.literal("Power estimate = reference MW x min(fuel fraction, flow ceiling)."),
+                Component.literal("Steam equivalent uses current pressure and feedwater temperature."),
+                Component.literal("These are planning estimates, not operating limits."),
+                Component.literal("Actual output depends on rods, fuel condition and water supply."));
+        else if(y>=105 && y<143)infoTooltip=List.of(
+                Component.literal("Jets must have a matching assembly across the vessel."),
+                Component.literal("Place bases 1 or 2 blocks above the bottom shell; face oppositely."),
+                Component.literal("A complete RCP loop alone adds up to 5% rated flow."),
+                Component.literal("Each opposing set adds capacity for 20% rated flow."),
+                Component.literal("Ten matched assemblies + two RCPs reach 100%."),
+                Component.literal("Actual core flow: "+big(menu.coreFlowKgPerS)+" kg/s"));
+        else if(y>=143 && y<155)infoTooltip=List.of(
+                Component.literal("Vessel water temperature and calculated inlet subcooling."),
+                Component.literal("The loop circulates water; the pump does not cool it."));
     }
 
     private void readouts(GuiGraphics graphics) {

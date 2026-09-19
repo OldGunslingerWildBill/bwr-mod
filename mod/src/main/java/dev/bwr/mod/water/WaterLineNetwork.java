@@ -23,12 +23,12 @@ public final class WaterLineNetwork {
             AssemblyPort port = assembly.portAt(state, face);
             return port != null && !port.isSteam();
         }
-        if (state.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get()))
+        if (state.getBlock() instanceof dev.bwr.mod.reactor.RpvWaterInjectionPortBlock)
             return face == state.getValue(dev.bwr.mod.reactor.RpvWaterInjectionPortBlock.FACING);
+        if (state.getBlock() instanceof dev.bwr.mod.flow.RecirculationPumpBlock pump) return pump.waterPortAt(state,face)!=null;
         return state.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get())
                 || state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())
-                || state.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get())
-                || state.is(BwrBlocks.RECIRCULATION_PUMP.get());
+                || state.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
     }
 
     /** Foreign water handlers (including Mekanism turbine valves) can push condensate in. */

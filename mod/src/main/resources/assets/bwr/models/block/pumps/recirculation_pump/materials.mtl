@@ -1,0 +1,31 @@
+newmtl dvss_0
+Kd 0.05 0.43 0.65
+map_Kd minecraft:block/white_concrete
+
+newmtl dvss_1
+Kd 0.06 0.085 0.095
+map_Kd minecraft:block/white_concrete
+
+newmtl dvss_2
+Kd 0.08 0.23 0.19
+map_Kd minecraft:block/white_concrete
+
+newmtl dvss_3
+Kd 0.1 0.65 0.5
+map_Kd minecraft:block/white_concrete
+
+newmtl dvss_4
+Kd 0.32 0.39 0.4
+map_Kd minecraft:block/white_concrete
+
+newmtl dvss_5
+Kd 0.64 0.69 0.69
+map_Kd minecraft:block/white_concrete
+
+newmtl dvss_6
+Kd 0.65 0.43 0.12
+map_Kd minecraft:block/white_concrete
+
+newmtl dvss_7
+Kd 0.8 0.84 0.79
+map_Kd minecraft:block/white_concrete

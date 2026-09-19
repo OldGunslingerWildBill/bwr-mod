@@ -118,10 +118,13 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     /** Satellite recirculation pumps that have announced themselves. */
     private final Set<BlockPos> pumpPositions = new LinkedHashSet<>();
     private volatile double recirculationCapacityFraction;
-    private volatile int connectedJetPairs,installedInternalPumps;
+    private volatile int connectedJetPairs,installedInternalPumps,unmatchedJets,connectedExternalPumps;
     public double getRecirculationCapacityFraction() { return recirculationCapacityFraction; }
     public int getConnectedJetPairs() { return connectedJetPairs; }
     public int getInstalledInternalPumps() { return installedInternalPumps; }
+    public int getUnmatchedJets() { return unmatchedJets; }
+    public int getConnectedExternalPumps() { return connectedExternalPumps; }
+    public double getConfiguredRatedThermalMW() { return config.ratedThermalMW; }
 
     private int sinceSync;
     private ReactorState pendingRestore;
@@ -257,6 +260,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         recirculationCapacityFraction=hardware.maximum();
         connectedJetPairs=hardware.pairedJets();
         installedInternalPumps=hardware.internalPumps();
+        unmatchedJets=hardware.unmatchedJets();
+        connectedExternalPumps=hardware.externalPumps();
         core.getBoundaryStress().setPlantConfiguration(BoundaryDamageNbt.configurationFor(installedInternalPumps));
         // A direct Lua demand is still manual, but cannot exceed installed hardware.
         if(core.getRecirculationFlowFractionDemand()>recirculationCapacityFraction)
@@ -825,8 +830,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     /** Human-readable status, shown when a player right-clicks the controller. */
     public List<String> statusLines() {
         List<String> out = new ArrayList<>();
-        out.add(String.format("Connected jet pairs: %d; internal pumps: %d; maximum forced flow: %.0f%%",
-                connectedJetPairs,installedInternalPumps,100*recirculationCapacityFraction));
+        out.add(String.format("Matched jet assemblies: %d; unmatched: %d; external/internal pumps: %d/%d; maximum forced flow: %.0f%%",
+                connectedJetPairs,unmatchedJets,connectedExternalPumps,installedInternalPumps,100*recirculationCapacityFraction));
         if (structure == null) {
             out.add("Reactor not formed.");
             out.addAll(lastValidation.messages());

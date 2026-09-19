@@ -51,6 +51,11 @@ public final class BwrMenus {
             MENUS.register("fuel_fabricator",
                     () -> IMenuTypeExtension.create(FuelFabricatorMenu::new));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.PumpControlMenu>> PUMP_CONTROL =
+            MENUS.register("pump_control", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.PumpControlMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.CondensateTankMenu>> CONDENSATE_TANK =
+            MENUS.register("condensate_tank", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.CondensateTankMenu::new));
+
     private BwrMenus() {
     }
 }

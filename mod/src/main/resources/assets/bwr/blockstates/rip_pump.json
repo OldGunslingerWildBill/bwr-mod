@@ -3071,6 +3071,5126 @@
     "assembled=true,cell=95,facing=west": {
       "model": "bwr:block/pumps/empty",
       "y": 270
+    },
+    "assembled=false,cell=96,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=96,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=97,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=97,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=98,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=98,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=99,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=99,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=100,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=100,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=101,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=101,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=102,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=102,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=103,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=103,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=104,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=104,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=105,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=105,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=106,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=106,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=107,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=107,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=108,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=108,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=109,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=109,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=110,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=110,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=111,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=111,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=112,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=112,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=113,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=113,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=114,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=114,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=115,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=115,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=116,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=116,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=117,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=117,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=118,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=118,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=119,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=119,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=120,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=120,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=121,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=121,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=122,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=122,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=123,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=123,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=124,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=124,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=125,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=125,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=126,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=126,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=127,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=127,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=128,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=128,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=129,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=129,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=130,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=130,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=131,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=131,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=132,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=132,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=133,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=133,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=134,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=134,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=135,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=135,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=136,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=136,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=137,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=137,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=138,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=138,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=139,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=139,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=140,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=140,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=141,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=141,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=142,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=142,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=143,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=143,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=144,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=144,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=145,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=145,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=146,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=146,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=147,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=147,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=148,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=148,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=149,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=149,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=150,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=150,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=151,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=151,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=152,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=152,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=153,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=153,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=154,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=154,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=155,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=155,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=156,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=156,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=157,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=157,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=158,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=158,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=159,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=159,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=160,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=160,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=161,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=161,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=162,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=162,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=163,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=163,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=164,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=164,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=165,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=165,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=166,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=166,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=167,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=167,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=168,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=168,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=169,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=169,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=170,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=170,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=171,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=171,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=172,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=172,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=173,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=173,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=174,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=174,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=175,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=175,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=176,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=176,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=177,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=177,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=178,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=178,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=179,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=179,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=180,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=180,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=181,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=181,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=182,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=182,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=183,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=183,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=184,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=184,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=185,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=185,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=186,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=186,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=187,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=187,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=188,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=188,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=189,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=189,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=190,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=190,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=191,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=191,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=192,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=192,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=193,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=193,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=194,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=194,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=195,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=195,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=196,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=196,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=197,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=197,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=198,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=198,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=199,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=199,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=200,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=200,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=201,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=201,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=202,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=202,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=203,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=203,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=204,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=204,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=205,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=205,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=206,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=206,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=207,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=207,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=208,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=208,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=209,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=209,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=210,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=210,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=211,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=211,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=212,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=212,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=213,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=213,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=214,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=214,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=215,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=215,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=216,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=216,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=217,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=217,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=218,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=218,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=219,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=219,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=220,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=220,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=221,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=221,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=222,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=222,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=223,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=223,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=224,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=224,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=225,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=225,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=226,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=226,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=227,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=227,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=228,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=228,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=229,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=229,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=230,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=230,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=231,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=231,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=232,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=232,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=233,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=233,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=234,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=234,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=235,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=235,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=236,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=236,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=237,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=237,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=238,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=238,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=239,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=239,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=240,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=240,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=241,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=241,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=242,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=242,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=243,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=243,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=244,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=244,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=245,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=245,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=246,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=246,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=247,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=247,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=248,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=248,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=249,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=249,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=250,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=250,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=251,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=251,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=252,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=252,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=253,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=253,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=254,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=254,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=255,facing=north": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 0
+    },
+    "assembled=true,cell=255,facing=north": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=false,cell=96,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=96,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=97,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=97,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=98,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=98,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=99,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=99,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=100,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=100,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=101,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=101,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=102,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=102,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=103,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=103,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=104,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=104,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=105,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=105,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=106,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=106,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=107,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=107,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=108,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=108,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=109,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=109,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=110,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=110,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=111,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=111,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=112,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=112,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=113,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=113,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=114,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=114,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=115,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=115,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=116,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=116,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=117,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=117,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=118,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=118,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=119,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=119,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=120,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=120,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=121,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=121,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=122,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=122,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=123,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=123,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=124,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=124,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=125,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=125,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=126,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=126,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=127,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=127,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=128,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=128,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=129,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=129,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=130,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=130,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=131,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=131,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=132,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=132,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=133,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=133,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=134,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=134,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=135,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=135,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=136,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=136,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=137,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=137,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=138,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=138,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=139,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=139,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=140,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=140,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=141,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=141,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=142,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=142,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=143,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=143,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=144,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=144,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=145,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=145,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=146,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=146,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=147,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=147,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=148,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=148,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=149,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=149,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=150,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=150,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=151,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=151,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=152,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=152,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=153,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=153,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=154,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=154,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=155,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=155,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=156,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=156,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=157,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=157,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=158,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=158,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=159,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=159,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=160,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=160,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=161,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=161,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=162,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=162,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=163,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=163,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=164,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=164,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=165,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=165,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=166,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=166,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=167,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=167,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=168,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=168,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=169,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=169,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=170,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=170,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=171,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=171,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=172,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=172,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=173,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=173,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=174,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=174,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=175,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=175,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=176,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=176,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=177,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=177,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=178,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=178,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=179,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=179,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=180,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=180,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=181,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=181,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=182,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=182,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=183,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=183,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=184,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=184,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=185,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=185,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=186,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=186,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=187,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=187,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=188,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=188,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=189,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=189,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=190,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=190,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=191,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=191,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=192,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=192,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=193,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=193,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=194,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=194,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=195,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=195,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=196,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=196,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=197,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=197,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=198,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=198,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=199,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=199,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=200,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=200,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=201,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=201,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=202,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=202,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=203,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=203,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=204,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=204,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=205,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=205,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=206,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=206,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=207,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=207,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=208,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=208,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=209,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=209,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=210,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=210,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=211,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=211,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=212,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=212,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=213,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=213,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=214,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=214,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=215,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=215,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=216,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=216,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=217,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=217,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=218,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=218,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=219,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=219,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=220,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=220,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=221,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=221,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=222,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=222,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=223,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=223,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=224,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=224,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=225,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=225,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=226,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=226,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=227,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=227,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=228,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=228,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=229,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=229,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=230,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=230,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=231,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=231,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=232,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=232,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=233,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=233,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=234,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=234,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=235,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=235,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=236,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=236,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=237,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=237,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=238,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=238,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=239,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=239,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=240,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=240,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=241,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=241,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=242,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=242,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=243,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=243,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=244,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=244,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=245,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=245,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=246,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=246,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=247,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=247,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=248,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=248,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=249,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=249,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=250,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=250,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=251,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=251,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=252,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=252,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=253,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=253,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=254,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=254,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=255,facing=east": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 90
+    },
+    "assembled=true,cell=255,facing=east": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=false,cell=96,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=96,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=97,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=97,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=98,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=98,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=99,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=99,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=100,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=100,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=101,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=101,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=102,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=102,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=103,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=103,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=104,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=104,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=105,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=105,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=106,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=106,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=107,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=107,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=108,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=108,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=109,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=109,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=110,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=110,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=111,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=111,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=112,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=112,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=113,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=113,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=114,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=114,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=115,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=115,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=116,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=116,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=117,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=117,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=118,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=118,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=119,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=119,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=120,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=120,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=121,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=121,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=122,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=122,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=123,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=123,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=124,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=124,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=125,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=125,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=126,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=126,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=127,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=127,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=128,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=128,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=129,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=129,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=130,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=130,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=131,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=131,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=132,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=132,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=133,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=133,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=134,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=134,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=135,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=135,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=136,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=136,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=137,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=137,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=138,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=138,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=139,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=139,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=140,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=140,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=141,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=141,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=142,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=142,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=143,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=143,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=144,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=144,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=145,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=145,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=146,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=146,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=147,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=147,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=148,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=148,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=149,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=149,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=150,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=150,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=151,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=151,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=152,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=152,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=153,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=153,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=154,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=154,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=155,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=155,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=156,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=156,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=157,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=157,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=158,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=158,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=159,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=159,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=160,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=160,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=161,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=161,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=162,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=162,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=163,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=163,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=164,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=164,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=165,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=165,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=166,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=166,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=167,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=167,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=168,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=168,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=169,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=169,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=170,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=170,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=171,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=171,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=172,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=172,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=173,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=173,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=174,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=174,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=175,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=175,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=176,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=176,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=177,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=177,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=178,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=178,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=179,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=179,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=180,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=180,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=181,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=181,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=182,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=182,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=183,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=183,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=184,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=184,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=185,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=185,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=186,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=186,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=187,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=187,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=188,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=188,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=189,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=189,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=190,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=190,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=191,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=191,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=192,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=192,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=193,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=193,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=194,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=194,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=195,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=195,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=196,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=196,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=197,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=197,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=198,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=198,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=199,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=199,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=200,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=200,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=201,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=201,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=202,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=202,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=203,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=203,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=204,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=204,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=205,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=205,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=206,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=206,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=207,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=207,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=208,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=208,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=209,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=209,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=210,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=210,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=211,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=211,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=212,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=212,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=213,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=213,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=214,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=214,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=215,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=215,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=216,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=216,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=217,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=217,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=218,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=218,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=219,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=219,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=220,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=220,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=221,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=221,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=222,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=222,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=223,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=223,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=224,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=224,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=225,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=225,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=226,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=226,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=227,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=227,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=228,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=228,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=229,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=229,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=230,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=230,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=231,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=231,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=232,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=232,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=233,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=233,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=234,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=234,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=235,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=235,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=236,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=236,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=237,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=237,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=238,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=238,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=239,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=239,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=240,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=240,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=241,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=241,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=242,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=242,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=243,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=243,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=244,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=244,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=245,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=245,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=246,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=246,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=247,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=247,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=248,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=248,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=249,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=249,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=250,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=250,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=251,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=251,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=252,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=252,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=253,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=253,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=254,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=254,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=255,facing=south": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 180
+    },
+    "assembled=true,cell=255,facing=south": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=false,cell=96,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=96,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=97,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=97,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=98,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=98,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=99,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=99,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=100,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=100,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=101,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=101,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=102,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=102,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=103,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=103,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=104,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=104,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=105,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=105,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=106,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=106,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=107,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=107,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=108,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=108,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=109,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=109,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=110,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=110,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=111,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=111,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=112,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=112,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=113,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=113,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=114,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=114,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=115,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=115,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=116,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=116,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=117,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=117,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=118,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=118,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=119,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=119,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=120,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=120,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=121,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=121,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=122,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=122,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=123,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=123,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=124,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=124,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=125,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=125,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=126,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=126,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=127,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=127,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=128,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=128,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=129,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=129,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=130,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=130,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=131,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=131,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=132,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=132,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=133,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=133,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=134,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=134,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=135,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=135,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=136,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=136,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=137,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=137,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=138,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=138,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=139,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=139,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=140,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=140,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=141,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=141,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=142,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=142,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=143,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=143,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=144,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=144,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=145,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=145,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=146,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=146,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=147,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=147,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=148,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=148,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=149,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=149,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=150,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=150,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=151,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=151,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=152,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=152,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=153,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=153,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=154,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=154,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=155,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=155,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=156,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=156,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=157,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=157,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=158,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=158,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=159,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=159,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=160,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=160,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=161,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=161,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=162,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=162,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=163,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=163,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=164,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=164,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=165,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=165,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=166,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=166,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=167,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=167,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=168,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=168,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=169,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=169,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=170,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=170,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=171,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=171,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=172,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=172,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=173,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=173,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=174,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=174,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=175,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=175,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=176,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=176,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=177,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=177,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=178,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=178,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=179,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=179,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=180,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=180,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=181,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=181,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=182,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=182,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=183,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=183,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=184,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=184,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=185,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=185,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=186,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=186,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=187,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=187,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=188,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=188,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=189,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=189,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=190,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=190,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=191,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=191,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=192,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=192,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=193,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=193,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=194,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=194,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=195,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=195,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=196,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=196,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=197,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=197,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=198,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=198,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=199,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=199,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=200,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=200,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=201,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=201,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=202,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=202,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=203,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=203,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=204,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=204,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=205,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=205,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=206,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=206,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=207,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=207,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=208,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=208,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=209,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=209,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=210,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=210,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=211,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=211,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=212,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=212,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=213,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=213,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=214,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=214,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=215,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=215,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=216,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=216,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=217,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=217,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=218,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=218,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=219,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=219,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=220,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=220,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=221,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=221,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=222,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=222,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=223,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=223,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=224,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=224,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=225,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=225,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=226,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=226,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=227,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=227,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=228,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=228,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=229,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=229,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=230,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=230,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=231,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=231,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=232,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=232,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=233,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=233,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=234,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=234,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=235,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=235,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=236,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=236,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=237,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=237,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=238,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=238,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=239,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=239,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=240,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=240,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=241,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=241,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=242,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=242,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=243,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=243,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=244,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=244,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=245,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=245,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=246,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=246,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=247,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=247,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=248,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=248,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=249,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=249,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=250,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=250,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=251,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=251,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=252,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=252,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=253,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=253,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=254,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=254,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=false,cell=255,facing=west": {
+      "model": "bwr:block/pumps/rip_pump/compact",
+      "y": 270
+    },
+    "assembled=true,cell=255,facing=west": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
     }
   }
 }

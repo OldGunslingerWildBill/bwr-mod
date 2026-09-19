@@ -19,7 +19,7 @@ public final class AssemblyPlumbing {
     private AssemblyPlumbing() {}
     public record Line(List<BlockPos> ends, Set<BlockPos> nodes, boolean valid, double opening) {}
     public static boolean isWaterEndpoint(BlockState state) {
-        return state.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get())
+        return state.getBlock() instanceof dev.bwr.mod.reactor.RpvWaterInjectionPortBlock
                 || state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())
                 || state.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
     }
@@ -101,6 +101,7 @@ public final class AssemblyPlumbing {
         ReactorControllerBlockEntity found = null;
         for (BlockPos p : line.ends()) {
             if (!level.isLoaded(p) || !(level.getBlockEntity(p) instanceof dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity port)) return null;
+            if (level.getBlockState(p).getBlock() instanceof dev.bwr.mod.reactor.RecirculationPortBlock) return null;
             var next = port.controller();
             if (next == null || found != null && found != next) return null;
             found = next;

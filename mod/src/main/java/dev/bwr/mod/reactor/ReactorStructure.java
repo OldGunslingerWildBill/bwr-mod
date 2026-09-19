@@ -376,7 +376,7 @@ public final class ReactorStructure {
                 && !s.is(BwrBlocks.REACTOR_CONTROLLER.get())
                 && !(s.is(BwrBlocks.RIP_PUMP.get()) && s.getValue(dev.bwr.mod.eccs.PumpAssemblyBlock.CELL)/4==3)
                 && !s.is(BwrBlocks.RPV_STEAM_OUTLET.get())
-                && !s.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get());
+                && !(s.getBlock() instanceof RpvWaterInjectionPortBlock);
     }
 
     /**
@@ -484,7 +484,7 @@ public final class ReactorStructure {
                         result.fail(p, "gap in the reactor vessel shell");
                         continue;
                     }
-                    if (state.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get())) waterPorts.add(p.immutable());
+                    if (state.getBlock() instanceof RpvWaterInjectionPortBlock) waterPorts.add(p.immutable());
                     if (state.is(BwrBlocks.RPV_STEAM_OUTLET.get())) {
                         steamOutlets.add(p.immutable());
                     }
@@ -567,7 +567,7 @@ public final class ReactorStructure {
                 || (s.is(BwrBlocks.JET_PUMP.get()) && !s.getValue(dev.bwr.mod.eccs.PumpAssemblyBlock.ASSEMBLED))
                 || (s.is(BwrBlocks.RIP_PUMP.get()) && s.getValue(dev.bwr.mod.eccs.PumpAssemblyBlock.CELL)/4>=3)
                 || s.is(BwrBlocks.RPV_STEAM_OUTLET.get())
-                || s.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get());
+                || (s.getBlock() instanceof RpvWaterInjectionPortBlock);
     }
 
     /**

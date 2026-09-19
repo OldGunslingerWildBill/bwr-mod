@@ -5,6 +5,7 @@ import dev.bwr.core.feedwater.FeedwaterDesign;
 import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.water.HighPressureWaterPipeBlock;
 import dev.bwr.mod.reactor.RpvWaterInjectionPortBlock;
+import dev.bwr.mod.reactor.RecirculationPortBlock;
 import dev.bwr.mod.eccs.AdsControllerBlock;
 import dev.bwr.mod.eccs.CondensateStorageTankBlock;
 import dev.bwr.mod.eccs.EccsPumpBlock;
@@ -102,6 +103,11 @@ public final class BwrBlocks {
             BLOCKS.register("high_pressure_water_pipe", () -> new HighPressureWaterPipeBlock(machine()));
     public static final DeferredBlock<RpvWaterInjectionPortBlock> RPV_WATER_INJECTION_PORT =
             BLOCKS.register("rpv_water_injection_port", () -> new RpvWaterInjectionPortBlock(vesselSteel()));
+
+    public static final DeferredBlock<RecirculationPortBlock> RECIRCULATION_OUTLET =
+            BLOCKS.register("recirculation_outlet", () -> new RecirculationPortBlock(vesselSteel(),true));
+    public static final DeferredBlock<RecirculationPortBlock> RECIRCULATION_INLET =
+            BLOCKS.register("recirculation_inlet", () -> new RecirculationPortBlock(vesselSteel(),false));
 
     // --- Steam --------------------------------------------------------
 

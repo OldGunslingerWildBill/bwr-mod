@@ -139,6 +139,7 @@ public class ReactorPanelMenu extends BwrMenu {
 
     /** Null until the first map arrives. */
     public CoreMapSnapshot map;
+    public ReactorConfigurationInfo configuration=ReactorConfigurationInfo.EMPTY;
 
     // -----------------------------------------------------------------
 
@@ -253,6 +254,7 @@ public class ReactorPanelMenu extends BwrMenu {
         if (withMap) {
             CoreMapSnapshot.write(buf, core, be.assemblyCount());
         }
+        ReactorConfigurationInfo.capture(be).write(buf);
     }
 
     @Override
@@ -326,6 +328,7 @@ public class ReactorPanelMenu extends BwrMenu {
         if (buf.readBoolean()) {
             map = CoreMapSnapshot.read(buf);
         }
+        configuration=ReactorConfigurationInfo.read(buf);
     }
 
     // -----------------------------------------------------------------

@@ -57,11 +57,23 @@ public class CondensateStorageTankBlockEntity extends BlockEntity {
     /** Sub-kilogram remainder carried between ticks. See {@link #drawKg(double)}. */
     private double pendingDrawKg;
 
+    /** External extraction cannot take the fractional water already supplied to a pump. */
+    private final IFluidHandler fluidHandler = new IFluidHandler() {
+        @Override public int getTanks(){return 1;}
+        @Override public FluidStack getFluidInTank(int index){return tank.getFluidInTank(index);}
+        @Override public int getTankCapacity(int index){return tank.getCapacity();}
+        @Override public boolean isFluidValid(int index,FluidStack stack){return tank.isFluidValid(index,stack);}
+        @Override public int fill(FluidStack stack,FluidAction action){return tank.fill(stack,action);}
+        @Override public FluidStack drain(int amount,FluidAction action){return tank.drain(Math.min(amount,(int)Math.floor(Math.max(0,storedKg()-pendingDrawKg))),action);}
+        @Override public FluidStack drain(FluidStack stack,FluidAction action){return stack.getFluid()==Fluids.WATER?drain(stack.getAmount(),action):FluidStack.EMPTY;}
+    };
+    public IFluidHandler fluidHandler(){return fluidHandler;}
+
     public CondensateStorageTankBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.CONDENSATE_STORAGE_TANK.get(), pos, state);
     }
 
-    /** The tank itself, for the fluid capability and for pipes. */
+    /** Internal whole-millibucket store. Pipes must use {@link #fluidHandler()}. */
     public FluidTank tank() {
         return tank;
     }
@@ -112,6 +124,7 @@ public class CondensateStorageTankBlockEntity extends BlockEntity {
             return 0.0;
         }
         pendingDrawKg += delivered;
+        setChanged();
         int whole = (int) Math.floor(pendingDrawKg);
         if (whole > 0) {
             FluidStack drained = tank.drain(whole, IFluidHandler.FluidAction.EXECUTE);

@@ -45,6 +45,7 @@ public final class EccsPump {
     // --- commanded state ---------------------------------------------
     private boolean running;
     private double flowDemandFraction = 1.0;
+    private double speedDemandFraction = 1.0;
 
     // --- inputs, refreshed every step --------------------------------
     private double vesselPressurePsig;
@@ -119,6 +120,12 @@ public final class EccsPump {
     public double getFlowDemandFraction() {
         return flowDemandFraction;
     }
+
+    /** Operator shaft-speed ceiling, independent of the existing discharge flow throttle. */
+    public void setSpeedDemandFraction(double fraction) {
+        if (Double.isFinite(fraction)) speedDemandFraction = clampFraction(fraction);
+    }
+    public double getSpeedDemandFraction() { return speedDemandFraction; }
 
     // -----------------------------------------------------------------
     // Inputs
@@ -200,7 +207,7 @@ public final class EccsPump {
         // exactly 1.0 across a fraction of a psi. See shaftPowerAtSpeed.
         achievableSpeedFraction = solveAchievableSpeed(dp, availableShaftPowerWatts());
 
-        double target = running ? achievableSpeedFraction : 0.0;
+        double target = running ? Math.min(speedDemandFraction, achievableSpeedFraction) : 0.0;
         double tau = (target >= speedFraction)
                 ? Math.max(0.1, design.startupSeconds() / 3.0)
                 : Math.max(0.1, design.coastdownSeconds() / 3.0);
@@ -506,7 +513,7 @@ public final class EccsPump {
      * per {@code SPEC.md} section 11.
      */
     public double[] toArray() {
-        return new double[]{running ? 1.0 : 0.0, flowDemandFraction, speedFraction};
+        return new double[]{running ? 1.0 : 0.0, flowDemandFraction, speedFraction, speedDemandFraction};
     }
 
     /**
@@ -535,6 +542,7 @@ public final class EccsPump {
         running = a[0] != 0.0;
         flowDemandFraction = clampFraction(a[1]);
         speedFraction = clampFraction(a[2]);
+        speedDemandFraction = a.length > 3 ? clampFraction(a[3]) : 1.0;
     }
 
     /** A saved fraction as a usable 0..1, with a non-finite value taken as zero. */

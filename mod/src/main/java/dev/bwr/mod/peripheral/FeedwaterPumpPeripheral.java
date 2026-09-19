@@ -59,6 +59,14 @@ public class FeedwaterPumpPeripheral implements IPeripheral {
      * other — which matters, because they fail in completely different ways and
      * a program that lines up a blackout response wants the turbine ones.
      */
+    @LuaFunction(mainThread = true)
+    public void setSpeed(double fraction) throws LuaException {
+        if (!Double.isFinite(fraction) || fraction < 0 || fraction > 1) throw new LuaException("Speed must be 0..1");
+        PlantActuators.run(be, () -> {be.setComputerControlled(true);be.setSpeedDemandFraction(fraction);});
+    }
+    @LuaFunction(mainThread = true)
+    public double getTargetSpeed() { return be.pump().getSpeedDemandFraction(); }
+
     @Override
     public String getType() {
         return "bwr_" + be.design().id();

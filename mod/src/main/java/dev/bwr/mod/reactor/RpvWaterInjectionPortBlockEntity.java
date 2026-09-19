@@ -14,6 +14,12 @@ public class RpvWaterInjectionPortBlockEntity extends BlockEntity {
         if (level == null || isRemoved() || controllerPos == null || !level.isLoaded(controllerPos)
                 || !(level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity c) || !c.isFormed()
                 || !c.structure().waterInjectionPositions().contains(getBlockPos())) return null;
+        if (getBlockState().getBlock() instanceof RecirculationPortBlock port) {
+            var direction=getBlockState().getValue(RpvWaterInjectionPortBlock.FACING);
+            int low=c.structure().interiorMin().getY(),high=c.structure().interiorMax().getY();
+            if (!direction.getAxis().isHorizontal()) return null;
+            if (port.isOutlet() ? getBlockPos().getY() < (low+high+1)/2 : getBlockPos().getY() > low+1) return null;
+        }
         BlockPos inside = getBlockPos().relative(getBlockState().getValue(RpvWaterInjectionPortBlock.FACING).getOpposite());
         BlockPos min = c.structure().interiorMin(), max = c.structure().interiorMax();
         return inside.getX() >= min.getX() && inside.getX() <= max.getX()

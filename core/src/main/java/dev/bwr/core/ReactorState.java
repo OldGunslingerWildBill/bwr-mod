@@ -93,6 +93,7 @@ package dev.bwr.core;
  * @param iodine             I-135 concentration, arbitrary consistent units
  * @param boronPpm           dissolved boron from SLC injection, ppm
  * @param burnupMwdPerTonne  core-average burnup, MWd/tonne
+ * @param rodPositionsNotches       physical travel in notch units, 0..24; empty in legacy snapshots
  * @param rodNotches         per-rod notch position, 0..24 index (FCD label = index * 2)
  * @param accumulatorCharge  per-CRD accumulator charge, 0..1
  * @param reactivityTotal    net reactivity this tick, dk/k
@@ -209,7 +210,8 @@ public record ReactorState(
         double dopplerCoefficientPerCAtAnchor,
         double elapsedSeconds,
         boolean scramActive,
-        int[] intermediateRangeMonitorRanges
+        int[] intermediateRangeMonitorRanges,
+        double[] rodPositionsNotches
 ) {
     /**
      * Defensive copy on construction. These arrays cross the physics/Minecraft
@@ -219,6 +221,7 @@ public record ReactorState(
     public ReactorState {
         precursors = precursors == null ? new double[6] : precursors.clone();
         decayGroups = decayGroups == null ? new double[0] : decayGroups.clone();
+        rodPositionsNotches = rodPositionsNotches == null ? new double[0] : rodPositionsNotches.clone();
         rodNotches = rodNotches == null ? new int[0] : rodNotches.clone();
         accumulatorCharge = accumulatorCharge == null ? new double[0] : accumulatorCharge.clone();
         rodFluxWeights = rodFluxWeights == null ? new double[0] : rodFluxWeights.clone();
@@ -235,6 +238,9 @@ public record ReactorState(
     public double[] decayGroups() {
         return decayGroups.clone();
     }
+
+    @Override
+    public double[] rodPositionsNotches() { return rodPositionsNotches.clone(); }
 
     @Override
     public int[] rodNotches() {

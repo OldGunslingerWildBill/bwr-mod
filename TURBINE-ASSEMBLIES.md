@@ -2,7 +2,8 @@
 
 These are the placeable RCIC/HPCI machines available in crafting and the creative
 tab. Old RCIC/HPCI cube IDs remain loadable for existing worlds but have no recipe
-or creative-tab entry. The RCP cube remains available until its model is ready.
+or creative-tab entry. External recirculation now uses the DVSS model on the
+existing RCP id; see [RECIRCULATION.md](RECIRCULATION.md).
 
 | Item | Reserved space (width × height × depth) | Process ports |
 | --- | --- | --- |
@@ -20,8 +21,9 @@ Find both items in the BWR creative tab. Both can be crafted directly from iron
 blocks, vessel blocks, steam pipe and water pipe, with a piston for RCIC or a
 diamond for HPCI. No retired cube is required.
 
-Right-click an adapter face to see its role. The other exterior fittings are CAD
-details, not additional interchangeable connections.
+Right-click any assembly cell to open the pump panel for numeric speed,
+Start/Stop, suction selection and operating data. Exterior CAD fittings beyond
+the defined adapters are not additional interchangeable connections.
 
 - **Steam inlet:** High-Pressure Steam Pipe to a formed reactor's RPV steam nozzle.
   Open the nozzle and any MSIVs manually or through your control program.
@@ -47,7 +49,8 @@ or injects automatically into whichever reactor supplies its drive steam.
 See [WATER-PLUMBING.md](WATER-PLUMBING.md) for existing-world upgrade instructions.
 
 The controller is the placement-origin cell at the skid corner. Redstone at that
-cell commands running when computer control is disabled. CC:Tweaked exposes the
+cell commands running when **Redstone** control is selected. Panel control
+ignores redstone, and computer ownership disables the manual buttons. CC:Tweaked exposes the
 existing `bwr_rcic` or `bwr_hpci` peripheral there, with the existing start, stop,
 demand, and suction-selection methods. The player supplies all control logic.
 

@@ -1,0 +1,361 @@
+{
+  "id": "jet_pump",
+  "status": "PREPARED RESOURCES; not installed or registered in the inspected mod",
+  "width": 2,
+  "height": 6,
+  "depth": 1,
+  "controller_cell": [
+    0,
+    0,
+    0
+  ],
+  "anchor_in_assembly_grid": [
+    1.0,
+    0,
+    0.725
+  ],
+  "anchor_from_controller": [
+    1.0,
+    0,
+    0.725
+  ],
+  "cells": [
+    {
+      "index": 0,
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "bounds": [
+        0.4445,
+        0,
+        0.005,
+        1,
+        1,
+        0.9505
+      ],
+      "triangles": 395
+    },
+    {
+      "index": 1,
+      "offset": [
+        1,
+        0,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.005,
+        0.5555,
+        1,
+        0.9505
+      ],
+      "triangles": 396
+    },
+    {
+      "index": 2,
+      "offset": [
+        0,
+        1,
+        0
+      ],
+      "bounds": [
+        0.5054783,
+        0,
+        0.005,
+        1,
+        1,
+        0.9075
+      ],
+      "triangles": 1625
+    },
+    {
+      "index": 3,
+      "offset": [
+        1,
+        1,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.005,
+        0.4945217,
+        1,
+        0.9075
+      ],
+      "triangles": 1626
+    },
+    {
+      "index": 4,
+      "offset": [
+        0,
+        2,
+        0
+      ],
+      "bounds": [
+        0.523,
+        0,
+        0.5425,
+        1,
+        1,
+        0.9075
+      ],
+      "triangles": 732
+    },
+    {
+      "index": 5,
+      "offset": [
+        1,
+        2,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.5425,
+        0.477,
+        1,
+        0.9075
+      ],
+      "triangles": 740
+    },
+    {
+      "index": 6,
+      "offset": [
+        0,
+        3,
+        0
+      ],
+      "bounds": [
+        0.562,
+        0,
+        0.577,
+        1,
+        1,
+        0.8615
+      ],
+      "triangles": 326
+    },
+    {
+      "index": 7,
+      "offset": [
+        1,
+        3,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.577,
+        0.438,
+        1,
+        0.8615
+      ],
+      "triangles": 326
+    },
+    {
+      "index": 8,
+      "offset": [
+        0,
+        4,
+        0
+      ],
+      "bounds": [
+        0.51,
+        0,
+        0.5425,
+        1,
+        1,
+        0.9075
+      ],
+      "triangles": 1506
+    },
+    {
+      "index": 9,
+      "offset": [
+        1,
+        4,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.5425,
+        0.49,
+        1,
+        0.9075
+      ],
+      "triangles": 1514
+    },
+    {
+      "index": 10,
+      "offset": [
+        0,
+        5,
+        0
+      ],
+      "bounds": [
+        0.55,
+        0,
+        0.59,
+        1,
+        0.2999997,
+        0.86
+      ],
+      "triangles": 346
+    },
+    {
+      "index": 11,
+      "offset": [
+        1,
+        5,
+        0
+      ],
+      "bounds": [
+        0,
+        0,
+        0.59,
+        0.45,
+        0.2999997,
+        0.86
+      ],
+      "triangles": 346
+    }
+  ],
+  "ports": [
+    {
+      "name": "diffuser_outlet_-1",
+      "role": "mixed_water_outlet",
+      "position_blender": [
+        -0.33000001311302185,
+        0.0,
+        0.0
+      ],
+      "outward_blender": [
+        0,
+        0,
+        -1
+      ],
+      "position_minecraft": [
+        -0.33000001311302185,
+        0.0,
+        0.0
+      ],
+      "outward_minecraft": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "visual_diameter_m": 0.451,
+      "game_connection": null,
+      "role_basis": "Proposed integration role; not a manufacturer rating.",
+      "assembly_position": [
+        0.6699999868869781,
+        0.0,
+        0.725
+      ],
+      "proposed_connection_cell": [
+        0,
+        0,
+        0
+      ],
+      "connection_status": "UNWIRED: adapter to block-grid face and existing capability mapping require integration"
+    },
+    {
+      "name": "diffuser_outlet_1",
+      "role": "mixed_water_outlet",
+      "position_blender": [
+        0.33000001311302185,
+        0.0,
+        0.0
+      ],
+      "outward_blender": [
+        0,
+        0,
+        -1
+      ],
+      "position_minecraft": [
+        0.33000001311302185,
+        0.0,
+        0.0
+      ],
+      "outward_minecraft": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "visual_diameter_m": 0.451,
+      "game_connection": null,
+      "role_basis": "Proposed integration role; not a manufacturer rating.",
+      "assembly_position": [
+        1.3300000131130219,
+        0.0,
+        0.725
+      ],
+      "proposed_connection_cell": [
+        1,
+        0,
+        0
+      ],
+      "connection_status": "UNWIRED: adapter to block-grid face and existing capability mapping require integration"
+    },
+    {
+      "name": "drive_water_inlet",
+      "role": "drive_water_inlet",
+      "position_blender": [
+        0.0,
+        0.7200000286102295,
+        0.9700000286102295
+      ],
+      "outward_blender": [
+        0,
+        1,
+        0
+      ],
+      "position_minecraft": [
+        0.0,
+        0.9700000286102295,
+        -0.7200000286102295
+      ],
+      "outward_minecraft": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "visual_diameter_m": 0.273,
+      "game_connection": null,
+      "role_basis": "Proposed integration role; not a manufacturer rating.",
+      "assembly_position": [
+        1.0,
+        0.9700000286102295,
+        0.004999971389770486
+      ],
+      "proposed_connection_cell": [
+        1,
+        0,
+        0
+      ],
+      "connection_status": "UNWIRED: adapter to block-grid face and existing capability mapping require integration"
+    }
+  ],
+  "placement_clearance": "All listed cells must be loaded, replaceable, inside border/build-height, and unobstructed.",
+  "removal_behavior": "Proposed: one controller; mine any part to remove its owned cells and drop exactly one item.",
+  "access_faces": [
+    "north",
+    "south"
+  ],
+  "maintenance_clearance_m": 1.0,
+  "culling": "Per-cell OBJ geometry is clipped within its own block; chunk baking can use normal bounds.",
+  "validation": {
+    "source_triangles": 6956,
+    "clipped_triangles": 9878,
+    "source_surface_area_m2": 27.86199026000806,
+    "clipped_surface_area_m2": 27.861990260008056,
+    "area_error_m2": 3.552713678800501e-15,
+    "cell_bounds_pass": true
+  },
+  "game_ports": []
+}

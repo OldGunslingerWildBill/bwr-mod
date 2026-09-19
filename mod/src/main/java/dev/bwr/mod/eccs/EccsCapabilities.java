@@ -50,7 +50,7 @@ public final class EccsCapabilities {
         event.registerBlockEntity(
                 Capabilities.FluidHandler.BLOCK,
                 BwrBlockEntities.CONDENSATE_STORAGE_TANK.get(),
-                (be, side) -> be.tank());
+                (be, side) -> be.fluidHandler());
 
         // The reactor feed pumps. Energy on both, because the turbine-driven one
         // refuses every joule offered through a motor rating of zero and that is

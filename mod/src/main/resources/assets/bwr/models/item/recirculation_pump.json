@@ -1,3 +1,31 @@
 {
-  "parent": "bwr:block/recirculation_pump"
+  "parent": "bwr:block/pumps/recirculation_pump/compact",
+  "display": {
+    "gui": {
+      "rotation": [
+        20,
+        225,
+        0
+      ],
+      "scale": [
+        0.9,
+        0.9,
+        0.9
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.7,
+        0.7,
+        0.7
+      ]
+    }
+  }
 }

@@ -1,84 +1,118 @@
-# Steam and water plumbing
+# Water supply, pump controls, and recirculation
 
-## Build the return-water loop
+## Condensate storage and pump suction
 
-1. Configure the Mekanism turbine's water output, or an attached Mechanical Pipe,
-   to push water into **High-Pressure Water Pipe** (blue bands).
-2. Run that pipe to the feed pump's **water suction** flange. Incoming water fills
-   its finite 2,000 mB suction buffer. A condensate storage tank is also a valid
-   suction source when connected by water pipe.
-3. Run a separate water pipe from **water discharge** to an **RPV Water Injection
-   Port** installed in the reactor vessel wall. Point the blue flange outward;
-   only that face accepts the pipe. Right-click the port to check vessel ownership.
-4. Supply the motor pump with FE, or supply the turbine feed pump with steam and
-   a working steam-exhaust path. Start and control the pump using its existing
-   manual/redstone/CC:Tweaked controls.
+The **Condensate Storage Tank** holds **2,000,000 mB** of finite water. It now has
+a tank-shaped model and a right-click level panel. Fill it with buckets or water
+pipes; extraction is available on every face. Existing inventories are preserved.
+Stored condensate uses the existing **32°C** temperature; no new storage thermal
+simulation is introduced. The mod conversion is **1 mB water = 1 kg**.
 
-There is no additional condenser. A pipe moves incoming condensate into actual
-storage; it does not create water, remove reactor backpressure, or replace a pump.
-The injection port receives the pump's modeled water delivery. It does not expose
-a passive fluid tank that would let an ordinary pipe inject against vessel pressure.
-The existing mod conversion remains **1 mB of water = 1 kg**.
+Use either return-water arrangement:
 
-## Which pipe connects where
+- **Mekanism Mechanical Pipe → pump water-suction flange**, directly. A
+  high-pressure segment is not required upstream. Configure Mekanism's source
+  connection to extract/pull if the source does not push water itself.
+- **Mekanism return → Condensate Storage Tank → High-Pressure Water Pipe → pump
+  suction**, for a shared feedwater/emergency reserve. BWR pumps draw from the
+  connected tank. A Mechanical Pipe can also extract CST water and deliver it to
+  a pump's suction buffer.
 
-| Connection | Pipe |
+On ECCS pumps select **Suction: Tank / piped water**. **Suppression pool** is a
+separate manual selection. Feedwater pumps always use tank/piped water. Each inlet
+buffer holds **2,000 mB**; after disconnecting a source, buffered water remains
+usable until exhausted. Neither pipes nor tanks generate free water.
+
+## Pump discharge and controls
+
+Run **High-Pressure Water Pipe** from water discharge to an outward-facing **RPV
+Water Injection Port** in the vessel wall. The port now has a full pressure-boundary
+cube, fixing the recessed-face gap. Right-click it to check vessel ownership.
+Ordinary pipes cannot bypass the pump and inject against vessel pressure.
+
+Right-click any powered pump cell to open its panel:
+
+- Enter **speed 0–100%**, press Apply/Enter, and Start/Stop. Actual speed ramps up;
+  power supply and reactor pressure still limit delivery.
+- Read target/actual speed, water flow, pressure differential, suction-water
+  temperature, and stored FE or steam-drive identification.
+- Choose **Control: Panel / Redstone / Computer** (RCP/RIP: Panel/Computer).
+  Computer ownership disables manual buttons until control is handed back.
+- On ECCS choose tank/piped-water or pool suction. On RHR select reactor injection
+  or pool cooling.
+
+Electric pumps require FE and have no steam ports or steam-admission readout.
+RCIC, HPCI and turbine feedwater pumps retain their steam admission/exhaust paths.
+Existing core-spray rings are still needed for LPCS/HPCS. No new sprayer or
+condenser is added.
+
+Speed commands control shaft speed separately from the existing flow throttle.
+Lua now exposes `setSpeed(0..1)` and `getTargetSpeed()` for ECCS/feedwater. Older
+saves default to 100% speed demand. No automatic start or source switching is
+added. RCP/RIP show their core-flow contribution and vessel pressure/temperature;
+their external water-loop temperature and pump head are not separately simulated.
+Disconnected recirculation pumps show temperature unavailable. Passive jets have
+no independent motor or speed panel.
+
+## External recirculation
+
+The DVSS model occupies a 5 × 5 footprint and is 10 blocks tall. Build two separate High-Pressure Water
+Pipe headers: **RPV top outlet → blue rear lower suction**, and **teal front
+upper discharge → RPV bottom inlet**. Both ports must belong to the same formed
+vessel. The top outlet goes in the upper half of a side wall; the bottom inlet
+in either lowest side-wall row beside the interior. Both face outward.
+
+New jet assemblies occupy one column. Align them across opposite walls in the
+same row and at the same height, with opposite facings. Their bases can be 1 or 2 blocks
+above the bottom shell. A loop without matched jets provides weak circulation;
+matched jets raise capacity. See [RECIRCULATION.md](RECIRCULATION.md) for the
+flow table, placement example and the new reactor INFO tab.
+
+Breaking a header removes its flow contribution. New jets register within one
+second; pump associations refresh within two seconds. Recirculation does not
+create water or cooling. RIP mounting is unchanged.
+
+## Pipe compatibility
+
+| Application | Pipe |
 | --- | --- |
-| RPV steam nozzle → main turbine steam outlet | High-Pressure Steam Pipe |
-| RPV steam nozzle → RCIC / HPCI / turbine feed-pump steam inlet | High-Pressure Steam Pipe |
+| Condensate / return water → pump suction | Mechanical Pipe or other NeoForge water pipe; BWR water pipe also works |
+| Tank or suppression-pool controller → pump suction | High-Pressure Water Pipe; select the matching source |
+| Pump discharge → RPV injection port | High-Pressure Water Pipe |
+| RHR pool-cooling discharge → selected pool | High-Pressure Water Pipe |
+| Vessel recirculation ports ↔ RCP | High-Pressure Water Pipe |
+| RPV steam nozzle → main turbine or turbine-driven pump | High-Pressure Steam Pipe |
 | RCIC/HPCI exhaust → submerged pool quencher | High-Pressure Steam Pipe |
 | Turbine feed-pump exhaust → turbine steam outlet | High-Pressure Steam Pipe |
-| Condensate tank / pool → pump water suction | High-Pressure Water Pipe |
-| Mekanism return water → tank or pump water suction | High-Pressure Water Pipe |
-| Feedwater / RCIC / HPCI / LPCI-RHR / LPCS / HPCS discharge → RPV injection port | High-Pressure Water Pipe |
-| RHR pool-cooling discharge → its selected pool controller | High-Pressure Water Pipe |
-| External recirculation pump → jet-pump drive inlet | High-Pressure Water Pipe |
 
-Steam and water pipes never join, and steam valves never carry water. Pump casings
-do not bridge networks internally. Keep water suction and discharge headers separate.
-Use existing spray rings for LPCS/HPCS; their future models are not part of this update.
-
-Water piping accepts only water through NeoForge's fluid interface. It forwards
-incoming water to attached suction buffers or condensate tanks without storing
-extra fluid in each segment. The source must push water; the pipe does not extract
-from an arbitrary external tank. Network walks use loaded chunks and stop at 256
-blocks. Disconnecting a pipe is checked again on the next transfer. Water already
-in a pump's buffer can still be used until that finite buffer empties.
-
-ECCS pumps use incoming buffer water when **condensate-tank suction** is selected.
-Pool suction remains a separate operator-selected source. No control commands or
-automatic switching have been added.
+Steam and water pipes never join. Pump casings do not bridge the headers. BWR
+water pipes forward pushed NeoForge water to actual storage; they have no per-pipe
+inventory and do not extract from arbitrary external tanks. Surveys stop at 256
+loaded blocks and never load chunks.
 
 ## Existing worlds
 
-- Keep the RCP cube for now. Its recipe and creative entry remain available, and
-  external jet-pump flow still depends on connected pump speed and installed jets.
-- The old `rcic_turbine_pump` and `hpci_turbine_pump` cubes are marked Legacy and
-  removed from crafting and the creative tab. Their IDs and saved state remain
-  supported; already-placed blocks are not deleted or automatically expanded.
-- Replace old pressurised tubes used for **water** with the new water pipe. The
-  `pressurised_tube` ID now displays as **High-Pressure Steam Pipe** and is steam-only.
-- Reroute modeled-pump discharge from reactor controllers to the new wall ports.
-- The modeled HPCI assembly now has two blue water adapters for its associated
-  pump and requires physical suction/discharge piping. Its steam ports remain.
-- Existing compact pump blocks preserve their legacy behavior until replaced
-  with full models. No automatic world conversion moves or deletes plant blocks.
+- Existing RCPs retain compact occupancy, orientation and same-height front/back
+  connections. New placements build the DVSS model with an elevated discharge.
+  Rewire through the vessel recirculation ports and match jets on opposite sides.
+- Tank inventory, pump commands and existing block IDs are preserved. Legacy
+  compact pumps remain compact until picked up and placed again.
+- Legacy RCIC/HPCI cubes remain supported but hidden from recipes/creative.
+- Replace steam tubes used for water with water pipes. Modeled pump discharge
+  must reach an injection port rather than the reactor controller.
+- No automatic conversion moves or deletes equipment.
 
-## Pressure label
+## Pressure nameplate
 
-Tooltip: **ASME B31.1-inspired | Design pressure: 2,500 psi (simulation)**.
-The value is a gameplay nameplate, not an ASME certification or an additional
-pipe-burst solver. Actual pump curves and reactor backpressure still limit flow.
-[ASME B31.1](https://www.asme.org/codes-standards/find-codes-standards/power-piping)
-specifies requirements for power piping; it does not assign all pipes a single
-pressure rating.
+The tooltip remains **ASME B31.1-inspired | Design pressure: 2,500 psi (simulation)**.
+It is a gameplay nameplate, not certification or a pipe-burst solver; pump curves
+and reactor backpressure govern delivery.
 
-## Validation
+## Verification
 
-The isolated Minecraft GameTest exercises real pipe blocks, formed vessels,
-capability transfers, sided ports, wrong-fluid rejection, simulated versus actual
-fills, finite buffers, fractional persistence, disconnections, and RCIC/HPCI/
-feedwater/ECCS/recirculation delivery. The client model check bakes all 64 water
-pipe states, all six injection-port orientations, both new item models, and the
-existing modeled pumps. A complete live Mekanism Generators turbine is not built
-by this fixture; condensate input is tested through the same NeoForge interface.
+Runtime tests cover placement, sided ports, actual Mekanism Mechanical Pipe network
+delivery into electric pumps, finite tank/buffer accounting, save/load, panel versus
+computer control, jet-count limits and broken/reversed recirculation loops. Client
+checks bake the models; optional panel QA opens real server-synchronized screens
+in a new isolated world. The fixture does not build a complete Mekanism Generators
+turbine. See [BUILD-STATUS.md](BUILD-STATUS.md) for results.

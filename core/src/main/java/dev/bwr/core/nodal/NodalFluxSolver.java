@@ -216,7 +216,7 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
     // Inputs, pushed in by the reactor once per solve interval
     // ---------------------------------------------------------------
 
-    private final int[] rodNotchIndex;
+    private final double[] rodPositionNotches;
     private RodLatticeMap rodLatticeMap;
     /**
      * True when {@link #setRodLatticeMap} supplied the map in force, false when
@@ -350,10 +350,10 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
         }
         this.loading = loading;
         this.axialNodes = axialNodes;
-        this.rodNotchIndex = new int[Math.max(1, config.controlRodCount)];
+        this.rodPositionNotches = new double[Math.max(1, config.controlRodCount)];
         // Rods default to fully withdrawn: a solver nobody has told about rod
         // positions should report the unrodded shape, not a shut-down core.
-        Arrays.fill(rodNotchIndex, RodWorth.NOTCH_INDEX_FULLY_WITHDRAWN);
+        Arrays.fill(rodPositionNotches, RodWorth.NOTCH_INDEX_FULLY_WITHDRAWN);
         this.rodAbsorptionPerCm = calibratedRodAbsorptionPerCm(config.totalRodWorth);
     }
 
@@ -383,29 +383,25 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
      * what make shadowing and a stuck rod's hot spot appear.
      */
     public void setRodNotchIndices(int[] notchIndices) {
-        if (notchIndices == null) {
-            Arrays.fill(rodNotchIndex, RodWorth.NOTCH_INDEX_FULLY_WITHDRAWN);
-            return;
-        }
-        int copied = Math.min(notchIndices.length, rodNotchIndex.length);
-        for (int rod = 0; rod < copied; rod++) {
-            int notch = notchIndices[rod];
-            if (notch < RodWorth.NOTCH_INDEX_FULLY_INSERTED
-                    || notch > RodWorth.NOTCH_INDEX_FULLY_WITHDRAWN) {
-                throw new IllegalArgumentException("rod " + rod + " notch index out of range 0.."
-                        + RodWorth.NOTCH_INDEX_FULLY_WITHDRAWN + ": " + notch);
-            }
-            rodNotchIndex[rod] = notch;
-        }
-        for (int rod = copied; rod < rodNotchIndex.length; rod++) {
-            rodNotchIndex[rod] = RodWorth.NOTCH_INDEX_FULLY_WITHDRAWN;
+        setRodPositions(notchIndices==null ? null : java.util.Arrays.stream(notchIndices).asDoubleStream().toArray());
+    }
+
+    /** Physical absorber travel in notch units; evaluated only on a spatial refresh. */
+    public void setRodPositions(double[] positions) {
+        if(positions==null) { Arrays.fill(rodPositionNotches,RodWorth.NOTCH_INDEX_FULLY_WITHDRAWN);return; }
+        for(int rod=0;rod<rodPositionNotches.length;rod++) {
+            double p=rod<positions.length?positions[rod]:RodWorth.NOTCH_INDEX_FULLY_WITHDRAWN;
+            if(!Double.isFinite(p) || p<0 || p>RodWorth.NOTCH_INDEX_FULLY_WITHDRAWN)
+                throw new IllegalArgumentException("rod position out of range: "+p);
+            rodPositionNotches[rod]=p;
         }
     }
 
-    /** Copy of the rod positions the next solve will use. */
+    /** Rounded notch snapshot for existing callers; the solve uses fractional positions. */
     public int[] getRodNotchIndices() {
-        return rodNotchIndex.clone();
+        return java.util.Arrays.stream(rodPositionNotches).mapToInt(p->(int)Math.round(p)).toArray();
     }
+    public double[] getRodPositions() { return rodPositionNotches.clone(); }
 
     /**
      * Replace the rod-to-lattice mapping, or pass {@code null} to go back to the
@@ -431,9 +427,9 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
      *            covering exactly this core's rod count
      */
     public void setRodLatticeMap(RodLatticeMap map) {
-        if (map != null && map.rodCount() != rodNotchIndex.length) {
+        if (map != null && map.rodCount() != rodPositionNotches.length) {
             throw new IllegalArgumentException("rod lattice map covers " + map.rodCount()
-                    + " rods, this core has " + rodNotchIndex.length);
+                    + " rods, this core has " + rodPositionNotches.length);
         }
         // A map sized for a different lattice is not a smaller map, it is a
         // wrong one: rodAtPosition() answers -1 outside its own range, so the
@@ -769,7 +765,7 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
         }
         if (rodLatticeMapDirty || rodLatticeMap == null) {
             if (!rodLatticeMapIsExplicit) {
-                rodLatticeMap = RodLatticeMap.centreOutward(loading, rodNotchIndex.length);
+                rodLatticeMap = RodLatticeMap.centreOutward(loading, rodPositionNotches.length);
             }
             rodLatticeMapDirty = false;
             countRodPositions();
@@ -804,13 +800,13 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
         }
         assemblyAccumulator = new double[mesh.positionCount()];
         axialAccumulator = new double[mesh.axialNodes()];
-        rodAccumulator = new double[rodNotchIndex.length];
-        rodPositionCount = new int[rodNotchIndex.length];
+        rodAccumulator = new double[rodPositionNotches.length];
+        rodPositionCount = new int[rodPositionNotches.length];
     }
 
     private void countRodPositions() {
         Arrays.fill(rodPositionCount, 0);
-        for (int rod = 0; rod < rodNotchIndex.length; rod++) {
+        for (int rod = 0; rod < rodPositionNotches.length; rod++) {
             rodPositionCount[rod] = rodLatticeMap.positionCountOfRod(rod);
         }
     }
@@ -979,10 +975,10 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
      */
     private double rodAbsorptionAt(int position, int axial, int axialCount) {
         int rod = rodLatticeMap.rodAtPosition(position);
-        if (rod < 0 || rod >= rodNotchIndex.length || rodAbsorptionPerCm <= 0.0) {
+        if (rod < 0 || rod >= rodPositionNotches.length || rodAbsorptionPerCm <= 0.0) {
             return 0.0;
         }
-        double insertion = RodWorth.insertionFraction(rodNotchIndex[rod]);
+        double insertion = 1.0-rodPositionNotches[rod]/RodWorth.NOTCH_INDEX_FULLY_WITHDRAWN;
         double bottom = (double) axial / axialCount;
         double covered = clamp((insertion - bottom) * axialCount, 0.0, 1.0);
         return rodAbsorptionPerCm * covered;
@@ -1256,7 +1252,7 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
 
         // Per-rod flux weight: the flux the rod itself sits in, mean 1 over the
         // rods that shadow fuel at all.
-        double[] rodFluxWeights = new double[rodNotchIndex.length];
+        double[] rodFluxWeights = new double[rodPositionNotches.length];
         Arrays.fill(rodAccumulator, 0.0);
         for (int node = 0; node < nodes; node++) {
             int rod = rodLatticeMap.rodAtPosition(mesh.positionOfNode(node));
@@ -1316,7 +1312,7 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
     private FluxSolution emptySolution() {
         return new FluxSolution(mesh, new double[0], new double[0],
                 new double[mesh.positionCount()], new double[mesh.positionCount()],
-                new double[mesh.axialNodes()], uniform(rodNotchIndex.length),
+                new double[mesh.axialNodes()], uniform(rodPositionNotches.length),
                 0.0, 0.0, 0, 0.0, 0.0);
     }
 
@@ -1339,7 +1335,7 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
     @Override
     public String toString() {
         return String.format("NodalFluxSolver[%s, %d rods, %s]",
-                mesh == null ? "unmeshed" : mesh.toString(), rodNotchIndex.length,
+                mesh == null ? "unmeshed" : mesh.toString(), rodPositionNotches.length,
                 lastSolution == null ? "unsolved" : lastSolution.toString());
     }
 }

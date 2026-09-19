@@ -15,7 +15,7 @@ import net.neoforged.neoforge.capabilities.*;
 public final class PumpAssemblyCapabilities {
     private PumpAssemblyCapabilities() {}
     public static Block[] blocks() { return new Block[]{BwrBlocks.LPCS_PUMP.get(),BwrBlocks.HPCS_PUMP.get(),BwrBlocks.RHR_PUMP.get(),
-            BwrBlocks.MOTOR_FEED_PUMP.get(),BwrBlocks.TURBINE_FEED_PUMP.get(),BwrBlocks.RIP_PUMP.get(),BwrBlocks.RCIC_TWL.get(),BwrBlocks.HPCI_TURBINE.get()}; }
+            BwrBlocks.MOTOR_FEED_PUMP.get(),BwrBlocks.TURBINE_FEED_PUMP.get(),BwrBlocks.RIP_PUMP.get(),BwrBlocks.RECIRCULATION_PUMP.get(),BwrBlocks.RCIC_TWL.get(),BwrBlocks.HPCI_TURBINE.get()}; }
     public static BlockEntity controller(Level level,BlockPos pos,BlockState state) {
         if (!(state.getBlock() instanceof ProcessAssembly b)) return null;
         BlockPos root=b.origin(pos,state);

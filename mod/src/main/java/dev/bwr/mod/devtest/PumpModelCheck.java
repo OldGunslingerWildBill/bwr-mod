@@ -13,14 +13,18 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 public final class PumpModelCheck {
     private PumpModelCheck() {}
     public static PumpAssemblyBlock[] blocks() { return new PumpAssemblyBlock[]{BwrBlocks.LPCS_PUMP.get(),BwrBlocks.RHR_PUMP.get(),BwrBlocks.HPCS_PUMP.get(),
-            BwrBlocks.MOTOR_FEED_PUMP.get(),BwrBlocks.TURBINE_FEED_PUMP.get(),BwrBlocks.JET_PUMP.get(),BwrBlocks.RIP_PUMP.get()}; }
+            BwrBlocks.MOTOR_FEED_PUMP.get(),BwrBlocks.TURBINE_FEED_PUMP.get(),BwrBlocks.JET_PUMP.get(),BwrBlocks.RIP_PUMP.get(),BwrBlocks.RECIRCULATION_PUMP.get()}; }
     public static void run(ModelEvent.BakingCompleted event) {
         waterModels(event);
         int checked=0;
         for(var block:blocks()) {
             int faces=0;
-            for(Direction facing:Direction.Plane.HORIZONTAL) for(int cell=0;cell<block.cellCount();cell++) {
-                var state=block.defaultBlockState().setValue(PumpAssemblyBlock.ASSEMBLED,true).setValue(PumpAssemblyBlock.FACING,facing).setValue(PumpAssemblyBlock.CELL,cell);
+            var layouts=new java.util.ArrayList<net.minecraft.world.level.block.state.BlockState>();
+            layouts.add(block.placementState());
+            if(block.kind()==PumpAssemblyBlock.Kind.RCP || block.kind()==PumpAssemblyBlock.Kind.JET)
+                layouts.add(block.defaultBlockState().setValue(PumpAssemblyBlock.ASSEMBLED,true));
+            for(var layout:layouts) for(Direction facing:Direction.Plane.HORIZONTAL) for(int cell=0;cell<block.cellCount(layout);cell++) {
+                var state=layout.setValue(PumpAssemblyBlock.FACING,facing).setValue(PumpAssemblyBlock.CELL,cell);
                 var model=event.getModels().get(BlockModelShaper.stateToModelLocation(state));
                 if(model==null || model==event.getModelManager().getMissingModel()) throw new IllegalStateException("Missing pump model "+state);
                 var quads=model.getQuads(state,null,RandomSource.create(0),ModelData.EMPTY,null);
@@ -42,11 +46,11 @@ public final class PumpModelCheck {
             if(compact==null || compact==event.getModelManager().getMissingModel() || compact.getQuads(null,null,RandomSource.create(0),ModelData.EMPTY,null).isEmpty()) throw new IllegalStateException("Missing compact migration model "+id);
             LogUtils.getLogger().info("PUMP MODEL CHECK: {} has {} quads across four rotations",id,faces);
         }
-        LogUtils.getLogger().info("PUMP MODEL CHECK PASS: {} occupied cell states, seven inventory and seven compact models",checked);
+        LogUtils.getLogger().info("PUMP MODEL CHECK PASS: {} occupied cell states, {} inventory and compact models",checked,blocks().length);
     }
     private static void waterModels(ModelEvent.BakingCompleted event) {
         int states=0;
-        for (var block:new net.minecraft.world.level.block.Block[]{BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(), BwrBlocks.RPV_WATER_INJECTION_PORT.get()}) {
+        for (var block:new net.minecraft.world.level.block.Block[]{BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(), BwrBlocks.RPV_WATER_INJECTION_PORT.get(), BwrBlocks.RECIRCULATION_OUTLET.get(), BwrBlocks.RECIRCULATION_INLET.get(), BwrBlocks.CONDENSATE_STORAGE_TANK.get()}) {
             for (var state:block.getStateDefinition().getPossibleStates()) {
                 var model=event.getModels().get(BlockModelShaper.stateToModelLocation(state));
                 if(model==null || model==event.getModelManager().getMissingModel()) throw new IllegalStateException("Missing water model "+state);
@@ -67,6 +71,6 @@ public final class PumpModelCheck {
             if(item==null || item==event.getModelManager().getMissingModel() || item.getQuads(null,null,RandomSource.create(0),ModelData.EMPTY,null).isEmpty())
                 throw new IllegalStateException("Missing water inventory model "+id);
         }
-        LogUtils.getLogger().info("WATER MODEL CHECK PASS: {} block states and two inventory models",states);
+        LogUtils.getLogger().info("WATER MODEL CHECK PASS: {} block states and five inventory models",states);
     }
 }

@@ -12,11 +12,12 @@ import java.util.*;
 /** Hardware capacity, separate from player speed commands. No automatic control. */
 public final class RecirculationNetwork {
     private RecirculationNetwork() {}
-    // Gameplay balance: ten paired jets fed by two external pumps reach rated core flow.
+    // Gameplay balance: ten matched jet assemblies (five opposing sets) and two RCPs reach rated flow.
     public static final double PAIRED_JET_CAPACITY=.1;
     public static final double EXTERNAL_PUMP_CAPACITY=.5;
     public static final double INTERNAL_PUMP_CAPACITY=.1;
-    public record Flow(double fraction,double maximum,int pairedJets,int internalPumps) {}
+    public static final double UNASSISTED_PUMP_EFFICIENCY=.1;
+    public record Flow(double fraction,double maximum,int pairedJets,int internalPumps,int unmatchedJets,int externalPumps) {}
     private record Survey(long time,List<BlockPos> jets) {}
     private static final Map<Level,Map<BlockPos,Survey>> CACHE=new WeakHashMap<>();
 
@@ -43,12 +44,12 @@ public final class RecirculationNetwork {
         if(vessel==null || !level.isLoaded(pos)) return false;
         BlockState s=level.getBlockState(pos);
         if(!(s.getBlock() instanceof JetPumpBlock b) || !b.isFull(s)
-                || s.getValue(PumpAssemblyBlock.CELL)!=b.controllerCell() || !b.complete(level,pos,s)) return false;
+                || s.getValue(PumpAssemblyBlock.CELL)!=b.controllerCell(s) || !b.complete(level,pos,s)) return false;
         BlockPos min=vessel.interiorMin(),max=vessel.interiorMax();
         // The lower outlets open into the plenum at the bottom of the interior.
-        if(pos.getY()!=min.getY()) return false;
-        for(int i=0;i<b.cellCount();i++) {
-            BlockPos p=pos.offset(TurbineAssemblyBlock.turn(b.cellOffset(i),s.getValue(PumpAssemblyBlock.FACING)));
+        if(pos.getY()<min.getY() || pos.getY()>min.getY()+1) return false;
+        for(int i=0;i<b.cellCount(s);i++) {
+            BlockPos p=pos.offset(TurbineAssemblyBlock.turn(b.cellOffset(s,i),s.getValue(PumpAssemblyBlock.FACING)));
             if(p.getX()<min.getX() || p.getX()>max.getX() || p.getY()>max.getY() || p.getZ()<min.getZ() || p.getZ()>max.getZ()) return false;
             if(Math.min(Math.min(p.getX()-min.getX(),max.getX()-p.getX()),Math.min(p.getZ()-min.getZ(),max.getZ()-p.getZ()))>1) return false;
         }
@@ -62,14 +63,10 @@ public final class RecirculationNetwork {
         if(previous!=null && level.getGameTime()-previous.time()<20) return previous.jets();
         List<BlockPos> found=new ArrayList<>();
         BlockPos min=vessel.interiorMin(),max=vessel.interiorMax();
-        for(BlockPos p:BlockPos.betweenClosed(min,new BlockPos(max.getX(),min.getY(),max.getZ())))
+        for(BlockPos p:BlockPos.betweenClosed(min,new BlockPos(max.getX(),Math.min(max.getY(),min.getY()+1),max.getZ())))
             if(installedJet(level,vessel,p)) found.add(p.immutable());
         map.put(controller.getBlockPos(),new Survey(level.getGameTime(),List.copyOf(found)));
         return found;
-    }
-    private static final class Circuit {
-        final Set<BlockPos> pumps=new HashSet<>();
-        double capacity;
     }
     /** Controllers survey their own vessel once formed; the index stores positions only. */
     public static List<ReactorControllerBlockEntity> controllers(Level level) {
@@ -86,55 +83,74 @@ public final class RecirculationNetwork {
         return result;
     }
     public static ReactorControllerBlockEntity connectedController(Level level,BlockPos pump) {
-        ReactorControllerBlockEntity found=null;
-        for(var c:controllers(level)) {
-            if(!c.isFormed()) continue;
-            boolean connected=false;
-            for(BlockPos root:jets(level,c)) if(installedJet(level,c.structure(),root)) {
-                var line=AssemblyPlumbing.trace(level,root,level.getBlockState(root),AssemblyPort.WATER_SUCTION);
-                if(line.valid() && line.ends().contains(pump)) { connected=true; break; }
-            }
-            if(connected) { if(found!=null) return null; found=c; }
-        }
-        return found;
+        return RecirculationCircuit.controller(level,pump);
     }
     public static Flow measure(Level level,ReactorControllerBlockEntity controller,Collection<BlockPos> pumps) {
-        List<Circuit> circuits=new ArrayList<>();
-        int count=0,internal=0;
-        double flow=0,maximum=0;
-        for(BlockPos root:jets(level,controller)) {
-            if(!installedJet(level,controller.structure(),root)) continue;
-            var s=level.getBlockState(root);
-            var line=AssemblyPlumbing.trace(level,root,s,AssemblyPort.WATER_SUCTION);
-            if(!line.valid()) continue;
-            Circuit circuit=new Circuit();
-            for(BlockPos p:line.ends()) if(pumps.contains(p) && level.isLoaded(p)
-                    && level.getBlockState(p).is(BwrBlocks.RECIRCULATION_PUMP.get())
-                    && level.getBlockEntity(p) instanceof RecirculationPumpBlockEntity be
-                    && controller.getBlockPos().equals(be.getControllerPos())) circuit.pumps.add(p);
-            if(circuit.pumps.isEmpty()) continue;
-            count++;
-            circuit.capacity=PAIRED_JET_CAPACITY*s.getValue(JetPumpBlock.SIZE).flowMultiplier()*line.opening();
-            // A shared pump can supply its rating once, even if the line branches.
-            var iterator=circuits.iterator();
-            while(iterator.hasNext()) {
-                Circuit old=iterator.next();
-                if(!Collections.disjoint(old.pumps,circuit.pumps)) {
-                    circuit.pumps.addAll(old.pumps); circuit.capacity+=old.capacity; iterator.remove();
-                }
+        int count=0,internal=0;double jetCapacity=0,drive=0,flow=0,maximum=0;
+        Map<Set<BlockPos>,BlockPos> installed=new HashMap<>();
+        for(BlockPos root:jets(level,controller)) if(installedJet(level,controller.structure(),root))
+            installed.put(footprint(level,root),root);
+        Set<BlockPos> matched=new HashSet<>();
+        var vessel=controller.structure();
+        if(vessel!=null) for(BlockPos root:installed.values().stream().sorted().toList()) {
+            if(matched.contains(root))continue;
+            BlockPos partner=null;
+            Set<BlockPos> ownFootprint=footprint(level,root);
+            // Across the X wall or Z wall, preserving the along-wall row. Also
+            // retain the older diagonal/180-degree arrangement for existing builds.
+            for(int mirror=0;mirror<3 && partner==null;mirror++) {
+                Set<BlockPos> opposite=new HashSet<>();
+                for(BlockPos p:ownFootprint)opposite.add(new BlockPos(
+                        mirror!=1?vessel.interiorMin().getX()+vessel.interiorMax().getX()-p.getX():p.getX(),
+                        p.getY(),mirror!=0?vessel.interiorMin().getZ()+vessel.interiorMax().getZ()-p.getZ():p.getZ()));
+                BlockPos candidate=installed.get(opposite);
+                if(mirror<2 && (!oppositeWalls(ownFootprint,opposite,vessel,mirror)
+                        || level.getBlockState(root).getValue(PumpAssemblyBlock.FACING).getAxis()
+                        !=(mirror==0?net.minecraft.core.Direction.Axis.X:net.minecraft.core.Direction.Axis.Z)))continue;
+                if(candidate!=null && !candidate.equals(root) && !matched.contains(candidate)
+                        && level.getBlockState(root).getValue(PumpAssemblyBlock.FACING).getOpposite()
+                        ==level.getBlockState(candidate).getValue(PumpAssemblyBlock.FACING))partner=candidate;
             }
-            circuits.add(circuit);
+            if(partner==null)continue;
+            var a=level.getBlockState(root);var b=level.getBlockState(partner);
+            if(a.getValue(PumpAssemblyBlock.FACING).getOpposite()!=b.getValue(PumpAssemblyBlock.FACING))continue;
+            matched.add(root);matched.add(partner);count+=2;
+            jetCapacity+=2*PAIRED_JET_CAPACITY*Math.min(a.getValue(JetPumpBlock.SIZE).flowMultiplier(),b.getValue(JetPumpBlock.SIZE).flowMultiplier());
         }
-        for(Circuit c:circuits) {
-            double speed=0;
-            for(BlockPos p:c.pumps) speed+=((RecirculationPumpBlockEntity)level.getBlockEntity(p)).getActualSpeedFraction()*EXTERNAL_PUMP_CAPACITY;
-            flow+=Math.min(c.capacity,speed);
-            maximum+=Math.min(c.capacity,c.pumps.size()*EXTERNAL_PUMP_CAPACITY);
+        List<RecirculationPumpBlockEntity> external=new ArrayList<>();
+        for(BlockPos p:pumps) if(level.isLoaded(p) && level.getBlockEntity(p) instanceof RecirculationPumpBlockEntity be) {
+            be.reportCoreFlowFraction(0);
+            if(installedRip(level,controller.structure(),p)) {
+                double part=INTERNAL_PUMP_CAPACITY*be.getActualSpeedFraction();
+                flow+=part; maximum+=INTERNAL_PUMP_CAPACITY;internal++;be.reportCoreFlowFraction(part);
+            } else if(connectedController(level,p)==controller) {
+                external.add(be);drive+=EXTERNAL_PUMP_CAPACITY*be.getActualSpeedFraction();
+            }
         }
-        for(BlockPos p:pumps) if(installedRip(level,controller.structure(),p)
-                && level.getBlockEntity(p) instanceof RecirculationPumpBlockEntity be) {
-            flow+=INTERNAL_PUMP_CAPACITY*be.getActualSpeedFraction(); maximum+=INTERNAL_PUMP_CAPACITY; internal++;
-        }
-        return new Flow(Math.min(1,flow),Math.min(1,maximum),count,internal);
+        double externalRating=external.size()*EXTERNAL_PUMP_CAPACITY;
+        double capacity=Math.min(externalRating,Math.max(jetCapacity,externalRating*UNASSISTED_PUMP_EFFICIENCY));
+        // Sum each drive's available contribution, then cap at the shared manifold.
+        // A stopped parallel pump must never dilute a running pump's speed.
+        double perPumpCapacity=Math.min(EXTERNAL_PUMP_CAPACITY,Math.max(jetCapacity,EXTERNAL_PUMP_CAPACITY*UNASSISTED_PUMP_EFFICIENCY));
+        double delivered=Math.min(capacity,drive*perPumpCapacity/EXTERNAL_PUMP_CAPACITY);
+        for(var be:external)be.reportCoreFlowFraction(drive>0?delivered*EXTERNAL_PUMP_CAPACITY*be.getActualSpeedFraction()/drive:0);
+        flow+=delivered;maximum+=capacity;
+        // More installed hardware cannot report more than the solver's rated-flow ceiling.
+        if(flow>1) for(BlockPos p:pumps) if(level.isLoaded(p) && level.getBlockEntity(p) instanceof RecirculationPumpBlockEntity be)be.scaleCoreFlowReport(1/flow);
+        return new Flow(Math.min(1,flow),Math.min(1,maximum),count,internal,installed.size()-count,external.size());
+    }
+    private static Set<BlockPos> footprint(Level level,BlockPos root) {
+        var state=level.getBlockState(root);var block=(JetPumpBlock)state.getBlock();
+        Set<BlockPos> result=new HashSet<>();
+        for(int i=0;i<block.cellCount(state);i++)result.add(root.offset(TurbineAssemblyBlock.turn(block.cellOffset(state,i),state.getValue(PumpAssemblyBlock.FACING))));
+        return result;
+    }
+    private static boolean oppositeWalls(Set<BlockPos> a,Set<BlockPos> b,ReactorStructure vessel,int axis) {
+        int min=axis==0?vessel.interiorMin().getX():vessel.interiorMin().getZ();
+        int max=axis==0?vessel.interiorMax().getX():vessel.interiorMax().getZ();
+        return (a.stream().allMatch(p->(axis==0?p.getX():p.getZ())<=min+1)
+                && b.stream().allMatch(p->(axis==0?p.getX():p.getZ())>=max-1))
+                || (b.stream().allMatch(p->(axis==0?p.getX():p.getZ())<=min+1)
+                && a.stream().allMatch(p->(axis==0?p.getX():p.getZ())>=max-1));
     }
 }

@@ -43,8 +43,8 @@ import dev.bwr.core.kinetics.RodWorth;
  * The operator's demand for a rod is held <i>here</i>, not in the core, and it
  * is forwarded to the core only while that rod's drive
  * {@linkplain ControlRodDriveHardware#canPerformNormalMotion() can move}. A
- * drive with no power, no water or a seized mechanism has its core-side demand
- * pinned to wherever the rod already is, so the rod stays put while the panel
+ * drive with no power, no water or a seized mechanism has its normal motion
+ * disabled, so the rod holds its physical position while the panel
  * goes on showing the demand the operator entered — which is exactly what a
  * control room sees when a drive will not answer.
  *
@@ -242,32 +242,32 @@ public final class ControlRodDriveNetwork {
         int operable = 0;
         for (int r = 0; r < rods; r++) {
             ControlRodDriveHardware drive = drives[r];
-            int actual = c.getRodNotchIndex(r);
 
             if (drive == null) {
                 // Nothing under this rod. It cannot be driven, and the core is
                 // told to leave it where it is.
-                c.setRodNotchDemand(r, actual);
+                c.setRodNormalMotionAvailable(r,false);
                 continue;
             }
 
             drive.setEnvironmentCladTemperatureC(cladTemperatureC);
             boolean moving = scramActive
-                    ? actual != RodWorth.NOTCH_INDEX_FULLY_INSERTED
-                    : commandedNotchIndex[r] != actual;
+                    ? c.getRodPositionNotches(r) != RodWorth.NOTCH_INDEX_FULLY_INSERTED
+                    : commandedNotchIndex[r] != c.getRodPositionNotches(r);
             drive.setMotionCommanded(moving);
 
             if (drive.canPerformNormalMotion()) {
                 operable++;
+                c.setRodNormalMotionAvailable(r,true);
                 c.setRodNotchDemand(r, commandedNotchIndex[r]);
             } else {
-                c.setRodNotchDemand(r, actual);
+                c.setRodNormalMotionAvailable(r,false);
             }
         }
 
         // The core's power and water flags are system-level: they gate all
         // normal motion and all recharging. Per-drive outages are already
-        // handled above by pinning demand, so the system is "up" as long as
+        // handled above by holding each unavailable drive, so the system is "up" as long as
         // something on it is up. The recharge rate then carries the degradation
         // — a bus browning out across the drives recovers scram capability
         // proportionally more slowly, which is the balance knob SPEC 3.3 names.

@@ -233,7 +233,9 @@ public final class ReactorCore {
     private final int controlRodCount;
     private final int[] rodNotchIndex;
     private final int[] rodNotchDemand;
-    private final double[] rodDriveTimerSeconds;
+    private final double[] rodPositionNotches;
+    private final boolean[] rodNormalMotionAvailable;
+    private final boolean[] rodDemandKnown;
     private final double[] accumulatorCharge;
 
     private boolean crdPowered = true;
@@ -350,7 +352,11 @@ public final class ReactorCore {
 
         this.rodNotchIndex = new int[controlRodCount];
         this.rodNotchDemand = new int[controlRodCount];
-        this.rodDriveTimerSeconds = new double[controlRodCount];
+        this.rodPositionNotches = new double[controlRodCount];
+        this.rodNormalMotionAvailable = new boolean[controlRodCount];
+        Arrays.fill(rodNormalMotionAvailable,true);
+        this.rodDemandKnown = new boolean[controlRodCount];
+        Arrays.fill(rodDemandKnown,true);
         this.accumulatorCharge = new double[controlRodCount];
         Arrays.fill(accumulatorCharge, 1.0);
 
@@ -508,7 +514,7 @@ public final class ReactorCore {
     private void initialiseShutdownAtVesselConditions() {
         Arrays.fill(rodNotchIndex, RodWorth.NOTCH_INDEX_FULLY_INSERTED);
         Arrays.fill(rodNotchDemand, RodWorth.NOTCH_INDEX_FULLY_INSERTED);
-        Arrays.fill(rodDriveTimerSeconds, 0.0);
+        syncPhysicalRodPositions();
         Arrays.fill(accumulatorCharge, 1.0);
         scramActive = false;
 
@@ -616,7 +622,7 @@ public final class ReactorCore {
 
         scramActive = false;
         Arrays.fill(accumulatorCharge, 1.0);
-        Arrays.fill(rodDriveTimerSeconds, 0.0);
+        syncPhysicalRodPositions();
 
         vessel.initialiseToNormalLevel();
         double pressurePsig = vessel.getPressurePsig();
@@ -742,7 +748,7 @@ public final class ReactorCore {
         }
         System.arraycopy(pattern, 0, rodNotchIndex, 0, controlRodCount);
         System.arraycopy(pattern, 0, rodNotchDemand, 0, controlRodCount);
-        Arrays.fill(rodDriveTimerSeconds, 0.0);
+        syncPhysicalRodPositions();
         return closeReactivityBalance();
     }
 
@@ -758,7 +764,7 @@ public final class ReactorCore {
     }
 
     private double closeReactivityBalance() {
-        return reactivityWithRodWorth(rodWorth.totalInsertedWorthDkOverK(rodNotchIndex));
+        return reactivityWithRodWorth(rodWorth.totalInsertedWorthDkOverK(rodPositionNotches));
     }
 
     // ---------------------------------------------------------------
@@ -902,80 +908,73 @@ public final class ReactorCore {
         tickCount++;
     }
 
-    /**
-     * Control rod drive motion. Rods index one discrete notch at a time — there
-     * is no continuous position and no percentage, because a BWR drive is a
-     * notched hydraulic collet and its position is one of twenty-five things.
-     */
+    /** Commands remain discrete; absorbers move continuously between notch latches. */
     private void stepControlRodDrives(double dtSeconds) {
-        double domePressurePsig = vessel.getPressurePsig();
-        boolean pressureAssist = domePressurePsig >= SCRAM_PRESSURE_ASSIST_PSIG;
-        boolean normalMotionAvailable = crdPowered && crdWaterSupplied;
-
+        boolean pressureAssist = vessel.getPressurePsig() >= SCRAM_PRESSURE_ASSIST_PSIG;
         for (int r = 0; r < controlRodCount; r++) {
-            int target;
-            double secondsPerNotch;
-
+            double previous = rodPositionNotches[r];
+            int target = scramActive ? 0 : rodNotchDemand[r];
+            double travel = 0.0;
             if (scramActive) {
-                target = RodWorth.NOTCH_INDEX_FULLY_INSERTED;
-                if (accumulatorCharge[r] > 0.0) {
-                    secondsPerNotch = SCRAM_FULL_STROKE_SECONDS / NOTCH_SPANS;
-                } else if (pressureAssist) {
-                    secondsPerNotch =
-                            SCRAM_FULL_STROKE_SECONDS / NOTCH_SPANS / PRESSURE_ASSIST_SPEED_FRACTION;
-                } else {
-                    // No stored charge and no reactor pressure behind the piston.
-                    // This rod is stuck where it is, and it is stuck because its
-                    // accumulator was allowed to drain — a consequence of neglect,
-                    // not a dice roll.
-                    rodDriveTimerSeconds[r] = 0.0;
-                    continue;
+                double rate = NOTCH_SPANS / SCRAM_FULL_STROKE_SECONDS;
+                double powered = Math.min(previous, Math.min(rate * dtSeconds,
+                        accumulatorCharge[r] / ACCUMULATOR_CHARGE_PER_NOTCH));
+                accumulatorCharge[r] = Math.max(0,
+                        accumulatorCharge[r] - powered * ACCUMULATOR_CHARGE_PER_NOTCH);
+                if (accumulatorCharge[r] < 1e-12) {
+                    accumulatorCharge[r] = 0;
                 }
-            } else {
-                if (!normalMotionAvailable) {
-                    rodDriveTimerSeconds[r] = 0.0;
-                    continue;
+                travel = powered;
+                if (pressureAssist) {
+                    travel += rate * PRESSURE_ASSIST_SPEED_FRACTION
+                            * Math.max(0, dtSeconds - powered / rate);
                 }
-                target = rodNotchDemand[r];
-                secondsPerNotch = NORMAL_SECONDS_PER_NOTCH;
+            } else if (crdPowered && crdWaterSupplied && rodNormalMotionAvailable[r] && rodDemandKnown[r]) {
+                travel = dtSeconds / NORMAL_SECONDS_PER_NOTCH;
             }
-
-            if (rodNotchIndex[r] == target) {
-                rodDriveTimerSeconds[r] = 0.0;
-                continue;
+            double next = previous + Math.copySign(Math.min(Math.abs(target - previous), travel),
+                    target - previous);
+            if (Math.abs(next - target) < 1e-12) {
+                next = target;
             }
-
-            rodDriveTimerSeconds[r] += dtSeconds;
-            while (rodDriveTimerSeconds[r] >= secondsPerNotch && rodNotchIndex[r] != target) {
-                rodDriveTimerSeconds[r] -= secondsPerNotch;
-                rodNotchIndex[r] += (target > rodNotchIndex[r]) ? 1 : -1;
-                if (scramActive) {
-                    // A charge too small to index one more notch is not a charge,
-                    // so it is spent rather than left as a residue. Twenty-four
-                    // subtractions of 1/24 from 1.0 do not land on zero in binary
-                    // floating point, and without this snap a completed full-stroke
-                    // scram would leave every accumulator holding about 1e-16 of a
-                    // charge — which getChargedAccumulatorCount() would then report
-                    // as a full complement of armed drives. That readout is "how
-                    // many rods will actually insert if I scram right now" and it
-                    // is the one number on the panel that must never lie.
-                    double remaining = accumulatorCharge[r] - ACCUMULATOR_CHARGE_PER_NOTCH;
-                    accumulatorCharge[r] = (remaining >= ACCUMULATOR_CHARGE_PER_NOTCH) ? remaining : 0.0;
-                }
+            rodPositionNotches[r] = next;
+            // The panel retains the last notch actually crossed, including on reversal.
+            if (next == target) {
+                rodNotchIndex[r] = target;
+            } else if (next > previous && Math.floor(next + 1e-10) > Math.floor(previous + 1e-10)) {
+                rodNotchIndex[r] = (int) Math.floor(next + 1e-10);
+            } else if (next < previous && Math.ceil(next - 1e-10) < Math.ceil(previous - 1e-10)) {
+                rodNotchIndex[r] = (int) Math.ceil(next - 1e-10);
             }
         }
-
-        // Recharging needs both electrical power and a water supply. Losing the
-        // water means scram capability decays even with the bus energised, which
-        // is the non-obvious failure mode SPEC 3.3 asks to be surfaced.
         if (!scramActive && crdPowered && crdWaterSupplied) {
             double gain = accumulatorRechargePerSecond * dtSeconds;
             for (int r = 0; r < controlRodCount; r++) {
-                if (accumulatorCharge[r] < 1.0) {
-                    accumulatorCharge[r] = Math.min(1.0, accumulatorCharge[r] + gain);
-                }
+                accumulatorCharge[r] = Math.min(1, accumulatorCharge[r] + gain);
             }
         }
+    }
+
+    private void syncPhysicalRodPositions() {
+        for (int r = 0; r < controlRodCount; r++) {
+            rodPositionNotches[r] = rodNotchIndex[r];
+            rodDemandKnown[r] = true;
+        }
+    }
+
+    public double getRodPositionNotches(int rod) {
+        checkRodIndex(rod);
+        return rodPositionNotches[rod];
+    }
+
+    public double[] getRodPositions() {
+        return rodPositionNotches.clone();
+    }
+
+    /** A failed individual drive holds its current physical position, without changing demand. */
+    public void setRodNormalMotionAvailable(int rod, boolean available) {
+        checkRodIndex(rod);
+        rodNormalMotionAvailable[rod] = available;
     }
 
     private void stepRecirculationFlow(double dtSeconds) {
@@ -1035,7 +1034,7 @@ public final class ReactorCore {
      * deeper.
      */
     private void refreshNodalShape() {
-        nodalFlux.setRodNotchIndices(rodNotchIndex);
+        nodalFlux.setRodPositions(rodPositionNotches);
         nodalFlux.setVoidProfile(voidModel.getBoilingBoundaryFraction(),
                 voidModel.getExitVoidFraction());
         loading.invalidateWeights();
@@ -1261,7 +1260,6 @@ public final class ReactorCore {
         scramActive = true;
         for (int r = 0; r < controlRodCount; r++) {
             rodNotchDemand[r] = RodWorth.NOTCH_INDEX_FULLY_INSERTED;
-            rodDriveTimerSeconds[r] = 0.0;
         }
     }
 
@@ -1295,6 +1293,7 @@ public final class ReactorCore {
                     + RodWorth.NOTCH_INDEX_FULLY_WITHDRAWN + ": " + notchIndex);
         }
         rodNotchDemand[rodIndex] = notchIndex;
+        rodDemandKnown[rodIndex] = true;
     }
 
     /** Command every rod to the same notch. Convenience; the drives are still individual. */
@@ -1334,7 +1333,7 @@ public final class ReactorCore {
     /** True when every drive has reached its demanded notch. */
     public boolean isRodMotionComplete() {
         for (int r = 0; r < controlRodCount; r++) {
-            if (rodNotchIndex[r] != rodNotchDemand[r]) {
+            if ((scramActive || rodDemandKnown[r]) && rodPositionNotches[r] != rodNotchDemand[r]) {
                 return false;
             }
         }
@@ -2337,7 +2336,7 @@ public final class ReactorCore {
                 // deliberately absent from the record — a conditioning lag is a
                 // filter, not plant state — but where the operator left the
                 // switches is hardware, and nothing will put it back.
-                getIntermediateRangeMonitorRanges());
+                getIntermediateRangeMonitorRanges(), rodPositionNotches);
     }
 
     /**
@@ -2535,7 +2534,21 @@ public final class ReactorCore {
 
         System.arraycopy(notches, 0, rodNotchIndex, 0, controlRodCount);
         System.arraycopy(charges, 0, accumulatorCharge, 0, controlRodCount);
-        Arrays.fill(rodDriveTimerSeconds, 0.0);
+        syncPhysicalRodPositions();
+        double[] positions=state.rodPositionsNotches();
+        if(positions.length!=0 && positions.length!=controlRodCount)
+            throw new IllegalArgumentException("physical rod position array has wrong length");
+        for(int r=0;r<positions.length;r++) {
+            double value=positions[r];
+            if(!Double.isFinite(value) || value<0 || value>NOTCH_SPANS)
+                throw new IllegalArgumentException("physical rod position out of range: "+value);
+            rodPositionNotches[r]=value;
+        }
+        Arrays.fill(rodNormalMotionAvailable,true);
+        // The mod restores its standing command separately. Until it does, hold
+        // between notches rather than inventing a reverse move to the last latch.
+        Arrays.fill(rodDemandKnown,false);
+
 
         // The scram latch is plant state and comes back latched. It used to be
         // cleared unconditionally here, which meant saving cancelled a scram: the
@@ -2572,7 +2585,7 @@ public final class ReactorCore {
         // produced come back from the record verbatim above, because a restored
         // core must resume on the beta it was suspended on rather than on one
         // recomputed from a slightly different weighting.
-        nodalFlux.setRodNotchIndices(rodNotchIndex);
+        nodalFlux.setRodPositions(rodPositionNotches);
         nodalFlux.setVoidProfile(voidModel.getBoilingBoundaryFraction(),
                 voidModel.getExitVoidFraction());
         loading.invalidateWeights();
