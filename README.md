@@ -7,14 +7,6 @@ physically-modelled boiling water reactor. Power is **emergent** from neutronics
 you set rod position and recirculation flow, and the physics decides what the reactor
 does. There is no commanded "burn rate."
 
-
-## Files
-
-| File | What it is |
-|---|---|
-| `SPEC.md` | The authoritative specification. Read this first, in full. |
-| `spec-v1-draft.md` | Earlier draft, kept for history. **Superseded** — do not implement from it. |
-
 ## Why this mod exists
 
 Mekanism's fission reactor is a single first-order heat balance:
@@ -26,7 +18,7 @@ temperature         = storedHeat / (casingHeatCapacity × casingCount)
 
 That's it. Steady-state temperature has a closed form. There is no neutron flux, no
 delayed neutrons, no reactivity, no void feedback, no burnup, no decay heat. Burn rate
-is a number the operator types in.
+is a number the operator types in, to me this felt unrealistic and kind of a lazy way of making a recator for a mod as advanced as Mekanism.
 
 The fundamental mismatch: in a real BWR you do **not** command power. You move rods and
 change flow, and power is what the physics gives you. That inversion is the whole point
