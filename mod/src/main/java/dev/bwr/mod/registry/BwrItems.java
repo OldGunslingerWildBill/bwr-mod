@@ -85,6 +85,11 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONDENSATE_STORAGE_TANK);
     public static final DeferredItem<BlockItem> MOTOR_FEED_PUMP =
             ITEMS.registerSimpleBlockItem(BwrBlocks.MOTOR_FEED_PUMP);
+    public static final DeferredItem<BlockItem> STEAM_STOP_VALVE = ITEMS.registerSimpleBlockItem(BwrBlocks.STEAM_STOP_VALVE);
+    public static final DeferredItem<BlockItem> TURBINE_CONTROL_VALVE = ITEMS.registerSimpleBlockItem(BwrBlocks.TURBINE_CONTROL_VALVE);
+    public static final DeferredItem<BlockItem> HP_TURBINE = ITEMS.register("hp_turbine", () -> new dev.bwr.mod.power.PowerModuleItem(BwrBlocks.HP_TURBINE.get(),new Item.Properties()));
+    public static final DeferredItem<BlockItem> LP_TURBINE = ITEMS.register("lp_turbine", () -> new dev.bwr.mod.power.PowerModuleItem(BwrBlocks.LP_TURBINE.get(),new Item.Properties()));
+    public static final DeferredItem<BlockItem> NUCLEAR_GENERATOR = ITEMS.register("nuclear_generator", () -> new dev.bwr.mod.power.PowerModuleItem(BwrBlocks.NUCLEAR_GENERATOR.get(),new Item.Properties()));
     public static final DeferredItem<BlockItem> TURBINE_FEED_PUMP =
             ITEMS.registerSimpleBlockItem(BwrBlocks.TURBINE_FEED_PUMP);
 
@@ -113,6 +118,8 @@ public final class BwrItems {
                         output.accept(RIP_PUMP.get());
                         output.accept(SAFETY_RELIEF_VALVE.get());
                         output.accept(MSIV.get());
+                        output.accept(STEAM_STOP_VALVE.get());
+                        output.accept(TURBINE_CONTROL_VALVE.get());
                         output.accept(PRESSURISED_TUBE.get());
                         output.accept(HIGH_PRESSURE_WATER_PIPE.get());
                         output.accept(RPV_WATER_INJECTION_PORT.get());
@@ -133,6 +140,9 @@ public final class BwrItems {
                         output.accept(ADS_CONTROLLER.get());
                         output.accept(CONDENSATE_STORAGE_TANK.get());
                         output.accept(MOTOR_FEED_PUMP.get());
+                        output.accept(HP_TURBINE.get());
+                        output.accept(LP_TURBINE.get());
+                        output.accept(NUCLEAR_GENERATOR.get());
                         output.accept(TURBINE_FEED_PUMP.get());
                         // A fresh bundle of every fuel the install knows, each
                         // at its own nominal enrichment. Creative-mode players

@@ -29,6 +29,9 @@ public final class BwrPeripheralSupport {
     }
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlock(PeripheralCapability.get(), (level,pos,state,unused,side) ->
+                dev.bwr.mod.eccs.PumpAssemblyCapabilities.controller(level,pos,state) instanceof dev.bwr.mod.power.PowerModuleBlockEntity m
+                        ? new PowerModulePeripheral(m) : null, dev.bwr.mod.power.PowerModuleCapabilities.blocks());
         event.registerBlock(PeripheralCapability.get(), (level,pos,state,unused,side) -> {
             var be=dev.bwr.mod.eccs.PumpAssemblyCapabilities.controller(level,pos,state);
             if(be instanceof dev.bwr.mod.eccs.EccsPumpBlockEntity p) return new EccsPumpPeripheral(p);
@@ -101,6 +104,7 @@ public final class BwrPeripheralSupport {
                 PeripheralCapability.get(),
                 BwrBlockEntities.MSIV.get(),
                 (be, side) -> new MainSteamIsolationValvePeripheral(be));
+        event.registerBlockEntity(PeripheralCapability.get(), BwrBlockEntities.TURBINE_VALVE.get(), (be, side) -> new TurbineValvePeripheral(be));
 
         // Core flow. The reactor controller sums its satellite recirculation
         // pumps into ReactorCore.setRecirculationFlowFraction on every tick

@@ -1,5 +1,5 @@
 {
-  "parent": "bwr:block/pumps/lpcs_pump/compact",
+  "parent": "bwr:block/pumps/lpcs_pump_modern/compact",
   "display": {
     "gui": {
       "rotation": [
@@ -7,29 +7,10 @@
         225,
         0
       ],
-      "translation": [
-        0,
-        0,
-        0
-      ],
       "scale": [
-        0.8,
-        0.8,
-        0.8
-      ]
-    },
-    "ground": {
-      "scale": [
-        0.3,
-        0.3,
-        0.3
-      ]
-    },
-    "fixed": {
-      "scale": [
-        0.7,
-        0.7,
-        0.7
+        0.85,
+        0.85,
+        0.85
       ]
     }
   }

@@ -577,6 +577,8 @@ public class RpvSteamOutletBlockEntity extends BlockEntity {
      * a valve across a chunk border deregister itself for good.
      */
     private double lineOpenFraction() {
+        double controlled=dev.bwr.mod.steam.SteamValveRouting.nozzleOpening(level,worldPosition);
+        if(controlled>=0)return controlled;
         if (level == null || lineIsolationValves.isEmpty()) {
             return 1.0;
         }

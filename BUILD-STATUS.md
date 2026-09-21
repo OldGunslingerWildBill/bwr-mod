@@ -1,5 +1,191 @@
 # Build Status
 
+## 2026-09-21 — inline turbine steam valves and Realistic BWR logo
+
+Added Blender-authored `steam_stop_valve` and `turbine_control_valve` blocks,
+axial steam connections, recipes, loot, creative entries, manual panels and
+optional CC peripherals. The control valve has 0.1% resolution and a two-second
+full stroke; the binary stop valve strokes in 0.5 seconds. Both start closed.
+HP/LP sections now operate from their physical supply; local admission/Start
+controls and their CC methods are removed. Existing steam/energy inventories
+remain valid. See [STEAM-VALVES.md](STEAM-VALVES.md) for wiring and migration.
+
+The mod name/creative tab are **Realistic BWR**; `bwr` registry IDs are retained.
+The supplied artwork is embedded as `logo.png`, with the original image pixels
+preserved. README and turbine instructions reflect the new controls.
+
+Verification:
+
+- 12 new real-server scenarios pass: common control at 100%, 50%, 25%, 25.1%
+  and 0%; two HP/four LP mass accounting; stop isolation with trapped steam;
+  a physical bypass; closed Mek export branch; all flange rotations; actuator
+  persistence/invalid NBT; GUI range/distance checks; CC actuation.
+- Existing 15 main-module, 73 pump, 96 RCIC/HPCI assembly and two plumbing
+  scenarios pass. Five focused core turbine tests also pass.
+- Actual client bake checks: 2,203 water/steam/valve states and eight item
+  models, 6,816 pump/main-module states and 11 item models, plus 312 RCIC/HPCI
+  states. Eight client screenshots captured; new valves and both valve panels
+  visually inspected, with 65.3% command and stop closure round-trips verified.
+- `:mod:build`, protection-logic check (157 files), asset audit (zero problems),
+  valve export reproducibility (14 files), and JAR audit (257 classes) pass.
+  No CC/Mekanism or developer-test classes are bundled. Full long-running
+  reactor acceptance suite was not rerun; the pure-Java reactor core is unchanged
+  by the valve patch.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **14,261,494 bytes**.
+
+SHA-256: `97444843E48B2931C91420A99ADBBD008ADE9498E6C247E08525BDA5C24A5C16`.
+
+Logs: `tmp/valve-live-check.log`, `tmp/valve-release-build.log`,
+`tmp/valve-assets.log`. Reviewed screenshots and editable Blender source:
+`art/models/steam_valves/`. The subsequent requested GitHub update packages
+this patch with the pending modular turbines, modern pumps/pipes and
+volume-based recirculation changes documented below.
+
+## 2026-09-20 — modular main turbine and generator release
+
+Three Blender-authored placeable modules: TX-10-style HP (5 x 5 x 9), LP
+(7 x 5 x 7), and TX-NLCH-style generator (5 x 5 x 9). Touching aligned shafts
+form a train; external steam headers connect HP exhausts to LP inlets. LP
+condensate returns through a dedicated Mekanism-compatible water outlet.
+The condenser/MSR is deferred; the temporary condensation model is documented
+in [MODULAR-TURBINES.md](MODULAR-TURBINES.md). Generator capacity is 1,500 MW per
+module, using the mod's existing FE conversion. Panels and CC are included.
+
+Validation of the final implementation:
+
+- Five new core physics tests pass: HP/LP mass and energy balance, finite load
+  and inventory limits, parallel draws, invalid inputs and fractional restore.
+- Fifteen main-turbine runtime scenarios pass, including 2 HP / 4 LP on one
+  shaft, proportional shared-header supply, no duplicated nozzle flow or FE,
+  all four rotations, shaft gaps/height/reversal, persistence, and actual
+  Mekanism mechanical-pipe condensate transfer.
+- All 73 existing pump scenarios, 96 RCIC/HPCI assembly scenarios and two
+  earlier turbine plumbing scenarios pass.
+- Actual client model checks pass: 6,816 pump/main-turbine cell states plus
+  312 RCIC/HPCI states, inventory models and textures. Five screenshots were
+  visually checked: the train, generator exterior and three working panels.
+  Client admission changes round-trip to the server. The test generator
+  produces FE under load from a real hot-reactor nozzle.
+- Both model exporter reproducibility checks pass (1,414 new module files and
+  949 existing modern pump/pipe files). Asset audit reports zero problems.
+- `:mod:build` and protection-logic checks pass. JAR audit checks 249 classes,
+  no bundled Mekanism/CC classes, and no dev-test classes. `git diff --check`
+  passes. The entire long-running core acceptance suite was not rerun.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **13,368,882 bytes**.
+
+SHA-256: `D194A57D3187AB22148F344B06169CE24C73B656BF75C674116E0D6975E0F813`.
+
+Final server/client/build log: `tmp/power-balanced-release.log`. In-game
+previews are included in `art/models/power_turbines/`. Changes remain local.
+
+## 2026-09-20 — ten jet assemblies per recirculation pump
+
+Raised `RecirculationSizing.JETS_PER_EXTERNAL_PUMP` from eight to **ten normal
+placed assemblies**, as requested. Required pump counts, actual flow limits,
+CC:Tweaked sizing and the INFO tooltip use this shared value. Volume-derived
+jet requirements remain unchanged. Two full-speed RCPs support 20 normal
+assemblies, three support 30, and four support 40. For a 32-assembly target,
+the resulting flow limits are 62.5%, 93.75% and 100%. A 44-assembly target now
+requires five full-speed RCPs. The no-jet path retains 10% of drive capacity.
+
+Validation:
+
+- **Six core sizing tests passed**, including plateau, speed/stopped-drive,
+  volume, no-jet, flow preservation and restore checks.
+- **73 pump runtime scenarios passed**, plus all 96 RCIC/HPCI assembly scenarios
+  and both turbine plumbing scenarios. Shared-header tests reached the revised
+  limits and verified that surplus jets and duplicate pumps add no capacity.
+- `:mod:build`, JAR audit and `git diff --check` passed. The JAR contains 231
+  classes including the nested core, no bundled optional mods and no dev tests.
+- The full core suite and client rendering were not rerun for this limit change;
+  prior validation is recorded below.
+
+Playable artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **12,435,273 bytes**.
+SHA-256: `CB36985FF80BADDA1327797F1B0298FDA3B8FC03025BB51B3BAE362388470F47`.
+
+## 2026-09-20 — volume-based recirculation and finite drive capacity
+
+Required normal jet assemblies now equal `2 * ceil(6 * cbrt(max(1, V / 200)))`,
+where V is interior width × height × depth. A minimum vessel needs 12 assemblies;
+a 23 × 23 outside footprint, 10 blocks high, needs 32. Each RCP supports eight
+normal assembly equivalents, so that larger example requires four full-speed
+drives. These are gameplay calibration values. The weak no-jet path, matched
+opposing assemblies, speed ramp and coastdown remain part of the flow calculation.
+
+The core flow reference scales with the target while each jet/RCP/RIP has a
+fixed kg/s capacity. Updating the reference preserves instantaneous physical
+flow and demand; it does not create water, heat, fuel or a new operating core.
+The controller stores `RatedCoreFlowKgPerS` beside the core snapshot, preserves
+it through pending/unformed saves and rebases old fixed-reference saves on load.
+Height-only resizing keeps the existing core and fuel. Thermal MW and vessel
+inventory sizing are separate work; this patch scales circulation requirements.
+
+INFO shows matched/required jets, installed/required RCPs, interior volume and
+available flow. Tooltips show required/actual kg/s and unmatched/internal hardware.
+CC:Tweaked exposes the same sizing through `getRecirculationSizing()`.
+
+Validation:
+
+- **24 targeted core tests passed, 0 failed** (97.7 s): six new sizing/drive/
+  reference-preservation tests plus the existing continuous-rod, cold-start and
+  state-round-trip tests. The complete long-running acceptance suite was not
+  rerun for this patch; its previous result is recorded below.
+- **73 pump runtime scenarios passed, 0 failed**, including real minimum and
+  maximum-footprint vessels, roof extension without fuel loss, reference NBT
+  migration, and a tall 32-assembly target with shared pump headers. Two drives
+  stayed at 50% with 16, 32 and 40 jets; three reached 75%, four 100%; stopping
+  the fourth returned delivery to 75%. Duplicate registrations did not add flow.
+  All 96 RCIC/HPCI assembly scenarios and both turbine-plumbing scenarios pass.
+- Client model checks and all panel captures pass. The updated INFO screenshot
+  was visually inspected: 1,089 interior blocks, 22 assemblies and three RCPs.
+- `:mod:build`, `git diff --check` and JAR audit pass. The JAR contains 231 classes
+  including the nested core, no bundled optional mods and no dev-test package.
+
+Guide: [RECIRCULATION.md](RECIRCULATION.md).
+Playable artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **12,435,230 bytes**.
+SHA-256: `91A8366ACCCABB1FB8587D08D3B170961446D645D69A55F66E92A91089B4126A`.
+
+## 2026-09-19 — centered pump flanges and dyeable round piping
+
+Blender-authored modern layouts replace the offset green adapters on new HPCS,
+LPCS, RHR/LPCI, electric feedwater and turbine feedwater placements. RHR grows
+15%; both feedwater bodies grow 25%. All five footprints have odd widths and
+depths, with centered base controllers and flanges at exact block-face centers.
+The DVSS model, reactor physics and pump curves are unchanged. See
+[MODERN-PUMPS-AND-PIPES.md](MODERN-PUMPS-AND-PIPES.md) for sizes and migration.
+
+Steam and water pipes use 64 Blender-built round connection patterns. Each
+segment's identification bands accept all 16 vanilla dyes. Paint persists in
+blockstates, consumes one dye per changed segment in survival, and has no effect
+on service compatibility or flow. Solid material UVs sample the texture interior
+to avoid atlas-edge artifacts; pipe blocks use non-occluding rendering.
+
+Validation:
+
+- **71 pump runtime scenarios passed**, including four-way modern placement,
+  20 legacy-layout cases, real Mekanism suction delivery, separate steam/water
+  circuits, turbine admission/exhaust, and both pipe types with every dye.
+  The dye checks cover consumption, creative mode, repeated color, NBT,
+  neighbor updates and rotation. All 96 RCIC/HPCI assembly scenarios and both
+  turbine-plumbing scenarios also pass.
+- Client baking: **4,036 pump cell states**, eight inventory/compact models,
+  **2,195 water/steam states**, six associated item models and 312 RCIC/HPCI
+  states. Real client captures of all five connected modern pumps and the 16
+  pipe colors were visually inspected, as were the Blender previews.
+- Export reproduction: **949 modern assets** match. Asset audit: **1,380 JSON
+  files, zero problems**. JAR audit passes with no bundled optional-mod classes
+  or development-test package. Final `:mod:build` passes.
+- Core physics was not modified; the 160-test acceptance result below is from
+  the preceding rod/jet update and was not rerun for this model/pipe patch.
+
+Editable source: `art/models/modern/modern_pumps_and_pipes.blend`.
+Game captures: `mod/run/turbineModelCheck/panel-check/modern-*.png` and
+`pipe-colors.png`. Blender previews are alongside the editable project.
+Playable artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **12,430,929 bytes**.
+SHA-256: `BA959D23E96163A10335A55612F776BD82B5F75525E2E58A5785671CC8D2E800`.
+
 ## 2026-09-19 — continuous rod travel and one-column jet assemblies
 
 Rod commands retain discrete notch labels, while absorber position and integral

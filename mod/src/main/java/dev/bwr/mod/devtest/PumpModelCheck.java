@@ -13,7 +13,8 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 public final class PumpModelCheck {
     private PumpModelCheck() {}
     public static PumpAssemblyBlock[] blocks() { return new PumpAssemblyBlock[]{BwrBlocks.LPCS_PUMP.get(),BwrBlocks.RHR_PUMP.get(),BwrBlocks.HPCS_PUMP.get(),
-            BwrBlocks.MOTOR_FEED_PUMP.get(),BwrBlocks.TURBINE_FEED_PUMP.get(),BwrBlocks.JET_PUMP.get(),BwrBlocks.RIP_PUMP.get(),BwrBlocks.RECIRCULATION_PUMP.get()}; }
+            BwrBlocks.MOTOR_FEED_PUMP.get(),BwrBlocks.TURBINE_FEED_PUMP.get(),BwrBlocks.JET_PUMP.get(),BwrBlocks.RIP_PUMP.get(),BwrBlocks.RECIRCULATION_PUMP.get(),
+            BwrBlocks.HP_TURBINE.get(),BwrBlocks.LP_TURBINE.get(),BwrBlocks.NUCLEAR_GENERATOR.get()}; }
     public static void run(ModelEvent.BakingCompleted event) {
         waterModels(event);
         int checked=0;
@@ -21,7 +22,8 @@ public final class PumpModelCheck {
             int faces=0;
             var layouts=new java.util.ArrayList<net.minecraft.world.level.block.state.BlockState>();
             layouts.add(block.placementState());
-            if(block.kind()==PumpAssemblyBlock.Kind.RCP || block.kind()==PumpAssemblyBlock.Kind.JET)
+            if(block.kind()==PumpAssemblyBlock.Kind.RCP || block.kind()==PumpAssemblyBlock.Kind.JET
+                    || block instanceof dev.bwr.mod.eccs.ModernPumpAssemblyBlock)
                 layouts.add(block.defaultBlockState().setValue(PumpAssemblyBlock.ASSEMBLED,true));
             for(var layout:layouts) for(Direction facing:Direction.Plane.HORIZONTAL) for(int cell=0;cell<block.cellCount(layout);cell++) {
                 var state=layout.setValue(PumpAssemblyBlock.FACING,facing).setValue(PumpAssemblyBlock.CELL,cell);
@@ -50,12 +52,15 @@ public final class PumpModelCheck {
     }
     private static void waterModels(ModelEvent.BakingCompleted event) {
         int states=0;
-        for (var block:new net.minecraft.world.level.block.Block[]{BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(), BwrBlocks.RPV_WATER_INJECTION_PORT.get(), BwrBlocks.RECIRCULATION_OUTLET.get(), BwrBlocks.RECIRCULATION_INLET.get(), BwrBlocks.CONDENSATE_STORAGE_TANK.get()}) {
+        for (var block:new net.minecraft.world.level.block.Block[]{BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(), BwrBlocks.PRESSURISED_TUBE.get(), BwrBlocks.RPV_WATER_INJECTION_PORT.get(), BwrBlocks.RECIRCULATION_OUTLET.get(), BwrBlocks.RECIRCULATION_INLET.get(), BwrBlocks.CONDENSATE_STORAGE_TANK.get(),BwrBlocks.STEAM_STOP_VALVE.get(),BwrBlocks.TURBINE_CONTROL_VALVE.get()}) {
             for (var state:block.getStateDefinition().getPossibleStates()) {
                 var model=event.getModels().get(BlockModelShaper.stateToModelLocation(state));
                 if(model==null || model==event.getModelManager().getMissingModel()) throw new IllegalStateException("Missing water model "+state);
                 var quads=model.getQuads(state,null,RandomSource.create(0),ModelData.EMPTY,null);
                 if(quads.isEmpty()) throw new IllegalStateException("Empty water model "+state);
+                if (block instanceof dev.bwr.mod.piping.PaintedPipeBlock && (quads.stream().noneMatch(q -> q.getTintIndex()==0)
+                        || quads.stream().noneMatch(q -> q.getTintIndex()==-1)))
+                    throw new IllegalStateException("Pipe needs both paint and unpainted metal: "+state);
                 for(var quad:quads) {
                     if(quad.getSprite().contents().name().getPath().equals("missingno")) throw new IllegalStateException("Missing water material "+state);
                     int[] data=quad.getVertices(); int stride=data.length/4;
@@ -71,6 +76,6 @@ public final class PumpModelCheck {
             if(item==null || item==event.getModelManager().getMissingModel() || item.getQuads(null,null,RandomSource.create(0),ModelData.EMPTY,null).isEmpty())
                 throw new IllegalStateException("Missing water inventory model "+id);
         }
-        LogUtils.getLogger().info("WATER MODEL CHECK PASS: {} block states and five inventory models",states);
+        LogUtils.getLogger().info("WATER/STEAM MODEL CHECK PASS: {} block states and eight inventory models",states);
     }
 }

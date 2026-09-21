@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/steam_valves/steam_stop_valve/body",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "bwr:block/steam_valves/steam_stop_valve/body",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/steam_valves/steam_stop_valve/body",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/steam_valves/steam_stop_valve/body",
+      "y": 270
+    }
+  }
+}

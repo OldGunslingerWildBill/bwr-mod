@@ -474,7 +474,7 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
                 it.remove(); // the nozzle was broken or replaced
                 continue;
             }
-            got += nozzle.claimFlowKgPerS(gameTime, wantKgPerS - got);
+            got += SteamValveRouting.claim(level,worldPosition,nozzle,wantKgPerS-got);
             if (!(wantKgPerS - got > 0.0)) {
                 break;
             }

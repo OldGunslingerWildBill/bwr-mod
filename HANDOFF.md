@@ -1,5 +1,173 @@
 # Agent Handoff
 
+## 2026-09-21: physical steam admission valves and branding
+
+Latest user requested stop valves, one fine upstream steam-control valve for
+the HP-to-LP plant, and the Realistic BWR name/logo. Implemented and built;
+see [STEAM-VALVES.md](STEAM-VALVES.md) and the latest BUILD-STATUS entry.
+
+`TurbineValveBlock` supplies two opposed horizontal steam flanges and opens
+`TurbineValveMenu`. `TurbineValveBlockEntity` saves target/actual position and
+tracks shared source allowances once per tick. Manual GUI and optional
+`TurbineValvePeripheral` control it. No automatic plant commands or new
+redstone override were added. Stop/control blocks start closed.
+
+`SteamValveRouting` handles downstream nozzle opening and actual Mek export
+paths. It honors closed branches/bypasses, does not traverse machines, and
+never loads chunks. `PowerSteamNetwork` carries the selected path's valves;
+main-turbine draws debit their shared allowances and the existing nozzle/HP
+exhaust ledger. Valve opening is applied once to vessel supply. Series valves
+use the tightest opening; parallel conductances are not added in this first
+model. Legacy lines without new valves preserve their nozzle boundary.
+
+HP/LP panels and peripherals now report status only. Local `setRunning` and
+`setAdmission` are removed, and old saved Running/Valve fields are ignored.
+Steam/energy inventories persist. Existing direct-fed turbines automatically
+use supplied steam; users should add inline valves before operating them.
+
+Blender source: `art/models/steam_valves/steam_valves.blend`, with authoring
+script and mesh exports beside it. `tools-export-steam-valves.py --check`
+reproduces all 14 game resources. User artwork was converted to PNG preserving
+every decoded pixel and referenced by `logoFile` in mod metadata. Registry ID
+`bwr` is unchanged. Final JAR, validation counts and hash are in BUILD-STATUS.
+The subsequent GitHub update request includes this patch and all preceding
+pending turbine, pump/pipe and volume-based recirculation changes.
+
+## 2026-09-20: modular TX-10-style turbines and TX-NLCH-style generator
+
+Added `hp_turbine` (5 x 5 x 9), `lp_turbine` (7 x 5 x 7), and
+`nuclear_generator` (5 x 5 x 9), authored through the live Blender connection.
+Editable isolated scenes are in `art/models/power_turbines/power_turbines.blend`;
+the previous pump scenes were preserved. `tools-export-power-turbines.py` uses
+the shared UV/area-preserving cell exporter. Regeneration checks for both new
+and earlier modern pump/pipe assets pass.
+
+`PowerModuleBlock` reuses full-object placement/removal from `PumpAssemblyBlock`
+with three new kinds. `PowerTrain` follows touching coaxial shaft ends, allows
+reversed sections and multiple generators, and allocates work once per tick.
+Steam piping is separate: HP draws from actual RPV nozzle claim ledgers; LP
+draws finite HP exhaust inventory. Shared headers allocate steam by admission
+demand. No chunk is loaded by a topology search. Maximum 32 modules per train.
+
+`PowerTurbine` / `SteamInventory` implement bounded mass and enthalpy inventories
+and a simplified pressure-dependent expansion. LP temporarily condenses to
+40 C return water; residual heat is explicitly rejected. Actual condenser/MSR
+hardware is deferred as requested. LP fluid capability is output-only at its
+water flange; real Mekanism pipe transfer is tested. Generator FE output is
+only the copper side terminal, 1,500 MW cap, 98.5% efficiency, existing 13.4 W
+per FE/t calibration. No automatic protection was introduced.
+
+Panels expose manual admission, Start/Stop, steam flow, pressure/temperature
+estimates, shaft speed, section/train MW and FE. CC has `bwr_hp_turbine`,
+`bwr_lp_turbine`, `bwr_generator`, with `setAdmission`, `setRunning`, `getStatus`.
+Steam inventory, fractional water, FE and controls persist. Rotor kinetic
+energy and external water-temperature transport remain future work.
+
+Verification: five core tests; 15 real-server scenarios including 2 HP / 4 LP,
+balanced parallel supply, nozzle sharing, shaft gap/height/reversal, all four
+rotations, correct capability faces, Mekanism water, save/load and conservation;
+the previous 73 pump, 96 assembly and two plumbing scenarios also pass.
+Opt-in client check: `runTurbineModelCheck -PbwrPowerPanelCheck`; generated
+screenshots live in `mod/run/turbineModelCheck/power-check`. The client check
+uses a fixed camera in a disposable world and extracts FE through the real
+capability as a test electrical load. Dev fixtures are stripped from the JAR.
+
+See [MODULAR-TURBINES.md](MODULAR-TURBINES.md) for building instructions and
+modeling limits, and [BUILD-STATUS.md](BUILD-STATUS.md) for the artifact hash.
+This work is local; the user has not requested a commit/push for this feature.
+All earlier uncommitted pump, pipe and recirculation work is preserved.
+
+## 2026-09-20: ten normal jet assemblies per RCP
+
+User requested increasing the external recirculation pump limit from eight to
+ten. `RecirculationSizing.JETS_PER_EXTERNAL_PUMP` is now **10**; this supersedes
+the eight-assembly calibration in the historical entry below. The INFO tooltip
+now reads the shared constant. Pump requirements and the CC sizing map already
+derive from it. Volume-derived jet targets, matching and internal pumps remain
+unchanged. The no-jet allowance is still 10% of each drive's assisted capacity.
+
+Updated sizing and runtime expectations verify 20/30/40 normal assembly capacity
+for two/three/four full-speed RCPs, subject to installed jets and vessel demand.
+A 32-assembly vessel reaches 62.5%/93.75%/100%; a 44-assembly vessel requires
+five RCPs. Updated the current README and recirculation/model guides.
+
+Validation: six core sizing tests, 73 pump runtime scenarios, 96 RCIC/HPCI
+assembly scenarios, both turbine plumbing scenarios, build and JAR audit pass.
+Artifact hash is in [BUILD-STATUS.md](BUILD-STATUS.md). Changes remain local;
+this turn did not request a commit or push.
+
+## 2026-09-20: vessel volume, jet requirements and drive limits
+
+`core.flow.RecirculationSizing` owns the gameplay calibration: base interior
+volume 200, 12 normal placed jet assemblies, cube-root scaling rounded up to
+opposing pairs, eight normal equivalents per RCP, and 1.2 per RIP. The whole
+geometric interior counts, including height; falling water level cannot lower
+the target. The no-jet route retains 10% drive efficiency. Saved large jets still
+count 1.5 equivalents per matched assembly, limited by the smaller partner.
+
+`RecirculationNetwork` computes capacity and actual speed-limited delivery in
+assembly equivalents, divides by the volume-derived target and caps at 100%.
+It deduplicates registered positions, preserves running-pump capacity when a
+parallel pump stops, and reports consistent physical kg/s on individual pumps.
+This removes the previous fixed 10% per jet / 50% per RCP percentages.
+
+`ReactorCore.setRatedCoreFlowKgPerS` rebases actual/demand fractions while keeping
+physical kg/s unchanged. The controller applies it on every successful geometry
+validation, including height-only changes, without replacing the operating core.
+`RatedCoreFlowKgPerS` is saved alongside `Core`; pending saves preserve it too.
+Restore installs the saved reference before `fromState`, then rebases against
+current geometry. Missing/invalid references use the legacy fixed reference.
+The reactor state record is unchanged; the reference is plant configuration.
+Thermal MW, water storage capacity and fuel ratings are not rescaled here.
+
+`ReactorConfigurationInfo` syncs volume, required normal jets, required external
+drives and required kg/s. INFO displays the construction targets and tooltips;
+`getRecirculationSizing()` exposes them through CC. Targets assume normal jets
+and external pumps at full speed; RIPs can contribute independently.
+
+Validation: 24 targeted core tests and 73 pump runtime scenarios pass, as do
+turbine checks, the client render/sync checks, build and JAR audit. Runtime tests
+include real vessel height changes, pending/legacy NBT, maximum footprint,
+32/40 jets on two/three/four drives and stopped-drive behavior. The updated INFO
+screen was visually inspected. See [BUILD-STATUS.md](BUILD-STATUS.md).
+This patch and the preceding modern pump/pipe patch are local, not committed or
+pushed. The user will provide drawings for a future steam turbine; turbine work
+has not begun in this patch.
+
+## 2026-09-19: modern pump ports and pipe colors
+
+`ModernPumpAssemblyBlock` adds a `modern` state property to LPCS, HPCS, RHR,
+motor-feed and turbine-feed pumps. Missing/false loads their original manifests
+and occupied cells. New item placement sets true and uses `<id>_modern`, with
+the controller at the center of the base. Ownership includes the layout flag;
+loot supports each layout's root. Pick up/replacement upgrades a saved pump.
+Port offsets and reserved dimensions are in [PUMP-MODELS.md](PUMP-MODELS.md).
+The existing DVSS, jets, pump controls and physics were not changed.
+
+All new geometry was authored through Blender. The original pump gallery was
+copied into isolated scenes, preserving its textured parts; direct round necks
+and bolted flanges replace the original nozzle/adapter geometry. RHR body scale
+is 1.15, both feedwater bodies 1.25. The editable file, UV-preserving mesh
+snapshots, build script and previews are under `art/models/modern/`.
+`tools-export-modern.py` clips geometry into cells, verifies surface area and
+writes 949 assets; `--check` is read-only. The original pack importer reapplies
+this export after the narrow jet, preserving the modern assets during reimports.
+
+`PaintedPipeBlock` shares the dye interaction and `paint` blockstate for both
+pipe types. `PipePaint` contains NONE plus 16 vanilla colors. Client-only
+`PipeColors` tints material index 0; steel uses -1. The 64 Blender connection
+patterns are shared by steam and water, with blue/amber default bands.
+Connectivity is still controlled by the existing service-specific code.
+New solid meshes have UV (.5,.5): sampling an atlas corner caused black flecks
+in the first Minecraft preview. The final game captures verify that fix.
+
+Validation: 71 pump scenarios, all 96 turbine assembly scenarios, both turbine
+plumbing scenarios, client model checks, visual captures, asset reproduction,
+asset/JAR audits and the mod build pass. Three existing flow fixtures were
+updated to route from the actual modern port coordinates. No core changes or
+new core acceptance run. See the newest [BUILD-STATUS.md](BUILD-STATUS.md) entry.
+This patch is local; the preceding rod/jet update was pushed as `82b9514`.
+
 ## 2026-09-19: rod travel and narrow, same-row jet pairs
 
 `ReactorCore.rodPositionNotches` now holds continuous physical position, while

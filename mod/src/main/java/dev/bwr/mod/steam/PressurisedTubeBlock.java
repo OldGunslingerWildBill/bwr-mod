@@ -20,7 +20,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 /** High-pressure steam piping. Both rendered arms and flow routing accept steam ports only.
  * Pressure remains a lumped vessel/header model, not a per-segment solver.
  */
-public class PressurisedTubeBlock extends PipeBlock implements SteamLinePort {
+public class PressurisedTubeBlock extends dev.bwr.mod.piping.PaintedPipeBlock implements SteamLinePort {
 
     public static final MapCodec<PressurisedTubeBlock> CODEC =
             simpleCodec(PressurisedTubeBlock::new);
@@ -46,8 +46,8 @@ public class PressurisedTubeBlock extends PipeBlock implements SteamLinePort {
     }
 
     public PressurisedTubeBlock(Properties properties) {
-        super(0.25F, properties);
-        BlockState base = stateDefinition.any();
+        super(properties);
+        BlockState base = defaultBlockState();
         for (Direction d : Direction.values()) {
             base = base.setValue(PROPERTY_BY_DIRECTION.get(d), false);
         }
@@ -56,9 +56,7 @@ public class PressurisedTubeBlock extends PipeBlock implements SteamLinePort {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        for (Direction d : Direction.values()) {
-            builder.add(PROPERTY_BY_DIRECTION.get(d));
-        }
+        super.createBlockStateDefinition(builder);
     }
 
     // -----------------------------------------------------------------

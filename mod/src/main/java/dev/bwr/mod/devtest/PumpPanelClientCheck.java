@@ -26,7 +26,8 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 public final class PumpPanelClientCheck {
     private static boolean started,requested;
     private static int age,stage,shown;
-    private static final String[] NAMES={"rhr-panel","hpci-panel","recirculation-panel","condensate-tank-panel","reactor-info","dvss-in-world","jet-pair-in-vessel"};
+    private static final String[] NAMES={"rhr-panel","hpci-panel","recirculation-panel","condensate-tank-panel","reactor-info","dvss-in-world","jet-pair-in-vessel",
+            "modern-lpcs","modern-hpcs","modern-rhr","modern-motor-feed","modern-turbine-feed","pipe-colors"};
     /** Use a deterministic hover position while capturing the real INFO screen. */
     @SubscribeEvent public static void render(net.neoforged.neoforge.client.event.ScreenEvent.Render.Pre event) {
         if(Boolean.getBoolean("bwr.pumpPanelCheck") && stage==4 && event.getScreen() instanceof ReactorPanelScreen) {
@@ -54,6 +55,35 @@ public final class PumpPanelClientCheck {
             server.execute(()->{
                 var player=server.getPlayerList().getPlayer(uuid);if(player==null)throw new IllegalStateException("Test player missing");
                 var level=player.serverLevel();var pos=player.blockPosition().offset(3,0,0);
+                if(selected>=7 && selected<=11) {
+                    var pump=new PumpAssemblyBlock[]{BwrBlocks.LPCS_PUMP.get(),BwrBlocks.HPCS_PUMP.get(),BwrBlocks.RHR_PUMP.get(),BwrBlocks.MOTOR_FEED_PUMP.get(),BwrBlocks.TURBINE_FEED_PUMP.get()}[selected-7];
+                    var at=new net.minecraft.core.BlockPos(220+(selected-7)*18,120,160);
+                    for(var p:net.minecraft.core.BlockPos.betweenClosed(at.offset(-7,-1,-5),at.offset(7,-1,5)))level.setBlock(p,net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState(),3);
+                    var state=pump.placementState();level.setBlock(at,state,3);pump.setPlacedBy(level,at,state,null,new net.minecraft.world.item.ItemStack(pump));
+                    for(var port:pump.ports(state)) {
+                        var atPort=pump.portPosition(at,state,port.role());var face=pump.portFace(state,port.role());
+                        for(int i=1;i<=3;i++) {
+                            var p=atPort.relative(face,i);
+                            var pipe=port.role().isSteam()?BwrBlocks.PRESSURISED_TUBE.get().stateWithConnections(level,p):BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get().stateWithConnections(level,p);
+                            if(port.role()==AssemblyPort.WATER_DISCHARGE)pipe=pipe.setValue(dev.bwr.mod.piping.PaintedPipeBlock.PAINT,dev.bwr.mod.piping.PipePaint.RED);
+                            level.setBlock(p,pipe,3);
+                        }
+                    }
+                    player.connection.teleport(at.getX()-8,126,150,-39,20);return;
+                }
+                if(selected==12) {
+                    var at=new net.minecraft.core.BlockPos(325,120,160);
+                    for(var p:net.minecraft.core.BlockPos.betweenClosed(at.offset(-2,-1,-2),at.offset(12,-1,12)))level.setBlock(p,net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState(),3);
+                    int[] masks={12,36,44,63};
+                    for(int i=0;i<16;i++) {
+                        var block=(i%2==0?BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get():BwrBlocks.PRESSURISED_TUBE.get());
+                        var state=block.defaultBlockState().setValue(dev.bwr.mod.piping.PaintedPipeBlock.PAINT,dev.bwr.mod.piping.PipePaint.of(net.minecraft.world.item.DyeColor.byId(i)));
+                        var directions=net.minecraft.core.Direction.values();
+                        for(int d=0;d<6;d++)state=state.setValue(net.minecraft.world.level.block.PipeBlock.PROPERTY_BY_DIRECTION.get(directions[d]),(masks[i%4]&(1<<d))!=0);
+                        level.setBlock(at.offset((i%4)*3,0,(i/4)*3),state,18);
+                    }
+                    player.connection.teleport(321,131,149,-28,35);return;
+                }
                 if(selected==4) {
                     player.getAbilities().flying=true;player.onUpdateAbilities();
                     player.teleportTo(172.5,200,133.5);
@@ -97,7 +127,8 @@ public final class PumpPanelClientCheck {
                 }else PumpControlMenu.open(player,pos,pos);
             });
         }
-        boolean ready=stage==6?mc.screen==null && mc.player.getX()<170 && mc.player.getY()>199:stage==5?mc.screen==null && mc.player.getX()>180:stage==4?mc.screen instanceof ReactorPanelScreen && mc.player.containerMenu instanceof ReactorPanelMenu reactorMenu && reactorMenu.formed && reactorMenu.map!=null
+        boolean ready=stage>=7?mc.screen==null && Math.abs(mc.player.getX()-(stage==12?321:212+(stage-7)*18))<1
+                :stage==6?mc.screen==null && mc.player.getX()<170 && mc.player.getY()>199:stage==5?mc.screen==null && mc.player.getX()>180:stage==4?mc.screen instanceof ReactorPanelScreen && mc.player.containerMenu instanceof ReactorPanelMenu reactorMenu && reactorMenu.formed && reactorMenu.map!=null
                 :stage==3?mc.screen instanceof CondensateTankScreen && mc.player.containerMenu instanceof CondensateTankMenu tankMenu && tankMenu.stored==800000
                 :mc.screen instanceof PumpControlScreen && mc.player.containerMenu instanceof PumpControlMenu m && m.present && Math.abs(m.target-.5)<1e-9;
         if(ready && stage==4 && shown==0) {
@@ -105,6 +136,7 @@ public final class PumpPanelClientCheck {
         }
         if(ready && stage==4)mc.getToasts().clear();
         if(ready && stage>=5)mc.options.hideGui=true;
+        if(ready && stage>=7)mc.options.fov().set(48);
         if(!ready || ++shown<20)return;
         try {
             var directory=mc.gameDirectory.toPath().resolve("panel-check");java.nio.file.Files.createDirectories(directory);
@@ -112,6 +144,6 @@ public final class PumpPanelClientCheck {
             LogUtils.getLogger().info("PUMP PANEL CLIENT CHECK: rendered and synchronized {}",NAMES[stage]);
         } catch(java.io.IOException e){throw new IllegalStateException("Could not save panel check",e);}
         mc.player.closeContainer();requested=false;
-        if(++stage==NAMES.length){LogUtils.getLogger().info("PUMP PANEL CLIENT CHECK PASS: five real screens, DVSS placement and matched one-column jets");mc.options.hideGui=false;mc.stop();}
+        if(++stage==NAMES.length){LogUtils.getLogger().info("PUMP PANEL CLIENT CHECK PASS: five screens, DVSS, jets, five modern pumps and all sixteen pipe colors");mc.options.hideGui=false;mc.stop();}
     }
 }

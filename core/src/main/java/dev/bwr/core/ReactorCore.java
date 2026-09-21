@@ -1443,6 +1443,17 @@ public final class ReactorCore {
         return coreFlowFraction * voidModel.getRatedCoreFlowKgPerS();
     }
 
+    /** Change a vessel's flow reference without instantly changing its actual
+     * mass flow, command, water inventory, temperatures or lagged void states. */
+    public void setRatedCoreFlowKgPerS(double ratedFlow) {
+        double previous = voidModel.getRatedCoreFlowKgPerS();
+        if (ratedFlow == previous) return;
+        // The void model validates the reference before any operating state changes.
+        voidModel.setRatedCoreFlowKgPerS(ratedFlow);
+        coreFlowFraction *= previous / ratedFlow;
+        recirculationFlowFractionDemand *= previous / ratedFlow;
+    }
+
     /** Steam to the turbine control valves, kg/s. */
     public void setTurbineSteamFlowKgPerS(double flow) {
         this.turbineSteamFlowKgPerS = nonNegative(flow);

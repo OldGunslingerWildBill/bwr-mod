@@ -6,6 +6,11 @@
     "bwr:high_pressure_water_pipe",
     "bwr:rpv_water_injection_port",
     "bwr:recirculation_outlet",
-    "bwr:recirculation_inlet"
+    "bwr:recirculation_inlet",
+    "bwr:hp_turbine",
+    "bwr:lp_turbine",
+    "bwr:nuclear_generator",
+    "bwr:steam_stop_valve",
+    "bwr:turbine_control_valve"
   ]
 }

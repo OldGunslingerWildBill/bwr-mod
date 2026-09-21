@@ -74,6 +74,12 @@ create water or cooling. RIP mounting is unchanged.
 
 ## Pipe compatibility
 
+Water and steam pipes now have round Blender-built fittings. Their default
+bands are blue and amber respectively. Right-click a segment with any vanilla
+dye to recolor its bands; one dye is used per changed segment in survival.
+Colors persist through saves and do not change fluid compatibility. See
+[Modern pumps and pipes](MODERN-PUMPS-AND-PIPES.md) for model and upgrade details.
+
 | Application | Pipe |
 | --- | --- |
 | Condensate / return water → pump suction | Mechanical Pipe or other NeoForge water pipe; BWR water pipe also works |

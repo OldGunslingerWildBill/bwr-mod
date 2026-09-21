@@ -12,17 +12,17 @@ import net.minecraft.world.level.block.state.*;
 import java.util.List;
 
 /** Six-way water pipe; its NeoForge capability forwards incoming condensate to suction tanks. */
-public class HighPressureWaterPipeBlock extends PipeBlock {
+public class HighPressureWaterPipeBlock extends dev.bwr.mod.piping.PaintedPipeBlock {
     public static final MapCodec<HighPressureWaterPipeBlock> CODEC = simpleCodec(HighPressureWaterPipeBlock::new);
     public HighPressureWaterPipeBlock(Properties properties) {
-        super(.25F, properties);
-        BlockState state = stateDefinition.any();
+        super(properties);
+        BlockState state = defaultBlockState();
         for (Direction d : Direction.values()) state = state.setValue(PROPERTY_BY_DIRECTION.get(d), false);
         registerDefaultState(state);
     }
     @Override protected MapCodec<? extends PipeBlock> codec() { return CODEC; }
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        for (Direction d : Direction.values()) builder.add(PROPERTY_BY_DIRECTION.get(d));
+        super.createBlockStateDefinition(builder);
     }
     private boolean connects(BlockGetter world, BlockPos pos, Direction face) {
         return world instanceof Level level ? WaterLineNetwork.connectsTo(level, pos, face)
@@ -52,5 +52,6 @@ public class HighPressureWaterPipeBlock extends PipeBlock {
     @Override public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> lines, TooltipFlag flag) {
         lines.add(Component.translatable("tooltip.bwr.water_pipe.rating"));
         lines.add(Component.translatable("tooltip.bwr.water_pipe.service"));
+        super.appendHoverText(stack, context, lines, flag);
     }
 }

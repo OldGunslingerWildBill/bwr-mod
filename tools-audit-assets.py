@@ -106,6 +106,9 @@ for m in re.finditer(r'BLOCKS\.register\(\s*"([a-z0-9_]+)",\s*\(\)\s*->\s*new ([
         ename, pname = pm.group(1), pm.group(3)
         em = re.search(r'enum\s+' + ename + r'\s*implements[^{]*\{(.*?)\;', body, re.S) \
              or re.search(r'enum\s+' + ename + r'\s*\{(.*?)\;', body, re.S)
+        if not em:
+            enum_body = javafile(ename)
+            em = re.search(r'enum\s+' + ename + r'\s*implements[^{]*\{(.*?)\;', enum_body, re.S)
         vals = []
         if em:
             for c in re.finditer(r'\b([A-Z][A-Z0-9_]*)\s*\(', em.group(1)):
@@ -120,8 +123,8 @@ for m in re.finditer(r'BLOCKS\.register\(\s*"([a-z0-9_]+)",\s*\(\)\s*->\s*new ([
     if re.search(r"BlockStateProperties\.FACING\b", body):
         pr["facing"] = ["north", "east", "south", "west", "up", "down"]
     if "extends PipeBlock" in body:
-        pr = {d: ["false", "true"] for d in
-              ["north", "east", "south", "west", "up", "down"]}
+        pr.update({d: ["false", "true"] for d in
+              ["north", "east", "south", "west", "up", "down"]})
     props[name] = pr
 
 # ---------- 2. model texture resolution ----------
@@ -178,6 +181,9 @@ for rel, m in models.items():
                     continue
                 for texture in re.findall(r'^map_Kd\s+(.+)$', open(material, encoding="utf-8").read(), re.M):
                     texture = texture.strip()
+                    ns_t, path_t = tex_split(texture)
+                    if ns_t == "bwr":
+                        referenced_textures.add(path_t)
                     if not texture.startswith("#") and not tex_exists(texture):
                         bad("MISSING-TEXTURE", f"{rel}: material texture {texture} is missing")
     for k, v in (m.get("textures") or {}).items():

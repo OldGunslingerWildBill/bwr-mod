@@ -68,6 +68,8 @@ public final class BwrMod {
         // The SPEC 2.1 fuel registry: data/<namespace>/fuel_type/*.json, reloaded
         // with the rest of the datapack. This is on the game bus, not the mod
         // bus, because it is server data and it happens again on every /reload.
+        modBus.addListener(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent.class,
+                dev.bwr.mod.power.PowerModuleCapabilities::register);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
                 net.neoforged.neoforge.event.AddReloadListenerEvent.class,
                 event -> event.addListener(new dev.bwr.mod.fuel.FuelTypeLoader()));

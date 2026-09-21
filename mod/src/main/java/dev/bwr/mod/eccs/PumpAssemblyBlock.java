@@ -34,7 +34,7 @@ import java.util.*;
 
 /** One item and one simulation per full-sized pump, including the hanging RIP. */
 public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort, ProcessAssembly {
-    public enum Kind { LPCS, RHR, HPCS, MOTOR_FEED, TURBINE_FEED, JET, RIP, RCP }
+    public enum Kind { LPCS, RHR, HPCS, MOTOR_FEED, TURBINE_FEED, JET, RIP, RCP, HP_TURBINE, LP_TURBINE, GENERATOR }
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final IntegerProperty CELL = IntegerProperty.create("cell",0,255);
     // Missing property on an old save intentionally loads a compact model in its original cell.
@@ -91,6 +91,7 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
             case LPCS -> "lpcs_pump"; case RHR -> "rhr_pump"; case HPCS -> "hpcs_pump";
             case MOTOR_FEED -> "motor_feed_pump"; case TURBINE_FEED -> "turbine_feed_pump";
             case JET -> "jet_pump"; case RIP -> "rip_pump"; case RCP -> "recirculation_pump";
+            case HP_TURBINE -> "hp_turbine"; case LP_TURBINE -> "lp_turbine"; case GENERATOR -> "nuclear_generator";
         };
         model=loadLayout(id);
         registerDefaultState(stateDefinition.any().setValue(FACING,Direction.NORTH).setValue(CELL,model.controller).setValue(ASSEMBLED,false));
@@ -143,7 +144,7 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
             case LPCS,RHR,HPCS -> new EccsPumpBlockEntity(pos,s);
             case MOTOR_FEED,TURBINE_FEED -> new FeedwaterPumpBlockEntity(pos,s);
             case RIP,RCP -> new RecirculationPumpBlockEntity(pos,s);
-            case JET -> null;
+            case JET,HP_TURBINE,LP_TURBINE,GENERATOR -> null;
         };
     }
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level,BlockState s,BlockEntityType<T> type) {
@@ -152,7 +153,7 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
             case LPCS,RHR,HPCS -> createTickerHelper(type,BwrBlockEntities.ECCS_PUMP.get(),EccsPumpBlockEntity::serverTick);
             case MOTOR_FEED,TURBINE_FEED -> createTickerHelper(type,BwrBlockEntities.FEEDWATER_PUMP.get(),FeedwaterPumpBlockEntity::serverTick);
             case RIP,RCP -> createTickerHelper(type,BwrBlockEntities.RECIRCULATION_PUMP.get(),RecirculationPumpBlockEntity::serverTick);
-            case JET -> null;
+            case JET,HP_TURBINE,LP_TURBINE,GENERATOR -> null;
         };
     }
     @Override public BlockState getStateForPlacement(BlockPlaceContext ctx) {

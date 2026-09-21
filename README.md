@@ -1,4 +1,6 @@
-# Realistic BWR Physics Mod
+# Realistic BWR
+
+![Realistic BWR](mod/src/main/resources/logo.png)
 
 A working **Minecraft 1.21.1 / NeoForge** mod that adds a physically modeled
 boiling water reactor, modeled pumps, and connected steam and water systems.
@@ -9,6 +11,17 @@ flow, and the reactor responds. There is no commanded burn rate.
 
 ## What is implemented
 
+- **Steam valve control:** placeable Blender-built stop and fine control valves
+  regulate a common header feeding multiple HP turbines. HP exhaust supplies
+  the LP sections. Valve panels provide Open/Close and 0.1% adjustments; turbine
+  panels report operating data. See [steam valves and migration](STEAM-VALVES.md).
+- **Modular main turbine trains:** Blender-built TX-10-style HP and LP sections
+  and a TX-NLCH-style generator. Aligned end shafts join; steam is piped between
+  sections independently. LP water outlets accept Mekanism mechanical pipes.
+  Turbine panels and CC readouts report flow, pressure, temperature estimates,
+  shaft speed and power. Each generator supports up to 1,500 MW electrical.
+  See [the turbine build guide](MODULAR-TURBINES.md) for connections, dimensions
+  and the temporary condensation model.
 - **Reactor physics:** delayed-neutron kinetics, rod worth, spatial flux, void
   and temperature feedback, xenon, fuel burnup, decay heat, vessel inventory,
   pressure, and damage modeling.
@@ -18,9 +31,15 @@ flow, and the reactor responds. There is no commanded burn rate.
 - **Reactor screens:** operating instruments, fuel/flux information, and an
   **INFO** tab with loaded bundles, jet matching, installed flow capacity, live
   thermal/steam output, and labeled planning estimates.
+- **Volume-based recirculation:** width, depth and height determine the flow
+  target. Each external recirculation pump supports ten normal jet assemblies;
+  additional jets stop increasing flow at the drive limit. INFO shows the targets.
 - **Placeable pump models:** RCIC TWL, HPCI, HPCS, LPCS, RHR/LPCI, electric and
   turbine feedwater, internal recirculation, jet assemblies, and a Blender-built
   DVSS-style external recirculation pump.
+- **Modern pump connections:** centered round flanges on HPCS, LPCS, RHR/LPCI,
+  and both feedwater pumps, with odd-width footprints and larger RHR/feedwater
+  bodies. These models and the new pipe fittings are authored in Blender.
 - **Pump controls:** right-click a powered pump for numerical 0–100% speed,
   Start/Stop, flow, pressure, and available temperature/supply information.
   Manual, redstone, and computer modes are available where supported.
@@ -28,6 +47,9 @@ flow, and the reactor responds. There is no commanded burn rate.
   pipe support at pump suction, and pressure-side injection into the vessel.
 - **Separate pipe systems:** High-Pressure Water Pipe for water and High-Pressure
   Steam Pipe for steam. Electric pumps use FE and have no steam-drive ports.
+- **Dyeable round pipes:** swept elbows, junctions and coupling rings. Right-click
+  with any of the 16 vanilla dyes to color the identification bands. Color is
+  cosmetic; water and steam stay separate.
 - **Integrations:** Mekanism water/steam connections and CC:Tweaked peripherals.
   Both mods are optional and installed separately.
 
@@ -108,18 +130,22 @@ across opposite walls in the **same row and at the same height**, facing each
 other. Off-center rows work. The previous diagonal arrangement remains supported.
 Each placed assembly contains two modeled jets; the INFO tab counts assemblies.
 
-At full speed, using normal-size assemblies:
+The target uses whole interior volume: **12 × cube_root(volume / 200)**,
+rounded up to opposing pairs, with a minimum of 12 normal placed assemblies.
+Each full-speed external pump supports **ten normal assemblies' worth of flow**.
 
-| Connected hardware | Maximum rated core flow |
-| --- | ---: |
-| One external pump, no matched jets | 5% |
-| One external pump, one opposing set (2 assemblies) | 20% |
-| One external pump, three opposing sets | 50% |
-| Two external pumps, five opposing sets (10 assemblies) | 100% |
+| Outside footprint and height | Matched assemblies | Full-speed external pumps |
+| --- | ---: | ---: |
+| 7 × 7 footprint, 10 tall | 12 | 2 |
+| 7 × 7 footprint, 18 tall | 16 | 2 |
+| 23 × 23 footprint, 10 tall | 32 | 4 |
+| 23 × 23 footprint, 23 tall | 44 | 5 |
 
-These are game balance values. Actual delivery also depends on pump speed,
-power, and complete piping. See [Recirculation](RECIRCULATION.md) for the full
-flow table, port placement, and matching rules.
+For the 32-assembly target, two pumps cap at 62.5%, three at 93.75%, and four reach
+100%. Adding more jets cannot exceed pump capacity. A complete loop retains weak
+flow without jets. These are game balance values; actual delivery also depends
+on speed, power and complete piping. See [Recirculation](RECIRCULATION.md) for
+the volume rule, current INFO/CC readouts and upgrade details.
 
 ## Existing worlds
 
@@ -128,12 +154,18 @@ flow table, port placement, and matching rules.
   then reconnect their defined ports.
 - Saved two-column jet assemblies stay two columns wide until picked up and
   replaced. Existing matched pairs remain supported.
+- Previously assembled HPCS, LPCS, RHR/LPCI and feedwater pumps keep their old
+  models and connections. Pick up and replace them to use the modern flanges and
+  larger footprints. [Dimensions and upgrade notes](MODERN-PUMPS-AND-PIPES.md).
 - Old RCIC/HPCI cube IDs remain loadable but are hidden from crafting and the
   creative tab.
 - Replace steam tubes previously used for water with High-Pressure Water Pipe.
   Pump discharge must reach an RPV Water Injection Port.
 - Older rod saves start from their recorded notches; new saves preserve
   fractional travel. See [Rod motion](ROD-MOTION.md).
+- Existing reactors now use volume-based recirculation targets. Check INFO for
+  required jets and drives; larger vessels may need more hardware. Save migration
+  preserves physical flow and water rather than multiplying them on reload.
 
 ## Build and install
 
@@ -161,7 +193,8 @@ not committed.
 - `core/` — pure Java physics, independent of Minecraft.
 - `mod/` — NeoForge blocks, screens, networking, and integrations.
 - `art/models/dvss/` — editable Blender models, source meshes, and previews.
-- `tools-export-dvss.py` / `tools-narrow-jet.py` — reproducible game assets;
+- `art/models/modern/` — five revised pump models and dyeable pipe fittings in Blender.
+- `tools-export-dvss.py` / `tools-narrow-jet.py` / `tools-export-modern.py` — reproducible game assets;
   pass `--check` to verify generated output.
 
 Useful checks:
@@ -170,20 +203,35 @@ Useful checks:
 .\gradlew.bat :core:check
 .\gradlew.bat :mod:runTurbineGameTest
 .\gradlew.bat :mod:runTurbineModelCheck -PbwrPumpPanelCheck
+.\gradlew.bat :mod:runTurbineModelCheck -PbwrPowerPanelCheck
 python tools-audit-assets.py
 python tools-check-jar.py
 ```
 
-The September 19 update passed **160 core acceptance tests**, **50 pump runtime
-scenarios**, all 96 RCIC/HPCI assembly scenarios, both turbine-plumbing scenarios,
-client model checks, and asset/JAR audits. The final rod-restore refinement also
-passed all 12 targeted motion/save tests. Exact scope and artifact hashes are in
+The modular turbine update passed **five turbine physics tests**, **15 main
+turbine runtime scenarios**, **73 pump scenarios**, the 96 RCIC/HPCI assembly
+scenarios and both older turbine plumbing scenarios. Client checks cover all
+three new models in four rotations, the connected train, and synchronized
+admission/power panels. The asset and JAR audits pass.
+
+The ten-assembly-per-pump adjustment passed **six core sizing tests**, **73 pump
+runtime scenarios**, all 96 RCIC/HPCI assembly scenarios, both turbine plumbing
+scenarios, the build and JAR audit. The preceding volume/recirculation update
+passed **24 targeted core tests**, **73
+pump runtime scenarios**, all 96 RCIC/HPCI assembly scenarios, both turbine
+plumbing scenarios, client checks, visual inspection and the JAR audit. The
+model/pipe asset audit also passed in the preceding patch. The rod/jet update passed
+**160 core acceptance tests** and 12 targeted motion/save tests after its final
+restore refinement; the full acceptance suite was not rerun for this patch.
+Exact scope and artifact hashes are in
 [BUILD-STATUS.md](BUILD-STATUS.md).
 
 ## Further reading
 
+- [Modular main turbines, generator, and temporary condensate return](MODULAR-TURBINES.md)
 - [Water plumbing, pump controls, and upgrade notes](WATER-PLUMBING.md)
 - [Pump model dimensions and port coordinates](PUMP-MODELS.md)
+- [Modern pump flanges, round pipes, and dye colors](MODERN-PUMPS-AND-PIPES.md)
 - [RCIC TWL and HPCI turbine assemblies](TURBINE-ASSEMBLIES.md)
 - [Recirculation, jet matching, and reactor INFO](RECIRCULATION.md)
 - [Continuous rod travel and persistence](ROD-MOTION.md)

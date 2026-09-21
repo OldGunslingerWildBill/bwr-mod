@@ -11,11 +11,25 @@
       ],
       "conditions": [
         {
-          "condition": "minecraft:block_state_property",
-          "block": "bwr:motor_feed_pump",
-          "properties": {
-            "cell": "0"
-          }
+          "condition": "minecraft:any_of",
+          "terms": [
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "bwr:motor_feed_pump",
+              "properties": {
+                "cell": "0",
+                "modern": "false"
+              }
+            },
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "bwr:motor_feed_pump",
+              "properties": {
+                "cell": "10",
+                "modern": "true"
+              }
+            }
+          ]
         },
         {
           "condition": "minecraft:survives_explosion"

@@ -124,10 +124,9 @@ public class RecirculationPumpBlockEntity extends BlockEntity {
         }
     };
 
-    private double coreFlowContribution;
-    void reportCoreFlowFraction(double fraction) { coreFlowContribution=fraction; }
-    void scaleCoreFlowReport(double scale) { coreFlowContribution*=scale; }
-    public double getCoreFlowContributionKgPerS() { return coreFlowContribution*dev.bwr.core.PhysicalConstants.RATED_CORE_FLOW_LB_PER_HR*.45359237/3600; }
+    private double coreFlowContributionKgPerS;
+    void reportCoreFlowKgPerS(double flow) { coreFlowContributionKgPerS=flow; }
+    public double getCoreFlowContributionKgPerS() { return coreFlowContributionKgPerS; }
 
     public RecirculationPumpBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.RECIRCULATION_PUMP.get(), pos, state);
@@ -328,7 +327,7 @@ public class RecirculationPumpBlockEntity extends BlockEntity {
     private void detachController() {
         if(level!=null && controllerPos!=null && level.isLoaded(controllerPos)
                 && level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity old) old.removePump(getBlockPos());
-        controllerPos=null;coreFlowContribution=0;
+        controllerPos=null;coreFlowContributionKgPerS=0;
     }
     @Override public void setRemoved() {
         if(level!=null && !level.isClientSide()) detachController();

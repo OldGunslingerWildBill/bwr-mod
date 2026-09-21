@@ -29,8 +29,8 @@ public final class PumpAssemblyRuntimeCheck {
     private static PumpAssemblyBlock[] blocks() { return new PumpAssemblyBlock[]{BwrBlocks.LPCS_PUMP.get(),BwrBlocks.RHR_PUMP.get(),BwrBlocks.HPCS_PUMP.get(),
             BwrBlocks.MOTOR_FEED_PUMP.get(),BwrBlocks.TURBINE_FEED_PUMP.get(),BwrBlocks.JET_PUMP.get(),BwrBlocks.RIP_PUMP.get(),BwrBlocks.RECIRCULATION_PUMP.get()}; }
     private static void clear(ServerLevel l) {
-        for(BlockPos p:BlockPos.betweenClosed(new BlockPos(155,190,125),new BlockPos(191,219,153))) if(!l.getBlockState(p).isAir()) l.removeBlock(p,false);
-        l.getEntitiesOfClass(ItemEntity.class,new AABB(155,190,125,192,220,154)).forEach(net.minecraft.world.entity.Entity::discard);
+        for(BlockPos p:BlockPos.betweenClosed(new BlockPos(155,190,125),new BlockPos(191,235,153))) if(!l.getBlockState(p).isAir()) l.removeBlock(p,false);
+        l.getEntitiesOfClass(ItemEntity.class,new AABB(155,190,125,192,236,154)).forEach(net.minecraft.world.entity.Entity::discard);
     }
     private static BlockState place(ServerLevel l,PumpAssemblyBlock b,BlockPos root,Direction d) {
         var s=b.placementState().setValue(PumpAssemblyBlock.FACING,d);
@@ -59,6 +59,13 @@ public final class PumpAssemblyRuntimeCheck {
             }
             clear(l);
             try { circuits(l); checks++; } catch(RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Pump circuit FAIL",e); }
+            for (var block : blocks()) if (block instanceof ModernPumpAssemblyBlock) for (Direction direction : Direction.Plane.HORIZONTAL) {
+                clear(l);
+                try { legacyModernPump(l, block, direction); checks++; }
+                catch (RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Legacy pump layout FAIL: {} {}", block, direction, e); }
+            }
+            clear(l);
+            try { pipeDyes(l); checks++; } catch (RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Pipe dye FAIL", e); }
             clear(l);
             try { waterBoundary(l); checks++; } catch(RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Water boundary FAIL",e); }
             if(net.neoforged.fml.ModList.get().isLoaded("mekanism")) for(var b:new PumpAssemblyBlock[]{BwrBlocks.LPCS_PUMP.get(),BwrBlocks.HPCS_PUMP.get(),BwrBlocks.RHR_PUMP.get(),BwrBlocks.MOTOR_FEED_PUMP.get()}) {
@@ -73,6 +80,10 @@ public final class PumpAssemblyRuntimeCheck {
             try { rodTravelNbt(); checks++; } catch(RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Rod travel NBT FAIL",e); }
             clear(l);
             try { dvssLoop(l); checks++; } catch(RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("DVSS recirculation FAIL",e); }
+            clear(l);
+            try { recirculationVolume(l); checks++; } catch(RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Vessel volume sizing FAIL",e); }
+            clear(l);
+            try { recirculationDriveLimit(l); checks++; } catch(RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Recirculation drive limit FAIL",e); }
             clear(l);
             try { turbineFeed(l); checks++; } catch(RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Turbine feedwater FAIL",e); }
             for(var b:new PumpAssemblyBlock[]{BwrBlocks.LPCS_PUMP.get(),BwrBlocks.HPCS_PUMP.get(),BwrBlocks.RHR_PUMP.get()}) {
@@ -163,17 +174,90 @@ public final class PumpAssemblyRuntimeCheck {
         check(b.getStateForPlacement(context)==null,"blocked footprint accepted");
     }
     static ReactorControllerBlockEntity vessel(ServerLevel l) {
-        for(BlockPos p:BlockPos.betweenClosed(new BlockPos(158,194,127),new BlockPos(170,204,139))) {
-            boolean wall=p.getX()==158 || p.getX()==170 || p.getY()==194 || p.getY()==204 || p.getZ()==127 || p.getZ()==139;
+        return vessel(l,11,9,11);
+    }
+    private static ReactorControllerBlockEntity vessel(ServerLevel l,int width,int height,int depth) {
+        int right=159+width,top=195+height,back=128+depth;
+        for(BlockPos p:BlockPos.betweenClosed(new BlockPos(158,194,127),new BlockPos(right,top,back))) {
+            boolean wall=p.getX()==158 || p.getX()==right || p.getY()==194 || p.getY()==top || p.getZ()==127 || p.getZ()==back;
             l.setBlock(p,(wall?BwrBlocks.REACTOR_VESSEL.get():Blocks.AIR).defaultBlockState(),3);
         }
-        BlockPos controller=new BlockPos(170,200,133);
-        l.setBlock(new BlockPos(170,199,133),BwrBlocks.RPV_WATER_INJECTION_PORT.get().defaultBlockState().setValue(RpvWaterInjectionPortBlock.FACING,Direction.EAST),3);
+        BlockPos controller=new BlockPos(right,200,128+depth/2);
+        l.setBlock(controller.below(),BwrBlocks.RPV_WATER_INJECTION_PORT.get().defaultBlockState().setValue(RpvWaterInjectionPortBlock.FACING,Direction.EAST),3);
         l.setBlock(controller,BwrBlocks.REACTOR_CONTROLLER.get().defaultBlockState(),3);
-        for(int x=160;x<=168;x+=2) for(int z=129;z<=137;z+=2) l.setBlock(new BlockPos(x,193,z),BwrBlocks.CONTROL_ROD_DRIVE.get().defaultBlockState(),3);
+        for(int x=160;x<right;x+=2) for(int z=129;z<back;z+=2) l.setBlock(new BlockPos(x,193,z),BwrBlocks.CONTROL_ROD_DRIVE.get().defaultBlockState(),3);
         var be=(ReactorControllerBlockEntity)l.getBlockEntity(controller);
         ReactorControllerBlockEntity.serverTick(l,controller,be.getBlockState(),be);
         check(be.isFormed(),"test vessel not formed: "+be.statusLines()); return be;
+    }
+
+    private static void legacyModernPump(ServerLevel level, PumpAssemblyBlock block, Direction direction) {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("Name", net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block).toString());
+        CompoundTag properties = new CompoundTag();
+        properties.putString("assembled", "true"); properties.putString("cell", "0");
+        properties.putString("facing", direction.getName()); tag.put("Properties", properties);
+        var state = NbtUtils.readBlockState(level.holderLookup(net.minecraft.core.registries.Registries.BLOCK), tag);
+        check(!state.getValue(ModernPumpAssemblyBlock.MODERN), "save without modern flag expanded");
+        level.setBlock(ROOT, state, 3);
+        block.setPlacedBy(level, ROOT, state, null, new ItemStack(block));
+        check(block.complete(level, ROOT, state), "legacy assembly incomplete");
+        var owner = level.getBlockEntity(ROOT);
+        check(owner != null, "legacy pump lost controller");
+        for (int i=0; i<block.cellCount(state); i++) {
+            var p=pos(block,ROOT,state,i);
+            check(block.origin(p,level.getBlockState(p)).equals(ROOT), "legacy cell resolved wrong owner");
+            check(block.controller(level,p,level.getBlockState(p))==owner, "legacy controller forwarding split");
+        }
+        for (var port:block.ports(state)) {
+            var p=block.portPosition(ROOT,state,port.role()); var face=block.portFace(state,port.role());
+            check(block.portAt(level.getBlockState(p),face)==port.role(), "legacy port moved");
+        }
+        BlockPos neighbour=ROOT.below(); level.setBlock(neighbour,Blocks.STONE.defaultBlockState(),3);
+        level.removeBlock(pos(block,ROOT,state,block.cellCount(state)-1),false);
+        check(level.getBlockState(ROOT).isAir() && level.getBlockState(neighbour).is(Blocks.STONE), "legacy removal changed neighbour or left root");
+    }
+
+    private static void pipeDyes(ServerLevel level) {
+        var player=net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(level);
+        boolean oldCreative=player.getAbilities().instabuild;
+        boolean oldBuild=player.getAbilities().mayBuild;
+        try {
+            player.getAbilities().instabuild=false; player.getAbilities().mayBuild=true;
+            for (var block:new dev.bwr.mod.piping.PaintedPipeBlock[]{BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(), BwrBlocks.PRESSURISED_TUBE.get()}) {
+                level.setBlock(ROOT,block.defaultBlockState(),3);
+                level.setBlock(ROOT.east(),block.defaultBlockState(),3);
+                var opposite=block==BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get()?BwrBlocks.PRESSURISED_TUBE.get():BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get();
+                level.setBlock(ROOT.west(),opposite.defaultBlockState(),3);
+                for (DyeColor dye:DyeColor.values()) {
+                    ItemStack stack=new ItemStack(DyeItem.byColor(dye),3);
+                    var hit=new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(ROOT),Direction.UP,ROOT,false);
+                    var state=level.getBlockState(ROOT);
+                    state.useItemOn(stack,level,player,net.minecraft.world.InteractionHand.MAIN_HAND,hit);
+                    state=level.getBlockState(ROOT);
+                    check(stack.getCount()==2, "dye was not consumed exactly once");
+                    var paint=dev.bwr.mod.piping.PipePaint.of(dye);
+                    check(state.getValue(dev.bwr.mod.piping.PaintedPipeBlock.PAINT)==paint, "wrong dye applied");
+                    check(state.getValue(PipeBlock.EAST) && !state.getValue(PipeBlock.WEST), "dye altered process connectivity");
+                    state.useItemOn(stack,level,player,net.minecraft.world.InteractionHand.MAIN_HAND,hit);
+                    check(stack.getCount()==2, "same-color repaint consumed dye");
+                    var loaded=NbtUtils.readBlockState(level.holderLookup(net.minecraft.core.registries.Registries.BLOCK),NbtUtils.writeBlockState(state));
+                    check(loaded.equals(state), "pipe paint did not survive NBT");
+                    check(state.rotate(Rotation.CLOCKWISE_90).getValue(dev.bwr.mod.piping.PaintedPipeBlock.PAINT)==paint, "rotation lost paint");
+                    level.removeBlock(ROOT.east(),false);
+                    check(level.getBlockState(ROOT).getValue(dev.bwr.mod.piping.PaintedPipeBlock.PAINT)==paint, "neighbor update lost paint");
+                    level.setBlock(ROOT.east(),block.defaultBlockState(),3);
+                }
+                player.getAbilities().instabuild=true;
+                ItemStack stack=new ItemStack(Items.WHITE_DYE,2);
+                var hit=new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(ROOT),Direction.UP,ROOT,false);
+                level.getBlockState(ROOT).useItemOn(stack,level,player,net.minecraft.world.InteractionHand.MAIN_HAND,hit);
+                check(stack.getCount()==2,"creative paint consumed dye"); player.getAbilities().instabuild=false;
+                level.removeBlock(ROOT,false);level.removeBlock(ROOT.east(),false);level.removeBlock(ROOT.west(),false);
+            }
+        } finally {
+            player.getAbilities().instabuild=oldCreative;player.getAbilities().mayBuild=oldBuild;
+        }
     }
     private static void legacyDvss(ServerLevel l,Direction d) {
         var b=BwrBlocks.RECIRCULATION_PUMP.get();
@@ -217,16 +301,12 @@ public final class PumpAssemblyRuntimeCheck {
     }
     private static void circuits(ServerLevel l) {
         var reactor=vessel(l); var b=BwrBlocks.MOTOR_FEED_PUMP.get(); var s=place(l,b,ROOT,Direction.NORTH);
-        BlockPos tank=ROOT.offset(1,4,1); l.setBlock(tank,BwrBlocks.CONDENSATE_STORAGE_TANK.get().defaultBlockState(),3);
-        pipe(l,ROOT.offset(1,2,1),ROOT.offset(1,3,1));
-        pipe(l,ROOT.offset(3,2,1),ROOT.offset(3,4,1));
-        pipe(l,ROOT.offset(3,4,1),ROOT.offset(3,4,-3));
-        pipe(l,ROOT.offset(3,4,-3),new BlockPos(172,214,137));
-        pipe(l,new BlockPos(172,214,137),new BlockPos(172,199,137));
-        pipe(l,new BlockPos(172,199,137),new BlockPos(172,199,133));
-        pipe(l,new BlockPos(172,199,133),new BlockPos(171,199,133));
+        BlockPos suction=b.portPosition(ROOT,s,AssemblyPort.WATER_SUCTION).above();
+        BlockPos tank=suction.above(3); l.setBlock(tank,BwrBlocks.CONDENSATE_STORAGE_TANK.get().defaultBlockState(),3);
+        pipe(l,suction,suction.above(2));
+        waterDischarge(l,b,s);
         var t=(CondensateStorageTankBlockEntity)l.getBlockEntity(tank);t.fillKg(50000);
-        BlockPos branch=ROOT.offset(0,3,1);
+        BlockPos branch=suction.above().west();
         l.setBlock(branch,BwrBlocks.MSIV.get().defaultBlockState(),3);
         var valve=(dev.bwr.mod.steam.MainSteamIsolationValveBlockEntity)l.getBlockEntity(branch);
         valve.setDemandOpen(false);valve.tickValve(10);
@@ -239,11 +319,12 @@ public final class PumpAssemblyRuntimeCheck {
         }
         check(mass>0,"connected motor feed pump did not deliver: "+pump.statusLines());
         check(Math.abs(before-t.storedKg()-mass)<1.01,"feedwater created water");
-        l.removeBlock(ROOT.offset(3,3,1),false); FeedwaterPumpBlockEntity.serverTick(l,ROOT,s,pump);
+        l.removeBlock(b.portPosition(ROOT,s,AssemblyPort.WATER_DISCHARGE).above(2),false); FeedwaterPumpBlockEntity.serverTick(l,ROOT,s,pump);
         check(pump.getDeliveredFlowKgPerS()==0 && pump.isRunning(),"broken discharge delivered water or changed command");
     }
     private static void recirculation(ServerLevel l) {
         var reactor=vessel(l); var jet=BwrBlocks.JET_PUMP.get();
+        check(RecirculationNetwork.sizing(reactor.structure()).requiredJets()==22,"fixture flow target did not scale with volume");
         BlockPos a=new BlockPos(160,195,128),b=new BlockPos(168,195,138),drive=new BlockPos(174,195,133);
         place(l,jet,a,Direction.NORTH);place(l,jet,b,Direction.SOUTH);
         check(jet.ports().isEmpty(),"jet mesh still exposes added external ports");
@@ -267,10 +348,10 @@ public final class PumpAssemblyRuntimeCheck {
         check(reactor.getBlockPos().equals(motor.getControllerPos()),"external pump did not bind through both vessel ports");
         for(int i=0;i<1000;i++) { motor.energy().receiveEnergy(Integer.MAX_VALUE,false);motor.tickPump(.05); }
         var flow=RecirculationNetwork.measure(l,reactor,List.of(drive));
-        check(flow.pairedJets()==2 && Math.abs(flow.fraction()-.2)<1e-6,"two connected pairs did not cap at 20%: "+flow);
+        check(flow.pairedJets()==2 && Math.abs(flow.fraction()-2.0/22)<1e-6,"two matched assemblies did not limit flow: "+flow);
         l.removeBlock(a.above(3),false);
         flow=RecirculationNetwork.measure(l,reactor,List.of(drive));
-        check(flow.pairedJets()==0 && flow.unmatchedJets()==1 && Math.abs(flow.fraction()-.05)<1e-6,"removed partner retained capacity: "+flow);
+        check(flow.pairedJets()==0 && flow.unmatchedJets()==1 && Math.abs(flow.fraction()-1.0/22)<1e-6,"removed partner retained capacity: "+flow);
         l.removeBlock(new BlockPos(173,195,130),false);
         check(RecirculationNetwork.measure(l,reactor,List.of(drive)).fraction()==0,"disconnected jet still drives flow");
         // The RIP crosses a prepared floor opening; it contributes independently of jet drive lines.
@@ -288,7 +369,7 @@ public final class PumpAssemblyRuntimeCheck {
         check(menu.stillValid(player),"internal pump control menu closes immediately");
         for(int i=0;i<1000;i++) { internal.energy().receiveEnergy(Integer.MAX_VALUE,false);internal.tickPump(.05); }
         flow=RecirculationNetwork.measure(l,reactor,List.of(drive,mount));
-        check(flow.internalPumps()==1 && Math.abs(flow.fraction()-.1)<1e-6,"mounted internal pump missing from flow: "+flow);
+        check(flow.internalPumps()==1 && Math.abs(flow.fraction()-1.2/22)<1e-6,"mounted internal pump missing from flow: "+flow);
     }
     private static void dvssLoop(ServerLevel l) {
         var reactor=vessel(l);var block=BwrBlocks.RECIRCULATION_PUMP.get();
@@ -311,9 +392,10 @@ public final class PumpAssemblyRuntimeCheck {
             motor.energy().receiveEnergy(Integer.MAX_VALUE,false);
             ReactorControllerBlockEntity.serverTick(l,reactor.getBlockPos(),reactor.getBlockState(),reactor);
         }
-        check(reactor.core().getCoreFlowFraction()>.045,"no-jet loop never reached the core solver");
+        check(reactor.core().getCoreFlowFraction()>1.0/22*.9,"no-jet loop never reached the core solver");
         var info=dev.bwr.mod.gui.ReactorConfigurationInfo.capture(reactor);
-        check(info.externalPumps()==1 && info.flowCeilingFraction()==.05 && info.flowSupportedMW()==0,"empty-core configuration info is wrong: "+info);
+        check(info.externalPumps()==1 && info.flowCeilingFraction()==1.0/22 && info.flowSupportedMW()==0
+                && info.interiorVolume()==1089 && info.requiredJets()==22 && info.requiredExternalPumps()==3,"empty-core configuration info is wrong: "+info);
         int slot=dev.bwr.mod.gui.CoreLattice.corePositions(reactor.core().getCoreLoading().latticeWidth(),reactor.assemblyCount())[0];
         reactor.core().getCoreLoading().load(slot,new dev.bwr.core.fuel.FuelAssembly(dev.bwr.core.fuel.FuelType.LEU));
         info=dev.bwr.mod.gui.ReactorConfigurationInfo.capture(reactor);
@@ -330,15 +412,15 @@ public final class PumpAssemblyRuntimeCheck {
         place(l,jet,a,Direction.NORTH);
         ((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(l.getGameTime()+21);
         var flow=RecirculationNetwork.measure(l,reactor,List.of(root));
-        check(flow.unmatchedJets()==1 && flow.maximum()==.05,"single unopposed jet gained capacity");
+        check(flow.unmatchedJets()==1 && flow.maximum()==1.0/22,"single unopposed jet gained capacity");
         place(l,jet,new BlockPos(164,196,128),Direction.NORTH);
         ((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(l.getGameTime()+21);
         flow=RecirculationNetwork.measure(l,reactor,List.of(root));
-        check(flow.unmatchedJets()==2 && flow.maximum()==.05,"same-side jets gained paired capacity");
+        check(flow.unmatchedJets()==2 && flow.maximum()==1.0/22,"same-side jets gained paired capacity");
         place(l,jet,b,Direction.SOUTH);
         ((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(l.getGameTime()+21);
         flow=RecirculationNetwork.measure(l,reactor,List.of(root));
-        check(flow.pairedJets()==2 && flow.unmatchedJets()==1 && flow.maximum()==.2,"opposing elevated jets did not match: "+flow);
+        check(flow.pairedJets()==2 && flow.unmatchedJets()==1 && flow.maximum()==2.0/22,"opposing elevated jets did not match: "+flow);
         BlockPos second=new BlockPos(181,195,133);
         l.setBlock(second,block.defaultBlockState(),3);
         pipe(l,new BlockPos(176,195,136),new BlockPos(181,195,136));
@@ -350,7 +432,7 @@ public final class PumpAssemblyRuntimeCheck {
         motor.setTargetSpeedFraction(.5);
         for(int i=0;i<2500;i++){motor.energy().receiveEnergy(Integer.MAX_VALUE,false);motor.tickPump(.05);}
         flow=RecirculationNetwork.measure(l,reactor,List.of(root));
-        check(Math.abs(flow.fraction()-.1)<1e-5,"half-speed DVSS did not halve limited core flow: "+flow);
+        check(Math.abs(flow.fraction()-1.0/22)<1e-5,"half-speed DVSS did not halve limited core flow: "+flow);
         l.removeBlock(b,false);place(l,jet,b.above(),Direction.SOUTH);
         ((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(l.getGameTime()+21);
         check(!RecirculationNetwork.installedJet(l,reactor.structure(),b.above()) && RecirculationNetwork.measure(l,reactor,List.of(root)).pairedJets()==0,"too-high jet counted");
@@ -365,6 +447,97 @@ public final class PumpAssemblyRuntimeCheck {
     private static RecirculationNetwork.Flow freshJets(ServerLevel l,ReactorControllerBlockEntity reactor) {
         ((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(l.getGameTime()+21);
         return RecirculationNetwork.measure(l,reactor,List.of());
+    }
+    private static void recirculationVolume(ServerLevel l) {
+        var reactor=vessel(l,5,8,5);var core=reactor.core();
+        var info=dev.bwr.mod.gui.ReactorConfigurationInfo.capture(reactor);
+        check(info.interiorVolume()==200 && info.requiredJets()==12 && info.requiredExternalPumps()==2,"minimum vessel target");
+        int slot=dev.bwr.mod.gui.CoreLattice.corePositions(core.getCoreLoading().latticeWidth(),reactor.assemblyCount())[0];
+        core.getCoreLoading().load(slot,new dev.bwr.core.fuel.FuelAssembly(dev.bwr.core.fuel.FuelType.LEU));
+        // Raise only the roof: the controller, rods, fuel, bottom head and operating core remain.
+        for(var p:BlockPos.betweenClosed(new BlockPos(158,203,127),new BlockPos(164,211,133))) {
+            boolean shell=p.getX()==158 || p.getX()==164 || p.getZ()==127 || p.getZ()==133 || p.getY()==211;
+            l.setBlock(p,(shell?BwrBlocks.REACTOR_VESSEL.get():Blocks.AIR).defaultBlockState(),3);
+        }
+        double beforeFlow=core.getCoreFlowKgPerS(),beforeMass=core.getLiquidMassKg();
+        reactor.markStructureDirty();ReactorControllerBlockEntity.serverTick(l,reactor.getBlockPos(),reactor.getBlockState(),reactor);
+        check(reactor.isFormed() && reactor.core()==core && core.getCoreLoading().loadedAssemblyCount()==1,"height change replaced operating core or fuel");
+        info=dev.bwr.mod.gui.ReactorConfigurationInfo.capture(reactor);
+        check(info.interiorVolume()==400 && info.requiredJets()==16 && info.requiredExternalPumps()==2,"height did not increase target");
+        check(core.getVoidModel().getRatedCoreFlowKgPerS()==info.requiredFlowKgPerS(),"solver kept old flow reference");
+        check(core.getLiquidMassKg()==beforeMass && core.getCoreFlowKgPerS()<=beforeFlow && core.getCoreFlowKgPerS()>beforeFlow*.99,"resize invented water/flow or skipped normal coastdown");
+        var saved=reactor.saveWithFullMetadata(l.registryAccess());
+        var held=new ReactorControllerBlockEntity(reactor.getBlockPos(),reactor.getBlockState());
+        held.loadWithComponents(saved,l.registryAccess());held.setLevel(l);
+        var resaved=held.saveWithFullMetadata(l.registryAccess());
+        check(resaved.getDouble("RatedCoreFlowKgPerS")==info.requiredFlowKgPerS(),"unformed pending save lost flow reference");
+        beforeFlow=core.getCoreFlowKgPerS();
+        l.setBlockEntity(held);ReactorControllerBlockEntity.serverTick(l,held.getBlockPos(),held.getBlockState(),held);
+        check(held.isFormed() && held.core().getCoreLoading().loadedAssemblyCount()==1,"saved larger vessel failed restore");
+        check(held.core().getCoreFlowKgPerS()<=beforeFlow && held.core().getCoreFlowKgPerS()>beforeFlow*.99,"reload multiplied physical flow");
+        check(held.core().getVoidModel().getRatedCoreFlowKgPerS()==info.requiredFlowKgPerS(),"reload lost sized rating");
+        if(net.neoforged.fml.ModList.get().isLoaded("computercraft")) {
+            var readout=new dev.bwr.mod.peripheral.ReactorPeripheral(held).getRecirculationSizing();
+            check(readout.get("requiredJetAssemblies").equals(16) && readout.get("interiorVolumeBlocks").equals(400L)
+                    && readout.get("jetAssembliesPerPump").equals(10),"computer sizing disagrees with GUI");
+        }
+        // Legacy saves used the fixed reference; migration must preserve kg/s, not the old percentage.
+        saved.remove("RatedCoreFlowKgPerS");saved.getCompound("Core").putDouble("flow",.4);
+        var legacy=new ReactorControllerBlockEntity(reactor.getBlockPos(),reactor.getBlockState());
+        legacy.loadWithComponents(saved,l.registryAccess());legacy.setLevel(l);l.setBlockEntity(legacy);
+        ReactorControllerBlockEntity.serverTick(l,legacy.getBlockPos(),legacy.getBlockState(),legacy);
+        double oldFlow=.4*dev.bwr.core.thermal.VoidModel.RATED_CORE_FLOW_KG_PER_S;
+        check(legacy.core().getCoreFlowKgPerS()<=oldFlow && legacy.core().getCoreFlowKgPerS()>oldFlow*.99,"legacy flow migration changed kg/s");
+        clear(l);var largest=vessel(l,21,8,21);
+        check(RecirculationNetwork.sizing(largest.structure()).requiredJets()==32
+                && largest.core().getVoidModel().getRatedCoreFlowKgPerS()==dev.bwr.core.flow.RecirculationSizing.forDimensions(21,8,21).ratedFlowKgPerS(),"maximum-footprint vessel ignored volume");
+    }
+
+    private static void recirculationDriveLimit(ServerLevel l) {
+        var reactor=vessel(l,11,27,11);var jet=BwrBlocks.JET_PUMP.get();
+        check(RecirculationNetwork.sizing(reactor.structure()).requiredJets()==32,"tall test vessel needs 32 jets");
+        var face=RpvWaterInjectionPortBlock.FACING;
+        l.setBlock(new BlockPos(170,213,130),BwrBlocks.RECIRCULATION_OUTLET.get().defaultBlockState().setValue(face,Direction.EAST),3);
+        l.setBlock(new BlockPos(170,195,130),BwrBlocks.RECIRCULATION_INLET.get().defaultBlockState().setValue(face,Direction.EAST),3);
+        reactor.markStructureDirty();ReactorControllerBlockEntity.serverTick(l,reactor.getBlockPos(),reactor.getBlockState(),reactor);
+        List<BlockPos> roots=new ArrayList<>();List<RecirculationPumpBlockEntity> motors=new ArrayList<>();
+        pipe(l,new BlockPos(171,213,130),new BlockPos(172,213,130));
+        pipe(l,new BlockPos(172,213,130),new BlockPos(172,213,136));
+        pipe(l,new BlockPos(172,213,136),new BlockPos(186,213,136));
+        pipe(l,new BlockPos(171,195,130),new BlockPos(186,195,130));
+        for(int x:new int[]{174,178,182,186}) {
+            var root=new BlockPos(x,195,133);roots.add(root);
+            l.setBlock(root,BwrBlocks.RECIRCULATION_PUMP.get().defaultBlockState(),3);
+            pipe(l,root.south(),new BlockPos(x,195,136));pipe(l,new BlockPos(x,195,136),new BlockPos(x,213,136));
+            pipe(l,root.north(),new BlockPos(x,195,130));
+            check(RecirculationCircuit.controller(l,root)==reactor,"parallel drive did not complete vessel loop");
+            var motor=(RecirculationPumpBlockEntity)l.getBlockEntity(root);motors.add(motor);motor.setTargetSpeedFraction(1);
+            for(int i=0;i<1500;i++){motor.energy().receiveEnergy(Integer.MAX_VALUE,false);motor.tickPump(.05);}
+        }
+        List<BlockPos[]> pairs=new ArrayList<>();
+        for(int z=128;z<=138;z++)pairs.add(new BlockPos[]{new BlockPos(159,195,z),new BlockPos(169,195,z)});
+        for(int x=160;x<=168;x++)pairs.add(new BlockPos[]{new BlockPos(x,195,128),new BlockPos(x,195,138)});
+        for(int i=0;i<10;i++){var p=pairs.get(i);place(l,jet,p[0],Direction.EAST);place(l,jet,p[1],Direction.WEST);}
+        ((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(l.getGameTime()+21);
+        var flow=RecirculationNetwork.measure(l,reactor,roots.subList(0,2));
+        check(flow.pairedJets()==20 && Math.abs(flow.fraction()-.625)<1e-6,"two drives did not support twenty assemblies");
+        for(int i=10;i<16;i++){var p=pairs.get(i);place(l,jet,p[0],i<11?Direction.EAST:Direction.SOUTH);place(l,jet,p[1],i<11?Direction.WEST:Direction.NORTH);}
+        ((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(l.getGameTime()+21);
+        flow=RecirculationNetwork.measure(l,reactor,roots.subList(0,2));
+        check(flow.pairedJets()==32 && Math.abs(flow.fraction()-.625)<1e-6 && flow.maximum()==.625,"extra jets bypassed two-drive ceiling: "+flow);
+        double reported=motors.get(0).getCoreFlowContributionKgPerS()+motors.get(1).getCoreFlowContributionKgPerS();
+        check(Math.abs(reported-flow.fraction()*reactor.core().getVoidModel().getRatedCoreFlowKgPerS())<1e-6,"pump kg/s readouts used the old fixed reference");
+        check(Math.abs(RecirculationNetwork.measure(l,reactor,roots.subList(0,3)).fraction()-.9375)<1e-6,"third drive gave wrong flow");
+        check(Math.abs(RecirculationNetwork.measure(l,reactor,roots).fraction()-1)<1e-6,"four drives did not reach target");
+        for(int i=16;i<pairs.size();i++){var p=pairs.get(i);place(l,jet,p[0],Direction.SOUTH);place(l,jet,p[1],Direction.NORTH);}
+        ((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(l.getGameTime()+21);
+        flow=RecirculationNetwork.measure(l,reactor,roots.subList(0,2));
+        check(flow.pairedJets()==40 && Math.abs(flow.fraction()-.625)<1e-6,"forty jets increased flow beyond two-drive rating");
+        check(Math.abs(RecirculationNetwork.measure(l,reactor,List.of(roots.get(0),roots.get(0))).fraction()-.3125)<1e-6,"duplicate registration created a drive");
+        motors.get(3).setTargetSpeedFraction(0);
+        for(int i=0;i<5000;i++)motors.get(3).tickPump(.05);
+        flow=RecirculationNetwork.measure(l,reactor,roots);
+        check(Math.abs(flow.fraction()-.9375)<1e-5 && flow.maximum()==1,"stopped fourth pump failed to limit actual flow");
     }
     private static void jetRows(ServerLevel l) {
         var reactor=vessel(l);var jet=BwrBlocks.JET_PUMP.get();
@@ -419,7 +592,7 @@ public final class PumpAssemblyRuntimeCheck {
         var reactor=vessel(l);
         var b=BwrBlocks.MOTOR_FEED_PUMP.get(); var s=place(l,b,ROOT,Direction.NORTH);
         waterDischarge(l,b,s);
-        BlockPos suction=ROOT.offset(1,2,1), entry=ROOT.offset(1,4,1);
+        BlockPos suction=b.portPosition(ROOT,s,AssemblyPort.WATER_SUCTION).above(), entry=suction.above(2);
         pipe(l,suction,entry);
         var inlet=l.getCapability(Capabilities.FluidHandler.BLOCK,entry,Direction.UP);
         check(inlet!=null,"water pipe exposes no NeoForge inlet for turbine condensate");
@@ -456,7 +629,7 @@ public final class PumpAssemblyRuntimeCheck {
         check(bus!=null,"pumped condensate was not reported to vessel");
         // Replacing one discharge segment with steam interrupts water immediately.
         inlet.fill(water,IFluidHandler.FluidAction.EXECUTE);
-        BlockPos wrong=ROOT.offset(3,4,1);
+        BlockPos wrong=b.portPosition(ROOT,s,AssemblyPort.WATER_DISCHARGE).above(2);
         l.setBlock(wrong,BwrBlocks.PRESSURISED_TUBE.get().defaultBlockState(),3);
         FeedwaterPumpBlockEntity.serverTick(l,ROOT,s,pump);
         check(pump.getDeliveredFlowKgPerS()==0 && pump.isRunning(),"steam segment carried pumped water or changed controls");
@@ -546,13 +719,15 @@ public final class PumpAssemblyRuntimeCheck {
         waterDischarge(l,b,s);
         BlockPos nozzlePos=new BlockPos(164,201,127);
         l.setBlock(nozzlePos,BwrBlocks.RPV_STEAM_OUTLET.get().defaultBlockState(),3);
+        BlockPos admission=b.portPosition(ROOT,s,AssemblyPort.STEAM_INLET).relative(b.portFace(s,AssemblyPort.STEAM_INLET));
         steamPipe(l,new BlockPos(164,201,126),new BlockPos(164,216,126));
-        steamPipe(l,new BlockPos(164,216,126),new BlockPos(180,216,126));
-        steamPipe(l,new BlockPos(180,216,126),new BlockPos(180,216,141));
-        steamPipe(l,new BlockPos(180,216,141),new BlockPos(180,213,141));
-        BlockPos export=new BlockPos(180,211,146);
+        steamPipe(l,new BlockPos(164,216,126),new BlockPos(admission.getX(),216,126));
+        steamPipe(l,new BlockPos(admission.getX(),216,126),new BlockPos(admission.getX(),216,admission.getZ()));
+        steamPipe(l,new BlockPos(admission.getX(),216,admission.getZ()),admission);
+        BlockPos exhaust=b.portPosition(ROOT,s,AssemblyPort.STEAM_EXHAUST).relative(b.portFace(s,AssemblyPort.STEAM_EXHAUST));
+        BlockPos export=exhaust.south(3);
         l.setBlock(export,BwrBlocks.TURBINE_STEAM_OUTLET.get().defaultBlockState(),3);
-        steamPipe(l,new BlockPos(180,211,143),new BlockPos(180,211,145));
+        steamPipe(l,exhaust,exhaust.south(2));
         var outlet=(dev.bwr.mod.steam.TurbineSteamOutletBlockEntity)l.getBlockEntity(export);outlet.setCommandedFlowKgPerS(500);
         var nozzle=(RpvSteamOutletBlockEntity)l.getBlockEntity(nozzlePos);
         nozzle.noteController(reactor.getBlockPos());nozzle.setPosition(1);nozzle.refreshAttachment(l);nozzle.refreshLine(l);
@@ -570,7 +745,7 @@ public final class PumpAssemblyRuntimeCheck {
         exported+=outlet.drainMilliBuckets(Long.MAX_VALUE,false);
         check(water>0 && steam>0,"piped RFPT failed to pump: "+pump.statusLines());
         check(Math.abs(steam*1000-exported)<1.01,"RFPT exhaust mass differs from claimed steam");
-        l.removeBlock(new BlockPos(180,211,144),false);
+        l.removeBlock(exhaust.south(),false);
         FeedwaterPumpBlockEntity.serverTick(l,ROOT,s,pump);
         check(pump.getSteamDrawKgPerS()==0 && pump.isRunning(),"broken exhaust consumed steam or changed command");
         var saved=outlet.saveWithFullMetadata(l.registryAccess());

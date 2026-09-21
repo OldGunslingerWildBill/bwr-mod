@@ -52,34 +52,64 @@ Saved two-column jets retain their original model and footprint via `narrow=fals
 Pick up and replace them to get the one-column model. Existing correctly matched
 diagonal installations keep working; no conversion changes neighboring blocks.
 
-### Flow balance
+### Volume and flow balance
 
-These are game balance values, not a manufacturer's pump curve.
+The required circulation capacity now depends on the **whole interior volume**,
+including height. These are game balance values, not a manufacturer's pump curve.
+The shell is excluded; the requirement does not decrease when water level falls.
 
-| Complete hardware at full speed | Maximum rated core flow |
-| --- | ---: |
-| One RCP, no matched jets | 5% |
-| One RCP, one opposing set (2 normal jet assemblies) | 20% |
-| One RCP, two opposing sets | 40% |
-| One RCP, three or more opposing sets | 50% |
-| Two RCPs, five opposing sets (10 assemblies) | 100% |
-| Each correctly mounted reactor internal pump (RIP) | +10%, capped at 100% overall |
+```text
+V = interior width × interior height × interior depth
+required normal assemblies = 2 × ceil(6 × cube_root(max(1, V / 200)))
+minimum external pumps = ceil(required assemblies / 10)
+```
 
-Normal matched assemblies contribute 10% capacity each. Saved `large` jet
-assemblies retain their 1.5 rating multiplier; a mixed-size opposing set uses
-the smaller rating for both sides. Internal pump mounting is unchanged.
+The smallest valid interior (5 × 8 × 5 = 200 blocks) uses 12 matched assemblies.
+Cube-root scaling includes height while keeping larger targets practical to
+place around the vessel. This patch sizes circulation demand; it does not
+rescale the reference thermal MW or the vessel's stored-water capacity.
 
-Drive contributions increase with actual speed and are capped by the shared
-manifold. One RCP driving one opposing set at 50% speed gives 10% core flow.
-A stopped parallel RCP does not dilute a running pump. Shared headers and
-multiple connected pumps do not duplicate the jet capacity. Existing spin-up,
-power limits and coastdown still apply. No automatic reactor control is added.
+| Outside footprint | Outside height | Interior volume | Matched normal assemblies | Full-speed RCPs |
+| --- | ---: | ---: | ---: | ---: |
+| 7 × 7 | 10 | 200 | 12 | 2 |
+| 7 × 7 | 18 | 400 | 16 | 2 |
+| 13 × 13 | 11 | 1,089 | 22 | 3 |
+| 23 × 23 | 10 | 3,528 | 32 | 4 |
+| 23 × 23 | 23 | 9,261 | 44 | 5 |
+
+Counts are **placed assemblies**, not individual tubes in the two-jet model.
+Targets assume normal jets, correct opposing matches and full-speed external
+drives. Placement clearance still applies, especially in tall narrow vessels.
+
+Each RCP supports at most **ten normal assemblies' worth of core flow**.
+On a vessel requiring 32 assemblies, two full-speed RCPs cap at 62.5%, three at
+93.75%, and four reach 100% when enough matched jets are installed. Adding 40 jets
+to those two RCPs still gives only 62.5%. Extra jets are permitted but cannot
+overcome the drive limit.
+
+One normal assembly represents about 1,092 kg/s of assisted core-flow capacity;
+the solver's rated flow is that amount times the required assembly count. A
+complete no-jet loop retains 10% of its drive's assisted rating: about 1,092 kg/s
+per full-speed RCP, or 8.3% on the smallest vessel. This is core-flow contribution,
+not a separate measurement of motive water through the external pump.
+
+Saved `large` jet assemblies retain their 1.5 multiplier; mixed-size opposing
+sets use the smaller rating. The ten-assembly drive limit counts normal-rating
+equivalents. Each mounted RIP adds 1.2 normal equivalents, so its absolute
+capacity is fixed and its percentage contribution decreases on larger vessels.
+
+Speed, power limits and coastdown still apply. A stopped parallel RCP never
+dilutes running pumps. Shared headers and duplicate registrations do not create
+extra capacity. Total delivery is capped at the vessel's rated target. No
+automatic start, trip or speed control is added.
 
 ## Reactor INFO tab
 
-Open the reactor controller and select **INFO**. It shows loaded bundles, matched
-and unmatched jet assemblies, connected external/internal pumps, flow capacity,
-water temperature, inlet subcooling and live thermal/steam output. Hover the fuel
+Open the reactor controller and select **INFO**. It shows loaded bundles,
+matched/required jet assemblies, installed/required external pumps, flow capacity,
+interior volume and live thermal/steam output. Hover the circulation rows for
+unmatched jets, internal pumps, required kg/s and actual kg/s; hover volume for
+the sizing rule, water temperature and inlet subcooling. Hover the fuel
 count for a breakdown by fuel type; the **FLUX** tab still shows each bundle's
 power, enrichment and burnup.
 
@@ -94,9 +124,24 @@ The starred numbers are **planning estimates**, clearly separated from live outp
 They are not a prediction of criticality, a safe operating limit, or a cap applied
 to the solver. Rods, fuel condition, water supply and the transient physics still
 determine actual output. The existing reactor reference rating is unchanged;
-size-dependent reactor ratings remain future work.
+size-dependent thermal ratings remain future work. Circulation targets already
+scale with volume.
+
+CC:Tweaked's `getRecirculationSizing()` returns `interiorVolumeBlocks`,
+`requiredJetAssemblies`, `requiredExternalPumps`, `jetAssembliesPerPump`,
+`requiredFlowKgPerS`, `availableFlowKgPerS`, `matchedJetAssemblies`,
+`unmatchedJetAssemblies`, `externalPumps` and `internalPumps`. Unformed vessels
+report zero geometry/capacity. Existing `getConnectedJetPairs()` continues to
+count matched **assemblies** and `getRecirculationCapacity()` returns a fraction.
 
 ## Existing saves
+
+Existing reactors adopt volume-based circulation targets when they form. Check
+INFO and add matched jets/drives if needed. Changing the reference preserves
+actual kg/s, water inventory, temperatures and fuel; normal coastdown then moves
+toward the available hardware flow. Saves retain the flow reference alongside
+the core snapshot, including while an unformed reactor awaits repair. Old saves
+without that field migrate from the previous fixed reference.
 
 The registry id is still `bwr:recirculation_pump`. Saved RCPs retain speed, energy,
 computer mode, orientation and one-cell occupancy, now with a compact DVSS model.

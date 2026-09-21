@@ -8,18 +8,21 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import java.util.*;
+import dev.bwr.core.flow.RecirculationSizing;
 
 /** Hardware capacity, separate from player speed commands. No automatic control. */
 public final class RecirculationNetwork {
     private RecirculationNetwork() {}
-    // Gameplay balance: ten matched jet assemblies (five opposing sets) and two RCPs reach rated flow.
-    public static final double PAIRED_JET_CAPACITY=.1;
-    public static final double EXTERNAL_PUMP_CAPACITY=.5;
-    public static final double INTERNAL_PUMP_CAPACITY=.1;
-    public static final double UNASSISTED_PUMP_EFFICIENCY=.1;
     public record Flow(double fraction,double maximum,int pairedJets,int internalPumps,int unmatchedJets,int externalPumps) {}
     private record Survey(long time,List<BlockPos> jets) {}
     private static final Map<Level,Map<BlockPos,Survey>> CACHE=new WeakHashMap<>();
+
+    public static RecirculationSizing.Sizing sizing(ReactorStructure vessel) {
+        if (vessel == null) return RecirculationSizing.forVolume(RecirculationSizing.BASE_VOLUME);
+        var min = vessel.interiorMin(); var max = vessel.interiorMax();
+        return RecirculationSizing.forDimensions(max.getX()-min.getX()+1,
+                max.getY()-min.getY()+1, max.getZ()-min.getZ()+1);
+    }
 
     /** RIP mounting plane crosses the bottom head, with the motor below the vessel. */
     public static boolean installedRip(Level level,ReactorStructure vessel,BlockPos pos) {
@@ -87,6 +90,8 @@ public final class RecirculationNetwork {
     }
     public static Flow measure(Level level,ReactorControllerBlockEntity controller,Collection<BlockPos> pumps) {
         int count=0,internal=0;double jetCapacity=0,drive=0,flow=0,maximum=0;
+        double required=sizing(controller.structure()).requiredJets();
+        var contributions=new LinkedHashMap<RecirculationPumpBlockEntity,Double>();
         Map<Set<BlockPos>,BlockPos> installed=new HashMap<>();
         for(BlockPos root:jets(level,controller)) if(installedJet(level,controller.structure(),root))
             installed.put(footprint(level,root),root);
@@ -115,29 +120,28 @@ public final class RecirculationNetwork {
             var a=level.getBlockState(root);var b=level.getBlockState(partner);
             if(a.getValue(PumpAssemblyBlock.FACING).getOpposite()!=b.getValue(PumpAssemblyBlock.FACING))continue;
             matched.add(root);matched.add(partner);count+=2;
-            jetCapacity+=2*PAIRED_JET_CAPACITY*Math.min(a.getValue(JetPumpBlock.SIZE).flowMultiplier(),b.getValue(JetPumpBlock.SIZE).flowMultiplier());
+            jetCapacity+=2*Math.min(a.getValue(JetPumpBlock.SIZE).flowMultiplier(),b.getValue(JetPumpBlock.SIZE).flowMultiplier());
         }
         List<RecirculationPumpBlockEntity> external=new ArrayList<>();
-        for(BlockPos p:pumps) if(level.isLoaded(p) && level.getBlockEntity(p) instanceof RecirculationPumpBlockEntity be) {
-            be.reportCoreFlowFraction(0);
+        for(BlockPos p:new LinkedHashSet<>(pumps)) if(level.isLoaded(p) && level.getBlockEntity(p) instanceof RecirculationPumpBlockEntity be) {
+            be.reportCoreFlowKgPerS(0);
             if(installedRip(level,controller.structure(),p)) {
-                double part=INTERNAL_PUMP_CAPACITY*be.getActualSpeedFraction();
-                flow+=part; maximum+=INTERNAL_PUMP_CAPACITY;internal++;be.reportCoreFlowFraction(part);
+                double part=RecirculationSizing.INTERNAL_PUMP_UNITS*be.getActualSpeedFraction();
+                flow+=part; maximum+=RecirculationSizing.INTERNAL_PUMP_UNITS;internal++;contributions.put(be,part);
             } else if(connectedController(level,p)==controller) {
-                external.add(be);drive+=EXTERNAL_PUMP_CAPACITY*be.getActualSpeedFraction();
+                external.add(be);drive+=be.getActualSpeedFraction();
             }
         }
-        double externalRating=external.size()*EXTERNAL_PUMP_CAPACITY;
-        double capacity=Math.min(externalRating,Math.max(jetCapacity,externalRating*UNASSISTED_PUMP_EFFICIENCY));
-        // Sum each drive's available contribution, then cap at the shared manifold.
-        // A stopped parallel pump must never dilute a running pump's speed.
-        double perPumpCapacity=Math.min(EXTERNAL_PUMP_CAPACITY,Math.max(jetCapacity,EXTERNAL_PUMP_CAPACITY*UNASSISTED_PUMP_EFFICIENCY));
-        double delivered=Math.min(capacity,drive*perPumpCapacity/EXTERNAL_PUMP_CAPACITY);
-        for(var be:external)be.reportCoreFlowFraction(drive>0?delivered*EXTERNAL_PUMP_CAPACITY*be.getActualSpeedFraction()/drive:0);
+        double capacity=RecirculationSizing.externalCapacityUnits(jetCapacity,external.size());
+        double delivered=RecirculationSizing.externalDeliveryUnits(jetCapacity,
+                external.stream().mapToDouble(RecirculationPumpBlockEntity::getActualSpeedFraction).toArray());
+        for(var be:external)contributions.put(be,drive>0?delivered*be.getActualSpeedFraction()/drive:0);
         flow+=delivered;maximum+=capacity;
         // More installed hardware cannot report more than the solver's rated-flow ceiling.
-        if(flow>1) for(BlockPos p:pumps) if(level.isLoaded(p) && level.getBlockEntity(p) instanceof RecirculationPumpBlockEntity be)be.scaleCoreFlowReport(1/flow);
-        return new Flow(Math.min(1,flow),Math.min(1,maximum),count,internal,installed.size()-count,external.size());
+        double reportDivisor=Math.max(required,flow);
+        contributions.forEach((pump,units)->pump.reportCoreFlowKgPerS(
+                units/reportDivisor*required*RecirculationSizing.JET_FLOW_KG_PER_S));
+        return new Flow(Math.min(1,flow/required),Math.min(1,maximum/required),count,internal,installed.size()-count,external.size());
     }
     private static Set<BlockPos> footprint(Level level,BlockPos root) {
         var state=level.getBlockState(root);var block=(JetPumpBlock)state.getBlock();

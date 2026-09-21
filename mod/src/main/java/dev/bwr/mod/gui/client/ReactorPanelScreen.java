@@ -192,10 +192,10 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
         readout(g,"Flow-supported power*",big(c.flowSupportedMW())+" MWth",12,70,244,TEXT_BRIGHT);
         readout(g,"Steam equivalent*",big(c.steamEquivalentKgPerS())+" kg/s",12,82,244,TEXT_BRIGHT);
         text(g,"RECIRCULATION",12,96,ACCENT);
-        readout(g,"Matched / unmatched jets",c.matchedJetAssemblies()+" / "+c.unmatchedJetAssemblies(),12,108,244,TEXT_BRIGHT);
-        readout(g,"External / internal pumps",c.externalPumps()+" / "+c.internalPumps(),12,120,244,TEXT_BRIGHT);
+        readout(g,"Jets matched / needed",c.matchedJetAssemblies()+" / "+c.requiredJets(),12,108,244,TEXT_BRIGHT);
+        readout(g,"RCPs installed / needed",c.externalPumps()+" / "+c.requiredExternalPumps(),12,120,244,TEXT_BRIGHT);
         readout(g,"Flow ceiling",pct(c.flowCeilingFraction())+" | "+big(c.flowCeilingKgPerS())+" kg/s",12,132,244,TEXT_BRIGHT);
-        readout(g,"Water / subcooling",big(menu.coolantTemperatureC)+" C / "+big(c.inletSubcoolingKJPerKg())+" kJ/kg",12,144,244,TEXT_BRIGHT);
+        readout(g,"Vessel interior volume",c.interiorVolume()+" blocks^3",12,144,244,TEXT_BRIGHT);
         text(g,"LIVE OUTPUT",12,158,ACCENT);
         readout(g,"MWth / steam kg/s",big(menu.thermalMW)+" / "+big(menu.steamKgPerS),12,170,244,GOOD);
         text(g,"* Planning estimates; hover for basis",12,181,TEXT_DIM);
@@ -215,13 +215,16 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
         else if(y>=105 && y<143)infoTooltip=List.of(
                 Component.literal("Jets must have a matching assembly across the vessel."),
                 Component.literal("Place bases 1 or 2 blocks above the bottom shell; face oppositely."),
-                Component.literal("A complete RCP loop alone adds up to 5% rated flow."),
-                Component.literal("Each opposing set adds capacity for 20% rated flow."),
-                Component.literal("Ten matched assemblies + two RCPs reach 100%."),
+                Component.literal("Each RCP supports up to "+dev.bwr.core.flow.RecirculationSizing.JETS_PER_EXTERNAL_PUMP+" normal placed jet assemblies."),
+                Component.literal("Targets assume normal jets and full-speed external pumps."),
+                Component.literal("Unmatched jets: "+c.unmatchedJetAssemblies()+"; internal pumps: "+c.internalPumps()),
+                Component.literal("Required core flow: "+big(c.requiredFlowKgPerS())+" kg/s"),
                 Component.literal("Actual core flow: "+big(menu.coreFlowKgPerS)+" kg/s"));
         else if(y>=143 && y<155)infoTooltip=List.of(
-                Component.literal("Vessel water temperature and calculated inlet subcooling."),
-                Component.literal("The loop circulates water; the pump does not cool it."));
+                Component.literal("Whole interior: width x height x depth; shell excluded."),
+                Component.literal("12 jets x cube root(volume / 200), rounded up to pairs."),
+                Component.literal("Geometric sizing; lowering water level does not reduce the target."),
+                Component.literal("Water: "+big(menu.coolantTemperatureC)+" C; inlet subcooling: "+big(c.inletSubcoolingKJPerKg())+" kJ/kg"));
     }
 
     private void readouts(GuiGraphics graphics) {

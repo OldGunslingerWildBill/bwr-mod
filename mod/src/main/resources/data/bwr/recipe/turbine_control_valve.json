@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " R ",
+    "IPI",
+    " I "
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:comparator"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "bwr:pressurised_tube"
+    }
+  },
+  "result": {
+    "id": "bwr:turbine_control_valve",
+    "count": 1
+  }
+}

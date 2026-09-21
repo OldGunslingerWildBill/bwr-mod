@@ -24,7 +24,7 @@ public final class AssemblyPlumbing {
                 || state.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
     }
     private static boolean conduit(BlockState s, AssemblyPort role) {
-        return role.isSteam() ? s.is(BwrBlocks.PRESSURISED_TUBE.get()) || s.is(BwrBlocks.MSIV.get())
+        return role.isSteam() ? s.is(BwrBlocks.PRESSURISED_TUBE.get()) || s.is(BwrBlocks.MSIV.get()) || s.getBlock() instanceof dev.bwr.mod.steam.TurbineValveBlock
                 : s.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get());
     }
     private static boolean accepts(BlockState s, Direction face, AssemblyPort role) {
@@ -61,6 +61,10 @@ public final class AssemblyPlumbing {
                     continue;
                 }
                 if(conduit(s,role) || (role.isSteam() && s.is(BwrBlocks.SAFETY_RELIEF_VALVE.get()))) {
+                    if(level.getBlockEntity(next) instanceof dev.bwr.mod.steam.TurbineValveBlockEntity valve){
+                        if(valve.position()<=0)continue;
+                        opening=Math.min(opening,valve.position());
+                    }
                     if(level.getBlockEntity(next) instanceof MainSteamIsolationValveBlockEntity valve) {
                         double aperture=valve.getPosition();
                         // A shut side branch is isolated; it must not close an

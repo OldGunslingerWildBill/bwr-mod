@@ -3,6 +3,7 @@ package dev.bwr.mod.registry;
 import dev.bwr.core.eccs.EccsDesign;
 import dev.bwr.core.feedwater.FeedwaterDesign;
 import dev.bwr.mod.BwrMod;
+import dev.bwr.mod.steam.TurbineValveBlock;
 import dev.bwr.mod.water.HighPressureWaterPipeBlock;
 import dev.bwr.mod.reactor.RpvWaterInjectionPortBlock;
 import dev.bwr.mod.reactor.RecirculationPortBlock;
@@ -10,6 +11,7 @@ import dev.bwr.mod.eccs.AdsControllerBlock;
 import dev.bwr.mod.eccs.CondensateStorageTankBlock;
 import dev.bwr.mod.eccs.EccsPumpBlock;
 import dev.bwr.mod.eccs.PumpAssemblyBlock;
+import dev.bwr.mod.eccs.ModernPumpAssemblyBlock;
 import dev.bwr.mod.eccs.TurbineAssemblyBlock;
 import dev.bwr.mod.feedwater.FeedwaterPumpBlock;
 import dev.bwr.mod.flow.JetPumpBlock;
@@ -27,6 +29,7 @@ import dev.bwr.mod.steam.TurbineSteamOutletBlock;
 import dev.bwr.mod.suppression.SuppressionPoolControllerBlock;
 import dev.bwr.mod.suppression.SuppressionPoolQuencherBlock;
 import net.minecraft.world.level.block.Block;
+import dev.bwr.mod.power.PowerModuleBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -195,14 +198,14 @@ public final class BwrBlocks {
      * a blackout unless emergency power was built and starts.
      */
     public static final DeferredBlock<PumpAssemblyBlock> HPCS_PUMP =
-            BLOCKS.register("hpcs_pump", () -> new PumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.HPCS));
+            BLOCKS.register("hpcs_pump", () -> new ModernPumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.HPCS));
 
     /**
      * Low Pressure Core Spray. Enormous volume, 300 psi of shutoff head. Useless
      * until the vessel has been blown down.
      */
     public static final DeferredBlock<PumpAssemblyBlock> LPCS_PUMP =
-            BLOCKS.register("lpcs_pump", () -> new PumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.LPCS));
+            BLOCKS.register("lpcs_pump", () -> new ModernPumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.LPCS));
 
     /**
      * Residual Heat Removal, in LPCI mode. The largest flow and the softest
@@ -210,7 +213,7 @@ public final class BwrBlocks {
      * there is — it cannot do both at once.
      */
     public static final DeferredBlock<PumpAssemblyBlock> RHR_PUMP =
-            BLOCKS.register("rhr_pump", () -> new PumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.RHR));
+            BLOCKS.register("rhr_pump", () -> new ModernPumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.RHR));
 
     /**
      * Standby Liquid Control. Positive displacement, 43 gpm of sodium
@@ -252,7 +255,7 @@ public final class BwrBlocks {
      */
     public static final DeferredBlock<PumpAssemblyBlock> MOTOR_FEED_PUMP =
             BLOCKS.register("motor_feed_pump",
-                    () -> new PumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.MOTOR_FEED));
+                    () -> new ModernPumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.MOTOR_FEED));
 
     /**
      * Turbine-driven reactor feed pump — the RFPT. No electrical load at all,
@@ -264,13 +267,25 @@ public final class BwrBlocks {
      */
     public static final DeferredBlock<PumpAssemblyBlock> TURBINE_FEED_PUMP =
             BLOCKS.register("turbine_feed_pump",
-                    () -> new PumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.TURBINE_FEED));
+                    () -> new ModernPumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.TURBINE_FEED));
 
     /** Full-size exterior assemblies imported from the supplied STEP files. */
     public static final DeferredBlock<TurbineAssemblyBlock> RCIC_TWL =
             BLOCKS.register("rcic_twl", () -> new TurbineAssemblyBlock(machine(), false));
     public static final DeferredBlock<TurbineAssemblyBlock> HPCI_TURBINE =
             BLOCKS.register("hpci_turbine", () -> new TurbineAssemblyBlock(machine(), true));
+
+    public static final DeferredBlock<PowerModuleBlock> HP_TURBINE =
+            BLOCKS.register("hp_turbine", () -> new PowerModuleBlock(machine(), PumpAssemblyBlock.Kind.HP_TURBINE));
+    public static final DeferredBlock<PowerModuleBlock> LP_TURBINE =
+            BLOCKS.register("lp_turbine", () -> new PowerModuleBlock(machine(), PumpAssemblyBlock.Kind.LP_TURBINE));
+    public static final DeferredBlock<PowerModuleBlock> NUCLEAR_GENERATOR =
+            BLOCKS.register("nuclear_generator", () -> new PowerModuleBlock(machine(), PumpAssemblyBlock.Kind.GENERATOR));
+
+    public static final DeferredBlock<TurbineValveBlock> STEAM_STOP_VALVE =
+            BLOCKS.register("steam_stop_valve", () -> new TurbineValveBlock(machine()));
+    public static final DeferredBlock<TurbineValveBlock> TURBINE_CONTROL_VALVE =
+            BLOCKS.register("turbine_control_valve", () -> new TurbineValveBlock(machine()));
 
     // --- Suppression pool ---------------------------------------------
 

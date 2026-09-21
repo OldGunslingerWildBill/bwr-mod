@@ -128,6 +128,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     private int sinceSync;
     private ReactorState pendingRestore;
+    // Flow fractions in Core are relative to this saved reference. Keep it even
+    // while an unformed vessel holds a pending snapshot, then rebase on formation.
+    private double pendingRatedCoreFlowKgPerS = dev.bwr.core.thermal.VoidModel.RATED_CORE_FLOW_KG_PER_S;
 
     /**
      * The rod demand pattern as it was saved, held until a network exists to put
@@ -495,12 +498,14 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 // after the first there is nothing on disk left to restore from
                 // and the world in front of us is the only authority.
                 pendingRestore = core.toState();
+                pendingRatedCoreFlowKgPerS = core.getVoidModel().getRatedCoreFlowKgPerS();
                 pendingFuelRestore = writeCoreFuel();
                 pendingBoundaryRestore = BoundaryDamageNbt.write(core.getBoundaryStress());
                 pendingRodDemand = rodNetwork == null
                         ? null : rodNetwork.getCommandedNotchIndices();
             }
             core = new ReactorCore(config);
+            if (pendingRestore != null) core.getVoidModel().setRatedCoreFlowKgPerS(pendingRatedCoreFlowKgPerS);
             // A calibrated startup source, because a plant is built with one.
             // Before any restore: fromState carries the source strength the
             // reactor was saved with, and a saved reactor's source is its own.
@@ -558,6 +563,12 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             // gatherPumpFlow, including after a saved core is restored.
             core.getBoundaryStress().setPlantConfiguration(
                     BoundaryDamageNbt.configurationFor(0));
+        }
+
+        double ratedFlow=dev.bwr.mod.flow.RecirculationNetwork.sizing(found).ratedFlowKgPerS();
+        if (ratedFlow != core.getVoidModel().getRatedCoreFlowKgPerS()) {
+            core.setRatedCoreFlowKgPerS(ratedFlow);
+            lastPumpFlowFraction=Double.NaN;
         }
 
         // This is what makes rod i in the physics the same rod as drive i in
@@ -877,6 +888,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         tag.put("Pumps", pumps);
 
         tag.put("CoreFuel", core != null ? writeCoreFuel() : savedFuelOrEmpty());
+        tag.putDouble("RatedCoreFlowKgPerS", core != null
+                ? core.getVoidModel().getRatedCoreFlowKgPerS() : pendingRatedCoreFlowKgPerS);
 
         if (core != null) {
             tag.put("Core", ReactorStateNbt.write(core.toState()));
@@ -922,6 +935,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
 
         if (tag.contains("Core")) {
+            double savedRating=tag.getDouble("RatedCoreFlowKgPerS");
+            pendingRatedCoreFlowKgPerS=Double.isFinite(savedRating) && savedRating>0
+                    ? savedRating : dev.bwr.core.thermal.VoidModel.RATED_CORE_FLOW_KG_PER_S;
             ReactorState restored = ReactorStateNbt.read(tag.getCompound("Core"));
             // The structure has not been validated yet at load time, so the core
             // does not exist. Hold the snapshot until the first validation builds

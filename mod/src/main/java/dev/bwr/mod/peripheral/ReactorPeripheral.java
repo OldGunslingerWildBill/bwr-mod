@@ -91,6 +91,18 @@ public class ReactorPeripheral implements IPeripheral {
     @LuaFunction(mainThread = true)
     public int getInstalledInternalPumps() { return be.getInstalledInternalPumps(); }
 
+    /** Read-only volume-derived targets for normal jets and full-speed external drives. */
+    @LuaFunction(mainThread = true)
+    public java.util.Map<String,Object> getRecirculationSizing() {
+        var info=dev.bwr.mod.gui.ReactorConfigurationInfo.capture(be);
+        return java.util.Map.of("interiorVolumeBlocks",info.interiorVolume(),
+                "requiredJetAssemblies",info.requiredJets(),"requiredExternalPumps",info.requiredExternalPumps(),
+                "jetAssembliesPerPump",dev.bwr.core.flow.RecirculationSizing.JETS_PER_EXTERNAL_PUMP,
+                "requiredFlowKgPerS",info.requiredFlowKgPerS(),"availableFlowKgPerS",info.flowCeilingKgPerS(),
+                "matchedJetAssemblies",info.matchedJetAssemblies(),"unmatchedJetAssemblies",info.unmatchedJetAssemblies(),
+                "externalPumps",info.externalPumps(),"internalPumps",info.internalPumps());
+    }
+
     @Override
     public String getType() {
         return "bwr_reactor";

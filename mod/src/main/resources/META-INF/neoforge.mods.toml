@@ -7,6 +7,7 @@ issueTrackerURL = "https://github.com/"
 modId = "${modId}"
 version = "${modVersion}"
 displayName = "${modName}"
+logoFile = "logo.png"
 authors = "the Realistic BWR contributors"
 description = '''
 A physically-modelled boiling water reactor. Power is emergent from neutronics:

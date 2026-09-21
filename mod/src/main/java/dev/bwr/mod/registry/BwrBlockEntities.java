@@ -72,6 +72,14 @@ public final class BwrBlockEntities {
             () -> BlockEntityType.Builder.of(TurbineSteamOutletBlockEntity::new,
                     BwrBlocks.TURBINE_STEAM_OUTLET.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.steam.TurbineValveBlockEntity>> TURBINE_VALVE =
+            BLOCK_ENTITIES.register("turbine_valve", () -> BlockEntityType.Builder.of(dev.bwr.mod.steam.TurbineValveBlockEntity::new,
+                    BwrBlocks.STEAM_STOP_VALVE.get(), BwrBlocks.TURBINE_CONTROL_VALVE.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.power.PowerModuleBlockEntity>> POWER_MODULE =
+            BLOCK_ENTITIES.register("power_module", () -> BlockEntityType.Builder.of(dev.bwr.mod.power.PowerModuleBlockEntity::new,
+                    BwrBlocks.HP_TURBINE.get(), BwrBlocks.LP_TURBINE.get(), BwrBlocks.NUCLEAR_GENERATOR.get()).build(null));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FuelFabricatorBlockEntity>>
             FUEL_FABRICATOR = BLOCK_ENTITIES.register("fuel_fabricator",
             () -> BlockEntityType.Builder.of(FuelFabricatorBlockEntity::new,

@@ -13,6 +13,7 @@ run/
 !gradle/wrapper/gradle-wrapper.jar
 
 # IDE
+__pycache__/
 .idea/
 *.iml
 .vscode/

@@ -16,11 +16,11 @@ harvesting returns one item. Machines cannot be pushed by pistons.
 
 | Block ID | Width × height × depth, blocks |
 |---|---|
-| `lpcs_pump` | 4 × 5 × 2 |
-| `rhr_pump` (also LPCI) | 6 × 3 × 3 |
-| `hpcs_pump` | 8 × 4 × 3 |
-| `motor_feed_pump` | 6 × 2 × 2 |
-| `turbine_feed_pump` | 7 × 3 × 3 |
+| `lpcs_pump` | 5 × 5 × 3 |
+| `rhr_pump` (also LPCI) | 7 × 3 × 3 |
+| `hpcs_pump` | 9 × 4 × 3 |
+| `motor_feed_pump` | 7 × 3 × 3 |
+| `turbine_feed_pump` | 9 × 3 × 3 |
 | `jet_pump` (a pair) | 1 × 6 × 1 |
 | `rip_pump` | 2 × 5 × 2 |
 | `recirculation_pump` (DVSS) | 5 × 10 × 5 |
@@ -32,12 +32,19 @@ saved block through neighbouring equipment. The old compact motor/ECCS machines
 retain their earlier proximity-based water behavior. Compact jet blocks must be
 replaced by full paired jets to contribute to the new recirculation circuit.
 
+The five modernized electric/feedwater machines place their controller at the
+**center of the base**, so leave space on both sides of the clicked block.
+Previously assembled versions keep their old footprint, ports and controller
+data. Pick up and replace a machine to get its new size and round flanges, then
+reconnect its pipes. See [Modern pumps and pipes](MODERN-PUMPS-AND-PIPES.md).
+
 ## Ports
 
 Right-click any machine cell to open its control panel. Water pipes connect to water flanges, and
-steam pipes connect to steam flanges. Short visible adapters bridge the model's original nozzle
-to the Minecraft grid, except on the internal jet pump, which has no external adapters. Feedwater suction and discharge adapters have a gap between
-their risers so the two circuits can be built separately.
+steam pipes connect to steam flanges. The five modernized pump models have
+straight round necks and flanges centered on block faces, without offset green
+adapters. Feedwater suction and discharge have a gap between their risers so the
+two circuits can be built separately. The internal jet has no external adapters.
 
 Coordinates below are `(x,y,z)` offsets from the placed controller for a machine
 with `facing=north`: +x is east, +y is up, +z is south. Rotate both the offsets and
@@ -46,18 +53,18 @@ listed machine cell.
 
 | Machine | Port | Cell | Outward face |
 |---|---|---|---|
-| LPCS | Water suction | (0,0,1) | West |
-| LPCS | Water discharge | (3,0,1) | East |
-| RHR/LPCI | Water suction | (0,1,1) | West |
-| RHR/LPCI | Water discharge | (1,2,1) | Up |
-| HPCS | Water suction | (0,1,1) | West |
-| HPCS | Water discharge | (1,3,1) | Up |
-| Motor feedwater | Water suction | (1,1,1) | Up |
-| Motor feedwater | Water discharge | (3,1,1) | Up |
-| Turbine feedwater | Water suction | (1,2,1) | Up |
-| Turbine feedwater | Water discharge | (3,2,1) | Up |
-| Turbine feedwater | Steam inlet | (5,2,1) | Up |
-| Turbine feedwater | Steam exhaust | (5,1,2) | South |
+| LPCS | Water suction | (-2,0,0) | West |
+| LPCS | Water discharge | (2,0,0) | East |
+| RHR/LPCI | Water suction | (-3,1,0) | West |
+| RHR/LPCI | Water discharge | (-2,2,0) | Up |
+| HPCS | Water suction | (-4,1,0) | West |
+| HPCS | Water discharge | (-2,3,0) | Up |
+| Motor feedwater | Water suction | (-2,2,0) | Up |
+| Motor feedwater | Water discharge | (0,2,0) | Up |
+| Turbine feedwater | Water suction | (-3,2,0) | Up |
+| Turbine feedwater | Water discharge | (-1,2,0) | Up |
+| Turbine feedwater | Steam inlet | (2,2,0) | Up |
+| Turbine feedwater | Steam exhaust | (3,1,1) | South |
 | DVSS RCP | Water suction | (0,0,2) | South |
 | DVSS RCP | Water discharge | (0,2,-2) | North |
 | Paired jet / RIP | No external water ports | Internal manifold / bottom-head mounting | — |
@@ -101,7 +108,7 @@ Disconnecting the pipe does not make it draw steam directly from a nearby reacto
 Pick up and replace that outlet to return it to main-steam service. Its right-click
 status identifies exhaust service. No condenser block is added.
 
-Use the blue water pipe for pressure-side discharge and external recirculation.
+Use High-Pressure Water Pipe for pressure-side discharge and external recirculation.
 Ordinary water pipes are allowed at pump suction. Use High-Pressure Steam Pipe
 (`bwr:pressurised_tube`) for steam inlet and exhaust only. See [WATER-PLUMBING.md](WATER-PLUMBING.md) for upgrade instructions.
 
@@ -114,12 +121,15 @@ shell, at the interior perimeter, and align them in the same row across opposing
 walls with opposite facings. The old diagonal arrangement also remains supported.
 Saved two-column jets retain their footprint until picked up and replaced.
 
-A complete external loop provides weak circulation without jets (5% per RCP).
-A normal opposing set raises the manifold capacity to 20%; ten matched assemblies
-and two full-speed RCPs reach 100%. Speed and connected drive capacity limit flow.
+A complete external loop provides weak circulation without jets. Required flow
+scales with interior volume, including height, starting at 12 normal matched
+assemblies for the smallest vessel. Each RCP supports ten normal assemblies'
+worth of assisted core flow; extra jets cannot bypass that limit. See the volume
+table in [RECIRCULATION.md](RECIRCULATION.md). Speed and connected drive capacity limit flow.
 The original `getConnectedJetPairs()` Lua name now reports **matched assemblies**,
 not the number of opposing sets. `getRecirculationCapacity()` remains a 0–1
 hardware ceiling. The reactor INFO tab also shows unmatched assemblies and pumps.
+`getRecirculationSizing()` exposes the volume-derived targets and capacities.
 
 ### Reactor internal pump
 
@@ -132,7 +142,8 @@ drives clear. For a north-facing model on the west rim, put the controller in th
 west shell column so the model's east column enters the interior. It needs no external drive-water pipe and its
 mechanical mounting flange is not a pipe port.
 
-Each complete mounted RIP contributes up to **10% × actual shaft speed**, powered
+Each complete mounted RIP contributes up to **1.2 normal jet equivalents × actual shaft speed**
+(10% of the smallest reactor's rating), powered
 and controlled through the existing recirculation-pump GUI/peripheral. It also
 updates the reactor's existing internal-pump boundary configuration. The new
 crafting recipe uses an external recirculation pump, three vessel blocks and a
@@ -143,11 +154,14 @@ copper block.
 Source archive SHA-256:
 `2324ff88b74351fcf5c34756b12a1ef7c8b07261bcadf1129d7c8321f574b3a8`.
 
-`tools-import-pump-pack.py <archive.zip>` reproduces the runtime assets: supplied
-clipped OBJ meshes, the supplied atlas, grid adapters (except jets), compact inventory models,
-blockstates, root-only loot tables and collision/port manifests. The Blender
-project and full source archive are not needed by Minecraft. Rendering uses the
-built-in NeoForge OBJ loader. No new runtime mod dependency is added.
+`tools-import-pump-pack.py <archive.zip>` reproduces the legacy source-pack assets,
+then reapplies the narrow jet and modern pump/pipe exports. The editable modern
+Blender project and its exported source meshes are in `art/models/modern/`.
+`python tools-export-modern.py --check` verifies the modern runtime meshes,
+materials, textures, blockstates, inventory models, loot and port manifests.
+The exporter preserves UVs and clips each pump into its owned cells. Blender and
+the source archive are not needed by Minecraft; rendering uses NeoForge's OBJ
+loader without an additional runtime dependency.
 
 The pack's equipment sizes and arrangements are visual reference estimates;
 existing motor/feedwater/ECCS nameplates are preserved. The pack contains no new
