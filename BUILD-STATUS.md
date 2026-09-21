@@ -1,5 +1,37 @@
 # Build Status
 
+## 2026-09-21 — README, attribution and source-available licensing
+
+Updated the README for the current steam-valve controls, modular turbine
+layout, migration steps, model sources, validation and distribution terms.
+Added the Realistic BWR Source-Available License 1.0 and owner attribution.
+It permits private edits and unchanged redistribution with credit, while
+modified redistribution and reuse in another distributed project require
+prior written approval. Earlier MIT/MPL grants through `19a7424` remain valid;
+their original texts are preserved in `licenses/legacy/`.
+
+The mod, nested core and core source JARs include the license, attribution,
+third-party notices and historical license texts. Mod metadata names
+OldGunslingerWildBill and the new license identifier.
+
+Verification:
+
+- `:mod:build :core:sourcesJar` passed, including the protection-logic check.
+- The JAR audit passed for 257 classes and both project JARs, checking exact
+  notice contents, metadata and the existing dependency/dev-test exclusions.
+- Historical license texts match Git history; README/document links and
+  source-JAR notices passed. An in-memory JAR missing attribution was correctly
+  rejected by the auditor. The whitespace check passed for edited material;
+  the archived MPL text retains its original trailing space on line 38.
+- Gameplay code is unchanged; runtime/client scenarios were not rerun for
+  this documentation and packaging update. Prior results appear below.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **14,286,663 bytes**.
+
+SHA-256: `5192781CD78A0EFF00E8BACC6EA9BACA4391AE38076E468F8DF5E3B0F3D2760E`.
+
+Build log: `tmp/license-readme-build.log`.
+
 ## 2026-09-21 — inline turbine steam valves and Realistic BWR logo
 
 Added Blender-authored `steam_stop_valve` and `turbine_control_valve` blocks,

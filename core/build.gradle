@@ -1,5 +1,5 @@
 // Pure-Java physics module. No Minecraft, no NeoForge, no mod loader.
-// Licensed MIT so the reactor model is reusable outside this mod.
+// Current licensing: ../LICENSE. Earlier MIT grants remain valid.
 plugins {
     id 'java-library'
 }
@@ -12,6 +12,14 @@ java {
         languageVersion = JavaLanguageVersion.of(project.property('javaVersion') as int)
     }
     withSourcesJar()
+}
+
+// Keep complete terms with standalone and nested core artifacts.
+tasks.withType(Jar).configureEach {
+    from(rootProject.file('LICENSE')) { into 'META-INF' }
+    from(rootProject.file('NOTICE')) { into 'META-INF' }
+    from(rootProject.file('THIRD-PARTY-NOTICES.md')) { into 'META-INF' }
+    from(rootProject.file('licenses/legacy')) { into 'META-INF/licenses/legacy' }
 }
 
 repositories {

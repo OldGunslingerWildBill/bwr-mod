@@ -1,5 +1,30 @@
 # Agent Handoff
 
+## 2026-09-21: README, credit and distribution permissions
+
+User requested a current README and approval/credit requirements for code
+redistribution. The README now covers physical valve control, plant setup,
+module specifications, existing-world migration, model sources and validation.
+
+Root `LICENSE` is Realistic BWR Source-Available License 1.0. Private edits
+and unchanged distribution with attribution are permitted; modified versions
+and reuse in another distributed project need prior written approval from
+OldGunslingerWildBill. Do not describe these restrictions as OSI open source.
+The license explicitly preserves earlier MIT/MPL rights through `19a7424`;
+it cannot withdraw those grants. Original texts are in `licenses/legacy/`.
+`NOTICE` and `THIRD-PARTY-NOTICES.md` preserve attribution and explain scope.
+
+Core/mod JAR tasks now embed all legal notices, including core sources and the
+nested core JAR. Metadata carries the owner, project URL and custom license
+identifier. `tools-check-jar.py` checks notice content and metadata as well as
+the existing packaging exclusions; it now requires Python 3.11+ (`tomllib`).
+
+Build, JAR audit, source-JAR notices, historical text comparison, documentation
+links and a missing-notice rejection check passed. No gameplay logic changed.
+Current artifact hash and scope of testing are in BUILD-STATUS. The prior
+gameplay/model work was pushed to `github/main` as `19a7424`; this follow-up
+is included in the user's authorized GitHub update.
+
 ## 2026-09-21: physical steam admission valves and branding
 
 Latest user requested stop valves, one fine upstream steam-control valve for

@@ -5,7 +5,7 @@ Run after `gradle build`:
 
     python tools-check-jar.py
 
-Exits non-zero on any violation. Three things are checked.
+Exits non-zero on any violation. Four things are checked.
 
 1. ZERO CC:Tweaked classes.  CC:Tweaked's API is partly LicenseRef-CCPL, which
    permits redistribution only "unmodified and in full", so it must never be
@@ -22,6 +22,10 @@ Exits non-zero on any violation. Three things are checked.
    exercise the peripheral at runtime and has no business in a player's jar --
    and it is the one place outside `peripheral/` that names a CC type.
 
+4. Our mod and nested core JARs carry the current license, attribution,
+   third-party notices and historical licenses. Mod metadata names the current
+   license and project owner.
+
 The scan is at the *bytecode* level, not by filename: every class in the jar has
 its constant pool read, so a reference survives even if the class that makes it
 is named something innocuous. Nested jarJar jars are opened and scanned too.
@@ -31,6 +35,8 @@ import io
 import struct
 import sys
 import zipfile
+from pathlib import Path
+import tomllib
 
 MOD_JAR = "mod/build/libs/mod-0.1.0-SNAPSHOT.jar"
 
@@ -75,6 +81,24 @@ def constant_pool_strings(data):
 
 def scan(jar_bytes, origin, problems, counters):
     with zipfile.ZipFile(io.BytesIO(jar_bytes)) as z:
+        if any(name.startswith('dev/bwr/') for name in z.namelist()):
+            required = ['LICENSE', 'NOTICE', 'THIRD-PARTY-NOTICES.md',
+                        'licenses/legacy/core-MIT.txt', 'licenses/legacy/mod-MPL-2.0.txt',
+                        'licenses/legacy/PREVIOUS-LICENSING.txt']
+            for source in required:
+                entry = 'META-INF/' + source
+                if entry not in z.namelist():
+                    problems.append(f'{origin}: missing {entry}')
+                elif z.read(entry) != Path(source).read_bytes():
+                    problems.append(f'{origin}: stale {entry}')
+            counters['licensed_jars'] = counters.get('licensed_jars', 0) + 1
+        if 'META-INF/neoforge.mods.toml' in z.namelist():
+            meta = tomllib.loads(z.read('META-INF/neoforge.mods.toml').decode('utf-8'))
+            expected = next(line.split('=', 1)[1].strip() for line in Path('gradle.properties').read_text().splitlines() if line.startswith('modLicense='))
+            if meta.get('license') != expected:
+                problems.append(f'{origin}: incorrect mod license metadata')
+            if not any(m.get('modId') == 'bwr' and 'OldGunslingerWildBill' in m.get('authors', '') for m in meta.get('mods', [])):
+                problems.append(f'{origin}: missing project-owner attribution in mod metadata')
         for name in z.namelist():
             for prefix, why in FORBIDDEN_PACKAGES.items():
                 if name.startswith(prefix):
@@ -119,6 +143,7 @@ def main():
 
     print(f"scanned {counters['classes']} class files in {MOD_JAR} "
           f"(including nested jarJar jars)")
+    print(f"  project JARs checked for license and attribution: {counters.get('licensed_jars', 0)}")
     for prefix, why in FORBIDDEN_PREFIXES.items():
         holders = counters.get("refs", {}).get(prefix, [])
         bundled = sum(1 for p in problems if f"bundled class {prefix}" in p)

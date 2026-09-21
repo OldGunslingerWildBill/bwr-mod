@@ -1,14 +1,15 @@
 modLoader = "javafml"
 loaderVersion = "[4,)"
 license = "${modLicense}"
-issueTrackerURL = "https://github.com/"
+issueTrackerURL = "https://github.com/OldGunslingerWildBill/bwr-mod/issues"
 
 [[mods]]
 modId = "${modId}"
 version = "${modVersion}"
 displayName = "${modName}"
 logoFile = "logo.png"
-authors = "the Realistic BWR contributors"
+authors = "OldGunslingerWildBill and contributors"
+displayURL = "https://github.com/OldGunslingerWildBill/bwr-mod"
 description = '''
 A physically-modelled boiling water reactor. Power is emergent from neutronics:
 you set rod position and recirculation flow, and the physics decides what the

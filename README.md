@@ -1,13 +1,33 @@
 # Realistic BWR
 
-![Realistic BWR](mod/src/main/resources/logo.png)
+<p align="center"><img src="mod/src/main/resources/logo.png" alt="Realistic BWR" width="420"></p>
+
+**By [OldGunslingerWildBill](https://github.com/OldGunslingerWildBill)**
 
 A working **Minecraft 1.21.1 / NeoForge** mod that adds a physically modeled
 boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-SNAPSHOT`, in active development.
+**Current version:** `0.1.0-SNAPSHOT` — development build, updated September 21, 2026.
+
+| Platform | Required version |
+| --- | --- |
+| Minecraft | 1.21.1 |
+| NeoForge | 21.1.248 |
+| Java | 21 |
+| Optional integrations | Mekanism and CC:Tweaked, installed separately |
+
+The current update adds modular HP/LP turbine trains, generators, physical
+steam stop/control valves, modern pump connections, dyeable pipes and
+volume-based recirculation. **Turbine admission is now controlled at the
+upstream valve**, rather than separately in each turbine's panel.
+
+Source is publicly readable under the custom
+[Realistic BWR Source-Available License](LICENSE). Modified redistribution
+and copying code/assets into another project require written approval, subject
+to the preserved rights for earlier MIT/MPL releases. Permitted redistribution
+must credit **OldGunslingerWildBill**. See [license and credit](#license-and-credit).
 
 ## What is implemented
 
@@ -56,6 +76,62 @@ flow, and the reactor responds. There is no commanded burn rate.
 The mod provides hardware and physics. The player provides control logic:
 automatic trips, ECCS actuation, and protection sequences are not built in.
 Manual controls and the scram actuator remain available.
+
+## Build a working steam plant
+
+```text
+RPV steam outlet
+  -> Steam Stop Valve -> Turbine Steam Control Valve -> HP inlet header
+                                                          |       |
+                                                         HP      HP
+                                                          |       |
+                                                          +---+---+
+                                                       crossover header
+                                                         | | | |
+                                                        LP LP LP LP
+                                                         | | | |
+                                                    condensate return
+                                                          |
+                                        storage tank -> feedwater pump
+                                                          |
+                                                RPV Water Injection Port
+```
+
+1. Place turbine sections and a generator with **touching, aligned end shafts
+   at the same height**. Each module is one large placeable object. Steam pipes
+   connect the sections separately from the shafts.
+2. Feed the HP top inlets through a common steam header. Place the stop and
+   control valves before the branch if one valve should control all HP sections.
+   Use **High-Pressure Steam Pipe** at steam ports.
+3. Pipe HP side exhausts into LP top inlets. Route LP water outlets to storage
+   or feedwater suction using **Mekanism Mechanical Pipes** or the supported
+   water network. Return pressure-side water through BWR High-Pressure Water
+   Pipe and an RPV Water Injection Port.
+4. Connect an energy consumer or storage to the generator's **copper terminal**.
+   A full energy buffer, full condensate buffer or blocked exhaust limits flow.
+5. Right-click the valves: **new valves start closed**. Open the stop valve,
+   then adjust the control valve in **0.1% steps**. HP/LP panels report operation;
+   they no longer have local admission settings or Start/Stop buttons.
+
+| Module | Width × height × length | Game capacity |
+| --- | --- | --- |
+| TX-10 Style HP Turbine | 5 × 5 × 9 | Up to 2,200 kg/s |
+| TX-10 Style LP Turbine | 7 × 5 × 7 | Up to 750 kg/s |
+| TX-NLCH Style Nuclear Generator | 5 × 5 × 9 | Up to 1,500 MW electrical |
+
+Valve opening controls steam supply, not a fixed electrical power percentage.
+HP sections share that supply, and LP sections consume their actual exhaust.
+Stored downstream steam can continue expanding briefly after the stop closes.
+The stop valve takes 0.5 seconds for a full stroke; the control valve takes two.
+
+LP sections currently provide **temporary built-in condensation**, returning
+water at a displayed 40 °C. A separate condenser and moisture separator/reheater
+are future work. Steam temperatures are saturation estimates; full plant-wide
+water-temperature transport is not implemented. These are game-scale models,
+not manufacturer performance simulations.
+
+See [steam valves and their CC API](STEAM-VALVES.md) and
+[modular turbines](MODULAR-TURBINES.md) for the full connection and operating guide.
 
 ## Reactor size limits
 
@@ -149,6 +225,12 @@ the volume rule, current INFO/CC readouts and upgrade details.
 
 ## Existing worlds
 
+- **Turbine control migration:** older HP/LP admission and running settings are
+  ignored. Existing directly fed sections now use available steam automatically.
+  Install upstream stop/control valves before operating the updated plant.
+  Stored steam, water and energy survive the update. CC scripts must replace
+  turbine `setAdmission` / `setRunning` calls with valve `setPosition`, `open`
+  and `close` calls. [Migration details](STEAM-VALVES.md#computercraft).
 - Saved compact pumps and older DVSS assemblies retain their original footprint
   and controls. Pick up and replace them to use the current full-size models,
   then reconnect their defined ports.
@@ -194,10 +276,16 @@ not committed.
 - `mod/` — NeoForge blocks, screens, networking, and integrations.
 - `art/models/dvss/` — editable Blender models, source meshes, and previews.
 - `art/models/modern/` — five revised pump models and dyeable pipe fittings in Blender.
+- `art/models/power_turbines/` — editable HP, LP and generator Blender scenes.
+- `art/models/steam_valves/` — editable stop/control valves and in-game previews.
 - `tools-export-dvss.py` / `tools-narrow-jet.py` / `tools-export-modern.py` — reproducible game assets;
   pass `--check` to verify generated output.
+- `tools-export-power-turbines.py` / `tools-export-steam-valves.py` — turbine and valve exporters;
+  both also support `--check`.
 
 Useful checks:
+
+The Python audit/export commands below require Python 3.11 or newer.
 
 ```powershell
 .\gradlew.bat :core:check
@@ -206,28 +294,24 @@ Useful checks:
 .\gradlew.bat :mod:runTurbineModelCheck -PbwrPowerPanelCheck
 python tools-audit-assets.py
 python tools-check-jar.py
+python tools-export-steam-valves.py --check
 ```
 
-The modular turbine update passed **five turbine physics tests**, **15 main
-turbine runtime scenarios**, **73 pump scenarios**, the 96 RCIC/HPCI assembly
-scenarios and both older turbine plumbing scenarios. Client checks cover all
-three new models in four rotations, the connected train, and synchronized
-admission/power panels. The asset and JAR audits pass.
+The steam-valve gameplay update passed **12 valve scenarios**, **15 main-turbine
+scenarios**, **73 pump scenarios**, **96 RCIC/HPCI assembly scenarios**, two
+earlier plumbing scenarios and five focused turbine-physics tests. Actual
+client checks covered the models, connected train, readout panels and valve
+commands, including a 65.3% setting and zero flow after stop-valve closure.
 
-The ten-assembly-per-pump adjustment passed **six core sizing tests**, **73 pump
-runtime scenarios**, all 96 RCIC/HPCI assembly scenarios, both turbine plumbing
-scenarios, the build and JAR audit. The preceding volume/recirculation update
-passed **24 targeted core tests**, **73
-pump runtime scenarios**, all 96 RCIC/HPCI assembly scenarios, both turbine
-plumbing scenarios, client checks, visual inspection and the JAR audit. The
-model/pipe asset audit also passed in the preceding patch. The rod/jet update passed
-**160 core acceptance tests** and 12 targeted motion/save tests after its final
-restore refinement; the full acceptance suite was not rerun for this patch.
-Exact scope and artifact hashes are in
-[BUILD-STATUS.md](BUILD-STATUS.md).
+The README/license update changes documentation, attribution, metadata and
+packaged notices. Its build and JAR checks are separate from those gameplay
+tests. The full long-running core acceptance suite was not rerun for this
+documentation update. See [BUILD-STATUS.md](BUILD-STATUS.md) for exact scope,
+older verification results and artifact hashes.
 
 ## Further reading
 
+- [Steam stop/control valves, shared admission, and CC migration](STEAM-VALVES.md)
 - [Modular main turbines, generator, and temporary condensate return](MODULAR-TURBINES.md)
 - [Water plumbing, pump controls, and upgrade notes](WATER-PLUMBING.md)
 - [Pump model dimensions and port coordinates](PUMP-MODELS.md)
@@ -237,4 +321,39 @@ Exact scope and artifact hashes are in
 - [Continuous rod travel and persistence](ROD-MOTION.md)
 - [Design specification](SPEC.md) and [developer handoff](HANDOFF.md)
 
-License: [MPL-2.0 for the mod](mod/LICENSE) and [MIT for the physics core](core/LICENSE).
+## License and credit
+
+**Realistic BWR by OldGunslingerWildBill**
+
+Original project: <https://github.com/OldGunslingerWildBill/bwr-mod>
+
+Current original material uses the custom
+**[Realistic BWR Source-Available License 1.0](LICENSE)**. These approval
+restrictions mean it is **source-available**, not open source under the
+[Open Source Initiative definition](https://opensource.org/osd).
+
+| Use under the new license | Permission |
+| --- | --- |
+| Read, download, build, run, or edit privately | Allowed |
+| Share an unchanged project/release, including an unchanged JAR in a modpack | Allowed with credit and all required notices |
+| Publish modified source, modified forks/patches, or modified JARs | Owner's prior written approval required |
+| Copy or adapt project code/assets into another distributed project | Owner's prior written approval required |
+| Remove attribution or claim you created the original project | Not permitted |
+
+Every permitted redistribution must include [LICENSE](LICENSE) and
+[NOTICE](NOTICE), visibly credit **OldGunslingerWildBill**, and link to this
+repository. Approved changes must be identified separately. Credit is not a
+substitute for permission. Request written approval through the
+[GitHub issue tracker](https://github.com/OldGunslingerWildBill/bwr-mod/issues).
+
+**Earlier releases retain their rights.** Through commit
+[`19a7424`](https://github.com/OldGunslingerWildBill/bwr-mod/tree/19a742408e2cd7ef8cee42a26157e8662daa340b),
+the core was MIT and the mod was MPL-2.0. This change does not revoke those
+grants or prevent reuse of that previously released material under its earlier
+terms. The new restrictions cannot override an independent earlier license
+covering the same material. See [LICENSE §6](LICENSE) and
+[historical and third-party notices](THIRD-PARTY-NOTICES.md).
+
+Independent player-written Lua programs and unrelated mods remain their
+authors' work. Third-party components keep their own licenses. This summary
+does not replace the full license.

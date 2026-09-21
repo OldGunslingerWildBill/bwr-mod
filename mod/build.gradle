@@ -1,5 +1,5 @@
 // NeoForge mod module. Depends on :core for all physics.
-// Licensed MPL-2.0.
+// Current licensing: ../LICENSE. Earlier MPL-2.0 grants remain valid.
 plugins {
     id 'net.neoforged.moddev' version '2.0.143'
 }
@@ -144,6 +144,10 @@ dependencies {
 tasks.named('jar', Jar).configure {
     exclude 'dev/bwr/mod/devtest/**'
     exclude 'data/bwr/structure/empty.nbt'
+    from(rootProject.file('LICENSE')) { into 'META-INF' }
+    from(rootProject.file('NOTICE')) { into 'META-INF' }
+    from(rootProject.file('THIRD-PARTY-NOTICES.md')) { into 'META-INF' }
+    from(rootProject.file('licenses/legacy')) { into 'META-INF/licenses/legacy' }
 }
 
 tasks.named('processResources', ProcessResources).configure {

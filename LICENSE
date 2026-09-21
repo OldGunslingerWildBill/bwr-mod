@@ -1,61 +1,134 @@
-Realistic BWR — licensing
-=========================
+Realistic BWR Source-Available License 1.0
+========================================
 
-This project is open source under a two-module split. The boundary is the same
-one the architecture already draws: physics that has nothing to do with
-Minecraft, versus the mod that embeds it.
+Copyright (c) 2026 OldGunslingerWildBill, to the extent of rights owned or
+controlled by that copyright holder. Other copyright notices remain valid.
 
-  core/  — MIT.        See core/LICENSE
-  mod/   — MPL-2.0.    See mod/LICENSE
+Project: https://github.com/OldGunslingerWildBill/bwr-mod
+Owner and approval contact: https://github.com/OldGunslingerWildBill
+License identifier: LicenseRef-Realistic-BWR-Source-Available-1.0
+Introduced: 2026-09-21
 
-Why the split
--------------
+This is a custom source-available license, not an OSI-approved open-source
+license. Public source access does not grant unrestricted redistribution of
+modified versions. The historical-license exception in section 6 is part of
+these terms and must not be omitted from descriptions of them.
 
-core/ is a pure-Java boiling water reactor model with zero Minecraft imports.
-It is independently useful outside this mod, so MIT keeps it maximally
-reusable — anyone can take the reactor physics for a simulator, a teaching
-tool, or another game.
+1. Scope
+--------
 
-mod/ is the NeoForge integration. MPL-2.0 is file-level copyleft: improvements
-to these files come back, but the licence does not reach players' Lua scripts
-or other mods sharing a pack. That matters because stronger copyleft creates
-real friction in modpack distribution. It is also what CC:Tweaked chose for its
-own newer code.
+"Owner" means OldGunslingerWildBill. "Covered Material" means the original
+Realistic BWR source code, original models and artwork, build/export tools,
+and documentation offered with this license, only to the extent the Owner
+owns or is authorized to license that material. It includes the core/ and mod/
+modules and compiled forms of Covered Material.
 
-Player-written code
--------------------
+Third-party material and material under a separate applicable license are
+excluded. This license does not claim ownership of Minecraft, dependencies,
+manufacturer references, other people's artwork, or independent code.
 
-This mod deliberately ships no control logic. Every scram channel, setpoint,
-protection scheme, and emergency-system actuation sequence is written by the
-player in CC:Tweaked Lua.
+2. Use and private modification
+-------------------------------
 
-Lua programs written by players are the players' own work. They are not
-derivative works of this mod, and neither licence above applies to them.
-Players own what they write, without condition.
+You may read, download, make local copies of, build, and run Covered Material.
+You may edit it privately for your own use and run it on your own servers.
+Ordinary gameplay on a server is not redistribution of its source or binaries.
+You may send a proposed patch privately to the Owner for review. These
+permissions do not authorize publishing a modified version.
 
-Third-party dependencies
-------------------------
+3. Redistribution and reuse
+--------------------------
 
-CC:Tweaked — compile-time only, and deliberately never bundled. Parts of its
-API remain under LicenseRef-CCPL, which permits redistribution only
-"unmodified and in full"; IPeripheral.java still carries that header. This
-project therefore depends on it via compileOnly and players install
-CC:Tweaked themselves. Do not vendor, shade, or copy CC:Tweaked source into
-this tree.
+You may redistribute an unchanged copy of the complete project or an unchanged
+Realistic BWR release, including an unmodified build from unchanged source,
+if you comply with section 4 and preserve applicable license notices. An
+unmodified Realistic BWR JAR may be included in a modpack on those conditions;
+this license does not apply to unrelated modpack contents.
 
-Mekanism — MIT. A hard runtime dependency, used for the fuel-crafting and
-steam-turbine boundaries.
+Prior express written approval from the Owner is required before you copy for
+others, publish, upload, sell, sublicense, or otherwise redistribute:
 
-NeoForge — LGPL-2.1. Linking against it does not affect this project's
-licensing.
+  a. a modified version of Covered Material, including modified source, a
+     modified fork, a patch containing Covered Material, or a modified binary;
+     or
+  b. copyrightable portions extracted for reuse in another project, including
+     copied or adapted code or assets.
 
-Reference data
---------------
+Credit alone is not approval. A request, silence, or public availability is
+not approval. Approval must identify the work and the redistribution or reuse
+being authorized. Written approval from the Owner's GitHub account is an
+acceptable form of approval. Its scope and additional conditions apply; it
+does not grant permission for unrelated uses.
 
-Plant constants in REFERENCE-DATA.md are drawn from the U.S. Nuclear
-Regulatory Commission's Boiling Water Reactor Systems Manual, BWR/6 Design
-(ADAMS accession ML20090J537), a public United States Government document.
-Physical facts — pressures, flow rates, geometry, delayed neutron data — are
-not subject to copyright. The source document itself is deliberately not
-committed to this repository; it is cited by accession number so anyone can
-retrieve it from the NRC directly.
+Request approval through the project's GitHub issue tracker:
+https://github.com/OldGunslingerWildBill/bwr-mod/issues
+
+4. Attribution and accurate authorship
+-------------------------------------
+
+Every redistribution authorized by this license must:
+
+  a. include LICENSE and NOTICE, preserving applicable copyright, attribution,
+     historical-license and third-party notices;
+  b. visibly credit "Realistic BWR by OldGunslingerWildBill" and link to
+     https://github.com/OldGunslingerWildBill/bwr-mod in the distribution's
+     README, credits or description, as well as with the distributed files;
+     and
+  c. identify approved modifications and their authors accurately, and mark
+     the distribution unofficial unless the Owner approves official status
+     in writing.
+
+You must not remove attribution, claim authorship of the original Realistic
+BWR work, pass off a copy as your original work, or imply endorsement of an
+unapproved version. You may take accurate credit for your own contributions
+without obscuring the original project's authorship. Credit to the Owner
+does not replace credit owed to another copyright holder.
+
+5. Independent work and platform rights
+--------------------------------------
+
+Independent player-written Lua programs, configurations, other mods and works
+that do not copy or adapt Covered Material are not restricted by this license.
+Physical facts and general ideas are not claimed as exclusive property.
+No trademark rights are granted except use of the project name and supplied
+branding needed to identify an authorized distribution accurately.
+
+Nothing here limits rights that cannot lawfully be restricted, including
+applicable fair use/fair dealing, or minimum viewing and forking rights
+already granted under GitHub's applicable terms for a public repository.
+
+6. Earlier releases and third-party rights
+-----------------------------------------
+
+This change does not revoke, replace, or narrow permissions already granted
+under another license. Through commit
+19a742408e2cd7ef8cee42a26157e8662daa340b, the physics core was offered under MIT
+and the mod integration under MPL-2.0. Recipients may continue exercising the
+rights those licenses grant over that previously released material, including
+modification and redistribution in accordance with their terms.
+
+The restrictions above apply only to rights offered under this license; they
+do not override an independent MIT, MPL, or other grant covering the same
+material. New material is offered under this license unless expressly stated
+otherwise. Prior notices and license texts are retained in licenses/legacy/.
+Their preservation does not grant MIT/MPL rights to newly added material.
+
+Third-party code, libraries, tools, references and assets keep their own
+licenses and notices. See THIRD-PARTY-NOTICES.md. The Owner cannot authorize
+uses of third-party material beyond the rights the Owner actually holds.
+
+7. Warranty and liability
+-------------------------
+
+Covered Material is provided as-is and as-available, without warranties of any
+kind, to the extent permitted by applicable law. The Owner and contributors
+are not liable for damages or losses arising from its use or distribution,
+to the extent such liability may lawfully be excluded.
+
+8. Reserved rights
+------------------
+
+Permissions under this license are conditional on compliance with its terms.
+Rights not expressly granted are reserved. Additional permissions require a
+separate written agreement with the relevant rights holder. A later change
+to the project's license does not retroactively change an existing grant.
