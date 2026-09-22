@@ -87,10 +87,16 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
      * which is not part of the capability, so a neighbouring cable can never
      * siphon the buffer back out.
      */
-    private static final class MachineEnergy extends EnergyStorage {
+    private final class MachineEnergy extends EnergyStorage {
 
         MachineEnergy() {
             super(ENERGY_CAPACITY, ENERGY_CAPACITY / 10, 0);
+        }
+
+        @Override public int receiveEnergy(int amount, boolean simulate) {
+            int accepted=super.receiveEnergy(amount,simulate);
+            if(accepted>0 && !simulate) setChanged();
+            return accepted;
         }
 
         void drain(int amount) {

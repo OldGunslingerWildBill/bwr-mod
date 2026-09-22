@@ -42,6 +42,9 @@ public final class FuelTypes {
 
     private static volatile Map<String, FuelType> byName = index(FuelType.presets());
 
+    /** Immutable table identity lets each live core notice datapack replacement. */
+    public static Object revision() { return byName; }
+
     /**
      * Fallback when an itemstack names a fuel type this install does not have.
      *

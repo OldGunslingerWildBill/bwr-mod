@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "IPI",
+    "TCT",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "P": {
+      "item": "bwr:pressurised_tube"
+    },
+    "T": {
+      "item": "bwr:high_pressure_water_pipe"
+    },
+    "C": {
+      "item": "bwr:condensate_storage_tank"
+    }
+  },
+  "result": {
+    "id": "bwr:arabelle_condenser",
+    "count": 1
+  }
+}

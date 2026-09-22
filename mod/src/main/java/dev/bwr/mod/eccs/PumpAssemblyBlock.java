@@ -160,7 +160,7 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
         BlockState s=placementState().setValue(FACING,ctx.getHorizontalDirection().getOpposite());
         for(int i=0;i<cellCount(s);i++) {
             BlockPos p=ctx.getClickedPos().offset(TurbineAssemblyBlock.turn(cellOffset(s,i),s.getValue(FACING)));
-            if(!ctx.getLevel().isLoaded(p) || ctx.getLevel().isOutsideBuildHeight(p) || !ctx.getLevel().getWorldBorder().isWithinBounds(p)
+            if(!dev.bwr.mod.world.AssemblyAccess.permitted(ctx.getLevel(),ctx.getPlayer(),p)||!ctx.getLevel().isLoaded(p) || ctx.getLevel().isOutsideBuildHeight(p) || !ctx.getLevel().getWorldBorder().isWithinBounds(p)
                     || !ctx.getLevel().getBlockState(p).canBeReplaced() || !ctx.getLevel().isUnobstructed(s.setValue(CELL,i),p,CollisionContext.empty())) return null;
         }
         return s;
@@ -169,7 +169,7 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
         if(!isFull(s) || s.getValue(CELL)!=controllerCell(s)) return;
         for(int i=0;i<cellCount(s);i++) if(i!=controllerCell(s)) {
             BlockPos p=root.offset(TurbineAssemblyBlock.turn(cellOffset(s,i),s.getValue(FACING)));
-            if(!level.isLoaded(p) || !level.getBlockState(p).canBeReplaced()) { level.removeBlock(root,false); return; }
+            if(!dev.bwr.mod.world.AssemblyAccess.permitted(level,placer,p) || !level.isLoaded(p) || !level.getBlockState(p).canBeReplaced()) { level.removeBlock(root,false); return; }
         }
         for(int i=0;i<cellCount(s);i++) if(i!=controllerCell(s)) {
             BlockPos p=root.offset(TurbineAssemblyBlock.turn(cellOffset(s,i),s.getValue(FACING)));
@@ -185,6 +185,7 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
     @Override protected void tick(BlockState s,ServerLevel level,BlockPos pos,RandomSource random) {
         BlockPos root=origin(pos,s);
         if(level.isLoaded(root) && !owned(level.getBlockState(root),s,controllerCell(s))) { level.removeBlock(pos,false); return; }
+        if(dev.bwr.mod.world.AssemblyAccess.allLoaded(level,pos,s) && !complete(level,root,s)) { level.destroyBlock(root,true); return; }
         level.scheduleTick(pos,this,40);
     }
     @Override public BlockState playerWillDestroy(Level level,BlockPos pos,BlockState s,Player player) {

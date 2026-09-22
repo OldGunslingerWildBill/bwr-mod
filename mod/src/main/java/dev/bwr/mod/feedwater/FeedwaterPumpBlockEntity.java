@@ -102,6 +102,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
     private final FeedwaterDesign design;
     private final EccsPump pump;
     private final MachineEnergy energy;
+    private final AssemblyPlumbing.Cache plumbing = new AssemblyPlumbing.Cache();
 
     /**
      * The pump's own suction buffer. Water only — a feed pump is not a place to
@@ -243,8 +244,8 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
         final double dt=.05;
         var state=getBlockState();
         boolean complete=assembly.complete(level,getBlockPos(),state);
-        var inlet=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_SUCTION);
-        var discharge=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_DISCHARGE);
+        var inlet=plumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_SUCTION);
+        var discharge=plumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_DISCHARGE);
         var tank=complete ? AssemblyPlumbing.endpoint(level,inlet,CondensateStorageTankBlockEntity.class) : null;
         var delivery=complete ? AssemblyPlumbing.waterReceiver(level,discharge) : null;
         if(delivery!=null && !delivery.isFormed()) delivery=null;
@@ -260,22 +261,23 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
         pump.setElectricalPowerAvailableWatts(Math.min(EccsPower.wattsFromFePerTick(energy.getEnergyStored()),design.motorRatingWatts()));
         steamDrawKgPerS=0;
         if(design.drive()==PumpDesign.Drive.STEAM_TURBINE) {
-            var admission=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.STEAM_INLET);
-            var exhaust=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.STEAM_EXHAUST);
+            var admission=plumbing.trace(level,getBlockPos(),state,AssemblyPort.STEAM_INLET);
+            var exhaust=plumbing.trace(level,getBlockPos(),state,AssemblyPort.STEAM_EXHAUST);
             var nozzles=AssemblyPlumbing.nozzles(level,admission);
+            var steamPort=((ProcessAssembly)state.getBlock()).portPosition(getBlockPos(),state,AssemblyPort.STEAM_INLET);
             var source=AssemblyPlumbing.source(level,nozzles);
             var sink=complete?AssemblyPlumbing.endpoint(level,exhaust,TurbineSteamOutletBlockEntity.class):null;
             if(sink!=null) sink.connectPumpExhaust();
             double available=complete && source!=null && sink!=null && pump.isRunning()
-                    ? Math.min(nozzles.stream().mapToDouble(n -> n.getLastFlowKgPerS()).sum(),
-                        Math.min(design.maximumSteamKgPerS()*Math.min(admission.opening(),exhaust.opening()),sink.pumpExhaustCapacityKgPerS(level.getGameTime()))) : 0;
+                    ? Math.min(nozzles.stream().mapToDouble(n -> dev.bwr.mod.steam.SteamValveRouting.available(level,steamPort,n)).sum(),
+                         Math.min(design.maximumSteamKgPerS()*exhaust.opening(),sink.pumpExhaustCapacityKgPerS(level.getGameTime()))) : 0;
             pump.setSteamInletPressurePsig(source==null?0:source.core().getPressurePsig());
             pump.setExhaustPressurePsig(Saturation.psigFromPsia(FeedwaterDesign.DRIVE_EXHAUST_PSIA));
             pump.setSteamSupplyLimitKgPerS(available);
             double[] before=pump.toArray(); pump.step(dt);
             double wanted=pump.getSteamDemandKgPerS();
             for(var nozzle:nozzles) if(steamDrawKgPerS<wanted)
-                steamDrawKgPerS+=nozzle.claimFlowKgPerS(level.getGameTime(),wanted-steamDrawKgPerS);
+                steamDrawKgPerS+=dev.bwr.mod.steam.SteamValveRouting.claim(level,steamPort,nozzle,wanted-steamDrawKgPerS);
             if(steamDrawKgPerS+1e-12<wanted) { pump.fromArray(before); pump.setSteamSupplyLimitKgPerS(steamDrawKgPerS); pump.step(dt); }
             if(sink!=null) sink.receivePumpExhaustKgPerS(level.getGameTime(),steamDrawKgPerS);
         } else pump.step(dt);
@@ -383,6 +385,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
         for (BlockPos p : BlockPos.betweenClosed(
                 here.offset(-SEARCH_RADIUS, -SEARCH_RADIUS, -SEARCH_RADIUS),
                 here.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS))) {
+            if (!level.isLoaded(p)) continue;
             BlockState s = level.getBlockState(p);
             if (foundReactor == null && s.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
                 foundReactor = p.immutable();

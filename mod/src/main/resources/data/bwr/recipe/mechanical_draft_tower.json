@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "IPI",
+    "ICI",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:smooth_stone"
+    },
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    },
+    "C": {
+      "item": "minecraft:comparator"
+    }
+  },
+  "result": {
+    "id": "bwr:mechanical_draft_tower",
+    "count": 1
+  }
+}

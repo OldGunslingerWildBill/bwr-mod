@@ -1,5 +1,468 @@
 # Build Status
 
+## 2026-09-22 — Combined GitHub publication verification
+
+- GitHub main was b77cf00, matching the local base; no open pull request or
+  newer upstream branch needed merging.
+- The publication snapshot includes all accumulated models and gameplay work,
+  including the rounded reactor vessel and compact fuel/CRD layouts.
+- Reran the mod build, test registration (29 classes / 186 methods), and all
+  18 required Minecraft GameTests successfully. Existing hardware checks passed.
+- Resource audit: 2,183 JSON files, zero problems. Packaged-JAR audit passed.
+- The most recent complete physics run remains 186/186 passing; the published
+  GitHub workflow runs the full suite again from the committed snapshot.
+- Historical entries below describe the state at their original verification
+  time. The five R01–R05 re-audit findings remain unresolved.
+
+## 2026-09-22 — Rounded pressure vessel appearance
+
+- Original Blender components: barrel, dished lower head/skirt, proportional
+  domed head, bolted flange, welds and adapters to existing player-placed ports.
+- One controller renderer supports square and rectangular envelopes. The
+  rectangular build, collision and selection boundary remains; holding a
+  vessel block shows its outline. See PRESSURE-VESSEL.md.
+- Formation/break/repair and controller removal update shell visibility.
+  Live NeoForge data packets now update the same client mirror as chunk tags.
+  Ordinary vessel and pipe blocks gain no tickers or block entities.
+- 18/18 required GameTests passed, including compact-core and original audit
+  regressions; the existing pump, valve, condenser, cooling and tank checks passed.
+- Actual client: eight scenarios passed across four sizes, head opening,
+  broken/repaired shell, controller removal and material resolution. Screenshots
+  inspected; reference preview is `art/models/reactor_vessel/in-game.png`.
+- Export verification: 24 generated files matched. Resource audit: 2,183 JSONs,
+  zero problems. Build/design gate and packaged-JAR audit passed.
+- Core physics is unchanged in this pass; the earlier 186/186 full core result
+  below remains the latest physics run.
+
+JAR: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar` (19,786,248 bytes).
+SHA-256: `62D001C76ABB25D848820FE75DD418C997C3D6A89C91498FC6C98C07A379879A`.
+
+GitHub #1–#13 and #15–#18 now have `fixed` and `pending-push` labels.
+#14 has `pending-push` only, pending hosted CI publication/execution. Issue
+states remain open. The code and model changes have not been pushed in this pass.
+The separate R01–R05 re-audit findings remain outstanding.
+
+## 2026-09-22 — Compact logical fuel / physical CRD layout
+
+- New 17 × 17 vessels: 764 individually tracked fuel assemblies, 185 physical CRD blocks.
+- Symmetric masks for every supported footprint; minimum 88/21, maximum 1,476/357.
+- Versioned saves preserve legacy layouts, fuel exposure and rod demand. Compact
+  controllers retain their formed footprint to preserve physical blade IDs.
+- Shared horizontal CRD supply manifolds conserve water/FE; individual hardware
+  condition and continuous rod motion remain active.
+- Explicit fuel/drive maps in GUI protocol 2 and CC `getCoreLayout()`.
+- Refuelling and reactor summaries fit the larger layouts. Internal RIPs mount
+  in the unused corner spaces instead of occupying required drive columns.
+- See [COMPACT-CORE.md](COMPACT-CORE.md) for construction, migration and sizing.
+
+Verification:
+
+- Compact core tests: all 289 supported width/depth combinations, reference/max
+  inventory and physics restore, **3 passed**.
+- Minecraft: **18/18 required GameTests passed**, including original audit
+  regressions, actual CRD bindings, menu packet round trips, legacy broken saves,
+  peripheral fuel recovery and continuous rod travel across reload.
+- CC/Mekanism installed and absent: peripheral/startup checks **0 problems**,
+  seven permission scenarios passed.
+- Actual client: reference and maximum fuel/rod maps, refuelling screen, and
+  commands to the last physical drive passed; screenshots inspected.
+- Build, no-protection-logic gate, resource audit and JAR packaging audit passed.
+- Full `:core:check`: **186/186 passed**, 881.9 seconds, 29 registered classes.
+
+JAR: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar` (19,609,303 bytes).
+SHA-256: `3993EA7E474BE704B423C277322B344EA50B469142599A8EEB937A11AEBD380D`.
+
+The separate R01–R05 re-audit findings remain tracked in PHASE-ONE-REAUDIT.md.
+
+## 2026-09-22 — Intake, cooling-tower, LP exhaust and automatic tank revision
+
+- Screened intake parts retain water through waterlogging. Two exterior source-water
+  sides qualify; a solid lakebed is allowed. Isolated waterlogged parts cannot supply
+  themselves. The passive screen no longer displays motor/fan or cooling-tower rows.
+- Both towers were rebuilt in live Blender using real tower photo references.
+  Natural draft: concrete panel/pour detail, supports, walkway and distribution piping.
+  Circular induced draft: 19 animated fans, stacks, louvers, deck, rails and ladder.
+  Original editable Blender files and deterministic mesh exports are retained.
+  Existing towers preserve their saved assembly occupancy; ports and ratings are unchanged.
+- LP turbines have no water flange/capability or internal condensation. Residual
+  exhaust enters the matching compact condenser six blocks below, with the same
+  facing. Missing/full condensers block LP flow. Old LP water migrates without
+  losing fractional amounts when condenser capacity is available.
+- Complete player-built tank boxes automatically become cylinders: square odd
+  widths 3–15, height 3–24. A hollow shell is recommended. Formation preserves
+  combined available water and the exact number of paid blocks; the panel is
+  now read-only. Existing single-block and assembled tanks remain compatible.
+
+Validation of the resulting production sources:
+
+- Full `:core:check`: **183 passed, 0 failed**, 867.1 seconds, 28 registered classes.
+- `:mod:runTurbineGameTest`: **all 15 required tests passed**. Existing audit
+  regressions retained; runtime checks passed 73 pump, 16 power-module, 12 valve,
+  5 MSIV, 10 condenser, 27 cooling and 9 tank scenarios.
+- New regressions cover submerged placement/teardown water retention, solid
+  lakebed suction, isolated screen rejection, old tower layouts, completed/missing
+  tank roofs, obstruction rejection, exact block refunds, fractional tank water,
+  missing/full/dry/cooled condensers and cached condenser-port reconnection.
+- Dedicated peripheral checks: **zero problems** with integrations installed and
+  with both `-PbwrNoCC -PbwrNoMekanism`; **seven spawn-protection scenarios** pass
+  in each, including automatic tank formation.
+- Actual Minecraft client checks pass for the towers, all 19 rotors, ports,
+  underwater screen placement, passive intake GUI, automatically formed
+  minimum/medium/maximum tanks and the read-only tank GUI. Screenshots reviewed
+  and copied into the model directories. No player world was used.
+- Both changed asset exporters pass `--check`. Asset audit: **2,175 JSON files,
+  zero problems**. Final JAR audit: **306 class files**, notices retained, no
+  bundled optional integrations or development harnesses.
+- Final standard `build -x :core:acceptance` and `git diff --check`: **passed**.
+  The full core suite above was run separately; production core sources were stable.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **19,602,804 bytes**.
+SHA-256: `3589F8041CA8B726DD9400A0BAF4C994D9000A72DE5F46A7C84370CCB7908E03`.
+
+Logs: `tmp/cooling-revision-core-full.log`, `tmp/cooling-revision-runtime.log`,
+`tmp/cooling-revision-no-integrations.log`, `tmp/cooling-revision-wet-client.log`,
+`tmp/cooling-revision-tank-client.log`, `tmp/cooling-revision-final-build.log` and
+`tmp/cooling-revision-jar-audit.log`. This revision does not resolve the separate
+R01–R05 re-audit findings recorded below. Water temperatures remain the existing
+design assumptions, and condenser vacuum is not dynamically simulated.
+
+## 2026-09-21 — GitHub issues #14–#18 fixed; original regressions retained
+
+See [PHASE-TWO-FIXES.md](PHASE-TWO-FIXES.md) for the five fixes and measured
+performance, and [TESTING.md](TESTING.md) for the F01–F13 regression map. Added
+push/PR verification, a test-registration guard, pump-route caching, loaded-only
+binding scans and a formed-reactor registry independent of jet-flow surveys.
+
+Final verification of the resulting sources:
+
+- Full `:core:check`: **182 passed, 0 failed**, 877.9 seconds; registration
+  verified **28 classes**. Core sources were unchanged during the final mod checks.
+- `:mod:runTurbineGameTest`: **all 15 required tests passed**, including all
+  original audit regressions, operating-pump shared-valve checks and three new
+  cache/registry tests. The unloaded-scan regression now covers ECCS, ADS and
+  feedwater binding as well as reactors and pools.
+- `:mod:runPeripheralCheck`: **0 problems**, with CC:Tweaked/Mekanism installed;
+  **six dedicated-server spawn-protection scenarios passed**.
+- Fresh dedicated server with `-PbwrNoCC -PbwrNoMekanism`: **0 problems**;
+  the same **six permission scenarios passed** with both integrations absent.
+- Final standard `build -x :core:acceptance`: **passed**; the complete physics
+  suite above was run separately. Design-rule check: **198 mod Java files**.
+- Registration negative test: **passed**; an actual unregistered compiled test
+  fails both verification and filtered execution, naming the missing class.
+- Asset audit: **2,170 JSON files, zero problems**. JAR audit: **307 class files**,
+  notices retained, no bundled optional-mod or development-test classes.
+- Workflow syntax: **actionlint passed**. `git diff --check`: **passed**.
+  Hosted CI has not run; the workflow takes effect after it is pushed.
+
+The original thirteen reproductions remain fixed under these checks. The
+separate **R01–R05 findings below remain open**; this pass addresses the five
+issues filed by Sam-Elsberry, not those additional re-audit findings.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **18,116,203 bytes**.
+SHA-256: `33675EDED5BD0C8DBAD9DE035E21761DD70C394467D6665A14CD7B1F84D05368`.
+
+Logs: `tmp/phase-two-full-verification.log` (complete passing core suite; its
+later server stage exposed leftover geometry in the new test fixture),
+`tmp/phase-two-final-runtime.log` (corrected fixture and all final server tests,
+permissions and build passed), `tmp/phase-two-optional.log`,
+`tmp/phase-two-release.log`, `tmp/phase-two-registration.log`,
+`tmp/phase-two-assets.log`, `tmp/phase-two-jar.log`. Fixture setup now removes its
+old branch and asserts exactly one initial endpoint; successful runs clean up
+their pipes and tanks. This correction did not weaken the inventory assertion.
+
+## 2026-09-21 — verification audit: five remaining defects
+
+See [PHASE-ONE-REAUDIT.md](PHASE-ONE-REAUDIT.md) for reproduced failures and source
+locations. The normal build passes, but shared fluid capacity, suppression-pool
+revalidation, remote computer reloads, MSIV branch routing and recirculation
+command conversion still have correctness issues. No gameplay code was changed
+in this verification pass.
+
+- Fresh `:core:check`: **182 passed, 0 failed**, 880.1 seconds.
+- Fresh `:mod:runTurbineGameTest`: **12 passed** with CC:Tweaked and Mekanism.
+- Full `build`: **passed**, 15 minutes 21 seconds.
+- Four temporary server probes reproduced four additional defects; a separate
+  compiled-core calculation reproduced the recirculation command mismatch.
+  These failing probes are separate from the passing standard suite.
+- Assets: **2,170 JSON files, zero problems**. JAR: **303 classes**, no bundled
+  optional-mod or development-test classes. Whitespace validation passed.
+- Normal build output restored after the probes. Release artifact SHA-256 is
+  unchanged: `61EBC479DBC3052D4C6DEBE6DFBA5649EEBC18228B5DD6CF32603C8D100AE5D2`.
+
+Logs and test scope are listed in the verification report. The earlier repair
+entry below is historical and does not supersede these new findings.
+
+## 2026-09-21 — all 13 phase-one audit findings repaired
+
+See [PHASE-ONE-FIXES.md](PHASE-ONE-FIXES.md) for the issue-by-issue changes,
+regressions, existing-world behavior and coverage limits. Fuel and basin
+inventory ownership, remote capabilities, spawn permissions, pump valve
+accounting, chunk recovery, idle FE persistence and live fuel reload are fixed.
+
+Verification of the resulting working tree:
+
+- `:core:check`: **182 tests passed, 0 failed**, 884.4 seconds.
+- `:mod:runTurbineGameTest`: **all 12 GameTests passed**, including the existing
+  246 machine scenarios and 11 new audit regression methods. Three operating
+  steam-driven pump fixtures also check competing consumers on a shared valve.
+- `:mod:runPeripheralCheck`: **0 problems**, with CC:Tweaked/Mekanism installed;
+  **six dedicated-server spawn-protection scenarios passed**.
+- The same peripheral/startup check with `-PbwrNoCC -PbwrNoMekanism`: **passed**,
+  including the six permission scenarios.
+- `build -x :core:acceptance`: **passed**. The complete core acceptance run
+  above was executed separately against the same core sources to avoid repeating
+  the 15-minute suite. Hardware-only design-rule check: **196 mod Java files**.
+- Asset audit: **2,170 JSON files, zero problems**.
+- JAR audit: **303 class files**, both project JARs retain their notices;
+  no bundled optional-mod classes or development harness classes.
+- `git diff --check`: **passed**. Models/resources are unchanged by this repair.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **18,109,108 bytes**.
+SHA-256: `61EBC479DBC3052D4C6DEBE6DFBA5649EEBC18228B5DD6CF32603C8D100AE5D2`.
+
+Logs: `tmp/phase-one-fix-core.log`, `tmp/phase-one-fix-release.log`,
+`tmp/phase-one-fix-integration-3.log` (successful peripheral/permission stage),
+`tmp/phase-one-fix-optional.log`, `tmp/phase-one-fix-assets.log`,
+`tmp/phase-one-fix-jar.log`. The earlier integration log includes a subsequently
+corrected test-fixture failure in its later GameTest stage; the final GameTest
+result is in `phase-one-fix-release.log`.
+
+## 2026-09-21 — scalable cylindrical condensate storage tank
+
+Replaced the assembled cube appearance with five original Blender components:
+round enamel shell, shallow cone roof with railings and vent, plinth, ladder,
+and four water flanges. Players select odd diameter 3–15 and height 3–24 in the
+tank GUI. Capacity follows cylinder dimensions. Survival construction consumes
+tank blocks, shrinking refunds them, and resizing preserves stored water and
+fractional withdrawals. Legacy single-block tanks remain compatible. See
+CONDENSATE-TANK.md for construction, connections and dismantling behavior.
+
+Verification:
+
+- `:mod:runTurbineGameTest`: **8 tank scenarios passed**, including legacy
+  water, min/medium/max sizes, shared flange inventory, fractional persistence,
+  obstruction rejection, survival expansion/refunds and teardown drops. Existing
+  turbine, pump, valve, condenser and cooling scenarios also passed.
+- `:mod:runTurbineModelCheck -PbwrTankPanelCheck`: **passed**. Checked **5,518
+  component quads**, min/medium/max scaling, material colors and bounds. Actual
+  Minecraft world screenshots show three sizes, connected flanges and a live
+  client-to-server resize. Inspected the model and final synchronized GUI.
+  Existing model checks, including **2,274 water/steam states**, also passed.
+- `tools-export-condensate-tank.py --check`: **15 resources reproduced**.
+- Asset audit: **2,170 JSON files**, all **44 blocks** covered, **zero problems**.
+- `:core:jar :core:sourcesJar :mod:build`: passed. JAR audit: **294 classes**,
+  current notices in both project JARs, no bundled optional-mod classes or
+  development harness. Whitespace check passed.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **18,088,745 bytes**.
+
+SHA-256: `6D02131BA8D8E703C6A4F57122229618A0D9A3BE5376AF9EAB9245DE0C2D0549`.
+
+Logs: `tmp/tank-runtime.log`, `tmp/tank-package-final.log`,
+`tmp/tank-assets-final.log`. Blender sources and inspected Minecraft previews
+are in `art/models/condensate_tank/`. This patch has not been committed or pushed.
+
+## 2026-09-21 — cooling towers, circulation and makeup water
+
+Added five Blender-authored placeable assemblies: natural-draft tower (25x36x25),
+Columbia-style circular induced-draft tower (17x8x17), circulating-water pump
+(5x8x5), makeup pump (3x5x3), and screened intake (3x2x3). Models expose physical
+water flanges and FE boxes; six fan rotors animate on the circular tower. Simple
+local speed/readout panels and CC:Tweaked controls are included. See COOLING-WATER.md.
+
+Finite water inventories and shared outlet budgets prevent duplication. Towers
+use the existing 24->13 C design point and lose 2% water to a modeled combined
+evaporation/blowdown allowance. Lake extraction requires source water and feeds
+a finite buffer. Chemistry and water temperature transport are not implemented;
+the LP turbine's existing internal condensation remains unchanged.
+
+Verification:
+
+- `:core:acceptance --args=CoolingWater`: **6 passed**, including finite storage,
+  invalid input, blocked outlets, speed limits and closed-loop mass accounting.
+- `:mod:runTurbineGameTest`: **25 cooling scenarios passed**. All five models in
+  all four orientations, obstruction rejection, ownership, save/load, fluid/FE
+  faces, steam-pipe rejection, survival teardown, stale handlers, fan/pump power,
+  speed, real CC capability, lake source rules, condenser/tower circulation and
+  intake/makeup/tower transfers. Existing turbine, pump, valve and condenser
+  regression scenarios also passed.
+- `:mod:runTurbineModelCheck -PbwrCoolingPanelCheck`: **passed**. Verified 60,152
+  body quads, five inventory meshes, six fan instances, four renderer rotations,
+  material colors, bounds and controller-only rendering. Inspected screenshots
+  from a fresh actual Minecraft world, with connected pipe flanges and the GUI.
+  Fixed base-shadow lighting and GUI clipping found during that review.
+- `tools-export-cooling.py --check`: all **58 generated resources** reproduced.
+- Asset audit: **2,164 JSON files**, all **44 blocks** covered, **zero problems**.
+  Audit now recognizes explicitly registered BlockItem subclasses correctly.
+- `:mod:build :core:sourcesJar`: passed. JAR audit: **290 classes**, correct
+  notices, no bundled Mekanism/CC classes or development harness. Whitespace
+  check passed.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **17,996,971 bytes**.
+
+SHA-256: `BF01E6F61597F9155625246DD6754B3B3EEBE71553FCA45CFDB13FC3D4805F38`.
+
+Logs: `tmp/cooling-runtime.log` (core tests), `tmp/cooling-final.log` (server/client),
+`tmp/cooling-package.log` and `tmp/cooling-assets.log`. Previews are saved under
+`art/models/cooling/`. This patch has not been committed or pushed.
+
+## 2026-09-21 — condenser shell seam repair
+
+Closed the horizontal opening beside the catwalk on both front and rear faces
+in Blender. The tapered transition now meets the actual lower casing in height
+and depth, with a small overlap at the joint. Re-exported the game and inventory
+meshes and updated the Blender previews. Footprint, ports, controller and all
+172 occupied cell indexes/roles match the previous compact layout, so existing
+compact units update without replacement. Triangle count remains 17,696.
+
+Verification:
+
+- Inspected front and rear Blender views. A shell-only ray check hit the near
+  casing at all 630 samples across the former opening.
+- `:mod:build :mod:runTurbineModelCheck -PbwrCondenserPanelCheck`: passed.
+  Inspected actual in-game close-ups of both repaired seams, plus the LP fit
+  and existing day/rear/night views. Renderer material and rotation checks passed.
+- Exporter reproduced all 22 resources. Asset audit: zero problems. JAR audit:
+  272 classes, valid notices, no bundled optional mods or development harness.
+- This is a geometry-only patch; reactor and condenser physics were unchanged.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **16,376,101 bytes**.
+
+SHA-256: `391FD4028DF3170143A230D3C9EEC47A2863494F3B73BBB0CB2D6DE905C75B22`.
+
+Log: `tmp/condenser-seam-client.log`. Close-up previews:
+`art/models/condenser_ports/condenser_front_seam.png` and
+`art/models/condenser_ports/condenser_rear_seam.png`.
+
+## 2026-09-21 — compact condenser fitted beneath one LP turbine
+
+New placements use a **7x6x7** closed, single-bay Blender model with six ports:
+one bypass inlet, two hot-water outlets, two cold-water inlets and one condensate
+outlet. Its top collar was shaped against the actual LP skid/casing. Place the
+LP root six blocks above the condenser root with the same facing. The compact
+model has 17,696 triangles and 172 occupied cells.
+
+Fixed white in-world rendering by preserving OBJ material RGB in the vertex
+writer and using the entity atlas render buffer. Old 25x14x25 machines keep their
+saved geometry, collision, inventories and ports; break/replacement upgrades them.
+The physics assumptions and temporary internal LP condensation are unchanged.
+
+Verification completed:
+
+- `:mod:runTurbineGameTest`: ten condenser scenarios passed, including actual
+  LP placement above the condenser in all four directions, all six connection
+  faces, Mekanism transfer, CC bypass control and legacy save/reload/replacement.
+  Existing assembly, pump, turbine, valve and MSIV regressions also passed.
+- `:mod:runTurbineModelCheck -PbwrCondenserPanelCheck`: passed. Renderer capture
+  checks material RGB preservation, entity buffer, mesh bounds and all four
+  rotations. Existing 2,255 water/steam, 6,816 pump/power-module and 312 RCIC/HPCI
+  cell states also passed. A fresh Minecraft world placed a real LP turbine on
+  the condenser with steam/water pipes. Front, rear and night screenshots were
+  inspected: correct colors, no white silhouette, seated LP and joined flanges.
+- Blender front/rear and fitted-LP renders inspected. Saved source geometry is
+  in `art/models/condenser_ports/condenser_ports.blend`; the previous large asset
+  is archived beside it for save compatibility.
+- Exporter check: 22 resources reproduced. Asset audit: 2,123 valid JSON files,
+  all 39 blocks covered, zero problems. Whitespace check passed.
+- `:mod:build`: passed. JAR audit: 272 classes, matching project notices, no
+  bundled optional-mod classes or development harness. Packaged layouts verified
+  as 7x6x7 (new) and 25x14x25 (legacy). No reactor-physics changes were made;
+  the long reactor acceptance suite was not rerun for this visual/layout patch.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **16,375,914 bytes**.
+
+SHA-256: `66E7D8CB8A6F58140D0B86347EB10FF07C0A2ACF97650C80EA00510F910F8A7F`.
+
+Logs: `tmp/condenser-fit-runtime.log`, `tmp/condenser-fit-client.log`,
+`tmp/condenser-fit-build.log`. Screenshots are in
+`mod/run/turbineModelCheck/condenser-check/`; the front view is also saved as
+`art/models/condenser_ports/lp_condenser_ingame.png`.
+
+## 2026-09-21 — connectable condenser and bypass steam valve
+
+Added the closed Arabelle-style condenser as a 25x14x25 placeable machine.
+Its 18 physical ports comprise three upper-front bypass steam inlets, six
+front hot-water outlets, six rear cold-water inlets and three separate rear
+condensate outlets. The original cutaway remains an inspection source only.
+The new one-block Blender bypass valve has local percentage control and the
+`bwr_bypass_steam_valve` CC peripheral, with a two-second full stroke.
+
+Condenser cooling and condensate inventories are separate and finite. A basic
+mass/enthalpy balance requires cooling supply and room for both products.
+Fixed 13/24 C cooling and 40 C condensate temperatures are labeled assumptions;
+temperature propagation, towers, vacuum and external LP exhaust are future work.
+LP sections retain temporary internal condensation. No automatic controls added.
+
+Verification completed:
+
+- `:core:acceptance --args=SurfaceCondenser`: all five new physics tests passed
+  (mass/heat balance, dry/full limits, simulation, invalid input and fractional
+  persistence). The unrelated long-running reactor acceptance suite was not
+  rerun for this patch.
+- `:mod:runTurbineGameTest`: nine new condenser scenarios passed, including
+  18 ports in four orientations, obstruction, collision, correct pipe types,
+  NeoForge/Mekanism transfer, separate products, NBT, far-port menu reachability,
+  actual CC peripheral discovery/commands, shared steam admission, finite
+  buffer backpressure, teardown, stale handlers and one-item survival drops.
+  Existing 96 RCIC/HPCI assembly, two plumbing, 73 pump, 15 main-turbine,
+  12 steam-valve and five MSIV scenarios also passed.
+- `:mod:build :core:sourcesJar :mod:runTurbineModelCheck`: passed, including
+  protection-logic checks and the final Blender exports. The actual condenser
+  renderer emitted its 74,924 quads once in each of four orientations within
+  the full structure bounds; child parts emitted no duplicate mesh. Existing
+  checks covered 2,255 water/steam states, ten corresponding item models,
+  6,816 pump/power-module cells and 312 RCIC/HPCI cells.
+- Asset audit: 2,121 JSON files, 39 blocks, all 40 condenser states covered,
+  no problems. Condenser and MSIV exporters reproduced 18 and 13 resources.
+- Front/rear condenser and bypass-valve Blender renders inspected. Both new
+  standalone Blender files reopened. Documentation links and whitespace passed.
+- JAR audit: 272 classes, exact current notices in both project JARs, no
+  bundled optional-mod classes or development harness.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **16,763,348 bytes**.
+
+SHA-256: `0ADA270443B456211AD8237D690C3F6E8BAF853B03CB02252E1A39D7F504E4F5`.
+
+Logs: `tmp/condenser-runtime.log`, `tmp/condenser-build.log`,
+`tmp/condenser-assets.log`. Connections and CC examples:
+[CONDENSER-AND-MSIV.md](CONDENSER-AND-MSIV.md).
+
+## 2026-09-21 — Arabelle condenser artwork and modeled MSIV
+
+Built the detailed three-bay condenser in Blender, using the supplied cutaway
+and Arabelle's 1,700 MWe reference dimensions. Standalone exterior/cutaway
+scenes contain 95,912 triangles and 1,357 named meshes; both were rendered and
+inspected. This is a model asset, not implemented condenser gameplay.
+
+Newly placed MSIVs use a 1x3x1 Blender model with 10,804 triangles, opposed base
+steam ports and one actuator simulation. Existing cubes retain their geometry,
+connections and saved data until replaced. Redstone can command any part;
+CC remains on the base. Four-second full travel ends exactly on tick 80.
+
+Verification completed:
+
+- `:mod:build` passed, including `checkNoProtectionLogic`.
+- `:mod:runTurbineGameTest` passed: five new MSIV scenarios, 12 steam-valve,
+  15 main-turbine, 73 pump, two turbine-plumbing scenarios and the existing
+  RCIC/HPCI assembly suite. MSIV tests exercise all four facings, obstruction,
+  per-tick steam routing/closure, upper redstone, CC, moving-state persistence,
+  reversal, valid single-item drops and legacy saves.
+- `:mod:runTurbineModelCheck` passed: 2,251 water/steam states (including all
+  48 MSIV states) and nine inventory models, plus 6,816 pump/power-module
+  cell states and 312 RCIC/HPCI cell states. The check now reads both unculled
+  OBJ faces and culled legacy-cube faces.
+- Asset audit: 2,108 JSON files, 37 registered blocks, no problems.
+- `tools-export-msiv.py --check`: 13 resources reproduced with bounds and
+  surface-area checks. Both standalone Blender files reopened successfully.
+- JAR audit: 258 classes, two project JARs with exact current notices, no
+  bundled optional-mod classes or development test harness.
+
+Artifact: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar`, **14,845,315 bytes**.
+
+SHA-256: `8AF4516B57E4A967A9725D7605A1F4A6D99F82A536C4CC518556887CFD24AE7A`.
+
+Source assets, renders, controls and migration: [CONDENSER-AND-MSIV.md](CONDENSER-AND-MSIV.md).
+
 ## 2026-09-21 — README, attribution and source-available licensing
 
 Updated the README for the current steam-valve controls, modular turbine

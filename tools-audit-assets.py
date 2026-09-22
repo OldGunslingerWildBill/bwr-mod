@@ -66,10 +66,13 @@ blocks = re.findall(r'BLOCKS\.register\(\s*"([a-z0-9_]+)"', src)
 isrc = open(os.path.join(JAVA, "registry/BwrItems.java"), encoding="utf-8").read()
 simple_block_items = re.findall(r'registerSimpleBlockItem\(BwrBlocks\.([A-Z0-9_]+)\)', isrc)
 extra_items = re.findall(r'ITEMS\.register\(\s*"([a-z0-9_]+)"', isrc)
+# Explicitly registered BlockItem subclasses still use block translation keys.
+custom_block_items = re.findall(r'DeferredItem<BlockItem>\s+\w+\s*=\s*ITEMS\.register\(\s*"([a-z0-9_]+)"', isrc)
+extra_items = [it for it in extra_items if it not in custom_block_items]
 # map CONSTANT -> registry name via BwrBlocks
 const_to_name = dict(re.findall(
     r'DeferredBlock<[^>]+>\s+([A-Z0-9_]+)\s*=\s*\n?\s*BLOCKS\.register\(\s*"([a-z0-9_]+)"', src))
-block_items = [const_to_name.get(c, "??" + c) for c in simple_block_items]
+block_items = [const_to_name.get(c, "??" + c) for c in simple_block_items] + custom_block_items
 all_items = block_items + extra_items
 
 # ---------- block state properties, scraped from java ----------

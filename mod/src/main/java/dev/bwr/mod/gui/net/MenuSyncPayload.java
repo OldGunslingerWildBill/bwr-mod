@@ -21,8 +21,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 public record MenuSyncPayload(int containerId, byte[] data) implements CustomPacketPayload {
 
     /**
-     * Hard cap on one snapshot. The largest real payload is the refuelling core
-     * map at eight bytes per lattice position for a 21x21 vessel, about 3.5 kB.
+     * Hard cap on one snapshot. The maximum compact core has
+     * 1,476 fuel entries, including explicit indices, comfortably below this cap.
      */
     public static final int MAX_BYTES = 64 * 1024;
 

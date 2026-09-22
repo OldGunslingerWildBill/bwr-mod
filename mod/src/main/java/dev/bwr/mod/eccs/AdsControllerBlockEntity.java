@@ -350,6 +350,7 @@ public class AdsControllerBlockEntity extends BlockEntity {
         for (BlockPos p : BlockPos.betweenClosed(
                 from.offset(-SEARCH_RADIUS, -SEARCH_RADIUS, -SEARCH_RADIUS),
                 from.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS))) {
+            if (!level.isLoaded(p)) continue;
             BlockState s = level.getBlockState(p);
             if (reactorPos == null && s.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
                 reactorPos = p.immutable();
@@ -372,6 +373,8 @@ public class AdsControllerBlockEntity extends BlockEntity {
         for (Iterator<BlockPos> it = held.iterator(); it.hasNext(); ) {
             BlockPos vp = it.next();
             if (!valves.contains(vp)) {
+                // Keep the pending release until the valve is loaded again.
+                if (!level.isLoaded(vp)) continue;
                 if (level.getBlockEntity(vp) instanceof SafetyReliefValveBlockEntity srv) {
                     srv.setComputerControlled(false);
                 }
@@ -381,7 +384,7 @@ public class AdsControllerBlockEntity extends BlockEntity {
     }
 
     private ReactorControllerBlockEntity reactor(Level level) {
-        if (reactorPos == null) {
+        if (reactorPos == null || !level.isLoaded(reactorPos)) {
             return null;
         }
         return level.getBlockEntity(reactorPos) instanceof ReactorControllerBlockEntity c ? c : null;

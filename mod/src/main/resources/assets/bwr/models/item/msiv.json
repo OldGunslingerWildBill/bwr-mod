@@ -1,3 +1,17 @@
 {
-  "parent": "bwr:block/msiv_open"
+  "parent": "bwr:block/pumps/msiv/compact",
+  "display": {
+    "gui": {
+      "rotation": [
+        15,
+        225,
+        0
+      ],
+      "scale": [
+        1.05,
+        1.05,
+        1.05
+      ]
+    }
+  }
 }

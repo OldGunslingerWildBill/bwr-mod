@@ -25,6 +25,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.jar.JarFile;
 
 /**
  * Runs the whole acceptance suite and exits non-zero if anything fails.
@@ -67,7 +72,10 @@ public final class AcceptanceTests {
 
     /** Every test class, in the order the runner executes them. */
     public static final Class<?>[] TEST_CLASSES = {
+            CompactCoreLayoutTest.class,
             PowerTurbineTest.class,
+            SurfaceCondenserTest.class,
+            CoolingWaterUnitTest.class,
             RecirculationSizingTest.class,
             ContinuousRodMotionTest.class,
             PumpSpeedControlTest.class,
@@ -96,6 +104,13 @@ public final class AcceptanceTests {
     };
 
     public static void main(String[] args) {
+        // Run before filtering too: a targeted run must not hide an unregistered class.
+        verifyRegistration();
+        if (Arrays.asList(args).contains("--verify-registration")) {
+            System.out.printf("Test registration verified: %d classes, %d methods%n",
+                    TEST_CLASSES.length, Arrays.stream(TEST_CLASSES).mapToInt(c -> testMethods(c).size()).sum());
+            return;
+        }
         long startedAtNanos = System.nanoTime();
         List<String> failures = new ArrayList<>();
         int passed = 0;
@@ -175,6 +190,7 @@ public final class AcceptanceTests {
             if (method.getName().startsWith("test")
                     && Modifier.isStatic(method.getModifiers())
                     && Modifier.isPublic(method.getModifiers())
+                    && method.getReturnType() == void.class
                     && method.getParameterCount() == 0) {
                 methods.add(method);
             }
@@ -196,5 +212,42 @@ public final class AcceptanceTests {
     /** For a caller that wants the class list without running anything. */
     public static List<Class<?>> testClasses() {
         return Arrays.asList(TEST_CLASSES);
+    }
+
+    /** Preserve the deliberate execution order, but fail if the compiled test tree disagrees. */
+    public static void verifyRegistration() {
+        Set<String> discovered = new TreeSet<>();
+        try {
+            Path location = Path.of(AcceptanceTests.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            if (Files.isDirectory(location)) {
+                try (var files = Files.walk(location)) {
+                    for (Path file : files.filter(p -> p.toString().endsWith(".class")).toList())
+                        inspectClass(location.relativize(file).toString().replace('\\', '/'), discovered);
+                }
+            } else {
+                try (var jar = new JarFile(location.toFile())) {
+                    for (var entry : jar.stream().filter(e -> e.getName().endsWith(".class")).toList())
+                        inspectClass(entry.getName(), discovered);
+                }
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot verify acceptance test registration", e);
+        }
+        Set<String> registered = new TreeSet<>();
+        for (Class<?> type : TEST_CLASSES) {
+            if (!registered.add(type.getName())) throw new IllegalStateException("Duplicate test class: " + type.getName());
+        }
+        Set<String> missing = new TreeSet<>(discovered); missing.removeAll(registered);
+        Set<String> empty = new TreeSet<>(registered); empty.removeAll(discovered);
+        if (!missing.isEmpty() || !empty.isEmpty()) throw new IllegalStateException(
+                "Acceptance test registration mismatch. Add to TEST_CLASSES: " + missing
+                        + "; registered classes without test methods: " + empty);
+    }
+
+    private static void inspectClass(String path, Set<String> discovered) throws ClassNotFoundException {
+        if (path.equals("module-info.class") || path.endsWith("package-info.class")) return;
+        String name = path.substring(0, path.length() - ".class".length()).replace('/', '.');
+        Class<?> type = Class.forName(name, false, AcceptanceTests.class.getClassLoader());
+        if (!testMethods(type).isEmpty()) discovered.add(name);
     }
 }

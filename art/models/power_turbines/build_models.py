@@ -77,8 +77,7 @@ def build(id,w,h,depth):
         for x in (.7,w-.95):
             for z in (1.5,2.5,3.5,4.5,5.5): box(s,'exhaust casing rib',(x,.5,z-.06),(x+.25,2.05,z+.06),RIB)
         port(s,'LP crossover steam inlet',(cx,h,cz),(0,1,0),(cx,4.15,cz),CASING)
-        port(s,'condensate outlet',(0,.5,cz),(-1,0,0),(.8,.5,cz),BASE)
-        ports=[('STEAM_INLET',[w//2,h-1,depth//2],'up'),('WATER_DISCHARGE',[0,0,depth//2],'west')]
+        ports=[('STEAM_INLET',[w//2,h-1,depth//2],'up')]
     else:
         box(s,'stator bed',(cx-1.55,.55,1.2),(cx+1.55,1.4,depth-1.2),BASE)
         cylinder(s,'long TX-NLCH stator barrel',(cx,2.5,1.3),(cx,2.5,depth-1.3),1.3,GEN,32)

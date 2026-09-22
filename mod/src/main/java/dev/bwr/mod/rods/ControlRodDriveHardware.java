@@ -138,6 +138,18 @@ public final class ControlRodDriveHardware {
     public ControlRodDriveHardware() {
     }
 
+    /** Adjacent manifold sections equalise supplies; this never creates either inventory. */
+    public void shareSuppliesWith(ControlRodDriveHardware other) {
+        double energy = energyStoredFe + other.energyStoredFe;
+        double energyHere = energy * energyCapacityFe / (energyCapacityFe + other.energyCapacityFe);
+        energyStoredFe = energyHere;
+        other.energyStoredFe = energy - energyHere;
+        double water = waterStoredMb + other.waterStoredMb;
+        double waterHere = water * waterCapacityMb / (waterCapacityMb + other.waterCapacityMb);
+        waterStoredMb = waterHere;
+        other.waterStoredMb = water - waterHere;
+    }
+
     // ---------------------------------------------------------------
     // Tick
     // ---------------------------------------------------------------

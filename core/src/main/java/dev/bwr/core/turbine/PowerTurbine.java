@@ -1,7 +1,7 @@
 package dev.bwr.core.turbine;
 
 /** Conservative game-scale expansion, not a manufacturer performance curve.
- * Every kg can traverse HP then LP once. LP's deferred condenser rejects residual heat.
+ * Every kg can traverse HP then LP once. Both stages discharge steam; only a condenser removes its residual heat.
  */
 public final class PowerTurbine {
     public static final double GENERATOR_EFFICIENCY=.985;
@@ -19,15 +19,14 @@ public final class PowerTurbine {
         double drop=nominal*Math.max(0,Math.min(1,Math.log(pressure/outlet)/Math.log(reference)));
         return Math.max(0,Math.min(drop,h-CONDENSATE_ENTHALPY));
     }
-    public static Expansion expand(Stage stage,SteamInventory inlet,SteamInventory exhaust,double wantedKg,double workBudgetKJ,double waterSpaceKg) {
+    public static Expansion expand(Stage stage,SteamInventory inlet,SteamInventory exhaust,double wantedKg,double workBudgetKJ) {
         double specific=specificWork(stage,inlet.enthalpy(),inlet.pressure());
         if(specific<=0||!Double.isFinite(wantedKg)||!Double.isFinite(workBudgetKJ))return new Expansion(0,0,0,0,0);
-        double room=stage==Stage.HP?exhaust.space():Math.max(0,waterSpaceKg);
+        double room=exhaust==null?0:exhaust.space();
         double n=Math.max(0,Math.min(Math.min(wantedKg,room),Math.min(inlet.mass(),workBudgetKJ/specific)));
         var steam=inlet.take(n);
         double work=n*specific, h=steam.enthalpy()-specific, pressure=outletPressure(stage,steam.pressurePsia());
-        if(stage==Stage.HP)exhaust.offer(new SteamInventory.Packet(n,h,pressure));
-        double rejected=stage==Stage.LP?n*Math.max(0,h-CONDENSATE_ENTHALPY):0;
-        return new Expansion(n,work,stage==Stage.LP?CONDENSATE_ENTHALPY:h,pressure,rejected);
+        if(exhaust!=null)exhaust.offer(new SteamInventory.Packet(n,h,pressure));
+        return new Expansion(n,work,h,pressure,0);
     }
 }

@@ -1033,6 +1033,9 @@ public final class ReactorCore {
      * separation is load bearing. Solve more often if you must; do not solve
      * deeper.
      */
+    /** Recompute derived fuel constants after a definition reload, preserving the transient. */
+    public void refreshFuelDefinitions() { refreshNodalShape(); }
+
     private void refreshNodalShape() {
         nodalFlux.setRodPositions(rodPositionNotches);
         nodalFlux.setVoidProfile(voidModel.getBoilingBoundaryFraction(),

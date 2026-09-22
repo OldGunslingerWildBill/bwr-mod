@@ -129,7 +129,7 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
         Level level = ctx.getLevel();
         for (int i = 0; i < cellCount(); i++) {
             BlockPos p = ctx.getClickedPos().offset(turn(cellOffset(i), state.getValue(FACING)));
-            if (!level.isLoaded(p) || !level.getWorldBorder().isWithinBounds(p) || level.isOutsideBuildHeight(p)
+            if (!dev.bwr.mod.world.AssemblyAccess.permitted(level,ctx.getPlayer(),p) || !level.isLoaded(p) || !level.getWorldBorder().isWithinBounds(p) || level.isOutsideBuildHeight(p)
                     || !level.getBlockState(p).canBeReplaced() || !level.isUnobstructed(state.setValue(CELL, i), p, CollisionContext.empty())) return null;
         }
         return state;
@@ -138,7 +138,7 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
         if (state.getValue(CELL) != 0) return;
         for (int i = 1; i < cellCount(); i++) {
             BlockPos p = pos.offset(turn(cellOffset(i), state.getValue(FACING)));
-            if (!level.isLoaded(p) || !level.getBlockState(p).canBeReplaced()) {
+            if (!dev.bwr.mod.world.AssemblyAccess.permitted(level,placer,p) || !level.isLoaded(p) || !level.getBlockState(p).canBeReplaced()) {
                 level.removeBlock(pos, false);
                 return;
             }
@@ -163,6 +163,7 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
             }
         }
         // Saved scheduled ticks clean orphan parts after their chunk is loaded again.
+        if(dev.bwr.mod.world.AssemblyAccess.allLoaded(level,pos,state) && !complete(level,root,state)) { level.destroyBlock(root,true); return; }
         level.scheduleTick(pos, this, 40);
     }
     @Override public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {

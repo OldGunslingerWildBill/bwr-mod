@@ -69,7 +69,7 @@ public final class TurbinePlumbingRuntimeCheck {
         level.setBlock(new BlockPos(151,197,132),BwrBlocks.RPV_WATER_INJECTION_PORT.get().defaultBlockState()
                 .setValue(RpvWaterInjectionPortBlock.FACING,net.minecraft.core.Direction.EAST),3);
         set(level,NOZZLE,BwrBlocks.RPV_STEAM_OUTLET.get());
-        for(int x:new int[]{147,149}) for(int z:new int[]{131,133}) set(level,new BlockPos(x,192,z),BwrBlocks.CONTROL_ROD_DRIVE.get());
+        for(var drive:new dev.bwr.core.fuel.CompactCoreLayout(5,5).drives()) set(level,new BlockPos(146+drive.x(),192,130+drive.z()),BwrBlocks.CONTROL_ROD_DRIVE.get());
         box(level,new BlockPos(157,193,144),new BlockPos(163,197,150),BwrBlocks.SUPPRESSION_POOL_WALL.get(),Blocks.WATER);
         set(level,POOL,BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
         set(level,QUENCHER,BwrBlocks.SUPPRESSION_POOL_QUENCHER.get());
@@ -121,6 +121,8 @@ public final class TurbinePlumbingRuntimeCheck {
         var bus=EccsNetwork.existingBusFor(level,CONTROLLER); bus.applyTo(receiver.core(),level.getGameTime());
         check(bus.getTotalSteamKgPerS()==0,"assembly debited turbine steam twice via ECCS bus");
         check(receiver.core().getInjectionFlowKgPerS()>0,"injection failed to reach core");
+        PumpValveLedgerCheck.run(level,new BlockPos(150,206,132),nozzle,receiver.core().getPressurePsig(),
+                ()->EccsPumpBlockEntity.serverTick(level,ROOT,state,pump),pump::getAssemblySteamDrawKgPerS);
         if(!block.isHpci()) {
             // Adjacent water and steam risers must stay separate, including when both are installed.
             check(AssemblyPlumbing.trace(level,ROOT,state,AssemblyPort.WATER_DISCHARGE).valid(),"water and steam risers merged");

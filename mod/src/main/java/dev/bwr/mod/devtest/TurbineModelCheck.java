@@ -53,6 +53,6 @@ public final class TurbineModelCheck {
             LogUtils.getLogger().info("TURBINE MODEL CHECK: {} has {} baked quads across four rotations", id, faces);
         }
         LogUtils.getLogger().info("TURBINE MODEL CHECK PASS: {} cell states and both inventory models", checked);
-        if(!Boolean.getBoolean("bwr.pumpPanelCheck") && !Boolean.getBoolean("bwr.powerPanelCheck")) Minecraft.getInstance().execute(() -> Minecraft.getInstance().stop());
+        if(!Boolean.getBoolean("bwr.pumpPanelCheck") && !Boolean.getBoolean("bwr.powerPanelCheck") && !Boolean.getBoolean("bwr.condenserPanelCheck") && !Boolean.getBoolean("bwr.coolingPanelCheck") && !Boolean.getBoolean("bwr.tankPanelCheck") && !Boolean.getBoolean("bwr.compactCorePanelCheck") && !Boolean.getBoolean("bwr.vesselModelCheck")) Minecraft.getInstance().execute(() -> Minecraft.getInstance().stop());
     }
 }

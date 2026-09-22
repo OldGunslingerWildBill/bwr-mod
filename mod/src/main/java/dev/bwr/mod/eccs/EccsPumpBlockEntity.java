@@ -86,6 +86,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
     private final EccsDesign design;
     private final EccsPump pump;
     private final MachineEnergy energy;
+    private final AssemblyPlumbing.Cache plumbing = new AssemblyPlumbing.Cache();
 
     // Commands and published measurements are volatile because Lua reads them
     // from a CC computer thread. Writes are marshalled onto the server thread by
@@ -239,8 +240,8 @@ public class EccsPumpBlockEntity extends BlockEntity {
         final double dt=.05;
         var state=getBlockState();
         boolean complete=assembly.complete(level,getBlockPos(),state);
-        var suction=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_SUCTION);
-        var outlet=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_DISCHARGE);
+        var suction=plumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_SUCTION);
+        var outlet=plumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_DISCHARGE);
         var tank=complete ? AssemblyPlumbing.endpoint(level,suction,CondensateStorageTankBlockEntity.class) : null;
         var pool=complete ? AssemblyPlumbing.endpoint(level,suction,SuppressionPoolBlockEntity.class) : null;
         var delivery=complete ? AssemblyPlumbing.waterReceiver(level,outlet) : null;
@@ -290,14 +291,15 @@ public class EccsPumpBlockEntity extends BlockEntity {
             setChanged();
             return;
         }
-        var inlet=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.STEAM_INLET);
-        var exhaust=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.STEAM_EXHAUST);
+        var inlet=plumbing.trace(level,getBlockPos(),state,AssemblyPort.STEAM_INLET);
+        var exhaust=plumbing.trace(level,getBlockPos(),state,AssemblyPort.STEAM_EXHAUST);
         var nozzles=AssemblyPlumbing.nozzles(level,inlet);
+        var steamPort=assembly.portPosition(getBlockPos(),state,AssemblyPort.STEAM_INLET);
         var source=AssemblyPlumbing.source(level,nozzles);
         if (source!=null) nozzles.removeIf(n -> !source.getBlockPos().equals(n.getControllerPos()));
         var exhaustPool=AssemblyPlumbing.exhaustPool(level,exhaust);
-        var suction=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_SUCTION);
-        var discharge=AssemblyPlumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_DISCHARGE);
+        var suction=plumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_SUCTION);
+        var discharge=plumbing.trace(level,getBlockPos(),state,AssemblyPort.WATER_DISCHARGE);
         var suctionTank=AssemblyPlumbing.endpoint(level,suction,CondensateStorageTankBlockEntity.class);
         var suctionPool=AssemblyPlumbing.endpoint(level,suction,SuppressionPoolBlockEntity.class);
         var delivery=AssemblyPlumbing.waterReceiver(level,discharge);
@@ -332,7 +334,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
         // that steam from the shared ledger. Only re-step if another consumer
         // already took a share. The controller already debited the source vessel.
         double available=source==null || exhaustPool==null || !pump.isRunning() ? 0
-                : Math.min(nozzles.stream().mapToDouble(n -> n.getLastFlowKgPerS()).sum(),
+                : Math.min(nozzles.stream().mapToDouble(n -> dev.bwr.mod.steam.SteamValveRouting.available(level,steamPort,n)).sum(),
                         design.maximumSteamKgPerS()*exhaust.opening());
         pump.setSteamSupplyLimitKgPerS(available);
         double[] before=pump.toArray();
@@ -341,7 +343,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
         double claimedSteam=0;
         for (var nozzle:nozzles) {
             if (claimedSteam>=wantedSteam) break;
-            claimedSteam+=nozzle.claimFlowKgPerS(level.getGameTime(),wantedSteam-claimedSteam);
+            claimedSteam+=dev.bwr.mod.steam.SteamValveRouting.claim(level,steamPort,nozzle,wantedSteam-claimedSteam);
         }
         if (claimedSteam+1e-12<wantedSteam) {
             pump.fromArray(before);
@@ -516,6 +518,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
         for (BlockPos p : BlockPos.betweenClosed(
                 from.offset(-SEARCH_RADIUS, -SEARCH_RADIUS, -SEARCH_RADIUS),
                 from.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS))) {
+            if (!level.isLoaded(p)) continue;
             BlockState s = level.getBlockState(p);
             if (reactorPos == null && s.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
                 reactorPos = p.immutable();
@@ -528,21 +531,21 @@ public class EccsPumpBlockEntity extends BlockEntity {
     }
 
     private ReactorControllerBlockEntity reactor(Level level) {
-        if (reactorPos == null) {
+        if (reactorPos == null || !level.isLoaded(reactorPos)) {
             return null;
         }
         return level.getBlockEntity(reactorPos) instanceof ReactorControllerBlockEntity c ? c : null;
     }
 
     private SuppressionPoolBlockEntity pool(Level level) {
-        if (poolPos == null) {
+        if (poolPos == null || !level.isLoaded(poolPos)) {
             return null;
         }
         return level.getBlockEntity(poolPos) instanceof SuppressionPoolBlockEntity p ? p : null;
     }
 
     private CondensateStorageTankBlockEntity tank(Level level) {
-        if (tankPos == null) {
+        if (tankPos == null || !level.isLoaded(tankPos)) {
             return null;
         }
         return level.getBlockEntity(tankPos) instanceof CondensateStorageTankBlockEntity t ? t : null;

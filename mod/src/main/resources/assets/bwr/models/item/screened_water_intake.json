@@ -1,0 +1,17 @@
+{
+  "parent": "bwr:block/cooling/screened_water_intake/compact",
+  "display": {
+    "gui": {
+      "rotation": [
+        20,
+        225,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    }
+  }
+}

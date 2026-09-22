@@ -43,13 +43,9 @@ public interface SteamLinePort {
      * Whether a pressurised tube laid against {@code face} of this block should
      * read as landing on a nozzle.
      *
-     * <p>Defaults to accepting every face. None of the steam hardware that
-     * exists today carries a {@code FACING} property — the MSIV, the relief
-     * valve and the turbine steam outlet are all omnidirectional cubes with no
-     * modelled port — so there is no orientation for any of them to respect, and
-     * inventing one here would restrict connections on the strength of geometry
-     * the models do not actually show. A block that <i>does</i> model a nozzle on
-     * one side should override this and return true only for that side.
+     * <p>Defaults to accepting every face for legacy unoriented hardware.
+     * Modeled valves and machine assemblies override this to expose only their
+     * actual flanges. An MSIV actuator or bonnet is not a steam connection.
      *
      * @param state this block's own state, so an override can read its
      *              {@code FACING} or any other property it wants to

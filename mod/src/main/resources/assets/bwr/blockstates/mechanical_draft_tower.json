@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "bwr:block/mechanical_draft_tower"
+    }
+  }
+}

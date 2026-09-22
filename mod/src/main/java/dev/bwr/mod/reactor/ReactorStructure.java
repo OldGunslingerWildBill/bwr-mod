@@ -22,7 +22,8 @@ import java.util.List;
  * Control rods are cruciform and sit in the gap between four fuel assemblies —
  * one rod per 2x2 bundle group. That rule is self-enforcing: rod count follows
  * core size rather than being configured, which is exactly how a real core is
- * laid out. A BWR/6 has 748 assemblies to 177 rods, a ratio of 4.2.
+ * laid out. Compact layout v2 uses four logical bundles per physical drive
+ * column plus peripheral fuel; v1 saves retain their original block spacing.
  */
 public final class ReactorStructure {
 
@@ -68,12 +69,13 @@ public final class ReactorStructure {
     private final List<BlockPos> waterInjectionPositions;
     private final int topOfActiveFuelY;
     private final int assemblyCount;
+    private final dev.bwr.core.fuel.CompactCoreLayout compactLayout;
     private double sprayRingCompleteness = 1.0;
 
     private ReactorStructure(BlockPos interiorMin, BlockPos interiorMax,
                              List<BlockPos> rodPositions, List<BlockPos> crdPositions,
                              List<BlockPos> steamOutletPositions, List<BlockPos> waterInjectionPositions,
-                             int topOfActiveFuelY, int assemblyCount) {
+                             int topOfActiveFuelY, int assemblyCount, dev.bwr.core.fuel.CompactCoreLayout compactLayout) {
         this.interiorMin = interiorMin;
         this.interiorMax = interiorMax;
         this.rodPositions = Collections.unmodifiableList(rodPositions);
@@ -82,6 +84,7 @@ public final class ReactorStructure {
         this.waterInjectionPositions = List.copyOf(waterInjectionPositions);
         this.topOfActiveFuelY = topOfActiveFuelY;
         this.assemblyCount = assemblyCount;
+        this.compactLayout = compactLayout;
     }
 
     public BlockPos interiorMin() {
@@ -131,6 +134,16 @@ public final class ReactorStructure {
         return assemblyCount;
     }
 
+    public int latticeWidth() {
+        return compactLayout == null ? dev.bwr.core.ReactorCore.DEFAULT_LATTICE_WIDTH
+                : dev.bwr.core.fuel.CompactCoreLayout.LATTICE_WIDTH;
+    }
+
+    public int[] fuelPositions() {
+        return compactLayout == null ? dev.bwr.mod.gui.CoreLattice.corePositions(latticeWidth(), assemblyCount)
+                : compactLayout.fuelPositions();
+    }
+
     /** Elevation of the top of active fuel, which the sparger rings key off. */
     public int topOfActiveFuelY() {
         return topOfActiveFuelY;
@@ -159,6 +172,7 @@ public final class ReactorStructure {
      * @param latticeWidth side of the physics lattice, {@code CoreLoading.latticeWidth()}
      */
     public dev.bwr.core.nodal.RodLatticeMap rodLatticeMap(int latticeWidth) {
+        if (compactLayout != null) return compactLayout.rodMap();
         int width = interiorMax.getX() - interiorMin.getX() + 1;
         int depth = interiorMax.getZ() - interiorMin.getZ() + 1;
         int[] rodX = new int[rodPositions.size()];
@@ -183,6 +197,20 @@ public final class ReactorStructure {
      */
     public static ReactorStructure validate(Level level, BlockPos controllerPos,
                                             ValidationResult result) {
+        int version = level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity be
+                ? be.coreLayoutVersion() : dev.bwr.core.fuel.CompactCoreLayout.VERSION;
+        if (version != 1 && version != dev.bwr.core.fuel.CompactCoreLayout.VERSION) {
+            result.fail(controllerPos,"Unsupported saved core layout version: " + version);
+            return null;
+        }
+        try { return validateLoaded(level,controllerPos,result,version); }
+        catch(dev.bwr.mod.world.LoadedWorld.MissingChunk missing) {
+            result.fail(missing.pos,"Reactor validation is waiting for the remaining chunks to load.");
+            return null;
+        }
+    }
+
+    private static ReactorStructure validateLoaded(Level level, BlockPos controllerPos, ValidationResult result, int version) {
         // Walk inward from the controller until we leave the wall, to find the interior.
         BlockPos seed = findInteriorSeed(level, controllerPos);
         if (seed == null) {
@@ -220,6 +248,15 @@ public final class ReactorStructure {
             return null;
         }
 
+        int controllers=0;
+        for(BlockPos p:BlockPos.betweenClosed(min.offset(-1,-1,-1),max.offset(1,1,1))) {
+            if(dev.bwr.mod.world.LoadedWorld.block(level,p).is(BwrBlocks.REACTOR_CONTROLLER.get())) controllers++;
+        }
+        if(controllers!=1) {
+            result.fail(controllerPos,"A reactor vessel must contain exactly one controller; found "+controllers+".");
+            return null;
+        }
+
         // Shell must be closed all the way round. The same walk is the only
         // pass that visits every wall block, so it is also where the vessel's
         // steam penetrations are picked up.
@@ -244,11 +281,15 @@ public final class ReactorStructure {
         // Rod lattice: one rod per 2x2 assembly group, offset one in from the wall.
         List<BlockPos> rods = new ArrayList<>();
         List<BlockPos> crds = new ArrayList<>();
-        int assemblies = 0;
+        var compact = version == 1 ? null : new dev.bwr.core.fuel.CompactCoreLayout(width, depth);
+        var driveCells = new java.util.HashSet<Integer>();
+        if (compact != null) for (var drive : compact.drives()) driveCells.add(drive.x()*depth + drive.z());
+        int assemblies = compact == null ? width*depth : compact.assemblyCount();
         for (int x = min.getX(); x <= max.getX(); x++) {
             for (int z = min.getZ(); z <= max.getZ(); z++) {
-                assemblies++;
-                boolean rodHere = ((x - min.getX()) % 2 == 1) && ((z - min.getZ()) % 2 == 1);
+                boolean rodHere = compact == null
+                        ? ((x - min.getX()) % 2 == 1) && ((z - min.getZ()) % 2 == 1)
+                        : driveCells.contains((x-min.getX())*depth + z-min.getZ());
                 if (!rodHere) {
                     continue;
                 }
@@ -259,7 +300,7 @@ public final class ReactorStructure {
                 rods.add(rod);
                 crds.add(crd);
 
-                BlockState driveState = level.getBlockState(crd);
+                BlockState driveState = dev.bwr.mod.world.LoadedWorld.block(level, crd);
                 if (!driveState.is(BwrBlocks.CONTROL_ROD_DRIVE.get())) {
                     if (!result.hasEnoughFailures()) {
                         result.fail(crd, "missing control rod drive for the rod at "
@@ -292,7 +333,7 @@ public final class ReactorStructure {
         }
 
         ReactorStructure structure =
-                new ReactorStructure(min, max, rods, crds, steamOutlets, waterPorts, activeFuelTopY, assemblies);
+                new ReactorStructure(min, max, rods, crds, steamOutlets, waterPorts, activeFuelTopY, assemblies, compact);
         structure.sprayRingCompleteness = ringCompleteness;
         return structure;
     }
@@ -322,12 +363,14 @@ public final class ReactorStructure {
      * corners to be shell, so that corner is frequently open.
      */
     private static BlockPos findInteriorSeed(Level level, BlockPos controllerPos) {
+        dev.bwr.mod.world.LoadedWorld.MissingChunk unavailable=null;
         for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
-            BlockPos candidate = controllerPos.relative(d);
-            if (isInteriorBlock(level, candidate) && isEnclosed(level, candidate)) {
-                return candidate;
-            }
+            BlockPos candidate=controllerPos.relative(d);
+            try {
+                if(isInteriorBlock(level,candidate) && isEnclosed(level,candidate)) return candidate;
+            } catch(dev.bwr.mod.world.LoadedWorld.MissingChunk missing) { unavailable=missing; }
         }
+        if(unavailable!=null) throw unavailable;
         return null;
     }
 
@@ -371,7 +414,7 @@ public final class ReactorStructure {
      * {@link #findInteriorSeed} was written to kill.
      */
     private static boolean isInteriorBlock(Level level, BlockPos pos) {
-        BlockState s = level.getBlockState(pos);
+        BlockState s = dev.bwr.mod.world.LoadedWorld.block(level, pos);
         return !s.is(BwrBlocks.REACTOR_VESSEL.get())
                 && !s.is(BwrBlocks.REACTOR_CONTROLLER.get())
                 && !(s.is(BwrBlocks.RIP_PUMP.get()) && s.getValue(dev.bwr.mod.eccs.PumpAssemblyBlock.CELL)/4==3)
@@ -476,7 +519,7 @@ public final class ReactorStructure {
                     // nozzle test looked the same state up again, which is two
                     // chunk lookups per shell block for one question about one
                     // block.
-                    BlockState state = level.getBlockState(p);
+                    BlockState state = dev.bwr.mod.world.LoadedWorld.block(level, p);
                     if (!isShell(state)) {
                         if (result.hasEnoughFailures()) {
                             return;
@@ -604,7 +647,7 @@ public final class ReactorStructure {
                         continue;
                     }
                     loopExpected++;
-                    BlockState s = level.getBlockState(p.set(x, y, z));
+                    BlockState s = dev.bwr.mod.world.LoadedWorld.block(level, p.set(x, y, z));
                     // The segment has to belong to the loop being counted, not
                     // merely be a sparger. Counting any sparger at the right
                     // elevation let a ring of LPCS segments sitting at the HPCS
@@ -637,7 +680,7 @@ public final class ReactorStructure {
         for (int x = min.getX(); x <= max.getX(); x++) {
             for (int z = min.getZ(); z <= max.getZ(); z++) {
                 for (int y = min.getY(); y <= max.getY(); y++) {
-                    BlockState s = level.getBlockState(p.set(x, y, z));
+                    BlockState s = dev.bwr.mod.world.LoadedWorld.block(level, p.set(x, y, z));
                     if (!s.is(BwrBlocks.CORE_SPRAY_SPARGER.get())) {
                         continue;
                     }

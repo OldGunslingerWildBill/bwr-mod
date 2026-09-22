@@ -1,7 +1,10 @@
 {
   "variants": {
-    "": {
+    "assembled=false": {
       "model": "bwr:block/condensate_storage_tank"
+    },
+    "assembled=true": {
+      "model": "bwr:block/condensate_tank/formed"
     }
   }
 }

@@ -1,0 +1,11 @@
+newmtl mat_0
+Kd 0.7673756654827062 0.7977377471499069 0.815250645058287
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_1
+Kd 0.3318300279142669 0.3810918544541135 0.41002090312257067
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_2
+Kd 0.7220273482492262 0.7673756654827062 0.791786885083823
+map_Kd minecraft:block/white_concrete

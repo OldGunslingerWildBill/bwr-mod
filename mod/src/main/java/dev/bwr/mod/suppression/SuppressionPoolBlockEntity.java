@@ -212,7 +212,8 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      */
     private static final double BARE_DISCHARGE_ADMISSION = 0.40;
 
-    private final SuppressionPool pool = new SuppressionPool();
+    private SuppressionPool pool = new SuppressionPool();
+    private SuppressionBasinData basinData;
 
     private ValidationResult lastValidation = new ValidationResult();
     private boolean structureDirty = true;
@@ -369,6 +370,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             pool.coolWithRhr(duty, rhrCapacityMW, heatSinkC, dt);
         }
 
+        if(basinData!=null)basinData.setDirty();
         setChanged();
     }
 
@@ -538,6 +540,14 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     }
 
     private void revalidate(Level level) {
+        try { revalidateLoaded(level); }
+        catch(dev.bwr.mod.world.LoadedWorld.MissingChunk missing) {
+            formed=false; lastValidation=new ValidationResult();
+            lastValidation.fail(missing.pos,"Suppression basin validation is waiting for the remaining chunks to load.");
+        }
+    }
+
+    private void revalidateLoaded(Level level) {
         ValidationResult result = new ValidationResult();
         dischargingValves.clear();
         quencheredValves.clear();
@@ -564,6 +574,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         // ones standing in the box are the far end of somebody else's line.
         List<BlockPos> boxValves = new ArrayList<>();
         for (BlockPos p : BlockPos.betweenClosed(min, max)) {
+            if(!level.isLoaded(p)) continue;
             BlockState found = level.getBlockState(p);
             if (found.is(BwrBlocks.SAFETY_RELIEF_VALVE.get())
                     && level.getBlockEntity(p) instanceof SafetyReliefValveBlockEntity) {
@@ -580,8 +591,6 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
                 reactorPos = p.immutable();
             }
         }
-
-        gatherDischarges(level, boxValves, result);
 
         Basin basin = surveyBasin(level);
         waterBlocks = basin.waterBlocks();
@@ -601,6 +610,8 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             return;
         }
 
+        quenchers.removeIf(q -> !basinWater.contains(q.above().asLong()));
+        gatherDischarges(level,boxValves,result);
         if (dischargingValves.isEmpty()) {
             result.degrade("no relief valves discharge into this pool; it is a heat sink with nothing attached");
         }
@@ -611,7 +622,15 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         // in the physics. Only the change in capacity moves water, so a survey
         // that finds the same basin costs nothing and a pool drawn down by hours
         // of ECCS suction is not quietly refilled by being looked at.
-        pool.resizeToDesignMassKg(structureMassKg(), SuppressionPool.DEFAULT_TEMPERATURE_C);
+        if(basinData==null) pool.resizeToDesignMassKg(structureMassKg(),SuppressionPool.DEFAULT_TEMPERATURE_C);
+        if(level instanceof net.minecraft.server.level.ServerLevel server) {
+            basinData=SuppressionBasinData.get(server);
+            var claim=basinData.claim(server,getBlockPos(),basinWater,pool);
+            pool=claim.pool();
+            if(claim.problem()!=null) {
+                result.fail(getBlockPos(),claim.problem());formed=false;lastValidation=result;return;
+            }
+        }
         formed = true;
         lastValidation = result;
     }
@@ -677,7 +696,17 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
                                 + " condensed here");
                     }
                 }
-                case OPEN_WATER -> dischargingValves.add(vp);
+                case OPEN_WATER -> {
+                    for(int depth=1;depth<=24;depth++) {
+                        BlockPos water=vp.below(depth);
+                        if(!level.isLoaded(water))break;
+                        var fluid=level.getFluidState(water);
+                        if(fluid.is(net.minecraft.tags.FluidTags.WATER)) {
+                            if(basinWater.contains(water.asLong()))dischargingValves.add(vp);
+                            break;
+                        }
+                    }
+                }
                 case NONE -> result.degrade(vp, "this relief valve has no discharge path:"
                         + " no water below it and no submerged quencher on its steam line,"
                         + " so it suppresses nothing");
@@ -809,7 +838,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         for (BlockPos p : BlockPos.betweenClosed(
                 origin.offset(-SEED_RADIUS, -SEED_RADIUS, -SEED_RADIUS),
                 origin.offset(SEED_RADIUS, SEED_RADIUS, SEED_RADIUS))) {
-            if (isPoolWater(level, p)) {
+            if (level.isLoaded(p) && isPoolWater(level, p)) {
                 seeds.add(p.immutable());
             }
         }
@@ -964,7 +993,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      * so a basin faced with slabs or stairs is still a basin.
      */
     private static boolean isPoolWater(Level level, BlockPos pos) {
-        return level.getFluidState(pos).getType() == Fluids.WATER;
+        return dev.bwr.mod.world.LoadedWorld.fluid(level,pos).getType() == Fluids.WATER;
     }
 
     /** Whether a position is past the survey box this controller can see. */
@@ -975,7 +1004,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     }
 
     private ReactorControllerBlockEntity reactor(Level level) {
-        if (reactorPos == null) {
+        if (reactorPos == null || !level.isLoaded(reactorPos)) {
             return null;
         }
         return level.getBlockEntity(reactorPos) instanceof ReactorControllerBlockEntity c ? c : null;
@@ -984,6 +1013,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     // --- Measurements and commands --------------------------------------
 
     public SuppressionPool pool() {
+        if(basinData!=null)basinData.setDirty();
         return pool;
     }
 
@@ -1153,6 +1183,11 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     }
 
     // --- Persistence -----------------------------------------------------
+
+    @Override public void setChanged() {
+        super.setChanged();
+        if(basinData!=null)basinData.setDirty();
+    }
 
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {

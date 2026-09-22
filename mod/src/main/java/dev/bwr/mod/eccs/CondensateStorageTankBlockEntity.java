@@ -40,6 +40,30 @@ import java.util.Locale;
  */
 public class CondensateStorageTankBlockEntity extends BlockEntity {
 
+    public int diameter=1,height=1,paidBlocks=1;
+    int breakCost;
+    private BlockPos root;
+    private java.util.UUID assembly=java.util.UUID.randomUUID();
+    private long checkedAt=Long.MIN_VALUE;private boolean complete;
+    public boolean assembled(){return getBlockState().getValue(CondensateStorageTankBlock.ASSEMBLED);}
+    public BlockPos root(){return root;}
+    public boolean belongsTo(CondensateStorageTankBlockEntity o){return root.equals(o.worldPosition)&&assembly.equals(o.assembly);}
+    public CondensateStorageTankBlockEntity owner(){
+        if(isRemoved())return null;
+        if(!assembled())return this;
+        if(level==null)return root.equals(worldPosition)?this:null;
+        return level.isLoaded(root)&&level.getBlockEntity(root) instanceof CondensateStorageTankBlockEntity o&&!o.isRemoved()&&o.getBlockState().getValue(CondensateStorageTankBlock.CONTROLLER)&&belongsTo(o)?o:null;
+    }
+    public void markStructureDirty(){checkedAt=Long.MIN_VALUE;setChanged();}
+    public boolean ready(){
+        var o=owner();if(o==null)return false;if(o!=this)return o.ready();if(!assembled())return true;
+        if(level==null||!CondensateTankShape.valid(diameter,height))return false;
+        int half=diameter/2;for(int x=(worldPosition.getX()-half)>>4;x<=(worldPosition.getX()+half)>>4;x++)for(int z=(worldPosition.getZ()-half)>>4;z<=(worldPosition.getZ()+half)>>4;z++)if(!level.isLoaded(new BlockPos(x*16,worldPosition.getY(),z*16)))return false;
+        if(checkedAt==Long.MIN_VALUE||level.getGameTime()-checkedAt>=20){complete=true;for(var off:CondensateTankShape.get(diameter,height).cells.keySet())if(!(level.getBlockEntity(worldPosition.offset(off)) instanceof CondensateStorageTankBlockEntity p)||!p.belongsTo(this)){complete=false;break;}checkedAt=level.getGameTime();}return complete;
+    }
+    public void configure(int d,int h,int blocks){diameter=d;height=h;paidBlocks=blocks;tank.setCapacity(CondensateTankShape.get(d,h).capacity);markStructureDirty();}
+    public void bind(CondensateStorageTankBlockEntity o){root=o.worldPosition;assembly=o.assembly;diameter=o.diameter;height=o.height;paidBlocks=root.equals(worldPosition)?o.paidBlocks:0;markStructureDirty();}
+
     /** Millibuckets, and therefore kilograms, at full. */
     public static final int CAPACITY_MB = 2_000_000;
 
@@ -60,37 +84,43 @@ public class CondensateStorageTankBlockEntity extends BlockEntity {
     /** External extraction cannot take the fractional water already supplied to a pump. */
     private final IFluidHandler fluidHandler = new IFluidHandler() {
         @Override public int getTanks(){return 1;}
-        @Override public FluidStack getFluidInTank(int index){return tank.getFluidInTank(index);}
-        @Override public int getTankCapacity(int index){return tank.getCapacity();}
-        @Override public boolean isFluidValid(int index,FluidStack stack){return tank.isFluidValid(index,stack);}
-        @Override public int fill(FluidStack stack,FluidAction action){return tank.fill(stack,action);}
-        @Override public FluidStack drain(int amount,FluidAction action){return tank.drain(Math.min(amount,(int)Math.floor(Math.max(0,storedKg()-pendingDrawKg))),action);}
+        @Override public FluidStack getFluidInTank(int index){var o=owner();return index==0&&o!=null&&o.ready()?o.tank.getFluid().copyWithAmount((int)Math.floor(Math.max(0,o.storedKg()-o.pendingDrawKg))):FluidStack.EMPTY;}
+        @Override public int getTankCapacity(int index){var o=owner();return index==0&&o!=null?(int)o.capacityKg():0;}
+        @Override public boolean isFluidValid(int index,FluidStack stack){return index==0&&stack.is(Fluids.WATER);}
+        @Override public int fill(FluidStack stack,FluidAction action){var o=owner();return o!=null&&o.ready()?o.tank.fill(stack,action):0;}
+        @Override public FluidStack drain(int amount,FluidAction action){var o=owner();return o!=null&&o.ready()?o.tank.drain(Math.min(Math.max(0,amount),(int)Math.floor(Math.max(0,o.storedKg()-o.pendingDrawKg))),action):FluidStack.EMPTY;}
         @Override public FluidStack drain(FluidStack stack,FluidAction action){return stack.getFluid()==Fluids.WATER?drain(stack.getAmount(),action):FluidStack.EMPTY;}
     };
     public IFluidHandler fluidHandler(){return fluidHandler;}
 
     public CondensateStorageTankBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.CONDENSATE_STORAGE_TANK.get(), pos, state);
+        root=pos.immutable();
     }
 
     /** Internal whole-millibucket store. Pipes must use {@link #fluidHandler()}. */
     public FluidTank tank() {
-        return tank;
+        var o=owner();return o==null?tank:o.tank;
     }
 
     /** Water in the tank, kg. */
     public double storedKg() {
-        return tank.getFluidAmount();
+        var o=owner();return o==null?0:o.tank.getFluidAmount();
+    }
+    public double availableWaterKg(){return Math.max(0,storedKg()-pendingDrawKg);}
+    void restoreAvailableWater(double kg){
+        int whole=(int)Math.ceil(kg);tank.setFluid(whole==0?FluidStack.EMPTY:new FluidStack(Fluids.WATER,whole));
+        pendingDrawKg=whole-kg;setChanged();
     }
 
     /** Capacity, kg. */
     public double capacityKg() {
-        return tank.getCapacity();
+        var o=owner();return o==null?0:o.tank.getCapacity();
     }
 
     /** How full, 0 to 1. */
     public double levelFraction() {
-        return tank.getCapacity() > 0 ? (double) tank.getFluidAmount() / tank.getCapacity() : 0.0;
+        return capacityKg()>0?storedKg()/capacityKg():0;
     }
 
     /**
@@ -107,7 +137,8 @@ public class CondensateStorageTankBlockEntity extends BlockEntity {
      *         running out
      */
     public double drawKg(double wantedKg) {
-        if (!(wantedKg > 0.0)) {
+        var o=owner();if(o==null||!ready())return 0;if(o!=this)return o.drawKg(wantedKg);
+        if (!Double.isFinite(wantedKg)||!(wantedKg > 0.0)) {
             return 0.0;
         }
         // pendingDrawKg is water already handed to a pump that has NOT yet been
@@ -140,6 +171,7 @@ public class CondensateStorageTankBlockEntity extends BlockEntity {
 
     /** Put water in by hand, for creative staging and for the bucket. */
     public void fillKg(double kg) {
+        var o=owner();if(o==null||!ready())return;if(o!=this){o.fillKg(kg);return;}
         if (!(kg > 0.0)) {
             return;
         }
@@ -160,6 +192,7 @@ public class CondensateStorageTankBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
+        tag.putLong("TankRoot",root.asLong());tag.putUUID("TankAssembly",assembly);tag.putInt("Diameter",diameter);tag.putInt("Height",height);tag.putInt("PaidBlocks",paidBlocks);
         tag.put("Tank", tank.writeToNBT(registries, new CompoundTag()));
         // The carried remainder is a real debt against the tank contents, so it
         // has to survive a save or the sub-kilogram already handed to a pump is
@@ -170,10 +203,17 @@ public class CondensateStorageTankBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        root=tag.contains("TankRoot")?BlockPos.of(tag.getLong("TankRoot")):worldPosition;if(tag.hasUUID("TankAssembly"))assembly=tag.getUUID("TankAssembly");
+        int d=tag.getInt("Diameter"),h=tag.getInt("Height");diameter=CondensateTankShape.valid(d,h)?d:1;height=diameter==1?1:h;
+        paidBlocks=tag.contains("PaidBlocks")?Math.clamp(tag.getInt("PaidBlocks"),0,10000):1;
+        tank.setCapacity(diameter==1?CAPACITY_MB:CondensateTankShape.get(diameter,height).capacity);checkedAt=Long.MIN_VALUE;
         if (tag.contains("Tank")) {
             tank.readFromNBT(registries, tag.getCompound("Tank"));
         }
         double pending = tag.getDouble("PendingDraw");
         pendingDrawKg = Double.isFinite(pending) ? Math.max(0.0, pending) : 0.0;
     }
+    @Override public CompoundTag getUpdateTag(HolderLookup.Provider r){return saveWithoutMetadata(r);}
+    @Override public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket(){return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);}
+    @Override public void onLoad(){super.onLoad();if(level!=null&&!level.isClientSide()&&assembled())level.scheduleTick(worldPosition,getBlockState().getBlock(),20);}
 }

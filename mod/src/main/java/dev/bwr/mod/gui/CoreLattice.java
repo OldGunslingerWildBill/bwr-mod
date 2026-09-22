@@ -3,7 +3,8 @@ package dev.bwr.mod.gui;
 import java.util.Arrays;
 
 /**
- * Which squares of the lattice are actually core positions, and in what order.
+ * Legacy centre-outward fuel positions. Compact cores use CompactCoreLayout.
+ * Modern GUI packets carry the exact allowed indices rather than inferring them.
  *
  * <p>{@code CoreLoading} is a square 31x31 array because indexing is trivial
  * that way, but a real core is a circle inscribed in that square and a
@@ -13,11 +14,6 @@ import java.util.Arrays;
  * {@code ReactorCore.defaultCoreLoading} uses to fill a fresh core, reproduced
  * here so the GUI, the block entity and the physics all agree on which square
  * is position 0.
- *
- * <p>That ordering is also the wire format: the reactor snapshot sends one
- * entry per <i>core slot</i> in this order rather than one per lattice square,
- * which is what keeps a 21x21 vessel's map at 441 entries instead of 961, and
- * lets the client rebuild the geometry from two integers.
  *
  * <h2>The ordering is computed once per lattice width and then remembered</h2>
  * It is a pure function of {@code latticeWidth} — no reactor, no fuel, no world

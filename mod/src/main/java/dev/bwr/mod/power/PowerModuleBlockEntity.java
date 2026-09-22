@@ -37,11 +37,21 @@ public class PowerModuleBlockEntity extends BlockEntity {
     public double waterStored() { return waterKg; }
     public double inletMass() { return inlet.mass(); }
     public double exhaustMass() { return exhaust.mass(); }
+    /** One compact condenser seats six blocks directly below a matching LP foundation. */
+    public dev.bwr.mod.condenser.CondenserBlockEntity condenser(){
+        if(level==null||block().generator()||block().highPressure())return null;
+        var p=worldPosition.below(6);
+        return level.isLoaded(p)&&level.getBlockEntity(p) instanceof dev.bwr.mod.condenser.CondenserBlockEntity c
+                &&c.owner()==c&&c.layout()==dev.bwr.mod.condenser.CondenserLayout.INSTANCE
+                &&c.getBlockState().getValue(dev.bwr.mod.condenser.CondenserBlock.FACING)==getBlockState().getValue(PumpAssemblyBlock.FACING)
+                &&c.ready()?c:null;
+    }
+    private double outletRoom(){var c=condenser();return block().highPressure()?exhaust.space():c==null?0:c.plant().steam.space();}
     public static void serverTick(Level level,BlockPos pos,BlockState state,PowerModuleBlockEntity be) { PowerTrain.tick(be); }
     void resetReadouts() { running=false;flowKgPerS=shaftMW=electricMW=trainMW=rejectedMW=0;inletPsia=outletPsia=inletC=outletC=0; }
     double headerDemandKg() {
         if(!hasWorkLoad||block().generator())return 0;
-        double room=block().highPressure()?exhaust.space():WATER_CAPACITY-waterKg;
+        double room=outletRoom();
         double rate=(block().highPressure()?2200:750)*(.1+.9*Math.pow(rpm/1500,2))/20;
         return Math.max(0,Math.min(room,rate)-inlet.mass());
     }
@@ -68,8 +78,9 @@ public class PowerModuleBlockEntity extends BlockEntity {
     double expand(double workBudgetKJ) {
         if(workBudgetKJ<=0)return 0;
         var stage=block().highPressure()?PowerTurbine.Stage.HP:PowerTurbine.Stage.LP;
-        double room=block().highPressure()?exhaust.space():WATER_CAPACITY-waterKg;
-        if(room<1e-9){status=block().highPressure()?"HP exhaust buffer full":"Condensate outlet full";return 0;}
+        var condenser=condenser();
+        double room=outletRoom();
+        if(room<1e-9){status=block().highPressure()?"HP exhaust buffer full":condenser==null?"Fit a condenser six blocks below, same facing":"Condenser steam buffer full";return 0;}
         double rate=(block().highPressure()?2200:750)*(.1+.9*Math.pow(rpm/1500,2));
         double wanted=Math.min(rate/20,room);
         var sources=PowerSteamNetwork.sources(this);
@@ -95,11 +106,11 @@ public class PowerModuleBlockEntity extends BlockEntity {
             }
         }
         inletPsia=inlet.pressure();inletC=inlet.mass()>0?Saturation.temperatureCelsiusFromPsia(inletPsia):0;
-        var result=PowerTurbine.expand(stage,inlet,exhaust,wanted,workBudgetKJ,WATER_CAPACITY-waterKg);
+        var result=PowerTurbine.expand(stage,inlet,stage==PowerTurbine.Stage.HP?exhaust:condenser.plant().steam,wanted,workBudgetKJ);
         if(stage==PowerTurbine.Stage.HP && exhaustLedgerTick==level.getGameTime())exhaustOfferedKg+=result.mass();
-        if(stage==PowerTurbine.Stage.LP)waterKg+=result.mass();
+        if(stage==PowerTurbine.Stage.LP&&result.mass()>0)condenser.setChanged();
         flowKgPerS=result.mass()*20;shaftMW=result.workKJ()*20/1000;
-        outletPsia=result.outletPressure();outletC=result.mass()>0?(stage==PowerTurbine.Stage.LP?40:Saturation.temperatureCelsiusFromPsia(outletPsia)):0;
+        outletPsia=result.outletPressure();outletC=result.mass()>0?Saturation.temperatureCelsiusFromPsia(outletPsia):0;
         rejectedMW=result.rejectedHeatKJ()*20/1000;
         running=flowKgPerS>0;
         status=running?"Steam flowing":sources.isEmpty()?"Steam path closed or disconnected":"Waiting for steam";
@@ -113,25 +124,14 @@ public class PowerModuleBlockEntity extends BlockEntity {
         public boolean canExtract(){return true;}
         public boolean canReceive(){return false;}
     };
-    public final IFluidHandler condensate=new IFluidHandler() {
-        public int getTanks(){return 1;}
-        public FluidStack getFluidInTank(int tank){return tank==0&&waterKg>=1?new FluidStack(Fluids.WATER,(int)Math.floor(waterKg)):FluidStack.EMPTY;}
-        public int getTankCapacity(int tank){return tank==0?WATER_CAPACITY:0;}
-        public boolean isFluidValid(int tank,FluidStack fluid){return false;}
-        public int fill(FluidStack fluid,FluidAction action){return 0;}
-        public FluidStack drain(FluidStack fluid,FluidAction action){return fluid.is(Fluids.WATER)?drain(fluid.getAmount(),action):FluidStack.EMPTY;}
-        public FluidStack drain(int max,FluidAction action){int n=Math.min(Math.max(0,max),(int)Math.floor(waterKg));if(n<=0)return FluidStack.EMPTY;if(action.execute()){waterKg-=n;setChanged();}return new FluidStack(Fluids.WATER,n);}
-    };
     void pushOutputs() {
         var s=getBlockState();
         if(block().generator()) {
             var face=block().terminalFace(s);var next=block().terminal(worldPosition,s).relative(face);
             if(level.isLoaded(next)){var target=level.getCapability(Capabilities.EnergyStorage.BLOCK,next,face.getOpposite());
                 if(target!=null&&target.canReceive()){int n=target.receiveEnergy(energy.getEnergyStored(),false);energy.extractEnergy(n,false);}}
-        } else if(!block().highPressure()&&waterKg>=1) {
-            var face=block().portFace(s,AssemblyPort.WATER_DISCHARGE);var next=block().portPosition(worldPosition,s,AssemblyPort.WATER_DISCHARGE).relative(face);
-            if(level.isLoaded(next)){var target=level.getCapability(Capabilities.FluidHandler.BLOCK,next,face.getOpposite());
-                if(target!=null){int n=target.fill(condensate.getFluidInTank(0),IFluidHandler.FluidAction.EXECUTE);condensate.drain(n,IFluidHandler.FluidAction.EXECUTE);}}
+        } else if(!block().highPressure()&&waterKg>0) {
+            var c=condenser();if(c!=null){double moved=c.plant().acceptLegacyCondensate(waterKg);waterKg-=moved;if(moved>0){setChanged();c.setChanged();}}
         }
     }
     @Override protected void saveAdditional(CompoundTag t,HolderLookup.Provider registries) {

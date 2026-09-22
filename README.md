@@ -9,7 +9,7 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-SNAPSHOT` — development build, updated September 21, 2026.
+**Current version:** `0.1.0-SNAPSHOT` — development build, updated September 22, 2026.
 
 | Platform | Required version |
 | --- | --- |
@@ -18,10 +18,17 @@ flow, and the reactor responds. There is no commanded burn rate.
 | Java | 21 |
 | Optional integrations | Mekanism and CC:Tweaked, installed separately |
 
-The current update adds modular HP/LP turbine trains, generators, physical
-steam stop/control valves, modern pump connections, dyeable pipes and
-volume-based recirculation. **Turbine admission is now controlled at the
-upstream valve**, rather than separately in each turbine's panel.
+The current update adds rounded pressure vessels, compact logical fuel layouts
+(764 assemblies in a 17 x 17 vessel), cooling towers, waterlogged intakes and
+automatically assembled cylindrical condensate tanks. Modular HP/LP turbine
+trains now exhaust to a separate condenser with bypass and cooling-water ports.
+**Turbine admission is controlled at the upstream valve.** Pump, ownership,
+inventory and chunk-lifecycle fixes include permanent regression checks.
+
+Five separate known defects remain documented in the
+[verification re-audit](PHASE-ONE-REAUDIT.md): shared-port water simulation,
+suppression-basin inventory during revalidation, remote computer rebinding,
+closed MSIV branch routing and recirculation command conversion.
 
 Source is publicly readable under the custom
 [Realistic BWR Source-Available License](LICENSE). Modified redistribution
@@ -31,17 +38,44 @@ must credit **OldGunslingerWildBill**. See [license and credit](#license-and-cre
 
 ## What is implemented
 
+- **Phase-one reliability fixes:** fuel recovery when a controller is removed,
+  exclusive reactor and suppression-basin ownership, persistent basin water,
+  protected multiblock placement/mining, reconnecting machine ports, hardware-based
+  recirculation commands, shared steam-valve accounting and live fuel-definition
+  reload. See [all 13 fixes and existing-world behavior](PHASE-ONE-FIXES.md).
+
+- **Condenser cooling-water loop:** Blender-built natural-draft and Columbia-style
+  circular induced-draft towers, circulating and makeup pumps, and a screened
+  lake/river intake. Waterlogged intake parts retain surrounding water and allow
+  lakebed mounting. The circular tower has 19 animated fans, detailed louvers,
+  rails and service access; the natural tower has revised concrete/support detail.
+  Finite reservoirs, 2% makeup loss, FE-driven motors/fans,
+  animated fans, local speed controls and CC peripherals. See the
+  [cooling-water build guide](COOLING-WATER.md) for sizes, ports and capacities.
+- **Condenser and steam bypass:** a closed, Blender-built **7 x 6 x 7** condenser
+  fitted beneath one LP turbine, with one upper front bypass-steam inlet, two
+  front hot-water outlets, two rear cold-water inlets and a separate condensate
+  outlet. Place the LP turbine six blocks directly above the condenser's center
+  foundation, facing the same direction. Replace existing large units to upgrade.
+  A modeled bypass
+  valve provides 0-100% local and CC control. See the
+  [port, cooling-supply and CC guide](CONDENSER-AND-MSIV.md).
+- **Modeled MSIV:** a Blender-built three-block isolation valve with opposed
+  steam flanges, redstone/CC control and a four-second full closing stroke.
+  Existing cube valves remain compatible until replaced. See
+  [MSIV placement and condenser guide](CONDENSER-AND-MSIV.md).
 - **Steam valve control:** placeable Blender-built stop and fine control valves
   regulate a common header feeding multiple HP turbines. HP exhaust supplies
   the LP sections. Valve panels provide Open/Close and 0.1% adjustments; turbine
   panels report operating data. See [steam valves and migration](STEAM-VALVES.md).
 - **Modular main turbine trains:** Blender-built TX-10-style HP and LP sections
   and a TX-NLCH-style generator. Aligned end shafts join; steam is piped between
-  sections independently. LP water outlets accept Mekanism mechanical pipes.
+  sections independently. LP exhaust discharges into a matching condenser below it;
+  water is collected at the condenser, not the LP turbine.
   Turbine panels and CC readouts report flow, pressure, temperature estimates,
   shaft speed and power. Each generator supports up to 1,500 MW electrical.
   See [the turbine build guide](MODULAR-TURBINES.md) for connections, dimensions
-  and the temporary condensation model.
+  and condenser placement.
 - **Reactor physics:** delayed-neutron kinetics, rod worth, spatial flux, void
   and temperature feedback, xenon, fuel burnup, decay heat, vessel inventory,
   pressure, and damage modeling.
@@ -63,10 +97,20 @@ must credit **OldGunslingerWildBill**. See [license and credit](#license-and-cre
 - **Pump controls:** right-click a powered pump for numerical 0–100% speed,
   Start/Stop, flow, pressure, and available temperature/supply information.
   Manual, redstone, and computer modes are available where supported.
-- **Water supply:** finite 2,000,000 mB condensate storage tanks, ordinary water
-  pipe support at pump suction, and pressure-side injection into the vessel.
+- **Scalable condensate tanks:** cylindrical Blender models, 3–15 block odd
+  diameters and 3–24 block heights. Build a complete box of tank blocks with a
+  floor, walls and roof; it automatically becomes a cylindrical tank. Capacity
+  follows volume, and formation preserves the placed blocks’ combined water. Four side flanges connect to water pipes and pump suction.
+  Existing single-block tanks retain their saved water until converted.
+  See the [tank construction guide](CONDENSATE-TANK.md).
+- **Rounded pressure vessel:** a Blender-built steel barrel, bolted flange and
+  domed head appear when the reactor forms. Ports stay at their placed locations.
+  The rectangular construction/collision boundary remains; holding a vessel
+  block shows its outline. See [vessel appearance](PRESSURE-VESSEL.md).
 - **Separate pipe systems:** High-Pressure Water Pipe for water and High-Pressure
   Steam Pipe for steam. Electric pumps use FE and have no steam-drive ports.
+  BWR pipe segments do not tick individually; machines drive flow and perform
+  bounded network checks, with cached ECCS/feedwater routes.
 - **Dyeable round pipes:** swept elbows, junctions and coupling rings. Right-click
   with any of the 16 vanilla dyes to color the identification bands. Color is
   cosmetic; water and steam stay separate.
@@ -76,6 +120,12 @@ must credit **OldGunslingerWildBill**. See [license and credit](#license-and-cre
 The mod provides hardware and physics. The player provides control logic:
 automatic trips, ECCS actuation, and protection sequences are not built in.
 Manual controls and the scram actuator remain available.
+
+The condenser receives **LP exhaust and reactor bypass steam**. Cooling and
+condensate inventories are finite and separate; heat transfer uses fixed
+temperature assumptions. Propagated water temperature and dynamic vacuum
+simulation remain future work. The cutaway is an inspection asset;
+the in-game machine retains its shell panels.
 
 ## Build a working steam plant
 
@@ -90,6 +140,8 @@ RPV steam outlet
                                                          | | | |
                                                         LP LP LP LP
                                                          | | | |
+                                                   condensers below LPs
+                                                         | | | |
                                                     condensate return
                                                           |
                                         storage tank -> feedwater pump
@@ -103,10 +155,11 @@ RPV steam outlet
 2. Feed the HP top inlets through a common steam header. Place the stop and
    control valves before the branch if one valve should control all HP sections.
    Use **High-Pressure Steam Pipe** at steam ports.
-3. Pipe HP side exhausts into LP top inlets. Route LP water outlets to storage
-   or feedwater suction using **Mekanism Mechanical Pipes** or the supported
-   water network. Return pressure-side water through BWR High-Pressure Water
-   Pipe and an RPV Water Injection Port.
+3. Pipe HP side exhausts into LP top inlets. Put one compact condenser **six
+   blocks directly below each LP placement block**, with matching facing. Supply
+   its cold-water inlets, remove hot cooling water, and route its separate
+   condensate outlet to storage or feedwater suction. Use **Mekanism Mechanical
+   Pipes** or BWR water pipes. Return feedwater through an RPV Water Injection Port.
 4. Connect an energy consumer or storage to the generator's **copper terminal**.
    A full energy buffer, full condensate buffer or blocked exhaust limits flow.
 5. Right-click the valves: **new valves start closed**. Open the stop valve,
@@ -124,9 +177,10 @@ HP sections share that supply, and LP sections consume their actual exhaust.
 Stored downstream steam can continue expanding briefly after the stop closes.
 The stop valve takes 0.5 seconds for a full stroke; the control valve takes two.
 
-LP sections currently provide **temporary built-in condensation**, returning
-water at a displayed 40 °C. A separate condenser and moisture separator/reheater
-are future work. Steam temperatures are saturation estimates; full plant-wide
+LP sections now require an external condenser. Missing or full condensers stop
+LP exhaust flow; cooling supply and condensate drainage are needed for sustained
+operation. Legacy LP water is moved into its matched condenser without loss. A
+moisture separator/reheater remains future work. Steam temperatures are saturation estimates; full plant-wide
 water-temperature transport is not implemented. These are game-scale models,
 not manufacturer performance simulations.
 
@@ -158,6 +212,30 @@ The limits are defined in
 [`ReactorStructure.java`](mod/src/main/java/dev/bwr/mod/reactor/ReactorStructure.java).
 Larger geometry does not by itself promise proportionally greater thermal power;
 the INFO tab distinguishes live output from configuration estimates.
+
+## Compact fuel and control rods
+
+New reactors simulate individual fuel assemblies independently of Minecraft
+blocks, with one physical CRD below the floor for every blade.
+
+| Outside vessel footprint | Fuel assemblies | CRD blocks |
+| --- | ---: | ---: |
+| Minimum 7 × 7 | 88 | 21 |
+| Reference 17 × 17 | **764** | **185** |
+| Maximum 23 × 23 | 1,476 | 357 |
+
+The reference matches the requested Columbia counts using a symmetric game
+layout. Every blade shadows four local bundles, with additional peripheral
+fuel. GUI maps, physics and CC use the same stable layout. Touching compact
+CRDs share supplied water and FE while retaining individual consumption,
+condition, accumulators and gradual blade motion.
+
+**Existing reactors keep their legacy layout.** To convert, shut down, cool,
+defuel, replace the controller and rebuild the drive layer. A compact
+controller retains its formed footprint; resizing also requires replacing it
+after defuelling. Client and server must both use this update.
+
+See [the drive-layer pattern, size table and CC layout API](COMPACT-CORE.md).
 
 ## Water and steam connections
 
@@ -272,12 +350,20 @@ not committed.
 
 ## Development and verification
 
+See [Testing and CI](TESTING.md) for automated push/PR checks, the release
+checklist, test registration, and regression coverage for the original audit
+findings. [Issues 14–18](PHASE-TWO-FIXES.md) documents the follow-up fixes.
+
 - `core/` — pure Java physics, independent of Minecraft.
 - `mod/` — NeoForge blocks, screens, networking, and integrations.
 - `art/models/dvss/` — editable Blender models, source meshes, and previews.
 - `art/models/modern/` — five revised pump models and dyeable pipe fittings in Blender.
 - `art/models/power_turbines/` — editable HP, LP and generator Blender scenes.
 - `art/models/steam_valves/` — editable stop/control valves and in-game previews.
+- `art/models/condenser_msiv/` — original condenser exterior/cutaway and modeled MSIV.
+- `art/models/condenser_ports/` — connectable condenser exterior and bypass valve, authored in Blender.
+- `art/models/cooling/` — natural/circular towers, two pumps, screened intake and animated fan, authored in Blender.
+- `art/models/condensate_tank/` — scalable tank shell, roof, plinth, flanges and ladder in Blender.
 - `tools-export-dvss.py` / `tools-narrow-jet.py` / `tools-export-modern.py` — reproducible game assets;
   pass `--check` to verify generated output.
 - `tools-export-power-turbines.py` / `tools-export-steam-valves.py` — turbine and valve exporters;
@@ -289,13 +375,28 @@ The Python audit/export commands below require Python 3.11 or newer.
 
 ```powershell
 .\gradlew.bat :core:check
+python tools-check-test-registration.py
 .\gradlew.bat :mod:runTurbineGameTest
 .\gradlew.bat :mod:runTurbineModelCheck -PbwrPumpPanelCheck
 .\gradlew.bat :mod:runTurbineModelCheck -PbwrPowerPanelCheck
+.\gradlew.bat :mod:runTurbineModelCheck -PbwrCompactCorePanelCheck
+.\gradlew.bat :mod:runTurbineModelCheck -PbwrVesselModelCheck
 python tools-audit-assets.py
 python tools-check-jar.py
 python tools-export-steam-valves.py --check
+python tools-export-msiv.py --check
+python tools-export-condenser.py --check
+python tools-export-cooling.py --check
+python tools-export-condensate-tank.py --check
+python tools-export-reactor-vessel.py --check
+.\gradlew.bat :core:acceptance --args=CoolingWater
+.\gradlew.bat :mod:runTurbineModelCheck -PbwrCoolingPanelCheck
 ```
+
+The compact-core update passed **186 physics tests and all 18 required Minecraft
+GameTests**. Both optional-integration configurations booted successfully. Real
+client checks covered 764/185 and 1,476/357 layouts, refuelling, and commands to
+the last blade. See [compact-core construction and migration](COMPACT-CORE.md).
 
 The steam-valve gameplay update passed **12 valve scenarios**, **15 main-turbine
 scenarios**, **73 pump scenarios**, **96 RCIC/HPCI assembly scenarios**, two
@@ -303,16 +404,30 @@ earlier plumbing scenarios and five focused turbine-physics tests. Actual
 client checks covered the models, connected train, readout panels and valve
 commands, including a 65.3% setting and zero flow after stop-valve closure.
 
-The README/license update changes documentation, attribution, metadata and
-packaged notices. Its build and JAR checks are separate from those gameplay
-tests. The full long-running core acceptance suite was not rerun for this
-documentation update. See [BUILD-STATUS.md](BUILD-STATUS.md) for exact scope,
-older verification results and artifact hashes.
+The condenser update adds five core heat/mass-balance tests and ten server
+scenarios covering the six compact connections in four orientations, LP placement,
+Mekanism water transfer, CC bypass control, shared steam supply, persistence,
+teardown and replacement of legacy large units. Client tests exercise the real
+full-mesh renderer, including preservation of Blender material colors and the
+entity atlas shader. The opt-in `:mod:runTurbineModelCheck -PbwrCondenserPanelCheck`
+captures placed-world front, rear and nighttime views. See [BUILD-STATUS.md](BUILD-STATUS.md)
+for exact scope, earlier results and artifact hashes.
+
+The latest cooling revision passes **183 core tests**, **15 required GameTests**,
+**16 turbine**, **27 cooling** and **9 tank** runtime scenarios. Seven dedicated
+permission scenarios pass with optional integrations present and absent. Coverage
+includes a waterlogged lakebed intake, automatic tank formation, legacy saves,
+LP condenser backpressure and finite water/energy accounting. Client checks cover
+all five cooling models, 19 fan instances, submerged placement and the updated
+intake/tank screens. Full results are in [BUILD-STATUS.md](BUILD-STATUS.md).
 
 ## Further reading
 
+- [Scalable condensate tank construction and ports](CONDENSATE-TANK.md)
+- [Cooling towers, circulating pumps, lake intake and makeup water](COOLING-WATER.md)
+- [Condenser ports, bypass valve, cooling supply and modeled MSIV](CONDENSER-AND-MSIV.md)
 - [Steam stop/control valves, shared admission, and CC migration](STEAM-VALVES.md)
-- [Modular main turbines, generator, and temporary condensate return](MODULAR-TURBINES.md)
+- [Modular main turbines, generator, and external condensers](MODULAR-TURBINES.md)
 - [Water plumbing, pump controls, and upgrade notes](WATER-PLUMBING.md)
 - [Pump model dimensions and port coordinates](PUMP-MODELS.md)
 - [Modern pump flanges, round pipes, and dye colors](MODERN-PUMPS-AND-PIPES.md)

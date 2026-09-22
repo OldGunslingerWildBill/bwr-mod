@@ -39,7 +39,7 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
     private static final int GRID_X = 8;
     private static final int GRID_Y = 30;
     private static final int GRID_W = 146;
-    private static final int GRID_H = 94;
+    private static final int GRID_H = 84;
 
     private static final int DETAIL_X = 164;
     private static final int DETAIL_RIGHT = 246;
@@ -167,10 +167,10 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                     map.enrichmentWeightFraction[selected] * 100.0,
                     map.burnupMwdPerTonne[selected], map.kInf[selected]);
         }
-        text(graphics, selectedLine, 8, 116, TEXT);
+        text(graphics, font.plainSubstrByWidth(selectedLine, 238), 8, 116, TEXT);
         if (grid.marked() >= 0) {
-            text(graphics, "marked position " + grid.marked() + " for a swap",
-                    8, 106, 0xFFFFC24A);
+            text(graphics, "Marked: " + grid.marked(),
+                    164, 112, 0xFFFFC24A);
         }
     }
 

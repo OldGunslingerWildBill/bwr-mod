@@ -1,0 +1,17 @@
+{
+  "parent": "bwr:block/cooling/natural_draft_tower/compact",
+  "display": {
+    "gui": {
+      "rotation": [
+        20,
+        225,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    }
+  }
+}

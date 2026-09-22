@@ -123,19 +123,10 @@ public class ReactorPanelMenu extends BwrMenu {
     /** What each drive has been told to go to, same units. */
     public int[] rodDemandLabels = new int[0];
 
-    /**
-     * Shape of the control rod lattice, columns (x) by rows (z).
-     *
-     * <p>Sent rather than inferred. {@code ReactorStructure} puts one drive
-     * under every 2x2 assembly group and walks x outside z, so rod index
-     * {@code r = xIndex * rodsPerZ + zIndex} — which only looks square when the
-     * vessel interior is. Interiors are legal from 5x5 to 21x21 in either
-     * direction, so a rectangular core is ordinary, and a client guessing
-     * {@code ceil(sqrt(count))} draws every rod but the first in the wrong
-     * place. Zero when the shape is unknown.
-     */
+    /** Interior floor dimensions; sparse drive coordinates follow in the packet. */
     public int rodsPerX;
     public int rodsPerZ;
+    public int[] rodLatticeIndices = new int[0];
 
     /** Null until the first map arrives. */
     public CoreMapSnapshot map;
@@ -237,22 +228,24 @@ public class ReactorPanelMenu extends BwrMenu {
 
         int n = core.getControlRodCount();
         buf.writeVarInt(n);
-        // Lattice shape, so the rod overlay can place the drives where they
-        // physically are instead of guessing a square. One drive per 2x2
-        // assembly group means floor(interior/2) of them along each axis.
+        // Actual floor geometry, including gaps and legacy drive spacing.
         ReactorStructure structure = be.structure();
         buf.writeVarInt(structure == null ? 0
-                : (structure.interiorMax().getX() - structure.interiorMin().getX() + 1) / 2);
+                : (structure.interiorMax().getX() - structure.interiorMin().getX() + 1));
         buf.writeVarInt(structure == null ? 0
-                : (structure.interiorMax().getZ() - structure.interiorMin().getZ() + 1) / 2);
+                : (structure.interiorMax().getZ() - structure.interiorMin().getZ() + 1));
         for (int r = 0; r < n; r++) {
+            var position = structure.crdPositions().get(r);
+            int width = structure.interiorMax().getX()-structure.interiorMin().getX()+1;
+            buf.writeVarInt((position.getZ()-structure.interiorMin().getZ())*width
+                    + position.getX()-structure.interiorMin().getX());
             buf.writeByte(core.getRodNotchLabel(r));
             buf.writeByte(rods == null ? core.getRodNotchLabel(r) : rods.getCommandedNotchLabel(r));
         }
 
         buf.writeBoolean(withMap);
         if (withMap) {
-            CoreMapSnapshot.write(buf, core, be.assemblyCount());
+            CoreMapSnapshot.write(buf, core, be.corePositions());
         }
         ReactorConfigurationInfo.capture(be).write(buf);
     }
@@ -318,9 +311,11 @@ public class ReactorPanelMenu extends BwrMenu {
         int n = buf.readVarInt();
         rodsPerX = buf.readVarInt();
         rodsPerZ = buf.readVarInt();
+        rodLatticeIndices = new int[n];
         rodNotchLabels = new int[n];
         rodDemandLabels = new int[n];
         for (int r = 0; r < n; r++) {
+            rodLatticeIndices[r] = buf.readVarInt();
             rodNotchLabels[r] = buf.readByte();
             rodDemandLabels[r] = buf.readByte();
         }

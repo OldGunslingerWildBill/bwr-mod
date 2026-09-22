@@ -279,6 +279,13 @@ public final class SuppressionPool {
         return designMassKg;
     }
 
+    /** Geometry changes alter capacity, never replenish an already metered basin. */
+    public void resizeCapacityKeepingInventory(double capacityKg) {
+        if(!Double.isFinite(capacityKg) || capacityKg<=0) return;
+        designMassKg=Math.max(1,capacityKg);
+        massKg=Math.max(1,Math.min(massKg,designMassKg));
+    }
+
     /**
      * Water above the pump intake, kilograms — what suction can actually reach.
      *

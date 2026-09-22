@@ -91,12 +91,11 @@ public final class CoreMapSnapshot {
     /**
      * Write the map for a core.
      *
-     * @param assemblyCount positions this vessel has, from the multiblock
+     * @param positions exact allowed fuel slots, shared with the multiblock and rod map
      */
-    public static void write(FriendlyByteBuf buf, ReactorCore core, int assemblyCount) {
+    public static void write(FriendlyByteBuf buf, ReactorCore core, int[] positions) {
         CoreLoading loading = core.getCoreLoading();
         int width = loading.latticeWidth();
-        int[] positions = CoreLattice.corePositions(width, assemblyCount);
         double[] weights = loading.powerWeights();
 
         double peak = 0.0;
@@ -124,6 +123,7 @@ public final class CoreMapSnapshot {
         }
 
         for (int position : positions) {
+            buf.writeVarInt(position);
             FuelAssembly assembly = loading.assemblyAt(position);
             if (assembly == null) {
                 buf.writeByte(0);
@@ -152,7 +152,7 @@ public final class CoreMapSnapshot {
         }
 
         int n = map.coreSlotCount;
-        map.latticeIndex = CoreLattice.corePositions(map.latticeWidth, n);
+        map.latticeIndex = new int[n];
         map.fuelTypeIndex = new int[n];
         map.burnupMwdPerTonne = new double[n];
         map.enrichmentWeightFraction = new double[n];
@@ -168,6 +168,7 @@ public final class CoreMapSnapshot {
             // map. The byte on the wire is unchanged, so this is a decode fix,
             // not a format change. The ceiling is 255 fuel types in one core;
             // above that the name table would need a varint.
+            map.latticeIndex[i] = buf.readVarInt();
             int type = buf.readUnsignedByte();
             if (type == 0) {
                 map.fuelTypeIndex[i] = -1;

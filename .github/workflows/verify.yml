@@ -1,0 +1,95 @@
+name: Verify Realistic BWR
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Physics, build and resource checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Run acceptance suite, design checks and build
+        run: bash ./gradlew check build --console=plain | tee verification-build.log
+      - name: Prove unregistered tests fail the gate
+        run: python3 tools-check-test-registration.py
+      - name: Audit assets and packaged classes
+        run: |
+          python3 tools-audit-assets.py | tee verification-assets.log
+          python3 tools-check-jar.py | tee verification-jar.log
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: build-verification
+          path: |
+            verification-*.log
+            core/build/reports/
+            mod/build/reports/
+          retention-days: 14
+
+  server:
+    name: Server (${{ matrix.integrations }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        integrations: [installed, absent]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Prepare disposable dedicated test server
+        run: |
+          mkdir -p mod/run/peripheralCheck mod/run/turbineGameTest
+          printf 'eula=true\n' > mod/run/peripheralCheck/eula.txt
+          printf 'eula=true\n' > mod/run/turbineGameTest/eula.txt
+          printf 'online-mode=false\nserver-port=0\nspawn-protection=16\n' > mod/run/peripheralCheck/server.properties
+      - name: Run Minecraft GameTests
+        if: matrix.integrations == 'installed'
+        run: bash ./gradlew :mod:runTurbineGameTest --console=plain | tee verification-gametest.log
+      - name: Run dedicated-server permissions and integration checks
+        env:
+          INTEGRATIONS: ${{ matrix.integrations }}
+        shell: bash
+        run: |
+          options=()
+          if [[ "$INTEGRATIONS" == "absent" ]]; then
+            options=(-PbwrNoCC -PbwrNoMekanism)
+          fi
+          bash ./gradlew :mod:runPeripheralCheck "${options[@]}" --console=plain | tee verification-peripheral.log
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: server-verification-${{ matrix.integrations }}
+          path: |
+            verification-*.log
+            mod/run/*/logs/
+            mod/run/*/crash-reports/
+          retention-days: 14

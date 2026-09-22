@@ -34,6 +34,8 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
 
     /** One game tick, seconds. The drive's own clock, independent of the multiblock. */
     private static final double TICK_SECONDS = 0.05;
+    private static final net.minecraft.core.Direction[] MANIFOLD_EDGES = {
+            net.minecraft.core.Direction.EAST, net.minecraft.core.Direction.SOUTH};
 
     private final ControlRodDriveHardware hardware = new ControlRodDriveHardware();
 
@@ -60,12 +62,32 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
      */
     public static void serverTick(Level level, BlockPos pos, BlockState state,
                                   ControlRodDriveBlockEntity be) {
+        be.shareCompactManifold(level, pos);
         be.hardware.tickHardware(TICK_SECONDS);
         // The buffers moved, so the chunk is no longer what is on disk. Same
         // reasoning and same cost as RecirculationPumpBlockEntity.tickPump: a
         // drive that spent its supplies and then unloaded without being marked
         // would come back with them.
         be.setChanged();
+    }
+
+    private void shareCompactManifold(Level level, BlockPos pos) {
+        if (controllerPos == null || !level.isLoaded(controllerPos)
+                || !(level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity controller)
+                || !controller.isFormed() || controller.coreLayoutVersion() != 2) return;
+        // Visit each horizontal edge once. Never query an unloaded neighbour.
+        var positions = controller.structure().crdPositions();
+        if (rodIndex < 0 || rodIndex >= positions.size() || !positions.get(rodIndex).equals(pos)) return;
+        for (var side : MANIFOLD_EDGES) {
+            var next = pos.relative(side);
+            if (level.isLoaded(next) && level.getBlockEntity(next) instanceof ControlRodDriveBlockEntity other
+                    && controllerPos.equals(other.controllerPos)
+                    && other.rodIndex >= 0 && other.rodIndex < positions.size()
+                    && positions.get(other.rodIndex).equals(next)) {
+                hardware.shareSuppliesWith(other.hardware);
+                other.setChanged();
+            }
+        }
     }
 
     /**

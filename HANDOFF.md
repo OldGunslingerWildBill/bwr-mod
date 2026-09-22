@@ -1,5 +1,240 @@
 # Agent Handoff
 
+## Publication snapshot (2026-09-22)
+
+The user requested publication of all accumulated work, including the rounded
+reactor vessel. GitHub main was still at b77cf00 with no open pull requests or
+new upstream commits when checked; this update can fast-forward main without
+merging another branch. The snapshot includes Blender sources and exports,
+compact cores, condensers, cooling equipment, automatic tanks, audit fixes and
+the verification workflow. The build and all 18 required GameTests were rerun
+successfully before publication. Earlier entries below record their state at
+the time of each development pass. R01–R05 remain unresolved.
+
+## Latest: pressure vessel appearance (2026-09-22)
+
+Formed reactors render a scalable rounded Blender vessel. Construction,
+collision and selection remain rectangular; a held vessel block reveals the
+boundary outline. No world blocks are replaced. See PRESSURE-VESSEL.md and the
+new BUILD-STATUS.md entry for the artifact and tests.
+
+`VesselAppearance` stores client-only envelope visibility. `ReactorVesselRenderer`
+wraps shell baked models and draws eight exported Blender components from one
+controller. Client mirrors now consume both initial chunk tags and live data
+packets. Controller unload/removal clears the appearance index. Revalidation
+sends geometry changes even when the reactor becomes unformed.
+
+GitHub issues #1–#13 and #15–#18 are labeled `fixed` plus `pending-push`; #14
+is only `pending-push` until CI is published and runs. No push/commit occurred.
+The separate R01–R05 findings are still unresolved.
+
+## Latest: compact core layout (2026-09-22)
+
+New controllers use layout v2: 17×17 outside = 764 logical fuel assemblies and
+185 individual physical CRDs. Legacy saves keep v1; no automatic fuel/rod-ID
+migration. See COMPACT-CORE.md for the drive pattern, scaling table and conversion
+procedure, and BUILD-STATUS.md for the current JAR and verification results.
+Client/server GUI protocol is now 2. Maximum compact capacity is 1,476 assemblies
+and 357 drives; vessel size limits are unchanged.
+
+
+## 2026-09-21: phase-one audit repairs complete
+
+All 13 reported findings now have fixes and permanent regressions. See
+[PHASE-ONE-FIXES.md](PHASE-ONE-FIXES.md) for behavior/migration details and
+[BUILD-STATUS.md](BUILD-STATUS.md) for the verified artifact and results.
+The core suite passed 182/182 tests, the final server suite passed 12/12
+GameTests, dedicated-server permission checks passed six scenarios, and startup
+passed with optional integrations both present and absent.
+
+New shared helpers: `world/LoadedWorld` prevents structure scans from loading
+chunks; `world/LiveCapabilities` resolves current inventories per transfer;
+`world/AssemblyAccess` enumerates footprints for permissions/recovery.
+`suppression/SuppressionBasinData` persists exclusive basin ownership and water
+history beyond a controller's lifetime. Basin history intentionally prevents
+controller replacement or geometry edits from replenishing metered water.
+
+Reactor controller removal recovers fuel with exposure. Invalid shrinking is
+rejected until excluded positions are unloaded. CC recirculation demand now
+targets physical motors; fuel-definition replacement refreshes live cores on
+their server tick. Pump admission uses the shared physical valve ledger.
+
+The chunk regression combines actual availability changes with an explicit
+engine unload callback and NBT restoration, because Minecraft can retain a
+neighboring chunk below FULL status. It is not a prolonged multiplayer test.
+No model edits were needed. Existing uncommitted feature work was preserved.
+These repair changes are local; no commit, Git push or GitHub issue closure was
+performed in this repair pass.
+
+## 2026-09-21: scalable cylindrical condensate tank
+
+The existing tank item now opens a size selector: odd diameter 3–15, height
+3–24. Assemble/resize uses constituent tank blocks in survival and refunds
+excess on shrinking. Creative is free. Legacy single cubes retain their
+2,000,000 kg capacity and water until explicitly converted. Size changes keep
+water and fractional withdrawal debt; capacity, obstruction, ownership, chunk,
+player and material checks happen before world edits.
+
+`CondensateTankShape` caches circular occupied cells, collision and capacity.
+`CondensateTankAssembly` owns construction and guarded teardown. All parts use
+the existing block/BE, with root position and UUID ownership. Root owns the
+water; four cardinal flanges one block above the base expose outward fluid
+faces. Existing pump plumbing resolves and deduplicates their owner. Broken or
+unloaded structures refuse transfers. Breaking any part dismantles the tank,
+drops material once in survival, and loses water; resize preserves water.
+
+Five original Blender components are in `art/models/condensate_tank`, with
+reproducible OBJ/MTL export via `tools-export-condensate-tank.py`. The renderer
+draws only at the controller, preserving material colors; shell diameter and
+height scale, while flanges and ladder stay full-size. GUI size selections
+follow successful server resizes. Existing CC methods remain compatible,
+with assembled/ready/dimensions added to status. Temperature is still assumed.
+
+Eight server scenarios passed, including min/mid/max structures, survival
+construction/refunds/teardown, shared water and fractional persistence. Client
+check uses `-PbwrTankPanelCheck` to create a fresh world, render three sizes,
+connect pipes and send a live resize command. Guide: CONDENSATE-TANK.md.
+This update remains uncommitted; preserve the earlier cooling/condenser work.
+
+## 2026-09-21: condenser cooling-water hardware
+
+User selected Columbia-style circular **induced draft**, alongside natural draft.
+Five new sparse assemblies share `CoolingBlock`, `CoolingBlockEntity`, layout,
+renderer, menu and CC peripheral; enum design selects capacity and power. IDs:
+`natural_draft_tower`, `mechanical_draft_tower`, `circulating_water_pump`,
+`makeup_water_pump`, `screened_water_intake`. Editable Blender files and original
+authoring script live in `art/models/cooling`; reproducible 58-resource export is
+`tools-export-cooling.py`. Body meshes render once; fan tower draws six animated
+instances of the separate fan mesh. Daylight is sampled above the structure to
+avoid black exteriors from the shaded basin controller. GUI fits 720p/scale 3.
+
+`CoolingWaterUnit` provides finite input/output inventories, speed-limited flow,
+2% tower water loss and design-point 24->13 C heat rejection. Powered pumps/fans
+start stopped, accept FE at their modeled box and use cubic speed/power scaling.
+Only exact outward water faces expose fluid handlers. Pump suction traverses up
+to 256 BWR water-pipe cells and terminates at actual fluid handlers; outputs have
+one shared per-tick budget. Broken structures invalidate cached handlers. Intake
+requires source water below the center and two outer cardinal sides, supplying
+renewable ordinary water into a finite buffer. No real filtration chemistry.
+
+See COOLING-WATER.md for all dimensions, coordinates, references, capacities and
+CC commands. Existing condenser/LP exhaust assumptions remain unchanged: this
+loop cools the bypass condenser; LP exhaust integration is still pending.
+
+Validation: six core tests; 25 real-server scenarios including all orientations,
+placement, teardown, pipe/FE faces, closed condenser loop and lake-to-makeup path;
+60,152 body quads plus fan instances checked in the real renderer. Opt-in client
+world/screenshots use `-PbwrCoolingPanelCheck`. Details/hashes in BUILD-STATUS.md.
+
+## 2026-09-21: close the condenser shell gap beside the catwalk
+
+The compact transition started at y=3.75 while the lower casing ended at
+y=3.4603, and the two skins also differed in depth. `seal_shell_transition()`
+in the Blender source now derives the joint from the lower end/side panels,
+extends the four neck panels down with 0.08-block overlap, and matches their
+bottom corners to the casing. Both front and rear openings are closed.
+
+Re-exported the existing model; no new objects or triangles were needed. The
+7x6x7 dimensions, six ports and all 172 occupied cell indexes/roles are unchanged,
+so existing compact placements update on reload without replacement. Updated
+Blender previews and added close-up camera views to the existing client harness.
+
+## 2026-09-21: compact condenser and material rendering fix
+
+User selected one condenser per LP turbine. Rebuilt a single closed bay in
+Blender to 7x6x7, using the actual LP source skid/casing as the top collar reference.
+LP root is exactly six blocks above condenser root with matching facing. Retained
+full-size block-centered flanges: one bypass, two hot, two cold, one condensate.
+Current export is 17,696 triangles and 172 occupied cells. Blender sources and
+solo/fitted renders are in `art/models/condenser_ports`.
+
+White-model root cause: `ModelBlockRenderer.renderModel` replaces OBJ Kd vertex
+RGB, and terrain `RenderType.solid()` is unsuitable for a block entity renderer.
+`CondenserRenderer` now uses `Sheets.cutoutBlockSheet()` and the bulk vertex
+writer with existing-color preservation. Regression capture checks RGB diversity
+and the buffer type. Actual in-world front/rear/night screenshots are generated
+by `CondenserClientCheck` (opt in with `-PbwrCondenserPanelCheck`).
+
+LayoutVersion=2 marks new units. Missing/old versions use the archived 25x14x25
+mesh and sparse layout for rendering, collision, ports and full teardown. Binding
+copies the owner's version; ownership matching includes it. Old inventories and
+connections survive saves. Break/replacement installs the compact unit, without
+orphaning old cells or deleting an LP above it. The ten server scenarios include
+four actual LP/condenser placements and a legacy save/reload/replacement check.
+No heat-balance changes or new LP exhaust integration are included in this patch.
+
+## 2026-09-21: connectable condenser and CC bypass valve
+
+Implemented the user's marked ports in the closed condenser exterior: three
+front steam bypass inlets, six front/down hot-water outlets, six rear/down
+cold-water inlets. Three smaller rear condensate outlets remain a separate
+circuit. `arabelle_condenser` is now a placeable 25x14x25 machine; the original
+inspection cutaway is not the in-game model. New Blender source, interchange
+meshes and front/rear/valve renders are in `art/models/condenser_ports`.
+
+`tools-export-condenser.py` generates one 74,924-triangle exterior plus a compact
+item, 3,606 sparse occupancy cells and 18 port roles. A controller-only BER
+draws the mesh once with full-footprint culling bounds. Parts persist their
+controller UUID and cell index; one controller ticks the plant. Placement
+refuses occupied/unloaded space; removal respects ownership, and stale fluid
+handlers refuse transfer. One suitable-tool survival drop per machine.
+
+`SurfaceCondenser` provides a finite initial bypass heat balance, independent
+cold/hot/condensate inventories, and steam mass/enthalpy accounting. Fixed
+temperatures are assumptions (13/24 C cooling and 40 C condensate), labeled in
+the read-only panel. Both BWR water pipes and NeoForge/Mekanism fluid handlers
+connect on the specified faces. Steam uses the existing bounded routing and
+shared nozzle/valve ledger. See CONDENSER-AND-MSIV.md for capacities and limits.
+
+New `bypass_steam_valve` uses an original one-block Blender mesh and the existing
+fine-valve actuator/menu. CC type is `bwr_bypass_steam_valve`; `setPosition`
+takes 0..1, while the local panel uses percent. Starts shut; two-second full
+stroke; target/position save. `getStatus` adds `steamKgPerS` and `bypassValve`
+while retaining the old `turbineSteamKgPerS` field for compatibility.
+
+Five new core tests, nine condenser server scenarios and a real four-rotation
+renderer test cover this feature. Server checks include actual Mekanism
+transfer and CC capability discovery. The shared existing pump/turbine/MSIV
+regressions passed. See BUILD-STATUS.md for the final artifact and checks.
+
+Next scope remains cooling/forced-draft towers, transported water temperature,
+vacuum and external LP exhaust. Current LP modules still internally condense;
+the new condenser only consumes reactor bypass steam. No automatic control
+logic was added. This turn did not request a Git commit/push.
+
+## 2026-09-21: condenser Blender artwork and MSIV model
+
+Built original Blender condenser/MSIV assets from the user's three references;
+see CONDENSER-AND-MSIV.md. An online search found no suitable Arabelle-specific
+mesh. Manufacturer reference is 1,700 MWe plant / 2,750 MW heat rejection, not
+1,700 MW of condenser heat rejection. Blender files, authoring script, exports
+and inspected renders are under `art/models/condenser_msiv`.
+
+Condenser scope is **model only**: detailed exterior and cutaway scenes, named
+future ports, no registered block or new condenser thermodynamics. LP internal
+condensation remains unchanged. The user was asked whether to include gameplay
+integration; no answer was received during this patch, so the explicit modeling
+request was completed without silently changing the steam cycle.
+
+MSIV is an actual in-game replacement on new placement. MainSteamIsolationValveBlock
+owns a vertical 1x3x1 assembly with PART=0..2, ASSEMBLED and FACING; OPEN retains
+its command meaning. Only PART=0 has a block entity and steam ports. All network
+traversal still passes through that same base position, so it is not modeled as
+a ProcessAssembly endpoint. Redstone on any part reaches the base, while the
+existing CC peripheral stays on the base. Static exterior; no stroke animation.
+
+Missing new properties in old saved states default to ASSEMBLED=false/PART=0:
+legacy cubes and six connections remain. Replacement opts into the full model.
+Break handling removes the three parts and only drops one item with a pickaxe.
+Existing four-second stroke now snaps exactly to the end stop on tick 80 and
+ignores nonfinite/negative time steps. No automated protection logic added.
+
+`tools-export-msiv.py --check` reproduces 13 assets from the Blender mesh.
+`MsivRuntimeCheck` covers four rotations, stroke/routing each tick, obstruction,
+upper redstone, CC, mid-stroke NBT/reversal, drops and a legacy saved state.
+The client model check now includes all 48 MSIV states and the inventory model.
+Validation results and the current JAR are recorded in BUILD-STATUS.md.
+
 ## 2026-09-21: README, credit and distribution permissions
 
 User requested a current README and approval/credit requirements for code

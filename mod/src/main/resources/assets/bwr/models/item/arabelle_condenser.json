@@ -1,0 +1,17 @@
+{
+  "parent": "bwr:block/condenser/compact",
+  "display": {
+    "gui": {
+      "rotation": [
+        20,
+        225,
+        0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  }
+}

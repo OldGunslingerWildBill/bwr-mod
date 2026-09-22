@@ -11,6 +11,13 @@
     "bwr:lp_turbine",
     "bwr:nuclear_generator",
     "bwr:steam_stop_valve",
-    "bwr:turbine_control_valve"
+    "bwr:turbine_control_valve",
+    "bwr:arabelle_condenser",
+    "bwr:bypass_steam_valve",
+    "bwr:natural_draft_tower",
+    "bwr:mechanical_draft_tower",
+    "bwr:circulating_water_pump",
+    "bwr:makeup_water_pump",
+    "bwr:screened_water_intake"
   ]
 }

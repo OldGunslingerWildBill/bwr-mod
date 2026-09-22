@@ -19,6 +19,9 @@ public final class WaterLineNetwork {
     public static final int MAX_PIPE_BLOCKS = 256;
 
     public static boolean acceptsLineOn(BlockState state, Direction face) {
+        if(state.getBlock() instanceof CondensateStorageTankBlock)return CondensateStorageTankBlock.acceptsWater(state,face);
+        if(state.getBlock() instanceof dev.bwr.mod.cooling.CoolingBlock)return dev.bwr.mod.cooling.CoolingBlock.acceptsWater(state,face);
+        if(state.getBlock() instanceof dev.bwr.mod.condenser.CondenserBlock)return dev.bwr.mod.condenser.CondenserBlock.acceptsWater(state,face);
         if (state.getBlock() instanceof ProcessAssembly assembly) {
             AssemblyPort port = assembly.portAt(state, face);
             return port != null && !port.isSteam();
@@ -81,6 +84,11 @@ public final class WaterLineNetwork {
                                 queue.add(p);
                             }
                         } else if (state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())
+                                || state.getBlock() instanceof dev.bwr.mod.cooling.CoolingBlock
+                                && (state.getValue(dev.bwr.mod.cooling.CoolingBlock.PORT)==dev.bwr.mod.cooling.CoolingBlock.Port.INLET
+                                    ||state.getValue(dev.bwr.mod.cooling.CoolingBlock.PORT)==dev.bwr.mod.cooling.CoolingBlock.Port.MAKEUP)
+                                || state.getBlock() instanceof dev.bwr.mod.condenser.CondenserBlock
+                                && state.getValue(dev.bwr.mod.condenser.CondenserBlock.PORT)==dev.bwr.mod.condenser.CondenserBlock.Port.COLD
                                 || state.getBlock() instanceof ProcessAssembly assembly
                                 && assembly.portAt(state, d.getOpposite()) == AssemblyPort.WATER_SUCTION) {
                             IFluidHandler sink = level.getCapability(Capabilities.FluidHandler.BLOCK, p, d.getOpposite());

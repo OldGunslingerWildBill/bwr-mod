@@ -7,12 +7,12 @@ interpretations, not CAD replicas or manufacturer performance simulations.
 | Item | Width x height x length | Connections | Game rating |
 | --- | --- | --- | --- |
 | TX-10 Style HP Turbine | 5 x 5 x 9 | Top steam inlet; left HP steam exhaust; two end shafts | 2,200 kg/s |
-| TX-10 Style LP Turbine | 7 x 5 x 7 | Top crossover steam inlet; left water outlet; two end shafts | 750 kg/s |
+| TX-10 Style LP Turbine | 7 x 5 x 7 | Top crossover steam inlet; bottom condenser interface; two end shafts | 750 kg/s |
 | TX-NLCH Style Nuclear Generator | 5 x 5 x 9 | Two end shafts; copper FE terminal on right | 1,500 MW electrical |
 
 Left/right are relative to a module's front. All shaft centers are 2.5 blocks
 above the placement floor. Each item reserves its full footprint, creates one
-simulation entity, and dismantles as one object when any part is broken. The
+controller block entity, and dismantles as one object when any part is broken. The
 placement anchor is the center cell of the floor. Leave the footprint clear.
 
 ## Build a plant
@@ -25,9 +25,11 @@ placement anchor is the center cell of the floor. Leave the footprint clear.
    inlets. Valve positions and finite nozzle capacity still determine supply.
 3. Pipe HP left-side exhausts to LP top inlets. A common header can join several
    HP exhausts and several LP inlets. Shafts transmit work, not steam.
-4. Connect LP left-side water outlets to **Mekanism mechanical pipes**, then to
-   condensate storage or feedwater pump suction. The LP outlet pushes water and
-   also permits extraction. No steam is accepted at this water port.
+4. Place one **compact condenser six blocks directly below each LP center-base
+   placement block**, facing the same direction. Exhaust transfers through the
+   seated bottom interface. Supply cold cooling water and remove hot return water.
+   Connect the condenser’s separate condensate outlet to storage/feedwater suction
+   with BWR water pipes or Mekanism mechanical pipes. LPs have no water outlet.
 5. Connect energy cables/storage to the generator's copper terminal. Its other
    faces have no FE capability; the terminal is output-only.
 6. Put a **Steam Stop Valve** and **Turbine Steam Control Valve** upstream of the
@@ -59,15 +61,19 @@ load chunks. Arrange chunk loading for the complete plant when operating it.
   Cable and storage throughput can constrain usable output.
 - A generator stores up to 2 billion FE. With no generator capacity available,
   turbine sections stop accepting further work. A full HP exhaust buffer or LP
-  water buffer also limits flow. These are physical inventory limits, not
+  condenser steam buffer also limits flow. These are physical inventory limits, not
   automatic reactor controls.
-- **Temporary condensation:** each LP section returns one kilogram of water per
-  kilogram of steam consumed, at a displayed 40 C. Residual heat is explicitly
-  rejected by this temporary built-in sink. Water holds 20,000 kg per LP section;
-  an undrained outlet eventually stops it. The mod convention is **1 mB = 1 kg**.
-- The condenser, moisture separator/reheater and water-temperature transport
-  through ordinary mechanical pipes remain future work. This release does not
-  require those unimplemented machines.
+- LPs discharge residual steam enthalpy into their external condenser. Only the
+  condenser converts that steam into water, requiring cooling water, hot-water
+  storage room and condensate storage room. A missing or full condenser stops
+  LP expansion. The mod convention is **1 mB = 1 kg**.
+- A moisture separator/reheater, dynamic vacuum and water-temperature transport
+  through ordinary mechanical pipes remain future work. Current condenser outlet
+  temperature is the existing 40°C assumption.
+- Old LP water inventories survive updating and migrate into the matched
+  condenser as room becomes available, including fractional amounts. Reconnect
+  old LP outlet piping to the condenser. Do not dismantle a water-filled old LP
+  before that transfer completes.
 - Steam, energy and fractional condensate inventories survive saves. Speed is
   a simple startup/coastdown indication; rotor stored kinetic energy is not yet
   simulated. No automatic turbine or reactor protection is added.
@@ -95,7 +101,8 @@ command wins. Local turbine `setAdmission` and `setRunning` are removed.
 
 ## Models and references
 
-- Editable Blender scenes: `art/models/power_turbines/power_turbines.blend`
+- Updated LP Blender scene: `art/models/power_turbines/lp_turbine.blend`
+- Original HP/generator scenes: `art/models/power_turbines/power_turbines.blend`
 - Blender authoring script: `art/models/power_turbines/build_models.py`
 - Resource exporter: `python tools-export-power-turbines.py`
 - Reproducibility check: `python tools-export-power-turbines.py --check`

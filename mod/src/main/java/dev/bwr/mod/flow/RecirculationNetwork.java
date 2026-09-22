@@ -17,6 +17,12 @@ public final class RecirculationNetwork {
     private record Survey(long time,List<BlockPos> jets) {}
     private static final Map<Level,Map<BlockPos,Survey>> CACHE=new WeakHashMap<>();
 
+    /** Geometry/lifecycle changes discard memoised geometry, never registry membership. */
+    public static void invalidateSurvey(Level level,BlockPos controller) {
+        var surveys=CACHE.get(level);
+        if(surveys!=null) surveys.remove(controller);
+    }
+
     public static RecirculationSizing.Sizing sizing(ReactorStructure vessel) {
         if (vessel == null) return RecirculationSizing.forVolume(RecirculationSizing.BASE_VOLUME);
         var min = vessel.interiorMin(); var max = vessel.interiorMax();
@@ -73,17 +79,7 @@ public final class RecirculationNetwork {
     }
     /** Controllers survey their own vessel once formed; the index stores positions only. */
     public static List<ReactorControllerBlockEntity> controllers(Level level) {
-        var index=CACHE.get(level);
-        if(index==null) return List.of();
-        List<ReactorControllerBlockEntity> result=new ArrayList<>();
-        var iterator=index.keySet().iterator();
-        while(iterator.hasNext()) {
-            BlockPos p=iterator.next();
-            if(!level.isLoaded(p)) continue;
-            if(level.getBlockEntity(p) instanceof ReactorControllerBlockEntity c && c.isFormed()) result.add(c);
-            else iterator.remove();
-        }
-        return result;
+        return dev.bwr.mod.reactor.FormedReactorRegistry.controllers(level);
     }
     public static ReactorControllerBlockEntity connectedController(Level level,BlockPos pump) {
         return RecirculationCircuit.controller(level,pump);

@@ -35,7 +35,7 @@ import net.minecraft.world.item.ItemStack;
  * pressure the vessel is still holding.
  *
  * <h2>Why the lattice is not made of slots</h2>
- * A 21x21 vessel has 441 positions. Vanilla slots would mean 441 of them in the
+ * A maximum compact core has 1,476 positions. Vanilla slots would put all of them in the
  * container, synced every tick, plus the shift-click and quick-craft machinery
  * that comes with them. Positions are addressed by index in a command instead,
  * and the bundle itself is a normal item that moves between the core and the
@@ -142,7 +142,7 @@ public class RefuellingMenu extends BwrMenu {
         buf.writeDouble(loading.effectiveBeta());
         buf.writeBoolean(loading.isEndOfCycle());
         buf.writeVarInt(countBundles(player));
-        CoreMapSnapshot.write(buf, be.core(), be.assemblyCount());
+        CoreMapSnapshot.write(buf, be.core(), be.corePositions());
     }
 
     @Override

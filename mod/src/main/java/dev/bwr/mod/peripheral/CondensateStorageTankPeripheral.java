@@ -74,6 +74,8 @@ public class CondensateStorageTankPeripheral implements IPeripheral {
         m.put("capacity", be.capacityKg());
         m.put("level", be.levelFraction());
         m.put("temperature", CondensateStorageTankBlockEntity.STORED_TEMPERATURE_C);
+        var owner=be.owner();m.put("assembled",owner!=null&&owner.assembled());m.put("ready",be.ready());
+        m.put("diameter",owner==null?0:owner.diameter);m.put("height",owner==null?0:owner.height);
         return m;
     }
 }

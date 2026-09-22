@@ -21,17 +21,14 @@ import java.util.function.IntConsumer;
  * reuse the spec was asking for.
  *
  * <h2>Fitting</h2>
- * The assembly lattice is a fixed 31x31 square because that is how
- * {@code CoreLoading} indexes, but a vessel only uses a circle in the middle of
- * it whose size follows the multiblock's footprint. Drawing all 961 squares
- * would put a tiny core in the middle of a lot of nothing, so the widget
- * measures the bounding box of the cells it was actually given and scales to
- * that.
+ * Legacy fuel uses a 31x31 lattice and compact fuel a 42x42 lattice. Only
+ * occupied geometry is drawn: the bounding box of the supplied cells sets the
+ * scale, and two-pixel cells keep maximum cores within the panel.
  */
 public class LatticeGridWidget extends AbstractWidget {
 
     /** Cells never render smaller than this, even if that means clipping. */
-    private static final int MIN_CELL = 3;
+    private static final int MIN_CELL = 2;
     /** Nor larger, so a 9-rod core does not get dinner-plate cells. */
     private static final int MAX_CELL = 14;
 

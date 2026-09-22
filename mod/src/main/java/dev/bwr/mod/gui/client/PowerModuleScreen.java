@@ -25,13 +25,13 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
         }else{
             readout(g,"This section",num(menu.shaftMW,2)+" MW / "+num(menu.flow,1)+" kg/s",12,81,288,TEXT_BRIGHT);
             readout(g,"Steam in / out",num(menu.inletP,1)+" / "+num(menu.outletP,1)+" psia",12,97,288,TEXT_BRIGHT);
-            readout(g,menu.hp?"In / exhaust temperature":"Steam / return temperature",num(menu.inletC,1)+" / "+num(menu.outletC,1)+" C",12,113,288,TEXT_BRIGHT);
-            if(!menu.hp)readout(g,"Return water buffer",big(menu.water)+" / 20,000 kg",12,129,288,TEXT_BRIGHT);
-            text(g,menu.hp?"Top: steam in   Left: HP exhaust":"Top: HP exhaust in   Left: water out",12,151,TEXT_DIM);
+            readout(g,"In / exhaust temperature",num(menu.inletC,1)+" / "+num(menu.outletC,1)+" C",12,113,288,TEXT_BRIGHT);
+            if(!menu.hp&&menu.water>0)readout(g,"Legacy water awaiting transfer",big(menu.water)+" kg",12,129,288,TEXT_BRIGHT);
+            text(g,menu.hp?"Top: steam in   Left: HP exhaust":"Top: steam in   Bottom: condenser",12,151,TEXT_DIM);
             text(g,"Steam is controlled by the upstream valve.",12,182,TEXT);
             text(g,"HP exhaust supplies the LP sections.",12,196,TEXT_DIM);
         }
         text(g,font.plainSubstrByWidth(menu.status,276),12,213,TEXT_BRIGHT);
-        text(g,menu.generator?"1 FE/t = 13.4 W  |  98.5% conversion":menu.hp?"Pipe HP exhaust to LP inlets.":"Temporary built-in condensation; 1 mB = 1 kg",12,228,TEXT_DIM);
+        text(g,menu.generator?"1 FE/t = 13.4 W  |  98.5% conversion":menu.hp?"Pipe HP exhaust to LP inlets.":"Condenser: six blocks below, same facing",12,228,TEXT_DIM);
     }
 }

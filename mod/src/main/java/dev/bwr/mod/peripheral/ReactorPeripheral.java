@@ -505,6 +505,27 @@ public class ReactorPeripheral implements IPeripheral {
     // Control rods
     // =================================================================
 
+    /** Stable drive IDs and world coordinates; fuel slots use the GUI's lattice indices. */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> getCoreLayout() throws LuaException {
+        if (!be.isFormed()) throw new LuaException("reactor is not formed");
+        var structure = be.structure();
+        Map<Integer, Object> drives = new HashMap<>();
+        var mapping = structure.rodLatticeMap(structure.latticeWidth());
+        for (int r = 0; r < structure.controlRodCount(); r++) {
+            var position = structure.crdPositions().get(r);
+            Map<Integer, Integer> fuel = new HashMap<>();
+            int[] slots = mapping.positionsOfRod(r);
+            for (int i = 0; i < slots.length; i++) fuel.put(i+1, slots[i]);
+            drives.put(r+1, Map.of("x", position.getX(), "y", position.getY(), "z", position.getZ(), "fuelSlots", fuel));
+        }
+        Map<Integer, Integer> slots = new HashMap<>();
+        int[] positions = be.corePositions();
+        for (int i = 0; i < positions.length; i++) slots.put(i+1, positions[i]);
+        return Map.of("version", be.coreLayoutVersion(), "assemblies", positions.length,
+                "latticeWidth", structure.latticeWidth(), "drives", drives, "fuelSlots", slots);
+    }
+
     /** Notch positions as the Full Core Display reads them: 00 to 48, in twos. */
     @LuaFunction(mainThread = true)
     public final Map<Integer, Integer> getRodPositions() throws LuaException {
@@ -779,22 +800,12 @@ public class ReactorPeripheral implements IPeripheral {
         return core().getCoreFlowFraction();
     }
 
-    /**
-     * Forced recirculation flow as a fraction of rated.
-     *
-     * <p><b>The recirculation pump blocks write this same field.</b> The
-     * controller derives a flow fraction from its satellite pumps each tick and
-     * takes the channel back whenever that figure actually changes, because the
-     * pumps are the plant's own hardware. Between pump movements whatever wrote
-     * last stands, so a demand set here holds on a plant with no pump blocks and
-     * holds only until the next speed change on a plant that has them. A flow
-     * manoeuvre that must survive the pumps is commanded through
-     * {@code bwr_recirculation_pump}. Read {@link #getRecirculationFlowDemand()}
-     * back to see which writer is standing.
-     */
+    /** Commands connected recirculation motors toward a requested fraction of rated core flow.
+     * Actual delivery remains limited by electrical supply, motor speed, and installed jets. */
     @LuaFunction(mainThread = true)
     public final void setRecirculationFlow(double fraction) throws LuaException {
-        core().setRecirculationFlowFraction(finite("recirculation flow fraction", fraction));
+        core();
+        be.setRecirculationDemand(finite("recirculation flow fraction", fraction));
     }
 
     /**

@@ -57,6 +57,7 @@ public class MainSteamIsolationValveBlockEntity extends BlockEntity {
 
     /** Advance the stroke. Called by the ticker, once per server tick. */
     public void tickValve(double dtSeconds) {
+        if (!Double.isFinite(dtSeconds) || dtSeconds <= 0) return;
         double target = demandOpen ? 1.0 : 0.0;
         if (position == target) {
             // A valve sitting at its end stop is not a change. Marking the chunk
@@ -64,7 +65,10 @@ public class MainSteamIsolationValveBlockEntity extends BlockEntity {
             return;
         }
         double step = dtSeconds / STROKE_SECONDS;
-        if (position < target) {
+        if (Math.abs(position - target) <= step + 1e-12) {
+            // Avoid an extra tick at the end stop from accumulated floating-point error.
+            position = target;
+        } else if (position < target) {
             position = Math.min(target, position + step);
         } else {
             position = Math.max(target, position - step);

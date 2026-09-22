@@ -110,6 +110,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private ControlRodDriveNetwork rodNetwork;
 
     private ReactorStructure structure;
+    private VesselAppearance.Envelope vesselEnvelope;
+    private VesselAppearance.Envelope clientVesselEnvelope;
+    private int coreLayoutVersion = dev.bwr.core.fuel.CompactCoreLayout.VERSION;
+    private int savedInteriorWidth, savedInteriorDepth;
+    public int coreLayoutVersion() { return coreLayoutVersion; }
     private ValidationResult lastValidation = new ValidationResult();
     private boolean structureDirty = true;
     private int sinceRevalidate;
@@ -139,12 +144,6 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * onto the notch the rods had reached.
      */
     private int[] pendingRodDemand;
-
-    /**
-     * The recirculation flow fraction this controller last derived from its
-     * pumps, or NaN before it has derived one. See {@link #gatherPumpFlow}.
-     */
-    private double lastPumpFlowFraction = Double.NaN;
 
     /**
      * The vessel geometry the rod-to-lattice map in the solver was built for,
@@ -181,6 +180,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * bundle, per SPEC section 2.3 — so the lattice is persisted alongside it.
      */
     private net.minecraft.nbt.ListTag pendingFuelRestore;
+    private Object fuelDefinitionRevision;
 
     public ReactorControllerBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.REACTOR_CONTROLLER.get(), pos, state);
@@ -211,6 +211,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             return;
         }
 
+        refreshFuelDefinitions();
         gatherPumpFlow(level);
         applyVesselSteamDischarge(level);
 
@@ -229,11 +230,20 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         setChanged();
     }
 
-    /**
-     * Sum flow from every satellite pump. An unpowered or broken pump simply
-     * contributes nothing — losing a pump reduces flow, it never invalidates
-     * the multiblock or stops the reactor ({@code SPEC.md} section 4.2).
-     */
+    /** CC demand commands the connected motors; it cannot manufacture delivered flow. */
+    public void setRecirculationDemand(double fraction) {
+        if(level==null || core==null || structure==null || !Double.isFinite(fraction)) return;
+        double capacity=dev.bwr.mod.flow.RecirculationNetwork.measure(level,this,pumpPositions).maximum();
+        double speed=capacity>0 ? Math.clamp(fraction/capacity,0,1) : 0;
+        for(BlockPos p:pumpPositions) if(level.isLoaded(p)
+                && level.getBlockEntity(p) instanceof RecirculationPumpBlockEntity pump
+                && (dev.bwr.mod.flow.RecirculationNetwork.installedRip(level,structure,p)
+                    || dev.bwr.mod.flow.RecirculationNetwork.connectedController(level,p)==this)) {
+            pump.setComputerControlled(true);
+            pump.setTargetSpeedFraction(speed);
+        }
+    }
+
     private void gatherPumpFlow(Level level) {
         var iterator = pumpPositions.iterator();
         while (iterator.hasNext()) {
@@ -266,29 +276,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         unmatchedJets=hardware.unmatchedJets();
         connectedExternalPumps=hardware.externalPumps();
         core.getBoundaryStress().setPlantConfiguration(BoundaryDamageNbt.configurationFor(installedInternalPumps));
-        // A direct Lua demand is still manual, but cannot exceed installed hardware.
-        if(core.getRecirculationFlowFractionDemand()>recirculationCapacityFraction)
-            core.setRecirculationFlowFraction(recirculationCapacityFraction);
-
-        // Two writers, one field. The pumps are the plant's own hardware, and
-        // ReactorPeripheral.setRecirculationFlow is a player actuator that
-        // writes the same core demand from the computer thread. Pushing the
-        // pump figure unconditionally every tick made the Lua write dead on
-        // arrival: it survived at most one tick and the program could not even
-        // detect that it had been ignored, so flow control — the defining BWR
-        // manoeuvre, and the only handle on power that does not move a rod —
-        // was unreachable from a computer.
-        //
-        // So the pumps write on CHANGE, not on level. They take the demand back
-        // the moment they actually move, which is what "the hardware is the
-        // authority" means; between moves whatever wrote last stands. Nothing
-        // here decides which writer is right — it is last-writer-wins, with the
-        // pumps counting as a writer only when they have something new to say.
-        if (fraction != lastPumpFlowFraction
-                || core.getRecirculationFlowFractionDemand() == lastPumpFlowFraction) {
-            core.setRecirculationFlowFraction(fraction);
-            lastPumpFlowFraction = fraction;
-        }
+        // Delivery always comes from powered physical hardware; commands target motor speed.
+        core.setRecirculationFlowFraction(fraction);
     }
 
     /**
@@ -466,6 +455,17 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * snapshot that was consumed and nulled on the first load.
      */
     private void revalidate(Level level) {
+        var previous = vesselEnvelope;
+        vesselEnvelope = null;
+        revalidateStructure(level);
+        // Unformed reactors return before the normal periodic sync. Send the
+        // changed boundary now so clients never retain a closed-looking vessel.
+        if (!java.util.Objects.equals(previous, vesselEnvelope)) syncToClients();
+    }
+
+    private void revalidateStructure(Level level) {
+        FormedReactorRegistry.remove(this);
+        dev.bwr.mod.flow.RecirculationNetwork.invalidateSurvey(level,getBlockPos());
         ValidationResult result = new ValidationResult();
         ReactorStructure found = ReactorStructure.validate(level, getBlockPos(), result);
         lastValidation = result;
@@ -479,7 +479,30 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             return;
         }
 
+        int width = found.interiorMax().getX()-found.interiorMin().getX()+1;
+        int depth = found.interiorMax().getZ()-found.interiorMin().getZ()+1;
+        // Compact rod IDs belong to this footprint. Never reinterpret a saved
+        // transient or an in-flight drive demand as a different physical blade.
+        if (coreLayoutVersion != 1 && savedInteriorWidth > 0
+                && (width != savedInteriorWidth || depth != savedInteriorDepth)) {
+            result.fail(getBlockPos(), "This controller retains a " + (savedInteriorWidth+2) + "x"
+                    + (savedInteriorDepth+2) + " core. Restore that footprint; to resize, shut down, cool and defuel, then replace the controller.");
+            structure = null;
+            return;
+        }
+        // Preserve fuel and reject a shrink before changing any live core or port owner.
+        var allowed=new java.util.HashSet<Integer>();
+        for(int slot:found.fuelPositions()) allowed.add(slot);
+        var saved=core!=null ? writeCoreFuel() : savedFuelOrEmpty();
+        for(int i=0;i<saved.size();i++) if(!allowed.contains(saved.getCompound(i).getInt("Slot"))) {
+            result.fail(getBlockPos(),"Cannot shrink vessel while fuel occupies outer positions. Restore the previous vessel and unload those bundles, or recover the fuel by removing the controller.");
+            structure=null;
+            return;
+        }
         structure = found;
+        savedInteriorWidth = width;
+        savedInteriorDepth = depth;
+        setChanged();
         for (BlockPos portPos : found.waterInjectionPositions())
             if (level.isLoaded(portPos) && level.getBlockEntity(portPos) instanceof RpvWaterInjectionPortBlockEntity port)
                 port.noteController(getBlockPos());
@@ -504,7 +527,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 pendingRodDemand = rodNetwork == null
                         ? null : rodNetwork.getCommandedNotchIndices();
             }
-            core = new ReactorCore(config);
+            core = new ReactorCore(config, new dev.bwr.core.fuel.CoreLoading(found.latticeWidth()));
+            // Install before restoring: fromState re-solves the saved rod pattern.
+            installRodLatticeMap(found);
             if (pendingRestore != null) core.getVoidModel().setRatedCoreFlowKgPerS(pendingRatedCoreFlowKgPerS);
             // A calibrated startup source, because a plant is built with one.
             // Before any restore: fromState carries the source strength the
@@ -544,9 +569,6 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 rodNetwork.restoreCommandedNotchIndices(pendingRodDemand);
                 pendingRodDemand = null;
             }
-            // The pumps have to re-establish their claim on the flow demand
-            // against a core that has never heard from them.
-            lastPumpFlowFraction = Double.NaN;
             // After the core is built and restored, because initialiseCold()
             // deliberately resets the damage model to a pristine plant and this
             // puts the plant's real history back.
@@ -568,7 +590,6 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         double ratedFlow=dev.bwr.mod.flow.RecirculationNetwork.sizing(found).ratedFlowKgPerS();
         if (ratedFlow != core.getVoidModel().getRatedCoreFlowKgPerS()) {
             core.setRatedCoreFlowKgPerS(ratedFlow);
-            lastPumpFlowFraction=Double.NaN;
         }
 
         // This is what makes rod i in the physics the same rod as drive i in
@@ -577,6 +598,40 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         // does not cover; the method itself decides whether anything moved.
         installRodLatticeMap(found);
         bindDrives(level);
+        FormedReactorRegistry.add(this);
+        var min=found.interiorMin().offset(-1,-1,-1);
+        var max=found.interiorMax().offset(1,1,1);
+        var visualPorts=new java.util.ArrayList<BlockPos>();
+        for(var p:BlockPos.betweenClosed(min,max)) {
+            if(p.getX()!=min.getX() && p.getX()!=max.getX()
+                    && p.getY()!=min.getY() && p.getY()!=max.getY()
+                    && p.getZ()!=min.getZ() && p.getZ()!=max.getZ())continue;
+            if(level.isLoaded(p)) {
+                var s=level.getBlockState(p);
+                if(!s.isAir() && !s.is(dev.bwr.mod.registry.BwrBlocks.REACTOR_VESSEL.get()))visualPorts.add(p.immutable());
+            }
+        }
+        vesselEnvelope=new VesselAppearance.Envelope(min,max,visualPorts);
+    }
+
+    @Override public void onLoad() {
+        super.onLoad();
+        structureDirty = true;
+        FormedReactorRegistry.add(this);
+    }
+
+    @Override public void setRemoved() {
+        VesselAppearance.update(level,getBlockPos(),null);
+        FormedReactorRegistry.remove(this);
+        dev.bwr.mod.flow.RecirculationNetwork.invalidateSurvey(level,getBlockPos());
+        super.setRemoved();
+    }
+
+    @Override public void onChunkUnloaded() {
+        VesselAppearance.update(level,getBlockPos(),null);
+        FormedReactorRegistry.remove(this);
+        dev.bwr.mod.flow.RecirculationNetwork.invalidateSurvey(level,getBlockPos());
+        super.onChunkUnloaded();
     }
 
     /**
@@ -702,13 +757,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     // Refuelling — SPEC section 10
     // -----------------------------------------------------------------
 
-    /**
-     * How many core positions this vessel has. The lattice
-     * {@code CoreLoading} indexes is a fixed 31x31 square; this is how much of
-     * it a vessel of this footprint actually uses, and
-     * {@link dev.bwr.mod.gui.CoreLattice} turns the two into the centre-outward
-     * slot ordering the GUI and the wire format share.
-     */
+    /** Fuel capacity of the saved layout, independent of physical floor block count. */
     public int assemblyCount() {
         return structure == null ? 0 : structure.assemblyCount();
     }
@@ -718,8 +767,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         if (core == null || structure == null) {
             return new int[0];
         }
-        return dev.bwr.mod.gui.CoreLattice.corePositions(
-                core.getCoreLoading().latticeWidth(), structure.assemblyCount());
+        return structure.fuelPositions();
     }
 
     /**
@@ -774,7 +822,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 || !stack.is(dev.bwr.mod.registry.BwrItems.FUEL_ASSEMBLY.get())) {
             return false;
         }
-        if (core.getCoreLoading().isOccupied(latticePosition)) {
+        if (structure == null || java.util.Arrays.stream(corePositions()).noneMatch(p -> p == latticePosition)
+                || core.getCoreLoading().isOccupied(latticePosition)) {
             return false;
         }
         core.getCoreLoading().load(latticePosition,
@@ -791,29 +840,42 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
     }
 
-    /**
-     * Put the saved core loading back, or empty the core if there is none.
-     *
-     * <p>A freshly built vessel arrives <b>empty</b>. {@code ReactorCore}
-     * constructs itself around a full core of fresh LEU because its standalone
-     * harness and its acceptance tests need fuel in it, but a multiblock a
-     * player has just welded together has not been fuelled yet, and handing them
-     * 748 free bundles they could pull straight back out through the refuelling
-     * screen would delete the entire fuel cycle. Fuel comes out of the
-     * fabricator.
-     *
-     * <p><b>The {@code unloadAll()} below is only ever safe because this method
-     * is called on the very next statement after {@code new ReactorCore(config)}
-     * and on no other path.</b> The bundles it discards are the synthetic fresh
-     * LEU the constructor loads for the benefit of the standalone harness, never
-     * anything a player fabricated. {@code CoreLoading.unloadAll} is
-     * {@code Arrays.fill(positions, null)} — the assemblies are dropped on the
-     * floor, not returned as items — so calling this against a fuelled core
-     * destroys up to 441 bundles and their accumulated exposure with no item
-     * drop and no message. {@link #revalidate} snapshots the loading into
-     * {@code pendingFuelRestore} before it discards a live core for exactly this
-     * reason. Do not call this from anywhere else.
-     */
+    /** Consume the inventory once, before block-entity removal. Works before first formation too. */
+    public List<ItemStack> takeFuelForRemoval() {
+        List<ItemStack> result=new ArrayList<>();
+        if(core!=null) {
+            var loading=core.getCoreLoading();
+            for(int i=0;i<loading.positionCount();i++) if(loading.isOccupied(i)) result.add(unloadAssembly(i));
+        } else if(pendingFuelRestore!=null) {
+            for(int i=0;i<pendingFuelRestore.size();i++) {
+                var entry=pendingFuelRestore.getCompound(i);
+                dev.bwr.mod.fuel.FuelAssemblyData.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE,entry.get("Fuel"))
+                        .result().ifPresent(data -> result.add(dev.bwr.mod.fuel.FuelAssemblyItem.stackOf(
+                                dev.bwr.mod.registry.BwrItems.FUEL_ASSEMBLY.get(),data)));
+            }
+        }
+        pendingFuelRestore=null;
+        setChanged();
+        return result;
+    }
+
+    /** Refresh on the server thread, retaining each assembly's exposure and enrichment. */
+    public void refreshFuelDefinitions() {
+        Object revision=dev.bwr.mod.fuel.FuelTypes.revision();
+        if(core==null || revision==fuelDefinitionRevision) return;
+        var loading=core.getCoreLoading();
+        for(int i=0;i<loading.positionCount();i++) if(loading.isOccupied(i)) {
+            var assembly=loading.assemblyAt(i);
+            var type=dev.bwr.mod.fuel.FuelTypes.byNameOrFallback(assembly.fuelType().name());
+            if(type!=assembly.fuelType()) loading.load(i,dev.bwr.core.fuel.FuelAssembly.restore(type,
+                    assembly.enrichmentWeightFraction(),assembly.heavyMetalMassKg(),assembly.burnupMwdPerTonne(),assembly.gadoliniaRemainingFraction()));
+        }
+        core.refreshFuelDefinitions();
+        fuelDefinitionRevision=revision;
+        setChanged();
+    }
+
+    /** Restore player-owned bundles into the newly created empty loading. Never grants fuel. */
     private void applyCoreFuel() {
         var loading = core.getCoreLoading();
         loading.unloadAll();
@@ -851,6 +913,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             }
             return out;
         }
+        out.add("Core layout: " + (coreLayoutVersion == 1 ? "legacy" : "compact") + "; one drive block per blade.");
         out.add("Reactor formed: " + structure.assemblyCount() + " assemblies, "
                 + structure.controlRodCount() + " control rods, vessel " + vesselState.getSerializedName());
         if (core != null) {
@@ -880,6 +943,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.putString("VesselState", vesselState.getSerializedName());
+        tag.putInt("CoreLayoutVersion", coreLayoutVersion);
+        tag.putInt("CoreInteriorWidth", savedInteriorWidth);
+        tag.putInt("CoreInteriorDepth", savedInteriorDepth);
 
         net.minecraft.nbt.ListTag pumps = new net.minecraft.nbt.ListTag();
         for (BlockPos p : pumpPositions) {
@@ -927,6 +993,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         vesselState = VesselState.byName(tag.getString("VesselState"));
+        // Missing key is an old save, including a temporarily broken vessel.
+        coreLayoutVersion = tag.contains("CoreLayoutVersion") ? tag.getInt("CoreLayoutVersion") : 1;
+        savedInteriorWidth = tag.getInt("CoreInteriorWidth");
+        savedInteriorDepth = tag.getInt("CoreInteriorDepth");
 
         pumpPositions.clear();
         net.minecraft.nbt.ListTag pumps = tag.getList("Pumps", net.minecraft.nbt.Tag.TAG_LONG);
@@ -1006,6 +1076,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         CompoundTag tag = super.getUpdateTag(registries);
         tag.putString("VesselState", vesselState.getSerializedName());
         tag.putBoolean("Formed", isFormed());
+        if (vesselEnvelope != null) vesselEnvelope.write(tag);
         if (core != null) {
             // The client renders and displays; it never recomputes physics.
             tag.putDouble("Power", core.getTotalPowerFractionOfRated());
@@ -1018,7 +1089,6 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     @Override
     public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries) {
-        super.handleUpdateTag(tag, registries);
         vesselState = VesselState.byName(tag.getString("VesselState"));
         // Everything getUpdateTag sends is stored, not just the vessel state.
         // Five of the six keys used to be read and thrown away here, so the
@@ -1026,10 +1096,21 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         // renderer or tooltip written against getUpdateTag — the natural place
         // to look — would have found default values on arrival.
         clientFormed = tag.getBoolean("Formed");
+        clientVesselEnvelope = VesselAppearance.read(tag);
+        VesselAppearance.update(level,getBlockPos(),clientVesselEnvelope);
         clientPowerFractionOfRated = tag.getDouble("Power");
         clientPressurePsig = tag.getDouble("Pressure");
         clientLevelIn = tag.getDouble("Level");
         clientChargedAccumulators = tag.getInt("ChargedAccumulators");
+    }
+
+    @Override
+    public void onDataPacket(net.minecraft.network.Connection connection,
+                             ClientboundBlockEntityDataPacket packet, HolderLookup.Provider registries) {
+        // NeoForge's default packet handler loads persistent NBT, not the
+        // client-mirror handler. Initial chunk tags and live updates need the
+        // same path, particularly when an already rendered vessel becomes unformed.
+        handleUpdateTag(packet.getTag(), registries);
     }
 
     // -----------------------------------------------------------------
@@ -1051,6 +1132,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     public boolean clientFormed() {
         return clientFormed;
     }
+
+    public VesselAppearance.Envelope clientVesselEnvelope() { return clientVesselEnvelope; }
 
     /** Total power as a fraction of rated, as last synced. @see #handleUpdateTag */
     public double clientPowerFractionOfRated() {

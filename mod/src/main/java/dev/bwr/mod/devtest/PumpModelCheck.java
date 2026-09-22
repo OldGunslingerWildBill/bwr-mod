@@ -17,6 +17,9 @@ public final class PumpModelCheck {
             BwrBlocks.HP_TURBINE.get(),BwrBlocks.LP_TURBINE.get(),BwrBlocks.NUCLEAR_GENERATOR.get()}; }
     public static void run(ModelEvent.BakingCompleted event) {
         waterModels(event);
+        CondenserModelCheck.run(event);
+        CoolingModelCheck.run(event);
+        CondensateTankModelCheck.run(event);
         int checked=0;
         for(var block:blocks()) {
             int faces=0;
@@ -52,12 +55,16 @@ public final class PumpModelCheck {
     }
     private static void waterModels(ModelEvent.BakingCompleted event) {
         int states=0;
-        for (var block:new net.minecraft.world.level.block.Block[]{BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(), BwrBlocks.PRESSURISED_TUBE.get(), BwrBlocks.RPV_WATER_INJECTION_PORT.get(), BwrBlocks.RECIRCULATION_OUTLET.get(), BwrBlocks.RECIRCULATION_INLET.get(), BwrBlocks.CONDENSATE_STORAGE_TANK.get(),BwrBlocks.STEAM_STOP_VALVE.get(),BwrBlocks.TURBINE_CONTROL_VALVE.get()}) {
+        for (var block:new net.minecraft.world.level.block.Block[]{BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(), BwrBlocks.PRESSURISED_TUBE.get(), BwrBlocks.RPV_WATER_INJECTION_PORT.get(), BwrBlocks.RECIRCULATION_OUTLET.get(), BwrBlocks.RECIRCULATION_INLET.get(), BwrBlocks.CONDENSATE_STORAGE_TANK.get(),BwrBlocks.STEAM_STOP_VALVE.get(),BwrBlocks.TURBINE_CONTROL_VALVE.get(),BwrBlocks.MSIV.get(),BwrBlocks.BYPASS_STEAM_VALVE.get()}) {
             for (var state:block.getStateDefinition().getPossibleStates()) {
                 var model=event.getModels().get(BlockModelShaper.stateToModelLocation(state));
                 if(model==null || model==event.getModelManager().getMissingModel()) throw new IllegalStateException("Missing water model "+state);
-                var quads=model.getQuads(state,null,RandomSource.create(0),ModelData.EMPTY,null);
-                if(quads.isEmpty()) throw new IllegalStateException("Empty water model "+state);
+                // OBJ parts use unculled quads; legacy cube valves use six culled faces.
+                var quads=new java.util.ArrayList<>(model.getQuads(state,null,RandomSource.create(0),ModelData.EMPTY,null));
+                for(Direction side:Direction.values())quads.addAll(model.getQuads(state,side,RandomSource.create(0),ModelData.EMPTY,null));
+                boolean tankRenderer=block instanceof dev.bwr.mod.eccs.CondensateStorageTankBlock&&state.getValue(dev.bwr.mod.eccs.CondensateStorageTankBlock.ASSEMBLED);
+                if(quads.isEmpty()&&!tankRenderer) throw new IllegalStateException("Empty water model "+state);
+                if(tankRenderer&&!quads.isEmpty())throw new IllegalStateException("Assembled tank still renders cubes");
                 if (block instanceof dev.bwr.mod.piping.PaintedPipeBlock && (quads.stream().noneMatch(q -> q.getTintIndex()==0)
                         || quads.stream().noneMatch(q -> q.getTintIndex()==-1)))
                     throw new IllegalStateException("Pipe needs both paint and unpainted metal: "+state);
@@ -73,9 +80,11 @@ public final class PumpModelCheck {
             }
             var id=net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block);
             var item=event.getModels().get(ModelResourceLocation.inventory(id));
-            if(item==null || item==event.getModelManager().getMissingModel() || item.getQuads(null,null,RandomSource.create(0),ModelData.EMPTY,null).isEmpty())
+            int itemQuads=item==null?0:item.getQuads(null,null,RandomSource.create(0),ModelData.EMPTY,null).size();
+            if(item!=null)for(var side:Direction.values())itemQuads+=item.getQuads(null,side,RandomSource.create(0),ModelData.EMPTY,null).size();
+            if(item==null || item==event.getModelManager().getMissingModel() || itemQuads==0)
                 throw new IllegalStateException("Missing water inventory model "+id);
         }
-        LogUtils.getLogger().info("WATER/STEAM MODEL CHECK PASS: {} block states and eight inventory models",states);
+        LogUtils.getLogger().info("WATER/STEAM MODEL CHECK PASS: {} block states and ten inventory models",states);
     }
 }

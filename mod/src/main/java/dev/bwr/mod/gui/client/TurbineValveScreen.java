@@ -33,7 +33,7 @@ public class TurbineValveScreen extends BwrScreen<TurbineValveMenu> {
         readout(g,"Requested opening",num(menu.target*100,1)+" %",12,36,288,TEXT_BRIGHT);
         readout(g,"Actual opening",num(menu.position*100,1)+" %",12,53,288,ACCENT);
         bar(g,12,73,276,10,menu.position,ACCENT);
-        readout(g,"Turbine steam flow",num(menu.flow,2)+" kg/s",12,96,288,GOOD);
+        readout(g,"Steam flow",num(menu.flow,2)+" kg/s",12,96,288,GOOD);
         text(g,menu.stop?"Stop valve: fully open or fully closed.":"Set opening (%)",12,132,TEXT);
         text(g,"Controls the steam supply through this line.",12,187,TEXT_DIM);
         text(g,"Connect pipes to the two opposing flanges.",12,202,TEXT_DIM);

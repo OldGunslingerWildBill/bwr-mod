@@ -74,7 +74,16 @@ public final class BwrBlockEntities {
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.steam.TurbineValveBlockEntity>> TURBINE_VALVE =
             BLOCK_ENTITIES.register("turbine_valve", () -> BlockEntityType.Builder.of(dev.bwr.mod.steam.TurbineValveBlockEntity::new,
-                    BwrBlocks.STEAM_STOP_VALVE.get(), BwrBlocks.TURBINE_CONTROL_VALVE.get()).build(null));
+                    BwrBlocks.STEAM_STOP_VALVE.get(), BwrBlocks.TURBINE_CONTROL_VALVE.get(), BwrBlocks.BYPASS_STEAM_VALVE.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.condenser.CondenserBlockEntity>> CONDENSER =
+            BLOCK_ENTITIES.register("condenser", () -> BlockEntityType.Builder.of(dev.bwr.mod.condenser.CondenserBlockEntity::new,
+                    BwrBlocks.ARABELLE_CONDENSER.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.cooling.CoolingBlockEntity>> COOLING =
+            BLOCK_ENTITIES.register("cooling", () -> BlockEntityType.Builder.of(dev.bwr.mod.cooling.CoolingBlockEntity::new,
+                    BwrBlocks.NATURAL_DRAFT_TOWER.get(), BwrBlocks.MECHANICAL_DRAFT_TOWER.get(), BwrBlocks.CIRCULATING_WATER_PUMP.get(),
+                    BwrBlocks.MAKEUP_WATER_PUMP.get(), BwrBlocks.SCREENED_WATER_INTAKE.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.power.PowerModuleBlockEntity>> POWER_MODULE =
             BLOCK_ENTITIES.register("power_module", () -> BlockEntityType.Builder.of(dev.bwr.mod.power.PowerModuleBlockEntity::new,

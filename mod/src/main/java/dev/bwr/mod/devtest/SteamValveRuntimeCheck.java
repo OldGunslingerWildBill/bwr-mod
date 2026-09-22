@@ -24,7 +24,7 @@ public final class SteamValveRuntimeCheck {
         return (TurbineValveBlockEntity)l.getBlockEntity(p);
     }
     private static void reset(List<PowerModuleBlockEntity> modules){
-        for(var m:modules){var t=new CompoundTag();t.putDouble("RPM",1500);t.putBoolean("Running",false);t.putDouble("Valve",0);m.loadWithComponents(t,m.getLevel().registryAccess());}
+        for(var m:modules){if(m.condenser()!=null){m.condenser().plant().steam.restore(0,0,0);m.condenser().plant().restore(0,0,0);}var t=new CompoundTag();t.putDouble("RPM",1500);t.putBoolean("Running",false);t.putDouble("Valve",0);m.loadWithComponents(t,m.getLevel().registryAccess());}
     }
     public static int run(ServerLevel l){
         long original=l.getGameTime();int passed=0;
@@ -48,7 +48,7 @@ public final class SteamValveRuntimeCheck {
                 near(draw,supply,"shared HP admission duplicated, squared or lost valve flow");
                 near(modules.get(0).flowKgPerS,modules.get(1).flowKgPerS,"HP supply not shared");
                 for(int i=2;i<6;i++)near(modules.get(i).flowKgPerS,draw/4,"HP-to-LP steam allocation");
-                near(modules.stream().mapToDouble(m->m.inletMass()+m.exhaustMass()+m.waterStored()).sum(),draw/20,"steam/water mass balance");
+                near(PowerModuleRuntimeCheck.plantMass(modules),draw/20,"steam/water mass balance");
                 if(fraction==0)tick(l); // Meter holds its most recent sample for at most one tick.
                 near(control.flowKgPerS(),draw,"control valve meter");near(stop.flowKgPerS(),draw,"stop valve meter");
                 double stored=gen.energyStored();PowerTrain.tick(gen);near(gen.energyStored(),stored,"second tick regenerated steam");passed++;
@@ -58,7 +58,7 @@ public final class SteamValveRuntimeCheck {
             near(nozzle.flowKgPerS(reactor.core().getPressurePsig()),0,"closed stop passed reactor steam");
             var hp=modules.getFirst();var t=hp.saveWithoutMetadata(l.registryAccess());var steam=new CompoundTag();
             steam.putDouble("Mass",5);steam.putDouble("Enthalpy",2770);steam.putDouble("Pressure",1015);t.put("Inlet",steam);hp.loadWithComponents(t,l.registryAccess());
-            PowerTrain.tick(gen);near(modules.stream().mapToDouble(PowerModuleBlockEntity::waterStored).sum(),5,"stop erased trapped steam or local legacy controls blocked expansion");passed++;
+            PowerTrain.tick(gen);near(PowerModuleRuntimeCheck.plantMass(modules),5,"stop erased trapped steam or local legacy controls blocked expansion");passed++;
             // Physically bypass both valves: a closed parallel branch must not shut the open route.
             PowerModuleRuntimeCheck.pipe(l,new BlockPos(170,250,140),new BlockPos(170,250,142));
             PowerModuleRuntimeCheck.pipe(l,new BlockPos(170,250,142),new BlockPos(175,250,142));

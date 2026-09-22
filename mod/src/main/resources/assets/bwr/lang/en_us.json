@@ -85,5 +85,16 @@
   "block.bwr.lp_turbine": "TX-10 Style LP Turbine",
   "block.bwr.nuclear_generator": "TX-NLCH Style Nuclear Generator",
   "block.bwr.steam_stop_valve": "Steam Stop Valve",
-  "block.bwr.turbine_control_valve": "Turbine Steam Control Valve"
+  "block.bwr.turbine_control_valve": "Turbine Steam Control Valve",
+  "tooltip.bwr.msiv.size": "1 wide x 3 high x 1 deep; reserve two blocks above.",
+  "tooltip.bwr.msiv.ports": "Steam: opposed flanges at the base. Four-second full stroke.",
+  "tooltip.bwr.msiv.control": "Redstone closes; CC:Tweaked modem connects to the base.",
+  "block.bwr.arabelle_condenser": "Arabelle-style 1700 MW Condenser",
+  "block.bwr.bypass_steam_valve": "Bypass Steam Control Valve",
+  "item.bwr.arabelle_condenser": "Arabelle-style 1700 MW Condenser",
+  "block.bwr.natural_draft_tower": "Natural-Draft Cooling Tower",
+  "block.bwr.mechanical_draft_tower": "Mechanical-Draft Cooling Tower",
+  "block.bwr.circulating_water_pump": "Circulating Water Pump",
+  "block.bwr.makeup_water_pump": "Makeup Water Pump",
+  "block.bwr.screened_water_intake": "Screened Water Intake"
 }

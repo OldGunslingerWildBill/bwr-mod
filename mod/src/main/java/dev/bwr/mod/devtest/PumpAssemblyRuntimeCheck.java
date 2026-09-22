@@ -185,7 +185,7 @@ public final class PumpAssemblyRuntimeCheck {
         BlockPos controller=new BlockPos(right,200,128+depth/2);
         l.setBlock(controller.below(),BwrBlocks.RPV_WATER_INJECTION_PORT.get().defaultBlockState().setValue(RpvWaterInjectionPortBlock.FACING,Direction.EAST),3);
         l.setBlock(controller,BwrBlocks.REACTOR_CONTROLLER.get().defaultBlockState(),3);
-        for(int x=160;x<right;x+=2) for(int z=129;z<back;z+=2) l.setBlock(new BlockPos(x,193,z),BwrBlocks.CONTROL_ROD_DRIVE.get().defaultBlockState(),3);
+        for(var drive:new dev.bwr.core.fuel.CompactCoreLayout(width,depth).drives()) l.setBlock(new BlockPos(159+drive.x(),193,128+drive.z()),BwrBlocks.CONTROL_ROD_DRIVE.get().defaultBlockState(),3);
         var be=(ReactorControllerBlockEntity)l.getBlockEntity(controller);
         ReactorControllerBlockEntity.serverTick(l,controller,be.getBlockState(),be);
         check(be.isFormed(),"test vessel not formed: "+be.statusLines()); return be;
@@ -355,7 +355,7 @@ public final class PumpAssemblyRuntimeCheck {
         l.removeBlock(new BlockPos(173,195,130),false);
         check(RecirculationNetwork.measure(l,reactor,List.of(drive)).fraction()==0,"disconnected jet still drives flow");
         // The RIP crosses a prepared floor opening; it contributes independently of jet drive lines.
-        var rip=BwrBlocks.RIP_PUMP.get();BlockPos mount=new BlockPos(158,194,134);
+        var rip=BwrBlocks.RIP_PUMP.get();BlockPos mount=new BlockPos(158,194,127);
         for(int i=0;i<rip.cellCount();i++) l.removeBlock(mount.offset(rip.cellOffset(i)),false);
         var rs=place(l,rip,mount,Direction.NORTH);
         reactor.markStructureDirty();ReactorControllerBlockEntity.serverTick(l,reactor.getBlockPos(),reactor.getBlockState(),reactor);
@@ -396,7 +396,7 @@ public final class PumpAssemblyRuntimeCheck {
         var info=dev.bwr.mod.gui.ReactorConfigurationInfo.capture(reactor);
         check(info.externalPumps()==1 && info.flowCeilingFraction()==1.0/22 && info.flowSupportedMW()==0
                 && info.interiorVolume()==1089 && info.requiredJets()==22 && info.requiredExternalPumps()==3,"empty-core configuration info is wrong: "+info);
-        int slot=dev.bwr.mod.gui.CoreLattice.corePositions(reactor.core().getCoreLoading().latticeWidth(),reactor.assemblyCount())[0];
+        int slot=reactor.corePositions()[0];
         reactor.core().getCoreLoading().load(slot,new dev.bwr.core.fuel.FuelAssembly(dev.bwr.core.fuel.FuelType.LEU));
         info=dev.bwr.mod.gui.ReactorConfigurationInfo.capture(reactor);
         check(Math.abs(info.fuelLoadedRatingMW()-reactor.getConfiguredRatedThermalMW()/reactor.assemblyCount())<1e-9
@@ -452,7 +452,7 @@ public final class PumpAssemblyRuntimeCheck {
         var reactor=vessel(l,5,8,5);var core=reactor.core();
         var info=dev.bwr.mod.gui.ReactorConfigurationInfo.capture(reactor);
         check(info.interiorVolume()==200 && info.requiredJets()==12 && info.requiredExternalPumps()==2,"minimum vessel target");
-        int slot=dev.bwr.mod.gui.CoreLattice.corePositions(core.getCoreLoading().latticeWidth(),reactor.assemblyCount())[0];
+        int slot=reactor.corePositions()[0];
         core.getCoreLoading().load(slot,new dev.bwr.core.fuel.FuelAssembly(dev.bwr.core.fuel.FuelType.LEU));
         // Raise only the roof: the controller, rods, fuel, bottom head and operating core remain.
         for(var p:BlockPos.betweenClosed(new BlockPos(158,203,127),new BlockPos(164,211,133))) {
@@ -745,6 +745,8 @@ public final class PumpAssemblyRuntimeCheck {
         exported+=outlet.drainMilliBuckets(Long.MAX_VALUE,false);
         check(water>0 && steam>0,"piped RFPT failed to pump: "+pump.statusLines());
         check(Math.abs(steam*1000-exported)<1.01,"RFPT exhaust mass differs from claimed steam");
+        PumpValveLedgerCheck.run(l,new BlockPos(166,216,126),nozzle,reactor.core().getPressurePsig(),
+                ()->{outlet.drainMilliBuckets(Long.MAX_VALUE,false);FeedwaterPumpBlockEntity.serverTick(l,ROOT,s,pump);},pump::getSteamDrawKgPerS);
         l.removeBlock(exhaust.south(),false);
         FeedwaterPumpBlockEntity.serverTick(l,ROOT,s,pump);
         check(pump.getSteamDrawKgPerS()==0 && pump.isRunning(),"broken exhaust consumed steam or changed command");

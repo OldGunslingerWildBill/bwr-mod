@@ -68,6 +68,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
     private Button infoTab;
     private List<Component> infoTooltip=List.of();
     private Button headButton;
+    private boolean footerHovered;
 
     /** Rod the player last clicked on the rod overlay, or -1 for "all rods". */
     private int selectedRod = -1;
@@ -163,11 +164,19 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
 
     @Override
     protected List<Component> hoverTooltip() {
+        if (footerHovered) return List.of(
+                Component.literal("Burnup " + big(menu.averageBurnup) + " MWd/t | beta " + num(menu.betaEffective,5)),
+                Component.literal("Xenon " + pct(menu.xenonFraction) + " | APRM " + num(menu.aprmPercent,1) + "%"),
+                Component.literal("Oxidation " + pct(menu.oxidationFraction) + " | hydrogen " + num(menu.hydrogenKg,1) + " kg"),
+                Component.literal("Uncovered fuel " + pct(menu.uncoveredFuelFraction) + " | spray ring " + pct(menu.sprayRingCompleteness)));
+
         return !menu.formed?List.of():overlay==Overlay.INFO?infoTooltip:grid.hoverTooltip();
     }
 
     @Override
     protected void renderContent(GuiGraphics graphics, int mouseX, int mouseY) {
+        footerHovered = menu.formed && overlay != Overlay.INFO && mouseX >= leftPos+8
+                && mouseX < leftPos+248 && mouseY >= topPos+160 && mouseY < topPos+188;
         if (!menu.formed) {
             int y = 40;
             text(graphics, "Reactor not formed.", 12, y, ALARM);
@@ -277,19 +286,12 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
     }
 
     private void secondary(GuiGraphics graphics) {
-        String top = String.format(Locale.ROOT,
-                "k-inf %.4f   beta %.5f   burnup %,.0f MWd/t   xenon %.0f%%   APRM %.1f%%",
-                menu.aggregateKInf, menu.betaEffective, menu.averageBurnup,
-                menu.xenonFraction * 100.0, menu.aprmPercent);
-        String bottom = String.format(Locale.ROOT,
-                "decay %.2f%%   oxid %.2f%%   H2 %.1f kg   uncovered %.0f%%   "
-                        + "spray ring %.0f%%   pumps %d   drives %d pwr / %d water",
-                menu.decayHeatFraction * 100.0, menu.oxidationFraction * 100.0, menu.hydrogenKg,
-                menu.uncoveredFuelFraction * 100.0, menu.sprayRingCompleteness * 100.0,
-                menu.pumpCount, menu.poweredDrives, menu.waterSuppliedDrives);
-        text(graphics, top, 10, 164, TEXT);
-        text(graphics, bottom, 10, 174,
-                menu.uncoveredFuelFraction > 0.0 || menu.oxidationFraction > 0.0 ? WARN : TEXT);
+        text(graphics, "Fuel " + menu.loadedAssemblies + "/" + menu.assemblyCount
+                + " | k-inf " + num(menu.aggregateKInf,4) + " | decay " + pct(menu.decayHeatFraction), 8, 160, TEXT);
+        text(graphics, "Drives: " + menu.poweredDrives + " powered / " + menu.waterSuppliedDrives
+                + " water | pumps " + menu.pumpCount, 8, 170, TEXT);
+        text(graphics, "Hover here: fuel, damage and cooling details", 8, 180,
+                menu.uncoveredFuelFraction > 0 || menu.oxidationFraction > 0 ? WARN : TEXT_DIM);
 
         if (menu.scramActive) {
             text(graphics, "SCRAM", 10, 18, ALARM);
@@ -349,22 +351,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
         };
     }
 
-    /**
-     * Rods sit in the gap between four assemblies, one per 2x2 group, so their
-     * lattice is half the size of the assembly lattice along each axis. The
-     * multiblock walks x outside z, so rod index is
-     * {@code xIndex * rodsPerZ + zIndex} and the drawn position is column
-     * {@code xIndex}, row {@code zIndex} — a plain top-down map of the drives.
-     *
-     * <p>The shape comes from the snapshot rather than from
-     * {@code ceil(sqrt(count))}. That guess is only right when the vessel
-     * interior is square, and interiors are legal anywhere from 5x5 to 21x21 in
-     * either direction: a 5-wide by 11-deep interior gives 2 columns of 5 rods,
-     * where the square guess would draw a 4-wide grid and put every rod except
-     * the first somewhere it physically is not. Nothing crashed, which is why
-     * it survived — the mapping stayed injective, so clicking cell {@code i}
-     * still selected rod {@code i}, and only the picture was wrong.
-     */
+    /** Sparse physical CRD positions supplied by the server, with stable blade IDs. */
     private LatticeGridWidget.Cells rodCells() {
         // Capture the arrays, not the menu fields. readSnapshot reallocates
         // both on every snapshot, this closure is rebuilt only once per client
@@ -380,18 +367,9 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
             return null;
         }
 
-        int perX = menu.rodsPerX;
-        int perZ = menu.rodsPerZ;
-        if (perX <= 0 || perZ <= 0 || perX * perZ != count) {
-            // Shape unknown or out of step with the rod count — an old snapshot,
-            // or a vessel caught mid-rebuild. Fall back to the squarest grid
-            // that holds them all. Still injective, so the overlay degrades to
-            // "positions are arbitrary" rather than to a crash.
-            perZ = (int) Math.ceil(Math.sqrt(count));
-            perX = (count + perZ - 1) / perZ;
-        }
-        final int columns = perX;
-        final int rows = perZ;
+        final int columns = Math.max(1, menu.rodsPerX);
+        final int[] indices = menu.rodLatticeIndices;
+        if (indices.length != count) return null;
 
         return new LatticeGridWidget.Cells() {
             @Override
@@ -406,15 +384,15 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
 
             @Override
             public int latticeIndex(int cell) {
-                // row * columns + column, with column = xIndex and row = zIndex.
-                return (cell % rows) * columns + (cell / rows);
+                // Explicit floor position: compact layouts have empty corner cells.
+                return indices[cell];
             }
 
             @Override
             public int colour(int cell) {
                 double out = notch[cell] / 48.0;
-                int grey = (int) Math.round(40 + 150 * (1.0 - out));
-                int green = (int) Math.round(60 + 160 * out);
+                int grey = (int) Math.round(40 + 80 * (1.0 - out));
+                int green = (int) Math.round(120 + 100 * out);
                 boolean moving = demand[cell] != notch[cell];
                 return moving
                         ? 0xFF000000 | (200 << 16) | (160 << 8) | 40
@@ -425,7 +403,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
             public List<Component> tooltip(int cell) {
                 return List.of(
                         Component.literal(String.format(Locale.ROOT, "Rod %d at notch %02d",
-                                cell, notch[cell])),
+                                cell + 1, notch[cell])),
                         Component.literal(String.format(Locale.ROOT,
                                 "demanded %02d   (00 fully inserted, 48 fully withdrawn)",
                                 demand[cell])));

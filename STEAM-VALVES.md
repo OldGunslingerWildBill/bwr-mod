@@ -30,7 +30,8 @@ RPV steam outlet -> stop valve -> control valve -> common main-steam header
 All branches intended to share the control must be downstream of that valve.
 A pipe physically bypassing a closed valve remains an open steam path.
 HP exhaust feeds LP inlets; shaft alignment joins mechanical work, not steam.
-LP water return and generator FE connections remain unchanged.
+LP exhaust now enters a matching condenser below each LP section. Take water
+from the condenser’s condensate flange; generator FE connections are unchanged.
 
 HP/LP panels now show operating data. They have no separate admission setting
 or Start/Stop button. Sections expand available steam when their shaft has

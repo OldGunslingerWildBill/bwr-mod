@@ -16,6 +16,7 @@ public class TurbineValveBlockEntity extends BlockEntity {
     private final Map<BlockPos,Double> claims=new HashMap<>();
     public TurbineValveBlockEntity(BlockPos p,BlockState s){super(BwrBlockEntities.TURBINE_VALVE.get(),p,s);}
     public boolean stopValve(){return getBlockState().is(BwrBlocks.STEAM_STOP_VALVE.get());}
+    public boolean bypassValve(){return getBlockState().is(BwrBlocks.BYPASS_STEAM_VALVE.get());}
     public double target(){return target;}
     public double position(){return position;}
     public void setTarget(double fraction){

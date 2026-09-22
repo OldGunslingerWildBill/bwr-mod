@@ -12,6 +12,8 @@ import net.minecraft.world.level.block.Block;
 public class ReactorVesselBlock extends Block {
 
     public ReactorVesselBlock(Properties properties) {
-        super(properties);
+        // The assembled skin is rendered by the controller. Invisible build
+        // cells must not occlude nozzles or cast a rectangular self-shadow.
+        super(properties.noOcclusion());
     }
 }

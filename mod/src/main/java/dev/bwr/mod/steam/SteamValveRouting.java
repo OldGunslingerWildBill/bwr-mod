@@ -14,6 +14,13 @@ public final class SteamValveRouting {
     private record PathNode(BlockPos pos,double opening,List<TurbineValveBlockEntity> valves){}
     /** Claim on one real path, also used by the Mekanism steam boundary. */
     public static double claim(Level level,BlockPos start,RpvSteamOutletBlockEntity nozzle,double wantedKgPerS){
+        return transfer(level,start,nozzle,wantedKgPerS,false);
+    }
+    public static double available(Level level,BlockPos start,RpvSteamOutletBlockEntity nozzle){
+        return transfer(level,start,nozzle,Double.MAX_VALUE,true);
+    }
+    private static double transfer(Level level,BlockPos start,RpvSteamOutletBlockEntity nozzle,double wantedKgPerS,boolean simulate){
+        if(level==null||!level.isLoaded(start)||!level.isLoaded(nozzle.getBlockPos())||nozzle.isRemoved()||!(wantedKgPerS>0))return 0;
         Map<BlockPos,Double> seen=new HashMap<>();ArrayDeque<PathNode> q=new ArrayDeque<>();
         q.add(new PathNode(start,1,List.of()));seen.put(start,1.0);PathNode route=null;
         while(!q.isEmpty()){
@@ -36,6 +43,7 @@ public final class SteamValveRouting {
         double raw=nozzle.getLineOpenFraction()>0?nozzle.getLastFlowKgPerS()/nozzle.getLineOpenFraction()/20:0;
         double limit=Math.min(wantedKgPerS/20,raw*route.opening);
         for(var v:route.valves)limit=Math.min(limit,v.allowance(nozzle.getBlockPos(),raw));
+        if(simulate)return Math.min(limit*20,nozzle.availableFlowKgPerS(level.getGameTime()));
         double kg=nozzle.claimFlowKgPerS(level.getGameTime(),limit*20)/20;
         for(var v:route.valves)v.record(nozzle.getBlockPos(),kg);
         return kg*20;
@@ -58,6 +66,8 @@ public final class SteamValveRouting {
                 seen.put(next,opening);if(seen.size()>SteamLineNetwork.MAX_LINE_BLOCKS)return controlled?0:-1;
                 if(s.getBlock() instanceof ProcessAssembly a){
                     if(a.portAt(s,d.getOpposite())==AssemblyPort.STEAM_INLET)best=Math.max(best,opening);
+                }else if(s.getBlock() instanceof dev.bwr.mod.condenser.CondenserBlock){
+                    if(dev.bwr.mod.condenser.CondenserBlockEntity.acceptsSteam(level,next))best=Math.max(best,opening);
                 }else if(s.is(BwrBlocks.TURBINE_STEAM_OUTLET.get())||s.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get()))best=Math.max(best,opening);
                 else if(s.is(BwrBlocks.PRESSURISED_TUBE.get())||s.is(BwrBlocks.MSIV.get())||s.is(BwrBlocks.SAFETY_RELIEF_VALVE.get())||s.getBlock() instanceof TurbineValveBlock)
                     q.add(new Node(next,opening));

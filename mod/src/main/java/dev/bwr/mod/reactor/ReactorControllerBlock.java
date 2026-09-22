@@ -50,6 +50,15 @@ public class ReactorControllerBlock extends BaseEntityBlock {
     }
 
     @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moving) {
+        if (!level.isClientSide() && !state.is(replacement.getBlock())
+                && level.getBlockEntity(pos) instanceof ReactorControllerBlockEntity reactor) {
+            for (var bundle : reactor.takeFuelForRemoval()) Block.popResource(level, pos, bundle);
+        }
+        super.onRemove(state, level, pos, replacement, moving);
+    }
+
+    @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
                                                                   BlockEntityType<T> type) {
         // Physics is server-authoritative. The client only renders synced state.

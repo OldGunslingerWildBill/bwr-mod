@@ -4,6 +4,9 @@ import dev.bwr.core.eccs.EccsDesign;
 import dev.bwr.core.feedwater.FeedwaterDesign;
 import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.steam.TurbineValveBlock;
+import dev.bwr.mod.condenser.CondenserBlock;
+import dev.bwr.mod.cooling.CoolingBlock;
+import dev.bwr.core.turbine.CoolingWaterUnit.Design;
 import dev.bwr.mod.water.HighPressureWaterPipeBlock;
 import dev.bwr.mod.reactor.RpvWaterInjectionPortBlock;
 import dev.bwr.mod.reactor.RecirculationPortBlock;
@@ -64,6 +67,12 @@ public final class BwrBlocks {
                 .sound(SoundType.METAL)
                 .requiresCorrectToolForDrops();
     }
+
+    public static final DeferredBlock<CoolingBlock> NATURAL_DRAFT_TOWER = BLOCKS.register("natural_draft_tower",()->new CoolingBlock(machine(),Design.NATURAL));
+    public static final DeferredBlock<CoolingBlock> MECHANICAL_DRAFT_TOWER = BLOCKS.register("mechanical_draft_tower",()->new CoolingBlock(machine(),Design.MECHANICAL));
+    public static final DeferredBlock<CoolingBlock> CIRCULATING_WATER_PUMP = BLOCKS.register("circulating_water_pump",()->new CoolingBlock(machine(),Design.CIRCULATING));
+    public static final DeferredBlock<CoolingBlock> MAKEUP_WATER_PUMP = BLOCKS.register("makeup_water_pump",()->new CoolingBlock(machine(),Design.MAKEUP));
+    public static final DeferredBlock<CoolingBlock> SCREENED_WATER_INTAKE = BLOCKS.register("screened_water_intake",()->new CoolingBlock(machine(),Design.INTAKE));
 
     // --- Reactor multiblock ------------------------------------------
 
@@ -286,6 +295,10 @@ public final class BwrBlocks {
             BLOCKS.register("steam_stop_valve", () -> new TurbineValveBlock(machine()));
     public static final DeferredBlock<TurbineValveBlock> TURBINE_CONTROL_VALVE =
             BLOCKS.register("turbine_control_valve", () -> new TurbineValveBlock(machine()));
+    public static final DeferredBlock<TurbineValveBlock> BYPASS_STEAM_VALVE =
+            BLOCKS.register("bypass_steam_valve", () -> new TurbineValveBlock(machine()));
+    public static final DeferredBlock<CondenserBlock> ARABELLE_CONDENSER =
+            BLOCKS.register("arabelle_condenser", () -> new CondenserBlock(machine()));
 
     // --- Suppression pool ---------------------------------------------
 

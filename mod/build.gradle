@@ -37,6 +37,11 @@ neoForge {
             jvmArguments.add('-Dbwr.turbineModelCheck=true')
             if (project.hasProperty('bwrPumpPanelCheck')) jvmArguments.add('-Dbwr.pumpPanelCheck=true')
             if (project.hasProperty('bwrPowerPanelCheck')) jvmArguments.add('-Dbwr.powerPanelCheck=true')
+            if (project.hasProperty('bwrCondenserPanelCheck')) jvmArguments.add('-Dbwr.condenserPanelCheck=true')
+            if (project.hasProperty('bwrCoolingPanelCheck')) jvmArguments.add('-Dbwr.coolingPanelCheck=true')
+            if (project.hasProperty('bwrCompactCorePanelCheck')) jvmArguments.add('-Dbwr.compactCorePanelCheck=true')
+            if (project.hasProperty('bwrVesselModelCheck')) jvmArguments.add('-Dbwr.vesselModelCheck=true')
+            if (project.hasProperty('bwrTankPanelCheck')) jvmArguments.add('-Dbwr.tankPanelCheck=true')
         }
 
         // Builds a reactor, a suppression pool and a turbine outlet in a real

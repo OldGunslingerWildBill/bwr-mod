@@ -70,6 +70,9 @@ public final class BwrMod {
         // bus, because it is server data and it happens again on every /reload.
         modBus.addListener(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent.class,
                 dev.bwr.mod.power.PowerModuleCapabilities::register);
+        modBus.addListener(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent.class,
+                dev.bwr.mod.condenser.CondenserCapabilities::register);
+        modBus.addListener(dev.bwr.mod.cooling.CoolingCapabilities::register);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
                 net.neoforged.neoforge.event.AddReloadListenerEvent.class,
                 event -> event.addListener(new dev.bwr.mod.fuel.FuelTypeLoader()));

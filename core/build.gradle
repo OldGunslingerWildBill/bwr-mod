@@ -53,6 +53,18 @@ tasks.register('acceptance', JavaExec) {
     mainClass = 'dev.bwr.core.AcceptanceTests'
 }
 
+tasks.register('verifyTestRegistration', JavaExec) {
+    group = 'verification'
+    description = 'Reject unregistered compiled acceptance test classes before running the suite.'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.bwr.core.AcceptanceTests'
+    args '--verify-registration'
+}
+
+tasks.named('acceptance') {
+    dependsOn 'verifyTestRegistration'
+}
+
 tasks.named('check') {
     dependsOn 'acceptance'
 }

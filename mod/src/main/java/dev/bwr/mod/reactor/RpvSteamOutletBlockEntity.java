@@ -440,6 +440,10 @@ public class RpvSteamOutletBlockEntity extends BlockEntity {
      * @param wantKgPerS how much the caller would take if it were there
      * @return how much it actually gets, never negative and never NaN
      */
+    public double availableFlowKgPerS(long gameTime) {
+        return isPartOfFormedReactor() ? Math.max(0,lastFlowKgPerS-(claimGameTime==gameTime?claimedKgPerS:0)) : 0;
+    }
+
     public double claimFlowKgPerS(long gameTime, double wantKgPerS) {
         if (!(wantKgPerS > 0.0) || !isPartOfFormedReactor()) {
             return 0.0;

@@ -105,6 +105,9 @@ public final class BwrPeripheralSupport {
                 BwrBlockEntities.MSIV.get(),
                 (be, side) -> new MainSteamIsolationValvePeripheral(be));
         event.registerBlockEntity(PeripheralCapability.get(), BwrBlockEntities.TURBINE_VALVE.get(), (be, side) -> new TurbineValvePeripheral(be));
+        event.registerBlockEntity(PeripheralCapability.get(), BwrBlockEntities.COOLING.get(), (be, side) -> {
+            var owner=be.owner();return owner!=null&&owner.ready()?new CoolingPeripheral(owner):null;
+        });
 
         // Core flow. The reactor controller sums its satellite recirculation
         // pumps into ReactorCore.setRecirculationFlowFraction on every tick

@@ -420,6 +420,7 @@ public final class PeripheralRuntimeCheck {
         // boundary. The catch increments rather than assigns, so this is correct
         // on both paths.
         onThreadFailures += boundaryFailures;
+        onThreadFailures += AssemblyPermissionRuntimeCheck.run(server.overworld());
 
         if (offThread == null) {
             finish(server, onThreadFailures);
@@ -974,15 +975,10 @@ public final class PeripheralRuntimeCheck {
         // the interior floor, i.e. one below the vessel bottom.
         int driveY = INTERIOR_MIN.getY() - 2;
         BlockState drive = BwrBlocks.CONTROL_ROD_DRIVE.get().defaultBlockState();
-        for (int x = INTERIOR_MIN.getX(); x <= INTERIOR_MAX.getX(); x++) {
-            for (int z = INTERIOR_MIN.getZ(); z <= INTERIOR_MAX.getZ(); z++) {
-                boolean rodHere = ((x - INTERIOR_MIN.getX()) % 2 == 1)
-                        && ((z - INTERIOR_MIN.getZ()) % 2 == 1);
-                if (rodHere) {
-                    level.setBlock(new BlockPos(x, driveY, z), drive, 3);
-                }
-            }
-        }
+        var layout = new dev.bwr.core.fuel.CompactCoreLayout(
+                INTERIOR_MAX.getX()-INTERIOR_MIN.getX()+1, INTERIOR_MAX.getZ()-INTERIOR_MIN.getZ()+1);
+        for (var cell : layout.drives())
+            level.setBlock(new BlockPos(INTERIOR_MIN.getX()+cell.x(), driveY, INTERIOR_MIN.getZ()+cell.z()), drive, 3);
 
         // A deliberately unformed reactor: a controller in mid-air with nothing
         // around it. Every readback has to behave on this one.

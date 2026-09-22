@@ -93,7 +93,7 @@ public final class TurbineAssemblyRuntimeCheck {
 
         try {
             helper.assertTrue(ready, "Fixture entity chunks never became ready");
-            int failures = run(level) + TurbinePlumbingRuntimeCheck.run(level) + PumpAssemblyRuntimeCheck.run(level) + PowerModuleRuntimeCheck.run(level) + SteamValveRuntimeCheck.run(level);
+            int failures = run(level) + TurbinePlumbingRuntimeCheck.run(level) + PumpAssemblyRuntimeCheck.run(level) + PowerModuleRuntimeCheck.run(level) + SteamValveRuntimeCheck.run(level) + MsivRuntimeCheck.run(level) + CondenserRuntimeCheck.run(level) + CoolingRuntimeCheck.run(level) + CondensateTankRuntimeCheck.run(level);
             helper.assertTrue(failures == 0,
                     "Turbine assembly checks: " + failures + " failure(s); see server log");
             helper.succeed();

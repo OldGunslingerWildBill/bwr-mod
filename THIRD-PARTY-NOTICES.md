@@ -38,6 +38,36 @@ Reference data in REFERENCE-DATA.md cites the NRC BWR/6 manual by accession
 ML20090J537. The reference document is not included in this repository. The
 project license does not restrict reuse of uncopyrightable physical facts.
 
+The condenser and MSIV meshes in `art/models/condenser_msiv` are original Blender
+geometry inspired by the owner's supplied reference photographs. The condenser
+uses publicly listed Arabelle reference dimensions; source links and approximate
+dimensions are documented in CONDENSER-AND-MSIV.md. No downloaded third-party mesh
+is embedded in these assets. Referenced photographs and manufacturer trademarks
+remain outside the project's ownership claim.
+
+The connectable condenser adaptation and bypass-valve meshes in
+`art/models/condenser_ports` are also original Blender geometry. The upper
+front reference locations are repurposed as game bypass ports at the owner's
+request; this does not represent a manufacturer-verified port arrangement.
+
+Cooling-system meshes in `art/models/cooling` are original Blender geometry.
+The September 2026 tower revision also references photographs in SPIG's
+cooling-tower brochure, Black & Veatch's Columbia Generating Station article,
+and the USGS natural-draft tower photograph. These are linked in COOLING-WATER.md;
+no photograph or third-party mesh was copied into the game textures or meshes.
+Flowserve VCT/VTP pumps, Columbia's circular induced-draft towers and SPX
+natural-draft references informed their appearance. No third-party mesh was
+imported. The model dimensions, flow and electric ratings are game design
+assumptions. Reference links are in COOLING-WATER.md; no manufacturer endorsement
+or ownership of manufacturer marks is implied.
+
+The scalable condensate tank components in `art/models/condensate_tank` are
+original Blender-authored geometry. No third-party tank mesh is included.
+
+The pressure-vessel components in `art/models/reactor_vessel` are original
+Blender-authored geometry. No third-party vessel mesh is included. Their
+dimensions follow the game's construction envelope.
+
 ## Previously published versions
 
 Through commit [`19a7424`](https://github.com/OldGunslingerWildBill/bwr-mod/tree/19a742408e2cd7ef8cee42a26157e8662daa340b),
