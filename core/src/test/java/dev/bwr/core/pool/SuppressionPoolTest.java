@@ -220,4 +220,87 @@ public final class SuppressionPoolTest {
         Check.note(". the heat capacity temperature limit is deliberately absent: "
                 + "subcooling and effectiveness are published, the limit is the operator's to choose");
     }
+    public static void test20_emptyBasinAndFiniteSpray() {
+        var p=SuppressionPool.empty(100_000);
+        Check.isTrue(p.getMassKg()==0 && p.drawSuctionKg(100,1)==0,"new shell must contain no water");
+        p.condenseSteam(100,1000,1);
+        Check.isTrue(p.getMassKg()==0 && p.getUncondensedSteamKgPerS()==100,"dry pool condensed steam");
+        p.addHeatMJ(100);Check.isTrue(Double.isFinite(p.getTemperatureC()),"dry heat poisoned temperature");
+        Check.isTrue(p.receiveWaterKg(40_000,32)==40_000,"metered filling");
+        Check.isTrue(p.getMassKg()==40_000,"fill mass");
+        p.fromArray(new SuppressionPool(40_000,105).toArray());p.resizeCapacityKeepingInventory(100_000);
+        p.setSprayMode(true);Check.isTrue(p.receiveWaterKg(100_000,20)==SuppressionPool.SPRAY_HEADER_KG,"finite header");
+        double start=p.getMassKg()+p.getSprayWaterKg();
+        p.condenseSteam(200,1000,1);double escaped=p.getUncondensedSteamKgPerS();
+        double captured=p.spraySteam(escaped,1000,1);
+        Check.isTrue(captured>0 && captured<200,"hot pool spray must capture finite steam");
+        Check.isTrue(Math.abs(p.getMassKg()+p.getSprayWaterKg()-start-captured)<1e-6,"spray mass balance");
+        Check.isTrue(Math.abs(p.getUncondensedSteamKgPerS()+captured-200)<1e-6,"escaping steam balance");
+        Check.isTrue(p.getSprayKgPerS()==600,"spray nozzle flow limit");
+        var saved=new SuppressionPool();saved.fromArray(p.toArray());
+        Check.isTrue(saved.isSprayMode() && saved.getSprayWaterKg()==p.getSprayWaterKg(),"spray persistence");
+        double total=saved.getMassKg()+saved.getSprayWaterKg();saved.setSprayMode(false);saved.spraySteam(200,1000,1);
+        Check.isTrue(Math.abs(saved.getMassKg()-total)<1e-6 && saved.getSprayCondensedKgPerS()==0,"mode switch lost water or condensed without spray");
+        for(int n=0;n<20;n++)p.spraySteam(200,1000,1);
+        Check.isTrue(p.getSprayKgPerS()==0 && p.getSprayCondensedKgPerS()==0,"empty header produced free spray");
+        p.resizeCapacityKeepingInventory(p.getMassKg());Check.isTrue(p.receiveWaterKg(100,20)==0,"full basin accepted more supply");
+    }
+
+    public static void test21_sprayHeatMarginAndNoSteam() {
+        var p=SuppressionPool.empty(100_000);p.setSprayMode(true);p.receiveWaterKg(600,110);
+        Check.isTrue(p.spraySteam(100,1000,1)==0,"hot spray condensed steam without a heat margin");
+        Check.isTrue(p.getMassKg()==600 && p.getTemperatureC()==110,"uncooled spray lost water or heat");
+        p.receiveWaterKg(600,20);p.spraySteam(0,1000,1);
+        Check.isTrue(p.getMassKg()==1200 && Math.abs(p.getTemperatureC()-65)<1e-9,"spray with no steam must just mix");
+        Check.isTrue(p.receiveWaterKg(Double.NaN,20)==0 && p.receiveWaterKg(10,Double.NaN)==0,"invalid supply accepted");
+    }
+
+    public static void test22_passiveCoolingConservesWaterAndScalesWithGeometry() {
+        var p = new SuppressionPool(105_000, 80);
+        double heat = p.coolPassively(25, 35, 107, 3600);
+        Check.isTrue(p.getTemperatureC() < 80 && p.getTemperatureC() > 25,
+                "unpowered hot pool must cool gradually toward ambient");
+        double cp = Saturation.liquidSpecificHeatKJPerKgC(p.getContainmentPressurePsia());
+        Check.isTrue(Math.abs(heat - (80-p.getTemperatureC())*105_000*cp/1000) < 1e-7,
+                "passive removed heat must match the water's energy loss");
+        Check.exactly(105_000, p.getMassKg(), "passive cooling consumes no water");
+        Check.exactly(0, p.getCumulativeRhrRemovedMJ(), "passive cooling is not RHR duty");
+        var shallow = new SuppressionPool(52_500, 80);
+        shallow.coolPassively(25, 35, 71, 3600);
+        Check.isTrue(shallow.getTemperatureC() < p.getTemperatureC(), "less water cools faster");
+        var broader = new SuppressionPool(105_000, 80);
+        broader.coolPassively(25, 70, 107, 3600);
+        Check.isTrue(broader.getTemperatureC() < p.getTemperatureC(), "more surface increases cooling");
+        var stepped = new SuppressionPool(105_000, 80);
+        for (int n=0; n<3600; n++) stepped.coolPassively(25, 35, 107, 1);
+        Check.isTrue(Math.abs(stepped.getTemperatureC()-p.getTemperatureC()) < 1e-8,
+                "cooling must not depend on timestep subdivision");
+        var restored = new SuppressionPool(); restored.fromArray(p.toArray());
+        p.coolPassively(25,35,107,60); restored.coolPassively(25,35,107,60);
+        Check.exactly(p.getTemperatureC(), restored.getTemperatureC(), "reload preserves passive cooldown");
+        Check.note("105 tonne pool after one hour from 80 C: %.3f C", stepped.getTemperatureC());
+    }
+
+    public static void test23_passiveCoolingBoundsAndInvalidInputs() {
+        var p = new SuppressionPool(105_000,80);
+        Check.exactly(0,p.coolPassively(25,0,0,3600),"no area means no heat transfer");
+        for (double bad : new double[]{Double.NaN,Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY}) {
+            Check.exactly(0,p.coolPassively(bad,35,107,1),"invalid ambient");
+            Check.exactly(0,p.coolPassively(25,bad,107,1),"invalid surface");
+            Check.exactly(0,p.coolPassively(25,35,bad,1),"invalid shell");
+            Check.exactly(0,p.coolPassively(25,35,107,bad),"invalid time");
+        }
+        Check.exactly(0,p.coolPassively(25,-1,107,1),"negative area");
+        Check.exactly(0,p.coolPassively(25,35,107,-1),"negative time");
+        Check.exactly(80,p.getTemperatureC(),"invalid calls must not corrupt temperature");
+        p.coolPassively(25,35,107,1e12);
+        Check.exactly(25,p.getTemperatureC(),"long timestep must not overshoot ambient");
+        Check.exactly(0,p.coolPassively(25,35,107,1),"ambient pool has no cooling load");
+        var cold = new SuppressionPool(1000,10);
+        Check.exactly(0,cold.coolPassively(25,35,107,3600),"cooling does not heat a cold pool");
+        Check.exactly(10,cold.getTemperatureC(),"cold pool unchanged");
+        var dry = SuppressionPool.empty(105_000);
+        Check.exactly(0,dry.coolPassively(25,35,107,3600),"empty basin has no stored water heat");
+        Check.isTrue(Double.isFinite(dry.getTemperatureC()),"empty basin stays finite");
+    }
 }

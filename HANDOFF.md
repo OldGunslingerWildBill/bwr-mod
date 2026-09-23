@@ -1,5 +1,46 @@
 # Agent Handoff
 
+## Natural suppression-pool cooling (2026-09-23)
+
+Formed, ticking concrete and legacy pools now lose heat gradually toward 25 C.
+The core uses an exponential heat-loss step with exposed surface and wetted
+shell area. Concrete wall area follows inventory; legacy boundary areas are
+cached only when surveyed. There is no pump demand, water consumption or
+evaporation. Existing NBT temperature persistence needs no migration, and RHR
+energy totals remain separate.
+
+The GUI has a Natural cooling readout in kW; its wire protocol is now 5.
+CC status adds passiveCoolingMW and ambientTemperatureC. Two core tests and
+one server regression cover heat/mass accounting, geometry, timestep bounds,
+unpowered operation and reload. Final checks and artifact are recorded in
+BUILD-STATUS.md. This publication includes the preceding pool/pump work, Blender
+sources, generated assets, tests and updated guides. It builds on 685d14c;
+GitHub main had no newer commits when checked before publication.
+
+## Dry suppression multiblocks, spray and detailed pumps (2026-09-23)
+
+Included in the natural-cooling publication above. See SUPPRESSION-BASIN.md and COOLING-WATER.md for the
+new construction, operator controls and pump connections.
+
+Concrete basins automatically form dry and accept metered water through their
+return/fill ports. Regular fill mixes directly; spray routes supplied water
+through a finite header. Blender risers, rails/nozzles and a dynamic water
+volume render with the stored inventory. GUI protocol is now 4; CC:Tweaked has
+getFillMode/setFillMode and spray status fields. Spray captures currently
+arriving steam within the supplied water's heat capacity. Generic water still
+enters at 32 C; no stored containment atmosphere is simulated.
+
+The circulating and makeup pumps have new detailed Blender models based on
+manufacturer sectional drawings. Layout version 3 uses 5x8x5 and 3x3x7
+envelopes respectively. Existing version 1/2 placements retain old geometry and
+connections; break and replace to adopt the new model. Preserve the *_v2 assets
+and layouts. Reproducible source is art/models/cooling/revise_pumps.py.
+
+Verification: 193/193 core tests, 23/23 required Minecraft GameTests, seven
+client scenarios, CC:Tweaked runtime with zero problems, both generated-asset
+checks and the asset audit. See BUILD-STATUS.md for the final JAR. R01/R03/R04/R05
+remain unrelated open findings. Earlier entries below are historical snapshots.
+
 ## Concrete suppression basin and physical RHR (2026-09-22)
 
 See SUPPRESSION-BASIN.md for construction and four-port connections. New water

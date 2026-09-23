@@ -81,6 +81,12 @@ public final class SuppressionPool {
     /** Nominal initial pool temperature, degrees C. */
     public static final double DEFAULT_TEMPERATURE_C = 32.0;
 
+    /** Fixed surroundings until a containment-air temperature model exists. */
+    public static final double AMBIENT_TEMPERATURE_C = 25.0;
+    /** Effective game-calibrated heat-loss coefficients, W/(m2 K), not vendor data. */
+    private static final double SURFACE_LOSS_W_PER_M2_K = 100.0;
+    private static final double WALL_LOSS_W_PER_M2_K = 25.0;
+
     /**
      * Containment pressure the pool sits under, psia. Held at roughly
      * atmospheric here; a containment model would drive this, and when one
@@ -106,6 +112,14 @@ public final class SuppressionPool {
     private double cumulativeRhrRemovedMJ;
     private double lastUncondensedSteamKgPerS;
     private double lastCondensationEffectiveness = 1.0;
+    /** Finite spray header; supplied water is still counted against basin capacity. */
+    public static final double SPRAY_HEADER_KG = 6_000;
+    public static final double SPRAY_RATE_KG_PER_S = 600;
+    private boolean sprayMode;
+    private double sprayWaterKg;
+    private double sprayWaterC = DEFAULT_TEMPERATURE_C;
+    private double lastSprayKgPerS;
+    private double lastSprayCondensedKgPerS;
 
     public SuppressionPool() {
         this(DEFAULT_MASS_KG, DEFAULT_TEMPERATURE_C);
@@ -113,13 +127,77 @@ public final class SuppressionPool {
 
     /**
      * A pool holding {@code massKg} of water at {@code temperatureC}, whose
-     * design inventory is that same mass — a full pool, in other words, which is
-     * the only state a pool can be built in.
+     * design inventory is that same mass. Use {@link #empty(double)} for a new
+     * dry concrete basin with separately specified capacity.
      */
     public SuppressionPool(double massKg, double temperatureC) {
-        this.massKg = Math.max(1.0, massKg);
-        this.designMassKg = this.massKg;
+        this.massKg = Math.max(0.0, massKg);
+        this.designMassKg = Math.max(1.0, this.massKg);
         this.temperatureC = temperatureC;
+    }
+
+    /** New concrete shells contain no water until it is delivered through an inlet. */
+    public static SuppressionPool empty(double capacityKg) {
+        var pool = new SuppressionPool(0, DEFAULT_TEMPERATURE_C);
+        pool.resizeCapacityKeepingInventory(capacityKg);
+        return pool;
+    }
+
+    public boolean isSprayMode() { return sprayMode; }
+    public void setSprayMode(boolean enabled) { sprayMode = enabled; }
+    public double getSprayWaterKg() { return sprayWaterKg; }
+    public double getSprayKgPerS() { return lastSprayKgPerS; }
+    public double getSprayCondensedKgPerS() { return lastSprayCondensedKgPerS; }
+    public double getFillSpaceKg() {
+        double room = Math.max(0, designMassKg - massKg - sprayWaterKg);
+        return sprayMode ? Math.min(room, Math.max(0, SPRAY_HEADER_KG - sprayWaterKg)) : room;
+    }
+
+    /** Metered external supply. SIMULATE callers query getFillSpaceKg without mutation. */
+    public double receiveWaterKg(double requestedKg, double inletC) {
+        if (!Double.isFinite(requestedKg) || !Double.isFinite(inletC) || requestedKg <= 0) return 0;
+        double accepted = Math.min(requestedKg, getFillSpaceKg());
+        if (accepted <= 0) return 0;
+        if (sprayMode) {
+            sprayWaterC = (sprayWaterKg * sprayWaterC + accepted * inletC) / (sprayWaterKg + accepted);
+            sprayWaterKg += accepted;
+        } else addWaterKg(accepted, inletC);
+        return accepted;
+    }
+
+    /**
+     * Spray captures this step's steam escaping bulk condensation. The droplets
+     * can only absorb their sensible heat margin to saturation; both supplied
+     * water and captured steam fall into the pool, carrying that heat with them.
+     * This is not a heat sink or a containment pressure simulation.
+     */
+    public double spraySteam(double steamKgPerS, double pressurePsig, double dt) {
+        lastSprayKgPerS = 0;
+        lastSprayCondensedKgPerS = 0;
+        if (!Double.isFinite(dt) || dt <= 0) return 0;
+        if (!sprayMode) {
+            addWaterKg(sprayWaterKg, sprayWaterC);
+            sprayWaterKg = 0;
+            return 0;
+        }
+        double water = Math.min(sprayWaterKg, SPRAY_RATE_KG_PER_S * dt);
+        if (water <= 0) return 0;
+        double targetC = getSaturationTemperatureC() - 1;
+        double cp = specificHeatKJPerKgC();
+        double steamH = Saturation.vapourEnthalpyKJPerKg(Saturation.psiaFromPsig(pressurePsig));
+        double heatPerKg = Math.max(1, steamH - Saturation.subcooledLiquidEnthalpyKJPerKg(targetC));
+        double captured = Math.min(Math.max(0, steamKgPerS) * dt,
+                water * cp * Math.max(0, targetC - sprayWaterC) / heatPerKg);
+        double heatKJ = captured * heatPerKg;
+        double dropletC = sprayWaterC + heatKJ / (water * cp);
+        sprayWaterKg -= water;
+        addWaterKg(water, dropletC);
+        addWaterKg(captured, targetC);
+        cumulativeHeatInputMJ += heatKJ / 1000;
+        lastSprayKgPerS = water / dt;
+        lastSprayCondensedKgPerS = captured / dt;
+        lastUncondensedSteamKgPerS = Math.max(0, lastUncondensedSteamKgPerS - lastSprayCondensedKgPerS);
+        return lastSprayCondensedKgPerS;
     }
 
     // -----------------------------------------------------------------
@@ -183,7 +261,7 @@ public final class SuppressionPool {
      * turbine-driven ECCS exhaust discharging to the pool.
      */
     public void addHeatMJ(double heatMJ) {
-        if (heatMJ == 0.0) {
+        if (heatMJ == 0.0 || massKg <= 0.0) {
             return;
         }
         double cp = specificHeatKJPerKgC();
@@ -196,6 +274,27 @@ public final class SuppressionPool {
     // -----------------------------------------------------------------
     // Heat removal
     // -----------------------------------------------------------------
+
+    /**
+     * Slow heat loss to the surroundings through the surface and wetted shell.
+     * Uses an exponential cooling step, so long timesteps cannot overshoot
+     * ambient. Only heat is removed: no water consumption, evaporation, pump
+     * demand or RHR accounting. Returns removed heat in MJ.
+     */
+    public double coolPassively(double ambientC, double surfaceAreaM2,
+                                double wettedShellAreaM2, double dtSeconds) {
+        if (!Double.isFinite(ambientC) || !Double.isFinite(surfaceAreaM2)
+                || !Double.isFinite(wettedShellAreaM2) || !Double.isFinite(dtSeconds)
+                || surfaceAreaM2 < 0 || wettedShellAreaM2 < 0 || dtSeconds <= 0
+                || massKg <= 0 || temperatureC <= ambientC) return 0;
+        double conductanceKJPerSK = (surfaceAreaM2 * SURFACE_LOSS_W_PER_M2_K
+                + wettedShellAreaM2 * WALL_LOSS_W_PER_M2_K) / 1000.0;
+        double heatCapacityKJPerK = massKg * specificHeatKJPerKgC();
+        double dropC = (temperatureC - ambientC)
+                * -Math.expm1(-conductanceKJPerSK * dtSeconds / heatCapacityKJPerK);
+        temperatureC = Math.max(ambientC, temperatureC - dropC);
+        return dropC * heatCapacityKJPerK / 1000.0;
+    }
 
     /**
      * Run RHR in pool cooling mode for one timestep.
@@ -334,7 +433,7 @@ public final class SuppressionPool {
 
     /** Add water at a given temperature — makeup from a tank, or condensate return. */
     public void addWaterKg(double kg, double temperatureOfAddedWaterC) {
-        if (kg <= 0.0) {
+        if (!Double.isFinite(kg) || !Double.isFinite(temperatureOfAddedWaterC) || kg <= 0.0) {
             return;
         }
         double total = massKg + kg;
@@ -383,6 +482,7 @@ public final class SuppressionPool {
      * Falls off as subcooling is used up. Physics, not a setpoint.
      */
     public double condensationEffectiveness() {
+        if (massKg <= 0) return 0;
         double subcooling = getSubcoolingC();
         if (subcooling <= 0.0) {
             return 0.0;
@@ -446,7 +546,8 @@ public final class SuppressionPool {
     public double[] toArray() {
         return new double[]{
                 massKg, temperatureC, containmentPressurePsia,
-                cumulativeHeatInputMJ, cumulativeRhrRemovedMJ, designMassKg
+                cumulativeHeatInputMJ, cumulativeRhrRemovedMJ, designMassKg,
+                sprayMode ? 1 : 0, sprayWaterKg, sprayWaterC
         };
     }
 
@@ -470,5 +571,8 @@ public final class SuppressionPool {
         if (a.length >= 6 && Double.isFinite(a[5]) && a[5] > 0.0) {
             designMassKg = a[5];
         }
+        sprayMode = a.length >= 9 && a[6] == 1;
+        sprayWaterKg = a.length >= 9 && Double.isFinite(a[7]) ? Math.max(0, Math.min(SPRAY_HEADER_KG, a[7])) : 0;
+        sprayWaterC = a.length >= 9 && Double.isFinite(a[8]) ? a[8] : DEFAULT_TEMPERATURE_C;
     }
 }

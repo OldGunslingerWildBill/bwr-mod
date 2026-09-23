@@ -1,5 +1,81 @@
 # Build Status
 
+## 2026-09-23 — Natural suppression-pool cooling
+
+- Formed, ticking pools cool gradually toward a fixed 25 C ambient without
+  pumps, power or water injection. Surface area, wetted shell area and water
+  inventory determine the rate. An exponential step prevents overshoot; no
+  evaporation or water loss is introduced. Concrete wetted area follows level;
+  legacy boundary areas are cached during structure validation.
+- New Natural cooling GUI readout in kW and CC status fields passiveCoolingMW
+  and ambientTemperatureC. GUI protocol is 5. Existing saved temperature needs
+  no migration; passive loss does not increase the RHR heat-removal total.
+- Full 105,000 kg example: 80 C to 77.340 C after one simulated hour, with no
+  heat input. The coefficients are game calibration, documented in the guide.
+
+Verification completed:
+
+- **195/195 physics tests passed**, 867.3 seconds; 30 registered classes.
+- **24/24 required Minecraft GameTests passed**, including cooling without any
+  attached supply, inventory preservation, water-level geometry, reload and
+  ambient bounds. Existing spray, RHR and legacy pump tests remain passing.
+- Seven real-client checks passed. The new natural-cooling snapshot was
+  asserted and the panel screenshot inspected; no label overlap.
+- CC:Tweaked runtime: zero problems. Asset audit: 2,210 JSON files, zero
+  problems. Mod design check, final build and packaged-JAR audit passed.
+- Final JAR explicitly checked for the new core cooling method and GUI readout.
+  No optional dependencies or development fixtures are bundled.
+
+JAR: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar` (**20,531,308 bytes**).
+SHA-256: `CA75D1B2E355F8308EC7C46B4CCFF13EC60C483E600078C94AA05D6368BE25AB`.
+
+This publication includes the preceding pool/pump changes, Blender sources,
+generated models, regression tests and updated guides. GitHub main was at
+685d14c when checked; no upstream merge was needed. R01/R03/R04/R05 remain
+unrelated open findings. Older entries below retain their historical results.
+
+## 2026-09-23 — Dry suppression multiblocks, spray and detailed water pumps
+
+- Complete concrete shells auto-form empty. Pipe-delivered water sets the
+  rendered level and quencher submersion; source blocks do not grant inventory.
+  Saved metered inventory survives repair, replacement and reload.
+- Regular fill or over-pool spray selected through the GUI or CC:Tweaked.
+  A 6,000 kg header supplies at most 600 kg/s; capture is limited by incoming
+  steam and supplied water's heat margin. Supplied water and captured steam
+  remain in the basin with their heat. Blender rails, nozzles and risers are
+  visible above the water. Generic supply remains 32 C; there is no stored
+  containment atmosphere model. GUI protocol is 4.
+- Blender pump replacements: VCT-inspired vertical circulating unit, 5x8x5;
+  horizontal end-suction centrifugal makeup unit, 3x3x7. Detailed motors,
+  coupling/guard, flanges, bolts, gauges, piping and skid. Layout version 3;
+  prior placements preserve their geometry and connections with versioned assets.
+  Flow and electrical ratings are unchanged. Manufacturer drawings are cited in
+  COOLING-WATER.md; all new meshes are original.
+
+Verification completed:
+
+- Full core acceptance: **193/193 passed**, 873.6 seconds, 30 classes.
+- Minecraft server: **23/23 required GameTests passed**, including pumped fill,
+  finite spray, dynamic submersion, unformed-controller reload and old pump
+  layout/capability/teardown compatibility.
+- Real client: **seven scenarios passed**. Screenshots reviewed for basin water,
+  spray rails/particles, both pumps, exchanger connections and GUI commands.
+  Current and preserved pump models have no missing textures.
+- CC:Tweaked dedicated-server runtime check: **zero problems**.
+- Asset audit: **2,210 JSON files, zero problems**. Cooling (58) and suppression
+  (24) generated files match their source exports.
+- Final mod build passed; design rule scanned 215 Java files. Packaged-JAR audit
+  checked 327 classes, current licenses and nested core. New spray assets,
+  preserved pump assets and renamed inlet are packaged; no test fixtures or
+  optional dependency classes are bundled.
+
+JAR: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar` (**20,530,163 bytes**).
+SHA-256: `60AE39685760A8BF32A1067C9B185EF9E4CBA6F5B536D551D22160BB5CDAF654`.
+
+These changes are included with the natural-cooling publication above.
+R01/R03/R04/R05 remain unrelated open findings. Earlier entries record previous
+build and publication states.
+
 ## 2026-09-22 — Concrete suppression basin and four-port RHR exchanger
 
 - Blender-authored concrete wall/rim panels, recessed basin suction/return

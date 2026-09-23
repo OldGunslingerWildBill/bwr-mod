@@ -154,3 +154,31 @@ artistic adaptation, not a certified Columbia construction drawing.
 ![Fan tower controls](art/models/cooling/cooling_controls_ingame.png)
 ![Passive intake controls](art/models/cooling/intake_controls_ingame.png)
 ![Water retained around the submerged screen](art/models/cooling/submerged_intake_ingame.png)
+
+## Detailed pump replacements (September 2026)
+
+![Detailed circulating and makeup pumps in Minecraft](art/models/cooling/in-game-pumps.png)
+
+The circulating pump is an original Blender model informed by the
+[Flowserve VCT circulating-pump bulletin](https://www.flowserve.com/sites/default/files/dam/documents/ps-40-6-e.pdf),
+especially its sectional discharge head, column flanges and bearing arrangement.
+The game uses a pipe-fed suction barrel, a five-segment discharge elbow, an open
+motor stool, finned motor, bolted joints, seal piping, gauge and electrical box.
+Its existing 5 × 8 × 5 envelope and flange locations are retained.
+
+The makeup pump is a horizontal end-suction centrifugal assembly informed by
+[KSB's Etanorm sectional drawing, Figure 6](https://configurator.ksbindia.co.in/GeneralUtilities/KSBDocumentation/ETANORM/ETANORM_Op_Ins.pdf).
+It has a spiral volute, seal/bearing carrier, visible shaft coupling under a
+perforated guard, horizontal finned electric motor, fan grille, skid anchors,
+instruments and an overhead discharge header. Its new envelope is 3 × 3 × 7.
+The header retains the south-facing discharge connection; suction faces north.
+
+These are original exterior game meshes, not vendor CAD or exact rated products.
+The manufacturer names identify visual references only. Editable source and
+reproducible Blender script are under `art/models/cooling/revise_pumps.py`.
+
+New placements use layout version 3. Existing version 1/2 pumps keep their old
+geometry, occupied cells and connections. Break and replace an old pump to use
+its new model, leaving space for the longer makeup-pump skid. Water-flow and FE
+ratings have not changed. Supply water to a suppression basin through its amber
+Return / Fill Port; choose regular fill or spray in the basin panel.

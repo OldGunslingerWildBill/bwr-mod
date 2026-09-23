@@ -9,7 +9,7 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-SNAPSHOT` — development build, updated September 22, 2026.
+**Current version:** `0.1.0-SNAPSHOT` — development build, updated September 23, 2026.
 
 | Platform | Required version |
 | --- | --- |
@@ -18,8 +18,9 @@ flow, and the reactor responds. There is no commanded burn rate.
 | Java | 21 |
 | Optional integrations | Mekanism and CC:Tweaked, installed separately |
 
-The current update adds concrete suppression basins with physical RHR heat
-exchangers, rounded pressure vessels, compact logical fuel layouts
+The current update adds dry-built suppression basins with pumped filling and
+over-pool spray, detailed Blender circulating/makeup pumps, physical RHR heat
+exchangers, rounded pressure vessels, and compact logical fuel layouts
 (764 assemblies in a 17 x 17 vessel), cooling towers, waterlogged intakes and
 automatically assembled cylindrical condensate tanks. Modular HP/LP turbine
 trains now exhaust to a separate condenser with bypass and cooling-water ports.
@@ -42,6 +43,12 @@ must credit **OldGunslingerWildBill**. See [license and credit](#license-and-cre
 
 - **Concrete suppression basins:** player-built open tubs, modeled concrete
   walls and rims, directional suction/return flanges, and automatic formation.
+  New concrete pools start empty and must be filled through pipes. A live water
+  surface follows inventory. Choose **regular fill** or **over-pool spray** in
+  the panel or with CC `setFillMode("fill"/"spray")`. Spray consumes supplied
+  water and condenses steam within its finite heat-absorption limit.
+  Pools also cool naturally toward 25 C over time, without power or makeup
+  water; the panel reports natural heat loss separately from RHR cooling.
   LPCI/RHR pumps connect directly for injection or circulation, or through a
   Blender-built **four-port heat exchanger** with a separate cooling-water
   circuit. Direct circulation does not provide free cooling. See the
@@ -57,6 +64,9 @@ must credit **OldGunslingerWildBill**. See [license and credit](#license-and-cre
   lake/river intake. Waterlogged intake parts retain surrounding water and allow
   lakebed mounting. The circular tower has 19 animated fans, detailed louvers,
   rails and service access; the natural tower has revised concrete/support detail.
+  The circulating pump now has a detailed VCT-inspired exterior; the makeup
+  pump is a horizontal centrifugal assembly with a guarded coupling and finned
+  motor. New makeup pumps occupy **3 × 3 × 7 blocks**.
   Finite reservoirs, 2% makeup loss, FE-driven motors/fans,
   animated fans, local speed controls and CC peripherals. See the
   [cooling-water build guide](COOLING-WATER.md) for sizes, ports and capacities.
@@ -315,6 +325,9 @@ the volume rule, current INFO/CC readouts and upgrade details.
   a new suction/return wall port enables the concrete-basin rules and physical
   exchanger cooling. Complete the concrete shell before converting a dug pool.
   See [suppression basin construction](SUPPRESSION-BASIN.md).
+- Existing circulating/makeup pumps retain their previous models and ports.
+  Replace them to get the new detailed geometry; allow room for the longer
+  makeup-pump skid. Flow and energy ratings are unchanged.
 - **Turbine control migration:** older HP/LP admission and running settings are
   ignored. Existing directly fed sections now use available steam automatically.
   Install upstream stop/control valves before operating the updated plant.
@@ -406,10 +419,11 @@ python tools-export-suppression.py --check
 .\gradlew.bat :mod:runTurbineModelCheck -PbwrCoolingPanelCheck
 ```
 
-The concrete-basin/RHR update passed **191 physics tests and all 21 required
-Minecraft GameTests**, including finite secondary cooling, real RHR plumbing,
-basin repair/reload and fractional fluid accounting. Client checks covered
-Blender materials, connected flanges and live panels. See
+The natural-cooling update passed **195 physics tests and all 24 required
+Minecraft GameTests**, including metered filling, finite spray capture, real RHR
+plumbing, passive cooldown, basin repair/reload and older pump compatibility. Seven client views
+checked Blender materials, water levels, spray headers, detailed pumps and live
+panels. The CC:Tweaked runtime check reported zero problems. See
 [suppression basin construction](SUPPRESSION-BASIN.md).
 
 The compact-core update passed **186 physics tests and all 18 required Minecraft

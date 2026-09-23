@@ -98,6 +98,6 @@
   "block.bwr.makeup_water_pump": "Makeup Water Pump",
   "block.bwr.screened_water_intake": "Screened Water Intake",
   "block.bwr.suppression_pool_suction": "Suppression Pool Suction Port",
-  "block.bwr.suppression_pool_return": "Suppression Pool Return Port",
+  "block.bwr.suppression_pool_return": "Suppression Pool Return / Fill Port",
   "block.bwr.rhr_heat_exchanger": "RHR Heat Exchanger"
 }

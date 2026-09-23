@@ -43,26 +43,18 @@ import net.minecraft.world.phys.BlockHitResult;
  * <h2>Passive hardware, and it has no block entity</h2>
  * A quencher decides nothing. It does not open, does not close, holds no
  * setpoint and carries no state of its own — whether it is submerged is a fact
- * about the block above it, and which valves discharge through it is a fact
+ * about the pool's current water level, and which valves discharge through it is a fact
  * about the pipework, both of which are read from the level at the moment
  * somebody asks. There is therefore nothing to persist, nothing to tick and no
  * cached answer that can go stale, which is why this is a plain {@link Block}
  * and not a {@code BaseEntityBlock}. A block entity here would exist only to
  * hold copies of things the world already knows.
  *
- * <h2>Submerged means water directly above, and nothing cleverer</h2>
- * {@link #isSubmerged} asks one question: is there a water source block on top
- * of this one. That is the honest reading of "the discharge is under water", it
- * is one fluid lookup, and — importantly — it is answered fresh every time.
- *
- * <p>Waterlogging was the obvious alternative and is a trap. A waterlogged
- * block takes its {@code WATERLOGGED} value at the instant it is placed, so a
- * player who lays the quenchers on the basin floor and <i>then</i> floods the
- * basin — which is how anybody builds a pool — would end up with quenchers
- * permanently marked dry, with no symptom except a pool that will not condense
- * and no way to fix it but to break and replace every one of them. A test that
- * reads the world each time cannot fail that way, and it also makes draining
- * the pool show up immediately and correctly as a lost discharge path.
+ * <h2>Submersion follows the current inventory</h2>
+ * {@link #isSubmerged} uses the metered water surface of a concrete basin.
+ * Legacy dug pools instead require a water source directly above the quencher.
+ * The answer is read fresh so filling or draining changes the discharge path
+ * without requiring the player to replace the quencher.
  *
  * <h2>All six faces take a steam line</h2>
  * {@link SteamLinePort} defaults to accepting every face and this block leaves
@@ -89,9 +81,8 @@ public class SuppressionPoolQuencherBlock extends Block implements SteamLinePort
     /**
      * Whether the quencher at {@code pos} has water over it.
      *
-     * <p>Source blocks only, matching {@code SuppressionPoolBlockEntity}'s own
-     * test for pool water: flowing water is a partial volume and a transient
-     * one, and a quencher standing under a waterfall is not standing in a pool.
+     * <p>A concrete basin's pumped inventory takes precedence over world water.
+     * Legacy pools require a source block above; flowing water alone is not a pool.
      *
      * <p>Static, and takes the position rather than reading a field, because
      * there is no instance state to read — the two callers are the relief valve
@@ -100,6 +91,10 @@ public class SuppressionPoolQuencherBlock extends Block implements SteamLinePort
      * position already.
      */
     public static boolean isSubmerged(BlockGetter level, BlockPos pos) {
+        if(level instanceof Level world) {
+            for(var pool:dev.bwr.mod.eccs.AssemblyPlumbing.nearby(world,pos,SuppressionPoolBlockEntity.class))
+                if(pool.containsConcrete(pos))return pool.submergedConcrete(pos);
+        }
         return level.getFluidState(pos.above()).getType() == Fluids.WATER;
     }
 
@@ -121,11 +116,11 @@ public class SuppressionPoolQuencherBlock extends Block implements SteamLinePort
         }
         if (isSubmerged(level, pos)) {
             player.displayClientMessage(Component.literal(
-                    "Quencher submerged; steam admitted to the pool through it condenses in full."),
+                    "Quencher submerged; condensation depends on the pool's temperature."),
                     false);
         } else {
             player.displayClientMessage(Component.literal(
-                    "Quencher is not submerged: no water directly above it. A quencher above the"
+                    "Quencher is not submerged: raise the water level above it. A quencher above the"
                             + " pool surface admits steam to the containment airspace, not to the"
                             + " water."), false);
         }

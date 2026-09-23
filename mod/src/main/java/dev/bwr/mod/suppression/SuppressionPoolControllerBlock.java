@@ -17,8 +17,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
 /**
- * Controller for the suppression pool. Right-click reports pool condition; all
- * actual control is through the peripheral or redstone.
+ * Controller for the suppression pool. Right-click opens the panel; sneak-click
+ * reports construction details. Filling/spray can also be selected through CC.
  */
 public class SuppressionPoolControllerBlock extends BaseEntityBlock {
 
@@ -48,7 +48,7 @@ public class SuppressionPoolControllerBlock extends BaseEntityBlock {
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
                                                                   BlockEntityType<T> type) {
         if (level.isClientSide()) {
-            return null;
+            return createTickerHelper(type,BwrBlockEntities.SUPPRESSION_POOL.get(),SuppressionPoolBlockEntity::clientTick);
         }
         return createTickerHelper(type, BwrBlockEntities.SUPPRESSION_POOL.get(),
                 SuppressionPoolBlockEntity::serverTick);

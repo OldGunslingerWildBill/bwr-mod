@@ -154,9 +154,22 @@ public class SuppressionPoolPeripheral implements IPeripheral {
     }
 
     @LuaFunction(mainThread = true)
+    public final String getFillMode() { return be.pool().isSprayMode()?"spray":"fill"; }
+
+    @LuaFunction(mainThread = true)
+    public final void setFillMode(String mode) throws LuaException {
+        if(!"fill".equals(mode)&&!"spray".equals(mode))throw new LuaException("Fill mode must be 'fill' or 'spray'.");
+        if(!be.isConcreteBasin())throw new LuaException("Fill mode requires a concrete basin.");
+        be.setSprayMode("spray".equals(mode));
+    }
+
+    @LuaFunction(mainThread = true)
     public final Map<String, Object> getStatus() {
         Map<String, Object> m = new HashMap<>();
         SuppressionPool p = be.pool();
+        m.put("fillMode",getFillMode());m.put("capacityKg",p.getDesignMassKg());
+        m.put("sprayHeaderKg",p.getSprayWaterKg());m.put("sprayFlowKgPerS",p.getSprayKgPerS());
+        m.put("sprayCondensedKgPerS",p.getSprayCondensedKgPerS());
         m.put("formed", be.isFormed());
         m.put("temperature", p.getTemperatureC());
         m.put("saturation", p.getSaturationTemperatureC());
@@ -171,6 +184,8 @@ public class SuppressionPoolPeripheral implements IPeripheral {
         m.put("valves", be.dischargingValveCount());
         m.put("heatInMJ", p.getCumulativeHeatInputMJ());
         m.put("heatRemovedMJ", p.getCumulativeRhrRemovedMJ());
+        m.put("passiveCoolingMW", be.passiveCoolingMW());
+        m.put("ambientTemperatureC", SuppressionPool.AMBIENT_TEMPERATURE_C);
         return m;
     }
 }

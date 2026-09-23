@@ -15,6 +15,9 @@ public final class CoolingLayout {
     private static final Map<dev.bwr.core.turbine.CoolingWaterUnit.Design,CoolingLayout> LEGACY=new EnumMap<>(dev.bwr.core.turbine.CoolingWaterUnit.Design.class);
     public static CoolingLayout get(dev.bwr.core.turbine.CoolingWaterUnit.Design d){return CACHE.computeIfAbsent(d,k->new CoolingLayout(k.id+".json"));}
     public static CoolingLayout legacy(dev.bwr.core.turbine.CoolingWaterUnit.Design d){return LEGACY.computeIfAbsent(d,k->new CoolingLayout(k.id+"_legacy.json"));}
+    private static final Map<dev.bwr.core.turbine.CoolingWaterUnit.Design,CoolingLayout> V2=new EnumMap<>(dev.bwr.core.turbine.CoolingWaterUnit.Design.class);
+    public static boolean revisedPump(dev.bwr.core.turbine.CoolingWaterUnit.Design d){return d.id.equals("circulating_water_pump")||d.id.equals("makeup_water_pump");}
+    public static CoolingLayout previous(dev.bwr.core.turbine.CoolingWaterUnit.Design d){return revisedPump(d)?V2.computeIfAbsent(d,k->new CoolingLayout(k.id+"_v2.json")):get(d);}
     public record Cell(int index,BlockPos local,CoolingBlock.Port role,Direction face,VoxelShape[] shapes) {
         public VoxelShape shape(Direction facing){return shapes[facing.get2DDataValue()];}
     }

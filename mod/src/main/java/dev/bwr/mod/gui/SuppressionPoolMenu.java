@@ -31,6 +31,10 @@ public class SuppressionPoolMenu extends BwrMenu {
 
     /** a = RHR duty in per mille. */
     public static final int CMD_SET_RHR_DUTY = 0;
+    public static final int CMD_FILL_MODE = 1;
+    public boolean sprayMode;
+    public double passiveCoolingMW;
+    public double capacityKg,sprayHeaderKg,sprayFlow,sprayCondensed;
 
     // --- client-visible snapshot -------------------------------------
 
@@ -109,7 +113,7 @@ public class SuppressionPoolMenu extends BwrMenu {
         buf.writeDouble(pool.getRemainingHeatCapacityMJ());
         buf.writeDouble(pool.getCumulativeHeatInputMJ());
         buf.writeDouble(pool.getCumulativeRhrRemovedMJ());
-        buf.writeDouble(pool.getUncondensedSteamKgPerS());
+        buf.writeDouble(pool.getUncondensedSteamKgPerS()+be.getBypassedSteamKgPerS());
         buf.writeDouble(pool.getMassKg());
         buf.writeDouble(be.getRhrDuty());
         buf.writeDouble(be.getRhrCapacityMW());
@@ -117,6 +121,9 @@ public class SuppressionPoolMenu extends BwrMenu {
         buf.writeVarInt(be.waterBlocks());
         buf.writeVarInt(be.dischargingValveCount());
         buf.writeBoolean(be.isConcreteBasin());buf.writeDouble(be.physicalCoolingMW());
+        buf.writeBoolean(pool.isSprayMode());buf.writeDouble(pool.getDesignMassKg());buf.writeDouble(pool.getSprayWaterKg());
+        buf.writeDouble(pool.getSprayKgPerS());buf.writeDouble(pool.getSprayCondensedKgPerS());
+        buf.writeDouble(be.passiveCoolingMW());
     }
 
     @Override
@@ -141,6 +148,9 @@ public class SuppressionPoolMenu extends BwrMenu {
         waterBlocks = buf.readVarInt();
         dischargingValves = buf.readVarInt();
         concrete=buf.readBoolean();physicalCoolingMW=buf.readDouble();
+        sprayMode=buf.readBoolean();capacityKg=buf.readDouble();sprayHeaderKg=buf.readDouble();
+        sprayFlow=buf.readDouble();sprayCondensed=buf.readDouble();
+        passiveCoolingMW=buf.readDouble();
     }
 
     @Override
@@ -148,6 +158,9 @@ public class SuppressionPoolMenu extends BwrMenu {
         SuppressionPoolBlockEntity be = poolBlock();
         if (be == null) {
             return;
+        }
+        if(command==CMD_FILL_MODE&&(a==0||a==1)&&be.isConcreteBasin()) {
+            be.setSprayMode(a==1);markSnapshotDirty();
         }
         if (command == CMD_SET_RHR_DUTY && !be.isConcreteBasin()) {
             be.setRhrDuty(fromPerMille(a));

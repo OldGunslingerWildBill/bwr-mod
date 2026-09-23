@@ -88,3 +88,11 @@ The exact previous files are retained here:
 
 The earlier overview is a historical record, not current dependency guidance.
 Both Mekanism and CC:Tweaked are optional in the current build.
+
+## Pump reference drawings (September 2026)
+
+The detailed cooling-water pumps are original Blender-authored meshes. Flowserve's
+[VCT bulletin](https://www.flowserve.com/sites/default/files/dam/documents/ps-40-6-e.pdf)
+and KSB's [Etanorm manual, Figure 6](https://configurator.ksbindia.co.in/GeneralUtilities/KSBDocumentation/ETANORM/ETANORM_Op_Ins.pdf)
+were used as visual references only. Manufacturer drawings and CAD are not
+included in game assets or distributed with the mod. Names do not imply endorsement.

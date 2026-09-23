@@ -21,9 +21,10 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 @EventBusSubscriber(modid=BwrMod.MOD_ID,value=Dist.CLIENT)
 public class CoolingRenderer implements BlockEntityRenderer<CoolingBlockEntity> {
     public static ModelResourceLocation model(Design d){return ModelResourceLocation.standalone(BwrMod.id("block/cooling/"+d.id+"/body"));}
+    public static ModelResourceLocation previous(Design d){return ModelResourceLocation.standalone(BwrMod.id("block/cooling/"+d.id+"_v2/body"));}
     public static final ModelResourceLocation FAN=ModelResourceLocation.standalone(BwrMod.id("block/cooling/fan/body"));
     public CoolingRenderer(BlockEntityRendererProvider.Context c){}
-    @SubscribeEvent public static void models(ModelEvent.RegisterAdditional e){for(var d:Design.values())e.register(model(d));e.register(FAN);}
+    @SubscribeEvent public static void models(ModelEvent.RegisterAdditional e){for(var d:Design.values()){e.register(model(d));if(CoolingLayout.revisedPump(d))e.register(previous(d));}e.register(FAN);}
     @SubscribeEvent public static void renderers(EntityRenderersEvent.RegisterRenderers e){e.registerBlockEntityRenderer(BwrBlockEntities.COOLING.get(),CoolingRenderer::new);}
     @Override public void render(CoolingBlockEntity be,float partial,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
         if(!be.getBlockState().getValue(CoolingBlock.CONTROLLER))return;var layout=be.layout();var c=layout.controller;
@@ -33,7 +34,7 @@ public class CoolingRenderer implements BlockEntityRenderer<CoolingBlockEntity> 
             light=LightTexture.pack(Math.max(l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,be.getBlockPos()),l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,top)),l.getBrightness(net.minecraft.world.level.LightLayer.SKY,top));}
         float angle=switch(be.getBlockState().getValue(CoolingBlock.FACING)){case EAST->90;case SOUTH->180;case WEST->270;default->0;};
         pose.pushPose();pose.translate(.5,0,.5);pose.mulPose(Axis.YP.rotationDegrees(-angle));pose.translate(-.5-c.getX(),-c.getY(),-.5-c.getZ());
-        draw(model(be.design()),pose,buffers,light,overlay);
+        draw(be.previousPumpModel()?previous(be.design()):model(be.design()),pose,buffers,light,overlay);
         for(var pivot:CoolingLayout.get(be.design()).rotors){
             pose.pushPose();pose.translate(pivot.x,pivot.y,pivot.z);
             double time=be.getLevel()==null?0:be.getLevel().getGameTime()+partial;

@@ -68,14 +68,18 @@ The earlier published snapshot had **171 methods in 26 classes**. Local
 condenser/cooling additions and LP condensate migration brought that to
 **183 methods in 28 classes**. The compact-core update brings the current total
 to **186 methods in 29 classes**. Suppression-basin and RHR exchanger tests bring
-the current total to **191 methods in 30 classes**. New tests may change those counts; the runner's
-output is authoritative.
+that total to **191 methods in 30 classes**. Dry-basin and spray tests bring it
+to **193 methods in 30 classes**; passive cooling brings it to **195 methods in
+30 classes**. New tests may change those counts;
+the runner's output is authoritative.
 
 ### Minecraft-facing coverage
 
-The concrete suppression update has **21 required GameTests**, including three
-new tests for concrete-basin lifecycle, physical RHR circulation/cooling, and
-rotated exchanger capabilities/persistence. The opt-in visual check
+The concrete suppression update has **24 required GameTests**, including six
+new tests for concrete-basin lifecycle, physical RHR circulation/cooling,
+rotated exchanger capabilities/persistence, pumped filling/spray and older pump
+compatibility, plus unpowered natural cooling and its reload/ambient bounds.
+The opt-in visual check
 `gradlew.bat :mod:runTurbineModelCheck -PbwrSuppressionPanelCheck` creates a
 disposable world and captures the basin, exchanger flanges and live panels in
 `mod/run/turbineModelCheck/suppression-check`. It is excluded from the release JAR.
@@ -174,3 +178,27 @@ renderer, client appearance synchronization or Blender components. Inspect all
 screenshots under `mod/run/turbineModelCheck/vessel-check/`, especially the
 broken/repaired shell and the port-to-barrel transitions. Verify reproducible
 exports with `python tools-export-reactor-vessel.py --check`.
+
+### Dry suppression basins, spray and detailed pumps (2026-09-23)
+
+The subsequent natural-cooling patch passed **195/195 core tests** and **24/24
+required GameTests**. It adds heat/water accounting, exposed-area and inventory
+scaling, timestep subdivision, invalid inputs and ambient bounds in the core;
+the Minecraft test verifies a genuinely unpowered basin, level-dependent heat
+loss and reload continuity. The existing client fixture also asserts the new
+Natural cooling readout arrives in its menu snapshot.
+
+Core acceptance: **193/193**, including empty inventory, finite spray heat/mass,
+no-flow and hot-supply cases, mode switching and spray-buffer persistence.
+The 23 required GameTests include actual pipe-capability fills, source-block
+rejection as metered inventory, dynamic quencher submersion, empty saved
+controllers, repairs and old pump layout/port/teardown compatibility. Basin tests
+use fresh coordinates because saved metered inventory deliberately survives
+across repeated GameTestServer runs.
+
+The suppression client fixture now checks seven views: assembled water, exchanger
+orientations, exchanger panel, fill panel, a real GUI spray-mode packet, spray
+headers/particles, and both detailed pump models. It also checks standalone model
+textures, including the preserved old pump models. Test steam is explicitly
+injected by the development fixture; production steam still comes from plant
+reports. The release JAR excludes all development fixture code.

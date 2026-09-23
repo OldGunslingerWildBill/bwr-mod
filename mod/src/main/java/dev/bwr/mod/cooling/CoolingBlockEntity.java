@@ -19,7 +19,7 @@ import java.util.*;
 
 /** Sparse parts share one finite water inventory, one motor, and one tick. */
 public class CoolingBlockEntity extends BlockEntity {
-    private BlockPos root;private UUID assembly=UUID.randomUUID();private int cell;private int layoutVersion=2;
+    private BlockPos root;private UUID assembly=UUID.randomUUID();private int cell;private int layoutVersion=3;
     private final CoolingWaterUnit unit;private final MachineEnergy energy;
     private final Map<CoolingBlock.Port,IFluidHandler> handlers=new EnumMap<>(CoolingBlock.Port.class);
     private long checkedAt=Long.MIN_VALUE,drainTick=Long.MIN_VALUE;private int drained;
@@ -32,7 +32,8 @@ public class CoolingBlockEntity extends BlockEntity {
         target=design()==Design.NATURAL||design()==Design.INTAKE?1:0;
     }
     public Design design(){return ((CoolingBlock)getBlockState().getBlock()).design;}
-    public CoolingLayout layout(){return layoutVersion==1?CoolingLayout.legacy(design()):CoolingLayout.get(design());}
+    public CoolingLayout layout(){return layoutVersion==1?CoolingLayout.legacy(design()):layoutVersion==2?CoolingLayout.previous(design()):CoolingLayout.get(design());}
+    public boolean previousPumpModel(){return layoutVersion<3&&CoolingLayout.revisedPump(design());}
     public BlockPos root(){return root;}public int cellIndex(){return cell;}public CoolingWaterUnit plant(){return unit;}
     public double target(){return target;}public double actual(){return actual;}public int draw(){return draw;}
     public int storedFE(){return energy==null?0:energy.getEnergyStored();}
@@ -129,7 +130,7 @@ public class CoolingBlockEntity extends BlockEntity {
         if(unit!=null){t.putDouble("Input",unit.input());t.putDouble("Output",unit.output());t.putDouble("Loss",unit.totalLoss());t.putDouble("Target",target);t.putDouble("Actual",actual);t.putInt("Energy",energy.getEnergyStored());}
     }
     @Override protected void loadAdditional(CompoundTag t,HolderLookup.Provider r){
-        super.loadAdditional(t,r);layoutVersion=t.getInt("LayoutVersion")>=2?2:1;root=t.contains("Root")?BlockPos.of(t.getLong("Root")):worldPosition;if(t.hasUUID("Assembly"))assembly=t.getUUID("Assembly");cell=t.contains("Cell")?t.getInt("Cell"):layout().controllerIndex();
+        super.loadAdditional(t,r);layoutVersion=Math.clamp(t.getInt("LayoutVersion"),1,3);root=t.contains("Root")?BlockPos.of(t.getLong("Root")):worldPosition;if(t.hasUUID("Assembly"))assembly=t.getUUID("Assembly");cell=t.contains("Cell")?t.getInt("Cell"):layout().controllerIndex();
         if(unit!=null){unit.restore(t.getDouble("Input"),t.getDouble("Output"),t.getDouble("Loss"));energy.setStored(t.getInt("Energy"));
             if(t.contains("Target"))setTarget(t.getDouble("Target"));double a=t.getDouble("Actual");actual=Double.isFinite(a)?Math.clamp(a,0,1):0;}
         structureDirty=true;checkedAt=drainTick=Long.MIN_VALUE;drained=0;

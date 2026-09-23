@@ -3,119 +3,58 @@ package dev.bwr.mod.gui.client;
 import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.gui.SuppressionPoolMenu;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
-import java.util.Locale;
-
-/**
- * Suppression pool panel — {@code SPEC.md} section 12.
- *
- * <p>Temperature and subcooling say how close the pool is to being unable to
- * condense; condensation effectiveness says how well it is doing right now; and
- * remaining heat capacity in megajoules says how much longer it can keep doing
- * it. That last number is the one that turns an extended transient into a
- * decision, because it is finite and it is visibly falling.
- *
- * <p>RHR is a slider. It does not come on by itself at any temperature, and
- * there is no limit line on this screen that anything acts on.
- */
+/** Operator-selected filling/spray and measured pool condition. */
 public class SuppressionPoolScreen extends BwrScreen<SuppressionPoolMenu> {
-
-    public static final ResourceLocation TEXTURE = BwrMod.id("textures/gui/suppression_pool.png");
-
-    private static final int WIDTH = 176;
-    private static final int HEIGHT = 166;
-
+    public static final ResourceLocation TEXTURE=BwrMod.id("textures/gui/suppression_pool.png");
     private FractionSlider rhr;
-
-    public SuppressionPoolScreen(SuppressionPoolMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, TEXTURE, WIDTH, HEIGHT);
+    private Button fill,spray;
+    public SuppressionPoolScreen(SuppressionPoolMenu menu,Inventory inventory,Component title) {
+        super(menu,inventory,title,TEXTURE,310,246);
     }
-
-    @Override
-    protected void init() {
+    @Override protected void init() {
         super.init();
-        rhr = addRenderableWidget(new FractionSlider(leftPos + 8, topPos + 114, 160, 20,
-                "RHR DUTY", menu.rhrDuty,
-                f -> menu.sendCommand(SuppressionPoolMenu.CMD_SET_RHR_DUTY,
-                        (int) Math.round(f * 1000.0))));
+        fill=addRenderableWidget(Button.builder(Component.literal("Regular fill"),b->menu.sendCommand(SuppressionPoolMenu.CMD_FILL_MODE,0)).bounds(leftPos+12,topPos+191,140,20).build());
+        spray=addRenderableWidget(Button.builder(Component.literal("Over-pool spray"),b->menu.sendCommand(SuppressionPoolMenu.CMD_FILL_MODE,1)).bounds(leftPos+158,topPos+191,140,20).build());
+        rhr=addRenderableWidget(new FractionSlider(leftPos+12,topPos+191,286,20,"RHR DUTY",menu.rhrDuty,f->menu.sendCommand(SuppressionPoolMenu.CMD_SET_RHR_DUTY,(int)Math.round(f*1000))));
+        follow();
     }
-
-    @Override
-    protected void containerTick() {
-        super.containerTick();
-        rhr.visible=!menu.concrete;rhr.active=!menu.concrete;
-        // The duty is persisted in NBT and survives a reload, so the slider has
-        // to be told what it already is. init() cannot do it: the client's copy
-        // of menu.rhrDuty is still 0.0 when the screen is built, and the first
-        // snapshot only arrives on the server's next broadcastChanges(). That
-        // left a pool with RHR at 80% showing "RHR DUTY 0%" over a line reading
-        // "RHR removing 24.0 MW", and one click on the track would have sent
-        // the 0% the slider was showing. follow() suppresses the echo packet,
-        // and stops once the player takes the widget.
-        if (!rhr.isFocused()) {
-            rhr.follow(menu.rhrDuty);
-        }
+    private void follow() {
+        fill.visible=spray.visible=menu.concrete;rhr.visible=!menu.concrete;
+        fill.active=menu.formed&&menu.sprayMode;spray.active=menu.formed&&!menu.sprayMode;
+        rhr.active=menu.formed&&!menu.concrete;if(!rhr.isFocused())rhr.follow(menu.rhrDuty);
     }
-
-    @Override
-    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, titleLabelX, titleLabelY, TEXT_BRIGHT, false);
+    @Override protected void containerTick(){super.containerTick();follow();}
+    @Override protected void renderBg(GuiGraphics g,float partial,int x,int y) {
+        g.fill(leftPos,topPos,leftPos+imageWidth,topPos+imageHeight,0xff171e27);
+        g.fill(leftPos,topPos,leftPos+imageWidth,topPos+22,0xff293a4e);
+        g.renderOutline(leftPos,topPos,imageWidth,imageHeight,0xff61738a);
     }
-
-    @Override
-    protected void renderContent(GuiGraphics graphics, int mouseX, int mouseY) {
-        if (!menu.present) {
-            text(graphics, "No pool controller here.", 10, 22, ALARM);
-            return;
+    @Override protected void renderLabels(GuiGraphics g,int x,int y){g.drawString(font,title,12,7,TEXT_BRIGHT,false);}
+    @Override protected void renderContent(GuiGraphics g,int x,int y) {
+        if(!menu.present){text(g,"No pool controller here.",12,32,ALARM);return;}
+        if(!menu.formed){
+            text(g,"Basin shell incomplete.",12,32,ALARM);
+            text(g,"Complete the concrete floor and four walls.",12,48,TEXT);
+            text(g,"Leave the top open; fit outward water ports.",12,62,TEXT);
+            text(g,"Sneak-click the controller for build details.",12,82,TEXT_DIM);return;
         }
-        if (!menu.formed) {
-            text(graphics, "Pool not formed.", 10, 22, ALARM);
-            text(graphics, "Complete and fill the basin.", 10, 34, TEXT);
-            text(graphics, "Sneak-click for details.", 10, 44, TEXT);
-            return;
-        }
-
-        int y = 20;
-        readout(graphics, "TEMPERATURE", num(menu.temperatureC, 2) + " C", 10, y, 166,
-                menu.boiling ? ALARM : TEXT_BRIGHT);
-        readout(graphics, "SATURATION", num(menu.saturationTemperatureC, 2) + " C",
-                10, y += 10, 166, TEXT_BRIGHT);
-        readout(graphics, "SUBCOOLING", num(menu.subcoolingC, 2) + " C", 10, y += 10, 166,
-                menu.subcoolingC < 10.0 ? WARN : GOOD);
-        readout(graphics, "CONDENSING AT", pct(menu.condensationEffectiveness),
-                10, y += 10, 166,
-                menu.condensationEffectiveness < 0.5 ? ALARM
-                        : menu.condensationEffectiveness < 0.9 ? WARN : GOOD);
-        readout(graphics, "CAPACITY LEFT", big(menu.remainingHeatCapacityMJ) + " MJ",
-                10, y += 10, 166, TEXT_BRIGHT);
-        readout(graphics, "HEAT IN", big(menu.cumulativeHeatInputMJ) + " MJ",
-                10, y += 10, 166, TEXT_DIM);
-        readout(graphics, "RHR REMOVED", big(menu.cumulativeRhrRemovedMJ) + " MJ",
-                10, y += 10, 166, TEXT_DIM);
-        readout(graphics, "UNCONDENSED", num(menu.uncondensedSteamKgPerS, 2) + " kg/s",
-                10, y += 10, 166, menu.uncondensedSteamKgPerS > 0.0 ? WARN : TEXT_DIM);
-        readout(graphics, "POOL", String.format(Locale.ROOT, "%d blocks, %d SRV",
-                menu.waterBlocks, menu.dischargingValves), 10, y += 10, 166, TEXT_BRIGHT);
-
-        // Capacity remaining as a bar, against the capacity of a cold full pool.
-        double coldCapacityMJ = Math.max(1.0, menu.massKg * 4.186e-3 * 68.0);
-        bar(graphics, 10, 138, 156, 6,
-                menu.remainingHeatCapacityMJ / coldCapacityMJ,
-                menu.remainingHeatCapacityMJ / coldCapacityMJ < 0.2 ? ALARM : ACCENT);
-
-        if(menu.concrete) {
-            text(graphics,"RHR -> exchanger -> pool",10,116,TEXT_DIM);
-            text(graphics,"Separate cooling circuit",10,126,TEXT_DIM);
-            text(graphics,String.format(Locale.ROOT,"Cooling: %.2f MW",menu.physicalCoolingMW),10,148,TEXT_DIM);
-        } else text(graphics, String.format(Locale.ROOT, "RHR removing %.1f MW of %.0f MW installed",
-                menu.rhrDutyMW(), menu.rhrCapacityMW), 10, 148, TEXT_DIM);
-
-        if (menu.boiling) {
-            text(graphics, "POOL BOILING - steam is passing through to containment",
-                    10, 106, ALARM);
-        }
+        readout(g,"Water inventory",big(menu.massKg)+" / "+big(menu.capacityKg)+" kg",12,32,298,TEXT_BRIGHT);
+        bar(g,12,46,286,7,menu.massKg/Math.max(1,menu.capacityKg),ACCENT);
+        readout(g,"Water temperature",num(menu.temperatureC,1)+" C",12,61,298,menu.boiling?WARN:TEXT_BRIGHT);
+        readout(g,"Subcooling to saturation",num(menu.subcoolingC,1)+" C",12,75,298,TEXT_BRIGHT);
+        readout(g,"Bulk condensation",pct(menu.condensationEffectiveness),12,89,298,TEXT_BRIGHT);
+        readout(g,"Steam escaping bulk + spray",num(menu.uncondensedSteamKgPerS,2)+" kg/s",12,103,298,menu.uncondensedSteamKgPerS>0?WARN:TEXT_BRIGHT);
+        readout(g,"Physical RHR cooling",num(menu.rhrDutyMW(),2)+" MW",12,117,298,TEXT_BRIGHT);
+        readout(g,"Spray header inventory",big(menu.sprayHeaderKg)+" kg",12,131,298,ACCENT);
+        readout(g,"Water spraying / steam captured",num(menu.sprayFlow,1)+" / "+num(menu.sprayCondensed,1)+" kg/s",12,145,298,ACCENT);
+        readout(g,"Natural cooling",num(menu.passiveCoolingMW * 1000,1)+" kW",12,159,298,TEXT_BRIGHT);
+        text(g,menu.concrete?"Inlet mode: "+(menu.sprayMode?"SPRAY":"REGULAR FILL"):"Legacy dug pool",12,172,TEXT_BRIGHT);
+        text(g,menu.massKg<=0?"Empty: pump water into the amber return port.":"Spray uses supplied water; heat stays in the pool.",12,220,menu.massKg<=0?WARN:TEXT_DIM);
+        text(g,"Leave room for spray water and condensed steam.",12,233,TEXT_DIM);
     }
 }
