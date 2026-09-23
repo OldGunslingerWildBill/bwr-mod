@@ -18,17 +18,19 @@ flow, and the reactor responds. There is no commanded burn rate.
 | Java | 21 |
 | Optional integrations | Mekanism and CC:Tweaked, installed separately |
 
-The current update adds rounded pressure vessels, compact logical fuel layouts
+The current update adds concrete suppression basins with physical RHR heat
+exchangers, rounded pressure vessels, compact logical fuel layouts
 (764 assemblies in a 17 x 17 vessel), cooling towers, waterlogged intakes and
 automatically assembled cylindrical condensate tanks. Modular HP/LP turbine
 trains now exhaust to a separate condenser with bypass and cooling-water ports.
 **Turbine admission is controlled at the upstream valve.** Pump, ownership,
 inventory and chunk-lifecycle fixes include permanent regression checks.
 
-Five separate known defects remain documented in the
+Four separate known defects remain documented in the
 [verification re-audit](PHASE-ONE-REAUDIT.md): shared-port water simulation,
-suppression-basin inventory during revalidation, remote computer rebinding,
+remote computer rebinding,
 closed MSIV branch routing and recirculation command conversion.
+The suppression-basin inventory defect (R02) is fixed and regression-tested.
 
 Source is publicly readable under the custom
 [Realistic BWR Source-Available License](LICENSE). Modified redistribution
@@ -38,6 +40,12 @@ must credit **OldGunslingerWildBill**. See [license and credit](#license-and-cre
 
 ## What is implemented
 
+- **Concrete suppression basins:** player-built open tubs, modeled concrete
+  walls and rims, directional suction/return flanges, and automatic formation.
+  LPCI/RHR pumps connect directly for injection or circulation, or through a
+  Blender-built **four-port heat exchanger** with a separate cooling-water
+  circuit. Direct circulation does not provide free cooling. See the
+  [construction and RHR plumbing guide](SUPPRESSION-BASIN.md).
 - **Phase-one reliability fixes:** fuel recovery when a controller is removed,
   exclusive reactor and suppression-basin ownership, persistent basin water,
   protected multiblock placement/mining, reconnecting machine ports, hardware-based
@@ -303,6 +311,10 @@ the volume rule, current INFO/CC readouts and upgrade details.
 
 ## Existing worlds
 
+- Existing suppression pools keep their inventories and legacy behavior. Adding
+  a new suction/return wall port enables the concrete-basin rules and physical
+  exchanger cooling. Complete the concrete shell before converting a dug pool.
+  See [suppression basin construction](SUPPRESSION-BASIN.md).
 - **Turbine control migration:** older HP/LP admission and running settings are
   ignored. Existing directly fed sections now use available steam automatically.
   Install upstream stop/control valves before operating the updated plant.
@@ -389,9 +401,16 @@ python tools-export-condenser.py --check
 python tools-export-cooling.py --check
 python tools-export-condensate-tank.py --check
 python tools-export-reactor-vessel.py --check
+python tools-export-suppression.py --check
 .\gradlew.bat :core:acceptance --args=CoolingWater
 .\gradlew.bat :mod:runTurbineModelCheck -PbwrCoolingPanelCheck
 ```
+
+The concrete-basin/RHR update passed **191 physics tests and all 21 required
+Minecraft GameTests**, including finite secondary cooling, real RHR plumbing,
+basin repair/reload and fractional fluid accounting. Client checks covered
+Blender materials, connected flanges and live panels. See
+[suppression basin construction](SUPPRESSION-BASIN.md).
 
 The compact-core update passed **186 physics tests and all 18 required Minecraft
 GameTests**. Both optional-integration configurations booted successfully. Real
@@ -423,6 +442,7 @@ intake/tank screens. Full results are in [BUILD-STATUS.md](BUILD-STATUS.md).
 
 ## Further reading
 
+- [Concrete suppression basins and four-port RHR cooling](SUPPRESSION-BASIN.md)
 - [Scalable condensate tank construction and ports](CONDENSATE-TANK.md)
 - [Cooling towers, circulating pumps, lake intake and makeup water](COOLING-WATER.md)
 - [Condenser ports, bypass valve, cooling supply and modeled MSIV](CONDENSER-AND-MSIV.md)

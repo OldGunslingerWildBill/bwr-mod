@@ -283,7 +283,9 @@ public final class SuppressionPool {
     public void resizeCapacityKeepingInventory(double capacityKg) {
         if(!Double.isFinite(capacityKg) || capacityKg<=0) return;
         designMassKg=Math.max(1,capacityKg);
-        massKg=Math.max(1,Math.min(massKg,designMassKg));
+        // A survey is not a drain. Condensed steam can raise inventory above
+        // nominal volume; neither an unchanged survey nor a smaller shell
+        // may silently erase that water and its heat.
     }
 
     /**
@@ -297,6 +299,16 @@ public final class SuppressionPool {
      */
     public double getAvailableSuctionKg() {
         return Math.max(0.0, massKg - designMassKg * SUCTION_FLOOR_FRACTION);
+    }
+
+    /** Measured heat removal by a physical exchanger, bounded by its cold inlet. */
+    public double removeHeatMJ(double requestedMJ, double coldInletC) {
+        if (!Double.isFinite(requestedMJ) || !Double.isFinite(coldInletC) || requestedMJ <= 0) return 0;
+        double available = Math.max(0, temperatureC-coldInletC)*massKg*specificHeatKJPerKgC()/1000;
+        double removed = Math.min(requestedMJ, available);
+        addHeatMJ(-removed);
+        cumulativeRhrRemovedMJ += removed;
+        return removed;
     }
 
     /**

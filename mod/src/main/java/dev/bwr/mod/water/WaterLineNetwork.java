@@ -19,6 +19,8 @@ public final class WaterLineNetwork {
     public static final int MAX_PIPE_BLOCKS = 256;
 
     public static boolean acceptsLineOn(BlockState state, Direction face) {
+        if(state.getBlock() instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlock)return face==state.getValue(dev.bwr.mod.suppression.SuppressionPoolPortBlock.FACING);
+        if(state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock)return face.getAxis().isHorizontal();
         if(state.getBlock() instanceof CondensateStorageTankBlock)return CondensateStorageTankBlock.acceptsWater(state,face);
         if(state.getBlock() instanceof dev.bwr.mod.cooling.CoolingBlock)return dev.bwr.mod.cooling.CoolingBlock.acceptsWater(state,face);
         if(state.getBlock() instanceof dev.bwr.mod.condenser.CondenserBlock)return dev.bwr.mod.condenser.CondenserBlock.acceptsWater(state,face);
@@ -68,6 +70,7 @@ public final class WaterLineNetwork {
                         || !level.isLoaded(origin) || !level.getBlockState(origin).is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get())) return 0;
                 Set<BlockPos> seen = new HashSet<>();
                 Set<IFluidHandler> unique = Collections.newSetFromMap(new IdentityHashMap<>());
+                Set<BlockPos> uniquePools = new HashSet<>();
                 List<IFluidHandler> sinks = new ArrayList<>();
                 ArrayDeque<BlockPos> queue = new ArrayDeque<>();
                 queue.add(origin); seen.add(origin);
@@ -84,6 +87,9 @@ public final class WaterLineNetwork {
                                 queue.add(p);
                             }
                         } else if (state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())
+                                || state.is(BwrBlocks.SUPPRESSION_POOL_RETURN.get())
+                                || state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock
+                                && d.getOpposite()==dev.bwr.mod.suppression.RhrHeatExchangerBlock.coldIn(state)
                                 || state.getBlock() instanceof dev.bwr.mod.cooling.CoolingBlock
                                 && (state.getValue(dev.bwr.mod.cooling.CoolingBlock.PORT)==dev.bwr.mod.cooling.CoolingBlock.Port.INLET
                                     ||state.getValue(dev.bwr.mod.cooling.CoolingBlock.PORT)==dev.bwr.mod.cooling.CoolingBlock.Port.MAKEUP)
@@ -92,6 +98,9 @@ public final class WaterLineNetwork {
                                 || state.getBlock() instanceof ProcessAssembly assembly
                                 && assembly.portAt(state, d.getOpposite()) == AssemblyPort.WATER_SUCTION) {
                             IFluidHandler sink = level.getCapability(Capabilities.FluidHandler.BLOCK, p, d.getOpposite());
+                            if(level.getBlockEntity(p) instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlockEntity port) {
+                                var owner=port.owner();if(owner==null||!uniquePools.add(owner.getBlockPos()))continue;
+                            }
                             if (sink != null && unique.add(sink)) sinks.add(sink);
                         }
                     }

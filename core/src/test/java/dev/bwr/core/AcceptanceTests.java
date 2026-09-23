@@ -76,6 +76,7 @@ public final class AcceptanceTests {
             PowerTurbineTest.class,
             SurfaceCondenserTest.class,
             CoolingWaterUnitTest.class,
+            RhrHeatExchangerTest.class,
             RecirculationSizingTest.class,
             ContinuousRodMotionTest.class,
             PumpSpeedControlTest.class,

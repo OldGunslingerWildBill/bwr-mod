@@ -41,6 +41,7 @@ neoForge {
             if (project.hasProperty('bwrCoolingPanelCheck')) jvmArguments.add('-Dbwr.coolingPanelCheck=true')
             if (project.hasProperty('bwrCompactCorePanelCheck')) jvmArguments.add('-Dbwr.compactCorePanelCheck=true')
             if (project.hasProperty('bwrVesselModelCheck')) jvmArguments.add('-Dbwr.vesselModelCheck=true')
+            if (project.hasProperty('bwrSuppressionPanelCheck')) jvmArguments.add('-Dbwr.suppressionPanelCheck=true')
             if (project.hasProperty('bwrTankPanelCheck')) jvmArguments.add('-Dbwr.tankPanelCheck=true')
         }
 

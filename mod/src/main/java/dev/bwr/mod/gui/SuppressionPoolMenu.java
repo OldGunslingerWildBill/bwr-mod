@@ -36,6 +36,9 @@ public class SuppressionPoolMenu extends BwrMenu {
 
     public boolean present;
     public boolean formed;
+    public boolean concrete;
+    public double physicalCoolingMW;
+    private final BlockPos anchor;
     public double temperatureC;
     public double saturationTemperatureC;
     public double subcoolingC;
@@ -53,19 +56,31 @@ public class SuppressionPoolMenu extends BwrMenu {
 
     /** Client constructor. */
     public SuppressionPoolMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf extra) {
-        this(containerId, inventory, extra.readBlockPos());
+        this(containerId, inventory, extra.readBlockPos(),extra.readBlockPos());
     }
 
     public SuppressionPoolMenu(int containerId, Inventory inventory, BlockPos pos) {
+        this(containerId,inventory,pos,pos);
+    }
+    public SuppressionPoolMenu(int containerId, Inventory inventory, BlockPos pos,BlockPos anchor) {
         super(BwrMenus.SUPPRESSION_POOL.get(), containerId, inventory, pos,
                 BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
+        this.anchor=anchor;
     }
 
     public static void open(ServerPlayer player, SuppressionPoolBlockEntity be) {
+        open(player,be,be.getBlockPos());
+    }
+    public static void open(ServerPlayer player, SuppressionPoolBlockEntity be,BlockPos anchor) {
         player.openMenu(new SimpleMenuProvider(
-                        (id, inventory, who) -> new SuppressionPoolMenu(id, inventory, be.getBlockPos()),
+                        (id, inventory, who) -> new SuppressionPoolMenu(id, inventory, be.getBlockPos(),anchor),
                         Component.translatable("menu.bwr.suppression_pool")),
-                be.getBlockPos());
+                b->{b.writeBlockPos(be.getBlockPos());b.writeBlockPos(anchor);});
+    }
+    @Override public boolean stillValid(net.minecraft.world.entity.player.Player who) {
+        if(!level().isLoaded(pos)||!level().isLoaded(anchor)||who.distanceToSqr(anchor.getX()+.5,anchor.getY()+.5,anchor.getZ()+.5)>64)return false;
+        if(anchor.equals(pos))return super.stillValid(who);
+        return level().getBlockEntity(anchor) instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlockEntity port&&port.owner()!=null&&port.owner().getBlockPos().equals(pos);
     }
 
     private SuppressionPoolBlockEntity poolBlock() {
@@ -74,6 +89,7 @@ public class SuppressionPoolMenu extends BwrMenu {
 
     /** RHR duty actually being delivered in MW, for the readout. */
     public double rhrDutyMW() {
+        if(concrete)return physicalCoolingMW;
         return rhrDuty * rhrCapacityMW;
     }
 
@@ -100,6 +116,7 @@ public class SuppressionPoolMenu extends BwrMenu {
         buf.writeBoolean(pool.isBoiling());
         buf.writeVarInt(be.waterBlocks());
         buf.writeVarInt(be.dischargingValveCount());
+        buf.writeBoolean(be.isConcreteBasin());buf.writeDouble(be.physicalCoolingMW());
     }
 
     @Override
@@ -123,6 +140,7 @@ public class SuppressionPoolMenu extends BwrMenu {
         boiling = buf.readBoolean();
         waterBlocks = buf.readVarInt();
         dischargingValves = buf.readVarInt();
+        concrete=buf.readBoolean();physicalCoolingMW=buf.readDouble();
     }
 
     @Override
@@ -131,7 +149,7 @@ public class SuppressionPoolMenu extends BwrMenu {
         if (be == null) {
             return;
         }
-        if (command == CMD_SET_RHR_DUTY) {
+        if (command == CMD_SET_RHR_DUTY && !be.isConcreteBasin()) {
             be.setRhrDuty(fromPerMille(a));
             markSnapshotDirty();
         }

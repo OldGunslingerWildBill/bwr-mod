@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IPI",
+    "PCP",
+    "IPI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    }
+  },
+  "result": {
+    "id": "bwr:rhr_heat_exchanger",
+    "count": 1
+  }
+}

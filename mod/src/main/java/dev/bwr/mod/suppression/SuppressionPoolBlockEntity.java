@@ -245,10 +245,54 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     /** Submerged quenchers found in this pool's search box. */
     private final List<BlockPos> quenchers = new ArrayList<>();
     private final LongOpenHashSet basinWater = new LongOpenHashSet();
+    private boolean concreteMode;
+    private ConcreteBasin.Layout concreteLayout;
+    private final Map<BlockPos,DutyReport> physicalCooling = new HashMap<>();
+    public boolean isConcreteBasin() { return concreteMode; }
+    public boolean touchesConcreteBounds(BlockPos p) {
+        if(concreteLayout==null)return true;
+        var min=concreteLayout.min();var max=concreteLayout.max();
+        return p.getX()>=min.getX()-1&&p.getX()<=max.getX()+1
+                &&p.getY()>=min.getY()-1&&p.getY()<=max.getY()+1
+                &&p.getZ()>=min.getZ()-1&&p.getZ()<=max.getZ()+1;
+    }
+    public void invalidateConcrete() { formed=false;markStructureDirty(); }
+    public boolean ownsPort(BlockPos p) { return formed&&concreteLayout!=null&&concreteLayout.ports().contains(p); }
+    public void reportPhysicalCooling(BlockPos p,long tick,double mw) {
+        if(Double.isFinite(mw)&&mw>=0)physicalCooling.put(p.immutable(),new DutyReport(tick,mw));
+    }
+    public double physicalCoolingMW() {
+        if(level==null)return 0;
+        physicalCooling.entrySet().removeIf(e->level.getGameTime()-e.getValue().tick()>1||!level.isLoaded(e.getKey())
+                ||!(level.getBlockEntity(e.getKey()) instanceof RhrHeatExchangerBlockEntity));
+        return physicalCooling.values().stream().mapToDouble(DutyReport::duty).sum();
+    }
+    private final net.neoforged.neoforge.fluids.capability.IFluidHandler suctionWater=poolWater(true),returnWater=poolWater(false);
+    public net.neoforged.neoforge.fluids.capability.IFluidHandler water(boolean suction) { return suction?suctionWater:returnWater; }
+    private net.neoforged.neoforge.fluids.capability.IFluidHandler poolWater(boolean suction) {
+        return new net.neoforged.neoforge.fluids.capability.IFluidHandler(){
+            private boolean live(){return level!=null&&!level.isClientSide()&&!isRemoved()&&isFormed()&&level.getBlockEntity(worldPosition)==SuppressionPoolBlockEntity.this;}
+            public int getTanks(){return 1;}
+            public net.neoforged.neoforge.fluids.FluidStack getFluidInTank(int tank){int n=tank==0&&live()?(int)Math.floor(pool.getMassKg()):0;return n>0?new net.neoforged.neoforge.fluids.FluidStack(Fluids.WATER,n):net.neoforged.neoforge.fluids.FluidStack.EMPTY;}
+            public int getTankCapacity(int tank){return tank==0?(int)Math.floor(pool.getDesignMassKg()):0;}
+            public boolean isFluidValid(int tank,net.neoforged.neoforge.fluids.FluidStack s){return tank==0&&!suction&&s.is(Fluids.WATER);}
+            public int fill(net.neoforged.neoforge.fluids.FluidStack s,FluidAction action){
+                if(!live()||!isFluidValid(0,s))return 0;int n=(int)Math.floor(Math.max(0,Math.min(s.getAmount(),pool.getDesignMassKg()-pool.getMassKg())));
+                if(n>0&&action.execute()){pool.addWaterKg(n,SuppressionPool.DEFAULT_TEMPERATURE_C);setChanged();}return n;
+            }
+            public net.neoforged.neoforge.fluids.FluidStack drain(net.neoforged.neoforge.fluids.FluidStack s,FluidAction a){return s.is(Fluids.WATER)?drain(s.getAmount(),a):net.neoforged.neoforge.fluids.FluidStack.EMPTY;}
+            public net.neoforged.neoforge.fluids.FluidStack drain(int amount,FluidAction action){
+                if(!live()||!suction)return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+                int n=(int)Math.floor(Math.max(0,Math.min(amount,pool.getAvailableSuctionKg())));
+                if(n<=0)return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+                if(action.execute()){pool.drawSuctionKg(n,1);setChanged();}return new net.neoforged.neoforge.fluids.FluidStack(Fluids.WATER,n);
+            }
+        };
+    }
 
     /** Membership of the basin this controller actually measured. */
     public boolean ownsQuencher(BlockPos pos) {
-        return formed && level != null && level.isLoaded(pos) && level.isLoaded(pos.above())
+        return isFormed() && level != null && level.isLoaded(pos) && level.isLoaded(pos.above())
                 && basinWater.contains(pos.above().asLong())
                 && SuppressionPoolQuencherBlock.isSubmerged(level, pos);
     }
@@ -293,7 +337,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
 
     private void tick(Level level) {
         maybeRevalidate(level);
-        if (!formed) {
+        if (!isFormed()) {
             return;
         }
 
@@ -592,7 +636,12 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             }
         }
 
-        Basin basin = surveyBasin(level);
+        concreteLayout=ConcreteBasin.inspect(level,getBlockPos(),concreteMode);
+        Basin basin;
+        if(concreteLayout!=null) {
+            concreteMode=true;basinWater.clear();basinWater.addAll(concreteLayout.water());
+            basin=new Basin(concreteLayout.water().size(),concreteLayout.problem());
+        } else basin=surveyBasin(level);
         waterBlocks = basin.waterBlocks();
 
         if (basin.problem() != null) {
@@ -617,21 +666,21 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         }
 
         pool.setContainmentPressurePsia(dev.bwr.core.PhysicalConstants.ATMOSPHERIC_PSI);
-        // The pool is as large as the basin, and it is re-imposed on every scan
-        // so that digging the basin out further, or draining part of it, is felt
-        // in the physics. Only the change in capacity moves water, so a survey
-        // that finds the same basin costs nothing and a pool drawn down by hours
-        // of ECCS suction is not quietly refilled by being looked at.
-        if(basinData==null) pool.resizeToDesignMassKg(structureMassKg(),SuppressionPool.DEFAULT_TEMPERATURE_C);
+        // A new basin starts with the water actually placed. Subsequent claims
+        // reuse its saved inventory and update capacity only: geometry changes
+        // neither refill a drawn-down basin nor discard condensed water.
+        if(basinData==null) pool.resizeToDesignMassKg(waterBlocks*KG_PER_WATER_BLOCK,SuppressionPool.DEFAULT_TEMPERATURE_C);
         if(level instanceof net.minecraft.server.level.ServerLevel server) {
             basinData=SuppressionBasinData.get(server);
-            var claim=basinData.claim(server,getBlockPos(),basinWater,pool);
+            var claim=basinData.claim(server,getBlockPos(),concreteLayout==null?basinWater:concreteLayout.cells(),pool,structureMassKg());
             pool=claim.pool();
             if(claim.problem()!=null) {
                 result.fail(getBlockPos(),claim.problem());formed=false;lastValidation=result;return;
             }
         }
         formed = true;
+        if(concreteLayout!=null)for(var p:concreteLayout.ports())
+            if(level.getBlockEntity(p) instanceof SuppressionPoolPortBlockEntity port)port.bind(getBlockPos());
         lastValidation = result;
     }
 
@@ -1018,6 +1067,11 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     }
 
     public boolean isFormed() {
+        if(formed&&concreteLayout!=null&&level!=null) {
+            for(int x=concreteLayout.min().getX()>>4;x<=concreteLayout.max().getX()>>4;x++)
+                for(int z=concreteLayout.min().getZ()>>4;z<=concreteLayout.max().getZ()>>4;z++)
+                    if(!level.isLoaded(new BlockPos(x*16,worldPosition.getY(),z*16)))return false;
+        }
         return formed;
     }
 
@@ -1043,7 +1097,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      * ECCS at all. That is why this figure was published and then ignored.
      */
     public double structureMassKg() {
-        return waterBlocks * KG_PER_WATER_BLOCK;
+        return (concreteLayout!=null&&concreteLayout.problem()==null?concreteLayout.volume():waterBlocks)*KG_PER_WATER_BLOCK;
     }
 
     public int dischargingValveCount() {
@@ -1060,6 +1114,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      * for here, plus what any RHR loop lined up for pool cooling is supplying.
      */
     public double getEffectiveRhrDuty() {
+        if(concreteMode)return 0; // Physical four-port exchangers own heat removal for concrete basins.
         return Math.min(1.0, Math.max(0.0, rhrDuty + machineRhrDuty));
     }
 
@@ -1148,7 +1203,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
 
     public List<String> statusLines() {
         List<String> out = new ArrayList<>();
-        if (!formed) {
+        if (!isFormed()) {
             out.add("Suppression pool not formed.");
             out.addAll(lastValidation.messages());
             return out;
@@ -1156,6 +1211,11 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         out.add(String.format("Pool formed: %d water blocks, %d relief valves discharging",
                 waterBlocks, dischargingValves.size()));
         out.addAll(inletLines());
+        if (concreteMode) {
+            out.add(String.format("Concrete basin: physical exchanger cooling %.2f MW", physicalCoolingMW()));
+            out.add("Suction -> LPCI/RHR -> exchanger primary inlet; primary outlet -> basin return.");
+            out.add("Direct return circulates water; supply the exchanger's separate cooling-water ports to remove heat.");
+        }
         // The basin size is physics now, not decoration, so it is on the board:
         // a small pool really does heat faster and lose suction sooner.
         out.add(String.format("%,.0f kg of %,.0f kg design inventory (%.0f%% level), "
@@ -1201,6 +1261,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         tag.putDouble("RhrCapacityMW", rhrCapacityMW);
         tag.putDouble("HeatSinkC", heatSinkC);
         tag.putInt("WaterBlocks", waterBlocks);
+        tag.putBoolean("ConcreteBasin",concreteMode);
         if (reactorPos != null) {
             tag.putLong("Reactor", reactorPos.asLong());
         }
@@ -1235,6 +1296,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             heatSinkC = Double.isFinite(saved) ? saved : heatSinkC;
         }
         waterBlocks = tag.getInt("WaterBlocks");
+        concreteMode=tag.getBoolean("ConcreteBasin");concreteLayout=null;
         reactorPos = tag.contains("Reactor") ? BlockPos.of(tag.getLong("Reactor")) : null;
         structureDirty = true;
     }

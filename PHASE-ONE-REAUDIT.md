@@ -7,6 +7,13 @@ including uncommitted condenser, cooling and tank work. Git base:
 
 ## Result
 
+**22 September update:** R02 is fixed by the concrete-basin/RHR update.
+Capacity refresh now preserves the complete water and thermal inventory,
+including condensed mass above design capacity and after a size reduction.
+Core and Minecraft regression tests cover revalidation, repair and reload.
+**R01, R03, R04 and R05 remain open.** The findings below retain the original
+reproduction evidence from the audit snapshot.
+
 **The standard build passes, but the code is not yet clear of known defects.**
 This audit found **five remaining P2 correctness/reliability issues**. Four
 were reproduced in a real NeoForge GameTest server; the fifth was reproduced
@@ -20,7 +27,7 @@ them. No commits, pushes or GitHub issue changes were made during this audit.
 | ID | Priority | Remaining issue | Measured result |
 | --- | --- | --- | --- |
 | R01 | P2 | Shared condenser ports overstate available water capacity | Simulated acceptance 200; actual acceptance 100; standard transfer lost 100 fluid units |
-| R02 | P2 | Basin revalidation discards newly condensed water | Unchanged 64-block basin fell from 64,100 kg to 64,000 kg |
+| R02 | Fixed | Basin revalidation discarded newly condensed water | Inventory now survives unchanged/shrunk geometry, repair and reload |
 | R03 | P2 | Remote computer peripherals retain discarded controllers | A 37% command changed the removed controller; the replacement remained at 100% |
 | R04 | P2 | An unused closed MSIV branch can stop the open header | Nozzle flow fell from 485.09 kg/s to zero |
 | R05 | P2 | Recirculation flow commands do not invert shared jet limits | A 50% flow command produces 83.33% delivery with 12 jets and two pumps at commanded speed |

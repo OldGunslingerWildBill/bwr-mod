@@ -67,10 +67,18 @@ and filtered runs reject it. It does not edit project sources or build output.
 The earlier published snapshot had **171 methods in 26 classes**. Local
 condenser/cooling additions and LP condensate migration brought that to
 **183 methods in 28 classes**. The compact-core update brings the current total
-to **186 methods in 29 classes**. New tests may change those counts; the runner's
+to **186 methods in 29 classes**. Suppression-basin and RHR exchanger tests bring
+the current total to **191 methods in 30 classes**. New tests may change those counts; the runner's
 output is authoritative.
 
 ### Minecraft-facing coverage
+
+The concrete suppression update has **21 required GameTests**, including three
+new tests for concrete-basin lifecycle, physical RHR circulation/cooling, and
+rotated exchanger capabilities/persistence. The opt-in visual check
+`gradlew.bat :mod:runTurbineModelCheck -PbwrSuppressionPanelCheck` creates a
+disposable world and captures the basin, exchanger flanges and live panels in
+`mod/run/turbineModelCheck/suppression-check`. It is excluded from the release JAR.
 
 The mod uses NeoForge's headless GameTest server and dedicated-server harnesses
 instead of a JUnit test source set. Their assertions are automated and exit
@@ -133,7 +141,8 @@ are separate from headless CI.
 
 Record the final JAR hash, executed checks and known limitations in
 `BUILD-STATUS.md`. Passing tests do not close unrelated findings automatically;
-`PHASE-ONE-REAUDIT.md` tracks the five separately reproduced R01–R05 issues.
+`PHASE-ONE-REAUDIT.md` tracks the five separately reproduced R01–R05 issues;
+R02 is now fixed, while R01/R03/R04/R05 remain open.
 
 ## Compact core layout verification
 

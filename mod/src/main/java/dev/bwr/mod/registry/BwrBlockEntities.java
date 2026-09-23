@@ -99,6 +99,13 @@ public final class BwrBlockEntities {
             () -> BlockEntityType.Builder.of(SuppressionPoolBlockEntity::new,
                     BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.suppression.SuppressionPoolPortBlockEntity>> SUPPRESSION_POOL_PORT =
+            BLOCK_ENTITIES.register("suppression_pool_port",()->BlockEntityType.Builder.of(dev.bwr.mod.suppression.SuppressionPoolPortBlockEntity::new,
+                    BwrBlocks.SUPPRESSION_POOL_SUCTION.get(),BwrBlocks.SUPPRESSION_POOL_RETURN.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.suppression.RhrHeatExchangerBlockEntity>> RHR_HEAT_EXCHANGER =
+            BLOCK_ENTITIES.register("rhr_heat_exchanger",()->BlockEntityType.Builder.of(dev.bwr.mod.suppression.RhrHeatExchangerBlockEntity::new,
+                    BwrBlocks.RHR_HEAT_EXCHANGER.get()).build(null));
+
     /**
      * One type for all six emergency injection machines. They differ only in
      * the {@code EccsDesign} their block carries, which the block entity reads

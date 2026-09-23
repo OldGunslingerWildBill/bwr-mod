@@ -73,6 +73,8 @@ public final class AssemblyPlumbing {
     }
     public static boolean isWaterEndpoint(BlockState state) {
         return state.getBlock() instanceof dev.bwr.mod.reactor.RpvWaterInjectionPortBlock
+                || state.getBlock() instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlock
+                || state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock
                 || state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())
                 || state.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
     }
@@ -122,6 +124,12 @@ public final class AssemblyPlumbing {
                 best.put(next,opening);
                 seen.add(next);
                 if(seen.size()>SteamLineNetwork.MAX_LINE_BLOCKS) return new Line(List.of(),Set.copyOf(seen),false,0);
+                if(s.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock) {
+                    if(next.equals(start))continue;
+                    if(role==AssemblyPort.WATER_DISCHARGE&&d.getOpposite()==dev.bwr.mod.suppression.RhrHeatExchangerBlock.primaryIn(s))ends.add(next);
+                    else valid=false;
+                    continue;
+                }
                 if(s.getBlock() instanceof ProcessAssembly assembly) {
                     // A tee feeding like ports is allowed. Joining incompatible roles is not.
                     if(assembly.portAt(s,d.getOpposite())!=role || (s.getBlock() instanceof dev.bwr.mod.flow.JetPumpBlock)!=jet) valid=false;
@@ -133,8 +141,8 @@ public final class AssemblyPlumbing {
                 boolean accepted=switch(role) {
                     case STEAM_INLET -> s.is(BwrBlocks.RPV_STEAM_OUTLET.get());
                     case STEAM_EXHAUST -> s.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get()) || s.is(BwrBlocks.TURBINE_STEAM_OUTLET.get());
-                    case WATER_SUCTION -> jet ? s.is(BwrBlocks.RECIRCULATION_PUMP.get()) : s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get()) || s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
-                    case WATER_DISCHARGE -> s.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get()) || s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
+                    case WATER_SUCTION -> jet ? s.is(BwrBlocks.RECIRCULATION_PUMP.get()) : s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get()) || s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get()) || s.is(BwrBlocks.SUPPRESSION_POOL_SUCTION.get());
+                    case WATER_DISCHARGE -> s.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get()) || s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get()) || s.is(BwrBlocks.SUPPRESSION_POOL_RETURN.get());
                 };
                 if(accepted) ends.add(next);
                 else if(s.is(BwrBlocks.RECIRCULATION_PUMP.get()) || isWaterEndpoint(s) || s.is(BwrBlocks.RPV_STEAM_OUTLET.get())
@@ -149,8 +157,12 @@ public final class AssemblyPlumbing {
     public static <T> T endpoint(Level level,Line line,Class<T> type) {
         if(!line.valid()) return null;
         T found=null;
-        for(BlockPos p:line.ends()) if(level.isLoaded(p) && type.isInstance(level.getBlockEntity(p))) {
-            T next=type.cast(level.getBlockEntity(p));
+        for(BlockPos p:line.ends()) {
+            if(!level.isLoaded(p))return null;
+            Object candidate=level.getBlockEntity(p);
+            if(candidate instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlockEntity port)candidate=port.owner();
+            if(!type.isInstance(candidate))return null;
+            T next=type.cast(candidate);
             if(next instanceof CondensateStorageTankBlockEntity tank){var owner=tank.owner();if(owner==null||!owner.ready())return null;next=type.cast(owner);}
             if(found!=null && found!=next) return null;
             found=next;

@@ -64,6 +64,8 @@ public final class BwrMenus {
 
     private BwrMenus() {
     }
+    public static final DeferredHolder<MenuType<?>,MenuType<dev.bwr.mod.gui.RhrHeatExchangerMenu>> RHR_HEAT_EXCHANGER =
+            MENUS.register("rhr_heat_exchanger",()->IMenuTypeExtension.create(dev.bwr.mod.gui.RhrHeatExchangerMenu::new));
 
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.CondenserMenu>> CONDENSER =
             MENUS.register("condenser", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.CondenserMenu::new));

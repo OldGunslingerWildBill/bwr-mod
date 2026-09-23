@@ -1,5 +1,50 @@
 # Build Status
 
+## 2026-09-22 — Concrete suppression basin and four-port RHR exchanger
+
+- Blender-authored concrete wall/rim panels, recessed basin suction/return
+  flanges and a four-port exchanger. Editable source and generated OBJ/MTL
+  resources are under `art/models/suppression` and the mod's assets.
+- Open tubs form automatically with a complete concrete shell, one controller,
+  outward water ports and at least 64 water sources. Outside width/depth 5–25,
+  height 4–16; at least 64 internal spaces below the rim are required.
+- Modeled LPCI/RHR pumps support direct suction, reactor injection, direct
+  pool return, and an exchanger loop returning to the same basin. Only the
+  exchanger removes heat from a new concrete pool; its secondary water circuit
+  is finite and separate. The existing dug-pool behavior remains compatible.
+- R02 fixed: revalidation and capacity changes preserve condensed water and
+  thermal inventory. Repair and controller replacement cannot refill the pool.
+- GUI protocol 3; exchanger live flow/heat/inventory readouts and basin panels
+  opened from wall ports. The cooling-water inlet still assumes 13 C;
+  ordinary water pipes do not transport temperature. See SUPPRESSION-BASIN.md.
+
+Verification completed:
+
+- Full core acceptance: **191/191 passed**, 877.9 seconds, 30 registered classes.
+  The subsequent outlet-temperature readout adjustment also passed the focused
+  five-test exchanger suite and live client check.
+- Final Minecraft server run: **21/21 required GameTests passed**, including
+  automatic basin formation, break/repair, exclusive ownership, cached fluid
+  handlers after replacement, actual RHR plumbing, separate inventories,
+  interrupted loops, rotated secondary ports and fractional fill accounting.
+- Dedicated server with CC:Tweaked/Mekanism installed and with both absent:
+  **0 problems**. Seven existing permission scenarios passed.
+- Real client: all four visual/panel scenarios passed; screenshots inspected.
+  The disposable fixture resends completed chunk lighting after bulk placement
+  and asserts daylight synchronization. Model materials and all facing states
+  load; the pool and exchanger panels report live physical cooling.
+- Asset audit: **2,203 JSON files, zero problems**. All 15 generated suppression
+  assets match their Blender exports. Mod build, design rule (214 Java files)
+  and packaged-JAR license/dependency/test-harness audit passed.
+
+JAR: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar` (**19,912,676 bytes**).
+SHA-256: `5884131680D77B9A14BFB5314E6959FF4F09DA4327ED344E6C00850213FF6826`.
+
+This publication includes the basin/exchanger implementation, Blender sources,
+generated assets, tests and construction guide. The prior combined publication
+is commit `619290a`. R01/R03/R04/R05 remain open; these checks do not claim those
+unrelated findings are resolved.
+
 ## 2026-09-22 — Combined GitHub publication verification
 
 - GitHub main was b77cf00, matching the local base; no open pull request or

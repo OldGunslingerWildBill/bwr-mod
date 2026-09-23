@@ -1,6 +1,3 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "bwr:block/suppression_pool_wall"
-  }
+  "parent": "bwr:block/suppression/rim/body"
 }

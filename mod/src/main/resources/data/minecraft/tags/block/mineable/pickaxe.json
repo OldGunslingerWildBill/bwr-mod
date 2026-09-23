@@ -18,6 +18,9 @@
     "bwr:mechanical_draft_tower",
     "bwr:circulating_water_pump",
     "bwr:makeup_water_pump",
-    "bwr:screened_water_intake"
+    "bwr:screened_water_intake",
+    "bwr:suppression_pool_suction",
+    "bwr:suppression_pool_return",
+    "bwr:rhr_heat_exchanger"
   ]
 }

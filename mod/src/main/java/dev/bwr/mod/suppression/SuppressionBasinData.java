@@ -26,6 +26,9 @@ public final class SuppressionBasinData extends SavedData {
         return level.getDataStorage().computeIfAbsent(FACTORY,"bwr_suppression_basins");
     }
     public Claim claim(ServerLevel level,BlockPos controller,LongOpenHashSet water,SuppressionPool legacy) {
+        return claim(level,controller,water,legacy,water.size()*1000.0);
+    }
+    public Claim claim(ServerLevel level,BlockPos controller,LongOpenHashSet water,SuppressionPool legacy,double capacityKg) {
         Set<Entry> matches=Collections.newSetFromMap(new IdentityHashMap<>());
         for(long cell:water) { var e=byCell.get(cell);if(e!=null)matches.add(e); }
         if(matches.size()>1) return new Claim(legacy,"Separate the previously metered suppression basins before forming them; their inventories cannot be merged by moving a controller.");
@@ -38,7 +41,7 @@ public final class SuppressionBasinData extends SavedData {
             return new Claim(entry.pool,"This basin already has a controller at "+entry.owner.toShortString()+". Remove it before assigning another controller.");
         entry.owner=controller.immutable();
         for(long cell:water) {entry.cells.add(cell);byCell.put(cell,entry);}
-        entry.pool.resizeCapacityKeepingInventory(water.size()*1000.0);
+        entry.pool.resizeCapacityKeepingInventory(capacityKg);
         setDirty();return new Claim(entry.pool,null);
     }
     @Override public CompoundTag save(CompoundTag tag,HolderLookup.Provider registries) {

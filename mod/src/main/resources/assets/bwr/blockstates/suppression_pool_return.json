@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/suppression/return/body",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "bwr:block/suppression/return/body",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/suppression/return/body",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/suppression/return/body",
+      "y": 270
+    }
+  }
+}

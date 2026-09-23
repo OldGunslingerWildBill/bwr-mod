@@ -247,8 +247,11 @@ public class EccsPumpBlockEntity extends BlockEntity {
         var delivery=complete ? AssemblyPlumbing.waterReceiver(level,outlet) : null;
         if(delivery!=null && !delivery.isFormed()) delivery=null;
         if(pool!=null && !pool.isFormed()) pool=null;
+        var exchanger=complete?AssemblyPlumbing.endpoint(level,outlet,dev.bwr.mod.suppression.RhrHeatExchangerBlockEntity.class):null;
+        boolean directReturn=pool!=null&&AssemblyPlumbing.endpoint(level,outlet,SuppressionPoolBlockEntity.class)==pool;
+        boolean exchangerReturn=pool!=null&&exchanger!=null&&exchanger.returnPool()==pool;
         boolean cooling=isPoolCooling() && pool!=null && suctionSource==SuctionSource.SUPPRESSION_POOL
-                && AssemblyPlumbing.endpoint(level,outlet,SuppressionPoolBlockEntity.class)==pool;
+                && (directReturn||exchangerReturn);
         BlockPos next=delivery==null || isPoolCooling() ? null : delivery.getBlockPos();
         if(!java.util.Objects.equals(reactorPos,next) || !java.util.Objects.equals(poolPos,pool==null?null:pool.getBlockPos())) detach();
         reactorPos=next; poolPos=pool==null?null:pool.getBlockPos(); tankPos=tank==null?null:tank.getBlockPos();
@@ -264,15 +267,19 @@ public class EccsPumpBlockEntity extends BlockEntity {
         boolean spray=design.delivery()==EccsDesign.Delivery.CORE_SPRAY;
         double wanted=path && !isPoolCooling()?pump.getFlowKgPerS()*(spray?delivery.sprayRingCompleteness():1):0;
         deliveredFlowKgPerS=drawSuction(pool,tank,wanted,dt)/dt;
+        if(cooling&&path)deliveredFlowKgPerS=pump.getFlowKgPerS();
         suctionShortfallKgPerS=Math.max(0,wanted-deliveredFlowKgPerS);
         if(reactorPos!=null) EccsNetwork.busFor(level,reactorPos).report(getBlockPos(),level.getGameTime(),
                 spray?0:deliveredFlowKgPerS,temperature,spray?deliveredFlowKgPerS:0,temperature,0,0,true,false);
         // A closed valve or dry source cannot reject heat through an absent water circuit.
-        if(cooling && pump.getFlowKgPerS()>0) {
+        if(cooling && path && pump.getFlowKgPerS()>0 && exchangerReturn) {
+            applyPoolCoolingDuty(pool,false);
+            exchanger.circulate(pool,pump.getFlowKgPerS());
+        } else if(cooling && path && pump.getFlowKgPerS()>0 && !pool.isConcreteBasin()) {
             pool.reportRhrDuty(getBlockPos(),level.getGameTime(),Math.min(pump.getSpeedFraction(),pump.getFlowKgPerS()/design.ratedFlowKgPerS()));
             wasCoolingPool=true;
         } else applyPoolCoolingDuty(pool,false);
-        assemblyConnectionStatus=path?"Water circuit connected":"Water circuit incomplete, crossed, or missing its selected source";
+        assemblyConnectionStatus=path?(cooling?(exchangerReturn?"Pool loop through heat exchanger":"Direct pool circulation (no external heat exchanger)"):"Water circuit connected"):"Water circuit incomplete, crossed, or missing its selected source";
         setChanged();
     }
 

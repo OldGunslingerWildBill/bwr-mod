@@ -1,7 +1,10 @@
 {
   "variants": {
-    "": {
-      "model": "bwr:block/suppression_pool_wall"
+    "rim=false": {
+      "model": "bwr:block/suppression/wall/body"
+    },
+    "rim=true": {
+      "model": "bwr:block/suppression/rim/body"
     }
   }
 }

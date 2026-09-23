@@ -46,6 +46,7 @@ public class SuppressionPoolScreen extends BwrScreen<SuppressionPoolMenu> {
     @Override
     protected void containerTick() {
         super.containerTick();
+        rhr.visible=!menu.concrete;rhr.active=!menu.concrete;
         // The duty is persisted in NBT and survives a reload, so the slider has
         // to be told what it already is. init() cannot do it: the client's copy
         // of menu.rhrDuty is still 0.0 when the screen is built, and the first
@@ -72,8 +73,8 @@ public class SuppressionPoolScreen extends BwrScreen<SuppressionPoolMenu> {
         }
         if (!menu.formed) {
             text(graphics, "Pool not formed.", 10, 22, ALARM);
-            text(graphics, "It needs a body of water and relief valves", 10, 34, TEXT);
-            text(graphics, "that actually discharge under it.", 10, 44, TEXT);
+            text(graphics, "Complete and fill the basin.", 10, 34, TEXT);
+            text(graphics, "Sneak-click for details.", 10, 44, TEXT);
             return;
         }
 
@@ -105,7 +106,11 @@ public class SuppressionPoolScreen extends BwrScreen<SuppressionPoolMenu> {
                 menu.remainingHeatCapacityMJ / coldCapacityMJ,
                 menu.remainingHeatCapacityMJ / coldCapacityMJ < 0.2 ? ALARM : ACCENT);
 
-        text(graphics, String.format(Locale.ROOT, "RHR removing %.1f MW of %.0f MW installed",
+        if(menu.concrete) {
+            text(graphics,"RHR -> exchanger -> pool",10,116,TEXT_DIM);
+            text(graphics,"Separate cooling circuit",10,126,TEXT_DIM);
+            text(graphics,String.format(Locale.ROOT,"Cooling: %.2f MW",menu.physicalCoolingMW),10,148,TEXT_DIM);
+        } else text(graphics, String.format(Locale.ROOT, "RHR removing %.1f MW of %.0f MW installed",
                 menu.rhrDutyMW(), menu.rhrCapacityMW), 10, 148, TEXT_DIM);
 
         if (menu.boiling) {

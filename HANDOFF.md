@@ -1,5 +1,24 @@
 # Agent Handoff
 
+## Concrete suppression basin and physical RHR (2026-09-22)
+
+See SUPPRESSION-BASIN.md for construction and four-port connections. New water
+ports opt a pool into strict open concrete-shell validation; legacy dug pools
+remain compatible. Source and runtime models were built in Blender. Primary
+heat-exchanger circulation is a closed physical route from the modeled RHR
+pump back to its own basin, with no generic primary fluid inventory. Secondary
+water uses ordinary directional NeoForge capabilities and finite buffers.
+Concrete pools disable the legacy abstract cooling sink. GUI protocol is 3.
+
+R02 is fixed: capacity changes no longer erase pool inventory. R01/R03/R04/R05
+remain outstanding. The full core run passed 191/191; final artifact and mod
+checks are recorded in BUILD-STATUS.md. Source, Blender assets, tests and the
+construction guide are included in the suppression-basin publication.
+
+The preceding combined publication completed as commit 619290a on GitHub main.
+Its `pending-push` issue labels were removed. Older entries below describe
+historical verification state, not current publication status.
+
 ## Publication snapshot (2026-09-22)
 
 The user requested publication of all accumulated work, including the rounded

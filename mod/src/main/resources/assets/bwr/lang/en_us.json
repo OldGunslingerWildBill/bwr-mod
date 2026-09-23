@@ -11,7 +11,7 @@
   "block.bwr.pressurised_tube": "High-Pressure Steam Pipe",
   "block.bwr.rpv_steam_outlet": "RPV Steam Outlet",
   "block.bwr.suppression_pool_controller": "Suppression Pool Controller",
-  "block.bwr.suppression_pool_wall": "Suppression Pool Wall",
+  "block.bwr.suppression_pool_wall": "Suppression Pool Concrete",
   "block.bwr.suppression_pool_quencher": "Suppression Pool Quencher",
   "block.bwr.turbine_steam_outlet": "Turbine Steam Outlet",
   "block.bwr.fuel_fabricator": "Fuel Fabricator",
@@ -96,5 +96,8 @@
   "block.bwr.mechanical_draft_tower": "Mechanical-Draft Cooling Tower",
   "block.bwr.circulating_water_pump": "Circulating Water Pump",
   "block.bwr.makeup_water_pump": "Makeup Water Pump",
-  "block.bwr.screened_water_intake": "Screened Water Intake"
+  "block.bwr.screened_water_intake": "Screened Water Intake",
+  "block.bwr.suppression_pool_suction": "Suppression Pool Suction Port",
+  "block.bwr.suppression_pool_return": "Suppression Pool Return Port",
+  "block.bwr.rhr_heat_exchanger": "RHR Heat Exchanger"
 }

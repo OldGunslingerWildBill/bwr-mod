@@ -308,8 +308,14 @@ public final class BwrBlocks {
                     () -> new SuppressionPoolControllerBlock(machine()));
 
     /** Structural wall of the suppression pool. */
-    public static final DeferredBlock<Block> SUPPRESSION_POOL_WALL =
-            BLOCKS.register("suppression_pool_wall", () -> new Block(vesselSteel()));
+    public static final DeferredBlock<dev.bwr.mod.suppression.SuppressionPoolWallBlock> SUPPRESSION_POOL_WALL =
+            BLOCKS.register("suppression_pool_wall", () -> new dev.bwr.mod.suppression.SuppressionPoolWallBlock(BlockBehaviour.Properties.of().strength(4.0f,30.0f).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<dev.bwr.mod.suppression.SuppressionPoolPortBlock> SUPPRESSION_POOL_SUCTION =
+            BLOCKS.register("suppression_pool_suction",()->new dev.bwr.mod.suppression.SuppressionPoolPortBlock(machine(),true));
+    public static final DeferredBlock<dev.bwr.mod.suppression.SuppressionPoolPortBlock> SUPPRESSION_POOL_RETURN =
+            BLOCKS.register("suppression_pool_return",()->new dev.bwr.mod.suppression.SuppressionPoolPortBlock(machine(),false));
+    public static final DeferredBlock<dev.bwr.mod.suppression.RhrHeatExchangerBlock> RHR_HEAT_EXCHANGER =
+            BLOCKS.register("rhr_heat_exchanger",()->new dev.bwr.mod.suppression.RhrHeatExchangerBlock(machine().noOcclusion()));
 
     /**
      * T-quencher — the submerged termination of a relief valve discharge line,

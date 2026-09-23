@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " W ",
+    "DPD",
+    " W "
+  ],
+  "key": {
+    "W": {
+      "item": "bwr:suppression_pool_wall"
+    },
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    },
+    "D": {
+      "item": "minecraft:blue_dye"
+    }
+  },
+  "result": {
+    "id": "bwr:suppression_pool_suction",
+    "count": 1
+  }
+}

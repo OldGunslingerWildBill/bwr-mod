@@ -68,6 +68,11 @@ The pressure-vessel components in `art/models/reactor_vessel` are original
 Blender-authored geometry. No third-party vessel mesh is included. Their
 dimensions follow the game's construction envelope.
 
+The concrete suppression-basin panels, water flanges and RHR heat exchanger in
+`art/models/suppression` are original Blender-authored geometry. No third-party
+mesh is included. Exchanger ratings and the compact plate-cassette appearance
+are gameplay choices, not a manufacturer-specific or certified nuclear design.
+
 ## Previously published versions
 
 Through commit [`19a7424`](https://github.com/OldGunslingerWildBill/bwr-mod/tree/19a742408e2cd7ef8cee42a26157e8662daa340b),
