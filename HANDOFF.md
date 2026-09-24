@@ -1,5 +1,211 @@
 # Agent Handoff
 
+## User communication preference
+
+End final responses for code updates with a short Discord-ready changelog that the user
+can copy and paste. Keep it factual and limited to completed changes.
+
+Deliver the **JAR only**, not a ZIP, unless the user changes this preference.
+
+## Fuel catalogue and specialty rods (2026-09-24)
+
+Current version **0.1.0-alpha.5**, GUI protocol **8**. The user has now requested
+that all accumulated changes be committed and pushed to GitHub `main`, together
+with a full changelog since the preceding push (`b126650`, September 23).
+See `CHANGELOG.md` for the combined alpha.1–alpha.5 scope. Older entries below
+describe the publication status at the time of their individual patches.
+
+- 19 datapack fuel definitions; original five numerical definitions unchanged.
+- Eight non-fuel `CoreInsert` types use separate arrays/components from fuel.
+  Absorption enters local nodal coefficients and the bulk balance; source rods
+  add to the baseline neutron source. Targets integrate fission flux, not heat.
+- Refuelling load/unload/shuffle, saved and pending controller recovery, and
+  core-map snapshots include cassettes and their exposure. Counted fuel/power
+  remains actual fuel only. Never disguise target progress as fuel burnup.
+- Tagged GUI wire format uses varint name indices. Old client/server pairs
+  cannot mix with protocol 8; old world fuel saves remain compatible.
+- Creative tab `bwr:fuel`, 33 entries including charges/samples. 34 new Blender
+  PNG renders, including replacement of the original assembly icon. Sources
+  and gameplay limitations are documented in `FUELS-AND-RODS.md`.
+- `art/models/fuel_icons/build_icons.py` and `catalog.json` reproduce the
+  icons; `fuel_icons.blend` contains the studio. Live user Blender scenes
+  were preserved; rendering ran in a separate background Blender process.
+- Minecraft: 50/50 tests; catalogue client check verifies all 19+8 textures.
+  New tests: `FuelVarietyTest`, `FuelVarietyRegressionTests`, and
+  `FuelCatalogueClientCheck`; release verification recorded in BUILD-STATUS.
+
+## Transverse condenser and hotwell makeup (2026-09-24)
+
+Previous patch **0.1.0-alpha.4**, GUI protocol **7**. No Git push or
+public release requested. Keep all earlier uncommitted alpha work.
+
+- New layout **v4: 7 x 6 x 9**, controller `[3,0,4]`. `facingForTurbine()` turns
+  new condensers clockwise 90 degrees relative to the LP shaft. Old v1/v2/v3
+  layouts keep the original facing rule. LP root is still six blocks above.
+  World footprint remains nine across the shaft, seven along it, allowing
+  contiguous LPs. Inset side wall leaves cells for makeup pipes between units.
+- Blender rebuilt two small oval decorative manways as true round open makeup
+  flanges. No whole-mesh nonuniform scaling of these fittings. Source and
+  exporter check circular radii, clear port cells and face centers. Mesh has
+  18,492 triangles; layout has 179 occupied cells and eight ports.
+- `MAKEUP` is water-only, inlet-only, local WEST. Both nozzles share the existing
+  hotwell handler, so pipe simulations reserve its remaining space only once.
+  `SurfaceCondenser.fillMakeup()` conserves inlet mass/enthalpy independently
+  of circulating water. Water exits through the existing condensate outlet.
+  New CC aliases: hotwellKg, hotwellC, makeupSpaceKg; old fields preserved.
+- V3 mesh/manifest/Blend archived under wide_v3. Never reinterpret old cell
+  indices or auto-rotate placed machines. Drain/re-place for new geometry.
+- All pipe transport remains event-invalidated/cached; no pipe ticking added.
+- See BUILD-STATUS.md for final validation and artifacts. Historical alpha.3
+  notes below describe that earlier snapshot, not current placement behavior.
+
+## Condenser attachment and powered MSIV (2026-09-24)
+
+Previous local version: **0.1.0-alpha.3**, GUI protocol **7**. No Git push or
+public release was requested. Preserve the tank/CRD changes and all earlier
+uncommitted alpha work below.
+
+- Condenser new-placement layout v3 is **9 x 6 x 7**, widened in Blender with
+  a seven-block LP seat centered on the wider lower shell. Six flanges retain
+  full-size circular connections. `build_models.py` reads actual mesh vertices
+  when sealing the transition; Blender bound_box can be stale after mesh edits.
+- Layout v2 (7 x 6 x 7) and v1 (25 x 14 x 25) retain their own resources, saved
+  cell indices, ownership and renderer models. A v2 condenser still couples to
+  its LP; upgrading requires draining and replacing it. Never reinterpret its
+  old indices using the v3 width.
+- `CondenserPlacement` resolves an LP underside hit to its root minus six Y,
+  inheriting its facing. `CondenserItem` aligns before vanilla placement checks.
+  The LP lets condenser clicks through instead of opening its GUI. Normal
+  foundation placement and offhand placement with an empty main hand work.
+- The client draws a green/red box using the same attachment/footprint rules.
+  Validation is cached for one game tick per target; the preview never renders
+  a duplicate detailed mesh. Server placement remains authoritative.
+- MSIV exposes receive-only FE on every non-steam face of the three parts,
+  including the top actuator; legacy cubes accept FE on all faces. One actual
+  buffer: 20,000 FE. Opening uses 100 FE/t, holding 20 FE/t; these are gameplay
+  loads. Starts closed; power exhaustion releases the four-second spring close.
+  Restoring FE follows the saved operator demand. Steam uses actual position.
+- `bwr_msiv` still accepts modems on exposed parts. Added `isPowered()`,
+  `getEnergyStoredFe()` and power fields in `getStatus()`. Live capability
+  handles re-resolve the intact current assembly and never feed a removed BE.
+- Three GameTests cover four-direction snapping/rejected placement, v2 save
+  compatibility, and powered MSIVs with actual CC and Mekanism capabilities.
+  Dedicated permission tests add a protected-footprint snap scenario. The
+  client harness captures green/red outlines and uses normal unsneaked input.
+- Core physics and GUI protocol are unchanged. The previous full 204-test core
+  result remains applicable; do not describe it as freshly rerun. Current
+  build/test evidence and artifact details are at the top of BUILD-STATUS.md.
+
+## Tank dismantling and shared CRD supplies (2026-09-24)
+
+Previous local version: **0.1.0-alpha.2**, GUI protocol **7**. This patch and the
+earlier alpha work remain local; no new commit, push or release was requested.
+Preserve all earlier alpha/transport changes. See BUILD-STATUS.md for evidence.
+
+- A broken assembled condensate tank restores ordinary casings instead of
+  deleting the whole structure. The mined part follows normal survival-tool
+  and creative rules; excess paid materials become item stacks. Collision-only
+  cells do not duplicate blocks. Casings remain in the cylinder footprint,
+  rather than rebuilding the old box automatically. Drain before dismantling;
+  water is not retained, matching the existing dismantling contract.
+- `CondensateTankDismantling` keeps a SavedData ledger for unloaded cells.
+  Restoration checks loaded chunks, uses known-shape block updates and bypasses
+  vanilla's two-block comparator scans during bulk BE changes/removal. Legacy
+  orphan parts without a ledger are removed, since their original material
+  refund may already have been paid. Do not restore free casings for them.
+- `ControlRodDriveSupplies` caches six-face connected banks, including vertical
+  connections, for compact, legacy and unformed drives. One bottom FE connection
+  and one bottom water connection can feed an entire 17 × 17 grid. Capabilities
+  expose the combined actual buffers and immediately distribute accepted input.
+  Each drive retains its own saved inventory, consumption, wear, accumulator
+  and motion. Gaps/diagonals do not connect; broken/unloaded banks split safely.
+- CRD graphs rebuild only after structural/capability/chunk-availability changes.
+  Balancing happens once per loaded bank per tick without a neighbour search.
+  Chunk FULL ticket transitions invalidate only our cached bank, not unrelated
+  third-party capability listeners. Retained handles resolve current BEs.
+  Shared fluid identity prevents pipe tees reserving the same space twice.
+- Five additional Minecraft regressions exercise actual mining/material recovery,
+  saved deferred dismantling, full-grid conservation, multiple pipe inlets,
+  chunk lifecycle, NBT replacement and bridge removal/reconnection. The client
+  tank harness adds a fourth screenshot showing recovered casing blocks.
+- Reactor/core physics, meshes, GUI wire format and individual CRD hardware
+  mechanics are unchanged. The earlier complete 204-test core result remains
+  applicable; do not describe it as a newly rerun full physics suite.
+
+## Alpha hardware and creative inventory (2026-09-23)
+
+Previous local version: **0.1.0-alpha.1**, GUI protocol **7**. No commit/push or
+GitHub release has been made for these local changes. Preserve the earlier
+transport/computer candidate changes below. BUILD-STATUS.md identifies the
+final verified artifact; ALPHA-HARDWARE.md explains operation and migration.
+
+- The user clarified that the 216 → 20 FPS drop was the **creative inventory**.
+  Full machine meshes in slots reproduced 18.84 FPS. `InventoryModels` selects
+  Blender-rendered two-quad GUI icons for 33 items, retaining placed/held meshes.
+  The same local test measured 560.83 FPS. Regenerate icons from Blender when
+  changing a source mesh; never replace the 3D block resources with icon planes.
+- Physical SLC: `BoronSolution`, `SlcTankBlockEntity`, `SlcPlumbing` and the SLC
+  path in `EccsPumpBlockEntity` conserve finite solution/boron. FE, a boron tank
+  and a valid normal RPV water-injection route are required. Feedwater discharge
+  cross-ties are allowed; recirculation ports and multiple reactor recipients
+  are rejected. Old compact SLC cubes require replacement for physical ports.
+- ADS division 0–4 is persisted; controllers only command their matching bank.
+  The modeled valve's left flange resolves its actual steam source. Its flow
+  shares the nozzle/valve claim ledger once per game tick; the nozzle has
+  already debited the reactor, so do not post a second relief sink. Legacy SRV
+  behavior remains available. No automatic trips or control programs were added.
+- Water discharge is a passive back-in/front-out environmental sink with a
+  60,000 kg/s shared rate cap, blocked-mouth validation and cumulative mass/heat.
+  It creates no world source-water blocks. The unanswered optional clarification
+  was resolved as a lake/river outfall, as stated to the user.
+- Original Blender sources are in `art/models/alpha/`; export using
+  `tools-export-alpha.py`. Inventory renderer is in `art/models/inventory/`.
+  Client panels/assembly geometry were inspected in Minecraft and Blender.
+- Verification: 204 core tests; 36 GameTests; 44 machine types on six CC faces;
+  optional integrations present/absent; asset and JAR checks. Final evidence is
+  in BUILD-STATUS.md. Developer harnesses are stripped from the shipped JAR.
+
+The transport entry below is historical; its version, test counts and
+unreproduced creative-menu statement are superseded by this alpha entry.
+
+## First-release transport and computer candidate (2026-09-23)
+
+Current work is local on main above `b126650`; no commit/push/release was made
+for this update. Scope: all four remaining verification defects, segmented
+water energy, condenser backpressure, complete computer connection coverage,
+GUI performance and event-driven pipe topology. A plant-wide control/overview
+screen was expressly excluded; the player writes control programs.
+
+- `PipeTopology` owns the per-level, bounded geometry cache. Plain runs are
+  compressed; capabilities and chunk ticket/future events invalidate affected
+  routes. Do not reintroduce the five-tick TTL or global capability invalidation
+  on ticket transitions: the latter breaks unrelated retained energy handlers.
+  Fluid inventories, valve position and shared steam budgets are always live.
+- `LivePeripheral` schedules Lua operations on the server thread and resolves
+  current owners per call. CC schemas retain method names. Every machine type
+  has six usable connection faces; structural walls remain structural. CC-only
+  GameTest helpers must stay outside annotated discovery classes so optional
+  absence works. The production JAR excludes all devtest classes.
+- `WaterInventory`, `ThermalWater` and `ThermalWaterTank` preserve mass/energy,
+  including fractional suction debt and automatic tank formation. External
+  untagged water is 13 C; old tank/pump saves retain 32 C defaults. Third-party
+  fluid networks do not necessarily mix temperature components.
+- Condenser backpressure feeds LP specific-work calculations. Vacuum constants
+  are game calibration; air/ejectors, detailed wet stages and weather are not
+  modeled. The RHR secondary stream receives the heat removed from the pool.
+- GUI protocol is 6. Fuel-grid rectangles/readouts use managed draw batches;
+  retain widget/tooltip order. Local benchmark evidence and reproduction
+  settings are recorded in PLANT-TRANSPORT.md, with modpack limitations.
+
+All R01–R05 reproductions are fixed. Verification and final JAR/hash are in
+BUILD-STATUS.md: 202 core tests, 32 Minecraft GameTests, optional integrations
+present/absent, client screenshots, asset/packaging and registration checks.
+Ignored detailed transcripts are `tmp/release-core-all.log`,
+`tmp/release-candidate-final.log`, `tmp/release-no-optional-2.log`,
+`tmp/gui-full-before.log`, `tmp/gui-full-after.log` and `tmp/release-panel-*.log`.
+Earlier sections below are historical; use the new transport guide and current
+TESTING.md instead of their old cache/temperature/open-finding statements.
+
 ## Natural suppression-pool cooling (2026-09-23)
 
 Formed, ticking concrete and legacy pools now lose heat gradually toward 25 C.

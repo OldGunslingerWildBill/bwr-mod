@@ -72,9 +72,12 @@ public final class AcceptanceTests {
 
     /** Every test class, in the order the runner executes them. */
     public static final Class<?>[] TEST_CLASSES = {
+            FuelVarietyTest.class,
             CompactCoreLayoutTest.class,
             PowerTurbineTest.class,
             SurfaceCondenserTest.class,
+            WaterSegmentTest.class,
+            BoronSolutionTest.class,
             CoolingWaterUnitTest.class,
             RhrHeatExchangerTest.class,
             RecirculationSizingTest.class,

@@ -38,7 +38,9 @@ import zipfile
 from pathlib import Path
 import tomllib
 
-MOD_JAR = "mod/build/libs/mod-0.1.0-SNAPSHOT.jar"
+ROOT = Path(__file__).resolve().parent
+VERSION = next(line.split("=", 1)[1].strip() for line in (ROOT / "gradle.properties").read_text().splitlines() if line.startswith("version="))
+MOD_JAR = str(ROOT / f"mod/build/libs/mod-{VERSION}.jar")
 
 FORBIDDEN_PREFIXES = {
     "dan200/computercraft": "CC:Tweaked (LicenseRef-CCPL -- MUST NOT be bundled)",

@@ -1,147 +1,99 @@
 package dev.bwr.mod.peripheral;
 
-import com.mojang.logging.LogUtils;
-import dan200.computercraft.api.peripheral.PeripheralCapability;
-import dev.bwr.mod.registry.BwrBlockEntities;
+import dan200.computercraft.api.peripheral.*;
+import dev.bwr.mod.registry.BwrBlocks;
+import dev.bwr.mod.eccs.*;
+import dev.bwr.mod.feedwater.*;
+import dev.bwr.mod.flow.*;
+import dev.bwr.mod.power.*;
+import dev.bwr.mod.reactor.*;
+import dev.bwr.mod.steam.*;
+import dev.bwr.mod.suppression.*;
+import dev.bwr.mod.cooling.*;
+import dev.bwr.mod.condenser.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import org.slf4j.Logger;
+import java.util.*;
 
-/**
- * Attaches the peripherals to their block entities.
- *
- * <h2>Soft dependency, deliberately</h2>
- * This class references CC:Tweaked types directly, so it must never be loaded
- * unless CC:Tweaked is installed. {@code BwrClientHooks} checks
- * {@code BwrMod.isComputerCraftPresent()} before touching it, and because the
- * check happens in a different class the JVM never has to resolve these types
- * on a CC-less install.
- *
- * <p>CC:Tweaked is a <b>compileOnly</b> dependency and is never bundled. Parts
- * of its API — {@code IPeripheral} among them — remain under LicenseRef-CCPL,
- * which permits redistribution only "unmodified and in full". Players install
- * CC:Tweaked themselves.
- */
+/** Optional CC integration. Every exterior cell has a connection face, independent of fluid ports. */
 public final class BwrPeripheralSupport {
-
-    private static final Logger LOGGER = LogUtils.getLogger();
-
-    private BwrPeripheralSupport() {
-    }
-
+    private BwrPeripheralSupport() {}
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlock(PeripheralCapability.get(), (level,pos,state,unused,side) ->
-                dev.bwr.mod.eccs.PumpAssemblyCapabilities.controller(level,pos,state) instanceof dev.bwr.mod.power.PowerModuleBlockEntity m
-                        ? new PowerModulePeripheral(m) : null, dev.bwr.mod.power.PowerModuleCapabilities.blocks());
-        event.registerBlock(PeripheralCapability.get(), (level,pos,state,unused,side) -> {
-            var be=dev.bwr.mod.eccs.PumpAssemblyCapabilities.controller(level,pos,state);
-            if(be instanceof dev.bwr.mod.eccs.EccsPumpBlockEntity p) return new EccsPumpPeripheral(p);
-            if(be instanceof dev.bwr.mod.feedwater.FeedwaterPumpBlockEntity p) return new FeedwaterPumpPeripheral(p);
-            if(be instanceof dev.bwr.mod.flow.RecirculationPumpBlockEntity p) return new RecirculationPumpPeripheral(p);
-            return null;
-        }, dev.bwr.mod.eccs.PumpAssemblyCapabilities.blocks());
-        // Deliberately at INFO. This branch was dead for the whole life of the
-        // project — CC:Tweaked was compileOnly and on no run configuration, so
-        // nothing here had ever executed. The one line is how anyone confirms,
-        // from a log alone, that the peripheral surface is actually attached.
-        LOGGER.info("BwrPeripheralSupport: CC:Tweaked detected, attaching peripherals to "
-                + "reactor_controller, suppression_pool, turbine_steam_outlet, "
-                + "eccs_pump, ads_controller, condensate_storage_tank, "
-                + "safety_relief_valve, msiv, recirculation_pump, rpv_steam_outlet, "
-                + "feedwater_pump");
-
-        event.registerBlockEntity(
-                PeripheralCapability.get(),
-                BwrBlockEntities.REACTOR_CONTROLLER.get(),
-                (be, side) -> new ReactorPeripheral(be));
-
-        event.registerBlockEntity(
-                PeripheralCapability.get(),
-                BwrBlockEntities.SUPPRESSION_POOL.get(),
-                (be, side) -> new SuppressionPoolPeripheral(be));
-
-        // The steam boundary. Registered whether or not Mekanism is installed:
-        // the peripheral names no Mekanism type, and reporting that Mekanism is
-        // absent is more useful than the peripheral itself being absent.
-        event.registerBlockEntity(
-                PeripheralCapability.get(),
-                BwrBlockEntities.TURBINE_STEAM_OUTLET.get(),
-                (be, side) -> new TurbineSteamOutletPeripheral(be));
-
-        // Emergency core cooling (SPEC section 9). One block entity type covers
-        // all six injection machines; the peripheral type string carries the
-        // system name, so peripheral.find("bwr_rcic") finds RCIC and nothing
-        // else. This is the surface the entire emergency response of the plant
-        // is written against, because the mod ships none of it.
-        event.registerBlockEntity(
-                PeripheralCapability.get(),
-                BwrBlockEntities.ECCS_PUMP.get(),
-                (be, side) -> new EccsPumpPeripheral(be));
-
-        event.registerBlockEntity(
-                PeripheralCapability.get(),
-                BwrBlockEntities.ADS_CONTROLLER.get(),
-                (be, side) -> new AdsPeripheral(be));
-
-        event.registerBlockEntity(
-                PeripheralCapability.get(),
-                BwrBlockEntities.CONDENSATE_STORAGE_TANK.get(),
-                (be, side) -> new CondensateStorageTankPeripheral(be));
-
-        // The two player-actuated valves. Both block entities have documented
-        // "called from redstone or from Lua" since they were written, but
-        // neither was registered here, so setComputerControlled had zero callers
-        // anywhere in the mod, the redstone-override guards in both blocks were
-        // conditions that could never be false, and peripheral.find("bwr_msiv")
-        // returned nothing. Redstone worked and Lua did not. SPEC section 6.3's
-        // headline transient — MSIV closure into pressurisation, void collapse
-        // and a power surge — was reachable only by hand-built redstone.
-        event.registerBlockEntity(
-                PeripheralCapability.get(),
-                BwrBlockEntities.SAFETY_RELIEF_VALVE.get(),
-                (be, side) -> new SafetyReliefValvePeripheral(be));
-
-        event.registerBlockEntity(
-                PeripheralCapability.get(),
-                BwrBlockEntities.MSIV.get(),
-                (be, side) -> new MainSteamIsolationValvePeripheral(be));
-        event.registerBlockEntity(PeripheralCapability.get(), BwrBlockEntities.TURBINE_VALVE.get(), (be, side) -> new TurbineValvePeripheral(be));
-        event.registerBlockEntity(PeripheralCapability.get(), BwrBlockEntities.COOLING.get(), (be, side) -> {
-            var owner=be.owner();return owner!=null&&owner.ready()?new CoolingPeripheral(owner):null;
+        int count=0;
+        for(var entry:BwrBlocks.BLOCKS.getEntries()) {
+            var block=entry.get();var state=block.defaultBlockState();
+            // Fixed schemas are discovered once. Prototypes have no level and are never exposed as inventories.
+            BlockEntity prototype;
+            if(block instanceof PowerModuleBlock)prototype=new PowerModuleBlockEntity(BlockPos.ZERO,state);
+            else if(block instanceof PumpAssemblyBlock pump)prototype=switch(pump.kind()) {
+                case JET -> null;
+                case SLC_TANK -> new SlcTankBlockEntity(BlockPos.ZERO,state);
+                case RIP,RCP -> new RecirculationPumpBlockEntity(BlockPos.ZERO,state);
+                case MOTOR_FEED,TURBINE_FEED -> new FeedwaterPumpBlockEntity(BlockPos.ZERO,state);
+                default -> new EccsPumpBlockEntity(BlockPos.ZERO,state);
+            };
+            else prototype=block instanceof EntityBlock entity?entity.newBlockEntity(BlockPos.ZERO,state):null;
+            IPeripheral sample=block instanceof JetPumpBlock?jet(null,BlockPos.ZERO,state):typed(prototype);
+            if(sample==null)continue;
+            var schema=sample.getClass();String type=sample.getType();
+            event.registerBlock(PeripheralCapability.get(),(level,pos,s,unused,side)->
+                    new LivePeripheral(level,pos,s.getBlock(),type,schema,()->resolve(level,pos)),block);
+            count++;
+        }
+        com.mojang.logging.LogUtils.getLogger().info("CC:Tweaked: live computer faces registered on {} machine block types",count);
+    }
+    private static IPeripheral resolve(Level level,BlockPos pos) {
+        if(!level.isLoaded(pos))return null;
+        var state=level.getBlockState(pos);
+        if(state.getBlock() instanceof JetPumpBlock)return jet(level,pos,state);
+        BlockEntity be;
+        if(state.getBlock() instanceof ProcessAssembly)be=PumpAssemblyCapabilities.controller(level,pos,state);
+        else if(state.getBlock() instanceof MainSteamIsolationValveBlock msiv)be=msiv.controller(level,pos,state);
+        else be=level.getBlockEntity(pos);
+        if(be==null||be.isRemoved())return null;
+        if(be instanceof CondenserBlockEntity part)be=part.owner();
+        else if(be instanceof CoolingBlockEntity part)be=part.owner();
+        else if(be instanceof CondensateStorageTankBlockEntity part)be=part.owner();
+        else if(be instanceof SuppressionPoolPortBlockEntity part)be=part.owner();
+        return typed(be);
+    }
+    private static IPeripheral typed(BlockEntity be) {
+        if(be instanceof PowerModuleBlockEntity b)return new PowerModulePeripheral(b);
+        if(be instanceof SlcTankBlockEntity b)return new HardwarePeripheral("bwr_slc_tank",()->Map.of(
+                "connected",b.ready(),"solutionKg",b.solution().massKg(),"borateKg",b.solution().borateKg(),"boronPpm",b.solution().boronFraction()*1e6,"temperatureC",b.solution().temperatureC(),"capacityKg",dev.bwr.core.eccs.BoronSolution.CAPACITY_KG));
+        if(be instanceof dev.bwr.mod.water.WaterDischargeBlockEntity b)return new WaterDischargePeripheral(b);
+        if(be instanceof EccsPumpBlockEntity b)return new EccsPumpPeripheral(b);
+        if(be instanceof FeedwaterPumpBlockEntity b)return new FeedwaterPumpPeripheral(b);
+        if(be instanceof RecirculationPumpBlockEntity b)return new RecirculationPumpPeripheral(b);
+        if(be instanceof ReactorControllerBlockEntity b)return new ReactorPeripheral(b);
+        if(be instanceof SuppressionPoolBlockEntity b)return new SuppressionPoolPeripheral(b);
+        if(be instanceof SuppressionPoolPortBlockEntity)return new SuppressionPoolPeripheral(null);
+        if(be instanceof TurbineSteamOutletBlockEntity b)return new TurbineSteamOutletPeripheral(b);
+        if(be instanceof AdsControllerBlockEntity b)return new AdsPeripheral(b);
+        if(be instanceof CondensateStorageTankBlockEntity b)return new CondensateStorageTankPeripheral(b);
+        if(be instanceof SafetyReliefValveBlockEntity b)return new SafetyReliefValvePeripheral(b);
+        if(be instanceof MainSteamIsolationValveBlockEntity b)return new MainSteamIsolationValvePeripheral(b);
+        if(be instanceof TurbineValveBlockEntity b)return new TurbineValvePeripheral(b);
+        if(be instanceof CoolingBlockEntity b)return new CoolingPeripheral(b);
+        if(be instanceof CondenserBlockEntity b)return new CondenserPeripheral(b);
+        if(be instanceof RhrHeatExchangerBlockEntity b)return new HeatExchangerPeripheral(b);
+        if(be instanceof RpvSteamOutletBlockEntity b)return new RpvSteamOutletPeripheral(b);
+        if(be instanceof RpvWaterInjectionPortBlockEntity b)return new HardwarePeripheral("bwr_rpv_water_port",()->{
+            var c=b.controller();var m=new LinkedHashMap<String,Object>();m.put("connected",c!=null&&c.isFormed());
+            if(c!=null&&c.isFormed()){m.put("pressurePsig",c.core().getPressurePsig());m.put("waterC",c.core().getCoolantTemperatureC());}return m;
         });
-
-        // Core flow. The reactor controller sums its satellite recirculation
-        // pumps into ReactorCore.setRecirculationFlowFraction on every tick
-        // before the physics runs, so the pumps — not the reactor peripheral —
-        // are the authority on forced flow, and with no peripheral here Lua had
-        // no working handle on core flow at all.
-        event.registerBlockEntity(
-                PeripheralCapability.get(),
-                BwrBlockEntities.RECIRCULATION_PUMP.get(),
-                (be, side) -> new RecirculationPumpPeripheral(be));
-
-        // The main steam path. The RPV steam nozzles are what the reactor
-        // controller sums into the one steam-discharge scalar it owns, so they
-        // are the principal way steam leaves a vessel — and with no peripheral
-        // here they were the only actuator on the plant a Lua program could not
-        // reach at all. The block entity was built for this: it has carried
-        // setPosition, setComputerControlled and a comment saying the stop valve
-        // is moved "by the player's hand, by an analogue redstone signal, or by
-        // Lua" since the day it was written, and the Lua half of that sentence
-        // was not true until this line existed.
-        event.registerBlockEntity(
-                PeripheralCapability.get(),
-                BwrBlockEntities.RPV_STEAM_OUTLET.get(),
-                (be, side) -> new RpvSteamOutletPeripheral(be));
-
-        // Feedwater (SPEC section 15). The normal level control path, and the
-        // surface a player's level control program is written against — because
-        // the mod ships no level control at all. One block entity type covers
-        // both feed pumps; the peripheral type string carries the drive, so
-        // peripheral.find("bwr_turbine_feed_pump") finds the pumps that survive
-        // a blackout and not the ones that do not.
-        event.registerBlockEntity(
-                PeripheralCapability.get(),
-                BwrBlockEntities.FEEDWATER_PUMP.get(),
-                (be, side) -> new FeedwaterPumpPeripheral(be));
+        if(be instanceof dev.bwr.mod.fuel.FuelFabricatorBlockEntity b)return new HardwarePeripheral("bwr_fuel_fabricator",()->Map.of(
+                "batchHeavyMetalKg",b.batchHeavyMetalKg(),"enrichment",b.batchEnrichmentWeightFraction(),"energyFE",b.energy().getEnergyStored(),"outputCount",b.output().getStackInSlot(0).getCount()));
+        if(be instanceof dev.bwr.mod.rods.ControlRodDriveBlockEntity b)return new HardwarePeripheral("bwr_control_rod_drive",()->Map.of(
+                "attached",b.isAttached(),"rodIndex",b.rodIndex(),"notch",b.notchLabel(),"accumulatorCharge",b.accumulatorCharge(),"energyFE",b.energyStoredFe(),"waterKg",b.waterStoredMb(),"health",b.health()));
+        return null;
+    }
+    private static IPeripheral jet(Level level,BlockPos pos,BlockState state) {
+        return new HardwarePeripheral("bwr_jet_pump",()->Map.of("passive",true,"size",state.getValue(JetPumpBlock.SIZE).getSerializedName(),
+                "complete",level!=null&&((JetPumpBlock)state.getBlock()).complete(level,((JetPumpBlock)state.getBlock()).origin(pos,state),state)));
     }
 }

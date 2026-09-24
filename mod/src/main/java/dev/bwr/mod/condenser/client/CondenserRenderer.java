@@ -23,13 +23,15 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 public class CondenserRenderer implements BlockEntityRenderer<CondenserBlockEntity> {
     public static final ModelResourceLocation MODEL=ModelResourceLocation.standalone(ResourceLocation.fromNamespaceAndPath("bwr","block/condenser/body"));
     public static final ModelResourceLocation LEGACY_MODEL=ModelResourceLocation.standalone(ResourceLocation.fromNamespaceAndPath("bwr","block/condenser/legacy/body"));
+    public static final ModelResourceLocation COMPACT_V2_MODEL=ModelResourceLocation.standalone(ResourceLocation.fromNamespaceAndPath("bwr","block/condenser/compact_v2/body"));
+    public static final ModelResourceLocation WIDE_V3_MODEL=ModelResourceLocation.standalone(ResourceLocation.fromNamespaceAndPath("bwr","block/condenser/wide_v3/body"));
     public CondenserRenderer(BlockEntityRendererProvider.Context context){}
-    @SubscribeEvent public static void models(ModelEvent.RegisterAdditional event){event.register(MODEL);event.register(LEGACY_MODEL);}
+    @SubscribeEvent public static void models(ModelEvent.RegisterAdditional event){event.register(MODEL);event.register(LEGACY_MODEL);event.register(COMPACT_V2_MODEL);event.register(WIDE_V3_MODEL);}
     @SubscribeEvent public static void renderers(EntityRenderersEvent.RegisterRenderers event){event.registerBlockEntityRenderer(BwrBlockEntities.CONDENSER.get(),CondenserRenderer::new);}
     @Override public void render(CondenserBlockEntity be,float partial,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
         if(!be.getBlockState().getValue(CondenserBlock.CONTROLLER))return;
         var mc=Minecraft.getInstance();var layout=be.layout();
-        var model=mc.getModelManager().getModel(layout==CondenserLayout.LEGACY?LEGACY_MODEL:MODEL);var c=layout.controller;
+        var model=mc.getModelManager().getModel(layout==CondenserLayout.LEGACY?LEGACY_MODEL:layout==CondenserLayout.COMPACT_V2?COMPACT_V2_MODEL:layout==CondenserLayout.WIDE_V3?WIDE_V3_MODEL:MODEL);var c=layout.controller;
         float angle=switch(be.getBlockState().getValue(CondenserBlock.FACING)){case EAST->90;case SOUTH->180;case WEST->270;default->0;};
         pose.pushPose();pose.translate(.5,0,.5);pose.mulPose(Axis.YP.rotationDegrees(-angle));pose.translate(-.5-c.getX(),-c.getY(),-.5-c.getZ());
         // A BER needs an entity-format atlas buffer, not the terrain chunk shader.

@@ -23,9 +23,17 @@ combined available water of the placed blocks, including fractional withdrawals,
 is preserved. Four full-size flanges appear one block above the base.
 Keep the full structure loaded to transfer water.
 
-Breaking any part removes the assembled tank. With a suitable pickaxe in
-survival, the exact number of tank blocks used to build it drops once. **Drain the tank before
-breaking it:** breaking is dismantling, and does not preserve its water.
+Breaking any part dismantles the cylinder into ordinary, recoverable casing
+blocks. Mine the broken part with a suitable pickaxe in survival to receive its
+normal drop; creative breaking and unsuitable tools consume only that part.
+The remaining casings stay in the world. Any construction blocks beyond the
+number of casing positions are refunded as item stacks. Collision-only cells
+do not create extra materials. The surviving casings follow the cylinder's
+footprint; rebuild them into a box to form the tank again.
+
+Sections in unloaded chunks are restored when those chunks become available;
+pending restorations are saved with the world. **Drain the tank before breaking
+it:** dismantling does not preserve its water.
 
 ## Capacity and connections
 
@@ -51,8 +59,10 @@ Buckets work on the tank, and CC:Tweaked keeps the existing type
 reports `assembled`, `ready`, `diameter`, and `height`. Size construction is a
 local player action, so computers cannot bypass the material cost.
 
-Stored temperature remains the existing **32°C assumption**; pipe temperature
-transport and water chemistry are unchanged.
+Stored water now mixes by mass and enthalpy, including during automatic
+formation and reload. Older untagged inventories retain the former 32 C value;
+new untagged external water enters at 13 C. Water chemistry is unchanged. See
+[temperature transport and third-party compatibility](PLANT-TRANSPORT.md).
 
 ## Existing worlds
 
@@ -70,8 +80,10 @@ mesh was imported.
 
 Server checks cover legacy water, minimum/medium/maximum sizes, pipe faces,
 shared storage, fractional persistence, obstruction rejection, survival material
-cost/refund and dismantling. The opt-in client check is
-`:mod:runTurbineModelCheck -PbwrTankPanelCheck`.
+cost/refund and dismantling, including actual player mining and deferred
+restoration across unloaded chunks. The opt-in client check is
+`:mod:runTurbineModelCheck -PbwrTankPanelCheck`; it also captures the recovered
+casings after breaking the middle tank.
 
 ![Blender tank model](art/models/condensate_tank/condensate_tank.png)
 

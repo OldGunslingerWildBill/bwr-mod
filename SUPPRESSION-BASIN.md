@@ -73,8 +73,8 @@ local status = pool.getStatus()
 print(status.sprayHeaderKg, status.sprayFlowKgPerS, status.sprayCondensedKgPerS)
 ```
 
-Supply water currently enters at **32 °C**, the existing suppression-pool makeup
-assumption. Generic water pipes do not propagate temperature yet. The spray
+Supply water uses its transported temperature; untagged external water enters
+at **13 C**. BWR water pipes preserve the supplied enthalpy. The spray
 calculation handles currently arriving steam escaping the bulk pool; there is
 no stored containment steam atmosphere or containment-pressure simulation yet.
 The physical closed RHR/exchanger circuit remains a separate heat-removal path;
@@ -164,10 +164,10 @@ abstract cooling-duty slider. Existing pump local and CC controls still apply.
   temperature and secondary-water availability.
 - Separate cold and hot buffers: **12,000 kg each**; secondary flow up to
   **2,400 kg/s**. These are gameplay ratings, not a vendor-certified design.
-- Secondary inlet assumes **13 °C**, with a **24 °C** design outlet ceiling.
-  Ordinary Minecraft water pipes do not carry temperature yet. Connect a
-  cooling tower for the intended plant layout; full temperature propagation
-  and enforcement of cooling-tower heat rejection remain future work.
+- Secondary inlet uses the actual water temperature. Heat gain is bounded by
+  an 11 C design range and the primary-water temperature. Connect a cooling
+  tower to remove that heat. BWR pipes carry enthalpy; see
+  [transport and third-party limits](PLANT-TRANSPORT.md).
 - Dry secondary supply, a full hot buffer, a stopped pump or a broken primary
   return stops heat transfer. The physical model removes heat from the pool
   and adds that heat to the secondary water before it leaves the exchanger.

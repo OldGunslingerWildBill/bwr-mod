@@ -12,6 +12,8 @@ import java.util.*;
 /** Blender-authored sparse occupancy: no giant blockstate table or duplicated mesh. */
 public final class CondenserLayout {
     public static final CondenserLayout INSTANCE=new CondenserLayout("layout.json");
+    public static final CondenserLayout COMPACT_V2=new CondenserLayout("layout_compact_v2.json");
+    public static final CondenserLayout WIDE_V3=new CondenserLayout("layout_wide_v3.json");
     public static final CondenserLayout LEGACY=new CondenserLayout("layout_legacy.json");
     public record Cell(int index,BlockPos local,CondenserBlock.Port role,VoxelShape[] shapes) {
         public VoxelShape shape(Direction facing){return shapes[facing.get2DDataValue()];}
@@ -41,6 +43,8 @@ public final class CondenserLayout {
     }
     private static BlockPos pos(com.google.gson.JsonArray a){return new BlockPos(a.get(0).getAsInt(),a.get(1).getAsInt(),a.get(2).getAsInt());}
     public int controllerIndex(){return controller.getX()+size.getX()*(controller.getZ()+size.getZ()*controller.getY());}
+    /** Older saved condensers retain their original shaft-aligned seat. */
+    public Direction facingForTurbine(Direction turbineFacing){return this==INSTANCE?turbineFacing.getClockWise():turbineFacing;}
     public Cell cell(int index){return byIndex.get(index);}
     public BlockPos world(BlockPos root,Direction facing,Cell c){return root.offset(TurbineAssemblyBlock.turn(c.local().subtract(controller),facing));}
     public AABB bounds(BlockPos root,Direction facing){

@@ -24,9 +24,10 @@ import java.util.Locale;
 /** One placeable closed condenser. Only the foundation controller ticks or renders. */
 public class CondenserBlock extends BaseEntityBlock implements SteamLinePort {
     public enum Port implements StringRepresentable {
-        NONE,BYPASS,COLD,HOT,CONDENSATE;
+        NONE,BYPASS,COLD,HOT,CONDENSATE,MAKEUP;
         @Override public String getSerializedName(){return name().toLowerCase(Locale.ROOT);}
-        public boolean water(){return this==COLD||this==HOT||this==CONDENSATE;}
+        public boolean water(){return this==COLD||this==HOT||this==CONDENSATE||this==MAKEUP;}
+        public boolean inlet(){return this==COLD||this==MAKEUP;}
     }
     public static final DirectionProperty FACING=BlockStateProperties.HORIZONTAL_FACING;
     public static final BooleanProperty CONTROLLER=BooleanProperty.create("controller");
@@ -41,7 +42,8 @@ public class CondenserBlock extends BaseEntityBlock implements SteamLinePort {
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> b){b.add(FACING,CONTROLLER,PORT);}
     @Override protected RenderShape getRenderShape(BlockState s){return s.getValue(CONTROLLER)?RenderShape.ENTITYBLOCK_ANIMATED:RenderShape.INVISIBLE;}
     public static Direction portFace(BlockState s){return switch(s.getValue(PORT)){
-        case BYPASS->s.getValue(FACING);case CONDENSATE->s.getValue(FACING).getOpposite();default->Direction.DOWN;};}
+        case BYPASS->s.getValue(FACING);case CONDENSATE->s.getValue(FACING).getOpposite();
+        case MAKEUP->s.getValue(FACING).getCounterClockWise();default->Direction.DOWN;};}
     @Override public boolean acceptsSteamLineOn(BlockState s,Direction side){return s.getValue(PORT)==Port.BYPASS&&side==portFace(s);}
     public static boolean acceptsWater(BlockState s,Direction side){return s.getBlock() instanceof CondenserBlock&&s.getValue(PORT).water()&&side==portFace(s);}
     @Override public BlockEntity newBlockEntity(BlockPos p,BlockState s){return new CondenserBlockEntity(p,s);}
@@ -49,14 +51,23 @@ public class CondenserBlock extends BaseEntityBlock implements SteamLinePort {
         return l.isClientSide()||!s.getValue(CONTROLLER)?null:createTickerHelper(type,BwrBlockEntities.CONDENSER.get(),CondenserBlockEntity::serverTick);
     }
     @Override public BlockState getStateForPlacement(BlockPlaceContext ctx){
+        ctx=CondenserPlacement.align(ctx);
+        if(!CondenserPlacement.anchorReady(ctx))return null;
         var state=defaultBlockState().setValue(FACING,ctx.getHorizontalDirection().getOpposite());
+        return canPlaceAt(ctx.getLevel(),ctx.getPlayer(),ctx.getClickedPos(),state.getValue(FACING))?state:null;
+    }
+    public static boolean canPlaceAt(Level level,Player player,BlockPos root,Direction facing){
+        // BlockItem also checks the controller block before its BE exists,
+        // when its fallback collision shape is a full cube. Match that check
+        // so the preview cannot promise placement through an entity at root.
+        if(!level.isUnobstructed(null,Shapes.block().move(root.getX(),root.getY(),root.getZ())))return false;
         var layout=CondenserLayout.INSTANCE;
         for(var cell:layout.cells){
-            var p=layout.world(ctx.getClickedPos(),state.getValue(FACING),cell);
-            if(!dev.bwr.mod.world.AssemblyAccess.permitted(ctx.getLevel(),ctx.getPlayer(),p)||!ctx.getLevel().isLoaded(p)||ctx.getLevel().isOutsideBuildHeight(p)||!ctx.getLevel().getWorldBorder().isWithinBounds(p)
-                    ||!ctx.getLevel().getBlockState(p).canBeReplaced()||!ctx.getLevel().isUnobstructed(null,cell.shape(state.getValue(FACING)).move(p.getX(),p.getY(),p.getZ())))return null;
+            var p=layout.world(root,facing,cell);
+            if(!level.isLoaded(p)||!dev.bwr.mod.world.AssemblyAccess.permitted(level,player,p)||level.isOutsideBuildHeight(p)||!level.getWorldBorder().isWithinBounds(p)
+                    ||!level.getBlockState(p).canBeReplaced()||!level.isUnobstructed(null,cell.shape(facing).move(p.getX(),p.getY(),p.getZ())))return false;
         }
-        return state;
+        return true;
     }
     public BlockState cellState(BlockState root,CondenserLayout.Cell cell){return root.setValue(CONTROLLER,cell.index()==CondenserLayout.INSTANCE.controllerIndex()).setValue(PORT,cell.role());}
     @Override public void setPlacedBy(Level l,BlockPos root,BlockState state,LivingEntity who,ItemStack stack){

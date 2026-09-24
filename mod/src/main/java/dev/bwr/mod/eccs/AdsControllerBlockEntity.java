@@ -101,6 +101,8 @@ public class AdsControllerBlockEntity extends BlockEntity {
 
     // Volatile because Lua reads them from a CC computer thread; the matching
     // writes are marshalled onto the server thread by PlantActuators.
+    private int division;
+    public int getDivision(){return division;}
     private volatile boolean open;
     private volatile double valveDemandFraction = 1.0;
     private volatile double nitrogenCharge = 1.0;
@@ -195,6 +197,10 @@ public class AdsControllerBlockEntity extends BlockEntity {
                 held.remove(vp);
                 continue;
             }
+            if(srv.getDivision()!=division){
+                if(held.remove(vp))setValve(level,vp,srv,false);
+                it.remove();continue;
+            }
             if (shouldHold) {
                 opened++;
                 held.add(vp);
@@ -278,15 +284,18 @@ public class AdsControllerBlockEntity extends BlockEntity {
             }
             double flow = srv.flowKgPerS(domePsig);
             total += flow;
-            if (bus != null) {
-                bus.report(vp, gameTime, 0.0, 0.0, 0.0, 0.0, flow, 0.0, false, true);
-            }
+            srv.reportRelief(bus,gameTime,flow);
         }
         return total;
     }
 
     // --- Binding --------------------------------------------------------
 
+    public void setDivision(int value){
+        int next=Math.clamp(value,0,4);if(next==division)return;
+        if(level!=null)for(BlockPos vp:held)if(level.isLoaded(vp)&&level.getBlockEntity(vp) instanceof SafetyReliefValveBlockEntity srv)setValve(level,vp,srv,false);
+        division=next;bindingDirty=true;ticksSinceRebind=REBIND_INTERVAL_TICKS;setChanged();
+    }
     public void markBindingDirty() {
         bindingDirty = true;
     }
@@ -354,12 +363,12 @@ public class AdsControllerBlockEntity extends BlockEntity {
             BlockState s = level.getBlockState(p);
             if (reactorPos == null && s.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
                 reactorPos = p.immutable();
-            } else if (s.is(BwrBlocks.SAFETY_RELIEF_VALVE.get())
+            } else if ((s.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock)
                     && level.getBlockEntity(p) instanceof SafetyReliefValveBlockEntity srv) {
                 // A valve venting into air suppresses nothing and is not part of
                 // a depressurisation the containment can survive, so it is not
                 // counted. That is validation of plumbing, not a permissive.
-                if (srv.revalidateDischarge(level)) {
+                if (srv.getDivision()==division && srv.revalidateDischarge(level)) {
                     valves.add(p.immutable());
                 }
             }
@@ -508,6 +517,7 @@ public class AdsControllerBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
+        tag.putInt("Division",division);
         tag.putBoolean("Open", open);
         tag.putDouble("ValveDemand", valveDemandFraction);
         tag.putDouble("Nitrogen", nitrogenCharge);
@@ -526,6 +536,7 @@ public class AdsControllerBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        division=Math.clamp(tag.getInt("Division"),0,4);
         open = tag.getBoolean("Open");
         // Sanitised on the way in, for the reason the suppression pool's load
         // path spells out: clamping with Math.min/Math.max does not stop a

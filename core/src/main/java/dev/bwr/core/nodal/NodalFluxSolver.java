@@ -940,6 +940,7 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
             double moderated = Math.max(0.0, kInf * (1.0 - voidKInfDepression * voidFraction));
 
             double absorption = absorptionPerCm
+                    + (loading.insertAt(position) == null ? 0.0 : absorptionPerCm * loading.insertAt(position).kind().absorptionRatio)
                     + rodAbsorptionAt(position, axial, axialCount)
                     + (supplementalAbsorptionPerCm == null ? 0.0 : supplementalAbsorptionPerCm[position]);
 

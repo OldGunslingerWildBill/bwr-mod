@@ -2,5 +2,121 @@
   "parent": "minecraft:item/generated",
   "textures": {
     "layer0": "bwr:item/fuel_assembly"
-  }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "bwr:fuel_variant": 0
+      },
+      "model": "bwr:item/fuel/leu"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 1
+      },
+      "model": "bwr:item/fuel/heu"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 2
+      },
+      "model": "bwr:item/fuel/plutonium"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 3
+      },
+      "model": "bwr:item/fuel/mox"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 4
+      },
+      "model": "bwr:item/fuel/thorium"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 5
+      },
+      "model": "bwr:item/fuel/natural_uranium"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 6
+      },
+      "model": "bwr:item/fuel/uranium_12"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 7
+      },
+      "model": "bwr:item/fuel/uranium_14"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 8
+      },
+      "model": "bwr:item/fuel/uranium_27"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 9
+      },
+      "model": "bwr:item/fuel/uranium_495"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 10
+      },
+      "model": "bwr:item/fuel/uranium_8"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 11
+      },
+      "model": "bwr:item/fuel/uranium_1975"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 12
+      },
+      "model": "bwr:item/fuel/gadolinia_uranium"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 13
+      },
+      "model": "bwr:item/fuel/mox_lean"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 14
+      },
+      "model": "bwr:item/fuel/mox_rich"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 15
+      },
+      "model": "bwr:item/fuel/plutonium_lean"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 16
+      },
+      "model": "bwr:item/fuel/plutonium_rich"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 17
+      },
+      "model": "bwr:item/fuel/thorium_lean"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 18
+      },
+      "model": "bwr:item/fuel/thorium_rich"
+    }
+  ]
 }

@@ -1,0 +1,36 @@
+{
+  "variants": {
+    "facing=north,open=false": {
+      "model": "bwr:block/alpha/ads_relief_valve/body",
+      "y": 0
+    },
+    "facing=north,open=true": {
+      "model": "bwr:block/alpha/ads_relief_valve/body",
+      "y": 0
+    },
+    "facing=east,open=false": {
+      "model": "bwr:block/alpha/ads_relief_valve/body",
+      "y": 90
+    },
+    "facing=east,open=true": {
+      "model": "bwr:block/alpha/ads_relief_valve/body",
+      "y": 90
+    },
+    "facing=south,open=false": {
+      "model": "bwr:block/alpha/ads_relief_valve/body",
+      "y": 180
+    },
+    "facing=south,open=true": {
+      "model": "bwr:block/alpha/ads_relief_valve/body",
+      "y": 180
+    },
+    "facing=west,open=false": {
+      "model": "bwr:block/alpha/ads_relief_valve/body",
+      "y": 270
+    },
+    "facing=west,open=true": {
+      "model": "bwr:block/alpha/ads_relief_valve/body",
+      "y": 270
+    }
+  }
+}

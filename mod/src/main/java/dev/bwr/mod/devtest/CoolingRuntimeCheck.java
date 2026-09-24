@@ -142,6 +142,6 @@ public final class CoolingRuntimeCheck {
         near(tower.plant().output(),750,"lake -> makeup pump -> cold basin did not transfer at 1500 kg/s");
         near(intake.plant().input()+intake.plant().output()+pump.plant().input()+pump.plant().output()+tower.plant().output(),3000,"makeup path duplicated water");
         var cc=l.getCapability(dan200.computercraft.api.peripheral.PeripheralCapability.get(),port(pump,Port.POWER),Direction.EAST);
-        check(cc instanceof dev.bwr.mod.peripheral.CoolingPeripheral&&cc.getType().equals("bwr_makeup_water_pump"),"CC capability missing from physical part");
+        check(cc instanceof dan200.computercraft.api.peripheral.IDynamicPeripheral&&cc.getType().equals("bwr_makeup_water_pump"),"CC capability missing from physical part");
     }
 }

@@ -325,6 +325,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
 
             @Override
             public int colour(int cell) {
+                if (map.isInsert(cell)) return 0xFFB886D6;
                 if (!map.isOccupied(cell)) {
                     return 0xFF191C20;
                 }
@@ -334,6 +335,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
             @Override
             public List<Component> tooltip(int cell) {
                 List<Component> out = new ArrayList<>();
+                if (map.isInsert(cell)) return map.insertTooltip(cell);
                 if (!map.isOccupied(cell)) {
                     out.add(Component.literal("Position " + cell + ": empty"));
                     return out;

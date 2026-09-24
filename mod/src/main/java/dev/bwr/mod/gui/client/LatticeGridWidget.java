@@ -197,21 +197,25 @@ public class LatticeGridWidget extends AbstractWidget {
         measure();
         hovered = isMouseOver(mouseX, mouseY) ? cellAt(mouseX, mouseY) : -1;
 
-        int width = Math.max(1, cells.latticeWidth());
-        for (int i = 0; i < cells.count(); i++) {
-            int index = cells.latticeIndex(i);
-            int x = originX + ((index % width) - minColumn) * cellPx;
-            int y = originY + ((index / width) - minRow) * cellPx;
-            graphics.fill(x, y, x + cellPx - 1, y + cellPx - 1, cells.colour(i));
-            if (i == marked) {
-                outline(graphics, x, y, 0xFFFFC24A);
+        // GuiGraphics otherwise flushes after each fill: a large core made
+        // over a thousand draw calls for tiny squares on every frame.
+        graphics.drawManaged(() -> {
+            int width = Math.max(1, cells.latticeWidth());
+            for (int i = 0; i < cells.count(); i++) {
+                int index = cells.latticeIndex(i);
+                int x = originX + ((index % width) - minColumn) * cellPx;
+                int y = originY + ((index / width) - minRow) * cellPx;
+                graphics.fill(x, y, x + cellPx - 1, y + cellPx - 1, cells.colour(i));
+                if (i == marked) {
+                    outline(graphics, x, y, 0xFFFFC24A);
+                }
+                if (i == selected) {
+                    outline(graphics, x, y, 0xFFFFFFFF);
+                } else if (i == hovered) {
+                    outline(graphics, x, y, 0xFF9FD2FF);
+                }
             }
-            if (i == selected) {
-                outline(graphics, x, y, 0xFFFFFFFF);
-            } else if (i == hovered) {
-                outline(graphics, x, y, 0xFF9FD2FF);
-            }
-        }
+        });
     }
 
     private void outline(GuiGraphics graphics, int x, int y, int colour) {

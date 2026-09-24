@@ -141,7 +141,10 @@ public class EccsPumpBlockEntity extends BlockEntity {
     // The tick
     // -----------------------------------------------------------------
 
+    private double deliveredBoronKgPerS;
+    public double deliveredBoronKgPerS(){return deliveredBoronKgPerS;}
     private void tick(Level level) {
+        if(design==EccsDesign.SLC){tickSlc(level);return;}
         if (getBlockState().getBlock() instanceof TurbineAssemblyBlock assembly) {
             tickAssembly(level, assembly);
             return;
@@ -226,8 +229,8 @@ public class EccsPumpBlockEntity extends BlockEntity {
                             * (deliveredFlowKgPerS / design.ratedFlowKgPerS())
                     : 0.0;
             EccsNetwork.busFor(level, reactorPos).report(getBlockPos(), level.getGameTime(),
-                    spray ? 0.0 : deliveredFlowKgPerS, suctionTemperatureC,
-                    spray ? deliveredFlowKgPerS : 0.0, suctionTemperatureC,
+                    spray ? 0.0 : deliveredFlowKgPerS, deliveredTemperatureC,
+                    spray ? deliveredFlowKgPerS : 0.0, deliveredTemperatureC,
                     steamKgPerS, boron,
                     true,
                     design.drive() == EccsDesign.Drive.STEAM_TURBINE);
@@ -235,6 +238,36 @@ public class EccsPumpBlockEntity extends BlockEntity {
 
         setChanged();
     }
+
+    private void tickSlc(Level level){
+        var circuit=SlcPlumbing.resolve(level,worldPosition,getBlockState());
+        var target=circuit.reactor();var source=circuit.tank();
+        BlockPos next=target==null?null:target.getBlockPos();
+        if(!java.util.Objects.equals(reactorPos,next))detach();
+        reactorPos=next;
+        tankPos=source==null?null:source.getBlockPos();poolPos=null;
+        boolean connected=target!=null&&source!=null;
+        double available=source==null?0:source.solution().massKg();
+        boolean borated=source!=null&&source.solution().boronFraction()>0;
+        pump.setVesselPressurePsig(target==null?0:target.core().getPressurePsig());
+        pump.setSuctionPressurePsig(0);
+        pump.setSuctionTemperatureC(source==null?20:source.solution().temperatureC());
+        pump.setSuctionFlowLimitKgPerS(connected&&borated?available/.05:0);
+        pump.setElectricalPowerAvailableWatts(Math.min(EccsPower.wattsFromFePerTick(energy.getEnergyStored()),design.motorRatingWatts()));
+        pump.step(.05);
+        energy.drain(EccsPower.fePerTickFromWatts(pump.getElectricalDemandWatts()));
+        var batch=connected&&borated?source.draw(pump.getFlowKgPerS()*.05):new dev.bwr.core.eccs.BoronSolution.Batch(0,0,20);
+        deliveredFlowKgPerS=batch.massKg()/.05;deliveredBoronKgPerS=batch.boronKg()/.05;deliveredTemperatureC=batch.temperatureC();
+        suctionShortfallKgPerS=Math.max(0,pump.getFlowKgPerS()-deliveredFlowKgPerS);
+        assemblyConnectionStatus=connected&&!borated?"Add borate charges to the SLC tank":circuit.status();
+        deliveredBoronPpmPerMinute=target==null?0:deliveredBoronKgPerS/Math.max(1,target.core().getLiquidMassKg())*1e6*60;
+        if(target!=null)EccsNetwork.busFor(level,reactorPos).report(worldPosition,level.getGameTime(),deliveredFlowKgPerS,deliveredTemperatureC,0,20,0,
+                deliveredBoronPpmPerMinute,true,false);
+        setChanged();
+    }
+
+    private double deliveredBoronPpmPerMinute;
+    public double deliveredBoronPpmPerMinute(){return design==EccsDesign.SLC?deliveredBoronPpmPerMinute:pump.getBoronPpmPerMinute();}
 
     private void tickMotorAssembly(Level level, PumpAssemblyBlock assembly) {
         final double dt=.05;
@@ -270,7 +303,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
         if(cooling&&path)deliveredFlowKgPerS=pump.getFlowKgPerS();
         suctionShortfallKgPerS=Math.max(0,wanted-deliveredFlowKgPerS);
         if(reactorPos!=null) EccsNetwork.busFor(level,reactorPos).report(getBlockPos(),level.getGameTime(),
-                spray?0:deliveredFlowKgPerS,temperature,spray?deliveredFlowKgPerS:0,temperature,0,0,true,false);
+                spray?0:deliveredFlowKgPerS,deliveredTemperatureC,spray?deliveredFlowKgPerS:0,deliveredTemperatureC,0,0,true,false);
         // A closed valve or dry source cannot reject heat through an absent water circuit.
         if(cooling && path && pump.getFlowKgPerS()>0 && exchangerReturn) {
             applyPoolCoolingDuty(pool,false);
@@ -361,7 +394,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
         deliveredFlowKgPerS=drawSuction(suctionPool,suctionTank,wantedWater,dt)/dt;
         suctionShortfallKgPerS=Math.max(0,wantedWater-deliveredFlowKgPerS);
         if (delivery!=null) EccsNetwork.busFor(level,reactorPos).report(getBlockPos(),level.getGameTime(),
-                deliveredFlowKgPerS,temperature,0,temperature,0,0,true,false);
+                deliveredFlowKgPerS,deliveredTemperatureC,0,deliveredTemperatureC,0,0,true,false);
         if (exhaustPool!=null) exhaustPool.reportSteamKgPerS(getBlockPos(),level.getGameTime(),claimedSteam,exhaustPressure);
         assemblySteamDrawKgPerS=claimedSteam;
         assemblyConnectionStatus="Steam inlet: "+(source!=null ? "connected" : "no live reactor nozzle")
@@ -402,11 +435,12 @@ public class EccsPumpBlockEntity extends BlockEntity {
         return mode == Mode.POOL_COOLING && design.isPoolCoolingCapable();
     }
 
+    private double deliveredTemperatureC=32;
     private double suctionTemperatureC(SuppressionPoolBlockEntity poolBe) {
         if (suctionSource == SuctionSource.SUPPRESSION_POOL && poolBe != null) {
             return poolBe.pool().getTemperatureC();
         }
-        return CondensateStorageTankBlockEntity.STORED_TEMPERATURE_C;
+        return incomingWater.temperatureC();
     }
 
     /** Water the chosen source could supply this tick, kg. */
@@ -434,10 +468,15 @@ public class EccsPumpBlockEntity extends BlockEntity {
             return 0.0;
         }
         if (suctionSource == SuctionSource.SUPPRESSION_POOL) {
+            deliveredTemperatureC=poolBe==null?32:poolBe.pool().getTemperatureC();
             return poolBe != null ? poolBe.pool().drawSuctionKg(kgPerS, dt) : 0.0;
         }
+        double bufferH=incomingWater.enthalpy(),tankH=tankBe==null?bufferH:dev.bwr.mod.water.ThermalWater.enthalpy(tankBe.tank().getFluid(),32);
         double fromBuffer = incomingWater.drawKg(kgPerS * dt);
-        return fromBuffer + (tankBe != null ? tankBe.drawKg(Math.max(0, kgPerS * dt - fromBuffer)) : 0);
+        double fromTank=tankBe!=null?tankBe.drawKg(Math.max(0,kgPerS*dt-fromBuffer)):0;
+        if(fromBuffer+fromTank>0)deliveredTemperatureC=dev.bwr.core.thermal.WaterInventory.temperature((fromBuffer*bufferH+fromTank*tankH)/(fromBuffer+fromTank));
+        pump.setSuctionTemperatureC(deliveredTemperatureC);
+        return fromBuffer+fromTank;
     }
 
     // -----------------------------------------------------------------
@@ -691,6 +730,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
     }
 
     public String connectionStatus() {
+        if(design==EccsDesign.SLC)return assemblyConnectionStatus;
         if(getBlockState().getBlock() instanceof TurbineAssemblyBlock
                 || getBlockState().getBlock() instanceof PumpAssemblyBlock a && a.isFull(getBlockState())) return assemblyConnectionStatus;
         if(isPoolCooling()) return poolPos==null?"Pool disconnected":"Pool connected";

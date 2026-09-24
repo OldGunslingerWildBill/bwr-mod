@@ -19,6 +19,6 @@ public class RhrHeatExchangerScreen extends BwrScreen<RhrHeatExchangerMenu> {
         readout(g,"Pool-water return",menu.primaryFlow>0?num(menu.primaryOut,1)+" C":"No flow",12,143,308,TEXT_BRIGHT);
         text(g,"Pool: red IN / amber OUT. Cooling: blue IN / cyan OUT.",12,169,TEXT_DIM);
         text(g,"Supply cooling water and drain the heated outlet.",12,183,TEXT_DIM);
-        text(g,"13 C cooling inlet; pipe temperature not tracked.",12,197,TEXT_DIM);
+        readout(g,"Cooling-water inlet",num(menu.coldTemperature,1)+" C",12,197,308,TEXT_DIM);
     }
 }

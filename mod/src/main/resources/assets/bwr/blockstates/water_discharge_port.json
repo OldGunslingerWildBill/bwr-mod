@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/alpha/water_discharge_port/body",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "bwr:block/alpha/water_discharge_port/body",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/alpha/water_discharge_port/body",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/alpha/water_discharge_port/body",
+      "y": 270
+    }
+  }
+}

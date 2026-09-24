@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:irradiation_casing"
+    },
+    {
+      "item": "minecraft:nether_star"
+    }
+  ],
+  "result": {
+    "id": "bwr:specialty_rod",
+    "count": 1,
+    "components": {
+      "bwr:core_insert": {
+        "kind": "californium_source",
+        "exposure_seconds": 0
+      }
+    }
+  }
+}

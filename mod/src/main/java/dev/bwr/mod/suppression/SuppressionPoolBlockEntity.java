@@ -332,19 +332,19 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         return new net.neoforged.neoforge.fluids.capability.IFluidHandler(){
             private boolean live(){return level!=null&&!level.isClientSide()&&!isRemoved()&&isFormed()&&level.getBlockEntity(worldPosition)==SuppressionPoolBlockEntity.this;}
             public int getTanks(){return 1;}
-            public net.neoforged.neoforge.fluids.FluidStack getFluidInTank(int tank){int n=tank==0&&live()?(int)Math.floor(pool.getMassKg()):0;return n>0?new net.neoforged.neoforge.fluids.FluidStack(Fluids.WATER,n):net.neoforged.neoforge.fluids.FluidStack.EMPTY;}
+            public net.neoforged.neoforge.fluids.FluidStack getFluidInTank(int tank){int n=tank==0&&live()?(int)Math.floor(pool.getMassKg()):0;return n>0?dev.bwr.mod.water.ThermalWater.atTemperature(n,pool.getTemperatureC()):net.neoforged.neoforge.fluids.FluidStack.EMPTY;}
             public int getTankCapacity(int tank){return tank==0?(int)Math.floor(pool.getDesignMassKg()):0;}
             public boolean isFluidValid(int tank,net.neoforged.neoforge.fluids.FluidStack s){return tank==0&&!suction&&s.is(Fluids.WATER);}
             public int fill(net.neoforged.neoforge.fluids.FluidStack s,FluidAction action){
                 if(!live()||!isFluidValid(0,s))return 0;int n=(int)Math.floor(Math.max(0,Math.min(s.getAmount(),pool.getFillSpaceKg())));
-                if(n>0&&action.execute()){pool.receiveWaterKg(n,SuppressionPool.DEFAULT_TEMPERATURE_C);inventoryChanged();}return n;
+                if(n>0&&action.execute()){pool.receiveWaterKg(n,dev.bwr.mod.water.ThermalWater.temperature(s,dev.bwr.mod.water.ThermalWater.AMBIENT_C));inventoryChanged();}return n;
             }
             public net.neoforged.neoforge.fluids.FluidStack drain(net.neoforged.neoforge.fluids.FluidStack s,FluidAction a){return s.is(Fluids.WATER)?drain(s.getAmount(),a):net.neoforged.neoforge.fluids.FluidStack.EMPTY;}
             public net.neoforged.neoforge.fluids.FluidStack drain(int amount,FluidAction action){
                 if(!live()||!suction)return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
                 int n=(int)Math.floor(Math.max(0,Math.min(amount,pool.getAvailableSuctionKg())));
                 if(n<=0)return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
-                if(action.execute()){pool.drawSuctionKg(n,1);inventoryChanged();}return new net.neoforged.neoforge.fluids.FluidStack(Fluids.WATER,n);
+                if(action.execute()){pool.drawSuctionKg(n,1);inventoryChanged();}return dev.bwr.mod.water.ThermalWater.atTemperature(n,pool.getTemperatureC());
             }
         };
     }
@@ -447,9 +447,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             // containment, so the valve correctly passes nothing and its cached
             // reading is zeroed rather than left at its last discharge.
             double flow = srv.flowKgPerS(domePressurePsig, containmentPsia);
-            if (bus != null) {
-                bus.report(vp, gameTime, 0.0, 0.0, 0.0, 0.0, flow, 0.0, false, true);
-            }
+            srv.reportRelief(bus,gameTime,flow);
             // Only the pool that owns the discharge condenses it. Two pool
             // controllers can sit within range of one valve, and without this
             // each would put the whole flow into its own water.
@@ -689,7 +687,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         for (BlockPos p : BlockPos.betweenClosed(min, max)) {
             if(!level.isLoaded(p)) continue;
             BlockState found = level.getBlockState(p);
-            if (found.is(BwrBlocks.SAFETY_RELIEF_VALVE.get())
+            if ((found.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock)
                     && level.getBlockEntity(p) instanceof SafetyReliefValveBlockEntity) {
                 boxValves.add(p.immutable());
             } else if (found.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get())) {

@@ -249,7 +249,23 @@ public record FuelType(
      * The built-in fuels, in tier order. A datapack loader should treat this as
      * the default contents of the registry and be free to replace any of them.
      */
+    private static final List<FuelType> CATALOG = List.of(LEU, HEU, PLUTONIUM, MOX, THORIUM,
+            new FuelType("natural_uranium", 0.5802306938521229, 0.006502, 4e-05, 6.5e-06, -1.6e-05, 0, 202.5, 0.00711, 0.0),
+            new FuelType("uranium_12", 0.7928493623355096, 0.006502, 4e-05, 6.5e-06, -1.6e-05, 0, 202.5, 0.012, 0.0),
+            new FuelType("uranium_14", 0.8581677712277103, 0.006502, 4e-05, 6.5e-06, -1.6e-05, 0, 202.5, 0.014, 0.0),
+            new FuelType("uranium_27", 1.1262034500985056, 0.006502, 4e-05, 6.5e-06, -1.6e-05, 0.01, 202.5, 0.027, 0.0),
+            new FuelType("uranium_495", 1.329467257285183, 0.006502, 4e-05, 6.5e-06, -1.6e-05, 0.02, 202.5, 0.0495, 0.0),
+            new FuelType("uranium_8", 1.4491248029183539, 0.006502, 4e-05, 6.5e-06, -1.6e-05, 0.03, 202.5, 0.08, 0.0),
+            new FuelType("uranium_1975", 1.4488255023489953, 0.006502, 2.5e-05, 2e-06, -1.1e-05, 0.04, 202.5, 0.1975, 0.0),
+            new FuelType("gadolinia_uranium", 1.22, 0.006502, 4e-05, 6.5e-06, -1.6e-05, 0.04, 202.5, 0.035, 0.0),
+            new FuelType("mox_lean", 1.1367297762478485, 0.0035, 3e-05, 5.5e-06, -1.8e-05, 0.015, 206.0, 0.045, 0.0),
+            new FuelType("mox_rich", 1.2957611530633657, 0.0035, 3e-05, 5.5e-06, -1.8e-05, 0.035, 206.0, 0.095, 0.0),
+            new FuelType("plutonium_lean", 1.1895392749244715, 0.002099, 2e-05, 5e-06, -1.4e-05, 0.01, 211.5, 0.04, 0.0),
+            new FuelType("plutonium_rich", 1.375113633445469, 0.002099, 2e-05, 5e-06, -1.4e-05, 0.03, 211.5, 0.085, 0.0),
+            new FuelType("thorium_lean", 0.907809208546494, 0.00266, 4.2e-05, 3e-06, -1.9e-05, 0, 199.7, 0.02, 0.1),
+            new FuelType("thorium_rich", 1.2004178272980501, 0.00266, 4.2e-05, 3e-06, -1.9e-05, 0.01, 199.7, 0.05, 0.1));
+
     public static List<FuelType> presets() {
-        return List.of(LEU, HEU, PLUTONIUM, MOX, THORIUM);
+        return CATALOG;
     }
 }

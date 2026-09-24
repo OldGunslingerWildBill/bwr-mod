@@ -12,5 +12,7 @@ public final class MainSteamIsolationValveItem extends BlockItem {
         lines.add(Component.translatable("tooltip.bwr.msiv.size").withStyle(ChatFormatting.GRAY));
         lines.add(Component.translatable("tooltip.bwr.msiv.ports").withStyle(ChatFormatting.AQUA));
         lines.add(Component.translatable("tooltip.bwr.msiv.control").withStyle(ChatFormatting.GRAY));
+        lines.add(Component.translatable("tooltip.bwr.msiv.power").withStyle(ChatFormatting.YELLOW));
+        lines.add(Component.translatable("tooltip.bwr.msiv.fail_closed").withStyle(ChatFormatting.GRAY));
     }
 }

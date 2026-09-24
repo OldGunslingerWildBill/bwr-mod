@@ -14,6 +14,6 @@ public class CoolingPeripheral implements IPeripheral {
     @LuaFunction(mainThread=true) public Map<String,Object> getStatus(){
         var p=be.plant();Map<String,Object> m=new LinkedHashMap<>();m.put("ready",be.ready());m.put("target",be.target());m.put("speed",be.actual());
         m.put("inputKg",p.input());m.put("outputKg",p.output());m.put("flowKgPerS",p.flow());m.put("ratedKgPerS",be.design().flow);
-        m.put("makeupKgPerS",p.loss());m.put("heatRejectedMW",p.heatMW());m.put("energyFE",be.storedFE());m.put("drawFEPerTick",be.draw());return m;
+        m.put("makeupKgPerS",p.loss());m.put("heatRejectedMW",p.heatMW());m.put("energyFE",be.storedFE());m.put("drawFEPerTick",be.draw());m.put("inletC",p.inputC());m.put("outletC",p.outputC());return m;
     }
 }

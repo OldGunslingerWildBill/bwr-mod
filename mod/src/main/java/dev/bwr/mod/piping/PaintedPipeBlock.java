@@ -32,6 +32,15 @@ public abstract class PaintedPipeBlock extends PipeBlock {
         builder.add(PAINT);
     }
 
+    @Override protected void onPlace(BlockState state,Level level,BlockPos pos,BlockState old,boolean moving) {
+        super.onPlace(state,level,pos,old,moving);
+        if(!old.is(state.getBlock()))PipeTopology.changed(level,pos);
+    }
+    @Override protected void onRemove(BlockState state,Level level,BlockPos pos,BlockState next,boolean moving) {
+        if(!next.is(state.getBlock()))PipeTopology.changed(level,pos);
+        super.onRemove(state,level,pos,next,moving);
+    }
+
     @Override protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level,
                                                        BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!(stack.getItem() instanceof DyeItem dye)) return super.useItemOn(stack, state, level, pos, player, hand, hit);

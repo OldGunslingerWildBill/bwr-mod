@@ -62,7 +62,8 @@ public abstract class BwrScreen<T extends BwrMenu> extends AbstractContainerScre
     @Override
     public final void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
-        renderContent(graphics, mouseX, mouseY);
+        // Keep readouts in one batch; slots and tooltips retain their own ordering.
+        graphics.drawManaged(() -> renderContent(graphics, mouseX, mouseY));
         renderTooltip(graphics, mouseX, mouseY);
         java.util.List<net.minecraft.network.chat.Component> extra = hoverTooltip();
         if (!extra.isEmpty()) {

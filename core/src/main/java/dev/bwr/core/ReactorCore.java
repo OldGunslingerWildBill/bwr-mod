@@ -807,7 +807,22 @@ public final class ReactorCore {
         //        PointKinetics sub-divides further on its own if the implicit
         //        denominator says the step is under-resolved, which only happens
         //        above prompt critical.
+        kinetics.setInstalledSourcePerSecond(loading.installedSourcePerSecond());
         double fissionPower = kinetics.step(rho, dtSeconds);
+        // Only fission flux irradiates targets; decay heat and source-only empty cores do not.
+        if (loading.loadedAssemblyCount() > 0 && loading.insertCount() > 0) {
+            var solution = nodalFlux.lastSolution();
+            double referenceFlux = 0;
+            int fuelCount = 0;
+            if (solution != null) for (int i = 0; i < loading.positionCount(); i++) {
+                if (loading.assemblyAt(i) != null) { referenceFlux += solution.assemblyFlux(i); fuelCount++; }
+            }
+            referenceFlux = fuelCount > 0 ? referenceFlux / fuelCount : 0;
+            if (referenceFlux > 0) for (int i = 0; i < loading.positionCount(); i++) {
+                var insert = loading.insertAt(i);
+                if (insert != null) insert.irradiate(fissionPower * solution.assemblyFlux(i) / referenceFlux, dtSeconds);
+            }
+        }
 
         // --- 5. Decay heat from fission power alone (feeding total power back
         //        into it would make the inventory chase itself), then the fuel

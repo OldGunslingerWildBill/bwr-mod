@@ -13,7 +13,7 @@ public class CondensateTankScreen extends BwrScreen<CondensateTankMenu> {
         text(g,menu.assembled?(menu.ready?"Assembled cylindrical tank":"Tank incomplete / chunks unloaded"):"Build a complete shell to form a tank.",12,31,TEXT);
         readout(g,"Water",big(menu.stored)+" / "+big(menu.capacity)+" kg",12,49,328,TEXT_BRIGHT);
         bar(g,12,65,316,10,menu.capacity>0?menu.stored/menu.capacity:0,ACCENT);
-        readout(g,"Stored temperature (assumed)",num(menu.temperature,0)+" C",12,84,328,TEXT_BRIGHT);
+        readout(g,"Stored water temperature",num(menu.temperature,0)+" C",12,84,328,TEXT_BRIGHT);
         if(menu.assembled){
             readout(g,"Diameter / height",menu.diameter+" / "+menu.height+" blocks",12,110,328,TEXT_BRIGHT);
             readout(g,"Construction blocks",big(menu.blocks),12,130,328,TEXT_BRIGHT);

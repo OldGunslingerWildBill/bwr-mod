@@ -44,7 +44,7 @@ public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
         apply.active=menu.present && menu.control!=2 && percent()!=null;
         run.active=menu.present && menu.control!=2;run.setMessage(Component.literal(menu.running?"Stop":"Start"));
         control.active=menu.present;control.setMessage(Component.literal("Control: "+switch(menu.control){case 1->"Redstone";case 2->"Computer";default->"Panel";}));
-        suction.visible=menu.eccs;suctions();
+        suction.visible=menu.eccs&&!menu.slc;suctions();
         mode.visible=menu.rhr;mode.active=menu.control!=2;mode.setMessage(Component.literal(menu.poolCooling?"Mode: Pool cooling":"Mode: Reactor injection"));
     }
     private void suctions() {
@@ -68,7 +68,8 @@ public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
         readout(g,menu.turbine?"Drive":"Stored energy",menu.turbine?"Steam":big(menu.energy)+" FE",12,99,248,TEXT_BRIGHT);
         text(g,font.plainSubstrByWidth(menu.connection,236),12,115,TEXT_DIM);
         text(g,"Speed (%)",12,138,TEXT);
+        if(menu.slc)text(g,"Suction: finite boron tank",12,189,TEXT_DIM);
         if(!menu.eccs)text(g,menu.recirculation?"Speed determines circulation demand.":"Suction: tank / piped water",12,189,TEXT_DIM);
-        if(!menu.rhr)text(g,menu.control==2?"Computer owns the controls.":menu.recirculation?"Flow is this pump's share of core circulation.":"Inlet buffer: "+big(menu.buffer)+" / 2,000 kg",12,215,TEXT_DIM);
+        if(!menu.rhr&&!menu.slc)text(g,menu.control==2?"Computer owns the controls.":menu.recirculation?"Flow is this pump's share of core circulation.":"Inlet buffer: "+big(menu.buffer)+" / 2,000 kg",12,215,TEXT_DIM);
     }
 }

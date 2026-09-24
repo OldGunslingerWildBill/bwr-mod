@@ -76,6 +76,10 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.LPCS_PUMP);
     public static final DeferredItem<BlockItem> RHR_PUMP =
             ITEMS.registerSimpleBlockItem(BwrBlocks.RHR_PUMP);
+    public static final DeferredItem<BlockItem> SLC_BORON_TANK = ITEMS.registerSimpleBlockItem(BwrBlocks.SLC_BORON_TANK);
+    public static final DeferredItem<BlockItem> ADS_RELIEF_VALVE = ITEMS.registerSimpleBlockItem(BwrBlocks.ADS_RELIEF_VALVE);
+    public static final DeferredItem<BlockItem> WATER_DISCHARGE_PORT = ITEMS.registerSimpleBlockItem(BwrBlocks.WATER_DISCHARGE_PORT);
+    public static final DeferredItem<Item> BORATE_CHARGE = ITEMS.registerSimpleItem("borate_charge",new Item.Properties());
     public static final DeferredItem<BlockItem> SLC_PUMP =
             ITEMS.registerSimpleBlockItem(BwrBlocks.SLC_PUMP);
     public static final DeferredItem<BlockItem> RCIC_TWL =
@@ -114,6 +118,23 @@ public final class BwrItems {
     public static final DeferredItem<FuelAssemblyItem> FUEL_ASSEMBLY =
             ITEMS.register("fuel_assembly",
                     () -> new FuelAssemblyItem(new Item.Properties().stacksTo(1)));
+
+    public static final DeferredItem<dev.bwr.mod.fuel.SpecialtyRodItem> SPECIALTY_ROD =
+            ITEMS.register("specialty_rod", () -> new dev.bwr.mod.fuel.SpecialtyRodItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> IRRADIATION_CASING = ITEMS.registerSimpleItem("irradiation_casing");
+    public static final DeferredItem<Item> COBALT_CHARGE = ITEMS.registerSimpleItem("cobalt_charge");
+    public static final DeferredItem<Item> LITHIUM_CHARGE = ITEMS.registerSimpleItem("lithium_charge");
+    public static final DeferredItem<Item> COBALT_SAMPLE = ITEMS.registerSimpleItem("cobalt_sample");
+    public static final DeferredItem<Item> TRITIUM_SAMPLE = ITEMS.registerSimpleItem("tritium_sample");
+    public static final DeferredItem<Item> DOPED_SILICON = ITEMS.registerSimpleItem("doped_silicon");
+
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> FUEL_TAB = TABS.register("fuel", () ->
+            CreativeModeTab.builder().title(Component.translatable("itemGroup.bwr.fuel"))
+                    .icon(() -> FUEL_ASSEMBLY.get().getDefaultInstance()).displayItems((parameters, output) -> {
+                        for (var type : FuelTypes.all()) output.accept(FuelAssemblyItem.stackOf(FUEL_ASSEMBLY.get(), FuelAssemblyData.fresh(type)));
+                        for (var kind : dev.bwr.core.fuel.CoreInsert.Kind.values()) output.accept(dev.bwr.mod.fuel.SpecialtyRodItem.stack(new dev.bwr.mod.fuel.CoreInsertData(kind, 0)));
+                        for (var item : java.util.List.of(IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, COBALT_SAMPLE, TRITIUM_SAMPLE, DOPED_SILICON)) output.accept(item.get());
+                    }).build());
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB =
             TABS.register("main", () -> CreativeModeTab.builder()
@@ -156,6 +177,10 @@ public final class BwrItems {
                         output.accept(LPCS_PUMP.get());
                         output.accept(RHR_PUMP.get());
                         output.accept(SLC_PUMP.get());
+                        output.accept(SLC_BORON_TANK.get());
+                        output.accept(BORATE_CHARGE.get());
+                        output.accept(ADS_RELIEF_VALVE.get());
+                        output.accept(WATER_DISCHARGE_PORT.get());
                         output.accept(RCIC_TWL.get());
                         output.accept(HPCI_TURBINE.get());
                         output.accept(ADS_CONTROLLER.get());
@@ -165,16 +190,6 @@ public final class BwrItems {
                         output.accept(LP_TURBINE.get());
                         output.accept(NUCLEAR_GENERATOR.get());
                         output.accept(TURBINE_FEED_PUMP.get());
-                        // A fresh bundle of every fuel the install knows, each
-                        // at its own nominal enrichment. Creative-mode players
-                        // get the whole fuel table without having to build the
-                        // enrichment chain first; survival players get these
-                        // out of the fabricator at whatever enrichment they
-                        // actually managed to feed it.
-                        for (dev.bwr.core.fuel.FuelType type : FuelTypes.all()) {
-                            output.accept(FuelAssemblyItem.stackOf(
-                                    FUEL_ASSEMBLY.get(), FuelAssemblyData.fresh(type)));
-                        }
                     })
                     .build());
 }

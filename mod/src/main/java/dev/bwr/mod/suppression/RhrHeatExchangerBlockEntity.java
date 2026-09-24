@@ -49,19 +49,19 @@ public class RhrHeatExchangerBlockEntity extends BlockEntity {
     }
     private IFluidHandler handler(boolean input){return new IFluidHandler(){
         public int getTanks(){return 1;}
-        public FluidStack getFluidInTank(int tank){int n=tank==0&&live()?(int)Math.floor(input?exchanger.cold():exchanger.hot()):0;return n>0?new FluidStack(Fluids.WATER,n):FluidStack.EMPTY;}
+        public FluidStack getFluidInTank(int tank){int n=tank==0&&live()?(int)Math.floor(input?exchanger.cold():exchanger.hot()):0;return n>0?dev.bwr.mod.water.ThermalWater.stack(n,input?exchanger.coldH():exchanger.hotH()):FluidStack.EMPTY;}
         public int getTankCapacity(int tank){return tank==0?RhrHeatExchanger.CAPACITY_KG:0;}
         public boolean isFluidValid(int tank,FluidStack s){return tank==0&&input&&s.is(Fluids.WATER);}
         public int fill(FluidStack s,FluidAction action){
             if(!live()||!isFluidValid(0,s))return 0;
             // NeoForge accounts whole mB. Never store a fractional amount then report a rounded value.
-            int n=(int)Math.floor(exchanger.fillCold(s.getAmount(),true));
-            if(n>0&&action.execute()){exchanger.fillCold(n,false);setChanged();}
+            int n=(int)Math.floor(exchanger.fillCold(s.getAmount(),dev.bwr.mod.water.ThermalWater.enthalpy(s),true));
+            if(n>0&&action.execute()){exchanger.fillCold(n,dev.bwr.mod.water.ThermalWater.enthalpy(s),false);setChanged();}
             return n;
         }
         public FluidStack drain(FluidStack s,FluidAction action){return s.is(Fluids.WATER)?drain(s.getAmount(),action):FluidStack.EMPTY;}
-        public FluidStack drain(int amount,FluidAction action){if(input||!live())return FluidStack.EMPTY;int n=(int)Math.floor(exchanger.drainHot(amount,true));if(n<=0)return FluidStack.EMPTY;if(action.execute()){exchanger.drainHot(n,false);setChanged();}return new FluidStack(Fluids.WATER,n);}
+        public FluidStack drain(int amount,FluidAction action){if(input||!live())return FluidStack.EMPTY;int n=(int)Math.floor(exchanger.drainHot(amount,true));if(n<=0)return FluidStack.EMPTY;double h=exchanger.hotH();if(action.execute()){exchanger.drainHot(n,false);setChanged();}return dev.bwr.mod.water.ThermalWater.stack(n,h);}
     };}
-    @Override protected void saveAdditional(CompoundTag t,HolderLookup.Provider r){super.saveAdditional(t,r);t.putDouble("Cold",exchanger.cold());t.putDouble("Hot",exchanger.hot());t.putDouble("HotEnergyKJ",exchanger.hotEnergyKJ());}
-    @Override protected void loadAdditional(CompoundTag t,HolderLookup.Provider r){super.loadAdditional(t,r);exchanger.restore(t.getDouble("Cold"),t.getDouble("Hot"),t.getDouble("HotEnergyKJ"));readoutTick=processedTick=Long.MIN_VALUE;}
+    @Override protected void saveAdditional(CompoundTag t,HolderLookup.Provider r){super.saveAdditional(t,r);t.putDouble("ColdH",exchanger.coldH());t.putDouble("HotH",exchanger.hotH());t.putDouble("Cold",exchanger.cold());t.putDouble("Hot",exchanger.hot());t.putDouble("HotEnergyKJ",exchanger.hotEnergyKJ());}
+    @Override protected void loadAdditional(CompoundTag t,HolderLookup.Provider r){super.loadAdditional(t,r);if(t.contains("ColdH"))exchanger.restore(t.getDouble("Cold"),t.getDouble("Hot"),t.getDouble("ColdH"),t.getDouble("HotH"));else exchanger.restore(t.getDouble("Cold"),t.getDouble("Hot"),t.getDouble("HotEnergyKJ"));readoutTick=processedTick=Long.MIN_VALUE;}
 }

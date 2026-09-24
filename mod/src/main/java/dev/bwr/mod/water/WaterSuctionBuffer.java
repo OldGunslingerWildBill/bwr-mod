@@ -13,7 +13,7 @@ public final class WaterSuctionBuffer {
     private final Runnable changed;
     public WaterSuctionBuffer(Runnable changed) {
         this.changed = changed;
-        tank = new FluidTank(2000, s -> s.getFluid() == Fluids.WATER) {
+        tank = new ThermalWaterTank(2000,32,()->debt) {
             @Override protected void onContentsChanged() { changed.run(); }
             // This is a receiving buffer; an external pipe cannot remove water already owed to the pump.
             @Override public net.neoforged.neoforge.fluids.FluidStack drain(int amount, IFluidHandler.FluidAction action) {
@@ -22,6 +22,8 @@ public final class WaterSuctionBuffer {
         };
     }
     public FluidTank tank() { return tank; }
+    public double enthalpy(){return ThermalWater.enthalpy(tank.getFluid(),32);}
+    public double temperatureC(){return ThermalWater.temperature(tank.getFluid(),32);}
     public double availableKg() { return Math.max(0, tank.getFluidAmount() - debt); }
     public double drawKg(double requested) {
         double got = Math.min(Math.max(0, requested), availableKg());

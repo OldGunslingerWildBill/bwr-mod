@@ -76,10 +76,8 @@ public final class SteamLineNetwork {
      * <p>256 is a very long main steam line — a BWR/6 run from the vessel through
      * the drywell penetration to the turbine hall is a couple of dozen blocks —
      * and it bounds the cost at roughly fifteen hundred block lookups for the
-     * pathological case. Surveys run on a multi-second timer, never per tick, so
-     * even the worst case is not a per-tick cost. A truncated survey is still a
-     * usable answer: it found everything within 256 blocks of line, which is
-     * everything that matters on any plant anybody will build.
+     * pathological case. Geometry is cached until a structural or chunk event.
+     * A truncated route fails closed rather than transferring through a partial survey.
      */
     public static final int MAX_LINE_BLOCKS = 256;
 
@@ -121,86 +119,19 @@ public final class SteamLineNetwork {
         if (level == null || start == null) {
             return EMPTY;
         }
-        BlockPos origin = start.immutable();
-        if (!level.isLoaded(origin)) {
-            return EMPTY;
+        var graph=dev.bwr.mod.piping.PipeTopology.get(level,start,null,true,false);
+        List<BlockPos> nozzles=new ArrayList<>(),valves=new ArrayList<>(),reliefs=new ArrayList<>(),outlets=new ArrayList<>(),quenchers=new ArrayList<>();
+        for(var node:graph.edges().keySet()) {
+            if(node.kind()==dev.bwr.mod.piping.PipeTopology.Kind.START)continue;
+            var s=node.state();
+            if(isVesselNozzle(s))nozzles.add(node.pos());
+            if(s.is(BwrBlocks.MSIV.get()))valves.add(node.pos());
+            if((s.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock))reliefs.add(node.pos());
+            if(isTurbineOutlet(s))outlets.add(node.pos());
+            if(isQuencher(s))quenchers.add(node.pos());
         }
-
-        List<BlockPos> nozzles = new ArrayList<>();
-        List<BlockPos> valves = new ArrayList<>();
-        List<BlockPos> reliefValves = new ArrayList<>();
-        List<BlockPos> outlets = new ArrayList<>();
-        List<BlockPos> quenchers = new ArrayList<>();
-        int lineBlocks = 0;
-        boolean truncated = false;
-
-        Set<BlockPos> seen = new HashSet<>();
-        seen.add(origin);
-        ArrayDeque<BlockPos> frontier = new ArrayDeque<>();
-        frontier.add(origin);
-
-        while (!frontier.isEmpty()) {
-            BlockPos here = frontier.poll();
-            BlockState hereState = level.getBlockState(here);
-            for (Direction d : Direction.values()) {
-                // relative() on an immutable BlockPos allocates an immutable one,
-                // so every position that goes into a set or a result list here is
-                // already a copy nobody else is walking. There is no cursor in
-                // this method and there must not be one: the lists outlive it.
-                BlockPos next = here.relative(d);
-                if (seen.contains(next) || !level.isLoaded(next)) {
-                    continue;
-                }
-                BlockState nextState = level.getBlockState(next);
-                if (!joined(hereState, nextState, d)) {
-                    // Not marked seen. A block that refuses the line on one of
-                    // its faces may accept it on another, and marking it here
-                    // would make whichever face the walk happened to try first
-                    // decide the answer for all six. Nothing overrides
-                    // acceptsSteamLineOn today, so the two orderings agree today
-                    // — but the interface exists precisely so that something can,
-                    // and this is the loop that would quietly be wrong when it
-                    // does. The re-test costs one block lookup per rejected face.
-                    continue;
-                }
-                seen.add(next);
-                if (nextState.getBlock() instanceof dev.bwr.mod.eccs.ProcessAssembly) {
-                    continue; // each machine port terminates its own circuit
-                }
-                if (isVesselNozzle(nextState)) {
-                    nozzles.add(next);
-                    continue; // an end of the line, not a way through it
-                }
-                if (isTurbineOutlet(nextState)) {
-                    outlets.add(next);
-                    continue; // likewise
-                }
-                if (isQuencher(nextState)) {
-                    quenchers.add(next);
-                    continue; // likewise: the line ends in the water
-                }
-                lineBlocks++;
-                if (nextState.is(BwrBlocks.MSIV.get())) {
-                    valves.add(next);
-                }
-                if (nextState.is(BwrBlocks.SAFETY_RELIEF_VALVE.get())) {
-                    reliefValves.add(next);
-                }
-                if (lineBlocks >= MAX_LINE_BLOCKS) {
-                    truncated = true;
-                    frontier.clear();
-                    break;
-                }
-                frontier.add(next);
-            }
-        }
-
-        return new Survey(Collections.unmodifiableList(nozzles),
-                Collections.unmodifiableList(valves),
-                Collections.unmodifiableList(reliefValves),
-                Collections.unmodifiableList(outlets),
-                Collections.unmodifiableList(quenchers),
-                lineBlocks, truncated);
+        return new Survey(List.copyOf(nozzles),List.copyOf(valves),List.copyOf(reliefs),List.copyOf(outlets),List.copyOf(quenchers),
+                Math.max(0,graph.cells().size()-1),graph.truncated());
     }
 
     /**

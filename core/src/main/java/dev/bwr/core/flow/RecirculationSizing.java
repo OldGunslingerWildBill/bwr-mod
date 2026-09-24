@@ -46,4 +46,19 @@ public final class RecirculationSizing {
         return Math.min(externalCapacityUnits(jetUnits, speeds.length),
                 speedSum * externalCapacityUnits(jetUnits, 1));
     }
+
+    /** Invert the actual shared-manifold curve, including its plateau, for equal motor commands. */
+    public static double speedForDemand(double fraction, double requiredJets, double jetUnits,
+                                       int externalPumps, int internalPumps) {
+        if (!Double.isFinite(fraction) || !Double.isFinite(requiredJets) || requiredJets <= 0
+                || internalPumps < 0) throw new IllegalArgumentException("Invalid circulation demand");
+        double externalCap = externalCapacityUnits(jetUnits, externalPumps);
+        double externalGain = externalPumps * externalCapacityUnits(jetUnits, 1);
+        double internalGain = internalPumps * INTERNAL_PUMP_UNITS;
+        double wanted = Math.min(Math.clamp(fraction, 0, 1) * requiredJets, externalCap + internalGain);
+        if (wanted <= 0 || externalGain + internalGain <= 0) return 0;
+        double linear = wanted / (externalGain + internalGain);
+        if (externalGain * linear <= externalCap) return Math.clamp(linear, 0, 1);
+        return internalGain > 0 ? Math.clamp((wanted - externalCap) / internalGain, 0, 1) : 1;
+    }
 }

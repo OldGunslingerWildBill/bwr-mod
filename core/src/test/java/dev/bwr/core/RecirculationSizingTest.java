@@ -4,6 +4,17 @@ import dev.bwr.core.flow.RecirculationSizing;
 
 /** Volume scaling, finite drive ratings and preservation of physical flow on resize. */
 public final class RecirculationSizingTest {
+    public static void test07_inverseMatchesSharedManifoldIncludingSaturation() {
+        near(RecirculationSizing.speedForDemand(.5,12,12,2,0),.3);
+        for(double jets:new double[]{0,2,12,32,48}) for(int external=0;external<=5;external++)
+            for(int internal=0;internal<=4;internal++) for(double fraction:new double[]{0,.1,.5,.9,1}) {
+                double speed=RecirculationSizing.speedForDemand(fraction,12,jets,external,internal);
+                double[] speeds=new double[external];java.util.Arrays.fill(speeds,speed);
+                double delivered=RecirculationSizing.externalDeliveryUnits(jets,speeds)+internal*RecirculationSizing.INTERNAL_PUMP_UNITS*speed;
+                double capacity=RecirculationSizing.externalCapacityUnits(jets,external)+internal*RecirculationSizing.INTERNAL_PUMP_UNITS;
+                near(delivered,Math.min(12*fraction,capacity));
+            }
+    }
     private static void check(boolean ok,String message) { if(!ok)throw new AssertionError(message); }
     private static void near(double actual,double expected) { check(Math.abs(actual-expected)<1e-8,"expected "+expected+", got "+actual); }
 

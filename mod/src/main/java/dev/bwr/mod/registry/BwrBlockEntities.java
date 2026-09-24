@@ -46,7 +46,7 @@ public final class BwrBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SafetyReliefValveBlockEntity>>
             SAFETY_RELIEF_VALVE = BLOCK_ENTITIES.register("safety_relief_valve",
             () -> BlockEntityType.Builder.of(SafetyReliefValveBlockEntity::new,
-                    BwrBlocks.SAFETY_RELIEF_VALVE.get()).build(null));
+                    BwrBlocks.SAFETY_RELIEF_VALVE.get(), BwrBlocks.ADS_RELIEF_VALVE.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MainSteamIsolationValveBlockEntity>>
             MSIV = BLOCK_ENTITIES.register("msiv",
@@ -132,6 +132,11 @@ public final class BwrBlockEntities {
             CONDENSATE_STORAGE_TANK = BLOCK_ENTITIES.register("condensate_storage_tank",
             () -> BlockEntityType.Builder.of(CondensateStorageTankBlockEntity::new,
                     BwrBlocks.CONDENSATE_STORAGE_TANK.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.eccs.SlcTankBlockEntity>> SLC_TANK =
+            BLOCK_ENTITIES.register("slc_boron_tank", () -> BlockEntityType.Builder.of(dev.bwr.mod.eccs.SlcTankBlockEntity::new,BwrBlocks.SLC_BORON_TANK.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.water.WaterDischargeBlockEntity>> WATER_DISCHARGE =
+            BLOCK_ENTITIES.register("water_discharge_port", () -> BlockEntityType.Builder.of(dev.bwr.mod.water.WaterDischargeBlockEntity::new,BwrBlocks.WATER_DISCHARGE_PORT.get()).build(null));
 
     /**
      * One type for both reactor feed pumps. They differ only in the

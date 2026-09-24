@@ -108,8 +108,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
      * The pump's own suction buffer. Water only — a feed pump is not a place to
      * put lava, and refusing it here is cheaper than explaining it later.
      */
-    private final FluidTank suction = new FluidTank(SUCTION_BUFFER_MB,
-            stack -> stack.getFluid() == Fluids.WATER) {
+    private final FluidTank suction = new dev.bwr.mod.water.ThermalWaterTank(SUCTION_BUFFER_MB,32,this::bufferDebt) {
         @Override
         protected void onContentsChanged() {
             setChanged();
@@ -155,6 +154,8 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
      * is available and it survives a save.
      */
     private double pendingBufferDrawKg;
+    private double bufferDebt(){return pendingBufferDrawKg;}
+    private double deliveredTemperatureC=32;
 
     /** Last tick's figures, kept for the panel, the peripheral and the chat readout. */
     private volatile double deliveredFlowKgPerS;
@@ -202,7 +203,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
         pump.setExhaustPressurePsig(
                 Saturation.psigFromPsia(FeedwaterDesign.DRIVE_EXHAUST_PSIA));
 
-        double suctionTemperatureC = CondensateStorageTankBlockEntity.STORED_TEMPERATURE_C;
+        double suctionTemperatureC = dev.bwr.mod.water.ThermalWater.temperature(suction.getFluid(),32);
         pump.setSuctionTemperatureC(suctionTemperatureC);
         pump.setSuctionFlowLimitKgPerS(availableSuctionKg(tankBe) / dt);
 
@@ -233,7 +234,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
             // See reportFeedwater: a claim that switches off when the pump stops
             // latches the core's last relief figure in place.
             EccsNetwork.busFor(level, reactorPos).reportFeedwater(getBlockPos(),
-                    level.getGameTime(), deliveredFlowKgPerS, suctionTemperatureC,
+                    level.getGameTime(), deliveredFlowKgPerS, deliveredTemperatureC,
                     steamDrawKgPerS, design.drive() == PumpDesign.Drive.STEAM_TURBINE);
         }
 
@@ -254,7 +255,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
         reactorPos=next; tankPos=tank==null?null:tank.getBlockPos();
         pump.setVesselPressurePsig(delivery==null?0:delivery.core().getPressurePsig());
         pump.setSuctionPressurePsig(0);
-        double temperature=CondensateStorageTankBlockEntity.STORED_TEMPERATURE_C;
+        double temperature=dev.bwr.mod.water.ThermalWater.temperature(suction.getFluid(),32);
         pump.setSuctionTemperatureC(temperature);
         pump.setSuctionFlowLimitKgPerS(delivery==null || !inlet.valid()?0:
                 Math.min(availableSuctionKg(tank)/dt,design.ratedFlowKgPerS()*Math.min(inlet.opening(),discharge.opening())));
@@ -285,7 +286,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
         double wanted=delivery==null?0:pump.getFlowKgPerS();
         deliveredFlowKgPerS=drawSuction(tank,wanted,dt)/dt;
         suctionShortfallKgPerS=Math.max(0,wanted-deliveredFlowKgPerS);
-        if(delivery!=null) EccsNetwork.busFor(level,reactorPos).reportFeedwater(getBlockPos(),level.getGameTime(),deliveredFlowKgPerS,temperature,0,false);
+        if(delivery!=null) EccsNetwork.busFor(level,reactorPos).reportFeedwater(getBlockPos(),level.getGameTime(),deliveredFlowKgPerS,deliveredTemperatureC,0,false);
         assemblyConnections="Discharge: "+(delivery==null?"no connected reactor":"connected")
                 +"; water: "+(tank==null?"suction buffer":"connected storage tank and suction buffer");
         setChanged();
@@ -320,6 +321,8 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
         if (!(kgPerS > 0.0)) {
             return 0.0;
         }
+        double bufferH=dev.bwr.mod.water.ThermalWater.enthalpy(suction.getFluid(),32);
+        double tankH=tankBe==null?bufferH:dev.bwr.mod.water.ThermalWater.enthalpy(tankBe.tank().getFluid(),32);
         double wantedKg = kgPerS * dt;
 
         // The buffer counts in whole millibuckets and a tick's draw is usually
@@ -343,6 +346,8 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
 
         double remaining = wantedKg - fromBuffer;
         double fromTank = (remaining > 0.0 && tankBe != null) ? tankBe.drawKg(remaining) : 0.0;
+        if(fromBuffer+fromTank>0)deliveredTemperatureC=dev.bwr.core.thermal.WaterInventory.temperature((fromBuffer*bufferH+fromTank*tankH)/(fromBuffer+fromTank));
+        pump.setSuctionTemperatureC(deliveredTemperatureC);
         return fromBuffer + fromTank;
     }
 
@@ -530,18 +535,8 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
         return reactorPos;
     }
 
-    /**
-     * Temperature this pump's water would arrive at if it were the whole plant's
-     * feedwater, degrees C. Published for the readout only — the figure the core
-     * is actually given is computed on the bus from every pump's flow together,
-     * because how hot the heater string runs depends on total steam flow and not
-     * on any one machine.
-     */
-    public double getIndicatedFeedwaterTemperatureC() {
-        return FeedwaterHeating.finalTemperatureC(
-                CondensateStorageTankBlockEntity.STORED_TEMPERATURE_C,
-                deliveredFlowKgPerS / FeedwaterDesign.RATED_FEEDWATER_FLOW_KG_PER_S);
-    }
+    /** Actual delivered water temperature; pumps do not imply a feedwater heater. */
+    public double getIndicatedFeedwaterTemperatureC() { return deliveredTemperatureC; }
 
     public List<String> statusLines() {
         List<String> out = new ArrayList<>();

@@ -76,7 +76,7 @@ public final class PowerModuleRuntimeCheck {
     public static dev.bwr.mod.condenser.CondenserBlockEntity attachCondenser(PowerModuleBlockEntity m){
         var l=m.getLevel();var p=m.getBlockPos().below(6);var b=BwrBlocks.ARABELLE_CONDENSER.get();
         if(l.getBlockEntity(p) instanceof dev.bwr.mod.condenser.CondenserBlockEntity old)l.removeBlock(p,false);
-        var s=b.defaultBlockState().setValue(dev.bwr.mod.condenser.CondenserBlock.FACING,m.getBlockState().getValue(PumpAssemblyBlock.FACING));
+        var s=b.defaultBlockState().setValue(dev.bwr.mod.condenser.CondenserBlock.FACING,m.getBlockState().getValue(PumpAssemblyBlock.FACING).getClockWise());
         l.setBlock(p,s,3);b.setPlacedBy(l,p,s,null,new ItemStack(b));
         var c=(dev.bwr.mod.condenser.CondenserBlockEntity)l.getBlockEntity(p);check(c!=null&&c.ready(),"condenser placement incomplete");return c;
     }
@@ -113,7 +113,7 @@ public final class PowerModuleRuntimeCheck {
         near(lp.inletMass()+c.plant().steam.mass()+c.plant().condensate(),100,"condensing lost mass");
         // Retained remote capability must resolve the replacement controller after reload.
         var entry=c.layout().ports.stream().filter(p->p.role()==dev.bwr.mod.condenser.CondenserBlock.Port.CONDENSATE).findFirst().orElseThrow();
-        var at=c.layout().world(c.root(),Direction.EAST,entry);var face=dev.bwr.mod.condenser.CondenserBlock.portFace(l.getBlockState(at));
+        var at=c.layout().world(c.root(),c.getBlockState().getValue(dev.bwr.mod.condenser.CondenserBlock.FACING),entry);var face=dev.bwr.mod.condenser.CondenserBlock.portFace(l.getBlockState(at));
         var cache=net.neoforged.neoforge.capabilities.BlockCapabilityCache.create(Capabilities.FluidHandler.BLOCK,l,at,face);var oldHandler=cache.getCapability();
         var nbt=c.saveWithFullMetadata(l.registryAccess());var state=c.getBlockState();l.removeBlockEntity(c.root());var replacement=new dev.bwr.mod.condenser.CondenserBlockEntity(c.root(),state);replacement.loadWithComponents(nbt,l.registryAccess());l.setBlockEntity(replacement);
         double old=c.plant().condensate();check(oldHandler.drain(1,IFluidHandler.FluidAction.EXECUTE).getAmount()==1,"cached condenser outlet did not reconnect");near(c.plant().condensate(),old,"remote drain touched obsolete condenser");near(replacement.plant().condensate(),old-1,"replacement water inventory not debited");

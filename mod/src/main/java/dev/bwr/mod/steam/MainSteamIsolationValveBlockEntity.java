@@ -28,9 +28,26 @@ public class MainSteamIsolationValveBlockEntity extends BlockEntity {
 
     /** One game tick, seconds. The valve strokes on the server tick. */
     private static final double TICK_SECONDS = 0.05;
+    /** Gameplay electrical loads: motor while opening, solenoid while held open. */
+    public static final int ENERGY_CAPACITY_FE = 20_000;
+    public static final int OPENING_FE_PER_TICK = 100;
+    public static final int HOLDING_FE_PER_TICK = 20;
+    private int energyFe;
+    private final net.neoforged.neoforge.energy.IEnergyStorage energy = new net.neoforged.neoforge.energy.IEnergyStorage() {
+        public int receiveEnergy(int amount, boolean simulate) {
+            int accepted = Math.min(Math.max(0,amount),ENERGY_CAPACITY_FE-energyFe);
+            if(!simulate && accepted>0){energyFe+=accepted;setChanged();}
+            return accepted;
+        }
+        public int extractEnergy(int amount,boolean simulate){return 0;}
+        public int getEnergyStored(){return energyFe;}
+        public int getMaxEnergyStored(){return ENERGY_CAPACITY_FE;}
+        public boolean canExtract(){return false;}
+        public boolean canReceive(){return true;}
+    };
 
     /** 1.0 fully open, 0.0 fully shut. */
-    private volatile double position = 1.0;
+    private volatile double position;
     private volatile boolean demandOpen = true;
     private volatile boolean computerControlled;
 
@@ -58,10 +75,16 @@ public class MainSteamIsolationValveBlockEntity extends BlockEntity {
     /** Advance the stroke. Called by the ticker, once per server tick. */
     public void tickValve(double dtSeconds) {
         if (!Double.isFinite(dtSeconds) || dtSeconds <= 0) return;
-        double target = demandOpen ? 1.0 : 0.0;
+        // The spring can always close; electrical energy is required to open
+        // or hold the valve. Commands never grant free actuator power.
+        double openingSeconds=Math.min(dtSeconds,(1-position)*STROKE_SECONDS);
+        double cost=Math.ceil((openingSeconds*OPENING_FE_PER_TICK
+                +(dtSeconds-openingSeconds)*HOLDING_FE_PER_TICK)/TICK_SECONDS-1e-9);
+        boolean powered=demandOpen && cost<=energyFe;
+        if(powered && cost>0){energyFe-=(int)cost;setChanged();}
+        double target = powered ? 1.0 : 0.0;
         if (position == target) {
-            // A valve sitting at its end stop is not a change. Marking the chunk
-            // dirty twenty times a second for every MSIV in the world would be.
+            syncOpenState();
             return;
         }
         double step = dtSeconds / STROKE_SECONDS;
@@ -74,7 +97,19 @@ public class MainSteamIsolationValveBlockEntity extends BlockEntity {
             position = Math.max(target, position - step);
         }
         setChanged();
+        syncOpenState();
     }
+    private void syncOpenState(){
+        if(level!=null && !level.isClientSide() && getBlockState().getValue(MainSteamIsolationValveBlock.OPEN)!=(position>0))
+            level.setBlock(worldPosition,getBlockState().setValue(MainSteamIsolationValveBlock.OPEN,position>0),net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+    }
+
+    public net.neoforged.neoforge.energy.IEnergyStorage energy(){return energy;}
+    public boolean isPowered(){return energyFe>=(position<1?OPENING_FE_PER_TICK:HOLDING_FE_PER_TICK);}
+    public int getRequiredFePerTick(){return demandOpen?(position<1?OPENING_FE_PER_TICK:HOLDING_FE_PER_TICK):0;}
+    // This valve has no comparator output. Avoid vanilla's adjacent comparator
+    // scan (and possible chunk loads) for every electrical transfer.
+    @Override public void setChanged(){if(level!=null)level.blockEntityChanged(worldPosition);}
 
     public double getPosition() {
         return position;
@@ -105,6 +140,7 @@ public class MainSteamIsolationValveBlockEntity extends BlockEntity {
         tag.putDouble("Position", position);
         tag.putBoolean("DemandOpen", demandOpen);
         tag.putBoolean("ComputerControlled", computerControlled);
+        tag.putInt("EnergyFe",energyFe);
     }
 
     @Override
@@ -118,9 +154,10 @@ public class MainSteamIsolationValveBlockEntity extends BlockEntity {
         // both do — gets a NaN steam flow. Clamping here costs nothing and the
         // consumers guard as well, on the principle that a value crossing a
         // boundary is checked on both sides of it.
-        double saved = tag.contains("Position") ? tag.getDouble("Position") : 1.0;
-        position = Double.isFinite(saved) ? Math.max(0.0, Math.min(1.0, saved)) : 1.0;
+        double saved = tag.contains("Position") ? tag.getDouble("Position") : 0.0;
+        position = Double.isFinite(saved) ? Math.max(0.0, Math.min(1.0, saved)) : 0.0;
         demandOpen = !tag.contains("DemandOpen") || tag.getBoolean("DemandOpen");
         computerControlled = tag.getBoolean("ComputerControlled");
+        energyFe=Math.clamp(tag.getInt("EnergyFe"),0,ENERGY_CAPACITY_FE);
     }
 }

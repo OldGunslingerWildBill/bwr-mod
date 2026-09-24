@@ -22,7 +22,7 @@ public class SuppressionPoolPortBlock extends BaseEntityBlock {
     @Override public BlockState getStateForPlacement(BlockPlaceContext c){var d=c.getClickedFace();return defaultBlockState().setValue(FACING,d.getAxis().isHorizontal()?d:c.getHorizontalDirection().getOpposite());}
     @Override protected RenderShape getRenderShape(BlockState s){return RenderShape.MODEL;}
     @Override public BlockEntity newBlockEntity(BlockPos p,BlockState s){return new SuppressionPoolPortBlockEntity(p,s);}
-    @Override protected void onPlace(BlockState s,Level l,BlockPos p,BlockState old,boolean moved){super.onPlace(s,l,p,old,moved);if(s.getBlock()!=old.getBlock())ConcreteBasin.changed(l,p,false);}
+    @Override protected void onPlace(BlockState s,Level l,BlockPos p,BlockState old,boolean moved){super.onPlace(s,l,p,old,moved);if(s!=old)dev.bwr.mod.piping.PipeTopology.changed(l,p);if(s.getBlock()!=old.getBlock())ConcreteBasin.changed(l,p,false);}
     @Override protected void onRemove(BlockState s,Level l,BlockPos p,BlockState n,boolean moved){if(s.getBlock()!=n.getBlock())ConcreteBasin.changed(l,p,true);super.onRemove(s,l,p,n,moved);}
     @Override protected InteractionResult useWithoutItem(BlockState s,Level l,BlockPos p,Player player,BlockHitResult hit){
         if(!l.isClientSide()&&l.getBlockEntity(p) instanceof SuppressionPoolPortBlockEntity port

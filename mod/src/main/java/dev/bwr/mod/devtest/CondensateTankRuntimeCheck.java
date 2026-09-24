@@ -48,12 +48,19 @@ public final class CondensateTankRuntimeCheck {
             var clicked=ROOT.offset(CondensateTankShape.port(3,Direction.NORTH));var state=l.getBlockState(clicked);var child=(CondensateStorageTankBlockEntity)l.getBlockEntity(clicked);var stale=child.fluidHandler();var required=tank.paidBlocks;
             var tool=new ItemStack(Items.NETHERITE_PICKAXE);player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,tool);
             block.playerWillDestroy(l,clicked,state,player);l.removeBlock(clicked,false);block.playerDestroy(l,player,clicked,state,child,tool);
-            int drops=l.getEntitiesOfClass(ItemEntity.class,new AABB(ROOT).inflate(30)).stream().filter(e->e.getItem().is(block.asItem())).mapToInt(e->e.getItem().getCount()).sum();check(drops==required,"broken shell refund "+drops+" != "+required);check(stale.fill(new FluidStack(Fluids.WATER,100),EXECUTE)==0,"destroyed tank still accepts water");
-            for(var p:CondensateTankShape.get(3,3).cells.keySet())check(l.getBlockState(ROOT.offset(p)).isAir(),"orphan tank part");passed++;
+            int drops=l.getEntitiesOfClass(ItemEntity.class,new AABB(ROOT).inflate(30)).stream().filter(e->e.getItem().is(block.asItem())).mapToInt(e->e.getItem().getCount()).sum();check(drops+casings(l,ROOT)==required,"broken shell material loss: "+drops+" drops + "+casings(l,ROOT)+" casings != "+required);check(stale.fill(new FluidStack(Fluids.WATER,100),EXECUTE)==0,"destroyed tank still accepts water");
+            for(var p:CondensateTankShape.get(3,3).cells.keySet()){var s=l.getBlockState(ROOT.offset(p));check(!s.is(block)||!s.getValue(CondensateStorageTankBlock.ASSEMBLED),"orphan assembled part");}clear(l,ROOT);passed++;
             automatic(l,player);passed++;
             LogUtils.getLogger().info("CONDENSATE TANK RUNTIME CHECK PASS: {} scenarios, automatic shells, min/mid/max, survival costs, pipes, legacy water and fractional persistence",passed);return 0;
         }catch(Throwable e){LogUtils.getLogger().error("CONDENSATE TANK RUNTIME CHECK FAIL after {} scenarios",passed,e);return 1;}
-        finally{l.removeBlock(ROOT,false);l.getEntitiesOfClass(ItemEntity.class,new AABB(ROOT).inflate(30)).forEach(ItemEntity::discard);player.getInventory().clearContent();player.setGameMode(GameType.CREATIVE);}
+        finally{clear(l,ROOT);l.getEntitiesOfClass(ItemEntity.class,new AABB(ROOT).inflate(30)).forEach(ItemEntity::discard);player.getInventory().clearContent();player.setGameMode(GameType.CREATIVE);}
+    }
+    public static void clear(ServerLevel l,BlockPos root){
+        for(var p:BlockPos.betweenClosed(root.offset(-7,0,-7),root.offset(7,23,7)))l.removeBlock(p,false);
+    }
+    public static int casings(ServerLevel l,BlockPos root){
+        int count=0;for(var p:BlockPos.betweenClosed(root.offset(-7,0,-7),root.offset(7,23,7)))if(l.getBlockState(p).is(BwrBlocks.CONDENSATE_STORAGE_TANK.get()))count++;
+        return count;
     }
     public static CondensateStorageTankBlockEntity buildShell(ServerLevel l,ServerPlayer player,BlockPos root,int d,int h){
         var b=BwrBlocks.CONDENSATE_STORAGE_TANK.get();int r=d/2;
@@ -71,19 +78,22 @@ public final class CondensateTankRuntimeCheck {
     private static void automatic(ServerLevel l,ServerPlayer player){
         var b=BwrBlocks.CONDENSATE_STORAGE_TANK.get();player.setPos(190,290,145);player.setGameMode(GameType.SURVIVAL);
         for(int[] size:new int[][]{{3,3},{7,8},{15,24}}){
-            var t=buildShell(l,player,ROOT,size[0],size[1]);check(t.assembled()&&t.ready(),"complete shell did not autoform");
+            clear(l,ROOT);var t=buildShell(l,player,ROOT,size[0],size[1]);check(t.assembled()&&t.ready(),"complete shell did not autoform");
             int paid=size[0]*size[0]*size[1]-(size[0]-2)*(size[0]-2)*(size[1]-2);check(t.paidBlocks==paid,"paid shell blocks were miscounted");
             var tag=t.saveWithoutMetadata(l.registryAccess());t.loadWithComponents(tag,l.registryAccess());check(t.ready(),"automatic tank failed reload");l.removeBlock(ROOT,false);
         }
         // Incomplete/obstructed boxes keep their blocks and fractional water untouched.
+        clear(l,ROOT);
         l.setBlock(ROOT.above(),Blocks.DIAMOND_BLOCK.defaultBlockState(),3);
         var t=buildShell(l,player,ROOT,3,3);check(!t.assembled(),"autoformation destroyed an interior block");
-        t.fillKg(25);near(t.drawKg(.25),.25,"fractional seed failed");
+        t.tank().fill(dev.bwr.mod.water.ThermalWater.atTemperature(25,70),EXECUTE);near(t.drawKg(.25),.25,"fractional seed failed");
+        var other=(CondensateStorageTankBlockEntity)l.getBlockEntity(ROOT.east());other.tank().fill(dev.bwr.mod.water.ThermalWater.atTemperature(10,20),EXECUTE);
+        double expectedH=(24.75*dev.bwr.core.thermal.Saturation.subcooledLiquidEnthalpyKJPerKg(70)+10*dev.bwr.core.thermal.Saturation.subcooledLiquidEnthalpyKJPerKg(20))/34.75;
         l.removeBlock(ROOT.above(),false);var last=ROOT.above(2);b.setPlacedBy(l,last,l.getBlockState(last),player,new ItemStack(b));
-        check(t.ready(),"unobstructed complete shell failed to form");near(t.availableWaterKg(),24.75,"autoformation duplicated fractional water");
+        check(t.ready(),"unobstructed complete shell failed to form");near(t.availableWaterKg(),34.75,"autoformation duplicated fractional water");near(dev.bwr.mod.water.ThermalWater.enthalpy(t.tank().getFluid()),expectedH,"autoformation lost mixed thermal inventory");
         var port=ROOT.offset(CondensateTankShape.port(3,Direction.NORTH));var part=(CondensateStorageTankBlockEntity)l.getBlockEntity(port);var state=l.getBlockState(port);var tool=new ItemStack(Items.NETHERITE_PICKAXE);
         l.getEntitiesOfClass(ItemEntity.class,new AABB(ROOT).inflate(30)).forEach(ItemEntity::discard);
         player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,tool);b.playerWillDestroy(l,port,state,player);l.removeBlock(port,false);b.playerDestroy(l,player,port,state,part,tool);
-        int drops=l.getEntitiesOfClass(ItemEntity.class,new AABB(ROOT).inflate(30)).stream().filter(e->e.getItem().is(b.asItem())).mapToInt(e->e.getItem().getCount()).sum();check(drops==26,"automatic shell refund did not preserve 26 placed blocks");
+        int drops=l.getEntitiesOfClass(ItemEntity.class,new AABB(ROOT).inflate(30)).stream().filter(e->e.getItem().is(b.asItem())).mapToInt(e->e.getItem().getCount()).sum();check(drops+casings(l,ROOT)==26,"automatic shell dismantling did not preserve 26 placed blocks");
     }
 }

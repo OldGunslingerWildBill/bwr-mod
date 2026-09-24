@@ -15,7 +15,7 @@ import net.neoforged.neoforge.capabilities.*;
 /** All part cells address their one controller; fluid is exposed only at suction. */
 public final class PumpAssemblyCapabilities {
     private PumpAssemblyCapabilities() {}
-    public static Block[] blocks() { return new Block[]{BwrBlocks.LPCS_PUMP.get(),BwrBlocks.HPCS_PUMP.get(),BwrBlocks.RHR_PUMP.get(),
+    public static Block[] blocks() { return new Block[]{BwrBlocks.SLC_PUMP.get(),BwrBlocks.LPCS_PUMP.get(),BwrBlocks.HPCS_PUMP.get(),BwrBlocks.RHR_PUMP.get(),
             BwrBlocks.MOTOR_FEED_PUMP.get(),BwrBlocks.TURBINE_FEED_PUMP.get(),BwrBlocks.RIP_PUMP.get(),BwrBlocks.RECIRCULATION_PUMP.get(),BwrBlocks.RCIC_TWL.get(),BwrBlocks.HPCI_TURBINE.get()}; }
     public static BlockEntity controller(Level level,BlockPos pos,BlockState state) {
         if (!(state.getBlock() instanceof ProcessAssembly b)) return null;
@@ -42,7 +42,7 @@ public final class PumpAssemblyCapabilities {
             if (!waterFace(current,side)) return null;
             BlockEntity be = controller(level,pos,current);
             if (be instanceof FeedwaterPumpBlockEntity p) return p.suction();
-            if (be instanceof EccsPumpBlockEntity p) return p.waterInlet();
+            if (be instanceof EccsPumpBlockEntity p && p.design()!=dev.bwr.core.eccs.EccsDesign.SLC) return p.waterInlet();
             return null;
             });
         },blocks());

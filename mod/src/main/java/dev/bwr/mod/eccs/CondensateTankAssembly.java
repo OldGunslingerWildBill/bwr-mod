@@ -30,14 +30,14 @@ public final class CondensateTankAssembly {
         int d=maxX-minX+1,h=maxY-minY+1;
         if(maxZ-minZ+1!=d||!CondensateTankShape.valid(d,h))return false;
         var shape=CondensateTankShape.get(d,h);var root=new BlockPos(minX+d/2,minY,minZ+d/2);
-        double water=0;
+        double water=0,energy=0;
         for(var p:BlockPos.betweenClosed(minX,minY,minZ,maxX,maxY,maxZ)){
             if(!l.isLoaded(p)||!dev.bwr.mod.world.AssemblyAccess.permitted(l,player,p))return false;
             boolean boundary=p.getX()==minX||p.getX()==maxX||p.getY()==minY||p.getY()==maxY||p.getZ()==minZ||p.getZ()==maxZ;
             if(boundary&&!found.contains(p))return false;
             if(found.contains(p)){
                 if(!(l.getBlockEntity(p) instanceof CondensateStorageTankBlockEntity tank)||tank.assembled())return false;
-                water+=tank.availableWaterKg();
+                double mass=tank.availableWaterKg();water+=mass;energy+=mass*dev.bwr.mod.water.ThermalWater.enthalpy(tank.tank().getFluid(),CondensateStorageTankBlockEntity.STORED_TEMPERATURE_C);
             }else if(!l.getBlockState(p).isAir())return false;
         }
         if(water>shape.capacity)return false; // Never silently discard water during formation.
@@ -46,7 +46,7 @@ public final class CondensateTankAssembly {
         var owner=(CondensateStorageTankBlockEntity)l.getBlockEntity(root);
         EDITING.set(true);
         try{
-            owner.configure(d,h,found.size());owner.restoreAvailableWater(water);
+            owner.configure(d,h,found.size());owner.restoreAvailableWater(water,water>0?energy/water:dev.bwr.core.thermal.Saturation.subcooledLiquidEnthalpyKJPerKg(32));
             for(var p:found)if(!shape.cells.containsKey(p.subtract(root)))l.removeBlock(p,false);
             for(var off:shape.cells.keySet()){
                 var p=root.offset(off);var state=block.defaultBlockState().setValue(ASSEMBLED,true).setValue(CONTROLLER,off.equals(BlockPos.ZERO)).setValue(PORT,shape.role(off));
@@ -99,9 +99,4 @@ public final class CondensateTankAssembly {
     private static int count(ServerPlayer p,net.minecraft.world.item.Item item){int n=0;for(int i=0;i<p.getInventory().getContainerSize();i++){var s=p.getInventory().getItem(i);if(s.is(item))n+=s.getCount();}return n;}
     private static void take(ServerPlayer p,net.minecraft.world.item.Item item,int n){for(int i=0;i<p.getInventory().getContainerSize()&&n>0;i++){var s=p.getInventory().getItem(i);if(s.is(item)){int k=Math.min(s.getCount(),n);s.shrink(k);n-=k;}}p.getInventory().setChanged();}
     private static void give(ServerPlayer p,net.minecraft.world.item.Item item,int n){while(n>0){var s=new ItemStack(item,Math.min(64,n));n-=s.getCount();if(!p.getInventory().add(s))p.drop(s,false);}p.getInventory().setChanged();}
-    static void remove(CondensateStorageTankBlockEntity owner,BlockPos removed){
-        if(EDITING.get()||!owner.assembled())return;var l=owner.getLevel();EDITING.set(true);
-        try{for(var off:CondensateTankShape.get(owner.diameter,owner.height).cells.keySet()){var p=owner.getBlockPos().offset(off);if(!p.equals(removed)&&l.isLoaded(p)&&l.getBlockEntity(p) instanceof CondensateStorageTankBlockEntity part&&part.belongsTo(owner))l.removeBlock(p,false);}}
-        finally{EDITING.set(false);}
-    }
 }

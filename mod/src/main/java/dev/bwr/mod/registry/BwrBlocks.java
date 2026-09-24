@@ -229,8 +229,8 @@ public final class BwrBlocks {
      * pentaborate, about three quarters of an hour to a shutdown concentration.
      * The answer to an ATWS, and slow on purpose.
      */
-    public static final DeferredBlock<EccsPumpBlock> SLC_PUMP =
-            BLOCKS.register("slc_pump", () -> new EccsPumpBlock(machine(), EccsDesign.SLC));
+    public static final DeferredBlock<PumpAssemblyBlock> SLC_PUMP =
+            BLOCKS.register("slc_pump", () -> new PumpAssemblyBlock(machine(), PumpAssemblyBlock.Kind.SLC));
 
     /**
      * Automatic Depressurisation System — automatic in name only. Holds the
@@ -246,6 +246,13 @@ public final class BwrBlocks {
     public static final DeferredBlock<CondensateStorageTankBlock> CONDENSATE_STORAGE_TANK =
             BLOCKS.register("condensate_storage_tank",
                     () -> new CondensateStorageTankBlock(vesselSteel()));
+
+    public static final DeferredBlock<dev.bwr.mod.eccs.SlcTankBlock> SLC_BORON_TANK =
+            BLOCKS.register("slc_boron_tank", () -> new dev.bwr.mod.eccs.SlcTankBlock(machine()));
+    public static final DeferredBlock<dev.bwr.mod.steam.AdsReliefValveBlock> ADS_RELIEF_VALVE =
+            BLOCKS.register("ads_relief_valve", () -> new dev.bwr.mod.steam.AdsReliefValveBlock(machine()));
+    public static final DeferredBlock<dev.bwr.mod.water.WaterDischargeBlock> WATER_DISCHARGE_PORT =
+            BLOCKS.register("water_discharge_port", () -> new dev.bwr.mod.water.WaterDischargeBlock(machine()));
 
     // --- Feedwater (SPEC section 15) ------------------------------------
     //

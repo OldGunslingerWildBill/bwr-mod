@@ -19,6 +19,7 @@ public class PumpControlMenu extends BwrMenu {
     public static final int SPEED=0, RUN=1, CONTROL=2, SUCTION=3, MODE=4;
     private final BlockPos anchor;
     private final Block expected;
+    public boolean slc;
     public boolean present, running, turbine, recirculation, eccs, rhr, poolSuction, poolCooling;
     public int control; // 0 panel, 1 redstone, 2 computer
     public double target, actual, flow, pressure, temperature, energy, capacity, buffer;
@@ -63,6 +64,7 @@ public class PumpControlMenu extends BwrMenu {
             if(be instanceof EccsPumpBlockEntity e) {
                 control=e.isComputerControlled()?2:e.isPanelControlled()?0:1;
                 rhr=e.design()==dev.bwr.core.eccs.EccsDesign.RHR;
+                slc=e.design()==dev.bwr.core.eccs.EccsDesign.SLC;
                 poolSuction=e.getSuctionSource()==SuctionSource.SUPPRESSION_POOL;
                 poolCooling=e.getMode()==EccsPumpBlockEntity.Mode.POOL_COOLING;
                 flow=e.getDeliveredFlowKgPerS(); energy=e.energy().getEnergyStored();capacity=e.energy().getMaxEnergyStored();
@@ -82,14 +84,14 @@ public class PumpControlMenu extends BwrMenu {
         b.writeBoolean(running);b.writeBoolean(turbine);b.writeBoolean(recirculation);b.writeBoolean(eccs);b.writeBoolean(rhr);
         b.writeBoolean(poolSuction);b.writeBoolean(poolCooling);b.writeInt(control);
         for(double v:new double[]{target,actual,flow,pressure,temperature,energy,capacity,buffer}) b.writeDouble(v);
-        b.writeUtf(connection);b.writeUtf(drive);
+        b.writeUtf(connection);b.writeUtf(drive);b.writeBoolean(slc);
     }
     @Override protected void readSnapshot(FriendlyByteBuf b) {
         present=b.readBoolean();if(!present)return;
         running=b.readBoolean();turbine=b.readBoolean();recirculation=b.readBoolean();eccs=b.readBoolean();rhr=b.readBoolean();
         poolSuction=b.readBoolean();poolCooling=b.readBoolean();control=b.readInt();
         target=b.readDouble();actual=b.readDouble();flow=b.readDouble();pressure=b.readDouble();temperature=b.readDouble();energy=b.readDouble();capacity=b.readDouble();buffer=b.readDouble();
-        connection=b.readUtf();drive=b.readUtf();
+        connection=b.readUtf();drive=b.readUtf();slc=b.readBoolean();
     }
     @Override public void handleCommand(ServerPlayer sender,int command,int a,int unused) {
         if(!stillValid(sender))return;

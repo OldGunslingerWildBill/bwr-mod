@@ -65,7 +65,7 @@ src = open(os.path.join(JAVA, "registry/BwrBlocks.java"), encoding="utf-8").read
 blocks = re.findall(r'BLOCKS\.register\(\s*"([a-z0-9_]+)"', src)
 isrc = open(os.path.join(JAVA, "registry/BwrItems.java"), encoding="utf-8").read()
 simple_block_items = re.findall(r'registerSimpleBlockItem\(BwrBlocks\.([A-Z0-9_]+)\)', isrc)
-extra_items = re.findall(r'ITEMS\.register\(\s*"([a-z0-9_]+)"', isrc)
+extra_items = re.findall(r'ITEMS\.register(?:SimpleItem)?\(\s*"([a-z0-9_]+)"', isrc)
 # Explicitly registered BlockItem subclasses still use block translation keys.
 custom_block_items = re.findall(r'DeferredItem<BlockItem>\s+\w+\s*=\s*ITEMS\.register\(\s*"([a-z0-9_]+)"', isrc)
 extra_items = [it for it in extra_items if it not in custom_block_items]
@@ -84,8 +84,8 @@ def javafile(cls):
     return ""
 
 # resolve per-block: find "name" -> class on the same register line
-for m in re.finditer(r'BLOCKS\.register\(\s*"([a-z0-9_]+)",\s*\(\)\s*->\s*new ([A-Za-z0-9_]+)\(', src):
-    name, cls = m.group(1), m.group(2)
+for m in re.finditer(r'BLOCKS\.register\(\s*"([a-z0-9_]+)",\s*\(\)\s*->\s*new ([A-Za-z0-9_.]+)\(', src):
+    name, cls = m.group(1), m.group(2).split('.')[-1]
     body = javafile(cls)
     # Registry classes can inherit blockstate properties (e.g. paired jet pumps).
     seen_classes = {cls}

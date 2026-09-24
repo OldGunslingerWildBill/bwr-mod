@@ -209,6 +209,12 @@ public final class FuelTypeSpecTest {
         measuredBeta.put("plutonium", 0.002099);  // Keepin, Pu-239 thermal
         measuredBeta.put("mox", 0.0035);          // blended U/Pu fission rate
         measuredBeta.put("thorium", 0.00266);     // U-233
+        // Grade changes retain their family's delayed-neutron data.
+        for (String name : List.of("natural_uranium", "uranium_12", "uranium_14", "uranium_27",
+                "uranium_495", "uranium_8", "uranium_1975", "gadolinia_uranium")) measuredBeta.put(name, 0.006502);
+        for (String name : List.of("mox_lean", "mox_rich")) measuredBeta.put(name, 0.0035);
+        for (String name : List.of("plutonium_lean", "plutonium_rich")) measuredBeta.put(name, 0.002099);
+        for (String name : List.of("thorium_lean", "thorium_rich")) measuredBeta.put(name, 0.00266);
 
         List<FuelType> presets = FuelType.presets();
         Check.exactly(measuredBeta.size(), presets.size(), "preset count");

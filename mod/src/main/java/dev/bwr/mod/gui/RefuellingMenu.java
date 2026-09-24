@@ -205,16 +205,16 @@ public class RefuellingMenu extends BwrMenu {
         // The held bundle first, so a player who cares which one goes where can
         // choose it by holding it. Two bundles are not interchangeable — that is
         // the entire point of exposure travelling on the item.
-        int found = inventory.getSelected().is(BwrItems.FUEL_ASSEMBLY.get())
+        int found = dev.bwr.mod.fuel.SpecialtyRodItem.isCoreItem(inventory.getSelected())
                 ? inventory.selected
                 : -1;
         for (int i = 0; found < 0 && i < inventory.getContainerSize(); i++) {
-            if (inventory.getItem(i).is(BwrItems.FUEL_ASSEMBLY.get())) {
+            if (dev.bwr.mod.fuel.SpecialtyRodItem.isCoreItem(inventory.getItem(i))) {
                 found = i;
             }
         }
         if (found < 0) {
-            refuse(sender, "No fuel assembly in your inventory.");
+            refuse(sender, "No fuel assembly or specialty rod in your inventory.");
             return;
         }
         ItemStack stack = inventory.getItem(found);
@@ -250,7 +250,7 @@ public class RefuellingMenu extends BwrMenu {
         Inventory inventory = who.getInventory();
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
-            if (stack.is(BwrItems.FUEL_ASSEMBLY.get())) {
+            if (dev.bwr.mod.fuel.SpecialtyRodItem.isCoreItem(stack)) {
                 total += stack.getCount();
             }
         }

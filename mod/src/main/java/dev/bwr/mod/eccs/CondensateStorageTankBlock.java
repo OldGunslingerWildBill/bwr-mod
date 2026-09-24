@@ -60,15 +60,29 @@ public class CondensateStorageTankBlock extends BaseEntityBlock {
         return net.minecraft.world.phys.shapes.Shapes.block();
     }
     @Override protected void onRemove(BlockState s,Level l,BlockPos p,BlockState next,boolean moving){
-        var owner=l.getBlockEntity(p) instanceof CondensateStorageTankBlockEntity part?part.owner():null;
-        if(owner!=null&&!next.is(this)&&l.getBlockEntity(p) instanceof CondensateStorageTankBlockEntity part)part.breakCost=owner.paidBlocks;
-        super.onRemove(s,l,p,next,moving);l.invalidateCapabilities(p);
-        if(!l.isClientSide()&&!next.is(this)&&owner!=null)CondensateTankAssembly.remove(owner,p);
+        boolean dismantle=!next.is(this)&&s.getValue(ASSEMBLED)&&!CondensateTankAssembly.EDITING.get();
+        if(dismantle&&l instanceof net.minecraft.server.level.ServerLevel server&&l.getBlockEntity(p) instanceof CondensateStorageTankBlockEntity part)
+            CondensateTankDismantling.get(server).begin(server,part,p);
+        // Bulk restoration removes unpaid collision cells too. Level.removeBlockEntity
+        // performs the same unsafe two-block comparator scan as setChanged; these tank
+        // cells have no comparator output, so remove their BE directly from the loaded chunk.
+        if(CondensateTankAssembly.EDITING.get()&&!next.is(this))l.getChunkAt(p).removeBlockEntity(p);
+        else super.onRemove(s,l,p,next,moving);
+        l.invalidateCapabilities(p);
+        if(dismantle&&l instanceof net.minecraft.server.level.ServerLevel server)CondensateTankDismantling.get(server).process(server);
     }
     @Override protected void tick(BlockState s,net.minecraft.server.level.ServerLevel l,BlockPos p,net.minecraft.util.RandomSource r){
         if(s.getValue(ASSEMBLED)&&l.getBlockEntity(p) instanceof CondensateStorageTankBlockEntity part){
             if(!l.isLoaded(part.root())){l.scheduleTick(p,this,100);return;}
-            if(part.owner()==null){l.removeBlock(p,false);return;}
+            if(part.owner()==null){
+                CondensateTankDismantling.get(l).process(l);
+                if(l.getBlockState(p).is(this)&&l.getBlockState(p).getValue(ASSEMBLED)){
+                    // Legacy orphans have no remaining material ledger; the old controller may
+                    // already have refunded them. Only a recorded dismantle restores casings.
+                    l.setBlock(p,net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),UPDATE_CLIENTS|UPDATE_KNOWN_SHAPE);
+                }
+                return;
+            }
             if(s.getValue(CONTROLLER)){
                 part.markStructureDirty();
                 if(dev.bwr.mod.world.AssemblyAccess.allLoaded(l,p,s)&&!part.ready()){l.destroyBlock(p,true);return;}
@@ -80,7 +94,8 @@ public class CondensateStorageTankBlock extends BaseEntityBlock {
         if(!s.getValue(ASSEMBLED))return super.getDrops(s,params);
         var be=params.getOptionalParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.BLOCK_ENTITY);
         if(!(be instanceof CondensateStorageTankBlockEntity part))return java.util.List.of();
-        var result=new java.util.ArrayList<ItemStack>();int count=part.owner()!=null?part.owner().paidBlocks:part.breakCost;while(count>0){int n=Math.min(64,count);result.add(new ItemStack(this,n));count-=n;}return result;
+        int count=part.getLevel() instanceof net.minecraft.server.level.ServerLevel server?CondensateTankDismantling.get(server).dropCount(part):part.breakCost;
+        var result=new java.util.ArrayList<ItemStack>();while(count>0){int n=Math.min(64,count);result.add(new ItemStack(this,n));count-=n;}return result;
     }
 
     @Override

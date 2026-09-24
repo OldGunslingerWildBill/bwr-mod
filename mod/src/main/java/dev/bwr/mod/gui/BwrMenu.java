@@ -139,6 +139,8 @@ public abstract class BwrMenu extends AbstractContainerMenu {
             // A malformed snapshot must not take the client's world down with
             // it. The screen simply keeps showing the last good values.
             buf.clear();
+        } finally {
+            buf.release();
         }
     }
 

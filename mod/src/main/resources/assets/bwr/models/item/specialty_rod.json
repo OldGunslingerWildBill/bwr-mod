@@ -1,0 +1,56 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "bwr:item/fuel/boron_absorber"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "bwr:rod_variant": 0
+      },
+      "model": "bwr:item/fuel/boron_absorber"
+    },
+    {
+      "predicate": {
+        "bwr:rod_variant": 1
+      },
+      "model": "bwr:item/fuel/hafnium_absorber"
+    },
+    {
+      "predicate": {
+        "bwr:rod_variant": 2
+      },
+      "model": "bwr:item/fuel/californium_source"
+    },
+    {
+      "predicate": {
+        "bwr:rod_variant": 3
+      },
+      "model": "bwr:item/fuel/americium_beryllium_source"
+    },
+    {
+      "predicate": {
+        "bwr:rod_variant": 4
+      },
+      "model": "bwr:item/fuel/antimony_beryllium_source"
+    },
+    {
+      "predicate": {
+        "bwr:rod_variant": 5
+      },
+      "model": "bwr:item/fuel/cobalt_target"
+    },
+    {
+      "predicate": {
+        "bwr:rod_variant": 6
+      },
+      "model": "bwr:item/fuel/tritium_target"
+    },
+    {
+      "predicate": {
+        "bwr:rod_variant": 7
+      },
+      "model": "bwr:item/fuel/silicon_target"
+    }
+  ]
+}

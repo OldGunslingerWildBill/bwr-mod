@@ -39,6 +39,11 @@ public class AdsPeripheral implements IPeripheral {
         this.be = be;
     }
 
+    @LuaFunction(mainThread=true) public int getDivision(){return be.getDivision();}
+    @LuaFunction(mainThread=true) public void setDivision(int division) throws dan200.computercraft.api.lua.LuaException {
+        if(division<0||division>4)throw new dan200.computercraft.api.lua.LuaException("Division must be 0 through 4");
+        be.setDivision(division);
+    }
     @Override
     public String getType() {
         return "bwr_ads";
@@ -144,6 +149,7 @@ public class AdsPeripheral implements IPeripheral {
     @LuaFunction(mainThread = true)
     public final Map<String, Object> getStatus() {
         Map<String, Object> m = new HashMap<>();
+        m.put("division",be.getDivision());
         m.put("open", be.isOpen());
         m.put("valves", be.getValveCount());
         m.put("valvesOpen", be.getHeldOpenCount());

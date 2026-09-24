@@ -1,5 +1,12 @@
 # GitHub issues 14–18: fixes and verification
 
+**23 September follow-up:** the first-release transport work supersedes the
+five-tick discovery window described in this historical report. Topology now
+rebuilds only after relevant edits, capability or chunk availability changes;
+valve travel uses the existing compact graph. R01–R05 are also fixed with
+permanent regressions. See [PLANT-TRANSPORT.md](PLANT-TRANSPORT.md),
+[TESTING.md](TESTING.md) and [PHASE-ONE-REAUDIT.md](PHASE-ONE-REAUDIT.md).
+
 Implemented against the local tree after the original thirteen phase-one
 repairs. Existing uncommitted model, condenser, cooling and storage-tank work is
 retained. This pass targets the five additional issues filed by Sam-Elsberry;

@@ -51,7 +51,7 @@ public final class CondenserRuntimeCheck {
     public static int run(ServerLevel l){
         int passed=0;long original=l.getGameTime();
         try{
-            check(LAYOUT.size.equals(new BlockPos(7,6,7))&&LAYOUT.ports.size()==6,"compact footprint/ports incorrect");
+            check(LAYOUT.size.equals(new BlockPos(7,6,9))&&LAYOUT.ports.size()==8,"transverse footprint/ports incorrect");
             for(Direction d:Direction.Plane.HORIZONTAL){
                 clear(l);var b=BwrBlocks.ARABELLE_CONDENSER.get();
                 var ctx=new DirectionalPlaceContext(l,ROOT,d.getOpposite(),new ItemStack(b),Direction.UP);
@@ -81,11 +81,11 @@ public final class CondenserRuntimeCheck {
                     originalPart.loadWithComponents(saved,l.registryAccess());check(originalPart.owner()==owner,"saved port lost owner");
                 }
                 // The real LP assembly sits directly above the condenser in every facing.
-                var lp=BwrBlocks.LP_TURBINE.get();var lpRoot=ROOT.above(6);
-                var lpContext=new DirectionalPlaceContext(l,lpRoot,d.getOpposite(),new ItemStack(lp),Direction.UP);
+                var lp=BwrBlocks.LP_TURBINE.get();var lpRoot=ROOT.above(6);var lpFacing=d.getCounterClockWise();
+                var lpContext=new DirectionalPlaceContext(l,lpRoot,lpFacing.getOpposite(),new ItemStack(lp),Direction.UP);
                 check(lp.getStateForPlacement(lpContext)!=null,"LP cannot be placed on condenser");
-                var lpState=lp.placementState().setValue(dev.bwr.mod.eccs.PumpAssemblyBlock.FACING,d);
-                for(int i=0;i<lp.cellCount(lpState);i++)WRITTEN.add(lpRoot.offset(dev.bwr.mod.eccs.TurbineAssemblyBlock.turn(lp.cellOffset(lpState,i),d)));
+                var lpState=lp.placementState().setValue(dev.bwr.mod.eccs.PumpAssemblyBlock.FACING,lpFacing);
+                for(int i=0;i<lp.cellCount(lpState);i++)WRITTEN.add(lpRoot.offset(dev.bwr.mod.eccs.TurbineAssemblyBlock.turn(lp.cellOffset(lpState,i),lpFacing)));
                 put(l,lpRoot,lpState);lp.setPlacedBy(l,lpRoot,lpState,null,new ItemStack(lp));
                 check(lp.complete(l,lpRoot,lpState)&&owner.ready(),"LP/condenser intersect or invalidate each other");
                 l.removeBlock(ROOT,false);check(lp.complete(l,lpRoot,lpState),"condenser teardown removed LP turbine");
@@ -110,7 +110,7 @@ public final class CondenserRuntimeCheck {
             var hs=l.getCapability(Capabilities.FluidHandler.BLOCK,hotSink,Direction.UP);var cs=l.getCapability(Capabilities.FluidHandler.BLOCK,condSink,Direction.NORTH);
             check(hs.getFluidInTank(0).getAmount()>0&&cs.getFluidInTank(0).getAmount()>0,"products not pushed into connected tanks");
             near(hs.getFluidInTank(0).getAmount()+cs.getFluidInTank(0).getAmount()+owner.plant().hot()+owner.plant().condensate()+owner.plant().steam.mass(),before,"output transfer duplicated water");passed++;
-            if(net.neoforged.fml.ModList.get().isLoaded("mekanism")){l.removeBlock(wp,false);mechanicalPipe(l,owner);passed++;}
+            if(net.neoforged.fml.ModList.get().isLoaded("mekanism")){l.removeBlock(wp,false);mechanicalPipe(l,owner,Port.COLD);mechanicalPipe(l,owner,Port.MAKEUP);passed++;}
             var player=net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(l);var anchor=port(Port.COLD);
             player.setPos(anchor.getX()+.5,anchor.getY(),anchor.getZ()+.5);var menu=new CondenserMenu(1,player.getInventory(),ROOT,anchor);
             check(menu.stillValid(player),"far port GUI cannot reach owner");player.setPos(0,0,0);check(!menu.stillValid(player),"remote condenser GUI remains valid");passed++;
@@ -124,7 +124,7 @@ public final class CondenserRuntimeCheck {
             int drops=l.getEntitiesOfClass(ItemEntity.class,new AABB(ROOT).inflate(28)).stream().filter(e->e.getItem().is(block.asItem())).mapToInt(e->e.getItem().getCount()).sum();
             check(drops==1,"part break produced "+drops+" condenser items");passed++;
             clear(l);legacy(l);passed++;
-            LogUtils.getLogger().info("CONDENSER RUNTIME CHECK PASS: {} scenarios; compact LP fit, six rotated ports, CC and legacy replacement",passed);return 0;
+            LogUtils.getLogger().info("CONDENSER RUNTIME CHECK PASS: {} scenarios; compact LP fit, eight rotated ports, CC and legacy replacement",passed);return 0;
         }catch(Throwable e){LogUtils.getLogger().error("CONDENSER RUNTIME CHECK FAIL after {} scenarios",passed,e);return 1;}
         finally{clear(l);((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(original);}
     }
@@ -158,24 +158,24 @@ public final class CondenserRuntimeCheck {
             @SuppressWarnings("unchecked") var typed=(BlockCapability<Object,Direction>)capability;
             Object cc=l.getCapability(typed,vp,Direction.UP);check(cc!=null,"no CC peripheral capability on bypass valve");
             check(cc.getClass().getMethod("getType").invoke(cc).equals("bwr_bypass_steam_valve"),"wrong CC type");
-            cc.getClass().getMethod("setPosition",double.class).invoke(cc,.251);near(valve.target(),.251,"CC fine position");
-            try{cc.getClass().getMethod("setPosition",double.class).invoke(cc,Double.NaN);throw new AssertionError("NaN CC command accepted");}
-            catch(java.lang.reflect.InvocationTargetException expected){check(expected.getCause().getClass().getSimpleName().equals("LuaException"),"wrong invalid input failure");}
-            cc.getClass().getMethod("close").invoke(cc);near(valve.target(),0,"CC close");
+            PeripheralTestCalls.call(cc,"setPosition",.251);near(valve.target(),.251,"CC fine position");
+            try{PeripheralTestCalls.call(cc,"setPosition",Double.NaN);throw new AssertionError("NaN CC command accepted");}
+            catch(dan200.computercraft.api.lua.LuaException expected){check(expected.getMessage()!=null,"missing invalid input reason");}
+            PeripheralTestCalls.call(cc,"close");near(valve.target(),0,"CC close");
         }
         var player=net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(l);player.setPos(vp.getX()+.5,vp.getY(),vp.getZ()+.5);
         var menu=new TurbineValveMenu(3,player.getInventory(),vp);menu.handleCommand(player,0,357,0);near(valve.target(),.357,"bypass local GUI control");
         valve.stroke(.2);var tag=valve.saveWithoutMetadata(l.registryAccess());var copy=new TurbineValveBlockEntity(vp,valve.getBlockState());copy.loadWithComponents(tag,l.registryAccess());near(copy.target(),.357,"bypass target persistence");near(copy.position(),valve.position(),"bypass stroke persistence");
     }
-    private static void mechanicalPipe(ServerLevel l,CondenserBlockEntity owner)throws Exception{
-        var pipePos=port(Port.COLD).below();var block=BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("mekanism","basic_mechanical_pipe"));
+    private static void mechanicalPipe(ServerLevel l,CondenserBlockEntity owner,Port role)throws Exception{
+        var face=portFace(l.getBlockState(port(role)));var pipePos=port(role).relative(face);var block=BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("mekanism","basic_mechanical_pipe"));
         put(l,pipePos,block.defaultBlockState());var tile=l.getBlockEntity(pipePos);
         var base=Class.forName("mekanism.common.tile.transmitter.TileEntityTransmitter");base.getMethod("tickServer",net.minecraft.world.level.Level.class,BlockPos.class,BlockState.class,base).invoke(null,l,pipePos,l.getBlockState(pipePos),tile);
         Object t=tile.getClass().getMethod("getTransmitter").invoke(tile);var type=t.getClass();type.getMethod("refreshConnections").invoke(t);
-        check(type.getMethod("getAcceptor",Direction.class).invoke(t,Direction.UP) instanceof IFluidHandler,"Mekanism does not recognize cold-water flange");
+        check(type.getMethod("getAcceptor",Direction.class).invoke(t,face.getOpposite()) instanceof IFluidHandler,"Mekanism does not recognize "+role+" flange");
         Object network=type.getMethod("createEmptyNetworkWithID",UUID.class).invoke(t,UUID.randomUUID());var validator=Class.forName("mekanism.common.lib.transmitter.CompatibleTransmitterValidator");
         network.getClass().getMethod("addNewTransmitters",Collection.class,validator).invoke(network,List.of(t),type.getMethod("getNewOrphanValidator").invoke(t));network.getClass().getMethod("commit").invoke(network);
-        try{owner.plant().restore(0,0,0);var cap=(IFluidHandler)network;check(cap.fill(new FluidStack(Fluids.WATER,1000),EXECUTE)==1000,"Mek network fill failed");network.getClass().getMethod("onUpdate").invoke(network);near(owner.plant().cold(),1000,"Mek pipe did not supply condenser");}
+        try{owner.plant().restore(0,0,0);var cap=(IFluidHandler)network;check(cap.fill(new FluidStack(Fluids.WATER,1000),EXECUTE)==1000,"Mek network fill failed");network.getClass().getMethod("onUpdate").invoke(network);near(role==Port.MAKEUP?owner.plant().condensate():owner.plant().cold(),1000,"Mek pipe did not supply "+role);}
         finally{network.getClass().getMethod("deregister").invoke(network);l.removeBlock(pipePos,false);}
     }
     private static void legacy(ServerLevel l){

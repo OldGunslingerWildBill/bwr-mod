@@ -20,6 +20,11 @@ public class TurbineValveBlock extends BaseEntityBlock implements SteamLinePort 
     public static final MapCodec<TurbineValveBlock> CODEC=simpleCodec(TurbineValveBlock::new);
     public static final DirectionProperty FACING=BlockStateProperties.HORIZONTAL_FACING;
     public TurbineValveBlock(Properties properties){super(properties.noOcclusion());registerDefaultState(stateDefinition.any().setValue(FACING,Direction.NORTH));}
+    @Override protected void onPlace(BlockState state,Level level,BlockPos pos,BlockState old,boolean moving) {
+        super.onPlace(state,level,pos,old,moving);
+        if(state!=old)dev.bwr.mod.piping.PipeTopology.changed(level,pos);
+    }
+
     @Override protected MapCodec<TurbineValveBlock> codec(){return CODEC;}
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> b){b.add(FACING);}
     @Override public BlockState getStateForPlacement(BlockPlaceContext c){return defaultBlockState().setValue(FACING,c.getHorizontalDirection().getOpposite());}

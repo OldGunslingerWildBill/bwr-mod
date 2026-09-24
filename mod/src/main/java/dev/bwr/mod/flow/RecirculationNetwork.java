@@ -13,7 +13,7 @@ import dev.bwr.core.flow.RecirculationSizing;
 /** Hardware capacity, separate from player speed commands. No automatic control. */
 public final class RecirculationNetwork {
     private RecirculationNetwork() {}
-    public record Flow(double fraction,double maximum,int pairedJets,int internalPumps,int unmatchedJets,int externalPumps) {}
+    public record Flow(double fraction,double maximum,int pairedJets,int internalPumps,int unmatchedJets,int externalPumps,double jetUnits) {}
     private record Survey(long time,List<BlockPos> jets) {}
     private static final Map<Level,Map<BlockPos,Survey>> CACHE=new WeakHashMap<>();
 
@@ -137,7 +137,7 @@ public final class RecirculationNetwork {
         double reportDivisor=Math.max(required,flow);
         contributions.forEach((pump,units)->pump.reportCoreFlowKgPerS(
                 units/reportDivisor*required*RecirculationSizing.JET_FLOW_KG_PER_S));
-        return new Flow(Math.min(1,flow/required),Math.min(1,maximum/required),count,internal,installed.size()-count,external.size());
+        return new Flow(Math.min(1,flow/required),Math.min(1,maximum/required),count,internal,installed.size()-count,external.size(),jetCapacity);
     }
     private static Set<BlockPos> footprint(Level level,BlockPos root) {
         var state=level.getBlockState(root);var block=(JetPumpBlock)state.getBlock();

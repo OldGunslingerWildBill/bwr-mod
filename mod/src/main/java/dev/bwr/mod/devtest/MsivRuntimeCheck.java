@@ -58,6 +58,12 @@ public final class MsivRuntimeCheck {
                 l.setBlock(controlPos,cb.defaultBlockState().setValue(TurbineValveBlock.FACING,facing),3);
                 var control=(TurbineValveBlockEntity)l.getBlockEntity(controlPos);control.setTarget(1);control.stroke(3);
                 var valve=(MainSteamIsolationValveBlockEntity)l.getBlockEntity(ROOT);
+                var energy=l.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.BLOCK,ROOT.above(2),Direction.UP);
+                check(energy!=null,"MSIV actuator has no cable port");
+                near(valve.getPosition(),0,"new unpowered valve started open");
+                valve.tickValve(4);near(valve.getPosition(),0,"unpowered opening command moved MSIV");
+                energy.receiveEnergy(20_000,false);valve.tickValve(4);
+                near(valve.getPosition(),1,"powered valve did not open");
                 // Redstone on the upper actuator reaches the single base controller.
                 var signal=ROOT.above(2).relative(facing.getClockWise());
                 l.setBlock(signal,Blocks.REDSTONE_BLOCK.defaultBlockState(),3);

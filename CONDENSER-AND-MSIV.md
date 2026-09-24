@@ -15,10 +15,26 @@ condensers receive this visual fix after updating the mod; no replacement is nee
 
 ![Condenser front: bypass steam and hot-water outlets](art/models/condenser_ports/condenser_ports_front.png)
 
-Allow **7 blocks wide, 6 high and 7 deep**. Place the center foundation;
+Allow **7 blocks wide, 6 high and 9 deep in local model coordinates**. Once
+attached, that is **9 blocks across the turbine shaft and 7 along it**. Main
+CW/bypass piping faces the sides of the hall rather than the next turbine.
+Hold a condenser and aim at the
+underside of a placed LP turbine. A **green outline** shows a valid attachment;
+**red** indicates blocked space or an incomplete turbine. Right-click without
+sneaking to snap it underneath, aligned to the turbine even when clicking away
+from its center. The entire occupied footprint is checked for blocks, entities,
+loaded chunks, world bounds and building permissions before placement.
+
+![Green attachment preview beneath an LP turbine](art/models/condenser_ports/snap-preview-green.png)
+
+![Red attachment preview with an obstructed footprint](art/models/condenser_ports/snap-preview-red.png)
+
+Alternatively, place the center foundation manually;
 the model turns with the player's facing. Place the LP turbine's center foundation
-**six blocks directly above** the condenser's placement block, facing the same
-direction. The two footprints align without overlapping occupied cells.
+**six blocks directly above** the condenser's placement block. The condenser
+faces **90 degrees clockwise from the LP**: north-facing LP, east-facing
+condenser; east/south, south/west and west/north work likewise. The two footprints
+align without overlapping occupied cells.
 Occupied parts must be clear and
 loaded. Breaking a part removes the assembly; a suitable pickaxe returns one
 item. Right-click any part for inventories, flow and heat-rejection readings.
@@ -29,6 +45,11 @@ item. Right-click any part for inventories, flow and heat-rejection readings.
 | Hot cooling water **out** | 2 | Front elbows, downward-facing bottom flanges, orange bands | BWR water pipe or Mekanism Mechanical Pipe |
 | Cold cooling water **in** | 2 | Opposite/rear elbows, downward-facing bottom flanges, blue bands | BWR water pipe or Mekanism Mechanical Pipe |
 | Condensate **out** | 1 | Small horizontal rear nozzle between the cold-water elbows | BWR water pipe or Mekanism Mechanical Pipe |
+| Hotwell makeup water **in** | 2 | Round open nozzles on the inset ribbed side, local west | BWR water pipe or Mekanism Mechanical Pipe |
+
+![Round makeup flanges with connected water pipes](art/models/condenser_ports/hotwell_makeup_ingame.png)
+
+![Adjacent LP condensers with the main piping facing the hall walls](art/models/condenser_ports/adjacent_lp_condensers_ingame.png)
 
 All flanges meet block-face centers directly. The red-circled upper locations
 in the supplied reference are repurposed as bypass inlets for gameplay; this
@@ -41,10 +62,13 @@ manufacturer equipment. Non-port faces accept neither water nor steam.
 
 ![Verified in Minecraft with connected steam and water pipes](art/models/condenser_ports/lp_condenser_ingame.png)
 
-**Upgrading a placed condenser:** existing 25 x 14 x 25 units retain their saved
-geometry, inventories and 18 connections. Break and replace the old machine to
-install the compact unit, then reconnect its six ports. Both versions now preserve
-the blue shell, steel and pipe-band material colors when rendered in the world.
+**Upgrading a placed condenser:** existing 25 x 14 x 25 (v1), 7 x 6 x 7
+(v2), and 9 x 6 x 7 (v3) machines retain their saved geometry, facing,
+cell ownership, inventories and connections. The v2/v3 machines still seat
+their original LP turbines with the old facing. Drain, break and replace an
+old machine using underside snap placement for the new alignment and eight
+ports, then reconnect its piping. The update does not rotate a live machine
+through neighboring blocks. All four versions preserve Blender material colors.
 
 ### First-pass operation
 
@@ -57,28 +81,41 @@ Cold-water supply -> rear lower elbows -> condenser -> front hot-water elbows
 
 Supply cold water and drain both products. The cooling circuit has separate
 1,000,000 kg cold and hot inventories. Condensate has a separate 200,000 kg
-inventory, and the steam buffer holds 10,000 kg. Each condenser has one set of these inventories;
+hotwell inventory, and the steam buffer holds 10,000 kg. Each condenser has one set of these inventories;
 connecting several ports does not duplicate capacity or steam supply. As with
 the other water machines, **1 mB of water represents 1 kg** in this mod.
+
+A powered makeup pump supplies the **two round side inlets**. Their shared
+200,000 kg capacity is the same hotwell used by condensed steam; two connections
+do not double it, even during simulated transfers. Makeup is water-only and
+inlet-only. Its temperature mixes by mass and enthalpy with the hotwell;
+the rear condensate outlet supplies that mixture to storage or feedwater.
+The GUI reports hotwell inventory and temperature. CC retains `condensateKg`
+and `condensateC` and adds `hotwellKg`, `hotwellC` and `makeupSpaceKg`.
+No water purification or chemistry model is implied.
 
 Cooling water does not mix with steam or condensate. Condensation requires
 available cold water, hot-water storage room and condensate storage room.
 A dry or blocked machine holds admitted steam until its finite buffer fills;
-it cannot create water without steam. Water outputs support pipe extraction
+it cannot condense steam without cooling water. Makeup water can still fill
+the hotwell independently. Water outputs support pipe extraction
 and also push into adjacent accepting fluid handlers.
 
-This patch uses assumed **13 -> 24 °C cooling water** and **40 °C condensate**.
-The game heat balance uses incoming steam enthalpy and caps rejection at
-2,750 MW and cooling flow at 60,000 kg/s. At the fixed temperatures, the current
-water-property table yields approximately 2,732 MW at that flow. These are
-initial game assumptions, not a full manufacturer performance simulation.
+Cooling uses the actual supplied water enthalpy. Heat rejection is capped at
+2,750 MW and cooling flow at 60,000 kg/s, with an 11 C design range. Condensate
+temperature follows the cooling approach and exhaust pressure. These are
+simplified game assumptions, not manufacturer performance curves.
+
+Warmer coolant and stored exhaust raise backpressure; LP expansion uses that
+pressure and produces less work as it rises. The GUI and `bwr_condenser`
+computer peripheral report cooling/condensate temperatures, backpressure and
+vacuum. Attach a modem to an exposed machine part. See the
+[thermal model and pipe/CC guide](PLANT-TRANSPORT.md).
 
 **Natural and circular induced-draft cooling towers are available:** see the
-[cooling-water loop guide](COOLING-WATER.md). Water-temperature transport and
-vacuum simulation remain future work. Vanilla water in pipes does not yet carry temperature. The
-display labels those temperatures as assumptions. LP turbines now require this
-external condenser; their water outlet and temporary condensation are removed.
-The condenser receives seated LP exhaust and reactor steam through its bypass port.
+[cooling-water loop guide](COOLING-WATER.md). The condenser receives seated LP
+exhaust and reactor bypass steam. Its finite inventories are shared across all
+ports, including during simulated transfers.
 
 ## Bypass Steam Control Valve
 
@@ -109,18 +146,24 @@ those later. The actuator geometry is static; its position controls steam flow.
 
 [`art/models/condenser_ports/`](art/models/condenser_ports/) contains
 `condenser_ports.blend`, `bypass_steam_valve.blend`, the authoring script, mesh
-exports and the previews above. The compact game exterior contains **17,696 triangles**;
+exports and the previews above. The transverse game exterior contains **18,492 triangles**;
 the valve contains **3,304**. Hidden tube-bundle geometry stays in the original
 inspection asset. The condenser draws one full mesh at its controller and uses
-172 occupied cells for collision, ownership and port connections. The archived
+179 occupied cells for collision, ownership and port connections. The archived
 `condenser_ports_legacy.blend` and `arabelle_condenser_legacy.json` preserve the
-original three-bay machine for existing saves. The renderer selects geometry and
-collision layout by the saved layout version; new placements always use version 2.
+original three-bay machine for existing saves. `condenser_ports_compact_v2.blend`
+and `arabelle_condenser_compact_v2.json` retain the seven-block compact version.
+The renderer selects geometry and collision layout by the saved layout version;
+`condenser_ports_wide_v3.blend` and `arabelle_condenser_wide_v3.json` preserve
+the alpha.3 shaft-aligned version. New placements always use version 4.
+The creative-menu icon is rendered from
+the Blender mesh and remains two quads instead of drawing the detailed mesh.
 
 Load `build_models.py` definitions in Blender, then call `build_ports()` and
 `build_bypass()`. `python tools-export-condenser.py` generates the game assets;
 add `--check` to verify them without writing. The exporter checks footprint
-bounds and that each connection reaches its selected block face.
+bounds, clear makeup connection cells, circular makeup-pipe radii and that
+each connection reaches its selected block face.
 
 ## Main steam isolation valve: in-game replacement
 
@@ -136,8 +179,17 @@ The item, recipe and saved registry ID remain `bwr:msiv`.
   spring housing have no steam connections, and water pipes do not connect.
 - Redstone supplied beside any of the three parts commands closure. Removing
   the signal commands opening unless CC:Tweaked owns the actuator.
-- The optional `bwr_msiv` peripheral is still on the **base block**. Existing
+- The optional `bwr_msiv` peripheral accepts a modem on **any exposed part**. Existing
   `open()`, `close()`, `setOpen()`, `getPosition()` and status calls are retained.
+- Newly placed valves start **closed**. Connect an FE cable to an exposed
+  non-steam face, such as the top of the actuator. The two base steam flanges
+  are reserved for steam. Opening uses **100 FE/t**, holding open **20 FE/t**;
+  the shared actuator buffer stores **20,000 FE**. These are game balance values.
+  A stored charge can keep it open briefly after a cable is disconnected.
+- When power runs out, the spring closes it over the normal four-second stroke.
+  Closing requires no electricity; restoring power resumes a pending open
+  command. CC requests cannot bypass the electrical requirement. `isPowered()`,
+  `getEnergyStoredFe()` and the corresponding `getStatus()` fields expose power.
 - Full travel takes **80 server ticks**, or **4 seconds at 20 ticks/second**.
   Steam is restricted by actual valve position throughout the stroke. An
   intermediate position survives saving; reversal starts at that position.
@@ -153,6 +205,9 @@ Already placed cube valves keep their original one-block footprint, six-face
 connections and saved actuator data. **Break and replace a cube to install the
 new three-block model.** This avoids silently removing nearby blocks or breaking
 previous pipe layouts. New placements always use the model.
+Old cube valves also need FE to open or stay open after this update; connect
+power on an available face. Their saved positions are retained and close with
+the normal stroke if unpowered.
 
 ## Original condenser inspection asset
 

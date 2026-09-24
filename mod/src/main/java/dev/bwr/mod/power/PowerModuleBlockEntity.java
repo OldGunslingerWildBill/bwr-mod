@@ -42,8 +42,8 @@ public class PowerModuleBlockEntity extends BlockEntity {
         if(level==null||block().generator()||block().highPressure())return null;
         var p=worldPosition.below(6);
         return level.isLoaded(p)&&level.getBlockEntity(p) instanceof dev.bwr.mod.condenser.CondenserBlockEntity c
-                &&c.owner()==c&&c.layout()==dev.bwr.mod.condenser.CondenserLayout.INSTANCE
-                &&c.getBlockState().getValue(dev.bwr.mod.condenser.CondenserBlock.FACING)==getBlockState().getValue(PumpAssemblyBlock.FACING)
+                &&c.owner()==c&&c.layout()!=dev.bwr.mod.condenser.CondenserLayout.LEGACY
+                &&c.getBlockState().getValue(dev.bwr.mod.condenser.CondenserBlock.FACING)==c.layout().facingForTurbine(getBlockState().getValue(PumpAssemblyBlock.FACING))
                 &&c.ready()?c:null;
     }
     private double outletRoom(){var c=condenser();return block().highPressure()?exhaust.space():c==null?0:c.plant().steam.space();}
@@ -106,7 +106,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
             }
         }
         inletPsia=inlet.pressure();inletC=inlet.mass()>0?Saturation.temperatureCelsiusFromPsia(inletPsia):0;
-        var result=PowerTurbine.expand(stage,inlet,stage==PowerTurbine.Stage.HP?exhaust:condenser.plant().steam,wanted,workBudgetKJ);
+        var result=PowerTurbine.expand(stage,inlet,stage==PowerTurbine.Stage.HP?exhaust:condenser.plant().steam,wanted,workBudgetKJ,stage==PowerTurbine.Stage.HP?PowerTurbine.outletPressure(stage,inlet.pressure()):condenser.plant().backpressurePsia());
         if(stage==PowerTurbine.Stage.HP && exhaustLedgerTick==level.getGameTime())exhaustOfferedKg+=result.mass();
         if(stage==PowerTurbine.Stage.LP&&result.mass()>0)condenser.setChanged();
         flowKgPerS=result.mass()*20;shaftMW=result.workKJ()*20/1000;

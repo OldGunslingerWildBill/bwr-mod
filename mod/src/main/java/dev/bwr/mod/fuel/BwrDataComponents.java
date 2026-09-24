@@ -24,6 +24,16 @@ public final class BwrDataComponents {
     public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENTS =
             DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, BwrMod.MOD_ID);
 
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CoreInsertData>> CORE_INSERT =
+            DATA_COMPONENTS.register("core_insert", () -> DataComponentType.<CoreInsertData>builder()
+                    .persistent(CoreInsertData.CODEC).networkSynchronized(CoreInsertData.STREAM_CODEC).build());
+
+    /** Specific enthalpy on ordinary water, kJ/kg; retained by BWR pipes and saved tanks. */
+    public static final DeferredHolder<DataComponentType<?>,DataComponentType<Double>> WATER_ENTHALPY=
+            DATA_COMPONENTS.register("water_enthalpy",()->DataComponentType.<Double>builder()
+                    .persistent(com.mojang.serialization.Codec.doubleRange(0,5000))
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.DOUBLE).build());
+
     /** Burnup, enrichment, fuel type and remaining gadolinia, travelling with the itemstack. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<FuelAssemblyData>>
             FUEL_ASSEMBLY = DATA_COMPONENTS.register("fuel_assembly",

@@ -41,6 +41,16 @@ public final class AssemblyPermissionRuntimeCheck {
                 check(event.isCanceled()&&level.getBlockState(root).is(block),"unprotected root can remove protected remote cells");
                 level.removeBlock(root,false);passed++;
             }
+            // Snapping must validate the whole offset footprint, even when the
+            // clicked LP block itself is outside the protected spawn region.
+            var lp=BwrBlocks.LP_TURBINE.get();var lpState=lp.placementState();var lpRoot=root.above(6);
+            level.setBlock(lpRoot,lpState,3);lp.setPlacedBy(level,lpRoot,lpState,null,new ItemStack(lp));
+            var condenser=new ItemStack(BwrBlocks.ARABELLE_CONDENSER.get());
+            var snap=new BlockPlaceContext(level,player,InteractionHand.MAIN_HAND,condenser,
+                    new BlockHitResult(Vec3.atBottomCenterOf(lpRoot),Direction.DOWN,lpRoot,false));
+            check(!((BlockItem)condenser.getItem()).place(snap).consumesAction()&&condenser.getCount()==1
+                    &&level.getBlockState(root).isAir()&&lp.complete(level,lpRoot,lpState),"condenser snap crossed protected boundary");
+            level.removeBlock(lpRoot,false);passed++;
             // Tank parts retain their footprint even when their controller is unavailable.
             var block=BwrBlocks.CONDENSATE_STORAGE_TANK.get();level.setBlock(root,block.defaultBlockState(),3);
             var tank=(dev.bwr.mod.eccs.CondensateStorageTankBlockEntity)level.getBlockEntity(root);
@@ -49,6 +59,7 @@ public final class AssemblyPermissionRuntimeCheck {
             server.getPlayerList().deop(player.getGameProfile());player.setGameMode(GameType.SURVIVAL);
             var event=new BlockEvent.BreakEvent(level,root,level.getBlockState(root),player);NeoForge.EVENT_BUS.post(event);check(event.isCanceled(),"tank teardown crossed protection");passed++;
             level.removeBlock(root,false);
+            CondensateTankRuntimeCheck.clear(level,root);
             var unformed=CondensateTankRuntimeCheck.buildShell(level,player,root,3,3);
             check(!unformed.assembled(),"automatic tank crossed spawn protection");passed++;
             for(var at:BlockPos.betweenClosed(root.offset(-1,0,-1),root.offset(1,2,1)))level.removeBlock(at,false);

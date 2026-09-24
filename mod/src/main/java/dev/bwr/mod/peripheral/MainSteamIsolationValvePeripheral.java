@@ -4,9 +4,6 @@ import dan200.computercraft.api.lua.LuaFunction;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.bwr.mod.steam.MainSteamIsolationValveBlock;
 import dev.bwr.mod.steam.MainSteamIsolationValveBlockEntity;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -68,13 +65,13 @@ public class MainSteamIsolationValvePeripheral implements IPeripheral {
 
     // --- Actuators ------------------------------------------------------
 
-    /** Command the valve open. Unconditional. */
+    /** Request opening. Actual travel requires electrical power. */
     @LuaFunction(mainThread = true)
     public final void open() {
         command(true);
     }
 
-    /** Command the valve shut. Also unconditional; the mod never does this. */
+    /** Request spring-powered closure. */
     @LuaFunction(mainThread = true)
     public final void close() {
         command(false);
@@ -97,28 +94,12 @@ public class MainSteamIsolationValvePeripheral implements IPeripheral {
     }
 
     /**
-     * Move the demand and keep the block state in step, so the model and
-     * anything reading the block state agree with the block entity.
-     *
-     * <p>{@code Block.UPDATE_CLIENTS} rather than {@code UPDATE_ALL}: a full
-     * neighbour update here would re-enter this valve's own
-     * {@code neighborChanged}, which is the code path that owns the demand when
-     * the valve is <i>not</i> computer controlled.
+     * Change only the operator's demand. The powered actuator owns actual
+     * travel and the OPEN block state, including spring return on power loss.
      */
     private void command(boolean open) {
         be.setComputerControlled(true);
         be.setDemandOpen(open);
-        Level level = be.getLevel();
-        if (level == null || level.isClientSide()) {
-            return;
-        }
-        BlockState state = level.getBlockState(be.getBlockPos());
-        if (state.hasProperty(MainSteamIsolationValveBlock.OPEN)
-                && state.getValue(MainSteamIsolationValveBlock.OPEN) != open) {
-            level.setBlock(be.getBlockPos(),
-                    state.setValue(MainSteamIsolationValveBlock.OPEN, open),
-                    Block.UPDATE_CLIENTS);
-        }
     }
 
     // --- Measurements ---------------------------------------------------
@@ -156,6 +137,12 @@ public class MainSteamIsolationValvePeripheral implements IPeripheral {
         m.put("position", be.getPosition());
         m.put("strokeSeconds", MainSteamIsolationValveBlockEntity.STROKE_SECONDS);
         m.put("computerControlled", be.isComputerControlled());
+        m.put("powered",be.isPowered());
+        m.put("energyStoredFe",be.energy().getEnergyStored());
+        m.put("energyCapacityFe",MainSteamIsolationValveBlockEntity.ENERGY_CAPACITY_FE);
+        m.put("requiredFePerTick",be.getRequiredFePerTick());
         return m;
     }
+    @LuaFunction(mainThread=true) public final boolean isPowered(){return be.isPowered();}
+    @LuaFunction(mainThread=true) public final int getEnergyStoredFe(){return be.energy().getEnergyStored();}
 }

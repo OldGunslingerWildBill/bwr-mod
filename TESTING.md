@@ -6,6 +6,33 @@ headless checks on every push and pull request, and supports manual dispatch.
 
 ## Automated checks
 
+Alpha.5 adds `FuelVarietyTest` (five physics checks) and
+`FuelVarietyRegressionTests` (four real Minecraft tests): family constants,
+non-fuel absorption, source addition, exposure limits, component/core save
+recovery, shuffling, snapshots and single-use harvesting. The previously
+five-entry `FuelTypeSpecTest` now checks all 19 entries. `FuelCatalogueClientCheck`
+runs as the fourth stage of `:mod:runTurbineModelCheck -PbwrCreativePerformanceCheck`
+and validates all 19 fuel and eight specialty-rod textures and names.
+Release results and the focused rerun after the catalogue-test correction are
+recorded at the top of `BUILD-STATUS.md`.
+
+The condenser/MSIV patch adds `CondenserValveRegressionTests`: underside
+placement in every facing, entity/block rejection without consuming items,
+LP-menu pass-through, v2/v3 save compatibility, FE conservation and spring closure,
+all exposed CC faces, and recognition by a Mekanism Universal Cable. Optional
+API checks are guarded when those mods are absent. The dedicated permission
+harness also rejects a snap whose remote footprint crosses spawn protection.
+
+The condenser client harness (`:mod:runTurbineModelCheck
+-PbwrCondenserPanelCheck`) captures eleven views, including green/red attachment
+outlines, then places a condenser through the normal client interaction path. Additional
+views show the round makeup nozzles and two adjacent LP/condenser modules.
+`CondenserMakeupRegressionTests` covers adjacent units in four rotations, all
+port clearances, shared hotwell reservation, a real powered makeup pump feeding
+BWR pipes, water/heat conservation, save/reload and stale capability rejection.
+The dedicated runtime harness transfers real water through Mekanism Mechanical
+Pipes into both cooling and hotwell inlets.
+
 `.github/workflows/verify.yml` has three jobs:
 
 1. **Physics, build and resources:** JDK 21; `gradlew check build`; the
@@ -70,12 +97,56 @@ condenser/cooling additions and LP condensate migration brought that to
 to **186 methods in 29 classes**. Suppression-basin and RHR exchanger tests bring
 that total to **191 methods in 30 classes**. Dry-basin and spray tests bring it
 to **193 methods in 30 classes**; passive cooling brings it to **195 methods in
-30 classes**. New tests may change those counts;
+30 classes**. Segmented heat transport and the recirculation inverse regression
+bring the total to **202 methods in 31 classes**. Finite SLC solution tests bring
+the first alpha total to **204 methods in 32 classes**. Two hotwell makeup
+conservation tests bring alpha.4 to **206 methods in 32 classes**. New tests may change those counts;
 the runner's output is authoritative.
+
+### Alpha hardware and creative inventory
+
+The alpha has **46 required Minecraft GameTests**. Four alpha hardware tests cover:
+
+- Finite SLC water/borate mass, FE dependence, actual boron readouts, feedwater
+  cross-ties, broken lines and live tank capability ownership after reload.
+- Outfall orientation, simulated/actual shared rate budgets, water-only filling,
+  blocked mouths and removed-block capabilities.
+- Independent ADS divisions, reassignment, persistence and real CC calls.
+- Physical ADS steam source, nozzle closure/broken lines, shared steam claims
+  and prevention of a second vessel debit for nozzle-supplied steam.
+
+The CC face regression covers **44 machine block types × six directions**.
+The original F01–F13, GitHub #14–#18 and R01–R05 regressions remain in the gate.
+
+Five tank/CRD regressions cover actual player mining in survival and creative,
+unsuitable tools, root and flange breaking, deferred cross-chunk casing
+restoration and its saved ledger, a 289-drive grid fed through two bottom faces,
+water/FE conservation, shared pipe reservation, independent wear, disconnected
+groups, vertical connections, block-entity replacement and chunk unload/reload.
+The grid test also asserts that passing time does not rebuild its connection map.
+
+Opt-in real-client checks:
+
+```powershell
+.\gradlew.bat :mod:runTurbineModelCheck -PbwrCreativePerformanceCheck
+.\gradlew.bat :mod:runTurbineModelCheck -PbwrAlphaClientCheck
+python tools-export-alpha.py --check
+```
+
+The first measures vanilla and BWR creative tabs in a disposable world. Local
+BWR results were 18.84 → 560.83 FPS and 51.17 → 1.14 ms screen CPU time. Keep
+resolution, GUI scale, FPS cap and scene identical when comparing runs.
+The second saves six hardware/panel screenshots under
+`mod/run/turbineModelCheck/alpha-check/`; all were visually inspected. It also
+checks 33 two-quad inventory icons and the original world/held model resources.
+The Blender export check verifies all 144 new hardware output files are current.
+
+Current artifacts and transcripts are recorded in BUILD-STATUS.md. Benchmarks
+measure the local test scene and do not guarantee FPS in every modpack.
 
 ### Minecraft-facing coverage
 
-The concrete suppression update has **24 required GameTests**, including six
+The concrete suppression update had **24 required GameTests**, including six
 new tests for concrete-basin lifecycle, physical RHR circulation/cooling,
 rotated exchanger capabilities/persistence, pumped filling/spray and older pump
 compatibility, plus unpowered natural cooling and its reload/ambient bounds.
@@ -92,6 +163,19 @@ Development test classes and fixtures are excluded from the release JAR.
 
 The server suite includes assembly placement, ports, resource conservation,
 save/restore, teardown, pump/valve accounting, and the regressions below.
+
+The release candidate has **32 required GameTests**. `ReleaseRegressionTests`
+adds shared-fluid-inventory accounting, event-driven topology, branch-specific
+MSIV isolation, thermal packets and reload, live computer replacement, real
+chunk-frontier reconnection, all-six-face coverage for 41 machine block types,
+and oversized-network refusal. `partialChunkLifecycle` also retains a computer
+connection across real controller chunk unload/reload. The dedicated-server
+CC check invokes the dynamic Lua entry point on and off the server thread;
+it checks scheduling and results, not just Java reflection signatures.
+
+CC-specific test implementations live behind the optional-mod guard, so even
+GameTest discovery succeeds when CC:Tweaked is absent. Development classes are
+excluded from the player JAR.
 
 | Original finding | Permanent regression coverage |
 | --- | --- |
@@ -115,25 +199,41 @@ pump registration across formation, unload, NBT restore and structural failure.
 
 ## Pipe-cache contract and measurement
 
-ECCS and feedwater controllers keep their own route caches. The cached objects
-contain positions, block states and measured valve openings, not inventories,
-controller block entities or steam allowances. Source/destination objects and
-the shared steam ledger are resolved live.
+Neither BWR pipe block has a block entity or ticker. `PipeTopology` caches
+geometry per level and collapses contiguous ordinary pipes into junctions.
+Inventories, controller objects, valve positions and shared steam allowances
+are resolved during transfer, not frozen into the topology.
 
-- A changed or removed known pipe, changed valve opening/orientation, or an
-  unloaded dependency invalidates the route at its next use.
-- New branches and previously unavailable search frontiers are resurveyed at
-  least every **five ticks** (0.25 seconds at 20 TPS).
-- Time moving backwards invalidates cached results too.
-- Each controller retains at most one result per port role; destruction or
-  unload discards that controller's cache along with the controller instance.
+- Block/port edits and capability invalidation dirty affected entries. The
+  survey watches empty frontiers as well as existing pipes.
+- Chunk accessibility changes invalidate routes without force-loading chunks.
+  The regression includes a LIGHT-retained chunk becoming FULL again, which
+  need not generate another physical chunk-load event.
+- Time passing and valve travel do **not** rebuild topology. The previous
+  five-tick rebuild interval is removed. A 1,000-tick stationary route keeps
+  the same graph; a valve moves without rebuilding that graph.
+- Each level keeps at most 512 entries. Surveys stop at 256 line positions;
+  a truncated network refuses transfer rather than using a partial route.
 
-The GameTest log prints `F16 PLUMBING` measurements for HPCS, electric feedwater
-and turbine feedwater fixtures with 32 connected water pipes. It compares the
-original uncached tracer, warm-cache lookups, and advancing-tick lookups including
-periodic rebuilds. Allocation uses the JDK thread allocation counter. Timing is
-reported, not used as a brittle pass/fail threshold. This measures the plumbing
-part of ticking; it is not a whole-plant or multiplayer TPS benchmark.
+The GameTest log prints `F16 PLUMBING` timing/allocation measurements for HPCS,
+electric feedwater and turbine feedwater fixtures. Repeated endpoint tracing,
+cached line lookups and advancing-time lookups are compared, with an assertion that
+time alone creates no new topology. Timing is reported rather than used as a
+hardware-dependent pass/fail limit. These measurements cover plumbing work,
+not whole-plant or multiplayer TPS.
+
+## GUI performance check
+
+`gradlew.bat :mod:runTurbineModelCheck -PbwrGuiPerformanceCheck` creates a
+disposable client world and measures paired world/menu frames for a pump,
+764-assembly reactor and maximum reactor. It logs screen CPU time and FPS,
+and captures screens in `mod/run/turbineModelCheck/gui-performance/`.
+
+The fuel-grid and screen readout batching fix reduced local reactor screen
+CPU time from 4.80/8.13 ms to about 0.80 ms. Exact hardware/settings and paired
+FPS results are in [PLANT-TRANSPORT.md](PLANT-TRANSPORT.md). The user's exact
+216-to-20 FPS result was not reproduced, so these measurements do not establish
+modpack/shader performance. This harness is not part of headless CI.
 
 ## Manual release checks
 
@@ -145,8 +245,8 @@ are separate from headless CI.
 
 Record the final JAR hash, executed checks and known limitations in
 `BUILD-STATUS.md`. Passing tests do not close unrelated findings automatically;
-`PHASE-ONE-REAUDIT.md` tracks the five separately reproduced R01–R05 issues;
-R02 is now fixed, while R01/R03/R04/R05 remain open.
+`PHASE-ONE-REAUDIT.md` records the original R01–R05 reproductions and their
+current repairs. All five now have passing regression coverage.
 
 ## Compact core layout verification
 

@@ -5,13 +5,34 @@
 including uncommitted condenser, cooling and tank work. Git base:
 `b77cf001ce07a61342e4c11022e926aed80bd693`.
 
-## Result
+## Current status — 23 September 2026
+
+**All five findings are fixed in the local release candidate.** R02 was repaired
+by the concrete-basin update; the transport/computer update resolves the other
+four. The original reproductions below are retained as historical evidence,
+not descriptions of current behavior.
+
+| Finding | Repair | Permanent regression |
+| --- | --- | --- |
+| R01 | Deduplicate live fluid proxies by the logical inventory they resolve | `sharedCondenserTankSimulation`: two flanges, nearly full tank, actual NeoForge transfer and mass/heat accounting |
+| R02 | Preserve complete pool inventory when geometry is revalidated or resized | Existing suppression-basin conservation, repair and reload tests |
+| R03 | Resolve the current controller on the server thread for each computer call | `liveComputerFaceAfterControllerReplacement`, retained modem in `partialChunkLifecycle`, dedicated-server dynamic peripheral calls |
+| R04 | Apply MSIV opening to the consumer's route, including MSIV-only headers | `closedIsolationBranchDoesNotThrottleHeader`: unused branch, inline isolation and open bypass |
+| R05 | Invert the actual shared jet/pump delivery function | `RecirculationSizingTest.test07`: external/internal combinations and limited jet capacity |
+
+Verification: **202/202 core tests**, **32/32 required Minecraft GameTests**,
+dedicated-server checks with both optional integrations installed and absent,
+and the registration negative test pass. See [TESTING.md](TESTING.md) and
+[BUILD-STATUS.md](BUILD-STATUS.md) for scope and final artifact details. These
+checks establish the listed repairs, not an absence of every possible defect.
+
+## Original audit result — superseded by the repairs above
 
 **22 September update:** R02 is fixed by the concrete-basin/RHR update.
 Capacity refresh now preserves the complete water and thermal inventory,
 including condensed mass above design capacity and after a size reduction.
 Core and Minecraft regression tests cover revalidation, repair and reload.
-**R01, R03, R04 and R05 remain open.** The findings below retain the original
+**At that snapshot, R01, R03, R04 and R05 remained open.** The findings below retain the original
 reproduction evidence from the audit snapshot.
 
 **The standard build passes, but the code is not yet clear of known defects.**
@@ -24,7 +45,7 @@ No production code was changed during this verification. Temporary probes live
 under ignored `tmp/`; the normal build configuration and release JAR exclude
 them. No commits, pushes or GitHub issue changes were made during this audit.
 
-| ID | Priority | Remaining issue | Measured result |
+| ID | Original priority | Original issue | Original measured result |
 | --- | --- | --- | --- |
 | R01 | P2 | Shared condenser ports overstate available water capacity | Simulated acceptance 200; actual acceptance 100; standard transfer lost 100 fluid units |
 | R02 | Fixed | Basin revalidation discarded newly condensed water | Inventory now survives unchanged/shrunk geometry, repair and reload |

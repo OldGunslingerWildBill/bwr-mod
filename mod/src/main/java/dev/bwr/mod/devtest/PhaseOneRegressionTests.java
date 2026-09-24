@@ -28,6 +28,8 @@ public final class PhaseOneRegressionTests {
         l.getChunkSource().addRegionTicket(PORT_TICKET,chunk,0,chunk);
         var cache=net.neoforged.neoforge.capabilities.BlockCapabilityCache.create(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.BLOCK,l,port,block.terminalFace(state));
         var handler=cache.getCapability();h.assertTrue(handler!=null&&handler.getEnergyStored()==10000,"chunk fixture has no energy port");
+        Object computer=net.neoforged.fml.ModList.get().isLoaded("computercraft")?ReleaseCcChecks.computer(l,port):null;
+        if(computer!=null)ReleaseCcChecks.stored(h,computer,10000);
         var rootChunk=l.getChunkAt(root);
         h.startSequence()
                 .thenWaitUntil(()->h.assertTrue(!l.isLoaded(root)&&l.isLoaded(port),"waiting for controller unload and retained port chunk"))
@@ -38,10 +40,12 @@ public final class PhaseOneRegressionTests {
                     l.unload(rootChunk);rootChunk.setBlockEntityNbt(tag);
                     h.assertTrue(l.isLoaded(port)&&owner.isRemoved(),"asymmetric chunk unload did not occur");
                     h.assertTrue(cache.getCapability()==handler&&handler.extractEnergy(1000,false)==0,"cached port extracted while controller chunk was absent");
+                    if(computer!=null)ReleaseCcChecks.unavailable(computer);
                     l.getChunkAt(root);
                     h.assertTrue(l.getBlockEntity(root)!=owner,"controller instance was not replaced on reload");
                     h.assertTrue(handler.extractEnergy(1000,false)==1000&&handler.getEnergyStored()==9000,"remote cache did not reconnect to reloaded inventory");
                     h.assertTrue(owner.energyStored()==10000,"cached transfer mutated obsolete inventory");
+                    if(computer!=null)ReleaseCcChecks.stored(h,computer,9000);
                 })
                 .thenWaitUntil(()->h.assertTrue(!l.isLoaded(root),"controller chunk has not unloaded again"))
                 .thenExecute(()->{
@@ -335,6 +339,7 @@ public final class PhaseOneRegressionTests {
                 var missing=cells.stream().filter(p->!p.equals(root)).findFirst().orElseThrow();
                 // Recreate the saved state left when only a child chunk was available at removal.
                 l.removeBlock(root,false);
+                if(block==BwrBlocks.CONDENSATE_STORAGE_TANK.get())CondensateTankRuntimeCheck.clear(l,root);
                 for(var p:cells)if(!p.equals(missing))l.setBlock(p,states.get(p),2);
                 for(var e:tags.entrySet())if(!e.getKey().equals(missing))l.setBlockEntity(net.minecraft.world.level.block.entity.BlockEntity.loadStatic(e.getKey(),states.get(e.getKey()),e.getValue(),l.registryAccess()));
                 ((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime((time/20+1)*20);
@@ -342,7 +347,8 @@ public final class PhaseOneRegressionTests {
                 if(owner instanceof dev.bwr.mod.condenser.CondenserBlockEntity c)dev.bwr.mod.condenser.CondenserBlockEntity.serverTick(l,root,state,c);
                 else if(owner instanceof dev.bwr.mod.cooling.CoolingBlockEntity c)dev.bwr.mod.cooling.CoolingBlockEntity.serverTick(l,root,state,c);
                 else state.tick(l,root,l.random);
-                for(var p:cells)h.assertTrue(!l.getBlockState(p).is(block),"incomplete assembly survived recovery: "+block+" at "+p);
+                for(var p:cells)h.assertTrue(!l.getBlockState(p).is(block) || block==BwrBlocks.CONDENSATE_STORAGE_TANK.get()&&!l.getBlockState(p).getValue(dev.bwr.mod.eccs.CondensateStorageTankBlock.ASSEMBLED),"incomplete assembly survived recovery: "+block+" at "+p);
+                if(block==BwrBlocks.CONDENSATE_STORAGE_TANK.get())CondensateTankRuntimeCheck.clear(l,root);
                 l.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,new net.minecraft.world.phys.AABB(root).inflate(30)).forEach(net.minecraft.world.entity.item.ItemEntity::discard);
             }
         } finally {((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(time);fake.setGameMode(oldMode);fake.setPos(oldPos);}

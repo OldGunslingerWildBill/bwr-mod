@@ -19,6 +19,8 @@ public final class WaterLineNetwork {
     public static final int MAX_PIPE_BLOCKS = 256;
 
     public static boolean acceptsLineOn(BlockState state, Direction face) {
+        if(state.getBlock() instanceof dev.bwr.mod.rods.ControlRodDriveBlock)return true;
+        if(state.getBlock() instanceof WaterDischargeBlock)return face==state.getValue(WaterDischargeBlock.FACING).getOpposite();
         if(state.getBlock() instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlock)return face==state.getValue(dev.bwr.mod.suppression.SuppressionPoolPortBlock.FACING);
         if(state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock)return face.getAxis().isHorizontal();
         if(state.getBlock() instanceof CondensateStorageTankBlock)return CondensateStorageTankBlock.acceptsWater(state,face);
@@ -68,42 +70,27 @@ public final class WaterLineNetwork {
             @Override public int fill(FluidStack stack, FluidAction action) {
                 if (level.isClientSide() || stack.isEmpty() || !isFluidValid(0, stack)
                         || !level.isLoaded(origin) || !level.getBlockState(origin).is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get())) return 0;
-                Set<BlockPos> seen = new HashSet<>();
-                Set<IFluidHandler> unique = Collections.newSetFromMap(new IdentityHashMap<>());
-                Set<BlockPos> uniquePools = new HashSet<>();
-                List<IFluidHandler> sinks = new ArrayList<>();
-                ArrayDeque<BlockPos> queue = new ArrayDeque<>();
-                queue.add(origin); seen.add(origin);
-                while (!queue.isEmpty()) {
-                    BlockPos here = queue.remove();
-                    for (Direction d : Direction.values()) {
-                        BlockPos p = here.relative(d);
-                        if (!level.isLoaded(p)) continue;
-                        BlockState state = level.getBlockState(p);
-                        if (!acceptsLineOn(state, d.getOpposite())) continue;
-                        if (state.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get())) {
-                            if (seen.add(p)) {
-                                if (seen.size() > MAX_PIPE_BLOCKS) return 0;
-                                queue.add(p);
-                            }
-                        } else if (state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())
-                                || state.is(BwrBlocks.SUPPRESSION_POOL_RETURN.get())
-                                || state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock
-                                && d.getOpposite()==dev.bwr.mod.suppression.RhrHeatExchangerBlock.coldIn(state)
-                                || state.getBlock() instanceof dev.bwr.mod.cooling.CoolingBlock
-                                && (state.getValue(dev.bwr.mod.cooling.CoolingBlock.PORT)==dev.bwr.mod.cooling.CoolingBlock.Port.INLET
-                                    ||state.getValue(dev.bwr.mod.cooling.CoolingBlock.PORT)==dev.bwr.mod.cooling.CoolingBlock.Port.MAKEUP)
-                                || state.getBlock() instanceof dev.bwr.mod.condenser.CondenserBlock
-                                && state.getValue(dev.bwr.mod.condenser.CondenserBlock.PORT)==dev.bwr.mod.condenser.CondenserBlock.Port.COLD
-                                || state.getBlock() instanceof ProcessAssembly assembly
-                                && assembly.portAt(state, d.getOpposite()) == AssemblyPort.WATER_SUCTION) {
-                            IFluidHandler sink = level.getCapability(Capabilities.FluidHandler.BLOCK, p, d.getOpposite());
-                            if(level.getBlockEntity(p) instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlockEntity port) {
-                                var owner=port.owner();if(owner==null||!uniquePools.add(owner.getBlockPos()))continue;
-                            }
-                            if (sink != null && unique.add(sink)) sinks.add(sink);
-                        }
-                    }
+                var graph=dev.bwr.mod.piping.PipeTopology.get(level,origin,null,false,false);
+                if(graph.truncated())return 0;
+                Set<IFluidHandler> unique=Collections.newSetFromMap(new IdentityHashMap<>());
+                List<IFluidHandler> sinks=new ArrayList<>();
+                for(var end:graph.ends()) {
+                    var p=end.pos();if(!level.isLoaded(p))continue;
+                    var state=level.getBlockState(p);var face=end.face();
+                    boolean receiver=state.is(BwrBlocks.CONTROL_ROD_DRIVE.get())||state.is(BwrBlocks.WATER_DISCHARGE_PORT.get())||state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())
+                            || state.is(BwrBlocks.SUPPRESSION_POOL_RETURN.get())
+                            || state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock
+                            && face==dev.bwr.mod.suppression.RhrHeatExchangerBlock.coldIn(state)
+                            || state.getBlock() instanceof dev.bwr.mod.cooling.CoolingBlock
+                            && (state.getValue(dev.bwr.mod.cooling.CoolingBlock.PORT)==dev.bwr.mod.cooling.CoolingBlock.Port.INLET
+                                ||state.getValue(dev.bwr.mod.cooling.CoolingBlock.PORT)==dev.bwr.mod.cooling.CoolingBlock.Port.MAKEUP)
+                            || state.getBlock() instanceof dev.bwr.mod.condenser.CondenserBlock
+                            && state.getValue(dev.bwr.mod.condenser.CondenserBlock.PORT).inlet()
+                            || state.getBlock() instanceof ProcessAssembly assembly&&assembly.portAt(state,face)==AssemblyPort.WATER_SUCTION;
+                    if(!receiver)continue;
+                    var sink=level.getCapability(Capabilities.FluidHandler.BLOCK,p,face);
+                    var identity=dev.bwr.mod.world.LiveCapabilities.fluidIdentity(sink);
+                    if(identity!=null&&unique.add(identity))sinks.add(sink);
                 }
                 int filled = 0;
                 for (IFluidHandler sink : sinks) {

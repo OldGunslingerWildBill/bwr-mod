@@ -163,7 +163,11 @@ final class PeripheralRuntimeCheckCC {
     /** Every {@code @LuaFunction} on a peripheral, in a stable order. */
     private static List<Method> luaFunctions(IPeripheral p) {
         List<Method> methods = new ArrayList<>();
-        for (Method m : p.getClass().getMethods()) {
+        Method[] schema=p.getClass().getMethods();
+        if(p instanceof dev.bwr.mod.peripheral.LivePeripheral)try {
+            var field=p.getClass().getDeclaredField("methods");field.setAccessible(true);schema=(Method[])field.get(p);
+        }catch(ReflectiveOperationException ex){throw new AssertionError(ex);}
+        for (Method m : schema) {
             if (m.isAnnotationPresent(LuaFunction.class)) {
                 methods.add(m);
             }
@@ -215,7 +219,9 @@ final class PeripheralRuntimeCheckCC {
 
         Object result;
         try {
-            result = m.invoke(p, args);
+            result = p instanceof dan200.computercraft.api.peripheral.IDynamicPeripheral ? PeripheralTestCalls.call(p,m.getName(),args) : m.invoke(p, args);
+        } catch (LuaException e) {
+            LOGGER.info("  {} -> LuaException: {} (clean)",sig,e.getMessage());return failures;
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
             if (cause instanceof LuaException) {
@@ -326,6 +332,12 @@ final class PeripheralRuntimeCheckCC {
         LOGGER.info("--- off-thread: {}", label);
         int failures = 0;
         for (Method m : luaFunctions(p)) {
+            if(p instanceof dan200.computercraft.api.peripheral.IDynamicPeripheral) {
+                try {var result=PeripheralTestCalls.call(server,p,m.getName(),sampleArguments(m));LOGGER.info("  [dynamic, scheduled] {} -> {}",signature(m),render(result));}
+                catch(LuaException ex){LOGGER.info("  [dynamic, scheduled] {} -> LuaException: {} (clean)",signature(m),ex.getMessage());}
+                catch(Throwable ex){LOGGER.error("FAIL {} dynamic call {}",label,m.getName(),ex);failures++;}
+                continue;
+            }
             LuaFunction annotation = m.getAnnotation(LuaFunction.class);
             failures += annotation != null && annotation.mainThread()
                     ? callMarshalled(server, p, m, label)

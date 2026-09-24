@@ -187,6 +187,12 @@ public final class PointKinetics {
 
     private double promptLifetimeSeconds;
     private double sourceStrengthPerSecond;
+    // Derived from installed cassettes; the separately persisted base source stays unchanged.
+    private double installedSourcePerSecond;
+    public void setInstalledSourcePerSecond(double value) {
+        if (!Double.isFinite(value) || value < 0) throw new IllegalArgumentException("Invalid installed source");
+        installedSourcePerSecond = value;
+    }
 
     private double neutronPowerFraction;
     private final double[] precursorConcentrations = new double[DelayedNeutronData.GROUP_COUNT];
@@ -399,7 +405,7 @@ public final class PointKinetics {
             precursorDecay[i] = 1.0 / (1.0 + dt * lambdaPerSecond[i]);
             precursorSource[i] = dt * betaFraction[i] / promptLifetimeSeconds;
         }
-        double sourceTerm = dt * sourceStrengthPerSecond;
+        double sourceTerm = dt * (sourceStrengthPerSecond + installedSourcePerSecond);
 
         double n = neutronPowerFraction;
         for (long s = 0; s < totalSubSteps; s++) {
@@ -485,7 +491,7 @@ public final class PointKinetics {
     public double getPowerRateOfChangePerSecond() {
         return ((lastReactivityDkOverK - betaTotalFraction) / promptLifetimeSeconds) * neutronPowerFraction
                 + getDelayedSourcePerSecond()
-                + sourceStrengthPerSecond;
+                + sourceStrengthPerSecond + installedSourcePerSecond;
     }
 
     /**

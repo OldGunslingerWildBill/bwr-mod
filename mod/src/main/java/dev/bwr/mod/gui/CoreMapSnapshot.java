@@ -58,6 +58,14 @@ public final class CoreMapSnapshot {
     public double peakWeight;
 
     public double coreThermalMW;
+    public double[] insertProgress = new double[0];
+    public boolean isInsert(int slot) { return fuelTypeName(slot).startsWith("insert:"); }
+    public String insertId(int slot) { return fuelTypeName(slot).substring(7); }
+    public List<net.minecraft.network.chat.Component> insertTooltip(int slot) {
+        return List.of(net.minecraft.network.chat.Component.translatable("insert.bwr." + insertId(slot)),
+                net.minecraft.network.chat.Component.literal("Non-fuel cassette; no fission power."),
+                net.minecraft.network.chat.Component.literal(String.format(java.util.Locale.ROOT, "Irradiation / activation: %.1f%%", 100 * insertProgress[slot])));
+    }
 
     /** Thermal power of one slot, MW. */
     public double assemblyThermalMW(int slot) {
@@ -68,7 +76,7 @@ public final class CoreMapSnapshot {
     public double peakingFactor() {
         int loaded = 0;
         for (int i = 0; i < coreSlotCount; i++) {
-            if (fuelTypeIndex[i] >= 0) {
+            if (fuelTypeIndex[i] >= 0 && !isInsert(i)) {
                 loaded++;
             }
         }
@@ -107,7 +115,9 @@ public final class CoreMapSnapshot {
         // two fuel types across several hundred bundles.
         Map<String, Integer> names = new LinkedHashMap<>();
         for (int position : positions) {
+            var insert = loading.insertAt(position);
             FuelAssembly assembly = loading.assemblyAt(position);
+            if (insert != null) names.computeIfAbsent("insert:" + insert.kind().id(), k -> names.size());
             if (assembly != null) {
                 names.computeIfAbsent(assembly.fuelType().name(), k -> names.size());
             }
@@ -124,12 +134,18 @@ public final class CoreMapSnapshot {
 
         for (int position : positions) {
             buf.writeVarInt(position);
+            var insert = loading.insertAt(position);
             FuelAssembly assembly = loading.assemblyAt(position);
+            if (insert != null) {
+                buf.writeVarInt(1 + names.get("insert:" + insert.kind().id()));
+                buf.writeBoolean(true); buf.writeDouble(insert.progress()); continue;
+            }
             if (assembly == null) {
-                buf.writeByte(0);
+                buf.writeVarInt(0);
                 continue;
             }
-            buf.writeByte(1 + names.get(assembly.fuelType().name()));
+            buf.writeVarInt(1 + names.get(assembly.fuelType().name()));
+            buf.writeBoolean(false);
             buf.writeShort(clampShort(assembly.burnupMwdPerTonne() / BURNUP_QUANTUM));
             buf.writeShort(clampShort(assembly.enrichmentWeightFraction() * 10000.0));
             buf.writeShort(clampShort(assembly.kInf() * 10000.0));
@@ -158,23 +174,19 @@ public final class CoreMapSnapshot {
         map.enrichmentWeightFraction = new double[n];
         map.kInf = new double[n];
         map.relativeFlux = new double[n];
+        map.insertProgress = new double[n];
 
         for (int i = 0; i < n; i++) {
-            // Unsigned, because writeByte writes the low eight bits and the
-            // index it carries is 1 + a position in the per-packet name table.
-            // Reading it back signed meant the 128th distinct fuel type in one
-            // core and everything after it came out negative, which isOccupied
-            // reads as an empty slot — a loaded bundle drawn as a hole in the
-            // map. The byte on the wire is unchanged, so this is a decode fix,
-            // not a format change. The ceiling is 255 fuel types in one core;
-            // above that the name table would need a varint.
+            // Protocol 8 uses a varint name index and an explicit non-fuel tag.
+            // Target exposure travels separately from fuel burnup/enrichment.
             map.latticeIndex[i] = buf.readVarInt();
-            int type = buf.readUnsignedByte();
+            int type = buf.readVarInt();
             if (type == 0) {
                 map.fuelTypeIndex[i] = -1;
                 continue;
             }
             map.fuelTypeIndex[i] = type - 1;
+            if (buf.readBoolean()) { map.insertProgress[i] = buf.readDouble(); continue; }
             map.burnupMwdPerTonne[i] = buf.readShort() * BURNUP_QUANTUM;
             map.enrichmentWeightFraction[i] = buf.readShort() / 10000.0;
             map.kInf[i] = buf.readShort() / 10000.0;

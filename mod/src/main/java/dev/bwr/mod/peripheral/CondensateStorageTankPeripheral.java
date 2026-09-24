@@ -18,9 +18,8 @@ import java.util.Map;
  *
  * <h2>Everything that reads the tank runs on the server thread</h2>
  * The three level readouts are {@code @LuaFunction(mainThread = true)} because
- * they walk a {@code FluidTank} the server tick is draining. Only
- * {@link #getTemperature()} is off-thread, and only because its whole body is a
- * compile-time constant.
+ * they read inventories updated on the server thread, including the mixed
+ * water temperature.
  */
 public class CondensateStorageTankPeripheral implements IPeripheral {
 
@@ -61,10 +60,10 @@ public class CondensateStorageTankPeripheral implements IPeripheral {
         return be.levelFraction();
     }
 
-    /** Stored condensate temperature, degrees C. A constant, so it is off-thread. */
-    @LuaFunction
+    /** Stored condensate temperature, degrees C. */
+    @LuaFunction(mainThread = true)
     public final double getTemperature() {
-        return CondensateStorageTankBlockEntity.STORED_TEMPERATURE_C;
+        return be.temperatureC();
     }
 
     @LuaFunction(mainThread = true)
@@ -73,7 +72,7 @@ public class CondensateStorageTankPeripheral implements IPeripheral {
         m.put("stored", be.storedKg());
         m.put("capacity", be.capacityKg());
         m.put("level", be.levelFraction());
-        m.put("temperature", CondensateStorageTankBlockEntity.STORED_TEMPERATURE_C);
+        m.put("temperature", be.temperatureC());
         var owner=be.owner();m.put("assembled",owner!=null&&owner.assembled());m.put("ready",be.ready());
         m.put("diameter",owner==null?0:owner.diameter);m.put("height",owner==null?0:owner.height);
         return m;

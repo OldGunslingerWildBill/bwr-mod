@@ -62,13 +62,20 @@ The controller reports coordinates of missing drives. Drive IDs scan west to
 east, then north to south within each column; GUI labels and CC commands both
 start at 1. The RODS tab draws the actual sparse physical pattern.
 
-Adjacent compact CRDs share water and FE through their horizontal manifold
-connections. Feed cables and water pipes into separate exposed faces, spreading
-supply connections across the bottom layer for large cores. Sharing transfers
-existing buffer contents only. Each drive still pays its own consumption and
-has independent wear, power/water availability, accumulator and rod movement.
-Broken or unloaded connections do not transfer supplies. Legacy CRDs retain
-their original individual wiring behavior.
+CRDs touching on any of their six faces share water and FE. Connect one water
+pipe and one power cable to two separate exposed faces, such as the bottom of
+two drives. Either connection can reach the combined storage of the entire
+connected group, including a full 17 × 17 grid; no extra connections are needed
+to distribute supplies across it. The source and cables/pipes must still meet
+the combined consumption of all drives.
+
+This works before reactor formation and for both compact and legacy layouts.
+Diagonals and gaps do not connect. Each drive retains its saved buffer and its
+own consumption, wear, accumulator and rod movement. Breaking a connecting
+drive splits the group; unloaded drives cannot receive supplies. Reconnecting
+or reloading restores sharing without generating water or FE. The connection
+map is cached until blocks, capabilities or chunk availability change; it is
+not rebuilt every tick. The bounded group limit is 4,096 drives.
 
 Internal recirculation pumps need the unused corner spaces: placing one through
 a required CRD column prevents formation. A north-facing RIP can straddle the
@@ -104,6 +111,6 @@ reassigned by resizing around live fuel or a saved transient. To change its
 footprint, shut down, cool, defuel and replace the controller. Rebuilding the
 original footprint restores the retained core.
 
-Client and server must both use this update: GUI protocol 2 carries exact fuel
-indices and sparse drive positions. The 42 × 42 logical storage grid supports
+Client and server must both use the current update (GUI protocol 7). The GUI
+carries exact fuel indices and sparse drive positions. The 42 × 42 logical storage grid supports
 the largest mask without the old 961-position storage ceiling.

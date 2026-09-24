@@ -50,6 +50,13 @@ public class ControlRodDriveBlock extends BaseEntityBlock {
         return new ControlRodDriveBlockEntity(pos, state);
     }
 
+    @Override protected void onPlace(BlockState state,Level level,BlockPos pos,BlockState old,boolean moving){
+        super.onPlace(state,level,pos,old,moving);ControlRodDriveSupplies.changed(level,pos);
+    }
+    @Override protected void onRemove(BlockState state,Level level,BlockPos pos,BlockState next,boolean moving){
+        super.onRemove(state,level,pos,next,moving);ControlRodDriveSupplies.changed(level,pos);
+    }
+
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
                                                                   BlockEntityType<T> type) {

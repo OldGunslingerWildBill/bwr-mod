@@ -1,5 +1,314 @@
 # Build Status
 
+## 2026-09-24 — 0.1.0-alpha.5: fuel catalogue and specialty rods
+
+Built `mod/build/libs/mod-0.1.0-alpha.5.jar` (**22,594,012 bytes**).
+SHA-256: `D58BB9576F1AC770D1D55071B569D755172E729B785A9C8990B0CA676BD0C332`.
+Deliver this JAR directly; the user now requests JAR-only downloads.
+
+- 19 fuel definitions; original five presets retain their tuning. Natural
+  uranium, 1.2/1.4/2.7/4.95/8/19.75% uranium, extra gadolinia, and lean/rich
+  MOX, plutonium and thorium variants are added.
+- Eight non-fuel cassettes: two fixed absorbers, three source types, three
+  irradiation targets. Separate exposure component, tagged core persistence,
+  local absorption/source integration, refuelling maps and single-use harvest.
+- Separate 33-entry fuel creative tab. 34 Blender PNG renders, including the
+  original assembly icon replacement; no dynamic inventory renderers added.
+- GUI protocol **8**. Existing world fuel saves remain compatible; both sides
+  must update. `FUELS-AND-RODS.md` documents recipes, experimental choices,
+  simplified physics and primary references.
+
+Verification:
+
+- Full physics run: **210/211 passed** in 876.5 seconds. The only failure was
+  the previous test's explicit five-preset expectation. Its expected catalogue
+  now covers 19 entries and still pins each family's beta; the complete
+  `FuelTypeSpec` group then passed **4/4**. All 211 checks have passing evidence
+  across that run and the focused rerun; the long suite was not repeated after
+  this test-only correction. Final source calibration also passed **5/5**
+  `FuelVariety` tests.
+- Minecraft **50/50** required GameTests passed, including the original 46
+  regressions and four new fuel tests. Checks include loaded and pending NBT
+  recovery, shuffling, wire snapshots, actual irradiation and no double harvest.
+- Real client: all **19 fuel / 8 rod** names and texture overrides verified.
+  Fuel tab screenshot: `art/models/fuel_icons/fuel_tab_ingame.png`. Screen CPU
+  rendering averaged about **1.26 ms** in this local fixture; not a general FPS
+  guarantee. Existing 33 machine inventory icon checks also passed.
+- Dedicated server **with and without** Mekanism/CC:Tweaked: zero problems;
+  eight assembly-permission scenarios passed in both configurations.
+- Asset audit: **2,392 JSON files**, zero problems. JAR audit: **374 project
+  classes**, no optional-mod implementation classes or development harnesses.
+- `:mod:build` and the design guard passed. The subsequent user request
+  authorizes committing and pushing all accumulated alpha changes to GitHub
+  `main`; the complete scope since `b126650` is recorded in `CHANGELOG.md`.
+
+Logs: `tmp/fuel-alpha5-{core,fuel-spec,build,final-build,gametest,client,peripherals,no-optional,assets,jar,blender}.log`.
+
+## 2026-09-24 — 0.1.0-alpha.4: transverse condenser and hotwell makeup
+
+Local patch and packaged test build; no commit, push or public release made.
+Includes all earlier uncommitted alpha fixes.
+
+- Rebuilt the two small oval side fittings as circular, open Blender flanges.
+  They now accept water into the existing finite hotwell, retaining inlet
+  enthalpy and leaving the cold/hot cooling inventories separate.
+- New layout v4 is **7 x 6 x 9**, controller `[3,0,4]`, with **eight ports**.
+  Snap facing is 90 degrees clockwise from the LP; the main pipes face the
+  sides of the turbine hall. The world footprint remains nine across the
+  shaft and seven along it. Inset makeup nozzles remain accessible between
+  adjacent LP/condenser units.
+- Archived v3 alongside v1/v2. Saved geometry, facing, inventories and old LP
+  attachment behavior remain intact. Drain and re-place to upgrade.
+- Updated hotwell GUI labels, compatible CC status aliases, documentation and
+  the lightweight Blender-rendered inventory icon. GUI protocol remains 7;
+  no ticking or per-tick rebuilds were added to pipes.
+
+Verification on the final implementation:
+
+- **206/206 core acceptance tests**, including makeup mass, heat, capacity,
+  simulation, circuit isolation and reload (full suite: 883.2 seconds).
+- **46/46 Minecraft GameTests**. New tests exercise adjacent LPs in all four
+  rotations, every socket's clearance, a real powered makeup pump through BWR
+  pipes, two-port shared reservation, hotwell persistence and stale handles.
+  Existing audit, tank/CRD, MSIV and placement-permission regressions pass.
+  Updated runtime harness transfers water through actual Mekanism Mechanical
+  Pipes into both cooling and makeup sockets; v2/v3 save fixtures retain their
+  original LP coupling. The first run exposed a hardcoded old-facing test
+  coordinate; it was corrected before the final complete rerun.
+- Real client: **eleven screenshots**, four renderer rotations, all 33
+  lightweight icons, materials, circular fittings, green/red outlines, normal
+  unsneaked snapping and adjacent LP clearance. Inspected the final views.
+- Dedicated server **with** CC/Mekanism and **without** both: zero problems;
+  eight assembly-permission scenarios pass in each configuration.
+- `:mod:build` and design guard pass (251 mod source files). Export check:
+  **30 resources, 179 occupied cells, eight ports, 18,492 mesh triangles**;
+  also verifies circular makeup radii and unobstructed connector cells.
+- Asset audit: **2,324 JSON files, zero problems**. JAR audit: **368 classes**,
+  no development fixtures or optional-mod classes bundled; attribution passes.
+
+JAR: `mod/build/libs/mod-0.1.0-alpha.4.jar` (**22,103,889 bytes**).
+SHA-256: `15409B0B93CE618C2DD7E72C93E4D849971F59CA672061D1BBDDC1B2377A4ABB`.
+
+Download ZIP: `../Realistic-BWR-0.1.0-alpha.4.zip` (**17,862,564 bytes**).
+SHA-256: `AF9CE3A520CED724CC027C00B1FE91C99638047AF8AC181FBCDB0C1351E4017D`.
+Includes JAR, installation/upgrade instructions, changelog, checksum and license
+documents. ZIP CRC and extracted JAR hash verified against the tested artifact.
+
+Evidence: `tmp/condenser-alpha4-{core,gametest,client,peripherals,no-optional,
+export,assets,jar}.log`. Final images are under
+`mod/run/turbineModelCheck/condenser-check/` and copied alongside Blender sources
+in `art/models/condenser_ports/`. No additional manual player testing is claimed.
+
+## 2026-09-24 — 0.1.0-alpha.3: condenser snapping and powered MSIV
+
+Local patch; no commit, push or public release made for this request.
+
+- New condensers occupy **9 x 6 x 7** blocks, widened in Blender with a centered
+  LP exhaust seat and six full-size pipe flanges. Clicking an LP underside
+  snaps the condenser beneath its actual controller and inherits its facing.
+  A cached green/red box preview shows local placement validity. Placement
+  checks the complete footprint before consuming the item or writing parts.
+- Both old condenser layouts retain their meshes, cell indices, connections
+  and saved inventories. Seven-block compact units still connect to their LPs.
+  Drain and replace to upgrade to the wider model.
+- MSIVs now start closed and require FE: **100 FE/t opening, 20 FE/t holding**,
+  a **20,000 FE** buffer and receive-only ports on non-steam faces. Power
+  exhaustion releases their four-second spring closure. Every exposed part
+  accepts a CC modem; power telemetry is available through `bwr_msiv`.
+  Legacy cube valves also require FE while retaining their old footprint.
+- The condenser's inventory icon was rendered in Blender and keeps the
+  two-quad creative-menu path. Pipe transport and GUI protocol 7 are unchanged.
+
+Verification:
+
+- **44/44 required Minecraft GameTests passed** on the final code, including
+  all prior audit and tank/CRD regressions. New cases exercise four-direction
+  snapping, block/entity rejection and item conservation, offhand menu
+  pass-through, narrow-v2 save compatibility, FE conservation/persistence,
+  four-second spring closure, actual CC calls on all 18 MSIV faces, and
+  Mekanism Universal Cable recognition in every valve orientation.
+- Dedicated servers with integrations and with both integrations absent:
+  **zero problems** each; **eight** assembly-permission scenarios passed,
+  including rejection of a snapped footprint crossing spawn protection.
+- Real client: **nine** condenser screenshots, including green/red previews
+  and a successful normal unsneaked placement beneath an existing LP turbine.
+  Inspected previews and placed-model images; colors, fit and ports are intact.
+  Model checks include **17,844** condenser quads in four rotations and all
+  **33** lightweight creative icons.
+- `:mod:build` and the design guard passed (**250 mod source files**).
+  Exporter reproduces **26 resources**, **230 occupied cells**, **six ports**.
+  Asset audit: **2,322 JSON files, zero problems**. JAR audit: **368 classes**,
+  no bundled optional-mod classes or development fixtures; attribution passes.
+- Core source is unchanged by this patch. Alpha.1's full **204/204** physics
+  suite remains applicable; it was not rerun for this mod-layer patch.
+
+Artifact: `mod/build/libs/mod-0.1.0-alpha.3.jar` (**21,832,018 bytes**).
+SHA-256: `D299E562549C65C1573F977A4948A4EA8EEA1A9210410C3E1E056EAB911A1ADD`.
+
+Evidence: `tmp/condenser-msiv-release.log`, `tmp/condenser-msiv-client.log`,
+`tmp/condenser-msiv-peripherals.log`, `tmp/condenser-msiv-no-optional.log`,
+`tmp/condenser-msiv-export.log`, `tmp/condenser-msiv-assets.log`,
+`tmp/condenser-msiv-jar.log`. Screenshots:
+`mod/run/turbineModelCheck/condenser-check/`; reviewed preview/placement images
+are also in `art/models/condenser_ports/`.
+
+## 2026-09-24 — 0.1.0-alpha.2: tank recovery and shared CRD supplies
+
+Local patch; no commit, push or release made for this request.
+
+- Breaking a formed condensate tank restores ordinary casing blocks. The mined
+  part follows normal tool/creative drops, excess materials are refunded, and
+  collision cells cannot create extra blocks. A saved restoration ledger handles
+  unloaded sections without force-loading them. Water still needs draining first.
+- Face-adjacent CRDs share their actual saved water/FE buffers. One water inlet
+  and one energy inlet on separate bottom faces supply a full 17 × 17 grid.
+  Sources must cover total consumption; wear, accumulators and rod movement
+  remain independent. Six-face topology is cached until a structural, capability
+  or chunk-availability change. Supply balancing does not rebuild the graph.
+- Existing tanks and drive layouts need no replacement to receive these fixes.
+  Reactor physics, model resources and GUI protocol 7 are unchanged.
+
+Verification:
+
+- **41/41 required Minecraft GameTests passed**, including all existing audit
+  regressions and five new tank/CRD tests. Actual player mining covers correct
+  and unsuitable tools, creative, root and port removal. The cross-chunk case
+  restores **241 casings + one drop = 242 paid blocks**, including save/load of
+  the pending restoration. The 289-drive test verifies supplies from two bottom
+  faces, conservation, independent wear and no graph rebuild as time passes.
+- Dedicated server with CC:Tweaked and Mekanism: **zero problems**, all seven
+  assembly permission scenarios passed.
+- Dedicated server with both optional integrations absent: **zero problems**,
+  all seven assembly permission scenarios passed.
+- Real client: four captured tank stages. Inspected assembled and dismantled
+  screenshots confirm the cylinder becomes visible, recoverable casing blocks.
+- `:mod:build` passed; design check scanned 245 mod source files. Assets:
+  **2,320 JSON files, zero problems**. JAR audit: **362 classes**, zero bundled
+  optional-mod classes and zero development-fixture entries.
+- No core source changed since alpha.1's **204/204** complete physics suite;
+  that prior result remains applicable and was not rerun for this mod-layer patch.
+
+Artifact: `mod/build/libs/mod-0.1.0-alpha.2.jar` (**21,557,910 bytes**).
+SHA-256: `AD89118AF40195E495092852DD389B48194BE5DA056A9A57FD575C1E660C7A4B`.
+
+Evidence: `tmp/tank-crd-release.log`, `tmp/tank-crd-client.log`,
+`tmp/tank-crd-no-optional.log`,
+`tmp/tank-crd-assets.log`, `tmp/tank-crd-jar.log`.
+Screenshots: `mod/run/turbineModelCheck/tank-check/`, including
+`tank-ports.png` and `tank-dismantled.png`.
+
+## 2026-09-23 — 0.1.0-alpha.1: physical SLC/ADS and creative-menu fix
+
+**Local alpha candidate; not committed, pushed or published.** This includes
+the transport/computer candidate below and all its regression fixes.
+
+- Reproduced the reported creative-menu slowdown: detailed machine meshes
+  rendered per slot gave 18.84 FPS / 51.17 ms screen CPU time. Blender-rendered
+  inventory icons gave 560.83 FPS / 1.14 ms in the same local scene. Placed and
+  held meshes remain intact. These are local measurements, not modpack promises.
+- Blender-built SLC tank, powered positive-displacement pump, ADS division
+  cabinet, ADS relief valve, borate charge and water outfall. SLC consumes
+  finite water/boron through a physical source and normal RPV water-injection
+  route, including feedwater cross-ties. Computer boron readouts reflect the
+  delivered solution, not the former fixed-rate estimate.
+- ADS division selection persists and only commands matching valves. The new
+  valve resolves the actual steam inlet and shares its nozzle's allowance.
+  Multiple ADS/pool reporters cannot claim or debit that steam twice. The
+  final regression also checks nozzle closure and broken steam lines.
+- Passive outfall tracks discharged water/heat and refuses blocked outlets.
+  All six computer faces cover 44 machine block types. Pipes retain their
+  event-invalidated geometry cache and have no block entities or tickers.
+
+Final verification:
+
+- **204/204 core tests**, 32 classes, 867.0 seconds; registration negative canary
+  passed. No core source changed after the full suite.
+- **36/36 required Minecraft GameTests** on final production sources, retaining
+  F01–F13, GitHub #14–#18 and R01–R05 coverage. New SLC, ADS and outfall tests
+  exercise actual capabilities, physical pipes and controller behavior.
+- Dedicated server with CC:Tweaked/Mekanism: **zero problems**, seven permission
+  scenarios. Both optional mods absent: **zero problems**, seven scenarios.
+- Real client: six inspected hardware/panel screenshots; **33 valid two-quad
+  inventory icons**; **7,032 occupied pump cell states**, 13 pump/compact models;
+  existing turbine, condenser, cooling and pipe model checks passed.
+- Assets: **2,320 JSON files**, 50 blocks, 52 items, **zero problems**. Alpha
+  Blender export check: **144 files, zero stale outputs**.
+- Final `:mod:build` passes; design check scanned 242 mod source files with no
+  automatic protection logic. `git diff --check` is clean.
+- JAR audit: **358 classes**, current license/attribution in both project JARs,
+  zero bundled CC/Mekanism classes and zero development-fixture entries.
+
+Artifact: `mod/build/libs/mod-0.1.0-alpha.1.jar` (**21,543,788 bytes**).
+SHA-256: `36F62D281074905410F12D27B264EDFDAF10A14438AFB717A6B47EA58678B73A`.
+
+Use Minecraft 1.21.1, NeoForge 21.1.248 and Java 21. Clients and server need
+the same JAR (**GUI protocol 7**). Replace legacy SLC cubes to build the new
+physical ports. See [ALPHA-HARDWARE.md](ALPHA-HARDWARE.md) for ports, tank
+charging, ADS division control, the outfall and remaining modeling assumptions.
+
+Ignored evidence logs: `tmp/alpha-first-gate.log` (full core suite),
+`tmp/alpha-release-final.log` (final GameTests, integrated server and mod build),
+`tmp/alpha-no-optional.log`, `tmp/alpha-client.log`,
+`tmp/alpha-creative-before.log`, `tmp/alpha-creative-after.log`,
+`tmp/alpha-assets-audit.log`, `tmp/alpha-jar-audit.log`.
+Client screenshots: `mod/run/turbineModelCheck/alpha-check/`.
+
+Earlier entries below are historical, including the previously unidentified
+creative-menu slowdown and older artifact versions/counts.
+
+## 2026-09-23 — First-release transport and computer candidate
+
+- All R01–R05 findings now have repairs and permanent regressions: shared
+  inventory simulation, preserved pool mass, live computer owner resolution,
+  branch-specific MSIV isolation and inverse recirculation flow commands.
+- CC:Tweaked connections cover all six faces of 41 machine block types,
+  including modeled assembly parts. Every operation resolves the current owner
+  on the server thread. New condenser, exchanger and hardware readouts are
+  available; player-written controls remain independent.
+- Water buffers carry mass and energy through BWR pipes, pumps, tanks, cooling
+  towers and the RHR exchanger. Condenser backpressure responds to coolant and
+  stored exhaust, and governs LP expansion. No automatic trip/control logic.
+- Pipe blocks have no ticker or block entity. Event-invalidated topology
+  collapses plain pipe runs into junctions; transfers resolve live valves and
+  inventories. No timed rebuild or per-tick pipe walk. Chunk accessibility
+  transitions, including LIGHT-to-FULL reactivation, reconnect cached routes.
+- Fuel-grid draw calls and GUI readouts are batched. A controlled local run
+  improved the 764-assembly panel from 109 to 205 FPS and the maximum panel
+  from 67 to 148 FPS. Screen CPU time fell from 4.80/8.13 ms to about 0.80 ms.
+  The exact reported 216-to-20 modpack drop was not reproduced.
+
+Verification:
+
+- **202/202 core tests**, 31 registered classes, 862.9 seconds. Registration
+  negative canary passed. Core sources did not change after that full run.
+- **32/32 required Minecraft GameTests**, retaining original F01–F13 and
+  GitHub #14–#18 coverage. New tests include 1,000 time advances without a
+  topology rebuild, live valve motion, rotated ports, chunk reconnect, thermal
+  mixing/reload, logical inventory identity and retained modem calls.
+- Dedicated-server integration/permission checks pass with CC:Tweaked and
+  Mekanism installed and with both absent: zero problems; seven permission
+  scenarios. Dynamic peripheral calls are exercised on/off the server thread.
+- GUI benchmark plus condenser, cooling, suppression/exchanger and tank
+  client harnesses passed. Screenshots of updated readouts were inspected;
+  labels, values, buttons and tooltips render without overlap. Existing model
+  checks pass on the real client.
+- Asset audit: **2,210 JSON files, zero problems**. Design-rule check and final
+  mod build passed. JAR audit checks current notices and nested core, and
+  excludes optional dependencies and every development fixture.
+
+JAR: `mod/build/libs/mod-0.1.0-SNAPSHOT.jar` (**20,558,190 bytes**).
+SHA-256: `C990770119DECED3EF3C0769149C19AA8DC01BE06D8AE4E268FDF69302C7603D`.
+
+Use the same build on server and clients (GUI protocol **6**). Thermal state
+has legacy-save defaults. Third-party pipes can compare or discard temperature
+components; use BWR pipes for a temperature-preserving plant loop. The condenser
+vacuum model is a calibrated simplification without noncondensable gases.
+See [PLANT-TRANSPORT.md](PLANT-TRANSPORT.md) for the operating assumptions.
+
+This is a locally verified candidate based on `b126650`; this update has not
+been committed, pushed or published as a GitHub release. Older entries below
+are historical, including statements that R01/R03/R04/R05 were still open.
+
 ## 2026-09-23 — Natural suppression-pool cooling
 
 - Formed, ticking pools cool gradually toward a fixed 25 C ambient without

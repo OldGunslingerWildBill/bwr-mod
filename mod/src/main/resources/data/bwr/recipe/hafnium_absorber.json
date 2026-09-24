@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:irradiation_casing"
+    },
+    {
+      "item": "minecraft:netherite_scrap"
+    }
+  ],
+  "result": {
+    "id": "bwr:specialty_rod",
+    "count": 1,
+    "components": {
+      "bwr:core_insert": {
+        "kind": "hafnium_absorber",
+        "exposure_seconds": 0
+      }
+    }
+  }
+}

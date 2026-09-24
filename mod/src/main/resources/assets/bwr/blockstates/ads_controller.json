@@ -1,7 +1,20 @@
 {
   "variants": {
-    "": {
-      "model": "bwr:block/ads_controller"
+    "facing=north": {
+      "model": "bwr:block/alpha/ads_controller/body",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "bwr:block/alpha/ads_controller/body",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/alpha/ads_controller/body",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/alpha/ads_controller/body",
+      "y": 270
     }
   }
 }

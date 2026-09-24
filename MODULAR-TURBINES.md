@@ -26,7 +26,9 @@ placement anchor is the center cell of the floor. Leave the footprint clear.
 3. Pipe HP left-side exhausts to LP top inlets. A common header can join several
    HP exhausts and several LP inlets. Shafts transmit work, not steam.
 4. Place one **compact condenser six blocks directly below each LP center-base
-   placement block**, facing the same direction. Exhaust transfers through the
+   placement block**. Click the LP underside for automatic alignment: the
+   condenser faces 90 degrees clockwise from the shaft, with main pipes toward
+   the hall sides. Exhaust transfers through the
    seated bottom interface. Supply cold cooling water and remove hot return water.
    Connect the condenser’s separate condensate outlet to storage/feedwater suction
    with BWR water pipes or Mekanism mechanical pipes. LPs have no water outlet.
@@ -67,9 +69,10 @@ load chunks. Arrange chunk loading for the complete plant when operating it.
   condenser converts that steam into water, requiring cooling water, hot-water
   storage room and condensate storage room. A missing or full condenser stops
   LP expansion. The mod convention is **1 mB = 1 kg**.
-- A moisture separator/reheater, dynamic vacuum and water-temperature transport
-  through ordinary mechanical pipes remain future work. Current condenser outlet
-  temperature is the existing 40°C assumption.
+- LP work now uses the connected condenser's backpressure, which rises with
+  warmer cooling water and accumulated steam. Water enthalpy propagates through
+  BWR buffers and pipes. A moisture separator/reheater and air-removal vacuum
+  equipment remain future work; see [model limits](PLANT-TRANSPORT.md).
 - Old LP water inventories survive updating and migrate into the matched
   condenser as room becomes available, including fractional amounts. Reconnect
   old LP outlet piping to the condenser. Do not dismantle a water-filled old LP

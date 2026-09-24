@@ -64,10 +64,10 @@ public final class PhaseTwoRegressionTests {
             level.setBlock(cut,BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get().defaultBlockState(),2);
             long time=level.getGameTime();var data=(net.minecraft.world.level.storage.ServerLevelData)level.getLevelData();
             try {
-                data.setGameTime(time+AssemblyPlumbing.Cache.REFRESH_TICKS);
+                data.setGameTime(time+500);
                 h.assertTrue(cache.trace(level,root,state,role).ends().contains(tank),"repaired pipe not discovered by deadline");
                 level.setBlock(branch,BwrBlocks.CONDENSATE_STORAGE_TANK.get().defaultBlockState(),2);
-                data.setGameTime(time+2*AssemblyPlumbing.Cache.REFRESH_TICKS);
+                data.setGameTime(time+2*500);
                 h.assertTrue(cache.trace(level,root,state,role).ends().contains(branch),"new tee not discovered by deadline");
             } finally {data.setGameTime(time);}
             level.removeBlock(root,false);
@@ -101,11 +101,11 @@ public final class PhaseTwoRegressionTests {
         long amortizedNs=System.nanoTime()-start,amortizedBytes=bean.getThreadAllocatedBytes(thread)-bytes;
         System.out.printf(java.util.Locale.ROOT,"F16 PLUMBING %s: 32-pipe route, uncached %.0f ns / %.0f bytes; cached %.0f ns / %.0f bytes per lookup%n",
                 label,(double)rawNs/runs,(double)rawBytes/runs,(double)cachedNs/runs,(double)cachedBytes/runs);
-        System.out.printf(java.util.Locale.ROOT,"F16 PLUMBING %s: including periodic surveys %.0f ns / %.0f bytes per tick; %d rebuilds in %d ticks%n",
+        System.out.printf(java.util.Locale.ROOT,"F16 PLUMBING %s: event-cached, across time changes %.0f ns / %.0f bytes per tick; %d rebuilds in %d ticks%n",
                 label,(double)amortizedNs/runs,(double)amortizedBytes/runs,cache.rebuildCount()-rebuilds,runs);
         h.assertTrue(cachedBytes<rawBytes,"stable route allocation did not improve: "+label);
-        h.assertTrue(amortizedBytes<rawBytes&&cache.rebuildCount()-rebuilds<=runs/AssemblyPlumbing.Cache.REFRESH_TICKS,
-                "periodic route caching did not reduce per-tick work: "+label);
+        h.assertTrue(amortizedBytes<rawBytes&&cache.rebuildCount()==rebuilds,
+                "static network rebuilt without an edit: "+label);
     }
 
     @GameTest(template="empty",timeoutTicks=200)
@@ -127,11 +127,11 @@ public final class PhaseTwoRegressionTests {
         h.assertTrue(Math.abs(cache.trace(level,root,state,role).opening()-.5)<1e-6,"valve movement waited for TTL");
         // A legacy inline MSIV also needs immediate closure/reopening detection.
         var isolation=bend.relative(across,3);level.setBlock(isolation,BwrBlocks.MSIV.get().defaultBlockState().setValue(MainSteamIsolationValveBlock.FACING,across),2);
-        var msiv=(MainSteamIsolationValveBlockEntity)level.getBlockEntity(isolation);msiv.setDemandOpen(true);msiv.tickValve(10);
+        var msiv=(MainSteamIsolationValveBlockEntity)level.getBlockEntity(isolation);msiv.energy().receiveEnergy(20_000,false);msiv.setDemandOpen(true);msiv.tickValve(10);
         h.assertTrue(cache.trace(level,root,state,role).ends().contains(nozzle),"inline MSIV fixture disconnected");
         msiv.setDemandOpen(false);msiv.tickValve(10);
         h.assertTrue(cache.trace(level,root,state,role).ends().isEmpty(),"closed MSIV used cached opening");
-        msiv.setDemandOpen(true);msiv.tickValve(10);
+        msiv.energy().receiveEnergy(20_000,false);msiv.setDemandOpen(true);msiv.tickValve(10);
         h.assertTrue(cache.trace(level,root,state,role).ends().contains(nozzle),"MSIV reopening waited for TTL");
         level.removeBlock(root,false);h.succeed();
     }

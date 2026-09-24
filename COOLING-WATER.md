@@ -87,16 +87,17 @@ fill the mod's existing condensate tanks because the current game fluid is water
 
 ## Temperature and condenser limits
 
-Cooling still uses the existing **24°C hot return / 13°C cold supply** design point.
-Heat rejection is calculated from processed mass and liquid enthalpy difference.
-Temperature is not yet transported through arbitrary water pipes, so this is not a
-weather, wet-bulb, fouling, or whole-plant temperature simulation.
+Water now carries enthalpy between BWR machine buffers through BWR water pipes.
+Pumps preserve inlet temperature; towers cool by up to **11 C per pass** toward
+**13 C**, retaining the existing 2% makeup loss. Readouts show actual mixed inlet
+and outlet temperatures. Untagged external water enters at 13 C.
 
 The condenser accepts **LP exhaust and bypass steam**. An LP turbine seats six
-blocks above the matching condenser’s center foundation, facing the same way.
-LPs no longer condense water or expose a water outlet. Missing/full condensers
-block LP flow; sustained operation needs the cooling loop and condensate drain.
-Dynamic vacuum simulation remains future work. See [condenser guide](CONDENSER-AND-MSIV.md).
+blocks above its matching condenser; new condensers face 90 degrees clockwise
+from the LP. Use underside snap placement to align them. Missing/full
+condensers block LP flow. Warm cooling water and accumulated exhaust raise
+backpressure and reduce LP work. See the [transport model and compatibility
+limits](PLANT-TRANSPORT.md) and [condenser guide](CONDENSER-AND-MSIV.md).
 
 ## CC:Tweaked
 
@@ -116,7 +117,7 @@ print(textutils.serialize(pump.getStatus()))
 
 `getStatus()` returns `ready`, `target`, `speed`, `inputKg`, `outputKg`,
 `flowKgPerS`, `ratedKgPerS`, `makeupKgPerS`, `heatRejectedMW`, `energyFE`, and
-`drawFEPerTick`. Control logic and interlocks remain the player's responsibility.
+`drawFEPerTick`, `inletC` and `outletC`. Control logic and interlocks remain the player's responsibility.
 
 ## Models and references
 
@@ -182,3 +183,14 @@ geometry, occupied cells and connections. Break and replace an old pump to use
 its new model, leaving space for the longer makeup-pump skid. Water-flow and FE
 ratings have not changed. Supply water to a suppression basin through its amber
 Return / Fill Port; choose regular fill or spray in the basin panel.
+
+## Hotwell makeup
+
+A powered Makeup Water Pump can supply either of the condenser's two round
+side nozzles through BWR water pipes or Mekanism Mechanical Pipes. Both inlets
+share the existing **200,000 kg hotwell**, including space used by condensed
+steam. They are inlet-only; use the rear condensate outlet to withdraw water.
+Supplied water retains its enthalpy and mixes with the hotwell inventory.
+It does not enter the cold/hot circulating-water inventories. Water chemistry
+and purification are not simulated. Older placed condensers must be drained
+and replaced to receive these new physical ports.

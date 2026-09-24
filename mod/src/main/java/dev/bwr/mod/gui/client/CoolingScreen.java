@@ -31,7 +31,7 @@ public class CoolingScreen extends BwrScreen<CoolingMenu> {
         if(menu.design.watts>0)readout(g,menu.design.tower?"Fan":"Motor",num(menu.actual*100,1)+"%  |  "+big(menu.draw)+" FE/t",12,143,328,TEXT_BRIGHT);
         else text(g,menu.design==Design.INTAKE?"Passive screen - connect a makeup pump downstream.":"Natural draft - no motor or fan required.",12,143,TEXT_DIM);
         if(menu.design.watts>0)text(g,"Speed (%)",12,181,TEXT);
-        text(g,menu.design.tower?"Design point: hot 24 C -> cold 13 C; 2% water loss.":"Ordinary water; chemistry is not simulated.",12,206,TEXT_DIM);
+        text(g,"Water: "+num(menu.inputC,1)+" -> "+num(menu.outputC,1)+" C",12,206,TEXT_DIM);
         text(g,menu.design==Design.INTAKE?"Source water at two outer sides; lakebed mounting is OK.":menu.design.watts>0?"Connect water pipes to flanges; FE to electrical box.":"Connect water pipes to the three basin flanges.",12,221,TEXT_DIM);
     }
 }

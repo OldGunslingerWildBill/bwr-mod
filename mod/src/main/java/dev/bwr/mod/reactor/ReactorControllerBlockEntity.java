@@ -233,8 +233,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     /** CC demand commands the connected motors; it cannot manufacture delivered flow. */
     public void setRecirculationDemand(double fraction) {
         if(level==null || core==null || structure==null || !Double.isFinite(fraction)) return;
-        double capacity=dev.bwr.mod.flow.RecirculationNetwork.measure(level,this,pumpPositions).maximum();
-        double speed=capacity>0 ? Math.clamp(fraction/capacity,0,1) : 0;
+        var measured=dev.bwr.mod.flow.RecirculationNetwork.measure(level,this,pumpPositions);
+        double speed=dev.bwr.core.flow.RecirculationSizing.speedForDemand(fraction,
+                dev.bwr.mod.flow.RecirculationNetwork.sizing(structure).requiredJets(),
+                measured.jetUnits(),measured.externalPumps(),measured.internalPumps());
         for(BlockPos p:pumpPositions) if(level.isLoaded(p)
                 && level.getBlockEntity(p) instanceof RecirculationPumpBlockEntity pump
                 && (dev.bwr.mod.flow.RecirculationNetwork.installedRip(level,structure,p)
@@ -802,6 +804,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         if (core == null) {
             return ItemStack.EMPTY;
         }
+        var insert = core.getCoreLoading().unloadInsert(latticePosition);
+        if (insert != null) {
+            setChanged();
+            return dev.bwr.mod.fuel.SpecialtyRodItem.stack(dev.bwr.mod.fuel.CoreInsertData.of(insert));
+        }
         dev.bwr.core.fuel.FuelAssembly assembly = core.getCoreLoading().unload(latticePosition);
         if (assembly == null) {
             return ItemStack.EMPTY;
@@ -819,15 +826,16 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      */
     public boolean loadAssembly(int latticePosition, ItemStack stack) {
         if (core == null || stack.isEmpty()
-                || !stack.is(dev.bwr.mod.registry.BwrItems.FUEL_ASSEMBLY.get())) {
+                || !dev.bwr.mod.fuel.SpecialtyRodItem.isCoreItem(stack)) {
             return false;
         }
         if (structure == null || java.util.Arrays.stream(corePositions()).noneMatch(p -> p == latticePosition)
                 || core.getCoreLoading().isOccupied(latticePosition)) {
             return false;
         }
-        core.getCoreLoading().load(latticePosition,
-                dev.bwr.mod.fuel.FuelAssemblies.load(stack));
+        if (stack.is(dev.bwr.mod.registry.BwrItems.SPECIALTY_ROD.get()))
+            core.getCoreLoading().loadInsert(latticePosition, dev.bwr.mod.fuel.SpecialtyRodItem.data(stack).toCore());
+        else core.getCoreLoading().load(latticePosition, dev.bwr.mod.fuel.FuelAssemblies.load(stack));
         setChanged();
         return true;
     }
@@ -849,6 +857,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         } else if(pendingFuelRestore!=null) {
             for(int i=0;i<pendingFuelRestore.size();i++) {
                 var entry=pendingFuelRestore.getCompound(i);
+                if (entry.contains("Insert")) {
+                    dev.bwr.mod.fuel.CoreInsertData.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, entry.get("Insert"))
+                            .result().ifPresent(data -> result.add(dev.bwr.mod.fuel.SpecialtyRodItem.stack(data)));
+                    continue;
+                }
                 dev.bwr.mod.fuel.FuelAssemblyData.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE,entry.get("Fuel"))
                         .result().ifPresent(data -> result.add(dev.bwr.mod.fuel.FuelAssemblyItem.stackOf(
                                 dev.bwr.mod.registry.BwrItems.FUEL_ASSEMBLY.get(),data)));
@@ -864,7 +877,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         Object revision=dev.bwr.mod.fuel.FuelTypes.revision();
         if(core==null || revision==fuelDefinitionRevision) return;
         var loading=core.getCoreLoading();
-        for(int i=0;i<loading.positionCount();i++) if(loading.isOccupied(i)) {
+        for(int i=0;i<loading.positionCount();i++) if(loading.assemblyAt(i) != null) {
             var assembly=loading.assemblyAt(i);
             var type=dev.bwr.mod.fuel.FuelTypes.byNameOrFallback(assembly.fuelType().name());
             if(type!=assembly.fuelType()) loading.load(i,dev.bwr.core.fuel.FuelAssembly.restore(type,
@@ -887,6 +900,12 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             CompoundTag entry = pendingFuelRestore.getCompound(i);
             int slot = entry.getInt("Slot");
             if (slot < 0 || slot >= lattice * lattice) {
+                continue;
+            }
+            if (entry.contains("Insert")) {
+                dev.bwr.mod.fuel.CoreInsertData.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, entry.get("Insert"))
+                        .resultOrPartial(message -> lastValidation.degrade("Invalid saved insert: " + message))
+                        .ifPresent(data -> { if (!loading.isOccupied(slot)) loading.loadInsert(slot, data.toCore()); });
                 continue;
             }
             dev.bwr.mod.fuel.FuelAssemblyData.CODEC
@@ -1030,9 +1049,14 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         var loading = core.getCoreLoading();
         for (int i = 0; i < loading.positionCount(); i++) {
             dev.bwr.core.fuel.FuelAssembly assembly = loading.assemblyAt(i);
-            if (assembly == null) {
-                continue;
+            var insert = loading.insertAt(i);
+            if (insert != null) {
+                CompoundTag entry = new CompoundTag(); entry.putInt("Slot", i);
+                dev.bwr.mod.fuel.CoreInsertData.CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE,
+                        dev.bwr.mod.fuel.CoreInsertData.of(insert)).result().ifPresent(data -> entry.put("Insert", data));
+                fuel.add(entry); continue;
             }
+            if (assembly == null) { continue; }
             CompoundTag entry = new CompoundTag();
             entry.putInt("Slot", i);
             dev.bwr.mod.fuel.FuelAssemblyData.CODEC

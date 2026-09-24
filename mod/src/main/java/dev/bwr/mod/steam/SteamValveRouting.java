@@ -16,29 +16,22 @@ public final class SteamValveRouting {
     public static double claim(Level level,BlockPos start,RpvSteamOutletBlockEntity nozzle,double wantedKgPerS){
         return transfer(level,start,nozzle,wantedKgPerS,false);
     }
+    public static double claim(Level level,BlockPos start,Direction outlet,RpvSteamOutletBlockEntity nozzle,double wantedKgPerS){
+        return transfer(level,start,outlet,nozzle,wantedKgPerS,false);
+    }
     public static double available(Level level,BlockPos start,RpvSteamOutletBlockEntity nozzle){
         return transfer(level,start,nozzle,Double.MAX_VALUE,true);
     }
     private static double transfer(Level level,BlockPos start,RpvSteamOutletBlockEntity nozzle,double wantedKgPerS,boolean simulate){
+        return transfer(level,start,null,nozzle,wantedKgPerS,simulate);
+    }
+    private static double transfer(Level level,BlockPos start,Direction outlet,RpvSteamOutletBlockEntity nozzle,double wantedKgPerS,boolean simulate){
         if(level==null||!level.isLoaded(start)||!level.isLoaded(nozzle.getBlockPos())||nozzle.isRemoved()||!(wantedKgPerS>0))return 0;
-        Map<BlockPos,Double> seen=new HashMap<>();ArrayDeque<PathNode> q=new ArrayDeque<>();
-        q.add(new PathNode(start,1,List.of()));seen.put(start,1.0);PathNode route=null;
-        while(!q.isEmpty()){
-            var n=q.remove();var current=level.getBlockState(n.pos);
-            for(Direction d:Direction.values()){
-                var next=n.pos.relative(d);if(!level.isLoaded(next))continue;var s=level.getBlockState(next);
-                if(!SteamLineNetwork.acceptsLineOn(current,d)||!SteamLineNetwork.acceptsLineOn(s,d.getOpposite()))continue;
-                double opening=n.opening;List<TurbineValveBlockEntity> valves=n.valves;
-                var be=level.getBlockEntity(next);
-                if(be instanceof MainSteamIsolationValveBlockEntity v)opening=Math.min(opening,v.getPosition());
-                if(be instanceof TurbineValveBlockEntity v){opening=Math.min(opening,v.position());var copy=new ArrayList<>(valves);copy.add(v);valves=List.copyOf(copy);}
-                if(opening<=0||seen.getOrDefault(next,0.0)>=opening)continue;
-                seen.put(next,opening);if(seen.size()>SteamLineNetwork.MAX_LINE_BLOCKS)return 0;
-                var path=new PathNode(next,opening,valves);
-                if(next.equals(nozzle.getBlockPos())){route=path;continue;}
-                if(s.is(BwrBlocks.PRESSURISED_TUBE.get())||s.is(BwrBlocks.MSIV.get())||s.is(BwrBlocks.SAFETY_RELIEF_VALVE.get())||s.getBlock() instanceof TurbineValveBlock)q.add(path);
-            }
-        }
+        var graph=dev.bwr.mod.piping.PipeTopology.get(level,start,outlet,true,false);
+        PathNode route=null;
+        for(var path:dev.bwr.mod.piping.PipeTopology.routes(level,graph))if(path.node().kind()==dev.bwr.mod.piping.PipeTopology.Kind.END
+                &&path.node().pos().equals(nozzle.getBlockPos())&&(route==null||path.opening()>route.opening))
+            route=new PathNode(path.node().pos(),path.opening(),path.valves());
         if(route==null)return 0;
         double raw=nozzle.getLineOpenFraction()>0?nozzle.getLastFlowKgPerS()/nozzle.getLineOpenFraction()/20:0;
         double limit=Math.min(wantedKgPerS/20,raw*route.opening);
@@ -48,31 +41,27 @@ public final class SteamValveRouting {
         for(var v:route.valves)v.record(nozzle.getBlockPos(),kg);
         return kg*20;
     }
-    /** -1 preserves the legacy nozzle boundary on lines without a new valve. */
+    /** -1 preserves bare nozzle operation; an MSIV is also a physical admission control. */
     public static double nozzleOpening(Level level,BlockPos start){
         if(level==null||!level.isLoaded(start))return -1;
-        Map<BlockPos,Double> seen=new HashMap<>();ArrayDeque<Node> q=new ArrayDeque<>();
-        seen.put(start,1.0);q.add(new Node(start,1));boolean controlled=false;double best=0;
-        while(!q.isEmpty()){
-            var n=q.remove();var current=level.getBlockState(n.pos);
-            for(Direction d:Direction.values()){
-                var next=n.pos.relative(d);if(!level.isLoaded(next))continue;
-                var s=level.getBlockState(next);
-                if(!SteamLineNetwork.acceptsLineOn(current,d)||!SteamLineNetwork.acceptsLineOn(s,d.getOpposite()))continue;
-                double opening=n.opening;var be=level.getBlockEntity(next);
-                if(be instanceof TurbineValveBlockEntity v){controlled=true;opening=Math.min(opening,v.position());}
-                if(be instanceof MainSteamIsolationValveBlockEntity v)opening=Math.min(opening,v.getPosition());
-                if(seen.getOrDefault(next,-1.0)>=opening)continue;
-                seen.put(next,opening);if(seen.size()>SteamLineNetwork.MAX_LINE_BLOCKS)return controlled?0:-1;
-                if(s.getBlock() instanceof ProcessAssembly a){
-                    if(a.portAt(s,d.getOpposite())==AssemblyPort.STEAM_INLET)best=Math.max(best,opening);
-                }else if(s.getBlock() instanceof dev.bwr.mod.condenser.CondenserBlock){
-                    if(dev.bwr.mod.condenser.CondenserBlockEntity.acceptsSteam(level,next))best=Math.max(best,opening);
-                }else if(s.is(BwrBlocks.TURBINE_STEAM_OUTLET.get())||s.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get()))best=Math.max(best,opening);
-                else if(s.is(BwrBlocks.PRESSURISED_TUBE.get())||s.is(BwrBlocks.MSIV.get())||s.is(BwrBlocks.SAFETY_RELIEF_VALVE.get())||s.getBlock() instanceof TurbineValveBlock)
-                    q.add(new Node(next,opening));
-            }
+        var graph=dev.bwr.mod.piping.PipeTopology.get(level,start,null,true,false);
+        boolean controlled=graph.edges().keySet().stream().anyMatch(n->n.state()!=null&&
+                (n.state().is(BwrBlocks.MSIV.get())||n.state().getBlock() instanceof TurbineValveBlock||n.state().getBlock() instanceof AdsReliefValveBlock));
+        if(graph.truncated())return 0;
+        if(!controlled)return -1;
+        double best=0;
+        for(var route:dev.bwr.mod.piping.PipeTopology.routes(level,graph)) {
+            var node=route.node();
+            if(node.state()!=null&&node.state().getBlock() instanceof AdsReliefValveBlock
+                    &&level.isLoaded(node.pos())&&level.getBlockEntity(node.pos()) instanceof SafetyReliefValveBlockEntity relief
+                    &&relief.isOpen()&&relief.isDischargeSubmerged())best=Math.max(best,route.opening());
+            if(node.kind()!=dev.bwr.mod.piping.PipeTopology.Kind.END)continue;
+            var s=node.state();boolean sink;
+            if(s.getBlock() instanceof ProcessAssembly a)sink=a.portAt(s,node.face())==AssemblyPort.STEAM_INLET;
+            else if(s.getBlock() instanceof dev.bwr.mod.condenser.CondenserBlock)sink=dev.bwr.mod.condenser.CondenserBlockEntity.acceptsSteam(level,node.pos());
+            else sink=s.is(BwrBlocks.TURBINE_STEAM_OUTLET.get())||s.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get());
+            if(sink)best=Math.max(best,route.opening());
         }
-        return controlled?best:-1;
+        return best;
     }
 }

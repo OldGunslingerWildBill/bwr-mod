@@ -137,7 +137,7 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
     private void detail(GuiGraphics graphics) {
         CoreMapSnapshot map = menu.map;
         int y = 32;
-        readout(graphics, "LOADED", menu.loadedAssemblies + "/" + menu.assemblyCount,
+        readout(graphics, "FUEL", menu.loadedAssemblies + "/" + menu.assemblyCount,
                 DETAIL_X, y, DETAIL_RIGHT, TEXT_BRIGHT);
         readout(graphics, "k-inf", num(menu.aggregateKInf, 4), DETAIL_X, y += 10,
                 DETAIL_RIGHT, TEXT_BRIGHT);
@@ -160,6 +160,9 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
             selectedLine = "Click a position on the map.";
         } else if (!map.isOccupied(selected)) {
             selectedLine = String.format(Locale.ROOT, "Position %d: empty.", selected);
+        } else if (map.isInsert(selected)) {
+            selectedLine = Component.translatable("insert.bwr." + map.insertId(selected)).getString()
+                    + String.format(Locale.ROOT, " | %.1f%%", 100 * map.insertProgress[selected]);
         } else {
             selectedLine = String.format(Locale.ROOT,
                     "Position %d: %s, %.2f%% fissile, %,.0f MWd/t, k-inf %.4f",
@@ -203,6 +206,7 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                 if (!map.isOccupied(cell)) {
                     return 0xFF191C20;
                 }
+                if (map.isInsert(cell)) return 0xFFB886D6;
                 if (overlay == Overlay.BURNUP) {
                     // Fresh is green, spent is red.
                     double f = Math.min(1.0, map.burnupMwdPerTonne[cell] / peakBurnup);
@@ -224,6 +228,7 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                     out.add(Component.literal("Select it and press LOAD to place a bundle."));
                     return out;
                 }
+                if (map.isInsert(cell)) return map.insertTooltip(cell);
                 out.add(Component.literal(String.format(Locale.ROOT, "Position %d - %s",
                         cell, map.fuelTypeName(cell))));
                 out.add(Component.literal(String.format(Locale.ROOT, "%.2f%% fissile as fabricated",

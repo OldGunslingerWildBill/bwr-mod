@@ -20,6 +20,11 @@ public class RpvWaterInjectionPortBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final MapCodec<RpvWaterInjectionPortBlock> CODEC = simpleCodec(RpvWaterInjectionPortBlock::new);
     public RpvWaterInjectionPortBlock(Properties properties) { super(properties); registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH)); }
+    @Override protected void onPlace(BlockState state,Level level,BlockPos pos,BlockState old,boolean moving) {
+        super.onPlace(state,level,pos,old,moving);
+        if(state!=old)dev.bwr.mod.piping.PipeTopology.changed(level,pos);
+    }
+
     @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
     @Override protected RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) { builder.add(FACING); }

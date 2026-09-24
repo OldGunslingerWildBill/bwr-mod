@@ -26,6 +26,7 @@ public final class BwrScreens {
     // and NeoForge routes it by type. Naming a bus is deprecated for removal.
     @SubscribeEvent
     public static void registerScreens(RegisterMenuScreensEvent event) {
+        event.register(BwrMenus.SERVICE.get(), ServiceScreen::new);
         event.register(BwrMenus.REACTOR_PANEL.get(), ReactorPanelScreen::new);
         event.register(BwrMenus.REFUELLING.get(), RefuellingScreen::new);
         event.register(BwrMenus.RECIRCULATION_PUMP.get(), RecirculationPumpScreen::new);

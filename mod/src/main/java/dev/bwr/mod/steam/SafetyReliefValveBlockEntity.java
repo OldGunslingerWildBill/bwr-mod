@@ -96,6 +96,8 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
      */
     private static final int LINE_SURVEY_INTERVAL_TICKS = 20;
 
+    private int division;
+    public int getDivision(){return division;}
     private volatile boolean open;
     private volatile boolean computerControlled;
     private volatile double lastFlowKgPerS;
@@ -135,9 +137,48 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
     }
 
     /** Open or close the valve. Called from redstone or from Lua. Never from physics. */
+    public void setDivision(int value){
+        int next=Math.clamp(value,0,4);if(next==division)return;
+        division=next;setChanged();
+        if(level!=null)for(var controller:dev.bwr.mod.eccs.AssemblyPlumbing.nearby(level,worldPosition,dev.bwr.mod.eccs.AdsControllerBlockEntity.class))controller.markBindingDirty();
+    }
     public void setOpen(boolean open) {
         this.open = open;
+        if(level!=null&&!level.isClientSide()&&getBlockState().getValue(SafetyReliefValveBlock.OPEN)!=open)
+            level.setBlock(worldPosition,getBlockState().setValue(SafetyReliefValveBlock.OPEN,open),2);
         setChanged();
+    }
+
+    private long reliefClaimTick=Long.MIN_VALUE;
+    private double reliefClaimKgPerS;
+    private BlockPos reliefClaimSource;
+    public record Supply(dev.bwr.mod.reactor.ReactorControllerBlockEntity reactor,double opening,
+                         List<dev.bwr.mod.reactor.RpvSteamOutletBlockEntity> nozzles){}
+    /** New ADS hardware takes pressure from its actual steam inlet, never a nearby vessel. */
+    public Supply steamSupply(){
+        if(level==null||isRemoved()||!(getBlockState().getBlock() instanceof AdsReliefValveBlock))return null;
+        var inlet=getBlockState().getValue(AdsReliefValveBlock.FACING).getCounterClockWise();
+        var graph=dev.bwr.mod.piping.PipeTopology.get(level,worldPosition,inlet,true,false);
+        if(graph.truncated())return null;
+        dev.bwr.mod.reactor.ReactorControllerBlockEntity found=null;double opening=0;
+        var nozzles=new java.util.LinkedHashMap<BlockPos,dev.bwr.mod.reactor.RpvSteamOutletBlockEntity>();
+        for(var route:dev.bwr.mod.piping.PipeTopology.routes(level,graph)){
+            var p=route.node().pos();if(route.opening()<=0||!level.isLoaded(p))continue;
+            if(level.getBlockEntity(p) instanceof dev.bwr.mod.reactor.RpvSteamOutletBlockEntity nozzle&&nozzle.isPartOfFormedReactor()&&nozzle.getPosition()>0){
+                var cp=nozzle.getControllerPos();if(cp==null||!level.isLoaded(cp))continue;
+                if(!(level.getBlockEntity(cp) instanceof dev.bwr.mod.reactor.ReactorControllerBlockEntity c)||!c.isFormed())continue;
+                if(found!=null&&found!=c)return null;found=c;opening=Math.max(opening,Math.min(route.opening(),nozzle.getPosition()));
+                nozzles.put(p,nozzle);
+            }
+        }
+        return found==null?null:new Supply(found,opening,List.copyOf(nozzles.values()));
+    }
+    /** Pool and ADS reporters share the valve key, so the source is debited once. */
+    public void reportRelief(dev.bwr.mod.eccs.ReactorEccsBus fallback,long tick,double flow){
+        // The new valve claims steam already removed through the RPV nozzle.
+        // Reporting another relief sink would debit the vessel twice.
+        if(getBlockState().getBlock() instanceof AdsReliefValveBlock)return;
+        if(fallback!=null)fallback.report(worldPosition,tick,0,0,0,0,flow,0,false,true);
     }
 
     /**
@@ -221,6 +262,13 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
             lastFlowKgPerS = 0.0;
             return 0.0;
         }
+        double opening=1;
+        Supply supply=null;
+        if(getBlockState().getBlock() instanceof AdsReliefValveBlock){
+            supply=steamSupply();
+            if(supply==null){lastFlowKgPerS=0;return 0;}
+            domePressurePsig=supply.reactor().core().getPressurePsig();opening=supply.opening();
+        }
         double ratedPsia =
                 Saturation.psiaFromPsig(dev.bwr.core.PhysicalConstants.RATED_DOME_PRESSURE_PSIG);
         double upstreamPsia = Saturation.psiaFromPsig(domePressurePsig);
@@ -240,7 +288,19 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
             subcritical = Math.sqrt(Math.max(0.0, 1.0 - x * x));
         }
 
-        lastFlowKgPerS = CAPACITY_KG_PER_S * (upstreamPsia / ratedPsia) * subcritical;
+        lastFlowKgPerS = CAPACITY_KG_PER_S * (upstreamPsia / ratedPsia) * subcritical * opening;
+        if(supply!=null){
+            // ADS and the pool both meter this valve. Share one allocation per tick,
+            // including when they run on opposite sides of the reactor's tick.
+            if(reliefClaimTick!=level.getGameTime()){
+                reliefClaimTick=level.getGameTime();reliefClaimKgPerS=0;
+                reliefClaimSource=supply.reactor().getBlockPos();
+                var inlet=getBlockState().getValue(AdsReliefValveBlock.FACING).getCounterClockWise();
+                for(var nozzle:supply.nozzles())reliefClaimKgPerS+=SteamValveRouting.claim(level,worldPosition,inlet,nozzle,
+                        Math.max(0,lastFlowKgPerS-reliefClaimKgPerS));
+            }
+            lastFlowKgPerS=reliefClaimSource.equals(supply.reactor().getBlockPos())?Math.min(lastFlowKgPerS,reliefClaimKgPerS):0;
+        }
         return lastFlowKgPerS;
     }
 
@@ -309,10 +369,13 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
         BlockPos.MutableBlockPos p = getBlockPos().mutable();
         for (int i = 0; i < DISCHARGE_SEARCH_DEPTH; i++) {
             p.move(0, -1, 0);
+            if(!level.isLoaded(p))return DischargePath.NONE;
             if (level.getFluidState(p).getType() == Fluids.WATER
                     || level.getFluidState(p).getType() == Fluids.FLOWING_WATER) {
                 return DischargePath.OPEN_WATER;
             }
+            if(getBlockState().getBlock() instanceof AdsReliefValveBlock&&!level.getBlockState(p).isAir()
+                    &&!level.getBlockState(p).is(BwrBlocks.PRESSURISED_TUBE.get()))return DischargePath.NONE;
         }
         return DischargePath.NONE;
     }
@@ -327,6 +390,16 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
      * nothing fires a neighbour change here when they do.
      */
     private boolean hasSubmergedQuencher(Level level) {
+        if(getBlockState().getBlock() instanceof AdsReliefValveBlock){
+            var graph=dev.bwr.mod.piping.PipeTopology.get(level,worldPosition,net.minecraft.core.Direction.DOWN,true,false);
+            if(graph.truncated())return false;
+            for(var route:dev.bwr.mod.piping.PipeTopology.routes(level,graph)){
+                var node=route.node();
+                if(route.opening()>0&&level.isLoaded(node.pos())&&node.state().is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get())
+                        &&SuppressionPoolQuencherBlock.isSubmerged(level,node.pos()))return true;
+            }
+            return false;
+        }
         long now = level.getGameTime();
         // Long.MIN_VALUE as the initial value would overflow on subtraction, so
         // the two ends are compared rather than differenced.
@@ -357,6 +430,7 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
+        tag.putInt("Division",division);
         tag.putBoolean("Open", open);
         tag.putBoolean("ComputerControlled", computerControlled);
         tag.putBoolean("Submerged", dischargeSubmerged);
@@ -365,6 +439,7 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        division=Math.clamp(tag.getInt("Division"),0,4);
         open = tag.getBoolean("Open");
         computerControlled = tag.getBoolean("ComputerControlled");
         dischargeSubmerged = tag.getBoolean("Submerged");

@@ -41,9 +41,20 @@ import java.util.Locale;
 public class CondensateStorageTankBlockEntity extends BlockEntity {
 
     public int diameter=1,height=1,paidBlocks=1;
-    int breakCost;
+    int breakCost=1;
     private BlockPos root;
     private java.util.UUID assembly=java.util.UUID.randomUUID();
+    java.util.UUID assemblyId(){return assembly;}
+    @Override public void setChanged(){
+        // Bulk assembly/restoration sends its own updates. Vanilla's comparator notification
+        // follows a solid neighbour into a second chunk without checking whether it is loaded.
+        if(level!=null&&CondensateTankAssembly.EDITING.get())level.blockEntityChanged(worldPosition);
+        else super.setChanged();
+    }
+    void makeStandalone(){
+        root=worldPosition;assembly=java.util.UUID.randomUUID();diameter=height=paidBlocks=1;
+        tank.setCapacity(CAPACITY_MB);tank.setFluid(FluidStack.EMPTY);pendingDrawKg=0;markStructureDirty();
+    }
     private long checkedAt=Long.MIN_VALUE;private boolean complete;
     public boolean assembled(){return getBlockState().getValue(CondensateStorageTankBlock.ASSEMBLED);}
     public BlockPos root(){return root;}
@@ -70,8 +81,7 @@ public class CondensateStorageTankBlockEntity extends BlockEntity {
     /** Temperature of stored condensate, degrees C. Cold, which is the whole point. */
     public static final double STORED_TEMPERATURE_C = 32.0;
 
-    private final FluidTank tank = new FluidTank(CAPACITY_MB,
-            stack -> stack.getFluid() == Fluids.WATER) {
+    private final FluidTank tank = new dev.bwr.mod.water.ThermalWaterTank(CAPACITY_MB,STORED_TEMPERATURE_C,this::drawDebt) {
         @Override
         protected void onContentsChanged() {
             setChanged();
@@ -82,7 +92,9 @@ public class CondensateStorageTankBlockEntity extends BlockEntity {
     private double pendingDrawKg;
 
     /** External extraction cannot take the fractional water already supplied to a pump. */
-    private final IFluidHandler fluidHandler = new IFluidHandler() {
+    private double drawDebt(){return pendingDrawKg;}
+    private final IFluidHandler fluidHandler = new dev.bwr.mod.world.LiveCapabilities.FluidProxy() {
+        public IFluidHandler current(){var o=owner();return o==null?null:o.tank;}
         @Override public int getTanks(){return 1;}
         @Override public FluidStack getFluidInTank(int index){var o=owner();return index==0&&o!=null&&o.ready()?o.tank.getFluid().copyWithAmount((int)Math.floor(Math.max(0,o.storedKg()-o.pendingDrawKg))):FluidStack.EMPTY;}
         @Override public int getTankCapacity(int index){var o=owner();return index==0&&o!=null?(int)o.capacityKg():0;}
@@ -104,12 +116,13 @@ public class CondensateStorageTankBlockEntity extends BlockEntity {
     }
 
     /** Water in the tank, kg. */
+    public double temperatureC(){return dev.bwr.mod.water.ThermalWater.temperature(tank().getFluid(),STORED_TEMPERATURE_C);}
     public double storedKg() {
         var o=owner();return o==null?0:o.tank.getFluidAmount();
     }
     public double availableWaterKg(){return Math.max(0,storedKg()-pendingDrawKg);}
-    void restoreAvailableWater(double kg){
-        int whole=(int)Math.ceil(kg);tank.setFluid(whole==0?FluidStack.EMPTY:new FluidStack(Fluids.WATER,whole));
+    void restoreAvailableWater(double kg,double enthalpy){
+        int whole=(int)Math.ceil(kg);tank.setFluid(dev.bwr.mod.water.ThermalWater.stack(whole,enthalpy));
         pendingDrawKg=whole-kg;setChanged();
     }
 
@@ -182,7 +195,7 @@ public class CondensateStorageTankBlockEntity extends BlockEntity {
     public List<String> statusLines() {
         List<String> out = new ArrayList<>();
         out.add(String.format(Locale.ROOT, "Condensate storage tank: %,.0f / %,.0f kg (%.1f%%) at %.0f degC",
-                storedKg(), capacityKg(), levelFraction() * 100.0, STORED_TEMPERATURE_C));
+                storedKg(), capacityKg(), levelFraction() * 100.0, temperatureC()));
         out.add("Cold suction, and finite. The suppression pool is the endless, self-heating alternative.");
         return out;
     }

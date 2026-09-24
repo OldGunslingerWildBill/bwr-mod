@@ -34,8 +34,6 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
 
     /** One game tick, seconds. The drive's own clock, independent of the multiblock. */
     private static final double TICK_SECONDS = 0.05;
-    private static final net.minecraft.core.Direction[] MANIFOLD_EDGES = {
-            net.minecraft.core.Direction.EAST, net.minecraft.core.Direction.SOUTH};
 
     private final ControlRodDriveHardware hardware = new ControlRodDriveHardware();
 
@@ -56,38 +54,26 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
         return hardware;
     }
 
+    @Override public void setChanged(){
+        // Drives have no comparator output. Persist supply/wear changes without vanilla's
+        // second-neighbour comparator scan, which can load the next chunk across a dense bank.
+        if(level!=null)level.blockEntityChanged(worldPosition);
+    }
+
     /**
      * Spend this drive's supplies and accumulate its wear, once per tick,
      * whether or not the multiblock around it is formed.
      */
     public static void serverTick(Level level, BlockPos pos, BlockState state,
                                   ControlRodDriveBlockEntity be) {
-        be.shareCompactManifold(level, pos);
+        var bank=ControlRodDriveSupplies.at(level,pos);
+        if(bank!=null)bank.balance(level.getGameTime());
         be.hardware.tickHardware(TICK_SECONDS);
         // The buffers moved, so the chunk is no longer what is on disk. Same
         // reasoning and same cost as RecirculationPumpBlockEntity.tickPump: a
         // drive that spent its supplies and then unloaded without being marked
         // would come back with them.
         be.setChanged();
-    }
-
-    private void shareCompactManifold(Level level, BlockPos pos) {
-        if (controllerPos == null || !level.isLoaded(controllerPos)
-                || !(level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity controller)
-                || !controller.isFormed() || controller.coreLayoutVersion() != 2) return;
-        // Visit each horizontal edge once. Never query an unloaded neighbour.
-        var positions = controller.structure().crdPositions();
-        if (rodIndex < 0 || rodIndex >= positions.size() || !positions.get(rodIndex).equals(pos)) return;
-        for (var side : MANIFOLD_EDGES) {
-            var next = pos.relative(side);
-            if (level.isLoaded(next) && level.getBlockEntity(next) instanceof ControlRodDriveBlockEntity other
-                    && controllerPos.equals(other.controllerPos)
-                    && other.rodIndex >= 0 && other.rodIndex < positions.size()
-                    && positions.get(other.rodIndex).equals(next)) {
-                hardware.shareSuppliesWith(other.hardware);
-                other.setChanged();
-            }
-        }
     }
 
     /**
@@ -136,6 +122,7 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
     @Override
     public void setRemoved() {
         super.setRemoved();
+        if(level!=null)ControlRodDriveSupplies.changed(level,worldPosition);
         notifyController();
     }
 
@@ -166,160 +153,34 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
         return water;
     }
 
-    /**
-     * Accepts energy and never gives it back. The buffer itself lives on the
-     * hardware object in doubles; this is only the integer-FE face NeoForge
-     * cables speak.
-     */
+    private ControlRodDriveSupplies.Bank bank(){return ControlRodDriveSupplies.at(level,worldPosition);}
+
+    /** Retained handles resolve the live bank even after a drive/chunk replacement. */
     private final class DriveEnergy implements IEnergyStorage {
-
-        @Override
-        public int receiveEnergy(int toReceive, boolean simulate) {
-            // Whole FE only, decided here rather than truncated afterwards, so
-            // that a simulate and the execute that follows it agree exactly.
-            // Truncating the hardware's answer instead would let a fractional
-            // acceptance be taken from the cable and reported as zero.
-            double space = hardware.getEnergyCapacityFe() - hardware.getEnergyStoredFe();
-            int room = (int) Math.floor(Math.min(toReceive, Math.max(0.0, space)));
-            if (room <= 0) {
-                return 0;
-            }
-            int accepted = (int) hardware.receiveEnergyFe(room, simulate);
-            if (accepted > 0 && !simulate) {
-                setChanged();
-            }
-            return accepted;
-        }
-
-        @Override
-        public int extractEnergy(int toExtract, boolean simulate) {
-            return 0;
-        }
-
-        @Override
-        public int getEnergyStored() {
-            return (int) Math.min(Integer.MAX_VALUE, hardware.getEnergyStoredFe());
-        }
-
-        @Override
-        public int getMaxEnergyStored() {
-            return (int) Math.min(Integer.MAX_VALUE, hardware.getEnergyCapacityFe());
-        }
-
-        @Override
-        public boolean canExtract() {
-            return false;
-        }
-
-        @Override
-        public boolean canReceive() {
-            return true;
-        }
+        public int receiveEnergy(int offered,boolean simulate){var b=bank();return b==null?0:b.receive(offered,false,simulate);}
+        public int extractEnergy(int requested,boolean simulate){return 0;}
+        public int getEnergyStored(){var b=bank();return b==null?0:b.stored(false);}
+        public int getMaxEnergyStored(){var b=bank();return b==null?0:b.capacity(false);}
+        public boolean canExtract(){return false;}
+        public boolean canReceive(){return bank()!=null;}
     }
 
-    /**
-     * Accepts demineralised water and never gives it back. Water is consumed by
-     * the purge flow into the vessel and by charging the accumulator, so a drive
-     * with no pipe to it runs its line dry and stops answering normal motion
-     * demands while its accumulator quietly stops recharging — SPEC 3.3's
-     * non-obvious failure mode, and the reason this face exists.
-     */
-    private final class DriveWater implements IFluidHandler {
-
-        @Override
-        public int getTanks() {
-            return 1;
-        }
-
-        @Override
-        public FluidStack getFluidInTank(int tank) {
-            int stored = (int) hardware.getWaterStoredMb();
-            return stored <= 0 ? FluidStack.EMPTY : new FluidStack(Fluids.WATER, stored);
-        }
-
-        @Override
-        public int getTankCapacity(int tank) {
-            return (int) Math.min(Integer.MAX_VALUE, hardware.getWaterCapacityMb());
-        }
-
-        @Override
-        public boolean isFluidValid(int tank, FluidStack stack) {
-            return stack.getFluid() == Fluids.WATER;
-        }
-
-        @Override
-        public int fill(FluidStack resource, FluidAction action) {
-            if (resource.isEmpty() || resource.getFluid() != Fluids.WATER) {
-                return 0;
-            }
-            // Whole millibuckets only; see DriveEnergy.receiveEnergy.
-            double space = hardware.getWaterCapacityMb() - hardware.getWaterStoredMb();
-            int room = (int) Math.floor(Math.min(resource.getAmount(), Math.max(0.0, space)));
-            if (room <= 0) {
-                return 0;
-            }
-            int accepted = (int) hardware.receiveWaterMb(room, action.simulate());
-            if (accepted > 0 && action.execute()) {
-                setChanged();
-            }
-            return accepted;
-        }
-
-        @Override
-        public FluidStack drain(FluidStack resource, FluidAction action) {
-            return FluidStack.EMPTY;
-        }
-
-        @Override
-        public FluidStack drain(int maxDrain, FluidAction action) {
-            return FluidStack.EMPTY;
-        }
+    /** All ports in a bank resolve to one identity, preventing double reservation by a pipe tee. */
+    private final class DriveWater implements dev.bwr.mod.world.LiveCapabilities.FluidProxy {
+        public IFluidHandler current(){var b=bank();return b==null?null:b.water;}
+        public int getTanks(){return 1;}
+        public FluidStack getFluidInTank(int i){var f=current();return f==null?FluidStack.EMPTY:f.getFluidInTank(i);}
+        public int getTankCapacity(int i){var f=current();return f==null?0:f.getTankCapacity(i);}
+        public boolean isFluidValid(int i,FluidStack f){return i==0&&f.is(Fluids.WATER);}
+        public int fill(FluidStack f,FluidAction action){var h=current();return h==null?0:h.fill(f,action);}
+        public FluidStack drain(FluidStack f,FluidAction action){return FluidStack.EMPTY;}
+        public FluidStack drain(int n,FluidAction action){return FluidStack.EMPTY;}
     }
 
-    // --- ControlRodDriveAccess ---------------------------------------
+    @Override public void onLoad(){super.onLoad();if(level!=null)ControlRodDriveSupplies.changed(level,worldPosition);}
 
-    @Override
-    public int rodIndex() {
-        return rodIndex;
-    }
-
-    /**
-     * The <b>hydraulic</b> accumulator charge, mirrored out of the core by
-     * {@link ControlRodDriveNetwork#postStep()}.
-     *
-     * <h2>Not the energy buffer, and the difference is scram capability</h2>
-     * This used to return {@code energyStoredFe / energyCapacityFe}, which is a
-     * different quantity in different units answering a different question. The
-     * FE buffer is about three minutes of solenoid draw and it is full whenever
-     * a cable is attached; the accumulator is the stored water pressure that
-     * physically pushes the piston, it is spent by a scram, and
-     * {@code ReactorCore} owns it — {@link ControlRodDriveHardware} says as much
-     * in its own division-of-labour comment, and
-     * {@link ControlRodDriveHardware#getAccumulatorCharge()} is the field the
-     * network writes it into every tick.
-     *
-     * <p>The two only look alike while nothing is wrong. Fire a scram and the
-     * accumulators dump to zero while the FE buffers stay full, so the old
-     * reading showed a core of fully charged accumulators seconds after they
-     * had all been spent — and this number, not the energy buffer, is what
-     * {@code SPEC.md} section 3.3's "how many rods will actually insert if I
-     * scram right now" is computed from. They also diverge the other way: lose
-     * the water supply with the bus energised and the accumulator bleeds away
-     * while the FE buffer reads 100%, which is the exact failure mode the drive
-     * model exists to make visible.
-     *
-     * <p>A drive that has never been bound reports 1.0, which is correct rather
-     * than a placeholder: a drive sitting in an unformed structure with power
-     * and water really does hold a charged accumulator. A drive that <i>was</i>
-     * bound and has been unbound — the multiblock broke around it — keeps the
-     * last figure the core mirrored into it, which is also right: the
-     * accumulator does not refill because the structure stopped validating.
-     * That value is not persisted, so across a save it comes back at 1.0; the
-     * core owns the real charge and restores its own, and the moment the
-     * structure forms again {@link ControlRodDriveNetwork#postStep()} overwrites
-     * this with it on the first tick. {@link #energyStoredFe()} and
-     * {@link #energyCapacityFe()} publish the FE buffer for anyone who wants it.
-     */
+    /** Accumulator state, health and rod motion remain local to this drive. */
+    @Override public int rodIndex(){return rodIndex;}
     @Override
     public double accumulatorCharge() {
         return hardware.getAccumulatorCharge();
@@ -443,6 +304,8 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
      */
     public java.util.List<String> statusLines() {
         java.util.List<String> out = new java.util.ArrayList<>();
+        var bank=bank();
+        if(bank!=null)out.add("Shared supply manifold: "+bank.size()+" connected drives; feed water and FE on any exposed faces.");
         if (rodIndex < 0) {
             out.add("Control rod drive: not bound to a rod. "
                     + "It still spends its supplies and still holds its charge.");

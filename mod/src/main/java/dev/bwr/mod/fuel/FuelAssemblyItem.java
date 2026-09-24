@@ -59,6 +59,12 @@ public class FuelAssemblyItem extends Item {
     }
 
     @Override
+    public Component getName(ItemStack stack) {
+        String id = FuelAssemblies.dataOf(stack).fuelTypeName();
+        return Component.translatableWithFallback("fuel.bwr." + id, "Fuel Assembly: " + id);
+    }
+
+    @Override
     public void appendHoverText(ItemStack stack, TooltipContext context,
                                 List<Component> tooltip, TooltipFlag flag) {
         FuelAssemblyData data = FuelAssemblies.dataOf(stack);
@@ -67,6 +73,12 @@ public class FuelAssemblyItem extends Item {
 
         tooltip.add(line(String.format(Locale.ROOT, "%s, %.2f%% fissile, %.0f kg HM",
                 type.name(), data.enrichmentWeightFraction() * 100.0, data.heavyMetalMassKg())));
+
+        if (type.name().equals("natural_uranium")) tooltip.add(line("Experimental BWR loading; cannot sustain a chain reaction alone."));
+        if (data.enrichmentWeightFraction() >= 0.05 || type.name().startsWith("plutonium") || type.name().startsWith("thorium"))
+            tooltip.add(line("Experimental fuel option; simplified nuclear data."));
+        if (type.name().startsWith("mox") || type.name().startsWith("plutonium"))
+            tooltip.add(line("Effective fissile fraction; not total plutonium content."));
 
         // Two different things can have gone wrong, and conflating them is how
         // the old check managed to stay silent in the case that mattered.

@@ -12,10 +12,11 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 
 public final class PumpModelCheck {
     private PumpModelCheck() {}
-    public static PumpAssemblyBlock[] blocks() { return new PumpAssemblyBlock[]{BwrBlocks.LPCS_PUMP.get(),BwrBlocks.RHR_PUMP.get(),BwrBlocks.HPCS_PUMP.get(),
+    public static PumpAssemblyBlock[] blocks() { return new PumpAssemblyBlock[]{BwrBlocks.SLC_PUMP.get(),BwrBlocks.SLC_BORON_TANK.get(),BwrBlocks.LPCS_PUMP.get(),BwrBlocks.RHR_PUMP.get(),BwrBlocks.HPCS_PUMP.get(),
             BwrBlocks.MOTOR_FEED_PUMP.get(),BwrBlocks.TURBINE_FEED_PUMP.get(),BwrBlocks.JET_PUMP.get(),BwrBlocks.RIP_PUMP.get(),BwrBlocks.RECIRCULATION_PUMP.get(),
             BwrBlocks.HP_TURBINE.get(),BwrBlocks.LP_TURBINE.get(),BwrBlocks.NUCLEAR_GENERATOR.get()}; }
     public static void run(ModelEvent.BakingCompleted event) {
+        InventoryModelCheck.run(event);
         waterModels(event);
         CondenserModelCheck.run(event);
         CoolingModelCheck.run(event);

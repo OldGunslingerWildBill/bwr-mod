@@ -162,6 +162,33 @@ public final class CoreLoading {
         }
         this.latticeWidth = latticeWidth;
         this.positions = new FuelAssembly[latticeWidth * latticeWidth];
+        this.inserts = new CoreInsert[positions.length];
+    }
+
+    private final CoreInsert[] inserts;
+    public CoreInsert insertAt(int index) { checkIndex(index); return inserts[index]; }
+    public void loadInsert(int index, CoreInsert insert) {
+        checkIndex(index);
+        if (positions[index] != null) throw new IllegalStateException("Position contains fuel");
+        if (inserts[index] != null && insert != null) throw new IllegalStateException("Position contains an insert");
+        inserts[index] = insert;
+        invalidateWeights();
+    }
+    public CoreInsert unloadInsert(int index) {
+        CoreInsert result = insertAt(index); inserts[index] = null; invalidateWeights(); return result;
+    }
+    public int insertCount() { int n = 0; for (var insert : inserts) if (insert != null) n++; return n; }
+    public double installedSourcePerSecond() {
+        double total = 0; for (var insert : inserts) if (insert != null) total += insert.sourcePerSecond(); return total;
+    }
+    /** Fixed inserts enter the bulk balance as a geometric flux-weighted absorption increment. */
+    public double insertAbsorptionRatio() {
+        double absorber = 0, fuel = 0;
+        for (int i = 0; i < positions.length; i++) {
+            if (positions[i] != null) fuel += geometricFluxShape(i);
+            if (inserts[i] != null) absorber += geometricFluxShape(i) * inserts[i].kind().absorptionRatio;
+        }
+        return fuel > 0 ? absorber / fuel : 0;
     }
 
     // ---------------------------------------------------------------
@@ -205,6 +232,7 @@ public final class CoreLoading {
      */
     public FuelAssembly load(int index, FuelAssembly assembly) {
         checkIndex(index);
+        if (assembly != null && inserts[index] != null) throw new IllegalStateException("Position contains an insert");
         FuelAssembly previous = positions[index];
         positions[index] = assembly;
         invalidateWeights();
@@ -222,7 +250,7 @@ public final class CoreLoading {
     }
 
     public boolean isOccupied(int index) {
-        return assemblyAt(index) != null;
+        return assemblyAt(index) != null || inserts[index] != null;
     }
 
     /**
@@ -236,12 +264,14 @@ public final class CoreLoading {
         FuelAssembly temp = positions[indexA];
         positions[indexA] = positions[indexB];
         positions[indexB] = temp;
+        CoreInsert other = inserts[indexA]; inserts[indexA] = inserts[indexB]; inserts[indexB] = other;
         invalidateWeights();
     }
 
     /** Empties every position. */
     public void unloadAll() {
         Arrays.fill(positions, null);
+        Arrays.fill(inserts, null);
         invalidateWeights();
     }
 
@@ -660,7 +690,7 @@ public final class CoreLoading {
      * "does the fuel still have anything left in it".
      */
     public double kEffAllRodsOut() {
-        return aggregateKInf() * nonLeakageProbability;
+        return aggregateKInf() * nonLeakageProbability / (1.0 + insertAbsorptionRatio());
     }
 
     /**

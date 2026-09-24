@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:irradiation_casing"
+    },
+    {
+      "item": "minecraft:glowstone_dust"
+    }
+  ],
+  "result": {
+    "id": "bwr:specialty_rod",
+    "count": 1,
+    "components": {
+      "bwr:core_insert": {
+        "kind": "antimony_beryllium_source",
+        "exposure_seconds": 0
+      }
+    }
+  }
+}

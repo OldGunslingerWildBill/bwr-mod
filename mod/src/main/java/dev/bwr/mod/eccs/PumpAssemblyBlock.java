@@ -34,7 +34,7 @@ import java.util.*;
 
 /** One item and one simulation per full-sized pump, including the hanging RIP. */
 public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort, ProcessAssembly {
-    public enum Kind { LPCS, RHR, HPCS, MOTOR_FEED, TURBINE_FEED, JET, RIP, RCP, HP_TURBINE, LP_TURBINE, GENERATOR }
+    public enum Kind { SLC, SLC_TANK, LPCS, RHR, HPCS, MOTOR_FEED, TURBINE_FEED, JET, RIP, RCP, HP_TURBINE, LP_TURBINE, GENERATOR }
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final IntegerProperty CELL = IntegerProperty.create("cell",0,255);
     // Missing property on an old save intentionally loads a compact model in its original cell.
@@ -88,7 +88,7 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
         super(properties.noOcclusion().pushReaction(PushReaction.BLOCK));
         this.kind=kind;
         String id=switch(kind) {
-            case LPCS -> "lpcs_pump"; case RHR -> "rhr_pump"; case HPCS -> "hpcs_pump";
+            case SLC -> "slc_pump"; case SLC_TANK -> "slc_boron_tank"; case LPCS -> "lpcs_pump"; case RHR -> "rhr_pump"; case HPCS -> "hpcs_pump";
             case MOTOR_FEED -> "motor_feed_pump"; case TURBINE_FEED -> "turbine_feed_pump";
             case JET -> "jet_pump"; case RIP -> "rip_pump"; case RCP -> "recirculation_pump";
             case HP_TURBINE -> "hp_turbine"; case LP_TURBINE -> "lp_turbine"; case GENERATOR -> "nuclear_generator";
@@ -141,19 +141,20 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
     @Override public BlockEntity newBlockEntity(BlockPos pos,BlockState s) {
         if(s.getValue(CELL)!=controllerCell(s)) return null;
         return switch(kind) {
-            case LPCS,RHR,HPCS -> new EccsPumpBlockEntity(pos,s);
+            case SLC,LPCS,RHR,HPCS -> new EccsPumpBlockEntity(pos,s);
             case MOTOR_FEED,TURBINE_FEED -> new FeedwaterPumpBlockEntity(pos,s);
             case RIP,RCP -> new RecirculationPumpBlockEntity(pos,s);
+            case SLC_TANK -> new SlcTankBlockEntity(pos,s);
             case JET,HP_TURBINE,LP_TURBINE,GENERATOR -> null;
         };
     }
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level,BlockState s,BlockEntityType<T> type) {
         if(level.isClientSide() || s.getValue(CELL)!=controllerCell(s)) return null;
         return switch(kind) {
-            case LPCS,RHR,HPCS -> createTickerHelper(type,BwrBlockEntities.ECCS_PUMP.get(),EccsPumpBlockEntity::serverTick);
+            case SLC,LPCS,RHR,HPCS -> createTickerHelper(type,BwrBlockEntities.ECCS_PUMP.get(),EccsPumpBlockEntity::serverTick);
             case MOTOR_FEED,TURBINE_FEED -> createTickerHelper(type,BwrBlockEntities.FEEDWATER_PUMP.get(),FeedwaterPumpBlockEntity::serverTick);
             case RIP,RCP -> createTickerHelper(type,BwrBlockEntities.RECIRCULATION_PUMP.get(),RecirculationPumpBlockEntity::serverTick);
-            case JET,HP_TURBINE,LP_TURBINE,GENERATOR -> null;
+            case SLC_TANK,JET,HP_TURBINE,LP_TURBINE,GENERATOR -> null;
         };
     }
     @Override public BlockState getStateForPlacement(BlockPlaceContext ctx) {
@@ -217,7 +218,8 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
     }
     @Override protected InteractionResult useWithoutItem(BlockState s,Level level,BlockPos pos,Player player,BlockHitResult hit) {
         if(level.isClientSide()) return InteractionResult.SUCCESS;
-        if (kind != Kind.JET && player instanceof ServerPlayer sp)
+        if(kind==Kind.SLC_TANK && player instanceof ServerPlayer sp) dev.bwr.mod.gui.ServiceMenu.open(sp,pos);
+        else if (kind != Kind.JET && player instanceof ServerPlayer sp)
             dev.bwr.mod.gui.PumpControlMenu.open(sp, origin(pos,s), pos);
         return InteractionResult.CONSUME;
     }

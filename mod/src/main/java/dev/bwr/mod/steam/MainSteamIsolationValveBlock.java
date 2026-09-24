@@ -61,11 +61,21 @@ public class MainSteamIsolationValveBlock extends BaseEntityBlock implements Ste
     @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(OPEN, ASSEMBLED, FACING, PART); }
     @Override protected RenderShape getRenderShape(BlockState s) { return RenderShape.MODEL; }
-    public BlockState placementState() { return defaultBlockState().setValue(ASSEMBLED, true); }
+    public BlockState placementState() { return defaultBlockState().setValue(ASSEMBLED, true).setValue(OPEN,false); }
     public BlockPos origin(BlockPos p, BlockState s) { return p.below(s.getValue(PART)); }
     private boolean owned(BlockState actual, BlockState s, int part) {
         return actual.is(this) && actual.getValue(PART)==part && actual.getValue(ASSEMBLED)==s.getValue(ASSEMBLED)
                 && actual.getValue(FACING)==s.getValue(FACING);
+    }
+    public MainSteamIsolationValveBlockEntity controller(Level level,BlockPos pos,BlockState state){
+        var root=origin(pos,state);
+        for(int i=0;i<(state.getValue(ASSEMBLED)?3:1);i++)
+            if(!level.isLoaded(root.above(i))||!owned(level.getBlockState(root.above(i)),state,i))return null;
+        return level.getBlockEntity(root) instanceof MainSteamIsolationValveBlockEntity valve&&!valve.isRemoved()?valve:null;
+    }
+    /** Upper actuator faces take a cable; the two steam flanges stay dedicated. */
+    public boolean energyFace(BlockState state,Direction side){
+        return side!=null && (!state.getValue(ASSEMBLED)||!acceptsSteamLineOn(state,side));
     }
 
     @Override public boolean acceptsSteamLineOn(BlockState s, Direction face) {
@@ -114,12 +124,14 @@ public class MainSteamIsolationValveBlock extends BaseEntityBlock implements Ste
             for(int i=0;i<(s.getValue(ASSEMBLED)?3:1);i++) if(l.hasNeighborSignal(root.above(i))) open=false;
             if(open!=be.isDemandOpen()) {
                 be.setDemandOpen(open);
-                l.setBlock(root,l.getBlockState(root).setValue(OPEN,open),Block.UPDATE_CLIENTS);
             }
         }
     }
     @Override protected void onPlace(BlockState s, Level l, BlockPos p, BlockState old, boolean moving) {
         super.onPlace(s,l,p,old,moving);
+        l.invalidateCapabilities(p);
+        if(!old.is(this)||old.getValue(FACING)!=s.getValue(FACING)||old.getValue(PART)!=s.getValue(PART)
+                ||old.getValue(ASSEMBLED)!=s.getValue(ASSEMBLED))dev.bwr.mod.piping.PipeTopology.changed(l,p);
         if(!l.isClientSide() && s.getValue(ASSEMBLED)) l.scheduleTick(p,this,20);
     }
     @Override protected void tick(BlockState s, ServerLevel l, BlockPos p, RandomSource random) {
@@ -139,6 +151,7 @@ public class MainSteamIsolationValveBlock extends BaseEntityBlock implements Ste
     }
     @Override protected void onRemove(BlockState s, Level l, BlockPos p, BlockState replacement, boolean moving) {
         super.onRemove(s,l,p,replacement,moving);
+        l.invalidateCapabilities(p);
         if(l.isClientSide() || replacement.is(this) || !s.getValue(ASSEMBLED) || REMOVING.get()) return;
         REMOVING.set(true);
         try {

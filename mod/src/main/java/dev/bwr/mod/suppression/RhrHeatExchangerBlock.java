@@ -18,6 +18,11 @@ import net.minecraft.world.phys.BlockHitResult;
 public class RhrHeatExchangerBlock extends BaseEntityBlock implements ProcessAssembly {
     public static final DirectionProperty FACING=HorizontalDirectionalBlock.FACING;
     public RhrHeatExchangerBlock(Properties p){super(p);registerDefaultState(stateDefinition.any().setValue(FACING,Direction.NORTH));}
+    @Override protected void onPlace(BlockState state,Level level,BlockPos pos,BlockState old,boolean moving) {
+        super.onPlace(state,level,pos,old,moving);
+        if(state!=old)dev.bwr.mod.piping.PipeTopology.changed(level,pos);
+    }
+
     @Override protected MapCodec<? extends BaseEntityBlock> codec(){return simpleCodec(RhrHeatExchangerBlock::new);}
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState>b){b.add(FACING);}
     @Override public BlockState getStateForPlacement(BlockPlaceContext c){return defaultBlockState().setValue(FACING,c.getHorizontalDirection().getOpposite());}

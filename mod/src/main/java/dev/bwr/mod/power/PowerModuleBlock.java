@@ -40,4 +40,13 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
         if(player instanceof ServerPlayer sp)dev.bwr.mod.gui.PowerModuleMenu.open(sp,origin(pos,s),pos);
         return InteractionResult.sidedSuccess(level.isClientSide());
     }
+    @Override protected net.minecraft.world.ItemInteractionResult useItemOn(net.minecraft.world.item.ItemStack stack,
+            BlockState state,Level level,BlockPos pos,Player player,net.minecraft.world.InteractionHand hand,BlockHitResult hit){
+        if(kind()==Kind.LP_TURBINE && hit.getDirection()==Direction.DOWN
+                && (stack.getItem() instanceof dev.bwr.mod.condenser.CondenserItem
+                    ||hand==net.minecraft.world.InteractionHand.MAIN_HAND&&stack.isEmpty()
+                    &&player.getOffhandItem().getItem() instanceof dev.bwr.mod.condenser.CondenserItem))
+            return net.minecraft.world.ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+        return super.useItemOn(stack,state,level,pos,player,hand,hit);
+    }
 }

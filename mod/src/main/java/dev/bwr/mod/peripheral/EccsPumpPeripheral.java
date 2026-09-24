@@ -133,6 +133,10 @@ public class EccsPumpPeripheral implements IPeripheral {
      */
     @LuaFunction(mainThread = true)
     public final void setSuctionSource(String source) throws LuaException {
+        if(be.design()==dev.bwr.core.eccs.EccsDesign.SLC){
+            if(!"boron_tank".equalsIgnoreCase(source))throw new LuaException("SLC requires its physical boron_tank suction line");
+            return;
+        }
         SuctionSource lineup = SuctionSource.byName(source);
         if (!lineup.getSerializedName().equalsIgnoreCase(source)
                 && !lineup.name().equalsIgnoreCase(source)) {
@@ -313,7 +317,7 @@ public class EccsPumpPeripheral implements IPeripheral {
     /** Boron this machine is adding, ppm per minute. Zero except on SLC. */
     @LuaFunction(mainThread = true)
     public final double getBoronRate() {
-        return pump().getBoronPpmPerMinute();
+        return be.deliveredBoronPpmPerMinute();
     }
 
     /** Everything above, in one call. */
@@ -323,6 +327,7 @@ public class EccsPumpPeripheral implements IPeripheral {
         EccsDesign d = be.design();
         EccsPump p = pump();
         m.put("system", d.id());
+        m.put("boronKgPerS",be.deliveredBoronKgPerS());
         m.put("drive", d.drive().name());
         m.put("delivery", d.delivery().name());
         m.put("running", be.isRunning());
@@ -337,11 +342,11 @@ public class EccsPumpPeripheral implements IPeripheral {
         m.put("shutoffHead", d.maximumDischargePsi());
         m.put("aboveShutoffHead", p.isAboveShutoffHead());
         m.put("driveLimited", p.isDriveLimited());
-        m.put("suction", be.getSuctionSource().getSerializedName());
+        m.put("suction",d==dev.bwr.core.eccs.EccsDesign.SLC?"boron_tank":be.getSuctionSource().getSerializedName());
         m.put("suctionTemperature", p.getSuctionTemperatureC());
         m.put("suctionShortfall", be.getSuctionShortfallKgPerS());
         m.put("steamConsumption", p.getSteamDemandKgPerS());
-        m.put("boronRate", p.getBoronPpmPerMinute());
+        m.put("boronRate", be.deliveredBoronPpmPerMinute());
         m.put("energy", be.energy().getEnergyStored());
         m.put("energyCapacity", be.energy().getMaxEnergyStored());
         m.put("ratedPowerDraw", EccsPower.fePerTickFromWatts(d.motorRatingWatts()));

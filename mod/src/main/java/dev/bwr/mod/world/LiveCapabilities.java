@@ -13,6 +13,12 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 /** A remote port must never retain a controller's inventory across chunk unloads. */
 public final class LiveCapabilities {
     private LiveCapabilities() {}
+    public interface FluidProxy extends IFluidHandler { IFluidHandler current(); }
+    /** The physical tank behind live port proxies; used to reserve shared capacity only once. */
+    public static IFluidHandler fluidIdentity(IFluidHandler handler) {
+        for(int i=0;i<8&&handler instanceof FluidProxy proxy;i++)handler=proxy.current();
+        return handler;
+    }
     private static <T> Supplier<T> resolve(Level level, BlockPos position, Block block, Function<BlockState,T> lookup) {
         BlockPos pos = position.immutable();
         return () -> {
@@ -34,7 +40,8 @@ public final class LiveCapabilities {
     }
     public static IFluidHandler fluid(Level level, BlockPos pos, Block block, Function<BlockState,IFluidHandler> lookup) {
         var current = resolve(level,pos,block,lookup);
-        return new IFluidHandler() {
+        return new FluidProxy() {
+            public IFluidHandler current() { return current.get(); }
             public int getTanks() { var f=current.get(); return f==null?0:f.getTanks(); }
             public FluidStack getFluidInTank(int tank) { var f=current.get(); return f==null?FluidStack.EMPTY:f.getFluidInTank(tank); }
             public int getTankCapacity(int tank) { var f=current.get(); return f==null?0:f.getTankCapacity(tank); }

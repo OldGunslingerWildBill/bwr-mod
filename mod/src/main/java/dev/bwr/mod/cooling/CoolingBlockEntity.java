@@ -69,13 +69,13 @@ public class CoolingBlockEntity extends BlockEntity {
         if(unit==null||!role.water())return null;
         return handlers.computeIfAbsent(role,r->new IFluidHandler(){
             public int getTanks(){return 1;}
-            public FluidStack getFluidInTank(int tank){int n=tank==0&&ready()?(int)Math.floor(r==CoolingBlock.Port.INLET?unit.input():unit.output()):0;return n>0?new FluidStack(Fluids.WATER,n):FluidStack.EMPTY;}
+            public FluidStack getFluidInTank(int tank){int n=tank==0&&ready()?(int)Math.floor(r==CoolingBlock.Port.INLET?unit.input():unit.output()):0;return n>0?dev.bwr.mod.water.ThermalWater.stack(n,r==CoolingBlock.Port.INLET?unit.inputH():unit.outputH()):FluidStack.EMPTY;}
             public int getTankCapacity(int tank){return tank==0?design().capacity:0;}
             public boolean isFluidValid(int tank,FluidStack stack){return tank==0&&r!=CoolingBlock.Port.OUTLET&&stack.is(Fluids.WATER);}
             public int fill(FluidStack stack,FluidAction action){
                 if(!ready()||!isFluidValid(0,stack))return 0;
-                int n=(int)Math.floor(r==CoolingBlock.Port.INLET?unit.fillInput(stack.getAmount(),true):unit.fillMakeup(stack.getAmount(),true));
-                if(n>0&&action.execute()){if(r==CoolingBlock.Port.INLET)unit.fillInput(n,false);else unit.fillMakeup(n,false);setChanged();}return n;
+                int n=(int)Math.floor(r==CoolingBlock.Port.INLET?unit.fillInput(stack.getAmount(),dev.bwr.mod.water.ThermalWater.enthalpy(stack),true):unit.fillMakeup(stack.getAmount(),dev.bwr.mod.water.ThermalWater.enthalpy(stack),true));
+                if(n>0&&action.execute()){if(r==CoolingBlock.Port.INLET)unit.fillInput(n,dev.bwr.mod.water.ThermalWater.enthalpy(stack),false);else unit.fillMakeup(n,dev.bwr.mod.water.ThermalWater.enthalpy(stack),false);setChanged();}return n;
             }
             public FluidStack drain(FluidStack stack,FluidAction action){return stack.is(Fluids.WATER)?drain(stack.getAmount(),action):FluidStack.EMPTY;}
             public FluidStack drain(int requested,FluidAction action){
@@ -84,7 +84,7 @@ public class CoolingBlockEntity extends BlockEntity {
                 double limit=design().flow/20*(design().watts>0&&!design().tower?actual:1);
                 int n=(int)Math.floor(unit.drain(Math.min(Math.max(0,requested),Math.max(0,limit-used)),true));
                 if(n<=0)return FluidStack.EMPTY;
-                if(action.execute()){unit.drain(n,false);drainTick=tick;drained=used+n;setChanged();}return new FluidStack(Fluids.WATER,n);
+                double h=unit.outputH();if(action.execute()){unit.drain(n,false);drainTick=tick;drained=used+n;setChanged();}return dev.bwr.mod.water.ThermalWater.stack(n,h);
             }
         });
     }
@@ -127,11 +127,13 @@ public class CoolingBlockEntity extends BlockEntity {
     @Override public ClientboundBlockEntityDataPacket getUpdatePacket(){return ClientboundBlockEntityDataPacket.create(this);}
     @Override protected void saveAdditional(CompoundTag t,HolderLookup.Provider r){
         super.saveAdditional(t,r);t.putLong("Root",root.asLong());t.putUUID("Assembly",assembly);t.putInt("Cell",cell);t.putInt("LayoutVersion",layoutVersion);
-        if(unit!=null){t.putDouble("Input",unit.input());t.putDouble("Output",unit.output());t.putDouble("Loss",unit.totalLoss());t.putDouble("Target",target);t.putDouble("Actual",actual);t.putInt("Energy",energy.getEnergyStored());}
+        if(unit!=null){t.putDouble("InputH",unit.inputH());t.putDouble("OutputH",unit.outputH());t.putDouble("Input",unit.input());t.putDouble("Output",unit.output());t.putDouble("Loss",unit.totalLoss());t.putDouble("Target",target);t.putDouble("Actual",actual);t.putInt("Energy",energy.getEnergyStored());}
     }
     @Override protected void loadAdditional(CompoundTag t,HolderLookup.Provider r){
         super.loadAdditional(t,r);layoutVersion=Math.clamp(t.getInt("LayoutVersion"),1,3);root=t.contains("Root")?BlockPos.of(t.getLong("Root")):worldPosition;if(t.hasUUID("Assembly"))assembly=t.getUUID("Assembly");cell=t.contains("Cell")?t.getInt("Cell"):layout().controllerIndex();
-        if(unit!=null){unit.restore(t.getDouble("Input"),t.getDouble("Output"),t.getDouble("Loss"));energy.setStored(t.getInt("Energy"));
+        if(unit!=null){unit.restore(t.getDouble("Input"),t.getDouble("Output"),t.getDouble("Loss"),
+                t.contains("InputH")?t.getDouble("InputH"):dev.bwr.core.thermal.Saturation.subcooledLiquidEnthalpyKJPerKg(design().tower?24:13),
+                t.contains("OutputH")?t.getDouble("OutputH"):dev.bwr.core.thermal.Saturation.subcooledLiquidEnthalpyKJPerKg(13));energy.setStored(t.getInt("Energy"));
             if(t.contains("Target"))setTarget(t.getDouble("Target"));double a=t.getDouble("Actual");actual=Double.isFinite(a)?Math.clamp(a,0,1):0;}
         structureDirty=true;checkedAt=drainTick=Long.MIN_VALUE;drained=0;
     }

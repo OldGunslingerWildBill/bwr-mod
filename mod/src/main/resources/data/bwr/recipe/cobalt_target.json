@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:irradiation_casing"
+    },
+    {
+      "item": "bwr:cobalt_charge"
+    }
+  ],
+  "result": {
+    "id": "bwr:specialty_rod",
+    "count": 1,
+    "components": {
+      "bwr:core_insert": {
+        "kind": "cobalt_target",
+        "exposure_seconds": 0
+      }
+    }
+  }
+}

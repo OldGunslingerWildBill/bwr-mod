@@ -14,7 +14,7 @@ public final class SurfaceCondenserTest {
         var c=loaded();c.fillCold(100000,false);double energy=c.steam.energyKJ();c.tick(.05);
         near(c.cold()+c.hot(),100000);near(c.steam.mass()+c.condensate(),5000);
         double rise=Saturation.subcooledLiquidEnthalpyKJPerKg(SurfaceCondenser.HOT_C)-Saturation.subcooledLiquidEnthalpyKJPerKg(SurfaceCondenser.COLD_C);
-        double liquid=c.condensate()*Saturation.subcooledLiquidEnthalpyKJPerKg(SurfaceCondenser.CONDENSATE_C);
+        double liquid=c.condensate()*c.condensateH();
         near(c.steam.energyKJ()+liquid+c.hot()*rise,energy);
         near(c.rejectedMW(),c.hot()*rise/.05/1000);
         check(c.rejectedMW()<=SurfaceCondenser.HEAT_REJECTION_MW+1e-8);
@@ -35,6 +35,30 @@ public final class SurfaceCondenserTest {
         near(c.drainHot(2000000,false),hot);near(c.hot(),0);near(c.drainCondensate(2000000,false),water);near(c.condensate(),0);
         double steam=c.steam.mass();c.tick(Double.NaN);c.tick(-1);near(c.steam.mass(),steam);
         c.restore(Double.NaN,Double.POSITIVE_INFINITY,-1);near(c.cold()+c.hot()+c.condensate(),0);
+    }
+    public static void test06_makeupIsFiniteAndIsolatedFromCoolingWater(){
+        var c=new SurfaceCondenser();double h=Saturation.subcooledLiquidEnthalpyKJPerKg(17);
+        c.fillCold(123,false);
+        near(c.fillMakeup(250000,h,true),200000);near(c.condensate(),0);
+        near(c.fillMakeup(250000,h,false),200000);near(c.condensateC(),17);
+        near(c.fillMakeup(1,h,false),0);near(c.cold(),123);near(c.hot(),0);near(c.steam.mass(),0);
+        near(c.drainCondensate(.5,false),.5);
+        for(double invalid:new double[]{-1,Double.NaN,Double.POSITIVE_INFINITY}){
+            near(c.fillMakeup(invalid,h,false),0);near(c.fillMakeup(1,invalid,false),0);
+        }
+        near(c.condensate(),199999.5);near(c.fillMakeup(1,h,false),.5);
+    }
+    public static void test07_makeupAndSteamConserveMassAndEnthalpyAcrossReload(){
+        var c=loaded();c.fillCold(100000,false);
+        c.fillMakeup(123.25,Saturation.subcooledLiquidEnthalpyKJPerKg(15),false);
+        c.fillMakeup(72.5,Saturation.subcooledLiquidEnthalpyKJPerKg(80),false);
+        double energy=c.steam.energyKJ()+c.condensate()*c.condensateH()+c.cold()*c.coldH();
+        double mass=c.steam.mass()+c.condensate();c.tick(.05);
+        near(c.steam.mass()+c.condensate(),mass);near(c.cold()+c.hot(),100000);
+        near(c.steam.energyKJ()+c.condensate()*c.condensateH()+c.cold()*c.coldH()+c.hot()*c.hotH(),energy);
+        var copy=new SurfaceCondenser();copy.restore(c.cold(),c.hot(),c.condensate(),c.coldH(),c.hotH(),c.condensateH());
+        near(copy.condensate(),c.condensate());near(copy.condensateH(),c.condensateH());
+        near(copy.drainCondensate(1,true),1);near(copy.condensate(),c.condensate());
     }
     public static void test05_fractionalInventorySurvivesReload(){
         var c=loaded();c.fillCold(25.25,false);c.tick(.05);check(c.condensate()>0&&c.condensate()<1);

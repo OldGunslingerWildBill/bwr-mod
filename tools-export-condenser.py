@@ -15,6 +15,12 @@ mats=m.materials(s,folder)
 m.put(folder/'body.obj',m.obj(s['faces'],mats));m.put(folder/'body.json',m.model('bwr:models/block/condenser/body.obj'))
 b=m.bounds([v for f in s['faces'] for v in f['vertices']])
 assert all(b[a]>=-1e-6 and b[a+3]<=s['size'][a]+1e-6 for a in range(3)),b
+# Makeup nozzles are authored at final scale, not anisotropically stretched.
+for p in (p for p in s['ports'] if p['role']=='MAKEUP'):
+    cy,cz=p['cell'][1]+.5,p['cell'][2]+.5
+    neck=[v for f in s['faces'] if f['part'].startswith('hotwell makeup '+str(cz)+' neck') for v in f['vertices']]
+    assert neck,('missing makeup neck',p)
+    assert all(min(abs(math.hypot(v[1]-cy,v[2]-cz)-r) for r in (.205,.25))<1e-5 for v in neck),('oval makeup pipe',p)
 scale=.9/max(b[a+3]-b[a] for a in range(3))
 compact=[dict(f,vertices=[[(p[a]-(b[a]+b[a+3])/2)*scale+.5 for a in range(3)]+p[3:] for p in f['vertices']]) for f in s['faces']]
 m.put(folder/'compact.obj',m.obj(compact,mats));m.put(folder/'compact.json',m.model('bwr:models/block/condenser/compact.obj'))
@@ -45,6 +51,23 @@ def export_layout(s,path):
     m.put(path,{'size':s['size'],'controller':ctrl,'ports':s['ports'],'cells':[cells[i] for i in sorted(cells)]})
     return cells
 cells=export_layout(s,m.RES/'data/bwr/condenser/layout.json')
+occupied={tuple(c['cell']) for c in cells.values()}
+for p in (p for p in s['ports'] if p['role']=='MAKEUP'):
+    x,y,z=p['cell'];assert (x-1,y,z) not in occupied,('blocked makeup socket',p)
+# Preserve the alpha.3 facing and footprint in existing saved structures.
+wide_v3=m.read('arabelle_condenser_wide_v3.json')
+v3_folder=m.RES/'assets/bwr/models/block/condenser/wide_v3'
+v3_mats=m.materials(wide_v3,v3_folder)
+m.put(v3_folder/'body.obj',m.obj(wide_v3['faces'],v3_mats))
+m.put(v3_folder/'body.json',m.model('bwr:models/block/condenser/wide_v3/body.obj'))
+export_layout(wide_v3,m.RES/'data/bwr/condenser/layout_wide_v3.json')
+# Version 2 occupied seven columns. Retain its mesh and cell indices in saved worlds.
+compact_v2=m.read('arabelle_condenser_compact_v2.json')
+v2_folder=m.RES/'assets/bwr/models/block/condenser/compact_v2'
+v2_mats=m.materials(compact_v2,v2_folder)
+m.put(v2_folder/'body.obj',m.obj(compact_v2['faces'],v2_mats))
+m.put(v2_folder/'body.json',m.model('bwr:models/block/condenser/compact_v2/body.obj'))
+export_layout(compact_v2,m.RES/'data/bwr/condenser/layout_compact_v2.json')
 # Keep old placed structures addressable until the player breaks and replaces them.
 legacy=m.read('arabelle_condenser_legacy.json')
 legacy_folder=m.RES/'assets/bwr/models/block/condenser/legacy'

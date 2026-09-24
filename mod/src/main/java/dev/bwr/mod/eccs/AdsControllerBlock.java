@@ -31,9 +31,14 @@ public class AdsControllerBlock extends BaseEntityBlock {
     public static final MapCodec<AdsControllerBlock> CODEC = simpleCodec(AdsControllerBlock::new);
 
     public AdsControllerBlock(Properties properties) {
-        super(properties);
+        super(properties.noOcclusion());
+        registerDefaultState(defaultBlockState().setValue(FACING,net.minecraft.core.Direction.NORTH));
     }
 
+    public static final net.minecraft.world.level.block.state.properties.DirectionProperty FACING=net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING;
+    @Override protected void createBlockStateDefinition(net.minecraft.world.level.block.state.StateDefinition.Builder<Block,BlockState> b){b.add(FACING);}
+    @Override public BlockState getStateForPlacement(net.minecraft.world.item.context.BlockPlaceContext c){return defaultBlockState().setValue(FACING,c.getHorizontalDirection().getOpposite());}
+    @Override protected BlockState rotate(BlockState s,net.minecraft.world.level.block.Rotation r){return s.setValue(FACING,r.rotate(s.getValue(FACING)));}
     @Override
     protected MapCodec<? extends BaseEntityBlock> codec() {
         return CODEC;
@@ -99,11 +104,7 @@ public class AdsControllerBlock extends BaseEntityBlock {
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         }
-        if (level.getBlockEntity(pos) instanceof AdsControllerBlockEntity be) {
-            for (String line : be.statusLines()) {
-                player.displayClientMessage(Component.literal(line), false);
-            }
-        }
+        if(player instanceof net.minecraft.server.level.ServerPlayer sp)dev.bwr.mod.gui.ServiceMenu.open(sp,pos);
         return InteractionResult.CONSUME;
     }
 }

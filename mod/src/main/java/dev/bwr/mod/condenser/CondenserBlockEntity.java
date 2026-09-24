@@ -22,11 +22,10 @@ public class CondenserBlockEntity extends BlockEntity {
     private BlockPos root;
     private UUID assembly=UUID.randomUUID();
     private int cell;
-    private int layoutVersion=2;
+    private int layoutVersion=4;
     private final SurfaceCondenser plant;
     private final Map<CondenserBlock.Port,IFluidHandler> handlers=new EnumMap<>(CondenserBlock.Port.class);
-    private final Map<Integer,List<BlockPos>> sources=new HashMap<>();
-    private long surveyedAt=Long.MIN_VALUE,checkedAt=Long.MIN_VALUE;
+    private long checkedAt=Long.MIN_VALUE;
     private boolean complete;
     public boolean forming,structureDirty=true;
     public CondenserBlockEntity(BlockPos p,BlockState s){
@@ -35,7 +34,7 @@ public class CondenserBlockEntity extends BlockEntity {
     }
     public BlockPos root(){return root;}
     public int cellIndex(){return cell;}
-    public CondenserLayout layout(){return layoutVersion==1?CondenserLayout.LEGACY:CondenserLayout.INSTANCE;}
+    public CondenserLayout layout(){return switch(layoutVersion){case 1->CondenserLayout.LEGACY;case 2->CondenserLayout.COMPACT_V2;case 3->CondenserLayout.WIDE_V3;default->CondenserLayout.INSTANCE;};}
     public SurfaceCondenser plant(){return plant;}
     public void bind(CondenserBlockEntity owner,int index){root=owner.worldPosition;assembly=owner.assembly;cell=index;layoutVersion=owner.layoutVersion;setChanged();}
     public boolean matches(CondenserBlockEntity owner){return root.equals(owner.worldPosition)&&assembly.equals(owner.assembly)
@@ -70,23 +69,26 @@ public class CondenserBlockEntity extends BlockEntity {
     public IFluidHandler water(CondenserBlock.Port role){
         if(plant==null||!role.water())return null;
         return handlers.computeIfAbsent(role,r->new IFluidHandler(){
+            private double enthalpy(){return switch(r){case COLD->plant.coldH();case HOT->plant.hotH();default->plant.condensateH();};}
             private double stored(){return switch(r){case COLD->plant.cold();case HOT->plant.hot();default->plant.condensate();};}
             private boolean live(){return owner()==CondenserBlockEntity.this&&ready();}
             public int getTanks(){return 1;}
-            public FluidStack getFluidInTank(int tank){int n=tank==0&&live()?(int)Math.floor(stored()):0;return n>0?new FluidStack(Fluids.WATER,n):FluidStack.EMPTY;}
-            public int getTankCapacity(int tank){return tank==0?(r==CondenserBlock.Port.CONDENSATE?SurfaceCondenser.CONDENSATE_CAPACITY:SurfaceCondenser.COOLING_CAPACITY):0;}
-            public boolean isFluidValid(int tank,FluidStack stack){return tank==0&&r==CondenserBlock.Port.COLD&&stack.is(Fluids.WATER);}
+            public FluidStack getFluidInTank(int tank){int n=tank==0&&live()?(int)Math.floor(stored()):0;return n>0?dev.bwr.mod.water.ThermalWater.stack(n,enthalpy()):FluidStack.EMPTY;}
+            public int getTankCapacity(int tank){return tank==0?(r==CondenserBlock.Port.CONDENSATE||r==CondenserBlock.Port.MAKEUP?SurfaceCondenser.CONDENSATE_CAPACITY:SurfaceCondenser.COOLING_CAPACITY):0;}
+            public boolean isFluidValid(int tank,FluidStack stack){return tank==0&&r.inlet()&&stack.is(Fluids.WATER);}
+            private double fillInlet(double amount,double h,boolean simulate){return r==CondenserBlock.Port.MAKEUP?plant.fillMakeup(amount,h,simulate):plant.fillCold(amount,h,simulate);}
             public int fill(FluidStack stack,FluidAction action){
                 if(!live()||!isFluidValid(0,stack))return 0;
-                int n=(int)Math.floor(plant.fillCold(stack.getAmount(),true));
-                if(n>0&&action.execute()){plant.fillCold(n,false);setChanged();}return n;
+                int n=(int)Math.floor(fillInlet(stack.getAmount(),dev.bwr.mod.water.ThermalWater.enthalpy(stack),true));
+                if(n>0&&action.execute()){fillInlet(n,dev.bwr.mod.water.ThermalWater.enthalpy(stack),false);setChanged();}return n;
             }
             public FluidStack drain(FluidStack stack,FluidAction action){return stack.is(Fluids.WATER)?drain(stack.getAmount(),action):FluidStack.EMPTY;}
             public FluidStack drain(int max,FluidAction action){
-                if(r==CondenserBlock.Port.COLD||!live())return FluidStack.EMPTY;
+                if(r.inlet()||!live())return FluidStack.EMPTY;
                 int n=(int)Math.floor(Math.min(Math.max(0,max),stored()));if(n<=0)return FluidStack.EMPTY;
+                double h=enthalpy();
                 if(action.execute()){if(r==CondenserBlock.Port.HOT)plant.drainHot(n,false);else plant.drainCondensate(n,false);setChanged();}
-                return new FluidStack(Fluids.WATER,n);
+                return dev.bwr.mod.water.ThermalWater.stack(n,h);
             }
         });
     }
@@ -101,12 +103,12 @@ public class CondenserBlockEntity extends BlockEntity {
     }
     private void pullSteam(){
         var layout=layout();var facing=getBlockState().getValue(CondenserBlock.FACING);
-        long now=level.getGameTime();boolean resurvey=surveyedAt==Long.MIN_VALUE||now-surveyedAt>=20;
         double budget=SurfaceCondenser.HEAT_REJECTION_MW*1000/20;
         for(var port:layout.ports){if(port.role()!=CondenserBlock.Port.BYPASS)continue;
             var at=layout.world(worldPosition,facing,port);
-            if(resurvey){var survey=SteamLineNetwork.survey(level,at);sources.put(port.index(),survey.truncated()?List.of():survey.nozzles());}
-            for(var source:sources.getOrDefault(port.index(),List.of())){
+            // Geometry is shared and event-invalidated; current source inventories are resolved below.
+            var survey=SteamLineNetwork.survey(level,at);if(survey.truncated())continue;
+            for(var source:survey.nozzles()){
                 if(!level.isLoaded(source)||!(level.getBlockEntity(source) instanceof RpvSteamOutletBlockEntity nozzle))continue;
                 var controller=nozzle.getControllerPos();
                 if(controller==null||!level.isLoaded(controller)||!(level.getBlockEntity(controller) instanceof ReactorControllerBlockEntity reactor)||!reactor.isFormed())continue;
@@ -117,7 +119,6 @@ public class CondenserBlockEntity extends BlockEntity {
                 if(kg>0){plant.steam.offer(new SteamInventory.Packet(kg,h,pressure));budget=Math.max(0,budget-kg*heat);setChanged();}
             }
         }
-        if(resurvey)surveyedAt=now;
     }
     private void pushWater(){
         var layout=layout();var facing=getBlockState().getValue(CondenserBlock.FACING);
@@ -133,15 +134,18 @@ public class CondenserBlockEntity extends BlockEntity {
     @Override public ClientboundBlockEntityDataPacket getUpdatePacket(){return ClientboundBlockEntityDataPacket.create(this);}
     @Override protected void saveAdditional(CompoundTag t,HolderLookup.Provider r){
         super.saveAdditional(t,r);t.putLong("Root",root.asLong());t.putUUID("Assembly",assembly);t.putInt("Cell",cell);t.putInt("LayoutVersion",layoutVersion);
-        if(plant!=null){t.putDouble("Cold",plant.cold());t.putDouble("Hot",plant.hot());t.putDouble("Condensate",plant.condensate());
+        if(plant!=null){t.putDouble("ColdH",plant.coldH());t.putDouble("HotH",plant.hotH());t.putDouble("CondensateH",plant.condensateH());t.putDouble("Cold",plant.cold());t.putDouble("Hot",plant.hot());t.putDouble("Condensate",plant.condensate());
             t.putDouble("SteamMass",plant.steam.mass());t.putDouble("SteamEnthalpy",plant.steam.enthalpy());t.putDouble("SteamPressure",plant.steam.pressure());}
     }
     @Override protected void loadAdditional(CompoundTag t,HolderLookup.Provider r){
         super.loadAdditional(t,r);root=t.contains("Root")?BlockPos.of(t.getLong("Root")):worldPosition;
-        layoutVersion=t.contains("LayoutVersion")&&t.getInt("LayoutVersion")>=2?2:1;
+        layoutVersion=t.contains("LayoutVersion")?Math.clamp(t.getInt("LayoutVersion"),1,4):1;
         if(t.hasUUID("Assembly"))assembly=t.getUUID("Assembly");cell=t.contains("Cell")?t.getInt("Cell"):layout().controllerIndex();
-        if(plant!=null){plant.restore(t.getDouble("Cold"),t.getDouble("Hot"),t.getDouble("Condensate"));
+        if(plant!=null){plant.restore(t.getDouble("Cold"),t.getDouble("Hot"),t.getDouble("Condensate"),
+                t.contains("ColdH")?t.getDouble("ColdH"):Saturation.subcooledLiquidEnthalpyKJPerKg(SurfaceCondenser.COLD_C),
+                t.contains("HotH")?t.getDouble("HotH"):Saturation.subcooledLiquidEnthalpyKJPerKg(SurfaceCondenser.HOT_C),
+                t.contains("CondensateH")?t.getDouble("CondensateH"):Saturation.subcooledLiquidEnthalpyKJPerKg(SurfaceCondenser.CONDENSATE_C));
             plant.steam.restore(t.getDouble("SteamMass"),t.getDouble("SteamEnthalpy"),t.getDouble("SteamPressure"));}
-        structureDirty=true;surveyedAt=checkedAt=Long.MIN_VALUE;sources.clear();
+        structureDirty=true;checkedAt=Long.MIN_VALUE;
     }
 }

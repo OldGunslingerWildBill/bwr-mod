@@ -20,25 +20,17 @@ public final class RecirculationCircuit {
         return source!=null && source==destination?source:null;
     }
     private static ReactorControllerBlockEntity trace(Level level,BlockPos root,Direction direction,boolean suction){
-        Set<BlockPos> seen=new HashSet<>();ArrayDeque<BlockPos> queue=new ArrayDeque<>();
-        seen.add(root);queue.add(root);ReactorControllerBlockEntity found=null;
-        while(!queue.isEmpty()){
-            BlockPos p=queue.remove();
-            for(Direction face:Direction.values()){
-                if(p.equals(root) && face!=direction)continue;
-                BlockPos next=p.relative(face);if(!level.isLoaded(next) || seen.contains(next))continue;
-                var s=level.getBlockState(next);
-                if(s.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get())){
-                    seen.add(next);if(seen.size()>256)return null;queue.add(next);
-                } else if(s.getBlock() instanceof RecirculationPortBlock port && s.getValue(RpvWaterInjectionPortBlock.FACING)==face.getOpposite()){
-                    seen.add(next);
-                    if(port.isOutlet()!=suction || !(level.getBlockEntity(next) instanceof RpvWaterInjectionPortBlockEntity nozzle))return null;
-                    var owner=nozzle.controller();if(owner==null || found!=null && found!=owner)return null;found=owner;
-                } else if(s.getBlock() instanceof RecirculationPumpBlock pump){
-                    var role=pump.waterPortAt(s,face.getOpposite());
-                    if(role!=null && role!=(suction?AssemblyPort.WATER_SUCTION:AssemblyPort.WATER_DISCHARGE))return null;
-                } else if(dev.bwr.mod.water.WaterLineNetwork.acceptsLineOn(s,face.getOpposite()))return null;
-            }
+        var graph=dev.bwr.mod.piping.PipeTopology.get(level,root,direction,false,false);
+        if(graph.truncated())return null;
+        ReactorControllerBlockEntity found=null;
+        for(var end:graph.ends()) {
+            var next=end.pos();if(!level.isLoaded(next))return null;var s=level.getBlockState(next);
+            if(s.getBlock() instanceof RecirculationPortBlock port&&s.getValue(RpvWaterInjectionPortBlock.FACING)==end.face()) {
+                if(port.isOutlet()!=suction||!(level.getBlockEntity(next) instanceof RpvWaterInjectionPortBlockEntity nozzle))return null;
+                var owner=nozzle.controller();if(owner==null||found!=null&&found!=owner)return null;found=owner;
+            } else if(s.getBlock() instanceof RecirculationPumpBlock pump) {
+                var role=pump.waterPortAt(s,end.face());if(role!=null&&role!=(suction?AssemblyPort.WATER_SUCTION:AssemblyPort.WATER_DISCHARGE))return null;
+            } else return null;
         }
         return found;
     }
