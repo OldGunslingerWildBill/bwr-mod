@@ -1,4 +1,4 @@
-# Fuel and specialty rods — alpha.5
+# Fuel and specialty rods — alpha.7
 
 Open **Realistic BWR: Fuel & Rods** in the creative inventory. The machine tab
 now contains plant hardware; this tab contains 19 fuel grades, eight specialty
@@ -47,7 +47,7 @@ metal inventory or fuel burnup.
 | Americium-beryllium source | Adds a weaker startup neutron source |
 | Antimony-beryllium source | Builds up source strength while irradiated |
 | Cobalt target | Produces one sealed cobalt-60 sample |
-| Tritium target | Produces one sealed tritium sample; experimental BWR option |
+| Tritium target | Produces 1,250 sealed tritium samples per completed rod; experimental BWR option |
 | Silicon target | Produces one neutron-doped silicon item |
 
 Absorbers add local absorption to the spatial solve and a geometry-weighted
@@ -65,20 +65,65 @@ Fixed absorbers do not replace the movable control blades.
 3. Load the target into the reactor. Progress follows the local spatial flux
    and fission power. Decay heat does not process targets; unloaded items and
    unloaded reactors gain no offline progress.
-4. Remove a completed target and **use it in your hand**. It yields one sample
-   and one empty rod, consuming the completed cassette. A full inventory drops
-   the result instead of deleting it.
+4. Remove a completed target and **use it in your hand**. Cobalt and silicon
+   yield one product; tritium yields 1,250 sealed samples. Each harvest returns
+   one empty rod and consumes the completed cassette. A full inventory drops
+   the result instead of deleting it. Large harvests split into normal stacks
+   of at most 64, including any dropped overflow.
 
-At local flux equal to the rated core average, silicon takes 15 minutes,
-cobalt 20 minutes, and tritium 30 minutes of **gameplay simulation time**.
-The secondary source reaches its modeled strength after 10 equivalent minutes.
-These accelerated thresholds are not real irradiation schedules. Position and
-reactor power change the rate. Exposure survives shuffling, save/reload and
+At local flux equal to the rated core average:
+
+| Insert | Required operating exposure |
+|---|---|
+| Antimony-beryllium secondary source | 48 hours to full source strength |
+| Silicon target | 24 hours |
+| Cobalt target | 72 hours |
+| Tritium target | 168 hours / 7 days |
+
+These are **real running hours at 20 TPS**, not Minecraft day/night cycles or
+offline elapsed time. They are gameplay settings matched to long fuel cycles,
+not real irradiation schedules. At half the reference local fission flux, a
+batch takes twice as long. Position and reactor power change the rate; decay
+heat alone does not advance it. Exposure survives shuffling, save/reload and
 controller removal, and completed targets stop accumulating progress.
 
+Existing alpha.5 rods retain their accumulated exposure seconds; their shown
+percentage is recalculated against the longer threshold. An unharvested rod
+that met the old short threshold therefore needs more exposure. Already
+harvested samples remain usable.
+
 Sample uses: silicon + iron makes a repeater; cobalt sample + redstone + quartz
-makes a comparator; tritium sample + glass makes a sea lantern. Samples are
-sealed inventory items, with no radiochemistry or Mekanism chemical conversion.
+makes a comparator; tritium sample + glass makes a sea lantern.
+
+### Bulk Mekanism tritium
+
+With Mekanism **and Mekanism Generators** installed, process a sealed tritium
+sample in a powered **Chemical Oxidizer** to produce **10,000 mB of
+`mekanismgenerators:tritium`**. Pipe the
+chemical into Mekanism storage or its fusion-fuel system. One completed rod
+provides 1,250 samples, or **12,500,000 mB / 12,500 buckets**. This fills
+20 inventory slots (19 full stacks and one stack of 34), plus the empty casing.
+This is a game-balance yield, not a physical conversion from rod mass.
+
+For a fusion system consuming 2.5 buckets of D-T fuel per second with a 1:1
+deuterium/tritium input ratio, the tritium requirement is 756,000 buckets per
+seven days. A 764-position core with 64 targets leaves 700 fuel positions;
+one completed batch yields 800,000 buckets of tritium, about 5.8% above that
+requirement. This assumes all targets receive rated local flux for seven
+operating days and deuterium is supplied separately. Lower flux and refuelling
+downtime require more targets or stored supply. Harvesting is a batch process,
+not continuous export.
+
+The alpha.7 increase applies when a completed rod is harvested, including rods
+already loaded or stored. Previously harvested sample items still yield
+10,000 mB each; they are not retroactively multiplied. Exposure is unchanged.
+
+Each sample fits the pinned Chemical Oxidizer's 10,000 mB output tank. Empty
+or pipe out that tank between operations. Harvesting is one-shot, and the
+oxidizer consumes one sample per operation. Cobalt and silicon do not have
+Mekanism chemical outputs. The conversion recipe is disabled if either optional
+mod is absent; the rods, samples and ordinary crafting uses remain available.
+Generators owns the [tritium chemical registration](https://github.com/mekanism/Mekanism/blob/1.21.x/src/generators/java/mekanism/generators/common/registries/GeneratorsChemicals.java).
 
 Other rod recipes combine an empty casing with: borate charge (boron),
 netherite scrap (hafnium), nether star (californium), echo shard (Am-Be), or
@@ -104,6 +149,6 @@ glowstone dust (Sb-Be). These recipes represent gameplay costs only.
 - The documented TPBAR design is for PWRs, not ordinary BWR fuel. Our tritium
   target is explicitly a gameplay adaptation. [PNNL TPBAR description](https://www.pnnl.gov/publications/description-tritium-producing-burnable-absorber-rod-commercial-light-water-reactor).
 
-Client and server must both use alpha.5: GUI protocol 8 carries tagged
-specialty entries and a variable-length name index. Saved original fuel items
-and core inventories remain compatible.
+Install alpha.7 on clients and server together so exposure thresholds and
+tooltips agree. GUI protocol remains 8; saved original fuel items and core
+inventories remain compatible.

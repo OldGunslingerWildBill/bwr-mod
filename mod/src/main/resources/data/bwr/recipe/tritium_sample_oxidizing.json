@@ -1,0 +1,9 @@
+{
+  "type": "mekanism:oxidizing",
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "mekanism" },
+    { "type": "neoforge:mod_loaded", "modid": "mekanismgenerators" }
+  ],
+  "input": { "count": 1, "item": "bwr:tritium_sample" },
+  "output": { "amount": 10000, "id": "mekanismgenerators:tritium" }
+}

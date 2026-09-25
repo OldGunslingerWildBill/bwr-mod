@@ -40,7 +40,7 @@ public final class FuelVarietyTest {
     }
     public static void test04_sourcesAreAdditiveAndSecondaryNeedsActivation() {
         var source = new CoreInsert(CoreInsert.Kind.ANTIMONY_BERYLLIUM_SOURCE, 0); near(source.sourcePerSecond(), 0);
-        source.irradiate(1,300); near(source.progress(), .5); check(source.sourcePerSecond() > 0, "Secondary source not activated");
+        source.irradiate(1,24 * 3600); near(source.progress(), .5); check(source.sourcePerSecond() > 0, "Secondary source not activated");
         var config = new CoreConfig(); var base = new PointKinetics(config, DelayedNeutronData.U235);
         var added = new PointKinetics(config, DelayedNeutronData.U235);
         added.setInstalledSourcePerSecond(.02); double before = added.getSourceStrengthPerSecond();
@@ -51,10 +51,27 @@ public final class FuelVarietyTest {
     public static void test05_targetProgressIsFiniteAndBounded() {
         var target = new CoreInsert(CoreInsert.Kind.TRITIUM_TARGET, 0);
         for(double v:new double[]{0, -1, Double.NaN, Double.POSITIVE_INFINITY}) target.irradiate(v,1800);
-        near(target.progress(),0); target.irradiate(.5,1800); near(target.progress(),.5);
-        var restored = new CoreInsert(target.kind(),target.exposureSeconds()); restored.irradiate(1,1800);
+        double duration = CoreInsert.Kind.TRITIUM_TARGET.exposureSeconds;
+        near(target.progress(),0); target.irradiate(.5,duration); near(target.progress(),.5);
+        var restored = new CoreInsert(target.kind(),target.exposureSeconds()); restored.irradiate(1,duration);
         check(restored.complete(),"Target did not complete"); near(restored.progress(),1);
         restored.irradiate(100,1e9); near(restored.progress(),1);
         var empty = new CoreLoading(3);empty.loadInsert(4,restored);near(empty.loadedAssemblyCount(),0);near(empty.kEffAllRodsOut(),0);
+    }
+    public static void test06_irradiationRequiresRunningDaysAndKeepsOldExposure() {
+        CoreInsert.Kind[] kinds = {CoreInsert.Kind.ANTIMONY_BERYLLIUM_SOURCE, CoreInsert.Kind.COBALT_TARGET,
+                CoreInsert.Kind.TRITIUM_TARGET, CoreInsert.Kind.SILICON_TARGET};
+        double[] hours = {48, 72, 168, 24};
+        double[] oldSeconds = {600, 1200, 1800, 900};
+        for (int i=0; i<kinds.length; i++) {
+            var insert = new CoreInsert(kinds[i], oldSeconds[i]);
+            near(insert.exposureSeconds(), oldSeconds[i]);
+            check(insert.progress() < .02 && !insert.complete(), "Old short batch became a full multi-day batch");
+            var fresh = new CoreInsert(kinds[i], 0);
+            fresh.irradiate(.5, hours[i] * 3600); near(fresh.progress(), .5);
+            fresh = new CoreInsert(fresh.kind(),fresh.exposureSeconds());
+            fresh.irradiate(0, 30 * 24 * 3600); near(fresh.progress(), .5);
+            fresh.irradiate(.5, hours[i] * 3600); near(fresh.progress(), 1);
+        }
     }
 }

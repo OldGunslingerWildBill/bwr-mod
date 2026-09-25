@@ -1,6 +1,6 @@
 # Alpha hardware: SLC, ADS and water discharge
 
-For `0.1.0-alpha.5`, Minecraft 1.21.1, NeoForge 21.1.248 and Java 21.
+For `0.1.0-alpha.7`, Minecraft 1.21.1, NeoForge 21.1.248 and Java 21.
 Install the same build on clients and server; the GUI protocol is **8**.
 
 ## Standby liquid control

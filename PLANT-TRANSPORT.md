@@ -1,6 +1,6 @@
 # Computer faces, fluid temperatures and pipe routing
 
-The current alpha.5 build uses GUI protocol 8; install the same build on server and clients.
+The current alpha.7 build uses GUI protocol 8; install the same build on server and clients.
 Existing machines retain their dimensions, recipes and control method names.
 
 ## Computer connections

@@ -50,7 +50,7 @@ public final class FuelVarietyRegressionTests {
         try {
             CoreMapSnapshot.write(buf,be.core(),be.corePositions());var map=CoreMapSnapshot.read(buf);
             h.assertTrue(map.isOccupied(1)&&map.isInsert(1)&&!map.isInsert(0),"Map hid or mislabeled insert");
-            h.assertTrue(Math.abs(map.insertProgress[1]-333.0/1200)<1e-12&&map.assemblyThermalMW(1)==0,"Map lost exposure or fabricated power");
+            h.assertTrue(Math.abs(map.insertProgress[1]-333.0/CoreInsert.Kind.COBALT_TARGET.exposureSeconds)<1e-12&&map.assemblyThermalMW(1)==0,"Map lost exposure or fabricated power");
             h.assertTrue(buf.readableBytes()==0,"Core-map protocol mismatch");
         } finally {buf.release();}
         var saved=be.saveWithFullMetadata(l.registryAccess());var pos=be.getBlockPos();var state=be.getBlockState();l.removeBlockEntity(pos);
@@ -74,12 +74,52 @@ public final class FuelVarietyRegressionTests {
         var partial=SpecialtyRodItem.stack(new CoreInsertData(CoreInsert.Kind.TRITIUM_TARGET,200));player.setItemInHand(InteractionHand.MAIN_HAND,partial);
         partial.getItem().use(h.getLevel(),player,InteractionHand.MAIN_HAND);
         h.assertTrue(!partial.isEmpty(),"Premature target harvest");
-        var finished=SpecialtyRodItem.stack(new CoreInsertData(CoreInsert.Kind.TRITIUM_TARGET,1800));player.setItemInHand(InteractionHand.MAIN_HAND,finished);
+        var finished=SpecialtyRodItem.stack(new CoreInsertData(CoreInsert.Kind.TRITIUM_TARGET,CoreInsert.Kind.TRITIUM_TARGET.exposureSeconds));player.setItemInHand(InteractionHand.MAIN_HAND,finished);
         BwrItems.SPECIALTY_ROD.get().use(h.getLevel(),player,InteractionHand.MAIN_HAND);
         BwrItems.SPECIALTY_ROD.get().use(h.getLevel(),player,InteractionHand.MAIN_HAND);
-        h.assertTrue(player.getInventory().countItem(BwrItems.TRITIUM_SAMPLE.get())==1,"Harvest duplicated sample");
+        h.assertTrue(player.getInventory().countItem(BwrItems.TRITIUM_SAMPLE.get())==1250,"Harvest did not yield exactly one batch of 1,250 samples");
         h.assertTrue(player.getInventory().countItem(BwrItems.IRRADIATION_CASING.get())==1,"Harvest did not return one casing");
+        for(var stack:player.getInventory().items) h.assertTrue(stack.getCount()<=stack.getMaxStackSize(),"Harvest created an oversized inventory stack");
         player.getInventory().clearContent();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=200)
+    public static void largeTritiumHarvestPreservesOverflow(GameTestHelper h) {
+        var player=net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(h.getLevel());
+        var oldMode=player.gameMode.getGameModeForPlayer();var oldPos=player.position();
+        var pos=h.absolutePos(new BlockPos(1,1,1));
+        var bounds=new net.minecraft.world.phys.AABB(pos).inflate(4);
+        try {
+            player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            player.setPos(pos.getX()+.5,pos.getY(),pos.getZ()+.5);
+            player.getInventory().clearContent();player.getInventory().selected=0;
+            for(int i=0;i<36;i++)player.getInventory().setItem(i,new ItemStack(net.minecraft.world.item.Items.COBBLESTONE,64));
+            player.getInventory().setItem(1,new ItemStack(BwrItems.TRITIUM_SAMPLE.get(),60));
+            var finished=SpecialtyRodItem.stack(new CoreInsertData(CoreInsert.Kind.TRITIUM_TARGET,CoreInsert.Kind.TRITIUM_TARGET.exposureSeconds));
+            player.setItemInHand(InteractionHand.MAIN_HAND,finished);
+            BwrItems.SPECIALTY_ROD.get().use(h.getLevel(),player,InteractionHand.MAIN_HAND);
+            BwrItems.SPECIALTY_ROD.get().use(h.getLevel(),player,InteractionHand.MAIN_HAND);
+            var drops=h.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,bounds);
+            int sampleDrops=drops.stream().filter(e->e.getItem().is(BwrItems.TRITIUM_SAMPLE.get())).mapToInt(e->e.getItem().getCount()).sum();
+            int casingDrops=drops.stream().filter(e->e.getItem().is(BwrItems.IRRADIATION_CASING.get())).mapToInt(e->e.getItem().getCount()).sum();
+            h.assertTrue(sampleDrops>0,"Overflow path was not exercised");
+            h.assertTrue(player.getInventory().countItem(BwrItems.TRITIUM_SAMPLE.get())+sampleDrops==1310,"Harvest lost or duplicated samples when inventory was full");
+            h.assertTrue(player.getInventory().countItem(BwrItems.IRRADIATION_CASING.get())+casingDrops==1,"Overflow lost or duplicated the casing");
+            for(var stack:player.getInventory().items)h.assertTrue(stack.getCount()<=stack.getMaxStackSize(),"Oversized inventory stack");
+            for(var drop:drops)h.assertTrue(drop.getItem().getCount()<=drop.getItem().getMaxStackSize(),"Oversized dropped stack");
+            h.succeed();
+        } finally {
+            h.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,bounds).forEach(net.minecraft.world.entity.item.ItemEntity::discard);
+            player.getInventory().clearContent();player.setGameMode(oldMode);player.setPos(oldPos);
+        }
+    }
+    @GameTest(template="empty",timeoutTicks=500)
+    public static void optionalMekanismTritiumProcessing(GameTestHelper h) {
+        var recipe=h.getLevel().getRecipeManager().byKey(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("bwr","tritium_sample_oxidizing"));
+        if (!net.neoforged.fml.ModList.get().isLoaded("mekanism") || !net.neoforged.fml.ModList.get().isLoaded("mekanismgenerators")) {
+            h.assertTrue(recipe.isEmpty(),"Tritium recipe loaded without both Mekanism and Generators"); h.succeed(); return;
+        }
+        h.assertTrue(recipe.isPresent(),"Tritium processing recipe missing");
+        MekanismTritiumCheck.run(h);
     }
     @GameTest(template="empty",timeoutTicks=200)
     public static void poweredCoreIrradiatesNonFuelTarget(GameTestHelper h) {

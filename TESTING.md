@@ -6,6 +6,27 @@ headless checks on every push and pull request, and supports manual dispatch.
 
 ## Automated checks
 
+Alpha.7 extends `FuelVarietyRegressionTests` to six checks. A completed tritium
+rod must yield exactly 1,250 samples and one casing, once only. The added
+overflow regression starts with a nearly full inventory and a partial sample
+stack, checks inventory-plus-drop conservation, and rejects oversized stacks.
+The actual Chemical Oxidizer check also pins the total to 12,500,000 mB per rod.
+
+Alpha.6 extends `FuelVarietyTest` to six checks and
+`FuelVarietyRegressionTests` to five. New coverage checks multi-day exposure,
+retention of old exposure seconds, a 64-sample single-use harvest, and actual
+powered Chemical Oxidizer processing/extraction. Default dev runs now include
+Mekanism Generators, which owns the tritium chemical; it is runtime-only and
+never bundled. `-PbwrNoMekanismGenerators` tests base Mekanism without Generators;
+`-PbwrNoMekanism -PbwrNoCC` removes all three optional integrations. The recipe
+must be absent whenever either Mekanism or Generators is absent.
+
+Use `:mod:runPeripheralCheck -PbwrNoMekanism -PbwrNoCC` for the no-integration
+configuration; it explicitly checks recipe gating. The full GameTest harness
+still has an older fixture with an unconditional CC:Tweaked `LuaException`
+reference and cannot start with CC:Tweaked absent. This is a test-only
+limitation; these fixtures are excluded from the release JAR.
+
 Alpha.5 adds `FuelVarietyTest` (five physics checks) and
 `FuelVarietyRegressionTests` (four real Minecraft tests): family constants,
 non-fuel absorption, source addition, exposure limits, component/core save

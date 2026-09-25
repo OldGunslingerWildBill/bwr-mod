@@ -1,13 +1,14 @@
 package dev.bwr.core.fuel;
 
-/** Non-fuel cassettes. Rates are deliberately accelerated gameplay calibrations, not isotope data. */
+/** Non-fuel cassettes. Exposure is equivalent seconds at rated local fission flux, not wall-clock age. */
 public final class CoreInsert {
     public enum Kind {
         BORON_ABSORBER(2.0, 0, 0), HAFNIUM_ABSORBER(1.4, 0, 0),
         CALIFORNIUM_SOURCE(0.02, 2.0e-11, 0), AMERICIUM_BERYLLIUM_SOURCE(0.02, 8.0e-12, 0),
-        ANTIMONY_BERYLLIUM_SOURCE(0.04, 1.2e-11, 600),
-        COBALT_TARGET(0.3, 0, 1200), TRITIUM_TARGET(0.5, 0, 1800),
-        SILICON_TARGET(0.05, 0, 900);
+        // Multi-day gameplay batches, aligned with long fuel cycles rather than real isotope kinetics.
+        ANTIMONY_BERYLLIUM_SOURCE(0.04, 1.2e-11, 48 * 3600.0),
+        COBALT_TARGET(0.3, 0, 72 * 3600.0), TRITIUM_TARGET(0.5, 0, 168 * 3600.0),
+        SILICON_TARGET(0.05, 0, 24 * 3600.0);
 
         public final double absorptionRatio, sourcePerSecond, exposureSeconds;
         Kind(double absorption, double source, double exposure) {

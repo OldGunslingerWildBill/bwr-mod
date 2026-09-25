@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 
 public final class SpecialtyRodItem extends Item {
+    public static final int TRITIUM_SAMPLES_PER_ROD = 1_250;
     public SpecialtyRodItem(Properties properties) { super(properties); }
     public static boolean isCoreItem(ItemStack stack) {
         return stack.is(BwrItems.FUEL_ASSEMBLY.get()) || stack.is(BwrItems.SPECIALTY_ROD.get());
@@ -31,10 +32,16 @@ public final class SpecialtyRodItem extends Item {
         if (insert.kind().exposureSeconds > 0) {
             lines.add(Component.literal(String.format(Locale.ROOT, "%s %.1f%%", insert.kind().target() ? "Irradiation" : "Source activation", 100 * insert.progress())).withStyle(ChatFormatting.AQUA));
             lines.add(Component.literal("Progress requires fission flux; retained when removed.").withStyle(ChatFormatting.GRAY));
+            lines.add(Component.literal(String.format(Locale.ROOT, "Rated-flux exposure: %.0f hours (running time).",
+                    insert.kind().exposureSeconds / 3600)).withStyle(ChatFormatting.GRAY));
         }
         if (insert.kind().sourcePerSecond > 0) lines.add(Component.literal("Adds startup neutrons; no direct fission heat.").withStyle(ChatFormatting.GRAY));
         else lines.add(Component.literal("Absorbs neutrons without producing fission power.").withStyle(ChatFormatting.GRAY));
-        if (insert.kind() == CoreInsert.Kind.TRITIUM_TARGET) lines.add(Component.literal("Experimental BWR target, adapted for gameplay.").withStyle(ChatFormatting.GRAY));
+        if (insert.kind() == CoreInsert.Kind.TRITIUM_TARGET) {
+            lines.add(Component.literal(String.format(Locale.ROOT, "Harvest: %,d sealed tritium samples + empty rod.",
+                    TRITIUM_SAMPLES_PER_ROD)).withStyle(ChatFormatting.AQUA));
+            lines.add(Component.literal("Experimental BWR target, adapted for gameplay.").withStyle(ChatFormatting.GRAY));
+        }
         if (insert.complete()) lines.add(Component.literal("Use in hand to harvest the sample and recover the empty rod.").withStyle(ChatFormatting.GREEN));
     }
     @Override public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -49,10 +56,19 @@ public final class SpecialtyRodItem extends Item {
                 default -> throw new IllegalStateException("Not a harvestable target");
             };
             held.shrink(1);
-            give(player, new ItemStack(product));
-            give(player, new ItemStack(BwrItems.IRRADIATION_CASING.get()));
+            give(player, product, insert.kind() == CoreInsert.Kind.TRITIUM_TARGET ? TRITIUM_SAMPLES_PER_ROD : 1);
+            give(player, BwrItems.IRRADIATION_CASING.get(), 1);
         }
         return InteractionResultHolder.sidedSuccess(held, level.isClientSide());
     }
-    private static void give(Player player, ItemStack stack) { if (!player.getInventory().add(stack)) player.drop(stack, false); }
+    private static void give(Player player, Item item, int count) {
+        // Large harvests must use legal stack sizes, including any inventory overflow drops.
+        while (count > 0) {
+            ItemStack stack = new ItemStack(item);
+            int batch = Math.min(count, stack.getMaxStackSize());
+            stack.setCount(batch);
+            if (!player.getInventory().add(stack)) player.drop(stack, false);
+            count -= batch;
+        }
+    }
 }

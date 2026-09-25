@@ -1,5 +1,69 @@
 # Build Status
 
+## 2026-09-24 — 0.1.0-alpha.7: 12,500 buckets per tritium rod
+
+Built `mod/build/libs/mod-0.1.0-alpha.7.jar` (**22,596,020 bytes**).
+SHA-256: `2F7C5983D571349991FBDDF5635BB54B11A7D5C6CA48C1E8C0074E97BA57D168`.
+Validation for the user-requested alpha.6–alpha.7 source update to GitHub
+`main`. This source push does not publish a GitHub Release or upload the JAR.
+
+- One completed tritium rod gives 1,250 samples and one casing. Each sample
+  still produces 10,000 mB in the powered Chemical Oxidizer; total **12,500,000
+  mB / 12,500 buckets**. Seven-day rated-local-flux exposure is unchanged.
+- Large harvests split into legal stacks, including inventory overflow drops.
+  Existing unharvested rods get the new yield; already harvested samples retain
+  their per-item value. GUI protocol remains 8; update client and server together.
+- **52/52 Minecraft GameTests passed** with Mekanism, Generators and CC:Tweaked.
+  New checks conserve 1,250 samples plus a casing across inventory and drops,
+  reject oversized stacks and repeat harvesting, and pin the rod yield against
+  actual Chemical Oxidizer output. Runtime gate also passed its existing
+  machine, transport, tank and peripheral scenarios.
+- `:mod:build` and design guard passed. Asset audit: **2,393 JSON files, zero
+  problems**. JAR audit passed with no bundled optional-mod implementations or
+  development fixtures. Whitespace checks passed.
+- No reactor physics, irradiation timing, recipe gating or optional-mod loading
+  changed in alpha.7; the alpha.6 compatibility and focused physics results
+  below remain the latest evidence for those paths.
+
+Logs: `tmp/fuel-alpha7-{gametest-build,assets,jar}.log`.
+
+## 2026-09-24 — 0.1.0-alpha.6: bulk tritium and multi-day irradiation
+
+Built `mod/build/libs/mod-0.1.0-alpha.6.jar` (**22,595,615 bytes**).
+SHA-256: `522ED83B3D669895E9188BF3B0EAF77F878DED9F2BE826DF0C3054CF851C6746`.
+Local patch; not committed, pushed or published as a GitHub Release.
+
+- At rated local fission flux: silicon 24 operating hours, antimony-beryllium
+  48 hours, cobalt 72 hours and tritium 168 hours. Reduced flux increases the
+  required time; shutdown and offline time do not advance exposure. Saved
+  exposure seconds are retained, with progress recalculated for the new targets.
+- One completed tritium rod yields 64 samples and one reusable casing. Each
+  sample produces 10,000 mB of `mekanismgenerators:tritium` in a powered Chemical
+  Oxidizer: 640,000 mB per rod. The recipe requires both Mekanism and Generators.
+- GUI protocol remains 8; update client and server together. No pipe ticking
+  or additional transport rebuilds were introduced.
+
+Verification:
+
+- Focused fuel acceptance tests: **6/6 passed**. The full 212-test physics
+  catalogue was not rerun for this patch; earlier full-run evidence is below.
+- **51/51 Minecraft GameTests passed** with Mekanism, Generators and CC:Tweaked,
+  including actual powered Chemical Oxidizer processing of two samples,
+  unpowered rejection, exact output, extraction and no duplicate production.
+- **51/51 Minecraft GameTests passed** with base Mekanism and CC:Tweaked but
+  without Generators; the tritium recipe was correctly absent.
+- Dedicated server without all three optional integrations: **PASS, zero
+  problems**, including explicit recipe-absence verification and eight
+  assembly-permission scenarios. The full GameTest harness cannot run without
+  CC:Tweaked because an older fixture references `LuaException` unconditionally;
+  that attempted run failed before tests and was replaced by the dedicated
+  compatibility harness. Development fixtures are excluded from the JAR.
+- `:mod:build`, design guard and whitespace checks passed. Asset audit:
+  **2,393 JSON files, zero problems**. JAR audit passed: no bundled optional-mod
+  implementations or development harnesses.
+
+Logs: `tmp/fuel-alpha6-{build,gametest-final,no-generators,no-optional-server,assets,jar}.log`.
+
 ## 2026-09-24 — 0.1.0-alpha.5: fuel catalogue and specialty rods
 
 Built `mod/build/libs/mod-0.1.0-alpha.5.jar` (**22,594,012 bytes**).

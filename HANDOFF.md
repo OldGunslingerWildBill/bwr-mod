@@ -7,6 +7,31 @@ can copy and paste. Keep it factual and limited to completed changes.
 
 Deliver the **JAR only**, not a ZIP, unless the user changes this preference.
 
+## Increased tritium yield (2026-09-24)
+
+Current local version: **0.1.0-alpha.7**, GUI protocol **8**. User accepted
+either 10,000 or 12,500 buckets per target; selected **12,500** to leave a
+5.8% margin with 64 targets against their friend's 2.5 buckets/second D-T
+consumption (1.25 buckets/second tritium). Harvest now gives **1,250 samples**,
+each still worth 10,000 mB in the Chemical Oxidizer, and one casing. Stack
+splitting preserves legal inventory/drop sizes. Seven-day rated-flux exposure
+is unchanged. Existing unharvested rods get the new yield; old samples retain
+their per-item output. The user has now requested committing and pushing all
+alpha.6–alpha.7 changes to GitHub `main`. Source pushes do not upload a GitHub
+Release; deliver JAR only when providing the built artifact.
+
+## Long irradiation cycles and Mekanism tritium (2026-09-24)
+
+Previous local patch: **0.1.0-alpha.6**, GUI protocol remains **8**. Alpha.5 was
+pushed to GitHub `main` as `faa2bdc`. This follow-up changes irradiation to
+24/48/72/168 operating hours (silicon/antimony/cobalt/tritium) and yields 64
+tritium samples per completed rod. An optional Chemical Oxidizer recipe makes
+10,000 mB of `mekanismgenerators:tritium` per sample; 640,000 mB per rod. The
+recipe needs Mekanism and Generators and is gated on both. Defaults
+assume real running time and batch harvesting. Saved exposure seconds remain
+unchanged, so old unharvested rods need further irradiation at the new rates.
+See BUILD-STATUS for final validation. No new model assets are needed.
+
 ## Fuel catalogue and specialty rods (2026-09-24)
 
 Current version **0.1.0-alpha.5**, GUI protocol **8**. The user has now requested

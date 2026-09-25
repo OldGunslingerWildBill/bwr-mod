@@ -745,6 +745,14 @@ public final class PeripheralRuntimeCheck {
 
         boolean loaded = BwrMod.isMekanismPresent();
         LOGGER.info("  ModList says mekanism is loaded: {}", loaded);
+        boolean expectTritium = loaded && net.neoforged.fml.ModList.get().isLoaded("mekanismgenerators");
+        boolean tritiumRecipe = level.getRecipeManager().byKey(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("bwr", "tritium_sample_oxidizing")).isPresent();
+        if (tritiumRecipe != expectTritium) {
+            LOGGER.error("FAIL tritium recipe gating: present={}, expected={}", tritiumRecipe, expectTritium);
+            return 1;
+        }
+        LOGGER.info("  Tritium recipe gating passed: present={}, Mekanism+Generators={}", tritiumRecipe, expectTritium);
 
         // Our side of the boundary first, so that a dead capability can be told
         // apart from an outlet that was never built or never bound. None of these

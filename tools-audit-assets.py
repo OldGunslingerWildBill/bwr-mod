@@ -531,6 +531,17 @@ for rel, r in recipes.items():
             bad("RETIRED", f"{rel}: uses or produces retired block {retired}")
     if "type" not in r:
         bad("RECIPE", f"{rel}: no 'type'")
+    if r.get("type") == "mekanism:oxidizing":
+        conditions = r.get("neoforge:conditions", [])
+        for mod in ("mekanism", "mekanismgenerators"):
+            if not any(c.get("type") == "neoforge:mod_loaded" and c.get("modid") == mod for c in conditions):
+                bad("RECIPE", f"{rel}: optional {mod} processing is not mod-gated")
+        ingredient, output = r.get("input", {}), r.get("output", {})
+        if ingredient.get("item") not in valid_ids or ingredient.get("count") != 1:
+            bad("RECIPE", f"{rel}: invalid chemical-processing input")
+        if output.get("id") != "mekanismgenerators:tritium" or not isinstance(output.get("amount"), int) or not 0 < output["amount"] <= 10000:
+            bad("RECIPE", f"{rel}: unknown chemical or output exceeds pinned oxidizer capacity")
+        continue
     res = r.get("result")
     if res is None:
         bad("RECIPE", f"{rel}: no 'result'")
@@ -630,7 +641,8 @@ def find_pinned_jar(group, name, version):
         return None
     for d, _, fs in os.walk(base):
         for f in sorted(fs):
-            if f.endswith(".jar") and "-sources" not in f and "-javadoc" not in f:
+            # API and Generators classifiers share this cache directory; inspect the base mod.
+            if f == f"{name}-{version}.jar":
                 return os.path.join(d, f)
     return None
 

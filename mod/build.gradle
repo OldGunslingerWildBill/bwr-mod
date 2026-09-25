@@ -139,6 +139,10 @@ dependencies {
     // JVM never resolves a single mekanism.* type.
     if (!project.hasProperty('bwrNoMekanism')) {
         runtimeOnly "mekanism:Mekanism:${project.property('mekanismVersion')}@jar"
+        // Tritium is registered by Generators. Dev runtime only; never bundled or required by BWR.
+        if (!project.hasProperty('bwrNoMekanismGenerators')) {
+            runtimeOnly "mekanism:Mekanism:${project.property('mekanismVersion')}:generators@jar"
+        }
     }
 }
 

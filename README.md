@@ -9,10 +9,10 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-alpha.5` — expanded fuel catalogue and specialty rods, September 24, 2026.
+**Current version:** `0.1.0-alpha.7` — 12,500 buckets of Mekanism tritium per target rod, September 24, 2026.
 
-See the [full changelog since the previous GitHub push](CHANGELOG.md) for the
-accumulated alpha.1–alpha.5 hardware, performance, condenser and fuel updates.
+See the [full changelog](CHANGELOG.md) for the hardware, performance, condenser,
+fuel and irradiation updates.
 
 | Platform | Required version |
 | --- | --- |
@@ -37,7 +37,11 @@ have lean/standard/rich variants. Fixed absorbers, startup sources and simple
 irradiation targets use the existing refuelling map. Original fuel tuning and
 exposure are preserved. See [fuel grades, recipes and reference notes](FUELS-AND-RODS.md).
 Experimental grades are labeled; natural uranium is not self-sustaining in this
-BWR model. Client and server both need alpha.5 for GUI protocol 8.
+BWR model. Specialty irradiation now takes 24–168 operating hours at rated
+local flux. A completed tritium rod yields 1,250 samples, processable into
+12,500,000 mB (12,500 buckets) of tritium through a powered Chemical Oxidizer when Mekanism and
+Mekanism Generators are installed. Install
+alpha.7 on both client and server; GUI protocol remains 8.
 
 The first-publication candidate adds live CC:Tweaked faces across the machine
 registry, segmented water temperatures, condenser backpressure that affects LP

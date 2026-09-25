@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.1.0-alpha.7 — 2026-09-24
+
+- Increased completed tritium target yield to **12,500 buckets (12,500,000 mB)**:
+  1,250 samples per rod, processed in the existing 10,000 mB oxidizer batches.
+- Retained the seven-day rated-flux irradiation requirement. Existing completed
+  but unharvested rods receive the new yield; already harvested samples retain
+  their original per-item output.
+- Split large harvests into normal inventory stacks and preserved dropped
+  overflow when inventory space runs out. Added an overflow conservation check
+  and pinned the total yield against real Chemical Oxidizer output.
+- Updated tooltips and the fuel guide, including the 64-target / 700-fuel
+  example for a 764-position core and a 2.5 buckets/second D-T consumer.
+- GUI protocol remains 8. Use matching alpha.7 client/server builds.
+
+## 0.1.0-alpha.6 — 2026-09-24
+
+- Increased rated-local-flux exposure to 48 operating hours for antimony
+  activation, 24 hours for silicon, 72 hours for cobalt and 168 hours for
+  tritium. These are real running hours at 20 TPS, not Minecraft days.
+- Preserved flux-dependent progress, saved exposure seconds, and the absence
+  of offline progress. Existing unharvested rods are measured against the new
+  thresholds; already harvested products remain usable.
+- Completed tritium rods now yield 64 sealed samples and one reusable casing.
+- Added an optional Mekanism Chemical Oxidizer recipe: one sample becomes
+  10,000 mB tritium, totaling 640,000 mB per rod. Each operation fits the
+  machine's output tank and consumes its input normally. Both Mekanism and
+  Mekanism Generators are required for this recipe and remain optional for
+  BWR itself; ordinary sample crafting is unchanged.
+- Added operating-exposure and batch-yield tooltips, updated the fuel guide,
+  and extended tests for multi-day progress, migration, one-shot harvesting,
+  powered chemical processing and optional-mod recipe gating.
+- GUI protocol remains 8. Use matching alpha.6 client/server builds.
+
 ## 0.1.0-alpha.5 — 2026-09-24
 
 This entry covers all accumulated alpha.1–alpha.5 work since the previous

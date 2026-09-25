@@ -125,7 +125,7 @@ public final class BwrItems {
     public static final DeferredItem<Item> COBALT_CHARGE = ITEMS.registerSimpleItem("cobalt_charge");
     public static final DeferredItem<Item> LITHIUM_CHARGE = ITEMS.registerSimpleItem("lithium_charge");
     public static final DeferredItem<Item> COBALT_SAMPLE = ITEMS.registerSimpleItem("cobalt_sample");
-    public static final DeferredItem<Item> TRITIUM_SAMPLE = ITEMS.registerSimpleItem("tritium_sample");
+    public static final DeferredItem<Item> TRITIUM_SAMPLE = ITEMS.register("tritium_sample", () -> new dev.bwr.mod.fuel.TritiumSampleItem(new Item.Properties()));
     public static final DeferredItem<Item> DOPED_SILICON = ITEMS.registerSimpleItem("doped_silicon");
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> FUEL_TAB = TABS.register("fuel", () ->
