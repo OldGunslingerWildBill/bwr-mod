@@ -1,3 +1,15 @@
+## Alpha.10 source update (2026-09-25)
+
+Continuous, whiter and thicker vapor on both cooling towers. Emit overlapping
+layers every client tick, distribute mechanical emission evenly across fans,
+and use broader Blender-rendered sprites with a longer dense phase before fade.
+Shared 1,200-particle cap and particle settings remain. No physics or GUI
+protocol change. Source update for GitHub `main`; prior tip is 8991902.
+No GitHub Release or JAR upload is created by the source push.
+Deliver JAR only, and end update responses with a Discord changelog.
+Final artifact: `mod/build/libs/mod-0.1.0-alpha.10.jar`. Minecraft screenshot
+review, client checks, build, asset and JAR audits passed. See BUILD-STATUS.md.
+
 ## Alpha.8–alpha.9 source update (2026-09-25)
 
 Follow-up fan patch: reverse alpha.8's mechanical-tower rotation and increase
@@ -29,7 +41,7 @@ Deliver the **JAR only**, not a ZIP, unless the user changes this preference.
 
 ## Increased tritium yield (2026-09-24)
 
-Current local version: **0.1.0-alpha.9**, GUI protocol **9**. User accepted
+Current local version: **0.1.0-alpha.10**, GUI protocol **9**. User accepted
 either 10,000 or 12,500 buckets per target; selected **12,500** to leave a
 5.8% margin with 64 targets against their friend's 2.5 buckets/second D-T
 consumption (1.25 buckets/second tritium). Harvest now gives **1,250 samples**,

@@ -1,5 +1,28 @@
 # Build Status
 
+## 2026-09-25 — 0.1.0-alpha.10: continuous white tower vapor
+
+Built `mod/build/libs/mod-0.1.0-alpha.10.jar` (**22,726,911 bytes**).
+SHA-256: `38C0A2AD9D3DEDF3694D79F416C3464F6AFA3FBBCDAF6A564382596F04B9BBA9`.
+
+- Both towers emit overlapping layers every client tick. Larger white sprites
+  keep a denser core before dispersing. Mechanical emission is spread across
+  fan outlets; natural emission is concentrated above the stack mouth.
+- Vapor uses a shared translucent batch without depth writes, preventing
+  overlapping clouds from cutting one another into circular slices. Solid
+  scenery still depth-tests. Blender sprite sources and textures were updated.
+- Shared 1,200-particle cap, reduced/minimal settings, wind, rise, fading and
+  actual heat-rejection gating remain. No machine physics or GUI protocol change.
+- Minecraft cooling client check and screenshot review passed: 1,031 particles
+  across both running towers, continuous plumes, correct fan speed and GUI.
+- Build/design guard, 2,401-JSON asset audit, JAR packaging audit and whitespace
+  checks passed. Full reactor tests were not rerun for this visual patch.
+- Source update for GitHub `main`. GUI protocol remains 9. This source push
+  does not publish a GitHub Release or upload the built JAR.
+
+Logs: `tmp/vapor-alpha10-final-client-build.log`, `tmp/vapor-alpha10-blender.log`,
+`tmp/vapor-alpha10-assets.log`, `tmp/vapor-alpha10-jar.log`.
+
 ## 2026-09-25 — 0.1.0-alpha.9: fan direction and animation speed
 
 Built `mod/build/libs/mod-0.1.0-alpha.9.jar` (**22,727,745 bytes**).

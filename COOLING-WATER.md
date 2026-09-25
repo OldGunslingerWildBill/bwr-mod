@@ -195,11 +195,14 @@ It does not enter the cold/hot circulating-water inventories. Water chemistry
 and purification are not simulated. Older placed condensers must be drained
 and replaced to receive these new physical ports.
 
-## Tower vapor (alpha.8)
+## Tower vapor (alpha.10)
 
 ![Operating towers with drifting vapor in Minecraft](art/models/cooling/tall-vapor-plumes.png)
 
 Both tower types produce white vapor only while moving water and rejecting heat.
+Overlapping layers are emitted every client tick, with wider white sprites and
+a fuller opacity profile to make a continuous column. Mechanical towers cycle
+through fan outlets evenly; natural towers form a concentrated rising plume.
 Client particles rise with buoyancy, drift with a slowly changing shared wind,
 spread and fade over 21–30 seconds. Rain strengthens the drift. Natural-draft
 plumes can climb roughly 120–180 blocks; mechanical-tower plumes rise less.

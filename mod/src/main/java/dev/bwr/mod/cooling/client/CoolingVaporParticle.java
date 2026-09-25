@@ -1,6 +1,7 @@
 package dev.bwr.mod.cooling.client;
 
 import dev.bwr.mod.registry.BwrParticles;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
 import net.minecraft.core.particles.*;
@@ -14,15 +15,22 @@ import java.util.Optional;
 @EventBusSubscriber(modid="bwr",value=Dist.CLIENT)
 public final class CoolingVaporParticle extends TextureSheetParticle {
     private static final ParticleGroup GROUP=new ParticleGroup(1_200);
+    // Vapor layers blend through each other but still depth-test against solid scenery.
+    // Writing depth here cuts later layers into hard circular slices.
+    private static final ParticleRenderType VAPOR_SHEET=(tesselator,textures)->{
+        var buffer=ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT.begin(tesselator,textures);
+        RenderSystem.depthMask(false);
+        return buffer;
+    };
     private final float initialSize,opacity;
     private final double lift,phase;
 
     private CoolingVaporParticle(ClientLevel level,double x,double y,double z,double size,double rise,double strength,SpriteSet sprites){
         super(level,x,y,z);
         initialSize=(float)Math.clamp(size,.5,5);lift=Math.clamp(rise,.15,.55);
-        opacity=(float)Math.clamp(strength,.1,.6);phase=random.nextDouble()*Math.PI*2;
+        opacity=(float)Math.clamp(strength,.05,.9);phase=random.nextDouble()*Math.PI*2;
         lifetime=420+random.nextInt(180);hasPhysics=false;
-        rCol=.94f;gCol=.96f;bCol=.98f;quadSize=initialSize;alpha=0;
+        rCol=gCol=bCol=1;quadSize=initialSize;alpha=0;
         pickSprite(sprites);
     }
     @Override public void tick(){
@@ -38,10 +46,12 @@ public final class CoolingVaporParticle extends TextureSheetParticle {
         yd+=(lift*(1-.6*progress)-yd)*.06;
         move(xd,yd,zd);
         quadSize=initialSize*(1+2.5f*(float)progress);
-        alpha=opacity*(float)Math.min(1,age/25.0)*(float)Math.pow(1-progress,1.4);
+        double dispersal=Math.clamp((progress-.35)/.65,0,1);
+        double fade=1-dispersal*dispersal*(3-2*dispersal);
+        alpha=opacity*(float)Math.min(1,age/6.0)*(float)fade;
         setSize(quadSize*2,quadSize*2);
     }
-    @Override public ParticleRenderType getRenderType(){return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;}
+    @Override public ParticleRenderType getRenderType(){return VAPOR_SHEET;}
     @Override public Optional<ParticleGroup> getParticleGroup(){return Optional.of(GROUP);}
     @SubscribeEvent public static void providers(RegisterParticleProvidersEvent event){
         event.registerSpriteSet(BwrParticles.COOLING_VAPOR.get(),sprites->(type,level,x,y,z,size,rise,strength)->{

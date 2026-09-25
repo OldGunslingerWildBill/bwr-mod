@@ -124,29 +124,28 @@ public class CoolingBlockEntity extends BlockEntity {
         be.previousFanAngle=be.fanAngle;
         be.fanAngle+=12*(float)be.actual; // Positive model-space Y rotation; 40 visual RPM at full speed.
         if(be.fanAngle > 3600){be.fanAngle-=3600;be.previousFanAngle-=3600;}
-        if(!be.design().tower||be.vaporActivity<=0||l.getGameTime()-be.vaporUpdated>40||l.getGameTime()%3!=0)return;
+        if(!be.design().tower||be.vaporActivity<=0||l.getGameTime()-be.vaporUpdated>40)return;
         boolean natural=be.design()==Design.NATURAL;
         var bounds=be.layout().bounds(p,s.getValue(CoolingBlock.FACING));
         if(l.getNearestPlayer(bounds.getCenter().x,bounds.maxY,bounds.getCenter().z,256,false)==null)return;
         double strength=Math.sqrt(be.vaporActivity);
-        int puffs=natural?3:2;
-        for(int i=0;i<puffs;i++){
-            if(l.random.nextDouble()>strength)continue;
+        // One overlapping layer each tick avoids bursts and keeps two full towers below the shared cap.
+        {
             double x,z,y;
             if(natural){
-                double a=l.random.nextDouble()*Math.PI*2,r=Math.sqrt(l.random.nextDouble())*(bounds.maxX-bounds.minX)*.22;
+                double a=l.random.nextDouble()*Math.PI*2,r=Math.sqrt(l.random.nextDouble())*(bounds.maxX-bounds.minX)*.10;
                 x=bounds.getCenter().x+Math.cos(a)*r;z=bounds.getCenter().z+Math.sin(a)*r;y=bounds.maxY-.15;
             }else{
                 var rotors=be.layout().rotors;if(rotors.isEmpty())return;
-                var rotor=rotors.get(l.random.nextInt(rotors.size()));var c=be.layout().controller;
+                var rotor=rotors.get((int)Math.floorMod(l.getGameTime()*7+p.asLong(),rotors.size()));var c=be.layout().controller;
                 double dx=rotor.x-c.getX()-.5,dz=rotor.z-c.getZ()-.5;
                 double a=Math.toRadians(switch(s.getValue(CoolingBlock.FACING)){case EAST->90;case SOUTH->180;case WEST->270;default->0;});
                 x=p.getX()+.5+dx*Math.cos(a)-dz*Math.sin(a);z=p.getZ()+.5+dx*Math.sin(a)+dz*Math.cos(a);
                 y=Math.max(bounds.maxY+.1,p.getY()+rotor.y-c.getY()+.7);
             }
-            if(!l.canSeeSky(BlockPos.containing(x,y,z)))continue;
+            if(!l.canSeeSky(BlockPos.containing(x,y,z)))return;
             l.addParticle(dev.bwr.mod.registry.BwrParticles.COOLING_VAPOR.get(),true,x,y,z,
-                    natural?3.2:1.8,natural?.43:.30,.36+.14*strength);
+                    natural?5.0:3.4,natural?.43:.30,.12+.72*strength);
         }
     }
     private void push(){

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-alpha.10 — 2026-09-25
+
+- Reworked both cooling-tower plumes into continuous overlapping vapor layers instead of intermittent puffs.
+- Made vapor whiter and denser with larger Blender-rendered sprites, a fuller base and slower dispersal aloft.
+- Fixed overlapping vapor layers cutting each other into visible circular slices.
+- Retained wind drift, rising motion, eventual fade, particle settings and the shared 1,200-particle limit. GUI protocol remains 9.
+
 ## 0.1.0-alpha.9 — 2026-09-25
 
 - Reversed the mechanical cooling-tower fan animation following in-game feedback.
