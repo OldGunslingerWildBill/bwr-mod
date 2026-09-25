@@ -171,6 +171,8 @@ public class SuppressionPoolPeripheral implements IPeripheral {
         m.put("sprayHeaderKg",p.getSprayWaterKg());m.put("sprayFlowKgPerS",p.getSprayKgPerS());
         m.put("sprayCondensedKgPerS",p.getSprayCondensedKgPerS());
         m.put("formed", be.isFormed());
+        m.put("enclosed",be.isEnclosedTank());m.put("steamPorts",be.steamPortCount());
+        m.put("steamInKgPerS",be.steamInKgPerS());m.put("steamBufferKg",p.inletSteam.mass());
         m.put("temperature", p.getTemperatureC());
         m.put("saturation", p.getSaturationTemperatureC());
         m.put("subcooling", p.getSubcoolingC());

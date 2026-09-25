@@ -60,7 +60,8 @@ public class CoolingBlock extends BaseEntityBlock implements SimpleWaterloggedBl
     public static boolean acceptsWater(BlockState s,Direction side){return s.getBlock() instanceof CoolingBlock&&s.getValue(PORT).water()&&side==portFace(s);}
     @Override public BlockEntity newBlockEntity(BlockPos p,BlockState s){return new CoolingBlockEntity(p,s);}
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level l,BlockState s,BlockEntityType<T> type){
-        return l.isClientSide()||!s.getValue(CONTROLLER)?null:createTickerHelper(type,BwrBlockEntities.COOLING.get(),CoolingBlockEntity::serverTick);
+        if(!s.getValue(CONTROLLER))return null;
+        return createTickerHelper(type,BwrBlockEntities.COOLING.get(),l.isClientSide()?CoolingBlockEntity::clientTick:CoolingBlockEntity::serverTick);
     }
     @Override public BlockState getStateForPlacement(BlockPlaceContext ctx){
         var state=defaultBlockState().setValue(FACING,ctx.getHorizontalDirection().getOpposite())

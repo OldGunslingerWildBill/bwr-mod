@@ -240,6 +240,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             surface = width * depth;
             double waterDepth = Math.max(0, surfaceY() - concreteLayout.min().getY() - 1);
             shell = surface + 2 * (width + depth) * waterDepth;
+            if(closedTank){shell+=surface;surface=0;} // Roof/walls reject heat; no exposed free surface.
         }
         passiveCoolingMW = pool.coolPassively(SuppressionPool.AMBIENT_TEMPERATURE_C,
                 surface, shell, dt) / dt;
@@ -279,6 +280,46 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     private final List<BlockPos> quenchers = new ArrayList<>();
     private final LongOpenHashSet basinWater = new LongOpenHashSet();
     private boolean concreteMode;
+    private boolean closedTank;
+    private double steamInKgPerS;
+    public boolean isEnclosedTank(){return closedTank;}
+    public double steamInKgPerS(){return isFormed()?steamInKgPerS:0;}
+    public int steamPortCount(){return concreteLayout==null||level==null?0:(int)concreteLayout.ports().stream().filter(p->level.getBlockState(p).is(BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get())).count();}
+    public static final double STEAM_INLET_KG_PER_S=2_000;
+    private long steamBudgetTick=Long.MIN_VALUE;
+    private double steamAcceptedKg;
+    /** Shared by all wall inlets and both BWR and Mekanism transports. Simulation does not reserve. */
+    public double receiveSteam(double kg,double h,double psia,boolean simulate){
+        if(level==null||level.isClientSide()||isRemoved()||level.getBlockEntity(worldPosition)!=this||!isFormed()
+                ||!Double.isFinite(kg)||!Double.isFinite(h)||!Double.isFinite(psia)||kg<=0||h<=0||h>5000||psia<=0||psia>3208)return 0;
+        double used=steamBudgetTick==level.getGameTime()?steamAcceptedKg:0;
+        double accepted=Math.max(0,Math.min(kg,Math.min(pool.inletSteam.space(),STEAM_INLET_KG_PER_S/20-used)));
+        if(!simulate&&accepted>0){
+            accepted=pool.inletSteam.offer(new dev.bwr.core.turbine.SteamInventory.Packet(accepted,h,psia));
+            steamBudgetTick=level.getGameTime();steamAcceptedKg=used+accepted;inventoryChanged();
+        }
+        return accepted;
+    }
+    private void pullInletSteam(){
+        if(concreteLayout==null)return;
+        for(var inlet:concreteLayout.ports()){
+            if(!level.getBlockState(inlet).is(BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get()))continue;
+            var graph=dev.bwr.mod.piping.PipeTopology.get(level,inlet,null,true,false);
+            for(var route:dev.bwr.mod.piping.PipeTopology.routes(level,graph,true)){
+                // Relief valves meter their own discharge. Never claim a second parallel allocation through them.
+                if(route.opening()<=0||!level.isLoaded(route.node().pos())
+                        ||!(level.getBlockEntity(route.node().pos()) instanceof dev.bwr.mod.reactor.RpvSteamOutletBlockEntity nozzle))continue;
+                var cp=nozzle.getControllerPos();
+                if(cp==null||!level.isLoaded(cp)||!(level.getBlockEntity(cp) instanceof ReactorControllerBlockEntity reactor)||!reactor.isFormed())continue;
+                double psia=dev.bwr.core.thermal.Saturation.psiaFromPsig(reactor.core().getPressurePsig());
+                double h=dev.bwr.core.thermal.Saturation.vapourEnthalpyKJPerKg(psia);
+                double wanted=receiveSteam(STEAM_INLET_KG_PER_S/20,h,psia,true);
+                if(wanted<=0)return;
+                double actual=dev.bwr.mod.steam.SteamValveRouting.claimWithoutRelief(level,inlet,nozzle,wanted*20)/20;
+                if(actual>0)receiveSteam(actual,h,psia,false);
+            }
+        }
+    }
     private boolean inventoryRestored;
     public BlockPos visualMin, visualMax;
     public boolean visualFormed;
@@ -351,6 +392,8 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
 
     /** Membership of the basin this controller actually measured. */
     public boolean ownsQuencher(BlockPos pos) {
+        if(level!=null&&level.isLoaded(pos)&&level.getBlockState(pos).is(BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get()))
+            return isFormed()&&ownsPort(pos)&&pool.getLevelFraction()>SuppressionPool.SUCTION_FLOOR_FRACTION;
         return isFormed() && level != null && level.isLoaded(pos) && level.isLoaded(pos.above())
                 && (concreteMode ? submergedConcrete(pos) : basinWater.contains(pos.above().asLong())
                 && SuppressionPoolQuencherBlock.isSubmerged(level, pos));
@@ -443,6 +486,16 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
                 quencheredValves.remove(vp);
                 continue;
             }
+            if(closedTank&&quencheredValves.contains(vp)){
+                // Pumped water does not send neighbour updates to a distant valve.
+                // Check live water level and the cached discharge route before metering it.
+                srv.revalidateDischarge(level);
+                var exit=srv.getBlockState().getBlock() instanceof dev.bwr.mod.steam.AdsReliefValveBlock?Direction.DOWN:null;
+                var graph=dev.bwr.mod.piping.PipeTopology.get(level,vp,exit,true,false);
+                boolean connected=dev.bwr.mod.piping.PipeTopology.routes(level,graph).stream()
+                        .anyMatch(r->r.opening()>0&&quenchers.contains(r.node().pos())&&ownsQuencher(r.node().pos()));
+                if(!connected)continue;
+            }
             // With no reactor domePressurePsig is 0.0, which is at or below
             // containment, so the valve correctly passes nothing and its cached
             // reading is zeroed rather than left at its last discharge.
@@ -466,6 +519,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         double admittedKgPerS = quencheredKgPerS + bareKgPerS * BARE_DISCHARGE_ADMISSION;
         bypassedSteamKgPerS = bareKgPerS * (1.0 - BARE_DISCHARGE_ADMISSION);
 
+        pullInletSteam();
         condense(admittedKgPerS, domePressurePsig, gameTime, dt);
 
         machineRhrDuty = expireAndSumDuties(gameTime);
@@ -506,6 +560,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
                           double dt) {
         double total = Math.max(0.0, admittedSrvKgPerS);
         double pressureMoment = total * domePressurePsig;
+        double energyRate=total*dev.bwr.core.thermal.Saturation.vapourEnthalpyKJPerKg(dev.bwr.core.thermal.Saturation.psiaFromPsig(domePressurePsig));
 
         Iterator<Map.Entry<BlockPos, SteamReport>> reports = steamReports.entrySet().iterator();
         while (reports.hasNext()) {
@@ -516,10 +571,17 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             }
             total += r.kgPerS();
             pressureMoment += r.kgPerS() * r.pressurePsig();
+            energyRate+=r.kgPerS()*dev.bwr.core.thermal.Saturation.vapourEnthalpyKJPerKg(dev.bwr.core.thermal.Saturation.psiaFromPsig(r.pressurePsig()));
         }
 
+        var packet=pool.inletSteam.take(STEAM_INLET_KG_PER_S*dt);
+        if(packet.mass()>0){
+            total+=packet.mass()/dt;energyRate+=packet.energyKJ()/dt;
+            pressureMoment+=packet.mass()/dt*dev.bwr.core.thermal.Saturation.psigFromPsia(packet.pressurePsia());
+        }
+        steamInKgPerS=total;
         double meanPsig = total > 0.0 ? pressureMoment / total : 0.0;
-        pool.condenseSteam(total, meanPsig, dt);
+        pool.condenseSteamAtEnthalpy(total,total>0?energyRate/total:0,dt);
         double bulkEscaped=pool.getUncondensedSteamKgPerS();
         double sprayCaptured=pool.spraySteam(bulkEscaped+bypassedSteamKgPerS,meanPsig,dt);
         // Account for spray capturing the bare-discharge portion as well.
@@ -682,7 +744,8 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         // quencher may be well outside this box and is found below instead, and
         // until the quenchers are known there is no way to tell which of the
         // ones standing in the box are the far end of somebody else's line.
-        concreteLayout=ConcreteBasin.inspect(level,getBlockPos(),concreteMode);
+        concreteLayout=ConcreteBasin.inspect(level,getBlockPos(),concreteMode,closedTank);
+        if(concreteLayout!=null&&concreteLayout.problem()==null)closedTank=concreteLayout.enclosed();
         List<BlockPos> boxValves = new ArrayList<>();
         for (BlockPos p : BlockPos.betweenClosed(min, max)) {
             if(!level.isLoaded(p)) continue;
@@ -690,6 +753,8 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             if ((found.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock)
                     && level.getBlockEntity(p) instanceof SafetyReliefValveBlockEntity) {
                 boxValves.add(p.immutable());
+            } else if (found.is(BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get())&&concreteLayout!=null&&concreteLayout.ports().contains(p)) {
+                quenchers.add(p.immutable());
             } else if (found.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get())) {
                 if (containsConcrete(p) || SuppressionPoolQuencherBlock.isSubmerged(level, p)) {
                     quenchers.add(p.immutable());
@@ -725,9 +790,9 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             return;
         }
 
-        quenchers.removeIf(q -> concreteMode ? !containsConcrete(q) : !basinWater.contains(q.above().asLong()));
+        quenchers.removeIf(q -> concreteMode ? !containsConcrete(q)&&!concreteLayout.ports().contains(q) : !basinWater.contains(q.above().asLong()));
         gatherDischarges(level,boxValves,result);
-        if (dischargingValves.isEmpty()) {
+        if (dischargingValves.isEmpty()&&steamPortCount()==0) {
             result.degrade("no relief valves discharge into this pool; it is a heat sink with nothing attached");
         }
 
@@ -1241,6 +1306,10 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      */
     private List<String> inletLines() {
         List<String> out = new ArrayList<>();
+        if(steamPortCount()>0){
+            out.add(String.format("%d steam wall inlet(s): %.2f kg/s received, %.1f kg buffered. Fill the tank before admitting steam.",steamPortCount(),steamInKgPerS(),pool.inletSteam.mass()));
+            return out;
+        }
         int quenchered = quencheredValves.size();
         int bare = dischargingValves.size() - quenchered;
         if (quenchered > 0) {
@@ -1280,7 +1349,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             out.addAll(lastValidation.messages());
             return out;
         }
-        out.add(concreteMode?String.format("Concrete basin formed: %,.0f kg capacity, %d relief lines connected",
+        out.add(concreteMode?String.format((closedTank?"Enclosed tank":"Concrete basin")+" formed: %,.0f kg capacity, %d relief lines connected",
                 pool.getDesignMassKg(),dischargingValves.size()):String.format("Pool formed: %d water blocks, %d relief valves discharging",waterBlocks,dischargingValves.size()));
         out.addAll(inletLines());
         if (concreteMode) {
@@ -1310,7 +1379,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         if (pool.isBoiling()) {
             out.add("Pool is boiling; steam is passing straight through to containment.");
         }
-        if (reactorPos == null) {
+        if (reactorPos == null&&steamPortCount()==0) {
             out.add("No reactor controller found within " + SEARCH_RADIUS
                     + " blocks; the relief valves have nothing to relieve.");
         }
@@ -1338,6 +1407,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         tag.putDouble("HeatSinkC", heatSinkC);
         tag.putInt("WaterBlocks", waterBlocks);
         tag.putBoolean("ConcreteBasin",concreteMode);
+        tag.putBoolean("ClosedTank",closedTank);
         tag.putBoolean("MeteredInventory",inventoryRestored);
         if (reactorPos != null) {
             tag.putLong("Reactor", reactorPos.asLong());
@@ -1375,6 +1445,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         }
         waterBlocks = tag.getInt("WaterBlocks");
         concreteMode=tag.getBoolean("ConcreteBasin");concreteLayout=null;
+        closedTank=tag.getBoolean("ClosedTank");steamBudgetTick=Long.MIN_VALUE;steamAcceptedKg=0;steamInKgPerS=0;
         reactorPos = tag.contains("Reactor") ? BlockPos.of(tag.getLong("Reactor")) : null;
         structureDirty = true;
         visualFormed=tag.getBoolean("VisualFormed");
@@ -1398,7 +1469,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     public static void clientTick(Level l,BlockPos p,BlockState s,SuppressionPoolBlockEntity be) {
         if(!be.visualFormed||be.visualSpray<=0||be.visualMin==null||l.getGameTime()%3!=0)return;
         double surface=be.visualMin.getY()+1+(be.visualMax.getY()-be.visualMin.getY()-1)*Math.min(1,be.pool.getLevelFraction());
-        double top=be.visualMax.getY()+1.20;
+        double top=be.closedTank?be.visualMax.getY()-.40:be.visualMax.getY()+1.20;
         for(long packed:be.visualReturns) {
             var port=BlockPos.of(packed);var state=l.getBlockState(port);
             if(!state.is(BwrBlocks.SUPPRESSION_POOL_RETURN.get()))continue;

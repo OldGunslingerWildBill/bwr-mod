@@ -101,7 +101,7 @@ public final class BwrBlockEntities {
 
     public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.suppression.SuppressionPoolPortBlockEntity>> SUPPRESSION_POOL_PORT =
             BLOCK_ENTITIES.register("suppression_pool_port",()->BlockEntityType.Builder.of(dev.bwr.mod.suppression.SuppressionPoolPortBlockEntity::new,
-                    BwrBlocks.SUPPRESSION_POOL_SUCTION.get(),BwrBlocks.SUPPRESSION_POOL_RETURN.get()).build(null));
+                    BwrBlocks.SUPPRESSION_POOL_SUCTION.get(),BwrBlocks.SUPPRESSION_POOL_RETURN.get(),BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.suppression.RhrHeatExchangerBlockEntity>> RHR_HEAT_EXCHANGER =
             BLOCK_ENTITIES.register("rhr_heat_exchanger",()->BlockEntityType.Builder.of(dev.bwr.mod.suppression.RhrHeatExchangerBlockEntity::new,
                     BwrBlocks.RHR_HEAT_EXCHANGER.get()).build(null));

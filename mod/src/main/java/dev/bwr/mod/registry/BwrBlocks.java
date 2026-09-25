@@ -321,6 +321,8 @@ public final class BwrBlocks {
             BLOCKS.register("suppression_pool_suction",()->new dev.bwr.mod.suppression.SuppressionPoolPortBlock(machine(),true));
     public static final DeferredBlock<dev.bwr.mod.suppression.SuppressionPoolPortBlock> SUPPRESSION_POOL_RETURN =
             BLOCKS.register("suppression_pool_return",()->new dev.bwr.mod.suppression.SuppressionPoolPortBlock(machine(),false));
+    public static final DeferredBlock<dev.bwr.mod.suppression.SuppressionPoolSteamPortBlock> SUPPRESSION_POOL_STEAM_INLET =
+            BLOCKS.register("suppression_pool_steam_inlet",()->new dev.bwr.mod.suppression.SuppressionPoolSteamPortBlock(machine()));
     public static final DeferredBlock<dev.bwr.mod.suppression.RhrHeatExchangerBlock> RHR_HEAT_EXCHANGER =
             BLOCKS.register("rhr_heat_exchanger",()->new dev.bwr.mod.suppression.RhrHeatExchangerBlock(machine().noOcclusion()));
 

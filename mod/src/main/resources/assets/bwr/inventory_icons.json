@@ -31,5 +31,6 @@
   "suppression_pool_wall",
   "turbine_control_valve",
   "turbine_feed_pump",
-  "water_discharge_port"
+  "water_discharge_port",
+  "suppression_pool_steam_inlet"
 ]

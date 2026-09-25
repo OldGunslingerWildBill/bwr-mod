@@ -49,5 +49,9 @@ public final class BwrMekanismSupport {
                 (be, side) -> new TurbineSteamOutletChemicalHandler(be));
 
         SteamExport.install(new TurbineSteamOutletPusher());
+        event.registerBlock(MekanismSteam.CHEMICAL_HANDLER,(level,pos,state,be,side)->
+                side==state.getValue(dev.bwr.mod.suppression.SuppressionPoolSteamPortBlock.FACING)
+                        ?new SuppressionSteamChemicalHandler(level,pos,side):null,
+                dev.bwr.mod.registry.BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get());
     }
 }

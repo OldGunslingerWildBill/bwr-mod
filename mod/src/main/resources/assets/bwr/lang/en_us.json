@@ -34,7 +34,7 @@
   "menu.bwr.reactor_panel": "Reactor Control Panel",
   "menu.bwr.refuelling": "Refuelling Floor",
   "menu.bwr.recirculation_pump": "Recirculation Pump",
-  "menu.bwr.suppression_pool": "Suppression Pool",
+  "menu.bwr.suppression_pool": "Suppression Tank",
   "menu.bwr.fuel_fabricator": "Fuel Fabricator",
   "gui.bwr.core_map": "Core map",
   "block.bwr.rcic_turbine_pump": "RCIC Turbine Pump (Legacy)",
@@ -140,5 +140,6 @@
   "insert.bwr.antimony_beryllium_source": "Antimony-Beryllium Secondary Source Rod",
   "insert.bwr.cobalt_target": "Cobalt Irradiation Rod",
   "insert.bwr.tritium_target": "Tritium Target Rod",
-  "insert.bwr.silicon_target": "Silicon Irradiation Rod"
+  "insert.bwr.silicon_target": "Silicon Irradiation Rod",
+  "block.bwr.suppression_pool_steam_inlet": "Suppression Tank Steam Inlet"
 }

@@ -35,10 +35,9 @@ public class CoolingRenderer implements BlockEntityRenderer<CoolingBlockEntity> 
         float angle=switch(be.getBlockState().getValue(CoolingBlock.FACING)){case EAST->90;case SOUTH->180;case WEST->270;default->0;};
         pose.pushPose();pose.translate(.5,0,.5);pose.mulPose(Axis.YP.rotationDegrees(-angle));pose.translate(-.5-c.getX(),-c.getY(),-.5-c.getZ());
         draw(be.previousPumpModel()?previous(be.design()):model(be.design()),pose,buffers,light,overlay);
-        for(var pivot:CoolingLayout.get(be.design()).rotors){
+        for(var pivot:layout.rotors){
             pose.pushPose();pose.translate(pivot.x,pivot.y,pivot.z);
-            double time=be.getLevel()==null?0:be.getLevel().getGameTime()+partial;
-            pose.mulPose(Axis.YP.rotationDegrees((float)(time*9*be.actual()%360)));draw(FAN,pose,buffers,light,overlay);pose.popPose();
+            pose.mulPose(Axis.YP.rotationDegrees(net.minecraft.util.Mth.lerp(partial,be.previousFanAngle,be.fanAngle)));draw(FAN,pose,buffers,light,overlay);pose.popPose();
         }pose.popPose();
     }
     private static void draw(ModelResourceLocation id,PoseStack pose,MultiBufferSource buffers,int light,int overlay){

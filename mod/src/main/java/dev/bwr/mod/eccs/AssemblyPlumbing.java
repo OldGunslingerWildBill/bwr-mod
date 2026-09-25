@@ -73,12 +73,12 @@ public final class AssemblyPlumbing {
             }
             boolean accepted=switch(role) {
                 case STEAM_INLET -> s.is(BwrBlocks.RPV_STEAM_OUTLET.get());
-                case STEAM_EXHAUST -> s.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get())||s.is(BwrBlocks.TURBINE_STEAM_OUTLET.get());
+                case STEAM_EXHAUST -> dev.bwr.mod.steam.SteamLineNetwork.isQuencher(s)||s.is(BwrBlocks.TURBINE_STEAM_OUTLET.get());
                 case WATER_SUCTION -> jet?s.is(BwrBlocks.RECIRCULATION_PUMP.get()):s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())||s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get())||s.is(BwrBlocks.SUPPRESSION_POOL_SUCTION.get());
                 case WATER_DISCHARGE -> s.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get())||s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get())||s.is(BwrBlocks.SUPPRESSION_POOL_RETURN.get());
             };
             if(accepted){ends.add(next);opening=Math.max(opening,route.opening());}
-            else if(s.is(BwrBlocks.RECIRCULATION_PUMP.get())||isWaterEndpoint(s)||s.is(BwrBlocks.RPV_STEAM_OUTLET.get())||s.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get())
+            else if(s.is(BwrBlocks.RECIRCULATION_PUMP.get())||isWaterEndpoint(s)||s.is(BwrBlocks.RPV_STEAM_OUTLET.get())||dev.bwr.mod.steam.SteamLineNetwork.isQuencher(s)
                     ||(s.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock)||(s.is(BwrBlocks.TURBINE_STEAM_OUTLET.get())&&role!=AssemblyPort.STEAM_INLET))valid=false;
         }
         return new Line(List.copyOf(ends),graph.cells(),valid,opening);

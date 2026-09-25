@@ -9,7 +9,7 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-alpha.7` — 12,500 buckets of Mekanism tritium per target rod, September 24, 2026.
+**Current version:** `0.1.0-alpha.9` — cooling-tower fan direction and speed patch, September 25, 2026.
 
 See the [full changelog](CHANGELOG.md) for the hardware, performance, condenser,
 fuel and irradiation updates.
@@ -21,8 +21,9 @@ fuel and irradiation updates.
 | Java | 21 |
 | Optional integrations | Mekanism and CC:Tweaked, installed separately |
 
-The current update adds dry-built suppression basins with pumped filling and
-over-pool spray, detailed Blender circulating/makeup pumps, physical RHR heat
+The current update adds enclosed suppression tanks with dedicated steam inlets,
+measured steam heating, corrected cooling-tower fans and tall drifting vapor.
+The plant includes pumped tank filling and spray, Blender circulating/makeup pumps, physical RHR heat
 exchangers, rounded pressure vessels, and compact logical fuel layouts
 (764 assemblies in a 17 x 17 vessel), cooling towers, waterlogged intakes and
 automatically assembled cylindrical condensate tanks. Modular HP/LP turbine
@@ -41,7 +42,7 @@ BWR model. Specialty irradiation now takes 24–168 operating hours at rated
 local flux. A completed tritium rod yields 1,250 samples, processable into
 12,500,000 mB (12,500 buckets) of tritium through a powered Chemical Oxidizer when Mekanism and
 Mekanism Generators are installed. Install
-alpha.7 on both client and server; GUI protocol remains 8.
+alpha.9 on both client and server; GUI protocol is 9.
 
 The first-publication candidate adds live CC:Tweaked faces across the machine
 registry, segmented water temperatures, condenser backpressure that affects LP
@@ -67,10 +68,10 @@ must credit **OldGunslingerWildBill**. See [license and credit](#license-and-cre
 - **Fast creative inventory:** complex machines use Blender-rendered inventory
   icons while preserving their full placed and held models. The actual BWR
   creative-tab slowdown was reproduced and corrected.
-- **Concrete suppression basins:** player-built open tubs, modeled concrete
+- **Concrete suppression basins:** player-built enclosed tanks with steam inlet flanges, modeled concrete
   walls and rims, directional suction/return flanges, and automatic formation.
   New concrete pools start empty and must be filled through pipes. A live water
-  surface follows inventory. Choose **regular fill** or **over-pool spray** in
+  surface follows inventory. Choose **regular fill** or **tank spray** in
   the panel or with CC `setFillMode("fill"/"spray")`. Spray consumes supplied
   water and condenses steam within its finite heat-absorption limit.
   Pools also cool naturally toward 25 C over time, without power or makeup

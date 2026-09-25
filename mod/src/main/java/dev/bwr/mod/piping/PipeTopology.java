@@ -133,6 +133,10 @@ public final class PipeTopology {
     public record Route(Node node,double opening,List<TurbineValveBlockEntity> valves) {}
     /** Live valve settings are evaluated on the compressed graph, including zero-opening paths. */
     public static List<Route> routes(Level level,Graph graph) {
+        return routes(level,graph,false);
+    }
+    /** Relief valves own their discharge allocation; passive sinks must not pull through them again. */
+    public static List<Route> routes(Level level,Graph graph,boolean excludeRelief) {
         if(graph.truncated)return List.of();
         Map<Node,Route> best=new LinkedHashMap<>();var queue=new ArrayDeque<Route>();
         var first=new Route(graph.start,1,List.of());best.put(graph.start,first);queue.add(first);
@@ -143,6 +147,7 @@ public final class PipeTopology {
                 if(next.kind==Kind.VALVE) {
                     if(!level.isLoaded(next.pos))continue;
                     var be=level.getBlockEntity(next.pos);
+                    if(excludeRelief&&be instanceof SafetyReliefValveBlockEntity)continue;
                     if(be instanceof MainSteamIsolationValveBlockEntity v)opening=Math.min(opening,v.getPosition());
                     if(be instanceof SafetyReliefValveBlockEntity v&&!v.isOpen())opening=0;
                     if(be instanceof TurbineValveBlockEntity v){opening=Math.min(opening,v.position());var copy=new ArrayList<>(valves);copy.add(v);valves=List.copyOf(copy);}

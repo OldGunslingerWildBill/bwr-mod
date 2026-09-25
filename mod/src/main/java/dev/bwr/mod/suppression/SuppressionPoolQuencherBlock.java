@@ -92,6 +92,9 @@ public class SuppressionPoolQuencherBlock extends Block implements SteamLinePort
      */
     public static boolean isSubmerged(BlockGetter level, BlockPos pos) {
         if(level instanceof Level world) {
+            if(world.getBlockState(pos).is(dev.bwr.mod.registry.BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get())){
+                var pool=SuppressionPoolSteamPortBlock.owner(world,pos);return pool!=null&&pool.ownsQuencher(pos);
+            }
             for(var pool:dev.bwr.mod.eccs.AssemblyPlumbing.nearby(world,pos,SuppressionPoolBlockEntity.class))
                 if(pool.containsConcrete(pos))return pool.submergedConcrete(pos);
         }

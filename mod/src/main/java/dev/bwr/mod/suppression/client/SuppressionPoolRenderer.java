@@ -38,7 +38,7 @@ public final class SuppressionPoolRenderer implements BlockEntityRenderer<Suppre
             var p=BlockPos.of(packed);var state=level.getBlockState(p);
             if(!state.is(BwrBlocks.SUPPRESSION_POOL_RETURN.get()))continue;
             var face=state.getValue(SuppressionPoolPortBlock.FACING);var inside=p.relative(face.getOpposite());
-            double top=max.getY()+1.4;
+            double top=be.isEnclosedTank()?max.getY()-.25:max.getY()+1.4;
             part("spray_riser",pose,buffers,light,overlay,inside.getX(),p.getY()+.5,inside.getZ(),1,top-p.getY()-.5,1);
             // Short horizontal feed from the wall penetration to the riser.
             pose.pushPose();pose.translate(p.getX()+.5,p.getY()+.5,p.getZ()+.5);

@@ -25,6 +25,9 @@ public class CoolingBlockEntity extends BlockEntity {
     private long checkedAt=Long.MIN_VALUE,drainTick=Long.MIN_VALUE;private int drained;
     private boolean complete;public boolean forming,structureDirty=true;
     private double target,actual;private int draw;
+    public float fanAngle,previousFanAngle;
+    private double vaporActivity;
+    private long vaporUpdated=Long.MIN_VALUE;
     public CoolingBlockEntity(BlockPos p,BlockState s){
         super(BwrBlockEntities.COOLING.get(),p,s);root=p.immutable();cell=layout().controllerIndex();
         unit=s.getValue(CoolingBlock.CONTROLLER)?new CoolingWaterUnit(design()):null;
@@ -37,6 +40,7 @@ public class CoolingBlockEntity extends BlockEntity {
     public BlockPos root(){return root;}public int cellIndex(){return cell;}public CoolingWaterUnit plant(){return unit;}
     public double target(){return target;}public double actual(){return actual;}public int draw(){return draw;}
     public int storedFE(){return energy==null?0:energy.getEnergyStored();}
+    public double vaporActivity(){return vaporActivity;}
     public void setTarget(double n){if(Double.isFinite(n)&&n>=0&&n<=1&&design().watts>0){target=n;setChanged();}}
     public void bind(CoolingBlockEntity owner,int index){root=owner.worldPosition;assembly=owner.assembly;cell=index;layoutVersion=owner.layoutVersion;setChanged();}
     public boolean matches(CoolingBlockEntity owner){return root.equals(owner.worldPosition)&&assembly.equals(owner.assembly)&&getBlockState().getBlock()==owner.getBlockState().getBlock()&&getBlockState().getValue(CoolingBlock.FACING)==owner.getBlockState().getValue(CoolingBlock.FACING);}
@@ -112,7 +116,38 @@ public class CoolingBlockEntity extends BlockEntity {
             if(!be.design().tower&&be.design()!=Design.INTAKE&&be.actual>0)be.push();
             if(be.draw>0||be.unit.flow()>0)be.setChanged();
         }
+        be.vaporActivity=be.design().tower&&be.ready()&&be.unit.flow()>0&&be.unit.heatMW()>0
+                ?Math.clamp(be.unit.flow()/be.design().flow,0,1):0;
         if(l.getGameTime()%5==0)l.sendBlockUpdated(p,s,s,2);
+    }
+    public static void clientTick(Level l,BlockPos p,BlockState s,CoolingBlockEntity be){
+        be.previousFanAngle=be.fanAngle;
+        be.fanAngle+=12*(float)be.actual; // Positive model-space Y rotation; 40 visual RPM at full speed.
+        if(be.fanAngle > 3600){be.fanAngle-=3600;be.previousFanAngle-=3600;}
+        if(!be.design().tower||be.vaporActivity<=0||l.getGameTime()-be.vaporUpdated>40||l.getGameTime()%3!=0)return;
+        boolean natural=be.design()==Design.NATURAL;
+        var bounds=be.layout().bounds(p,s.getValue(CoolingBlock.FACING));
+        if(l.getNearestPlayer(bounds.getCenter().x,bounds.maxY,bounds.getCenter().z,256,false)==null)return;
+        double strength=Math.sqrt(be.vaporActivity);
+        int puffs=natural?3:2;
+        for(int i=0;i<puffs;i++){
+            if(l.random.nextDouble()>strength)continue;
+            double x,z,y;
+            if(natural){
+                double a=l.random.nextDouble()*Math.PI*2,r=Math.sqrt(l.random.nextDouble())*(bounds.maxX-bounds.minX)*.22;
+                x=bounds.getCenter().x+Math.cos(a)*r;z=bounds.getCenter().z+Math.sin(a)*r;y=bounds.maxY-.15;
+            }else{
+                var rotors=be.layout().rotors;if(rotors.isEmpty())return;
+                var rotor=rotors.get(l.random.nextInt(rotors.size()));var c=be.layout().controller;
+                double dx=rotor.x-c.getX()-.5,dz=rotor.z-c.getZ()-.5;
+                double a=Math.toRadians(switch(s.getValue(CoolingBlock.FACING)){case EAST->90;case SOUTH->180;case WEST->270;default->0;});
+                x=p.getX()+.5+dx*Math.cos(a)-dz*Math.sin(a);z=p.getZ()+.5+dx*Math.sin(a)+dz*Math.cos(a);
+                y=Math.max(bounds.maxY+.1,p.getY()+rotor.y-c.getY()+.7);
+            }
+            if(!l.canSeeSky(BlockPos.containing(x,y,z)))continue;
+            l.addParticle(dev.bwr.mod.registry.BwrParticles.COOLING_VAPOR.get(),true,x,y,z,
+                    natural?3.2:1.8,natural?.43:.30,.36+.14*strength);
+        }
     }
     private void push(){
         for(var port:layout().ports)if(port.role()==CoolingBlock.Port.OUTLET){
@@ -123,7 +158,7 @@ public class CoolingBlockEntity extends BlockEntity {
         }
     }
     @Override public void onLoad(){super.onLoad();if(level!=null&&!level.isClientSide()&&unit==null)level.scheduleTick(worldPosition,getBlockState().getBlock(),20);}
-    @Override public CompoundTag getUpdateTag(HolderLookup.Provider r){return saveWithoutMetadata(r);}
+    @Override public CompoundTag getUpdateTag(HolderLookup.Provider r){var t=saveWithoutMetadata(r);t.putDouble("VaporActivity",vaporActivity);return t;}
     @Override public ClientboundBlockEntityDataPacket getUpdatePacket(){return ClientboundBlockEntityDataPacket.create(this);}
     @Override protected void saveAdditional(CompoundTag t,HolderLookup.Provider r){
         super.saveAdditional(t,r);t.putLong("Root",root.asLong());t.putUUID("Assembly",assembly);t.putInt("Cell",cell);t.putInt("LayoutVersion",layoutVersion);
@@ -136,5 +171,7 @@ public class CoolingBlockEntity extends BlockEntity {
                 t.contains("OutputH")?t.getDouble("OutputH"):dev.bwr.core.thermal.Saturation.subcooledLiquidEnthalpyKJPerKg(13));energy.setStored(t.getInt("Energy"));
             if(t.contains("Target"))setTarget(t.getDouble("Target"));double a=t.getDouble("Actual");actual=Double.isFinite(a)?Math.clamp(a,0,1):0;}
         structureDirty=true;checkedAt=drainTick=Long.MIN_VALUE;drained=0;
+        double vapor=t.getDouble("VaporActivity");vaporActivity=Double.isFinite(vapor)?Math.clamp(vapor,0,1):0;
+        vaporUpdated=level==null?0:level.getGameTime();
     }
 }

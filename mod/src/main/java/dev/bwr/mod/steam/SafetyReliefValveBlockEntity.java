@@ -395,7 +395,7 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
             if(graph.truncated())return false;
             for(var route:dev.bwr.mod.piping.PipeTopology.routes(level,graph)){
                 var node=route.node();
-                if(route.opening()>0&&level.isLoaded(node.pos())&&node.state().is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get())
+                if(route.opening()>0&&level.isLoaded(node.pos())&&SteamLineNetwork.isQuencher(node.state())
                         &&SuppressionPoolQuencherBlock.isSubmerged(level,node.pos()))return true;
             }
             return false;
@@ -417,7 +417,7 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
             if (!level.isLoaded(q)) {
                 continue;
             }
-            if (level.getBlockState(q).is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get())
+            if (SteamLineNetwork.isQuencher(level.getBlockState(q))
                     && SuppressionPoolQuencherBlock.isSubmerged(level, q)) {
                 return true;
             }

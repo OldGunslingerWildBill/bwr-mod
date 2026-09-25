@@ -27,15 +27,15 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 @EventBusSubscriber(modid=BwrMod.MOD_ID,value=Dist.CLIENT)
 public final class SuppressionClientCheck {
     private static final BlockPos O=new BlockPos(160,190,160),HX=O.offset(6,6,-3);
-    private static final String[] NAMES={"concrete-basin","exchanger-ports","exchanger-panel","pool-panel","spray-panel","pool-spray","detailed-water-pumps"};
+    private static final String[] NAMES={"enclosed-tank","exchanger-ports","exchanger-panel","pool-panel","spray-panel","pool-spray","detailed-water-pumps"};
     private static boolean started,requested,fixture,warming;
     private static volatile boolean spraying;private static int age,joined,stage,shown,warmTicks;
     @SubscribeEvent public static void supply(net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) {
         if(!Boolean.getBoolean("bwr.suppressionPanelCheck")||!fixture)return;
         var l=e.getServer().overworld();
-        if(spraying&&l.getBlockEntity(O.offset(4,2,0)) instanceof SuppressionPoolBlockEntity pool) {
-            pool.water(false).fill(new FluidStack(Fluids.WATER,30),FluidAction.EXECUTE);
-            pool.reportSteamKgPerS(pool.getBlockPos(),l.getGameTime(),200,1000);
+        if(l.getBlockEntity(O.offset(4,2,0)) instanceof SuppressionPoolBlockEntity pool) {
+            if(spraying)pool.water(false).fill(new FluidStack(Fluids.WATER,30),FluidAction.EXECUTE);
+            pool.receiveSteam(10,2770,1015,false);
         }
         if(l.getBlockEntity(O.offset(12,0,3)) instanceof EccsPumpBlockEntity pump)pump.energy().setStored(pump.energy().getMaxEnergyStored());
         if(l.getBlockEntity(HX) instanceof RhrHeatExchangerBlockEntity hx){hx.secondary(true).fill(new FluidStack(Fluids.WATER,120),FluidAction.EXECUTE);hx.secondary(false).drain(120,FluidAction.EXECUTE);}
@@ -59,7 +59,7 @@ public final class SuppressionClientCheck {
             server.execute(()->{var player=server.getPlayerList().getPlayer(uuid);var l=player.serverLevel();player.setNoGravity(true);player.getAbilities().flying=true;player.onUpdateAbilities();
                 try {
                     if(selected==0) {
-                        var pool=SuppressionBasinRegressionTests.build(l,O);SuppressionBasinRegressionTests.connect(l,O);SuppressionBasinRegressionTests.validate(pool);
+                        var pool=SuppressionTankRegressionTests.build(l,O);SuppressionBasinRegressionTests.connect(l,O);SuppressionBasinRegressionTests.validate(pool);
                         pool.pool().fromArray(new dev.bwr.core.pool.SuppressionPool(105_000,80).toArray());
                         for(var p:BlockPos.betweenClosed(O.offset(-2,-1,-6),O.offset(27,-1,10)))l.setBlock(p,Blocks.SMOOTH_STONE.defaultBlockState(),3);
                         for(int i=0;i<4;i++) {
@@ -110,7 +110,7 @@ public final class SuppressionClientCheck {
             for(int i=0;i<7;i++){var quads=baked.getQuads(null,i<6?Direction.values()[i]:null,net.minecraft.util.RandomSource.create(42),ModelData.EMPTY,null);count+=quads.size();for(var q:quads)if(q.getSprite().contents().name().getPath().equals("missingno"))throw new AssertionError("Missing standalone texture: "+id);}
             if(baked==mc.getModelManager().getMissingModel()||count==0)throw new AssertionError("Missing standalone model: "+id);
         }
-        for(var block:new net.minecraft.world.level.block.Block[]{BwrBlocks.SUPPRESSION_POOL_WALL.get(),BwrBlocks.SUPPRESSION_POOL_SUCTION.get(),BwrBlocks.SUPPRESSION_POOL_RETURN.get(),BwrBlocks.RHR_HEAT_EXCHANGER.get()})for(var state:block.getStateDefinition().getPossibleStates()) {
+        for(var block:new net.minecraft.world.level.block.Block[]{BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get(),BwrBlocks.SUPPRESSION_POOL_WALL.get(),BwrBlocks.SUPPRESSION_POOL_SUCTION.get(),BwrBlocks.SUPPRESSION_POOL_RETURN.get(),BwrBlocks.RHR_HEAT_EXCHANGER.get()})for(var state:block.getStateDefinition().getPossibleStates()) {
             var model=mc.getModelManager().getModel(BlockModelShaper.stateToModelLocation(state));int count=0;
             for(int i=0;i<7;i++){var quads=model.getQuads(state,i==6?null:Direction.values()[i],net.minecraft.util.RandomSource.create(42),ModelData.EMPTY,null);count+=quads.size();for(var q:quads)if(q.getSprite().contents().name().getPath().equals("missingno"))throw new AssertionError("Missing suppression texture: "+state);}
             if(model==mc.getModelManager().getMissingModel()||count==0)throw new AssertionError("Missing suppression model: "+state);

@@ -16,6 +16,9 @@ public final class SteamValveRouting {
     public static double claim(Level level,BlockPos start,RpvSteamOutletBlockEntity nozzle,double wantedKgPerS){
         return transfer(level,start,nozzle,wantedKgPerS,false);
     }
+    public static double claimWithoutRelief(Level level,BlockPos start,RpvSteamOutletBlockEntity nozzle,double wantedKgPerS){
+        return transfer(level,start,null,nozzle,wantedKgPerS,false,true);
+    }
     public static double claim(Level level,BlockPos start,Direction outlet,RpvSteamOutletBlockEntity nozzle,double wantedKgPerS){
         return transfer(level,start,outlet,nozzle,wantedKgPerS,false);
     }
@@ -26,10 +29,13 @@ public final class SteamValveRouting {
         return transfer(level,start,null,nozzle,wantedKgPerS,simulate);
     }
     private static double transfer(Level level,BlockPos start,Direction outlet,RpvSteamOutletBlockEntity nozzle,double wantedKgPerS,boolean simulate){
+        return transfer(level,start,outlet,nozzle,wantedKgPerS,simulate,false);
+    }
+    private static double transfer(Level level,BlockPos start,Direction outlet,RpvSteamOutletBlockEntity nozzle,double wantedKgPerS,boolean simulate,boolean excludeRelief){
         if(level==null||!level.isLoaded(start)||!level.isLoaded(nozzle.getBlockPos())||nozzle.isRemoved()||!(wantedKgPerS>0))return 0;
         var graph=dev.bwr.mod.piping.PipeTopology.get(level,start,outlet,true,false);
         PathNode route=null;
-        for(var path:dev.bwr.mod.piping.PipeTopology.routes(level,graph))if(path.node().kind()==dev.bwr.mod.piping.PipeTopology.Kind.END
+        for(var path:dev.bwr.mod.piping.PipeTopology.routes(level,graph,excludeRelief))if(path.node().kind()==dev.bwr.mod.piping.PipeTopology.Kind.END
                 &&path.node().pos().equals(nozzle.getBlockPos())&&(route==null||path.opening()>route.opening))
             route=new PathNode(path.node().pos(),path.opening(),path.valves());
         if(route==null)return 0;
@@ -59,6 +65,10 @@ public final class SteamValveRouting {
             var s=node.state();boolean sink;
             if(s.getBlock() instanceof ProcessAssembly a)sink=a.portAt(s,node.face())==AssemblyPort.STEAM_INLET;
             else if(s.getBlock() instanceof dev.bwr.mod.condenser.CondenserBlock)sink=dev.bwr.mod.condenser.CondenserBlockEntity.acceptsSteam(level,node.pos());
+            else if(s.getBlock() instanceof dev.bwr.mod.suppression.SuppressionPoolSteamPortBlock){
+                var pool=dev.bwr.mod.suppression.SuppressionPoolSteamPortBlock.owner(level,node.pos());
+                sink=pool!=null&&pool.pool().inletSteam.space()>1e-6;
+            }
             else sink=s.is(BwrBlocks.TURBINE_STEAM_OUTLET.get())||s.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get());
             if(sink)best=Math.max(best,route.opening());
         }

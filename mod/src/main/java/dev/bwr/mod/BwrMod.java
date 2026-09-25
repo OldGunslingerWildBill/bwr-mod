@@ -42,6 +42,7 @@ public final class BwrMod {
         BwrItems.ITEMS.register(modBus);
         BwrItems.TABS.register(modBus);
         BwrBlockEntities.BLOCK_ENTITIES.register(modBus);
+        dev.bwr.mod.registry.BwrParticles.PARTICLES.register(modBus);
         dev.bwr.mod.registry.BwrMenus.MENUS.register(modBus);
         dev.bwr.mod.fuel.BwrDataComponents.DATA_COMPONENTS.register(modBus);
 

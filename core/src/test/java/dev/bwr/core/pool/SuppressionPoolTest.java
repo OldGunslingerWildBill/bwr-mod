@@ -20,6 +20,19 @@ public final class SuppressionPoolTest {
     private SuppressionPoolTest() {
     }
 
+    public static void testSteamBufferPersistsAndOldSavesRemainReadable() {
+        var pool=SuppressionPool.empty(100_000);
+        pool.receiveWaterKg(50_000,25);
+        pool.inletSteam.offer(new dev.bwr.core.turbine.SteamInventory.Packet(75,2770,1015));
+        var restored=SuppressionPool.empty(100_000);restored.fromArray(pool.toArray());
+        if(restored.inletSteam.mass()!=75||restored.inletSteam.enthalpy()!=2770)throw new AssertionError("steam inventory/enthalpy lost");
+        var packet=restored.inletSteam.take(75);double before=restored.getTemperatureC();
+        restored.condenseSteamAtEnthalpy(packet.mass(),packet.enthalpy(),1);
+        if(restored.getTemperatureC()<=before||restored.getMassKg()!=50_075)throw new AssertionError("steam did not become heat and water");
+        restored.fromArray(java.util.Arrays.copyOf(pool.toArray(),9));
+        if(restored.inletSteam.mass()!=0||restored.getMassKg()!=50_000)throw new AssertionError("legacy pool save incompatible");
+    }
+
     /**
      * Condensing steam must deposit exactly the enthalpy it carried, and the
      * pool must warm by that energy over its own heat capacity.

@@ -24,6 +24,7 @@
     "bwr:rhr_heat_exchanger",
     "bwr:slc_boron_tank",
     "bwr:ads_relief_valve",
-    "bwr:water_discharge_port"
+    "bwr:water_discharge_port",
+    "bwr:suppression_pool_steam_inlet"
   ]
 }

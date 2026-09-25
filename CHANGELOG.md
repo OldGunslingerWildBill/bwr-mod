@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.0-alpha.9 — 2026-09-25
+
+- Reversed the mechanical cooling-tower fan animation following in-game feedback.
+- Increased full-speed fan animation from 30 to 40 RPM (33% faster), retaining powered-speed scaling and smooth interpolation.
+- Includes the alpha.8 suppression-tank and tower-vapor changes. GUI protocol remains 9.
+
+## 0.1.0-alpha.8 — 2026-09-25
+
+- Reversed the mechanical cooling-tower fans and made their rotation continuous as speed changes.
+- Added tall, wind-drifting vapor plumes to operating natural and mechanical towers. Puffs rise, spread and fade; the effect is client-only with a shared particle cap.
+- Added enclosed concrete suppression tanks and a Blender-modeled steam inlet flange. Tanks form automatically, start empty and retain inventory through repair and controller replacement.
+- Steam from BWR pipes or optional Mekanism tubes heats the stored water and adds condensate. Shared inlet limits and valve routing prevent duplicate allocation.
+- Added steam-flow and inlet-buffer measurements to the tank GUI and CC:Tweaked status. Water suction/return, spray fill and the separate RHR exchanger circuit remain available.
+- Fixed relief discharge recognition after pumped tank filling and pipe disconnection. Verified ocean intake → makeup pump → exchanger → discharge cooling with separate water inventories.
+- GUI protocol is now 9. Update clients and servers together.
+
 ## 0.1.0-alpha.7 — 2026-09-24
 
 - Increased completed tritium target yield to **12,500 buckets (12,500,000 mB)**:

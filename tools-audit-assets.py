@@ -12,6 +12,7 @@ Checks:
      five GUI backgrounds are built in the screen classes as ResourceLocations
      and appear in no .json at all, so check 2 could never see them -- and no
      .png under assets/bwr/textures/ is referenced by nothing
+  2c. particle sprite lists resolve to real textures/particle/*.png files
   3. every registered block (read out of BwrBlocks.java) has a blockstate,
      a block model, an item model, a loot table and a recipe
   4. every blockstate covers all BlockState combinations the Java block
@@ -320,6 +321,27 @@ for base, _, files in os.walk(JAVA):
                                 f"script the form you used")
 
 # Orphans, both directions now accounted for.
+# Particle definitions name sprite paths relative to textures/particle/.
+particle_tex_refs = 0
+for rel, definition in jsons.items():
+    if not rel.startswith("assets/bwr/particles/"):
+        continue
+    sprites = definition.get("textures", []) if isinstance(definition, dict) else None
+    if not isinstance(sprites, list) or not sprites:
+        bad("PARTICLE-TEXTURE", f"{rel}: expected a nonempty textures list")
+        continue
+    for sprite in sprites:
+        if not isinstance(sprite, str):
+            bad("PARTICLE-TEXTURE", f"{rel}: sprite path is not a string")
+            continue
+        ns, path = tex_split(sprite)
+        texture = f"{ns}:particle/{path}"
+        if ns == "bwr":
+            referenced_textures.add(f"particle/{path}")
+        if not tex_exists(texture):
+            bad("MISSING-TEXTURE", f"{rel}: particle sprite '{sprite}' has no .png")
+        particle_tex_refs += 1
+
 textures_root = os.path.join(RES, "assets/bwr/textures")
 textures_on_disk = set()
 for base, _, files in os.walk(textures_root):
@@ -328,8 +350,8 @@ for base, _, files in os.walk(textures_root):
             rel = os.path.relpath(os.path.join(base, f), textures_root).replace("\\", "/")
             textures_on_disk.add(rel[:-len(".png")])
 for orphan in sorted(textures_on_disk - referenced_textures):
-    bad("ORPHAN-TEXTURE", f"assets/bwr/textures/{orphan}.png is referenced by no model and "
-                          f"no Java source; either something that should point at it does not "
+    bad("ORPHAN-TEXTURE", f"assets/bwr/textures/{orphan}.png is referenced by no model, particle or "
+                          f"Java source; either something that should point at it does not "
                           f"(look for a MISSING-TEXTURE above naming a similar path) or it is "
                           f"dead weight in the jar")
 

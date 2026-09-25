@@ -176,8 +176,8 @@ public final class SteamLineNetwork {
     }
 
     /** A suppression pool quencher: the far end of a relief discharge line. */
-    private static boolean isQuencher(BlockState state) {
-        return state.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get());
+    public static boolean isQuencher(BlockState state) {
+        return state.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get())||state.is(BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get());
     }
 
     /**

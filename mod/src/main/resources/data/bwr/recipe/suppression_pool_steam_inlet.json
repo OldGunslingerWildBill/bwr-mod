@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " W ",
+    "DPD",
+    " W "
+  ],
+  "key": {
+    "W": {
+      "item": "bwr:suppression_pool_wall"
+    },
+    "P": {
+      "item": "bwr:pressurised_tube"
+    },
+    "D": {
+      "item": "minecraft:orange_dye"
+    }
+  },
+  "result": {
+    "id": "bwr:suppression_pool_steam_inlet",
+    "count": 1
+  }
+}

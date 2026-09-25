@@ -34,6 +34,7 @@ public class SuppressionPoolMenu extends BwrMenu {
     public static final int CMD_FILL_MODE = 1;
     public boolean sprayMode;
     public double passiveCoolingMW;
+    public double steamIn, steamBuffer;
     public double capacityKg,sprayHeaderKg,sprayFlow,sprayCondensed;
 
     // --- client-visible snapshot -------------------------------------
@@ -124,6 +125,7 @@ public class SuppressionPoolMenu extends BwrMenu {
         buf.writeBoolean(pool.isSprayMode());buf.writeDouble(pool.getDesignMassKg());buf.writeDouble(pool.getSprayWaterKg());
         buf.writeDouble(pool.getSprayKgPerS());buf.writeDouble(pool.getSprayCondensedKgPerS());
         buf.writeDouble(be.passiveCoolingMW());
+        buf.writeDouble(be.steamInKgPerS());buf.writeDouble(pool.inletSteam.mass());
     }
 
     @Override
@@ -151,6 +153,7 @@ public class SuppressionPoolMenu extends BwrMenu {
         sprayMode=buf.readBoolean();capacityKg=buf.readDouble();sprayHeaderKg=buf.readDouble();
         sprayFlow=buf.readDouble();sprayCondensed=buf.readDouble();
         passiveCoolingMW=buf.readDouble();
+        steamIn=buf.readDouble();steamBuffer=buf.readDouble();
     }
 
     @Override

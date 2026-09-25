@@ -194,3 +194,31 @@ Supplied water retains its enthalpy and mixes with the hotwell inventory.
 It does not enter the cold/hot circulating-water inventories. Water chemistry
 and purification are not simulated. Older placed condensers must be drained
 and replaced to receive these new physical ports.
+
+## Tower vapor (alpha.8)
+
+![Operating towers with drifting vapor in Minecraft](art/models/cooling/tall-vapor-plumes.png)
+
+Both tower types produce white vapor only while moving water and rejecting heat.
+Client particles rise with buoyancy, drift with a slowly changing shared wind,
+spread and fade over 21–30 seconds. Rain strengthens the drift. Natural-draft
+plumes can climb roughly 120–180 blocks; mechanical-tower plumes rise less.
+These are visual approximations, not a weather or fluid simulation. Sky access
+is required at the outlet. Blender-rendered cloud sprites, viewing distance and a shared
+1,200-puff cap bound rendering cost. Reduced particles halves emission; Minimal disables it. Idle towers stop emitting; existing vapor fades.
+Mechanical fan rotation follows actual powered speed and the corrected blade direction.
+Alpha.9 reverses the alpha.8 animation and raises its full-speed visual rate
+from 30 to 40 RPM. Flow, cooling capacity and power draw are unchanged.
+
+## Once-through suppression-tank cooling
+
+Primary circuit: **tank suction → powered LPCI/RHR pump (pool-cooling mode) →
+exchanger primary inlet → primary outlet → tank return**.
+
+Secondary circuit: **submerged screened intake → powered makeup-water pump →
+exchanger blue cold inlet → cyan hot outlet → Water Discharge Port**. BWR water
+pipes connect each segment. Leave the discharge mouth open to air or water.
+The two circuits exchange heat without mixing water. The exchanger needs actual
+primary flow, a cold supply and space for its heated outlet; a blocked outfall
+eventually fills its finite outlet buffer and stops cooling. Ordinary external
+water has the existing 13 C default temperature.

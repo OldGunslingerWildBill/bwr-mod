@@ -1,54 +1,63 @@
-# Concrete suppression basin and RHR cooling
+# Enclosed suppression tanks and RHR cooling
 
-The suppression pool can now be built as an open concrete tub. Its wall panels,
-coping, water flanges and four-port RHR heat exchanger were authored in Blender.
-Existing dug pools remain supported; dedicated water ports opt a pool into the
-new concrete-shell rules.
+Build a hollow concrete tank with a complete floor, four walls and a roof.
+The concrete panels, water flanges, new steam flange and exchanger models are
+authored in Blender. Existing open concrete and dug pools remain compatible.
 
-![Concrete basin and connected RHR pump in Minecraft](art/models/suppression/in-game.png)
+![Enclosed tank with steam, suction and return flanges](art/models/suppression/suppression-tank.png)
 
-## Build the basin
+## Build the tank
 
-1. Build a complete rectangular floor and four walls from **Suppression Pool
-   Concrete**. Leave the top open. Outside width and depth may each be 5–25
-   blocks; outside height may be 4–16 blocks.
-2. Replace one shell block with a **Suppression Pool Controller**. Use exactly
-   one controller. Keep adjacent basins' concrete shells separate.
-3. Replace side-wall blocks with **Suppression Pool Suction Port** and
-   **Suppression Pool Return / Fill Port**, with their round flanges facing outside.
-   Ports go above the floor and below the rim. Multiple ports are allowed and
-   share the same water inventory.
-4. Leave the interior dry. The shell needs at least **64 interior spaces below
-   the rim**. Not every minimum-dimension combination provides enough volume.
-   Formation is automatic; allow up to five seconds after completing the shell.
-   Sneak-click the controller for validation details.
-5. Connect a powered makeup-water pump or configured fluid pipe to the **amber
-   Return / Fill Port**. New basins start at **0 kg**. Ordinary source-water
-   blocks inside the shell do not fill the metered tank.
-6. Route steam over the rim to suppression-pool quenchers. A concrete water
-   flange is not a steam inlet. Quenchers need the pumped water surface more
-   than 0.05 block above their top to provide a submerged discharge path.
+1. Build the shell from **Suppression Pool Concrete**. Outside width/depth:
+   **5–25 blocks** each; outside height: **4–16 blocks**. Use at least **64
+   hollow interior cells**, so not every minimum-dimension combination qualifies.
+2. Replace one shell block with a **Suppression Pool Controller**.
+3. Fit a **Suppression Tank Steam Inlet**, **Suppression Pool Suction Port**
+   and **Suppression Pool Return / Fill Port** in the side walls. Flanges must
+   face outward, above the floor and below the roof. Multiple ports share storage.
+4. Leave the inside empty. The tank forms automatically, normally within a
+   second after a shell edit; allow five seconds if it was previously unformed.
+   Sneak-click the controller for build details. Keep different tank shells separate.
+5. New tanks start **empty**. Pump water into the amber return/fill port.
+   Minecraft water sources inside do not fill the metered inventory.
+6. Connect **High-Pressure Steam Pipe** or optional **Mekanism Pressurized Tube**
+   to the steam inlet's round front flange. An internal sparger is represented
+   by this port; separate submerged quencher blocks are unnecessary in a tank.
 
-A **9 wide × 5 high × 7 deep** basin has 7 × 3 × 5 water spaces below its rim:
-**105,000 kg** design capacity. Each interior space adds 1,000 kg of capacity.
-The Blender water surface rises and falls with the stored inventory. It is a
-rendered tank volume, not scoopable/swimmable Minecraft source-water blocks.
+A **9 wide × 5 high × 7 deep** tank has 7 × 3 × 5 interior cells and **105,000 kg**
+capacity. Each cell adds 1,000 kg. Use pumped water above the 5% suction floor
+for a submerged relief-valve/pump-exhaust path. An empty tank is not a heat sink.
 
-Breaking a wall disables the basin's ports and hides the assembled water/header
-rendering until repaired. Required chunks must be loaded. Water, heat and queued
-spray supply survive repair, controller replacement and revalidation. Resizing
-never replenishes or discards stored water. Previously metered basins keep their
-inventory when upgrading; new concrete basins require pipe-delivered water.
-Legacy dug pools retain their earlier source-water construction behavior.
+The controller receives actual steam enthalpy from BWR lines; incoming steam
+heats the water and condensed mass joins the tank. Mekanism chemicals carry no
+temperature, so that boundary uses saturated atmospheric steam. A shared
+**10,000 kg steam buffer** accepts at most **2,000 kg/s** across all wall inlets.
+Stop/control valves govern direct steam lines; relief valves retain their own
+discharge accounting. The same steam cannot be claimed twice through an inlet.
 
-## Regular fill and over-pool spray
+Breaking a required wall or roof disables ports until repaired and leaves the
+other construction blocks in place. Water, heat, buffered steam and spray supply
+survive repair and controller replacement. All tank chunks must be loaded.
+An established enclosed tank cannot become an open basin by breaking its roof.
+Existing open pools can be upgraded by adding a complete roof and steam port.
 
-![Pumped water and overhead spray in Minecraft](art/models/suppression/pool-spray.png)
+The GUI reports **Steam received**, **Steam inlet buffer** and water temperature
+to two decimal places. CC:Tweaked `getStatus()` additionally exposes
+`enclosed`, `steamPorts`, `steamInKgPerS` and `steamBufferKg`.
 
-Right-click the controller or a water port and choose an inlet mode:
+![Enclosed suppression tank in Minecraft](art/models/suppression/enclosed-tank-ingame.png)
+
+![Steam admission and heat removal on the tank panel](art/models/suppression/tank-panel.png)
+
+## Regular fill and tank spray
+
+The spray hardware operates inside the enclosed shell; legacy open pools show
+the overhead spray rail above their water surface.
+
+Right-click the controller or a water/steam port and choose an inlet mode:
 
 - **Regular fill:** incoming water mixes directly into the pool.
-- **Over-pool spray:** the same inlet supplies the modeled riser and overhead
+- **Tank spray:** the same inlet supplies the modeled riser and overhead
   nozzle rail. A shared **6,000 kg header** meters up to **600 kg/s** into the
   pool. The header is finite and reserves space against the basin's capacity;
   extra return ports do not multiply its flow or storage limits.
@@ -91,11 +100,11 @@ by this cooling-only approximation.
 
 This is a simple game model: effective surface and shell conductances are
 100 and 25 W/(m2 K), respectively. It does not simulate evaporation, water loss,
-biome temperature, warming containment air or cooling while unloaded. Both
+biome temperature, warming containment air or cooling while unloaded. Enclosed tanks exchange heat through the shell and roof, without the open-water surface term. Both
 concrete and legacy dug pools receive passive cooling. Concrete wetted wall
 area follows the pumped level; legacy boundary areas are cached during scans.
 
-For scale, a full 9x5x7 basin containing 105,000 kg at 80 C cools to approximately
+For scale, a full **open** 9x5x7 basin containing 105,000 kg at 80 C cools to approximately
 **77.3 C after one simulated hour**, with no incoming heat. RHR is still the
 much stronger cooling path during steam discharge. The panel shows **Natural
 cooling** in kW; CC:Tweaked exposes `getStatus().passiveCoolingMW` and

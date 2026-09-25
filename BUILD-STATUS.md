@@ -1,5 +1,64 @@
 # Build Status
 
+## 2026-09-25 — 0.1.0-alpha.9: fan direction and animation speed
+
+Built `mod/build/libs/mod-0.1.0-alpha.9.jar` (**22,727,745 bytes**).
+SHA-256: `BF3E08B066CFA31835F66F7EC67432CF2F2CD040F63E5F465EBD15413B5C7180`.
+
+- Reversed the alpha.8 mechanical-tower fan animation and raised full-speed
+  rotation from 30 to 40 visual RPM. Actual powered-speed scaling and smooth
+  wrap/interpolation are retained. Cooling physics and GUI protocol 9 unchanged.
+- Minecraft cooling client check passed, including measured +6 degrees per
+  tick at 50% speed, sustained vapor and all seven existing visual captures.
+- `:mod:build`, design guard, JAR audit and whitespace checks passed.
+- No full physics/GameTest rerun for this animation-only follow-up; the
+  alpha.8 213/213 physics and 56/56 GameTest results below remain applicable
+  evidence for the unchanged simulation code.
+- Source update for GitHub `main`, including all alpha.8 changes. This source
+  push does not publish a GitHub Release or upload the built JAR.
+
+Logs: `tmp/fan-alpha9-client-build.log`, `tmp/fan-alpha9-jar.log`.
+
+## 2026-09-25 — 0.1.0-alpha.8: suppression tanks and tower vapor
+
+Built `mod/build/libs/mod-0.1.0-alpha.8.jar` (**22,727,751 bytes**).
+SHA-256: `61A9B6CFD96BDB11DF35A5C4595E418E54E8040BE908C88242C1E008C3D11BC3`.
+Included in the alpha.9 source update; not published as a GitHub Release.
+Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. GUI protocol **9**;
+update client and server together.
+
+- Enclosed suppression tanks form from concrete floor, walls, roof, controller
+  and directional ports. New tanks start empty. Dedicated steam inlets accept
+  BWR steam pipes and optional Mekanism tubes; actual steam heats the water and
+  adds condensate. Shared budgets prevent double allocation. Water, heat and
+  steam inventory survive breach, repair and controller replacement.
+- Live relief routing responds to pumped filling and disconnected lines.
+  A real ocean intake → powered makeup pump → exchanger → discharge test
+  confirms isolated primary/secondary water accounting and finite backpressure.
+- Mechanical fan rotation is corrected. Both operating towers emit Blender-
+  rendered vapor sprites with buoyant rise, changing drift, spreading and fading.
+  Effects are client-only, respect particle settings and share a 1,200-puff cap.
+  No pipe block tickers were introduced; transport uses cached topology.
+- **213/213 full core acceptance tests passed** (879 seconds).
+- **56/56 Minecraft GameTests passed**, including the new enclosed-tank,
+  BWR/Mekanism steam, ADS fill/disconnect and ocean cooling regressions.
+  Existing runtime checks also passed.
+- Dedicated server without optional integrations: **PASS, zero problems**,
+  including eight permission scenarios. CC faces cover 45 machine block types
+  in the integration runtime.
+- Actual Minecraft client checks passed for enclosed tank/GUI and operating
+  towers. Final plume screenshot recorded 769 particles across both towers.
+  Screenshots and reproducible Blender sources are under `art/models/`.
+- `:mod:build`, design guard, exported-asset consistency and JAR audit passed.
+  Asset audit: **2,401 JSON files, zero problems**. Particle sprite references
+  are now audited, with a deliberate missing-sprite failure check. No bundled
+  optional-mod implementations or development fixtures. Whitespace checks passed.
+
+Logs: `tmp/tank-core-full.log`, `tmp/tank-gametest-release.log`,
+`tmp/tank-no-optional.log`, `tmp/tank-suppression-client.log`,
+`tmp/tank-cooling-client-final.log`, `tmp/tank-assets-final.log`,
+`tmp/tank-particle-audit-negative.log`, `tmp/tank-jar-final.log`.
+
 ## 2026-09-24 — 0.1.0-alpha.7: 12,500 buckets per tritium rod
 
 Built `mod/build/libs/mod-0.1.0-alpha.7.jar` (**22,596,020 bytes**).

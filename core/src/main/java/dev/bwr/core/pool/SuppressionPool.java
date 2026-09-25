@@ -120,6 +120,8 @@ public final class SuppressionPool {
     private double sprayWaterC = DEFAULT_TEMPERATURE_C;
     private double lastSprayKgPerS;
     private double lastSprayCondensedKgPerS;
+    /** Finite wall-inlet inventory belongs to the basin and survives controller replacement. */
+    public final dev.bwr.core.turbine.SteamInventory inletSteam=new dev.bwr.core.turbine.SteamInventory(10_000);
 
     public SuppressionPool() {
         this(DEFAULT_MASS_KG, DEFAULT_TEMPERATURE_C);
@@ -231,7 +233,12 @@ public final class SuppressionPool {
      * @return heat actually absorbed by the pool this step, megajoules
      */
     public double condenseSteam(double steamKgPerS, double domePressurePsig, double dtSeconds) {
-        if (steamKgPerS <= 0.0 || dtSeconds <= 0.0) {
+        return condenseSteamAtEnthalpy(steamKgPerS,Saturation.vapourEnthalpyKJPerKg(Saturation.psiaFromPsig(domePressurePsig)),dtSeconds);
+    }
+
+    public double condenseSteamAtEnthalpy(double steamKgPerS,double steamEnthalpy,double dtSeconds) {
+        if (!Double.isFinite(steamKgPerS)||!Double.isFinite(steamEnthalpy)||!Double.isFinite(dtSeconds)
+                ||steamKgPerS <= 0.0 || steamEnthalpy<=0 || dtSeconds <= 0.0) {
             lastUncondensedSteamKgPerS = 0.0;
             lastCondensationEffectiveness = condensationEffectiveness();
             return 0.0;
@@ -243,8 +250,6 @@ public final class SuppressionPool {
         double condensedKgPerS = steamKgPerS * effectiveness;
         lastUncondensedSteamKgPerS = steamKgPerS - condensedKgPerS;
 
-        double domePsia = Saturation.psiaFromPsig(domePressurePsig);
-        double steamEnthalpy = Saturation.vapourEnthalpyKJPerKg(domePsia);
         double poolLiquidEnthalpy = Saturation.subcooledLiquidEnthalpyKJPerKg(temperatureC);
 
         double perKgKJ = Math.max(0.0, steamEnthalpy - poolLiquidEnthalpy);
@@ -547,7 +552,8 @@ public final class SuppressionPool {
         return new double[]{
                 massKg, temperatureC, containmentPressurePsia,
                 cumulativeHeatInputMJ, cumulativeRhrRemovedMJ, designMassKg,
-                sprayMode ? 1 : 0, sprayWaterKg, sprayWaterC
+                sprayMode ? 1 : 0, sprayWaterKg, sprayWaterC,
+                inletSteam.mass(),inletSteam.enthalpy(),inletSteam.pressure()
         };
     }
 
@@ -574,5 +580,6 @@ public final class SuppressionPool {
         sprayMode = a.length >= 9 && a[6] == 1;
         sprayWaterKg = a.length >= 9 && Double.isFinite(a[7]) ? Math.max(0, Math.min(SPRAY_HEADER_KG, a[7])) : 0;
         sprayWaterC = a.length >= 9 && Double.isFinite(a[8]) ? a[8] : DEFAULT_TEMPERATURE_C;
+        inletSteam.restore(a.length>=12?a[9]:0,a.length>=12?a[10]:0,a.length>=12?a[11]:0);
     }
 }

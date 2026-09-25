@@ -1,3 +1,23 @@
+## Alpha.8–alpha.9 source update (2026-09-25)
+
+Follow-up fan patch: reverse alpha.8's mechanical-tower rotation and increase
+its full-speed visual rate from 30 to 40 RPM. Client interpolation and actual
+powered-speed scaling remain in place. No physics or GUI protocol change.
+The alpha.8 work below is included in this source update for GitHub `main`.
+Deliver `mod/build/libs/mod-0.1.0-alpha.9.jar`; cooling client, build and JAR
+checks passed. See BUILD-STATUS.md for the checksum and validation scope.
+
+Enclosed suppression tank with a dedicated Blender-modeled steam wall port,
+metered BWR/Mekanism steam input, temperature/flow readouts, and shared persisted
+steam inventory. Existing open/dug pools remain compatible. Tower fan direction
+corrected; client-only buoyant drifting vapor with a shared particle cap.
+See SUPPRESSION-BASIN.md and COOLING-WATER.md. No GitHub Release or JAR upload
+is created by the source push.
+The GitHub main tip before this patch was da37137 (alpha.7).
+Alpha.8 baseline JAR: mod/build/libs/mod-0.1.0-alpha.8.jar. Full core 213/213, Minecraft
+GameTests 56/56, both client visual checks, no-optional-mod server, asset/JAR
+audits and build passed. Exact hash and logs are in BUILD-STATUS.md.
+
 # Agent Handoff
 
 ## User communication preference
@@ -9,7 +29,7 @@ Deliver the **JAR only**, not a ZIP, unless the user changes this preference.
 
 ## Increased tritium yield (2026-09-24)
 
-Current local version: **0.1.0-alpha.7**, GUI protocol **8**. User accepted
+Current local version: **0.1.0-alpha.9**, GUI protocol **9**. User accepted
 either 10,000 or 12,500 buckets per target; selected **12,500** to leave a
 5.8% margin with 64 targets against their friend's 2.5 buckets/second D-T
 consumption (1.25 buckets/second tritium). Harvest now gives **1,250 samples**,
