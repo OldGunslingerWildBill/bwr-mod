@@ -9,7 +9,7 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-alpha.12` — changing wind and winding cooling-tower vapor, September 25, 2026.
+**Current version:** `0.1.0-alpha.13` — cached machine rendering, September 25, 2026.
 
 See the [full changelog](CHANGELOG.md) for the hardware, performance, condenser,
 fuel and irradiation updates.
@@ -21,7 +21,10 @@ fuel and irradiation updates.
 | Java | 21 |
 | Optional integrations | Mekanism and CC:Tweaked, installed separately |
 
-Cooling-tower vapor now follows smooth random gusts and wind that varies with
+Large machine exteriors now reuse GPU meshes, with separate fan animation and
+full-machine visibility checks. See [machine rendering](MACHINE-RENDERING.md)
+for scope, cache behavior and the repeatable client comparison.
+Cooling-tower vapor follows smooth random gusts and wind that varies with
 height, moving between upright columns and winding, drifting plumes.
 The preceding update rebuilt RCIC and HPCI as original Blender turbine/pump skids
 with round steam/water flanges, visible computer panels and dedicated GUIs.
@@ -47,7 +50,7 @@ BWR model. Specialty irradiation now takes 24–168 operating hours at rated
 local flux. A completed tritium rod yields 1,250 samples, processable into
 12,500,000 mB (12,500 buckets) of tritium through a powered Chemical Oxidizer when Mekanism and
 Mekanism Generators are installed. Install
-alpha.12 on both client and server; GUI protocol remains 10.
+alpha.13 on both client and server; GUI protocol remains 10.
 
 The first-publication candidate adds live CC:Tweaked faces across the machine
 registry, segmented water temperatures, condenser backpressure that affects LP

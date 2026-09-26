@@ -2,21 +2,19 @@ package dev.bwr.mod.cooling.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.bwr.mod.BwrMod;
+import dev.bwr.mod.client.MachineMeshCache;
 import dev.bwr.mod.cooling.*;
 import dev.bwr.core.turbine.CoolingWaterUnit.Design;
 import dev.bwr.mod.registry.BwrBlockEntities;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.blockentity.*;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.core.Direction;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.*;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.*;
-import net.neoforged.neoforge.client.model.data.ModelData;
 
 @EventBusSubscriber(modid=BwrMod.MOD_ID,value=Dist.CLIENT)
 public class CoolingRenderer implements BlockEntityRenderer<CoolingBlockEntity> {
@@ -41,15 +39,14 @@ public class CoolingRenderer implements BlockEntityRenderer<CoolingBlockEntity> 
         }pose.popPose();
     }
     private static void draw(ModelResourceLocation id,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
-        var model=Minecraft.getInstance().getModelManager().getModel(id);var out=buffers.getBuffer(Sheets.cutoutBlockSheet());
-        var random=RandomSource.create(42);float[] brightness={1,1,1,1};int[] lights={light,light,light,light};
-        for(int i=0;i<7;i++){random.setSeed(42);for(var q:model.getQuads(null,i<6?Direction.values()[i]:null,random,ModelData.EMPTY,RenderType.solid()))
-            out.putBulkData(pose.last(),q,brightness,1,1,1,1,lights,overlay,true);}
+        MachineMeshCache.model(id,pose,buffers,light,overlay);
     }
     @Override public AABB getRenderBoundingBox(CoolingBlockEntity be){return be.layout().bounds(be.getBlockPos(),be.getBlockState().getValue(CoolingBlock.FACING));}
     @Override public int getViewDistance(){return 192;}
+    // Register the full machine independently of its controller's chunk section.
+    // NeoForge still frustum-culls this finite bounding box, including global BERs.
+    @Override public boolean shouldRenderOffScreen(CoolingBlockEntity be){return be.getBlockState().getValue(CoolingBlock.CONTROLLER);}
     @Override public boolean shouldRender(CoolingBlockEntity be,Vec3 camera){
-        if(!be.getBlockState().getValue(CoolingBlock.CONTROLLER))return false;var b=getRenderBoundingBox(be);
-        return camera.distanceToSqr(Math.clamp(camera.x,b.minX,b.maxX),Math.clamp(camera.y,b.minY,b.maxY),Math.clamp(camera.z,b.minZ,b.maxZ))<192*192;
+        return be.getBlockState().getValue(CoolingBlock.CONTROLLER)&&MachineMeshCache.withinDistance(getRenderBoundingBox(be),camera,getViewDistance());
     }
 }

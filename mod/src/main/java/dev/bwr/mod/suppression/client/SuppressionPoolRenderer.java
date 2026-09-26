@@ -3,20 +3,18 @@ package dev.bwr.mod.suppression.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.bwr.mod.BwrMod;
+import dev.bwr.mod.client.MachineMeshCache;
 import dev.bwr.mod.registry.*;
 import dev.bwr.mod.suppression.*;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.blockentity.*;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.*;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.*;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.*;
-import net.neoforged.neoforge.client.model.data.ModelData;
 
 /** One controller renders the metered water and Blender-authored spray header components. */
 @EventBusSubscriber(modid=BwrMod.MOD_ID,value=Dist.CLIENT)
@@ -58,11 +56,11 @@ public final class SuppressionPoolRenderer implements BlockEntityRenderer<Suppre
     }
     private static void part(String name,PoseStack pose,MultiBufferSource buffers,int light,int overlay,double x,double y,double z,double sx,double sy,double sz) {
         pose.pushPose();pose.translate(x,y,z);pose.scale((float)sx,(float)sy,(float)sz);
-        var baked=Minecraft.getInstance().getModelManager().getModel(model(name));var out=buffers.getBuffer(Sheets.cutoutBlockSheet());var random=RandomSource.create(42);
-        for(int i=0;i<7;i++){random.setSeed(42);for(var q:baked.getQuads(null,i<6?Direction.values()[i]:null,random,ModelData.EMPTY,RenderType.solid()))out.putBulkData(pose.last(),q,new float[]{1,1,1,1},1,1,1,1,new int[]{light,light,light,light},overlay,true);}
+        MachineMeshCache.model(model(name),pose,buffers,light,overlay);
         pose.popPose();
     }
     @Override public AABB getRenderBoundingBox(SuppressionPoolBlockEntity be){return be.visualMin==null?new AABB(be.getBlockPos()):new AABB(Vec3.atLowerCornerOf(be.visualMin),Vec3.atLowerCornerOf(be.visualMax.offset(1,2,1)));}
     @Override public int getViewDistance(){return 128;}
-    @Override public boolean shouldRender(SuppressionPoolBlockEntity be,Vec3 eye){return be.visualFormed&&getRenderBoundingBox(be).getCenter().distanceToSqr(eye)<128*128;}
+    @Override public boolean shouldRenderOffScreen(SuppressionPoolBlockEntity be){return true;}
+    @Override public boolean shouldRender(SuppressionPoolBlockEntity be,Vec3 eye){return be.visualFormed&&MachineMeshCache.withinDistance(getRenderBoundingBox(be),eye,getViewDistance());}
 }

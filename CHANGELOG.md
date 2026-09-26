@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.0-alpha.13 — 2026-09-25
+
+- Cached stationary reactor, cooling-machine, condenser and condensate-tank
+  geometry in reusable GPU buffers. Normal frames update placement and lighting
+  instead of rebuilding and uploading every model face on the CPU.
+- Kept mechanical-tower fans separate from the body; all fan instances reuse
+  one mesh while their rotation follows the existing animation.
+- Cached suppression-pool component meshes while preserving moving water levels.
+- Used full-machine bounds for large-object visibility and distance checks,
+  including views where the controller's chunk section is outside the camera.
+  NeoForge still rejects machines whose complete bounds are off-screen.
+- Added cache cleanup on resource reload, world unload and shutdown, plus bounded
+  reuse of assembly variants. Preserved the ordinary vertex path for special
+  destruction/outline consumers and retained Blender material colors.
+- Added a disposable client benchmark and checks for stable uploads, off-screen
+  rejection, tower-top visibility, day/night lighting and resource reloads.
+- Client rendering update; existing saves, simulation and GUI protocol 10 remain compatible.
+
 ## 0.1.0-alpha.12 — 2026-09-25
 
 - Added smoothly varying random wind and gusts to both cooling towers' vapor.

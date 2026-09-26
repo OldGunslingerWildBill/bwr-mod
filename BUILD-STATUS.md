@@ -1,5 +1,45 @@
 # Build Status
 
+## 2026-09-25 — 0.1.0-alpha.13: cached machine rendering
+
+Built `mod/build/libs/mod-0.1.0-alpha.13.jar` (**24,492,332 bytes**).
+SHA-256: `D63E04A6295A71233F9CB7D6EB7E600110C78F44BF670BE7CFFDBB100E69A150`.
+Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. GUI protocol **10**.
+
+- Stationary reactor shells, cooling machines, condensers and condensate tanks
+  reuse GPU buffers; tower fans rotate independently using shared geometry.
+  Suppression-pool water and header components also reuse cached meshes.
+- Large machines use their full bounds for visibility and distance checks.
+  The tower-top view passes even when its controller is outside the frustum;
+  looking away produces zero machine renderer calls.
+- The seven-stage client benchmark passed. In the same-build comparison,
+  uncached submission took **31.88 ms** of renderer CPU work per frame;
+  cached samples took **0.161 / 0.148 ms**. Seven shared meshes used
+  **25,211,232 vertex bytes**, with zero uploads during steady rendering.
+  A real resource reload rebuilt them once, and explicit cleanup freed all entries.
+  This controlled scene disables particles and does not measure GPU execution time
+  or predict FPS in a player's modpack. See [MACHINE-RENDERING.md](MACHINE-RENDERING.md).
+- Cooling, vessel, condenser, condensate-tank and suppression-pool client checks
+  passed. Reviewed captures cover model colors, day/night lighting, moving fans,
+  vapor, reactor open-head/breach/repair, tank sizes and condenser fit.
+- **56/56 required Minecraft GameTests passed**, including the existing machine,
+  plumbing, fluid-accounting, teardown and control regressions. Dedicated-server
+  startup also passed with the client-only cache classes present in the mod.
+- `:mod:build`, design guard, asset audit (**2,681 JSON files, zero problems**),
+  whitespace and JAR packaging checks passed. No development fixtures or optional
+  mod implementation classes are bundled. The full core physics suite was not
+  repeated for these client rendering changes.
+- Existing simulation and saves are unchanged. Shader packs and replacement
+  renderers have not been compatibility-tested.
+- Source update for GitHub `main`. This source push does not publish a GitHub
+  Release or upload the built JAR.
+
+Logs: `build-gpu-alpha13-benchmark-final.log`, `build-gpu-alpha13-cooling.log`,
+`build-gpu-alpha13-vessel.log`, `build-gpu-alpha13-condenser.log`,
+`build-gpu-alpha13-tank.log`, `build-gpu-alpha13-suppression.log`,
+`build-gpu-alpha13-final.log`, `build-gpu-alpha13-assets.log`,
+`build-gpu-alpha13-jar.log`. Captures: `mod/run/turbineModelCheck/`.
+
 ## 2026-09-25 — 0.1.0-alpha.12: changing wind and winding tower vapor
 
 Built `mod/build/libs/mod-0.1.0-alpha.12.jar` (**24,485,131 bytes**).
