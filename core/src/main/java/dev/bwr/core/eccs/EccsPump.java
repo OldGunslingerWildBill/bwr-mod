@@ -149,6 +149,9 @@ public final class EccsPump {
     public void setExhaustPressurePsig(double psig) {
         this.exhaustPressurePsig = psig;
     }
+    public double getExhaustPressurePsig() { return exhaustPressurePsig; }
+    public double getSteamInletPressurePsig() { return driveInletPressurePsig(); }
+    public double getVesselPressurePsig() { return vesselPressurePsig; }
 
     /** Temperature of the water at the suction, degrees C. */
     public void setSuctionTemperatureC(double temperatureC) {

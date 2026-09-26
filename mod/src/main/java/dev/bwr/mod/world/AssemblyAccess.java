@@ -28,7 +28,7 @@ public final class AssemblyAccess {
             for(int i=0;i<block.cellCount(state);i++)cells.add(root.offset(TurbineAssemblyBlock.turn(block.cellOffset(state,i),state.getValue(PumpAssemblyBlock.FACING))));
         } else if(state.getBlock() instanceof TurbineAssemblyBlock block) {
             BlockPos root=block.origin(pos,state);
-            for(int i=0;i<block.cellCount();i++)cells.add(root.offset(TurbineAssemblyBlock.turn(block.cellOffset(i),state.getValue(TurbineAssemblyBlock.FACING))));
+            for(int i=0;i<block.cellCount(state);i++)cells.add(root.offset(TurbineAssemblyBlock.turn(block.cellOffset(state,i),state.getValue(TurbineAssemblyBlock.FACING))));
         } else if(level.isLoaded(pos)) {
             var be=level.getBlockEntity(pos);
             if(be instanceof CondenserBlockEntity part) {

@@ -23,12 +23,14 @@ public final class CoolingVaporParticle extends TextureSheetParticle {
         return buffer;
     };
     private final float initialSize,opacity;
-    private final double lift,phase;
+    private final double lift,phase,sourceX,sourceY,sourceZ;
+    private final long windSalt;
 
     private CoolingVaporParticle(ClientLevel level,double x,double y,double z,double size,double rise,double strength,SpriteSet sprites){
         super(level,x,y,z);
         initialSize=(float)Math.clamp(size,.5,5);lift=Math.clamp(rise,.15,.55);
         opacity=(float)Math.clamp(strength,.05,.9);phase=random.nextDouble()*Math.PI*2;
+        sourceX=x;sourceY=y;sourceZ=z;windSalt=level.dimension().location().hashCode();
         lifetime=420+random.nextInt(180);hasPhysics=false;
         rCol=gCol=bCol=1;quadSize=initialSize;alpha=0;
         pickSprite(sprites);
@@ -37,13 +39,11 @@ public final class CoolingVaporParticle extends TextureSheetParticle {
         xo=x;yo=y;zo=z;
         if(age++>=lifetime){remove();return;}
         double progress=(double)age/lifetime;
-        double time=level.getGameTime()*.0025;
-        double windAngle=.55+.45*Math.sin(time*.37)+.20*Math.sin(time*.81);
-        double wind=.055+.025*Math.sin(time*.61)+(level.isRaining()?.055:0);
-        double eddy=.022+.045*progress;
-        xd+=(Math.cos(windAngle)*wind+Math.sin(age*.029+phase)*eddy-xd)*.025;
-        zd+=(Math.sin(windAngle)*wind+Math.cos(age*.023+phase)*eddy-zd)*.025;
-        yd+=(lift*(1-.6*progress)-yd)*.06;
+        var wind=CoolingVaporWind.sample(level.getGameTime()*.05,sourceX,sourceZ,Math.max(0,y-sourceY),windSalt,level.isRaining());
+        double eddy=.008+.024*progress;
+        xd+=(wind.x()+Math.sin(age*.029+phase)*eddy-xd)*.045;
+        zd+=(wind.z()+Math.cos(age*.023+phase)*eddy-zd)*.045;
+        yd+=(lift*(1-.6*progress)*wind.liftFactor()-yd)*.06;
         move(xd,yd,zd);
         quadSize=initialSize*(1+2.5f*(float)progress);
         double dispersal=Math.clamp((progress-.35)/.65,0,1);

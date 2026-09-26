@@ -1,7 +1,10 @@
 # RCIC TWL and HPCI turbine assemblies
 
-These are the placeable RCIC/HPCI machines available in crafting and the creative
-tab. Old RCIC/HPCI cube IDs remain loadable for existing worlds but have no recipe
+**Legacy layout reference:** since alpha.11, newly placed items use the rebuilt
+[Terry turbine skids and new port layouts](TERRY-TURBINES.md). This page documents
+existing `modern=false` assemblies, which remain supported in saved worlds.
+
+Old RCIC/HPCI cube IDs remain loadable for existing worlds but have no recipe
 or creative-tab entry. External recirculation now uses the DVSS model on the
 existing RCP id; see [RECIRCULATION.md](RECIRCULATION.md).
 

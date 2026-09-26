@@ -26,9 +26,10 @@ public final class TurbineModelCheck {
         int checked = 0;
         for (TurbineAssemblyBlock block : new TurbineAssemblyBlock[]{BwrBlocks.RCIC_TWL.get(), BwrBlocks.HPCI_TURBINE.get()}) {
             int faces = 0;
-            for (Direction facing : Direction.Plane.HORIZONTAL) {
-                for (int cell = 0; cell < block.cellCount(); cell++) {
-                    var state = block.defaultBlockState().setValue(TurbineAssemblyBlock.CELL, cell).setValue(TurbineAssemblyBlock.FACING, facing);
+            for(boolean modern:new boolean[]{false,true}) for (Direction facing : Direction.Plane.HORIZONTAL) {
+                var root=block.defaultBlockState().setValue(TurbineAssemblyBlock.MODERN,modern);
+                for (int cell = 0; cell < block.cellCount(root); cell++) {
+                    var state = root.setValue(TurbineAssemblyBlock.CELL, cell).setValue(TurbineAssemblyBlock.FACING, facing);
                     var model = event.getModels().get(BlockModelShaper.stateToModelLocation(state));
                     if (model == null || model == event.getModelManager().getMissingModel()) throw new IllegalStateException("Missing turbine model " + state);
                     var quads = model.getQuads(state, null, RandomSource.create(0), net.neoforged.neoforge.client.model.data.ModelData.EMPTY, null);
@@ -53,6 +54,6 @@ public final class TurbineModelCheck {
             LogUtils.getLogger().info("TURBINE MODEL CHECK: {} has {} baked quads across four rotations", id, faces);
         }
         LogUtils.getLogger().info("TURBINE MODEL CHECK PASS: {} cell states and both inventory models", checked);
-        if(!Boolean.getBoolean("bwr.alphaClientCheck") && !Boolean.getBoolean("bwr.pumpPanelCheck") && !Boolean.getBoolean("bwr.powerPanelCheck") && !Boolean.getBoolean("bwr.condenserPanelCheck") && !Boolean.getBoolean("bwr.coolingPanelCheck") && !Boolean.getBoolean("bwr.tankPanelCheck") && !Boolean.getBoolean("bwr.compactCorePanelCheck") && !Boolean.getBoolean("bwr.vesselModelCheck") && !Boolean.getBoolean("bwr.suppressionPanelCheck") && !Boolean.getBoolean("bwr.guiPerformanceCheck") && !Boolean.getBoolean("bwr.creativePerformanceCheck")) Minecraft.getInstance().execute(() -> Minecraft.getInstance().stop());
+        if(!Boolean.getBoolean("bwr.terryPanelCheck") && !Boolean.getBoolean("bwr.alphaClientCheck") && !Boolean.getBoolean("bwr.pumpPanelCheck") && !Boolean.getBoolean("bwr.powerPanelCheck") && !Boolean.getBoolean("bwr.condenserPanelCheck") && !Boolean.getBoolean("bwr.coolingPanelCheck") && !Boolean.getBoolean("bwr.tankPanelCheck") && !Boolean.getBoolean("bwr.compactCorePanelCheck") && !Boolean.getBoolean("bwr.vesselModelCheck") && !Boolean.getBoolean("bwr.suppressionPanelCheck") && !Boolean.getBoolean("bwr.guiPerformanceCheck") && !Boolean.getBoolean("bwr.creativePerformanceCheck")) Minecraft.getInstance().execute(() -> Minecraft.getInstance().stop());
     }
 }

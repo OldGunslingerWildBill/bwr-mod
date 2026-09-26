@@ -1,16 +1,5 @@
 {
-  "loader": "neoforge:obj",
-  "model": "bwr:models/block/turbines/rcic_twl/item.obj",
-  "automatic_culling": false,
-  "shade_quads": true,
-  "flip_v": true,
-  "emissive_ambient": false,
-  "ambientocclusion": false,
-  "textures": {
-    "particle": "minecraft:block/white_concrete"
-  },
-  "render_type": "minecraft:solid",
-  "gui_light": "front",
+  "parent": "bwr:block/pumps/rcic_twl_terry/compact",
   "display": {
     "gui": {
       "rotation": [
@@ -18,117 +7,10 @@
         225,
         0
       ],
-      "translation": [
-        0,
-        0,
-        0
-      ],
       "scale": [
-        1,
-        1,
-        1
-      ]
-    },
-    "ground": {
-      "rotation": [
-        0,
-        0,
-        0
-      ],
-      "translation": [
-        0,
-        3,
-        0
-      ],
-      "scale": [
-        0.5,
-        0.5,
-        0.5
-      ]
-    },
-    "fixed": {
-      "rotation": [
-        0,
-        180,
-        0
-      ],
-      "translation": [
-        0,
-        0,
-        0
-      ],
-      "scale": [
-        0.8,
-        0.8,
-        0.8
-      ]
-    },
-    "thirdperson_righthand": {
-      "rotation": [
-        75,
-        45,
-        0
-      ],
-      "translation": [
-        0,
-        2.5,
-        0
-      ],
-      "scale": [
-        0.5,
-        0.5,
-        0.5
-      ]
-    },
-    "firstperson_righthand": {
-      "rotation": [
-        0,
-        45,
-        0
-      ],
-      "translation": [
-        0,
-        0,
-        0
-      ],
-      "scale": [
-        0.65,
-        0.65,
-        0.65
-      ]
-    },
-    "thirdperson_lefthand": {
-      "rotation": [
-        75,
-        -45,
-        0
-      ],
-      "translation": [
-        0,
-        2.5,
-        0
-      ],
-      "scale": [
-        0.5,
-        0.5,
-        0.5
-      ]
-    },
-    "firstperson_lefthand": {
-      "rotation": [
-        0,
-        -45,
-        0
-      ],
-      "translation": [
-        0,
-        0,
-        0
-      ],
-      "scale": [
-        0.65,
-        0.65,
-        0.65
+        0.85,
+        0.85,
+        0.85
       ]
     }
   }

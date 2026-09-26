@@ -28,6 +28,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -38,10 +39,11 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumMap;
 
-/** One placeable item reserves the CAD assembly's volume; only cell zero owns physics. */
+/** One placeable turbine/pump skid; saved CAD layouts keep their original cells. */
 public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLinePort, ProcessAssembly {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    public static final IntegerProperty CELL = IntegerProperty.create("cell", 0, 59);
+    public static final IntegerProperty CELL = IntegerProperty.create("cell", 0, 255);
+    public static final BooleanProperty MODERN = BooleanProperty.create("modern");
     public static final MapCodec<TurbineAssemblyBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(), Codec.BOOL.fieldOf("hpci").forGetter(b -> b.hpci)
     ).apply(i, TurbineAssemblyBlock::new));
@@ -49,11 +51,13 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
     private final boolean hpci;
     private final EnumMap<AssemblyPort, BlockPos> ports = new EnumMap<>(AssemblyPort.class);
     private volatile VoxelShape[][] shapes;
+    private final PumpAssemblyBlock.Layout modernLayout;
 
     public TurbineAssemblyBlock(Properties properties, boolean hpci) {
         super(properties.noOcclusion().pushReaction(PushReaction.BLOCK), hpci ? EccsDesign.HPCI : EccsDesign.RCIC);
         this.hpci = hpci;
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(CELL, 0));
+        modernLayout = PumpAssemblyBlock.loadLayout((hpci ? "hpci_turbine" : "rcic_twl") + "_terry");
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(CELL, 0).setValue(MODERN, false));
         if (hpci) {
             ports.put(AssemblyPort.STEAM_INLET, new BlockPos(2, 4, 1));
             ports.put(AssemblyPort.STEAM_EXHAUST, new BlockPos(0, 1, 1));
@@ -69,13 +73,20 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
     }
 
     @Override protected MapCodec<TurbineAssemblyBlock> codec() { return CODEC; }
-    @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(FACING, CELL); }
+    @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(FACING, CELL, MODERN); }
+    public BlockState placementState() { return defaultBlockState().setValue(MODERN,true); }
     public boolean isHpci() { return hpci; }
     public int width() { return hpci ? 4 : 3; }
     public int depth() { return hpci ? 3 : 2; }
     public int height() { return hpci ? 5 : 3; }
     public int cellCount() { return width() * depth() * height(); }
     public BlockPos cellOffset(int cell) { return new BlockPos(cell % width(), cell / (width() * depth()), (cell / width()) % depth()); }
+    public int cellCount(BlockState state) { return state.getValue(MODERN) ? modernLayout.count() : cellCount(); }
+    public BlockPos cellOffset(BlockState state,int cell) { return state.getValue(MODERN) ? modernLayout.offset(cell) : cellOffset(cell); }
+    private boolean owned(BlockState actual,BlockState state,int cell) {
+        return actual.is(this) && actual.getValue(CELL)==cell && actual.getValue(FACING)==state.getValue(FACING)
+                && actual.getValue(MODERN)==state.getValue(MODERN);
+    }
     public static BlockPos turn(BlockPos p, Direction facing) {
         return switch (facing) {
             case EAST -> new BlockPos(-p.getZ(), p.getY(), p.getX());
@@ -88,13 +99,15 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
         if (d.getAxis().isVertical()) return d;
         return switch (facing) { case EAST -> d.getClockWise(); case SOUTH -> d.getOpposite(); case WEST -> d.getCounterClockWise(); default -> d; };
     }
-    public BlockPos origin(BlockPos pos, BlockState state) { return pos.subtract(turn(cellOffset(state.getValue(CELL)), state.getValue(FACING))); }
+    public BlockPos origin(BlockPos pos, BlockState state) { return pos.subtract(turn(cellOffset(state,state.getValue(CELL)), state.getValue(FACING))); }
     public boolean hasPort(AssemblyPort port) { return ports.containsKey(port); }
     public BlockPos portPosition(BlockPos root, BlockState state, AssemblyPort port) {
         if (!hasPort(port)) throw new IllegalArgumentException("No " + port + " on this exterior");
-        return root.offset(turn(ports.get(port), state.getValue(FACING)));
+        BlockPos offset=state.getValue(MODERN)?modernLayout.ports.stream().filter(p->p.role()==port).findFirst().orElseThrow().cell():ports.get(port);
+        return root.offset(turn(offset, state.getValue(FACING)));
     }
     public Direction portFace(BlockState state, AssemblyPort port) {
+        if(state.getValue(MODERN))return turn(modernLayout.ports.stream().filter(p->p.role()==port).findFirst().orElseThrow().face(),state.getValue(FACING));
         Direction d = switch (port) {
             case STEAM_INLET -> Direction.UP;
             case WATER_DISCHARGE -> hpci ? Direction.EAST : Direction.UP;
@@ -104,17 +117,17 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
         return turn(d, state.getValue(FACING));
     }
     public AssemblyPort portAt(BlockState state, Direction face) {
-        BlockPos local = cellOffset(state.getValue(CELL));
-        for (var e : ports.entrySet()) if (e.getValue().equals(local) && portFace(state, e.getKey()) == face) return e.getKey();
+        BlockPos local = turn(cellOffset(state,state.getValue(CELL)),state.getValue(FACING));
+        for (var port : AssemblyPort.values()) if (portPosition(BlockPos.ZERO,state,port).equals(local) && portFace(state,port)==face) return port;
         return null;
     }
     @Override public boolean acceptsSteamLineOn(BlockState state, Direction face) { var port = portAt(state, face); return port != null && port.isSteam(); }
     public boolean complete(Level level, BlockPos root, BlockState state) {
-        for (int i = 0; i < cellCount(); i++) {
-            BlockPos p = root.offset(turn(cellOffset(i), state.getValue(FACING)));
+        for (int i = 0; i < cellCount(state); i++) {
+            BlockPos p = root.offset(turn(cellOffset(state,i), state.getValue(FACING)));
             if (!level.isLoaded(p)) return false;
             BlockState actual = level.getBlockState(p);
-            if (!actual.is(this) || actual.getValue(CELL) != i || actual.getValue(FACING) != state.getValue(FACING)) return false;
+            if (!owned(actual,state,i)) return false;
         }
         return true;
     }
@@ -125,10 +138,10 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
         return state.getValue(CELL) == 0 ? super.getTicker(level, state, type) : null;
     }
     @Override public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        BlockState state = defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
+        BlockState state = placementState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
         Level level = ctx.getLevel();
-        for (int i = 0; i < cellCount(); i++) {
-            BlockPos p = ctx.getClickedPos().offset(turn(cellOffset(i), state.getValue(FACING)));
+        for (int i = 0; i < cellCount(state); i++) {
+            BlockPos p = ctx.getClickedPos().offset(turn(cellOffset(state,i), state.getValue(FACING)));
             if (!dev.bwr.mod.world.AssemblyAccess.permitted(level,ctx.getPlayer(),p) || !level.isLoaded(p) || !level.getWorldBorder().isWithinBounds(p) || level.isOutsideBuildHeight(p)
                     || !level.getBlockState(p).canBeReplaced() || !level.isUnobstructed(state.setValue(CELL, i), p, CollisionContext.empty())) return null;
         }
@@ -136,19 +149,19 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
     }
     @Override public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         if (state.getValue(CELL) != 0) return;
-        for (int i = 1; i < cellCount(); i++) {
-            BlockPos p = pos.offset(turn(cellOffset(i), state.getValue(FACING)));
+        for (int i = 1; i < cellCount(state); i++) {
+            BlockPos p = pos.offset(turn(cellOffset(state,i), state.getValue(FACING)));
             if (!dev.bwr.mod.world.AssemblyAccess.permitted(level,placer,p) || !level.isLoaded(p) || !level.getBlockState(p).canBeReplaced()) {
                 level.removeBlock(pos, false);
                 return;
             }
         }
-        for (int i = 1; i < cellCount(); i++) {
-            BlockPos p = pos.offset(turn(cellOffset(i), state.getValue(FACING)));
+        for (int i = 1; i < cellCount(state); i++) {
+            BlockPos p = pos.offset(turn(cellOffset(state,i), state.getValue(FACING)));
             if (!level.setBlock(p, state.setValue(CELL, i), 3)) { level.removeBlock(pos, false); return; }
         }
         super.setPlacedBy(level, pos, state, placer, stack);
-        for(int i=0;i<cellCount();i++) level.invalidateCapabilities(pos.offset(turn(cellOffset(i),state.getValue(FACING))));
+        for(int i=0;i<cellCount(state);i++) level.invalidateCapabilities(pos.offset(turn(cellOffset(state,i),state.getValue(FACING))));
     }
     @Override protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState old, boolean moving) {
         super.onPlace(state, level, pos, old, moving);
@@ -158,18 +171,19 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
         BlockPos root = origin(pos, state);
         if (level.isLoaded(root)) {
             BlockState owner = level.getBlockState(root);
-            if (!owner.is(this) || owner.getValue(CELL) != 0 || owner.getValue(FACING) != state.getValue(FACING)) {
+            if (!owned(owner,state,0)) {
                 level.removeBlock(pos, false); return;
             }
         }
         // Saved scheduled ticks clean orphan parts after their chunk is loaded again.
-        if(dev.bwr.mod.world.AssemblyAccess.allLoaded(level,pos,state) && !complete(level,root,state)) { level.destroyBlock(root,true); return; }
+        // The controller validates the footprint once, not once per child cell.
+        if(state.getValue(CELL)==0 && dev.bwr.mod.world.AssemblyAccess.allLoaded(level,pos,state) && !complete(level,root,state)) { level.destroyBlock(root,true); return; }
         level.scheduleTick(pos, this, 40);
     }
     @Override public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide() && state.getValue(CELL) != 0 && !player.isCreative() && player.hasCorrectToolForDrops(state)) {
             BlockPos root = origin(pos, state);
-            if (level.isLoaded(root) && level.getBlockState(root).is(this))
+            if (level.isLoaded(root) && owned(level.getBlockState(root),state,0))
                 Block.dropResources(level.getBlockState(root), level, root, level.getBlockEntity(root), player, player.getMainHandItem());
         }
         return super.playerWillDestroy(level, pos, state, player);
@@ -181,11 +195,11 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
         REMOVING.set(true);
         try {
             BlockPos root = origin(pos, state);
-            for (int i = 0; i < cellCount(); i++) {
-                BlockPos p = root.offset(turn(cellOffset(i), state.getValue(FACING)));
+            for (int i = 0; i < cellCount(state); i++) {
+                BlockPos p = root.offset(turn(cellOffset(state,i), state.getValue(FACING)));
                 if (p.equals(pos) || !level.isLoaded(p)) continue;
                 BlockState part = level.getBlockState(p);
-                if (part.is(this) && part.getValue(CELL) == i && part.getValue(FACING) == state.getValue(FACING)) level.removeBlock(p, false);
+                if (owned(part,state,i)) level.removeBlock(p, false);
             }
         } finally { REMOVING.set(false); }
     }
@@ -206,12 +220,13 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
 
     /** Precomputed per-cell CAD envelopes keep collisions inside the occupied block. */
     @Override protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        if(state.getValue(MODERN))return modernLayout.shapes[state.getValue(FACING).get2DDataValue()][state.getValue(CELL)];
         if (shapes == null) loadShapes();
         return shapes[state.getValue(FACING).get2DDataValue()][state.getValue(CELL)];
     }
     private synchronized void loadShapes() {
         if (shapes != null) return;
-        VoxelShape[][] loaded = new VoxelShape[4][60];
+        VoxelShape[][] loaded = new VoxelShape[4][256];
         for (var row : loaded) java.util.Arrays.fill(row, Shapes.empty());
         String id = hpci ? "hpci_turbine" : "rcic_twl";
         try (var stream = TurbineAssemblyBlock.class.getResourceAsStream("/data/bwr/turbine_models/" + id + ".json")) {

@@ -107,9 +107,9 @@ public final class TurbineAssemblyRuntimeCheck {
         TurbineAssemblyBlock[] blocks = {
                 BwrBlocks.RCIC_TWL.get(), BwrBlocks.HPCI_TURBINE.get()
         };
-        for (int kind = 0; kind < blocks.length; kind++) {
+        for (boolean modern : new boolean[]{false,true}) for (int kind = 0; kind < blocks.length; kind++) {
             for (int rotation = 0; rotation < FACINGS.length; rotation++) {
-                Fixture f = new Fixture(level, blocks[kind], kind == 1,
+                Fixture f = new Fixture(level, blocks[kind], kind == 1, modern,
                         FACINGS[rotation], new BlockPos(128 + rotation * 24, 200, 128 + kind * 24));
                 List<ChunkPos> forced = new ArrayList<>();
                 try {
@@ -128,6 +128,7 @@ public final class TurbineAssemblyRuntimeCheck {
                     failures += f.test("obstruction", f::obstruction);
                     failures += f.test("physical ports", f::ports);
                     failures += f.test("NBT persistence", f::persistence);
+                    if(modern)failures += f.test("Terry panel, CC and water capabilities",f::interfaces);
                     for (int cell : new int[]{0, f.count() - 1}) {
                         failures += f.test("survival pickaxe cell " + cell,
                                 () -> f.harvest(cell, false, true));
@@ -170,11 +171,11 @@ public final class TurbineAssemblyRuntimeCheck {
 
     private record Port(AssemblyPort role, BlockPos offset, Direction face) {}
 
-    private record Fixture(ServerLevel level, TurbineAssemblyBlock block, boolean hpci,
+    private record Fixture(ServerLevel level, TurbineAssemblyBlock block, boolean hpci, boolean modern,
                            Direction facing, BlockPos root) {
-        int width() { return hpci ? 4 : 3; }
-        int height() { return hpci ? 5 : 3; }
-        int depth() { return hpci ? 3 : 2; }
+        int width() { return modern ? hpci?7:5 : hpci?4:3; }
+        int height() { return modern ? hpci?5:4 : hpci?5:3; }
+        int depth() { return modern ? 5 : hpci?3:2; }
         int count() { return width() * height() * depth(); }
 
         // Independent coordinate oracle, deliberately not TurbineAssemblyBlock.turn().
@@ -207,6 +208,11 @@ public final class TurbineAssemblyRuntimeCheck {
         BlockPos pos(int cell) { return root.offset(rotated(offset(cell))); }
 
         BlockState candidate() {
+            if(!modern) {
+                // Saved legacy skids are not newly placeable; emulate their persisted root.
+                for(int i=0;i<count();i++)if(!level.getBlockState(pos(i)).canBeReplaced())return null;
+                return block.defaultBlockState().setValue(FACING,facing);
+            }
             return block.getStateForPlacement(new DirectionalPlaceContext(
                     level, root, facing.getOpposite(), new ItemStack(block), Direction.UP));
         }
@@ -237,8 +243,8 @@ public final class TurbineAssemblyRuntimeCheck {
         }
 
         void clear() {
-            for (BlockPos p : BlockPos.betweenClosed(root.offset(-5, -1, -5),
-                    root.offset(5, 6, 5))) {
+            for (BlockPos p : BlockPos.betweenClosed(root.offset(-7, -1, -7),
+                    root.offset(7, 6, 7))) {
                 if (!level.getBlockState(p).isAir()) level.removeBlock(p, false);
             }
             for (ItemEntity item : items()) item.discard();
@@ -270,7 +276,8 @@ public final class TurbineAssemblyRuntimeCheck {
                 BlockState actual = level.getBlockState(p);
                 check(actual.is(block) && actual.getValue(CELL) == i
                         && actual.getValue(FACING) == facing, "incorrect cell " + i + " at " + p);
-                check(block.cellOffset(i).equals(offset(i)), "cellOffset " + i);
+                check(block.cellOffset(rootState,i).equals(offset(i)), "cellOffset " + i);
+                check(actual.getValue(TurbineAssemblyBlock.MODERN)==modern,"saved model version");
                 check(block.origin(p, actual).equals(root), "origin from cell " + i);
                 BlockEntity entity = level.getBlockEntity(p);
                 check(i == 0 ? entity instanceof EccsPumpBlockEntity : entity == null,
@@ -285,9 +292,7 @@ public final class TurbineAssemblyRuntimeCheck {
         }
 
         void geometry() {
-            check(block.isHpci() == hpci && block.width() == width()
-                    && block.height() == height() && block.depth() == depth()
-                    && block.cellCount() == count(), "assembly dimensions");
+            check(block.isHpci() == hpci && block.cellCount(block.defaultBlockState().setValue(TurbineAssemblyBlock.MODERN,modern)) == count(), "assembly dimensions");
             BlockState state = place();
             verify(state);
             BlockPos tail = pos(count() - 1);
@@ -321,6 +326,11 @@ public final class TurbineAssemblyRuntimeCheck {
         }
 
         Port[] specifications() {
+            if(modern)return new Port[]{
+                    new Port(AssemblyPort.STEAM_INLET,new BlockPos(0,hpci?3:2,2),Direction.WEST),
+                    new Port(AssemblyPort.STEAM_EXHAUST,new BlockPos(hpci?2:1,1,0),Direction.NORTH),
+                    new Port(AssemblyPort.WATER_SUCTION,new BlockPos(hpci?6:4,1,2),Direction.EAST),
+                    new Port(AssemblyPort.WATER_DISCHARGE,new BlockPos(hpci?5:3,1,4),Direction.SOUTH)};
             return hpci ? new Port[]{
                     new Port(AssemblyPort.STEAM_INLET, new BlockPos(2, 4, 1), Direction.UP),
                     new Port(AssemblyPort.STEAM_EXHAUST, new BlockPos(0, 1, 1), Direction.WEST),
@@ -398,6 +408,7 @@ public final class TurbineAssemblyRuntimeCheck {
             List<CompoundTag> states = new ArrayList<>();
             for (int i = 0; i < count(); i++) {
                 states.add(NbtUtils.writeBlockState(level.getBlockState(pos(i))));
+                if(!modern)states.get(i).getCompound("Properties").remove("modern");
             }
             level.removeBlock(root, false);
             gone();
@@ -420,6 +431,53 @@ public final class TurbineAssemblyRuntimeCheck {
                     "persisted pump controls changed");
             verify(state);
             drops(0);
+        }
+
+        void interfaces() {
+            var state=place();
+            var be=(EccsPumpBlockEntity)level.getBlockEntity(root);
+            var suction=block.portPosition(root,state,AssemblyPort.WATER_SUCTION);
+            var face=block.portFace(state,AssemblyPort.WATER_SUCTION);
+            var capability=net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK;
+            var water=level.getCapability(capability,suction,face);
+            check(water!=null,"Mekanism-compatible suction capability missing");
+            check(water.fill(new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER,10000),
+                    net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE)>0,"suction rejected water");
+            check(water.fill(new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.LAVA,1000),
+                    net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE)==0,"suction accepted lava");
+            for(var port:specifications())for(Direction side:Direction.values()) {
+                var p=root.offset(rotated(port.offset));
+                check((level.getCapability(capability,p,side)!=null)==(port.role==AssemblyPort.WATER_SUCTION&&side==face),"fluid leaked onto another flange/face");
+            }
+            var panel=root.offset(rotated(new BlockPos(hpci?4:3,2,0)));
+            try {
+                if(net.neoforged.fml.ModList.get().isLoaded("computercraft")) {
+                    @SuppressWarnings("unchecked") var cc=(net.neoforged.neoforge.capabilities.BlockCapability<Object,Direction>)
+                            Class.forName("dan200.computercraft.api.peripheral.PeripheralCapability").getMethod("get").invoke(null);
+                    check(level.getCapability(cc,panel,rotation().rotate(Direction.NORTH))!=null,"visible computer panel has no peripheral");
+                }
+                var player=new FakePlayer(level,new GameProfile(UUID.randomUUID(),"TerryPanelTest"));
+                player.setPos(panel.getX()+.5,panel.getY()+.5,panel.getZ()-.5);
+                var menu=new dev.bwr.mod.gui.TerryTurbineMenu(2,player.getInventory(),root,panel);
+                check(menu.stillValid(player),"child panel could not reach controller");
+                be.setComputerControlled(true);be.setSpeedDemandFraction(.5);
+                menu.handleCommand(player,dev.bwr.mod.gui.PumpControlMenu.SPEED,900,0);
+                check(be.pump().getSpeedDemandFraction()==.5,"panel stole computer-owned speed");
+                menu.handleCommand(player,dev.bwr.mod.gui.PumpControlMenu.CONTROL,0,0);
+                menu.handleCommand(player,dev.bwr.mod.gui.PumpControlMenu.SPEED,650,0);
+                check(be.pump().getSpeedDemandFraction()==.65,"manual speed command failed");
+                var bytes=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+                try {
+                    var write=dev.bwr.mod.gui.TerryTurbineMenu.class.getDeclaredMethod("writeSnapshot",net.minecraft.network.FriendlyByteBuf.class);write.setAccessible(true);write.invoke(menu,bytes);
+                    byte[] data=new byte[bytes.readableBytes()];bytes.readBytes(data);
+                    var client=new dev.bwr.mod.gui.TerryTurbineMenu(2,player.getInventory(),root,panel);client.acceptSnapshot(data);
+                    check(client.present&&client.target==.65&&!client.portLocations[3].isEmpty(),"Terry snapshot round trip lost data");
+                } finally {bytes.release();}
+                level.removeBlock(root,false);
+                check(!menu.stillValid(player),"destroyed skid kept an active panel");
+                check(water.fill(new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER,1000),
+                        net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE)==0,"cached suction survived teardown");
+            } catch(ReflectiveOperationException e) {throw new IllegalStateException("Terry interface test",e);}
         }
 
         void harvest(int cell, boolean creative, boolean correctTool) {

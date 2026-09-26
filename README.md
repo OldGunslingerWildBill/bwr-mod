@@ -9,7 +9,7 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-alpha.10` — continuous, denser cooling-tower vapor, September 25, 2026.
+**Current version:** `0.1.0-alpha.12` — changing wind and winding cooling-tower vapor, September 25, 2026.
 
 See the [full changelog](CHANGELOG.md) for the hardware, performance, condenser,
 fuel and irradiation updates.
@@ -21,7 +21,12 @@ fuel and irradiation updates.
 | Java | 21 |
 | Optional integrations | Mekanism and CC:Tweaked, installed separately |
 
-The current update adds enclosed suppression tanks with dedicated steam inlets,
+Cooling-tower vapor now follows smooth random gusts and wind that varies with
+height, moving between upright columns and winding, drifting plumes.
+The preceding update rebuilt RCIC and HPCI as original Blender turbine/pump skids
+with round steam/water flanges, visible computer panels and dedicated GUIs.
+See the [Terry turbine connection and migration guide](TERRY-TURBINES.md).
+The plant also includes enclosed suppression tanks with dedicated steam inlets,
 measured steam heating, corrected cooling-tower fans and tall drifting vapor.
 The plant includes pumped tank filling and spray, Blender circulating/makeup pumps, physical RHR heat
 exchangers, rounded pressure vessels, and compact logical fuel layouts
@@ -42,7 +47,7 @@ BWR model. Specialty irradiation now takes 24–168 operating hours at rated
 local flux. A completed tritium rod yields 1,250 samples, processable into
 12,500,000 mB (12,500 buckets) of tritium through a powered Chemical Oxidizer when Mekanism and
 Mekanism Generators are installed. Install
-alpha.10 on both client and server; GUI protocol is 9.
+alpha.12 on both client and server; GUI protocol remains 10.
 
 The first-publication candidate adds live CC:Tweaked faces across the machine
 registry, segmented water temperatures, condenser backpressure that affects LP
@@ -59,6 +64,12 @@ must credit **OldGunslingerWildBill**. See [license and credit](#license-and-cre
 
 ## What is implemented
 
+- **Rebuilt RCIC/HPCI turbine pumps:** Terry GS-inspired RCIC (5 × 4 × 5 blocks)
+  and C-frame-inspired HPCI (7 × 5 × 5 blocks), listed as width × height × depth.
+  Four round flanges separate steam admission/exhaust from water suction/discharge.
+  Dedicated panels show speed, steam consumption, water flow, pressures,
+  inlet temperature and world coordinates for every connection. Existing
+  installed CAD assemblies keep their size and plumbing until replaced.
 - **Physical SLC and ADS hardware:** Blender-built boron solution tank and
   powered SLC injection pump, ADS division cabinet and modeled relief valve.
   SLC consumes finite borated solution through real piping into an RPV water
@@ -140,7 +151,7 @@ must credit **OldGunslingerWildBill**. See [license and credit](#license-and-cre
 - **Volume-based recirculation:** width, depth and height determine the flow
   target. Each external recirculation pump supports ten normal jet assemblies;
   additional jets stop increasing flow at the drive limit. INFO shows the targets.
-- **Placeable pump models:** RCIC TWL, HPCI, HPCS, LPCS, RHR/LPCI, electric and
+- **Placeable pump models:** Terry RCIC, HPCI, HPCS, LPCS, RHR/LPCI, electric and
   turbine feedwater, internal recirculation, jet assemblies, and a Blender-built
   DVSS-style external recirculation pump.
 - **Modern pump connections:** centered round flanges on HPCS, LPCS, RHR/LPCI,
@@ -324,7 +335,7 @@ feedwater; no separate condenser block is required.
 
 See [Water plumbing and controls](WATER-PLUMBING.md),
 [pump footprints and ports](PUMP-MODELS.md), and
-[RCIC/HPCI connections](TURBINE-ASSEMBLIES.md) for placement details.
+[RCIC/HPCI connections](TERRY-TURBINES.md) for placement details.
 
 ## External recirculation and jet pumps
 
@@ -536,7 +547,8 @@ intake/tank screens. Full results are in [BUILD-STATUS.md](BUILD-STATUS.md).
 - [Water plumbing, pump controls, and upgrade notes](WATER-PLUMBING.md)
 - [Pump model dimensions and port coordinates](PUMP-MODELS.md)
 - [Modern pump flanges, round pipes, and dye colors](MODERN-PUMPS-AND-PIPES.md)
-- [RCIC TWL and HPCI turbine assemblies](TURBINE-ASSEMBLIES.md)
+- [Rebuilt Terry RCIC/HPCI turbines and connections](TERRY-TURBINES.md)
+- [Legacy RCIC TWL and HPCI turbine assemblies](TURBINE-ASSEMBLIES.md)
 - [Recirculation, jet matching, and reactor INFO](RECIRCULATION.md)
 - [Continuous rod travel and persistence](ROD-MOTION.md)
 - [Design specification](SPEC.md) and [developer handoff](HANDOFF.md)

@@ -1,5 +1,69 @@
 # Build Status
 
+## 2026-09-25 — 0.1.0-alpha.12: changing wind and winding tower vapor
+
+Built `mod/build/libs/mod-0.1.0-alpha.12.jar` (**24,485,131 bytes**).
+SHA-256: `5EB9A0F24A516360213D9DD39AC7BE27BC548E42E14470B3E0444D39CE93B395`.
+Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. GUI protocol **10**.
+
+- Both cooling towers now follow smoothly interpolated random gusts. Wind
+  changes with height and reaches higher vapor layers later; particle momentum
+  produces bends and winding shapes. Calm periods restore taller upright plumes.
+- Continuous white emission, fading, particle settings and the shared 1,200
+  particle cap remain. This patch changes client visuals only.
+- Minecraft cooling client check passed. All ten captures were generated;
+  four wide views taken eight seconds apart were visually reviewed and show
+  sideways drift, an S-shaped bend and a return to upright plumes. The running
+  towers used **1,015–1,025 vapor particles** across those four captures.
+- `:mod:build`, design guard, asset audit (**2,680 JSON files, zero problems**),
+  whitespace and JAR packaging checks passed. No development fixtures or
+  optional-mod implementation classes are bundled.
+- The server GameTests and core physics suite were not repeated for this
+  client-only follow-up; the alpha.11 results below cover its included turbine work.
+- Source update for GitHub `main`, including the alpha.11 turbine rebuild.
+  This source push does not publish a GitHub Release or upload the built JAR.
+
+Logs: `build-vapor-drift-alpha12.log`, `build-vapor-alpha12-assets.log`,
+`build-vapor-alpha12-jar.log`. Visual captures:
+`mod/run/turbineModelCheck/cooling-check/`.
+
+## 2026-09-25 — 0.1.0-alpha.11: Terry RCIC/HPCI rebuild
+
+Built `mod/build/libs/mod-0.1.0-alpha.11.jar` (**24,482,399 bytes**).
+SHA-256: `A0ED30D28512603E351462B2D582CD0337EFA54A0FE487BAE6FCB67684132C81`.
+Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. GUI protocol **10**.
+
+- Original Blender RCIC (5 × 4 × 5) and HPCI (7 × 5 × 5) turbine/pump skids,
+  19,832 and 22,480 source triangles, four round process flanges, CC panels and
+  dedicated operating screens. Both `.blend` sources and exporters are included.
+- Existing `modern=false` CAD assemblies retain their old ports, footprint and
+  saved controls. New placements use the Terry layouts. Only the controller owns
+  simulation; scheduled full-footprint validation no longer repeats for every child.
+- **56/56 required Minecraft GameTests passed.** The assembly suite now includes
+  **200 scenarios** spanning both generations and all four rotations: obstruction,
+  geometry, one-item drops, old-property-free NBT restoration, Mekanism-compatible
+  water input, wrong-fluid/face rejection, CC access, GUI command ownership,
+  snapshot round trips and stale-capability invalidation after teardown.
+- **Four complete turbine plumbing scenarios passed** (old/new RCIC and HPCI).
+  Each generation delivered identical water and used identical steam in the same
+  test plant: about 2,475.58 kg water / 224.56 kg steam for RCIC and 18,940.49 kg
+  water / 1,027.89 kg steam for HPCI. Shared ledger, tank debit and exhaust-break
+  checks passed. These are fixture totals, not new published equipment ratings.
+- Real NeoForge model baking verified **1,412 turbine cell states** and both
+  inventory models, alongside the existing pump-model checks. In-game captures
+  of both connected skids and both synchronized screens were visually reviewed.
+- Blender export verification passed for **562 generated assets**. Asset audit:
+  **2,680 JSON files, zero problems**. Build/design guard, whitespace and JAR
+  packaging checks passed; no dev fixtures or optional-mod classes are bundled.
+- Reactor kinetics and pump equations were not changed; the full core physics
+  suite was not repeated for the three new pressure readout getters.
+- Included in the alpha.12 source update to GitHub `main`.
+
+Logs: `build-terry-gametest.log`, `build-terry-final.log`, `build-terry-assets.log`,
+`build-terry-jar.log`, `build-terry-models.log`, `build-terry-icons.log`.
+Visual captures: `mod/run/turbineModelCheck/terry-check/`.
+Connection/migration guide: [TERRY-TURBINES.md](TERRY-TURBINES.md).
+
 ## 2026-09-25 — 0.1.0-alpha.10: continuous white tower vapor
 
 Built `mod/build/libs/mod-0.1.0-alpha.10.jar` (**22,726,911 bytes**).

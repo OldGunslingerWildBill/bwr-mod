@@ -26,7 +26,7 @@ public final class TurbinePlumbingRuntimeCheck {
     private static void check(boolean condition,String message) { if(!condition) throw new AssertionError(message); }
     private static void set(ServerLevel l,BlockPos p,Block b) { l.setBlock(p,b.defaultBlockState(),3); }
     private static void clear(ServerLevel l) {
-        for(BlockPos p:BlockPos.betweenClosed(new BlockPos(144,190,128),new BlockPos(166,207,151)))
+        for(BlockPos p:BlockPos.betweenClosed(new BlockPos(144,190,128),new BlockPos(191,207,151)))
             if(!l.getBlockState(p).isAir()) l.removeBlock(p,false);
     }
     private static void box(ServerLevel l,BlockPos min,BlockPos max,Block wall,Block inside) {
@@ -54,16 +54,18 @@ public final class TurbinePlumbingRuntimeCheck {
         long savedTime=level.getGameTime();
         try {
             busRegression();
-            for(TurbineAssemblyBlock block:new TurbineAssemblyBlock[]{BwrBlocks.RCIC_TWL.get(),BwrBlocks.HPCI_TURBINE.get()}) {
+            for(boolean modern:new boolean[]{false,true}) for(TurbineAssemblyBlock block:new TurbineAssemblyBlock[]{BwrBlocks.RCIC_TWL.get(),BwrBlocks.HPCI_TURBINE.get()}) {
                 clear(level);
-                try { plant(level,block); LogUtils.getLogger().info("Turbine plumbing PASS: {}",block.design().id()); }
+                try { plant(level,block,modern); LogUtils.getLogger().info("Turbine plumbing PASS: {} modern={}",block.design().id(),modern); }
                 catch(RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Turbine plumbing FAIL: {}",block.design().id(),e); }
             }
         } catch(RuntimeException | AssertionError e) { failures++; LogUtils.getLogger().error("Turbine bus regression FAIL",e); }
         finally { clear(level); ((net.minecraft.world.level.storage.ServerLevelData)level.getLevelData()).setGameTime(savedTime); }
         return failures;
     }
-    private static void plant(ServerLevel level,TurbineAssemblyBlock block) {
+    private static void plant(ServerLevel level,TurbineAssemblyBlock block,boolean modern) {
+        final BlockPos ROOT=modern?new BlockPos(177,200,140):TurbinePlumbingRuntimeCheck.ROOT;
+        final BlockPos TANK=modern?new BlockPos(190,201,142):TurbinePlumbingRuntimeCheck.TANK;
         box(level,new BlockPos(145,193,129),new BlockPos(151,202,135),BwrBlocks.REACTOR_VESSEL.get(),Blocks.AIR);
         set(level,CONTROLLER,BwrBlocks.REACTOR_CONTROLLER.get());
         level.setBlock(new BlockPos(151,197,132),BwrBlocks.RPV_WATER_INJECTION_PORT.get().defaultBlockState()
@@ -74,18 +76,25 @@ public final class TurbinePlumbingRuntimeCheck {
         set(level,POOL,BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
         set(level,QUENCHER,BwrBlocks.SUPPRESSION_POOL_QUENCHER.get());
         set(level,TANK,BwrBlocks.CONDENSATE_STORAGE_TANK.get());
-        var state=block.defaultBlockState();
+        var state=modern?block.placementState():block.defaultBlockState();
         level.setBlock(ROOT,state,3); block.setPlacedBy(level,ROOT,state,null,new ItemStack(block));
-        var inlet=block.portPosition(ROOT,state,AssemblyPort.STEAM_INLET).above();
+        var inlet=block.portPosition(ROOT,state,AssemblyPort.STEAM_INLET).relative(block.portFace(state,AssemblyPort.STEAM_INLET));
         pipe(level,new BlockPos(144,200,132),new BlockPos(144,206,132),
-                new BlockPos(inlet.getX(),206,132),new BlockPos(inlet.getX(),206,141),inlet);
+                new BlockPos(inlet.getX(),206,132),new BlockPos(inlet.getX(),206,inlet.getZ()),inlet);
         BlockPos exhaust=block.portPosition(ROOT,state,AssemblyPort.STEAM_EXHAUST).relative(block.portFace(state,AssemblyPort.STEAM_EXHAUST));
-        pipe(level,exhaust,new BlockPos(exhaust.getX(),192,exhaust.getZ()),
-                new BlockPos(exhaust.getX(),192,147),new BlockPos(160,192,147));
-        if(!block.isHpci()) {
+        if(modern) {
+            pipe(level,exhaust,new BlockPos(exhaust.getX(),192,exhaust.getZ()),new BlockPos(160,192,exhaust.getZ()),new BlockPos(160,192,147));
+            var in=block.portPosition(ROOT,state,AssemblyPort.WATER_SUCTION).east();
+            water(level,in,TANK.west());
+            var out=block.portPosition(ROOT,state,AssemblyPort.WATER_DISCHARGE).south();
+            water(level,out,new BlockPos(out.getX(),199,145),new BlockPos(170,199,145),new BlockPos(170,203,145),new BlockPos(170,203,138),new BlockPos(163,203,138));
+        } else {
+            pipe(level,exhaust,new BlockPos(exhaust.getX(),192,exhaust.getZ()),new BlockPos(exhaust.getX(),192,147),new BlockPos(160,192,147));
+        }
+        if(!modern && !block.isHpci()) {
             water(level,new BlockPos(163,201,141),new BlockPos(164,201,141));
             water(level,new BlockPos(162,203,141),new BlockPos(163,203,141),new BlockPos(163,203,138));
-        } else {
+        } else if(!modern) {
             water(level,new BlockPos(164,200,140),new BlockPos(164,201,140),new BlockPos(164,201,141));
             water(level,new BlockPos(164,200,142),new BlockPos(164,199,142),new BlockPos(166,199,142),
                     new BlockPos(166,203,142),new BlockPos(166,203,138),new BlockPos(163,203,138));
@@ -123,7 +132,7 @@ public final class TurbinePlumbingRuntimeCheck {
         check(receiver.core().getInjectionFlowKgPerS()>0,"injection failed to reach core");
         PumpValveLedgerCheck.run(level,new BlockPos(150,206,132),nozzle,receiver.core().getPressurePsig(),
                 ()->EccsPumpBlockEntity.serverTick(level,ROOT,state,pump),pump::getAssemblySteamDrawKgPerS);
-        if(!block.isHpci()) {
+        if(!modern && !block.isHpci()) {
             // Adjacent water and steam risers must stay separate, including when both are installed.
             check(AssemblyPlumbing.trace(level,ROOT,state,AssemblyPort.WATER_DISCHARGE).valid(),"water and steam risers merged");
             var waterTube=new BlockPos(164,201,141);

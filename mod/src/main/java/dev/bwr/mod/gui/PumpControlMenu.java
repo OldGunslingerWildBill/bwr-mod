@@ -26,12 +26,16 @@ public class PumpControlMenu extends BwrMenu {
     public String connection="Waiting for pump", drive="";
     public PumpControlMenu(int id, Inventory inv, RegistryFriendlyByteBuf data) { this(id,inv,data.readBlockPos(),data.readBlockPos()); }
     public PumpControlMenu(int id, Inventory inv, BlockPos root, BlockPos anchor) {
-        super(BwrMenus.PUMP_CONTROL.get(),id,inv,root,inv.player.level().getBlockState(root).getBlock());
+        this(BwrMenus.PUMP_CONTROL.get(),id,inv,root,anchor);
+    }
+    protected PumpControlMenu(net.minecraft.world.inventory.MenuType<?> type,int id,Inventory inv,BlockPos root,BlockPos anchor) {
+        super(type,id,inv,root,inv.player.level().getBlockState(root).getBlock());
         this.anchor=anchor.immutable(); expected=inv.player.level().getBlockState(root).getBlock();
     }
     public static void open(ServerPlayer player, BlockPos root, BlockPos anchor) {
         var be=player.level().getBlockEntity(root);
         if (!(be instanceof EccsPumpBlockEntity || be instanceof FeedwaterPumpBlockEntity || be instanceof RecirculationPumpBlockEntity)) return;
+        if(be.getBlockState().getBlock() instanceof TurbineAssemblyBlock) { TerryTurbineMenu.open(player,root,anchor); return; }
         player.openMenu(new SimpleMenuProvider((id,inv,who)->new PumpControlMenu(id,inv,root,anchor),
                 be.getBlockState().getBlock().getName()),data->{data.writeBlockPos(root);data.writeBlockPos(anchor);});
     }

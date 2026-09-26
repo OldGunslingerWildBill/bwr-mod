@@ -22,8 +22,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 @EventBusSubscriber(modid=BwrMod.MOD_ID,value=Dist.CLIENT)
 public final class CoolingClientCheck {
     private static final BlockPos[] ROOTS={new BlockPos(140,200,140),new BlockPos(172,200,140),new BlockPos(194,200,140),new BlockPos(204,200,140),new BlockPos(211,200,140)};
-    private static final String[] NAMES={"natural-draft","circular-induced-draft","water-pumps-intake","fan-controls","intake-controls","submerged-intake","tall-vapor-plumes"};
-    private static final double[][] CAMERAS={{175,224,94,35,10},{194,216,112,38,18},{214,208,124,35,14},{173,202,130,0,0},{211,201,137,0,0},{213,201.3,137.3,37,5},{180,275,24,16,0}};
+    private static final String[] NAMES={"natural-draft","circular-induced-draft","water-pumps-intake","fan-controls","intake-controls","submerged-intake","tall-vapor-plumes","vapor-drift-08s","vapor-drift-16s","vapor-drift-24s"};
+    private static final double[][] CAMERAS={{175,224,94,35,10},{194,216,112,38,18},{214,208,124,35,14},{173,202,130,0,0},{211,201,137,0,0},{213,201.3,137.3,37,5},{185,280,-30,11,0}};
     private static boolean started,requested;private static int age,joined,stage,shown;
     @SubscribeEvent public static void supply(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event){
         if(!Boolean.getBoolean("bwr.coolingPanelCheck"))return;var l=event.getServer().overworld();
@@ -32,7 +32,7 @@ public final class CoolingClientCheck {
     @SubscribeEvent public static void tick(net.neoforged.neoforge.client.event.ClientTickEvent.Post e){
         if(!Boolean.getBoolean("bwr.coolingPanelCheck"))return;var mc=Minecraft.getInstance();
         if(++age>3000)throw new IllegalStateException("Cooling client timed out stage "+stage);
-        if(!started&&mc.screen!=null&&mc.getOverlay()==null){started=true;mc.options.pauseOnLostFocus=false;mc.options.cloudStatus().set(CloudStatus.OFF);mc.options.fov().set(55);
+        if(!started&&mc.screen!=null&&mc.getOverlay()==null){started=true;mc.options.pauseOnLostFocus=false;mc.options.cloudStatus().set(CloudStatus.OFF);mc.options.fov().set(55);mc.options.particles().set(ParticleStatus.ALL);
             mc.createWorldOpenFlows().createFreshLevel("bwr-cooling-check-"+System.currentTimeMillis(),new LevelSettings("Cooling check",GameType.CREATIVE,false,Difficulty.PEACEFUL,true,new GameRules(),WorldDataConfiguration.DEFAULT),new WorldOptions(0,false,false),r->r.registryOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).createWorldDimensions(),mc.screen);return;}
         if(mc.player==null||mc.level==null||mc.getSingleplayerServer()==null||++joined<40)return;
         if(!requested){requested=true;shown=0;var server=mc.getSingleplayerServer();var uuid=mc.player.getUUID();int selected=stage;
@@ -46,19 +46,19 @@ public final class CoolingClientCheck {
 
                     l.setBlock(ROOTS[4].north(2),Blocks.WATER.defaultBlockState(),3);l.setBlock(ROOTS[4].west(2),Blocks.WATER.defaultBlockState(),3);
                 }
-                l.setDayTime(6000);l.setWeatherParameters(6000,0,false,false);var c=CAMERAS[selected];player.connection.teleport(c[0],c[1],c[2],(float)c[3],(float)c[4]);
+                l.setDayTime(6000);l.setWeatherParameters(6000,0,false,false);var c=CAMERAS[Math.min(selected,6)];player.connection.teleport(c[0],c[1],c[2],(float)c[3],(float)c[4]);
                 if(selected>=5)player.closeContainer();
                 if(selected==4){player.closeContainer();CoolingMenu.open(player,ROOTS[4],ROOTS[4]);}
                 if(selected==3){var be=(CoolingBlockEntity)l.getBlockEntity(ROOTS[1]);be.plant().restore(150000,0,0);be.power().receiveEnergy(Integer.MAX_VALUE,false);CoolingMenu.open(player,ROOTS[1],CoolingRuntimeCheck.port(be,CoolingBlock.Port.INLET));}
             });}
         if(!(mc.level.getBlockEntity(ROOTS[0]) instanceof CoolingBlockEntity))return;
-        if(stage==6)mc.options.fov().set(90);
+        if(stage>=6)mc.options.fov().set(85);
         if((stage<3||stage>=5)&&mc.screen!=null||stage>=3&&stage<5&&!(mc.player.containerMenu instanceof CoolingMenu m&&m.present))return;
-        var c=CAMERAS[stage];mc.player.getAbilities().flying=true;mc.player.setDeltaMovement(Vec3.ZERO);mc.player.setPos(c[0],c[1],c[2]);mc.player.setYRot((float)c[3]);mc.player.setXRot((float)c[4]);
-        if(++shown<(stage==6?200:90))return;mc.options.hideGui=stage<3||stage>=5;mc.getToasts().clear();if(shown<95)return;
+        var c=CAMERAS[Math.min(stage,6)];mc.player.getAbilities().flying=true;mc.player.setDeltaMovement(Vec3.ZERO);mc.player.setPos(c[0],c[1],c[2]);mc.player.setYRot((float)c[3]);mc.player.setXRot((float)c[4]);
+        if(++shown<(stage>=6?(stage==6?200:160):90))return;mc.options.hideGui=stage<3||stage>=5;mc.getToasts().clear();if(shown<95)return;
         try{var dir=mc.gameDirectory.toPath().resolve("cooling-check");java.nio.file.Files.createDirectories(dir);try(var shot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve(NAMES[stage]+".png"));}}catch(java.io.IOException ex){throw new IllegalStateException(ex);}
         if(stage==1){var fan=(CoolingBlockEntity)mc.level.getBlockEntity(ROOTS[1]);if(fan.vaporActivity()<=0||Math.abs(fan.fanAngle-fan.previousFanAngle-6)>0.01)throw new AssertionError("Mechanical vapor activity/fan direction or speed incorrect at 50% power");}
-        if(stage==6){int particles=Integer.parseInt(mc.particleEngine.countParticles());if(particles<100)throw new AssertionError("No sustained cooling plumes: "+particles);LogUtils.getLogger().info("VAPOR PARTICLES: {}",particles);}
+        if(stage>=6){int particles=Integer.parseInt(mc.particleEngine.countParticles());if(particles<100)throw new AssertionError("No sustained cooling plumes: "+particles);LogUtils.getLogger().info("VAPOR PARTICLES: {} at tick {}",particles,mc.level.getGameTime());}
         LogUtils.getLogger().info("COOLING CLIENT CHECK: captured {}",NAMES[stage]);requested=false;
         if(++stage==NAMES.length){LogUtils.getLogger().info("COOLING CLIENT CHECK PASS: five models, ports, fan motion and control screen");mc.stop();}
     }

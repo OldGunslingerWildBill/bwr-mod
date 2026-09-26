@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.1.0-alpha.12 — 2026-09-25
+
+- Added smoothly varying random wind and gusts to both cooling towers' vapor.
+- Wind changes with height and reaches different sections of the plume at
+  different times, producing bends and winding shapes as existing vapor drifts.
+- Calm periods favor upright plumes; stronger gusts carry vapor sideways and
+  reduce its rise. Nearby towers share coherent wind, with gentle local mixing.
+- Retained the continuous white emission, gradual fade, reduced/minimal particle
+  settings and shared 1,200-particle cap. Motion is client-only; GUI protocol stays 10.
+
+## 0.1.0-alpha.11 — 2026-09-25
+
+- Rebuilt RCIC and HPCI in Blender as separate Terry-inspired turbine/pump skids,
+  with bolted casings, governor linkage, oil systems, gauges, coupling guards
+  and visible CC:Tweaked panels. HPCI adds an insulated casing and service platform.
+- Added four round, grid-aligned flanges: steam admission, steam exhaust, water
+  suction and water discharge. New footprints are 5 × 4 × 5 and 7 × 5 × 5 blocks
+  respectively (width × height × depth). Suction accepts ordinary water through
+  Mekanism-compatible fluid connections; discharge uses BWR high-pressure water pipes.
+- Added dedicated RCIC/HPCI GUIs with manual speed/start/stop, control ownership,
+  water-source selection, live steam/water measurements and port coordinates/status.
+- Preserved existing block IDs, old installed models/ports, saved controls and
+  finite steam/water accounting. Breaking and replacing an old assembly uses the new layout.
+- Updated the fast creative-inventory icons using Blender renders. Assembly
+  integrity checks now run once per controller instead of once per child cell.
+- Extended rotation, obstruction, teardown/drop, old-save, fluid/CC capability,
+  control ownership, snapshot, model and complete pumping-loop checks.
+- GUI protocol is now 10. Install alpha.11 on both clients and servers.
+
 ## 0.1.0-alpha.10 — 2026-09-25
 
 - Reworked both cooling-tower plumes into continuous overlapping vapor layers instead of intermittent puffs.

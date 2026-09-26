@@ -36,6 +36,7 @@ neoForge {
             programArguments.addAll('--width', '1280', '--height', '720')
             jvmArguments.add('-Dbwr.turbineModelCheck=true')
             if (project.hasProperty('bwrPumpPanelCheck')) jvmArguments.add('-Dbwr.pumpPanelCheck=true')
+            if (project.hasProperty('bwrTerryPanelCheck')) jvmArguments.add('-Dbwr.terryPanelCheck=true')
             if (project.hasProperty('bwrPowerPanelCheck')) jvmArguments.add('-Dbwr.powerPanelCheck=true')
             if (project.hasProperty('bwrCondenserPanelCheck')) jvmArguments.add('-Dbwr.condenserPanelCheck=true')
             if (project.hasProperty('bwrCoolingPanelCheck')) jvmArguments.add('-Dbwr.coolingPanelCheck=true')

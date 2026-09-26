@@ -369,6 +369,8 @@ public class EccsPumpBlockEntity extends BlockEntity {
         pump.setSuctionTemperatureC(temperature);
         pump.setSuctionFlowLimitKgPerS(delivery==null ? 0
                 : Math.min(availableSuctionKg(suctionPool,suctionTank)/dt, design.ratedFlowKgPerS()*waterOpening));
+        assemblyConnections=(source!=null?1:0)|(exhaustPool!=null?2:0)
+                |(suction.valid() && availableSuctionKg(suctionPool,suctionTank)>0?4:0)|(delivery!=null?8:0);
 
         // Predict demand using the physically available nozzle flow, then claim
         // that steam from the shared ledger. Only re-step if another consumer
@@ -545,6 +547,7 @@ public class EccsPumpBlockEntity extends BlockEntity {
             exhaustPool.withdrawSteam(getBlockPos());
         }
         assemblyExhaustPoolPos = null;
+        assemblyConnections = 0;
         assemblySteamDrawKgPerS = 0;
         deliveredFlowKgPerS = 0;
         if (wasCoolingPool) {
@@ -697,6 +700,12 @@ public class EccsPumpBlockEntity extends BlockEntity {
     }
 
     public double getAssemblySteamDrawKgPerS() { return assemblySteamDrawKgPerS; }
+    private int assemblyConnections;
+    /** Last simulation sample; opening a panel never traverses the pipe graph. */
+    public boolean assemblyPortReady(AssemblyPort port) {
+        int bit=switch(port) {case STEAM_INLET->1;case STEAM_EXHAUST->2;case WATER_SUCTION->4;case WATER_DISCHARGE->8;};
+        return (assemblyConnections&bit)!=0;
+    }
 
     @Override public void setRemoved() {
         if (level != null && !level.isClientSide() && getBlockState().getBlock() instanceof ProcessAssembly) detach();

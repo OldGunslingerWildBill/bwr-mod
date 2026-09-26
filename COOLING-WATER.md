@@ -195,17 +195,26 @@ It does not enter the cold/hot circulating-water inventories. Water chemistry
 and purification are not simulated. Older placed condensers must be drained
 and replaced to receive these new physical ports.
 
-## Tower vapor (alpha.10)
+## Tower vapor (alpha.12)
 
 ![Operating towers with drifting vapor in Minecraft](art/models/cooling/tall-vapor-plumes.png)
+
+![The same towers sixteen seconds later, as the wind eases](art/models/cooling/vapor-calm.png)
 
 Both tower types produce white vapor only while moving water and rejecting heat.
 Overlapping layers are emitted every client tick, with wider white sprites and
 a fuller opacity profile to make a continuous column. Mechanical towers cycle
 through fan outlets evenly; natural towers form a concentrated rising plume.
-Client particles rise with buoyancy, drift with a slowly changing shared wind,
-spread and fade over 21–30 seconds. Rain strengthens the drift. Natural-draft
-plumes can climb roughly 120–180 blocks; mechanical-tower plumes rise less.
+Client particles rise with buoyancy and follow smoothly changing random wind.
+Calm periods produce taller upright columns; gusts bend the column and reduce
+its rise. Wind varies with height and reaches higher sections later, so successive
+vapor layers can form curves and winding shapes. Each layer retains momentum
+rather than instantly changing direction. Nearby towers share coherent weather,
+with small local eddies for mixing. Gusts develop over seconds, without per-frame
+random jumps. Wind is sampled from time, position and dimension on the client.
+Vapor spreads and fades over 21–30 seconds. Rain strengthens the drift.
+Natural-draft plumes can climb roughly 120–180 blocks in calm conditions;
+gusts reduce the height and mechanical-tower plumes rise less.
 These are visual approximations, not a weather or fluid simulation. Sky access
 is required at the outlet. Blender-rendered cloud sprites, viewing distance and a shared
 1,200-puff cap bound rendering cost. Reduced particles halves emission; Minimal disables it. Idle towers stop emitting; existing vapor fades.
