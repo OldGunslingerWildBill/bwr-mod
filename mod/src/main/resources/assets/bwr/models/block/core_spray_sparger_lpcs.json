@@ -1,8 +1,3 @@
 {
-  "parent": "minecraft:block/cube_bottom_top",
-  "textures": {
-    "top": "bwr:block/core_spray_sparger_lpcs_end",
-    "side": "bwr:block/core_spray_sparger_lpcs",
-    "bottom": "bwr:block/core_spray_sparger_lpcs_end"
-  }
+  "parent": "bwr:block/core_sparger/segment_lpcs/body"
 }

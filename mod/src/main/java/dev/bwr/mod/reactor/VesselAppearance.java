@@ -9,8 +9,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /** Client-only appearance index, with no world writes, block entities or pipe ticking.
  * The rectangular construction boundary remains the interaction/collision boundary. */
 public final class VesselAppearance {
-    public record Envelope(BlockPos min, BlockPos max, List<BlockPos> ports) {
-        public Envelope { ports = List.copyOf(ports); }
+    public record Sparger(BlockPos pos, CoreSpraySpargerBlock.Loop loop) {}
+    public record Envelope(BlockPos min, BlockPos max, List<BlockPos> ports, List<Sparger> spargers) {
+        public Envelope { ports = List.copyOf(ports); spargers = List.copyOf(spargers); }
+        public Envelope(BlockPos min, BlockPos max, List<BlockPos> ports) { this(min,max,ports,List.of()); }
         public int width() { return max.getX()-min.getX()+1; }
         public int depth() { return max.getZ()-min.getZ()+1; }
         public int height() { return max.getY()-min.getY()+1; }
@@ -25,6 +27,8 @@ public final class VesselAppearance {
         public void write(CompoundTag tag) {
             tag.putLong("VisualMin",min.asLong());tag.putLong("VisualMax",max.asLong());
             tag.putLongArray("VisualPorts",ports.stream().mapToLong(BlockPos::asLong).toArray());
+            for(var loop:CoreSpraySpargerBlock.Loop.values())tag.putLongArray("VisualSpargers_"+loop.getSerializedName(),
+                    spargers.stream().filter(s->s.loop()==loop).mapToLong(s->s.pos().asLong()).toArray());
         }
     }
     private static final Map<Level, Map<BlockPos,Envelope>> CLIENTS = new WeakHashMap<>();
@@ -34,7 +38,17 @@ public final class VesselAppearance {
     public static Envelope read(CompoundTag tag) {
         if(!tag.getBoolean("Formed") || !tag.contains("VisualMin") || !tag.contains("VisualMax"))return null;
         var min=BlockPos.of(tag.getLong("VisualMin"));var max=BlockPos.of(tag.getLong("VisualMax"));
-        var e=new Envelope(min,max,Arrays.stream(tag.getLongArray("VisualPorts")).mapToObj(BlockPos::of).toList());
+        var spargers=new ArrayList<Sparger>();
+        for(var loop:CoreSpraySpargerBlock.Loop.values())
+            for(long value:tag.getLongArray("VisualSpargers_"+loop.getSerializedName())) {
+                var p=BlockPos.of(value);
+                if(spargers.size()<160 && p.getX()>min.getX() && p.getX()<max.getX()
+                        && p.getZ()>min.getZ() && p.getZ()<max.getZ()
+                        && p.getY()>min.getY() && p.getY()<max.getY()
+                        && (p.getX()==min.getX()+1 || p.getX()==max.getX()-1
+                        || p.getZ()==min.getZ()+1 || p.getZ()==max.getZ()-1))spargers.add(new Sparger(p,loop));
+            }
+        var e=new Envelope(min,max,Arrays.stream(tag.getLongArray("VisualPorts")).mapToObj(BlockPos::of).toList(),spargers);
         return e.width()>=7 && e.width()<=23 && e.depth()>=7 && e.depth()<=23
                 && e.height()>=10 && e.height()<=131 ? e : null;
     }
@@ -47,6 +61,11 @@ public final class VesselAppearance {
     public static boolean hides(Level level,BlockPos pos) {
         if(level==null || !level.isClientSide())return false;
         for(var e:index(level).values())if(e.shell(pos))return true;
+        return false;
+    }
+    public static boolean hidesSparger(Level level,BlockPos pos) {
+        if(level==null || !level.isClientSide())return false;
+        for(var e:index(level).values())for(var s:e.spargers())if(s.pos().equals(pos))return true;
         return false;
     }
     private static void dirty(Level level,Envelope e) {

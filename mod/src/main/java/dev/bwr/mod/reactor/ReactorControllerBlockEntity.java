@@ -613,7 +613,18 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 if(!s.isAir() && !s.is(dev.bwr.mod.registry.BwrBlocks.REACTOR_VESSEL.get()))visualPorts.add(p.immutable());
             }
         }
-        vesselEnvelope=new VesselAppearance.Envelope(min,max,visualPorts);
+        var visualSpargers=new java.util.ArrayList<VesselAppearance.Sparger>();
+        for(var loop:CoreSpraySpargerBlock.Loop.values()) {
+            int y=CoreSpraySpargerBlock.requiredY(loop,found.topOfActiveFuelY());
+            for(int x=min.getX()+1;x<max.getX();x++)for(int z=min.getZ()+1;z<max.getZ();z++) {
+                if(x!=min.getX()+1 && x!=max.getX()-1 && z!=min.getZ()+1 && z!=max.getZ()-1)continue;
+                var p=new BlockPos(x,y,z);if(!level.isLoaded(p))continue;
+                var s=level.getBlockState(p);
+                if(s.is(dev.bwr.mod.registry.BwrBlocks.CORE_SPRAY_SPARGER.get()) && s.getValue(CoreSpraySpargerBlock.LOOP)==loop)
+                    visualSpargers.add(new VesselAppearance.Sparger(p,loop));
+            }
+        }
+        vesselEnvelope=new VesselAppearance.Envelope(min,max,visualPorts,visualSpargers);
     }
 
     @Override public void onLoad() {

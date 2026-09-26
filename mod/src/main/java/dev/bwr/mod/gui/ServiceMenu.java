@@ -34,7 +34,7 @@ public final class ServiceMenu extends BwrMenu {
             rows.add("Only matching division valves are commanded.");rows.add("Actuation is manual or player-programmed.");
         }else if(be instanceof SafetyReliefValveBlockEntity v){
             k=3;d=v.getDivision();on=v.isOpen();rows.add("Division: "+d+" | "+(on?"Open":"Closed"));
-            rows.add("Commands: "+(v.isComputerControlled()?"Panel / computer / ADS":"Redstone"));rows.add("Relief outlet: downward to suppression pool");
+            rows.add("Commands: "+(v.isComputerControlled()?"Panel / computer / division":"Redstone"));rows.add("Relief outlet: downward to suppression pool");
             rows.add("Steam inlet: left-side flange");
         }else if(be instanceof WaterDischargeBlockEntity w){
             k=4;on=w.enabled();rows.add(w.clearMouth()?"Outfall mouth clear":"Outfall blocked or unloaded");
@@ -49,11 +49,11 @@ public final class ServiceMenu extends BwrMenu {
         var be=owner();
         if(be instanceof AdsControllerBlockEntity t){
             if(command==1){t.setComputerControlled(true);t.setOpen(!t.isOpen());}
-            if(command==2)t.setDivision((t.getDivision()+1)%5);
+            if(command==2)t.setDivision(t.getDivision()%4+1);
             if(command==3){t.setComputerControlled(false);t.setOpen(level().hasNeighborSignal(pos));}
         }else if(be instanceof SafetyReliefValveBlockEntity t){
             if(command==1){t.setComputerControlled(true);t.setOpen(!t.isOpen());}
-            if(command==2)t.setDivision((t.getDivision()+1)%5);
+            if(command==2)t.setDivision(t.getDivision()%4+1);
             if(command==3){t.setComputerControlled(false);t.setOpen(level().hasNeighborSignal(pos));}
         }else if(be instanceof WaterDischargeBlockEntity t&&command==1)t.setEnabled(!t.enabled());
         markSnapshotDirty();

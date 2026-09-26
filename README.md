@@ -9,7 +9,7 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-alpha.13` — cached machine rendering, September 25, 2026.
+**Current version:** `0.1.0-alpha.14` — generic relief controls and modeled core spargers, September 26, 2026.
 
 See the [full changelog](CHANGELOG.md) for the hardware, performance, condenser,
 fuel and irradiation updates.
@@ -21,7 +21,11 @@ fuel and irradiation updates.
 | Java | 21 |
 | Optional integrations | Mekanism and CC:Tweaked, installed separately |
 
-Large machine exteriors now reuse GPU meshes, with separate fan animation and
+Core-spray segments now display as scaled circular headers with modeled nozzles
+inside formed reactors. The former ADS items are named **Pressure Relief Valve**
+and **Division**, with a **1–4** panel selector. Existing saves and CC programs
+keep their registry IDs and peripheral types. See [core spargers](CORE-SPARGERS.md).
+Large machine exteriors reuse GPU meshes, with separate fan animation and
 full-machine visibility checks. See [machine rendering](MACHINE-RENDERING.md)
 for scope, cache behavior and the repeatable client comparison.
 Cooling-tower vapor follows smooth random gusts and wind that varies with
@@ -50,7 +54,7 @@ BWR model. Specialty irradiation now takes 24–168 operating hours at rated
 local flux. A completed tritium rod yields 1,250 samples, processable into
 12,500,000 mB (12,500 buckets) of tritium through a powered Chemical Oxidizer when Mekanism and
 Mekanism Generators are installed. Install
-alpha.13 on both client and server; GUI protocol remains 10.
+alpha.14 on both client and server; GUI protocol remains 10.
 
 The first-publication candidate adds live CC:Tweaked faces across the machine
 registry, segmented water temperatures, condenser backpressure that affects LP
@@ -73,10 +77,10 @@ must credit **OldGunslingerWildBill**. See [license and credit](#license-and-cre
   Dedicated panels show speed, steam consumption, water flow, pressures,
   inlet temperature and world coordinates for every connection. Existing
   installed CAD assemblies keep their size and plumbing until replaced.
-- **Physical SLC and ADS hardware:** Blender-built boron solution tank and
-  powered SLC injection pump, ADS division cabinet and modeled relief valve.
+- **Physical SLC and relief hardware:** Blender-built boron solution tank and
+  powered SLC injection pump, Division cabinet and modeled Pressure Relief Valve.
   SLC consumes finite borated solution through real piping into an RPV water
-  inlet or a feedwater cross-tie. ADS divisions have local, redstone and
+  inlet or a feedwater cross-tie. Divisions have local, redstone and
   CC:Tweaked commands. A new water discharge port provides a plant outfall.
   See [connections, controls and migration](ALPHA-HARDWARE.md).
 - **Fast creative inventory:** complex machines use Blender-rendered inventory
@@ -491,7 +495,7 @@ Mekanism both installed and absent. Computer coverage includes all six faces of
 The **creative inventory** slowdown was reproduced locally at **19 FPS** and
 improved to **561 FPS** by using Blender-rendered machine icons. Full world
 models remain intact. See [alpha hardware and migration](ALPHA-HARDWARE.md)
-for the SLC tank/pump, ADS divisions and water outfall.
+for the SLC tank/pump, Divisions and water outfall.
 
 Local reactor-panel measurements improved from **109 to 205 FPS** for 764
 assemblies and **67 to 148 FPS** at maximum size after batching the fuel map.

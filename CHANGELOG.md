@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.0-alpha.14 — 2026-09-26
+
+- Renamed ADS Relief Valve to **Pressure Relief Valve** and ADS Division Controller
+  to **Division**. Existing item IDs, recipes, placed machines and CC peripheral
+  names remain compatible.
+- New division hardware defaults to 1. Local selectors cycle through **1–4**;
+  saved division 0 and existing computer commands remain supported.
+- Replaced core-sparger cubes with Blender-authored header/nozzle segments.
+  Formed reactors display circular or elliptical rings scaled to the vessel,
+  with fixed-diameter pipes, circuit collars, nozzle tips and mounting brackets.
+- Missing segments leave visible gaps and preserve proportional spray capacity.
+  Rings reuse cached reactor geometry and revert to individual models on unforming.
+- Added a Blender-rendered sparger inventory icon to keep creative-menu rendering light.
+- Updated hardware and construction guides; GUI protocol remains 10.
+
 ## 0.1.0-alpha.13 — 2026-09-25
 
 - Cached stationary reactor, cooling-machine, condenser and condensate-tank

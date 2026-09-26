@@ -101,7 +101,7 @@ public class AdsControllerBlockEntity extends BlockEntity {
 
     // Volatile because Lua reads them from a CC computer thread; the matching
     // writes are marshalled onto the server thread by PlantActuators.
-    private int division;
+    private int division=1;
     public int getDivision(){return division;}
     private volatile boolean open;
     private volatile double valveDemandFraction = 1.0;
@@ -479,7 +479,7 @@ public class AdsControllerBlockEntity extends BlockEntity {
     public List<String> statusLines() {
         List<String> out = new ArrayList<>();
         out.add(String.format(Locale.ROOT,
-                "ADS: %d relief valves available, %d held open, demand %.0f%%",
+                "Division: %d relief valves available, %d held open, demand %.0f%%",
                 valves.size(), held.size(), valveDemandFraction * 100.0));
         out.add(String.format(Locale.ROOT, "Blowing down %.1f kg/s; nitrogen %.0f%%; %,d FE stored",
                 blowdownKgPerS, nitrogenCharge * 100.0, energy.getEnergyStored()));

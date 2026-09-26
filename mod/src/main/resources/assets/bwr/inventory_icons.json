@@ -5,6 +5,7 @@
   "borate_charge",
   "bypass_steam_valve",
   "circulating_water_pump",
+  "core_spray_sparger",
   "hp_turbine",
   "hpci_turbine",
   "hpcs_pump",
@@ -27,10 +28,10 @@
   "slc_pump",
   "steam_stop_valve",
   "suppression_pool_return",
+  "suppression_pool_steam_inlet",
   "suppression_pool_suction",
   "suppression_pool_wall",
   "turbine_control_valve",
   "turbine_feed_pump",
-  "water_discharge_port",
-  "suppression_pool_steam_inlet"
+  "water_discharge_port"
 ]

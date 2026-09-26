@@ -39,15 +39,17 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
         e.registerBlockEntityRenderer(BwrBlockEntities.REACTOR_CONTROLLER.get(),ReactorVesselRenderer::new);
     }
     @SubscribeEvent public static void baked(ModelEvent.ModifyBakingResult e) {
-        for(var state:BwrBlocks.REACTOR_VESSEL.get().getStateDefinition().getPossibleStates()) {
+        for(var block:List.of(BwrBlocks.REACTOR_VESSEL.get(),BwrBlocks.CORE_SPRAY_SPARGER.get()))
+        for(var state:block.getStateDefinition().getPossibleStates()) {
             var key=BlockModelShaper.stateToModelLocation(state);var original=e.getModels().get(key);
-            if(original!=null)e.getModels().put(key,new ShellModel(original));
+            if(original!=null)e.getModels().put(key,new ShellModel(original,block instanceof CoreSpraySpargerBlock));
         }
     }
     private static final class ShellModel extends BakedModelWrapper<BakedModel> {
-        ShellModel(BakedModel model) {super(model);}
+        private final boolean sparger;
+        ShellModel(BakedModel model,boolean sparger) {super(model);this.sparger=sparger;}
         @Override public ModelData getModelData(BlockAndTintGetter world,BlockPos pos,BlockState state,ModelData data) {
-            return data.derive().with(HIDDEN,VesselAppearance.hides(Minecraft.getInstance().level,pos)).build();
+            return data.derive().with(HIDDEN,sparger?VesselAppearance.hidesSparger(Minecraft.getInstance().level,pos):VesselAppearance.hides(Minecraft.getInstance().level,pos)).build();
         }
         @Override public List<BakedQuad> getQuads(BlockState state,Direction side,RandomSource random,ModelData data,RenderType type) {
             return Boolean.TRUE.equals(data.get(HIDDEN))?List.of():super.getQuads(state,side,random,data,type);
@@ -69,6 +71,7 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
         }
     }
     private static void build(MachineMeshCache.Builder b,VesselAppearance.Envelope e,boolean closed){
+        CoreSpargerGeometry.build(b,e);
         var pose=b.pose;
         float w=e.width(),d=e.depth(),h=e.height();
         float headHeight=Math.min(h*.22f,Math.min(w,d)*.18f);

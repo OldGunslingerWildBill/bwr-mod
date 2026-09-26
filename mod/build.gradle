@@ -48,6 +48,7 @@ neoForge {
             if (project.hasProperty('bwrCreativePerformanceCheck')) jvmArguments.add('-Dbwr.creativePerformanceCheck=true')
             if (project.hasProperty('bwrGuiPerformanceCheck')) jvmArguments.add('-Dbwr.guiPerformanceCheck=true')
             if (project.hasProperty('bwrMachineRenderCheck')) jvmArguments.add('-Dbwr.machineRenderCheck=true')
+            if (project.hasProperty('bwrSpargerCheck')) jvmArguments.add('-Dbwr.spargerCheck=true')
         }
 
         // Builds a reactor, a suppression pool and a turbine outlet in a real

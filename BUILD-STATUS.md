@@ -1,5 +1,42 @@
 # Build Status
 
+## 2026-09-26 — 0.1.0-alpha.14: generic relief hardware and core spargers
+
+Built `mod/build/libs/mod-0.1.0-alpha.14.jar` (**24,565,256 bytes**).
+SHA-256: `CFBCF5FCB62774060F7E91947E93B140A26B2D063F88EEF430D5D093B9277201`.
+Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. GUI protocol **10**.
+
+- Display names are now **Pressure Relief Valve** and **Division**. Local
+  selectors cycle 1–4, and newly placed hardware starts at 1. Existing saved
+  settings, including legacy zero, registry IDs and CC peripheral names remain.
+- Original Blender core-spray header/nozzle models replace the cube artwork.
+  Formed reactors display circular/elliptical rings with fixed-diameter pipework,
+  nozzle tips, welds, supports and circuit collars. Missing segments leave gaps.
+  The rings use the existing GPU cache and preserve spray-capacity calculations.
+- Blender source and mesh exports were inspected through the live viewport.
+  **19 exported assets** passed deterministic verification. A Blender-rendered
+  inventory icon keeps the sparger's detailed mesh out of creative GUI rendering.
+- **58/58 required Minecraft GameTests passed.** New tests cover complete,
+  damaged, repaired and unformed ring snapshots at four sizes; legacy appearance
+  data; actual panel command cycling; default divisions and saved zero migration.
+- Seven sparger client captures passed, including 7-, 17- and 23-block-wide
+  vessels and a rectangular vessel, with materials and visibility assertions.
+  Complete, damaged, minimum, maximum and rectangular views were visually reviewed.
+  The six-view hardware client check passed; the two renamed GUIs were reviewed.
+- `:mod:build`, design guard, asset audit (**2,687 JSON files, zero problems**),
+  whitespace and JAR packaging checks passed. The final JAR contains the new
+  model/icon resources and names, excludes the old cube textures, and contains
+  no development fixtures or optional-mod implementation classes.
+- The full core physics suite was not repeated; neutron kinetics and hydraulic
+  equations are unchanged.
+- Source update for GitHub `main`, including editable Blender source and reviewed
+  images. This source push does not publish a GitHub Release or upload the JAR.
+
+Logs: `build-sparger-alpha14-tests.log`, `build-sparger-alpha14-client.log`,
+`build-sparger-alpha14-panels.log`, `build-sparger-alpha14-final.log`,
+`build-sparger-alpha14-assets.log`, `build-sparger-alpha14-jar.log`.
+Guide and reviewed pictures: [CORE-SPARGERS.md](CORE-SPARGERS.md).
+
 ## 2026-09-25 — 0.1.0-alpha.13: cached machine rendering
 
 Built `mod/build/libs/mod-0.1.0-alpha.13.jar` (**24,492,332 bytes**).

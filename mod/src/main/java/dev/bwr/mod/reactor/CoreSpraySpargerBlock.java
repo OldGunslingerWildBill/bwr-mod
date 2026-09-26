@@ -62,16 +62,23 @@ public class CoreSpraySpargerBlock extends Block {
     }
 
     public static final EnumProperty<Loop> LOOP = EnumProperty.create("loop", Loop.class);
+    public static final net.minecraft.world.level.block.state.properties.DirectionProperty FACING = net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING;
 
     public CoreSpraySpargerBlock(Properties properties) {
-        super(properties);
-        registerDefaultState(stateDefinition.any().setValue(LOOP, Loop.LPCS));
+        super(properties.noOcclusion());
+        registerDefaultState(stateDefinition.any().setValue(LOOP, Loop.LPCS).setValue(FACING,net.minecraft.core.Direction.NORTH));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(LOOP);
+        builder.add(LOOP,FACING);
     }
+
+    @Override public BlockState getStateForPlacement(net.minecraft.world.item.context.BlockPlaceContext c) {
+        return defaultBlockState().setValue(FACING,c.getHorizontalDirection().getOpposite());
+    }
+    @Override protected BlockState rotate(BlockState s,net.minecraft.world.level.block.Rotation r) {return s.setValue(FACING,r.rotate(s.getValue(FACING)));}
+    @Override protected BlockState mirror(BlockState s,net.minecraft.world.level.block.Mirror m) {return s.rotate(m.getRotation(s.getValue(FACING)));}
 
     /**
      * Switch this segment to the other loop, and say which one it is now.

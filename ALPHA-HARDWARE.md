@@ -1,7 +1,7 @@
-# Alpha hardware: SLC, ADS and water discharge
+# Alpha hardware: SLC, divisions, relief valves and water discharge
 
-For `0.1.0-alpha.7`, Minecraft 1.21.1, NeoForge 21.1.248 and Java 21.
-Install the same build on clients and server; the GUI protocol is **8**.
+Updated for `0.1.0-alpha.14`, Minecraft 1.21.1, NeoForge 21.1.248 and Java 21.
+Install the same build on clients and server; the GUI protocol is **10**.
 
 ## Standby liquid control
 
@@ -42,10 +42,10 @@ The borate item recipe and the 0.183 elemental-boron equivalent are gameplay
 calibrations. There is no water-chemistry, solubility, tank-heater or enrichment
 simulation in this alpha. The recipe does not represent real chemical manufacture.
 
-## ADS division controller and relief valve
+## Division and Pressure Relief Valve
 
-The **ADS Division Controller** replaces the old controller's cube model and
-keeps its registry ID. The new **ADS Relief Valve** has a side steam inlet and
+The **Division** cabinet (formerly ADS Division Controller) keeps its existing
+model and registry ID. The **Pressure Relief Valve** (formerly ADS Relief Valve) has a side steam inlet and
 a downward relief outlet. For the default north-facing valve, the inlet is
 the west flange. It is a branch valve, not a straight-through header segment.
 
@@ -53,8 +53,10 @@ the west flange. It is a branch valve, not a straight-through header segment.
   respects intervening valve positions and requires one live reactor source.
 - Pipe the downward outlet to a submerged suppression-pool quencher. The
   existing open-water discharge fallback also remains available.
-- Set controller and valves to the same **division, 0–4**, in their panels or
-  through CC. Zero is the legacy default. The controller discovers valves
+- Set controller and valves to the same **division, 1–4**, in their panels or
+  through CC. New hardware defaults to 1; the panel cycles 1, 2, 3, 4, 1.
+  Saved division 0 and CC commands for 0 remain supported for existing plants.
+  The controller discovers valves
   within 24 blocks along each axis; different divisions remain independent.
 - Command Open/Close locally, through redstone, or with a computer. Controller
   nitrogen charge and powered compressor behavior remain in place.
@@ -64,7 +66,7 @@ the west flange. It is a branch valve, not a straight-through header segment.
 
 There are **no automatic pressure/level trips or plant control programs**.
 Players choose the commands and write their own automation. A relief valve
-must be metered by an ADS controller or a suppression-pool controller.
+must be metered by a Division cabinet or a suppression-pool controller.
 
 ## Water discharge port
 
@@ -89,8 +91,8 @@ standalone computers.
 | --- | --- | --- |
 | Boron tank | `bwr_slc_tank` | `getStatus()` |
 | SLC pump | `bwr_slc` | `start()`, `stop()`, `setSpeed(0..1)`, `getStatus()`; status includes actual boron delivery |
-| ADS controller | `bwr_ads` | `setDivision(0..4)`, `getDivision()`, `start()`, `stop()`, `setFlow(0..1)`, `getStatus()` |
-| ADS relief valve | `bwr_safety_relief_valve` | `setDivision(0..4)`, `getDivision()`, `open()`, `close()`, `setOpen(boolean)`, `getStatus()` |
+| Division | `bwr_ads` (retained for existing programs) | `setDivision(0..4)`, `getDivision()`, `start()`, `stop()`, `setFlow(0..1)`, `getStatus()` |
+| Pressure Relief Valve | `bwr_safety_relief_valve` | `setDivision(0..4)`, `getDivision()`, `open()`, `close()`, `setOpen(boolean)`, `getStatus()` |
 | Water outfall | `bwr_water_discharge` | `setEnabled(boolean)`, `getStatus()` |
 
 `releaseControl()` hands supported actuators back to redstone. Panel buttons
@@ -100,8 +102,11 @@ also offer **Use Redstone**. Optional integrations are installed separately.
 
 - Replace old single-cube **SLC pumps** to construct the modeled pump and its
   physical ports. Their old implicit boron source is retired.
-- Old ADS controller/valve saves default to division zero. Legacy safety-relief
-  blocks remain available; the modeled ADS valve is a separate item.
+- Old controller/valve saves with no division field retain division zero. Existing
+  selected divisions are preserved. The first click of the division button moves
+  a legacy zero to 1. Registry IDs `ads_controller` and `ads_relief_valve` are
+  retained so placed blocks, inventories, recipes and scripts continue to resolve.
+  Legacy safety-relief blocks remain available as a separate item.
 - The complex machine models remain full 3D when placed or held. Inventories
   use Blender-rendered icons, avoiding tens of thousands of quads per slot.
 

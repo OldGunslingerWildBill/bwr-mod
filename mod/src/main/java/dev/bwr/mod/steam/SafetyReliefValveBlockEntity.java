@@ -96,7 +96,7 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
      */
     private static final int LINE_SURVEY_INTERVAL_TICKS = 20;
 
-    private int division;
+    private int division=1;
     public int getDivision(){return division;}
     private volatile boolean open;
     private volatile boolean computerControlled;
