@@ -112,6 +112,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private ReactorStructure structure;
     private VesselAppearance.Envelope vesselEnvelope;
     private VesselAppearance.Envelope clientVesselEnvelope;
+    private VesselCoreAppearance clientCoreAppearance;
+    private double[] clientBladeInsertion=new double[0];
+    private double[] clientBladeFrom=new double[0];
+    private long clientBladeSyncTick;
     private int coreLayoutVersion = dev.bwr.core.fuel.CompactCoreLayout.VERSION;
     private int savedInteriorWidth, savedInteriorDepth;
     public int coreLayoutVersion() { return coreLayoutVersion; }
@@ -1112,6 +1116,13 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         tag.putString("VesselState", vesselState.getSerializedName());
         tag.putBoolean("Formed", isFormed());
         if (vesselEnvelope != null) vesselEnvelope.write(tag);
+        var visualCore=VesselCoreAppearance.capture(this);
+        if(visualCore!=null) {
+            visualCore.write(tag);
+            int[] blades=new int[core.getControlRodCount()];
+            for(int i=0;i<blades.length;i++)blades[i]=(int)Math.round(Math.clamp(1-core.getRodPositionNotches(i)/24.0,0,1)*65535);
+            tag.putIntArray("VisualBladeInsertion",blades);
+        }
         if (core != null) {
             // The client renders and displays; it never recomputes physics.
             tag.putDouble("Power", core.getTotalPowerFractionOfRated());
@@ -1132,6 +1143,17 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         // to look — would have found default values on arrival.
         clientFormed = tag.getBoolean("Formed");
         clientVesselEnvelope = VesselAppearance.read(tag);
+        var nextCore=VesselCoreAppearance.read(tag,clientVesselEnvelope);
+        // Preserve identity when only physics measurements change: no mesh rebuild.
+        if(!java.util.Objects.equals(clientCoreAppearance,nextCore))clientCoreAppearance=nextCore;
+        var blades=tag.getIntArray("VisualBladeInsertion");
+        double[] from=new double[clientCoreAppearance==null?0:clientCoreAppearance.drives().size()];
+        for(int i=0;i<from.length;i++)from[i]=clientBladeInsertion(i,0);
+        boolean first=from.length!=clientBladeInsertion.length;
+        clientBladeInsertion=clientCoreAppearance==null?new double[0]:new double[clientCoreAppearance.drives().size()];
+        for(int i=0;i<clientBladeInsertion.length&&i<blades.length;i++)clientBladeInsertion[i]=Math.clamp(blades[i]/65535.0,0,1);
+        clientBladeFrom=first?clientBladeInsertion.clone():from;
+        clientBladeSyncTick=level==null?0:level.getGameTime();
         VesselAppearance.update(level,getBlockPos(),clientVesselEnvelope);
         clientPowerFractionOfRated = tag.getDouble("Power");
         clientPressurePsig = tag.getDouble("Pressure");
@@ -1169,6 +1191,12 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     }
 
     public VesselAppearance.Envelope clientVesselEnvelope() { return clientVesselEnvelope; }
+    public VesselCoreAppearance clientCoreAppearance() { return clientCoreAppearance; }
+    public double clientBladeInsertion(int i,float partial) {
+        if(i<0||i>=clientBladeInsertion.length)return 0;
+        double fraction=level==null?1:Math.clamp((level.getGameTime()-clientBladeSyncTick+partial)/SYNC_INTERVAL_TICKS,0,1);
+        return clientBladeFrom[i]+(clientBladeInsertion[i]-clientBladeFrom[i])*fraction;
+    }
 
     /** Total power as a fraction of rated, as last synced. @see #handleUpdateTag */
     public double clientPowerFractionOfRated() {

@@ -25,6 +25,22 @@ def revolved(s, name, rings, mat, segments=96):
     return mesh_object(s, name, vs, fs, mat)
 
 
+def closed_head(s, name, radius, height, base, upper):
+    """Closed-thickness meridian, shared radial tessellation with the barrel.
+    Weld coincident poles before recalculating normals: no zero-area pole fans.
+    Both sides are real steel surfaces, including the open-head/refuelling view.
+    """
+    sign = 1 if upper else -1
+    outer = [(radius*math.cos(i*math.pi/32),base+sign*height*math.sin(i*math.pi/32)) for i in range(17)]
+    inner = [((radius-.012)*math.cos(i*math.pi/32),base+sign*(height-.08)*math.sin(i*math.pi/32)) for i in range(16,-1,-1)]
+    o=revolved(s,name,outer+inner+[outer[0]],SHELL)
+    bm=bmesh.new();bm.from_mesh(o.data)
+    bmesh.ops.remove_doubles(bm,verts=list(bm.verts),dist=.000001)
+    bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
+    bm.to_mesh(o.data);bm.free();o.data.update()
+    return o
+
+
 def build():
     pieces = {}
     def part(name):
@@ -38,7 +54,7 @@ def build():
         cylinder(s, 'subtle longitudinal weld', (.4603*math.cos(a),0,.4603*math.sin(a)),
                  (.4603*math.cos(a),1,.4603*math.sin(a)), .0006, SEAM, 6)
     s = part('bottom')
-    revolved(s, 'dished lower head', [(0,.18)]+[(.46*math.sin(i*math.pi/24),1.2-1.02*math.cos(i*math.pi/24)) for i in range(1,13)], SHELL)
+    closed_head(s, 'solid dished lower head', .46,1.02,1.2,False)
     sleeve(s, 'load bearing skirt', (0,.08,0), (0,.98,0), .36,.347,SKIRT,64)
     sleeve(s, 'skirt base ring', (0,.04,0), (0,.18,0), .40,.32,STEEL,64)
     s = part('flange')
@@ -46,8 +62,7 @@ def build():
     sleeve(s, 'head joint', (0,.20,0),(0,.225,0),.482,.435,DARK,96)
     sleeve(s, 'upper head flange', (0,.225,0),(0,.42,0),.485,.435,SHELL,96)
     s = part('head')
-    revolved(s, 'closed elliptical removable head',
-             [(.46*math.cos(i*math.pi/32),1.65*math.sin(i*math.pi/32)) for i in range(17)], SHELL)
+    closed_head(s, 'solid elliptical removable head', .46,1.65,0,True)
     # Small lifting ears only. BWR control drives enter through the lower head.
     for x in (-.21,.21):
         sleeve(s,'head lifting ear',(x,1.48,-.012),(x,1.48,.012),.055,.027,STEEL,24)
@@ -73,7 +88,7 @@ def build():
     inst('bottom',(d,1,d),(0,0,0))
     head_height=min(h*.22,d*.18)
     flange_y=h-head_height-.40
-    inst('barrel',(d,flange_y-1.15,d),(0,1.2,0))
+    inst('barrel',(d,flange_y-1.10,d),(0,1.16,0))
     inst('flange',(d,1,d),(0,flange_y,0))
     inst('head',(d,head_height/1.65,d),(0,h-head_height,0))
     for y in range(4,h-3,4):inst('weld',(d,1,d),(0,y,0))

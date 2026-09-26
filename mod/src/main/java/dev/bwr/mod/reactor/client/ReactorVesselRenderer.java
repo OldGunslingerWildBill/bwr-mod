@@ -30,6 +30,7 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
     public static final String[] PARTS={"barrel","bottom","flange","head","weld","stud","spool","collar"};
     private static final ModelProperty<Boolean> HIDDEN=new ModelProperty<>();
     private record Shape(VesselAppearance.Envelope envelope,boolean closed){}
+    private record CoreShape(int width,int depth,int height,VesselCoreAppearance core){}
     public static ModelResourceLocation model(String part) {
         return ModelResourceLocation.standalone(BwrMod.id("block/reactor_vessel/"+part+"/body"));
     }
@@ -62,6 +63,19 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
         boolean closed=be.vesselState().canHoldPressure();
         pose.pushPose();pose.translate(cx-be.getBlockPos().getX(),e.min().getY()-be.getBlockPos().getY(),cz-be.getBlockPos().getZ());
         MachineMeshCache.draw(new Shape(e,closed),b->build(b,e,closed),pose,buffers,light,overlay);
+        var core=be.clientCoreAppearance();
+        var camera=Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        if(core!=null&&(!closed||getRenderBoundingBox(be).contains(camera))) {
+            MachineMeshCache.draw(new CoreShape(e.width(),e.depth(),e.height(),core),b->ReactorCoreGeometry.build(b,e,core),pose,buffers,light,overlay);
+            var layout=ReactorCoreGeometry.layout(e,core);
+            for(int i=0;i<core.drives().size();i++) {
+                float height=(float)((layout.top()-layout.bottom())*be.clientBladeInsertion(i,partial));if(height<.001)continue;
+                var drive=core.drives().get(i);
+                pose.pushPose();pose.translate(ReactorCoreGeometry.driveX(e,core,layout,drive),layout.bottom(),ReactorCoreGeometry.driveZ(e,core,layout,drive));
+                pose.scale(layout.pitchX(),height,layout.pitchZ());
+                MachineMeshCache.model(ReactorCoreGeometry.model("blade"),pose,buffers,light,overlay);pose.popPose();
+            }
+        }
         pose.popPose();
         var player=Minecraft.getInstance().player;
         if(player!=null && (player.getMainHandItem().is(BwrBlocks.REACTOR_VESSEL.get().asItem())
@@ -78,7 +92,8 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
         float flangeY=h-headHeight-.40f;
         double cx=e.min().getX()+w/2,cz=e.min().getZ()+d/2;
         b.part(model("bottom"),0,0,0,w,1,d);
-        b.part(model("barrel"),0,1.2,0,w,flangeY-1.15f,d);
+        // Positive overlap at both joints prevents sub-pixel cracks at every size.
+        b.part(model("barrel"),0,1.16,0,w,flangeY-1.10f,d);
         b.part(model("flange"),0,flangeY,0,w,1,d);
         if(closed) {
             b.part(model("head"),0,h-headHeight,0,w,headHeight/1.65f,d);

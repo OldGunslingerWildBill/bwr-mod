@@ -1,5 +1,45 @@
 # Build Status
 
+## 2026-09-26 — 0.1.0-alpha.15: scalable core internals and vessel seams
+
+Built `mod/build/libs/mod-0.1.0-alpha.15.jar` (**24,732,412 bytes**).
+SHA-256: `11D993294DA8DABB9C80DBBDA244491DCA0CB9B4B2C15D79DBB42353B7E3B83A`.
+Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. GUI protocol **10**.
+
+- Downloaded and reviewed the supplied Columbia FSAR, Amendment 67, public
+  edition (NRC ADAMS ML23346A215). The local PDF remains outside the repository.
+  [Reference guide](COLUMBIA-CORE-REFERENCE.md) identifies the core layout,
+  vessel cutaway, control-blade diagrams and verified plant characteristics.
+- Added original Blender core channels, handles, support cells, top guides,
+  shroud, guide tubes and blades. Loaded fuel and specialty inserts use the
+  actual saved loading. Empty slots remain empty. Existing compact and legacy
+  capacities, inventories, control IDs and simulation equations are preserved.
+- Rebuilt both vessel heads as closed solids with inner surfaces and welded
+  poles; shell joints overlap. Geometry checks passed for all supported widths
+  and depths and minimum/reference/maximum vessel heights.
+- Static core meshes reuse GPU buffers; blades use shared geometry and synced
+  insertion transforms. Closed vessels skip interiors from outside. The maximum
+  size fits within the existing 96 MiB cache without stationary upload churn.
+  This is a cache-stability check, not a before/after FPS benchmark.
+- **59/59 required Minecraft GameTests passed**, including loading/unloading,
+  specialty inserts, bounded visual packets, blade snapshots and legacy data.
+- **Nine client scenarios passed**: empty, 764 loaded, partially unloaded,
+  minimum, maximum, rectangular, legacy, closed and unformed vessels. Captures
+  were visually reviewed; the final run also verifies legacy blade alignment.
+  No repeated mesh uploads occurred during each stationary observation window.
+- **27 core and 24 vessel assets** passed deterministic export verification.
+  Asset audit: **2,696 JSON files, zero problems**. Blender scenes and exports
+  were inspected, and reviewed in-game captures are included with the source.
+- `:mod:build`, protection-logic guard, whitespace check and JAR packaging audit
+  passed. The JAR includes all new runtime assets and excludes dev fixtures,
+  optional-mod implementation classes, Blender sources and the reference PDF.
+- The full core physics acceptance suite was not repeated: this update changes
+  client appearance and visual synchronization, not kinetics or hydraulics.
+
+Logs: `build-core-alpha15-tests.log`, `build-core-alpha15-client.log`,
+`build-core-alpha15-final.log`, `build-core-alpha15-assets.log`,
+`build-core-alpha15-jar.log`.
+
 ## 2026-09-26 — 0.1.0-alpha.14: generic relief hardware and core spargers
 
 Built `mod/build/libs/mod-0.1.0-alpha.14.jar` (**24,565,256 bytes**).

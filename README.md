@@ -9,7 +9,7 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-alpha.14` — generic relief controls and modeled core spargers, September 26, 2026.
+**Current version:** `0.1.0-alpha.15` — scalable modeled core and sealed vessel heads, September 26, 2026.
 
 See the [full changelog](CHANGELOG.md) for the hardware, performance, condenser,
 fuel and irradiation updates.
@@ -20,6 +20,11 @@ fuel and irradiation updates.
 | NeoForge | 21.1.248 |
 | Java | 21 |
 | Optional integrations | Mekanism and CC:Tweaked, installed separately |
+
+Reactors now display the actual loaded core beneath the removable head: fuel
+channels, lifting handles, support grids, shroud and bottom-entry cruciform blades.
+The artwork uses Columbia FSAR diagrams, while preserving existing saved core
+layouts. See [Columbia references and core models](COLUMBIA-CORE-REFERENCE.md).
 
 Core-spray segments now display as scaled circular headers with modeled nozzles
 inside formed reactors. The former ADS items are named **Pressure Relief Valve**
@@ -54,7 +59,7 @@ BWR model. Specialty irradiation now takes 24–168 operating hours at rated
 local flux. A completed tritium rod yields 1,250 samples, processable into
 12,500,000 mB (12,500 buckets) of tritium through a powered Chemical Oxidizer when Mekanism and
 Mekanism Generators are installed. Install
-alpha.14 on both client and server; GUI protocol remains 10.
+alpha.15 on both client and server; GUI protocol remains 10.
 
 The first-publication candidate adds live CC:Tweaked faces across the machine
 registry, segmented water temperatures, condenser backpressure that affects LP

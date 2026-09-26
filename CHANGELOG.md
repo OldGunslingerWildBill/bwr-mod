@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.0-alpha.15 — 2026-09-26
+
+- Added Blender-authored scalable core internals based on Columbia FSAR diagrams:
+  fuel channels, lifting handles, support cells, top guides, shroud and cruciform blades.
+- Visible fuel and specialty inserts follow the actual saved loading; empty slots
+  remain empty. Compact and legacy capacities/control IDs are preserved.
+- Added continuous inner/outer vessel-head surfaces, sealed poles and overlapping
+  shell joints to eliminate open surfaces and seam cracks.
+- Core meshes reuse GPU buffers; closed vessels skip the interior from outside.
+  Moving blades reuse one mesh. Refuelling does not rebuild the vessel shell.
+- Added a Columbia FSAR reference index and core characteristics notes.
+
 ## 0.1.0-alpha.14 — 2026-09-26
 
 - Renamed ADS Relief Valve to **Pressure Relief Valve** and ADS Division Controller
