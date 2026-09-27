@@ -45,6 +45,11 @@ public final class FuelTypes {
     /** Immutable table identity lets each live core notice datapack replacement. */
     public static Object revision() { return byName; }
 
+    /** Current choices; retired IDs remain resolvable for old items, cores and datapacks. */
+    public static Collection<FuelType> catalogue() {
+        return byName.values().stream().filter(t->!t.name().equals("uranium_12")&&!t.name().equals("uranium_14")).toList();
+    }
+
     /**
      * Fallback when an itemstack names a fuel type this install does not have.
      *

@@ -1,7 +1,7 @@
-# Fuel and specialty rods — alpha.7
+# Fuel and specialty rods — alpha.21
 
 Open **Realistic BWR: Fuel & Rods** in the creative inventory. The machine tab
-now contains plant hardware; this tab contains 19 fuel grades, eight specialty
+now contains plant hardware; this tab contains 17 selectable fuel grades, eight specialty
 rod cassettes, empty irradiation rods, target charges and samples. All icons
 are small PNGs rendered from the Blender studio in `art/models/fuel_icons/`.
 Items still represent one logical core position, not a placeable fuel block.
@@ -10,7 +10,7 @@ Items still represent one logical core position, not a placeable fuel block.
 
 | Family | Available grades | Meaning |
 |---|---|---|
-| Uranium | 0.711%, 1.20%, 1.40%, 2.70%, 3.50%, 4.95%, 8.00%, 19.75%, 20.00% | U-235 weight fraction in the simplified fuel model |
+| Uranium | 0.711%, intermediate 2.70%, high BWR 3.50%, 4.95%, 8.00%, 19.75%, 20.00% | U-235 weight fraction in the simplified fuel model |
 | Gadolinia uranium | 3.50% | Additional burnable absorption compared with the standard 3.50% assembly |
 | Mixed oxide | Lean 4.5%, standard 7%, rich 9.5% | Effective fissile fractions for gameplay, **not total plutonium percentages** |
 | Plutonium | Lean 4%, standard 6%, rich 8.5% | Existing Pu-dominated kinetics family, extended with experimental grades |
@@ -29,6 +29,20 @@ gadolinia variant and thorium grades are available from the creative tab or
 datapack recipes; there is no new thorium processing chain. Existing fuel
 crafting remains compatible. Every fuel definition remains datapack editable
 under `data/bwr/fuel_type/`.
+
+### RVU fuel naming and saved rods
+
+The intermediate (2.70%) and high BWR (3.50%) categories use the existing
+`uranium_27` and `leu` definitions and Blender icons. Both are low-enriched
+uranium; the word high distinguishes this BWR catalogue grade from intermediate,
+not the separate 20% experimental HEU option. The percentages are the
+project owner’s selected mod values, not values established by Figure 2.2-8.
+
+The 1.20% and 1.40% grades are no longer offered in the creative tab or selected
+by the fabricator. Their definitions, icons and item IDs remain for saved rods
+and datapack compatibility. Fabrication still records the actual input fissile
+fraction, including values between catalogue grades; it never creates extra
+fissile inventory or upgrades old fuel.
 
 ## Specialty rods
 

@@ -71,7 +71,7 @@ public final class FuelFabrication {
      * available through crafting.
      */
     private static final Map<Family, List<String>> CANDIDATE_NAMES = Map.of(
-            Family.URANIUM, List.of("natural_uranium", "uranium_12", "uranium_14", "uranium_27", "leu", "uranium_495", "uranium_8", "uranium_1975", "heu"),
+            Family.URANIUM, List.of("natural_uranium", "uranium_27", "leu", "uranium_495", "uranium_8", "uranium_1975", "heu"),
             Family.MIXED, List.of("mox_lean", "mox", "mox_rich"),
             Family.PLUTONIUM, List.of("plutonium_lean", "plutonium", "plutonium_rich"));
 

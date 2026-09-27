@@ -132,7 +132,7 @@ public final class BwrItems {
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> FUEL_TAB = TABS.register("fuel", () ->
             CreativeModeTab.builder().title(Component.translatable("itemGroup.bwr.fuel"))
                     .icon(() -> FUEL_ASSEMBLY.get().getDefaultInstance()).displayItems((parameters, output) -> {
-                        for (var type : FuelTypes.all()) output.accept(FuelAssemblyItem.stackOf(FUEL_ASSEMBLY.get(), FuelAssemblyData.fresh(type)));
+                        for (var type : FuelTypes.catalogue()) output.accept(FuelAssemblyItem.stackOf(FUEL_ASSEMBLY.get(), FuelAssemblyData.fresh(type)));
                         for (var kind : dev.bwr.core.fuel.CoreInsert.Kind.values()) output.accept(dev.bwr.mod.fuel.SpecialtyRodItem.stack(new dev.bwr.mod.fuel.CoreInsertData(kind, 0)));
                         for (var item : java.util.List.of(IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, COBALT_SAMPLE, TRITIUM_SAMPLE, DOPED_SILICON)) output.accept(item.get());
                     }).build());

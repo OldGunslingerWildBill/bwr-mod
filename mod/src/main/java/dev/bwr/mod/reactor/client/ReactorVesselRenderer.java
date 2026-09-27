@@ -27,7 +27,7 @@ import java.util.*;
 /** One renderer per reactor. Blender pieces scale to the existing construction envelope. */
 @EventBusSubscriber(modid=BwrMod.MOD_ID,value=Dist.CLIENT)
 public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorControllerBlockEntity> {
-    public static final String[] PARTS={"barrel","bottom","flange","head","weld","stud","spool","collar"};
+    public static final String[] PARTS={"barrel","bottom","flange","head","weld","stud","spool","collar","steam_nozzle","water_nozzle","controller_panel"};
     private static final ModelProperty<Boolean> HIDDEN=new ModelProperty<>();
     private record Shape(VesselAppearance.Envelope envelope,boolean closed){}
     private record CoreShape(int width,int depth,int height,VesselCoreAppearance core){}
@@ -40,17 +40,23 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
         e.registerBlockEntityRenderer(BwrBlockEntities.REACTOR_CONTROLLER.get(),ReactorVesselRenderer::new);
     }
     @SubscribeEvent public static void baked(ModelEvent.ModifyBakingResult e) {
-        for(var block:List.of(BwrBlocks.REACTOR_VESSEL.get(),BwrBlocks.CORE_SPRAY_SPARGER.get()))
+        for(var block:List.of(BwrBlocks.REACTOR_VESSEL.get(),BwrBlocks.CORE_SPRAY_SPARGER.get(),
+                BwrBlocks.REACTOR_CONTROLLER.get(),BwrBlocks.RPV_WATER_INJECTION_PORT.get(),BwrBlocks.RPV_STEAM_OUTLET.get(),
+                BwrBlocks.RECIRCULATION_INLET.get(),BwrBlocks.RECIRCULATION_OUTLET.get()))
         for(var state:block.getStateDefinition().getPossibleStates()) {
             var key=BlockModelShaper.stateToModelLocation(state);var original=e.getModels().get(key);
-            if(original!=null)e.getModels().put(key,new ShellModel(original,block instanceof CoreSpraySpargerBlock));
+            if(original!=null)e.getModels().put(key,new ShellModel(original,block instanceof CoreSpraySpargerBlock,
+                    block!=BwrBlocks.REACTOR_VESSEL.get()&&!(block instanceof CoreSpraySpargerBlock)));
         }
     }
     private static final class ShellModel extends BakedModelWrapper<BakedModel> {
         private final boolean sparger;
-        ShellModel(BakedModel model,boolean sparger) {super(model);this.sparger=sparger;}
+        private final boolean interfaceBlock;
+        ShellModel(BakedModel model,boolean sparger,boolean interfaceBlock) {super(model);this.sparger=sparger;this.interfaceBlock=interfaceBlock;}
         @Override public ModelData getModelData(BlockAndTintGetter world,BlockPos pos,BlockState state,ModelData data) {
-            return data.derive().with(HIDDEN,sparger?VesselAppearance.hidesSparger(Minecraft.getInstance().level,pos):VesselAppearance.hides(Minecraft.getInstance().level,pos)).build();
+            var level=Minecraft.getInstance().level;
+            return data.derive().with(HIDDEN,sparger?VesselAppearance.hidesSparger(level,pos)
+                    :interfaceBlock?VesselAppearance.hidesInterface(level,pos):VesselAppearance.hides(level,pos)).build();
         }
         @Override public List<BakedQuad> getQuads(BlockState state,Direction side,RandomSource random,ModelData data,RenderType type) {
             return Boolean.TRUE.equals(data.get(HIDDEN))?List.of():super.getQuads(state,side,random,data,type);
@@ -76,6 +82,7 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
                 MachineMeshCache.model(ReactorCoreGeometry.model("blade"),pose,buffers,light,overlay);pose.popPose();
             }
         }
+        if(!closed&&be.clientWaterPresent())VesselWaterSurface.render(e,be.clientWaterLevelIn(partial),pose,buffers,light,overlay);
         pose.popPose();
         var player=Minecraft.getInstance().player;
         if(core!=null && core.layoutVersion()!=1 && player!=null && (player.getMainHandItem().is(BwrBlocks.RIP_PUMP.get().asItem())
@@ -115,9 +122,7 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
         // Adapt the curved barrel to actual player-selected wall blocks. Interfaces stay put.
         for(var port:e.ports()) {
             double x=port.getX()+.5-cx,z=port.getZ()+.5-cz,y=port.getY()+.5-e.min().getY();
-            Direction face=port.getX()==e.min().getX()?Direction.WEST:port.getX()==e.max().getX()?Direction.EAST
-                    :port.getZ()==e.min().getZ()?Direction.NORTH:port.getZ()==e.max().getZ()?Direction.SOUTH
-                    :port.getY()==e.min().getY()?Direction.DOWN:Direction.UP;
+            Direction face=e.face(port);
             double radiusX=.46*w,radiusZ=.46*d;
             double startX=x,startY=y,startZ=z;
             double r=Math.sqrt(x*x/(radiusX*radiusX)+z*z/(radiusZ*radiusZ));
@@ -132,14 +137,29 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
                 startY=face==Direction.UP?h-headHeight+headHeight*Math.sqrt(1-r*r)-.08
                         :1.2-1.02*Math.sqrt(1-r*r)+.08;
             }
-            var vector=new org.joml.Vector3f((float)(x-face.getStepX()*.45-startX),
-                    (float)(y-face.getStepY()*.45-startY),(float)(z-face.getStepZ()*.45-startZ));
-            float length=vector.length();if(length<.02)continue;
-            pose.pushPose();pose.translate(startX,startY,startZ);
-            pose.mulPose(new org.joml.Quaternionf().rotationTo(new org.joml.Vector3f(0,0,1),vector.normalize()));
-            b.part(model("spool"),0,0,0,1,1,(float)length);
-            b.part(model("collar"),0,0,.08,1,1,1);
-            pose.popPose();
+            var kind=e.kind(port);
+            boolean integrated=kind!=VesselAppearance.PortKind.LEGACY;
+            boolean panel=kind==VesselAppearance.PortKind.CONTROLLER;
+            double tip=integrated?(panel?.30:.50):-.45;
+            double endX=x+face.getStepX()*tip,endY=y+face.getStepY()*tip,endZ=z+face.getStepZ()*tip;
+            double neck=integrated?(panel?.14:.60):0;
+            var vector=new org.joml.Vector3f((float)(endX-face.getStepX()*neck-startX),
+                    (float)(endY-face.getStepY()*neck-startY),(float)(endZ-face.getStepZ()*neck-startZ));
+            float length=vector.length();
+            if(length>.02) {
+                pose.pushPose();pose.translate(startX,startY,startZ);
+                pose.mulPose(new org.joml.Quaternionf().rotationTo(new org.joml.Vector3f(0,0,1),vector.normalize()));
+                b.part(model("spool"),0,0,0,1,1,length);
+                b.part(model("collar"),0,0,.04,1,1,1);
+                pose.popPose();
+            }
+            if(integrated) {
+                pose.pushPose();pose.translate(endX,endY,endZ);
+                pose.mulPose(new org.joml.Quaternionf().rotationTo(new org.joml.Vector3f(0,0,1),
+                        new org.joml.Vector3f(face.getStepX(),face.getStepY(),face.getStepZ())));
+                b.part(model(panel?"controller_panel":kind==VesselAppearance.PortKind.WATER?"water_nozzle":"steam_nozzle"),0,0,0,1,1,1);
+                pose.popPose();
+            }
         }
     }
     @Override public AABB getRenderBoundingBox(ReactorControllerBlockEntity be) {

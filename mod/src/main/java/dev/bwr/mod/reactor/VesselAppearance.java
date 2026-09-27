@@ -1,6 +1,7 @@
 package dev.bwr.mod.reactor;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import java.util.*;
@@ -9,10 +10,14 @@ import java.util.concurrent.ConcurrentHashMap;
 /** Client-only appearance index, with no world writes, block entities or pipe ticking.
  * The rectangular construction boundary remains the interaction/collision boundary. */
 public final class VesselAppearance {
+    public enum PortKind { LEGACY, CONTROLLER, WATER, STEAM }
     public record Sparger(BlockPos pos, CoreSpraySpargerBlock.Loop loop) {}
-    public record Envelope(BlockPos min, BlockPos max, List<BlockPos> ports, List<Sparger> spargers) {
-        public Envelope { ports = List.copyOf(ports); spargers = List.copyOf(spargers); }
+    public record Envelope(BlockPos min, BlockPos max, List<BlockPos> ports, List<Sparger> spargers, Map<BlockPos,PortKind> kinds) {
+        public Envelope { ports = List.copyOf(ports); spargers = List.copyOf(spargers); kinds=Map.copyOf(kinds); }
+        public Envelope(BlockPos min, BlockPos max, List<BlockPos> ports, List<Sparger> spargers) { this(min,max,ports,spargers,Map.of()); }
         public Envelope(BlockPos min, BlockPos max, List<BlockPos> ports) { this(min,max,ports,List.of()); }
+        public PortKind kind(BlockPos pos) { return kinds.getOrDefault(pos,PortKind.LEGACY); }
+        public Direction face(BlockPos p) { return outwardFace(p,min,max); }
         public int width() { return max.getX()-min.getX()+1; }
         public int depth() { return max.getZ()-min.getZ()+1; }
         public int height() { return max.getY()-min.getY()+1; }
@@ -27,6 +32,7 @@ public final class VesselAppearance {
         public void write(CompoundTag tag) {
             tag.putLong("VisualMin",min.asLong());tag.putLong("VisualMax",max.asLong());
             tag.putLongArray("VisualPorts",ports.stream().mapToLong(BlockPos::asLong).toArray());
+            tag.putIntArray("VisualPortKinds",ports.stream().mapToInt(p->kind(p).ordinal()).toArray());
             for(var loop:CoreSpraySpargerBlock.Loop.values())tag.putLongArray("VisualSpargers_"+loop.getSerializedName(),
                     spargers.stream().filter(s->s.loop()==loop).mapToLong(s->s.pos().asLong()).toArray());
         }
@@ -48,7 +54,11 @@ public final class VesselAppearance {
                         && (p.getX()==min.getX()+1 || p.getX()==max.getX()-1
                         || p.getZ()==min.getZ()+1 || p.getZ()==max.getZ()-1))spargers.add(new Sparger(p,loop));
             }
-        var e=new Envelope(min,max,Arrays.stream(tag.getLongArray("VisualPorts")).mapToObj(BlockPos::of).toList(),spargers);
+        var ports=Arrays.stream(tag.getLongArray("VisualPorts")).mapToObj(BlockPos::of).toList();
+        var codes=tag.getIntArray("VisualPortKinds");var kinds=new HashMap<BlockPos,PortKind>();
+        for(int i=0;i<ports.size()&&i<codes.length;i++)
+            if(codes[i]>0&&codes[i]<PortKind.values().length)kinds.put(ports.get(i),PortKind.values()[codes[i]]);
+        var e=new Envelope(min,max,ports,spargers,kinds);
         return e.width()>=7 && e.width()<=23 && e.depth()>=7 && e.depth()<=23
                 && e.height()>=10 && e.height()<=131 ? e : null;
     }
@@ -67,6 +77,16 @@ public final class VesselAppearance {
         if(level==null || !level.isClientSide())return false;
         for(var e:index(level).values())for(var s:e.spargers())if(s.pos().equals(pos))return true;
         return false;
+    }
+    public static boolean hidesInterface(Level level,BlockPos pos) {
+        if(level==null || !level.isClientSide())return false;
+        for(var e:index(level).values())if(e.kind(pos)!=PortKind.LEGACY)return true;
+        return false;
+    }
+    public static Direction outwardFace(BlockPos p,BlockPos min,BlockPos max) {
+        return p.getX()==min.getX()?Direction.WEST:p.getX()==max.getX()?Direction.EAST
+                :p.getZ()==min.getZ()?Direction.NORTH:p.getZ()==max.getZ()?Direction.SOUTH
+                :p.getY()==min.getY()?Direction.DOWN:Direction.UP;
     }
     private static void dirty(Level level,Envelope e) {
         if(e==null)return;

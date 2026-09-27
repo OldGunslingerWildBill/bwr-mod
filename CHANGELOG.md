@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0-alpha.21 — 2026-09-27 — Reactor Visual Update
+
+- Replaced formed-vessel controller cubes with a shallow Blender instrument panel.
+- Integrated round Blender steam, feedwater and recirculation nozzles while keeping existing pipe and computer connections.
+- Added translucent water when the head is off, following physical water level and smoothing between server updates.
+- Kept static vessel/core meshes cached as water moves. Unformed vessels restore their construction blocks.
+- Named the 2.70% intermediate and 3.50% high BWR enrichment grades; retired 1.20%/1.40% from new selections while preserving saved fuel histories.
+
 ## 0.1.0-alpha.20 — 2026-09-27
 
 - Filled usable gaps around the RIP core perimeter with actual loadable fuel slots.

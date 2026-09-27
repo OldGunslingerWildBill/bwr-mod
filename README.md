@@ -9,7 +9,16 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-alpha.20` — usable perimeter fuel packing and additional control blades, September 27, 2026.
+**Current version:** `0.1.0-alpha.21` — Reactor Visual Update (RVU), September 27, 2026.
+
+**RVU:** formed vessels have a Blender-built instrument panel and round steam,
+feedwater and recirculation nozzles in place of visible interface cubes. Their
+existing block positions, pipe connections, menus and computer access remain
+usable. Removing the head reveals water at the physical free-surface level,
+with smooth updates and no rebuilding of the static vessel mesh.
+The fuel catalogue now labels **2.70% intermediate** and **3.50% high BWR
+enrichment**; 1.20% and 1.40% are retired from new selections but remain readable
+in old saves. See [RVU details and placement](REACTOR-VISUAL-UPDATE.md).
 
 See the [full changelog](CHANGELOG.md) for the hardware, performance, condenser,
 fuel and irradiation updates.
@@ -60,7 +69,7 @@ trains now exhaust to a separate condenser with bypass and cooling-water ports.
 inventory and chunk-lifecycle fixes include permanent regression checks.
 
 **Fuel update:** a separate **Realistic BWR: Fuel & Rods** creative tab contains
-19 fuel grades and eight specialty rods, with new Blender-rendered PNG icons.
+17 selectable fuel grades and eight specialty rods, with new Blender-rendered PNG icons.
 Uranium ranges from natural uranium through 20%; MOX, plutonium and thorium
 have lean/standard/rich variants. Fixed absorbers, startup sources and simple
 irradiation targets use the existing refuelling map. Original fuel tuning and
@@ -70,7 +79,7 @@ BWR model. Specialty irradiation now takes 24–168 operating hours at rated
 local flux. A completed tritium rod yields 1,250 samples, processable into
 12,500,000 mB (12,500 buckets) of tritium through a powered Chemical Oxidizer when Mekanism and
 Mekanism Generators are installed. Install
-alpha.20 on both client and server; GUI protocol remains 10.
+alpha.21 on both client and server; GUI protocol remains 10.
 
 The first-publication candidate adds live CC:Tweaked faces across the machine
 registry, segmented water temperatures, condenser backpressure that affects LP

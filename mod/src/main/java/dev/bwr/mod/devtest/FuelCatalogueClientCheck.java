@@ -20,7 +20,7 @@ final class FuelCatalogueClientCheck {
             if(stack.getHoverName().getString().startsWith("fuel.bwr.")||stack.getHoverName().getString().startsWith("insert.bwr."))
                 throw new IllegalStateException("Untranslated fuel name");
         }
-        if(fuel!=19||rods!=8)throw new IllegalStateException("Fuel tab incomplete: "+fuel+"/"+rods);
+        if(fuel!=17||rods!=8)throw new IllegalStateException("Fuel tab incomplete: "+fuel+"/"+rods);
         if(BwrItems.TAB.get().getDisplayItems().stream().anyMatch(SpecialtyRodItem::isCoreItem))throw new IllegalStateException("Fuels still fill machine tab");
         com.mojang.logging.LogUtils.getLogger().info("FUEL CATALOGUE CLIENT PASS: {} grades, {} inserts; distinct PNGs and translated names",fuel,rods);
     }

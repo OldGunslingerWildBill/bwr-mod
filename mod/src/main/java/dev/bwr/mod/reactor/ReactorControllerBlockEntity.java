@@ -631,12 +631,20 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         var min=found.interiorMin().offset(-1,-1,-1);
         var max=found.interiorMax().offset(1,1,1);
         var visualPorts=new java.util.ArrayList<BlockPos>();
+        var visualKinds=new java.util.HashMap<BlockPos,VesselAppearance.PortKind>();
         for(var p:BlockPos.betweenClosed(min,max)) {
             if(p.getX()!=min.getX() && p.getX()!=max.getX()
                     && p.getY()!=min.getY() && p.getY()!=max.getY()
                     && p.getZ()!=min.getZ() && p.getZ()!=max.getZ())continue;
             if(level.isLoaded(p)) {
                 var s=level.getBlockState(p);
+                var kind=s.getBlock() instanceof ReactorControllerBlock?VesselAppearance.PortKind.CONTROLLER
+                        :s.getBlock() instanceof RpvWaterInjectionPortBlock?VesselAppearance.PortKind.WATER
+                        :s.getBlock() instanceof RpvSteamOutletBlock?VesselAppearance.PortKind.STEAM:VesselAppearance.PortKind.LEGACY;
+                // Do not disguise an incorrectly oriented water block as a working outward nozzle.
+                if(kind==VesselAppearance.PortKind.WATER&&s.getValue(RpvWaterInjectionPortBlock.FACING)!=VesselAppearance.outwardFace(p,min,max))
+                    kind=VesselAppearance.PortKind.LEGACY;
+                if(kind!=VesselAppearance.PortKind.LEGACY)visualKinds.put(p.immutable(),kind);
                 if(!s.isAir() && !s.is(dev.bwr.mod.registry.BwrBlocks.REACTOR_VESSEL.get())
                         && !s.is(dev.bwr.mod.registry.BwrBlocks.RIP_PUMP.get()))visualPorts.add(p.immutable());
             }
@@ -652,7 +660,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                     visualSpargers.add(new VesselAppearance.Sparger(p,loop));
             }
         }
-        vesselEnvelope=new VesselAppearance.Envelope(min,max,visualPorts,visualSpargers);
+        vesselEnvelope=new VesselAppearance.Envelope(min,max,visualPorts,visualSpargers,visualKinds);
     }
 
     @Override public void onLoad() {
@@ -1156,6 +1164,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             tag.putDouble("Power", core.getTotalPowerFractionOfRated());
             tag.putDouble("Pressure", core.getPressurePsig());
             tag.putDouble("Level", core.getIndicatedLevelIn());
+            // The free surface follows physical level, not reference-leg instrument error.
+            tag.putDouble("VisualWaterLevel", core.getTwoPhaseLevelIn());
+            tag.putBoolean("VisualWaterPresent",core.getPressureVessel().getLiquidMassKg()>0.001);
             tag.putInt("ChargedAccumulators", core.getChargedAccumulatorCount());
         }
         return tag;
@@ -1163,6 +1174,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     @Override
     public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries) {
+        boolean hadWater=clientWaterPresent;
+        double previousWater=clientWaterLevelIn(0);
         vesselState = VesselState.byName(tag.getString("VesselState"));
         // Everything getUpdateTag sends is stored, not just the vessel state.
         // Five of the six keys used to be read and thrown away here, so the
@@ -1186,6 +1199,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         clientPowerFractionOfRated = tag.getDouble("Power");
         clientPressurePsig = tag.getDouble("Pressure");
         clientLevelIn = tag.getDouble("Level");
+        clientWaterPresent=clientFormed&&tag.getBoolean("VisualWaterPresent");
+        double water=tag.getDouble("VisualWaterLevel");
+        clientWaterLevel=Double.isFinite(water)?water:-530;
+        clientWaterFrom=hadWater?previousWater:clientWaterLevel;
+        clientWaterSyncTick=level==null?0:level.getGameTime();
         clientChargedAccumulators = tag.getInt("ChargedAccumulators");
     }
 
@@ -1212,6 +1230,15 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private double clientPressurePsig;
     private double clientLevelIn;
     private int clientChargedAccumulators;
+    private boolean clientWaterPresent;
+    private double clientWaterLevel=-530,clientWaterFrom=-530;
+    private long clientWaterSyncTick;
+
+    public boolean clientWaterPresent(){return clientWaterPresent;}
+    public double clientWaterLevelIn(float partial) {
+        double t=level==null?1:Math.clamp((level.getGameTime()-clientWaterSyncTick+partial)/SYNC_INTERVAL_TICKS,0,1);
+        return clientWaterFrom+(clientWaterLevel-clientWaterFrom)*t;
+    }
 
     /** @see #handleUpdateTag */
     public boolean clientFormed() {

@@ -30,6 +30,16 @@ public final class FuelVarietyRegressionTests {
         }
         h.assertTrue(FuelFabrication.select(FuelFabrication.Family.URANIUM,.027).name().equals("uranium_27"),"Fabricator ignores low enrichment grades");
         h.assertTrue(FuelFabrication.select(FuelFabrication.Family.URANIUM,.2).name().equals("heu"),"HEU compatibility lost");
+        h.assertTrue(FuelFabrication.select(FuelFabrication.Family.URANIUM,.035).name().equals("leu"),"BWR high grade not selected");
+        h.assertTrue(FuelTypes.catalogue().size()==17&&FuelTypes.catalogue().stream().noneMatch(t->t.name().equals("uranium_12")||t.name().equals("uranium_14")),"Retired fuel still offered");
+        for(String legacy:new String[]{"uranium_12","uranium_14"}) {
+            var type=FuelTypes.byNameOrPreset(legacy);
+            var original=new FuelAssemblyData(legacy,type.nominalEnrichmentWeightFraction(),180,21,.4);
+            var item=FuelAssemblyItem.stackOf(BwrItems.FUEL_ASSEMBLY.get(),original);
+            var restored=ItemStack.parse(h.getLevel().registryAccess(),item.save(h.getLevel().registryAccess())).orElseThrow();
+            h.assertTrue(FuelAssemblies.dataOf(restored).equals(original),"RVU rewrote a legacy fuel history");
+            h.assertTrue(!FuelFabrication.select(FuelFabrication.Family.URANIUM,type.nominalEnrichmentWeightFraction()).name().equals(legacy),"Fabricator still offers retired step");
+        }
         for(var k:CoreInsert.Kind.values()) {
             var data=new CoreInsertData(k,123);var stack=SpecialtyRodItem.stack(data);
             var restored=ItemStack.parse(h.getLevel().registryAccess(),stack.save(h.getLevel().registryAccess())).orElseThrow();
