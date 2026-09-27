@@ -60,6 +60,8 @@ def import_pack(archive):
             if isinstance(controller, dict):
                 controller = controller['offset']
             manifest['game_ports'] = [dict(role=r,cell=p,face=f) for r,p,f in PORTS[id]]
+            if id == 'rip_pump':
+                manifest['status'] = 'Registered reactor internal pump; compact vessels require a valid scaled bottom-head mount'
             manifest.pop('rotations', None)
             for cell in manifest['cells']:
                 cell['bounds'] = [min(1,max(0,value)) for value in cell['bounds']]

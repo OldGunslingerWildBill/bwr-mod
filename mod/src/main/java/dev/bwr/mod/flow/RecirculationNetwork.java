@@ -33,6 +33,7 @@ public final class RecirculationNetwork {
     /** RIP mounting plane crosses the bottom head, with the motor below the vessel. */
     public static boolean installedRip(Level level,ReactorStructure vessel,BlockPos pos) {
         if(vessel==null || !level.isLoaded(pos)) return false;
+        if(!vessel.internalPumpPositions().contains(pos))return false;
         BlockState s=level.getBlockState(pos);
         if(!(s.getBlock() instanceof PumpAssemblyBlock b) || b.kind()!=PumpAssemblyBlock.Kind.RIP
                 || !b.isFull(s) || !b.complete(level,pos,s)) return false;

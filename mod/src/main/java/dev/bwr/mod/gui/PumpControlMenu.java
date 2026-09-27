@@ -59,6 +59,10 @@ public class PumpControlMenu extends BwrMenu {
                     && level().getBlockEntity(p.getControllerPos()) instanceof ReactorControllerBlockEntity owner && owner.isFormed()?owner:null;
             pressure=c==null?0:c.core().getPressurePsig(); temperature=c==null?Double.NaN:c.core().getCoolantTemperatureC();
             connection=c==null?"Recirculation loop disconnected":"Recirculation loop connected";
+            if(p.getBlockState().is(dev.bwr.mod.registry.BwrBlocks.RIP_PUMP.get())) {
+                drive="Electric internal recirculation";
+                connection=c==null?"RIP mount invalid / incomplete":"Mounted inside reactor vessel";
+            }
         } else {
             var p=eccs?((EccsPumpBlockEntity)be).pump():((FeedwaterPumpBlockEntity)be).pump();
             turbine=p.design().drive()==PumpDesign.Drive.STEAM_TURBINE;

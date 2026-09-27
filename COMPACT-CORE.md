@@ -77,10 +77,13 @@ or reloading restores sharing without generating water or FE. The connection
 map is cached until blocks, capabilities or chunk availability change; it is
 not rebuilt every tick. The bounded group limit is 4,096 drives.
 
-Internal recirculation pumps need the unused corner spaces: placing one through
-a required CRD column prevents formation. A north-facing RIP can straddle the
-northwest shell corner, with its mounting plane on the bottom shell and its wet
-end inside the corner. External pumps and jet pumps retain their existing roles.
+Internal recirculation pumps use specific 2 x 2 bottom-head mounts in a ring
+around a smaller, continuous core and shroud. Installing the first RIP reserves
+this entire annulus; further pumps add flow without changing the fuel map.
+Ordinary reactors keep the capacities above. See [RIP construction and capacity
+tradeoffs](INTERNAL-PUMPS.md). Conversion refuses to discard occupied peripheral
+fuel slots. Surviving drives retain position and demand by physical location.
+Refresh cached numeric rod IDs when switching between ordinary and RIP cores.
 
 ## Control and persistence
 
@@ -111,6 +114,17 @@ reassigned by resizing around live fuel or a saved transient. To change its
 footprint, shut down, cool, defuel and replace the controller. Rebuilding the
 original footprint restores the retained core.
 
-Client and server must both use the current update (GUI protocol 7). The GUI
+Client and server must both use the current update (GUI protocol 10). The GUI
 carries exact fuel indices and sparse drive positions. The 42 × 42 logical storage grid supports
 the largest mask without the old 961-position storage ceiling.
+
+## RIP perimeter packing in alpha.20
+
+With internal pumps, the 17 × 17 core now has **476 fuel positions and 109
+blades**; the 23 × 23 has **1,084 positions and 253 blades**. The ordinary counts
+in the table above do not change. Fuel slots and Blender geometry use the same
+shroud-clearance calculation. Peripheral blades can own one to three positions;
+complete cells retain four. Additional drives are physical blocks, participate
+in the nodal solve and use the existing hydraulic/FE supply network.
+
+[Upgrade coordinates and packing constraints](INTERNAL-PUMPS.md#upgrading-an-alpha18-or-alpha19-rip-installation-to-alpha20).

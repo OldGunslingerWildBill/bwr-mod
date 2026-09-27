@@ -9,7 +9,7 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-alpha.15` — scalable modeled core and sealed vessel heads, September 26, 2026.
+**Current version:** `0.1.0-alpha.20` — usable perimeter fuel packing and additional control blades, September 27, 2026.
 
 See the [full changelog](CHANGELOG.md) for the hardware, performance, condenser,
 fuel and irradiation updates.
@@ -25,6 +25,17 @@ Reactors now display the actual loaded core beneath the removable head: fuel
 channels, lifting handles, support grids, shroud and bottom-entry cruciform blades.
 The artwork uses Columbia FSAR diagrams, while preserving existing saved core
 layouts. See [Columbia references and core models](COLUMBIA-CORE-REFERENCE.md).
+
+Reactor internal pumps now mount beneath the bottom head at scalable, highlighted
+sites. The visible RIP shroud now uses the GE ABWR vessel/shroud dimensions,
+with a continuous fuel array scaled to fit it. On a 17 × 17 vessel the annular
+gap is 1.62 blocks per side, down from 2.78. Additional pumps add powered flow
+without cutting holes or shrinking the core again. Alpha.20 fills usable perimeter gaps with real fuel slots: **476 assemblies /
+109 blades at 17 × 17**, and **1,084 / 253 at 23 × 23** with RIPs. Pump
+mounts stay in place; existing 17 × 17 RIP plants need eight additional drives.
+Ordinary 17 × 17 cores remain at 764 assemblies.
+A new Blender hydraulic control rod drive uses Columbia FSAR references.
+See [RIP placement, capacities and CRD model](INTERNAL-PUMPS.md).
 
 Core-spray segments now display as scaled circular headers with modeled nozzles
 inside formed reactors. The former ADS items are named **Pressure Relief Valve**
@@ -59,7 +70,7 @@ BWR model. Specialty irradiation now takes 24–168 operating hours at rated
 local flux. A completed tritium rod yields 1,250 samples, processable into
 12,500,000 mB (12,500 buckets) of tritium through a powered Chemical Oxidizer when Mekanism and
 Mekanism Generators are installed. Install
-alpha.15 on both client and server; GUI protocol remains 10.
+alpha.20 on both client and server; GUI protocol remains 10.
 
 The first-publication candidate adds live CC:Tweaked faces across the machine
 registry, segmented water temperatures, condenser backpressure that affects LP

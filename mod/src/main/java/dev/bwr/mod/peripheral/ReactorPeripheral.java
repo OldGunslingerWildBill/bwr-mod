@@ -91,6 +91,24 @@ public class ReactorPeripheral implements IPeripheral {
     @LuaFunction(mainThread = true)
     public int getInstalledInternalPumps() { return be.getInstalledInternalPumps(); }
 
+    /** Lower-X/lower-Z corner of each 2x2 flange, independent of facing.
+     * Diameter/area ratios retain the conservative seed mask for compatibility;
+     * getCoreLayout reports the final packed fuel/drive count. They are not visual shroud ratios. */
+    @LuaFunction(mainThread = true)
+    public java.util.List<java.util.Map<String,Object>> getInternalPumpMounts() {
+        if(!be.isFormed()||be.coreLayoutVersion()==1)return java.util.List.of();
+        var s=be.structure();var min=s.interiorMin();
+        var result=new java.util.ArrayList<java.util.Map<String,Object>>();
+        int w=s.interiorMax().getX()-min.getX()+1,d=s.interiorMax().getZ()-min.getZ()+1;
+        var design=dev.bwr.core.fuel.InternalPumpLayout.design(w,d);
+        for(var m:design.mounts())
+            result.add(java.util.Map.of("x",min.getX()+m.x(),"y",min.getY()-1,"z",min.getZ()+m.z(),
+                    "width",2,"depth",2,"clearanceBelow",3,"coreDiameterRatio",design.coreScale(),
+                    "coreAreaRatio",design.areaFraction(),"capacityKgPerS",
+                    dev.bwr.core.flow.RecirculationSizing.INTERNAL_PUMP_UNITS*dev.bwr.core.flow.RecirculationSizing.JET_FLOW_KG_PER_S));
+        return result;
+    }
+
     /** Read-only volume-derived targets for normal jets and full-speed external drives. */
     @LuaFunction(mainThread = true)
     public java.util.Map<String,Object> getRecirculationSizing() {

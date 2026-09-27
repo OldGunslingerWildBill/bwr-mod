@@ -71,6 +71,9 @@ public final class ReactorStructure {
     private final int assemblyCount;
     private final dev.bwr.core.fuel.CompactCoreLayout compactLayout;
     private double sprayRingCompleteness = 1.0;
+    private List<BlockPos> internalPumpPositions=List.of();
+    public List<BlockPos> internalPumpPositions(){return internalPumpPositions;}
+    public int[] driveCells(){return crdPositions.stream().mapToInt(p->(p.getX()-interiorMin.getX())*21+p.getZ()-interiorMin.getZ()).toArray();}
 
     private ReactorStructure(BlockPos interiorMin, BlockPos interiorMax,
                              List<BlockPos> rodPositions, List<BlockPos> crdPositions,
@@ -281,7 +284,9 @@ public final class ReactorStructure {
         // Rod lattice: one rod per 2x2 assembly group, offset one in from the wall.
         List<BlockPos> rods = new ArrayList<>();
         List<BlockPos> crds = new ArrayList<>();
-        var compact = version == 1 ? null : new dev.bwr.core.fuel.CompactCoreLayout(width, depth);
+        var internalPumps=InternalPumpMounts.inspect(level,min,max,version,result);
+        if(!result.isValid())return null;
+        var compact = version == 1 ? null : new dev.bwr.core.fuel.CompactCoreLayout(width, depth,!internalPumps.roots().isEmpty());
         var driveCells = new java.util.HashSet<Integer>();
         if (compact != null) for (var drive : compact.drives()) driveCells.add(drive.x()*depth + drive.z());
         int assemblies = compact == null ? width*depth : compact.assemblyCount();
@@ -335,6 +340,7 @@ public final class ReactorStructure {
         ReactorStructure structure =
                 new ReactorStructure(min, max, rods, crds, steamOutlets, waterPorts, activeFuelTopY, assemblies, compact);
         structure.sprayRingCompleteness = ringCompleteness;
+        structure.internalPumpPositions=internalPumps.roots();
         return structure;
     }
 

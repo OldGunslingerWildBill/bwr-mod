@@ -89,7 +89,7 @@ public final class BwrBlocks {
      * its rod. A missing drive means the multiblock does not form.
      */
     public static final DeferredBlock<ControlRodDriveBlock> CONTROL_ROD_DRIVE =
-            BLOCKS.register("control_rod_drive", () -> new ControlRodDriveBlock(machine()));
+            BLOCKS.register("control_rod_drive", () -> new ControlRodDriveBlock(machine().noOcclusion()));
 
     /**
      * Core spray sparger segment. Assembled into a ring around the core

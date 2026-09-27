@@ -202,7 +202,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
         readout(g,"Steam equivalent*",big(c.steamEquivalentKgPerS())+" kg/s",12,82,244,TEXT_BRIGHT);
         text(g,"RECIRCULATION",12,96,ACCENT);
         readout(g,"Jets matched / needed",c.matchedJetAssemblies()+" / "+c.requiredJets(),12,108,244,TEXT_BRIGHT);
-        readout(g,"RCPs installed / needed",c.externalPumps()+" / "+c.requiredExternalPumps(),12,120,244,TEXT_BRIGHT);
+        readout(g,"RCP / RIP installed",c.externalPumps()+" / "+c.internalPumps(),12,120,244,TEXT_BRIGHT);
         readout(g,"Flow ceiling",pct(c.flowCeilingFraction())+" | "+big(c.flowCeilingKgPerS())+" kg/s",12,132,244,TEXT_BRIGHT);
         readout(g,"Vessel interior volume",c.interiorVolume()+" blocks^3",12,144,244,TEXT_BRIGHT);
         text(g,"LIVE OUTPUT",12,158,ACCENT);
@@ -226,6 +226,8 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Component.literal("Place bases 1 or 2 blocks above the bottom shell; face oppositely."),
                 Component.literal("Each RCP supports up to "+dev.bwr.core.flow.RecirculationSizing.JETS_PER_EXTERNAL_PUMP+" normal placed jet assemblies."),
                 Component.literal("Targets assume normal jets and full-speed external pumps."),
+                Component.literal("Full-flow estimate: "+c.requiredExternalPumps()+" RCPs with jets, or "+(int)Math.ceil(c.requiredJets()/dev.bwr.core.flow.RecirculationSizing.INTERNAL_PUMP_UNITS)+" RIPs."),
+                Component.literal("RIPs need valid floor mounts and FE; hold a RIP to show mounting sites."),
                 Component.literal("Unmatched jets: "+c.unmatchedJetAssemblies()+"; internal pumps: "+c.internalPumps()),
                 Component.literal("Required core flow: "+big(c.requiredFlowKgPerS())+" kg/s"),
                 Component.literal("Actual core flow: "+big(menu.coreFlowKgPerS)+" kg/s"));

@@ -95,7 +95,7 @@ not a separate measurement of motive water through the external pump.
 
 Saved `large` jet assemblies retain their 1.5 multiplier; mixed-size opposing
 sets use the smaller rating. The ten-assembly drive limit counts normal-rating
-equivalents. Each mounted RIP adds 1.2 normal equivalents, so its absolute
+equivalents. Each mounted RIP adds 3 normal equivalents, so its absolute
 capacity is fixed and its percentage contribution decreases on larger vessels.
 
 Speed, power limits and coastdown still apply. A stopped parallel RCP never
@@ -103,10 +103,15 @@ dilutes running pumps. Shared headers and duplicate registrations do not create
 extra capacity. Total delivery is capped at the vessel's rated target. No
 automatic start, trip or speed control is added.
 
+For the peripheral bottom-head ring, continuous reduced core/shroud and
+hydraulic CRD model, see [internal pumps](INTERNAL-PUMPS.md). The first RIP
+selects the smaller core; additional pumps increase flow without removing fuel
+columns or reducing its diameter again.
+
 ## Reactor INFO tab
 
 Open the reactor controller and select **INFO**. It shows loaded bundles,
-matched/required jet assemblies, installed/required external pumps, flow capacity,
+matched/required jet assemblies, installed external/internal pumps, flow capacity,
 interior volume and live thermal/steam output. Hover the circulation rows for
 unmatched jets, internal pumps, required kg/s and actual kg/s; hover volume for
 the sizing rule, water temperature and inlet subcooling. Hover the fuel

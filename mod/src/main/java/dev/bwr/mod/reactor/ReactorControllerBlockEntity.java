@@ -118,6 +118,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private long clientBladeSyncTick;
     private int coreLayoutVersion = dev.bwr.core.fuel.CompactCoreLayout.VERSION;
     private int savedInteriorWidth, savedInteriorDepth;
+    private int[] savedDriveCells=new int[0];
     public int coreLayoutVersion() { return coreLayoutVersion; }
     private ValidationResult lastValidation = new ValidationResult();
     private boolean structureDirty = true;
@@ -501,9 +502,26 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         for(int slot:found.fuelPositions()) allowed.add(slot);
         var saved=core!=null ? writeCoreFuel() : savedFuelOrEmpty();
         for(int i=0;i<saved.size();i++) if(!allowed.contains(saved.getCompound(i).getInt("Slot"))) {
-            result.fail(getBlockPos(),"Cannot shrink vessel while fuel occupies outer positions. Restore the previous vessel and unload those bundles, or recover the fuel by removing the controller.");
+            result.fail(getBlockPos(),"Fuel occupies positions reserved by the new vessel/RIP layout. Restore the previous layout and unload those bundles, or recover the fuel by removing the controller.");
             structure=null;
             return;
+        }
+        int[] nextDriveCells=found.driveCells();
+        // Alpha.15 and earlier compact saves used the complete footprint's raster drive list.
+        if(coreLayoutVersion!=1 && savedDriveCells.length==0 && savedInteriorWidth>0)
+            savedDriveCells=new dev.bwr.core.fuel.CompactCoreLayout(savedInteriorWidth,savedInteriorDepth).drives()
+                    .stream().mapToInt(d->d.x()*21+d.z()).toArray();
+        boolean driveLayoutChanged=coreLayoutVersion!=1 && savedDriveCells.length>0
+                && !java.util.Arrays.equals(savedDriveCells,nextDriveCells);
+        if(driveLayoutChanged) {
+            var snapshot=core==null?pendingRestore:core.toState();
+            var demand=rodNetwork==null?pendingRodDemand:rodNetwork.getCommandedNotchIndices();
+            try {
+                if(snapshot!=null)CoreDriveRemap.state(snapshot,savedDriveCells,nextDriveCells);
+                CoreDriveRemap.demands(demand,savedDriveCells,nextDriveCells);
+            }catch(IllegalArgumentException invalid){
+                result.fail(getBlockPos(),"Cannot reconcile saved RIP/drive layout: "+invalid.getMessage());structure=null;return;
+            }
         }
         structure = found;
         savedInteriorWidth = width;
@@ -512,7 +530,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         for (BlockPos portPos : found.waterInjectionPositions())
             if (level.isLoaded(portPos) && level.getBlockEntity(portPos) instanceof RpvWaterInjectionPortBlockEntity port)
                 port.noteController(getBlockPos());
-        boolean rebuild = core == null || core.getControlRodCount() != found.controlRodCount();
+        boolean rebuild = core == null || core.getControlRodCount() != found.controlRodCount() || driveLayoutChanged;
 
         // Kept truthful whether or not a rebuild follows. Both are copied into
         // the core at construction and never read again, so writing them here
@@ -532,6 +550,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 pendingBoundaryRestore = BoundaryDamageNbt.write(core.getBoundaryStress());
                 pendingRodDemand = rodNetwork == null
                         ? null : rodNetwork.getCommandedNotchIndices();
+            }
+            if(driveLayoutChanged) {
+                if(pendingRestore!=null)pendingRestore=CoreDriveRemap.state(pendingRestore,savedDriveCells,nextDriveCells);
+                pendingRodDemand=CoreDriveRemap.demands(pendingRodDemand,savedDriveCells,nextDriveCells);
             }
             core = new ReactorCore(config, new dev.bwr.core.fuel.CoreLoading(found.latticeWidth()));
             // Install before restoring: fromState re-solves the saved rod pattern.
@@ -593,6 +615,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                     BoundaryDamageNbt.configurationFor(0));
         }
 
+        savedDriveCells=nextDriveCells;
         double ratedFlow=dev.bwr.mod.flow.RecirculationNetwork.sizing(found).ratedFlowKgPerS();
         if (ratedFlow != core.getVoidModel().getRatedCoreFlowKgPerS()) {
             core.setRatedCoreFlowKgPerS(ratedFlow);
@@ -614,7 +637,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                     && p.getZ()!=min.getZ() && p.getZ()!=max.getZ())continue;
             if(level.isLoaded(p)) {
                 var s=level.getBlockState(p);
-                if(!s.isAir() && !s.is(dev.bwr.mod.registry.BwrBlocks.REACTOR_VESSEL.get()))visualPorts.add(p.immutable());
+                if(!s.isAir() && !s.is(dev.bwr.mod.registry.BwrBlocks.REACTOR_VESSEL.get())
+                        && !s.is(dev.bwr.mod.registry.BwrBlocks.RIP_PUMP.get()))visualPorts.add(p.immutable());
             }
         }
         var visualSpargers=new java.util.ArrayList<VesselAppearance.Sparger>();
@@ -685,6 +709,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         // its square, and the lattice by CoreLoading.
         long signature = ((long) width << 48) | ((long) depth << 32)
                 | ((long) found.controlRodCount() << 16) | latticeWidth;
+        // A different RIP arrangement can retain the same rod count.
+        if(!java.util.Arrays.equals(savedDriveCells,found.driveCells()))rodLatticeMapSignature=Long.MIN_VALUE;
         if (signature == rodLatticeMapSignature
                 && core.getNodalFluxSolver().hasExplicitRodLatticeMap()) {
             return;
@@ -980,6 +1006,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         tag.putInt("CoreLayoutVersion", coreLayoutVersion);
         tag.putInt("CoreInteriorWidth", savedInteriorWidth);
         tag.putInt("CoreInteriorDepth", savedInteriorDepth);
+        tag.putIntArray("CoreDriveCells",savedDriveCells);
 
         net.minecraft.nbt.ListTag pumps = new net.minecraft.nbt.ListTag();
         for (BlockPos p : pumpPositions) {
@@ -1031,6 +1058,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         coreLayoutVersion = tag.contains("CoreLayoutVersion") ? tag.getInt("CoreLayoutVersion") : 1;
         savedInteriorWidth = tag.getInt("CoreInteriorWidth");
         savedInteriorDepth = tag.getInt("CoreInteriorDepth");
+        savedDriveCells=tag.getIntArray("CoreDriveCells");
 
         pumpPositions.clear();
         net.minecraft.nbt.ListTag pumps = tag.getList("Pumps", net.minecraft.nbt.Tag.TAG_LONG);

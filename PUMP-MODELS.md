@@ -133,21 +133,21 @@ hardware ceiling. The reactor INFO tab also shows unmatched assemblies and pumps
 
 ### Reactor internal pump
 
-The RIP is a bottom-head penetration. Prepare a 2 × 2 opening along the vessel's
-bottom-head rim and clearance below it, then place its controller at floor height. The assembly
-extends **three blocks below** that controller and one above it. Its mounting
-cells complete the pressure boundary; the flange may overlap the shell's outer
-row while the wet end overlaps the interior. This leaves the required control-rod
-drives clear. For a north-facing model on the west rim, put the controller in the
-west shell column so the model's east column enters the interior. It needs no external drive-water pipe and its
-mechanical mounting flange is not a pipe port.
+The RIP is a 2 x 2 x 5 bottom-head penetration. Compact reactors now use
+specific scaled mounting sites around a smaller central core and shroud.
+The entire pump ring is reserved with the first RIP; more pumps add flow
+without cutting holes in the core. Hold a pump beside a formed reactor for cyan guides.
+Its mounting flange occupies the bottom shell level; the motor extends three
+blocks below and the wet end one block above. No external drive-water pipe is
+needed. See [installation, coordinates and capacity tradeoffs](INTERNAL-PUMPS.md).
 
-Each complete mounted RIP contributes up to **1.2 normal jet equivalents × actual shaft speed**
-(10% of the smallest reactor's rating), powered
-and controlled through the existing recirculation-pump GUI/peripheral. It also
-updates the reactor's existing internal-pump boundary configuration. The new
-crafting recipe uses an external recirculation pump, three vessel blocks and a
-copper block.
+Each complete powered RIP contributes up to **3 normal jet equivalents x actual
+shaft speed** (25% of the smallest reactor's rating). The existing pump panel
+and peripheral control it. The recipe still uses an external recirculation pump,
+three vessel blocks and a copper block. Legacy version-1 rim mounts remain
+compatible; older compact version-2 installations must move to the alpha.17
+peripheral ring. Alpha.18 shifts its tightest sites slightly outward for a
+larger central core. The linked guide explains coordinates, fuel recovery and conversion.
 
 ## Source and implementation
 

@@ -1,5 +1,68 @@
 # Changelog
 
+## 0.1.0-alpha.20 — 2026-09-27
+
+- Filled usable gaps around the RIP core perimeter with actual loadable fuel slots.
+- 17 × 17 RIP cores increase from 444 to **476 assemblies**, with **109 control
+  blades** instead of 101. 23 × 23 cores increase to **1,084 / 253**.
+- Added controls to partial peripheral fuel groups where the blade and guide fit.
+  Complete four-assembly groups retain a valid physical drive.
+- Shared the packing dimensions between simulation, Minecraft and Blender; kept
+  the ABWR shroud size and pump mounts in place. Preserved every old fuel slot.
+- Existing 17 × 17 RIP plants need eight additional CRDs; 23 × 23 plants need
+  twelve. Surviving rod state is remapped by position, so refresh cached CC rod IDs.
+- Added packing checks across all 289 footprints and an alpha.19 save-upgrade
+  regression covering fuel, controls, missing new drives and save/reload.
+
+## 0.1.0-alpha.19 — 2026-09-26
+
+- Corrected the visible RIP annulus using GE ABWR DCD Table 5.3-2: 7,112 mm
+  vessel ID, 5,600.7 mm shroud OD and 57.2 mm shroud wall.
+- The 17 × 17 shroud grows from 9.68 to 12.00 blocks across; the radial gap
+  decreases from 2.78 to 1.62 blocks. The same proportions scale to every size.
+- Rebuilt the RIP shroud and rim in Blender and expanded the displayed fuel,
+  supports, guides and control blades together. The core remains continuous.
+- Separated visual dimensions from Minecraft construction-clearance masks.
+  Saved fuel capacities, drive identities, pump mounts and circulation are unchanged.
+- Added a top-down Minecraft review and checks of actual baked shroud dimensions,
+  fuel fit and reuse of uploaded GPU geometry.
+
+## 0.1.0-alpha.18 — 2026-09-26
+
+- Enlarged the continuous RIP core and shroud by moving the tightest pump sites
+  slightly outward while maintaining the existing clearances.
+- A 17 × 17 RIP reactor now holds 444 assemblies and 101 control drives, up from
+  408 and 97. Its twelve pump sites remain; only four diagonal sites move.
+- A 23 × 23 RIP core now holds 1,036 assemblies, up from 964. Ordinary core
+  capacities, pump counts, equipment dimensions and flow ratings are unchanged.
+- Updated Blender layout reviews, mounting coordinates and upgrade guidance.
+
+## 0.1.0-alpha.17 — 2026-09-26
+
+- Replaced the holes above internal pumps with one continuous, smaller core.
+- Reduced the core shroud and fuel/drive layout together, reserving a peripheral
+  pump ring with clearance from the shroud and vessel wall.
+- Additional RIPs now add flow without cutting more holes or reducing core size
+  again. Ordinary reactors retain their existing capacities.
+- Added diameter/area ratios to the CC mounting query and updated placement
+  guides with the new ring coordinates and upgrade instructions.
+- Reviewed matching Blender scenes and Minecraft cores at minimum, reference,
+  maximum and rectangular sizes. Preserved fuel-conversion checks, surviving
+  control-drive state and reusable GPU geometry.
+
+## 0.1.0-alpha.16 — 2026-09-26
+
+- Made reactor internal pumps form through a scalable bottom-head mounting grid,
+  with 4, 12 and 16 sites at 7-, 17- and 23-block-wide vessels.
+- Added held-item mount outlines and the CC:Tweaked `getInternalPumpMounts()` query.
+- Installed RIPs reserve fuel/drive positions, require FE and contribute real
+  core flow. Each powered full-speed RIP supplies three jet-equivalent units.
+- Protected loaded fuel during conversion; preserved surviving rod positions,
+  accumulator charge and pending commands through mounting changes and reloads.
+- Added a Blender hydraulic control rod drive model referenced to Columbia FSAR
+  Figures 4.6-2/4.6-3, preserving shared water/FE and computer connections.
+- Updated pump status, reactor INFO, placement guides and model references.
+
 ## 0.1.0-alpha.15 — 2026-09-26
 
 - Added Blender-authored scalable core internals based on Columbia FSAR diagrams:

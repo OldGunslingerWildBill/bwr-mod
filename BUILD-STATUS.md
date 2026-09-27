@@ -1,5 +1,203 @@
 # Build Status
 
+## 2026-09-27 — 0.1.0-alpha.20: filled RIP core perimeter
+
+Built `mod/build/libs/mod-0.1.0-alpha.20.jar` (**24,784,779 bytes**).
+SHA-256: `1DE2553C92488FADA6E090BD83248297CD3E9D076C2E393BC4BC35F5C95B1570`.
+Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. GUI protocol **10**.
+
+- Replaced stretched rendering of the conservative seed mask with shared fuel
+  packing. Square support-cell corners, blade wings and guide tubes must clear
+  the shroud. Symmetric additions keep every row/column continuous and preserve
+  complete four-bundle control coverage outside pump construction footprints.
+- 17 × 17 RIP cores grow from **444 / 101** assemblies/blades to **476 / 109**.
+  23 × 23 grows from **1,036 / 241** to **1,084 / 253**; 7 × 7 grows from
+  **24 / 5** to **40 / 5**. Ordinary cores and pump mounts remain unchanged.
+- **12/12 focused core tests passed**: all 289 footprints, old-slot/drive
+  preservation, clearance, contiguous masks, real rod-to-bundle mapping,
+  available perimeter fill and recirculation. The full physics suite was not
+  repeated; no kinetics coefficients were changed.
+- **63/63 required Minecraft GameTests passed**. The new upgrade test reconstructs
+  an alpha.19 444-slot / 101-drive save, checks retained fuel while new drives are
+  missing, remaps all surviving controls, starts new drives inserted/uncharged,
+  then loads and saves a newly available fuel slot.
+- **Nine client scenarios passed**, including minimum/reference/maximum packing,
+  one RIP versus a full ring, actual baked model dimensions and material checks,
+  peripheral blade clearance, GUI mount status and stable GPU-upload counts.
+  Reviewed Minecraft reference/maximum/top-down screenshots and the rebuilt
+  Blender layout. Blender uses exported simulation pitches and legal slots.
+- Asset audit: **2,698 JSON files, zero problems**; **33 core assets** reproduce.
+  Final build, packaging checks and `git diff --check` passed. Verified the
+  nested core JAR contains the compiled packing implementation; dev fixtures
+  remain excluded.
+- Upgrade requires **eight more CRDs at 17 × 17**, or **twelve at 23 × 23**.
+  Controller diagnostics give missing coordinates. Refresh cached numeric CC
+  rod IDs; physical drive state is preserved. See [upgrade guidance](INTERNAL-PUMPS.md).
+
+Logs: `build-rip-alpha20-core.log`, `build-rip-alpha20-tests.log`,
+`build-rip-alpha20-client-build.log`, `build-rip-alpha20-assets.log`,
+`build-rip-alpha20-final.log`, `build-rip-alpha20-jar.log`.
+
+## 2026-09-26 — 0.1.0-alpha.19: ABWR shroud proportions
+
+Built `mod/build/libs/mod-0.1.0-alpha.19.jar` (**24,778,971 bytes**).
+SHA-256: `A552342BA76BE1D1BE6260F1D0553059A6CE7D0A462BBEF2D74483F9C04E018F`.
+Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. GUI protocol **10**.
+
+- Separated the displayed shroud dimensions from the saved construction/fuel mask.
+  GE ABWR DCD Table 5.3-2 supplies vessel ID 7,112 mm, shroud OD 5,600.7 mm,
+  and shroud wall 57.2 mm. The shroud OD / vessel ID ratio is 0.7875.
+- The 17 × 17 shroud is now **11.9952 blocks** across and its radial annulus is
+  **1.6184 blocks**, previously about 9.68 / 2.78. These proportions apply to
+  every size; rectangular vessels scale each horizontal axis independently.
+- Authored dedicated shroud/rim pieces in Blender, rebuilt four assembled review
+  scenes, and expanded fuel channels, supports, guides and blades together.
+  Existing alpha.18 mounts, capacity, drive IDs and fuel state are unchanged.
+- **11/11 focused core tests passed**, including all 289 construction footprints
+  and recirculation sizing. The full physics/server GameTest suites were not
+  repeated for this visual-only change; alpha.18's results remain below.
+- **Nine Minecraft client scenarios passed**, including minimum/reference/maximum
+  cores, a one-RIP core, underside, mounting outlines, pump panel and top-down
+  annulus. Checked the actual baked Blender vertex radii, materials, fuel fit
+  and stable GPU-upload counts. Inspected the resulting screenshots.
+- Asset audit: **2,698 JSON files, zero problems**. All **33 core model assets**
+  match their exports. Final `:mod:build`, JAR packaging audit and `git diff
+  --check` passed. Confirmed the JAR contains both new model variants and the
+  shared ABWR dimension class; no development fixtures are shipped.
+- No new ticking, topology scans, kinetics changes or plant control logic.
+
+Logs: `build-rip-alpha19-core.log`, `build-rip-alpha19-client-build.log`,
+`build-rip-alpha19-assets.log`, `build-rip-alpha19-final.log`,
+`build-rip-alpha19-jar.log`.
+
+## 2026-09-26 — 0.1.0-alpha.18: modest RIP core expansion
+
+Built `mod/build/libs/mod-0.1.0-alpha.18.jar` (**24,760,889 bytes**).
+SHA-256: `87D1673B21A2B8B67A5CA531605B7F0FA818C86105ABAC7D093085DE26E2EC7F`.
+Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. GUI protocol **10**.
+
+- Adjusted the most restrictive RIP sites by at most one block along each axis,
+  recovering core space while retaining the same pump count and clearances.
+  The 17 x 17 core grows from 408/97 assemblies/drives to **444/101**; its shroud
+  diameter grows from 9.39 to **9.68 blocks**. Only four diagonal sites move.
+- The 23 x 23 RIP core grows from 964 to **1,036 assemblies** with 241 drives.
+  The minimum core remains 24/5: its existing pump ring has no extra clearance.
+  Ordinary core capacities and all pump dimensions/flow ratings are unchanged.
+- **11/11 focused core tests passed**, checking all 289 footprints for symmetry,
+  continuous fuel rows/columns, nonoverlapping mounts, and vessel/shroud clearance.
+  Reference cardinal-side mounts are explicitly checked to stay in place.
+- **62/62 required Minecraft GameTests passed**, including formation, rotations,
+  pump power, interruptions, fuel protection and drive-state preservation.
+- **Eight client scenarios passed**, with no extra stationary GPU-cache uploads.
+  Inspected the expanded reference and maximum cores, underside, one-pump core
+  and mounting outlines. Rebuilt and visually reviewed the matching Blender
+  scenes. Current reference screenshots are in `art/models/reactor_core/`.
+- `:mod:build` and packaging checks passed. Confirmed the shipped core JAR
+  includes the new site adjustment. No development fixtures or Blender files
+  are bundled. Asset audit: **2,696 JSON files, zero problems**; all 27 existing
+  core assets match their exported Blender geometry.
+- Existing reference installations need the four diagonal RIPs relocated and
+  four more control drives. Existing allowed fuel positions are retained;
+  surviving rods are remapped by physical coordinate. Follow
+  [the updated installation guide](INTERNAL-PUMPS.md) and refresh cached rod IDs.
+- No kinetics or pipe-routing changes. The full kinetics acceptance suite was
+  not repeated for this geometry adjustment.
+
+Logs: `build-rip-alpha18-core.log`, `build-rip-alpha18-tests.log`,
+`build-rip-alpha18-client-build.log`, `build-rip-alpha18-assets.log`,
+`build-rip-alpha18-jar.log`.
+
+## 2026-09-26 — 0.1.0-alpha.17: continuous RIP core and peripheral pump ring
+
+Built `mod/build/libs/mod-0.1.0-alpha.17.jar` (**24,759,603 bytes**).
+SHA-256: `A802EF23DD06A7A4ECB75F74781998F06BE1087E411941A61EFDC20D193A1445`.
+Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. GUI protocol **10**.
+
+- Replaced alpha.16's per-pump fuel holes with a continuous smaller core and
+  shroud. Pump sites form a reflected peripheral ring. The first RIP selects
+  this layout; more pumps add flow without changing fuel/drive identities.
+- Shared diameter ratio uses shroud, vessel-wall and pump clearance. Circular
+  area scales with the square of that ratio; whole fuel cells are discrete.
+  A 17 x 17 RIP vessel has 408 fuel positions and 97 drives, with 12 pump sites.
+  The ordinary 764-position core remains unchanged. Details and the NRC/Hitachi
+  design references are in [INTERNAL-PUMPS.md](INTERNAL-PUMPS.md).
+- **62/62 required Minecraft GameTests passed**, including rotated mounting,
+  invalid/incomplete pumps, FE-dependent flow, fuel-loss prevention, surviving
+  drive state, reload, pump relocation and restoration after removing the last
+  RIP. Existing plant runtime harnesses also passed.
+- **11/11 focused core tests passed**, covering all 289 supported footprints:
+  no gaps inside any fuel row or column, symmetry, disjoint pump mounts and
+  clearance from the shroud and vessel. Existing circulation tests also passed.
+- **Eight client scenarios passed**: hydraulic CRD close-up, pump underside,
+  reference/minimum/maximum cores, mount guides, pump panel and the reference
+  core with just one RIP. All screenshots were inspected. A single pump and
+  the full ring have identical continuous core geometry. Stationary observation
+  windows produced no extra machine GPU-cache uploads; no FPS benchmark claimed.
+- Reviewed matching Blender scenes for minimum, reference, maximum and
+  rectangular layouts. Sources and current Minecraft screenshots are in
+  `art/models/reactor_core/`; the original core pieces remain unchanged.
+- **3 CRD and 27 core assets** passed deterministic export checks. Asset audit:
+  **2,696 JSON files, zero problems**. `git diff --check` passed.
+- `:mod:build`, the protection-logic guard and JAR packaging audit passed.
+  Verified the JAR contains the corrected ring calculation, shroud scale and
+  visual snapshot flag, along with the hydraulic CRD. Development fixtures,
+  Blender sources, reference PDFs and old CRD textures are excluded.
+- Upgrade: alpha.16 RIPs may require relocation; restore the ordinary floor and
+  drives to unload saved peripheral fuel before conversion. The game refuses
+  conversion that would discard fuel. Refresh cached rod IDs when changing
+  between ordinary and RIP layouts. See the guide for exact coordinates.
+- The full kinetics acceptance suite was not repeated. This patch changes the
+  allowed core geometry and rendered dimensions, not kinetics equations.
+
+Logs: `build-rip-alpha17-tests.log`, `build-rip-alpha17-client.log`,
+`build-rip-alpha17-final.log`, `build-rip-alpha17-assets.log`,
+`build-rip-alpha17-jar.log`. The earlier `build-rip-alpha17-core.log` includes a
+subsequently corrected client-fixture compile error; the final log is authoritative.
+
+## 2026-09-26 — 0.1.0-alpha.16: internal pump mounts and hydraulic CRDs
+
+Built `mod/build/libs/mod-0.1.0-alpha.16.jar` (**24,754,665 bytes**).
+SHA-256: `7435684395241D5FDC98AD15A2E54A12CBD0AB342832DE4769A1BDDB6B9371FC`.
+Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. GUI protocol **10**.
+
+- Complete powered RIPs now form through a scaled bottom-head grid. Compact
+  cores exclude their occupied fuel/drive columns; old unmodified cores keep
+  their capacities. Mounts are offered through held-item outlines and CC.
+- Added original Blender hydraulic CRD artwork based on Columbia FSAR section
+  4.6.1.1.2 and Figures 4.6-2/4.6-3. The exterior is compressed into one block
+  and chunk-baked, with 1,052 triangles. Shared water/FE and CC remain intact.
+  Columbia is the CRD reference, not the source of the game RIP layout.
+- **62/62 required Minecraft GameTests passed.** New cases exercise minimum,
+  reference, maximum and rectangular vessels, all four RIP facings, valid and
+  invalid mounts, FE-dependent capacity, interrupted assemblies, fuel protection,
+  save/reload and rod-coordinate remapping. Moving a pump with the same total
+  drive count preserves surviving blade state; restored drives are inserted
+  with empty accumulators. Existing plant regression harnesses also passed.
+- **11/11 focused core tests passed** (`CompactCoreLayoutTest` and
+  `RecirculationSizingTest`), including all 289 supported width/depth combinations,
+  disjoint mounts, capacity reduction and shared-manifold sizing/inversion.
+- **Seven client scenarios passed**: CRD close-up, pump underside, reference,
+  minimum and maximum reduced cores, mounting outlines and the RIP panel.
+  Reviewed Minecraft images are in `art/models/control_rod_drive/`.
+  Stationary observation windows had no additional machine GPU-cache uploads;
+  this is not a measured before/after FPS comparison.
+- Three CRD assets passed deterministic export verification. Asset audit:
+  **2,696 JSON files, zero problems**. Removed the two unused CRD cube textures.
+- `:mod:build`, the protection-logic guard and JAR packaging audit passed.
+  The final JAR includes the new mount/remapping code and OBJ resources, excludes
+  old CRD textures, development fixtures, Blender sources and the reference PDF.
+- The full kinetics acceptance suite was not repeated. Kinetics equations are
+  unchanged; physical drive mapping and RIP circulation capacity did change and
+  have the focused coverage above. RIP flow ratings remain gameplay values.
+- Upgrade notes: compact version-2 rim-mounted RIPs must move to the new grid.
+  Legacy version-1 rim rules remain supported. Refresh cached numeric rod IDs
+  after changing mounts. A RIP cannot displace occupied fuel without unloading.
+
+Guide: [internal pumps and hydraulic CRDs](INTERNAL-PUMPS.md).
+Logs: `build-rip-alpha16-tests.log`, `build-rip-alpha16-core.log`,
+`build-rip-alpha16-client.log`, `build-rip-alpha16-assets.log`,
+`build-rip-alpha16-final.log`, `build-rip-alpha16-jar.log`.
+
 ## 2026-09-26 — 0.1.0-alpha.15: scalable core internals and vessel seams
 
 Built `mod/build/libs/mod-0.1.0-alpha.15.jar` (**24,732,412 bytes**).

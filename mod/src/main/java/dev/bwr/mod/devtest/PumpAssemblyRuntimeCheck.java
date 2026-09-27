@@ -355,9 +355,11 @@ public final class PumpAssemblyRuntimeCheck {
         l.removeBlock(new BlockPos(173,195,130),false);
         check(RecirculationNetwork.measure(l,reactor,List.of(drive)).fraction()==0,"disconnected jet still drives flow");
         // The RIP crosses a prepared floor opening; it contributes independently of jet drive lines.
-        var rip=BwrBlocks.RIP_PUMP.get();BlockPos mount=new BlockPos(158,194,127);
-        for(int i=0;i<rip.cellCount();i++) l.removeBlock(mount.offset(rip.cellOffset(i)),false);
-        var rs=place(l,rip,mount,Direction.NORTH);
+        var bounds=reactor.structure();
+        var sites=dev.bwr.core.fuel.InternalPumpLayout.mounts(bounds.interiorMax().getX()-bounds.interiorMin().getX()+1,
+                bounds.interiorMax().getZ()-bounds.interiorMin().getZ()+1);
+        var mount=InternalPumpRegressionTests.install(l,bounds.interiorMin(),sites.getFirst(),Direction.NORTH);
+        var rs=l.getBlockState(mount);
         reactor.markStructureDirty();ReactorControllerBlockEntity.serverTick(l,reactor.getBlockPos(),reactor.getBlockState(),reactor);
         check(reactor.isFormed(),"RIP mount invalidated the vessel or displaced a CRD: "+reactor.statusLines());
         var internal=(RecirculationPumpBlockEntity)l.getBlockEntity(mount);internal.setTargetSpeedFraction(1);
@@ -369,7 +371,7 @@ public final class PumpAssemblyRuntimeCheck {
         check(menu.stillValid(player),"internal pump control menu closes immediately");
         for(int i=0;i<1000;i++) { internal.energy().receiveEnergy(Integer.MAX_VALUE,false);internal.tickPump(.05); }
         flow=RecirculationNetwork.measure(l,reactor,List.of(drive,mount));
-        check(flow.internalPumps()==1 && Math.abs(flow.fraction()-1.2/22)<1e-6,"mounted internal pump missing from flow: "+flow);
+        check(flow.internalPumps()==1 && Math.abs(flow.fraction()-3.0/22)<1e-6,"mounted internal pump missing from flow: "+flow);
     }
     private static void dvssLoop(ServerLevel l) {
         var reactor=vessel(l);var block=BwrBlocks.RECIRCULATION_PUMP.get();

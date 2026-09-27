@@ -5,18 +5,20 @@ import net.minecraft.nbt.CompoundTag;
 
 /** Immutable visual snapshot of the authoritative loading, separate from the shell
  * so refuelling cannot dirty/rebuild the vessel's chunks or shell mesh. */
-public record VesselCoreAppearance(int layoutVersion,int latticeWidth,List<Cell> cells,List<Drive> drives) {
+public record VesselCoreAppearance(int layoutVersion,int latticeWidth,List<Cell> cells,List<Drive> drives,boolean internalPumps) {
     public record Cell(int slot,int content) {} // 0 empty, 1 fuel channel, 2 specialty insert
     public record Drive(int x,int z) {} // physical drive offset in the interior footprint
     public VesselCoreAppearance {cells=List.copyOf(cells);drives=List.copyOf(drives);}
+    public VesselCoreAppearance(int version,int width,List<Cell> cells,List<Drive> drives){this(version,width,cells,drives,false);}
     public static VesselCoreAppearance capture(ReactorControllerBlockEntity be) {
         if(!be.isFormed())return null;
         var s=be.structure();var loading=be.core().getCoreLoading();var cells=new ArrayList<Cell>();
         for(int slot:s.fuelPositions())cells.add(new Cell(slot,loading.assemblyAt(slot)!=null?1:loading.isOccupied(slot)?2:0));
         var drives=s.crdPositions().stream().map(p->new Drive(p.getX()-s.interiorMin().getX(),p.getZ()-s.interiorMin().getZ())).toList();
-        return new VesselCoreAppearance(be.coreLayoutVersion(),s.latticeWidth(),cells,drives);
+        return new VesselCoreAppearance(be.coreLayoutVersion(),s.latticeWidth(),cells,drives,be.coreLayoutVersion()!=1&&!s.internalPumpPositions().isEmpty());
     }
     public void write(CompoundTag tag) {
+        tag.putBoolean("VisualInternalPumps",internalPumps);
         tag.putInt("VisualCoreVersion",layoutVersion);tag.putInt("VisualCoreLattice",latticeWidth);
         tag.putIntArray("VisualCoreCells",cells.stream().mapToInt(c->c.slot()*3+c.content()).toArray());
         tag.putIntArray("VisualCoreDrives",drives.stream().mapToInt(d->d.x()*21+d.z()).toArray());
@@ -34,6 +36,6 @@ public record VesselCoreAppearance(int layoutVersion,int latticeWidth,List<Cell>
             if(n<0||n/21>=e.width()-2||n%21>=e.depth()-2||!seen.add(n))return null;
             drives.add(new Drive(n/21,n%21));
         }
-        return new VesselCoreAppearance(version,width,cells,drives);
+        return new VesselCoreAppearance(version,width,cells,drives,version!=1&&tag.getBoolean("VisualInternalPumps"));
     }
 }

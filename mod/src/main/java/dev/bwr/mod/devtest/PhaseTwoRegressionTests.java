@@ -143,9 +143,8 @@ public final class PhaseTwoRegressionTests {
         build.setAccessible(true);build.invoke(null,level,origin,11);
         var root=origin.offset(11,3,5);level.setBlock(root,BwrBlocks.REACTOR_CONTROLLER.get().defaultBlockState(),2);
         var reactor=(ReactorControllerBlockEntity)level.getBlockEntity(root);
-        var block=BwrBlocks.RIP_PUMP.get();var mount=origin.offset(-1,-1,-1);
-        for(int i=0;i<block.cellCount();i++)level.removeBlock(mount.offset(block.cellOffset(i)),false);
-        var state=place(level,block,mount);var pump=(RecirculationPumpBlockEntity)level.getBlockEntity(mount);
+        var mount=InternalPumpRegressionTests.install(level,origin,dev.bwr.core.fuel.InternalPumpLayout.mounts(11,11).getFirst(),net.minecraft.core.Direction.NORTH);
+        var state=level.getBlockState(mount);var pump=(RecirculationPumpBlockEntity)level.getBlockEntity(mount);
         var validate=ReactorControllerBlockEntity.class.getDeclaredMethod("revalidate",Level.class);validate.setAccessible(true);validate.invoke(reactor,level);
         h.assertTrue(reactor.isFormed(),"RIP vessel did not form: "+reactor.statusLines());
         var jetCache=RecirculationNetwork.class.getDeclaredField("CACHE");jetCache.setAccessible(true);

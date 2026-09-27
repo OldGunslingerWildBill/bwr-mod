@@ -1,0 +1,10 @@
+{
+  "source": "GE ABWR DCD Tier 2, Table 5.3-2",
+  "vessel_id_mm": 7112.0,
+  "shroud_od_mm": 5600.7,
+  "shroud_wall_mm": 57.2,
+  "outer_radius": 0.3528,
+  "inner_radius": 0.3455937007874016,
+  "rim_radius": 0.3608,
+  "fuel_radius": 0.33868182677165354
+}

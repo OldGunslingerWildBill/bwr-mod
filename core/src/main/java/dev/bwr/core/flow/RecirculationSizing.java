@@ -8,7 +8,8 @@ public final class RecirculationSizing {
     public static final long BASE_VOLUME = 5L * 8 * 5;
     public static final int BASE_JETS = 12;
     public static final int JETS_PER_EXTERNAL_PUMP = 10;
-    public static final double INTERNAL_PUMP_UNITS = 1.2;
+    /** Four mounted RIPs can supply the minimum vessel's twelve-unit demand. */
+    public static final double INTERNAL_PUMP_UNITS = 3.0;
     public static final double UNASSISTED_EFFICIENCY = .1;
     public static final double JET_FLOW_KG_PER_S = VoidModel.RATED_CORE_FLOW_KG_PER_S / BASE_JETS;
 

@@ -16,6 +16,8 @@ Some retained figures have earlier amendment dates printed on their pages.
 | Figure 5.3-5 | 2158 | Labeled reactor vessel cutaway and internal component order |
 | Figure 4.2-1.1 | 1956 | Original cruciform control blade and lifting handle |
 | Figures 4.2-1.2 through 4.2-1.5 | 1957-1960 | Replacement control-blade drawings |
+| Section 4.6.1.1.2 | 1998-2001 | Bottom-entry hydraulic CRD housing, flanges, coupling and position indicator |
+| Figures 4.6-1 / 4.6-2 / 4.6-3 | 2031-2033 | Rod coupling and detailed control rod drive unit schematics |
 | Figure 4.1-1 | 1939 | Steam separator cutaway |
 | Figure 4.1-2 | 1940 | Steam dryer panels |
 | Table 4.3-3 | 1970 | Neutronic design values |
@@ -79,9 +81,18 @@ GPU mesh and change transforms rather than rebuilding the complete core.
 Closed vessels skip the internal draw when the camera is outside their bounds.
 There are no extra ticking blocks or per-frame world searches.
 
-Missing old visual tags display no invented fuel. Save format, core masks,
-hydraulics, kinetics, inventories, control IDs and player-written protection
-logic are unchanged. Install alpha.15 on client and server for matching visuals.
+Missing old visual tags display no invented fuel. The alpha.15 visual update preserved core masks,
+hydraulics, kinetics, inventories and control IDs. Alpha.17 replaces the
+alpha.16 per-pump exclusions with one smaller continuous core and shroud inside
+a peripheral RIP ring. Surviving drives are remapped by physical location; see
+[internal pumps and the hydraulic CRD](INTERNAL-PUMPS.md) for ABWR references
+and the game-space tradeoff. Player-written protection logic remains
+player-controlled. Alpha.18 expands that continuous core by adjusting the
+limiting pump sites outward. Alpha.19 uses GE ABWR Table 5.3-2 for the visible
+shroud and annulus, independently of the saved fuel/drive capacity mask. See
+[the ABWR dimensions and Blender sources](INTERNAL-PUMPS.md#abwr-proportions-alpha19). Alpha.20 fills the usable perimeter with additional fuel and blades while
+preserving existing slots; eight extra drives are required at 17 × 17. Install alpha.20 on
+client and server for matching behavior and visuals.
 
 Blender sources: `art/models/reactor_core/build_models.py` and
 `art/models/reactor_core/reactor_core.blend`. Export with

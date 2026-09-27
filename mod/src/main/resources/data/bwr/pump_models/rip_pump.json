@@ -1,6 +1,6 @@
 {
   "id": "rip_pump",
-  "status": "PREPARED RESOURCES; not installed or registered in the inspected mod",
+  "status": "Registered reactor internal pump; compact vessels require a valid scaled bottom-head mount",
   "width": 2,
   "height": 5,
   "depth": 2,

@@ -78,6 +78,15 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
         }
         pose.popPose();
         var player=Minecraft.getInstance().player;
+        if(core!=null && core.layoutVersion()!=1 && player!=null && (player.getMainHandItem().is(BwrBlocks.RIP_PUMP.get().asItem())
+                || player.getOffhandItem().is(BwrBlocks.RIP_PUMP.get().asItem()))) {
+            for(var mount:dev.bwr.core.fuel.InternalPumpLayout.mounts(e.width()-2,e.depth()-2)) {
+                var p=e.min().offset(1+mount.x(),0,1+mount.z());
+                var box=new AABB(p.getX(),p.getY()-3,p.getZ(),p.getX()+2,p.getY()+2,p.getZ()+2)
+                        .move(-be.getBlockPos().getX(),-be.getBlockPos().getY(),-be.getBlockPos().getZ());
+                LevelRenderer.renderLineBox(pose,buffers.getBuffer(RenderType.lines()),box,.15f,.9f,1f,.85f);
+            }
+        }
         if(player!=null && (player.getMainHandItem().is(BwrBlocks.REACTOR_VESSEL.get().asItem())
                 || player.getOffhandItem().is(BwrBlocks.REACTOR_VESSEL.get().asItem()))) {
             var box=getRenderBoundingBox(be).move(-be.getBlockPos().getX(),-be.getBlockPos().getY(),-be.getBlockPos().getZ());
