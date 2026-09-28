@@ -76,16 +76,25 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
         grid = addRenderableWidget(new LatticeGridWidget(
                 leftPos + GRID_X, topPos + GRID_Y, GRID_W, GRID_H, cell -> {
         }));
+        grid.enableRefuellingControls();
+        addRenderableWidget(Button.builder(Component.literal("CLEAR"), b->{grid.clearSelection();grid.setMarked(-1);})
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Clear selected positions and the swap mark.")))
+                .bounds(leftPos+110,topPos+14,40,12).build());
+        addRenderableWidget(Button.builder(Component.literal("FIT"), b->grid.resetView())
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Fit the core to the map. Scroll to zoom; right-drag to pan.")))
+                .bounds(leftPos+152,topPos+14,28,12).build());
 
         int row = topPos + 129;
         loadButton = addRenderableWidget(Button.builder(Component.literal("LOAD"),
-                        b -> menu.sendCommand(RefuellingMenu.CMD_LOAD, grid.selected()))
+                        b -> menu.sendBatch(true, grid.selectedCells()))
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Load selected empty positions in click order, using held fuel first, then inventory.")))
                 .bounds(leftPos + 8, row, 54, 16).build());
         unloadButton = addRenderableWidget(Button.builder(Component.literal("UNLOAD"),
-                        b -> menu.sendCommand(RefuellingMenu.CMD_UNLOAD, grid.selected()))
+                        b -> menu.sendBatch(false, grid.selectedCells()))
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Unload selected occupied positions. Items drop beside you if your inventory is full.")))
                 .bounds(leftPos + 66, row, 58, 16).build());
         markButton = addRenderableWidget(Button.builder(Component.literal("MARK"),
-                        b -> grid.setMarked(grid.marked() == grid.selected() ? -1 : grid.selected()))
+                        b -> {grid.setMarked(grid.marked() == grid.selected() ? -1 : grid.selected());grid.clearSelection();})
                 .bounds(leftPos + 128, row, 52, 16).build());
         swapButton = addRenderableWidget(Button.builder(Component.literal("SWAP"), b -> {
                     menu.sendCommand(RefuellingMenu.CMD_SWAP, grid.marked(), grid.selected());
@@ -104,12 +113,26 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
         CoreMapSnapshot map = menu.map;
         int selected = grid.selected();
         boolean valid = map != null && selected >= 0 && selected < map.coreSlotCount;
-        boolean occupied = valid && map.isOccupied(selected);
-
-        loadButton.active = valid && !occupied && menu.bundlesInInventory > 0;
+        int[] selection=grid.selectedCells();
+        boolean empty=false,occupied=false;
+        if(map!=null)for(int cell:selection)if(cell<map.coreSlotCount){if(map.isOccupied(cell))occupied=true;else empty=true;}
+        loadButton.active = empty && menu.bundlesInInventory > 0;
         unloadButton.active = occupied;
-        markButton.active = valid;
-        swapButton.active = valid && grid.marked() >= 0 && grid.marked() != selected;
+        markButton.active = valid && selection.length==1;
+        swapButton.active = valid && selection.length==1 && grid.marked() >= 0 && grid.marked() != selected;
+    }
+
+    @Override public boolean mouseClicked(double x,double y,int button) {
+        if(button==1 && grid.isMouseOver(x,y))return grid.mouseClicked(x,y,button);
+        return super.mouseClicked(x,y,button);
+    }
+    @Override public boolean mouseDragged(double x,double y,int button,double dx,double dy) {
+        if(button==1 && grid.mouseDragged(x,y,button,dx,dy))return true;
+        return super.mouseDragged(x,y,button,dx,dy);
+    }
+    @Override public boolean mouseReleased(double x,double y,int button) {
+        if(button==1 && grid.mouseReleased(x,y,button))return true;
+        return super.mouseReleased(x,y,button);
     }
 
     @Override
@@ -157,7 +180,9 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
         int selected = grid.selected();
         String selectedLine;
         if (selected < 0 || selected >= map.coreSlotCount) {
-            selectedLine = "Click a position on the map.";
+            selectedLine = "Wheel zoom / Drag RMB to pan";
+        } else if (grid.selectedCells().length>1) {
+            selectedLine = grid.selectedCells().length + " selected | Click to toggle";
         } else if (!map.isOccupied(selected)) {
             selectedLine = String.format(Locale.ROOT, "Position %d: empty.", selected);
         } else if (map.isInsert(selected)) {
@@ -170,7 +195,7 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                     map.enrichmentWeightFraction[selected] * 100.0,
                     map.burnupMwdPerTonne[selected], map.kInf[selected]);
         }
-        text(graphics, font.plainSubstrByWidth(selectedLine, 238), 8, 116, TEXT);
+        text(graphics, font.plainSubstrByWidth(selectedLine, GRID_W), 8, 116, TEXT);
         if (grid.marked() >= 0) {
             text(graphics, "Marked: " + grid.marked(),
                     164, 112, 0xFFFFC24A);

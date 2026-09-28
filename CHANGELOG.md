@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.0-alpha.29 — 2026-09-27 — Refuelling map controls
+
+- Added cursor-centered scroll-wheel zoom, right-drag panning, and a FIT button to the refuelling map.
+- Clipped zoomed cells to the map panel and kept hit testing aligned while zooming and panning.
+- Added click-to-toggle multiple selection, visible selected outlines/count, and CLEAR.
+- LOAD and UNLOAD now process selected positions through one bounded server request and one map refresh.
+- Preserved held-fuel priority, click order, fuel exposure, specialty inserts, inventory exhaustion, and overflow item drops.
+- Fixed Creative-mode unloading silently discarding rods when the player's inventory was full; overflow now drops beside the player.
+- Kept MARK/SWAP as an explicit single-pair operation and retained the head-off refuelling requirement.
+- Added real client input/network and inventory-conservation checks. Menu network protocol is 12; update client and server together.
+
+## 0.1.0-alpha.28 — 2026-09-27 — Circular reactor internals
+
+- Capped modeled active fuel at nine blocks, with smaller footprints approaching 3.5 blocks; vessel height no longer stretches the fuel channels.
+- Accepted complete jet-pump assemblies at all fully enclosed mounting heights in the inner perimeter band, including raised construction locations.
+- Placed formed jet pumps between the core shroud and vessel wall using the existing uniformly scaled Blender fittings.
+- Rendered bound hydraulic control drives beneath their circular core/blade positions and concealed the rectangular construction grid, including spare drives.
+- Preserved saved CRD blocks, fuel, control mapping and bottom-face water/power connections. Holding a CRD item exposes original construction selection shapes for maintenance.
+- Kept water, Cherenkov visuals and spray headers aligned with the shortened core; accepted existing spray rings at their old build heights.
+- Invalidated the jet survey on construction changes instead of expiring it every second; retained cached GPU meshes.
+- Added a single-size 17×17×28 integrated client/server regression fixture and a Blender assembly driven by its exported runtime coordinates.
+
 ## 0.1.0-alpha.27 — 2026-09-27 — Spray-ring placement and rotation
 
 - Corrected the construction model's quarter-turn offset so new spray branches face the player.

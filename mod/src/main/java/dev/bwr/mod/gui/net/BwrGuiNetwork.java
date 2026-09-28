@@ -8,8 +8,8 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
- * The two packets every screen in the mod runs on: a snapshot down, a command
- * up. Registered from {@code BwrMod}.
+ * Shared menu snapshots and commands, plus bounded refuelling batches.
+ * Registered from {@code BwrMod}.
  *
  * <p>Both handlers are dist-agnostic on purpose. They only ever touch
  * {@link Player#containerMenu}, which is a common type, so nothing here has to
@@ -18,8 +18,8 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
  */
 public final class BwrGuiNetwork {
 
-    /** Bumped when the wire format of any menu snapshot changes incompatibly. */
-    private static final String VERSION = "11";
+    /** Bumped when required menu payloads or their wire formats change. */
+    private static final String VERSION = "12";
 
     private BwrGuiNetwork() {
     }
@@ -31,6 +31,14 @@ public final class BwrGuiNetwork {
                 BwrGuiNetwork::handleSync);
         registrar.playToServer(MenuCommandPayload.TYPE, MenuCommandPayload.STREAM_CODEC,
                 BwrGuiNetwork::handleCommand);
+        registrar.playToServer(RefuellingBatchPayload.TYPE, RefuellingBatchPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer sender
+                            && sender.containerMenu instanceof dev.bwr.mod.gui.RefuellingMenu menu
+                            && menu.containerId == payload.containerId() && menu.stillValid(sender)) {
+                        menu.handleBatch(sender, payload.load(), payload.slots());
+                    }
+                });
     }
 
     private static void handleSync(MenuSyncPayload payload, IPayloadContext context) {

@@ -20,8 +20,9 @@ public final class VesselAppearance {
             return List.copyOf(result);
         }
     }
-    public record Envelope(BlockPos min, BlockPos max, List<BlockPos> ports, List<Sparger> spargers, Map<BlockPos,PortKind> kinds,List<Jet> jets) {
-        public Envelope { ports = List.copyOf(ports); spargers = List.copyOf(spargers); kinds=Map.copyOf(kinds); jets=List.copyOf(jets); }
+    public record Envelope(BlockPos min, BlockPos max, List<BlockPos> ports, List<Sparger> spargers, Map<BlockPos,PortKind> kinds,List<Jet> jets,List<BlockPos> driveCells) {
+        public Envelope { ports = List.copyOf(ports); spargers = List.copyOf(spargers); kinds=Map.copyOf(kinds); jets=List.copyOf(jets); driveCells=List.copyOf(driveCells); }
+        public Envelope(BlockPos min,BlockPos max,List<BlockPos> ports,List<Sparger> spargers,Map<BlockPos,PortKind> kinds,List<Jet> jets) {this(min,max,ports,spargers,kinds,jets,List.of());}
         public Envelope(BlockPos min,BlockPos max,List<BlockPos> ports,List<Sparger> spargers,Map<BlockPos,PortKind> kinds) { this(min,max,ports,spargers,kinds,List.of()); }
         public Envelope(BlockPos min, BlockPos max, List<BlockPos> ports, List<Sparger> spargers) { this(min,max,ports,spargers,Map.of()); }
         public Envelope(BlockPos min, BlockPos max, List<BlockPos> ports) { this(min,max,ports,List.of()); }
@@ -44,6 +45,7 @@ public final class VesselAppearance {
             tag.putIntArray("VisualPortKinds",ports.stream().mapToInt(p->kind(p).ordinal()).toArray());
             tag.putLongArray("VisualJetRoots",jets.stream().mapToLong(j->j.root().asLong()).toArray());
             tag.putIntArray("VisualJetStates",jets.stream().mapToInt(j->j.facing().get2DDataValue()+(j.narrow()?4:0)).toArray());
+            tag.putLongArray("VisualDriveCells",driveCells.stream().mapToLong(BlockPos::asLong).toArray());
             for(var loop:CoreSpraySpargerBlock.Loop.values())tag.putLongArray("VisualSpargers_"+loop.getSerializedName(),
                     spargers.stream().filter(s->s.loop()==loop).mapToLong(s->s.pos().asLong()).toArray());
         }
@@ -59,7 +61,7 @@ public final class VesselAppearance {
         for(var loop:CoreSpraySpargerBlock.Loop.values())
             for(long value:tag.getLongArray("VisualSpargers_"+loop.getSerializedName())) {
                 var p=BlockPos.of(value);
-                if(spargers.size()<160 && p.getX()>min.getX() && p.getX()<max.getX()
+                if(spargers.size()<320 && p.getX()>min.getX() && p.getX()<max.getX()
                         && p.getZ()>min.getZ() && p.getZ()<max.getZ()
                         && p.getY()>min.getY() && p.getY()<max.getY()
                         && (p.getX()==min.getX()+1 || p.getX()==max.getX()-1
@@ -71,15 +73,21 @@ public final class VesselAppearance {
             if(codes[i]>0&&codes[i]<PortKind.values().length)kinds.put(ports.get(i),PortKind.values()[codes[i]]);
         var jets=new ArrayList<Jet>();var roots=tag.getLongArray("VisualJetRoots");var states=tag.getIntArray("VisualJetStates");
         var seen=new HashSet<BlockPos>();
-        for(int i=0;i<Math.min(roots.length,states.length)&&jets.size()<352;i++) {
+        for(int i=0;i<Math.min(roots.length,states.length)&&jets.size()<4096;i++) {
             var root=BlockPos.of(roots[i]);int state=states[i];
             if(state<0||state>7||!seen.add(root))continue;
             var jet=new Jet(root,Direction.from2DDataValue(state&3),(state&4)!=0);
-            if(root.getY()<min.getY()+1||root.getY()>min.getY()+2)continue;
+            if(root.getY()<min.getY()+1||root.getY()>=max.getY())continue;
             if(jet.cells().stream().allMatch(p->p.getX()>min.getX()&&p.getX()<max.getX()
                     &&p.getZ()>min.getZ()&&p.getZ()<max.getZ()&&p.getY()<max.getY()))jets.add(jet);
         }
-        var e=new Envelope(min,max,ports,spargers,kinds,jets);
+        var drives=new ArrayList<BlockPos>();seen.clear();
+        for(long value:tag.getLongArray("VisualDriveCells")) {
+            var p=BlockPos.of(value);
+            if(drives.size()<441 && p.getY()==min.getY()-1 && p.getX()>min.getX()&&p.getX()<max.getX()
+                    &&p.getZ()>min.getZ()&&p.getZ()<max.getZ()&&seen.add(p))drives.add(p);
+        }
+        var e=new Envelope(min,max,ports,spargers,kinds,jets,drives);
         return e.width()>=7 && e.width()<=23 && e.depth()>=7 && e.depth()<=23
                 && e.height()>=10 && e.height()<=131 ? e : null;
     }
@@ -105,6 +113,7 @@ public final class VesselAppearance {
         return false;
     }
     public static boolean hidesJet(Level level,BlockPos pos) { return VesselJetAccess.contains(level,pos); }
+    public static boolean hidesDrive(Level level,BlockPos pos) { return VesselDriveAccess.contains(level,pos); }
     public static Direction outwardFace(BlockPos p,BlockPos min,BlockPos max) {
         return p.getX()==min.getX()?Direction.WEST:p.getX()==max.getX()?Direction.EAST
                 :p.getZ()==min.getZ()?Direction.NORTH:p.getZ()==max.getZ()?Direction.SOUTH
@@ -114,7 +123,7 @@ public final class VesselAppearance {
         if(e==null)return;
         // One notification per section, on geometry changes only; never per frame/tick.
         for(int x=e.min().getX()>>4;x<=e.max().getX()>>4;x++)
-            for(int y=e.min().getY()>>4;y<=e.max().getY()>>4;y++)
+            for(int y=(e.min().getY()-1)>>4;y<=e.max().getY()>>4;y++)
                 for(int z=e.min().getZ()>>4;z<=e.max().getZ()>>4;z++) {
                     var p=new BlockPos(x*16+8,y*16+8,z*16+8);
                     if(level.isLoaded(p)) {var s=level.getBlockState(p);level.sendBlockUpdated(p,s,s,8);}

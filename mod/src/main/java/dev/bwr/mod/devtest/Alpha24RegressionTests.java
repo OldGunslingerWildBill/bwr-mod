@@ -57,7 +57,7 @@ public final class Alpha24RegressionTests {
         var l=h.getLevel();var min=new BlockPos(24700,190,24600);
         var be=CompactCoreRegressionTests.build(l,min,15,15,20,false);
         var legacy=min.offset(0,0,4);place(l,legacy,Direction.NORTH,false);
-        var invalid=min.offset(14,3,7);place(l,invalid,Direction.WEST,true);
+        var invalid=min.offset(7,3,7);place(l,invalid,Direction.WEST,true);
         SpargerRegressionTests.validate(be);
         var e=VesselAppearance.read(be.getUpdateTag(l.registryAccess()));
         h.assertTrue(e.jets().size()==1&&!e.jets().getFirst().narrow(),"legacy footprint lost or invalid jet hidden");

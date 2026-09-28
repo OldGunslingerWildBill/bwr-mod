@@ -19,7 +19,7 @@ final class VesselCherenkovGlow {
         double surface=VesselWaterGeometry.height(e,be.clientWaterLevelIn(partial));
         float strength=(float)CherenkovAppearance.strength(be.clientPowerFractionOfRated(),be.clientHasFuel(),be.clientWaterPresent(),surface);
         if(strength<.002)return;
-        double top=Math.min(surface-.035,e.height()-5.88);
+        double top=Math.min(surface-.035,VesselInternalsGeometry.coreTop(e)+.27);
         if(top<=2.02)return;
         double radius=ReactorCoreGeometry.fuelEnvelopeRadius(core)*1.01;
         var sprite=Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(WATER);

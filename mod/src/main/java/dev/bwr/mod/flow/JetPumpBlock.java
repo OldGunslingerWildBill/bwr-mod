@@ -48,6 +48,14 @@ public class JetPumpBlock extends dev.bwr.mod.eccs.PumpAssemblyBlock {
     }
     @Override protected Layout layout(BlockState s) { return s.getValue(NARROW)?super.layout(s):legacy; }
     @Override public BlockState placementState() { return super.placementState().setValue(NARROW,true); }
+    @Override protected void onPlace(BlockState state,net.minecraft.world.level.Level level,net.minecraft.core.BlockPos pos,BlockState old,boolean moving) {
+        super.onPlace(state,level,pos,old,moving);
+        dev.bwr.mod.reactor.FormedReactorRegistry.internalsChanged(level,pos);
+    }
+    @Override protected void onRemove(BlockState state,net.minecraft.world.level.Level level,net.minecraft.core.BlockPos pos,BlockState next,boolean moving) {
+        super.onRemove(state,level,pos,next,moving);
+        dev.bwr.mod.reactor.FormedReactorRegistry.internalsChanged(level,pos);
+    }
     @Override protected boolean owned(BlockState actual,BlockState s,int cell) {
         return super.owned(actual,s,cell) && actual.getValue(NARROW)==s.getValue(NARROW);
     }

@@ -152,6 +152,17 @@ public final class ReactorStructure {
         return topOfActiveFuelY;
     }
 
+    /** Older plants retain their original build-height rings; both map to the capped core. */
+    public int[] spargerHeights(CoreSpraySpargerBlock.Loop loop) {
+        return spargerHeights(loop, topOfActiveFuelY, interiorMax.getY() - DOME_BLOCKS_ABOVE_ACTIVE_FUEL);
+    }
+
+    private static int[] spargerHeights(CoreSpraySpargerBlock.Loop loop, int top, int legacyTop) {
+        int current = CoreSpraySpargerBlock.requiredY(loop, top);
+        int legacy = CoreSpraySpargerBlock.requiredY(loop, legacyTop);
+        return current == legacy ? new int[]{current} : new int[]{current, legacy};
+    }
+
     /**
      * Fraction of the core spray rings that is actually built, 0..1.
      * Spray capacity scales with this; an incomplete ring degrades rather than
@@ -275,7 +286,7 @@ public final class ReactorStructure {
         // and the dome has to be deep enough to hold both sparger rings —
         // see DOME_BLOCKS_ABOVE_ACTIVE_FUEL.
         int activeFuelBottomY = min.getY() + 1;
-        int activeFuelTopY = max.getY() - DOME_BLOCKS_ABOVE_ACTIVE_FUEL;
+        int activeFuelTopY = VesselInternalsGeometry.constructionFuelTop(min, max);
         if (activeFuelTopY <= activeFuelBottomY) {
             result.fail(min, "no room for active fuel between the lower plenum and the steam dome");
             return null;
@@ -641,7 +652,7 @@ public final class ReactorStructure {
         BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
 
         for (CoreSpraySpargerBlock.Loop loop : CoreSpraySpargerBlock.Loop.values()) {
-            int y = CoreSpraySpargerBlock.requiredY(loop, topOfActiveFuelY);
+            int[] heights = spargerHeights(loop, topOfActiveFuelY, max.getY() - DOME_BLOCKS_ABOVE_ACTIVE_FUEL);
             int loopPresent = 0;
             int loopExpected = 0;
 
@@ -653,15 +664,18 @@ public final class ReactorStructure {
                         continue;
                     }
                     loopExpected++;
-                    BlockState s = dev.bwr.mod.world.LoadedWorld.block(level, p.set(x, y, z));
                     // The segment has to belong to the loop being counted, not
                     // merely be a sparger. Counting any sparger at the right
                     // elevation let a ring of LPCS segments sitting at the HPCS
                     // elevation report the HPCS loop as complete, so the plant
                     // claimed spray capacity it did not have.
-                    if (s.is(BwrBlocks.CORE_SPRAY_SPARGER.get())
-                            && s.getValue(CoreSpraySpargerBlock.LOOP) == loop) {
-                        loopPresent++;
+                    for (int y : heights) {
+                        BlockState s = dev.bwr.mod.world.LoadedWorld.block(level, p.set(x, y, z));
+                        if (s.is(BwrBlocks.CORE_SPRAY_SPARGER.get())
+                                && s.getValue(CoreSpraySpargerBlock.LOOP) == loop) {
+                            loopPresent++;
+                            break; // A duplicated old/new segment cannot double the loop's flow.
+                        }
                     }
                 }
             }
@@ -690,15 +704,14 @@ public final class ReactorStructure {
                     if (!s.is(BwrBlocks.CORE_SPRAY_SPARGER.get())) {
                         continue;
                     }
-                    if (y != hpcsY && y != lpcsY) {
+                    boolean valid = false;
+                    for (int allowed : spargerHeights(s.getValue(CoreSpraySpargerBlock.LOOP), topOfActiveFuelY,
+                            max.getY() - DOME_BLOCKS_ABOVE_ACTIVE_FUEL)) valid |= y == allowed;
+                    if (!valid) {
                         if (!result.hasEnoughFailures()) {
                             result.fail(p, "sparger segment is at the wrong elevation; HPCS belongs at y="
                                     + hpcsY + " (4 above top of active fuel) and LPCS at y=" + lpcsY
                                     + " (1 above)");
-                        }
-                    } else if (!CoreSpraySpargerBlock.isAtCorrectElevation(s, p, topOfActiveFuelY)) {
-                        if (!result.hasEnoughFailures()) {
-                            result.fail(p, "sparger segment is set to the wrong loop for y=" + y);
                         }
                     }
                 }

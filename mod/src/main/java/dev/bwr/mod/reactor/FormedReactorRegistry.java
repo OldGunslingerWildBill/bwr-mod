@@ -34,4 +34,17 @@ public final class FormedReactorRegistry {
         }
         return result;
     }
+
+    /** Construction edits invalidate a survey once; fluid queries never rescan the vessel. */
+    public static void internalsChanged(Level level,BlockPos pos) {
+        if(level.isClientSide())return;
+        for(var controller:controllers(level)) {
+            var s=controller.structure();if(s==null)continue;
+            var min=s.interiorMin();var max=s.interiorMax();
+            if(pos.getX()<min.getX()||pos.getX()>max.getX()||pos.getZ()<min.getZ()||pos.getZ()>max.getZ()
+                    ||pos.getY()<min.getY()-2||pos.getY()>max.getY())continue;
+            dev.bwr.mod.flow.RecirculationNetwork.invalidateSurvey(level,controller.getBlockPos());
+            controller.markStructureDirty();
+        }
+    }
 }

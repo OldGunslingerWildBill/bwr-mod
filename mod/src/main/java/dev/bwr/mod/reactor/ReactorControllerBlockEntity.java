@@ -475,6 +475,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         boundaryEffects.invalidate();
         refreshHeadAccess();
         VesselJetAccess.update(level,getBlockPos(),vesselEnvelope);
+        VesselDriveAccess.update(level,getBlockPos(),vesselEnvelope);
         // Unformed reactors return before the normal periodic sync. Send the
         // changed boundary now so clients never retain a closed-looking vessel.
         if (!java.util.Objects.equals(previous, vesselEnvelope)) syncToClients();
@@ -661,7 +662,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
         var visualSpargers=new java.util.ArrayList<VesselAppearance.Sparger>();
         for(var loop:CoreSpraySpargerBlock.Loop.values()) {
-            int y=CoreSpraySpargerBlock.requiredY(loop,found.topOfActiveFuelY());
+            for(int y:found.spargerHeights(loop)) {
             for(int x=min.getX()+1;x<max.getX();x++)for(int z=min.getZ()+1;z<max.getZ();z++) {
                 if(x!=min.getX()+1 && x!=max.getX()-1 && z!=min.getZ()+1 && z!=max.getZ()-1)continue;
                 var p=new BlockPos(x,y,z);if(!level.isLoaded(p))continue;
@@ -669,14 +670,19 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 if(s.is(dev.bwr.mod.registry.BwrBlocks.CORE_SPRAY_SPARGER.get()) && s.getValue(CoreSpraySpargerBlock.LOOP)==loop)
                     visualSpargers.add(new VesselAppearance.Sparger(p,loop));
             }
+            }
         }
         var visualJets=new java.util.ArrayList<VesselAppearance.Jet>();
-        for(var p:BlockPos.betweenClosed(found.interiorMin(),new BlockPos(found.interiorMax().getX(),found.interiorMin().getY()+1,found.interiorMax().getZ())))
-            if(dev.bwr.mod.flow.RecirculationNetwork.installedJet(level,found,p)) {
+        for(var p:dev.bwr.mod.flow.RecirculationNetwork.jets(level,this)) {
                 var s=level.getBlockState(p);
                 visualJets.add(new VesselAppearance.Jet(p.immutable(),s.getValue(dev.bwr.mod.eccs.PumpAssemblyBlock.FACING),s.getValue(dev.bwr.mod.flow.JetPumpBlock.NARROW)));
             }
-        vesselEnvelope=new VesselAppearance.Envelope(min,max,visualPorts,visualSpargers,visualKinds,visualJets);
+        var driveCells=new java.util.ArrayList<BlockPos>();
+        for(int x=min.getX()+1;x<max.getX();x++)for(int z=min.getZ()+1;z<max.getZ();z++) {
+            var p=new BlockPos(x,min.getY()-1,z);
+            if(level.isLoaded(p)&&level.getBlockState(p).is(dev.bwr.mod.registry.BwrBlocks.CONTROL_ROD_DRIVE.get()))driveCells.add(p);
+        }
+        vesselEnvelope=new VesselAppearance.Envelope(min,max,visualPorts,visualSpargers,visualKinds,visualJets,driveCells);
     }
 
     @Override public void onLoad() {
@@ -687,6 +693,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     @Override public void setRemoved() {
         VesselJetAccess.update(level,getBlockPos(),null);
+        VesselDriveAccess.update(level,getBlockPos(),null);
         VesselHeadAccess.update(level,getBlockPos(),null,false);
         VesselAppearance.update(level,getBlockPos(),null);
         FormedReactorRegistry.remove(this);
@@ -696,6 +703,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     @Override public void onChunkUnloaded() {
         VesselJetAccess.update(level,getBlockPos(),null);
+        VesselDriveAccess.update(level,getBlockPos(),null);
         VesselHeadAccess.update(level,getBlockPos(),null,false);
         VesselAppearance.update(level,getBlockPos(),null);
         FormedReactorRegistry.remove(this);
@@ -1234,6 +1242,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         clientBladeFrom=first?clientBladeInsertion.clone():from;
         clientBladeSyncTick=level==null?0:level.getGameTime();
         VesselJetAccess.update(level,getBlockPos(),clientVesselEnvelope);
+        VesselDriveAccess.update(level,getBlockPos(),clientVesselEnvelope);
         VesselAppearance.update(level,getBlockPos(),clientVesselEnvelope);
         VesselHeadAccess.update(level,getBlockPos(),clientVesselEnvelope,!vesselState.canHoldPressure()||clientHeadFailed());
         clientPowerFractionOfRated = tag.getDouble("Power");

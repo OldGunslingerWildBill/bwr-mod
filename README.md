@@ -9,7 +9,21 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-alpha.27` — Spray-ring placement and rotation, September 27, 2026.
+**Current version:** `0.1.0-alpha.29` — Refuelling map controls, September 27, 2026.
+
+**Alpha.29:** scroll over the refuelling map to zoom toward the cursor; right-drag
+to pan and use **FIT** to reset the view. Click multiple positions to select them,
+or click again to deselect. **LOAD/UNLOAD** acts on the selection; **CLEAR** clears
+it. Loading uses held fuel first and stops when supplies run out. Overflow from
+unloading drops beside the player. **MARK/SWAP** remains a single-pair operation.
+Update both clients and server: the menu network protocol is now 12.
+
+**Alpha.28:** active fuel height scales with vessel footprint and stops at nine
+blocks. Complete jet pumps at any valid interior perimeter elevation tuck inside
+the formed vessel. Control-drive housings follow the circular core beneath the
+bottom head, while their saved blocks and supply connections stay in place.
+The dedicated verification fixture is **17×17, 28 blocks from CRDs to cap**.
+See [reactor fit and building compatibility](REACTOR-FIT-UPDATE.md).
 
 **Alpha.27:** unassembled spray branches face the player on placement. Use the
 Mekanism Configurator in **Rotate** mode and right-click to turn a straight or

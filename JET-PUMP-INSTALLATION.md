@@ -1,12 +1,13 @@
-# Jet-pump installation — alpha.25
+# Jet-pump installation — alpha.28
 
 ## Building and servicing
 
-Use the existing jet-pump placement rules: place complete assemblies near the
-interior perimeter, with the root at either of the lowest two interior levels.
+Place complete assemblies within the two-block band at the interior perimeter,
+at any elevation where the entire six-block assembly fits inside the vessel.
 Opposite assemblies still need matching rows/elevations and opposite facing.
 The tall, six-cell construction models remain visible while the reactor is unformed.
-This update does not add an upper mounting row or change core height.
+Alpha.28 recognizes raised construction roots and caps modeled active fuel at
+nine blocks. See [the 17×17×28 fit update](REACTOR-FIT-UPDATE.md).
 
 Once the reactor forms, the renderer fits the installed pump models into the
 annular gap **outside the core shroud and inside the vessel wall**. Their upper
@@ -44,7 +45,7 @@ reactor interior is visible. Placement/collision indices update on structure and
 chunk lifecycle changes; rendering does not scan the vessel or rebuild pipe graphs.
 
 This is a game-scale placement approximation, not an engineering dimension model.
-It does not change hydraulic capacity, fuel counts, the core-height behavior, or
+It does not change hydraulic capacity, fuel counts, or
 the ten jet assemblies supported by each external recirculation pump.
 
 ## References
@@ -58,8 +59,11 @@ the ten jet assemblies supported by each external recirculation pump.
 
 ## Verification
 
-GameTests cover formation/unformation, save/reload, legacy cells, invalid mounting,
+Earlier GameTests cover formation/unformation, save/reload, legacy cells, invalid mounting,
 removing an assembly, and matching/flow counts. The client harness checks live
 construction visibility, collision state, materials and static-mesh reuse, plus
 shroud/wall/inter-pump clearance at minimum, reference, maximum, rectangular and
-tall vessel sizes with several installed counts.
+tall vessel sizes with several installed counts. Those were previous-release
+checks. Alpha.28 verification intentionally uses only the requested 17×17×28
+fixture, including raised roots, a full square drive grid, nine lifecycle/views,
+actual baked vertex containment and the runtime-derived Blender review.

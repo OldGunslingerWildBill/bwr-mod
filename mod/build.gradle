@@ -24,6 +24,18 @@ neoForge {
     runs {
         client { client() }
         server { server() }
+        refuellingCheck {
+            client()
+            gameDirectory = file('run/refuellingCheck')
+            programArguments.addAll('--width', '1280', '--height', '900')
+            jvmArguments.add('-Dbwr.refuellingCheck=true')
+        }
+        reactorFitCheck {
+            client()
+            gameDirectory = file('run/reactorFitCheck')
+            programArguments.addAll('--width', '1280', '--height', '900')
+            jvmArguments.add('-Dbwr.reactorFitCheck=true')
+        }
         data { data() }
         turbineGameTest {
             type = 'gameTestServer'
