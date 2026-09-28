@@ -62,41 +62,10 @@ import java.util.Set;
  * ocean, a lake or a flooded cave is metering a heat sink with tens of
  * thousands of tonnes in it that the player never built.
  *
- * <h2>Steam gets in through an inlet, and there are two of them</h2>
- * Relief steam reaches this water by one of two routes and the pool separates
- * them, because they are not equally good at putting steam into water.
- *
- * <ul>
- *   <li>A <b>quencher</b> — {@link SuppressionPoolQuencherBlock} submerged in
- *       the basin with a pressurised tube run from the valve down to it. This
- *       is the real plant: the discharge is split across the quencher's holes
- *       and condenses in full, so everything the valve passes is admitted.</li>
- *   <li><b>Open water</b> — the valve simply standing above the pool, which is
- *       how this mod worked before quenchers existed and how every plant built
- *       so far is plumbed. A single unbroken jet out of one pipe bore, so only
- *       {@link #BARE_DISCHARGE_ADMISSION} of it is taken up by the water and
- *       the rest reaches the containment airspace uncondensed.</li>
- * </ul>
- *
- * <p><b>The bare route is not being taken away and is not deprecated.</b> A
- * plant already built goes on relieving, goes on depressurising at exactly the
- * rate it did, and goes on heating its pool — it simply does less of the last
- * one, and {@link #statusLines()} says so in as many words, names the block
- * that fixes it, and says so from the structure alone rather than waiting for a
- * transient to make it visible. What the de-rating costs is not free: steam
- * that is not condensed is water the pool does not get back, so a plant riding
- * out a long transient on pool suction with bare discharges will watch its own
- * level run down towards the pump intake. That is the honest consequence of
- * discharging into open water and it is exactly why the hardware exists.
- *
- * <h2>What it does not do</h2>
- * There is no heat capacity temperature limit here, no alarm, and no automatic
- * RHR start. Pool temperature, subcooling and condensation effectiveness are
- * published; what counts as too hot is a number a real plant sets
- * administratively, so in this mod it is the player's to choose and act on in
- * Lua. Nothing here decides when steam should flow either: a quencher is a
- * perforated pipe under water and the admission figures below are properties of
- * that pipework, not permissives.
+ * <p>New enclosed tanks receive steam through an outward-facing wall inlet.
+ * Distribution within the tank is implicit; water temperature and inventory
+ * determine condensation. Legacy open-water/quenchers remain save-compatible.
+ * No valve or RHR control policy is applied automatically here.
  */
 public class SuppressionPoolBlockEntity extends BlockEntity {
 
@@ -288,6 +257,21 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     public static final double STEAM_INLET_KG_PER_S=2_000;
     private long steamBudgetTick=Long.MIN_VALUE;
     private double steamAcceptedKg;
+    private final Map<BlockPos,dev.bwr.mod.piping.PipeTopology.Graph> wallSteamGraphs=new HashMap<>();
+    private void refreshWallReliefConnections(){
+        if(!closedTank||concreteLayout==null)return;
+        var next=new HashMap<BlockPos,dev.bwr.mod.piping.PipeTopology.Graph>();
+        for(var inlet:concreteLayout.ports())if(level.getBlockState(inlet).is(BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get()))
+            next.put(inlet,dev.bwr.mod.piping.PipeTopology.get(level,inlet,null,true,false));
+        boolean changed=next.size()!=wallSteamGraphs.size()||next.entrySet().stream().anyMatch(e->wallSteamGraphs.get(e.getKey())!=e.getValue());
+        if(!changed)return;
+        wallSteamGraphs.clear();wallSteamGraphs.putAll(next);
+        dischargingValves.clear();quencheredValves.clear();quenchers.clear();quenchers.addAll(next.keySet());
+        var valves=new LinkedHashSet<BlockPos>();
+        for(var graph:next.values())if(!graph.truncated())for(var node:graph.edges().keySet())
+            if(node.state()!=null&&node.state().getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock)valves.add(node.pos());
+        dischargingValves.addAll(valves);quencheredValves.addAll(valves);
+    }
     /** Shared by all wall inlets and both BWR and Mekanism transports. Simulation does not reserve. */
     public double receiveSteam(double kg,double h,double psia,boolean simulate){
         if(level==null||level.isClientSide()||isRemoved()||level.getBlockEntity(worldPosition)!=this||!isFormed()
@@ -318,6 +302,39 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
                 double actual=dev.bwr.mod.steam.SteamValveRouting.claimWithoutRelief(level,inlet,nozzle,wanted*20)/20;
                 if(actual>0)receiveSteam(actual,h,psia,false);
             }
+        }
+    }
+    public void setDrainsOpen(boolean open) {
+        if(level==null||level.isClientSide()||concreteLayout==null)return;
+        for(var p:concreteLayout.ports()){
+            var s=level.getBlockState(p);
+            if(s.getBlock() instanceof SuppressionPoolDrainBlock)level.setBlock(p,s.setValue(SuppressionPoolDrainBlock.OPEN,open),3);
+        }
+    }
+    private long drainTick=Long.MIN_VALUE;
+    private void drainOutlets() {
+        if(concreteLayout==null||drainTick==level.getGameTime())return;
+        drainTick=level.getGameTime();
+        for(var p:concreteLayout.ports()){
+            var s=level.getBlockState(p);
+            if(!(s.getBlock() instanceof SuppressionPoolDrainBlock)||!s.getValue(SuppressionPoolDrainBlock.OPEN))continue;
+            var face=s.getValue(SuppressionPoolPortBlock.FACING);var front=p.relative(face);
+            if(!level.isLoaded(front))continue;
+            int amount=(int)Math.floor(Math.min(50,pool.getMassKg()));
+            if(amount<=0)continue;
+            var packet=dev.bwr.mod.water.ThermalWater.atTemperature(amount,pool.getTemperatureC());
+            var sink=level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,front,face.getOpposite());
+            int removed=0;
+            if(sink!=null)removed=Math.clamp(sink.fill(packet,net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE),0,amount);
+            else {
+                var fs=level.getBlockState(front);
+                if(fs.isAir()||fs.getFluidState().is(net.minecraft.tags.FluidTags.WATER)&&fs.getCollisionShape(level,front).isEmpty()){
+                    removed=amount;
+                    if(level instanceof net.minecraft.server.level.ServerLevel server&&drainTick%5==0)
+                        server.sendParticles(net.minecraft.core.particles.ParticleTypes.SPLASH,front.getX()+.5,front.getY()+.3,front.getZ()+.5,3,.1,.03,.1,.03);
+                }
+            }
+            if(removed>0){pool.drainWaterKg(removed);inventoryChanged();}
         }
     }
     private boolean inventoryRestored;
@@ -393,7 +410,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     /** Membership of the basin this controller actually measured. */
     public boolean ownsQuencher(BlockPos pos) {
         if(level!=null&&level.isLoaded(pos)&&level.getBlockState(pos).is(BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get()))
-            return isFormed()&&ownsPort(pos)&&pool.getLevelFraction()>SuppressionPool.SUCTION_FLOOR_FRACTION;
+            return isFormed()&&ownsPort(pos);
         return isFormed() && level != null && level.isLoaded(pos) && level.isLoaded(pos.above())
                 && (concreteMode ? submergedConcrete(pos) : basinWater.contains(pos.above().asLong())
                 && SuppressionPoolQuencherBlock.isSubmerged(level, pos));
@@ -448,6 +465,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
 
         double dt = 0.05;
         long gameTime = level.getGameTime();
+        refreshWallReliefConnections();
 
         // No reactor, no steam. This used to default to RATED_DOME_PRESSURE_PSIG
         // and only replace it when a controller could be resolved, so a pool that
@@ -468,6 +486,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         // through, so the two inlets are summed apart.
         double quencheredKgPerS = 0.0;
         double bareKgPerS = 0.0;
+        double srvPressureMoment = 0.0;
         var it = dischargingValves.iterator();
         while (it.hasNext()) {
             BlockPos vp = it.next();
@@ -499,12 +518,15 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             // With no reactor domePressurePsig is 0.0, which is at or below
             // containment, so the valve correctly passes nothing and its cached
             // reading is zeroed rather than left at its last discharge.
-            double flow = srv.flowKgPerS(domePressurePsig, containmentPsia);
+            var supply = srv.steamSupply();
+            double sourcePressure = supply == null ? domePressurePsig : supply.reactor().core().getPressurePsig();
+            double flow = srv.flowKgPerS(sourcePressure, containmentPsia);
             srv.reportRelief(bus,gameTime,flow);
             // Only the pool that owns the discharge condenses it. Two pool
             // controllers can sit within range of one valve, and without this
             // each would put the whole flow into its own water.
             if (flow > 0.0 && srv.claimCondensation(getBlockPos(), gameTime)) {
+                srvPressureMoment += sourcePressure * flow * (quencheredValves.contains(vp) ? 1 : BARE_DISCHARGE_ADMISSION);
                 if (quencheredValves.contains(vp)) {
                     quencheredKgPerS += flow;
                 } else {
@@ -520,7 +542,8 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         bypassedSteamKgPerS = bareKgPerS * (1.0 - BARE_DISCHARGE_ADMISSION);
 
         pullInletSteam();
-        condense(admittedKgPerS, domePressurePsig, gameTime, dt);
+        condense(admittedKgPerS, admittedKgPerS > 0 ? srvPressureMoment / admittedKgPerS : domePressurePsig, gameTime, dt);
+        drainOutlets();
 
         machineRhrDuty = expireAndSumDuties(gameTime);
         double duty = getEffectiveRhrDuty();
@@ -1307,7 +1330,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     private List<String> inletLines() {
         List<String> out = new ArrayList<>();
         if(steamPortCount()>0){
-            out.add(String.format("%d steam wall inlet(s): %.2f kg/s received, %.1f kg buffered. Fill the tank before admitting steam.",steamPortCount(),steamInKgPerS(),pool.inletSteam.mass()));
+            out.add(String.format("%d steam wall inlet(s): %.2f kg/s received, %.1f kg buffered. Fill with water to condense incoming steam.",steamPortCount(),steamInKgPerS(),pool.inletSteam.mass()));
             return out;
         }
         int quenchered = quencheredValves.size();
@@ -1332,8 +1355,8 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
                             + " the water; the rest reaches containment uncondensed and does not"
                             + " return to the pool as inventory.",
                     bare, BARE_DISCHARGE_ADMISSION * 100.0));
-            out.add("To fix: place a Suppression Pool Quencher in the basin with water directly"
-                    + " above it, and run pressurised tube from the relief valve to it.");
+            out.add("For new builds use an enclosed suppression tank and a steam wall inlet"
+                    + " connected to the relief valve discharge.");
         }
         if (bypassedSteamKgPerS > 0.0) {
             out.add(String.format("%.1f kg/s is bypassing the water through bare discharges.",

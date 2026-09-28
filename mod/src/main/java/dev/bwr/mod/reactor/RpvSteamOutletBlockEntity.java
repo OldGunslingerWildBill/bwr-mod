@@ -2,7 +2,6 @@ package dev.bwr.mod.reactor;
 
 import dev.bwr.core.PhysicalConstants;
 import dev.bwr.core.thermal.Saturation;
-import dev.bwr.mod.eccs.PlantActuators;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.steam.SteamLineNetwork;
 import net.minecraft.core.BlockPos;
@@ -15,87 +14,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * An RPV main steam nozzle — the penetration through which steam leaves the
- * pressure vessel, and the block the main steam line is welded to.
- *
- * <h2>Why this block had to exist</h2>
- * Before it there was no vessel penetration at all. The shell predicate in
- * {@link ReactorStructure#isShell} accepted vessel, controller, sparger, tube,
- * recirculation pump and jet pump, and nothing on that list carries steam out;
- * putting a turbine steam outlet in the wall instead produced "gap in the
- * reactor vessel shell" and the plant refused to form. So the only ways to
- * remove steam from a vessel were a CC:Tweaked computer writing
- * {@code reactor.setTurbineSteamFlow}, a relief valve discharging into a
- * suppression pool that had to be built and validated first, or a turbine steam
- * outlet with Mekanism installed <i>and</i> a turbine actually draining its
- * buffer. A player with none of those three had a vessel that could only ever
- * gain steam. That is the gap the first playtest found, in those words: "there's
- * no way to get steam out of the reactor".
- *
- * <h2>What it is: hardware, and only hardware</h2>
- * A nozzle with a stop valve on it. It has one actuator — the stop position,
- * 0 shut to 1 fully open — and it is moved by the player's hand, by an analogue
- * redstone signal, or by Lua. <b>Nothing in this class ever moves it.</b> There
- * is no pressure regulator here, no setpoint, and no condition under which the
- * nozzle opens or shuts itself. Hold it wide open on a cold vessel and the plant
- * depressurises; hold it shut at power and pressure climbs until the metal gives
- * up. Both are the player's doing.
- *
- * <h2>Flow is choked, and it is a differential</h2>
- * Same physics as {@code SafetyReliefValveBlockEntity}, because it is the same
- * situation: a fixed throat passing saturated steam from a vessel at a thousand
- * psi into a line at roughly atmospheric. Below the critical pressure ratio the
- * throat is sonic and mass flow goes linearly with <i>upstream absolute
- * pressure</i>, which is the form real nozzle and relief sizing uses; above it
- * the standard subcritical correction takes the flow smoothly to zero as the
- * vessel equalises with the line. A nozzle left open at the end of a blowdown
- * stops passing steam because there is no differential left, not because
- * anything decided it should stop.
- *
- * <h2>A nozzle with nothing welded to it passes nothing</h2>
- * This is the same structural requirement the relief valves carry — an SRV that
- * vents to air suppresses nothing and is reported as useless rather than
- * silently working. A main steam nozzle discharging into open world is a hole
- * with no pipe on it, so the flow is zero until a steam line block sits on one
- * of its faces. That is a fact about what has been built, not a permissive: the
- * nozzle does not ask what the reactor is doing, and it will happily blow the
- * vessel down through a single tube stub if the player opens it.
- *
- * <h2>What is in the line downstream is part of the hardware</h2>
- * The nozzle is the first valve in a series of them. An MSIV further along the
- * same line is a second restriction in the same pipe, and a shut one dead-heads
- * the line, so this nozzle passes what the <i>tightest</i> valve between it and
- * the turbine hall allows — see {@link #lineOpenFraction}. That is what makes
- * {@code SPEC.md} section 6.3's headline transient emerge instead of being
- * described: shut the MSIVs on a plant at power and the vessel really is
- * isolated, pressure climbs, voids collapse and power surges, with nothing
- * anywhere deciding that any of it should happen. Before this the MSIVs
- * throttled only the turbine steam outlet's own separate draw, so closing every
- * valve in the plant left the nozzles wide open and the vessel unisolated.
- *
- * <p>It is emphatically not a permissive. Nothing here refuses to open, and the
- * nozzle's own stop valve goes exactly where it is put. A shut valve downstream
- * is a pipe with no way through it, which is a fact about plumbing.
- *
- * <h2>It does not write the core</h2>
- * {@link ReactorControllerBlockEntity} sums every nozzle on its vessel and
- * writes one figure, exactly as {@code ReactorEccsBus} sums relief valves and
- * writes one. Two per-tick writers on one core scalar is the defect this
- * codebase keeps finding in itself, and a nozzle is not going to add another.
- *
- * <h2>The turbine outlet is downstream of this, not beside it</h2>
- * Steam this nozzle passes has already left the vessel by the time anything
- * downstream sees it. A {@code TurbineSteamOutletBlockEntity} on the far end of
- * the line therefore <b>claims a share of that departing steam</b> through
- * {@link #claimFlowKgPerS} rather than drawing on the vessel a second time; see
- * {@code TurbineSteamOutletBlockEntity} for the whole argument and for what
- * happens to an outlet with no nozzle upstream of it. Whatever no outlet claims
- * is lost down the line to the condenser, which is the honest consequence of a
- * model with no header volume in it: matching the nozzle's stop position to the
- * turbine's demand is the player's control loop, exactly as matching rod
- * position to power is.
- */
+/** Always-open vessel nozzle; downstream MSIVs and valves control admission. */
 public class RpvSteamOutletBlockEntity extends BlockEntity {
 
     /**
@@ -164,11 +83,6 @@ public class RpvSteamOutletBlockEntity extends BlockEntity {
     // Volatile because a CC:Tweaked computer thread may read them; the matching
     // writes are marshalled onto the server thread by PlantActuators.
 
-    /** The actuator: stop valve position, 0 shut to 1 fully open. */
-    private volatile double position;
-
-    /** When true the redstone input is ignored and Lua owns the position. */
-    private volatile boolean computerControlled;
 
     /** Steam this nozzle passed on the last tick the controller asked, kg/s. */
     private volatile double lastFlowKgPerS;
@@ -194,7 +108,6 @@ public class RpvSteamOutletBlockEntity extends BlockEntity {
      * on one. See {@link #acceptRedstoneSignal(int)} for why the level is not
      * enough on its own.
      */
-    private int lastRedstoneSignal = -1;
 
     private int sinceAttachmentScan = ATTACHMENT_RESCAN_TICKS;
     private int sinceLineSurvey = LINE_SURVEY_TICKS;
@@ -247,65 +160,13 @@ public class RpvSteamOutletBlockEntity extends BlockEntity {
     // The actuator: the player's, never the mod's
     // -----------------------------------------------------------------
 
-    /** Stop valve position, 0 shut to 1 fully open. */
-    public double getPosition() {
-        return position;
-    }
-
-    /**
-     * Move the stop valve. Called from the player's hand, from redstone and from
-     * Lua; never from physics. Out-of-range and non-finite values are clamped
-     * because a valve cannot be more than open or less than shut, not because
-     * either extreme would be dangerous.
-     */
-    public void setPosition(double fraction) {
-        // Marshalled onto the server thread: a peripheral would call this from a
-        // CC computer thread and setChanged() dispatches neighbour updates. See
-        // PlantActuators.
-        PlantActuators.run(this, () -> {
-            this.position = Double.isFinite(fraction)
-                    ? Math.max(0.0, Math.min(1.0, fraction))
-                    : 0.0;
-            setChanged();
-        });
-    }
-
-    public boolean isComputerControlled() {
-        return computerControlled;
-    }
-
-    public void setComputerControlled(boolean computerControlled) {
-        PlantActuators.run(this, () -> {
-            this.computerControlled = computerControlled;
-            setChanged();
-        });
-    }
-
-    /**
-     * Take an analogue redstone signal, 0..15, as a stop valve position.
-     *
-     * <p><b>On change, not on level.</b> A hand on the nozzle and a lever beside
-     * it are two writers of one position, and pushing the redstone figure in on
-     * every neighbour update makes the hand useless: open the nozzle by hand
-     * beside an unpowered lever, place any block next to it, and the resulting
-     * neighbour update rewrites the position to signal-zero — shut — with no
-     * message and no indication. That is the failure
-     * {@code TurbineSteamOutletPeripheral.setFlow} documents against Lua, and
-     * {@code ReactorControllerBlockEntity.gatherPumpFlow} documents against the
-     * recirculation pumps. The resolution is the same one in both places:
-     * redstone counts as a writer only when it has something new to say, and
-     * between changes whoever wrote last stands.
-     *
-     * @param signal redstone strength 0..15
-     */
-    public void acceptRedstoneSignal(int signal) {
-        int clamped = Math.max(0, Math.min(15, signal));
-        if (clamped == lastRedstoneSignal) {
-            return;
-        }
-        lastRedstoneSignal = clamped;
-        setPosition(clamped / 15.0);
-    }
+    /** Compatibility readout: a nozzle has no movable stop valve. */
+    public double getPosition() { return 1.0; }
+    /** Legacy Java callers remain compatible; control the downstream MSIV instead. */
+    @Deprecated public void setPosition(double ignored) {}
+    public boolean isComputerControlled() { return false; }
+    @Deprecated public void setComputerControlled(boolean ignored) {}
+    @Deprecated public void acceptRedstoneSignal(int ignored) {}
 
     // -----------------------------------------------------------------
     // Flow
@@ -353,7 +214,7 @@ public class RpvSteamOutletBlockEntity extends BlockEntity {
         }
         double lineOpen = lineOpenFraction();
         lastLineOpenFraction = lineOpen;
-        if (!(position > 0.0) || !steamLineAttached || !(lineOpen > 0.0)) {
+        if (!steamLineAttached || !(lineOpen > 0.0)) {
             lastFlowKgPerS = 0.0;
             return 0.0;
         }
@@ -375,7 +236,7 @@ public class RpvSteamOutletBlockEntity extends BlockEntity {
             subcritical = Math.sqrt(Math.max(0.0, 1.0 - x * x));
         }
 
-        double flow = CAPACITY_KG_PER_S * position * lineOpen
+        double flow = CAPACITY_KG_PER_S * lineOpen
                 * (upstreamPsia / ratedPsia) * subcritical;
         // A non-finite dome pressure would otherwise be handed straight to the
         // vessel model as a steam sink and take the whole plant to NaN in one
@@ -668,8 +529,8 @@ public class RpvSteamOutletBlockEntity extends BlockEntity {
     public List<String> statusLines() {
         List<String> out = new ArrayList<>();
         boolean live = isPartOfFormedReactor();
-        out.add(String.format("RPV steam outlet: stop valve %.0f%% open, passing %.1f kg/s",
-                position * 100.0, live ? lastFlowKgPerS : 0.0));
+        out.add(String.format("RPV steam nozzle: always open, passing %.1f kg/s. Control steam with an MSIV downstream.",
+                live ? lastFlowKgPerS : 0.0));
         if (!live) {
             out.add("Not part of a formed reactor. A nozzle only carries steam when it is"
                     + " built into a reactor vessel shell that has actually assembled;"
@@ -701,9 +562,7 @@ public class RpvSteamOutletBlockEntity extends BlockEntity {
         out.add(String.format(
                 "Rated %.0f kg/s fully open at %.0f psig; %d nozzles pass rated steam flow",
                 CAPACITY_KG_PER_S, PhysicalConstants.RATED_DOME_PRESSURE_PSIG, MAIN_STEAM_LINES));
-        if (computerControlled) {
-            out.add("Under computer control; the redstone input is ignored.");
-        }
+
         return out;
     }
 
@@ -714,22 +573,12 @@ public class RpvSteamOutletBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
-        tag.putDouble("Position", position);
-        tag.putBoolean("ComputerControlled", computerControlled);
-        // Saved so that a lever which has not moved across a chunk reload does
-        // not count as a change and slam a hand-set nozzle shut on load. See
-        // acceptRedstoneSignal.
-        tag.putInt("LastRedstoneSignal", lastRedstoneSignal);
+        // No actuator state: old saved Position/ComputerControlled values are ignored.
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        double saved = tag.getDouble("Position");
-        position = Double.isFinite(saved) ? Math.max(0.0, Math.min(1.0, saved)) : 0.0;
-        computerControlled = tag.getBoolean("ComputerControlled");
-        lastRedstoneSignal = tag.contains("LastRedstoneSignal")
-                ? tag.getInt("LastRedstoneSignal") : -1;
         // Deliberately not restored: what is welded to the nozzle is a fact
         // about the world, and the world has not been asked yet. The first
         // refresh answers it, and until then the nozzle passes nothing, which is

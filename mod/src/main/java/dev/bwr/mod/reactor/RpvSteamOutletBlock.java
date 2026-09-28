@@ -88,16 +88,7 @@ public class RpvSteamOutletBlock extends BaseEntityBlock implements SteamLinePor
         }
     }
 
-    /**
-     * Analogue redstone commands the stop valve, linearly from shut at signal 0
-     * to fully open at signal 15.
-     *
-     * <p>A valve position, not a flow demand: the same signal always means the
-     * same opening, and what that opening passes depends on what the vessel is
-     * at. Matching the two is the player's control loop. A nozzle under computer
-     * control ignores redstone entirely, the same way the SRVs, the MSIVs and
-     * the turbine steam outlet do.
-     */
+    /** Always-open main steam penetration. Right-click reads status; use downstream MSIVs for isolation. */
     @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock,
                                    BlockPos neighborPos, boolean movedByPiston) {
@@ -109,27 +100,11 @@ public class RpvSteamOutletBlock extends BaseEntityBlock implements SteamLinePor
             // A neighbour change is exactly when a steam line may have appeared
             // or gone away, so this is the cheap and timely place to re-check.
             nozzle.refreshAttachment(level);
-            if (!nozzle.isComputerControlled()) {
-                nozzle.acceptRedstoneSignal(level.getBestNeighborSignal(pos));
-            }
+
         }
     }
 
-    /**
-     * Bare right-click throws the stop valve fully open or fully shut; sneaking
-     * reads the nozzle without touching it.
-     *
-     * <p>The split is the one {@code ReactorControllerBlock} already uses — act
-     * on a plain click, report on a sneaking one — so a player who wants to know
-     * what a hot nozzle is doing has a way to ask that does not move it. Opening
-     * a nozzle by hand is an operator action on plant hardware, in the same
-     * sense as switching a sparger segment between loops, and it is the only
-     * steam control a player has before they have built a lever or written any
-     * Lua.
-     *
-     * <p>Intermediate positions come from redstone or from Lua. A hand is a
-     * hand: it gets the two ends of the stroke.
-     */
+    /** Always-open main steam penetration. Right-click reads status; use downstream MSIVs for isolation. */
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                Player player, BlockHitResult hit) {
@@ -143,9 +118,7 @@ public class RpvSteamOutletBlock extends BaseEntityBlock implements SteamLinePor
             // looking for a fault in a pipe they have just finished building.
             nozzle.refreshAttachment(level);
             nozzle.refreshLine(level);
-            if (!player.isShiftKeyDown()) {
-                nozzle.setPosition(nozzle.getPosition() > 0.0 ? 0.0 : 1.0);
-            }
+
             for (String line : nozzle.statusLines()) {
                 player.displayClientMessage(Component.literal(line), false);
             }

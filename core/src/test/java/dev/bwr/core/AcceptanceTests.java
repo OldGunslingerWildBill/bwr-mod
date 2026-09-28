@@ -96,6 +96,7 @@ public final class AcceptanceTests {
             TransientHarnessTest.class,
             SuppressionPoolTest.class,
             BoundaryStressTest.class,
+            dev.bwr.core.boundary.PortLocaTest.class,
             SevereAccidentEscalationTest.class,
             QuenchSpikeRefloodTest.class,
             DamageBookkeepingTest.class,

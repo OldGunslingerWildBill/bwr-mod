@@ -1,5 +1,64 @@
 # Changelog
 
+## 0.1.0-alpha.27 — 2026-09-27 — Spray-ring placement and rotation
+
+- Corrected the construction model's quarter-turn offset so new spray branches face the player.
+- Stopped straight neighboring segments from overwriting the chosen nozzle direction; automatic 90-degree corners remain available.
+- Added Mekanism Configurator Rotate-mode support: right-click for a clockwise quarter turn of straight or corner segments.
+- Saved manual orientation so neighbor updates and world reloads do not undo tool rotations.
+- Fixed held-item interaction so extending a ring does not accidentally toggle LPCS/HPCS; empty-hand right-click still switches loops.
+- Added in-game placement/control tooltips and integration checks using the actual Mekanism Configurator.
+
+## 0.1.0-alpha.26 — 2026-09-27 — Port-height LOCA and white steam
+
+- Changed reactor accident plumes from red to white, retaining the existing particle budget.
+- Removing a previously connected vessel pipe now creates a persistent leak; never-connected construction ports remain buildable.
+- Added pressure- and elevation-dependent water discharge, with larger lower recirculation inlet breaks and smaller upper outlet breaks.
+- Direct liquid drainage stops at each broken nozzle's height; exposed nozzles vent steam and boiling/flashing can continue lowering inventory.
+- Added a fixed-volume, two-phase rupture solve coupling mass, outlet enthalpy, expanding steam space and depressurization.
+- Feedwater and steam-line breaks vent exposed vessel nozzles; multiple openings and their locations survive reload.
+- Pipe failures become possible above 1,250 psig after accumulated wear; vessel-head failures retain the separate 1,375-psig gate.
+- Added physics and Minecraft regression coverage for port elevation, flow scaling, conservation, pipe removal and save compatibility.
+
+
+## 0.1.0-alpha.25 — 2026-09-27 — Jet-pump proportions
+
+- Rebuilt the installed jet-pump appearance in Blender as separate diffuser, straight-pipe, inlet and support parts.
+- Preserved round pipe sections and uniformly scaled bends, suction bells, diffusers, braces and fasteners.
+- Limited straight-section length adjustment and total pump aspect ratio, preventing tall vessels from stretching the pumps into thin columns.
+- Improved fitting to the curved shroud/vessel gap while retaining spacing between adjacent assemblies.
+- Preserved existing construction placement, saved pump blocks, pairing and hydraulic capacity; retained cached GPU geometry.
+- Expanded the client checks to validate actual part bounds, materials, aspect ratios and a close view inside the downcomer.
+
+## 0.1.0-alpha.24 — 2026-09-27 — Installed jet pumps
+
+- Formed reactors now display their installed jet pumps down alongside the outside of the core shroud, inside the vessel wall.
+- Retained the tall construction models and existing lower mounting rows for building; unforming restores those models and their selection/collision shapes.
+- Removed invisible construction-column obstacles while formed without moving or deleting saved pump blocks.
+- Fit pump models to vessel size and installed count, including smaller and rectangular vessels; kept paired-flow rules and the ten-jet-per-recirculation-pump rating unchanged.
+- Reused the existing Blender-authored pump mesh, checked the shroud fit in Blender, and cached installed geometry on the GPU.
+- Added formation, disassembly, reload, legacy footprint, missing-pump, flow and client geometry checks.
+
+## 0.1.0-alpha.23 — 2026-09-27 — Open reactor access
+
+- Removed physical collision and crosshair obstruction from the raised/failed vessel head; closing the head restores collision. Preserved structure blocks and saved state.
+- Added water- and power-dependent blue Cherenkov-style light around submerged fuel, including decay-power glow after shutdown.
+- Added original Blender 90-degree sparger elbows that automatically turn at neighboring corners. New segments inherit the adjacent LPCS/HPCS setting.
+- Kept vessel/core meshes cached; no new machine ticker, particle cloud, or world-light updates.
+- Added open/closed/reloaded head collision, real entity passage, corner orientation and glow-condition checks.
+
+## 0.1.0-alpha.22 — 2026-09-27 — Steam paths and accident visuals
+
+- Fixed suppression wall-inlet routing after pipe changes. A separate quencher and submerged inlet block are no longer required. Retired quencher crafting/creative entry while keeping old-save compatibility.
+- Added a water drain outlet with manual, redstone and CC control. It drains outside or into a connected water line, stops against obstructions, and can empty below the separate RHR suction floor.
+- Made RPV steam nozzles permanently open; downstream MSIVs retain powered redstone/computer isolation. Old closed nozzle saves migrate automatically.
+- Waterlogged high-pressure water and steam pipes now survive underwater placement.
+- Shared pump suction across multiple water sources and added the connected-source count to the GUI; delivery remains limited by pump rating.
+- Connected existing pressure damage above 1,375 psig to actual service-pipe breaks and persistent failure effects. Vessel-side feedwater rupture now loses coolant.
+- Added an original Blender damaged-head model, bounded red-tinted accident steam and a loud one-shot vanilla explosion sound pending custom audio.
+- Preserved the existing temperature/steam-dependent oxidation and hydrogen model and documented its connection to loss of cooling.
+- Added drainage, RHR, intake, underwater pipe and failure/reload regressions; expanded the client visual check. GUI protocol is 11: update client and server together.
+
 ## 0.1.0-alpha.21 — 2026-09-27 — Reactor Visual Update
 
 - Replaced formed-vessel controller cubes with a shallow Blender instrument panel.

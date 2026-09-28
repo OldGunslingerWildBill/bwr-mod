@@ -4,6 +4,9 @@
   "block.bwr.reactor_vessel": "Reactor Pressure Vessel",
   "block.bwr.control_rod_drive": "Control Rod Drive",
   "block.bwr.core_spray_sparger": "Core Spray Sparger",
+  "tooltip.bwr.sparger.placement": "Spray branch faces you when placed; adjacent segments form corners.",
+  "tooltip.bwr.sparger.rotate": "Configurator in Rotate mode: right-click to turn and lock orientation.",
+  "tooltip.bwr.sparger.loop": "Empty-hand right-click: switch LPCS / HPCS.",
   "block.bwr.recirculation_pump": "DVSS Recirculation Pump",
   "block.bwr.jet_pump": "Jet Pump",
   "block.bwr.safety_relief_valve": "Safety/Relief Valve",
@@ -12,7 +15,7 @@
   "block.bwr.rpv_steam_outlet": "RPV Steam Outlet",
   "block.bwr.suppression_pool_controller": "Suppression Pool Controller",
   "block.bwr.suppression_pool_wall": "Suppression Pool Concrete",
-  "block.bwr.suppression_pool_quencher": "Suppression Pool Quencher",
+  "block.bwr.suppression_pool_quencher": "Legacy Quencher (retired)",
   "block.bwr.turbine_steam_outlet": "Turbine Steam Outlet",
   "block.bwr.fuel_fabricator": "Fuel Fabricator",
   "item.bwr.fuel_assembly": "Fuel Assembly",
@@ -141,5 +144,6 @@
   "insert.bwr.cobalt_target": "Cobalt Irradiation Rod",
   "insert.bwr.tritium_target": "Tritium Target Rod",
   "insert.bwr.silicon_target": "Silicon Irradiation Rod",
-  "block.bwr.suppression_pool_steam_inlet": "Suppression Tank Steam Inlet"
+  "block.bwr.suppression_pool_steam_inlet": "Suppression Tank Steam Inlet",
+  "block.bwr.suppression_pool_drain": "Suppression Pool Water Drain Outlet"
 }

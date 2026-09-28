@@ -42,7 +42,7 @@ public class JetPumpBlock extends dev.bwr.mod.eccs.PumpAssemblyBlock {
     public static final EnumProperty<Size> SIZE = EnumProperty.create("size", Size.class);
 
     public JetPumpBlock(Properties properties) {
-        super(properties, Kind.JET);
+        super(properties.dynamicShape(), Kind.JET);
         legacy=loadLayout("jet_pump_legacy");
         registerDefaultState(defaultBlockState().setValue(SIZE, Size.SMALL).setValue(NARROW,false));
     }
@@ -50,6 +50,10 @@ public class JetPumpBlock extends dev.bwr.mod.eccs.PumpAssemblyBlock {
     @Override public BlockState placementState() { return super.placementState().setValue(NARROW,true); }
     @Override protected boolean owned(BlockState actual,BlockState s,int cell) {
         return super.owned(actual,s,cell) && actual.getValue(NARROW)==s.getValue(NARROW);
+    }
+    @Override protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState s,net.minecraft.world.level.BlockGetter level,
+            net.minecraft.core.BlockPos pos,net.minecraft.world.phys.shapes.CollisionContext context) {
+        return dev.bwr.mod.reactor.VesselJetAccess.contains(level,pos)?net.minecraft.world.phys.shapes.Shapes.empty():super.getShape(s,level,pos,context);
     }
     @Override public void appendHoverText(net.minecraft.world.item.ItemStack stack,net.minecraft.world.item.Item.TooltipContext context,
             java.util.List<net.minecraft.network.chat.Component> lines,net.minecraft.world.item.TooltipFlag flag) {

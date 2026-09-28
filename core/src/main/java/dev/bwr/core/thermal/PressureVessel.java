@@ -226,6 +226,20 @@ public final class PressureVessel {
     private double injectionEnthalpyKJPerKg = Saturation.subcooledLiquidEnthalpyKJPerKg(40.0);
     private double liquidLeakKgPerS;
     private double steamLeakKgPerS;
+    private double ruptureVolumeM3;
+    private java.util.List<dev.bwr.core.boundary.BoundaryOpening> boundaryOpenings = java.util.List.of();
+    private double boundaryLiquidFlowKgPerS, boundarySteamFlowKgPerS;
+
+    public void setBoundaryOpenings(java.util.List<dev.bwr.core.boundary.BoundaryOpening> openings, double volume) {
+        boundaryOpenings = openings.stream().sorted(java.util.Comparator.comparingDouble(
+                dev.bwr.core.boundary.BoundaryOpening::elevationIn).reversed()).toList();
+        ruptureVolumeM3 = Double.isFinite(volume) ? Math.max(0, volume) : 0;
+    }
+    public double getBoundaryLiquidFlowKgPerS() { return boundaryLiquidFlowKgPerS; }
+    public double getBoundarySteamFlowKgPerS() { return boundarySteamFlowKgPerS; }
+    public double getOccupiedVolumeM3() {
+        return getSteamDomeVolumeM3() + liquidMassKg / Saturation.liquidDensityKgPerM3(getPressurePsia());
+    }
 
     // --- state ----------------------------------------------------------
 
@@ -311,6 +325,9 @@ public final class PressureVessel {
             return pressurePsig;
         }
 
+        if (ruptureVolumeM3 > 0) return stepRupture(coreThermalMW, turbineSteamFlowKgPerS,
+                bypassSteamFlowKgPerS, reliefSteamFlowKgPerS, dtSeconds);
+        boundaryLiquidFlowKgPerS = boundarySteamFlowKgPerS = 0;
         double thermalKW = Math.max(0.0, finite(coreThermalMW)) * 1000.0;
         double steamOut = nonNegative(turbineSteamFlowKgPerS)
                 + nonNegative(bypassSteamFlowKgPerS)
@@ -433,6 +450,68 @@ public final class PressureVessel {
         this.pressureCapacityKgPerPsi = lastCapacity;
         this.pressureRateOfChangePsiPerSecond = (pressurePsig - startPressure) / dtSeconds;
 
+        recomputeLevels();
+        return pressurePsig;
+    }
+
+    /** Bounded, conservative blowdown solve; only used after a boundary rupture. */
+    private double stepRupture(double thermalMW, double turbine, double bypass, double relief, double seconds) {
+        int steps = Math.max(1, Math.min(MAX_PRESSURE_SUB_STEPS, (int)Math.ceil(seconds / .01)));
+        double dt = seconds / steps, start = pressurePsig;
+        double liquidDischarge = 0, steamDischarge = 0, allSteam = 0, phaseChange = 0, flash = 0;
+        double heatKW = nonNegative(thermalMW) * 1000;
+        double normalSteam = nonNegative(turbine) + nonNegative(bypass) + nonNegative(relief) + steamLeakKgPerS;
+        commandedSteamRemovalKgPerS = normalSteam;
+        for (int step = 0; step < steps; step++) {
+            double psia = getPressurePsia();
+            double rf = Saturation.liquidDensityKgPerM3(psia);
+            double hf = Saturation.liquidEnthalpyKJPerKg(psia), hg = Saturation.vapourEnthalpyKJPerKg(psia);
+            double mass = liquidMassKg + getSteamMassKg();
+            double energy = VesselBlowdown.at(pressurePsig, mass, ruptureVolumeM3).energy();
+            double level = liquidMassKg / rf / levelAreaM2 / METRES_PER_INCH
+                    - PhysicalConstants.INSTRUMENT_ZERO_ABOVE_VESSEL_ZERO_IN;
+            double leakLiquid = 0, leakSteam = 0;
+            // Openings are sorted highest first. Every port may remove only the
+            // inventory above its own elevation, including simultaneous breaks.
+            for (var opening : boundaryOpenings) {
+                double retained = Math.max(0, opening.elevationIn()
+                        + PhysicalConstants.INSTRUMENT_ZERO_ABOVE_VESSEL_ZERO_IN) * METRES_PER_INCH * levelAreaM2 * rf;
+                double available = Math.max(0, liquidMassKg - retained - leakLiquid * dt);
+                leakLiquid += Math.min(available / dt, opening.liquidFlow(pressurePsig, level, rf));
+                leakSteam += opening.steamFlow(pressurePsig, level);
+            }
+            double manualLiquid = Math.min(liquidLeakKgPerS, Math.max(0, liquidMassKg / dt - leakLiquid));
+            double waterIn = (feedwaterFlowKgPerS + injectionFlowKgPerS) * dt;
+            double liquidOut = (leakLiquid + manualLiquid) * dt;
+            // Do not remove more vapour than exists in this substep; newly flashed
+            // steam becomes available on the next one. No negative inventories.
+            double reserve = ruptureVolumeM3 * Saturation.vapourDensityKgPerM3(Saturation.MINIMUM_PRESSURE_PSIA);
+            double availableSteam = Math.min(getSteamMassKg(), Math.max(0,mass+waterIn-liquidOut-reserve));
+            double steamScale = Math.min(1, availableSteam / Math.max(1e-12, (normalSteam + leakSteam) * dt));
+            double steamOut = (normalSteam + leakSteam) * dt * steamScale;
+            double newMass = Math.max(0, mass + waterIn - liquidOut - steamOut);
+            double newEnergy = energy + (heatKW + feedwaterFlowKgPerS * feedwaterEnthalpyKJPerKg
+                    + injectionFlowKgPerS * injectionEnthalpyKJPerKg) * dt - liquidOut * hf - steamOut * hg;
+            var next = VesselBlowdown.solve(newMass, newEnergy, ruptureVolumeM3);
+            double boiling = (heatKW - feedwaterFlowKgPerS * (hf - feedwaterEnthalpyKJPerKg)
+                    - injectionFlowKgPerS * (hf - injectionEnthalpyKJPerKg)) / (hg - hf);
+            double transferred = liquidMassKg + waterIn - liquidOut - next.liquid();
+            phaseChange += transferred;
+            flash += transferred - boiling * dt;
+            liquidMassKg = next.liquid(); pressurePsig = next.pressure();
+            liquidDischarge += leakLiquid * dt;
+            steamDischarge += leakSteam * dt * steamScale;
+            allSteam += steamOut;
+        }
+        boundaryLiquidFlowKgPerS = liquidDischarge / seconds;
+        boundarySteamFlowKgPerS = steamDischarge / seconds;
+        steamRemovalKgPerS = allSteam / seconds;
+        flashingKgPerS = flash / seconds;
+        steamGenerationKgPerS = (phaseChange - flash) / seconds;
+        pressureRateOfChangePsiPerSecond = (pressurePsig - start) / seconds;
+        double p = getPressurePsia();
+        pressureCapacityKgPerPsi = getSteamDomeVolumeM3() * Saturation.vapourDensitySlopeKgPerM3PerPsi(p)
+                + liquidMassKg * Saturation.liquidEnthalpySlopeKJPerKgPerPsi(p) / Saturation.latentHeatKJPerKg(p);
         recomputeLevels();
         return pressurePsig;
     }
@@ -614,7 +693,7 @@ public final class PressureVessel {
 
     /** Steam mass held in the dome, kg — dome volume times saturated vapour density. */
     public double getSteamMassKg() {
-        return steamDomeVolumeM3 * Saturation.vapourDensityKgPerM3(getPressurePsia());
+        return getSteamDomeVolumeM3() * Saturation.vapourDensityKgPerM3(getPressurePsia());
     }
 
     // ---------------------------------------------------------------
@@ -782,7 +861,8 @@ public final class PressureVessel {
 
     /** Steam dome volume, m3. Sets how sharply pressure answers a flow mismatch. */
     public double getSteamDomeVolumeM3() {
-        return steamDomeVolumeM3;
+        return ruptureVolumeM3 > 0 ? Math.max(0, ruptureVolumeM3
+                - liquidMassKg / Saturation.liquidDensityKgPerM3(getPressurePsia())) : steamDomeVolumeM3;
     }
 
     /** @see #getSteamDomeVolumeM3() */
@@ -875,6 +955,7 @@ public final class PressureVessel {
      * {@link #NORMAL_COLLAPSED_LEVEL_IN}, for a run that starts hot.
      */
     public void initialiseToNormalLevel() {
+        ruptureVolumeM3 = 0; boundaryOpenings = java.util.List.of();
         this.pressurePsig = PhysicalConstants.RATED_DOME_PRESSURE_PSIG;
         this.liquidMassKg = config.coolantMassKg;
         recomputeLevels();
@@ -934,6 +1015,7 @@ public final class PressureVessel {
      * calibration error the class comment describes, pointing the other way.
      */
     public void initialiseCold() {
+        ruptureVolumeM3 = 0; boundaryOpenings = java.util.List.of();
         this.pressurePsig = COLD_SHUTDOWN_PRESSURE_PSIG;
         this.liquidMassKg = config.coolantMassKg;
         recomputeLevels();

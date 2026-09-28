@@ -9,61 +9,7 @@ import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * CC:Tweaked peripheral for one RPV main steam nozzle.
- *
- * <h2>The last actuator on the plant Lua could not reach</h2>
- * {@code RpvSteamOutletBlockEntity} was written with a stop valve, a
- * {@code setPosition(double)} and a {@code setComputerControlled(boolean)}, and
- * its own class comment says the position "is moved by the player's hand, by an
- * analogue redstone signal, or by Lua". The first two worked. The third did not,
- * because no peripheral was ever registered for the block, so
- * {@code setComputerControlled} had zero callers and the
- * {@code !isComputerControlled()} guard in {@code RpvSteamOutletBlock
- * .neighborChanged} was a condition that could never be false.
- *
- * <p>That mattered more here than it would anywhere else. The nozzles are the
- * <b>main</b> steam path out of the vessel — {@code ReactorControllerBlockEntity
- * .gatherSteamOutletFlow} sums them into the one discharge scalar the controller
- * owns — so a program running the plant on Lua alone had no handle on the
- * principal steam removal path at all. Pressure control had to be done through
- * the relief valves, the turbine outlet, or a lever.
- *
- * <h2>Hardware, and nothing above it</h2>
- * There is no pressure regulator here and no setpoint. {@link #setPosition} moves
- * a stop valve because a program said so; what that opening passes depends on
- * what the vessel is at, and matching the two is the player's control loop. Hold
- * it wide open on a cold vessel and the plant depressurises; hold it shut at
- * power and pressure climbs until the metal gives up. Both are the player's
- * doing, and nothing in this class or the block behind it forms an opinion about
- * either.
- *
- * <h2>Claiming control</h2>
- * Every actuator claims computer control first, exactly as
- * {@code SafetyReliefValvePeripheral} and {@code TurbineSteamOutletPeripheral}
- * do. Without the claim the block owns the position: any neighbour update
- * reaching a Lua-opened nozzle takes the redstone branch and drives the stop
- * valve to whatever {@code getBestNeighborSignal} says — zero, on a nozzle
- * nobody has wired — so a Lua-commanded steam path would close the first time
- * somebody placed a block next to it, with no error and no indication.
- *
- * <p>{@link #releaseControl()} hands it back. The nozzle keeps its present
- * position until a redstone <i>change</i> reaches it, because
- * {@code acceptRedstoneSignal} is edge-triggered on purpose — see its comment —
- * so releasing beside a steady lever does not immediately snap the valve to the
- * lever's position. That is what a hardware selector switch does, and it is the
- * same behaviour the SRV and MSIV peripherals have.
- *
- * <h2>Everything that touches the nozzle runs on the server thread</h2>
- * Every method except the three nameplate constants is
- * {@code @LuaFunction(mainThread = true)} and must stay that way. The actuators
- * reach {@code BlockEntity.setChanged()}, which walks the chunk map and
- * dispatches neighbour updates to adjacent comparators, and the readouts sample
- * fields the controller's tick is writing inside {@code gatherSteamOutletFlow}.
- *
- * <p>This class references CC:Tweaked types directly, so it must only ever be
- * loaded when CC:Tweaked is present. {@link BwrPeripheralSupport} is the guard.
- */
+/** Readouts for an always-open vessel nozzle. Use an MSIV for steam isolation. */
 public class RpvSteamOutletPeripheral implements IPeripheral {
 
     private final RpvSteamOutletBlockEntity be;
@@ -103,58 +49,16 @@ public class RpvSteamOutletPeripheral implements IPeripheral {
         return be;
     }
 
-    // --- Actuators ------------------------------------------------------
-
-    /**
-     * Move the stop valve, 0.0 shut to 1.0 fully open. Claims computer control.
-     *
-     * <p>Out of range clamps, because a valve cannot be more than open or less
-     * than shut and the handle has stops. <b>Non-finite is refused</b>, and that
-     * asymmetry is deliberate: {@code RpvSteamOutletBlockEntity.setPosition}
-     * maps a non-finite argument to {@code 0.0}, so a control loop that divided
-     * by zero would <i>slam the main steam nozzle shut</i> and be told nothing
-     * at all. Lua has one number type and produces NaN trivially — {@code 0/0},
-     * or any unguarded division inside a pressure controller — and on a plant at
-     * power an unannounced full closure of a steam path is the start of the
-     * MSIV-closure transient. A Lua error naming the value is the only way the
-     * player finds out their control loop produced a NaN. This is a judgement
-     * about the <i>argument</i>, never about the plant.
-     */
+    // Legacy method names fail clearly instead of pretending to shut an open nozzle.
     @LuaFunction(mainThread = true)
     public final void setPosition(double fraction) throws LuaException {
-        if (!Double.isFinite(fraction)) {
-            throw new LuaException("stop valve position must be a finite number, got " + fraction);
-        }
-        be.setComputerControlled(true);
-        be.setPosition(fraction);
+        if (fraction != 1.0) throw new LuaException("RPV nozzle is always open; control the downstream MSIV.");
     }
-
-    /** Throw the stop valve fully open. Unconditional; nothing checks it. */
-    @LuaFunction(mainThread = true)
-    public final void open() {
-        be.setComputerControlled(true);
-        be.setPosition(1.0);
+    @LuaFunction(mainThread = true) public final void open() {}
+    @LuaFunction(mainThread = true) public final void close() throws LuaException {
+        throw new LuaException("RPV nozzle is always open; close the downstream MSIV.");
     }
-
-    /**
-     * Shut the stop valve. Equally unconditional — and on a vessel at power this
-     * is one quarter of an MSIV closure, so the pressure transient that follows
-     * is the player's to anticipate.
-     */
-    @LuaFunction(mainThread = true)
-    public final void close() {
-        be.setComputerControlled(true);
-        be.setPosition(0.0);
-    }
-
-    /**
-     * Hand the nozzle back to redstone and to the player's hand. See the class
-     * comment for why the valve does not move until a redstone change arrives.
-     */
-    @LuaFunction(mainThread = true)
-    public final void releaseControl() {
-        be.setComputerControlled(false);
-    }
+    @LuaFunction(mainThread = true) public final void releaseControl() {}
 
     // --- Measurements ---------------------------------------------------
 

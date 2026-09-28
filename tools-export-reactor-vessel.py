@@ -5,7 +5,7 @@ ROOT=Path(__file__).resolve().parent
 spec=importlib.util.spec_from_file_location('modern',ROOT/'tools-export-modern.py')
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 m.SOURCE=ROOT/'art/models/reactor_vessel'
-for name in ('barrel','bottom','flange','head','weld','stud','spool','collar','steam_nozzle','water_nozzle','controller_panel'):
+for name in ('barrel','bottom','flange','head','weld','stud','spool','collar','steam_nozzle','water_nozzle','controller_panel','failed_head'):
     source=m.read(name+'.json');folder=m.RES/'assets/bwr/models/block/reactor_vessel'/name
     mats=m.materials(source,folder)
     m.put(folder/'body.obj',m.obj(source['faces'],mats))

@@ -25,6 +25,7 @@ public class CoolingBlockEntity extends BlockEntity {
     private long checkedAt=Long.MIN_VALUE,drainTick=Long.MIN_VALUE;private int drained;
     private boolean complete;public boolean forming,structureDirty=true;
     private double target,actual;private int draw;
+    public int connectedSources;
     public float fanAngle,previousFanAngle;
     private double vaporActivity;
     private long vaporUpdated=Long.MIN_VALUE;
@@ -101,7 +102,7 @@ public class CoolingBlockEntity extends BlockEntity {
     private boolean source(BlockPos p){return level.isLoaded(p)&&level.getFluidState(p).isSource()&&level.getFluidState(p).is(Fluids.WATER);}
     public static void serverTick(Level l,BlockPos p,BlockState s,CoolingBlockEntity be){
         if(be.unit==null)return;
-        be.unit.clearReadouts();be.actual=0;be.draw=0;
+        be.unit.clearReadouts();be.actual=0;be.draw=0;be.connectedSources=0;
         if(!be.ready() && !be.forming && be.owner()==be && l.getGameTime()%20==0
                 && dev.bwr.mod.world.AssemblyAccess.allLoaded(l,p,s)){l.destroyBlock(p,true);return;}
         if(be.ready()){

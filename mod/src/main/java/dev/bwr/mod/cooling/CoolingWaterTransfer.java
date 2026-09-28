@@ -26,14 +26,24 @@ public final class CoolingWaterTransfer {
             var identity=dev.bwr.mod.world.LiveCapabilities.fluidIdentity(source);
             if(identity!=null&&unique.add(identity))sources.add(source);
         }
+        pump.connectedSources=sources.size();
         int wanted=(int)Math.floor(Math.min(pump.design().flow/20,pump.design().capacity-pump.plant().input()));
+        var offers=new ArrayList<FluidStack>();long available=0;
         for(var source:sources){
-            if(wanted<=0)break;
-            var taken=source.drain(wanted,IFluidHandler.FluidAction.SIMULATE);
+            var offer=source.drain(wanted,IFluidHandler.FluidAction.SIMULATE);
+            if(!offer.is(Fluids.WATER))offer=FluidStack.EMPTY;
+            offers.add(offer);available+=offer.getAmount();
+        }
+        // Share demand across every connected source, redistributing empty/limited supplies.
+        // One assembly exposed through several faces is counted once above.
+        for(int i=0;i<sources.size()&&wanted>0&&available>0;i++){
+            var offer=offers.get(i);int amount=offer.getAmount();if(amount<=0)continue;
+            int share=(int)Math.min(amount,Math.ceil((double)wanted*amount/available));
+            var taken=sources.get(i).drain(offer.copyWithAmount(share),IFluidHandler.FluidAction.EXECUTE);
             if(!taken.isEmpty()&&taken.is(Fluids.WATER)){
-                taken=source.drain(taken,IFluidHandler.FluidAction.EXECUTE);
                 pump.plant().fillInput(taken.getAmount(),dev.bwr.mod.water.ThermalWater.enthalpy(taken),false);wanted-=taken.getAmount();pump.setChanged();
             }
+            available-=amount;
         }
     }
 }

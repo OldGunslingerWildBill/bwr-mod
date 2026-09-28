@@ -28,6 +28,10 @@ public class CoolingScreen extends BwrScreen<CoolingMenu> {
             readout(g,"Heat rejected",num(menu.heat,1)+" MW",12,111,328,TEXT_BRIGHT);
             readout(g,"Makeup demand",num(menu.loss,1)+" kg/s",12,127,328,TEXT_BRIGHT);
         }
+        else if(menu.design.watts>0){
+            readout(g,"Connected water sources",Integer.toString(menu.connectedSources),12,111,328,TEXT_BRIGHT);
+            text(g,"Combined supply is limited by the pump rating.",12,127,TEXT_DIM);
+        }
         if(menu.design.watts>0)readout(g,menu.design.tower?"Fan":"Motor",num(menu.actual*100,1)+"%  |  "+big(menu.draw)+" FE/t",12,143,328,TEXT_BRIGHT);
         else text(g,menu.design==Design.INTAKE?"Passive screen - connect a makeup pump downstream.":"Natural draft - no motor or fan required.",12,143,TEXT_DIM);
         if(menu.design.watts>0)text(g,"Speed (%)",12,181,TEXT);

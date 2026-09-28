@@ -12,17 +12,19 @@ import net.minecraft.world.level.block.state.*;
 import java.util.List;
 
 /** Six-way water pipe; its NeoForge capability forwards incoming condensate to suction tanks. */
-public class HighPressureWaterPipeBlock extends dev.bwr.mod.piping.PaintedPipeBlock {
+public class HighPressureWaterPipeBlock extends dev.bwr.mod.piping.PaintedPipeBlock implements SimpleWaterloggedBlock {
+    public static final net.minecraft.world.level.block.state.properties.BooleanProperty WATERLOGGED = net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED;
     public static final MapCodec<HighPressureWaterPipeBlock> CODEC = simpleCodec(HighPressureWaterPipeBlock::new);
     public HighPressureWaterPipeBlock(Properties properties) {
         super(properties);
         BlockState state = defaultBlockState();
         for (Direction d : Direction.values()) state = state.setValue(PROPERTY_BY_DIRECTION.get(d), false);
-        registerDefaultState(state);
+        registerDefaultState(state.setValue(WATERLOGGED, false));
     }
     @Override protected MapCodec<? extends PipeBlock> codec() { return CODEC; }
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
+        builder.add(WATERLOGGED);
     }
     private boolean connects(BlockGetter world, BlockPos pos, Direction face) {
         return world instanceof Level level ? WaterLineNetwork.connectsTo(level, pos, face)
@@ -31,13 +33,17 @@ public class HighPressureWaterPipeBlock extends dev.bwr.mod.piping.PaintedPipeBl
     public BlockState stateWithConnections(BlockGetter level, BlockPos pos) {
         BlockState state = defaultBlockState();
         for (Direction d : Direction.values()) state = state.setValue(PROPERTY_BY_DIRECTION.get(d), connects(level, pos.relative(d), d.getOpposite()));
-        return state;
+        return state.setValue(WATERLOGGED, level.getFluidState(pos).getType() == net.minecraft.world.level.material.Fluids.WATER);
     }
     @Override public BlockState getStateForPlacement(BlockPlaceContext context) {
         return stateWithConnections(context.getLevel(), context.getClickedPos());
     }
     @Override protected BlockState updateShape(BlockState state, Direction d, BlockState neighbour, LevelAccessor level, BlockPos pos, BlockPos neighbourPos) {
+        if (state.getValue(WATERLOGGED)) level.scheduleTick(pos, net.minecraft.world.level.material.Fluids.WATER, net.minecraft.world.level.material.Fluids.WATER.getTickDelay(level));
         return state.setValue(PROPERTY_BY_DIRECTION.get(d), connects(level, neighbourPos, d.getOpposite()));
+    }
+    @Override protected net.minecraft.world.level.material.FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? net.minecraft.world.level.material.Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
     @Override protected BlockState rotate(BlockState state, Rotation rotation) {
         BlockState out = state;

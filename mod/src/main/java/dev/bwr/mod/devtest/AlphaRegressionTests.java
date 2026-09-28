@@ -128,7 +128,13 @@ public final class AlphaRegressionTests {
         near(h,nozzle.availableFlowKgPerS(l.getGameTime()),0,"ADS did not spend steam allocation");
         var bus=EccsNetwork.busFor(l,cp);valve.reportRelief(bus,l.getGameTime(),flow);bus.applyTo(reactor.core(),l.getGameTime());
         near(h,bus.getTotalSteamKgPerS(),0,"ADS debited nozzle steam a second time");
-        nozzle.setPosition(0);h.assertTrue(valve.steamSupply()==null,"closed RPV nozzle still supplies ADS");nozzle.setPosition(1);
+        nozzle.setPosition(0);nozzle.acceptRedstoneSignal(0);
+        h.assertTrue(valve.steamSupply()!=null&&nozzle.getPosition()==1,"obsolete nozzle controls isolated the vessel");
+        var msivAt=o.offset(14,6,5);l.setBlock(msivAt,BwrBlocks.MSIV.get().defaultBlockState(),3);
+        h.assertTrue(valve.steamSupply()==null,"closed MSIV supplied ADS");
+        var msiv=(dev.bwr.mod.steam.MainSteamIsolationValveBlockEntity)l.getBlockEntity(msivAt);
+        msiv.energy().receiveEnergy(20000,false);msiv.setDemandOpen(true);msiv.tickValve(4);
+        h.assertTrue(valve.steamSupply()!=null,"powered open MSIV failed to supply ADS");
         l.removeBlock(o.offset(14,6,5),false);h.assertTrue(valve.steamSupply()==null,"broken steam pipe remained connected");
         l.removeBlock(at,false);l.removeBlock(cp,false);h.succeed();
     }

@@ -405,6 +405,14 @@ public final class SuppressionPool {
         return Math.max(0.0, massKg - designMassKg * SUCTION_FLOOR_FRACTION);
     }
 
+    /** Maintenance drain below the elevated RHR suction. Carries the pool's specific enthalpy. */
+    public double drainWaterKg(double requested) {
+        if (!Double.isFinite(requested) || requested <= 0) return 0;
+        double removed = Math.min(requested, massKg);
+        massKg -= removed;
+        return removed;
+    }
+
     /** Measured heat removal by a physical exchanger, bounded by its cold inlet. */
     public double removeHeatMJ(double requestedMJ, double coldInletC) {
         if (!Double.isFinite(requestedMJ) || !Double.isFinite(coldInletC) || requestedMJ <= 0) return 0;

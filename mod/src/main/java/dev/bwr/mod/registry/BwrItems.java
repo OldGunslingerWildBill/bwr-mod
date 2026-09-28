@@ -63,6 +63,7 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.SUPPRESSION_POOL_WALL);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_SUCTION = ITEMS.registerSimpleBlockItem(BwrBlocks.SUPPRESSION_POOL_SUCTION);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_RETURN = ITEMS.registerSimpleBlockItem(BwrBlocks.SUPPRESSION_POOL_RETURN);
+    public static final DeferredItem<BlockItem> SUPPRESSION_POOL_DRAIN = ITEMS.registerSimpleBlockItem(BwrBlocks.SUPPRESSION_POOL_DRAIN);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_STEAM_INLET = ITEMS.registerSimpleBlockItem(BwrBlocks.SUPPRESSION_POOL_STEAM_INLET);
     public static final DeferredItem<BlockItem> RHR_HEAT_EXCHANGER = ITEMS.registerSimpleBlockItem(BwrBlocks.RHR_HEAT_EXCHANGER);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_QUENCHER =
@@ -173,8 +174,9 @@ public final class BwrItems {
                         output.accept(SUPPRESSION_POOL_SUCTION.get());
                         output.accept(SUPPRESSION_POOL_RETURN.get());
                         output.accept(SUPPRESSION_POOL_STEAM_INLET.get());
+            output.accept(SUPPRESSION_POOL_DRAIN.get());
                         output.accept(RHR_HEAT_EXCHANGER.get());
-                        output.accept(SUPPRESSION_POOL_QUENCHER.get());
+                        // Legacy quencher registry retained only for existing saves.
                         output.accept(HPCS_PUMP.get());
                         output.accept(LPCS_PUMP.get());
                         output.accept(RHR_PUMP.get());

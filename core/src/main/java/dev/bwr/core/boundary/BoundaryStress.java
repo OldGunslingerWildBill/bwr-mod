@@ -12,110 +12,14 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-/**
- * Overpressure damage to the reactor pressure boundary — {@code SPEC.md}
- * section 7, and the only thing in this entire plant that happens to a player
- * without a player asking for it.
- *
- * <h2>Why this class exists at all</h2>
- * Every other consequence in this mod is either commanded by the player or
- * mediated by their control program. The safety and relief valves are
- * player-actuated ({@code ReactorCore#setReliefSteamFlowKgPerS}), so nothing
- * relieves pressure on its own; there is no scram on high pressure, because
- * there is no scram on anything. Without this class a plant can be isolated at
- * rated power and left, and it will sit at three times its design pressure
- * indefinitely with no consequence whatsoever. That silently contradicts the
- * project's premise that failures should be traceable to neglect: neglect
- * needs somewhere to land.
- *
- * <p>This is damage, not protection. Nothing here warns, trips, prevents,
- * relieves or actuates. It accumulates wear and eventually breaks something.
- * Accumulated stress per component is published as a measurement precisely so
- * a player can write their own alarms against it in Lua — and equally, so they
- * can choose not to.
- *
- * <h2>Stress accumulation, not a threshold</h2>
- * Metal does not fail the instant it is overloaded and survive indefinitely
- * one psi below. It uses up life at a rate that climbs steeply with load. So:
- *
- * <table border="1">
- *   <caption>Behaviour by dome pressure</caption>
- *   <tr><th>Dome pressure</th><th>Behaviour</th></tr>
- *   <tr><td>below {@value #DESIGN_PRESSURE_PSIG} psig</td>
- *       <td>Nothing. Vessel design pressure [TTC 2.2]; the plant is inside its
- *           envelope and no stress accumulates at all.</td></tr>
- *   <tr><td>{@value #DESIGN_PRESSURE_PSIG} to {@value #CODE_PRESSURE_PSIG}</td>
- *       <td>Stress accumulates, at a rate scaling as the square of how far
- *           over design pressure the plant is. Nothing can break in this band.
- *           This is the warning band, and the damage done in it is
- *           <b>permanent</b>.</td></tr>
- *   <tr><td>above {@value #CODE_PRESSURE_PSIG}</td>
- *       <td>ASME 110% of design, the code transient limit [TTC 2.5]. Stress
- *           keeps accumulating and each component now carries a per-second
- *           failure hazard proportional to the stress it has already
- *           accumulated.</td></tr>
- * </table>
- *
- * <p>Stress never decreases. There is no annealing, no cooling-off, no
- * forgiveness for going back inside the envelope. A plant that spends an hour
- * at 1300 psig cannot break there — but it has spent most of a steam line's
- * life, and the <i>next</i> excursion past the code limit will kill it in
- * seconds. That is what makes a failure traceable to neglect rather than to a
- * dice roll: the dice are only rolled at all once the metal is used up, and
- * how used up it is was entirely the player's doing.
- *
- * <h2>Non-deterministic, but not arbitrary</h2>
- * Above the code limit every exposed component has an independent hazard rate
- *
- * <pre>
- *   h_c = HAZARD_PER_SECOND * y * max(0, stress_c - FAILURE_STRESS)
- *   y   = (pressure - CODE_PRESSURE) / (CODE_PRESSURE - DESIGN_PRESSURE)
- * </pre>
- *
- * and the probability that anything fails in a step is
- * {@code 1 - exp(-sum(h_c) * dt)}. When something does fail, which component
- * it was is drawn in proportion to those same hazards. Since {@code h_c} is
- * linear in accumulated stress, and accumulated stress is proportional to the
- * component's exposure weight, <b>the component that has been abused hardest
- * is the one that goes</b>, without any of it being predetermined.
- *
- * <p>The {@code max(0, stress - FAILURE_STRESS)} gate is what keeps the vessel
- * head honest. The head accumulates stress at a quarter of a steam line's rate
- * because it is a forging several inches thick, so it needs four times as long
- * to reach the gate at all. By then a steam line or a recirculation line has
- * almost certainly already gone and depressurised the vessel. Losing the head
- * therefore requires sustained gross overpressure with everything else somehow
- * intact, which is exactly what {@code SPEC.md} section 7 asks for.
- *
- * <h2>Calibration, and why it is deliberately slow</h2>
- * {@link #SECONDS_TO_UNIT_STRESS_AT_CODE_PRESSURE} is the single knob. At
- * exactly the code limit a main steam line uses up its life in twenty minutes.
- * Everything else follows from the square law:
- *
- * <table border="1">
- *   <caption>Time for a main steam line to reach the failure gate</caption>
- *   <tr><th>Sustained pressure</th><th>Time to the gate</th></tr>
- *   <tr><td>1300 psig</td><td>about 2 hours (and it can never break there)</td></tr>
- *   <tr><td>1325 psig</td><td>about 56 minutes (and it can never break there)</td></tr>
- *   <tr><td>1375 psig</td><td>20 minutes</td></tr>
- *   <tr><td>1500 psig</td><td>5 minutes</td></tr>
- *   <tr><td>2000 psig</td><td>33 seconds</td></tr>
- *   <tr><td>3315 psig</td><td>4.4 seconds</td></tr>
- * </table>
- *
- * <p>The point of those numbers is that a plant drifting a little over design
- * pressure is a problem measured in hours, which is long enough for an absent
- * player to come back and find it, and a plant in a runaway pressurisation
- * transient is a problem measured in seconds, which is correct because it is
- * already at more than twice the pressure the vessel was built for. Nothing is
- * deleted instantly at any pressure: the fastest possible path from crossing
- * design pressure to a break is several seconds, and the break that results is
- * survivable — only the head is terminal, and the head is the slowest thing
- * here by a factor of four.
- *
- * <p>Pure Java, doubles only, zero Minecraft imports.
+/** Pressure-boundary wear and rupture state. Pipe failures become possible above
+ * 1,250 psig after accumulated wear; the head retains its separate 1,375-psig
+ * gate. Wear rates, probabilities and opening sizes are gameplay calibration,
+ * not predictions of a real vessel's rupture pressure. No automatic protection.
  */
 public final class BoundaryStress {
+    // Component stress, odds and failure timing are gameplay calibration.
+    // A design/code pressure is not a measured real-world rupture threshold.
 
     // -----------------------------------------------------------------
     // The pressure envelope. Hardware, from REFERENCE-DATA section 1.
@@ -222,8 +126,8 @@ public final class BoundaryStress {
 
     /**
      * Water discharged by a broken recirculation line at rated pressure, as a
-     * fraction of rated core flow. Subcooled liquid leaving below the water
-     * line, so it scales with the square root of absolute pressure. At about
+     * fraction of rated core flow. Liquid leaving below the water
+     * line scales with the square root of gauge pressure plus hydrostatic head. At about
      * 2600 kg/s this empties the vessel in something over a minute if nothing
      * injects, which is what "the design basis LOCA that sizes ECCS" means.
      */
@@ -255,6 +159,31 @@ public final class BoundaryStress {
     private double irradiatedFuelOverpressureSeconds;
     private double peakPressurePsig;
 
+    private List<BoundaryOpening> openings = List.of();
+    private double ruptureVolumeM3;
+    public void setOpenings(List<BoundaryOpening> openings) { this.openings = List.copyOf(openings); }
+    public double getRuptureVolumeM3() { return ruptureVolumeM3; }
+    public void initialiseRuptureVolume(double volume) {
+        if (ruptureVolumeM3 == 0 && Double.isFinite(volume) && volume > 0) ruptureVolumeM3 = volume;
+    }
+    /** World adapters provide actual nozzle elevations; standalone cores use representative defaults. */
+    public List<BoundaryOpening> activeOpenings() {
+        if (!hasFailed()) return List.of();
+        var result = new ArrayList<BoundaryOpening>();
+        for (var c : COMPONENTS) if (isBroken(c)) {
+            var configured = openings.stream().filter(o -> o.component() == c).toList();
+            if (!configured.isEmpty()) result.addAll(configured);
+            else result.add(switch (c) {
+                case MAIN_STEAM_LINE -> new BoundaryOpening(c, 60, 0, RATED_STEAM_FLOW_KG_PER_S);
+                case FEEDWATER_LINE -> new BoundaryOpening(c, -100, .02 * RATED_CORE_FLOW_KG_PER_S, .4 * RATED_STEAM_FLOW_KG_PER_S);
+                case RECIRCULATION_LINE -> new BoundaryOpening(c, -400, RECIRCULATION_BREAK_FLOW_FRACTION * RATED_CORE_FLOW_KG_PER_S, 1.5 * RATED_STEAM_FLOW_KG_PER_S);
+                case REACTOR_VESSEL_HEAD -> new BoundaryOpening(c, 60, HEAD_FAILURE_LIQUID_FRACTION * RATED_CORE_FLOW_KG_PER_S, HEAD_FAILURE_STEAM_MULTIPLE * RATED_STEAM_FLOW_KG_PER_S);
+            });
+        }
+        result.sort(java.util.Comparator.comparingDouble(BoundaryOpening::elevationIn).reversed());
+        return List.copyOf(result);
+    }
+
     private boolean irradiatedFuelPresent;
     private double lastFailureRatePerSecond;
 
@@ -273,7 +202,7 @@ public final class BoundaryStress {
 
     /**
      * Accumulate wear for one timestep at the given dome pressure, and roll for
-     * a failure if the plant is over the code limit.
+     * a failure if the plant is over the relevant component pressure gate.
      *
      * <p>At most one component fails per step. That is not a fairness rule: a
      * break relieves the pressure that caused it, so two simultaneous failures
@@ -314,12 +243,7 @@ public final class BoundaryStress {
             stress[i] += component.exposureWeight() * perUnitWeight;
         }
 
-        if (pressurePsig <= CODE_PRESSURE_PSIG) {
-            // Damage, but nothing can let go yet.
-            lastFailureRatePerSecond = 0.0;
-            return null;
-        }
-        secondsAboveCodePressure += dtSeconds;
+        if (pressurePsig > CODE_PRESSURE_PSIG) secondsAboveCodePressure += dtSeconds;
         return rollForFailure(pressurePsig, dtSeconds);
     }
 
@@ -339,15 +263,15 @@ public final class BoundaryStress {
 
     /**
      * How far past the code limit the plant is, in units of the design-to-code
-     * span. Zero at the code limit, one at 1500 psig. This is the multiplier on
-     * the failure hazard.
+     * span. Zero at the code limit, one at 1500 psig. Used for the head;
+     * piping instead uses exceedance above design pressure.
      */
     public static double codeExceedance(double pressurePsig) {
         return Math.max(0.0, (pressurePsig - CODE_PRESSURE_PSIG) / CODE_MARGIN_PSI);
     }
 
     private BoundaryFailure rollForFailure(double pressurePsig, double dtSeconds) {
-        double exceedance = codeExceedance(pressurePsig);
+
         double[] hazard = new double[COMPONENTS.length];
         double total = 0.0;
         for (BoundaryComponent component : COMPONENTS) {
@@ -359,6 +283,9 @@ public final class BoundaryStress {
             if (excess <= 0.0) {
                 continue;
             }
+            double gate = component == BoundaryComponent.REACTOR_VESSEL_HEAD
+                    ? CODE_PRESSURE_PSIG : DESIGN_PRESSURE_PSIG;
+            double exceedance = Math.max(0, (pressurePsig - gate) / CODE_MARGIN_PSI);
             hazard[i] = HAZARD_PER_SECOND * exceedance * excess;
             total += hazard[i];
         }
@@ -441,6 +368,8 @@ public final class BoundaryStress {
      */
     public void reset() {
         repairAll();
+        ruptureVolumeM3 = 0;
+        openings = List.of();
         failures.clear();
         clockSeconds = 0.0;
         secondsAboveDesignPressure = 0.0;
@@ -610,8 +539,8 @@ public final class BoundaryStress {
     }
 
     /**
-     * Total failure hazard as of the last step, per second. Zero below the code
-     * limit and zero while no component has reached {@link #FAILURE_STRESS}.
+     * Total failure hazard as of the last step, per second. Zero below design
+     * pressure and zero while no component has reached {@link #FAILURE_STRESS}.
      * A rate, not a warning.
      */
     public double getFailureRatePerSecond() {
@@ -660,67 +589,17 @@ public final class BoundaryStress {
     // What a break actually does
     // -----------------------------------------------------------------
 
-    /**
-     * Steam leaving through breaks in the steam space, kg/s. Choked flow, so
-     * linear in absolute pressure: violent at first and self-limiting as the
-     * vessel depressurises.
-     *
-     * <p>A main steam line break is the one that <i>reduces</i> power. Pressure
-     * falls, voids form rather than collapse, the void coefficient is negative,
-     * and the reactor turns itself down — while the level swells hard on the
-     * flashing and then shrinks as the inventory actually leaves.
-     */
+    /** Nominal-level estimate; live flows come from the vessel's elevation-aware solver. */
     public double steamBreakFlowKgPerS(double pressurePsig) {
-        double psia = pressurePsig + PhysicalConstants.ATMOSPHERIC_PSI;
-        if (!(psia > 0.0)) {
-            return 0.0;
-        }
-        double scale = psia / RATED_PSIA;
-        double multiple = 0.0;
-        if (broken[BoundaryComponent.MAIN_STEAM_LINE.ordinal()]) {
-            multiple += STEAM_LINE_BREAK_FLOW_MULTIPLE;
-        }
-        if (broken[BoundaryComponent.REACTOR_VESSEL_HEAD.ordinal()]) {
-            multiple += HEAD_FAILURE_STEAM_MULTIPLE;
-        }
-        return multiple * RATED_STEAM_FLOW_KG_PER_S * scale;
+        return activeOpenings().stream().mapToDouble(o -> o.steamFlow(pressurePsig,8)).sum();
     }
-
-    /**
-     * Water leaving through breaks below the water line, kg/s. Subcooled
-     * discharge, so it goes as the square root of absolute pressure.
-     *
-     * <p>The recirculation line is the nasty one: this drain runs at the same
-     * time as {@link #coreFlowDeliveredFraction()} goes to zero, so the plant
-     * loses inventory and forced circulation together. That combination is the
-     * design basis LOCA on a jet pump plant, and it is the failure a reactor
-     * internal pump plant is structurally incapable of suffering.
-     */
+    /** Nominal-level estimate; live discharge also respects each opening's retained inventory. */
     public double liquidBreakFlowKgPerS(double pressurePsig) {
-        double psia = pressurePsig + PhysicalConstants.ATMOSPHERIC_PSI;
-        if (!(psia > 0.0)) {
-            return 0.0;
-        }
-        double scale = Math.sqrt(psia / RATED_PSIA);
-        double fraction = 0.0;
-        if (broken[BoundaryComponent.RECIRCULATION_LINE.ordinal()]) {
-            fraction += RECIRCULATION_BREAK_FLOW_FRACTION;
-        }
-        if (broken[BoundaryComponent.REACTOR_VESSEL_HEAD.ordinal()]) {
-            fraction += HEAD_FAILURE_LIQUID_FRACTION;
-        }
-        return fraction * RATED_CORE_FLOW_KG_PER_S * scale;
+        double density=dev.bwr.core.thermal.Saturation.liquidDensityKgPerM3(
+                dev.bwr.core.thermal.Saturation.psiaFromPsig(pressurePsig));
+        return activeOpenings().stream().mapToDouble(o -> o.liquidFlow(pressurePsig,8,density)).sum();
     }
-
-    /**
-     * Fraction of commanded feedwater that actually reaches the vessel. Zero
-     * once the feedwater line is broken.
-     *
-     * <p>This is the slow failure. Nothing dramatic happens: the pumps run, the
-     * control program thinks it is feeding, and the level walks down at the
-     * boiloff rate while decay heat keeps making steam. It is the failure most
-     * likely to be survivable and most likely to be missed.
-     */
+    /** Fraction of commanded feedwater reaching the vessel after line rupture. */
     public double feedwaterDeliveredFraction() {
         return broken[BoundaryComponent.FEEDWATER_LINE.ordinal()] ? 0.0 : 1.0;
     }
@@ -739,7 +618,8 @@ public final class BoundaryStress {
     // -----------------------------------------------------------------
 
     /** Number of doubles {@link #toArray()} produces. */
-    public static final int SNAPSHOT_LENGTH = 6 + 2 * BoundaryComponent.values().length;
+    public static final int LEGACY_SNAPSHOT_LENGTH = 6 + 2 * BoundaryComponent.values().length;
+    public static final int SNAPSHOT_LENGTH = LEGACY_SNAPSHOT_LENGTH + 1;
 
     /**
      * Snapshot for NBT persistence and client sync. Damage must survive a chunk
@@ -762,6 +642,7 @@ public final class BoundaryStress {
             a[6 + i] = stress[i];
             a[6 + COMPONENTS.length + i] = broken[i] ? 1.0 : 0.0;
         }
+        a[LEGACY_SNAPSHOT_LENGTH] = ruptureVolumeM3;
         return a;
     }
 
@@ -771,9 +652,11 @@ public final class BoundaryStress {
      * so a vessel that came back with a hole in it still has the hole.
      */
     public void fromArray(double[] a) {
-        if (a == null || a.length < SNAPSHOT_LENGTH) {
+        if (a == null || a.length < LEGACY_SNAPSHOT_LENGTH) {
             return;
         }
+        ruptureVolumeM3 = a.length >= SNAPSHOT_LENGTH && Double.isFinite(a[LEGACY_SNAPSHOT_LENGTH])
+                ? Math.max(0, a[LEGACY_SNAPSHOT_LENGTH]) : 0;
         clockSeconds = a[0];
         secondsAboveDesignPressure = a[1];
         secondsAboveCodePressure = a[2];

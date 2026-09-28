@@ -855,7 +855,6 @@ public final class ReactorCore {
         //        50 ms of latency and keeps the vessel solve consistent with the
         //        boundary state it was handed.
         double totalPower = fissionHeatFraction + decayHeatFraction;
-        double breakPressurePsig = vessel.getPressurePsig();
         vessel.setFeedwaterFlowKgPerS(feedwaterFlowKgPerS * boundary.feedwaterDeliveredFraction());
 
         // Core spray is liquid makeup only for the part of it that survives the
@@ -870,23 +869,16 @@ public final class ReactorCore {
         double sprayEvaporationKgPerS = fuelThermal.getSprayEvaporationKgPerS();
         vessel.setInjectionFlowKgPerS(Math.max(0.0,
                 injectionFlowKgPerS + coreSprayFlowKgPerS - sprayEvaporationKgPerS));
-        // A hole below the water line can only pass water while there is water
-        // above it. Once the vessel is dry the break is uncovered and discharges
-        // steam, which the steam-side term already accounts for; capping here
-        // keeps the reported discharge honest instead of leaving it quoting a
-        // flow out of an empty vessel.
-        lastBreakLiquidFlowKgPerS = Math.min(
-                boundary.liquidBreakFlowKgPerS(breakPressurePsig),
-                vessel.getLiquidMassKg() / dtSeconds);
-        lastBreakSteamFlowKgPerS = boundary.steamBreakFlowKgPerS(breakPressurePsig);
-        vessel.setLiquidLeakKgPerS(manualLiquidLeakKgPerS + lastBreakLiquidFlowKgPerS);
+        if (boundary.hasFailed()) boundary.initialiseRuptureVolume(vessel.getOccupiedVolumeM3());
+        vessel.setBoundaryOpenings(boundary.activeOpenings(), boundary.getRuptureVolumeM3());
+        vessel.setLiquidLeakKgPerS(manualLiquidLeakKgPerS);
         // Steam the zirconium-water reaction eats never reaches a valve, but it
         // does leave the steam space, so it belongs with the other sinks. The
         // reaction is limited by the steam available to it (FuelThermal caps its
         // rate on setSteamSupplyKgPerS), and a limit that consumes nothing is not
         // a limit: without this the model lets a runaway oxidation burn steam it
         // never removes from the vessel.
-        vessel.setSteamLeakKgPerS(manualSteamLeakKgPerS + lastBreakSteamFlowKgPerS
+        vessel.setSteamLeakKgPerS(manualSteamLeakKgPerS
                 + fuelThermal.getSteamConsumptionKgPerS());
         // The vessel is fed the heat SOURCES, not the clad-to-coolant conduction
         // path — that decoupling is deliberate. The zirconium-water reaction is a
@@ -901,6 +893,9 @@ public final class ReactorCore {
                 bypassSteamFlowKgPerS,
                 reliefSteamFlowKgPerS,
                 dtSeconds);
+
+        lastBreakLiquidFlowKgPerS = vessel.getBoundaryLiquidFlowKgPerS();
+        lastBreakSteamFlowKgPerS = vessel.getBoundarySteamFlowKgPerS();
 
         // --- 7. Slow states and instruments. Both take the RAW fission rate:
         //        xenon is bred per fission and a fission chamber measures flux, so

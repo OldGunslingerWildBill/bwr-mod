@@ -76,6 +76,31 @@ public final class SpargerClientCheck {
             var faces=baked.getQuads(null,null,net.minecraft.util.RandomSource.create(42),ModelData.EMPTY,null);
             if(baked==mc.getModelManager().getMissingModel()||faces.isEmpty()||faces.stream().anyMatch(q->q.getSprite().contents().name().getPath().equals("missingno")))throw new AssertionError("Missing sparger model/material "+part);
         }
+        if(stage==0&&shown==130) {
+            // manual_orientation is deliberately omitted from JSON variant predicates:
+            // verify both settings resolve to the same real, textured model at runtime.
+            for(var variant:BwrBlocks.CORE_SPRAY_SPARGER.get().getStateDefinition().getPossibleStates()) {
+                var baked=mc.getModelManager().getModel(BlockModelShaper.stateToModelLocation(variant));
+                var faces=baked.getQuads(variant,null,net.minecraft.util.RandomSource.create(42),ModelData.EMPTY,null);
+                if(baked==mc.getModelManager().getMissingModel()||faces.isEmpty()||faces.stream().anyMatch(q->q.getSprite().contents().name().getPath().equals("missingno")))throw new AssertionError("Missing sparger state "+variant);
+                if(!variant.getValue(CoreSpraySpargerBlock.CORNER)) {
+                    double minX=Double.POSITIVE_INFINITY,minZ=minX,maxX=Double.NEGATIVE_INFINITY,maxZ=maxX;
+                    for(var face:faces) {
+                        var vertices=face.getVertices();int stride=vertices.length/4;
+                        for(int v=0;v<4;v++) {
+                            double x=Float.intBitsToFloat(vertices[v*stride]),z=Float.intBitsToFloat(vertices[v*stride+2]);
+                            minX=Math.min(minX,x);maxX=Math.max(maxX,x);minZ=Math.min(minZ,z);maxZ=Math.max(maxZ,z);
+                        }
+                    }
+                    // The branch extends farther than the mounting bracket on the other side.
+                    // Inspect the baked mesh, not just the stored facing, to catch quarter-turn errors.
+                    var nozzle=variant.getValue(CoreSpraySpargerBlock.FACING).getClockWise();
+                    double toward=(minX+maxX-1)*.5*nozzle.getStepX()+(minZ+maxZ-1)*.5*nozzle.getStepZ();
+                    if(toward<.05)throw new AssertionError("Baked nozzle points away from placement direction: "+variant);
+                }
+            }
+            com.mojang.logging.LogUtils.getLogger().info("SPARGER CLIENT CHECK: all 32 placement/rotation states baked with valid materials");
+        }
         mc.player.setPos(camera.x,camera.y,camera.z);mc.player.setYRot(yaw);mc.player.setXRot(pitch);mc.player.setDeltaMovement(Vec3.ZERO);mc.options.hideGui=true;mc.getToasts().clear();
         if(shown<140)return;
         var dir=mc.gameDirectory.toPath().resolve("sparger-check");java.nio.file.Files.createDirectories(dir);

@@ -58,3 +58,30 @@ def build():
     bpy.data.libraries.write(str(OUT/'core_sparger.blend'),set(parts.values())|{review},fake_user=True)
     viewport(review,(0,.5,0),(12,14,-15),19)
     return review
+
+
+def build_corners():
+    """Quarter-turn construction pieces, north/east endpoints, matching the straight headers."""
+    parts={}
+    for loop,band in LOOPS.items():
+        s=new_scene('Realistic BWR | '+loop+' 90 degree sparger');parts['corner_'+loop]=s
+        path=[(1-.5*math.cos(i*math.pi/40),.52,.5*math.sin(i*math.pi/40)) for i in range(21)]
+        sweep(s,'continuous 90 degree header elbow',path,.13,METAL,20)
+        for a,b in (((.5,.52,.065),(.5,.52,.095)),((.905,.52,.5),(.935,.52,.5))):
+            sleeve(s,'elbow butt weld',a,b,.14,.128,WELD,20)
+        before=set(s.objects);nozzle(s,band)
+        centre=Vector((1-.5/math.sqrt(2),.52,.5/math.sqrt(2)))
+        for o in set(s.objects)-before:
+            for v in o.data.vertices:
+                x,y,z=game(v.co)
+                v.co=xyz(centre+Vector(((x+z)/math.sqrt(2),y,(-x+z)/math.sqrt(2))))
+        export_scene(s,'corner_'+loop+'.json',{'id':'corner_'+loop,'connections':['north','east']})
+    review=new_scene('Realistic BWR | sparger corner review')
+    for i,s in enumerate(parts.values()):
+        for src in s.objects:
+            o=src.copy();o.data=src.data.copy();review.collection.objects.link(o);o.location+=xyz((i*1.5,0,0))
+    studio(review,(1.2,.45,.45),(3.3,3,-3.5),3.5,(1280,720))
+    review.render.filepath=str(OUT/'sparger-corners.png')
+    bpy.data.libraries.write(str(OUT/'sparger_corners.blend'),set(parts.values())|{review},fake_user=True)
+    viewport(review,(1.2,.45,.45),(3.3,3,-3.5),4)
+    return review
