@@ -87,6 +87,15 @@ public class LatticeGridWidget extends AbstractWidget {
     private int selected = -1;
     private int marked = -1;
     private int hovered = -1;
+    private boolean multiSelect, zoomable, panning;
+    private final java.util.LinkedHashSet<Integer> selection = new java.util.LinkedHashSet<>();
+    private int zoomSteps;
+    private double panX, panY;
+
+    public void enableRefuellingControls() { multiSelect = zoomable = true; }
+    public int[] selectedCells() { return selection.stream().mapToInt(Integer::intValue).toArray(); }
+    public void clearSelection() { selection.clear(); selected = -1; }
+    public void resetView() { zoomSteps = 0; panX = panY = 0; measure(); }
 
     // Geometry of the last render, used for hit testing.
     private int cellPx = MIN_CELL;
@@ -104,6 +113,7 @@ public class LatticeGridWidget extends AbstractWidget {
 
     public void setCells(Cells cells) {
         this.cells = cells == null ? EMPTY : cells;
+        selection.removeIf(i -> i < 0 || i >= this.cells.count());
         if (selected >= this.cells.count()) {
             selected = -1;
         }
@@ -119,6 +129,7 @@ public class LatticeGridWidget extends AbstractWidget {
 
     public void setSelected(int cell) {
         this.selected = cell;
+        selection.clear(); if (cell >= 0) selection.add(cell);
     }
 
     /** A second, differently outlined cell — the source end of a shuffle. */
@@ -165,12 +176,16 @@ public class LatticeGridWidget extends AbstractWidget {
         rows = maxR - minR + 1;
 
         int fit = Math.min(getWidth() / columns, getHeight() / rows);
-        cellPx = Math.max(MIN_CELL, Math.min(MAX_CELL, fit));
-        originX = getX() + (getWidth() - columns * cellPx) / 2;
-        originY = getY() + (getHeight() - rows * cellPx) / 2;
+        cellPx = Math.min(24, Math.max(MIN_CELL, Math.min(MAX_CELL, fit)) + zoomSteps * 2);
+        double limitX = Math.max(0, (columns * cellPx - getWidth()) / 2.0);
+        double limitY = Math.max(0, (rows * cellPx - getHeight()) / 2.0);
+        panX = Math.clamp(panX, -limitX, limitX); panY = Math.clamp(panY, -limitY, limitY);
+        originX = (int)Math.round(getX() + (getWidth() - columns * cellPx) / 2.0 + panX);
+        originY = (int)Math.round(getY() + (getHeight() - rows * cellPx) / 2.0 + panY);
     }
 
     private int cellAt(double mouseX, double mouseY) {
+        if (!isMouseOver(mouseX, mouseY) || cells.count() == 0) return -1;
         int width = Math.max(1, cells.latticeWidth());
         int column = (int) Math.floor((mouseX - originX) / cellPx) + minColumn;
         int row = (int) Math.floor((mouseY - originY) / cellPx) + minRow;
@@ -199,23 +214,26 @@ public class LatticeGridWidget extends AbstractWidget {
 
         // GuiGraphics otherwise flushes after each fill: a large core made
         // over a thousand draw calls for tiny squares on every frame.
+        graphics.enableScissor(getX(), getY(), getX() + getWidth(), getY() + getHeight());
         graphics.drawManaged(() -> {
             int width = Math.max(1, cells.latticeWidth());
             for (int i = 0; i < cells.count(); i++) {
                 int index = cells.latticeIndex(i);
                 int x = originX + ((index % width) - minColumn) * cellPx;
                 int y = originY + ((index / width) - minRow) * cellPx;
+                if (x + cellPx <= getX() || x >= getX() + getWidth() || y + cellPx <= getY() || y >= getY() + getHeight()) continue;
                 graphics.fill(x, y, x + cellPx - 1, y + cellPx - 1, cells.colour(i));
                 if (i == marked) {
                     outline(graphics, x, y, 0xFFFFC24A);
                 }
-                if (i == selected) {
+                if (multiSelect ? selection.contains(i) : i == selected) {
                     outline(graphics, x, y, 0xFFFFFFFF);
                 } else if (i == hovered) {
                     outline(graphics, x, y, 0xFF9FD2FF);
                 }
             }
         });
+        graphics.disableScissor();
     }
 
     private void outline(GuiGraphics graphics, int x, int y, int colour) {
@@ -233,13 +251,39 @@ public class LatticeGridWidget extends AbstractWidget {
 
     @Override
     public void onClick(double mouseX, double mouseY) {
+        measure();
         int cell = cellAt(mouseX, mouseY);
         if (cell >= 0) {
             selected = cell;
+            if (multiSelect && !selection.add(cell)) {
+                selection.remove(cell);
+                selected = selection.isEmpty() ? -1 : selection.getLast();
+            }
             if (onSelect != null) {
                 onSelect.accept(cell);
             }
         }
+    }
+
+    @Override public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
+        if (!zoomable || !isMouseOver(x,y) || vertical == 0 || !Double.isFinite(vertical)) return false;
+        measure(); double col=(x-originX)/cellPx, row=(y-originY)/cellPx;
+        zoomSteps=Math.clamp(zoomSteps+(vertical>0?1:-1),0,11);
+        measure();
+        panX += x - (originX + col*cellPx); panY += y - (originY + row*cellPx);
+        measure(); return true;
+    }
+    @Override public boolean mouseClicked(double x,double y,int button) {
+        if (zoomable && button==1 && isMouseOver(x,y)) {panning=true;return true;}
+        return super.mouseClicked(x,y,button);
+    }
+    @Override public boolean mouseDragged(double x,double y,int button,double dx,double dy) {
+        if (panning && button==1) {panX+=dx;panY+=dy;measure();return true;}
+        return super.mouseDragged(x,y,button,dx,dy);
+    }
+    @Override public boolean mouseReleased(double x,double y,int button) {
+        if(button==1 && panning){panning=false;return true;}
+        return super.mouseReleased(x,y,button);
     }
 
     @Override

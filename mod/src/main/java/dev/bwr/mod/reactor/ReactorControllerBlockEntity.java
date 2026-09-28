@@ -43,6 +43,11 @@ import java.util.Set;
  * left, minus all their situational awareness.
  */
 public class ReactorControllerBlockEntity extends BlockEntity {
+    private final ReactorBoundaryEffects boundaryEffects = new ReactorBoundaryEffects();
+    private int clientBoundaryMask;
+    private long[] clientBoundaryLeaks = new long[0];
+    public boolean clientHeadFailed(){return (clientBoundaryMask & ReactorBoundaryEffects.HEAD)!=0;}
+    public long[] clientBoundaryLeaks(){return clientBoundaryLeaks;}
 
     /** Client sync interval in ticks. 5 ticks is 4 Hz, per SPEC section 14. */
     private static final int SYNC_INTERVAL_TICKS = 5;
@@ -225,8 +230,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         // afterwards, so the core sees a consistent rod configuration for the
         // whole tick.
         rodNetwork.preStep(config.tickSeconds);
+        boundaryEffects.apply(this,vesselEnvelope);
         core.step();
         rodNetwork.postStep();
+        refreshHeadAccess();
 
         if (++sinceSync >= SYNC_INTERVAL_TICKS) {
             sinceSync = 0;
@@ -465,6 +472,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         var previous = vesselEnvelope;
         vesselEnvelope = null;
         revalidateStructure(level);
+        boundaryEffects.invalidate();
+        refreshHeadAccess();
+        VesselJetAccess.update(level,getBlockPos(),vesselEnvelope);
+        VesselDriveAccess.update(level,getBlockPos(),vesselEnvelope);
         // Unformed reactors return before the normal periodic sync. Send the
         // changed boundary now so clients never retain a closed-looking vessel.
         if (!java.util.Objects.equals(previous, vesselEnvelope)) syncToClients();
@@ -651,7 +662,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
         var visualSpargers=new java.util.ArrayList<VesselAppearance.Sparger>();
         for(var loop:CoreSpraySpargerBlock.Loop.values()) {
-            int y=CoreSpraySpargerBlock.requiredY(loop,found.topOfActiveFuelY());
+            for(int y:found.spargerHeights(loop)) {
             for(int x=min.getX()+1;x<max.getX();x++)for(int z=min.getZ()+1;z<max.getZ();z++) {
                 if(x!=min.getX()+1 && x!=max.getX()-1 && z!=min.getZ()+1 && z!=max.getZ()-1)continue;
                 var p=new BlockPos(x,y,z);if(!level.isLoaded(p))continue;
@@ -659,8 +670,19 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 if(s.is(dev.bwr.mod.registry.BwrBlocks.CORE_SPRAY_SPARGER.get()) && s.getValue(CoreSpraySpargerBlock.LOOP)==loop)
                     visualSpargers.add(new VesselAppearance.Sparger(p,loop));
             }
+            }
         }
-        vesselEnvelope=new VesselAppearance.Envelope(min,max,visualPorts,visualSpargers,visualKinds);
+        var visualJets=new java.util.ArrayList<VesselAppearance.Jet>();
+        for(var p:dev.bwr.mod.flow.RecirculationNetwork.jets(level,this)) {
+                var s=level.getBlockState(p);
+                visualJets.add(new VesselAppearance.Jet(p.immutable(),s.getValue(dev.bwr.mod.eccs.PumpAssemblyBlock.FACING),s.getValue(dev.bwr.mod.flow.JetPumpBlock.NARROW)));
+            }
+        var driveCells=new java.util.ArrayList<BlockPos>();
+        for(int x=min.getX()+1;x<max.getX();x++)for(int z=min.getZ()+1;z<max.getZ();z++) {
+            var p=new BlockPos(x,min.getY()-1,z);
+            if(level.isLoaded(p)&&level.getBlockState(p).is(dev.bwr.mod.registry.BwrBlocks.CONTROL_ROD_DRIVE.get()))driveCells.add(p);
+        }
+        vesselEnvelope=new VesselAppearance.Envelope(min,max,visualPorts,visualSpargers,visualKinds,visualJets,driveCells);
     }
 
     @Override public void onLoad() {
@@ -670,6 +692,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     }
 
     @Override public void setRemoved() {
+        VesselJetAccess.update(level,getBlockPos(),null);
+        VesselDriveAccess.update(level,getBlockPos(),null);
+        VesselHeadAccess.update(level,getBlockPos(),null,false);
         VesselAppearance.update(level,getBlockPos(),null);
         FormedReactorRegistry.remove(this);
         dev.bwr.mod.flow.RecirculationNetwork.invalidateSurvey(level,getBlockPos());
@@ -677,6 +702,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     }
 
     @Override public void onChunkUnloaded() {
+        VesselJetAccess.update(level,getBlockPos(),null);
+        VesselDriveAccess.update(level,getBlockPos(),null);
+        VesselHeadAccess.update(level,getBlockPos(),null,false);
         VesselAppearance.update(level,getBlockPos(),null);
         FormedReactorRegistry.remove(this);
         dev.bwr.mod.flow.RecirculationNetwork.invalidateSurvey(level,getBlockPos());
@@ -788,6 +816,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * @return null on success, or the reason it was refused
      */
     public String setVesselState(VesselState next) {
+        if (next.canHoldPressure() && core != null && core.getBoundaryStress().isBroken(dev.bwr.core.boundary.BoundaryComponent.REACTOR_VESSEL_HEAD))
+            return "The vessel head has failed; changing the refuelling state cannot repair pressure-boundary damage.";
         if (next == VesselState.REFUELING && core != null) {
             double psig = core.getPressurePsig();
             if (psig > 25.0) {
@@ -796,8 +826,15 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             }
         }
         vesselState = next;
+        refreshHeadAccess();
         setChanged();
+        syncToClients();
         return null;
+    }
+
+    private void refreshHeadAccess() {
+        boolean failed=core!=null&&core.getBoundaryStress().isBroken(dev.bwr.core.boundary.BoundaryComponent.REACTOR_VESSEL_HEAD);
+        VesselHeadAccess.update(level,getBlockPos(),vesselEnvelope,!vesselState.canHoldPressure()||failed);
     }
 
     public double sprayRingCompleteness() {
@@ -1010,6 +1047,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
+        boundaryEffects.write(tag);
         tag.putString("VesselState", vesselState.getSerializedName());
         tag.putInt("CoreLayoutVersion", coreLayoutVersion);
         tag.putInt("CoreInteriorWidth", savedInteriorWidth);
@@ -1061,6 +1099,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        boundaryEffects.read(tag);
         vesselState = VesselState.byName(tag.getString("VesselState"));
         // Missing key is an old save, including a temporarily broken vessel.
         coreLayoutVersion = tag.contains("CoreLayoutVersion") ? tag.getInt("CoreLayoutVersion") : 1;
@@ -1162,6 +1201,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         if (core != null) {
             // The client renders and displays; it never recomputes physics.
             tag.putDouble("Power", core.getTotalPowerFractionOfRated());
+            tag.putInt("VisualBoundaryMask",ReactorBoundaryEffects.mask(core));
+            tag.putLongArray("VisualBoundaryLeaks",boundaryEffects.leakPositions());
             tag.putDouble("Pressure", core.getPressurePsig());
             tag.putDouble("Level", core.getIndicatedLevelIn());
             // The free surface follows physical level, not reference-leg instrument error.
@@ -1174,6 +1215,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     @Override
     public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries) {
+        clientBoundaryMask=tag.getInt("VisualBoundaryMask");
+        clientBoundaryLeaks=tag.getLongArray("VisualBoundaryLeaks");
         boolean hadWater=clientWaterPresent;
         double previousWater=clientWaterLevelIn(0);
         vesselState = VesselState.byName(tag.getString("VesselState"));
@@ -1186,7 +1229,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         clientVesselEnvelope = VesselAppearance.read(tag);
         var nextCore=VesselCoreAppearance.read(tag,clientVesselEnvelope);
         // Preserve identity when only physics measurements change: no mesh rebuild.
-        if(!java.util.Objects.equals(clientCoreAppearance,nextCore))clientCoreAppearance=nextCore;
+        if(!java.util.Objects.equals(clientCoreAppearance,nextCore)) {
+            clientCoreAppearance=nextCore;
+            clientHasFuel=nextCore!=null&&nextCore.cells().stream().anyMatch(c->c.content()==1);
+        }
         var blades=tag.getIntArray("VisualBladeInsertion");
         double[] from=new double[clientCoreAppearance==null?0:clientCoreAppearance.drives().size()];
         for(int i=0;i<from.length;i++)from[i]=clientBladeInsertion(i,0);
@@ -1195,7 +1241,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         for(int i=0;i<clientBladeInsertion.length&&i<blades.length;i++)clientBladeInsertion[i]=Math.clamp(blades[i]/65535.0,0,1);
         clientBladeFrom=first?clientBladeInsertion.clone():from;
         clientBladeSyncTick=level==null?0:level.getGameTime();
+        VesselJetAccess.update(level,getBlockPos(),clientVesselEnvelope);
+        VesselDriveAccess.update(level,getBlockPos(),clientVesselEnvelope);
         VesselAppearance.update(level,getBlockPos(),clientVesselEnvelope);
+        VesselHeadAccess.update(level,getBlockPos(),clientVesselEnvelope,!vesselState.canHoldPressure()||clientHeadFailed());
         clientPowerFractionOfRated = tag.getDouble("Power");
         clientPressurePsig = tag.getDouble("Pressure");
         clientLevelIn = tag.getDouble("Level");
@@ -1227,6 +1276,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     private boolean clientFormed;
     private double clientPowerFractionOfRated;
+    private boolean clientHasFuel;
+    public boolean clientHasFuel(){return clientHasFuel;}
     private double clientPressurePsig;
     private double clientLevelIn;
     private int clientChargedAccumulators;

@@ -104,7 +104,7 @@ for m in re.finditer(r'BLOCKS\.register\(\s*"([a-z0-9_]+)",\s*\(\)\s*->\s*new ([
             break
         body += '\n' + ancestry
     pr = {}
-    for pm in re.finditer(r'BooleanProperty\s+([A-Z_]+)\s*=\s*BooleanProperty\.create\("([a-z_]+)"\)', body):
+    for pm in re.finditer(r'BooleanProperty\s+([A-Z_]+)\s*=\s*(?:\w+\.)*BooleanProperty\.create\("([a-z_]+)"\)', body):
         pr[pm.group(2)] = ["false", "true"]
     for pm in re.finditer(r'EnumProperty<(\w+)>\s+([A-Z_]+)\s*=\s*EnumProperty\.create\("([a-z_]+)",\s*(\w+)\.class\)', body):
         ename, pname = pm.group(1), pm.group(3)
@@ -357,6 +357,7 @@ for orphan in sorted(textures_on_disk - referenced_textures):
 
 # ---------- 3. per-block coverage ----------
 missing = {"blockstate": [], "blockmodel": [], "itemmodel": [], "loot": [], "recipe": []}
+RETIRED_BLOCKS = {"rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_quencher"}
 
 # What each per-block gap actually costs in game. These strings go into the
 # bad() message so the report says why it matters and not just that a file is
@@ -482,7 +483,7 @@ for b in blocks:
         missing["itemmodel"].append(b)
     if f"data/bwr/loot_table/blocks/{b}.json" not in jsons:
         missing["loot"].append(b)
-    if b not in {"rcic_turbine_pump", "hpci_turbine_pump"} and f"data/bwr/recipe/{b}.json" not in jsons:
+    if b not in RETIRED_BLOCKS and f"data/bwr/recipe/{b}.json" not in jsons:
         missing["recipe"].append(b)
 
 # Check 3 reaches the exit code. It used to accumulate into `missing`, print a
@@ -542,7 +543,6 @@ FOREIGN_ITEM_IDS = {
 valid_ids = {"bwr:" + n for n in blocks} | {"bwr:" + n for n in extra_items}
 recipes = {k: v for k, v in jsons.items() if k.startswith("data/bwr/recipe")}
 foreign_ids_used = set()
-RETIRED_BLOCKS = {"rcic_turbine_pump", "hpci_turbine_pump"}
 creative_source = open(os.path.join(ROOT, "mod/src/main/java/dev/bwr/mod/registry/BwrItems.java"), encoding="utf-8").read()
 for retired in RETIRED_BLOCKS:
     if re.search(r"output\.accept\(" + retired.upper() + r"\.get\(\)\)", creative_source):

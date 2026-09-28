@@ -24,6 +24,18 @@ neoForge {
     runs {
         client { client() }
         server { server() }
+        refuellingCheck {
+            client()
+            gameDirectory = file('run/refuellingCheck')
+            programArguments.addAll('--width', '1280', '--height', '900')
+            jvmArguments.add('-Dbwr.refuellingCheck=true')
+        }
+        reactorFitCheck {
+            client()
+            gameDirectory = file('run/reactorFitCheck')
+            programArguments.addAll('--width', '1280', '--height', '900')
+            jvmArguments.add('-Dbwr.reactorFitCheck=true')
+        }
         data { data() }
         turbineGameTest {
             type = 'gameTestServer'
@@ -43,6 +55,8 @@ neoForge {
             if (project.hasProperty('bwrCompactCorePanelCheck')) jvmArguments.add('-Dbwr.compactCorePanelCheck=true')
             if (project.hasProperty('bwrVesselModelCheck')) jvmArguments.add('-Dbwr.vesselModelCheck=true')
             if (project.hasProperty('bwrRvuCheck')) jvmArguments.add('-Dbwr.rvuCheck=true')
+            if (project.hasProperty('bwrRvuAccidentCheck')) jvmArguments.addAll('-Dbwr.rvuCheck=true', '-Dbwr.rvuAccident=true')
+            if (project.hasProperty('bwrRvuQuickCheck')) jvmArguments.addAll('-Dbwr.rvuCheck=true', '-Dbwr.rvuQuick=true')
             if (project.hasProperty('bwrSuppressionPanelCheck')) jvmArguments.add('-Dbwr.suppressionPanelCheck=true')
             if (project.hasProperty('bwrTankPanelCheck')) jvmArguments.add('-Dbwr.tankPanelCheck=true')
             if (project.hasProperty('bwrAlphaClientCheck')) jvmArguments.add('-Dbwr.alphaClientCheck=true')

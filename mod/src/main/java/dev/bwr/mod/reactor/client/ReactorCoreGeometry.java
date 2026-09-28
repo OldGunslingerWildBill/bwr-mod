@@ -30,7 +30,7 @@ public final class ReactorCoreGeometry {
     public static Layout layout(VesselAppearance.Envelope e,VesselCoreAppearance core) {
         if(core.internalPumps()) {
             var packed=dev.bwr.core.fuel.RipCorePacking.layout(e.width()-2,e.depth()-2);
-            return new Layout((float)packed.pitchX(),(float)packed.pitchZ(),2,e.height()-6.15f,core.latticeWidth());
+            return new Layout((float)packed.pitchX(),(float)packed.pitchZ(),2,(float)VesselInternalsGeometry.coreTop(e),core.latticeWidth());
         }
         float nx=e.width()-2,nz=e.depth()-2;
         if(core.layoutVersion()==1) {
@@ -46,7 +46,7 @@ public final class ReactorCoreGeometry {
                 (Math.abs(c.slot()/core.latticeWidth()+.5-core.latticeWidth()/2.0)+.5)*pz/e.depth()));
         float fit=radial==0?1:fuelEnvelopeRadius(core)/radial;
         fit=Math.min(1,fit);
-        return new Layout(px*fit,pz*fit,2,e.height()-6.15f,core.latticeWidth());
+        return new Layout(px*fit,pz*fit,2,(float)VesselInternalsGeometry.coreTop(e),core.latticeWidth());
     }
     public static void build(MachineMeshCache.Builder b,VesselAppearance.Envelope e,VesselCoreAppearance core) {
         var l=layout(e,core);float px=l.pitchX(),pz=l.pitchZ(),detail=Math.min(px,pz),height=l.top()-l.bottom();

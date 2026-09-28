@@ -10,7 +10,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.Containers;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -233,12 +232,9 @@ public class RefuellingMenu extends BwrMenu {
         if (removed.isEmpty()) {
             return;
         }
-        if (!sender.getInventory().add(removed)) {
-            // 180 kg of irradiated heavy metal is not something to void because
-            // a player's inventory was full.
-            Containers.dropItemStack(sender.level(), sender.getX(), sender.getY(),
-                    sender.getZ(), removed);
-        }
+        // Inventory.add silently discards overflow in Creative. This helper
+        // finds actual space first and drops any remainder in every game mode.
+        sender.getInventory().placeItemBackInInventory(removed);
     }
 
     private static boolean inRange(int[] positions, int slot) {
@@ -288,5 +284,50 @@ public class RefuellingMenu extends BwrMenu {
             slot.setChanged();
         }
         return original;
+    }
+
+    public void sendBatch(boolean load, int[] slots) {
+        if (slots.length > 0) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                    new dev.bwr.mod.gui.net.RefuellingBatchPayload(containerId, load, slots));
+        }
+    }
+
+    public void handleBatch(ServerPlayer sender, boolean loading, int[] slots) {
+        if (slots.length == 0 || slots.length > dev.bwr.mod.gui.net.RefuellingBatchPayload.MAX_SLOTS) {
+            return;
+        }
+        var be = controller();
+        if (be == null || !be.isFormed()) {
+            return;
+        }
+        String blocked = be.refuellingBlockedReason();
+        if (blocked != null) {
+            refuse(sender, "Refuelling is not possible: " + blocked + ".");
+            return;
+        }
+        int[] positions = be.corePositions();
+        // Reject an invalid request before modifying anything; ignore repeated positions.
+        for (int slot : slots) {
+            if (!inRange(positions, slot)) return;
+        }
+        var unique = new java.util.LinkedHashSet<Integer>();
+        for (int slot : slots) unique.add(slot);
+        int changed = 0;
+        for (int slot : unique) {
+            boolean occupied = be.core().getCoreLoading().isOccupied(positions[slot]);
+            if (loading) {
+                if (occupied) continue;
+                if (countBundles(sender) == 0) break;
+                load(sender, be, positions, slot);
+                if (be.core().getCoreLoading().isOccupied(positions[slot])) changed++;
+            } else if (occupied) {
+                unload(sender, be, positions, slot);
+                changed++;
+            }
+        }
+        markSnapshotDirty();
+        sender.displayClientMessage(Component.literal((loading ? "Loaded " : "Unloaded ")
+                + changed + " of " + unique.size() + " selected positions."), true);
     }
 }

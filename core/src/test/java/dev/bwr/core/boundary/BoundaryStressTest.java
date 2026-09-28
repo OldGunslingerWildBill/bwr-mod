@@ -178,57 +178,19 @@ public final class BoundaryStressTest {
                 "the most stressed component on a jet pump plant");
     }
 
-    /**
-     * <b>The 1250 to 1375 band accumulates but cannot break.</b> That band is
-     * the whole warning the player gets. If something could let go inside it
-     * there would be no readable interval between "you have a problem" and "you
-     * have a hole", and the stress readout would be pointless.
-     */
-    public static void test03_nothingBreaksBelowTheCodeLimit() {
+    /** Pipes may fail above design pressure; the head keeps its independent code-limit gate. */
+    public static void test03_pipesCanBreakAbove1250ButHeadRequires1375() {
         BoundaryStress boundary = new BoundaryStress();
-        for (int i = 0; i < 20 * 4 * 3600; i++) { // four hours at 1374 psig
-            Check.isTrue(boundary.step(1374.0, TICK) == null,
-                    "nothing may break below the code limit");
-        }
-        Check.note("four hours at 1374 psig: steam line stress %.2f, recirculation %.2f, "
-                        + "hazard %.3e per second, failures %d",
-                boundary.getStress(BoundaryComponent.MAIN_STEAM_LINE),
-                boundary.getStress(BoundaryComponent.RECIRCULATION_LINE),
-                boundary.getFailureRatePerSecond(), boundary.getFailures().size());
-
-        Check.greaterThan(10.0, boundary.getStress(BoundaryComponent.MAIN_STEAM_LINE),
-                "four hours one psi under the code limit must do serious damage");
-        Check.exactly(0.0, boundary.getFailureRatePerSecond(),
-                "failure hazard below the code limit");
-        Check.isFalse(boundary.hasFailed(), "nothing may break one psi below the code limit");
-        Check.exactly(0.0, boundary.getSecondsAboveCodePressure(), "seconds above the code limit");
-
-        // The damage is real, though: one second past the limit and it is armed.
-        //
-        // This line used to read `step(...) == null || true`, which is a constant
-        // true expression: it performed the step but asserted nothing, while
-        // reading in the transcript as a check. What the test actually wants of
-        // that single tick is that nothing lets go on it — the whole "gradual
-        // enough to be noticed" claim above depends on there being a readable
-        // interval between crossing the limit and losing a pipe, and a model that
-        // broke a component on the first tick across would have satisfied
-        // `null || true` just as happily.
-        BoundaryFailure firstTickAcross = boundary.step(1376.0, TICK);
-        Check.isTrue(firstTickAcross == null,
-                "nothing may break on the first tick across the code limit; got %s",
-                firstTickAcross);
-        Check.exactly(TICK, boundary.getSecondsAboveCodePressure(),
-                "the step above the limit must be counted as time above the limit");
-        Check.greaterThan(0.0, boundary.getFailureRatePerSecond(),
-                "hazard becomes non-zero the moment the code limit is crossed with used-up metal");
-        // And the hazard it arms has to be a hazard, not a certainty: a tick is
-        // 50 ms and the whole design intent is minutes of warning, so the chance
-        // of losing something on any one tick must stay far below one.
-        Check.lessThan(0.01, boundary.getFailureProbabilityOver(TICK),
-                "single-tick failure probability just across the code limit");
-        Check.note("crossing to 1376 psig with that history arms a hazard of %.4f per second, "
-                        + "which is a %.3g chance over one %.2f s tick",
-                boundary.getFailureRatePerSecond(), boundary.getFailureProbabilityOver(TICK), TICK);
+        for (int i=0;i<20*4*3600;i++) boundary.step(1374,TICK);
+        Check.isTrue(boundary.isBroken(BoundaryComponent.MAIN_STEAM_LINE),"sustained overpressure must rupture steam piping below 1375");
+        Check.isTrue(boundary.isBroken(BoundaryComponent.RECIRCULATION_LINE),"recirculation piping must also be exposed");
+        Check.isFalse(boundary.isBroken(BoundaryComponent.REACTOR_VESSEL_HEAD),"head gate remains 1375");
+        Check.exactly(0,boundary.getSecondsAboveCodePressure(),"pipe hazard must not miscount code-limit exposure");
+        boundary.step(1376,TICK);
+        Check.greaterThan(0,boundary.getFailureRatePerSecond(),"worn head becomes exposed above its own gate");
+        var fresh = new BoundaryStress();fresh.step(1250.01,TICK);
+        Check.isFalse(fresh.hasFailed(),"crossing 1250 is not an immediate scripted break");
+        Check.exactly(0,fresh.getFailureRatePerSecond(),"unworn metal has no hazard");
     }
 
     /**
@@ -513,7 +475,7 @@ public final class BoundaryStressTest {
         Check.greaterThan(0.0, lossOfCoolant.getBreakLiquidFlowKgPerS(),
                 "the break must still be discharging");
 
-        // --- Feedwater line: slower. Makeup goes away; nothing else changes.
+        // --- Feedwater: liquid loss while submerged, then steam blowdown.
         ReactorCore lossOfFeed = TransientHarness.ratedCore();
         TransientHarness.PlantOperator feeding =
                 new TransientHarness.PlantOperator(lossOfFeed);
@@ -528,7 +490,9 @@ public final class BoundaryStressTest {
         double feedPowerBefore = lossOfFeed.getNeutronPowerFraction();
         lossOfFeed.getBoundaryStress()
                 .forceFailure(BoundaryComponent.FEEDWATER_LINE, feedPressureBefore);
-        TransientHarness.runSeconds(lossOfFeed, feeding, 20.0, null);
+        TransientHarness.runSeconds(lossOfFeed, feeding, .05, null);
+        Check.greaterThan(0,lossOfFeed.getBreakLiquidFlowKgPerS(),"submerged feedwater nozzle loses liquid immediately");
+        TransientHarness.runSeconds(lossOfFeed, feeding, 19.95, null);
 
         double levelAt30 = lossOfFeed.getCollapsedLevelIn();
         Check.note("feedwater break, first 20 s: commanded %.0f kg/s, delivered %.0f kg/s; "
@@ -545,16 +509,10 @@ public final class BoundaryStressTest {
         Check.exactly(0.0, lossOfFeed.getDeliveredFeedwaterFlowKgPerS(),
                 "but none of it arrives");
         Check.exactly(0.0, lossOfFeed.getBreakLiquidFlowKgPerS(),
-                "a feedwater break spills outside the vessel, not out of it");
-        Check.exactly(0.0, lossOfFeed.getBreakSteamFlowKgPerS(),
-                "and it is not in the steam space either");
-        // This is what "slower" means. Twenty seconds after a steam line break
-        // the vessel has lost hundreds of psi; twenty seconds after a
-        // recirculation break the core flow is most of the way gone. Twenty
-        // seconds after this one the vessel is intact, still at pressure, still
-        // circulating, still making power, and nothing is coming out of it. The
-        // only thing that has moved is the level, which is exactly the failure
-        // an inattentive operator misses.
+                "direct liquid drainage stops below the feedwater nozzle");
+        Check.greaterThan(0.0, lossOfFeed.getBreakSteamFlowKgPerS(),
+                "the exposed feedwater nozzle now vents steam");
+        // The smaller feedwater break initially depressurizes less than a main steam break.
         Check.absolute(feedPressureBefore, lossOfFeed.getPressurePsig(), 150.0,
                 "the vessel must still be holding pressure after 20 s");
         Check.absolute(feedFlowBefore, lossOfFeed.getCoreFlowFraction(), 0.05,

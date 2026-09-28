@@ -1,35 +1,67 @@
 {
   "variants": {
-    "facing=north,loop=lpcs": {
+    "corner=false,facing=north,loop=lpcs": {
       "model": "bwr:block/core_spray_sparger_lpcs",
       "y": 0
     },
-    "facing=east,loop=lpcs": {
+    "corner=true,facing=north,loop=lpcs": {
+      "model": "bwr:block/core_sparger/corner_lpcs/body",
+      "y": 0
+    },
+    "corner=false,facing=east,loop=lpcs": {
       "model": "bwr:block/core_spray_sparger_lpcs",
       "y": 90
     },
-    "facing=south,loop=lpcs": {
+    "corner=true,facing=east,loop=lpcs": {
+      "model": "bwr:block/core_sparger/corner_lpcs/body",
+      "y": 90
+    },
+    "corner=false,facing=south,loop=lpcs": {
       "model": "bwr:block/core_spray_sparger_lpcs",
       "y": 180
     },
-    "facing=west,loop=lpcs": {
+    "corner=true,facing=south,loop=lpcs": {
+      "model": "bwr:block/core_sparger/corner_lpcs/body",
+      "y": 180
+    },
+    "corner=false,facing=west,loop=lpcs": {
       "model": "bwr:block/core_spray_sparger_lpcs",
       "y": 270
     },
-    "facing=north,loop=hpcs": {
+    "corner=true,facing=west,loop=lpcs": {
+      "model": "bwr:block/core_sparger/corner_lpcs/body",
+      "y": 270
+    },
+    "corner=false,facing=north,loop=hpcs": {
       "model": "bwr:block/core_spray_sparger_hpcs",
       "y": 0
     },
-    "facing=east,loop=hpcs": {
+    "corner=true,facing=north,loop=hpcs": {
+      "model": "bwr:block/core_sparger/corner_hpcs/body",
+      "y": 0
+    },
+    "corner=false,facing=east,loop=hpcs": {
       "model": "bwr:block/core_spray_sparger_hpcs",
       "y": 90
     },
-    "facing=south,loop=hpcs": {
+    "corner=true,facing=east,loop=hpcs": {
+      "model": "bwr:block/core_sparger/corner_hpcs/body",
+      "y": 90
+    },
+    "corner=false,facing=south,loop=hpcs": {
       "model": "bwr:block/core_spray_sparger_hpcs",
       "y": 180
     },
-    "facing=west,loop=hpcs": {
+    "corner=true,facing=south,loop=hpcs": {
+      "model": "bwr:block/core_sparger/corner_hpcs/body",
+      "y": 180
+    },
+    "corner=false,facing=west,loop=hpcs": {
       "model": "bwr:block/core_spray_sparger_hpcs",
+      "y": 270
+    },
+    "corner=true,facing=west,loop=hpcs": {
+      "model": "bwr:block/core_sparger/corner_hpcs/body",
       "y": 270
     }
   }

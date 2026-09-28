@@ -29,14 +29,16 @@ public final class CoreSpargerGeometry {
         for(int z=z1-1;z>z0;z--)perimeter.add(new BlockPos(x0,0,z));
         double cx=e.min().getX()+e.width()/2.0,cz=e.min().getZ()+e.depth()/2.0;
         double rx=e.width()*.40,rz=e.depth()*.40;
+        var placed=new java.util.HashSet<String>();
         for(var segment:e.spargers()) {
             int i=perimeter.indexOf(new BlockPos(segment.pos().getX(),0,segment.pos().getZ()));
             if(i<0)continue;
+            if(!placed.add(segment.loop()+":"+i))continue;
             double a=angle(perimeter.get(i),cx,cz,rx,rz);
             double previous=angle(perimeter.get((i+perimeter.size()-1)%perimeter.size()),cx,cz,rx,rz);
             double next=angle(perimeter.get((i+1)%perimeter.size()),cx,cz,rx,rz);
             double start=a-forward(a-previous)/2,end=a+forward(next-a)/2;
-            double y=segment.pos().getY()+.52-e.min().getY();
+            double y=dev.bwr.mod.reactor.VesselInternalsGeometry.spargerHeight(e,segment.loop());
             int steps=Math.max(2,(int)Math.ceil((end-start)/Math.toRadians(3)));
             for(int j=0;j<steps;j++) {
                 double u=start+(end-start)*j/steps,v=start+(end-start)*(j+1)/steps;

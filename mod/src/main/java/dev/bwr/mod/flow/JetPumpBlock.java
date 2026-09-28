@@ -42,14 +42,26 @@ public class JetPumpBlock extends dev.bwr.mod.eccs.PumpAssemblyBlock {
     public static final EnumProperty<Size> SIZE = EnumProperty.create("size", Size.class);
 
     public JetPumpBlock(Properties properties) {
-        super(properties, Kind.JET);
+        super(properties.dynamicShape(), Kind.JET);
         legacy=loadLayout("jet_pump_legacy");
         registerDefaultState(defaultBlockState().setValue(SIZE, Size.SMALL).setValue(NARROW,false));
     }
     @Override protected Layout layout(BlockState s) { return s.getValue(NARROW)?super.layout(s):legacy; }
     @Override public BlockState placementState() { return super.placementState().setValue(NARROW,true); }
+    @Override protected void onPlace(BlockState state,net.minecraft.world.level.Level level,net.minecraft.core.BlockPos pos,BlockState old,boolean moving) {
+        super.onPlace(state,level,pos,old,moving);
+        dev.bwr.mod.reactor.FormedReactorRegistry.internalsChanged(level,pos);
+    }
+    @Override protected void onRemove(BlockState state,net.minecraft.world.level.Level level,net.minecraft.core.BlockPos pos,BlockState next,boolean moving) {
+        super.onRemove(state,level,pos,next,moving);
+        dev.bwr.mod.reactor.FormedReactorRegistry.internalsChanged(level,pos);
+    }
     @Override protected boolean owned(BlockState actual,BlockState s,int cell) {
         return super.owned(actual,s,cell) && actual.getValue(NARROW)==s.getValue(NARROW);
+    }
+    @Override protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState s,net.minecraft.world.level.BlockGetter level,
+            net.minecraft.core.BlockPos pos,net.minecraft.world.phys.shapes.CollisionContext context) {
+        return dev.bwr.mod.reactor.VesselJetAccess.contains(level,pos)?net.minecraft.world.phys.shapes.Shapes.empty():super.getShape(s,level,pos,context);
     }
     @Override public void appendHoverText(net.minecraft.world.item.ItemStack stack,net.minecraft.world.item.Item.TooltipContext context,
             java.util.List<net.minecraft.network.chat.Component> lines,net.minecraft.world.item.TooltipFlag flag) {

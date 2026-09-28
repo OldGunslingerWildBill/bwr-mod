@@ -27,35 +27,40 @@ import java.util.*;
 /** One renderer per reactor. Blender pieces scale to the existing construction envelope. */
 @EventBusSubscriber(modid=BwrMod.MOD_ID,value=Dist.CLIENT)
 public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorControllerBlockEntity> {
-    public static final String[] PARTS={"barrel","bottom","flange","head","weld","stud","spool","collar","steam_nozzle","water_nozzle","controller_panel"};
+    public static final String[] PARTS={"barrel","bottom","flange","head","weld","stud","spool","collar","steam_nozzle","water_nozzle","controller_panel","failed_head"};
     private static final ModelProperty<Boolean> HIDDEN=new ModelProperty<>();
-    private record Shape(VesselAppearance.Envelope envelope,boolean closed){}
+    private record Shape(VesselAppearance.Envelope envelope,boolean closed,boolean failed){}
     private record CoreShape(int width,int depth,int height,VesselCoreAppearance core){}
+    private record JetShape(VesselAppearance.Envelope envelope,boolean internalPumps){}
+    private record DriveShape(int width,int depth,int height,int version,int latticeWidth,
+                              List<VesselCoreAppearance.Drive> drives,boolean internalPumps){}
     public static ModelResourceLocation model(String part) {
         return ModelResourceLocation.standalone(BwrMod.id("block/reactor_vessel/"+part+"/body"));
     }
     public ReactorVesselRenderer(BlockEntityRendererProvider.Context context) {}
-    @SubscribeEvent public static void models(ModelEvent.RegisterAdditional e) {for(var p:PARTS)e.register(model(p));}
+    @SubscribeEvent public static void models(ModelEvent.RegisterAdditional e) {for(var p:PARTS)e.register(model(p));for(var p:VesselJetGeometry.PARTS)e.register(VesselJetGeometry.model(p));e.register(VesselDriveGeometry.MODEL);}
     @SubscribeEvent public static void renderers(EntityRenderersEvent.RegisterRenderers e) {
         e.registerBlockEntityRenderer(BwrBlockEntities.REACTOR_CONTROLLER.get(),ReactorVesselRenderer::new);
     }
     @SubscribeEvent public static void baked(ModelEvent.ModifyBakingResult e) {
-        for(var block:List.of(BwrBlocks.REACTOR_VESSEL.get(),BwrBlocks.CORE_SPRAY_SPARGER.get(),
+        for(var block:List.of(BwrBlocks.REACTOR_VESSEL.get(),BwrBlocks.CORE_SPRAY_SPARGER.get(),BwrBlocks.JET_PUMP.get(),
                 BwrBlocks.REACTOR_CONTROLLER.get(),BwrBlocks.RPV_WATER_INJECTION_PORT.get(),BwrBlocks.RPV_STEAM_OUTLET.get(),
-                BwrBlocks.RECIRCULATION_INLET.get(),BwrBlocks.RECIRCULATION_OUTLET.get()))
+                BwrBlocks.RECIRCULATION_INLET.get(),BwrBlocks.RECIRCULATION_OUTLET.get(),BwrBlocks.CONTROL_ROD_DRIVE.get()))
         for(var state:block.getStateDefinition().getPossibleStates()) {
             var key=BlockModelShaper.stateToModelLocation(state);var original=e.getModels().get(key);
             if(original!=null)e.getModels().put(key,new ShellModel(original,block instanceof CoreSpraySpargerBlock,
-                    block!=BwrBlocks.REACTOR_VESSEL.get()&&!(block instanceof CoreSpraySpargerBlock)));
+                    block!=BwrBlocks.REACTOR_VESSEL.get()&&!(block instanceof CoreSpraySpargerBlock),block==BwrBlocks.JET_PUMP.get(),block==BwrBlocks.CONTROL_ROD_DRIVE.get()));
         }
     }
     private static final class ShellModel extends BakedModelWrapper<BakedModel> {
         private final boolean sparger;
         private final boolean interfaceBlock;
-        ShellModel(BakedModel model,boolean sparger,boolean interfaceBlock) {super(model);this.sparger=sparger;this.interfaceBlock=interfaceBlock;}
+        private final boolean jet;
+        private final boolean drive;
+        ShellModel(BakedModel model,boolean sparger,boolean interfaceBlock,boolean jet,boolean drive) {super(model);this.sparger=sparger;this.interfaceBlock=interfaceBlock;this.jet=jet;this.drive=drive;}
         @Override public ModelData getModelData(BlockAndTintGetter world,BlockPos pos,BlockState state,ModelData data) {
             var level=Minecraft.getInstance().level;
-            return data.derive().with(HIDDEN,sparger?VesselAppearance.hidesSparger(level,pos)
+            return data.derive().with(HIDDEN,drive?VesselAppearance.hidesDrive(level,pos):jet?VesselAppearance.hidesJet(level,pos):sparger?VesselAppearance.hidesSparger(level,pos)
                     :interfaceBlock?VesselAppearance.hidesInterface(level,pos):VesselAppearance.hides(level,pos)).build();
         }
         @Override public List<BakedQuad> getQuads(BlockState state,Direction side,RandomSource random,ModelData data,RenderType type) {
@@ -66,13 +71,19 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
         var e=be.clientVesselEnvelope();if(e==null || !be.clientFormed())return;
         double cx=e.min().getX()+e.width()/2.0,cz=e.min().getZ()+e.depth()/2.0;
         if(be.getLevel()!=null)light=LevelRenderer.getLightColor(be.getLevel(),BlockPos.containing(cx,e.max().getY()+1,cz));
-        boolean closed=be.vesselState().canHoldPressure();
+        boolean failed=be.clientHeadFailed();
+        boolean closed=be.vesselState().canHoldPressure()&&!failed;
+        VesselAccidentEffects.emit(be);
         pose.pushPose();pose.translate(cx-be.getBlockPos().getX(),e.min().getY()-be.getBlockPos().getY(),cz-be.getBlockPos().getZ());
-        MachineMeshCache.draw(new Shape(e,closed),b->build(b,e,closed),pose,buffers,light,overlay);
+        MachineMeshCache.draw(new Shape(e,closed,failed),b->build(b,e,closed,failed),pose,buffers,light,overlay);
         var core=be.clientCoreAppearance();
+        if(core!=null)MachineMeshCache.draw(new DriveShape(e.width(),e.depth(),e.height(),core.layoutVersion(),core.latticeWidth(),core.drives(),core.internalPumps()),
+                b->VesselDriveGeometry.build(b,e,core),pose,buffers,light,overlay);
         var camera=Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-        if(core!=null&&(!closed||getRenderBoundingBox(be).contains(camera))) {
+        boolean interiorVisible=!closed||getRenderBoundingBox(be).contains(camera);
+        if(core!=null&&interiorVisible) {
             MachineMeshCache.draw(new CoreShape(e.width(),e.depth(),e.height(),core),b->ReactorCoreGeometry.build(b,e,core),pose,buffers,light,overlay);
+            MachineMeshCache.draw(new JetShape(e,core.internalPumps()),b->VesselJetGeometry.build(b,e,core),pose,buffers,light,overlay);
             var layout=ReactorCoreGeometry.layout(e,core);
             for(int i=0;i<core.drives().size();i++) {
                 float height=(float)((layout.top()-layout.bottom())*be.clientBladeInsertion(i,partial));if(height<.001)continue;
@@ -82,7 +93,10 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
                 MachineMeshCache.model(ReactorCoreGeometry.model("blade"),pose,buffers,light,overlay);pose.popPose();
             }
         }
-        if(!closed&&be.clientWaterPresent())VesselWaterSurface.render(e,be.clientWaterLevelIn(partial),pose,buffers,light,overlay);
+        if(interiorVisible&&be.clientWaterPresent()) {
+            VesselWaterSurface.render(e,be.clientWaterLevelIn(partial),pose,buffers,light,overlay);
+            if(core!=null)VesselCherenkovGlow.render(be,e,core,partial,pose,buffers);
+        }
         pose.popPose();
         var player=Minecraft.getInstance().player;
         if(core!=null && core.layoutVersion()!=1 && player!=null && (player.getMainHandItem().is(BwrBlocks.RIP_PUMP.get().asItem())
@@ -100,7 +114,7 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
             LevelRenderer.renderLineBox(pose,buffers.getBuffer(RenderType.lines()),box,.3f,.75f,1f,.65f);
         }
     }
-    private static void build(MachineMeshCache.Builder b,VesselAppearance.Envelope e,boolean closed){
+    private static void build(MachineMeshCache.Builder b,VesselAppearance.Envelope e,boolean closed,boolean failed){
         CoreSpargerGeometry.build(b,e);
         var pose=b.pose;
         float w=e.width(),d=e.depth(),h=e.height();
@@ -111,6 +125,7 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
         // Positive overlap at both joints prevents sub-pixel cracks at every size.
         b.part(model("barrel"),0,1.16,0,w,flangeY-1.10f,d);
         b.part(model("flange"),0,flangeY,0,w,1,d);
+        if(failed)b.part(model("failed_head"),0,flangeY,0,w,headHeight/1.65f,d);
         if(closed) {
             b.part(model("head"),0,h-headHeight,0,w,headHeight/1.65f,d);
             int studs=Math.min(80,Math.max(24,Math.round((w+d)*2)));
@@ -163,7 +178,7 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
         }
     }
     @Override public AABB getRenderBoundingBox(ReactorControllerBlockEntity be) {
-        var e=be.clientVesselEnvelope();return e==null?new AABB(be.getBlockPos()):new AABB(Vec3.atLowerCornerOf(e.min()),Vec3.atLowerCornerOf(e.max().offset(1,1,1)));
+        var e=be.clientVesselEnvelope();return e==null?new AABB(be.getBlockPos()):new AABB(Vec3.atLowerCornerOf(e.min().below()),Vec3.atLowerCornerOf(e.max().offset(1,1,1)));
     }
     @Override public int getViewDistance(){return 256;}
     // NeoForge frustum-tests this full finite envelope even on the global BER path.

@@ -14,7 +14,7 @@ import dev.bwr.core.flow.RecirculationSizing;
 public final class RecirculationNetwork {
     private RecirculationNetwork() {}
     public record Flow(double fraction,double maximum,int pairedJets,int internalPumps,int unmatchedJets,int externalPumps,double jetUnits) {}
-    private record Survey(long time,List<BlockPos> jets) {}
+    private record Survey(List<BlockPos> jets) {}
     private static final Map<Level,Map<BlockPos,Survey>> CACHE=new WeakHashMap<>();
 
     /** Geometry/lifecycle changes discard memoised geometry, never registry membership. */
@@ -56,8 +56,8 @@ public final class RecirculationNetwork {
         if(!(s.getBlock() instanceof JetPumpBlock b) || !b.isFull(s)
                 || s.getValue(PumpAssemblyBlock.CELL)!=b.controllerCell(s) || !b.complete(level,pos,s)) return false;
         BlockPos min=vessel.interiorMin(),max=vessel.interiorMax();
-        // The lower outlets open into the plenum at the bottom of the interior.
-        if(pos.getY()<min.getY() || pos.getY()>min.getY()+1) return false;
+        // Construction height is independent of the formed downcomer mounting height.
+        if(pos.getY()<min.getY() || pos.getY()>max.getY()) return false;
         for(int i=0;i<b.cellCount(s);i++) {
             BlockPos p=pos.offset(TurbineAssemblyBlock.turn(b.cellOffset(s,i),s.getValue(PumpAssemblyBlock.FACING)));
             if(p.getX()<min.getX() || p.getX()>max.getX() || p.getY()>max.getY() || p.getZ()<min.getZ() || p.getZ()>max.getZ()) return false;
@@ -65,17 +65,22 @@ public final class RecirculationNetwork {
         }
         return true;
     }
-    private static List<BlockPos> jets(Level level,ReactorControllerBlockEntity controller) {
+    public static List<BlockPos> jets(Level level,ReactorControllerBlockEntity controller) {
         var vessel=controller.structure();
         if(vessel==null) return List.of();
         var map=CACHE.computeIfAbsent(level,k -> new HashMap<>());
         var previous=map.get(controller.getBlockPos());
-        if(previous!=null && level.getGameTime()-previous.time()<20) return previous.jets();
+        if(previous!=null) return previous.jets();
         List<BlockPos> found=new ArrayList<>();
         BlockPos min=vessel.interiorMin(),max=vessel.interiorMax();
-        for(BlockPos p:BlockPos.betweenClosed(min,new BlockPos(max.getX(),Math.min(max.getY(),min.getY()+1),max.getZ())))
-            if(installedJet(level,vessel,p)) found.add(p.immutable());
-        map.put(controller.getBlockPos(),new Survey(level.getGameTime(),List.copyOf(found)));
+        // Perimeter-only scan on construction changes/revalidation, never per flow tick.
+        for(int x=min.getX();x<=max.getX();x++)for(int z=min.getZ();z<=max.getZ();z++) {
+            if(Math.min(Math.min(x-min.getX(),max.getX()-x),Math.min(z-min.getZ(),max.getZ()-z))>1)continue;
+            for(int y=min.getY();y<=max.getY()-5;y++) {
+                var p=new BlockPos(x,y,z);if(installedJet(level,vessel,p))found.add(p);
+            }
+        }
+        map.put(controller.getBlockPos(),new Survey(List.copyOf(found)));
         return found;
     }
     /** Controllers survey their own vessel once formed; the index stores positions only. */

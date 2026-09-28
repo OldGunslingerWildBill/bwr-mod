@@ -46,7 +46,7 @@ public final class BoundaryDamageNbt {
             return;
         }
         double[] snapshot = ReactorStateNbt.getDoubles(t, "s");
-        if (snapshot.length >= BoundaryStress.SNAPSHOT_LENGTH) {
+        if (snapshot.length >= BoundaryStress.LEGACY_SNAPSHOT_LENGTH) {
             boundary.fromArray(snapshot);
         }
     }

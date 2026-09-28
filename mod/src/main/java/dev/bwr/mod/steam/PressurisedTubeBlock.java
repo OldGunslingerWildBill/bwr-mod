@@ -20,7 +20,8 @@ import net.minecraft.world.level.block.state.StateDefinition;
 /** High-pressure steam piping. Both rendered arms and flow routing accept steam ports only.
  * Pressure remains a lumped vessel/header model, not a per-segment solver.
  */
-public class PressurisedTubeBlock extends dev.bwr.mod.piping.PaintedPipeBlock implements SteamLinePort {
+public class PressurisedTubeBlock extends dev.bwr.mod.piping.PaintedPipeBlock implements SteamLinePort, net.minecraft.world.level.block.SimpleWaterloggedBlock {
+    public static final net.minecraft.world.level.block.state.properties.BooleanProperty WATERLOGGED=net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED;
 
     public static final MapCodec<PressurisedTubeBlock> CODEC =
             simpleCodec(PressurisedTubeBlock::new);
@@ -51,12 +52,13 @@ public class PressurisedTubeBlock extends dev.bwr.mod.piping.PaintedPipeBlock im
         for (Direction d : Direction.values()) {
             base = base.setValue(PROPERTY_BY_DIRECTION.get(d), false);
         }
-        registerDefaultState(base);
+        registerDefaultState(base.setValue(WATERLOGGED,false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
+        builder.add(WATERLOGGED);
     }
 
     // -----------------------------------------------------------------
@@ -107,7 +109,7 @@ public class PressurisedTubeBlock extends dev.bwr.mod.piping.PaintedPipeBlock im
             state = state.setValue(PROPERTY_BY_DIRECTION.get(d),
                     connectsTo(level.getBlockState(pos.relative(d)), d));
         }
-        return state;
+        return state.setValue(WATERLOGGED,level.getFluidState(pos).getType()==net.minecraft.world.level.material.Fluids.WATER);
     }
 
     @Override
@@ -130,8 +132,12 @@ public class PressurisedTubeBlock extends dev.bwr.mod.piping.PaintedPipeBlock im
     protected BlockState updateShape(BlockState state, Direction towardsNeighbour,
                                      BlockState neighbour, LevelAccessor level, BlockPos pos,
                                      BlockPos neighbourPos) {
+        if(state.getValue(WATERLOGGED))level.scheduleTick(pos,net.minecraft.world.level.material.Fluids.WATER,net.minecraft.world.level.material.Fluids.WATER.getTickDelay(level));
         return state.setValue(PROPERTY_BY_DIRECTION.get(towardsNeighbour),
                 connectsTo(neighbour, towardsNeighbour));
+    }
+    @Override protected net.minecraft.world.level.material.FluidState getFluidState(BlockState state){
+        return state.getValue(WATERLOGGED)?net.minecraft.world.level.material.Fluids.WATER.getSource(false):super.getFluidState(state);
     }
 
     // -----------------------------------------------------------------

@@ -110,7 +110,7 @@ public final class SuppressionTankRegressionTests {
         pipe(l,o.offset(2,3,-4),o.offset(2,3,-4),true);
         var relief=(SafetyReliefValveBlockEntity)l.getBlockEntity(ads);relief.setComputerControlled(true);relief.setOpen(true);
         pool.pool().fromArray(SuppressionPool.empty(105_000).toArray());SuppressionBasinRegressionTests.validate(pool);relief.revalidateDischarge(l);
-        h.assertTrue(!relief.isDischargeSubmerged(),"dry tank treated as submerged relief sink");
+        h.assertTrue(relief.isDischargeSubmerged(),"formed wall inlet must accept steam even before filling");
         pool.water(false).fill(new FluidStack(Fluids.WATER,50_000),EXECUTE);
         long now=l.getGameTime();var data=l.getServer().getWorldData().overworldData();
         try{

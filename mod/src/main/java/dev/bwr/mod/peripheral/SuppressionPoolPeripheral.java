@@ -31,6 +31,9 @@ import java.util.Map;
 public class SuppressionPoolPeripheral implements IPeripheral {
 
     private final SuppressionPoolBlockEntity be;
+    /** Commands all dedicated drain outlets on this tank; RHR suction is independent. */
+    @LuaFunction(mainThread = true)
+    public final void setDrainsOpen(boolean open) { be.setDrainsOpen(open); }
 
     public SuppressionPoolPeripheral(SuppressionPoolBlockEntity be) {
         this.be = be;

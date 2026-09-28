@@ -9,7 +9,57 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-alpha.21` — Reactor Visual Update (RVU), September 27, 2026.
+**Current version:** `0.1.0-alpha.29` — Refuelling map controls, September 27, 2026.
+
+**Alpha.29:** scroll over the refuelling map to zoom toward the cursor; right-drag
+to pan and use **FIT** to reset the view. Click multiple positions to select them,
+or click again to deselect. **LOAD/UNLOAD** acts on the selection; **CLEAR** clears
+it. Loading uses held fuel first and stops when supplies run out. Overflow from
+unloading drops beside the player. **MARK/SWAP** remains a single-pair operation.
+Update both clients and server: the menu network protocol is now 12.
+
+**Alpha.28:** active fuel height scales with vessel footprint and stops at nine
+blocks. Complete jet pumps at any valid interior perimeter elevation tuck inside
+the formed vessel. Control-drive housings follow the circular core beneath the
+bottom head, while their saved blocks and supply connections stay in place.
+The dedicated verification fixture is **17×17, 28 blocks from CRDs to cap**.
+See [reactor fit and building compatibility](REACTOR-FIT-UPDATE.md).
+
+**Alpha.27:** unassembled spray branches face the player on placement. Use the
+Mekanism Configurator in **Rotate** mode and right-click to turn a straight or
+corner segment 90 degrees; neighboring changes no longer undo manual rotations.
+Holding another sparger lets you extend the ring without accidentally switching
+the existing segment between LPCS and HPCS. See [sparger controls](CORE-SPARGERS.md).
+
+**Alpha.26:** reactor leaks emit white plumes. Disconnecting an established vessel
+pipe creates a persistent rupture. Liquid flow depends on gauge pressure,
+hydrostatic head and nozzle elevation; lower recirculation inlets have larger
+breaks than upper outlets. The rupture solver couples inventory loss, growing
+steam space, depressurization and flashing. Pipe failure hazards start above
+1,250 psig after accumulated wear; the head retains its separate 1,375-psig gate.
+See [LOCA behavior and limitations](PORT-LOCA-UPDATE.md).
+
+**Alpha.25:** installed jet pumps use new Blender parts with consistently scaled
+bends, diffusers and fittings. Only plain straight sections adjust in length,
+within limits, so taller vessels keep believable pump proportions.
+
+**Alpha.24:** jet pumps keep their tall construction models while building, then
+fit down alongside the outside of the core shroud when the vessel forms. Unforming
+restores the original models; saved blocks and paired-flow rules are preserved.
+See [jet-pump installation](JET-PUMP-INSTALLATION.md).
+
+**Alpha.23:** removing the head now opens the physical roof so players can enter
+the vessel. Submerged fuel has a Cherenkov-style blue glow tied to fission and
+decay power. Spargers automatically form Blender-built 90-degree corners and
+inherit their neighboring loop setting. See [open reactor access](OPEN-REACTOR-UPDATE.md).
+
+**Alpha.22:** suppression tank wall inlets accept relief steam without a separate
+quencher; a new controllable drain empties water outside while RHR retains its
+dedicated suction. RPV steam nozzles are always open; MSIVs provide isolation.
+High-pressure water and steam pipes can be waterlogged, and pumps share demand
+across connected intakes. Existing overpressure damage now breaks connected pipes
+and displays a Blender-built damaged head, steam jets and a one-time explosion
+sound. See [connections, controls and accident behavior](STEAM-AND-ACCIDENT-UPDATE.md).
 
 **RVU:** formed vessels have a Blender-built instrument panel and round steam,
 feedwater and recirculation nozzles in place of visible interface cubes. Their
@@ -79,7 +129,7 @@ BWR model. Specialty irradiation now takes 24–168 operating hours at rated
 local flux. A completed tritium rod yields 1,250 samples, processable into
 12,500,000 mB (12,500 buckets) of tritium through a powered Chemical Oxidizer when Mekanism and
 Mekanism Generators are installed. Install
-alpha.21 on both client and server; GUI protocol remains 10.
+alpha.23 on both client and server; GUI protocol remains 11.
 
 The first-publication candidate adds live CC:Tweaked faces across the machine
 registry, segmented water temperatures, condenser backpressure that affects LP
