@@ -186,6 +186,40 @@ public final class ReactorCore {
     public static final double FLOW_COASTDOWN_TIME_CONSTANT_S = 15.0;
 
     // ---------------------------------------------------------------
+    // Natural circulation [SPEC 4.5]
+    // ---------------------------------------------------------------
+
+    /**
+     * Natural circulation flow coefficient: core flow fraction at rated power
+     * with no pump running. Buoyancy-driven flow in a heated loop scales with
+     * the cube root of the heat input, so {@code W = K * P^(1/3)}.
+     *
+     * <p>Calibrated to the familiar point on a jet-pump BWR power/flow map —
+     * the natural circulation line reaches roughly 30% flow near 55% power —
+     * giving {@code K = 0.30 / 0.55^(1/3) ~= 0.366}. At 2% decay heat that is
+     * about 10% flow: enough to keep a covered core cooled after a pump trip,
+     * nowhere near enough to run the plant at full power without pumps. These
+     * are gameplay calibration values anchored to the published map shape, not
+     * a validated two-phase loop solution for any particular vessel.
+     */
+    public static final double NATURAL_CIRCULATION_COEFFICIENT = 0.366;
+
+    /**
+     * Collapsed level, instrument scale, at and above which the natural
+     * circulation path is complete, inches. Buoyant flow needs liquid above the
+     * shroud head and separator inlets to return down the downcomer.
+     */
+    public static final double NATURAL_CIRCULATION_FULL_LEVEL_IN = -60.0;
+
+    /**
+     * Collapsed level, instrument scale, below which the natural circulation
+     * path is broken and only steam cooling remains, inches: 20 inches above
+     * the top of active fuel.
+     */
+    public static final double NATURAL_CIRCULATION_LOST_LEVEL_IN =
+            PhysicalConstants.TAF_ON_INSTRUMENT_SCALE_IN + 20.0;
+
+    // ---------------------------------------------------------------
     // Instrument complement [TTC 3.2]
     // ---------------------------------------------------------------
 
@@ -218,6 +252,8 @@ public final class ReactorCore {
     private final DecayHeat decayHeat;
     private final Xenon xenon;
     private final BoundaryStress boundary;
+    private final dev.bwr.core.accident.SevereAccident severeAccident = new dev.bwr.core.accident.SevereAccident();
+    private final dev.bwr.core.accident.ContainmentAtmosphere containment = new dev.bwr.core.accident.ContainmentAtmosphere();
 
     private final SourceRangeMonitor[] sourceRangeMonitors;
     private final IntermediateRangeMonitor[] intermediateRangeMonitors;
@@ -249,6 +285,8 @@ public final class ReactorCore {
 
     private double recirculationFlowFractionDemand = 1.0;
     private double coreFlowFraction = 1.0;
+    private boolean naturalCirculationEnabled = true;
+    private double lastNaturalCirculationFlowFraction;
 
     private double turbineSteamFlowKgPerS;
     private double bypassSteamFlowKgPerS;
@@ -349,6 +387,10 @@ public final class ReactorCore {
         this.decayHeat = new DecayHeat();
         this.xenon = new Xenon();
         this.boundary = new BoundaryStress();
+        double sizeScale = config.ratedThermalMW > 0.0
+                ? config.ratedThermalMW / PhysicalConstants.RATED_THERMAL_MW : 1.0;
+        severeAccident.setSizeScale(sizeScale);
+        containment.setSizeScale(sizeScale);
 
         this.rodNotchIndex = new int[controlRodCount];
         this.rodNotchDemand = new int[controlRodCount];
@@ -838,12 +880,37 @@ public final class ReactorCore {
         double heatScale = heatPerFissionScale;
         double fissionHeatFraction = fissionPower * heatScale;
         double decayHeatFraction = decayFraction * heatScale;
+        // Fuel that has slumped out of its channels takes its heat with it: the
+        // lumped fuel node only heats with the share still in the core region,
+        // and the debris carries the rest (SevereAccident below). With an
+        // intact core this is exactly 1 and nothing changes.
+        double inCoreFraction = Math.max(0.0, 1.0 - severeAccident.getRelocatedFraction());
         fuelThermal.setCoveredFuelFraction(vessel.getCoveredFuelFraction());
         fuelThermal.setSteamCoolingFlowKgPerS(vessel.getSteamGenerationKgPerS());
         fuelThermal.setSteamSupplyKgPerS(Math.max(0.0, vessel.getSteamGenerationKgPerS())
                 + fuelThermal.getSprayEvaporationKgPerS());
         fuelThermal.setCoreSprayFlowKgPerS(coreSprayFlowKgPerS);
-        fuelThermal.step(fissionHeatFraction, decayHeatFraction, vessel.getPressurePsig(), dtSeconds);
+        double hydrogenBeforeKg = fuelThermal.getHydrogenGeneratedKg();
+        fuelThermal.step(fissionHeatFraction * inCoreFraction, decayHeatFraction * inCoreFraction,
+                vessel.getPressurePsig(), dtSeconds);
+
+        // --- 5b. Severe accident progression past oxidation (SPEC 8.1 stages 4-7)
+        //         and the containment atmosphere it fills (SPEC 8.3). Water on
+        //         the drywell floor is what last tick's breaks discharged.
+        severeAccident.step(fuelThermal.getFuelTemperatureC(), fuelThermal.getCladTemperatureC(),
+                fuelThermal.getFuelHeatCapacityMJPerC(),
+                decayHeatFraction * config.ratedThermalMW,
+                vessel.getPressurePsig(), vessel.getCollapsedLevelIn(),
+                vessel.getUncoveredFuelFraction(),
+                lastBreakLiquidFlowKgPerS + manualLiquidLeakKgPerS, dtSeconds);
+        fuelThermal.removeFuelEnergyMJ(severeAccident.getFuelEnergyToRemoveMJ());
+        double hydrogenToContainmentKg = Math.max(0.0, fuelThermal.getHydrogenGeneratedKg() - hydrogenBeforeKg);
+        containment.step(hydrogenToContainmentKg / dtSeconds + severeAccident.getConcreteHydrogenKgPerS(),
+                severeAccident.getConcreteGasMolPerS(),
+                severeAccident.getLastReleasedFraction(), dtSeconds);
+        if (severeAccident.isBasematFailed()) {
+            containment.failByMeltThrough();
+        }
 
         // --- 6. Pressure and inventory, ONCE per tick. This is what produces the
         //        pressure the next tick's void solve will see.
@@ -869,8 +936,10 @@ public final class ReactorCore {
         double sprayEvaporationKgPerS = fuelThermal.getSprayEvaporationKgPerS();
         vessel.setInjectionFlowKgPerS(Math.max(0.0,
                 injectionFlowKgPerS + coreSprayFlowKgPerS - sprayEvaporationKgPerS));
-        if (boundary.hasFailed()) boundary.initialiseRuptureVolume(vessel.getOccupiedVolumeM3());
-        vessel.setBoundaryOpenings(boundary.activeOpenings(), boundary.getRuptureVolumeM3());
+        if (boundary.hasFailed() || severeAccident.isLowerHeadFailed()) {
+            boundary.initialiseRuptureVolume(vessel.getOccupiedVolumeM3());
+        }
+        vessel.setBoundaryOpenings(activeVesselOpenings(), boundary.getRuptureVolumeM3());
         vessel.setLiquidLeakKgPerS(manualLiquidLeakKgPerS);
         // Steam the zirconium-water reaction eats never reaches a valve, but it
         // does leave the steam space, so it belongs with the other sinks. The
@@ -887,7 +956,11 @@ public final class ReactorCore {
         // FuelThermal deposits it in the clad node and nowhere else, so until it
         // is added here the biggest heat source in a severe accident boils no
         // water, raises no pressure and drains no inventory.
-        vessel.step(totalPower * config.ratedThermalMW + fuelThermal.getZirconiumReactionPowerMW(),
+        // Relocated fuel's decay heat reaches the water only as fast as the debris
+        // bed gives it up; corium outside the vessel heats the floor, not the vessel.
+        vessel.step(totalPower * config.ratedThermalMW * inCoreFraction
+                        + fuelThermal.getZirconiumReactionPowerMW()
+                        + severeAccident.getDebrisHeatToVesselMW(),
                 voidModel.getCoreAverageVoidFraction(),
                 turbineSteamFlowKgPerS,
                 bypassSteamFlowKgPerS,
@@ -991,11 +1064,70 @@ public final class ReactorCore {
         // A broken recirculation line delivers nothing however hard the pumps
         // are driven, but the coastdown lag still applies: the flywheels are
         // still turning, they are just pushing water onto the drywell floor.
-        double target = recirculationFlowFractionDemand * boundary.coreFlowDeliveredFraction();
+        double pumped = recirculationFlowFractionDemand * boundary.coreFlowDeliveredFraction();
+        // Natural circulation is a floor, not an addition: a running pump sets
+        // the loop's flow and buoyancy rides inside it. With the pumps tripped
+        // or absent, the driving head is the density difference between the
+        // voided core and the downcomer, so flow follows power and level.
+        lastNaturalCirculationFlowFraction = naturalCirculationEnabled
+                ? naturalCirculationFlowFraction() : 0.0;
+        double target = Math.max(pumped, lastNaturalCirculationFlowFraction);
         double tau = (target >= coreFlowFraction)
                 ? FLOW_ACCELERATION_TIME_CONSTANT_S : FLOW_COASTDOWN_TIME_CONSTANT_S;
         double alpha = (tau > 0.0) ? 1.0 - Math.exp(-dtSeconds / tau) : 1.0;
         coreFlowFraction += (target - coreFlowFraction) * alpha;
+    }
+
+    /**
+     * Buoyancy-driven core flow the vessel would establish on its own, fraction
+     * of rated: {@link #NATURAL_CIRCULATION_COEFFICIENT} times the cube root of
+     * last tick's total thermal power, scaled down as the collapsed level falls
+     * from {@link #NATURAL_CIRCULATION_FULL_LEVEL_IN} to
+     * {@link #NATURAL_CIRCULATION_LOST_LEVEL_IN}, and down again by the fraction
+     * of the core that has slumped out of its channels into the lower plenum.
+     *
+     * <p>Power is taken from the previous tick, the same timescale separation the
+     * void model uses. Flow therefore lags power through the ordinary flow time
+     * constants, which is what keeps the power-void-flow loop from being solved
+     * as an algebraic identity every tick.
+     */
+    public double naturalCirculationFlowFraction() {
+        double power = Math.max(0.0, getTotalPowerFractionOfRated());
+        if (!(power > 0.0) || !Double.isFinite(power)) {
+            return 0.0;
+        }
+        double level = vessel.getCollapsedLevelIn();
+        double levelFactor = (level - NATURAL_CIRCULATION_LOST_LEVEL_IN)
+                / (NATURAL_CIRCULATION_FULL_LEVEL_IN - NATURAL_CIRCULATION_LOST_LEVEL_IN);
+        levelFactor = Math.max(0.0, Math.min(1.0, levelFactor));
+        double geometry = Math.max(0.0, 1.0 - severeAccident.getRelocatedFraction());
+        // A broken recirculation line or a breached lower head short-circuits
+        // the loop: water coming down the downcomer leaves through the hole
+        // instead of turning up through the core. SPEC 7: the recirculation
+        // break loses core flow and inventory together.
+        double path = severeAccident.isLowerHeadFailed() ? 0.0 : boundary.coreFlowDeliveredFraction();
+        return NATURAL_CIRCULATION_COEFFICIENT * Math.cbrt(power) * levelFactor * geometry * path;
+    }
+
+    /** The natural circulation flow the last tick established, fraction of rated. */
+    public double getNaturalCirculationFlowFraction() {
+        return lastNaturalCirculationFlowFraction;
+    }
+
+    /** True when core flow is currently set by buoyancy rather than by the pumps. */
+    public boolean isNaturalCirculationDominant() {
+        return lastNaturalCirculationFlowFraction > 0.0
+                && lastNaturalCirculationFlowFraction
+                >= recirculationFlowFractionDemand * boundary.coreFlowDeliveredFraction();
+    }
+
+    /** Enables or disables the natural circulation floor. On by default; tests use the switch. */
+    public void setNaturalCirculationEnabled(boolean enabled) {
+        this.naturalCirculationEnabled = enabled;
+    }
+
+    public boolean isNaturalCirculationEnabled() {
+        return naturalCirculationEnabled;
     }
 
     private void stepBoronInjection(double dtSeconds) {
@@ -1945,6 +2077,47 @@ public final class ReactorCore {
      */
     public BoundaryStress getBoundaryStress() {
         return boundary;
+    }
+
+    /**
+     * Severe accident progression past oxidation: cladding failure, melt and
+     * relocation, lower head failure and core-concrete interaction. Persisted
+     * separately from {@link ReactorState}, like the boundary damage, through
+     * {@code SevereAccident.toArray()}.
+     */
+    public dev.bwr.core.accident.SevereAccident getSevereAccident() {
+        return severeAccident;
+    }
+
+    /**
+     * Primary containment atmosphere: hydrogen, oxygen, pressure, inerting,
+     * venting and fission product releases. Persisted separately through
+     * {@code ContainmentAtmosphere.toArray()}.
+     */
+    public dev.bwr.core.accident.ContainmentAtmosphere getContainment() {
+        return containment;
+    }
+
+    /**
+     * Every opening in the vessel this tick: the pressure-boundary breaks, plus
+     * a breach at the bottom of the vessel once the lower head has failed.
+     */
+    private java.util.List<dev.bwr.core.boundary.BoundaryOpening> activeVesselOpenings() {
+        var openings = boundary.activeOpenings();
+        if (!severeAccident.isLowerHeadFailed()) {
+            return openings;
+        }
+        var all = new java.util.ArrayList<>(openings);
+        // The component tag is only a label inside the vessel solver; elevation
+        // and ratings are what drive the discharge.
+        all.add(new dev.bwr.core.boundary.BoundaryOpening(
+                dev.bwr.core.boundary.BoundaryComponent.REACTOR_VESSEL_HEAD,
+                dev.bwr.core.accident.SevereAccident.LOWER_HEAD_BREACH_ELEVATION_IN,
+                dev.bwr.core.accident.SevereAccident.LOWER_HEAD_BREACH_LIQUID_FRACTION
+                        * BoundaryStress.RATED_CORE_FLOW_KG_PER_S,
+                dev.bwr.core.accident.SevereAccident.LOWER_HEAD_BREACH_STEAM_FRACTION
+                        * BoundaryStress.RATED_STEAM_FLOW_KG_PER_S));
+        return java.util.List.copyOf(all);
     }
 
     /** Steam that actually left through breaks in the pressure boundary last tick, kg/s. */

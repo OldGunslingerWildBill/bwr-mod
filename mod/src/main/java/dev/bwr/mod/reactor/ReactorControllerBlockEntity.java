@@ -5,6 +5,8 @@ import dev.bwr.core.ReactorCore;
 import dev.bwr.core.ReactorState;
 import dev.bwr.mod.damage.BoundaryDamageNbt;
 import dev.bwr.mod.damage.BoundaryDamageReadout;
+import dev.bwr.mod.damage.SevereAccidentNbt;
+import dev.bwr.mod.damage.SevereAccidentReadout;
 import dev.bwr.mod.flow.RecirculationPumpBlockEntity;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.rods.ControlRodDriveBlockEntity;
@@ -44,6 +46,7 @@ import java.util.Set;
  */
 public class ReactorControllerBlockEntity extends BlockEntity {
     private final ReactorBoundaryEffects boundaryEffects = new ReactorBoundaryEffects();
+    private final ReactorSevereAccidentEffects severeEffects = new ReactorSevereAccidentEffects();
     private int clientBoundaryMask;
     private long[] clientBoundaryLeaks = new long[0];
     public boolean clientHeadFailed(){return (clientBoundaryMask & ReactorBoundaryEffects.HEAD)!=0;}
@@ -183,6 +186,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * survives a vessel block being replaced.
      */
     private net.minecraft.nbt.CompoundTag pendingBoundaryRestore;
+    /** Core damage and containment gas awaiting a formed core; see SevereAccidentNbt. */
+    private net.minecraft.nbt.CompoundTag pendingSevereRestore;
 
     /**
      * The core loading as it was saved, held until a structure exists to put it
@@ -233,6 +238,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         boundaryEffects.apply(this,vesselEnvelope);
         core.step();
         rodNetwork.postStep();
+        severeEffects.afterStep(this);
         refreshHeadAccess();
 
         if (++sinceSync >= SYNC_INTERVAL_TICKS) {
@@ -559,6 +565,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 pendingRatedCoreFlowKgPerS = core.getVoidModel().getRatedCoreFlowKgPerS();
                 pendingFuelRestore = writeCoreFuel();
                 pendingBoundaryRestore = BoundaryDamageNbt.write(core.getBoundaryStress());
+                pendingSevereRestore = SevereAccidentNbt.write(core);
                 pendingRodDemand = rodNetwork == null
                         ? null : rodNetwork.getCommandedNotchIndices();
             }
@@ -615,6 +622,12 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             if (pendingBoundaryRestore != null) {
                 BoundaryDamageNbt.read(pendingBoundaryRestore, core.getBoundaryStress());
                 pendingBoundaryRestore = null;
+            }
+            // Same rule for core damage and containment gas: a rebuilt core
+            // starts pristine, and the plant's real history goes back on top.
+            if (pendingSevereRestore != null) {
+                SevereAccidentNbt.read(pendingSevereRestore, core);
+                pendingSevereRestore = null;
             }
             // After the restore, not before: the snapshot carries the
             // configuration the plant had when it was saved, and the structure
@@ -1035,6 +1048,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                     structure.steamOutletCount(), lastSteamOutletFlowKgPerS,
                     core.getSteamGenerationKgPerS()));
             out.addAll(BoundaryDamageReadout.statusLines(core.getBoundaryStress()));
+            out.addAll(SevereAccidentReadout.statusLines(core));
         }
         out.addAll(lastValidation.messages());
         return out;
@@ -1070,6 +1084,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             // property of the plant's metal rather than of its operating point
             // — so it is saved alongside rather than inside it.
             tag.put(BoundaryDamageNbt.KEY, BoundaryDamageNbt.write(core.getBoundaryStress()));
+            tag.put(SevereAccidentNbt.KEY, SevereAccidentNbt.write(core));
         } else {
             // Never formed since load: the structure is still broken, so the
             // snapshot is sitting in the pending fields with nothing to apply it
@@ -1084,6 +1099,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             }
             if (pendingBoundaryRestore != null) {
                 tag.put(BoundaryDamageNbt.KEY, pendingBoundaryRestore);
+            }
+            if (pendingSevereRestore != null) {
+                tag.put(SevereAccidentNbt.KEY, pendingSevereRestore);
             }
         }
 
@@ -1125,6 +1143,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
         if (tag.contains(BoundaryDamageNbt.KEY)) {
             pendingBoundaryRestore = tag.getCompound(BoundaryDamageNbt.KEY);
+        }
+        if (tag.contains(SevereAccidentNbt.KEY)) {
+            pendingSevereRestore = tag.getCompound(SevereAccidentNbt.KEY);
         }
         pendingFuelRestore = tag.contains("CoreFuel")
                 ? tag.getList("CoreFuel", net.minecraft.nbt.Tag.TAG_COMPOUND)

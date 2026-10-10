@@ -1,3 +1,20 @@
+## Alpha.30 source update (2026-10-09) — severe accident chain
+
+Branch `accident-progression`, based on alpha.29 (`77e9d48`, PR #19 branch).
+Natural circulation floor in `ReactorCore.stepRecirculationFlow`; stages 4-7
+in `dev.bwr.core.accident.SevereAccident`; hydrogen/inerting/vent/releases in
+`ContainmentAtmosphere`. Both persist beside boundary damage under NBT key
+`SevereAccident` (`mod/.../damage/SevereAccidentNbt.java`) and follow the same
+pending-restore path on rebuild. World effects: `ReactorSevereAccidentEffects`
+(explosions use ExplosionInteraction.NONE; contamination as status effects).
+CC methods added to `ReactorPeripheral`. No GUI/network protocol change (12).
+
+The physics core was built and its acceptance suite run with plain javac; the
+mod module was **not compiled** in that environment (Gradle/NeoForge maven were
+unreachable). New mod classes were type-checked against stubs only. Build the
+mod, run GameTests and add a save/reload GameTest for the `SevereAccident` key
+before releasing a JAR. See SEVERE-ACCIDENT-UPDATE.md.
+
 ## Alpha.10 source update (2026-09-25)
 
 Continuous, whiter and thicker vapor on both cooling towers. Emit overlapping

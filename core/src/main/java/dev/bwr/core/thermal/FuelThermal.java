@@ -731,6 +731,18 @@ public final class FuelThermal {
     // Calibration
     // ---------------------------------------------------------------
 
+    /**
+     * Take energy out of the fuel node, MJ — the latent heat the severe accident
+     * model spends melting fuel above its liquefaction plateau. Lowers the fuel
+     * temperature and nothing else; the recorded peak is untouched.
+     */
+    public void removeFuelEnergyMJ(double energyMJ) {
+        if (!(energyMJ > 0.0) || !Double.isFinite(energyMJ) || !(fuelHeatCapacityMJPerC > 0.0)) {
+            return;
+        }
+        fuelTemperatureC -= energyMJ / fuelHeatCapacityMJPerC;
+    }
+
     /** Fuel heat capacity, MJ per degree C for the whole core. */
     public double getFuelHeatCapacityMJPerC() {
         return fuelHeatCapacityMJPerC;
