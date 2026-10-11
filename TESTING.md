@@ -6,6 +6,16 @@ headless checks on every push and pull request, and supports manual dispatch.
 
 ## Automated checks
 
+Alpha.30 adds `CoreMeltProgressionTest` (9), `ContainmentHydrogenTest` (11),
+`SevereAccidentIntegrationTest` (4) and `NaturalCirculationTest` (6). They cover
+burst and gap release, latent-heat melting, relocation, flooded versus dry lower
+heads, pressure dependence of head creep, ablation with and without water,
+basemat melt-through, snapshot round trips without event replay, hostile input,
+hydrogen ignition and standing flames, inerting and de-inerting, oxygen
+starvation, venting, overpressure and air ingress, contamination decay, the
+vessel bottom breach, debris heat to water, and natural circulation versus power
+and level. No mod GameTest covers the new save key yet.
+
 Alpha.7 extends `FuelVarietyRegressionTests` to six checks. A completed tritium
 rod must yield exactly 1,250 samples and one casing, once only. The added
 overflow regression starts with a nearly full inventory and a partial sample

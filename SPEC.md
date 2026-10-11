@@ -242,11 +242,13 @@ Physical blocks placed in the core (downcomer region):
 - Flow scales with RIP count × speed
 - **Major safety advantage:** no large external recirculation piping → no recirc-line LOCA (§7). A genuine mechanical advantage from geometry — makes RIP a meaningful late-game upgrade, not just "more pumps."
 
-### 4.5 Natural Circulation — DEFERRED
+### 4.5 Natural Circulation — implemented in alpha.30
 
 The mode for a BWR with no recirculation pumps at all; lower power density (buoyancy can't match pumped flow — cf. ESBWR).
 
-Deferred because flow becomes an *output* not an input: buoyancy depends on void, which depends on power, which depends on flow. Genuine algebraic loop with known instability regions in real plants.
+Flow becomes an *output* not an input: buoyancy depends on void, which depends on power, which depends on flow. Genuine algebraic loop with known instability regions in real plants.
+
+**As built:** a flow floor of `0.366 × P^(1/3)` of rated, using last tick's power so the loop is lagged through the ordinary flow time constants rather than solved as an identity. It needs liquid above the shroud head (full at −60 in collapsed level, gone 20 in above TAF) and shrinks with relocated fuel. A broken recirculation line or failed lower head removes it entirely. Pumps running above it set the flow as before. See [SEVERE-ACCIDENT-UPDATE.md](SEVERE-ACCIDENT-UPDATE.md).
 
 ---
 
@@ -339,6 +341,10 @@ Failures are non-deterministic but not arbitrary: the abused component is the on
 ---
 
 ## 8. Severe Accident / Meltdown
+
+> **Status (alpha.30):** stages 1–3 live in `FuelThermal`; stages 4–7, the
+> lumped containment atmosphere (§8.3) and the contaminated-plant endpoint (§8.4)
+> live in `dev.bwr.core.accident`. See [SEVERE-ACCIDENT-UPDATE.md](SEVERE-ACCIDENT-UPDATE.md).
 
 **A progression with recovery points, not a binary.** This is the path that makes ECCS matter — without it, every emergency system is decorative.
 
@@ -513,7 +519,7 @@ Not a decorative water block. Full model:
 11. **Severe accident model** — uncovery, Zr reaction, quench branching, hydrogen.
 12. **Suppression pool, ECCS machines, spargers, SLC, ADS.**
 
-**Deferred:** natural circulation, per-jet-pump asymmetric flow, custom pump/impeller models, full RHR heat sink, containment detail.
+**Deferred:** per-jet-pump asymmetric flow, custom pump/impeller models, full RHR heat sink, containment detail.
 
 ---
 

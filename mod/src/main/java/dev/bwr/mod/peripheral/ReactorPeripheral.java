@@ -789,6 +789,102 @@ public class ReactorPeripheral implements IPeripheral {
         return core().getHydrogenGeneratedKg();
     }
 
+    // -----------------------------------------------------------------
+    // Natural circulation, severe accident and containment (SPEC 4.5, 8)
+    // -----------------------------------------------------------------
+
+    /** Buoyancy-driven core flow the vessel is establishing on its own, fraction of rated. */
+    @LuaFunction(mainThread = true)
+    public final double getNaturalCirculationFlow() throws LuaException {
+        return core().getNaturalCirculationFlowFraction();
+    }
+
+    /** Current core damage stage, 0 (intact) to 7 (core-concrete interaction). See SPEC 8.1. */
+    @LuaFunction(mainThread = true)
+    public final int getCoreDamageStage() throws LuaException {
+        return core().getSevereAccident().getStage().number();
+    }
+
+    /**
+     * Severe accident state: stage, cladding failure, melt and relocation,
+     * lower head creep, concrete ablation and fission product release. All
+     * fractions are of the whole core, 0..1.
+     */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> getCoreDamage() throws LuaException {
+        var sa = core().getSevereAccident();
+        Map<String, Object> m = new HashMap<>();
+        m.put("stage", sa.getStage().number());
+        m.put("stageName", sa.getStage().displayName());
+        m.put("worstStage", sa.getWorstStage().number());
+        m.put("permanent", sa.isPermanentDamage());
+        m.put("failedCladding", sa.getFailedCladFraction());
+        m.put("melted", sa.getMeltedFraction());
+        m.put("moltenInCore", sa.getMoltenInCoreFraction());
+        m.put("lowerPlenumDebris", sa.getLowerPlenumDebrisFraction());
+        m.put("debrisTemp", sa.getDebrisTemperatureC());
+        m.put("lowerHeadDamage", sa.getLowerHeadDamage());
+        m.put("lowerHeadFailed", sa.isLowerHeadFailed());
+        m.put("exVessel", sa.getExVesselFraction());
+        m.put("coriumCoolingMW", sa.getCoriumWaterCoolingMW());
+        m.put("ablationDepth", sa.getAblationDepthM());
+        m.put("ablationRateMmPerHour", sa.getAblationRateMmPerHour());
+        m.put("basematFailed", sa.isBasematFailed());
+        m.put("released", sa.getReleasedFraction());
+        return m;
+    }
+
+    /**
+     * Primary containment atmosphere. Percentages are by volume. Hydrogen burns
+     * once it reaches 8% with at least 5% oxygen; a mixture that finds oxygen
+     * while already above 13% detonates.
+     */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> getContainment() throws LuaException {
+        var ct = core().getContainment();
+        Map<String, Object> m = new HashMap<>();
+        m.put("hydrogenPercent", ct.getHydrogenPercent());
+        m.put("oxygenPercent", ct.getOxygenPercent());
+        m.put("hydrogenKg", ct.getHydrogenKg());
+        m.put("pressure", ct.getPressurePsig());
+        m.put("peakPressure", ct.getPeakPressurePsig());
+        m.put("flammable", ct.isFlammable());
+        m.put("inerted", ct.isInerted());
+        m.put("inerting", ct.isInertingCommanded());
+        m.put("purgeActive", ct.isPurgeActive());
+        m.put("ventOpen", ct.isVentOpen());
+        m.put("failed", ct.isFailed());
+        m.put("failureMode", ct.getFailureMode().name().toLowerCase(java.util.Locale.ROOT));
+        m.put("burns", ct.getBurnCount());
+        m.put("airborne", ct.getAirborneFraction());
+        m.put("deposited", ct.getDepositedFraction());
+        m.put("environmentalRelease", ct.getEnvironmentalReleaseFraction());
+        m.put("plantContamination", ct.getPlantContaminationIndex());
+        m.put("siteContamination", ct.getSiteContaminationIndex());
+        return m;
+    }
+
+    /**
+     * Start a nitrogen purge (true) or an air purge to de-inert (false). Oxygen
+     * moves toward 2% or 21% with a 30 minute time constant and the purge stops
+     * when it gets there, so inerting has to be done before it is needed — and
+     * de-inerting a containment full of hydrogen is how a detonation happens.
+     * Burns use up oxygen; nothing replaces it except another purge or a
+     * failed containment drawing in outside air.
+     */
+    @LuaFunction(mainThread = true)
+    public final void setContainmentInerting(boolean inerting) throws LuaException {
+        core().getContainment().setInertingCommanded(inerting);
+        be.setChanged();
+    }
+
+    /** Open or close the hardened wetwell vent. Lowers pressure and hydrogen; releases scrubbed activity. */
+    @LuaFunction(mainThread = true)
+    public final void setContainmentVent(boolean open) throws LuaException {
+        core().getContainment().setVentOpen(open);
+        be.setChanged();
+    }
+
     @LuaFunction(mainThread = true)
     public final double getVoidFraction() throws LuaException {
         return core().getVoidFraction();
@@ -1050,6 +1146,10 @@ public class ReactorPeripheral implements IPeripheral {
         m.put("peakCladTemp", c.getPeakCladTemperatureC());
         m.put("oxidation", c.getOxidationFraction());
         m.put("hydrogenKg", c.getHydrogenGeneratedKg());
+        m.put("naturalCirculation", c.getNaturalCirculationFlowFraction());
+        m.put("coreDamageStage", c.getSevereAccident().getStage().number());
+        m.put("containmentHydrogenPercent", c.getContainment().getHydrogenPercent());
+        m.put("containmentPressure", c.getContainment().getPressurePsig());
         m.put("boron", c.getBoronPpm());
         m.put("kInfinity", c.getAggregateKInfinity());
         m.put("kEffAllRodsOut", c.getKEffectiveAllRodsOut());

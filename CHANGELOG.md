@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.0-alpha.30 — 2026-10-09 — Natural circulation, core melt and containment hydrogen
+
+- Added natural circulation: with pumps tripped or absent, core flow follows the cube root of thermal power and needs water above the shroud head. A two-pump trip from rated, with pressure and level held, settles near 23% flow and 26% power.
+- Added cladding failure: rods burst between 750 and 1,200 °C, release the gap inventory and leave the coolant radioactive. This damage is permanent.
+- Added core melt: above 2,200 °C excess heat melts fuel as latent heat, and molten fuel relocates to the lower plenum with its decay heat.
+- Added lower plenum debris behavior: water quenches debris and saves the head, while dry debris creeps the lower head to failure (about 35 min at pressure and 80 min depressurised for 30% of the core).
+- Lower head failure drains the vessel from the bottom and moves the debris onto the drywell floor.
+- Added core-concrete interaction: corium ablates concrete unless water reaching the floor removes its heat. It produces gas and hydrogen, and penetrating the 3 m basemat fails containment.
+- Added a containment atmosphere: hydrogen burns at 8% with oxygen present and detonates when oxygen reaches an already-rich mixture. Burns consume oxygen that a sealed containment does not regain.
+- Added containment controls: nitrogen inerting and de-inerting purges, a pool-scrubbed wetwell vent, overpressure failure, and air ingress through a failed containment.
+- Added fission product releases to containment and the environment. Contamination decays with a one-day half-life, and nearby players receive escalating status effects.
+- Hydrogen burns cause explosions that damage entities but not blocks; other milestones produce chat notices and sounds. Events never replay after a reload.
+- Added the CC:Tweaked methods getNaturalCirculationFlow, getCoreDamageStage, getCoreDamage, getContainment, setContainmentInerting and setContainmentVent, plus new getStatus fields, and expanded the controller INFO readout.
+- Damage and containment state persist under a new SevereAccident save key. Old saves load undamaged with an air-filled containment. Menu network protocol stays at 12.
+- Added 30 physics acceptance tests covering the new models. A recirculation-line break or failed lower head still removes all core flow, because natural circulation cannot run through a short-circuited loop.
+
 ## 0.1.0-alpha.29 — 2026-09-27 — Refuelling map controls
 
 - Added cursor-centered scroll-wheel zoom, right-drag panning, and a FIT button to the refuelling map.

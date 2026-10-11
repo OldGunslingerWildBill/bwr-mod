@@ -9,7 +9,17 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-alpha.29` — Refuelling map controls, September 27, 2026.
+**Current version:** `0.1.0-alpha.30` — Natural circulation, core melt and containment hydrogen, October 9, 2026.
+
+**Alpha.30:** a lost reactor now keeps going wrong in order. With the pumps off,
+natural circulation holds a reduced flow. An uncovered core bursts its cladding,
+melts at 2,200 °C, and relocates into the lower plenum. Water there saves the
+vessel; a dry plenum fails the lower head, and the corium attacks the concrete
+floor. Hydrogen fills a lumped containment, where it burns at 8%, detonates if
+oxygen reaches a rich mixture, or waits harmlessly if you inerted with nitrogen
+beforehand. Vent through the pool or risk overpressure failure. Releases
+contaminate the area around the plant. New CC methods report all of it; nothing
+acts automatically. See [severe accident behavior](SEVERE-ACCIDENT-UPDATE.md).
 
 **Alpha.29:** scroll over the refuelling map to zoom toward the cursor; right-drag
 to pan and use **FIT** to reset the view. Click multiple positions to select them,
