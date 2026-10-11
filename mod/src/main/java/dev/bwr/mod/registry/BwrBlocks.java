@@ -357,4 +357,13 @@ public final class BwrBlocks {
     public static final DeferredBlock<SuppressionPoolQuencherBlock> SUPPRESSION_POOL_QUENCHER =
             BLOCKS.register("suppression_pool_quencher",
                     () -> new SuppressionPoolQuencherBlock(machine()));
+
+    // --- Severe accident ------------------------------------------------
+
+    /**
+     * Corium: molten core and dissolved concrete under a failed vessel. Placed
+     * by the reactor, never crafted; see dev.bwr.mod.accident.CoriumPool.
+     */
+    public static final DeferredBlock<dev.bwr.mod.accident.CoriumBlock> CORIUM =
+            BLOCKS.register("corium", () -> new dev.bwr.mod.accident.CoriumBlock());
 }

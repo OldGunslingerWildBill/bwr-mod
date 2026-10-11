@@ -53,6 +53,196 @@ public final class Alpha31ContainmentTests {
         return controller;
     }
 
+    /** A hollow box: {@code wall} on every cell with a coordinate on {@code lo} or {@code hi}, air inside. */
+    private static void hollow(ServerLevel level, BlockPos lo, BlockPos hi, Block wall) {
+        for (int x = lo.getX(); x <= hi.getX(); x++)
+            for (int z = lo.getZ(); z <= hi.getZ(); z++) {
+                level.getChunk(x >> 4, z >> 4);
+                for (int y = lo.getY(); y <= hi.getY(); y++) {
+                    boolean shell = x == lo.getX() || x == hi.getX() || y == lo.getY() || y == hi.getY()
+                            || z == lo.getZ() || z == hi.getZ();
+                    level.setBlock(new BlockPos(x, y, z), (shell ? wall : Blocks.AIR).defaultBlockState(), 2);
+                }
+            }
+    }
+
+    private static void tickReactor(ServerLevel level, ReactorControllerBlockEntity reactor) {
+        ReactorControllerBlockEntity.serverTick(level, reactor.getBlockPos(),
+                level.getBlockState(reactor.getBlockPos()), reactor);
+    }
+
+    private static void tickController(ServerLevel level, ContainmentControllerBlockEntity controller) {
+        ContainmentControllerBlockEntity.serverTick(level, controller.getBlockPos(),
+                level.getBlockState(controller.getBlockPos()), controller);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 600)
+    public static void sealedReactorStaysContainedWhileRatingsRecompute(GameTestHelper helper) throws Exception {
+        ServerLevel level = helper.getLevel();
+        BlockPos min = new BlockPos(36000, 190, 36000);
+        int width = 11, depth = 11, height = 8;
+        // 55 x 24 x 55 interior: over 11,000 boundary faces, so one rating pass
+        // outlasts the tick its survey completes in (two 4,000-face budgets).
+        hollow(level, min.offset(-23, -4, -23), min.offset(width + 22, height + 13, depth + 22), Blocks.STONE);
+        ReactorControllerBlockEntity reactor = CompactCoreRegressionTests.build(
+                level, min, width, depth, height, false);
+        helper.assertTrue(reactor.isFormed(), "reference vessel did not form");
+        var containment = place(level, min.offset(-10, 0, -10));
+        survey(level, containment);
+        helper.assertTrue(containment.isSealed() && containment.linkedReactors().contains(reactor.getBlockPos()),
+                "large reactor room did not seal and link: " + containment.statusLines());
+        helper.assertTrue(containment.boundaryFaces().size() > 8_000,
+                "room too small to span rating ticks: " + containment.boundaryFaces().size() + " faces");
+        for (int i = 0; i < 32 && !containment.strengthReady(); i++) tickController(level, containment);
+        helper.assertTrue(containment.strengthReady(), "initial ratings never finished");
+        tickReactor(level, reactor);
+        helper.assertTrue(reactor.core().getContainment().getLeakArea() == 0.0, "sealed room not linked");
+
+        // Timer revalidation: survey again, then rebuild every rating over several ticks.
+        containment.markDirty();
+        boolean recomputing = false;
+        for (int tick = 0; tick < 64; tick++) {
+            tickController(level, containment);
+            tickReactor(level, reactor);
+            recomputing |= !containment.isScanning() && !containment.strengthReady();
+            helper.assertTrue(reactor.core().getContainment().getLeakArea() == 0.0,
+                    "sealed room went uncontained on revalidation tick " + tick
+                            + ": scanning=" + containment.isScanning()
+                            + " strengthReady=" + containment.strengthReady());
+            if (recomputing && containment.strengthReady()) break;
+        }
+        helper.assertTrue(recomputing, "revalidation never recomputed ratings across ticks");
+        helper.assertTrue(containment.strengthReady(), "rating recompute never finished");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void rebuiltBreachRestoresContainment(GameTestHelper helper) throws Exception {
+        ServerLevel level = helper.getLevel();
+        BlockPos min = new BlockPos(38000, 190, 38000);
+        int width = 11, depth = 11, height = 8;
+        hollow(level, min.offset(-4, -4, -4), min.offset(width + 3, height + 2, depth + 3), Blocks.STONE);
+        ReactorControllerBlockEntity reactor = CompactCoreRegressionTests.build(
+                level, min, width, depth, height, false);
+        helper.assertTrue(reactor.isFormed(), "reference vessel did not form");
+        var containment = place(level, min.offset(-3, 0, -3));
+        BlockPos weakWall = min.offset(-4, 0, 0);
+        level.setBlock(weakWall, Blocks.OAK_PLANKS.defaultBlockState(), 2);
+        survey(level, containment);
+        helper.assertTrue(containment.isSealed() && containment.strengthReady()
+                        && weakWall.equals(containment.weakestSpot().position()),
+                "plank wall was not the weakest spot: " + containment.statusLines());
+        tickReactor(level, reactor);
+        var atmosphere = reactor.core().getContainment();
+        double[] ambient = atmosphere.toArray();
+        double[] gas = atmosphere.toArray();
+        gas[2] *= 2.0;
+        gas[3] *= 2.0;
+        atmosphere.fromArray(gas);
+        tickReactor(level, reactor);
+        helper.assertTrue(level.getBlockState(weakWall).isAir() && !containment.isSealed()
+                        && atmosphere.getFailureMode() == dev.bwr.core.accident.ContainmentAtmosphere.FailureMode.OVERPRESSURE,
+                "overpressure did not fail containment and open the plank wall: " + atmosphere);
+        double peak = atmosphere.getPeakPressurePsig();
+        tickReactor(level, reactor);
+        helper.assertTrue(atmosphere.getLeakArea() == 1.0 && atmosphere.isFailed(),
+                "breached containment was not open and failed");
+        survey(level, containment);
+        helper.assertTrue(!containment.isSealed() && weakWall.equals(containment.leak()),
+                "survey did not report the blown-out wall");
+
+        // The hole has vented the overpressure by the time the wall is rebuilt.
+        double[] vented = atmosphere.toArray();
+        vented[2] = ambient[2];
+        vented[3] = ambient[3];
+        atmosphere.fromArray(vented);
+        level.setBlock(weakWall, Blocks.STONE.defaultBlockState(), 2);
+        survey(level, containment);
+        helper.assertTrue(containment.isSealed(), "rebuilt wall did not reseal: " + containment.statusLines());
+        tickReactor(level, reactor);
+        helper.assertTrue(atmosphere.getLeakArea() == 0.0 && !atmosphere.isFailed(),
+                "rebuilt and resealed containment still reports failure: " + atmosphere);
+        helper.assertTrue(atmosphere.getPeakPressurePsig() == peak, "repair erased the peak pressure");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void lShapedRoomDoesNotLinkReactorInItsNotch(GameTestHelper helper) throws Exception {
+        ServerLevel level = helper.getLevel();
+        BlockPos origin = new BlockPos(40000, 190, 40000);
+        hollow(level, origin, origin.offset(40, 14, 40), Blocks.STONE);
+        // Partition off the notch: the containment is the L along the north and
+        // west sides, and the square room in the south-east corner is next door.
+        for (int i = 9; i < 40; i++)
+            for (int y = 1; y < 14; y++) {
+                level.setBlock(origin.offset(9, y, i), Blocks.STONE.defaultBlockState(), 2);
+                level.setBlock(origin.offset(i, y, 9), Blocks.STONE.defaultBlockState(), 2);
+            }
+        ReactorControllerBlockEntity reactor = CompactCoreRegressionTests.build(
+                level, origin.offset(20, 3, 20), 11, 11, 8, false);
+        helper.assertTrue(reactor.isFormed(), "reference vessel did not form");
+        var containment = place(level, origin.offset(4, 3, 4));
+        survey(level, containment);
+        BlockPos reactorPos = reactor.getBlockPos();
+        helper.assertTrue(containment.isSealed() && containment.contains(reactorPos),
+                "L-shaped room did not seal around a box covering the notch: " + containment.statusLines());
+        helper.assertTrue(!containment.linkedReactors().contains(reactorPos),
+                "reactor in the room next door was linked by the L's bounding box");
+        helper.assertTrue(ContainmentControllerRegistry.linkedReactor(level, reactorPos) == null,
+                "registry linked a reactor outside the L-shaped interior");
+        tickReactor(level, reactor);
+        helper.assertTrue(reactor.core().getContainment().getLeakArea() == 1.0,
+                "reactor outside the L-shaped containment ran sealed");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void firstSurveyReportsLeakAtTheGap(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        // A brand-new controller has no previous sealed box to compare against,
+        // and the search runs about 20 blocks up to the build limit before it
+        // gives up. The readout must still name the one-block hole.
+        BlockPos sideCenter = new BlockPos(42008, 296, 42008);
+        BlockPos roofCenter = new BlockPos(42040, 296, 42008);
+        for (int cx = (42008 - 32) >> 4; cx <= (42040 + 32) >> 4; cx++)
+            for (int cz = (42008 - 32) >> 4; cz <= (42008 + 32) >> 4; cz++) level.getChunk(cx, cz);
+        hollow(level, sideCenter.offset(-2, -2, -2), sideCenter.offset(2, 2, 2), Blocks.STONE);
+        hollow(level, roofCenter.offset(-2, -2, -2), roofCenter.offset(2, 2, 2), Blocks.STONE);
+        BlockPos sideGap = sideCenter.east(2);
+        BlockPos roofGap = roofCenter.above(2);
+        level.setBlock(sideGap, Blocks.AIR.defaultBlockState(), 2);
+        level.setBlock(roofGap, Blocks.AIR.defaultBlockState(), 2);
+        var side = place(level, sideCenter);
+        survey(level, side);
+        helper.assertTrue(!side.isSealed() && side.leak() != null && side.leak().distManhattan(sideGap) <= 1,
+                "first survey put the side-wall leak far from the gap " + sideGap.toShortString()
+                        + ": " + side.statusLines());
+        var roof = place(level, roofCenter);
+        survey(level, roof);
+        helper.assertTrue(!roof.isSealed() && roof.leak() != null && roof.leak().distManhattan(roofGap) <= 1,
+                "first survey put the roof leak far from the gap " + roofGap.toShortString()
+                        + ": " + roof.statusLines());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void floodedCellsSealButAreNotFreeVolume(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos center = new BlockPos(44008, 200, 44008);
+        hollow(level, center.offset(-2, -2, -2), center.offset(2, 2, 2), Blocks.STONE);
+        // Flood the bottom layer of the 3 x 3 x 3 interior: 9 water cells, 18 gas cells.
+        for (int x = -1; x <= 1; x++)
+            for (int z = -1; z <= 1; z++)
+                level.setBlock(center.offset(x, -1, z), Blocks.WATER.defaultBlockState(), 2);
+        var controller = place(level, center);
+        survey(level, controller);
+        helper.assertTrue(controller.isSealed() && controller.interiorMin().getY() == center.getY() - 1,
+                "survey did not seal through the flooded layer: " + controller.statusLines());
+        helper.assertTrue(controller.freeVolume() == 18,
+                "water cells counted as free gas volume: " + controller.statusLines());
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void layeredRatingsDepthCapAndWeakestColumnRupture(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();

@@ -359,3 +359,14 @@ linked reactors uncontained until a new one validates.
 5. Vault door (§5.1), then the airlock (§5.2).
 6. Nitrogen supply and vent valve (§6), then the CC peripheral, GUI and
    documentation.
+
+## 12. Known limitations
+
+- **Some block changes wait for the 30 s timer.** Only player placement and
+  breaking (`BlockEvent.EntityPlaceEvent` and `BlockEvent.BreakEvent`) trigger
+  an immediate resurvey or column re-rating. Pistons, explosions, fluid spread,
+  `/setblock`, `/fill` and other mods' block placers are not seen until the
+  revalidation timer (§2.2, default every 30 s) runs the next survey. That is
+  the timer's job as the backstop. A global `NeighborNotifyEvent` hook is
+  deliberately not used: it fires far too often to filter on every block
+  update.

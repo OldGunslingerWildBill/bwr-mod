@@ -157,5 +157,6 @@
   "insert.bwr.tritium_target": "Tritium Target Rod",
   "insert.bwr.silicon_target": "Silicon Irradiation Rod",
   "block.bwr.suppression_pool_steam_inlet": "Suppression Tank Steam Inlet",
-  "block.bwr.suppression_pool_drain": "Suppression Pool Water Drain Outlet"
+  "block.bwr.suppression_pool_drain": "Suppression Pool Water Drain Outlet",
+  "block.bwr.corium": "Corium"
 }

@@ -41,6 +41,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_DATA_PENETRATION);
     public static final DeferredItem<BlockItem> REACTOR_VESSEL =
             ITEMS.registerSimpleBlockItem(BwrBlocks.REACTOR_VESSEL);
+    public static final DeferredItem<BlockItem> CORIUM =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CORIUM);
     public static final DeferredItem<BlockItem> CONTROL_ROD_DRIVE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_ROD_DRIVE);
     public static final DeferredItem<BlockItem> CORE_SPRAY_SPARGER =
@@ -212,6 +214,7 @@ public final class BwrItems {
                         output.accept(LP_TURBINE.get());
                         output.accept(NUCLEAR_GENERATOR.get());
                         output.accept(TURBINE_FEED_PUMP.get());
+                        output.accept(CORIUM.get());
                     })
                     .build());
 }

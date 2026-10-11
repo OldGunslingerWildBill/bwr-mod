@@ -358,6 +358,9 @@ for orphan in sorted(textures_on_disk - referenced_textures):
 # ---------- 3. per-block coverage ----------
 missing = {"blockstate": [], "blockmodel": [], "itemmodel": [], "loot": [], "recipe": []}
 RETIRED_BLOCKS = {"rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_quencher"}
+# Made by the world, not the player: corium exists only where a core melted
+# through a vessel, so a recipe for it would be the bug.
+WORLD_MADE_BLOCKS = {"corium"}
 
 # What each per-block gap actually costs in game. These strings go into the
 # bad() message so the report says why it matters and not just that a file is
@@ -483,7 +486,7 @@ for b in blocks:
         missing["itemmodel"].append(b)
     if f"data/bwr/loot_table/blocks/{b}.json" not in jsons:
         missing["loot"].append(b)
-    if b not in RETIRED_BLOCKS and f"data/bwr/recipe/{b}.json" not in jsons:
+    if b not in RETIRED_BLOCKS | WORLD_MADE_BLOCKS and f"data/bwr/recipe/{b}.json" not in jsons:
         missing["recipe"].append(b)
 
 # Check 3 reaches the exit code. It used to accumulate into `missing`, print a

@@ -25,6 +25,26 @@ public final class SevereAccidentNbt {
     /** Key this data is stored under in the controller's tag. */
     public static final String KEY = "SevereAccident";
 
+    /**
+     * Key of the corium pool's placement record, beside {@link #KEY}. Kept
+     * separate because it belongs to the world, not the core: it is written
+     * whether or not a core exists, and must survive a core being rebuilt or
+     * reset, or the blocks already melted would be placed again. Absent in old
+     * saves, which read as nothing placed yet.
+     */
+    public static final String CORIUM_KEY = "CoriumPool";
+
+    public static void writeCorium(CompoundTag controllerTag, dev.bwr.mod.accident.CoriumPool pool) {
+        CompoundTag t = new CompoundTag();
+        pool.write(t);
+        controllerTag.put(CORIUM_KEY, t);
+    }
+
+    public static void readCorium(CompoundTag controllerTag, dev.bwr.mod.accident.CoriumPool pool) {
+        pool.read(controllerTag.contains(CORIUM_KEY, net.minecraft.nbt.Tag.TAG_COMPOUND)
+                ? controllerTag.getCompound(CORIUM_KEY) : new CompoundTag());
+    }
+
     public static CompoundTag write(ReactorCore core) {
         CompoundTag t = new CompoundTag();
         if (core == null) {

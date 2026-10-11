@@ -143,6 +143,46 @@ public final class ContainmentStructurePhysicsTest {
                 "uncontained release was bypassed twice or retained indoors");
     }
 
+    public static void test07_repairedWallClearsStructuralFailureButNotMeltThrough() {
+        var ct = new ContainmentAtmosphere();
+        ct.setFailurePressurePsig(5.0);
+        ct.step(0.0, 0.0, 0.02, 1.0);
+        ct.setLeakArea(0.5);
+        ct.step(0.0, 0.0, 0.02, 1.0);
+        ct.setLeakArea(0.0);
+        for (int i = 0; i < 20 && !ct.isFailed(); i++) ct.step(0.0, 20_000.0, 0.0, 1.0);
+        Check.isTrue(ct.getFailureMode() == ContainmentAtmosphere.FailureMode.OVERPRESSURE,
+                "5 psig wall did not fail on overpressure");
+        double peak = ct.getPeakPressurePsig();
+        double released = ct.getEnvironmentalReleaseFraction();
+        double plant = ct.getPlantContaminationIndex();
+        double site = ct.getSiteContaminationIndex();
+        double deposited = ct.getDepositedFraction();
+        Check.greaterThan(0.0, released, "setup released nothing");
+        Check.greaterThan(0.0, plant, "setup left no plant contamination");
+        ct.clearStructuralFailure();
+        Check.isFalse(ct.isFailed(), "rebuilt wall left overpressure failure set");
+        Check.exactly(peak, ct.getPeakPressurePsig(), "peak pressure cleared");
+        Check.exactly(released, ct.getEnvironmentalReleaseFraction(), "release total cleared");
+        Check.exactly(plant, ct.getPlantContaminationIndex(), "plant contamination cleared");
+        Check.exactly(site, ct.getSiteContaminationIndex(), "site contamination cleared");
+        Check.exactly(deposited, ct.getDepositedFraction(), "deposited activity cleared");
+
+        double[] snapshot = new ContainmentAtmosphere().toArray();
+        snapshot[8] = ContainmentAtmosphere.FailureMode.DETONATION.ordinal();
+        var detonated = new ContainmentAtmosphere();
+        detonated.fromArray(snapshot);
+        Check.isTrue(detonated.isFailed(), "detonation snapshot did not load failed");
+        detonated.clearStructuralFailure();
+        Check.isFalse(detonated.isFailed(), "rebuilt wall left detonation failure set");
+
+        var melted = new ContainmentAtmosphere();
+        melted.failByMeltThrough();
+        melted.clearStructuralFailure();
+        Check.isTrue(melted.getFailureMode() == ContainmentAtmosphere.FailureMode.BASEMAT_MELT_THROUGH,
+                "rebuilding a wall cleared basemat melt-through");
+    }
+
     private static ReactorCore damagedCore(double bypassFlow, double leakArea) {
         var core = new ReactorCore(new CoreConfig());
         double[] state = core.getSevereAccident().toArray();
