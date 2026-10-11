@@ -26,8 +26,10 @@ automatically: players automate through CC:Tweaked.
 - Players build containment walls from **any full, solid block**, vanilla or
   modded (stone, iron blocks, IE concrete, IE reinforced concrete, and so on).
 - A **containment controller** placed inside finds the enclosed room by flood fill.
-- **Openings must be mod blocks**: vault door, personnel airlock, and pipe,
-  cable and modem penetrations. Vanilla and modded doors, slabs, panes and pipes
+- **Openings must be mod blocks**: vault door, personnel airlock, and steam,
+  water, power and data penetrations, plus a general pass-through for other
+  mods' pipes. Penetrations carry ASME-inspired process nameplates and
+  isolation valves (§5.3, §5.4). Vanilla and modded doors, slabs, panes and pipes
   are not full cubes, so they leak.
 - **Wall strength comes from layering.** Each spot's pressure rating is the sum
   of contributions from the continuous solid blocks behind it. Containment fails
@@ -177,19 +179,73 @@ has a fixed pressure rating (config).
 
 ### 5.3 Penetrations
 
-Each is a full-cube wall block that also carries one connection straight through:
+Each is a full-cube wall block that also carries one connection straight through.
+Every penetration has **two separate ratings**, as real ones do:
 
-- `bwr:containment_steam_penetration`: a steam line. It must join
-  `SteamLineNetwork` on both faces. Check `SteamLineNetwork.acceptsLineOn`.
-- `bwr:containment_water_penetration`: a high-pressure water line, joining
-  `WaterLineNetwork`.
-- `bwr:containment_power_penetration`: FE passthrough, exposing the energy
-  capability on both faces.
-- `bwr:containment_data_penetration`: passes CC wired modem cables and redstone
-  through.
+- **Process side:** the pressure of the fluid inside the line. Penetrations are
+  ASME-inspired nameplates set at or above the pipe they carry, so a penetration
+  is never the weak link on the process side.
+- **Containment side:** the pressure difference across the containment wall
+  that breaks the penetration sleeve. That number is what goes into the
+  weakest-spot calculation (§4.2).
 
-Rating: 150 psig each. Failure turns the block into its ruptured state, which
-counts as an opening.
+| Block | Carries | Process-side nameplate | Basis | Containment side |
+| --- | --- | --- | --- | --- |
+| `bwr:containment_steam_penetration` | High-Pressure Steam Pipe (`pressurised_tube`) | **1,250 psig at 575 °F** design, 1,375 psig code limit | ASME Section III-inspired; same as vessel and main steam line design (`PhysicalConstants.VESSEL_DESIGN_PRESSURE_PSIG`, `VESSEL_CODE_LIMIT_PSIG`) | 150 psig |
+| `bwr:containment_water_penetration` | High-Pressure Water Pipe | **2,500 psi** design | ASME Section III-inspired; matches the existing High-Pressure Water Pipe nameplate (B31.1-inspired, 2,500 psi) | 150 psig |
+| `bwr:containment_pass_through` | Other mods' fluids, Mekanism chemicals, items | **1,480 psi** design | ASME Class 600, carbon steel at ambient temperature | 150 psig |
+| `bwr:containment_power_penetration` | FE | Electrical, no process pressure; FE throughput cap (config) | IEEE 317-inspired (electrical penetration assemblies) | 150 psig |
+| `bwr:containment_data_penetration` | CC wired modem cable, redstone | None | IEEE 317-inspired | 150 psig |
+
+Rules:
+
+- The steam penetration joins `SteamLineNetwork` on both faces (check
+  `SteamLineNetwork.acceptsLineOn`). The water penetration joins
+  `WaterLineNetwork`. Neither accepts the other's pipe, and neither accepts the
+  pass-through's traffic.
+- The **pass-through** forwards the NeoForge fluid, item and energy capabilities
+  and the Mekanism chemical capability (soft dependency) from one face to the
+  other, with no inventory of its own. It is how players run Mekanism, IE or any
+  other mod's pipes through a sealed wall. It does not connect to the mod's own
+  steam or water pipes, so it can't be used to carry reactor coolant.
+- **No new pipe-burst solver.** Process-side overpressure on the reactor lines is
+  already modelled by `BoundaryStress` (main steam and feedwater line failure
+  above 1,250 psig). The nameplates are shown in the tooltip, the controller
+  GUI and over CC, in the same style as the water pipe:
+  `ASME Section III-inspired | Process design: 2,500 psi | Containment: 150 psig (simulation)`.
+  Like the water pipe, it is a gameplay nameplate, not certification.
+- All process and containment ratings are config values, defaulting to the
+  table.
+- Containment-side failure turns the block into its **ruptured** state. A
+  ruptured penetration counts as an opening (a leak) whatever its isolation
+  valve is doing, because the sleeve itself has failed. It stops passing traffic
+  until repaired (break and replace).
+
+### 5.4 Containment isolation
+
+Real plants put an isolation valve on every line that crosses containment. The
+steam, water and pass-through penetrations each have an **integral isolation
+valve**:
+
+- States OPEN and CLOSED. Closed passes nothing.
+- Stroke time about 4 s, powered from an FE buffer, controlled by redstone and
+  CC, the same as the MSIV. It **fails closed** (spring) when the buffer runs out,
+  like the MSIV. That is passive hardware behavior, not automatic protection:
+  nothing commands it closed on a signal.
+- On a steam line, an existing MSIV anywhere on the same line counts as an
+  isolation valve too. The line is isolated if **either** the penetration valve
+  or an MSIV on it is closed, which mirrors the real inboard and outboard pair.
+- Power and data penetrations have no valve.
+
+**Why isolation matters: containment bypass.** After cladding failure (core
+damage stage 4 or higher), reactor steam and water carry fission products. A
+steam or water line that is open through a penetration to equipment outside
+containment carries them straight out, unscrubbed, bypassing containment. This is
+why real MSIVs close on high radiation. Closing the line stops it. See §7 for the
+physics.
+
+The pass-through never carries reactor coolant, so it never causes a bypass.
+Its valve exists so a player can isolate a line for maintenance or a leak test.
 
 ## 6. Containment equipment
 
@@ -219,6 +275,16 @@ Add to `ContainmentAtmosphere`, keeping all existing behavior and tests:
 - **Uncontained reactors** (no linked sealed containment): run with leak area
   1.0. Hydrogen disperses rather than accumulating, and releases go unscrubbed to
   the environment, with no burns indoors.
+- **Containment bypass** (§5.4), in `ReactorCore`:
+  `setContainmentBypassFlowFraction(double f)`, where `f` is the steam and water
+  flow leaving containment through open penetrations, as a fraction of rated
+  steam flow. The mod sets it each tick from the linked controller. While fission
+  products are being released from the fuel, a share
+  `min(1, BYPASS_CARRYOVER × f)` of that release goes straight to the
+  environmental release instead of into the containment airborne inventory, with
+  no scrubbing. `BYPASS_CARRYOVER` is a named game-calibration constant (start at
+  0.5). Zero before cladding failure, zero when every line is isolated, and zero
+  for an uncontained reactor (everything already goes out).
 - Extend the snapshot with a version bump for the new fields, and keep reading
   old 22-length snapshots.
 
@@ -229,6 +295,9 @@ Unit tests to add in `ContainmentHydrogenTest` or a new class:
 - Leak area 1.0 never accumulates past the flammability limit under a steady
   release. Leak area 0 after a leak period resumes accumulation.
 - The snapshot round-trips, and a legacy snapshot loads.
+- Bypass: with `f = 0` the environmental release is unchanged; with lines open
+  after cladding failure it rises and the containment airborne share falls by
+  the same amount; before cladding failure an open line releases nothing.
 - The calibration formula and targets in §4.1 (pure functions, so they live in core).
 
 ## 8. Readouts and CC
@@ -237,7 +306,13 @@ New peripheral `bwr_containment` on the controller:
 
 - `isSealed()`, `getLeak()` (position or nil), `getFreeVolume()`,
   `getFailurePressure()`, `getWeakestSpot()` (pos, material, layers, rating,
-  deep), `getOpenings()` (list with type, pos, state, rating), `getLinkedReactors()`.
+  deep), `getOpenings()` (list with type, pos, state, containment rating, and
+  for penetrations the process nameplate, carried service and isolation state),
+  `getLinkedReactors()`.
+- `setIsolation(x, y, z, closed)` strokes a penetration's isolation valve and
+  returns false if there is no valve there or no power; `isIsolated()` is true
+  when every steam and water line through the wall is closed;
+  `getBypassFlow()` returns the bypass flow fraction.
 - It mirrors the atmosphere getters from `ReactorPeripheral.getContainment()`.
 - Controller GUI: sealed or leaking, volume, weakest spot, openings list, and
   hydrogen, oxygen and pressure.
@@ -260,7 +335,16 @@ linked reactors uncontained until a new one validates.
   Stone 20 deep reports `deep` with a capped scan.
 - Overpressure breaks exactly the weakest column and nothing else, and the
   next fill reports the leak there.
-- A steam penetration carries steam through and keeps the seal.
+- A steam penetration carries steam through and keeps the seal. A water pipe
+  does not connect to it, and a steam pipe does not connect to the water one.
+- The pass-through moves a Mekanism or vanilla-capability fluid through a sealed
+  wall (skip the Mekanism part when it is absent) and won't connect to a mod
+  steam or water pipe.
+- Tooltips and CC report the nameplates: steam 1,250 psig, water 2,500 psi,
+  pass-through 1,480 psi, containment side 150 psig.
+- A closed isolation valve passes nothing; an open MSIV with a closed
+  penetration valve counts as isolated; cutting power fails the valve closed.
+- A ruptured penetration leaks even with its valve closed.
 - Save and reload keep sealed state and weakest spot. An unloaded boundary
   chunk keeps the last result, flagged stale.
 - Without Mekanism and CC: the controller, doors and penetrations still work.
@@ -270,7 +354,8 @@ linked reactors uncontained until a new one validates.
 1. Core physics changes (§7) with unit tests.
 2. Controller, flood fill and leak readout (§2, §3).
 3. Layered ratings, weakest spot and failure breakage (§4).
-4. Penetrations (§5.3). Without them no real plant can seal.
+4. Penetrations with their nameplates (§5.3), then isolation valves and bypass
+   (§5.4, §7). Without penetrations no real plant can seal.
 5. Vault door (§5.1), then the airlock (§5.2).
 6. Nitrogen supply and vent valve (§6), then the CC peripheral, GUI and
    documentation.
