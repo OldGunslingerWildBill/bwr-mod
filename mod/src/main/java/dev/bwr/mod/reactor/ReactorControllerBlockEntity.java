@@ -47,6 +47,7 @@ import java.util.Set;
 public class ReactorControllerBlockEntity extends BlockEntity {
     private final ReactorBoundaryEffects boundaryEffects = new ReactorBoundaryEffects();
     private final ReactorSevereAccidentEffects severeEffects = new ReactorSevereAccidentEffects();
+    public ReactorSevereAccidentEffects severeEffects() { return severeEffects; }
     private int clientBoundaryMask;
     private long[] clientBoundaryLeaks = new long[0];
     public boolean clientHeadFailed(){return (clientBoundaryMask & ReactorBoundaryEffects.HEAD)!=0;}
@@ -1074,6 +1075,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         boundaryEffects.write(tag);
+        severeEffects.write(tag);
         tag.putString("VesselState", vesselState.getSerializedName());
         tag.putInt("CoreLayoutVersion", coreLayoutVersion);
         tag.putInt("CoreInteriorWidth", savedInteriorWidth);
@@ -1130,6 +1132,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         boundaryEffects.read(tag);
+        severeEffects.read(tag);
         vesselState = VesselState.byName(tag.getString("VesselState"));
         // Missing key is an old save, including a temporarily broken vessel.
         coreLayoutVersion = tag.contains("CoreLayoutVersion") ? tag.getInt("CoreLayoutVersion") : 1;
