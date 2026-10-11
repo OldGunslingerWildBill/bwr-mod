@@ -26,6 +26,7 @@
     "bwr:ads_relief_valve",
     "bwr:water_discharge_port",
     "bwr:suppression_pool_steam_inlet",
-    "bwr:suppression_pool_drain"
+    "bwr:suppression_pool_drain",
+    "bwr:corium"
   ]
 }
