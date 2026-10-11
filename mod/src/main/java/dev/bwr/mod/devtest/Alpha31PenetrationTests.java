@@ -26,6 +26,10 @@ public final class Alpha31PenetrationTests {
     private Alpha31PenetrationTests() {}
 
     private static ContainmentControllerBlockEntity box(ServerLevel level, BlockPos center) {
+        // These rooms sit far from the test structure, so nothing else keeps
+        // their chunks loaded through the delayed checks below. Without a
+        // ticket the chunk unloads and routing correctly skips the sleeve.
+        hold(level,center,true);
         for (int x=-3; x<=3; x++) for (int y=-3; y<=3; y++) for (int z=-3; z<=3; z++) {
             BlockPos pos=center.offset(x,y,z);
             level.getChunk(pos.getX()>>4,pos.getZ()>>4);
@@ -34,6 +38,11 @@ public final class Alpha31PenetrationTests {
         }
         level.setBlock(center,BwrBlocks.CONTAINMENT_CONTROLLER.get().defaultBlockState(),3);
         return (ContainmentControllerBlockEntity)level.getBlockEntity(center);
+    }
+    private static void hold(ServerLevel level, BlockPos center, boolean forced) {
+        for (int cx=(center.getX()-3)>>4; cx<=(center.getX()+3)>>4; cx++)
+            for (int cz=(center.getZ()-3)>>4; cz<=(center.getZ()+3)>>4; cz++)
+                level.setChunkForced(cx,cz,forced);
     }
     private static void survey(ServerLevel level, ContainmentControllerBlockEntity controller) {
         controller.markDirty();
@@ -86,6 +95,7 @@ public final class Alpha31PenetrationTests {
                     "sleeve failure broke wrong column or remained airtight");
             helper.assertTrue(!SteamLineNetwork.acceptsLineOn(level.getBlockState(sleeve),Direction.WEST),
                     "ruptured sleeve still passed traffic");
+            hold(level,center,false);
             helper.succeed();
         });
     }
@@ -120,6 +130,7 @@ public final class Alpha31PenetrationTests {
             var items=level.getCapability(Capabilities.ItemHandler.BLOCK,sleeve,Direction.WEST);
             helper.assertTrue(items!=null && items.getSlots()>0,
                     "powered pass-through failed to expose a foreign item inventory across a sealed wall");
+            hold(level,center,false);
             helper.succeed();
         });
     }
