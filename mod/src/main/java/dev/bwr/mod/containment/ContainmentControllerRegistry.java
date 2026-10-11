@@ -43,7 +43,7 @@ public final class ContainmentControllerRegistry {
         Level level = controller.getLevel();
         if (level == null || controller.interiorMin() == null || controller.interiorMax() == null) return;
         Map<Long, Set<BlockPos>> chunks = BY_CHUNK.computeIfAbsent(level, unused -> new HashMap<>());
-        int depth = 16; // The future layered-strength survey reaches this far beyond the interior.
+        int depth = ContainmentConfig.STRENGTH_SCAN_DEPTH.get();
         BlockPos min = controller.interiorMin();
         BlockPos max = controller.interiorMax();
         for (int cx = (min.getX() - depth) >> 4; cx <= (max.getX() + depth) >> 4; cx++)
@@ -79,7 +79,8 @@ public final class ContainmentControllerRegistry {
             ContainmentControllerBlockEntity controller = level.getBlockEntity(pos)
                     instanceof ContainmentControllerBlockEntity found ? found : null;
             if (controller != null && !controller.isRemoved() && level.isLoaded(pos)
-                    && controller.isSealed() && controller.contains(reactorPos)) return controller;
+                    && controller.isSealed() && controller.strengthReady()
+                    && controller.contains(reactorPos)) return controller;
         }
         return null;
     }
@@ -96,7 +97,18 @@ public final class ContainmentControllerRegistry {
             if (!active.contains(pos) || !level.isLoaded(pos)) continue;
             ContainmentControllerBlockEntity controller = level.getBlockEntity(pos)
                     instanceof ContainmentControllerBlockEntity found ? found : null;
-            if (controller != null && controller.watches(edited)) controller.markDirty();
+            if (controller != null && controller.watches(edited)) controller.blockChanged(edited);
+        }
+    }
+
+    /** A datapack strength change invalidates ratings without rebuilding room geometry. */
+    static void strengthsReloaded() {
+        for (var entry : ACTIVE.entrySet()) {
+            Level level = entry.getKey();
+            for (BlockPos pos : entry.getValue())
+                if (level.isLoaded(pos)
+                        && level.getBlockEntity(pos) instanceof ContainmentControllerBlockEntity controller)
+                    controller.markStrengthDirty();
         }
     }
 

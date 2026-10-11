@@ -17,12 +17,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /** One cached, time-sliced survey of the room surrounding a controller. */
 public final class ContainmentControllerBlockEntity extends BlockEntity {
     public record BoundaryFace(BlockPos wall, Direction normal) {}
+    public record WeakestSpot(BlockPos position, Direction normal, String material,
+                              int layers, double ratingPsig, boolean deep) {}
 
     private boolean sealed;
     private boolean stale;
@@ -33,10 +37,20 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     private BlockPos leak;
     private int sinceScan;
     private List<BoundaryFace> boundary = List.of();
+    private final LongOpenHashSet boundaryWalls = new LongOpenHashSet();
+    private final LongOpenHashSet interiorCells = new LongOpenHashSet();
+    private final Map<Long, Boolean> frontierIsOutside = new HashMap<>();
     private List<BlockPos> linkedReactors = List.of();
     private List<BlockPos> linkedPools = List.of();
     private final Set<Long> indexedChunks = new HashSet<>();
     private Scan scan;
+    private boolean strengthDirty = true;
+    private boolean strengthReady;
+    private WeakestSpot weakest;
+    private final Map<BoundaryFace, ContainmentStrength.Column> ratings = new HashMap<>();
+    private final Map<Long, Set<BoundaryFace>> ratingDependencies = new HashMap<>();
+    private final Set<BoundaryFace> pendingRatingFaces = new HashSet<>();
+    private ArrayDeque<BoundaryFace> ratingQueue;
 
     public ContainmentControllerBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.CONTAINMENT_CONTROLLER.get(), pos, state);
@@ -54,10 +68,25 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         }
         if (controller.scan != null) controller.scan.advance(server, controller,
                 ContainmentConfig.SCAN_CELLS_PER_TICK.get());
+        controller.updateStrength(server, Math.min(4_000, ContainmentConfig.SCAN_CELLS_PER_TICK.get()));
     }
 
     public void markDirty() {
         dirty = true;
+    }
+
+    public void markStrengthDirty() {
+        strengthDirty = true;
+    }
+
+    /** Geometry changes rescan the room; outer reinforcement edits refresh only dependent columns. */
+    public void blockChanged(BlockPos edited) {
+        if (contains(edited) || boundaryWalls.contains(edited.asLong())) {
+            markDirty();
+            return;
+        }
+        Set<BoundaryFace> dependent = ratingDependencies.get(edited.asLong());
+        if (dependent != null) pendingRatingFaces.addAll(dependent);
     }
 
     public boolean isSealed() { return sealed; }
@@ -70,6 +99,9 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     public List<BoundaryFace> boundaryFaces() { return boundary; }
     public List<BlockPos> linkedReactors() { return linkedReactors; }
     public List<BlockPos> linkedPools() { return linkedPools; }
+    public boolean strengthReady() { return strengthReady; }
+    public WeakestSpot weakestSpot() { return weakest; }
+    public double failurePressurePsig() { return weakest == null ? 140.0 : weakest.ratingPsig(); }
     Set<Long> indexedChunks() { return indexedChunks; }
 
     public boolean contains(BlockPos pos) {
@@ -77,10 +109,11 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     }
 
     public boolean watches(BlockPos pos) {
+        int depth = ContainmentConfig.STRENGTH_SCAN_DEPTH.get();
         return min != null && max != null
-                && pos.getX() >= min.getX() - 16 && pos.getX() <= max.getX() + 16
-                && pos.getY() >= min.getY() - 16 && pos.getY() <= max.getY() + 16
-                && pos.getZ() >= min.getZ() - 16 && pos.getZ() <= max.getZ() + 16;
+                && pos.getX() >= min.getX() - depth && pos.getX() <= max.getX() + depth
+                && pos.getY() >= min.getY() - depth && pos.getY() <= max.getY() + depth
+                && pos.getZ() >= min.getZ() - depth && pos.getZ() <= max.getZ() + depth;
     }
 
     private static boolean inside(BlockPos pos, BlockPos min, BlockPos max) {
@@ -96,6 +129,9 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         if (stale) lines.add("Survey stale: a boundary chunk is unloaded");
         if (leak != null) lines.add("Leak at " + leak.getX() + ", " + leak.getY() + ", " + leak.getZ());
         if (sealed) lines.add("Free volume: " + freeVolume + " m3");
+        if (weakest != null) lines.add("Weakest spot: " + weakest.position().toShortString()
+                + " " + String.format(java.util.Locale.ROOT, "%.1f psig", weakest.ratingPsig())
+                + " (" + weakest.layers() + " layers" + (weakest.deep() ? ", deep" : "") + ")");
         lines.add("Linked reactors: " + linkedReactors.size() + "; suppression pools: " + linkedPools.size());
         return lines;
     }
@@ -108,12 +144,19 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         min = new BlockPos(finished.minX, finished.minY, finished.minZ);
         max = new BlockPos(finished.maxX, finished.maxY, finished.maxZ);
         boundary = List.copyOf(finished.boundary);
+        boundaryWalls.clear();
+        for (BoundaryFace face : boundary) boundaryWalls.add(face.wall().asLong());
+        interiorCells.clear();
+        interiorCells.addAll(finished.visited);
+        frontierIsOutside.clear();
         linkedReactors = FormedReactorRegistry.controllers(level).stream()
                 .map(BlockEntity::getBlockPos).filter(this::contains).toList();
         linkedPools = FormedSuppressionPoolRegistry.controllers(level).stream()
                 .map(BlockEntity::getBlockPos).filter(this::contains).toList();
         scan = null;
+        strengthDirty = true;
         ContainmentControllerRegistry.index(this);
+        updateStrength(level, Math.min(4_000, ContainmentConfig.SCAN_CELLS_PER_TICK.get()));
         setChanged();
     }
 
@@ -124,6 +167,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         scan = null;
         linkedReactors = List.of();
         linkedPools = List.of();
+        strengthReady = false;
         setChanged();
     }
 
@@ -133,6 +177,127 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         stale = true;
         scan = null;
         setChanged();
+    }
+
+    private void updateStrength(Level level, int budget) {
+        if (!sealed || scan != null || budget <= 0) return;
+        if (strengthDirty) {
+            ratings.clear();
+            ratingDependencies.clear();
+            pendingRatingFaces.clear();
+            ratingQueue = new ArrayDeque<>(new java.util.LinkedHashSet<>(boundary));
+            strengthReady = false;
+            strengthDirty = false;
+        }
+        if (ratingQueue == null && !pendingRatingFaces.isEmpty()) {
+            ratingQueue = new ArrayDeque<>(pendingRatingFaces);
+            pendingRatingFaces.clear();
+            strengthReady = false;
+        }
+        if (ratingQueue == null) return;
+        for (int count = 0; count < budget && !ratingQueue.isEmpty(); count++) {
+            BoundaryFace face = ratingQueue.removeFirst();
+            ContainmentStrength.Column prior = ratings.remove(face);
+            if (prior != null) forget(prior);
+            ContainmentStrength.Column column = ContainmentStrength.rate(level, face,
+                    ContainmentConfig.STRENGTH_SCAN_DEPTH.get());
+            if (column == null) {
+                stale = true;
+                ratingQueue = null;
+                return;
+            }
+            Boolean exterior = exteriorFrontier(level, column.frontier());
+            if (exterior == null) {
+                stale = true;
+                ratingQueue = null;
+                return;
+            }
+            if (!exterior) continue;
+            ratings.put(face, column);
+            remember(column);
+        }
+        if (ratingQueue.isEmpty()) {
+            ratingQueue = null;
+            weakest = ratings.values().stream()
+                    .min(java.util.Comparator.comparingDouble(ContainmentStrength.Column::ratingPsig)
+                            .thenComparingLong(column -> column.position().asLong())
+                            .thenComparingInt(column -> column.face().normal().ordinal()))
+                    .map(column -> new WeakestSpot(column.position(), column.face().normal(),
+                            column.material(), column.layerCount(), column.ratingPsig(), column.deep()))
+                    .orElse(null);
+            strengthReady = weakest != null;
+            setChanged();
+        }
+    }
+
+    /** Return whether the air beyond a wall column can reach outside the room envelope. */
+    private Boolean exteriorFrontier(Level level, BlockPos frontier) {
+        if (frontier == null) return true; // A depth-capped solid column is a boundary.
+        if (interiorCells.contains(frontier.asLong())) return false;
+        if (!inside(frontier, min, max)) return true;
+        Boolean cached = frontierIsOutside.get(frontier.asLong());
+        if (cached != null) return cached;
+        ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+        LongOpenHashSet component = new LongOpenHashSet();
+        queue.add(frontier);
+        component.add(frontier.asLong());
+        boolean outside = false;
+        while (!queue.isEmpty()) {
+            BlockPos current = queue.removeFirst();
+            if (!inside(current, min, max)) { outside = true; break; }
+            for (Direction direction : Direction.values()) {
+                BlockPos next = current.relative(direction);
+                if (component.contains(next.asLong())) continue;
+                if (!level.isLoaded(next)) return null;
+                if (ContainmentWall.isWall(level, next, level.getBlockState(next))) continue;
+                if (interiorCells.contains(next.asLong())) {
+                    // An island within the same room, including the controller itself.
+                    continue;
+                }
+                component.add(next.asLong());
+                queue.add(next.immutable());
+                if (component.size() > ContainmentConfig.MAX_INTERIOR_CELLS.get()) return null;
+            }
+        }
+        for (long pos : component) frontierIsOutside.put(pos, outside);
+        return outside;
+    }
+
+    private void remember(ContainmentStrength.Column column) {
+        for (BlockPos pos : column.layers()) ratingDependencies
+                .computeIfAbsent(pos.asLong(), unused -> new HashSet<>()).add(column.face());
+        if (column.frontier() != null) ratingDependencies
+                .computeIfAbsent(column.frontier().asLong(), unused -> new HashSet<>()).add(column.face());
+    }
+
+    private void forget(ContainmentStrength.Column column) {
+        for (BlockPos pos : column.layers()) forget(pos, column.face());
+        if (column.frontier() != null) forget(column.frontier(), column.face());
+    }
+
+    private void forget(BlockPos pos, BoundaryFace face) {
+        Set<BoundaryFace> faces = ratingDependencies.get(pos.asLong());
+        if (faces == null) return;
+        faces.remove(face);
+        if (faces.isEmpty()) ratingDependencies.remove(pos.asLong());
+    }
+
+    /** Physically opens only the least-rated continuous column after a core failure event. */
+    public BlockPos ruptureWeakest(ServerLevel level) {
+        if (!sealed || !strengthReady || weakest == null) return null;
+        BoundaryFace face = new BoundaryFace(weakest.position(), weakest.normal());
+        ContainmentStrength.Column column = ratings.get(face);
+        if (column == null) column = ContainmentStrength.rate(level, face,
+                ContainmentConfig.STRENGTH_SCAN_DEPTH.get());
+        if (column == null) { stale = true; return null; }
+        for (BlockPos pos : column.layers()) if (!level.isLoaded(pos)) { stale = true; return null; }
+        for (BlockPos pos : column.layers()) level.destroyBlock(pos, true);
+        sealed = false;
+        leak = weakest.position();
+        strengthReady = false;
+        markDirty();
+        setChanged();
+        return weakest.position();
     }
 
     @Override public void onLoad() {
@@ -162,6 +327,16 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         if (leak != null) tag.putLong("Leak", leak.asLong());
         tag.putLongArray("LinkedReactors", linkedReactors.stream().mapToLong(BlockPos::asLong).toArray());
         tag.putLongArray("LinkedPools", linkedPools.stream().mapToLong(BlockPos::asLong).toArray());
+        if (weakest != null) {
+            CompoundTag spot = new CompoundTag();
+            spot.putLong("Pos", weakest.position().asLong());
+            spot.putInt("Normal", weakest.normal().ordinal());
+            spot.putString("Material", weakest.material());
+            spot.putInt("Layers", weakest.layers());
+            spot.putDouble("RatingPsig", weakest.ratingPsig());
+            spot.putBoolean("Deep", weakest.deep());
+            tag.put("Weakest", spot);
+        }
     }
 
     @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
@@ -174,6 +349,16 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         leak = tag.contains("Leak", Tag.TAG_LONG) ? BlockPos.of(tag.getLong("Leak")) : null;
         linkedReactors = positions(tag.getLongArray("LinkedReactors"));
         linkedPools = positions(tag.getLongArray("LinkedPools"));
+        weakest = null;
+        if (tag.contains("Weakest", Tag.TAG_COMPOUND)) {
+            CompoundTag spot = tag.getCompound("Weakest");
+            int normal = Math.clamp(spot.getInt("Normal"), 0, Direction.values().length - 1);
+            weakest = new WeakestSpot(BlockPos.of(spot.getLong("Pos")), Direction.values()[normal],
+                    spot.getString("Material"), Math.max(0, spot.getInt("Layers")),
+                    Math.max(0, spot.getDouble("RatingPsig")), spot.getBoolean("Deep"));
+        }
+        strengthDirty = true;
+        strengthReady = false;
         dirty = true;
         scan = null;
     }

@@ -61,8 +61,15 @@ public final class ReactorSevereAccidentEffects {
         for (SevereAccident.Event event : core.getSevereAccident().drainEvents()) {
             onCoreEvent(level, pos, event);
         }
+        var containmentController = dev.bwr.mod.containment.ContainmentControllerRegistry
+                .linkedReactor(level, pos);
+        BlockPos breachedAt = null;
         for (ContainmentAtmosphere.Event event : core.getContainment().drainEvents()) {
-            onContainmentEvent(level, pos, event);
+            boolean failure = event == ContainmentAtmosphere.Event.HYDROGEN_DETONATION
+                    || event == ContainmentAtmosphere.Event.CONTAINMENT_OVERPRESSURE_FAILURE;
+            if (failure && breachedAt == null && containmentController != null)
+                breachedAt = containmentController.ruptureWeakest(level);
+            onContainmentEvent(level, failure && breachedAt != null ? breachedAt : pos, event);
         }
         if (++sinceDose >= DOSE_INTERVAL_TICKS) {
             sinceDose = 0;

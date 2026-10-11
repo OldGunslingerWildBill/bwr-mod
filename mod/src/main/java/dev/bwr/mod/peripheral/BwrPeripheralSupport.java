@@ -76,6 +76,17 @@ public final class BwrPeripheralSupport {
             status.put("sealed",b.isSealed());
             status.put("stale",b.isStale());
             status.put("freeVolumeM3",b.freeVolume());
+            status.put("failurePressurePsig",b.failurePressurePsig());
+            if(b.weakestSpot()!=null){
+                var weakest=b.weakestSpot();
+                status.put("weakestX",weakest.position().getX());
+                status.put("weakestY",weakest.position().getY());
+                status.put("weakestZ",weakest.position().getZ());
+                status.put("weakestMaterial",weakest.material());
+                status.put("weakestLayers",weakest.layers());
+                status.put("weakestRatingPsig",weakest.ratingPsig());
+                status.put("weakestDeep",weakest.deep());
+            }
             if(b.leak()!=null){
                 status.put("leakX",b.leak().getX());
                 status.put("leakY",b.leak().getY());

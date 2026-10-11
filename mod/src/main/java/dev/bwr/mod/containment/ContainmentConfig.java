@@ -19,5 +19,8 @@ public final class ContainmentConfig {
     public static final ModConfigSpec.IntValue REVALIDATE_TICKS = BUILDER
             .comment("Slow backstop survey interval, in ticks")
             .defineInRange("revalidateTicks", 600, 20, 72_000);
+    public static final ModConfigSpec.IntValue STRENGTH_SCAN_DEPTH = BUILDER
+            .comment("Maximum continuous wall layers counted at each boundary face")
+            .defineInRange("strengthScanDepth", 16, 1, 64);
     public static final ModConfigSpec SPEC = BUILDER.build();
 }

@@ -2,13 +2,16 @@ package dev.bwr.mod.devtest;
 
 import dev.bwr.mod.containment.ContainmentControllerBlockEntity;
 import dev.bwr.mod.containment.ContainmentControllerRegistry;
+import dev.bwr.mod.containment.ContainmentStrength;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import dev.bwr.mod.registry.BwrBlocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -32,6 +35,64 @@ public final class Alpha31ContainmentTests {
             if (!controller.isScanning()) return;
         }
         throw new AssertionError("containment scan exceeded 32 ticks");
+    }
+
+    private static ContainmentControllerBlockEntity cube(ServerLevel level, BlockPos center,
+                                                         int layers, Block wall) {
+        int radius = layers + 1;
+        for (int x = -radius; x <= radius; x++)
+            for (int y = -radius; y <= radius; y++)
+                for (int z = -radius; z <= radius; z++) {
+                    BlockPos pos = center.offset(x, y, z);
+                    level.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+                    boolean outside = Math.max(Math.max(Math.abs(x), Math.abs(y)), Math.abs(z)) > 1;
+                    level.setBlock(pos, (outside ? wall : Blocks.AIR).defaultBlockState(), 2);
+                }
+        var controller = place(level, center);
+        survey(level, controller);
+        return controller;
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void layeredRatingsDepthCapAndWeakestColumnRupture(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        var wood = cube(level, new BlockPos(32008, 230, 32008), 3, Blocks.OAK_PLANKS);
+        helper.assertTrue(wood.isSealed() && wood.strengthReady()
+                && wood.failurePressurePsig() > 29 && wood.failurePressurePsig() < 31,
+                "three planks did not rate about 30 psig: " + wood.statusLines());
+        var obsidian = cube(level, new BlockPos(32104, 230, 32104), 2, Blocks.OBSIDIAN);
+        helper.assertTrue(obsidian.failurePressurePsig() > 140,
+                "two obsidian layers did not exceed 140 psig: " + obsidian.statusLines()
+                        + " strengthReady=" + obsidian.strengthReady()
+                        + " rawResistance=" + level.getBlockState(obsidian.getBlockPos().east(2))
+                        .getExplosionResistance(level, obsidian.getBlockPos().east(2), null));
+
+        BlockPos deepStart = new BlockPos(32208, 230, 32208);
+        for (int i = 0; i < 20; i++) {
+            BlockPos pos = deepStart.east(i);
+            level.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+            level.setBlock(pos, Blocks.STONE.defaultBlockState(), 2);
+        }
+        var deep = ContainmentStrength.rate(level,
+                new ContainmentControllerBlockEntity.BoundaryFace(deepStart, Direction.EAST), 16);
+        helper.assertTrue(deep != null && deep.deep() && deep.layerCount() == 16,
+                "20-deep stone column ignored the scan depth cap");
+
+        BlockPos failureCenter = new BlockPos(32312, 317, 32312);
+        var weak = cube(level, failureCenter, 1, Blocks.STONE);
+        BlockPos roof = failureCenter.above(2);
+        level.setBlock(roof, Blocks.OAK_PLANKS.defaultBlockState(), 2);
+        survey(level, weak);
+        helper.assertTrue(roof.equals(weak.weakestSpot().position()),
+                "wood roof was not the weakest spot: " + weak.statusLines());
+        helper.assertTrue(roof.equals(weak.ruptureWeakest(level)), "rupture did not choose wood roof");
+        helper.assertTrue(level.getBlockState(roof).isAir()
+                && level.getBlockState(failureCenter.north(2)).is(Blocks.STONE),
+                "rupture broke another column or left the weak one intact");
+        survey(level, weak);
+        helper.assertTrue(!weak.isSealed() && roof.equals(weak.leak()),
+                "rupture did not leave a reported hole");
+        helper.succeed();
     }
 
     @GameTest(template = "empty", timeoutTicks = 400)
@@ -81,7 +142,10 @@ public final class Alpha31ContainmentTests {
         level.setBlockEntity(restored);
         helper.assertTrue(restored.isSealed() && restored.freeVolume() == 27
                 && restored.interiorMin().equals(controller.interiorMin())
-                && restored.interiorMax().equals(controller.interiorMax()),
+                && restored.interiorMax().equals(controller.interiorMax())
+                && restored.weakestSpot() != null
+                && restored.weakestSpot().position().equals(controller.weakestSpot().position())
+                && restored.weakestSpot().ratingPsig() == controller.weakestSpot().ratingPsig(),
                 "containment room result lost on reload");
         survey(level, restored);
         helper.assertTrue(restored.isSealed(), "reloaded room failed resurvey");
@@ -119,6 +183,23 @@ public final class Alpha31ContainmentTests {
                         + reactor.core().getContainment().getLeakArea() + " volume="
                         + reactor.core().getContainment().getVolumeM3() + " measured=" + containment.freeVolume()
                         + " formed=" + reactor.isFormed());
+
+        BlockPos weakWall = min.offset(-4, 0, 0);
+        level.setBlock(weakWall, Blocks.OAK_PLANKS.defaultBlockState(), 2);
+        survey(level, containment);
+        helper.assertTrue(containment.strengthReady() && weakWall.equals(containment.weakestSpot().position()),
+                "reactor room did not identify the weak outer wall");
+        double[] gas = reactor.core().getContainment().toArray();
+        gas[2] *= 2.0;
+        gas[3] *= 2.0;
+        reactor.core().getContainment().fromArray(gas);
+        ReactorControllerBlockEntity.serverTick(level, reactor.getBlockPos(),
+                level.getBlockState(reactor.getBlockPos()), reactor);
+        helper.assertTrue(level.getBlockState(weakWall).isAir()
+                && level.getBlockState(weakWall.south()).is(Blocks.STONE)
+                && !containment.isSealed() && weakWall.equals(containment.leak()),
+                "reactor overpressure event did not rupture only the weakest column");
+
         level.removeBlock(controllerPos, false);
         ReactorControllerBlockEntity.serverTick(level, reactor.getBlockPos(),
                 level.getBlockState(reactor.getBlockPos()), reactor);

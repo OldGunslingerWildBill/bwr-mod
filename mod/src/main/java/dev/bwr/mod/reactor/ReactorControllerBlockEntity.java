@@ -240,8 +240,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 .linkedReactor(level, getBlockPos());
         if (containmentController == null) {
             core.getContainment().setLeakArea(1.0);
+            core.getContainment().setFailurePressurePsig(
+                    dev.bwr.core.accident.ContainmentAtmosphere.FAILURE_PRESSURE_PSIG);
         } else {
             core.getContainment().setLeakArea(0.0);
+            core.getContainment().setFailurePressurePsig(containmentController.failurePressurePsig());
             if (core.getContainment().getVolumeM3() != containmentController.freeVolume())
                 core.getContainment().setFreeVolumeM3(containmentController.freeVolume());
         }

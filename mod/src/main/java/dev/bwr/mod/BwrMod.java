@@ -80,6 +80,9 @@ public final class BwrMod {
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
                 net.neoforged.neoforge.event.AddReloadListenerEvent.class,
                 event -> event.addListener(new dev.bwr.mod.fuel.FuelTypeLoader()));
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
+                net.neoforged.neoforge.event.AddReloadListenerEvent.class,
+                event -> event.addListener(new dev.bwr.mod.containment.ContainmentStrength.Loader()));
 
         computerCraftPresent = ModList.get().isLoaded(CC_MOD_ID);
         mekanismPresent = ModList.get().isLoaded(MEKANISM_MOD_ID);
