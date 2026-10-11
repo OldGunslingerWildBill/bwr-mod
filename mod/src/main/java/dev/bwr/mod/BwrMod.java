@@ -38,6 +38,8 @@ public final class BwrMod {
     private static boolean mekanismPresent;
 
     public BwrMod(IEventBus modBus, ModContainer container) {
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON,
+                dev.bwr.mod.containment.ContainmentConfig.SPEC);
         BwrBlocks.BLOCKS.register(modBus);
         BwrItems.ITEMS.register(modBus);
         BwrItems.TABS.register(modBus);

@@ -3,6 +3,7 @@ package dev.bwr.mod.registry;
 import dev.bwr.core.eccs.EccsDesign;
 import dev.bwr.core.feedwater.FeedwaterDesign;
 import dev.bwr.mod.BwrMod;
+import dev.bwr.mod.containment.ContainmentControllerBlock;
 import dev.bwr.mod.steam.TurbineValveBlock;
 import dev.bwr.mod.condenser.CondenserBlock;
 import dev.bwr.mod.cooling.CoolingBlock;
@@ -79,6 +80,9 @@ public final class BwrBlocks {
     /** Owns the ReactorCore instance and ticks the physics. One per reactor. */
     public static final DeferredBlock<ReactorControllerBlock> REACTOR_CONTROLLER =
             BLOCKS.register("reactor_controller", () -> new ReactorControllerBlock(machine()));
+
+    public static final DeferredBlock<ContainmentControllerBlock> CONTAINMENT_CONTROLLER =
+            BLOCKS.register("containment_controller", () -> new ContainmentControllerBlock(machine()));
 
     /** Reactor pressure vessel shell. Forms the pressure boundary. */
     public static final DeferredBlock<ReactorVesselBlock> REACTOR_VESSEL =

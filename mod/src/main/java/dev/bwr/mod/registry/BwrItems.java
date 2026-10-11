@@ -27,6 +27,8 @@ public final class BwrItems {
 
     public static final DeferredItem<BlockItem> REACTOR_CONTROLLER =
             ITEMS.registerSimpleBlockItem(BwrBlocks.REACTOR_CONTROLLER);
+    public static final DeferredItem<BlockItem> CONTAINMENT_CONTROLLER =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_CONTROLLER);
     public static final DeferredItem<BlockItem> REACTOR_VESSEL =
             ITEMS.registerSimpleBlockItem(BwrBlocks.REACTOR_VESSEL);
     public static final DeferredItem<BlockItem> CONTROL_ROD_DRIVE =
@@ -144,6 +146,7 @@ public final class BwrItems {
                     .icon(() -> REACTOR_CONTROLLER.get().getDefaultInstance())
                     .displayItems((params, output) -> {
                         output.accept(REACTOR_CONTROLLER.get());
+                        output.accept(CONTAINMENT_CONTROLLER.get());
                         output.accept(REACTOR_VESSEL.get());
                         output.accept(CONTROL_ROD_DRIVE.get());
                         output.accept(CORE_SPRAY_SPARGER.get());

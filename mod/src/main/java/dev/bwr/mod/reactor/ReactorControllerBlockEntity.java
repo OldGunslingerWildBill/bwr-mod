@@ -236,6 +236,15 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         // whole tick.
         rodNetwork.preStep(config.tickSeconds);
         boundaryEffects.apply(this,vesselEnvelope);
+        var containmentController = dev.bwr.mod.containment.ContainmentControllerRegistry
+                .linkedReactor(level, getBlockPos());
+        if (containmentController == null) {
+            core.getContainment().setLeakArea(1.0);
+        } else {
+            core.getContainment().setLeakArea(0.0);
+            if (core.getContainment().getVolumeM3() != containmentController.freeVolume())
+                core.getContainment().setFreeVolumeM3(containmentController.freeVolume());
+        }
         core.step();
         rodNetwork.postStep();
         severeEffects.afterStep(this);

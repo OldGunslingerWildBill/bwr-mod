@@ -450,6 +450,21 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         EccsNetwork.ensureListenerRegistered();
     }
 
+    @Override public void onLoad() {
+        super.onLoad();
+        FormedSuppressionPoolRegistry.update(this);
+    }
+
+    @Override public void setRemoved() {
+        FormedSuppressionPoolRegistry.remove(this);
+        super.setRemoved();
+    }
+
+    @Override public void onChunkUnloaded() {
+        FormedSuppressionPoolRegistry.remove(this);
+        super.onChunkUnloaded();
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state,
                                   SuppressionPoolBlockEntity be) {
         be.tick(level);
@@ -740,6 +755,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             formed=false; lastValidation=new ValidationResult();
             lastValidation.fail(missing.pos,"Suppression basin validation is waiting for the remaining chunks to load.");
         }
+        FormedSuppressionPoolRegistry.update(this);
     }
 
     private void revalidateLoaded(Level level) {

@@ -1,6 +1,7 @@
 package dev.bwr.mod.registry;
 
 import dev.bwr.mod.BwrMod;
+import dev.bwr.mod.containment.ContainmentControllerBlockEntity;
 import dev.bwr.mod.eccs.AdsControllerBlockEntity;
 import dev.bwr.mod.eccs.CondensateStorageTankBlockEntity;
 import dev.bwr.mod.eccs.EccsPumpBlockEntity;
@@ -32,6 +33,11 @@ public final class BwrBlockEntities {
             REACTOR_CONTROLLER = BLOCK_ENTITIES.register("reactor_controller",
             () -> BlockEntityType.Builder.of(ReactorControllerBlockEntity::new,
                     BwrBlocks.REACTOR_CONTROLLER.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ContainmentControllerBlockEntity>>
+            CONTAINMENT_CONTROLLER = BLOCK_ENTITIES.register("containment_controller",
+            () -> BlockEntityType.Builder.of(ContainmentControllerBlockEntity::new,
+                    BwrBlocks.CONTAINMENT_CONTROLLER.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ControlRodDriveBlockEntity>>
             CONTROL_ROD_DRIVE = BLOCK_ENTITIES.register("control_rod_drive",

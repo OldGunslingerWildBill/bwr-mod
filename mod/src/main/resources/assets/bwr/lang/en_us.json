@@ -1,6 +1,7 @@
 {
   "itemGroup.bwr": "Realistic BWR",
   "block.bwr.reactor_controller": "Reactor Controller",
+  "block.bwr.containment_controller": "Containment Controller",
   "block.bwr.reactor_vessel": "Reactor Pressure Vessel",
   "block.bwr.control_rod_drive": "Control Rod Drive",
   "block.bwr.core_spray_sparger": "Core Spray Sparger",
@@ -20,6 +21,7 @@
   "block.bwr.fuel_fabricator": "Fuel Fabricator",
   "item.bwr.fuel_assembly": "Fuel Assembly",
   "item.bwr.reactor_controller": "Reactor Controller",
+  "item.bwr.containment_controller": "Containment Controller",
   "item.bwr.reactor_vessel": "Reactor Pressure Vessel",
   "item.bwr.control_rod_drive": "Control Rod Drive",
   "item.bwr.core_spray_sparger": "Core Spray Sparger",

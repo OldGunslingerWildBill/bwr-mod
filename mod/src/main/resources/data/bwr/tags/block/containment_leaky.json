@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:leaves",
+    "minecraft:scaffolding",
+    "minecraft:powder_snow",
+    "minecraft:cobweb",
+    "minecraft:honey_block"
+  ]
+}

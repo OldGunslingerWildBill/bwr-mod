@@ -11,6 +11,7 @@ import dev.bwr.mod.steam.*;
 import dev.bwr.mod.suppression.*;
 import dev.bwr.mod.cooling.*;
 import dev.bwr.mod.condenser.*;
+import dev.bwr.mod.containment.ContainmentControllerBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
@@ -70,6 +71,18 @@ public final class BwrPeripheralSupport {
         if(be instanceof FeedwaterPumpBlockEntity b)return new FeedwaterPumpPeripheral(b);
         if(be instanceof RecirculationPumpBlockEntity b)return new RecirculationPumpPeripheral(b);
         if(be instanceof ReactorControllerBlockEntity b)return new ReactorPeripheral(b);
+        if(be instanceof ContainmentControllerBlockEntity b)return new HardwarePeripheral("bwr_containment",()->{
+            var status=new LinkedHashMap<String,Object>();
+            status.put("sealed",b.isSealed());
+            status.put("stale",b.isStale());
+            status.put("freeVolumeM3",b.freeVolume());
+            if(b.leak()!=null){
+                status.put("leakX",b.leak().getX());
+                status.put("leakY",b.leak().getY());
+                status.put("leakZ",b.leak().getZ());
+            }
+            return status;
+        });
         if(be instanceof SuppressionPoolBlockEntity b)return new SuppressionPoolPeripheral(b);
         if(be instanceof SuppressionPoolPortBlockEntity)return new SuppressionPoolPeripheral(null);
         if(be instanceof TurbineSteamOutletBlockEntity b)return new TurbineSteamOutletPeripheral(b);
