@@ -155,7 +155,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         sealed = true;
         stale = false;
         leak = null;
-        freeVolume = finished.visited.size();
+        freeVolume = finished.gasCells;
         min = new BlockPos(finished.minX, finished.minY, finished.minZ);
         max = new BlockPos(finished.maxX, finished.maxY, finished.maxZ);
         boundary = List.copyOf(finished.boundary);
@@ -394,6 +394,8 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         private final List<BoundaryFace> boundary = new ArrayList<>();
         private int minX, minY, minZ, maxX, maxY, maxZ;
         private BlockPos firstCrossing;
+        /** Interior cells holding gas. Water is passable for the seal but is not free volume. */
+        private int gasCells = 1; // The controller's own cell.
 
         Scan(BlockPos start) {
             BlockPos origin = start.immutable();
@@ -426,6 +428,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                     }
                     if (!visited.add(next.asLong())) continue;
                     parents.put(next.asLong(), current.asLong());
+                    if (state.getFluidState().isEmpty()) gasCells++;
                     if (controller.min != null && controller.max != null
                             && firstCrossing == null && !inside(next, controller.min, controller.max))
                         firstCrossing = next.immutable();

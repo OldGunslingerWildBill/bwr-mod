@@ -226,6 +226,24 @@ public final class Alpha31ContainmentTests {
     }
 
     @GameTest(template = "empty", timeoutTicks = 400)
+    public static void floodedCellsSealButAreNotFreeVolume(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos center = new BlockPos(44008, 200, 44008);
+        hollow(level, center.offset(-2, -2, -2), center.offset(2, 2, 2), Blocks.STONE);
+        // Flood the bottom layer of the 3 x 3 x 3 interior: 9 water cells, 18 gas cells.
+        for (int x = -1; x <= 1; x++)
+            for (int z = -1; z <= 1; z++)
+                level.setBlock(center.offset(x, -1, z), Blocks.WATER.defaultBlockState(), 2);
+        var controller = place(level, center);
+        survey(level, controller);
+        helper.assertTrue(controller.isSealed() && controller.interiorMin().getY() == center.getY() - 1,
+                "survey did not seal through the flooded layer: " + controller.statusLines());
+        helper.assertTrue(controller.freeVolume() == 18,
+                "water cells counted as free gas volume: " + controller.statusLines());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
     public static void layeredRatingsDepthCapAndWeakestColumnRupture(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var wood = cube(level, new BlockPos(32008, 230, 32008), 3, Blocks.OAK_PLANKS);
