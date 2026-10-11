@@ -219,6 +219,9 @@ public final class ReactorCore {
     public static final double NATURAL_CIRCULATION_LOST_LEVEL_IN =
             PhysicalConstants.TAF_ON_INSTRUMENT_SCALE_IN + 20.0;
 
+    /** Game calibration: open containment lines carry this share of fuel release per rated flow. */
+    public static final double BYPASS_CARRYOVER = 0.5;
+
     // ---------------------------------------------------------------
     // Instrument complement [TTC 3.2]
     // ---------------------------------------------------------------
@@ -254,6 +257,7 @@ public final class ReactorCore {
     private final BoundaryStress boundary;
     private final dev.bwr.core.accident.SevereAccident severeAccident = new dev.bwr.core.accident.SevereAccident();
     private final dev.bwr.core.accident.ContainmentAtmosphere containment = new dev.bwr.core.accident.ContainmentAtmosphere();
+    private double containmentBypassFlowFraction;
 
     private final SourceRangeMonitor[] sourceRangeMonitors;
     private final IntermediateRangeMonitor[] intermediateRangeMonitors;
@@ -905,9 +909,15 @@ public final class ReactorCore {
                 lastBreakLiquidFlowKgPerS + manualLiquidLeakKgPerS, dtSeconds);
         fuelThermal.removeFuelEnergyMJ(severeAccident.getFuelEnergyToRemoveMJ());
         double hydrogenToContainmentKg = Math.max(0.0, fuelThermal.getHydrogenGeneratedKg() - hydrogenBeforeKg);
+        double released = severeAccident.getLastReleasedFraction();
+        double bypassShare = severeAccident.getStage().number()
+                >= dev.bwr.core.accident.SevereAccident.Stage.CLADDING_FAILURE.number()
+                && containment.getLeakArea() < 1.0
+                ? Math.min(1.0, BYPASS_CARRYOVER * containmentBypassFlowFraction) : 0.0;
+        double bypassed = released * bypassShare;
+        containment.releaseDirectToEnvironment(bypassed);
         containment.step(hydrogenToContainmentKg / dtSeconds + severeAccident.getConcreteHydrogenKgPerS(),
-                severeAccident.getConcreteGasMolPerS(),
-                severeAccident.getLastReleasedFraction(), dtSeconds);
+                severeAccident.getConcreteGasMolPerS(), released - bypassed, dtSeconds);
         if (severeAccident.isBasematFailed()) {
             containment.failByMeltThrough();
         }
@@ -1615,6 +1625,15 @@ public final class ReactorCore {
 
     public double getBypassSteamFlowKgPerS() {
         return bypassSteamFlowKgPerS;
+    }
+
+    /** Flow crossing open containment penetrations, divided by rated main-steam flow. */
+    public void setContainmentBypassFlowFraction(double fraction) {
+        containmentBypassFlowFraction = nonNegative(fraction);
+    }
+
+    public double getContainmentBypassFlowFraction() {
+        return containmentBypassFlowFraction;
     }
 
     /**

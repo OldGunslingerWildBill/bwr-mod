@@ -102,6 +102,7 @@ public final class AcceptanceTests {
             DamageBookkeepingTest.class,
             dev.bwr.core.accident.CoreMeltProgressionTest.class,
             dev.bwr.core.accident.ContainmentHydrogenTest.class,
+            dev.bwr.core.accident.ContainmentStructurePhysicsTest.class,
             dev.bwr.core.accident.SevereAccidentIntegrationTest.class,
             NaturalCirculationTest.class,
             NodalFluxSolverTest.class,

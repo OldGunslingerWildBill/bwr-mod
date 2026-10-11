@@ -102,6 +102,9 @@ public final class ContainmentAtmosphere {
     /** Time constant for gas leaving through a failed containment, seconds. */
     public static final double FAILED_TIME_CONSTANT_S = 600.0;
 
+    /** An open boundary exchanges with the outdoors on a much shorter time scale. */
+    public static final double OPEN_BOUNDARY_TIME_CONSTANT_S = 5.0;
+
     /** Design leakage of an intact containment, fraction of contents per second (0.5%/day). */
     public static final double DESIGN_LEAK_FRACTION_PER_S = 0.005 / 86_400.0;
 
@@ -127,6 +130,8 @@ public final class ContainmentAtmosphere {
     // ---------------------------------------------------------------
 
     private double volumeM3 = FREE_VOLUME_AT_RATED_M3;
+    private double failurePressurePsig = FAILURE_PRESSURE_PSIG;
+    private double leakArea;
     private double nitrogenMol;
     private double oxygenMol;
     private double hydrogenMol;
@@ -161,6 +166,42 @@ public final class ContainmentAtmosphere {
             volumeM3 = FREE_VOLUME_AT_RATED_M3 * scale;
             fillWithAir(oxygen > 0.0 ? oxygen : AIR_OXYGEN_FRACTION);
         }
+    }
+
+    /** Resize an already filled room without changing its pressure or gas mixture. */
+    public void setFreeVolumeM3(double volume) {
+        if (!Double.isFinite(volume)) return;
+        double next = Math.max(50.0, volume);
+        double ratio = next / volumeM3;
+        nitrogenMol *= ratio;
+        oxygenMol *= ratio;
+        hydrogenMol *= ratio;
+        otherGasMol *= ratio;
+        volumeM3 = next;
+    }
+
+    public void setFailurePressurePsig(double pressure) {
+        if (Double.isFinite(pressure)) failurePressurePsig = Math.max(0.0, pressure);
+    }
+
+    public double getFailurePressurePsig() {
+        return failurePressurePsig;
+    }
+
+    /** Fractional opening in the boundary; zero is sealed and one is outdoors. */
+    public void setLeakArea(double fraction) {
+        if (Double.isFinite(fraction)) leakArea = Math.clamp(fraction, 0.0, 1.0);
+    }
+
+    public double getLeakArea() {
+        return leakArea;
+    }
+
+    /** Activity carried directly outside by a coolant line, without pool scrubbing. */
+    public void releaseDirectToEnvironment(double fraction) {
+        double released = Math.max(0.0, finite(fraction));
+        environmentalReleaseFraction += released;
+        siteContamination += released;
     }
 
     /** Start inerted, as an operating BWR containment normally is. */
@@ -238,7 +279,12 @@ public final class ContainmentAtmosphere {
         }
         hydrogenMol += Math.max(0.0, finite(hydrogenInKgPerS)) * HYDROGEN_MOL_PER_KG * dtSeconds;
         otherGasMol += Math.max(0.0, finite(otherGasInMolPerS)) * dtSeconds;
-        airborneFraction += Math.max(0.0, finite(fissionProductFraction));
+        double fuelRelease = Math.max(0.0, finite(fissionProductFraction));
+        // An open boundary has no enclosed airspace in which to retain its
+        // share of a new release. A completely uncontained core sends it all
+        // outside immediately; a partial opening partitions it by area.
+        releaseDirectToEnvironment(fuelRelease * leakArea);
+        airborneFraction += fuelRelease * (1.0 - leakArea);
 
         clockSeconds += dtSeconds;
 
@@ -248,8 +294,9 @@ public final class ContainmentAtmosphere {
         // air from outside instead, below.
         double total = totalMol();
         boolean failed = failureMode != FailureMode.NONE;
+        boolean openBoundary = leakArea > 0.0;
         double air = oxygenMol + nitrogenMol;
-        if (!failed && purgeActive && air > 0.0) {
+        if (!failed && !openBoundary && purgeActive && air > 0.0) {
             double targetOxygen = inertingCommanded ? INERTED_OXYGEN_FRACTION : AIR_OXYGEN_FRACTION;
             double targetOxygenMol = targetOxygen * air;
             double alpha = 1.0 - Math.exp(-dtSeconds / INERTING_TIME_CONSTANT_S);
@@ -270,6 +317,9 @@ public final class ContainmentAtmosphere {
         double decontamination = 1.0;
         if (failed) {
             leaving = Math.max(leaving, excessFraction * (1.0 - Math.exp(-dtSeconds / FAILED_TIME_CONSTANT_S)));
+        } else if (openBoundary) {
+            leaving = Math.max(leaving, excessFraction *
+                    (1.0 - Math.exp(-dtSeconds * leakArea / OPEN_BOUNDARY_TIME_CONSTANT_S)));
         } else if (ventOpen) {
             leaving = Math.max(leaving, excessFraction * (1.0 - Math.exp(-dtSeconds / VENT_TIME_CONSTANT_S)));
             decontamination = POOL_DECONTAMINATION_FACTOR;
@@ -279,15 +329,18 @@ public final class ContainmentAtmosphere {
         // A failed containment also breathes: convection and wind swap its gas
         // for outside air. This is what brings oxygen back to a hydrogen-filled
         // building, and it is the second half of the Fukushima failure mode.
-        if (failed) {
-            double exchange = 1.0 - Math.exp(-dtSeconds / (4.0 * FAILED_TIME_CONSTANT_S));
+        if (failed || openBoundary) {
+            double exchangeRate = (failed ? 1.0 / (4.0 * FAILED_TIME_CONSTANT_S) : 0.0)
+                    + leakArea / OPEN_BOUNDARY_TIME_CONSTANT_S;
+            double exchange = 1.0 - Math.exp(-dtSeconds * exchangeRate);
             double outside = ATMOSPHERIC_PA * volumeM3 / (GAS_CONSTANT * GAS_TEMPERATURE_K);
             double replaced = Math.min(totalMol(), outside) * exchange;
             removeProportionally(replaced / totalMol(), 1.0);
             // Below atmospheric — after a burn has consumed gas — outside air
             // flows in through the same opening until the pressure is equal.
             double deficit = Math.max(0.0, outside - (totalMol() + replaced))
-                    * (1.0 - Math.exp(-dtSeconds / FAILED_TIME_CONSTANT_S));
+                    * (1.0 - Math.exp(-dtSeconds * Math.max(
+                    failed ? 1.0 / FAILED_TIME_CONSTANT_S : 0.0, exchangeRate)));
             oxygenMol += (replaced + deficit) * AIR_OXYGEN_FRACTION;
             nitrogenMol += (replaced + deficit) * (1.0 - AIR_OXYGEN_FRACTION);
         }
@@ -327,7 +380,7 @@ public final class ContainmentAtmosphere {
 
         double psig = getPressurePsig();
         peakPressurePsig = Math.max(peakPressurePsig, psig);
-        if (failureMode == FailureMode.NONE && psig > FAILURE_PRESSURE_PSIG) {
+        if (failureMode == FailureMode.NONE && psig > failurePressurePsig) {
             failureMode = FailureMode.OVERPRESSURE;
             pendingEvents.add(Event.CONTAINMENT_OVERPRESSURE_FAILURE);
         }
@@ -353,7 +406,7 @@ public final class ContainmentAtmosphere {
             }
         } else {
             pendingEvents.add(Event.HYDROGEN_DEFLAGRATION);
-            if (failureMode == FailureMode.NONE && lastBurnPeakPsig > FAILURE_PRESSURE_PSIG) {
+            if (failureMode == FailureMode.NONE && lastBurnPeakPsig > failurePressurePsig) {
                 failureMode = FailureMode.OVERPRESSURE;
                 pendingEvents.add(Event.CONTAINMENT_OVERPRESSURE_FAILURE);
             }
@@ -502,8 +555,9 @@ public final class ContainmentAtmosphere {
     // Persistence
     // ---------------------------------------------------------------
 
-    public static final int SNAPSHOT_VERSION = 1;
-    public static final int SNAPSHOT_LENGTH = 22;
+    public static final int SNAPSHOT_VERSION = 2;
+    public static final int LEGACY_SNAPSHOT_LENGTH = 22;
+    public static final int SNAPSHOT_LENGTH = 24;
 
     public double[] toArray() {
         double[] a = new double[SNAPSHOT_LENGTH];
@@ -529,14 +583,16 @@ public final class ContainmentAtmosphere {
         a[19] = purgeActive ? 1 : 0;
         a[20] = clockSeconds;
         a[21] = Double.isFinite(lastBurnClockSeconds) ? lastBurnClockSeconds : -1.0e12;
+        a[22] = failurePressurePsig;
+        a[23] = leakArea;
         return a;
     }
 
     public void fromArray(double[] a) {
-        if (a == null || a.length < SNAPSHOT_LENGTH) {
+        if (a == null || a.length < LEGACY_SNAPSHOT_LENGTH) {
             return;
         }
-        if (Double.isFinite(a[1]) && a[1] > 0.0) volumeM3 = a[1];
+        if (Double.isFinite(a[1]) && a[1] > 0.0) volumeM3 = Math.max(50.0, a[1]);
         nitrogenMol = nonNegative(a[2]);
         oxygenMol = nonNegative(a[3]);
         hydrogenMol = nonNegative(a[4]);
@@ -560,6 +616,10 @@ public final class ContainmentAtmosphere {
         purgeActive = a[19] != 0;
         clockSeconds = nonNegative(a[20]);
         lastBurnClockSeconds = Double.isFinite(a[21]) ? a[21] : Double.NEGATIVE_INFINITY;
+        failurePressurePsig = a.length >= SNAPSHOT_LENGTH && a[0] >= SNAPSHOT_VERSION
+                && Double.isFinite(a[22]) ? Math.max(0.0, a[22]) : FAILURE_PRESSURE_PSIG;
+        leakArea = a.length >= SNAPSHOT_LENGTH && a[0] >= SNAPSHOT_VERSION
+                && Double.isFinite(a[23]) ? Math.clamp(a[23], 0.0, 1.0) : 0.0;
         pendingEvents.clear();
     }
 
