@@ -40,6 +40,8 @@ public final class BwrMod {
     public BwrMod(IEventBus modBus, ModContainer container) {
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON,
                 dev.bwr.mod.containment.ContainmentConfig.SPEC);
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER,
+                dev.bwr.mod.accident.CoriumConfig.SPEC);
         BwrBlocks.BLOCKS.register(modBus);
         BwrItems.ITEMS.register(modBus);
         BwrItems.TABS.register(modBus);

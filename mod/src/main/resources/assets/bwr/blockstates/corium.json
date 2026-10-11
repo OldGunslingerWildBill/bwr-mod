@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "hot=false": {
+      "model": "bwr:block/corium_cold"
+    },
+    "hot=true": {
+      "model": "bwr:block/corium_hot"
+    }
+  }
+}

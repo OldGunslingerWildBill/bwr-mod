@@ -3,7 +3,11 @@ package dev.bwr.mod.reactor;
 import dev.bwr.core.ReactorCore;
 import dev.bwr.core.accident.ContainmentAtmosphere;
 import dev.bwr.core.accident.SevereAccident;
+import dev.bwr.mod.accident.CoriumConfig;
+import dev.bwr.mod.accident.CoriumPool;
+import dev.bwr.mod.damage.SevereAccidentNbt;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,6 +30,11 @@ import net.minecraft.world.level.Level;
  * <p>Contamination is applied as vanilla status effects to players near the
  * reactor, scaled by the decaying hazard indices from the containment model
  * and by distance. Creative and spectator players are exempt.
+ *
+ * <p>Ex-vessel corium is the one consequence that does change blocks: the
+ * {@link CoriumPool} melts the floor under a failed vessel as the concrete
+ * ablates, a few positions per tick, unless the server config turns world
+ * alteration off. Unlike events, its progress is saved.
  */
 public final class ReactorSevereAccidentEffects {
 
@@ -49,6 +58,12 @@ public final class ReactorSevereAccidentEffects {
 
     private int sinceDose;
 
+    private final CoriumPool corium = new CoriumPool();
+
+    public CoriumPool corium() {
+        return corium;
+    }
+
     public void afterStep(ReactorControllerBlockEntity reactor) {
         if (!(reactor.getLevel() instanceof ServerLevel level)) {
             return;
@@ -61,6 +76,10 @@ public final class ReactorSevereAccidentEffects {
         for (SevereAccident.Event event : core.getSevereAccident().drainEvents()) {
             onCoreEvent(level, pos, event);
         }
+        ReactorStructure structure = reactor.structure();
+        corium.update(level, structure == null ? null : structure.interiorMin(),
+                structure == null ? null : structure.interiorMax(), core.getSevereAccident(),
+                CoriumConfig.alterWorld(), CoriumConfig.blocksPerTick());
         var containmentController = dev.bwr.mod.containment.ContainmentControllerRegistry
                 .linkedReactor(level, pos);
         BlockPos breachedAt = null;
@@ -75,6 +94,14 @@ public final class ReactorSevereAccidentEffects {
             sinceDose = 0;
             applyDoses(level, pos, core.getContainment());
         }
+    }
+
+    public void write(CompoundTag tag) {
+        SevereAccidentNbt.writeCorium(tag, corium);
+    }
+
+    public void read(CompoundTag tag) {
+        SevereAccidentNbt.readCorium(tag, corium);
     }
 
     private static void onCoreEvent(ServerLevel level, BlockPos pos, SevereAccident.Event event) {
