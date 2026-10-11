@@ -3,6 +3,8 @@ package dev.bwr.mod.containment;
 import dev.bwr.mod.reactor.FormedReactorRegistry;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.suppression.FormedSuppressionPoolRegistry;
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -388,6 +390,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     private static final class Scan {
         private final ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         private final LongOpenHashSet visited = new LongOpenHashSet();
+        private final Long2LongOpenHashMap parents = new Long2LongOpenHashMap();
         private final List<BoundaryFace> boundary = new ArrayList<>();
         private int minX, minY, minZ, maxX, maxY, maxZ;
         private BlockPos firstCrossing;
@@ -409,7 +412,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                 for (Direction direction : Direction.values()) {
                     BlockPos next = current.relative(direction);
                     if (next.getY() < level.getMinBuildHeight() || next.getY() >= level.getMaxBuildHeight()) {
-                        controller.escaped(firstCrossing != null ? firstCrossing : next);
+                        controller.escaped(firstCrossing != null ? firstCrossing : traceLeak(level, current));
                         return;
                     }
                     if (!level.isLoaded(next)) {
@@ -422,6 +425,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                         continue;
                     }
                     if (!visited.add(next.asLong())) continue;
+                    parents.put(next.asLong(), current.asLong());
                     if (controller.min != null && controller.max != null
                             && firstCrossing == null && !inside(next, controller.min, controller.max))
                         firstCrossing = next.immutable();
@@ -431,12 +435,73 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                     minZ = Math.min(minZ, next.getZ()); maxZ = Math.max(maxZ, next.getZ());
                     if (visited.size() > limit || maxX - minX + 1 > span
                             || maxY - minY + 1 > span || maxZ - minZ + 1 > span) {
-                        controller.escaped(firstCrossing != null ? firstCrossing : next);
+                        controller.escaped(firstCrossing != null ? firstCrossing : traceLeak(level, next));
                         return;
                     }
                 }
             }
             if (queue.isEmpty()) controller.completed(this, level);
+        }
+
+        /**
+         * Without a previous sealed box, the cell where a cap was hit can be far
+         * from the gap. Follow the search path from the controller toward the
+         * escape and find where it first leaves cover: no wall overhead within
+         * the span. The opening is a path cell boxed in by four or more wall
+         * faces, a hole through a wall or roof: the covered cell just before
+         * that point (a doorway), else the first one after it (a roof hole
+         * above), else the nearest one before it. A leak with no uncovered cell
+         * (into a cave) reports the first boxed-in cell from the controller.
+         */
+        private BlockPos traceLeak(ServerLevel level, BlockPos escape) {
+            LongArrayList path = new LongArrayList();
+            long cell = escape.asLong();
+            path.add(cell);
+            while (parents.containsKey(cell)) {
+                cell = parents.get(cell);
+                path.add(cell);
+            }
+            // The last entry is the controller; lower indices lead outward.
+            int span = ContainmentConfig.MAX_SPAN.get();
+            int uncovered = -1;
+            for (int i = path.size() - 1; i >= 0 && uncovered < 0; i--)
+                if (!coveredAbove(level, BlockPos.of(path.getLong(i)), span)) uncovered = i;
+            if (uncovered < 0) {
+                for (int i = path.size() - 1; i >= 0; i--)
+                    if (boxedIn(level, path.getLong(i))) return BlockPos.of(path.getLong(i));
+                return escape;
+            }
+            if (uncovered + 1 < path.size() && boxedIn(level, path.getLong(uncovered + 1)))
+                return BlockPos.of(path.getLong(uncovered + 1));
+            for (int i = uncovered; i >= 0; i--)
+                if (boxedIn(level, path.getLong(i))) return BlockPos.of(path.getLong(i));
+            for (int i = uncovered + 2; i < path.size(); i++)
+                if (boxedIn(level, path.getLong(i))) return BlockPos.of(path.getLong(i));
+            return BlockPos.of(path.getLong(uncovered));
+        }
+
+        /** Wall blocks only, not sky light: light lags block edits by several ticks. */
+        private static boolean coveredAbove(ServerLevel level, BlockPos pos, int span) {
+            int top = Math.min(level.getMaxBuildHeight() - 1, pos.getY() + span);
+            BlockPos.MutableBlockPos cursor = pos.mutable();
+            for (int y = pos.getY() + 1; y <= top; y++) {
+                cursor.setY(y);
+                if (ContainmentWall.isWall(level, cursor, level.getBlockState(cursor))) return true;
+            }
+            return false;
+        }
+
+        private static boolean boxedIn(ServerLevel level, long packed) {
+            return wallFaces(level, BlockPos.of(packed)) >= 4;
+        }
+
+        private static int wallFaces(ServerLevel level, BlockPos pos) {
+            int walls = 0;
+            for (Direction direction : Direction.values()) {
+                BlockPos side = pos.relative(direction);
+                if (level.isLoaded(side) && ContainmentWall.isWall(level, side, level.getBlockState(side))) walls++;
+            }
+            return walls;
         }
     }
 }

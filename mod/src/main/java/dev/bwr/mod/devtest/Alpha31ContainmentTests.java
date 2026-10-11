@@ -197,6 +197,35 @@ public final class Alpha31ContainmentTests {
     }
 
     @GameTest(template = "empty", timeoutTicks = 400)
+    public static void firstSurveyReportsLeakAtTheGap(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        // A brand-new controller has no previous sealed box to compare against,
+        // and the search runs about 20 blocks up to the build limit before it
+        // gives up. The readout must still name the one-block hole.
+        BlockPos sideCenter = new BlockPos(42008, 296, 42008);
+        BlockPos roofCenter = new BlockPos(42040, 296, 42008);
+        for (int cx = (42008 - 32) >> 4; cx <= (42040 + 32) >> 4; cx++)
+            for (int cz = (42008 - 32) >> 4; cz <= (42008 + 32) >> 4; cz++) level.getChunk(cx, cz);
+        hollow(level, sideCenter.offset(-2, -2, -2), sideCenter.offset(2, 2, 2), Blocks.STONE);
+        hollow(level, roofCenter.offset(-2, -2, -2), roofCenter.offset(2, 2, 2), Blocks.STONE);
+        BlockPos sideGap = sideCenter.east(2);
+        BlockPos roofGap = roofCenter.above(2);
+        level.setBlock(sideGap, Blocks.AIR.defaultBlockState(), 2);
+        level.setBlock(roofGap, Blocks.AIR.defaultBlockState(), 2);
+        var side = place(level, sideCenter);
+        survey(level, side);
+        helper.assertTrue(!side.isSealed() && side.leak() != null && side.leak().distManhattan(sideGap) <= 1,
+                "first survey put the side-wall leak far from the gap " + sideGap.toShortString()
+                        + ": " + side.statusLines());
+        var roof = place(level, roofCenter);
+        survey(level, roof);
+        helper.assertTrue(!roof.isSealed() && roof.leak() != null && roof.leak().distManhattan(roofGap) <= 1,
+                "first survey put the roof leak far from the gap " + roofGap.toShortString()
+                        + ": " + roof.statusLines());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
     public static void layeredRatingsDepthCapAndWeakestColumnRupture(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var wood = cube(level, new BlockPos(32008, 230, 32008), 3, Blocks.OAK_PLANKS);
