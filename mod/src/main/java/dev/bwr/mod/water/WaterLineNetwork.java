@@ -19,6 +19,8 @@ public final class WaterLineNetwork {
     public static final int MAX_PIPE_BLOCKS = 256;
 
     public static boolean acceptsLineOn(BlockState state, Direction face) {
+        if (state.getBlock() instanceof dev.bwr.mod.containment.ContainmentPenetrationBlock penetration)
+            return penetration.acceptsWaterLineOn(state, face);
         if(state.getBlock() instanceof dev.bwr.mod.rods.ControlRodDriveBlock)return true;
         if(state.getBlock() instanceof WaterDischargeBlock)return face==state.getValue(WaterDischargeBlock.FACING).getOpposite();
         if(state.getBlock() instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlock)return face==state.getValue(dev.bwr.mod.suppression.SuppressionPoolPortBlock.FACING);
@@ -74,7 +76,9 @@ public final class WaterLineNetwork {
                 if(graph.truncated())return 0;
                 Set<IFluidHandler> unique=Collections.newSetFromMap(new IdentityHashMap<>());
                 List<IFluidHandler> sinks=new ArrayList<>();
-                for(var end:graph.ends()) {
+                for(var route:dev.bwr.mod.piping.PipeTopology.routes(level,graph)) {
+                    var end=route.node();
+                    if(end.kind()!=dev.bwr.mod.piping.PipeTopology.Kind.END || route.opening()<=0)continue;
                     var p=end.pos();if(!level.isLoaded(p))continue;
                     var state=level.getBlockState(p);var face=end.face();
                     boolean receiver=state.is(BwrBlocks.CONTROL_ROD_DRIVE.get())||state.is(BwrBlocks.WATER_DISCHARGE_PORT.get())||state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())

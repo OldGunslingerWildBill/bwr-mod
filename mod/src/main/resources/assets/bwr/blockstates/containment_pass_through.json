@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "bwr:block/containment_pass_through" }
+  }
+}

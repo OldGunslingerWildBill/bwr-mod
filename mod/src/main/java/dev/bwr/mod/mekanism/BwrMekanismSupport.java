@@ -43,6 +43,11 @@ public final class BwrMekanismSupport {
      * considered together should be read together.
      */
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlock(MekanismSteam.CHEMICAL_HANDLER,
+                (level, pos, state, be, side) -> side != null
+                        && dev.bwr.mod.containment.ContainmentPenetrationBlock.axial(state, side)
+                        ? new ContainmentChemicalBridge(level, pos, side) : null,
+                dev.bwr.mod.registry.BwrBlocks.CONTAINMENT_PASS_THROUGH.get());
         event.registerBlockEntity(
                 MekanismSteam.CHEMICAL_HANDLER,
                 BwrBlockEntities.TURBINE_STEAM_OUTLET.get(),

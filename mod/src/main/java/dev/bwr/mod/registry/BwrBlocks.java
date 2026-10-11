@@ -4,6 +4,7 @@ import dev.bwr.core.eccs.EccsDesign;
 import dev.bwr.core.feedwater.FeedwaterDesign;
 import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.containment.ContainmentControllerBlock;
+import dev.bwr.mod.containment.ContainmentPenetrationBlock;
 import dev.bwr.mod.steam.TurbineValveBlock;
 import dev.bwr.mod.condenser.CondenserBlock;
 import dev.bwr.mod.cooling.CoolingBlock;
@@ -83,6 +84,16 @@ public final class BwrBlocks {
 
     public static final DeferredBlock<ContainmentControllerBlock> CONTAINMENT_CONTROLLER =
             BLOCKS.register("containment_controller", () -> new ContainmentControllerBlock(machine()));
+    public static final DeferredBlock<ContainmentPenetrationBlock> CONTAINMENT_STEAM_PENETRATION =
+            BLOCKS.register("containment_steam_penetration", () -> new ContainmentPenetrationBlock(vesselSteel(), ContainmentPenetrationBlock.Service.STEAM));
+    public static final DeferredBlock<ContainmentPenetrationBlock> CONTAINMENT_WATER_PENETRATION =
+            BLOCKS.register("containment_water_penetration", () -> new ContainmentPenetrationBlock(vesselSteel(), ContainmentPenetrationBlock.Service.WATER));
+    public static final DeferredBlock<ContainmentPenetrationBlock> CONTAINMENT_PASS_THROUGH =
+            BLOCKS.register("containment_pass_through", () -> new ContainmentPenetrationBlock(vesselSteel(), ContainmentPenetrationBlock.Service.PASS_THROUGH));
+    public static final DeferredBlock<ContainmentPenetrationBlock> CONTAINMENT_POWER_PENETRATION =
+            BLOCKS.register("containment_power_penetration", () -> new ContainmentPenetrationBlock(vesselSteel(), ContainmentPenetrationBlock.Service.POWER));
+    public static final DeferredBlock<ContainmentPenetrationBlock> CONTAINMENT_DATA_PENETRATION =
+            BLOCKS.register("containment_data_penetration", () -> new ContainmentPenetrationBlock(vesselSteel(), ContainmentPenetrationBlock.Service.DATA));
 
     /** Reactor pressure vessel shell. Forms the pressure boundary. */
     public static final DeferredBlock<ReactorVesselBlock> REACTOR_VESSEL =

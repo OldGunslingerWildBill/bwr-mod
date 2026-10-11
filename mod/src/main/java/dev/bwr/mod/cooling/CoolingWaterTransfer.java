@@ -19,7 +19,9 @@ public final class CoolingWaterTransfer {
         if(graph.truncated())return;
         var unique=Collections.newSetFromMap(new IdentityHashMap<IFluidHandler,Boolean>());
         var sources=new ArrayList<IFluidHandler>();
-        for(var end:graph.ends()) {
+        for(var route:dev.bwr.mod.piping.PipeTopology.routes(l,graph)) {
+            var end=route.node();
+            if(end.kind()!=dev.bwr.mod.piping.PipeTopology.Kind.END || route.opening()<=0)continue;
             var p=end.pos();if(!l.isLoaded(p))continue;
             if(l.getBlockEntity(p) instanceof CoolingBlockEntity part&&part.owner()==pump)continue;
             var source=l.getCapability(Capabilities.FluidHandler.BLOCK,p,end.face());

@@ -1,6 +1,10 @@
 package dev.bwr.mod.containment;
 
 import dev.bwr.mod.reactor.FormedReactorRegistry;
+import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
+import dev.bwr.mod.reactor.RpvSteamOutletBlockEntity;
+import dev.bwr.mod.reactor.RecirculationPortBlock;
+import dev.bwr.mod.piping.PipeTopology;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.suppression.FormedSuppressionPoolRegistry;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -102,6 +106,70 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     public boolean strengthReady() { return strengthReady; }
     public WeakestSpot weakestSpot() { return weakest; }
     public double failurePressurePsig() { return weakest == null ? 140.0 : weakest.ratingPsig(); }
+    public List<BlockPos> openings() {
+        return ratings.keySet().stream().map(BoundaryFace::wall).distinct()
+                .filter(pos -> level != null && level.isLoaded(pos)
+                        && level.getBlockState(pos).getBlock() instanceof ContainmentPenetrationBlock)
+                .toList();
+    }
+
+    /** Flow out of the sealed boundary through open, connected process crossings. */
+    public double bypassFlowFraction(ReactorControllerBlockEntity reactor) {
+        if (level == null || !sealed || !strengthReady || reactor.structure() == null) return 0.0;
+        double flow = 0.0;
+        var boundaries = ratings.keySet().stream().filter(face -> level.isLoaded(face.wall())
+                && level.getBlockState(face.wall()).getBlock() instanceof ContainmentPenetrationBlock)
+                .toList();
+        for (BlockPos nozzlePos : reactor.structure().steamOutletPositions()) {
+            if (!level.isLoaded(nozzlePos)
+                    || !(level.getBlockEntity(nozzlePos) instanceof RpvSteamOutletBlockEntity nozzle)) continue;
+            PipeTopology.Graph inside = PipeTopology.get(level, nozzlePos, null, true, false);
+            double best = 0.0;
+            for (BoundaryFace face : boundaries)
+                best = Math.max(best, openCrossing(inside, face, ContainmentPenetrationBlock.Service.STEAM));
+            flow += nozzle.getLastFlowKgPerS() * best;
+        }
+        int externalOutlets = 0;
+        for (BlockPos port : reactor.structure().waterInjectionPositions())
+            if (level.isLoaded(port) && level.getBlockState(port).getBlock() instanceof RecirculationPortBlock b
+                    && b.isOutlet()) externalOutlets++;
+        if (externalOutlets > 0 && reactor.connectedExternalPumpCount() > 0) {
+            double available = reactor.core().getVoidModel().getRatedCoreFlowKgPerS()
+                    * reactor.deliveredRecirculationFraction() / externalOutlets;
+            for (BlockPos port : reactor.structure().waterInjectionPositions()) {
+                if (!level.isLoaded(port) || !(level.getBlockState(port).getBlock() instanceof RecirculationPortBlock b)
+                        || !b.isOutlet()) continue;
+                PipeTopology.Graph inside = PipeTopology.get(level, port, null, false, false);
+                double best = 0.0;
+                for (BoundaryFace face : boundaries)
+                    best = Math.max(best, openCrossing(inside, face, ContainmentPenetrationBlock.Service.WATER));
+                flow += available * best;
+            }
+        }
+        return Math.clamp(flow / RpvSteamOutletBlockEntity.RATED_STEAM_FLOW_KG_PER_S, 0.0, 1.0);
+    }
+
+    private double openCrossing(PipeTopology.Graph inside, BoundaryFace face,
+                                ContainmentPenetrationBlock.Service expected) {
+        BlockPos pos = face.wall();
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof ContainmentPenetrationBlock penetration)
+                || penetration.service() != expected
+                || state.getValue(ContainmentPenetrationBlock.RUPTURED)
+                || !ContainmentPenetrationBlock.axial(state, face.normal())
+                || !(level.getBlockEntity(pos) instanceof ContainmentPenetrationBlockEntity valve)) return 0.0;
+        double inlet = PipeTopology.routes(level, inside).stream()
+                .filter(route -> route.node().pos().equals(pos))
+                .mapToDouble(PipeTopology.Route::opening).max().orElse(0.0);
+        if (inlet <= 0.0) return 0.0;
+        PipeTopology.Graph outside = PipeTopology.get(level, pos, face.normal(),
+                expected == ContainmentPenetrationBlock.Service.STEAM, false);
+        double exit = PipeTopology.routes(level, outside).stream()
+                .filter(route -> route.node().kind() == PipeTopology.Kind.END
+                        && !contains(route.node().pos()))
+                .mapToDouble(PipeTopology.Route::opening).max().orElse(0.0);
+        return Math.min(Math.min(inlet, exit), valve.position());
+    }
     Set<Long> indexedChunks() { return indexedChunks; }
 
     public boolean contains(BlockPos pos) {
@@ -291,7 +359,11 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                 ContainmentConfig.STRENGTH_SCAN_DEPTH.get());
         if (column == null) { stale = true; return null; }
         for (BlockPos pos : column.layers()) if (!level.isLoaded(pos)) { stale = true; return null; }
-        for (BlockPos pos : column.layers()) level.destroyBlock(pos, true);
+        if (level.getBlockState(weakest.position()).getBlock() instanceof ContainmentPenetrationBlock) {
+            BlockState state = level.getBlockState(weakest.position());
+            level.setBlock(weakest.position(), state.setValue(ContainmentPenetrationBlock.RUPTURED, true),
+                    net.minecraft.world.level.block.Block.UPDATE_ALL);
+        } else for (BlockPos pos : column.layers()) level.destroyBlock(pos, true);
         sealed = false;
         leak = weakest.position();
         strengthReady = false;

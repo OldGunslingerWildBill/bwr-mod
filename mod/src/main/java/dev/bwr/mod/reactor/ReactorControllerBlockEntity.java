@@ -178,6 +178,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * a decision.
      */
     private double lastSteamOutletFlowKgPerS;
+    private double deliveredRecirculationFraction;
 
     /**
      * Overpressure damage, held across a rebuild of the core object. Damage is
@@ -242,11 +243,13 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             core.getContainment().setLeakArea(1.0);
             core.getContainment().setFailurePressurePsig(
                     dev.bwr.core.accident.ContainmentAtmosphere.FAILURE_PRESSURE_PSIG);
+            core.setContainmentBypassFlowFraction(0.0);
         } else {
             core.getContainment().setLeakArea(0.0);
             core.getContainment().setFailurePressurePsig(containmentController.failurePressurePsig());
             if (core.getContainment().getVolumeM3() != containmentController.freeVolume())
                 core.getContainment().setFreeVolumeM3(containmentController.freeVolume());
+            core.setContainmentBypassFlowFraction(containmentController.bypassFlowFraction(this));
         }
         core.step();
         rodNetwork.postStep();
@@ -302,6 +305,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         // installed paired jets. Internal pumps add their own direct capacity.
         var hardware = dev.bwr.mod.flow.RecirculationNetwork.measure(level,this,pumpPositions);
         double fraction = hardware.fraction();
+        deliveredRecirculationFraction = fraction;
         recirculationCapacityFraction=hardware.maximum();
         connectedJetPairs=hardware.pairedJets();
         installedInternalPumps=hardware.internalPumps();
@@ -447,6 +451,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     public double steamOutletFlowKgPerS() {
         return lastSteamOutletFlowKgPerS;
     }
+    public double deliveredRecirculationFraction() { return deliveredRecirculationFraction; }
+    public int connectedExternalPumpCount() { return connectedExternalPumps; }
 
     // -----------------------------------------------------------------
     // Structure

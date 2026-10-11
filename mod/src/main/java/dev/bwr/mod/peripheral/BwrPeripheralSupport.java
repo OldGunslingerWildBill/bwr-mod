@@ -12,6 +12,7 @@ import dev.bwr.mod.suppression.*;
 import dev.bwr.mod.cooling.*;
 import dev.bwr.mod.condenser.*;
 import dev.bwr.mod.containment.ContainmentControllerBlockEntity;
+import dev.bwr.mod.containment.ContainmentPenetrationBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
@@ -63,6 +64,7 @@ public final class BwrPeripheralSupport {
         return typed(be);
     }
     private static IPeripheral typed(BlockEntity be) {
+        if(be instanceof ContainmentPenetrationBlockEntity b)return new ContainmentPenetrationPeripheral(b);
         if(be instanceof PowerModuleBlockEntity b)return new PowerModulePeripheral(b);
         if(be instanceof SlcTankBlockEntity b)return new HardwarePeripheral("bwr_slc_tank",()->Map.of(
                 "connected",b.ready(),"solutionKg",b.solution().massKg(),"borateKg",b.solution().borateKg(),"boronPpm",b.solution().boronFraction()*1e6,"temperatureC",b.solution().temperatureC(),"capacityKg",dev.bwr.core.eccs.BoronSolution.CAPACITY_KG));

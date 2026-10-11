@@ -29,6 +29,16 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.REACTOR_CONTROLLER);
     public static final DeferredItem<BlockItem> CONTAINMENT_CONTROLLER =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_CONTROLLER);
+    public static final DeferredItem<BlockItem> CONTAINMENT_STEAM_PENETRATION =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_STEAM_PENETRATION);
+    public static final DeferredItem<BlockItem> CONTAINMENT_WATER_PENETRATION =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_WATER_PENETRATION);
+    public static final DeferredItem<BlockItem> CONTAINMENT_PASS_THROUGH =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_PASS_THROUGH);
+    public static final DeferredItem<BlockItem> CONTAINMENT_POWER_PENETRATION =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_POWER_PENETRATION);
+    public static final DeferredItem<BlockItem> CONTAINMENT_DATA_PENETRATION =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_DATA_PENETRATION);
     public static final DeferredItem<BlockItem> REACTOR_VESSEL =
             ITEMS.registerSimpleBlockItem(BwrBlocks.REACTOR_VESSEL);
     public static final DeferredItem<BlockItem> CONTROL_ROD_DRIVE =
@@ -147,6 +157,11 @@ public final class BwrItems {
                     .displayItems((params, output) -> {
                         output.accept(REACTOR_CONTROLLER.get());
                         output.accept(CONTAINMENT_CONTROLLER.get());
+                        output.accept(CONTAINMENT_STEAM_PENETRATION.get());
+                        output.accept(CONTAINMENT_WATER_PENETRATION.get());
+                        output.accept(CONTAINMENT_PASS_THROUGH.get());
+                        output.accept(CONTAINMENT_POWER_PENETRATION.get());
+                        output.accept(CONTAINMENT_DATA_PENETRATION.get());
                         output.accept(REACTOR_VESSEL.get());
                         output.accept(CONTROL_ROD_DRIVE.get());
                         output.accept(CORE_SPRAY_SPARGER.get());

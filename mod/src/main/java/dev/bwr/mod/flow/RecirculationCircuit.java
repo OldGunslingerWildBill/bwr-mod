@@ -23,7 +23,9 @@ public final class RecirculationCircuit {
         var graph=dev.bwr.mod.piping.PipeTopology.get(level,root,direction,false,false);
         if(graph.truncated())return null;
         ReactorControllerBlockEntity found=null;
-        for(var end:graph.ends()) {
+        for(var route:dev.bwr.mod.piping.PipeTopology.routes(level,graph)) {
+            var end=route.node();
+            if(end.kind()!=dev.bwr.mod.piping.PipeTopology.Kind.END || route.opening()<=0)continue;
             var next=end.pos();if(!level.isLoaded(next))return null;var s=level.getBlockState(next);
             if(s.getBlock() instanceof RecirculationPortBlock port&&s.getValue(RpvWaterInjectionPortBlock.FACING)==end.face()) {
                 if(port.isOutlet()!=suction||!(level.getBlockEntity(next) instanceof RpvWaterInjectionPortBlockEntity nozzle))return null;

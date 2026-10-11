@@ -69,7 +69,12 @@ public final class PipeTopology {
                 var s=level.getBlockState(pos);
                 if(!accepts(level,pos,s,d.getOpposite(),key,true))continue;
                 boolean pipe=s.is(key.steam?BwrBlocks.PRESSURISED_TUBE.get():BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get());
-                boolean valve=key.steam&&(s.is(BwrBlocks.MSIV.get())||(s.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock)||s.getBlock() instanceof TurbineValveBlock);
+                boolean penetration=s.getBlock() instanceof dev.bwr.mod.containment.ContainmentPenetrationBlock b
+                        && (key.steam ? b.service()==dev.bwr.mod.containment.ContainmentPenetrationBlock.Service.STEAM
+                                      : b.service()==dev.bwr.mod.containment.ContainmentPenetrationBlock.Service.WATER);
+                boolean valve=penetration || key.steam&&(s.is(BwrBlocks.MSIV.get())
+                        ||s.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock
+                        ||s.getBlock() instanceof TurbineValveBlock);
                 var next=new Node(pos,pipe||valve?null:d.getOpposite(),pipe?Kind.JUNCTION:valve?Kind.VALVE:Kind.END,s);
                 join(raw,current,next);
                 if((pipe||valve)&&conduits.add(pos)) {
@@ -149,6 +154,8 @@ public final class PipeTopology {
                     var be=level.getBlockEntity(next.pos);
                     if(excludeRelief&&be instanceof SafetyReliefValveBlockEntity)continue;
                     if(be instanceof MainSteamIsolationValveBlockEntity v)opening=Math.min(opening,v.getPosition());
+                    if(be instanceof dev.bwr.mod.containment.ContainmentPenetrationBlockEntity v)
+                        opening=Math.min(opening,v.position());
                     if(be instanceof SafetyReliefValveBlockEntity v&&!v.isOpen())opening=0;
                     if(be instanceof TurbineValveBlockEntity v){opening=Math.min(opening,v.position());var copy=new ArrayList<>(valves);copy.add(v);valves=List.copyOf(copy);}
                 }

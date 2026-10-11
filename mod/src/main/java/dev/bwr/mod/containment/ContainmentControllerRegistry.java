@@ -85,7 +85,7 @@ public final class ContainmentControllerRegistry {
         return null;
     }
 
-    private static void changed(Level level, BlockPos edited) {
+    public static void changed(Level level, BlockPos edited) {
         if (level.isClientSide()) return;
         Map<Long, Set<BlockPos>> chunks = BY_CHUNK.get(level);
         if (chunks == null) return;

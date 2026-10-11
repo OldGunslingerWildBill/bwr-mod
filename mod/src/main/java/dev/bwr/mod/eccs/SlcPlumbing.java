@@ -15,7 +15,9 @@ public final class SlcPlumbing {
         var outlet=PipeTopology.get(level,pump.portPosition(root,state,AssemblyPort.WATER_DISCHARGE),pump.portFace(state,AssemblyPort.WATER_DISCHARGE),false,false);
         if(suction.truncated()||outlet.truncated())return new Circuit(null,null,"SLC line exceeds survey limit");
         SlcTankBlockEntity tank=null;ReactorControllerBlockEntity reactor=null;
-        for(var end:suction.ends()){
+        for(var route:PipeTopology.routes(level,suction)){
+            var end=route.node();
+            if(end.kind()!=PipeTopology.Kind.END || route.opening()<=0)continue;
             if(!level.isLoaded(end.pos()))return new Circuit(null,null,"SLC supply is unloaded");
             if(end.state().getBlock() instanceof SlcTankBlock b&&b.portAt(end.state(),end.face())==AssemblyPort.WATER_DISCHARGE){
                 var owner=b.controller(level,end.pos(),end.state());
@@ -23,7 +25,9 @@ public final class SlcPlumbing {
                 tank=t;
             }else if(!(end.state().getBlock() instanceof PumpAssemblyBlock b&&b.kind()==PumpAssemblyBlock.Kind.SLC&&b.portAt(end.state(),end.face())==AssemblyPort.WATER_SUCTION))return new Circuit(null,null,"Invalid SLC suction branch");
         }
-        for(var end:outlet.ends()){
+        for(var route:PipeTopology.routes(level,outlet)){
+            var end=route.node();
+            if(end.kind()!=PipeTopology.Kind.END || route.opening()<=0)continue;
             if(!level.isLoaded(end.pos()))return new Circuit(null,null,"SLC recipient is unloaded");
             if(end.state().getBlock() instanceof RpvWaterInjectionPortBlock && !(end.state().getBlock() instanceof RecirculationPortBlock)
                     &&level.getBlockEntity(end.pos()) instanceof RpvWaterInjectionPortBlockEntity port){

@@ -23,15 +23,23 @@ public final class AssemblyPlumbing {
     public static final class Cache {
         private final EnumMap<AssemblyPort,Object> graphs=new EnumMap<>(AssemblyPort.class);
         private final EnumMap<AssemblyPort,Line> waterLines=new EnumMap<>(AssemblyPort.class);
+        private final EnumMap<AssemblyPort,Boolean> dynamicWater=new EnumMap<>(AssemblyPort.class);
         private long rebuilds;
         public Line trace(Level level,BlockPos root,BlockState state,AssemblyPort role) {
             var block=(ProcessAssembly)state.getBlock();
             if(!block.hasPort(role))return new Line(List.of(),Set.of(),false,0);
             var graph=dev.bwr.mod.piping.PipeTopology.get(level,block.portPosition(root,state,role),block.portFace(state,role),role.isSteam(),false);
-            if(graphs.put(role,graph)!=graph){rebuilds++;waterLines.remove(role);}
-            if(!role.isSteam()&&waterLines.containsKey(role))return waterLines.get(role);
+            if(graphs.put(role,graph)!=graph){
+                rebuilds++;
+                waterLines.remove(role);
+                dynamicWater.put(role,!role.isSteam()&&graph.edges().keySet().stream().anyMatch(node ->
+                        node.state()!=null && node.state().getBlock()
+                                instanceof dev.bwr.mod.containment.ContainmentPenetrationBlock));
+            }
+            if(!role.isSteam()&&!dynamicWater.getOrDefault(role,false)&&waterLines.containsKey(role))
+                return waterLines.get(role);
             var line=AssemblyPlumbing.trace(level,root,state,role);
-            if(!role.isSteam())waterLines.put(role,line);
+            if(!role.isSteam()&&!dynamicWater.getOrDefault(role,false))waterLines.put(role,line);
             return line;
         }
         public long rebuildCount(){return rebuilds;}

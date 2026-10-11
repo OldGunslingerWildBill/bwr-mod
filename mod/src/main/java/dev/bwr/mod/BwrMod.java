@@ -77,6 +77,7 @@ public final class BwrMod {
                 dev.bwr.mod.condenser.CondenserCapabilities::register);
         modBus.addListener(dev.bwr.mod.cooling.CoolingCapabilities::register);
         modBus.addListener(dev.bwr.mod.suppression.SuppressionWaterCapabilities::register);
+        modBus.addListener(dev.bwr.mod.containment.ContainmentPenetrationCapabilities::register);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
                 net.neoforged.neoforge.event.AddReloadListenerEvent.class,
                 event -> event.addListener(new dev.bwr.mod.fuel.FuelTypeLoader()));

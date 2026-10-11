@@ -65,7 +65,12 @@ public final class ContainmentStrength {
             }
             if (layer == 0) material = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
             layers.add(pos.immutable());
-            psi += contribution(level, pos, state);
+            // An opening has its own sleeve rating. Exterior wall layers do not
+            // make the sleeve any stronger than its 150-psig qualification.
+            if (layer == 0 && state.getBlock() instanceof ContainmentPenetrationBlock)
+                psi = ContainmentPenetrationRatings.containmentPsig();
+            else if (!(level.getBlockState(face.wall()).getBlock() instanceof ContainmentPenetrationBlock))
+                psi += contribution(level, pos, state);
         }
         return new Column(face, List.copyOf(layers), frontier, material, psi,
                 layers.size() == depth);
