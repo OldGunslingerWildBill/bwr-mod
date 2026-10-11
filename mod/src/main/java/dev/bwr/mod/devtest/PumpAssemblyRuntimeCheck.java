@@ -437,7 +437,11 @@ public final class PumpAssemblyRuntimeCheck {
         check(Math.abs(flow.fraction()-1.0/22)<1e-5,"half-speed DVSS did not halve limited core flow: "+flow);
         l.removeBlock(b,false);place(l,jet,b.above(),Direction.SOUTH);
         ((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(l.getGameTime()+21);
-        check(!RecirculationNetwork.installedJet(l,reactor.structure(),b.above()) && RecirculationNetwork.measure(l,reactor,List.of(root)).pairedJets()==0,"too-high jet counted");
+        // Since alpha.28 any fully enclosed height in the perimeter band is a valid mount,
+        // so the raised jet installs; one block higher than its partner it must not pair.
+        var raised=RecirculationNetwork.measure(l,reactor,List.of(root));
+        check(RecirculationNetwork.installedJet(l,reactor.structure(),b.above()) && raised.pairedJets()==0 && raised.unmatchedJets()==3,
+                "raised enclosed jet should install but not pair across elevations: "+raised);
         // Crossing the two headers cannot become a bypass that claims a working closed loop.
         pipe(l,new BlockPos(172,195,130),new BlockPos(172,201,130));
         check(RecirculationCircuit.controller(l,root)==null,"shorted suction and discharge headers accepted");

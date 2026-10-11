@@ -50,7 +50,16 @@ public final class RvuRegressionTests {
         for(int w=7;w<=23;w++)for(int d=7;d<=23;d++)for(int height:new int[]{10,22,131}) {
             var e=new VesselAppearance.Envelope(BlockPos.ZERO,new BlockPos(w-1,height-1,d-1),java.util.List.of());
             h.assertTrue(Math.abs(VesselWaterGeometry.height(e,PressureVessel.BAF_ON_INSTRUMENT_SCALE_IN)-2)<1e-10,"BAF water/fuel mismatch");
-            h.assertTrue(Math.abs(VesselWaterGeometry.height(e,PhysicalConstants.TAF_ON_INSTRUMENT_SCALE_IN)-(height-6.15))<1e-10,"TAF water/fuel mismatch");
+            // Since alpha.28 the active fuel is capped and sits low in the vessel; extra
+            // height is steam space. TAF water must meet the rendered fuel top, wherever it is.
+            double coreTop=VesselInternalsGeometry.coreTop(e);
+            h.assertTrue(Math.abs(VesselWaterGeometry.height(e,PhysicalConstants.TAF_ON_INSTRUMENT_SCALE_IN)-coreTop)<1e-10,"TAF water/fuel mismatch");
+            h.assertTrue(coreTop<=VesselInternalsGeometry.CORE_BOTTOM+VesselInternalsGeometry.MAX_CORE_HEIGHT+1e-10,"Active fuel exceeds the height cap");
+            h.assertTrue(coreTop<VesselWaterGeometry.rim(e),"No room for water above the fuel");
+            if(height>22) {
+                var shorter=new VesselAppearance.Envelope(BlockPos.ZERO,new BlockPos(w-1,21,d-1),java.util.List.of());
+                h.assertTrue(Math.abs(coreTop-VesselInternalsGeometry.coreTop(shorter))<1e-10,"Vessel height stretches the fuel");
+            }
             double prev=-1;
             for(double in=-530;in<=100;in+=5) {
                 double y=VesselWaterGeometry.height(e,in),r=VesselWaterGeometry.radiusFraction(y);
