@@ -262,6 +262,18 @@ public final class ContainmentAtmosphere {
         }
     }
 
+    /**
+     * The broken wall has been rebuilt and the room seals again. Overpressure
+     * and detonation failures clear; melt-through does not, because the corium
+     * is still in the floor. Contamination, release totals and peak pressure
+     * are history and stay.
+     */
+    public void clearStructuralFailure() {
+        if (failureMode == FailureMode.OVERPRESSURE || failureMode == FailureMode.DETONATION) {
+            failureMode = FailureMode.NONE;
+        }
+    }
+
     // ---------------------------------------------------------------
     // Step
     // ---------------------------------------------------------------

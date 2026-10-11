@@ -243,6 +243,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             core.getContainment().setFailurePressurePsig(
                     dev.bwr.core.accident.ContainmentAtmosphere.FAILURE_PRESSURE_PSIG);
         } else {
+            // The boundary was open last tick and a sealed survey now links it:
+            // the breach has been rebuilt. Melt-through stays failed.
+            if (core.getContainment().getLeakArea() > 0.0) core.getContainment().clearStructuralFailure();
             core.getContainment().setLeakArea(0.0);
             core.getContainment().setFailurePressurePsig(containmentController.failurePressurePsig());
             if (core.getContainment().getVolumeM3() != containmentController.freeVolume())

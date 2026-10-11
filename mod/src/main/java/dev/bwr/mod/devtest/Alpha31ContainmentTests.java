@@ -117,6 +117,56 @@ public final class Alpha31ContainmentTests {
     }
 
     @GameTest(template = "empty", timeoutTicks = 400)
+    public static void rebuiltBreachRestoresContainment(GameTestHelper helper) throws Exception {
+        ServerLevel level = helper.getLevel();
+        BlockPos min = new BlockPos(38000, 190, 38000);
+        int width = 11, depth = 11, height = 8;
+        hollow(level, min.offset(-4, -4, -4), min.offset(width + 3, height + 2, depth + 3), Blocks.STONE);
+        ReactorControllerBlockEntity reactor = CompactCoreRegressionTests.build(
+                level, min, width, depth, height, false);
+        helper.assertTrue(reactor.isFormed(), "reference vessel did not form");
+        var containment = place(level, min.offset(-3, 0, -3));
+        BlockPos weakWall = min.offset(-4, 0, 0);
+        level.setBlock(weakWall, Blocks.OAK_PLANKS.defaultBlockState(), 2);
+        survey(level, containment);
+        helper.assertTrue(containment.isSealed() && containment.strengthReady()
+                        && weakWall.equals(containment.weakestSpot().position()),
+                "plank wall was not the weakest spot: " + containment.statusLines());
+        tickReactor(level, reactor);
+        var atmosphere = reactor.core().getContainment();
+        double[] ambient = atmosphere.toArray();
+        double[] gas = atmosphere.toArray();
+        gas[2] *= 2.0;
+        gas[3] *= 2.0;
+        atmosphere.fromArray(gas);
+        tickReactor(level, reactor);
+        helper.assertTrue(level.getBlockState(weakWall).isAir() && !containment.isSealed()
+                        && atmosphere.getFailureMode() == dev.bwr.core.accident.ContainmentAtmosphere.FailureMode.OVERPRESSURE,
+                "overpressure did not fail containment and open the plank wall: " + atmosphere);
+        double peak = atmosphere.getPeakPressurePsig();
+        tickReactor(level, reactor);
+        helper.assertTrue(atmosphere.getLeakArea() == 1.0 && atmosphere.isFailed(),
+                "breached containment was not open and failed");
+        survey(level, containment);
+        helper.assertTrue(!containment.isSealed() && weakWall.equals(containment.leak()),
+                "survey did not report the blown-out wall");
+
+        // The hole has vented the overpressure by the time the wall is rebuilt.
+        double[] vented = atmosphere.toArray();
+        vented[2] = ambient[2];
+        vented[3] = ambient[3];
+        atmosphere.fromArray(vented);
+        level.setBlock(weakWall, Blocks.STONE.defaultBlockState(), 2);
+        survey(level, containment);
+        helper.assertTrue(containment.isSealed(), "rebuilt wall did not reseal: " + containment.statusLines());
+        tickReactor(level, reactor);
+        helper.assertTrue(atmosphere.getLeakArea() == 0.0 && !atmosphere.isFailed(),
+                "rebuilt and resealed containment still reports failure: " + atmosphere);
+        helper.assertTrue(atmosphere.getPeakPressurePsig() == peak, "repair erased the peak pressure");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
     public static void layeredRatingsDepthCapAndWeakestColumnRupture(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var wood = cube(level, new BlockPos(32008, 230, 32008), 3, Blocks.OAK_PLANKS);
