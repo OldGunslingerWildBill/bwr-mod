@@ -167,6 +167,36 @@ public final class Alpha31ContainmentTests {
     }
 
     @GameTest(template = "empty", timeoutTicks = 400)
+    public static void lShapedRoomDoesNotLinkReactorInItsNotch(GameTestHelper helper) throws Exception {
+        ServerLevel level = helper.getLevel();
+        BlockPos origin = new BlockPos(40000, 190, 40000);
+        hollow(level, origin, origin.offset(40, 14, 40), Blocks.STONE);
+        // Partition off the notch: the containment is the L along the north and
+        // west sides, and the square room in the south-east corner is next door.
+        for (int i = 9; i < 40; i++)
+            for (int y = 1; y < 14; y++) {
+                level.setBlock(origin.offset(9, y, i), Blocks.STONE.defaultBlockState(), 2);
+                level.setBlock(origin.offset(i, y, 9), Blocks.STONE.defaultBlockState(), 2);
+            }
+        ReactorControllerBlockEntity reactor = CompactCoreRegressionTests.build(
+                level, origin.offset(20, 3, 20), 11, 11, 8, false);
+        helper.assertTrue(reactor.isFormed(), "reference vessel did not form");
+        var containment = place(level, origin.offset(4, 3, 4));
+        survey(level, containment);
+        BlockPos reactorPos = reactor.getBlockPos();
+        helper.assertTrue(containment.isSealed() && containment.contains(reactorPos),
+                "L-shaped room did not seal around a box covering the notch: " + containment.statusLines());
+        helper.assertTrue(!containment.linkedReactors().contains(reactorPos),
+                "reactor in the room next door was linked by the L's bounding box");
+        helper.assertTrue(ContainmentControllerRegistry.linkedReactor(level, reactorPos) == null,
+                "registry linked a reactor outside the L-shaped interior");
+        tickReactor(level, reactor);
+        helper.assertTrue(reactor.core().getContainment().getLeakArea() == 1.0,
+                "reactor outside the L-shaped containment ran sealed");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
     public static void layeredRatingsDepthCapAndWeakestColumnRupture(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var wood = cube(level, new BlockPos(32008, 230, 32008), 3, Blocks.OAK_PLANKS);

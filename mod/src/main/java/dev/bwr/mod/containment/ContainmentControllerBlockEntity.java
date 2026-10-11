@@ -108,6 +108,19 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         return min != null && max != null && inside(pos, min, max);
     }
 
+    /**
+     * True when a block or one of its six neighbours is an interior cell of the
+     * last survey, so a reactor controller set in its vessel wall still counts.
+     * The bounding box is not enough: an L-shaped room's box takes in the room
+     * next door.
+     */
+    public boolean encloses(BlockPos pos) {
+        if (interiorCells.contains(pos.asLong())) return true;
+        for (Direction direction : Direction.values())
+            if (interiorCells.contains(pos.relative(direction).asLong())) return true;
+        return false;
+    }
+
     public boolean watches(BlockPos pos) {
         int depth = ContainmentConfig.STRENGTH_SCAN_DEPTH.get();
         return min != null && max != null
@@ -150,9 +163,9 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         interiorCells.addAll(finished.visited);
         frontierIsOutside.clear();
         linkedReactors = FormedReactorRegistry.controllers(level).stream()
-                .map(BlockEntity::getBlockPos).filter(this::contains).toList();
+                .map(BlockEntity::getBlockPos).filter(this::encloses).toList();
         linkedPools = FormedSuppressionPoolRegistry.controllers(level).stream()
-                .map(BlockEntity::getBlockPos).filter(this::contains).toList();
+                .map(BlockEntity::getBlockPos).filter(this::encloses).toList();
         scan = null;
         strengthDirty = true;
         ContainmentControllerRegistry.index(this);

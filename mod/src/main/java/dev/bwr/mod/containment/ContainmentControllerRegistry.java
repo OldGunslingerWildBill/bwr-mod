@@ -70,7 +70,9 @@ public final class ContainmentControllerRegistry {
      * At most the controllers whose bounds cover this chunk are examined. A
      * rating recompute keeps the previous weakest spot, so a sealed room stays
      * linked through it; only a survey that finds a leak, or removing the
-     * controller, makes the reactor uncontained.
+     * controller, makes the reactor uncontained. The saved link list covers the
+     * ticks after a reload before the interior cells have been surveyed again;
+     * the live check covers a reactor formed since the last survey.
      */
     public static ContainmentControllerBlockEntity linkedReactor(Level level, BlockPos reactorPos) {
         Map<Long, Set<BlockPos>> chunks = BY_CHUNK.get(level);
@@ -85,7 +87,8 @@ public final class ContainmentControllerRegistry {
                     instanceof ContainmentControllerBlockEntity found ? found : null;
             if (controller != null && !controller.isRemoved() && level.isLoaded(pos)
                     && controller.isSealed() && controller.weakestSpot() != null
-                    && controller.contains(reactorPos)) return controller;
+                    && (controller.linkedReactors().contains(reactorPos)
+                        || controller.encloses(reactorPos))) return controller;
         }
         return null;
     }
