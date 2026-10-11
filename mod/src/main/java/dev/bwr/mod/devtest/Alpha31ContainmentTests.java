@@ -53,6 +53,69 @@ public final class Alpha31ContainmentTests {
         return controller;
     }
 
+    /** A hollow box: {@code wall} on every cell with a coordinate on {@code lo} or {@code hi}, air inside. */
+    private static void hollow(ServerLevel level, BlockPos lo, BlockPos hi, Block wall) {
+        for (int x = lo.getX(); x <= hi.getX(); x++)
+            for (int z = lo.getZ(); z <= hi.getZ(); z++) {
+                level.getChunk(x >> 4, z >> 4);
+                for (int y = lo.getY(); y <= hi.getY(); y++) {
+                    boolean shell = x == lo.getX() || x == hi.getX() || y == lo.getY() || y == hi.getY()
+                            || z == lo.getZ() || z == hi.getZ();
+                    level.setBlock(new BlockPos(x, y, z), (shell ? wall : Blocks.AIR).defaultBlockState(), 2);
+                }
+            }
+    }
+
+    private static void tickReactor(ServerLevel level, ReactorControllerBlockEntity reactor) {
+        ReactorControllerBlockEntity.serverTick(level, reactor.getBlockPos(),
+                level.getBlockState(reactor.getBlockPos()), reactor);
+    }
+
+    private static void tickController(ServerLevel level, ContainmentControllerBlockEntity controller) {
+        ContainmentControllerBlockEntity.serverTick(level, controller.getBlockPos(),
+                level.getBlockState(controller.getBlockPos()), controller);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 600)
+    public static void sealedReactorStaysContainedWhileRatingsRecompute(GameTestHelper helper) throws Exception {
+        ServerLevel level = helper.getLevel();
+        BlockPos min = new BlockPos(36000, 190, 36000);
+        int width = 11, depth = 11, height = 8;
+        // 55 x 24 x 55 interior: over 11,000 boundary faces, so one rating pass
+        // outlasts the tick its survey completes in (two 4,000-face budgets).
+        hollow(level, min.offset(-23, -4, -23), min.offset(width + 22, height + 13, depth + 22), Blocks.STONE);
+        ReactorControllerBlockEntity reactor = CompactCoreRegressionTests.build(
+                level, min, width, depth, height, false);
+        helper.assertTrue(reactor.isFormed(), "reference vessel did not form");
+        var containment = place(level, min.offset(-10, 0, -10));
+        survey(level, containment);
+        helper.assertTrue(containment.isSealed() && containment.linkedReactors().contains(reactor.getBlockPos()),
+                "large reactor room did not seal and link: " + containment.statusLines());
+        helper.assertTrue(containment.boundaryFaces().size() > 8_000,
+                "room too small to span rating ticks: " + containment.boundaryFaces().size() + " faces");
+        for (int i = 0; i < 32 && !containment.strengthReady(); i++) tickController(level, containment);
+        helper.assertTrue(containment.strengthReady(), "initial ratings never finished");
+        tickReactor(level, reactor);
+        helper.assertTrue(reactor.core().getContainment().getLeakArea() == 0.0, "sealed room not linked");
+
+        // Timer revalidation: survey again, then rebuild every rating over several ticks.
+        containment.markDirty();
+        boolean recomputing = false;
+        for (int tick = 0; tick < 64; tick++) {
+            tickController(level, containment);
+            tickReactor(level, reactor);
+            recomputing |= !containment.isScanning() && !containment.strengthReady();
+            helper.assertTrue(reactor.core().getContainment().getLeakArea() == 0.0,
+                    "sealed room went uncontained on revalidation tick " + tick
+                            + ": scanning=" + containment.isScanning()
+                            + " strengthReady=" + containment.strengthReady());
+            if (recomputing && containment.strengthReady()) break;
+        }
+        helper.assertTrue(recomputing, "revalidation never recomputed ratings across ticks");
+        helper.assertTrue(containment.strengthReady(), "rating recompute never finished");
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void layeredRatingsDepthCapAndWeakestColumnRupture(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();

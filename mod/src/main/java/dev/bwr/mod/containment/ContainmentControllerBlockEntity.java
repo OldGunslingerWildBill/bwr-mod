@@ -282,9 +282,12 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         if (faces.isEmpty()) ratingDependencies.remove(pos.asLong());
     }
 
-    /** Physically opens only the least-rated continuous column after a core failure event. */
+    /**
+     * Physically opens only the least-rated continuous column after a core failure event.
+     * A failure during a rating recompute uses the previous weakest spot, re-rated now.
+     */
     public BlockPos ruptureWeakest(ServerLevel level) {
-        if (!sealed || !strengthReady || weakest == null) return null;
+        if (!sealed || weakest == null) return null;
         BoundaryFace face = new BoundaryFace(weakest.position(), weakest.normal());
         ContainmentStrength.Column column = ratings.get(face);
         if (column == null) column = ContainmentStrength.rate(level, face,
