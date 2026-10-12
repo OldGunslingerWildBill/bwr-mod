@@ -338,6 +338,7 @@ public final class PanelBlockEntity extends BlockEntity {
             PanelComponent removed = removeComponent(component.id());
             if (removed != null) {
                 dropItem(removed);
+                syncCoverage(removed, worldPosition);
             }
         }
         for (Claim claim : new ArrayList<>(foreign)) {
@@ -345,7 +346,7 @@ public final class PanelBlockEntity extends BlockEntity {
                 PanelComponent removed = owner.removeComponent(claim.id());
                 if (removed != null) {
                     owner.dropItem(removed);
-                    owner.syncFull();
+                    owner.syncCoverage(removed, worldPosition);
                 }
             }
         }
@@ -429,6 +430,15 @@ public final class PanelBlockEntity extends BlockEntity {
                 setInput(component, i, value);
             } else {
                 component.storeInput(i, value);
+            }
+        }
+    }
+
+    /** Re-sends the state of every block a removed component covered, except {@code skip} (a block going away). */
+    void syncCoverage(PanelComponent component, BlockPos skip) {
+        for (BlockPos pos : coverage(component)) {
+            if (!pos.equals(skip) && level.isLoaded(pos) && level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
+                be.syncFull();
             }
         }
     }

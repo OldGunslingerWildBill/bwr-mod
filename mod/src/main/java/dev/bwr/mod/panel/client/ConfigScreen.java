@@ -60,13 +60,13 @@ public final class ConfigScreen extends Screen {
             switch (field.kind()) {
                 case ENUM -> addRenderableWidget(CycleButton.<String>builder(value -> Component.translatable(
                                 "component.bwr.option." + field.key() + "." + value))
-                        .withValues(field.options()).withInitialValue(fieldRow.text)
+                        .withValues(field.options()).withInitialValue(fieldRow.text).displayOnlyValue()
                         .create(layout.widgetX, y, layout.widgetWidth, layout.rowHeight - 2, Component.empty(),
                                 (button, value) -> {
                                     fieldRow.text = value;
                                     refresh();
                                 }));
-                case BOOL -> addRenderableWidget(CycleButton.onOffBuilder(Boolean.parseBoolean(fieldRow.text))
+                case BOOL -> addRenderableWidget(CycleButton.onOffBuilder(Boolean.parseBoolean(fieldRow.text)).displayOnlyValue()
                         .create(layout.widgetX, y, layout.widgetWidth, layout.rowHeight - 2, Component.empty(),
                                 (button, value) -> {
                                     fieldRow.text = Boolean.toString(value);
@@ -89,7 +89,7 @@ public final class ConfigScreen extends Screen {
             int half = layout.widgetWidth / 2;
             addRenderableWidget(CycleButton.booleanBuilder(Component.translatable("screen.bwr.panel_config.constant"),
                             Component.translatable("screen.bwr.panel_config.none"))
-                    .withInitialValue(input.constant)
+                    .withInitialValue(input.constant).displayOnlyValue()
                     .create(layout.widgetX, y, half - 2, layout.rowHeight - 2, Component.empty(),
                             (button, value) -> {
                                 input.constant = value;
