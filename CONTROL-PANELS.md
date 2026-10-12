@@ -55,7 +55,7 @@ A panel is sampled only while it has a plant or redstone input; a panel with non
 
 | Sink | Does | Notes |
 | --- | --- | --- |
-| Plant command | Sends `output x scale` to a command of the linked device, e.g. the MSIV's `open` | The same code as the device's CC setter, so power, interlocks and `computerControlled` behave identically. A PULSE command (scram) fires only for a non-zero value, so a pushbutton acts on press, not release |
+| Plant command | Sends `output x scale` to a command of the linked device, e.g. the MSIV's `open` | The same code as the device's CC setter, so power, interlocks and `computerControlled` behave identically. A PULSE command (scram) fires only for a non-zero value, so a pushbutton acts on press, not release. Mode *momentary* sends a fixed value on a rise instead (see below) |
 | Redstone | Emits `round(output x scale)` clamped to 0 to 15 from the **back face** | The strongest of the block's redstone sinks wins. Neighbours update like a repeater's (the block behind it is strongly powered) |
 | CC event | `bwr_panel_input(label, value, port)` | Always on: every operated output raises it for every computer attached to the group. Not stored per output |
 
@@ -64,6 +64,21 @@ re-sampling, rebinding or resyncing never fires a sink. Setting the same value a
 
 **MSIV note.** Commanding an unpowered MSIV open records the demand, exactly as CC's `open()` does; the valve
 opens when power returns. The wiring reports that it cannot move yet; the demand stands.
+
+### Momentary sinks
+
+A plant command sink has a mode. **Follow** (the default for existing bindings) sends `output x scale` on
+every change. **Momentary** sends one fixed value when the output becomes non-zero and nothing when it
+returns to zero. Use it for controls that spring back or are pressed and released: a spring-return control
+switch goes OPEN = 1 then back to 0, so a follow sink on the MSIV's `open` would open the valve and shut it
+again on release. Real GE control switches are momentary and the equipment seals in; a momentary sink does
+the same. A pushbutton can start or stop a pump the same way (one button momentary 1, another momentary 0).
+
+The binding screen shows a mode button and a "send value" field for plant outputs, and defaults to
+momentary when you bind a control switch's `open` (sends 1) or `close` (sends 0) output, or a pushbutton's
+output (sends 1), to a BOOLEAN or LEVEL command. The value must lie within the command's range. You can
+switch back to follow. Momentary sinks, like all sinks, fire only on an operated change, never on load,
+resample or rebind. Redstone sinks have no mode.
 
 ### Scale
 
@@ -86,9 +101,12 @@ wiring, which is identical for every type.
    chunk unloaded) a display shows dashes.
 4. **MSIV control switch with lamps.** Sneak-right-click the MSIV with the linker.
    * Control switch (CLOSE / NORMAL / OPEN, spring return): right-click it, an *output* port, mode *Plant*,
-     command `open` (Open / close). The device treats 0.5 and above as open, so wire the output that is 1
-     for OPEN and 0 for CLOSE. Operating it commands the valve exactly as CC's `open()`/`close()` would. On
-     an unpowered valve the open demand is recorded and the valve opens when power returns.
+     command `open` (Open / close), **twice**, both *momentary*: output `open` with value 1, and output
+     `close` with value 0 (the screen suggests exactly this). The device treats 0.5 and above as open.
+     Turning the switch to OPEN sends 1 once; the spring return to NORMAL sends nothing, so the valve stays
+     open until the switch is turned to CLOSE. Operating it commands the valve exactly as CC's
+     `open()`/`close()` would. On an unpowered valve the open demand is recorded and the valve opens when
+     power returns.
    * Red lamp (open): input *state*, mode *Plant*, signal `position`. It lights for any non-zero position, so
      it glows while the valve is open or opening.
    * Green lamp (closed): input *state*, mode *Plant*, signal `position` on a second lamp plus a nameplate
@@ -168,7 +186,8 @@ the existing `bwr_reactor` / `bwr_msiv` API.)
   its own output, so it cannot latch itself.
 * `bwr-panels.toml`: `sampleTicks` (2), `linkRange` (64), `maxGroupColumns` (16), `maxGroupRows` (8),
   `maxComponentsPerBlock` (64), `maxLabelLength` (16).
-* Network protocol version 15. Packets: `panel_linker_open` and `panel_bind` (client to server, validated:
-  reach, claim permission, the linker's own device, dimension, range, key exists), `panel_linker_screen`
+* Network protocol version 16. Packets: `panel_linker_open` and `panel_bind` (client to server, validated:
+  reach, claim permission, the linker's own device, dimension, range, key exists, momentary value within the
+  command's range), `panel_linker_screen`
   (server to client), and `panel_content` (server to client: bounded display content patches, at most one per
   component per tick).

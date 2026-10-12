@@ -123,6 +123,20 @@ power requirements, interlocks and `computerControlled` behave identically. A
 switch commanding an unpowered MSIV records the open demand, the same as CC's
 `open()`; the valve opens when power returns.
 
+A plant sink has a **mode**. FOLLOW (default; the only behavior before GUI
+protocol 16, and what a save without a `Mode` key loads as) sends
+`output x scale` on every change. MOMENTARY sends a fixed, configured command
+value once when the output becomes non-zero and ignores the return to zero. It
+exists because momentary inputs (the spring-return control switch, a
+pushbutton) go 1 then 0: a FOLLOW sink bound to a BOOLEAN command would
+reverse itself on release, while real GE switches are momentary and the
+equipment seals in. The fixed value is validated server-side (finite, within
+the command's min/max). The binding screen defaults to MOMENTARY (OPEN sends 1,
+CLOSE sends 0, a pushbutton sends 1) when a control switch's `open` or `close`
+output, or a pushbutton's output, is bound to a BOOLEAN or LEVEL command; the
+player can switch it back. A momentary sink still fires only on an operated
+output change, never on load, resample or rebind. Redstone sinks have no mode.
+
 No logic, comparators or timers in v1. Annunciator alarm conditions
 (`input > setpoint`, `input < setpoint`, `input == 1`) are display behavior
 only and never command anything.
