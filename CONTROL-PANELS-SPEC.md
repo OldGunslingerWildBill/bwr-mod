@@ -120,7 +120,8 @@ Sinks for a component output:
 
 Commands go through exactly the same code path as the device's CC setter, so
 power requirements, interlocks and `computerControlled` behave identically. A
-switch commanding an unpowered MSIV does nothing, the same as CC would.
+switch commanding an unpowered MSIV records the open demand, the same as CC's
+`open()`; the valve opens when power returns.
 
 No logic, comparators or timers in v1. Annunciator alarm conditions
 (`input > setpoint`, `input < setpoint`, `input == 1`) are display behavior
