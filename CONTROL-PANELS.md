@@ -57,7 +57,7 @@ A panel is sampled only while it has a plant or redstone input; a panel with non
 | --- | --- | --- |
 | Plant command | Sends `output x scale` to a command of the linked device, e.g. the MSIV's `open` | The same code as the device's CC setter, so power, interlocks and `computerControlled` behave identically. A PULSE command (scram) fires only for a non-zero value, so a pushbutton acts on press, not release. Mode *momentary* sends a fixed value on a rise instead (see below) |
 | Redstone | Emits `round(output x scale)` clamped to 0 to 15 from the **back face** | The strongest of the block's redstone sinks wins. Neighbours update like a repeater's (the block behind it is strongly powered) |
-| CC event | `bwr_panel_input(label, value, port)` | Always on: every operated output raises it for every computer attached to the group. Not stored per output |
+| CC event | `bwr_panel_input(name, label, value, port)` | Always on: every operated output raises it once for every computer attached to the group. Not stored per output |
 
 A command fires only when a control's output **changes because someone operated it**. Loading a world,
 re-sampling, rebinding or resyncing never fires a sink. Setting the same value again fires nothing.
@@ -130,6 +130,18 @@ Soft dependency: panels, the linker and everything above work without CC. With C
 group** is the peripheral `bwr_panel` for the whole group. Components are addressed by **label** (unique in
 the group, shown in the wrench screen; auto-assigned like `LP-1`).
 
+**Label uniqueness.** Labels are unique when you place a component and when you rename one with the wrench (a
+rename to a label already used in the group is refused and the old label stays). Joining two groups can bring
+two equal labels together (both walls had `PB-1`). When a group forms or merges, the duplicates among its
+loaded blocks are renamed once: in order of owner block position (Minecraft `BlockPos` order: lowest Y, then
+Z, then X), then component id, the first holder keeps the label and each later one becomes the next free
+`PREFIX-n` (for auto labels like `PB-1`) or `label-2`, `label-3`... (for custom labels). A rename is saved and
+synced like a wrench edit. Renames only move away from a clash and never back, so splitting and re-joining
+walls does not rename again; a block in an unloaded chunk is not touched until it loads and its group is
+recomputed. Scripts should read labels with `list()` instead of hard-coding them after joining walls. If two
+components ever do share a label, `list()` and `getInputs()` still show both (the first by position as
+`label`, the others as `label#2`, `label#3`) and `get(label)` is deterministic.
+
 ```lua
 local panel = peripheral.find("bwr_panel")
 ```
@@ -158,19 +170,42 @@ The drawing calls work on components whose data implements `PanelDrawTarget`; on
 "is not a drawable display". Drawing is coalesced: however many calls arrive in a tick, each watching client
 gets one update.
 
-**Event** `bwr_panel_input`: `event, label, value, port = os.pullEvent("bwr_panel_input")` whenever a player
-operates a control, for every computer attached to the group (also fires for outputs wired to nothing, and
-is not raised by `set`).
+**Event** `bwr_panel_input`: `event, name, label, value, port = os.pullEvent("bwr_panel_input")` whenever a
+player operates a control, for every computer attached to the group (also fires for outputs wired to
+nothing, and is not raised by `set`). `name` is the peripheral name the computer sees for the panel, like the
+first argument of `monitor_touch`: `"top"` for a panel the computer touches, or `"bwr_panel_3"` through a
+wired modem. Labels are unique only within a group, so with two walls on one computer use `name` to tell
+them apart. A computer gets **one** event per change per group, even when it is attached to several blocks
+of the group (say a side plus a modem on another block); the `name` is then the one that was attached first
+(if that detaches, the next one). A computer attached to two different groups sees each group's events under
+that group's name.
 
 ```lua
 local panel = peripheral.find("bwr_panel")
 panel.setText("NP-2", "TURBINE ONLINE")
 while true do
-  local _, label, value, port = os.pullEvent("bwr_panel_input")
-  if label == "SW-MSIV" then
+  local _, name, label, value, port = os.pullEvent("bwr_panel_input")
+  if name == peripheral.getName(panel) and label == "SW-MSIV" then
     peripheral.find("bwr_msiv").setOpen(value >= 0.5)
   end
   panel.set("DISP-POWER", peripheral.find("bwr_reactor").getAprmPercent())
+end
+```
+
+Several panels on one computer (two walls through modems):
+
+```lua
+local panels = {}
+for _, n in ipairs(peripheral.getNames()) do
+  if peripheral.getType(n) == "bwr_panel" then panels[n] = peripheral.wrap(n) end
+end
+while true do
+  local _, name, label, value, port = os.pullEvent("bwr_panel_input")
+  local panel = panels[name]
+  if panel then
+    print(name, label, port, value)
+    panel.setText("NP-1", label .. "=" .. value)
+  end
 end
 ```
 

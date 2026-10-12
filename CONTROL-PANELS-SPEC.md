@@ -32,7 +32,7 @@ same pattern as other mod multiblocks). Groups are capped (config, default
 ## 2. Components
 
 A component has a type, a grid footprint (w × h cells), an anchor cell, a
-player-set **label** (unique within the group; auto-assigned like `PB-1`),
+player-set **label** (unique within the group; auto-assigned like `PB-1`; see §8 for merges),
 type-specific config, and live state.
 
 - **Placement:** right-click a mounting face holding a component item. The
@@ -221,7 +221,19 @@ Any panel block exposes the group as peripheral `bwr_panel`:
   `setPixel(label, x, y, color)`, `fill(label, x, y, w, h, color)`,
   `drawText(label, x, y, text, color)`, `blit(label, rows)` (hex strings),
   `setPalette(label, index, rgb)`. Rate-limited, and only changes are synced.
-- Event `bwr_panel_input(label, value)` whenever a player operates an input.
+- Event `bwr_panel_input(name, label, value, port)` whenever a player operates an input. `name` is the
+  attachment name the computer sees (`IComputerAccess.getAttachmentName()`, stored when the peripheral attaches),
+  first as in `monitor_touch`, so scripts can tell two groups apart. At most one event per computer per group
+  per output change: CC gives every attachment its own `IComputerAccess`, so the computer is identified by
+  `getID()`, and when it is attached to the same group through several names the earliest still-attached one
+  is used. Computers attached to other groups are not notified.
+- Label uniqueness: labels are unique at placement and on wrench rename (a rename to a taken label is
+  refused). When a group (re)forms, duplicates among its loaded members are renamed deterministically: in
+  owner `BlockPos` order, then component id, the first keeps its label; later ones get the next free
+  `PREFIX-n`, or `label-n` (n from 2) for custom labels, truncated to the label length limit. Members in
+  unloaded chunks are not considered and nothing is ever renamed back, so a split and re-merge is stable.
+  Lookups stay deterministic regardless: `list()`/`getInputs()` never drop a component; if a duplicate
+  exists, later ones are keyed `label#2`, `label#3` in the same order, and `get(label)` accepts those keys.
 
 This is how players "load their own software": a CC computer drives displays
 and reads switches.
