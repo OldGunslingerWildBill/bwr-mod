@@ -72,6 +72,37 @@ public final class BwrItems {
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> LAMP =
             ITEMS.register("lamp", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.LAMP.id()));
+    // Gauges, displays and mimic (spec 2.1, 2.2)
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> DIAL_GAUGE =
+            ITEMS.register("dial_gauge", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.DIAL_GAUGE.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> EDGEWISE_GAUGE_VERTICAL =
+            ITEMS.register("edgewise_gauge_vertical", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.EDGEWISE_GAUGE_VERTICAL.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> EDGEWISE_GAUGE_HORIZONTAL =
+            ITEMS.register("edgewise_gauge_horizontal", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> STRIP_CHART =
+            ITEMS.register("strip_chart", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.STRIP_CHART.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> SEVEN_SEGMENT_DISPLAY =
+            ITEMS.register("seven_segment_display", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.SEVEN_SEGMENT_DISPLAY.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> SIXTEEN_SEGMENT_DISPLAY =
+            ITEMS.register("sixteen_segment_display", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.SIXTEEN_SEGMENT_DISPLAY.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> CHARACTER_LCD =
+            ITEMS.register("character_lcd", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.CHARACTER_LCD.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> GRAPHIC_DISPLAY =
+            ITEMS.register("graphic_display", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.GRAPHIC_DISPLAY.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> MIMIC_LINE =
+            ITEMS.register("mimic_line", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.MIMIC_LINE.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> MIMIC_SYMBOL =
+            ITEMS.register("mimic_symbol", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.MIMIC_SYMBOL.id()));
     public static final DeferredItem<BlockItem> CONTROL_ROD_DRIVE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_ROD_DRIVE);
     public static final DeferredItem<BlockItem> CORE_SPRAY_SPARGER =
@@ -256,6 +287,16 @@ public final class BwrItems {
                         output.accept(PANEL_WRENCH.get());
                         output.accept(NAMEPLATE.get());
                         output.accept(LAMP.get());
+                        output.accept(DIAL_GAUGE.get());
+                        output.accept(EDGEWISE_GAUGE_VERTICAL.get());
+                        output.accept(EDGEWISE_GAUGE_HORIZONTAL.get());
+                        output.accept(STRIP_CHART.get());
+                        output.accept(SEVEN_SEGMENT_DISPLAY.get());
+                        output.accept(SIXTEEN_SEGMENT_DISPLAY.get());
+                        output.accept(CHARACTER_LCD.get());
+                        output.accept(GRAPHIC_DISPLAY.get());
+                        output.accept(MIMIC_LINE.get());
+                        output.accept(MIMIC_SYMBOL.get());
                     })
                     .build());
 }

@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": ["RCR", "RGR", "III"], "key": {"R": {"item": "minecraft:redstone"}, "C": {"item": "minecraft:comparator"}, "G": {"item": "minecraft:glass_pane"}, "I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:sixteen_segment_display", "count": 1}}
