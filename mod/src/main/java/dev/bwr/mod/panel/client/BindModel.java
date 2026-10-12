@@ -15,6 +15,7 @@ import dev.bwr.mod.panel.wiring.PlantSource;
 import dev.bwr.mod.panel.wiring.RedstoneSink;
 import dev.bwr.mod.panel.wiring.RedstoneSource;
 import dev.bwr.mod.panel.wiring.WiringOps;
+import dev.bwr.mod.signal.Kind;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -64,6 +65,9 @@ public final class BindModel {
     public String filter = "";
     public String scaleText = "1";
     public Entry selected;
+    /** Plant output sink mode: false follows the output (value x scale), true sends {@link #fixedText} on a rise. */
+    public boolean momentary;
+    public String fixedText = "1";
 
     public BindModel(PanelBlockEntity block, PanelComponent component, PanelPayloads.LinkerScreen device) {
         this.block = block;
@@ -94,6 +98,7 @@ public final class BindModel {
     public void choose(PortChoice choice) {
         this.port = choice;
         this.selected = null;
+        resetMomentary();
         List<Mode> modes = modes();
         if (mode == null || !modes.contains(mode)) {
             mode = modes.get(0);
@@ -111,7 +116,64 @@ public final class BindModel {
     public void setMode(Mode mode) {
         this.mode = mode;
         this.selected = null;
+        resetMomentary();
         scaleText = defaultScale();
+    }
+
+    private void resetMomentary() {
+        momentary = false;
+        fixedText = "1";
+    }
+
+    /** Selects a list entry; the momentary default applies here, and the player may change it afterwards. */
+    public void select(Entry entry) {
+        selected = entry;
+        resetMomentary();
+        if (mode == Mode.PLANT && port != null && port.output() && entry != null) {
+            PanelPayloads.CommandEntry command = command(entry.key());
+            String type = component.type().id().getPath();
+            String output = port.spec().key();
+            boolean switchPort = type.equals("control_switch") && (output.equals("open") || output.equals("close"));
+            boolean button = type.equals("pushbutton");
+            if (command != null && (switchPort || button)
+                    && (command.kind() == Kind.BOOLEAN.ordinal() || command.kind() == Kind.LEVEL.ordinal())) {
+                momentary = true;
+                // CLOSE sends the "off" end of the command; OPEN and a pushbutton send "on".
+                fixedText = output.equals("close") ? "0" : "1";
+            }
+        }
+    }
+
+    private PanelPayloads.CommandEntry command(String key) {
+        for (PanelPayloads.CommandEntry command : device.commands()) {
+            if (command.key().equals(key)) {
+                return command;
+            }
+        }
+        return null;
+    }
+
+    /** Whether the follow / momentary choice is offered: a plant command on an output. */
+    public boolean usesSinkMode() {
+        return port != null && port.output() && mode == Mode.PLANT;
+    }
+
+    public boolean usesFixed() {
+        return usesSinkMode() && momentary;
+    }
+
+    /** The fixed value, or null when it is not a finite number inside the selected command's range. */
+    public Double fixed() {
+        try {
+            double value = Double.parseDouble(fixedText.trim());
+            if (!Double.isFinite(value)) {
+                return null;
+            }
+            PanelPayloads.CommandEntry command = selected == null ? null : command(selected.key());
+            return command == null || value >= command.min() && value <= command.max() ? value : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /** A redstone sink usually wants a full-strength signal from a 0/1 switch; plant commands default to 1:1. */
@@ -125,7 +187,7 @@ public final class BindModel {
     }
 
     public boolean usesScale() {
-        return port != null && port.output() && (mode == Mode.PLANT || mode == Mode.REDSTONE);
+        return port != null && port.output() && (mode == Mode.PLANT && !momentary || mode == Mode.REDSTONE);
     }
 
     /** The entries of the selection list for the current port and mode, narrowed by the filter. */
@@ -184,7 +246,7 @@ public final class BindModel {
         if (port == null) {
             return false;
         }
-        if (usesScale() && scale() == null) {
+        if (usesScale() && scale() == null || usesFixed() && fixed() == null) {
             return false;
         }
         return switch (mode) {
@@ -217,7 +279,9 @@ public final class BindModel {
                 mode == Mode.COMPONENT && entry != null ? entry.refOwner() : BlockPos.ZERO,
                 mode == Mode.COMPONENT && entry != null ? entry.refId() : 0,
                 mode == Mode.COMPONENT && entry != null ? entry.refOutput() : 0,
-                usesScale() && scale() != null ? scale() : 1.0);
+                usesScale() && scale() != null ? scale() : 1.0,
+                usesFixed() ? PlantSink.Mode.MOMENTARY.ordinal() : PlantSink.Mode.FOLLOW.ordinal(),
+                usesFixed() && fixed() != null ? fixed() : 0.0);
     }
 
     /** Clears the current port (input to no signal, output to no sinks). */
@@ -284,6 +348,10 @@ public final class BindModel {
     public static Component describeSink(OutputSink sink) {
         if (sink instanceof PlantSink plant) {
             BlockPos device = plant.device();
+            if (plant.mode() == PlantSink.Mode.MOMENTARY) {
+                return Component.translatable("sink.bwr.panel.plant_momentary", plant.key(), device.getX(), device.getY(),
+                        device.getZ(), trim(plant.fixed()));
+            }
             return Component.translatable("sink.bwr.panel.plant", plant.key(), device.getX(), device.getY(), device.getZ(),
                     trim(plant.scale()));
         }

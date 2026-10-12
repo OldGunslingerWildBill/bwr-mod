@@ -163,10 +163,19 @@ public final class PanelPayloads {
     /**
      * Bind or unbind one port of a component. {@code kind} is a {@link dev.bwr.mod.panel.wiring.WiringOps.BindKind}
      * ordinal; the fields a kind does not use are ignored. {@code refOutput} doubles as the sink position for a
-     * remove. Everything is re-validated by {@code WiringOps#bind}.
+     * remove. {@code sinkMode} (a {@code PlantSink.Mode} ordinal) and {@code fixed} apply to a plant output only:
+     * MOMENTARY sends {@code fixed} when the output rises and ignores {@code scale}. Everything is re-validated by
+     * {@code WiringOps#bind}.
      */
     public record Bind(BlockPos pos, int id, boolean output, int port, int kind, BlockPos device, String key,
-                       BlockPos refOwner, int refId, int refOutput, double scale) implements CustomPacketPayload {
+                       BlockPos refOwner, int refId, int refOutput, double scale, int sinkMode, double fixed)
+            implements CustomPacketPayload {
+        /** A request that follows the output (every binding before the sink mode existed). */
+        public Bind(BlockPos pos, int id, boolean output, int port, int kind, BlockPos device, String key,
+                    BlockPos refOwner, int refId, int refOutput, double scale) {
+            this(pos, id, output, port, kind, device, key, refOwner, refId, refOutput, scale, 0, 0.0);
+        }
+
         public static final Type<Bind> TYPE = new Type<>(BwrMod.id("panel_bind"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Bind> STREAM_CODEC = StreamCodec.of(
                 (buf, bind) -> {
@@ -181,10 +190,12 @@ public final class PanelPayloads {
                     buf.writeVarInt(bind.refId);
                     buf.writeVarInt(bind.refOutput);
                     buf.writeDouble(bind.scale);
+                    buf.writeVarInt(bind.sinkMode);
+                    buf.writeDouble(bind.fixed);
                 },
                 buf -> new Bind(buf.readBlockPos(), buf.readVarInt(), buf.readBoolean(), buf.readVarInt(),
                         buf.readVarInt(), buf.readBlockPos(), buf.readUtf(MAX_KEY), buf.readBlockPos(),
-                        buf.readVarInt(), buf.readVarInt(), buf.readDouble()));
+                        buf.readVarInt(), buf.readVarInt(), buf.readDouble(), buf.readVarInt(), buf.readDouble()));
 
         @Override
         public Type<? extends CustomPacketPayload> type() {
@@ -196,8 +207,15 @@ public final class PanelPayloads {
     public record SignalEntry(String key, String label, String unit) {
     }
 
-    /** One command of the linked device. */
-    public record CommandEntry(String key, String label, boolean pulse) {
+    /**
+     * One command of the linked device. {@code kind} is a {@code Kind} ordinal and {@code min}/{@code max} the
+     * accepted range, so the binding screen can offer a sensible momentary default; the server re-checks.
+     */
+    public record CommandEntry(String key, String label, boolean pulse, int kind, double min, double max) {
+        public CommandEntry(String key, String label, boolean pulse) {
+            this(key, label, pulse, pulse ? dev.bwr.mod.signal.Kind.PULSE.ordinal() : dev.bwr.mod.signal.Kind.NUMBER.ordinal(),
+                    0.0, 1.0);
+        }
     }
 
     /** Opens the binding screen: the component and the linked device's signals and commands. */
@@ -222,6 +240,9 @@ public final class PanelPayloads {
                         buf.writeUtf(entry.key, MAX_KEY);
                         buf.writeUtf(entry.label, MAX_LABEL);
                         buf.writeBoolean(entry.pulse);
+                        buf.writeVarInt(entry.kind);
+                        buf.writeDouble(entry.min);
+                        buf.writeDouble(entry.max);
                     }
                 },
                 buf -> {
@@ -244,7 +265,8 @@ public final class PanelPayloads {
                     }
                     List<CommandEntry> commands = new ArrayList<>(commandCount);
                     for (int i = 0; i < commandCount; i++) {
-                        commands.add(new CommandEntry(buf.readUtf(MAX_KEY), buf.readUtf(MAX_LABEL), buf.readBoolean()));
+                        commands.add(new CommandEntry(buf.readUtf(MAX_KEY), buf.readUtf(MAX_LABEL), buf.readBoolean(),
+                                buf.readVarInt(), buf.readDouble(), buf.readDouble()));
                     }
                     return new LinkerScreen(pos, id, status, device, name, signals, commands);
                 });

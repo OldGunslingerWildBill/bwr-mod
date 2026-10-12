@@ -19,6 +19,13 @@ import org.slf4j.Logger;
  * knob can drive a 0 to 1 demand with scale 0.01). A PULSE command fires only for a non-zero value, so a
  * pushbutton wired to scram acts on press, not again on release.
  *
+ * <p>Mode {@link Mode#FOLLOW} (the default, and what every save without a {@code Mode} key loads as) sends that
+ * value on every change. Mode {@link Mode#MOMENTARY} is for momentary inputs (a spring-return control switch,
+ * a pushbutton) driving a BOOLEAN or LEVEL command: when the output takes a non-zero value it sends the fixed
+ * configured command value once, and the return to zero sends nothing, so the equipment seals in the way a
+ * real GE switch's contacts do. It keeps no state of its own: only a player or CC operated output change
+ * reaches {@link #fire}, so a load, resample or rebind never sends anything.
+ *
  * <p>An unloaded or missing device, an unknown key or a refusal simply does nothing; the sink never loads a
  * chunk and never retries.
  */
@@ -26,14 +33,35 @@ public final class PlantSink implements OutputSink {
     public static final String KIND = OutputSinks.KIND_PLANT;
     private static final Logger LOGGER = LogUtils.getLogger();
 
+    /** How an output change becomes a command value. The ordinal travels in {@code PanelPayloads.Bind}. */
+    public enum Mode {
+        /** Send {@code value * scale} on every change. */
+        FOLLOW,
+        /** Send the fixed value when the output becomes non-zero; ignore the return to zero. */
+        MOMENTARY;
+
+        public static Mode byId(int id) {
+            Mode[] all = values();
+            return id >= 0 && id < all.length ? all[id] : null;
+        }
+    }
+
     private final BlockPos device;
     private final String key;
     private final double scale;
+    private final Mode mode;
+    private final double fixed;
 
     public PlantSink(BlockPos device, String key, double scale) {
+        this(device, key, scale, Mode.FOLLOW, 0.0);
+    }
+
+    public PlantSink(BlockPos device, String key, double scale, Mode mode, double fixed) {
         this.device = device.immutable();
         this.key = key;
         this.scale = scale;
+        this.mode = mode;
+        this.fixed = fixed;
     }
 
     public BlockPos device() {
@@ -48,6 +76,15 @@ public final class PlantSink implements OutputSink {
         return scale;
     }
 
+    public Mode mode() {
+        return mode;
+    }
+
+    /** The command value a MOMENTARY sink sends (unused in FOLLOW). */
+    public double fixed() {
+        return fixed;
+    }
+
     @Override
     public String kind() {
         return KIND;
@@ -55,7 +92,7 @@ public final class PlantSink implements OutputSink {
 
     @Override
     public void fire(FireContext context, double value) {
-        if (Double.isNaN(value)) {
+        if (Double.isNaN(value) || mode == Mode.MOMENTARY && value == 0.0) {
             return;
         }
         SignalProvider provider = SignalProviders.at(context.level(), device);
@@ -71,7 +108,7 @@ public final class PlantSink implements OutputSink {
             }
         }
         try {
-            provider.command(key, value * scale);
+            provider.command(key, mode == Mode.MOMENTARY ? fixed : value * scale);
         } catch (RuntimeException e) {
             LOGGER.warn("Panel command {} at {} failed", key, device, e);
         }
@@ -84,6 +121,11 @@ public final class PlantSink implements OutputSink {
         tag.putInt("Z", device.getZ());
         tag.putString("Key", key);
         tag.putDouble("Scale", scale);
+        if (mode == Mode.MOMENTARY) {
+            // Absent means FOLLOW, so saves from before the mode existed load unchanged.
+            tag.putString("Mode", "momentary");
+            tag.putDouble("Fixed", fixed);
+        }
     }
 
     static OutputSink load(CompoundTag tag) {
@@ -94,6 +136,18 @@ public final class PlantSink implements OutputSink {
         }
         double scale = tag.contains("Scale", Tag.TAG_ANY_NUMERIC) && Double.isFinite(tag.getDouble("Scale"))
                 ? tag.getDouble("Scale") : 1.0;
-        return new PlantSink(new BlockPos(tag.getInt("X"), tag.getInt("Y"), tag.getInt("Z")), tag.getString("Key"), scale);
+        Mode mode = Mode.FOLLOW;
+        double fixed = 0.0;
+        if (tag.contains("Mode")) {
+            // An unknown mode or a missing fixed value is kept inert rather than guessed at.
+            if (!tag.contains("Mode", Tag.TAG_STRING) || !"momentary".equals(tag.getString("Mode"))
+                    || !tag.contains("Fixed", Tag.TAG_ANY_NUMERIC) || !Double.isFinite(tag.getDouble("Fixed"))) {
+                return OutputSinks.preserved(tag);
+            }
+            mode = Mode.MOMENTARY;
+            fixed = tag.getDouble("Fixed");
+        }
+        return new PlantSink(new BlockPos(tag.getInt("X"), tag.getInt("Y"), tag.getInt("Z")), tag.getString("Key"), scale,
+                mode, fixed);
     }
 }

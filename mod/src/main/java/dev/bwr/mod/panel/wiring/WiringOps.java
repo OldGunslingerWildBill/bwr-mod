@@ -175,7 +175,12 @@ public final class WiringOps {
                 component.addSink(port, new RedstoneSink(request.scale()));
             }
             case PLANT -> {
-                if (!validScale(request.scale())) {
+                PlantSink.Mode mode = PlantSink.Mode.byId(request.sinkMode());
+                if (mode == null) {
+                    return Result.BAD_VALUE;
+                }
+                // A momentary sink ignores the scale, so only a following one needs a usable scale.
+                if (mode == PlantSink.Mode.FOLLOW && !validScale(request.scale()) || !Double.isFinite(request.fixed())) {
                     return Result.BAD_VALUE;
                 }
                 if (component.sinks(port).size() >= MAX_SINKS) {
@@ -185,7 +190,12 @@ public final class WiringOps {
                 if (checked != Result.OK) {
                     return checked;
                 }
-                component.addSink(port, new PlantSink(request.device(), request.key(), request.scale()));
+                if (mode == PlantSink.Mode.MOMENTARY && !fixedInRange(level, request)) {
+                    return Result.BAD_VALUE;
+                }
+                component.addSink(port, mode == PlantSink.Mode.MOMENTARY
+                        ? new PlantSink(request.device(), request.key(), 1.0, mode, request.fixed())
+                        : new PlantSink(request.device(), request.key(), request.scale()));
             }
             default -> {
                 return Result.BAD_VALUE;
@@ -196,6 +206,20 @@ public final class WiringOps {
 
     private static boolean validScale(double scale) {
         return Double.isFinite(scale) && scale != 0.0 && Math.abs(scale) <= MAX_SCALE;
+    }
+
+    /** Whether a momentary sink's fixed value lies in the range of the (already checked) command. */
+    private static boolean fixedInRange(ServerLevel level, PanelPayloads.Bind request) {
+        SignalProvider provider = SignalProviders.at(level, request.device());
+        if (provider == null) {
+            return false;
+        }
+        for (CommandSpec spec : provider.commands()) {
+            if (spec.key().equals(request.key())) {
+                return request.fixed() >= spec.min() && request.fixed() <= spec.max();
+            }
+        }
+        return false;
     }
 
     /** Shared checks for a plant binding: the linker's device, dimension, range, permission, and the key. */
@@ -295,7 +319,8 @@ public final class WiringOps {
                 for (CommandSpec spec : provider.commands()) {
                     if (spec.kind() != Kind.TEXT && commands.size() < PanelPayloads.MAX_LISTED) {
                         commands.add(new PanelPayloads.CommandEntry(clip(spec.key(), PanelPayloads.MAX_KEY),
-                                clip(spec.label(), PanelPayloads.MAX_LABEL), spec.kind() == Kind.PULSE));
+                                clip(spec.label(), PanelPayloads.MAX_LABEL), spec.kind() == Kind.PULSE,
+                                spec.kind().ordinal(), spec.min(), spec.max()));
                     }
                 }
             }

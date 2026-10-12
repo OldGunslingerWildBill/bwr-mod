@@ -35,7 +35,7 @@ public final class BindScreen extends Screen {
     @Override
     protected void init() {
         boolean listed = model.hasPorts() && model.listed();
-        boolean scaled = model.hasPorts() && model.usesScale();
+        boolean scaled = model.hasPorts() && (model.usesScale() || model.usesSinkMode());
         int currentRows = model.port != null && model.port.output() ? model.sinkCount() + 1 : 1;
         layout = new BindLayout(width, height, currentRows, listed, scaled);
         if (!model.hasPorts()) {
@@ -84,14 +84,37 @@ public final class BindScreen extends Screen {
             list.refill();
         }
         if (scaled) {
-            EditBox scale = new EditBox(font, layout.left + layout.width / 2, layout.scaleY, layout.width / 2, 20,
-                    Component.translatable("screen.bwr.panel_bind.scale"));
-            scale.setValue(model.scaleText);
-            scale.setResponder(value -> {
-                model.scaleText = value;
-                refresh();
-            });
-            addRenderableWidget(scale);
+            int half = layout.width / 2;
+            if (model.usesSinkMode()) {
+                addRenderableWidget(CycleButton.booleanBuilder(Component.translatable("screen.bwr.panel_bind.sink_momentary"),
+                                Component.translatable("screen.bwr.panel_bind.sink_follow"))
+                        .withInitialValue(model.momentary)
+                        .create(layout.left, layout.scaleY, half - 4, 20, Component.empty(), (button, value) -> {
+                            model.momentary = value;
+                            rebuildWidgets();
+                        }));
+            }
+            if (model.usesFixed()) {
+                EditBox fixed = new EditBox(font, layout.left + half, layout.scaleY, half, 20,
+                        Component.translatable("screen.bwr.panel_bind.fixed"));
+                fixed.setHint(Component.translatable("screen.bwr.panel_bind.fixed"));
+                fixed.setValue(model.fixedText);
+                fixed.setResponder(value -> {
+                    model.fixedText = value;
+                    refresh();
+                });
+                addRenderableWidget(fixed);
+            } else {
+                EditBox scale = new EditBox(font, layout.left + half, layout.scaleY, half, 20,
+                        Component.translatable("screen.bwr.panel_bind.scale"));
+                scale.setHint(Component.translatable("screen.bwr.panel_bind.scale"));
+                scale.setValue(model.scaleText);
+                scale.setResponder(value -> {
+                    model.scaleText = value;
+                    refresh();
+                });
+                addRenderableWidget(scale);
+            }
         }
 
         int third = (layout.width - 8) / 3;
@@ -136,7 +159,7 @@ public final class BindScreen extends Screen {
                 graphics.drawString(font, lines.get(lines.size() - 1), layout.left,
                         layout.currentY + model.sinkCount() * BindLayout.ROW + 5, 0xCCCCCC);
             }
-            if (model.usesScale()) {
+            if (model.usesScale() && !model.usesSinkMode()) {
                 graphics.drawString(font, Component.translatable("screen.bwr.panel_bind.scale"), layout.left,
                         layout.scaleY + 6, 0xCCCCCC);
             }
@@ -188,8 +211,13 @@ public final class BindScreen extends Screen {
 
             @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
-                model.selected = entry;
+                boolean wasMomentary = model.momentary;
+                String wasFixed = model.fixedText;
+                model.select(entry);
                 setSelected(this);
+                if (wasMomentary != model.momentary || !wasFixed.equals(model.fixedText)) {
+                    rebuildWidgets();
+                }
                 refresh();
                 return true;
             }
