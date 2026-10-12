@@ -21,6 +21,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -76,6 +78,8 @@ public final class PanelBlockEntity extends BlockEntity {
     private final List<ValueDelta> pending = new ArrayList<>();
     private final List<PanelComponent> contentDirty = new ArrayList<>();
     private Claim[] grid;
+    /** Chunks (packed) whose loading a deferred {@link #verifyConsistency()} waits for; see {@link PanelConsistency}. */
+    private final Set<Long> awaitedChunks = new HashSet<>();
     private int nextId = 1;
     private PanelGroup group;
     private AABB renderBounds;
@@ -304,6 +308,113 @@ public final class PanelBlockEntity extends BlockEntity {
         if (foreign.removeIf(claim -> claim.owner().equals(owner) && claim.id() == id)) {
             structureChanged();
         }
+    }
+
+    // ---- ownership consistency (see PanelConsistency)
+
+    Set<Long> awaitedChunks() {
+        return awaitedChunks;
+    }
+
+    /**
+     * The per-block rectangles an owned component should occupy, anchor block first, derived from the footprint
+     * alone; null when the panel style has no block where part of the footprint would have to go.
+     */
+    List<PanelGroup.Rect> footprintRects(PanelComponent component) {
+        int spanX = (component.x() + component.w() + PanelGeometry.GRID - 1) / PanelGeometry.GRID;
+        int spanY = (component.y() + component.h() + PanelGeometry.GRID - 1) / PanelGeometry.GRID;
+        List<BlockPos> covered = coverage(component);
+        if (covered.size() < spanX * spanY) {
+            return null;
+        }
+        List<PanelGroup.Rect> rects = new ArrayList<>(covered.size());
+        for (int index = 0; index < covered.size(); index++) {
+            int i = index % spanX;
+            int j = index / spanX;
+            rects.add(new PanelGroup.Rect(covered.get(index),
+                    Math.max(component.x() - i * PanelGeometry.GRID, 0),
+                    Math.max(component.y() - j * PanelGeometry.GRID, 0),
+                    Math.min(component.x() + component.w() - i * PanelGeometry.GRID, PanelGeometry.GRID),
+                    Math.min(component.y() + component.h() - j * PanelGeometry.GRID, PanelGeometry.GRID)));
+        }
+        return rects;
+    }
+
+    /**
+     * Server: repairs claim/ownership mismatches left by a block removed while the other half's chunk was not
+     * loaded. Never loads a chunk; a position in an unloaded chunk defers the decision until it loads.
+     * Idempotent: a second run over a consistent state changes and drops nothing.
+     *
+     * <p>Owner side: a straddling component whose covered block is loaded but is not a panel block of the same
+     * type and facing (so not in the same group), or does not hold the matching {@link Claim}, is removed and
+     * its item dropped, as the wrench would. Covered side: a foreign claim whose owner is loaded but does not
+     * own that component covering this cell is dropped silently (the owner already dealt with the item).
+     *
+     * @return whether anything was repaired
+     */
+    public boolean verifyConsistency() {
+        if (!(level instanceof ServerLevel server) || isRemoved()) {
+            return false;
+        }
+        PanelConsistency.forget(this);
+        boolean repaired = false;
+        for (PanelComponent component : new ArrayList<>(owned)) {
+            List<PanelGroup.Rect> rects = footprintRects(component);
+            boolean invalid = rects == null;
+            for (int i = 1; !invalid && i < rects.size(); i++) {
+                PanelGroup.Rect rect = rects.get(i);
+                if (!server.isLoaded(rect.pos())) {
+                    PanelConsistency.await(this, server, ChunkPos.asLong(rect.pos()));
+                    continue;
+                }
+                BlockState state = server.getBlockState(rect.pos());
+                invalid = !(state.getBlock() instanceof PanelBlock block)
+                        || block.panelType() != panelType()
+                        || state.getValue(PanelBlock.FACING) != facing()
+                        || !(server.getBlockEntity(rect.pos()) instanceof PanelBlockEntity other)
+                        || !other.foreign.contains(new Claim(worldPosition, component.id(),
+                                rect.x0(), rect.y0(), rect.x1(), rect.y1()));
+            }
+            if (invalid) {
+                PanelComponent removed = removeComponent(component.id());
+                if (removed != null) {
+                    dropItem(removed);
+                    syncCoverage(removed, null);
+                    repaired = true;
+                }
+            }
+        }
+        boolean claimsChanged = false;
+        for (Claim claim : new ArrayList<>(foreign)) {
+            if (!server.isLoaded(claim.owner())) {
+                PanelConsistency.await(this, server, ChunkPos.asLong(claim.owner()));
+                continue;
+            }
+            boolean valid = false;
+            if (server.getBlockEntity(claim.owner()) instanceof PanelBlockEntity ownerBe && !ownerBe.isRemoved()) {
+                PanelComponent component = ownerBe.component(claim.id());
+                List<PanelGroup.Rect> rects = component == null ? null : ownerBe.footprintRects(component);
+                if (rects != null) {
+                    for (PanelGroup.Rect rect : rects) {
+                        if (rect.pos().equals(worldPosition) && rect.x0() == claim.x0() && rect.y0() == claim.y0()
+                                && rect.x1() == claim.x1() && rect.y1() == claim.y1()) {
+                            valid = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!valid) {
+                foreign.remove(claim);
+                claimsChanged = true;
+            }
+        }
+        if (claimsChanged) {
+            structureChanged();
+            syncFull();
+            repaired = true;
+        }
+        return repaired;
     }
 
     // ---- server-side item drops
@@ -743,6 +854,9 @@ public final class PanelBlockEntity extends BlockEntity {
         super.onLoad();
         invalidateGroups();
         if (level != null && !level.isClientSide()) {
+            if (!owned.isEmpty() || !foreign.isEmpty()) {
+                PanelConsistency.request(this);
+            }
             for (PanelComponent component : owned) {
                 resample(component, false);
                 if (component.type() != null) {
@@ -766,6 +880,7 @@ public final class PanelBlockEntity extends BlockEntity {
     public void setRemoved() {
         super.setRemoved();
         PanelSampler.untrack(this);
+        PanelConsistency.forget(this);
         invalidateGroups();
     }
 
