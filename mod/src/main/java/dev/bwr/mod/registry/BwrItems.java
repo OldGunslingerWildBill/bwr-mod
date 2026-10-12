@@ -72,6 +72,29 @@ public final class BwrItems {
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> LAMP =
             ITEMS.register("lamp", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.LAMP.id()));
+    // inputs and indicators (spec 2.1, first two tables)
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> PUSHBUTTON = ITEMS.register("pushbutton", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.PUSHBUTTON.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> TOGGLE_SWITCH = ITEMS.register("toggle_switch", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.TOGGLE_SWITCH.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> ROTARY_SELECTOR = ITEMS.register("rotary_selector", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.ROTARY_SELECTOR.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> CONTROL_SWITCH = ITEMS.register("control_switch", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.CONTROL_SWITCH.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> KEY_SWITCH = ITEMS.register("key_switch", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.KEY_SWITCH.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> SETPOINT_KNOB = ITEMS.register("setpoint_knob", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.SETPOINT_KNOB.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> THUMBWHEEL = ITEMS.register("thumbwheel", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.THUMBWHEEL.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> ANNUNCIATOR = ITEMS.register("annunciator", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.ANNUNCIATOR.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> BAR_GRAPH = ITEMS.register("bar_graph", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.BAR_GRAPH.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.PanelKeyItem> PANEL_KEY =
+            ITEMS.register("panel_key", () -> new dev.bwr.mod.panel.component.PanelKeyItem(new Item.Properties().stacksTo(1)));
+
+
     public static final DeferredItem<BlockItem> CONTROL_ROD_DRIVE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_ROD_DRIVE);
     public static final DeferredItem<BlockItem> CORE_SPRAY_SPARGER =
@@ -256,6 +279,16 @@ public final class BwrItems {
                         output.accept(PANEL_WRENCH.get());
                         output.accept(NAMEPLATE.get());
                         output.accept(LAMP.get());
+                        output.accept(PUSHBUTTON.get());
+                        output.accept(TOGGLE_SWITCH.get());
+                        output.accept(ROTARY_SELECTOR.get());
+                        output.accept(CONTROL_SWITCH.get());
+                        output.accept(KEY_SWITCH.get());
+                        output.accept(PANEL_KEY.get());
+                        output.accept(SETPOINT_KNOB.get());
+                        output.accept(THUMBWHEEL.get());
+                        output.accept(ANNUNCIATOR.get());
+                        output.accept(BAR_GRAPH.get());
                     })
                     .build());
 }

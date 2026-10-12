@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shapeless", "category": "redstone", "ingredients": [{"item": "minecraft:lever"}, {"item": "minecraft:tripwire_hook"}, {"item": "minecraft:iron_ingot"}], "result": {"id": "bwr:key_switch", "count": 1}}

@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": [" I ", "IRI", " I "], "key": {"I": {"item": "minecraft:iron_ingot"}, "R": {"item": "minecraft:redstone"}}, "result": {"id": "bwr:rotary_selector", "count": 1}}

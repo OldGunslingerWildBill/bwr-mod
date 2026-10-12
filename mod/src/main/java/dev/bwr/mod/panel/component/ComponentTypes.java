@@ -23,6 +23,16 @@ public final class ComponentTypes {
     // ---- the catalogue: add new types here -------------------------------------
     public static final ComponentType NAMEPLATE = register(new NameplateType());
     public static final ComponentType LAMP = register(new LampType());
+    // inputs and indicators (spec 2.1, first two tables)
+    public static final ComponentType PUSHBUTTON = register(new PushbuttonType());
+    public static final ComponentType TOGGLE_SWITCH = register(new ToggleSwitchType());
+    public static final ComponentType ROTARY_SELECTOR = register(new RotarySelectorType());
+    public static final ComponentType CONTROL_SWITCH = register(new ControlSwitchType());
+    public static final ComponentType KEY_SWITCH = register(new KeySwitchType());
+    public static final ComponentType SETPOINT_KNOB = register(new SetpointKnobType());
+    public static final ComponentType THUMBWHEEL = register(new ThumbwheelType());
+    public static final ComponentType ANNUNCIATOR = register(new AnnunciatorType());
+    public static final ComponentType BAR_GRAPH = register(new BarGraphType());
     // ----------------------------------------------------------------------------
 
     /** Forces class initialisation. */
