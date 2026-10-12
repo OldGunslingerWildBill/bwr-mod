@@ -42,7 +42,13 @@ type-specific config, and live state.
   up to 4 × 4 blocks. The anchor block's BE owns the component; every covered
   cell is reserved so nothing else can overlap, and clicks on any covered cell
   are forwarded to the owner. Breaking any block a component covers drops the
-  component item.
+  component item. A block removed while the other half's chunk is unloaded
+  cannot tell it (chunks are never force-loaded), so each side re-verifies
+  itself when its chunk becomes available: an owner removes (and drops) a
+  component whose covered block is loaded but is no longer a same-type,
+  same-facing panel holding the matching claim; a covered block silently drops
+  a claim whose loaded owner no longer owns that component. A check that meets
+  an unloaded position is deferred until that chunk loads (`PanelConsistency`).
 - **Removal:** sneak-right-click with the panel wrench (§7) drops the item.
 - Every component has a recipe and drops itself. `tools-audit-assets.py`
   must stay at 0 problems.
