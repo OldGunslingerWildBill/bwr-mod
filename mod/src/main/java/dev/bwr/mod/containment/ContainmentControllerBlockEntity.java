@@ -5,6 +5,10 @@ import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import dev.bwr.mod.reactor.RpvSteamOutletBlockEntity;
 import dev.bwr.mod.reactor.RecirculationPortBlock;
 import dev.bwr.mod.piping.PipeTopology;
+import dev.bwr.mod.water.WaterLineNetwork;
+import dev.bwr.mod.water.WaterDischargeBlock;
+import dev.bwr.mod.eccs.CondensateStorageTankBlock;
+import net.minecraft.core.registries.BuiltInRegistries;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.suppression.FormedSuppressionPoolRegistry;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
@@ -131,23 +135,16 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                 best = Math.max(best, openCrossing(inside, face, ContainmentPenetrationBlock.Service.STEAM));
             flow += nozzle.getLastFlowKgPerS() * best;
         }
-        int externalOutlets = 0;
-        for (BlockPos port : reactor.structure().waterInjectionPositions())
-            if (level.isLoaded(port) && level.getBlockState(port).getBlock() instanceof RecirculationPortBlock b
-                    && b.isOutlet()) externalOutlets++;
-        if (externalOutlets > 0 && reactor.connectedExternalPumpCount() > 0) {
-            double available = reactor.core().getVoidModel().getRatedCoreFlowKgPerS()
-                    * reactor.deliveredRecirculationFraction() / externalOutlets;
-            for (BlockPos port : reactor.structure().waterInjectionPositions()) {
-                if (!level.isLoaded(port) || !(level.getBlockState(port).getBlock() instanceof RecirculationPortBlock b)
-                        || !b.isOutlet()) continue;
-                PipeTopology.Graph inside = PipeTopology.get(level, port, null, false, false);
-                double best = 0.0;
-                for (BoundaryFace face : boundaries)
-                    best = Math.max(best, openCrossing(inside, face, ContainmentPenetrationBlock.Service.WATER));
-                flow += available * best;
-            }
+        Map<BlockPos, Double> waterSinks = new HashMap<>();
+        for (BlockPos port : reactor.structure().waterInjectionPositions()) {
+            if (!level.isLoaded(port) || !(level.getBlockState(port).getBlock() instanceof RecirculationPortBlock b)
+                    || !b.isOutlet()) continue;
+            PipeTopology.Graph inside = PipeTopology.get(level, port, null, false, false);
+            for (BoundaryFace face : boundaries)
+                waterCrossings(inside, face, waterSinks);
         }
+        for (var sink : waterSinks.entrySet())
+            flow += WaterLineNetwork.lastDeliveredKgPerS(level, sink.getKey()) * sink.getValue();
         return Math.clamp(flow / RpvSteamOutletBlockEntity.RATED_STEAM_FLOW_KG_PER_S, 0.0, 1.0);
     }
 
@@ -168,9 +165,40 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                 expected == ContainmentPenetrationBlock.Service.STEAM, false);
         double exit = PipeTopology.routes(level, outside).stream()
                 .filter(route -> route.node().kind() == PipeTopology.Kind.END
-                        && !contains(route.node().pos()))
+                        && !encloses(route.node().pos()))
                 .mapToDouble(PipeTopology.Route::opening).max().orElse(0.0);
         return Math.min(Math.min(inlet, exit), valve.position());
+    }
+
+    private void waterCrossings(PipeTopology.Graph inside, BoundaryFace face,
+                                Map<BlockPos, Double> sinks) {
+        BlockPos pos = face.wall();
+        if (!level.isLoaded(pos)) return;
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof ContainmentPenetrationBlock penetration)
+                || penetration.service() != ContainmentPenetrationBlock.Service.WATER
+                || state.getValue(ContainmentPenetrationBlock.RUPTURED)
+                || !ContainmentPenetrationBlock.axial(state, face.normal())
+                || !(level.getBlockEntity(pos) instanceof ContainmentPenetrationBlockEntity valve)) return;
+        double inlet = PipeTopology.routes(level, inside).stream()
+                .filter(route -> route.node().pos().equals(pos))
+                .mapToDouble(PipeTopology.Route::opening).max().orElse(0.0);
+        if (inlet <= 0) return;
+        PipeTopology.Graph outside = PipeTopology.get(level, pos, face.normal(), false, true);
+        for (PipeTopology.Route route : PipeTopology.routes(level, outside)) {
+            BlockPos sink = route.node().pos();
+            if (route.node().kind() != PipeTopology.Kind.END || encloses(sink)
+                    || !level.isLoaded(sink) || !nonReturningWaterSink(sink)) continue;
+            double opening = Math.min(Math.min(inlet, route.opening()), valve.position());
+            if (opening > 0) sinks.merge(sink, opening, Math::max);
+        }
+    }
+
+    private boolean nonReturningWaterSink(BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        return state.getBlock() instanceof WaterDischargeBlock
+                || state.getBlock() instanceof CondensateStorageTankBlock
+                || !BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals("bwr");
     }
     Set<Long> indexedChunks() { return indexedChunks; }
 

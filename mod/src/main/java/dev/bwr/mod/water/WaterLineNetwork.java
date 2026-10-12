@@ -17,6 +17,26 @@ import java.util.*;
 public final class WaterLineNetwork {
     private WaterLineNetwork() {}
     public static final int MAX_PIPE_BLOCKS = 256;
+    private record Delivery(long tick, int kg) {}
+    private static final Map<Level, LinkedHashMap<BlockPos, Delivery>> DELIVERIES = new WeakHashMap<>();
+
+    /** Water actually accepted by a non-returning sink this or the previous tick. */
+    public static double lastDeliveredKgPerS(Level level, BlockPos sink) {
+        var entries = DELIVERIES.get(level);
+        if (entries == null) return 0.0;
+        Delivery delivery = entries.get(sink);
+        return delivery != null && level.getGameTime() - delivery.tick() <= 1
+                && level.getGameTime() >= delivery.tick() ? delivery.kg() * 20.0 : 0.0;
+    }
+
+    private static void delivered(Level level, BlockPos sink, int kg) {
+        if (kg <= 0) return;
+        var entries = DELIVERIES.computeIfAbsent(level, unused -> new LinkedHashMap<>());
+        long tick = level.getGameTime();
+        Delivery old = entries.get(sink);
+        entries.put(sink.immutable(), new Delivery(tick, kg + (old != null && old.tick() == tick ? old.kg() : 0)));
+        if (entries.size() > 2048) entries.remove(entries.keySet().iterator().next());
+    }
 
     public static boolean acceptsLineOn(BlockState state, Direction face) {
         if (state.getBlock() instanceof dev.bwr.mod.containment.ContainmentPenetrationBlock penetration)
@@ -75,7 +95,8 @@ public final class WaterLineNetwork {
                 var graph=dev.bwr.mod.piping.PipeTopology.get(level,origin,null,false,false);
                 if(graph.truncated())return 0;
                 Set<IFluidHandler> unique=Collections.newSetFromMap(new IdentityHashMap<>());
-                List<IFluidHandler> sinks=new ArrayList<>();
+                record Sink(BlockPos pos, IFluidHandler handler) {}
+                List<Sink> sinks=new ArrayList<>();
                 for(var route:dev.bwr.mod.piping.PipeTopology.routes(level,graph)) {
                     var end=route.node();
                     if(end.kind()!=dev.bwr.mod.piping.PipeTopology.Kind.END || route.opening()<=0)continue;
@@ -94,11 +115,13 @@ public final class WaterLineNetwork {
                     if(!receiver)continue;
                     var sink=level.getCapability(Capabilities.FluidHandler.BLOCK,p,face);
                     var identity=dev.bwr.mod.world.LiveCapabilities.fluidIdentity(sink);
-                    if(identity!=null&&unique.add(identity))sinks.add(sink);
+                    if(identity!=null&&unique.add(identity))sinks.add(new Sink(p.immutable(),sink));
                 }
                 int filled = 0;
-                for (IFluidHandler sink : sinks) {
-                    filled += sink.fill(stack.copyWithAmount(stack.getAmount() - filled), action);
+                for (Sink sink : sinks) {
+                    int accepted = sink.handler().fill(stack.copyWithAmount(stack.getAmount() - filled), action);
+                    if (action.execute()) delivered(level, sink.pos(), accepted);
+                    filled += accepted;
                     if (filled == stack.getAmount()) break;
                 }
                 return filled;
