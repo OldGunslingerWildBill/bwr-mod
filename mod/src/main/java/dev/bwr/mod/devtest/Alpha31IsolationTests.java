@@ -28,6 +28,10 @@ public final class Alpha31IsolationTests {
         level.setChunkForced(cx, cz, true);
         level.getChunk(cx, cz);
         BlockPos source = sleeve.west(), msivPos = sleeve.east(), sink = sleeve.east(2);
+        // The GameTest world can survive another Gradle run. Replacing an
+        // identical block preserves its BE (including the MSIV's old FE).
+        for (BlockPos pos : new BlockPos[] {source, sleeve, msivPos, sink})
+            level.removeBlock(pos, false);
         level.setBlock(source, BwrBlocks.PRESSURISED_TUBE.get().defaultBlockState(), 3);
         level.setBlock(sleeve, BwrBlocks.CONTAINMENT_STEAM_PENETRATION.get().defaultBlockState()
                 .setValue(ContainmentPenetrationBlock.FACING, Direction.EAST), 3);
@@ -46,7 +50,9 @@ public final class Alpha31IsolationTests {
             double isolated = PipeTopology.routes(level, graph).stream()
                     .filter(route -> route.node().pos().equals(sink))
                     .mapToDouble(PipeTopology.Route::opening).max().orElse(-1);
-            helper.assertTrue(isolated == 0, "unpowered MSIV did not isolate the open sleeve: " + isolated);
+            helper.assertTrue(isolated == 0, "unpowered MSIV did not isolate the open sleeve: " + isolated
+                    + " msiv=" + msiv.getPosition() + " graph=" + graph.edges()
+                    + " routes=" + PipeTopology.routes(level, graph));
             msiv.energy().receiveEnergy(20_000, false);
             msiv.tickValve(4.0);
             double open = PipeTopology.routes(level, PipeTopology.get(level, source, Direction.EAST, true, false)).stream()
@@ -61,6 +67,8 @@ public final class Alpha31IsolationTests {
                     .filter(route -> route.node().pos().equals(sink))
                     .mapToDouble(PipeTopology.Route::opening).max().orElse(-1);
             helper.assertTrue(isolated == 0, "unpowered sleeve passed steam: " + isolated);
+            for (BlockPos pos : new BlockPos[] {source, sleeve, msivPos, sink})
+                level.removeBlock(pos, false);
             level.setChunkForced(cx, cz, false);
             helper.succeed();
         });
