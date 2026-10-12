@@ -103,6 +103,21 @@ public final class PanelPayloads {
         }
     }
 
+    /** Bulk content changes of one component (see ComponentData#drainPatch), bounded by {@code ComponentData.MAX_PATCH}. */
+    public record Content(BlockPos pos, int id, byte[] bytes) implements CustomPacketPayload {
+        public static final Type<Content> TYPE = new Type<>(BwrMod.id("panel_content"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Content> STREAM_CODEC = StreamCodec.composite(
+                BlockPos.STREAM_CODEC, Content::pos,
+                ByteBufCodecs.VAR_INT, Content::id,
+                ByteBufCodecs.byteArray(dev.bwr.mod.panel.component.ComponentData.MAX_PATCH), Content::bytes,
+                Content::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     /** Open the config screen of a component (server-initiated, for the vanilla right-click path). */
     public record OpenConfig(BlockPos pos, int id) implements CustomPacketPayload {
         public static final Type<OpenConfig> TYPE = new Type<>(BwrMod.id("panel_open_config"));

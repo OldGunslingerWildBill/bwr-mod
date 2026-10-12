@@ -2,6 +2,7 @@ package dev.bwr.mod.panel;
 
 import com.mojang.logging.LogUtils;
 import dev.bwr.mod.fuel.BwrDataComponents;
+import dev.bwr.mod.panel.component.ComponentData;
 import dev.bwr.mod.panel.component.ComponentType;
 import dev.bwr.mod.panel.component.Footprint;
 import dev.bwr.mod.panel.component.InputSource;
@@ -61,10 +62,15 @@ public final class PanelBlockEntity extends BlockEntity {
     public record ValueDelta(int id, boolean output, int index, double value) {
     }
 
+    /** Bulk content changes of one component (display pixels, text), queued for the next batched packet. */
+    public record ContentPatch(int id, byte[] bytes) {
+    }
+
     private final List<PanelComponent> owned = new ArrayList<>();
     private final List<PanelComponent> ownedView = Collections.unmodifiableList(owned);
     private final List<Claim> foreign = new ArrayList<>();
     private final List<ValueDelta> pending = new ArrayList<>();
+    private final List<PanelComponent> contentDirty = new ArrayList<>();
     private Claim[] grid;
     private int nextId = 1;
     private PanelGroup group;
@@ -228,6 +234,7 @@ public final class PanelBlockEntity extends BlockEntity {
                                 List<PanelGroup.Rect> rects) {
         PanelComponent component = new PanelComponent(nextId++, type, x, y, footprint, label);
         owned.add(component);
+        attachData(component);
         structureChanged();
         for (PanelGroup.Rect rect : rects) {
             if (rect.pos().equals(worldPosition)) {
@@ -401,6 +408,72 @@ public final class PanelBlockEntity extends BlockEntity {
         return drained;
     }
 
+    // ---- bulk content (displays): see ComponentData#drainPatch
+
+    /** Links a component's data to this block entity: clock, size, and the way to report content changes. */
+    private void attachData(PanelComponent component) {
+        if (component.data() == null) {
+            return;
+        }
+        component.data().attach(new ComponentData.Host() {
+            @Override
+            public long gameTime() {
+                return level == null ? 0L : level.getGameTime();
+            }
+
+            @Override
+            public int cellsWide() {
+                return component.w();
+            }
+
+            @Override
+            public int cellsHigh() {
+                return component.h();
+            }
+
+            @Override
+            public void touch() {
+                component.touch();
+            }
+
+            @Override
+            public void contentChanged() {
+                if (level == null || level.isClientSide()) {
+                    return;
+                }
+                if (!contentDirty.contains(component)) {
+                    contentDirty.add(component);
+                }
+                setChanged();
+                PanelSync.markDirty(PanelBlockEntity.this);
+            }
+        });
+    }
+
+    /** Server: takes the content patches queued since the last call. */
+    List<ContentPatch> drainContent() {
+        if (contentDirty.isEmpty()) {
+            return List.of();
+        }
+        List<ContentPatch> patches = new ArrayList<>(contentDirty.size());
+        for (PanelComponent component : contentDirty) {
+            byte[] bytes = component.data().drainPatch();
+            if (bytes != null && bytes.length <= ComponentData.MAX_PATCH) {
+                patches.add(new ContentPatch(component.id(), bytes));
+            }
+        }
+        contentDirty.clear();
+        return patches;
+    }
+
+    /** Client: applies a received content patch. */
+    public void applyContent(int id, byte[] bytes) {
+        PanelComponent component = component(id);
+        if (component != null && component.data() != null) {
+            component.data().applyPatch(bytes);
+        }
+    }
+
     /** Client: applies a received delta. */
     public void applyDelta(ValueDelta delta) {
         PanelComponent component = component(delta.id());
@@ -485,6 +558,7 @@ public final class PanelBlockEntity extends BlockEntity {
     public void loadPanel(CompoundTag tag) {
         owned.clear();
         foreign.clear();
+        contentDirty.clear();
         int version = tag.getInt("Version");
         if (version > SAVE_VERSION) {
             LOGGER.warn("Panel at {} was saved by a newer version ({} > {}); loading what is understood",
@@ -495,6 +569,7 @@ public final class PanelBlockEntity extends BlockEntity {
         for (int i = 0; i < components.size(); i++) {
             PanelComponent component = PanelComponent.load(components.getCompound(i));
             owned.add(component);
+            attachData(component);
             highest = Math.max(highest, component.id());
         }
         ListTag claims = tag.getList("Claims", Tag.TAG_COMPOUND);

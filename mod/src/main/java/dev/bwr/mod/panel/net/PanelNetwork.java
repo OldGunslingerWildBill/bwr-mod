@@ -30,6 +30,7 @@ public final class PanelNetwork {
         registrar.playToServer(PanelPayloads.Operate.TYPE, PanelPayloads.Operate.STREAM_CODEC, PanelNetwork::handleOperate);
         registrar.playToClient(PanelPayloads.State.TYPE, PanelPayloads.State.STREAM_CODEC, PanelNetwork::handleState);
         registrar.playToClient(PanelPayloads.Delta.TYPE, PanelPayloads.Delta.STREAM_CODEC, PanelNetwork::handleDelta);
+        registrar.playToClient(PanelPayloads.Content.TYPE, PanelPayloads.Content.STREAM_CODEC, PanelNetwork::handleContent);
         registrar.playToClient(PanelPayloads.OpenConfig.TYPE, PanelPayloads.OpenConfig.STREAM_CODEC,
                 PanelNetwork::handleOpenConfig);
     }
@@ -81,6 +82,13 @@ public final class PanelNetwork {
             if (be != null) {
                 be.applyDelta(new PanelBlockEntity.ValueDelta(entry.id(), entry.output(), entry.index(), entry.value()));
             }
+        }
+    }
+
+    private static void handleContent(PanelPayloads.Content payload, IPayloadContext context) {
+        PanelBlockEntity be = panelAt(context, payload.pos());
+        if (be != null) {
+            be.applyContent(payload.id(), payload.bytes());
         }
     }
 
