@@ -34,6 +34,12 @@ public final class BwrDataComponents {
                     .persistent(com.mojang.serialization.Codec.doubleRange(0,5000))
                     .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.DOUBLE).build());
 
+    /** Which of a control panel component type's footprints an item stack places (index into the type's list). */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> COMPONENT_VARIANT =
+            DATA_COMPONENTS.register("component_variant", () -> DataComponentType.<Integer>builder()
+                    .persistent(com.mojang.serialization.Codec.intRange(0, 63))
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT).build());
+
     /** Burnup, enrichment, fuel type and remaining gadolinia, travelling with the itemstack. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<FuelAssemblyData>>
             FUEL_ASSEMBLY = DATA_COMPONENTS.register("fuel_assembly",

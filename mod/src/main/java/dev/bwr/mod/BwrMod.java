@@ -42,6 +42,9 @@ public final class BwrMod {
                 dev.bwr.mod.containment.ContainmentConfig.SPEC);
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER,
                 dev.bwr.mod.accident.CoriumConfig.SPEC);
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON,
+                dev.bwr.mod.panel.PanelConfig.SPEC, "bwr-panels.toml");
+        dev.bwr.mod.panel.component.ComponentTypes.bootstrap();
         BwrBlocks.BLOCKS.register(modBus);
         BwrItems.ITEMS.register(modBus);
         BwrItems.TABS.register(modBus);

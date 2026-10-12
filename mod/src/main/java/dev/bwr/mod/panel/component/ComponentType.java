@@ -1,0 +1,169 @@
+package dev.bwr.mod.panel.component;
+
+import dev.bwr.mod.panel.PanelBlockEntity;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+
+import java.util.List;
+
+/**
+ * A kind of panel component: the single object that defines everything common
+ * (non-client) about, say, a lamp. There is exactly one instance per kind,
+ * registered in {@link ComponentTypes}; instances of the kind on a panel are
+ * {@link PanelComponent}s carrying a {@link ComponentData} made by
+ * {@link #createData()}.
+ *
+ * <h2>How to add a component type</h2>
+ * <ol>
+ *   <li>Write a {@link ComponentData} subclass: config fields + latched state,
+ *       {@code save}/{@code load} (see {@code LampData}).</li>
+ *   <li>Subclass this: id, {@link #footprints()}, {@link #createData()},
+ *       {@link #configSchema()}, port lists, and the interaction hooks you
+ *       need. Input components override {@link #operate} and/or {@link #use}
+ *       and call {@code ctx.setOutput(i, v)}; output components read
+ *       {@code component.input(i)} when drawing.</li>
+ *   <li>Register it in {@link ComponentTypes} (one line).</li>
+ *   <li>Register its item in {@code BwrItems} (one line, a
+ *       {@link ComponentItem} with the same id), then add the item model, lang
+ *       keys {@code item.bwr.<id>} / {@code component.bwr.<id>}, and a recipe.
+ *       {@code tools-audit-assets.py} and the {@code ComponentRegistryTests}
+ *       GameTest fail if any of these is missing.</li>
+ *   <li>Client: write a {@code ComponentModel} and register it in
+ *       {@code ComponentModels} under the same id. Until then the type draws a
+ *       generic grey slab. A baked Blender model replaces the procedural body
+ *       by registering a different {@code ComponentModel} for the id; nothing
+ *       here changes.</li>
+ *   <li>Add the type to the save/reload GameTest.</li>
+ * </ol>
+ *
+ * <h2>Rules</h2>
+ * <ul>
+ *   <li>Types are stateless singletons. All per-instance state is in
+ *       {@link ComponentData} (saved) or {@link PanelComponent} live values.</li>
+ *   <li>Never act on the plant automatically. A type may only change outputs in
+ *       response to a player ({@link #operate}, {@link #use}); sinks are wired
+ *       later by the binding layer.</li>
+ *   <li>Everything here runs on the server unless marked; the client only
+ *       draws. Do not store client-only objects in {@link ComponentData}.</li>
+ * </ul>
+ */
+public abstract class ComponentType {
+    private final ResourceLocation id;
+
+    protected ComponentType(ResourceLocation id) {
+        this.id = id;
+    }
+
+    public final ResourceLocation id() {
+        return id;
+    }
+
+    /** {@code component.bwr.<path>}: display name of the type. */
+    public String translationKey() {
+        return "component." + id.getNamespace() + "." + id.getPath();
+    }
+
+    /**
+     * Sizes the item can be placed at, in cells. Index 0 is the default. The
+     * item remembers an index; right-clicking air with it cycles. A footprint
+     * may never exceed {@link Footprint#MAX_CELLS} either way.
+     */
+    public abstract List<Footprint> footprints();
+
+    /** A fresh {@link ComponentData} holding the defaults. */
+    public abstract ComponentData createData();
+
+    /** Editable settings; the wrench screen is generated from this and the server validates against it. */
+    public List<ConfigField> configSchema() {
+        return List.of();
+    }
+
+    /**
+     * Inputs (values this component displays), by index. May depend on the
+     * config; the framework calls {@link PanelComponent#syncPorts()} after every
+     * config change.
+     */
+    public List<PortSpec> inputPorts(ComponentData data) {
+        return List.of();
+    }
+
+    /** Outputs (values this component produces), by index. */
+    public List<PortSpec> outputPorts(ComponentData data) {
+        return List.of();
+    }
+
+    /** Prefix of auto-assigned labels, producing PB-1, PB-2 ... unique within the group. */
+    public String labelPrefix() {
+        return id.getPath().toUpperCase(java.util.Locale.ROOT).substring(0, Math.min(3, id.getPath().length()));
+    }
+
+    /**
+     * A player is operating the component with a press / release / turn / set.
+     * Server only, already validated (distance, permission, finite value); clamp
+     * {@code value} to your own range. Return whether anything was handled.
+     */
+    public boolean operate(OperateContext context, OperateAction action, double value) {
+        return false;
+    }
+
+    /** Whether a bare-handed click does anything (makes the client swing the arm). Override with {@link #use}. */
+    public boolean isInteractive() {
+        return false;
+    }
+
+    /** A bare-handed right-click landed on the component. Server only. */
+    public InteractionResult use(UseContext context) {
+        return InteractionResult.PASS;
+    }
+
+    /**
+     * An input value or output value changed (both sides). Recompute derived
+     * data here, never schedule ticks. Keep it cheap: it runs for every delta.
+     */
+    public void valuesChanged(PanelComponent component) {
+    }
+
+    /**
+     * The component was just loaded from NBT or received over the network
+     * (both sides). Restore {@code storeOutput} values from latched data here.
+     */
+    public void onLoaded(PanelComponent component) {
+    }
+
+    /** The registered item that places this type. */
+    public final Item item() {
+        Item item = BuiltInRegistries.ITEM.get(id);
+        return item == null ? Items.AIR : item;
+    }
+
+    /** Server-side handle for {@link #operate}. */
+    public record OperateContext(ServerLevel level, ServerPlayer player, PanelBlockEntity owner,
+                                 PanelComponent component) {
+        /** Sets an output, syncs it and notifies {@link dev.bwr.mod.panel.PanelBus} listeners. */
+        public void setOutput(int index, double value) {
+            owner.setOutput(component, index, value);
+        }
+
+        /** Re-sends the whole owner state to watchers; use after changing latched {@link ComponentData}. */
+        public void syncFull() {
+            owner.syncFull();
+        }
+    }
+
+    /** Server-side handle for {@link #use}: where on the component the click landed. */
+    public record UseContext(ServerLevel level, ServerPlayer player, PanelBlockEntity owner,
+                             PanelComponent component, double cellX, double cellY) {
+        public void setOutput(int index, double value) {
+            owner.setOutput(component, index, value);
+        }
+
+        public void syncFull() {
+            owner.syncFull();
+        }
+    }
+}

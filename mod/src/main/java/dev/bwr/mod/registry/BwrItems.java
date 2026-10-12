@@ -55,6 +55,23 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.REACTOR_VESSEL);
     public static final DeferredItem<BlockItem> CORIUM =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CORIUM);
+
+    // --- Control panels (CONTROL-PANELS-SPEC) ---------------------------------
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_VERTICAL =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_VERTICAL);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_BENCHBOARD =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_BENCHBOARD);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_CONSOLE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_CONSOLE);
+    public static final DeferredItem<dev.bwr.mod.panel.PanelWrenchItem> PANEL_WRENCH =
+            ITEMS.register("panel_wrench", () -> new dev.bwr.mod.panel.PanelWrenchItem(new Item.Properties().stacksTo(1)));
+    // One item per component type, registered under the type's own id. Add a line per new type.
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> NAMEPLATE =
+            ITEMS.register("nameplate", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.NAMEPLATE.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> LAMP =
+            ITEMS.register("lamp", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.LAMP.id()));
     public static final DeferredItem<BlockItem> CONTROL_ROD_DRIVE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_ROD_DRIVE);
     public static final DeferredItem<BlockItem> CORE_SPRAY_SPARGER =
@@ -233,6 +250,12 @@ public final class BwrItems {
                         output.accept(NUCLEAR_GENERATOR.get());
                         output.accept(TURBINE_FEED_PUMP.get());
                         output.accept(CORIUM.get());
+                        output.accept(CONTROL_PANEL_VERTICAL.get());
+                        output.accept(CONTROL_PANEL_BENCHBOARD.get());
+                        output.accept(CONTROL_PANEL_CONSOLE.get());
+                        output.accept(PANEL_WRENCH.get());
+                        output.accept(NAMEPLATE.get());
+                        output.accept(LAMP.get());
                     })
                     .build());
 }

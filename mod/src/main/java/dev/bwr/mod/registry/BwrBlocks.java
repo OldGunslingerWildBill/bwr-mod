@@ -379,4 +379,23 @@ public final class BwrBlocks {
      */
     public static final DeferredBlock<dev.bwr.mod.accident.CoriumBlock> CORIUM =
             BLOCKS.register("corium", () -> new dev.bwr.mod.accident.CoriumBlock());
+    // --- Control panels --------------------------------------------------
+
+    /** Painted board for control rooms; breaks with any tool. */
+    private static BlockBehaviour.Properties panelBoard() {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_LIGHT_GREEN)
+                .strength(1.5F, 6.0F)
+                .sound(SoundType.METAL);
+    }
+
+    public static final DeferredBlock<dev.bwr.mod.panel.PanelBlock> CONTROL_PANEL_VERTICAL =
+            BLOCKS.register("control_panel_vertical",
+                    () -> new dev.bwr.mod.panel.PanelBlock(panelBoard(), dev.bwr.mod.panel.PanelType.VERTICAL));
+    public static final DeferredBlock<dev.bwr.mod.panel.PanelBlock> CONTROL_PANEL_BENCHBOARD =
+            BLOCKS.register("control_panel_benchboard",
+                    () -> new dev.bwr.mod.panel.PanelBlock(panelBoard(), dev.bwr.mod.panel.PanelType.BENCHBOARD));
+    public static final DeferredBlock<dev.bwr.mod.panel.PanelBlock> CONTROL_PANEL_CONSOLE =
+            BLOCKS.register("control_panel_console",
+                    () -> new dev.bwr.mod.panel.PanelBlock(panelBoard(), dev.bwr.mod.panel.PanelType.CONSOLE));
 }

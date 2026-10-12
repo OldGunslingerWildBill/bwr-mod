@@ -19,13 +19,16 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class BwrGuiNetwork {
 
     /** Bumped when required menu payloads or their wire formats change. */
-    private static final String VERSION = "12";
+    private static final String VERSION = "13";
 
     private BwrGuiNetwork() {
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(VERSION);
+
+        // Control panel packets share this registrar, so they ride this version.
+        dev.bwr.mod.panel.net.PanelNetwork.register(registrar);
 
         registrar.playToClient(MenuSyncPayload.TYPE, MenuSyncPayload.STREAM_CODEC,
                 BwrGuiNetwork::handleSync);
