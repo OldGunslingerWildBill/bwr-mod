@@ -1,0 +1,1 @@
+{"type":"minecraft:block","pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"bwr:containment_vault_door"}],"conditions":[{"condition":"minecraft:block_state_property","block":"bwr:containment_vault_door","properties":{"cell":"0"}},{"condition":"minecraft:survives_explosion"}]}]}

@@ -22,6 +22,13 @@ public final class ContainmentPenetrationCapabilities {
     private static final ThreadLocal<Set<BlockPos>> RESOLVING = ThreadLocal.withInitial(HashSet::new);
 
     public static void register(RegisterCapabilitiesEvent event) {
+        for (var vault : new ContainmentVaultDoorBlock[] {
+                BwrBlocks.CONTAINMENT_VAULT_DOOR.get(), BwrBlocks.CONTAINMENT_VAULT_DOOR_4X4.get() }) {
+            event.registerBlock(Capabilities.EnergyStorage.BLOCK, (level, pos, state, unused, side) -> {
+                var owner = vault.owner(level, pos, state);
+                return owner == null ? null : owner.energy();
+            }, vault);
+        }
         for (var entry : new net.minecraft.world.level.block.Block[] {
                 BwrBlocks.CONTAINMENT_STEAM_PENETRATION.get(), BwrBlocks.CONTAINMENT_WATER_PENETRATION.get(),
                 BwrBlocks.CONTAINMENT_PASS_THROUGH.get(), BwrBlocks.CONTAINMENT_POWER_PENETRATION.get(),

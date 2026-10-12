@@ -3,6 +3,7 @@ package dev.bwr.mod.registry;
 import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.containment.ContainmentControllerBlockEntity;
 import dev.bwr.mod.containment.ContainmentPenetrationBlockEntity;
+import dev.bwr.mod.containment.ContainmentVaultDoorBlockEntity;
 import dev.bwr.mod.eccs.AdsControllerBlockEntity;
 import dev.bwr.mod.eccs.CondensateStorageTankBlockEntity;
 import dev.bwr.mod.eccs.EccsPumpBlockEntity;
@@ -39,6 +40,11 @@ public final class BwrBlockEntities {
             CONTAINMENT_CONTROLLER = BLOCK_ENTITIES.register("containment_controller",
             () -> BlockEntityType.Builder.of(ContainmentControllerBlockEntity::new,
                     BwrBlocks.CONTAINMENT_CONTROLLER.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ContainmentVaultDoorBlockEntity>>
+            CONTAINMENT_VAULT_DOOR = BLOCK_ENTITIES.register("containment_vault_door",
+            () -> BlockEntityType.Builder.of(ContainmentVaultDoorBlockEntity::new,
+                    BwrBlocks.CONTAINMENT_VAULT_DOOR.get(),BwrBlocks.CONTAINMENT_VAULT_DOOR_4X4.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ContainmentPenetrationBlockEntity>>
             CONTAINMENT_PENETRATION = BLOCK_ENTITIES.register("containment_penetration",

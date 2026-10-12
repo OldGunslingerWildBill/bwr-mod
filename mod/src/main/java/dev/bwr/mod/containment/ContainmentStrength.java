@@ -69,7 +69,10 @@ public final class ContainmentStrength {
             // make the sleeve any stronger than its 150-psig qualification.
             if (layer == 0 && state.getBlock() instanceof ContainmentPenetrationBlock)
                 psi = ContainmentPenetrationRatings.containmentPsig();
-            else if (!(level.getBlockState(face.wall()).getBlock() instanceof ContainmentPenetrationBlock))
+            else if (layer == 0 && state.getBlock() instanceof ContainmentVaultDoorBlock)
+                psi = ContainmentConfig.VAULT_DOOR_CONTAINMENT_PSIG.get();
+            else if (!(level.getBlockState(face.wall()).getBlock() instanceof ContainmentPenetrationBlock)
+                    && !(level.getBlockState(face.wall()).getBlock() instanceof ContainmentVaultDoorBlock))
                 psi += contribution(level, pos, state);
         }
         return new Column(face, List.copyOf(layers), frontier, material, psi,

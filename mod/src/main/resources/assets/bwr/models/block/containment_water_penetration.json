@@ -1,4 +1,3 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "textures": { "all": "bwr:block/machine_casing" }
+  "parent": "bwr:block/containment/sleeve_water"
 }

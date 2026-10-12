@@ -1,5 +1,48 @@
 {
   "variants": {
-    "": { "model": "bwr:block/containment_water_penetration" }
+    "facing=north,ruptured=false": {
+      "model": "bwr:block/containment_water_penetration"
+    },
+    "facing=north,ruptured=true": {
+      "model": "bwr:block/containment_water_penetration"
+    },
+    "facing=south,ruptured=false": {
+      "model": "bwr:block/containment_water_penetration"
+    },
+    "facing=south,ruptured=true": {
+      "model": "bwr:block/containment_water_penetration"
+    },
+    "facing=east,ruptured=false": {
+      "model": "bwr:block/containment_water_penetration",
+      "y": 90
+    },
+    "facing=east,ruptured=true": {
+      "model": "bwr:block/containment_water_penetration",
+      "y": 90
+    },
+    "facing=west,ruptured=false": {
+      "model": "bwr:block/containment_water_penetration",
+      "y": 90
+    },
+    "facing=west,ruptured=true": {
+      "model": "bwr:block/containment_water_penetration",
+      "y": 90
+    },
+    "facing=up,ruptured=false": {
+      "model": "bwr:block/containment_water_penetration",
+      "x": 90
+    },
+    "facing=up,ruptured=true": {
+      "model": "bwr:block/containment_water_penetration",
+      "x": 90
+    },
+    "facing=down,ruptured=false": {
+      "model": "bwr:block/containment_water_penetration",
+      "x": 90
+    },
+    "facing=down,ruptured=true": {
+      "model": "bwr:block/containment_water_penetration",
+      "x": 90
+    }
   }
 }

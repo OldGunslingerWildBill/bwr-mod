@@ -5,6 +5,7 @@ import dev.bwr.core.feedwater.FeedwaterDesign;
 import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.containment.ContainmentControllerBlock;
 import dev.bwr.mod.containment.ContainmentPenetrationBlock;
+import dev.bwr.mod.containment.ContainmentVaultDoorBlock;
 import dev.bwr.mod.steam.TurbineValveBlock;
 import dev.bwr.mod.condenser.CondenserBlock;
 import dev.bwr.mod.cooling.CoolingBlock;
@@ -84,6 +85,10 @@ public final class BwrBlocks {
 
     public static final DeferredBlock<ContainmentControllerBlock> CONTAINMENT_CONTROLLER =
             BLOCKS.register("containment_controller", () -> new ContainmentControllerBlock(machine()));
+    public static final DeferredBlock<ContainmentVaultDoorBlock> CONTAINMENT_VAULT_DOOR =
+            BLOCKS.register("containment_vault_door", () -> new ContainmentVaultDoorBlock(vesselSteel(),3));
+    public static final DeferredBlock<ContainmentVaultDoorBlock> CONTAINMENT_VAULT_DOOR_4X4 =
+            BLOCKS.register("containment_vault_door_4x4", () -> new ContainmentVaultDoorBlock(vesselSteel(),4));
     public static final DeferredBlock<ContainmentPenetrationBlock> CONTAINMENT_STEAM_PENETRATION =
             BLOCKS.register("containment_steam_penetration", () -> new ContainmentPenetrationBlock(vesselSteel(), ContainmentPenetrationBlock.Service.STEAM));
     public static final DeferredBlock<ContainmentPenetrationBlock> CONTAINMENT_WATER_PENETRATION =

@@ -59,7 +59,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     private WeakestSpot weakest;
     private final Map<BoundaryFace, ContainmentStrength.Column> ratings = new HashMap<>();
     /** Published only after a complete rating pass; live valve state is still queried per crossing. */
-    private List<BoundaryFace> penetrationFaces = List.of();
+    private List<BoundaryFace> penetrationFaces = List.of(); // All rated openings, including doors.
     private final Map<Long, Set<BoundaryFace>> ratingDependencies = new HashMap<>();
     private final Set<BoundaryFace> pendingRatingFaces = new HashSet<>();
     private ArrayDeque<BoundaryFace> ratingQueue;
@@ -117,7 +117,8 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     public List<BlockPos> openings() {
         return penetrationFaces.stream().map(BoundaryFace::wall).distinct()
                 .filter(pos -> level != null && level.isLoaded(pos)
-                        && level.getBlockState(pos).getBlock() instanceof ContainmentPenetrationBlock)
+                        && (level.getBlockState(pos).getBlock() instanceof ContainmentPenetrationBlock
+                            || level.getBlockState(pos).getBlock() instanceof ContainmentVaultDoorBlock))
                 .toList();
     }
 
@@ -341,8 +342,9 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
             // One boundary scan for the completed rating pass. Neither reactor
             // ticks nor the CC opening readout scan thousands of wall faces.
             penetrationFaces = ratings.keySet().stream()
-                    .filter(face -> level.isLoaded(face.wall())
-                            && level.getBlockState(face.wall()).getBlock() instanceof ContainmentPenetrationBlock)
+                    .filter(face -> level.isLoaded(face.wall()) && (
+                            level.getBlockState(face.wall()).getBlock() instanceof ContainmentPenetrationBlock
+                            || level.getBlockState(face.wall()).getBlock() instanceof ContainmentVaultDoorBlock))
                     .sorted(java.util.Comparator.comparingLong((BoundaryFace face) -> face.wall().asLong())
                             .thenComparingInt(face -> face.normal().ordinal()))
                     .toList();
@@ -414,7 +416,12 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                 ContainmentConfig.STRENGTH_SCAN_DEPTH.get());
         if (column == null) { stale = true; return null; }
         for (BlockPos pos : column.layers()) if (!level.isLoaded(pos)) { stale = true; return null; }
-        if (level.getBlockState(weakest.position()).getBlock() instanceof ContainmentPenetrationBlock) {
+        if (level.getBlockState(weakest.position()).getBlock() instanceof ContainmentVaultDoorBlock door) {
+            BlockState state = level.getBlockState(weakest.position());
+            ContainmentVaultDoorBlockEntity owner = door.owner(level, weakest.position(), state);
+            if (owner != null) owner.jamBlownOpen();
+            else return null;
+        } else if (level.getBlockState(weakest.position()).getBlock() instanceof ContainmentPenetrationBlock) {
             BlockState state = level.getBlockState(weakest.position());
             level.setBlock(weakest.position(), state.setValue(ContainmentPenetrationBlock.RUPTURED, true),
                     net.minecraft.world.level.block.Block.UPDATE_ALL);
