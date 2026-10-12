@@ -1,8 +1,12 @@
-# Containment structure — implementation spec (planned alpha.31)
+# Containment structure — alpha.31 implementation spec
 
-Status: **design, not yet built.** This is a handoff spec. It turns the lumped
+Status: **implemented in alpha.31, except the dedicated controller GUI.** This
+document retains the original handoff order for historical context. It turns the lumped
 containment atmosphere from alpha.30 (`dev.bwr.core.accident.ContainmentAtmosphere`)
 into something players build in the world.
+
+The controller GUI is deferred to a later visual overhaul. The in-world status
+readout and `bwr_containment` CC methods provide its information meanwhile.
 
 ## 0. Before starting
 

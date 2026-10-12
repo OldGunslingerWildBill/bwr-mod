@@ -9,7 +9,18 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-alpha.30` — Natural circulation, core melt and containment hydrogen, October 9, 2026.
+**Current version:** `0.1.0-alpha.31` — Buildable containment, October 11, 2026.
+
+**Alpha.31:** surround the reactor and a suppression pool with a solid containment
+room. Its controller surveys free volume and wall strength, reports leaks and
+openings, and links the vessel to the simulated atmosphere. Install rated steam,
+water, power and data penetrations, a vault door or interlocked airlock, then
+power isolation valves. A nitrogen supply and a wetwell vent are now real
+equipment; the vent works with a concrete basin or an enclosed suppression tank.
+The controller's status readout and CC:Tweaked methods expose hydrogen, oxygen,
+pressure, weakest spot and bypass flow. The dedicated controller GUI is deferred
+to the later GUI overhaul. See the [containment build guide](CONTAINMENT-UPDATE.md)
+and [alpha.31 project log](PROJECT-LOG.md).
 
 **Alpha.30:** a lost reactor now keeps going wrong in order. With the pumps off,
 natural circulation holds a reduced flow. An uncovered core bursts its cladding,

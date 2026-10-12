@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.0-alpha.31 — 2026-10-11 — Buildable containment
+
+- Added surveyed containment rooms built from full solid blocks, with volume, leak position, layer-based weakest-spot pressure rating and reactor/pool linking.
+- Added steam, water, power, data and general penetrations. Powered isolation valves close on lost actuator power; connected open process lines can bypass the containment atmosphere.
+- Added 3×3 and 4×4 Blender-modeled vault doors and a two-leaf personnel airlock. Redstone pulses cycle the airlock interlock; only CC override forces both leaves open, creating a medium leak even after releasing override.
+- Added a powered nitrogen supply with consumable canisters and a powered wetwell vent valve for concrete basins and enclosed suppression tanks. Vent discharge needs exterior air or a straight stack.
+- Replaced the containment controller's status-only CC face with room, opening, isolation, bypass and atmosphere methods. The in-world status readout shows openings, weakest spot, hydrogen, oxygen and pressure.
+- Fixed persistent-world GameTest fixture readiness for tank casing drops; added airlock reload, redstone and equipment regressions. The controller GUI is deferred to a later visual overhaul.
+- See [CONTAINMENT-UPDATE.md](CONTAINMENT-UPDATE.md) for a worked build and limitations. The corium and severe-accident model remains lumped, not a fluid-dynamics simulation.
+
 ## 0.1.0-alpha.30 — 2026-10-09 — Natural circulation, core melt and containment hydrogen
 
 - Added natural circulation: with pumps tripped or absent, core flow follows the cube root of thermal power and needs water above the shroud head. A two-pump trip from rated, with pressure and level held, settles near 23% flow and 26% power.

@@ -1,0 +1,8 @@
+Realistic BWR 0.1.0-alpha.31 — Buildable containment
+
+• Build a sealed containment room around your reactor and suppression pool. The controller reports leaks, free volume, weakest spot and pressure rating.
+• Add rated steam/water/power/data penetrations and powered isolation valves. Open process lines can bypass containment.
+• Install the Blender-modeled vault door or two-leaf airlock. Redstone cycles the interlocked leaves; CC can force both open at a leak cost.
+• Power a nitrogen supply with canisters. The wetwell vent works with both concrete basins and enclosed suppression tanks when its outlet reaches exterior air.
+• CC:Tweaked now reads the room, openings, atmosphere and bypass flow, and can isolate penetrations. The controller status readout includes hydrogen, oxygen and pressure; its GUI comes in a later overhaul.
+• Fixed persistent-world tank drop-test readiness and added containment regressions.
