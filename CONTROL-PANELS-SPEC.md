@@ -137,6 +137,16 @@ output, or a pushbutton's output, is bound to a BOOLEAN or LEVEL command; the
 player can switch it back. A momentary sink still fires only on an operated
 output change, never on load, resample or rebind. Redstone sinks have no mode.
 
+A **plant signal** source carries a linear transform `displayed = raw x scale + offset` (defaults 1 and 0,
+from GUI protocol 17). It is applied in `PlantSource.sample`, so every consumer sees the transformed value; NaN
+(no signal) stays NaN. It is saved as `Scale` and `Offset` only when non-default, so earlier saves load
+unchanged and re-save byte-identical; a tag whose `Scale` is zero, non-finite or not a number, or whose `Offset`
+is, is kept verbatim like any other malformed source. The `Bind` payload carries `scale` (shared with sinks) and
+a trailing `offset`; for a plant input the server requires a finite non-zero scale and a finite offset, both of
+magnitude at most 1e6 (`BAD_VALUE` otherwise). Component, redstone and CC sources have no transform in v1. The
+binding screen shows Scale and Offset fields for plant inputs, with presets Raw (x1) and Fraction to %
+(x100), so a 0 to 1 signal such as the MSIV `position` can drive a 7-segment display that reads 0 to 100.
+
 No logic, comparators or timers in v1. Annunciator alarm conditions
 (`input > setpoint`, `input < setpoint`, `input == 1`) are display behavior
 only and never command anything.

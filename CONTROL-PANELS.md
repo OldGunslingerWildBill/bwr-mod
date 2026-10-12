@@ -80,7 +80,26 @@ output (sends 1), to a BOOLEAN or LEVEL command. The value must lie within the c
 switch back to follow. Momentary sinks, like all sinks, fire only on an operated change, never on load,
 resample or rebind. Redstone sinks have no mode.
 
-### Scale
+### Scale and offset on plant inputs
+
+A **plant signal** input has a linear transform, `shown = raw x scale + offset` (defaults 1 and 0), set with
+the Scale and Offset fields of the binding screen when the mode is *Plant*. Two presets sit under the fields:
+*Raw (x1)* and *Fraction to % (x100)*. The scale must be finite and non-zero (at most 1,000,000 in size) and
+the offset finite (same bound); the server refuses anything else. No signal stays no signal: a removed or
+unloaded device still reads dashes, never `offset`. Use it where a display or gauge should show a signal in
+other units or a 0 to 1 fraction as a percentage:
+
+* MSIV `position` is 0 to 1. Scale 100 makes a 7-segment with format `{0:3.0f}` read `100` when open and `0`
+  when closed (without the scale it reads `1.00` / `0.00`).
+* Reactor `pressure` in psig on a gauge ranged in MPa: scale 0.00689476.
+* A kg/s signal shown in t/h: scale 3.6. Celsius to kelvin: offset 273.15.
+
+The transform is applied where the plant signal is read, so everything downstream (the display format, a
+gauge's range, an annunciator's setpoint) sees the transformed number. It is saved on the binding only when it
+is not the identity, so older worlds load and save unchanged. Component, redstone and CC inputs have no
+transform. The wrench screen shows a scaled binding as "Plant key @ x, y, z (xS + O)".
+
+### Scale (sinks)
 
 A sink has a scale factor, default 1 (redstone defaults to 15 in the screen). Use it to match ranges: a 0 to
 100 percent knob driving a 0 to 1 demand needs scale 0.01; a 0/1 switch driving redstone needs scale 15.
@@ -107,6 +126,9 @@ wiring, which is identical for every type.
      open until the switch is turned to CLOSE. Operating it commands the valve exactly as CC's
      `open()`/`close()` would. On an unpowered valve the open demand is recorded and the valve opens when
      power returns.
+   * Open-position display (7-segment, format `{0:3.0f}`): input *value*, mode *Plant*, signal `position`,
+     **Scale 100** (press *Fraction to %*). It reads `100` with the valve fully open, `0` closed, and the
+     travel in between.
    * Red lamp (open): input *state*, mode *Plant*, signal `position`. It lights for any non-zero position, so
      it glows while the valve is open or opening.
    * Green lamp (closed): input *state*, mode *Plant*, signal `position` on a second lamp plus a nameplate
