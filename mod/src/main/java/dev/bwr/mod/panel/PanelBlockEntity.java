@@ -367,6 +367,9 @@ public final class PanelBlockEntity extends BlockEntity {
         }
         if (component.type() != null) {
             component.type().valuesChanged(component);
+            if (component.data().consumeLatchedChange()) {
+                setChanged(); // a type latched something because of this input (an annunciator going into alarm)
+            }
         }
         queue(new ValueDelta(component.id(), false, index, value));
         return true;
@@ -561,6 +564,12 @@ public final class PanelBlockEntity extends BlockEntity {
         if (level != null && !level.isClientSide()) {
             for (PanelComponent component : owned) {
                 resample(component, false);
+                if (component.type() != null) {
+                    component.type().valuesChanged(component); // derived state (annunciators) sees the sampled inputs
+                    if (component.data().consumeLatchedChange()) {
+                        setChanged();
+                    }
+                }
             }
         }
     }
