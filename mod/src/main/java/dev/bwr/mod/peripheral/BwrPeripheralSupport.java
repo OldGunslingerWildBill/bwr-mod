@@ -57,18 +57,8 @@ public final class BwrPeripheralSupport {
         if(!level.isLoaded(pos))return null;
         var state=level.getBlockState(pos);
         if(state.getBlock() instanceof JetPumpBlock)return jet(level,pos,state);
-        BlockEntity be;
-        if(state.getBlock() instanceof ContainmentVaultDoorBlock vault)be=vault.owner(level,pos,state);
-        else if(state.getBlock() instanceof ContainmentAirlockBlock airlock)be=airlock.owner(level,pos,state);
-        else if(state.getBlock() instanceof ProcessAssembly)be=PumpAssemblyCapabilities.controller(level,pos,state);
-        else if(state.getBlock() instanceof MainSteamIsolationValveBlock msiv)be=msiv.controller(level,pos,state);
-        else be=level.getBlockEntity(pos);
-        if(be==null||be.isRemoved())return null;
-        if(be instanceof CondenserBlockEntity part)be=part.owner();
-        else if(be instanceof CoolingBlockEntity part)be=part.owner();
-        else if(be instanceof CondensateStorageTankBlockEntity part)be=part.owner();
-        else if(be instanceof SuppressionPoolPortBlockEntity part)be=part.owner();
-        return typed(be);
+        // The same owner lookup the panel signal layer uses, so both agree on which device a position means.
+        return typed(dev.bwr.mod.signal.DeviceResolver.resolve(level,pos));
     }
     private static IPeripheral typed(BlockEntity be) {
         if(be instanceof dev.bwr.mod.panel.PanelBlockEntity b)return new PanelPeripheral(b);

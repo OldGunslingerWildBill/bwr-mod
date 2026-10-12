@@ -14,13 +14,13 @@ public final class ContainmentAirlockPeripheral implements IPeripheral {
     @Override public Object getTarget(){return door;}
     @Override public boolean equals(@Nullable IPeripheral other){return other instanceof ContainmentAirlockPeripheral p&&p.door==door;}
     @LuaFunction(mainThread=true) public final boolean setInnerOpen(boolean open){
-        boolean moved=door.setInnerOpen(open,false);if(moved)door.setComputerControlled(true);return moved;
+        return dev.bwr.mod.signal.DeviceCommands.airlockInnerOpen(door,open);
     }
     @LuaFunction(mainThread=true) public final boolean setOuterOpen(boolean open){
-        boolean moved=door.setOuterOpen(open,false);if(moved)door.setComputerControlled(true);return moved;
+        return dev.bwr.mod.signal.DeviceCommands.airlockOuterOpen(door,open);
     }
     @LuaFunction(mainThread=true) public final void setOverride(boolean enabled){
-        door.setComputerControlled(true);door.setOverride(enabled);
+        dev.bwr.mod.signal.DeviceCommands.airlockOverride(door,enabled);
     }
     @LuaFunction(mainThread=true) public final void releaseControl(){door.setComputerControlled(false);}
     @LuaFunction(mainThread=true) public final Map<String,Object> getStatus(){return Map.of(

@@ -137,18 +137,7 @@ public class SafetyReliefValvePeripheral implements IPeripheral {
      * ADS controller's validation on every stroke.
      */
     private void command(boolean open) {
-        be.setComputerControlled(true);
-        be.setOpen(open);
-        Level level = be.getLevel();
-        if (level == null || level.isClientSide()) {
-            return;
-        }
-        BlockState state = level.getBlockState(be.getBlockPos());
-        if (state.hasProperty(SafetyReliefValveBlock.OPEN)
-                && state.getValue(SafetyReliefValveBlock.OPEN) != open) {
-            level.setBlock(be.getBlockPos(), state.setValue(SafetyReliefValveBlock.OPEN, open),
-                    Block.UPDATE_CLIENTS);
-        }
+        dev.bwr.mod.signal.DeviceCommands.srvOpen(be, open);
     }
 
     // --- Measurements ---------------------------------------------------
@@ -204,7 +193,7 @@ public class SafetyReliefValvePeripheral implements IPeripheral {
      */
     @LuaFunction(mainThread = true)
     public final double getFlow() {
-        return be.isOpen() ? be.getLastFlowKgPerS() : 0.0;
+        return dev.bwr.mod.signal.DeviceReadouts.srvFlow(be);
     }
 
     /** Flow one fully open valve passes at rated dome pressure, kg/s. Nameplate. */
@@ -222,7 +211,7 @@ public class SafetyReliefValvePeripheral implements IPeripheral {
         m.put("dischargeSubmerged", be.isDischargeSubmerged());
         // Same rule as getFlow(): a shut valve passes nothing, and the stored
         // figure is only refreshed while something is metering the valve.
-        m.put("flow", be.isOpen() ? be.getLastFlowKgPerS() : 0.0);
+        m.put("flow", dev.bwr.mod.signal.DeviceReadouts.srvFlow(be));
         m.put("capacity", SafetyReliefValveBlockEntity.CAPACITY_KG_PER_S);
         return m;
     }

@@ -20,11 +20,7 @@ public final class ContainmentPenetrationPeripheral implements IPeripheral {
     @Override public Object getTarget() { return be; }
     private ContainmentPenetrationBlock block() { return (ContainmentPenetrationBlock) be.getBlockState().getBlock(); }
     @LuaFunction(mainThread = true) public final boolean setOpen(boolean open) {
-        if (!block().hasValve() || be.getBlockState().getValue(ContainmentPenetrationBlock.RUPTURED)) return false;
-        if (open && !be.hasPowerToOpen()) return false;
-        be.setComputerControlled(true);
-        be.setDemandOpen(open);
-        return true;
+        return dev.bwr.mod.signal.DeviceCommands.penetrationOpen(be, open);
     }
     @LuaFunction(mainThread = true) public final void releaseControl() { be.setComputerControlled(false); }
     @LuaFunction(mainThread = true) public final double getPosition() { return be.position(); }

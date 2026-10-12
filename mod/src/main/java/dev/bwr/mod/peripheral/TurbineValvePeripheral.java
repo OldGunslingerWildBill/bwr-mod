@@ -13,7 +13,7 @@ public final class TurbineValvePeripheral implements IPeripheral {
     @LuaFunction(mainThread=true) public void setPosition(double fraction)throws LuaException{
         if(!Double.isFinite(fraction)||fraction<0||fraction>1)throw new LuaException("Opening must be a finite fraction from 0 to 1");
         if(valve.stopValve()&&fraction!=0&&fraction!=1)throw new LuaException("Stop valve accepts only 0 (closed) or 1 (open)");
-        valve.setTarget(fraction);
+        dev.bwr.mod.signal.DeviceCommands.turbineValvePosition(valve,fraction);
     }
     @LuaFunction(mainThread=true) public void open(){valve.setTarget(1);}
     @LuaFunction(mainThread=true) public void close(){valve.setTarget(0);}
