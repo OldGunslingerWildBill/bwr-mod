@@ -33,6 +33,29 @@ public final class TankDriveRegressionTests {
 
     @GameTest(template="empty",timeoutTicks=400)
     public static void tankPlayerBreakPreservesCasings(GameTestHelper h){
+        var l=h.getLevel();var root=new BlockPos(12000,200,12000);
+        var held=new java.util.ArrayList<ChunkPos>();
+        for(int x=(root.getX()-25)>>4;x<=(root.getX()+25)>>4;x++)
+            for(int z=(root.getZ()-25)>>4;z<=(root.getZ()+25)>>4;z++){
+                var chunk=new ChunkPos(x,z);
+                if(!l.getForcedChunks().contains(chunk.toLong())){
+                    held.add(chunk);l.setChunkForced(x,z,true);
+                }
+                l.getChunk(x,z);
+            }
+        awaitTankFixture(h,held);
+    }
+    private static void awaitTankFixture(GameTestHelper h,java.util.List<ChunkPos> held){
+        var l=h.getLevel();
+        boolean ready=held.stream().allMatch(c->l.areEntitiesLoaded(c.toLong())
+                &&l.isPositionEntityTicking(new BlockPos((c.x<<4)+8,200,(c.z<<4)+8)));
+        if(!ready&&h.getTick()<180){h.runAfterDelay(1,()->awaitTankFixture(h,held));return;}
+        try{
+            h.assertTrue(ready,"tank fixture entity chunks never became ready");
+            checkTankPlayerBreakPreservesCasings(h);
+        }finally{held.forEach(c->l.setChunkForced(c.x,c.z,false));}
+    }
+    private static void checkTankPlayerBreakPreservesCasings(GameTestHelper h){
         var l=h.getLevel();var root=new BlockPos(12000,200,12000);load(l,root);
         var player=net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(l);var oldMode=player.gameMode.getGameModeForPlayer();var oldPos=player.position();
         try{
