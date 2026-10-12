@@ -168,6 +168,15 @@ public final class PanelBlock extends BaseEntityBlock {
     }
 
     @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean moving) {
+        super.onPlace(state, level, pos, oldState, moving);
+        // Server only: the new block's own entity does not exist yet, but its neighbours' cached groups are stale.
+        if (!level.isClientSide()) {
+            PanelBlockEntity.invalidateAround(level, pos, state);
+        }
+    }
+
+    @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moving) {
         // Read the block entity before super removes it: every component owned here, or covering any cell
         // here, comes off the panel and drops its item.
@@ -175,6 +184,9 @@ public final class PanelBlock extends BaseEntityBlock {
             be.releaseEverything();
         }
         super.onRemove(state, level, pos, replacement, moving);
+        if (!level.isClientSide()) {
+            PanelBlockEntity.invalidateAround(level, pos, state);
+        }
     }
 
     @Override

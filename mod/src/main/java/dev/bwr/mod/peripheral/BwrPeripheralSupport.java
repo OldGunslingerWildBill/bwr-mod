@@ -71,6 +71,7 @@ public final class BwrPeripheralSupport {
         return typed(be);
     }
     private static IPeripheral typed(BlockEntity be) {
+        if(be instanceof dev.bwr.mod.panel.PanelBlockEntity b)return new PanelPeripheral(b);
         if(be instanceof ContainmentEquipmentBlockEntity b)return new ContainmentEquipmentPeripheral(b);
         if(be instanceof ContainmentVaultDoorBlockEntity b)return new ContainmentVaultDoorPeripheral(b);
         if(be instanceof ContainmentAirlockBlockEntity b)return new ContainmentAirlockPeripheral(b);

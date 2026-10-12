@@ -107,15 +107,27 @@ public final class PanelBlockEntity extends BlockEntity {
             return;
         }
         BlockState state = getBlockState();
+        if (state.getBlock() instanceof PanelBlock) {
+            invalidateAround(level, worldPosition, state);
+        }
+    }
+
+    /**
+     * Drops the cached group of every loaded panel block that could be a group neighbour of {@code pos}. Never
+     * touches {@code pos} itself: asking a level for a block entity that is still being attached would create a
+     * second one.
+     */
+    static void invalidateAround(Level level, BlockPos pos, BlockState state) {
         if (!(state.getBlock() instanceof PanelBlock block)) {
             return;
         }
         Direction facing = state.getValue(PanelBlock.FACING);
         PanelType type = block.panelType();
-        BlockPos[] around = {PanelType.nextColumn(worldPosition, facing), PanelType.previousColumn(worldPosition, facing),
-                type.nextRow(worldPosition, facing), type.previousRow(worldPosition, facing)};
-        for (BlockPos pos : around) {
-            if (pos != null && level.isLoaded(pos) && level.getBlockEntity(pos) instanceof PanelBlockEntity other) {
+        BlockPos[] around = {PanelType.nextColumn(pos, facing), PanelType.previousColumn(pos, facing),
+                type.nextRow(pos, facing), type.previousRow(pos, facing)};
+        for (BlockPos neighbour : around) {
+            if (neighbour != null && level.isLoaded(neighbour)
+                    && level.getBlockEntity(neighbour) instanceof PanelBlockEntity other) {
                 other.dropGroup();
             }
         }
@@ -519,6 +531,17 @@ public final class PanelBlockEntity extends BlockEntity {
         } else {
             loadPanel(new CompoundTag());
         }
+    }
+
+    /**
+     * Called when the block entity is attached to a level, on both sides, for
+     * placement as well as chunk load (onLoad is not reliable for placement), so
+     * this is where neighbouring groups learn about a new member.
+     */
+    @Override
+    public void setLevel(Level level) {
+        super.setLevel(level);
+        invalidateGroups();
     }
 
     @Override

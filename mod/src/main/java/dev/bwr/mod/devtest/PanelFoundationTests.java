@@ -65,24 +65,63 @@ public final class PanelFoundationTests {
     private static final Direction FACING = Direction.NORTH;
 
     /** A cleared, force-loaded stage with a survival fake player standing in front of the panels. */
-    private static final class Stage implements AutoCloseable {
+    private static final class Stage {
         final ServerLevel level;
         /** Top-left block of the panel wall. Columns run toward -X (the right of a north-facing panel). */
         final BlockPos origin;
         final FakePlayer player;
 
-        Stage(GameTestHelper helper, int slot) {
+        private Runnable afterCheck;
+
+        private Stage(GameTestHelper helper, int slot) {
             level = helper.getLevel();
             origin = new BlockPos(44_900 + slot * 64, 110, 44_900);
             hold(true);
-            clear();
             player = FakePlayerFactory.get(level, new GameProfile(
                     UUID.nameUUIDFromBytes(("panel-test-" + slot).getBytes(java.nio.charset.StandardCharsets.UTF_8)),
                     "panel-test-" + slot));
-            player.setGameMode(GameType.SURVIVAL);
-            player.getInventory().clearContent();
-            player.setShiftKeyDown(false);
-            player.setPos(origin.getX() - 1.5, origin.getY() - 1.0, origin.getZ() - 2.5);
+        }
+
+        /**
+         * Runs {@code body} on a clean, force-loaded fixture. The chunks are forced at once but the fixture
+         * is only reset and built two ticks later: until then the chunk's entity section is not accessible,
+         * so item entities left by an earlier run (the GameTest world persists) could not be found and
+         * removed. If the body registered an {@link #after} check it runs three ticks later, once items the
+         * body spawned are visible. The chunks are released in every outcome.
+         */
+        static void run(GameTestHelper helper, int slot, java.util.function.Consumer<Stage> body) {
+            Stage s = new Stage(helper, slot);
+            helper.runAfterDelay(2, () -> {
+                try {
+                    s.clear();
+                    s.player.setGameMode(GameType.SURVIVAL);
+                    s.player.getInventory().clearContent();
+                    s.player.setShiftKeyDown(false);
+                    s.player.setPos(s.origin.getX() - 1.5, s.origin.getY() - 1.0, s.origin.getZ() - 2.5);
+                    body.accept(s);
+                } catch (RuntimeException | Error e) {
+                    s.release();
+                    throw e;
+                }
+                if (s.afterCheck == null) {
+                    s.release();
+                    helper.succeed();
+                } else {
+                    helper.runAfterDelay(3, () -> {
+                        try {
+                            s.afterCheck.run();
+                        } finally {
+                            s.release();
+                        }
+                        helper.succeed();
+                    });
+                }
+            });
+        }
+
+        /** Checks to run after a delay (see {@link #run}). */
+        void after(Runnable check) {
+            afterCheck = check;
         }
 
         private AABB area() {
@@ -162,8 +201,16 @@ public final class PanelFoundationTests {
             return level.getEntitiesOfClass(ItemEntity.class, area(), e -> e.getItem().is(item));
         }
 
-        @Override
-        public void close() {
+        /** For failure messages: every item entity near the fixture. */
+        String items() {
+            StringBuilder out = new StringBuilder("items[");
+            for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, area().inflate(40))) {
+                out.append(item.getItem()).append('@').append(item.blockPosition().toShortString()).append(' ');
+            }
+            return out.append("] origin=").append(origin.toShortString()).toString();
+        }
+
+        void release() {
             clear();
             hold(false);
         }
@@ -266,7 +313,7 @@ public final class PanelFoundationTests {
 
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void placementSnapsCollidesAndConsumesItems(GameTestHelper helper) {
-        try (Stage s = new Stage(helper, 0)) {
+        Stage.run(helper, 0, s -> {
             s.wall(1, 1);
             BlockPos pos = s.at(0, 0);
             PanelBlockEntity be = s.be(pos);
@@ -314,15 +361,14 @@ public final class PanelFoundationTests {
             s.player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Blocks.STONE));
             helper.assertTrue(PanelOps.place(s.player, InteractionHand.MAIN_HAND, pos, 12, 12) == PanelGroup.Result.BAD_ARGUMENTS,
                     "stone is not a component");
-            helper.succeed();
-        }
+        });
     }
 
     // ---- straddling
 
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void componentsStraddleBlocksAndReserveTheirCells(GameTestHelper helper) {
-        try (Stage s = new Stage(helper, 1)) {
+        Stage.run(helper, 1, s -> {
             s.wall(3, 2);
             PanelBlockEntity first = s.be(s.at(0, 0));
             PanelBlockEntity second = s.be(s.at(1, 0));
@@ -361,19 +407,19 @@ public final class PanelFoundationTests {
 
             // A hole in the group stops a straddle.
             s.level.setBlock(s.at(1, 1), Blocks.AIR.defaultBlockState(), 3);
-            helper.assertTrue(s.drops(BwrItems.LAMP.get()).size() == 1 && first.component(corner.id()) == null,
-                    "losing one of the four covered blocks drops the corner lamp");
+            helper.assertTrue(first.component(corner.id()) == null, "losing one of the four covered blocks removes the corner lamp");
             helper.assertTrue(s.place(BwrItems.LAMP.get(), 1, s.at(0, 0), 15, 15) == PanelGroup.Result.OUTSIDE_GROUP,
                     "no placement through a missing block");
-            helper.succeed();
-        }
+            s.after(() -> helper.assertTrue(s.drops(BwrItems.LAMP.get()).size() == 1,
+                    "the corner lamp item dropped: " + s.items()));
+        });
     }
 
     // ---- groups
 
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void groupsFormMergeAndSplit(GameTestHelper helper) {
-        try (Stage s = new Stage(helper, 2)) {
+        Stage.run(helper, 2, s -> {
             s.panel(s.at(0, 0), PanelType.VERTICAL, FACING);
             s.panel(s.at(2, 0), PanelType.VERTICAL, FACING);
             PanelGroup lone = s.be(s.at(0, 0)).group();
@@ -424,13 +470,12 @@ public final class PanelFoundationTests {
             s.panel(desk.below().relative(FACING), PanelType.CONSOLE, FACING);
             s.panel(desk.below(), PanelType.CONSOLE, FACING);
             helper.assertTrue(s.be(desk).group().members().size() == 1, "console groups are a single row");
-            helper.succeed();
-        }
+        });
     }
 
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void groupSizeIsCappedByConfig(GameTestHelper helper) {
-        try (Stage s = new Stage(helper, 3)) {
+        Stage.run(helper, 3, s -> {
             int columns = dev.bwr.mod.panel.PanelConfig.maxColumns();
             for (int c = 0; c < columns; c++) {
                 s.panel(s.col(c), PanelType.VERTICAL, FACING);
@@ -448,15 +493,14 @@ public final class PanelFoundationTests {
             helper.assertTrue(s.be(s.col(0)).group().oversize(), "forced oversize is flagged");
             helper.assertTrue(s.place(BwrItems.LAMP.get(), 0, s.col(0), 0, 0) == PanelGroup.Result.OVERSIZE_GROUP,
                     "an oversize group refuses components");
-            helper.succeed();
-        }
+        });
     }
 
     // ---- removal and breaking
 
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void wrenchRemovalDropsTheItemAndFreesTheCells(GameTestHelper helper) {
-        try (Stage s = new Stage(helper, 4)) {
+        Stage.run(helper, 4, s -> {
             s.wall(2, 1);
             PanelBlockEntity first = s.be(s.at(0, 0));
             PanelBlockEntity second = s.be(s.at(1, 0));
@@ -471,24 +515,26 @@ public final class PanelFoundationTests {
             helper.assertTrue(!PanelOps.remove(s.player, first.getBlockPos(), id), "removal needs reach");
             s.player.setPos(s.origin.getX() - 1.5, s.origin.getY() - 1.0, s.origin.getZ() - 2.5);
             helper.assertTrue(!PanelOps.remove(s.player, first.getBlockPos(), id + 99), "an unknown component id removes nothing");
-            helper.assertTrue(first.owned().size() == 1 && s.drops(BwrItems.LAMP.get()).isEmpty(), "nothing happened so far");
+            helper.assertTrue(first.owned().size() == 1, "nothing happened so far");
 
             helper.assertTrue(PanelOps.remove(s.player, first.getBlockPos(), id), "wrench removal");
             helper.assertTrue(first.owned().isEmpty(), "component gone");
             helper.assertTrue(second.claimAt(0, 4) == null && first.claimAt(15, 4) == null, "the cells are free again");
-            List<ItemEntity> drops = s.drops(BwrItems.LAMP.get());
-            helper.assertTrue(drops.size() == 1 && drops.get(0).getItem().getCount() == 1, "exactly one lamp item dropped");
-            helper.assertTrue(ComponentItem.footprint(drops.get(0).getItem()).equals(new Footprint(2, 2)),
-                    "the dropped item keeps its footprint");
             helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 3, s.at(0, 0), 12, 4) == PanelGroup.Result.OK,
                     "the freed cells accept a new component");
-            helper.succeed();
-        }
+            s.after(() -> {
+                List<ItemEntity> drops = s.drops(BwrItems.LAMP.get());
+                helper.assertTrue(drops.size() == 1 && drops.get(0).getItem().getCount() == 1,
+                        "exactly one lamp item dropped: " + s.items());
+                helper.assertTrue(ComponentItem.footprint(drops.get(0).getItem()).equals(new Footprint(2, 2)),
+                        "the dropped item keeps its footprint");
+            });
+        });
     }
 
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void breakingACoveredBlockDropsTheComponent(GameTestHelper helper) {
-        try (Stage s = new Stage(helper, 5)) {
+        Stage.run(helper, 5, s -> {
             s.wall(3, 1);
             PanelBlockEntity first = s.be(s.at(0, 0));
             PanelBlockEntity third = s.be(s.at(2, 0));
@@ -500,31 +546,33 @@ public final class PanelFoundationTests {
             helper.assertTrue(first.component(1) == null, "the straddling component is gone");
             helper.assertTrue(first.component(2) != null, "other components on the owner are untouched");
             helper.assertTrue(third.claimAt(0, 5) == null && first.claimAt(12, 5) == null, "claims on both sides are released");
-            helper.assertTrue(s.drops(BwrItems.NAMEPLATE.get()).size() == 1, "the nameplate item dropped");
             helper.assertTrue(first.group().members().size() == 1 && third.group().members().size() == 1, "the wall split");
 
             // Rebuild, then break the owner: the straddling component drops, neighbours' claims go.
             s.level.setBlock(s.at(1, 0), BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState(), 3);
             helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 6, s.at(0, 0), 10, 5) == PanelGroup.Result.OK, "straddling plate again");
             s.level.destroyBlock(s.at(0, 0), false);
-            helper.assertTrue(s.drops(BwrItems.NAMEPLATE.get()).size() == 2, "the second nameplate dropped");
-            helper.assertTrue(s.drops(BwrItems.LAMP.get()).size() == 1, "the lamp on the broken owner dropped too");
             helper.assertTrue(s.be(s.at(1, 0)).claimAt(0, 5) == null, "no claim outlives its owner");
+            helper.assertTrue(s.be(s.at(0, 0)) == null, "the owner block is gone");
 
             // Breaking the far covered block works the same way.
             helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 5, s.at(1, 0), 10, 5) == PanelGroup.Result.OK, "plate over blocks 1 and 2");
             s.level.destroyBlock(s.at(2, 0), false);
-            helper.assertTrue(s.drops(BwrItems.NAMEPLATE.get()).size() == 3 && s.be(s.at(1, 0)).owned().isEmpty(),
-                    "breaking the last covered block drops it as well");
-            helper.succeed();
-        }
+            helper.assertTrue(s.be(s.at(1, 0)).owned().isEmpty() && s.be(s.at(1, 0)).claimAt(12, 5) == null,
+                    "breaking the last covered block removes it as well");
+            s.after(() -> {
+                helper.assertTrue(s.drops(BwrItems.NAMEPLATE.get()).size() == 3,
+                        "one nameplate per broken block scenario: " + s.items());
+                helper.assertTrue(s.drops(BwrItems.LAMP.get()).size() == 1, "the lamp on the broken owner dropped too");
+            });
+        });
     }
 
     // ---- configuration, operation, saves
 
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void configureValidatesEveryField(GameTestHelper helper) {
-        try (Stage s = new Stage(helper, 6)) {
+        Stage.run(helper, 6, s -> {
             s.wall(1, 1);
             PanelBlockEntity be = s.be(s.at(0, 0));
             helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 0, s.at(0, 0), 0, 0) == PanelGroup.Result.OK, "plate");
@@ -603,13 +651,12 @@ public final class PanelFoundationTests {
             lampEdit.put("Inputs", clear);
             PanelOps.configure(s.player, pos, 2, lampEdit);
             helper.assertTrue(Double.isNaN(lamp.input(0)) && !LampData.active(lamp.input(0)), "none reads no signal");
-            helper.succeed();
-        }
+        });
     }
 
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void operateIsValidatedBeforeItReachesTheType(GameTestHelper helper) {
-        try (Stage s = new Stage(helper, 7)) {
+        Stage.run(helper, 7, s -> {
             s.wall(1, 1);
             helper.assertTrue(s.place(BwrItems.LAMP.get(), 0, s.at(0, 0), 0, 0) == PanelGroup.Result.OK, "lamp");
             BlockPos pos = s.at(0, 0);
@@ -620,13 +667,12 @@ public final class PanelFoundationTests {
             helper.assertTrue(!PanelOps.operate(s.player, pos, 77, OperateAction.PRESS, 0), "unknown component");
             s.player.setPos(s.origin.getX() + 200, s.origin.getY(), s.origin.getZ());
             helper.assertTrue(!PanelOps.operate(s.player, pos, 1, OperateAction.PRESS, 0), "out of reach");
-            helper.succeed();
-        }
+        });
     }
 
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void nameplateAndLampSurviveSaveReloadAndNetworkSync(GameTestHelper helper) {
-        try (Stage s = new Stage(helper, 8)) {
+        Stage.run(helper, 8, s -> {
             s.wall(2, 1);
             PanelBlockEntity owner = s.be(s.at(0, 0));
             helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 5, s.at(0, 0), 10, 2) == PanelGroup.Result.OK, "straddling plate");
@@ -711,13 +757,12 @@ public final class PanelFoundationTests {
             helper.assertTrue(future.savePanel(false).getList("Components", 10).get(2).equals(unknown),
                     "unknown type is written back unchanged");
             helper.assertTrue(future.owned().size() == 3 && future.savePanel(false).getInt("NextId") > 9, "ids continue past the unknown one");
-            helper.succeed();
-        }
+        });
     }
 
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void settingInputsStoresValuesAndNotifiesTheType(GameTestHelper helper) {
-        try (Stage s = new Stage(helper, 9)) {
+        Stage.run(helper, 9, s -> {
             s.wall(1, 1);
             helper.assertTrue(s.place(BwrItems.LAMP.get(), 0, s.at(0, 0), 0, 0) == PanelGroup.Result.OK, "lamp");
             PanelBlockEntity be = s.be(s.at(0, 0));
@@ -730,7 +775,6 @@ public final class PanelFoundationTests {
             helper.assertTrue(!be.setInput(lamp, 0, Double.NaN), "NaN equals NaN");
             // Output API: lamps have none, so the call is a no-op rather than an error.
             helper.assertTrue(!be.setOutput(lamp, 0, 1.0), "components without outputs ignore setOutput");
-            helper.succeed();
-        }
+        });
     }
 }
