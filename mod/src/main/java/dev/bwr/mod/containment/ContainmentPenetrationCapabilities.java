@@ -22,6 +22,10 @@ public final class ContainmentPenetrationCapabilities {
     private static final ThreadLocal<Set<BlockPos>> RESOLVING = ThreadLocal.withInitial(HashSet::new);
 
     public static void register(RegisterCapabilitiesEvent event) {
+        for (var equipment : new ContainmentEquipmentBlock[] {
+                BwrBlocks.CONTAINMENT_NITROGEN_SUPPLY.get(), BwrBlocks.CONTAINMENT_VENT_VALVE.get() })
+            event.registerBlock(Capabilities.EnergyStorage.BLOCK, (level, pos, state, unused, side) ->
+                    level.getBlockEntity(pos) instanceof ContainmentEquipmentBlockEntity be ? be.energy() : null, equipment);
         for (var vault : new ContainmentVaultDoorBlock[] {
                 BwrBlocks.CONTAINMENT_VAULT_DOOR.get(), BwrBlocks.CONTAINMENT_VAULT_DOOR_4X4.get() }) {
             event.registerBlock(Capabilities.EnergyStorage.BLOCK, (level, pos, state, unused, side) -> {

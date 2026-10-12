@@ -242,6 +242,12 @@ public final class ContainmentAtmosphere {
         return purgeActive;
     }
 
+    /** Stop the supply without starting an air purge or resetting the gas inventory. */
+    public void stopPurge() {
+        purgeActive = false;
+        inertingCommanded = false;
+    }
+
     public boolean isInertingCommanded() {
         return inertingCommanded;
     }

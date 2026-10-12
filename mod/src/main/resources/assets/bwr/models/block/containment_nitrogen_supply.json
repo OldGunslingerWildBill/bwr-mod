@@ -1,0 +1,1 @@
+{"parent":"minecraft:block/cube_bottom_top","textures":{"top":"bwr:block/reactor_controller_top","side":"bwr:block/machine_casing","bottom":"bwr:block/machine_casing"}}

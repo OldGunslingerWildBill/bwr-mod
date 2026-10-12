@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"building","pattern":["ICI","RHR","ISI"],"key":{"I":{"item":"minecraft:iron_ingot"},"C":{"item":"minecraft:comparator"},"R":{"item":"minecraft:redstone"},"H":{"item":"minecraft:hopper"},"S":{"item":"minecraft:smooth_stone"}},"result":{"id":"bwr:containment_nitrogen_supply","count":1}}

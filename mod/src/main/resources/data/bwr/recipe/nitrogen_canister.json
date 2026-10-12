@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"misc","pattern":[" I ","IGI"," B "],"key":{"I":{"item":"minecraft:iron_ingot"},"G":{"item":"minecraft:glass_bottle"},"B":{"item":"minecraft:blue_ice"}},"result":{"id":"bwr:nitrogen_canister","count":1}}

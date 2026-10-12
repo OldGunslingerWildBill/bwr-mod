@@ -873,16 +873,14 @@ public class ReactorPeripheral implements IPeripheral {
      * failed containment drawing in outside air.
      */
     @LuaFunction(mainThread = true)
-    public final void setContainmentInerting(boolean inerting) throws LuaException {
-        core().getContainment().setInertingCommanded(inerting);
-        be.setChanged();
+    public final boolean setContainmentInerting(boolean inerting) throws LuaException {
+        return dev.bwr.mod.containment.ContainmentEquipmentRegistry.command(be, false, inerting);
     }
 
     /** Open or close the hardened wetwell vent. Lowers pressure and hydrogen; releases scrubbed activity. */
     @LuaFunction(mainThread = true)
-    public final void setContainmentVent(boolean open) throws LuaException {
-        core().getContainment().setVentOpen(open);
-        be.setChanged();
+    public final boolean setContainmentVent(boolean open) throws LuaException {
+        return dev.bwr.mod.containment.ContainmentEquipmentRegistry.command(be, true, open);
     }
 
     @LuaFunction(mainThread = true)

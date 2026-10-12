@@ -5,6 +5,7 @@ import dev.bwr.mod.containment.ContainmentControllerBlockEntity;
 import dev.bwr.mod.containment.ContainmentPenetrationBlockEntity;
 import dev.bwr.mod.containment.ContainmentVaultDoorBlockEntity;
 import dev.bwr.mod.containment.ContainmentAirlockBlockEntity;
+import dev.bwr.mod.containment.ContainmentEquipmentBlockEntity;
 import dev.bwr.mod.eccs.AdsControllerBlockEntity;
 import dev.bwr.mod.eccs.CondensateStorageTankBlockEntity;
 import dev.bwr.mod.eccs.EccsPumpBlockEntity;
@@ -51,6 +52,11 @@ public final class BwrBlockEntities {
             CONTAINMENT_AIRLOCK = BLOCK_ENTITIES.register("containment_airlock",
             () -> BlockEntityType.Builder.of(ContainmentAirlockBlockEntity::new,
                     BwrBlocks.CONTAINMENT_AIRLOCK.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ContainmentEquipmentBlockEntity>>
+            CONTAINMENT_EQUIPMENT = BLOCK_ENTITIES.register("containment_equipment",
+            () -> BlockEntityType.Builder.of(ContainmentEquipmentBlockEntity::new,
+                    BwrBlocks.CONTAINMENT_NITROGEN_SUPPLY.get(), BwrBlocks.CONTAINMENT_VENT_VALVE.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ContainmentPenetrationBlockEntity>>
             CONTAINMENT_PENETRATION = BLOCK_ENTITIES.register("containment_penetration",
