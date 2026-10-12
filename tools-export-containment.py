@@ -31,9 +31,11 @@ def bake(name):
 
 def run():
     for name in ('vault_3_frame','vault_3_leaf','vault_4_frame','vault_4_leaf',
+                 'airlock_frame','airlock_inner_leaf','airlock_outer_leaf',
                  'sleeve_steam','sleeve_water','sleeve_pass_through','sleeve_power','sleeve_data'):
         bake(name)
-    for block,part in (('containment_vault_door','vault_3_leaf'),('containment_vault_door_4x4','vault_4_leaf')):
+    for block,part in (('containment_vault_door','vault_3_leaf'),('containment_vault_door_4x4','vault_4_leaf'),
+                       ('containment_airlock','airlock_inner_leaf')):
         put(RES/('assets/bwr/blockstates/'+block+'.json'),{'variants':{'':{'model':'bwr:block/containment/empty'}}})
         put(RES/('assets/bwr/models/item/'+block+'.json'),{
             'parent':'bwr:block/containment/'+part,

@@ -71,8 +71,11 @@ public final class ContainmentStrength {
                 psi = ContainmentPenetrationRatings.containmentPsig();
             else if (layer == 0 && state.getBlock() instanceof ContainmentVaultDoorBlock)
                 psi = ContainmentConfig.VAULT_DOOR_CONTAINMENT_PSIG.get();
+            else if (layer == 0 && state.getBlock() instanceof ContainmentAirlockBlock)
+                psi = ContainmentConfig.AIRLOCK_CONTAINMENT_PSIG.get();
             else if (!(level.getBlockState(face.wall()).getBlock() instanceof ContainmentPenetrationBlock)
-                    && !(level.getBlockState(face.wall()).getBlock() instanceof ContainmentVaultDoorBlock))
+                    && !(level.getBlockState(face.wall()).getBlock() instanceof ContainmentVaultDoorBlock)
+                    && !(level.getBlockState(face.wall()).getBlock() instanceof ContainmentAirlockBlock))
                 psi += contribution(level, pos, state);
         }
         return new Column(face, List.copyOf(layers), frontier, material, psi,

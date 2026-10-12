@@ -102,6 +102,14 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     }
 
     public boolean isSealed() { return sealed; }
+    /** A forced dual-open personnel passage has a smaller gas aperture than a missing wall. */
+    public boolean isForcedAirlockLeak() {
+        if (sealed || stale || leak == null || level == null || !level.isLoaded(leak)) return false;
+        BlockState state = level.getBlockState(leak);
+        if (!(state.getBlock() instanceof ContainmentAirlockBlock airlock)) return false;
+        var owner = airlock.owner(level, leak, state);
+        return owner != null && owner.override() && owner.innerOpen() && owner.outerOpen() && !owner.damaged();
+    }
     public boolean isStale() { return stale; }
     public boolean isScanning() { return scan != null; }
     public int freeVolume() { return freeVolume; }
@@ -118,7 +126,8 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         return penetrationFaces.stream().map(BoundaryFace::wall).distinct()
                 .filter(pos -> level != null && level.isLoaded(pos)
                         && (level.getBlockState(pos).getBlock() instanceof ContainmentPenetrationBlock
-                            || level.getBlockState(pos).getBlock() instanceof ContainmentVaultDoorBlock))
+                            || level.getBlockState(pos).getBlock() instanceof ContainmentVaultDoorBlock
+                            || level.getBlockState(pos).getBlock() instanceof ContainmentAirlockBlock))
                 .toList();
     }
 
@@ -344,7 +353,8 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
             penetrationFaces = ratings.keySet().stream()
                     .filter(face -> level.isLoaded(face.wall()) && (
                             level.getBlockState(face.wall()).getBlock() instanceof ContainmentPenetrationBlock
-                            || level.getBlockState(face.wall()).getBlock() instanceof ContainmentVaultDoorBlock))
+                            || level.getBlockState(face.wall()).getBlock() instanceof ContainmentVaultDoorBlock
+                            || level.getBlockState(face.wall()).getBlock() instanceof ContainmentAirlockBlock))
                     .sorted(java.util.Comparator.comparingLong((BoundaryFace face) -> face.wall().asLong())
                             .thenComparingInt(face -> face.normal().ordinal()))
                     .toList();
@@ -419,6 +429,11 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         if (level.getBlockState(weakest.position()).getBlock() instanceof ContainmentVaultDoorBlock door) {
             BlockState state = level.getBlockState(weakest.position());
             ContainmentVaultDoorBlockEntity owner = door.owner(level, weakest.position(), state);
+            if (owner != null) owner.jamBlownOpen();
+            else return null;
+        } else if (level.getBlockState(weakest.position()).getBlock() instanceof ContainmentAirlockBlock airlock) {
+            BlockState state = level.getBlockState(weakest.position());
+            ContainmentAirlockBlockEntity owner = airlock.owner(level, weakest.position(), state);
             if (owner != null) owner.jamBlownOpen();
             else return null;
         } else if (level.getBlockState(weakest.position()).getBlock() instanceof ContainmentPenetrationBlock) {

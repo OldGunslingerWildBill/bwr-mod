@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"building","pattern":["IGI","RPR","IGI"],"key":{"I":{"item":"minecraft:iron_block"},"G":{"item":"minecraft:glass_pane"},"R":{"item":"minecraft:redstone"},"P":{"item":"minecraft:piston"}},"result":{"id":"bwr:containment_airlock","count":1}}

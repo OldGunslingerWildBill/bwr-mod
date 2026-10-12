@@ -1,0 +1,1 @@
+{"type":"minecraft:block","pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"bwr:containment_airlock"}],"conditions":[{"condition":"minecraft:block_state_property","block":"bwr:containment_airlock","properties":{"cell":"0"}},{"condition":"minecraft:survives_explosion"}]}]}

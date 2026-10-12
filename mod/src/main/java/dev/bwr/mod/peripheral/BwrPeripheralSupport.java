@@ -15,6 +15,8 @@ import dev.bwr.mod.containment.ContainmentControllerBlockEntity;
 import dev.bwr.mod.containment.ContainmentPenetrationBlockEntity;
 import dev.bwr.mod.containment.ContainmentVaultDoorBlock;
 import dev.bwr.mod.containment.ContainmentVaultDoorBlockEntity;
+import dev.bwr.mod.containment.ContainmentAirlockBlock;
+import dev.bwr.mod.containment.ContainmentAirlockBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
@@ -56,6 +58,7 @@ public final class BwrPeripheralSupport {
         if(state.getBlock() instanceof JetPumpBlock)return jet(level,pos,state);
         BlockEntity be;
         if(state.getBlock() instanceof ContainmentVaultDoorBlock vault)be=vault.owner(level,pos,state);
+        else if(state.getBlock() instanceof ContainmentAirlockBlock airlock)be=airlock.owner(level,pos,state);
         else if(state.getBlock() instanceof ProcessAssembly)be=PumpAssemblyCapabilities.controller(level,pos,state);
         else if(state.getBlock() instanceof MainSteamIsolationValveBlock msiv)be=msiv.controller(level,pos,state);
         else be=level.getBlockEntity(pos);
@@ -68,6 +71,7 @@ public final class BwrPeripheralSupport {
     }
     private static IPeripheral typed(BlockEntity be) {
         if(be instanceof ContainmentVaultDoorBlockEntity b)return new ContainmentVaultDoorPeripheral(b);
+        if(be instanceof ContainmentAirlockBlockEntity b)return new ContainmentAirlockPeripheral(b);
         if(be instanceof ContainmentPenetrationBlockEntity b)return new ContainmentPenetrationPeripheral(b);
         if(be instanceof PowerModuleBlockEntity b)return new PowerModulePeripheral(b);
         if(be instanceof SlcTankBlockEntity b)return new HardwarePeripheral("bwr_slc_tank",()->Map.of(

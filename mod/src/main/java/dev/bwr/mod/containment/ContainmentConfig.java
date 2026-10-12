@@ -28,6 +28,9 @@ public final class ContainmentConfig {
     public static final ModConfigSpec.DoubleValue VAULT_DOOR_CONTAINMENT_PSIG = BUILDER
             .comment("Closed containment vault door pressure rating, psig")
             .defineInRange("vaultDoorContainmentPsig", 200.0, 0.0, 10_000.0);
+    public static final ModConfigSpec.DoubleValue AIRLOCK_CONTAINMENT_PSIG = BUILDER
+            .comment("Closed personnel airlock leaf pressure rating, psig")
+            .defineInRange("airlockContainmentPsig", 120.0, 0.0, 10_000.0);
     public static final ModConfigSpec.DoubleValue STEAM_DESIGN_PSIG = BUILDER
             .comment("Steam penetration process nameplate at 575 F, psig")
             .defineInRange("steamPenetrationDesignPsig", 1250.0, 0.0, 20_000.0);

@@ -92,6 +92,33 @@ def vault(size):
     export_scene(leaf,f'vault_{size}_leaf.json',{'size':[size,size,1],'part':'leaf'})
     render_parts('vault_'+str(size),[frame,leaf],size,size,1)
 
+def airlock():
+    frame=new_scene('Airlock frame')
+    inner=new_scene('Airlock inner leaf')
+    outer=new_scene('Airlock outer leaf')
+    # Two portal leaves 2.5 blocks apart, with a sealed short chamber.
+    for depth in (0,2.5):
+        leaves=inner if depth==0 else outer
+        box(frame,'jamb left',(-.08,0,depth-.08),(.13,2,depth+.12),FRAME)
+        box(frame,'jamb right',(.87,0,depth-.08),(1.08,2,depth+.12),FRAME)
+        box(frame,'lintel',(-.06,1.85,depth-.08),(1.06,2,depth+.12),FRAME)
+        box(frame,'threshold',(-.06,0,depth-.08),(1.06,.12,depth+.12),FRAME)
+        box(leaves,'interlocked leaf',(.14,.13,depth-.03),(.86,1.84,depth+.08),LEAF)
+        box(leaves,'vision port bezel',(.34,1.36,depth-.05),(.67,1.67,depth-.025),TRIM)
+        box(leaves,'vision port glass',(.38,1.40,depth-.065),(.63,1.63,depth-.05),SEAL)
+        cylinder(leaves,'latch spindle',(.73,.92,depth-.12),(.73,.92,depth-.025),.045,TRIM)
+        for y in (.25,1.76):
+            cylinder(frame,'hinge',(.11,y-.1,depth),(.11,y+.1,depth),.045,HINGE)
+    for y in (.05,1.9):
+        box(frame,'chamber side rail',(-.06,y,.12),(.08,y+.05,2.5),TRIM)
+        box(frame,'opposite side rail',(.92,y,.12),(1.06,y+.05,2.5),TRIM)
+    box(frame,'override console',(.93,.78,.97),(1.11,1.27,1.48),FRAME)
+    box(frame,'override amber lamp',(1.11,1.10,1.11),(1.12,1.19,1.24),WARN)
+    export_scene(frame,'airlock_frame.json',{'size':[1,2,3],'part':'frame'})
+    export_scene(inner,'airlock_inner_leaf.json',{'size':[1,2,3],'part':'inner_leaf'})
+    export_scene(outer,'airlock_outer_leaf.json',{'size':[1,2,3],'part':'outer_leaf'})
+    render_parts('airlock',[frame,inner,outer],1,2,3)
+
 def sleeve_model(service,band):
     scene=new_scene('Containment '+service+' sleeve')
     box(scene,'welded sleeve plate',(.06,.06,.12),(.94,.94,.88),FRAME)
@@ -143,6 +170,7 @@ def render_parts(label,parts,width,height,depth):
 
 vault(3)
 vault(4)
+airlock()
 for service,band in (('steam',STEAM),('water',WATER),('pass_through',WARN),('power',POWER),('data',DATA)):
     sleeve_model(service,band)
 bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'containment_doors.blend'))

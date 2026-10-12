@@ -33,6 +33,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_VAULT_DOOR);
     public static final DeferredItem<BlockItem> CONTAINMENT_VAULT_DOOR_4X4 =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_VAULT_DOOR_4X4);
+    public static final DeferredItem<BlockItem> CONTAINMENT_AIRLOCK =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_AIRLOCK);
     public static final DeferredItem<BlockItem> CONTAINMENT_STEAM_PENETRATION =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_STEAM_PENETRATION);
     public static final DeferredItem<BlockItem> CONTAINMENT_WATER_PENETRATION =
@@ -165,6 +167,7 @@ public final class BwrItems {
                         output.accept(CONTAINMENT_CONTROLLER.get());
                         output.accept(CONTAINMENT_VAULT_DOOR.get());
                         output.accept(CONTAINMENT_VAULT_DOOR_4X4.get());
+                        output.accept(CONTAINMENT_AIRLOCK.get());
                         output.accept(CONTAINMENT_STEAM_PENETRATION.get());
                         output.accept(CONTAINMENT_WATER_PENETRATION.get());
                         output.accept(CONTAINMENT_PASS_THROUGH.get());

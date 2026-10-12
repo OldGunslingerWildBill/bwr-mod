@@ -21,6 +21,7 @@ public final class PumpModelCheck {
         CondenserModelCheck.run(event);
         CoolingModelCheck.run(event);
         CondensateTankModelCheck.run(event);
+        ContainmentModelCheck.run(event);
         int checked=0;
         for(var block:blocks()) {
             int faces=0;

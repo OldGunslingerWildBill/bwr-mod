@@ -93,6 +93,22 @@ public final class ContainmentControllerRegistry {
         return null;
     }
 
+    /** Retain the surveyed room's smaller aperture when its sole reported breach is a forced airlock. */
+    public static ContainmentControllerBlockEntity forcedAirlockFor(Level level, BlockPos reactorPos) {
+        Map<Long, Set<BlockPos>> chunks = BY_CHUNK.get(level);
+        if (chunks == null) return null;
+        Set<BlockPos> candidates = chunks.get(ChunkPos.asLong(reactorPos));
+        Set<BlockPos> active = ACTIVE.get(level);
+        if (candidates == null || active == null) return null;
+        for (BlockPos pos : candidates) {
+            if (!active.contains(pos) || !level.isLoaded(pos)) continue;
+            if (level.getBlockEntity(pos) instanceof ContainmentControllerBlockEntity controller
+                    && !controller.isRemoved() && controller.isForcedAirlockLeak()
+                    && controller.encloses(reactorPos)) return controller;
+        }
+        return null;
+    }
+
     public static void changed(Level level, BlockPos edited) {
         if (level.isClientSide()) return;
         Map<Long, Set<BlockPos>> chunks = BY_CHUNK.get(level);

@@ -241,9 +241,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         var containmentController = dev.bwr.mod.containment.ContainmentControllerRegistry
                 .linkedReactor(level, getBlockPos());
         if (containmentController == null) {
-            core.getContainment().setLeakArea(1.0);
+            var airlock = dev.bwr.mod.containment.ContainmentControllerRegistry.forcedAirlockFor(level, getBlockPos());
+            core.getContainment().setLeakArea(airlock == null ? 1.0 : 0.35);
             core.getContainment().setFailurePressurePsig(
-                    dev.bwr.core.accident.ContainmentAtmosphere.FAILURE_PRESSURE_PSIG);
+                    airlock == null ? dev.bwr.core.accident.ContainmentAtmosphere.FAILURE_PRESSURE_PSIG
+                            : airlock.failurePressurePsig());
             core.setContainmentBypassFlowFraction(0.0);
         } else {
             // The boundary was open last tick and a sealed survey now links it:
