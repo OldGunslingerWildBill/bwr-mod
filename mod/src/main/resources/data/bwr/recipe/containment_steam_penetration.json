@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SIS",
+    "ITI",
+    "SIS"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:smooth_stone"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "T": {
+      "item": "bwr:pressurised_tube"
+    }
+  },
+  "result": {
+    "id": "bwr:containment_steam_penetration",
+    "count": 1
+  }
+}
