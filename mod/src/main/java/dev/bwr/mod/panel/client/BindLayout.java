@@ -21,6 +21,7 @@ public final class BindLayout {
     public final int listY;
     public final int listHeight;
     public final int scaleY;
+    public final int presetY;
     public final int buttonY;
     public final int bottom;
 
@@ -28,8 +29,10 @@ public final class BindLayout {
      * @param currentRows rows used by the "now wired to" lines (each sink gets a remove button)
      * @param listed      whether a filter and selection list are shown
      * @param scaled      whether the scale field is shown
+     * @param presets     whether a row of one-click transform presets follows the scale row
      */
-    public BindLayout(int screenWidth, int screenHeight, int currentRows, boolean listed, boolean scaled) {
+    public BindLayout(int screenWidth, int screenHeight, int currentRows, boolean listed, boolean scaled,
+                      boolean presets) {
         this.width = Math.min(340, screenWidth - 20);
         this.left = (screenWidth - width) / 2;
         this.top = 6;
@@ -41,11 +44,12 @@ public final class BindLayout {
         int y = currentY + Math.max(1, currentRows) * ROW + 2;
         this.filterY = y;
         int listTop = listed ? y + ROW : y;
-        int reserved = (scaled ? ROW : 0) + ROW + 8;
+        int reserved = (scaled ? ROW : 0) + (presets ? ROW : 0) + ROW + 8;
         this.listY = listTop;
         this.listHeight = listed ? Math.max(36, screenHeight - listTop - reserved - 6) : 0;
         this.scaleY = listTop + listHeight + (listed ? 4 : 0);
-        this.buttonY = scaleY + (scaled ? ROW : 0) + 4;
+        this.presetY = scaleY + (scaled ? ROW : 0);
+        this.buttonY = presetY + (presets ? ROW : 0) + 4;
         this.bottom = buttonY + ROW;
     }
 }

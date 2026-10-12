@@ -64,6 +64,8 @@ public final class BindModel {
     public Mode mode;
     public String filter = "";
     public String scaleText = "1";
+    /** Plant input transform: displayed = raw x scale + offset. */
+    public String offsetText = "0";
     public Entry selected;
     /** Plant output sink mode: false follows the output (value x scale), true sends {@link #fixedText} on a rise. */
     public boolean momentary;
@@ -104,6 +106,7 @@ public final class BindModel {
             mode = modes.get(0);
         }
         scaleText = defaultScale();
+        resetTransform();
     }
 
     public List<Mode> modes() {
@@ -118,6 +121,28 @@ public final class BindModel {
         this.selected = null;
         resetMomentary();
         scaleText = defaultScale();
+        resetTransform();
+    }
+
+    /** An input's transform starts at the current plant binding's (so editing keeps it) or at identity. */
+    private void resetTransform() {
+        offsetText = "0";
+        if (port != null && !port.output() && mode == Mode.PLANT && component.source(port.index()) instanceof PlantSource plant) {
+            scaleText = trim(plant.scale());
+            offsetText = trim(plant.offset());
+        }
+    }
+
+    /** Preset: the raw signal unchanged. */
+    public void presetRaw() {
+        scaleText = "1";
+        offsetText = "0";
+    }
+
+    /** Preset: a 0 to 1 fraction shown as 0 to 100 percent. */
+    public void presetFractionToPercent() {
+        scaleText = "100";
+        offsetText = "0";
     }
 
     private void resetMomentary() {
@@ -186,6 +211,11 @@ public final class BindModel {
         return mode == Mode.PLANT && deviceUsable() || mode == Mode.COMPONENT;
     }
 
+    /** Whether the Scale and Offset fields of a plant input (displayed = raw x scale + offset) are shown. */
+    public boolean usesTransform() {
+        return port != null && !port.output() && mode == Mode.PLANT;
+    }
+
     public boolean usesScale() {
         return port != null && port.output() && (mode == Mode.PLANT && !momentary || mode == Mode.REDSTONE);
     }
@@ -246,7 +276,8 @@ public final class BindModel {
         if (port == null) {
             return false;
         }
-        if (usesScale() && scale() == null || usesFixed() && fixed() == null) {
+        if ((usesScale() || usesTransform()) && scale() == null || usesTransform() && offset() == null
+                || usesFixed() && fixed() == null) {
             return false;
         }
         return switch (mode) {
@@ -259,6 +290,15 @@ public final class BindModel {
         try {
             double value = Double.parseDouble(scaleText.trim());
             return Double.isFinite(value) && value != 0.0 && Math.abs(value) <= 1.0e6 ? value : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    public Double offset() {
+        try {
+            double value = Double.parseDouble(offsetText.trim());
+            return Double.isFinite(value) && Math.abs(value) <= 1.0e6 ? value : null;
         } catch (NumberFormatException e) {
             return null;
         }
@@ -279,9 +319,10 @@ public final class BindModel {
                 mode == Mode.COMPONENT && entry != null ? entry.refOwner() : BlockPos.ZERO,
                 mode == Mode.COMPONENT && entry != null ? entry.refId() : 0,
                 mode == Mode.COMPONENT && entry != null ? entry.refOutput() : 0,
-                usesScale() && scale() != null ? scale() : 1.0,
+                (usesScale() || usesTransform()) && scale() != null ? scale() : 1.0,
                 usesFixed() ? PlantSink.Mode.MOMENTARY.ordinal() : PlantSink.Mode.FOLLOW.ordinal(),
-                usesFixed() && fixed() != null ? fixed() : 0.0);
+                usesFixed() && fixed() != null ? fixed() : 0.0,
+                usesTransform() && offset() != null ? offset() : 0.0);
     }
 
     /** Clears the current port (input to no signal, output to no sinks). */
@@ -328,6 +369,10 @@ public final class BindModel {
     public static Component describeSource(InputSource source) {
         if (source instanceof PlantSource plant) {
             BlockPos device = plant.device();
+            if (plant.scale() != 1.0 || plant.offset() != 0.0) {
+                return Component.translatable("source.bwr.panel.plant_scaled", plant.key(), device.getX(), device.getY(),
+                        device.getZ(), trim(plant.scale()), trim(plant.offset()));
+            }
             return Component.translatable("source.bwr.panel.plant", plant.key(), device.getX(), device.getY(), device.getZ());
         }
         if (source instanceof ComponentSource reference) {

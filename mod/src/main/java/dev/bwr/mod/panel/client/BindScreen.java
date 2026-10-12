@@ -35,9 +35,10 @@ public final class BindScreen extends Screen {
     @Override
     protected void init() {
         boolean listed = model.hasPorts() && model.listed();
-        boolean scaled = model.hasPorts() && (model.usesScale() || model.usesSinkMode());
+        boolean scaled = model.hasPorts() && (model.usesScale() || model.usesSinkMode() || model.usesTransform());
+        boolean presets = model.hasPorts() && model.usesTransform();
         int currentRows = model.port != null && model.port.output() ? model.sinkCount() + 1 : 1;
-        layout = new BindLayout(width, height, currentRows, listed, scaled);
+        layout = new BindLayout(width, height, currentRows, listed, scaled, presets);
         if (!model.hasPorts()) {
             addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), button -> onClose())
                     .bounds(layout.left, layout.portY, layout.width, 20).build());
@@ -104,6 +105,33 @@ public final class BindScreen extends Screen {
                     refresh();
                 });
                 addRenderableWidget(fixed);
+            } else if (model.usesTransform()) {
+                // Scale and Offset side by side: displayed = raw x scale + offset.
+                int quarter = layout.width / 4;
+                EditBox scale = new EditBox(font, layout.left + 34, layout.scaleY, quarter - 36, 20,
+                        Component.translatable("screen.bwr.panel_bind.scale"));
+                scale.setValue(model.scaleText);
+                scale.setResponder(value -> {
+                    model.scaleText = value;
+                    refresh();
+                });
+                addRenderableWidget(scale);
+                EditBox offset = new EditBox(font, layout.left + half + 38, layout.scaleY, half - 38, 20,
+                        Component.translatable("screen.bwr.panel_bind.offset"));
+                offset.setValue(model.offsetText);
+                offset.setResponder(value -> {
+                    model.offsetText = value;
+                    refresh();
+                });
+                addRenderableWidget(offset);
+                addRenderableWidget(Button.builder(Component.translatable("screen.bwr.panel_bind.preset_raw"), button -> {
+                    model.presetRaw();
+                    rebuildWidgets();
+                }).bounds(layout.left, layout.presetY, half - 2, 20).build());
+                addRenderableWidget(Button.builder(Component.translatable("screen.bwr.panel_bind.preset_percent"), button -> {
+                    model.presetFractionToPercent();
+                    rebuildWidgets();
+                }).bounds(layout.left + half + 2, layout.presetY, half - 2, 20).build());
             } else {
                 EditBox scale = new EditBox(font, layout.left + half, layout.scaleY, half, 20,
                         Component.translatable("screen.bwr.panel_bind.scale"));
@@ -158,6 +186,12 @@ public final class BindScreen extends Screen {
                 List<Component> lines = model.current();
                 graphics.drawString(font, lines.get(lines.size() - 1), layout.left,
                         layout.currentY + model.sinkCount() * BindLayout.ROW + 5, 0xCCCCCC);
+            }
+            if (model.usesTransform()) {
+                graphics.drawString(font, Component.translatable("screen.bwr.panel_bind.scale"), layout.left,
+                        layout.scaleY + 6, 0xCCCCCC);
+                graphics.drawString(font, Component.translatable("screen.bwr.panel_bind.offset"),
+                        layout.left + layout.width / 2 + 2, layout.scaleY + 6, 0xCCCCCC);
             }
             if (model.usesScale() && !model.usesSinkMode()) {
                 graphics.drawString(font, Component.translatable("screen.bwr.panel_bind.scale"), layout.left,
