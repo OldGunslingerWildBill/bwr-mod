@@ -1165,4 +1165,139 @@ public final class PanelWiringTests {
             }
         });
     }
+    // ---- plant input transform (displayed = raw x scale + offset)
+
+    @GameTest(template = "empty")
+    public static void inputTransformPayloadAndSaveRoundTripAndOldSavesAreByteIdentical(GameTestHelper helper) {
+        var registry = helper.getLevel().registryAccess();
+        var buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), registry);
+        var bind = new PanelPayloads.Bind(new BlockPos(1, 2, 3), 7, false, 0, BindKind.PLANT.ordinal(),
+                new BlockPos(-50, 64, 9), "position", BlockPos.ZERO, 0, 0, 100.0, 0, 0.0, -2.5);
+        PanelPayloads.Bind.STREAM_CODEC.encode(buffer, bind);
+        var decoded = PanelPayloads.Bind.STREAM_CODEC.decode(buffer);
+        check(helper, decoded.equals(bind) && decoded.scale() == 100.0 && decoded.offset() == -2.5, "bind with offset round trip");
+        check(helper, buffer.readableBytes() == 0, "the codec consumed every byte");
+        var legacy = new PanelPayloads.Bind(new BlockPos(1, 2, 3), 7, true, 1, BindKind.PLANT.ordinal(),
+                BlockPos.ZERO, "open", BlockPos.ZERO, 0, 0, 2.0, PlantSink.Mode.MOMENTARY.ordinal(), 1.0);
+        check(helper, legacy.offset() == 0.0 && new PanelPayloads.Bind(BlockPos.ZERO, 1, false, 0, 0, BlockPos.ZERO, "",
+                BlockPos.ZERO, 0, 0, 1.0).offset() == 0.0, "the older constructors have no offset");
+
+        // A source with the default transform saves exactly the old tag; an old tag re-saves byte-identical.
+        CompoundTag old = new CompoundTag();
+        old.putString("Kind", "plant");
+        old.putInt("X", 5);
+        old.putInt("Y", 6);
+        old.putInt("Z", 7);
+        old.putString("Key", "position");
+        InputSource loaded = InputSources.load(old);
+        check(helper, loaded instanceof PlantSource p && p.scale() == 1.0 && p.offset() == 0.0, "old tag loads as identity");
+        check(helper, InputSources.save(loaded).equals(old), "old tag re-saves byte-identical");
+        check(helper, InputSources.save(new PlantSource(new BlockPos(5, 6, 7), "position")).equals(old),
+                "an identity source writes no Scale or Offset");
+
+        InputSource scaled = new PlantSource(new BlockPos(5, 6, 7), "position", 100.0, -2.5);
+        CompoundTag scaledTag = InputSources.save(scaled);
+        check(helper, scaledTag.contains("Scale") && scaledTag.contains("Offset"), "a transform is saved");
+        check(helper, InputSources.load(scaledTag) instanceof PlantSource q && q.scale() == 100.0 && q.offset() == -2.5
+                && InputSources.save(InputSources.load(scaledTag)).equals(scaledTag), "transform round trip");
+        CompoundTag scaleOnly = InputSources.save(new PlantSource(new BlockPos(5, 6, 7), "position", 100.0, 0.0));
+        check(helper, scaleOnly.contains("Scale") && !scaleOnly.contains("Offset"), "only the non-default half is saved");
+
+        CompoundTag zero = old.copy();
+        zero.putDouble("Scale", 0.0);
+        CompoundTag nan = old.copy();
+        nan.putDouble("Offset", Double.NaN);
+        CompoundTag text = old.copy();
+        text.putString("Scale", "big");
+        for (CompoundTag bad : List.of(zero, nan, text)) {
+            check(helper, InputSources.save(InputSources.load(bad)).equals(bad), "a malformed transform is kept verbatim: " + bad);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 900)
+    public static void scaledPlantInputShowsPercentOffsetAppliesAndNaNStaysNaN(GameTestHelper helper) {
+        Stage.run(helper, 11, s -> {
+            s.wall(1, 1);
+            PanelBlockEntity block = s.be(s.at(0, 0));
+            BlockPos pos = block.getBlockPos();
+            PanelComponent seven = PanelOps.placeDirect(s.level, pos, 0, 0, ComponentTypes.SEVEN_SEGMENT_DISPLAY, Footprint.of(8, 3));
+            check(helper, seven != null, "the display fits");
+            var valve = s.msiv(s.devices);
+            valve.energy().receiveEnergy(20_000, false);
+            s.linker(s.devices);
+            SegmentDisplayData digits = (SegmentDisplayData) seven.data();
+
+            check(helper, s.bind(block, seven, false, 0, BindKind.PLANT, s.devices, "position", 100) == Result.OK, "scale 100");
+            CompoundTag format = new CompoundTag();
+            format.putString("Format", "{0:3.0f}");
+            s.configure(block, seven, format);
+            s.linker(s.devices);
+
+            // Refusals leave the binding as it was.
+            PlantSource before = (PlantSource) seven.source(0);
+            check(helper, s.bind(block, seven, false, 0, BindKind.PLANT, s.devices, "position", 0) == Result.BAD_VALUE,
+                    "scale 0 refused");
+            check(helper, s.bind(block, seven, false, 0, BindKind.PLANT, s.devices, "position", Double.NaN) == Result.BAD_VALUE
+                    && s.bind(block, seven, false, 0, BindKind.PLANT, s.devices, "position", Double.POSITIVE_INFINITY) == Result.BAD_VALUE
+                    && s.bind(block, seven, false, 0, BindKind.PLANT, s.devices, "position", 1.0e7) == Result.BAD_VALUE,
+                    "a non-finite or absurd scale is refused");
+            for (double offset : new double[] {Double.NaN, Double.POSITIVE_INFINITY, 1.0e7}) {
+                check(helper, WiringOps.bind(s.player, new PanelPayloads.Bind(pos, seven.id(), false, 0, BindKind.PLANT.ordinal(),
+                        s.devices, "position", BlockPos.ZERO, 0, 0, 1.0, 0, 0.0, offset)) == Result.BAD_VALUE,
+                        "offset " + offset + " refused");
+            }
+            check(helper, seven.source(0) == before, "refused binds changed nothing");
+
+            valve.setDemandOpen(true);
+            for (int i = 0; i < 90; i++) {
+                valve.tickValve(.05);
+            }
+            check(helper, valve.getPosition() == 1.0, "the valve is fully open: " + valve.getPosition());
+            s.then(sampleWait(), () -> {
+                check(helper, seven.input(0) == 100.0, "open reads 100 after scale: " + seven.input(0));
+                check(helper, digits.shown(seven).strip().equals("100"), "the display shows 100 when open: '" + digits.shown(seven) + "'");
+                valve.setDemandOpen(false);
+                for (int i = 0; i < 90; i++) {
+                    valve.tickValve(.05);
+                }
+                check(helper, valve.getPosition() == 0.0, "the valve closed");
+            });
+            s.then(sampleWait(), () -> {
+                check(helper, digits.shown(seven).strip().equals("0"), "and 0 when closed: '" + digits.shown(seven) + "'");
+                // Offset: closed reads 0 x 100 - 50 = -50 at once; open reads +50 later.
+                s.linker(s.devices);
+                check(helper, WiringOps.bind(s.player, new PanelPayloads.Bind(pos, seven.id(), false, 0, BindKind.PLANT.ordinal(),
+                        s.devices, "position", BlockPos.ZERO, 0, 0, 100.0, 0, 0.0, -50.0)) == Result.OK, "scale and offset");
+                check(helper, seven.input(0) == -50.0, "offset applied at once: " + seven.input(0));
+                valve.setDemandOpen(true);
+                for (int i = 0; i < 90; i++) {
+                    valve.tickValve(.05);
+                }
+            });
+            s.then(sampleWait(), () -> {
+                check(helper, seven.input(0) == 50.0, "open reads 1 x 100 - 50: " + seven.input(0));
+
+                // Save and reload through the chunk NBT: the transform survives and the block re-saves identically.
+                CompoundTag saved = block.savePanel(false);
+                PanelBlockEntity copy = copyOf(s, block);
+                check(helper, copy.savePanel(false).equals(saved), "block round trip");
+                check(helper, copy.component(seven.id()).source(0) instanceof PlantSource p && p.scale() == 100.0
+                        && p.offset() == -50.0 && p.device().equals(s.devices), "the transform is saved and reloaded");
+
+                // Back to identity: nothing extra is saved, so this is exactly an old-style source.
+                s.linker(s.devices);
+                check(helper, s.bind(block, seven, false, 0, BindKind.PLANT, s.devices, "position", 1) == Result.OK, "identity");
+                CompoundTag plain = InputSources.save(seven.source(0));
+                check(helper, !plain.contains("Scale") && !plain.contains("Offset"), "identity saves no transform keys");
+                check(helper, seven.input(0) == 1.0, "unscaled again: " + seven.input(0));
+                s.bind(block, seven, false, 0, BindKind.PLANT, s.devices, "position", 100);
+                s.removeMsiv(s.devices);
+            });
+            s.then(sampleWait(), () -> {
+                check(helper, Double.isNaN(seven.input(0)), "NaN stays NaN through scale and offset: " + seven.input(0));
+                check(helper, digits.shown(seven).strip().equals("---"), "the display shows dashes: '" + digits.shown(seven) + "'");
+            });
+        });
+    }
 }
