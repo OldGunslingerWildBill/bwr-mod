@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": ["GGG", "LQL", "III"], "key": {"G": {"item": "minecraft:glass_pane"}, "L": {"item": "minecraft:lime_dye"}, "Q": {"item": "minecraft:quartz"}, "I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:character_lcd", "count": 1}}

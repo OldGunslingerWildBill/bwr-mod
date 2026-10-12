@@ -166,4 +166,35 @@ public final class PanelRenderContext implements QuadSink {
     public Font font() {
         return font;
     }
+
+    /**
+     * Draws one textured rectangle parallel to the face at elevation {@code z}, with the whole texture of
+     * {@code type} (u,v 0..1) mapped onto it. This is how displays show pixel content (the LCD and graphic
+     * display render into dynamic textures). Not allocation free in the vertex buffer sense, but it makes no
+     * objects of its own.
+     */
+    public void texturedRect(RenderType type, float x, float y, float w, float h, float z, boolean emissive) {
+        int packedLight = emissive ? LightTexture.FULL_BRIGHT : light;
+        VertexConsumer out = buffers.getBuffer(type);
+        float nx = normals[0];
+        float ny = normals[1];
+        float nz = normals[2];
+        textured(out, x, y, z, 0.0f, 0.0f, packedLight, nx, ny, nz);
+        textured(out, x + w, y, z, 1.0f, 0.0f, packedLight, nx, ny, nz);
+        textured(out, x + w, y + h, z, 1.0f, 1.0f, packedLight, nx, ny, nz);
+        textured(out, x, y + h, z, 0.0f, 1.0f, packedLight, nx, ny, nz);
+        consumer = null;
+    }
+
+    private void textured(VertexConsumer out, float x, float y, float z, float u, float v, int packedLight,
+                          float nx, float ny, float nz) {
+        double cu = originU + x;
+        double cv = originV + y;
+        out.addVertex(pose, (float) frame.x(cu, cv, z), (float) frame.y(cu, cv, z), (float) frame.z(cu, cv, z))
+                .setColor(255, 255, 255, 255)
+                .setUv(u, v)
+                .setOverlay(overlay)
+                .setLight(packedLight)
+                .setNormal(pose, nx, ny, nz);
+    }
 }

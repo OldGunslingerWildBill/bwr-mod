@@ -49,6 +49,17 @@ public final class ComponentModels {
         register(ComponentTypes.THUMBWHEEL.id(), new ThumbwheelModel());
         register(ComponentTypes.ANNUNCIATOR.id(), new AnnunciatorModel());
         register(ComponentTypes.BAR_GRAPH.id(), new BarGraphModel());
+        // gauges, displays and mimic
+        register(ComponentTypes.DIAL_GAUGE.id(), new DialGaugeModel());
+        register(ComponentTypes.EDGEWISE_GAUGE_VERTICAL.id(), new EdgewiseGaugeModel(true));
+        register(ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL.id(), new EdgewiseGaugeModel(false));
+        register(ComponentTypes.STRIP_CHART.id(), new StripChartModel());
+        register(ComponentTypes.SEVEN_SEGMENT_DISPLAY.id(), new SegmentDisplayModel(false));
+        register(ComponentTypes.SIXTEEN_SEGMENT_DISPLAY.id(), new SegmentDisplayModel(true));
+        register(ComponentTypes.CHARACTER_LCD.id(), new LcdModel());
+        register(ComponentTypes.GRAPHIC_DISPLAY.id(), new GraphicDisplayModel());
+        register(ComponentTypes.MIMIC_LINE.id(), new MimicLineModel());
+        register(ComponentTypes.MIMIC_SYMBOL.id(), new MimicSymbolModel());
     }
 
     public static void register(ResourceLocation typeId, ComponentModel model) {

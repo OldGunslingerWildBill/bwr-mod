@@ -13,6 +13,46 @@ public final class NameplateData extends ComponentData implements PanelTextTarge
     public int plate = DEFAULT_PLATE;
     public int ink = DEFAULT_INK;
 
+    /** Pending patch for watching clients (server). */
+    private boolean dirty;
+
+    /**
+     * Replaces the engraved text (the CC {@code setText} path). Printable characters only, at most
+     * {@link #MAX_TEXT}; the change is saved and sent to watching clients as a small patch.
+     *
+     * @return whether the text changed
+     */
+    public boolean setText(String newText) {
+        String clean = ConfigSchema.cleanText(newText == null ? "" : newText, MAX_TEXT);
+        if (clean.equals(text)) {
+            return false;
+        }
+        text = clean;
+        dirty = true;
+        contentChanged();
+        return true;
+    }
+
+    @Override
+    public byte[] drainPatch() {
+        if (!dirty) {
+            return null;
+        }
+        dirty = false;
+        return ContentPatches.encode(toTag());
+    }
+
+    @Override
+    public void applyPatch(byte[] patch) {
+        CompoundTag tag = ContentPatches.decode(patch);
+        if (tag != null) {
+            load(tag);
+            if (host() != null) {
+                host().touch();
+            }
+        }
+    }
+
     @Override
     public boolean setText(String value) {
         String clean = ConfigSchema.cleanText(value, MAX_TEXT);

@@ -80,6 +80,13 @@ public final class PanelSync {
         }
         Map<Level, Map<ChunkPos, List<PanelPayloads.Entry>>> batches = new HashMap<>();
         for (PanelBlockEntity be : DIRTY) {
+            List<PanelBlockEntity.ContentPatch> patches = be.drainContent();
+            if (!be.isRemoved() && be.getLevel() instanceof ServerLevel patchLevel) {
+                for (PanelBlockEntity.ContentPatch patch : patches) {
+                    PacketDistributor.sendToPlayersTrackingChunk(patchLevel, new ChunkPos(be.getBlockPos()),
+                            new PanelPayloads.Content(be.getBlockPos(), patch.id(), patch.bytes()));
+                }
+            }
             List<PanelBlockEntity.ValueDelta> deltas = be.drainDeltas();
             if (be.isRemoved() || !(be.getLevel() instanceof ServerLevel level) || deltas.isEmpty()) {
                 continue;

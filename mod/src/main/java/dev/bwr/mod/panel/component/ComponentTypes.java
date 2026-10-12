@@ -33,6 +33,17 @@ public final class ComponentTypes {
     public static final ComponentType THUMBWHEEL = register(new ThumbwheelType());
     public static final ComponentType ANNUNCIATOR = register(new AnnunciatorType());
     public static final ComponentType BAR_GRAPH = register(new BarGraphType());
+    // -- gauges, displays and mimic (spec 2.1, 2.2) --
+    public static final ComponentType DIAL_GAUGE = register(new DialGaugeType());
+    public static final ComponentType EDGEWISE_GAUGE_VERTICAL = register(new EdgewiseGaugeType(true));
+    public static final ComponentType EDGEWISE_GAUGE_HORIZONTAL = register(new EdgewiseGaugeType(false));
+    public static final ComponentType STRIP_CHART = register(new StripChartType());
+    public static final ComponentType SEVEN_SEGMENT_DISPLAY = register(new SegmentDisplayType(false));
+    public static final ComponentType SIXTEEN_SEGMENT_DISPLAY = register(new SegmentDisplayType(true));
+    public static final ComponentType CHARACTER_LCD = register(new LcdType());
+    public static final ComponentType GRAPHIC_DISPLAY = register(new GraphicDisplayType());
+    public static final ComponentType MIMIC_LINE = register(new MimicLineType());
+    public static final ComponentType MIMIC_SYMBOL = register(new MimicSymbolType());
     // ----------------------------------------------------------------------------
 
     /** Forces class initialisation. */

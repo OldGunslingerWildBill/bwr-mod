@@ -22,6 +22,9 @@ public final class RenderCache {
     public float textX2;
     public float textY2;
 
+    /** A model's own per-component client state (damped needle position, cached labels). Never saved. */
+    public Object scratch;
+
     /** The cache of {@code component}, created on first use. */
     public static RenderCache of(PanelComponent component) {
         if (component.clientCache instanceof RenderCache cache) {

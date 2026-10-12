@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": ["PPP", "ICI", "IRI"], "key": {"P": {"item": "minecraft:paper"}, "I": {"item": "minecraft:iron_ingot"}, "C": {"item": "minecraft:clock"}, "R": {"item": "minecraft:redstone"}}, "result": {"id": "bwr:strip_chart", "count": 1}}

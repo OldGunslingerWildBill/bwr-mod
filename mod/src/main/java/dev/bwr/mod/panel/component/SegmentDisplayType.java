@@ -1,0 +1,72 @@
+package dev.bwr.mod.panel.component;
+
+import dev.bwr.mod.BwrMod;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * The 7-segment display and the 16-segment alphanumeric display (spec 2.1):
+ * 2x3 cells per digit, 1 to 16 digits (so the footprint list is the digit
+ * counts), amber by default. They share this class and {@link SegmentDisplayData};
+ * the 7-segment shows digits and the letters a seven-segment digit can form, the
+ * 16-segment full ASCII. Inputs {@code v0..v3} feed the format string.
+ */
+public final class SegmentDisplayType extends ComponentType {
+    private static final int[] DIGIT_COUNTS = {4, 1, 2, 3, 5, 6, 8, 10, 12, 16};
+    private static final List<ConfigField> SCHEMA = SegmentDisplayData.schema();
+    private static final List<PortSpec> INPUTS = List.of(
+            PortSpec.of("v0"), PortSpec.of("v1"), PortSpec.of("v2"), PortSpec.of("v3"));
+
+    private final boolean sixteen;
+    private final List<Footprint> footprints;
+
+    SegmentDisplayType(boolean sixteen) {
+        super(BwrMod.id(sixteen ? "sixteen_segment_display" : "seven_segment_display"));
+        this.sixteen = sixteen;
+        List<Footprint> list = new ArrayList<>();
+        for (int digits : DIGIT_COUNTS) {
+            list.add(Footprint.of(digits * 2, 3));
+        }
+        this.footprints = List.copyOf(list);
+    }
+
+    public boolean sixteen() {
+        return sixteen;
+    }
+
+    @Override
+    public List<Footprint> footprints() {
+        return footprints;
+    }
+
+    @Override
+    public ComponentData createData() {
+        return new SegmentDisplayData(sixteen);
+    }
+
+    @Override
+    public List<ConfigField> configSchema() {
+        return SCHEMA;
+    }
+
+    @Override
+    public List<PortSpec> inputPorts(ComponentData data) {
+        return INPUTS;
+    }
+
+    @Override
+    public void valuesChanged(PanelComponent component) {
+        ((SegmentDisplayData) component.data()).invalidate();
+    }
+
+    @Override
+    public void onLoaded(PanelComponent component) {
+        ((SegmentDisplayData) component.data()).invalidate();
+    }
+
+    @Override
+    public String labelPrefix() {
+        return sixteen ? "AD" : "SD";
+    }
+}
