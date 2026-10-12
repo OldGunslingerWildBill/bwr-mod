@@ -108,7 +108,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         BlockState state = level.getBlockState(leak);
         if (!(state.getBlock() instanceof ContainmentAirlockBlock airlock)) return false;
         var owner = airlock.owner(level, leak, state);
-        return owner != null && owner.override() && owner.innerOpen() && owner.outerOpen() && !owner.damaged();
+        return owner != null && owner.innerOpen() && owner.outerOpen() && !owner.damaged();
     }
     public boolean isStale() { return stale; }
     public boolean isScanning() { return scan != null; }
@@ -287,8 +287,9 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         stale = false;
         leak = at.immutable();
         scan = null;
-        linkedReactors = List.of();
-        linkedPools = List.of();
+        // Keep last surveyed membership while the room leaks. It is needed to
+        // associate a dual-open airlock with its reactor after a chunk reload,
+        // before the interior-cell survey has been rebuilt.
         strengthReady = false;
         setChanged();
     }

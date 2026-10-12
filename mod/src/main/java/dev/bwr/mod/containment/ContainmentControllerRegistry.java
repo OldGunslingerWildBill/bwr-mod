@@ -104,7 +104,8 @@ public final class ContainmentControllerRegistry {
             if (!active.contains(pos) || !level.isLoaded(pos)) continue;
             if (level.getBlockEntity(pos) instanceof ContainmentControllerBlockEntity controller
                     && !controller.isRemoved() && controller.isForcedAirlockLeak()
-                    && controller.encloses(reactorPos)) return controller;
+                    && (controller.linkedReactors().contains(reactorPos)
+                        || controller.encloses(reactorPos))) return controller;
         }
         return null;
     }
