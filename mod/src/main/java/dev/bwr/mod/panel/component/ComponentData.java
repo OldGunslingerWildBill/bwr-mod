@@ -68,6 +68,14 @@ public abstract class ComponentData {
     protected void attached() {
     }
 
+    /**
+     * Whether this type sends its content changes as {@link #drainPatch patches}. Such types must not also be
+     * sent in full when CC changes them; see {@code PanelBlockEntity.displayChanged}.
+     */
+    public boolean syncsByPatch() {
+        return false;
+    }
+
     /** Tells the host that bulk content changed (server): it is saved and a patch is sent next tick. */
     protected final void contentChanged() {
         if (host != null) {

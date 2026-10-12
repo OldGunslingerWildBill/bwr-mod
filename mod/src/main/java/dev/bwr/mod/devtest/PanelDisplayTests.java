@@ -79,7 +79,7 @@ public final class PanelDisplayTests {
 
         private Stage(GameTestHelper helper, int slot) {
             level = helper.getLevel();
-            origin = new BlockPos(46_900 + slot * 64, 110, 46_900);
+            origin = new BlockPos(48_900 + slot * 64, 110, 48_900);
             hold(true);
             player = FakePlayerFactory.get(level, new GameProfile(
                     UUID.nameUUIDFromBytes(("panel-display-test-" + slot).getBytes(java.nio.charset.StandardCharsets.UTF_8)),

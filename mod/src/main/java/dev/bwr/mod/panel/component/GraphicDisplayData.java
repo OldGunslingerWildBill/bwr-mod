@@ -32,7 +32,7 @@ import java.util.List;
  * changed palette entries, never more than {@link #MAX_PATCH} bytes. A program may
  * therefore draw as much as it likes per tick; only the net change is sent.
  */
-public final class GraphicDisplayData extends ComponentData {
+public final class GraphicDisplayData extends ComponentData implements PanelDrawTarget {
     public static final int PX_PER_BLOCK = 32;
     public static final int PX_PER_CELL = PX_PER_BLOCK / 16;
     public static final int MAX_PX = PX_PER_BLOCK * 4;
@@ -86,6 +86,29 @@ public final class GraphicDisplayData extends ComponentData {
         ensureSize();
     }
 
+    @Override
+    public boolean syncsByPatch() {
+        return true;
+    }
+
+    /** CC {@code getSize}: pixels across. */
+    @Override
+    public int drawWidth() {
+        return width();
+    }
+
+    /** CC {@code getSize}: pixels down. */
+    @Override
+    public int drawHeight() {
+        return height();
+    }
+
+    /** CC {@code blit(label, rows)}: rows of hex palette digits from the top-left corner. */
+    @Override
+    public boolean blit(String[] rows) {
+        return rows != null && blit(java.util.Arrays.asList(rows));
+    }
+
     public int width() {
         ensureSize();
         return width;
@@ -119,6 +142,7 @@ public final class GraphicDisplayData extends ComponentData {
 
     // ---- drawing (server side API)
 
+    @Override
     public boolean clear(int color) {
         ensureSize();
         if (!validColor(color) || pixels.length == 0) {
@@ -138,11 +162,13 @@ public final class GraphicDisplayData extends ComponentData {
         return done(changed);
     }
 
+    @Override
     public boolean setPixel(int x, int y, int color) {
         ensureSize();
         return validColor(color) && done(put(x, y, color));
     }
 
+    @Override
     public boolean fill(int x, int y, int w, int h, int color) {
         ensureSize();
         if (!validColor(color) || w <= 0 || h <= 0) {
@@ -161,6 +187,7 @@ public final class GraphicDisplayData extends ComponentData {
         return done(changed);
     }
 
+    @Override
     public boolean drawText(int x, int y, String text, int color) {
         ensureSize();
         if (text == null || !validColor(color)) {
@@ -218,6 +245,7 @@ public final class GraphicDisplayData extends ComponentData {
         return done(changed);
     }
 
+    @Override
     public boolean setPalette(int index, int rgb) {
         if (index < 0 || index >= PALETTE_SIZE || palette[index] == (rgb & 0xFFFFFF)) {
             return false;

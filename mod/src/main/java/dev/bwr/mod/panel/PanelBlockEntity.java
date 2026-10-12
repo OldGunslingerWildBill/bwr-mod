@@ -610,6 +610,11 @@ public final class PanelBlockEntity extends BlockEntity {
     public void displayChanged(PanelComponent component) {
         component.touch();
         setChanged();
+        // Displays that patch their content already queued one through contentChanged(); a full resend
+        // of a graphic display's framebuffer every tick a program draws would be wasted traffic.
+        if (component.data().syncsByPatch()) {
+            return;
+        }
         if (level != null && !level.isClientSide()) {
             PanelSync.markDisplayDirty(this);
         }

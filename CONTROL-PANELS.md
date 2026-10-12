@@ -168,6 +168,7 @@ the existing `bwr_reactor` / `bwr_msiv` API.)
   its own output, so it cannot latch itself.
 * `bwr-panels.toml`: `sampleTicks` (2), `linkRange` (64), `maxGroupColumns` (16), `maxGroupRows` (8),
   `maxComponentsPerBlock` (64), `maxLabelLength` (16).
-* Network protocol version 14. Packets: `panel_linker_open` and `panel_bind` (client to server, validated:
+* Network protocol version 15. Packets: `panel_linker_open` and `panel_bind` (client to server, validated:
   reach, claim permission, the linker's own device, dimension, range, key exists), `panel_linker_screen`
-  (server to client).
+  (server to client), and `panel_content` (server to client: bounded display content patches, at most one per
+  component per tick).

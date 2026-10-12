@@ -22,6 +22,7 @@ public final class NameplateData extends ComponentData implements PanelTextTarge
      *
      * @return whether the text changed
      */
+    @Override
     public boolean setText(String newText) {
         String clean = ConfigSchema.cleanText(newText == null ? "" : newText, MAX_TEXT);
         if (clean.equals(text)) {
@@ -30,6 +31,11 @@ public final class NameplateData extends ComponentData implements PanelTextTarge
         text = clean;
         dirty = true;
         contentChanged();
+        return true;
+    }
+
+    @Override
+    public boolean syncsByPatch() {
         return true;
     }
 
@@ -51,16 +57,6 @@ public final class NameplateData extends ComponentData implements PanelTextTarge
                 host().touch();
             }
         }
-    }
-
-    @Override
-    public boolean setText(String value) {
-        String clean = ConfigSchema.cleanText(value, MAX_TEXT);
-        if (clean.equals(text)) {
-            return false;
-        }
-        text = clean;
-        return true;
     }
 
     @Override

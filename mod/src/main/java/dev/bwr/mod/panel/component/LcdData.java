@@ -29,7 +29,7 @@ import java.util.Arrays;
  * Each mutator returns whether anything changed and queues one small patch, sent at most once per tick.
  * Printable ASCII only; anything else is stored as {@code ?}.
  */
-public final class LcdData extends ComponentData {
+public final class LcdData extends ComponentData implements PanelDrawTarget, PanelTextTarget {
     public static final int MAX_ROWS = 4;
     public static final int MAX_COLS = 64;
     public static final int MAX_FORMAT = 96;
@@ -54,6 +54,29 @@ public final class LcdData extends ComponentData {
     }
 
     /** Characters per row. */
+    @Override
+    public boolean syncsByPatch() {
+        return true;
+    }
+
+    /** CC {@code getSize}: characters across. */
+    @Override
+    public int drawWidth() {
+        return cols();
+    }
+
+    /** CC {@code getSize}: rows. */
+    @Override
+    public int drawHeight() {
+        return rows();
+    }
+
+    /** CC {@code clear(label, color)}: an LCD has no colours, so it only clears its text. */
+    @Override
+    public boolean clear(int color) {
+        return clear();
+    }
+
     public int cols() {
         return host() == null ? 16 : Math.max(1, Math.min(MAX_COLS, host().cellsWide()));
     }
@@ -72,6 +95,7 @@ public final class LcdData extends ComponentData {
     }
 
     /** Overwrites characters of a row starting at {@code col}; clipped at the edges. Clears the format. */
+    @Override
     public boolean write(int row, int col, String text) {
         if (text == null || row < 0 || row >= rows() || col >= cols()) {
             return false;
@@ -111,6 +135,7 @@ public final class LcdData extends ComponentData {
     }
 
     /** Replaces the whole grid: rows separated by newline, anything beyond the display is dropped. Clears the format. */
+    @Override
     public boolean setText(String text) {
         String[] lines = (text == null ? "" : text).split("\n", -1);
         boolean changed = !format.isEmpty();

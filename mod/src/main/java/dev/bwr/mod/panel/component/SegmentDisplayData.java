@@ -28,7 +28,7 @@ import java.util.List;
  * recomputed only when the text, an input or the config changed; the returned
  * array is reused, so a frame allocates nothing.
  */
-public final class SegmentDisplayData extends ComponentData {
+public final class SegmentDisplayData extends ComponentData implements PanelTextTarget {
     public static final int MAX_FORMAT = 48;
     public static final int MAX_TEXT = 48;
     public static final int INPUTS = 4;
@@ -70,6 +70,12 @@ public final class SegmentDisplayData extends ComponentData {
      *
      * @return whether anything changed
      */
+    @Override
+    public boolean syncsByPatch() {
+        return true;
+    }
+
+    @Override
     public boolean setText(String newText) {
         String clean = ConfigSchema.cleanText(newText == null ? "" : newText, MAX_TEXT);
         if (clean.equals(text) && format.isEmpty()) {
