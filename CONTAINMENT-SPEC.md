@@ -173,8 +173,10 @@ has a fixed pressure rating (config).
   and a short chamber between them.
 - Interlocked: one door can't open while the other is open. Walking through
   never unseals.
-- A CC or redstone override can force both doors open, which unseals and is a
-  medium leak.
+- Each plain redstone pulse advances the interlocked passage: open inner,
+  close inner, open outer, close outer. A CC `setOverride(true)` is the only
+  command that forces both doors open. Releasing it does not close either leaf;
+  the medium leak persists until at least one leaf closes.
 - Rating: 120 psig.
 
 ### 5.3 Penetrations

@@ -12,6 +12,7 @@ import net.minecraft.world.level.block.state.BlockState;
 /** Interlock decisions live on the single root, and are saved across unloads. */
 public final class ContainmentAirlockBlockEntity extends BlockEntity {
     private boolean innerOpen,outerOpen,override,computerControlled,damaged;
+    private boolean redstoneHigh,nextOuter;
     public ContainmentAirlockBlockEntity(BlockPos pos,BlockState state){super(BwrBlockEntities.CONTAINMENT_AIRLOCK.get(),pos,state);}
     public boolean innerOpen(){return innerOpen;}
     public boolean outerOpen(){return outerOpen;}
@@ -21,13 +22,28 @@ public final class ContainmentAirlockBlockEntity extends BlockEntity {
     public void setComputerControlled(boolean value){computerControlled=value;changed();}
     public boolean setInnerOpen(boolean value,boolean force){
         if(level==null||level.isClientSide()||damaged||value&&outerOpen&&!force)return false;
-        if(value!=innerOpen){innerOpen=value;syncCells();}return true;
+        if(value!=innerOpen){if(!value)nextOuter=true;innerOpen=value;syncCells();}return true;
     }
     public boolean setOuterOpen(boolean value,boolean force){
         if(level==null||level.isClientSide()||damaged||value&&innerOpen&&!force)return false;
-        if(value!=outerOpen){outerOpen=value;syncCells();}return true;
+        if(value!=outerOpen){if(!value)nextOuter=false;outerOpen=value;syncCells();}return true;
     }
-    /** Redstone high or explicit computer override unseals both leaves. */
+    /** A rising redstone edge takes one safe step through the personnel passage. */
+    public void redstoneSignal(boolean high){
+        if(level==null||level.isClientSide())return;
+        boolean changedSignal=high!=redstoneHigh;
+        boolean rising=high&&!redstoneHigh;
+        redstoneHigh=high;
+        if(!rising||computerControlled||damaged){if(changedSignal)changed();return;}
+        if(innerOpen&&outerOpen){
+            innerOpen=false;outerOpen=false;nextOuter=false;syncCells();
+        }else if(innerOpen)setInnerOpen(false,false);
+        else if(outerOpen)setOuterOpen(false,false);
+        else if(nextOuter)setOuterOpen(true,false);
+        else setInnerOpen(true,false);
+        changed();
+    }
+    /** Explicit computer override unseals both leaves. Releasing it leaves their positions unchanged. */
     public void setOverride(boolean forced){
         if(level==null||level.isClientSide())return;
         if(damaged)return;
@@ -61,12 +77,14 @@ public final class ContainmentAirlockBlockEntity extends BlockEntity {
         tag.putBoolean("InnerOpen",innerOpen);tag.putBoolean("OuterOpen",outerOpen);
         tag.putBoolean("Override",override);tag.putBoolean("ComputerControlled",computerControlled);
         tag.putBoolean("Damaged",damaged);
+        tag.putBoolean("RedstoneHigh",redstoneHigh);tag.putBoolean("NextOuter",nextOuter);
     }
     @Override protected void loadAdditional(CompoundTag tag,HolderLookup.Provider registries){
         super.loadAdditional(tag,registries);
         innerOpen=tag.getBoolean("InnerOpen");outerOpen=tag.getBoolean("OuterOpen");
         override=tag.getBoolean("Override");computerControlled=tag.getBoolean("ComputerControlled");
         damaged=tag.getBoolean("Damaged");
+        redstoneHigh=tag.getBoolean("RedstoneHigh");nextOuter=tag.getBoolean("NextOuter");
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries){return saveWithoutMetadata(registries);}
     @Override public ClientboundBlockEntityDataPacket getUpdatePacket(){return ClientboundBlockEntityDataPacket.create(this);}

@@ -95,10 +95,10 @@ public final class ContainmentAirlockBlock extends BaseEntityBlock {
     @Override protected void neighborChanged(BlockState state,Level level,BlockPos pos,Block neighbour,BlockPos changed,boolean moving){
         super.neighborChanged(state,level,pos,neighbour,changed,moving);
         if(level.isClientSide())return;
-        var owner=owner(level,pos,state);if(owner==null||owner.isComputerControlled())return;
+        var owner=owner(level,pos,state);if(owner==null)return;
         BlockPos root=root(pos,state);boolean signal=false;
         for(int i=0;i<6&&!signal;i++)signal=level.hasNeighborSignal(cell(root,state.getValue(FACING),i));
-        owner.setOverride(signal);
+        owner.redstoneSignal(signal);
     }
     @Override protected void onPlace(BlockState state,Level level,BlockPos pos,BlockState old,boolean moving){
         super.onPlace(state,level,pos,old,moving);
