@@ -108,6 +108,8 @@ public final class PanelBlockEntity extends BlockEntity {
                     other.group = group;
                 }
             }
+            // A merge can join two equal labels; make them unique (first holder by position keeps its label).
+            group.resolveDuplicateLabels(level);
         }
         return group;
     }
