@@ -116,11 +116,16 @@ public final class WiringOps {
             case REDSTONE -> source = RedstoneSource.INSTANCE;
             case CC -> source = component.source(request.port()) instanceof CcSource existing ? existing : new CcSource();
             case PLANT -> {
+                // displayed = raw * scale + offset; the same bounds as an output scale, and a finite offset.
+                if (!validScale(request.scale()) || !Double.isFinite(request.offset())
+                        || Math.abs(request.offset()) > MAX_SCALE) {
+                    return Result.BAD_VALUE;
+                }
                 Result checked = checkDevice(player, level, linker, owner.getBlockPos(), request, false);
                 if (checked != Result.OK) {
                     return checked;
                 }
-                source = new PlantSource(request.device(), request.key());
+                source = new PlantSource(request.device(), request.key(), request.scale(), request.offset());
             }
             case COMPONENT -> {
                 BlockPos refOwner = request.refOwner();

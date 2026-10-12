@@ -168,12 +168,19 @@ public final class PanelPayloads {
      * {@code WiringOps#bind}.
      */
     public record Bind(BlockPos pos, int id, boolean output, int port, int kind, BlockPos device, String key,
-                       BlockPos refOwner, int refId, int refOutput, double scale, int sinkMode, double fixed)
+                       BlockPos refOwner, int refId, int refOutput, double scale, int sinkMode, double fixed,
+                       double offset)
             implements CustomPacketPayload {
+        /** A request with no input offset (every binding before the input transform existed). */
+        public Bind(BlockPos pos, int id, boolean output, int port, int kind, BlockPos device, String key,
+                    BlockPos refOwner, int refId, int refOutput, double scale, int sinkMode, double fixed) {
+            this(pos, id, output, port, kind, device, key, refOwner, refId, refOutput, scale, sinkMode, fixed, 0.0);
+        }
+
         /** A request that follows the output (every binding before the sink mode existed). */
         public Bind(BlockPos pos, int id, boolean output, int port, int kind, BlockPos device, String key,
                     BlockPos refOwner, int refId, int refOutput, double scale) {
-            this(pos, id, output, port, kind, device, key, refOwner, refId, refOutput, scale, 0, 0.0);
+            this(pos, id, output, port, kind, device, key, refOwner, refId, refOutput, scale, 0, 0.0, 0.0);
         }
 
         public static final Type<Bind> TYPE = new Type<>(BwrMod.id("panel_bind"));
@@ -192,10 +199,12 @@ public final class PanelPayloads {
                     buf.writeDouble(bind.scale);
                     buf.writeVarInt(bind.sinkMode);
                     buf.writeDouble(bind.fixed);
+                    buf.writeDouble(bind.offset);
                 },
                 buf -> new Bind(buf.readBlockPos(), buf.readVarInt(), buf.readBoolean(), buf.readVarInt(),
                         buf.readVarInt(), buf.readBlockPos(), buf.readUtf(MAX_KEY), buf.readBlockPos(),
-                        buf.readVarInt(), buf.readVarInt(), buf.readDouble(), buf.readVarInt(), buf.readDouble()));
+                        buf.readVarInt(), buf.readVarInt(), buf.readDouble(), buf.readVarInt(), buf.readDouble(),
+                        buf.readDouble()));
 
         @Override
         public Type<? extends CustomPacketPayload> type() {
