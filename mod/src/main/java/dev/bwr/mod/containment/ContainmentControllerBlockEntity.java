@@ -58,6 +58,8 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     private boolean strengthReady;
     private WeakestSpot weakest;
     private final Map<BoundaryFace, ContainmentStrength.Column> ratings = new HashMap<>();
+    /** Published only after a complete rating pass; live valve state is still queried per crossing. */
+    private List<BoundaryFace> penetrationFaces = List.of();
     private final Map<Long, Set<BoundaryFace>> ratingDependencies = new HashMap<>();
     private final Set<BoundaryFace> pendingRatingFaces = new HashSet<>();
     private ArrayDeque<BoundaryFace> ratingQueue;
@@ -113,7 +115,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     public WeakestSpot weakestSpot() { return weakest; }
     public double failurePressurePsig() { return weakest == null ? 140.0 : weakest.ratingPsig(); }
     public List<BlockPos> openings() {
-        return ratings.keySet().stream().map(BoundaryFace::wall).distinct()
+        return penetrationFaces.stream().map(BoundaryFace::wall).distinct()
                 .filter(pos -> level != null && level.isLoaded(pos)
                         && level.getBlockState(pos).getBlock() instanceof ContainmentPenetrationBlock)
                 .toList();
@@ -121,11 +123,9 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
 
     /** Flow out of the sealed boundary through open, connected process crossings. */
     public double bypassFlowFraction(ReactorControllerBlockEntity reactor) {
-        if (level == null || !sealed || !strengthReady || reactor.structure() == null) return 0.0;
+        if (level == null || !sealed || weakest == null || reactor.structure() == null) return 0.0;
         double flow = 0.0;
-        var boundaries = ratings.keySet().stream().filter(face -> level.isLoaded(face.wall())
-                && level.getBlockState(face.wall()).getBlock() instanceof ContainmentPenetrationBlock)
-                .toList();
+        var boundaries = penetrationFaces;
         for (BlockPos nozzlePos : reactor.structure().steamOutletPositions()) {
             if (!level.isLoaded(nozzlePos)
                     || !(level.getBlockEntity(nozzlePos) instanceof RpvSteamOutletBlockEntity nozzle)) continue;
@@ -151,6 +151,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     private double openCrossing(PipeTopology.Graph inside, BoundaryFace face,
                                 ContainmentPenetrationBlock.Service expected) {
         BlockPos pos = face.wall();
+        if (!level.isLoaded(pos)) return 0.0;
         BlockState state = level.getBlockState(pos);
         if (!(state.getBlock() instanceof ContainmentPenetrationBlock penetration)
                 || penetration.service() != expected
@@ -337,6 +338,14 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                             column.material(), column.layerCount(), column.ratingPsig(), column.deep()))
                     .orElse(null);
             strengthReady = weakest != null;
+            // One boundary scan for the completed rating pass. Neither reactor
+            // ticks nor the CC opening readout scan thousands of wall faces.
+            penetrationFaces = ratings.keySet().stream()
+                    .filter(face -> level.isLoaded(face.wall())
+                            && level.getBlockState(face.wall()).getBlock() instanceof ContainmentPenetrationBlock)
+                    .sorted(java.util.Comparator.comparingLong((BoundaryFace face) -> face.wall().asLong())
+                            .thenComparingInt(face -> face.normal().ordinal()))
+                    .toList();
             setChanged();
         }
     }
@@ -445,6 +454,8 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         if (leak != null) tag.putLong("Leak", leak.asLong());
         tag.putLongArray("LinkedReactors", linkedReactors.stream().mapToLong(BlockPos::asLong).toArray());
         tag.putLongArray("LinkedPools", linkedPools.stream().mapToLong(BlockPos::asLong).toArray());
+        tag.putLongArray("PenetrationPositions", penetrationFaces.stream().mapToLong(face -> face.wall().asLong()).toArray());
+        tag.putIntArray("PenetrationNormals", penetrationFaces.stream().mapToInt(face -> face.normal().ordinal()).toArray());
         if (weakest != null) {
             CompoundTag spot = new CompoundTag();
             spot.putLong("Pos", weakest.position().asLong());
@@ -467,6 +478,13 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         leak = tag.contains("Leak", Tag.TAG_LONG) ? BlockPos.of(tag.getLong("Leak")) : null;
         linkedReactors = positions(tag.getLongArray("LinkedReactors"));
         linkedPools = positions(tag.getLongArray("LinkedPools"));
+        long[] facePositions = tag.getLongArray("PenetrationPositions");
+        int[] faceNormals = tag.getIntArray("PenetrationNormals");
+        List<BoundaryFace> savedFaces = new ArrayList<>();
+        for (int i = 0; i < Math.min(facePositions.length, faceNormals.length); i++)
+            if (faceNormals[i] >= 0 && faceNormals[i] < Direction.values().length)
+                savedFaces.add(new BoundaryFace(BlockPos.of(facePositions[i]), Direction.values()[faceNormals[i]]));
+        penetrationFaces = List.copyOf(savedFaces);
         weakest = null;
         if (tag.contains("Weakest", Tag.TAG_COMPOUND)) {
             CompoundTag spot = tag.getCompound("Weakest");
