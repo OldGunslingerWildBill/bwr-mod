@@ -254,7 +254,18 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         if (weakest != null) lines.add("Weakest spot: " + weakest.position().toShortString()
                 + " " + String.format(java.util.Locale.ROOT, "%.1f psig", weakest.ratingPsig())
                 + " (" + weakest.layers() + " layers" + (weakest.deep() ? ", deep" : "") + ")");
+        lines.add("Openings: " + openings().size());
         lines.add("Linked reactors: " + linkedReactors.size() + "; suppression pools: " + linkedPools.size());
+        if (level != null) for (BlockPos reactorPos : linkedReactors) {
+            if (!level.isLoaded(reactorPos)
+                    || !(level.getBlockEntity(reactorPos) instanceof ReactorControllerBlockEntity reactor)
+                    || !reactor.isFormed()) continue;
+            var gas = reactor.core().getContainment();
+            lines.add(String.format(java.util.Locale.ROOT,
+                    "Atmosphere: H2 %.2f%%, O2 %.2f%%, %.2f psig",
+                    gas.getHydrogenPercent(), gas.getOxygenPercent(), gas.getPressurePsig()));
+            break;
+        }
         return lines;
     }
 
