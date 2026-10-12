@@ -9,7 +9,7 @@ public class CoolingPeripheral implements IPeripheral {
     @Override public boolean equals(IPeripheral other){return other instanceof CoolingPeripheral p&&p.be==be;}
     @LuaFunction(mainThread=true) public void setSpeed(double speed)throws LuaException{
         if(!Double.isFinite(speed)||speed<0||speed>1)throw new LuaException("Speed must be a finite fraction from 0 to 1");
-        if(be.design().watts==0)throw new LuaException("This machine has no electric drive");be.setTarget(speed);
+        if(be.design().watts==0)throw new LuaException("This machine has no electric drive");dev.bwr.mod.signal.DeviceCommands.coolingSpeed(be,speed);
     }
     @LuaFunction(mainThread=true) public Map<String,Object> getStatus(){
         var p=be.plant();Map<String,Object> m=new LinkedHashMap<>();m.put("ready",be.ready());m.put("target",be.target());m.put("speed",be.actual());

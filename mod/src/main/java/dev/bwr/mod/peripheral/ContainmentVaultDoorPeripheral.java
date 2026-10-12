@@ -14,9 +14,7 @@ public final class ContainmentVaultDoorPeripheral implements IPeripheral {
     @Override public Object getTarget(){return door;}
     @Override public boolean equals(@Nullable IPeripheral other){return other instanceof ContainmentVaultDoorPeripheral p&&p.door==door;}
     @LuaFunction(mainThread=true) public final boolean setOpen(boolean open){
-        boolean started=door.setOpen(open,true);
-        if(started)door.setComputerControlled(true);
-        return started;
+        return dev.bwr.mod.signal.DeviceCommands.vaultDoorOpen(door,open);
     }
     @LuaFunction(mainThread=true) public final void releaseControl(){door.setComputerControlled(false);}
     @LuaFunction(mainThread=true) public final Map<String,Object> getStatus(){return Map.of(

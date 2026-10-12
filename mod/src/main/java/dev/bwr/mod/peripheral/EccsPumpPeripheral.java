@@ -56,8 +56,7 @@ public class EccsPumpPeripheral implements IPeripheral {
     @LuaFunction(mainThread = true)
     public void setSpeed(double fraction) throws LuaException {
         if (!Double.isFinite(fraction) || fraction < 0 || fraction > 1) throw new LuaException("Speed must be 0..1");
-        be.setComputerControlled(true);
-        be.setSpeedDemandFraction(fraction);
+        dev.bwr.mod.signal.DeviceCommands.eccsSpeed(be, fraction);
     }
     @LuaFunction(mainThread = true)
     public double getTargetSpeed() { return be.pump().getSpeedDemandFraction(); }
@@ -92,15 +91,13 @@ public class EccsPumpPeripheral implements IPeripheral {
      */
     @LuaFunction(mainThread = true)
     public final void start() {
-        be.setComputerControlled(true);
-        be.setRunning(true);
+        dev.bwr.mod.signal.DeviceCommands.eccsRunning(be, true);
     }
 
     /** Stop the machine. Also unconditional; it coasts down. */
     @LuaFunction(mainThread = true)
     public final void stop() {
-        be.setComputerControlled(true);
-        be.setRunning(false);
+        dev.bwr.mod.signal.DeviceCommands.eccsRunning(be, false);
     }
 
     /**
@@ -117,8 +114,7 @@ public class EccsPumpPeripheral implements IPeripheral {
         if (!Double.isFinite(fraction)) {
             throw new LuaException("flow demand fraction must be a finite number, got " + fraction);
         }
-        be.setComputerControlled(true);
-        be.setFlowDemandFraction(fraction);
+        dev.bwr.mod.signal.DeviceCommands.eccsFlow(be, fraction);
     }
 
     /**

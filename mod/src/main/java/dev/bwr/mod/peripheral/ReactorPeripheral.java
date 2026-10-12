@@ -662,22 +662,12 @@ public class ReactorPeripheral implements IPeripheral {
      */
     @LuaFunction(mainThread = true)
     public final void scram() throws LuaException {
-        ControlRodDriveNetwork r = be.rods();
-        if (r != null) {
-            r.scram();
-        } else {
-            core().scram();
-        }
+        if (!dev.bwr.mod.signal.DeviceCommands.reactorScram(be)) throw new LuaException("reactor is not formed");
     }
 
     @LuaFunction(mainThread = true)
     public final void resetScram() throws LuaException {
-        ControlRodDriveNetwork r = be.rods();
-        if (r != null) {
-            r.resetScram();
-        } else {
-            core().resetScram();
-        }
+        if (!dev.bwr.mod.signal.DeviceCommands.reactorResetScram(be)) throw new LuaException("reactor is not formed");
     }
 
     @LuaFunction(mainThread = true)
@@ -917,7 +907,7 @@ public class ReactorPeripheral implements IPeripheral {
     @LuaFunction(mainThread = true)
     public final void setRecirculationFlow(double fraction) throws LuaException {
         core();
-        be.setRecirculationDemand(finite("recirculation flow fraction", fraction));
+        dev.bwr.mod.signal.DeviceCommands.reactorRecirculationFlow(be, finite("recirculation flow fraction", fraction));
     }
 
     /**

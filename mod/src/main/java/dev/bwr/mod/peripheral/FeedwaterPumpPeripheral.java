@@ -62,7 +62,7 @@ public class FeedwaterPumpPeripheral implements IPeripheral {
     @LuaFunction(mainThread = true)
     public void setSpeed(double fraction) throws LuaException {
         if (!Double.isFinite(fraction) || fraction < 0 || fraction > 1) throw new LuaException("Speed must be 0..1");
-        PlantActuators.run(be, () -> {be.setComputerControlled(true);be.setSpeedDemandFraction(fraction);});
+        dev.bwr.mod.signal.DeviceCommands.feedwaterSpeed(be, fraction);
     }
     @LuaFunction(mainThread = true)
     public double getTargetSpeed() { return be.pump().getSpeedDemandFraction(); }
@@ -90,10 +90,7 @@ public class FeedwaterPumpPeripheral implements IPeripheral {
      */
     @LuaFunction(mainThread = true)
     public final void setRunning(boolean running) {
-        PlantActuators.run(be, () -> {
-            be.setComputerControlled(true);
-            be.setRunning(running);
-        });
+        dev.bwr.mod.signal.DeviceCommands.feedwaterRunning(be, running);
     }
 
     /** Start the pump. */
@@ -123,10 +120,7 @@ public class FeedwaterPumpPeripheral implements IPeripheral {
         if (!Double.isFinite(fraction)) {
             throw new LuaException("feedwater flow demand must be a finite number, got " + fraction);
         }
-        PlantActuators.run(be, () -> {
-            be.setComputerControlled(true);
-            be.setFlowDemandFraction(fraction);
-        });
+        dev.bwr.mod.signal.DeviceCommands.feedwaterFlowDemand(be, fraction);
     }
 
     /** Hand the pump back to its redstone signal. */

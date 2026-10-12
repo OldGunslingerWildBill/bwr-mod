@@ -97,9 +97,7 @@ public class RpvSteamOutletPeripheral implements IPeripheral {
     }
 
     private boolean isPassing() {
-        return be.getPosition() > 0.0
-                && be.isSteamLineAttached()
-                && be.isPartOfFormedReactor();
+        return dev.bwr.mod.signal.DeviceReadouts.rpvOutletPassing(be);
     }
 
     /**

@@ -25,11 +25,7 @@ public final class ContainmentPeripheral implements IPeripheral {
     }
     private Level level() { return room.getLevel(); }
     private ReactorControllerBlockEntity reactor() {
-        if (level() == null) return null;
-        for (BlockPos pos : room.linkedReactors())
-            if (level().isLoaded(pos) && level().getBlockEntity(pos) instanceof ReactorControllerBlockEntity reactor
-                    && reactor.isFormed()) return reactor;
-        return null;
+        return dev.bwr.mod.signal.DeviceReadouts.containmentReactor(room);
     }
     private static Map<String, Object> pos(BlockPos pos) {
         return Map.of("x", pos.getX(), "y", pos.getY(), "z", pos.getZ());
@@ -103,17 +99,7 @@ public final class ContainmentPeripheral implements IPeripheral {
         return true;
     }
     @LuaFunction(mainThread = true) public final boolean isIsolated() {
-        if (level() == null) return false;
-        for (BlockPos at : room.openings()) {
-            var state = level().getBlockState(at);
-            if (!(state.getBlock() instanceof ContainmentPenetrationBlock penetration)
-                    || penetration.service() != ContainmentPenetrationBlock.Service.STEAM
-                    && penetration.service() != ContainmentPenetrationBlock.Service.WATER) continue;
-            if (state.getValue(ContainmentPenetrationBlock.RUPTURED)
-                    || !(level().getBlockEntity(at) instanceof ContainmentPenetrationBlockEntity valve)
-                    || !valve.isIsolated()) return false;
-        }
-        return true;
+        return dev.bwr.mod.signal.DeviceReadouts.containmentIsolated(room);
     }
     @LuaFunction(mainThread = true) public final double getBypassFlow() {
         var reactor = reactor();

@@ -98,8 +98,7 @@ public class MainSteamIsolationValvePeripheral implements IPeripheral {
      * travel and the OPEN block state, including spring return on power loss.
      */
     private void command(boolean open) {
-        be.setComputerControlled(true);
-        be.setDemandOpen(open);
+        dev.bwr.mod.signal.DeviceCommands.msivDemand(be, open);
     }
 
     // --- Measurements ---------------------------------------------------

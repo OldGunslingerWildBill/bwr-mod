@@ -87,8 +87,7 @@ public class RecirculationPumpPeripheral implements IPeripheral {
         if (!Double.isFinite(fraction)) {
             throw new LuaException("pump speed fraction must be a finite number, got " + fraction);
         }
-        be.setComputerControlled(true);
-        be.setTargetSpeedFraction(fraction);
+        dev.bwr.mod.signal.DeviceCommands.recirculationPumpSpeed(be, fraction);
     }
 
     /** Hand the pump back to the GUI slider. */
@@ -177,15 +176,7 @@ public class RecirculationPumpPeripheral implements IPeripheral {
     }
 
     private boolean attached() {
-        BlockPos controllerPos = be.getControllerPos();
-        if (controllerPos == null) {
-            return false;
-        }
-        Level level = be.getLevel();
-        if (level == null || !level.isLoaded(controllerPos)) {
-            return true;
-        }
-        return level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity;
+        return dev.bwr.mod.signal.DeviceReadouts.recirculationPumpAttached(be);
     }
 
     @LuaFunction(mainThread = true)

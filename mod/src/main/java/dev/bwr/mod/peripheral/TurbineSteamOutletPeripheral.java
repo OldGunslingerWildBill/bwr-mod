@@ -167,8 +167,7 @@ public class TurbineSteamOutletPeripheral implements IPeripheral {
         if (!Double.isFinite(kgPerS)) {
             throw new LuaException("steam flow must be a finite number, got " + kgPerS);
         }
-        be.setComputerControlled(true);
-        be.setCommandedFlowKgPerS(kgPerS);
+        dev.bwr.mod.signal.DeviceCommands.turbineOutletFlow(be, kgPerS);
     }
 
     /**
@@ -181,8 +180,7 @@ public class TurbineSteamOutletPeripheral implements IPeripheral {
         if (!Double.isFinite(fraction)) {
             throw new LuaException("steam flow fraction must be a finite number, got " + fraction);
         }
-        be.setComputerControlled(true);
-        be.setCommandedFlowFractionOfRated(fraction);
+        dev.bwr.mod.signal.DeviceCommands.turbineOutletFlowFraction(be, fraction);
     }
 
     /**
@@ -241,11 +239,7 @@ public class TurbineSteamOutletPeripheral implements IPeripheral {
      */
     @LuaFunction(mainThread = true)
     public final double getBufferFill() {
-        long capacity = be.getBufferCapacityMilliBuckets();
-        if (capacity <= 0L) {
-            return 0.0;
-        }
-        return (double) be.getBufferedMilliBuckets() / (double) capacity;
+        return dev.bwr.mod.signal.DeviceReadouts.turbineOutletBufferFill(be);
     }
 
     // -----------------------------------------------------------------

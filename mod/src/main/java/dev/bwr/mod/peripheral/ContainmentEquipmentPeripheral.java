@@ -16,9 +16,7 @@ public final class ContainmentEquipmentPeripheral implements IPeripheral {
         return other instanceof ContainmentEquipmentPeripheral p && p.equipment == equipment;
     }
     @LuaFunction(mainThread = true) public final boolean setActive(boolean active) {
-        if (active && !equipment.supplied()) return false;
-        equipment.setDemand(active);
-        return true;
+        return dev.bwr.mod.signal.DeviceCommands.equipmentActive(equipment, active);
     }
     @LuaFunction(mainThread = true) public final Map<String, Object> getStatus() {
         return Map.of("type", getType(), "demand", equipment.demand(),
