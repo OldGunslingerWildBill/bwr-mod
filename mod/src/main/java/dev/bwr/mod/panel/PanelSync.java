@@ -33,8 +33,15 @@ public final class PanelSync {
 
     private static final Set<PanelBlockEntity> DIRTY = Collections.newSetFromMap(new IdentityHashMap<>());
 
+    /** Blocks whose display content changed this tick: each gets one full-state sync at the end of it. */
+    private static final Set<PanelBlockEntity> DISPLAY_DIRTY = Collections.newSetFromMap(new IdentityHashMap<>());
+
     static void markDirty(PanelBlockEntity be) {
         DIRTY.add(be);
+    }
+
+    static void markDisplayDirty(PanelBlockEntity be) {
+        DISPLAY_DIRTY.add(be);
     }
 
     static void sendFull(ServerLevel level, PanelBlockEntity be) {
@@ -58,6 +65,16 @@ public final class PanelSync {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
+        if (!DISPLAY_DIRTY.isEmpty()) {
+            // Drawing calls from CC arrive in bursts; however many there were, the client gets one state per tick.
+            java.util.List<PanelBlockEntity> displays = new ArrayList<>(DISPLAY_DIRTY);
+            DISPLAY_DIRTY.clear();
+            for (PanelBlockEntity be : displays) {
+                if (!be.isRemoved() && be.getLevel() instanceof ServerLevel) {
+                    be.syncFull();
+                }
+            }
+        }
         if (DIRTY.isEmpty()) {
             return;
         }

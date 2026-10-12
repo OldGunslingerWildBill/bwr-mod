@@ -8,6 +8,7 @@ import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.component.PortSpec;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,16 +57,23 @@ public final class ConfigModel {
         }
     }
 
-    /** One input port with its source being edited (none or a constant). */
+    /**
+     * One input port with its source being edited (none or a constant). A port wired by the linker (plant,
+     * component, redstone, CC) is {@link #bound}: this screen shows it read-only and sends "keep" so saving the
+     * wrench screen never unwires it.
+     */
     public static final class InputRow {
         public final PortSpec port;
         public boolean constant;
         public String valueText;
+        /** Translated description of a linker-made source, or null when this row is editable here. */
+        public final Component bound;
 
-        InputRow(PortSpec port, boolean constant, String valueText) {
+        InputRow(PortSpec port, boolean constant, String valueText, Component bound) {
             this.port = port;
             this.constant = constant;
             this.valueText = valueText;
+            this.bound = bound;
         }
 
         public Double parsedValue() {
@@ -93,8 +101,11 @@ public final class ConfigModel {
         List<PortSpec> ports = type.inputPorts(component.data());
         for (int i = 0; i < ports.size(); i++) {
             CompoundTag source = InputSources.save(component.source(i));
-            boolean constant = InputSources.KIND_CONSTANT.equals(source.getString("Kind"));
-            inputs.add(new InputRow(ports.get(i), constant, constant ? format(source.getDouble("Value")) : "0"));
+            String kind = source.getString("Kind");
+            boolean constant = InputSources.KIND_CONSTANT.equals(kind);
+            boolean editable = constant || InputSources.KIND_NONE.equals(kind);
+            inputs.add(new InputRow(ports.get(i), constant, constant ? format(source.getDouble("Value")) : "0",
+                    editable ? null : BindModel.describeSource(component.source(i))));
         }
     }
 
@@ -144,7 +155,7 @@ public final class ConfigModel {
             }
         }
         for (InputRow row : inputs) {
-            if (row.constant && row.parsedValue() == null) {
+            if (row.bound == null && row.constant && row.parsedValue() == null) {
                 return false;
             }
         }
@@ -169,7 +180,9 @@ public final class ConfigModel {
         ListTag sources = new ListTag();
         for (InputRow row : inputs) {
             CompoundTag source = new CompoundTag();
-            if (row.constant) {
+            if (row.bound != null) {
+                source.putString("Kind", "keep");
+            } else if (row.constant) {
                 source.putString("Kind", InputSources.KIND_CONSTANT);
                 source.putDouble("Value", row.parsedValue());
             } else {

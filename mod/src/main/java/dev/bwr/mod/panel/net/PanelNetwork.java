@@ -3,6 +3,7 @@ package dev.bwr.mod.panel.net;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.PanelOps;
 import dev.bwr.mod.panel.component.OperateAction;
+import dev.bwr.mod.panel.wiring.WiringOps;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -28,6 +29,11 @@ public final class PanelNetwork {
         registrar.playToServer(PanelPayloads.Configure.TYPE, PanelPayloads.Configure.STREAM_CODEC,
                 PanelNetwork::handleConfigure);
         registrar.playToServer(PanelPayloads.Operate.TYPE, PanelPayloads.Operate.STREAM_CODEC, PanelNetwork::handleOperate);
+        registrar.playToServer(PanelPayloads.LinkerOpen.TYPE, PanelPayloads.LinkerOpen.STREAM_CODEC,
+                PanelNetwork::handleLinkerOpen);
+        registrar.playToServer(PanelPayloads.Bind.TYPE, PanelPayloads.Bind.STREAM_CODEC, PanelNetwork::handleBind);
+        registrar.playToClient(PanelPayloads.LinkerScreen.TYPE, PanelPayloads.LinkerScreen.STREAM_CODEC,
+                PanelNetwork::handleLinkerScreen);
         registrar.playToClient(PanelPayloads.State.TYPE, PanelPayloads.State.STREAM_CODEC, PanelNetwork::handleState);
         registrar.playToClient(PanelPayloads.Delta.TYPE, PanelPayloads.Delta.STREAM_CODEC, PanelNetwork::handleDelta);
         registrar.playToClient(PanelPayloads.OpenConfig.TYPE, PanelPayloads.OpenConfig.STREAM_CODEC,
@@ -61,7 +67,23 @@ public final class PanelNetwork {
         }
     }
 
+    private static void handleLinkerOpen(PanelPayloads.LinkerOpen payload, IPayloadContext context) {
+        if (context.player() instanceof ServerPlayer sender) {
+            WiringOps.openScreen(sender, payload.pos(), payload.id());
+        }
+    }
+
+    private static void handleBind(PanelPayloads.Bind payload, IPayloadContext context) {
+        if (context.player() instanceof ServerPlayer sender) {
+            WiringOps.bind(sender, payload);
+        }
+    }
+
     // ---- client
+
+    private static void handleLinkerScreen(PanelPayloads.LinkerScreen payload, IPayloadContext context) {
+        dev.bwr.mod.panel.client.PanelClientHooks.openBind(payload);
+    }
 
     private static PanelBlockEntity panelAt(IPayloadContext context, BlockPos pos) {
         Level level = context.player().level();

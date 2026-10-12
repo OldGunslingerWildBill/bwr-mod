@@ -36,9 +36,22 @@ public final class ComponentTypes {
         return type;
     }
 
+    /** Types that exist only while a GameTest class is loaded: findable by id, but not in the catalogue. */
+    private static final Map<ResourceLocation, ComponentType> TEST_ONLY = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * Registers a type for tests only. It is found by {@link #get} (so saves, packets and {@code ComponentItem}
+     * work) but is not part of {@link #all()}, so it needs no item, recipe or lang entry and never reaches a
+     * player's world.
+     */
+    public static void registerTestOnly(ComponentType type) {
+        TEST_ONLY.put(type.id(), type);
+    }
+
     /** The type with this id, or null when unknown (for example an add-on that was removed). */
     public static ComponentType get(ResourceLocation id) {
-        return TYPES.get(id);
+        ComponentType type = TYPES.get(id);
+        return type != null ? type : TEST_ONLY.get(id);
     }
 
     public static Collection<ComponentType> all() {

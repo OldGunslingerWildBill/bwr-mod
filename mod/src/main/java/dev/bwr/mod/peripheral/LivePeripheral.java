@@ -37,10 +37,27 @@ public final class LivePeripheral implements IDynamicPeripheral {
             else if(types[i]==int.class)converted[i]=args.getInt(i);
             else if(types[i]==boolean.class)converted[i]=args.getBoolean(i);
             else if(types[i]==String.class)converted[i]=args.getString(i);
+            else if(types[i]==String[].class)converted[i]=strings(args.getTableUnsafe(i));
             else throw new LuaException("Unsupported machine method argument");
         }
         // Resolve after scheduling, not while still on the computer thread.
         return context.executeMainThreadTask(()->invoke(method,converted));
+    }
+    /** A Lua array of strings (the rows of a panel blit), bounded so a script cannot hand over a huge table. */
+    private static String[] strings(LuaTable<?,?> table)throws LuaException {
+        int count=table.length();
+        if(count>MAX_TABLE_STRINGS)throw new LuaException("Table too long (limit "+MAX_TABLE_STRINGS+")");
+        String[] values=new String[count];
+        for(int i=0;i<count;i++)values[i]=table.getString(i+1);
+        return values;
+    }
+    private static final int MAX_TABLE_STRINGS=256;
+    /** Panels need to know which computers are attached, to raise their input events. */
+    @Override public void attach(IComputerAccess computer){
+        if(PanelPeripheral.TYPE.equals(type))PanelPeripheral.attached(level,anchor,computer);
+    }
+    @Override public void detach(IComputerAccess computer){
+        if(PanelPeripheral.TYPE.equals(type))PanelPeripheral.detached(computer);
     }
     private Object[] invoke(Method method,Object[] args)throws LuaException {
         if(level.getServer()==null||!level.getServer().isSameThread())throw new LuaException("Machine access requires server thread");

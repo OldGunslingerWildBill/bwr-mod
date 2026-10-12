@@ -86,6 +86,13 @@ public final class ConfigScreen extends Screen {
         for (ConfigModel.InputRow input : model.inputs) {
             int y = layout.rowY(row);
             rowLabel(row, Component.translatable(input.port.labelKey()));
+            if (input.bound != null) {
+                Button bound = addRenderableWidget(Button.builder(input.bound, button -> {
+                }).bounds(layout.widgetX, y, layout.widgetWidth, layout.rowHeight - 2).build());
+                bound.active = false;
+                row++;
+                continue;
+            }
             int half = layout.widgetWidth / 2;
             addRenderableWidget(CycleButton.booleanBuilder(Component.translatable("screen.bwr.panel_config.constant"),
                             Component.translatable("screen.bwr.panel_config.none"))

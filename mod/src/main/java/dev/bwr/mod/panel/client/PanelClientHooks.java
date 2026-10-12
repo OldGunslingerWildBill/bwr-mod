@@ -10,6 +10,19 @@ public final class PanelClientHooks {
     private PanelClientHooks() {
     }
 
+    /** Opens the linker's binding screen with the device lists the server sent. */
+    public static void openBind(dev.bwr.mod.panel.net.PanelPayloads.LinkerScreen payload) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || !minecraft.level.isLoaded(payload.pos())
+                || !(minecraft.level.getBlockEntity(payload.pos()) instanceof PanelBlockEntity be)) {
+            return;
+        }
+        PanelComponent component = be.component(payload.id());
+        if (component != null && component.type() != null) {
+            minecraft.setScreen(new BindScreen(be, component, payload));
+        }
+    }
+
     /** Opens the wrench screen for a component the client already knows about. */
     public static void openConfig(BlockPos owner, int id) {
         Minecraft minecraft = Minecraft.getInstance();

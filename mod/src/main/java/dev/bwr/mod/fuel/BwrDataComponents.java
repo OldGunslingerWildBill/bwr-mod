@@ -40,6 +40,12 @@ public final class BwrDataComponents {
                     .persistent(com.mojang.serialization.Codec.intRange(0, 63))
                     .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT).build());
 
+    /** The plant device a panel linker has stored (dimension and absolute position). */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<net.minecraft.core.GlobalPos>> LINKED_DEVICE =
+            DATA_COMPONENTS.register("linked_device", () -> DataComponentType.<net.minecraft.core.GlobalPos>builder()
+                    .persistent(net.minecraft.core.GlobalPos.CODEC)
+                    .networkSynchronized(net.minecraft.core.GlobalPos.STREAM_CODEC).build());
+
     /** Burnup, enrichment, fuel type and remaining gadolinia, travelling with the itemstack. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<FuelAssemblyData>>
             FUEL_ASSEMBLY = DATA_COMPONENTS.register("fuel_assembly",

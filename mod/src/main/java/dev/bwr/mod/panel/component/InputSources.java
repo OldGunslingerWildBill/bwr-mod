@@ -72,6 +72,17 @@ public final class InputSources {
         }
     }
 
+    /**
+     * A source kept verbatim and reading "no signal": what a kind's loader returns when the tag lacks the
+     * fields it needs, so malformed or future data survives a load/save cycle instead of being rewritten.
+     */
+    public static InputSource preserved(CompoundTag tag) {
+        CompoundTag raw = tag.copy();
+        String kind = raw.getString("Kind");
+        raw.remove("Kind");
+        return new Unknown(kind, raw);
+    }
+
     public static InputSource constant(double value) {
         if (!Double.isFinite(value)) {
             return NONE;
