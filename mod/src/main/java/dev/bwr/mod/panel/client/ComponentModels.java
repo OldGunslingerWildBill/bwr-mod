@@ -39,6 +39,16 @@ public final class ComponentModels {
     private static void bootstrap() {
         register(ComponentTypes.NAMEPLATE.id(), new NameplateModel());
         register(ComponentTypes.LAMP.id(), new LampModel());
+        // inputs and indicators (spec 2.1, first two tables)
+        register(ComponentTypes.PUSHBUTTON.id(), new PushbuttonModel());
+        register(ComponentTypes.TOGGLE_SWITCH.id(), new ToggleSwitchModel());
+        register(ComponentTypes.ROTARY_SELECTOR.id(), new RotarySelectorModel());
+        register(ComponentTypes.CONTROL_SWITCH.id(), new ControlSwitchModel());
+        register(ComponentTypes.KEY_SWITCH.id(), new KeySwitchModel());
+        register(ComponentTypes.SETPOINT_KNOB.id(), new SetpointKnobModel());
+        register(ComponentTypes.THUMBWHEEL.id(), new ThumbwheelModel());
+        register(ComponentTypes.ANNUNCIATOR.id(), new AnnunciatorModel());
+        register(ComponentTypes.BAR_GRAPH.id(), new BarGraphModel());
     }
 
     public static void register(ResourceLocation typeId, ComponentModel model) {

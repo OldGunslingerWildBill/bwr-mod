@@ -20,6 +20,8 @@ import net.minecraft.nbt.CompoundTag;
  * field is added later.
  */
 public abstract class ComponentData {
+    private boolean latchedDirty;
+
     /** Writes configuration and latched state. */
     public abstract void save(CompoundTag tag);
 
@@ -31,5 +33,22 @@ public abstract class ComponentData {
         CompoundTag tag = new CompoundTag();
         save(tag);
         return tag;
+    }
+
+    /**
+     * Latched state changed outside a player operation (for example an
+     * annunciator reacting to an input delta from {@link ComponentType#valuesChanged}),
+     * so the owning block must be saved. The block entity collects the flag
+     * with {@link #consumeLatchedChange()}.
+     */
+    public final void latchedChanged() {
+        latchedDirty = true;
+    }
+
+    /** Whether {@link #latchedChanged()} was called since the last time; clears the flag. */
+    public final boolean consumeLatchedChange() {
+        boolean dirty = latchedDirty;
+        latchedDirty = false;
+        return dirty;
     }
 }

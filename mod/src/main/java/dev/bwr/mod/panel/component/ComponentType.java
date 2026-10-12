@@ -116,6 +116,34 @@ public abstract class ComponentType {
         return false;
     }
 
+    // ---- operating hints for input components (read by the client input hook; defaults suit indicators)
+
+    /**
+     * Client: the value sent with a PRESS when the player clicks at {@code (cellX, cellY)}, measured in cells from
+     * the component's top-left corner. Types use it to tell which half or which digit was clicked.
+     */
+    public double clickValue(PanelComponent component, double cellX, double cellY) {
+        return 0.0;
+    }
+
+    /** Whether scrolling over the component sends TURN (the hotbar does not scroll while pointing at one). */
+    public boolean scrollable() {
+        return false;
+    }
+
+    /** Client: the value sent with a TURN for {@code notches} of scroll (positive is up) at the given cell position. */
+    public double scrollValue(PanelComponent component, double cellX, double cellY, int notches) {
+        return notches;
+    }
+
+    /**
+     * Whether holding the use key keeps the input operated: the client repeats PRESS while the key is down and sends
+     * RELEASE when it is let go (a momentary pushbutton, a spring-return switch).
+     */
+    public boolean holdable() {
+        return false;
+    }
+
     /** A bare-handed right-click landed on the component. Server only. */
     public InteractionResult use(UseContext context) {
         return InteractionResult.PASS;

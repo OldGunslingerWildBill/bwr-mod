@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": ["B", "I"], "key": {"B": {"item": "minecraft:stone_button"}, "I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:pushbutton", "count": 2}}

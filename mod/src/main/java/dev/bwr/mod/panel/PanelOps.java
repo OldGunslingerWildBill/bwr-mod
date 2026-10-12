@@ -209,6 +209,7 @@ public final class PanelOps {
             CompoundTag merged = ConfigSchema.merge(type.configSchema(), component.data().toTag(), edit.getCompound("Config"));
             component.data().load(merged);
             component.syncPorts();
+            type.onLoaded(component); // latched outputs and derived state follow the new config
             component.touch();
         }
         if (edit.contains("Inputs", Tag.TAG_LIST)) {

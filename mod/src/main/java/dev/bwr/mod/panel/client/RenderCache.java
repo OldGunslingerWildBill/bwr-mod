@@ -18,6 +18,9 @@ public final class RenderCache {
     public float scale;
     public float textX;
     public float textY;
+    /** A second text line (annunciator windows). */
+    public float textX2;
+    public float textY2;
 
     /** The cache of {@code component}, created on first use. */
     public static RenderCache of(PanelComponent component) {
