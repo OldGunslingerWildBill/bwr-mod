@@ -40,6 +40,11 @@ public final class PanelSync {
         DIRTY.add(be);
     }
 
+    /** Whether a full-state resend is queued for this block at the end of the tick (read-only, for tests). */
+    public static boolean displaySyncPending(PanelBlockEntity be) {
+        return DISPLAY_DIRTY.contains(be);
+    }
+
     static void markDisplayDirty(PanelBlockEntity be) {
         DISPLAY_DIRTY.add(be);
     }

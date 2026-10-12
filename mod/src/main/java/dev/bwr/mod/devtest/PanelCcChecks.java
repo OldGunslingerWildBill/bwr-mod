@@ -60,6 +60,41 @@ final class PanelCcChecks {
         };
     }
 
+    /**
+     * Drives a real character LCD and a real graphic display through {@code bwr_panel}: sizes, the drawing calls,
+     * and that every change is a queued content patch with no full-state resend.
+     */
+    static void drawDisplays(GameTestHelper helper, PanelBlockEntity block, PanelBlockEntity graphicBlock,
+                             PanelComponent lcd, PanelComponent graphic) {
+        try {
+            PanelPeripheral panel = new PanelPeripheral(block);
+            Object[] lcdSize = panel.getSize(lcd.label());
+            check(helper, lcdSize.length == 2 && lcdSize[0].equals(16) && lcdSize[1].equals(2), "cc lcd size 16 x 2");
+            Object[] gSize = panel.getSize(graphic.label());
+            check(helper, gSize.length == 2 && gSize[0].equals(32) && gSize[1].equals(32), "cc graphic size 32 x 32");
+
+            check(helper, panel.write(lcd.label(), 1, 2, "CC HELLO"), "cc write");
+            check(helper, ((dev.bwr.mod.panel.component.LcdData) lcd.data()).line(1).equals("  CC HELLO"),
+                    "the LCD row holds the text");
+            check(helper, panel.setPixel(graphic.label(), 3, 4, 5), "cc setPixel");
+            check(helper, panel.blit(graphic.label(), new String[] {"0123", "4567"}), "cc blit");
+            var graphicData = (dev.bwr.mod.panel.component.GraphicDisplayData) graphic.data();
+            check(helper, graphicData.getPixel(0, 0) == 0 && graphicData.getPixel(3, 1) == 7, "blit landed at the top-left");
+            check(helper, block.contentPending() && graphicBlock.contentPending()
+                            && !dev.bwr.mod.panel.PanelSync.displaySyncPending(block)
+                            && !dev.bwr.mod.panel.PanelSync.displaySyncPending(graphicBlock),
+                    "cc drawing queues content patches and no full-state resend");
+            check(helper, graphicData.drainPatch() != null, "the graphic display has a patch to send");
+            check(helper, panel.clear(graphic.label(), 2) && graphicData.getPixel(31, 31) == 2, "cc clear");
+            check(helper, panel.clear(lcd.label(), 0)
+                    && ((dev.bwr.mod.panel.component.LcdData) lcd.data()).line(1).isEmpty(), "cc clear on the LCD");
+            check(helper, !dev.bwr.mod.panel.PanelSync.displaySyncPending(block)
+                    && !dev.bwr.mod.panel.PanelSync.displaySyncPending(graphicBlock), "still no full-state resend");
+        } catch (LuaException e) {
+            helper.fail("unexpected LuaException: " + e.getMessage());
+        }
+    }
+
     static void run(GameTestHelper helper, ServerLevel level, PanelBlockEntity block, PanelComponent io, PanelComponent plate) {
         try {
             exercise(helper, level, block, io, plate);

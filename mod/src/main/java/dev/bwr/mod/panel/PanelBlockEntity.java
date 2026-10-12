@@ -464,6 +464,11 @@ public final class PanelBlockEntity extends BlockEntity {
         });
     }
 
+    /** Server: whether a content patch is queued for this block (read-only, for tests). */
+    public boolean contentPending() {
+        return !contentDirty.isEmpty();
+    }
+
     /** Server: takes the content patches queued since the last call. */
     List<ContentPatch> drainContent() {
         if (contentDirty.isEmpty()) {

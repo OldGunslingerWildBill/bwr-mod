@@ -8,7 +8,11 @@ import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.PanelLinkerItem;
 import dev.bwr.mod.panel.PanelOps;
 import dev.bwr.mod.panel.PanelType;
+import dev.bwr.mod.panel.PanelSync;
 import dev.bwr.mod.panel.component.ComponentData;
+import dev.bwr.mod.panel.component.GraphicDisplayData;
+import dev.bwr.mod.panel.component.LcdData;
+import dev.bwr.mod.panel.component.SegmentDisplayData;
 import dev.bwr.mod.panel.component.ComponentType;
 import dev.bwr.mod.panel.component.ComponentTypes;
 import dev.bwr.mod.panel.component.Footprint;
@@ -404,6 +408,22 @@ public final class PanelWiringTests {
             return WiringOps.bind(player, new PanelPayloads.Bind(block.getBlockPos(), component.id(), output, port,
                     kind.ordinal(), device == null ? BlockPos.ZERO : device, key == null ? "" : key, BlockPos.ZERO, 0, 0,
                     scale));
+        }
+
+        /** Binds an output to a plant command with an explicit sink mode and fixed value. */
+        Result bindSink(PanelBlockEntity block, PanelComponent component, int port, String key, PlantSink.Mode mode,
+                        double fixed, double scale) {
+            return WiringOps.bind(player, new PanelPayloads.Bind(block.getBlockPos(), component.id(), true, port,
+                    BindKind.PLANT.ordinal(), devices, key, BlockPos.ZERO, 0, 0, scale, mode.ordinal(), fixed));
+        }
+
+        /** Applies config fields with the wrench (a Config compound). */
+        void configure(PanelBlockEntity block, PanelComponent component, CompoundTag config) {
+            wrench();
+            CompoundTag edit = new CompoundTag();
+            edit.put("Config", config);
+            helper.assertTrue(PanelOps.configure(player, block.getBlockPos(), component.id(), edit),
+                    "configure refused for " + component.label());
         }
 
         Result bindComponent(PanelBlockEntity block, PanelComponent component, int port, BlockPos refOwner, int refId,
@@ -903,6 +923,246 @@ public final class PanelWiringTests {
             s.linker(null);
             check(helper, s.bind(block, io, false, 0, BindKind.CC, null, null, 1) == Result.OK, "cc in");
             PanelCcChecks.run(helper, s.level, block, io, plate);
+        });
+    }
+
+    // ---- momentary plant sinks
+
+    @GameTest(template = "empty")
+    public static void momentarySinkPayloadAndSaveRoundTripAndOldSavesFollow(GameTestHelper helper) {
+        var registry = helper.getLevel().registryAccess();
+        var buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), registry);
+        var bind = new PanelPayloads.Bind(new BlockPos(1, 2, 3), 7, true, 1, BindKind.PLANT.ordinal(),
+                new BlockPos(-50, 64, 9), "open", BlockPos.ZERO, 0, 0, 1.0, PlantSink.Mode.MOMENTARY.ordinal(), 0.0);
+        PanelPayloads.Bind.STREAM_CODEC.encode(buffer, bind);
+        var decoded = PanelPayloads.Bind.STREAM_CODEC.decode(buffer);
+        check(helper, decoded.equals(bind) && decoded.sinkMode() == 1, "momentary bind round trip");
+        var legacy = new PanelPayloads.Bind(new BlockPos(1, 2, 3), 7, true, 1, BindKind.PLANT.ordinal(),
+                BlockPos.ZERO, "open", BlockPos.ZERO, 0, 0, 2.0);
+        check(helper, legacy.sinkMode() == PlantSink.Mode.FOLLOW.ordinal() && legacy.fixed() == 0.0,
+                "the short constructor follows the output");
+        var entry = new PanelPayloads.CommandEntry("open", "Open / close", false, dev.bwr.mod.signal.Kind.BOOLEAN.ordinal(), 0, 1);
+        var screen = new PanelPayloads.LinkerScreen(BlockPos.ZERO, 1, PanelPayloads.LINK_OK, BlockPos.ZERO, "x",
+                List.of(), List.of(entry));
+        var out = new RegistryFriendlyByteBuf(Unpooled.buffer(), registry);
+        PanelPayloads.LinkerScreen.STREAM_CODEC.encode(out, screen);
+        check(helper, PanelPayloads.LinkerScreen.STREAM_CODEC.decode(out).equals(screen), "command kind and range round trip");
+
+        BlockPos device = new BlockPos(5, 6, 7);
+        PlantSink momentary = new PlantSink(device, "open", 1.0, PlantSink.Mode.MOMENTARY, 0.0);
+        CompoundTag saved = OutputSinks.save(momentary);
+        check(helper, saved.getString("Mode").equals("momentary") && saved.getDouble("Fixed") == 0.0, "mode and fixed value are saved");
+        OutputSink reloaded = OutputSinks.load(saved);
+        check(helper, reloaded instanceof PlantSink p && p.mode() == PlantSink.Mode.MOMENTARY && p.fixed() == 0.0
+                && p.device().equals(device) && OutputSinks.save(reloaded).equals(saved), "momentary sink reloads as a fixed point");
+        PlantSink one = new PlantSink(device, "open", 1.0, PlantSink.Mode.MOMENTARY, 1.0);
+        check(helper, OutputSinks.load(OutputSinks.save(one)) instanceof PlantSink p && p.fixed() == 1.0, "fixed 1 reloads");
+
+        // A follow sink saves exactly as before (no Mode key), and a save from before the mode loads as follow.
+        CompoundTag follow = OutputSinks.save(new PlantSink(device, "open", 0.5));
+        check(helper, !follow.contains("Mode") && !follow.contains("Fixed"), "follow saves no mode keys");
+        CompoundTag old = new CompoundTag();
+        old.putString("Kind", "plant");
+        old.putInt("X", 5);
+        old.putInt("Y", 6);
+        old.putInt("Z", 7);
+        old.putString("Key", "open");
+        old.putDouble("Scale", 0.25);
+        OutputSink loaded = OutputSinks.load(old);
+        check(helper, loaded instanceof PlantSink p && p.mode() == PlantSink.Mode.FOLLOW && p.scale() == 0.25
+                && OutputSinks.save(loaded).equals(old), "an old save loads as FOLLOW and re-saves unchanged");
+
+        // Malformed momentary data is kept verbatim and inert rather than guessed at.
+        CompoundTag noFixed = old.copy();
+        noFixed.putString("Mode", "momentary");
+        check(helper, OutputSinks.save(OutputSinks.load(noFixed)).equals(noFixed) && !(OutputSinks.load(noFixed) instanceof PlantSink),
+                "momentary without a fixed value is preserved");
+        CompoundTag future = noFixed.copy();
+        future.putString("Mode", "toggle");
+        future.putDouble("Fixed", 1.0);
+        check(helper, OutputSinks.save(OutputSinks.load(future)).equals(future) && !(OutputSinks.load(future) instanceof PlantSink),
+                "an unknown future mode is preserved");
+        CompoundTag nan = noFixed.copy();
+        nan.putDouble("Fixed", Double.NaN);
+        check(helper, !(OutputSinks.load(nan) instanceof PlantSink), "a non-finite fixed value is not trusted");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void momentarySinkFiresOnTheRiseOnlyAndFollowIsUnchanged(GameTestHelper helper) {
+        Stage.run(helper, 10, s -> {
+            s.wall(1, 1);
+            PanelBlockEntity block = s.be(s.at(0, 0));
+            PanelComponent io = s.io(block.getBlockPos(), 2, 2);
+            var valve = s.msiv(s.devices);
+            valve.energy().receiveEnergy(20_000, false);
+            s.linker(s.devices);
+
+            // Validation, server side.
+            check(helper, s.bindSink(block, io, 0, "open", PlantSink.Mode.MOMENTARY, Double.NaN, 1) == Result.BAD_VALUE,
+                    "a non-finite fixed value is refused");
+            check(helper, s.bindSink(block, io, 0, "open", PlantSink.Mode.MOMENTARY, 2, 1) == Result.BAD_VALUE
+                    && s.bindSink(block, io, 0, "open", PlantSink.Mode.MOMENTARY, -1, 1) == Result.BAD_VALUE,
+                    "a fixed value outside the command's 0 to 1 range is refused");
+            check(helper, WiringOps.bind(s.player, new PanelPayloads.Bind(block.getBlockPos(), io.id(), true, 0,
+                    BindKind.PLANT.ordinal(), s.devices, "open", BlockPos.ZERO, 0, 0, 1, 9, 1)) == Result.BAD_VALUE,
+                    "an unknown sink mode is refused");
+            check(helper, s.bindSink(block, io, 0, "position", PlantSink.Mode.MOMENTARY, 1, 1) == Result.NO_SUCH_KEY,
+                    "momentary still needs a real command");
+            check(helper, io.sinks(0).isEmpty(), "refusals stored nothing");
+            check(helper, s.bindSink(block, io, 0, "open", PlantSink.Mode.MOMENTARY, 1, 0) == Result.OK,
+                    "a momentary sink ignores the scale, even an unusable one");
+            check(helper, s.bindSink(block, io, 1, "open", PlantSink.Mode.MOMENTARY, 0, 1) == Result.OK, "second momentary sink");
+            check(helper, ((PlantSink) io.sinks(0).get(0)).mode() == PlantSink.Mode.MOMENTARY
+                    && ((PlantSink) io.sinks(0).get(0)).fixed() == 1.0, "stored with its mode and fixed value");
+            check(helper, !valve.isComputerControlled() && !valve.isDemandOpen(), "binding does not act");
+
+            // Rise sends the fixed value once, whatever the output value was.
+            s.operate(block, io, OperateAction.SET, 3);
+            check(helper, valve.isDemandOpen(), "output 0 to 3 sent the fixed value 1");
+            // The fall does nothing: someone else closes the valve first, then the control returns to zero.
+            valve.setDemandOpen(false);
+            s.operate(block, io, OperateAction.SET, 0);
+            check(helper, !valve.isDemandOpen(), "the return to zero sent nothing (a follow sink would have sent 0 as well)");
+            s.operate(block, io, OperateAction.PRESS, 0);
+            check(helper, valve.isDemandOpen(), "the next press sends 1 again");
+            s.operate(block, io, OperateAction.RELEASE, 0);
+            check(helper, valve.isDemandOpen(), "release leaves the valve open: it sealed in");
+            // A second output with fixed 0 closes it, and its own fall does nothing.
+            s.operate(block, io, OperateAction.TURN, 5);
+            check(helper, !valve.isDemandOpen(), "a rise on the other output sent its fixed 0");
+            valve.setDemandOpen(true);
+            s.operate(block, io, OperateAction.TURN, 0);
+            check(helper, valve.isDemandOpen(), "its fall sent nothing");
+
+            // Saved and reloaded through the block entity: same mode, same fixed value, and loading fires nothing.
+            valve.setDemandOpen(false);
+            PanelBlockEntity copy = copyOf(s, block);
+            PanelComponent reloaded = copy.component(io.id());
+            check(helper, reloaded.sinks(0).get(0) instanceof PlantSink a && a.mode() == PlantSink.Mode.MOMENTARY && a.fixed() == 1.0
+                            && reloaded.sinks(1).get(0) instanceof PlantSink b && b.mode() == PlantSink.Mode.MOMENTARY && b.fixed() == 0.0,
+                    "mode and fixed value survive a block entity save");
+            check(helper, copy.savePanel(false).equals(block.savePanel(false)), "the panel save is a fixed point");
+            check(helper, !valve.isDemandOpen(), "loading fired nothing");
+
+            // FOLLOW is unchanged: value x scale on every change, including the fall.
+            check(helper, s.bind(block, io, true, 0, BindKind.NONE, null, null, 1) == Result.OK
+                    && s.bind(block, io, true, 1, BindKind.NONE, null, null, 1) == Result.OK, "clearing");
+            check(helper, s.bind(block, io, true, 0, BindKind.PLANT, s.devices, "open", 0.5) == Result.OK
+                    && ((PlantSink) io.sinks(0).get(0)).mode() == PlantSink.Mode.FOLLOW, "an old-style request is FOLLOW");
+            s.operate(block, io, OperateAction.SET, 1);
+            check(helper, valve.isDemandOpen(), "follow: 1 x 0.5 opens");
+            s.operate(block, io, OperateAction.SET, 0);
+            check(helper, !valve.isDemandOpen(), "follow: the fall sends 0 and closes");
+            s.removeMsiv(s.devices);
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 900)
+    public static void controlRoomSwitchSealsTheMsivInAndLampsAndGaugesFollow(GameTestHelper helper) {
+        Stage.run(helper, 8, s -> {
+            s.wall(2, 2);
+            PanelBlockEntity block = s.be(s.at(0, 0));
+            BlockPos pos = block.getBlockPos();
+            PanelComponent sw = PanelOps.placeDirect(s.level, pos, 0, 0, ComponentTypes.CONTROL_SWITCH, Footprint.of(3, 4));
+            PanelComponent gauge = PanelOps.placeDirect(s.level, pos, 4, 0, ComponentTypes.EDGEWISE_GAUGE_VERTICAL, Footprint.of(2, 6));
+            PanelComponent seven = PanelOps.placeDirect(s.level, pos, 7, 0, ComponentTypes.SEVEN_SEGMENT_DISPLAY, Footprint.of(8, 3));
+            check(helper, sw != null && gauge != null && seven != null, "the real components fit on the wall");
+            var valve = s.msiv(s.devices);
+            valve.energy().receiveEnergy(20_000, false);
+            s.linker(s.devices);
+
+            check(helper, s.bindSink(block, sw, 1, "open", PlantSink.Mode.MOMENTARY, 1, 1) == Result.OK, "OPEN -> open = 1 momentary");
+            check(helper, s.bindSink(block, sw, 2, "open", PlantSink.Mode.MOMENTARY, 0, 1) == Result.OK, "CLOSE -> open = 0 momentary");
+            check(helper, s.bind(block, sw, false, 0, BindKind.PLANT, s.devices, "position", 1) == Result.OK, "red lamp <- position");
+            check(helper, s.bind(block, gauge, false, 0, BindKind.PLANT, s.devices, "position", 1) == Result.OK, "gauge <- position");
+            check(helper, s.bind(block, seven, false, 0, BindKind.PLANT, s.devices, "position", 1) == Result.OK, "display <- position");
+            // The display shows the fraction open: the format is the only scaling the display API has.
+            CompoundTag format = new CompoundTag();
+            format.putString("Format", "{0:4.2f}");
+            s.configure(block, seven, format);
+            s.linker(s.devices);
+            SegmentDisplayData digits = (SegmentDisplayData) seven.data();
+            check(helper, !valve.isDemandOpen() && valve.getPosition() == 0.0, "the valve starts closed");
+
+            // OPEN, then the spring return.
+            s.operate(block, sw, OperateAction.SET, 1);
+            check(helper, valve.isDemandOpen() && sw.output(1) == 1.0, "turning to OPEN commanded the valve open");
+            s.operate(block, sw, OperateAction.RELEASE, 0);
+            check(helper, sw.output(1) == 0.0 && sw.output(0) == 0.0, "the switch sprang back to NORMAL");
+            check(helper, valve.isDemandOpen(), "and the demand stayed open: the valve is sealed in");
+            for (int i = 0; i < 90; i++) {
+                valve.tickValve(.05);
+            }
+            check(helper, valve.getPosition() == 1.0, "the valve reached full open: " + valve.getPosition());
+            s.then(sampleWait(), () -> {
+                check(helper, sw.input(0) > 0.99, "the red lamp input reads the position after sampling: " + sw.input(0));
+                check(helper, gauge.input(0) > 0.99, "the edgewise gauge reads the position: " + gauge.input(0));
+                check(helper, ((dev.bwr.mod.panel.component.GaugeData) gauge.data()).fraction(gauge.input(0)) > 0.0,
+                        "and its needle fraction follows");
+                check(helper, digits.shown(seven).equals("1.00"), "the display shows the open position: '" + digits.shown(seven) + "'");
+                check(helper, valve.isDemandOpen(), "still open");
+
+                // CLOSE, then the spring return.
+                s.operate(block, sw, OperateAction.SET, -1);
+                check(helper, !valve.isDemandOpen() && sw.output(2) == 1.0, "turning to CLOSE commanded the valve closed");
+                s.operate(block, sw, OperateAction.RELEASE, 0);
+                check(helper, !valve.isDemandOpen(), "and it stayed closed after the spring return");
+                for (int i = 0; i < 90; i++) {
+                    valve.tickValve(.05);
+                }
+                check(helper, valve.getPosition() == 0.0, "the valve closed: " + valve.getPosition());
+            });
+            s.then(sampleWait(), () -> {
+                check(helper, sw.input(0) < 0.01 && gauge.input(0) < 0.01, "lamp and gauge follow it closed: " + sw.input(0));
+                check(helper, digits.shown(seven).equals("0.00"), "the display shows closed: '" + digits.shown(seven) + "'");
+                s.removeMsiv(s.devices);
+            });
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void lcdAndGraphicDisplayDrawBySmallPatchesNotFullResends(GameTestHelper helper) {
+        Stage.run(helper, 9, s -> {
+            s.wall(2, 2);
+            PanelBlockEntity block = s.be(s.at(0, 0));
+            PanelBlockEntity lower = s.be(s.at(1, 1));
+            PanelComponent lcd = PanelOps.placeDirect(s.level, block.getBlockPos(), 0, 0, ComponentTypes.CHARACTER_LCD, Footprint.of(16, 4));
+            PanelComponent graphic = PanelOps.placeDirect(s.level, lower.getBlockPos(), 0, 0, ComponentTypes.GRAPHIC_DISPLAY, Footprint.of(16, 16));
+            check(helper, lcd != null && graphic != null, "the displays fit");
+            PanelComponent tio = s.io(s.at(1, 0), 8, 8);
+            check(helper, lcd.data() instanceof PanelDrawTarget && graphic.data() instanceof PanelDrawTarget, "both are draw targets");
+            check(helper, lcd.data().syncsByPatch() && graphic.data().syncsByPatch() && !tio.data().syncsByPatch(),
+                    "the displays sync by patch; an ordinary component does not");
+
+            PanelDrawTarget lcdTarget = (PanelDrawTarget) lcd.data();
+            PanelDrawTarget gTarget = (PanelDrawTarget) graphic.data();
+            check(helper, lcdTarget.drawWidth() == 16 && lcdTarget.drawHeight() == 2, "lcd is 16 x 2 characters");
+            check(helper, gTarget.drawWidth() == 32 && gTarget.drawHeight() == 32, "a 16 x 16 cell graphic display is 32 x 32 px");
+
+            // Each draw is followed by displayChanged, exactly as PanelPeripheral does.
+            check(helper, lcdTarget.write(0, 1, "BWR"), "lcd write");
+            block.displayChanged(lcd);
+            check(helper, ((LcdData) lcd.data()).line(0).equals(" BWR"), "the text is on the row");
+            check(helper, gTarget.setPixel(2, 3, 9), "setPixel");
+            lower.displayChanged(graphic);
+            check(helper, gTarget.blit(new String[] {"0123", "4567"}), "blit");
+            lower.displayChanged(graphic);
+            check(helper, gTarget.clear(1) && ((GraphicDisplayData) graphic.data()).getPixel(5, 5) == 1, "clear");
+            lower.displayChanged(graphic);
+            check(helper, block.contentPending() && lower.contentPending(), "content patches are queued for both blocks");
+            check(helper, !PanelSync.displaySyncPending(block) && !PanelSync.displaySyncPending(lower),
+                    "and neither block queued a full-state resend");
+            check(helper, ((LcdData) lcd.data()).drainPatch() != null && ((GraphicDisplayData) graphic.data()).drainPatch() != null,
+                    "each display holds a patch to send");
+
+            // Contrast: a component that does not patch does get the full resend.
+            s.be(s.at(1, 0)).displayChanged(tio);
+            check(helper, PanelSync.displaySyncPending(s.be(s.at(1, 0))), "an ordinary component's change queues a full-state resend");
+
+            if (BwrMod.isComputerCraftPresent()) {
+                PanelCcChecks.drawDisplays(helper, block, lower, lcd, graphic);
+            }
         });
     }
 }
