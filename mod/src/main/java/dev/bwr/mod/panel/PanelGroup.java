@@ -311,4 +311,99 @@ public final class PanelGroup {
             }
         }
     }
+
+    // ---- label uniqueness
+
+    /** A component with its owning block, as listed by {@link #components}. */
+    public record Entry(PanelBlockEntity owner, dev.bwr.mod.panel.component.PanelComponent component) {
+    }
+
+    /**
+     * Every component owned by a loaded member, in the one canonical order used for renaming and for CC lookups:
+     * owner block position ({@code BlockPos} order: y, z, x), then component id.
+     */
+    public List<Entry> components(Level level) {
+        List<PanelBlockEntity> owners = new ArrayList<>();
+        for (BlockPos pos : members) {
+            if (level.isLoaded(pos) && level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
+                owners.add(be);
+            }
+        }
+        owners.sort((a, b) -> a.getBlockPos().compareTo(b.getBlockPos()));
+        List<Entry> result = new ArrayList<>();
+        for (PanelBlockEntity be : owners) {
+            List<dev.bwr.mod.panel.component.PanelComponent> owned = new ArrayList<>(be.owned());
+            owned.sort((a, b) -> Integer.compare(a.id(), b.id()));
+            for (dev.bwr.mod.panel.component.PanelComponent component : owned) {
+                result.add(new Entry(be, component));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Makes labels unique among the loaded members after a group forms or merges. In {@link #components} order the
+     * first holder of a label keeps it; each later holder is renamed to the next free {@code PREFIX-n} when its
+     * label has that form, otherwise to {@code label-2}, {@code label-3}... (the base is shortened to fit the label
+     * length limit). Only loaded members take part and renames only ever move away from a clash, so a member
+     * that is unloaded now and loads later is simply handled when its group next forms; nothing is renamed back.
+     * Server side only.
+     *
+     * @return how many components were renamed
+     */
+    int resolveDuplicateLabels(Level level) {
+        if (level.isClientSide()) {
+            return 0;
+        }
+        List<Entry> entries = components(level);
+        Set<String> all = new HashSet<>();
+        for (Entry entry : entries) {
+            all.add(entry.component().label());
+        }
+        if (all.size() == entries.size()) {
+            return 0;
+        }
+        Set<String> claimed = new HashSet<>();
+        Set<PanelBlockEntity> changed = new java.util.LinkedHashSet<>();
+        int renamed = 0;
+        for (Entry entry : entries) {
+            var component = entry.component();
+            String label = component.label();
+            if (claimed.add(label)) {
+                continue;
+            }
+            String fresh = freshLabel(component, label, all, claimed);
+            component.setLabel(fresh);
+            component.touch();
+            all.add(fresh);
+            claimed.add(fresh);
+            changed.add(entry.owner());
+            renamed++;
+        }
+        for (PanelBlockEntity be : changed) {
+            be.syncFull();
+        }
+        return renamed;
+    }
+
+    private static String freshLabel(dev.bwr.mod.panel.component.PanelComponent component, String label,
+                                     Set<String> all, Set<String> claimed) {
+        String base = label.isEmpty() ? "X" : label;
+        if (component.type() != null) {
+            String prefix = component.type().labelPrefix();
+            if (label.startsWith(prefix + "-") && label.length() > prefix.length() + 1
+                    && label.substring(prefix.length() + 1).chars().allMatch(Character::isDigit)) {
+                base = prefix;
+            }
+        }
+        int limit = PanelConfig.maxLabelLength();
+        for (int n = base.equals(label) ? 2 : 1; ; n++) {
+            String suffix = "-" + n;
+            String stem = base.length() + suffix.length() > limit ? base.substring(0, Math.max(0, limit - suffix.length())) : base;
+            String candidate = stem + suffix;
+            if (!all.contains(candidate) && !claimed.contains(candidate)) {
+                return candidate;
+            }
+        }
+    }
 }

@@ -33,7 +33,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *   <li>{@code setText(label, text)}: the text of a nameplate or text display;</li>
  *   <li>drawing, for components whose data implements {@link PanelDrawTarget}: {@code getSize, clear,
  *       setPixel, fill, drawText, blit, setPalette, write};</li>
- *   <li>event {@code bwr_panel_input(label, value, port)} whenever a player operates a control.</li>
+ *   <li>event {@code bwr_panel_input(name, label, value, port)} whenever a player operates a control.
+ *       {@code name} is the peripheral name the computer sees for the panel (the side, or the modem name such as
+ *       {@code bwr_panel_3}), like {@code monitor_touch}'s first argument. A computer receives at most one event
+ *       per output change and group; when it is attached to the group through several blocks, the name is the
+ *       one attached first (and the next one if that detaches).</li>
  * </ul>
  * The calls go through {@code LivePeripheral}, which converts Lua arguments to {@code int}, {@code double},
  * {@code boolean}, {@code String} and {@code String[]} only, so the API is built from those.
@@ -42,7 +46,7 @@ public final class PanelPeripheral implements IPeripheral {
     public static final String TYPE = "bwr_panel";
     public static final String EVENT = "bwr_panel_input";
 
-    private record Attachment(Level level, BlockPos pos, IComputerAccess computer) {
+    private record Attachment(Level level, BlockPos pos, IComputerAccess computer, int computerId, String name) {
     }
 
     private static final List<Attachment> ATTACHED = new CopyOnWriteArrayList<>();
@@ -65,7 +69,7 @@ public final class PanelPeripheral implements IPeripheral {
     }
 
     static void attached(Level level, BlockPos pos, IComputerAccess computer) {
-        ATTACHED.add(new Attachment(level, pos.immutable(), computer));
+        ATTACHED.add(new Attachment(level, pos.immutable(), computer, computer.getID(), computer.getAttachmentName()));
     }
 
     static void detached(IComputerAccess computer) {
@@ -97,10 +101,13 @@ public final class PanelPeripheral implements IPeripheral {
         }
         List<PortSpec> ports = component.type().outputPorts(component.data());
         String port = index >= 0 && index < ports.size() ? ports.get(index).key() : Integer.toString(index);
+        // One event per computer (CC gives every attachment its own IComputerAccess, so key on the computer id),
+        // however many blocks of the group it is attached to: the first attachment wins.
+        java.util.Set<Integer> notified = new java.util.HashSet<>();
         for (Attachment attachment : ATTACHED) {
-            if (attachment.level == level && group.contains(attachment.pos)) {
+            if (attachment.level == level && group.contains(attachment.pos) && notified.add(attachment.computerId)) {
                 try {
-                    attachment.computer.queueEvent(EVENT, component.label(), value, port);
+                    attachment.computer.queueEvent(EVENT, attachment.name, component.label(), value, port);
                 } catch (RuntimeException e) {
                     ATTACHED.remove(attachment); // the computer detached without telling us
                 }
@@ -123,18 +130,32 @@ public final class PanelPeripheral implements IPeripheral {
     private record Found(PanelBlockEntity owner, PanelComponent component) {
     }
 
-    private Found find(String label) throws LuaException {
+    /**
+     * Labels are unique within a group (duplicates from a merge are renamed when the group forms), but if two
+     * components ever share one, it is never dropped: the first in canonical order (owner position, then id) keeps
+     * the plain label and the others are listed as {@code label#2}, {@code label#3}, in order.
+     */
+    private Map<String, Found> keyed() {
+        Map<String, Found> keyed = new LinkedHashMap<>();
         PanelGroup group = block.group();
-        if (group != null && block.getLevel() != null) {
-            for (BlockPos pos : group.members()) {
-                if (block.getLevel().isLoaded(pos) && block.getLevel().getBlockEntity(pos) instanceof PanelBlockEntity be) {
-                    for (PanelComponent component : be.owned()) {
-                        if (component.label().equals(label) && component.type() != null) {
-                            return new Found(be, component);
-                        }
-                    }
-                }
+        if (group == null || block.getLevel() == null) {
+            return keyed;
+        }
+        for (PanelGroup.Entry entry : group.components(block.getLevel())) {
+            String base = entry.component().label();
+            String key = base;
+            for (int n = 2; keyed.containsKey(key); n++) {
+                key = base + "#" + n;
             }
+            keyed.put(key, new Found(entry.owner(), entry.component()));
+        }
+        return keyed;
+    }
+
+    private Found find(String label) throws LuaException {
+        Found found = keyed().get(label);
+        if (found != null && found.component.type() != null) {
+            return found;
         }
         throw new LuaException("No component labelled " + label);
     }
@@ -145,20 +166,13 @@ public final class PanelPeripheral implements IPeripheral {
     @LuaFunction(mainThread = true)
     public Map<String, Object> list() {
         Map<String, Object> labels = new LinkedHashMap<>();
-        PanelGroup group = block.group();
-        if (group == null || block.getLevel() == null) {
-            return labels;
-        }
-        for (BlockPos pos : group.members()) {
-            if (block.getLevel().isLoaded(pos) && block.getLevel().getBlockEntity(pos) instanceof PanelBlockEntity be) {
-                for (PanelComponent component : be.owned()) {
-                    Map<String, Object> entry = new LinkedHashMap<>();
-                    entry.put("type", component.type() == null ? "unknown" : component.type().id().toString());
-                    entry.put("width", component.w());
-                    entry.put("height", component.h());
-                    labels.put(component.label(), entry);
-                }
-            }
+        for (Map.Entry<String, Found> keyed : keyed().entrySet()) {
+            PanelComponent component = keyed.getValue().component;
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("type", component.type() == null ? "unknown" : component.type().id().toString());
+            entry.put("width", component.w());
+            entry.put("height", component.h());
+            labels.put(keyed.getKey(), entry);
         }
         return labels;
     }
@@ -176,24 +190,17 @@ public final class PanelPeripheral implements IPeripheral {
     @LuaFunction(mainThread = true)
     public Map<String, Object> getInputs() {
         Map<String, Object> result = new LinkedHashMap<>();
-        PanelGroup group = block.group();
-        if (group == null || block.getLevel() == null) {
-            return result;
-        }
-        for (BlockPos pos : group.members()) {
-            if (block.getLevel().isLoaded(pos) && block.getLevel().getBlockEntity(pos) instanceof PanelBlockEntity be) {
-                for (PanelComponent component : be.owned()) {
-                    if (component.type() == null || component.outputCount() == 0) {
-                        continue;
-                    }
-                    Map<String, Object> ports = new LinkedHashMap<>();
-                    List<PortSpec> outputPorts = component.type().outputPorts(component.data());
-                    for (int i = 0; i < outputPorts.size(); i++) {
-                        ports.put(outputPorts.get(i).key(), component.output(i));
-                    }
-                    result.put(component.label(), ports);
-                }
+        for (Map.Entry<String, Found> keyed : keyed().entrySet()) {
+            PanelComponent component = keyed.getValue().component;
+            if (component.type() == null || component.outputCount() == 0) {
+                continue;
             }
+            Map<String, Object> ports = new LinkedHashMap<>();
+            List<PortSpec> outputPorts = component.type().outputPorts(component.data());
+            for (int i = 0; i < outputPorts.size(); i++) {
+                ports.put(outputPorts.get(i).key(), component.output(i));
+            }
+            result.put(keyed.getKey(), ports);
         }
         return result;
     }
