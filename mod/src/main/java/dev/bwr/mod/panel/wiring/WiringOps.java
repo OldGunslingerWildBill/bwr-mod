@@ -245,15 +245,25 @@ public final class WiringOps {
      * linker's device is bindable) or the reason it is not.
      */
     public static boolean openScreen(ServerPlayer player, BlockPos ownerPos, int id) {
+        PanelPayloads.LinkerScreen screen = screenFor(player, ownerPos, id);
+        if (screen == null) {
+            return false;
+        }
+        PacketDistributor.sendToPlayer(player, screen);
+        return true;
+    }
+
+    /** The screen contents {@link #openScreen} would send, or null when the player may not open it. */
+    public static PanelPayloads.LinkerScreen screenFor(ServerPlayer player, BlockPos ownerPos, int id) {
         ServerLevel level = player.serverLevel();
         if (PanelLinkerItem.held(player).isEmpty() || !PanelOps.inReach(player, ownerPos) || !level.isLoaded(ownerPos)
                 || !AssemblyAccess.permitted(level, player, ownerPos)
                 || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
-            return false;
+            return null;
         }
         PanelComponent component = owner.component(id);
         if (component == null || component.type() == null) {
-            return false;
+            return null;
         }
         GlobalPos link = PanelLinkerItem.linked(PanelLinkerItem.held(player));
         int status = PanelPayloads.LINK_OK;
@@ -290,9 +300,7 @@ public final class WiringOps {
                 }
             }
         }
-        PacketDistributor.sendToPlayer(player, new PanelPayloads.LinkerScreen(ownerPos, id, status, device, name,
-                signals, commands));
-        return true;
+        return new PanelPayloads.LinkerScreen(ownerPos, id, status, device, name, signals, commands);
     }
 
     private static String clip(String text, int max) {

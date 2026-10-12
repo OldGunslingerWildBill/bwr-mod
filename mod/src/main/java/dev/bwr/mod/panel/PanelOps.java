@@ -104,18 +104,36 @@ public final class PanelOps {
                 return PanelGroup.Result.BAD_ARGUMENTS;
             }
         }
+        commit(level, anchor, cx, cy, type, footprint, placement);
+        if (!player.getAbilities().instabuild) {
+            stack.shrink(1);
+        }
+        return PanelGroup.Result.OK;
+    }
+
+    /**
+     * Places a component without a player: no reach, permission or item. For tests and tooling that build
+     * panels directly; the fit is still checked.
+     *
+     * @return the component, or null with the reason lost (call {@link PanelGroup#checkPlacement} for it)
+     */
+    public static PanelComponent placeDirect(ServerLevel level, BlockPos anchor, int cx, int cy, ComponentType type,
+                                             Footprint footprint) {
+        PanelGroup.Placement placement = PanelGroup.checkPlacement(level, anchor, cx, cy, footprint);
+        return placement.ok() ? commit(level, anchor, cx, cy, type, footprint, placement) : null;
+    }
+
+    private static PanelComponent commit(ServerLevel level, BlockPos anchor, int cx, int cy, ComponentType type,
+                                         Footprint footprint, PanelGroup.Placement placement) {
         PanelBlockEntity be = (PanelBlockEntity) level.getBlockEntity(anchor);
         String label = be.group().nextLabel(level, type.labelPrefix());
-        be.addComponent(type, cx, cy, footprint, label, placement.rects());
+        PanelComponent component = be.addComponent(type, cx, cy, footprint, label, placement.rects());
         for (PanelGroup.Rect rect : placement.rects()) {
             if (level.getBlockEntity(rect.pos()) instanceof PanelBlockEntity touched) {
                 touched.syncFull();
             }
         }
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-        }
-        return PanelGroup.Result.OK;
+        return component;
     }
 
     // ---- remove

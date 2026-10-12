@@ -37,14 +37,14 @@ public final class LivePeripheral implements IDynamicPeripheral {
             else if(types[i]==int.class)converted[i]=args.getInt(i);
             else if(types[i]==boolean.class)converted[i]=args.getBoolean(i);
             else if(types[i]==String.class)converted[i]=args.getString(i);
-            else if(types[i]==String[].class)converted[i]=strings(args.getTableUnsafe(i));
+            else if(types[i]==String[].class)converted[i]=tableStrings(args.getTableUnsafe(i));
             else throw new LuaException("Unsupported machine method argument");
         }
         // Resolve after scheduling, not while still on the computer thread.
         return context.executeMainThreadTask(()->invoke(method,converted));
     }
     /** A Lua array of strings (the rows of a panel blit), bounded so a script cannot hand over a huge table. */
-    private static String[] strings(LuaTable<?,?> table)throws LuaException {
+    public static String[] tableStrings(LuaTable<?,?> table)throws LuaException {
         int count=table.length();
         if(count>MAX_TABLE_STRINGS)throw new LuaException("Table too long (limit "+MAX_TABLE_STRINGS+")");
         String[] values=new String[count];
