@@ -13,6 +13,9 @@ when nothing is there or the chunk is not loaded. It never loads a chunk and nev
   interlocks and `computerControlled` behave identically. A refused command returns `false` and changes
   nothing. A command that is NaN, or outside its range, is refused. For BOOLEAN commands a value of 0.5 or
   more means on. A PULSE command fires once whatever value is sent.
+* The MSIV `open` command is the exception to "refused changes nothing": it records the demand exactly like
+  CC's `open()` (the valve opens when power returns) and returns whether the valve can move now, so an
+  unpowered open returns `false` with the demand stored.
 * Keys are lowercase snake_case and stable. A LEVEL is a whole-number step (a rod notch, a damage stage).
 * Flow, head and energy ranges for pumps and cooling units differ per design; the table range is an upper
   bound and the device also reports `rated_flow` for scaling.

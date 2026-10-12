@@ -239,7 +239,7 @@ GameTests:
 - wrench removal and dropped items, and breaking a covered block;
 - save and reload of every type;
 - each signal adapter reads the same as its CC peripheral (when CC is present);
-- commands obey power and interlocks (an unpowered MSIV refuses);
+- commands obey power and interlocks (an unpowered MSIV records the demand like CC and reports it cannot move yet);
 - redstone in and out;
 - the annunciator sequence;
 - the CC peripheral (skipped without CC);

@@ -86,14 +86,15 @@ public final class DeviceCommands {
     }
 
     /**
-     * A panel command for an MSIV. Closing is always accepted (the spring can always close). Opening is
-     * refused while the actuator has no power for the stroke, instead of recording a demand that cannot
-     * move the valve.
+     * A panel command for an MSIV: identical to the CC setter, so the demand is always recorded (an open
+     * demand on an unpowered valve is kept and the valve opens when power returns).
+     *
+     * @return whether the valve can move toward the demand right now: closing always can (the spring),
+     *         opening needs actuator power. A false result is information, not a refusal; the demand stands.
      */
     public static boolean msivCommand(MainSteamIsolationValveBlockEntity be, boolean open) {
-        if (open && !be.isPowered()) return false;
         msivDemand(be, open);
-        return true;
+        return !open || be.isPowered();
     }
 
     public static void srvOpen(SafetyReliefValveBlockEntity be, boolean open) {
