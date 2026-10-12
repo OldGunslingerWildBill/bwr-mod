@@ -161,6 +161,10 @@ final class PanelCcChecks {
                         event[0] = args[0];
                         System.arraycopy((Object[]) args[1], 0, event, 1, event.length - 1);
                         events.add(event);
+                    } else if (method.getName().equals("getAttachmentName")) {
+                        return "top";
+                    } else if (method.getName().equals("getID")) {
+                        return 1;
                     } else if (method.getName().equals("equals")) {
                         return proxy == args[0];
                     } else if (method.getName().equals("hashCode")) {
@@ -176,9 +180,10 @@ final class PanelCcChecks {
         try {
             check(helper, PanelPeripheral.attachedCount() == before + 1, "attach registers the computer");
             block.setOutput(io, 0, 3.0);
-            check(helper, events.size() == 1 && events.get(0)[0].equals("bwr_panel_input") && events.get(0)[1].equals(label)
-                            && events.get(0)[2].equals(3.0) && events.get(0)[3].equals("x"),
-                    "a player operating a control raises bwr_panel_input(label, value): " + events.size());
+            check(helper, events.size() == 1 && events.get(0)[0].equals("bwr_panel_input") && events.get(0)[1].equals("top")
+                            && events.get(0)[2].equals(label) && events.get(0)[3].equals(3.0)
+                            && events.get(0)[4].equals("x"),
+                    "a player operating a control raises bwr_panel_input(name, label, value, port): " + events.size());
             block.setOutput(io, 0, 3.0);
             check(helper, events.size() == 1, "no event when nothing changed");
             io.addSink(0, new dev.bwr.mod.panel.wiring.RedstoneSink(1));
