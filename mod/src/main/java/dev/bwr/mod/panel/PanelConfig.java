@@ -27,6 +27,9 @@ public final class PanelConfig {
     public static final ModConfigSpec.IntValue MAX_LABEL_LENGTH = BUILDER
             .comment("Longest component label")
             .defineInRange("maxLabelLength", 16, 4, 32);
+    public static final ModConfigSpec.IntValue LINK_RANGE = BUILDER
+            .comment("Farthest a panel may be linked to a plant device, in blocks (same dimension only)")
+            .defineInRange("linkRange", 64, 1, 1024);
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     /** Defensive reads: a GameTest or a very early caller may run before the file is loaded. */
@@ -44,6 +47,10 @@ public final class PanelConfig {
 
     public static int sampleTicks() {
         return SPEC.isLoaded() ? SAMPLE_TICKS.get() : 2;
+    }
+
+    public static int linkRange() {
+        return SPEC.isLoaded() ? LINK_RANGE.get() : 64;
     }
 
     public static int maxLabelLength() {

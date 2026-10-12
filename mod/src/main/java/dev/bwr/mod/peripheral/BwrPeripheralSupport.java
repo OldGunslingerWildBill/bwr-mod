@@ -31,6 +31,7 @@ public final class BwrPeripheralSupport {
     private BwrPeripheralSupport() {}
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         int count=0;
+        PanelPeripheral.install();
         for(var entry:BwrBlocks.BLOCKS.getEntries()) {
             var block=entry.get();var state=block.defaultBlockState();
             // Fixed schemas are discovered once. Prototypes have no level and are never exposed as inventories.

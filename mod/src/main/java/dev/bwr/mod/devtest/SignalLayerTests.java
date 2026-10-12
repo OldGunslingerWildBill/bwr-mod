@@ -95,8 +95,8 @@ public final class SignalLayerTests {
         h.assertTrue(provider != null, "no MSIV provider");
         h.assertTrue(read(h, provider, "powered") == 0 && read(h, provider, "position") == 0 && read(h, provider, "demand_open") == 0,
                 "unpowered closed MSIV reads wrong");
-        h.assertTrue(!provider.command("open", 1) && !valve.isDemandOpen() && !valve.isComputerControlled(),
-                "unpowered MSIV accepted an open command");
+        h.assertTrue(!provider.command("open", 1) && valve.isDemandOpen() && valve.isComputerControlled(),
+                "unpowered MSIV open command must record the demand like CC and report it cannot move yet");
         h.assertTrue(provider.command("open", 0) && valve.isComputerControlled() && !valve.isDemandOpen(), "close command refused");
         valve.energy().receiveEnergy(20_000, false);
         h.assertTrue(provider.command("open", 1) && valve.isDemandOpen(), "powered MSIV refused to open");

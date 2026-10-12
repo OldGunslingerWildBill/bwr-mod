@@ -117,6 +117,129 @@ public final class PanelPayloads {
         }
     }
 
+    // ---- wiring: linker and binding screens
+
+    /** Most signals or commands one {@link LinkerScreen} lists. */
+    public static final int MAX_LISTED = 512;
+    public static final int MAX_KEY = 64;
+    public static final int MAX_LABEL = 96;
+
+    /** Why a linker screen has no device lists. */
+    public static final int LINK_OK = 0;
+    public static final int LINK_NONE = 1;
+    public static final int LINK_WRONG_DIMENSION = 2;
+    public static final int LINK_OUT_OF_RANGE = 3;
+    public static final int LINK_MISSING = 4;
+
+    /** Ask the server to open the binding screen for a component (linker in hand). */
+    public record LinkerOpen(BlockPos pos, int id) implements CustomPacketPayload {
+        public static final Type<LinkerOpen> TYPE = new Type<>(BwrMod.id("panel_linker_open"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, LinkerOpen> STREAM_CODEC = StreamCodec.composite(
+                BlockPos.STREAM_CODEC, LinkerOpen::pos,
+                ByteBufCodecs.VAR_INT, LinkerOpen::id,
+                LinkerOpen::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * Bind or unbind one port of a component. {@code kind} is a {@link dev.bwr.mod.panel.wiring.WiringOps.BindKind}
+     * ordinal; the fields a kind does not use are ignored. {@code refOutput} doubles as the sink position for a
+     * remove. Everything is re-validated by {@code WiringOps#bind}.
+     */
+    public record Bind(BlockPos pos, int id, boolean output, int port, int kind, BlockPos device, String key,
+                       BlockPos refOwner, int refId, int refOutput, double scale) implements CustomPacketPayload {
+        public static final Type<Bind> TYPE = new Type<>(BwrMod.id("panel_bind"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Bind> STREAM_CODEC = StreamCodec.of(
+                (buf, bind) -> {
+                    buf.writeBlockPos(bind.pos);
+                    buf.writeVarInt(bind.id);
+                    buf.writeBoolean(bind.output);
+                    buf.writeVarInt(bind.port);
+                    buf.writeVarInt(bind.kind);
+                    buf.writeBlockPos(bind.device);
+                    buf.writeUtf(bind.key, MAX_KEY);
+                    buf.writeBlockPos(bind.refOwner);
+                    buf.writeVarInt(bind.refId);
+                    buf.writeVarInt(bind.refOutput);
+                    buf.writeDouble(bind.scale);
+                },
+                buf -> new Bind(buf.readBlockPos(), buf.readVarInt(), buf.readBoolean(), buf.readVarInt(),
+                        buf.readVarInt(), buf.readBlockPos(), buf.readUtf(MAX_KEY), buf.readBlockPos(),
+                        buf.readVarInt(), buf.readVarInt(), buf.readDouble()));
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** One readable signal of the linked device, as listed on the binding screen. */
+    public record SignalEntry(String key, String label, String unit) {
+    }
+
+    /** One command of the linked device. */
+    public record CommandEntry(String key, String label, boolean pulse) {
+    }
+
+    /** Opens the binding screen: the component and the linked device's signals and commands. */
+    public record LinkerScreen(BlockPos pos, int id, int status, BlockPos device, String deviceName,
+                               List<SignalEntry> signals, List<CommandEntry> commands) implements CustomPacketPayload {
+        public static final Type<LinkerScreen> TYPE = new Type<>(BwrMod.id("panel_linker_screen"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, LinkerScreen> STREAM_CODEC = StreamCodec.of(
+                (buf, screen) -> {
+                    buf.writeBlockPos(screen.pos);
+                    buf.writeVarInt(screen.id);
+                    buf.writeVarInt(screen.status);
+                    buf.writeBlockPos(screen.device);
+                    buf.writeUtf(screen.deviceName, MAX_LABEL);
+                    buf.writeVarInt(screen.signals.size());
+                    for (SignalEntry entry : screen.signals) {
+                        buf.writeUtf(entry.key, MAX_KEY);
+                        buf.writeUtf(entry.label, MAX_LABEL);
+                        buf.writeUtf(entry.unit, MAX_KEY);
+                    }
+                    buf.writeVarInt(screen.commands.size());
+                    for (CommandEntry entry : screen.commands) {
+                        buf.writeUtf(entry.key, MAX_KEY);
+                        buf.writeUtf(entry.label, MAX_LABEL);
+                        buf.writeBoolean(entry.pulse);
+                    }
+                },
+                buf -> {
+                    BlockPos pos = buf.readBlockPos();
+                    int id = buf.readVarInt();
+                    int status = buf.readVarInt();
+                    BlockPos device = buf.readBlockPos();
+                    String name = buf.readUtf(MAX_LABEL);
+                    int signalCount = buf.readVarInt();
+                    if (signalCount < 0 || signalCount > MAX_LISTED) {
+                        throw new io.netty.handler.codec.DecoderException("panel signal list too large: " + signalCount);
+                    }
+                    List<SignalEntry> signals = new ArrayList<>(signalCount);
+                    for (int i = 0; i < signalCount; i++) {
+                        signals.add(new SignalEntry(buf.readUtf(MAX_KEY), buf.readUtf(MAX_LABEL), buf.readUtf(MAX_KEY)));
+                    }
+                    int commandCount = buf.readVarInt();
+                    if (commandCount < 0 || commandCount > MAX_LISTED) {
+                        throw new io.netty.handler.codec.DecoderException("panel command list too large: " + commandCount);
+                    }
+                    List<CommandEntry> commands = new ArrayList<>(commandCount);
+                    for (int i = 0; i < commandCount; i++) {
+                        commands.add(new CommandEntry(buf.readUtf(MAX_KEY), buf.readUtf(MAX_LABEL), buf.readBoolean()));
+                    }
+                    return new LinkerScreen(pos, id, status, device, name, signals, commands);
+                });
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     /** One changed live value. */
     public record Entry(BlockPos pos, int id, boolean output, int index, double value) {
     }

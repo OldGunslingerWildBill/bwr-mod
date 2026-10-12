@@ -1,0 +1,315 @@
+package dev.bwr.mod.panel.client;
+
+import dev.bwr.mod.panel.PanelBlockEntity;
+import dev.bwr.mod.panel.PanelGroup;
+import dev.bwr.mod.panel.component.InputSource;
+import dev.bwr.mod.panel.component.InputSources;
+import dev.bwr.mod.panel.component.OutputSink;
+import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.component.PortSpec;
+import dev.bwr.mod.panel.net.PanelPayloads;
+import dev.bwr.mod.panel.wiring.CcSource;
+import dev.bwr.mod.panel.wiring.ComponentSource;
+import dev.bwr.mod.panel.wiring.PlantSink;
+import dev.bwr.mod.panel.wiring.PlantSource;
+import dev.bwr.mod.panel.wiring.RedstoneSink;
+import dev.bwr.mod.panel.wiring.RedstoneSource;
+import dev.bwr.mod.panel.wiring.WiringOps;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+/**
+ * The state behind the linker's binding screen: which port is being wired, to what, and the packet that
+ * results. No widgets and no layout, so a later GUI overhaul can replace {@link BindScreen} and
+ * {@link BindLayout} without touching this. Everything it sends is re-validated by the server
+ * ({@code WiringOps}); this class only builds sensible requests.
+ */
+public final class BindModel {
+    /** What to wire a port to. Outputs offer PLANT and REDSTONE; inputs offer all four. */
+    public enum Mode {
+        PLANT, COMPONENT, REDSTONE, CC;
+
+        public String translationKey() {
+            return "screen.bwr.panel_bind.mode." + name().toLowerCase(Locale.ROOT);
+        }
+    }
+
+    /** One selectable port: an input or an output of the component. */
+    public record PortChoice(boolean output, int index, PortSpec spec) {
+        public Component text() {
+            return Component.translatable(output ? "screen.bwr.panel_bind.outputs" : "screen.bwr.panel_bind.inputs")
+                    .append(": ").append(Component.translatable(spec.labelKey()));
+        }
+    }
+
+    /** One line of the selection list. */
+    public record Entry(String key, Component label, BlockPos refOwner, int refId, int refOutput) {
+    }
+
+    public final BlockPos owner;
+    public final int componentId;
+    public final String componentLabel;
+    public final PanelPayloads.LinkerScreen device;
+    public final List<PortChoice> choices = new ArrayList<>();
+    private final PanelBlockEntity block;
+    private final PanelComponent component;
+
+    public PortChoice port;
+    public Mode mode;
+    public String filter = "";
+    public String scaleText = "1";
+    public Entry selected;
+
+    public BindModel(PanelBlockEntity block, PanelComponent component, PanelPayloads.LinkerScreen device) {
+        this.block = block;
+        this.component = component;
+        this.owner = block.getBlockPos();
+        this.componentId = component.id();
+        this.componentLabel = component.label();
+        this.device = device;
+        List<PortSpec> inputs = component.type().inputPorts(component.data());
+        for (int i = 0; i < inputs.size(); i++) {
+            choices.add(new PortChoice(false, i, inputs.get(i)));
+        }
+        List<PortSpec> outputs = component.type().outputPorts(component.data());
+        for (int i = 0; i < outputs.size(); i++) {
+            choices.add(new PortChoice(true, i, outputs.get(i)));
+        }
+        choose(choices.isEmpty() ? null : choices.get(0));
+    }
+
+    public boolean hasPorts() {
+        return port != null;
+    }
+
+    public boolean deviceUsable() {
+        return device.status() == PanelPayloads.LINK_OK;
+    }
+
+    public void choose(PortChoice choice) {
+        this.port = choice;
+        this.selected = null;
+        List<Mode> modes = modes();
+        if (mode == null || !modes.contains(mode)) {
+            mode = modes.get(0);
+        }
+        scaleText = defaultScale();
+    }
+
+    public List<Mode> modes() {
+        if (port != null && port.output()) {
+            return List.of(Mode.PLANT, Mode.REDSTONE);
+        }
+        return List.of(Mode.PLANT, Mode.COMPONENT, Mode.REDSTONE, Mode.CC);
+    }
+
+    public void setMode(Mode mode) {
+        this.mode = mode;
+        this.selected = null;
+        scaleText = defaultScale();
+    }
+
+    /** A redstone sink usually wants a full-strength signal from a 0/1 switch; plant commands default to 1:1. */
+    private String defaultScale() {
+        return port != null && port.output() && mode == Mode.REDSTONE ? "15" : "1";
+    }
+
+    /** Whether the list of choices is shown for the current mode. */
+    public boolean listed() {
+        return mode == Mode.PLANT && deviceUsable() || mode == Mode.COMPONENT;
+    }
+
+    public boolean usesScale() {
+        return port != null && port.output() && (mode == Mode.PLANT || mode == Mode.REDSTONE);
+    }
+
+    /** The entries of the selection list for the current port and mode, narrowed by the filter. */
+    public List<Entry> entries() {
+        List<Entry> all = new ArrayList<>();
+        if (port == null) {
+            return all;
+        }
+        String needle = filter.toLowerCase(Locale.ROOT).strip();
+        if (mode == Mode.PLANT && deviceUsable()) {
+            if (port.output()) {
+                for (PanelPayloads.CommandEntry command : device.commands()) {
+                    all.add(new Entry(command.key(), Component.literal(command.label() + (command.pulse() ? " (pulse)" : "")
+                            + "  [" + command.key() + "]"), BlockPos.ZERO, 0, 0));
+                }
+            } else {
+                for (PanelPayloads.SignalEntry signal : device.signals()) {
+                    all.add(new Entry(signal.key(), Component.literal(signal.label()
+                            + (signal.unit().isEmpty() ? "" : " (" + signal.unit() + ")") + "  [" + signal.key() + "]"),
+                            BlockPos.ZERO, 0, 0));
+                }
+            }
+        } else if (mode == Mode.COMPONENT && !port.output()) {
+            PanelGroup group = block.group();
+            if (group != null && block.getLevel() != null) {
+                for (BlockPos pos : group.members()) {
+                    if (block.getLevel().isLoaded(pos) && block.getLevel().getBlockEntity(pos) instanceof PanelBlockEntity be) {
+                        for (PanelComponent other : be.owned()) {
+                            if (other == component || other.type() == null) {
+                                continue;
+                            }
+                            List<PortSpec> outputs = other.type().outputPorts(other.data());
+                            for (int i = 0; i < outputs.size(); i++) {
+                                all.add(new Entry(other.label() + "." + outputs.get(i).key(),
+                                        Component.literal(other.label() + "." + outputs.get(i).key()), pos, other.id(), i));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (needle.isEmpty()) {
+            return all;
+        }
+        List<Entry> matching = new ArrayList<>();
+        for (Entry entry : all) {
+            if (entry.label().getString().toLowerCase(Locale.ROOT).contains(needle)) {
+                matching.add(entry);
+            }
+        }
+        return matching;
+    }
+
+    /** Whether Apply has everything it needs. */
+    public boolean canApply() {
+        if (port == null) {
+            return false;
+        }
+        if (usesScale() && scale() == null) {
+            return false;
+        }
+        return switch (mode) {
+            case PLANT, COMPONENT -> selected != null;
+            case REDSTONE, CC -> true;
+        };
+    }
+
+    public Double scale() {
+        try {
+            double value = Double.parseDouble(scaleText.trim());
+            return Double.isFinite(value) && value != 0.0 && Math.abs(value) <= 1.0e6 ? value : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** The bind packet for the current selection; only call when {@link #canApply()}. */
+    public PanelPayloads.Bind toBind() {
+        WiringOps.BindKind kind = switch (mode) {
+            case PLANT -> WiringOps.BindKind.PLANT;
+            case COMPONENT -> WiringOps.BindKind.COMPONENT;
+            case REDSTONE -> WiringOps.BindKind.REDSTONE;
+            case CC -> WiringOps.BindKind.CC;
+        };
+        Entry entry = selected;
+        boolean plant = mode == Mode.PLANT && entry != null;
+        return new PanelPayloads.Bind(owner, componentId, port.output(), port.index(), kind.ordinal(),
+                plant ? device.device() : BlockPos.ZERO, plant ? entry.key() : "",
+                mode == Mode.COMPONENT && entry != null ? entry.refOwner() : BlockPos.ZERO,
+                mode == Mode.COMPONENT && entry != null ? entry.refId() : 0,
+                mode == Mode.COMPONENT && entry != null ? entry.refOutput() : 0,
+                usesScale() && scale() != null ? scale() : 1.0);
+    }
+
+    /** Clears the current port (input to no signal, output to no sinks). */
+    public PanelPayloads.Bind toClear() {
+        return new PanelPayloads.Bind(owner, componentId, port.output(), port.index(), WiringOps.BindKind.NONE.ordinal(),
+                BlockPos.ZERO, "", BlockPos.ZERO, 0, 0, 1.0);
+    }
+
+    public PanelPayloads.Bind toRemoveSink(int position) {
+        return new PanelPayloads.Bind(owner, componentId, true, port.index(), WiringOps.BindKind.REMOVE_SINK.ordinal(),
+                BlockPos.ZERO, "", BlockPos.ZERO, 0, position, 1.0);
+    }
+
+    /** How the current port is wired now: the source of an input, or the sinks of an output. */
+    public List<Component> current() {
+        List<Component> lines = new ArrayList<>();
+        if (port == null) {
+            return lines;
+        }
+        if (port.output()) {
+            for (OutputSink sink : component.sinks(port.index())) {
+                lines.add(describeSink(sink));
+            }
+            if (lines.isEmpty()) {
+                lines.add(Component.translatable("sink.bwr.panel.none"));
+            }
+            lines.add(Component.translatable("sink.bwr.panel.cc"));
+        } else {
+            lines.add(describeSource(component.source(port.index())));
+        }
+        return lines;
+    }
+
+    public int sinkCount() {
+        return port != null && port.output() ? component.sinks(port.index()).size() : 0;
+    }
+
+    public Component sinkText(int position) {
+        return describeSink(component.sinks(port.index()).get(position));
+    }
+
+    // ---- descriptions (also used by the wrench screen)
+
+    public static Component describeSource(InputSource source) {
+        if (source instanceof PlantSource plant) {
+            BlockPos device = plant.device();
+            return Component.translatable("source.bwr.panel.plant", plant.key(), device.getX(), device.getY(), device.getZ());
+        }
+        if (source instanceof ComponentSource reference) {
+            return Component.translatable("source.bwr.panel.component", referenceLabel(reference));
+        }
+        if (source instanceof RedstoneSource) {
+            return Component.translatable("source.bwr.panel.redstone");
+        }
+        if (source instanceof CcSource cc) {
+            return Component.translatable(cc.awaiting() ? "source.bwr.panel.cc_awaiting" : "source.bwr.panel.cc");
+        }
+        if (InputSources.KIND_NONE.equals(source.kind())) {
+            return Component.translatable("source.bwr.panel.none");
+        }
+        return Component.translatable("source.bwr.panel.other", source.kind());
+    }
+
+    public static Component describeSink(OutputSink sink) {
+        if (sink instanceof PlantSink plant) {
+            BlockPos device = plant.device();
+            return Component.translatable("sink.bwr.panel.plant", plant.key(), device.getX(), device.getY(), device.getZ(),
+                    trim(plant.scale()));
+        }
+        if (sink instanceof RedstoneSink redstone) {
+            return Component.translatable("sink.bwr.panel.redstone", trim(redstone.scale()));
+        }
+        return Component.translatable("sink.bwr.panel.other", sink.kind());
+    }
+
+    private static String trim(double value) {
+        return value == Math.rint(value) ? Long.toString((long) value) : String.format(Locale.ROOT, "%.3g", value);
+    }
+
+    /** "LABEL.port" of a referenced component, or its raw id when the client does not know it. */
+    private static String referenceLabel(ComponentSource reference) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level != null && minecraft.level.isLoaded(reference.owner())
+                && minecraft.level.getBlockEntity(reference.owner()) instanceof PanelBlockEntity be) {
+            PanelComponent target = be.component(reference.componentId());
+            if (target != null && target.type() != null) {
+                List<PortSpec> outputs = target.type().outputPorts(target.data());
+                String port = reference.output() >= 0 && reference.output() < outputs.size()
+                        ? outputs.get(reference.output()).key() : Integer.toString(reference.output());
+                return target.label() + "." + port;
+            }
+        }
+        return "#" + reference.componentId() + "." + reference.output();
+    }
+}

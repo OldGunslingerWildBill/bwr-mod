@@ -5,7 +5,9 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,6 +47,8 @@ public final class PanelComponent {
     private InputSource[] sources = new InputSource[0];
     private double[] inputs = new double[0];
     private double[] outputs = new double[0];
+    /** Per output index, where that output goes (fan-out); see {@link OutputSink}. */
+    private final List<List<OutputSink>> sinks = new ArrayList<>();
 
     /** Client-only render cache (static mesh), dropped whenever {@link #revision()} changes. */
     public Object clientCache;
@@ -184,6 +188,35 @@ public final class PanelComponent {
         }
     }
 
+    /** The sinks output {@code index} fans out to; empty for an index out of range. */
+    public List<OutputSink> sinks(int index) {
+        return index >= 0 && index < sinks.size() ? Collections.unmodifiableList(sinks.get(index)) : List.of();
+    }
+
+    public void addSink(int index, OutputSink sink) {
+        if (index >= 0 && index < sinks.size()) {
+            sinks.get(index).add(sink);
+            touch();
+        }
+    }
+
+    /** Removes the sink at {@code position} of output {@code index}; returns whether it existed. */
+    public boolean removeSink(int index, int position) {
+        if (index < 0 || index >= sinks.size() || position < 0 || position >= sinks.get(index).size()) {
+            return false;
+        }
+        sinks.get(index).remove(position);
+        touch();
+        return true;
+    }
+
+    public void clearSinks(int index) {
+        if (index >= 0 && index < sinks.size() && !sinks.get(index).isEmpty()) {
+            sinks.get(index).clear();
+            touch();
+        }
+    }
+
     private static boolean same(double a, double b) {
         return a == b || Double.isNaN(a) && Double.isNaN(b);
     }
@@ -212,6 +245,12 @@ public final class PanelComponent {
         if (outputs.length != out) {
             outputs = Arrays.copyOf(outputs, out);
         }
+        while (sinks.size() < out) {
+            sinks.add(new ArrayList<>());
+        }
+        while (sinks.size() > out) {
+            sinks.remove(sinks.size() - 1);
+        }
     }
 
     // ---- persistence (also the S2C wire form)
@@ -234,6 +273,17 @@ public final class PanelComponent {
             list.add(InputSources.save(source));
         }
         tag.put("Inputs", list);
+        ListTag sinkList = new ListTag();
+        for (int output = 0; output < sinks.size(); output++) {
+            for (OutputSink sink : sinks.get(output)) {
+                CompoundTag entry = OutputSinks.save(sink);
+                entry.putInt("Output", output);
+                sinkList.add(entry);
+            }
+        }
+        if (!sinkList.isEmpty()) {
+            tag.put("Sinks", sinkList);
+        }
         return tag;
     }
 
@@ -274,6 +324,16 @@ public final class PanelComponent {
         ListTag list = tag.getList("Inputs", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size() && i < component.sources.length; i++) {
             component.sources[i] = InputSources.load(list.getCompound(i));
+        }
+        ListTag sinkList = tag.getList("Sinks", Tag.TAG_COMPOUND);
+        for (int i = 0; i < sinkList.size(); i++) {
+            CompoundTag entry = sinkList.getCompound(i);
+            int output = entry.getInt("Output");
+            if (output >= 0 && output < component.sinks.size()) {
+                CompoundTag fields = entry.copy();
+                fields.remove("Output");
+                component.sinks.get(output).add(OutputSinks.load(fields));
+            }
         }
         ListTag in = tag.getList("InValues", Tag.TAG_DOUBLE);
         for (int i = 0; i < in.size() && i < component.inputs.length; i++) {

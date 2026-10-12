@@ -6,6 +6,10 @@ import dev.bwr.mod.panel.component.ComponentType;
 import dev.bwr.mod.panel.component.Footprint;
 import dev.bwr.mod.panel.component.InputSource;
 import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.wiring.PanelSampler;
+import dev.bwr.mod.panel.wiring.PanelWiring;
+import dev.bwr.mod.panel.wiring.RedstoneSink;
+import dev.bwr.mod.panel.wiring.RedstoneSource;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -69,6 +73,8 @@ public final class PanelBlockEntity extends BlockEntity {
     private int nextId = 1;
     private PanelGroup group;
     private AABB renderBounds;
+    /** Redstone strength emitted from the back face (strongest redstone sink); -1 until first computed. */
+    private int redstoneOut = -1;
 
     public PanelBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.PANEL.get(), pos, state);
@@ -217,6 +223,7 @@ public final class PanelBlockEntity extends BlockEntity {
         grid = null;
         renderBounds = null;
         setChanged();
+        updateRedstoneOutput();
     }
 
     /**
@@ -254,6 +261,10 @@ public final class PanelBlockEntity extends BlockEntity {
             if (!pos.equals(worldPosition) && level.isLoaded(pos) && level.getBlockEntity(pos) instanceof PanelBlockEntity other) {
                 other.releaseClaims(worldPosition, id);
             }
+        }
+        if (!level.isClientSide() && component.outputCount() > 0) {
+            // Anything reading this component's outputs now reads "no signal".
+            PanelWiring.refreshReaders(this, worldPosition, id);
         }
         return component;
     }
@@ -417,6 +428,78 @@ public final class PanelBlockEntity extends BlockEntity {
         }
     }
 
+    /** Whether any input of any owned component is re-sampled by the group sampler (plant signal, redstone). */
+    public boolean hasLiveInputs() {
+        for (PanelComponent component : owned) {
+            for (int i = 0; i < component.inputCount(); i++) {
+                if (component.source(i).isLive()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Server: re-reads every live input and stores changes (queued as deltas). Called by {@link PanelSampler}. */
+    public void sampleLive() {
+        sampleLive(false);
+    }
+
+    /** A neighbouring block changed: re-read only the redstone inputs. */
+    public void redstoneNeighbourChanged() {
+        sampleLive(true);
+    }
+
+    private void sampleLive(boolean redstoneOnly) {
+        if (level == null || level.isClientSide()) {
+            return;
+        }
+        for (PanelComponent component : owned) {
+            for (int i = 0; i < component.inputCount(); i++) {
+                InputSource source = component.source(i);
+                if (source.isLive() && (!redstoneOnly || source instanceof RedstoneSource)) {
+                    setInput(component, i, source.sample(new InputSource.SampleContext(level, this, component, i)));
+                }
+            }
+        }
+    }
+
+    // ---- redstone output
+
+    /** Strength (0..15) emitted from the back face: the strongest redstone sink among the owned outputs. */
+    public int redstonePower() {
+        if (redstoneOut < 0) {
+            redstoneOut = computeRedstone();
+        }
+        return redstoneOut;
+    }
+
+    private int computeRedstone() {
+        int best = 0;
+        for (PanelComponent component : owned) {
+            for (int output = 0; output < component.outputCount(); output++) {
+                for (var sink : component.sinks(output)) {
+                    if (sink instanceof RedstoneSink redstone) {
+                        best = Math.max(best, redstone.strength(component.output(output)));
+                    }
+                }
+            }
+        }
+        return best;
+    }
+
+    /** Server: recomputes the emitted strength and, if it changed, updates the block behind (like a repeater). */
+    public void updateRedstoneOutput() {
+        if (level == null || level.isClientSide()) {
+            return;
+        }
+        int before = redstoneOut;
+        redstoneOut = computeRedstone();
+        if (before >= 0 && before != redstoneOut && getBlockState().getBlock() instanceof PanelBlock block) {
+            PanelBlock.notifyBack(level, worldPosition, block, facing());
+        }
+    }
+
     /**
      * Re-reads every source of {@code component} and stores the results. With
      * {@code notify} the changes are queued as deltas (a config edit); without,
@@ -435,6 +518,7 @@ public final class PanelBlockEntity extends BlockEntity {
                 component.storeInput(i, value);
             }
         }
+        PanelSampler.track(this);
     }
 
     /** Re-sends the state of every block a removed component covered, except {@code skip} (a block going away). */
@@ -443,6 +527,18 @@ public final class PanelBlockEntity extends BlockEntity {
             if (!pos.equals(skip) && level.isLoaded(pos) && level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
                 be.syncFull();
             }
+        }
+    }
+
+    /**
+     * Server: a component's content (text, pixels) changed outside the normal input/output paths, e.g. from
+     * CC. Marks it for redraw and queues one coalesced full-state sync for the end of the tick.
+     */
+    public void displayChanged(PanelComponent component) {
+        component.touch();
+        setChanged();
+        if (level != null && !level.isClientSide()) {
+            PanelSync.markDisplayDirty(this);
         }
     }
 
@@ -571,12 +667,20 @@ public final class PanelBlockEntity extends BlockEntity {
                     }
                 }
             }
+            redstoneOut = computeRedstone();
+            PanelSampler.track(this);
+            for (PanelComponent component : owned) {
+                if (component.outputCount() > 0) {
+                    PanelWiring.refreshReaders(this, worldPosition, component.id());
+                }
+            }
         }
     }
 
     @Override
     public void setRemoved() {
         super.setRemoved();
+        PanelSampler.untrack(this);
         invalidateGroups();
     }
 

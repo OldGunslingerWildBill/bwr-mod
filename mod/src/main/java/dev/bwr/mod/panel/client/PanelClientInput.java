@@ -5,6 +5,7 @@ import dev.bwr.mod.panel.PanelBlock;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.PanelGeometry;
 import dev.bwr.mod.panel.PanelGroup;
+import dev.bwr.mod.panel.PanelLinkerItem;
 import dev.bwr.mod.panel.PanelOps;
 import dev.bwr.mod.panel.PanelWrenchItem;
 import dev.bwr.mod.panel.component.ComponentItem;
@@ -101,6 +102,14 @@ public final class PanelClientInput {
             }
             event.setCanceled(true);
             event.setSwingHand(true);
+        } else if (stack.getItem() instanceof PanelLinkerItem) {
+            // Right-click a component to wire it; the server answers with the device lists for the screen.
+            PanelBlockEntity.Claim claim = target.block.claimAt(target.cell[0], target.cell[1]);
+            if (claim != null && !minecraft.player.isShiftKeyDown()) {
+                PacketDistributor.sendToServer(new PanelPayloads.LinkerOpen(claim.owner(), claim.id()));
+                event.setSwingHand(true);
+            }
+            event.setCanceled(true);
         } else if (stack.getItem() instanceof PanelWrenchItem) {
             PanelBlockEntity.Claim claim = target.block.claimAt(target.cell[0], target.cell[1]);
             if (claim != null) {
@@ -113,6 +122,19 @@ public final class PanelClientInput {
             }
             event.setCanceled(true);
         }
+    }
+
+    /** The component under the crosshair on a panel face, or null (used by the linker's device outline). */
+    public static PanelComponent hoveredComponent(Minecraft minecraft) {
+        Target target = target(minecraft);
+        if (!target.valid) {
+            return null;
+        }
+        PanelBlockEntity.Claim claim = target.block.claimAt(target.cell[0], target.cell[1]);
+        if (claim == null || !(minecraft.level.getBlockEntity(claim.owner()) instanceof PanelBlockEntity owner)) {
+            return null;
+        }
+        return owner.component(claim.id());
     }
 
     // ---- ghost and wrench highlight
@@ -133,7 +155,8 @@ public final class PanelClientInput {
             return;
         }
         ItemStack held = minecraft.player.getMainHandItem();
-        if (!(held.getItem() instanceof ComponentItem) && !(held.getItem() instanceof PanelWrenchItem)) {
+        if (!(held.getItem() instanceof ComponentItem) && !(held.getItem() instanceof PanelWrenchItem)
+                && !(held.getItem() instanceof PanelLinkerItem)) {
             held = minecraft.player.getOffhandItem();
         }
         Vec3 camera = event.getCamera().getPosition();
@@ -156,6 +179,16 @@ public final class PanelClientInput {
             outline(event, pose, camera, target.block, target.cell[0], target.cell[1], footprint.w(), footprint.h(),
                     cachedFits ? 0.15f : 1.0f, cachedFits ? 1.0f : 0.15f, 0.2f);
             event.setCanceled(true);
+        } else if (held.getItem() instanceof PanelLinkerItem) {
+            PanelBlockEntity.Claim claim = target.block.claimAt(target.cell[0], target.cell[1]);
+            if (claim != null && minecraft.level.getBlockEntity(claim.owner()) instanceof PanelBlockEntity owner) {
+                PanelComponent component = owner.component(claim.id());
+                if (component != null) {
+                    outline(event, pose, camera, owner, component.x(), component.y(), component.w(), component.h(),
+                            0.3f, 0.9f, 1.0f);
+                    event.setCanceled(true);
+                }
+            }
         } else if (held.getItem() instanceof PanelWrenchItem) {
             PanelBlockEntity.Claim claim = target.block.claimAt(target.cell[0], target.cell[1]);
             if (claim != null && minecraft.level.getBlockEntity(claim.owner()) instanceof PanelBlockEntity owner) {

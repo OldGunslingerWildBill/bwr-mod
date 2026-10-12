@@ -66,6 +66,8 @@ public final class BwrItems {
     public static final DeferredItem<dev.bwr.mod.panel.PanelWrenchItem> PANEL_WRENCH =
             ITEMS.register("panel_wrench", () -> new dev.bwr.mod.panel.PanelWrenchItem(new Item.Properties().stacksTo(1)));
     // One item per component type, registered under the type's own id. Add a line per new type.
+    public static final DeferredItem<dev.bwr.mod.panel.PanelLinkerItem> PANEL_LINKER =
+            ITEMS.register("panel_linker", () -> new dev.bwr.mod.panel.PanelLinkerItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> NAMEPLATE =
             ITEMS.register("nameplate", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.NAMEPLATE.id()));
@@ -277,6 +279,7 @@ public final class BwrItems {
                         output.accept(CONTROL_PANEL_BENCHBOARD.get());
                         output.accept(CONTROL_PANEL_CONSOLE.get());
                         output.accept(PANEL_WRENCH.get());
+                        output.accept(PANEL_LINKER.get());
                         output.accept(NAMEPLATE.get());
                         output.accept(LAMP.get());
                         output.accept(PUSHBUTTON.get());

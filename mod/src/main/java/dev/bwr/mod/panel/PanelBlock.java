@@ -103,7 +103,8 @@ public final class PanelBlock extends BaseEntityBlock {
                                               InteractionHand hand, BlockHitResult hit) {
         boolean component = stack.getItem() instanceof ComponentItem;
         boolean wrench = stack.getItem() instanceof PanelWrenchItem;
-        if (!component && !wrench) {
+        boolean linker = stack.getItem() instanceof PanelLinkerItem;
+        if (!component && !wrench && !linker) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (level.isClientSide()) {
@@ -116,7 +117,12 @@ public final class PanelBlock extends BaseEntityBlock {
         if (!PanelOps.cellAt(be, sender.getEyePosition(), sender.getLookAngle(), cell)) {
             return ItemInteractionResult.CONSUME;
         }
-        if (component) {
+        if (linker) {
+            PanelBlockEntity.Claim claim = be.claimAt(cell[0], cell[1]);
+            if (claim != null && !sender.isShiftKeyDown()) {
+                dev.bwr.mod.panel.wiring.WiringOps.openScreen(sender, claim.owner(), claim.id());
+            }
+        } else if (component) {
             if (sender.isShiftKeyDown()) {
                 ComponentItem.cycle(stack, sender);
             } else {
@@ -187,6 +193,44 @@ public final class PanelBlock extends BaseEntityBlock {
         if (!level.isClientSide()) {
             PanelBlockEntity.invalidateAround(level, pos, state);
         }
+    }
+
+    // ---- redstone: input at the back face, output from it (spec section 3)
+
+    @Override
+    protected boolean isSignalSource(BlockState state) {
+        return true;
+    }
+
+    @Override
+    protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        // `direction` points from the receiving block toward this one, so the receiver behind the panel
+        // asks with the panel's own facing; the other sides get nothing.
+        if (direction == state.getValue(FACING) && level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
+            return be.redstonePower();
+        }
+        return 0;
+    }
+
+    @Override
+    protected int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        return getSignal(state, level, pos, direction);
+    }
+
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighbour, BlockPos neighbourPos,
+                                   boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighbour, neighbourPos, movedByPiston);
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
+            be.redstoneNeighbourChanged();
+        }
+    }
+
+    /** Tells the block behind a panel (and its neighbours, except the panel) that the emitted strength changed. */
+    static void notifyBack(Level level, BlockPos pos, Block block, Direction facing) {
+        BlockPos behind = pos.relative(facing.getOpposite());
+        level.neighborChanged(behind, block, pos);
+        level.updateNeighborsAtExceptFromFacing(behind, block, facing);
     }
 
     @Override

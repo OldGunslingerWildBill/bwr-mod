@@ -45,6 +45,7 @@ public final class BwrMod {
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON,
                 dev.bwr.mod.panel.PanelConfig.SPEC, "bwr-panels.toml");
         dev.bwr.mod.panel.component.ComponentTypes.bootstrap();
+        dev.bwr.mod.panel.wiring.PanelWiring.bootstrap();
         BwrBlocks.BLOCKS.register(modBus);
         BwrItems.ITEMS.register(modBus);
         BwrItems.TABS.register(modBus);
