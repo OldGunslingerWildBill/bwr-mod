@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "building", "pattern": ["III", "ILI", "III"], "key": {"I": {"item": "minecraft:iron_ingot"}, "L": {"item": "minecraft:lime_dye"}}, "result": {"id": "bwr:control_panel_vertical", "count": 4}}

@@ -1,0 +1,8 @@
+newmtl face
+Kd 0.654902 0.737255 0.682353
+map_Kd minecraft:block/white_concrete
+
+newmtl bezel
+Kd 0.490196 0.572549 0.517647
+map_Kd minecraft:block/white_concrete
+

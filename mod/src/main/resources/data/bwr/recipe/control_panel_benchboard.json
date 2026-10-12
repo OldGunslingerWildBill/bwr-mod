@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "building", "pattern": ["V ", "VV"], "key": {"V": {"item": "bwr:control_panel_vertical"}}, "result": {"id": "bwr:control_panel_benchboard", "count": 1}}
