@@ -54,6 +54,8 @@ public final class PanelGeometry {
         public final double nx, ny, nz;
         /** Real length of one cell down the face relative to one cell across (1.0 on a vertical board). */
         public final double vLength;
+        /** Unit vector along the columns, and unit vector down the rows (with {@link #nx} the face normal: an orthonormal basis). */
+        public final double rightX, rightY, rightZ, downX, downY, downZ;
 
         Frame(double ox, double oy, double oz, double ux, double uy, double uz,
               double vx, double vy, double vz, double nx, double ny, double nz) {
@@ -69,7 +71,32 @@ public final class PanelGeometry {
             this.nx = nx;
             this.ny = ny;
             this.nz = nz;
-            this.vLength = Math.sqrt(vx * vx + vy * vy + vz * vz) * GRID;
+            double uLen = Math.sqrt(ux * ux + uy * uy + uz * uz);
+            double vLen = Math.sqrt(vx * vx + vy * vy + vz * vz);
+            this.vLength = vLen * GRID;
+            this.rightX = ux / uLen;
+            this.rightY = uy / uLen;
+            this.rightZ = uz / uLen;
+            this.downX = vx / vLen;
+            this.downY = vy / vLen;
+            this.downZ = vz / vLen;
+        }
+
+        /**
+         * Block-space x of a direction given in true-length component space: {@code cx} along the columns,
+         * {@code cy} down the rows, {@code cz} out of the face (a baked model's normals; its geometry is in that
+         * space once it has been fitted with the row aspect, see {@code Placement}).
+         */
+        public double directionX(double cx, double cy, double cz) {
+            return cx * rightX + cy * downX + cz * nx;
+        }
+
+        public double directionY(double cx, double cy, double cz) {
+            return cx * rightY + cy * downY + cz * ny;
+        }
+
+        public double directionZ(double cx, double cy, double cz) {
+            return cx * rightZ + cy * downZ + cz * nz;
         }
 
         public double x(double cu, double cv, double cz) {

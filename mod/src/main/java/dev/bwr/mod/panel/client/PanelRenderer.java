@@ -2,6 +2,8 @@ package dev.bwr.mod.panel.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.bwr.mod.BwrMod;
+import dev.bwr.mod.client.VisualEffectsConfig;
+import dev.bwr.mod.client.VisualEffectsMode;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.component.ComponentType;
 import dev.bwr.mod.panel.component.PanelComponent;
@@ -17,6 +19,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 import java.util.List;
 
@@ -28,8 +31,12 @@ import java.util.List;
  * <ul>
  *   <li>Blocks that own nothing return immediately.</li>
  *   <li>Static geometry is recorded once per component revision
- *       ({@link ComponentModel#buildStatic}) into a {@link StaticMesh} and replayed;
- *       only {@link ComponentModel#renderDynamic} runs model code per frame.</li>
+ *       ({@link ComponentModel#buildStatic}) into a {@link StaticMesh}. With the GPU cache on (the default) a
+ *       block's recorded meshes and posed geometry sit in one vertex buffer ({@link PanelMeshCache}) that is
+ *       rebuilt only when something in it changes and drawn with one call, so a frame runs model code only for
+ *       what moves continuously, the legends and the glass ({@link ComponentModel#renderLive}). With it off,
+ *       or for a block whose buffer failed, the meshes are replayed and {@link ComponentModel#renderDynamic}
+ *       runs per frame.</li>
  *   <li>The frame loop does not allocate: one shared {@link PanelRenderContext},
  *       index loops, cached render bounds.</li>
  *   <li>Level of detail by distance to the block (spec section 10): beyond
@@ -44,6 +51,8 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
     public static final double COMPONENT_DISTANCE = 64.0;
     private static final double FULL_SQ = FULL_DETAIL_DISTANCE * FULL_DETAIL_DISTANCE;
     private static final double COMPONENT_SQ = COMPONENT_DISTANCE * COMPONENT_DISTANCE;
+
+    private static final boolean IMMEDIATE = Boolean.getBoolean("bwr.panelImmediate");
 
     private final PanelRenderContext context = new PanelRenderContext();
 
@@ -80,6 +89,17 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
         }
         float time = be.getLevel() == null ? 0.0f : be.getLevel().getGameTime() + partial;
         context.begin(be, pose, buffers, light, overlay, time, lod, minecraft.font);
+        PanelMeshCache cache = gpuCache() ? PanelMeshCache.of(be) : null;
+        if (cache == null || !cache.usable()) {
+            renderImmediate(components, count);
+        } else {
+            renderCached(be, cache, components, count, pose, light, minecraft.font);
+        }
+    }
+
+    /** Every vertex of every component goes through the CPU every frame. */
+    private void renderImmediate(List<PanelComponent> components, int count) {
+        float aspect = context.rowAspect();
         for (int i = 0; i < count; i++) {
             PanelComponent component = components.get(i);
             ComponentType type = component.type();
@@ -87,20 +107,135 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
                 continue;
             }
             ComponentModel model = ComponentModels.get(type.id());
-            RenderCache cache = RenderCache.of(component);
-            int generation = PanelModels.generation();
-            if (cache.meshRevision != component.revision() || cache.modelGeneration != generation) {
-                // Rebuilt only when the component changed (config edit, new component, network state) or the
-                // set of loaded baked models did (a resource reload).
-                MeshBuilder fresh = new MeshBuilder();
-                model.buildStatic(fresh, component);
-                cache.mesh = fresh.build();
-                cache.meshRevision = component.revision();
-                cache.modelGeneration = generation;
-            }
+            RenderCache cache = currentMesh(component, model, aspect);
             context.beginComponent(component);
             cache.mesh.emit(context);
             model.renderDynamic(context, component);
+        }
+    }
+
+    /**
+     * The solid geometry of the block comes from its vertex buffer, rebuilt only when the signature of what is in
+     * it changes; each frame then draws only what moves continuously, the legends and the glass.
+     */
+    private void renderCached(PanelBlockEntity be, PanelMeshCache cache, List<PanelComponent> components, int count,
+                              PoseStack pose, int light, net.minecraft.client.gui.Font font) {
+        float aspect = context.rowAspect();
+        long signature = PanelMeshCache.seed(light, PanelModels.generation(), aspect, count);
+        for (int i = 0; i < count; i++) {
+            PanelComponent component = components.get(i);
+            ComponentType type = component.type();
+            if (type == null) {
+                continue;
+            }
+            ComponentModel model = ComponentModels.get(type.id());
+            currentMesh(component, model, aspect);
+            signature = PanelMeshCache.mix(signature, component.id());
+            signature = PanelMeshCache.mix(signature, component.revision());
+            signature = PanelMeshCache.mix(signature, model.poseKey(context, component));
+        }
+        if (!cache.isCurrent(signature)) {
+            cache.rebuild(be, components, light, font, signature);
+            if (!cache.usable()) {
+                // Poses are already read for this frame; the models draw them from the state they hold.
+                for (int i = 0; i < count; i++) {
+                    PanelComponent component = components.get(i);
+                    ComponentType type = component.type();
+                    if (type != null) {
+                        context.beginComponent(component);
+                        RenderCache.of(component).mesh.emit(context);
+                        ComponentModels.get(type.id()).emitPosed(context, component);
+                    }
+                }
+            }
+        }
+        if (cache.usable()) {
+            cache.draw(pose.last());
+        }
+        for (int i = 0; i < count; i++) {
+            PanelComponent component = components.get(i);
+            ComponentType type = component.type();
+            if (type != null) {
+                context.beginComponent(component);
+                ComponentModels.get(type.id()).renderLive(context, component);
+            }
+        }
+        if (context.lod() < PanelRenderContext.LOD_FULL) {
+            return;
+        }
+        // Text, then glass, each for the whole block: one render type switch each instead of one per component.
+        for (int i = 0; i < count; i++) {
+            PanelComponent component = components.get(i);
+            ComponentType type = component.type();
+            if (type != null) {
+                context.beginComponent(component);
+                ComponentModels.get(type.id()).renderLegends(context, component);
+            }
+        }
+        for (int i = 0; i < count; i++) {
+            PanelComponent component = components.get(i);
+            ComponentType type = component.type();
+            if (type != null) {
+                context.beginComponent(component);
+                ComponentModels.get(type.id()).renderGlass(context, component);
+            }
+        }
+    }
+
+    /**
+     * The component's render cache with its static mesh current: rebuilt only when the component changed (config
+     * edit, new component, network state), the set of loaded baked models did (a resource reload), or the panel
+     * under it has other cells.
+     */
+    private static RenderCache currentMesh(PanelComponent component, ComponentModel model, float aspect) {
+        RenderCache cache = RenderCache.of(component);
+        int generation = PanelModels.generation();
+        if (cache.meshRevision != component.revision() || cache.modelGeneration != generation
+                || cache.meshRowAspect != aspect) {
+            MeshBuilder fresh = new MeshBuilder();
+            model.buildStatic(fresh, component, aspect);
+            cache.mesh = fresh.build();
+            cache.meshRevision = component.revision();
+            cache.modelGeneration = generation;
+            cache.meshRowAspect = aspect;
+        }
+        return cache;
+    }
+
+    /**
+     * Whether blocks keep their solid geometry in vertex buffers: on unless the client option turns it off, a
+     * shader pack is in use (it replaces the programs the buffers are drawn with), or {@code -Dbwr.panelImmediate}
+     * is set (a development switch to compare against the per frame path).
+     */
+    private static boolean gpuCache() {
+        return !IMMEDIATE && VisualEffectsConfig.PANEL_GPU_CACHE.get() && !VisualEffectsMode.shaderPackInUse();
+    }
+
+    /** Block buffers built so far, for checks. */
+    public static int debugRebuilds() {
+        return PanelMeshCache.totalRebuilds();
+    }
+
+    /** Milliseconds spent building block buffers so far, for checks. */
+    public static double debugRebuildMillis() {
+        return PanelMeshCache.totalRebuildNanos() / 1.0e6;
+    }
+
+    /** Block buffers currently alive, for checks. */
+    public static int debugCachedBlocks() {
+        return PanelMeshCache.cachedBlocks();
+    }
+
+    /** Quads held in block buffers right now (each is four 36 byte vertices), for checks. */
+    public static int debugCachedQuads() {
+        return PanelMeshCache.cachedQuads();
+    }
+
+    /** Closes the buffers of blocks that stopped being drawn; once per frame, before any block is drawn. */
+    @SubscribeEvent
+    public static void sweep(RenderLevelStageEvent event) {
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY) {
+            PanelMeshCache.sweep();
         }
     }
 

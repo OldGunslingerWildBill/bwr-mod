@@ -14,6 +14,8 @@ public final class RenderCache {
     int meshRevision = -1;
     /** The {@link dev.bwr.mod.panel.model.PanelModels#generation()} the mesh was built under; a reload rebuilds it. */
     int modelGeneration = -1;
+    /** The row aspect (real row length per column width) of the panel the mesh was built for; another one rebuilds it. */
+    float meshRowAspect;
     /** The baked model drawing this component, or null for the classic procedural look. Set with the mesh. */
     BakedComponentModel baked;
 

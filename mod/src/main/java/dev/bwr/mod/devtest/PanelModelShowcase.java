@@ -143,6 +143,14 @@ final class PanelModelShowcase {
             throw new AssertionError("Baked showcase placement refused " + type.id() + " " + w + "x" + h + " at group "
                     + group + " cell " + x + "," + y);
         }
+        look(component, style, variant);
+        SHOWN.add(type.id().getPath() + "/" + style + "/" + variant);
+        component.touch();
+        return component;
+    }
+
+    /** Sets the style and variant of a component that has them (the types the style table covers). */
+    static void look(PanelComponent component, String style, String variant) {
         var data = component.data();
         if (data instanceof ControlSwitchData d) {
             d.style = style;
@@ -166,9 +174,6 @@ final class PanelModelShowcase {
             d.style = style;
             d.variant = variant;
         }
-        SHOWN.add(type.id().getPath() + "/" + style + "/" + variant);
-        component.touch();
-        return component;
     }
 
     private static PanelBlockEntity owner(ServerLevel level, int group, int x, int y) {

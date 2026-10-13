@@ -10,6 +10,9 @@ public final class VisualEffectsConfig {
     public static final ModConfigSpec.EnumValue<Mode> VISUAL_EFFECTS = BUILDER
             .comment("GPU visual effects: AUTO chooses the measured default, SHADER requests GPU effects, CLASSIC uses the original renderers.")
             .defineEnum("visualEffects", Mode.AUTO);
+    public static final ModConfigSpec.BooleanValue PANEL_GPU_CACHE = BUILDER
+            .comment("Control panels keep the solid geometry of each panel block in a vertex buffer on the GPU, which is much faster with detailed component models. Turn off if panels draw wrongly (a shader pack that replaces entity shaders turns it off by itself).")
+            .define("panelGpuCache", true);
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     private VisualEffectsConfig() {}

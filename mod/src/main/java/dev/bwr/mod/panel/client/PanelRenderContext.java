@@ -68,13 +68,11 @@ public final class PanelRenderContext implements QuadSink {
         this.font = font;
         PanelGeometry.Frame f = PanelGeometry.frame(be.panelType(), be.facing());
         this.frame = f;
-        float len = (float) Math.sqrt(f.ux * f.ux + f.uy * f.uy + f.uz * f.uz);
-        float vlen = (float) Math.sqrt(f.vx * f.vx + f.vy * f.vy + f.vz * f.vz);
         setNormal(NORMAL_FACE, (float) f.nx, (float) f.ny, (float) f.nz);
-        setNormal(NORMAL_LEFT, (float) (-f.ux / len), (float) (-f.uy / len), (float) (-f.uz / len));
-        setNormal(NORMAL_RIGHT, (float) (f.ux / len), (float) (f.uy / len), (float) (f.uz / len));
-        setNormal(NORMAL_UP, (float) (-f.vx / vlen), (float) (-f.vy / vlen), (float) (-f.vz / vlen));
-        setNormal(NORMAL_DOWN, (float) (f.vx / vlen), (float) (f.vy / vlen), (float) (f.vz / vlen));
+        setNormal(NORMAL_LEFT, (float) -f.rightX, (float) -f.rightY, (float) -f.rightZ);
+        setNormal(NORMAL_RIGHT, (float) f.rightX, (float) f.rightY, (float) f.rightZ);
+        setNormal(NORMAL_UP, (float) -f.downX, (float) -f.downY, (float) -f.downZ);
+        setNormal(NORMAL_DOWN, (float) f.downX, (float) f.downY, (float) f.downZ);
         // Text space: x along the cell columns, y down the rows, z into the panel (so glyphs are not mirrored).
         basis.identity()
                 .m00((float) f.ux).m01((float) f.uy).m02((float) f.uz)

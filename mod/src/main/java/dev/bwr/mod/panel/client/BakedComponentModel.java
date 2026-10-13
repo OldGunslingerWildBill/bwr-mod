@@ -39,6 +39,16 @@ import java.util.List;
  * </ul>
  * Glass is drawn per frame, not recorded: it is translucent and must come after everything it covers.
  *
+ * <h3>With the panel's GPU cache</h3>
+ * The renderer keeps the solid geometry of a whole panel block in one vertex buffer (see {@link PanelMeshCache})
+ * and splits {@link #renderDynamic} in three: {@link #updatePose} reads the component's state once a frame,
+ * {@link #poseKey} says whether the posed geometry changed (it then rebuilds the block's buffer through
+ * {@link #emitPosed}, which draws the parts that only change when the component is operated: handles, caps,
+ * keys, knobs, lenses, flags), and every frame {@link #renderLive} draws what moves continuously (the pointers
+ * of the two meters, which follow a signal), then {@link #renderLegends} and {@link #renderGlass}. The renderer
+ * calls each of the three for all the components of a block in turn, so the buffer source switches render type
+ * (solid, text, glass) a few times per block instead of a few times per component.
+ *
  * <h3>State to pose</h3>
  * See {@link Poses}: a control switch handle swings -45, 0, +45 degrees for CLOSE, NORMAL, OPEN; a selector
  * steps 45 degrees per detent about its middle; a key turns a quarter; the setpoint knob sweeps 270 degrees; a
@@ -74,12 +84,22 @@ final class BakedComponentModel {
     private final float[] detents;
     private final float[] scratch = new float[PartDraw.SCRATCH];
     private boolean measured;
+    /** Whether the moving parts follow a signal (a meter's pointer): they are drawn live, never kept in the block's buffer. */
+    private final boolean continuous;
+
+    // The pose of the moving parts this frame, set by updatePose.
+    private float poseAngle;
+    private float poseSlide;
+    private float poseDemand = Float.NaN;
+    private boolean poseLit;
+    private int poseFlagRgb = FlagState.NEUTRAL;
 
     private BakedComponentModel(BakedPanelModel model, PanelStyles.Resolved resolved, PanelComponent component, Kind kind,
-                                String type) {
+                                String type, float rowAspect) {
         int needleRgb = resolved.needleRgb();
         this.kind = kind;
-        this.place = Placement.fit(model, component.w(), component.h());
+        this.continuous = kind == Kind.DIAL_GAUGE || kind == Kind.EDGEWISE;
+        this.place = Placement.fit(model, component.w(), component.h(), rowAspect);
         ComponentData data = component.data();
         List<BakedPanelModel.Part> statics = new ArrayList<>();
         List<BakedPanelModel.Part> dynamics = new ArrayList<>();
@@ -113,9 +133,10 @@ final class BakedComponentModel {
 
     /**
      * The model that draws {@code component}, or null for the classic procedural look: its style is classic,
-     * the table has no row for the choice, or none of the row's model files is loaded.
+     * the table has no row for the choice, or none of the row's model files is loaded. {@code rowAspect} is the
+     * real length of a row relative to a column on the panel it is drawn on (see {@link Placement}).
      */
-    static BakedComponentModel create(PanelComponent component, Kind kind, String type) {
+    static BakedComponentModel create(PanelComponent component, Kind kind, String type, float rowAspect) {
         ComponentData data = component.data();
         String style;
         String variant;
@@ -148,7 +169,7 @@ final class BakedComponentModel {
             return null;
         }
         BakedPanelModel model = PanelModels.get(resolved.modelId());
-        return model == null ? null : new BakedComponentModel(model, resolved, component, kind, type);
+        return model == null ? null : new BakedComponentModel(model, resolved, component, kind, type, rowAspect);
     }
 
     // ---- colour
@@ -169,7 +190,20 @@ final class BakedComponentModel {
         }
     }
 
+    /** Draws everything that moves, the legends and the glass straight to {@code context}: the panel without its GPU cache. */
     void renderDynamic(PanelRenderContext context, PanelComponent component) {
+        updatePose(context, component);
+        emitMoving(context);
+        renderLegends(context);
+        renderGlass(context);
+    }
+
+    /**
+     * Reads the component's state into the pose of the moving parts. Once per frame, before {@link #poseKey},
+     * {@link #emitPosed} and {@link #renderLive}: a meter's pointer lags the signal by the frame time, so this
+     * is not something to call twice.
+     */
+    void updatePose(PanelRenderContext context, PanelComponent component) {
         float angle = 0.0f;
         float slide = 0.0f;
         float demand = Float.NaN;
@@ -220,34 +254,81 @@ final class BakedComponentModel {
                 }
             }
         }
+        poseAngle = angle;
+        poseSlide = slide;
+        poseDemand = demand;
+        poseLit = lit;
+        poseFlagRgb = flagRgb;
+    }
+
+    /**
+     * A key for the geometry {@link #emitPosed} would draw in the current pose: equal keys mean equal geometry.
+     * Zero for a meter, whose moving parts are drawn live and never recorded.
+     */
+    long poseKey() {
+        if (continuous) {
+            return 0L;
+        }
+        long key = Float.floatToIntBits(poseAngle);
+        key = key * 31 + Float.floatToIntBits(poseSlide);
+        key = key * 31 + (poseLit ? 1 : 0);
+        return key * 31 + poseFlagRgb;
+    }
+
+    /** The parts that only change when the component is operated, in the current pose (for the block's vertex buffer). */
+    void emitPosed(QuadSink sink) {
+        if (!continuous) {
+            emitMoving(sink);
+        }
+    }
+
+    /** What changes without the component being operated: a meter's pointer. */
+    void renderLive(PanelRenderContext context) {
+        if (continuous) {
+            emitMoving(context);
+        }
+    }
+
+    /** Every part with a pivot or travel, lamp lens and target flag in the current pose. */
+    private void emitMoving(QuadSink sink) {
         for (int i = 0; i < dynamicParts.length; i++) {
             BakedPanelModel.Part part = dynamicParts[i];
-            float partSlide = part.hasTravel ? slide : 0.0f;
+            float partSlide = part.hasTravel ? poseSlide : 0.0f;
             if (part.name.equals(DEMAND)) {
-                if (Float.isNaN(demand)) {
+                if (Float.isNaN(poseDemand)) {
                     continue; // no demand signal: the marker is not shown
                 }
-                partSlide = demand;
+                partSlide = poseDemand;
             }
             int base = dynamicBase[i];
             float brightness = 1.0f;
             boolean emissive = false;
             if (part.role == BakedPanelModel.Role.LAMP) {
-                emissive = lit;
-                brightness = lit ? 1.0f : LAMP_OFF;
+                emissive = poseLit;
+                brightness = poseLit ? 1.0f : LAMP_OFF;
             } else if (part.role == BakedPanelModel.Role.FLAG) {
-                base = flagRgb;
+                base = poseFlagRgb;
             }
-            float partAngle = part.hasPivot ? angle : 0.0f;
+            float partAngle = part.hasPivot ? poseAngle : 0.0f;
             if (kind == Kind.KEY_SWITCH && part.name.equals(PLUG)) {
-                partAngle = lit ? PLUG_UNLOCKED_DEG : 0.0f; // a tumbler lock's plug follows the key, not the handle
+                partAngle = poseLit ? PLUG_UNLOCKED_DEG : 0.0f; // a tumbler lock's plug follows the key, not the handle
             }
-            PartDraw.emit(context, part, place, partAngle, partSlide, base, brightness, emissive, scratch);
+            PartDraw.emit(sink, part, place, partAngle, partSlide, base, brightness, emissive, scratch);
         }
+    }
+
+    /** The legends at the label anchors: full detail only, and never recorded (see the class comment). */
+    void renderLegends(PanelRenderContext context) {
+        if (context.lod() >= PanelRenderContext.LOD_FULL) {
+            drawLegends(context, poseLit);
+        }
+    }
+
+    /** The glass, translucent and so after everything it covers: full detail only, and never recorded. */
+    void renderGlass(PanelRenderContext context) {
         if (context.lod() < PanelRenderContext.LOD_FULL) {
             return;
         }
-        drawLegends(context, lit);
         for (int i = 0; i < glassParts.length; i++) {
             PartDraw.emitGlass(context, glassParts[i], place, PartDraw.GLASS_ALPHA, scratch);
         }
