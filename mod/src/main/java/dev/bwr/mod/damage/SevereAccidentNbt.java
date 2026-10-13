@@ -64,7 +64,7 @@ public final class SevereAccidentNbt {
             core.getSevereAccident().fromArray(damage);
         }
         double[] gas = ReactorStateNbt.getDoubles(t, "containment");
-        if (gas.length >= ContainmentAtmosphere.SNAPSHOT_LENGTH) {
+        if (gas.length >= ContainmentAtmosphere.LEGACY_SNAPSHOT_LENGTH) {
             core.getContainment().fromArray(gas);
         }
     }

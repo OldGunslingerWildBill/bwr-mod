@@ -2,6 +2,7 @@ package dev.bwr.core.accident;
 
 import java.util.ArrayList;
 import java.util.List;
+import dev.bwr.core.thermal.Saturation;
 
 /**
  * Lumped primary containment atmosphere: SPEC section 8.3, the hydrogen.
@@ -24,8 +25,8 @@ import java.util.List;
  * hydrogen, at the cost of a scrubbed release ({@link #POOL_DECONTAMINATION_FACTOR}).
  * A failed containment leaks unscrubbed.
  *
- * <p>Gas temperature is held constant and steam is not tracked, so steam
- * inerting is not modelled. Burn criteria and pressure rise use simple lean
+ * <p>Steam, structural heat storage and spray use a lumped one-node model.
+ * Burn criteria and pressure rise use simple lean
  * hydrogen-air relations. Game model, not a containment analysis code.
  */
 public final class ContainmentAtmosphere {
@@ -54,8 +55,24 @@ public final class ContainmentAtmosphere {
     /** Free volume, drywell plus wetwell airspace, at rated size, m3. Mark I order. */
     public static final double FREE_VOLUME_AT_RATED_M3 = 8000.0;
 
-    /** Gas temperature, K. Held constant. */
+    /** Legacy initial gas temperature, K. */
     public static final double GAS_TEMPERATURE_K = 330.0;
+    public static final double STEAM_MOL_PER_KG = 1000.0 / 18.01528;
+    public static final double STEAM_INERTING_FRACTION = 0.55;
+    public static final double STEAM_LATENT_HEAT_J_PER_KG = 2_257_000.0;
+    public static final double STEAM_REFERENCE_ENTHALPY_KJ_PER_KG = 2675.0;
+    public static final double STEAM_HEAT_CAPACITY_J_PER_KG_K = 2100.0;
+    public static final double GAS_HEAT_CAPACITY_J_PER_MOL_K = 29.0;
+    /** Lumped concrete and steel heat capacity per free cubic metre. */
+    public static final double WALL_HEAT_CAPACITY_J_PER_K_M3 = 100_000.0;
+    /** Gas-to-structure sensible and condensation exchange time scale. */
+    public static final double WALL_HEAT_TRANSFER_TIME_S = 3600.0;
+    /** Structure's passive loss to a 27 C surrounding per free cubic metre. */
+    public static final double AMBIENT_LOSS_W_PER_K_M3 = 0.1;
+    public static final double AMBIENT_TEMPERATURE_K = 300.0;
+    /** Airborne activity remaining after 1 kg/m3 of spray traverses the room. */
+    public static final double SPRAY_DECONTAMINATION_PER_KG_M3 = 0.8;
+    public static final double SPRAY_WATER_HEAT_CAPACITY_J_PER_KG_K = 4180.0;
 
     public static final double AIR_OXYGEN_FRACTION = 0.21;
 
@@ -136,6 +153,11 @@ public final class ContainmentAtmosphere {
     private double oxygenMol;
     private double hydrogenMol;
     private double otherGasMol;
+    private double steamKg;
+    private double gasTemperatureK = GAS_TEMPERATURE_K;
+    private double wallTemperatureK = GAS_TEMPERATURE_K;
+    private double lastSprayFlowKgPerS;
+    private SteamInputs pendingSteamInputs = SteamInputs.NONE;
     private boolean inertingCommanded;
     private boolean ventOpen;
     private FailureMode failureMode = FailureMode.NONE;
@@ -177,6 +199,7 @@ public final class ContainmentAtmosphere {
         oxygenMol *= ratio;
         hydrogenMol *= ratio;
         otherGasMol *= ratio;
+        steamKg *= ratio;
         volumeM3 = next;
     }
 
@@ -212,11 +235,12 @@ public final class ContainmentAtmosphere {
     }
 
     private void fillWithAir(double oxygenFraction) {
-        double total = ATMOSPHERIC_PA * volumeM3 / (GAS_CONSTANT * GAS_TEMPERATURE_K);
+        double total = ATMOSPHERIC_PA * volumeM3 / (GAS_CONSTANT * gasTemperatureK);
         oxygenMol = total * oxygenFraction;
         nitrogenMol = total - oxygenMol;
         hydrogenMol = 0.0;
         otherGasMol = 0.0;
+        steamKg = 0.0;
     }
 
     // ---------------------------------------------------------------
@@ -284,6 +308,18 @@ public final class ContainmentAtmosphere {
     // Step
     // ---------------------------------------------------------------
 
+    /** Optional process inputs for one containment step; zero means disconnected. */
+    public record SteamInputs(double drywellSteamKgPerS, double drywellEnthalpyKJPerKg,
+                              double wetwellSteamKgPerS, double poolSurfaceTemperatureK,
+                              double sprayKgPerS, double sprayTemperatureK) {
+        public static final SteamInputs NONE = new SteamInputs(0, 0, 0, 0, 0, 0);
+    }
+
+    /** Stage process inputs for the next step only. A missed update cannot latch flow. */
+    public void setSteamInputs(SteamInputs inputs) {
+        pendingSteamInputs = inputs == null ? SteamInputs.NONE : inputs;
+    }
+
     /**
      * @param hydrogenInKgPerS       hydrogen entering containment, kg/s
      * @param otherGasInMolPerS      non-condensable gas entering, mol/s
@@ -292,9 +328,12 @@ public final class ContainmentAtmosphere {
      */
     public void step(double hydrogenInKgPerS, double otherGasInMolPerS,
                      double fissionProductFraction, double dtSeconds) {
+        SteamInputs inputs = pendingSteamInputs;
+        pendingSteamInputs = SteamInputs.NONE;
         if (!(dtSeconds > 0.0) || !Double.isFinite(dtSeconds)) {
             return;
         }
+        stepSteam(inputs, dtSeconds);
         hydrogenMol += Math.max(0.0, finite(hydrogenInKgPerS)) * HYDROGEN_MOL_PER_KG * dtSeconds;
         otherGasMol += Math.max(0.0, finite(otherGasInMolPerS)) * dtSeconds;
         double fuelRelease = Math.max(0.0, finite(fissionProductFraction));
@@ -329,7 +368,7 @@ public final class ContainmentAtmosphere {
         // Gas leaves through the vent, the failure, or design leakage. Every
         // species leaves in proportion, so hydrogen and airborne activity go
         // with it; only a pool-scrubbed vent holds most of the activity back.
-        double pressurePa = total * GAS_CONSTANT * GAS_TEMPERATURE_K / volumeM3;
+        double pressurePa = total * GAS_CONSTANT * gasTemperatureK / volumeM3;
         double excessFraction = Math.max(0.0, (pressurePa - ATMOSPHERIC_PA) / pressurePa);
         double leaving = DESIGN_LEAK_FRACTION_PER_S * dtSeconds;
         double decontamination = 1.0;
@@ -351,7 +390,7 @@ public final class ContainmentAtmosphere {
             double exchangeRate = (failed ? 1.0 / (4.0 * FAILED_TIME_CONSTANT_S) : 0.0)
                     + leakArea / OPEN_BOUNDARY_TIME_CONSTANT_S;
             double exchange = 1.0 - Math.exp(-dtSeconds * exchangeRate);
-            double outside = ATMOSPHERIC_PA * volumeM3 / (GAS_CONSTANT * GAS_TEMPERATURE_K);
+            double outside = ATMOSPHERIC_PA * volumeM3 / (GAS_CONSTANT * gasTemperatureK);
             double replaced = Math.min(totalMol(), outside) * exchange;
             removeProportionally(replaced / totalMol(), 1.0);
             // Below atmospheric — after a burn has consumed gas — outside air
@@ -374,7 +413,7 @@ public final class ContainmentAtmosphere {
 
         // Combustion. Shortly after a burn, arriving hydrogen burns at the
         // release point instead of building toward another explosion.
-        if (clockSeconds - lastBurnClockSeconds < STANDING_FLAME_S
+        if (clockSeconds - lastBurnClockSeconds < STANDING_FLAME_S && !isSteamInerted()
                 && oxygenFraction() >= OXYGEN_LIMIT_FRACTION && hydrogenFraction() >= FLAMMABILITY_FRACTION) {
             double burned = Math.min(hydrogenMol - FLAMMABILITY_FRACTION * totalMol(), 2.0 * oxygenMol);
             if (burned > 0.0) {
@@ -386,12 +425,13 @@ public final class ContainmentAtmosphere {
         }
         double xH2 = hydrogenFraction();
         double xO2 = oxygenFraction();
-        boolean flammable = xH2 >= FLAMMABILITY_FRACTION && xO2 >= OXYGEN_LIMIT_FRACTION;
+        boolean flammable = xH2 >= FLAMMABILITY_FRACTION && xO2 >= OXYGEN_LIMIT_FRACTION
+                && !isSteamInerted();
         if (flammable && !flammableLatched) {
             pendingEvents.add(Event.HYDROGEN_FLAMMABLE);
         }
-        flammableLatched = xH2 >= FLAMMABILITY_FRACTION && xO2 >= OXYGEN_LIMIT_FRACTION;
-        if (xO2 >= OXYGEN_LIMIT_FRACTION && xH2 >= IGNITION_FRACTION) {
+        flammableLatched = flammable;
+        if (!isSteamInerted() && xO2 >= OXYGEN_LIMIT_FRACTION && xH2 >= IGNITION_FRACTION) {
             burn(xH2 >= DETONATION_FRACTION);
             lastBurnClockSeconds = clockSeconds;
         }
@@ -402,6 +442,77 @@ public final class ContainmentAtmosphere {
             failureMode = FailureMode.OVERPRESSURE;
             pendingEvents.add(Event.CONTAINMENT_OVERPRESSURE_FAILURE);
         }
+    }
+
+    private void stepSteam(SteamInputs in, double dt) {
+        double dry = nonNegative(in.drywellSteamKgPerS());
+        double wet = nonNegative(in.wetwellSteamKgPerS());
+        double spray = nonNegative(in.sprayKgPerS());
+        lastSprayFlowKgPerS = spray;
+        if (dry + wet + spray + steamKg <= 0.0) return; // Legacy gas-only behavior.
+
+        double arriving = (dry + wet) * dt;
+        steamKg += arriving;
+        double gasCapacity = Math.max(1.0, dryMol() * GAS_HEAT_CAPACITY_J_PER_MOL_K
+                + steamKg * STEAM_MOL_PER_KG * 34.0);
+        double inletH = in.drywellEnthalpyKJPerKg() > 0.0 && Double.isFinite(in.drywellEnthalpyKJPerKg())
+                ? in.drywellEnthalpyKJPerKg() : STEAM_REFERENCE_ENTHALPY_KJ_PER_KG;
+        double inletK = 373.15 + (inletH - STEAM_REFERENCE_ENTHALPY_KJ_PER_KG) * 1000.0
+                / STEAM_HEAT_CAPACITY_J_PER_KG_K;
+        inletK = Math.clamp(inletK, 273.15, 650.0);
+        double wetK = in.poolSurfaceTemperatureK() > 0.0 && Double.isFinite(in.poolSurfaceTemperatureK())
+                ? Math.max(373.15, in.poolSurfaceTemperatureK()) : 373.15;
+        gasTemperatureK += (dry * dt * STEAM_HEAT_CAPACITY_J_PER_KG_K * (inletK - gasTemperatureK)
+                + wet * dt * STEAM_HEAT_CAPACITY_J_PER_KG_K * (wetK - gasTemperatureK)) / gasCapacity;
+
+        double wallCapacity = WALL_HEAT_CAPACITY_J_PER_K_M3 * volumeM3;
+        double contact = 1.0 - Math.exp(-dt / WALL_HEAT_TRANSFER_TIME_S);
+        double gasToWall = (gasTemperatureK - wallTemperatureK) * gasCapacity * contact;
+        gasTemperatureK -= gasToWall / gasCapacity;
+        wallTemperatureK += gasToWall / wallCapacity;
+
+        // A warm pool prevents the shared wetwell node condensing below its
+        // surface saturation pressure. A cold wall otherwise caps steam pressure.
+        double surfaceK = wallTemperatureK;
+        if (in.poolSurfaceTemperatureK() > 0.0 && Double.isFinite(in.poolSurfaceTemperatureK()))
+            surfaceK = Math.max(surfaceK, in.poolSurfaceTemperatureK());
+        double wallLimitKg = saturatedSteamKg(surfaceK);
+        double condensed = Math.max(0.0, steamKg - wallLimitKg);
+        steamKg -= condensed;
+        wallTemperatureK += condensed * STEAM_LATENT_HEAT_J_PER_KG / wallCapacity;
+
+        if (spray > 0.0 && in.sprayTemperatureK() > 0.0 && Double.isFinite(in.sprayTemperatureK())) {
+            double sprayK = Math.clamp(in.sprayTemperatureK(), 273.15, 450.0);
+            double targetKg = saturatedSteamKg(sprayK);
+            double potential = Math.max(0.0, steamKg - targetKg);
+            double perKg = STEAM_LATENT_HEAT_J_PER_KG
+                    + STEAM_HEAT_CAPACITY_J_PER_KG_K * Math.max(0.0, gasTemperatureK - sprayK);
+            double captured = Math.min(potential, spray * dt * SPRAY_WATER_HEAT_CAPACITY_J_PER_KG_K
+                    * Math.max(0.0, Math.max(373.15, gasTemperatureK) - sprayK) / Math.max(1.0, perKg));
+            steamKg -= captured;
+            double gasCooling = Math.min(Math.max(0.0, gasTemperatureK - sprayK) * gasCapacity,
+                    spray * dt * SPRAY_WATER_HEAT_CAPACITY_J_PER_KG_K * Math.max(0.0, gasTemperatureK - sprayK));
+            gasTemperatureK -= gasCooling / gasCapacity;
+            double washed = airborneFraction * (1.0 - Math.exp(-SPRAY_DECONTAMINATION_PER_KG_M3
+                    * spray * dt / volumeM3));
+            airborneFraction -= washed;
+            depositedFraction += washed;
+            plantContamination += washed;
+        }
+        wallTemperatureK -= (wallTemperatureK - AMBIENT_TEMPERATURE_K)
+                * (1.0 - Math.exp(-AMBIENT_LOSS_W_PER_K_M3 * volumeM3 * dt / wallCapacity));
+        gasTemperatureK = Math.clamp(gasTemperatureK, 273.15, 650.0);
+        wallTemperatureK = Math.clamp(wallTemperatureK, 273.15, 650.0);
+    }
+
+    private double saturatedSteamKg(double temperatureK) {
+        double c = Math.clamp(temperatureK - 273.15, 0.0, 250.0);
+        // Buck saturation curve below boiling; the existing plant steam-table
+        // fit handles the higher range. Both meet near atmospheric boiling.
+        double pa = c <= 100.0
+                ? 611.21 * Math.exp((18.678 - c / 234.5) * c / (257.14 + c))
+                : Saturation.pressurePsiaFromTemperatureCelsius(c) * PA_PER_PSI;
+        return pa * volumeM3 / (GAS_CONSTANT * Math.max(273.15, gasTemperatureK) * STEAM_MOL_PER_KG);
     }
 
     private void burn(boolean detonation) {
@@ -445,6 +556,7 @@ public final class ContainmentAtmosphere {
         oxygenMol *= keep;
         hydrogenMol *= keep;
         otherGasMol *= keep;
+        steamKg *= keep;
         double escaping = airborneFraction * (1.0 - keep);
         airborneFraction -= escaping;
         double released = escaping / Math.max(1.0, decontamination);
@@ -463,7 +575,11 @@ public final class ContainmentAtmosphere {
     }
 
     private double totalMol() {
-        return Math.max(1e-9, nitrogenMol + oxygenMol + hydrogenMol + otherGasMol);
+        return Math.max(1e-9, dryMol() + steamKg * STEAM_MOL_PER_KG);
+    }
+
+    private double dryMol() {
+        return nitrogenMol + oxygenMol + hydrogenMol + otherGasMol;
     }
 
     /** Hydrogen mole fraction, 0..1. */
@@ -488,8 +604,19 @@ public final class ContainmentAtmosphere {
         return hydrogenMol / HYDROGEN_MOL_PER_KG;
     }
 
+    public double getSteamKg() { return steamKg; }
+    public double getSteamPercent() { return 100.0 * steamKg * STEAM_MOL_PER_KG / totalMol(); }
+    public double getGasTemperatureK() { return gasTemperatureK; }
+    public double getGasTemperatureC() { return gasTemperatureK - 273.15; }
+    public double getWallTemperatureK() { return wallTemperatureK; }
+    public double getLastSprayFlowKgPerS() { return lastSprayFlowKgPerS; }
+    public double getSteamPartialPressurePsia() {
+        return steamKg * STEAM_MOL_PER_KG * GAS_CONSTANT * gasTemperatureK / volumeM3 / PA_PER_PSI;
+    }
+    public boolean isSteamInerted() { return getSteamPercent() >= 100.0 * STEAM_INERTING_FRACTION; }
+
     public double getPressurePsia() {
-        return totalMol() * GAS_CONSTANT * GAS_TEMPERATURE_K / volumeM3 / PA_PER_PSI;
+        return totalMol() * GAS_CONSTANT * gasTemperatureK / volumeM3 / PA_PER_PSI;
     }
 
     public double getPressurePsig() {
@@ -506,7 +633,8 @@ public final class ContainmentAtmosphere {
 
     /** True when the current mixture would burn if lit. */
     public boolean isFlammable() {
-        return hydrogenFraction() >= FLAMMABILITY_FRACTION && oxygenFraction() >= OXYGEN_LIMIT_FRACTION;
+        return !isSteamInerted() && hydrogenFraction() >= FLAMMABILITY_FRACTION
+                && oxygenFraction() >= OXYGEN_LIMIT_FRACTION;
     }
 
     /** True once oxygen is below the combustion limit. */
@@ -573,9 +701,10 @@ public final class ContainmentAtmosphere {
     // Persistence
     // ---------------------------------------------------------------
 
-    public static final int SNAPSHOT_VERSION = 2;
+    public static final int SNAPSHOT_VERSION = 3;
     public static final int LEGACY_SNAPSHOT_LENGTH = 22;
-    public static final int SNAPSHOT_LENGTH = 24;
+    public static final int V2_SNAPSHOT_LENGTH = 24;
+    public static final int SNAPSHOT_LENGTH = 28;
 
     public double[] toArray() {
         double[] a = new double[SNAPSHOT_LENGTH];
@@ -603,6 +732,10 @@ public final class ContainmentAtmosphere {
         a[21] = Double.isFinite(lastBurnClockSeconds) ? lastBurnClockSeconds : -1.0e12;
         a[22] = failurePressurePsig;
         a[23] = leakArea;
+        a[24] = steamKg;
+        a[25] = gasTemperatureK;
+        a[26] = wallTemperatureK;
+        a[27] = lastSprayFlowKgPerS;
         return a;
     }
 
@@ -634,10 +767,18 @@ public final class ContainmentAtmosphere {
         purgeActive = a[19] != 0;
         clockSeconds = nonNegative(a[20]);
         lastBurnClockSeconds = Double.isFinite(a[21]) ? a[21] : Double.NEGATIVE_INFINITY;
-        failurePressurePsig = a.length >= SNAPSHOT_LENGTH && a[0] >= SNAPSHOT_VERSION
+        failurePressurePsig = a.length >= V2_SNAPSHOT_LENGTH && a[0] >= 2
                 && Double.isFinite(a[22]) ? Math.max(0.0, a[22]) : FAILURE_PRESSURE_PSIG;
-        leakArea = a.length >= SNAPSHOT_LENGTH && a[0] >= SNAPSHOT_VERSION
+        leakArea = a.length >= V2_SNAPSHOT_LENGTH && a[0] >= 2
                 && Double.isFinite(a[23]) ? Math.clamp(a[23], 0.0, 1.0) : 0.0;
+        steamKg = a.length >= SNAPSHOT_LENGTH && a[0] >= SNAPSHOT_VERSION ? nonNegative(a[24]) : 0.0;
+        gasTemperatureK = a.length >= SNAPSHOT_LENGTH && a[0] >= SNAPSHOT_VERSION
+                && Double.isFinite(a[25]) ? Math.clamp(a[25], 273.15, 650.0) : GAS_TEMPERATURE_K;
+        wallTemperatureK = a.length >= SNAPSHOT_LENGTH && a[0] >= SNAPSHOT_VERSION
+                && Double.isFinite(a[26]) ? Math.clamp(a[26], 273.15, 650.0) : GAS_TEMPERATURE_K;
+        lastSprayFlowKgPerS = a.length >= SNAPSHOT_LENGTH && a[0] >= SNAPSHOT_VERSION
+                ? nonNegative(a[27]) : 0.0;
+        pendingSteamInputs = SteamInputs.NONE;
         pendingEvents.clear();
     }
 
