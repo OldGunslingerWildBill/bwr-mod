@@ -58,9 +58,14 @@ public final class GuiPerformanceCheck {
                 }
             });
         }
+        // Closing a creative player's server menu can reopen the creative inventory locally.
+        // The two world baselines must measure the world, not an unrelated inventory screen.
+        if ((stage == 5 || stage == 7) && mc.screen != null) mc.setScreen(null);
         if((stage==1||stage==3)&&!(mc.screen instanceof BwrScreen<?>))return;
         if((stage==4||stage==6)&&(!(mc.player.containerMenu instanceof ReactorPanelMenu m)||m.map==null||!m.formed))return;
         if(System.nanoTime()-began>12_000_000_000L) {
+            if ((stage == 5 || stage == 7) && mc.screen != null)
+                throw new AssertionError("GUI world baseline still has a screen at stage " + stage);
             double seconds=(System.nanoTime()-began)/1e9-3;
             LogUtils.getLogger().info("GUI PERFORMANCE stage={} screen={} fps={} screenCPUms={} windowActive={}",stage,
                 mc.screen==null?"world":mc.screen.getClass().getSimpleName(),frames/seconds,frames==0?0:renderNanos/1e6/frames,mc.isWindowActive());
