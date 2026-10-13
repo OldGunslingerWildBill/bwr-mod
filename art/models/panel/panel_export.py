@@ -217,6 +217,13 @@ def preview(path, footprint_w, footprint_h, views=("front", "three_quarter", "si
     if scene.world is None:
         scene.world = bpy.data.worlds.new("w")
     scene.world.color = (0.18, 0.2, 0.19)
+    # Blender 4.2+/5.x worlds render through their node tree, which ignores world.color
+    # (its default 0.05 grey Background leaves previews nearly unlit): set the node too.
+    bg = scene.world.node_tree.nodes.get("Background") if scene.world.node_tree else None
+    if bg is not None:
+        bg.inputs["Color"].default_value = (0.18, 0.2, 0.19, 1.0)
+    # Show palette colours as authored (the default AgX view transform desaturates them).
+    scene.view_settings.view_transform = "Standard"
     cx, cy = footprint_w / 2, -footprint_h / 2
     size = max(footprint_w, footprint_h) * 1.25
     # A panel-face backdrop in benchboard paint so the model is seen in context.
