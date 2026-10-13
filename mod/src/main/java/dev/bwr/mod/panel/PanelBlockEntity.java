@@ -52,8 +52,8 @@ import java.util.Set;
  * <h3>Sync</h3>
  * Server to client: a full-state payload on chunk watch and after any
  * structural or config change ({@link #syncFull()}), and batched value deltas
- * ({@link PanelSync}). The vanilla block-entity update tag is deliberately
- * empty.
+ * ({@link PanelSync}). The vanilla chunk update tag also carries a full state,
+ * covering initial chunk delivery when a custom packet arrives too early.
  */
 public final class PanelBlockEntity extends BlockEntity {
     public static final int SAVE_VERSION = 1;
@@ -144,8 +144,13 @@ public final class PanelBlockEntity extends BlockEntity {
         BlockPos[] around = {PanelType.nextColumn(pos, facing), PanelType.previousColumn(pos, facing),
                 type.nextRow(pos, facing), type.previousRow(pos, facing)};
         for (BlockPos neighbour : around) {
-            if (neighbour != null && level.isLoaded(neighbour)
-                    && level.getBlockEntity(neighbour) instanceof PanelBlockEntity other) {
+            // Looking up a block entity here may instantiate a pending neighbour. During chunk
+            // reload, its setLevel then looks back at this pending entity and recurses forever.
+            // Only invalidate neighbours already registered in the chunk's live BE map.
+            if (neighbour != null
+                    && level.getChunkSource().getChunkNow(neighbour.getX() >> 4, neighbour.getZ() >> 4)
+                    instanceof net.minecraft.world.level.chunk.LevelChunk loaded
+                    && loaded.getBlockEntities().get(neighbour) instanceof PanelBlockEntity other) {
                 other.dropGroup();
             }
         }
@@ -838,6 +843,20 @@ public final class PanelBlockEntity extends BlockEntity {
         } else {
             loadPanel(new CompoundTag());
         }
+    }
+
+    /**
+     * A newly watched chunk creates its block entities from this vanilla update tag before custom play packets
+     * are handled. The separate full-state packet sent by PanelSync on ChunkWatchEvent.Sent can arrive first;
+     * without the tag, its handler drops the state because this block entity does not yet exist on the client.
+     * Include live values here so a player approaching an already built control room sees working instruments
+     * immediately, even if the extra packet wins that race.
+     */
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = saveWithoutMetadata(registries);
+        tag.put(KEY, savePanel(true));
+        return tag;
     }
 
     /**
