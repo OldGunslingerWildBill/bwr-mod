@@ -1,0 +1,30 @@
+{
+  "display": {
+    "icon": {
+      "id": "bwr:control_panel_vertical",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.bwr.milestones.build_control_room.title"
+    },
+    "description": {
+      "translate": "advancements.bwr.milestones.build_control_room.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "achieved": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "achieved"
+    ]
+  ],
+  "sends_telemetry_event": false,
+  "parent": "bwr:milestones/root"
+}

@@ -317,6 +317,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         strengthDirty = true;
         ContainmentControllerRegistry.index(this);
         updateStrength(level, Math.min(4_000, ContainmentConfig.SCAN_CELLS_PER_TICK.get()));
+        dev.bwr.mod.advancement.PlantMilestones.containmentSurveyCompleted(this);
         setChanged();
     }
 
@@ -490,17 +491,20 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
 
     @Override public void onLoad() {
         super.onLoad();
+        dev.bwr.mod.advancement.PlantMilestones.loaded(this);
         dirty = true;
         ContainmentControllerRegistry.register(this);
         if (min != null && max != null) ContainmentControllerRegistry.index(this);
     }
 
     @Override public void setRemoved() {
+        dev.bwr.mod.advancement.PlantMilestones.unloaded(this);
         ContainmentControllerRegistry.unregister(this);
         super.setRemoved();
     }
 
     @Override public void onChunkUnloaded() {
+        dev.bwr.mod.advancement.PlantMilestones.unloaded(this);
         ContainmentControllerRegistry.unregister(this);
         super.onChunkUnloaded();
     }

@@ -118,7 +118,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
     }
     public final IEnergyStorage energy=new IEnergyStorage() {
         public int receiveEnergy(int max,boolean simulate){return 0;}
-        public int extractEnergy(int max,boolean simulate){int n=Math.min(Math.max(0,max),getEnergyStored());if(!simulate&&n>0){energyFe-=n;setChanged();}return n;}
+        public int extractEnergy(int max,boolean simulate){int n=Math.min(Math.max(0,max),getEnergyStored());if(!simulate&&n>0){energyFe-=n;setChanged();dev.bwr.mod.advancement.PlantMilestones.energyDelivered(PowerModuleBlockEntity.this,n);}return n;}
         public int getEnergyStored(){return (int)Math.floor(energyFe);}
         public int getMaxEnergyStored(){return ENERGY_CAPACITY;}
         public boolean canExtract(){return true;}
@@ -134,6 +134,9 @@ public class PowerModuleBlockEntity extends BlockEntity {
             var c=condenser();if(c!=null){double moved=c.plant().acceptLegacyCondensate(waterKg);waterKg-=moved;if(moved>0){setChanged();c.setChanged();}}
         }
     }
+    @Override public void onLoad() { super.onLoad(); dev.bwr.mod.advancement.PlantMilestones.loaded(this); }
+    @Override public void setRemoved() { dev.bwr.mod.advancement.PlantMilestones.unloaded(this); super.setRemoved(); }
+    @Override public void onChunkUnloaded() { dev.bwr.mod.advancement.PlantMilestones.unloaded(this); super.onChunkUnloaded(); }
     @Override protected void saveAdditional(CompoundTag t,HolderLookup.Provider registries) {
         super.saveAdditional(t,registries);t.putDouble("RPM",rpm);
         t.putDouble("Energy",energyFe);t.putDouble("Water",waterKg);

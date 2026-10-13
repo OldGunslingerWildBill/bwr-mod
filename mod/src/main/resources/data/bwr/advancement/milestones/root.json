@@ -1,0 +1,37 @@
+{
+  "display": {
+    "icon": {
+      "id": "bwr:reactor_controller",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.bwr.milestones.root.title"
+    },
+    "description": {
+      "translate": "advancements.bwr.milestones.root.description"
+    },
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false,
+    "background": "minecraft:textures/block/stone.png"
+  },
+  "criteria": {
+    "achieved": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bwr:reactor_controller"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "achieved"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

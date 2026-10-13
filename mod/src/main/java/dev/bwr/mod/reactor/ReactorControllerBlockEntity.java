@@ -228,9 +228,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             structureDirty = false;
         }
         if (core == null || structure == null) {
+            dev.bwr.mod.advancement.PlantMilestones.reactorUnavailable(this);
             return;
         }
 
+        dev.bwr.mod.advancement.PlantMilestones.beforeReactorStep(this);
         dev.bwr.mod.config.GameplayConfig.applyTo(core);
 
         refreshFuelDefinitions();
@@ -267,6 +269,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         core.step();
         rodNetwork.postStep();
         severeEffects.afterStep(this);
+        dev.bwr.mod.advancement.PlantMilestones.afterReactorStep(this);
         refreshHeadAccess();
 
         if (++sinceSync >= SYNC_INTERVAL_TICKS) {
@@ -596,6 +599,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
         if (rebuild) {
             if (core != null) {
+                dev.bwr.mod.advancement.PlantMilestones.reactorUnavailable(this);
                 // Snapshot before discarding. The pending fields are consumed
                 // and nulled the first time they are used, so on any rebuild
                 // after the first there is nothing on disk left to restore from
@@ -739,11 +743,13 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     @Override public void onLoad() {
         super.onLoad();
+        dev.bwr.mod.advancement.PlantMilestones.loaded(this);
         structureDirty = true;
         FormedReactorRegistry.add(this);
     }
 
     @Override public void setRemoved() {
+        dev.bwr.mod.advancement.PlantMilestones.unloaded(this);
         VesselJetAccess.update(level,getBlockPos(),null);
         VesselDriveAccess.update(level,getBlockPos(),null);
         VesselHeadAccess.update(level,getBlockPos(),null,false);
@@ -754,6 +760,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     }
 
     @Override public void onChunkUnloaded() {
+        dev.bwr.mod.advancement.PlantMilestones.unloaded(this);
         VesselJetAccess.update(level,getBlockPos(),null);
         VesselDriveAccess.update(level,getBlockPos(),null);
         VesselHeadAccess.update(level,getBlockPos(),null,false);
@@ -966,6 +973,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
         ItemStack stack = new ItemStack(dev.bwr.mod.registry.BwrItems.FUEL_ASSEMBLY.get());
         dev.bwr.mod.fuel.FuelAssemblies.store(stack, assembly);
+        dev.bwr.mod.advancement.PlantMilestones.fuelUnloaded(this, latticePosition);
         setChanged();
         return stack;
     }
@@ -986,7 +994,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
         if (stack.is(dev.bwr.mod.registry.BwrItems.SPECIALTY_ROD.get()))
             core.getCoreLoading().loadInsert(latticePosition, dev.bwr.mod.fuel.SpecialtyRodItem.data(stack).toCore());
-        else core.getCoreLoading().load(latticePosition, dev.bwr.mod.fuel.FuelAssemblies.load(stack));
+        else {
+            core.getCoreLoading().load(latticePosition, dev.bwr.mod.fuel.FuelAssemblies.load(stack));
+            dev.bwr.mod.advancement.PlantMilestones.fuelLoaded(this, latticePosition);
+        }
         setChanged();
         return true;
     }

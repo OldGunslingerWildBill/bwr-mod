@@ -658,6 +658,7 @@ public final class PanelBlockEntity extends BlockEntity {
                 }
             }
         }
+        dev.bwr.mod.advancement.PlantMilestones.panelChanged(this);
     }
 
     // ---- redstone output
@@ -715,6 +716,7 @@ public final class PanelBlockEntity extends BlockEntity {
             }
         }
         PanelSampler.track(this);
+        dev.bwr.mod.advancement.PlantMilestones.panelChanged(this);
     }
 
     /** Re-sends the state of every block a removed component covered, except {@code skip} (a block going away). */
@@ -873,6 +875,7 @@ public final class PanelBlockEntity extends BlockEntity {
     @Override
     public void onLoad() {
         super.onLoad();
+        dev.bwr.mod.advancement.PlantMilestones.loaded(this);
         invalidateGroups();
         if (level != null && !level.isClientSide()) {
             if (!owned.isEmpty() || !foreign.isEmpty()) {
@@ -899,10 +902,17 @@ public final class PanelBlockEntity extends BlockEntity {
 
     @Override
     public void setRemoved() {
+        dev.bwr.mod.advancement.PlantMilestones.unloaded(this);
         super.setRemoved();
         PanelSampler.untrack(this);
         PanelConsistency.forget(this);
         invalidateGroups();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        dev.bwr.mod.advancement.PlantMilestones.unloaded(this);
+        super.onChunkUnloaded();
     }
 
     // ---- rendering support (common code, no client classes)

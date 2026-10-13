@@ -1,0 +1,30 @@
+{
+  "display": {
+    "icon": {
+      "id": "bwr:control_rod_drive",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.bwr.milestones.survive_scram.title"
+    },
+    "description": {
+      "translate": "advancements.bwr.milestones.survive_scram.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "achieved": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "achieved"
+    ]
+  ],
+  "sends_telemetry_event": false,
+  "parent": "bwr:milestones/first_criticality"
+}
