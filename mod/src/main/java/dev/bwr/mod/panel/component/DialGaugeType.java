@@ -11,14 +11,15 @@ import java.util.List;
  * fast signal costs no extra packets.
  */
 public final class DialGaugeType extends ComponentType {
+    public static final String ID_PATH = "dial_gauge";
     public static final List<Footprint> FOOTPRINTS = List.of(
             Footprint.of(12, 12), Footprint.of(16, 16), Footprint.of(20, 20), Footprint.of(24, 24),
             Footprint.of(32, 32));
-    private static final List<ConfigField> SCHEMA = GaugeData.schema();
+    private static final List<ConfigField> SCHEMA = GaugeData.schema(ID_PATH);
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("value"));
 
     DialGaugeType() {
-        super(BwrMod.id("dial_gauge"));
+        super(BwrMod.id(ID_PATH));
     }
 
     @Override
@@ -28,7 +29,7 @@ public final class DialGaugeType extends ComponentType {
 
     @Override
     public ComponentData createData() {
-        return new GaugeData();
+        return new GaugeData(ID_PATH);
     }
 
     @Override

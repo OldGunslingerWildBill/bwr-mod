@@ -12,6 +12,10 @@ public final class RenderCache {
     /** Static geometry, valid for {@link #meshRevision}. */
     StaticMesh mesh = StaticMesh.EMPTY;
     int meshRevision = -1;
+    /** The {@link dev.bwr.mod.panel.model.PanelModels#generation()} the mesh was built under; a reload rebuilds it. */
+    int modelGeneration = -1;
+    /** The baked model drawing this component, or null for the classic procedural look. Set with the mesh. */
+    BakedComponentModel baked;
 
     /** Scratch for models; reset implicitly because a new cache is made per revision of the mesh. */
     public int fitRevision = -1;
@@ -24,6 +28,11 @@ public final class RenderCache {
 
     /** A model's own per-component client state (damped needle position, cached labels). Never saved. */
     public Object scratch;
+
+    /** Whether the component was last drawn from a baked model (false: the classic procedural look). For checks. */
+    public boolean usesBaked() {
+        return baked != null;
+    }
 
     /** The cache of {@code component}, created on first use. */
     public static RenderCache of(PanelComponent component) {

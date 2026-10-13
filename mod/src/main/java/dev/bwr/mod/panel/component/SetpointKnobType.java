@@ -14,9 +14,9 @@ public final class SetpointKnobType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 8), Footprint.of(12, 12));
     /** A click moves the knob by this many steps. */
     public static final double CLICK_STEPS = 5.0;
-    private static final List<ConfigField> SCHEMA = List.of(
+    private static final List<ConfigField> SCHEMA = PanelStyles.withLook(SetpointKnobData.TYPE, List.of(
             ConfigField.decimal("Step", "component.bwr.field.step", SetpointKnobData.MIN_STEP, SetpointKnobData.MAX_STEP),
-            ConfigField.color("Color", "component.bwr.field.knob_color"));
+            ConfigField.color("Color", "component.bwr.field.knob_color")));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("value"));
 
     SetpointKnobType() {

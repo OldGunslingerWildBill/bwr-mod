@@ -1,5 +1,6 @@
 package dev.bwr.mod.panel.client;
 
+import dev.bwr.mod.panel.component.ComponentType;
 import dev.bwr.mod.panel.component.ComponentTypes;
 import dev.bwr.mod.panel.component.PanelComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -38,21 +39,29 @@ public final class ComponentModels {
 
     private static void bootstrap() {
         register(ComponentTypes.NAMEPLATE.id(), new NameplateModel());
-        register(ComponentTypes.LAMP.id(), new LampModel());
+        register(ComponentTypes.LAMP.id(), styled(new LampModel(), BakedComponentModel.Kind.LAMP, ComponentTypes.LAMP));
         // inputs and indicators (spec 2.1, first two tables)
-        register(ComponentTypes.PUSHBUTTON.id(), new PushbuttonModel());
+        register(ComponentTypes.PUSHBUTTON.id(),
+                styled(new PushbuttonModel(), BakedComponentModel.Kind.PUSHBUTTON, ComponentTypes.PUSHBUTTON));
         register(ComponentTypes.TOGGLE_SWITCH.id(), new ToggleSwitchModel());
-        register(ComponentTypes.ROTARY_SELECTOR.id(), new RotarySelectorModel());
-        register(ComponentTypes.CONTROL_SWITCH.id(), new ControlSwitchModel());
-        register(ComponentTypes.KEY_SWITCH.id(), new KeySwitchModel());
-        register(ComponentTypes.SETPOINT_KNOB.id(), new SetpointKnobModel());
+        register(ComponentTypes.ROTARY_SELECTOR.id(),
+                styled(new RotarySelectorModel(), BakedComponentModel.Kind.ROTARY_SELECTOR, ComponentTypes.ROTARY_SELECTOR));
+        register(ComponentTypes.CONTROL_SWITCH.id(),
+                styled(new ControlSwitchModel(), BakedComponentModel.Kind.CONTROL_SWITCH, ComponentTypes.CONTROL_SWITCH));
+        register(ComponentTypes.KEY_SWITCH.id(),
+                styled(new KeySwitchModel(), BakedComponentModel.Kind.KEY_SWITCH, ComponentTypes.KEY_SWITCH));
+        register(ComponentTypes.SETPOINT_KNOB.id(),
+                styled(new SetpointKnobModel(), BakedComponentModel.Kind.SETPOINT_KNOB, ComponentTypes.SETPOINT_KNOB));
         register(ComponentTypes.THUMBWHEEL.id(), new ThumbwheelModel());
         register(ComponentTypes.ANNUNCIATOR.id(), new AnnunciatorModel());
         register(ComponentTypes.BAR_GRAPH.id(), new BarGraphModel());
         // gauges, displays and mimic
-        register(ComponentTypes.DIAL_GAUGE.id(), new DialGaugeModel());
-        register(ComponentTypes.EDGEWISE_GAUGE_VERTICAL.id(), new EdgewiseGaugeModel(true));
-        register(ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL.id(), new EdgewiseGaugeModel(false));
+        register(ComponentTypes.DIAL_GAUGE.id(),
+                styled(new DialGaugeModel(), BakedComponentModel.Kind.DIAL_GAUGE, ComponentTypes.DIAL_GAUGE));
+        register(ComponentTypes.EDGEWISE_GAUGE_VERTICAL.id(),
+                styled(new EdgewiseGaugeModel(true), BakedComponentModel.Kind.EDGEWISE, ComponentTypes.EDGEWISE_GAUGE_VERTICAL));
+        register(ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL.id(),
+                styled(new EdgewiseGaugeModel(false), BakedComponentModel.Kind.EDGEWISE, ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL));
         register(ComponentTypes.STRIP_CHART.id(), new StripChartModel());
         register(ComponentTypes.SEVEN_SEGMENT_DISPLAY.id(), new SegmentDisplayModel(false));
         register(ComponentTypes.SIXTEEN_SEGMENT_DISPLAY.id(), new SegmentDisplayModel(true));
@@ -60,6 +69,14 @@ public final class ComponentModels {
         register(ComponentTypes.GRAPHIC_DISPLAY.id(), new GraphicDisplayModel());
         register(ComponentTypes.MIMIC_LINE.id(), new MimicLineModel());
         register(ComponentTypes.MIMIC_SYMBOL.id(), new MimicSymbolModel());
+    }
+
+    /**
+     * The model for a type that has baked looks: it draws whatever baked model the component's style selects and
+     * falls back to {@code classic} (the procedural placeholder) when the style is classic or the model is missing.
+     */
+    private static ComponentModel styled(ComponentModel classic, BakedComponentModel.Kind kind, ComponentType type) {
+        return new StyledComponentModel(classic, kind, type.id().getPath());
     }
 
     public static void register(ResourceLocation typeId, ComponentModel model) {

@@ -11,6 +11,7 @@ import java.util.List;
  * pushbutton is 1 only while held.
  */
 public final class PushbuttonData extends ComponentData {
+    public static final String TYPE = "pushbutton";
     public static final String ROLE_NONE = "none";
     public static final String ROLE_ACK = "ack";
     public static final String ROLE_RESET = "reset";
@@ -21,12 +22,16 @@ public final class PushbuttonData extends ComponentData {
     public String role = ROLE_NONE;
     /** The annunciator group this button acknowledges or resets when it has a role. */
     public int group = AnnunciatorData.MIN_GROUP;
+    /** Look: {@link PanelStyles} style and button variant. */
+    public String style = PanelStyles.newStyle(TYPE);
+    public String variant = PanelStyles.defaultVariant(TYPE, style);
 
     @Override
     public void save(CompoundTag tag) {
         tag.putInt("Color", color);
         tag.putString("Role", role);
         tag.putInt("AnnGroup", group);
+        PanelStyles.save(tag, style, variant);
     }
 
     @Override
@@ -37,5 +42,7 @@ public final class PushbuttonData extends ComponentData {
         group = tag.contains("AnnGroup", Tag.TAG_ANY_NUMERIC)
                 ? Math.max(AnnunciatorData.MIN_GROUP, Math.min(AnnunciatorData.MAX_GROUP, tag.getInt("AnnGroup")))
                 : AnnunciatorData.MIN_GROUP;
+        style = PanelStyles.loadStyle(TYPE, tag);
+        variant = PanelStyles.loadVariant(TYPE, tag, style);
     }
 }

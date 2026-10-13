@@ -12,10 +12,10 @@ import java.util.List;
  */
 public final class PushbuttonType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 6), Footprint.of(8, 8));
-    private static final List<ConfigField> SCHEMA = List.of(
+    private static final List<ConfigField> SCHEMA = PanelStyles.withLook(PushbuttonData.TYPE, List.of(
             ConfigField.color("Color", "component.bwr.field.cap_color"),
             ConfigField.choice("Role", "component.bwr.field.role", PushbuttonData.ROLES),
-            ConfigField.integer("AnnGroup", "component.bwr.field.ann_group", AnnunciatorData.MIN_GROUP, AnnunciatorData.MAX_GROUP));
+            ConfigField.integer("AnnGroup", "component.bwr.field.ann_group", AnnunciatorData.MIN_GROUP, AnnunciatorData.MAX_GROUP)));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("state"));
 
     PushbuttonType() {

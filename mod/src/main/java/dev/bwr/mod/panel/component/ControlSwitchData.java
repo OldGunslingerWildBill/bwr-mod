@@ -9,10 +9,16 @@ import net.minecraft.nbt.Tag;
  * the spring; a spring-return switch always loads at NORMAL).
  */
 public final class ControlSwitchData extends ComponentData {
+    public static final String TYPE = "control_switch";
     public static final int MAX_TEXT = 8;
     public static final int CLOSE = -1;
     public static final int NORMAL = 0;
     public static final int OPEN = 1;
+    /** Target flag colour after an operation when the lamp inputs say nothing: red after CLOSE (GE breaker control). */
+    public static final String FLAG_RED_AFTER_CLOSE = "close";
+    /** ...or red after OPEN (valves and pumps: red = open / running). */
+    public static final String FLAG_RED_AFTER_OPEN = "open";
+    public static final java.util.List<String> FLAG_MODES = java.util.List.of(FLAG_RED_AFTER_CLOSE, FLAG_RED_AFTER_OPEN);
 
     public boolean spring = true;
     public String closeText = "CLOSE";
@@ -24,6 +30,17 @@ public final class ControlSwitchData extends ComponentData {
     public String greenText = "CLOSED";
     /** -1 CLOSE, 0 NORMAL, +1 OPEN. */
     public int position;
+    /**
+     * Latched: the last position the handle was moved to that was not NORMAL (-1 CLOSE, +1 OPEN, 0 never
+     * operated). A baked model's target flag shows it when the lamp inputs say nothing; saved, and kept in step
+     * on clients because every output change runs {@link ControlSwitchType#valuesChanged}.
+     */
+    public int lastOperated;
+    /** Which operation leaves the target flag red; see {@link #FLAG_MODES}. Default: CLOSE, as on GE switches. */
+    public String flagRed = FLAG_RED_AFTER_CLOSE;
+    /** Look: {@link PanelStyles} style and handle variant. */
+    public String style = PanelStyles.newStyle(TYPE);
+    public String variant = PanelStyles.defaultVariant(TYPE, style);
 
     @Override
     public void save(CompoundTag tag) {
@@ -34,6 +51,9 @@ public final class ControlSwitchData extends ComponentData {
         tag.putString("RedText", redText);
         tag.putString("GreenText", greenText);
         tag.putInt("Position", position);
+        tag.putInt("LastOperated", lastOperated);
+        tag.putString("FlagRed", flagRed);
+        PanelStyles.save(tag, style, variant);
     }
 
     @Override
@@ -45,6 +65,11 @@ public final class ControlSwitchData extends ComponentData {
         redText = text(tag, "RedText", "OPEN");
         greenText = text(tag, "GreenText", "CLOSED");
         position = spring ? NORMAL : Math.max(CLOSE, Math.min(OPEN, tag.getInt("Position")));
+        lastOperated = Math.max(CLOSE, Math.min(OPEN, tag.getInt("LastOperated")));
+        String savedFlag = tag.getString("FlagRed");
+        flagRed = FLAG_MODES.contains(savedFlag) ? savedFlag : FLAG_RED_AFTER_CLOSE;
+        style = PanelStyles.loadStyle(TYPE, tag);
+        variant = PanelStyles.loadVariant(TYPE, tag, style);
     }
 
     private static String text(CompoundTag tag, String key, String fallback) {

@@ -49,6 +49,20 @@ Engraved text, captions and labels scale with their component. Components placed
 the size they were placed at; a display's digit, character and segment counts follow its width, so an old
 display shows fewer digits or characters than before.
 
+### Looks: style and variant
+
+Control switches, rotary selectors, key switches, pushbuttons, lamps, setpoint knobs and the three meter types
+have a **Style** in the wrench screen: `classic` (the simple built-in look), `ge` and, for the three switch
+types, `westinghouse`. Types with several models also have a second choice: the **Handle** (pistol grip, heavy
+duty pistol; oval, knurled, lever, round notched, mini slimline; removable key, tumbler lock), the **Button**
+(flush, extended, mushroom, guarded, illuminated), the **Lens** (round, round with plate, ET-16 dome, square) or
+the **Pointer** (black, red). New components start as `ge` when the model ships and `classic` otherwise; saves
+from before this feature load as `classic`. If a model file is missing the component simply draws `classic`.
+Cap, lens and knob colours still work: a colour you set recolours the model, and the default colour leaves the
+model's own. The control switch's target flag shows the plant state when its lamp inputs are wired, otherwise
+the last operation. The switch's "Target red after" setting picks which operation leaves it red: CLOSE
+(default, as on a GE breaker control switch) or OPEN (valves and pumps). The big breaker-control switches read best at their larger 12x16 size.
+
 ### The linker
 
 * **Sneak-right-click a plant device** (any block of it: a reactor controller, an MSIV, a pump...) to store

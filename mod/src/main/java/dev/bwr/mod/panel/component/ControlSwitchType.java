@@ -23,13 +23,14 @@ import java.util.List;
  */
 public final class ControlSwitchType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 12), Footprint.of(12, 16));
-    private static final List<ConfigField> SCHEMA = List.of(
+    private static final List<ConfigField> SCHEMA = PanelStyles.withLook(ControlSwitchData.TYPE, List.of(
             ConfigField.bool("Spring", "component.bwr.field.spring"),
             ConfigField.text("CloseText", "component.bwr.field.close_text", ControlSwitchData.MAX_TEXT),
             ConfigField.text("NormalText", "component.bwr.field.normal_text", ControlSwitchData.MAX_TEXT),
             ConfigField.text("OpenText", "component.bwr.field.open_text", ControlSwitchData.MAX_TEXT),
             ConfigField.text("RedText", "component.bwr.field.red_text", ControlSwitchData.MAX_TEXT),
-            ConfigField.text("GreenText", "component.bwr.field.green_text", ControlSwitchData.MAX_TEXT));
+            ConfigField.text("GreenText", "component.bwr.field.green_text", ControlSwitchData.MAX_TEXT),
+            ConfigField.choice("FlagRed", "component.bwr.field.flag_red", ControlSwitchData.FLAG_MODES)));
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("red"), PortSpec.of("green"));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("position"), PortSpec.of("open"), PortSpec.of("close"));
 
@@ -88,6 +89,8 @@ public final class ControlSwitchType extends PanelInputType {
         ControlSwitchData data = (ControlSwitchData) component.data();
         if (data.spring) {
             data.position = ControlSwitchData.NORMAL;
+        } else if (data.position != ControlSwitchData.NORMAL && data.lastOperated == ControlSwitchData.NORMAL) {
+            data.lastOperated = data.position; // a held-position switch saved before the latch existed
         }
         publish(component, data.position);
     }
@@ -98,7 +101,24 @@ public final class ControlSwitchType extends PanelInputType {
         component.storeOutput(2, position < 0 ? 1.0 : 0.0);
     }
 
+    /**
+     * Both sides, on every output change: latches the last position that was not NORMAL. The server runs this
+     * from {@code setOutput} and the client from the output delta, so the two stay in step without a full sync;
+     * a late joiner gets the latched value in the saved data.
+     */
+    @Override
+    public void valuesChanged(PanelComponent component) {
+        if (component.data() instanceof ControlSwitchData data) {
+            int position = (int) Math.round(component.output(0));
+            if (position != ControlSwitchData.NORMAL && position != data.lastOperated
+                    && position >= ControlSwitchData.CLOSE && position <= ControlSwitchData.OPEN) {
+                data.lastOperated = position;
+            }
+        }
+    }
+
     private static void move(OperateContext context, ControlSwitchData data, int position) {
+        int lastOperated = data.lastOperated;
         data.position = position;
         if (!data.spring) {
             markSaved(context);
@@ -106,6 +126,9 @@ public final class ControlSwitchType extends PanelInputType {
         context.setOutput(0, position);
         context.setOutput(1, position > 0 ? 1.0 : 0.0);
         context.setOutput(2, position < 0 ? 1.0 : 0.0);
+        if (data.lastOperated != lastOperated) {
+            markSaved(context); // the target flag's latch changed, whether or not the handle springs back
+        }
     }
 
     @Override

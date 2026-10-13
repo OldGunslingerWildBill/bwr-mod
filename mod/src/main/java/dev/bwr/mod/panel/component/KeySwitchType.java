@@ -13,9 +13,9 @@ import java.util.List;
  */
 public final class KeySwitchType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 8), Footprint.of(8, 10));
-    private static final List<ConfigField> SCHEMA = List.of(
+    private static final List<ConfigField> SCHEMA = PanelStyles.withLook(KeySwitchData.TYPE, List.of(
             ConfigField.bool("RequireKey", "component.bwr.field.require_key"),
-            ConfigField.text("KeyCode", "component.bwr.field.key_code", KeySwitchData.MAX_CODE));
+            ConfigField.text("KeyCode", "component.bwr.field.key_code", KeySwitchData.MAX_CODE)));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("state"));
 
     KeySwitchType() {

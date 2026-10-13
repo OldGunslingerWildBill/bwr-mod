@@ -5,6 +5,7 @@ import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.component.ComponentType;
 import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.model.PanelModels;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -87,12 +88,15 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
             }
             ComponentModel model = ComponentModels.get(type.id());
             RenderCache cache = RenderCache.of(component);
-            if (cache.meshRevision != component.revision()) {
-                // Rebuilt only when the component changed (config edit, new component, network state).
+            int generation = PanelModels.generation();
+            if (cache.meshRevision != component.revision() || cache.modelGeneration != generation) {
+                // Rebuilt only when the component changed (config edit, new component, network state) or the
+                // set of loaded baked models did (a resource reload).
                 MeshBuilder fresh = new MeshBuilder();
                 model.buildStatic(fresh, component);
                 cache.mesh = fresh.build();
                 cache.meshRevision = component.revision();
+                cache.modelGeneration = generation;
             }
             context.beginComponent(component);
             cache.mesh.emit(context);

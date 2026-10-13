@@ -65,6 +65,7 @@ neoForge {
             if (project.hasProperty('bwrCreativePerformanceCheck')) jvmArguments.add('-Dbwr.creativePerformanceCheck=true')
             if (project.hasProperty('bwrGuiPerformanceCheck')) jvmArguments.add('-Dbwr.guiPerformanceCheck=true')
             if (project.hasProperty('bwrPanelClientCheck')) jvmArguments.add('-Dbwr.panelClientCheck=true')
+            if (project.hasProperty('bwrPanelFixtureModels')) jvmArguments.add('-Dbwr.panelFixtureModels=true')
             if (project.hasProperty('bwrContainmentClientCheck')) jvmArguments.add('-Dbwr.containmentClientCheck=true')
             if (project.hasProperty('bwrPanelPerformanceCheck')) jvmArguments.add('-Dbwr.panelPerformanceCheck=true')
             if (project.hasProperty('bwrMachineRenderCheck')) jvmArguments.add('-Dbwr.machineRenderCheck=true')

@@ -29,9 +29,21 @@ public final class GaugeData extends ComponentData {
     public final double[] bandLow = {80.0, 90.0, 0.0};
     public final double[] bandHigh = {90.0, 100.0, 0.0};
     public final int[] bandColor = {0xFFB000, 0xE02020, 0x30C030};
+    /** The component type path this data belongs to ({@code dial_gauge} or an edgewise meter): picks the model table rows. */
+    public final String type;
+    /** Look: {@link PanelStyles} style and pointer variant. */
+    public String style;
+    public String variant;
 
-    /** Config fields for a gauge: scale, units, damping, bands. */
-    public static List<ConfigField> schema() {
+    /** Data for a gauge of type path {@code type}, with the look a new component of that type starts with. */
+    public GaugeData(String type) {
+        this.type = type;
+        this.style = PanelStyles.newStyle(type);
+        this.variant = PanelStyles.defaultVariant(type, style);
+    }
+
+    /** Config fields for a gauge of type path {@code type}: scale, units, damping, bands, then the look. */
+    public static List<ConfigField> schema(String type) {
         List<ConfigField> fields = new ArrayList<>();
         fields.add(ConfigField.decimal("Min", "component.bwr.field.min", -LIMIT, LIMIT));
         fields.add(ConfigField.decimal("Max", "component.bwr.field.max", -LIMIT, LIMIT));
@@ -42,6 +54,7 @@ public final class GaugeData extends ComponentData {
             fields.add(ConfigField.decimal("Band" + i + "High", "component.bwr.field.band" + i + "_high", -LIMIT, LIMIT));
             fields.add(ConfigField.color("Band" + i + "Color", "component.bwr.field.band" + i + "_color"));
         }
+        fields.addAll(PanelStyles.fields(type));
         return List.copyOf(fields);
     }
 
@@ -74,6 +87,7 @@ public final class GaugeData extends ComponentData {
             tag.putDouble("Band" + (i + 1) + "High", bandHigh[i]);
             tag.putInt("Band" + (i + 1) + "Color", bandColor[i]);
         }
+        PanelStyles.save(tag, style, variant);
     }
 
     @Override
@@ -92,6 +106,8 @@ public final class GaugeData extends ComponentData {
             bandColor[i] = tag.contains(key + "Color", Tag.TAG_ANY_NUMERIC) ? tag.getInt(key + "Color") & 0xFFFFFF
                     : defaultColor[i];
         }
+        style = PanelStyles.loadStyle(type, tag);
+        variant = PanelStyles.loadVariant(type, tag, style);
     }
 
     static double number(CompoundTag tag, String key, double fallback, double low, double high) {

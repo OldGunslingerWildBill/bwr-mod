@@ -5,6 +5,7 @@ import net.minecraft.nbt.Tag;
 
 /** Rotary selector: how many positions, their labels (comma separated) and the latched position. */
 public final class RotarySelectorData extends ComponentData {
+    public static final String TYPE = "rotary_selector";
     public static final int MIN_POSITIONS = 2;
     public static final int MAX_POSITIONS = 6;
     public static final int MAX_NAMES = 60;
@@ -16,6 +17,9 @@ public final class RotarySelectorData extends ComponentData {
     public int color = DEFAULT_COLOR;
     /** Latched position, 0 .. positions-1. */
     public int position;
+    /** Look: {@link PanelStyles} style and handle variant. */
+    public String style = PanelStyles.newStyle(TYPE);
+    public String variant = PanelStyles.defaultVariant(TYPE, style);
 
     /** The label of position {@code index} (0-based): the configured name, else its 1-based number. */
     public String nameAt(int index) {
@@ -32,6 +36,7 @@ public final class RotarySelectorData extends ComponentData {
         tag.putString("Names", names);
         tag.putInt("Color", color);
         tag.putInt("Position", position);
+        PanelStyles.save(tag, style, variant);
     }
 
     @Override
@@ -41,5 +46,7 @@ public final class RotarySelectorData extends ComponentData {
         names = ConfigSchema.cleanText(tag.getString("Names"), MAX_NAMES);
         color = tag.contains("Color", Tag.TAG_ANY_NUMERIC) ? tag.getInt("Color") & 0xFFFFFF : DEFAULT_COLOR;
         position = Math.max(0, Math.min(positions - 1, tag.getInt("Position")));
+        style = PanelStyles.loadStyle(TYPE, tag);
+        variant = PanelStyles.loadVariant(TYPE, tag, style);
     }
 }

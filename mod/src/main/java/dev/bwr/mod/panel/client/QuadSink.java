@@ -17,11 +17,49 @@ public interface QuadSink {
     int NORMAL_RIGHT = 2;
     int NORMAL_UP = 3;
     int NORMAL_DOWN = 4;
+    /** Flag value recorded meshes use for "this quad carries its own normal"; never passed to a sink as an enum normal. */
+    int NORMAL_CUSTOM = 5;
 
     /** One quad, corners in order around the perimeter. {@code rgb} is 0xRRGGBB. */
     void quad(float x0, float y0, float z0, float x1, float y1, float z1,
               float x2, float y2, float z2, float x3, float y3, float z3,
               int rgb, int normal, boolean emissive);
+
+    /**
+     * One quad with an arbitrary normal, in component space (x right, y down the face, z out of the face; it
+     * must be a unit vector). Baked models use this so curved handles and knobs shade smoothly instead of
+     * snapping to the five axis directions. A sink that does not override it draws the quad with the nearest
+     * axis normal, so every existing sink keeps working.
+     */
+    default void quad(float x0, float y0, float z0, float x1, float y1, float z1,
+                      float x2, float y2, float z2, float x3, float y3, float z3,
+                      int rgb, float nx, float ny, float nz, boolean emissive) {
+        quad(x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3, rgb, nearestNormal(nx, ny, nz), emissive);
+    }
+
+    /**
+     * One translucent quad (a meter window). Only the live {@link PanelRenderContext} draws it: recorded meshes
+     * ignore it, because translucent geometry must come after everything it covers and so cannot be replayed
+     * from the static mesh. {@code alpha} is 0..255.
+     */
+    default void glassQuad(float x0, float y0, float z0, float x1, float y1, float z1,
+                           float x2, float y2, float z2, float x3, float y3, float z3,
+                           int rgb, int alpha, float nx, float ny, float nz) {
+    }
+
+    /** The axis normal constant closest to the component-space direction {@code (nx, ny, nz)}. */
+    static int nearestNormal(float nx, float ny, float nz) {
+        float ax = Math.abs(nx);
+        float ay = Math.abs(ny);
+        float az = Math.abs(nz);
+        if (az >= ax && az >= ay) {
+            return NORMAL_FACE;
+        }
+        if (ax >= ay) {
+            return nx < 0 ? NORMAL_LEFT : NORMAL_RIGHT;
+        }
+        return ny < 0 ? NORMAL_UP : NORMAL_DOWN;
+    }
 
     /** A rectangle parallel to the face at elevation {@code z}. */
     default void rect(float x, float y, float w, float h, float z, int rgb, boolean emissive) {
