@@ -1,5 +1,7 @@
 package dev.bwr.mod.fuel;
 
+import dev.bwr.mod.text.BwrText;
+
 import dev.bwr.core.fuel.FuelAssembly;
 import dev.bwr.core.fuel.FuelType;
 import net.minecraft.ChatFormatting;
@@ -71,14 +73,24 @@ public class FuelAssemblyItem extends Item {
         FuelAssembly assembly = FuelAssemblies.toCore(data);
         FuelType type = assembly.fuelType();
 
-        tooltip.add(line(String.format(Locale.ROOT, "%s, %.2f%% fissile, %.0f kg HM",
-                type.name(), data.enrichmentWeightFraction() * 100.0, data.heavyMetalMassKg())));
+        tooltip.add(line(BwrText.tr(
+                "status.bwr.fuel_assembly_item.issile_kg_hm",
+                "%s, %s%% fissile, %s kg HM",
+                type.name(),
+                String.format(java.util.Locale.ROOT, "%.2f", data.enrichmentWeightFraction() * 100.0),
+                String.format(java.util.Locale.ROOT, "%.0f", data.heavyMetalMassKg()))));
 
-        if (type.name().equals("natural_uranium")) tooltip.add(line("Experimental BWR loading; cannot sustain a chain reaction alone."));
+        if (type.name().equals("natural_uranium")) tooltip.add(line(BwrText.tr(
+                "status.bwr.fuel_assembly_item.experimental_bwr_loading_cannot_sustain_a_chain_reaction",
+                "Experimental BWR loading; cannot sustain a chain reaction alone.")));
         if (data.enrichmentWeightFraction() >= 0.05 || type.name().startsWith("plutonium") || type.name().startsWith("thorium"))
-            tooltip.add(line("Experimental fuel option; simplified nuclear data."));
+            tooltip.add(line(BwrText.tr(
+                    "status.bwr.fuel_assembly_item.experimental_fuel_option_simplified_nuclear_data",
+                    "Experimental fuel option; simplified nuclear data.")));
         if (type.name().startsWith("mox") || type.name().startsWith("plutonium"))
-            tooltip.add(line("Effective fissile fraction; not total plutonium content."));
+            tooltip.add(line(BwrText.tr(
+                    "status.bwr.fuel_assembly_item.effective_fissile_fraction_not_total_plutonium_content",
+                    "Effective fissile fraction; not total plutonium content.")));
 
         // Two different things can have gone wrong, and conflating them is how
         // the old check managed to stay silent in the case that mattered.
@@ -94,49 +106,69 @@ public class FuelAssemblyItem extends Item {
         // they simply are not this world's fuel table's. That is provenance
         // worth stating and not an error.
         if (!type.name().equals(data.fuelTypeName())) {
-            tooltip.add(Component.literal("fuel type '" + data.fuelTypeName()
-                            + "' is not loaded; substituted " + type.name())
+            tooltip.add(BwrText.tr(
+                    "status.bwr.fuel_assembly_item.fuel_type_is_not_loaded_substituted",
+                    "fuel type '%s' is not loaded; substituted %s",
+                    data.fuelTypeName(),
+                    type.name())
                     .withStyle(ChatFormatting.RED));
         } else if (!FuelTypes.isKnown(data.fuelTypeName())) {
-            tooltip.add(Component.literal("fuel type '" + data.fuelTypeName()
-                            + "' is not in this world's fuel table; showing built-in data")
+            tooltip.add(BwrText.tr(
+                    "status.bwr.fuel_assembly_item.fuel_type_is_not_in_this_world_s",
+                    "fuel type '%s' is not in this world's fuel table; showing built-in data",
+                    data.fuelTypeName())
                     .withStyle(ChatFormatting.YELLOW));
         }
 
-        tooltip.add(line(String.format(Locale.ROOT, "Burnup %,.0f MWd/t  (%,.0f MWd produced)",
-                data.burnupMwdPerTonne(), FuelAssemblies.energyProducedMwd(assembly))));
+        tooltip.add(line(BwrText.tr(
+                "status.bwr.fuel_assembly_item.burnup_mwd_t_mwd_produced",
+                "Burnup %s MWd/t  (%s MWd produced)",
+                String.format(java.util.Locale.ROOT, "%,.0f", data.burnupMwdPerTonne()),
+                String.format(java.util.Locale.ROOT, "%,.0f", FuelAssemblies.energyProducedMwd(assembly)))));
 
-        tooltip.add(line(String.format(Locale.ROOT, "k-inf %.4f  (fresh %.4f)",
-                assembly.kInf(), assembly.baseKInf())));
+        tooltip.add(line(BwrText.tr(
+                "status.bwr.fuel_assembly_item.k_inf_fresh",
+                "k-inf %s  (fresh %s)",
+                String.format(java.util.Locale.ROOT, "%.4f", assembly.kInf()),
+                String.format(java.util.Locale.ROOT, "%.4f", assembly.baseKInf()))));
 
         double remaining = FuelAssemblies.exposureRemainingMwdPerTonne(assembly);
         if (remaining <= 0.0) {
-            tooltip.add(line("Below k-inf 1.0 on its own"));
+            tooltip.add(line(BwrText.tr("status.bwr.fuel_assembly_item.below_k_inf_1_0_on_its_own", "Below k-inf 1.0 on its own")));
         } else if (remaining >= FuelAssemblies.EXPOSURE_SCAN_LIMIT_MWD_PER_TONNE) {
             // A very highly enriched bundle can outlast the scan. Saying so is
             // honest; printing the scan limit as if it were the answer is not.
-            tooltip.add(line(String.format(Locale.ROOT,
-                    "Exposure to k-inf 1.0: over %,.0f MWd/t",
-                    FuelAssemblies.EXPOSURE_SCAN_LIMIT_MWD_PER_TONNE)));
+            tooltip.add(line(BwrText.tr(
+                    "status.bwr.fuel_assembly_item.exposure_to_k_inf_1_0_over_mwd",
+                    "Exposure to k-inf 1.0: over %s MWd/t",
+                    String.format(java.util.Locale.ROOT, "%,.0f", FuelAssemblies.EXPOSURE_SCAN_LIMIT_MWD_PER_TONNE))));
         } else {
-            tooltip.add(line(String.format(Locale.ROOT,
-                    "Exposure to k-inf 1.0: %,.0f MWd/t", remaining)));
+            tooltip.add(line(BwrText.tr(
+                    "status.bwr.fuel_assembly_item.exposure_to_k_inf_1_0_mwd_t",
+                    "Exposure to k-inf 1.0: %s MWd/t",
+                    String.format(java.util.Locale.ROOT, "%,.0f", remaining))));
         }
 
         if (type.gadContentWeightFraction() > 0.0) {
-            tooltip.add(line(String.format(Locale.ROOT, "Gadolinia %.0f%% remaining (holding %.4f dk)",
-                    data.gadoliniaRemainingFraction() * 100.0, assembly.gadPenaltyKInf())));
+            tooltip.add(line(BwrText.tr(
+                    "status.bwr.fuel_assembly_item.gadolinia_emaining_holding_dk",
+                    "Gadolinia %s%% remaining (holding %s dk)",
+                    String.format(java.util.Locale.ROOT, "%.0f", data.gadoliniaRemainingFraction() * 100.0),
+                    String.format(java.util.Locale.ROOT, "%.4f", assembly.gadPenaltyKInf()))));
         }
 
         // Beta is the number that decides how much control margin the core has.
         // It is on the tooltip because a player loading MOX into a high-flux
         // position deserves to have seen 0.0035 first, not because anything in
         // the mod reacts to it.
-        tooltip.add(line(String.format(Locale.ROOT, "beta %.5f, prompt lifetime %.1e s",
-                type.beta(), type.promptLifetimeSeconds())));
+        tooltip.add(line(BwrText.tr(
+                "status.bwr.fuel_assembly_item.beta_prompt_lifetime_s",
+                "beta %s, prompt lifetime %s s",
+                String.format(java.util.Locale.ROOT, "%.5f", type.beta()),
+                String.format(java.util.Locale.ROOT, "%.1e", type.promptLifetimeSeconds()))));
     }
 
-    private static Component line(String text) {
-        return Component.literal(text).withStyle(ChatFormatting.GRAY);
+    private static Component line(Component text) {
+        return text.copy().withStyle(ChatFormatting.GRAY);
     }
 }

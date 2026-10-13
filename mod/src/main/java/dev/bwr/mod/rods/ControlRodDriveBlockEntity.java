@@ -1,5 +1,8 @@
 package dev.bwr.mod.rods;
 
+import dev.bwr.mod.text.BwrText;
+import net.minecraft.network.chat.Component;
+
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -303,30 +306,53 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
      * already defines and is exactly as much of an opinion as an ammeter is.
      */
     public java.util.List<String> statusLines() {
-        java.util.List<String> out = new java.util.ArrayList<>();
+        return BwrText.english(statusComponents());
+    }
+
+    public java.util.List<Component> statusComponents() {
+        java.util.List<Component> out = new java.util.ArrayList<>();
         var bank=bank();
-        if(bank!=null)out.add("Shared supply manifold: "+bank.size()+" connected drives; feed water and FE on any exposed faces.");
+        if(bank!=null)out.add(BwrText.tr(
+                "status.bwr.control_rod_drive.shared_supply_manifold_connected_drives_feed_water_and",
+                "Shared supply manifold: %s connected drives; feed water and FE on any exposed faces.",
+                bank.size()));
         if (rodIndex < 0) {
-            out.add("Control rod drive: not bound to a rod. "
-                    + "It still spends its supplies and still holds its charge.");
+            out.add(BwrText.tr(
+                    "status.bwr.control_rod_drive.control_rod_drive_not_bound_to_a_rod",
+                    "Control rod drive: not bound to a rod. It still spends its supplies and still holds its charge."));
         } else {
-            out.add(String.format(java.util.Locale.ROOT,
-                    "Control rod drive for rod %d, at notch %02d", rodIndex, notchLabel()));
+            out.add(BwrText.tr(
+                    "status.bwr.control_rod_drive.control_rod_drive_for_rod_at_notch",
+                    "Control rod drive for rod %s, at notch %s",
+                    String.format(java.util.Locale.ROOT, "%d", rodIndex),
+                    String.format(java.util.Locale.ROOT, "%02d", notchLabel())));
         }
-        out.add(String.format(java.util.Locale.ROOT,
-                "Accumulator %.0f%% charged", accumulatorCharge() * 100.0));
-        out.add(String.format(java.util.Locale.ROOT,
-                "Power %s: %,.0f / %,.0f FE, drawing %.1f FE/t",
-                powered() ? "supplied" : "LOST", energyStoredFe(), energyCapacityFe(),
-                energyDrawFePerTick()));
-        out.add(String.format(java.util.Locale.ROOT,
-                "Water %s: %,.0f / %,.0f mB",
-                waterSupplied() ? "supplied" : "DRY", waterStoredMb(), waterCapacityMb()));
-        out.add(String.format(java.util.Locale.ROOT,
-                "Mechanism %.0f%%%s", health() * 100.0, failed() ? " — seized" : ""));
+        out.add(BwrText.tr(
+                "status.bwr.control_rod_drive.accumulator_harged",
+                "Accumulator %s%% charged",
+                String.format(java.util.Locale.ROOT, "%.0f", accumulatorCharge() * 100.0)));
+        out.add(BwrText.tr(
+                "status.bwr.control_rod_drive.power_fe_drawing_fe_t",
+                "Power %s: %s / %s FE, drawing %s FE/t",
+                (powered() ? BwrText.tr("status.bwr.control_rod_drive.supplied", "supplied") : BwrText.tr("status.bwr.control_rod_drive.lost", "LOST")),
+                String.format(java.util.Locale.ROOT, "%,.0f", energyStoredFe()),
+                String.format(java.util.Locale.ROOT, "%,.0f", energyCapacityFe()),
+                String.format(java.util.Locale.ROOT, "%.1f", energyDrawFePerTick())));
+        out.add(BwrText.tr(
+                "status.bwr.control_rod_drive.water_mb",
+                "Water %s: %s / %s mB",
+                (waterSupplied() ? BwrText.tr("status.bwr.control_rod_drive.supplied", "supplied") : BwrText.tr("status.bwr.control_rod_drive.dry", "DRY")),
+                String.format(java.util.Locale.ROOT, "%,.0f", waterStoredMb()),
+                String.format(java.util.Locale.ROOT, "%,.0f", waterCapacityMb())));
+        out.add(BwrText.tr(
+                "status.bwr.control_rod_drive.mechanism",
+                "Mechanism %s%%%s",
+                String.format(java.util.Locale.ROOT, "%.0f", health() * 100.0),
+                (failed() ? BwrText.tr("status.bwr.control_rod_drive.seized", " — seized") : Component.empty())));
         if (!canPerformNormalMotion()) {
-            out.add("This drive cannot index a notch under normal control. "
-                    + "Scram insertion is a separate hydraulic path and is not affected.");
+            out.add(BwrText.tr(
+                    "status.bwr.control_rod_drive.this_drive_cannot_index_a_notch_under_normal",
+                    "This drive cannot index a notch under normal control. Scram insertion is a separate hydraulic path and is not affected."));
         }
         return out;
     }

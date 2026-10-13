@@ -1,5 +1,7 @@
 package dev.bwr.mod.suppression;
 
+import dev.bwr.mod.text.BwrText;
+
 import com.mojang.serialization.MapCodec;
 import dev.bwr.mod.steam.SteamLinePort;
 import net.minecraft.core.*;
@@ -30,13 +32,19 @@ public final class SuppressionPoolSteamPortBlock extends BaseEntityBlock impleme
         if(who instanceof net.minecraft.server.level.ServerPlayer player&&l.getBlockEntity(p) instanceof SuppressionPoolPortBlockEntity port){
             var pool=port.owner();
             if(pool!=null)dev.bwr.mod.gui.SuppressionPoolMenu.open(player,pool,p);
-            else player.displayClientMessage(net.minecraft.network.chat.Component.literal("Complete the suppression tank floor, walls and roof with one controller."),true);
+            else player.displayClientMessage(BwrText.tr(
+                    "status.bwr.suppression_pool_steam_port.complete_the_suppression_tank_floor_walls_and_roof",
+                    "Complete the suppression tank floor, walls and roof with one controller."),true);
         }
         return InteractionResult.SUCCESS;
     }
     @Override public void appendHoverText(ItemStack stack,Item.TooltipContext context,java.util.List<net.minecraft.network.chat.Component> lines,TooltipFlag flag){
-        lines.add(net.minecraft.network.chat.Component.literal("Steam IN: outward-facing wall flange on an enclosed suppression tank."));
-        lines.add(net.minecraft.network.chat.Component.literal("Connect High-Pressure Steam Pipe or Mekanism Pressurized Tube. Pump water into the tank first."));
+        lines.add(BwrText.tr(
+                "status.bwr.suppression_pool_steam_port.steam_in_outward_facing_wall_flange_on_an",
+                "Steam IN: outward-facing wall flange on an enclosed suppression tank."));
+        lines.add(BwrText.tr(
+                "status.bwr.suppression_pool_steam_port.connect_high_pressure_steam_pipe_or_mekanism_pressurized",
+                "Connect High-Pressure Steam Pipe or Mekanism Pressurized Tube. Pump water into the tank first."));
     }
     public static SuppressionPoolBlockEntity owner(Level level,BlockPos p){
         if(!level.isLoaded(p)||!level.getBlockState(p).is(dev.bwr.mod.registry.BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get()))return null;

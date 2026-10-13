@@ -119,8 +119,8 @@ public class RpvSteamOutletBlock extends BaseEntityBlock implements SteamLinePor
             nozzle.refreshAttachment(level);
             nozzle.refreshLine(level);
 
-            for (String line : nozzle.statusLines()) {
-                player.displayClientMessage(Component.literal(line), false);
+            for (Component line : nozzle.statusComponents()) {
+                player.displayClientMessage(line, false);
             }
         }
         return InteractionResult.CONSUME;

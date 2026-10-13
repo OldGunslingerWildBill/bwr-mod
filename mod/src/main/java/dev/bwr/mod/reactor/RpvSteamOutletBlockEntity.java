@@ -1,5 +1,9 @@
 package dev.bwr.mod.reactor;
 
+import net.minecraft.network.chat.Component;
+
+import dev.bwr.mod.text.BwrText;
+
 import dev.bwr.core.PhysicalConstants;
 import dev.bwr.core.thermal.Saturation;
 import dev.bwr.mod.registry.BwrBlockEntities;
@@ -527,41 +531,54 @@ public class RpvSteamOutletBlockEntity extends BlockEntity {
 
     /** Lines shown when a player right-clicks the nozzle. */
     public List<String> statusLines() {
-        List<String> out = new ArrayList<>();
+        return BwrText.english(statusComponents());
+    }
+
+    public List<Component> statusComponents() {
+        List<Component> out = new ArrayList<>();
         boolean live = isPartOfFormedReactor();
-        out.add(String.format("RPV steam nozzle: always open, passing %.1f kg/s. Control steam with an MSIV downstream.",
-                live ? lastFlowKgPerS : 0.0));
+        out.add(BwrText.tr(
+                "status.bwr.rpv_steam_outlet.rpv_steam_nozzle_always_open_passing_kg_s",
+                "RPV steam nozzle: always open, passing %s kg/s. Control steam with an MSIV downstream.",
+                String.format(java.util.Locale.ROOT, "%.1f", live ? lastFlowKgPerS : 0.0)));
         if (!live) {
-            out.add("Not part of a formed reactor. A nozzle only carries steam when it is"
-                    + " built into a reactor vessel shell that has actually assembled;"
-                    + " right-click the controller while sneaking to see what is missing.");
+            out.add(BwrText.tr(
+                    "status.bwr.rpv_steam_outlet.not_part_of_a_formed_reactor_a_nozzle",
+                    "Not part of a formed reactor. A nozzle only carries steam when it is built into a reactor vessel shell that has actually assembled; right-click the controller while sneaking to see what is missing."));
         }
         if (!steamLineAttached) {
-            out.add("No main steam line on any face, so this nozzle passes nothing."
-                    + " Weld a pressurised steam tube, an MSIV, an SRV or a turbine steam"
-                    + " outlet to it.");
+            out.add(BwrText.tr(
+                    "status.bwr.rpv_steam_outlet.no_main_steam_line_on_any_face_so",
+                    "No main steam line on any face, so this nozzle passes nothing. Weld a pressurised steam tube, an MSIV, an SRV or a turbine steam outlet to it."));
         } else {
             // Where the pipe goes, which is the thing a player cannot see from
             // outside and the thing that decides where the steam ends up.
-            out.add(String.format(
-                    "Line downstream: %d block(s), %d isolation valve(s) with the tightest"
-                            + " %.0f%% open, %d turbine steam outlet(s) on the far end",
-                    getLineBlockCount(), getLineIsolationValveCount(),
-                    getLineOpenFraction() * 100.0, getLineTurbineOutletCount()));
+            out.add(BwrText.tr(
+                    "status.bwr.rpv_steam_outlet.line_downstream_block_s_isolation_valve_s_with",
+                    "Line downstream: %s block(s), %s isolation valve(s) with the tightest %s%% open, %s turbine steam outlet(s) on the far end",
+                    String.format(java.util.Locale.ROOT, "%d", getLineBlockCount()),
+                    String.format(java.util.Locale.ROOT, "%d", getLineIsolationValveCount()),
+                    String.format(java.util.Locale.ROOT, "%.0f", getLineOpenFraction() * 100.0),
+                    String.format(java.util.Locale.ROOT, "%d", getLineTurbineOutletCount())));
             if (getLineTurbineOutletCount() == 0) {
-                out.add("Nothing on this line takes the steam, so all of it is lost to the"
-                        + " condenser. Run the line to a turbine steam outlet to put it"
-                        + " through a turbine.");
+                out.add(BwrText.tr(
+                        "status.bwr.rpv_steam_outlet.nothing_on_this_line_takes_the_steam_so",
+                        "Nothing on this line takes the steam, so all of it is lost to the condenser. Run the line to a turbine steam outlet to put it through a turbine."));
             }
             if (isLineTruncated()) {
-                out.add("The steam line is longer than " + SteamLineNetwork.MAX_LINE_BLOCKS
-                        + " blocks; only the first " + SteamLineNetwork.MAX_LINE_BLOCKS
-                        + " were surveyed, so valves and outlets past that are not counted.");
+                out.add(BwrText.tr(
+                        "status.bwr.rpv_steam_outlet.the_steam_line_is_longer_than_blocks_only",
+                        "The steam line is longer than %s blocks; only the first %s were surveyed, so valves and outlets past that are not counted.",
+                        SteamLineNetwork.MAX_LINE_BLOCKS,
+                        SteamLineNetwork.MAX_LINE_BLOCKS));
             }
         }
-        out.add(String.format(
-                "Rated %.0f kg/s fully open at %.0f psig; %d nozzles pass rated steam flow",
-                CAPACITY_KG_PER_S, PhysicalConstants.RATED_DOME_PRESSURE_PSIG, MAIN_STEAM_LINES));
+        out.add(BwrText.tr(
+                "status.bwr.rpv_steam_outlet.rated_kg_s_fully_open_at_psig_nozzles",
+                "Rated %s kg/s fully open at %s psig; %s nozzles pass rated steam flow",
+                String.format(java.util.Locale.ROOT, "%.0f", CAPACITY_KG_PER_S),
+                String.format(java.util.Locale.ROOT, "%.0f", PhysicalConstants.RATED_DOME_PRESSURE_PSIG),
+                String.format(java.util.Locale.ROOT, "%d", MAIN_STEAM_LINES)));
 
         return out;
     }

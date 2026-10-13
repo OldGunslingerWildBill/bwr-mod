@@ -1,5 +1,8 @@
 package dev.bwr.mod.containment;
 
+import dev.bwr.mod.text.BwrText;
+import net.minecraft.network.chat.Component;
+
 import dev.bwr.mod.reactor.FormedReactorRegistry;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import dev.bwr.mod.reactor.RpvSteamOutletBlockEntity;
@@ -248,26 +251,40 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     }
 
     public List<String> statusLines() {
-        List<String> lines = new ArrayList<>();
-        lines.add(sealed ? "Containment sealed" : "Containment leaking");
-        if (scan != null) lines.add("Survey in progress: " + scan.visited.size() + " cells");
-        if (stale) lines.add("Survey stale: a boundary chunk is unloaded");
-        if (leak != null) lines.add("Leak at " + leak.getX() + ", " + leak.getY() + ", " + leak.getZ());
-        if (sealed) lines.add("Free volume: " + freeVolume + " m3");
-        if (weakest != null) lines.add("Weakest spot: " + weakest.position().toShortString()
-                + " " + String.format(java.util.Locale.ROOT, "%.1f psig", weakest.ratingPsig())
-                + " (" + weakest.layers() + " layers" + (weakest.deep() ? ", deep" : "") + ")");
-        lines.add("Openings: " + openings().size());
-        lines.add("Linked reactors: " + linkedReactors.size() + "; suppression pools: " + linkedPools.size());
+        return BwrText.english(statusComponents());
+    }
+
+    public List<Component> statusComponents() {
+        List<Component> lines = new ArrayList<>();
+        lines.add((sealed ? BwrText.tr("status.bwr.containment_controller.containment_sealed", "Containment sealed") : BwrText.tr("status.bwr.containment_controller.containment_leaking", "Containment leaking")));
+        if (scan != null) lines.add(BwrText.tr("status.bwr.containment_controller.survey_in_progress_cells", "Survey in progress: %s cells" , scan.visited.size()));
+        if (stale) lines.add(BwrText.tr(
+                "status.bwr.containment_controller.survey_stale_a_boundary_chunk_is_unloaded",
+                "Survey stale: a boundary chunk is unloaded"));
+        if (leak != null) lines.add(BwrText.tr("status.bwr.containment_controller.leak_at", "Leak at %s, %s, %s" , leak.getX(), leak.getY(), leak.getZ()));
+        if (sealed) lines.add(BwrText.tr("status.bwr.containment_controller.free_volume_m3", "Free volume: %s m3" , freeVolume));
+        if (weakest != null) lines.add(BwrText.tr("status.bwr.containment_controller.weakest_spot_layers", "Weakest spot: %s %s (%s layers%s)" , weakest.position().toShortString(), BwrText.tr(
+                "status.bwr.containment_controller.psig",
+                "%s psig",
+                String.format(java.util.Locale.ROOT, "%.1f", weakest.ratingPsig())), weakest.layers(), (weakest.deep() ? BwrText.tr("status.bwr.containment_controller.deep", ", deep") : Component.empty())));
+        lines.add(BwrText.tr("status.bwr.containment_controller.openings", "Openings: %s" , openings().size()));
+        lines.add(BwrText.tr(
+                "status.bwr.containment_controller.linked_reactors_suppression_pools",
+                "Linked reactors: %s; suppression pools: %s",
+                linkedReactors.size(),
+                linkedPools.size()));
         if (level != null) for (BlockPos reactorPos : linkedReactors) {
             if (!level.isLoaded(reactorPos)
                     || !(level.getBlockEntity(reactorPos) instanceof ReactorControllerBlockEntity reactor)
                     || !reactor.isFormed()) continue;
             var gas = reactor.core().getContainment();
-            lines.add(String.format(java.util.Locale.ROOT,
-                    "Atmosphere: H2 %.2f%%, O2 %.2f%%, drywell %.2f / wetwell %.2f psig",
-                    gas.getHydrogenPercent(), gas.getOxygenPercent(),
-                    gas.getDrywellPressurePsig(), gas.getWetwellPressurePsig()));
+            lines.add(BwrText.tr(
+                    "status.bwr.containment_controller.atmosphere_h2_2_rywell_wetwell_psig",
+                    "Atmosphere: H2 %s%%, O2 %s%%, drywell %s / wetwell %s psig",
+                    String.format(java.util.Locale.ROOT, "%.2f", gas.getHydrogenPercent()),
+                    String.format(java.util.Locale.ROOT, "%.2f", gas.getOxygenPercent()),
+                    String.format(java.util.Locale.ROOT, "%.2f", gas.getDrywellPressurePsig()),
+                    String.format(java.util.Locale.ROOT, "%.2f", gas.getWetwellPressurePsig())));
             break;
         }
         return lines;

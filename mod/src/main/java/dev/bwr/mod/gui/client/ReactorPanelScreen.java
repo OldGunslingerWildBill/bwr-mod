@@ -179,10 +179,11 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 && mouseX < leftPos+248 && mouseY >= topPos+160 && mouseY < topPos+188;
         if (!menu.formed) {
             int y = 40;
-            text(graphics, "Reactor not formed.", 12, y, ALARM);
-            for (String line : menu.statusLines) {
+            text(graphics, Component.translatable("status.bwr.reactor_controller.reactor_not_formed").getString(), 12, y, ALARM);
+            for (Component line : menu.statusLines) {
                 y += 10;
-                text(graphics, line.length() > 78 ? line.substring(0, 78) : line, 12, y, TEXT);
+                String localized = line.getString();
+                text(graphics, localized.length() > 78 ? localized.substring(0, 78) : localized, 12, y, TEXT);
             }
             return;
         }

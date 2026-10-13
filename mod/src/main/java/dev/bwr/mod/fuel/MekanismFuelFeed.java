@@ -1,5 +1,8 @@
 package dev.bwr.mod.fuel;
 
+import dev.bwr.mod.text.BwrText;
+import net.minecraft.network.chat.Component;
+
 import dev.bwr.mod.registry.BwrBlockEntities;
 import mekanism.api.Action;
 import mekanism.api.AutomationType;
@@ -284,21 +287,26 @@ public final class MekanismFuelFeed implements FuelFeed, IChemicalHandler, ICont
     }
 
     @Override
-    public List<String> statusLines() {
-        List<String> out = new ArrayList<>();
-        out.add(describe("Matrix", matrixTank));
-        out.add(describe("Fissile", fissileTank));
+    public List<Component> statusComponents() {
+        List<Component> out = new ArrayList<>();
+        out.add(describe(BwrText.tr("status.bwr.mekanism_fuel_feed.matrix", "Matrix"), matrixTank));
+        out.add(describe(BwrText.tr("status.bwr.mekanism_fuel_feed.fissile", "Fissile"), fissileTank));
         return out;
     }
 
-    private static String describe(String label, IChemicalTank tank) {
+    private static Component describe(Component label, IChemicalTank tank) {
         if (tank.isEmpty()) {
-            return label + " tank empty";
+            return BwrText.tr("status.bwr.mekanism_fuel_feed.tank_empty", "%s tank empty" , label);
         }
         ResourceLocation name = MekanismAPI.CHEMICAL_REGISTRY.getKey(tank.getStack().getChemical());
-        return String.format(Locale.ROOT, "%s tank: %,d / %,d mB of %s (%.1f kg HM)",
-                label, tank.getStored(), tank.getCapacity(),
-                name == null ? "?" : name.getPath(), availableHeavyMetalKg(tank));
+        return BwrText.tr(
+                "status.bwr.mekanism_fuel_feed.tank_mb_of_kg_hm",
+                "%s tank: %s / %s mB of %s (%s kg HM)",
+                label,
+                String.format(java.util.Locale.ROOT, "%,d", tank.getStored()),
+                String.format(java.util.Locale.ROOT, "%,d", tank.getCapacity()),
+                (name == null ? BwrText.tr("status.bwr.mekanism_fuel_feed.value", "?") : Component.literal(name.getPath())),
+                String.format(java.util.Locale.ROOT, "%.1f", availableHeavyMetalKg(tank)));
     }
 
     @Override

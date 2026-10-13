@@ -1,5 +1,9 @@
 package dev.bwr.mod.fuel;
 
+import net.minecraft.network.chat.Component;
+
+import dev.bwr.mod.text.BwrText;
+
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.registry.BwrItems;
 import net.minecraft.core.BlockPos;
@@ -192,20 +196,32 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
     }
 
     public List<String> statusLines() {
-        List<String> out = new ArrayList<>();
-        out.addAll(feed.statusLines());
-        out.add(String.format(Locale.ROOT, "Batch %.1f / %.0f kg HM at %.2f%% fissile",
-                batchHeavyMetalKg, FuelFabrication.batchHeavyMetalKg(),
-                batchEnrichmentWeightFraction() * 100.0));
+        return BwrText.english(statusComponents());
+    }
+
+    public List<Component> statusComponents() {
+        List<Component> out = new ArrayList<>();
+        out.addAll(feed.statusComponents());
+        out.add(BwrText.tr(
+                "status.bwr.fuel_fabricator.batch_kg_hm_at_issile",
+                "Batch %s / %s kg HM at %s%% fissile",
+                String.format(java.util.Locale.ROOT, "%.1f", batchHeavyMetalKg),
+                String.format(java.util.Locale.ROOT, "%.0f", FuelFabrication.batchHeavyMetalKg()),
+                String.format(java.util.Locale.ROOT, "%.2f", batchEnrichmentWeightFraction() * 100.0)));
         if (batchHeavyMetalKg > 0.0) {
-            out.add("Would fabricate: " + FuelFabrication.fabricate(
-                    batchHeavyMetalKg, batchFissileKg, batchPlutoniumKg).fuelTypeName());
+            out.add(BwrText.tr("status.bwr.fuel_fabricator.would_fabricate", "Would fabricate: %s" , FuelFabrication.fabricate(
+                    batchHeavyMetalKg, batchFissileKg, batchPlutoniumKg).fuelTypeName()));
         }
-        out.add(String.format(Locale.ROOT, "%,d / %,d FE",
-                energy.getEnergyStored(), energy.getMaxEnergyStored()));
+        out.add(BwrText.tr(
+                "status.bwr.fuel_fabricator.fe",
+                "%s / %s FE",
+                String.format(java.util.Locale.ROOT, "%,d", energy.getEnergyStored()),
+                String.format(java.util.Locale.ROOT, "%,d", energy.getMaxEnergyStored())));
         ItemStack held = output.getStackInSlot(OUTPUT_SLOT);
         if (!held.isEmpty()) {
-            out.add("Output slot holds a finished bundle; the machine is stopped until it is taken.");
+            out.add(BwrText.tr(
+                    "status.bwr.fuel_fabricator.output_slot_holds_a_finished_bundle_the_machine",
+                    "Output slot holds a finished bundle; the machine is stopped until it is taken."));
         }
         return out;
     }

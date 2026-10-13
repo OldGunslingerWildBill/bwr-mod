@@ -1,5 +1,7 @@
 package dev.bwr.mod.reactor;
 
+import dev.bwr.mod.text.BwrText;
+
 import dev.bwr.core.ReactorCore;
 import dev.bwr.core.accident.ContainmentAtmosphere;
 import dev.bwr.core.accident.SevereAccident;
@@ -106,20 +108,26 @@ public final class ReactorSevereAccidentEffects {
 
     private static void onCoreEvent(ServerLevel level, BlockPos pos, SevereAccident.Event event) {
         switch (event) {
-            case CLADDING_FAILURE -> notice(level, pos,
-                    "Reactor: fuel cladding failure. Coolant activity rising.");
-            case FUEL_MELT_ONSET -> notice(level, pos,
-                    "Reactor: core melt in progress.");
+            case CLADDING_FAILURE -> notice(level, pos, BwrText.tr(
+                    "status.bwr.reactor_severe_accident_effects.reactor_fuel_cladding_failure_coolant_activity_rising",
+                    "Reactor: fuel cladding failure. Coolant activity rising."));
+            case FUEL_MELT_ONSET -> notice(level, pos, BwrText.tr("status.bwr.reactor_severe_accident_effects.reactor_core_melt_in_progress", "Reactor: core melt in progress."));
             case CORE_RELOCATION -> {
-                notice(level, pos, "Reactor: molten core relocating to the lower plenum.");
+                notice(level, pos, BwrText.tr(
+                        "status.bwr.reactor_severe_accident_effects.reactor_molten_core_relocating_to_the_lower_plenum",
+                        "Reactor: molten core relocating to the lower plenum."));
                 level.playSound(null, pos, SoundEvents.ANVIL_LAND, SoundSource.BLOCKS, 3f, 0.5f);
             }
             case LOWER_HEAD_FAILURE -> {
-                notice(level, pos, "Reactor: VESSEL LOWER HEAD FAILED. Corium on the drywell floor.");
+                notice(level, pos, BwrText.tr(
+                        "status.bwr.reactor_severe_accident_effects.reactor_vessel_lower_head_failed_corium_on_the",
+                        "Reactor: VESSEL LOWER HEAD FAILED. Corium on the drywell floor."));
                 level.playSound(null, pos, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 8f, 0.4f);
             }
             case BASEMAT_MELT_THROUGH -> {
-                notice(level, pos, "Reactor: corium has penetrated the basemat. Containment lost.");
+                notice(level, pos, BwrText.tr(
+                        "status.bwr.reactor_severe_accident_effects.reactor_corium_has_penetrated_the_basemat_containment_lost",
+                        "Reactor: corium has penetrated the basemat. Containment lost."));
                 level.playSound(null, pos, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 6f, 0.3f);
             }
         }
@@ -128,29 +136,34 @@ public final class ReactorSevereAccidentEffects {
     private static void onContainmentEvent(ServerLevel level, BlockPos pos, ContainmentAtmosphere.Event event) {
         double x = pos.getX() + 0.5, y = pos.getY() + 2.0, z = pos.getZ() + 0.5;
         switch (event) {
-            case HYDROGEN_FLAMMABLE -> notice(level, pos,
-                    "Containment: hydrogen concentration is flammable.");
+            case HYDROGEN_FLAMMABLE -> notice(level, pos, BwrText.tr(
+                    "status.bwr.reactor_severe_accident_effects.containment_hydrogen_concentration_is_flammable",
+                    "Containment: hydrogen concentration is flammable."));
             case HYDROGEN_DEFLAGRATION -> {
-                notice(level, pos, "Containment: HYDROGEN BURN.");
+                notice(level, pos, BwrText.tr("status.bwr.reactor_severe_accident_effects.containment_hydrogen_burn", "Containment: HYDROGEN BURN."));
                 level.explode(null, x, y, z, 4.0f, Level.ExplosionInteraction.NONE);
             }
             case HYDROGEN_DETONATION -> {
-                notice(level, pos, "Containment: HYDROGEN DETONATION. Containment destroyed.");
+                notice(level, pos, BwrText.tr(
+                        "status.bwr.reactor_severe_accident_effects.containment_hydrogen_detonation_containment_destroyed",
+                        "Containment: HYDROGEN DETONATION. Containment destroyed."));
                 level.explode(null, x, y, z, 10.0f, Level.ExplosionInteraction.NONE);
                 level.playSound(null, pos, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 32f, 0.5f);
             }
             case CONTAINMENT_OVERPRESSURE_FAILURE -> {
-                notice(level, pos, "Containment: OVERPRESSURE FAILURE. Uncontrolled release.");
+                notice(level, pos, BwrText.tr(
+                        "status.bwr.reactor_severe_accident_effects.containment_overpressure_failure_uncontrolled_release",
+                        "Containment: OVERPRESSURE FAILURE. Uncontrolled release."));
                 level.playSound(null, pos, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 12f, 0.6f);
             }
         }
     }
 
-    private static void notice(ServerLevel level, BlockPos pos, String text) {
+    private static void notice(ServerLevel level, BlockPos pos, Component text) {
         double limit = NOTICE_DISTANCE_BLOCKS * NOTICE_DISTANCE_BLOCKS;
         for (ServerPlayer player : level.players()) {
             if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= limit) {
-                player.displayClientMessage(Component.literal(text), false);
+                player.displayClientMessage(text, false);
             }
         }
     }

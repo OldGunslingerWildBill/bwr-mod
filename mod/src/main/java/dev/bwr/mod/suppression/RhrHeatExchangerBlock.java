@@ -1,5 +1,7 @@
 package dev.bwr.mod.suppression;
 
+import dev.bwr.mod.text.BwrText;
+
 import com.mojang.serialization.MapCodec;
 import dev.bwr.mod.eccs.*;
 import dev.bwr.mod.registry.BwrBlockEntities;
@@ -45,9 +47,13 @@ public class RhrHeatExchangerBlock extends BaseEntityBlock implements ProcessAss
         return InteractionResult.SUCCESS;
     }
     @Override public void appendHoverText(net.minecraft.world.item.ItemStack stack,net.minecraft.world.item.Item.TooltipContext context,java.util.List<net.minecraft.network.chat.Component> lines,net.minecraft.world.item.TooltipFlag flag){
-        lines.add(net.minecraft.network.chat.Component.literal("Pool water: red IN / amber OUT. Use an RHR pump."));
-        lines.add(net.minecraft.network.chat.Component.literal("Cooling water: blue IN / cyan OUT. Separate circuit."));
-        lines.add(net.minecraft.network.chat.Component.literal("Up to 27.1 MW; requires both water circuits."));
+        lines.add(BwrText.tr(
+                "status.bwr.rhr_heat_exchanger.pool_water_red_in_amber_out_use_an",
+                "Pool water: red IN / amber OUT. Use an RHR pump."));
+        lines.add(BwrText.tr(
+                "status.bwr.rhr_heat_exchanger.cooling_water_blue_in_cyan_out_separate_circuit",
+                "Cooling water: blue IN / cyan OUT. Separate circuit."));
+        lines.add(BwrText.tr("status.bwr.rhr_heat_exchanger.up_to_27_1_mw_requires_both_water", "Up to 27.1 MW; requires both water circuits."));
         super.appendHoverText(stack,context,lines,flag);
     }
 }

@@ -175,8 +175,8 @@ public abstract class BwrMenu extends AbstractContainerMenu {
      * constraints — a head that cannot come off against pressure — never for
      * advice about whether an action is wise.
      */
-    protected static void refuse(ServerPlayer who, String reason) {
-        who.displayClientMessage(Component.literal(reason), false);
+    protected static void refuse(ServerPlayer who, Component reason) {
+        who.displayClientMessage(reason, false);
     }
 
     // -----------------------------------------------------------------

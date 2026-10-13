@@ -1,5 +1,7 @@
 package dev.bwr.mod.containment;
 
+import dev.bwr.mod.text.BwrText;
+
 import com.mojang.serialization.MapCodec;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -89,7 +91,7 @@ public final class ContainmentAirlockBlock extends BaseEntityBlock {
         boolean ok=depth==0?owner.setInnerOpen(!owner.innerOpen(),false)
                 :depth==2&&owner.setOuterOpen(!owner.outerOpen(),false);
         if(player instanceof ServerPlayer server&&depth!=1)
-            server.displayClientMessage(net.minecraft.network.chat.Component.literal(ok?"Airlock leaf moved":"Interlock: close the other leaf first"),true);
+            server.displayClientMessage((ok ? BwrText.tr("status.bwr.containment_airlock.airlock_leaf_moved", "Airlock leaf moved") : BwrText.tr("status.bwr.containment_airlock.interlock_close_the_other_leaf_first", "Interlock: close the other leaf first")),true);
         return depth==1?InteractionResult.PASS:InteractionResult.CONSUME;
     }
     @Override protected void neighborChanged(BlockState state,Level level,BlockPos pos,Block neighbour,BlockPos changed,boolean moving){

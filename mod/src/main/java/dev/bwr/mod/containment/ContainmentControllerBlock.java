@@ -39,7 +39,7 @@ public final class ContainmentControllerBlock extends BaseEntityBlock {
                                                            Player player, BlockHitResult hit) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         if (level.getBlockEntity(pos) instanceof ContainmentControllerBlockEntity controller)
-            for (String line : controller.statusLines()) player.displayClientMessage(Component.literal(line), false);
+            for (Component line : controller.statusComponents()) player.displayClientMessage(line, false);
         return InteractionResult.CONSUME;
     }
 

@@ -1,5 +1,8 @@
 package dev.bwr.mod.steam;
 
+import dev.bwr.mod.text.BwrText;
+import net.minecraft.network.chat.Component;
+
 import dev.bwr.core.PhysicalConstants;
 import dev.bwr.core.ReactorCore;
 import dev.bwr.mod.eccs.PlantActuators;
@@ -889,16 +892,29 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
 
     /** Lines shown when a player right-clicks the outlet. */
     public List<String> statusLines() {
-        List<String> out = new ArrayList<>();
+        return BwrText.english(statusComponents());
+    }
+
+    public List<Component> statusComponents() {
+        List<Component> out = new ArrayList<>();
         if(pumpExhaustReceiver) {
-            out.add(String.format("Feed-pump exhaust receiver: commanded %.1f kg/s, received %.1f kg/s; buffer %d/%d mB",
-                    commandedFlowKgPerS,deliveredFlowKgPerS,bufferedMilliBuckets,BUFFER_CAPACITY_MB));
-            out.add("Receives only piped pump exhaust. Pick up and place again to return this outlet to main-steam service.");
+            out.add(BwrText.tr(
+                    "status.bwr.turbine_steam_outlet.feed_pump_exhaust_receiver_commanded_kg_s_received",
+                    "Feed-pump exhaust receiver: commanded %s kg/s, received %s kg/s; buffer %s/%s mB",
+                    String.format(java.util.Locale.ROOT, "%.1f", commandedFlowKgPerS),
+                    String.format(java.util.Locale.ROOT, "%.1f", deliveredFlowKgPerS),
+                    String.format(java.util.Locale.ROOT, "%d", bufferedMilliBuckets),
+                    String.format(java.util.Locale.ROOT, "%d", BUFFER_CAPACITY_MB)));
+            out.add(BwrText.tr(
+                    "status.bwr.turbine_steam_outlet.receives_only_piped_pump_exhaust_pick_up_and",
+                    "Receives only piped pump exhaust. Pick up and place again to return this outlet to main-steam service."));
             out.addAll(mekanismBoundaryLines());
             return out;
         }
         if (!isAttached()) {
-            out.add("Turbine steam outlet: not attached to a formed reactor.");
+            out.add(BwrText.tr(
+                    "status.bwr.turbine_steam_outlet.turbine_steam_outlet_not_attached_to_a_formed",
+                    "Turbine steam outlet: not attached to a formed reactor."));
             // The downstream half is still worth reporting. An outlet with no
             // reactor behind it and an outlet with no pipe in front of it are
             // different problems with the same symptom, and a player who has
@@ -906,10 +922,17 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
             out.addAll(mekanismBoundaryLines());
             return out;
         }
-        out.add(String.format("Turbine steam outlet: commanded %.1f kg/s, delivering %.1f kg/s",
-                commandedFlowKgPerS, deliveredFlowKgPerS));
-        out.add(String.format("Core boiling %.1f kg/s; buffer %d/%d mB",
-                steamProductionKgPerS, bufferedMilliBuckets, BUFFER_CAPACITY_MB));
+        out.add(BwrText.tr(
+                "status.bwr.turbine_steam_outlet.turbine_steam_outlet_commanded_kg_s_delivering_kg",
+                "Turbine steam outlet: commanded %s kg/s, delivering %s kg/s",
+                String.format(java.util.Locale.ROOT, "%.1f", commandedFlowKgPerS),
+                String.format(java.util.Locale.ROOT, "%.1f", deliveredFlowKgPerS)));
+        out.add(BwrText.tr(
+                "status.bwr.turbine_steam_outlet.core_boiling_kg_s_buffer_mb",
+                "Core boiling %s kg/s; buffer %s/%s mB",
+                String.format(java.util.Locale.ROOT, "%.1f", steamProductionKgPerS),
+                String.format(java.util.Locale.ROOT, "%d", bufferedMilliBuckets),
+                String.format(java.util.Locale.ROOT, "%d", BUFFER_CAPACITY_MB)));
         // Which of the two modes this outlet is in, because it decides where its
         // steam comes from and it is not visible from outside the block.
         if (isNozzleFed()) {
@@ -918,36 +941,40 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
             // outlet; what it took is how much of that ceiling the commanded flow
             // and the buffer actually reached. A player whose turbine is starved
             // needs to know which of the two is short.
-            out.add(String.format(
-                    "Fed by %d RPV steam nozzle(s) along the steam line, which are passing"
-                            + " %.1f kg/s; took %.1f kg/s of it. Open the nozzles further or"
-                            + " fit more of them to raise the ceiling.",
-                    getFeedNozzleCount(), nozzleFlowKgPerS(), getNozzleSupplyKgPerS()));
+            out.add(BwrText.tr(
+                    "status.bwr.turbine_steam_outlet.fed_by_rpv_steam_nozzle_s_along_the",
+                    "Fed by %s RPV steam nozzle(s) along the steam line, which are passing %s kg/s; took %s kg/s of it. Open the nozzles further or fit more of them to raise the ceiling.",
+                    String.format(java.util.Locale.ROOT, "%d", getFeedNozzleCount()),
+                    String.format(java.util.Locale.ROOT, "%.1f", nozzleFlowKgPerS()),
+                    String.format(java.util.Locale.ROOT, "%.1f", getNozzleSupplyKgPerS())));
         } else {
-            out.add("No RPV steam nozzle on this outlet's steam line, so it draws on the"
-                    + " vessel directly. Run pressurised steam tube from a nozzle in the"
-                    + " vessel shell to put the two in series.");
+            out.add(BwrText.tr(
+                    "status.bwr.turbine_steam_outlet.no_rpv_steam_nozzle_on_this_outlet_s",
+                    "No RPV steam nozzle on this outlet's steam line, so it draws on the vessel directly. Run pressurised steam tube from a nozzle in the vessel shell to put the two in series."));
         }
         if (getIsolationValveCount() > 0) {
-            out.add(String.format("%d isolation valve(s) on the line, %.0f%% open%s",
-                    getIsolationValveCount(), getMainSteamLineOpenFraction() * 100.0,
-                    isNozzleFed() ? " (throttling at the nozzle, upstream of here)" : ""));
+            out.add(BwrText.tr("status.bwr.turbine_steam_outlet.isolation_valve_s_on_the_line_pen", "%s isolation valve(s) on the line, %s%% open%s" , String.format(java.util.Locale.ROOT, "%d", getIsolationValveCount()), String.format(java.util.Locale.ROOT, "%.0f", getMainSteamLineOpenFraction() * 100.0), (isNozzleFed() ? BwrText.tr(
+                    "status.bwr.turbine_steam_outlet.throttling_at_the_nozzle_upstream_of_here",
+                    " (throttling at the nozzle, upstream of here)") : Component.empty())));
         }
         // Whether the reactor end is doing anything at all, which is the half of
         // "it isn't connecting" that has nothing to do with Mekanism. Only the
         // case that is actually in front of the player is printed; the figures
         // that separate the causes are all on the lines above.
         if (!(commandedFlowKgPerS > 0.0)) {
-            out.add("Commanded flow is zero, so nothing is being asked of this outlet."
-                    + " Give it a redstone signal, or command a flow from a computer.");
+            out.add(BwrText.tr(
+                    "status.bwr.turbine_steam_outlet.commanded_flow_is_zero_so_nothing_is_being",
+                    "Commanded flow is zero, so nothing is being asked of this outlet. Give it a redstone signal, or command a flow from a computer."));
         } else if (!(deliveredFlowKgPerS > 0.0)) {
-            out.add("Commanded steam is not reaching the buffer: either the buffer is full"
-                    + " because nothing downstream is taking any, or the isolation valves"
-                    + " are shut, or the nozzles on this line are passing nothing."
-                    + " The figures above say which.");
+            out.add(BwrText.tr(
+                    "status.bwr.turbine_steam_outlet.commanded_steam_is_not_reaching_the_buffer_either",
+                    "Commanded steam is not reaching the buffer: either the buffer is full because nothing downstream is taking any, or the isolation valves are shut, or the nozzles on this line are passing nothing. The figures above say which."));
         }
-        out.add(String.format("Exchange rate %.0f mB per kg (%.0f mB/t per kg/s)",
-                MILLIBUCKETS_PER_KILOGRAM, MILLIBUCKETS_PER_TICK_PER_KG_PER_S));
+        out.add(BwrText.tr(
+                "status.bwr.turbine_steam_outlet.exchange_rate_mb_per_kg_mb_t_per",
+                "Exchange rate %s mB per kg (%s mB/t per kg/s)",
+                String.format(java.util.Locale.ROOT, "%.0f", MILLIBUCKETS_PER_KILOGRAM),
+                String.format(java.util.Locale.ROOT, "%.0f", MILLIBUCKETS_PER_TICK_PER_KG_PER_S)));
         out.addAll(mekanismBoundaryLines());
         return out;
     }
@@ -963,10 +990,12 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
      * thing take steam, and is any steam actually crossing. Every one of them is
      * a measurement of what happened; not one of them decides anything.
      */
-    private List<String> mekanismBoundaryLines() {
-        List<String> out = new ArrayList<>();
+    private List<Component> mekanismBoundaryLines() {
+        List<Component> out = new ArrayList<>();
         if (!dev.bwr.mod.BwrMod.isMekanismPresent()) {
-            out.add("Mekanism is not installed; this outlet is inert.");
+            out.add(BwrText.tr(
+                    "status.bwr.turbine_steam_outlet.mekanism_is_not_installed_this_outlet_is_inert",
+                    "Mekanism is not installed; this outlet is inert."));
             return out;
         }
         if (!mekanismSteamKnown) {
@@ -974,36 +1003,41 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
             // way the boundary cannot name what it would hand over, and saying so
             // is far better than the "nothing is connected" the counts below
             // would otherwise report.
-            out.add("Mekanism is installed but this outlet has not yet found a chemical"
-                    + " registered as mekanism:steam, so it has nothing it can hand over.");
+            out.add(BwrText.tr(
+                    "status.bwr.turbine_steam_outlet.mekanism_is_installed_but_this_outlet_has_not",
+                    "Mekanism is installed but this outlet has not yet found a chemical registered as mekanism:steam, so it has nothing it can hand over."));
             return out;
         }
         if (adjacentAcceptors == 0) {
-            out.add("No Mekanism chemical acceptor on any of the six faces. Put a Mekanism"
-                    + " pressurised tube or a turbine valve flat against this block — our own"
-                    + " pressurised steam tube is structural and carries nothing, so it is the"
-                    + " wrong pipe for this end of the line.");
+            out.add(BwrText.tr(
+                    "status.bwr.turbine_steam_outlet.no_mekanism_chemical_acceptor_on_any_of_the",
+                    "No Mekanism chemical acceptor on any of the six faces. Put a Mekanism pressurised tube or a turbine valve flat against this block — our own pressurised steam tube is structural and carries nothing, so it is the wrong pipe for this end of the line."));
         } else if (acceptorsTakingSteam == 0) {
             // Deliberately "will not accept a push" rather than "is not taking
             // steam". Something that only ever extracts would be counted here
             // and would still be emptying the buffer, so the claim is kept to
             // what was actually measured and the next line settles it.
-            out.add(String.format(
-                    "%d Mekanism acceptor(s) against this block, none of which will accept a"
-                            + " push right now: full, holding something that is not steam, or"
-                            + " built to extract rather than be fed.",
-                    adjacentAcceptors));
+            out.add(BwrText.tr(
+                    "status.bwr.turbine_steam_outlet.mekanism_acceptor_s_against_this_block_none_of",
+                    "%s Mekanism acceptor(s) against this block, none of which will accept a push right now: full, holding something that is not steam, or built to extract rather than be fed.",
+                    String.format(java.util.Locale.ROOT, "%d", adjacentAcceptors)));
         } else {
-            out.add(String.format(
-                    "%d of %d Mekanism acceptor(s) accepting a push; pushed %d mB last tick.",
-                    acceptorsTakingSteam, adjacentAcceptors, pushedMilliBuckets));
+            out.add(BwrText.tr(
+                    "status.bwr.turbine_steam_outlet.of_mekanism_acceptor_s_accepting_a_push_pushed",
+                    "%s of %s Mekanism acceptor(s) accepting a push; pushed %s mB last tick.",
+                    String.format(java.util.Locale.ROOT, "%d", acceptorsTakingSteam),
+                    String.format(java.util.Locale.ROOT, "%d", adjacentAcceptors),
+                    String.format(java.util.Locale.ROOT, "%d", pushedMilliBuckets)));
         }
         // Push and extraction drain the same buffer, so this one figure covers a
         // tube set to pull just as well as it covers what the outlet pushed out.
         // It is the line that answers "is any steam actually crossing", and it
         // is the only one of these that cannot be fooled by how it crossed.
-        out.add(String.format("Steam leaving the buffer %d mB/t (%.1f kg/s).",
-                drainedLastTickMb, drainedLastTickMb / MILLIBUCKETS_PER_TICK_PER_KG_PER_S));
+        out.add(BwrText.tr(
+                "status.bwr.turbine_steam_outlet.steam_leaving_the_buffer_mb_t_kg_s",
+                "Steam leaving the buffer %s mB/t (%s kg/s).",
+                String.format(java.util.Locale.ROOT, "%d", drainedLastTickMb),
+                String.format(java.util.Locale.ROOT, "%.1f", drainedLastTickMb / MILLIBUCKETS_PER_TICK_PER_KG_PER_S)));
         return out;
     }
 

@@ -1,5 +1,7 @@
 package dev.bwr.mod.eccs;
 
+import dev.bwr.mod.text.BwrText;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
@@ -15,8 +17,10 @@ public final class SlcTankBlock extends PumpAssemblyBlock {
     @Override protected ItemInteractionResult useItemOn(ItemStack stack,BlockState state,Level level,BlockPos pos,Player player,InteractionHand hand,BlockHitResult hit){
         if(!stack.is(dev.bwr.mod.registry.BwrItems.BORATE_CHARGE.get()))return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         if(!level.isClientSide() && controller(level,pos,state) instanceof SlcTankBlockEntity tank){
-            if(tank.addCharge()){if(!player.isCreative())stack.shrink(1);player.displayClientMessage(net.minecraft.network.chat.Component.literal("Borate charge dissolved."),true);}
-            else player.displayClientMessage(net.minecraft.network.chat.Component.literal("Add water first; leave 25 kg free. Maximum borate concentration: 13%."),true);
+            if(tank.addCharge()){if(!player.isCreative())stack.shrink(1);player.displayClientMessage(BwrText.tr("status.bwr.slc_tank.borate_charge_dissolved", "Borate charge dissolved."),true);}
+            else player.displayClientMessage(BwrText.tr(
+                    "status.bwr.slc_tank.add_water_first_leave_25_kg_free_maximum",
+                    "Add water first; leave 25 kg free. Maximum borate concentration: 13%%."),true);
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide());
     }

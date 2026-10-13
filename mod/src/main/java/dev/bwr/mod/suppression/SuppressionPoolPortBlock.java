@@ -1,5 +1,7 @@
 package dev.bwr.mod.suppression;
 
+import dev.bwr.mod.text.BwrText;
+
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.*;
 import net.minecraft.world.*;
@@ -28,14 +30,20 @@ public class SuppressionPoolPortBlock extends BaseEntityBlock {
         if(!l.isClientSide()&&l.getBlockEntity(p) instanceof SuppressionPoolPortBlockEntity port
                 &&player instanceof net.minecraft.server.level.ServerPlayer sp){
             var owner=port.owner();
-            if(owner==null)player.displayClientMessage(net.minecraft.network.chat.Component.literal("Pool not formed. Complete and fill the concrete tub; check its controller for details."),true);
+            if(owner==null)player.displayClientMessage(BwrText.tr(
+                    "status.bwr.suppression_pool_port.pool_not_formed_complete_and_fill_the_concrete",
+                    "Pool not formed. Complete and fill the concrete tub; check its controller for details."),true);
             else dev.bwr.mod.gui.SuppressionPoolMenu.open(sp,owner,p);
         }
         return InteractionResult.SUCCESS;
     }
     @Override public void appendHoverText(net.minecraft.world.item.ItemStack stack,net.minecraft.world.item.Item.TooltipContext context,java.util.List<net.minecraft.network.chat.Component> lines,net.minecraft.world.item.TooltipFlag flag){
-        lines.add(net.minecraft.network.chat.Component.literal(suction?"Blue flange: water OUT to pump suction.":"Amber flange: water IN from the return loop."));
-        lines.add(net.minecraft.network.chat.Component.literal("Place in a concrete basin wall, facing outward."));
+        lines.add((suction ? BwrText.tr("status.bwr.suppression_pool_port.blue_flange_water_out_to_pump_suction", "Blue flange: water OUT to pump suction.") : BwrText.tr(
+                "status.bwr.suppression_pool_port.amber_flange_water_in_from_the_return_loop",
+                "Amber flange: water IN from the return loop.")));
+        lines.add(BwrText.tr(
+                "status.bwr.suppression_pool_port.place_in_a_concrete_basin_wall_facing_outward",
+                "Place in a concrete basin wall, facing outward."));
         super.appendHoverText(stack,context,lines,flag);
     }
 }

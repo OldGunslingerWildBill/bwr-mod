@@ -1,6 +1,8 @@
 package dev.bwr.mod.reactor;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import dev.bwr.mod.text.BwrText;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,12 +25,15 @@ import java.util.List;
 public final class ValidationResult {
 
     /** One thing that is wrong, and where. */
-    public record Problem(BlockPos where, String message) {
+    public record Problem(BlockPos where, Component text) {
+        public String message() { return BwrText.english(text); }
+        public Component component() {
+            return where == null ? text : BwrText.tr("status.bwr.validation.at", "%s at %s, %s, %s",
+                    text, where.getX(), where.getY(), where.getZ());
+        }
         @Override
         public String toString() {
-            return where == null
-                    ? message
-                    : message + " at " + where.getX() + ", " + where.getY() + ", " + where.getZ();
+            return BwrText.english(component());
         }
     }
 
@@ -51,6 +56,10 @@ public final class ValidationResult {
      * a real one.
      */
     public ValidationResult fail(BlockPos where, String message) {
+        return fail(where, Component.literal(message));
+    }
+
+    public ValidationResult fail(BlockPos where, Component message) {
         failures.add(new Problem(where == null ? null : where.immutable(), message));
         return this;
     }
@@ -59,11 +68,17 @@ public final class ValidationResult {
         return fail(null, message);
     }
 
+    public ValidationResult fail(Component message) { return fail(null, message); }
+
     /**
      * A degradation: the multiblock forms, but something works less well. The
      * position is copied for the reason {@link #fail(BlockPos, String)} gives.
      */
     public ValidationResult degrade(BlockPos where, String message) {
+        return degrade(where, Component.literal(message));
+    }
+
+    public ValidationResult degrade(BlockPos where, Component message) {
         degradations.add(new Problem(where == null ? null : where.immutable(), message));
         return this;
     }
@@ -71,6 +86,8 @@ public final class ValidationResult {
     public ValidationResult degrade(String message) {
         return degrade(null, message);
     }
+
+    public ValidationResult degrade(Component message) { return degrade(null, message); }
 
     public boolean isValid() {
         return failures.isEmpty();
@@ -95,12 +112,16 @@ public final class ValidationResult {
 
     /** Every problem as human-readable lines, failures first. */
     public List<String> messages() {
-        List<String> out = new ArrayList<>(failures.size() + degradations.size());
+        return BwrText.english(components());
+    }
+
+    public List<Component> components() {
+        List<Component> out = new ArrayList<>(failures.size() + degradations.size());
         for (Problem p : failures) {
-            out.add("FAULT: " + p);
+            out.add(BwrText.tr("status.bwr.validation.fault", "FAULT: %s", p.component()));
         }
         for (Problem p : degradations) {
-            out.add("DEGRADED: " + p);
+            out.add(BwrText.tr("status.bwr.validation.degraded", "DEGRADED: %s", p.component()));
         }
         return out;
     }

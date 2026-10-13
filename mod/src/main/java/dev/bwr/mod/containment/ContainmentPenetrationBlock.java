@@ -41,7 +41,7 @@ public final class ContainmentPenetrationBlock extends BaseEntityBlock implement
     public Service service() { return service; }
     @Override public void appendHoverText(ItemStack stack, Item.TooltipContext context,
                                           List<Component> lines, TooltipFlag flag) {
-        lines.add(Component.literal(ContainmentPenetrationRatings.nameplate(service)));
+        lines.add(ContainmentPenetrationRatings.nameplateComponent(service));
         super.appendHoverText(stack, context, lines, flag);
     }
     public boolean hasValve() { return service == Service.STEAM || service == Service.WATER || service == Service.PASS_THROUGH; }
@@ -79,8 +79,8 @@ public final class ContainmentPenetrationBlock extends BaseEntityBlock implement
                                                           Player player, BlockHitResult hit) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         if (level.getBlockEntity(pos) instanceof ContainmentPenetrationBlockEntity penetration)
-            for (String line : penetration.statusLines())
-                player.displayClientMessage(Component.literal(line), false);
+            for (Component line : penetration.statusComponents())
+                player.displayClientMessage(line, false);
         return InteractionResult.CONSUME;
     }
     @Override protected void neighborChanged(BlockState state, Level level, BlockPos pos,

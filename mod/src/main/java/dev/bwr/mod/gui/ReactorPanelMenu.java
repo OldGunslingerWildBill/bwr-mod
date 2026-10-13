@@ -1,5 +1,7 @@
 package dev.bwr.mod.gui;
 
+import dev.bwr.mod.text.BwrText;
+
 import dev.bwr.core.ReactorCore;
 import dev.bwr.core.kinetics.RodWorth;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
@@ -72,7 +74,7 @@ public class ReactorPanelMenu extends BwrMenu {
 
     public boolean formed;
     public VesselState vesselState = VesselState.SHUTDOWN;
-    public List<String> statusLines = new ArrayList<>();
+    public List<Component> statusLines = new ArrayList<>();
 
     public double powerFractionOfRated;
     public double thermalMW;
@@ -169,10 +171,10 @@ public class ReactorPanelMenu extends BwrMenu {
         buf.writeByte(be == null ? VesselState.SHUTDOWN.ordinal() : be.vesselState().ordinal());
 
         if (!isFormed) {
-            List<String> lines = be == null ? List.of("No reactor controller here.") : be.statusLines();
+            List<Component> lines = be == null ? List.of(BwrText.tr("status.bwr.reactor_panel_menu.no_reactor_controller_here", "No reactor controller here.")) : be.statusComponents();
             buf.writeVarInt(Math.min(lines.size(), 12));
             for (int i = 0; i < Math.min(lines.size(), 12); i++) {
-                buf.writeUtf(lines.get(i), 200);
+                buf.writeUtf(Component.Serializer.toJson(lines.get(i), level().registryAccess()), 8192);
             }
             return;
         }
@@ -257,9 +259,9 @@ public class ReactorPanelMenu extends BwrMenu {
 
         if (!formed) {
             int lines = buf.readVarInt();
-            List<String> out = new ArrayList<>(lines);
+            List<Component> out = new ArrayList<>(lines);
             for (int i = 0; i < lines; i++) {
-                out.add(buf.readUtf(200));
+                out.add(Component.Serializer.fromJson(buf.readUtf(8192), level().registryAccess()));
             }
             statusLines = out;
             return;
@@ -356,16 +358,16 @@ public class ReactorPanelMenu extends BwrMenu {
             case CMD_SET_VESSEL_STATE -> {
                 VesselState[] states = VesselState.values();
                 if (a >= 0 && a < states.length) {
-                    String refusal = be.setVesselState(states[a]);
+                    Component refusal = be.setVesselStateMessage(states[a]);
                     if (refusal != null) {
                         refuse(sender, refusal);
                     }
                 }
             }
             case CMD_OPEN_REFUELLING -> {
-                String blocked = be.refuellingBlockedReason();
+                Component blocked = be.refuellingBlockedMessage();
                 if (blocked != null) {
-                    refuse(sender, "Refuelling is not possible: " + blocked + ".");
+                    refuse(sender, BwrText.tr("status.bwr.reactor_panel_menu.refuelling_is_not_possible", "Refuelling is not possible: %s." , blocked));
                     return;
                 }
                 RefuellingMenu.open(sender, be);

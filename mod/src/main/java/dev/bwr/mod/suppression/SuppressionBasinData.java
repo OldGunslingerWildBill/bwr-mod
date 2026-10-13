@@ -1,5 +1,9 @@
 package dev.bwr.mod.suppression;
 
+import net.minecraft.network.chat.Component;
+
+import dev.bwr.mod.text.BwrText;
+
 import dev.bwr.core.pool.SuppressionPool;
 import dev.bwr.mod.reactor.ReactorStateNbt;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -21,7 +25,7 @@ public final class SuppressionBasinData extends SavedData {
         final SuppressionPool pool=new SuppressionPool();
         BlockPos owner;
     }
-    public record Claim(SuppressionPool pool,String problem) {}
+    public record Claim(SuppressionPool pool,Component problem) {}
     public static SuppressionBasinData get(ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(FACTORY,"bwr_suppression_basins");
     }
@@ -31,18 +35,23 @@ public final class SuppressionBasinData extends SavedData {
     public Claim claim(ServerLevel level,BlockPos controller,LongOpenHashSet water,SuppressionPool legacy,double capacityKg) {
         Set<Entry> matches=Collections.newSetFromMap(new IdentityHashMap<>());
         for(long cell:water) { var e=byCell.get(cell);if(e!=null)matches.add(e); }
-        if(matches.size()>1) return new Claim(legacy,"Separate the previously metered suppression basins before forming them; their inventories cannot be merged by moving a controller.");
+        if(matches.size()>1) return new Claim(legacy, BwrText.tr(
+                "status.bwr.suppression_basin_data.separate_the_previously_metered_suppression_basins_before_forming",
+                "Separate the previously metered suppression basins before forming them; their inventories cannot be merged by moving a controller."));
         Entry entry;
         if(matches.isEmpty()) {
             entry=new Entry();entry.pool.fromArray(legacy.toArray());entries.add(entry);
         } else entry=matches.iterator().next();
         if(entry.owner!=null && !entry.owner.equals(controller)
                 && (!level.isLoaded(entry.owner) || level.getBlockEntity(entry.owner) instanceof SuppressionPoolBlockEntity))
-            return new Claim(entry.pool,"This basin already has a controller at "+entry.owner.toShortString()+". Remove it before assigning another controller.");
+            return new Claim(entry.pool, BwrText.tr(
+                    "status.bwr.suppression_basin_data.this_basin_already_has_a_controller_at_remove",
+                    "This basin already has a controller at %s. Remove it before assigning another controller.",
+                    entry.owner.toShortString()));
         entry.owner=controller.immutable();
         for(long cell:water) {entry.cells.add(cell);byCell.put(cell,entry);}
         entry.pool.resizeCapacityKeepingInventory(capacityKg);
-        setDirty();return new Claim(entry.pool,null);
+        setDirty();return new Claim(entry.pool, null);
     }
     @Override public CompoundTag save(CompoundTag tag,HolderLookup.Provider registries) {
         ListTag list=new ListTag();

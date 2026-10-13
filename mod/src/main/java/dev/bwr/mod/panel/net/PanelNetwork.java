@@ -76,7 +76,10 @@ public final class PanelNetwork {
 
     private static void handleBind(PanelPayloads.Bind payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer sender) {
-            WiringOps.bind(sender, payload);
+            var result = WiringOps.bind(sender, payload);
+            if (result != WiringOps.Result.OK) {
+                sender.displayClientMessage(dev.bwr.mod.panel.PanelMessages.wiringRefused(result), true);
+            }
         }
     }
 

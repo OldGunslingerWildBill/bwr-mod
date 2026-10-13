@@ -1,5 +1,7 @@
 package dev.bwr.mod.suppression;
 
+import dev.bwr.mod.text.BwrText;
+
 import com.mojang.serialization.MapCodec;
 import dev.bwr.mod.steam.SafetyReliefValveBlockEntity;
 import dev.bwr.mod.steam.SteamLineNetwork;
@@ -118,31 +120,34 @@ public class SuppressionPoolQuencherBlock extends Block implements SteamLinePort
             return InteractionResult.SUCCESS;
         }
         if (isSubmerged(level, pos)) {
-            player.displayClientMessage(Component.literal(
+            player.displayClientMessage(BwrText.tr(
+                    "status.bwr.suppression_pool_quencher.quencher_submerged_condensation_depends_on_the_pool_s",
                     "Quencher submerged; condensation depends on the pool's temperature."),
                     false);
         } else {
-            player.displayClientMessage(Component.literal(
-                    "Quencher is not submerged: raise the water level above it. A quencher above the"
-                            + " pool surface admits steam to the containment airspace, not to the"
-                            + " water."), false);
+            player.displayClientMessage(BwrText.tr(
+                    "status.bwr.suppression_pool_quencher.quencher_is_not_submerged_raise_the_water_level",
+                    "Quencher is not submerged: raise the water level above it. A quencher above the pool surface admits steam to the containment airspace, not to the water."), false);
         }
         SteamLineNetwork.Survey survey = SteamLineNetwork.survey(level, pos);
         int valves = survey.reliefValves().size();
         if (valves == 0) {
-            player.displayClientMessage(Component.literal(
-                    "No relief valve is on this quencher's steam line; run pressurised tube from"
-                            + " the valve down to it."), false);
+            player.displayClientMessage(BwrText.tr(
+                    "status.bwr.suppression_pool_quencher.no_relief_valve_is_on_this_quencher_s",
+                    "No relief valve is on this quencher's steam line; run pressurised tube from the valve down to it."), false);
         } else {
-            player.displayClientMessage(Component.literal(String.format(
-                    "%d relief valve(s) discharge through this quencher, over %d blocks of line.",
-                    valves, survey.lineBlocks())), false);
+            player.displayClientMessage(BwrText.tr(
+                    "status.bwr.suppression_pool_quencher.relief_valve_s_discharge_through_this_quencher_over",
+                    "%s relief valve(s) discharge through this quencher, over %s blocks of line.",
+                    String.format(java.util.Locale.ROOT, "%d", valves),
+                    String.format(java.util.Locale.ROOT, "%d", survey.lineBlocks())), false);
         }
         if (survey.truncated()) {
-            player.displayClientMessage(Component.literal(
-                    "The line is longer than " + SteamLineNetwork.MAX_LINE_BLOCKS
-                            + " blocks; only the first " + SteamLineNetwork.MAX_LINE_BLOCKS
-                            + " were walked."), false);
+            player.displayClientMessage(BwrText.tr(
+                    "status.bwr.suppression_pool_quencher.the_line_is_longer_than_blocks_only_the",
+                    "The line is longer than %s blocks; only the first %s were walked.",
+                    SteamLineNetwork.MAX_LINE_BLOCKS,
+                    SteamLineNetwork.MAX_LINE_BLOCKS), false);
         }
         return InteractionResult.CONSUME;
     }

@@ -82,8 +82,8 @@ public class ReactorControllerBlock extends BaseEntityBlock {
         }
         if (level.getBlockEntity(pos) instanceof ReactorControllerBlockEntity be) {
             if (player.isShiftKeyDown() || !(player instanceof net.minecraft.server.level.ServerPlayer sp)) {
-                for (String line : be.statusLines()) {
-                    player.displayClientMessage(Component.literal(line), false);
+                for (Component line : be.statusComponents()) {
+                    player.displayClientMessage(line, false);
                 }
             } else {
                 dev.bwr.mod.gui.ReactorPanelMenu.open(sp, be);

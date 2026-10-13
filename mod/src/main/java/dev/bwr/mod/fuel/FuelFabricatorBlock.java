@@ -77,8 +77,8 @@ public class FuelFabricatorBlock extends BaseEntityBlock {
                     }
                     return InteractionResult.CONSUME;
                 }
-                for (String line : be.statusLines()) {
-                    player.displayClientMessage(Component.literal(line), false);
+                for (Component line : be.statusComponents()) {
+                    player.displayClientMessage(line, false);
                 }
             } else {
                 dev.bwr.mod.gui.FuelFabricatorMenu.open(sp, be);

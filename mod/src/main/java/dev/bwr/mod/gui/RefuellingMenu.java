@@ -1,5 +1,7 @@
 package dev.bwr.mod.gui;
 
+import dev.bwr.mod.text.BwrText;
+
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import dev.bwr.mod.reactor.VesselState;
 import dev.bwr.mod.registry.BwrBlocks;
@@ -173,9 +175,9 @@ public class RefuellingMenu extends BwrMenu {
         if (be == null || !be.isFormed()) {
             return;
         }
-        String blocked = be.refuellingBlockedReason();
+        Component blocked = be.refuellingBlockedMessage();
         if (blocked != null) {
-            refuse(sender, "Refuelling is not possible: " + blocked + ".");
+            refuse(sender, BwrText.tr("status.bwr.refuelling_menu.refuelling_is_not_possible", "Refuelling is not possible: %s." , blocked));
             return;
         }
 
@@ -213,7 +215,9 @@ public class RefuellingMenu extends BwrMenu {
             }
         }
         if (found < 0) {
-            refuse(sender, "No fuel assembly or specialty rod in your inventory.");
+            refuse(sender, BwrText.tr(
+                    "status.bwr.refuelling_menu.no_fuel_assembly_or_specialty_rod_in_your",
+                    "No fuel assembly or specialty rod in your inventory."));
             return;
         }
         ItemStack stack = inventory.getItem(found);
@@ -301,9 +305,9 @@ public class RefuellingMenu extends BwrMenu {
         if (be == null || !be.isFormed()) {
             return;
         }
-        String blocked = be.refuellingBlockedReason();
+        Component blocked = be.refuellingBlockedMessage();
         if (blocked != null) {
-            refuse(sender, "Refuelling is not possible: " + blocked + ".");
+            refuse(sender, BwrText.tr("status.bwr.refuelling_menu.refuelling_is_not_possible", "Refuelling is not possible: %s." , blocked));
             return;
         }
         int[] positions = be.corePositions();
@@ -327,7 +331,11 @@ public class RefuellingMenu extends BwrMenu {
             }
         }
         markSnapshotDirty();
-        sender.displayClientMessage(Component.literal((loading ? "Loaded " : "Unloaded ")
-                + changed + " of " + unique.size() + " selected positions."), true);
+        sender.displayClientMessage(BwrText.tr(
+                "status.bwr.refuelling_menu.of_selected_positions",
+                "%s%s of %s selected positions.",
+                (loading ? BwrText.tr("status.bwr.refuelling_menu.loaded", "Loaded ") : BwrText.tr("status.bwr.refuelling_menu.unloaded", "Unloaded ")),
+                changed,
+                unique.size()), true);
     }
 }

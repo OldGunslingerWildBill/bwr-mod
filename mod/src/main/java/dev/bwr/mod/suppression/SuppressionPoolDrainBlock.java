@@ -1,5 +1,7 @@
 package dev.bwr.mod.suppression;
 
+import dev.bwr.mod.text.BwrText;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -24,13 +26,19 @@ public final class SuppressionPoolDrainBlock extends SuppressionPoolPortBlock {
         if(player.isShiftKeyDown())return super.useWithoutItem(s,l,p,player,hit);
         if(!l.isClientSide()){
             l.setBlock(p,s.cycle(OPEN),3);
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(s.getValue(OPEN)?"Pool drain closed":"Pool drain open"),true);
+            player.displayClientMessage((s.getValue(OPEN) ? BwrText.tr("status.bwr.suppression_pool_drain.pool_drain_closed", "Pool drain closed") : BwrText.tr("status.bwr.suppression_pool_drain.pool_drain_open", "Pool drain open")),true);
         }
         return InteractionResult.SUCCESS;
     }
     @Override public void appendHoverText(net.minecraft.world.item.ItemStack stack,net.minecraft.world.item.Item.TooltipContext context,java.util.List<net.minecraft.network.chat.Component> lines,net.minecraft.world.item.TooltipFlag flag){
-        lines.add(net.minecraft.network.chat.Component.literal("Water drain OUT: click or redstone to open. Closed on placement."));
-        lines.add(net.minecraft.network.chat.Component.literal("Drains to clear air/water or a connected water line, up to 1,000 kg/s."));
-        lines.add(net.minecraft.network.chat.Component.literal("Can empty the tank below RHR suction level. Sneak-click: pool screen."));
+        lines.add(BwrText.tr(
+                "status.bwr.suppression_pool_drain.water_drain_out_click_or_redstone_to_open",
+                "Water drain OUT: click or redstone to open. Closed on placement."));
+        lines.add(BwrText.tr(
+                "status.bwr.suppression_pool_drain.drains_to_clear_air_water_or_a_connected",
+                "Drains to clear air/water or a connected water line, up to 1,000 kg/s."));
+        lines.add(BwrText.tr(
+                "status.bwr.suppression_pool_drain.can_empty_the_tank_below_rhr_suction_level",
+                "Can empty the tank below RHR suction level. Sneak-click: pool screen."));
     }
 }

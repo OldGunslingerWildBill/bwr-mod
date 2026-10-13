@@ -1,5 +1,8 @@
 package dev.bwr.mod.damage;
 
+import dev.bwr.mod.text.BwrText;
+import net.minecraft.network.chat.Component;
+
 import dev.bwr.core.boundary.BoundaryComponent;
 import dev.bwr.core.boundary.BoundaryFailure;
 import dev.bwr.core.boundary.BoundaryStress;
@@ -112,37 +115,49 @@ public final class BoundaryDamageReadout {
      * clipboard by somebody walking the plant.
      */
     public static List<String> statusLines(BoundaryStress boundary) {
-        List<String> out = new ArrayList<>();
+        return BwrText.english(statusComponents(boundary));
+    }
+
+    public static List<Component> statusComponents(BoundaryStress boundary) {
+        List<Component> out = new ArrayList<>();
         if (boundary == null) {
             return out;
         }
         for (BoundaryComponent component : boundary.getPlantConfiguration().exposedComponents()) {
             if (boundary.isBroken(component)) {
-                out.add(String.format(Locale.ROOT, "%s: BROKEN%s",
-                        component.displayName(), component.isTerminal() ? " (terminal)" : ""));
+                out.add(BwrText.tr(
+                        "status.bwr.boundary_damage_readout.broken",
+                        "%s: BROKEN%s",
+                        dev.bwr.mod.text.StatusNames.boundary(component),
+                        (component.isTerminal() ? BwrText.tr("status.bwr.boundary_damage_readout.terminal", " (terminal)") : Component.empty())));
             }
         }
         double peak = boundary.getPeakStress();
         if (peak > 0.0) {
             BoundaryComponent worst = boundary.getMostStressedComponent();
-            out.add(String.format(Locale.ROOT,
-                    "Pressure boundary: %.0f%% of life used on the %s; %.0f s above %.0f psig",
-                    100.0 * peak / BoundaryStress.FAILURE_STRESS,
-                    worst == null ? "boundary" : worst.displayName().toLowerCase(Locale.ROOT),
-                    boundary.getSecondsAboveDesignPressure(),
-                    BoundaryStress.DESIGN_PRESSURE_PSIG));
+            out.add(BwrText.tr(
+                    "status.bwr.boundary_damage_readout.pressure_boundary_f_life_used_on_the_s",
+                    "Pressure boundary: %s%% of life used on the %s; %s s above %s psig",
+                    String.format(java.util.Locale.ROOT, "%.0f", 100.0 * peak / BoundaryStress.FAILURE_STRESS),
+                    (worst == null ? BwrText.tr("status.bwr.boundary_damage_readout.boundary", "boundary") : dev.bwr.mod.text.StatusNames.boundaryLower(worst)),
+                    String.format(java.util.Locale.ROOT, "%.0f", boundary.getSecondsAboveDesignPressure()),
+                    String.format(java.util.Locale.ROOT, "%.0f", BoundaryStress.DESIGN_PRESSURE_PSIG)));
         }
         if (boundary.getIrradiatedFuelOverpressureSeconds() > 0.0) {
-            out.add(String.format(Locale.ROOT,
-                    "%.0f s spent above %.0f psig with irradiated fuel in the vessel",
-                    boundary.getIrradiatedFuelOverpressureSeconds(),
-                    BoundaryStress.FUEL_PRESENT_PRESSURE_PSIG));
+            out.add(BwrText.tr(
+                    "status.bwr.boundary_damage_readout.s_spent_above_psig_with_irradiated_fuel_in",
+                    "%s s spent above %s psig with irradiated fuel in the vessel",
+                    String.format(java.util.Locale.ROOT, "%.0f", boundary.getIrradiatedFuelOverpressureSeconds()),
+                    String.format(java.util.Locale.ROOT, "%.0f", BoundaryStress.FUEL_PRESENT_PRESSURE_PSIG)));
         }
         if (boundary.getCooldownThermalStress() > 0.0) {
-            out.add(String.format(Locale.ROOT,
-                    "Vessel cooldown: %.1f C/h; thermal-stress life used %.3f; %.0f s above %.1f C/h",
-                    boundary.getLastCooldownRateCPerHour(), boundary.getCooldownThermalStress(),
-                    boundary.getSecondsAboveCooldownLimit(), BoundaryStress.COOLDOWN_LIMIT_C_PER_HOUR));
+            out.add(BwrText.tr(
+                    "status.bwr.boundary_damage_readout.vessel_cooldown_c_h_thermal_stress_life_used",
+                    "Vessel cooldown: %s C/h; thermal-stress life used %s; %s s above %s C/h",
+                    String.format(java.util.Locale.ROOT, "%.1f", boundary.getLastCooldownRateCPerHour()),
+                    String.format(java.util.Locale.ROOT, "%.3f", boundary.getCooldownThermalStress()),
+                    String.format(java.util.Locale.ROOT, "%.0f", boundary.getSecondsAboveCooldownLimit()),
+                    String.format(java.util.Locale.ROOT, "%.1f", BoundaryStress.COOLDOWN_LIMIT_C_PER_HOUR)));
         }
         return out;
     }

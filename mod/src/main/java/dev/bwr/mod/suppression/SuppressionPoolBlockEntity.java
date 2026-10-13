@@ -1,5 +1,8 @@
 package dev.bwr.mod.suppression;
 
+import dev.bwr.mod.text.BwrText;
+import net.minecraft.network.chat.Component;
+
 import dev.bwr.core.ReactorCore;
 import dev.bwr.core.pool.SuppressionPool;
 import dev.bwr.mod.eccs.EccsNetwork;
@@ -772,7 +775,9 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         try { revalidateLoaded(level); }
         catch(dev.bwr.mod.world.LoadedWorld.MissingChunk missing) {
             formed=false; lastValidation=new ValidationResult();
-            lastValidation.fail(missing.pos,"Suppression basin validation is waiting for the remaining chunks to load.");
+            lastValidation.fail(missing.pos, BwrText.tr(
+                    "status.bwr.suppression_pool.suppression_basin_validation_is_waiting_for_the_remaining",
+                    "Suppression basin validation is waiting for the remaining chunks to load."));
         }
         FormedSuppressionPoolRegistry.update(this);
     }
@@ -817,9 +822,9 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
                 if (containsConcrete(p) || SuppressionPoolQuencherBlock.isSubmerged(level, p)) {
                     quenchers.add(p.immutable());
                 } else {
-                    result.degrade(p.immutable(),
-                            "this quencher has no water above it, so it admits steam to the"
-                                    + " containment airspace rather than to the pool");
+                    result.degrade(p.immutable(), BwrText.tr(
+                            "status.bwr.suppression_pool.this_quencher_has_no_water_above_it_so",
+                            "this quencher has no water above it, so it admits steam to the containment airspace rather than to the pool"));
                 }
             } else if (found.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
                 reactorPos = p.immutable();
@@ -829,7 +834,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         Basin basin;
         if(concreteLayout!=null) {
             concreteMode=true;basinWater.clear();basinWater.addAll(concreteLayout.water());
-            basin=new Basin(concreteLayout.water().size(),concreteLayout.problem());
+            basin=new Basin(concreteLayout.water().size(), concreteLayout.problemText());
         } else basin=surveyBasin(level);
         waterBlocks = basin.waterBlocks();
 
@@ -841,8 +846,11 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         }
 
         if (concreteLayout==null && waterBlocks < MIN_WATER_BLOCKS) {
-            result.fail(getBlockPos(), "suppression pool needs at least " + MIN_WATER_BLOCKS
-                    + " water blocks in one basin, found " + waterBlocks);
+            result.fail(getBlockPos(), BwrText.tr(
+                    "status.bwr.suppression_pool.suppression_pool_needs_at_least_water_blocks_in",
+                    "suppression pool needs at least %s water blocks in one basin, found %s",
+                    MIN_WATER_BLOCKS,
+                    waterBlocks));
             formed = false;
             lastValidation = result;
             return;
@@ -851,7 +859,9 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         quenchers.removeIf(q -> concreteMode ? !containsConcrete(q)&&!concreteLayout.ports().contains(q) : !basinWater.contains(q.above().asLong()));
         gatherDischarges(level,boxValves,result);
         if (dischargingValves.isEmpty()&&steamPortCount()==0) {
-            result.degrade("no relief valves discharge into this pool; it is a heat sink with nothing attached");
+            result.degrade(BwrText.tr(
+                    "status.bwr.suppression_pool.no_relief_valves_discharge_into_this_pool_it",
+                    "no relief valves discharge into this pool; it is a heat sink with nothing attached"));
         }
 
         pool.setContainmentPressurePsia(dev.bwr.core.PhysicalConstants.ATMOSPHERIC_PSI);
@@ -936,9 +946,9 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
                         // Piped to a quencher, but not to one of this pool's.
                         // Condensing it here would put another basin's steam
                         // into this water.
-                        result.degrade(vp, "this relief valve discharges through a quencher"
-                                + " that is not submerged in this basin, so its steam is not"
-                                + " condensed here");
+                        result.degrade(vp, BwrText.tr(
+                                "status.bwr.suppression_pool.this_relief_valve_discharges_through_a_quencher_that",
+                                "this relief valve discharges through a quencher that is not submerged in this basin, so its steam is not condensed here"));
                     }
                 }
                 case OPEN_WATER -> {
@@ -952,9 +962,9 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
                         }
                     }
                 }
-                case NONE -> result.degrade(vp, "this relief valve has no discharge path:"
-                        + " no water below it and no submerged quencher on its steam line,"
-                        + " so it suppresses nothing");
+                case NONE -> result.degrade(vp, BwrText.tr(
+                        "status.bwr.suppression_pool.this_relief_valve_has_no_discharge_path_no",
+                        "this relief valve has no discharge path: no water below it and no submerged quencher on its steam line, so it suppresses nothing"));
             }
         }
     }
@@ -966,7 +976,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      * the reason there is no pool when there is not one. {@code problem} is
      * null exactly when a basin was found.
      */
-    private record Basin(int waterBlocks, String problem) {
+    private record Basin(int waterBlocks, Component problem) {
     }
 
     /**
@@ -1088,9 +1098,10 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             }
         }
         if (seeds.isEmpty()) {
-            return new Basin(0, "no water within " + SEED_RADIUS
-                    + " blocks of this controller; a pool controller has to stand at the"
-                    + " basin it meters");
+            return new Basin(0, BwrText.tr(
+                    "status.bwr.suppression_pool.no_water_within_blocks_of_this_controller_a",
+                    "no water within %s blocks of this controller; a pool controller has to stand at the basin it meters",
+                    SEED_RADIUS));
         }
         seeds.sort(Comparator.comparingDouble(p -> p.distSqr(origin)));
 
@@ -1118,7 +1129,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         // the sea several times grows the backing table once instead of once
         // per seed.
         LongOpenHashSet body = new LongOpenHashSet();
-        String firstProblem = null;
+        Component firstProblem = null;
         int largestSmall = 0;
         int walked = 0;
         for (BlockPos seed : seeds) {
@@ -1208,10 +1219,10 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
                 if (outsideSurvey(origin, next)) {
                     // The body carries on past the far side of the box, so
                     // there is no wall in it that this controller can see.
-                    return new Basin(found, "the water at this controller is open to more water"
-                            + " than it can survey (it runs past " + SEARCH_RADIUS + " blocks);"
-                            + " a suppression pool has to be an enclosed basin, not an ocean,"
-                            + " a lake or a flooded cave");
+                    return new Basin(found, BwrText.tr(
+                            "status.bwr.suppression_pool.the_water_at_this_controller_is_open_to",
+                            "the water at this controller is open to more water than it can survey (it runs past %s blocks); a suppression pool has to be an enclosed basin, not an ocean, a lake or a flooded cave",
+                            SEARCH_RADIUS));
                 }
                 long neighbour = next.asLong();
                 if (body.add(neighbour)) {
@@ -1222,10 +1233,9 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         return new Basin(found, null);
     }
 
-    private static String tooMuchWaterMessage() {
-        return "this body of water is larger than the " + MAX_WATER_BLOCKS
-                + " blocks one controller surveys; a suppression pool is a basin, not a"
-                + " flooded cave system";
+    private static Component tooMuchWaterMessage() {
+        return BwrText.tr("status.bwr.suppression_pool.this_body_of_water_is_larger_than_the",
+                "this body of water is larger than the %s blocks one controller surveys; a suppression pool is a basin, not a flooded cave system", MAX_WATER_BLOCKS);
     }
 
     /**
@@ -1362,86 +1372,139 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      * build. Waiting for a transient to reveal it would be exactly the silent
      * degradation this must not be.
      */
-    private List<String> inletLines() {
-        List<String> out = new ArrayList<>();
+    private List<Component> inletLines() {
+        List<Component> out = new ArrayList<>();
         if(steamPortCount()>0){
-            out.add(String.format("%d steam wall inlet(s): %.2f kg/s received, %.1f kg buffered. Fill with water to condense incoming steam.",steamPortCount(),steamInKgPerS(),pool.inletSteam.mass()));
+            out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.steam_wall_inlet_s_kg_s_received_kg",
+                    "%s steam wall inlet(s): %s kg/s received, %s kg buffered. Fill with water to condense incoming steam.",
+                    String.format(java.util.Locale.ROOT, "%d", steamPortCount()),
+                    String.format(java.util.Locale.ROOT, "%.2f", steamInKgPerS()),
+                    String.format(java.util.Locale.ROOT, "%.1f", pool.inletSteam.mass())));
             return out;
         }
         int quenchered = quencheredValves.size();
         int bare = dischargingValves.size() - quenchered;
         if (quenchered > 0) {
-            out.add(String.format(
-                    "%d valve line(s) connected through %d quencher(s); %d currently submerged. Condensation depends on pool temperature.",
-                    quenchered, quenchers.size(),quenchers.stream().filter(this::ownsQuencher).count()));
+            out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.valve_line_s_connected_through_quencher_s_currently",
+                    "%s valve line(s) connected through %s quencher(s); %s currently submerged. Condensation depends on pool temperature.",
+                    String.format(java.util.Locale.ROOT, "%d", quenchered),
+                    String.format(java.util.Locale.ROOT, "%d", quenchers.size()),
+                    String.format(java.util.Locale.ROOT, "%d", quenchers.stream().filter(this::ownsQuencher).count())));
         } else if (!quenchers.isEmpty()) {
             // Built but not plumbed. Saying nothing here would leave a player
             // who has just set the quenchers in the water with a board that
             // does not acknowledge them at all.
-            out.add(String.format(
-                    "%d quencher(s) in this basin, with no relief valve piped to any"
-                            + " of them. Run pressurised tube from the valve to the quencher.",
-                    quenchers.size()));
+            out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.quencher_s_in_this_basin_with_no_relief",
+                    "%s quencher(s) in this basin, with no relief valve piped to any of them. Run pressurised tube from the valve to the quencher.",
+                    String.format(java.util.Locale.ROOT, "%d", quenchers.size())));
         }
         if (bare > 0) {
-            out.add(String.format(
-                    "%d valve(s) discharge into open water with no quencher. A bare discharge is"
-                            + " one coherent jet, so only %.0f%% of what it passes is taken up by"
-                            + " the water; the rest reaches containment uncondensed and does not"
-                            + " return to the pool as inventory.",
-                    bare, BARE_DISCHARGE_ADMISSION * 100.0));
-            out.add("For new builds use an enclosed suppression tank and a steam wall inlet"
-                    + " connected to the relief valve discharge.");
+            out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.valve_s_discharge_into_open_water_with_no",
+                    "%s valve(s) discharge into open water with no quencher. A bare discharge is one coherent jet, so only %s%% of what it passes is taken up by the water; the rest reaches containment uncondensed and does not return to the pool as inventory.",
+                    String.format(java.util.Locale.ROOT, "%d", bare),
+                    String.format(java.util.Locale.ROOT, "%.0f", BARE_DISCHARGE_ADMISSION * 100.0)));
+            out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.for_new_builds_use_an_enclosed_suppression_tank",
+                    "For new builds use an enclosed suppression tank and a steam wall inlet connected to the relief valve discharge."));
         }
         if (bypassedSteamKgPerS > 0.0) {
-            out.add(String.format("%.1f kg/s is bypassing the water through bare discharges.",
-                    bypassedSteamKgPerS));
+            out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.kg_s_is_bypassing_the_water_through_bare",
+                    "%s kg/s is bypassing the water through bare discharges.",
+                    String.format(java.util.Locale.ROOT, "%.1f", bypassedSteamKgPerS)));
         }
         return out;
     }
 
     public List<String> statusLines() {
-        List<String> out = new ArrayList<>();
+        return BwrText.english(statusComponents());
+    }
+
+    public List<Component> statusComponents() {
+        List<Component> out = new ArrayList<>();
         if (!isFormed()) {
-            out.add("Suppression pool not formed.");
-            out.addAll(lastValidation.messages());
+            out.add(BwrText.tr("status.bwr.suppression_pool.suppression_pool_not_formed", "Suppression pool not formed."));
+            out.addAll(lastValidation.components());
             return out;
         }
-        out.add(concreteMode?String.format((closedTank?"Enclosed tank":"Concrete basin")+" formed: %,.0f kg capacity, %d relief lines connected",
-                pool.getDesignMassKg(),dischargingValves.size()):String.format("Pool formed: %d water blocks, %d relief valves discharging",waterBlocks,dischargingValves.size()));
+        out.add((concreteMode ? BwrText.tr(
+                "status.bwr.suppression_pool.formed_kg_capacity_relief_lines_connected",
+                "%s formed: %s kg capacity, %s relief lines connected",
+                (closedTank ? BwrText.tr("status.bwr.suppression_pool.enclosed_tank", "Enclosed tank") : BwrText.tr("status.bwr.suppression_pool.concrete_basin", "Concrete basin")),
+                String.format(java.util.Locale.ROOT, "%,.0f", pool.getDesignMassKg()),
+                dischargingValves.size()) : BwrText.tr(
+                "status.bwr.suppression_pool.pool_formed_water_blocks_relief_valves_discharging",
+                "Pool formed: %s water blocks, %s relief valves discharging",
+                String.format(java.util.Locale.ROOT, "%d", waterBlocks),
+                String.format(java.util.Locale.ROOT, "%d", dischargingValves.size()))));
         out.addAll(inletLines());
         if (concreteMode) {
-            out.add(String.format("Inlet mode: %s; spray %.1f kg/s, steam captured %.1f kg/s",pool.isSprayMode()?"spray":"regular fill",pool.getSprayKgPerS(),pool.getSprayCondensedKgPerS()));
-            if(pool.getMassKg()<=0)out.add("Basin is empty. Pump water into an amber Return / Fill Port.");
-            out.add(String.format("Concrete basin: physical exchanger cooling %.2f MW", physicalCoolingMW()));
-            out.add("Suction -> LPCI/RHR -> exchanger primary inlet; primary outlet -> basin return.");
-            out.add("Direct return circulates water; supply the exchanger's separate cooling-water ports to remove heat.");
+            out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.inlet_mode_spray_kg_s_steam_captured_kg",
+                    "Inlet mode: %s; spray %s kg/s, steam captured %s kg/s",
+                    (pool.isSprayMode() ? BwrText.tr("status.bwr.suppression_pool.spray", "spray") : BwrText.tr("status.bwr.suppression_pool.regular_fill", "regular fill")),
+                    String.format(java.util.Locale.ROOT, "%.1f", pool.getSprayKgPerS()),
+                    String.format(java.util.Locale.ROOT, "%.1f", pool.getSprayCondensedKgPerS())));
+            if(pool.getMassKg()<=0)out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.basin_is_empty_pump_water_into_an_amber",
+                    "Basin is empty. Pump water into an amber Return / Fill Port."));
+            out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.concrete_basin_physical_exchanger_cooling_mw",
+                    "Concrete basin: physical exchanger cooling %s MW",
+                    String.format(java.util.Locale.ROOT, "%.2f", physicalCoolingMW())));
+            out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.suction_lpci_rhr_exchanger_primary_inlet_primary_outlet",
+                    "Suction -> LPCI/RHR -> exchanger primary inlet; primary outlet -> basin return."));
+            out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.direct_return_circulates_water_supply_the_exchanger_s",
+                    "Direct return circulates water; supply the exchanger's separate cooling-water ports to remove heat."));
         }
         // The basin size is physics now, not decoration, so it is on the board:
         // a small pool really does heat faster and lose suction sooner.
-        out.add(String.format("%,.0f kg of %,.0f kg design inventory (%.0f%% level), "
-                        + "%,.0f kg reachable by suction",
-                pool.getMassKg(), pool.getDesignMassKg(), pool.getLevelFraction() * 100.0,
-                pool.getAvailableSuctionKg()));
-        out.add(String.format("%.2f degC, subcooling %.2f degC, condensing at %.0f%%, %.0f MJ capacity left",
-                pool.getTemperatureC(), pool.getSubcoolingC(),
-                pool.condensationEffectiveness() * 100.0,
-                pool.getRemainingHeatCapacityMJ()));
-        out.add(String.format("Natural cooling %.1f kW toward %.0f degC ambient",
-                passiveCoolingMW() * 1000, SuppressionPool.AMBIENT_TEMPERATURE_C));
+        out.add(BwrText.tr(
+                "status.bwr.suppression_pool.kg_of_kg_design_inventory_evel_kg_reachable",
+                "%s kg of %s kg design inventory (%s%% level), %s kg reachable by suction",
+                String.format(java.util.Locale.ROOT, "%,.0f", pool.getMassKg()),
+                String.format(java.util.Locale.ROOT, "%,.0f", pool.getDesignMassKg()),
+                String.format(java.util.Locale.ROOT, "%.0f", pool.getLevelFraction() * 100.0),
+                String.format(java.util.Locale.ROOT, "%,.0f", pool.getAvailableSuctionKg())));
+        out.add(BwrText.tr(
+                "status.bwr.suppression_pool.degc_subcooling_degc_condensing_at_mj_capacity_left",
+                "%s degC, subcooling %s degC, condensing at %s%%, %s MJ capacity left",
+                String.format(java.util.Locale.ROOT, "%.2f", pool.getTemperatureC()),
+                String.format(java.util.Locale.ROOT, "%.2f", pool.getSubcoolingC()),
+                String.format(java.util.Locale.ROOT, "%.0f", pool.condensationEffectiveness() * 100.0),
+                String.format(java.util.Locale.ROOT, "%.0f", pool.getRemainingHeatCapacityMJ())));
+        out.add(BwrText.tr(
+                "status.bwr.suppression_pool.natural_cooling_kw_toward_degc_ambient",
+                "Natural cooling %s kW toward %s degC ambient",
+                String.format(java.util.Locale.ROOT, "%.1f", passiveCoolingMW() * 1000),
+                String.format(java.util.Locale.ROOT, "%.0f", SuppressionPool.AMBIENT_TEMPERATURE_C)));
         double effective = getEffectiveRhrDuty();
         if (effective > 0.0) {
-            out.add(String.format("RHR cooling at %.0f%% duty (%.0f%% commanded here, %.0f%% from loops)",
-                    effective * 100.0, rhrDuty * 100.0, machineRhrDuty * 100.0));
+            out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.rhr_cooling_at_uty_ommanded_here_rom_loops",
+                    "RHR cooling at %s%% duty (%s%% commanded here, %s%% from loops)",
+                    String.format(java.util.Locale.ROOT, "%.0f", effective * 100.0),
+                    String.format(java.util.Locale.ROOT, "%.0f", rhrDuty * 100.0),
+                    String.format(java.util.Locale.ROOT, "%.0f", machineRhrDuty * 100.0)));
         }
         if (pool.isBoiling()) {
-            out.add("Pool is boiling; steam is passing straight through to containment.");
+            out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.pool_is_boiling_steam_is_passing_straight_through",
+                    "Pool is boiling; steam is passing straight through to containment."));
         }
         if (reactorPos == null&&steamPortCount()==0) {
-            out.add("No reactor controller found within " + SEARCH_RADIUS
-                    + " blocks; the relief valves have nothing to relieve.");
+            out.add(BwrText.tr(
+                    "status.bwr.suppression_pool.no_reactor_controller_found_within_blocks_the_relief",
+                    "No reactor controller found within %s blocks; the relief valves have nothing to relieve.",
+                    SEARCH_RADIUS));
         }
-        out.addAll(lastValidation.messages());
+        out.addAll(lastValidation.components());
         return out;
     }
 

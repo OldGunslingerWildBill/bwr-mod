@@ -1,5 +1,9 @@
 package dev.bwr.mod.fuel;
 
+import net.minecraft.network.chat.Component;
+
+import dev.bwr.mod.text.BwrText;
+
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 
@@ -52,7 +56,9 @@ public interface FuelFeed {
     Draw draw(double maxHeavyMetalKg);
 
     /** Human-readable contents, for the right-click readout. */
-    List<String> statusLines();
+    default List<String> statusLines() { return BwrText.english(statusComponents()); }
+
+    List<Component> statusComponents();
 
     /** Called when the block entity is reconstructed, so the feed can mark it dirty. */
     void setChangeListener(Runnable onChanged);
@@ -74,8 +80,8 @@ public interface FuelFeed {
         }
 
         @Override
-        public List<String> statusLines() {
-            return List.of("No chemical feed: Mekanism is not installed.");
+        public List<Component> statusComponents() {
+            return List.of(BwrText.tr("status.bwr.fuel_feed.no_chemical_feed_mekanism_is_not_installed", "No chemical feed: Mekanism is not installed."));
         }
 
         @Override

@@ -121,8 +121,8 @@ public class TurbineSteamOutletBlock extends BaseEntityBlock implements SteamLin
             return InteractionResult.SUCCESS;
         }
         if (level.getBlockEntity(pos) instanceof TurbineSteamOutletBlockEntity outlet) {
-            for (String line : outlet.statusLines()) {
-                player.displayClientMessage(Component.literal(line), false);
+            for (Component line : outlet.statusComponents()) {
+                player.displayClientMessage(line, false);
             }
         }
         return InteractionResult.CONSUME;

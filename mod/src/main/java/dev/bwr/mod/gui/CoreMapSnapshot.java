@@ -1,5 +1,8 @@
 package dev.bwr.mod.gui;
 
+import dev.bwr.mod.text.BwrText;
+import net.minecraft.network.chat.Component;
+
 import dev.bwr.core.ReactorCore;
 import dev.bwr.core.fuel.CoreLoading;
 import dev.bwr.core.fuel.FuelAssembly;
@@ -63,8 +66,11 @@ public final class CoreMapSnapshot {
     public String insertId(int slot) { return fuelTypeName(slot).substring(7); }
     public List<net.minecraft.network.chat.Component> insertTooltip(int slot) {
         return List.of(net.minecraft.network.chat.Component.translatable("insert.bwr." + insertId(slot)),
-                net.minecraft.network.chat.Component.literal("Non-fuel cassette; no fission power."),
-                net.minecraft.network.chat.Component.literal(String.format(java.util.Locale.ROOT, "Irradiation / activation: %.1f%%", 100 * insertProgress[slot])));
+                BwrText.tr("status.bwr.core_map_snapshot.non_fuel_cassette_no_fission_power", "Non-fuel cassette; no fission power."),
+                BwrText.tr(
+                        "status.bwr.core_map_snapshot.irradiation_activation",
+                        "Irradiation / activation: %s%%",
+                        String.format(java.util.Locale.ROOT, "%.1f", 100 * insertProgress[slot])));
     }
 
     /** Thermal power of one slot, MW. */

@@ -1,4 +1,5 @@
 package dev.bwr.mod.rods;
+import net.minecraft.network.chat.Component;
 
 import com.mojang.serialization.MapCodec;
 import dev.bwr.mod.registry.BwrBlockEntities;
@@ -102,9 +103,9 @@ public class ControlRodDriveBlock extends BaseEntityBlock {
             return net.minecraft.world.InteractionResult.SUCCESS;
         }
         if (level.getBlockEntity(pos) instanceof ControlRodDriveBlockEntity be) {
-            for (String line : be.statusLines()) {
+            for (Component line : be.statusComponents()) {
                 player.displayClientMessage(
-                        net.minecraft.network.chat.Component.literal(line), false);
+                        line, false);
             }
         }
         return net.minecraft.world.InteractionResult.CONSUME;

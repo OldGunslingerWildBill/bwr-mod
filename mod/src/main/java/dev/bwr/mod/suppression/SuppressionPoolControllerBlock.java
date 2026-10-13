@@ -71,8 +71,8 @@ public class SuppressionPoolControllerBlock extends BaseEntityBlock {
             // sneak-click, same convention as the reactor controller.
             if (player.isShiftKeyDown()
                     || !(player instanceof net.minecraft.server.level.ServerPlayer sp)) {
-                for (String line : be.statusLines()) {
-                    player.displayClientMessage(Component.literal(line), false);
+                for (Component line : be.statusComponents()) {
+                    player.displayClientMessage(line, false);
                 }
             } else {
                 dev.bwr.mod.gui.SuppressionPoolMenu.open(sp, be);

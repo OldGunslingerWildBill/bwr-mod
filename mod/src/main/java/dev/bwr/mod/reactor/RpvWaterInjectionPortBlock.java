@@ -1,5 +1,7 @@
 package dev.bwr.mod.reactor;
 
+import dev.bwr.mod.text.BwrText;
+
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.*;
 import net.minecraft.network.chat.Component;
@@ -35,8 +37,12 @@ public class RpvWaterInjectionPortBlock extends BaseEntityBlock {
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof RpvWaterInjectionPortBlockEntity port) {
             var owner = port.controller();
-            player.displayClientMessage(Component.literal(owner == null ? "Port disconnected: use a formed vessel wall, outward flange, and the required elevation."
-                    : "Water port connected to reactor at " + owner.getBlockPos().toShortString()), false);
+            player.displayClientMessage((owner == null ? BwrText.tr(
+                    "status.bwr.rpv_water_injection_port.port_disconnected_use_a_formed_vessel_wall_outward",
+                    "Port disconnected: use a formed vessel wall, outward flange, and the required elevation.") : BwrText.tr(
+                    "status.bwr.rpv_water_injection_port.water_port_connected_to_reactor_at",
+                    "Water port connected to reactor at %s",
+                    owner.getBlockPos().toShortString())), false);
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
     }

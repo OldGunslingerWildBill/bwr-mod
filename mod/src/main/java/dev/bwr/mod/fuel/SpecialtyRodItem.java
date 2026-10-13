@@ -1,5 +1,7 @@
 package dev.bwr.mod.fuel;
 
+import dev.bwr.mod.text.BwrText;
+
 import dev.bwr.core.fuel.CoreInsert;
 import dev.bwr.mod.registry.BwrItems;
 import net.minecraft.ChatFormatting;
@@ -28,21 +30,41 @@ public final class SpecialtyRodItem extends Item {
     @Override public Component getName(ItemStack stack) { return Component.translatable("insert.bwr." + data(stack).kind().id()); }
     @Override public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
         var insert = data(stack).toCore();
-        lines.add(Component.literal("Non-fuel cassette; occupies one refuelling position.").withStyle(ChatFormatting.GRAY));
+        lines.add(BwrText.tr(
+                "status.bwr.specialty_rod_item.non_fuel_cassette_occupies_one_refuelling_position",
+                "Non-fuel cassette; occupies one refuelling position.").withStyle(ChatFormatting.GRAY));
         if (insert.kind().exposureSeconds > 0) {
-            lines.add(Component.literal(String.format(Locale.ROOT, "%s %.1f%%", insert.kind().target() ? "Irradiation" : "Source activation", 100 * insert.progress())).withStyle(ChatFormatting.AQUA));
-            lines.add(Component.literal("Progress requires fission flux; retained when removed.").withStyle(ChatFormatting.GRAY));
-            lines.add(Component.literal(String.format(Locale.ROOT, "Rated-flux exposure: %.0f hours (running time).",
-                    insert.kind().exposureSeconds / 3600)).withStyle(ChatFormatting.GRAY));
+            lines.add(BwrText.tr(
+                    "status.bwr.specialty_rod_item.value",
+                    "%s %s%%",
+                    (insert.kind().target() ? BwrText.tr("status.bwr.specialty_rod_item.irradiation", "Irradiation") : BwrText.tr("status.bwr.specialty_rod_item.source_activation", "Source activation")),
+                    String.format(java.util.Locale.ROOT, "%.1f", 100 * insert.progress())).withStyle(ChatFormatting.AQUA));
+            lines.add(BwrText.tr(
+                    "status.bwr.specialty_rod_item.progress_requires_fission_flux_retained_when_removed",
+                    "Progress requires fission flux; retained when removed.").withStyle(ChatFormatting.GRAY));
+            lines.add(BwrText.tr(
+                    "status.bwr.specialty_rod_item.rated_flux_exposure_hours_running_time",
+                    "Rated-flux exposure: %s hours (running time).",
+                    String.format(java.util.Locale.ROOT, "%.0f", insert.kind().exposureSeconds / 3600)).withStyle(ChatFormatting.GRAY));
         }
-        if (insert.kind().sourcePerSecond > 0) lines.add(Component.literal("Adds startup neutrons; no direct fission heat.").withStyle(ChatFormatting.GRAY));
-        else lines.add(Component.literal("Absorbs neutrons without producing fission power.").withStyle(ChatFormatting.GRAY));
+        if (insert.kind().sourcePerSecond > 0) lines.add(BwrText.tr(
+                "status.bwr.specialty_rod_item.adds_startup_neutrons_no_direct_fission_heat",
+                "Adds startup neutrons; no direct fission heat.").withStyle(ChatFormatting.GRAY));
+        else lines.add(BwrText.tr(
+                "status.bwr.specialty_rod_item.absorbs_neutrons_without_producing_fission_power",
+                "Absorbs neutrons without producing fission power.").withStyle(ChatFormatting.GRAY));
         if (insert.kind() == CoreInsert.Kind.TRITIUM_TARGET) {
-            lines.add(Component.literal(String.format(Locale.ROOT, "Harvest: %,d sealed tritium samples + empty rod.",
-                    dev.bwr.mod.config.GameplayConfig.tritiumSamplesPerRod())).withStyle(ChatFormatting.AQUA));
-            lines.add(Component.literal("Experimental BWR target, adapted for gameplay.").withStyle(ChatFormatting.GRAY));
+            lines.add(BwrText.tr(
+                    "status.bwr.specialty_rod_item.harvest_sealed_tritium_samples_empty_rod",
+                    "Harvest: %s sealed tritium samples + empty rod.",
+                    String.format(java.util.Locale.ROOT, "%,d", dev.bwr.mod.config.GameplayConfig.tritiumSamplesPerRod())).withStyle(ChatFormatting.AQUA));
+            lines.add(BwrText.tr(
+                    "status.bwr.specialty_rod_item.experimental_bwr_target_adapted_for_gameplay",
+                    "Experimental BWR target, adapted for gameplay.").withStyle(ChatFormatting.GRAY));
         }
-        if (insert.complete()) lines.add(Component.literal("Use in hand to harvest the sample and recover the empty rod.").withStyle(ChatFormatting.GREEN));
+        if (insert.complete()) lines.add(BwrText.tr(
+                "status.bwr.specialty_rod_item.use_in_hand_to_harvest_the_sample_and",
+                "Use in hand to harvest the sample and recover the empty rod.").withStyle(ChatFormatting.GREEN));
     }
     @Override public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);

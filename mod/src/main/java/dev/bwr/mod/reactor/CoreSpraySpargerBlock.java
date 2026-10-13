@@ -1,5 +1,7 @@
 package dev.bwr.mod.reactor;
 
+import dev.bwr.mod.text.BwrText;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
@@ -179,10 +181,11 @@ public class CoreSpraySpargerBlock extends Block {
         }
         Loop next = state.getValue(LOOP) == Loop.HPCS ? Loop.LPCS : Loop.HPCS;
         level.setBlockAndUpdate(pos, connections(state.setValue(LOOP, next),level,pos));
-        player.displayClientMessage(Component.literal(
-                "Sparger segment set to " + next.getSerializedName().toUpperCase(Locale.ROOT)
-                        + ", which belongs " + next.blocksAboveTaf()
-                        + " block(s) above the top of active fuel"), true);
+        player.displayClientMessage(BwrText.tr(
+                "status.bwr.core_spray_sparger.sparger_segment_set_to_which_belongs_block_s",
+                "Sparger segment set to %s, which belongs %s block(s) above the top of active fuel",
+                next.getSerializedName().toUpperCase(Locale.ROOT),
+                next.blocksAboveTaf()), true);
         return InteractionResult.CONSUME;
     }
 

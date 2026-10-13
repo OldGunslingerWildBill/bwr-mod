@@ -1,5 +1,9 @@
 package dev.bwr.mod.containment;
 
+import net.minecraft.network.chat.Component;
+
+import dev.bwr.mod.text.BwrText;
+
 import dev.bwr.mod.registry.BwrBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -89,12 +93,22 @@ public final class ContainmentPenetrationBlockEntity extends BlockEntity {
     }
 
     public List<String> statusLines() {
+        return BwrText.english(statusComponents());
+    }
+
+    public List<Component> statusComponents() {
         var service = ((ContainmentPenetrationBlock)getBlockState().getBlock()).service();
-        List<String> lines = new ArrayList<>();
-        lines.add(service.name().replace('_', ' ') + " containment penetration");
-        lines.add(ContainmentPenetrationRatings.nameplate(service));
-        lines.add(getBlockState().getValue(ContainmentPenetrationBlock.RUPTURED) ? "RUPTURED: leaks; replace block"
-                : String.format(Locale.ROOT, "Isolation %.0f%% open | %d FE", position() * 100.0, energyFe));
+        List<Component> lines = new ArrayList<>();
+        lines.add(BwrText.tr(
+                "status.bwr.containment_penetration.containment_penetration",
+                "%s containment penetration",
+                dev.bwr.mod.text.StatusNames.penetration(service)));
+        lines.add(ContainmentPenetrationRatings.nameplateComponent(service));
+        lines.add((getBlockState().getValue(ContainmentPenetrationBlock.RUPTURED) ? BwrText.tr("status.bwr.containment_penetration.ruptured_leaks_replace_block", "RUPTURED: leaks; replace block") : BwrText.tr(
+                "status.bwr.containment_penetration.isolation_pen_fe",
+                "Isolation %s%% open | %s FE",
+                String.format(java.util.Locale.ROOT, "%.0f", position() * 100.0),
+                String.format(java.util.Locale.ROOT, "%d", energyFe))));
         return lines;
     }
 

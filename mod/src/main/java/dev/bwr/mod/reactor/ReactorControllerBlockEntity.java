@@ -1,5 +1,8 @@
 package dev.bwr.mod.reactor;
 
+import dev.bwr.mod.text.BwrText;
+import net.minecraft.network.chat.Component;
+
 import dev.bwr.core.CoreConfig;
 import dev.bwr.core.ReactorCore;
 import dev.bwr.core.ReactorState;
@@ -537,8 +540,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         // transient or an in-flight drive demand as a different physical blade.
         if (coreLayoutVersion != 1 && savedInteriorWidth > 0
                 && (width != savedInteriorWidth || depth != savedInteriorDepth)) {
-            result.fail(getBlockPos(), "This controller retains a " + (savedInteriorWidth+2) + "x"
-                    + (savedInteriorDepth+2) + " core. Restore that footprint; to resize, shut down, cool and defuel, then replace the controller.");
+            result.fail(getBlockPos(), BwrText.tr(
+                    "status.bwr.reactor_controller.this_controller_retains_a_x_core_restore_that",
+                    "This controller retains a %sx%s core. Restore that footprint; to resize, shut down, cool and defuel, then replace the controller.",
+                    savedInteriorWidth+2,
+                    savedInteriorDepth+2));
             structure = null;
             return;
         }
@@ -547,7 +553,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         for(int slot:found.fuelPositions()) allowed.add(slot);
         var saved=core!=null ? writeCoreFuel() : savedFuelOrEmpty();
         for(int i=0;i<saved.size();i++) if(!allowed.contains(saved.getCompound(i).getInt("Slot"))) {
-            result.fail(getBlockPos(),"Fuel occupies positions reserved by the new vessel/RIP layout. Restore the previous layout and unload those bundles, or recover the fuel by removing the controller.");
+            result.fail(getBlockPos(), BwrText.tr(
+                    "status.bwr.reactor_controller.fuel_occupies_positions_reserved_by_the_new_vessel",
+                    "Fuel occupies positions reserved by the new vessel/RIP layout. Restore the previous layout and unload those bundles, or recover the fuel by removing the controller."));
             structure=null;
             return;
         }
@@ -565,7 +573,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 if(snapshot!=null)CoreDriveRemap.state(snapshot,savedDriveCells,nextDriveCells);
                 CoreDriveRemap.demands(demand,savedDriveCells,nextDriveCells);
             }catch(IllegalArgumentException invalid){
-                result.fail(getBlockPos(),"Cannot reconcile saved RIP/drive layout: "+invalid.getMessage());structure=null;return;
+                result.fail(getBlockPos(), BwrText.tr(
+                        "status.bwr.reactor_controller.cannot_reconcile_saved_rip_drive_layout",
+                        "Cannot reconcile saved RIP/drive layout: %s",
+                        invalid.getMessage()));structure=null;return;
             }
         }
         structure = found;
@@ -857,13 +868,19 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * @return null on success, or the reason it was refused
      */
     public String setVesselState(VesselState next) {
+        Component message = setVesselStateMessage(next);
+        return message == null ? null : BwrText.english(message);
+    }
+
+    public Component setVesselStateMessage(VesselState next) {
         if (next.canHoldPressure() && core != null && core.getBoundaryStress().isBroken(dev.bwr.core.boundary.BoundaryComponent.REACTOR_VESSEL_HEAD))
-            return "The vessel head has failed; changing the refuelling state cannot repair pressure-boundary damage.";
+            return BwrText.tr("status.bwr.reactor_controller.head_failed",
+                    "The vessel head has failed; changing the refuelling state cannot repair pressure-boundary damage.");
         if (next == VesselState.REFUELING && core != null) {
             double psig = core.getPressurePsig();
             if (psig > 25.0) {
-                return "cannot remove the head at " + Math.round(psig)
-                        + " psig; the vessel must be depressurised first";
+                return BwrText.tr("status.bwr.reactor_controller.cannot_remove_the_head_at",
+                        "cannot remove the head at %s psig; the vessel must be depressurised first", Math.round(psig));
             }
         }
         vesselState = next;
@@ -908,19 +925,26 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * held on by a thousand psi of steam, not by an interlock.
      */
     public String refuellingBlockedReason() {
+        Component message = refuellingBlockedMessage();
+        return message == null ? null : BwrText.english(message);
+    }
+
+    public Component refuellingBlockedMessage() {
         if (!isFormed()) {
-            return "the reactor is not formed, so there is no core to refuel";
+            return BwrText.tr(
+                    "status.bwr.reactor_controller.the_reactor_is_not_formed_so_there_is",
+                    "the reactor is not formed, so there is no core to refuel");
         }
         if (vesselState == VesselState.REFUELING) {
             return null;
         }
         double psig = core.getPressurePsig();
         if (psig > 25.0) {
-            return "the vessel head is on, and it cannot be removed at "
-                    + Math.round(psig) + " psig; depressurise below 25 psig first";
+            return BwrText.tr("status.bwr.reactor_controller.the_vessel_head_is_on_and_it_cannot",
+                    "the vessel head is on, and it cannot be removed at %s psig; depressurise below 25 psig first", Math.round(psig));
         }
-        return "the vessel head is on; the vessel is at " + Math.round(psig)
-                + " psig so the head can be removed, but nobody has removed it yet";
+        return BwrText.tr("status.bwr.reactor_controller.head_can_be_removed",
+                "the vessel head is on; the vessel is at %s psig so the head can be removed, but nobody has removed it yet", Math.round(psig));
     }
 
     /**
@@ -1031,15 +1055,17 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             }
             if (entry.contains("Insert")) {
                 dev.bwr.mod.fuel.CoreInsertData.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, entry.get("Insert"))
-                        .resultOrPartial(message -> lastValidation.degrade("Invalid saved insert: " + message))
+                        .resultOrPartial(message -> lastValidation.degrade(BwrText.tr("status.bwr.reactor_controller.invalid_saved_insert", "Invalid saved insert: %s" , message)))
                         .ifPresent(data -> { if (!loading.isOccupied(slot)) loading.loadInsert(slot, data.toCore()); });
                 continue;
             }
             dev.bwr.mod.fuel.FuelAssemblyData.CODEC
                     .parse(net.minecraft.nbt.NbtOps.INSTANCE, entry.get("Fuel"))
-                    .resultOrPartial(message -> lastValidation.degrade(
-                            "a saved fuel bundle at core position " + slot
-                                    + " could not be read: " + message))
+                    .resultOrPartial(message -> lastValidation.degrade(BwrText.tr(
+                            "status.bwr.reactor_controller.a_saved_fuel_bundle_at_core_position_could",
+                            "a saved fuel bundle at core position %s could not be read: %s",
+                            slot,
+                            message)))
                     .ifPresent(data -> loading.load(slot,
                             dev.bwr.mod.fuel.FuelAssemblies.toCore(data)));
         }
@@ -1048,37 +1074,58 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     /** Human-readable status, shown when a player right-clicks the controller. */
     public List<String> statusLines() {
-        List<String> out = new ArrayList<>();
-        out.add(String.format("Matched jet assemblies: %d; unmatched: %d; external/internal pumps: %d/%d; maximum forced flow: %.0f%%",
-                connectedJetPairs,unmatchedJets,connectedExternalPumps,installedInternalPumps,100*recirculationCapacityFraction));
+        return BwrText.english(statusComponents());
+    }
+
+    public List<Component> statusComponents() {
+        List<Component> out = new ArrayList<>();
+        out.add(BwrText.tr(
+                "status.bwr.reactor_controller.matched_jet_assemblies_unmatched_external_internal_pumps_maximum",
+                "Matched jet assemblies: %s; unmatched: %s; external/internal pumps: %s/%s; maximum forced flow: %s%%",
+                String.format(java.util.Locale.ROOT, "%d", connectedJetPairs),
+                String.format(java.util.Locale.ROOT, "%d", unmatchedJets),
+                String.format(java.util.Locale.ROOT, "%d", connectedExternalPumps),
+                String.format(java.util.Locale.ROOT, "%d", installedInternalPumps),
+                String.format(java.util.Locale.ROOT, "%.0f", 100*recirculationCapacityFraction)));
         if (structure == null) {
-            out.add("Reactor not formed.");
-            out.addAll(lastValidation.messages());
+            out.add(BwrText.tr("status.bwr.reactor_controller.reactor_not_formed", "Reactor not formed."));
+            out.addAll(lastValidation.components());
             if (out.size() == 1) {
-                out.add("No vessel found around this controller.");
+                out.add(BwrText.tr("status.bwr.reactor_controller.no_vessel_found_around_this_controller", "No vessel found around this controller."));
             }
             return out;
         }
-        out.add("Core layout: " + (coreLayoutVersion == 1 ? "legacy" : "compact") + "; one drive block per blade.");
-        out.add("Reactor formed: " + structure.assemblyCount() + " assemblies, "
-                + structure.controlRodCount() + " control rods, vessel " + vesselState.getSerializedName());
+        out.add(BwrText.tr(
+                "status.bwr.reactor_controller.core_layout_one_drive_block_per_blade",
+                "Core layout: %s; one drive block per blade.",
+                (coreLayoutVersion == 1 ? BwrText.tr("status.bwr.reactor_controller.legacy", "legacy") : BwrText.tr("status.bwr.reactor_controller.compact", "compact"))));
+        out.add(BwrText.tr(
+                "status.bwr.reactor_controller.reactor_formed_assemblies_control_rods_vessel",
+                "Reactor formed: %s assemblies, %s control rods, vessel %s",
+                structure.assemblyCount(),
+                structure.controlRodCount(),
+                dev.bwr.mod.text.StatusNames.vessel(vesselState)));
         if (core != null) {
-            out.add(String.format("%.2f%% rated, %.0f psig, %d/%d accumulators charged",
-                    core.getTotalPowerFractionOfRated() * 100.0,
-                    core.getPressurePsig(),
-                    core.getChargedAccumulatorCount(),
-                    core.getControlRodCount()));
+            out.add(BwrText.tr(
+                    "status.bwr.reactor_controller.ated_psig_accumulators_charged",
+                    "%s%% rated, %s psig, %s/%s accumulators charged",
+                    String.format(java.util.Locale.ROOT, "%.2f", core.getTotalPowerFractionOfRated() * 100.0),
+                    String.format(java.util.Locale.ROOT, "%.0f", core.getPressurePsig()),
+                    String.format(java.util.Locale.ROOT, "%d", core.getChargedAccumulatorCount()),
+                    String.format(java.util.Locale.ROOT, "%d", core.getControlRodCount())));
             // What the vessel's own steam penetrations are doing. A measurement,
             // and the one a player standing at the reactor wants while they are
             // working out why pressure is going the way it is.
-            out.add(String.format("%d RPV steam outlet(s) fitted, passing %.1f kg/s;"
-                            + " core boiling %.1f kg/s",
-                    structure.steamOutletCount(), lastSteamOutletFlowKgPerS,
-                    core.getSteamGenerationKgPerS()));
-            out.addAll(BoundaryDamageReadout.statusLines(core.getBoundaryStress()));
-            out.addAll(SevereAccidentReadout.statusLines(core));
+            out.add(BwrText.tr(
+                    "status.bwr.reactor_controller.rpv_steam_outlet_s_fitted_passing_kg_s",
+                    "%s RPV steam outlet(s) fitted, passing %s kg/s; core boiling %s kg/s",
+                    String.format(java.util.Locale.ROOT, "%d", structure.steamOutletCount()),
+                    String.format(java.util.Locale.ROOT, "%.1f", lastSteamOutletFlowKgPerS),
+                    String.format(java.util.Locale.ROOT, "%.1f", core.getSteamGenerationKgPerS())));
+            out.addAll(BoundaryDamageReadout.statusComponents(core.getBoundaryStress()));
+            out.addAll(SevereAccidentReadout.statusComponents(core));
         }
-        out.addAll(lastValidation.messages());
+        out.addAll(lastValidation.components());
         return out;
     }
 
@@ -1221,8 +1268,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         } catch (IllegalArgumentException e) {
             // Rod count changed while unloaded — the player rebuilt the vessel.
             // Keep the fresh core rather than refusing to load the chunk.
-            lastValidation.degrade("saved reactor state did not match the rebuilt vessel: "
-                    + e.getMessage() + "; the core was reinitialised");
+            lastValidation.degrade(BwrText.tr(
+                    "status.bwr.reactor_controller.saved_reactor_state_did_not_match_the_rebuilt",
+                    "saved reactor state did not match the rebuilt vessel: %s; the core was reinitialised",
+                    e.getMessage()));
         }
     }
 

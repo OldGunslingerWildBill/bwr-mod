@@ -1,5 +1,7 @@
 package dev.bwr.mod.reactor;
 
+import dev.bwr.mod.text.BwrText;
+
 import dev.bwr.mod.registry.BwrBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -214,12 +216,17 @@ public final class ReactorStructure {
         int version = level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity be
                 ? be.coreLayoutVersion() : dev.bwr.core.fuel.CompactCoreLayout.VERSION;
         if (version != 1 && version != dev.bwr.core.fuel.CompactCoreLayout.VERSION) {
-            result.fail(controllerPos,"Unsupported saved core layout version: " + version);
+            result.fail(controllerPos, BwrText.tr(
+                    "status.bwr.reactor_structure.unsupported_saved_core_layout_version",
+                    "Unsupported saved core layout version: %s",
+                    version));
             return null;
         }
         try { return validateLoaded(level,controllerPos,result,version); }
         catch(dev.bwr.mod.world.LoadedWorld.MissingChunk missing) {
-            result.fail(missing.pos,"Reactor validation is waiting for the remaining chunks to load.");
+            result.fail(missing.pos, BwrText.tr(
+                    "status.bwr.reactor_structure.reactor_validation_is_waiting_for_the_remaining_chunks",
+                    "Reactor validation is waiting for the remaining chunks to load."));
             return null;
         }
     }
@@ -228,14 +235,17 @@ public final class ReactorStructure {
         // Walk inward from the controller until we leave the wall, to find the interior.
         BlockPos seed = findInteriorSeed(level, controllerPos);
         if (seed == null) {
-            result.fail(controllerPos,
-                    "controller is not mounted on a reactor vessel wall with open space behind it");
+            result.fail(controllerPos, BwrText.tr(
+                    "status.bwr.reactor_structure.controller_is_not_mounted_on_a_reactor_vessel",
+                    "controller is not mounted on a reactor vessel wall with open space behind it"));
             return null;
         }
 
         int[] bounds = measureInterior(level, seed);
         if (bounds == null) {
-            result.fail(seed, "interior is not a closed rectangular volume");
+            result.fail(seed, BwrText.tr(
+                    "status.bwr.reactor_structure.interior_is_not_a_closed_rectangular_volume",
+                    "interior is not a closed rectangular volume"));
             return null;
         }
         BlockPos min = new BlockPos(bounds[0], bounds[1], bounds[2]);
@@ -246,19 +256,31 @@ public final class ReactorStructure {
         int height = max.getY() - min.getY() + 1;
 
         if (width < MIN_INTERIOR || depth < MIN_INTERIOR) {
-            result.fail(min, "interior footprint " + width + "x" + depth
-                    + " is smaller than the minimum " + MIN_INTERIOR + "x" + MIN_INTERIOR);
+            result.fail(min, BwrText.tr(
+                    "status.bwr.reactor_structure.interior_footprint_x_is_smaller_than_the_minimum",
+                    "interior footprint %sx%s is smaller than the minimum %sx%s",
+                    width,
+                    depth,
+                    MIN_INTERIOR,
+                    MIN_INTERIOR));
             return null;
         }
         if (width > MAX_INTERIOR || depth > MAX_INTERIOR) {
-            result.fail(min, "interior footprint " + width + "x" + depth
-                    + " exceeds the maximum " + MAX_INTERIOR + "x" + MAX_INTERIOR);
+            result.fail(min, BwrText.tr(
+                    "status.bwr.reactor_structure.interior_footprint_x_exceeds_the_maximum_x",
+                    "interior footprint %sx%s exceeds the maximum %sx%s",
+                    width,
+                    depth,
+                    MAX_INTERIOR,
+                    MAX_INTERIOR));
             return null;
         }
         if (height < MIN_INTERIOR_HEIGHT) {
-            result.fail(min, "interior height " + height + " is below the minimum "
-                    + MIN_INTERIOR_HEIGHT + "; a vessel needs lower plenum, active fuel and a steam"
-                    + " dome deep enough for both core spray rings");
+            result.fail(min, BwrText.tr(
+                    "status.bwr.reactor_structure.interior_height_is_below_the_minimum_a_vessel",
+                    "interior height %s is below the minimum %s; a vessel needs lower plenum, active fuel and a steam dome deep enough for both core spray rings",
+                    height,
+                    MIN_INTERIOR_HEIGHT));
             return null;
         }
 
@@ -267,7 +289,10 @@ public final class ReactorStructure {
             if(dev.bwr.mod.world.LoadedWorld.block(level,p).is(BwrBlocks.REACTOR_CONTROLLER.get())) controllers++;
         }
         if(controllers!=1) {
-            result.fail(controllerPos,"A reactor vessel must contain exactly one controller; found "+controllers+".");
+            result.fail(controllerPos, BwrText.tr(
+                    "status.bwr.reactor_structure.a_reactor_vessel_must_contain_exactly_one_controller",
+                    "A reactor vessel must contain exactly one controller; found %s.",
+                    controllers));
             return null;
         }
 
@@ -288,7 +313,9 @@ public final class ReactorStructure {
         int activeFuelBottomY = min.getY() + 1;
         int activeFuelTopY = VesselInternalsGeometry.constructionFuelTop(min, max);
         if (activeFuelTopY <= activeFuelBottomY) {
-            result.fail(min, "no room for active fuel between the lower plenum and the steam dome");
+            result.fail(min, BwrText.tr(
+                    "status.bwr.reactor_structure.no_room_for_active_fuel_between_the_lower",
+                    "no room for active fuel between the lower plenum and the steam dome"));
             return null;
         }
 
@@ -319,15 +346,20 @@ public final class ReactorStructure {
                 BlockState driveState = dev.bwr.mod.world.LoadedWorld.block(level, crd);
                 if (!driveState.is(BwrBlocks.CONTROL_ROD_DRIVE.get())) {
                     if (!result.hasEnoughFailures()) {
-                        result.fail(crd, "missing control rod drive for the rod at "
-                                + x + ", " + z + "; every rod needs its own drive beneath it");
+                        result.fail(crd, BwrText.tr(
+                                "status.bwr.reactor_structure.missing_control_rod_drive_for_the_rod_at",
+                                "missing control rod drive for the rod at %s, %s; every rod needs its own drive beneath it",
+                                x,
+                                z));
                     }
                 }
             }
         }
 
         if (rods.isEmpty()) {
-            result.fail(min, "interior is too small to place any control rods");
+            result.fail(min, BwrText.tr(
+                    "status.bwr.reactor_structure.interior_is_too_small_to_place_any_control",
+                    "interior is too small to place any control rods"));
             return null;
         }
         if (!result.isValid()) {
@@ -541,7 +573,7 @@ public final class ReactorStructure {
                         if (result.hasEnoughFailures()) {
                             return;
                         }
-                        result.fail(p, "gap in the reactor vessel shell");
+                        result.fail(p, BwrText.tr("status.bwr.reactor_structure.gap_in_the_reactor_vessel_shell", "gap in the reactor vessel shell"));
                         continue;
                     }
                     if (state.getBlock() instanceof RpvWaterInjectionPortBlock) waterPorts.add(p.immutable());
@@ -568,11 +600,10 @@ public final class ReactorStructure {
     private static void reportSteamOutlets(Level level, List<BlockPos> steamOutlets,
                                            ValidationResult result) {
         if (steamOutlets.isEmpty()) {
-            result.degrade("no RPV steam outlet in the vessel shell; the only steam paths off"
-                    + " this vessel are the relief valves and a turbine steam outlet drawing"
-                    + " on the vessel directly. " + RpvSteamOutletBlockEntity.MAIN_STEAM_LINES
-                    + " nozzles pass rated steam flow, and a turbine steam outlet piped back"
-                    + " to one takes its steam through it instead of separately");
+            result.degrade(BwrText.tr(
+                    "status.bwr.reactor_structure.no_rpv_steam_outlet_in_the_vessel_shell",
+                    "no RPV steam outlet in the vessel shell; the only steam paths off this vessel are the relief valves and a turbine steam outlet drawing on the vessel directly. %s nozzles pass rated steam flow, and a turbine steam outlet piped back to one takes its steam through it instead of separately",
+                    RpvSteamOutletBlockEntity.MAIN_STEAM_LINES));
             return;
         }
         int unconnected = 0;
@@ -586,9 +617,11 @@ public final class ReactorStructure {
             }
         }
         if (unconnected > 0) {
-            result.degrade(first, unconnected + " of " + steamOutlets.size()
-                    + " RPV steam outlet(s) have no main steam line welded to any face and pass"
-                    + " nothing; the first is");
+            result.degrade(first, BwrText.tr(
+                    "status.bwr.reactor_structure.of_rpv_steam_outlet_s_have_no_main",
+                    "%s of %s RPV steam outlet(s) have no main steam line welded to any face and pass nothing; the first is",
+                    unconnected,
+                    steamOutlets.size()));
         }
     }
 
@@ -684,13 +717,18 @@ public final class ReactorStructure {
             expected += loopExpected;
 
             if (loopPresent == 0) {
-                result.degrade("no " + loop.getSerializedName().toUpperCase(java.util.Locale.ROOT)
-                        + " sparger ring built; that loop delivers no core spray");
+                result.degrade(BwrText.tr(
+                        "status.bwr.reactor_structure.no_sparger_ring_built_that_loop_delivers_no",
+                        "no %s sparger ring built; that loop delivers no core spray",
+                        loop.getSerializedName().toUpperCase(java.util.Locale.ROOT)));
             } else if (loopPresent < loopExpected) {
-                result.degrade("the " + loop.getSerializedName().toUpperCase(java.util.Locale.ROOT)
-                        + " sparger ring is " + loopPresent + "/" + loopExpected
-                        + " complete, so it sprays at " + Math.round(100.0 * loopPresent / loopExpected)
-                        + "% of capacity");
+                result.degrade(BwrText.tr(
+                        "status.bwr.reactor_structure.the_sparger_ring_is_complete_so_it_sprays",
+                        "the %s sparger ring is %s/%s complete, so it sprays at %s%% of capacity",
+                        loop.getSerializedName().toUpperCase(java.util.Locale.ROOT),
+                        loopPresent,
+                        loopExpected,
+                        Math.round(100.0 * loopPresent / loopExpected)));
             }
         }
 
@@ -709,9 +747,11 @@ public final class ReactorStructure {
                             max.getY() - DOME_BLOCKS_ABOVE_ACTIVE_FUEL)) valid |= y == allowed;
                     if (!valid) {
                         if (!result.hasEnoughFailures()) {
-                            result.fail(p, "sparger segment is at the wrong elevation; HPCS belongs at y="
-                                    + hpcsY + " (4 above top of active fuel) and LPCS at y=" + lpcsY
-                                    + " (1 above)");
+                            result.fail(p, BwrText.tr(
+                                    "status.bwr.reactor_structure.sparger_segment_is_at_the_wrong_elevation_hpcs",
+                                    "sparger segment is at the wrong elevation; HPCS belongs at y=%s (4 above top of active fuel) and LPCS at y=%s (1 above)",
+                                    hpcsY,
+                                    lpcsY));
                         }
                     }
                 }

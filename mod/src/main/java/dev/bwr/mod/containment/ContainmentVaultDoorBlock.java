@@ -1,5 +1,7 @@
 package dev.bwr.mod.containment;
 
+import dev.bwr.mod.text.BwrText;
+
 import com.mojang.serialization.MapCodec;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -98,8 +100,7 @@ public final class ContainmentVaultDoorBlock extends BaseEntityBlock {
         var owner=owner(level,pos,state);
         if(owner==null)return InteractionResult.PASS;
         boolean started=owner.handwheelToggle();
-        if(player instanceof ServerPlayer)player.displayClientMessage(Component.literal(started?
-                "Vault door handwheel engaged (60 s)":"Vault door jammed or already moving"),true);
+        if(player instanceof ServerPlayer)player.displayClientMessage((started ? BwrText.tr("status.bwr.containment_vault_door.vault_door_handwheel_engaged_60_s", "Vault door handwheel engaged (60 s)") : BwrText.tr("status.bwr.containment_vault_door.vault_door_jammed_or_already_moving", "Vault door jammed or already moving")),true);
         return InteractionResult.CONSUME;
     }
     @Override protected void neighborChanged(BlockState state,Level level,BlockPos pos,Block neighbour,BlockPos changed,boolean moving){
