@@ -57,6 +57,8 @@ neoForge {
             if (project.hasProperty('bwrRvuCheck')) jvmArguments.add('-Dbwr.rvuCheck=true')
             if (project.hasProperty('bwrRvuAccidentCheck')) jvmArguments.addAll('-Dbwr.rvuCheck=true', '-Dbwr.rvuAccident=true')
             if (project.hasProperty('bwrRvuQuickCheck')) jvmArguments.addAll('-Dbwr.rvuCheck=true', '-Dbwr.rvuQuick=true')
+            if (project.hasProperty('bwrGpuVisualsCheck')) jvmArguments.add('-Dbwr.gpuVisualsCheck=true')
+            if (project.hasProperty('bwrGpuBenchmarkOnly')) jvmArguments.addAll('-Dbwr.coolingPanelCheck=true', '-Dbwr.gpuVisualsCheck=true', '-Dbwr.gpuBenchmarkOnly=true')
             if (project.hasProperty('bwrSuppressionPanelCheck')) jvmArguments.add('-Dbwr.suppressionPanelCheck=true')
             if (project.hasProperty('bwrTankPanelCheck')) jvmArguments.add('-Dbwr.tankPanelCheck=true')
             if (project.hasProperty('bwrAlphaClientCheck')) jvmArguments.add('-Dbwr.alphaClientCheck=true')
@@ -185,6 +187,7 @@ dependencies {
 // ---------------------------------------------------------------------------
 tasks.named('jar', Jar).configure {
     exclude 'dev/bwr/mod/devtest/**'
+    exclude 'assets/bwr/shaders/core/test_broken_gpu.*'
     exclude 'data/bwr/structure/empty.nbt'
     from(rootProject.file('LICENSE')) { into 'META-INF' }
     from(rootProject.file('NOTICE')) { into 'META-INF' }

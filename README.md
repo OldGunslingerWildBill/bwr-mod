@@ -9,7 +9,7 @@ boiling water reactor, modeled pumps, and connected steam and water systems.
 Power emerges from neutronics: move the control rods and change recirculation
 flow, and the reactor responds. There is no commanded burn rate.
 
-**Current version:** `0.1.0-alpha.31` — Buildable containment, October 11, 2026.
+**Current version:** `0.1.0-alpha.32` — RHR containment physics and optional GPU visuals, October 13, 2026.
 
 **Alpha.31:** surround the reactor and a suppression pool with a solid containment
 room. Its controller surveys free volume and wall strength, reports leaks and

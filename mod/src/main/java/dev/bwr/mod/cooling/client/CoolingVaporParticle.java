@@ -22,6 +22,7 @@ public final class CoolingVaporParticle extends TextureSheetParticle {
         RenderSystem.depthMask(false);
         return buffer;
     };
+    private static SpriteSet spriteSet;
     private final float initialSize,opacity;
     private final double lift,phase,sourceX,sourceY,sourceZ;
     private final long windSalt;
@@ -38,27 +39,25 @@ public final class CoolingVaporParticle extends TextureSheetParticle {
     @Override public void tick(){
         xo=x;yo=y;zo=z;
         if(age++>=lifetime){remove();return;}
-        double progress=(double)age/lifetime;
-        var wind=CoolingVaporWind.sample(level.getGameTime()*.05,sourceX,sourceZ,Math.max(0,y-sourceY),windSalt,level.isRaining());
-        double eddy=.008+.024*progress;
-        xd+=(wind.x()+Math.sin(age*.029+phase)*eddy-xd)*.045;
-        zd+=(wind.z()+Math.cos(age*.023+phase)*eddy-zd)*.045;
-        yd+=(lift*(1-.6*progress)*wind.liftFactor()-yd)*.06;
+        var next=CoolingVaporMotion.step((ClientLevel)level,age,lifetime,phase,lift,sourceX,sourceY,sourceZ,
+                windSalt,xd,yd,zd,initialSize,opacity,y);
+        xd=next.x();yd=next.y();zd=next.z();
         move(xd,yd,zd);
-        quadSize=initialSize*(1+2.5f*(float)progress);
-        double dispersal=Math.clamp((progress-.35)/.65,0,1);
-        double fade=1-dispersal*dispersal*(3-2*dispersal);
-        alpha=opacity*(float)Math.min(1,age/6.0)*(float)fade;
+        quadSize=next.size();alpha=next.alpha();
         setSize(quadSize*2,quadSize*2);
     }
     @Override public ParticleRenderType getRenderType(){return VAPOR_SHEET;}
     @Override public Optional<ParticleGroup> getParticleGroup(){return Optional.of(GROUP);}
     @SubscribeEvent public static void providers(RegisterParticleProvidersEvent event){
-        event.registerSpriteSet(BwrParticles.COOLING_VAPOR.get(),sprites->(type,level,x,y,z,size,rise,strength)->{
+        event.registerSpriteSet(BwrParticles.COOLING_VAPOR.get(),sprites->{
+            spriteSet=sprites;
+            return (type,level,x,y,z,size,rise,strength)->{
             var setting=net.minecraft.client.Minecraft.getInstance().options.particles().get();
             if(setting==net.minecraft.client.ParticleStatus.MINIMAL
                     ||setting==net.minecraft.client.ParticleStatus.DECREASED&&level.random.nextBoolean())return null;
             return new CoolingVaporParticle(level,x,y,z,size,rise,strength,sprites);
+            };
         });
     }
+    public static SpriteSet spriteSet(){return spriteSet;}
 }

@@ -145,8 +145,10 @@ public class CoolingBlockEntity extends BlockEntity {
                 y=Math.max(bounds.maxY+.1,p.getY()+rotor.y-c.getY()+.7);
             }
             if(!l.canSeeSky(BlockPos.containing(x,y,z)))return;
-            l.addParticle(dev.bwr.mod.registry.BwrParticles.COOLING_VAPOR.get(),true,x,y,z,
-                    natural?5.0:3.4,natural?.43:.30,.12+.72*strength);
+            if (!dev.bwr.mod.cooling.client.VaporPlumeRenderer.spawn((net.minecraft.client.multiplayer.ClientLevel)l,p,
+                    x,y,z,natural?5.0:3.4,natural?.43:.30,.12+.72*strength))
+                l.addParticle(dev.bwr.mod.registry.BwrParticles.COOLING_VAPOR.get(),true,x,y,z,
+                        natural?5.0:3.4,natural?.43:.30,.12+.72*strength);
         }
     }
     private void push(){

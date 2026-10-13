@@ -44,6 +44,8 @@ public final class BwrMod {
                 dev.bwr.mod.accident.CoriumConfig.SPEC);
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON,
                 dev.bwr.mod.panel.PanelConfig.SPEC, "bwr-panels.toml");
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT,
+                dev.bwr.mod.client.VisualEffectsConfig.SPEC, "bwr-visuals.toml");
         dev.bwr.mod.panel.component.ComponentTypes.bootstrap();
         dev.bwr.mod.panel.wiring.PanelWiring.bootstrap();
         BwrBlocks.BLOCKS.register(modBus);

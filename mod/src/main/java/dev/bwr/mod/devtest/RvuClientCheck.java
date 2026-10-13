@@ -1,6 +1,9 @@
 package dev.bwr.mod.devtest;
 
 import dev.bwr.mod.client.MachineMeshCache;
+import dev.bwr.mod.client.GpuVisualShaders;
+import dev.bwr.mod.client.VisualEffectsConfig;
+import dev.bwr.mod.client.VisualEffectsMode;
 import dev.bwr.mod.reactor.*;
 import dev.bwr.mod.reactor.client.ReactorVesselRenderer;
 import dev.bwr.mod.registry.*;
@@ -26,6 +29,9 @@ public final class RvuClientCheck {
     private static final BlockPos MIN=new BlockPos(160,190,160),ROOT=MIN.offset(-1,3,7);
     private static final String[] NAMES={"rvu-exterior","rvu-full-water","rvu-low-water","rvu-empty","rvu-broken","rvu-repaired","rvu-pressure-failure","rvu-cherenkov","rvu-inside","rvu-dry-no-glow","rvu-sparger-corners","rvu-jet-proportions"};
     private static boolean started,requested;private static int age,joined,stage,shown;private static long uploads,previousUploads;
+    private static long glowDraws, waterDraws;
+    private static java.util.concurrent.CompletableFuture<Void> gpuReload;
+    private static boolean gpuPolicyChecked,gpuReloadSettled;
     @SubscribeEvent public static void tick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event)throws Exception {
         if(!Boolean.getBoolean("bwr.rvuCheck"))return;var mc=Minecraft.getInstance();
         if(++age>5000)throw new AssertionError("RVU timeout stage "+stage);
@@ -98,6 +104,22 @@ public final class RvuClientCheck {
                 l.setDayTime(selected==8?18000:6000);l.setWeatherParameters(6000,0,false,false);player.connection.teleport(camera.x,camera.y,camera.z,yaw,pitch);
             });
         }
+        if(Boolean.getBoolean("bwr.gpuVisualsCheck")&&shown==0) {
+            if(stage==7) {
+                if(!gpuPolicyChecked){GpuVisualsClientCheck.policyAndBrokenShader(mc);gpuPolicyChecked=true;}
+                VisualEffectsMode.testOverride(VisualEffectsConfig.Mode.SHADER,false);
+            } else if(stage==8)VisualEffectsMode.testOverride(VisualEffectsConfig.Mode.CLASSIC,false);
+            else if(stage==9)VisualEffectsMode.testOverride(VisualEffectsConfig.Mode.SHADER,false);
+            else VisualEffectsMode.testOverride(null,null);
+            glowDraws=GpuVisualShaders.drawCount(VisualEffectsMode.Effect.CHERENKOV);
+            waterDraws=GpuVisualShaders.drawCount(VisualEffectsMode.Effect.WATER);
+        }
+        if(Boolean.getBoolean("bwr.gpuVisualsCheck")&&stage==7&&shown==40&&gpuReload==null)gpuReload=mc.reloadResourcePacks();
+        if(Boolean.getBoolean("bwr.gpuVisualsCheck")&&stage==7&&gpuReload!=null&&!gpuReloadSettled){
+            if(!gpuReload.isDone())return;
+            if(gpuReload.isCompletedExceptionally())throw new AssertionError("GPU resource reload failed");
+            gpuReloadSettled=true;shown=0;return; // Let the unchanged mesh-stability check observe a settled resource generation.
+        }
         if(++shown<120)return;
         if(stage==0&&shown==120) {
             new net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen(mc.player,mc.level.enabledFeatures(),true);
@@ -117,6 +139,18 @@ public final class RvuClientCheck {
         if(stage!=4&&mc.level.getBlockState(roof).getCollisionShape(mc.level,roof).isEmpty()!=headOpen)throw new AssertionError("Client head collision stale "+stage);
         if((stage==7||stage==8)&&CherenkovAppearance.strength(be.clientPowerFractionOfRated(),be.clientHasFuel(),be.clientWaterPresent(),VesselWaterGeometry.height(be.clientVesselEnvelope(),be.clientWaterLevelIn(0)))<.05)throw new AssertionError("Decaying wet fuel has no glow");
         if(stage==9&&be.clientWaterPresent())throw new AssertionError("Dry glow fixture retained water");
+        if(Boolean.getBoolean("bwr.gpuVisualsCheck")) {
+            long glowNow=GpuVisualShaders.drawCount(VisualEffectsMode.Effect.CHERENKOV);
+            long waterNow=GpuVisualShaders.drawCount(VisualEffectsMode.Effect.WATER);
+            if(stage==7&&(glowNow<=glowDraws||waterNow<=waterDraws
+                    ||!VisualEffectsMode.gpu(VisualEffectsMode.Effect.CHERENKOV,true)
+                    ||!VisualEffectsMode.gpu(VisualEffectsMode.Effect.WATER,true)))
+                throw new AssertionError("GPU vessel effects did not render after reload");
+            if(stage==8&&(glowNow!=glowDraws||waterNow!=waterDraws))
+                throw new AssertionError("CLASSIC vessel effects still used GPU shaders");
+            if(stage==9&&shown==120)glowDraws=glowNow;
+            if(stage==9&&shown>=155&&glowNow!=glowDraws)throw new AssertionError("Dry core emitted GPU glow");
+        }
         if(stage==10)for(int loop=0;loop<2;loop++)for(int x:new int[]{0,2})for(int z:new int[]{0,2}) {
             var p=new BlockPos(147+loop*4+x,191,150+z);var state=mc.level.getBlockState(p);
             if(!state.getValue(CoreSpraySpargerBlock.CORNER))throw new AssertionError("Missing corner "+p);

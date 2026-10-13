@@ -3,6 +3,9 @@ import com.mojang.logging.LogUtils;
 import dev.bwr.mod.BwrMod;
 import dev.bwr.core.turbine.CoolingWaterUnit.Design;
 import dev.bwr.mod.cooling.*;
+import dev.bwr.mod.cooling.client.VaporPlumeRenderer;
+import dev.bwr.mod.client.VisualEffectsConfig;
+import dev.bwr.mod.client.VisualEffectsMode;
 import dev.bwr.mod.gui.CoolingMenu;
 import dev.bwr.mod.registry.BwrBlocks;
 import net.minecraft.client.*;
@@ -22,20 +25,27 @@ import net.neoforged.fml.common.EventBusSubscriber;
 @EventBusSubscriber(modid=BwrMod.MOD_ID,value=Dist.CLIENT)
 public final class CoolingClientCheck {
     private static final BlockPos[] ROOTS={new BlockPos(140,200,140),new BlockPos(172,200,140),new BlockPos(194,200,140),new BlockPos(204,200,140),new BlockPos(211,200,140)};
-    private static final String[] NAMES={"natural-draft","circular-induced-draft","water-pumps-intake","fan-controls","intake-controls","submerged-intake","tall-vapor-plumes","vapor-drift-08s","vapor-drift-16s","vapor-drift-24s"};
+    private static final String[] NAMES={"natural-draft","circular-induced-draft","water-pumps-intake","fan-controls","intake-controls","submerged-intake","tall-vapor-plumes","vapor-drift-08s","vapor-drift-16s","vapor-drift-24s","vapor-classic","vapor-gpu"};
     private static final double[][] CAMERAS={{175,224,94,35,10},{194,216,112,38,18},{214,208,124,35,14},{173,202,130,0,0},{211,201,137,0,0},{213,201.3,137.3,37,5},{185,280,-30,11,0}};
     private static boolean started,requested;private static int age,joined,stage,shown;
+    private static long lastFrame;
+    private static final java.util.ArrayList<Double> FRAME_MS=new java.util.ArrayList<>();
     @SubscribeEvent public static void supply(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event){
         if(!Boolean.getBoolean("bwr.coolingPanelCheck"))return;var l=event.getServer().overworld();
         for(var root:ROOTS)if(l.getBlockEntity(root) instanceof CoolingBlockEntity be){if(be.design().watts>0)be.power().receiveEnergy(Integer.MAX_VALUE,false);if(be.design().tower){be.plant().fillInput(be.design().flow/20,false);be.plant().drain(be.design().flow/20,false);}}
     }
     @SubscribeEvent public static void tick(net.neoforged.neoforge.client.event.ClientTickEvent.Post e){
         if(!Boolean.getBoolean("bwr.coolingPanelCheck"))return;var mc=Minecraft.getInstance();
-        if(++age>3000)throw new IllegalStateException("Cooling client timed out stage "+stage);
+        if(++age>4000)throw new IllegalStateException("Cooling client timed out stage "+stage);
         if(!started&&mc.screen!=null&&mc.getOverlay()==null){started=true;mc.options.pauseOnLostFocus=false;mc.options.cloudStatus().set(CloudStatus.OFF);mc.options.fov().set(55);mc.options.particles().set(ParticleStatus.ALL);
             mc.createWorldOpenFlows().createFreshLevel("bwr-cooling-check-"+System.currentTimeMillis(),new LevelSettings("Cooling check",GameType.CREATIVE,false,Difficulty.PEACEFUL,true,new GameRules(),WorldDataConfiguration.DEFAULT),new WorldOptions(0,false,false),r->r.registryOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).createWorldDimensions(),mc.screen);return;}
         if(mc.player==null||mc.level==null||mc.getSingleplayerServer()==null||++joined<40)return;
         if(!requested){requested=true;shown=0;var server=mc.getSingleplayerServer();var uuid=mc.player.getUUID();int selected=stage;
+            if(stage>=10){
+                VisualEffectsMode.testOverride(stage==10?VisualEffectsConfig.Mode.CLASSIC:VisualEffectsConfig.Mode.SHADER,false);
+                mc.options.enableVsync().set(false);mc.options.framerateLimit().set(260);mc.options.particles().set(ParticleStatus.ALL);
+                FRAME_MS.clear();lastFrame=0;
+            }
             server.execute(()->{var player=server.getPlayerList().getPlayer(uuid);var l=player.serverLevel();player.getAbilities().flying=true;player.setNoGravity(true);player.onUpdateAbilities();
                 if(selected==0){for(int x=7;x<=14;x++)for(int z=7;z<=10;z++){l.setChunkForced(x,z,true);l.getChunk(x,z);}
                     for(var p:BlockPos.betweenClosed(new BlockPos(126,199,126),new BlockPos(216,199,154)))l.setBlock(p,Blocks.SMOOTH_STONE.defaultBlockState(),3);
@@ -55,12 +65,50 @@ public final class CoolingClientCheck {
         if(stage>=6)mc.options.fov().set(85);
         if((stage<3||stage>=5)&&mc.screen!=null||stage>=3&&stage<5&&!(mc.player.containerMenu instanceof CoolingMenu m&&m.present))return;
         var c=CAMERAS[Math.min(stage,6)];mc.player.getAbilities().flying=true;mc.player.setDeltaMovement(Vec3.ZERO);mc.player.setPos(c[0],c[1],c[2]);mc.player.setYRot((float)c[3]);mc.player.setXRot((float)c[4]);
-        if(++shown<(stage>=6?(stage==6?200:160):90))return;mc.options.hideGui=stage<3||stage>=5;mc.getToasts().clear();if(shown<95)return;
-        try{var dir=mc.gameDirectory.toPath().resolve("cooling-check");java.nio.file.Files.createDirectories(dir);try(var shot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve(NAMES[stage]+".png"));}}catch(java.io.IOException ex){throw new IllegalStateException(ex);}
+        if(++shown<(stage>=10?850:stage>=6?(stage==6?200:160):90))return;mc.options.hideGui=stage<3||stage>=5;mc.getToasts().clear();if(shown<95)return;
+        try{var dir=mc.gameDirectory.toPath().resolve("cooling-check");java.nio.file.Files.createDirectories(dir);try(var shot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){
+            shot.writeToFile(dir.resolve(NAMES[stage]+".png"));
+            if(stage==11&&brightVaporPixels(shot)<1000)throw new AssertionError("GPU vapor drew no visible plume");
+        }}catch(java.io.IOException ex){throw new IllegalStateException(ex);}
         if(stage==1){var fan=(CoolingBlockEntity)mc.level.getBlockEntity(ROOTS[1]);if(fan.vaporActivity()<=0||Math.abs(fan.fanAngle-fan.previousFanAngle-6)>0.01)throw new AssertionError("Mechanical vapor activity/fan direction or speed incorrect at 50% power");}
-        if(stage>=6){int particles=Integer.parseInt(mc.particleEngine.countParticles());if(particles<100)throw new AssertionError("No sustained cooling plumes: "+particles);LogUtils.getLogger().info("VAPOR PARTICLES: {} at tick {}",particles,mc.level.getGameTime());}
+        if(stage>=6){
+            int particles=Integer.parseInt(mc.particleEngine.countParticles());
+            if(stage==11){
+                if(VaporPlumeRenderer.count()<100||VaporPlumeRenderer.count()>VaporPlumeRenderer.CAP
+                        ||VaporPlumeRenderer.drawCount()==0||!VisualEffectsMode.gpu(VisualEffectsMode.Effect.VAPOR,true))
+                    throw new AssertionError("GPU plume count/draw/mode wrong: "+VaporPlumeRenderer.count());
+            }else if(particles<100)throw new AssertionError("No sustained cooling plumes: "+particles);
+            LogUtils.getLogger().info("VAPOR PARTICLES: {} GPU {} at tick {}",particles,VaporPlumeRenderer.count(),mc.level.getGameTime());
+        }
+        if(stage>=10){
+            if(FRAME_MS.size()<100)throw new AssertionError("Vapor benchmark lacks frames: "+FRAME_MS.size());
+            java.util.Collections.sort(FRAME_MS);
+            double mean=FRAME_MS.stream().mapToDouble(Double::doubleValue).average().orElseThrow();
+            LogUtils.getLogger().info("VAPOR BENCHMARK {} frames={} meanMs={} p50Ms={} p95Ms={} classicParticles={} gpuPuffs={} gpuDraws={}",
+                    stage==10?"CLASSIC":"GPU",FRAME_MS.size(),mean,FRAME_MS.get(FRAME_MS.size()/2),
+                    FRAME_MS.get((int)(FRAME_MS.size()*.95)),mc.particleEngine.countParticles(),
+                    VaporPlumeRenderer.count(),VaporPlumeRenderer.drawCount());
+            if(stage==11)GpuVisualsClientCheck.vaporSettingsAndCap(mc,ROOTS[0]);
+        }
         LogUtils.getLogger().info("COOLING CLIENT CHECK: captured {}",NAMES[stage]);requested=false;
-        if(++stage==NAMES.length){LogUtils.getLogger().info("COOLING CLIENT CHECK PASS: five models, ports, fan motion and control screen");mc.stop();}
+        stage++;
+        if(stage==1&&Boolean.getBoolean("bwr.gpuBenchmarkOnly"))stage=10;
+        if(stage==NAMES.length||stage==10&&!Boolean.getBoolean("bwr.gpuVisualsCheck")){
+            VisualEffectsMode.testOverride(null,null);
+            LogUtils.getLogger().info("COOLING CLIENT CHECK PASS: five models, ports, fan motion and control screen");mc.stop();}
+    }
+    @SubscribeEvent public static void frame(net.neoforged.neoforge.client.event.RenderFrameEvent.Post event){
+        if(!Boolean.getBoolean("bwr.coolingPanelCheck")||!Boolean.getBoolean("bwr.gpuVisualsCheck")||!requested||stage<10||shown<650)return;
+        long now=System.nanoTime();if(lastFrame!=0){double ms=(now-lastFrame)/1_000_000.0;if(ms>0&&ms<500)FRAME_MS.add(ms);}lastFrame=now;
+    }
+    private static int brightVaporPixels(com.mojang.blaze3d.platform.NativeImage image){
+        int bright=0;
+        for(int y=0;y<Math.min(500,image.getHeight());y+=2)
+            for(int x=100;x<Math.min(1000,image.getWidth());x+=2){
+                int rgba=image.getPixelRGBA(x,y);
+                if((rgba&255)>220&&((rgba>>>8)&255)>220&&((rgba>>>16)&255)>220)bright++;
+            }
+        return bright;
     }
     private static CoolingBlockEntity wetIntake(net.minecraft.server.level.ServerLevel l,BlockPos root){
         for(var p:BlockPos.betweenClosed(root.offset(-3,0,-3),root.offset(3,3,3)))l.setBlock(p,Blocks.WATER.defaultBlockState(),3);

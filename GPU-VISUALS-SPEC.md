@@ -1,6 +1,6 @@
-# GPU visual effects — implementation spec (planned, after alpha.31)
+# GPU visual effects — implementation spec (alpha.32)
 
-Status: **design, not yet built.** Three client-side effects move onto GPU
+Status: **implemented in Phase K.** Three client-side effects move onto GPU
 shaders, each with the current renderer kept as the fallback. Build this after
 the containment structure (alpha.31) has shipped.
 

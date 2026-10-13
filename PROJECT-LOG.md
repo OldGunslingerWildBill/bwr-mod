@@ -1,5 +1,15 @@
 # Project log
 
+## Alpha.32 — Phases J and K — 2026-10-13
+
+RHR now cools the suppression pool and pressure vessel, sprays containment,
+and routes break and relief steam through the modeled containment. The vessel
+stores metal heat, and excessive cooldown adds boundary damage. Containment
+pressure remains one shared drywell/wetwell node. Client visuals add GPU
+Cherenkov and water shaders plus an instanced cooling vapor option. Every
+effect can fall back independently; `bwr-visuals.toml` selects `AUTO`,
+`SHADER`, or `CLASSIC`. The classic renderers remain available.
+
 ## Alpha.31 — Phase F — 2026-10-11
 
 Completed the buildable-containment milestone: surveyed rooms, strength and

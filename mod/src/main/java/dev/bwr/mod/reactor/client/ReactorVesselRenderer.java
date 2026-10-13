@@ -94,8 +94,10 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
             }
         }
         if(interiorVisible&&be.clientWaterPresent()) {
-            VesselWaterSurface.render(e,be.clientWaterLevelIn(partial),pose,buffers,light,overlay);
-            if(core!=null)VesselCherenkovGlow.render(be,e,core,partial,pose,buffers);
+            if(!VesselGpuVisuals.water(be,e,partial,pose,buffers,light))
+                VesselWaterSurface.render(e,be.clientWaterLevelIn(partial),pose,buffers,light,overlay);
+            if(core!=null&&!VesselGpuVisuals.cherenkov(be,e,core,partial,pose,buffers))
+                VesselCherenkovGlow.render(be,e,core,partial,pose,buffers);
         }
         pose.popPose();
         var player=Minecraft.getInstance().player;
