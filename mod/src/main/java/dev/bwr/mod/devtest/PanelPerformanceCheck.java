@@ -5,6 +5,7 @@ import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.panel.PanelBlock;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.PanelOps;
+import dev.bwr.mod.panel.client.PanelRenderer;
 import dev.bwr.mod.panel.component.ComponentType;
 import dev.bwr.mod.panel.component.ComponentTypes;
 import dev.bwr.mod.panel.component.ControlSwitchData;
@@ -199,6 +200,9 @@ public final class PanelPerformanceCheck {
         double mean = sum / n;
         LogUtils.getLogger().info("PANEL PERFORMANCE stage={} frames={} meanMs={} p50Ms={} p95Ms={} fps={} active={}",
                 current.name(), n, mean, FRAME_MS.get(n / 2), FRAME_MS.get((int) (n * .95)), 1000 / mean, mc.isWindowActive());
+        LogUtils.getLogger().info("PANEL PERFORMANCE stage={} gpu cache: {} blocks hold {} quads, {} buffers built so far in {} ms",
+                current.name(), PanelRenderer.debugCachedBlocks(), PanelRenderer.debugCachedQuads(), PanelRenderer.debugRebuilds(),
+                PanelRenderer.debugRebuildMillis());
         try {
             var directory = mc.gameDirectory.toPath().resolve("panel-performance");
             Files.createDirectories(directory);

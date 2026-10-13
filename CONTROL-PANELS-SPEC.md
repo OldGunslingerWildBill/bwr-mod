@@ -278,6 +278,10 @@ and tiles, and pushbutton caps that are not held, stay at world light.
   static geometry per component and only redraw moving parts (needles,
   lamps, segments, pens).
 - LOD: beyond 24 blocks skip text and fine detail; beyond 64 skip components.
+- Cached solid geometry: each panel block keeps the recorded static meshes of its components, and the posed
+  geometry of baked models, in one vertex buffer on the GPU, rebuilt only when something in it changes (see
+  PANEL-MODELS-SPEC.md, "Cost"); a frame draws it with one call and runs model code only for what moves
+  continuously, the legends and the glass, switching render type once per block for each.
 - Placeholder bodies are procedural (boxes and quads). Put each type's body
   behind a `ComponentModel` interface keyed by type, so a baked Blender model
   can be swapped in later per type.

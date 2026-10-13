@@ -45,4 +45,54 @@ final class StyledComponentModel implements ComponentModel {
             baked.renderDynamic(context, component);
         }
     }
+
+    @Override
+    public long poseKey(PanelRenderContext context, PanelComponent component) {
+        BakedComponentModel baked = RenderCache.of(component).baked;
+        if (baked == null) {
+            return classic.poseKey(context, component);
+        }
+        baked.updatePose(context, component);
+        return baked.poseKey();
+    }
+
+    @Override
+    public void emitPosed(QuadSink sink, PanelComponent component) {
+        BakedComponentModel baked = RenderCache.of(component).baked;
+        if (baked == null) {
+            classic.emitPosed(sink, component);
+        } else {
+            baked.emitPosed(sink);
+        }
+    }
+
+    @Override
+    public void renderLive(PanelRenderContext context, PanelComponent component) {
+        BakedComponentModel baked = RenderCache.of(component).baked;
+        if (baked == null) {
+            classic.renderLive(context, component);
+        } else {
+            baked.renderLive(context);
+        }
+    }
+
+    @Override
+    public void renderLegends(PanelRenderContext context, PanelComponent component) {
+        BakedComponentModel baked = RenderCache.of(component).baked;
+        if (baked == null) {
+            classic.renderLegends(context, component);
+        } else {
+            baked.renderLegends(context);
+        }
+    }
+
+    @Override
+    public void renderGlass(PanelRenderContext context, PanelComponent component) {
+        BakedComponentModel baked = RenderCache.of(component).baked;
+        if (baked == null) {
+            classic.renderGlass(context, component);
+        } else {
+            baked.renderGlass(context);
+        }
+    }
 }

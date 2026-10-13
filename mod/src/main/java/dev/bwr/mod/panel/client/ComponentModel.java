@@ -41,4 +41,40 @@ public interface ComponentModel {
      * {@link PanelRenderContext#LOD_FULL}.
      */
     void renderDynamic(PanelRenderContext context, PanelComponent component);
+
+    // The next three are how a model takes part in the panel's GPU cache (PanelMeshCache), which keeps the solid
+    // geometry of a block in a vertex buffer: the recorded static meshes, plus any posed geometry a model says
+    // only changes when its poseKey does. A model that has none of that keeps these defaults and draws all its
+    // moving parts through renderDynamic, every frame, as before.
+
+    /**
+     * Reads the component's live state once a frame and returns a key for the posed geometry
+     * {@link #emitPosed} would record now; the block's buffer is rebuilt when the key changes. 0 when the model
+     * has no posed geometry.
+     */
+    default long poseKey(PanelRenderContext context, PanelComponent component) {
+        return 0L;
+    }
+
+    /** Records the posed geometry: parts that change only when the component is operated, in the pose of the last {@link #poseKey}. */
+    default void emitPosed(QuadSink sink, PanelComponent component) {
+    }
+
+    /**
+     * What is drawn every frame when the static meshes and the posed geometry live in the block's buffer: by
+     * default everything {@link #renderDynamic} draws. The renderer calls this for every component of a block,
+     * then {@link #renderLegends} for every component, then {@link #renderGlass}: each switches the buffer
+     * source to another render type, so grouping them keeps a block to a handful of draw calls.
+     */
+    default void renderLive(PanelRenderContext context, PanelComponent component) {
+        renderDynamic(context, component);
+    }
+
+    /** Text drawn after the {@link #renderLive} of every component of the block; nothing by default (see there). */
+    default void renderLegends(PanelRenderContext context, PanelComponent component) {
+    }
+
+    /** Translucent geometry drawn last of all, over everything it covers; nothing by default (see {@link #renderLive}). */
+    default void renderGlass(PanelRenderContext context, PanelComponent component) {
+    }
 }

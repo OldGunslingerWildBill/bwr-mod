@@ -208,6 +208,26 @@ Other ids (`maker`, `top`, `lower_left`, `bottom`) are not drawn. Text is scaled
 rotated by its `rot`, aligned by `align`, coloured to read on the surface behind it (dark on a lit lens), and
 drawn only within 24 blocks.
 
+**Cost.** A baked model is hundreds of faces, so a block's solid geometry is not sent through the CPU every
+frame. Each panel block keeps its recorded static meshes plus the posed geometry of its baked components (a
+handle, cap, key, knob, lens or flag in its current pose) in one vertex buffer on the GPU (`PanelMeshCache`),
+rebuilt only when the block's light, the loaded models, a component's revision or a component's pose changes,
+and drawn with one call; a rebuild runs the same drawing code as the per frame path, so the pictures are
+identical (the performance walls and the client check's fixed camera stages photograph pixel for pixel the same with
+the cache on and off). What moves
+continuously (the pointers of the two meter types, which follow a signal), the legends and the glass stay per
+frame, and a block draws them with one render type switch each (solid, text, glass) rather than three per
+component. Beyond 24 blocks legends and glass are skipped as before, beyond 64 blocks nothing is drawn.
+Measured with `-PbwrPanelPerformanceCheck` on a fully populated 16 x 8 vertical wall (704 components in 128
+blocks: control switches, selectors, keys, pushbuttons, lamps, knobs, round and edgewise meters), mean frame
+time over 8 seconds, an empty scene being 0.45 ms: without the cache the classic wall costs 3.8 to 4.1 ms and
+the baked wall 30 to 35 ms (from beyond 24 blocks 1.6 and 18 to 21 ms); with it, 3.5 to 4.0 ms and 3.5 to 3.9 ms
+(1.4 to 1.7 and 1.3 to 1.5 ms from beyond 24 blocks). The baked wall holds 193,000 quads in video memory, about
+28 MB, and takes about 45 ms in all to build the first time all of it is in view (0.35 ms a block). Buffers are
+freed ten seconds after a block was last drawn. The client option `panelGpuCache` (`bwr-visuals.toml`) turns
+the cache off, and a shader pack in use does so by itself (the buffers are drawn with the vanilla entity
+program); `-Dbwr.panelImmediate=true` does the same for development.
+
 **Known limits.** The classic procedural components still fill their cells as drawn, so on a benchboard or
 console they are stretched along the rows (a classic round dial is an oval there); baked models are not.
 A model with a frame much larger than its plate (the target pistols) looks small at the default size; the table
