@@ -73,9 +73,17 @@ public final class ContainmentStructurePhysicsTest {
                 "uncontained hydrogen reached flammability during a steady release");
         Check.isFalse(ct.isFailed(), "an opening alone set a failure mode");
         ct.setLeakArea(0.0);
-        for (int i = 0; i < 60; i++) ct.step(0.5, 0.0, 0.0, 1.0);
-        Check.greaterThan(peak + 1.0, ct.getHydrogenPercent(),
+        double sealedPeak = 0.0;
+        for (int i = 0; i < 60; i++) {
+            ct.step(0.5, 0.0, 0.0, 1.0);
+            sealedPeak = Math.max(sealedPeak, ct.getHydrogenPercent());
+        }
+        // Accumulation can ignite the smaller drywell before the end of this
+        // interval. Its maximum measures resumed accumulation despite that burn.
+        Check.greaterThan(peak + 1.0, sealedPeak,
                 "hydrogen did not accumulate after the boundary was repaired");
+        Check.note("seal restored: leak peak %.6f%%, sealed peak %.6f%%, final %.6f%%, burns %d",
+                peak, sealedPeak, ct.getHydrogenPercent(), ct.getBurnCount());
     }
 
     public static void test04_newSnapshotRoundTripsAndLegacySnapshotLoads() {
