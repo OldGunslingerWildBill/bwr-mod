@@ -14,6 +14,11 @@ public final class ControlSwitchData extends ComponentData {
     public static final int CLOSE = -1;
     public static final int NORMAL = 0;
     public static final int OPEN = 1;
+    /** Target flag colour after an operation when the lamp inputs say nothing: red after CLOSE (GE breaker control). */
+    public static final String FLAG_RED_AFTER_CLOSE = "close";
+    /** ...or red after OPEN (valves and pumps: red = open / running). */
+    public static final String FLAG_RED_AFTER_OPEN = "open";
+    public static final java.util.List<String> FLAG_MODES = java.util.List.of(FLAG_RED_AFTER_CLOSE, FLAG_RED_AFTER_OPEN);
 
     public boolean spring = true;
     public String closeText = "CLOSE";
@@ -31,6 +36,8 @@ public final class ControlSwitchData extends ComponentData {
      * on clients because every output change runs {@link ControlSwitchType#valuesChanged}.
      */
     public int lastOperated;
+    /** Which operation leaves the target flag red; see {@link #FLAG_MODES}. Default: CLOSE, as on GE switches. */
+    public String flagRed = FLAG_RED_AFTER_CLOSE;
     /** Look: {@link PanelStyles} style and handle variant. */
     public String style = PanelStyles.newStyle(TYPE);
     public String variant = PanelStyles.defaultVariant(TYPE, style);
@@ -45,6 +52,7 @@ public final class ControlSwitchData extends ComponentData {
         tag.putString("GreenText", greenText);
         tag.putInt("Position", position);
         tag.putInt("LastOperated", lastOperated);
+        tag.putString("FlagRed", flagRed);
         PanelStyles.save(tag, style, variant);
     }
 
@@ -58,6 +66,8 @@ public final class ControlSwitchData extends ComponentData {
         greenText = text(tag, "GreenText", "CLOSED");
         position = spring ? NORMAL : Math.max(CLOSE, Math.min(OPEN, tag.getInt("Position")));
         lastOperated = Math.max(CLOSE, Math.min(OPEN, tag.getInt("LastOperated")));
+        String savedFlag = tag.getString("FlagRed");
+        flagRed = FLAG_MODES.contains(savedFlag) ? savedFlag : FLAG_RED_AFTER_CLOSE;
         style = PanelStyles.loadStyle(TYPE, tag);
         variant = PanelStyles.loadVariant(TYPE, tag, style);
     }

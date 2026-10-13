@@ -60,7 +60,8 @@ the **Pointer** (black, red). New components start as `ge` when the model ships 
 from before this feature load as `classic`. If a model file is missing the component simply draws `classic`.
 Cap, lens and knob colours still work: a colour you set recolours the model, and the default colour leaves the
 model's own. The control switch's target flag shows the plant state when its lamp inputs are wired, otherwise
-the last operation. The big breaker-control switches read best at their larger 12x16 size.
+the last operation. The switch's "Target red after" setting picks which operation leaves it red: CLOSE
+(default, as on a GE breaker control switch) or OPEN (valves and pumps). The big breaker-control switches read best at their larger 12x16 size.
 
 ### The linker
 

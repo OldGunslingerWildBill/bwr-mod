@@ -557,11 +557,45 @@ public final class PanelModelTests {
                 "a lit lamp input decides");
         helper.assertTrue(FlagState.colour(true, false, -1) == FlagState.RED && FlagState.colour(false, true, 1) == FlagState.GREEN,
                 "the lamp wins over the last operation");
-        helper.assertTrue(FlagState.colour(false, false, 1) == FlagState.RED && FlagState.colour(false, false, -1) == FlagState.GREEN,
-                "no lamp: OPEN leaves it red, CLOSE green");
-        helper.assertTrue(FlagState.colour(true, true, 1) == FlagState.RED && FlagState.colour(true, true, -1) == FlagState.GREEN,
+        helper.assertTrue(FlagState.colour(false, false, -1) == FlagState.RED && FlagState.colour(false, false, 1) == FlagState.GREEN,
+                "no lamp: CLOSE leaves it red, OPEN (TRIP) green, as on a GE breaker control switch");
+        helper.assertTrue(FlagState.colour(true, true, -1) == FlagState.RED && FlagState.colour(true, true, 1) == FlagState.GREEN,
                 "both lit says nothing: last operation");
         helper.assertTrue(FlagState.colour(false, false, 0) == FlagState.NEUTRAL, "never operated, no lamps: neutral");
+        // The per-switch "Target red after: OPEN" setting reverses only the last-operation fallback.
+        helper.assertTrue(FlagState.colour(false, false, 1, false) == FlagState.RED
+                        && FlagState.colour(false, false, -1, false) == FlagState.GREEN,
+                "red-after-OPEN setting: OPEN leaves it red, CLOSE green");
+        helper.assertTrue(FlagState.colour(true, false, -1, false) == FlagState.RED
+                        && FlagState.colour(false, true, 1, false) == FlagState.GREEN,
+                "wired lamps still win under either setting");
+        helper.assertTrue(FlagState.colour(false, false, 0, false) == FlagState.NEUTRAL, "never operated stays neutral");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void panelControlSwitchFlagSettingSavesAndDefaultsToClose(GameTestHelper helper) {
+        var fresh = new dev.bwr.mod.panel.component.ControlSwitchData();
+        helper.assertTrue(dev.bwr.mod.panel.component.ControlSwitchData.FLAG_RED_AFTER_CLOSE.equals(fresh.flagRed),
+                "a new switch defaults to red after CLOSE");
+        fresh.flagRed = dev.bwr.mod.panel.component.ControlSwitchData.FLAG_RED_AFTER_OPEN;
+        var tag = new net.minecraft.nbt.CompoundTag();
+        fresh.save(tag);
+        var loaded = new dev.bwr.mod.panel.component.ControlSwitchData();
+        loaded.load(tag);
+        helper.assertTrue(dev.bwr.mod.panel.component.ControlSwitchData.FLAG_RED_AFTER_OPEN.equals(loaded.flagRed),
+                "the setting round-trips");
+        tag.remove("FlagRed");
+        loaded.load(tag);
+        helper.assertTrue(dev.bwr.mod.panel.component.ControlSwitchData.FLAG_RED_AFTER_CLOSE.equals(loaded.flagRed),
+                "a save from before the setting loads as red after CLOSE");
+        tag.putString("FlagRed", "purple");
+        loaded.load(tag);
+        helper.assertTrue(dev.bwr.mod.panel.component.ControlSwitchData.FLAG_RED_AFTER_CLOSE.equals(loaded.flagRed),
+                "an unknown value falls back to red after CLOSE");
+        helper.assertTrue(dev.bwr.mod.panel.component.ComponentTypes.CONTROL_SWITCH.configSchema().stream()
+                        .anyMatch(field -> field.key().equals("FlagRed")),
+                "the wrench screen offers the setting");
         helper.succeed();
     }
 
@@ -1328,11 +1362,11 @@ public final class PanelModelTests {
             helper.assertTrue(spring.output(0) == 1.0 && data.lastOperated == 1, "OPEN latches +1");
             type.operate(context, OperateAction.RELEASE, 0.0);
             helper.assertTrue(spring.output(0) == 0.0 && data.position == 0 && data.lastOperated == 1, "the spring return keeps the latch");
-            helper.assertTrue(FlagState.colour(false, false, data.lastOperated) == FlagState.RED, "flag red after OPEN");
+            helper.assertTrue(FlagState.colour(false, false, data.lastOperated) == FlagState.GREEN, "flag green after OPEN (TRIP)");
             type.operate(context, OperateAction.PRESS, -1.0);
             helper.assertTrue(data.lastOperated == -1, "CLOSE latches -1");
             type.operate(context, OperateAction.RELEASE, 0.0);
-            helper.assertTrue(data.lastOperated == -1 && FlagState.colour(false, false, data.lastOperated) == FlagState.GREEN, "flag green after CLOSE");
+            helper.assertTrue(data.lastOperated == -1 && FlagState.colour(false, false, data.lastOperated) == FlagState.RED, "flag red after CLOSE");
             type.operate(context, OperateAction.TURN, 1.0);
             helper.assertTrue(data.lastOperated == 1, "a scroll flick counts");
             type.operate(context, OperateAction.RELEASE, 0.0);

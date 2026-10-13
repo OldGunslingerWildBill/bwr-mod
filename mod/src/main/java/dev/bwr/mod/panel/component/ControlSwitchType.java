@@ -29,7 +29,8 @@ public final class ControlSwitchType extends PanelInputType {
             ConfigField.text("NormalText", "component.bwr.field.normal_text", ControlSwitchData.MAX_TEXT),
             ConfigField.text("OpenText", "component.bwr.field.open_text", ControlSwitchData.MAX_TEXT),
             ConfigField.text("RedText", "component.bwr.field.red_text", ControlSwitchData.MAX_TEXT),
-            ConfigField.text("GreenText", "component.bwr.field.green_text", ControlSwitchData.MAX_TEXT)));
+            ConfigField.text("GreenText", "component.bwr.field.green_text", ControlSwitchData.MAX_TEXT),
+            ConfigField.choice("FlagRed", "component.bwr.field.flag_red", ControlSwitchData.FLAG_MODES)));
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("red"), PortSpec.of("green"));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("position"), PortSpec.of("open"), PortSpec.of("close"));
 

@@ -181,7 +181,8 @@ final class BakedComponentModel {
                 angle = Poses.controlSwitchAngle((int) Math.round(component.output(0)));
                 boolean red = LampData.active(component.input(0));
                 boolean green = LampData.active(component.input(1));
-                flagRgb = FlagState.colour(red, green, data.lastOperated);
+                flagRgb = FlagState.colour(red, green, data.lastOperated,
+                        !ControlSwitchData.FLAG_RED_AFTER_OPEN.equals(data.flagRed));
                 lit = red || green;
             }
             case ROTARY_SELECTOR -> angle = detents[Math.max(0, Math.min(detents.length - 1, (int) component.output(0)))];

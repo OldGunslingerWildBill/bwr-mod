@@ -187,7 +187,8 @@ palette colour while it is still the default; authored per-face shading is kept.
 variant's colour only when its dedicated model is missing. Lamp lenses are full-bright when lit (pushbutton:
 held, key switch: on, lamp: input, control switch: either lamp input) and dimmed to 22 percent when not. The
 target flag shows red when only the red lamp input is lit, green when only the green one is, else the last
-operation (OPEN red, CLOSE green, matching the mod's red = open / running convention), else neutral dark.
+operation, else neutral dark. Which operation leaves it red is the switch's "Target red after" setting:
+CLOSE (default, as on a GE breaker control switch) or OPEN (valves and pumps, red = open / running).
 Glass is drawn last and translucent.
 
 **Legends.** Models mark where; the game supplies the words: `caption` the component label (`legend` too on a
