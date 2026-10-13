@@ -5,14 +5,14 @@ import dev.bwr.mod.BwrMod;
 import java.util.List;
 
 /**
- * Engraved label plate, 1 cell tall and W wide (spec 2.1). The smallest useful
+ * Engraved label plate, 4 cells tall and W wide (spec 2.1). The smallest useful
  * component: it has no inputs, no outputs and no interaction, and exists to
  * prove placement, config, saves and drawing.
  */
 public final class NameplateType extends ComponentType {
     public static final List<Footprint> FOOTPRINTS = List.of(
-            Footprint.of(4, 1), Footprint.of(2, 1), Footprint.of(6, 1), Footprint.of(8, 1),
-            Footprint.of(12, 1), Footprint.of(16, 1), Footprint.of(24, 1), Footprint.of(32, 1));
+            Footprint.of(16, 4), Footprint.of(8, 4), Footprint.of(24, 4), Footprint.of(32, 4),
+            Footprint.of(48, 4), Footprint.of(64, 4), Footprint.of(24, 6), Footprint.of(32, 8));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.text("Text", "component.bwr.field.text", NameplateData.MAX_TEXT),
             ConfigField.color("Plate", "component.bwr.field.plate_color"),

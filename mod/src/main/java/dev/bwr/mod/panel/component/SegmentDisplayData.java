@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * State of a 7- or 16-segment display: how many digits it has (from its
- * footprint, 2 cells each), what it shows and in what colour.
+ * footprint, 5 cells each), what it shows and in what colour.
  *
  * <h3>What it shows</h3>
  * {@link #format} (a config field) wins when it is not empty: it is run through
@@ -59,9 +59,9 @@ public final class SegmentDisplayData extends ComponentData implements PanelText
         return sixteen;
     }
 
-    /** Number of digits: two cells each, at least one. */
+    /** Number of digits: five cells each, at least one. */
     public int digits() {
-        return host() == null ? 8 : Math.max(1, host().cellsWide() / 2);
+        return host() == null ? 8 : Math.max(1, host().cellsWide() / SegmentDisplayType.DIGIT_W);
     }
 
     /**

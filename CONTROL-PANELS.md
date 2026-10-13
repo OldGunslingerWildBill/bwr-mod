@@ -18,6 +18,37 @@ order and plug into the same wiring; the worked example below names them as the 
 | Panel wrench | Right-click a component: label, colours and other settings. Sneak-right-click removes it |
 | **Panel linker** | Wires components. See below |
 
+### Component sizes
+
+A panel block face is a 16 x 16 grid of cells (one cell is 1/16 block). Components are sized so a wall reads
+from a few blocks away; right-click air with the item to cycle through the sizes (width x height in cells,
+the default first). A component may span up to 4 x 4 blocks.
+
+| Component | Sizes (cells) |
+| --- | --- |
+| Pushbutton | 6x6, 8x8 |
+| Toggle switch, key switch | 6x8, 8x10 |
+| Rotary selector | 8x10, 12x14 (the extra rows hold the position name) |
+| Setpoint knob | 8x8, 12x12 |
+| Control switch | 8x12, 12x16 |
+| Thumbwheel | 3 cells wide per digit, 6 tall: 9x6 (3 digits), 3x6 to 24x6 (1 to 8 digits) |
+| Lamp | 4x4, 6x6 |
+| Annunciator window | 12x8, 16x12 |
+| Bar graph | 3x24, 3x12, 3x16, 3x32 and the same lying down (24x3 ...); one segment per 2 cells |
+| Round dial | 12x12, 16x16, 20x20, 24x24, 32x32 |
+| Edgewise meter | vertical 6x16, 6x24, 8x24, 8x32; horizontal 16x6, 24x6, 24x8, 32x8 |
+| Strip-chart recorder | 16x16, 24x16, 32x24 |
+| 7- and 16-segment display | 5 cells wide per digit, 8 tall: 20x8 (4 digits), 1 to 12 digits |
+| Character LCD | 3 cells wide per character, 4 tall per row: 48x8 (16 x 2), 1 to 4 rows of 8 to 20 characters |
+| Graphic display | 32x32 (2 x 2 blocks), 16x16, 48x48, 64x64 and rectangles; 2 pixels per cell |
+| Mimic line | 3 cells thick: 16x3, 8x3, 4x3, 3x3, 32x3, 64x3 and vertical; corners and tees 6x6 to 16x16 |
+| Mimic symbol | 6x6, 8x8, 10x10, 12x12 |
+| Nameplate | 4 cells tall: 16x4, 8x4, 24x4, 32x4, 48x4, 64x4, 24x6, 32x8 |
+
+Engraved text, captions and labels scale with their component. Components placed before this size change keep
+the size they were placed at; a display's digit, character and segment counts follow its width, so an old
+display shows fewer digits or characters than before.
+
 ### The linker
 
 * **Sneak-right-click a plant device** (any block of it: a reactor controller, an MSIV, a pump...) to store
@@ -106,7 +137,7 @@ A sink has a scale factor, default 1 (redstone defaults to 15 in the screen). Us
 
 ## 3. Worked example: a small reactor control room
 
-A vertical board three blocks wide and two high (one group, 48 x 32 cells). Link the reactor controller once,
+A vertical board five blocks wide and three high (one group, 80 x 48 cells; see the component sizes above). Link the reactor controller once,
 then wire left to right. Signal and command keys are in `SIGNALS.md`. Component appearance and settings
 (ranges, bands, formats, alarm setpoints) are each component's own wrench screen; this example is about the
 wiring, which is identical for every type.

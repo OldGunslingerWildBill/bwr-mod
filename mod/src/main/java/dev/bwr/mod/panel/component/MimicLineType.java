@@ -13,10 +13,10 @@ import java.util.List;
  */
 public final class MimicLineType extends ComponentType {
     public static final List<Footprint> FOOTPRINTS = List.of(
-            Footprint.of(8, 1), Footprint.of(4, 1), Footprint.of(2, 1), Footprint.of(1, 1), Footprint.of(16, 1),
-            Footprint.of(1, 8), Footprint.of(1, 4), Footprint.of(1, 2), Footprint.of(1, 16),
-            Footprint.of(2, 2), Footprint.of(3, 3), Footprint.of(4, 4), Footprint.of(6, 6),
-            Footprint.of(8, 2), Footprint.of(2, 8), Footprint.of(32, 1), Footprint.of(1, 32));
+            Footprint.of(16, 3), Footprint.of(8, 3), Footprint.of(4, 3), Footprint.of(3, 3), Footprint.of(32, 3),
+            Footprint.of(3, 16), Footprint.of(3, 8), Footprint.of(3, 4), Footprint.of(3, 32),
+            Footprint.of(6, 6), Footprint.of(8, 8), Footprint.of(12, 12), Footprint.of(16, 16),
+            Footprint.of(16, 6), Footprint.of(6, 16), Footprint.of(64, 3), Footprint.of(3, 64));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.choice("Shape", "component.bwr.field.shape", MimicShape.SHAPES),
             ConfigField.integer("Rotation", "component.bwr.field.rotation", 0, 3),

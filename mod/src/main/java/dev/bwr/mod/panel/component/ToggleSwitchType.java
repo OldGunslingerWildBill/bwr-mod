@@ -10,7 +10,7 @@ import java.util.List;
  * scrolling up switches it on and down off.
  */
 public final class ToggleSwitchType extends PanelInputType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(2, 3));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 8), Footprint.of(8, 10));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.color("Color", "component.bwr.field.lever_color"));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("state"));

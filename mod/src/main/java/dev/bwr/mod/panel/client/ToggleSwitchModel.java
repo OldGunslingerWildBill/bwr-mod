@@ -9,9 +9,10 @@ final class ToggleSwitchModel implements ComponentModel {
     public void buildStatic(QuadSink sink, PanelComponent component) {
         float w = component.w();
         float h = component.h();
-        sink.box(0, 0, w, h, 0, 0.8f, ModelDraw.BEZEL, false);
-        sink.box(w * 0.3f, h * 0.12f, w * 0.4f, h * 0.76f, 0, 1.0f, ModelDraw.RECESS, false);
-        sink.box(w * 0.5f - 0.4f, h * 0.5f - 0.4f, 0.8f, 0.8f, 0, 1.8f, ModelDraw.STEEL, false);
+        float pivot = w * 0.18f;
+        sink.box(0, 0, w, h, 0, 1.2f, ModelDraw.BEZEL, false);
+        sink.box(w * 0.28f, h * 0.1f, w * 0.44f, h * 0.8f, 0, 1.5f, ModelDraw.RECESS, false);
+        sink.box(w * 0.5f - pivot, h * 0.5f - pivot, 2 * pivot, 2 * pivot, 0, 2.6f, ModelDraw.STEEL, false);
     }
 
     @Override
@@ -23,10 +24,11 @@ final class ToggleSwitchModel implements ComponentModel {
         float cx = w * 0.5f;
         float cy = h * 0.5f;
         float angle = on ? 0.0f : (float) Math.PI;
-        float length = h * 0.34f;
+        float length = h * 0.3f;
+        float tip = w * 0.17f;
         // The lever lies on the face in this placeholder; the tip is a coloured block.
-        ModelDraw.bar(context, cx, cy, angle, length, 0.6f, 2.2f, ModelDraw.STEEL, false);
+        ModelDraw.bar(context, cx, cy, angle, length, w * 0.14f, 3.3f, ModelDraw.STEEL, false);
         float tipY = on ? cy - length : cy + length;
-        context.box(cx - 0.45f, tipY - 0.45f, 0.9f, 0.9f, 1.0f, 2.8f, data.color, false);
+        context.box(cx - tip, tipY - tip, 2 * tip, 2 * tip, 1.5f, 4.2f, data.color, false);
     }
 }

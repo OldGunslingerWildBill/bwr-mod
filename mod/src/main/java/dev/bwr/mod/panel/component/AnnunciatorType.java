@@ -16,7 +16,7 @@ import java.util.List;
  * full-state sync and the save.
  */
 public final class AnnunciatorType extends ComponentType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(4, 3), Footprint.of(6, 4));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(12, 8), Footprint.of(16, 12));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.text("Line1", "component.bwr.field.line1", AnnunciatorData.MAX_TEXT),
             ConfigField.text("Line2", "component.bwr.field.line2", AnnunciatorData.MAX_TEXT),

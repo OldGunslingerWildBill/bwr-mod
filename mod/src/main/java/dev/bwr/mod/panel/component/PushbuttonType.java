@@ -5,13 +5,13 @@ import dev.bwr.mod.BwrMod;
 import java.util.List;
 
 /**
- * Momentary pushbutton, 2x2 (spec 2.1): output "state" is 1 while held and 0
+ * Momentary pushbutton, 6x6 (spec 2.1): output "state" is 1 while held and 0
  * otherwise. Pressing it also acknowledges or resets an annunciator group when
  * configured with that role ({@link AnnunciatorGroups}); that is display
  * behaviour only and never touches the plant.
  */
 public final class PushbuttonType extends PanelInputType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(2, 2), Footprint.of(3, 3));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 6), Footprint.of(8, 8));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.color("Color", "component.bwr.field.cap_color"),
             ConfigField.choice("Role", "component.bwr.field.role", PushbuttonData.ROLES),

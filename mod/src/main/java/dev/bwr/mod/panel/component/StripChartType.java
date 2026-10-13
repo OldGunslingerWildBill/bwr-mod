@@ -11,7 +11,7 @@ import java.util.List;
  * clients redraw the paper from it.
  */
 public final class StripChartType extends ComponentType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 6), Footprint.of(8, 6), Footprint.of(8, 8));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(16, 16), Footprint.of(24, 16), Footprint.of(32, 24));
     private static final List<ConfigField> SCHEMA = StripChartData.schema();
     private static final List<List<PortSpec>> PORTS = List.of(
             List.of(PortSpec.of("pen1")),

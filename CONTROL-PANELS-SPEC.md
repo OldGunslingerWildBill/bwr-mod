@@ -58,43 +58,49 @@ type-specific config, and live state.
 Inputs (produce an output value):
 | Type | Footprint | Behavior |
 | --- | --- | --- |
-| Pushbutton | 2×2 | Momentary 1 while held, color option |
-| Toggle switch | 2×3 | Maintained 0/1 |
-| Rotary selector | 3×3 | 2–6 labeled positions, outputs position index |
-| Control switch (pistol grip) | 3×4 | GE style: positions e.g. CLOSE / NORMAL / OPEN with spring return to NORMAL; red lamp = open/running, green = closed/stopped (US convention; lamps also labeled) |
-| Key switch | 2×3 | 0/1, only operable while holding the matching key item (optional) |
-| Setpoint knob | 3×3 | Continuous 0–100 % (scroll or drag) |
-| Thumbwheel | 1×2 per digit | Numeric entry, N digits |
+| Pushbutton | 6×6 (8×8) | Momentary 1 while held, color option |
+| Toggle switch | 6×8 (8×10) | Maintained 0/1 |
+| Rotary selector | 8×10 (12×14; the bottom rows hold the position name) | 2–6 labeled positions, outputs position index |
+| Control switch (pistol grip) | 8×12 (12×16) | GE style: positions e.g. CLOSE / NORMAL / OPEN with spring return to NORMAL; red lamp = open/running, green = closed/stopped (US convention; lamps also labeled) |
+| Key switch | 6×8 (8×10) | 0/1, only operable while holding the matching key item (optional) |
+| Setpoint knob | 8×8 (12×12) | Continuous 0–100 % (scroll or drag) |
+| Thumbwheel | 3×6 per digit | Numeric entry, N digits |
 
 Indicators and annunciators:
 | Type | Footprint | Behavior |
 | --- | --- | --- |
-| Lamp | 1×1 or 2×2 | On/off/flash, color |
-| Annunciator window | 4×3 | Engraved text; ISA-18.1 sequence A: alarm → fast flash; acknowledge → steady; condition clears → off. Group-level ACK/RESET via a pushbutton bound to the group's `ack` |
-| Bar graph | 1×N or N×1 | Segmented level with warn/alarm bands |
+| Lamp | 4×4 or 6×6 | On/off/flash, color |
+| Annunciator window | 12×8 (16×12) | Engraved text; ISA-18.1 sequence A: alarm → fast flash; acknowledge → steady; condition clears → off. Group-level ACK/RESET via a pushbutton bound to the group's `ack` |
+| Bar graph | 3×N or N×3 (N 12 to 32; one segment per 2 cells) | Segmented level with warn/alarm bands |
 
 Gauges:
 | Type | Footprint | Behavior |
 | --- | --- | --- |
-| Round dial | 4×4 to 8×8 | Needle, min/max, units, colored bands, damping |
-| Edgewise vertical | 2×6 | Like the GUI mockup: scale, pointer, optional demand marker |
-| Edgewise horizontal | 6×2 | Same, horizontal |
-| Strip-chart recorder | 6×6 | 1–4 pens, configurable time span, scrolling paper |
+| Round dial | 12×12 to 32×32 | Needle, min/max, units, colored bands, damping |
+| Edgewise vertical | 6×16 (up to 8×32) | Like the GUI mockup: scale, pointer, optional demand marker |
+| Edgewise horizontal | 16×6 (up to 32×8) | Same, horizontal |
+| Strip-chart recorder | 16×16 (24×16, 32×24) | 1–4 pens, configurable time span, scrolling paper |
 
 Displays:
 | Type | Footprint | Behavior |
 | --- | --- | --- |
-| 7-segment display | 2×3 per digit | N digits, decimal point, color. Digits plus the letters 7-seg can show (A b C d E F G H I J L n o P q r S t U y - _); anything else renders blank |
-| 16-segment display | 2×3 per char | Full A–Z, 0–9, punctuation |
-| Character LCD | 1 row = 2 cells tall, 1 char = 1 cell wide | Clock-style LCD, 1–4 rows × N chars, 5×7 dot matrix, backlight color |
-| Graphic display | up to 4×4 blocks | Pixel framebuffer, 32 px per block edge, palette of 16; drawn by CC (§8) |
+| 7-segment display | 5×8 per digit (1 to 12 digits) | N digits, decimal point, color. Digits plus the letters 7-seg can show (A b C d E F G H I J L n o P q r S t U y - _); anything else renders blank |
+| 16-segment display | 5×8 per char (1 to 12) | Full A–Z, 0–9, punctuation |
+| Character LCD | 1 row = 4 cells tall, 1 char = 3 cells wide | Clock-style LCD, 1–4 rows × N chars, 5×7 dot matrix, backlight color |
+| Graphic display | 32×32 default, up to 4×4 blocks | Pixel framebuffer, 32 px per block edge, palette of 16; drawn by CC (§8) |
 
 Labels and mimic:
 | Type | Footprint | Behavior |
 | --- | --- | --- |
-| Nameplate | 1×W | Engraved custom text, plate/text colors |
-| Mimic line | 1×N, corners, tees | Colored bus line; optional binding dims it to gray when 0 |
-| Mimic symbol | 2×2 | Valve, pump, tank, turbine, breaker; colored by bound state |
+| Nameplate | 4×W (4 cells tall) | Engraved custom text, plate/text colors |
+| Mimic line | 3×N (3 cells thick), corners, tees | Colored bus line; optional binding dims it to gray when 0 |
+| Mimic symbol | 6×6 (to 12×12) | Valve, pump, tank, turbine, breaker; colored by bound state |
+
+Sizes are width × height in cells (one cell is 1/16 block; sizes in parentheses are the other options the item
+cycles through, the first is the default). They were made roughly three times larger than the first design so a
+wall reads at a few blocks; components may still span up to 4 × 4 blocks. Engraved text, captions and labels
+scale with their component (aiming for at least about 3 cells of text height where the text fits). A footprint
+that is no longer in a type's list (a component placed before the change) keeps its stored size.
 
 ### 2.2 Display text and formats
 

@@ -12,7 +12,7 @@ import java.util.List;
  * on the action bar.
  */
 public final class KeySwitchType extends PanelInputType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(2, 3));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 8), Footprint.of(8, 10));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.bool("RequireKey", "component.bwr.field.require_key"),
             ConfigField.text("KeyCode", "component.bwr.field.key_code", KeySwitchData.MAX_CODE));

@@ -8,12 +8,13 @@ final class KeySwitchModel implements ComponentModel {
     public void buildStatic(QuadSink sink, PanelComponent component) {
         float w = component.w();
         float h = component.h();
-        sink.box(0, 0, w, h, 0, 0.6f, ModelDraw.HOUSING, false);
+        sink.box(0, 0, w, h, 0, 1.0f, ModelDraw.HOUSING, false);
         float cx = w / 2.0f;
-        float cy = h * 0.55f;
-        float r = Math.min(w * 0.4f, h * 0.3f);
-        sink.box(cx - r, cy - r, 2 * r, 2 * r, 0.6f, 1.6f, ModelDraw.STEEL, false);
-        sink.box(0.2f, 0.2f, 0.5f, 0.5f, 0.4f, 0.9f, QuadSink.shade(ModelDraw.GREEN, 0.2f), false);
+        float cy = h * 0.57f;
+        float r = Math.min(w * 0.36f, h * 0.3f);
+        float dot = w * 0.16f;
+        sink.box(cx - r, cy - r, 2 * r, 2 * r, 1.0f, 2.4f, ModelDraw.STEEL, false);
+        sink.box(w * 0.1f, w * 0.1f, dot, dot, 0.6f, 1.4f, QuadSink.shade(ModelDraw.GREEN, 0.2f), false);
     }
 
     @Override
@@ -22,12 +23,15 @@ final class KeySwitchModel implements ComponentModel {
         float w = component.w();
         float h = component.h();
         float cx = w / 2.0f;
-        float cy = h * 0.55f;
-        float r = Math.min(w * 0.4f, h * 0.3f);
-        ModelDraw.bar(context, cx, cy, on ? (float) (Math.PI / 2) : 0.0f, r * 0.8f, 0.3f, 1.9f, ModelDraw.RECESS, false);
-        ModelDraw.bar(context, cx, cy, on ? (float) (-Math.PI / 2) : (float) Math.PI, r * 0.8f, 0.3f, 1.9f, ModelDraw.RECESS, false);
+        float cy = h * 0.57f;
+        float r = Math.min(w * 0.36f, h * 0.3f);
+        float dot = w * 0.16f;
+        ModelDraw.bar(context, cx, cy, on ? (float) (Math.PI / 2) : 0.0f, r * 0.8f, r * 0.3f, 2.7f,
+                ModelDraw.RECESS, false);
+        ModelDraw.bar(context, cx, cy, on ? (float) (-Math.PI / 2) : (float) Math.PI, r * 0.8f, r * 0.3f, 2.7f,
+                ModelDraw.RECESS, false);
         if (on) {
-            context.box(0.2f, 0.2f, 0.5f, 0.5f, 0.4f, 1.0f, ModelDraw.GREEN, true);
+            context.box(w * 0.1f, w * 0.1f, dot, dot, 0.6f, 1.5f, ModelDraw.GREEN, true);
         }
     }
 }

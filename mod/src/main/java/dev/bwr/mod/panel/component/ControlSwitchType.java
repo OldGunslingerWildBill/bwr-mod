@@ -22,7 +22,7 @@ import java.util.List;
  * was put, including across a restart.
  */
 public final class ControlSwitchType extends PanelInputType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(3, 4));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 12), Footprint.of(12, 16));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.bool("Spring", "component.bwr.field.spring"),
             ConfigField.text("CloseText", "component.bwr.field.close_text", ControlSwitchData.MAX_TEXT),

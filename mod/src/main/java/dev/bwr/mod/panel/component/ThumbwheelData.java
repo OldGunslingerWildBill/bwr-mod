@@ -3,7 +3,8 @@ package dev.bwr.mod.panel.component;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 
-/** Thumbwheel: digit colour and the latched value. The digit count is the component's width in cells. */
+/** Thumbwheel: digit colour and the latched value. The digit count is the component's width in cells divided by
+ * {@link ThumbwheelType#DIGIT_W}. */
 public final class ThumbwheelData extends ComponentData {
     public static final int MAX_DIGITS = 8;
     public static final long LIMIT = 100_000_000L;

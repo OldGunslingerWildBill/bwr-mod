@@ -11,11 +11,12 @@ import net.minecraft.nbt.Tag;
  */
 public final class MimicLineData extends ComponentData {
     public static final int DEFAULT_COLOR = 0x2E7DE0;
-    public static final int MAX_THICKNESS = 4;
+    public static final int MAX_THICKNESS = 8;
+    public static final int DEFAULT_THICKNESS = 3;
 
     public String shape = MimicShape.STRAIGHT;
     public int rotation;
-    public int thickness = 1;
+    public int thickness = DEFAULT_THICKNESS;
     public int color = DEFAULT_COLOR;
 
     @Override
@@ -32,7 +33,7 @@ public final class MimicLineData extends ComponentData {
         shape = MimicShape.SHAPES.contains(saved) ? saved : MimicShape.STRAIGHT;
         rotation = tag.contains("Rotation", Tag.TAG_ANY_NUMERIC) ? Math.max(0, Math.min(3, tag.getInt("Rotation"))) : 0;
         thickness = tag.contains("Thickness", Tag.TAG_ANY_NUMERIC)
-                ? Math.max(1, Math.min(MAX_THICKNESS, tag.getInt("Thickness"))) : 1;
+                ? Math.max(1, Math.min(MAX_THICKNESS, tag.getInt("Thickness"))) : DEFAULT_THICKNESS;
         color = tag.contains("Color", Tag.TAG_ANY_NUMERIC) ? tag.getInt("Color") & 0xFFFFFF : DEFAULT_COLOR;
     }
 }

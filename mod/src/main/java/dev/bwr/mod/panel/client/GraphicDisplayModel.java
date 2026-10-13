@@ -10,7 +10,7 @@ import dev.bwr.mod.panel.component.PanelComponent;
  * the data's version moved (a patch arrived), never per frame.
  */
 final class GraphicDisplayModel implements ComponentModel {
-    private static final float INSET = 0.25f;
+    private static final float INSET = 0.5f;
 
     @Override
     public void buildStatic(QuadSink sink, PanelComponent component) {

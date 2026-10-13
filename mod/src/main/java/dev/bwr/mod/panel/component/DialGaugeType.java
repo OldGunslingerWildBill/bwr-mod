@@ -5,14 +5,15 @@ import dev.bwr.mod.BwrMod;
 import java.util.List;
 
 /**
- * Round dial gauge, 4x4 to 8x8 cells (spec 2.1): a needle over a 270 degree
+ * Round dial gauge, 12x12 to 32x32 cells (spec 2.1): a needle over a 270 degree
  * scale with colour bands. One input, "value". No signal pegs the needle low
  * and lights the off-scale flag. Needle damping is a client smoothing, so a
  * fast signal costs no extra packets.
  */
 public final class DialGaugeType extends ComponentType {
     public static final List<Footprint> FOOTPRINTS = List.of(
-            Footprint.of(4, 4), Footprint.of(5, 5), Footprint.of(6, 6), Footprint.of(7, 7), Footprint.of(8, 8));
+            Footprint.of(12, 12), Footprint.of(16, 16), Footprint.of(20, 20), Footprint.of(24, 24),
+            Footprint.of(32, 32));
     private static final List<ConfigField> SCHEMA = GaugeData.schema();
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("value"));
 

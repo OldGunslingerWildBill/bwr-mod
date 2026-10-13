@@ -5,12 +5,12 @@ import dev.bwr.mod.BwrMod;
 import java.util.List;
 
 /**
- * Mimic symbol (spec 2.1): valve, pump, tank, turbine or breaker, 2x2 and up,
+ * Mimic symbol (spec 2.1): valve, pump, tank, turbine or breaker, 6x6 and up,
  * coloured by one bound state. Pure display: it never commands anything.
  */
 public final class MimicSymbolType extends ComponentType {
     public static final List<Footprint> FOOTPRINTS = List.of(
-            Footprint.of(2, 2), Footprint.of(3, 3), Footprint.of(4, 4), Footprint.of(5, 5), Footprint.of(6, 6));
+            Footprint.of(6, 6), Footprint.of(8, 8), Footprint.of(10, 10), Footprint.of(12, 12));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.choice("Symbol", "component.bwr.field.symbol", MimicSymbolData.SYMBOLS),
             ConfigField.color("OnColor", "component.bwr.field.on_color"),
