@@ -355,3 +355,27 @@ The physics in `SPEC.md` holds up well against the primary source. Confirmed wit
 2. Make `α_v` void-fraction-dependent rather than a constant (§1.2)
 3. Implement SRV spring settings and pump shutoff head as hardware; leave every trip setpoint
    to the player (§1, §6.5, §9.6)
+
+---
+
+## 11. Phase J: pressure suppression and RHR scenario bases
+
+The Phase J tests compare a deliberately lumped, one-airspace game model with
+published BWR behavior. These sources support the **direction and approximate
+scale** of the transients; they do not validate a plant-specific safety analysis.
+
+| Basis | Source and application |
+|---|---|
+| Browns Ferry Mark I calculated LOCA peaks: drywell **49.6 psig**, suppression chamber **27 psig**; design internal pressure **56 psig** | NRC/GE [Advanced Technology Manual, Table 6.2-1](https://adamswebsearch2.nrc.gov/webSearch2/main.jsp?AccessionNumber=ML14140A181). The §4.1 shared-airspace peak is checked near the 27 psig wetwell value and below the 49.6 psig drywell value and 56 psig design pressure. The **0.75** drywell wall-contact fraction is a named **model calibration**, not a measured flow split. |
+| Subcooled pool condenses SRV and blowdown steam; sustained heating can degrade stable condensation | NRC [NUREG-0783](https://www.nrc.gov/reading-rm/doc-collections/nuregs/staff/sr0783/index) and [Issue 108](https://www.nrc.gov/sr0933/section-3-new-generic-issues/issue-108-bwr-suppression-pool-temperature-limits). §§4.1–4.3 assert rising pool temperature, reduced condensation and rising containment pressure without heat removal. These publications do not give a universal pool-temperature limit; this model therefore exposes subcooling rather than claiming one. |
+| RHR modes include suppression pool cooling, containment spray, LPCI and shutdown cooling | NRC [Issue C-9](https://www.nrc.gov/sr0933/section-2-task-action-plan-items/item-c-9-rhr-heat-exchanger-tube-failures). §§4.2–4.4 use the existing RHR exchanger for pool and vessel heat removal. |
+| BWR shutdown-cooling isolation at **135 psig**; overpressure of low-pressure interfacing lines can rupture piping outside containment | NRC [inspection attachment](https://www.nrc.gov/reading-rm/doc-collections/insp-manual/manual-chapter/mc0308g-att3.pdf) and [Issue 105](https://www.nrc.gov/sr0933/section-3-new-generic-issues/issue-105-interfacing-systems-loca-lwrs). The 135 psig figure is a representative lineup rating. The game deliberately omits an automatic interlock; exceeding it creates an outside break. |
+| A BWR shutdown case brought the unit to cold shutdown within **24 h** | NRC [Generic Letter 80-27 / IEB 80-07](https://www.nrc.gov/reading-rm/doc-collections/gen-comm/gen-letters/1980/gl80027). §4.4 asserts less than 100 °C within 24 h after a safe 130-psig RHR lineup. The 100-MW exchanger and specific cooldown time are game-model output, not a universal BWR requirement. |
+| RCIC and SRV discharge heat into the suppression pool during blackout | NRC [NUREG-0783](https://www.nrc.gov/reading-rm/doc-collections/nuregs/staff/sr0783/index) and [NUREG/IA-0440](https://www.nrc.gov/regulations-legislation/nureg-series-publications/publications-resulting-from-international-agreements/ia0440). The §4.3 steam history is a scenario input, not a reconstructed Fukushima unit history. |
+| Steam can inert a hydrogen/air mixture; condensing it with sprays can expose a flammable mixture | Sandia/NRC [NUREG/CR-5586](https://www.osti.gov/servlets/purl/6343479) discusses steam near a **55%** inerting limit, and Sandia's [Containment Performance training](https://www.osti.gov/servlets/purl/1312666) shows spray condensation moving an inerted mixture into the flammable region. The core uses a single **55 vol%** threshold, a simplification of the composition-dependent Shapiro diagram. |
+
+The model uses a 30-second long-term step and a 0.25-second initial blowdown
+step in these tests. The comparison runs with a raised structural-failure
+threshold to show the **potential** pressure rise over 24 h without aborting
+at containment failure; this is a diagnostic counterfactual, not a prediction
+that an intact Mark I would hold that pressure.
