@@ -62,6 +62,9 @@ neoForge {
             if (project.hasProperty('bwrAlphaClientCheck')) jvmArguments.add('-Dbwr.alphaClientCheck=true')
             if (project.hasProperty('bwrCreativePerformanceCheck')) jvmArguments.add('-Dbwr.creativePerformanceCheck=true')
             if (project.hasProperty('bwrGuiPerformanceCheck')) jvmArguments.add('-Dbwr.guiPerformanceCheck=true')
+            if (project.hasProperty('bwrPanelClientCheck')) jvmArguments.add('-Dbwr.panelClientCheck=true')
+            if (project.hasProperty('bwrContainmentClientCheck')) jvmArguments.add('-Dbwr.containmentClientCheck=true')
+            if (project.hasProperty('bwrPanelPerformanceCheck')) jvmArguments.add('-Dbwr.panelPerformanceCheck=true')
             if (project.hasProperty('bwrMachineRenderCheck')) jvmArguments.add('-Dbwr.machineRenderCheck=true')
             if (project.hasProperty('bwrSpargerCheck')) jvmArguments.add('-Dbwr.spargerCheck=true')
             if (project.hasProperty('bwrCoreModelCheck')) jvmArguments.add('-Dbwr.coreModelCheck=true')
@@ -79,6 +82,12 @@ neoForge {
             server()
             gameDirectory = file('run/peripheralCheck')
             jvmArguments.add('-Dbwr.peripheralRuntimeCheck=true')
+            programArguments.addAll('--nogui')
+        }
+        panelCcCheck {
+            server()
+            gameDirectory = file('run/panelCcCheck')
+            jvmArguments.add('-Dbwr.panelCcCheck=true')
             programArguments.addAll('--nogui')
         }
     }

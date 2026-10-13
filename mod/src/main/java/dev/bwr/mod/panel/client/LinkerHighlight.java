@@ -34,6 +34,10 @@ import java.util.OptionalDouble;
 public final class LinkerHighlight {
     private LinkerHighlight() {
     }
+    private static long debugDraws;
+
+    /** Number of frames with a bound-device outline, for the opt-in client check. */
+    public static long debugDraws() { return debugDraws; }
 
     /** Lines that ignore depth, so the outline shows through blocks. Subclassing only reaches the shared states. */
     private static final class Types extends RenderType {
@@ -48,8 +52,7 @@ public final class LinkerHighlight {
                 VertexFormat.Mode.LINES, 256, false, false, RenderType.CompositeState.builder()
                         .setShaderState(RENDERTYPE_LINES_SHADER)
                         .setLineState(new LineStateShard(OptionalDouble.of(3.0)))
-                        .setLayeringState(VIEW_OFFSET_Z_LAYERING)
-                        .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                        .setTransparencyState(NO_TRANSPARENCY)
                         .setDepthTestState(NO_DEPTH_TEST)
                         .setCullState(NO_CULL)
                         .createCompositeState(false));
@@ -57,7 +60,9 @@ public final class LinkerHighlight {
 
     @SubscribeEvent
     public static void onRender(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+        // Draw while the world target is active, after opaque block entities. Later translucent
+        // stages can use intermediate targets and AFTER_LEVEL may no longer have this target bound.
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();
@@ -90,6 +95,7 @@ public final class LinkerHighlight {
             }
         }
         if (drew) {
+            debugDraws++;
             buffers.endBatch(Types.THROUGH_WALLS);
         }
     }
