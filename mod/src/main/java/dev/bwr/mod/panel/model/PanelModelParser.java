@@ -42,8 +42,8 @@ public final class PanelModelParser {
     public static final float MAX_TRAVEL = 64.0f;
 
     /** Light legend ink for dark surfaces, dark ink for light ones. */
-    static final int INK_LIGHT = 0xE8E8E8;
-    static final int INK_DARK = 0x141414;
+    public static final int INK_LIGHT = 0xE8E8E8;
+    public static final int INK_DARK = 0x141414;
 
     /** Parses model text. */
     public static BakedPanelModel parse(String id, String json) {
@@ -281,20 +281,22 @@ public final class PanelModelParser {
         if (o.has("rot") && !o.get("rot").isJsonNull()) {
             rot = number(id, o.get("rot"), where + ".rot");
         }
+        float[] surface = surfaceAt(parts, pos[0], pos[1], pos[2]);
         return new BakedPanelModel.Label(labelId, pos[0], pos[1], pos[2], height, align, rot,
-                inkAt(parts, pos[0], pos[1], pos[2]));
+                inkFor(surface), surface != null && surface[1] > 0.5f);
     }
 
     // ---- legend colour: dark ink on a light surface, light ink on a dark one
 
     /**
-     * The ink that reads on the front-most static surface under the anchor (x, y): the highest face that faces
-     * the operator, contains the anchor in plan and is not above the anchor's own height. Light ink when nothing
-     * is found (a legend printed straight onto the panel).
+     * The front-most static surface under the anchor (x, y): the highest face that faces the operator, contains
+     * the anchor in plan and is not above the anchor's own height. Returns {color, lamp (1 or 0)}, or null when
+     * there is none (a legend printed straight onto the panel).
      */
-    static int inkAt(List<BakedPanelModel.Part> parts, float x, float y, float z) {
+    static float[] surfaceAt(List<BakedPanelModel.Part> parts, float x, float y, float z) {
         float bestZ = -Float.MAX_VALUE;
         int bestColor = -1;
+        boolean lamp = false;
         for (BakedPanelModel.Part part : parts) {
             if (part.moving() || part.role == BakedPanelModel.Role.GLASS) {
                 continue;
@@ -311,13 +313,19 @@ public final class PanelModelParser {
                 if (inside(part, f, x, y)) {
                     bestZ = top;
                     bestColor = part.faceColor(f);
+                    lamp = part.role == BakedPanelModel.Role.LAMP;
                 }
             }
         }
-        if (bestColor < 0) {
+        return bestColor < 0 ? null : new float[] {bestColor, lamp ? 1.0f : 0.0f};
+    }
+
+    /** Dark ink on a light surface, light ink on a dark one; light ink when there is no surface. */
+    static int inkFor(float[] surface) {
+        if (surface == null) {
             return INK_LIGHT;
         }
-        return luminance(bestColor) > 0.45 ? INK_DARK : INK_LIGHT;
+        return luminance((int) surface[0]) > 0.45 ? INK_DARK : INK_LIGHT;
     }
 
     private static boolean inside(BakedPanelModel.Part part, int face, float x, float y) {

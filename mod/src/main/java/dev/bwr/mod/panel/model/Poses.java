@@ -6,7 +6,8 @@ package dev.bwr.mod.panel.model;
  *
  * <p>Every angle is in degrees, measured from the pose the part was modelled in (rotation 0, the middle of its
  * travel), positive clockwise as the operator sees the face. Modellers author handles pointing at the middle
- * position (NORMAL on a control switch) and needles pointing at mid-scale.
+ * position (NORMAL on a control switch, whose grip hangs down) and needles pointing at mid-scale, selectors
+ * pointing at 12 o'clock.
  */
 public final class Poses {
     private Poses() {
@@ -23,9 +24,13 @@ public final class Poses {
     /** Setpoint knob sweep, 0 to 100 percent. */
     public static final float KNOB_SWEEP_DEG = 270.0f;
 
-    /** Control switch handle angle for position -1 (CLOSE, left), 0 (NORMAL) or +1 (OPEN, right); other values clamp. */
+    /**
+     * Control switch handle angle for the mod's position -1 (CLOSE), 0 (NORMAL) or +1 (OPEN, the breaker's TRIP);
+     * other values clamp. The modelled pistol grip hangs straight down at NORMAL; CLOSE turns it 45 degrees
+     * clockwise and TRIP 45 degrees counter-clockwise, hence the minus sign.
+     */
     public static float controlSwitchAngle(int position) {
-        return Math.max(-1, Math.min(1, position)) * CONTROL_SWITCH_STEP_DEG;
+        return -Math.max(-1, Math.min(1, position)) * CONTROL_SWITCH_STEP_DEG;
     }
 
     /**

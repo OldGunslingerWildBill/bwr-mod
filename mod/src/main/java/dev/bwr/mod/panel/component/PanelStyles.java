@@ -51,36 +51,76 @@ public final class PanelStyles {
     public static final int NO_COLOUR = -1;
 
     /**
+     * What a key switch model needs beyond its handle: which label anchors carry the OFF and ON legends, and the
+     * handle angles of the two positions (clockwise degrees from the modelled pose).
+     */
+    public record KeyPose(String offLegend, String onLegend, float offDegrees, float onDegrees) {
+    }
+
+    /**
      * One row of the table.
      *
      * @param type      component type path ({@code control_switch})
      * @param models    candidate model ids in preference order (file names under {@code models/panel/})
-     * @param needleRgb colour forced onto the model's pointer parts, or {@link #NO_COLOUR}
+     * @param needleRgb colour forced onto the model's pointer parts, or {@link #NO_COLOUR}. It applies only when a
+     *                  model after the first candidate is the one used: the first is the variant's own model, which
+     *                  already has the right colour, and the later ones stand in for it (the plain model with its
+     *                  pointer recoloured when the dedicated red-pointer model is missing).
+     * @param key       key switch legends and angles, or null for other types (a key switch without it turns a
+     *                  quarter turn about its modelled pose, legends "OFF" and "ON" nowhere)
+     * @param footprint index into the type's footprint list of the size this model reads best at: 0 for the
+     *                  default size; 1 for a model whose frame is much larger than its plate (the heavy duty and
+     *                  target pistols), which looks small at the default size. A hint for placing and for the
+     *                  showcase; the footprint of a placed component never changes under it.
      */
-    public record Entry(String type, String style, String variant, boolean isDefault, int needleRgb, List<String> models) {
+    public record Entry(String type, String style, String variant, boolean isDefault, int needleRgb, List<String> models,
+                        KeyPose key, int footprint) {
+        Entry needle(int rgb) {
+            return new Entry(type, style, variant, isDefault, rgb, models, key, footprint);
+        }
+
+        Entry keyed(KeyPose pose) {
+            return new Entry(type, style, variant, isDefault, needleRgb, models, pose, footprint);
+        }
+
+        Entry larger() {
+            return new Entry(type, style, variant, isDefault, needleRgb, models, key, 1);
+        }
     }
 
-    /** The outcome of resolving a (style, variant): the model to draw and any pointer recolouring. */
-    public record Resolved(String modelId, int needleRgb) {
-    }
-
-    private static Entry row(String type, String style, String variant, boolean isDefault, int needleRgb, String... models) {
-        return new Entry(type, style, variant, isDefault, needleRgb, List.of(models));
+    /** The outcome of resolving a (style, variant): the model to draw, any pointer recolouring, key switch poses. */
+    public record Resolved(String modelId, int needleRgb, KeyPose key) {
     }
 
     private static Entry row(String type, String style, String variant, boolean isDefault, String... models) {
-        return row(type, style, variant, isDefault, NO_COLOUR, models);
+        return new Entry(type, style, variant, isDefault, NO_COLOUR, List.of(models), null, 0);
     }
+
+    /** GE keyed escutcheon: OFF at 12 o'clock (pos3), ON at 1:30 (pos4). */
+    private static final KeyPose GE_KEY = new KeyPose("pos3", "pos4", 0.0f, 45.0f);
+    /** Westinghouse key: OFF 45 degrees left (the "left" legend), ON 45 degrees right. */
+    private static final KeyPose W2_KEY = new KeyPose("left", "right", -45.0f, 45.0f);
 
     /**
      * (type, style, variant) to model id: the single table. Ids that the modelling work has already named come
      * first; later ids are alternatives for names that were not fixed when this was written.
+     *
+     * <p>Conventions the models follow (see the model READMEs) and the game relies on:
+     * <ul>
+     *   <li>Control switch: the grip hangs straight down at NORMAL; CLOSE turns it 45 degrees clockwise and
+     *       TRIP (the mod's OPEN) 45 degrees counter-clockwise, so the handle angle is -45 x position. The
+     *       legends are the model's {@code right} anchor for CLOSE and {@code left} for TRIP.</li>
+     *   <li>Rotary selector: the pointer is modelled at 12 o'clock; position k (from 0) sits at the label
+     *       {@code pos(k+1)}, and the handle turns to that label's bearing from the shaft (GE: pos1 at 9 o'clock;
+     *       Westinghouse: pos1 at 7:30, pos4 at 12).</li>
+     *   <li>Key switch: see {@link KeyPose}; the tumbler lock's {@code plug} part turns 0 locked, +90 unlocked.</li>
+     * </ul>
      */
     public static final List<Entry> TABLE = List.of(
             // control switch: breaker control with a target flag
-            row("control_switch", GE, "pistol", true, "ge_sb_target_pistol"),
+            row("control_switch", GE, "pistol", true, "ge_sb_target_pistol").larger(),
             row("control_switch", WESTINGHOUSE, "pistol", true, "w2_pistol"),
-            row("control_switch", WESTINGHOUSE, "pistol_hd", false, "w2_pistol_hd", "w2_pistol_heavy", "w2_pistol_heavy_duty"),
+            row("control_switch", WESTINGHOUSE, "pistol_hd", false, "w2_pistol_hd", "w2_pistol_heavy", "w2_pistol_heavy_duty").larger(),
             // rotary selector
             row("rotary_selector", GE, "oval", true, "ge_sb_standard_oval"),
             row("rotary_selector", GE, "knurled", false, "ge_sb_standard_knurled", "ge_sb_knurled"),
@@ -89,9 +129,9 @@ public final class PanelStyles {
             row("rotary_selector", WESTINGHOUSE, "round_notched", false, "w2_round_notched", "w2_notched"),
             row("rotary_selector", WESTINGHOUSE, "mini_slim", false, "w2_mini_slim", "w2_mini_slimline", "w2_mini"),
             // key switch
-            row("key_switch", GE, "key", true, "ge_sb_keyed"),
-            row("key_switch", WESTINGHOUSE, "key", true, "w2_key"),
-            row("key_switch", WESTINGHOUSE, "tumbler", false, "w2_tumbler", "w2_key_tumbler", "w2_lock"),
+            row("key_switch", GE, "key", true, "ge_sb_keyed").keyed(GE_KEY),
+            row("key_switch", WESTINGHOUSE, "key", true, "w2_key").keyed(W2_KEY),
+            row("key_switch", WESTINGHOUSE, "tumbler", false, "w2_tumbler", "w2_key_tumbler", "w2_lock").keyed(W2_KEY),
             // 30.5 mm oiltight pushbutton, indicating light, fluted knob
             row("pushbutton", GE, "flush", true, "pb_flush"),
             row("pushbutton", GE, "extended", false, "pb_extended"),
@@ -99,15 +139,18 @@ public final class PanelStyles {
             row("pushbutton", GE, "guarded", false, "pb_guarded"),
             row("pushbutton", GE, "illuminated", false, "pb_illuminated"),
             row("lamp", GE, "round", true, "light_round"),
-            row("lamp", GE, "square", false, "light_square", "light_rect"),
+            row("lamp", GE, "round_plate", false, "light_round_plate"),
+            row("lamp", GE, "et16", false, "light_et16"),
+            row("lamp", GE, "square", false, "light_square"),
             row("setpoint_knob", GE, "fluted", true, "knob_fluted"),
-            // switchboard meters: standard black pointer, or the Day-glo red one on the same model
+            // switchboard meters: standard pointer, or the Day-glo red one (its own model, else the standard
+            // model with the pointer recoloured)
             row("dial_gauge", GE, "standard", true, "ge_ab40"),
-            row("dial_gauge", GE, "red_pointer", false, RED_POINTER, "ge_ab40"),
+            row("dial_gauge", GE, "red_pointer", false, "ge_ab40_red", "ge_ab40").needle(RED_POINTER),
             row("edgewise_gauge_vertical", GE, "standard", true, "ge_180_vertical"),
-            row("edgewise_gauge_vertical", GE, "red_pointer", false, RED_POINTER, "ge_180_vertical"),
+            row("edgewise_gauge_vertical", GE, "red_pointer", false, "ge_180_vertical_red", "ge_180_vertical").needle(RED_POINTER),
             row("edgewise_gauge_horizontal", GE, "standard", true, "ge_180_horizontal"),
-            row("edgewise_gauge_horizontal", GE, "red_pointer", false, RED_POINTER, "ge_180_horizontal"));
+            row("edgewise_gauge_horizontal", GE, "red_pointer", false, "ge_180_horizontal_red", "ge_180_horizontal").needle(RED_POINTER));
 
     // ---- queries over the table
 
@@ -165,6 +208,12 @@ public final class PanelStyles {
         return fallback == null ? "" : fallback.variant();
     }
 
+    /** The footprint index {@link Entry#footprint} the (style, variant) reads best at; 0 when there is no such row. */
+    public static int preferredFootprint(String type, String style, String variant) {
+        Entry entry = entry(type, style, variant);
+        return entry == null ? 0 : entry.footprint();
+    }
+
     /** The row for (type, style, variant); the style's default row if that variant is not one of its own; else null. */
     public static Entry entry(String type, String style, String variant) {
         Entry defaultRow = null;
@@ -194,9 +243,10 @@ public final class PanelStyles {
         if (entry == null) {
             return null;
         }
-        for (String id : entry.models()) {
+        for (int i = 0; i < entry.models().size(); i++) {
+            String id = entry.models().get(i);
             if (exists.test(id)) {
-                return new Resolved(id, entry.needleRgb());
+                return new Resolved(id, i == 0 ? NO_COLOUR : entry.needleRgb(), entry.key());
             }
         }
         return null;

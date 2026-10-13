@@ -136,8 +136,14 @@ public final class BakedPanelModel {
         public final float rotation;
         /** Legend colour (0xRRGGBB) chosen to read on whatever surface sits behind the anchor. */
         public final int ink;
+        /**
+         * Whether the surface behind the anchor is a lamp lens: the legend is then printed on the lens, so it is
+         * drawn dark while the lens is lit and with {@link #ink} while it is dim.
+         */
+        public final boolean onLamp;
 
-        Label(String id, float x, float y, float z, float height, Align align, float rotation, int ink) {
+        Label(String id, float x, float y, float z, float height, Align align, float rotation, int ink, boolean onLamp) {
+            this.onLamp = onLamp;
             this.id = id;
             this.x = x;
             this.y = y;

@@ -401,6 +401,8 @@
   "component.bwr.option.Variant.guarded": "Guarded",
   "component.bwr.option.Variant.illuminated": "Illuminated",
   "component.bwr.option.Variant.round": "Round",
+  "component.bwr.option.Variant.round_plate": "Round, legend plate",
+  "component.bwr.option.Variant.et16": "ET-16 dome",
   "component.bwr.option.Variant.square": "Square",
   "component.bwr.option.Variant.fluted": "Fluted",
   "component.bwr.option.Variant.standard": "Black",

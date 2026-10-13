@@ -12,6 +12,10 @@ public final class RenderCache {
     /** Static geometry, valid for {@link #meshRevision}. */
     StaticMesh mesh = StaticMesh.EMPTY;
     int meshRevision = -1;
+    /** The {@link dev.bwr.mod.panel.model.PanelModels#generation()} the mesh was built under; a reload rebuilds it. */
+    int modelGeneration = -1;
+    /** The baked model drawing this component, or null for the classic procedural look. Set with the mesh. */
+    BakedComponentModel baked;
 
     /** Scratch for models; reset implicitly because a new cache is made per revision of the mesh. */
     public int fitRevision = -1;
