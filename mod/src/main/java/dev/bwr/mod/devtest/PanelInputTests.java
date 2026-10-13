@@ -310,7 +310,7 @@ public final class PanelInputTests {
     @GameTest(template = "empty", timeoutTicks = 300)
     public static void everyInputAndIndicatorPlacesAtEveryFootprint(GameTestHelper helper) {
         Stage.run(helper, 0, s -> {
-            s.wall(4, 2);
+            s.wall(4, 6);
             List<ComponentType> types = List.of(ComponentTypes.PUSHBUTTON, ComponentTypes.TOGGLE_SWITCH,
                     ComponentTypes.ROTARY_SELECTOR, ComponentTypes.CONTROL_SWITCH, ComponentTypes.KEY_SWITCH,
                     ComponentTypes.SETPOINT_KNOB, ComponentTypes.THUMBWHEEL, ComponentTypes.ANNUNCIATOR, ComponentTypes.BAR_GRAPH);
@@ -319,7 +319,7 @@ public final class PanelInputTests {
                     Footprint footprint = type.footprints().get(variant);
                     PanelComponent placed = null;
                     search:
-                    for (int row = 0; row < 2; row++) {
+                    for (int row = 0; row < 6; row++) {
                         for (int column = 0; column < 4; column++) {
                             for (int cy = 0; cy < 16; cy++) {
                                 for (int cx = 0; cx < 16; cx++) {
@@ -333,7 +333,7 @@ public final class PanelInputTests {
                             }
                         }
                     }
-                    helper.assertTrue(placed != null, type.id() + " " + footprint + " found no room on a 4x2 wall");
+                    helper.assertTrue(placed != null, type.id() + " " + footprint + " found no room on a 4x6 wall");
                     helper.assertTrue(placed.type() == type && placed.w() == footprint.w() && placed.h() == footprint.h(),
                             type.id() + " keeps the footprint " + footprint);
                     helper.assertTrue(placed.label().startsWith(type.labelPrefix() + "-"), "label " + placed.label());
@@ -349,13 +349,13 @@ public final class PanelInputTests {
     @GameTest(template = "empty", timeoutTicks = 300)
     public static void pushbuttonIsOneWhileHeldAndLetsGoByItself(GameTestHelper helper) {
         Stage.run(helper, 1, 40, s -> {
-            s.wall(1, 1);
+            s.wall(2, 1);
             BlockPos pos = s.at(0, 0);
             PanelBlockEntity be = s.be(pos);
             PanelComponent held = s.put(helper, BwrItems.PUSHBUTTON.get(), 0, pos, 0, 0);
-            PanelComponent clicked = s.put(helper, BwrItems.PUSHBUTTON.get(), 0, pos, 4, 0);
-            PanelComponent abandoned = s.put(helper, BwrItems.PUSHBUTTON.get(), 0, pos, 8, 0);
-            helper.assertTrue(held.w() == 2 && held.h() == 2 && held.outputCount() == 1 && held.output(0) == 0.0, "2x2, one output, idle");
+            PanelComponent clicked = s.put(helper, BwrItems.PUSHBUTTON.get(), 0, pos, 6, 0);
+            PanelComponent abandoned = s.put(helper, BwrItems.PUSHBUTTON.get(), 0, pos, 12, 0);
+            helper.assertTrue(held.w() == 6 && held.h() == 6 && held.outputCount() == 1 && held.output(0) == 0.0, "6x6, one output, idle");
 
             helper.assertTrue(s.operate(pos, held, OperateAction.PRESS, 0), "press is handled");
             helper.assertTrue(held.output(0) == 1.0, "1 while held");
@@ -365,7 +365,7 @@ public final class PanelInputTests {
                     "a pushbutton ignores turning and setting");
 
             // The vanilla right-click fallback (no client hook): a short pulse that lets go by itself.
-            helper.assertTrue(PanelOps.forwardUse(s.player, be, 4, 0, 4.5, 0.5).consumesAction(), "bare-handed click is consumed");
+            helper.assertTrue(PanelOps.forwardUse(s.player, be, 6, 0, 6.5, 0.5).consumesAction(), "bare-handed click is consumed");
             helper.assertTrue(clicked.output(0) == 1.0, "the click pressed it");
             // A press whose release never comes (client gone) is let go by the fail-safe.
             s.operate(pos, abandoned, OperateAction.PRESS, 0);
@@ -383,7 +383,7 @@ public final class PanelInputTests {
             s.wall(1, 1);
             BlockPos pos = s.at(0, 0);
             PanelComponent toggle = s.put(helper, BwrItems.TOGGLE_SWITCH.get(), 0, pos, 0, 0);
-            helper.assertTrue(toggle.w() == 2 && toggle.h() == 3 && toggle.output(0) == 0.0, "2x3 and off");
+            helper.assertTrue(toggle.w() == 6 && toggle.h() == 8 && toggle.output(0) == 0.0, "6x8 and off");
             helper.assertTrue(s.operate(pos, toggle, OperateAction.PRESS, 0) && toggle.output(0) == 1.0, "click turns it on");
             helper.assertTrue(((ToggleSwitchData) toggle.data()).on, "the position is latched");
             helper.assertTrue(s.operate(pos, toggle, OperateAction.RELEASE, 0) == false && toggle.output(0) == 1.0,
@@ -404,7 +404,7 @@ public final class PanelInputTests {
             BlockPos pos = s.at(0, 0);
             PanelComponent rotary = s.put(helper, BwrItems.ROTARY_SELECTOR.get(), 0, pos, 0, 0);
             RotarySelectorData data = (RotarySelectorData) rotary.data();
-            helper.assertTrue(rotary.w() == 3 && rotary.h() == 3 && data.positions == 3 && rotary.output(0) == 0.0, "3x3, three detents");
+            helper.assertTrue(rotary.w() == 8 && rotary.h() == 10 && data.positions == 3 && rotary.output(0) == 0.0, "8x10, three detents");
             helper.assertTrue(s.configure(pos, rotary, config("Positions", 4, "Names", "OFF, LOW,,HIGH")), "configure");
             helper.assertTrue(data.positions == 4 && data.nameAt(0).equals("OFF") && data.nameAt(1).equals("LOW")
                     && data.nameAt(2).equals("3") && data.nameAt(3).equals("HIGH") && data.nameAt(4).equals("5"),
@@ -428,13 +428,13 @@ public final class PanelInputTests {
     @GameTest(template = "empty", timeoutTicks = 300)
     public static void controlSwitchSpringsBackToNormalAndShowsRealState(GameTestHelper helper) {
         Stage.run(helper, 4, 14, s -> {
-            s.wall(1, 1);
+            s.wall(1, 2);
             BlockPos pos = s.at(0, 0);
             PanelBlockEntity be = s.be(pos);
             PanelComponent sw = s.put(helper, BwrItems.CONTROL_SWITCH.get(), 0, pos, 0, 0);
-            PanelComponent flicked = s.put(helper, BwrItems.CONTROL_SWITCH.get(), 0, pos, 4, 0);
-            PanelComponent scrolled = s.put(helper, BwrItems.CONTROL_SWITCH.get(), 0, pos, 8, 0);
-            helper.assertTrue(sw.w() == 3 && sw.h() == 4 && sw.outputCount() == 3 && sw.inputCount() == 2, "3x4, three outputs, two lamps");
+            PanelComponent flicked = s.put(helper, BwrItems.CONTROL_SWITCH.get(), 0, pos, 8, 0);
+            PanelComponent scrolled = s.put(helper, BwrItems.CONTROL_SWITCH.get(), 0, pos, 0, 12);
+            helper.assertTrue(sw.w() == 8 && sw.h() == 12 && sw.outputCount() == 3 && sw.inputCount() == 2, "8x12, three outputs, two lamps");
             helper.assertTrue(((ControlSwitchData) sw.data()).spring, "spring return is the default");
 
             helper.assertTrue(s.operate(pos, sw, OperateAction.PRESS, -1), "hold at CLOSE");
@@ -452,7 +452,7 @@ public final class PanelInputTests {
             helper.assertTrue(Double.isNaN(s.be(pos).component(flicked.id()).input(0)), "an unwired lamp has no signal");
 
             // The vanilla fallback on the right third: a pulse to OPEN, then the spring.
-            helper.assertTrue(PanelOps.forwardUse(s.player, be, 4 + 2, 1, 6.5, 1.5).consumesAction(), "click consumed");
+            helper.assertTrue(PanelOps.forwardUse(s.player, be, 8 + 6, 1, 14.5, 1.5).consumesAction(), "click consumed");
             helper.assertTrue(flicked.output(0) == 1, "right third opens");
             // A scroll flick springs back too.
             helper.assertTrue(s.operate(pos, scrolled, OperateAction.TURN, -1) && scrolled.output(0) == -1, "scroll down to CLOSE");
@@ -500,7 +500,7 @@ public final class PanelInputTests {
             PanelBlockEntity be = s.be(pos);
             PanelComponent key = s.put(helper, BwrItems.KEY_SWITCH.get(), 0, pos, 0, 0);
             KeySwitchData data = (KeySwitchData) key.data();
-            helper.assertTrue(key.w() == 2 && key.h() == 3 && data.requireKey && key.output(0) == 0.0, "2x3, key required, off");
+            helper.assertTrue(key.w() == 6 && key.h() == 8 && data.requireKey && key.output(0) == 0.0, "6x8, key required, off");
 
             s.player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
             helper.assertTrue(!s.operate(pos, key, OperateAction.PRESS, 0) && key.output(0) == 0.0, "bare-handed: refused");
@@ -545,7 +545,7 @@ public final class PanelInputTests {
             s.wall(1, 1);
             BlockPos pos = s.at(0, 0);
             PanelComponent knob = s.put(helper, BwrItems.SETPOINT_KNOB.get(), 0, pos, 0, 0);
-            helper.assertTrue(knob.w() == 3 && knob.h() == 3 && knob.output(0) == 0.0, "3x3 at 0 percent");
+            helper.assertTrue(knob.w() == 8 && knob.h() == 8 && knob.output(0) == 0.0, "8x8 at 0 percent");
             helper.assertTrue(s.configure(pos, knob, config("Step", 2.5)), "step 2.5");
             helper.assertTrue(s.operate(pos, knob, OperateAction.TURN, 1) && knob.output(0) == 2.5, "one notch up");
             helper.assertTrue(s.operate(pos, knob, OperateAction.TURN, 4) && knob.output(0) == 12.5, "four notches");
@@ -558,8 +558,8 @@ public final class PanelInputTests {
                     "the step is bounded");
 
             // Four digits: variant 3 of the footprint list.
-            PanelComponent wheel = s.put(helper, BwrItems.THUMBWHEEL.get(), 3, pos, 0, 4);
-            helper.assertTrue(wheel.w() == 4 && wheel.h() == 2 && wheel.output(0) == 0.0, "four digits, 4x2");
+            PanelComponent wheel = s.put(helper, BwrItems.THUMBWHEEL.get(), 3, pos, 0, 8);
+            helper.assertTrue(wheel.w() == 12 && wheel.h() == 6 && wheel.output(0) == 0.0, "four digits, 12x6");
             helper.assertTrue(s.operate(pos, wheel, OperateAction.SET, 1234) && wheel.output(0) == 1234, "set 1234");
             helper.assertTrue(s.operate(pos, wheel, OperateAction.PRESS, 1) && wheel.output(0) == 2234, "top half of the first digit raises it");
             helper.assertTrue(s.operate(pos, wheel, OperateAction.PRESS, -4) && wheel.output(0) == 2233, "bottom half of the last digit lowers it");
@@ -581,18 +581,18 @@ public final class PanelInputTests {
     @GameTest(template = "empty", timeoutTicks = 300)
     public static void annunciatorsFollowTheSequenceWithGroupAckAndReset(GameTestHelper helper) {
         Stage.run(helper, 8, s -> {
-            s.wall(2, 1);
+            s.wall(2, 2);
             BlockPos left = s.at(0, 0);
             BlockPos right = s.at(1, 0);
             PanelBlockEntity leftBe = s.be(left);
             PanelBlockEntity rightBe = s.be(right);
             PanelComponent a1 = s.put(helper, BwrItems.ANNUNCIATOR.get(), 0, left, 0, 0);
-            PanelComponent a2 = s.put(helper, BwrItems.ANNUNCIATOR.get(), 0, right, 0, 0);
-            PanelComponent a3 = s.put(helper, BwrItems.ANNUNCIATOR.get(), 0, left, 5, 0);
-            PanelComponent ack = s.put(helper, BwrItems.PUSHBUTTON.get(), 0, left, 0, 5);
-            PanelComponent reset = s.put(helper, BwrItems.PUSHBUTTON.get(), 0, left, 3, 5);
-            PanelComponent plain = s.put(helper, BwrItems.PUSHBUTTON.get(), 0, left, 6, 5);
-            helper.assertTrue(a1.w() == 4 && a1.h() == 3 && a1.inputCount() == 1 && a1.outputCount() == 0, "4x3, one input, display only");
+            PanelComponent a2 = s.put(helper, BwrItems.ANNUNCIATOR.get(), 0, right, 4, 0);
+            PanelComponent a3 = s.put(helper, BwrItems.ANNUNCIATOR.get(), 0, left, 0, 8);
+            PanelComponent ack = s.put(helper, BwrItems.PUSHBUTTON.get(), 0, left, 12, 0);
+            PanelComponent reset = s.put(helper, BwrItems.PUSHBUTTON.get(), 0, left, 12, 6);
+            PanelComponent plain = s.put(helper, BwrItems.PUSHBUTTON.get(), 0, left, 12, 12);
+            helper.assertTrue(a1.w() == 12 && a1.h() == 8 && a1.inputCount() == 1 && a1.outputCount() == 0, "12x8, one input, display only");
 
             helper.assertTrue(s.configure(left, a3, config("AnnGroup", 2, "Line1", "TURBINE", "Line2", "TRIP")), "group 2");
             helper.assertTrue(s.configure(left, ack, config("Role", PushbuttonData.ROLE_ACK, "AnnGroup", 1)), "ack button");
@@ -678,12 +678,12 @@ public final class PanelInputTests {
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void barGraphTakesAnyOrientationAndHasNoSignalState(GameTestHelper helper) {
         Stage.run(helper, 9, s -> {
-            s.wall(1, 1);
+            s.wall(2, 2);
             BlockPos pos = s.at(0, 0);
             PanelBlockEntity be = s.be(pos);
             PanelComponent vertical = s.put(helper, BwrItems.BAR_GRAPH.get(), 0, pos, 0, 0);
-            PanelComponent horizontal = s.put(helper, BwrItems.BAR_GRAPH.get(), 5, pos, 2, 0);
-            helper.assertTrue(vertical.w() == 1 && vertical.h() == 8 && horizontal.w() == 8 && horizontal.h() == 1, "1x8 and 8x1");
+            PanelComponent horizontal = s.put(helper, BwrItems.BAR_GRAPH.get(), 4, pos, 4, 0);
+            helper.assertTrue(vertical.w() == 3 && vertical.h() == 24 && horizontal.w() == 24 && horizontal.h() == 3, "3x24 and 24x3");
             helper.assertTrue(Double.isNaN(vertical.input(0)), "a bar graph with nothing wired has no signal");
             helper.assertTrue(s.configure(pos, vertical, config("Min", 0.0, "Max", 200.0, "Warn", 150.0, "Alarm", 180.0)), "scale");
             BarGraphData data = (BarGraphData) vertical.data();
@@ -703,103 +703,127 @@ public final class PanelInputTests {
     @GameTest(template = "empty", timeoutTicks = 300)
     public static void everyInputAndIndicatorSurvivesSaveReloadAndNetworkSync(GameTestHelper helper) {
         Stage.run(helper, 10, s -> {
-            s.wall(2, 1);
-            BlockPos pos = s.at(0, 0);
-            PanelBlockEntity owner = s.be(pos);
-            PanelComponent pb = s.put(helper, BwrItems.PUSHBUTTON.get(), 1, pos, 0, 0);
-            PanelComponent ts = s.put(helper, BwrItems.TOGGLE_SWITCH.get(), 0, pos, 4, 0);
-            PanelComponent rs = s.put(helper, BwrItems.ROTARY_SELECTOR.get(), 0, pos, 7, 0);
-            PanelComponent cs = s.put(helper, BwrItems.CONTROL_SWITCH.get(), 0, pos, 11, 0);
-            PanelComponent ks = s.put(helper, BwrItems.KEY_SWITCH.get(), 0, pos, 0, 4);
-            PanelComponent sk = s.put(helper, BwrItems.SETPOINT_KNOB.get(), 0, pos, 3, 4);
-            PanelComponent tw = s.put(helper, BwrItems.THUMBWHEEL.get(), 5, pos, 7, 6);
-            PanelComponent an = s.put(helper, BwrItems.ANNUNCIATOR.get(), 1, pos, 0, 9);
-            PanelComponent bg = s.put(helper, BwrItems.BAR_GRAPH.get(), 1, pos, 14, 0);
-            PanelComponent straddler = s.put(helper, BwrItems.ANNUNCIATOR.get(), 0, pos, 14, 9);
-            helper.assertTrue(straddler.w() == 4 && s.be(s.at(1, 0)).claimAt(1, 9) != null, "one annunciator straddles into the next block");
+            // The components are 6 to 18 cells across, so each is anchored in a block of its own (ids are per block).
+            s.wall(5, 3);
+            BlockPos pPb = s.at(0, 0);
+            BlockPos pTs = s.at(1, 0);
+            BlockPos pRs = s.at(2, 0);
+            BlockPos pCs = s.at(3, 0);
+            BlockPos pKs = s.at(4, 0);
+            BlockPos pSk = s.at(0, 1);
+            BlockPos pTw = s.at(1, 1);
+            BlockPos pAn = s.at(3, 1);
+            BlockPos pBg = s.at(4, 1);
+            BlockPos pStraddler = s.at(0, 2);
+            PanelComponent pb = s.put(helper, BwrItems.PUSHBUTTON.get(), 1, pPb, 0, 0);
+            PanelComponent ts = s.put(helper, BwrItems.TOGGLE_SWITCH.get(), 0, pTs, 0, 0);
+            PanelComponent rs = s.put(helper, BwrItems.ROTARY_SELECTOR.get(), 0, pRs, 0, 0);
+            PanelComponent cs = s.put(helper, BwrItems.CONTROL_SWITCH.get(), 0, pCs, 0, 0);
+            PanelComponent ks = s.put(helper, BwrItems.KEY_SWITCH.get(), 0, pKs, 0, 0);
+            PanelComponent sk = s.put(helper, BwrItems.SETPOINT_KNOB.get(), 0, pSk, 0, 0);
+            PanelComponent tw = s.put(helper, BwrItems.THUMBWHEEL.get(), 5, pTw, 0, 0);
+            PanelComponent an = s.put(helper, BwrItems.ANNUNCIATOR.get(), 1, pAn, 0, 0);
+            PanelComponent bg = s.put(helper, BwrItems.BAR_GRAPH.get(), 1, pBg, 0, 0);
+            PanelComponent straddler = s.put(helper, BwrItems.ANNUNCIATOR.get(), 0, pStraddler, 10, 0);
+            helper.assertTrue(straddler.w() == 12 && s.be(s.at(1, 2)).claimAt(5, 0) != null, "one annunciator straddles into the next block");
 
             s.wrench();
             for (var edit : List.<Object[]>of(
-                    new Object[] {pb, config("Color", 0x2040FF, "Role", "reset", "AnnGroup", 3)},
-                    new Object[] {ts, config("Color", 0x112233)},
-                    new Object[] {rs, config("Positions", 5, "Names", "A,B,C,D,E", "Color", 0x445566)},
-                    new Object[] {cs, config("Spring", false, "CloseText", "STOP", "NormalText", "AUTO", "OpenText", "START",
+                    new Object[] {pPb, pb, config("Color", 0x2040FF, "Role", "reset", "AnnGroup", 3)},
+                    new Object[] {pTs, ts, config("Color", 0x112233)},
+                    new Object[] {pRs, rs, config("Positions", 5, "Names", "A,B,C,D,E", "Color", 0x445566)},
+                    new Object[] {pCs, cs, config("Spring", false, "CloseText", "STOP", "NormalText", "AUTO", "OpenText", "START",
                             "RedText", "RUNNING", "GreenText", "STOPPED")},
-                    new Object[] {ks, config("KeyCode", "VAULT", "RequireKey", true)},
-                    new Object[] {sk, config("Step", 0.5, "Color", 0x778899)},
-                    new Object[] {tw, config("Color", 0xFFAA00)},
-                    new Object[] {an, config("Line1", "HI PRESS", "Line2", "RPV", "Color", 0xFF3030, "Condition", "below",
+                    new Object[] {pKs, ks, config("KeyCode", "VAULT", "RequireKey", true)},
+                    new Object[] {pSk, sk, config("Step", 0.5, "Color", 0x778899)},
+                    new Object[] {pTw, tw, config("Color", 0xFFAA00)},
+                    new Object[] {pAn, an, config("Line1", "HI PRESS", "Line2", "RPV", "Color", 0xFF3030, "Condition", "below",
                             "Setpoint", -2.5, "AnnGroup", 4, "Reset", "manual")},
-                    new Object[] {bg, config("Min", -10.0, "Max", 90.0, "Warn", 60.0, "Alarm", 80.0, "Color", 0x3399FF)})) {
-                helper.assertTrue(s.configure(pos, (PanelComponent) edit[0], (CompoundTag) edit[1]), "configure " + ((PanelComponent) edit[0]).label());
+                    new Object[] {pBg, bg, config("Min", -10.0, "Max", 90.0, "Warn", 60.0, "Alarm", 80.0, "Color", 0x3399FF)})) {
+                helper.assertTrue(s.configure((BlockPos) edit[0], (PanelComponent) edit[1], (CompoundTag) edit[2]),
+                        "configure " + ((PanelComponent) edit[1]).label());
             }
 
             // Operate the latched ones.
             ItemStack vaultKey = new ItemStack(BwrItems.PANEL_KEY.get());
             vaultKey.set(DataComponents.CUSTOM_NAME, Component.literal("VAULT"));
-            s.operate(pos, ts, OperateAction.PRESS, 0);
-            s.operate(pos, rs, OperateAction.SET, 3);
-            s.operate(pos, cs, OperateAction.PRESS, -1);
-            s.operate(pos, cs, OperateAction.RELEASE, 0);
+            s.operate(pTs, ts, OperateAction.PRESS, 0);
+            s.operate(pRs, rs, OperateAction.SET, 3);
+            s.operate(pCs, cs, OperateAction.PRESS, -1);
+            s.operate(pCs, cs, OperateAction.RELEASE, 0);
             s.player.setItemInHand(InteractionHand.MAIN_HAND, vaultKey);
-            s.operate(pos, ks, OperateAction.PRESS, 0);
-            s.operate(pos, sk, OperateAction.SET, 42.5);
-            s.operate(pos, tw, OperateAction.SET, 3141);
-            owner.setInput(an, 0, -3.0);
-            owner.setInput(bg, 0, 55.0);
-            owner.setInput(cs, 0, 1.0);
+            s.operate(pKs, ks, OperateAction.PRESS, 0);
+            s.operate(pSk, sk, OperateAction.SET, 42.5);
+            s.operate(pTw, tw, OperateAction.SET, 3141);
+            s.be(pAn).setInput(an, 0, -3.0);
+            s.be(pBg).setInput(bg, 0, 55.0);
+            s.be(pCs).setInput(cs, 0, 1.0);
             helper.assertTrue(ts.output(0) == 1 && rs.output(0) == 3 && cs.output(0) == -1 && ks.output(0) == 1
                     && sk.output(0) == 42.5 && tw.output(0) == 3141, "operated: " + ts.output(0) + " " + rs.output(0) + " " + cs.output(0)
                     + " " + ks.output(0) + " " + sk.output(0) + " " + tw.output(0));
             helper.assertTrue(((AnnunciatorData) an.data()).logic.display() == AnnunciatorLogic.Display.FLASH, "the annunciator is in alarm");
 
             var registries = s.level.registryAccess();
-            CompoundTag saved = owner.saveWithoutMetadata(registries);
-            PanelBlockEntity reloaded = new PanelBlockEntity(owner.getBlockPos(), owner.getBlockState());
-            reloaded.loadWithComponents(saved, registries);
-            helper.assertTrue(reloaded.savePanel(false).equals(owner.savePanel(false)), "save is a fixed point of load");
+            java.util.Map<BlockPos, PanelBlockEntity> reloadedAt = new java.util.HashMap<>();
+            for (BlockPos where : List.of(pPb, pTs, pRs, pCs, pKs, pSk, pTw, pAn, pBg, pStraddler)) {
+                PanelBlockEntity owner = s.be(where);
+                CompoundTag saved = owner.saveWithoutMetadata(registries);
+                PanelBlockEntity copy = new PanelBlockEntity(owner.getBlockPos(), owner.getBlockState());
+                copy.loadWithComponents(saved, registries);
+                helper.assertTrue(copy.savePanel(false).equals(owner.savePanel(false)), "save is a fixed point of load");
+                reloadedAt.put(where, copy);
+            }
 
-            PushbuttonData pbData = (PushbuttonData) reloaded.component(pb.id()).data();
-            helper.assertTrue(reloaded.component(pb.id()).w() == 3 && pbData.color == 0x2040FF && pbData.role.equals("reset") && pbData.group == 3,
-                    "pushbutton");
-            helper.assertTrue(((ToggleSwitchData) reloaded.component(ts.id()).data()).color == 0x112233
-                    && reloaded.component(ts.id()).output(0) == 1.0, "toggle: config and latched output");
-            RotarySelectorData rsData = (RotarySelectorData) reloaded.component(rs.id()).data();
-            helper.assertTrue(rsData.positions == 5 && rsData.names.equals("A,B,C,D,E") && reloaded.component(rs.id()).output(0) == 3.0,
-                    "rotary");
-            PanelComponent csCopy = reloaded.component(cs.id());
+            PushbuttonData pbData = (PushbuttonData) reloadedAt.get(pPb).component(pb.id()).data();
+            helper.assertTrue(reloadedAt.get(pPb).component(pb.id()).w() == 8 && pbData.color == 0x2040FF && pbData.role.equals("reset")
+                    && pbData.group == 3, "pushbutton");
+            helper.assertTrue(((ToggleSwitchData) reloadedAt.get(pTs).component(ts.id()).data()).color == 0x112233
+                    && reloadedAt.get(pTs).component(ts.id()).output(0) == 1.0, "toggle: config and latched output");
+            RotarySelectorData rsData = (RotarySelectorData) reloadedAt.get(pRs).component(rs.id()).data();
+            helper.assertTrue(rsData.positions == 5 && rsData.names.equals("A,B,C,D,E")
+                    && reloadedAt.get(pRs).component(rs.id()).output(0) == 3.0, "rotary");
+            PanelComponent csCopy = reloadedAt.get(pCs).component(cs.id());
             ControlSwitchData csData = (ControlSwitchData) csCopy.data();
             helper.assertTrue(!csData.spring && csData.closeText.equals("STOP") && csData.greenText.equals("STOPPED")
                     && csCopy.output(0) == -1 && csCopy.output(2) == 1, "control switch");
-            KeySwitchData ksData = (KeySwitchData) reloaded.component(ks.id()).data();
-            helper.assertTrue(ksData.keyCode.equals("VAULT") && ksData.requireKey && reloaded.component(ks.id()).output(0) == 1.0, "key switch");
-            SetpointKnobData skData = (SetpointKnobData) reloaded.component(sk.id()).data();
-            helper.assertTrue(skData.step == 0.5 && skData.value == 42.5 && reloaded.component(sk.id()).output(0) == 42.5, "knob");
-            ThumbwheelData twData = (ThumbwheelData) reloaded.component(tw.id()).data();
-            helper.assertTrue(reloaded.component(tw.id()).w() == 6 && twData.value == 3141 && reloaded.component(tw.id()).output(0) == 3141,
-                    "thumbwheel (six digits)");
-            AnnunciatorData anData = (AnnunciatorData) reloaded.component(an.id()).data();
+            KeySwitchData ksData = (KeySwitchData) reloadedAt.get(pKs).component(ks.id()).data();
+            helper.assertTrue(ksData.keyCode.equals("VAULT") && ksData.requireKey
+                    && reloadedAt.get(pKs).component(ks.id()).output(0) == 1.0, "key switch");
+            SetpointKnobData skData = (SetpointKnobData) reloadedAt.get(pSk).component(sk.id()).data();
+            helper.assertTrue(skData.step == 0.5 && skData.value == 42.5 && reloadedAt.get(pSk).component(sk.id()).output(0) == 42.5, "knob");
+            ThumbwheelData twData = (ThumbwheelData) reloadedAt.get(pTw).component(tw.id()).data();
+            helper.assertTrue(reloadedAt.get(pTw).component(tw.id()).w() == 18 && twData.value == 3141
+                    && reloadedAt.get(pTw).component(tw.id()).output(0) == 3141, "thumbwheel (six digits, 18 cells)");
+            AnnunciatorData anData = (AnnunciatorData) reloadedAt.get(pAn).component(an.id()).data();
             helper.assertTrue(anData.line1.equals("HI PRESS") && anData.condition.equals("below") && anData.setpoint == -2.5
                     && anData.group == 4 && anData.resetMode.equals("manual") && anData.color == 0xFF3030
                     && anData.logic.display() == AnnunciatorLogic.Display.FLASH && anData.logic.manualReset(), "annunciator");
-            BarGraphData bgData = (BarGraphData) reloaded.component(bg.id()).data();
+            BarGraphData bgData = (BarGraphData) reloadedAt.get(pBg).component(bg.id()).data();
             helper.assertTrue(bgData.min == -10.0 && bgData.max == 90.0 && bgData.warn == 60.0 && bgData.alarm == 80.0
-                    && bgData.color == 0x3399FF && reloaded.component(bg.id()).h() == 4, "bar graph");
+                    && bgData.color == 0x3399FF && reloadedAt.get(pBg).component(bg.id()).h() == 12, "bar graph");
 
             // The network form carries live values and latched state to a client copy.
-            PanelBlockEntity client = new PanelBlockEntity(owner.getBlockPos(), owner.getBlockState());
-            client.applyNetworkState(owner.savePanel(true));
-            helper.assertTrue(client.component(an.id()).input(0) == -3.0 && client.component(bg.id()).input(0) == 55.0
-                    && client.component(cs.id()).input(0) == 1.0, "client sees the live inputs");
-            helper.assertTrue(client.component(ts.id()).output(0) == 1.0 && client.component(tw.id()).output(0) == 3141,
+            java.util.function.Function<BlockPos, PanelBlockEntity> clientOf = where -> {
+                PanelBlockEntity copy = new PanelBlockEntity(where, s.be(where).getBlockState());
+                copy.applyNetworkState(s.be(where).savePanel(true));
+                return copy;
+            };
+            PanelBlockEntity clientAn = clientOf.apply(pAn);
+            PanelBlockEntity clientBg = clientOf.apply(pBg);
+            PanelBlockEntity clientCs = clientOf.apply(pCs);
+            PanelBlockEntity clientTs = clientOf.apply(pTs);
+            PanelBlockEntity clientTw = clientOf.apply(pTw);
+            helper.assertTrue(clientAn.component(an.id()).input(0) == -3.0 && clientBg.component(bg.id()).input(0) == 55.0
+                    && clientCs.component(cs.id()).input(0) == 1.0, "client sees the live inputs");
+            helper.assertTrue(clientTs.component(ts.id()).output(0) == 1.0 && clientTw.component(tw.id()).output(0) == 3141,
                     "client sees the operated outputs");
-            AnnunciatorData clientAn = (AnnunciatorData) client.component(an.id()).data();
-            helper.assertTrue(clientAn.logic.display() == AnnunciatorLogic.Display.FLASH, "client sees the alarm state");
+            AnnunciatorData clientAnData = (AnnunciatorData) clientAn.component(an.id()).data();
+            helper.assertTrue(clientAnData.logic.display() == AnnunciatorLogic.Display.FLASH, "client sees the alarm state");
             // The client runs the same state machine from the same deltas.
-            client.applyDelta(new PanelBlockEntity.ValueDelta(an.id(), false, 0, 0.0));
-            helper.assertTrue(clientAn.logic.display() == AnnunciatorLogic.Display.FLASH, "cleared but unacknowledged keeps flashing on the client");
-            client.applyDelta(new PanelBlockEntity.ValueDelta(ts.id(), true, 0, 0.0));
-            helper.assertTrue(client.component(ts.id()).output(0) == 0.0, "an output delta moves the toggle on the client");
+            clientAn.applyDelta(new PanelBlockEntity.ValueDelta(an.id(), false, 0, 0.0));
+            helper.assertTrue(clientAnData.logic.display() == AnnunciatorLogic.Display.FLASH, "cleared but unacknowledged keeps flashing on the client");
+            clientTs.applyDelta(new PanelBlockEntity.ValueDelta(ts.id(), true, 0, 0.0));
+            helper.assertTrue(clientTs.component(ts.id()).output(0) == 0.0, "an output delta moves the toggle on the client");
         });
     }
 }

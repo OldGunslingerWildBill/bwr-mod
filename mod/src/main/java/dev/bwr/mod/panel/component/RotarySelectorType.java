@@ -11,7 +11,7 @@ import java.util.List;
  * the ends rather than wrapping.
  */
 public final class RotarySelectorType extends PanelInputType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(3, 3), Footprint.of(4, 4));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 10), Footprint.of(12, 14));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.integer("Positions", "component.bwr.field.positions",
                     RotarySelectorData.MIN_POSITIONS, RotarySelectorData.MAX_POSITIONS),

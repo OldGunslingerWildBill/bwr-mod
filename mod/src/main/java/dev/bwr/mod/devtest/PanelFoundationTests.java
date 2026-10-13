@@ -319,20 +319,20 @@ public final class PanelFoundationTests {
             PanelBlockEntity be = s.be(pos);
             helper.assertTrue(be != null && be.owned().isEmpty(), "a fresh panel owns nothing");
 
-            var result = s.place(BwrItems.NAMEPLATE.get(), 0, pos, 2, 3);
-            helper.assertTrue(result == PanelGroup.Result.OK, "nameplate 4x1 at (2,3): " + result);
+            var result = s.place(BwrItems.NAMEPLATE.get(), 1, pos, 2, 3);
+            helper.assertTrue(result == PanelGroup.Result.OK, "nameplate 8x4 at (2,3): " + result);
             helper.assertTrue(s.player.getMainHandItem().isEmpty(), "placing consumes the item in survival");
             PanelComponent plate = be.owned().get(0);
-            helper.assertTrue(plate.x() == 2 && plate.y() == 3 && plate.w() == 4 && plate.h() == 1, "anchor and footprint");
+            helper.assertTrue(plate.x() == 2 && plate.y() == 3 && plate.w() == 8 && plate.h() == 4, "anchor and footprint");
             helper.assertTrue(plate.label().equals("NP-1"), "first nameplate label: " + plate.label());
 
             // Collision: every cell of the plate is taken, the cell next to it is not.
             helper.assertTrue(s.place(BwrItems.LAMP.get(), 0, pos, 2, 3) == PanelGroup.Result.BLOCKED, "same cell");
-            helper.assertTrue(s.place(BwrItems.LAMP.get(), 0, pos, 5, 3) == PanelGroup.Result.BLOCKED, "last cell of the plate");
-            helper.assertTrue(s.place(BwrItems.LAMP.get(), 1, pos, 4, 2) == PanelGroup.Result.BLOCKED, "2x2 overlapping from above");
-            helper.assertTrue(s.place(BwrItems.LAMP.get(), 0, pos, 6, 3) == PanelGroup.Result.OK, "cell right of the plate is free");
+            helper.assertTrue(s.place(BwrItems.LAMP.get(), 0, pos, 9, 3) == PanelGroup.Result.BLOCKED, "last cell of the plate");
+            helper.assertTrue(s.place(BwrItems.LAMP.get(), 1, pos, 4, 0) == PanelGroup.Result.BLOCKED, "6x6 overlapping from above");
+            helper.assertTrue(s.place(BwrItems.LAMP.get(), 0, pos, 10, 3) == PanelGroup.Result.OK, "cell right of the plate is free");
             helper.assertTrue(be.component(2).label().equals("LP-1"), "lamp label: " + be.component(2).label());
-            helper.assertTrue(be.claimAt(6, 3).id() == 2 && be.claimAt(2, 3).id() == 1 && be.claimAt(7, 3) == null,
+            helper.assertTrue(be.claimAt(10, 3).id() == 2 && be.claimAt(2, 3).id() == 1 && be.claimAt(14, 3) == null,
                     "claims follow the footprints");
 
             // Edges: nothing next door to extend into.
@@ -345,10 +345,10 @@ public final class PanelFoundationTests {
             helper.assertTrue(be.owned().size() == 2, "failed placements add nothing");
 
             // Second nameplate is numbered, a lamp variant carries its footprint.
-            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 3, pos, 0, 8) == PanelGroup.Result.OK, "8x1 nameplate");
+            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 1, pos, 0, 8) == PanelGroup.Result.OK, "8x4 nameplate");
             helper.assertTrue(be.component(3).label().equals("NP-2") && be.component(3).w() == 8, "second label and width");
-            helper.assertTrue(s.place(BwrItems.LAMP.get(), 1, pos, 0, 10) == PanelGroup.Result.OK
-                    && be.component(4).w() == 2 && be.component(4).h() == 2, "2x2 lamp variant");
+            helper.assertTrue(s.place(BwrItems.LAMP.get(), 1, pos, 10, 10) == PanelGroup.Result.OK
+                    && be.component(4).w() == 6 && be.component(4).h() == 6, "6x6 lamp variant");
 
             // Reach and permission: a player on the other side of the world places nothing.
             s.player.setPos(s.origin.getX() + 300, s.origin.getY(), s.origin.getZ());
@@ -375,7 +375,7 @@ public final class PanelFoundationTests {
             PanelBlockEntity third = s.be(s.at(2, 0));
 
             // 24 wide from cell 10: columns 0 (10..16), 1 (all 16) and 2 (0..2).
-            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 6, s.at(0, 0), 10, 5) == PanelGroup.Result.OK, "24x1 straddle");
+            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 2, s.at(0, 0), 10, 5) == PanelGroup.Result.OK, "24x4 straddle");
             PanelComponent plate = first.owned().get(0);
             helper.assertTrue(plate.w() == 24 && second.owned().isEmpty() && third.owned().isEmpty(),
                     "only the anchor block owns the component");
@@ -388,10 +388,10 @@ public final class PanelFoundationTests {
             // Clicks anywhere on the reserved cells reach the owner; collisions are detected in the neighbour.
             helper.assertTrue(s.place(BwrItems.LAMP.get(), 0, s.at(1, 0), 7, 5) == PanelGroup.Result.BLOCKED,
                     "a lamp on a reserved neighbour cell collides");
-            helper.assertTrue(s.place(BwrItems.LAMP.get(), 0, s.at(1, 0), 7, 6) == PanelGroup.Result.OK, "the row below is free");
+            helper.assertTrue(s.place(BwrItems.LAMP.get(), 0, s.at(1, 0), 7, 9) == PanelGroup.Result.OK, "the row below is free");
             helper.assertTrue(second.owned().size() == 1, "the lamp belongs to the second block");
             helper.assertTrue(second.owned().get(0).label().equals("LP-1"), "labels are numbered per type across the group");
-            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 0, s.at(2, 0), 0, 2) == PanelGroup.Result.OK
+            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 0, s.at(2, 0), 0, 10) == PanelGroup.Result.OK
                             && third.owned().get(0).label().equals("NP-2"),
                     "a nameplate in another block is numbered after the first: " + third.owned().get(0).label());
 
@@ -399,8 +399,8 @@ public final class PanelFoundationTests {
             helper.assertTrue(PanelOps.forwardUse(s.player, second, 4, 5, 4.5, 5.5) == net.minecraft.world.InteractionResult.PASS,
                     "forwarding resolves to a passive component");
 
-            // A component can straddle both ways: a 2x2 lamp on a corner covers four blocks.
-            helper.assertTrue(s.place(BwrItems.LAMP.get(), 1, s.at(0, 0), 15, 15) == PanelGroup.Result.OK, "2x2 corner straddle");
+            // A component can straddle both ways: a 6x6 lamp on a corner covers four blocks.
+            helper.assertTrue(s.place(BwrItems.LAMP.get(), 1, s.at(0, 0), 15, 15) == PanelGroup.Result.OK, "6x6 corner straddle");
             PanelComponent corner = first.component(first.owned().get(first.owned().size() - 1).id());
             helper.assertTrue(second.claimAt(0, 15).id() == corner.id() && s.be(s.at(0, 1)).claimAt(15, 0).id() == corner.id()
                     && s.be(s.at(1, 1)).claimAt(0, 0).id() == corner.id(), "all four blocks reserve the corner");
@@ -504,7 +504,7 @@ public final class PanelFoundationTests {
             s.wall(2, 1);
             PanelBlockEntity first = s.be(s.at(0, 0));
             PanelBlockEntity second = s.be(s.at(1, 0));
-            helper.assertTrue(s.place(BwrItems.LAMP.get(), 1, s.at(0, 0), 15, 4) == PanelGroup.Result.OK, "2x2 lamp across two blocks");
+            helper.assertTrue(s.place(BwrItems.LAMP.get(), 1, s.at(0, 0), 15, 4) == PanelGroup.Result.OK, "6x6 lamp across two blocks");
             int id = first.owned().get(0).id();
 
             // No wrench, no removal; and not from out of reach.
@@ -520,13 +520,13 @@ public final class PanelFoundationTests {
             helper.assertTrue(PanelOps.remove(s.player, first.getBlockPos(), id), "wrench removal");
             helper.assertTrue(first.owned().isEmpty(), "component gone");
             helper.assertTrue(second.claimAt(0, 4) == null && first.claimAt(15, 4) == null, "the cells are free again");
-            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 3, s.at(0, 0), 12, 4) == PanelGroup.Result.OK,
+            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 1, s.at(0, 0), 12, 4) == PanelGroup.Result.OK,
                     "the freed cells accept a new component");
             s.after(() -> {
                 List<ItemEntity> drops = s.drops(BwrItems.LAMP.get());
                 helper.assertTrue(drops.size() == 1 && drops.get(0).getItem().getCount() == 1,
                         "exactly one lamp item dropped: " + s.items());
-                helper.assertTrue(ComponentItem.footprint(drops.get(0).getItem()).equals(new Footprint(2, 2)),
+                helper.assertTrue(ComponentItem.footprint(drops.get(0).getItem()).equals(new Footprint(6, 6)),
                         "the dropped item keeps its footprint");
             });
         });
@@ -538,7 +538,7 @@ public final class PanelFoundationTests {
             s.wall(3, 1);
             PanelBlockEntity first = s.be(s.at(0, 0));
             PanelBlockEntity third = s.be(s.at(2, 0));
-            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 6, s.at(0, 0), 10, 5) == PanelGroup.Result.OK, "straddling plate");
+            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 2, s.at(0, 0), 10, 5) == PanelGroup.Result.OK, "straddling plate");
             helper.assertTrue(s.place(BwrItems.LAMP.get(), 0, s.at(0, 0), 1, 1) == PanelGroup.Result.OK, "bystander lamp");
 
             // Break the block in the middle: not the owner, covered only by the claim.
@@ -550,13 +550,13 @@ public final class PanelFoundationTests {
 
             // Rebuild, then break the owner: the straddling component drops, neighbours' claims go.
             s.level.setBlock(s.at(1, 0), BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState(), 3);
-            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 6, s.at(0, 0), 10, 5) == PanelGroup.Result.OK, "straddling plate again");
+            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 2, s.at(0, 0), 10, 5) == PanelGroup.Result.OK, "straddling plate again");
             s.level.destroyBlock(s.at(0, 0), false);
             helper.assertTrue(s.be(s.at(1, 0)).claimAt(0, 5) == null, "no claim outlives its owner");
             helper.assertTrue(s.be(s.at(0, 0)) == null, "the owner block is gone");
 
             // Breaking the far covered block works the same way.
-            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 5, s.at(1, 0), 10, 5) == PanelGroup.Result.OK, "plate over blocks 1 and 2");
+            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 0, s.at(1, 0), 10, 5) == PanelGroup.Result.OK, "plate over blocks 1 and 2");
             s.level.destroyBlock(s.at(2, 0), false);
             helper.assertTrue(s.be(s.at(1, 0)).owned().isEmpty() && s.be(s.at(1, 0)).claimAt(12, 5) == null,
                     "breaking the last covered block removes it as well");
@@ -675,8 +675,8 @@ public final class PanelFoundationTests {
         Stage.run(helper, 8, s -> {
             s.wall(2, 1);
             PanelBlockEntity owner = s.be(s.at(0, 0));
-            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 5, s.at(0, 0), 10, 2) == PanelGroup.Result.OK, "straddling plate");
-            helper.assertTrue(s.place(BwrItems.LAMP.get(), 1, s.at(0, 0), 2, 6) == PanelGroup.Result.OK, "2x2 lamp");
+            helper.assertTrue(s.place(BwrItems.NAMEPLATE.get(), 0, s.at(0, 0), 10, 2) == PanelGroup.Result.OK, "straddling plate");
+            helper.assertTrue(s.place(BwrItems.LAMP.get(), 1, s.at(0, 0), 2, 6) == PanelGroup.Result.OK, "6x6 lamp");
             s.wrench();
             CompoundTag plateEdit = new CompoundTag();
             plateEdit.putString("Label", "SPEC-PLATE");
@@ -715,7 +715,7 @@ public final class PanelFoundationTests {
                     "plate placement and label");
             helper.assertTrue(plateData.text.equals("REACTOR PRESSURE") && plateData.plate == 0x101820 && plateData.ink == 0xFFB000,
                     "plate config");
-            helper.assertTrue(lamp.label().equals("SCRAM") && lamp.w() == 2 && lamp.h() == 2 && lampData.color == 0xFF2200
+            helper.assertTrue(lamp.label().equals("SCRAM") && lamp.w() == 6 && lamp.h() == 6 && lampData.color == 0xFF2200
                     && lampData.flash.equals(LampData.SLOW), "lamp config");
             helper.assertTrue(lamp.source(0).sample(null) == 2.5, "lamp source is the constant 2.5");
             helper.assertTrue(reloaded.claimAt(11, 2).id() == 1 && reloaded.claimAt(3, 7).id() == 2 && reloaded.claimAt(0, 0) == null,

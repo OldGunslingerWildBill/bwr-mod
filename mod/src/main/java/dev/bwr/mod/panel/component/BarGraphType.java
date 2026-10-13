@@ -5,15 +5,17 @@ import dev.bwr.mod.BwrMod;
 import java.util.List;
 
 /**
- * Segmented bar graph, 1xN vertical or Nx1 horizontal (spec 2.1): one segment
- * per cell along its long side, lit up to the input value on the configured
+ * Segmented bar graph, 3xN vertical or Nx3 horizontal (spec 2.1): one segment
+ * per {@link #SEGMENT_CELLS} cells along its long side, lit up to the input value on the configured
  * scale, coloured by the warn and alarm bands ({@link BarGraphLogic}). No
  * signal shows every segment grey and unlit.
  */
 public final class BarGraphType extends ComponentType {
+    /** Cells along the long side that one segment covers. */
+    public static final int SEGMENT_CELLS = 2;
     public static final List<Footprint> FOOTPRINTS = List.of(
-            Footprint.of(1, 8), Footprint.of(1, 4), Footprint.of(1, 6), Footprint.of(1, 12), Footprint.of(1, 16),
-            Footprint.of(8, 1), Footprint.of(4, 1), Footprint.of(6, 1), Footprint.of(12, 1), Footprint.of(16, 1));
+            Footprint.of(3, 24), Footprint.of(3, 12), Footprint.of(3, 16), Footprint.of(3, 32),
+            Footprint.of(24, 3), Footprint.of(12, 3), Footprint.of(16, 3), Footprint.of(32, 3));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.decimal("Min", "component.bwr.field.min", -BarGraphData.LIMIT, BarGraphData.LIMIT),
             ConfigField.decimal("Max", "component.bwr.field.max", -BarGraphData.LIMIT, BarGraphData.LIMIT),

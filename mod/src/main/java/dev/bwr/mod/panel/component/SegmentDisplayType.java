@@ -7,13 +7,16 @@ import java.util.List;
 
 /**
  * The 7-segment display and the 16-segment alphanumeric display (spec 2.1):
- * 2x3 cells per digit, 1 to 16 digits (so the footprint list is the digit
+ * 5x8 cells per digit, 1 to 12 digits (so the footprint list is the digit
  * counts), amber by default. They share this class and {@link SegmentDisplayData};
  * the 7-segment shows digits and the letters a seven-segment digit can form, the
  * 16-segment full ASCII. Inputs {@code v0..v3} feed the format string.
  */
 public final class SegmentDisplayType extends ComponentType {
-    private static final int[] DIGIT_COUNTS = {4, 1, 2, 3, 5, 6, 8, 10, 12, 16};
+    /** Cells one digit occupies across and down. */
+    public static final int DIGIT_W = 5;
+    public static final int DIGIT_H = 8;
+    private static final int[] DIGIT_COUNTS = {4, 1, 2, 3, 5, 6, 8, 10, 12};
     private static final List<ConfigField> SCHEMA = SegmentDisplayData.schema();
     private static final List<PortSpec> INPUTS = List.of(
             PortSpec.of("v0"), PortSpec.of("v1"), PortSpec.of("v2"), PortSpec.of("v3"));
@@ -26,7 +29,7 @@ public final class SegmentDisplayType extends ComponentType {
         this.sixteen = sixteen;
         List<Footprint> list = new ArrayList<>();
         for (int digits : DIGIT_COUNTS) {
-            list.add(Footprint.of(digits * 2, 3));
+            list.add(Footprint.of(digits * DIGIT_W, DIGIT_H));
         }
         this.footprints = List.copyOf(list);
     }

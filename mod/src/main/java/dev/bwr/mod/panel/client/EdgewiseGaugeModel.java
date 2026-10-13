@@ -18,12 +18,13 @@ final class EdgewiseGaugeModel implements ComponentModel {
     private static final int POINTER = 0xD03010;
     private static final int DEMAND = 0x1B6FE0;
     private static final int FLAG = 0xC02020;
-    private static final float PAD = 0.55f;
+    private final float pad;
 
     private final boolean vertical;
 
     EdgewiseGaugeModel(boolean vertical) {
         this.vertical = vertical;
+        this.pad = vertical ? 2.4f : 1.2f;
     }
 
     private float along(PanelComponent component) {
@@ -36,8 +37,8 @@ final class EdgewiseGaugeModel implements ComponentModel {
 
     /** Position along the meter of a scale fraction (0 low .. 1 high), from the top or left edge. */
     private float position(PanelComponent component, float fraction) {
-        float usable = along(component) - 2.0f * PAD;
-        return vertical ? PAD + (1.0f - fraction) * usable : PAD + fraction * usable;
+        float usable = along(component) - 2.0f * pad;
+        return vertical ? pad + (1.0f - fraction) * usable : pad + fraction * usable;
     }
 
     /** A line across the meter at position {@code p}, from {@code a0} to {@code a1} across, of thickness {@code t}. */
@@ -67,7 +68,7 @@ final class EdgewiseGaugeModel implements ComponentModel {
         float h = component.h();
         float t = across(component);
         sink.box(0, 0, w, h, 0, 1.0f, BEZEL, false);
-        sink.rect(0.12f, 0.12f, w - 0.24f, h - 0.24f, 1.05f, FACE, false);
+        sink.rect(0.3f, 0.3f, w - 0.6f, h - 0.6f, 1.05f, FACE, false);
         for (int i = 0; i < GaugeData.BANDS; i++) {
             if (data.bandHigh[i] > data.bandLow[i]) {
                 strip(sink, position(component, (float) data.fraction(data.bandLow[i])),
@@ -77,7 +78,7 @@ final class EdgewiseGaugeModel implements ComponentModel {
         }
         for (int i = 0; i <= 20; i++) {
             boolean major = i % 5 == 0;
-            line(sink, position(component, i / 20.0f), t * (major ? 0.2f : 0.32f), t * 0.6f, major ? 0.1f : 0.05f, 1.12f, INK);
+            line(sink, position(component, i / 20.0f), t * (major ? 0.2f : 0.32f), t * 0.6f, major ? 0.3f : 0.15f, 1.12f, INK);
         }
     }
 
@@ -88,26 +89,26 @@ final class EdgewiseGaugeModel implements ComponentModel {
         double value = component.input(0);
         float t = across(component);
         float needle = scratch.follow((float) data.fraction(value), data.damping, context.gameTime());
-        line(context, position(component, needle), t * 0.06f, t * 0.62f, 0.16f, 1.3f, POINTER);
+        line(context, position(component, needle), t * 0.06f, t * 0.62f, 0.4f, 1.3f, POINTER);
         double demand = component.input(1);
         if (!Double.isNaN(demand)) {
             float marker = scratch.followMarker((float) data.fraction(demand), data.damping);
-            line(context, position(component, marker), t * 0.82f, t * 0.98f, 0.16f, 1.25f, DEMAND);
+            line(context, position(component, marker), t * 0.82f, t * 0.98f, 0.4f, 1.25f, DEMAND);
         } else {
             scratch.markerPrimed = false;
         }
         if (GaugeData.offScale(value)) {
             float p = position(component, 1.0f);
             if (vertical) {
-                context.rect(t * 0.3f, p - 0.38f, t * 0.4f, 0.26f, 1.2f, FLAG, false);
+                context.rect(t * 0.3f, p - 0.9f, t * 0.4f, 0.6f, 1.2f, FLAG, false);
             } else {
-                context.rect(p - 0.12f, t * 0.3f, 0.26f, t * 0.4f, 1.2f, FLAG, false);
+                context.rect(p - 0.3f, t * 0.3f, 0.6f, t * 0.4f, 1.2f, FLAG, false);
             }
         }
         if (vertical && context.lod() >= PanelRenderContext.LOD_FULL && !data.units.isEmpty()) {
             scratch.layoutText(context, component, data);
-            float scale = Math.min(0.06f, (t - 0.3f) / Math.max(1.0f, scratch.unitsWidth));
-            context.text(scratch.units, (t - scratch.unitsWidth * scale) / 2.0f, 0.18f, scale, 1.2f, INK, false);
+            float scale = Math.min(0.2f, (t - 0.8f) / Math.max(1.0f, scratch.unitsWidth));
+            context.text(scratch.units, (t - scratch.unitsWidth * scale) / 2.0f, 0.5f, scale, 1.2f, INK, false);
         }
     }
 }

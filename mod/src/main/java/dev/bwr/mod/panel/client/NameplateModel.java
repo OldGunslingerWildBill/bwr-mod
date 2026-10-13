@@ -9,8 +9,8 @@ import dev.bwr.mod.panel.component.PanelComponent;
  * revision into a {@link RenderCache} so drawing a frame is just the draw call.
  */
 final class NameplateModel implements ComponentModel {
-    private static final float RIM = 0.08f;
-    private static final float PLATE_TOP = 0.5f;
+    private static final float RIM = 0.25f;
+    private static final float PLATE_TOP = 0.8f;
 
     @Override
     public void buildStatic(QuadSink sink, PanelComponent component) {
@@ -45,8 +45,8 @@ final class NameplateModel implements ComponentModel {
     private static void fit(PanelRenderContext context, PanelComponent component, NameplateData data, RenderCache cache) {
         float lineHeight = 8.0f;
         float textWidth = Math.max(1, context.font().width(data.text));
-        float availableW = component.w() - 0.4f;
-        float availableH = (component.h() - 0.3f) / context.rowAspect();
+        float availableW = component.w() - 1.2f;
+        float availableH = (component.h() - 0.9f) / context.rowAspect();
         float scale = Math.min(availableW / textWidth, availableH / lineHeight);
         cache.scale = scale;
         cache.textX = (component.w() - textWidth * scale) / 2.0f;

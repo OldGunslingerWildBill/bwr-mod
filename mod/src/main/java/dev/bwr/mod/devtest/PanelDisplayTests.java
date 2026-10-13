@@ -584,7 +584,7 @@ public final class PanelDisplayTests {
                     placements++;
                 }
             }
-            helper.assertTrue(placements >= 90, "placed every footprint of every type: " + placements);
+            helper.assertTrue(placements >= 80, "placed every footprint of every type: " + placements);
         });
     }
 
@@ -627,15 +627,15 @@ public final class PanelDisplayTests {
             // type, block column, block row, cell x, cell y (default footprints; the graphic display straddles four blocks)
             Object[][] layout = {
                     {ComponentTypes.DIAL_GAUGE, 0, 0, 0, 0},
-                    {ComponentTypes.EDGEWISE_GAUGE_VERTICAL, 0, 0, 4, 0},
-                    {ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL, 0, 0, 6, 0},
-                    {ComponentTypes.STRIP_CHART, 0, 0, 0, 6},
-                    {ComponentTypes.SEVEN_SEGMENT_DISPLAY, 0, 0, 6, 6},
-                    {ComponentTypes.SIXTEEN_SEGMENT_DISPLAY, 0, 0, 6, 10},
-                    {ComponentTypes.CHARACTER_LCD, 0, 1, 0, 0},
-                    {ComponentTypes.MIMIC_LINE, 0, 1, 0, 6},
-                    {ComponentTypes.MIMIC_SYMBOL, 0, 1, 0, 8},
-                    {ComponentTypes.GRAPHIC_DISPLAY, 1, 1, 0, 0},
+                    {ComponentTypes.EDGEWISE_GAUGE_VERTICAL, 1, 0, 0, 0},
+                    {ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL, 1, 3, 12, 5},
+                    {ComponentTypes.STRIP_CHART, 0, 0, 0, 15},
+                    {ComponentTypes.SEVEN_SEGMENT_DISPLAY, 0, 2, 0, 11},
+                    {ComponentTypes.SIXTEEN_SEGMENT_DISPLAY, 1, 2, 8, 11},
+                    {ComponentTypes.CHARACTER_LCD, 0, 2, 0, 1},
+                    {ComponentTypes.MIMIC_LINE, 0, 3, 0, 5},
+                    {ComponentTypes.MIMIC_SYMBOL, 1, 3, 4, 5},
+                    {ComponentTypes.GRAPHIC_DISPLAY, 2, 0, 0, 0},
             };
             for (Object[] slot : layout) {
                 ComponentType type = (ComponentType) slot[0];
@@ -810,17 +810,20 @@ public final class PanelDisplayTests {
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void inputValuesDriveNeedleSegmentsAndPens(GameTestHelper helper) {
         Stage.run(helper, 4, s -> {
-            s.wall(1, 1);
+            // The components are 12 to 48 cells across, so they are split over two blocks (ids are per block).
+            s.wall(3, 2);
             BlockPos pos = s.at(0, 0);
+            BlockPos lower = s.at(0, 1);
             PanelBlockEntity be = s.be(pos);
+            PanelBlockEntity lowerBe = s.be(lower);
             helper.assertTrue(s.place(itemOf(ComponentTypes.DIAL_GAUGE), 0, pos, 0, 0) == PanelGroup.Result.OK, "dial");
-            helper.assertTrue(s.place(itemOf(ComponentTypes.SEVEN_SEGMENT_DISPLAY), 0, pos, 0, 4) == PanelGroup.Result.OK, "7 seg");
-            helper.assertTrue(s.place(itemOf(ComponentTypes.SIXTEEN_SEGMENT_DISPLAY), 6, pos, 0, 8) == PanelGroup.Result.OK, "16 seg");
-            helper.assertTrue(s.place(itemOf(ComponentTypes.CHARACTER_LCD), 0, pos, 0, 12) == PanelGroup.Result.OK, "lcd");
+            helper.assertTrue(s.place(itemOf(ComponentTypes.SEVEN_SEGMENT_DISPLAY), 0, pos, 12, 0) == PanelGroup.Result.OK, "7 seg");
+            helper.assertTrue(s.place(itemOf(ComponentTypes.CHARACTER_LCD), 0, lower, 0, 0) == PanelGroup.Result.OK, "lcd");
+            helper.assertTrue(s.place(itemOf(ComponentTypes.SIXTEEN_SEGMENT_DISPLAY), 6, lower, 0, 8) == PanelGroup.Result.OK, "16 seg");
             PanelComponent dial = be.component(1);
             PanelComponent seven = be.component(2);
-            PanelComponent sixteen = be.component(3);
-            PanelComponent lcd = be.component(4);
+            PanelComponent sixteen = lowerBe.component(2);
+            PanelComponent lcd = lowerBe.component(1);
             GaugeData gauge = (GaugeData) dial.data();
             s.configure(pos, 1, config("Min", 0.0, "Max", 200.0));
             helper.assertTrue(gauge.fraction(dial.input(0)) == 0.0 && GaugeData.offScale(dial.input(0)), "no signal pegs low and flags off scale");
@@ -848,16 +851,16 @@ public final class PanelDisplayTests {
             helper.assertTrue(seg.shown(seven).equals("P OFL"), "overflow shows OFL in the field width: " + seg.shown(seven));
 
             SegmentDisplayData alpha = (SegmentDisplayData) sixteen.data();
-            s.configure(pos, 3, config("Format", "{0:d}-{1}"), 5, Double.NaN);
+            s.configure(lower, 2, config("Format", "{0:d}-{1}"), 5, Double.NaN);
             helper.assertTrue(alpha.shown(sixteen).equals("5-----"), "unwired input shows dashes: " + alpha.shown(sixteen));
             helper.assertTrue(alpha.digits() == 8 && alpha.masks(sixteen).length == 8, "eight characters");
 
             LcdData data = (LcdData) lcd.data();
-            s.configure(pos, 4, config("Format", "N={0:3d}|{1:5.2f}"), 7, 3.14159);
+            s.configure(lower, 1, config("Format", "N={0:3d}|{1:5.2f}"), 7, 3.14159);
             String[] rows = data.shownRows(lcd);
             helper.assertTrue(data.rows() == 2 && data.cols() == 16 && rows[0].equals("N=  7") && rows[1].equals(" 3.14"),
                     "lcd rows: '" + rows[0] + "' '" + rows[1] + "'");
-            be.setInput(lcd, 0, 999);
+            lowerBe.setInput(lcd, 0, 999);
             helper.assertTrue(data.shownRows(lcd)[0].equals("N=999"), "lcd follows its input");
         });
     }
@@ -895,8 +898,8 @@ public final class PanelDisplayTests {
             BlockPos pos = s.at(0, 0);
             PanelBlockEntity be = s.be(pos);
             helper.assertTrue(s.place(itemOf(ComponentTypes.MIMIC_SYMBOL), 0, pos, 0, 0) == PanelGroup.Result.OK, "symbol");
-            helper.assertTrue(s.place(itemOf(ComponentTypes.MIMIC_LINE), 0, pos, 4, 0) == PanelGroup.Result.OK, "line");
-            helper.assertTrue(s.place(itemOf(ComponentTypes.EDGEWISE_GAUGE_VERTICAL), 0, pos, 13, 2) == PanelGroup.Result.OK, "edgewise");
+            helper.assertTrue(s.place(itemOf(ComponentTypes.MIMIC_LINE), 2, pos, 0, 8) == PanelGroup.Result.OK, "line");
+            helper.assertTrue(s.place(itemOf(ComponentTypes.EDGEWISE_GAUGE_VERTICAL), 0, pos, 10, 0) == PanelGroup.Result.OK, "edgewise");
             PanelComponent symbol = be.component(1);
             PanelComponent line = be.component(2);
             PanelComponent meter = be.component(3);
@@ -928,17 +931,17 @@ public final class PanelDisplayTests {
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void displayApiSetsTextWritesLcdAndSendsSmallPatches(GameTestHelper helper) {
         Stage.run(helper, 7, s -> {
-            s.wall(1, 1);
+            s.wall(3, 2);
             BlockPos pos = s.at(0, 0);
             PanelBlockEntity be = s.be(pos);
-            helper.assertTrue(s.place(itemOf(ComponentTypes.SEVEN_SEGMENT_DISPLAY), 0, pos, 0, 0) == PanelGroup.Result.OK, "7 seg");
-            helper.assertTrue(s.place(itemOf(ComponentTypes.CHARACTER_LCD), 0, pos, 0, 4) == PanelGroup.Result.OK, "lcd");
-            helper.assertTrue(s.place(itemOf(ComponentTypes.NAMEPLATE), 0, pos, 0, 10) == PanelGroup.Result.OK, "nameplate");
-            PanelComponent seven = be.component(1);
-            PanelComponent lcd = be.component(2);
-            PanelComponent plate = be.component(3);
+            helper.assertTrue(s.place(itemOf(ComponentTypes.NAMEPLATE), 0, pos, 0, 0) == PanelGroup.Result.OK, "nameplate");
+            helper.assertTrue(s.place(itemOf(ComponentTypes.SEVEN_SEGMENT_DISPLAY), 0, pos, 0, 4) == PanelGroup.Result.OK, "7 seg");
+            helper.assertTrue(s.place(itemOf(ComponentTypes.CHARACTER_LCD), 0, pos, 0, 12) == PanelGroup.Result.OK, "lcd");
+            PanelComponent plate = be.component(1);
+            PanelComponent seven = be.component(2);
+            PanelComponent lcd = be.component(3);
             PanelBlockEntity client = new PanelBlockEntity(pos, be.getBlockState());
-            s.configure(pos, 1, config("Format", "{0}"), 3);
+            s.configure(pos, 2, config("Format", "{0}"), 3);
             client.applyNetworkState(be.savePanel(true));
 
             SegmentDisplayData seg = (SegmentDisplayData) seven.data();
@@ -948,10 +951,10 @@ public final class PanelDisplayTests {
             helper.assertTrue(seg.digits() == 4 && masks.length == 4, "four digits");
             byte[] patch = seg.drainPatch();
             helper.assertTrue(patch != null && patch.length < 200 && seg.drainPatch() == null, "one small patch");
-            client.applyContent(1, patch);
-            SegmentDisplayData remoteSeg = (SegmentDisplayData) client.component(1).data();
+            client.applyContent(2, patch);
+            SegmentDisplayData remoteSeg = (SegmentDisplayData) client.component(2).data();
             helper.assertTrue(remoteSeg.text.equals(seg.text) && remoteSeg.format.isEmpty(), "client shows the same text");
-            helper.assertTrue(java.util.Arrays.equals(remoteSeg.masks(client.component(1)), masks), "and the same segments");
+            helper.assertTrue(java.util.Arrays.equals(remoteSeg.masks(client.component(2)), masks), "and the same segments");
             helper.assertTrue(seg.setText("x".repeat(500)) && seg.text.length() == SegmentDisplayData.MAX_TEXT, "text is bounded");
 
             LcdData data = (LcdData) lcd.data();
@@ -963,13 +966,13 @@ public final class PanelDisplayTests {
             helper.assertTrue(data.write(0, 1, "é\n") && data.line(0).startsWith("c??") , "unprintable becomes ?: " + data.line(0));
             byte[] lcdPatch = data.drainPatch();
             helper.assertTrue(lcdPatch != null && lcdPatch.length < 400, "lcd patch is small");
-            client.applyContent(2, lcdPatch);
-            LcdData remoteLcd = (LcdData) client.component(2).data();
+            client.applyContent(3, lcdPatch);
+            LcdData remoteLcd = (LcdData) client.component(3).data();
             helper.assertTrue(remoteLcd.line(0).equals(data.line(0)) && remoteLcd.line(1).equals(data.line(1)), "client lcd matches");
             helper.assertTrue(data.setText("one\ntwo\nthree") && data.line(0).equals("one") && data.line(1).equals("two"),
                     "setText splits rows and drops the extra");
             helper.assertTrue(data.clear() && data.line(0).isEmpty() && !data.clear(), "clear");
-            s.configure(pos, 2, config("Format", "static"));
+            s.configure(pos, 3, config("Format", "static"));
             helper.assertTrue(data.shownRows(lcd)[0].equals("static"), "a static format is just text");
             helper.assertTrue(data.write(0, 0, "A") && data.format.isEmpty(), "the program's write replaces the format");
 
@@ -978,8 +981,8 @@ public final class PanelDisplayTests {
                     "nameplate setText");
             byte[] platePatch = plateData.drainPatch();
             helper.assertTrue(platePatch != null, "nameplate patch");
-            client.applyContent(3, platePatch);
-            helper.assertTrue(((NameplateData) client.component(3).data()).text.equals("MAIN STEAM"), "client nameplate updated");
+            client.applyContent(1, platePatch);
+            helper.assertTrue(((NameplateData) client.component(1).data()).text.equals("MAIN STEAM"), "client nameplate updated");
             helper.assertTrue(plateData.setText("y".repeat(99)) && plateData.text.length() == NameplateData.MAX_TEXT, "nameplate text bounded");
         });
     }

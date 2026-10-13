@@ -14,8 +14,8 @@ final class StripChartModel implements ComponentModel {
     private static final int CASE = 0x23282C;
     private static final int PAPER = 0xF2EFE2;
     private static final int GRID = 0xCFC9B4;
-    private static final float MARGIN = 0.35f;
-    private static final float LINE = 0.09f;
+    private static final float MARGIN = 1.0f;
+    private static final float LINE = 0.3f;
 
     @Override
     public void buildStatic(QuadSink sink, PanelComponent component) {
@@ -28,8 +28,8 @@ final class StripChartModel implements ComponentModel {
         float ph = h - 2 * MARGIN;
         sink.rect(x0, y0, pw, ph, 1.05f, PAPER, false);
         for (int i = 1; i < 5; i++) {
-            sink.rect(x0 + pw * i / 5.0f - 0.02f, y0, 0.04f, ph, 1.08f, GRID, false);
-            sink.rect(x0, y0 + ph * i / 5.0f - 0.02f, pw, 0.04f, 1.08f, GRID, false);
+            sink.rect(x0 + pw * i / 5.0f - 0.05f, y0, 0.1f, ph, 1.08f, GRID, false);
+            sink.rect(x0, y0 + ph * i / 5.0f - 0.05f, pw, 0.1f, 1.08f, GRID, false);
         }
     }
 
@@ -53,7 +53,7 @@ final class StripChartModel implements ComponentModel {
                 continue;
             }
             int color = data.penColor[pen];
-            float z = 1.2f + 0.02f * pen;
+            float z = 1.2f + 0.03f * pen;
             boolean havePrev = false;
             float prevX = x0;
             float prevY = 0;

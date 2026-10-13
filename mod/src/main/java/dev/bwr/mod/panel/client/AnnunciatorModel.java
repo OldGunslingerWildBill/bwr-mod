@@ -12,16 +12,16 @@ import dev.bwr.mod.panel.component.PanelComponent;
  * revision.
  */
 final class AnnunciatorModel implements ComponentModel {
-    private static final float BORDER = 0.25f;
-    private static final float TEXT_Z = 1.2f;
+    private static final float BORDER = 0.75f;
+    private static final float TEXT_Z = 1.9f;
 
     @Override
     public void buildStatic(QuadSink sink, PanelComponent component) {
         AnnunciatorData data = (AnnunciatorData) component.data();
         float w = component.w();
         float h = component.h();
-        sink.box(0, 0, w, h, 0, 0.6f, ModelDraw.HOUSING, false);
-        sink.box(BORDER, BORDER, w - 2 * BORDER, h - 2 * BORDER, 0.4f, 1.0f, QuadSink.shade(data.color, 0.2f), false);
+        sink.box(0, 0, w, h, 0, 1.0f, ModelDraw.HOUSING, false);
+        sink.box(BORDER, BORDER, w - 2 * BORDER, h - 2 * BORDER, 0.6f, 1.5f, QuadSink.shade(data.color, 0.2f), false);
     }
 
     @Override
@@ -33,10 +33,10 @@ final class AnnunciatorModel implements ComponentModel {
         boolean lit = display == AnnunciatorLogic.Display.STEADY
                 || display == AnnunciatorLogic.Display.FLASH && context.blinkOn(4.0f);
         if (lit) {
-            context.box(BORDER, BORDER, w - 2 * BORDER, h - 2 * BORDER, 0.4f, 1.1f, data.color, true);
+            context.box(BORDER, BORDER, w - 2 * BORDER, h - 2 * BORDER, 0.6f, 1.6f, data.color, true);
         }
         if (Double.isNaN(component.input(0))) {
-            context.rect(w - 0.75f, BORDER + 0.1f, 0.5f, 0.3f, 1.2f, ModelDraw.NO_SIGNAL, false);
+            context.rect(w - 2.25f, BORDER + 0.3f, 1.5f, 0.9f, 1.8f, ModelDraw.NO_SIGNAL, false);
         }
         if (context.lod() < PanelRenderContext.LOD_FULL || data.line1.isEmpty() && data.line2.isEmpty()) {
             return;
@@ -58,8 +58,8 @@ final class AnnunciatorModel implements ComponentModel {
     private static void fit(PanelRenderContext context, PanelComponent component, AnnunciatorData data, RenderCache cache) {
         float w = component.w();
         float h = component.h();
-        float innerW = w - 2 * BORDER - 0.3f;
-        float innerH = h - 2 * BORDER - 0.2f;
+        float innerW = w - 2 * BORDER - 0.9f;
+        float innerH = h - 2 * BORDER - 0.6f;
         int lines = (data.line1.isEmpty() ? 0 : 1) + (data.line2.isEmpty() ? 0 : 1);
         float width1 = Math.max(1, context.font().width(data.line1));
         float width2 = Math.max(1, context.font().width(data.line2));

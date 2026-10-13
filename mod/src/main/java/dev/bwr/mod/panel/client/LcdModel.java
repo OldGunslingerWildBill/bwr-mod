@@ -14,7 +14,7 @@ import dev.bwr.mod.panel.display.LcdFont;
  */
 final class LcdModel implements ComponentModel {
     private static final int FRAME = 0x1A1D1F;
-    private static final float INSET = 0.2f;
+    private static final float INSET = 0.5f;
 
     @Override
     public void buildStatic(QuadSink sink, PanelComponent component) {

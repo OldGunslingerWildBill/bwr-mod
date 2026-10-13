@@ -5,8 +5,8 @@ import dev.bwr.mod.BwrMod;
 import java.util.List;
 
 /**
- * Thumbwheel, 1x2 cells per digit (spec 2.1): the footprint's width is the
- * number of digits (1 to 8), the output "value" is the number shown. Clicking
+ * Thumbwheel, 3x6 cells per digit (spec 2.1): the footprint's width is
+ * three cells per digit (1 to 8 digits), the output "value" is the number shown. Clicking
  * the top half of a digit raises it and the bottom half lowers it (0 to 9 and
  * round again, no carry, like a real wheel); scrolling over a digit does the
  * same. SET writes the whole number.
@@ -15,9 +15,13 @@ import java.util.List;
  * leftmost digit, the sign being the direction.
  */
 public final class ThumbwheelType extends PanelInputType {
+    /** Cells one digit occupies across and down. */
+    public static final int DIGIT_W = 3;
+    public static final int DIGIT_H = 6;
     public static final List<Footprint> FOOTPRINTS = List.of(
-            Footprint.of(3, 2), Footprint.of(1, 2), Footprint.of(2, 2), Footprint.of(4, 2), Footprint.of(5, 2),
-            Footprint.of(6, 2), Footprint.of(7, 2), Footprint.of(8, 2));
+            Footprint.of(3 * DIGIT_W, DIGIT_H), Footprint.of(DIGIT_W, DIGIT_H), Footprint.of(2 * DIGIT_W, DIGIT_H),
+            Footprint.of(4 * DIGIT_W, DIGIT_H), Footprint.of(5 * DIGIT_W, DIGIT_H), Footprint.of(6 * DIGIT_W, DIGIT_H),
+            Footprint.of(7 * DIGIT_W, DIGIT_H), Footprint.of(8 * DIGIT_W, DIGIT_H));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.color("Color", "component.bwr.field.digit_color"));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("value"));
@@ -51,8 +55,13 @@ public final class ThumbwheelType extends PanelInputType {
         return "TW";
     }
 
+    /** Number of digits: the width in whole digit cells, at least one. */
+    public static int digits(PanelComponent component) {
+        return Math.max(1, Math.min(ThumbwheelData.MAX_DIGITS, component.w() / DIGIT_W));
+    }
+
     private static int digitAt(PanelComponent component, double cellX) {
-        return Math.max(0, Math.min(component.w() - 1, (int) Math.floor(cellX)));
+        return Math.max(0, Math.min(digits(component) - 1, (int) Math.floor(cellX / DIGIT_W)));
     }
 
     @Override
@@ -75,7 +84,7 @@ public final class ThumbwheelType extends PanelInputType {
     @Override
     public void onLoaded(PanelComponent component) {
         ThumbwheelData data = (ThumbwheelData) component.data();
-        data.value = Math.min(data.value, ThumbwheelData.limit(component.w()) - 1);
+        data.value = Math.min(data.value, ThumbwheelData.limit(digits(component)) - 1);
         component.storeOutput(0, data.value);
     }
 
@@ -83,7 +92,7 @@ public final class ThumbwheelType extends PanelInputType {
     public boolean operate(OperateContext context, OperateAction action, double value) {
         PanelComponent component = context.component();
         ThumbwheelData data = (ThumbwheelData) component.data();
-        int digits = component.w();
+        int digits = digits(component);
         long limit = ThumbwheelData.limit(digits);
         switch (action) {
             case PRESS, TURN -> {

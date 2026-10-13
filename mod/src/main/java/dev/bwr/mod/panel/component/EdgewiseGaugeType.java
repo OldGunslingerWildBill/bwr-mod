@@ -21,8 +21,8 @@ public final class EdgewiseGaugeType extends ComponentType {
         super(BwrMod.id(vertical ? "edgewise_gauge_vertical" : "edgewise_gauge_horizontal"));
         this.vertical = vertical;
         this.footprints = vertical
-                ? List.of(Footprint.of(2, 6), Footprint.of(2, 8), Footprint.of(3, 6), Footprint.of(2, 10))
-                : List.of(Footprint.of(6, 2), Footprint.of(8, 2), Footprint.of(6, 3), Footprint.of(10, 2));
+                ? List.of(Footprint.of(6, 16), Footprint.of(6, 24), Footprint.of(8, 24), Footprint.of(8, 32))
+                : List.of(Footprint.of(16, 6), Footprint.of(24, 6), Footprint.of(24, 8), Footprint.of(32, 8));
     }
 
     public boolean vertical() {

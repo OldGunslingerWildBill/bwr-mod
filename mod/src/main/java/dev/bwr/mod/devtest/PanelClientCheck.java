@@ -12,6 +12,7 @@ import dev.bwr.mod.panel.client.BindScreen;
 import dev.bwr.mod.panel.client.ConfigScreen;
 import dev.bwr.mod.panel.client.PanelClientInput;
 import dev.bwr.mod.panel.client.LinkerHighlight;
+import dev.bwr.mod.panel.client.PanelRenderContext;
 import dev.bwr.mod.panel.component.*;
 import dev.bwr.mod.panel.net.PanelPayloads;
 import dev.bwr.mod.panel.wiring.PanelSampler;
@@ -23,6 +24,7 @@ import dev.bwr.mod.steam.MainSteamIsolationValveBlock;
 import dev.bwr.mod.steam.MainSteamIsolationValveBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
@@ -57,7 +59,7 @@ public final class PanelClientCheck {
     private static final BlockPos BENCH = new BlockPos(5098, 120, 5094);
     private static final BlockPos MSIV = new BlockPos(5098, 126, 5101);
     private static final String[] NAMES = {"board-day-wide", "board-controls-close", "board-annunciators",
-            "board-lod-28m", "board-night-lamps", "wrench-config", "linker-binding", "linker-outline"};
+            "board-lod-28m", "board-night-lamps", "wrench-config", "linker-binding", "linker-outline", "board-night-close"};
     private static boolean started, built, requested;
     private static volatile Throwable buildFailure;
     private static volatile Vec3 heldCamera;
@@ -91,11 +93,17 @@ public final class PanelClientCheck {
         }
         if (mc.player == null || mc.level == null || mc.getSingleplayerServer() == null || ++joined < 35) return;
         if (!requested) {
+            if (stage == 0) {
+                // The light a glowing element is drawn with: full bright, and the world light for everything else.
+                if (PanelRenderContext.packedLight(true, 0x00A000A0) != LightTexture.FULL_BRIGHT
+                        || PanelRenderContext.packedLight(false, 0x00A000A0) != 0x00A000A0)
+                    throw new AssertionError("PanelRenderContext.packedLight: emissive must be full bright, others unchanged");
+            }
             requested = true;
             shown = 0;
             mc.setScreen(null);
             int selected = stage;
-            mc.options.hideGui = selected < 5 || selected == 7;
+            mc.options.hideGui = selected < 5 || selected == 7 || selected == 8;
             mc.options.fov().set(selected == 7 ? 90 : 60);
             var server = mc.getSingleplayerServer();
             var uuid = mc.player.getUUID();
@@ -114,15 +122,15 @@ public final class PanelClientCheck {
                 }
                 Vec3 camera = (switch (selected) {
                     case 0 -> new Vec3(93, 125, 79);
-                    case 1, 5, 6 -> new Vec3(94, 125, 92);
+                    case 1, 5, 6, 8 -> new Vec3(94, 125, 92);
                     case 2 -> new Vec3(91, 121, 94);
                     case 7 -> new Vec3(96, 126, 97);
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = (selected == 7 ? new Vec3(96.53125, 127.75, 100.75)
+                Vec3 target = (selected == 7 ? new Vec3(96.375, 127.5, 100.75)
                         : selected == 2 ? new Vec3(94, 120.5, 100)
-                        : selected == 1 || selected >= 5
+                        : selected == 1 || selected == 5 || selected == 6 || selected == 8
                         ? new Vec3(94, 125, 100) : new Vec3(93, 123, 100))
                         .add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
                 Vec3 delta = target.subtract(camera.add(0, player.getEyeHeight(), 0));
@@ -136,7 +144,7 @@ public final class PanelClientCheck {
                 player.setNoGravity(true);
                 player.getAbilities().flying = true;
                 player.onUpdateAbilities();
-                level.setDayTime(selected == 4 ? 18_000 : 6_000);
+                level.setDayTime(selected == 4 || selected == 8 ? 18_000 : 6_000);
                 level.setWeatherParameters(6000, 0, false, false);
                 if (selected == 7) {
                     var linker = new ItemStack(BwrItems.PANEL_LINKER.get());
@@ -203,6 +211,20 @@ public final class PanelClientCheck {
                     if (orangePixels < 100) throw new AssertionError(
                             "Linker outline was submitted but is not visible in the framebuffer: " + orangePixels);
                 }
+                if (stage == 8) {
+                    // Lit lamps, tiles and segments must be full-bright against the night world: count saturated
+                    // red and amber pixels that a world-lit (about 30 %) element could not reach.
+                    int red = 0, amber = 0;
+                    for (int y = 0; y < shot.getHeight(); y++) for (int x = 0; x < shot.getWidth(); x++) {
+                        int abgr = shot.getPixelRGBA(x, y);
+                        int r = abgr & 0xFF, g = abgr >> 8 & 0xFF, b = abgr >> 16 & 0xFF;
+                        if (r >= 215 && g <= 45 && b <= 45) red++;                  // lamp red 0xE02020 at full strength
+                        if (r >= 240 && g >= 160 && g <= 190 && b <= 12) amber++;   // segment amber 0xFFB000
+                    }
+                    LogUtils.getLogger().info("PANEL CLIENT CHECK night glow: red={} amber={}", red, amber);
+                    if (red < 100 || amber < 300) throw new AssertionError(
+                            "Lit lamps or segments are not full-bright at night: red=" + red + " amber=" + amber);
+                }
                 shot.writeToFile(directory.resolve(NAMES[stage] + ".png"));
             }
         } catch (IOException ex) {
@@ -251,8 +273,8 @@ public final class PanelClientCheck {
                 Footprint.of(16, 16), occupied);
         ((GraphicDisplayData) secondary.data()).drawText(1, 2, "CORE", 14);
         for (int i = 0; i < 3; i++) {
-            PanelComponent annunciator = place(level, 70 + i * 14, 108, ComponentTypes.ANNUNCIATOR,
-                    Footprint.of(6, 4), occupied);
+            PanelComponent annunciator = place(level, 70 + i * 20, 108, ComponentTypes.ANNUNCIATOR,
+                    Footprint.of(16, 12), occupied);
             AnnunciatorData lamp = (AnnunciatorData) annunciator.data();
             lamp.line1 = i == 0 ? "ALARM" : i == 1 ? "ACK" : "CLEAR";
             lamp.line2 = "PUMP TRIP";
@@ -260,21 +282,21 @@ public final class PanelClientCheck {
             if (i == 1) lamp.logic.acknowledge();
         }
 
-        PanelComponent sw = place(level, 70, 2, ComponentTypes.CONTROL_SWITCH, Footprint.of(3, 4), occupied);
+        PanelComponent sw = place(level, 70, 2, ComponentTypes.CONTROL_SWITCH, Footprint.of(8, 12), occupied);
         switchOwner = blockAt(70 / 16, 0);
         switchId = sw.id();
         sw.setLabel("MSIV-A");
         sw.addSink(1, new PlantSink(MSIV, "open", 1, PlantSink.Mode.MOMENTARY, 1));
         sw.addSink(2, new PlantSink(MSIV, "open", 1, PlantSink.Mode.MOMENTARY, 0));
         sw.setSource(0, new PlantSource(MSIV, "position"));
-        PanelComponent seven = place(level, 78, 2, ComponentTypes.SEVEN_SEGMENT_DISPLAY, Footprint.of(8, 3), occupied);
+        PanelComponent seven = place(level, 82, 2, ComponentTypes.SEVEN_SEGMENT_DISPLAY, Footprint.of(20, 8), occupied);
         seven.setLabel("MSIV-POS");
         seven.setSource(0, new PlantSource(MSIV, "position", 100, 0));
         ((SegmentDisplayData) seven.data()).format = "{0:5.1f}";
-        PanelComponent edgewise = place(level, 90, 2, ComponentTypes.EDGEWISE_GAUGE_VERTICAL, Footprint.of(2, 6), occupied);
+        PanelComponent edgewise = place(level, 106, 2, ComponentTypes.EDGEWISE_GAUGE_VERTICAL, Footprint.of(6, 16), occupied);
         edgewise.setLabel("MSIV-STROKE");
         edgewise.setSource(0, new PlantSource(MSIV, "position"));
-        place(level, 108, 12, ComponentTypes.DIAL_GAUGE, Footprint.of(8, 8), occupied).setLabel("DIAL-X-BLOCK");
+        place(level, 118, 10, ComponentTypes.DIAL_GAUGE, Footprint.of(12, 12), occupied).setLabel("DIAL-X-BLOCK");
 
         // Reserve a deliberately large, four-block-spanning visual and then fit both a small and large
         // footprint of every catalogue type into the remaining 12 blocks of width.
@@ -283,26 +305,16 @@ public final class PanelClientCheck {
             placedTypes++;
             if (type == ComponentTypes.GRAPHIC_DISPLAY) continue;
             var sizes = type.footprints();
-            int variant = 0;
-            for (Footprint size : List.of(sizes.get(0), sizes.get(sizes.size() - 1))) {
-                boolean found = false;
-                int firstY = variant++ == 0 ? 28 : 70;
-                for (int y = firstY; y + size.h() <= 128 && !found; y++) for (int x = 66; x + size.w() <= 256; x++) {
-                    if (!free(occupied, x, y, size.w(), size.h())) continue;
-                    var component = place(level, x, y, type, size, occupied);
-                    if (component != null) {
-                        previewValue(level, blockAt(x / 16, y / 16), component);
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) throw new AssertionError("No showcase space for " + type.id() + " " + size);
+            if (!fit(level, type, sizes.get(0), 28, occupied)) {
+                throw new AssertionError("No showcase space for " + type.id() + " " + sizes.get(0));
             }
+            // The largest option that still fits the rest of the board (the biggest ones are 4 blocks long).
+            for (int i = sizes.size() - 1; i >= 1; i--) if (fit(level, type, sizes.get(i), 70, occupied)) break;
         }
         // The desk is a separate connected group and tests the sloped face geometry.
-        PanelOps.placeDirect(level, BENCH, 1, 2, ComponentTypes.NAMEPLATE, Footprint.of(12, 3));
-        PanelOps.placeDirect(level, BENCH.relative(Direction.WEST, 2), 4, 4, ComponentTypes.PUSHBUTTON, Footprint.of(3, 3));
-        PanelOps.placeDirect(level, BENCH.relative(Direction.WEST, 4), 2, 2, ComponentTypes.ANNUNCIATOR, Footprint.of(6, 4));
+        PanelOps.placeDirect(level, BENCH, 1, 2, ComponentTypes.NAMEPLATE, Footprint.of(12, 4));
+        PanelOps.placeDirect(level, BENCH.relative(Direction.WEST, 2), 4, 4, ComponentTypes.PUSHBUTTON, Footprint.of(6, 6));
+        PanelOps.placeDirect(level, BENCH.relative(Direction.WEST, 4), 1, 1, ComponentTypes.ANNUNCIATOR, Footprint.of(12, 8));
         for (int row = 0; row < 8; row++) for (int col = 0; col < 16; col++) {
             if (level.getBlockEntity(blockAt(col, row)) instanceof PanelBlockEntity be) {
                 PanelSampler.track(be);
@@ -315,6 +327,20 @@ public final class PanelClientCheck {
             throw new AssertionError("MSIV did not deliver a live position to the panel instruments: segment="
                     + seven.input(0) + " edgewise=" + edgewise.input(0));
         }
+    }
+
+    private static boolean fit(net.minecraft.server.level.ServerLevel level, ComponentType type, Footprint size,
+                               int firstY, boolean[][] occupied) {
+        for (int y = firstY; y + size.h() <= 128; y++) for (int x = 66; x + size.w() <= 256; x++) {
+            if (!free(occupied, x, y, size.w(), size.h())) continue;
+            if ((x % 16 + size.w() + 15) / 16 > 4 || (y % 16 + size.h() + 15) / 16 > 4) continue; // spans five blocks
+            var component = place(level, x, y, type, size, occupied);
+            if (component != null) {
+                previewValue(level, blockAt(x / 16, y / 16), component);
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void previewValue(net.minecraft.server.level.ServerLevel level, BlockPos owner, PanelComponent component) {
@@ -331,9 +357,13 @@ public final class PanelClientCheck {
                 if (component.id() % 3 == 1) ann.logic.acknowledge();
             }
         }
-        if (component.inputCount() > 0 && !(data instanceof AnnunciatorData))
-            ((PanelBlockEntity) level.getBlockEntity(owner)).setInput(component, 0, .68);
-        ((PanelBlockEntity) level.getBlockEntity(owner)).syncFull();
+        var entity = (PanelBlockEntity) level.getBlockEntity(owner);
+        if (component.inputCount() > 0 && !(data instanceof AnnunciatorData)) {
+            // A constant source, so the value survives re-sampling and the full sync: lamps lit, gauges at 68 %.
+            component.setSource(0, InputSources.constant(68));
+            entity.resample(component, true);
+        }
+        entity.syncFull();
     }
 
     private static PanelComponent place(net.minecraft.server.level.ServerLevel level, int x, int y,

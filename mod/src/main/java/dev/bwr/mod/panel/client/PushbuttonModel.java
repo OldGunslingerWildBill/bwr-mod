@@ -9,9 +9,9 @@ final class PushbuttonModel implements ComponentModel {
     public void buildStatic(QuadSink sink, PanelComponent component) {
         float w = component.w();
         float h = component.h();
-        sink.box(0, 0, w, h, 0, 0.8f, ModelDraw.BEZEL, false);
+        sink.box(0, 0, w, h, 0, 1.2f, ModelDraw.BEZEL, false);
         float ring = Math.min(w, h) * 0.12f;
-        sink.box(ring, ring, w - 2 * ring, h - 2 * ring, 0, 1.0f, ModelDraw.RECESS, false);
+        sink.box(ring, ring, w - 2 * ring, h - 2 * ring, 0, 1.5f, ModelDraw.RECESS, false);
     }
 
     @Override
@@ -20,8 +20,8 @@ final class PushbuttonModel implements ComponentModel {
         boolean held = component.output(0) > 0.5;
         float w = component.w();
         float h = component.h();
-        float inset = Math.min(w, h) * 0.22f;
+        float inset = Math.min(w, h) * 0.2f;
         int color = held ? data.color : QuadSink.shade(data.color, 0.8f);
-        context.box(inset, inset, w - 2 * inset, h - 2 * inset, 0.5f, held ? 1.3f : 2.4f, color, held);
+        context.box(inset, inset, w - 2 * inset, h - 2 * inset, 0.8f, held ? 2.0f : 3.6f, color, held);
     }
 }

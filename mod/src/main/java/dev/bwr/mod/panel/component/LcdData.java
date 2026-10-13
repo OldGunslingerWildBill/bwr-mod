@@ -10,8 +10,8 @@ import java.util.Arrays;
 
 /**
  * State of a character LCD: up to {@link #MAX_ROWS} rows of up to
- * {@link #MAX_COLS} characters (the size comes from the footprint: one character
- * per cell across, two cells per row down), a backlight colour and a dot colour.
+ * {@link #MAX_COLS} characters (the size comes from the footprint: three cells per
+ * character across, four cells per row down), a backlight colour and a dot colour.
  *
  * <h3>Content</h3>
  * Either the {@link #format} config (rows separated by {@code |}, each row run
@@ -78,12 +78,12 @@ public final class LcdData extends ComponentData implements PanelDrawTarget, Pan
     }
 
     public int cols() {
-        return host() == null ? 16 : Math.max(1, Math.min(MAX_COLS, host().cellsWide()));
+        return host() == null ? 16 : Math.max(1, Math.min(MAX_COLS, host().cellsWide() / LcdType.CELLS_PER_CHAR));
     }
 
-    /** Number of rows (two cells tall each). */
+    /** Number of rows (four cells tall each). */
     public int rows() {
-        return host() == null ? 2 : Math.max(1, Math.min(MAX_ROWS, host().cellsHigh() / 2));
+        return host() == null ? 2 : Math.max(1, Math.min(MAX_ROWS, host().cellsHigh() / LcdType.CELLS_PER_ROW));
     }
 
     /** The latched grid row as text, trailing blanks removed. */

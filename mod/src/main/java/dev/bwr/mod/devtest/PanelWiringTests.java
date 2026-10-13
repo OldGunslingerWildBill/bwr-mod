@@ -1064,9 +1064,9 @@ public final class PanelWiringTests {
             s.wall(2, 2);
             PanelBlockEntity block = s.be(s.at(0, 0));
             BlockPos pos = block.getBlockPos();
-            PanelComponent sw = PanelOps.placeDirect(s.level, pos, 0, 0, ComponentTypes.CONTROL_SWITCH, Footprint.of(3, 4));
-            PanelComponent gauge = PanelOps.placeDirect(s.level, pos, 4, 0, ComponentTypes.EDGEWISE_GAUGE_VERTICAL, Footprint.of(2, 6));
-            PanelComponent seven = PanelOps.placeDirect(s.level, pos, 7, 0, ComponentTypes.SEVEN_SEGMENT_DISPLAY, Footprint.of(8, 3));
+            PanelComponent gauge = PanelOps.placeDirect(s.level, pos, 0, 0, ComponentTypes.EDGEWISE_GAUGE_VERTICAL, Footprint.of(6, 16));
+            PanelComponent sw = PanelOps.placeDirect(s.level, pos, 7, 0, ComponentTypes.CONTROL_SWITCH, Footprint.of(8, 12));
+            PanelComponent seven = PanelOps.placeDirect(s.level, pos, 7, 12, ComponentTypes.SEVEN_SEGMENT_DISPLAY, Footprint.of(20, 8));
             check(helper, sw != null && gauge != null && seven != null, "the real components fit on the wall");
             var valve = s.msiv(s.devices);
             valve.energy().receiveEnergy(20_000, false);
@@ -1124,10 +1124,10 @@ public final class PanelWiringTests {
     @GameTest(template = "empty", timeoutTicks = 300)
     public static void lcdAndGraphicDisplayDrawBySmallPatchesNotFullResends(GameTestHelper helper) {
         Stage.run(helper, 9, s -> {
-            s.wall(2, 2);
+            s.wall(3, 2);
             PanelBlockEntity block = s.be(s.at(0, 0));
             PanelBlockEntity lower = s.be(s.at(1, 1));
-            PanelComponent lcd = PanelOps.placeDirect(s.level, block.getBlockPos(), 0, 0, ComponentTypes.CHARACTER_LCD, Footprint.of(16, 4));
+            PanelComponent lcd = PanelOps.placeDirect(s.level, block.getBlockPos(), 0, 0, ComponentTypes.CHARACTER_LCD, Footprint.of(48, 8));
             PanelComponent graphic = PanelOps.placeDirect(s.level, lower.getBlockPos(), 0, 0, ComponentTypes.GRAPHIC_DISPLAY, Footprint.of(16, 16));
             check(helper, lcd != null && graphic != null, "the displays fit");
             PanelComponent tio = s.io(s.at(1, 0), 8, 8);
@@ -1218,10 +1218,10 @@ public final class PanelWiringTests {
     @GameTest(template = "empty", timeoutTicks = 900)
     public static void scaledPlantInputShowsPercentOffsetAppliesAndNaNStaysNaN(GameTestHelper helper) {
         Stage.run(helper, 11, s -> {
-            s.wall(1, 1);
+            s.wall(2, 1);
             PanelBlockEntity block = s.be(s.at(0, 0));
             BlockPos pos = block.getBlockPos();
-            PanelComponent seven = PanelOps.placeDirect(s.level, pos, 0, 0, ComponentTypes.SEVEN_SEGMENT_DISPLAY, Footprint.of(8, 3));
+            PanelComponent seven = PanelOps.placeDirect(s.level, pos, 0, 0, ComponentTypes.SEVEN_SEGMENT_DISPLAY, Footprint.of(20, 8));
             check(helper, seven != null, "the display fits");
             var valve = s.msiv(s.devices);
             valve.energy().receiveEnergy(20_000, false);

@@ -16,9 +16,9 @@ final class LampModel implements ComponentModel {
         LampData data = (LampData) component.data();
         float w = component.w();
         float h = component.h();
-        sink.box(0, 0, w, h, 0, 1.0f, BEZEL, false);
-        float inset = Math.min(w, h) * 0.14f;
-        sink.box(inset, inset, w - 2 * inset, h - 2 * inset, 0.5f, 1.3f, QuadSink.shade(data.color, 0.22f), false);
+        sink.box(0, 0, w, h, 0, 1.5f, BEZEL, false);
+        float inset = Math.min(w, h) * 0.16f;
+        sink.box(inset, inset, w - 2 * inset, h - 2 * inset, 0.8f, 2.0f, QuadSink.shade(data.color, 0.22f), false);
     }
 
     @Override
@@ -33,7 +33,7 @@ final class LampModel implements ComponentModel {
         }
         float w = component.w();
         float h = component.h();
-        float inset = Math.min(w, h) * 0.14f;
-        context.box(inset, inset, w - 2 * inset, h - 2 * inset, 0.5f, 1.4f, data.color, true);
+        float inset = Math.min(w, h) * 0.16f;
+        context.box(inset, inset, w - 2 * inset, h - 2 * inset, 0.8f, 2.1f, data.color, true);
     }
 }

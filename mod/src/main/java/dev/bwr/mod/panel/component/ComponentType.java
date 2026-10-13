@@ -72,6 +72,12 @@ public abstract class ComponentType {
      * Sizes the item can be placed at, in cells. Index 0 is the default. The
      * item remembers an index; right-clicking air with it cycles. A footprint
      * may never exceed {@link Footprint#MAX_CELLS} either way.
+     *
+     * <p>Sizes are in cells (1/16 block), chosen so a component reads from a few
+     * blocks away: about 6 x 6 for a pushbutton, 12 x 12 for a dial. A list may
+     * change between versions: a saved component keeps the width and height it
+     * was placed with even when that footprint is no longer listed, and its item
+     * then drops at the default size.
      */
     public abstract List<Footprint> footprints();
 
