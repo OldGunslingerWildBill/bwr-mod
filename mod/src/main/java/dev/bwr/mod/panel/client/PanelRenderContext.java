@@ -30,13 +30,20 @@ public final class PanelRenderContext implements QuadSink {
     private static final ResourceLocation WHITE = ResourceLocation.withDefaultNamespace("textures/misc/white.png");
     /** Untextured, vertex coloured, lit, double sided: the one render type all procedural geometry uses. */
     public static final RenderType SOLID = RenderType.entityCutoutNoCull(WHITE);
+    /** Translucent, vertex coloured and lit: meter windows. Drawn after the solid geometry it covers. */
+    public static final RenderType GLASS = RenderType.entityTranslucent(WHITE);
 
     private final Matrix4f basis = new Matrix4f();
     private final Matrix4f textMatrix = new Matrix4f();
     private final float[] normals = new float[15];
+    private static final int FACE_AT = NORMAL_FACE * 3;
+    private static final int RIGHT_AT = NORMAL_RIGHT * 3;
+    private static final int DOWN_AT = NORMAL_DOWN * 3;
 
     private MultiBufferSource buffers;
     private VertexConsumer consumer;
+    /** The open translucent builder, if any; dropped whenever another render type is used (that closes it). */
+    private VertexConsumer glassConsumer;
     private PoseStack.Pose pose;
     private PanelGeometry.Frame frame;
     private Font font;
@@ -52,6 +59,7 @@ public final class PanelRenderContext implements QuadSink {
                float time, int lod, Font font) {
         this.buffers = buffers;
         this.consumer = null;
+        this.glassConsumer = null;
         this.pose = stack.last();
         this.light = light;
         this.overlay = overlay;
@@ -123,16 +131,48 @@ public final class PanelRenderContext implements QuadSink {
     public void quad(float x0, float y0, float z0, float x1, float y1, float z1,
                      float x2, float y2, float z2, float x3, float y3, float z3,
                      int rgb, int normal, boolean emissive) {
+        int n = normal * 3;
+        solid(x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3, rgb, emissive, normals[n], normals[n + 1], normals[n + 2]);
+    }
+
+    /**
+     * A quad with its own normal, given in component space and mapped onto the panel frame here: the face
+     * normal, the column direction and the row direction are the three axes. Curved handles and knobs shade
+     * smoothly this way. A glowing quad still gets the world-up normal, as in the enum version.
+     */
+    @Override
+    public void quad(float x0, float y0, float z0, float x1, float y1, float z1,
+                     float x2, float y2, float z2, float x3, float y3, float z3,
+                     int rgb, float nx, float ny, float nz, boolean emissive) {
+        solid(x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3, rgb, emissive,
+                worldNormalX(nx, ny, nz), worldNormalY(nx, ny, nz), worldNormalZ(nx, ny, nz));
+    }
+
+    /** Component-space normal to world: {@code nx} along the columns, {@code ny} down the rows, {@code nz} out of the face. */
+    private float worldNormalX(float nx, float ny, float nz) {
+        return nx * normals[RIGHT_AT] + ny * normals[DOWN_AT] + nz * normals[FACE_AT];
+    }
+
+    private float worldNormalY(float nx, float ny, float nz) {
+        return nx * normals[RIGHT_AT + 1] + ny * normals[DOWN_AT + 1] + nz * normals[FACE_AT + 1];
+    }
+
+    private float worldNormalZ(float nx, float ny, float nz) {
+        return nx * normals[RIGHT_AT + 2] + ny * normals[DOWN_AT + 2] + nz * normals[FACE_AT + 2];
+    }
+
+    private void solid(float x0, float y0, float z0, float x1, float y1, float z1,
+                       float x2, float y2, float z2, float x3, float y3, float z3,
+                       int rgb, boolean emissive, float worldNx, float worldNy, float worldNz) {
         int packedLight = packedLight(emissive, light);
         int r = (rgb >> 16) & 0xFF;
         int g = (rgb >> 8) & 0xFF;
         int b = rgb & 0xFF;
         // A glowing quad also ignores the directional shading of the entity shader: it gets the world-up normal,
         // which the shader lights to full strength, so its colour is shown as authored whatever the face's angle.
-        int n = normal * 3;
-        float nx = emissive ? 0.0f : normals[n];
-        float ny = emissive ? 1.0f : normals[n + 1];
-        float nz = emissive ? 0.0f : normals[n + 2];
+        float nx = emissive ? 0.0f : worldNx;
+        float ny = emissive ? 1.0f : worldNy;
+        float nz = emissive ? 0.0f : worldNz;
         vertex(x0, y0, z0, r, g, b, packedLight, nx, ny, nz);
         vertex(x1, y1, z1, r, g, b, packedLight, nx, ny, nz);
         vertex(x2, y2, z2, r, g, b, packedLight, nx, ny, nz);
@@ -143,14 +183,51 @@ public final class PanelRenderContext implements QuadSink {
         double u = originU + x;
         double v = originV + y;
         if (consumer == null) {
-            // Drawing text switches the buffer source to another render type, which closes the solid builder.
+            // Drawing text or glass switches the buffer source to another render type, which closes the solid builder.
             consumer = buffers.getBuffer(SOLID);
+            glassConsumer = null;
         }
         consumer.addVertex(pose, (float) frame.x(u, v, z), (float) frame.y(u, v, z), (float) frame.z(u, v, z))
                 .setColor(r, g, b, 255)
                 .setUv(0.5f, 0.5f)
                 .setOverlay(overlay)
                 .setLight(packedLight)
+                .setNormal(pose, nx, ny, nz);
+    }
+
+    /**
+     * A translucent quad (a meter window) with its own normal. It is lit by the world light like any other
+     * non-glowing geometry. Callers draw glass after everything it covers: the buffer switch flushes what came
+     * before, and the translucent layer then blends over it.
+     */
+    @Override
+    public void glassQuad(float x0, float y0, float z0, float x1, float y1, float z1,
+                          float x2, float y2, float z2, float x3, float y3, float z3,
+                          int rgb, int alpha, float nx, float ny, float nz) {
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+        float wx = worldNormalX(nx, ny, nz);
+        float wy = worldNormalY(nx, ny, nz);
+        float wz = worldNormalZ(nx, ny, nz);
+        glassVertex(x0, y0, z0, r, g, b, alpha, wx, wy, wz);
+        glassVertex(x1, y1, z1, r, g, b, alpha, wx, wy, wz);
+        glassVertex(x2, y2, z2, r, g, b, alpha, wx, wy, wz);
+        glassVertex(x3, y3, z3, r, g, b, alpha, wx, wy, wz);
+    }
+
+    private void glassVertex(float x, float y, float z, int r, int g, int b, int alpha, float nx, float ny, float nz) {
+        double u = originU + x;
+        double v = originV + y;
+        if (glassConsumer == null) {
+            glassConsumer = buffers.getBuffer(GLASS);
+            consumer = null;
+        }
+        glassConsumer.addVertex(pose, (float) frame.x(u, v, z), (float) frame.y(u, v, z), (float) frame.z(u, v, z))
+                .setColor(r, g, b, alpha)
+                .setUv(0.5f, 0.5f)
+                .setOverlay(overlay)
+                .setLight(light)
                 .setNormal(pose, nx, ny, nz);
     }
 
@@ -172,6 +249,34 @@ public final class PanelRenderContext implements QuadSink {
         font.drawInBatch(text, 0.0f, 0.0f, 0xFF000000 | rgb, false, textMatrix, buffers,
                 Font.DisplayMode.POLYGON_OFFSET, 0, packedLight(emissive, light));
         consumer = null;
+        glassConsumer = null;
+    }
+
+    /**
+     * Draws a line of text lying on the face, rotated about its anchor. Baked models place legends this way: the
+     * anchor is where the text sits, {@code rotDegrees} turns it clockwise as the operator sees it (the
+     * rotation is done in real lengths, so on a sloped board it is still a true rotation), and
+     * {@code (dx, dy)} is the offset of the string's top-left from the anchor in font pixels before scaling
+     * (alignment and centring on the cap height). Only call at {@link #LOD_FULL}.
+     *
+     * @param scale cells per font pixel
+     */
+    public void textRotated(String text, float x, float y, float scale, float rotDegrees, float z, int rgb,
+                            boolean emissive, float dx, float dy) {
+        double u = originU + x;
+        double v = originV + y;
+        textMatrix.set(pose.pose());
+        textMatrix.translate((float) frame.x(u, v, z), (float) frame.y(u, v, z), (float) frame.z(u, v, z));
+        textMatrix.mul(basis);
+        textMatrix.scale(1.0f, 1.0f / rowAspect(), 1.0f);
+        if (rotDegrees != 0.0f) {
+            textMatrix.rotateZ((float) Math.toRadians(rotDegrees));
+        }
+        textMatrix.scale(scale);
+        font.drawInBatch(text, dx, dy, 0xFF000000 | rgb, false, textMatrix, buffers,
+                Font.DisplayMode.POLYGON_OFFSET, 0, packedLight(emissive, light));
+        consumer = null;
+        glassConsumer = null;
     }
 
     public Font font() {
@@ -195,6 +300,7 @@ public final class PanelRenderContext implements QuadSink {
         textured(out, x + w, y + h, z, 1.0f, 1.0f, packedLight, nx, ny, nz);
         textured(out, x, y + h, z, 0.0f, 1.0f, packedLight, nx, ny, nz);
         consumer = null;
+        glassConsumer = null;
     }
 
     private void textured(VertexConsumer out, float x, float y, float z, float u, float v, int packedLight,
