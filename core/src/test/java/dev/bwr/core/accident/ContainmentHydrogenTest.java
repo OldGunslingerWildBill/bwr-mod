@@ -33,7 +33,7 @@ public final class ContainmentHydrogenTest {
         List<ContainmentAtmosphere.Event> events = new ArrayList<>();
         for (int i = 0; i < 4000 && ct.getBurnCount() == 0; i++) {
             ct.step(0.05, 0, 0, 1.0);
-            peakH2 = Math.max(peakH2, ct.getHydrogenPercent());
+            peakH2 = Math.max(peakH2, ct.getDrywellHydrogenPercent());
             events.addAll(ct.drainEvents());
         }
         Check.exactly(1, ct.getBurnCount(), "one burn");
@@ -42,7 +42,9 @@ public final class ContainmentHydrogenTest {
                         && events.contains(ContainmentAtmosphere.Event.HYDROGEN_FLAMMABLE),
                 "flammable warning precedes the burn, got %s", events);
         Check.isFalse(events.contains(ContainmentAtmosphere.Event.HYDROGEN_DETONATION), "a lean burn is not a detonation");
-        Check.inRange(7.5, 8.5, peakH2, "hydrogen percent at ignition");
+        // The release enters the drywell. In a two-volume containment its
+        // local 8% ignition mixture is diluted in a combined-plant readout.
+        Check.inRange(7.5, 8.5, peakH2, "drywell hydrogen percent at ignition");
         Check.lessThan(1.0, ct.getHydrogenPercent(), "hydrogen after the burn");
         Check.lessThan(20.0, ct.getOxygenPercent(), "oxygen consumed by the burn");
         Check.greaterThan(5.0, ct.getLastBurnPeakPressurePsig(), "burn pressure spike");

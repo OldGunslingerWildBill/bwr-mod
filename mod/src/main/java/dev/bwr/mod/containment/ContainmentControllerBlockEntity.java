@@ -265,8 +265,9 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                     || !reactor.isFormed()) continue;
             var gas = reactor.core().getContainment();
             lines.add(String.format(java.util.Locale.ROOT,
-                    "Atmosphere: H2 %.2f%%, O2 %.2f%%, %.2f psig",
-                    gas.getHydrogenPercent(), gas.getOxygenPercent(), gas.getPressurePsig()));
+                    "Atmosphere: H2 %.2f%%, O2 %.2f%%, drywell %.2f / wetwell %.2f psig",
+                    gas.getHydrogenPercent(), gas.getOxygenPercent(),
+                    gas.getDrywellPressurePsig(), gas.getWetwellPressurePsig()));
             break;
         }
         return lines;

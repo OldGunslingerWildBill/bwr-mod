@@ -1,5 +1,8 @@
 # Phase J fixes and Phase K review (2026-10-13)
 
+Historical J-fix3/Phase K record. The later two-volume J-fix4 physics,
+timelines, and verification are recorded in `PHASE-J4-REVIEW.md`.
+
 The numbers below are printed by the full `:core:acceptance` run after the
 steam-cap and RPV-metal fixes (`279/279` passed). Containment pressure is one
 shared node. The drywell and wetwell methods expose that same pressure; no

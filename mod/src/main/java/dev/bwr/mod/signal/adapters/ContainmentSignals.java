@@ -50,9 +50,9 @@ final class ContainmentSignals {
             .number("pressure", "Containment pressure", "psig", -5, 150, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getPressurePsig()))
             .number("steam_percent", "Steam", "%", 0, 100, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getSteamPercent()))
             .number("gas_temperature", "Gas temperature", "degC", 0, 400, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getGasTemperatureC()))
-            .number("drywell_pressure", "Drywell pressure (shared node)", "psig", -5, 150, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getDrywellPressurePsig()))
-            .number("wetwell_pressure", "Wetwell pressure (shared node)", "psig", -5, 150, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getWetwellPressurePsig()))
-            .number("pressure_nodes", "Pressure nodes", "nodes", 0, 1,
+            .number("drywell_pressure", "Drywell pressure", "psig", -5, 150, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getDrywellPressurePsig()))
+            .number("wetwell_pressure", "Wetwell pressure", "psig", -5, 150, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getWetwellPressurePsig()))
+            .number("pressure_nodes", "Pressure nodes", "nodes", 0, 2,
                     reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getPressureNodeCount()))
             .number("spray_flow", "Containment spray", "kg/s", 0, 2500, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getLastSprayFlowKgPerS()));
 

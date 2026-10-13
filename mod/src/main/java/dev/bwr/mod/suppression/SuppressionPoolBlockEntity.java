@@ -254,6 +254,19 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     public boolean isEnclosedTank(){return closedTank;}
     public double steamInKgPerS(){return isFormed()?steamInKgPerS:0;}
     public int steamPortCount(){return concreteLayout==null||level==null?0:(int)concreteLayout.ports().stream().filter(p->level.getBlockState(p).is(BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get())).count();}
+    /** A spray header above the pool water, inside its horizontal footprint, serves the wetwell airspace. */
+    public boolean isWetwellSprayHeader(BlockPos header) {
+        if (!formed || header == null) return false;
+        if (concreteLayout != null) {
+            var min = concreteLayout.min(); var max = concreteLayout.max();
+            return header.getX() > min.getX() && header.getX() < max.getX()
+                    && header.getZ() > min.getZ() && header.getZ() < max.getZ()
+                    && header.getY() > surfaceY() && header.getY() < max.getY();
+        }
+        for (int below = 1; below <= 8; below++)
+            if (basinWater.contains(header.below(below).asLong())) return true;
+        return false;
+    }
     public static final double STEAM_INLET_KG_PER_S=2_000;
     private long steamBudgetTick=Long.MIN_VALUE;
     private double steamAcceptedKg;

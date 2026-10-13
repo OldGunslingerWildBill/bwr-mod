@@ -82,9 +82,9 @@ final class ReactorSignals {
             .number("containment_pressure", "Containment pressure", "psig", -5, 150, core(c -> c.getContainment().getPressurePsig()))
             .number("containment_steam_percent", "Containment steam", "%", 0, 100, core(c -> c.getContainment().getSteamPercent()))
             .number("containment_gas_temp_c", "Containment gas temperature", "degC", 0, 400, core(c -> c.getContainment().getGasTemperatureC()))
-            .number("containment_drywell_pressure", "Drywell pressure (shared node)", "psig", -5, 150, core(c -> c.getContainment().getDrywellPressurePsig()))
-            .number("containment_wetwell_pressure", "Wetwell pressure (shared node)", "psig", -5, 150, core(c -> c.getContainment().getWetwellPressurePsig()))
-            .number("containment_pressure_nodes", "Containment pressure nodes", "nodes", 0, 1,
+            .number("containment_drywell_pressure", "Drywell pressure", "psig", -5, 150, core(c -> c.getContainment().getDrywellPressurePsig()))
+            .number("containment_wetwell_pressure", "Wetwell pressure", "psig", -5, 150, core(c -> c.getContainment().getWetwellPressurePsig()))
+            .number("containment_pressure_nodes", "Containment pressure nodes", "nodes", 0, 2,
                     core(c -> c.getContainment().getPressureNodeCount()))
             .number("containment_spray_flow", "Containment spray", "kg/s", 0, 2500, core(c -> c.getContainment().getLastSprayFlowKgPerS()))
             .boolOrNone("containment_inerted", "Containment inerted", core(c -> flag(c.getContainment().isInerted())))

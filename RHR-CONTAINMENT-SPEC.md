@@ -5,12 +5,10 @@ and the containment atmosphere so that a BWR containment works the way it
 really does: it suppresses pressure by condensing steam in the pool, and RHR
 removes the heat. Then it proves it with whole-plant scenario tests.
 
-Implementation note after Phase J: containment pressure is **one lumped node**.
-Drywell and wetwell pressure methods intentionally return the same value. The
-corrected cold-pool condensation cap lowered the modeled subcooled-pool DBA
-peak to about **5.3 psig**. The `<50 psig` acceptance check is not validation
-of the cited **49.6-psig drywell** or **27-psig wetwell** peaks, which require
-separate volumes and flow resistance this model does not have.
+Implementation note after J-fix4: containment has **separate drywell and
+wetwell gas nodes**, pressure-driven downcomers, passive vacuum breakers and
+finite-rate condensation. The DBA test requires distinct pressure peaks in
+the cited **49.6-psig drywell** and **27-psig wetwell** neighborhoods.
 
 House rules: physics stays in `core/` with no Minecraft imports. No per-block
 tickers. Never force-load chunks. Every saved state round-trips, and old saves

@@ -846,8 +846,15 @@ public class ReactorPeripheral implements IPeripheral {
         m.put("gasTemperatureC", ct.getGasTemperatureC());
         m.put("drywellPressurePsig", ct.getDrywellPressurePsig());
         m.put("wetwellPressurePsig", ct.getWetwellPressurePsig());
+        m.put("drywellPeakPressurePsig", ct.getPeakDrywellPressurePsig());
+        m.put("wetwellPeakPressurePsig", ct.getPeakWetwellPressurePsig());
+        m.put("drywellGasTemperatureC", ct.getDrywellGasTemperatureC());
+        m.put("wetwellGasTemperatureC", ct.getWetwellGasTemperatureC());
+        m.put("drywellSteamKg", ct.getDrywellSteamKg());
+        m.put("wetwellSteamKg", ct.getWetwellSteamKg());
+        m.put("downcomerSteamKgPerS", ct.getLastDowncomerSteamKgPerS());
         m.put("pressureNodeCount", ct.getPressureNodeCount());
-        m.put("pressureModel", "single_node");
+        m.put("pressureModel", "drywell_wetwell");
         m.put("sprayFlowKgPerS", ct.getLastSprayFlowKgPerS());
         m.put("pressure", ct.getPressurePsig());
         m.put("peakPressure", ct.getPeakPressurePsig());

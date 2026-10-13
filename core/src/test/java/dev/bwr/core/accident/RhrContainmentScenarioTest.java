@@ -16,7 +16,8 @@ import java.util.Arrays;
 public final class RhrContainmentScenarioTest {
     private RhrContainmentScenarioTest() {}
 
-    private record State(double[] pool, double[] atmosphere, double peakPsig, double peakSteamKgPerS) {}
+    private record State(double[] pool, double[] atmosphere, double peakDrywellPsig,
+                         double peakWetwellPsig, double peakSteamKgPerS) {}
 
     /** Scrammed reactor, guillotine recirculation break, and an operator lined up ECCS pump. */
     private static State designBasisBlowdown(boolean print) {
@@ -30,34 +31,37 @@ public final class RhrContainmentScenarioTest {
         core.getBoundaryStress().forceFailure(BoundaryComponent.RECIRCULATION_LINE, core.getPressurePsig());
         SuppressionPool pool = new SuppressionPool();
         var gas = core.getContainment();
-        double peakP = gas.getPressurePsig(), peakFlow = 0, priorBreak = 0;
+        double peakDry = gas.getDrywellPressurePsig(), peakWet = gas.getWetwellPressurePsig();
+        double peakFlow = 0, priorBreak = 0;
         final double dt = .25;
-        if (print) Check.note("DBA t=0 s: RPV %.1f psig, pool %.1f C, containment %.1f psig",
-                core.getPressurePsig(), pool.getTemperatureC(), peakP);
+        if (print) Check.note("DBA t=0 s: RPV %.1f psig, pool %.1f C, drywell %.1f psig, wetwell %.1f psig",
+                core.getPressurePsig(), pool.getTemperatureC(), peakDry, peakWet);
         for (int i = 1; i <= 1200; i++) {
-            pool.setContainmentPressurePsia(gas.getPressurePsia());
-            double drywellContact = priorBreak * ContainmentAtmosphere.DRYWELL_WALL_CONTACT_FRACTION;
-            pool.condenseSteam(priorBreak - drywellContact, core.getPressurePsig(), dt);
-            gas.setSteamInputs(new ContainmentAtmosphere.SteamInputs(drywellContact, 2800,
+            pool.setContainmentPressurePsia(gas.getWetwellPressurePsig() + ContainmentAtmosphere.ATMOSPHERIC_PA
+                    / ContainmentAtmosphere.PA_PER_PSI);
+            pool.condenseSteam(gas.getLastDowncomerSteamKgPerS(), core.getPressurePsig(), dt);
+            gas.setSteamInputs(new ContainmentAtmosphere.SteamInputs(priorBreak, 2800,
                     pool.getUncondensedSteamKgPerS(), pool.getTemperatureC() + 273.15, 0, 0));
             core.setInjectionFlowKgPerS(2000);
             core.setInjectionTemperatureC(pool.getTemperatureC());
             core.step(dt);
             double vesselP = Saturation.psiaFromPsig(core.getPressurePsig());
-            double containmentP = Math.max(.1, gas.getPressurePsia());
+            double containmentP = Math.max(.1, gas.getDrywellPressurePsig()
+                    + ContainmentAtmosphere.ATMOSPHERIC_PA / ContainmentAtmosphere.PA_PER_PSI);
             double flash = Math.clamp((Saturation.liquidEnthalpyKJPerKg(vesselP)
                     - Saturation.liquidEnthalpyKJPerKg(containmentP))
                     / Math.max(1, Saturation.latentHeatKJPerKg(containmentP)), 0, 1);
             priorBreak = Math.max(0, core.getBreakSteamFlowKgPerS()
                     + core.getBreakLiquidFlowKgPerS() * flash);
             peakFlow = Math.max(peakFlow, priorBreak);
-            peakP = Math.max(peakP, gas.getPressurePsig());
+            peakDry = Math.max(peakDry, gas.getPeakDrywellPressurePsig());
+            peakWet = Math.max(peakWet, gas.getPeakWetwellPressurePsig());
             if (print && (i == 120 || i == 240 || i == 480 || i == 1200))
-                Check.note("DBA t=%d s: RPV %.1f psig, break %.0f kg/s, pool %.1f C, containment %.1f psig",
+                Check.note("DBA t=%d s: RPV %.1f psig, break %.0f kg/s, pool %.1f C, drywell %.1f psig, wetwell %.1f psig",
                         (int) (i * dt), core.getPressurePsig(), priorBreak,
-                        pool.getTemperatureC(), gas.getPressurePsig());
+                        pool.getTemperatureC(), gas.getDrywellPressurePsig(), gas.getWetwellPressurePsig());
         }
-        return new State(pool.toArray(), gas.toArray(), peakP, peakFlow);
+        return new State(pool.toArray(), gas.toArray(), peakDry, peakWet, peakFlow);
     }
 
     public static void test01_designBasisRecirculationLoca() {
@@ -67,21 +71,19 @@ public final class RhrContainmentScenarioTest {
         Check.greaterThan(500, result.peakSteamKgPerS(), "large recirculation break sends steam to suppression pool");
         Check.greaterThan(32, pool.getTemperatureC(), "suppression pool takes blowdown heat");
         Check.greaterThan(0, pool.getSubcoolingC(), "pool remains subcooled at DBA endpoint");
-        Check.lessThan(gas.getFailurePressurePsig(), result.peakPsig(), "peak below structural failure");
-        // With the corrected cold-pool saturation cap, this single shared
-        // airspace node peaks near 5 psig during a subcooled-pool DBA. The old
-        // >25 psig assertion depended on the warmer wall incorrectly setting
-        // the cap. The model still has to show a positive break-driven rise.
-        Check.greaterThan(4, result.peakPsig(), "subcooled-pool DBA raises shared airspace pressure");
-        // This is the common-node pressure only. A <50 psig assertion does
-        // not validate the separate 49.6-psig Mark I drywell peak; this model
-        // has no independent drywell gas volume or downcomer pressure drop.
-        Check.lessThan(50, result.peakPsig(), "shared-node peak below 50 psig; no drywell validation");
-        Check.note("DBA shared-node peak: %.1f psig (reference Mark I wetwell 27, drywell 49.6; neither resolved); break %.0f kg/s; pool %.1f C, subcooling %.1f C",
-                result.peakPsig(), result.peakSteamKgPerS(), pool.getTemperatureC(), pool.getSubcoolingC());
+        Check.lessThan(gas.getFailurePressurePsig(), result.peakDrywellPsig(), "drywell peak below structural failure");
+        // NRC/GE Mark I Browns Ferry references: 49.6 psig drywell, 27 psig
+        // suppression chamber. Broad tolerances acknowledge a lumped vent and
+        // heat-transfer model while requiring both volumes to be resolved.
+        Check.inRange(40, 60, result.peakDrywellPsig(), "cited Mark I drywell DBA peak");
+        Check.inRange(20, 35, result.peakWetwellPsig(), "cited Mark I wetwell DBA peak");
+        Check.note("DBA peak: drywell %.1f, wetwell %.1f psig; break %.0f kg/s; pool %.1f C, subcooling %.1f C",
+                result.peakDrywellPsig(), result.peakWetwellPsig(), result.peakSteamKgPerS(),
+                pool.getTemperatureC(), pool.getSubcoolingC());
     }
 
-    private record Tail(double peakP, double finalP, double poolC, double preVentP) {}
+    private record Tail(double peakP, double finalP, double poolC, double preVentP,
+                        double peakDry, double peakWet, double finalDry, double finalWet) {}
 
     /** Tail heat is an explicit decaying steam source from an injected scrammed vessel. */
     private static Tail runTail(State start, boolean rhr, boolean vent, String name) {
@@ -90,6 +92,7 @@ public final class RhrContainmentScenarioTest {
         // Keep the three operator lineups observable even if containment would fail.
         gas.setFailurePressurePsig(1000);
         double peak = gas.getPressurePsig(), beforeVent = Double.NaN;
+        double peakDry = gas.getPeakDrywellPressurePsig(), peakWet = gas.getPeakWetwellPressurePsig();
         final double dt = 30;
         for (int i = 1; i <= 2880; i++) {
             double h = i * dt / 3600.0;
@@ -104,11 +107,15 @@ public final class RhrContainmentScenarioTest {
                     pool.getUncondensedSteamKgPerS(), pool.getTemperatureC() + 273.15, 0, 0));
             gas.step(0, 0, 0, dt);
             peak = Math.max(peak, gas.getPressurePsig());
+            peakDry = Math.max(peakDry, gas.getPeakDrywellPressurePsig());
+            peakWet = Math.max(peakWet, gas.getPeakWetwellPressurePsig());
             if (i == 1 || i == 720 || i == 1440 || i == 2160 || i == 2880)
-                Check.note("24h %s t=%.0f h: pool %.1f C, suppression %.2f, containment %.1f psig",
-                        name, h, pool.getTemperatureC(), pool.getLastCondensationEffectiveness(), gas.getPressurePsig());
+                Check.note("24h %s t=%.0f h: pool %.1f C, suppression %.2f, drywell %.1f / wetwell %.1f psig",
+                        name, h, pool.getTemperatureC(), pool.getLastCondensationEffectiveness(),
+                        gas.getDrywellPressurePsig(), gas.getWetwellPressurePsig());
         }
-        return new Tail(peak, gas.getPressurePsig(), pool.getTemperatureC(), beforeVent);
+        return new Tail(peak, gas.getPressurePsig(), pool.getTemperatureC(), beforeVent,
+                peakDry, peakWet, gas.getDrywellPressurePsig(), gas.getWetwellPressurePsig());
     }
 
     public static void test02_twentyFourHourLocaRhrAndVenting() {
@@ -119,8 +126,9 @@ public final class RhrContainmentScenarioTest {
         Check.greaterThan(cooled.poolC() + 10, noRhr.poolC(), "RHR bounds suppression pool temperature");
         Check.greaterThan(cooled.peakP(), noRhr.peakP(), "RHR bounds pressure");
         Check.lessThan(vented.preVentP(), vented.finalP(), "wetwell vent reduces pressure after opening");
-        Check.note("24h peaks: no RHR %.1f psig/%.1f C; RHR %.1f psig/%.1f C; vent final %.1f psig",
-                noRhr.peakP(), noRhr.poolC(), cooled.peakP(), cooled.poolC(), vented.finalP());
+        Check.note("24h peaks: no RHR dry %.1f/wet %.1f psig, pool %.1f C; RHR dry %.1f/wet %.1f psig, pool %.1f C; vent final dry %.1f/wet %.1f psig",
+                noRhr.peakDry(), noRhr.peakWet(), noRhr.poolC(),
+                cooled.peakDry(), cooled.peakWet(), cooled.poolC(), vented.finalDry(), vented.finalWet());
     }
 
     public static void test03_stationBlackoutRcicSrvAndPowerRestoration() {
@@ -142,13 +150,15 @@ public final class RhrContainmentScenarioTest {
             peak = Math.max(peak, gas.getPressurePsig());
             if (i == 720) preRhr = gas.getPressurePsig();
             if (i == 1 || i == 240 || i == 480 || i == 720 || i == 840 || i == 1080)
-                Check.note("SBO t=%.0f h %s: pool %.1f C, containment %.1f psig",
-                        h, h <= 6 ? "RCIC/SRV" : "RHR restored", pool.getTemperatureC(), gas.getPressurePsig());
+                Check.note("SBO t=%.0f h %s: pool %.1f C, drywell %.1f / wetwell %.1f psig",
+                        h, h <= 6 ? "RCIC/SRV" : "RHR restored", pool.getTemperatureC(),
+                        gas.getDrywellPressurePsig(), gas.getWetwellPressurePsig());
         }
         Check.greaterThan(initial + 1, preRhr, "RCIC/SRV heating raises containment pressure");
         Check.lessThan(preRhr, gas.getPressurePsig(), "restored RHR turns pressure down");
-        Check.note("SBO peak %.1f psig; 6h %.1f psig; 9h %.1f psig; final pool %.1f C",
-                peak, preRhr, gas.getPressurePsig(), pool.getTemperatureC());
+        Check.note("SBO peaks drywell %.1f / wetwell %.1f psig; 6h %.1f psig; 9h %.1f psig; final pool %.1f C",
+                gas.getPeakDrywellPressurePsig(), gas.getPeakWetwellPressurePsig(),
+                preRhr, gas.getPressurePsig(), pool.getTemperatureC());
     }
 
     private record Cooldown(double hours, double peakDutyMW, double peakRateCPerHour,
@@ -222,8 +232,9 @@ public final class RhrContainmentScenarioTest {
         }
         Check.isTrue(room.isSteamInerted(), "steam exceeds 55 vol percent");
         Check.exactly(0, room.getBurnCount(), "stored hydrogen remains inerted");
-        Check.note("inerting: steam %.1f%%, H2 %.1f%%, O2 %.1f%%, burns %d",
-                room.getSteamPercent(), room.getHydrogenPercent(), room.getOxygenPercent(), room.getBurnCount());
+        Check.note("inerting: steam %.1f%%, H2 %.1f%%, O2 %.1f%%, drywell %.1f / wetwell %.1f psig, burns %d",
+                room.getSteamPercent(), room.getHydrogenPercent(), room.getOxygenPercent(),
+                room.getDrywellPressurePsig(), room.getWetwellPressurePsig(), room.getBurnCount());
         double elapsed = 0;
         while (elapsed < 1000 && room.getBurnCount() == 0) {
             room.setSteamInputs(new ContainmentAtmosphere.SteamInputs(0, 0, 0, 0, 1000, 283.15));
@@ -231,8 +242,9 @@ public final class RhrContainmentScenarioTest {
             elapsed += .05;
         }
         Check.greaterThan(0, room.getBurnCount(), "spray uncovers stored combustible mixture");
-        Check.note("spray after %.1f s: steam %.1f%%, burns %d, peak %.1f psig",
-                elapsed, room.getSteamPercent(), room.getBurnCount(), room.getLastBurnPeakPressurePsig());
+        Check.note("spray after %.1f s: steam %.1f%%, burns %d, peak drywell %.1f / wetwell %.1f psig",
+                elapsed, room.getSteamPercent(), room.getBurnCount(),
+                room.getPeakDrywellPressurePsig(), room.getPeakWetwellPressurePsig());
     }
 
     public static void test06_v2SaveLoadsWithoutSteam() {
@@ -250,7 +262,8 @@ public final class RhrContainmentScenarioTest {
         for (int i = 0; i < 1200; i++) legacyReference.step(0, 0, 0, .05);
         Check.absolute(legacyReference.getPressurePsig(), loaded.getPressurePsig(), 1e-9,
                 "v2 zero-input pressure matches the legacy gas-only path, including design leakage");
-        Check.note("v2 load: steam %.0f kg, gas %.1f C, pressure %.3f -> %.3f psig in 60 s",
-                loaded.getSteamKg(), loaded.getGasTemperatureC(), before, loaded.getPressurePsig());
+        Check.note("v2 load: steam %.0f kg, gas %.1f C, representative %.3f -> %.3f psig in 60 s; drywell %.3f / wetwell %.3f psig",
+                loaded.getSteamKg(), loaded.getGasTemperatureC(), before, loaded.getPressurePsig(),
+                loaded.getDrywellPressurePsig(), loaded.getWetwellPressurePsig());
     }
 }

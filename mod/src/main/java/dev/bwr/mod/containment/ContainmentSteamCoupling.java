@@ -20,7 +20,8 @@ public final class ContainmentSteamCoupling {
         if (level == null) return;
         long now = level.getGameTime();
         SuppressionPoolBlockEntity wetwell = wetwell(level, reactor.getBlockPos(), room);
-        double pressurePsia = Math.max(0.1, atmosphere.getPressurePsia());
+        double pressurePsia = Math.max(0.1, atmosphere.getDrywellPressurePsig()
+                + ContainmentAtmosphere.ATMOSPHERIC_PA / ContainmentAtmosphere.PA_PER_PSI);
         double vesselPsia = Saturation.psiaFromPsig(core.getPressurePsig());
         // A recirculation-line break discharges hot liquid. The fraction that
         // flashes at containment pressure joins the steam-space break flow.
@@ -31,40 +32,57 @@ public final class ContainmentSteamCoupling {
                 + core.getBreakLiquidFlowKgPerS() * flash);
         if (core.getBoundaryStress().isInterfacingSystemsLoca()) breakSteam = 0.0;
         double wetSteam = 0.0, poolK = 0.0;
-        double sprayFlow = 0.0, sprayTemperatureMoment = 0.0;
+        double drySprayFlow = 0.0, drySprayMoment = 0.0;
+        double wetSprayFlow = 0.0, wetSprayMoment = 0.0;
         if (wetwell != null) {
-            wetwell.pool().setContainmentPressurePsia(pressurePsia);
+            wetwell.pool().setContainmentPressurePsia(Math.max(0.1, atmosphere.getWetwellPressurePsig()
+                    + ContainmentAtmosphere.ATMOSPHERIC_PA / ContainmentAtmosphere.PA_PER_PSI));
+            double captured = atmosphere.getLastPoolSurfaceCondensedKgPerS() * .05;
+            double evaporated = atmosphere.getLastPoolEvaporatedKgPerS();
+            if (captured > 0) {
+                wetwell.pool().addHeatMJ(captured * ContainmentAtmosphere.STEAM_LATENT_HEAT_J_PER_KG / 1_000_000);
+                wetwell.pool().addWaterKg(captured, wetwell.pool().getTemperatureC());
+            }
+            if (evaporated > 0) {
+                wetwell.pool().drawSuctionKg(evaporated, .05);
+                wetwell.pool().addHeatMJ(-evaporated * .05
+                        * ContainmentAtmosphere.STEAM_LATENT_HEAT_J_PER_KG / 1_000_000);
+            }
             wetSteam = wetwell.escapedSteamKgPerS(now);
             poolK = wetwell.pool().getTemperatureC() + 273.15;
-            // The drywell downcomer transit is one tick at this resolution.
-            // A fraction of the blowdown contacts drywell structures before the
-            // downcomers. The remainder enters the pool, whose uncondensed
-            // share returns to the common airspace. No mass is counted twice.
+            // The atmosphere's pressure-driven downcomer discharge from the
+            // preceding reactor step reaches the pool this tick. Its escaped
+            // share enters wetwell airspace on the following tick.
             wetwell.reportSteamKgPerS(reactor.getBlockPos(), now,
-                    breakSteam * (1.0 - ContainmentAtmosphere.DRYWELL_WALL_CONTACT_FRACTION), core.getPressurePsig());
+                    atmosphere.getLastDowncomerSteamKgPerS(), core.getPressurePsig());
         }
-        double drySteam = wetwell == null ? breakSteam
-                : breakSteam * ContainmentAtmosphere.DRYWELL_WALL_CONTACT_FRACTION;
+        double drySteam = breakSteam;
         if (room != null) for (BlockPos pos : room.linkedSprayHeaders()) {
             if (!level.isLoaded(pos) || !(level.getBlockEntity(pos) instanceof ContainmentSprayHeaderBlockEntity header))
                 continue;
             var sample = header.takeForRoom(now, .05);
-            sprayFlow += sample.flowKgPerS();
-            sprayTemperatureMoment += sample.flowKgPerS() * sample.temperatureC();
+            if (wetwell != null && wetwell.isWetwellSprayHeader(pos)) {
+                wetSprayFlow += sample.flowKgPerS();
+                wetSprayMoment += sample.flowKgPerS() * sample.temperatureC();
+            } else {
+                drySprayFlow += sample.flowKgPerS();
+                drySprayMoment += sample.flowKgPerS() * sample.temperatureC();
+            }
         }
-        double sprayK = sprayFlow > 0.0 ? sprayTemperatureMoment / sprayFlow + 273.15 : 0.0;
-        if (wetwell != null && sprayFlow > 0)
-            wetwell.pool().addWaterKg(sprayFlow * .05, sprayK - 273.15);
+        double drySprayK = drySprayFlow > 0 ? drySprayMoment / drySprayFlow + 273.15 : 0;
+        double wetSprayK = wetSprayFlow > 0 ? wetSprayMoment / wetSprayFlow + 273.15 : 0;
+        if (wetwell != null && wetSprayFlow > 0)
+            wetwell.pool().addWaterKg(wetSprayFlow * .05, wetSprayK - 273.15);
         if (atmosphere.getLeakArea() >= 1.0) {
             drySteam = 0.0;
             wetSteam = 0.0;
             poolK = 0.0;
-            sprayFlow = 0.0;
-            sprayK = 0.0;
+            drySprayFlow = wetSprayFlow = 0.0;
+            drySprayK = wetSprayK = 0.0;
         }
         atmosphere.setSteamInputs(new ContainmentAtmosphere.SteamInputs(
                 drySteam, Saturation.vapourEnthalpyKJPerKg(vesselPsia),
-                wetSteam, poolK, sprayFlow, sprayK));
+                wetSteam, poolK, drySprayFlow, drySprayK, wetSprayFlow, wetSprayK));
     }
 
     private static SuppressionPoolBlockEntity wetwell(Level level, BlockPos reactor,

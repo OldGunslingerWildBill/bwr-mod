@@ -232,12 +232,13 @@ calibration and is documented as a named constant in
 `dev.bwr.core.accident.SevereAccident` and `ContainmentAtmosphere`.
 
 Phase J added steam mass, gas temperature, condensation, sprays, and linked-pool
-heat removal to that containment atmosphere. The drywell and wetwell readouts
-still expose **one common pressure node**. It has no separate drywell/wetwell
-volume, downcomer differential pressure, or distinct peak. The 5.3-psig
-subcooled-pool DBA peak cannot validate the NRC Mark I's 49.6-psig drywell
-peak or 27-psig wetwell peak. The `<50 psig` acceptance bound checks only the
-shared node.
+heat removal. J-fix4 split the containment into **drywell and wetwell gas
+nodes**, joined by submerged downcomers and passive vacuum breakers. Surface
+condensation is limited by area, heat-transfer coefficient and temperature
+difference rather than an instantaneous cold-pool cap. The DBA test now checks
+the two pressure peaks against separate Mark I reference ranges. The model
+still lumps each volume internally; it does not resolve local jets, eddies,
+stratification or structural pressure waves.
 
 Not modelled: in-vessel steam explosions, debris recriticality, hydrogen in the reactor building separately from containment,
 igniters and recombiners, and a cleanup mechanic beyond decay.

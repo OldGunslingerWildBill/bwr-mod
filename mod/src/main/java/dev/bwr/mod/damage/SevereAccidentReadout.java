@@ -65,9 +65,9 @@ public final class SevereAccidentReadout {
                 ct.isVentOpen() ? ", vent OPEN" : "",
                 ct.isFailed() ? ", FAILED (" + ct.getFailureMode().name().toLowerCase(Locale.ROOT).replace('_', ' ') + ")" : ""));
         out.add(String.format(Locale.ROOT,
-                "Containment steam %.1f%% (%.0f kg), gas %.1f C, drywell/wetwell %.1f psig, spray %.1f kg/s",
+                "Containment steam %.1f%% (%.0f kg), gas %.1f C, drywell %.1f / wetwell %.1f psig, spray %.1f kg/s",
                 ct.getSteamPercent(), ct.getSteamKg(), ct.getGasTemperatureC(),
-                ct.getPressurePsig(), ct.getLastSprayFlowKgPerS()));
+                ct.getDrywellPressurePsig(), ct.getWetwellPressurePsig(), ct.getLastSprayFlowKgPerS()));
         if (ct.getBurnCount() > 0) {
             out.add(String.format(Locale.ROOT, "Hydrogen burns: %d, %.0f kg burned, peak %.0f psig",
                     ct.getBurnCount(), ct.getHydrogenBurnedKg(), ct.getPeakPressurePsig()));

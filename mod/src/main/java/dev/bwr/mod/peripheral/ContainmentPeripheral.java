@@ -130,7 +130,9 @@ public final class ContainmentPeripheral implements IPeripheral {
     @LuaFunction(mainThread = true) public final double getWetwellPressurePsig() {
         var reactor = reactor(); return reactor == null ? 0 : reactor.core().getContainment().getWetwellPressurePsig();
     }
-    @LuaFunction(mainThread = true) public final int getPressureNodeCount() { return 1; }
+    @LuaFunction(mainThread = true) public final int getPressureNodeCount() {
+        var reactor = reactor(); return reactor == null ? 0 : reactor.core().getContainment().getPressureNodeCount();
+    }
     @LuaFunction(mainThread = true) public final double getSprayFlowKgPerS() {
         var reactor = reactor(); return reactor == null ? 0 : reactor.core().getContainment().getLastSprayFlowKgPerS();
     }
