@@ -1050,6 +1050,7 @@ public final class PanelModelTests {
     @GameTest(template = "empty")
     public static void panelShippedModelsLoadAndStayInsideTheirFootprintAtEveryPosition(GameTestHelper helper) throws IOException {
         java.util.Set<String> done = new java.util.HashSet<>();
+        int checked = 0;
         for (PanelStyles.Entry entry : PanelStyles.TABLE) {
             for (String id : entry.models()) {
                 if (!done.add(id)) {
@@ -1104,8 +1105,10 @@ public final class PanelModelTests {
                         }
                     }
                 }
+                checked++;
             }
         }
+        com.mojang.logging.LogUtils.getLogger().info("PANEL MODELS shipped in the mod and checked: {}", checked);
         helper.succeed();
     }
 

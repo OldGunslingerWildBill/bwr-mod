@@ -57,32 +57,43 @@ final class PanelModelShowcase {
     /** The (type, style, variant) combinations placed, to prove the showcase covers the whole table. */
     private static final Set<String> SHOWN = new LinkedHashSet<>();
 
-    /** Screenshot names, one per stage. */
+    /** Screenshot names, one per stage: the seven boards, the lights at night, then four close-ups to read the legends. */
     static final String[] NAMES = {"baked-control-switches", "baked-selectors-ge", "baked-selectors-westinghouse",
             "baked-keys-and-knobs", "baked-pushbuttons-and-lights", "baked-round-meters", "baked-edgewise-meters",
-            "baked-night-lights"};
+            "baked-night-lights", "baked-closeup-control-switch", "baked-closeup-selector-westinghouse",
+            "baked-closeup-round-meter", "baked-closeup-edgewise-meters"};
     /** The group each stage shows. */
-    private static final int[] GROUP_OF = {0, 1, 2, 3, 4, 5, 6, 4};
+    private static final int[] GROUP_OF = {0, 1, 2, 3, 4, 5, 6, 4, 0, 2, 5, 6};
+    /** The cell (within the group) the camera looks at, and how far away it stands in blocks. */
+    private static final int[][] FOCUS = {{40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32},
+            {17 + 6, 22 + 8}, {17 + 6, 2 + 7}, {20 + 8, 2 + 8}, {10 + 4, 2 + 12}};
+    private static final double[] DISTANCE = {4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 1.7, 1.5, 1.8, 2.6};
 
     static boolean night(int stage) {
-        return stage == NAMES.length - 1;
+        return stage == 7;
+    }
+
+    /** World x of a cell column of a group (columns run toward -X on a north facing board). */
+    private static double worldX(int group, double cellX) {
+        return CORNER.getX() - group * 6 + 1.0 - cellX / 16.0;
+    }
+
+    private static double worldY(double cellY) {
+        return CORNER.getY() + 1.0 - cellY / 16.0;
     }
 
     static BlockPos block(int group, int col, int row) {
         return CORNER.west(group * 6 + col).below(row);
     }
 
-    private static double centreX(int group) {
-        return CORNER.getX() - group * 6 - (COLS - 1) / 2.0 + 0.5;
-    }
-
-    /** Where the camera stands (its feet) for a stage: facing the board from the north, eyes level with its middle. */
+    /** Where the camera stands (its feet) for a stage: facing the board from the north, eyes level with the focus. */
     static Vec3 camera(int stage) {
-        return new Vec3(centreX(GROUP_OF[stage]), CORNER.getY() - ROWS / 2.0 + 1.0 - 1.62, CORNER.getZ() + 0.75 - 4.2);
+        return new Vec3(worldX(GROUP_OF[stage], FOCUS[stage][0]), worldY(FOCUS[stage][1]) - 1.62,
+                CORNER.getZ() + 0.75 - DISTANCE[stage]);
     }
 
     static Vec3 target(int stage) {
-        return new Vec3(centreX(GROUP_OF[stage]), CORNER.getY() - ROWS / 2.0 + 1.0, CORNER.getZ() + 0.75);
+        return new Vec3(worldX(GROUP_OF[stage], FOCUS[stage][0]), worldY(FOCUS[stage][1]), CORNER.getZ() + 0.75);
     }
 
     // ---- building (server)

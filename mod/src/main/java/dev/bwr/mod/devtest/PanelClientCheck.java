@@ -187,6 +187,8 @@ public final class PanelClientCheck {
                     List.of(new PanelPayloads.CommandEntry("open", "Open / close", false)))));
         }
         if (shown < 105) return;
+        if ((stage == 5 || stage == 6) && mc.screen == null)
+            throw new AssertionError("The wrench / linker screen was closed before its screenshot (stage " + stage + ")");
         PanelComponent hovered = stage == 7 ? PanelClientInput.hoveredComponent(mc) : null;
         if (stage == 7 && hovered == null) {
             String detail = "hit=" + mc.hitResult;
