@@ -76,10 +76,10 @@ final class BakedComponentModel {
     private boolean measured;
 
     private BakedComponentModel(BakedPanelModel model, PanelStyles.Resolved resolved, PanelComponent component, Kind kind,
-                                String type) {
+                                String type, float rowAspect) {
         int needleRgb = resolved.needleRgb();
         this.kind = kind;
-        this.place = Placement.fit(model, component.w(), component.h());
+        this.place = Placement.fit(model, component.w(), component.h(), rowAspect);
         ComponentData data = component.data();
         List<BakedPanelModel.Part> statics = new ArrayList<>();
         List<BakedPanelModel.Part> dynamics = new ArrayList<>();
@@ -113,9 +113,10 @@ final class BakedComponentModel {
 
     /**
      * The model that draws {@code component}, or null for the classic procedural look: its style is classic,
-     * the table has no row for the choice, or none of the row's model files is loaded.
+     * the table has no row for the choice, or none of the row's model files is loaded. {@code rowAspect} is the
+     * real length of a row relative to a column on the panel it is drawn on (see {@link Placement}).
      */
-    static BakedComponentModel create(PanelComponent component, Kind kind, String type) {
+    static BakedComponentModel create(PanelComponent component, Kind kind, String type, float rowAspect) {
         ComponentData data = component.data();
         String style;
         String variant;
@@ -148,7 +149,7 @@ final class BakedComponentModel {
             return null;
         }
         BakedPanelModel model = PanelModels.get(resolved.modelId());
-        return model == null ? null : new BakedComponentModel(model, resolved, component, kind, type);
+        return model == null ? null : new BakedComponentModel(model, resolved, component, kind, type, rowAspect);
     }
 
     // ---- colour

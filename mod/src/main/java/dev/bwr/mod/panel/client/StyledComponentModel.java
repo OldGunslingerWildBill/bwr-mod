@@ -22,10 +22,15 @@ final class StyledComponentModel implements ComponentModel {
 
     @Override
     public void buildStatic(QuadSink sink, PanelComponent component) {
-        BakedComponentModel baked = BakedComponentModel.create(component, kind, type);
+        buildStatic(sink, component, 1.0f);
+    }
+
+    @Override
+    public void buildStatic(QuadSink sink, PanelComponent component, float rowAspect) {
+        BakedComponentModel baked = BakedComponentModel.create(component, kind, type, rowAspect);
         RenderCache.of(component).baked = baked;
         if (baked == null) {
-            classic.buildStatic(sink, component);
+            classic.buildStatic(sink, component, rowAspect);
         } else {
             baked.buildStatic(sink);
         }

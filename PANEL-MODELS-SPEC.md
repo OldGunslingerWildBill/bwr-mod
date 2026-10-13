@@ -146,6 +146,14 @@ parts / 64 labels is logged as a warning and skipped. Nothing a file contains ca
 elevation included) and centred on the axis with room to spare. Pick the footprint to match the default
 aspect ratio and leave room for every handle position inside it.
 
+**Sloped panels.** A cell is one column wide but 1.41 (benchboard, 45 degrees) or 1.04 (console, 15 degrees)
+columns long down the face, so the fit is made in real lengths: the footprint is fitted into the rectangle's real
+size (`cellsW` columns by `cellsH x rowAspect` columns), and a model inch spans the same length across the face,
+down it and out of it. A model therefore keeps its proportions on every panel type, its elevation axis is the
+face normal, and its normals light it as the face it is. The cell grid, placement and collision are unchanged;
+a round dial on a benchboard is round, in a rectangle that is taller than it looks. `PanelSlopeTests` checks
+edge lengths, angles, the elevation axis and the normals of every shipped model on all three panel types.
+
 **Style table.** `PanelStyles.TABLE` is the one table from (component type, style, variant) to model id. A row
 lists candidate ids (the first that exists wins) and may carry a pointer colour, a key switch pose, and a
 preferred footprint. A missing or rejected model means the classic procedural look for that component, never
@@ -200,7 +208,8 @@ Other ids (`maker`, `top`, `lower_left`, `bottom`) are not drawn. Text is scaled
 rotated by its `rot`, aligned by `align`, coloured to read on the surface behind it (dark on a lit lens), and
 drawn only within 24 blocks.
 
-**Known limits.** On a benchboard or console the face is stretched along its rows like every other component.
+**Known limits.** The classic procedural components still fill their cells as drawn, so on a benchboard or
+console they are stretched along the rows (a classic round dial is an oval there); baked models are not.
 A model with a frame much larger than its plate (the target pistols) looks small at the default size; the table
 marks such rows as preferring the larger footprint. Edgewise meters ignore the demand marker unless the model
 has a `demand` part.

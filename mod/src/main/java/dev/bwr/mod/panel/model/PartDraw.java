@@ -71,6 +71,7 @@ public final class PartDraw {
         float py = part.pivotY;
         float pz = part.pivotZ;
         float scale = place.scale;
+        float rowScale = place.rowScale;
         float ox = place.offsetX;
         float oy = place.offsetY;
         float[] positions = part.positions;
@@ -82,7 +83,7 @@ public final class PartDraw {
                 float dy = positions[base + corner * 3 + 1] - py;
                 float dz = positions[base + corner * 3 + 2] - pz;
                 scratch[corner * 3] = ox + (r00 * dx + r01 * dy + r02 * dz + px + tx) * scale;
-                scratch[corner * 3 + 1] = oy + (r10 * dx + r11 * dy + r12 * dz + py + ty) * scale;
+                scratch[corner * 3 + 1] = oy + (r10 * dx + r11 * dy + r12 * dz + py + ty) * rowScale;
                 scratch[corner * 3 + 2] = (r20 * dx + r21 * dy + r22 * dz + pz + tz) * scale;
             }
             float n0 = normals[f * 3];
@@ -99,13 +100,14 @@ public final class PartDraw {
     /** Emits a {@link BakedPanelModel.Role#GLASS} part as translucent quads in the part's own colours. */
     public static void emitGlass(QuadSink sink, BakedPanelModel.Part part, Placement place, int alpha, float[] scratch) {
         float scale = place.scale;
+        float rowScale = place.rowScale;
         float ox = place.offsetX;
         float oy = place.offsetY;
         for (int f = 0; f < part.faceCount; f++) {
             int base = f * 12;
             for (int corner = 0; corner < 4; corner++) {
                 scratch[corner * 3] = ox + part.positions[base + corner * 3] * scale;
-                scratch[corner * 3 + 1] = oy + part.positions[base + corner * 3 + 1] * scale;
+                scratch[corner * 3 + 1] = oy + part.positions[base + corner * 3 + 1] * rowScale;
                 scratch[corner * 3 + 2] = part.positions[base + corner * 3 + 2] * scale;
             }
             sink.glassQuad(scratch[0], scratch[1], scratch[2], scratch[3], scratch[4], scratch[5],

@@ -60,14 +60,18 @@ public final class PanelClientCheck {
     private static final BlockPos MSIV = new BlockPos(5098, 126, 5101);
     /** The first stage of the baked-model boards (see {@link PanelModelShowcase}); the stages before it are the original wall. */
     private static final int BAKED_FIRST = 9;
+    /** The first stage of the sloped boards (see {@link PanelSlopeShowcase}): benchboard and console groups after the vertical boards. */
+    private static final int SLOPE_FIRST = BAKED_FIRST + PanelModelShowcase.NAMES.length;
     private static final String[] NAMES = names();
 
     private static String[] names() {
         String[] original = {"board-day-wide", "board-controls-close", "board-annunciators",
                 "board-lod-28m", "board-night-lamps", "wrench-config", "linker-binding", "linker-outline", "board-night-close"};
-        String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length];
+        String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length + PanelSlopeShowcase.NAMES.length];
         System.arraycopy(original, 0, all, 0, original.length);
         System.arraycopy(PanelModelShowcase.NAMES, 0, all, BAKED_FIRST, PanelModelShowcase.NAMES.length);
+        System.arraycopy(PanelSlopeShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length,
+                PanelSlopeShowcase.NAMES.length);
         return all;
     }
     private static boolean started, built, requested;
@@ -127,13 +131,15 @@ public final class PanelClientCheck {
                     try {
                         build(level);
                         PanelModelShowcase.build(level);
+                        PanelSlopeShowcase.build(level);
                         built = true;
                     } catch (Throwable failure) {
                         buildFailure = failure;
                         return;
                     }
                 }
-                Vec3 camera = selected >= BAKED_FIRST ? PanelModelShowcase.camera(selected - BAKED_FIRST) : (switch (selected) {
+                Vec3 camera = selected >= SLOPE_FIRST ? PanelSlopeShowcase.camera(selected - SLOPE_FIRST)
+                        : selected >= BAKED_FIRST ? PanelModelShowcase.camera(selected - BAKED_FIRST) : (switch (selected) {
                     case 0 -> new Vec3(93, 125, 79);
                     case 1, 5, 6, 8 -> new Vec3(94, 125, 92);
                     case 2 -> new Vec3(91, 121, 94);
@@ -141,7 +147,8 @@ public final class PanelClientCheck {
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = selected >= BAKED_FIRST ? PanelModelShowcase.target(selected - BAKED_FIRST) : (selected == 7 ? new Vec3(96.375, 127.5, 100.75)
+                Vec3 target = selected >= SLOPE_FIRST ? PanelSlopeShowcase.target(selected - SLOPE_FIRST)
+                        : selected >= BAKED_FIRST ? PanelModelShowcase.target(selected - BAKED_FIRST) : (selected == 7 ? new Vec3(96.375, 127.5, 100.75)
                         : selected == 2 ? new Vec3(94, 120.5, 100)
                         : selected == 1 || selected == 5 || selected == 6 || selected == 8
                         ? new Vec3(94, 125, 100) : new Vec3(93, 123, 100))
@@ -157,7 +164,7 @@ public final class PanelClientCheck {
                 player.setNoGravity(true);
                 player.getAbilities().flying = true;
                 player.onUpdateAbilities();
-                level.setDayTime(selected == 4 || selected == 8 || selected >= BAKED_FIRST && PanelModelShowcase.night(selected - BAKED_FIRST)
+                level.setDayTime(selected == 4 || selected == 8 || selected >= BAKED_FIRST && selected < SLOPE_FIRST && PanelModelShowcase.night(selected - BAKED_FIRST)
                         ? 18_000 : 6_000);
                 level.setWeatherParameters(6000, 0, false, false);
                 if (selected == 7) {
@@ -220,7 +227,8 @@ public final class PanelClientCheck {
             if (stage >= BAKED_FIRST) {
                 // Every component must draw baked exactly when a loaded model exists for its look.
                 LogUtils.getLogger().info("PANEL CLIENT CHECK baked models {}: {} components drawn from baked models ({} loaded)",
-                        NAMES[stage], PanelModelShowcase.verify(mc, stage - BAKED_FIRST), dev.bwr.mod.panel.model.PanelModels.loadedCount());
+                        NAMES[stage], stage >= SLOPE_FIRST ? PanelSlopeShowcase.verify(mc, stage - SLOPE_FIRST)
+                                : PanelModelShowcase.verify(mc, stage - BAKED_FIRST), dev.bwr.mod.panel.model.PanelModels.loadedCount());
             }
             try (var shot = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
                 if (stage == 7) {

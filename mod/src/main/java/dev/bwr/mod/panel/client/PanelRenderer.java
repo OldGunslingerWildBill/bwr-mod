@@ -89,14 +89,17 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
             ComponentModel model = ComponentModels.get(type.id());
             RenderCache cache = RenderCache.of(component);
             int generation = PanelModels.generation();
-            if (cache.meshRevision != component.revision() || cache.modelGeneration != generation) {
-                // Rebuilt only when the component changed (config edit, new component, network state) or the
-                // set of loaded baked models did (a resource reload).
+            float aspect = context.rowAspect();
+            if (cache.meshRevision != component.revision() || cache.modelGeneration != generation
+                    || cache.meshRowAspect != aspect) {
+                // Rebuilt only when the component changed (config edit, new component, network state), the
+                // set of loaded baked models did (a resource reload), or the panel under it has other cells.
                 MeshBuilder fresh = new MeshBuilder();
-                model.buildStatic(fresh, component);
+                model.buildStatic(fresh, component, aspect);
                 cache.mesh = fresh.build();
                 cache.meshRevision = component.revision();
                 cache.modelGeneration = generation;
+                cache.meshRowAspect = aspect;
             }
             context.beginComponent(component);
             cache.mesh.emit(context);

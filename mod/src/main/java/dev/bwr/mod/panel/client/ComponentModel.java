@@ -26,6 +26,16 @@ public interface ComponentModel {
     void buildStatic(QuadSink sink, PanelComponent component);
 
     /**
+     * {@link #buildStatic(QuadSink, PanelComponent)} told the real length of one row relative to one column
+     * ({@link PanelRenderContext#rowAspect()}: 1.0 on a vertical board, 1.41 on a benchboard). A model that draws
+     * real-proportioned geometry (a baked Blender model) uses it to keep its shape on a sloped face; a model that
+     * fills its cells as drawn ignores it, which is what this default does.
+     */
+    default void buildStatic(QuadSink sink, PanelComponent component, float rowAspect) {
+        buildStatic(sink, component);
+    }
+
+    /**
      * Draws the moving parts. {@link PanelRenderContext#lod()} says how much
      * detail is worth drawing; skip text and fine detail unless it is
      * {@link PanelRenderContext#LOD_FULL}.
