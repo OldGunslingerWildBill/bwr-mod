@@ -71,7 +71,12 @@ public final class PanelWiring {
 
     /** Re-reads every input in the group that reads any output of component {@code id} (it was removed, or loaded). */
     public static void refreshReaders(PanelBlockEntity owner, BlockPos ownerPos, int id) {
-        forEachReader(owner, ownerPos, id, -1, (be, reader, input) -> be.resample(reader, true));
+        dev.bwr.mod.advancement.PlantMilestones.beginPanelEdit();
+        try {
+            forEachReader(owner, ownerPos, id, -1, (be, reader, input) -> be.resample(reader, true));
+        } finally {
+            dev.bwr.mod.advancement.PlantMilestones.endPanelEdit();
+        }
     }
 
     @FunctionalInterface

@@ -26,6 +26,14 @@ The two accident milestones are hidden until earned and do not announce in chat.
 They have no additional rewards. The tree places melt-through after lower-head
 failure for presentation; the runtime records the actual state changes.
 
+The control-room check runs on component placement/removal, configuration or
+wiring edits, an owner's permitted claim/interaction, and group formation/join
+(including loaded panels). It uses the inputs already sampled by those events.
+Periodic live sampling does not evaluate or award this milestone. If a live
+source becomes available later, another qualifying edit or owner interaction
+may be needed. A qualifying group credits every owned member in the same pass;
+reader refreshes within one edit are batched by group.
+
 The scram percentages, hold time, and panel/component counts are gameplay
 achievement definitions, not real plant operating limits or safety criteria.
 Advancement checks do not introduce a scram, interlock, startup, shutdown, load

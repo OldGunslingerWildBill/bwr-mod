@@ -114,6 +114,7 @@ public final class PanelBlockEntity extends BlockEntity {
             }
             // A merge can join two equal labels; make them unique (first holder by position keeps its label).
             group.resolveDuplicateLabels(level);
+            dev.bwr.mod.advancement.PlantMilestones.panelGroupFormed(this, group);
         }
         return group;
     }
@@ -250,21 +251,27 @@ public final class PanelBlockEntity extends BlockEntity {
      */
     PanelComponent addComponent(ComponentType type, int x, int y, Footprint footprint, String label,
                                 List<PanelGroup.Rect> rects) {
-        PanelComponent component = new PanelComponent(nextId++, type, x, y, footprint, label);
-        owned.add(component);
-        attachData(component);
-        structureChanged();
-        for (PanelGroup.Rect rect : rects) {
-            if (rect.pos().equals(worldPosition)) {
-                continue;
+        dev.bwr.mod.advancement.PlantMilestones.beginPanelEdit();
+        try {
+            PanelComponent component = new PanelComponent(nextId++, type, x, y, footprint, label);
+            owned.add(component);
+            attachData(component);
+            structureChanged();
+            for (PanelGroup.Rect rect : rects) {
+                if (rect.pos().equals(worldPosition)) {
+                    continue;
+                }
+                if (level.getBlockEntity(rect.pos()) instanceof PanelBlockEntity other) {
+                    other.foreign.add(new Claim(worldPosition, component.id(), rect.x0(), rect.y0(), rect.x1(), rect.y1()));
+                    other.structureChanged();
+                }
             }
-            if (level.getBlockEntity(rect.pos()) instanceof PanelBlockEntity other) {
-                other.foreign.add(new Claim(worldPosition, component.id(), rect.x0(), rect.y0(), rect.x1(), rect.y1()));
-                other.structureChanged();
-            }
+            resample(component, false);
+            dev.bwr.mod.advancement.PlantMilestones.panelChanged(this);
+            return component;
+        } finally {
+            dev.bwr.mod.advancement.PlantMilestones.endPanelEdit();
         }
-        resample(component, false);
-        return component;
     }
 
     /** Removes a component and releases every cell it reserved, here and in neighbouring blocks. */
@@ -273,18 +280,24 @@ public final class PanelBlockEntity extends BlockEntity {
         if (component == null) {
             return null;
         }
-        owned.remove(component);
-        structureChanged();
-        for (BlockPos pos : coverage(component)) {
-            if (!pos.equals(worldPosition) && level.isLoaded(pos) && level.getBlockEntity(pos) instanceof PanelBlockEntity other) {
-                other.releaseClaims(worldPosition, id);
+        dev.bwr.mod.advancement.PlantMilestones.beginPanelEdit();
+        try {
+            owned.remove(component);
+            structureChanged();
+            for (BlockPos pos : coverage(component)) {
+                if (!pos.equals(worldPosition) && level.isLoaded(pos) && level.getBlockEntity(pos) instanceof PanelBlockEntity other) {
+                    other.releaseClaims(worldPosition, id);
+                }
             }
+            if (!level.isClientSide() && component.outputCount() > 0) {
+                // Anything reading this component's outputs now reads "no signal".
+                PanelWiring.refreshReaders(this, worldPosition, id);
+            }
+            dev.bwr.mod.advancement.PlantMilestones.panelChanged(this);
+            return component;
+        } finally {
+            dev.bwr.mod.advancement.PlantMilestones.endPanelEdit();
         }
-        if (!level.isClientSide() && component.outputCount() > 0) {
-            // Anything reading this component's outputs now reads "no signal".
-            PanelWiring.refreshReaders(this, worldPosition, id);
-        }
-        return component;
     }
 
     /**
@@ -658,7 +671,6 @@ public final class PanelBlockEntity extends BlockEntity {
                 }
             }
         }
-        dev.bwr.mod.advancement.PlantMilestones.panelChanged(this);
     }
 
     // ---- redstone output
@@ -706,17 +718,22 @@ public final class PanelBlockEntity extends BlockEntity {
         if (level == null || level.isClientSide()) {
             return;
         }
-        for (int i = 0; i < component.inputCount(); i++) {
-            InputSource source = component.source(i);
-            double value = source.sample(new InputSource.SampleContext(level, this, component, i));
-            if (notify) {
-                setInput(component, i, value);
-            } else {
-                component.storeInput(i, value);
+        if (notify) dev.bwr.mod.advancement.PlantMilestones.beginPanelEdit();
+        try {
+            for (int i = 0; i < component.inputCount(); i++) {
+                InputSource source = component.source(i);
+                double value = source.sample(new InputSource.SampleContext(level, this, component, i));
+                if (notify) {
+                    setInput(component, i, value);
+                } else {
+                    component.storeInput(i, value);
+                }
             }
+            PanelSampler.track(this);
+            if (notify) dev.bwr.mod.advancement.PlantMilestones.panelChanged(this);
+        } finally {
+            if (notify) dev.bwr.mod.advancement.PlantMilestones.endPanelEdit();
         }
-        PanelSampler.track(this);
-        dev.bwr.mod.advancement.PlantMilestones.panelChanged(this);
     }
 
     /** Re-sends the state of every block a removed component covered, except {@code skip} (a block going away). */
@@ -878,24 +895,30 @@ public final class PanelBlockEntity extends BlockEntity {
         dev.bwr.mod.advancement.PlantMilestones.loaded(this);
         invalidateGroups();
         if (level != null && !level.isClientSide()) {
-            if (!owned.isEmpty() || !foreign.isEmpty()) {
-                PanelConsistency.request(this);
-            }
-            for (PanelComponent component : owned) {
-                resample(component, false);
-                if (component.type() != null) {
-                    component.type().valuesChanged(component); // derived state (annunciators) sees the sampled inputs
-                    if (component.data().consumeLatchedChange()) {
-                        setChanged();
+            dev.bwr.mod.advancement.PlantMilestones.beginPanelEdit();
+            try {
+                if (!owned.isEmpty() || !foreign.isEmpty()) {
+                    PanelConsistency.request(this);
+                }
+                for (PanelComponent component : owned) {
+                    resample(component, false);
+                    if (component.type() != null) {
+                        component.type().valuesChanged(component); // derived state (annunciators) sees the sampled inputs
+                        if (component.data().consumeLatchedChange()) {
+                            setChanged();
+                        }
                     }
                 }
-            }
-            redstoneOut = computeRedstone();
-            PanelSampler.track(this);
-            for (PanelComponent component : owned) {
-                if (component.outputCount() > 0) {
-                    PanelWiring.refreshReaders(this, worldPosition, component.id());
+                redstoneOut = computeRedstone();
+                PanelSampler.track(this);
+                for (PanelComponent component : owned) {
+                    if (component.outputCount() > 0) {
+                        PanelWiring.refreshReaders(this, worldPosition, component.id());
+                    }
                 }
+                dev.bwr.mod.advancement.PlantMilestones.panelChanged(this);
+            } finally {
+                dev.bwr.mod.advancement.PlantMilestones.endPanelEdit();
             }
         }
     }

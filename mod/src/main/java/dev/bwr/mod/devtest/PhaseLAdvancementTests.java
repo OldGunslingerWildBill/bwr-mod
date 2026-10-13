@@ -5,11 +5,14 @@ import dev.bwr.mod.advancement.PlantMilestones;
 import dev.bwr.mod.containment.ContainmentControllerBlockEntity;
 import dev.bwr.mod.panel.PanelBlock;
 import dev.bwr.mod.panel.PanelBlockEntity;
+import dev.bwr.mod.panel.PanelConfig;
 import dev.bwr.mod.panel.PanelOps;
+import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.component.ComponentTypes;
 import dev.bwr.mod.panel.component.Footprint;
 import dev.bwr.mod.panel.component.InputSources;
 import dev.bwr.mod.panel.wiring.PlantSource;
+import dev.bwr.mod.panel.wiring.PanelSampler;
 import dev.bwr.mod.power.PowerModuleBlockEntity;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import dev.bwr.mod.reactor.VesselState;
@@ -20,6 +23,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.GameTestInfo;
+import net.minecraft.gametest.framework.GameTestListener;
+import net.minecraft.gametest.framework.GameTestRunner;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -214,15 +220,133 @@ public final class PhaseLAdvancementTests {
             PlantMilestones.panelChanged(panel);
             h.assertTrue(!f.has(f.owner, "build_control_room"), "constant input counted as live instrumentation");
             lamp.setSource(0, new PlantSource(f.origin.east(8), "stored_fe"));
-            panel.sampleLive();
+            panel.resample(lamp, true);
             h.assertTrue(!f.has(f.owner, "build_control_room"), "missing device counted as a finite live input");
             var generator = PowerModuleRuntimeCheck.place(f.level, BwrBlocks.NUCLEAR_GENERATOR.get(), f.origin.east(8), Direction.EAST);
-            panel.sampleLive();
+            panel.resample(lamp, true);
             h.assertTrue(Double.isFinite(lamp.input(0)), "live fixture signal did not resolve");
             h.assertTrue(f.has(f.owner, "build_control_room") && !f.has(f.other, "build_control_room"),
-                    "actual live sampling did not award the instrumented panel owner");
+                    "actual wiring/config resample did not award the instrumented panel owner");
         }
         h.succeed();
+    }
+
+    /** A separate batch keeps unrelated structural edits out of the global diagnostic counter. */
+    @GameTest(template = "empty", batch = "l3_panel_sampling", timeoutTicks = 2000)
+    public static void gaugeWallSamplingDoesNotReevaluateTheGroup(GameTestHelper h) throws Exception {
+        var f = new Fixture(h, 9);
+        try {
+            f.releaseWhenTestEnds();
+            var panels = new PanelBlockEntity[6];
+            var gauges = new PanelComponent[panels.length];
+            var generator = PowerModuleRuntimeCheck.place(f.level, BwrBlocks.NUCLEAR_GENERATOR.get(), f.origin.east(8), Direction.EAST);
+            for (int i = 0; i < panels.length; i++) {
+                var pos = f.origin.west(i);
+                f.level.setBlock(pos, BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState()
+                        .setValue(PanelBlock.FACING, Direction.NORTH), 3);
+                panels[i] = (PanelBlockEntity) f.level.getBlockEntity(pos);
+                h.assertTrue(PlantMilestones.claim(panels[i], f.owner), "gauge panel ownership failed");
+                gauges[i] = PanelOps.placeDirect(f.level, pos, 1, 1, ComponentTypes.DIAL_GAUGE, Footprint.of(12, 12));
+                h.assertTrue(gauges[i] != null && gauges[i].inputCount() > 0
+                        && gauges[i].outputCount() == 0, "fixture must contain input-only gauges");
+                gauges[i].setSource(0, new PlantSource(generator.getBlockPos(), "stored_fe"));
+                panels[i].resample(gauges[i], true);
+                h.assertTrue(PanelSampler.isTracked(panels[i]), "live gauge is not registered with the sampler");
+            }
+            h.assertTrue(panels[0].group().members().size() == panels.length, "gauge wall is not one connected group");
+            h.assertTrue(!f.has(f.owner, "build_control_room"), "gauges without outputs qualified as a control room");
+            // Newly placed BEs can receive their queued onLoad/group-join callback next tick.
+            // Those structural evaluations are legitimate; measure only after the setup settles.
+            h.runAfterDelay(2, () -> {
+                try {
+                    long evaluations = panelGroupEvaluations();
+                    h.assertTrue(evaluations > 0, "structural setup did not exercise the evaluation counter");
+                    awaitGaugeSample(h, f, panels, gauges, generator, evaluations, 8);
+                } catch (RuntimeException | Error failure) {
+                    f.close();
+                    throw failure;
+                }
+            });
+        } catch (RuntimeException | Error failure) {
+            f.close();
+            throw failure;
+        }
+    }
+
+    private static void awaitGaugeSample(GameTestHelper h, Fixture f, PanelBlockEntity[] panels,
+            PanelComponent[] gauges, PowerModuleBlockEntity generator, long evaluations, int remaining) {
+        double energy = remaining * 100.0 + 0.5;
+        var snapshot = generator.saveWithoutMetadata(f.level.registryAccess());
+        snapshot.putDouble("Energy", energy);
+        generator.loadWithComponents(snapshot, f.level.registryAccess());
+        // Do not call sampleLive/resample here: a changed value must arrive via the real server sampler.
+        h.runAfterDelay(PanelConfig.sampleTicks() + 1L, () -> {
+            try {
+                for (int i = 0; i < panels.length; i++) {
+                    h.assertTrue(PanelSampler.isTracked(panels[i]), "sampler silently stopped tracking a gauge");
+                    h.assertTrue(Math.abs(gauges[i].input(0) - energy) < 1e-9,
+                            "normal sampler did not refresh gauge " + i + "; remaining cycles=" + remaining);
+                }
+                h.assertTrue(panelGroupEvaluations() == evaluations,
+                        "live sampling reevaluated a group which cannot qualify; remaining cycles=" + remaining);
+                h.assertTrue(!f.has(f.owner, "build_control_room"), "sampling input-only gauges awarded a control room");
+                if (remaining > 1) {
+                    awaitGaugeSample(h, f, panels, gauges, generator, evaluations, remaining - 1);
+                    return;
+                }
+                com.mojang.logging.LogUtils.getLogger().info(
+                        "L3 PANEL SAMPLING: {} panels, 8 measured live cycles, group evaluations {} -> {}",
+                        panels.length, evaluations, panelGroupEvaluations());
+            } catch (RuntimeException | Error failure) {
+                f.close();
+                throw failure;
+            }
+            f.close();
+            h.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", batch = "l3_advancements", timeoutTicks = 300)
+    public static void oneStructuralEvaluationCreditsEveryPanelOwner(GameTestHelper h) throws Exception {
+        try (var f = new Fixture(h, 10)) {
+            var panels = new PanelBlockEntity[4];
+            var components = new PanelComponent[panels.length];
+            for (int i = 0; i < panels.length; i++) {
+                var pos = f.origin.west(i);
+                f.level.setBlock(pos, BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState()
+                        .setValue(PanelBlock.FACING, Direction.NORTH), 3);
+                panels[i] = (PanelBlockEntity) f.level.getBlockEntity(pos);
+                PlantMilestones.claim(panels[i], i < 2 ? f.owner : f.other);
+                components[i] = PanelOps.placeDirect(f.level, pos, 1, 1,
+                        i == 1 ? ComponentTypes.PUSHBUTTON : ComponentTypes.LAMP, Footprint.of(2, 2));
+                h.assertTrue(components[i] != null, "multi-owner fixture placement failed");
+            }
+            h.assertTrue(panels[0].group().members().size() == panels.length, "owners' panels did not join one group");
+            h.assertTrue(!f.has(f.owner, "build_control_room") && !f.has(f.other, "build_control_room"),
+                    "unwired group awarded an owner");
+            var generator = PowerModuleRuntimeCheck.place(f.level, BwrBlocks.NUCLEAR_GENERATOR.get(), f.origin.east(8), Direction.EAST);
+            components[0].setSource(0, new PlantSource(generator.getBlockPos(), "stored_fe"));
+            long before = panelGroupEvaluations();
+            panels[0].resample(components[0], true);
+            h.assertTrue(panelGroupEvaluations() == before + 1, "one wiring edit did not evaluate exactly one group");
+            h.assertTrue(f.has(f.owner, "build_control_room") && f.has(f.other, "build_control_room"),
+                    "one qualifying group pass failed to credit every member's owner");
+            int earnedBit = 1 << PlantMilestones.Milestone.BUILD_CONTROL_ROOM.ordinal();
+            for (var panel : panels)
+                h.assertTrue((panel.getPersistentData().getCompound(PlantMilestones.DATA_KEY).getInt("Earned") & earnedBit) != 0,
+                        "qualifying member was not marked earned in the shared pass");
+        }
+        h.succeed();
+    }
+
+    private static long panelGroupEvaluations() {
+        try {
+            var counter = PlantMilestones.class.getDeclaredField("panelGroupEvaluations");
+            counter.setAccessible(true);
+            return counter.getLong(null);
+        } catch (ReflectiveOperationException failure) {
+            throw new AssertionError("panel group evaluation diagnostic is unavailable", failure);
+        }
     }
 
     @GameTest(template = "empty", batch = "l3_advancements", timeoutTicks = 400)
@@ -372,7 +496,7 @@ public final class PhaseLAdvancementTests {
         method.invoke(reactor, reactor.getLevel());
     }
 
-    private static final class Fixture implements AutoCloseable {
+    static final class Fixture implements AutoCloseable {
         final GameTestHelper helper;
         final ServerLevel level;
         final BlockPos origin;
@@ -382,6 +506,7 @@ public final class PhaseLAdvancementTests {
         final Map<UUID, ServerPlayer> previous = new LinkedHashMap<>();
         final Map<UUID, PlayerAdvancements> advancementStore;
         final Map<UUID, PlayerAdvancements> previousAdvancements = new LinkedHashMap<>();
+        private boolean closed;
 
         @SuppressWarnings("unchecked")
         Fixture(GameTestHelper helper, int slot) throws Exception {
@@ -473,7 +598,18 @@ public final class PhaseLAdvancementTests {
                 if (!level.getBlockState(pos).isAir()) level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
         }
 
+        void releaseWhenTestEnds() {
+            helper.testInfo.addListener(new GameTestListener() {
+                @Override public void testStructureLoaded(GameTestInfo info) { }
+                @Override public void testPassed(GameTestInfo info, GameTestRunner runner) { close(); }
+                @Override public void testFailed(GameTestInfo info, GameTestRunner runner) { close(); }
+                @Override public void testAddedForRerun(GameTestInfo before, GameTestInfo after, GameTestRunner runner) { close(); }
+            });
+        }
+
         @Override public void close() {
+            if (closed) return;
+            closed = true;
             try { clear(); }
             finally {
                 try { hold(false); }

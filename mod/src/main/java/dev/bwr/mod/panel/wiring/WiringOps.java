@@ -104,6 +104,7 @@ public final class WiringOps {
         if (result == Result.OK) {
             owner.updateRedstoneOutput();
             owner.syncFull();
+            if (request.output()) dev.bwr.mod.advancement.PlantMilestones.panelChanged(owner);
         }
         return result;
     }

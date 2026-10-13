@@ -7,6 +7,7 @@ import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.containment.ContainmentControllerBlockEntity;
 import dev.bwr.mod.eccs.PumpAssemblyBlock;
 import dev.bwr.mod.panel.PanelBlockEntity;
+import dev.bwr.mod.panel.PanelGroup;
 import dev.bwr.mod.power.PowerModuleBlockEntity;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import dev.bwr.mod.reactor.VesselState;
@@ -28,6 +29,8 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
@@ -58,6 +61,11 @@ public final class PlantMilestones {
 
     // Only entities already encountered through their normal lifecycle; no world scan or chunk ticket.
     private static final Set<BlockEntity> LOADED = Collections.newSetFromMap(new WeakHashMap<>());
+    private static final Set<PanelBlockEntity> RESOLVING_PANEL_GROUP = Collections.newSetFromMap(new IdentityHashMap<>());
+    private static final Map<PanelGroup, ServerLevel> PANEL_EDITS = new IdentityHashMap<>();
+    private static int panelEditDepth;
+    /** Actual component traversals, for the structural-only evaluation regression. Server thread only. */
+    static long panelGroupEvaluations;
     private PlantMilestones() {}
 
     private static boolean supported(BlockEntity be) {
@@ -87,7 +95,9 @@ public final class PlantMilestones {
             be.setChanged();
         }
         loaded(be);
-        return player.getUUID().equals(milestoneOwner(be));
+        boolean ownsMilestones = player.getUUID().equals(milestoneOwner(be));
+        if (ownsMilestones && be instanceof PanelBlockEntity panel) panelChanged(panel);
+        return ownsMilestones;
     }
 
     public static void loaded(BlockEntity be) {
@@ -276,16 +286,57 @@ public final class PlantMilestones {
             earn(be, Milestone.SEAL_CONTAINMENT);
     }
 
-    /** Uses the existing cached, loaded-only panel group after a component/wiring/sample change. */
+    /** Begin a nested structural edit, so a reader fan-out evaluates each affected group once. */
+    public static void beginPanelEdit() { panelEditDepth++; }
+
+    /** Called in finally by the matching edit. There is no recurring tick or pending world search. */
+    public static void endPanelEdit() {
+        if (--panelEditDepth != 0) return;
+        var pending = new IdentityHashMap<>(PANEL_EDITS);
+        PANEL_EDITS.clear();
+        for (var entry : pending.entrySet()) evaluatePanelGroup(entry.getValue(), entry.getKey());
+    }
+
+    /** A structural/configuration event; never called by periodic live-value sampling. */
     public static void panelChanged(PanelBlockEntity be) {
-        if (!(be.getLevel() instanceof ServerLevel level) || milestoneOwner(be) == null
-                || (data(be).getInt("Earned") & Milestone.BUILD_CONTROL_ROOM.mask()) != 0) return;
-        var group = be.group();
-        if (group == null || group.oversize() || group.members().size() < CONTROL_ROOM_PANELS) return;
+        if (!(be.getLevel() instanceof ServerLevel level) || be.isRemoved()) return;
+        // group() publishes its new shared group before its formation callback. Suppress only that
+        // callback here: this request evaluates the resolved group below, without a second pass.
+        if (!RESOLVING_PANEL_GROUP.add(be)) return;
+        PanelGroup group;
+        try { group = be.group(); }
+        finally { RESOLVING_PANEL_GROUP.remove(be); }
+        requestPanelGroup(level, group);
+    }
+
+    /** Called only after a newly computed group has been shared with every loaded member. */
+    public static void panelGroupFormed(PanelBlockEntity be, PanelGroup group) {
+        if (be.getLevel() instanceof ServerLevel level && !RESOLVING_PANEL_GROUP.contains(be))
+            requestPanelGroup(level, group);
+    }
+
+    private static void requestPanelGroup(ServerLevel level, PanelGroup group) {
+        if (group == null || !group.isValid()) return;
+        if (panelEditDepth > 0) PANEL_EDITS.put(group, level);
+        else evaluatePanelGroup(level, group);
+    }
+
+    private static void evaluatePanelGroup(ServerLevel level, PanelGroup group) {
+        if (!group.isValid() || group.oversize() || group.members().size() < CONTROL_ROOM_PANELS) return;
+        var members = new ArrayList<PanelBlockEntity>(group.members().size());
+        boolean uncreditedOwner = false;
+        for (BlockPos pos : group.members()) {
+            if (!level.isLoaded(pos) || !(level.getBlockEntity(pos) instanceof PanelBlockEntity member)
+                    || member.isRemoved()) return;
+            members.add(member);
+            uncreditedOwner |= milestoneOwner(member) != null
+                    && (data(member).getInt("Earned") & Milestone.BUILD_CONTROL_ROOM.mask()) == 0;
+        }
+        if (!uncreditedOwner) return;
+        panelGroupEvaluations++;
         int components = 0;
         boolean input = false, output = false, live = false;
-        for (BlockPos pos : group.members()) {
-            if (!level.isLoaded(pos) || !(level.getBlockEntity(pos) instanceof PanelBlockEntity member)) return;
+        for (PanelBlockEntity member : members) {
             for (var component : member.owned()) {
                 if (component.type() == null) continue;
                 components++;
@@ -295,8 +346,9 @@ public final class PlantMilestones {
                     live |= component.source(i).isLive() && Double.isFinite(component.input(i));
             }
         }
-        if (components >= CONTROL_ROOM_COMPONENTS && input && output && live)
-            earn(be, Milestone.BUILD_CONTROL_ROOM);
+        if (components >= CONTROL_ROOM_COMPONENTS && input && output && live) {
+            for (PanelBlockEntity member : members) earn(member, Milestone.BUILD_CONTROL_ROOM);
+        }
     }
 
     private static BlockEntity target(Level level, BlockPos pos) {
@@ -308,21 +360,30 @@ public final class PlantMilestones {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void placed(BlockEvent.EntityPlaceEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player && event.getLevel() instanceof ServerLevel level)
-            claim(target(level, event.getPos()), player);
+        if (event.getLevel() instanceof ServerLevel level) {
+            BlockEntity be = target(level, event.getPos());
+            boolean claimed = event.getEntity() instanceof ServerPlayer player && claim(be, player);
+            // Automated placement may join groups, but does not acquire cosmetic player ownership.
+            if (!claimed && be instanceof PanelBlockEntity panel) panelChanged(panel);
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void interacted(PlayerInteractEvent.RightClickBlock event) {
         if (event.getEntity() instanceof ServerPlayer player && event.getLevel() instanceof ServerLevel level
                 && level.mayInteract(player, event.getPos())) {
-            BlockEntity be = target(level, event.getPos());
-            if (claim(be, player) && be instanceof PanelBlockEntity panel) panelChanged(panel);
+            claim(target(level, event.getPos()), player);
         }
     }
 
     @SubscribeEvent public static void loggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) flush(player);
     }
-    @SubscribeEvent public static void stopped(ServerStoppedEvent event) { LOADED.clear(); }
+    @SubscribeEvent public static void stopped(ServerStoppedEvent event) {
+        LOADED.clear();
+        RESOLVING_PANEL_GROUP.clear();
+        PANEL_EDITS.clear();
+        panelEditDepth = 0;
+        panelGroupEvaluations = 0;
+    }
 }
