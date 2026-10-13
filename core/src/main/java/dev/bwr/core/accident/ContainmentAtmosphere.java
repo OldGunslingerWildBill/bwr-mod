@@ -473,14 +473,19 @@ public final class ContainmentAtmosphere {
         gasTemperatureK -= gasToWall / gasCapacity;
         wallTemperatureK += gasToWall / wallCapacity;
 
-        // A warm pool prevents the shared wetwell node condensing below its
-        // surface saturation pressure. A cold wall otherwise caps steam pressure.
+        // Steam condenses on the coldest available surface. A warm pool does
+        // not raise the cap imposed by colder containment structures.
         double surfaceK = wallTemperatureK;
-        if (in.poolSurfaceTemperatureK() > 0.0 && Double.isFinite(in.poolSurfaceTemperatureK()))
-            surfaceK = Math.max(surfaceK, in.poolSurfaceTemperatureK());
+        boolean poolIsColdest = in.poolSurfaceTemperatureK() > 0.0
+                && Double.isFinite(in.poolSurfaceTemperatureK())
+                && in.poolSurfaceTemperatureK() < wallTemperatureK;
+        if (poolIsColdest) surfaceK = in.poolSurfaceTemperatureK();
         double wallLimitKg = saturatedSteamKg(surfaceK);
         double condensed = Math.max(0.0, steamKg - wallLimitKg);
         steamKg -= condensed;
+        // Keep the released latent heat in this lumped thermal node. The
+        // linked pool temperature controls saturation; its detailed surface
+        // heat exchange is outside this one-node atmosphere model.
         wallTemperatureK += condensed * STEAM_LATENT_HEAT_J_PER_KG / wallCapacity;
 
         if (spray > 0.0 && in.sprayTemperatureK() > 0.0 && Double.isFinite(in.sprayTemperatureK())) {

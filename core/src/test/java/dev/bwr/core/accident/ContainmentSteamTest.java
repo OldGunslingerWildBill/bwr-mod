@@ -115,4 +115,24 @@ public final class ContainmentSteamTest {
         restored.fromArray(original.toArray());
         Check.arraysExactly(original.toArray(), restored.toArray(), "v3 steam and thermal state");
     }
+
+    public static void test07_coldPoolCondensesSteamDespiteHotWalls() {
+        var room = new ContainmentAtmosphere();
+        double[] hot = room.toArray();
+        hot[24] = 4000.0; // Existing v3 steam inventory, kg.
+        hot[25] = 393.15; // Gas and wall have both been heated by a preceding break.
+        hot[26] = 423.15;
+        room.fromArray(hot);
+        Check.greaterThan(353.15, room.getWallTemperatureK(), "wall starts hotter than pool");
+
+        room.setSteamInputs(new ContainmentAtmosphere.SteamInputs(0, 0, 0, 313.15, 0, 0));
+        room.step(0, 0, 0, .05);
+
+        // Buck saturation at 40 C is 7.38 kPa = 1.07 psia. A hot wall may
+        // retain its stored heat, but cannot set the steam-pressure cap while
+        // a colder wetted pool surface is available.
+        Check.lessThan(1.2, room.getSteamPartialPressurePsia(),
+                "airspace steam falls to linked cold-pool saturation");
+        Check.greaterThan(313.15, room.getWallTemperatureK(), "wall is still hotter than pool");
+    }
 }
