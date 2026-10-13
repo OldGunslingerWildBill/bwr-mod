@@ -94,9 +94,21 @@ public final class RvuClientCheck {
                     if(selected==9)be.core().getPressureVessel().restoreLiquidMassKg(0);
                     if(selected==10) {
                         for(int loop=0;loop<2;loop++) {
-                            var s=BwrBlocks.CORE_SPRAY_SPARGER.get().defaultBlockState().setValue(CoreSpraySpargerBlock.LOOP,loop==0?CoreSpraySpargerBlock.Loop.LPCS:CoreSpraySpargerBlock.Loop.HPCS);
-                            for(int x=0;x<=2;x++)for(int z=0;z<=2;z++)if(x==0||x==2||z==0||z==2)
-                                l.setBlock(new BlockPos(147+loop*4+x,191,150+z),s,3);
+                            var block=BwrBlocks.CORE_SPRAY_SPARGER.get();
+                            for(int x=0;x<=2;x++)for(int z=0;z<=2;z++)if(x==0||x==2||z==0||z==2) {
+                                var p=new BlockPos(147+loop*4+x,191,150+z);
+                                // setBlock(defaultState) bypasses placement: the final corner never
+                                // receives a subsequent neighbor shape update. Compute its connections
+                                // through the same placement path as an item, including the last piece.
+                                // Place from the ring's interior so straight nozzles point inward.
+                                var looking=x==1?(z==0?Direction.NORTH:Direction.SOUTH)
+                                        :x==0?Direction.WEST:Direction.EAST;
+                                var context=new net.minecraft.world.item.context.DirectionalPlaceContext(
+                                        l,p,looking,new ItemStack(block),Direction.UP);
+                                var placed=block.getStateForPlacement(context)
+                                        .setValue(CoreSpraySpargerBlock.LOOP,loop==0?CoreSpraySpargerBlock.Loop.LPCS:CoreSpraySpargerBlock.Loop.HPCS);
+                                l.setBlock(p,placed,3);
+                            }
                         }
                     }
                     SpargerRegressionTests.validate(be);
