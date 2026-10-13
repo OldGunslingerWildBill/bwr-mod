@@ -42,6 +42,12 @@ neoForge {
             gameDirectory = file('run/turbineGameTest')
             systemProperty 'neoforge.enabledGameTestNamespaces', 'bwr'
         }
+        advancementClientCheck {
+            client()
+            gameDirectory = file('run/advancementClientCheck')
+            programArguments.addAll('--width', '1280', '--height', '900')
+            jvmArguments.add('-Dbwr.advancementClientCheck=true')
+        }
         turbineModelCheck {
             client()
             gameDirectory = file('run/turbineModelCheck')
