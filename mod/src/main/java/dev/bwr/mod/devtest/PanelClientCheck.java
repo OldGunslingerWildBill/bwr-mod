@@ -58,8 +58,18 @@ public final class PanelClientCheck {
     private static final BlockPos BOARD = new BlockPos(5100, 127, 5100);
     private static final BlockPos BENCH = new BlockPos(5098, 120, 5094);
     private static final BlockPos MSIV = new BlockPos(5098, 126, 5101);
-    private static final String[] NAMES = {"board-day-wide", "board-controls-close", "board-annunciators",
-            "board-lod-28m", "board-night-lamps", "wrench-config", "linker-binding", "linker-outline", "board-night-close"};
+    /** The first stage of the baked-model boards (see {@link PanelModelShowcase}); the stages before it are the original wall. */
+    private static final int BAKED_FIRST = 9;
+    private static final String[] NAMES = names();
+
+    private static String[] names() {
+        String[] original = {"board-day-wide", "board-controls-close", "board-annunciators",
+                "board-lod-28m", "board-night-lamps", "wrench-config", "linker-binding", "linker-outline", "board-night-close"};
+        String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length];
+        System.arraycopy(original, 0, all, 0, original.length);
+        System.arraycopy(PanelModelShowcase.NAMES, 0, all, BAKED_FIRST, PanelModelShowcase.NAMES.length);
+        return all;
+    }
     private static boolean started, built, requested;
     private static volatile Throwable buildFailure;
     private static volatile Vec3 heldCamera;
@@ -76,7 +86,7 @@ public final class PanelClientCheck {
         if (!Boolean.getBoolean("bwr.panelClientCheck")) return;
         Minecraft mc = Minecraft.getInstance();
         if (buildFailure != null) throw new IllegalStateException("Panel showcase build failed", buildFailure);
-        if (++age > 2800) throw new IllegalStateException("Panel client check timed out at " + stage);
+        if (++age > 4200) throw new IllegalStateException("Panel client check timed out at " + stage);
         if (!started && mc.screen != null && mc.getOverlay() == null) {
             started = true;
             mc.options.pauseOnLostFocus = false;
@@ -84,6 +94,8 @@ public final class PanelClientCheck {
             mc.options.renderDistance().set(10);
             mc.options.fov().set(60);
             mc.options.guiScale().set(2);
+            // Stand-in models for the ids no resource provides yet (a real model with the same id always wins).
+            if (Boolean.getBoolean("bwr.panelFixtureModels")) PanelModelFixtures.install();
             mc.createWorldOpenFlows().createFreshLevel("bwr-panel-client-" + System.currentTimeMillis(),
                     new LevelSettings("Panel client check", GameType.CREATIVE, false, Difficulty.PEACEFUL,
                             true, new GameRules(), WorldDataConfiguration.DEFAULT),
@@ -103,7 +115,7 @@ public final class PanelClientCheck {
             shown = 0;
             mc.setScreen(null);
             int selected = stage;
-            mc.options.hideGui = selected < 5 || selected == 7 || selected == 8;
+            mc.options.hideGui = selected < 5 || selected == 7 || selected == 8 || selected >= BAKED_FIRST;
             mc.options.fov().set(selected == 7 ? 90 : 60);
             var server = mc.getSingleplayerServer();
             var uuid = mc.player.getUUID();
@@ -114,13 +126,14 @@ public final class PanelClientCheck {
                 if (!built) {
                     try {
                         build(level);
+                        PanelModelShowcase.build(level);
                         built = true;
                     } catch (Throwable failure) {
                         buildFailure = failure;
                         return;
                     }
                 }
-                Vec3 camera = (switch (selected) {
+                Vec3 camera = selected >= BAKED_FIRST ? PanelModelShowcase.camera(selected - BAKED_FIRST) : (switch (selected) {
                     case 0 -> new Vec3(93, 125, 79);
                     case 1, 5, 6, 8 -> new Vec3(94, 125, 92);
                     case 2 -> new Vec3(91, 121, 94);
@@ -128,7 +141,7 @@ public final class PanelClientCheck {
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = (selected == 7 ? new Vec3(96.375, 127.5, 100.75)
+                Vec3 target = selected >= BAKED_FIRST ? PanelModelShowcase.target(selected - BAKED_FIRST) : (selected == 7 ? new Vec3(96.375, 127.5, 100.75)
                         : selected == 2 ? new Vec3(94, 120.5, 100)
                         : selected == 1 || selected == 5 || selected == 6 || selected == 8
                         ? new Vec3(94, 125, 100) : new Vec3(93, 123, 100))
@@ -144,7 +157,8 @@ public final class PanelClientCheck {
                 player.setNoGravity(true);
                 player.getAbilities().flying = true;
                 player.onUpdateAbilities();
-                level.setDayTime(selected == 4 || selected == 8 ? 18_000 : 6_000);
+                level.setDayTime(selected == 4 || selected == 8 || selected >= BAKED_FIRST && PanelModelShowcase.night(selected - BAKED_FIRST)
+                        ? 18_000 : 6_000);
                 level.setWeatherParameters(6000, 0, false, false);
                 if (selected == 7) {
                     var linker = new ItemStack(BwrItems.PANEL_LINKER.get());
@@ -201,6 +215,11 @@ public final class PanelClientCheck {
         try {
             var directory = mc.gameDirectory.toPath().resolve("panel-client-check");
             Files.createDirectories(directory);
+            if (stage >= BAKED_FIRST) {
+                // Every component must draw baked exactly when a loaded model exists for its look.
+                LogUtils.getLogger().info("PANEL CLIENT CHECK baked models {}: {} components drawn from baked models ({} loaded)",
+                        NAMES[stage], PanelModelShowcase.verify(mc, stage - BAKED_FIRST), dev.bwr.mod.panel.model.PanelModels.loadedCount());
+            }
             try (var shot = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
                 if (stage == 7) {
                     int orangePixels = 0;

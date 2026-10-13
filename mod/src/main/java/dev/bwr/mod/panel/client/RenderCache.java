@@ -29,6 +29,11 @@ public final class RenderCache {
     /** A model's own per-component client state (damped needle position, cached labels). Never saved. */
     public Object scratch;
 
+    /** Whether the component was last drawn from a baked model (false: the classic procedural look). For checks. */
+    public boolean usesBaked() {
+        return baked != null;
+    }
+
     /** The cache of {@code component}, created on first use. */
     public static RenderCache of(PanelComponent component) {
         if (component.clientCache instanceof RenderCache cache) {
