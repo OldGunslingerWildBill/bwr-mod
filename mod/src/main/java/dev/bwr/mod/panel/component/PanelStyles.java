@@ -192,8 +192,21 @@ public final class PanelStyles {
         return variants(type).size() > 1;
     }
 
-    /** The variant a style shows by default, or "" if the style has no rows for the type. */
+    /**
+     * The variant a style shows by default. Classic has no models of its own, so it keeps GE's default variant:
+     * that is what a component that starts classic holds (and keeps in its save) until the player picks a style,
+     * which makes saving and loading a fixed point whichever look a component has. "" if the type has no rows.
+     */
     public static String defaultVariant(String type, String style) {
+        String own = defaultOf(type, style);
+        if (own != null) {
+            return own;
+        }
+        String ge = CLASSIC.equals(style) ? defaultOf(type, GE) : null;
+        return ge == null ? "" : ge;
+    }
+
+    private static String defaultOf(String type, String style) {
         Entry fallback = null;
         for (Entry entry : TABLE) {
             if (entry.type().equals(type) && entry.style().equals(style)) {
@@ -205,7 +218,7 @@ public final class PanelStyles {
                 }
             }
         }
-        return fallback == null ? "" : fallback.variant();
+        return fallback == null ? null : fallback.variant();
     }
 
     /** The footprint index {@link Entry#footprint} the (style, variant) reads best at; 0 when there is no such row. */

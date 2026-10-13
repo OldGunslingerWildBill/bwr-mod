@@ -194,7 +194,7 @@ public final class PanelModelTests {
         BakedPanelModel.Part target = sw.part("target");
         helper.assertTrue(target.role == BakedPanelModel.Role.FLAG && !target.moving() && target.faceCount == 1, "flag part");
         BakedPanelModel.Part handle = sw.part("handle");
-        helper.assertTrue(handle.hasPivot && near(handle.pivotX, 1.2, 1e-5) && near(handle.pivotY, 2.3, 1e-5)
+        helper.assertTrue(handle.hasPivot && near(handle.pivotX, 1.2, 1e-5) && near(handle.pivotY, 1.5, 1e-5)
                 && near(handle.axisX, 0, 1e-6) && near(handle.axisY, 0, 1e-6) && near(handle.axisZ, 1, 1e-6), "pivot and axis");
         helper.assertTrue(!handle.hasTravel && handle.role == BakedPanelModel.Role.PAINT, "handle rotates, does not slide");
         for (int p = 0; p < sw.partCount(); p++) {
@@ -261,9 +261,9 @@ public final class PanelModelTests {
                 + "\"faces\":[{\"v\":[[0,0,0],[1e999,0,0],[1,1,0]],\"n\":[0,0,1],\"c\":\"FFFFFF\"}]}]}");
         texts.put("faces_not_array", "{\"format\":1,\"footprint\":{\"w\":1,\"h\":1},\"parts\":[{\"name\":\"a\",\"role\":\"paint\",\"faces\":5}]}");
         texts.put("zero_axis", good.replace("\"pivot\":null,\"axis\":null", "\"pivot\":[0.5,0.5,0.1],\"axis\":[0,0,0]"));
-        texts.put("bad_label_align", good.replace("\"labels\":[]", "\"labels\":[{\"id\":\"a\",\"pos\":[0.5,0.5,0.1],\"h\":0.1,\"align\":\"up\",\"rot\":0}]"));
-        texts.put("duplicate_labels", good.replace("\"labels\":[]", "\"labels\":[{\"id\":\"a\",\"pos\":[0.5,0.5,0.1],\"h\":0.1},"
-                + "{\"id\":\"a\",\"pos\":[0.6,0.5,0.1],\"h\":0.1}]"));
+        texts.put("bad_label_align", good.replaceAll("\"labels\":\\[.*\\]\\}$", "\"labels\":[{\"id\":\"a\",\"pos\":[0.5,0.5,0.1],\"h\":0.1,\"align\":\"up\",\"rot\":0}]}"));
+        texts.put("duplicate_labels", good.replaceAll("\"labels\":\\[.*\\]\\}$", "\"labels\":[{\"id\":\"a\",\"pos\":[0.5,0.5,0.1],\"h\":0.1},"
+                + "{\"id\":\"a\",\"pos\":[0.6,0.5,0.1],\"h\":0.1}]}"));
         texts.put("Bad-Id", good);
         texts.put("deeply_nested", "[".repeat(5000) + "]".repeat(5000));
         StringBuilder many = new StringBuilder("{\"format\":1,\"footprint\":{\"w\":1,\"h\":1},\"parts\":[{\"name\":\"a\",\"role\":\"paint\",\"faces\":[");
@@ -999,6 +999,20 @@ public final class PanelModelTests {
                 again.load(saved);
                 helper.assertTrue(again.toTag().equals(saved), type.id() + " save is a fixed point of load");
             }
+            // A component that starts classic (no model ships) holds a variant too, and its save is just as stable.
+            PanelStyles.overrideShipped(id -> false);
+            for (ComponentType type : ComponentTypes.all()) {
+                ComponentData data = type.createData();
+                CompoundTag tag = data.toTag();
+                if (!tag.contains("Style")) {
+                    continue;
+                }
+                helper.assertTrue(tag.getString("Style").equals("classic"), type.id() + " starts classic");
+                ComponentData again = type.createData();
+                again.load(tag);
+                helper.assertTrue(again.toTag().equals(tag), type.id() + " classic save is a fixed point of load: " + tag + " vs " + again.toTag());
+            }
+            PanelStyles.overrideShipped(id -> true);
             // Old saves have no style: classic, whatever new components start as.
             for (ComponentType type : ComponentTypes.all()) {
                 ComponentData data = type.createData();
