@@ -7,6 +7,7 @@ import java.util.List;
 
 /** Lamp configuration: lens colour and how it shows "on". No latched state. */
 public final class LampData extends ComponentData {
+    public static final String TYPE = "lamp";
     public static final String STEADY = "steady";
     public static final String SLOW = "slow";
     public static final String FAST = "fast";
@@ -16,6 +17,9 @@ public final class LampData extends ComponentData {
     public int color = DEFAULT_COLOR;
     /** How the lamp shows its active state: steady, or flashing slow (1 Hz) or fast (4 Hz). */
     public String flash = STEADY;
+    /** Look: {@link PanelStyles} style and lens variant. */
+    public String style = PanelStyles.newStyle(TYPE);
+    public String variant = PanelStyles.defaultVariant(TYPE, style);
 
     /** A lamp is active when its input has a signal and the signal is non-zero. */
     public static boolean active(double input) {
@@ -26,6 +30,7 @@ public final class LampData extends ComponentData {
     public void save(CompoundTag tag) {
         tag.putInt("Color", color);
         tag.putString("Flash", flash);
+        PanelStyles.save(tag, style, variant);
     }
 
     @Override
@@ -33,5 +38,7 @@ public final class LampData extends ComponentData {
         color = tag.contains("Color", Tag.TAG_ANY_NUMERIC) ? tag.getInt("Color") & 0xFFFFFF : DEFAULT_COLOR;
         String mode = tag.getString("Flash");
         flash = FLASH_MODES.contains(mode) ? mode : STEADY;
+        style = PanelStyles.loadStyle(TYPE, tag);
+        variant = PanelStyles.loadVariant(TYPE, tag, style);
     }
 }

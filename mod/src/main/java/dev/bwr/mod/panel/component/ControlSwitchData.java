@@ -9,6 +9,7 @@ import net.minecraft.nbt.Tag;
  * the spring; a spring-return switch always loads at NORMAL).
  */
 public final class ControlSwitchData extends ComponentData {
+    public static final String TYPE = "control_switch";
     public static final int MAX_TEXT = 8;
     public static final int CLOSE = -1;
     public static final int NORMAL = 0;
@@ -24,6 +25,15 @@ public final class ControlSwitchData extends ComponentData {
     public String greenText = "CLOSED";
     /** -1 CLOSE, 0 NORMAL, +1 OPEN. */
     public int position;
+    /**
+     * Latched: the last position the handle was moved to that was not NORMAL (-1 CLOSE, +1 OPEN, 0 never
+     * operated). A baked model's target flag shows it when the lamp inputs say nothing; saved, and kept in step
+     * on clients because every output change runs {@link ControlSwitchType#valuesChanged}.
+     */
+    public int lastOperated;
+    /** Look: {@link PanelStyles} style and handle variant. */
+    public String style = PanelStyles.newStyle(TYPE);
+    public String variant = PanelStyles.defaultVariant(TYPE, style);
 
     @Override
     public void save(CompoundTag tag) {
@@ -34,6 +44,8 @@ public final class ControlSwitchData extends ComponentData {
         tag.putString("RedText", redText);
         tag.putString("GreenText", greenText);
         tag.putInt("Position", position);
+        tag.putInt("LastOperated", lastOperated);
+        PanelStyles.save(tag, style, variant);
     }
 
     @Override
@@ -45,6 +57,9 @@ public final class ControlSwitchData extends ComponentData {
         redText = text(tag, "RedText", "OPEN");
         greenText = text(tag, "GreenText", "CLOSED");
         position = spring ? NORMAL : Math.max(CLOSE, Math.min(OPEN, tag.getInt("Position")));
+        lastOperated = Math.max(CLOSE, Math.min(OPEN, tag.getInt("LastOperated")));
+        style = PanelStyles.loadStyle(TYPE, tag);
+        variant = PanelStyles.loadVariant(TYPE, tag, style);
     }
 
     private static String text(CompoundTag tag, String key, String fallback) {

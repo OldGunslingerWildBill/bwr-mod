@@ -12,11 +12,11 @@ import java.util.List;
  */
 public final class RotarySelectorType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 10), Footprint.of(12, 14));
-    private static final List<ConfigField> SCHEMA = List.of(
+    private static final List<ConfigField> SCHEMA = PanelStyles.withLook(RotarySelectorData.TYPE, List.of(
             ConfigField.integer("Positions", "component.bwr.field.positions",
                     RotarySelectorData.MIN_POSITIONS, RotarySelectorData.MAX_POSITIONS),
             ConfigField.text("Names", "component.bwr.field.names", RotarySelectorData.MAX_NAMES),
-            ConfigField.color("Color", "component.bwr.field.knob_color"));
+            ConfigField.color("Color", "component.bwr.field.knob_color")));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("position"));
 
     RotarySelectorType() {

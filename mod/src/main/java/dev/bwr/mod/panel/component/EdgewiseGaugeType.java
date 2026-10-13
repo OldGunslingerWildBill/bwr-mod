@@ -11,15 +11,18 @@ import java.util.List;
  * orientations are two registered types sharing this class.
  */
 public final class EdgewiseGaugeType extends ComponentType {
-    private static final List<ConfigField> SCHEMA = GaugeData.schema();
+    public static final String VERTICAL_PATH = "edgewise_gauge_vertical";
+    public static final String HORIZONTAL_PATH = "edgewise_gauge_horizontal";
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("value"), PortSpec.of("demand"));
 
     private final boolean vertical;
     private final List<Footprint> footprints;
+    private final List<ConfigField> schema;
 
     EdgewiseGaugeType(boolean vertical) {
-        super(BwrMod.id(vertical ? "edgewise_gauge_vertical" : "edgewise_gauge_horizontal"));
+        super(BwrMod.id(vertical ? VERTICAL_PATH : HORIZONTAL_PATH));
         this.vertical = vertical;
+        this.schema = GaugeData.schema(vertical ? VERTICAL_PATH : HORIZONTAL_PATH);
         this.footprints = vertical
                 ? List.of(Footprint.of(6, 16), Footprint.of(6, 24), Footprint.of(8, 24), Footprint.of(8, 32))
                 : List.of(Footprint.of(16, 6), Footprint.of(24, 6), Footprint.of(24, 8), Footprint.of(32, 8));
@@ -36,12 +39,12 @@ public final class EdgewiseGaugeType extends ComponentType {
 
     @Override
     public ComponentData createData() {
-        return new GaugeData();
+        return new GaugeData(vertical ? VERTICAL_PATH : HORIZONTAL_PATH);
     }
 
     @Override
     public List<ConfigField> configSchema() {
-        return SCHEMA;
+        return schema;
     }
 
     @Override

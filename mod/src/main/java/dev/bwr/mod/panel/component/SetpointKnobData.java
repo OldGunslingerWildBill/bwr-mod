@@ -5,6 +5,7 @@ import net.minecraft.nbt.Tag;
 
 /** Setpoint knob: scroll step, knob colour and the latched value in percent. */
 public final class SetpointKnobData extends ComponentData {
+    public static final String TYPE = "setpoint_knob";
     public static final double MIN_STEP = 0.1;
     public static final double MAX_STEP = 25.0;
     public static final int DEFAULT_COLOR = 0x303438;
@@ -13,12 +14,16 @@ public final class SetpointKnobData extends ComponentData {
     public int color = DEFAULT_COLOR;
     /** 0 .. 100 percent. */
     public double value;
+    /** Look: {@link PanelStyles} style. */
+    public String style = PanelStyles.newStyle(TYPE);
+    public String variant = PanelStyles.defaultVariant(TYPE, style);
 
     @Override
     public void save(CompoundTag tag) {
         tag.putDouble("Step", step);
         tag.putInt("Color", color);
         tag.putDouble("Value", value);
+        PanelStyles.save(tag, style, variant);
     }
 
     @Override
@@ -29,5 +34,7 @@ public final class SetpointKnobData extends ComponentData {
         color = tag.contains("Color", Tag.TAG_ANY_NUMERIC) ? tag.getInt("Color") & 0xFFFFFF : DEFAULT_COLOR;
         double saved = tag.getDouble("Value");
         value = Double.isFinite(saved) ? Math.max(0.0, Math.min(100.0, saved)) : 0.0;
+        style = PanelStyles.loadStyle(TYPE, tag);
+        variant = PanelStyles.loadVariant(TYPE, tag, style);
     }
 }
