@@ -221,6 +221,10 @@ public final class RhrContainmentScenarioTest {
 
     public static void test05_steamInertingSprayAndHydrogenBurn() {
         ContainmentAtmosphere room = new ContainmentAtmosphere();
+        // Deliberately strengthened 1,000-psig test boundary: isolate steam
+        // inerting and spray-induced combustion from structural rupture. This
+        // fixture exceeds the normal 140-psig failure rating and is NOT a
+        // survivable Mark I accident or a containment-strength validation.
         room.setFailurePressurePsig(1000);
         for (int i = 0; i < 10000 && room.getSteamPercent() < 70; i++) {
             room.setSteamInputs(new ContainmentAtmosphere.SteamInputs(1200, 2800, 0, 0, 0, 0));
@@ -232,6 +236,9 @@ public final class RhrContainmentScenarioTest {
         }
         Check.isTrue(room.isSteamInerted(), "steam exceeds 55 vol percent");
         Check.exactly(0, room.getBurnCount(), "stored hydrogen remains inerted");
+        Check.isFalse(room.isFailed(), "strengthened inerting fixture remains intact before spray");
+        Check.note("inerting fixture failure threshold %.0f psig (normal %.0f psig)",
+                room.getFailurePressurePsig(), ContainmentAtmosphere.FAILURE_PRESSURE_PSIG);
         Check.note("inerting: steam %.1f%%, H2 %.1f%%, O2 %.1f%%, drywell %.1f / wetwell %.1f psig, burns %d",
                 room.getSteamPercent(), room.getHydrogenPercent(), room.getOxygenPercent(),
                 room.getDrywellPressurePsig(), room.getWetwellPressurePsig(), room.getBurnCount());
