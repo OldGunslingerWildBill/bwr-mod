@@ -68,6 +68,11 @@ Block entity `ReactorControllerBlockEntity`; CC peripheral `bwr_reactor`.
 | `containment_h2_percent` | Containment hydrogen | % | 0 to 100 | NUMBER |
 | `containment_o2_percent` | Containment oxygen | % | 0 to 25 | NUMBER |
 | `containment_pressure` | Containment pressure | psig | -5 to 150 | NUMBER |
+| `containment_steam_percent` | Containment steam | % | 0 to 100 | NUMBER |
+| `containment_gas_temp_c` | Containment gas temperature | degC | 0 to 400 | NUMBER |
+| `containment_drywell_pressure` | Drywell pressure | psig | -5 to 150 | NUMBER |
+| `containment_wetwell_pressure` | Wetwell pressure | psig | -5 to 150 | NUMBER |
+| `containment_spray_flow` | Containment spray | kg/s | 0 to 2500 | NUMBER |
 | `containment_inerted` | Containment inerted |  | 0 to 1 | BOOLEAN |
 | `containment_vent_open` | Containment vent open |  | 0 to 1 | BOOLEAN |
 | `containment_failed` | Containment failed |  | 0 to 1 | BOOLEAN |
@@ -406,6 +411,16 @@ Block entity `ContainmentControllerBlockEntity`; CC peripheral `bwr_containment`
 | `isolated` | Steam and water isolated |  | 0 to 1 | BOOLEAN |
 | `openings` | Openings | openings | 0 to 256 | NUMBER |
 | `bypass_flow` | Bypass flow | fraction | 0 to 1 | NUMBER |
+| `h2_percent` | Hydrogen | % | 0 to 100 | NUMBER |
+| `o2_percent` | Oxygen | % | 0 to 25 | NUMBER |
+| `pressure` | Containment pressure | psig | -5 to 150 | NUMBER |
+| `steam_percent` | Steam | % | 0 to 100 | NUMBER |
+| `gas_temperature` | Gas temperature | degC | 0 to 400 | NUMBER |
+| `drywell_pressure` | Drywell pressure | psig | -5 to 150 | NUMBER |
+| `wetwell_pressure` | Wetwell pressure | psig | -5 to 150 | NUMBER |
+| `spray_flow` | Containment spray | kg/s | 0 to 2500 | NUMBER |
+
+Drywell and wetwell pressures use the same lumped airspace node in this version.
 
 No commands (read only).
 

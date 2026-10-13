@@ -258,6 +258,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             core.setContainmentBypassFlowFraction(containmentController.bypassFlowFraction(this));
         }
         dev.bwr.mod.containment.ContainmentEquipmentRegistry.apply(this, containmentController);
+        dev.bwr.mod.containment.ContainmentSteamCoupling.beforeReactorStep(this, containmentController);
         core.step();
         rodNetwork.postStep();
         severeEffects.afterStep(this);

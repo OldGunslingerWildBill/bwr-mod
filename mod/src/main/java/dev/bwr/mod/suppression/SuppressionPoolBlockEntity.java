@@ -431,6 +431,12 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
      */
     private double bypassedSteamKgPerS;
     public double getBypassedSteamKgPerS(){return bypassedSteamKgPerS;}
+    private long lastSteamCondensedTick = Long.MIN_VALUE;
+    /** Fresh wetwell escape, including the bare-discharge portion. */
+    public double escapedSteamKgPerS(long now) {
+        return isFormed() && now >= lastSteamCondensedTick && now - lastSteamCondensedTick <= 1
+                ? pool.getUncondensedSteamKgPerS() + bypassedSteamKgPerS : 0.0;
+    }
 
     private BlockPos reactorPos;
 
@@ -624,9 +630,9 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         double sprayCaptured=pool.spraySteam(bulkEscaped+bypassedSteamKgPerS,meanPsig,dt);
         // Account for spray capturing the bare-discharge portion as well.
         bypassedSteamKgPerS=Math.max(0,bypassedSteamKgPerS-Math.max(0,sprayCaptured-bulkEscaped));
+        lastSteamCondensedTick = gameTime;
         // Steam the pool could not condense goes on to pressurise containment.
-        // Containment is not modelled yet (SPEC section 16); the quantity is
-        // published so a player can see it and so the model can consume it later.
+        // The linked reactor samples this fresh reading on its next tick.
     }
 
     // --- Reports from machines discharging into this pool -----------------

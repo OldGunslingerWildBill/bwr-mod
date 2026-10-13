@@ -118,6 +118,17 @@ public final class ContainmentPeripheral implements IPeripheral {
     @LuaFunction(mainThread = true) public final double getPressurePsig() {
         var reactor = reactor(); return reactor == null ? 0 : reactor.core().getContainment().getPressurePsig();
     }
+    @LuaFunction(mainThread = true) public final double getSteamPercent() {
+        var reactor = reactor(); return reactor == null ? 0 : reactor.core().getContainment().getSteamPercent();
+    }
+    @LuaFunction(mainThread = true) public final double getGasTemperatureC() {
+        var reactor = reactor(); return reactor == null ? 0 : reactor.core().getContainment().getGasTemperatureC();
+    }
+    @LuaFunction(mainThread = true) public final double getDrywellPressurePsig() { return getPressurePsig(); }
+    @LuaFunction(mainThread = true) public final double getWetwellPressurePsig() { return getPressurePsig(); }
+    @LuaFunction(mainThread = true) public final double getSprayFlowKgPerS() {
+        var reactor = reactor(); return reactor == null ? 0 : reactor.core().getContainment().getLastSprayFlowKgPerS();
+    }
     @LuaFunction(mainThread = true) public final Map<String, Object> getStatus() throws LuaException {
         var status = new LinkedHashMap<String, Object>();
         status.put("sealed", isSealed()); status.put("stale", room.isStale());

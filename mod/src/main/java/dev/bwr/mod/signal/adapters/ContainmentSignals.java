@@ -38,7 +38,12 @@ final class ContainmentSignals {
             })
             .number("h2_percent", "Hydrogen", "%", 0, 100, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getHydrogenPercent()))
             .number("o2_percent", "Oxygen", "%", 0, 25, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getOxygenPercent()))
-            .number("pressure", "Containment pressure", "psig", -5, 150, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getPressurePsig()));
+            .number("pressure", "Containment pressure", "psig", -5, 150, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getPressurePsig()))
+            .number("steam_percent", "Steam", "%", 0, 100, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getSteamPercent()))
+            .number("gas_temperature", "Gas temperature", "degC", 0, 400, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getGasTemperatureC()))
+            .number("drywell_pressure", "Drywell pressure", "psig", -5, 150, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getPressurePsig()))
+            .number("wetwell_pressure", "Wetwell pressure", "psig", -5, 150, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getPressurePsig()))
+            .number("spray_flow", "Containment spray", "kg/s", 0, 2500, reactor(r -> r.core() == null ? Double.NaN : r.core().getContainment().getLastSprayFlowKgPerS()));
 
     static final Schema<ContainmentPenetrationBlockEntity> PENETRATION = new Schema<ContainmentPenetrationBlockEntity>()
             .number("position", "Isolation valve position", "fraction open", 0, 1, ContainmentPenetrationBlockEntity::position)

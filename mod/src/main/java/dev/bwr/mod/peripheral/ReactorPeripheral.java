@@ -836,6 +836,12 @@ public class ReactorPeripheral implements IPeripheral {
         m.put("hydrogenPercent", ct.getHydrogenPercent());
         m.put("oxygenPercent", ct.getOxygenPercent());
         m.put("hydrogenKg", ct.getHydrogenKg());
+        m.put("steamKg", ct.getSteamKg());
+        m.put("steamPercent", ct.getSteamPercent());
+        m.put("gasTemperatureC", ct.getGasTemperatureC());
+        m.put("drywellPressurePsig", ct.getPressurePsig());
+        m.put("wetwellPressurePsig", ct.getPressurePsig());
+        m.put("sprayFlowKgPerS", ct.getLastSprayFlowKgPerS());
         m.put("pressure", ct.getPressurePsig());
         m.put("peakPressure", ct.getPeakPressurePsig());
         m.put("flammable", ct.isFlammable());
