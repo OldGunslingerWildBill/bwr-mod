@@ -35,11 +35,13 @@ final class PumpSignals {
             .number("energy_capacity_fe", "Energy capacity", "FE", 0, 1e6, be -> be.energy().getMaxEnergyStored())
             .number("boron_rate", "Boron injection rate", "ppm/min", 0, 20, EccsPumpBlockEntity::deliveredBoronPpmPerMinute)
             .bool("pool_cooling_mode", "Lined up for pool cooling", be -> be.getMode() == EccsPumpBlockEntity.Mode.POOL_COOLING)
+            .bool("shutdown_cooling_mode", "Lined up for shutdown cooling", be -> be.getMode() == EccsPumpBlockEntity.Mode.SHUTDOWN_COOLING)
             .text("mode", "Lineup mode", be -> be.getMode().name())
             .toggle("run", "Start / stop", (be, v) -> { DeviceCommands.eccsRunning(be, v >= 0.5); return true; })
             .command("speed", "Speed demand", Kind.NUMBER, 0, 1, DeviceCommands::eccsSpeed)
             .command("flow_demand", "Flow demand", Kind.NUMBER, 0, 1, DeviceCommands::eccsFlow)
-            .toggle("pool_cooling", "Pool cooling lineup", (be, v) -> { DeviceCommands.eccsMode(be, v >= 0.5); return true; });
+            .toggle("pool_cooling", "Pool cooling lineup", (be, v) -> { DeviceCommands.eccsMode(be, v >= 0.5); return true; })
+            .toggle("shutdown_cooling", "Shutdown cooling lineup", (be, v) -> { DeviceCommands.eccsShutdownMode(be, v >= 0.5); return true; });
 
     static final Schema<FeedwaterPumpBlockEntity> FEEDWATER = new Schema<FeedwaterPumpBlockEntity>()
             .bool("running", "Running", FeedwaterPumpBlockEntity::isRunning)

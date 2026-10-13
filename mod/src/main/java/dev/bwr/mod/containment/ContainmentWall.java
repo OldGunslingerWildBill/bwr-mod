@@ -18,6 +18,7 @@ public final class ContainmentWall {
     public static final TagKey<Block> LEAKY = TagKey.create(Registries.BLOCK, BwrMod.id("containment_leaky"));
 
     public static boolean isWall(Level level, BlockPos pos, BlockState state) {
+        if (state.getBlock() instanceof ContainmentSprayHeaderBlock) return false;
         if (state.getBlock() instanceof ContainmentVaultDoorBlock)
             return state.getValue(ContainmentVaultDoorBlock.SEALED);
         if (state.getBlock() instanceof ContainmentAirlockBlock airlock)

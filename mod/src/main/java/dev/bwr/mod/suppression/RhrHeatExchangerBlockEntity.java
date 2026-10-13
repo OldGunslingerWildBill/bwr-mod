@@ -29,6 +29,11 @@ public class RhrHeatExchangerBlockEntity extends BlockEntity {
         if(!live())return null;
         return AssemblyPlumbing.endpoint(level,returnRoute.trace(level,worldPosition,getBlockState(),AssemblyPort.WATER_DISCHARGE),SuppressionPoolBlockEntity.class);
     }
+    public dev.bwr.mod.reactor.ReactorControllerBlockEntity returnReactor() {
+        if (!live()) return null;
+        return AssemblyPlumbing.waterReceiver(level,
+                returnRoute.trace(level, worldPosition, getBlockState(), AssemblyPort.WATER_DISCHARGE));
+    }
     /** Heat is exchanged only on a running pump's actual tick, never from a stale command. */
     public void circulate(SuppressionPoolBlockEntity pool,double flow){
         resetReadouts();
@@ -37,6 +42,17 @@ public class RhrHeatExchangerBlockEntity extends BlockEntity {
         exchanger.step(pool.pool(),flow,.05);
         pool.reportPhysicalCooling(worldPosition,level.getGameTime(),exchanger.heatMW());
         pool.setChanged();setChanged();
+    }
+    /** Heat transfer in a vessel-to-vessel RHR loop; the water inventory returns unchanged. */
+    public void circulateReactor(dev.bwr.mod.reactor.ReactorControllerBlockEntity reactor, double flow) {
+        resetReadouts();
+        if (!live() || reactor == null || reactor.core() == null || returnReactor() != reactor
+                || !Double.isFinite(flow) || flow <= 0 || processedTick == level.getGameTime()) return;
+        processedTick = level.getGameTime();
+        var core = reactor.core();
+        double duty = exchanger.stepReactor(core.getCoolantTemperatureC(), core.getLiquidMassKg(), flow, .05);
+        core.addShutdownCoolingMW(duty);
+        setChanged();
     }
     public static void serverTick(Level l,BlockPos p,BlockState s,RhrHeatExchangerBlockEntity be){
         be.resetReadouts();

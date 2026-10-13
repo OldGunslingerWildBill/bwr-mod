@@ -224,6 +224,12 @@ public final class PressureVessel {
     private double feedwaterEnthalpyKJPerKg = VoidModel.DEFAULT_FEEDWATER_ENTHALPY_KJ_PER_KG;
     private double injectionFlowKgPerS;
     private double injectionEnthalpyKJPerKg = Saturation.subcooledLiquidEnthalpyKJPerKg(40.0);
+    private double shutdownCoolingMW;
+
+    /** Heat removed by a measured RHR vessel loop this step, not an automatic demand. */
+    public void setShutdownCoolingMW(double duty) {
+        shutdownCoolingMW = Double.isFinite(duty) ? Math.max(0.0, duty) : 0.0;
+    }
     private double liquidLeakKgPerS;
     private double steamLeakKgPerS;
     private double ruptureVolumeM3;
@@ -328,7 +334,7 @@ public final class PressureVessel {
         if (ruptureVolumeM3 > 0) return stepRupture(coreThermalMW, turbineSteamFlowKgPerS,
                 bypassSteamFlowKgPerS, reliefSteamFlowKgPerS, dtSeconds);
         boundaryLiquidFlowKgPerS = boundarySteamFlowKgPerS = 0;
-        double thermalKW = Math.max(0.0, finite(coreThermalMW)) * 1000.0;
+        double thermalKW = (Math.max(0.0, finite(coreThermalMW)) - shutdownCoolingMW) * 1000.0;
         double steamOut = nonNegative(turbineSteamFlowKgPerS)
                 + nonNegative(bypassSteamFlowKgPerS)
                 + nonNegative(reliefSteamFlowKgPerS)
@@ -459,7 +465,7 @@ public final class PressureVessel {
         int steps = Math.max(1, Math.min(MAX_PRESSURE_SUB_STEPS, (int)Math.ceil(seconds / .01)));
         double dt = seconds / steps, start = pressurePsig;
         double liquidDischarge = 0, steamDischarge = 0, allSteam = 0, phaseChange = 0, flash = 0;
-        double heatKW = nonNegative(thermalMW) * 1000;
+        double heatKW = (nonNegative(thermalMW) - shutdownCoolingMW) * 1000;
         double normalSteam = nonNegative(turbine) + nonNegative(bypass) + nonNegative(relief) + steamLeakKgPerS;
         commandedSteamRemovalKgPerS = normalSteam;
         for (int step = 0; step < steps; step++) {

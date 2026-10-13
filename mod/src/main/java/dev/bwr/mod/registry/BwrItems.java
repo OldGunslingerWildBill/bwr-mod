@@ -39,6 +39,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_NITROGEN_SUPPLY);
     public static final DeferredItem<BlockItem> CONTAINMENT_VENT_VALVE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_VENT_VALVE);
+    public static final DeferredItem<BlockItem> CONTAINMENT_SPRAY_HEADER =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTAINMENT_SPRAY_HEADER);
     public static final DeferredItem<Item> NITROGEN_CANISTER =
             ITEMS.registerSimpleItem("nitrogen_canister");
     public static final DeferredItem<BlockItem> CONTAINMENT_STEAM_PENETRATION =
@@ -249,6 +251,7 @@ public final class BwrItems {
                         output.accept(CONTAINMENT_AIRLOCK.get());
                         output.accept(CONTAINMENT_NITROGEN_SUPPLY.get());
                         output.accept(CONTAINMENT_VENT_VALVE.get());
+                        output.accept(CONTAINMENT_SPRAY_HEADER.get());
                         output.accept(NITROGEN_CANISTER.get());
                         output.accept(CONTAINMENT_STEAM_PENETRATION.get());
                         output.accept(CONTAINMENT_WATER_PENETRATION.get());

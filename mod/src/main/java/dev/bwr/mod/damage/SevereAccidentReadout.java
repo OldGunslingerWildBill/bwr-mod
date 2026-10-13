@@ -56,6 +56,8 @@ public final class SevereAccidentReadout {
         }
 
         ContainmentAtmosphere ct = core.getContainment();
+        if (core.getBoundaryStress().isInterfacingSystemsLoca())
+            out.add("RHR low-pressure line RUPTURED outside containment; vessel inventory bypasses the drywell.");
         out.add(String.format(Locale.ROOT, "Containment: H2 %.2f%%, O2 %.1f%%, %.1f psig%s%s%s",
                 ct.getHydrogenPercent(), ct.getOxygenPercent(), ct.getPressurePsig(),
                 ct.isPurgeActive() ? (ct.isInertingCommanded() ? ", nitrogen purge running" : ", air purge running")

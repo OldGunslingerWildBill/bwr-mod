@@ -1144,6 +1144,8 @@ public class ReactorPeripheral implements IPeripheral {
         m.put("coreDamageStage", c.getSevereAccident().getStage().number());
         m.put("containmentHydrogenPercent", c.getContainment().getHydrogenPercent());
         m.put("containmentPressure", c.getContainment().getPressurePsig());
+        m.put("shutdownCoolingMW", c.getShutdownCoolingMW());
+        m.put("interfacingSystemsLoca", c.getBoundaryStress().isInterfacingSystemsLoca());
         m.put("boron", c.getBoronPpm());
         m.put("kInfinity", c.getAggregateKInfinity());
         m.put("kEffAllRodsOut", c.getKEffectiveAllRodsOut());

@@ -80,7 +80,9 @@ public class EccsPumpBlockEntity extends BlockEntity {
         /** Take suction and put water in the vessel. */
         INJECTION,
         /** Circulate the suppression pool through the heat exchangers instead. */
-        POOL_COOLING
+        POOL_COOLING,
+        /** Recirculate vessel water through the RHR exchanger and back. */
+        SHUTDOWN_COOLING
     }
 
     private final EccsDesign design;
@@ -198,7 +200,8 @@ public class EccsPumpBlockEntity extends BlockEntity {
 
         // No reactor to deliver into means no water leaves the source. A pump
         // running on nothing recirculates through its own min-flow line.
-        boolean delivering = !poolCooling && reactor != null && core != null;
+        // A saved legacy single-block pump has no closed RHR return circuit.
+        boolean delivering = !poolCooling && mode != Mode.SHUTDOWN_COOLING && reactor != null && core != null;
         double wantedKgPerS = delivering ? pumpedKgPerS * ringFactor : 0.0;
         double gotKg = drawSuction(poolBe, tankBe, wantedKgPerS, dt);
         deliveredFlowKgPerS = dt > 0.0 ? gotKg / dt : 0.0;
@@ -281,38 +284,62 @@ public class EccsPumpBlockEntity extends BlockEntity {
         if(delivery!=null && !delivery.isFormed()) delivery=null;
         if(pool!=null && !pool.isFormed()) pool=null;
         var exchanger=complete?AssemblyPlumbing.endpoint(level,outlet,dev.bwr.mod.suppression.RhrHeatExchangerBlockEntity.class):null;
+        var sprayHeader=complete?AssemblyPlumbing.endpoint(level,outlet,dev.bwr.mod.containment.ContainmentSprayHeaderBlockEntity.class):null;
+        boolean shutdown = mode == Mode.SHUTDOWN_COOLING && design.isPoolCoolingCapable();
+        var sourceReactor = shutdown ? AssemblyPlumbing.reactorWaterSource(level, suction) : null;
+        boolean shutdownCircuit = shutdown && sourceReactor != null && exchanger != null
+                && exchanger.returnReactor() == sourceReactor;
         boolean directReturn=pool!=null&&AssemblyPlumbing.endpoint(level,outlet,SuppressionPoolBlockEntity.class)==pool;
         boolean exchangerReturn=pool!=null&&exchanger!=null&&exchanger.returnPool()==pool;
         boolean cooling=isPoolCooling() && pool!=null && suctionSource==SuctionSource.SUPPRESSION_POOL
                 && (directReturn||exchangerReturn);
-        BlockPos next=delivery==null || isPoolCooling() ? null : delivery.getBlockPos();
+        BlockPos next=shutdown ? sourceReactor == null ? null : sourceReactor.getBlockPos()
+                : delivery==null || isPoolCooling() ? null : delivery.getBlockPos();
         if(!java.util.Objects.equals(reactorPos,next) || !java.util.Objects.equals(poolPos,pool==null?null:pool.getBlockPos())) detach();
         reactorPos=next; poolPos=pool==null?null:pool.getBlockPos(); tankPos=tank==null?null:tank.getBlockPos();
         double opening=Math.min(suction.opening(),outlet.opening());
-        boolean path=complete && suction.valid() && outlet.valid() && (isPoolCooling()?cooling:delivery!=null);
-        double temperature=suctionTemperatureC(pool);
-        pump.setVesselPressurePsig(isPoolCooling()?POOL_COOLING_LOOP_PSI:delivery==null?0:delivery.core().getPressurePsig());
+        boolean path=complete && suction.valid() && outlet.valid()
+                && (shutdown ? shutdownCircuit : isPoolCooling() ? cooling : delivery!=null || sprayHeader!=null);
+        double temperature=shutdown && sourceReactor!=null ? sourceReactor.core().getCoolantTemperatureC()
+                : suctionTemperatureC(pool);
+        if (shutdownCircuit && sourceReactor.core().getPressurePsig()
+                > dev.bwr.core.boundary.BoundaryStress.RHR_PIPE_DESIGN_PRESSURE_PSIG)
+            sourceReactor.core().getBoundaryStress().forceInterfacingSystemsLoca();
+        pump.setVesselPressurePsig((shutdown || isPoolCooling())?POOL_COOLING_LOOP_PSI:delivery==null?0:delivery.core().getPressurePsig());
         pump.setSuctionPressurePsig(0); pump.setSuctionTemperatureC(temperature);
-        pump.setSuctionFlowLimitKgPerS(path?Math.min(availableSuctionKg(pool,tank)/dt,design.ratedFlowKgPerS()*opening):0);
+        pump.setSuctionFlowLimitKgPerS(path?Math.min(
+                shutdown ? sourceReactor.core().getLiquidMassKg()/dt : availableSuctionKg(pool,tank)/dt,
+                design.ratedFlowKgPerS()*opening):0);
         pump.setElectricalPowerAvailableWatts(Math.min(EccsPower.wattsFromFePerTick(energy.getEnergyStored()),design.motorRatingWatts()));
         pump.step(dt);
         energy.drain(EccsPower.fePerTickFromWatts(pump.getElectricalDemandWatts()));
         boolean spray=design.delivery()==EccsDesign.Delivery.CORE_SPRAY;
-        double wanted=path && !isPoolCooling()?pump.getFlowKgPerS()*(spray?delivery.sprayRingCompleteness():1):0;
+        double wanted=path && !isPoolCooling() && !shutdown
+                ? Math.min(pump.getFlowKgPerS()*(spray && delivery!=null?delivery.sprayRingCompleteness():1),
+                        sprayHeader==null?Double.MAX_VALUE:sprayHeader.availableSpaceKg()/dt):0;
         deliveredFlowKgPerS=drawSuction(pool,tank,wanted,dt)/dt;
+        if (sprayHeader!=null && path)
+            deliveredFlowKgPerS=sprayHeader.receiveWaterKg(deliveredFlowKgPerS*dt, deliveredTemperatureC)/dt;
         if(cooling&&path)deliveredFlowKgPerS=pump.getFlowKgPerS();
+        if(shutdown&&path)deliveredFlowKgPerS=pump.getFlowKgPerS();
         suctionShortfallKgPerS=Math.max(0,wanted-deliveredFlowKgPerS);
-        if(reactorPos!=null) EccsNetwork.busFor(level,reactorPos).report(getBlockPos(),level.getGameTime(),
+        if(reactorPos!=null && !shutdown) EccsNetwork.busFor(level,reactorPos).report(getBlockPos(),level.getGameTime(),
                 spray?0:deliveredFlowKgPerS,deliveredTemperatureC,spray?deliveredFlowKgPerS:0,deliveredTemperatureC,0,0,true,false);
         // A closed valve or dry source cannot reject heat through an absent water circuit.
-        if(cooling && path && pump.getFlowKgPerS()>0 && exchangerReturn) {
+        if(shutdown && path && pump.getFlowKgPerS()>0) {
+            applyPoolCoolingDuty(pool,false);
+            exchanger.circulateReactor(sourceReactor,pump.getFlowKgPerS());
+        } else if(cooling && path && pump.getFlowKgPerS()>0 && exchangerReturn) {
             applyPoolCoolingDuty(pool,false);
             exchanger.circulate(pool,pump.getFlowKgPerS());
         } else if(cooling && path && pump.getFlowKgPerS()>0 && !pool.isConcreteBasin()) {
             pool.reportRhrDuty(getBlockPos(),level.getGameTime(),Math.min(pump.getSpeedFraction(),pump.getFlowKgPerS()/design.ratedFlowKgPerS()));
             wasCoolingPool=true;
         } else applyPoolCoolingDuty(pool,false);
-        assemblyConnectionStatus=path?(cooling?(exchangerReturn?"Pool loop through heat exchanger":"Direct pool circulation (no external heat exchanger)"):"Water circuit connected"):"Water circuit incomplete, crossed, or missing its selected source";
+        assemblyConnectionStatus=path?(shutdown?"Vessel loop through RHR heat exchanger"
+                :cooling?(exchangerReturn?"Pool loop through heat exchanger":"Direct pool circulation (no external heat exchanger)")
+                :sprayHeader!=null?"Containment spray header connected":"Water circuit connected")
+                :"Water circuit incomplete, crossed, or missing its selected source";
         setChanged();
     }
 

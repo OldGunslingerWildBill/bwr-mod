@@ -58,6 +58,8 @@ public final class ContainmentAtmosphere {
     /** Legacy initial gas temperature, K. */
     public static final double GAS_TEMPERATURE_K = 330.0;
     public static final double STEAM_MOL_PER_KG = 1000.0 / 18.01528;
+    /** Blowdown steam that contacts drywell structures before the downcomers; one-node calibration. */
+    public static final double DRYWELL_WALL_CONTACT_FRACTION = 0.75;
     public static final double STEAM_INERTING_FRACTION = 0.55;
     public static final double STEAM_LATENT_HEAT_J_PER_KG = 2_257_000.0;
     public static final double STEAM_REFERENCE_ENTHALPY_KJ_PER_KG = 2675.0;

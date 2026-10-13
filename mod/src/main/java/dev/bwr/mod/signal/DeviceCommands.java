@@ -153,6 +153,10 @@ public final class DeviceCommands {
     public static void eccsMode(EccsPumpBlockEntity be, boolean poolCooling) {
         be.setMode(poolCooling ? EccsPumpBlockEntity.Mode.POOL_COOLING : EccsPumpBlockEntity.Mode.INJECTION);
     }
+    public static void eccsShutdownMode(EccsPumpBlockEntity be, boolean shutdownCooling) {
+        be.setMode(shutdownCooling ? EccsPumpBlockEntity.Mode.SHUTDOWN_COOLING
+                : EccsPumpBlockEntity.Mode.INJECTION);
+    }
 
     public static boolean feedwaterSpeed(FeedwaterPumpBlockEntity be, double fraction) {
         if (!Double.isFinite(fraction) || fraction < 0 || fraction > 1) return false;

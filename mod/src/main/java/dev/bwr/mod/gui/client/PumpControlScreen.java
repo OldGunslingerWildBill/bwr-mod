@@ -21,7 +21,8 @@ public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
         run=button("Start",12,158,112,()->menu.sendCommand(PumpControlMenu.RUN,menu.running?0:1));
         control=button("Control: Panel",132,158,116,()->menu.sendCommand(PumpControlMenu.CONTROL,menu.recirculation?(menu.control==2?0:2):(menu.control+1)%3));
         suction=button("Suction",12,184,236,()->menu.sendCommand(PumpControlMenu.SUCTION,menu.poolSuction?0:1));
-        mode=button("Mode",12,208,236,()->menu.sendCommand(PumpControlMenu.MODE,menu.poolCooling?0:1));
+        mode=button("Mode",12,208,236,()->menu.sendCommand(PumpControlMenu.MODE,
+                menu.shutdownCooling?0:menu.poolCooling?2:1));
     }
     private Button button(String label,int x,int y,int w,Runnable action) {
         return addRenderableWidget(Button.builder(Component.literal(label),b->action.run()).bounds(leftPos+x,topPos+y,w,20).build());
@@ -45,7 +46,9 @@ public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
         run.active=menu.present && menu.control!=2;run.setMessage(Component.literal(menu.running?"Stop":"Start"));
         control.active=menu.present;control.setMessage(Component.literal("Control: "+switch(menu.control){case 1->"Redstone";case 2->"Computer";default->"Panel";}));
         suction.visible=menu.eccs&&!menu.slc;suctions();
-        mode.visible=menu.rhr;mode.active=menu.control!=2;mode.setMessage(Component.literal(menu.poolCooling?"Mode: Pool cooling":"Mode: Reactor injection"));
+        mode.visible=menu.rhr;mode.active=menu.control!=2;
+        mode.setMessage(Component.literal(menu.shutdownCooling?"Mode: Shutdown cooling"
+                :menu.poolCooling?"Mode: Pool cooling":"Mode: Reactor injection"));
     }
     private void suctions() {
         suction.active=menu.present && menu.control!=2;

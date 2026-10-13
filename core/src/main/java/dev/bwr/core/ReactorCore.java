@@ -312,6 +312,8 @@ public final class ReactorCore {
     /** What the boundary breaks actually discharged on the last tick, kg/s. */
     private double lastBreakLiquidFlowKgPerS;
     private double lastBreakSteamFlowKgPerS;
+    private double pendingShutdownCoolingMW;
+    private double lastShutdownCoolingMW;
 
     private double boronInjectionPpmPerMinute;
     private double boronPpm;
@@ -910,7 +912,7 @@ public final class ReactorCore {
         fuelThermal.removeFuelEnergyMJ(severeAccident.getFuelEnergyToRemoveMJ());
         double hydrogenToContainmentKg = Math.max(0.0, fuelThermal.getHydrogenGeneratedKg() - hydrogenBeforeKg);
         double released = severeAccident.getLastReleasedFraction();
-        double bypassShare = severeAccident.getStage().number()
+        double bypassShare = boundary.isInterfacingSystemsLoca() ? 1.0 : severeAccident.getStage().number()
                 >= dev.bwr.core.accident.SevereAccident.Stage.CLADDING_FAILURE.number()
                 && containment.getLeakArea() < 1.0
                 ? Math.min(1.0, BYPASS_CARRYOVER * containmentBypassFlowFraction) : 0.0;
@@ -968,6 +970,9 @@ public final class ReactorCore {
         // water, raises no pressure and drains no inventory.
         // Relocated fuel's decay heat reaches the water only as fast as the debris
         // bed gives it up; corium outside the vessel heats the floor, not the vessel.
+        lastShutdownCoolingMW = pendingShutdownCoolingMW;
+        pendingShutdownCoolingMW = 0.0;
+        vessel.setShutdownCoolingMW(lastShutdownCoolingMW);
         vessel.step(totalPower * config.ratedThermalMW * inCoreFraction
                         + fuelThermal.getZirconiumReactionPowerMW()
                         + severeAccident.getDebrisHeatToVesselMW(),
@@ -979,6 +984,7 @@ public final class ReactorCore {
 
         lastBreakLiquidFlowKgPerS = vessel.getBoundaryLiquidFlowKgPerS();
         lastBreakSteamFlowKgPerS = vessel.getBoundarySteamFlowKgPerS();
+        vessel.setShutdownCoolingMW(0.0);
 
         // --- 7. Slow states and instruments. Both take the RAW fission rate:
         //        xenon is bred per fission and a fission chamber measures flux, so
@@ -2152,6 +2158,13 @@ public final class ReactorCore {
     public double getBreakLiquidFlowKgPerS() {
         return lastBreakLiquidFlowKgPerS;
     }
+
+    /** Add measured heat rejected by a running RHR shutdown loop for the next vessel step. */
+    public void addShutdownCoolingMW(double mw) {
+        if (Double.isFinite(mw) && mw > 0.0) pendingShutdownCoolingMW += mw;
+    }
+
+    public double getShutdownCoolingMW() { return lastShutdownCoolingMW; }
 
     /**
      * Feedwater actually reaching the vessel, kg/s. Differs from

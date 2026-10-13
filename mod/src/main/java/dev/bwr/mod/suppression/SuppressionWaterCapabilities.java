@@ -24,5 +24,9 @@ public final class SuppressionWaterCapabilities {
                 return null;
             });
         },BwrBlocks.RHR_HEAT_EXCHANGER.get());
+        event.registerBlock(Capabilities.FluidHandler.BLOCK, (l,p,s,be,face) ->
+                LiveCapabilities.fluid(l,p,s.getBlock(), current ->
+                        l.getBlockEntity(p) instanceof dev.bwr.mod.containment.ContainmentSprayHeaderBlockEntity header
+                                ? header.waterInlet() : null), BwrBlocks.CONTAINMENT_SPRAY_HEADER.get());
     }
 }

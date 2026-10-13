@@ -20,7 +20,7 @@ public class PumpControlMenu extends BwrMenu {
     private final BlockPos anchor;
     private final Block expected;
     public boolean slc;
-    public boolean present, running, turbine, recirculation, eccs, rhr, poolSuction, poolCooling;
+    public boolean present, running, turbine, recirculation, eccs, rhr, poolSuction, poolCooling, shutdownCooling;
     public int control; // 0 panel, 1 redstone, 2 computer
     public double target, actual, flow, pressure, temperature, energy, capacity, buffer;
     public String connection="Waiting for pump", drive="";
@@ -51,7 +51,7 @@ public class PumpControlMenu extends BwrMenu {
         present=eccs || recirculation || be instanceof FeedwaterPumpBlockEntity;
         if(!present)return;
         if(be instanceof RecirculationPumpBlockEntity p) {
-            turbine=false;rhr=false;poolSuction=false;poolCooling=false;buffer=0;
+            turbine=false;rhr=false;poolSuction=false;poolCooling=false;shutdownCooling=false;buffer=0;
             target=p.getTargetSpeedFraction();actual=p.getActualSpeedFraction();running=target>0;
             control=p.isComputerControlled()?2:0;drive="Electric recirculation";
             energy=p.getEnergyStoredFe();capacity=p.getEnergyCapacityFe();flow=p.getCoreFlowContributionKgPerS();
@@ -75,13 +75,14 @@ public class PumpControlMenu extends BwrMenu {
                 slc=e.design()==dev.bwr.core.eccs.EccsDesign.SLC;
                 poolSuction=e.getSuctionSource()==SuctionSource.SUPPRESSION_POOL;
                 poolCooling=e.getMode()==EccsPumpBlockEntity.Mode.POOL_COOLING;
+                shutdownCooling=e.getMode()==EccsPumpBlockEntity.Mode.SHUTDOWN_COOLING;
                 flow=e.getDeliveredFlowKgPerS(); energy=e.energy().getEnergyStored();capacity=e.energy().getMaxEnergyStored();
                 buffer=e.waterInlet().getFluidInTank(0).getAmount();
                 connection=e.connectionStatus();
             } else {
                 var f=(FeedwaterPumpBlockEntity)be;
                 control=f.isComputerControlled()?2:f.isPanelControlled()?0:1;
-                rhr=false;poolSuction=false;poolCooling=false;
+                rhr=false;poolSuction=false;poolCooling=false;shutdownCooling=false;
                 flow=f.getDeliveredFlowKgPerS();energy=f.energy().getEnergyStored();capacity=f.energy().getMaxEnergyStored();buffer=f.getSuctionBufferKg();
                 connection=f.getReactorPos()==null?"Water discharge disconnected":"Water discharge connected";
             }
@@ -90,14 +91,14 @@ public class PumpControlMenu extends BwrMenu {
     @Override protected void writeSnapshot(FriendlyByteBuf b) {
         sample(); b.writeBoolean(present); if(!present)return;
         b.writeBoolean(running);b.writeBoolean(turbine);b.writeBoolean(recirculation);b.writeBoolean(eccs);b.writeBoolean(rhr);
-        b.writeBoolean(poolSuction);b.writeBoolean(poolCooling);b.writeInt(control);
+        b.writeBoolean(poolSuction);b.writeBoolean(poolCooling);b.writeBoolean(shutdownCooling);b.writeInt(control);
         for(double v:new double[]{target,actual,flow,pressure,temperature,energy,capacity,buffer}) b.writeDouble(v);
         b.writeUtf(connection);b.writeUtf(drive);b.writeBoolean(slc);
     }
     @Override protected void readSnapshot(FriendlyByteBuf b) {
         present=b.readBoolean();if(!present)return;
         running=b.readBoolean();turbine=b.readBoolean();recirculation=b.readBoolean();eccs=b.readBoolean();rhr=b.readBoolean();
-        poolSuction=b.readBoolean();poolCooling=b.readBoolean();control=b.readInt();
+        poolSuction=b.readBoolean();poolCooling=b.readBoolean();shutdownCooling=b.readBoolean();control=b.readInt();
         target=b.readDouble();actual=b.readDouble();flow=b.readDouble();pressure=b.readDouble();temperature=b.readDouble();energy=b.readDouble();capacity=b.readDouble();buffer=b.readDouble();
         connection=b.readUtf();drive=b.readUtf();slc=b.readBoolean();
     }
@@ -115,7 +116,7 @@ public class PumpControlMenu extends BwrMenu {
                 case SPEED -> {p.setPanelControlled(true);p.setSpeedDemandFraction(fromPerMille(a));}
                 case RUN -> {p.setPanelControlled(true);p.setRunning(a!=0);}
                 case SUCTION -> {p.setPanelControlled(true);p.setSuctionSource(a==0?SuctionSource.CONDENSATE_TANK:SuctionSource.SUPPRESSION_POOL);}
-                case MODE -> {if(rhr){p.setPanelControlled(true);p.setMode(a==0?EccsPumpBlockEntity.Mode.INJECTION:EccsPumpBlockEntity.Mode.POOL_COOLING);}}
+                case MODE -> {if(rhr && a>=0 && a<=2){p.setPanelControlled(true);p.setMode(EccsPumpBlockEntity.Mode.values()[a]);}}
                 default -> {return;}
             }
         } else if(be instanceof FeedwaterPumpBlockEntity p) {

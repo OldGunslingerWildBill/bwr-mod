@@ -72,6 +72,7 @@ public final class BoundaryDamageReadout {
         out.put("failureRatePerSecond", boundary.getFailureRatePerSecond());
         out.put("failureProbabilityPerTick", boundary.getFailureProbabilityOver(0.05));
         out.put("anyFailed", boundary.hasFailed());
+        out.put("interfacingSystemsLoca", boundary.isInterfacingSystemsLoca());
         out.put("terminalFailure", boundary.hasTerminalFailure());
 
         out.put("secondsAboveDesignPressure", boundary.getSecondsAboveDesignPressure());

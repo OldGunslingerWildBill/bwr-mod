@@ -61,6 +61,8 @@ final class ReactorSignals {
             .number("injection_flow", "Injection flow", "kg/s", 0, 2500, core(ReactorCore::getInjectionFlowKgPerS))
             .number("break_steam_flow", "Break steam flow", "kg/s", 0, 2500, core(ReactorCore::getBreakSteamFlowKgPerS))
             .number("break_liquid_flow", "Break liquid flow", "kg/s", 0, 5000, core(ReactorCore::getBreakLiquidFlowKgPerS))
+            .number("shutdown_cooling_mw", "RHR shutdown cooling", "MW", 0, 500, core(ReactorCore::getShutdownCoolingMW))
+            .boolOrNone("interfacing_systems_loca", "Interfacing systems LOCA", core(c -> flag(c.getBoundaryStress().isInterfacingSystemsLoca())))
             .number("coolant_temp_c", "Coolant temperature", "degC", 0, 400, core(ReactorCore::getCoolantTemperatureC))
             .number("fuel_temp_c", "Fuel temperature", "degC", 0, 3000, core(ReactorCore::getFuelTemperatureC))
             .number("clad_temp_c", "Cladding temperature", "degC", 0, 2500, core(ReactorCore::getCladTemperatureC))

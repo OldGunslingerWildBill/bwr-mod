@@ -5,6 +5,7 @@ import dev.bwr.mod.containment.ContainmentAirlockBlockEntity;
 import dev.bwr.mod.containment.ContainmentControllerBlockEntity;
 import dev.bwr.mod.containment.ContainmentEquipmentBlockEntity;
 import dev.bwr.mod.containment.ContainmentPenetrationBlockEntity;
+import dev.bwr.mod.containment.ContainmentSprayHeaderBlockEntity;
 import dev.bwr.mod.containment.ContainmentVaultDoorBlockEntity;
 import dev.bwr.mod.cooling.CoolingBlockEntity;
 import dev.bwr.mod.eccs.CondensateStorageTankBlockEntity;
@@ -43,6 +44,7 @@ public final class SignalAdapters {
         SignalProviders.register(CoolingBlockEntity.class, PlantSignals.COOLING::bind);
         SignalProviders.register(PowerModuleBlockEntity.class, PlantSignals.POWER_MODULE::bind);
         SignalProviders.register(ContainmentControllerBlockEntity.class, ContainmentSignals.CONTROLLER::bind);
+        SignalProviders.register(ContainmentSprayHeaderBlockEntity.class, ContainmentSignals.SPRAY_HEADER::bind);
         SignalProviders.register(ContainmentPenetrationBlockEntity.class, ContainmentSignals.PENETRATION::bind);
         SignalProviders.register(ContainmentVaultDoorBlockEntity.class, ContainmentSignals.VAULT_DOOR::bind);
         SignalProviders.register(ContainmentAirlockBlockEntity.class, ContainmentSignals.AIRLOCK::bind);

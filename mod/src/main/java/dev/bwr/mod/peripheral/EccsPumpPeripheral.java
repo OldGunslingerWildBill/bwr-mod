@@ -143,7 +143,7 @@ public class EccsPumpPeripheral implements IPeripheral {
     }
 
     /**
-     * Line an RHR loop up for {@code "injection"} or {@code "pool_cooling"}.
+     * Line an RHR loop up for injection, pool cooling or shutdown cooling.
      * Ignored by the machines that have no second job. One loop cannot do both,
      * which is the choice between saving the core now and keeping the heat sink.
      *
@@ -156,11 +156,13 @@ public class EccsPumpPeripheral implements IPeripheral {
     public final void setMode(String mode) throws LuaException {
         if ("pool_cooling".equalsIgnoreCase(mode) || "poolcooling".equalsIgnoreCase(mode)) {
             be.setMode(EccsPumpBlockEntity.Mode.POOL_COOLING);
+        } else if ("shutdown_cooling".equalsIgnoreCase(mode) || "shutdowncooling".equalsIgnoreCase(mode)) {
+            be.setMode(EccsPumpBlockEntity.Mode.SHUTDOWN_COOLING);
         } else if ("injection".equalsIgnoreCase(mode)) {
             be.setMode(EccsPumpBlockEntity.Mode.INJECTION);
         } else {
             throw new LuaException("no such lineup \"" + mode
-                    + "\"; a loop is lined up for \"injection\" or \"pool_cooling\"");
+                    + "\"; a loop is lined up for \"injection\", \"pool_cooling\" or \"shutdown_cooling\"");
         }
     }
 
@@ -286,7 +288,7 @@ public class EccsPumpPeripheral implements IPeripheral {
         return be.design().delivery().name();
     }
 
-    /** {@code "INJECTION"} or {@code "POOL_COOLING"}. */
+    /** {@code "INJECTION"}, {@code "POOL_COOLING"} or {@code "SHUTDOWN_COOLING"}. */
     @LuaFunction(mainThread = true)
     public final String getMode() {
         return be.getMode().name();

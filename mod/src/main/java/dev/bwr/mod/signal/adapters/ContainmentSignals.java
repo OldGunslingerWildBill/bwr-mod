@@ -5,6 +5,7 @@ import dev.bwr.mod.containment.ContainmentControllerBlockEntity;
 import dev.bwr.mod.containment.ContainmentEquipmentBlockEntity;
 import dev.bwr.mod.containment.ContainmentPenetrationBlock;
 import dev.bwr.mod.containment.ContainmentPenetrationBlockEntity;
+import dev.bwr.mod.containment.ContainmentSprayHeaderBlockEntity;
 import dev.bwr.mod.containment.ContainmentVaultDoorBlockEntity;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import dev.bwr.mod.signal.DeviceCommands;
@@ -17,6 +18,14 @@ import java.util.function.ToDoubleFunction;
 /** Containment room controller, penetrations, vault door, airlock and atmosphere equipment. */
 final class ContainmentSignals {
     private ContainmentSignals() {}
+
+    static final Schema<ContainmentSprayHeaderBlockEntity> SPRAY_HEADER = new Schema<ContainmentSprayHeaderBlockEntity>()
+            .number("water", "Spray header water", "kg", 0, ContainmentSprayHeaderBlockEntity.CAPACITY_KG,
+                    ContainmentSprayHeaderBlockEntity::getWaterKg)
+            .number("water_temperature", "Spray water temperature", "degC", 0, 300,
+                    ContainmentSprayHeaderBlockEntity::getWaterTemperatureC)
+            .number("flow", "Spray flow", "kg/s", 0, ContainmentSprayHeaderBlockEntity.MAX_FLOW_KG_PER_S,
+                    ContainmentSprayHeaderBlockEntity::getLastFlowKgPerS);
 
     /** Reads from the first linked, formed reactor; NaN (no signal) when the room has none. */
     private static ToDoubleFunction<ContainmentControllerBlockEntity> reactor(ToDoubleFunction<ReactorControllerBlockEntity> read) {

@@ -34,6 +34,32 @@ public final class RhrHeatExchanger {
         primaryFlow=primaryKg/seconds;secondaryFlow=secondaryKg/seconds;heatMW=removed/seconds;
         primaryOutC=inlet-removed*1000/(primaryKg*CP);secondaryOutC=WaterInventory.temperature(outH);
     }
+    /** Closed reactor-water primary loop. Mass returns to the vessel; only heat leaves. */
+    public double stepReactor(double vesselC, double vesselWaterKg, double flow, double seconds) {
+        clearReadouts();
+        if (!Double.isFinite(vesselC) || !Double.isFinite(vesselWaterKg) || !Double.isFinite(flow)
+                || !Double.isFinite(seconds) || vesselWaterKg <= 0 || flow <= 0 || seconds <= 0) return 0;
+        double primaryKg = Math.min(flow * seconds, vesselWaterKg);
+        double secondaryKg = Math.min(cold.mass(), Math.min(SECONDARY_FLOW * seconds, hot.space()));
+        if (primaryKg <= 0 || secondaryKg <= 0) return 0;
+        double coldC = cold.temperatureC(), inH = cold.enthalpy();
+        double requested = Math.min(RATING_MW * seconds,
+                .8 * Math.min(primaryKg, secondaryKg) * CP * Math.max(0, vesselC - coldC) / 1000);
+        double ceiling = Saturation.subcooledLiquidEnthalpyKJPerKg(Math.min(vesselC, coldC + 11));
+        requested = Math.min(requested, secondaryKg * Math.max(0, ceiling - inH) / 1000);
+        // The vessel pressure floor corresponds to about 99 C; avoid pretending
+        // to cool a clamped vessel further or removing more stored heat than it has.
+        requested = Math.min(requested, vesselWaterKg * CP * Math.max(0, vesselC - 99.0) / 1000);
+        double outH = inH + requested * 1000 / secondaryKg;
+        cold.drain(secondaryKg, false);
+        hot.fill(secondaryKg, outH, false);
+        primaryFlow = primaryKg / seconds;
+        secondaryFlow = secondaryKg / seconds;
+        heatMW = requested / seconds;
+        primaryOutC = vesselC - requested * 1000 / (primaryKg * CP);
+        secondaryOutC = WaterInventory.temperature(outH);
+        return heatMW;
+    }
     public void restore(double coldKg,double hotKg,double energyKJ){
         double h=Saturation.subcooledLiquidEnthalpyKJPerKg(COLD_C);
         restore(coldKg,hotKg,h,hotKg>0&&Double.isFinite(energyKJ)?h+Math.max(0,energyKJ)/hotKg:h);

@@ -48,6 +48,7 @@ public final class AssemblyPlumbing {
         return state.getBlock() instanceof dev.bwr.mod.reactor.RpvWaterInjectionPortBlock
                 || state.getBlock() instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlock
                 || state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock
+                || state.getBlock() instanceof dev.bwr.mod.containment.ContainmentSprayHeaderBlock
                 || state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())
                 || state.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
     }
@@ -82,8 +83,10 @@ public final class AssemblyPlumbing {
             boolean accepted=switch(role) {
                 case STEAM_INLET -> s.is(BwrBlocks.RPV_STEAM_OUTLET.get());
                 case STEAM_EXHAUST -> dev.bwr.mod.steam.SteamLineNetwork.isQuencher(s)||s.is(BwrBlocks.TURBINE_STEAM_OUTLET.get());
-                case WATER_SUCTION -> jet?s.is(BwrBlocks.RECIRCULATION_PUMP.get()):s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())||s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get())||s.is(BwrBlocks.SUPPRESSION_POOL_SUCTION.get());
-                case WATER_DISCHARGE -> s.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get())||s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get())||s.is(BwrBlocks.SUPPRESSION_POOL_RETURN.get());
+                case WATER_SUCTION -> jet?s.is(BwrBlocks.RECIRCULATION_PUMP.get()):s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())||s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get())||s.is(BwrBlocks.SUPPRESSION_POOL_SUCTION.get())
+                        || s.getBlock() instanceof dev.bwr.mod.reactor.RecirculationPortBlock port && port.isOutlet();
+                case WATER_DISCHARGE -> s.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get())||s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get())||s.is(BwrBlocks.SUPPRESSION_POOL_RETURN.get())
+                        || s.is(BwrBlocks.CONTAINMENT_SPRAY_HEADER.get());
             };
             if(accepted){ends.add(next);opening=Math.max(opening,route.opening());}
             else if(s.is(BwrBlocks.RECIRCULATION_PUMP.get())||isWaterEndpoint(s)||s.is(BwrBlocks.RPV_STEAM_OUTLET.get())||dev.bwr.mod.steam.SteamLineNetwork.isQuencher(s)
@@ -113,6 +116,20 @@ public final class AssemblyPlumbing {
         for (BlockPos p : line.ends()) {
             if (!level.isLoaded(p) || !(level.getBlockEntity(p) instanceof dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity port)) return null;
             if (level.getBlockState(p).getBlock() instanceof dev.bwr.mod.reactor.RecirculationPortBlock) return null;
+            var next = port.controller();
+            if (next == null || found != null && found != next) return null;
+            found = next;
+        }
+        return found;
+    }
+    /** Reactor water source for a shutdown-cooling loop's suction flange. */
+    public static ReactorControllerBlockEntity reactorWaterSource(Level level, Line line) {
+        if (!line.valid()) return null;
+        ReactorControllerBlockEntity found = null;
+        for (BlockPos p : line.ends()) {
+            if (!level.isLoaded(p) || !(level.getBlockEntity(p) instanceof dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity port)
+                    || !(level.getBlockState(p).getBlock() instanceof dev.bwr.mod.reactor.RecirculationPortBlock recirc)
+                    || !recirc.isOutlet()) return null;
             var next = port.controller();
             if (next == null || found != null && found != next) return null;
             found = next;

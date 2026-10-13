@@ -80,6 +80,7 @@ public final class AcceptanceTests {
             BoronSolutionTest.class,
             CoolingWaterUnitTest.class,
             RhrHeatExchangerTest.class,
+            ShutdownCoolingTest.class,
             RecirculationSizingTest.class,
             ContinuousRodMotionTest.class,
             PumpSpeedControlTest.class,

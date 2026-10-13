@@ -10,6 +10,7 @@ import dev.bwr.mod.water.WaterDischargeBlock;
 import dev.bwr.mod.eccs.CondensateStorageTankBlock;
 import net.minecraft.core.registries.BuiltInRegistries;
 import dev.bwr.mod.registry.BwrBlockEntities;
+import dev.bwr.mod.registry.BwrBlocks;
 import dev.bwr.mod.suppression.FormedSuppressionPoolRegistry;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -52,6 +53,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     private final Map<Long, Boolean> frontierIsOutside = new HashMap<>();
     private List<BlockPos> linkedReactors = List.of();
     private List<BlockPos> linkedPools = List.of();
+    private List<BlockPos> linkedSprayHeaders = List.of();
     private final Set<Long> indexedChunks = new HashSet<>();
     private Scan scan;
     private boolean strengthDirty = true;
@@ -119,6 +121,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     public List<BoundaryFace> boundaryFaces() { return boundary; }
     public List<BlockPos> linkedReactors() { return linkedReactors; }
     public List<BlockPos> linkedPools() { return linkedPools; }
+    public List<BlockPos> linkedSprayHeaders() { return linkedSprayHeaders; }
     public boolean strengthReady() { return strengthReady; }
     public WeakestSpot weakestSpot() { return weakest; }
     public double failurePressurePsig() { return weakest == null ? 140.0 : weakest.ratingPsig(); }
@@ -286,6 +289,12 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                 .map(BlockEntity::getBlockPos).filter(this::encloses).toList();
         linkedPools = FormedSuppressionPoolRegistry.controllers(level).stream()
                 .map(BlockEntity::getBlockPos).filter(this::encloses).toList();
+        var sprays = new ArrayList<BlockPos>();
+        for (long cell : finished.visited) {
+            BlockPos at = BlockPos.of(cell);
+            if (level.isLoaded(at) && level.getBlockState(at).is(BwrBlocks.CONTAINMENT_SPRAY_HEADER.get())) sprays.add(at);
+        }
+        linkedSprayHeaders = List.copyOf(sprays);
         scan = null;
         strengthDirty = true;
         ContainmentControllerRegistry.index(this);
@@ -488,6 +497,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         if (leak != null) tag.putLong("Leak", leak.asLong());
         tag.putLongArray("LinkedReactors", linkedReactors.stream().mapToLong(BlockPos::asLong).toArray());
         tag.putLongArray("LinkedPools", linkedPools.stream().mapToLong(BlockPos::asLong).toArray());
+        tag.putLongArray("LinkedSprayHeaders", linkedSprayHeaders.stream().mapToLong(BlockPos::asLong).toArray());
         tag.putLongArray("PenetrationPositions", penetrationFaces.stream().mapToLong(face -> face.wall().asLong()).toArray());
         tag.putIntArray("PenetrationNormals", penetrationFaces.stream().mapToInt(face -> face.normal().ordinal()).toArray());
         if (weakest != null) {
@@ -512,6 +522,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         leak = tag.contains("Leak", Tag.TAG_LONG) ? BlockPos.of(tag.getLong("Leak")) : null;
         linkedReactors = positions(tag.getLongArray("LinkedReactors"));
         linkedPools = positions(tag.getLongArray("LinkedPools"));
+        linkedSprayHeaders = positions(tag.getLongArray("LinkedSprayHeaders"));
         long[] facePositions = tag.getLongArray("PenetrationPositions");
         int[] faceNormals = tag.getIntArray("PenetrationNormals");
         List<BoundaryFace> savedFaces = new ArrayList<>();

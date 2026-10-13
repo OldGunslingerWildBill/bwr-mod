@@ -18,6 +18,7 @@ import dev.bwr.mod.containment.ContainmentVaultDoorBlockEntity;
 import dev.bwr.mod.containment.ContainmentAirlockBlock;
 import dev.bwr.mod.containment.ContainmentAirlockBlockEntity;
 import dev.bwr.mod.containment.ContainmentEquipmentBlockEntity;
+import dev.bwr.mod.containment.ContainmentSprayHeaderBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
@@ -64,6 +65,9 @@ public final class BwrPeripheralSupport {
     private static IPeripheral typed(BlockEntity be) {
         if(be instanceof dev.bwr.mod.panel.PanelBlockEntity b)return new PanelPeripheral(b);
         if(be instanceof ContainmentEquipmentBlockEntity b)return new ContainmentEquipmentPeripheral(b);
+        if(be instanceof ContainmentSprayHeaderBlockEntity b)return new HardwarePeripheral("bwr_containment_spray_header",()->Map.of(
+                "waterKg",b.getWaterKg(),"waterTemperatureC",b.getWaterTemperatureC(),
+                "flowKgPerS",b.getLastFlowKgPerS(),"capacityKg",ContainmentSprayHeaderBlockEntity.CAPACITY_KG));
         if(be instanceof ContainmentVaultDoorBlockEntity b)return new ContainmentVaultDoorPeripheral(b);
         if(be instanceof ContainmentAirlockBlockEntity b)return new ContainmentAirlockPeripheral(b);
         if(be instanceof ContainmentPenetrationBlockEntity b)return new ContainmentPenetrationPeripheral(b);

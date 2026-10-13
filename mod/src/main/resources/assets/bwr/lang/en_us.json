@@ -7,6 +7,7 @@
   "block.bwr.containment_airlock": "Containment Personnel Airlock",
   "block.bwr.containment_nitrogen_supply": "Containment Nitrogen Supply",
   "block.bwr.containment_vent_valve": "Wetwell Vent Valve",
+  "block.bwr.containment_spray_header": "Containment Spray Header",
   "item.bwr.nitrogen_canister": "Nitrogen Canister",
   "block.bwr.containment_steam_penetration": "Containment Steam Penetration",
   "block.bwr.containment_water_penetration": "Containment Water Penetration",

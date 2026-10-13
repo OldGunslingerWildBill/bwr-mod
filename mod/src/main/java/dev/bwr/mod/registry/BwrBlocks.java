@@ -355,6 +355,8 @@ public final class BwrBlocks {
             BLOCKS.register("suppression_pool_steam_inlet",()->new dev.bwr.mod.suppression.SuppressionPoolSteamPortBlock(machine()));
     public static final DeferredBlock<dev.bwr.mod.suppression.RhrHeatExchangerBlock> RHR_HEAT_EXCHANGER =
             BLOCKS.register("rhr_heat_exchanger",()->new dev.bwr.mod.suppression.RhrHeatExchangerBlock(machine().noOcclusion()));
+    public static final DeferredBlock<dev.bwr.mod.containment.ContainmentSprayHeaderBlock> CONTAINMENT_SPRAY_HEADER =
+            BLOCKS.register("containment_spray_header", () -> new dev.bwr.mod.containment.ContainmentSprayHeaderBlock(machine().noOcclusion()));
 
     /**
      * T-quencher — the submerged termination of a relief valve discharge line,

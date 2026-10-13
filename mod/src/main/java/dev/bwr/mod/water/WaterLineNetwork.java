@@ -45,6 +45,7 @@ public final class WaterLineNetwork {
         if(state.getBlock() instanceof WaterDischargeBlock)return face==state.getValue(WaterDischargeBlock.FACING).getOpposite();
         if(state.getBlock() instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlock)return face==state.getValue(dev.bwr.mod.suppression.SuppressionPoolPortBlock.FACING);
         if(state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock)return face.getAxis().isHorizontal();
+        if(state.getBlock() instanceof dev.bwr.mod.containment.ContainmentSprayHeaderBlock)return true;
         if(state.getBlock() instanceof CondensateStorageTankBlock)return CondensateStorageTankBlock.acceptsWater(state,face);
         if(state.getBlock() instanceof dev.bwr.mod.cooling.CoolingBlock)return dev.bwr.mod.cooling.CoolingBlock.acceptsWater(state,face);
         if(state.getBlock() instanceof dev.bwr.mod.condenser.CondenserBlock)return dev.bwr.mod.condenser.CondenserBlock.acceptsWater(state,face);

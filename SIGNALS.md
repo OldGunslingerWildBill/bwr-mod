@@ -57,6 +57,8 @@ Block entity `ReactorControllerBlockEntity`; CC peripheral `bwr_reactor`.
 | `injection_flow` | Injection flow | kg/s | 0 to 2500 | NUMBER |
 | `break_steam_flow` | Break steam flow | kg/s | 0 to 2500 | NUMBER |
 | `break_liquid_flow` | Break liquid flow | kg/s | 0 to 5000 | NUMBER |
+| `shutdown_cooling_mw` | RHR shutdown cooling | MW | 0 to 500 | NUMBER |
+| `interfacing_systems_loca` | Interfacing systems LOCA |  | 0 to 1 | BOOLEAN |
 | `coolant_temp_c` | Coolant temperature | degC | 0 to 400 | NUMBER |
 | `fuel_temp_c` | Fuel temperature | degC | 0 to 3000 | NUMBER |
 | `clad_temp_c` | Cladding temperature | degC | 0 to 2500 | NUMBER |
@@ -210,6 +212,7 @@ Block entity `EccsPumpBlockEntity`; CC peripheral `bwr_ plus the design id`.
 | `energy_capacity_fe` | Energy capacity | FE | 0 to 1e6 | NUMBER |
 | `boron_rate` | Boron injection rate | ppm/min | 0 to 20 | NUMBER |
 | `pool_cooling_mode` | Lined up for pool cooling |  | 0 to 1 | BOOLEAN |
+| `shutdown_cooling_mode` | Lined up for shutdown cooling |  | 0 to 1 | BOOLEAN |
 | `mode` | Lineup mode |  | text | TEXT |
 
 | Command key | Label | Kind | Range |
@@ -218,6 +221,7 @@ Block entity `EccsPumpBlockEntity`; CC peripheral `bwr_ plus the design id`.
 | `speed` | Speed demand | NUMBER | 0 to 1 |
 | `flow_demand` | Flow demand | NUMBER | 0 to 1 |
 | `pool_cooling` | Pool cooling lineup | BOOLEAN | 0 to 1 |
+| `shutdown_cooling` | Shutdown cooling lineup | BOOLEAN | 0 to 1 |
 
 ## Feedwater pump (motor and turbine driven)
 
@@ -423,6 +427,19 @@ Block entity `ContainmentControllerBlockEntity`; CC peripheral `bwr_containment`
 Drywell and wetwell pressures use the same lumped airspace node in this version.
 
 No commands (read only).
+
+## Containment spray header
+
+Block entity `ContainmentSprayHeaderBlockEntity`; CC peripheral `bwr_containment_spray_header`.
+The CC `getStatus()` table reports `waterKg`, `waterTemperatureC`, `flowKgPerS`, and `capacityKg`.
+
+| Signal key | Label | Unit | Range | Kind |
+| --- | --- | --- | --- | --- |
+| `water` | Spray header water | kg | 0 to 1000 | NUMBER |
+| `water_temperature` | Spray water temperature | degC | 0 to 300 | NUMBER |
+| `flow` | Spray flow | kg/s | 0 to 500 | NUMBER |
+
+The header meters its inventory once per containment tick. Its inlet accepts water from a pump line. No commands (read only).
 
 ## Containment penetration
 

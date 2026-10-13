@@ -161,6 +161,14 @@ public final class BoundaryStress {
 
     private List<BoundaryOpening> openings = List.of();
     private double ruptureVolumeM3;
+    /** A low-pressure RHR loop exposed to vessel pressure outside the drywell. */
+    private boolean interfacingSystemsLoca;
+    /** Representative shutdown-cooling isolation pressure; failure is a consequence, not a permissive. */
+    public static final double RHR_PIPE_DESIGN_PRESSURE_PSIG = 135.0;
+    public static final double RHR_INTERFACING_BREAK_FRACTION = 0.08;
+    public boolean isInterfacingSystemsLoca() { return interfacingSystemsLoca; }
+    public void forceInterfacingSystemsLoca() { interfacingSystemsLoca = true; }
+    public void repairInterfacingSystemsLine() { interfacingSystemsLoca = false; }
     public void setOpenings(List<BoundaryOpening> openings) { this.openings = List.copyOf(openings); }
     public double getRuptureVolumeM3() { return ruptureVolumeM3; }
     public void initialiseRuptureVolume(double volume) {
@@ -179,6 +187,12 @@ public final class BoundaryStress {
                 case RECIRCULATION_LINE -> new BoundaryOpening(c, -400, RECIRCULATION_BREAK_FLOW_FRACTION * RATED_CORE_FLOW_KG_PER_S, 1.5 * RATED_STEAM_FLOW_KG_PER_S);
                 case REACTOR_VESSEL_HEAD -> new BoundaryOpening(c, 60, HEAD_FAILURE_LIQUID_FRACTION * RATED_CORE_FLOW_KG_PER_S, HEAD_FAILURE_STEAM_MULTIPLE * RATED_STEAM_FLOW_KG_PER_S);
             });
+        }
+        if (interfacingSystemsLoca) {
+            // The opening's component is a solver tag; this separate break does
+            // not damage the vessel's feedwater line or its stress history.
+            result.add(new BoundaryOpening(BoundaryComponent.FEEDWATER_LINE, -100,
+                    RHR_INTERFACING_BREAK_FRACTION * RATED_CORE_FLOW_KG_PER_S, 0));
         }
         result.sort(java.util.Comparator.comparingDouble(BoundaryOpening::elevationIn).reversed());
         return List.copyOf(result);
@@ -360,6 +374,7 @@ public final class BoundaryStress {
         for (BoundaryComponent component : COMPONENTS) {
             repair(component);
         }
+        repairInterfacingSystemsLine();
     }
 
     /**
@@ -515,7 +530,7 @@ public final class BoundaryStress {
                 return true;
             }
         }
-        return false;
+        return interfacingSystemsLoca;
     }
 
     /** Whether a failure the plant does not come back from has occurred. */
@@ -619,7 +634,7 @@ public final class BoundaryStress {
 
     /** Number of doubles {@link #toArray()} produces. */
     public static final int LEGACY_SNAPSHOT_LENGTH = 6 + 2 * BoundaryComponent.values().length;
-    public static final int SNAPSHOT_LENGTH = LEGACY_SNAPSHOT_LENGTH + 1;
+    public static final int SNAPSHOT_LENGTH = LEGACY_SNAPSHOT_LENGTH + 2;
 
     /**
      * Snapshot for NBT persistence and client sync. Damage must survive a chunk
@@ -643,6 +658,7 @@ public final class BoundaryStress {
             a[6 + COMPONENTS.length + i] = broken[i] ? 1.0 : 0.0;
         }
         a[LEGACY_SNAPSHOT_LENGTH] = ruptureVolumeM3;
+        a[LEGACY_SNAPSHOT_LENGTH + 1] = interfacingSystemsLoca ? 1 : 0;
         return a;
     }
 
@@ -655,8 +671,9 @@ public final class BoundaryStress {
         if (a == null || a.length < LEGACY_SNAPSHOT_LENGTH) {
             return;
         }
-        ruptureVolumeM3 = a.length >= SNAPSHOT_LENGTH && Double.isFinite(a[LEGACY_SNAPSHOT_LENGTH])
+        ruptureVolumeM3 = a.length >= LEGACY_SNAPSHOT_LENGTH + 1 && Double.isFinite(a[LEGACY_SNAPSHOT_LENGTH])
                 ? Math.max(0, a[LEGACY_SNAPSHOT_LENGTH]) : 0;
+        interfacingSystemsLoca = a.length >= SNAPSHOT_LENGTH && a[LEGACY_SNAPSHOT_LENGTH + 1] != 0;
         clockSeconds = a[0];
         secondsAboveDesignPressure = a[1];
         secondsAboveCodePressure = a[2];

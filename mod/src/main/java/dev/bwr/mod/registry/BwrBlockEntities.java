@@ -139,6 +139,10 @@ public final class BwrBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.suppression.RhrHeatExchangerBlockEntity>> RHR_HEAT_EXCHANGER =
             BLOCK_ENTITIES.register("rhr_heat_exchanger",()->BlockEntityType.Builder.of(dev.bwr.mod.suppression.RhrHeatExchangerBlockEntity::new,
                     BwrBlocks.RHR_HEAT_EXCHANGER.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.containment.ContainmentSprayHeaderBlockEntity>> CONTAINMENT_SPRAY_HEADER =
+            BLOCK_ENTITIES.register("containment_spray_header", () -> BlockEntityType.Builder.of(
+                    dev.bwr.mod.containment.ContainmentSprayHeaderBlockEntity::new,
+                    BwrBlocks.CONTAINMENT_SPRAY_HEADER.get()).build(null));
 
     /**
      * One type for all six emergency injection machines. They differ only in
