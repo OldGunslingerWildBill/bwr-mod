@@ -77,6 +77,14 @@ print("hydrogen %", room.getHydrogenPercent())
 
 - The room solver uses cubic gas-cell volume and a single atmosphere; it does
   not simulate local gas eddies, stratification, or detailed radiation transport.
+- Drywell and wetwell pressure readouts refer to that **same atmosphere node**.
+  Steam and noncondensables share one inventory and temperature; there is no
+  separate drywell peak, wetwell peak, downcomer pressure drop, or intervolume
+  delay. The model's subcooled-pool DBA peak is 5.3 psig. NRC Mark I references
+  of 27 psig in the wetwell and 49.6 psig in the drywell are context, not
+  validated outputs. A `<50 psig` shared-node test cannot establish drywell
+  pressure margin. CC `getContainment()` reports `pressureModel = "single_node"`
+  and `pressureNodeCount = 1`; the two pressure fields are equal by design.
 - Corium heats and ablates the basemat through the alpha.30 lumped accident
   model. It can fail containment, but has no free-flowing fluid mesh.
 - Valve and wall ratings are gameplay approximations inspired by engineering

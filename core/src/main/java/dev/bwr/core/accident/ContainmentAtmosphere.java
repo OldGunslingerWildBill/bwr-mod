@@ -630,6 +630,11 @@ public final class ContainmentAtmosphere {
         return getPressurePsia() - ATMOSPHERIC_PA / PA_PER_PSI;
     }
 
+    /** Drywell and wetwell share one gas inventory and pressure in this model. */
+    public int getPressureNodeCount() { return 1; }
+    public double getDrywellPressurePsig() { return getPressurePsig(); }
+    public double getWetwellPressurePsig() { return getPressurePsig(); }
+
     public double getPeakPressurePsig() {
         return peakPressurePsig;
     }

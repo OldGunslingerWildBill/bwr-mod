@@ -231,6 +231,13 @@ inerting follow standard practice. Every threshold, time constant and rate is ga
 calibration and is documented as a named constant in
 `dev.bwr.core.accident.SevereAccident` and `ContainmentAtmosphere`.
 
-Not modelled: in-vessel steam explosions, debris recriticality, containment steam
-and temperature, hydrogen in the reactor building separately from containment,
+Phase J added steam mass, gas temperature, condensation, sprays, and linked-pool
+heat removal to that containment atmosphere. The drywell and wetwell readouts
+still expose **one common pressure node**. It has no separate drywell/wetwell
+volume, downcomer differential pressure, or distinct peak. The 5.3-psig
+subcooled-pool DBA peak cannot validate the NRC Mark I's 49.6-psig drywell
+peak or 27-psig wetwell peak. The `<50 psig` acceptance bound checks only the
+shared node.
+
+Not modelled: in-vessel steam explosions, debris recriticality, hydrogen in the reactor building separately from containment,
 igniters and recombiners, and a cleanup mechanic beyond decay.

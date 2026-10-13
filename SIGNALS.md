@@ -17,6 +17,9 @@ when nothing is there or the chunk is not loaded. It never loads a chunk and nev
   CC's `open()` (the valve opens when power returns) and returns whether the valve can move now, so an
   unpowered open returns `false` with the demand stored.
 * Keys are lowercase snake_case and stable. A LEVEL is a whole-number step (a rod notch, a damage stage).
+* Drywell and wetwell pressure signals are aliases of one shared containment
+  pressure node. `containment_pressure_nodes` or `pressure_nodes` reads `1`;
+  neither alias measures the physical drywell pressure peak independently.
 * Flow, head and energy ranges for pumps and cooling units differ per design; the table range is an upper
   bound and the device also reports `rated_flow` for scaling.
 * A command whose key equals a signal key (for example `open` on a valve) is the writable half of that
@@ -77,6 +80,7 @@ Block entity `ReactorControllerBlockEntity`; CC peripheral `bwr_reactor`.
 | `containment_gas_temp_c` | Containment gas temperature | degC | 0 to 400 | NUMBER |
 | `containment_drywell_pressure` | Drywell pressure | psig | -5 to 150 | NUMBER |
 | `containment_wetwell_pressure` | Wetwell pressure | psig | -5 to 150 | NUMBER |
+| `containment_pressure_nodes` | Containment pressure nodes | nodes | 0 to 1 | NUMBER |
 | `containment_spray_flow` | Containment spray | kg/s | 0 to 2500 | NUMBER |
 | `containment_inerted` | Containment inerted |  | 0 to 1 | BOOLEAN |
 | `containment_vent_open` | Containment vent open |  | 0 to 1 | BOOLEAN |
@@ -425,6 +429,7 @@ Block entity `ContainmentControllerBlockEntity`; CC peripheral `bwr_containment`
 | `gas_temperature` | Gas temperature | degC | 0 to 400 | NUMBER |
 | `drywell_pressure` | Drywell pressure | psig | -5 to 150 | NUMBER |
 | `wetwell_pressure` | Wetwell pressure | psig | -5 to 150 | NUMBER |
+| `pressure_nodes` | Pressure nodes | nodes | 0 to 1 | NUMBER |
 | `spray_flow` | Containment spray | kg/s | 0 to 2500 | NUMBER |
 
 Drywell and wetwell pressures use the same lumped airspace node in this version.

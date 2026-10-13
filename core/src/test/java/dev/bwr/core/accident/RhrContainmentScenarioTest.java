@@ -73,8 +73,11 @@ public final class RhrContainmentScenarioTest {
         // >25 psig assertion depended on the warmer wall incorrectly setting
         // the cap. The model still has to show a positive break-driven rise.
         Check.greaterThan(4, result.peakPsig(), "subcooled-pool DBA raises shared airspace pressure");
-        Check.lessThan(50, result.peakPsig(), "peak stays below cited Mark I 49.6 psig drywell value");
-        Check.note("DBA peak: %.1f psig (NRC Mark I wetwell 27, drywell 49.6); break %.0f kg/s; pool %.1f C, subcooling %.1f C",
+        // This is the common-node pressure only. A <50 psig assertion does
+        // not validate the separate 49.6-psig Mark I drywell peak; this model
+        // has no independent drywell gas volume or downcomer pressure drop.
+        Check.lessThan(50, result.peakPsig(), "shared-node peak below 50 psig; no drywell validation");
+        Check.note("DBA shared-node peak: %.1f psig (reference Mark I wetwell 27, drywell 49.6; neither resolved); break %.0f kg/s; pool %.1f C, subcooling %.1f C",
                 result.peakPsig(), result.peakSteamKgPerS(), pool.getTemperatureC(), pool.getSubcoolingC());
     }
 

@@ -135,4 +135,15 @@ public final class ContainmentSteamTest {
                 "airspace steam falls to linked cold-pool saturation");
         Check.greaterThan(313.15, room.getWallTemperatureK(), "wall is still hotter than pool");
     }
+
+    public static void test08_drywellAndWetwellExposeOneSharedPressureNode() {
+        var room = new ContainmentAtmosphere();
+        room.setSteamInputs(new ContainmentAtmosphere.SteamInputs(120, 2800, 0, 0, 0, 0));
+        room.step(0, 0, 0, .05);
+        Check.exactly(1, room.getPressureNodeCount(), "one shared containment pressure node");
+        Check.exactly(room.getPressurePsig(), room.getDrywellPressurePsig(),
+                "drywell readout is the common node");
+        Check.exactly(room.getPressurePsig(), room.getWetwellPressurePsig(),
+                "wetwell readout is the common node");
+    }
 }
