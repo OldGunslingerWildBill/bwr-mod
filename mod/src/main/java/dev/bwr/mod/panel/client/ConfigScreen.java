@@ -8,6 +8,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -163,7 +164,11 @@ public final class ConfigScreen extends Screen {
             }
             row++;
         }
-        super.render(graphics, mouseX, mouseY, partial);
+        // Screen.render blurs the background again. We already drew it above; drawing it twice
+        // blurs this screen's title and labels while widgets remain sharp.
+        for (Renderable widget : renderables) {
+            widget.render(graphics, mouseX, mouseY, partial);
+        }
     }
 
     @Override

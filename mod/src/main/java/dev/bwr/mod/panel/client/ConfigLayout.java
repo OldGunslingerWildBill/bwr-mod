@@ -17,7 +17,7 @@ public final class ConfigLayout {
     public final int panelBottom;
 
     public ConfigLayout(int screenWidth, int screenHeight, int rowCount) {
-        this.width = Math.min(300, screenWidth - 20);
+        this.width = Math.min(380, screenWidth - 20);
         this.left = (screenWidth - width) / 2;
         int available = screenHeight - 20 - 24 - 36;
         this.rowHeight = Math.max(18, Math.min(24, available / Math.max(1, rowCount)));

@@ -47,12 +47,14 @@ public final class BindScreen extends Screen {
 
         addRenderableWidget(CycleButton.<BindModel.PortChoice>builder(BindModel.PortChoice::text)
                 .withValues(model.choices).withInitialValue(model.port)
+                .displayOnlyValue()
                 .create(layout.left, layout.portY, layout.width, 20, Component.empty(), (button, value) -> {
                     model.choose(value);
                     rebuildWidgets();
                 }));
         addRenderableWidget(CycleButton.<BindModel.Mode>builder(mode -> Component.translatable(mode.translationKey()))
                 .withValues(model.modes()).withInitialValue(model.mode)
+                .displayOnlyValue()
                 .create(layout.left, layout.modeY, layout.width, 20, Component.empty(), (button, value) -> {
                     model.setMode(value);
                     rebuildWidgets();
@@ -198,7 +200,11 @@ public final class BindScreen extends Screen {
                         layout.scaleY + 6, 0xCCCCCC);
             }
         }
-        super.render(graphics, mouseX, mouseY, partial);
+        // The backdrop was already drawn above. Calling Screen.render here applies a second
+        // blur after the heading and status have been drawn.
+        for (var widget : renderables) {
+            widget.render(graphics, mouseX, mouseY, partial);
+        }
     }
 
     @Override

@@ -212,7 +212,7 @@
   "component.bwr.field.positions": "Positions",
   "component.bwr.field.names": "Position names (comma separated)",
   "component.bwr.field.knob_color": "Knob colour",
-  "component.bwr.field.spring": "Spring return to NORMAL",
+  "component.bwr.field.spring": "Return to NORMAL",
   "component.bwr.field.close_text": "CLOSE caption",
   "component.bwr.field.normal_text": "NORMAL caption",
   "component.bwr.field.open_text": "OPEN caption",
