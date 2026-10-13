@@ -39,7 +39,7 @@ public final class SpecialtyRodItem extends Item {
         else lines.add(Component.literal("Absorbs neutrons without producing fission power.").withStyle(ChatFormatting.GRAY));
         if (insert.kind() == CoreInsert.Kind.TRITIUM_TARGET) {
             lines.add(Component.literal(String.format(Locale.ROOT, "Harvest: %,d sealed tritium samples + empty rod.",
-                    TRITIUM_SAMPLES_PER_ROD)).withStyle(ChatFormatting.AQUA));
+                    dev.bwr.mod.config.GameplayConfig.tritiumSamplesPerRod())).withStyle(ChatFormatting.AQUA));
             lines.add(Component.literal("Experimental BWR target, adapted for gameplay.").withStyle(ChatFormatting.GRAY));
         }
         if (insert.complete()) lines.add(Component.literal("Use in hand to harvest the sample and recover the empty rod.").withStyle(ChatFormatting.GREEN));
@@ -56,7 +56,8 @@ public final class SpecialtyRodItem extends Item {
                 default -> throw new IllegalStateException("Not a harvestable target");
             };
             held.shrink(1);
-            give(player, product, insert.kind() == CoreInsert.Kind.TRITIUM_TARGET ? TRITIUM_SAMPLES_PER_ROD : 1);
+            give(player, product, insert.kind() == CoreInsert.Kind.TRITIUM_TARGET
+                    ? dev.bwr.mod.config.GameplayConfig.tritiumSamplesPerRod() : 1);
             give(player, BwrItems.IRRADIATION_CASING.get(), 1);
         }
         return InteractionResultHolder.sidedSuccess(held, level.isClientSide());

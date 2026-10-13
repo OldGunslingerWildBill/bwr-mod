@@ -221,6 +221,8 @@ public final class SevereAccident {
     // ---------------------------------------------------------------
 
     private double sizeScale = 1.0;
+    /** Rate multiplier for phenomenological progression, not heat capacity or decay heat. */
+    private double progressionMultiplier = 1.0;
 
     // ---------------------------------------------------------------
     // State (all monotonic except the debris temperature)
@@ -272,6 +274,12 @@ public final class SevereAccident {
     public double getSizeScale() {
         return sizeScale;
     }
+
+    public void setProgressionMultiplier(double multiplier) {
+        if (Double.isFinite(multiplier) && multiplier > 0.0) progressionMultiplier = multiplier;
+    }
+
+    public double getProgressionMultiplier() { return progressionMultiplier; }
 
     // ---------------------------------------------------------------
     // Step
@@ -342,7 +350,7 @@ public final class SevereAccident {
 
         // --- 5b. Relocation into the lower plenum, or straight out of a breached head.
         if (moltenInCoreFraction > 0.0) {
-            double moved = moltenInCoreFraction * (1.0 - Math.exp(-dtSeconds / RELOCATION_TIME_CONSTANT_S));
+            double moved = moltenInCoreFraction * (1.0 - Math.exp(-dtSeconds * progressionMultiplier / RELOCATION_TIME_CONSTANT_S));
             moltenInCoreFraction -= moved;
             if (lowerHeadFailed) {
                 exVesselFraction += moved;
@@ -380,7 +388,8 @@ public final class SevereAccident {
             double creep = Math.max(0.0, (debrisTemperatureC - LOWER_HEAD_CREEP_ONSET_C) / LOWER_HEAD_CREEP_SPAN_C);
             double pressureFactor = 0.4 + 0.6 * clamp(pressure / PhysicalConstants.RATED_DOME_PRESSURE_PSIG, 0.0, 1.2);
             double loading = Math.min(1.0, relocatedInVesselFraction / LOWER_HEAD_LOADING_FRACTION);
-            lowerHeadDamage += creep * creep * pressureFactor * loading * dtSeconds / LOWER_HEAD_FAILURE_TIME_S;
+            lowerHeadDamage += creep * creep * pressureFactor * loading * dtSeconds
+                    * progressionMultiplier / LOWER_HEAD_FAILURE_TIME_S;
             if (lowerHeadDamage >= 1.0) {
                 lowerHeadDamage = 1.0;
                 lowerHeadFailed = true;
@@ -401,7 +410,8 @@ public final class SevereAccident {
                     Math.min(waterCapacityMW, FLOODED_CORIUM_FLUX_LIMIT_MW_PER_M2 * area));
             double uncooledMW = exVesselDecayHeatMW - coriumWaterCoolingMW;
             if (uncooledMW > 0.0) {
-                double concreteKgPerS = DOWNWARD_HEAT_FRACTION * uncooledMW / CONCRETE_ABLATION_MJ_PER_KG;
+                double concreteKgPerS = DOWNWARD_HEAT_FRACTION * uncooledMW
+                        / CONCRETE_ABLATION_MJ_PER_KG * progressionMultiplier;
                 ablationRateMPerS = concreteKgPerS / CONCRETE_DENSITY_KG_PER_M3 / area;
                 ablationDepthM += ablationRateMPerS * dtSeconds;
                 concreteGasMolPerS = concreteKgPerS * CONCRETE_GAS_MOL_PER_KG;
@@ -411,7 +421,7 @@ public final class SevereAccident {
                         * uncooledMW / Math.max(1.0e-9, exVesselDecayHeatMW);
                 if (target > exVesselReleaseFraction) {
                     exVesselReleaseFraction += (target - exVesselReleaseFraction)
-                            * (1.0 - Math.exp(-dtSeconds / EX_VESSEL_RELEASE_TIME_CONSTANT_S));
+                            * (1.0 - Math.exp(-dtSeconds * progressionMultiplier / EX_VESSEL_RELEASE_TIME_CONSTANT_S));
                 }
                 if (ablationDepthM >= BASEMAT_THICKNESS_M) {
                     ablationDepthM = BASEMAT_THICKNESS_M;

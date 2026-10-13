@@ -223,6 +223,14 @@ public final class BoundaryStress {
 
     private boolean irradiatedFuelPresent;
     private double lastFailureRatePerSecond;
+    private double failureHazardPerSecond = HAZARD_PER_SECOND;
+
+    /** Server gameplay calibration; zero disables random rupture, not wear. */
+    public void setFailureHazardPerSecond(double hazard) {
+        if (Double.isFinite(hazard) && hazard >= 0.0) failureHazardPerSecond = hazard;
+    }
+
+    public double getFailureHazardPerSecond() { return failureHazardPerSecond; }
 
     /** A pristine boundary on a jet pump plant. */
     public BoundaryStress() {
@@ -323,7 +331,7 @@ public final class BoundaryStress {
             double gate = component == BoundaryComponent.REACTOR_VESSEL_HEAD
                     ? CODE_PRESSURE_PSIG : DESIGN_PRESSURE_PSIG;
             double exceedance = Math.max(0, (pressurePsig - gate) / CODE_MARGIN_PSI);
-            hazard[i] = HAZARD_PER_SECOND * exceedance * excess;
+            hazard[i] = failureHazardPerSecond * exceedance * excess;
             total += hazard[i];
         }
         lastFailureRatePerSecond = total;

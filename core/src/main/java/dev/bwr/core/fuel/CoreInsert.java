@@ -10,11 +10,15 @@ public final class CoreInsert {
         COBALT_TARGET(0.3, 0, 72 * 3600.0), TRITIUM_TARGET(0.5, 0, 168 * 3600.0),
         SILICON_TARGET(0.05, 0, 24 * 3600.0);
 
-        public final double absorptionRatio, sourcePerSecond, exposureSeconds;
+        public final double absorptionRatio, sourcePerSecond;
+        public volatile double exposureSeconds;
         Kind(double absorption, double source, double exposure) {
             absorptionRatio = absorption; sourcePerSecond = source; exposureSeconds = exposure;
         }
         public String id() { return name().toLowerCase(java.util.Locale.ROOT); }
+        public void setExposureSeconds(double seconds) {
+            if (Double.isFinite(seconds) && seconds > 0 && exposureSeconds > 0) exposureSeconds = seconds;
+        }
         public boolean target() { return this == COBALT_TARGET || this == TRITIUM_TARGET || this == SILICON_TARGET; }
     }
 

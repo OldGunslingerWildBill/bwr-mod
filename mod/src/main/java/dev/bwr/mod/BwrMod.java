@@ -42,6 +42,12 @@ public final class BwrMod {
                 dev.bwr.mod.containment.ContainmentConfig.SPEC);
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER,
                 dev.bwr.mod.accident.CoriumConfig.SPEC);
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER,
+                dev.bwr.mod.config.GameplayConfig.SPEC, "bwr-gameplay.toml");
+        modBus.addListener(net.neoforged.fml.event.config.ModConfigEvent.Loading.class,
+                event -> dev.bwr.mod.config.GameplayConfig.refreshIrradiationTimes());
+        modBus.addListener(net.neoforged.fml.event.config.ModConfigEvent.Reloading.class,
+                event -> dev.bwr.mod.config.GameplayConfig.refreshIrradiationTimes());
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON,
                 dev.bwr.mod.panel.PanelConfig.SPEC, "bwr-panels.toml");
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT,

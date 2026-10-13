@@ -42,7 +42,9 @@ public final class ContainmentStrength {
         Double direct = blockOverrides.get(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
         if (direct != null) return direct;
         for (var override : tagOverrides.entrySet()) if (state.is(override.getKey())) return override.getValue();
-        return ContainmentWallStrength.psi(state.getExplosionResistance(level, pos, null));
+        return ContainmentWallStrength.psi(state.getExplosionResistance(level, pos, null),
+                dev.bwr.mod.config.GameplayConfig.wallStrengthK(),
+                dev.bwr.mod.config.GameplayConfig.wallStrengthCapPsig());
     }
 
     public static Column rate(Level level, ContainmentControllerBlockEntity.BoundaryFace face, int depth) {

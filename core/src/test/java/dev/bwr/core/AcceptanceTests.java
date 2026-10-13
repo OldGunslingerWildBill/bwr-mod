@@ -101,6 +101,7 @@ public final class AcceptanceTests {
             SevereAccidentEscalationTest.class,
             QuenchSpikeRefloodTest.class,
             DamageBookkeepingTest.class,
+            GameplayTuningTest.class,
             dev.bwr.core.accident.CoreMeltProgressionTest.class,
             dev.bwr.core.accident.ContainmentHydrogenTest.class,
             dev.bwr.core.accident.ContainmentSteamTest.class,

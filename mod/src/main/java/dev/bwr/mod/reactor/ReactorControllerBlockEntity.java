@@ -228,6 +228,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             return;
         }
 
+        dev.bwr.mod.config.GameplayConfig.applyTo(core);
+
         refreshFuelDefinitions();
         gatherPumpFlow(level);
         applyVesselSteamDischarge(level);

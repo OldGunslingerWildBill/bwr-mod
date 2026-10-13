@@ -172,7 +172,7 @@ public final class ReactorSevereAccidentEffects {
             }
             double hazard = plant / (1.0 + d2 / (PLANT_HALF_DISTANCE_BLOCKS * PLANT_HALF_DISTANCE_BLOCKS))
                     + SITE_HAZARD_WEIGHT * site / (1.0 + d2 / (SITE_HALF_DISTANCE_BLOCKS * SITE_HALF_DISTANCE_BLOCKS));
-            dose(player, hazard);
+            dose(player, hazard * dev.bwr.mod.config.GameplayConfig.contaminationDoseMultiplier());
         }
     }
 

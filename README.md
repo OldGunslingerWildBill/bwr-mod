@@ -11,6 +11,9 @@ flow, and the reactor responds. There is no commanded burn rate.
 
 **Current version:** `0.1.0-alpha.32` — RHR containment physics and optional GPU visuals, October 13, 2026.
 
+Server operators can adjust the gameplay calibration in `serverconfig/bwr-gameplay.toml`;
+see the [Phase L1 settings guide](PHASE-L1-REVIEW.md) for defaults and effects.
+
 **Alpha.31:** surround the reactor and a suppression pool with a solid containment
 room. Its controller surveys free volume and wall strength, reports leaks and
 openings, and links the vessel to the simulated atmosphere. Install rated steam,

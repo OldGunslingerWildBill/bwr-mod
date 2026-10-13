@@ -162,6 +162,7 @@ public final class ContainmentAtmosphere {
 
     private double volumeM3 = FREE_VOLUME_AT_RATED_M3;
     private double failurePressurePsig = FAILURE_PRESSURE_PSIG;
+    private double contaminationHalfLifeSeconds = CONTAMINATION_HALF_LIFE_S;
     private double leakArea;
     private double nitrogenMol;
     private double oxygenMol;
@@ -251,6 +252,12 @@ public final class ContainmentAtmosphere {
     public double getFailurePressurePsig() {
         return failurePressurePsig;
     }
+
+    public void setContaminationHalfLifeSeconds(double seconds) {
+        if (Double.isFinite(seconds) && seconds > 0.0) contaminationHalfLifeSeconds = seconds;
+    }
+
+    public double getContaminationHalfLifeSeconds() { return contaminationHalfLifeSeconds; }
 
     /** Fractional opening in the boundary; zero is sealed and one is outdoors. */
     public void setLeakArea(double fraction) {
@@ -461,7 +468,7 @@ public final class ContainmentAtmosphere {
         airborneFraction -= settled;
         depositedFraction += settled;
         plantContamination += settled;
-        double decay = Math.exp(-dtSeconds * Math.log(2.0) / CONTAMINATION_HALF_LIFE_S);
+        double decay = Math.exp(-dtSeconds * Math.log(2.0) / contaminationHalfLifeSeconds);
         plantContamination *= decay;
         siteContamination *= decay;
 
