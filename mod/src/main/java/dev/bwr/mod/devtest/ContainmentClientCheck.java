@@ -39,7 +39,7 @@ public final class ContainmentClientCheck {
     private static final BlockPos VAULT4 = new BlockPos(42, 121, 30);
     private static final BlockPos AIRLOCK = new BlockPos(55, 121, 30);
     private static final String[] NAMES = {"vaults-closed", "vault-3-mid-swing", "vault-4-mid-swing",
-            "airlock-closed", "airlock-open", "penetrations", "corium-hot-cold"};
+            "airlock-closed", "airlock-mid-swing", "airlock-open", "penetrations", "corium-hot-cold"};
     private static boolean started, built, requested;
     private static int age, joined, stage, shown;
 
@@ -96,16 +96,16 @@ public final class ContainmentClientCheck {
                     case 0 -> new Vec3(37, 125, 18);
                     case 1 -> new Vec3(34, 124, 22);
                     case 2 -> new Vec3(43, 124, 22);
-                    case 3, 4 -> new Vec3(55, 123, 22);
-                    case 5 -> new Vec3(75, 124, 23);
+                    case 3, 4, 5 -> new Vec3(55, 123, 22);
+                    case 6 -> new Vec3(75, 124, 23);
                     default -> new Vec3(92, 125, 22);
                 };
                 Vec3 target = switch (selected) {
                     case 0 -> new Vec3(38, 123, 30);
                     case 1 -> Vec3.atCenterOf(VAULT3.above());
                     case 2 -> Vec3.atCenterOf(VAULT4.above());
-                    case 3, 4 -> Vec3.atCenterOf(AIRLOCK.above());
-                    case 5 -> new Vec3(75, 122, 30);
+                    case 3, 4, 5 -> Vec3.atCenterOf(AIRLOCK.above());
+                    case 6 -> new Vec3(75, 122, 30);
                     default -> new Vec3(92, 121, 30);
                 };
                 Vec3 delta = target.subtract(camera);
@@ -114,12 +114,12 @@ public final class ContainmentClientCheck {
                 player.setNoGravity(true);
                 player.getAbilities().flying = true;
                 player.onUpdateAbilities();
-                level.setDayTime(selected == 6 ? 18_000 : 6_000);
+                level.setDayTime(selected == 7 ? 18_000 : 6_000);
                 level.setWeatherParameters(6000, 0, false, false);
                 player.connection.teleport(camera.x, camera.y, camera.z, yaw, pitch);
             });
         }
-        if (++shown < (stage == 1 || stage == 2 ? 75 : 95)) return;
+        if (++shown < (stage == 1 || stage == 2 ? 75 : stage == 4 ? 5 : 95)) return;
         if (stage == 1 || stage == 2) {
             BlockPos doorPos = stage == 1 ? VAULT3 : VAULT4;
             if (!(mc.level.getBlockEntity(doorPos) instanceof ContainmentVaultDoorBlockEntity door)
@@ -127,6 +127,18 @@ public final class ContainmentClientCheck {
                 throw new AssertionError("Vault door was not mid-swing in the client at " + doorPos);
             }
         }
+        if (stage == 4) {
+            if (!(mc.level.getBlockEntity(AIRLOCK) instanceof ContainmentAirlockBlockEntity airlock)
+                    || !airlock.innerOpen() || airlock.innerSwing(0) < 0.40) {
+                if (shown < 60) return;
+                throw new AssertionError("Airlock did not start a visible client swing");
+            }
+            if (airlock.innerSwing(0) >= 0.75)
+                throw new AssertionError("Airlock finished swinging before the mid-swing capture");
+        }
+        if (stage == 5 && (!(mc.level.getBlockEntity(AIRLOCK) instanceof ContainmentAirlockBlockEntity airlock)
+                || airlock.innerSwing(0) < 0.99))
+            throw new AssertionError("Airlock did not finish its visual swing");
         try {
             var directory = mc.gameDirectory.toPath().resolve("containment-client-check");
             Files.createDirectories(directory);

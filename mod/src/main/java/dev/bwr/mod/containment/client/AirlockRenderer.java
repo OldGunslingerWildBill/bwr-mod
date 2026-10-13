@@ -36,10 +36,10 @@ public final class AirlockRenderer implements BlockEntityRenderer<ContainmentAir
         pose.pushPose();pose.translate(.5,0,.5);pose.mulPose(Axis.YP.rotationDegrees(-angle));pose.translate(-.5,0,-.5);
         MachineMeshCache.model(FRAME,pose,buffers,light,overlay);
         pose.pushPose();pose.translate(.11,0,0);
-        if(be.innerOpen())pose.mulPose(Axis.YP.rotationDegrees(-82));
+        pose.mulPose(Axis.YP.rotationDegrees(-82*be.innerSwing(partial)));
         pose.translate(-.11,0,0);MachineMeshCache.model(INNER,pose,buffers,light,overlay);pose.popPose();
         pose.pushPose();pose.translate(.11,0,2.5);
-        if(be.outerOpen())pose.mulPose(Axis.YP.rotationDegrees(82));
+        pose.mulPose(Axis.YP.rotationDegrees(82*be.outerSwing(partial)));
         pose.translate(-.11,0,-2.5);MachineMeshCache.model(OUTER,pose,buffers,light,overlay);pose.popPose();
         pose.popPose();
     }

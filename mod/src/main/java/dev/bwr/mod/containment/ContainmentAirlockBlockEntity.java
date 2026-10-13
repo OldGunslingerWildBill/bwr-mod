@@ -13,9 +13,28 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class ContainmentAirlockBlockEntity extends BlockEntity {
     private boolean innerOpen,outerOpen,override,computerControlled,damaged;
     private boolean redstoneHigh,nextOuter;
+    // Render-only interpolation. The authoritative interlock state above changes immediately;
+    // no ticker, save field, or delayed gameplay transition is needed.
+    private float innerVisual=Float.NaN,outerVisual=Float.NaN;
+    private double visualTime=Double.NaN;
     public ContainmentAirlockBlockEntity(BlockPos pos,BlockState state){super(BwrBlockEntities.CONTAINMENT_AIRLOCK.get(),pos,state);}
     public boolean innerOpen(){return innerOpen;}
     public boolean outerOpen(){return outerOpen;}
+    public float innerSwing(float partial){advanceVisual(partial);return innerVisual;}
+    public float outerSwing(float partial){advanceVisual(partial);return outerVisual;}
+    private void advanceVisual(float partial){
+        double now=level==null?0:level.getGameTime()+partial;
+        if(!Double.isFinite(visualTime)){
+            innerVisual=innerOpen?1:0;outerVisual=outerOpen?1:0;visualTime=now;return;
+        }
+        float distance=(float)Math.clamp((now-visualTime)/12.0,0.0,1.0);
+        innerVisual=approach(innerVisual,innerOpen?1:0,distance);
+        outerVisual=approach(outerVisual,outerOpen?1:0,distance);
+        visualTime=now;
+    }
+    private static float approach(float current,float target,float distance){
+        return current<target?Math.min(target,current+distance):Math.max(target,current-distance);
+    }
     public boolean override(){return override;}
     public boolean damaged(){return damaged;}
     public boolean isComputerControlled(){return computerControlled;}
