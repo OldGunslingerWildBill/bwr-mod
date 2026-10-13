@@ -267,6 +267,9 @@ paint (#A7BCAE face, #7D9284 bezel), black engraved nameplates, amber/red/
 green segment colors, backlit annunciator tiles. Lamps and displays render
 full-bright (emissive). The US color convention is red = open/running, green =
 closed/stopped, and lamps also carry text so color isn't the only cue.
+Glowing (emissive) geometry is drawn with the full-bright packed light and an up-facing normal, so the entity
+shader neither darkens it with the world light at night nor shades it by the face's angle; unlit lamps, segments
+and tiles, and pushbutton caps that are not held, stay at world light.
 
 ## 10. Rendering and models
 

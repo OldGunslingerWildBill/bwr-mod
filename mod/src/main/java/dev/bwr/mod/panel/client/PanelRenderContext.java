@@ -86,6 +86,15 @@ public final class PanelRenderContext implements QuadSink {
         this.originV = component.y();
     }
 
+    /**
+     * The packed light a quad or glyph is drawn with: full bright for glowing elements (a lit lamp, a lit
+     * annunciator tile, a lit segment, a display), the world light at the block otherwise. Every emissive path in
+     * this class goes through here.
+     */
+    public static int packedLight(boolean emissive, int worldLight) {
+        return emissive ? LightTexture.FULL_BRIGHT : worldLight;
+    }
+
     /** {@link #LOD_FULL} close up, {@link #LOD_REDUCED} beyond 24 blocks (skip text and fine detail). */
     public int lod() {
         return lod;
@@ -114,14 +123,16 @@ public final class PanelRenderContext implements QuadSink {
     public void quad(float x0, float y0, float z0, float x1, float y1, float z1,
                      float x2, float y2, float z2, float x3, float y3, float z3,
                      int rgb, int normal, boolean emissive) {
-        int packedLight = emissive ? LightTexture.FULL_BRIGHT : light;
+        int packedLight = packedLight(emissive, light);
         int r = (rgb >> 16) & 0xFF;
         int g = (rgb >> 8) & 0xFF;
         int b = rgb & 0xFF;
+        // A glowing quad also ignores the directional shading of the entity shader: it gets the world-up normal,
+        // which the shader lights to full strength, so its colour is shown as authored whatever the face's angle.
         int n = normal * 3;
-        float nx = normals[n];
-        float ny = normals[n + 1];
-        float nz = normals[n + 2];
+        float nx = emissive ? 0.0f : normals[n];
+        float ny = emissive ? 1.0f : normals[n + 1];
+        float nz = emissive ? 0.0f : normals[n + 2];
         vertex(x0, y0, z0, r, g, b, packedLight, nx, ny, nz);
         vertex(x1, y1, z1, r, g, b, packedLight, nx, ny, nz);
         vertex(x2, y2, z2, r, g, b, packedLight, nx, ny, nz);
@@ -159,7 +170,7 @@ public final class PanelRenderContext implements QuadSink {
         textMatrix.mul(basis);
         textMatrix.scale(scale, scale / rowAspect(), scale);
         font.drawInBatch(text, 0.0f, 0.0f, 0xFF000000 | rgb, false, textMatrix, buffers,
-                Font.DisplayMode.POLYGON_OFFSET, 0, emissive ? LightTexture.FULL_BRIGHT : light);
+                Font.DisplayMode.POLYGON_OFFSET, 0, packedLight(emissive, light));
         consumer = null;
     }
 
@@ -174,11 +185,11 @@ public final class PanelRenderContext implements QuadSink {
      * objects of its own.
      */
     public void texturedRect(RenderType type, float x, float y, float w, float h, float z, boolean emissive) {
-        int packedLight = emissive ? LightTexture.FULL_BRIGHT : light;
+        int packedLight = packedLight(emissive, light);
         VertexConsumer out = buffers.getBuffer(type);
-        float nx = normals[0];
-        float ny = normals[1];
-        float nz = normals[2];
+        float nx = emissive ? 0.0f : normals[0];
+        float ny = emissive ? 1.0f : normals[1];
+        float nz = emissive ? 0.0f : normals[2];
         textured(out, x, y, z, 0.0f, 0.0f, packedLight, nx, ny, nz);
         textured(out, x + w, y, z, 1.0f, 0.0f, packedLight, nx, ny, nz);
         textured(out, x + w, y + h, z, 1.0f, 1.0f, packedLight, nx, ny, nz);
