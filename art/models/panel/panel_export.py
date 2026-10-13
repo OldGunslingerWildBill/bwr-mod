@@ -225,7 +225,9 @@ def preview(path, footprint_w, footprint_h, views=("front", "three_quarter", "si
     bd.data.materials.append(material("backdrop", "A7BCAE", 0.8))
     sun = bpy.data.objects.new("sun", bpy.data.lights.new("sun", "SUN"))
     sun.data.energy = 3.5
-    sun.rotation_euler = (math.radians(40), math.radians(-25), math.radians(20))
+    # Light from the upper left, as from control-room ceiling lights. (+Y is UP on the
+    # face here, so a positive X tilt would light the model from below.)
+    sun.rotation_euler = (math.radians(-40), math.radians(-25), math.radians(20))
     scene.collection.objects.link(sun)
     cam = bpy.data.objects.new("cam", bpy.data.cameras.new("cam"))
     scene.collection.objects.link(cam)
@@ -254,5 +256,12 @@ def preview(path, footprint_w, footprint_h, views=("front", "three_quarter", "si
         scene.render.filepath = out
         bpy.ops.render.render(write_still=True)
         outs.append(out)
+    # Remove everything this call added, so repeated previews of one scene (e.g. a
+    # needle at min / mid / max) do not stack suns and over-expose later renders.
     bpy.data.objects.remove(bd)
+    light, camera = sun.data, cam.data
+    bpy.data.objects.remove(sun)
+    bpy.data.objects.remove(cam)
+    bpy.data.lights.remove(light)
+    bpy.data.cameras.remove(camera)
     return outs
