@@ -307,7 +307,7 @@ public final class ReactorStateRoundTripTest {
                 snapshot.fuelExcessReactivityDkOverK(),
                 snapshot.dopplerCoefficientPerCAtAnchor(),
                 snapshot.elapsedSeconds(), snapshot.scramActive(),
-                snapshot.intermediateRangeMonitorRanges(), new double[3]);
+                snapshot.intermediateRangeMonitorRanges(), new double[3], snapshot.metalTemperatureC());
 
         boolean refused = false;
         try {

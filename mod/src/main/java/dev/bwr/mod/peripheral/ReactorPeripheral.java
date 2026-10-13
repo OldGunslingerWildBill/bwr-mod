@@ -744,6 +744,11 @@ public class ReactorPeripheral implements IPeripheral {
     }
 
     @LuaFunction(mainThread = true)
+    public final double getVesselMetalTemperature() throws LuaException {
+        return core().getPressureVessel().getMetalTemperatureC();
+    }
+
+    @LuaFunction(mainThread = true)
     public final double getFuelTemperature() throws LuaException {
         return core().getFuelTemperatureC();
     }
@@ -1145,6 +1150,9 @@ public class ReactorPeripheral implements IPeripheral {
         m.put("containmentHydrogenPercent", c.getContainment().getHydrogenPercent());
         m.put("containmentPressure", c.getContainment().getPressurePsig());
         m.put("shutdownCoolingMW", c.getShutdownCoolingMW());
+        m.put("vesselMetalTempC", c.getPressureVessel().getMetalTemperatureC());
+        m.put("cooldownRateCPerHour", c.getBoundaryStress().getLastCooldownRateCPerHour());
+        m.put("cooldownThermalStress", c.getBoundaryStress().getCooldownThermalStress());
         m.put("interfacingSystemsLoca", c.getBoundaryStress().isInterfacingSystemsLoca());
         m.put("boron", c.getBoronPpm());
         m.put("kInfinity", c.getAggregateKInfinity());

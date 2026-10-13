@@ -211,7 +211,8 @@ public record ReactorState(
         double elapsedSeconds,
         boolean scramActive,
         int[] intermediateRangeMonitorRanges,
-        double[] rodPositionsNotches
+        double[] rodPositionsNotches,
+        double metalTemperatureC
 ) {
     /**
      * Defensive copy on construction. These arrays cross the physics/Minecraft

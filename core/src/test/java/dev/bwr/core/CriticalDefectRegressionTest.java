@@ -243,7 +243,8 @@ public final class CriticalDefectRegressionTest {
                 state.betaEff(), state.promptLifetime(), state.rodFluxWeights(),
                 state.fuelExcessReactivityDkOverK(),
                 state.dopplerCoefficientPerCAtAnchor(), state.elapsedSeconds(),
-                state.scramActive(), state.intermediateRangeMonitorRanges(), state.rodPositionsNotches());
+                state.scramActive(), state.intermediateRangeMonitorRanges(), state.rodPositionsNotches(),
+                state.metalTemperatureC());
     }
 
     // ---------------------------------------------------------------
@@ -330,7 +331,7 @@ public final class CriticalDefectRegressionTest {
                 state.betaEff(), state.promptLifetime(), state.rodFluxWeights(),
                 state.fuelExcessReactivityDkOverK(),
                 state.dopplerCoefficientPerCAtAnchor(), state.elapsedSeconds(),
-                state.scramActive(), ranges, state.rodPositionsNotches());
+                state.scramActive(), ranges, state.rodPositionsNotches(), state.metalTemperatureC());
     }
 
     // ---------------------------------------------------------------
@@ -581,7 +582,8 @@ public final class CriticalDefectRegressionTest {
                 state.betaEff(), state.promptLifetime(), state.rodFluxWeights(),
                 state.fuelExcessReactivityDkOverK(),
                 state.dopplerCoefficientPerCAtAnchor(), state.elapsedSeconds(),
-                state.scramActive(), state.intermediateRangeMonitorRanges(), state.rodPositionsNotches());
+                state.scramActive(), state.intermediateRangeMonitorRanges(), state.rodPositionsNotches(),
+                state.metalTemperatureC());
     }
 
     // ---------------------------------------------------------------

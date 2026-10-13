@@ -4,7 +4,8 @@ import dev.bwr.core.thermal.*;
 /** Finite secondary inventory and a closed primary pool loop. The circuits exchange only heat. */
 public final class RhrHeatExchanger {
     public static final int CAPACITY_KG=12_000;
-    public static final double COLD_C=13,HOT_DESIGN_C=24,SECONDARY_FLOW=2400,RATING_MW=100;
+    /** 92.5 million Btu/h for a representative BWR RHR exchanger (EPRI 1012129), or 27.1 MW. */
+    public static final double COLD_C=13,HOT_DESIGN_C=24,SECONDARY_FLOW=2400,RATING_MW=27.1;
     private static final double CP=4.184;
     private final WaterInventory cold=new WaterInventory(CAPACITY_KG,COLD_C),hot=new WaterInventory(CAPACITY_KG,COLD_C);
     private double primaryFlow,secondaryFlow,heatMW,primaryOutC,secondaryOutC;

@@ -166,6 +166,29 @@ public final class BoundaryStress {
     /** Representative shutdown-cooling isolation pressure; failure is a consequence, not a permissive. */
     public static final double RHR_PIPE_DESIGN_PRESSURE_PSIG = 135.0;
     public static final double RHR_INTERFACING_BREAK_FRACTION = 0.08;
+    /** 100 F/h is 55.56 C/h; NRC BWR event report, REFERENCE-DATA.md §12. */
+    public static final double COOLDOWN_LIMIT_C_PER_HOUR = 100.0 / 1.8;
+    /** Calibration: life used in one hour at twice the rate limit. */
+    public static final double COOLDOWN_STRESS_PER_EXCESS_HOUR = 0.05;
+    private double cooldownThermalStress;
+    private double secondsAboveCooldownLimit;
+    private double lastCooldownRateCPerHour;
+
+    /** Record a physical thermal transient without operating any valve or pump. */
+    public void recordCooldownRateCPerHour(double rateCPerHour, double dtSeconds) {
+        if (!(dtSeconds > 0.0) || !Double.isFinite(dtSeconds)) return;
+        lastCooldownRateCPerHour = Double.isFinite(rateCPerHour) ? Math.max(0.0, rateCPerHour) : 0.0;
+        if (lastCooldownRateCPerHour <= COOLDOWN_LIMIT_C_PER_HOUR) return;
+        secondsAboveCooldownLimit += dtSeconds;
+        double excess = lastCooldownRateCPerHour / COOLDOWN_LIMIT_C_PER_HOUR - 1.0;
+        double added = COOLDOWN_STRESS_PER_EXCESS_HOUR * excess * excess * dtSeconds / 3600.0;
+        cooldownThermalStress += added;
+        stress[BoundaryComponent.REACTOR_VESSEL_HEAD.ordinal()] += added;
+    }
+
+    public double getCooldownThermalStress() { return cooldownThermalStress; }
+    public double getSecondsAboveCooldownLimit() { return secondsAboveCooldownLimit; }
+    public double getLastCooldownRateCPerHour() { return lastCooldownRateCPerHour; }
     public boolean isInterfacingSystemsLoca() { return interfacingSystemsLoca; }
     public void forceInterfacingSystemsLoca() { interfacingSystemsLoca = true; }
     public void repairInterfacingSystemsLine() { interfacingSystemsLoca = false; }
@@ -634,7 +657,8 @@ public final class BoundaryStress {
 
     /** Number of doubles {@link #toArray()} produces. */
     public static final int LEGACY_SNAPSHOT_LENGTH = 6 + 2 * BoundaryComponent.values().length;
-    public static final int SNAPSHOT_LENGTH = LEGACY_SNAPSHOT_LENGTH + 2;
+    public static final int PRE_COOLDOWN_SNAPSHOT_LENGTH = LEGACY_SNAPSHOT_LENGTH + 2;
+    public static final int SNAPSHOT_LENGTH = PRE_COOLDOWN_SNAPSHOT_LENGTH + 3;
 
     /**
      * Snapshot for NBT persistence and client sync. Damage must survive a chunk
@@ -659,6 +683,9 @@ public final class BoundaryStress {
         }
         a[LEGACY_SNAPSHOT_LENGTH] = ruptureVolumeM3;
         a[LEGACY_SNAPSHOT_LENGTH + 1] = interfacingSystemsLoca ? 1 : 0;
+        a[PRE_COOLDOWN_SNAPSHOT_LENGTH] = cooldownThermalStress;
+        a[PRE_COOLDOWN_SNAPSHOT_LENGTH + 1] = secondsAboveCooldownLimit;
+        a[PRE_COOLDOWN_SNAPSHOT_LENGTH + 2] = lastCooldownRateCPerHour;
         return a;
     }
 
@@ -673,7 +700,10 @@ public final class BoundaryStress {
         }
         ruptureVolumeM3 = a.length >= LEGACY_SNAPSHOT_LENGTH + 1 && Double.isFinite(a[LEGACY_SNAPSHOT_LENGTH])
                 ? Math.max(0, a[LEGACY_SNAPSHOT_LENGTH]) : 0;
-        interfacingSystemsLoca = a.length >= SNAPSHOT_LENGTH && a[LEGACY_SNAPSHOT_LENGTH + 1] != 0;
+        interfacingSystemsLoca = a.length >= PRE_COOLDOWN_SNAPSHOT_LENGTH && a[LEGACY_SNAPSHOT_LENGTH + 1] != 0;
+        cooldownThermalStress = a.length >= SNAPSHOT_LENGTH ? Math.max(0, a[PRE_COOLDOWN_SNAPSHOT_LENGTH]) : 0;
+        secondsAboveCooldownLimit = a.length >= SNAPSHOT_LENGTH ? Math.max(0, a[PRE_COOLDOWN_SNAPSHOT_LENGTH + 1]) : 0;
+        lastCooldownRateCPerHour = a.length >= SNAPSHOT_LENGTH ? Math.max(0, a[PRE_COOLDOWN_SNAPSHOT_LENGTH + 2]) : 0;
         clockSeconds = a[0];
         secondsAboveDesignPressure = a[1];
         secondsAboveCodePressure = a[2];

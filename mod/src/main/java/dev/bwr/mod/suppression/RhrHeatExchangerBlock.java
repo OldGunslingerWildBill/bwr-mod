@@ -47,7 +47,7 @@ public class RhrHeatExchangerBlock extends BaseEntityBlock implements ProcessAss
     @Override public void appendHoverText(net.minecraft.world.item.ItemStack stack,net.minecraft.world.item.Item.TooltipContext context,java.util.List<net.minecraft.network.chat.Component> lines,net.minecraft.world.item.TooltipFlag flag){
         lines.add(net.minecraft.network.chat.Component.literal("Pool water: red IN / amber OUT. Use an RHR pump."));
         lines.add(net.minecraft.network.chat.Component.literal("Cooling water: blue IN / cyan OUT. Separate circuit."));
-        lines.add(net.minecraft.network.chat.Component.literal("Up to 100 MW; requires both water circuits."));
+        lines.add(net.minecraft.network.chat.Component.literal("Up to 27.1 MW; requires both water circuits."));
         super.appendHoverText(stack,context,lines,flag);
     }
 }

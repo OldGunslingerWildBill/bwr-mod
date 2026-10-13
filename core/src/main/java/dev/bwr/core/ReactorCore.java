@@ -1001,6 +1001,7 @@ public final class ReactorCore {
         //        warn, trip or relieve, and it never touches a valve.
         boundary.setIrradiatedFuelPresent(
                 decayHeat.getFractionOfRated() > 0.0 || loading.averageBurnupMwdPerTonne() > 0.0);
+        boundary.recordCooldownRateCPerHour(vessel.getCooldownRateCPerHour(), dtSeconds);
         boundary.step(vessel.getPressurePsig(), dtSeconds);
 
         elapsedSeconds += dtSeconds;
@@ -2565,7 +2566,8 @@ public final class ReactorCore {
                 // deliberately absent from the record — a conditioning lag is a
                 // filter, not plant state — but where the operator left the
                 // switches is hardware, and nothing will put it back.
-                getIntermediateRangeMonitorRanges(), rodPositionNotches);
+                getIntermediateRangeMonitorRanges(), rodPositionNotches,
+                vessel.getMetalTemperatureC());
     }
 
     /**
@@ -2693,6 +2695,7 @@ public final class ReactorCore {
         decayHeat.restoreGroupInventories(state.decayGroups());
 
         vessel.restorePressurePsig(state.pressurePsig());
+        vessel.restoreMetalTemperatureC(state.metalTemperatureC());
         restoreCollapsedLevelExactly(state.waterLevelIn());
 
         // Core inlet enthalpy is the void model's other lagged state and it comes

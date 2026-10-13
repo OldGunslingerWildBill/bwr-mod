@@ -87,6 +87,7 @@ public final class ReactorStateNbt {
         t.putDouble("oxideFilm", s.protectiveOxideArealKgPerM2());
         t.putDouble("coolantC", s.coolantTempC());
         t.putDouble("psig", s.pressurePsig());
+        t.putDouble("metalC", s.metalTemperatureC());
         t.putDouble("void", s.voidFraction());
         // The void model's other lagged state. Written beside the void fraction
         // because the two are a pair: recomputing this one on load put it at the
@@ -202,7 +203,10 @@ public final class ReactorStateNbt {
                 // record says nothing about is the auto-ranging this component
                 // exists to stop.
                 t.getIntArray("irmRanges"),
-                getDoubles(t,"rodPositionsNotches")
+                getDoubles(t,"rodPositionsNotches"),
+                // Zero means a pre-metal-node save; fromState equilibrates it
+                // to the restored coolant temperature.
+                t.getDouble("metalC")
         );
     }
 }

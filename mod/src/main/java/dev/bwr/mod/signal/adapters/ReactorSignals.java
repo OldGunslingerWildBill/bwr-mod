@@ -62,6 +62,12 @@ final class ReactorSignals {
             .number("break_steam_flow", "Break steam flow", "kg/s", 0, 2500, core(ReactorCore::getBreakSteamFlowKgPerS))
             .number("break_liquid_flow", "Break liquid flow", "kg/s", 0, 5000, core(ReactorCore::getBreakLiquidFlowKgPerS))
             .number("shutdown_cooling_mw", "RHR shutdown cooling", "MW", 0, 500, core(ReactorCore::getShutdownCoolingMW))
+            .number("vessel_metal_temp_c", "Vessel steel temperature", "degC", 0, 600,
+                    core(c -> c.getPressureVessel().getMetalTemperatureC()))
+            .number("cooldown_rate_c_per_hour", "Vessel cooldown rate", "degC/h", 0, 500,
+                    core(c -> c.getBoundaryStress().getLastCooldownRateCPerHour()))
+            .number("cooldown_thermal_stress", "Cooldown thermal-stress life used", "fraction", 0, 5,
+                    core(c -> c.getBoundaryStress().getCooldownThermalStress()))
             .boolOrNone("interfacing_systems_loca", "Interfacing systems LOCA", core(c -> flag(c.getBoundaryStress().isInterfacingSystemsLoca())))
             .number("coolant_temp_c", "Coolant temperature", "degC", 0, 400, core(ReactorCore::getCoolantTemperatureC))
             .number("fuel_temp_c", "Fuel temperature", "degC", 0, 3000, core(ReactorCore::getFuelTemperatureC))

@@ -205,6 +205,16 @@ public final class PressureVessel {
      */
     public static final double COLD_SHUTDOWN_PRESSURE_PSIG = 0.0;
 
+    /** Representative BWR pressure-vessel shell mass; see REFERENCE-DATA.md §12. */
+    public static final double VESSEL_STEEL_MASS_KG = 500_000.0;
+    /** Lumped wetted shroud, separator, dryer and support steel; see REFERENCE-DATA.md §12. */
+    public static final double INTERNALS_STEEL_MASS_KG = 100_000.0;
+    public static final double STEEL_SPECIFIC_HEAT_J_PER_KG_K = 500.0;
+    /** Calibrated bulk metal-to-water equilibration time, not a material constant. */
+    public static final double METAL_COUPLING_TIME_S = 180.0;
+    public static final double METAL_HEAT_CAPACITY_J_PER_K =
+            (VESSEL_STEEL_MASS_KG + INTERNALS_STEEL_MASS_KG) * STEEL_SPECIFIC_HEAT_J_PER_KG_K;
+
     // ---------------------------------------------------------------
     // Configuration
     // ---------------------------------------------------------------
@@ -251,6 +261,25 @@ public final class PressureVessel {
 
     private double pressurePsig = PhysicalConstants.RATED_DOME_PRESSURE_PSIG;
     private double liquidMassKg;
+    private double metalTemperatureC = Saturation.temperatureCelsiusFromPsig(pressurePsig);
+    private double cooldownRateCPerHour;
+
+    public double getMetalTemperatureC() { return metalTemperatureC; }
+    public double getCooldownRateCPerHour() { return cooldownRateCPerHour; }
+
+    /** Restore the lagged steel node; old saves default to coolant equilibrium. */
+    public void restoreMetalTemperatureC(double celsius) {
+        metalTemperatureC = Double.isFinite(celsius) && celsius > 0.0
+                ? Math.clamp(celsius, 0.0, 600.0) : getSaturationTemperatureC();
+    }
+
+    private double exchangeMetalHeatMW(double dtSeconds) {
+        double coolantC = getSaturationTemperatureC();
+        double transferJ = METAL_HEAT_CAPACITY_J_PER_K * (metalTemperatureC - coolantC)
+                * (1.0 - Math.exp(-dtSeconds / METAL_COUPLING_TIME_S));
+        metalTemperatureC -= transferJ / METAL_HEAT_CAPACITY_J_PER_K;
+        return transferJ / dtSeconds / 1_000_000.0;
+    }
 
     // --- last computed ---------------------------------------------------
 
@@ -331,10 +360,17 @@ public final class PressureVessel {
             return pressurePsig;
         }
 
-        if (ruptureVolumeM3 > 0) return stepRupture(coreThermalMW, turbineSteamFlowKgPerS,
-                bypassSteamFlowKgPerS, reliefSteamFlowKgPerS, dtSeconds);
+        double startCoolantC = getSaturationTemperatureC();
+        double metalHeatMW = exchangeMetalHeatMW(dtSeconds);
+
+        if (ruptureVolumeM3 > 0) {
+            double result = stepRupture(coreThermalMW + metalHeatMW, turbineSteamFlowKgPerS,
+                    bypassSteamFlowKgPerS, reliefSteamFlowKgPerS, dtSeconds);
+            cooldownRateCPerHour = (startCoolantC - getSaturationTemperatureC()) * 3600.0 / dtSeconds;
+            return result;
+        }
         boundaryLiquidFlowKgPerS = boundarySteamFlowKgPerS = 0;
-        double thermalKW = (Math.max(0.0, finite(coreThermalMW)) - shutdownCoolingMW) * 1000.0;
+        double thermalKW = (Math.max(0.0, finite(coreThermalMW)) + metalHeatMW - shutdownCoolingMW) * 1000.0;
         double steamOut = nonNegative(turbineSteamFlowKgPerS)
                 + nonNegative(bypassSteamFlowKgPerS)
                 + nonNegative(reliefSteamFlowKgPerS)
@@ -455,6 +491,7 @@ public final class PressureVessel {
         this.flashingKgPerS = lastFlashing;
         this.pressureCapacityKgPerPsi = lastCapacity;
         this.pressureRateOfChangePsiPerSecond = (pressurePsig - startPressure) / dtSeconds;
+        this.cooldownRateCPerHour = (startCoolantC - getSaturationTemperatureC()) * 3600.0 / dtSeconds;
 
         recomputeLevels();
         return pressurePsig;
@@ -963,6 +1000,7 @@ public final class PressureVessel {
     public void initialiseToNormalLevel() {
         ruptureVolumeM3 = 0; boundaryOpenings = java.util.List.of();
         this.pressurePsig = PhysicalConstants.RATED_DOME_PRESSURE_PSIG;
+        this.metalTemperatureC = getSaturationTemperatureC();
         this.liquidMassKg = config.coolantMassKg;
         recomputeLevels();
     }
@@ -1023,6 +1061,7 @@ public final class PressureVessel {
     public void initialiseCold() {
         ruptureVolumeM3 = 0; boundaryOpenings = java.util.List.of();
         this.pressurePsig = COLD_SHUTDOWN_PRESSURE_PSIG;
+        this.metalTemperatureC = getSaturationTemperatureC();
         this.liquidMassKg = config.coolantMassKg;
         recomputeLevels();
     }
@@ -1042,6 +1081,7 @@ public final class PressureVessel {
     /** Restore persisted dome pressure, psig. Persistence only. */
     public void restorePressurePsig(double pressurePsig) {
         this.pressurePsig = clamp(finite(pressurePsig), MINIMUM_PRESSURE_PSIG, MAXIMUM_PRESSURE_PSIG);
+        this.metalTemperatureC = getSaturationTemperatureC();
         recomputeLevels();
     }
 

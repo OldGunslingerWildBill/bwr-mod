@@ -58,6 +58,9 @@ Block entity `ReactorControllerBlockEntity`; CC peripheral `bwr_reactor`.
 | `break_steam_flow` | Break steam flow | kg/s | 0 to 2500 | NUMBER |
 | `break_liquid_flow` | Break liquid flow | kg/s | 0 to 5000 | NUMBER |
 | `shutdown_cooling_mw` | RHR shutdown cooling | MW | 0 to 500 | NUMBER |
+| `vessel_metal_temp_c` | Vessel steel temperature | degC | 0 to 600 | NUMBER |
+| `cooldown_rate_c_per_hour` | Vessel cooldown rate | degC/h | 0 to 500 | NUMBER |
+| `cooldown_thermal_stress` | Cooldown thermal-stress life used | fraction | 0 to 5 | NUMBER |
 | `interfacing_systems_loca` | Interfacing systems LOCA |  | 0 to 1 | BOOLEAN |
 | `coolant_temp_c` | Coolant temperature | degC | 0 to 400 | NUMBER |
 | `fuel_temp_c` | Fuel temperature | degC | 0 to 3000 | NUMBER |

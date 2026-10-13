@@ -148,29 +148,51 @@ public final class RhrContainmentScenarioTest {
                 peak, preRhr, gas.getPressurePsig(), pool.getTemperatureC());
     }
 
-    public static void test04_scramToColdShutdownAndHighPressureLineup() {
+    private record Cooldown(double hours, double peakDutyMW, double peakRateCPerHour,
+                            double thermalStress) {}
+
+    private static Cooldown runCooldown(double serviceWaterKgPerS, String name) {
         PressureVessel vessel = new PressureVessel(new CoreConfig());
         vessel.initialiseToNormalLevel();
         vessel.restorePressurePsig(130);
         RhrHeatExchanger exchanger = new RhrHeatExchanger();
-        double start = vessel.getSaturationTemperatureC(), peakDuty = 0, reachedSeconds = Double.NaN;
-        Check.note("shutdown t=0 min: vessel %.1f C, pressure %.1f psig", start, vessel.getPressurePsig());
-        for (int i = 1; i <= 3600 * 20; i++) {
-            exchanger.drainHot(120, false);
-            exchanger.fillCold(120, false);
+        BoundaryStress boundary = new BoundaryStress();
+        double start = vessel.getSaturationTemperatureC(), peakDuty = 0, peakRate = 0;
+        double reachedSeconds = Double.NaN;
+        Check.note("shutdown %s t=0 h: vessel %.1f C, metal %.1f C, pressure %.1f psig",
+                name, start, vessel.getMetalTemperatureC(), vessel.getPressurePsig());
+        // The former one-hour case was predicated on an uncited 100-MW single
+        // exchanger. Keep the cold-shutdown endpoint, extend the observation
+        // to the cited 24-hour operating horizon, and run at one-second steps.
+        for (int i = 1; i <= 24 * 3600; i++) {
+            exchanger.drainHot(serviceWaterKgPerS, false);
+            exchanger.fillCold(serviceWaterKgPerS, false);
             double duty = exchanger.stepReactor(vessel.getSaturationTemperatureC(),
-                    vessel.getLiquidMassKg(), 1500, .05);
+                    vessel.getLiquidMassKg(), 1500, 1.0);
             peakDuty = Math.max(peakDuty, duty);
             vessel.setShutdownCoolingMW(duty);
-            vessel.step(20, 0, 0, 0, 0, .05);
-            if (i % (900 * 20) == 0)
-                Check.note("shutdown t=%d min: vessel %.1f C, pressure %.1f psig, HX %.1f MW",
-                        i / 1200, vessel.getSaturationTemperatureC(), vessel.getPressurePsig(), duty);
-            if (vessel.getSaturationTemperatureC() < 100) { reachedSeconds = i * .05; break; }
+            vessel.step(20, 0, 0, 0, 0, 1.0);
+            double rate = vessel.getCooldownRateCPerHour();
+            peakRate = Math.max(peakRate, rate);
+            boundary.recordCooldownRateCPerHour(rate, 1.0);
+            if (i % 3600 == 0)
+                Check.note("shutdown %s t=%d h: vessel %.1f C, metal %.1f C, pressure %.1f psig, HX %.1f MW",
+                        name, i / 3600, vessel.getSaturationTemperatureC(),
+                        vessel.getMetalTemperatureC(), vessel.getPressurePsig(), duty);
+            if (vessel.getSaturationTemperatureC() < 100) { reachedSeconds = i; break; }
         }
-        Check.isTrue(Double.isFinite(reachedSeconds), "operator-lined RHR reaches <100 C within one hour");
-        Check.note("shutdown: %.1f -> %.1f C in %.1f min; peak exchanger %.1f MW",
-                start, vessel.getSaturationTemperatureC(), reachedSeconds / 60, peakDuty);
+        Check.isTrue(Double.isFinite(reachedSeconds), "operator-lined RHR reaches <100 C within 24 hours");
+        Check.note("shutdown %s: %.1f -> %.1f C in %.2f h; peak HX %.1f MW; peak rate %.1f C/h; damage %.5f",
+                name, start, vessel.getSaturationTemperatureC(), reachedSeconds / 3600,
+                peakDuty, peakRate, boundary.getCooldownThermalStress());
+        return new Cooldown(reachedSeconds / 3600, peakDuty, peakRate, boundary.getCooldownThermalStress());
+    }
+
+    public static void test04_scramToColdShutdownAndHighPressureLineup() {
+        Cooldown full = runCooldown(2400, "full");
+        Cooldown throttled = runCooldown(500, "throttled");
+        Check.greaterThan(full.hours(), throttled.hours(), "throttling service water extends cooldown");
+        Check.greaterThan(throttled.peakDutyMW(), full.peakDutyMW(), "full lineup extracts more heat");
 
         ReactorCore highPressure = new ReactorCore(new CoreConfig());
         highPressure.initialiseAtTotalPowerFraction(1);

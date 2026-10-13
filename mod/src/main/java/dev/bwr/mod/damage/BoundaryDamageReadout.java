@@ -80,6 +80,10 @@ public final class BoundaryDamageReadout {
         out.put("irradiatedFuelOverpressureSeconds",
                 boundary.getIrradiatedFuelOverpressureSeconds());
         out.put("peakPressurePsig", boundary.getPeakPressurePsig());
+        out.put("cooldownRateCPerHour", boundary.getLastCooldownRateCPerHour());
+        out.put("cooldownLimitCPerHour", BoundaryStress.COOLDOWN_LIMIT_C_PER_HOUR);
+        out.put("secondsAboveCooldownLimit", boundary.getSecondsAboveCooldownLimit());
+        out.put("cooldownThermalStress", boundary.getCooldownThermalStress());
 
         // The hardware envelope, so a control program does not have to hardcode
         // it. These are properties of the vessel, not setpoints: what to do
@@ -133,6 +137,12 @@ public final class BoundaryDamageReadout {
                     "%.0f s spent above %.0f psig with irradiated fuel in the vessel",
                     boundary.getIrradiatedFuelOverpressureSeconds(),
                     BoundaryStress.FUEL_PRESENT_PRESSURE_PSIG));
+        }
+        if (boundary.getCooldownThermalStress() > 0.0) {
+            out.add(String.format(Locale.ROOT,
+                    "Vessel cooldown: %.1f C/h; thermal-stress life used %.3f; %.0f s above %.1f C/h",
+                    boundary.getLastCooldownRateCPerHour(), boundary.getCooldownThermalStress(),
+                    boundary.getSecondsAboveCooldownLimit(), BoundaryStress.COOLDOWN_LIMIT_C_PER_HOUR));
         }
         return out;
     }
