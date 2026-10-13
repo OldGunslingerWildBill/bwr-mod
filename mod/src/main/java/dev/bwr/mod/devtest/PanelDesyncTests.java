@@ -174,11 +174,11 @@ public final class PanelDesyncTests {
             return level.getBlockEntity(pos) instanceof PanelBlockEntity be ? be : null;
         }
 
-        /** A two-block-wide nameplate anchored in column 4, covering columns 4 and 5 (a chunk border). */
+        /** An 8 x 4 nameplate anchored in column 4 at cell 10, covering columns 4 and 5 (a chunk border). */
         PanelGroup.Result placeStraddler() {
             player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BwrItems.NAMEPLATE.get()));
             ItemStack stack = player.getItemInHand(InteractionHand.MAIN_HAND);
-            stack.set(dev.bwr.mod.fuel.BwrDataComponents.COMPONENT_VARIANT.get(), 5);
+            stack.set(dev.bwr.mod.fuel.BwrDataComponents.COMPONENT_VARIANT.get(), 1);
             return PanelOps.place(player, InteractionHand.MAIN_HAND, at(4, 0), 10, 5);
         }
 
