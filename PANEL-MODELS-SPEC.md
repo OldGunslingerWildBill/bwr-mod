@@ -132,13 +132,77 @@ rectangular legend plate ~1.75" × 2.25" behind, mushroom cap 1.375".
 - setpoint_knob style "ge": fluted control knob with pointer skirt and dial
   plate (part "knob", rotation ±135°).
 
-## Integration (separate coding task, not the modelers')
-A Java loader reads these JSON files into the panel renderer (`QuadSink` gains
-arbitrary normals), maps roles and moving parts to component state (handle angle
-from switch position, target flag colour from last operation, needle from
-input, lamp emission from lamp inputs, cap travel while pressed), draws legends
-at label anchors with the component's configured text, and adds a "style"
-config field (ge / westinghouse / classic placeholder) to the component types.
+## Integration (as built)
+The game side lives in `dev.bwr.mod.panel.model` (pure: parser, poses, legends, the style table's data) and
+`dev.bwr.mod.panel.client` (`PanelModelLoader`, `StyledComponentModel`, `BakedComponentModel`).
+
+**Loading.** `PanelModelLoader` is a client resource reload listener. It reads every
+`assets/bwr/models/panel/*.json` into an immutable `BakedPanelModel`; a file that is not format 1, has
+malformed numbers or colours, a face with other than 3 or 4 corners, a vertex outside the footprint (0.02 in of
+slack, z from -0.06 to 8), a pivot or label outside it, a duplicate label id, or more than 4000 faces / 64
+parts / 64 labels is logged as a warning and skipped. Nothing a file contains can crash the client.
+
+**Fit.** The footprint is fitted into the component's cell rectangle with one uniform scale (cells per inch,
+elevation included) and centred on the axis with room to spare. Pick the footprint to match the default
+aspect ratio and leave room for every handle position inside it.
+
+**Style table.** `PanelStyles.TABLE` is the one table from (component type, style, variant) to model id. A row
+lists candidate ids (the first that exists wins) and may carry a pointer colour, a key switch pose, and a
+preferred footprint. A missing or rejected model means the classic procedural look for that component, never
+an empty hole. New components start as `ge` when the default `ge` model of their type ships in the mod, else
+`classic`; the choice is saved, so models arriving later never change an existing component.
+
+| type | style | variant -> model id |
+| --- | --- | --- |
+| control_switch | ge | pistol -> `ge_sb_target_pistol` (prefers 12x16) |
+| control_switch | westinghouse | pistol -> `w2_pistol`; pistol_hd -> `w2_pistol_hd` (prefers 12x16) |
+| rotary_selector | ge | oval -> `ge_sb_standard_oval`; knurled -> `ge_sb_standard_knurled`; lever -> `ge_sb_standard_lever` |
+| rotary_selector | westinghouse | oval -> `w2_oval`; round_notched -> `w2_round_notched`; mini_slim -> `w2_mini_slim` |
+| key_switch | ge | key -> `ge_sb_keyed` (OFF pos3 at 0, ON pos4 at +45) |
+| key_switch | westinghouse | key -> `w2_key`; tumbler -> `w2_tumbler` (OFF `left` at -45, ON `right` at +45) |
+| pushbutton | ge | flush -> `pb_flush`; extended -> `pb_extended`; mushroom -> `pb_mushroom`; guarded -> `pb_guarded`; illuminated -> `pb_illuminated` |
+| lamp | ge | round -> `light_round`; round_plate -> `light_round_plate`; et16 -> `light_et16`; square -> `light_square` |
+| setpoint_knob | ge | fluted -> `knob_fluted` |
+| dial_gauge | ge | standard -> `ge_ab40`; red_pointer -> `ge_ab40_red` (else `ge_ab40` with the pointer recoloured) |
+| edgewise_gauge_vertical | ge | standard -> `ge_180_vertical`; red_pointer -> `ge_180_vertical_red` (same fallback) |
+| edgewise_gauge_horizontal | ge | standard -> `ge_180_horizontal`; red_pointer -> `ge_180_horizontal_red` (same fallback) |
+
+**Poses** (`Poses`, `Detents`). Angles are clockwise as the operator sees the face, applied as an ordinary
+rotation about the part's pivot and axis (axis `[0,0,1]`) in the y-down frame.
+* Control switch: the grip is modelled hanging straight down at NORMAL; the handle turns `-45 x position`
+  (CLOSE, position -1, is +45 clockwise; TRIP, the mod's OPEN, +1, is -45). The `right` label carries the CLOSE
+  caption and `left` the OPEN one.
+* Rotary selector: the pointer is modelled at 12 o'clock; position k (from 0) points at the label `pos(k+1)`
+  (its bearing from the pivot), so GE (pos1 at 9 o'clock) and Westinghouse (pos1 at 7:30, pos4 at 12) both work.
+  Without a pos label for every position it falls back to 45 degree steps about the modelled pose.
+* Key switch: the two angles come from the table row; a tumbler's `plug` part turns 0 locked, +90 unlocked.
+* Setpoint knob: -135 at 0 percent to +135 at 100 percent, rest = 50 percent pointing up.
+* Dial pointer: `-125 + 250 x fraction`; edgewise pointer slides `travel x fraction` along its axis, low end at
+  the modelled position; both follow the gauge's configured lag; no signal pegs low.
+* Pushbutton cap: slides its `travel` along its axis while held. An optional `demand` part of an edgewise
+  meter slides with input 1 and is hidden without a signal.
+
+**Colour.** Parts with a `tint` take the colour the player set on the component (cap, lens, knob), the tint's
+palette colour while it is still the default; authored per-face shading is kept. Pointer parts take the red-pointer
+variant's colour only when its dedicated model is missing. Lamp lenses are full-bright when lit (pushbutton:
+held, key switch: on, lamp: input, control switch: either lamp input) and dimmed to 22 percent when not. The
+target flag shows red when only the red lamp input is lit, green when only the green one is, else the last
+operation (OPEN red, CLOSE green, matching the mod's red = open / running convention), else neutral dark.
+Glass is drawn last and translucent.
+
+**Legends.** Models mark where; the game supplies the words: `caption` the component label (`legend` too on a
+pushbutton or lamp); control switch `right` / `left` / `center` the CLOSE / OPEN / NORMAL captions; selector
+`pos1..pos8` the position names; key switch OFF and ON at the row's anchors; meters `units` and `scale0 ..
+scaleN` (one numeral per anchor from min to max; the end numerals of a strip meter are nudged half a cap height
+inward), or a single `scale` anchor, or `scale_min` / `scale_max`; knob `min` / `mid` / `max` (0, 50, 100).
+Other ids (`maker`, `top`, `lower_left`, `bottom`) are not drawn. Text is scaled by the anchor's cap height,
+rotated by its `rot`, aligned by `align`, coloured to read on the surface behind it (dark on a lit lens), and
+drawn only within 24 blocks.
+
+**Known limits.** On a benchboard or console the face is stretched along its rows like every other component.
+A model with a frame much larger than its plate (the target pistols) looks small at the default size; the table
+marks such rows as preferring the larger footprint. Edgewise meters ignore the demand marker unless the model
+has a `demand` part.
 
 ## Sources (local copies for reading only)
 Scratch folder: `C:\Users\14238\AppData\Local\Temp\claude\C--Users-14238-Downloads-bwr-mod-handoff\418cd604-018d-4e92-a0cc-37a0e339a9c4\scratchpad\cr-refs\`
