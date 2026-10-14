@@ -99,6 +99,18 @@ Block entity `ReactorControllerBlockEntity`; CC peripheral `bwr_reactor`.
 | `rod_<n>_demand` | Rod n demand | notch | 0 to 48 | LEVEL |
 | `rod_<n>_accumulator` | Rod n accumulator charge | fraction | 0 to 1 | NUMBER |
 | `selected_rod` | Selected rod (0 = none; 1-based like n) | rod | 0 to 400 | LEVEL |
+| `rod_<n>_drift` | Rod n away from its demand with nothing driving it | | 0 to 1 | BOOLEAN |
+| `rod_<n>_scram` | Rod n: scram latched and the rod not yet fully in | | 0 to 1 | BOOLEAN |
+| `rod_<n>_full_in` | Rod n at notch 00 | | 0 to 1 | BOOLEAN |
+| `rod_<n>_full_out` | Rod n at notch 48 | | 0 to 1 | BOOLEAN |
+| `rod_<n>_accum_trouble` | Rod n accumulator below 0.9 of a full charge | | 0 to 1 | BOOLEAN |
+| `rod_<n>_lattice_x` | Rod n core x (GE XX of XX-YY) | | 0 to 99 | LEVEL |
+| `rod_<n>_lattice_y` | Rod n core y (GE YY of XX-YY) | | 0 to 99 | LEVEL |
+| `rod_<n>_label` | Rod n coordinate, `XX-YY` | | text | TEXT |
+| `lprm_count` | LPRM strings | strings | 0 to 100 | LEVEL |
+| `lprm_<s>_label` | LPRM string s coordinate, `XX-YY` | | text | TEXT |
+| `lprm_<s>_<a-d>_percent` | LPRM string s, level a to d, indication | % | 0 to 125 | NUMBER |
+| `lprm_<s>_<a-d>_bypassed` / `_failed` / `_downscale` / `_upscale` | LPRM level flags | | 0 to 1 | BOOLEAN |
 
 | Command key | Label | Kind | Range |
 | --- | --- | --- | --- |
@@ -114,6 +126,36 @@ Block entity `ReactorControllerBlockEntity`; CC peripheral `bwr_reactor`.
 | `selected_rod_withdraw` | Selected rod: withdraw one notch | PULSE |  |
 | `selected_rod_insert_continuous` | Selected rod: insert continuously (1 holds, 0 releases) | BOOLEAN | 0 to 1 |
 | `selected_rod_withdraw_continuous` | Selected rod: withdraw continuously (1 holds, 0 releases) | BOOLEAN | 0 to 1 |
+
+### Per-rod indications and LPRM strings (full core display)
+
+These are plain facts for the full core display and for any program; none of them acts on the plant. They read no
+signal unless the reactor is formed. Rods and strings are numbered from 1.
+
+* **Coordinates.** `rod_<n>_label` is the rod's coordinate in the GE `XX-YY` convention and `rod_<n>_lattice_x/_y` are its
+  two numbers. Columns run 02, 06 ... 58 from west to east and rows 03, 07 ... 59 from south to north (so the number
+  rises up the core, as on the Browns Ferry display); a core with fewer than 15 rods across is centred in that grid
+  (its middle rod is `30-31`), a wider one starts at 02 and runs on. The rod number n is the drive's number, as for
+  `rod_<n>_position`.
+* **full_in / full_out**: the rod is at notch 00 or 48. **scram**: the scram signal is latched and the rod is not fully
+  in (the core has no per-rod scram state). **accum_trouble**: the accumulator holds less than 0.9 of a full charge; the
+  core has no notion of low charge (only charged or empty), so 0.9 is a gameplay default and a display component has a
+  setting for it.
+* **drift**: the core models no spontaneous rod motion, so the real "moving without a command" cannot happen. The
+  signal is the mirror image the model does have: the rod is not at its demanded notch, no scram is forcing it and its
+  drive cannot index (no power, no water, seized or missing). A rod travelling toward its demand under power does not
+  drift. It is what `rods_not_at_demand` counts while the rod stays put, per rod.
+* **LPRM strings.** A string stands in the gap between four rods; the mod places one wherever the GE grid has a point
+  (`x` a multiple of 8, `y` one more than a multiple of 8, as in `08-49`) with a rod on all four sides: 39 strings in the
+  185-rod core, fewer in a smaller one. They are numbered in reading order (top row first, west to east). `lprm_<s>_label`
+  is the coordinate. Each string has four levels, a (bottom) to d (top).
+* The core models LPRM chambers only as the 24 inputs of each of its six APRM channels and not by position, so the
+  display deals its strings onto them in order: level L (0 to 3) of string s (0-based) is chamber `(4 s + L) mod 144`,
+  which is input `(chamber / 6) mod 24` of channel `chamber mod 6`. Bypass, failure and the indication of a level are
+  exactly those of its chamber (`setLprmBypassed` / `setLprmFailed` on the core show up here). `_downscale` is below
+  5 percent and `_upscale` above 110 percent for a chamber that is in service and working; those are gameplay defaults
+  (no source for exact GE alarm values was found) and each display component carries its own. The mod does not model
+  SRM or IRM detectors by position, so no SRM or IRM labels are shown.
 
 ### Rod selection (rod select matrix and rod motion pushbuttons)
 

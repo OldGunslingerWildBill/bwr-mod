@@ -865,6 +865,29 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         return rodNetwork;
     }
 
+    private ReactorStructure coreMapFor;
+    private CoreRodMap coreMap;
+
+    /**
+     * Where each rod and LPRM string sits on the display grid, with the GE coordinates, or null when the reactor is
+     * not formed. Rebuilt only when revalidation made a new structure object.
+     */
+    public CoreRodMap coreMap() {
+        ReactorStructure current = structure;
+        if (current == null || core == null) {
+            return null;
+        }
+        if (coreMapFor != current) {
+            try {
+                coreMap = CoreRodMap.fromStructure(current);
+            } catch (IllegalArgumentException e) {
+                coreMap = null; // not displayable (wider than the grid); readouts say no signal
+            }
+            coreMapFor = current;
+        }
+        return coreMap;
+    }
+
     /** The selected rod, 1-based; 0 when none is selected or the reactor is not formed. */
     public int selectedRod() {
         return isFormed() && rodNetwork != null ? rodSelection.selected() : 0;

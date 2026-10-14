@@ -518,6 +518,23 @@ public final class ControlRodDriveNetwork {
         return c.getChargedAccumulatorCount();
     }
 
+    /**
+     * Whether a rod is away from its demand and nothing is driving it there: no scram is forcing it, and its drive
+     * cannot index (no power, no water, seized, or no drive). The core models no uncommanded motion, so this is the
+     * way a rod comes to disagree with its demand and stay that way; see {@link RodIndications}. A rod that is
+     * simply travelling toward its demand under power is not drifting. A fact about hardware, not a trip.
+     */
+    public boolean isRodDrifting(int rodIndex) {
+        checkRodIndex(rodIndex);
+        ReactorCore c = core;
+        if (c == null || rodIndex >= c.getControlRodCount() || c.isScramActive()
+                || c.getRodPositionNotches(rodIndex) == commandedNotchIndex[rodIndex]) {
+            return false;
+        }
+        ControlRodDriveHardware drive = drives[rodIndex];
+        return drive == null || !(c.isCrdPowered() && c.isCrdWaterSupplied() && drive.canPerformNormalMotion());
+    }
+
     /** Drives that could index a notch under normal control right now. */
     public int getOperableDriveCount() {
         int count = 0;

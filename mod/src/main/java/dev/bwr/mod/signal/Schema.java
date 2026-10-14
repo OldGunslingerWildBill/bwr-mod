@@ -35,6 +35,7 @@ public final class Schema<T extends BlockEntity> {
     private BiFunction<T, String, OptionalDouble> extraReader;
     private Function<T, List<CommandSpec>> extraCommands;
     private KeyedCommand<T> extraCommand;
+    private BiFunction<T, String, Optional<String>> extraText;
 
     public Schema<T> number(String key, String label, String unit, double min, double max, ToDoubleFunction<T> reader) {
         return add(new SignalSpec(key, label, unit, min, max, Kind.NUMBER), reader);
@@ -78,6 +79,12 @@ public final class Schema<T extends BlockEntity> {
     public Schema<T> dynamicSignals(Function<T, List<SignalSpec>> list, BiFunction<T, String, OptionalDouble> reader) {
         extraSignals = list;
         extraReader = reader;
+        return this;
+    }
+
+    /** Text signals whose keys depend on the live device (per-rod labels); their specs come from {@link #dynamicSignals}. */
+    public Schema<T> dynamicText(BiFunction<T, String, Optional<String>> reader) {
+        extraText = reader;
         return this;
     }
 
@@ -125,7 +132,8 @@ public final class Schema<T extends BlockEntity> {
 
         @Override public Optional<String> readText(String key) {
             Function<T, String> reader = textReaders.get(key);
-            if (reader == null || !live()) return Optional.empty();
+            if (!live()) return Optional.empty();
+            if (reader == null) return extraText == null ? Optional.empty() : extraText.apply(be, key);
             return Optional.ofNullable(reader.apply(be));
         }
 
