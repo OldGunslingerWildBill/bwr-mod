@@ -87,7 +87,15 @@ public final class PanelRenderContext implements QuadSink {
         normals[kind * 3 + 2] = z;
     }
 
+    private dev.bwr.mod.panel.model.Placement classicPlacement;
+    void classicPlacement(dev.bwr.mod.panel.model.Placement fit) { classicPlacement=fit; }
+    private float fittedX(float x) { return classicPlacement==null?x:classicPlacement.x(x); }
+    private float fittedY(float y) { return classicPlacement==null?y:classicPlacement.y(y); }
+    private float fittedZ(float z) { return classicPlacement==null?z:classicPlacement.z(z); }
+    private float fittedScale(float scale) { return classicPlacement==null?scale:classicPlacement.length(scale); }
+
     void beginComponent(PanelComponent component) {
+        classicPlacement=null;
         this.originU = component.x();
         this.originV = component.y();
     }
@@ -178,14 +186,14 @@ public final class PanelRenderContext implements QuadSink {
     }
 
     private void vertex(float x, float y, float z, int r, int g, int b, int packedLight, float nx, float ny, float nz) {
-        double u = originU + x;
-        double v = originV + y;
+        double u = originU + fittedX(x);
+        double v = originV + fittedY(y);
         if (consumer == null) {
             // Drawing text or glass switches the buffer source to another render type, which closes the solid builder.
             consumer = buffers.getBuffer(SOLID);
             glassConsumer = null;
         }
-        consumer.addVertex(pose, (float) frame.x(u, v, z), (float) frame.y(u, v, z), (float) frame.z(u, v, z))
+        consumer.addVertex(pose, (float) frame.x(u, v, fittedZ(z)), (float) frame.y(u, v, fittedZ(z)), (float) frame.z(u, v, fittedZ(z)))
                 .setColor(r, g, b, 255)
                 .setUv(0.5f, 0.5f)
                 .setOverlay(overlay)
@@ -215,13 +223,13 @@ public final class PanelRenderContext implements QuadSink {
     }
 
     private void glassVertex(float x, float y, float z, int r, int g, int b, int alpha, float nx, float ny, float nz) {
-        double u = originU + x;
-        double v = originV + y;
+        double u = originU + fittedX(x);
+        double v = originV + fittedY(y);
         if (glassConsumer == null) {
             glassConsumer = buffers.getBuffer(GLASS);
             consumer = null;
         }
-        glassConsumer.addVertex(pose, (float) frame.x(u, v, z), (float) frame.y(u, v, z), (float) frame.z(u, v, z))
+        glassConsumer.addVertex(pose, (float) frame.x(u, v, fittedZ(z)), (float) frame.y(u, v, fittedZ(z)), (float) frame.z(u, v, fittedZ(z)))
                 .setColor(r, g, b, alpha)
                 .setUv(0.5f, 0.5f)
                 .setOverlay(overlay)
@@ -238,12 +246,12 @@ public final class PanelRenderContext implements QuadSink {
      * @param z     elevation above the face in 1/16 block
      */
     public void text(String text, float x, float y, float scale, float z, int rgb, boolean emissive) {
-        double u = originU + x;
-        double v = originV + y;
+        double u = originU + fittedX(x);
+        double v = originV + fittedY(y);
         textMatrix.set(pose.pose());
-        textMatrix.translate((float) frame.x(u, v, z), (float) frame.y(u, v, z), (float) frame.z(u, v, z));
+        textMatrix.translate((float) frame.x(u, v, fittedZ(z)), (float) frame.y(u, v, fittedZ(z)), (float) frame.z(u, v, fittedZ(z)));
         textMatrix.mul(basis);
-        textMatrix.scale(scale, scale / rowAspect(), scale);
+        textMatrix.scale(fittedScale(scale), fittedScale(scale) / rowAspect(), fittedScale(scale));
         font.drawInBatch(text, 0.0f, 0.0f, 0xFF000000 | rgb, false, textMatrix, buffers,
                 Font.DisplayMode.POLYGON_OFFSET, 0, packedLight(emissive, light));
         consumer = null;
@@ -261,16 +269,16 @@ public final class PanelRenderContext implements QuadSink {
      */
     public void textRotated(String text, float x, float y, float scale, float rotDegrees, float z, int rgb,
                             boolean emissive, float dx, float dy) {
-        double u = originU + x;
-        double v = originV + y;
+        double u = originU + fittedX(x);
+        double v = originV + fittedY(y);
         textMatrix.set(pose.pose());
-        textMatrix.translate((float) frame.x(u, v, z), (float) frame.y(u, v, z), (float) frame.z(u, v, z));
+        textMatrix.translate((float) frame.x(u, v, fittedZ(z)), (float) frame.y(u, v, fittedZ(z)), (float) frame.z(u, v, fittedZ(z)));
         textMatrix.mul(basis);
         textMatrix.scale(1.0f, 1.0f / rowAspect(), 1.0f);
         if (rotDegrees != 0.0f) {
             textMatrix.rotateZ((float) Math.toRadians(rotDegrees));
         }
-        textMatrix.scale(scale);
+        textMatrix.scale(fittedScale(scale));
         font.drawInBatch(text, dx, dy, 0xFF000000 | rgb, false, textMatrix, buffers,
                 Font.DisplayMode.POLYGON_OFFSET, 0, packedLight(emissive, light));
         consumer = null;
@@ -303,9 +311,9 @@ public final class PanelRenderContext implements QuadSink {
 
     private void textured(VertexConsumer out, float x, float y, float z, float u, float v, int packedLight,
                           float nx, float ny, float nz) {
-        double cu = originU + x;
-        double cv = originV + y;
-        out.addVertex(pose, (float) frame.x(cu, cv, z), (float) frame.y(cu, cv, z), (float) frame.z(cu, cv, z))
+        double cu = originU + fittedX(x);
+        double cv = originV + fittedY(y);
+        out.addVertex(pose, (float) frame.x(cu, cv, fittedZ(z)), (float) frame.y(cu, cv, fittedZ(z)), (float) frame.z(cu, cv, fittedZ(z)))
                 .setColor(255, 255, 255, 255)
                 .setUv(u, v)
                 .setOverlay(overlay)

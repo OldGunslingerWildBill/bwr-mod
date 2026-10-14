@@ -104,8 +104,7 @@ final class PanelSlopeShowcase {
 
     /**
      * The benchboard group: switches along the top, then meters, pushbuttons and lights (80 x 48 cells), and in the
-     * last column the classic procedural look of a dial, a pushbutton and a switch for comparison (they fill
-     * their cells as drawn, so on the slope they are stretched along the rows by design).
+     * last column the classic procedural look of a dial, a pushbutton and a switch for comparison (their physical proportions now match the vertical board, with the spare row length centered around them).
      */
     private static List<Spec> benchSpecs() {
         List<Spec> specs = new ArrayList<>();

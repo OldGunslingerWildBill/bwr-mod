@@ -18,6 +18,7 @@ public final class RenderCache {
     float meshRowAspect;
     /** The baked model drawing this component, or null for the classic procedural look. Set with the mesh. */
     BakedComponentModel baked;
+    dev.bwr.mod.panel.model.PlacedQuadSink classicSink;
 
     /** Scratch for models; reset implicitly because a new cache is made per revision of the mesh. */
     public int fitRevision = -1;

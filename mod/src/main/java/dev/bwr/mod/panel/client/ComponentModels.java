@@ -82,7 +82,9 @@ public final class ComponentModels {
     }
 
     public static void register(ResourceLocation typeId, ComponentModel model) {
-        MODELS.put(typeId, model);
+        // FCD and rod matrix already fit geometry to the real row aspect.
+        MODELS.put(typeId, model instanceof StyledComponentModel || model instanceof FullCoreDisplayModel
+                || model instanceof RodSelectMatrixModel ? model : new ProportionedComponentModel(model));
     }
 
     public static ComponentModel get(ResourceLocation typeId) {

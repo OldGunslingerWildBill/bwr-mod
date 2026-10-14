@@ -15,7 +15,7 @@ final class StyledComponentModel implements ComponentModel {
     private final String type;
 
     StyledComponentModel(ComponentModel classic, BakedComponentModel.Kind kind, String type) {
-        this.classic = classic;
+        this.classic = new ProportionedComponentModel(classic);
         this.kind = kind;
         this.type = type;
     }
