@@ -19,10 +19,12 @@ import net.minecraft.server.level.TicketType;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -30,7 +32,11 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -46,6 +52,11 @@ import java.util.UUID;
  * <p>Fixtures: origin 52_900 / 52_900 plus {@code slot * 64} blocks in X (every slot is a whole number of chunks,
  * and columns 4 and 5 sit either side of a chunk border). Chunks are released in every outcome and the fixture is
  * cleared first, so a persistent world can run this twice.
+ *
+ * <p>Isolation: GameTests of one batch run in the same level at the same time, and a force-loaded chunk becomes
+ * visible to entity lookups some ticks after it is readable, by a delay that depends on the machine's load. So
+ * every count here is of the fixture's own things (deferrals of the fixture's block entities, nameplate items in
+ * the fixture box), and nothing counts items until {@link Stage#entitiesLive} has seen a probe item found.
  */
 @GameTestHolder("bwr")
 @PrefixGameTestTemplate(false)
@@ -63,6 +74,10 @@ public final class PanelDesyncTests {
         final BlockPos origin;
         final FakePlayer player;
         private final List<Runnable> steps = new ArrayList<>();
+        /** Chunks whose entity lookups have been seen to work (a probe item was found there). */
+        private final Set<ChunkPos> live = new HashSet<>();
+        private final Map<ChunkPos, ItemEntity> probes = new HashMap<>();
+        private int polls;
 
         private Stage(GameTestHelper helper, int slot) {
             level = helper.getLevel();
@@ -73,10 +88,13 @@ public final class PanelDesyncTests {
                     "panel-desync-" + slot));
         }
 
-        /** Runs {@code body} on a clean fixture two ticks after forcing; then each added step three ticks apart. */
+        /**
+         * Runs {@code body} on a clean fixture once both chunks answer entity lookups (see {@link #entitiesLive}); then
+         * each added step eight ticks apart.
+         */
         static void run(GameTestHelper helper, int slot, java.util.function.Consumer<Stage> body) {
             Stage s = new Stage(helper, slot);
-            helper.runAfterDelay(8, () -> {
+            s.whenLive(helper, () -> {
                 try {
                     s.prepare();
                     body.accept(s);
@@ -86,6 +104,79 @@ public final class PanelDesyncTests {
                 }
                 s.next(helper);
             });
+        }
+
+        /** Waits, a tick at a time and without a fixed count, until both fixture chunks answer entity lookups; then runs {@code then}. */
+        private void whenLive(GameTestHelper helper, Runnable then) {
+            helper.runAfterDelay(1, () -> {
+                if (entitiesLive(at(4, 0)) && entitiesLive(at(5, 0))) {
+                    then.run();
+                    return;
+                }
+                if (++polls > 200) {
+                    release();
+                    helper.assertTrue(false, "the fixture chunks never answered entity lookups");
+                }
+                whenLive(helper, then);
+            });
+        }
+
+        /**
+         * Whether an entity spawned at {@code pos} can be found by a lookup yet. A chunk that is loaded and forced
+         * is not necessarily visible to {@code getEntitiesOfClass} at once: an item added to it right away is alive
+         * but not found for a tick or more, longer on a busy machine, which is what made "one item dropped" read
+         * zero. A probe item (bedrock, which nothing here counts) is added to the chunk and the answer is whether it
+         * is found; once it is, it is removed and the chunk counts as live until {@link #forgetLive}.
+         */
+        boolean entitiesLive(BlockPos pos) {
+            if (!level.isLoaded(pos)) {
+                return false;
+            }
+            ChunkPos chunk = new ChunkPos(pos);
+            if (live.contains(chunk)) {
+                return true;
+            }
+            ItemEntity probe = probes.get(chunk);
+            if (probe == null || probe.isRemoved()) {
+                probe = new ItemEntity(level, pos.getX() + 0.5, origin.getY() + 3.0, pos.getZ() + 0.5, new ItemStack(Items.BEDROCK));
+                probe.setNoGravity(true);
+                probe.setDeltaMovement(Vec3.ZERO);
+                probe.setUnlimitedLifetime();
+                probe.setPickUpDelay(32767);
+                if (!level.addFreshEntity(probe)) {
+                    return false;
+                }
+                probes.put(chunk, probe);
+                return false;
+            }
+            ItemEntity wanted = probe;
+            if (level.getEntitiesOfClass(ItemEntity.class, wanted.getBoundingBox().inflate(0.5), e -> e == wanted).isEmpty()) {
+                return false;
+            }
+            wanted.discard();
+            probes.remove(chunk);
+            live.add(chunk);
+            return true;
+        }
+
+        /** Forget what was seen of the chunks' entity lookups (after they were unloaded and loaded again). */
+        void forgetLive() {
+            live.clear();
+            for (ItemEntity probe : probes.values()) {
+                probe.discard();
+            }
+            probes.clear();
+        }
+
+        /** Whether a position belongs to this fixture's wall (columns -1 to 8, two rows). */
+        boolean owns(BlockPos pos) {
+            return pos.getZ() == origin.getZ() && pos.getX() >= origin.getX() - 8 && pos.getX() <= origin.getX() + 1
+                    && pos.getY() <= origin.getY() && pos.getY() >= origin.getY() - 1;
+        }
+
+        /** Deferred verifications of this fixture's block entities: the count that no other test can move. */
+        int waiting() {
+            return PanelConsistency.waitingCount(level, this::owns);
         }
 
         void then(Runnable step) {
@@ -193,6 +284,7 @@ public final class PanelDesyncTests {
         }
 
         void release() {
+            forgetLive();
             hold(true);
             clear();
             hold(false);
@@ -342,14 +434,16 @@ public final class PanelDesyncTests {
         int[] baseline = new int[1];
         int[] polls = new int[1];
         helper.startSequence()
-                .thenExecuteAfter(2, () -> guard(s, () -> {
+                .thenWaitUntil(() -> poll(helper, s, polls, s.entitiesLive(ownerPos) && s.entitiesLive(coveredPos),
+                        "waiting for the fixture chunks to answer entity lookups"))
+                .thenExecute(() -> guard(s, () -> {
                     s.prepare();
                     s.wall();
                     helper.assertTrue(s.placeStraddler() == PanelGroup.Result.OK, "straddling plate");
                     helper.assertTrue(!s.ownerChunk().equals(s.coveredChunk()), "the plate spans a chunk border");
                 }))
                 .thenExecuteAfter(3, () -> guard(s, () -> {
-                    baseline[0] = PanelConsistency.waitingCount(level);
+                    baseline[0] = s.waiting();
                     level.setChunkForced(s.ownerChunk().x, s.ownerChunk().z, false);
                     level.setChunkForced(s.coveredChunk().x, s.coveredChunk().z, false);
                     feasibilityHold(level, s.coveredChunk());
@@ -361,14 +455,18 @@ public final class PanelDesyncTests {
                     level.setBlock(coveredPos, Blocks.AIR.defaultBlockState(), 18);
                     helper.assertTrue(s.drops().isEmpty(), "the unloaded owner was not told (and not loaded)");
                     helper.assertTrue(!level.isLoaded(ownerPos), "the owner chunk was not force-loaded by the break");
+                    s.forgetLive(); // the owner chunk loads again: its entity lookups have to be seen to work again
                     level.setChunkForced(s.ownerChunk().x, s.ownerChunk().z, true);
                 }))
                 .thenWaitUntil(() -> poll(helper, s, polls, level.isLoaded(ownerPos)
                         && s.be(ownerPos) != null && s.be(ownerPos).owned().isEmpty(), "waiting for the repair loaded=" + level.isLoaded(ownerPos) + " be=" + (level.isLoaded(ownerPos) ? s.be(ownerPos) + " state=" + level.getBlockState(ownerPos) + " col3=" + level.getBlockState(s.at(3, 0)).getBlock() + " col0=" + level.getBlockState(s.at(0, 0)).getBlock() : "-") + " covered=" + level.isLoaded(coveredPos) + " drops=" + s.drops().size()))
+                .thenWaitUntil(() -> poll(helper, s, polls, s.entitiesLive(ownerPos),
+                        "waiting for the owner chunk to answer entity lookups again"))
                 .thenExecuteAfter(4, () -> guard(s, () -> {
                     helper.assertTrue(s.drops().size() == 1, "one item dropped, got " + s.drops().size());
                     helper.assertTrue(!s.be(ownerPos).verifyConsistency(), "idempotent");
-                    helper.assertTrue(PanelConsistency.waitingCount(level) == baseline[0], "nothing left deferred");
+                    helper.assertTrue(s.waiting() == baseline[0], "nothing left deferred: now=" + s.waiting()
+                            + " baseline=" + baseline[0] + " " + PanelConsistency.describeWaiting(level));
                 }))
                 .thenExecuteAfter(3, () -> guard(s, () -> helper.assertTrue(s.drops().size() == 1, "still one item")))
                 .thenExecute(s::release)
@@ -391,7 +489,9 @@ public final class PanelDesyncTests {
         int[] polls = new int[1];
         CompoundTag[] saved = new CompoundTag[1];
         helper.startSequence()
-                .thenExecuteAfter(4, () -> guard(s, () -> {
+                .thenWaitUntil(() -> poll(helper, s, polls, s.entitiesLive(ownerPos) && s.entitiesLive(coveredPos),
+                        "waiting for the fixture chunks to answer entity lookups"))
+                .thenExecute(() -> guard(s, () -> {
                     s.prepare();
                     s.wall();
                     helper.assertTrue(s.placeStraddler() == PanelGroup.Result.OK, "straddling plate");
@@ -416,14 +516,15 @@ public final class PanelDesyncTests {
                 .thenExecuteAfter(8, () -> guard(s, () -> {
                     s.discardDrops();
                     before[0] = s.drops().size();
-                    baseline[0] = PanelConsistency.waitingCount(level);
+                    baseline[0] = s.waiting();
                     PanelBlockEntity owner = s.be(ownerPos);
                     helper.assertTrue(owner.owned().isEmpty(), "owner is empty after the wrench removal");
                     owner.loadPanel(saved[0]); // a straddler over a covered block that is not loaded
                     helper.assertTrue(!level.isLoaded(coveredPos), "covered chunk still unloaded");
                     helper.assertTrue(!owner.verifyConsistency(), "undecidable: nothing repaired yet");
                     helper.assertTrue(owner.owned().size() == 1, "component kept while the covered block is unloaded");
-                    helper.assertTrue(PanelConsistency.waitingCount(level) == baseline[0] + 1, "deferred on the chunk");
+                    helper.assertTrue(s.waiting() == baseline[0] + 1, "deferred on the chunk, waiting " + s.waiting() + " baseline "
+                            + baseline[0] + " " + PanelConsistency.describeWaiting(level));
                     helper.assertTrue(!level.isLoaded(coveredPos), "verification did not load the covered chunk");
                     helper.assertTrue(s.drops().size() == before[0], "no item yet");
                     level.setChunkForced(s.coveredChunk().x, s.coveredChunk().z, true);
@@ -432,7 +533,8 @@ public final class PanelDesyncTests {
                         && s.be(ownerPos).owned().isEmpty(), "waiting for the deferred verification to repair the owner"))
                 .thenExecuteAfter(4, () -> guard(s, () -> {
                     helper.assertTrue(s.drops().size() == before[0] + 1, "one item dropped, got " + (s.drops().size() - before[0]));
-                    helper.assertTrue(PanelConsistency.waitingCount(level) == baseline[0], "deferral cleared");
+                    helper.assertTrue(s.waiting() == baseline[0], "deferral cleared, waiting " + s.waiting() + " baseline "
+                            + baseline[0] + " " + PanelConsistency.describeWaiting(level));
                     helper.assertTrue(!s.be(ownerPos).verifyConsistency(), "idempotent");
                 }))
                 .thenExecuteAfter(3, () -> guard(s, () -> helper.assertTrue(s.drops().size() == before[0] + 1, "still one item")))
