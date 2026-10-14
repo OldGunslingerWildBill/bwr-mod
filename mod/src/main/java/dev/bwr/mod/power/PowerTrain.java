@@ -1,7 +1,6 @@
 package dev.bwr.mod.power;
 
-import dev.bwr.core.turbine.PowerTurbine;
-import dev.bwr.mod.eccs.EccsPower;
+import dev.bwr.core.turbine.ShaftDynamics;
 import net.minecraft.core.BlockPos;
 import java.util.*;
 
@@ -37,18 +36,33 @@ public final class PowerTrain {
         // If a train was joined after one half already ran this tick, only unprocessed modules can act.
         var active=train.stream().filter(m->m.lastTick!=now).toList();
         var generators=active.stream().filter(m->m.block().generator()).toList();
-        double budget=generators.stream().mapToDouble(PowerModuleBlockEntity::workRoomKJ).sum();
-        double rpm=train.stream().mapToDouble(m->m.rpm).max().orElse(0);
+        // Each module owns only its share of rotor energy. Never clone the fastest
+        // rotor's energy into a newly attached stationary train.
+        double inertia=active.stream().mapToDouble(PowerModuleBlockEntity::shaftInertia).sum();
+        var coupling=ShaftDynamics.couple(active.stream().mapToDouble(PowerModuleBlockEntity::shaftInertia).toArray(),
+                active.stream().mapToDouble(m->m.rpm).toArray());
+        double rpm=coupling.rpm();
         int hp=(int)train.stream().filter(m->m.block().highPressure()).count();
         int lp=(int)train.stream().filter(m->m.block().kind()==dev.bwr.mod.eccs.PumpAssemblyBlock.Kind.LP_TURBINE).count();
-        for(var m:active){m.lastTick=now;m.hasWorkLoad=budget>0;m.resetReadouts();m.rpm=rpm;m.hpCount=hp;m.lpCount=lp;m.generatorCount=(int)train.stream().filter(n->n.block().generator()).count();m.status=budget>0?"Ready":"No generator load / buffer full";}
+        boolean connectedGenerator=train.stream().anyMatch(m->m.block().generator());
+        for(var m:active){m.lastTick=now;m.hasWorkLoad=connectedGenerator;m.resetReadouts();m.rpm=rpm;m.hpCount=hp;m.lpCount=lp;m.generatorCount=(int)train.stream().filter(n->n.block().generator()).count();m.status=connectedGenerator?"Ready":"No generator attached";}
         double work=0;
         // HP output can feed LP immediately, independent of block-entity insertion order.
         for(boolean high:new boolean[]{true,false})for(var m:active)if(!m.block().generator()&&m.block().highPressure()==high)
-            work+=m.expand(Math.max(0,budget-work));
-        double remaining=work;
+            if(connectedGenerator)work+=m.expand(Double.MAX_VALUE);
+        double request=generators.stream().mapToDouble(PowerModuleBlockEntity::workRoomKJ).sum();
+        var step=ShaftDynamics.step(inertia,rpm,work,request,.05);
+        double remaining=step.generatorWorkKJ();
         for(var g:generators){double share=Math.min(remaining,g.workRoomKJ());g.generate(share);remaining-=share;}
-        rpm+=(work>0?1500-rpm:-rpm)*(1-Math.exp(-.05/8));
-        for(var m:active){m.rpm=rpm;m.trainMW=work*20/1000;m.pushOutputs();m.setChanged();}
+        for(var m:active){m.rpm=step.rpm();m.trainMW=work*20/1000;
+            m.trainLossKJ=step.lossKJ()+coupling.lossKJ();
+            m.addShaftDamage(ShaftDynamics.damage(m.damage(),m.rpm,.05)-m.damage());}
+        // A mid-tick connection can include a half already processed. Couple it
+        // once after the new half's step; never repeat steam or electrical work.
+        if(active.size()!=train.size()) {
+            var joined=ShaftDynamics.couple(train.stream().mapToDouble(PowerModuleBlockEntity::shaftInertia).toArray(),train.stream().mapToDouble(m->m.rpm).toArray());
+            for(var m:train){m.rpm=joined.rpm();m.trainLossKJ+=joined.lossKJ();m.setChanged();}
+        }
+        for(var m:active){m.pushOutputs();m.setChanged();}
     }
 }

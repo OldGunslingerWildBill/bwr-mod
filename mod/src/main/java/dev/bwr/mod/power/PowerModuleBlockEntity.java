@@ -31,12 +31,23 @@ public class PowerModuleBlockEntity extends BlockEntity {
     public int hpCount,lpCount,generatorCount;
     public String status="Stopped";
     private double energyFe,waterKg;
+    private double damage;
+    public double trainLossKJ;
     public PowerModuleBlockEntity(BlockPos pos,BlockState state) { super(BwrBlockEntities.POWER_MODULE.get(),pos,state); }
     public PowerModuleBlock block() { return (PowerModuleBlock)getBlockState().getBlock(); }
     public double energyStored() { return energyFe; }
     public double waterStored() { return waterKg; }
     public double inletMass() { return inlet.mass(); }
     public double exhaustMass() { return exhaust.mass(); }
+    public double shaftInertia() { return ShaftDynamics.REFERENCE_INERTIA*(block().generator()?.4:.1); }
+    public double kineticEnergyKJ() { return ShaftDynamics.energyKJ(shaftInertia(),rpm); }
+    public double damage() { return damage; }
+    public boolean failed() { return damage>=1; }
+    public double speedPercent() { return rpm/ShaftDynamics.RATED_RPM*100; }
+    public boolean overspeed() { return rpm>ShaftDynamics.OVERSPEED_RPM; }
+    public void addShaftDamage(double amount) {
+        if(Double.isFinite(amount)&&amount>0){damage=Math.min(1,damage+amount);setChanged();}
+    }
     /** One compact condenser seats six blocks directly below a matching LP foundation. */
     public dev.bwr.mod.condenser.CondenserBlockEntity condenser(){
         if(level==null||block().generator()||block().highPressure())return null;
@@ -48,11 +59,11 @@ public class PowerModuleBlockEntity extends BlockEntity {
     }
     private double outletRoom(){var c=condenser();return block().highPressure()?exhaust.space():c==null?0:c.plant().steam.space();}
     public static void serverTick(Level level,BlockPos pos,BlockState state,PowerModuleBlockEntity be) { PowerTrain.tick(be); }
-    void resetReadouts() { running=false;flowKgPerS=shaftMW=electricMW=trainMW=rejectedMW=0;inletPsia=outletPsia=inletC=outletC=0; }
+    void resetReadouts() { running=false;flowKgPerS=shaftMW=electricMW=trainMW=rejectedMW=trainLossKJ=0;inletPsia=outletPsia=inletC=outletC=0; }
     double headerDemandKg() {
         if(!hasWorkLoad||block().generator())return 0;
         double room=outletRoom();
-        double rate=(block().highPressure()?2200:750)*(.1+.9*Math.pow(rpm/1500,2))/20;
+        double rate=admissionCapacityKgPerS()/20;
         return Math.max(0,Math.min(room,rate)-inlet.mass());
     }
     private double exhaustOffered() {
@@ -67,7 +78,11 @@ public class PowerModuleBlockEntity extends BlockEntity {
         exhaustClaims.put(consumer,already+packet.mass());setChanged();return packet;
     }
     double workRoomKJ() {
-        return Math.max(0,Math.min(PowerTurbine.GENERATOR_RATING_W/20/1000,
+        if(failed())return 0;
+        // Passive generator characteristic, not a speed controller: available
+        // conversion rises with shaft speed; zero speed cannot produce power.
+        double speedFactor=Math.min(1,Math.pow(rpm/ShaftDynamics.RATED_RPM,2));
+        return Math.max(0,Math.min(PowerTurbine.GENERATOR_RATING_W*speedFactor/20/1000,
                 (ENERGY_CAPACITY-energyFe)*EccsPower.WATTS_PER_FE_PER_TICK/20/1000))/PowerTurbine.GENERATOR_EFFICIENCY;
     }
     void generate(double workKJ) {
@@ -81,7 +96,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
         var condenser=condenser();
         double room=outletRoom();
         if(room<1e-9){status=block().highPressure()?"HP exhaust buffer full":condenser==null?"Fit a condenser six blocks below, same facing":"Condenser steam buffer full";return 0;}
-        double rate=(block().highPressure()?2200:750)*(.1+.9*Math.pow(rpm/1500,2));
+        double rate=admissionCapacityKgPerS();
         double wanted=Math.min(rate/20,room);
         var sources=PowerSteamNetwork.sources(this);
         // Rotate the first source each tick when several HPs or nozzles share a header.
@@ -116,6 +131,10 @@ public class PowerModuleBlockEntity extends BlockEntity {
         status=running?"Steam flowing":sources.isEmpty()?"Steam path closed or disconnected":"Waiting for steam";
         return result.workKJ();
     }
+    // Valve opening and pressure determine admission. Keep the existing rated
+    // capacities as game calibration; remove the former RPM-dependent demand
+    // multiplier which created positive-feedback steam admission on overspeed.
+    private double admissionCapacityKgPerS(){return block().highPressure()?2200:750;}
     public final IEnergyStorage energy=new IEnergyStorage() {
         public int receiveEnergy(int max,boolean simulate){return 0;}
         public int extractEnergy(int max,boolean simulate){int n=Math.min(Math.max(0,max),getEnergyStored());if(!simulate&&n>0){energyFe-=n;setChanged();dev.bwr.mod.advancement.PlantMilestones.energyDelivered(PowerModuleBlockEntity.this,n);}return n;}
@@ -139,13 +158,16 @@ public class PowerModuleBlockEntity extends BlockEntity {
     @Override public void onChunkUnloaded() { dev.bwr.mod.advancement.PlantMilestones.unloaded(this); super.onChunkUnloaded(); }
     @Override protected void saveAdditional(CompoundTag t,HolderLookup.Provider registries) {
         super.saveAdditional(t,registries);t.putDouble("RPM",rpm);
+        t.putInt("ShaftVersion",1);t.putDouble("ShaftDamage",damage);
         t.putDouble("Energy",energyFe);t.putDouble("Water",waterKg);
         saveSteam(t,"Inlet",inlet);saveSteam(t,"Exhaust",exhaust);
     }
     private static void saveSteam(CompoundTag t,String key,SteamInventory s){var p=new CompoundTag();p.putDouble("Mass",s.mass());p.putDouble("Enthalpy",s.enthalpy());p.putDouble("Pressure",s.pressure());t.put(key,p);}
     @Override protected void loadAdditional(CompoundTag t,HolderLookup.Provider registries) {
         super.loadAdditional(t,registries);running=false; // Legacy local Running/Valve commands are superseded by physical steam valves.
-        rpm=finite(t.getDouble("RPM"),1500);energyFe=finite(t.getDouble("Energy"),ENERGY_CAPACITY);waterKg=finite(t.getDouble("Water"),WATER_CAPACITY);
+        // Numerical corruption bound, not a rated-speed clamp or operating limit.
+        rpm=finite(t.getDouble("RPM"),1e6);damage=finite(t.getDouble("ShaftDamage"),1);trainLossKJ=0;
+        energyFe=finite(t.getDouble("Energy"),ENERGY_CAPACITY);waterKg=finite(t.getDouble("Water"),WATER_CAPACITY);
         loadSteam(t,"Inlet",inlet);loadSteam(t,"Exhaust",exhaust);lastTick=Long.MIN_VALUE;exhaustLedgerTick=Long.MIN_VALUE;exhaustClaims.clear();hasWorkLoad=false;
     }
     private static void loadSteam(CompoundTag t,String key,SteamInventory s){var p=t.getCompound(key);s.restore(p.getDouble("Mass"),p.getDouble("Enthalpy"),p.getDouble("Pressure"));}

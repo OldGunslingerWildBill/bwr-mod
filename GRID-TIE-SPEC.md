@@ -7,7 +7,8 @@ Scope follows the updated handoff `ASTRA-TODO-4.txt` Phase M and the owner's
 budget are superseded by `ASTRA-REVIEW-PHASE-M-SPEC.txt` (2026-10-14).
 Plan: this review-update documentation commit plus **seven implementation commits**.
 The owner authorized implementation without another routine spec stop. Stop early
-only for a real scope conflict; the compatibility conflict in §9.1 needs resolution.
+only for a real scope conflict. The owner authorized both acceptance-contract
+updates in §9.1 on 2026-10-14 ("update them").
 
 Electricity remains FE. Add a controllable external demand sink, delivered-load
 measurements, a directional inline meter and manual grid synchronization. No
@@ -347,6 +348,13 @@ implement a governor. Expose RPM, percent rated speed, overspeed, kinetic energy
 shaft/loss power and damage. Save speed/damage; derive kinetic energy from the
 installed inertia. Legacy finite saved RPM becomes the starting physical speed,
 including speeds above rated; loading must not silently clamp it to 1500.
+The passive generator conversion capacity scales with min(1,(rpm/1500)^2),
+explicit game calibration; it is zero at rest and does not regulate speed.
+Steam admission uses the existing rated capacities (HP 2200, LP 750 kg/s),
+with actual draw limited by valves/supply/backpressure. Remove the old
+RPM-squared demand multiplier: it artificially increased admission on overspeed.
+For compatibility, an isolated turbine without any attached generator keeps
+its steam inventory; its retained rotor energy still coasts down through losses.
 
 Opening at load stops tie intake immediately; other FE loads remain. Internal
 buffer headroom (at most 0.8933 seconds at rated production) and external storage
@@ -559,11 +567,13 @@ the delayed compensation, not these numeric tolerances.
    uses the actual command path, damages the bound generator, remains closed,
    and fails to generate only at the defined damage endpoint. Repeated close is inert.
 4. With stable steam supply/condenser and fixed valve positions, reduce a closed
-   tie's demand, wait for measured buffer/rolling-window settling, and prove lower
-   generator delivery and turbine steam draw; restore demand and prove recovery.
-   Choose targets within that fixture's measured sustainable output, log MW/FE,
-   buffer and steam before/after, and declare numeric bands before implementation.
-   Do not make the steam source follow the requested grid demand directly.
+   tie's demand and prove lower delivery plus shaft acceleration once buffer
+   headroom is exhausted. Then explicitly throttle the existing control valve
+   through test-side player commands, demonstrating reduced steam draw and a
+   controlled return to rated speed. Reverse through explicit valve/demand actions
+   for recovery. Predeclare numeric bands from the fixture's sustainable output;
+   log delivery, steam, buffer, RPM and losses. Keep the steam source independent
+   of requested grid demand. No production governor is added.
 5. Opening the export breaker stops tie intake while a separately wired base load
    can still draw from the existing generator terminal. Retained branch loads and
    buffer changes explain the difference from full rejection. Prove acceleration
@@ -620,36 +630,34 @@ implementation. Do not amend old acceptance assertions without owner authorizati
 | M6 | Explicit meter selection, MW-error report, all signal/CC/panel linker paths, `SIGNALS.md` and wiring docs. Real peripheral/panel parity, linker setup, CC-absent startup and invalid-input tests. |
 | M7 | Registered coupled long load-follow acceptance, end-to-end grid/steam scenarios, migration/unload/priority coverage and final report. Run/report `:core:longAcceptance` when the runtime criterion in §7.2 applies. |
 
-### 9.1 Scope conflict found while applying R1
+### 9.1 Authorized acceptance-contract updates
 
-The review says both to implement inertia/losses and to retain the prior
-fixed-valve steam/demand acceptance and existing tests. Two concrete conflicts:
+The owner authorized the following two updates on 2026-10-14 after review of
+the concrete proposals. They resolve conflicts between inertia/losses and the
+former acceptance contracts:
 
-1. §7.3 item 4 still requires lower steam draw after lowering grid demand at
+1. Former §7.3 item 4 required lower steam draw after lowering grid demand at
    **fixed valve positions**. Once buffer-room gating is removed, reduced
    electrical torque creates acceleration, not a steam-control action. The
    current admission capacity actually rises with RPM (`0.1 + 0.9*(rpm/1500)^2`).
-   Proposed replacement: first assert load-rejection acceleration at fixed valve
+   Authorized replacement: first assert load-rejection acceleration at fixed valve
    position; then issue explicit test-side player throttle commands and assert
    lower steam draw/delivery and a controlled return to rated speed. Reverse the
-   sequence for recovery. No governor in production. The original item above is
-   retained visibly until the owner resolves this conflict.
+   sequence for recovery. No governor in production. The accepted sequence is now in §7.3 item 4.
 2. `PowerModuleRuntimeCheck.modularPlant` asserts exactly
    `400*850*1000*0.985/0.67` FE from its seeded steam after 300 ticks, despite
    seeding 1500 rpm and ignoring rotor energy and mechanical losses. It then
    asserts zero electric MW after reload merely because steam was consumed.
    With a physical shaft, stored rotational energy may supply electrical work
-   and mechanical losses must enter the balance. Proposed replacement, requiring
-   explicit owner authorization: retain steam/mass/share and duplicate-tick
+   and mechanical losses must enter the balance. Authorized replacement: retain steam/mass/share and duplicate-tick
    checks; assert steam work plus initial kinetic energy equals electrical work
    before conversion losses plus mechanical losses plus final kinetic energy;
    assert save/load preserves that balance and introduces no steam or energy.
    Keep the existing numerical conservation tolerance; do not loosen it.
 
-These are identified contract conflicts, **not observed failing test runs**.
-No existing test or production behavior was changed during this documentation
-update. Resolve the contracts before M1, rather than calibrating away losses or
-adding hidden automatic steam control to satisfy incompatible assertions.
+The prior stop report describes source-level conflicts, not observed failing
+runs. Only these two contract changes are authorized; retain all other existing
+assertions. Implementation continues through M1–M7 without another spec stop.
 
 Final planned commands from the repository (Java 21 environment already used by
 the project):

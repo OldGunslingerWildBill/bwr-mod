@@ -13,6 +13,9 @@ public final class PowerModulePeripheral implements IPeripheral {
     @Override public boolean equals(IPeripheral other){return other instanceof PowerModulePeripheral p&&p.module==module;}
     @LuaFunction(mainThread=true) public Map<String,Object> getStatus(){
         Map<String,Object> m=new LinkedHashMap<>();m.put("running",module.running);m.put("control", "upstream_steam_valve");m.put("rpm",module.rpm);
+        m.put("speedPercent",module.speedPercent());m.put("overspeed",module.overspeed());
+        m.put("kineticEnergyMJ",module.kineticEnergyKJ()/1000);m.put("shaftLossMW",module.trainLossKJ*20/1000);
+        m.put("damage",module.damage());m.put("failed",module.failed());
         m.put("flowKgPerS",module.flowKgPerS);m.put("shaftMW",module.shaftMW);m.put("electricMW",module.electricMW);m.put("trainMW",module.trainMW);
         m.put("inletPsia",module.inletPsia);m.put("outletPsia",module.outletPsia);m.put("inletC",module.inletC);m.put("outletC",module.outletC);
         m.put("waterKg",module.waterStored());m.put("storedFE",module.energyStored());m.put("hpSections",module.hpCount);m.put("lpSections",module.lpCount);m.put("generators",module.generatorCount);m.put("status",module.status);return m;

@@ -49,9 +49,12 @@ public final class SteamValveRuntimeCheck {
                 near(modules.get(0).flowKgPerS,modules.get(1).flowKgPerS,"HP supply not shared");
                 for(int i=2;i<6;i++)near(modules.get(i).flowKgPerS,draw/4,"HP-to-LP steam allocation");
                 near(PowerModuleRuntimeCheck.plantMass(modules),draw/20,"steam/water mass balance");
+                // Check duplicate execution before the meter-expiry clock advance.
+                // A genuinely new tick can convert retained rotor energy to FE.
+                double stored=gen.energyStored();PowerTrain.tick(gen);near(gen.energyStored(),stored,"second tick regenerated steam");
                 if(fraction==0)tick(l); // Meter holds its most recent sample for at most one tick.
                 near(control.flowKgPerS(),draw,"control valve meter");near(stop.flowKgPerS(),draw,"stop valve meter");
-                double stored=gen.energyStored();PowerTrain.tick(gen);near(gen.energyStored(),stored,"second tick regenerated steam");passed++;
+                passed++;
             }
             // A stop valve closes the one shared header; trapped downstream steam can still expand.
             control.setTarget(1);control.stroke(3);stop.setTarget(0);stop.stroke(1);reset(modules);tick(l);

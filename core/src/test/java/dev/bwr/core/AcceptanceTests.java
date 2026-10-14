@@ -75,6 +75,7 @@ public final class AcceptanceTests {
             FuelVarietyTest.class,
             CompactCoreLayoutTest.class,
             PowerTurbineTest.class,
+            ShaftDynamicsTest.class,
             SurfaceCondenserTest.class,
             WaterSegmentTest.class,
             BoronSolutionTest.class,

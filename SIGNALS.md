@@ -466,6 +466,12 @@ Block entity `PowerModuleBlockEntity`; CC peripheral `bwr_hp_turbine / bwr_lp_tu
 | --- | --- | --- | --- | --- |
 | `running` | Running |  | 0 to 1 | BOOLEAN |
 | `rpm` | Shaft speed | rpm | 0 to 4000 | NUMBER |
+| `speed_percent` | Rated shaft speed | % | 0 to 300 | NUMBER |
+| `overspeed` | Shaft overspeed | | 0 to 1 | BOOLEAN |
+| `kinetic_energy_mj` | Module rotor energy | MJ | 0 to 1000000 | NUMBER |
+| `shaft_loss_mw` | Train mechanical losses | MW | 0 to 100000 | NUMBER |
+| `damage` | Shaft damage | fraction | 0 to 1 | NUMBER |
+| `failed` | Generator failed | | 0 to 1 | BOOLEAN |
 | `flow` | Steam flow | kg/s | 0 to 2500 | NUMBER |
 | `shaft_mw` | Shaft power | MW | 0 to 1500 | NUMBER |
 | `electric_mw` | Electrical output | MW | 0 to 1500 | NUMBER |
@@ -479,6 +485,14 @@ Block entity `PowerModuleBlockEntity`; CC peripheral `bwr_hp_turbine / bwr_lp_tu
 | `status` | Status |  | text | TEXT |
 
 No commands (read only).
+
+Shaft additions in `getStatus()` are `speedPercent`, `overspeed`,
+`kineticEnergyMJ`, `shaftLossMW`, `damage`, and `failed`. Kinetic energy belongs
+to this module; sum modules once for total rotor energy. Loss power is the shared
+train's last-step mechanical/coupling loss, so do not sum it across modules.
+Overspeed above 110% accumulates damage; neither signal operates a valve or trips
+a breaker. At damage 1 a generator produces no new FE; stored FE remains usable.
+The calibration is documented in `GRID-TIE-SPEC.md` §4.3.
 
 ## Containment controller
 
