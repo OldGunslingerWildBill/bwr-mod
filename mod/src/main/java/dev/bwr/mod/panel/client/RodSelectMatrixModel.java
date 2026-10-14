@@ -30,6 +30,8 @@ final class RodSelectMatrixModel extends CoreDisplayModel {
         final Kit button;
         final OffsetSink offset = new OffsetSink();
         final float textZ;
+        final boolean coordinates;
+        final String caption;
 
         State(PanelComponent component, float aspect) {
             RodSelectMatrixData data = (RodSelectMatrixData) component.data();
@@ -38,6 +40,8 @@ final class RodSelectMatrixModel extends CoreDisplayModel {
             this.aspect = aspect;
             this.map = data.displayMap();
             this.tile = FcdLayout.clampTile(data.tileCells);
+            this.coordinates = data.coordLegends;
+            this.caption = data.caption;
             this.needed = new int[] {FcdLayout.matrixWidth(map, tile), FcdLayout.matrixHeight(map, tile)};
             this.fits = component.w() >= needed[0] && component.h() >= needed[1];
             this.ox = dev.bwr.mod.panel.component.CoreDisplayData.centre(component.w(), needed[0]);
@@ -164,7 +168,8 @@ final class RodSelectMatrixModel extends CoreDisplayModel {
             return;
         }
         float t = s.tile;
-        for (int rod = 0; rod < s.map.rodCount(); rod++) {
+        caption(context, s.caption, s.ox + s.needed[0] / 2.0f, s.oy + t * 0.5f, s.needed[0] * 0.9f, t * 0.8f, s.textZ, INK);
+        for (int rod = 0; s.coordinates && rod < s.map.rodCount(); rod++) {
             float x = s.ox + FcdLayout.buttonX(s.map, s.tile, rod);
             float y = s.oy + FcdLayout.buttonY(s.map, s.tile, rod);
             fitted(context, s.map.label(rod), x + t / 2.0f, y + t / 2.0f, t * 0.74f, t * 0.4f, s.textZ, INK);

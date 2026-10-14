@@ -92,7 +92,7 @@ public final class FcdLayout {
     private static final float BF_STRIP_H = 2.7f;
     private static final float BF_LEFT = 1.6f;
     private static final float BF_RIGHT = 0.4f;
-    private static final float BF_TOP = 0.4f;
+    private static final float BF_TOP = 1.0f;
     private static final float BF_BOTTOM = 1.0f;
 
     private final CoreRodMap map;

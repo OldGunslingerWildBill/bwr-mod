@@ -75,7 +75,9 @@ public final class FcdClientCheck {
             new Stage("columbia-scram", true, false, false, 9, true),
             new Stage("columbia-close", true, false, false, 3, false),
             new Stage("browns-close", false, true, false, 3, false),
-            new Stage("matrix-close", false, false, true, 3, false));
+            new Stage("matrix-close", false, false, true, 3, false),
+            new Stage("columbia-labels", true, false, false, 3, false),
+            new Stage("nameplates", false, false, false, 3, false));
 
     private static final String OPTION = System.getProperty("bwr.fcdClientStages", "");
     private static final List<Stage> STAGES = chosen();
@@ -156,7 +158,7 @@ public final class FcdClientCheck {
                     player.getAbilities().flying = true;
                     player.onUpdateAbilities();
                     level.setDayTime(6000);
-                    int rows = current.columbia() ? 6 : current.browns() ? 5 : 4;
+                    int rows = current.name().equals("nameplates") ? 2 : current.columbia() ? 6 : current.browns() ? 5 : 4;
                     double cameraY = wall.getY() - rows / 2.0 + 0.5 - 1.62;
                     player.connection.teleport(centreX, cameraY, wall.getZ() - current.distance(), 0, 0);
                 } catch (Throwable t) {
@@ -257,6 +259,9 @@ public final class FcdClientCheck {
      * bound to the reactor through the same source and sink classes the linker makes.
      */
     private static double build(ServerLevel level, BlockPos min, BlockPos wall, Stage stage) throws Exception {
+        if (stage.name().equals("nameplates")) {
+            return nameplates(level, wall);
+        }
         if (!stage.columbia() && !stage.browns() && !stage.matrix()) {
             return wall.getX();
         }
@@ -293,10 +298,10 @@ public final class FcdClientCheck {
             }
         }
         if (columbiaAt >= 0) place(level, wall.relative(Direction.WEST, columbiaAt), ComponentTypes.FULL_CORE_DISPLAY, 96, 96, reactor,
-                FullCoreDisplayData.COLUMBIA);
+                FullCoreDisplayData.COLUMBIA, stage.name().equals("columbia-labels"));
         if (brownsAt >= 0) place(level, wall.relative(Direction.WEST, brownsAt), ComponentTypes.FULL_CORE_DISPLAY, 128, 80, reactor,
-                FullCoreDisplayData.BROWNS_FERRY);
-        if (matrixAt >= 0) place(level, wall.relative(Direction.WEST, matrixAt), ComponentTypes.ROD_SELECT_MATRIX, 64, 64, reactor, null);
+                FullCoreDisplayData.BROWNS_FERRY, true);
+        if (matrixAt >= 0) place(level, wall.relative(Direction.WEST, matrixAt), ComponentTypes.ROD_SELECT_MATRIX, 64, 64, reactor, null, true);
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 if (level.getBlockEntity(wall.relative(Direction.WEST, col).below(row)) instanceof PanelBlockEntity be) be.syncFull();
@@ -307,12 +312,52 @@ public final class FcdClientCheck {
         return wall.getX() - (cols - 1) / 2.0 + 0.5;
     }
 
+    /** Four valve nameplates like the Columbia SRV plates: two lines, dot, number, red tag, pressure, and a red stripe on the ADS ones. */
+    private static double nameplates(ServerLevel level, BlockPos wall) {
+        for (int row = 0; row < 2; row++) {
+            for (int col = 0; col < 4; col++) {
+                level.setBlock(wall.relative(Direction.WEST, col).below(row), BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState()
+                        .setValue(PanelBlock.FACING, Direction.NORTH), 3);
+            }
+        }
+        String[] names = {"MS-RV-3A", "MS-RV-2B", "MS-RV-1D", "MS-RV-4D"};
+        String[] numbers = {"12", "9", "13", "4"};
+        String[] pressure = {"1121 PSIG", "1101 PSIG", "1101 PSIG", "1131 PSIG"};
+        for (int i = 0; i < 4; i++) {
+            BlockPos anchor = wall.relative(Direction.WEST, (i % 2) * 2).below(i / 2);
+            PanelComponent plate = PanelOps.placeDirect(level, anchor, 0, 3, ComponentTypes.NAMEPLATE, Footprint.of(32, 10));
+            if (plate == null) throw new AssertionError("nameplate placement failed " + i);
+            dev.bwr.mod.panel.component.NameplateData data = (dev.bwr.mod.panel.component.NameplateData) plate.data();
+            data.plate = 0xF2F2EC;
+            data.ink = 0x30343A;
+            data.setField("line1", "SAFETY RELIEF");
+            data.setField("line2", names[i]);
+            data.setField("cornerLeft", numbers[i]);
+            data.setField("cornerRight", pressure[i]);
+            data.setField("tag", "PAM");
+            data.dot = true;
+            data.dotColor = 0x2040C0;
+            data.stripe = i == 3;
+            plate.touch();
+        }
+        for (int row = 0; row < 2; row++) {
+            for (int col = 0; col < 4; col++) {
+                if (level.getBlockEntity(wall.relative(Direction.WEST, col).below(row)) instanceof PanelBlockEntity be) be.syncFull();
+            }
+        }
+        return wall.getX() - 1.5;
+    }
+
     private static void place(ServerLevel level, BlockPos anchor, dev.bwr.mod.panel.component.ComponentType type, int w, int h,
-                              ReactorControllerBlockEntity reactor, String style) {
+                              ReactorControllerBlockEntity reactor, String style, boolean labels) {
         PanelComponent component = PanelOps.placeDirect(level, anchor, 0, 0, type, Footprint.of(w, h));
         if (component == null) throw new AssertionError("FCD check placement failed for " + type.id() + " at " + anchor);
         PanelBlockEntity owner = (PanelBlockEntity) level.getBlockEntity(anchor);
         if (component.data() instanceof FullCoreDisplayData data && style != null) data.style = style;
+        if (labels && component.data() instanceof CoreDisplayData data) {
+            data.setText(type == ComponentTypes.ROD_SELECT_MATRIX ? "ROD SELECT" : "FULL CORE DISPLAY");
+            if (component.data() instanceof FullCoreDisplayData full && FullCoreDisplayData.COLUMBIA.equals(style)) full.edgeNumbers = "on";
+        }
         component.setSource(0, new PlantSource(reactor.getBlockPos(), "formed"));
         if (type == ComponentTypes.ROD_SELECT_MATRIX) component.addSink(0, new PlantSink(reactor.getBlockPos(), "select_rod", 1.0));
         owner.resample(component, true);

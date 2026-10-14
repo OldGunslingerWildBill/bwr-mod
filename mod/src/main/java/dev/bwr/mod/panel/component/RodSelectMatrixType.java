@@ -18,7 +18,9 @@ public final class RodSelectMatrixType extends CoreDisplayType {
             Footprint.of(64, 64), Footprint.of(48, 48), Footprint.of(80, 80), Footprint.of(96, 96), Footprint.of(112, 112),
             Footprint.of(128, 128), Footprint.of(32, 32));
     private static final List<ConfigField> SCHEMA = List.of(
-            ConfigField.integer("TileCells", "component.bwr.field.tile_cells", FcdLayout.MIN_TILE, FcdLayout.MAX_TILE));
+            ConfigField.integer("TileCells", "component.bwr.field.tile_cells", FcdLayout.MIN_TILE, FcdLayout.MAX_TILE),
+            ConfigField.text("Caption", "component.bwr.field.caption", CoreDisplayData.MAX_CAPTION),
+            ConfigField.bool("CoordLegends", "component.bwr.field.coord_legends"));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("rod"));
 
     RodSelectMatrixType() {

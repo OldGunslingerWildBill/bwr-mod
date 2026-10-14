@@ -19,6 +19,9 @@ public final class FullCoreDisplayType extends CoreDisplayType {
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.choice(FullCoreDisplayData.KEY_STYLE, "component.bwr.field.fcd_style", FullCoreDisplayData.STYLES),
             ConfigField.integer("TileCells", "component.bwr.field.tile_cells", FcdLayout.MIN_TILE, FcdLayout.MAX_TILE),
+            ConfigField.text("Caption", "component.bwr.field.caption", CoreDisplayData.MAX_CAPTION),
+            ConfigField.choice("EdgeNumbers", "component.bwr.field.edge_numbers", FullCoreDisplayData.EDGE_MODES),
+            ConfigField.bool("CoordLegends", "component.bwr.field.coord_legends"),
             ConfigField.decimal("AccumFraction", "component.bwr.field.accum_fraction", 0.1, 1.0),
             ConfigField.decimal("Downscale", "component.bwr.field.lprm_downscale", 0.0, 100.0),
             ConfigField.decimal("Upscale", "component.bwr.field.lprm_upscale", 0.0, 200.0));

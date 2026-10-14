@@ -47,6 +47,9 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
         final Kit blank;
         final Kit module;
         final Kit strip;
+        final boolean edge;
+        final boolean coordinates;
+        final String caption;
         final OffsetSink offset = new OffsetSink();
         /** Elevation of the printed legends: over the baked bodies when there are some. */
         float textZ = TEXT_Z;
@@ -61,6 +64,9 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
             this.generation = PanelModels.generation();
             this.aspect = aspect;
             this.layout = FcdLayout.of(data.displayMap(), data.layoutStyle(), data.tileCells);
+            this.edge = data.edgeNumbersOn();
+            this.coordinates = data.coordLegends;
+            this.caption = data.caption;
             this.needed = new int[] {layout.neededWidth(), layout.neededHeight()};
             this.fits = component.w() >= needed[0] && component.h() >= needed[1];
             this.ox = dev.bwr.mod.panel.component.CoreDisplayData.centre(component.w(), needed[0]);
@@ -238,7 +244,7 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
         }
         // grid lines from the numbers to the modules
         float line = Math.max(0.2f, layout.tile() * 0.1f);
-        for (int row = 0; row < map.rows(); row++) {
+        for (int row = 0; s.edge && row < map.rows(); row++) {
             int first = -1;
             for (int c = 0; c < map.cols() && first < 0; c++) {
                 first = map.rodAt(c, row) >= 0 ? c : -1;
@@ -250,7 +256,7 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
                 sink.rect(x0, s.oy + layout.rowCentreY(row) - line / 2, x1 - x0, line, 0.5f, GRID_LINE, false);
             }
         }
-        for (int c = 0; c < map.cols(); c++) {
+        for (int c = 0; s.edge && c < map.cols(); c++) {
             int lowest = -1;
             for (int row = map.rows() - 1; row >= 0 && lowest < 0; row--) {
                 lowest = map.rodAt(c, row) >= 0 ? row : -1;
@@ -481,6 +487,11 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
         } else {
             brownsFerryLegends(context, s);
         }
+        // The caption sits in the margin above the picture (a tile high in every style): light on the black backplate
+        // of Columbia, dark on the board elsewhere.
+        float t = s.layout.tile();
+        caption(context, s.caption, s.ox + s.needed[0] / 2.0f, s.oy + t * 0.5f, s.needed[0] * 0.9f, t * 0.8f, s.textZ,
+                s.layout.style() == FcdLayout.Style.COLUMBIA ? 0xE8E8E0 : GRID_LINE);
     }
 
     private void columbiaLegends(PanelRenderContext context, State s) {
@@ -493,11 +504,34 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
             for (int which = FcdLayout.TILE_A; which <= FcdLayout.TILE_C; which++) {
                 float x = s.ox + layout.tileX(rod, which);
                 float y = s.oy + layout.tileY(rod, which);
-                String upper = which == FcdLayout.TILE_A ? map.label(rod) : COLUMBIA_UPPER_TEXT[which];
+                String upper = which == FcdLayout.TILE_A ? (s.coordinates ? map.label(rod) : "") : COLUMBIA_UPPER_TEXT[which];
                 String lower = COLUMBIA_LOWER_TEXT[which];
                 float cx = x + t / 2.0f;
                 fitted(context, upper, cx, y + upperY(t) + hh / 2.0f, hw, hh, s.textZ, INK);
                 fitted(context, lower, cx, y + lowerY(t) + hh / 2.0f, hw, hh, s.textZ, INK);
+            }
+        }
+        if (s.edge) {
+            // GE row numbers in the margin of the backplate left of each row, column numbers under each column
+            for (int row = 0; row < map.rows(); row++) {
+                int first = -1;
+                for (int c = 0; c < map.cols() && first < 0; c++) {
+                    first = map.rodAt(c, row) >= 0 ? c : -1;
+                }
+                if (first >= 0) {
+                    fitted(context, String.format(Locale.ROOT, "%02d", map.labelY(row)), s.ox + (1 + 2 * first) * t - t * 0.5f,
+                            s.oy + (2 + 2 * row) * t, t * 0.9f, t * 0.7f, 0.3f, 0xE8E8E0);
+                }
+            }
+            for (int c = 0; c < map.cols(); c++) {
+                int lowest = -1;
+                for (int row = map.rows() - 1; row >= 0 && lowest < 0; row--) {
+                    lowest = map.rodAt(c, row) >= 0 ? row : -1;
+                }
+                if (lowest >= 0) {
+                    fitted(context, String.format(Locale.ROOT, "%02d", map.labelX(c)), s.ox + (2 + 2 * c) * t,
+                            s.oy + (1 + 2 * lowest) * t + 2.5f * t, t * 1.4f, t * 0.7f, 0.3f, 0xE8E8E0);
+                }
             }
         }
     }
@@ -513,7 +547,9 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
             legend(context, "ACCUM", BF_ACCUM, x, y, mw, mh, s.textZ);
             legend(context, "SCRAM", BF_SCRAM, x, y, mw, mh, s.textZ);
             legend(context, "DRIFT", BF_DRIFT, x, y, mw, mh, s.textZ);
-            legend(context, map.label(rod), BF_SELECT, x, y, mw, mh, s.textZ);
+            if (s.coordinates) {
+                legend(context, map.label(rod), BF_SELECT, x, y, mw, mh, s.textZ);
+            }
         }
         for (int string = 0; string < map.lprmStrings().size(); string++) {
             float x = s.ox + layout.stripX(string);
@@ -521,11 +557,11 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
             fitted(context, map.lprmStrings().get(string).label(), x + layout.stripWidth() / 2.0f,
                     y + layout.tile() * 0.3f, layout.stripWidth() * 1.5f, layout.tile() * 0.5f, s.textZ, GRID_LINE);
         }
-        for (int row = 0; row < map.rows(); row++) {
+        for (int row = 0; s.edge && row < map.rows(); row++) {
             fitted(context, String.format(Locale.ROOT, "%02d", map.labelY(row)), s.ox + layout.leftMargin() * 0.4f,
                     s.oy + layout.rowCentreY(row), layout.leftMargin() * 0.7f, layout.moduleHeight() * 0.8f, 0.6f, GRID_LINE);
         }
-        for (int c = 0; c < map.cols(); c++) {
+        for (int c = 0; s.edge && c < map.cols(); c++) {
             fitted(context, String.format(Locale.ROOT, "%02d", map.labelX(c)), s.ox + layout.columnCentreX(c),
                     s.oy + layout.bottomMarginY() + layout.bottomMargin() * 0.55f, layout.moduleWidth() * 0.7f,
                     layout.bottomMargin() * 0.6f, 0.6f, GRID_LINE);

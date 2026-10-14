@@ -158,6 +158,19 @@ labels.
 8. **Docs:** CONTROL-PANELS.md (how to place and bind an FCD), SIGNALS.md (new signals and commands),
    and a short section in PANEL-MODELS-SPEC.md for the new models.
 
+9. **Labels** (project owner request, after the code above):
+   - `full_core_display` and `rod_select_matrix` get an optional `Caption` text field (for example `FULL CORE
+     DISPLAY`, `ROD SELECT`) drawn above the picture, and a `CoordLegends` toggle for the rod-coordinate legends
+     (default on). The display also gets `EdgeNumbers` for the GE row and column numbers: `auto` (on for
+     `browns_ferry`, off for `columbia`), `on` or `off`. Rod coordinates and LPRM labels stay automatic from the core.
+   - The nameplate matches the Columbia SRV plates (`columbia_srv_switches_1.png`, `_2.png`): up to 3 lines (`Text`,
+     `Text2`, `Text3`, 32 characters each; an old single-line save loads into line 1), two small bottom corner fields
+     (`CornerLeft` "16", `CornerRight` "1101 PSIG"), an optional coloured tag with its own text (`Tag`, `TagColor`: a red
+     `PAM`) and an optional coloured dot (`Dot`, `DotColor`), both bottom left, and an optional coloured stripe down the
+     left edge (`Stripe`, `StripeColor`, red on the ADS valves). All are config fields with lang keys; the text ones are
+     CC-settable through `PanelTextTarget` (`setText` is line 1 or the caption; `setTextField(label, field, text)` names
+     `line1` to `line3`, `cornerLeft`, `cornerRight`, `tag` or `caption`). Patch round trip and old-save load are tested.
+
 ## 6. Models track (Blender): ids, parts, budgets
 
 Use `art/models/panel/panel_export.py` (read its docstring) and the existing family pattern
@@ -190,5 +203,5 @@ headless `blender --background --factory-startup`.
 | Track | State | Resume from |
 | --- | --- | --- |
 | models (`fcd-models`) | not started | section 6 |
-| code (`fcd-code`) | not started | section 5, items 1 to 8 in order |
+| code (`fcd-code`) | done: items 1 to 9 | Nothing left. Commits: rod selection 51c48ec, indications 3d9334a, components addb852, patch 252bdcd, cache and client models 4e4038a, style table f744b4d, docs e50724d, labels (item 9, last commit). To finish at integration: merge `fcd-models`, run `:mod:runTurbineModelCheck -PbwrFcdClientCheck` once (baked models) and compare screenshots in `mod/run/turbineModelCheck/fcd-check/` with the photos |
 | integration (Claude) | not started | merge both, client screenshots against the photos |

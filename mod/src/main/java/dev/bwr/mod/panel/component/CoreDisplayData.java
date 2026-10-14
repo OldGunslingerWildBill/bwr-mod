@@ -36,8 +36,20 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  *
  * <p>Nothing here acts: the snapshot only reads, and the matrix's one output is operated by a player.
  */
-public abstract class CoreDisplayData extends ComponentData {
+public abstract class CoreDisplayData extends ComponentData implements PanelTextTarget {
     public static final int DEFAULT_TILE = FcdLayout.DEFAULT_TILE;
+    /** Longest caption, characters. */
+    public static final int MAX_CAPTION = 32;
+    private static final java.util.List<String> TEXT_FIELDS = java.util.List.of("caption");
+    /** First byte of a patch that carries the caption as well as the snapshot (a snapshot patch starts with its version, 1). */
+    private static final int CAPTION_PATCH = 0x7F;
+
+    /** Optional caption drawn above the picture ("FULL CORE DISPLAY", "ROD SELECT"); empty draws none. */
+    public String caption = "";
+    /** Whether the rod coordinates (18-31) are printed on the tiles, modules or buttons. The LPRM labels always are. */
+    public boolean coordLegends = true;
+    /** Server: the caption changed since the last {@link #drainPatch}. */
+    private boolean captionPending;
 
     public int tileCells = DEFAULT_TILE;
     private FcdSnapshot snapshot = FcdSnapshot.DARK;
@@ -102,6 +114,38 @@ public abstract class CoreDisplayData extends ComponentData {
         }
     }
 
+    /**
+     * Sets the caption (the CC {@code setText} path): printable characters only, at most {@link #MAX_CAPTION}. It is
+     * saved and sent to watching clients in the next patch, with the snapshot.
+     */
+    @Override
+    public boolean setText(String text) {
+        return setField("caption", text);
+    }
+
+    @Override
+    public java.util.List<String> textFields() {
+        return TEXT_FIELDS;
+    }
+
+    @Override
+    public boolean setField(String field, String text) {
+        if (!"caption".equals(field)) {
+            return false;
+        }
+        String clean = ConfigSchema.cleanText(text == null ? "" : text, MAX_CAPTION);
+        if (clean.equals(caption)) {
+            return false;
+        }
+        caption = clean;
+        captionPending = true;
+        if (host() != null) {
+            host().touch();
+        }
+        contentChanged();
+        return true;
+    }
+
     /** The snapshot changed: queue it as one content patch (and the save). */
     private void changed(PanelBlockEntity owner, PanelComponent component) {
         patchPending = true;
@@ -115,16 +159,45 @@ public abstract class CoreDisplayData extends ComponentData {
 
     @Override
     public final byte[] drainPatch() {
-        if (!patchPending) {
+        if (!patchPending && !captionPending) {
             return null;
         }
         patchPending = false;
         byte[] bytes = snapshot.encode();
+        if (captionPending) {
+            // A changed caption travels with the snapshot, in one patch: marker, snapshot length, snapshot, caption.
+            captionPending = false;
+            byte[] text = caption.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            byte[] both = new byte[3 + bytes.length + text.length];
+            both[0] = CAPTION_PATCH;
+            both[1] = (byte) (bytes.length >> 8);
+            both[2] = (byte) bytes.length;
+            System.arraycopy(bytes, 0, both, 3, bytes.length);
+            System.arraycopy(text, 0, both, 3 + bytes.length, text.length);
+            return both.length <= MAX_PATCH ? both : null;
+        }
         return bytes.length <= MAX_PATCH ? bytes : null;
     }
 
     @Override
     public final void applyPatch(byte[] patch) {
+        if (patch != null && patch.length >= 3 && (patch[0] & 0xFF) == CAPTION_PATCH) {
+            int length = (patch[1] & 0xFF) << 8 | patch[2] & 0xFF;
+            if (3 + length > patch.length) {
+                return;
+            }
+            FcdSnapshot decoded = FcdSnapshot.decode(java.util.Arrays.copyOfRange(patch, 3, 3 + length), snapshot);
+            if (decoded == null) {
+                return;
+            }
+            storeSnapshot(decoded);
+            caption = ConfigSchema.cleanText(new String(patch, 3 + length, patch.length - 3 - length,
+                    java.nio.charset.StandardCharsets.UTF_8), MAX_CAPTION);
+            if (host() != null) {
+                host().touch();
+            }
+            return;
+        }
         FcdSnapshot next = FcdSnapshot.decode(patch, snapshot);
         if (next != null) {
             storeSnapshot(next);
@@ -205,6 +278,10 @@ public abstract class CoreDisplayData extends ComponentData {
     @Override
     public void save(CompoundTag tag) {
         tag.putInt("TileCells", tileCells);
+        if (!caption.isEmpty()) {
+            tag.putString("Caption", caption);
+        }
+        tag.putBoolean("CoordLegends", coordLegends);
         if (snapshot.formed()) {
             tag.putByteArray("Snap", snapshot.encode()); // a dark display is rebuilt from its binding on load
         }
@@ -214,6 +291,8 @@ public abstract class CoreDisplayData extends ComponentData {
     @Override
     public void load(CompoundTag tag) {
         tileCells = tag.contains("TileCells", Tag.TAG_ANY_NUMERIC) ? FcdLayout.clampTile(tag.getInt("TileCells")) : DEFAULT_TILE;
+        caption = ConfigSchema.cleanText(tag.getString("Caption"), MAX_CAPTION);
+        coordLegends = !tag.contains("CoordLegends", Tag.TAG_ANY_NUMERIC) || tag.getBoolean("CoordLegends");
         FcdSnapshot loaded = tag.contains("Snap", Tag.TAG_BYTE_ARRAY) ? FcdSnapshot.decode(tag.getByteArray("Snap"), snapshot) : null;
         snapshot = loaded == null ? FcdSnapshot.DARK : loaded;
         loadOwn(tag);

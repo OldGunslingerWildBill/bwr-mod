@@ -177,6 +177,13 @@ abstract class CoreDisplayModel implements ComponentModel {
         }
     }
 
+    /** The caption above a display: one line (no break at a space), as large as fits the box, centred on {@code cx}. */
+    static void caption(PanelRenderContext context, String text, float cx, float cy, float w, float h, float z, int ink) {
+        if (!text.isEmpty()) {
+            line(context, text, cx, cy, w, h, z, ink);
+        }
+    }
+
     private static void line(PanelRenderContext context, String text, float cx, float cy, float w, float h, float z, int ink) {
         float pixels = context.font().width(text);
         if (pixels <= 0.0f) {

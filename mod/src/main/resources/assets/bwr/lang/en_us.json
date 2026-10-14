@@ -786,5 +786,20 @@
   "message.bwr.panel_bind.result.refused": "This component cannot take that device",
   "text.bwr.core_display.needs_size": "NEEDS %s x %s",
   "component.bwr.option.FcdStyle.columbia": "Columbia (lamp matrix)",
-  "component.bwr.option.FcdStyle.browns_ferry": "Browns Ferry (digital)"
+  "component.bwr.option.FcdStyle.browns_ferry": "Browns Ferry (digital)",
+  "component.bwr.field.caption": "Caption above",
+  "component.bwr.field.edge_numbers": "Edge row and column numbers",
+  "component.bwr.field.coord_legends": "Rod coordinate legends",
+  "component.bwr.option.EdgeNumbers.auto": "Automatic (on for Browns Ferry)",
+  "component.bwr.option.EdgeNumbers.on": "On",
+  "component.bwr.option.EdgeNumbers.off": "Off",
+  "component.bwr.field.text_line_2": "Engraved line 2 (second row)",
+  "component.bwr.field.text_line_3": "Engraved line 3 (third row)",
+  "component.bwr.field.corner_left": "Bottom-left field",
+  "component.bwr.field.corner_right": "Bottom-right field",
+  "component.bwr.field.tag_text": "Tag text (bottom left)",
+  "component.bwr.field.tag_color": "Tag colour",
+  "component.bwr.field.dot_show": "Show dot (bottom left)",
+  "component.bwr.field.stripe_show": "Show stripe (left edge)",
+  "component.bwr.field.stripe_color": "Stripe colour"
 }

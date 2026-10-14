@@ -44,7 +44,7 @@ may span up to 8 x 8, because a 185-rod core is 96 cells across.
 | Graphic display | 32x32 (2 x 2 blocks), 16x16, 48x48, 64x64 and rectangles; 2 pixels per cell |
 | Mimic line | 3 cells thick: 16x3, 8x3, 4x3, 3x3, 32x3, 64x3 and vertical; corners and tees 6x6 to 16x16 |
 | Mimic symbol | 6x6, 8x8, 10x10, 12x12 |
-| Nameplate | 4 cells tall: 16x4, 8x4, 24x4, 32x4, 48x4, 64x4, 24x6, 32x8 |
+| Nameplate | 4 cells tall: 16x4, 8x4, 24x4, 32x4, 48x4, 64x4, 24x6, 32x8; valve plates 32x10, 24x8, 32x12 |
 | Full core display | 96x96, 128x128, 64x64, 80x80, 112x112, 48x48, 128x96, 128x80, 112x80 (up to **8 x 8 blocks**) |
 | Rod select matrix | 64x64, 48x48, 80x80, 96x96, 112x112, 128x128, 32x32 (up to 8 x 8 blocks) |
 
@@ -185,6 +185,12 @@ binding and the wrench refuses the setting**, with a message that names the size
 is already bound when its reactor is rebuilt larger shows `NEEDS 96 x 96` instead of a picture. Binding the input to
 a device that is not a reactor controller is refused too.
 
+**Labels.** The wrench screen of both components has `Caption above` (for example `FULL CORE DISPLAY` or
+`ROD SELECT`, drawn in the margin above the picture; CC `setText` sets it) and `Rod coordinate legends` (on by
+default: the `18-31` on tiles, modules and buttons). The display also has `Edge row and column numbers`: automatic
+(on for Browns Ferry, off for Columbia), on, or off; on in Columbia style prints the GE row numbers and column numbers
+in the margin of the backplate. The rod coordinates and the LPRM string labels themselves always come from the core.
+
 **Unbound, unformed, unloaded.** An unbound display draws a dark 185-rod reference layout (the frame and dark tiles) so
 you can see what you placed. With the binding removed, the reactor unformed or its chunk unloaded every lamp goes dark
 and the tiles stay; nothing ever lights from a stale reading.
@@ -242,6 +248,10 @@ then wire left to right. Signal and command keys are in `SIGNALS.md`. Component 
 (ranges, bands, formats, alarm setpoints) are each component's own wrench screen; this example is about the
 wiring, which is identical for every type.
 
+0. **Valve nameplates.** A nameplate holds up to three lines of text, a small field at each bottom corner (`16`,
+   `1101 PSIG`), an optional coloured tag with its own text (a red `PAM`), an optional coloured dot (both at the bottom
+   left) and an optional coloured stripe down the left edge (red on the ADS valves), all in the wrench screen: the
+   Columbia SRV plates. An old one-line plate loads into line 1.
 1. **Nameplates.** A row of nameplates along the top: `REACTOR`, `POWER`, `MSIV`. Static engraved text
    (wrench screen), or changed from CC with `setText`.
 2. **Reactor pressure dial** (round dial). Sneak-right-click the reactor controller with the linker.
@@ -309,7 +319,8 @@ server thread; a bad label or argument raises an error.
 | `getInputs()` | `{label = {port = value}}` | The current **output** of every control (switches, knobs, buttons): the "inputs" a program reads |
 | `set(label, value)` | boolean | Sets the first input of a component that is wired to **CC**. Errors if that input has another source or the value is not finite |
 | `setPort(label, port, value)` | boolean | Same, for the input named `port` (keys as in `get(label).inputs`) |
-| `setText(label, text)` | boolean (changed) | Text of a nameplate or text display |
+| `setText(label, text)` | boolean (changed) | Text of a nameplate (line 1), a text display, or the caption of a core display or rod select matrix |
+| `setTextField(label, field, text)` | boolean (changed) | One named text field: a nameplate's `line1`..`line3`, `cornerLeft`, `cornerRight`, `tag`; a core display's or matrix's `caption`. An unknown field is an error that lists the component's fields |
 | `getSize(label)` | `width, height` | Pixels (graphic display) or characters and rows (character LCD) |
 | `clear(label, color)` | boolean | Clears to a palette colour; an LCD clears its text and ignores the colour |
 | `setPixel(label, x, y, color)` | boolean | Graphic display |

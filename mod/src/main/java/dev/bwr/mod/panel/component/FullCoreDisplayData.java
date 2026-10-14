@@ -25,7 +25,19 @@ public final class FullCoreDisplayData extends CoreDisplayData {
      */
     public static final String KEY_STYLE = "FcdStyle";
 
+    /** Edge row and column numbers: {@code auto} is on for Browns Ferry and off for Columbia. */
+    public static final String EDGE_AUTO = "auto";
+    public static final String EDGE_ON = "on";
+    public static final String EDGE_OFF = "off";
+    public static final List<String> EDGE_MODES = List.of(EDGE_AUTO, EDGE_ON, EDGE_OFF);
+
     public String style = COLUMBIA;
+    public String edgeNumbers = EDGE_AUTO;
+
+    /** Whether the GE row and column numbers are drawn along the edges (with the grid lines of Browns Ferry). */
+    public boolean edgeNumbersOn() {
+        return EDGE_ON.equals(edgeNumbers) || EDGE_AUTO.equals(edgeNumbers) && layoutStyle() == FcdLayout.Style.BROWNS_FERRY;
+    }
     public double accumFraction = RodIndications.DEFAULT_ACCUMULATOR_FRACTION;
     public double downscale = LprmReadout.DEFAULT_DOWNSCALE_PERCENT;
     public double upscale = LprmReadout.DEFAULT_UPSCALE_PERCENT;
@@ -71,6 +83,7 @@ public final class FullCoreDisplayData extends CoreDisplayData {
     @Override
     protected void saveOwn(CompoundTag tag) {
         tag.putString(KEY_STYLE, style);
+        tag.putString("EdgeNumbers", edgeNumbers);
         tag.putDouble("AccumFraction", accumFraction);
         tag.putDouble("Downscale", downscale);
         tag.putDouble("Upscale", upscale);
@@ -80,6 +93,8 @@ public final class FullCoreDisplayData extends CoreDisplayData {
     protected void loadOwn(CompoundTag tag) {
         String saved = tag.getString(KEY_STYLE);
         style = STYLES.contains(saved) ? saved : COLUMBIA;
+        String edge = tag.getString("EdgeNumbers");
+        edgeNumbers = EDGE_MODES.contains(edge) ? edge : EDGE_AUTO;
         accumFraction = finite(tag, "AccumFraction", RodIndications.DEFAULT_ACCUMULATOR_FRACTION, 0.1, 1.0);
         downscale = finite(tag, "Downscale", LprmReadout.DEFAULT_DOWNSCALE_PERCENT, 0.0, 100.0);
         upscale = finite(tag, "Upscale", LprmReadout.DEFAULT_UPSCALE_PERCENT, 0.0, 200.0);
