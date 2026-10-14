@@ -119,6 +119,8 @@ public final class AcceptanceTests {
             dev.bwr.core.eccs.PipedTurbineTest.class,
     };
 
+    public static final Class<?>[] LONG_TEST_CLASSES = {LoadFollowingLongTest.class};
+
     public static void main(String[] args) {
         // Run before filtering too: a targeted run must not hide an unregistered class.
         verifyRegistration();
@@ -132,8 +134,9 @@ public final class AcceptanceTests {
         int passed = 0;
         int run = 0;
 
-        for (Class<?> testClass : TEST_CLASSES) {
-            if (args.length > 0 && !matchesAny(testClass, args)) {
+        boolean longRun = Arrays.asList(args).contains("--long");
+        for (Class<?> testClass : longRun ? LONG_TEST_CLASSES : TEST_CLASSES) {
+            if (!longRun && args.length > 0 && !matchesAny(testClass, args)) {
                 continue;
             }
             System.out.println();
@@ -252,6 +255,9 @@ public final class AcceptanceTests {
         Set<String> registered = new TreeSet<>();
         for (Class<?> type : TEST_CLASSES) {
             if (!registered.add(type.getName())) throw new IllegalStateException("Duplicate test class: " + type.getName());
+        }
+        for (Class<?> type : LONG_TEST_CLASSES) {
+            if (!registered.add(type.getName())) throw new IllegalStateException("Duplicate long test class: " + type.getName());
         }
         Set<String> missing = new TreeSet<>(discovered); missing.removeAll(registered);
         Set<String> empty = new TreeSet<>(registered); empty.removeAll(discovered);

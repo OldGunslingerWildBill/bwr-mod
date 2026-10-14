@@ -1,6 +1,7 @@
 # Grid tie and load following — Phase M implementation spec
 
-Status: **review R1–R5 applied; implementation pending.** Baseline:
+Status: **implemented through M7; ready for review.** Final results and coverage
+limits: [PHASE-M7-REVIEW.md](PHASE-M7-REVIEW.md). Original baseline:
 `2ef9943` on `containment-structure`, after accepted TODO-5 Part A.
 Scope follows the updated handoff `ASTRA-TODO-4.txt` Phase M and the owner's
 2026-10-14 instruction. The older Downloads copy's diesel and larger commit
@@ -498,7 +499,8 @@ NBT paths require round-trip coverage; no repair-by-replacement-of-the-same-item
 
 ## 7. Load-following and integration acceptance
 
-These are **planned tests, not results from step 0**. Register new normal core classes in
+These are acceptance requirements originally written at step 0; measured results
+and remaining coverage limits are in `PHASE-M7-REVIEW.md`. Register new normal core classes in
 `AcceptanceTests` and pass `verifyTestRegistration`; register the long runner
 explicitly as well if used. A filtered unregistered test
 is not evidence. Add new assertions without weakening existing ones. Every commit
@@ -716,6 +718,6 @@ game choices. Unit conversions and phase integration are derived equations.
   a cable-topology, load-priority or aggregate unmet-demand query. Network limits
   in this spec are engineering deductions from that API.
 
-References checked 2026-10-14. Step 0 validates the design against source and
-references only; it provides no executed Phase M gameplay, compatibility, damage
-or long-transient test results.
+References checked 2026-10-14. Step 0 validated the design against source and
+references only. Executed implementation results, including compatibility,
+damage and the coupled long transient, are recorded in `PHASE-M7-REVIEW.md`.

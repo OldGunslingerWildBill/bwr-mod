@@ -76,7 +76,10 @@ public final class CoolingRuntimeCheck {
         power(pump);pump.setTarget(.5);step(l,pump);near(pump.plant().flow(),15000,"speed ignored");check(outlet.drain(10000,EXECUTE).getAmount()==750&&outlet.drain(1,EXECUTE).isEmpty(),"shared tick budget exceeded");
         pump.setTarget(0);step(l,pump);check(outlet.drain(100,EXECUTE).isEmpty(),"stopped pump drains");
         var save=pump.saveWithoutMetadata(l.registryAccess());double stored=pump.plant().input();pump.loadWithComponents(save,l.registryAccess());near(pump.plant().input(),stored,"saved water lost");check(pump.storedFE()>0,"saved energy lost");
-        var peripheral=new dev.bwr.mod.peripheral.CoolingPeripheral(pump);peripheral.setSpeed(.25);near(pump.target(),.25,"CC speed ignored");boolean invalid=false;try{peripheral.setSpeed(Double.NaN);}catch(Exception e){invalid=true;}check(invalid,"CC accepts NaN");passed++;
+        if(net.neoforged.fml.ModList.get().isLoaded("computercraft")){
+            var peripheral=new dev.bwr.mod.peripheral.CoolingPeripheral(pump);peripheral.setSpeed(.25);near(pump.target(),.25,"CC speed ignored");boolean invalid=false;try{peripheral.setSpeed(Double.NaN);}catch(Exception e){invalid=true;}check(invalid,"CC accepts NaN");
+        }else LogUtils.getLogger().info("CC-ABSENT SKIP: cooling peripheral command assertions");
+        passed++;
         clear(l);var tower=place(l,Design.MECHANICAL,ROOT,Direction.NORTH);tower.plant().fillInput(10000,false);tower.setTarget(1);step(l,tower);near(tower.plant().flow(),0,"unpowered fan cools");power(tower);step(l,tower);near(tower.plant().output(),490,"fan flow/loss wrong");near(tower.plant().loss(),200,"fan makeup wrong");passed++;
         clear(l);var intake=place(l,Design.INTAKE,ROOT,Direction.NORTH);step(l,intake);near(intake.plant().output(),0,"dry intake creates water");
         for(var p:List.of(ROOT.below(),ROOT.north(2),ROOT.west(2)))put(l,p,Blocks.WATER.defaultBlockState());check(intake.submerged(),"lake not detected");step(l,intake);near(intake.plant().output(),300,"lake intake rate");
@@ -141,7 +144,9 @@ public final class CoolingRuntimeCheck {
         for(int i=0;i<10;i++){power(pump);step(l,intake,pump);}
         near(tower.plant().output(),750,"lake -> makeup pump -> cold basin did not transfer at 1500 kg/s");
         near(intake.plant().input()+intake.plant().output()+pump.plant().input()+pump.plant().output()+tower.plant().output(),3000,"makeup path duplicated water");
+        if(net.neoforged.fml.ModList.get().isLoaded("computercraft")){
         var cc=l.getCapability(dan200.computercraft.api.peripheral.PeripheralCapability.get(),port(pump,Port.POWER),Direction.EAST);
         check(cc instanceof dan200.computercraft.api.peripheral.IDynamicPeripheral&&cc.getType().equals("bwr_makeup_water_pump"),"CC capability missing from physical part");
+        }else LogUtils.getLogger().info("CC-ABSENT SKIP: makeup pump peripheral capability assertion");
     }
 }

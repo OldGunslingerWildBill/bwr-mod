@@ -48,8 +48,12 @@ Reload clears rate history; lifetime MWh survives. One-minute averages need
 
 Verified with **Mekanism 10.7.19**: generator → basic universal cable → FE meter
 → fuel fabricator transferred 10000 FE exactly. Direct generator → meter → tie
-is also covered by an integration test. Other cable mods may require positive
-storage/capacity and may not support a zero-storage bridge.
+is also covered by an integration test. A real parallel-cable fixture delivered
+5000 FE each to a metered export tie and a fuel-fabricator base branch; after
+opening export, another 10000 FE went entirely to the base branch. This checks
+branch availability and conservation, not configurable cable priority. Other
+cable mods may require positive storage/capacity and may not support a
+zero-storage bridge.
 
 Use explicit cable priority where available or a separately controlled export
 branch to serve base loads first. Parallel equal-priority cables can let export

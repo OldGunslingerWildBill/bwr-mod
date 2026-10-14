@@ -61,6 +61,15 @@ tasks.register('verifyTestRegistration', JavaExec) {
     args '--verify-registration'
 }
 
+tasks.register('longAcceptance', JavaExec) {
+    group = 'verification'
+    description = 'Run registered coupled multi-day load-follow acceptance at the normal integration step.'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.bwr.core.AcceptanceTests'
+    args '--long'
+    dependsOn 'verifyTestRegistration'
+}
+
 tasks.named('acceptance') {
     dependsOn 'verifyTestRegistration'
 }

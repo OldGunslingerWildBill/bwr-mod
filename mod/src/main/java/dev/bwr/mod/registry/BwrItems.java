@@ -315,6 +315,8 @@ public final class BwrItems {
                         output.accept(HP_TURBINE.get());
                         output.accept(LP_TURBINE.get());
                         output.accept(NUCLEAR_GENERATOR.get());
+                        output.accept(GRID_TIE.get());
+                        output.accept(FE_METER.get());
                         output.accept(TURBINE_FEED_PUMP.get());
                         output.accept(CORIUM.get());
                         output.accept(CONTROL_PANEL_VERTICAL.get());

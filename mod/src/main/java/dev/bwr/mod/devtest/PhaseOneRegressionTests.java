@@ -74,7 +74,9 @@ public final class PhaseOneRegressionTests {
         h.assertTrue(dev.bwr.mod.flow.RecirculationCircuit.controller(l,root)==r,"recirc fixture not connected");
         var gather=r.getClass().getDeclaredMethod("gatherPumpFlow",Level.class);gather.setAccessible(true);gather.invoke(r,l);
         double capacity=r.getRecirculationCapacityFraction();
-        new dev.bwr.mod.peripheral.ReactorPeripheral(r).setRecirculationFlow(capacity);
+        if(net.neoforged.fml.ModList.get().isLoaded("computercraft"))
+            new dev.bwr.mod.peripheral.ReactorPeripheral(r).setRecirculationFlow(capacity);
+        else dev.bwr.mod.signal.DeviceCommands.reactorRecirculationFlow(r,capacity);
         for(int i=0;i<3;i++)gather.invoke(r,l);
         System.out.println("REGRESSION STOPPED RECIRC: speed="+motor.getActualSpeedFraction()+" energy="+motor.energy().getEnergyStored()+" hardwareCapacity="+capacity+" solverDemand="+r.core().getRecirculationFlowFractionDemand());
         h.assertTrue(capacity>0&&motor.getActualSpeedFraction()==0&&r.core().getRecirculationFlowFractionDemand()==0,"computer demand bypassed stopped hardware");

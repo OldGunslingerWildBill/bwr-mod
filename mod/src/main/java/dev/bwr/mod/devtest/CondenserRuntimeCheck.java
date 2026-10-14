@@ -160,7 +160,7 @@ public final class CondenserRuntimeCheck {
             check(cc.getClass().getMethod("getType").invoke(cc).equals("bwr_bypass_steam_valve"),"wrong CC type");
             PeripheralTestCalls.call(cc,"setPosition",.251);near(valve.target(),.251,"CC fine position");
             try{PeripheralTestCalls.call(cc,"setPosition",Double.NaN);throw new AssertionError("NaN CC command accepted");}
-            catch(dan200.computercraft.api.lua.LuaException expected){check(expected.getMessage()!=null,"missing invalid input reason");}
+            catch(Exception expected){if(!expected.getClass().getName().equals("dan200.computercraft.api.lua.LuaException"))throw expected;check(expected.getMessage()!=null,"missing invalid input reason");}
             PeripheralTestCalls.call(cc,"close");near(valve.target(),0,"CC close");
         }
         var player=net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(l);player.setPos(vp.getX()+.5,vp.getY(),vp.getZ()+.5);

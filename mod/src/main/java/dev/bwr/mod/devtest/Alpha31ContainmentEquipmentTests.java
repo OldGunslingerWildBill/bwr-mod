@@ -21,6 +21,10 @@ public final class Alpha31ContainmentEquipmentTests {
 
     @GameTest(template = "empty", timeoutTicks = 160)
     public static void missingEquipmentCannotPurgeOrVent(GameTestHelper helper) throws Exception {
+        if (!net.neoforged.fml.ModList.get().isLoaded("computercraft")) {
+            System.out.println("CC-ABSENT SKIP: missingEquipmentCannotPurgeOrVent");
+            helper.succeed(); return;
+        }
         var level = helper.getLevel();
         BlockPos origin = new BlockPos(45412, 190, 45412);
         var reactor = CompactCoreRegressionTests.build(level, origin, 11, 11, 8, false);

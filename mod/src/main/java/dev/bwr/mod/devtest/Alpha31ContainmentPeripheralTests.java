@@ -20,6 +20,10 @@ public final class Alpha31ContainmentPeripheralTests {
 
     @GameTest(template = "empty", timeoutTicks = 240)
     public static void roomPeripheralExposesOpeningsAndPoweredIsolation(GameTestHelper helper) throws Exception {
+        if (!net.neoforged.fml.ModList.get().isLoaded("computercraft")) {
+            System.out.println("CC-ABSENT SKIP: roomPeripheralExposesOpeningsAndPoweredIsolation");
+            helper.succeed(); return;
+        }
         var level = helper.getLevel();
         BlockPos origin = new BlockPos(46012, 190, 46012);
         for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++)
