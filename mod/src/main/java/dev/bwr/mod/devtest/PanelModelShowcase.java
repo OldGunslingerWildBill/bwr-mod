@@ -40,7 +40,10 @@ import java.util.Set;
  *       red or green lamp lit; 1 and 2: GE and Westinghouse selectors at several positions and counts;
  *       3: key switches off and on, and the fluted knob at 0, 50 and 100 percent (also recoloured);
  *       4: pushbuttons released, held and recoloured, and indicating lights off and lit;
- *       5: round meters at 0, 50 and 100 percent and with no signal; 6: edgewise meters, vertical and horizontal.</li>
+ *       5: round meters at 0, 50 and 100 percent and with no signal; 6: edgewise meters, vertical and horizontal;
+ *       7: the SRV switches of the Columbia benchboard: oiltight selectors (black knob and chrome lever) at every
+ *       detent, dome indicating lights lit and unlit in green and red, and the yellow guarded pushbutton released
+ *       and pressed.</li>
  * </ul>
  * The check also confirms, from the client, that every component draws with a baked model exactly when the style
  * table says a loaded model exists for its choice.
@@ -49,7 +52,7 @@ final class PanelModelShowcase {
     private PanelModelShowcase() {
     }
 
-    static final int GROUPS = 7;
+    static final int GROUPS = 8;
     private static final int COLS = 5;
     private static final int ROWS = 4;
     /** Top-left block of group 0 as seen from the north; further groups step west, columns run west. */
@@ -61,16 +64,20 @@ final class PanelModelShowcase {
     static final String[] NAMES = {"baked-control-switches", "baked-selectors-ge", "baked-selectors-westinghouse",
             "baked-keys-and-knobs", "baked-pushbuttons-and-lights", "baked-round-meters", "baked-edgewise-meters",
             "baked-night-lights", "baked-closeup-control-switch", "baked-closeup-selector-westinghouse",
-            "baked-closeup-round-meter", "baked-closeup-edgewise-meters"};
+            "baked-closeup-round-meter", "baked-closeup-edgewise-meters", "baked-srv-overview",
+            "baked-srv-closeup-selector-knob", "baked-srv-closeup-selector-lever", "baked-srv-closeup-lamps",
+            "baked-srv-closeup-guarded-button", "baked-srv-night"};
     /** The group each stage shows. */
-    private static final int[] GROUP_OF = {0, 1, 2, 3, 4, 5, 6, 4, 0, 2, 5, 6};
+    private static final int[] GROUP_OF = {0, 1, 2, 3, 4, 5, 6, 4, 0, 2, 5, 6, 7, 7, 7, 7, 7, 7};
     /** The cell (within the group) the camera looks at, and how far away it stands in blocks. */
     private static final int[][] FOCUS = {{40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32},
-            {17 + 6, 22 + 8}, {17 + 6, 2 + 7}, {20 + 8, 2 + 8}, {10 + 4, 2 + 12}};
-    private static final double[] DISTANCE = {4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 1.7, 1.5, 1.8, 2.6};
+            {17 + 6, 22 + 8}, {17 + 6, 2 + 7}, {20 + 8, 2 + 8}, {10 + 4, 2 + 12},
+            {40, 32}, {30, 9}, {30, 27}, {70, 22}, {70, 52}, {40, 32}};
+    private static final double[] DISTANCE = {4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 1.7, 1.5, 1.8, 2.6,
+            4.2, 1.9, 1.9, 2.4, 1.2, 4.2};
 
     static boolean night(int stage) {
-        return stage == 7;
+        return stage == 7 || stage == 17;
     }
 
     /** World x of a cell column of a group (columns run toward -X on a north facing board). */
@@ -115,6 +122,7 @@ final class PanelModelShowcase {
         pushbuttonsAndLights(level);
         roundMeters(level);
         edgewiseMeters(level);
+        srvSwitches(level);
         for (int g = 0; g < GROUPS; g++) {
             for (int c = 0; c < COLS; c++) {
                 for (int r = 0; r < ROWS; r++) {
@@ -216,6 +224,48 @@ final class PanelModelShowcase {
                 component.syncPorts();
                 component.type().onLoaded(component);
             }
+        }
+    }
+
+    /**
+     * Group 7, the SRV switches of the Columbia benchboard (see the owner's photos): a row of oiltight selectors with
+     * a black knob and a row with a chrome wing lever, each at the three detents OFF, AUTO, OPEN and in a two position
+     * version; two columns of dome indicating lights, smooth and ribbed, green and red, unlit then lit; and the yellow
+     * guarded pushbutton released and pressed.
+     */
+    private static void srvSwitches(ServerLevel level) {
+        String[] variants = {"knob", "lever"};
+        int[][] shapes = {{3, 0}, {3, 1}, {3, 2}, {2, 1}};
+        for (int row = 0; row < variants.length; row++) {
+            for (int col = 0; col < shapes.length; col++) {
+                int x = 2 + col * 15;
+                int y = 2 + row * 18;
+                PanelComponent component = put(level, 7, ComponentTypes.ROTARY_SELECTOR, x, y, 12, 15, PanelStyles.OILTIGHT, variants[row]);
+                RotarySelectorData data = (RotarySelectorData) component.data();
+                data.positions = shapes[col][0];
+                data.names = shapes[col][0] == 3 ? "OFF,AUTO,OPEN" : "OFF,OPEN";
+                data.position = shapes[col][1];
+                component.syncPorts();
+                component.type().onLoaded(component);
+            }
+        }
+        String[] domes = {"dome_smooth", "dome_ribbed", "dome_smooth", "dome_ribbed"};
+        int[] colours = {0x30D060, 0xE02020, 0xE02020, 0x30D060};
+        for (int row = 0; row < domes.length; row++) {
+            for (int col = 0; col < 2; col++) {
+                int x = 62 + col * 9;
+                int y = 2 + row * 11;
+                PanelComponent component = put(level, 7, ComponentTypes.LAMP, x, y, 8, 8, PanelStyles.GE, domes[row]);
+                LampData data = (LampData) component.data();
+                data.color = colours[row];
+                component.setSource(0, InputSources.constant(col));
+                owner(level, 7, x, y).resample(component, true);
+            }
+        }
+        for (int col = 0; col < 2; col++) {
+            int x = 62 + col * 9;
+            PanelComponent component = put(level, 7, ComponentTypes.PUSHBUTTON, x, 48, 8, 8, PanelStyles.GE, "guarded_yellow");
+            owner(level, 7, x, 48).setOutput(component, 0, col);
         }
     }
 

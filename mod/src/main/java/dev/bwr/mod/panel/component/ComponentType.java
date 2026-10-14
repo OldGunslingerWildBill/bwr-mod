@@ -108,6 +108,19 @@ public abstract class ComponentType {
     /** A fresh {@link ComponentData} holding the defaults. */
     public abstract ComponentData createData();
 
+    /** A fresh {@link ComponentData} for a component about to be placed with {@code footprint}: defaults that depend on its size. */
+    public ComponentData createData(Footprint footprint) {
+        return createData();
+    }
+
+    /**
+     * A config edit is about to be checked and applied: {@code proposed} is the edit merged into the current data and
+     * may be adjusted in place (a setting that follows another one the player changed, such as a default that depends
+     * on the look). Called before {@link #refuseConfig}.
+     */
+    public void adjustConfig(PanelComponent component, CompoundTag proposed) {
+    }
+
     /** Editable settings; the wrench screen is generated from this and the server validates against it. */
     public List<ConfigField> configSchema() {
         return List.of();

@@ -89,9 +89,15 @@ public final class PartDraw {
             float n0 = normals[f * 3];
             float n1 = normals[f * 3 + 1];
             float n2 = normals[f * 3 + 2];
+            float faceBrightness = brightness;
+            if (emissive) {
+                // A glowing face is not lit by the world, so a dome or a ribbed lens would read as a flat disc: shade it
+                // by how squarely it faces the viewer (a flat face, normal straight out, is untouched).
+                faceBrightness *= 0.6f + 0.4f * Math.max(0.0f, r20 * n0 + r21 * n1 + r22 * n2);
+            }
             sink.quad(scratch[0], scratch[1], scratch[2], scratch[3], scratch[4], scratch[5],
                     scratch[6], scratch[7], scratch[8], scratch[9], scratch[10], scratch[11],
-                    faceColor(part, f, baseRgb, brightness),
+                    faceColor(part, f, baseRgb, faceBrightness),
                     r00 * n0 + r01 * n1 + r02 * n2, r10 * n0 + r11 * n1 + r12 * n2, r20 * n0 + r21 * n1 + r22 * n2,
                     emissive);
         }

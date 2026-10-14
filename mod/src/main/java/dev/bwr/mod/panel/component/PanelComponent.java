@@ -58,7 +58,7 @@ public final class PanelComponent {
     public PanelComponent(int id, ComponentType type, int x, int y, Footprint footprint, String label) {
         this.id = id;
         this.type = type;
-        this.data = type.createData();
+        this.data = type.createData(footprint);
         this.unknownTag = null;
         this.x = x;
         this.y = y;

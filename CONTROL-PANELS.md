@@ -175,7 +175,12 @@ content patch only when something changed. Neither acts on the plant by itself.
 3. The layout comes from the core: its rod lattice, its numbering in the GE `XX-YY` convention and its LPRM strings.
    A smaller or compact core draws a smaller picture centred in the component.
 
-**Size and `tile_cells`.** The wrench screen has `Tile size (cells)` from 2 to 6 (default 3). Columbia is 2 tiles a rod
+**Size and `tile_cells`.** The wrench screen has `Tile size (cells)` from 2 to 6. A new component starts at the
+largest size at which a full 185-rod core fits the 8-block span (128 cells) with its margins and caption: 4 for the
+Columbia display, 3 for Browns Ferry, 6 for the rod select matrix. A smaller footprint gets the largest of those
+that it holds (never below 3, the old default), changing the look moves a size that is only the old look's default to
+the new one's, and a size the player chose, and any saved component (one saved without the key loads as 3), keeps
+what it has. Columbia is 2 tiles a rod
 plus one tile of margin: `(2 x rods across + 2) x tile_cells` (96 at 15 rods across and 3 cells; 128 at 4 cells; the
 largest core, 21 across, needs 2 cells to fit 8 blocks). Browns Ferry is a module of 2 x 1.6 tiles per rod plus a
 strip of 1.4 tiles in each LPRM gap and the margins for the numbers (about 127 x 77 cells for 185 rods at 3). A

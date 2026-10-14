@@ -51,6 +51,11 @@ public abstract class CoreDisplayData extends ComponentData implements PanelText
     /** Server: the caption changed since the last {@link #drainPatch}. */
     private boolean captionPending;
 
+    /**
+     * Cells per tile. A new component starts at its type's default ({@link #defaultTile()}, reduced to what its
+     * footprint holds, see {@link #defaultTileFor}); a saved one keeps what it was saved with, and one saved without
+     * the key (before the setting existed) loads as {@link #DEFAULT_TILE}.
+     */
     public int tileCells = DEFAULT_TILE;
     private FcdSnapshot snapshot = FcdSnapshot.DARK;
     /** Server: the snapshot changed since the last {@link #drainPatch}. */
@@ -88,6 +93,36 @@ public abstract class CoreDisplayData extends ComponentData implements PanelText
 
     /** The same for a layout and tile setting that is not stored yet (a binding or config edit being checked). */
     public abstract int[] neededCells(CoreRodMap map, CompoundTag config);
+
+    /** The drawing size {@code map} needs at {@code tile} cells per tile, in this component's look. */
+    protected abstract int[] neededAt(CoreRodMap map, int tile);
+
+    /**
+     * The tile size a new component of this look starts at: the largest at which the reference 185 rod core fits the
+     * 8 block span with its margins and caption.
+     */
+    public abstract int defaultTile();
+
+    /**
+     * The tile size a component placed with a {@code width x height} footprint starts at: {@link #defaultTile()}, or
+     * the largest smaller size the footprint holds for the reference core, never less than {@link #DEFAULT_TILE} (so
+     * a footprint too small for any size keeps the old default and the refusal that goes with it).
+     */
+    public final int defaultTileFor(int width, int height) {
+        return fittingTile(defaultTile(), width, height);
+    }
+
+    /** {@code top}, or the largest size under it, that the reference core fits in {@code width x height}; at least the legacy default. */
+    protected final int fittingTile(int top, int width, int height) {
+        CoreRodMap map = FcdSnapshot.referenceCells().map();
+        for (int tile = Math.min(top, FcdLayout.MAX_TILE); tile > DEFAULT_TILE; tile--) {
+            int[] needed = neededAt(map, tile);
+            if (width >= needed[0] && height >= needed[1]) {
+                return tile;
+            }
+        }
+        return DEFAULT_TILE;
+    }
 
     /** Whether the drawing fits a component of this size. */
     public final boolean fits(int width, int height) {

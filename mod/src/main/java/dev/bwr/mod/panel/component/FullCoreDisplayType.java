@@ -40,6 +40,24 @@ public final class FullCoreDisplayType extends CoreDisplayType {
         return new FullCoreDisplayData();
     }
 
+    /**
+     * Changing the look keeps the tile size the player chose, but a tile size that is only the old look's default
+     * (what the component started at) follows to the new look's default, so switching a Columbia display to Browns
+     * Ferry does not leave it at a size the new look cannot hold.
+     */
+    @Override
+    public void adjustConfig(PanelComponent component, net.minecraft.nbt.CompoundTag proposed) {
+        FullCoreDisplayData data = (FullCoreDisplayData) component.data();
+        FcdLayout.Style next = proposed.contains(FullCoreDisplayData.KEY_STYLE, net.minecraft.nbt.Tag.TAG_STRING)
+                ? FcdLayout.Style.byId(proposed.getString(FullCoreDisplayData.KEY_STYLE)) : null;
+        if (next == null || next == data.layoutStyle()
+                || proposed.getInt("TileCells") != data.tileCells
+                || data.tileCells != data.defaultTileFor(data.layoutStyle(), component.w(), component.h())) {
+            return;
+        }
+        proposed.putInt("TileCells", data.defaultTileFor(next, component.w(), component.h()));
+    }
+
     @Override
     public List<ConfigField> configSchema() {
         return SCHEMA;

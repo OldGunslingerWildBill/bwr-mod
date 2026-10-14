@@ -30,6 +30,11 @@ public final class Recolour {
             return needleRgb;
         }
         if (part.tint != null && part.role != BakedPanelModel.Role.FLAG) {
+            if (part.role == BakedPanelModel.Role.LAMP && "white".equalsIgnoreCase(part.tint) && data instanceof LampData lamp) {
+                // A lens modelled neutral (the dome indicating lights) is the lamp's colour whatever it is, the default
+                // red included: there is no "model default" colour for it to stand for, and left alone it reads white.
+                return lamp.color;
+            }
             int configured = configuredColour(data);
             return configured >= 0 ? configured : Tints.rgb(part.tint, KEEP);
         }

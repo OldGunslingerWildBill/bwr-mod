@@ -74,6 +74,14 @@ public final class PanelClientCheck {
                 PanelSlopeShowcase.NAMES.length);
         return all;
     }
+    private static final String STAGE_FILTER = System.getProperty("bwr.panelClientStages", "");
+
+    private static boolean chosen(String name) {
+        if (STAGE_FILTER.isBlank()) return true;
+        for (String word : STAGE_FILTER.split(",")) if (!word.isBlank() && name.contains(word.trim())) return true;
+        return false;
+    }
+
     private static boolean started, built, requested;
     private static volatile Throwable buildFailure;
     private static volatile Vec3 heldCamera;
@@ -90,7 +98,7 @@ public final class PanelClientCheck {
         if (!Boolean.getBoolean("bwr.panelClientCheck")) return;
         Minecraft mc = Minecraft.getInstance();
         if (buildFailure != null) throw new IllegalStateException("Panel showcase build failed", buildFailure);
-        if (++age > 4200) throw new IllegalStateException("Panel client check timed out at " + stage);
+        if (++age > Math.max(4200, 600 + 120 * NAMES.length)) throw new IllegalStateException("Panel client check timed out at " + stage);
         if (!started && mc.screen != null && mc.getOverlay() == null) {
             started = true;
             mc.options.pauseOnLostFocus = false;
@@ -109,6 +117,13 @@ public final class PanelClientCheck {
         }
         if (mc.player == null || mc.level == null || mc.getSingleplayerServer() == null || ++joined < 35) return;
         if (!requested) {
+            // -PbwrPanelClientStages=srv,night: only the stages whose name contains one of the words (all by default).
+            while (stage < NAMES.length && !chosen(NAMES[stage])) stage++;
+            if (stage == NAMES.length) {
+                LogUtils.getLogger().info("PANEL CLIENT CHECK PASS: {} component types, {} captures", placedTypes, captures);
+                mc.stop();
+                return;
+            }
             if (stage == 0) {
                 // The light a glowing element is drawn with: full bright, and the world light for everything else.
                 if (PanelRenderContext.packedLight(true, 0x00A000A0) != LightTexture.FULL_BRIGHT
@@ -332,7 +347,10 @@ public final class PanelClientCheck {
         List<ComponentType> all = new ArrayList<>(ComponentTypes.all());
         for (ComponentType type : all) {
             placedTypes++;
-            if (type == ComponentTypes.GRAPHIC_DISPLAY) continue;
+            // The core displays take 6 and 4 blocks across at their first size: more of this board than is left, and
+            // they have their own real-client check (FcdClientCheck, -PbwrFcdClientCheck).
+            if (type == ComponentTypes.GRAPHIC_DISPLAY || type == ComponentTypes.FULL_CORE_DISPLAY
+                    || type == ComponentTypes.ROD_SELECT_MATRIX) continue;
             var sizes = type.footprints();
             if (!fit(level, type, sizes.get(0), 28, occupied)) {
                 throw new AssertionError("No showcase space for " + type.id() + " " + sizes.get(0));
@@ -362,7 +380,8 @@ public final class PanelClientCheck {
                                int firstY, boolean[][] occupied) {
         for (int y = firstY; y + size.h() <= 128; y++) for (int x = 66; x + size.w() <= 256; x++) {
             if (!free(occupied, x, y, size.w(), size.h())) continue;
-            if ((x % 16 + size.w() + 15) / 16 > 4 || (y % 16 + size.h() + 15) / 16 > 4) continue; // spans five blocks
+            int span = type.maxSpanBlocks(); // the core displays are allowed up to 8 blocks, every other type 4
+            if ((x % 16 + size.w() + 15) / 16 > span || (y % 16 + size.h() + 15) / 16 > span) continue; // spans too many blocks
             var component = place(level, x, y, type, size, occupied);
             if (component != null) {
                 previewValue(level, blockAt(x / 16, y / 16), component);

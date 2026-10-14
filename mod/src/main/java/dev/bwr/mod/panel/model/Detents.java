@@ -18,8 +18,9 @@ public final class Detents {
         float[] angles = new float[n];
         BakedPanelModel.Part handle = handle(model);
         boolean derived = handle != null;
+        boolean outer = outerPair(model, n);
         for (int i = 0; i < n && derived; i++) {
-            BakedPanelModel.Label anchor = model.label("pos" + (i + 1));
+            BakedPanelModel.Label anchor = model.label("pos" + (outer ? (i == 0 ? 1 : 3) : i + 1));
             if (anchor == null) {
                 derived = false;
                 break;
@@ -32,6 +33,15 @@ public final class Detents {
             }
         }
         return angles;
+    }
+
+    /**
+     * Whether a selector of {@code count} positions uses the outer two legends of {@code model}: the model has
+     * exactly three (the oiltight selectors' OFF, AUTO, OPEN), so a two position one turns between its left and its
+     * right legend and not to the middle one.
+     */
+    public static boolean outerPair(BakedPanelModel model, int count) {
+        return count == 2 && model.label("pos3") != null && model.label("pos4") == null;
     }
 
     /** The part that turns about the shaft: the first part called {@code handle}, else the first pivoted part. */

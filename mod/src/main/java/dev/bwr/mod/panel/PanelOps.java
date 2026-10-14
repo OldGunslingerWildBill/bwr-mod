@@ -225,6 +225,7 @@ public final class PanelOps {
         }
         if (edit.contains("Config", Tag.TAG_COMPOUND)) {
             CompoundTag merged = ConfigSchema.merge(type.configSchema(), component.data().toTag(), edit.getCompound("Config"));
+            type.adjustConfig(component, merged);
             net.minecraft.network.chat.Component refusal = type.refuseConfig(level, component, merged);
             if (refusal != null) {
                 // A setting whose drawing would not fit the component is refused as a whole, and says why.
