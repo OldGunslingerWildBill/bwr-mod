@@ -38,6 +38,9 @@ public final class BwrMod {
     private static boolean mekanismPresent;
 
     public BwrMod(IEventBus modBus, ModContainer container) {
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER,dev.bwr.mod.grid.GridConfig.SPEC,"bwr-grid.toml");
+        dev.bwr.mod.grid.GridService.register();
+        modBus.addListener(dev.bwr.mod.grid.GridCapabilities::register);
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON,
                 dev.bwr.mod.containment.ContainmentConfig.SPEC);
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER,

@@ -801,5 +801,6 @@
   "component.bwr.field.tag_color": "Tag colour",
   "component.bwr.field.dot_show": "Show dot (bottom left)",
   "component.bwr.field.stripe_show": "Show stripe (left edge)",
-  "component.bwr.field.stripe_color": "Stripe colour"
+  "component.bwr.field.stripe_color": "Stripe colour",
+  "block.bwr.grid_tie": "Grid Tie"
 }

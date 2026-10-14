@@ -55,6 +55,7 @@ public final class BwrBlocks {
 
     public static final DeferredRegister.Blocks BLOCKS =
             DeferredRegister.createBlocks(BwrMod.MOD_ID);
+    public static final DeferredBlock<dev.bwr.mod.grid.GridTieBlock> GRID_TIE=BLOCKS.register("grid_tie",()->new dev.bwr.mod.grid.GridTieBlock(vesselSteel()));
 
     /** Heavy steel-ish properties shared by the pressure boundary. */
     private static BlockBehaviour.Properties vesselSteel() {

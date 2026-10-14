@@ -21,6 +21,7 @@ public final class BwrItems {
 
     public static final DeferredRegister.Items ITEMS =
             DeferredRegister.createItems(BwrMod.MOD_ID);
+    public static final DeferredItem<BlockItem> GRID_TIE=ITEMS.registerSimpleBlockItem(BwrBlocks.GRID_TIE);
 
     public static final DeferredRegister<CreativeModeTab> TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, BwrMod.MOD_ID);

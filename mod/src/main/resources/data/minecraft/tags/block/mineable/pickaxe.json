@@ -30,6 +30,7 @@
     "bwr:corium",
     "bwr:control_panel_vertical",
     "bwr:control_panel_benchboard",
-    "bwr:control_panel_console"
+    "bwr:control_panel_console",
+    "bwr:grid_tie"
   ]
 }

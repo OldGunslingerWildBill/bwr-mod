@@ -72,6 +72,7 @@ public final class BwrPeripheralSupport {
         if(be instanceof ContainmentAirlockBlockEntity b)return new ContainmentAirlockPeripheral(b);
         if(be instanceof ContainmentPenetrationBlockEntity b)return new ContainmentPenetrationPeripheral(b);
         if(be instanceof PowerModuleBlockEntity b)return new PowerModulePeripheral(b);
+        if(be instanceof dev.bwr.mod.grid.GridTieBlockEntity b)return new GridTiePeripheral(b);
         if(be instanceof SlcTankBlockEntity b)return new HardwarePeripheral("bwr_slc_tank",()->Map.of(
                 "connected",b.ready(),"solutionKg",b.solution().massKg(),"borateKg",b.solution().borateKg(),"boronPpm",b.solution().boronFraction()*1e6,"temperatureC",b.solution().temperatureC(),"capacityKg",dev.bwr.core.eccs.BoronSolution.CAPACITY_KG));
         if(be instanceof dev.bwr.mod.water.WaterDischargeBlockEntity b)return new WaterDischargePeripheral(b);
