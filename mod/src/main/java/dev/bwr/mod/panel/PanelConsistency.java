@@ -1,5 +1,6 @@
 package dev.bwr.mod.panel;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
@@ -91,6 +92,40 @@ public final class PanelConsistency {
             }
         }
         return total;
+    }
+
+    /**
+     * Number of deferrals of {@code level} whose block entity stands at a position {@code accept} takes: how a test
+     * counts only its own fixture, since the counts of other tests running in the same level move at the same time.
+     */
+    public static int waitingCount(Level level, java.util.function.Predicate<BlockPos> accept) {
+        Map<Long, Set<PanelBlockEntity>> perChunk = WAITING.get(level);
+        int total = 0;
+        if (perChunk != null) {
+            for (Set<PanelBlockEntity> set : perChunk.values()) {
+                for (PanelBlockEntity be : set) {
+                    if (accept.test(be.getBlockPos())) {
+                        total++;
+                    }
+                }
+            }
+        }
+        return total;
+    }
+
+    /** Every deferral of {@code level} as text, for test failure messages. */
+    public static String describeWaiting(Level level) {
+        Map<Long, Set<PanelBlockEntity>> perChunk = WAITING.get(level);
+        StringBuilder out = new StringBuilder("waiting[");
+        if (perChunk != null) {
+            for (Map.Entry<Long, Set<PanelBlockEntity>> entry : perChunk.entrySet()) {
+                out.append(ChunkPos.getX(entry.getKey())).append(',').append(ChunkPos.getZ(entry.getKey())).append("<-");
+                for (PanelBlockEntity be : entry.getValue()) {
+                    out.append(be.getBlockPos().toShortString()).append(' ');
+                }
+            }
+        }
+        return out.append(']').toString();
     }
 
     /** A chunk became available: queue everything that was waiting for it (public so tests can drive it). */

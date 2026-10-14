@@ -1,5 +1,7 @@
 # L5 player Lua examples
 
+**2026-10-14 resolution:** The two panel regression failures recorded below were diagnosed and repaired; the final current suite passed 269/269 twice on the same persistent world. See [Panel regression repair review](PANEL-REGRESSION-FIX-REVIEW.md) for the root causes, negative controls, cleanup verification, and complete validation. The original L5 run results below remain unchanged as historical evidence.
+
 Branch: `containment-structure`. Base: `e07a8cea677235164e60f5fe5b912ad89774cf1a`.
 Stop point: **L5, before Phase M step 0**. Nothing was pulled or pushed.
 

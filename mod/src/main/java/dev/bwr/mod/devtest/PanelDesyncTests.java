@@ -12,7 +12,11 @@ import dev.bwr.mod.registry.BwrItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.GameTestInfo;
+import net.minecraft.gametest.framework.GameTestListener;
+import net.minecraft.gametest.framework.GameTestRunner;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
@@ -46,6 +50,11 @@ import java.util.UUID;
  * <p>Fixtures: origin 52_900 / 52_900 plus {@code slot * 64} blocks in X (every slot is a whole number of chunks,
  * and columns 4 and 5 sit either side of a chunk border). Chunks are released in every outcome and the fixture is
  * cleared first, so a persistent world can run this twice.
+ *
+ * <p>Isolation: GameTests of one batch run in the same level at the same time, and a force-loaded chunk becomes
+ * visible to entity lookups some ticks after it is readable, by a delay that depends on the machine's load. So
+ * every count here is of the fixture's own things (deferrals of the fixture's block entities, nameplate items in
+ * the fixture box), and nothing counts items until {@link EntityLookupProbe} has seen a probe item found.
  */
 @GameTestHolder("bwr")
 @PrefixGameTestTemplate(false)
@@ -63,20 +72,33 @@ public final class PanelDesyncTests {
         final BlockPos origin;
         final FakePlayer player;
         private final List<Runnable> steps = new ArrayList<>();
+        private final EntityLookupProbe probe;
+        private int polls;
+        private boolean released;
 
         private Stage(GameTestHelper helper, int slot) {
             level = helper.getLevel();
             origin = new BlockPos(52_900 + slot * 64, 110, 52_900);
+            probe = new EntityLookupProbe(level, origin.getY() + 3.0);
+            helper.testInfo.addListener(new GameTestListener() {
+                @Override public void testStructureLoaded(GameTestInfo info) { }
+                @Override public void testPassed(GameTestInfo info, GameTestRunner runner) { release(); }
+                @Override public void testFailed(GameTestInfo info, GameTestRunner runner) { release(); }
+                @Override public void testAddedForRerun(GameTestInfo before, GameTestInfo after, GameTestRunner runner) { release(); }
+            });
             hold(true);
             player = FakePlayerFactory.get(level, new GameProfile(
                     UUID.nameUUIDFromBytes(("panel-desync-" + slot).getBytes(java.nio.charset.StandardCharsets.UTF_8)),
                     "panel-desync-" + slot));
         }
 
-        /** Runs {@code body} on a clean fixture two ticks after forcing; then each added step three ticks apart. */
+        /**
+         * Runs {@code body} on a clean fixture once both chunks answer entity lookups (see {@link #entitiesLive}); then
+         * each added step eight ticks apart.
+         */
         static void run(GameTestHelper helper, int slot, java.util.function.Consumer<Stage> body) {
             Stage s = new Stage(helper, slot);
-            helper.runAfterDelay(8, () -> {
+            s.whenLive(helper, () -> {
                 try {
                     s.prepare();
                     body.accept(s);
@@ -86,6 +108,42 @@ public final class PanelDesyncTests {
                 }
                 s.next(helper);
             });
+        }
+
+        /** Waits, a tick at a time and without a fixed count, until both fixture chunks answer entity lookups; then runs {@code then}. */
+        private void whenLive(GameTestHelper helper, Runnable then) {
+            helper.runAfterDelay(1, () -> {
+                if (entitiesLive(at(4, 0)) && entitiesLive(at(5, 0))) {
+                    then.run();
+                    return;
+                }
+                if (++polls > 200) {
+                    release();
+                    helper.assertTrue(false, "the fixture chunks never answered entity lookups");
+                }
+                whenLive(helper, then);
+            });
+        }
+
+        /** Whether an entity spawned at {@code pos} can be found by a lookup yet (see {@link EntityLookupProbe}). */
+        boolean entitiesLive(BlockPos pos) {
+            return probe.live(pos);
+        }
+
+        /** Forget what was seen of the chunks' entity lookups (after they were unloaded and loaded again). */
+        void forgetLive() {
+            probe.forget();
+        }
+
+        /** Whether a position belongs to this fixture's wall (columns -1 to 8, two rows). */
+        boolean owns(BlockPos pos) {
+            return pos.getZ() == origin.getZ() && pos.getX() >= origin.getX() - 8 && pos.getX() <= origin.getX() + 1
+                    && pos.getY() <= origin.getY() && pos.getY() >= origin.getY() - 1;
+        }
+
+        /** Deferred verifications of this fixture's block entities: the count that no other test can move. */
+        int waiting() {
+            return PanelConsistency.waitingCount(level, this::owns);
         }
 
         void then(Runnable step) {
@@ -193,9 +251,15 @@ public final class PanelDesyncTests {
         }
 
         void release() {
-            hold(true);
-            clear();
-            hold(false);
+            if (released) return;
+            released = true;
+            try {
+                forgetLive();
+                hold(true);
+                clear();
+            } finally {
+                hold(false);
+            }
         }
     }
 
@@ -342,14 +406,16 @@ public final class PanelDesyncTests {
         int[] baseline = new int[1];
         int[] polls = new int[1];
         helper.startSequence()
-                .thenExecuteAfter(2, () -> guard(s, () -> {
+                .thenWaitUntil(() -> poll(helper, s, polls, s.entitiesLive(ownerPos) && s.entitiesLive(coveredPos),
+                        "waiting for the fixture chunks to answer entity lookups"))
+                .thenExecute(() -> guard(s, () -> {
                     s.prepare();
                     s.wall();
                     helper.assertTrue(s.placeStraddler() == PanelGroup.Result.OK, "straddling plate");
                     helper.assertTrue(!s.ownerChunk().equals(s.coveredChunk()), "the plate spans a chunk border");
                 }))
                 .thenExecuteAfter(3, () -> guard(s, () -> {
-                    baseline[0] = PanelConsistency.waitingCount(level);
+                    baseline[0] = s.waiting();
                     level.setChunkForced(s.ownerChunk().x, s.ownerChunk().z, false);
                     level.setChunkForced(s.coveredChunk().x, s.coveredChunk().z, false);
                     feasibilityHold(level, s.coveredChunk());
@@ -361,14 +427,18 @@ public final class PanelDesyncTests {
                     level.setBlock(coveredPos, Blocks.AIR.defaultBlockState(), 18);
                     helper.assertTrue(s.drops().isEmpty(), "the unloaded owner was not told (and not loaded)");
                     helper.assertTrue(!level.isLoaded(ownerPos), "the owner chunk was not force-loaded by the break");
+                    s.forgetLive(); // the owner chunk loads again: its entity lookups have to be seen to work again
                     level.setChunkForced(s.ownerChunk().x, s.ownerChunk().z, true);
                 }))
                 .thenWaitUntil(() -> poll(helper, s, polls, level.isLoaded(ownerPos)
                         && s.be(ownerPos) != null && s.be(ownerPos).owned().isEmpty(), "waiting for the repair loaded=" + level.isLoaded(ownerPos) + " be=" + (level.isLoaded(ownerPos) ? s.be(ownerPos) + " state=" + level.getBlockState(ownerPos) + " col3=" + level.getBlockState(s.at(3, 0)).getBlock() + " col0=" + level.getBlockState(s.at(0, 0)).getBlock() : "-") + " covered=" + level.isLoaded(coveredPos) + " drops=" + s.drops().size()))
+                .thenWaitUntil(() -> poll(helper, s, polls, s.entitiesLive(ownerPos),
+                        "waiting for the owner chunk to answer entity lookups again"))
                 .thenExecuteAfter(4, () -> guard(s, () -> {
                     helper.assertTrue(s.drops().size() == 1, "one item dropped, got " + s.drops().size());
                     helper.assertTrue(!s.be(ownerPos).verifyConsistency(), "idempotent");
-                    helper.assertTrue(PanelConsistency.waitingCount(level) == baseline[0], "nothing left deferred");
+                    helper.assertTrue(s.waiting() == baseline[0], "nothing left deferred: now=" + s.waiting()
+                            + " baseline=" + baseline[0] + " " + PanelConsistency.describeWaiting(level));
                 }))
                 .thenExecuteAfter(3, () -> guard(s, () -> helper.assertTrue(s.drops().size() == 1, "still one item")))
                 .thenExecute(s::release)
@@ -391,7 +461,9 @@ public final class PanelDesyncTests {
         int[] polls = new int[1];
         CompoundTag[] saved = new CompoundTag[1];
         helper.startSequence()
-                .thenExecuteAfter(4, () -> guard(s, () -> {
+                .thenWaitUntil(() -> poll(helper, s, polls, s.entitiesLive(ownerPos) && s.entitiesLive(coveredPos),
+                        "waiting for the fixture chunks to answer entity lookups"))
+                .thenExecute(() -> guard(s, () -> {
                     s.prepare();
                     s.wall();
                     helper.assertTrue(s.placeStraddler() == PanelGroup.Result.OK, "straddling plate");
@@ -416,14 +488,15 @@ public final class PanelDesyncTests {
                 .thenExecuteAfter(8, () -> guard(s, () -> {
                     s.discardDrops();
                     before[0] = s.drops().size();
-                    baseline[0] = PanelConsistency.waitingCount(level);
+                    baseline[0] = s.waiting();
                     PanelBlockEntity owner = s.be(ownerPos);
                     helper.assertTrue(owner.owned().isEmpty(), "owner is empty after the wrench removal");
                     owner.loadPanel(saved[0]); // a straddler over a covered block that is not loaded
                     helper.assertTrue(!level.isLoaded(coveredPos), "covered chunk still unloaded");
                     helper.assertTrue(!owner.verifyConsistency(), "undecidable: nothing repaired yet");
                     helper.assertTrue(owner.owned().size() == 1, "component kept while the covered block is unloaded");
-                    helper.assertTrue(PanelConsistency.waitingCount(level) == baseline[0] + 1, "deferred on the chunk");
+                    helper.assertTrue(s.waiting() == baseline[0] + 1, "deferred on the chunk, waiting " + s.waiting() + " baseline "
+                            + baseline[0] + " " + PanelConsistency.describeWaiting(level));
                     helper.assertTrue(!level.isLoaded(coveredPos), "verification did not load the covered chunk");
                     helper.assertTrue(s.drops().size() == before[0], "no item yet");
                     level.setChunkForced(s.coveredChunk().x, s.coveredChunk().z, true);
@@ -432,7 +505,8 @@ public final class PanelDesyncTests {
                         && s.be(ownerPos).owned().isEmpty(), "waiting for the deferred verification to repair the owner"))
                 .thenExecuteAfter(4, () -> guard(s, () -> {
                     helper.assertTrue(s.drops().size() == before[0] + 1, "one item dropped, got " + (s.drops().size() - before[0]));
-                    helper.assertTrue(PanelConsistency.waitingCount(level) == baseline[0], "deferral cleared");
+                    helper.assertTrue(s.waiting() == baseline[0], "deferral cleared, waiting " + s.waiting() + " baseline "
+                            + baseline[0] + " " + PanelConsistency.describeWaiting(level));
                     helper.assertTrue(!s.be(ownerPos).verifyConsistency(), "idempotent");
                 }))
                 .thenExecuteAfter(3, () -> guard(s, () -> helper.assertTrue(s.drops().size() == before[0] + 1, "still one item")))
@@ -444,7 +518,7 @@ public final class PanelDesyncTests {
     private static void poll(GameTestHelper helper, Stage s, int[] polls, boolean ready, String waiting) {
         if (!ready) {
             if (++polls[0] > 200) {
-                s.release();
+                helper.testInfo.fail(new GameTestAssertException(waiting));
             }
             helper.assertTrue(false, waiting);
         }
