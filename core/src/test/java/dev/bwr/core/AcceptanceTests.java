@@ -97,6 +97,7 @@ public final class AcceptanceTests {
             ReactorStateRoundTripTest.class,
             CriticalDefectRegressionTest.class,
             TransientHarnessTest.class,
+            dev.bwr.core.harness.ThermalTargetOperatorTest.class,
             SuppressionPoolTest.class,
             BoundaryStressTest.class,
             dev.bwr.core.boundary.PortLocaTest.class,

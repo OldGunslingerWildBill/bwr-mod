@@ -763,18 +763,22 @@ public final class TransientHarness {
         /**
          * Rod control. Below the APRM's range the operator flies on period, which
          * is what the startup procedure is written in; above it, on indicated
-         * power, because period stops being the useful quantity once thermal
-         * feedback is setting it.
+         * heat-balance power, because period stops being the useful quantity once
+         * thermal feedback is setting it. APRM selects the operating range only:
+         * its gamma background and calibration are not total thermal power.
          */
         private void driveRodsTowardTarget() {
             double total = core.getTotalPowerFractionOfRated();
             double indicatedPercent = core.getAveragePowerRangePercent(0);
 
             if (indicatedPercent >= 5.0) {
-                double errorPercent = 100.0 * targetTotalPowerFraction - indicatedPercent;
-                if (errorPercent > 1.5) {
+                // Test-side operator choice, not a plant limit or production controller.
+                // A narrow symmetric 0.1 percentage-point deadband avoids parking
+                // at the old 1.5-point lower edge as xenon slowly recovers.
+                double errorPercent = 100.0 * (targetTotalPowerFraction - total);
+                if (errorPercent > 0.1) {
                     sequencer.withdrawOneNotch(1);
-                } else if (errorPercent < -1.5) {
+                } else if (errorPercent < -0.1) {
                     sequencer.insertOneNotch(1);
                 }
                 return;

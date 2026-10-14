@@ -25,9 +25,9 @@ public final class LoadFollowingLongTest {
             // Hold rods for the first five minutes of each ramp, proving the flow handle initiates it.
             boolean held=t>=down&&t<down+300||t>=up&&t<up+300;
             core.setRecirculationFlowFraction(flow);
-            // The harness's high-power rod comparison reads APRM (fission power),
-            // so the operator subtracts observed decay heat from the thermal target.
-            op.setTargetTotalPowerFraction(target-(core.getTotalPowerFractionOfRated()-core.getNeutronPowerFraction()));
+            // The operator now compares the thermal target with the heat balance.
+            // Decay heat belongs in that measurement; do not subtract it again.
+            op.setTargetTotalPowerFraction(target);
             op.setRodControlEnabled(!held);op.tick();core.step();
             double power=core.getTotalPowerFractionOfRated(),xe=core.getXenonAtomsPerCm3(),iodine=core.getIodineAtomsPerCm3();
             if(!Double.isFinite(power)||!Double.isFinite(xe)||!Double.isFinite(iodine)||xe<0||iodine<0||core.isScramActive()||power<.1||core.getFuelThermal().getPeakFuelTemperatureFractionOfMelt()>=1)

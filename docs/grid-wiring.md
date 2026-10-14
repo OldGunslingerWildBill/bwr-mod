@@ -61,3 +61,10 @@ compete with base loads. The tie itself does not discover or prioritize them.
 No voltage, reactive power, excitation or electromechanical grid locking is modeled.
 
 Exact signal keys, enum values and CC methods are in [SIGNALS.md](../SIGNALS.md).
+
+### Mekanism cable priority
+
+Mekanism **basic universal cables split power evenly and have no consumer priority**. Putting the base
+and a Grid Tie export on the same cable network does not guarantee base-first supply. For base-first
+feeding, use a cable/network with explicit output priorities, or a separate export line whose feed
+can be limited independently. The Grid Tie cannot impose a priority on another mod's cable network.
