@@ -149,13 +149,19 @@ signal unless the reactor is formed. Rods and strings are numbered from 1.
   (`x` a multiple of 8, `y` one more than a multiple of 8, as in `08-49`) with a rod on all four sides: 39 strings in the
   185-rod core, fewer in a smaller one. They are numbered in reading order (top row first, west to east). `lprm_<s>_label`
   is the coordinate. Each string has four levels, a (bottom) to d (top).
-* The core models LPRM chambers only as the 24 inputs of each of its six APRM channels and not by position, so the
-  display deals its strings onto them in order: level L (0 to 3) of string s (0-based) is chamber `(4 s + L) mod 144`,
-  which is input `(chamber / 6) mod 24` of channel `chamber mod 6`. Bypass, failure and the indication of a level are
-  exactly those of its chamber (`setLprmBypassed` / `setLprmFailed` on the core show up here). `_downscale` is below
-  5 percent and `_upscale` above 110 percent for a chamber that is in service and working; those are gameplay defaults
-  (no source for exact GE alarm values was found) and each display component carries its own. The mod does not model
-  SRM or IRM detectors by position, so no SRM or IRM labels are shown.
+* Each level now samples the nodal flux at its string's lattice location and axial height (A-D at
+  1/8, 3/8, 5/8, 7/8 of active height, using the containing axial node). Six APRMs receive spatially
+  interleaved inputs: strings are ordered by radius and distributed back and forth across six channels,
+  with the assignment rotated for each axial level. Channel names preserve the first string's
+  A-D rack addresses (channels 1-4, input 1). Every chamber has a unique
+  input index counted within that channel. Each channel samples all four axial levels across the core.
+  There is **no modulo-144 wrap**: the 39-string formed core has 156 separate detectors. The standalone
+  177-rod default has 37 strings / 148 detectors. Each amplifier averages its assigned inputs; bypass
+  removes a detector from numerator and divisor, failure contributes zero while remaining in the divisor.
+  Initialization commissions fixed channel reference gains; later rod/void changes do not recalibrate them.
+  Wiring, calibration, bypass and failure survive saves; old saves acquire healthy physical strings.
+  `_downscale` below 5% and `_upscale` above 110% remain gameplay defaults for working, unbypassed chambers.
+  See REFERENCE-DATA.md for the GE-style assignment basis and the explicit layout approximations.
 
 ### Rod selection (rod select matrix and rod motion pushbuttons)
 

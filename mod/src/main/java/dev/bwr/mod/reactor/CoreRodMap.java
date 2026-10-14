@@ -26,8 +26,7 @@ import java.util.Locale;
  * the four rods around it. On the GE grid those points are {@code x} a multiple of 8 and {@code y} one more than a
  * multiple of 8 ({@code 08-49}, {@code 16-33} ...), one for every two rods in each direction. The mod's strings
  * are those points that have a rod on all four sides, which gives 39 strings in the 185-rod core. They are
- * numbered in reading order, top row first and west to east, from 1. Nothing else in the mod depends on where
- * they are: it is the display's map of where an LPRM string would stand.
+ * numbered in reading order, top row first and west to east, from 1. The core uses the same rod-grid convention to install physical detector strings and their nodal samples.
  */
 public final class CoreRodMap {
     /** Rods across of the reference core (a 764-assembly BWR/4) that the label numbering is centred on. */

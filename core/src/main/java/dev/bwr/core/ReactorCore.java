@@ -440,6 +440,7 @@ public final class ReactorCore {
         // below is a fission-rate-weighted average and these are the weights.
         this.nodalFlux = new NodalFluxSolver(config, loading);
         loading.setPowerWeightSource(nodalFlux);
+        installLprmLayout(dev.bwr.core.instrument.LprmLayout.defaultLayout(loading,nodalFlux.rodLatticeMap()));
 
         refreshFuelAggregates();
         this.feedwaterTemperatureC = PhysicalConstants.RATED_FEEDWATER_TEMPERATURE_C;
@@ -632,6 +633,7 @@ public final class ReactorCore {
         elapsedSeconds = 0.0;
         tickCount = 0L;
         secondsSinceAggregateRefresh = 0.0;
+        commissionShutdownLprms();
         settleInstruments();
     }
 
@@ -743,6 +745,7 @@ public final class ReactorCore {
         elapsedSeconds = 0.0;
         tickCount = 0L;
         secondsSinceAggregateRefresh = 0.0;
+        calibrateLprmReference();
         settleInstruments();
     }
 
@@ -1221,6 +1224,7 @@ public final class ReactorCore {
         // flux and which sit in the reflector; without this the reactivity
         // balance does not, and every rod ends up worth totalRodWorth/count.
         installRodFluxWeights();
+        sampleLprms();
 
         refreshFuelAggregates();
     }
@@ -1351,6 +1355,95 @@ public final class ReactorCore {
                     "core", betaTotalFraction);
         }
         return DelayedNeutronData.U235.withTotalBetaFraction("core", Math.max(0.0, betaTotalFraction));
+    }
+
+    private dev.bwr.core.instrument.LprmLayout lprmLayout;
+    private final double[] lprmReferenceMean = {1,1,1,1,1,1};
+    public dev.bwr.core.instrument.LprmLayout getLprmLayout() { return lprmLayout; }
+
+    public void installLprmLayout(dev.bwr.core.instrument.LprmLayout layout) {
+        if(lprmLayout!=null&&lprmLayout.strings().equals(layout.strings())) return;
+        var oldFlags=new java.util.HashMap<String,Integer>();
+        if(lprmLayout!=null) for(int s=0;s<lprmLayout.count();s++) for(int l=0;l<4;l++) {
+            var location=lprmLayout.strings().get(s);var m=averagePowerRangeMonitors[lprmLayout.channel(s,l)];int i=lprmLayout.input(s,l);
+            oldFlags.put(location.x()+":"+location.y()+":"+l,(m.isLprmBypassed(i)?1:0)|(m.isLprmFailed(i)?2:0));
+        }
+        lprmLayout=layout;
+        for(int c=0;c<averagePowerRangeMonitors.length;c++) {
+            var m=averagePowerRangeMonitors[c];m.resizeInputs(layout.inputs(c));
+            for(int i=0;i<m.getAssignedLprmInputCount();i++) {m.setLprmBypassed(i,false);m.setLprmFailed(i,false);m.setLprmLocalFluxWeight(i,0);}
+        }
+        for(int s=0;s<layout.count();s++) for(int l=0;l<4;l++) {
+            var location=layout.strings().get(s);int flags=oldFlags.getOrDefault(location.x()+":"+location.y()+":"+l,0);
+            var m=averagePowerRangeMonitors[layout.channel(s,l)];int i=layout.input(s,l);
+            m.setLprmBypassed(i,(flags&1)!=0);m.setLprmFailed(i,(flags&2)!=0);
+        }
+        sampleLprms();
+    }
+    /** Cold commissioning uses an independent, unrodded flooded reference; the live shutdown shape is not a power-range calibration. */
+    private void commissionShutdownLprms() {
+        CoreLoading referenceLoading=loading;
+        if(loading.loadedAssemblyCount()==0) {
+            // Empty vessels still ship with a geometric factory calibration. This
+            // LEU template is private to the reference solve; it adds no real fuel.
+            referenceLoading=new CoreLoading(loading.latticeWidth());
+            var map=nodalFlux.rodLatticeMap();
+            for(int rod=0;rod<map.rodCount();rod++) for(int pos:map.positionsOfRod(rod))
+                referenceLoading.load(pos,new FuelAssembly(FuelType.LEU));
+        }
+        var reference=new NodalFluxSolver(config,referenceLoading);
+        reference.setRodLatticeMap(nodalFlux.rodLatticeMap());
+        calibrateLprmReference(reference.solve());
+    }
+    /** Explicit initialization at a known power may commission against that measured reference. */
+    private void calibrateLprmReference() { calibrateLprmReference(nodalFlux.lastSolution()); }
+    private void calibrateLprmReference(dev.bwr.core.nodal.FluxSolution reference) {
+        java.util.Arrays.fill(lprmReferenceMean,0);
+        int nodes=reference.mesh().axialNodes();
+        for(int s=0;s<lprmLayout.count();s++) for(int level=0;level<4;level++) {
+            int z=Math.min(nodes-1,(int)(dev.bwr.core.instrument.LprmLayout.heightFraction(level)*nodes));
+            lprmReferenceMean[lprmLayout.channel(s,level)]+=reference.flux(lprmLayout.strings().get(s).latticePosition(),z);
+        }
+        for(int c=0;c<6;c++) lprmReferenceMean[c]=lprmReferenceMean[c]>1e-12
+                ? lprmReferenceMean[c]/lprmLayout.inputs(c):1;
+        sampleLprms();
+    }
+    private dev.bwr.core.instrument.LprmState lprmState() {
+        var flags=new java.util.ArrayList<Integer>();
+        for(int s=0;s<lprmLayout.count();s++) for(int l=0;l<4;l++) {
+            var m=averagePowerRangeMonitors[lprmLayout.channel(s,l)]; int i=lprmLayout.input(s,l);
+            flags.add((m.isLprmBypassed(i)?1:0)|(m.isLprmFailed(i)?2:0));
+        }
+        var refs=new java.util.ArrayList<Double>();var gains=new java.util.ArrayList<Double>();var gamma=new java.util.ArrayList<Double>();
+        for(int c=0;c<6;c++) { refs.add(lprmReferenceMean[c]);gains.add(averagePowerRangeMonitors[c].getGainAdjustmentFactor());gamma.add(averagePowerRangeMonitors[c].getGammaBackgroundPercent()); }
+        return new dev.bwr.core.instrument.LprmState(lprmLayout.strings(),flags,refs,gains,gamma);
+    }
+    private void restoreLprms(dev.bwr.core.instrument.LprmState saved) {
+        if(saved.strings().isEmpty()) { calibrateLprmReference(); return; }
+        for(var string:saved.strings()) if(string.latticePosition()<0||string.latticePosition()>=loading.positionCount())
+            throw new IllegalArgumentException("saved LPRM outside fuel lattice");
+        installLprmLayout(new dev.bwr.core.instrument.LprmLayout(saved.strings()));
+        for(int c=0;c<6;c++) {
+            lprmReferenceMean[c]=saved.referenceMeans().get(c);
+            averagePowerRangeMonitors[c].setGainAdjustmentFactor(saved.gains().get(c));
+            averagePowerRangeMonitors[c].setGammaBackgroundPercent(saved.gamma().get(c));
+        }
+        for(int s=0;s<lprmLayout.count();s++) for(int l=0;l<4;l++) {
+            int flags=saved.detectorFlags().get(s*4+l),i=lprmLayout.input(s,l);
+            var m=averagePowerRangeMonitors[lprmLayout.channel(s,l)];m.setLprmBypassed(i,(flags&1)!=0);m.setLprmFailed(i,(flags&2)!=0);
+        }
+        sampleLprms();
+    }
+
+    private void sampleLprms() {
+        if(lprmLayout==null) return;
+        var solution=nodalFlux.lastSolution(); int nodes=solution.mesh().axialNodes();
+        for(int s=0;s<lprmLayout.count();s++) for(int level=0;level<4;level++) {
+            int c=lprmLayout.channel(s,level), input=lprmLayout.input(s,level);
+            int axial=Math.min(nodes-1,(int)(dev.bwr.core.instrument.LprmLayout.heightFraction(level)*nodes));
+            averagePowerRangeMonitors[c].setLprmLocalFluxWeight(input,
+                    solution.flux(lprmLayout.strings().get(s).latticePosition(),axial)/lprmReferenceMean[c]);
+        }
     }
 
     private void stepInstruments(double fissionPowerFraction, double dtSeconds) {
@@ -2567,7 +2660,7 @@ public final class ReactorCore {
                 // filter, not plant state — but where the operator left the
                 // switches is hardware, and nothing will put it back.
                 getIntermediateRangeMonitorRanges(), rodPositionNotches,
-                vessel.getMetalTemperatureC());
+                vessel.getMetalTemperatureC(), lprmState().encode());
     }
 
     /**
@@ -2898,6 +2991,7 @@ public final class ReactorCore {
         // afterwards would leave every channel showing the swing of a range
         // change nobody made.
         restoreIntermediateRangeMonitorRanges(state.intermediateRangeMonitorRanges());
+        restoreLprms(dev.bwr.core.instrument.LprmState.decode(state.lprmState()));
         settleInstruments();
     }
 

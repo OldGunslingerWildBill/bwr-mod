@@ -427,3 +427,27 @@ model must distinguish generated electricity, delivered FE and buffer changes
 when the export breaker opens under load. The calibration above is declared in
 advance for implementation/testing; it is not an executed validation result.
 See `GRID-TIE-SPEC.md` §9.1 for the identified acceptance-contract conflicts.
+
+## Part B neutron instrumentation
+
+- NRC, *NUREG-1123 Revision 2*, system 215005, p. 3.7-4, K4.08 and K5.04-K5.06:
+  [APRM/LPRM system knowledge catalog](https://www.nrc.gov/sites/default/files/doc_library/cdn/legacy/reading-rm/doc-collections/nuregs/staff/sr1123/sr1123r2.pdf).
+  The catalog identifies core-wide sampling through LPRM assignments, core symmetry, and assignment
+  to specific APRM channels. It supports the **distributed sampling principle**, not our exact wiring.
+- The game's GE-style six-channel assignment stratifies strings by radius, distributes them back and
+  forth across six channels, and rotates the channel for each A-D level. This gives each summing
+  circuit inner and outer samples instead of correlating a channel with rows of the core map.
+  Channel names are anchored to preserve string 1 A-D at channels 1-4 / input 1.
+  Every physical chamber has one rack address; the old 144-input alias has been removed. Exact plant
+  cabling differs, so this is a representative assignment, not a Columbia/Browns Ferry wiring diagram.
+- Four chamber heights at 1/8, 3/8, 5/8 and 7/8 of active height are the model's evenly spaced
+  A-D sampling convention (18, 54, 90 and 126 inches in a 144-inch core). The nodal cell containing
+  each height supplies flux. The closest fuel node to the water gap supplies the radial sample;
+  we do not separately resolve the instrument tube's water-gap flux enhancement.
+- Shutdown initialization commissions APRMs against a separate unrodded, flooded reference solve,
+  avoiding calibration to the fully inserted rod shadow. An empty vessel uses a private LEU template
+  at its rod-mapped fuel positions; no fuel is added to the plant. Explicit initialization at known
+  power commissions against that reference. These are fixed model commissioning conventions, not
+  a claimed plant calibration procedure. Local flux, failure and bypass
+  still affect the sum afterward; a running core is never automatically recalibrated. Player gain
+  and gamma settings, detector hardware flags, wiring and reference means are saved.

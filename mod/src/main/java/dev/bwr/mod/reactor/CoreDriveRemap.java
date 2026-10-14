@@ -33,7 +33,7 @@ public final class CoreDriveRemap {
             s.coolantTempC(),s.pressurePsig(),s.voidFraction(),s.coreInletEnthalpyKJPerKg(),s.coreFlowFraction(),s.waterLevelIn(),
             s.xenon(),s.iodine(),s.boronPpm(),s.burnupMwdPerTonne(),notches,charge,s.reactivityTotal(),s.betaEff(),s.promptLifetime(),
             new double[0],s.fuelExcessReactivityDkOverK(),s.dopplerCoefficientPerCAtAnchor(),s.elapsedSeconds(),s.scramActive(),
-            s.intermediateRangeMonitorRanges(),position,s.metalTemperatureC());
+            s.intermediateRangeMonitorRanges(),position,s.metalTemperatureC(), s.lprmState());
     }
     private CoreDriveRemap() {}
 }

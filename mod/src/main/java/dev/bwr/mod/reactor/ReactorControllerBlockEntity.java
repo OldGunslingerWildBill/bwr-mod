@@ -821,6 +821,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             return;
         }
         core.getNodalFluxSolver().setRodLatticeMap(found.rodLatticeMap(latticeWidth));
+        var displayMap = CoreRodMap.fromStructure(found);
+        int[] cols = new int[displayMap.rodCount()], rows = cols.clone();
+        for (int i = 0; i < cols.length; i++) { cols[i] = displayMap.col(i); rows[i] = displayMap.row(i); }
+        core.installLprmLayout(dev.bwr.core.instrument.LprmLayout.fromRodGrid(core.getCoreLoading(),
+                core.getNodalFluxSolver().rodLatticeMap(), cols, rows));
         rodLatticeMapSignature = signature;
     }
 
@@ -1355,6 +1360,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private void tryRestore(ReactorState state) {
         try {
             core.fromState(state);
+            // Restored detector coordinates may describe an earlier vessel footprint.
+            rodLatticeMapSignature = Long.MIN_VALUE;
+            installRodLatticeMap(structure);
         } catch (IllegalArgumentException e) {
             // Rod count changed while unloaded — the player rebuilt the vessel.
             // Keep the fresh core rather than refusing to load the chunk.

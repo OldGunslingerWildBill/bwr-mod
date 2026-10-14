@@ -124,9 +124,9 @@ public final class AveragePowerRangeMonitor extends NeutronDetector {
     /** Averaging amplifier time constant, seconds. Short — this channel is the fast one. */
     public static final double DEFAULT_RESPONSE_TIME_CONSTANT_S = 0.1;
 
-    private final boolean[] lprmBypassed;
-    private final boolean[] lprmFailed;
-    private final double[] lprmLocalFluxWeight;
+    private boolean[] lprmBypassed;
+    private boolean[] lprmFailed;
+    private double[] lprmLocalFluxWeight;
 
     private double gainAdjustmentFactor = 1.0;
     private double gammaBackgroundPercent = DEFAULT_GAMMA_BACKGROUND_PERCENT;
@@ -150,6 +150,16 @@ public final class AveragePowerRangeMonitor extends NeutronDetector {
         this.lprmFailed = new boolean[assignedLprmInputCount];
         this.lprmLocalFluxWeight = new double[assignedLprmInputCount];
         Arrays.fill(this.lprmLocalFluxWeight, 1.0);
+    }
+
+    /** Rewire the rack when a real detector layout is installed; the monitor and period meter stay attached. */
+    public void resizeInputs(int count) {
+        if(count<0) throw new IllegalArgumentException("negative rack input count");
+        int old=lprmBypassed.length;
+        lprmBypassed=Arrays.copyOf(lprmBypassed,count);
+        lprmFailed=Arrays.copyOf(lprmFailed,count);
+        lprmLocalFluxWeight=Arrays.copyOf(lprmLocalFluxWeight,count);
+        if(count>old) Arrays.fill(lprmLocalFluxWeight,old,count,1.0);
     }
 
     // ------------------------------------------------------------------
