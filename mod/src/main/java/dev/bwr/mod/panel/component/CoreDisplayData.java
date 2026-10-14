@@ -27,6 +27,13 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  * With no binding, a device that is not a reactor, an unloaded chunk or a reactor that is not formed the snapshot
  * is {@link FcdSnapshot#DARK}: the frame and dark tiles only.
  *
+ * <h3>Data path</h3>
+ * The snapshot reaches clients as ONE content patch (the whole snapshot, bit-packed, see {@link FcdSnapshot}), queued
+ * only when the new snapshot differs from the last: a sample that finds nothing changed sends nothing and does not
+ * touch the component, so a quiet core costs no traffic. A change of the drawn state does not bump the component's
+ * revision either (the static geometry stays); only a change of layout does. The full-state packet and the save carry
+ * the same bytes, so a client that joins late draws the right lamps at once.
+ *
  * <p>Nothing here acts: the snapshot only reads, and the matrix's one output is operated by a player.
  */
 public abstract class CoreDisplayData extends ComponentData {
@@ -34,6 +41,8 @@ public abstract class CoreDisplayData extends ComponentData {
 
     public int tileCells = DEFAULT_TILE;
     private FcdSnapshot snapshot = FcdSnapshot.DARK;
+    /** Server: the snapshot changed since the last {@link #drainPatch}. */
+    private boolean patchPending;
 
     /** What the component currently shows. */
     public final FcdSnapshot snapshot() {
@@ -93,8 +102,34 @@ public abstract class CoreDisplayData extends ComponentData {
         }
     }
 
-    /** What to do after the snapshot changed: queue the redraw and the save. */
-    protected abstract void changed(PanelBlockEntity owner, PanelComponent component);
+    /** The snapshot changed: queue it as one content patch (and the save). */
+    private void changed(PanelBlockEntity owner, PanelComponent component) {
+        patchPending = true;
+        contentChanged();
+    }
+
+    @Override
+    public final boolean syncsByPatch() {
+        return true;
+    }
+
+    @Override
+    public final byte[] drainPatch() {
+        if (!patchPending) {
+            return null;
+        }
+        patchPending = false;
+        byte[] bytes = snapshot.encode();
+        return bytes.length <= MAX_PATCH ? bytes : null;
+    }
+
+    @Override
+    public final void applyPatch(byte[] patch) {
+        FcdSnapshot next = FcdSnapshot.decode(patch, snapshot);
+        if (next != null) {
+            storeSnapshot(next);
+        }
+    }
 
     /** The reactor controller the component is bound to, or null (no binding, not a reactor, not loaded). */
     public static ReactorControllerBlockEntity boundReactor(Level level, PanelComponent component) {

@@ -1,6 +1,5 @@
 package dev.bwr.mod.panel.component;
 
-import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.fcd.FcdLayout;
 import dev.bwr.mod.reactor.CoreRodMap;
 import net.minecraft.nbt.CompoundTag;
@@ -33,11 +32,6 @@ public final class RodSelectMatrixData extends CoreDisplayData {
         int[] needed = neededCells();
         int rod = FcdLayout.buttonAt(map, tileCells, x - centre(componentW, needed[0]), y - centre(componentH, needed[1]));
         return rod + 1;
-    }
-
-    @Override
-    protected void changed(PanelBlockEntity owner, PanelComponent component) {
-        owner.displayChanged(component);
     }
 
     @Override

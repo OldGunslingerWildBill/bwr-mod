@@ -1,6 +1,5 @@
 package dev.bwr.mod.panel.component;
 
-import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.fcd.FcdLayout;
 import dev.bwr.mod.reactor.CoreRodMap;
 import dev.bwr.mod.reactor.LprmReadout;
@@ -67,11 +66,6 @@ public final class FullCoreDisplayData extends CoreDisplayData {
     @Override
     protected double lprmUpscale() {
         return upscale;
-    }
-
-    @Override
-    protected void changed(PanelBlockEntity owner, PanelComponent component) {
-        owner.displayChanged(component);
     }
 
     @Override
