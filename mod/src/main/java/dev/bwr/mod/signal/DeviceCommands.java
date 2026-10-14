@@ -70,6 +70,21 @@ public final class DeviceCommands {
         }
     }
 
+    /** Selects a rod, 1-based; 0 clears the selection. Moves nothing. */
+    public static boolean reactorSelectRod(ReactorControllerBlockEntity be, int rod) {
+        return be.selectRod(rod);
+    }
+
+    /** One notch for the selected rod through the drive network: {@code +1} out, {@code -1} in. */
+    public static boolean reactorStepSelectedRod(ReactorControllerBlockEntity be, int direction) {
+        return be.stepSelectedRod(direction);
+    }
+
+    /** Holds ({@code held}) or releases a continuous motion control of the selected rod. */
+    public static boolean reactorHoldSelectedRod(ReactorControllerBlockEntity be, int direction, boolean held) {
+        return be.holdSelectedRod(direction, held);
+    }
+
     public static boolean reactorBoronInjection(ReactorControllerBlockEntity be, double ppmPerMinute) {
         var core = be.core();
         if (core == null || !Double.isFinite(ppmPerMinute)) return false;

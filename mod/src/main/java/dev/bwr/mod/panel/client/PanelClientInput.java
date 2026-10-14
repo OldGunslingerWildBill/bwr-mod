@@ -94,7 +94,7 @@ public final class PanelClientInput {
             Footprint footprint = ComponentItem.footprint(stack);
             if (footprint != null) {
                 var placement = PanelGroup.checkPlacement(minecraft.level, target.block.getBlockPos(),
-                        target.cell[0], target.cell[1], footprint);
+                        target.cell[0], target.cell[1], footprint, ((ComponentItem) stack.getItem()).type().maxSpanBlocks());
                 if (placement.ok()) {
                     PacketDistributor.sendToServer(new PanelPayloads.Place(target.block.getBlockPos(), target.cell[0],
                             target.cell[1], event.getHand() == InteractionHand.OFF_HAND));
@@ -168,7 +168,8 @@ public final class PanelClientInput {
             long tick = minecraft.level.getGameTime();
             if (cachedLevel != minecraft.level || !pos.equals(cachedBlock) || cachedX != target.cell[0]
                     || cachedY != target.cell[1] || cachedVariant != variant || cachedTick != tick) {
-                cachedFits = PanelGroup.checkPlacement(minecraft.level, pos, target.cell[0], target.cell[1], footprint).ok();
+                cachedFits = PanelGroup.checkPlacement(minecraft.level, pos, target.cell[0], target.cell[1], footprint,
+                        item.type().maxSpanBlocks()).ok();
                 cachedLevel = minecraft.level;
                 cachedBlock = pos.immutable();
                 cachedX = target.cell[0];

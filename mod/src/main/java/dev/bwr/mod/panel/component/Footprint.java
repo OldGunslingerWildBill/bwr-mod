@@ -6,10 +6,12 @@ import dev.bwr.mod.panel.PanelGeometry;
  * A component's size on the mounting grid, in cells: {@code w} across and
  * {@code h} down. One cell is 1/16 block. A footprint may not span more than
  * {@link PanelGeometry#MAX_SPAN_BLOCKS} blocks either way, wherever on the grid
- * it is anchored.
+ * it is anchored, unless its type allows more ({@link ComponentType#maxSpanBlocks()}, at most
+ * {@link PanelGeometry#ABSOLUTE_MAX_SPAN_BLOCKS}).
  */
 public record Footprint(int w, int h) {
-    public static final int MAX_CELLS = PanelGeometry.GRID * PanelGeometry.MAX_SPAN_BLOCKS;
+    /** The hard limit of any footprint; a type may allow less ({@link ComponentType#maxSpanBlocks()}). */
+    public static final int MAX_CELLS = PanelGeometry.GRID * PanelGeometry.ABSOLUTE_MAX_SPAN_BLOCKS;
 
     public Footprint {
         if (w < 1 || h < 1 || w > MAX_CELLS || h > MAX_CELLS) {

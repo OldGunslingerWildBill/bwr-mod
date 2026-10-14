@@ -95,7 +95,7 @@ public final class PanelOps {
         }
         ComponentType type = item.type();
         Footprint footprint = ComponentItem.footprint(stack);
-        PanelGroup.Placement placement = PanelGroup.checkPlacement(level, anchor, cx, cy, footprint);
+        PanelGroup.Placement placement = PanelGroup.checkPlacement(level, anchor, cx, cy, footprint, type.maxSpanBlocks());
         if (!placement.ok()) {
             return placement.result();
         }
@@ -119,7 +119,7 @@ public final class PanelOps {
      */
     public static PanelComponent placeDirect(ServerLevel level, BlockPos anchor, int cx, int cy, ComponentType type,
                                              Footprint footprint) {
-        PanelGroup.Placement placement = PanelGroup.checkPlacement(level, anchor, cx, cy, footprint);
+        PanelGroup.Placement placement = PanelGroup.checkPlacement(level, anchor, cx, cy, footprint, type.maxSpanBlocks());
         return placement.ok() ? commit(level, anchor, cx, cy, type, footprint, placement) : null;
     }
 
@@ -225,10 +225,16 @@ public final class PanelOps {
         }
         if (edit.contains("Config", Tag.TAG_COMPOUND)) {
             CompoundTag merged = ConfigSchema.merge(type.configSchema(), component.data().toTag(), edit.getCompound("Config"));
-            component.data().load(merged);
-            component.syncPorts();
-            type.onLoaded(component); // latched outputs and derived state follow the new config
-            component.touch();
+            net.minecraft.network.chat.Component refusal = type.refuseConfig(level, component, merged);
+            if (refusal != null) {
+                // A setting whose drawing would not fit the component is refused as a whole, and says why.
+                player.displayClientMessage(refusal, true);
+            } else {
+                component.data().load(merged);
+                component.syncPorts();
+                type.onLoaded(component); // latched outputs and derived state follow the new config
+                component.touch();
+            }
         }
         if (edit.contains("Inputs", Tag.TAG_LIST)) {
             ListTag list = edit.getList("Inputs", Tag.TAG_COMPOUND);

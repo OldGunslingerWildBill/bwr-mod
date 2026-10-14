@@ -234,6 +234,38 @@ A model with a frame much larger than its plate (the target pistols) looks small
 marks such rows as preferring the larger footprint. Edgewise meters ignore the demand marker unless the model
 has a `demand` part.
 
+## Full core display family (as built)
+
+Ten models (`FULL-CORE-DISPLAY-SPEC.md` section 6; the Blender family is `art/models/panel/fcd` and `oiltight`, ids and part
+names in `dev.bwr.mod.panel.model.FcdModels`). Three of them go through the style table like any other component model;
+the other five are not components of their own but *instances inside one component*, repeated hundreds of times.
+
+| Model id | Used by | How |
+| --- | --- | --- |
+| `oiltight_selector_knob`, `oiltight_selector_lever` | `rotary_selector`, style `oiltight`, variants `knob` (default) and `lever` | Table rows; handle pivot at the shaft, each detent angle from the `pos1`..`pos3` anchors (the outer ones are about 37.6 degrees, not 45); legends from the position names and the label, as for every selector |
+| `light_dome_smooth`, `light_dome_ribbed` | `lamp`, style `ge`, variants `dome_smooth`, `dome_ribbed` | Table rows (the green SRV lights are smooth, the red ones ribbed); the lens is the lamp part and takes the lens colour |
+| `pb_guarded_yellow` | `pushbutton`, style `ge`, variant `guarded_yellow` | Table row; cap is a lamp tinted amber (glows while held) with 0.15 inch of travel, the guard is glass |
+| `fcd_tile_columbia`, `fcd_tile_blank` | `full_core_display`, Columbia style | Drawn four times per rod (A, B and C with the tile model, D with the blank), offset to each tile; the lens halves `upper` and `lower` are painted pale when off and glow in the lamp's colour when lit |
+| `fcd_bf_rod_module`, `fcd_bf_lprm_strip` | `full_core_display`, Browns Ferry style | One module per rod and one strip per LPRM string. The module's `digits` window is drawn as a black plate with a seven segment readout over it; its lamps are `accum`, `scram` (left column), `select` (carries the coordinate), `drift` (right column) and the small `full_in` and `full_out` flanking the digits. The strip's lamps `lvl_a`..`lvl_d` run **top to bottom**, while the real strip has level D at the top: the top lamp shows level D (`FcdLayout.lprmLevelAtSlot`, the one place this is decided) |
+| `rod_select_button` | `rod_select_matrix` | One per rod; the `cap` is a lamp with 0.08 inch of travel: white and pushed in for the selected rod |
+
+The core display models are fitted into one tile (or module, strip, button) rectangle of the component with the same
+`Placement` every model uses, so a model keeps its proportions on a benchboard or console, and the footprints
+(tiles 1.0 x 1.0 inch, the module 2.4 x 1.95, the strip 1.7 x 3.3, the button 1.0 x 1.0) match the proportions of the
+cells the layout gives them. **Every one has a procedural fallback** in `FullCoreDisplayModel` / `RodSelectMatrixModel`
+(and the classic look for the style table models), so the code never waits on a file: a model that is missing or rejected
+leaves the same picture drawn from boxes and rectangles. `-PbwrFcdProcedural` forces the fallback for comparison.
+
+**Cost.** A 185-rod display is up to ~740 tiles with ~1,100 printed legends (Columbia) or ~185 readouts and ~40 strips
+(Browns Ferry). The component keeps what never changes in the block's vertex buffer (`PanelMeshCache`: backplate,
+bezels, unlit windows, dots, grid lines), and now also its **static legends in a text vertex buffer** captured once per
+revision with the font code of the per frame path and drawn with one call per text render type, so a lamp that is off
+costs no text. What the snapshot lights (lamp glow and digits) is the model's posed geometry: the buffer is rebuilt when
+`FcdSnapshot.visualKey()` changes (a rod flag or notch, the selection, a scram, an LPRM state; never an LPRM percentage),
+so a display with nothing moving costs no model code at all. Beyond the 24 block full-detail distance legends are
+skipped as for every component and a lamp is its coloured quad. Measurements and the numbers before the change are in
+`PROJECT-LOG.md`.
+
 ## Sources (local copies for reading only)
 Scratch folder: `C:\Users\14238\AppData\Local\Temp\claude\C--Users-14238-Downloads-bwr-mod-handoff\418cd604-018d-4e92-a0cc-37a0e339a9c4\scratchpad\cr-refs\`
 - GE GEH-90BH: `ge_geh90bh.pdf`; rendered pages `geh_p2.png`, `geh_p4.png`.

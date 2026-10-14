@@ -3,7 +3,10 @@ package dev.bwr.mod.signal.adapters;
 import dev.bwr.core.PhysicalConstants;
 import dev.bwr.core.ReactorCore;
 import dev.bwr.mod.containment.ContainmentEquipmentRegistry;
+import dev.bwr.mod.reactor.CoreRodMap;
+import dev.bwr.mod.reactor.LprmReadout;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
+import dev.bwr.mod.rods.RodIndications;
 import dev.bwr.mod.signal.CommandSpec;
 import dev.bwr.mod.signal.DeviceCommands;
 import dev.bwr.mod.signal.Kind;
@@ -13,6 +16,7 @@ import dev.bwr.mod.signal.SignalSpec;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.function.ToDoubleFunction;
 
@@ -25,6 +29,13 @@ final class ReactorSignals {
     private ReactorSignals() {}
 
     private static final double MAX_ROD_LABEL = PhysicalConstants.ROD_NOTCH_MAX_LABEL;
+    /** Upper bound of the rod count (a 21 x 21 interior holds 357 rods). */
+    private static final double MAX_RODS = 400;
+
+    private static boolean selectRod(ReactorControllerBlockEntity be, double value) {
+        return Double.isFinite(value) && value == Math.rint(value) && value >= 0 && value <= MAX_RODS
+                && DeviceCommands.reactorSelectRod(be, (int) value);
+    }
 
     /** Reads from the live core; NaN (no signal) when the reactor is not formed. */
     private static ToDoubleFunction<ReactorControllerBlockEntity> core(ToDoubleFunction<ReactorCore> read) {
@@ -102,7 +113,10 @@ final class ReactorSignals {
             .text("vessel_state", "Vessel state", be -> be.vesselState().getSerializedName())
             .text("core_damage_stage_name", "Core damage stage name",
                     be -> be.core() == null ? null : be.core().getSevereAccident().getStage().displayName())
+            .level("selected_rod", "Selected rod (0 = none)", "rod", 0, MAX_RODS,
+                    be -> be.isFormed() ? be.selectedRod() : Double.NaN)
             .dynamicSignals(ReactorSignals::rodSignals, ReactorSignals::readRod)
+            .dynamicText(ReactorSignals::readText)
             .pulse("scram", "Scram", (be, v) -> DeviceCommands.reactorScram(be))
             .pulse("reset_scram", "Reset scram", (be, v) -> DeviceCommands.reactorResetScram(be))
             .command("recirc_flow", "Recirculation flow demand", Kind.NUMBER, 0, 1.2,
@@ -111,6 +125,15 @@ final class ReactorSignals {
                     DeviceCommands::reactorBoronInjection)
             .toggle("containment_inerting", "Containment inerting", (be, v) -> ContainmentEquipmentRegistry.command(be, false, v >= 0.5))
             .toggle("containment_vent", "Containment vent", (be, v) -> ContainmentEquipmentRegistry.command(be, true, v >= 0.5))
+            .command("select_rod", "Select rod (0 = none)", Kind.LEVEL, 0, MAX_RODS, ReactorSignals::selectRod)
+            .pulse("selected_rod_insert", "Selected rod: insert one notch",
+                    (be, v) -> DeviceCommands.reactorStepSelectedRod(be, -1))
+            .pulse("selected_rod_withdraw", "Selected rod: withdraw one notch",
+                    (be, v) -> DeviceCommands.reactorStepSelectedRod(be, 1))
+            .toggle("selected_rod_insert_continuous", "Selected rod: insert continuously (1 holds, 0 releases)",
+                    (be, v) -> DeviceCommands.reactorHoldSelectedRod(be, -1, v >= 0.5))
+            .toggle("selected_rod_withdraw_continuous", "Selected rod: withdraw continuously (1 holds, 0 releases)",
+                    (be, v) -> DeviceCommands.reactorHoldSelectedRod(be, 1, v >= 0.5))
             .dynamicCommands(ReactorSignals::rodCommands, ReactorSignals::rodCommand);
 
     private static List<SignalSpec> rodSignals(ReactorControllerBlockEntity be) {
@@ -123,8 +146,35 @@ final class ReactorSignals {
             specs.add(new SignalSpec("rod_" + i + "_demand", "Rod " + i + " demand", "notch", 0, MAX_ROD_LABEL, Kind.LEVEL));
             specs.add(new SignalSpec("rod_" + i + "_accumulator", "Rod " + i + " accumulator", "fraction", 0, 1, Kind.NUMBER));
         }
+        // The display indications follow the original per-rod signals, so those keep their place in a picker list.
+        for (int i = 1; i <= n; i++) {
+            for (String flag : ROD_FLAGS) {
+                specs.add(new SignalSpec("rod_" + i + "_" + flag, "Rod " + i + " " + flag.replace('_', ' '), "", 0, 1, Kind.BOOLEAN));
+            }
+            specs.add(new SignalSpec("rod_" + i + "_lattice_x", "Rod " + i + " core x", "", 0, 99, Kind.LEVEL));
+            specs.add(new SignalSpec("rod_" + i + "_lattice_y", "Rod " + i + " core y", "", 0, 99, Kind.LEVEL));
+            specs.add(new SignalSpec("rod_" + i + "_label", "Rod " + i + " coordinate (XX-YY)", "", 0, 0, Kind.TEXT));
+        }
+        CoreRodMap map = be.coreMap();
+        if (map != null) {
+            specs.add(new SignalSpec("lprm_count", "LPRM strings", "strings", 0, 100, Kind.LEVEL));
+            int strings = map.lprmStrings().size();
+            for (int s = 1; s <= strings; s++) {
+                specs.add(new SignalSpec("lprm_" + s + "_label", "LPRM string " + s + " coordinate (XX-YY)", "", 0, 0, Kind.TEXT));
+                for (char level = 'a'; level < 'a' + LprmReadout.LEVELS; level++) {
+                    String at = "LPRM " + s + " " + Character.toUpperCase(level);
+                    specs.add(new SignalSpec("lprm_" + s + "_" + level + "_percent", at + " indication", "%", 0, 125, Kind.NUMBER));
+                    for (String flag : LPRM_FLAGS) {
+                        specs.add(new SignalSpec("lprm_" + s + "_" + level + "_" + flag, at + " " + flag, "", 0, 1, Kind.BOOLEAN));
+                    }
+                }
+            }
+        }
         return specs;
     }
+
+    private static final String[] ROD_FLAGS = {"drift", "scram", "full_in", "full_out", "accum_trouble"};
+    private static final String[] LPRM_FLAGS = {"bypassed", "failed", "downscale", "upscale"};
 
     private static List<CommandSpec> rodCommands(ReactorControllerBlockEntity be) {
         ReactorCore core = be.core();
@@ -148,6 +198,7 @@ final class ReactorSignals {
     }
 
     private static OptionalDouble readRod(ReactorControllerBlockEntity be, String key) {
+        if (key.startsWith("lprm_")) return readLprm(be, key);
         Object[] parsed = parseRod(key);
         ReactorCore core = be.core();
         if (parsed == null || core == null) return OptionalDouble.empty();
@@ -157,6 +208,70 @@ final class ReactorSignals {
             case "position" -> OptionalDouble.of(core.getRodNotchLabel(rod - 1));
             case "demand" -> be.rods() == null ? OptionalDouble.empty() : OptionalDouble.of(be.rods().getCommandedNotchLabel(rod - 1));
             case "accumulator" -> OptionalDouble.of(core.getAccumulatorCharge(rod - 1));
+            // The display indications read nothing unless the reactor is formed (the core of a broken one is kept for its
+            // restore, and the older signals above still read it).
+            case "drift" -> !be.isFormed() ? OptionalDouble.empty() : OptionalDouble.of(flag(RodIndications.drift(core, be.rods(), rod - 1)));
+            case "scram" -> !be.isFormed() ? OptionalDouble.empty() : OptionalDouble.of(flag(RodIndications.scram(core, rod - 1)));
+            case "full_in" -> !be.isFormed() ? OptionalDouble.empty() : OptionalDouble.of(flag(RodIndications.fullIn(core, rod - 1)));
+            case "full_out" -> !be.isFormed() ? OptionalDouble.empty() : OptionalDouble.of(flag(RodIndications.fullOut(core, rod - 1)));
+            case "accum_trouble" -> !be.isFormed() ? OptionalDouble.empty() : OptionalDouble.of(flag(RodIndications.accumulatorTrouble(core,
+                    rod - 1, RodIndications.DEFAULT_ACCUMULATOR_FRACTION)));
+            case "lattice_x" -> be.coreMap() == null ? OptionalDouble.empty() : OptionalDouble.of(be.coreMap().latticeX(rod - 1));
+            case "lattice_y" -> be.coreMap() == null ? OptionalDouble.empty() : OptionalDouble.of(be.coreMap().latticeY(rod - 1));
+            default -> OptionalDouble.empty();
+        };
+    }
+
+    private static Optional<String> readText(ReactorControllerBlockEntity be, String key) {
+        CoreRodMap map = be.coreMap();
+        if (map == null) return Optional.empty();
+        if (key.startsWith("lprm_")) {
+            int[] at = parseLprm(key);
+            return at != null && key.endsWith("_label") && at[0] >= 1 && at[0] <= map.lprmStrings().size()
+                    ? Optional.of(map.lprmStrings().get(at[0] - 1).label()) : Optional.empty();
+        }
+        Object[] parsed = parseRod(key);
+        if (parsed == null || !"label".equals(parsed[1])) return Optional.empty();
+        int rod = (Integer) parsed[0];
+        return rod >= 1 && rod <= map.rodCount() ? Optional.of(map.label(rod - 1)) : Optional.empty();
+    }
+
+    /** Parses the string number of {@code lprm_<s>_...}; returns {s} or null. */
+    private static int[] parseLprm(String key) {
+        int end = key.indexOf('_', 5);
+        if (end < 0) return null;
+        try {
+            return new int[]{Integer.parseInt(key.substring(5, end))};
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** {@code lprm_count}, {@code lprm_<s>_<a-d>_<percent|bypassed|failed|downscale|upscale>}. */
+    private static OptionalDouble readLprm(ReactorControllerBlockEntity be, String key) {
+        ReactorCore core = be.core();
+        CoreRodMap map = be.coreMap();
+        if (core == null || map == null) return OptionalDouble.empty();
+        if (key.equals("lprm_count")) return OptionalDouble.of(map.lprmStrings().size());
+        int[] at = parseLprm(key);
+        if (at == null || at[0] < 1 || at[0] > map.lprmStrings().size()) return OptionalDouble.empty();
+        String rest = key.substring(key.indexOf('_', 5) + 1);
+        if (rest.length() < 3 || rest.charAt(1) != '_' || rest.charAt(0) < 'a' || rest.charAt(0) >= 'a' + LprmReadout.LEVELS)
+            return OptionalDouble.empty();
+        int string = at[0] - 1;
+        int level = rest.charAt(0) - 'a';
+        String field = rest.substring(2);
+        double percent = LprmReadout.percent(core, string, level);
+        boolean bypassed = LprmReadout.bypassed(core, string, level);
+        boolean failed = LprmReadout.failed(core, string, level);
+        return switch (field) {
+            case "percent" -> OptionalDouble.of(percent);
+            case "bypassed" -> OptionalDouble.of(flag(bypassed));
+            case "failed" -> OptionalDouble.of(flag(failed));
+            case "downscale" -> OptionalDouble.of(flag(LprmReadout.downscale(percent, bypassed, failed,
+                    LprmReadout.DEFAULT_DOWNSCALE_PERCENT)));
+            case "upscale" -> OptionalDouble.of(flag(LprmReadout.upscale(percent, bypassed, failed,
+                    LprmReadout.DEFAULT_UPSCALE_PERCENT)));
             default -> OptionalDouble.empty();
         };
     }

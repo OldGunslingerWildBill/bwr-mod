@@ -25,6 +25,7 @@ public final class PanelMessages {
             case NO_SUCH_KEY -> BwrText.tr("message.bwr.panel_bind.result.no_such_key", "The device no longer provides this signal or command");
             case NOT_IN_GROUP -> BwrText.tr("message.bwr.panel_bind.result.not_in_group", "Choose a component in the same panel group");
             case TOO_MANY -> BwrText.tr("message.bwr.panel_bind.result.too_many", "This output already has the maximum number of connections");
+            case REFUSED -> BwrText.tr("message.bwr.panel_bind.result.refused", "This component cannot take that device");
         };
     }
 

@@ -248,6 +248,11 @@ public final class PanelGroup {
      * what the player sees is what the server decides.
      */
     public static Placement checkPlacement(Level level, BlockPos anchor, int cx, int cy, Footprint footprint) {
+        return checkPlacement(level, anchor, cx, cy, footprint, PanelGeometry.MAX_SPAN_BLOCKS);
+    }
+
+    /** {@link #checkPlacement(Level, BlockPos, int, int, Footprint)} for a type that may span up to {@code maxSpan} blocks. */
+    public static Placement checkPlacement(Level level, BlockPos anchor, int cx, int cy, Footprint footprint, int maxSpan) {
         if (!level.isLoaded(anchor) || !(level.getBlockEntity(anchor) instanceof PanelBlockEntity be)) {
             return NOT_A_PANEL;
         }
@@ -260,7 +265,7 @@ public final class PanelGroup {
         }
         int spanX = (cx + footprint.w() + PanelGeometry.GRID - 1) / PanelGeometry.GRID;
         int spanY = (cy + footprint.h() + PanelGeometry.GRID - 1) / PanelGeometry.GRID;
-        if (spanX > PanelGeometry.MAX_SPAN_BLOCKS || spanY > PanelGeometry.MAX_SPAN_BLOCKS) {
+        if (spanX > maxSpan || spanY > maxSpan) {
             return new Placement(Result.TOO_LARGE, List.of());
         }
         if (be.ownedCount() >= PanelConfig.maxComponentsPerBlock()) {

@@ -69,6 +69,8 @@ public final class ComponentModels {
         register(ComponentTypes.GRAPHIC_DISPLAY.id(), new GraphicDisplayModel());
         register(ComponentTypes.MIMIC_LINE.id(), new MimicLineModel());
         register(ComponentTypes.MIMIC_SYMBOL.id(), new MimicSymbolModel());
+        register(ComponentTypes.FULL_CORE_DISPLAY.id(), new FullCoreDisplayModel());
+        register(ComponentTypes.ROD_SELECT_MATRIX.id(), new RodSelectMatrixModel());
     }
 
     /**

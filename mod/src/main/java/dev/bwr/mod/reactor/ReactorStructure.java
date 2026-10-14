@@ -139,6 +139,11 @@ public final class ReactorStructure {
         return assemblyCount;
     }
 
+    /** Whether the drives follow the compact layout (one drive per cell); false for the legacy one drive per 2 x 2. */
+    public boolean isCompactLayout() {
+        return compactLayout != null;
+    }
+
     public int latticeWidth() {
         return compactLayout == null ? dev.bwr.core.ReactorCore.DEFAULT_LATTICE_WIDTH
                 : dev.bwr.core.fuel.CompactCoreLayout.LATTICE_WIDTH;
