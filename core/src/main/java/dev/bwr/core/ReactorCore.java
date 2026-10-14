@@ -278,6 +278,9 @@ public final class ReactorCore {
     private final boolean[] rodDemandKnown;
     private final double[] accumulatorCharge;
 
+    private final dev.bwr.core.kinetics.RodLatchDrift rodLatchDrift;
+    private boolean savedRodCommands;
+    private final int[] restoredRodCommands; // -1: no pending network restore, 0/1: saved command state
     private boolean crdPowered = true;
     private boolean crdWaterSupplied = true;
     private boolean scramActive = false;
@@ -383,6 +386,7 @@ public final class ReactorCore {
         this.config = config;
         this.loading = loading;
         this.controlRodCount = Math.max(1, config.controlRodCount);
+        this.rodLatchDrift = new dev.bwr.core.kinetics.RodLatchDrift(controlRodCount);
 
         this.kinetics = new PointKinetics(config, delayedDataFor(loading.effectiveBeta()));
         this.reactivity = new ReactivityBalance(config);
@@ -404,6 +408,8 @@ public final class ReactorCore {
         this.rodNormalMotionAvailable = new boolean[controlRodCount];
         Arrays.fill(rodNormalMotionAvailable,true);
         this.rodDemandKnown = new boolean[controlRodCount];
+        this.restoredRodCommands = new int[controlRodCount];
+        Arrays.fill(restoredRodCommands,-1);
         Arrays.fill(rodDemandKnown,true);
         this.accumulatorCharge = new double[controlRodCount];
         Arrays.fill(accumulatorCharge, 1.0);
@@ -1013,6 +1019,8 @@ public final class ReactorCore {
 
     /** Commands remain discrete; absorbers move continuously between notch latches. */
     private void stepControlRodDrives(double dtSeconds) {
+        // A saved command is only pending until the network reconnects before the first step.
+        Arrays.fill(restoredRodCommands,-1);
         boolean pressureAssist = vessel.getPressurePsig() >= SCRAM_PRESSURE_ASSIST_PSIG;
         for (int r = 0; r < controlRodCount; r++) {
             double previous = rodPositionNotches[r];
@@ -1040,6 +1048,12 @@ public final class ReactorCore {
             if (Math.abs(next - target) < 1e-12) {
                 next = target;
             }
+            boolean driven = travel > 0 && previous != target;
+            if (next == target && !scramActive) rodDemandKnown[r] = false;
+            double loose = rodLatchDrift.advance(r, next, driven, scramActive,
+                    config.rodColletFailureHazardPerSecond, config.rodDriftNotchesPerSecond, dtSeconds);
+            if (loose != next) rodDemandKnown[r] = false;
+            next = loose;
             rodPositionNotches[r] = next;
             // The panel retains the last notch actually crossed, including on reversal.
             if (next == target) {
@@ -1072,6 +1086,53 @@ public final class ReactorCore {
 
     public double[] getRodPositions() {
         return rodPositionNotches.clone();
+    }
+
+    public void setRodColletFailed(int rod, boolean failed) { checkRodIndex(rod); rodLatchDrift.setFailed(rod,failed); }
+    public boolean isRodColletFailed(int rod) { checkRodIndex(rod); return rodLatchDrift.failed(rod); }
+    public void seedRodColletFailures(long seed) { rodLatchDrift.seed(seed); }
+    public boolean hasSavedRodCommands() { return savedRodCommands; }
+    public boolean isRodMotionCommanded(int rod) {
+        checkRodIndex(rod);
+        return scramActive || (rodDemandKnown[rod] && rodPositionNotches[rod] != rodNotchDemand[rod]);
+    }
+    /** Physical position relative to the discrete collet notches. */
+    public boolean isRodBetweenNotches(int rod) {
+        checkRodIndex(rod);
+        return Math.abs(rodPositionNotches[rod]-Math.rint(rodPositionNotches[rod]))>1e-6;
+    }
+    /** Whether a normal hydraulic stroke is commanded and its drive supplies are available. */
+    public boolean isRodBeingDriven(int rod) {
+        checkRodIndex(rod);
+        return isRodMotionCommanded(rod) && crdPowered && crdWaterSupplied && rodNormalMotionAvailable[rod];
+    }
+    /** Copy a standing setpoint without treating every network tick as a fresh operator command. */
+    public void refreshRodNotchDemand(int rod,int demand) {
+        checkRodIndex(rod);
+        if(rodNotchDemand[rod]!=demand)setRodNotchDemand(rod,demand);
+    }
+    /** Only the drive network reconnects saved demands; core restoration alone never issues motion. */
+    public void restoreRodNotchDemand(int rod,int demand) {
+        checkRodIndex(rod);
+        boolean active = restoredRodCommands[rod] != 0 || rodNotchDemand[rod] != demand;
+        setRodNotchDemand(rod,demand);
+        rodDemandKnown[rod] = active;
+    }
+    private int[] rodLatchState() {
+        int[] mechanics=rodLatchDrift.snapshot();int[] out=java.util.Arrays.copyOf(mechanics,3+3*controlRodCount);
+        for(int r=0;r<controlRodCount;r++) {out[3+controlRodCount+r]=restoredRodCommands[r]>=0?restoredRodCommands[r]:(rodDemandKnown[r] && rodPositionNotches[r]!=rodNotchDemand[r]?1:0);out[3+2*controlRodCount+r]=rodNotchDemand[r];}
+        return out;
+    }
+    private void restoreRodLatchState(int[] saved) {
+        savedRodCommands=saved.length!=0;
+        Arrays.fill(restoredRodCommands,-1);
+        if(!savedRodCommands){rodLatchDrift.restore(saved);return;}
+        if(saved.length!=3+3*controlRodCount)throw new IllegalArgumentException("invalid rod latch/command snapshot");
+        rodLatchDrift.restore(java.util.Arrays.copyOf(saved,3+controlRodCount));
+        for(int r=0;r<controlRodCount;r++) {
+            int demand=saved[3+2*controlRodCount+r];if(demand<0||demand>NOTCH_SPANS)throw new IllegalArgumentException("invalid saved rod demand");
+            restoredRodCommands[r]=saved[3+controlRodCount+r]!=0?1:0;rodNotchDemand[r]=demand;
+        }
     }
 
     /** A failed individual drive holds its current physical position, without changing demand. */
@@ -1552,6 +1613,7 @@ public final class ReactorCore {
         }
         rodNotchDemand[rodIndex] = notchIndex;
         rodDemandKnown[rodIndex] = true;
+        restoredRodCommands[rodIndex] = -1;
     }
 
     /** Command every rod to the same notch. Convenience; the drives are still individual. */
@@ -2663,7 +2725,7 @@ public final class ReactorCore {
                 // filter, not plant state — but where the operator left the
                 // switches is hardware, and nothing will put it back.
                 getIntermediateRangeMonitorRanges(), rodPositionNotches,
-                vessel.getMetalTemperatureC(), lprmState().encode());
+                vessel.getMetalTemperatureC(), lprmState().encode(), rodLatchState());
     }
 
     /**
@@ -2755,15 +2817,11 @@ public final class ReactorCore {
      * — a save that predates the component — leaves the switches wherever they
      * are rather than moving them.
      *
-     * <p>One piece of hardware state the record still does not carry, and its
-     * consequence, so nobody rediscovers it: <b>rod notch demand</b>. See the
-     * comment at the restore itself — under a live scram it is reconstructed
-     * exactly, and without one a withdrawal in flight collapses onto the notch
-     * the rods had reached. The mod layer persists the operator's standing demand
-     * separately, in {@code ReactorControllerBlockEntity}'s {@code RodDemand} tag,
-     * and reinstalls it through {@code ControlRodDriveNetwork} after this returns;
-     * it is deliberately not a component here, because demand is the control
-     * room's state and not the physics'.
+     * <p>Collet state also remembers the standing setpoint and whether a stroke
+     * was still active. Restoring core physics alone does not energise a drive:
+     * the mod reconnects its authoritative RodDemand through the drive network,
+     * preserving completed versus in-flight commands. This prevents a reload
+     * from silently driving an unlatched rod back to an old completed setpoint.
      *
      * @throws IllegalArgumentException if the rod or accumulator arrays do not
      *                                  match this core's rod count
@@ -2876,6 +2934,7 @@ public final class ReactorCore {
         // The mod restores its standing command separately. Until it does, hold
         // between notches rather than inventing a reverse move to the last latch.
         Arrays.fill(rodDemandKnown,false);
+        restoreRodLatchState(state.rodLatchState());
 
 
         // The scram latch is plant state and comes back latched. It used to be
@@ -2885,22 +2944,12 @@ public final class ReactorCore {
         // only thing that could still move a rod — they stopped there for good
         // while the half-spent accumulators recharged over the evidence.
         //
-        // Rod DEMAND has no component of its own in the record, so it is
-        // reconstructed. Under a live scram that reconstruction is exact rather
-        // than approximate: scram() drives every demand to fully inserted, so
-        // that is where a scrammed core's demands were. Without a scram there is
-        // nothing here to reconstruct it from and the achieved position is the
-        // only honest answer — a withdrawal in flight when the chunk unloaded
-        // would collapse onto the notch the rods had reached. It does not, but
-        // that is not this method's doing: demand is the control room's state,
-        // not the physics', so the mod layer persists it in its own RodDemand tag
-        // and ControlRodDriveNetwork reinstalls it after this returns. Do not add
-        // a component here for it — there would then be two authorities for the
-        // same pattern, and the stale one would drive the rods.
+        // Legacy snapshots reconstruct a holding setpoint; current snapshots keep
+        // their saved setpoint dormant until the drive network reconnects it.
         scramActive = state.scramActive();
         if (scramActive) {
             Arrays.fill(rodNotchDemand, RodWorth.NOTCH_INDEX_FULLY_INSERTED);
-        } else {
+        } else if (!savedRodCommands) {
             System.arraycopy(notches, 0, rodNotchDemand, 0, controlRodCount);
         }
 

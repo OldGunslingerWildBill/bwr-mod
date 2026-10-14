@@ -25,6 +25,11 @@ public final class CoreConfig {
     /** Nodal flux shape re-solve interval, ticks. 20 ticks = 1 Hz per SPEC 1.3. */
     public int nodalSolveIntervalTicks = 20;
 
+    /** Per-rod collet failure hazard / second. Disabled by default; an optional gameplay fault rate. */
+    public double rodColletFailureHazardPerSecond = 0.0;
+    /** Unlatched outward travel, notch spans / second (gameplay calibration, not plant acceptance data). */
+    public double rodDriftNotchesPerSecond = 0.1;
+
     // --- Core sizing -------------------------------------------------
 
     /** Fuel assemblies in this core. */

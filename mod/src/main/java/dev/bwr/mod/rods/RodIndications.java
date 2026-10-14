@@ -11,11 +11,8 @@ import dev.bwr.core.kinetics.RodWorth;
  *   <li><b>full in / full out</b>: the rod is at notch 00 or notch 48 (index 0 or 24).</li>
  *   <li><b>scram</b>: the scram signal is latched and this rod is not yet fully in (the core has no per-rod scram
  *       state, only the one latch).</li>
- *   <li><b>drift</b>: the rod is not at the notch demanded for it, nothing is driving it there, and no scram is
- *       forcing it. The core models no spontaneous rod motion, so a rod never moves without a demand and the
- *       real "moving without a command" cannot occur; what the model does have is the same thing seen from the
- *       other side, a rod that stays away from its demand because its drive has lost power or water or seized
- *       (the situation {@code rods_not_at_demand} counts while it persists). That is what lights DRIFT.</li>
+ *   <li><b>drift</b>: between notches with no driving command, including passive outward travel after a
+ *       collet fails to latch. The existing away-from-demand/unavailable-drive indication is retained.</li>
  *   <li><b>accumulator trouble</b>: the accumulator holds less than a fraction of a full charge. The core has no
  *       notion of "low charge" (only a charged-or-empty count), so the threshold is a gameplay default,
  *       {@link #DEFAULT_ACCUMULATOR_FRACTION}, that a display component can set.</li>
@@ -42,8 +39,12 @@ public final class RodIndications {
         return core.isScramActive() && core.getRodPositionNotches(rod) > RodWorth.NOTCH_INDEX_FULLY_INSERTED;
     }
 
+    public static boolean passiveDrift(ReactorCore core, int rod) {
+        return !core.isScramActive() && core.isRodBetweenNotches(rod) && !core.isRodBeingDriven(rod);
+    }
+
     public static boolean drift(ReactorCore core, ControlRodDriveNetwork rods, int rod) {
-        return rods != null && rods.isRodDrifting(rod);
+        return passiveDrift(core, rod) || (rods != null && rods.isRodDrifting(rod));
     }
 
     public static boolean accumulatorTrouble(ReactorCore core, int rod, double fraction) {

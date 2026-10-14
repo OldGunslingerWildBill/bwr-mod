@@ -460,3 +460,12 @@ selecting the closest available string and avoiding shared tubes when the core h
 Core getters, CC `getDetectorLocations()`, signals, and Browns Ferry labels share this deterministic
 rule. Instrument insertion and the existing SRM/IRM transfer functions are unchanged; this item adds
 physical placement metadata, not a new source-range spatial-response calibration.
+
+### Collet drift calibration (B3)
+
+Failure to latch permits passive outward absorber travel; hydraulic drive commands and scram force
+still move the rod. The optional failure hazard is disabled by default. No plant failure-rate dataset
+is claimed: `1e-6 / rod-second` is an example rare gameplay rate, and 0.1 notch spans/second is a
+configurable gameplay travel rate. These are not certified CRD performance figures. The mechanical
+model catches a repaired collet at the next notch and reports between-notch uncommanded motion;
+it issues no protective action.

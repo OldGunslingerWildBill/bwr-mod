@@ -626,6 +626,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             int keptSelection = driveLayoutChanged ? 0 : pendingSelectedRod > 0 ? pendingSelectedRod : rodSelection.selected();
             pendingSelectedRod = 0;
             core = new ReactorCore(config, new dev.bwr.core.fuel.CoreLoading(found.latticeWidth()));
+            core.seedRodColletFailures(getBlockPos().asLong() ^ 0x43ad3672b16f0e95L);
             // Install before restoring: fromState re-solves the saved rod pattern.
             installRodLatticeMap(found);
             if (pendingRestore != null) core.getVoidModel().setRatedCoreFlowKgPerS(pendingRatedCoreFlowKgPerS);

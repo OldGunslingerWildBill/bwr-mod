@@ -213,7 +213,8 @@ public record ReactorState(
         int[] intermediateRangeMonitorRanges,
         double[] rodPositionsNotches,
         double metalTemperatureC,
-        double[] lprmState
+        double[] lprmState,
+        int[] rodLatchState
 ) {
     /**
      * Defensive copy on construction. These arrays cross the physics/Minecraft
@@ -221,6 +222,7 @@ public record ReactorState(
      * consumer mutate live core state.
      */
     public ReactorState {
+        rodLatchState = rodLatchState == null ? new int[0] : rodLatchState.clone();
         lprmState = lprmState == null ? new double[0] : lprmState.clone();
         precursors = precursors == null ? new double[6] : precursors.clone();
         decayGroups = decayGroups == null ? new double[0] : decayGroups.clone();
@@ -231,6 +233,9 @@ public record ReactorState(
         intermediateRangeMonitorRanges = intermediateRangeMonitorRanges == null
                 ? new int[0] : intermediateRangeMonitorRanges.clone();
     }
+
+    @Override
+    public int[] rodLatchState() { return rodLatchState.clone(); }
 
     @Override
     public double[] lprmState() { return lprmState.clone(); }

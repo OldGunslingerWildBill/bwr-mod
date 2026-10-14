@@ -141,10 +141,13 @@ signal unless the reactor is formed. Rods and strings are numbered from 1.
   in (the core has no per-rod scram state). **accum_trouble**: the accumulator holds less than 0.9 of a full charge; the
   core has no notion of low charge (only charged or empty), so 0.9 is a gameplay default and a display component has a
   setting for it.
-* **drift**: the core models no spontaneous rod motion, so the real "moving without a command" cannot happen. The
-  signal is the mirror image the model does have: the rod is not at its demanded notch, no scram is forcing it and its
-  drive cannot index (no power, no water, seized or missing). A rod travelling toward its demand under power does not
-  drift. It is what `rods_not_at_demand` counts while the rod stays put, per rod.
+* **drift**: a rod between notches with no driving command, including passive outward motion after a collet
+  fails to latch. A deliberate powered move or scram does not light this alarm. The previous indication for
+  a rod away from demand with an unavailable drive is retained. Random collet failures default **off**;
+  enable `rodColletFailureHazardPerSecond` in server gameplay config (per rod per simulated second).
+  `rodDriftNotchesPerSecond` controls travel, default 0.1. Both are gameplay calibrations.
+  Fault state, physical travel, outstanding command and random sequence survive saves. A repaired collet
+  catches the next notch. There is no automatic rod command or trip in response to a drift alarm.
 * **LPRM strings.** A string stands in the gap between four rods; the mod places one wherever the GE grid has a point
   (`x` a multiple of 8, `y` one more than a multiple of 8, as in `08-49`) with a rod on all four sides: 39 strings in the
   185-rod core, fewer in a smaller one. They are numbered in reading order (top row first, west to east). `lprm_<s>_label`

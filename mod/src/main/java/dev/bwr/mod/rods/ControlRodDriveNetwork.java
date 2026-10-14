@@ -18,8 +18,8 @@ import dev.bwr.core.kinetics.RodWorth;
  * the one readout that must never lie.
  *
  * <h2>One authoritative demand array</h2>
- * {@link #preStep} rewrites {@code ReactorCore}'s rod demand from
- * {@link #getCommandedNotchIndices()} on every single tick, so
+ * {@link #preStep} refreshes {@code ReactorCore}'s standing rod setpoint from
+ * {@link #getCommandedNotchIndices()} without reissuing a completed motion command, so
  * <b>{@code ReactorCore.setRodNotchDemand} / {@code setRodNotchLabelDemand} must
  * never be called from outside this class.</b> A demand written straight into
  * the core survives at most one tick before preStep reverts it, which is exactly
@@ -40,7 +40,7 @@ import dev.bwr.core.kinetics.RodWorth;
  * water this tick must not be allowed to move this tick.
  *
  * <h2>How a drive comes to be unable to move</h2>
- * The operator's demand for a rod is held <i>here</i>, not in the core, and it
+ * The operator's standing demand is held here and mirrored in the core, and it
  * is forwarded to the core only while that rod's drive
  * {@linkplain ControlRodDriveHardware#canPerformNormalMotion() can move}. A
  * drive with no power, no water or a seized mechanism has its normal motion
@@ -139,8 +139,10 @@ public final class ControlRodDriveNetwork {
      * Restore a saved demand pattern, clamping each entry into range and
      * ignoring an array that does not match this network's rod count.
      *
-     * <p>Rod demand has no component of its own in {@code ReactorState}, so
-     * without this a withdrawal that was in flight when the chunk unloaded comes
+     * <p>The core snapshot retains whether a motion command is still active; this
+     * restores the network setpoints without rearming completed commands. Legacy
+     * snapshots have no command state, so their saved demands are rearmed. Without
+     * this a withdrawal that was in flight when the chunk unloaded comes
      * back collapsed onto the notch the rods had reached: the plant resumes with
      * the drives stopped mid-stroke and nothing on the panel to say why. This is
      * the operator's standing demand being handed back to them, not a decision
@@ -156,6 +158,10 @@ public final class ControlRodDriveNetwork {
         for (int r = 0; r < commandedNotchIndex.length; r++) {
             commandedNotchIndex[r] = Math.max(RodWorth.NOTCH_INDEX_FULLY_INSERTED,
                     Math.min(RodWorth.NOTCH_INDEX_FULLY_WITHDRAWN, notchIndices[r]));
+            if (core != null) {
+                if (core.hasSavedRodCommands()) core.restoreRodNotchDemand(r,commandedNotchIndex[r]);
+                else core.setRodNotchDemand(r,commandedNotchIndex[r]);
+            }
         }
         return true;
     }
@@ -253,13 +259,13 @@ public final class ControlRodDriveNetwork {
             drive.setEnvironmentCladTemperatureC(cladTemperatureC);
             boolean moving = scramActive
                     ? c.getRodPositionNotches(r) != RodWorth.NOTCH_INDEX_FULLY_INSERTED
-                    : commandedNotchIndex[r] != c.getRodPositionNotches(r);
+                    : c.isRodMotionCommanded(r);
             drive.setMotionCommanded(moving);
 
             if (drive.canPerformNormalMotion()) {
                 operable++;
                 c.setRodNormalMotionAvailable(r,true);
-                c.setRodNotchDemand(r, commandedNotchIndex[r]);
+                c.refreshRodNotchDemand(r, commandedNotchIndex[r]);
             } else {
                 c.setRodNormalMotionAvailable(r,false);
             }
@@ -364,6 +370,7 @@ public final class ControlRodDriveNetwork {
                     + RodWorth.NOTCH_INDEX_FULLY_WITHDRAWN + ": " + notchIndex);
         }
         commandedNotchIndex[rodIndex] = notchIndex;
+        if (core != null) core.setRodNotchDemand(rodIndex,notchIndex);
     }
 
     /**
@@ -520,13 +527,14 @@ public final class ControlRodDriveNetwork {
 
     /**
      * Whether a rod is away from its demand and nothing is driving it there: no scram is forcing it, and its drive
-     * cannot index (no power, no water, seized, or no drive). The core models no uncommanded motion, so this is the
-     * way a rod comes to disagree with its demand and stay that way; see {@link RodIndications}. A rod that is
+     * cannot index (no power, no water, seized, or no drive), or the indications report uncommanded between-notch
+     * travel after a collet failure. See {@link RodIndications}. A rod that is
      * simply travelling toward its demand under power is not drifting. A fact about hardware, not a trip.
      */
     public boolean isRodDrifting(int rodIndex) {
         checkRodIndex(rodIndex);
         ReactorCore c = core;
+        if (c != null && rodIndex < c.getControlRodCount() && RodIndications.passiveDrift(c, rodIndex)) return true;
         if (c == null || rodIndex >= c.getControlRodCount() || c.isScramActive()
                 || c.getRodPositionNotches(rodIndex) == commandedNotchIndex[rodIndex]) {
             return false;

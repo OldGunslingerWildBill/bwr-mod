@@ -47,6 +47,13 @@ public final class GameplayConfig {
             .comment("Sealed tritium samples harvested from one completed target rod")
             .defineInRange("tritiumSamplesPerRod", SpecialtyRodItem.TRITIUM_SAMPLES_PER_ROD, 1, 100_000);
 
+    public static final ModConfigSpec.DoubleValue ROD_COLLET_FAILURE_HAZARD = BUILDER
+            .comment("Optional per-rod collet failure hazard per simulated second; 0 disables random drift (default). Example rare rate: 0.000001")
+            .defineInRange("rodColletFailureHazardPerSecond", 0.0, 0.0, 1.0);
+    public static final ModConfigSpec.DoubleValue ROD_DRIFT_RATE = BUILDER
+            .comment("Outward travel of an unlatched rod in notch spans per second; gameplay calibration")
+            .defineInRange("rodDriftNotchesPerSecond", 0.1, 0.001, 24.0);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static double failureHazardPerSecond() { return read(FAILURE_HAZARD_PER_SECOND); }
@@ -75,6 +82,8 @@ public final class GameplayConfig {
     public static void applyTo(ReactorCore core) {
         if (core == null) return;
         core.getBoundaryStress().setFailureHazardPerSecond(failureHazardPerSecond());
+        core.getConfig().rodColletFailureHazardPerSecond = read(ROD_COLLET_FAILURE_HAZARD);
+        core.getConfig().rodDriftNotchesPerSecond = read(ROD_DRIFT_RATE);
         core.getSevereAccident().setProgressionMultiplier(accidentProgressionMultiplier());
         core.getContainment().setContaminationHalfLifeSeconds(contaminationHalfLifeSeconds());
         refreshIrradiationTimes();

@@ -33,7 +33,17 @@ public final class CoreDriveRemap {
             s.coolantTempC(),s.pressurePsig(),s.voidFraction(),s.coreInletEnthalpyKJPerKg(),s.coreFlowFraction(),s.waterLevelIn(),
             s.xenon(),s.iodine(),s.boronPpm(),s.burnupMwdPerTonne(),notches,charge,s.reactivityTotal(),s.betaEff(),s.promptLifetime(),
             new double[0],s.fuelExcessReactivityDkOverK(),s.dopplerCoefficientPerCAtAnchor(),s.elapsedSeconds(),s.scramActive(),
-            s.intermediateRangeMonitorRanges(),position,s.metalTemperatureC(), s.lprmState());
+            s.intermediateRangeMonitorRanges(),position,s.metalTemperatureC(), s.lprmState(), latchState(s.rodLatchState(),before,after));
+    }
+    private static int[] latchState(int[] saved,int[] before,int[] after) {
+        if(saved.length==0)return saved;
+        if(saved.length!=3+3*before.length)throw new IllegalArgumentException("Saved latch states do not match mounting coordinates");
+        var map=index(before);int[] out=new int[3+3*after.length];System.arraycopy(saved,0,out,0,3);
+        for(int i=0;i<after.length;i++) {
+            Integer old=map.get(after[i]);if(old==null)continue;
+            for(int field=0;field<3;field++)out[3+field*after.length+i]=saved[3+field*before.length+old];
+        }
+        return out;
     }
     private CoreDriveRemap() {}
 }
