@@ -64,6 +64,83 @@ final class EntityLookupProbe {
         return true;
     }
 
+    @FunctionalInterface
+    interface CheckedAction { void run() throws Exception; }
+
+    /** Returns an idempotent cleanup and installs it before the fixture acquires any resources. */
+    static Runnable onFinished(net.minecraft.gametest.framework.GameTestHelper helper, Runnable cleanup) {
+        boolean[] finished = {false};
+        Runnable release = () -> {
+            if (finished[0]) return;
+            finished[0] = true;
+            cleanup.run();
+        };
+        helper.testInfo.addListener(new net.minecraft.gametest.framework.GameTestListener() {
+            @Override public void testStructureLoaded(net.minecraft.gametest.framework.GameTestInfo info) { }
+            @Override public void testPassed(net.minecraft.gametest.framework.GameTestInfo info, net.minecraft.gametest.framework.GameTestRunner runner) { release.run(); }
+            @Override public void testFailed(net.minecraft.gametest.framework.GameTestInfo info, net.minecraft.gametest.framework.GameTestRunner runner) { release.run(); }
+            @Override public void testAddedForRerun(net.minecraft.gametest.framework.GameTestInfo before, net.minecraft.gametest.framework.GameTestInfo after, net.minecraft.gametest.framework.GameTestRunner runner) { release.run(); }
+        });
+        return release;
+    }
+
+    /** Runs a synchronous fixture only after every chunk in its bounds answers a real entity lookup. */
+    static void runWhenLive(net.minecraft.gametest.framework.GameTestHelper helper,
+                            net.minecraft.world.phys.AABB bounds, CheckedAction action) {
+        ServerLevel level = helper.getLevel();
+        var chunks = new java.util.ArrayList<ChunkPos>();
+        var owned = new java.util.ArrayList<ChunkPos>();
+        EntityLookupProbe probe = new EntityLookupProbe(level, bounds.maxY + 2);
+        boolean[] released = {false};
+        Runnable release = onFinished(helper, () -> {
+            released[0] = true;
+            try { probe.forget(); } finally {
+                owned.forEach(c -> level.setChunkForced(c.x, c.z, false));
+            }
+        });
+        try {
+            for (int x = net.minecraft.util.Mth.floor(bounds.minX) >> 4; x <= net.minecraft.util.Mth.floor(bounds.maxX) >> 4; x++) {
+                for (int z = net.minecraft.util.Mth.floor(bounds.minZ) >> 4; z <= net.minecraft.util.Mth.floor(bounds.maxZ) >> 4; z++) {
+                    ChunkPos chunk = new ChunkPos(x, z);
+                    chunks.add(chunk);
+                    if (!level.getForcedChunks().contains(chunk.toLong())) {
+                        owned.add(chunk);
+                        level.setChunkForced(x, z, true);
+                    }
+                    level.getChunk(x, z);
+                }
+            }
+            await(helper, chunks, probe, action, release, released, 0);
+        } catch (RuntimeException | Error e) {
+            release.run();
+            throw e;
+        }
+    }
+
+    private static void await(net.minecraft.gametest.framework.GameTestHelper helper,
+                              java.util.List<ChunkPos> chunks, EntityLookupProbe probe, CheckedAction action,
+                              Runnable release, boolean[] released, int polls) {
+        if (released[0]) return; // A timeout, failure or rerun must never restart the fixture.
+        try {
+            boolean ready = true;
+            for (ChunkPos chunk : chunks) {
+                ready &= probe.live(new BlockPos((chunk.x << 4) + 8, (int) probe.probeY, (chunk.z << 4) + 8));
+            }
+            if (!ready && polls < 160) {
+                helper.runAfterDelay(1, () -> await(helper, chunks, probe, action, release, released, polls + 1));
+                return;
+            }
+            helper.assertTrue(ready, "fixture chunks never answered entity lookups");
+            try { action.run(); } finally { release.run(); }
+        } catch (RuntimeException | Error e) {
+            release.run();
+            throw e;
+        } catch (Exception e) {
+            release.run();
+            throw new RuntimeException(e);
+        }
+    }
+
     /** Forgets what was seen (the chunks were unloaded and loaded again) and removes any probe still waiting. */
     void forget() {
         live.clear();

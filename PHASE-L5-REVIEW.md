@@ -35,6 +35,8 @@ unchanged.
 
 ## Validation
 
+Part A2 update (2026-10-14): the harness now owns a real registered CC ServerComputer directly, keeps it alive through normal server ticks, and closes/unregisters it on every cleanup path. Actual registered BWR capabilities and the Lua VM remain unchanged. A physical computer block no longer owns the runtime whose sides the harness binds, avoiding competing native neighbor scans. This remains an API/runtime integration test, not a physical computer placement or cable-network test. The native-scan regression also owns and closes a separate physical computer runtime. Part A2 execution evidence is reported separately; the L5 results below are historical.
+
 The new `:mod:runLuaExamplesCheck` is an opt-in dedicated-server integration
 check. It loads the exact five files from `docs/lua/` into real CC:Tweaked
 computers, executes them with CC's Lua runtime, and attaches actual registered
@@ -43,13 +45,13 @@ the peripheral API with Lua mocks. It logs every script's SHA-256 and records
 Lua results plus block-entity readbacks in
 `mod/run/luaExamplesCheck/lua-examples-check/results.json`.
 
-The 22 scenarios cover:
+The current 23 scenarios cover (Part A2 adds the native-scan ECCS regression; historical 22-scenario run results below are unchanged):
 
 | Program | Scenarios | Important readbacks |
 | --- | ---: | --- |
 | Startup | 5 | Rod demand and physical position both reach notch 2; without drive supply, demand remains 2 and physical position 0 at timeout; invalid notch, active scram, and missing peripheral are rejected. |
 | Backup scram | 5 | Low-level trigger sets the real scram latch; no-trigger case leaves it clear; already active, unformed, and missing-peripheral cases are covered. |
-| ECCS start | 3 | RHR run command, injection mode, pool suction, 0.35 flow demand, and 0.6 speed demand; invalid flow and missing pump are rejected. |
+| ECCS start | 4 | RHR run command, injection mode, pool suction, 0.35 flow demand, and 0.6 speed demand; a separate real computer block repeatedly rescans its native sides without removing the harness attachment; invalid flow and missing pump are rejected. |
 | Containment isolation | 4 | MSIV and steam penetration physically reach position 0; preflight failure preserves open valves; a non-valved service refuses closure while the valid MSIV closes; timeout leaves the accepted close demand applied. |
 | Panel driver | 5 | Two formed and two unformed frames; exact `P 0.0%`, `SCRAM NO`, and `UNFORMED` glyph pixels; unchanged drawing returns `false` normally; missing label/reactor and invalid interval leave the display unchanged. |
 

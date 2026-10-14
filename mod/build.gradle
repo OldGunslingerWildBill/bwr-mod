@@ -83,6 +83,7 @@ neoForge {
             if (project.hasProperty('bwrPanelPerformanceStages')) jvmArguments.add('-Dbwr.panelPerformanceStages=' + project.property('bwrPanelPerformanceStages'))
             if (project.hasProperty('bwrPanelImmediate')) jvmArguments.add('-Dbwr.panelImmediate=true')
             if (project.hasProperty('bwrFcdClientCheck')) jvmArguments.add('-Dbwr.fcdClientCheck=true')
+            if (project.hasProperty('bwrFcdReadinessProbe')) jvmArguments.add('-Dbwr.fcdReadinessProbe=true')
             if (project.hasProperty('bwrFcdClientStages')) jvmArguments.add('-Dbwr.fcdClientStages=' + project.property('bwrFcdClientStages'))
             if (project.hasProperty('bwrFcdLegendsPerFrame')) jvmArguments.add('-Dbwr.fcdLegendCache=false')
             if (project.hasProperty('bwrFcdProcedural')) jvmArguments.add('-Dbwr.fcdKits=false')

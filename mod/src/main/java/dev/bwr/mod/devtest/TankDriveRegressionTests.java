@@ -33,27 +33,8 @@ public final class TankDriveRegressionTests {
 
     @GameTest(template="empty",timeoutTicks=400)
     public static void tankPlayerBreakPreservesCasings(GameTestHelper h){
-        var l=h.getLevel();var root=new BlockPos(12000,200,12000);
-        var held=new java.util.ArrayList<ChunkPos>();
-        for(int x=(root.getX()-25)>>4;x<=(root.getX()+25)>>4;x++)
-            for(int z=(root.getZ()-25)>>4;z<=(root.getZ()+25)>>4;z++){
-                var chunk=new ChunkPos(x,z);
-                if(!l.getForcedChunks().contains(chunk.toLong())){
-                    held.add(chunk);l.setChunkForced(x,z,true);
-                }
-                l.getChunk(x,z);
-            }
-        awaitTankFixture(h,held);
-    }
-    private static void awaitTankFixture(GameTestHelper h,java.util.List<ChunkPos> held){
-        var l=h.getLevel();
-        boolean ready=held.stream().allMatch(c->l.areEntitiesLoaded(c.toLong())
-                &&l.isPositionEntityTicking(new BlockPos((c.x<<4)+8,200,(c.z<<4)+8)));
-        if(!ready&&h.getTick()<180){h.runAfterDelay(1,()->awaitTankFixture(h,held));return;}
-        try{
-            h.assertTrue(ready,"tank fixture entity chunks never became ready");
-            checkTankPlayerBreakPreservesCasings(h);
-        }finally{held.forEach(c->l.setChunkForced(c.x,c.z,false));}
+        EntityLookupProbe.runWhenLive(h,new AABB(new BlockPos(12000,200,12000)).inflate(25),
+                ()->checkTankPlayerBreakPreservesCasings(h));
     }
     private static void checkTankPlayerBreakPreservesCasings(GameTestHelper h){
         var l=h.getLevel();var root=new BlockPos(12000,200,12000);load(l,root);
@@ -103,7 +84,7 @@ public final class TankDriveRegressionTests {
         near(h,water.fill(new FluidStack(Fluids.LAVA,10),EXECUTE),0,"drive accepted lava");
         for(var d:drives){near(h,d.energyStoredFe(),2000,"remote drive starved of FE");near(h,d.waterStoredMb(),100,"remote drive starved of water");}
         near(h,diagonal.energyStoredFe(),0,"diagonal drives were connected");near(h,diagonal.waterStoredMb(),0,"diagonal water crossed air gap");
-        long builds=ControlRodDriveSupplies.buildCount(),time=l.getGameTime();var data=(net.minecraft.world.level.storage.ServerLevelData)l.getLevelData();
+        var bank=ControlRodDriveSupplies.at(l,root);long time=l.getGameTime();var data=(net.minecraft.world.level.storage.ServerLevelData)l.getLevelData();
         try{
             for(int tick=0;tick<100;tick++){data.setGameTime(time+tick+1);for(var d:drives)ControlRodDriveBlockEntity.serverTick(l,d.getBlockPos(),d.getBlockState(),d);}
         }finally{data.setGameTime(time);}
@@ -111,7 +92,7 @@ public final class TankDriveRegressionTests {
         near(h,drives.stream().mapToDouble(ControlRodDriveBlockEntity::waterStoredMb).sum(),289*90,"grid water not conserved");
         h.assertTrue(drives.stream().allMatch(ControlRodDriveBlockEntity::canPerformNormalMotion),"supplied remote drive cannot move");
         near(h,drives.get(50).health(),.4,"supply manifold changed independent drive wear");
-        h.assertTrue(ControlRodDriveSupplies.buildCount()==builds,"drive graph rebuilt as time passed");
+        h.assertTrue(ControlRodDriveSupplies.at(l,root)==bank,"drive graph rebuilt as time passed");
         // BWR pipes may tee into two drive faces, but must reserve shared capacity only once.
         for(var d:drives)d.hardware().setWaterStoredMb(4000);drives.get(0).hardware().setWaterStoredMb(3990);
         for(int z=0;z<=1;z++)l.setBlock(root.offset(0,-1,z),BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get().defaultBlockState(),2);
@@ -169,24 +150,85 @@ public final class TankDriveRegressionTests {
         var root=new BlockPos(Math.floorDiv(fixture.getX(),16)*16+13,220,Math.floorDiv(fixture.getZ(),16)*16+8);load(l,root);
         CondensateTankDismantling.get(l).process(l);CondensateTankRuntimeCheck.clear(l,root);clearDrops(l,root);
         var player=net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(l);player.setGameMode(GameType.CREATIVE);player.setPos(15650,250,15650);
-        var tank=CondensateTankRuntimeCheck.buildShell(l,player,root,7,8);h.assertTrue(tank.assembled(),"cross-chunk tank fixture");int paid=tank.paidBlocks;
-        var held=new ChunkPos(root);l.getChunkSource().addRegionTicket(TICKET,held,0,held);var far=root.east(3);
-        h.startSequence().thenWaitUntil(()->h.assertTrue(l.isLoaded(root)&&!l.isLoaded(far),"waiting for tank far chunk unload"))
+        var tank=CondensateTankRuntimeCheck.buildShell(l,player,root,7,8);h.assertTrue(tank.assembled(),"cross-chunk tank fixture");int paid=tank.paidBlocks;var assemblyId=tank.saveWithoutMetadata(l.registryAccess()).getUUID("TankAssembly");
+        // A second real tank owns a different plan which must stay pending throughout the first recovery.
+        // Its far chunk is 128 blocks away, outside the first fixture's readiness/cleanup bounds.
+        var otherRoot=root.south(128);load(l,otherRoot);
+        CondensateTankRuntimeCheck.clear(l,otherRoot);clearDrops(l,otherRoot);
+        var otherTank=CondensateTankRuntimeCheck.buildShell(l,player,otherRoot,7,8);
+        h.assertTrue(otherTank.assembled(),"independent cross-chunk tank fixture");
+        var otherId=otherTank.saveWithoutMetadata(l.registryAccess()).getUUID("TankAssembly");
+        h.assertTrue(!assemblyId.equals(otherId),"tank fixtures must have independent identities");
+        var held=new ChunkPos(root);var otherHeld=new ChunkPos(otherRoot);
+        var releaseTicket=EntityLookupProbe.onFinished(h,()->{
+            tankDropFloor(l,root,false);tankDropFloor(l,otherRoot,false);
+            l.getChunkSource().removeRegionTicket(TICKET,held,0,held);
+            l.getChunkSource().removeRegionTicket(TICKET,otherHeld,0,otherHeld);
+            // Never retain this test's pending plan after an assertion failure/timeout.
+            pendingTankPlans(CondensateTankDismantling.get(l)).remove(assemblyId);
+            pendingTankPlans(CondensateTankDismantling.get(l)).remove(otherId);
+        });
+        // The mined bottom casing otherwise leaves a hole: a real drop can fall outside
+        // the unchanged count bounds while post-reload entity readiness is still pending.
+        // Each 3x3 support is wholly in its already loaded owner chunk, not the far chunk.
+        tankDropFloor(l,root,true);tankDropFloor(l,otherRoot,true);
+        l.getChunkSource().addRegionTicket(TICKET,held,0,held);
+        l.getChunkSource().addRegionTicket(TICKET,otherHeld,0,otherHeld);var far=root.east(3);var otherFar=otherRoot.east(3);
+        h.assertTrue(!l.getForcedChunks().contains(new ChunkPos(far).toLong())
+                &&!l.getForcedChunks().contains(new ChunkPos(otherFar).toLong()),"tank unload fixtures overlap a foreign forced chunk");
+        h.startSequence().thenWaitUntil(()->h.assertTrue(l.isLoaded(root)&&!l.isLoaded(far)&&l.isLoaded(otherRoot)&&!l.isLoaded(otherFar),"waiting for both tank far chunks to unload"))
             .thenExecute(()->{
+                h.assertTrue(l.destroyBlock(otherRoot,true),"independent tank root not broken");
+                h.assertTrue(!l.isLoaded(otherFar),"independent dismantling loaded remote chunk");
                 h.assertTrue(l.destroyBlock(root,true),"tank root not broken");
                 h.assertTrue(!l.isLoaded(far),"dismantling loaded remote chunk");
                 var data=CondensateTankDismantling.get(l);var saved=data.save(new net.minecraft.nbt.CompoundTag(),l.registryAccess());
-                h.assertTrue(!saved.getList("Plans",10).isEmpty(),"unloaded casing restoration was not saved");
+                h.assertTrue(saved.getList("Plans",10).stream().anyMatch(t->((net.minecraft.nbt.CompoundTag)t).getUUID("Assembly").equals(assemblyId)),"unloaded casing restoration was not saved");
                 try{
                     var read=CondensateTankDismantling.class.getDeclaredMethod("load",net.minecraft.nbt.CompoundTag.class,HolderLookup.Provider.class);read.setAccessible(true);
                     var restored=read.invoke(null,saved,l.registryAccess());var field=CondensateTankDismantling.class.getDeclaredField("pending");field.setAccessible(true);
-                    var active=(java.util.Map)field.get(data);active.clear();active.putAll((java.util.Map)field.get(restored));
-                }catch(Exception e){throw new RuntimeException(e);}
+                    var active=(java.util.Map)field.get(data);
+                    var foreignPlan=active.get(otherId);
+                    h.assertTrue(foreignPlan!=null,"independent unloaded plan was not created");
+                    active.put(assemblyId,((java.util.Map)field.get(restored)).get(assemblyId));
+                    h.assertTrue(active.get(otherId)==foreignPlan,"restoring one tank replaced another tank's live plan");
+                }catch(ReflectiveOperationException e){throw new RuntimeException(e);}
                 l.getChunkAt(far);data.process(l);
-                System.out.println("TANK DEFERRED RECOVERY: casings="+CondensateTankRuntimeCheck.casings(l,root)+" drops="+drops(l,root)+" paid="+paid);
-                near(h,CondensateTankRuntimeCheck.casings(l,root)+drops(l,root),paid,"deferred dismantling lost/duplicated paid materials");
-                h.assertTrue(data.save(new net.minecraft.nbt.CompoundTag(),l.registryAccess()).getList("Plans",10).isEmpty(),"completed dismantle remained pending");
-                CondensateTankRuntimeCheck.clear(l,root);clearDrops(l,root);l.getChunkSource().removeRegionTicket(TICKET,held,0,held);
-            }).thenSucceed();
+                EntityLookupProbe.runWhenLive(h,new AABB(root).inflate(25),()->{
+                    try {
+                        System.out.println("TANK DEFERRED RECOVERY: casings="+CondensateTankRuntimeCheck.casings(l,root)+" drops="+drops(l,root)+" paid="+paid);
+                        near(h,CondensateTankRuntimeCheck.casings(l,root)+drops(l,root),paid,"deferred dismantling lost/duplicated paid materials");
+                        var plans=data.save(new net.minecraft.nbt.CompoundTag(),l.registryAccess()).getList("Plans",10);
+                        h.assertTrue(plans.stream().noneMatch(t->((net.minecraft.nbt.CompoundTag)t).getUUID("Assembly").equals(assemblyId)),"completed dismantle remained pending");
+                        h.assertTrue(!l.isLoaded(otherFar)&&plans.stream().anyMatch(t->((net.minecraft.nbt.CompoundTag)t).getUUID("Assembly").equals(otherId)),
+                                "completing one tank consumed another tank's unloaded plan");
+                    } finally {
+                        CondensateTankRuntimeCheck.clear(l,root);clearDrops(l,root);
+                    }
+                    EntityLookupProbe.runWhenLive(h,new AABB(otherRoot).inflate(25),()->{
+                        try {
+                            data.process(l);
+                            CondensateTankRuntimeCheck.clear(l,otherRoot);clearDrops(l,otherRoot);
+                        } finally { releaseTicket.run(); }
+                        h.succeed();
+                    });
+                });
+            });
     }
+    private static void tankDropFloor(ServerLevel level,BlockPos root,boolean present) {
+        for(var pos:BlockPos.betweenClosed(root.offset(-1,-1,-1),root.offset(1,-1,1))) {
+            // Terminal cleanup must never reload a fixture after timeout/unload.
+            if(level.isLoaded(pos))level.setBlock(pos,present?net.minecraft.world.level.block.Blocks.STONE.defaultBlockState()
+                    :net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),18);
+        }
+    }
+    /** Test-only access keeps fixture cleanup/restoration scoped to its own assembly UUID. */
+    @SuppressWarnings("unchecked")
+    private static java.util.Map<java.util.UUID,?> pendingTankPlans(CondensateTankDismantling data) {
+        try {
+            var field=CondensateTankDismantling.class.getDeclaredField("pending");field.setAccessible(true);
+            return (java.util.Map<java.util.UUID,?>)field.get(data);
+        } catch(ReflectiveOperationException e) { throw new RuntimeException(e); }
+    }
+
 }

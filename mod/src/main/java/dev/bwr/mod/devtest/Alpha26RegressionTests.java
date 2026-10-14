@@ -27,6 +27,7 @@ public final class Alpha26RegressionTests {
         for(var p:java.util.List.of(upper,lower))
             l.setBlock(p.north(),BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get().stateWithConnections(l,p.north()),3);
         tick(be);
+        // Both reads and the tick are synchronous on the server thread; no other GameTest can interleave.
         long builds=dev.bwr.mod.piping.PipeTopology.buildCount();tick(be);
         h.assertTrue(dev.bwr.mod.piping.PipeTopology.buildCount()==builds,"steady boundary checks rebuilt a pipe network");
         l.removeBlock(upper.north(),false);tick(be);

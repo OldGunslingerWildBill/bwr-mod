@@ -89,8 +89,8 @@ public final class Alpha22RegressionTests {
         h.assertTrue(pump.connectedSources==3,"pump did not identify all three screens: "+pump.connectedSources);
         near(h,pump.plant().input(),75,"combined supply exceeded/lost makeup pump capacity");
         for(var source:sources)near(h,source.plant().output(),5975,"shared header monopolized a single screen");
-        var builds=dev.bwr.mod.piping.PipeTopology.buildCount();CoolingWaterTransfer.pull(pump);
-        h.assertTrue(dev.bwr.mod.piping.PipeTopology.buildCount()==builds,"steady suction rebuilt the pipe graph");h.succeed();
+        var graph=dev.bwr.mod.piping.PipeTopology.get(l,inlet,CoolingBlock.portFace(l.getBlockState(inlet)),false,true);CoolingWaterTransfer.pull(pump);
+        h.assertTrue(dev.bwr.mod.piping.PipeTopology.get(l,inlet,CoolingBlock.portFace(l.getBlockState(inlet)),false,true)==graph,"steady suction rebuilt the pipe graph");h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=200)
     public static void boundaryFailuresBreakPipesOnceAndPersist(GameTestHelper h)throws Exception{

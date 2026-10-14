@@ -54,8 +54,8 @@ import java.util.UUID;
 
 /**
  * Opt-in real CC computer execution of the actual docs/lua bytes. No hand-written
- * peripheral mock or alternate Lua interpreter is involved. Real capability objects
- * are attached directly to computer sides; cable topology and plant calibration are
+ * peripheral mock or alternate Lua interpreter is involved. A registered ServerComputer
+ * owns direct side attachments; no computer block ticker competes for them. Cable topology and plant calibration are
  * outside this test. Devtest classes are excluded from the release jar.
  */
 @EventBusSubscriber(modid = BwrMod.MOD_ID)
@@ -66,7 +66,7 @@ public final class LuaExamplesCheck {
     private static final List<String> FILES = List.of("startup.lua", "backup_scram.lua", "eccs_start.lua",
             "containment_isolation.lua", "panel_display.lua");
     private record Scenario(String name, String file, String error, String... args) { }
-    private static final List<Scenario> SCENARIOS = List.of(
+    private static final List<Scenario> DEFAULT_SCENARIOS = List.of(
             new Scenario("startup-motion", "startup.lua", null, "left", ".2", "1", "2", "15", ".05"),
             new Scenario("startup-invalid-notch", "startup.lua", "target_notch", "left", ".2", "1", "3", "2"),
             new Scenario("startup-active-scram", "startup.lua", "scram is active", "left", ".2", "1", "2", "2"),
@@ -78,6 +78,7 @@ public final class LuaExamplesCheck {
             new Scenario("backup-unformed", "backup_scram.lua", "not formed", "left", "1000000", "1000000", "-1000000", ".05", "1"),
             new Scenario("backup-missing", "backup_scram.lua", "peripheral unavailable", "missing", "1000000", "1000000", "-1000000", ".05", "1"),
             new Scenario("eccs-rhr-command", "eccs_start.lua", null, "left", "pool", ".35", ".6"),
+            new Scenario("eccs-rhr-pending-scan", "eccs_start.lua", null, "left", "pool", ".35", ".6"),
             new Scenario("eccs-invalid-flow", "eccs_start.lua", "Flow fraction", "left", "pool", "2", ".6"),
             new Scenario("eccs-missing", "eccs_start.lua", "No peripheral named", "missing", "pool", ".35", ".6"),
             new Scenario("isolation-closure", "containment_isolation.lua", null, "--timeout", "15", "left", "right"),
@@ -90,6 +91,15 @@ public final class LuaExamplesCheck {
             new Scenario("panel-invalid-interval", "panel_display.lua", "Interval", "left", "right", "BWR-STATUS", "once", "bad"),
             new Scenario("panel-missing-reactor", "panel_display.lua", "No peripheral named", "left", "missing", "BWR-STATUS", "once")
     );
+    private static final List<Scenario> SCENARIOS = scenarios();
+    private static List<Scenario> scenarios() {
+        int repeats = Integer.getInteger("bwr.luaEccsRepeats", 0);
+        if (repeats == 0) return DEFAULT_SCENARIOS;
+        if (repeats < 1 || repeats > 100) throw new IllegalArgumentException("bwr.luaEccsRepeats must be 1..100");
+        String name = Boolean.getBoolean("bwr.luaEccsPendingScan") ? "eccs-rhr-pending-scan" : "eccs-rhr-command";
+        Scenario eccs = DEFAULT_SCENARIOS.stream().filter(s -> s.name().equals(name)).findFirst().orElseThrow();
+        return java.util.Collections.nCopies(repeats, eccs);
+    }
     private static final Map<String, byte[]> sources = new LinkedHashMap<>();
     private static final Set<Long> releasedChunks = new LinkedHashSet<>();
     private static final JsonObject report = new JsonObject();
@@ -160,8 +170,8 @@ public final class LuaExamplesCheck {
                 phase = 1;
                 phaseTicks = 0;
             } else if (phase == 1) {
-                // Turning on starts CC's initial neighbor scan. Attach only after its
-                // real startup wrapper is running and waiting for the expected types.
+                // Attach only after the actual runtime has booted and its
+                // startup wrapper is waiting for the expected peripheral types.
                 if (!TOKEN.equals(fixture.read("l5-boot-ready"))) return;
                 fixture.start();
                 phase = 2;
@@ -216,7 +226,7 @@ public final class LuaExamplesCheck {
         }
         report.addProperty("run_token", TOKEN);
         report.addProperty("source_directory", root.toString());
-        report.addProperty("boundary", "Real CC computers and actual registered capability peripherals; direct side attachment, no cable-topology or plant-calibration claim");
+        report.addProperty("boundary", "Real registered CC ServerComputer and actual registered capability peripherals; direct side attachment, no cable-topology or plant-calibration claim");
         report.addProperty("expected_scenarios", SCENARIOS.size());
         report.add("scripts", files);
         report.add("scenarios", results);
@@ -292,7 +302,8 @@ public final class LuaExamplesCheck {
         final Scenario scenario;
         final Map<String, BlockPos> attachments = new LinkedHashMap<>();
         final Map<String, String> types = new LinkedHashMap<>();
-        Object computer, mount;
+        Object computer, mount, scanRuntime;
+        net.minecraft.world.level.block.entity.BlockEntity scanComputer;
         ReactorControllerBlockEntity reactor;
         EccsPumpBlockEntity pump;
         MainSteamIsolationValveBlockEntity msiv;
@@ -358,12 +369,29 @@ public final class LuaExamplesCheck {
                 default -> throw new AssertionError("unknown script fixture");
             }
             BlockPos computerPos = origin.offset(22, 0, 0);
-            var block = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("computercraft", "computer_normal"));
-            require(block != Blocks.AIR, "real CC computer block is absent");
-            level.setBlock(computerPos, block.defaultBlockState(), 3);
-            Object entity = level.getBlockEntity(computerPos);
-            require(entity != null, "real computer block entity missing");
-            computer = entity.getClass().getMethod("createServerComputer").invoke(entity);
+            // Direct attachments have one owner: a real registered CC runtime. A physical
+            // computer block owns its adjacent faces and can replace direct bindings on
+            // any later neighbor scan (even after the Lua boot marker was written).
+            Class<?> runtimeClass = Class.forName("dan200.computercraft.shared.computer.core.ServerComputer");
+            Class<?> familyClass = Class.forName("dan200.computercraft.shared.computer.core.ComputerFamily");
+            Object normal = familyClass.getField("NORMAL").get(null);
+            int id = (int) Class.forName("dan200.computercraft.api.ComputerCraftAPI")
+                    .getMethod("createUniqueNumberedSaveDir", MinecraftServer.class, String.class)
+                    .invoke(null, level.getServer(), "computer");
+            Object properties = runtimeClass.getMethod("properties", int.class, familyClass).invoke(null, id, normal);
+            computer = runtimeClass.getConstructor(ServerLevel.class, BlockPos.class, properties.getClass())
+                    .newInstance(level, computerPos, properties);
+            computer.getClass().getMethod("register").invoke(computer);
+            if (scenario.name().equals("eccs-rhr-pending-scan")) {
+                // Exercise the original competing owner at the same position. Its real
+                // native scan must never remove this fixture's runtime attachments.
+                var block = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("computercraft", "computer_normal"));
+                require(block != Blocks.AIR, "real CC computer block is absent");
+                level.setBlock(computerPos, block.defaultBlockState(), 3);
+                scanComputer = level.getBlockEntity(computerPos);
+                require(scanComputer != null, "scan-regression computer block entity missing");
+                scanRuntime = scanComputer.getClass().getMethod("createServerComputer").invoke(scanComputer);
+            }
             mount = computer.getClass().getMethod("createRootMount").invoke(computer);
             write("example.lua", sources.get(scenario.file()));
             write("startup.lua", wrapper().getBytes(StandardCharsets.UTF_8));
@@ -388,7 +416,12 @@ public final class LuaExamplesCheck {
             types.put(side, type);
         }
 
-        void supply() {
+        void supply() throws Exception {
+            // The server registry executes CC normally; the harness owns the runtime's lifetime.
+            computer.getClass().getMethod("keepAlive").invoke(computer);
+            // Keep invalidating the separate native owner throughout the real Lua calls.
+            if (scanComputer != null) for (Direction direction : Direction.values())
+                scanComputer.getClass().getMethod("neighbourShapeChanged", Direction.class).invoke(scanComputer, direction);
             if (reactor != null && reactor.isFormed()) {
                 boolean powered = !scenario.name().equals("startup-no-drive-supply");
                 for (BlockPos pos : reactor.structure().crdPositions()) {
@@ -404,11 +437,14 @@ public final class LuaExamplesCheck {
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         void start() throws Exception {
+            if (scanComputer != null) for (Direction direction : Direction.values())
+                scanComputer.getClass().getMethod("neighbourShapeChanged", Direction.class).invoke(scanComputer, direction);
             var capability = (BlockCapability<Object, Direction>) Class.forName("dan200.computercraft.api.peripheral.PeripheralCapability")
                     .getMethod("get").invoke(null);
             Class sideClass = Class.forName("dan200.computercraft.core.computer.ComputerSide");
             Class<?> peripheralClass = Class.forName("dan200.computercraft.api.peripheral.IPeripheral");
             var setter = computer.getClass().getMethod("setPeripheral", sideClass, peripheralClass);
+            Object expectedLeft = null;
             for (var attachment : attachments.entrySet()) {
                 Object actual = level.getCapability(capability, attachment.getValue(), Direction.NORTH);
                 require(actual != null, "actual peripheral capability missing at " + attachment.getValue());
@@ -416,6 +452,17 @@ public final class LuaExamplesCheck {
                 require(type.equals(types.get(attachment.getKey())), "incorrect actual peripheral type " + type);
                 Object side = Enum.valueOf(sideClass, attachment.getKey().toUpperCase(java.util.Locale.ROOT));
                 setter.invoke(computer, side, actual);
+                if (attachment.getKey().equals("left")) expectedLeft = actual;
+            }
+            if (scanComputer != null) {
+                var pos = scanComputer.getBlockPos();
+                var state = level.getBlockState(pos);
+                net.minecraft.world.level.block.entity.BlockEntityTicker ticker = state.getTicker(level, scanComputer.getType());
+                require(ticker != null, "scan-regression computer has no real ticker");
+                ticker.tick(level, pos, state, scanComputer);
+                Object side = Enum.valueOf(sideClass, "LEFT");
+                Object retained = computer.getClass().getMethod("getPeripheral", sideClass).invoke(computer, side);
+                require(retained != null && retained == expectedLeft, "pending native neighbor scan erased direct ECCS attachment");
             }
             if (msiv != null) require(msiv.getPosition() == 1 && msiv.isDemandOpen()
                     && penetration.position() == 1 && penetration.demandOpen(), "valves were not fully open before isolation test");
@@ -489,12 +536,13 @@ public final class LuaExamplesCheck {
             }
             if (pump != null) {
                 out.addProperty("running", pump.isRunning());
+                if (scanComputer != null) out.addProperty("pending_scan_attachment_survived", true);
                 out.addProperty("flow_demand_fraction", pump.getFlowDemandFraction());
                 out.addProperty("speed_demand_fraction", pump.pump().getSpeedDemandFraction());
                 out.addProperty("mode", pump.getMode().name());
                 out.addProperty("suction", pump.getSuctionSource().getSerializedName());
                 out.addProperty("delivered_flow_kg_s", pump.getDeliveredFlowKgPerS());
-                if (name.equals("eccs-rhr-command")) require(pump.isRunning() && pump.getMode() == EccsPumpBlockEntity.Mode.INJECTION
+                if (name.equals("eccs-rhr-command") || name.equals("eccs-rhr-pending-scan")) require(pump.isRunning() && pump.getMode() == EccsPumpBlockEntity.Mode.INJECTION
                         && pump.getSuctionSource() == SuctionSource.SUPPRESSION_POOL && Math.abs(pump.getFlowDemandFraction() - .35) < 1e-9
                         && Math.abs(pump.pump().getSpeedDemandFraction() - .6) < 1e-9, "ECCS commands/readbacks differ");
                 else require(!pump.isRunning() && pump.getMode() == EccsPumpBlockEntity.Mode.POOL_COOLING
@@ -597,10 +645,14 @@ public final class LuaExamplesCheck {
             if (closed) return;
             closed = true;
             try {
-                if (computer != null) computer.getClass().getMethod("shutdown").invoke(computer);
+                if (computer != null) computer.getClass().getMethod("close").invoke(computer);
             } finally {
-                try { clear(); }
-                finally { hold(false); }
+                try {
+                    if (scanRuntime != null && scanRuntime != computer) scanRuntime.getClass().getMethod("close").invoke(scanRuntime);
+                } finally {
+                    try { clear(); }
+                    finally { hold(false); }
+                }
             }
         }
     }

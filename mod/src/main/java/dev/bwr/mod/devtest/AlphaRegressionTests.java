@@ -42,12 +42,15 @@ public final class AlphaRegressionTests {
         pump.setPanelControlled(true);pump.setRunning(true);
         for(int i=0;i<150;i++)EccsPumpBlockEntity.serverTick(l,pumpPos,pump.getBlockState(),pump);
         near(h,tank.solution().massKg(),1025,"unpowered SLC consumed solution");
-        double fraction=tank.solution().boronFraction();long builds=dev.bwr.mod.piping.PipeTopology.buildCount();
+        double fraction=tank.solution().boronFraction();var pumpBlock=(PumpAssemblyBlock)pump.getBlockState().getBlock();
+        var suctionGraph=dev.bwr.mod.piping.PipeTopology.get(l,pumpBlock.portPosition(pumpPos,pump.getBlockState(),AssemblyPort.WATER_SUCTION),pumpBlock.portFace(pump.getBlockState(),AssemblyPort.WATER_SUCTION),false,false);
+        var dischargeGraph=dev.bwr.mod.piping.PipeTopology.get(l,pumpBlock.portPosition(pumpPos,pump.getBlockState(),AssemblyPort.WATER_DISCHARGE),pumpBlock.portFace(pump.getBlockState(),AssemblyPort.WATER_DISCHARGE),false,false);
         for(int i=0;i<250;i++){pump.energy().receiveEnergy(Integer.MAX_VALUE,false);EccsPumpBlockEntity.serverTick(l,pumpPos,pump.getBlockState(),pump);}
         h.assertTrue(pump.getDeliveredFlowKgPerS()>0&&tank.solution().massKg()<1025,"powered SLC did not deliver");
         near(h,pump.deliveredBoronKgPerS(),pump.getDeliveredFlowKgPerS()*fraction,"boron mass not tied to solution");
         near(h,pump.pump().getSuctionTemperatureC(),42,"SLC solution temperature lost");
-        h.assertTrue(dev.bwr.mod.piping.PipeTopology.buildCount()==builds,"stable SLC pipes rebuilt every tick");
+        h.assertTrue(dev.bwr.mod.piping.PipeTopology.get(l,pumpBlock.portPosition(pumpPos,pump.getBlockState(),AssemblyPort.WATER_SUCTION),pumpBlock.portFace(pump.getBlockState(),AssemblyPort.WATER_SUCTION),false,false)==suctionGraph
+                &&dev.bwr.mod.piping.PipeTopology.get(l,pumpBlock.portPosition(pumpPos,pump.getBlockState(),AssemblyPort.WATER_DISCHARGE),pumpBlock.portFace(pump.getBlockState(),AssemblyPort.WATER_DISCHARGE),false,false)==dischargeGraph,"stable SLC pipes rebuilt every tick");
         var bus=EccsNetwork.busFor(l,cp);bus.applyTo(reactor.core(),l.getGameTime());h.assertTrue(bus.getTotalBoronPpmPerMinute()>0,"SLC did not reach reactor poison channel");
         near(h,pump.deliveredBoronPpmPerMinute(),bus.getTotalBoronPpmPerMinute(),"SLC computer boron rate differs from delivered rate");
         var cut=o.offset(14,0,5);l.removeBlock(cut,false);double mass=tank.solution().massKg();EccsPumpBlockEntity.serverTick(l,pumpPos,pump.getBlockState(),pump);

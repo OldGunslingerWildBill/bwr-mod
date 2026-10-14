@@ -50,21 +50,21 @@ public final class ReleaseRegressionTests {
     public static void topologyOnlyChangesOnEvents(GameTestHelper h){
         var l=h.getLevel();var start=new BlockPos(8200,200,8200);load(l,start);
         pipe(l,start,start.east(32),true);var end=start.east(33);l.setBlock(end,BwrBlocks.TURBINE_STEAM_OUTLET.get().defaultBlockState(),2);
-        var graph=PipeTopology.get(l,start,null,true,false);long count=PipeTopology.buildCount();
+        var graph=PipeTopology.get(l,start,null,true,false);
         h.assertTrue(graph.ends().stream().anyMatch(n->n.pos().equals(end)),"static route missing end");
         h.assertTrue(graph.edges().size()<=3,"plain pipe run was not compressed");
         var data=(net.minecraft.world.level.storage.ServerLevelData)l.getLevelData();long time=l.getGameTime();
         try{for(int tick=1;tick<=1000;tick++){data.setGameTime(time+tick);h.assertTrue(PipeTopology.get(l,start,null,true,false)==graph,"static route rebuilt on a timer");}}
         finally{data.setGameTime(time);}
-        h.assertTrue(PipeTopology.buildCount()==count,"geometry rebuild without an edit");
+        h.assertTrue(PipeTopology.get(l,start,null,true,false)==graph,"geometry rebuild without an edit");
         var cut=start.east(16);l.setBlock(cut,Blocks.AIR.defaultBlockState(),18);
         h.assertTrue(PipeTopology.get(l,start,null,true,false).ends().isEmpty(),"flags-18 pipe removal retained path");
         l.setBlock(cut,BwrBlocks.TURBINE_CONTROL_VALVE.get().defaultBlockState().setValue(TurbineValveBlock.FACING,Direction.EAST),2);
         var v=(TurbineValveBlockEntity)l.getBlockEntity(cut);v.setTarget(1);v.stroke(10);
-        var withValve=PipeTopology.get(l,start,null,true,false);count=PipeTopology.buildCount();
+        var withValve=PipeTopology.get(l,start,null,true,false);
         h.assertTrue(withValve.ends().size()==1,"inline valve disconnected path");v.setTarget(.25);v.stroke(10);
         near(h,PipeTopology.routes(l,withValve).stream().filter(r->r.node().pos().equals(end)).findFirst().orElseThrow().opening(),.25,"valve opening stale");
-        h.assertTrue(PipeTopology.buildCount()==count,"moving valve rebuilt geometry");
+        h.assertTrue(PipeTopology.get(l,start,null,true,false)==withValve,"moving valve rebuilt geometry");
         l.setBlock(cut,l.getBlockState(cut).setValue(TurbineValveBlock.FACING,Direction.NORTH),2);
         h.assertTrue(PipeTopology.get(l,start,null,true,false).ends().isEmpty(),"same-block rotation retained path");
         for(var p:BlockPos.betweenClosed(start,end))l.removeBlock(p,false);h.succeed();

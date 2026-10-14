@@ -102,6 +102,10 @@ public final class PhaseOneRegressionTests {
     }
     @GameTest(template="empty",timeoutTicks=200)
     public static void reactorOwnershipAndResize(GameTestHelper h) throws Exception {
+        EntityLookupProbe.runWhenLive(h,new net.minecraft.world.phys.AABB(new BlockPos(520,200,520)).inflate(12),
+                ()->checkReactorOwnershipAndResize(h));
+    }
+    private static void checkReactorOwnershipAndResize(GameTestHelper h) throws Exception {
         var l=h.getLevel();var origin=new BlockPos(520,200,520);
         var validate=dev.bwr.mod.reactor.ReactorControllerBlockEntity.class.getDeclaredMethod("revalidate",Level.class);
         validate.setAccessible(true);

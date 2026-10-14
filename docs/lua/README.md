@@ -156,11 +156,16 @@ From the repository root, using the project's Java 21 installation:
 ```
 
 This opt-in dedicated-server check loads these exact files onto a real
-CC:Tweaked computer and executes them with the real Lua runtime and peripheral
+registered CC:Tweaked ServerComputer and executes them with the real Lua
+runtime and peripheral
 dispatch. It attaches actual BWR capability objects to computer sides, exercises
 successful operations and failures, and verifies block-entity readbacks. It
 does not substitute a hand-written Lua peripheral API or validate cable-network
-construction. Script names and source hashes appear in the check's output.
+construction. The harness owns this runtime and its lifetime; no physical
+computer block ticker competes for the direct side bindings. Its 23 scenarios
+include a separate real computer block with repeatedly invalidated native sides,
+verifying that native scans cannot erase the ECCS attachment. Script names and
+source hashes appear in the check's output.
 
 The development harness is stripped from the production JAR. It does not install
 these examples into a player's world. Results and limits are recorded in the

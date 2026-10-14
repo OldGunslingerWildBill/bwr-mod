@@ -54,52 +54,14 @@ public final class TurbineAssemblyRuntimeCheck {
 
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void assemblies(GameTestHelper helper) {
-        ServerLevel level = helper.getLevel();
-        List<ChunkPos> chunks = new ArrayList<>();
-        List<ChunkPos> owned = new ArrayList<>();
-        try {
-            // Covers all current fixtures, including rotated cells and cleanup bounds.
-            for (int x = 7; x <= 12; x++) {
-                for (int z = 7; z <= 9; z++) {
-                    ChunkPos chunk = new ChunkPos(x, z);
-                    chunks.add(chunk);
-                    if (!level.getForcedChunks().contains(chunk.toLong())) {
-                        owned.add(chunk);
-                        level.setChunkForced(x, z, true);
-                    }
-                    level.getChunk(x, z);
-                }
-            }
-        } catch (RuntimeException | Error e) {
-            owned.forEach(c -> level.setChunkForced(c.x, c.z, false));
-            throw e;
-        }
-        awaitFixtures(helper, chunks, owned);
-    }
-
-    private static void awaitFixtures(GameTestHelper helper,
-                                      List<ChunkPos> chunks,
-                                      List<ChunkPos> owned) {
-        ServerLevel level = helper.getLevel();
-        boolean ready = chunks.stream().allMatch(c ->
-                level.areEntitiesLoaded(c.toLong())
-                        && level.isPositionEntityTicking(
-                                new BlockPos((c.x << 4) + 8, 200, (c.z << 4) + 8)));
-
-        if (!ready && helper.getTick() < 180) {
-            helper.runAfterDelay(1, () -> awaitFixtures(helper, chunks, owned));
-            return;
-        }
-
-        try {
-            helper.assertTrue(ready, "Fixture entity chunks never became ready");
+        // Includes the rotated assembly at x=200 and every delegated runtime fixture/drop bound.
+        EntityLookupProbe.runWhenLive(helper, new AABB(85, 180, 78, 225, 300, 198), () -> {
+            ServerLevel level = helper.getLevel();
             int failures = run(level) + TurbinePlumbingRuntimeCheck.run(level) + PumpAssemblyRuntimeCheck.run(level) + PowerModuleRuntimeCheck.run(level) + SteamValveRuntimeCheck.run(level) + MsivRuntimeCheck.run(level) + CondenserRuntimeCheck.run(level) + CoolingRuntimeCheck.run(level) + CondensateTankRuntimeCheck.run(level);
             helper.assertTrue(failures == 0,
                     "Turbine assembly checks: " + failures + " failure(s); see server log");
             helper.succeed();
-        } finally {
-            owned.forEach(c -> level.setChunkForced(c.x, c.z, false));
-        }
+        });
     }
 
     public static int run(ServerLevel level) {

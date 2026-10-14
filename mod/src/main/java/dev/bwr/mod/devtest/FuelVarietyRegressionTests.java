@@ -94,6 +94,11 @@ public final class FuelVarietyRegressionTests {
     }
     @GameTest(template="empty",timeoutTicks=200)
     public static void largeTritiumHarvestPreservesOverflow(GameTestHelper h) {
+        var pos=h.absolutePos(new BlockPos(1,1,1));
+        EntityLookupProbe.runWhenLive(h,new net.minecraft.world.phys.AABB(pos).inflate(4),
+                ()->checkLargeTritiumHarvestPreservesOverflow(h));
+    }
+    private static void checkLargeTritiumHarvestPreservesOverflow(GameTestHelper h) {
         var player=net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(h.getLevel());
         var oldMode=player.gameMode.getGameModeForPlayer();var oldPos=player.position();
         var pos=h.absolutePos(new BlockPos(1,1,1));

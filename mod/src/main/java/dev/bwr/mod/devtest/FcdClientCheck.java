@@ -18,29 +18,36 @@ import dev.bwr.mod.registry.BwrBlocks;
 import dev.bwr.mod.rods.ControlRodDriveBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.client.CameraType;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.WorldDataConfiguration;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Real-client check of the full core display and the rod select matrix against a real formed 185-rod core: frame
@@ -51,6 +58,9 @@ import java.util.List;
  * panel wall with the displays bound to the reactor through the same binding path the linker uses, and measures mean
  * frame time over eight seconds from a fixed camera. {@code PANEL PERFORMANCE}-style lines are logged as
  * {@code FCD PERFORMANCE}; screenshots go to {@code fcd-check/<stage>.png} in the run directory.
+ * Timing starts only after construction, client snapshots, overview section compilation and the requested camera
+ * are ready. {@code -PbwrFcdReadinessProbe} holds a real refuelling menu on the first display stage for twelve seconds
+ * to prove the old eleven-second deadline cannot capture it or count its frames as benchmark samples.
  *
  * <p>{@code -PbwrPanelImmediate} draws every vertex per frame, {@code -PbwrFcdLegendsPerFrame} keeps the block's solid
  * vertex buffer but lays the legends out every frame (what the panel cache did before it could hold text), and
@@ -98,6 +108,16 @@ public final class FcdClientCheck {
     private static volatile Throwable failure;
     private static volatile boolean scrammed;
     private static long scramAt;
+    /** Published only after the server finishes construction and sends the final teleport. */
+    private record View(BlockPos wall, int cols, int rows, Vec3 feet, Vec3 overviewFeet) { }
+    private static volatile View builtView, probeView;
+    private static boolean warmed, sceneReady;
+    private static int readyFrames;
+    private static long requestedAt, probeOpenedAt;
+    private static String waitingFor = "server fixture";
+    /** Server-thread ownership: only this stage's previously unforced chunks are released. */
+    private static final Set<ChunkPos> ownedChunks = new LinkedHashSet<>();
+    private static ServerLevel fixtureLevel;
     /** Cache counters when the measured window began: nothing may be rebuilt while the picture is static. */
     private static int rebuildsAtWindow = -1, legendsAtWindow = -1;
 
@@ -129,6 +149,7 @@ public final class FcdClientCheck {
         if (!Boolean.getBoolean("bwr.fcdClientCheck")) return;
         Minecraft mc = Minecraft.getInstance();
         if (failure != null) throw new IllegalStateException("FCD check build failed", failure);
+        if (stage == STAGES.size()) return;
         if (++age > 600 + 1100 * STAGES.size()) throw new IllegalStateException("FCD check timed out at " + stage);
         if (!started && mc.screen != null && mc.getOverlay() == null) {
             started = true;
@@ -153,16 +174,25 @@ public final class FcdClientCheck {
             rebuildsAtWindow = -1;
             legendsAtWindow = -1;
             FRAME_MS.clear();
-            began = System.nanoTime();
+            began = 0;
+            requestedAt = System.nanoTime();
+            builtView = probeView = null;
+            readyFrames = 0;
+            warmed = sceneReady = false;
+            probeOpenedAt = 0;
+            waitingFor = "server fixture";
             int offset = offset(stage);
             var server = mc.getSingleplayerServer();
             var uuid = mc.player.getUUID();
             server.execute(() -> {
                 try {
                     var player = server.getPlayerList().getPlayer(uuid);
+                    if (player == null) throw new AssertionError("FCD check player missing");
+                    player.closeContainer();
                     var level = player.serverLevel();
                     // the reactor stands south of the wall, the wall faces north toward the camera
                     BlockPos min = new BlockPos(20 + offset, 120, 70 + offset);
+                    holdFixture(level, min);
                     for (BlockPos pos : BlockPos.betweenClosed(new BlockPos(min.getX() - 30, 117, min.getZ() - 60),
                             new BlockPos(min.getX() + 30, 117, min.getZ() + 20))) {
                         level.setBlock(pos, Blocks.SMOOTH_STONE.defaultBlockState(), 2);
@@ -174,13 +204,97 @@ public final class FcdClientCheck {
                     player.onUpdateAbilities();
                     level.setDayTime(6000);
                     int rows = rows(current);
-                    double cameraY = wall.getY() - rows / 2.0 + 0.5 - 1.62 + current.focusY();
-                    player.connection.teleport(centreX + current.focusX(), cameraY, wall.getZ() - current.distance(), 0, 0);
+                    double cameraY = wall.getY() - rows / 2.0 + 0.5 - player.getEyeHeight() + current.focusY();
+                    int cols = current.name().equals("nameplates") ? 4
+                            : 8 * ((current.columbia() ? 1 : 0) + (current.browns() ? 1 : 0) + (current.matrix() ? 1 : 0));
+                    View view = new View(wall, cols, rows,
+                            new Vec3(centreX + current.focusX(), cameraY, wall.getZ() - current.distance()),
+                            new Vec3(centreX, cameraY - current.focusY(), wall.getZ() - Math.max(9, current.distance())));
+                    if (stage == 0 && Boolean.getBoolean("bwr.fcdReadinessProbe")) {
+                        // Reproduce the reported stale menu/side-on view, without editing a GUI class or blocking a tick.
+                        var reactor = (ReactorControllerBlockEntity) level.getBlockEntity(min.offset(-1, 3, 7));
+                        if (reactor == null) throw new AssertionError("Readiness probe needs a display stage first");
+                        String refused = reactor.setVesselState(dev.bwr.mod.reactor.VesselState.REFUELING);
+                        if (refused != null) throw new AssertionError("Readiness probe refuelling refused: " + refused);
+                        player.connection.teleport(min.getX() - 3, min.getY() + 3, min.getZ() + 7, -90, 0);
+                        dev.bwr.mod.gui.RefuellingMenu.open(player, reactor);
+                        probeView = view;
+                    } else {
+                        player.connection.teleport(view.overviewFeet.x, view.overviewFeet.y, view.overviewFeet.z, 0, 0);
+                        builtView = view;
+                    }
                 } catch (Throwable t) {
+                    try { releaseFixture(); }
+                    catch (Throwable cleanup) { t.addSuppressed(cleanup); }
                     failure = t;
                 }
             });
             mc.options.hideGui = true;
+        }
+        if (probeView != null) {
+            if (!(mc.player.containerMenu instanceof dev.bwr.mod.gui.RefuellingMenu) || mc.screen == null) return;
+            if (probeOpenedAt == 0) probeOpenedAt = System.nanoTime();
+            // Hold the actual stale screen past the old unconditional eleven-second screenshot deadline.
+            if (System.nanoTime() - probeOpenedAt < 12_000_000_000L) return;
+            if (began != 0 || !FRAME_MS.isEmpty()) throw new AssertionError("FCD sampled frames before view readiness");
+            saveScreenshot(mc, "readiness-probe-before");
+            LogUtils.getLogger().info("FCD READINESS PROBE rejected stale screen={} camera={} afterMs={} samples={}",
+                    mc.screen.getClass().getSimpleName(), mc.gameRenderer.getMainCamera().getPosition(),
+                    (System.nanoTime() - requestedAt) / 1_000_000, FRAME_MS.size());
+            View view = probeView;
+            probeView = null;
+            mc.player.closeContainer();
+            var server = mc.getSingleplayerServer();
+            var uuid = mc.player.getUUID();
+            server.execute(() -> {
+                try {
+                    var player = server.getPlayerList().getPlayer(uuid);
+                    if (player == null) throw new AssertionError("FCD probe player missing");
+                    player.closeContainer();
+                    player.connection.teleport(view.overviewFeet.x, view.overviewFeet.y, view.overviewFeet.z, 0, 0);
+                    builtView = view;
+                } catch (Throwable t) {
+                    failure = t;
+                }
+            });
+        }
+        View view = builtView;
+        if (view == null) return;
+        if (mc.getOverlay() != null) return;
+        String sceneProblem = sceneProblem(mc, view);
+        sceneReady = sceneProblem == null;
+        if (!warmed && sceneReady) {
+            // Close-up frusta can exclude a display's top/anchor section. Compile the whole wall
+            // from an overview first, then hold the requested camera; never photograph the warm-up.
+            warmed = true;
+            LogUtils.getLogger().info("FCD READINESS stage={} overview sections and snapshots complete", current.name());
+        }
+        if (!sceneReady) waitingFor = sceneProblem;
+        Vec3 feet = warmed ? view.feet : view.overviewFeet;
+        if (mc.player.containerMenu != mc.player.inventoryMenu) mc.player.closeContainer();
+        if (mc.screen != null) mc.setScreen(null);
+        KeyMapping.releaseAll();
+        mc.options.setCameraType(CameraType.FIRST_PERSON);
+        mc.setCameraEntity(mc.player);
+        mc.player.getAbilities().flying = true;
+        mc.player.setNoGravity(true);
+        mc.player.setDeltaMovement(Vec3.ZERO);
+        mc.player.setPos(feet.x, feet.y, feet.z);
+        mc.player.xo = feet.x;
+        mc.player.yo = feet.y;
+        mc.player.zo = feet.z;
+        mc.player.setYRot(0);
+        mc.player.setXRot(0);
+        mc.player.yRotO = mc.player.xRotO = 0;
+        mc.options.hideGui = true;
+        mc.getToasts().clear();
+        if (began == 0) {
+            if (age % 100 == 0) {
+                LogUtils.getLogger().info("FCD READINESS stage={} waiting for {}", current.name(), waitingFor);
+                var server = mc.getSingleplayerServer();
+                server.execute(() -> diagnose(server.overworld(), view, current.name()));
+            }
+            return;
         }
         long elapsed = System.nanoTime() - began;
         if (current.scram()) {
@@ -199,9 +313,14 @@ public final class FcdClientCheck {
                 });
                 return;
             }
-            if (System.nanoTime() - scramAt < 900_000_000L) return;
-        } else if (elapsed < 11_000_000_000L) {
-            return;
+        }
+    }
+
+    /** Called only after rendering a verified world frame, never from a client tick with an old framebuffer. */
+    private static void capture(Minecraft mc, Stage current) {
+        String problem = readinessProblem(mc, builtView);
+        if (problem != null || readyFrames < 20 || began == 0) {
+            throw new AssertionError("FCD capture attempted before readiness: " + problem);
         }
         if (!current.scram() && FRAME_MS.size() < 100) throw new AssertionError("Too few frames for the FCD benchmark: " + FRAME_MS.size());
         boolean displays = current.columbia() || current.browns() || current.matrix();
@@ -237,16 +356,12 @@ public final class FcdClientCheck {
         LogUtils.getLogger().info("FCD PERFORMANCE stage={} gpu cache: {} blocks hold {} quads and {} legend vertices; {} buffers built so far in {} ms, {} legend captures",
                 current.name(), PanelRenderer.debugCachedBlocks(), PanelRenderer.debugCachedQuads(), PanelRenderer.debugCachedLegendVertices(),
                 PanelRenderer.debugRebuilds(), PanelRenderer.debugRebuildMillis(), PanelRenderer.debugLegendRebuilds());
-        try {
-            var directory = mc.gameDirectory.toPath().resolve("fcd-check");
-            Files.createDirectories(directory);
-            try (var shot = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
-                shot.writeToFile(directory.resolve(current.name() + ".png"));
-            }
-        } catch (IOException ex) {
-            throw new IllegalStateException("FCD check screenshot failed", ex);
-        }
+        saveScreenshot(mc, current.name());
+        LogUtils.getLogger().info("FCD CAPTURE VERIFIED stage={} screen=none camera={} yaw={} pitch={} readyFrames={} panels={}",
+                current.name(), mc.gameRenderer.getMainCamera().getPosition(), mc.gameRenderer.getMainCamera().getYRot(),
+                mc.gameRenderer.getMainCamera().getXRot(), readyFrames, builtView.cols * builtView.rows);
         requested = false;
+        mc.getSingleplayerServer().execute(FcdClientCheck::releaseFixture);
         if (++stage == STAGES.size()) {
             LogUtils.getLogger().info("FCD PERFORMANCE COMPLETE");
             mc.stop();
@@ -256,7 +371,23 @@ public final class FcdClientCheck {
     @SubscribeEvent
     public static void frame(RenderFrameEvent.Post ignored) {
         if (!Boolean.getBoolean("bwr.fcdClientCheck") || !requested) return;
+        Minecraft mc = Minecraft.getInstance();
+        String problem = readinessProblem(mc, builtView);
+        if (problem != null) {
+            waitingFor = problem;
+            readyFrames = 0;
+            began = lastFrame = 0;
+            rebuildsAtWindow = legendsAtWindow = -1;
+            FRAME_MS.clear();
+            return;
+        }
         long now = System.nanoTime();
+        if (++readyFrames < 20) return;
+        if (began == 0) {
+            began = now;
+            LogUtils.getLogger().info("FCD READINESS stage={} ready afterMs={} panels={} camera={}", STAGES.get(stage).name(),
+                    (now - requestedAt) / 1_000_000, builtView.cols * builtView.rows, mc.gameRenderer.getMainCamera().getPosition());
+        }
         if (now - began > 3_000_000_000L && lastFrame != 0 && !STAGES.get(stage).scram()) {
             if (rebuildsAtWindow < 0) {
                 rebuildsAtWindow = PanelRenderer.debugRebuilds();
@@ -266,6 +397,101 @@ public final class FcdClientCheck {
             if (delta > 0 && delta < 500) FRAME_MS.add(delta);
         }
         lastFrame = now;
+        Stage current = STAGES.get(stage);
+        if (current.scram() ? scrammed && now - scramAt >= 900_000_000L : now - began >= 11_000_000_000L) capture(mc, current);
+    }
+
+    private static String readinessProblem(Minecraft mc, View view) {
+        if (view == null) return "server fixture and teleport";
+        if (mc.player == null || mc.level == null) return "client level";
+        if (!warmed || !sceneReady) return waitingFor;
+        if (mc.screen != null || mc.getOverlay() != null || mc.player.containerMenu != mc.player.inventoryMenu) return "world screen";
+        var camera = mc.gameRenderer.getMainCamera();
+        if (!camera.isInitialized() || mc.getCameraEntity() != mc.player || !mc.options.getCameraType().isFirstPerson()
+                || camera.getPosition().distanceToSqr(view.feet.add(0, mc.player.getEyeHeight(), 0)) > 1e-4
+                || Math.abs(camera.getYRot()) > .01 || Math.abs(camera.getXRot()) > .01) return "rendered camera pose";
+        return null;
+    }
+
+    private static String sceneProblem(Minecraft mc, View view) {
+        int components = 0;
+        for (int row = 0; row < view.rows; row++) for (int col = 0; col < view.cols; col++) {
+            BlockPos pos = view.wall.relative(Direction.WEST, col).below(row);
+            if (!(mc.level.getBlockEntity(pos) instanceof PanelBlockEntity panel)
+                    || panel.getBlockState().getValue(PanelBlock.FACING) != Direction.NORTH) return "panel block " + pos;
+            if (!mc.levelRenderer.isSectionCompiled(pos)) return "panel section " + pos;
+            for (PanelComponent component : panel.owned()) {
+                if (component.data() instanceof CoreDisplayData data
+                        && (!data.snapshot().formed() || data.snapshot().cells().rodCount() != 185)) {
+                    return "display snapshot " + pos + " type=" + component.type().id() + " formed="
+                            + data.snapshot().formed() + " rods=" + data.snapshot().rodCount() + " input=" + component.input(0);
+                }
+                components++;
+            }
+        }
+        int expected = STAGES.get(stage).name().equals("nameplates") ? 4 : view.cols / 8;
+        if (components != expected) return "display components " + components + "/" + expected;
+        return null;
+    }
+
+    private static void holdFixture(ServerLevel level, BlockPos min) {
+        releaseFixture();
+        fixtureLevel = level;
+        // Includes the existing floor, entire reactor/drive field, wall and both photographic positions.
+        for (int x = (min.getX() - 30) >> 4; x <= (min.getX() + 30) >> 4; x++) {
+            for (int z = (min.getZ() - 60) >> 4; z <= (min.getZ() + 20) >> 4; z++) {
+                ChunkPos chunk = new ChunkPos(x, z);
+                if (!level.getForcedChunks().contains(chunk.toLong())) {
+                    ownedChunks.add(chunk);
+                    level.setChunkForced(x, z, true);
+                }
+                level.getChunk(x, z);
+            }
+        }
+        LogUtils.getLogger().info("FCD FIXTURE holding {} owned chunks before construction at {}", ownedChunks.size(), min);
+    }
+
+    private static void releaseFixture() {
+        if (fixtureLevel == null) return;
+        for (ChunkPos chunk : List.copyOf(ownedChunks)) {
+            fixtureLevel.setChunkForced(chunk.x, chunk.z, false);
+            ownedChunks.remove(chunk);
+        }
+        fixtureLevel = null;
+    }
+
+    @SubscribeEvent
+    public static void stopping(ServerStoppingEvent ignored) {
+        if (Boolean.getBoolean("bwr.fcdClientCheck")) releaseFixture();
+    }
+
+    private static void diagnose(ServerLevel level, View view, String name) {
+        if (!(level.getBlockEntity(view.wall) instanceof PanelBlockEntity panel)) {
+            LogUtils.getLogger().info("FCD READINESS SERVER stage={} panel missing at {}", name, view.wall);
+            return;
+        }
+        for (PanelComponent component : panel.owned()) {
+            if (!(component.data() instanceof CoreDisplayData data)) continue;
+            var source = component.source(0);
+            var reactor = CoreDisplayData.boundReactor(level, component);
+            LogUtils.getLogger().info("FCD READINESS SERVER stage={} panel={} removed={} tracked={} live={} type={} input={} snapshotFormed={} rods={} source={} reactor={} status={}",
+                    name, view.wall, panel.isRemoved(), dev.bwr.mod.panel.wiring.PanelSampler.isTracked(panel), panel.hasLiveInputs(),
+                    component.type().id(), component.input(0), data.snapshot().formed(), data.snapshot().rodCount(),
+                    source instanceof PlantSource plant ? plant.device() : source.kind(),
+                    reactor == null ? "unavailable" : reactor.getBlockPos(), reactor == null ? "unavailable" : reactor.statusLines());
+        }
+    }
+
+    private static void saveScreenshot(Minecraft mc, String name) {
+        try {
+            var directory = mc.gameDirectory.toPath().resolve("fcd-check");
+            Files.createDirectories(directory);
+            try (var shot = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
+                shot.writeToFile(directory.resolve(name + ".png"));
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException("FCD check screenshot failed", ex);
+        }
     }
 
     /**
