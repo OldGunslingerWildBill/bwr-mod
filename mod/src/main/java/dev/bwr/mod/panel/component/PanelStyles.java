@@ -1,5 +1,6 @@
 package dev.bwr.mod.panel.component;
 
+import dev.bwr.mod.panel.model.FcdModels;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 
@@ -41,6 +42,8 @@ public final class PanelStyles {
     public static final String CLASSIC = "classic";
     public static final String GE = "ge";
     public static final String WESTINGHOUSE = "westinghouse";
+    /** 30.5 mm oiltight selectors (the SRV switches of the Columbia benchboard): a black knob or a chrome wing lever. */
+    public static final String OILTIGHT = "oiltight";
 
     /** NBT keys of the two config fields. */
     public static final String KEY_STYLE = "Style";
@@ -128,6 +131,8 @@ public final class PanelStyles {
             row("rotary_selector", WESTINGHOUSE, "oval", true, "w2_oval"),
             row("rotary_selector", WESTINGHOUSE, "round_notched", false, "w2_round_notched", "w2_notched"),
             row("rotary_selector", WESTINGHOUSE, "mini_slim", false, "w2_mini_slim", "w2_mini_slimline", "w2_mini"),
+            row("rotary_selector", OILTIGHT, "knob", true, FcdModels.SELECTOR_KNOB),
+            row("rotary_selector", OILTIGHT, "lever", false, FcdModels.SELECTOR_LEVER),
             // key switch
             row("key_switch", GE, "key", true, "ge_sb_keyed").keyed(GE_KEY),
             row("key_switch", WESTINGHOUSE, "key", true, "w2_key").keyed(W2_KEY),
@@ -138,10 +143,13 @@ public final class PanelStyles {
             row("pushbutton", GE, "mushroom", false, "pb_mushroom"),
             row("pushbutton", GE, "guarded", false, "pb_guarded"),
             row("pushbutton", GE, "illuminated", false, "pb_illuminated"),
+            row("pushbutton", GE, "guarded_yellow", false, FcdModels.GUARDED_YELLOW),
             row("lamp", GE, "round", true, "light_round"),
             row("lamp", GE, "round_plate", false, "light_round_plate"),
             row("lamp", GE, "et16", false, "light_et16"),
             row("lamp", GE, "square", false, "light_square"),
+            row("lamp", GE, "dome_smooth", false, FcdModels.DOME_SMOOTH),
+            row("lamp", GE, "dome_ribbed", false, FcdModels.DOME_RIBBED),
             row("setpoint_knob", GE, "fluted", true, "knob_fluted"),
             // switchboard meters: standard pointer, or the Day-glo red one (its own model, else the standard
             // model with the pointer recoloured)
