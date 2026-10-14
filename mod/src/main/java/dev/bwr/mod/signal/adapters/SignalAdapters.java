@@ -28,6 +28,8 @@ public final class SignalAdapters {
     private SignalAdapters() {}
 
     public static void registerAll() {
+        SignalProviders.register(dev.bwr.mod.grid.GridTieBlockEntity.class, GridSignals.TIE::bind);
+        SignalProviders.register(dev.bwr.mod.grid.FeMeterBlockEntity.class, GridSignals.METER::bind);
         SignalProviders.register(ReactorControllerBlockEntity.class, ReactorSignals.SCHEMA::bind);
         SignalProviders.register(MainSteamIsolationValveBlockEntity.class, SteamSignals.MSIV::bind);
         SignalProviders.register(SafetyReliefValveBlockEntity.class, SteamSignals.SRV::bind);

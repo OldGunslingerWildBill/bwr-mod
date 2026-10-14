@@ -55,6 +55,24 @@ public final class PanelLinkerItem extends Item {
         Player player = context.getPlayer();
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
+        if(player!=null&&!player.isShiftKeyDown()&&level.getBlockEntity(pos) instanceof dev.bwr.mod.grid.GridTieBlockEntity tie){
+            if(level.isClientSide())return InteractionResult.SUCCESS;
+            if(!(player instanceof ServerPlayer sender))return InteractionResult.PASS;
+            GlobalPos selected=linked(context.getItemInHand());boolean success=false;String action="refused";
+            if(player.getAbilities().mayBuild&&dev.bwr.mod.world.AssemblyAccess.permitted(level,player,pos)
+                    &&selected!=null&&selected.dimension().equals(level.dimension())&&level.isLoaded(selected.pos())
+                    &&selected.pos().distSqr(pos)<=(double)PanelConfig.linkRange()*PanelConfig.linkRange()
+                    &&dev.bwr.mod.world.AssemblyAccess.permitted(level,player,selected.pos())){
+                var device=dev.bwr.mod.signal.DeviceResolver.resolve(level,selected.pos());
+                if(device instanceof dev.bwr.mod.power.PowerModuleBlockEntity gen&&gen.block().generator()){
+                    success=tie.bindGenerator(gen.getBlockPos());if(success)action="generator";
+                }else if(device instanceof dev.bwr.mod.grid.FeMeterBlockEntity meter){
+                    success=tie.toggleMeter(meter);if(success)action="meter";
+                }
+            }
+            sender.displayClientMessage(Component.translatable("message.bwr.grid_linker."+action),true);
+            return InteractionResult.CONSUME;
+        }
         if (player == null || !player.isShiftKeyDown() || level.getBlockState(pos).getBlock() instanceof PanelBlock) {
             return InteractionResult.PASS;
         }

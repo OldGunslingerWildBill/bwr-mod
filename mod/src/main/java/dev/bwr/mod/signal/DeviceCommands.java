@@ -30,6 +30,36 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class DeviceCommands {
     private DeviceCommands() {}
 
+    /** Phase M commands: shared by panels and CC, including finite pulse validation. */
+    public static boolean grid(dev.bwr.mod.grid.GridTieBlockEntity be,String key,double value){
+        if(!be.live()||!Double.isFinite(value))return false;
+        if(key.equals("close_breaker"))return value>=0&&value<=1&&(value<.5||be.closeBreaker());
+        if(key.equals("trip_breaker")){if(value<0||value>1)return false;if(value>=.5)be.tripBreaker();return true;}
+        if(key.equals("reset_curve")){if(value<0||value>1)return false;if(value>=.5)be.resetCurve();return true;}
+        var d=be.settings();
+        try {
+            return be.configure(switch(key){
+                case "demand_mode" -> value==Math.rint(value)?new dev.bwr.core.grid.GridDemand((int)value,d.fixedMW(),d.remoteMW(),d.minimumMW(),d.maximumMW(),d.periodTicks()):null;
+                case "fixed_mw" -> new dev.bwr.core.grid.GridDemand(d.mode(),value,d.remoteMW(),d.minimumMW(),d.maximumMW(),d.periodTicks());
+                case "remote_mw" -> new dev.bwr.core.grid.GridDemand(d.mode(),d.fixedMW(),value,d.minimumMW(),d.maximumMW(),d.periodTicks());
+                case "curve_min_mw" -> new dev.bwr.core.grid.GridDemand(d.mode(),d.fixedMW(),d.remoteMW(),value,d.maximumMW(),d.periodTicks());
+                case "curve_max_mw" -> new dev.bwr.core.grid.GridDemand(d.mode(),d.fixedMW(),d.remoteMW(),d.minimumMW(),value,d.periodTicks());
+                case "curve_period_ticks" -> value==Math.rint(value)?new dev.bwr.core.grid.GridDemand(d.mode(),d.fixedMW(),d.remoteMW(),d.minimumMW(),d.maximumMW(),(long)value):null;
+                default -> null;
+            });
+        } catch(IllegalArgumentException e){return false;}
+    }
+    public static boolean gridCurve(dev.bwr.mod.grid.GridTieBlockEntity be,double min,double max,long period){
+        if(!be.live())return false;var d=be.settings();
+        try{return be.configure(new dev.bwr.core.grid.GridDemand(d.mode(),d.fixedMW(),d.remoteMW(),min,max,period));}catch(IllegalArgumentException e){return false;}
+    }
+    public static boolean meter(dev.bwr.mod.grid.FeMeterBlockEntity be,String key,double value){
+        if(!be.live()||!Double.isFinite(value)||value!=Math.rint(value))return false;
+        if(key.equals("direction"))return value>=0&&value<6&&be.direction(net.minecraft.core.Direction.from3DDataValue((int)value));
+        return key.equals("display_units")&&value>=0&&value<=1&&be.units(value==0?"MW":"FE/t");
+    }
+    public static boolean meterLabel(dev.bwr.mod.grid.FeMeterBlockEntity be,String label){return be.live()&&be.label(label);}
+
     // --- Reactor ---------------------------------------------------------------------------------
 
     /** Bare scram through the rod-drive network when it exists, otherwise the core. False if not formed. */

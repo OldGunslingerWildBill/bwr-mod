@@ -38,6 +38,7 @@ public final class LivePeripheral implements IDynamicPeripheral {
             else if(types[i]==boolean.class)converted[i]=args.getBoolean(i);
             else if(types[i]==String.class)converted[i]=args.getString(i);
             else if(types[i]==String[].class)converted[i]=tableStrings(args.getTableUnsafe(i));
+            else if(types[i]==Map.class&&method.getDeclaringClass()==GridTiePeripheral.class&&method.getName().equals("setMeters"))converted[i]=meterPositions(args.getTableUnsafe(i));
             else throw new LuaException("Unsupported machine method argument");
         }
         // Resolve after scheduling, not while still on the computer thread.
@@ -52,6 +53,23 @@ public final class LivePeripheral implements IDynamicPeripheral {
         return values;
     }
     private static final int MAX_TABLE_STRINGS=256;
+    /** Copy bounded coordinate values before scheduling; never retain a live Lua table. */
+    private static Map<Integer,Map<String,Double>> meterPositions(LuaTable<?,?> table)throws LuaException {
+        int count=table.length();if(count>32||table.size()!=count)throw new LuaException("Expected an array of at most 32 meter positions");
+        var result=new LinkedHashMap<Integer,Map<String,Double>>();
+        for(int i=1;i<=count;i++){
+            Object row=table.get((double)i);if(row==null)row=table.get(i);
+            if(!(row instanceof Map<?,?> values)||values.size()!=3)throw new LuaException("Expected x, y, z coordinates");
+            var point=new LinkedHashMap<String,Double>();String[] names={"x","y","z"};
+            for(int j=0;j<3;j++){
+                Object value=values.get(names[j]);if(value==null)value=values.get((double)(j+1));if(value==null)value=values.get(j+1);
+                if(!(value instanceof Number n)||!Double.isFinite(n.doubleValue())||n.doubleValue()!=Math.rint(n.doubleValue())||n.doubleValue()<Integer.MIN_VALUE||n.doubleValue()>Integer.MAX_VALUE)
+                    throw new LuaException("Meter coordinates must be finite integers");
+                point.put(names[j],n.doubleValue());
+            }
+            result.put(i,Map.copyOf(point));
+        }return Map.copyOf(result);
+    }
     /** Panels need to know which computers are attached, to raise their input events. */
     @Override public void attach(IComputerAccess computer){
         if(PanelPeripheral.TYPE.equals(type))PanelPeripheral.attached(level,anchor,computer);

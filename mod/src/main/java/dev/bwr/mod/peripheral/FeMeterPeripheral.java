@@ -13,13 +13,9 @@ public final class FeMeterPeripheral implements IPeripheral {
     public String getType(){return "bwr_fe_meter";}
     public boolean equals(IPeripheral other){return other instanceof FeMeterPeripheral p&&p.meter==meter;}
     @LuaFunction(mainThread=true) public Map<String,Object> getStatus(){
-        var m=new LinkedHashMap<String,Object>();var e=meter.ledger();
-        m.put("label",meter.label());m.put("displayUnits",meter.units());m.put("direction",meter.direction().getName());
-        m.put("mwNow",EnergyUnits.mw(e.lastTickFE()));m.put("mw1s",EnergyUnits.mw(e.averageFE(20)));m.put("mw1min",EnergyUnits.mw(e.averageFE(1200)));
-        m.put("fePerTickNow",e.lastTickFE());m.put("fePerTick1s",e.averageFE(20));m.put("fePerTick1min",e.averageFE(1200));m.put("mwh",EnergyUnits.mwh(e.totalFE()));
-        m.put("sampleTicks",e.sampleTicks());m.put("windowReady1s",e.sampleTicks()>=20);m.put("windowReady1min",e.sampleTicks()>=1200);m.put("counterSaturated",e.saturated());return m;
+        return dev.bwr.mod.grid.GridTelemetry.meter(meter);
     }
-    @LuaFunction(mainThread=true) public boolean setLabel(String s){return meter.label(s);}
-    @LuaFunction(mainThread=true) public boolean setDisplayUnits(String s){return meter.units(s);}
-    @LuaFunction(mainThread=true) public boolean setDirection(String s){return meter.direction(Direction.byName(s));}
+    @LuaFunction(mainThread=true) public boolean setLabel(String s){return dev.bwr.mod.signal.DeviceCommands.meterLabel(meter,s);}
+    @LuaFunction(mainThread=true) public boolean setDisplayUnits(String s){return dev.bwr.mod.signal.DeviceCommands.meter(meter,"display_units","MW".equals(s)?0:"FE/t".equals(s)?1:-1);}
+    @LuaFunction(mainThread=true) public boolean setDirection(String s){var d=Direction.byName(s);return d!=null&&dev.bwr.mod.signal.DeviceCommands.meter(meter,"direction",d.get3DDataValue());}
 }

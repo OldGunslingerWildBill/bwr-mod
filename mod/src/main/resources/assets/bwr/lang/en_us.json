@@ -803,5 +803,8 @@
   "component.bwr.field.stripe_show": "Show stripe (left edge)",
   "component.bwr.field.stripe_color": "Stripe colour",
   "block.bwr.grid_tie": "Grid Tie",
-  "block.bwr.fe_meter": "FE Meter"
+  "block.bwr.fe_meter": "FE Meter",
+  "message.bwr.grid_linker.refused": "Grid link refused: select a loaded generator or meter in range; open the tie before rebinding its generator.",
+  "message.bwr.grid_linker.generator": "Generator bound to this grid tie.",
+  "message.bwr.grid_linker.meter": "Meter selection toggled for this grid tie."
 }

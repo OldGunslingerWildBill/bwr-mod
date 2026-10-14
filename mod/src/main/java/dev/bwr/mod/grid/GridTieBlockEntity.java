@@ -12,6 +12,7 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 public final class GridTieBlockEntity extends GridDevice {
     private GridDemand settings=new GridDemand(0,0,0,1050,1500,24000);
     private DeviceReference generator;
+    private final java.util.List<DeviceReference> meters=new java.util.ArrayList<>();
     private final DemandBudget budget=new DemandBudget();
     private long tick=Long.MIN_VALUE,curvePhase;
     private boolean closed,hasClose,lastCloseFault;
@@ -25,6 +26,28 @@ public final class GridTieBlockEntity extends GridDevice {
                 &&g.block().generator()&&g.block().complete(level,g.getBlockPos(),g.getBlockState())?g:null;
     }
     public DeviceReference binding(){return generator;}
+    public java.util.List<DeviceReference> meters(){return java.util.List.copyOf(meters);}
+    public FeMeterBlockEntity meter(DeviceReference ref){return ref.resolve(level) instanceof FeMeterBlockEntity m&&m.live()&&m.deviceId().equals(ref.id())?m:null;}
+    public boolean setMeters(java.util.List<BlockPos> positions){
+        if(!live()||positions==null||positions.size()>32)return false;
+        var next=new java.util.ArrayList<DeviceReference>();var ids=new java.util.HashSet<java.util.UUID>();
+        for(var pos:positions){
+            if(pos==null||!level.isLoaded(pos)||!(level.getBlockEntity(pos) instanceof FeMeterBlockEntity m)||!m.live()||!ids.add(m.deviceId()))return false;
+            next.add(new DeviceReference(level.dimension().location().toString(),pos,m.deviceId()));
+        }
+        meters.clear();meters.addAll(next);setChanged();return true;
+    }
+    public boolean toggleMeter(FeMeterBlockEntity meter){
+        if(!live()||meter==null||!meter.live()||meter.getLevel()!=level)return false;
+        if(meters.removeIf(r->r.id().equals(meter.deviceId()))){setChanged();return true;}
+        if(meters.size()>=32)return false;meters.add(new DeviceReference(level.dimension().location().toString(),meter.getBlockPos(),meter.deviceId()));setChanged();return true;
+    }
+    public boolean sampleValid(GridDevice d){return d!=null&&d.live()&&d.ledger().sampleTicks()>=20&&d.ledger().completedTick()==level.getGameTime()-1;}
+    public int validMeterCount(){int n=0;for(var r:meters)if(sampleValid(meter(r)))n++;return n;}
+    public boolean aggregateValid(){var g=generator();return sampleValid(this)&&g!=null&&g.delivered().sampleTicks()>=20&&g.delivered().completedTick()==ledger.completedTick()&&validMeterCount()==meters.size();}
+    public double observedBaseMW(){if(!aggregateValid())return Double.NaN;double sum=0;for(var r:meters)sum+=EnergyUnits.mw(meter(r).ledger().averageFE(20));return sum;}
+    public double requestedTotalMW(){return observedBaseMW()+demandMW1s();}
+    public double mwError(){var g=generator();return g==null?Double.NaN:requestedTotalMW()-g.generatedMW1s();}
     public boolean closed(){return closed;}
     public boolean exportEnabled(){return closed&&generator()!=null;}
     public boolean syncValid(){return !closed&&generator()!=null;}
@@ -44,6 +67,7 @@ public final class GridTieBlockEntity extends GridDevice {
                 Math.min(max,settings.minimumMW()),Math.min(max,settings.maximumMW()),settings.periodTicks());
     }
     public boolean configure(GridDemand next){
+        if(next==null)return false;
         double max=GridConfig.maximumMW();
         if(next.fixedMW()>max||next.remoteMW()>max||next.minimumMW()>max||next.maximumMW()>max)return false;
         if(live())tickDevice();settings=next;setChanged();return true;
@@ -68,6 +92,7 @@ public final class GridTieBlockEntity extends GridDevice {
         if(!live())return;long now=level.getGameTime();if(now==tick)return;
         if(tick!=Long.MIN_VALUE){
             requested[requestCursor]=demand;requestCursor=(requestCursor+1)%20;
+            for(long n=1;n<Math.min(now>tick?now-tick:1,21);n++){requested[requestCursor]=0;requestCursor=(requestCursor+1)%20;}
             curvePhase=(curvePhase+1)%settings.periodTicks();
             var g=generator();if(!closed&&g!=null)phase=Synchronizer.advance(phase,g.rpm,.05);
         }
@@ -92,6 +117,7 @@ public final class GridTieBlockEntity extends GridDevice {
     };
     @Override protected void saveAdditional(CompoundTag t,HolderLookup.Provider r){
         super.saveAdditional(t,r);t.putBoolean("Closed",closed);if(generator!=null)t.put("Generator",generator.save());
+        var list=new net.minecraft.nbt.ListTag();for(var meter:meters)list.add(meter.save());t.put("Meters",list);
         t.putInt("Mode",settings.mode());t.putDouble("FixedMW",settings.fixedMW());t.putDouble("RemoteMW",settings.remoteMW());
         t.putDouble("MinMW",settings.minimumMW());t.putDouble("MaxMW",settings.maximumMW());t.putLong("Period",settings.periodTicks());
         t.putLong("CurvePhase",curvePhase);t.putDouble("Carry",budget.carry());t.putDouble("Phase",phase);
@@ -99,6 +125,8 @@ public final class GridTieBlockEntity extends GridDevice {
     }
     @Override protected void loadAdditional(CompoundTag t,HolderLookup.Provider r){
         super.loadAdditional(t,r);closed=t.getBoolean("Closed");generator=DeviceReference.load(t.getCompound("Generator"));
+        meters.clear();var list=t.getList("Meters",10);var ids=new java.util.HashSet<java.util.UUID>();
+        for(int i=0;i<Math.min(32,list.size());i++){var ref=DeviceReference.load(list.getCompound(i));if(ref!=null&&ids.add(ref.id()))meters.add(ref);}
         long period=Math.max(20,Math.min(1_728_000,t.contains("Period")?t.getLong("Period"):24000));
         double min=bounded(t.getDouble("MinMW"),48000),max=Math.max(min,bounded(t.getDouble("MaxMW"),48000));
         settings=new GridDemand(Math.max(0,Math.min(2,t.getInt("Mode"))),bounded(t.getDouble("FixedMW"),48000),bounded(t.getDouble("RemoteMW"),48000),min,max,period);

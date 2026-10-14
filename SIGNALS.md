@@ -514,6 +514,101 @@ the same saved machine but cannot extract from its replacement. Generated energy
 minus delivered energy equals buffer change, including fractional FE precision.
 Buffer discharge can exceed current generation; delivered MW is not rating-capped.
 
+## Grid tie
+
+Peripheral `bwr_grid_tie`. All rates use completed ticks.
+
+| Signal | CC status key | Units / kind |
+| --- | --- | --- |
+| `demand_mode` | `demandMode` | NUMBER |
+| `fixed_mw` | `fixedMW` | MW |
+| `remote_mw` | `remoteMW` | MW |
+| `demand_mw` | `demandMW` | MW |
+| `demand_mw_1s` | `demandMW1s` | MW |
+| `curve_min_mw` | `curveMinMW` | MW |
+| `curve_max_mw` | `curveMaxMW` | MW |
+| `curve_period_ticks` | `curvePeriodTicks` | ticks |
+| `curve_phase_ticks` | `curvePhaseTicks` | ticks |
+| `maximum_mw` | `maximumMW` | MW |
+| `delivered_mw_now` | `deliveredMWNow` | MW |
+| `delivered_mw_1s` | `deliveredMW1s` | MW |
+| `delivered_mw_1min` | `deliveredMW1min` | MW |
+| `delivered_mwh` | `deliveredMWh` | MWh |
+| `grid_shortfall_mw` | `gridShortfallMW` | MW |
+| `observed_base_mw` | `observedBaseMW` | MW |
+| `requested_total_mw` | `requestedTotalMW` | MW |
+| `mw_error` | `mwError` | MW |
+| `aggregate_valid` | `aggregateValid` | BOOLEAN |
+| `selected_meter_count` | `selectedMeterCount` | NUMBER |
+| `valid_meter_count` | `validMeterCount` | NUMBER |
+| `breaker_closed` | `breakerClosed` | BOOLEAN |
+| `export_enabled` | `exportEnabled` | BOOLEAN |
+| `binding_valid` | `bindingValid` | BOOLEAN |
+| `bound_generator` | `boundGenerator` | TEXT |
+| `rpm` | `rpm` | rpm |
+| `shaft_frequency_hz` | `shaftFrequencyHz` | Hz |
+| `slip_hz` | `slipHz` | Hz |
+| `phase_degrees` | `phaseDegrees` | degrees |
+| `sync_valid` | `syncValid` | BOOLEAN |
+| `within_sync_window` | `withinSyncWindow` | BOOLEAN |
+| `last_close_angle_degrees` | `lastCloseAngleDegrees` | degrees |
+| `last_close_slip_hz` | `lastCloseSlipHz` | Hz |
+| `last_close_fault` | `lastCloseFault` | BOOLEAN |
+| `status` | `status` | TEXT |
+| `sample_ticks` | `sampleTicks` | ticks |
+| `window_ready_1s` | `windowReady1s` | BOOLEAN |
+| `window_ready_1min` | `windowReady1min` | BOOLEAN |
+| `counter_saturated` | `counterSaturated` | BOOLEAN |
+
+## FE meter
+
+Peripheral `bwr_fe_meter`. All rates use completed ticks.
+
+| Signal | CC status key | Units / kind |
+| --- | --- | --- |
+| `mw_now` | `mwNow` | MW |
+| `mw_1s` | `mw1s` | MW |
+| `mw_1min` | `mw1min` | MW |
+| `fe_per_tick_now` | `fePerTickNow` | FE/t |
+| `fe_per_tick_1s` | `fePerTick1s` | FE/t |
+| `fe_per_tick_1min` | `fePerTick1min` | FE/t |
+| `mwh` | `mwh` | MWh |
+| `label` | `label` | TEXT |
+| `display_units` | `displayUnits` | TEXT |
+| `direction` | `direction` | TEXT |
+| `sample_ticks` | `sampleTicks` | ticks |
+| `window_ready_1s` | `windowReady1s` | BOOLEAN |
+| `window_ready_1min` | `windowReady1min` | BOOLEAN |
+| `counter_saturated` | `counterSaturated` | BOOLEAN |
+
+Tie numeric commands: `demand_mode` (0 fixed, 1 daily, 2 remote), `fixed_mw`,
+`remote_mw`, `curve_min_mw`, `curve_max_mw`, `curve_period_ticks` (20–1728000).
+Pulse commands: `reset_curve`, `close_breaker`, `trip_breaker`. Finite pulse values
+0–1 are accepted; values >=0.5 issue the action. Close is never gated on sync angle
+or slip. Meter commands: `direction` (0 down, 1 up, 2 north, 3 south, 4 west,
+5 east) and `display_units` (0 MW, 1 FE/t). Invalid values reject atomically.
+
+CC methods: tie `getStatus`, `setDemandMode`, `setFixedDemandMW`,
+`setRemoteDemandMW`, `setDailyCurve(min,max,periodTicks)`, `resetCurve`,
+`closeBreaker`, `tripBreaker`, `bindGenerator(x,y,z)`, `clearGenerator`,
+`setMeters({{x=...,y=...,z=...},...})`, `getMeters`. Meter `getStatus`,
+`setLabel` (<=64 characters), `setDisplayUnits("MW"|"FE/t")`,
+`setDirection("north"|"south"|"east"|"west"|"up"|"down")`.
+
+Selected readings have keys `meter.<uuid>.label`, `.valid`, `.mw_1s`, `.mwh`.
+A warming, unloaded or replaced endpoint makes numeric aggregates unavailable,
+not zero. `aggregate_valid` requires the generator, tie and all selected meters to
+have 20 completed ticks ending at the same game tick. Empty selection explicitly
+means zero observed base load. Select disjoint base feeders only; do not select
+an export meter or serial copies. MW error is observed base plus requested export
+minus generated power; it does not know unmet demand inside foreign machines.
+
+Linker gestures (also work without CC): sneak-right-click the generator, then
+right-click the open tie to bind it; sneak-right-click a meter, then right-click
+the tie to toggle its selection. Selection uses the existing configured panel
+link range, same-dimension loaded endpoints and world-edit permissions. Normal
+panel linking is unchanged. See [grid wiring](docs/grid-wiring.md) for a setup.
+
 ## Containment controller
 
 Block entity `ContainmentControllerBlockEntity`; CC peripheral `bwr_containment`.

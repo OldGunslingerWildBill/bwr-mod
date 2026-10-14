@@ -5,7 +5,7 @@ import java.util.Arrays;
 /** Completed-tick measurements. Queries never advance the clock. */
 public final class EnergyLedger {
     private final long[] buckets=new long[1200];
-    private long tick=Long.MIN_VALUE,current,total,last;
+    private long tick=Long.MIN_VALUE,current,total,last,completedTick=Long.MIN_VALUE;
     private int cursor,samples;
     private boolean saturated;
     public void beginTick(long now) {
@@ -15,6 +15,7 @@ public final class EnergyLedger {
             // Only the loaded caller advances time. Rate windows retain idle zeros.
             long gap=now>tick?now-tick:1;
             for(long n=1;n<Math.min(gap,1201);n++)publish(0);
+            completedTick=now-1;
         }
         tick=now;current=0;
     }
@@ -32,6 +33,7 @@ public final class EnergyLedger {
     public boolean saturated(){return saturated;}
     public long lastTickFE(){return last;}
     public int sampleTicks(){return samples;}
+    public long completedTick(){return completedTick;}
     public double averageFE(int ticks) {
         if(ticks<1||ticks>buckets.length)throw new IllegalArgumentException("Invalid window");
         double sum=0;
@@ -42,5 +44,5 @@ public final class EnergyLedger {
         total=Math.max(0,lifetimeFE);saturated=overflow;
         resetRates();
     }
-    public void resetRates(){Arrays.fill(buckets,0);tick=Long.MIN_VALUE;current=last=0;cursor=samples=0;}
+    public void resetRates(){Arrays.fill(buckets,0);tick=completedTick=Long.MIN_VALUE;current=last=0;cursor=samples=0;}
 }
