@@ -202,6 +202,6 @@ headless `blender --background --factory-startup`.
 
 | Track | State | Resume from |
 | --- | --- | --- |
-| models (`fcd-models`) | not started | section 6 |
+| models (`fcd-models`) | done: all 10 models exported, previews checked, face counts within budget (`art/models/panel/fcd`, `art/models/panel/oiltight`, READMEs list parts and anchors) | wire the style table and the code track's part names to the exported ids |
 | code (`fcd-code`) | done: items 1 to 9 | Nothing left. Commits: rod selection 51c48ec, indications 3d9334a, components addb852, patch 252bdcd, cache and client models 4e4038a, style table f744b4d, docs e50724d, labels (item 9, last commit). To finish at integration: merge `fcd-models`, run `:mod:runTurbineModelCheck -PbwrFcdClientCheck` once (baked models) and compare screenshots in `mod/run/turbineModelCheck/fcd-check/` with the photos |
-| integration (Claude) | not started | merge both, client screenshots against the photos |
+| integration (Claude) | in progress: both tracks merged on `fcd` | GameTests and the baked-model client check, then merge into containment-structure at an Astra stop |
