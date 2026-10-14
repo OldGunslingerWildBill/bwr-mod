@@ -25,6 +25,14 @@ final class ReactorSignals {
     private ReactorSignals() {}
 
     private static final double MAX_ROD_LABEL = PhysicalConstants.ROD_NOTCH_MAX_LABEL;
+    /** Upper bound of the rod count (a 21 x 21 interior holds 357 rods). */
+    private static final double MAX_RODS = 400;
+
+    private static boolean selectRod(ReactorControllerBlockEntity be, double value) {
+        return Double.isFinite(value) && value == Math.rint(value) && value >= 0 && value <= MAX_RODS
+                && DeviceCommands.reactorSelectRod(be, (int) value);
+    }
+
 
     /** Reads from the live core; NaN (no signal) when the reactor is not formed. */
     private static ToDoubleFunction<ReactorControllerBlockEntity> core(ToDoubleFunction<ReactorCore> read) {
@@ -102,6 +110,8 @@ final class ReactorSignals {
             .text("vessel_state", "Vessel state", be -> be.vesselState().getSerializedName())
             .text("core_damage_stage_name", "Core damage stage name",
                     be -> be.core() == null ? null : be.core().getSevereAccident().getStage().displayName())
+            .level("selected_rod", "Selected rod (0 = none)", "rod", 0, MAX_RODS,
+                    be -> be.isFormed() ? be.selectedRod() : Double.NaN)
             .dynamicSignals(ReactorSignals::rodSignals, ReactorSignals::readRod)
             .pulse("scram", "Scram", (be, v) -> DeviceCommands.reactorScram(be))
             .pulse("reset_scram", "Reset scram", (be, v) -> DeviceCommands.reactorResetScram(be))
@@ -111,6 +121,15 @@ final class ReactorSignals {
                     DeviceCommands::reactorBoronInjection)
             .toggle("containment_inerting", "Containment inerting", (be, v) -> ContainmentEquipmentRegistry.command(be, false, v >= 0.5))
             .toggle("containment_vent", "Containment vent", (be, v) -> ContainmentEquipmentRegistry.command(be, true, v >= 0.5))
+            .command("select_rod", "Select rod (0 = none)", Kind.LEVEL, 0, MAX_RODS, ReactorSignals::selectRod)
+            .pulse("selected_rod_insert", "Selected rod: insert one notch",
+                    (be, v) -> DeviceCommands.reactorStepSelectedRod(be, -1))
+            .pulse("selected_rod_withdraw", "Selected rod: withdraw one notch",
+                    (be, v) -> DeviceCommands.reactorStepSelectedRod(be, 1))
+            .toggle("selected_rod_insert_continuous", "Selected rod: insert continuously (1 holds, 0 releases)",
+                    (be, v) -> DeviceCommands.reactorHoldSelectedRod(be, -1, v >= 0.5))
+            .toggle("selected_rod_withdraw_continuous", "Selected rod: withdraw continuously (1 holds, 0 releases)",
+                    (be, v) -> DeviceCommands.reactorHoldSelectedRod(be, 1, v >= 0.5))
             .dynamicCommands(ReactorSignals::rodCommands, ReactorSignals::rodCommand);
 
     private static List<SignalSpec> rodSignals(ReactorControllerBlockEntity be) {

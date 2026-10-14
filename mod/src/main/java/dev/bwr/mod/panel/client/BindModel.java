@@ -160,13 +160,21 @@ public final class BindModel {
             String output = port.spec().key();
             boolean switchPort = type.equals("control_switch") && (output.equals("open") || output.equals("close"));
             boolean button = type.equals("pushbutton");
-            if (command != null && (switchPort || button)
+            if (command != null && (switchPort || button) && !isHeldControl(command.key())
                     && (command.kind() == Kind.BOOLEAN.ordinal() || command.kind() == Kind.LEVEL.ordinal())) {
                 momentary = true;
                 // CLOSE sends the "off" end of the command; OPEN and a pushbutton send "on".
                 fixedText = output.equals("close") ? "0" : "1";
             }
         }
+    }
+
+    /**
+     * Commands that start on 1 and stop on 0 (the continuous rod motion controls): they need the follow mode, which
+     * sends the release, so the momentary default is not offered for them.
+     */
+    static boolean isHeldControl(String key) {
+        return key.endsWith("_continuous");
     }
 
     private PanelPayloads.CommandEntry command(String key) {

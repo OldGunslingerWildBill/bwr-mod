@@ -98,6 +98,7 @@ Block entity `ReactorControllerBlockEntity`; CC peripheral `bwr_reactor`.
 | `rod_<n>_position` | Rod n position (n from 1) | notch | 0 to 48 | LEVEL |
 | `rod_<n>_demand` | Rod n demand | notch | 0 to 48 | LEVEL |
 | `rod_<n>_accumulator` | Rod n accumulator charge | fraction | 0 to 1 | NUMBER |
+| `selected_rod` | Selected rod (0 = none; 1-based like n) | rod | 0 to 400 | LEVEL |
 
 | Command key | Label | Kind | Range |
 | --- | --- | --- | --- |
@@ -108,6 +109,33 @@ Block entity `ReactorControllerBlockEntity`; CC peripheral `bwr_reactor`.
 | `containment_inerting` | Containment inerting | BOOLEAN | 0 to 1 |
 | `containment_vent` | Containment vent | BOOLEAN | 0 to 1 |
 | `rod_<n>_position` | Rod n position (even notch labels only) | LEVEL | 0 to 48 |
+| `select_rod` | Select rod n (0 clears the selection) | LEVEL | 0 to 400 |
+| `selected_rod_insert` | Selected rod: insert one notch | PULSE |  |
+| `selected_rod_withdraw` | Selected rod: withdraw one notch | PULSE |  |
+| `selected_rod_insert_continuous` | Selected rod: insert continuously (1 holds, 0 releases) | BOOLEAN | 0 to 1 |
+| `selected_rod_withdraw_continuous` | Selected rod: withdraw continuously (1 holds, 0 releases) | BOOLEAN | 0 to 1 |
+
+### Rod selection (rod select matrix and rod motion pushbuttons)
+
+The reactor keeps one **selected rod** (saved with the controller; a world from before the feature loads with none;
+a rod renumbered by a drive layout change is deselected). `select_rod` sets it and moves nothing; a value that is not
+a rod of the formed core, not a whole number, or any command while the reactor is not formed is refused and changes
+nothing. The step commands act on the selected rod only (refused when none is selected), and do not use any path of
+their own: they change that rod's one standing demand in the control rod drive network by one notch (two on the 00
+to 48 label scale), exactly as `rod_<n>_position` does, so the drive carries it out only while it has power and water.
+A drive that cannot move keeps the demand standing, and the display then shows DRIFT for the rod (below).
+`selected_rod_insert` and `selected_rod_withdraw` are PULSE commands: a panel button wired to one acts on press.
+
+The continuous commands are held controls: `1` starts stepping the selected rod, `0` stops. While held, the rod is stepped
+one more notch each time it has reached its demand, which is the normal rod speed; a drive that cannot move leads its
+demand by one notch at most. Both held at once cancel. Selecting another rod, a scram, or the reactor unforming releases
+a held control, and a reload never resumes one. Wire them in *follow* mode so release sends `0` (the linker
+suggests that for these two commands); a panel push button also lets go by itself 1.5 s after the last press repeat.
+CC (`bwr_reactor`): `selectRod(n)`, `getSelectedRod()`, `stepSelectedRodIn()`, `stepSelectedRodOut()`,
+`setSelectedRodInsertHeld(bool)`, `setSelectedRodWithdrawHeld(bool)`.
+
+The mod adds no rod block, no sequence control and no worth minimiser: RWM, RSCS and RBM are protection logic, and
+building them from these signals is the player's job.
 
 ## Main steam isolation valve
 
