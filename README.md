@@ -14,6 +14,10 @@ flow, and the reactor responds. There is no commanded burn rate.
 Server operators can adjust the gameplay calibration in `serverconfig/bwr-gameplay.toml`;
 see the [Phase L1 settings guide](PHASE-L1-REVIEW.md) for defaults and effects.
 
+The [CC:Tweaked Lua examples](docs/lua/README.md) cover startup rod movement,
+backup scram, ECCS starting, containment isolation, and a panel display driver.
+They are the player's own automation, installed and run by the player.
+
 **Alpha.31:** surround the reactor and a suppression pool with a solid containment
 room. Its controller surveys free volume and wall strength, reports leaks and
 openings, and links the vessel to the simulated atmosphere. Install rated steam,

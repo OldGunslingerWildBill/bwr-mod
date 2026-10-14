@@ -106,6 +106,13 @@ neoForge {
             jvmArguments.add('-Dbwr.panelCcCheck=true')
             programArguments.addAll('--nogui')
         }
+        luaExamplesCheck {
+            server()
+            gameDirectory = file('run/luaExamplesCheck')
+            jvmArguments.add('-Dbwr.luaExamplesCheck=true')
+            systemProperty 'bwr.luaExamplesDirectory', rootProject.file('docs/lua').absolutePath
+            programArguments.addAll('--nogui')
+        }
     }
 
     mods {
