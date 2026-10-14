@@ -1,7 +1,7 @@
 {
   "display": {
     "icon": {
-      "id": "bwr:fuel_assembly",
+      "id": "bwr:fuel_fabricator",
       "count": 1
     },
     "title": {
@@ -26,5 +26,5 @@
     ]
   ],
   "sends_telemetry_event": false,
-  "parent": "bwr:milestones/first_criticality"
+  "parent": "bwr:milestones/power_to_grid"
 }

@@ -27,6 +27,7 @@ def validate(definitions, language, registered, models):
 
     require(set(definitions) == EXPECTED,
             f"milestone definitions differ: missing={sorted(EXPECTED-set(definitions))}, extra={sorted(set(definitions)-EXPECTED)}")
+    icon_owners = {}
     for name, data in definitions.items():
         if not isinstance(data, dict):
             problems.append(f"{name}: definition must be an object")
@@ -35,6 +36,9 @@ def validate(definitions, language, registered, models):
         icon = display.get("icon", {})
         require(icon.get("id") in registered, f"{name}: unregistered icon {icon.get('id')}")
         require(icon.get("id") in models, f"{name}: icon item model missing")
+        icon_id = icon.get("id")
+        require(icon_id not in icon_owners, f"{name}: duplicate icon {icon_id} also used by {icon_owners.get(icon_id)}")
+        icon_owners[icon_id] = name
         require(icon.get("count", 1) == 1 and "item" not in icon, f"{name}: invalid 1.21 icon stack")
         for field in ("title", "description"):
             text = display.get(field, {})
@@ -103,6 +107,7 @@ def main():
                 ("missing definition", lambda d: d.pop("power_to_grid")),
                 ("free trigger", lambda d: d["power_to_grid"]["criteria"]["achieved"].update(trigger="minecraft:tick")),
                 ("bad icon", lambda d: d["refuel"]["display"]["icon"].update(id="bwr:does_not_exist")),
+                ("duplicate icon", lambda d: d["refuel"]["display"]["icon"].update(id=d["first_criticality"]["display"]["icon"]["id"])),
                 ("missing translation", lambda d: d["refuel"]["display"]["title"].update(translate="missing.key")),
                 ("parent cycle", lambda d: d["first_criticality"].update(parent="bwr:milestones/first_criticality")),
                 ("missing parent", lambda d: d["first_criticality"].update(parent="bwr:milestones/missing")),

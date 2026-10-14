@@ -22,9 +22,17 @@ runtime criterion is `achieved`.
 | `lower_head_failure` | The Vessel Gives Way | Observe a reactor's modeled lower-head state change from intact to failed. |
 | `melt_through` | Nothing Left to Hold It | Observe the severe-accident model's basemat-failure flag change from intact to failed. Ablation depth alone does not grant the milestone. |
 
-The two accident milestones are hidden until earned and do not announce in chat.
-They have no additional rewards. The tree places melt-through after lower-head
-failure for presentation; the runtime records the actual state changes.
+The vanilla tab uses three short branches across four columns, making the full
+nine-node tree wider than tall and keeping it inside the standard viewport without
+scrolling. The branches are first criticality → power to grid → refuel; build a
+control room → survive a scram; and seal containment → lower-head failure →
+melt-through. These parent links arrange the display only; the runtime records
+each milestone's actual event independently. All nine nodes, including the root,
+use distinct item icons with different silhouettes or surfaces: a steam-valve
+handwheel, fuel bundle, generator, rod drive, fuel fabricator, vault door, control
+panel, vessel casing, and corium. The root's reactor-controller inventory trigger
+is unchanged. The two accident milestones remain hidden until earned, do not
+announce in chat, and have no additional rewards.
 
 The control-room check runs on component placement/removal, configuration or
 wiring edits, an owner's permitted claim/interaction, and group formation/join
@@ -83,4 +91,8 @@ The root uses the vanilla inventory-change trigger; eight plant milestones use
 `minecraft:impossible` so only observed server events grant them. Titles and
 descriptions use `advancements.bwr.milestones.*` translation keys. Icons are
 existing registered BWR items; the background is the vanilla stone texture.
+The asset audit rejects duplicate icon item IDs. The opt-in advancement client
+check verifies full-tree vanilla layout bounds (including hidden nodes) at every
+capture stage, checks all nine distinct icons when complete, and captures the
+whole completed tree without panning or scrolling.
 The format follows the [NeoForge 1.21.1 advancement documentation](https://docs.neoforged.net/docs/1.21.1/resources/server/advancements/).

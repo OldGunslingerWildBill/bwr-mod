@@ -26,5 +26,5 @@
     ]
   ],
   "sends_telemetry_event": false,
-  "parent": "bwr:milestones/first_criticality"
+  "parent": "bwr:milestones/build_control_room"
 }
