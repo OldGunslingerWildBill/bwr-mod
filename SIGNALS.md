@@ -724,3 +724,11 @@ Block entity `ContainmentEquipmentBlockEntity`; CC peripheral `bwr_containment_v
 | --- | --- | --- | --- |
 | `active` | Start / stop | BOOLEAN | 0 to 1 |
 
+
+### Startup detector locations
+
+`srm_<1-4>_lattice_x`, `_lattice_y`, `_lprm_string` and
+`irm_<1-8>_lattice_x`, `_lattice_y`, `_lprm_string` expose typical GE coordinates and the adjacent
+LPRM string number. CC `getDetectorLocations()` also includes the fuel-lattice position and marks
+placement as `typical`. Browns Ferry FCD strips carry the matching SRM-A through D / IRM-A through H
+legends above them. These are representative placements, not an as-built plant map.

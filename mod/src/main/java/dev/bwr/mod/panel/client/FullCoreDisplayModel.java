@@ -47,6 +47,7 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
         final Kit blank;
         final Kit module;
         final Kit strip;
+        final String[] startupLabels;
         final boolean edge;
         final boolean coordinates;
         final String caption;
@@ -67,6 +68,12 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
             this.generation = PanelModels.generation();
             this.aspect = aspect;
             this.layout = FcdLayout.of(data.displayMap(), data.layoutStyle(), data.tileCells);
+            this.startupLabels = new String[layout.map().lprmStrings().size()];
+            java.util.Arrays.fill(startupLabels, "");
+            for (var detector : layout.map().startupDetectors()) {
+                int at = detector.stringIndex();
+                startupLabels[at] += (startupLabels[at].isEmpty() ? "" : " / ") + detector.label();
+            }
             this.edge = data.edgeNumbersOn();
             this.coordinates = data.coordLegends;
             this.caption = data.caption;
@@ -564,8 +571,13 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
         for (int string = 0; string < map.lprmStrings().size(); string++) {
             float x = s.ox + layout.stripX(string);
             float y = s.oy + layout.stripY(string) + layout.stripHeight();
+            if (!s.startupLabels[string].isEmpty()) {
+                fitted(context, s.startupLabels[string], x + layout.stripWidth() / 2.0f,
+                        s.oy + layout.stripY(string) - layout.tile() * 0.13f,
+                        layout.stripWidth() * 0.95f, layout.tile() * 0.22f, s.textZ, GRID_LINE);
+            }
             fitted(context, map.lprmStrings().get(string).label(), x + layout.stripWidth() / 2.0f,
-                    y + layout.tile() * 0.3f, layout.stripWidth() * 1.5f, layout.tile() * 0.5f, s.textZ, GRID_LINE);
+                    y + layout.tile() * 0.13f, layout.stripWidth() * 0.95f, layout.tile() * 0.22f, s.textZ, GRID_LINE);
         }
         for (int row = 0; s.edge && row < map.rows(); row++) {
             fitted(context, String.format(Locale.ROOT, "%02d", map.labelY(row)), s.ox + layout.leftMargin() * 0.4f,

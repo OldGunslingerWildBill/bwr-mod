@@ -43,6 +43,7 @@ public final class CoreRodMap {
     private final int shiftX;
     private final int shiftY;
     private final List<Lprm> strings;
+    private final List<dev.bwr.core.instrument.StartupDetectorLocations.Detector> startupDetectors;
 
     /**
      * One LPRM string: the GE coordinates and the grid cells around it. {@code leftCol} and {@code topRow} are the
@@ -69,6 +70,9 @@ public final class CoreRodMap {
         this.shiftX = Math.max(0, (REFERENCE_ACROSS - 1) / 2 - (cols - 1) / 2);
         this.shiftY = Math.max(0, (REFERENCE_ACROSS - 1) / 2 - (rows - 1) / 2);
         this.strings = List.copyOf(findStrings());
+        this.startupDetectors = dev.bwr.core.instrument.StartupDetectorLocations.typical(
+                new dev.bwr.core.instrument.LprmLayout(strings.stream().map(p ->
+                        new dev.bwr.core.instrument.LprmLayout.StringLocation(p.x(),p.y(),0)).toList()));
     }
 
     /**
@@ -184,6 +188,9 @@ public final class CoreRodMap {
     public List<Lprm> lprmStrings() {
         return strings;
     }
+
+    /** Typical SRM/IRM display positions, derived by the same geometry rule as the core rack. */
+    public List<dev.bwr.core.instrument.StartupDetectorLocations.Detector> startupDetectors() { return startupDetectors; }
 
     public static String format(int x, int y) {
         return String.format(Locale.ROOT, "%02d-%02d", x, y);

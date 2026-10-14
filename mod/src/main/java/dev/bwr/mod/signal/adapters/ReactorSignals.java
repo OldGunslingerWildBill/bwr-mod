@@ -170,6 +170,11 @@ final class ReactorSignals {
                 }
             }
         }
+        for (var detector : core.getStartupDetectorLocations()) {
+            String prefix = detector.range().toLowerCase(java.util.Locale.ROOT) + "_" + (detector.channel()+1) + "_";
+            for (String field : new String[]{"lattice_x","lattice_y","lprm_string"})
+                specs.add(new SignalSpec(prefix+field, detector.label()+" "+field,"",0,200,Kind.LEVEL));
+        }
         return specs;
     }
 
@@ -199,6 +204,15 @@ final class ReactorSignals {
 
     private static OptionalDouble readRod(ReactorControllerBlockEntity be, String key) {
         if (key.startsWith("lprm_")) return readLprm(be, key);
+        if (be.core()!=null && (key.startsWith("srm_")||key.startsWith("irm_"))) {
+            for (var d:be.core().getStartupDetectorLocations()) {
+                String prefix=d.range().toLowerCase(java.util.Locale.ROOT)+"_"+(d.channel()+1)+"_";
+                if(key.equals(prefix+"lattice_x"))return OptionalDouble.of(d.x());
+                if(key.equals(prefix+"lattice_y"))return OptionalDouble.of(d.y());
+                if(key.equals(prefix+"lprm_string"))return OptionalDouble.of(d.stringIndex()+1);
+            }
+            return OptionalDouble.empty();
+        }
         Object[] parsed = parseRod(key);
         ReactorCore core = be.core();
         if (parsed == null || core == null) return OptionalDouble.empty();

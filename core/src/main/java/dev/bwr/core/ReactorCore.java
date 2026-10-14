@@ -1358,6 +1358,8 @@ public final class ReactorCore {
     }
 
     private dev.bwr.core.instrument.LprmLayout lprmLayout;
+    private java.util.List<dev.bwr.core.instrument.StartupDetectorLocations.Detector> startupDetectors=java.util.List.of();
+    public java.util.List<dev.bwr.core.instrument.StartupDetectorLocations.Detector> getStartupDetectorLocations() { return startupDetectors; }
     private final double[] lprmReferenceMean = {1,1,1,1,1,1};
     public dev.bwr.core.instrument.LprmLayout getLprmLayout() { return lprmLayout; }
 
@@ -1369,6 +1371,7 @@ public final class ReactorCore {
             oldFlags.put(location.x()+":"+location.y()+":"+l,(m.isLprmBypassed(i)?1:0)|(m.isLprmFailed(i)?2:0));
         }
         lprmLayout=layout;
+        startupDetectors=dev.bwr.core.instrument.StartupDetectorLocations.typical(layout);
         for(int c=0;c<averagePowerRangeMonitors.length;c++) {
             var m=averagePowerRangeMonitors[c];m.resizeInputs(layout.inputs(c));
             for(int i=0;i<m.getAssignedLprmInputCount();i++) {m.setLprmBypassed(i,false);m.setLprmFailed(i,false);m.setLprmLocalFluxWeight(i,0);}

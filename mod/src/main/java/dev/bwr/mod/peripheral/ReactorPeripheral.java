@@ -371,6 +371,16 @@ public class ReactorPeripheral implements IPeripheral {
      * <p>Meters are numbered with their channels, 0-based, matching
      * {@link #getSrmCounts(int)} rather than the 1-based rod numbering.
      */
+    /** Typical source/intermediate detector lattice positions, using the FCD's GE coordinates. */
+    @LuaFunction(mainThread = true)
+    public final Map<Integer,Object> getDetectorLocations() throws LuaException {
+        Map<Integer,Object> result=new HashMap<>();int index=1;
+        for(var d:core().getStartupDetectorLocations()) result.put(index++,Map.of(
+                "label",d.label(),"range",d.range(),"channel",d.channel()+1,"latticeX",d.x(),"latticeY",d.y(),
+                "fuelLatticePosition",d.latticePosition(),"lprmString",d.stringIndex()+1,"placement","typical"));
+        return result;
+    }
+
     private PeriodMeter srmPeriodMeter(int channel) throws LuaException {
         return core().getSourceRangePeriodMeter(
                 channel("source range", channel, ReactorCore.SOURCE_RANGE_CHANNELS));

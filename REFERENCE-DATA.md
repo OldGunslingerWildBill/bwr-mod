@@ -451,3 +451,12 @@ See `GRID-TIE-SPEC.md` §9.1 for the identified acceptance-contract conflicts.
   a claimed plant calibration procedure. Local flux, failure and bypass
   still affect the sum afterward; a running core is never automatically recalibrated. Player gain
   and gamma settings, detector hardware flags, wiring and reference means are saved.
+
+### Typical SRM and IRM map (B2)
+
+The four SRM and eight IRM positions are explicitly **typical**, not a reconstruction of a specific
+plant drawing. SRMs occupy four outer-quadrant strings; IRMs use eight azimuths nearer the center,
+selecting the closest available string and avoiding shared tubes when the core has enough strings.
+Core getters, CC `getDetectorLocations()`, signals, and Browns Ferry labels share this deterministic
+rule. Instrument insertion and the existing SRM/IRM transfer functions are unchanged; this item adds
+physical placement metadata, not a new source-range spatial-response calibration.
