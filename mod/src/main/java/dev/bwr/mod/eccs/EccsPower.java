@@ -24,7 +24,7 @@ public final class EccsPower {
     }
 
     /** Watts of shaft power one FE per tick buys. */
-    public static final double WATTS_PER_FE_PER_TICK = 6.7e6 / 500_000.0;
+    public static final double WATTS_PER_FE_PER_TICK = dev.bwr.core.grid.EnergyUnits.WATTS_PER_FE_PER_TICK;
 
     /** FE per tick a machine of a given electrical rating draws at full load. */
     public static int fePerTickFromWatts(double watts) {

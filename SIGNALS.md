@@ -482,6 +482,18 @@ Block entity `PowerModuleBlockEntity`; CC peripheral `bwr_hp_turbine / bwr_lp_tu
 | `outlet_temp` | Outlet temperature | degC | 0 to 350 | NUMBER |
 | `water` | Water stored | kg | 0 to 20000 | NUMBER |
 | `stored_fe` | Stored energy | FE | 0 to 2000000000 | NUMBER |
+| `delivered_mw_now` | Delivered last completed tick | MW | nonnegative | NUMBER |
+| `delivered_mw_1s` | Delivered over 20 ticks | MW | nonnegative | NUMBER |
+| `delivered_mw_1min` | Delivered over 1200 ticks | MW | nonnegative | NUMBER |
+| `delivered_mwh` | Lifetime delivered energy | MWh | nonnegative | NUMBER |
+| `generated_mw_1s` | Generated over 20 ticks | MW | nonnegative | NUMBER |
+| `generated_fe_tick` | Generated last completed tick | FE | nonnegative | NUMBER |
+| `delivered_fe_tick` | Delivered last completed tick | FE | nonnegative | NUMBER |
+| `buffer_delta_fe_tick` | Storage change last completed tick | FE | signed | NUMBER |
+| `sample_ticks` | Completed samples since load | ticks | 0 to 1200 | NUMBER |
+| `window_ready_1s` | One-second history ready | | 0 to 1 | BOOLEAN |
+| `window_ready_1min` | One-minute history ready | | 0 to 1 | BOOLEAN |
+| `counter_saturated` | Lifetime counter saturated | | 0 to 1 | BOOLEAN |
 | `status` | Status |  | text | TEXT |
 
 No commands (read only).
@@ -493,6 +505,14 @@ train's last-step mechanical/coupling loss, so do not sum it across modules.
 Overspeed above 110% accumulates damage; neither signal operates a valve or trips
 a breaker. At damage 1 a generator produces no new FE; stored FE remains usable.
 The calibration is documented in `GRID-TIE-SPEC.md` §4.3.
+
+Delivery counts actual terminal extraction, including generator push, exactly once.
+Simulation and rejected transfers count zero. These rates use completed ticks,
+include idle zeros, and restart at load; lifetime delivery and damage survive normal
+item drops. A new placement has a new world UUID. Cached capabilities reconnect to
+the same saved machine but cannot extract from its replacement. Generated energy
+minus delivered energy equals buffer change, including fractional FE precision.
+Buffer discharge can exceed current generation; delivered MW is not rating-capped.
 
 ## Containment controller
 

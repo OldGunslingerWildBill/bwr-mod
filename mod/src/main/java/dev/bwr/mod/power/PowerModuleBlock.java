@@ -49,4 +49,22 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
             return net.minecraft.world.ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
         return super.useItemOn(stack,state,level,pos,player,hand,hit);
     }
+    @Override public void setPlacedBy(Level level,BlockPos pos,BlockState state,net.minecraft.world.entity.LivingEntity placer,net.minecraft.world.item.ItemStack stack) {
+        super.setPlacedBy(level,pos,state,placer,stack);
+        if(level.getBlockEntity(pos) instanceof PowerModuleBlockEntity module){
+            module.establishIdentity();
+            var data=stack.getOrDefault(net.minecraft.core.component.DataComponents.CUSTOM_DATA,net.minecraft.world.item.component.CustomData.EMPTY).copyTag();
+            if(data.contains("BwrPowerCondition"))module.restoreCondition(data.getCompound("BwrPowerCondition"));
+        }
+    }
+    @Override protected java.util.List<net.minecraft.world.item.ItemStack> getDrops(BlockState state,net.minecraft.world.level.storage.loot.LootParams.Builder params) {
+        var drops=super.getDrops(state,params);
+        if(params.getOptionalParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.BLOCK_ENTITY) instanceof PowerModuleBlockEntity module)
+            for(var stack:drops)if(stack.is(asItem())){
+                var data=stack.getOrDefault(net.minecraft.core.component.DataComponents.CUSTOM_DATA,net.minecraft.world.item.component.CustomData.EMPTY).copyTag();
+                data.put("BwrPowerCondition",module.retainedCondition());
+                stack.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,net.minecraft.world.item.component.CustomData.of(data));
+            }
+        return drops;
+    }
 }

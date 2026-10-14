@@ -54,6 +54,8 @@ public final class ShaftDynamicsTests {
                     tag.put("Exhaust",steam);supply.loadWithComponents(tag,l.registryAccess());
                     condenser.plant().steam.take(condenser.plant().steam.mass());
                     PowerTrain.tick(gen);
+                    h.assertTrue(Math.abs(gen.generatedFELastTick()-gen.delivered().lastTickFE()-gen.bufferDeltaFELastTick())<1e-5,
+                            "generator production minus delivery differs from buffer change");
                     if(tick<400)gen.energy.extractEnergy(Integer.MAX_VALUE,false);
                     if(tick==399){loadedRpm=gen.rpm;h.assertTrue(gen.electricMW>100,"fixture never supplied electrical load");}
                     if(tick>=400&&stopTick<0&&gen.rpm>1700){peak=gen.rpm;stopTick=tick;valve.setTarget(0);valve.stroke(1);}

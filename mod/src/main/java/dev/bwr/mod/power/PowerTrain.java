@@ -30,7 +30,7 @@ public final class PowerTrain {
         return List.copyOf(found.values());
     }
     public static void tick(PowerModuleBlockEntity start) {
-        long now=start.getLevel().getGameTime();if(start.lastTick==now)return;
+        long now=start.getLevel().getGameTime();if(start.lastTick==now)return;start.beginAccounting();
         var train=members(start);
         if(train.isEmpty()){start.lastTick=now;start.hasWorkLoad=false;start.resetReadouts();start.status="Incomplete or over 32 modules";return;}
         // If a train was joined after one half already ran this tick, only unprocessed modules can act.
@@ -45,7 +45,7 @@ public final class PowerTrain {
         int hp=(int)train.stream().filter(m->m.block().highPressure()).count();
         int lp=(int)train.stream().filter(m->m.block().kind()==dev.bwr.mod.eccs.PumpAssemblyBlock.Kind.LP_TURBINE).count();
         boolean connectedGenerator=train.stream().anyMatch(m->m.block().generator());
-        for(var m:active){m.lastTick=now;m.hasWorkLoad=connectedGenerator;m.resetReadouts();m.rpm=rpm;m.hpCount=hp;m.lpCount=lp;m.generatorCount=(int)train.stream().filter(n->n.block().generator()).count();m.status=connectedGenerator?"Ready":"No generator attached";}
+        for(var m:active){m.beginAccounting();m.lastTick=now;m.hasWorkLoad=connectedGenerator;m.resetReadouts();m.rpm=rpm;m.hpCount=hp;m.lpCount=lp;m.generatorCount=(int)train.stream().filter(n->n.block().generator()).count();m.status=connectedGenerator?"Ready":"No generator attached";}
         double work=0;
         // HP output can feed LP immediately, independent of block-entity insertion order.
         for(boolean high:new boolean[]{true,false})for(var m:active)if(!m.block().generator()&&m.block().highPressure()==high)

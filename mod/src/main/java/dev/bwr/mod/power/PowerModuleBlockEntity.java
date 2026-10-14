@@ -32,6 +32,12 @@ public class PowerModuleBlockEntity extends BlockEntity {
     public String status="Stopped";
     private double energyFe,waterKg;
     private double damage;
+    private UUID deviceId=UUID.randomUUID();
+    private boolean identityReady;
+    private final dev.bwr.core.grid.EnergyLedger delivered=new dev.bwr.core.grid.EnergyLedger();
+    private final dev.bwr.core.grid.EnergyLedger generated=new dev.bwr.core.grid.EnergyLedger();
+    private long accountingTick=Long.MIN_VALUE;
+    private double startingFE,generatedFE,generatedCarry,lastGeneratedFE,lastBufferDelta,reservedFE;
     public double trainLossKJ;
     public PowerModuleBlockEntity(BlockPos pos,BlockState state) { super(BwrBlockEntities.POWER_MODULE.get(),pos,state); }
     public PowerModuleBlock block() { return (PowerModuleBlock)getBlockState().getBlock(); }
@@ -41,7 +47,36 @@ public class PowerModuleBlockEntity extends BlockEntity {
     public double exhaustMass() { return exhaust.mass(); }
     public double shaftInertia() { return ShaftDynamics.REFERENCE_INERTIA*(block().generator()?.4:.1); }
     public double kineticEnergyKJ() { return ShaftDynamics.energyKJ(shaftInertia(),rpm); }
+    public UUID deviceId(){return deviceId;}
+    boolean identityReady(){return identityReady;}
+    void establishIdentity(){identityReady=true;}
+    public dev.bwr.core.grid.EnergyLedger delivered(){return delivered;}
+    public double generatedMW1s(){return dev.bwr.core.grid.EnergyUnits.mw(generated.averageFE(20));}
+    public double generatedFELastTick(){return lastGeneratedFE;}
+    public double bufferDeltaFELastTick(){return lastBufferDelta;}
     public double damage() { return damage; }
+    public boolean live(){return level!=null&&!isRemoved()&&level.isLoaded(worldPosition)&&level.getBlockEntity(worldPosition)==this;}
+    void beginAccounting(){
+        long now=level.getGameTime();if(now==accountingTick)return;
+        if(accountingTick!=Long.MIN_VALUE){
+            lastGeneratedFE=now==accountingTick+1?generatedFE:0;
+            lastBufferDelta=now==accountingTick+1?energyFe-startingFE:0;
+        }
+        delivered.beginTick(now);generated.beginTick(now);
+        accountingTick=now;startingFE=energyFe;generatedFE=0;
+    }
+    private void recordDelivery(int n){
+        delivered.record(n);setChanged();
+        dev.bwr.mod.advancement.PlantMilestones.energyDelivered(this,n);
+    }
+    public CompoundTag retainedCondition(){
+        var t=new CompoundTag();t.putDouble("ShaftDamage",damage);
+        t.putLong("DeliveredFE",delivered.totalFE());t.putBoolean("CounterSaturated",delivered.saturated());return t;
+    }
+    public void restoreCondition(CompoundTag t){
+        damage=finite(t.getDouble("ShaftDamage"),1);
+        delivered.restore(t.getLong("DeliveredFE"),t.getBoolean("CounterSaturated"));setChanged();
+    }
     public boolean failed() { return damage>=1; }
     public double speedPercent() { return rpm/ShaftDynamics.RATED_RPM*100; }
     public boolean overspeed() { return rpm>ShaftDynamics.OVERSPEED_RPM; }
@@ -87,7 +122,11 @@ public class PowerModuleBlockEntity extends BlockEntity {
     }
     void generate(double workKJ) {
         double watts=workKJ*20*1000*PowerTurbine.GENERATOR_EFFICIENCY;
+        beginAccounting();double before=energyFe;
         energyFe=Math.min(ENERGY_CAPACITY,energyFe+watts/EccsPower.WATTS_PER_FE_PER_TICK);
+        double created=energyFe-before;generatedFE+=created;
+        double whole=created+generatedCarry;long counted=(long)Math.floor(whole);
+        generatedCarry=whole-counted;generated.record(counted);
         electricMW=watts/1e6;status=watts>0?"Generating":energyFe>=ENERGY_CAPACITY-.001?"Energy buffer full":"No turbine work";
     }
     double expand(double workBudgetKJ) {
@@ -137,8 +176,11 @@ public class PowerModuleBlockEntity extends BlockEntity {
     private double admissionCapacityKgPerS(){return block().highPressure()?2200:750;}
     public final IEnergyStorage energy=new IEnergyStorage() {
         public int receiveEnergy(int max,boolean simulate){return 0;}
-        public int extractEnergy(int max,boolean simulate){int n=Math.min(Math.max(0,max),getEnergyStored());if(!simulate&&n>0){energyFe-=n;setChanged();dev.bwr.mod.advancement.PlantMilestones.energyDelivered(PowerModuleBlockEntity.this,n);}return n;}
-        public int getEnergyStored(){return (int)Math.floor(energyFe);}
+        public int extractEnergy(int max,boolean simulate){
+            int n=Math.min(Math.max(0,max),getEnergyStored());
+            if(!simulate&&n>0){beginAccounting();energyFe-=n;recordDelivery(n);}return n;
+        }
+        public int getEnergyStored(){return live()?(int)Math.floor(Math.max(0,energyFe-reservedFE)):0;}
         public int getMaxEnergyStored(){return ENERGY_CAPACITY;}
         public boolean canExtract(){return true;}
         public boolean canReceive(){return false;}
@@ -148,17 +190,29 @@ public class PowerModuleBlockEntity extends BlockEntity {
         if(block().generator()) {
             var face=block().terminalFace(s);var next=block().terminal(worldPosition,s).relative(face);
             if(level.isLoaded(next)){var target=level.getCapability(Capabilities.EnergyStorage.BLOCK,next,face.getOpposite());
-                if(target!=null&&target.canReceive()){int n=target.receiveEnergy(energy.getEnergyStored(),false);energy.extractEnergy(n,false);}}
+                if(target!=null&&target.canReceive())pushEnergy(target);}
         } else if(!block().highPressure()&&waterKg>0) {
             var c=condenser();if(c!=null){double moved=c.plant().acceptLegacyCondensate(waterKg);waterKg-=moved;if(moved>0){setChanged();c.setChanged();}}
         }
+    }
+    /** Shared by the real terminal push and the reentrant-receiver regression. */
+    int pushEnergy(IEnergyStorage target) {
+        if(!live())return 0;
+        beginAccounting();int offered=energy.getEnergyStored();reservedFE+=offered;
+        try {
+            int n=Math.max(0,Math.min(offered,target.receiveEnergy(offered,false)));
+            if(n>0){energyFe-=n;recordDelivery(n);}return n;
+        } finally {reservedFE-=offered;}
     }
     @Override public void onLoad() { super.onLoad(); dev.bwr.mod.advancement.PlantMilestones.loaded(this); }
     @Override public void setRemoved() { dev.bwr.mod.advancement.PlantMilestones.unloaded(this); super.setRemoved(); }
     @Override public void onChunkUnloaded() { dev.bwr.mod.advancement.PlantMilestones.unloaded(this); super.onChunkUnloaded(); }
     @Override protected void saveAdditional(CompoundTag t,HolderLookup.Provider registries) {
         super.saveAdditional(t,registries);t.putDouble("RPM",rpm);
+        identityReady=true;
         t.putInt("ShaftVersion",1);t.putDouble("ShaftDamage",damage);
+        t.putInt("GridVersion",1);t.putUUID("DeviceId",deviceId);
+        t.putLong("DeliveredFE",delivered.totalFE());t.putBoolean("CounterSaturated",delivered.saturated());
         t.putDouble("Energy",energyFe);t.putDouble("Water",waterKg);
         saveSteam(t,"Inlet",inlet);saveSteam(t,"Exhaust",exhaust);
     }
@@ -167,6 +221,10 @@ public class PowerModuleBlockEntity extends BlockEntity {
         super.loadAdditional(t,registries);running=false; // Legacy local Running/Valve commands are superseded by physical steam valves.
         // Numerical corruption bound, not a rated-speed clamp or operating limit.
         rpm=finite(t.getDouble("RPM"),1e6);damage=finite(t.getDouble("ShaftDamage"),1);trainLossKJ=0;
+        if(t.hasUUID("DeviceId"))deviceId=t.getUUID("DeviceId");
+        identityReady=true;
+        delivered.restore(t.getLong("DeliveredFE"),t.getBoolean("CounterSaturated"));generated.restore(0,false);
+        accountingTick=Long.MIN_VALUE;startingFE=generatedFE=generatedCarry=lastGeneratedFE=lastBufferDelta=reservedFE=0;
         energyFe=finite(t.getDouble("Energy"),ENERGY_CAPACITY);waterKg=finite(t.getDouble("Water"),WATER_CAPACITY);
         loadSteam(t,"Inlet",inlet);loadSteam(t,"Exhaust",exhaust);lastTick=Long.MIN_VALUE;exhaustLedgerTick=Long.MIN_VALUE;exhaustClaims.clear();hasWorkLoad=false;
     }
