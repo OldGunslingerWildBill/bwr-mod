@@ -6,5 +6,5 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
 public final class GridCapabilities {
     private GridCapabilities() {}
-    public static void register(RegisterCapabilitiesEvent event){event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK,BwrBlockEntities.GRID_TIE.get(),(be,face)->be.energy);}
+    public static void register(RegisterCapabilitiesEvent event){event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK,BwrBlockEntities.FE_METER.get(),(be,face)->be.capability(face));event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK,BwrBlockEntities.GRID_TIE.get(),(be,face)->be.energy);}
 }
