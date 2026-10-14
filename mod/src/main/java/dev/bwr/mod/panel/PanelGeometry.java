@@ -36,6 +36,8 @@ public final class PanelGeometry {
     public static final int GRID = 16;
     /** Largest span of one component, in blocks, either way (spec section 2). */
     public static final int MAX_SPAN_BLOCKS = 4;
+    /** The most any component type may span: types that need more than {@link #MAX_SPAN_BLOCKS} say so themselves. */
+    public static final int ABSOLUTE_MAX_SPAN_BLOCKS = 8;
 
     private static final double TAN15 = Math.tan(Math.toRadians(15.0));
     /** Height of the back edge of the console desk. */

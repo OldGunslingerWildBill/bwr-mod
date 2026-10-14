@@ -76,6 +76,15 @@ public abstract class ComponentData {
         return false;
     }
 
+    /**
+     * Server: the owning panel re-read its inputs (a binding changed, the block loaded, or a live input was
+     * sampled). Types whose content is read from a plant device in bulk rather than through one input (the core
+     * displays) refresh it here and report a change; most types leave this alone.
+     */
+    public void sampleContent(net.minecraft.world.level.Level level, dev.bwr.mod.panel.PanelBlockEntity owner,
+                              PanelComponent component) {
+    }
+
     /** Tells the host that bulk content changed (server): it is saved and a patch is sent next tick. */
     protected final void contentChanged() {
         if (host != null) {

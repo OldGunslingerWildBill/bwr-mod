@@ -1,7 +1,10 @@
 package dev.bwr.mod.panel.component;
 
 import dev.bwr.mod.panel.PanelBlockEntity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -80,6 +83,27 @@ public abstract class ComponentType {
      * then drops at the default size.
      */
     public abstract List<Footprint> footprints();
+
+    /**
+     * How many blocks this type may span either way. Most types stay within 4 (64 cells); the core displays need up
+     * to 8 for a full size core. The footprints it lists may not exceed it.
+     */
+    public int maxSpanBlocks() {
+        return dev.bwr.mod.panel.PanelGeometry.MAX_SPAN_BLOCKS;
+    }
+
+    /**
+     * A plant binding of input {@code inputIndex} to {@code device} is about to be made (server, after the usual
+     * checks): a reason to refuse it, shown to the player, or null to allow it.
+     */
+    public Component refuseBinding(ServerLevel level, PanelComponent component, int inputIndex, BlockPos device) {
+        return null;
+    }
+
+    /** A config edit would produce {@code proposed} (the edit merged into the current data): a reason to refuse it, or null. */
+    public Component refuseConfig(ServerLevel level, PanelComponent component, CompoundTag proposed) {
+        return null;
+    }
 
     /** A fresh {@link ComponentData} holding the defaults. */
     public abstract ComponentData createData();

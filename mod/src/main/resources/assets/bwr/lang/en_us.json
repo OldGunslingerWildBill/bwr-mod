@@ -764,5 +764,22 @@
   "subtitle.bwr.scram_buzzer": "Scram buzzer sounds",
   "subtitle.bwr.edg_start": "Emergency diesel generator starts",
   "subtitle.bwr.edg_run": "Emergency diesel generator runs",
-  "subtitle.bwr.geiger_click": "Geiger counter clicks"
+  "subtitle.bwr.geiger_click": "Geiger counter clicks",
+  "item.bwr.full_core_display": "Full Core Display",
+  "component.bwr.full_core_display": "Full Core Display",
+  "item.bwr.rod_select_matrix": "Rod Select Matrix",
+  "component.bwr.rod_select_matrix": "Rod Select Matrix",
+  "component.bwr.port.core": "Reactor (bind any signal of the reactor controller)",
+  "component.bwr.port.rod": "Selected rod",
+  "component.bwr.field.fcd_style": "Display style",
+  "component.bwr.field.tile_cells": "Tile size (cells)",
+  "component.bwr.field.accum_fraction": "Accumulator trouble below (fraction of full)",
+  "component.bwr.field.lprm_downscale": "LPRM downscale below (%)",
+  "component.bwr.field.lprm_upscale": "LPRM upscale above (%)",
+  "message.bwr.core_display.not_a_reactor": "A core display reads a reactor controller: link the reactor, not another device",
+  "message.bwr.core_display.too_small": "This core needs %s x %s cells (%s x %s blocks) at this tile size; the component is %s x %s. Use a larger size or fewer cells per tile",
+  "message.bwr.panel_bind.result.refused": "This component cannot take that device",
+  "text.bwr.core_display.needs_size": "NEEDS %s x %s",
+  "component.bwr.option.FcdStyle.columbia": "Columbia (lamp matrix)",
+  "component.bwr.option.FcdStyle.browns_ferry": "Browns Ferry (digital)"
 }

@@ -92,7 +92,32 @@ final class FcdTestSupport {
     /** Empties the area and releases its chunks. Safe to call twice. */
     static void release(ServerLevel level, BlockPos min, int width, int depth) {
         clear(level, min, width, depth);
+        clearWall(level, min);
         hold(level, min, width, depth, false);
+    }
+
+    /** The top-left block of the panel wall of a fixture: columns run toward -X, rows downward, facing north. */
+    static BlockPos wallOrigin(BlockPos min) {
+        return min.offset(8, 26, -8);
+    }
+
+    /** Empties the 8 x 8 block area a panel wall may use. */
+    static void clearWall(ServerLevel level, BlockPos min) {
+        BlockPos origin = wallOrigin(min);
+        for (int c = -1; c <= 8; c++) {
+            for (int r = -1; r <= 8; r++) {
+                for (int z = -1; z <= 1; z++) {
+                    BlockPos pos = origin.offset(-c, -r, z);
+                    if (!level.getBlockState(pos).isAir()) {
+                        level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+                    }
+                }
+            }
+        }
+        for (net.minecraft.world.entity.item.ItemEntity item : level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                new net.minecraft.world.phys.AABB(origin).inflate(12, 12, 6))) {
+            item.discard();
+        }
     }
 
     /**
@@ -107,6 +132,8 @@ final class FcdTestSupport {
         final int width;
         final int depth;
         ReactorControllerBlockEntity be;
+        /** A survival fake player in front of the wall, set by {@link #wall}. */
+        net.neoforged.neoforge.common.util.FakePlayer player;
         /** Scratch for steps that hand a number to a later step. */
         int stopDemand;
         double scratch;
@@ -146,6 +173,52 @@ final class FcdTestSupport {
 
         void release() {
             FcdTestSupport.release(level, min, width, depth);
+        }
+
+        /** Builds a vertical panel wall of {@code cols x rows} blocks and puts a fake player in front of it. */
+        void wall(int cols, int rows) {
+            clearWall(level, min);
+            for (int r = 0; r < rows; r++) {
+                for (int c = 0; c < cols; c++) {
+                    level.setBlock(wallAt(c, r), dev.bwr.mod.registry.BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState()
+                            .setValue(dev.bwr.mod.panel.PanelBlock.FACING, net.minecraft.core.Direction.NORTH), 3);
+                }
+            }
+            BlockPos origin = wallOrigin(min);
+            player = net.neoforged.neoforge.common.util.FakePlayerFactory.get(level, new com.mojang.authlib.GameProfile(
+                    java.util.UUID.nameUUIDFromBytes("fcd-test-player".getBytes(java.nio.charset.StandardCharsets.UTF_8)), "fcd-test"));
+            player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            player.getInventory().clearContent();
+            player.setShiftKeyDown(false);
+            player.setPos(origin.getX() - 1.5, origin.getY() - 1.0, origin.getZ() - 2.5);
+        }
+
+        BlockPos wallAt(int col, int row) {
+            return wallOrigin(min).relative(net.minecraft.core.Direction.NORTH.getCounterClockWise(), col).below(row);
+        }
+
+        dev.bwr.mod.panel.PanelBlockEntity panel(int col, int row) {
+            return (dev.bwr.mod.panel.PanelBlockEntity) level.getBlockEntity(wallAt(col, row));
+        }
+
+        /** Binds input 0 of a core display to the reactor as the linker would. */
+        dev.bwr.mod.panel.wiring.WiringOps.Outcome bindReactor(dev.bwr.mod.panel.PanelBlockEntity owner,
+                                                                dev.bwr.mod.panel.component.PanelComponent component,
+                                                                BlockPos device) {
+            return bindReactor(owner, component, device, "formed");
+        }
+
+        /** Binds input 0 to {@code device}'s signal {@code key} as the linker would. */
+        dev.bwr.mod.panel.wiring.WiringOps.Outcome bindReactor(dev.bwr.mod.panel.PanelBlockEntity owner,
+                                                                dev.bwr.mod.panel.component.PanelComponent component,
+                                                                BlockPos device, String key) {
+            net.minecraft.world.item.ItemStack linker = new net.minecraft.world.item.ItemStack(dev.bwr.mod.registry.BwrItems.PANEL_LINKER.get());
+            linker.set(dev.bwr.mod.fuel.BwrDataComponents.LINKED_DEVICE.get(),
+                    net.minecraft.core.GlobalPos.of(level.dimension(), device));
+            player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, linker);
+            return dev.bwr.mod.panel.wiring.WiringOps.bindDetailed(player, new dev.bwr.mod.panel.net.PanelPayloads.Bind(
+                    owner.getBlockPos(), component.id(), false, 0, dev.bwr.mod.panel.wiring.WiringOps.BindKind.PLANT.ordinal(),
+                    device, key, BlockPos.ZERO, 0, 0, 1.0));
         }
 
         private void next() {
