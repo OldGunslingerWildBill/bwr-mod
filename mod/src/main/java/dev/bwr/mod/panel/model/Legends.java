@@ -71,9 +71,17 @@ public final class Legends {
     public static List<Item> items(BakedPanelModel model, Placement place, String type, PanelComponent component,
                                    PanelStyles.KeyPose key) {
         List<Item> items = new ArrayList<>();
+        boolean outer = component.data() instanceof RotarySelectorData selector && Detents.outerPair(model, selector.positions);
         for (int i = 0; i < model.labelCount(); i++) {
             BakedPanelModel.Label label = model.label(i);
-            String text = text(type, label.id, component, key);
+            String id = label.id;
+            if (outer && id.equals("pos2")) {
+                continue; // a two position selector has no middle legend ...
+            }
+            if (outer && id.equals("pos3")) {
+                id = "pos2"; // ... and its second name goes at the right
+            }
+            String text = text(type, id, component, key);
             if (text != null && !text.isEmpty()) {
                 items.add(item(text, label, place, label.x, label.y, label.z));
             }

@@ -7,7 +7,16 @@ import dev.bwr.mod.panel.component.RotarySelectorData;
 import dev.bwr.mod.panel.fcd.FcdLayout;
 import dev.bwr.mod.panel.model.BakedPanelModel;
 import dev.bwr.mod.panel.model.FcdModels;
+import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.component.ComponentTypes;
+import dev.bwr.mod.panel.component.Footprint;
+import dev.bwr.mod.panel.client.QuadSink;
+import dev.bwr.mod.panel.model.Detents;
+import dev.bwr.mod.panel.model.Legends;
 import dev.bwr.mod.panel.model.PanelModelParser;
+import dev.bwr.mod.panel.model.PartDraw;
+import dev.bwr.mod.panel.model.Placement;
+import dev.bwr.mod.panel.model.Recolour;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -139,6 +148,74 @@ public final class FcdModelTests {
                 h.assertTrue(light.part("lens") != null && light.part("lens").role == BakedPanelModel.Role.LAMP && light.part("bezel") != null,
                         id + " lens and bezel");
             }
+        }
+        h.succeed();
+    }
+
+    /**
+     * What the real-client check showed against the owner's SRV photos: the oiltight selectors turn to the bearings of
+     * their legends (about 37.6 degrees either side), a two position one between the outer two legends, a dome lens
+     * is the lamp's colour whatever it is (the default red included), and a lit dome is shaded, not a flat disc.
+     */
+    @GameTest(template = "empty", batch = "fcd")
+    public static void srvSwitchesFollowThePhotographedLook(GameTestHelper h) throws IOException {
+        for (String id : new String[] {FcdModels.SELECTOR_KNOB, FcdModels.SELECTOR_LEVER}) {
+            BakedPanelModel selector = load(id);
+            if (selector == null) {
+                continue;
+            }
+            float[] three = Detents.angles(selector, 3);
+            h.assertTrue(Math.abs(three[0] + 37.57f) < 0.1f && Math.abs(three[1]) < 0.01f && Math.abs(three[2] - 37.57f) < 0.1f,
+                    id + " three detents at -37.6, 0, 37.6: " + java.util.Arrays.toString(three));
+            float[] two = Detents.angles(selector, 2);
+            h.assertTrue(Detents.outerPair(selector, 2) && !Detents.outerPair(selector, 3)
+                    && Math.abs(two[0] + 37.57f) < 0.1f && Math.abs(two[1] - 37.57f) < 0.1f,
+                    id + " two positions use the outer legends: " + java.util.Arrays.toString(two));
+            PanelComponent component = new PanelComponent(1, ComponentTypes.ROTARY_SELECTOR, 0, 0, Footprint.of(12, 15), "RS-1");
+            RotarySelectorData data = (RotarySelectorData) component.data();
+            data.positions = 2;
+            data.names = "OFF,OPEN";
+            java.util.List<Legends.Item> items = Legends.items(selector, Placement.fit(selector, 12, 15, 1.0f), "rotary_selector", component);
+            BakedPanelModel.Label right = selector.label("pos3");
+            Legends.Item open = null;
+            boolean middle = false;
+            for (Legends.Item item : items) {
+                middle |= item.text().equals("AUTO") || item.text().equals("TEST");
+                if (item.text().equals("OPEN")) {
+                    open = item;
+                }
+            }
+            h.assertTrue(open != null && !middle && right != null, id + " a two position selector prints OFF and OPEN only");
+            data.positions = 3;
+            data.names = "OFF,AUTO,OPEN";
+            boolean auto = false;
+            for (Legends.Item item : Legends.items(selector, Placement.fit(selector, 12, 15, 1.0f), "rotary_selector", component)) {
+                auto |= item.text().equals("AUTO");
+            }
+            h.assertTrue(auto, id + " three positions print the middle legend too");
+        }
+        BakedPanelModel dome = load(FcdModels.DOME_SMOOTH);
+        if (dome != null) {
+            PanelComponent lamp = new PanelComponent(2, ComponentTypes.LAMP, 0, 0, Footprint.of(8, 8), "L-1");
+            LampData data = (LampData) lamp.data();
+            BakedPanelModel.Part lens = dome.part("lens");
+            h.assertTrue(Recolour.baseFor(lens, data, Recolour.KEEP) == LampData.DEFAULT_COLOR, "a default lamp: a lens of the default colour");
+            data.color = 0x30D060;
+            h.assertTrue(Recolour.baseFor(lens, data, Recolour.KEEP) == 0x30D060, "a green lamp: a green lens");
+            int[] lowest = {Integer.MAX_VALUE};
+            int[] highest = {0};
+            QuadSink sink = new QuadSink() {
+                @Override
+                public void quad(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2,
+                                 float x3, float y3, float z3, int rgb, int normal, boolean emissive) {
+                    int green = rgb >> 8 & 0xFF;
+                    lowest[0] = Math.min(lowest[0], green);
+                    highest[0] = Math.max(highest[0], green);
+                }
+            };
+            PartDraw.emit(sink, lens, Placement.fit(dome, 8, 8, 1.0f), 0.0f, 0.0f, 0x30D060, 1.0f, true, new float[PartDraw.SCRATCH]);
+            h.assertTrue(highest[0] >= 0xC8 && lowest[0] <= highest[0] - 40, "a lit dome: the face toward the viewer nearly at full colour, the flanks clearly darker: "
+                    + lowest[0] + ".." + highest[0]);
         }
         h.succeed();
     }
