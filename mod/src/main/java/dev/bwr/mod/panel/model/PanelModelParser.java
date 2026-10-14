@@ -283,7 +283,7 @@ public final class PanelModelParser {
         }
         float[] surface = surfaceAt(parts, pos[0], pos[1], pos[2]);
         return new BakedPanelModel.Label(labelId, pos[0], pos[1], pos[2], height, align, rot,
-                inkFor(surface), surface != null && surface[1] > 0.5f);
+                inkFor(surface), surface != null && surface[1] > 0.5f, surface == null ? 0 : (int) surface[0]);
     }
 
     // ---- legend colour: dark ink on a light surface, light ink on a dark one
@@ -298,7 +298,7 @@ public final class PanelModelParser {
         int bestColor = -1;
         boolean lamp = false;
         for (BakedPanelModel.Part part : parts) {
-            if (part.moving() || part.role == BakedPanelModel.Role.GLASS) {
+            if ((part.moving() && part.role != BakedPanelModel.Role.LAMP) || part.role == BakedPanelModel.Role.GLASS) {
                 continue;
             }
             for (int f = 0; f < part.faceCount; f++) {

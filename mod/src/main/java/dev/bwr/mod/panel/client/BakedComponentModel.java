@@ -80,6 +80,7 @@ final class BakedComponentModel {
     private final BakedPanelModel.Part[] glassParts;
     private final Legends.Item[] items;
     private final float[] itemWidth;
+    private final int legendCapRgb;
     /** Handle angle of each detent of a selector or key switch (from the legend anchors when the model has them). */
     private final float[] detents;
     private final float[] scratch = new float[PartDraw.SCRATCH];
@@ -101,6 +102,7 @@ final class BakedComponentModel {
         this.continuous = kind == Kind.DIAL_GAUGE || kind == Kind.EDGEWISE;
         this.place = Placement.fit(model, component.w(), component.h(), rowAspect);
         ComponentData data = component.data();
+        this.legendCapRgb = Recolour.configuredColour(data);
         List<BakedPanelModel.Part> statics = new ArrayList<>();
         List<BakedPanelModel.Part> dynamics = new ArrayList<>();
         List<BakedPanelModel.Part> glass = new ArrayList<>();
@@ -353,9 +355,9 @@ final class BakedComponentModel {
                 case RIGHT -> -width;
             };
             // A legend printed on a lamp lens reads dark against the lit lens and light against the dim one.
-            int ink = item.onLamp() && lit ? PanelModelParser.INK_DARK : item.ink();
+            int ink = item.onLamp() ? Legends.lampInk(legendCapRgb >= 0 ? legendCapRgb : item.surfaceRgb(), lit) : item.ink();
             context.textRotated(item.text(), item.x(), item.y(), item.capCells() / Legends.CAP_PIXELS, item.rotation(),
-                    item.z() + TEXT_LIFT, ink, false, dx, -Legends.CAP_PIXELS / 2.0f);
+                    item.z() + TEXT_LIFT, ink, item.onLamp(), dx, -Legends.CAP_PIXELS / 2.0f);
         }
     }
 }

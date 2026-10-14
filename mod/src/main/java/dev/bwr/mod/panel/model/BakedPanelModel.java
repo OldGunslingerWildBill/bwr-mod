@@ -141,8 +141,10 @@ public final class BakedPanelModel {
          * drawn dark while the lens is lit and with {@link #ink} while it is dim.
          */
         public final boolean onLamp;
+        public final int surfaceRgb;
 
-        Label(String id, float x, float y, float z, float height, Align align, float rotation, int ink, boolean onLamp) {
+        Label(String id, float x, float y, float z, float height, Align align, float rotation, int ink, boolean onLamp, int surfaceRgb) {
+            this.surfaceRgb = surfaceRgb;
             this.onLamp = onLamp;
             this.id = id;
             this.x = x;

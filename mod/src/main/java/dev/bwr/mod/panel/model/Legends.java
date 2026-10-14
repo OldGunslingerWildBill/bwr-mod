@@ -54,7 +54,13 @@ public final class Legends {
      * @param rotation clockwise degrees
      */
     public record Item(String text, float x, float y, float z, float capCells, float rotation,
-                       BakedPanelModel.Align align, int ink, boolean onLamp) {
+                       BakedPanelModel.Align align, int ink, boolean onLamp, int surfaceRgb) {
+    }
+
+    /** Choose ink from the actual cap colour and state, including player recolouring. */
+    public static int lampInk(int capRgb, boolean lit) {
+        int surface = lit ? capRgb : dev.bwr.mod.panel.client.QuadSink.shade(capRgb, 0.22f);
+        return PanelModelParser.luminance(surface) > 0.45 ? PanelModelParser.INK_DARK : PanelModelParser.INK_LIGHT;
     }
 
     /** {@link #items(BakedPanelModel, Placement, String, PanelComponent, PanelStyles.KeyPose)} for a model that is not a key switch. */
@@ -248,7 +254,7 @@ public final class Legends {
 
     private static Item item(String text, BakedPanelModel.Label label, Placement place, float x, float y, float z) {
         return new Item(text, place.x(x), place.y(y), place.z(z), place.length(label.height), label.rotation,
-                label.align, label.ink, label.onLamp);
+                label.align, label.ink, label.onLamp, label.surfaceRgb);
     }
 
     private static float lerp(float a, float b, float t) {

@@ -95,12 +95,26 @@ public final class PartDraw {
                 // by how squarely it faces the viewer (a flat face, normal straight out, is untouched).
                 faceBrightness *= 0.6f + 0.4f * Math.max(0.0f, r20 * n0 + r21 * n1 + r22 * n2);
             }
+            int rgb = faceColor(part, f, baseRgb, faceBrightness);
+            // The bulb transmits most strongly through the crown of a curved lens.
+            // Keep the shoulder saturated; flat annunciator/cap faces have no dome hot spot.
+            if (emissive && part.role == BakedPanelModel.Role.LAMP && part.faceCount >= 32) {
+                float facing = Math.max(0.0f, n2);
+                rgb = hotSpot(rgb, 0.9f * (float) Math.pow(facing, 20));
+            }
             sink.quad(scratch[0], scratch[1], scratch[2], scratch[3], scratch[4], scratch[5],
                     scratch[6], scratch[7], scratch[8], scratch[9], scratch[10], scratch[11],
-                    faceColor(part, f, baseRgb, faceBrightness),
+                    rgb,
                     r00 * n0 + r01 * n1 + r02 * n2, r10 * n0 + r11 * n1 + r12 * n2, r20 * n0 + r21 * n1 + r22 * n2,
                     emissive);
         }
+    }
+
+    private static int hotSpot(int rgb, float amount) {
+        int r = (rgb >> 16) & 255, g = (rgb >> 8) & 255, b = rgb & 255;
+        return ((r + Math.round((255 - r) * amount)) << 16)
+                | ((g + Math.round((255 - g) * amount)) << 8)
+                | (b + Math.round((255 - b) * amount));
     }
 
     /** Emits a {@link BakedPanelModel.Role#GLASS} part as translucent quads in the part's own colours. */
