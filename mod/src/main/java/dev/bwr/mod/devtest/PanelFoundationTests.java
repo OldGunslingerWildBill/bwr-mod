@@ -72,10 +72,13 @@ public final class PanelFoundationTests {
         final FakePlayer player;
 
         private Runnable afterCheck;
+        private final EntityLookupProbe probe;
+        private int polls;
 
         private Stage(GameTestHelper helper, int slot) {
             level = helper.getLevel();
             origin = new BlockPos(44_900 + slot * 64, 110, 44_900);
+            probe = new EntityLookupProbe(level, origin.getY() + 4.0);
             hold(true);
             player = FakePlayerFactory.get(level, new GameProfile(
                     UUID.nameUUIDFromBytes(("panel-test-" + slot).getBytes(java.nio.charset.StandardCharsets.UTF_8)),
@@ -83,15 +86,15 @@ public final class PanelFoundationTests {
         }
 
         /**
-         * Runs {@code body} on a clean, force-loaded fixture. The chunks are forced at once but the fixture
-         * is only reset and built two ticks later: until then the chunk's entity section is not accessible,
-         * so item entities left by an earlier run (the GameTest world persists) could not be found and
-         * removed. If the body registered an {@link #after} check it runs three ticks later, once items the
-         * body spawned are visible. The chunks are released in every outcome.
+         * Runs {@code body} on a clean, force-loaded fixture. The chunks are forced at once but the fixture is only
+         * reset and built once entity lookups work in them (see {@link EntityLookupProbe}; until then item entities
+         * left by an earlier run, the GameTest world persists, cannot be found and removed, and items the body
+         * spawns cannot be counted). If the body registered an {@link #after} check it runs three ticks later. The
+         * chunks are released in every outcome.
          */
         static void run(GameTestHelper helper, int slot, java.util.function.Consumer<Stage> body) {
             Stage s = new Stage(helper, slot);
-            helper.runAfterDelay(2, () -> {
+            s.whenLive(helper, () -> {
                 try {
                     s.clear();
                     s.player.setGameMode(GameType.SURVIVAL);
@@ -116,6 +119,25 @@ public final class PanelFoundationTests {
                         helper.succeed();
                     });
                 }
+            });
+        }
+
+        /** Waits a tick at a time, with no fixed count, until the chunks the wall and its drops can be in answer entity lookups. */
+        private void whenLive(GameTestHelper helper, Runnable then) {
+            helper.runAfterDelay(1, () -> {
+                boolean ready = true;
+                for (int x = -24; x <= 4; x += 8) {
+                    ready &= probe.live(origin.offset(x, 0, 0));
+                }
+                if (ready) {
+                    then.run();
+                    return;
+                }
+                if (++polls > 200) {
+                    release();
+                    helper.assertTrue(false, "the fixture chunks never answered entity lookups");
+                }
+                whenLive(helper, then);
             });
         }
 
@@ -211,6 +233,7 @@ public final class PanelFoundationTests {
         }
 
         void release() {
+            probe.forget();
             clear();
             hold(false);
         }

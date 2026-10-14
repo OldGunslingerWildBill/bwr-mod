@@ -19,12 +19,10 @@ import net.minecraft.server.level.TicketType;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -32,11 +30,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -56,7 +50,7 @@ import java.util.UUID;
  * <p>Isolation: GameTests of one batch run in the same level at the same time, and a force-loaded chunk becomes
  * visible to entity lookups some ticks after it is readable, by a delay that depends on the machine's load. So
  * every count here is of the fixture's own things (deferrals of the fixture's block entities, nameplate items in
- * the fixture box), and nothing counts items until {@link Stage#entitiesLive} has seen a probe item found.
+ * the fixture box), and nothing counts items until {@link EntityLookupProbe} has seen a probe item found.
  */
 @GameTestHolder("bwr")
 @PrefixGameTestTemplate(false)
@@ -74,14 +68,13 @@ public final class PanelDesyncTests {
         final BlockPos origin;
         final FakePlayer player;
         private final List<Runnable> steps = new ArrayList<>();
-        /** Chunks whose entity lookups have been seen to work (a probe item was found there). */
-        private final Set<ChunkPos> live = new HashSet<>();
-        private final Map<ChunkPos, ItemEntity> probes = new HashMap<>();
+        private final EntityLookupProbe probe;
         private int polls;
 
         private Stage(GameTestHelper helper, int slot) {
             level = helper.getLevel();
             origin = new BlockPos(52_900 + slot * 64, 110, 52_900);
+            probe = new EntityLookupProbe(level, origin.getY() + 3.0);
             hold(true);
             player = FakePlayerFactory.get(level, new GameProfile(
                     UUID.nameUUIDFromBytes(("panel-desync-" + slot).getBytes(java.nio.charset.StandardCharsets.UTF_8)),
@@ -121,51 +114,14 @@ public final class PanelDesyncTests {
             });
         }
 
-        /**
-         * Whether an entity spawned at {@code pos} can be found by a lookup yet. A chunk that is loaded and forced
-         * is not necessarily visible to {@code getEntitiesOfClass} at once: an item added to it right away is alive
-         * but not found for a tick or more, longer on a busy machine, which is what made "one item dropped" read
-         * zero. A probe item (bedrock, which nothing here counts) is added to the chunk and the answer is whether it
-         * is found; once it is, it is removed and the chunk counts as live until {@link #forgetLive}.
-         */
+        /** Whether an entity spawned at {@code pos} can be found by a lookup yet (see {@link EntityLookupProbe}). */
         boolean entitiesLive(BlockPos pos) {
-            if (!level.isLoaded(pos)) {
-                return false;
-            }
-            ChunkPos chunk = new ChunkPos(pos);
-            if (live.contains(chunk)) {
-                return true;
-            }
-            ItemEntity probe = probes.get(chunk);
-            if (probe == null || probe.isRemoved()) {
-                probe = new ItemEntity(level, pos.getX() + 0.5, origin.getY() + 3.0, pos.getZ() + 0.5, new ItemStack(Items.BEDROCK));
-                probe.setNoGravity(true);
-                probe.setDeltaMovement(Vec3.ZERO);
-                probe.setUnlimitedLifetime();
-                probe.setPickUpDelay(32767);
-                if (!level.addFreshEntity(probe)) {
-                    return false;
-                }
-                probes.put(chunk, probe);
-                return false;
-            }
-            ItemEntity wanted = probe;
-            if (level.getEntitiesOfClass(ItemEntity.class, wanted.getBoundingBox().inflate(0.5), e -> e == wanted).isEmpty()) {
-                return false;
-            }
-            wanted.discard();
-            probes.remove(chunk);
-            live.add(chunk);
-            return true;
+            return probe.live(pos);
         }
 
         /** Forget what was seen of the chunks' entity lookups (after they were unloaded and loaded again). */
         void forgetLive() {
-            live.clear();
-            for (ItemEntity probe : probes.values()) {
-                probe.discard();
-            }
-            probes.clear();
+            probe.forget();
         }
 
         /** Whether a position belongs to this fixture's wall (columns -1 to 8, two rows). */
