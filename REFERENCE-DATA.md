@@ -412,14 +412,18 @@ Preserved code parameters, independently distinguished from the physical sources
 | **13.4 W per FE/t** | `mod/.../eccs/EccsPower.java`: existing 6.7 MW / 500,000 FE/t mapping. Phase M preserves it. At 20 simulation ticks/s, **1 FE = 0.67 J**. FE is a game unit, not a physical measurement standard. |
 | **1500 MW**, **0.985 efficiency** | `core/.../turbine/PowerTurbine.java`, existing rating and efficiency; not recalibrated by Phase M. Rated delivery is approximately **111,940,299 FE/t**. |
 | **2,000,000,000 FE** generator buffer | `mod/.../power/PowerModuleBlockEntity.java`. Derived stored energy **0.372222 MWh**; empty-to-full charging headroom at rated production **0.893333 s**. Actual headroom depends on charge and other loads. |
-| **1500 rpm**, **8 s** RPM relaxation | `mod/.../power/PowerTrain.java`, existing work-dependent speed approximation. Phase M preserves it and proposes an export-branch breaker for compatibility. This approximation does not model load-rejection overspeed. |
+| **1500 rpm**, former **8 s** RPM relaxation | `mod/.../power/PowerTrain.java`, baseline work-dependent speed approximation. Review R1 replaces the relaxation with rotor dynamics while preserving rated speed. The old approximation does not model load-rejection overspeed. |
+| **H = 5 s**, nominal **7.5 GJ**, **I ≈ 607,927 kg m²** | Explicit **game calibration**, not sourced manufacturer data. Derive inertia with `I = 2*H*1.5e9/(1500*2*pi/60)^2`. The nominal 2 HP / 4 LP / 1 generator train allocates 10% to each HP and LP module and 40% to the generator; sum installed inertias. The allocation and use of a MW base are game choices. |
+| Rated mechanical loss **0.5%** of the shaft base, proportional to speed squared | Explicit **game calibration**: nominal 7.5 MW at 1500 rpm. Loss energy is bounded by available energy. Conversion efficiency remains the separate existing 0.985 factor. |
+| Overspeed damage above **110%** speed; accumulation `0.1*max(0,rpm/1650-1)` per second | Explicit **game calibration**, including threshold and severity, not a manufacturer trip or fatigue curve. Damage caps at 1 and never operates a valve/breaker. No real overspeed-protection design claim is made. |
 
 `GRID-TIE-SPEC.md` labels demand-curve defaults, configurable maximum, list/depth
 limits, meter time windows, bad-close damage severity and acceptance durations/
 tolerances as **game or engineering choices**, not sourced plant settings. Its
 FE/MWh equations are dimensional conversions from the preserved mapping.
 
-TODO-5 B6 remains deferred. Its eventual torque/inertia model must distinguish
-generated electricity, delivered FE and buffer changes when the export breaker
-opens under load. No inertia, losses or overspeed-damage threshold is adopted
-here; TODO-5's approximate 110–120% suggestion is not a sourced M parameter.
+Review R1 moves TODO-5 B6 into Phase M, before synchronization. The torque/inertia
+model must distinguish generated electricity, delivered FE and buffer changes
+when the export breaker opens under load. The calibration above is declared in
+advance for implementation/testing; it is not an executed validation result.
+See `GRID-TIE-SPEC.md` §9.1 for the identified acceptance-contract conflicts.

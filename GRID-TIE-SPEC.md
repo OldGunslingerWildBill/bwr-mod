@@ -1,11 +1,13 @@
 # Grid tie and load following — Phase M implementation spec
 
-Status: **step 0, proposed for review; no implementation.** Baseline:
+Status: **review R1–R5 applied; implementation pending.** Baseline:
 `2ef9943` on `containment-structure`, after accepted TODO-5 Part A.
 Scope follows the updated handoff `ASTRA-TODO-4.txt` Phase M and the owner's
 2026-10-14 instruction. The older Downloads copy's diesel and larger commit
-budget are superseded. Plan: this documentation commit plus **five implementation
-commits**, six total. Stop after this spec for review.
+budget are superseded by `ASTRA-REVIEW-PHASE-M-SPEC.txt` (2026-10-14).
+Plan: this review-update documentation commit plus **seven implementation commits**.
+The owner authorized implementation without another routine spec stop. Stop early
+only for a real scope conflict; the compatibility conflict in §9.1 needs resolution.
 
 Electricity remains FE. Add a controllable external demand sink, delivered-load
 measurements, a directional inline meter and manual grid synchronization. No
@@ -25,7 +27,7 @@ At the baseline:
 
 | Code | Existing behavior to preserve |
 | --- | --- |
-| `power/PowerTrain.java` in mod | Finds a loaded coaxial train, at most 32 modules; executes each module once per game tick. Generator buffer room bounds turbine expansion work. RPM approaches 1500 while work is positive and approaches zero otherwise, with an 8-second relaxation. |
+| `power/PowerTrain.java` in mod | Finds a loaded coaxial train, at most 32 modules; executes each module once per game tick. Replace buffer-room-gated expansion and the 8-second RPM relaxation with the shaft energy balance in §4.3. Preserve once-per-tick execution and loaded-only discovery. |
 | `power/PowerModuleBlockEntity.java` | Each generator stores up to 2,000,000,000 FE. Its terminal supports external extraction and pushes to a neighbor. `electricMW` is production, not delivered power. The common `extractEnergy` boundary is the accounting point. |
 | `core/turbine/PowerTurbine.java` | Existing electrical rating 1500 MW and efficiency 0.985; no rotor inertia, electrical torque or synchronization dynamics. |
 | `eccs/EccsPower.java` in mod | Existing conversion is 13.4 W per FE/t. Do not change the FE economy. |
@@ -38,15 +40,14 @@ code baselines, not newly asserted manufacturer ratings. References and the
 distinction between physical data and game choices are in §10 and
 `REFERENCE-DATA.md` §13.
 
-Three interpretations need explicit review before implementation:
+Scope interpretations retained after review:
 
 1. **The proposed breaker isolates the grid-export branch.** It lives in the grid
    tie; it does not disconnect the generator's existing FE terminal or base
    feeders. This is a scoped interpretation of TODO-4's “generator output
-   breaker.” A global output breaker with today's RPM rule prevents sustained
-   open-breaker spin-up once the internal buffer fills. Resolving that properly
-   requires the no-load shaft work deferred to B6. This proposal preserves the
-   existing terminal and requires a real auxiliary/base load for commissioning.
+   breaker.” Shaft dynamics (formerly TODO-5 B6) now belong to Phase M. A player
+   can roll and hold near rated speed with the tie open and a throttled turbine
+   control valve; commissioning does not require an auxiliary/base load.
    It therefore does **not** claim that opening the export breaker causes station
    blackout. Global generator isolation is not silently added here.
 2. **Base-first allocation is a wiring requirement.** A sink cannot enforce
@@ -162,27 +163,14 @@ not teleport FE or certify its origin. A shared cable can contain other sources;
 document that such a hookup is unsuitable for attributing export to one generator.
 Use a dedicated generator/export topology for the synchronizing scenario.
 
-Allow one tie per generator in M. Store reciprocal UUID bindings; handshakes must
-reject duplicates and stale coordinate reuse. Binding changes require the tie to
-be manually open, preventing a configuration change from bypassing a close event.
-This is configuration integrity, not a synchronization permissive. Rebinding away
-from an unloaded endpoint requires the player to clear its old association when
-it is next loaded; no hidden cross-chunk edits.
-Refuse a new binding until its prior association has been cleared by that procedure.
-
-Define an explicit recovery path for an orphaned reciprocal binding. Generator
-`clearGridBinding()` (also panel `clear_grid_binding` and the CC-free command)
-resolves the recorded tie location only if loaded. If the matching tie exists,
-it must be manually open, and the command clears both endpoints atomically. If
-that loaded location is empty or contains a different UUID, clear only the stale
-generator record. If the peer location is unloaded, return unavailable without
-mutation. The tie's `clearGenerator()` follows the same rule for its loaded peer
-and requires its own breaker open. Thus breaking a tie while its generator is
-unloaded cannot reserve that generator forever: later load the old tie location
-and generator, explicitly clear the orphan, and bind the replacement. Save/load
-alone never repairs or removes an association.
-Clear a peer record only if it reciprocally identifies the caller; otherwise
-clear the caller's stale record alone, without altering the peer's valid binding.
+Store the binding **one way, on the tie only**. The generator stores no tie
+association. Several ties may bind the same generator; each close is evaluated
+independently. A replaced generator's UUID invalidates the association until the
+player rebinds. Binding changes and `clearGenerator()` require this tie to be
+manually open. They mutate only this tie; the former endpoint need not be loaded.
+There is no reciprocal handshake, orphan recovery protocol or generator-side
+clear command. An unloaded endpoint is temporarily unavailable; a loaded matching
+UUID can become available again without changing the binding.
 
 Intake requires a closed breaker and a live, matching, formed binding. Loss of
 binding availability returns zero intake and `binding_valid = false`, without
@@ -272,13 +260,12 @@ universal damage-onset curve. They correspond, by derivation, to a 2.01-rpm
 speed difference at four poles. Omit voltage checking because voltage is out of
 scope. A read-only `within_sync_window` signal is allowed; it never gates close.
 
-Commissioning requires a genuine base/auxiliary FE draw with the tie open and
-steam admitted, then an explicit close near the displayed window. Under today's
-RPM approximation, sustained positive work approaches rated speed irrespective
-of its magnitude; steam interruption can change speed/phase. The implementation
-must prove a reachable synchronization sequence through actual steam/load
-inputs, without writing RPM or phase in the integration test. No hidden dump load,
-phase-set command or turbine governor is added to make that test pass.
+Commission with the tie open, using the existing non-stop
+`TurbineValveBlockEntity` fractional position to roll the shaft and trim its speed.
+The player makes the synchroscope creep toward zero, then explicitly closes.
+Prove a reachable synchronization sequence through real steam and valve commands,
+without writing RPM or phase in the integration test. No hidden dump load,
+phase-set command or automatic governor is added. An auxiliary load is optional.
 
 ### 4.2 Consequence of a bad close
 
@@ -300,33 +287,76 @@ Neither damage nor failure opens the breaker, operates a valve, starts backup or
 resets itself. Replacement is the M repair mechanism; normal drops retain damage
 to prevent break/re-place repair. There is no mod command to clear damage.
 
-### 4.3 B6 interaction — deferred, not built by M
+### 4.3 Shaft dynamics — TODO-5 B6 is part of Phase M
 
-Opening at load stops tie acceptance immediately. Other connected loads remain;
-a branch opening is full rejection only if it was the generator's only load.
-External cable/battery storage and the generator buffer can delay the decrease in
-electrical production. The existing internal buffer's empty-to-full headroom at
-1500 MW is only **0.8933 seconds**, derived from §1; its actual headroom may be
-smaller. In M, buffer-room gating then reduces steam draw and today's RPM rule
-decays speed. **M must not assert that this produces overspeed.**
+Use a core shaft model with torque balance expressed as rotational energy, so
+startup at zero RPM has no division by zero:
 
-B6 will use tick-level steam work, generated electrical energy, delivered FE,
-buffer delta and the manual breaker edge, not a one-second average as torque.
-Extraction alone is insufficient: charging storage is electrical load too, while
-discharge is not new shaft work. B6 must decouple admitted steam expansion from
-the present generator-room work cap and put surplus shaft work into rotational
-energy with losses. Merely replacing the RPM interpolation leaves steam work
-artificially removed at full storage and cannot create the requested transient.
-No energy dump or double-counting of storage as kinetic energy is allowed.
+```text
+omega = rpm * 2*pi/60
+E_rot = 0.5 * I * omega^2
+E_rot_next - E_rot = W_steam - W_generator - W_loss
+W_generator = generated_FE * 0.67 / 0.985 joules
+             = (delivered_FE + buffer_delta_FE) * 0.67 / 0.985
+rpm_next = sqrt(2 * E_rot_next / I) * 60/(2*pi)
+```
 
-Future B6 acceptance: with real steam still admitted and the grid branch carrying
-the sole load, manually open the breaker, account for storage/residual loads, and
-observe acceleration above rated speed; explicitly closing the stop valve must
-remove steam torque. With retained base load, expect a partial rejection. B6 must
-source its own inertia/loss and overspeed-damage parameters. TODO-5's suggested
-110–120% is **not an adopted M threshold**. There will still be no automatic trip.
-The global-terminal-breaker/startup question in §0 must be revisited when B6
-supplies real no-load shaft behavior.
+These are per-step energies, not rolling-average power readings. Generator
+conversion is bounded by its existing rating, buffer room and available shaft
+energy. A discharging buffer is not negative shaft torque and must not create
+rotation: generated FE remains nonnegative; delivery plus buffer delta equals
+that generation. Account separately for conversion losses and mechanical losses.
+Surplus steam work becomes rotation; energy already used to charge the FE buffer
+must never also accelerate the shaft. No infinite source or unreported energy
+sink is allowed. Kinetic energy can supply electrical work during coast-down.
+
+Admitted expansion must be independent of generator buffer room. The existing
+steam-path topology, valves, available steam, exhaust space and condenser
+backpressure still constrain expansion. Pass a finite physical expansion budget
+to the existing core expansion primitive; preserve its explicit budget contract.
+An active generator is not required to absorb every joule of admitted work.
+The shared train service advances the shaft once per server tick, using the
+existing loaded-only train discovery. Inertia and saved speed must not be
+multiplied when several modules report the same shaft. Joining/splitting trains
+must account for their rotational energy rather than select the largest RPM.
+
+Initial **game calibration**, not a claim about an actual manufacturer's rotor:
+
+- Rated speed stays 1500 rpm and electrical rating stays 1500 MW per generator.
+- Inertia constant H = 5 seconds on a 1500 MW base for one nominal train:
+  rated rotational energy = 7.5 GJ and I = 2*H*1.5e9/omega_rated^2,
+  approximately 607,927 kg m². Allocate that reference inertia across the existing
+  nominal 2 HP / 4 LP / 1 generator train: HP 10% each, LP 10% each, generator
+  40%. Sum installed module inertias; turbine-only fragments retain their inertia.
+  These proportions, H and using a MW base in place of an MVA nameplate are
+  explicit game choices. Verify joining/splitting conservation in core tests.
+- Windage/friction loss power = 0.005 * baseWatts * (rpm/1500)^2;
+  baseWatts is the train's rated rotational energy divided by H. At rated speed
+  the reference train loses 7.5 MW. Bound the discrete loss by available energy.
+- Overspeed threshold = 110% rated (1650 rpm). Above it, accumulate normalized
+  damage at `0.1 * max(0, rpm/1650 - 1)` per simulated second, capped at 1.
+  Threshold, coefficient and severity are game calibration, not a trip setting
+  or a manufacturer fatigue law. Damage persists and contributes to the same
+  generator condition as bad closing. At damage 1 the generator produces no
+  further FE. Neither damage nor overspeed moves a valve or opens a breaker.
+
+Use the existing throttling turbine control valve as the player's steam
+admission control. Keep fractional position/stroke, CC and panel commands;
+add no automatic governor, speed clamp or trip. Phase O/player CC may later
+implement a governor. Expose RPM, percent rated speed, overspeed, kinetic energy,
+shaft/loss power and damage. Save speed/damage; derive kinetic energy from the
+installed inertia. Legacy finite saved RPM becomes the starting physical speed,
+including speeds above rated; loading must not silently clamp it to 1500.
+
+Opening at load stops tie intake immediately; other FE loads remain. Internal
+buffer headroom (at most 0.8933 seconds at rated production) and external storage
+can delay rejection. With steam still admitted, reduced electrical torque then
+accelerates the shaft. Demonstrate overspeed on full rejection, and demonstrate
+that the player's stop-valve closure removes fresh steam torque; trapped steam
+may finish expanding. The breaker remains in its commanded position.
+
+This replaces the old buffer-gating/RPM-decay model. The old fixed-valve
+lower-demand/lower-steam acceptance cannot be retained unchanged; see §9.1.
 
 ## 5. Load report, commands and panel adapters
 
@@ -371,7 +401,7 @@ has a signal; labels and state explanations use TEXT. Keep all old keys/meanings
 
 | Device | New signal keys (canonical units) |
 | --- | --- |
-| Generator | `delivered_mw_now`, `delivered_mw_1s`, `delivered_mw_1min`, `delivered_mwh`, `generated_mw_1s`, `generated_fe_tick`, `delivered_fe_tick`, `buffer_delta_fe_tick`, `damage`, `failed`, `counter_saturated`, `sample_ticks`, `window_ready_1s`, `window_ready_1min`, `grid_binding_valid` |
+| Generator | `delivered_mw_now`, `delivered_mw_1s`, `delivered_mw_1min`, `delivered_mwh`, `generated_mw_1s`, `generated_fe_tick`, `delivered_fe_tick`, `buffer_delta_fe_tick`, `damage`, `failed`, `counter_saturated`, `sample_ticks`, `window_ready_1s`, `window_ready_1min`, `speed_percent`, `overspeed`, `kinetic_energy_mj`, `shaft_loss_mw` |
 | Tie demand | `demand_mode`, `fixed_mw`, `remote_mw`, `demand_mw`, `demand_mw_1s`, `curve_min_mw`, `curve_max_mw`, `curve_period_ticks`, `curve_phase_ticks`, `maximum_mw` |
 | Tie energy/report | `delivered_mw_now`, `delivered_mw_1s`, `delivered_mw_1min`, `delivered_mwh`, `grid_shortfall_mw`, `observed_base_mw`, `requested_total_mw`, `mw_error`, `aggregate_valid`, `selected_meter_count`, `valid_meter_count`, common sampling/saturation fields |
 | Tie breaker/source | `breaker_closed`, `export_enabled`, `binding_valid`, `bound_generator` (TEXT), `rpm`, `shaft_frequency_hz`, `slip_hz`, `phase_degrees`, `sync_valid`, `within_sync_window`, `last_close_angle_degrees`, `last_close_slip_hz`, `last_close_fault`, `status` (TEXT) |
@@ -387,7 +417,7 @@ Proposed CC API (all status fields mirror the signal contract in camelCase):
 
 | Peripheral | Methods |
 | --- | --- |
-| Existing `bwr_generator` | Extend `getStatus()` preserving old fields; add `clearGridBinding()` for the loaded, player-requested recovery in §2.2. |
+| Existing `bwr_generator` | Extend `getStatus()` preserving old fields; no tie-binding state or recovery method. |
 | `bwr_grid_tie` | `getStatus()`, `setDemandMode(mode)`, `setFixedDemandMW(mw)`, `setRemoteDemandMW(mw)`, `setDailyCurve(minMW,maxMW,periodTicks)`, `resetCurve()`, `closeBreaker()`, `tripBreaker()`, `bindGenerator(x,y,z)`, `clearGenerator()`, `setMeters({{x,y,z},...})`, `getMeters()` |
 | `bwr_fe_meter` | `getStatus()`, `setLabel(text)`, `setDisplayUnits("MW" or "FE/t")`, `setDirection(face)` |
 
@@ -398,20 +428,24 @@ Corresponding panel command keys: `demand_mode`, `fixed_mw`, `remote_mw`,
 `close_breaker`, `trip_breaker`; meter `direction` and `display_units` use
 documented enum indices. Invalid curve edits reject atomically. Text labels and
 association lists use configuration methods, not numeric signal commands.
-The generator's `clear_grid_binding` is a pulse with the same recovery validation.
 
-For CC-free setup, add narrow `/bwr grid ...` and `/bwr meter ...` commands aimed
-at the player's looked-at device, with tab completion and the same validation and
-world-edit permission checks. They expose the same configuration/close/trip
-operations; selection references resolve loaded blocks only. They introduce no
-screen, automation or remote chunk access. Panel controls then use the ordinary
-wiring system. Reject NaN/infinity even in pulse/boolean adapters; validate enum,
-length, duplicates and coordinate inputs before mutation. Update `SIGNALS.md`
-with exact mappings and CC methods during implementation, not spec step 0.
+For CC-free setup, extend the existing panel linker: select a loaded generator,
+then apply it to an open tie to bind; select a loaded meter, then apply it to a tie
+to toggle that meter in its selected list. Distinguish the pending target's device
+type and show translated feedback. Preserve existing panel wiring behavior and
+world-edit permission checks. No `/bwr grid` or `/bwr meter` commands are added.
+Demand, curve settings, breaker commands, meter direction and display units use
+normal panel commands or CC. Labels can use the existing linker/configuration
+conventions where supported and CC; new screens belong to the owner's GUI work.
+Reject NaN/infinity even in pulse/boolean adapters; validate enum, length,
+duplicates and coordinate inputs before mutation. Update `SIGNALS.md` with exact
+linker gestures, mappings and CC methods during implementation. Verify startup
+and the linker/panel workflow with CC absent.
 
 ## 6. Ownership, lifecycle and saves
 
-Pure Java in `core/`: bounded energy conversions/ledgers, demand-curve evaluation,
+Pure Java in `core/`: shaft dynamics/losses/overspeed damage, bounded energy
+conversions/ledgers, demand-curve evaluation,
 phase/slip and bad-close damage arithmetic, plus acceptance tests. FE capability
 types, world time, identities, wiring and NBT stay in mod. Share the existing
 conversion through a core constant with `EccsPower` delegating unchanged if needed;
@@ -429,17 +463,17 @@ Use versioned additional NBT, preserving all existing power-module tags:
 
 | Device | Durable state |
 | --- | --- |
-| Generator | UUID, damage, tie binding, lifetime delivered FE and saturation flag. Existing RPM, FE, water and steam inventories remain unchanged. |
+| Generator | UUID, damage, lifetime delivered FE and saturation flag. Existing RPM, FE, water and steam inventories remain unchanged. |
 | Tie | UUID, binding, selected meter identities, breaker position, mode and setpoints, curve phase/period/min/max, fractional budget carry, lifetime FE, open phase, last-close samples/fault. |
 | Meter | UUID, facing, label, units, lifetime FE and saturation flag. No energy inventory. |
 
-Also persist the tie's last budget game-time stamp, allocated/spent FE and carry
-state for **same-tick** unload/reload protection. Reuse them only when the loaded
-world tick matches; otherwise begin a new budget without spending old allowance
-or advancing an unloaded interval. Test this explicitly. Do not serialize rolling
+Per-tick allocated/spent budgets and tick stamps are transient. Reload discards
+them and starts fresh rate windows; no same-tick budget persistence. At most one
+extra tick of demand allowance on reload consumes real FE and duplicates no
+energy. Persist fractional carry and lifetime totals, but never serialize rolling
 arrays, capability objects, service membership or stale object references.
 
-Old generators without M fields acquire a UUID, zero damage/totals, no binding,
+Old generators without M fields acquire a UUID, zero damage/totals,
 and unchanged terminal behavior. New ties start open with zero fixed demand;
 there are no legacy ties to auto-bind. Sanitize malformed/nonfinite data, enum
 values and oversized lists, normalize phases, and bound counters without overflow.
@@ -456,8 +490,9 @@ NBT paths require round-trip coverage; no repair-by-replacement-of-the-same-item
 
 ## 7. Load-following and integration acceptance
 
-These are **planned tests, not results from step 0**. Register new core classes in
-`AcceptanceTests` and pass `verifyTestRegistration`; a filtered unregistered test
+These are **planned tests, not results from step 0**. Register new normal core classes in
+`AcceptanceTests` and pass `verifyTestRegistration`; register the long runner
+explicitly as well if used. A filtered unregistered test
 is not evidence. Add new assertions without weakening existing ones. Every commit
 below includes a focused regression that fails without its implementation.
 
@@ -467,7 +502,7 @@ below includes a focused regression that fails without its implementation.
   more than signed-int FE in an aggregate; caps and counter saturation.
 - One shared budget across repeated faces/calls, next-tick settings, expired
   allowance, simulation purity including calls at a tick boundary, zero/negative
-  and malformed values, idle windows, reload warm-up and same-tick reload.
+  and malformed values, idle windows and reload warm-up.
 - Daily extrema/period/freeze; signed slip, phase wrapping, exact limit boundaries
   and either-limit violation. Damage only on a new close event, no protective
   rejection, and persistence/failure behavior.
@@ -486,7 +521,10 @@ Proposed deterministic test schedule: 10-minute rated baseline, 1-hour ramp down
 choices informed by the hour-scale behavior in [M-XE], not operating limits or a
 claim that all poison states equilibrate by the deadline. Use the current core
 integration step; run simulation faster than wall clock, not with hour-sized
-steps or altered half-lives. Measure runtime and report it.
+steps or altered half-lives. Measure runtime and report it. If this adds more
+than about three minutes to normal acceptance, register `:core:longAcceptance`
+with its own runner and registration coverage, run it in M7 (the former M5 final
+scenario item), and report it separately. Keep the normal suite fast.
 
 Recirculation must initiate both load changes with rods initially held; subsequent
 explicit rod moves compensate the slow poison change. Demonstrate that both
@@ -516,7 +554,7 @@ the delayed compensation, not these numeric tolerances.
    transfer exactly accounted FE. Check both push and pull, rejecting destinations,
    reverse/wrong faces, meter chains/cycles/depth limit and no meter-held inventory.
    Report any unsupported foreign-cable arrangement honestly.
-3. Bind an actual formed train, supply actual steam and a real auxiliary FE load,
+3. Bind an actual formed train, supply actual steam through a throttling valve,
    and synchronize through normal controls. No test writes RPM/phase. Bad closing
    uses the actual command path, damages the bound generator, remains closed,
    and fails to generate only at the defined damage endpoint. Repeated close is inert.
@@ -528,19 +566,20 @@ the delayed compensation, not these numeric tolerances.
    Do not make the steam source follow the requested grid demand directly.
 5. Opening the export breaker stops tie intake while a separately wired base load
    can still draw from the existing generator terminal. Retained branch loads and
-   buffer changes explain the difference from full rejection. No overspeed assertion
-   belongs in M. A cable with configured priority must demonstrate base supply;
+   buffer changes explain the difference from full rejection. Prove acceleration
+   and overspeed after full rejection, then removal of fresh steam torque after
+   manual stop-valve closure. A cable with configured priority must demonstrate base supply;
    arbitrary equal-priority cables are not claimed to do so.
 6. Duplicate/missing meter selection, serial meters deliberately not selected,
    requested vs delivered grid load, time-aligned MW error, stale identities,
    unloading and replacing each endpoint. No production chunk ticket appears.
-7. Round-trip generator/tie/meter and item state, legacy generators, same-tick
-   reload, frozen-unload curves/phase, retained closed position and no duplicate FE.
-   Break a tie while its generator is unloaded, then load both locations, clear
-   the orphan through the real command, and successfully bind a replacement.
+7. Round-trip generator/tie/meter and item state, legacy generators,
+   frozen-unload curves/phase, retained closed position and no duplicate FE.
+   Several ties may bind one generator. Break/replace or unload each endpoint;
+   invalid UUIDs disable intake until explicit rebind, with no reciprocal cleanup.
 8. Run real CC methods and panel commands against live devices, asserting status
    and signal parity and invalid-input rejection. Repeat registration/startup with
-   CC absent. Verify the CC-free setup commands without a GUI.
+   CC absent. Verify the CC-free panel linker setup without a new GUI.
 
 Allocate fresh nonoverlapping fixture origins only after inventorying current
 devtests; the previously listed 44900–56900 origins and containment fixtures are
@@ -567,16 +606,50 @@ station-blackout code or automatic transfer switch is added.
 
 ## 9. Build order and completion evidence
 
-Step 0 is this spec and the reference appendix only. **Stop for review.** After
-approval, use the following five implementation commits; do not start any now.
+The R1–R5 documentation update is followed by **seven implementation commits**;
+shaft dynamics precedes the breaker. Each has a regression that fails without its
+implementation. Do not amend old acceptance assertions without owner authorization.
 
 | Commit | Deliverable and failing-without-it evidence |
 | --- | --- |
-| M1 | Core budget/curve/ledger/sync primitives and generator extraction accounting; registration, exact conservation, simulations, overflow/window tests and real-terminal push/pull regression. Preserve old FE/peripheral behavior. |
-| M2 | Grid tie, loaded service, config, binding, manual export breaker, close damage/save migration; recipes/assets alongside the block. Tests for multi-face budgets, manual close/trip, stale binding, actual startup/synchronization, damage and legacy generator behavior. |
-| M3 | Directional zero-storage FE meter, state/items/assets; push/pull conservation, loop/backpressure/reload tests and installed-cable compatibility evidence. |
-| M4 | Explicit meter selection and MW-error report; all signal/CC/configuration commands, `SIGNALS.md` and player wiring documentation. Real peripheral/panel parity and CC-free setup/optional-dependency checks. |
-| M5 | Registered long core load-follow acceptance, end-to-end demand/steam response, migration/unload/priority coverage and final report. Include measured runtime and supported cable limits. |
+| M1 | Core shaft inertia, energy/torque balance, losses and overspeed damage; mod steam-expansion coupling and existing fractional valve control. Core conservation/startup/coast-down/join-split tests; real load-rejection and stop-valve test. Report existing turbine behavior changes. |
+| M2 | Core energy budget, curve, ledger and sync primitives. Exact units, conservation, fractional carry, multi-call long budgets, simulation purity, overflow, windows and sync/damage boundaries. |
+| M3 | Generator extraction/production/storage accounting, live capability safety, UUID/damage and retained drop condition. Real-terminal push/pull/reentrancy, conservation, persistence and legacy regressions. |
+| M4 | Grid tie, loaded service, config, one-way binding and manual export breaker; recipes/assets. Multi-face budgets, multiple ties per generator, stale binding, bad close, and actual synchronization by throttling steam without RPM/phase writes. |
+| M5 | Directional zero-storage FE meter, state/items/assets. Push/pull conservation, loops/depth/backpressure/reload and installed-cable compatibility evidence. |
+| M6 | Explicit meter selection, MW-error report, all signal/CC/panel linker paths, `SIGNALS.md` and wiring docs. Real peripheral/panel parity, linker setup, CC-absent startup and invalid-input tests. |
+| M7 | Registered coupled long load-follow acceptance, end-to-end grid/steam scenarios, migration/unload/priority coverage and final report. Run/report `:core:longAcceptance` when the runtime criterion in §7.2 applies. |
+
+### 9.1 Scope conflict found while applying R1
+
+The review says both to implement inertia/losses and to retain the prior
+fixed-valve steam/demand acceptance and existing tests. Two concrete conflicts:
+
+1. §7.3 item 4 still requires lower steam draw after lowering grid demand at
+   **fixed valve positions**. Once buffer-room gating is removed, reduced
+   electrical torque creates acceleration, not a steam-control action. The
+   current admission capacity actually rises with RPM (`0.1 + 0.9*(rpm/1500)^2`).
+   Proposed replacement: first assert load-rejection acceleration at fixed valve
+   position; then issue explicit test-side player throttle commands and assert
+   lower steam draw/delivery and a controlled return to rated speed. Reverse the
+   sequence for recovery. No governor in production. The original item above is
+   retained visibly until the owner resolves this conflict.
+2. `PowerModuleRuntimeCheck.modularPlant` asserts exactly
+   `400*850*1000*0.985/0.67` FE from its seeded steam after 300 ticks, despite
+   seeding 1500 rpm and ignoring rotor energy and mechanical losses. It then
+   asserts zero electric MW after reload merely because steam was consumed.
+   With a physical shaft, stored rotational energy may supply electrical work
+   and mechanical losses must enter the balance. Proposed replacement, requiring
+   explicit owner authorization: retain steam/mass/share and duplicate-tick
+   checks; assert steam work plus initial kinetic energy equals electrical work
+   before conversion losses plus mechanical losses plus final kinetic energy;
+   assert save/load preserves that balance and introduces no steam or energy.
+   Keep the existing numerical conservation tolerance; do not loosen it.
+
+These are identified contract conflicts, **not observed failing test runs**.
+No existing test or production behavior was changed during this documentation
+update. Resolve the contracts before M1, rather than calibrating away losses or
+adding hidden automatic steam control to satisfy incompatible assertions.
 
 Final planned commands from the repository (Java 21 environment already used by
 the project):
@@ -598,14 +671,16 @@ scripts must still run against real peripheral names. Record exact commands,
 counts, runtime, failures and unverified claims; do not substitute only a focused
 test for the full acceptance/GameTest gates. No push is part of this phase.
 
-Budget excludes B6 and all TODO-5 Part B/C work. If implementation needs more
-than these five commits or the specified compatibility cannot be met, report the
+Budget includes B6; skip it in subsequent TODO-5 Part B. All other Part B/C work
+is separate. If implementation needs more than these seven commits or the
+specified compatibility cannot be met, report the
 concrete scope conflict for review rather than quietly extending the phase.
 
 ## 10. Reference index and numeric provenance
 
 Physical reference claims are limited to the cited material below. FE conversion,
-generator rating/efficiency/buffer/RPM relaxation are preserved code values (§0).
+generator rating/efficiency/buffer are preserved code values (§0). The old RPM
+relaxation is replaced by the explicitly game-calibrated shaft model in §4.3.
 Curve periods, configured caps, tick windows, identity/list/depth/label limits,
 damage severity and acceptance schedule/tolerances are explicitly engineering or
 game choices. Unit conversions and phase integration are derived equations.
