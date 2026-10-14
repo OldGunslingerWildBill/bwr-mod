@@ -6,6 +6,15 @@ headless checks on every push and pull request, and supports manual dispatch.
 
 ## Automated checks
 
+The full core display adds GameTest classes `FcdRodTests` (rod selection, steps, continuous stepping; fixture
+75,900), `FcdIndicationTests` (indications, LPRM strings, coordinates; 77,900), `FcdDisplayTests` (layout, mirroring,
+span and refusals, unbound, unformed and old saves, matrix presses; 79,900), `FcdSnapshotTests` (the codec and one
+patch per change; 81,900) and `FcdModelTests` (style table and model file contracts). They run in their own batch
+`fcd` on a real formed 15 x 15 reactor and a panel wall, and need CC for nothing. `:mod:runTurbineModelCheck
+-PbwrFcdClientCheck` (stages with `-PbwrFcdClientStages`, comparisons with `-PbwrPanelImmediate`,
+`-PbwrFcdLegendsPerFrame` and `-PbwrFcdProcedural`) measures frame cost and writes screenshots to
+`run/turbineModelCheck/fcd-check/`; it fails if the legend cache is not used.
+
 Alpha.30 adds `CoreMeltProgressionTest` (9), `ContainmentHydrogenTest` (11),
 `SevereAccidentIntegrationTest` (4) and `NaturalCirculationTest` (6). They cover
 burst and gap release, latent-heat melting, relocation, flooded versus dry lower

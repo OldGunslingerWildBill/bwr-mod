@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0-alpha.32 (unreleased) — Full core display, rod select matrix and SRV switches
+
+- Added reactor rod selection: signal `selected_rod`, commands `select_rod`, `selected_rod_insert` / `_withdraw` (one notch) and `selected_rod_insert_continuous` / `_withdraw_continuous` (held), and CC `selectRod`, `getSelectedRod`, `stepSelectedRodIn` / `Out`, `setSelectedRodInsertHeld` / `WithdrawHeld`. They move only the selected rod through the existing drive network, honouring CRD power and water. The selection is saved; old saves load with none.
+- Added per-rod indications `rod_<n>_drift`, `_scram`, `_full_in`, `_full_out`, `_accum_trouble`, `_lattice_x`, `_lattice_y`, `_label` (GE `XX-YY` coordinates) and per LPRM string and level `lprm_<s>_<a-d>_percent`, `_bypassed`, `_failed`, `_downscale`, `_upscale`. The core has no rod drift or low-charge notion, so those two are documented defaults; see SIGNALS.md.
+- Added the **full core display** (`columbia` lamp matrix and `browns_ferry` digital style) and the **rod select matrix** panel components. One binding to the reactor controller, no port per rod; one compact patch only when something changed. They span up to 8 x 8 blocks; a drawing that does not fit is refused with the size needed.
+- The panel GPU cache holds static legends in text vertex buffers; a 185-rod display plus a matrix costs about 0.05 to 0.09 ms a frame (was 1.4 to 1.5).
+- Style table: oiltight 30.5 mm selector (black knob, chrome wing lever), smooth and ribbed dome lights and the guarded yellow pushbutton, when their models ship.
+- No rod blocks, sequence control or worth minimiser: protection logic stays the player's.
+
 ## 0.1.0-alpha.31 — 2026-10-11 — Buildable containment
 
 - Added surveyed containment rooms built from full solid blocks, with volume, leak position, layer-based weakest-spot pressure rating and reactor/pool linking.

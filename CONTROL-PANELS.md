@@ -22,7 +22,8 @@ order and plug into the same wiring; the worked example below names them as the 
 
 A panel block face is a 16 x 16 grid of cells (one cell is 1/16 block). Components are sized so a wall reads
 from a few blocks away; right-click air with the item to cycle through the sizes (width x height in cells,
-the default first). A component may span up to 4 x 4 blocks.
+the default first). A component may span up to 4 x 4 blocks; the two core displays (below) are the exception and
+may span up to 8 x 8, because a 185-rod core is 96 cells across.
 
 | Component | Sizes (cells) |
 | --- | --- |
@@ -44,6 +45,8 @@ the default first). A component may span up to 4 x 4 blocks.
 | Mimic line | 3 cells thick: 16x3, 8x3, 4x3, 3x3, 32x3, 64x3 and vertical; corners and tees 6x6 to 16x16 |
 | Mimic symbol | 6x6, 8x8, 10x10, 12x12 |
 | Nameplate | 4 cells tall: 16x4, 8x4, 24x4, 32x4, 48x4, 64x4, 24x6, 32x8 |
+| Full core display | 96x96, 128x128, 64x64, 80x80, 112x112, 48x48, 128x96, 128x80, 112x80 (up to **8 x 8 blocks**) |
+| Rod select matrix | 64x64, 48x48, 80x80, 96x96, 112x112, 128x128, 32x32 (up to 8 x 8 blocks) |
 
 Engraved text, captions and labels scale with their component. Components placed before this size change keep
 the size they were placed at; a display's digit, character and segment counts follow its width, so an old
@@ -148,6 +151,89 @@ transform. The wrench screen shows a scaled binding as "Plant key @ x, y, z (xS 
 
 A sink has a scale factor, default 1 (redstone defaults to 15 in the screen). Use it to match ranges: a 0 to
 100 percent knob driving a 0 to 1 demand needs scale 0.01; a 0/1 switch driving redstone needs scale 15.
+
+## 2b. Core displays: the full core display and the rod select matrix
+
+Two components show the whole core, one rod and one LPRM string at a time, from **one binding to the reactor
+controller**. You never wire a port per rod: the component reads the bound reactor itself (all the rods, their
+flags, the selected rod and the LPRM strings) in one snapshot on every panel sample and sends it to clients as one
+content patch only when something changed. Neither acts on the plant by itself.
+
+| Component | What it is |
+| --- | --- |
+| **Full core display** (`full_core_display`) | A read-only picture of the core, in one of two styles chosen in the wrench screen (`Display style`): `columbia` (a lamp matrix) or `browns_ferry` (digital modules) |
+| **Rod select matrix** (`rod_select_matrix`) | One square illuminated pushbutton per rod in core layout. Pressing one selects that rod; the selected rod's button lights white |
+
+### Placing and binding one
+
+1. Build a vertical or benchboard group big enough (at the default tile size a 185-rod core is **96 x 96 cells, 6 x 6
+   blocks** as a Columbia display and 51 x 51 as a matrix). Cycle the item to the size you want (right-click air) and
+   place it on the group like any component. It may cover up to 8 x 8 blocks (128 x 128 cells).
+2. Sneak-right-click the **reactor controller** with the linker, then right-click the display with the linker, choose
+   the input `Reactor`, mode *Plant*, and any signal (`formed` is the natural one: the binding only says *which*
+   reactor), Apply.
+3. The layout comes from the core: its rod lattice, its numbering in the GE `XX-YY` convention and its LPRM strings.
+   A smaller or compact core draws a smaller picture centred in the component.
+
+**Size and `tile_cells`.** The wrench screen has `Tile size (cells)` from 2 to 6 (default 3). Columbia is 2 tiles a rod
+plus one tile of margin: `(2 x rods across + 2) x tile_cells` (96 at 15 rods across and 3 cells; 128 at 4 cells; the
+largest core, 21 across, needs 2 cells to fit 8 blocks). Browns Ferry is a module of 2 x 1.6 tiles per rod plus a
+strip of 1.4 tiles in each LPRM gap and the margins for the numbers (about 127 x 77 cells for 185 rods at 3). A
+matrix is `(rods across + 2) x tile_cells`. **If the drawing would not fit the component, the linker refuses the
+binding and the wrench refuses the setting**, with a message that names the size needed and the component's size
+("This core needs 96 x 96 cells (6 x 6 blocks) at this tile size; the component is 64 x 64 ..."). A component that
+is already bound when its reactor is rebuilt larger shows `NEEDS 96 x 96` instead of a picture. Binding the input to
+a device that is not a reactor controller is refused too.
+
+**Unbound, unformed, unloaded.** An unbound display draws a dark 185-rod reference layout (the frame and dark tiles) so
+you can see what you placed. With the binding removed, the reactor unformed or its chunk unloaded every lamp goes dark
+and the tiles stay; nothing ever lights from a stale reading.
+
+### Columbia style
+
+Every rod is a 2 x 2 block of square tiles, each tile split into an upper and a lower legend half that light on their
+own:
+
+| Tile | Upper half | Lower half |
+| --- | --- | --- |
+| A | rod coordinate, e.g. `18-31` (lights **white** when the rod is selected) | `DRIFT` (amber) |
+| B | `FULL IN` (white) | `FULL OUT` (red) |
+| C | `ACCUM` (amber: accumulator trouble) | `SCRAM` (blue) |
+| D | blank, black, never lit | |
+
+The blocks are mirrored so the blank D tiles of four neighbouring rods meet in a 2 x 2 black cluster, and a small yellow
+dot marks the middle of each cluster, which is where an LPRM string stands. The mirroring follows the strings of the
+bound core (a core with none uses plain parity: an even column reads A B over C D, its neighbour B A over D C), and
+there is a dot only where there is a string. The backplate is the union of the rod blocks grown by one tile.
+
+### Browns Ferry style
+
+Each rod module has a **two digit position readout** (00 to 48; green `00` fully in, red `48` fully out, amber between)
+and under it a small lamp cluster: ACCUM and SCRAM in the left column, SELECT (which carries the rod coordinate) and
+DRIFT in the right, with FULL IN and FULL OUT as small lamps flanking the digits. Between module columns stand the
+**LPRM strips**: four lamps, level D at the top and A at the bottom as on the real display, with the string coordinate
+below (`08-49`). A level lamp is lit white while the chamber is in range, amber for upscale, blue when bypassed, red
+when failed, and dark for downscale or an unformed core. The GE coordinates run along the left (rows 03 ... 59) and the
+bottom (columns 02 ... 58) with black lines to the modules. The style draws no backplate: the board's own colour shows.
+The mod does not model SRM or IRM detectors by position, so the `SRM-A` and `IRM-C` labels of the real board are not drawn.
+
+Thresholds (wrench screen): `Accumulator trouble below` (default 0.9 of a full charge) and the LPRM `downscale below`
+(5 percent) and `upscale above` (110 percent). They are gameplay defaults: the core has no notion of a low accumulator,
+and no source for exact GE alarm values was found.
+
+### Selecting and moving rods from a benchboard
+
+The matrix has one output, `rod`, whose value is the number of the rod last pressed. Bind it with the linker to the
+reactor's `select_rod` command in **follow** mode (the default for this output): every press sends the rod number,
+including a press of the rod that is already selected. The rod motion controls are ordinary panel components: wire
+pushbuttons (the `guarded_yellow` button variant is the large yellow one under a clear guard) to the reactor's
+`selected_rod_insert` and `selected_rod_withdraw` (one notch a press; PULSE commands, so they act on press) and
+`selected_rod_insert_continuous` / `selected_rod_withdraw_continuous` (held: the sink must be *follow* so the release
+sends 0; the linker defaults these two to follow). They move the selected rod only, through the same drive network
+and with the same CRD power and water rules as `rod_<n>_position`. Details and CC calls are in `SIGNALS.md`.
+
+**There are no rod blocks, no sequence control and no worth minimiser.** RWM, RSCS and RBM are protection logic and
+the mod never provides them; build them from the signals with CC or relays if you want them.
 
 ## 3. Worked example: a small reactor control room
 
