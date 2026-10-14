@@ -72,7 +72,8 @@ public abstract class ComponentType {
     }
 
     /**
-     * Sizes the item can be placed at, in cells. Index 0 is the default. The
+     * Sizes the item can be placed at, in cells. Index 0 is the fallback default;
+     * a new stack may use its baked variant's preferred index. The
      * item remembers an index; right-clicking air with it cycles. A footprint
      * may never exceed {@link Footprint#MAX_CELLS} either way.
      *

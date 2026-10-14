@@ -181,7 +181,7 @@ public final class PanelInputTests {
 
         PanelGroup.Result place(Item item, int variant, BlockPos pos, int cx, int cy) {
             ItemStack stack = new ItemStack(item);
-            if (variant > 0) {
+            if (variant >= 0) { // The fixture explicitly requests a footprint, including index zero.
                 stack.set(dev.bwr.mod.fuel.BwrDataComponents.COMPONENT_VARIANT.get(), variant);
             }
             player.setItemInHand(InteractionHand.MAIN_HAND, stack);

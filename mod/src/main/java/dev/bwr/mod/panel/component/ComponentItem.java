@@ -39,7 +39,13 @@ public final class ComponentItem extends Item {
     public static int variant(ItemStack stack, ComponentType type) {
         Integer stored = stack.get(BwrDataComponents.COMPONENT_VARIANT.get());
         int count = type.footprints().size();
-        return stored == null ? 0 : Math.max(0, Math.min(count - 1, stored));
+        if (stored != null) return Math.max(0, Math.min(count - 1, stored));
+        // Only new, unconfigured stacks take the model preference. Saved size
+        // indices and placed component dimensions remain authoritative.
+        String path = type.id().getPath();
+        String style = PanelStyles.newStyle(path);
+        return Math.max(0, Math.min(count - 1,
+                PanelStyles.preferredFootprint(path, style, PanelStyles.defaultVariant(path, style))));
     }
 
     /** The footprint this stack places, or null when the stack is not a component item. */

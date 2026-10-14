@@ -31,7 +31,7 @@ may span up to 8 x 8, because a 185-rod core is 96 cells across.
 | Toggle switch, key switch | 6x8, 8x10 |
 | Rotary selector | 8x10, 12x14 (the extra rows hold the position name) |
 | Setpoint knob | 8x8, 12x12 |
-| Control switch | 8x12, 12x16 |
+| Control switch | 8x12, 12x16 (new GE target pistol defaults to 12x16) |
 | Thumbwheel | 3 cells wide per digit, 6 tall: 9x6 (3 digits), 3x6 to 24x6 (1 to 8 digits) |
 | Lamp | 4x4, 6x6 |
 | Annunciator window | 12x8, 16x12 |
@@ -47,6 +47,10 @@ may span up to 8 x 8, because a 185-rod core is 96 cells across.
 | Nameplate | 4 cells tall: 16x4, 8x4, 24x4, 32x4, 48x4, 64x4, 24x6, 32x8; valve plates 32x10, 24x8, 32x12 |
 | Full core display | 96x96, 128x128, 64x64, 80x80, 112x112, 48x48, 128x96, 128x80, 112x80 (up to **8 x 8 blocks**) |
 | Rod select matrix | 64x64, 48x48, 80x80, 96x96, 112x112, 128x128, 32x32 (up to 8 x 8 blocks) |
+
+The GE target pistol and W-2 heavy-duty pistol prefer 12x16 so their handles fit. New control-switch
+items use the GE target pistol and that larger size. Explicit item sizes and already placed components
+keep their dimensions; changing a placed switch's style does not resize its occupied panel area.
 
 Engraved text, captions and labels scale with their component. Components placed before this size change keep
 the size they were placed at; a display's digit, character and segment counts follow its width, so an old
