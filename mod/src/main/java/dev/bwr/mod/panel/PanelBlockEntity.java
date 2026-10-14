@@ -524,6 +524,16 @@ public final class PanelBlockEntity extends BlockEntity {
         return true;
     }
 
+    /**
+     * Sets an output like {@link #setOutput} and tells the listeners even when the value did not change: a button that
+     * selects, whose every press is a command (pressing the rod that is already the output's value again).
+     */
+    public void pressOutput(PanelComponent component, int index, double value) {
+        if (!setOutput(component, index, value) && level instanceof ServerLevel server) {
+            PanelBus.fireOutput(server, this, component, index, value);
+        }
+    }
+
     /** Sets an output of an input component (server) and tells {@link PanelBus} listeners. */
     public boolean setOutput(PanelComponent component, int index, double value) {
         if (!component.storeOutput(index, value)) {
@@ -670,6 +680,9 @@ public final class PanelBlockEntity extends BlockEntity {
                     setInput(component, i, source.sample(new InputSource.SampleContext(level, this, component, i)));
                 }
             }
+            if (!redstoneOnly && component.data() != null) {
+                component.data().sampleContent(level, this, component);
+            }
         }
     }
 
@@ -728,6 +741,9 @@ public final class PanelBlockEntity extends BlockEntity {
                 } else {
                     component.storeInput(i, value);
                 }
+            }
+            if (component.data() != null) {
+                component.data().sampleContent(level, this, component);
             }
             PanelSampler.track(this);
             if (notify) dev.bwr.mod.advancement.PlantMilestones.panelChanged(this);

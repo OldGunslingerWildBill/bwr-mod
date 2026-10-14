@@ -74,6 +74,21 @@ public interface ComponentModel {
     default void renderLegends(PanelRenderContext context, PanelComponent component) {
     }
 
+    /**
+     * Whether this model's printed legends never change while the component's revision and the block's light stay
+     * the same, so the block can capture them once into a text vertex buffer ({@link PanelMeshCache}) and draw them
+     * with one call instead of laying every string out again each frame. A model that says yes writes its legends
+     * in {@link #emitLegends}; the renderer then does not call {@link #renderLegends} for it, unless the capture
+     * failed, when {@code renderLegends} is the per frame fallback and should draw the same text.
+     */
+    default boolean legendsCached() {
+        return false;
+    }
+
+    /** Draws the legends for capture into the text cache (full detail only: the cache is not drawn beyond that). */
+    default void emitLegends(PanelRenderContext context, PanelComponent component) {
+    }
+
     /** Translucent geometry drawn last of all, over everything it covers; nothing by default (see {@link #renderLive}). */
     default void renderGlass(PanelRenderContext context, PanelComponent component) {
     }

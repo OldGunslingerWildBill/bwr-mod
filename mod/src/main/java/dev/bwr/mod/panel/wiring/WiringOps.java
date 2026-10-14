@@ -62,7 +62,25 @@ public final class WiringOps {
 
     public enum Result {
         OK, NOT_HOLDING_LINKER, OUT_OF_REACH, NOT_PERMITTED, NO_SUCH_COMPONENT, BAD_PORT, BAD_VALUE, NO_LINK,
-        WRONG_DIMENSION, OUT_OF_RANGE, DEVICE_MISMATCH, NO_DEVICE, NO_SUCH_KEY, NOT_IN_GROUP, TOO_MANY
+        WRONG_DIMENSION, OUT_OF_RANGE, DEVICE_MISMATCH, NO_DEVICE, NO_SUCH_KEY, NOT_IN_GROUP, TOO_MANY,
+        /** The component type refused the device (a core display bound to a non-reactor, or too small for the core). */
+        REFUSED
+    }
+
+    /** A bind result with, for {@link Result#REFUSED}, the reason the component type gave. */
+    public record Outcome(Result result, net.minecraft.network.chat.Component detail) {
+    }
+
+    /** The reason of the most recent {@link Result#REFUSED}; read right after {@link #bind} on the same thread. */
+    private static net.minecraft.network.chat.Component lastRefusal;
+
+    /** {@link #bind} that also returns the reason for a refusal by the component type. */
+    public static Outcome bindDetailed(ServerPlayer player, PanelPayloads.Bind request) {
+        lastRefusal = null;
+        Result result = bind(player, request);
+        net.minecraft.network.chat.Component detail = result == Result.REFUSED ? lastRefusal : null;
+        lastRefusal = null;
+        return new Outcome(result, detail);
     }
 
     /** Most sinks one output may fan out to. */
@@ -125,6 +143,12 @@ public final class WiringOps {
                 Result checked = checkDevice(player, level, linker, owner.getBlockPos(), request, false);
                 if (checked != Result.OK) {
                     return checked;
+                }
+                net.minecraft.network.chat.Component refusal = component.type().refuseBinding(level, component,
+                        request.port(), request.device());
+                if (refusal != null) {
+                    lastRefusal = refusal;
+                    return Result.REFUSED;
                 }
                 source = new PlantSource(request.device(), request.key(), request.scale(), request.offset());
             }

@@ -14,6 +14,7 @@ import dev.bwr.mod.flow.RecirculationPumpBlockEntity;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.rods.ControlRodDriveBlockEntity;
 import dev.bwr.mod.rods.ControlRodDriveNetwork;
+import dev.bwr.mod.rods.RodSelection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -120,6 +121,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private final CoreConfig config = new CoreConfig();
     private ReactorCore core;
     private ControlRodDriveNetwork rodNetwork;
+    /** The operator's selected rod and held continuous controls; see {@link RodSelection}. */
+    private final RodSelection rodSelection = new RodSelection();
+    /** A saved selection waiting for the structure to be validated (the rod count is not known before). */
+    private int pendingSelectedRod;
 
     private ReactorStructure structure;
     private VesselAppearance.Envelope vesselEnvelope;
@@ -243,6 +248,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         // charge before the physics steps, then writes hardware condition back
         // afterwards, so the core sees a consistent rod configuration for the
         // whole tick.
+        rodSelection.tick(rodNetwork, core);
         rodNetwork.preStep(config.tickSeconds);
         boundaryEffects.apply(this,vesselEnvelope);
         var containmentController = dev.bwr.mod.containment.ContainmentControllerRegistry
@@ -616,6 +622,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 if(pendingRestore!=null)pendingRestore=CoreDriveRemap.state(pendingRestore,savedDriveCells,nextDriveCells);
                 pendingRodDemand=CoreDriveRemap.demands(pendingRodDemand,savedDriveCells,nextDriveCells);
             }
+            // The rod numbers mean other rods after a drive remap, so a selection does not survive one.
+            int keptSelection = driveLayoutChanged ? 0 : pendingSelectedRod > 0 ? pendingSelectedRod : rodSelection.selected();
+            pendingSelectedRod = 0;
             core = new ReactorCore(config, new dev.bwr.core.fuel.CoreLoading(found.latticeWidth()));
             // Install before restoring: fromState re-solves the saved rod pattern.
             installRodLatticeMap(found);
@@ -658,6 +667,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 rodNetwork.restoreCommandedNotchIndices(pendingRodDemand);
                 pendingRodDemand = null;
             }
+            rodSelection.restore(keptSelection, found.controlRodCount());
             // After the core is built and restored, because initialiseCold()
             // deliberately resets the damage model to a pristine plant and this
             // puts the plant's real history back.
@@ -853,6 +863,68 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     public ControlRodDriveNetwork rods() {
         return rodNetwork;
+    }
+
+    private ReactorStructure coreMapFor;
+    private CoreRodMap coreMap;
+
+    /**
+     * Where each rod and LPRM string sits on the display grid, with the GE coordinates, or null when the reactor is
+     * not formed. Rebuilt only when revalidation made a new structure object.
+     */
+    public CoreRodMap coreMap() {
+        ReactorStructure current = structure;
+        if (current == null || core == null) {
+            return null;
+        }
+        if (coreMapFor != current) {
+            try {
+                coreMap = CoreRodMap.fromStructure(current);
+            } catch (IllegalArgumentException e) {
+                coreMap = null; // not displayable (wider than the grid); readouts say no signal
+            }
+            coreMapFor = current;
+        }
+        return coreMap;
+    }
+
+    /** The selected rod, 1-based; 0 when none is selected or the reactor is not formed. */
+    public int selectedRod() {
+        return isFormed() && rodNetwork != null ? rodSelection.selected() : 0;
+    }
+
+    /**
+     * Selects a rod (1-based) or clears the selection (0). Moves nothing.
+     *
+     * @return false when the reactor is not formed or {@code rod} is not a rod of this core
+     */
+    public boolean selectRod(int rod) {
+        if (!isFormed() || rodNetwork == null) {
+            return false;
+        }
+        boolean ok = rodSelection.select(rod, core.getControlRodCount());
+        if (ok) {
+            setChanged();
+        }
+        return ok;
+    }
+
+    /** Steps the selected rod one notch ({@code +1} out, {@code -1} in) through the drive network. */
+    public boolean stepSelectedRod(int direction) {
+        return isFormed() && rodNetwork != null && rodSelection.step(rodNetwork, direction);
+    }
+
+    /** Holds or releases a continuous rod motion control ({@code +1} withdraw, {@code -1} insert). */
+    public boolean holdSelectedRod(int direction, boolean held) {
+        if (!isFormed() || rodNetwork == null) {
+            return false;
+        }
+        return rodSelection.hold(direction, held, core.getControlRodCount());
+    }
+
+    /** Whether a continuous rod motion control is currently held ({@code +1} withdraw, {@code -1} insert). */
+    public boolean selectedRodHeld(int direction) {
+        return direction > 0 ? rodSelection.withdrawHeld() : rodSelection.insertHeld();
     }
 
     public ReactorStructure structure() {
@@ -1199,6 +1271,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         if (demand != null && demand.length > 0) {
             tag.putIntArray("RodDemand", demand);
         }
+        // Old saves have no key, which loads as no selection.
+        int selection = rodNetwork != null ? rodSelection.selected() : pendingSelectedRod;
+        if (selection > 0) {
+            tag.putInt("SelectedRod", selection);
+        }
     }
 
     @Override
@@ -1239,6 +1316,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 ? tag.getList("CoreFuel", net.minecraft.nbt.Tag.TAG_COMPOUND)
                 : null;
         pendingRodDemand = tag.contains("RodDemand") ? tag.getIntArray("RodDemand") : null;
+        pendingSelectedRod = Math.max(0, tag.getInt("SelectedRod"));
+        rodSelection.clear();
         structureDirty = true;
     }
 

@@ -130,6 +130,12 @@ public final class BwrItems {
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> MIMIC_SYMBOL =
             ITEMS.register("mimic_symbol", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.MIMIC_SYMBOL.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> FULL_CORE_DISPLAY =
+            ITEMS.register("full_core_display", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.FULL_CORE_DISPLAY.id()));
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> ROD_SELECT_MATRIX =
+            ITEMS.register("rod_select_matrix", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.ROD_SELECT_MATRIX.id()));
     public static final DeferredItem<BlockItem> CONTROL_ROD_DRIVE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_ROD_DRIVE);
     public static final DeferredItem<BlockItem> CORE_SPRAY_SPARGER =
@@ -336,6 +342,8 @@ public final class BwrItems {
                         output.accept(GRAPHIC_DISPLAY.get());
                         output.accept(MIMIC_LINE.get());
                         output.accept(MIMIC_SYMBOL.get());
+                        output.accept(FULL_CORE_DISPLAY.get());
+                        output.accept(ROD_SELECT_MATRIX.get());
                     })
                     .build());
 }

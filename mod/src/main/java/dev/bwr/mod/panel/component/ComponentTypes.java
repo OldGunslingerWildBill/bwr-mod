@@ -44,6 +44,9 @@ public final class ComponentTypes {
     public static final ComponentType GRAPHIC_DISPLAY = register(new GraphicDisplayType());
     public static final ComponentType MIMIC_LINE = register(new MimicLineType());
     public static final ComponentType MIMIC_SYMBOL = register(new MimicSymbolType());
+    // -- core displays (full core display spec) --
+    public static final ComponentType FULL_CORE_DISPLAY = register(new FullCoreDisplayType());
+    public static final ComponentType ROD_SELECT_MATRIX = register(new RodSelectMatrixType());
     // ----------------------------------------------------------------------------
 
     /** Forces class initialisation. */

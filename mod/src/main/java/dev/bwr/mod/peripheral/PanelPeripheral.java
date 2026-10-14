@@ -282,6 +282,27 @@ public final class PanelPeripheral implements IPeripheral {
         return changed;
     }
 
+    /**
+     * Sets one named text field of a component whose text has several: a nameplate's {@code line1} to {@code line3},
+     * {@code cornerLeft}, {@code cornerRight} and {@code tag}, or a core display's {@code caption}. Returns whether it
+     * changed; an unknown field is an error that lists the component's fields.
+     */
+    @LuaFunction(mainThread = true)
+    public boolean setTextField(String label, String field, String text) throws LuaException {
+        Found found = find(label);
+        if (!(found.component.data() instanceof PanelTextTarget target) || target.textFields().isEmpty()) {
+            throw new LuaException(label + " has no named text fields");
+        }
+        if (!target.textFields().contains(field)) {
+            throw new LuaException(label + " has no text field " + field + "; its fields are " + String.join(", ", target.textFields()));
+        }
+        boolean changed = target.setField(field, text);
+        if (changed) {
+            found.owner.displayChanged(found.component);
+        }
+        return changed;
+    }
+
     // ---- drawing: thin wrappers over PanelDrawTarget
 
     private record Surface(Found found, PanelDrawTarget target) {

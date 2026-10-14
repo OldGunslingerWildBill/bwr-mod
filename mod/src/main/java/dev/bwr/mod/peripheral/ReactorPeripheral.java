@@ -584,6 +584,68 @@ public class ReactorPeripheral implements IPeripheral {
     }
 
     /**
+     * Selects a rod (1-based; 0 clears the selection), the way a rod select matrix pushbutton does. Moves nothing,
+     * and releases any held continuous control, which belonged to the previous rod.
+     */
+    @LuaFunction(mainThread = true)
+    public final void selectRod(int rod) throws LuaException {
+        int count = core().getControlRodCount();
+        if (rod < 0 || rod > count) {
+            throw new LuaException("no rod " + rod + "; this core has " + count + " control rods, numbered 1 to " + count
+                    + " (0 clears the selection)");
+        }
+        dev.bwr.mod.signal.DeviceCommands.reactorSelectRod(be, rod);
+    }
+
+    /** The selected rod, 1-based; 0 when none is selected. */
+    @LuaFunction(mainThread = true)
+    public final int getSelectedRod() throws LuaException {
+        core();
+        return be.selectedRod();
+    }
+
+    /** Steps the selected rod in one notch, through the same drive network as {@link #setRodPosition}. */
+    @LuaFunction(mainThread = true)
+    public final void stepSelectedRodIn() throws LuaException {
+        stepSelected(-1);
+    }
+
+    /** Steps the selected rod out one notch, through the same drive network as {@link #setRodPosition}. */
+    @LuaFunction(mainThread = true)
+    public final void stepSelectedRodOut() throws LuaException {
+        stepSelected(1);
+    }
+
+    private void stepSelected(int direction) throws LuaException {
+        core();
+        if (!dev.bwr.mod.signal.DeviceCommands.reactorStepSelectedRod(be, direction)) {
+            throw new LuaException("no rod is selected");
+        }
+    }
+
+    /**
+     * Holds ({@code true}) or releases the continuous insert control of the selected rod: while held it steps in at
+     * the normal rod speed. Releasing always works; holding needs a selected rod.
+     */
+    @LuaFunction(mainThread = true)
+    public final void setSelectedRodInsertHeld(boolean held) throws LuaException {
+        holdSelected(-1, held);
+    }
+
+    /** As {@link #setSelectedRodInsertHeld(boolean)}, stepping out. */
+    @LuaFunction(mainThread = true)
+    public final void setSelectedRodWithdrawHeld(boolean held) throws LuaException {
+        holdSelected(1, held);
+    }
+
+    private void holdSelected(int direction, boolean held) throws LuaException {
+        core();
+        if (!dev.bwr.mod.signal.DeviceCommands.reactorHoldSelectedRod(be, direction, held)) {
+            throw new LuaException("no rod is selected");
+        }
+    }
+
+    /**
      * The notch position demanded for one rod, 00 to 48.
      *
      * <p>Distinct from {@link #getRodPosition(int)}, which is where the rod
