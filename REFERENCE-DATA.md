@@ -391,3 +391,35 @@ that an intact Mark I would hold that pressure.
 | Steel specific heat **500 J/(kg K)** | NIST's [austenitic stainless-steel properties table](https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=913306) reports **500 J/(kg K)**. The shell is low-alloy steel rather than this exact alloy, so one constant is a thermal-capacity approximation. The **180-s** metal-to-water time constant is a model calibration, not a sourced material property. |
 | RHR exchanger **27.1 MW** per modeled unit | EPRI's [BWR RHR exchanger thermal-performance example](https://restservice.epri.com/publicdownload/000000000001012129/0/Product) lists **92.5 million Btu/h** required heat transfer, or **27.1 MW**. This replaces the uncited 100-MW single-exchanger cap. A plant-specific comparison: [Fermi 2 UFSAR §5.5.7, NRC ADAMS ML16165A456](https://adamswebsearch2.nrc.gov/webSearch2/main.jsp?AccessionNumber=ML16165A456) gives **41.6 million Btu/h**, or **12.2 MW**, for shutdown-cooling duty and says torus cooling is the more limiting duty. The 27.1-MW game block is therefore a representative bound, not Fermi's installed rating. |
 | Fast cooldown threshold **100 °F/h = 55.56 °C/h** | NRC [Fermi-related Part 21 report 1995-033](https://www.nrc.gov/regulations-legislation/reports-associated-with-events/part-21-reports/1995/1995033) identifies an exceeded **100 °F/h** Technical Specification cooldown limit and evaluates vessel/nozzle fatigue usage. The game adds accumulated thermal-stress life to the existing pressure-boundary bookkeeping above this rate. It does not install a permissive or isolation. The damage rate is a named game calibration, not a structural fracture analysis. |
+
+## 13. Phase M: grid tie, metering and synchronization (spec only)
+
+Added for `GRID-TIE-SPEC.md`, step 0, checked 2026-10-14. These are design
+bases, not implemented features or executed Phase M acceptance results.
+
+| ID / value or behavior | Primary source and application |
+| --- | --- |
+| **M-SYNC**: reference closing window **±10 electrical degrees**, **±0.067 Hz** slip | SEL, Thompson and Ravikumar, [New Developments in Generator Synchronizing Systems](https://cdn.selinc.com/assets/Literature/Publications/Technical%20Papers/6479_NewDevelopments_MT_20110210_Web.pdf), 2011, §II.A printed p.1 (PDF p.2). SEL attributes these limits to IEEE C50.12/C50.13 and describes possible mechanical and winding damage from faulty synchronization. The IEEE texts were not independently inspected. This is not a universal damage-onset/severity law. Phase M's damage coefficient and normalized condition scale are explicitly game calibration; no sync-check interlock or voltage model is adopted. |
+| **M-SPEED**: **rpm = 120 × Hz / poles** | STAMFORD, [Industrial Ratings Book, Edition 2](https://www.stamford-avk.com/sites/stamfordavk/files/2020-05/STAMFORD-Industrial-Ratings-Book-2.pdf), useful formulae p.5. Choosing **four poles / 50 Hz** preserves the mod's existing **1500 rpm**. Derived slip is `rpm/30 - 50`; derived phase rate is `360 × slip` electrical degrees per second. The slip-window speed difference is **2.01 rpm**. This is a consistent game reference, not a claim about a specific BWR generator's electrical design. |
+| **M-LF**: recirculation changes void/reactivity and hence BWR power; representative **60–100%** thermal-power range | IAEA NP-T-3.23, [Non-baseload Operation in Nuclear Power Plants](https://pub.iaea.org/MTCD/Publications/PDF/P1756_web.pdf), 2018, §5.4.1.2 printed p.74 (PDF p.86). Its German BWR example supports that range at fixed rod positions, with blades extending the range. It supports the requested **100 → 70 → 100%** test mechanism, not a universal ramp rate or test tolerance. |
+| **M-XE**: hours-long iodine/xenon response and operator compensation | NRC, [BWR Generic Fundamentals: Fission Product Poisons](https://www.nrc.gov/sites/default/files/doc_library/cdn/legacy/reactors/operator-licensing/history-rulemaking-activities/generic-fundamentals-examinations/bwr/bwr-files/292006.pdf), November 2020, B2559 p.19 and B2361/B2964 p.51, including answer keys. The reduced-power example still has xenon falling toward equilibrium after **20 h at 70%**, following a **1 h** reduction from equilibrium full power. A separate **70 → 100%** example over **2 h** calls for initial rod insertion then withdrawal during the following **12 h** to compensate xenon. These educational cases establish the delayed behavior, not plant limits or the game's hold deadlines. |
+| **M-FE**: integer FE transfers with simulation; no topology/demand-priority query | NeoForge [IEnergyStorage on the 1.21.1 branch](https://github.com/neoforged/NeoForge/blob/1.21.1/src/main/java/net/neoforged/neoforge/energy/IEnergyStorage.java), matching the project's API generation. Metered throughput is observable; unseen unmet demand and base-first allocation on arbitrary foreign cable networks are not. This is an API-derived limitation, not a real electrical-network claim. |
+
+Preserved code parameters, independently distinguished from the physical sources:
+
+| Value | Repository basis / derived use |
+| --- | --- |
+| **13.4 W per FE/t** | `mod/.../eccs/EccsPower.java`: existing 6.7 MW / 500,000 FE/t mapping. Phase M preserves it. At 20 simulation ticks/s, **1 FE = 0.67 J**. FE is a game unit, not a physical measurement standard. |
+| **1500 MW**, **0.985 efficiency** | `core/.../turbine/PowerTurbine.java`, existing rating and efficiency; not recalibrated by Phase M. Rated delivery is approximately **111,940,299 FE/t**. |
+| **2,000,000,000 FE** generator buffer | `mod/.../power/PowerModuleBlockEntity.java`. Derived stored energy **0.372222 MWh**; empty-to-full charging headroom at rated production **0.893333 s**. Actual headroom depends on charge and other loads. |
+| **1500 rpm**, **8 s** RPM relaxation | `mod/.../power/PowerTrain.java`, existing work-dependent speed approximation. Phase M preserves it and proposes an export-branch breaker for compatibility. This approximation does not model load-rejection overspeed. |
+
+`GRID-TIE-SPEC.md` labels demand-curve defaults, configurable maximum, list/depth
+limits, meter time windows, bad-close damage severity and acceptance durations/
+tolerances as **game or engineering choices**, not sourced plant settings. Its
+FE/MWh equations are dimensional conversions from the preserved mapping.
+
+TODO-5 B6 remains deferred. Its eventual torque/inertia model must distinguish
+generated electricity, delivered FE and buffer changes when the export breaker
+opens under load. No inertia, losses or overspeed-damage threshold is adopted
+here; TODO-5's approximate 110–120% suggestion is not a sourced M parameter.
