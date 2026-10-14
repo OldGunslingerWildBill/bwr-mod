@@ -1,0 +1,66 @@
+{
+  "annunciator_horn": {
+    "subtitle": "subtitle.bwr.annunciator_horn",
+    "sounds": [{"name": "bwr:annunciator_horn", "stream": false}]
+  },
+  "alarm_acknowledge": {
+    "subtitle": "subtitle.bwr.alarm_acknowledge",
+    "sounds": [{"name": "bwr:alarm_acknowledge", "stream": false}]
+  },
+  "relay_click": {
+    "subtitle": "subtitle.bwr.relay_click",
+    "sounds": [{"name": "bwr:relay_click", "stream": false}]
+  },
+  "contactor_click": {
+    "subtitle": "subtitle.bwr.contactor_click",
+    "sounds": [{"name": "bwr:contactor_click", "stream": false}]
+  },
+  "control_switch_detent": {
+    "subtitle": "subtitle.bwr.control_switch_detent",
+    "sounds": [{"name": "bwr:control_switch_detent", "stream": false}]
+  },
+  "breaker_close": {
+    "subtitle": "subtitle.bwr.breaker_close",
+    "sounds": [{"name": "bwr:breaker_close", "stream": false}]
+  },
+  "breaker_trip": {
+    "subtitle": "subtitle.bwr.breaker_trip",
+    "sounds": [{"name": "bwr:breaker_trip", "stream": false}]
+  },
+  "pump_motor": {
+    "subtitle": "subtitle.bwr.pump_motor",
+    "sounds": [{"name": "bwr:pump_motor", "stream": false}]
+  },
+  "turbine_whine": {
+    "subtitle": "subtitle.bwr.turbine_whine",
+    "sounds": [{"name": "bwr:turbine_whine", "stream": false}]
+  },
+  "steam_flow": {
+    "subtitle": "subtitle.bwr.steam_flow",
+    "sounds": [{"name": "bwr:steam_flow", "stream": false}]
+  },
+  "srv_lift": {
+    "subtitle": "subtitle.bwr.srv_lift",
+    "sounds": [{"name": "bwr:srv_lift", "stream": false}]
+  },
+  "msiv_slam": {
+    "subtitle": "subtitle.bwr.msiv_slam",
+    "sounds": [{"name": "bwr:msiv_slam", "stream": false}]
+  },
+  "scram_buzzer": {
+    "subtitle": "subtitle.bwr.scram_buzzer",
+    "sounds": [{"name": "bwr:scram_buzzer", "stream": false}]
+  },
+  "edg_start": {
+    "subtitle": "subtitle.bwr.edg_start",
+    "sounds": [{"name": "bwr:edg_start", "stream": false}]
+  },
+  "edg_run": {
+    "subtitle": "subtitle.bwr.edg_run",
+    "sounds": [{"name": "bwr:edg_run", "stream": false}]
+  },
+  "geiger_click": {
+    "subtitle": "subtitle.bwr.geiger_click",
+    "sounds": [{"name": "bwr:geiger_click", "stream": false}]
+  }
+}

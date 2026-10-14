@@ -48,6 +48,11 @@ neoForge {
             programArguments.addAll('--width', '1280', '--height', '900')
             jvmArguments.add('-Dbwr.advancementClientCheck=true')
         }
+        soundClientCheck {
+            client()
+            gameDirectory = file('run/soundClientCheck')
+            jvmArguments.add('-Dbwr.soundClientCheck=true')
+        }
         turbineModelCheck {
             client()
             gameDirectory = file('run/turbineModelCheck')
@@ -201,6 +206,7 @@ tasks.named('jar', Jar).configure {
     from(rootProject.file('LICENSE')) { into 'META-INF' }
     from(rootProject.file('NOTICE')) { into 'META-INF' }
     from(rootProject.file('THIRD-PARTY-NOTICES.md')) { into 'META-INF' }
+    from(rootProject.file('SOUND-CREDITS.md')) { into 'META-INF' }
     from(rootProject.file('licenses/legacy')) { into 'META-INF/licenses/legacy' }
 }
 

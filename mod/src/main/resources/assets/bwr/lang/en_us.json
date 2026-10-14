@@ -748,5 +748,21 @@
   "advancements.bwr.milestones.lower_head_failure.title": "The Vessel Gives Way",
   "advancements.bwr.milestones.lower_head_failure.description": "Witness the failure of a reactor vessel's lower head.",
   "advancements.bwr.milestones.melt_through.title": "Nothing Left to Hold It",
-  "advancements.bwr.milestones.melt_through.description": "Witness corium melt through the containment basemat."
+  "advancements.bwr.milestones.melt_through.description": "Witness corium melt through the containment basemat.",
+  "subtitle.bwr.annunciator_horn": "Annunciator horn sounds",
+  "subtitle.bwr.alarm_acknowledge": "Alarm acknowledged",
+  "subtitle.bwr.relay_click": "Relay clicks",
+  "subtitle.bwr.contactor_click": "Contactor clicks",
+  "subtitle.bwr.control_switch_detent": "Control switch clicks",
+  "subtitle.bwr.breaker_close": "Breaker closes",
+  "subtitle.bwr.breaker_trip": "Breaker trips",
+  "subtitle.bwr.pump_motor": "Pump motor hums",
+  "subtitle.bwr.turbine_whine": "Turbine whines",
+  "subtitle.bwr.steam_flow": "Steam flows",
+  "subtitle.bwr.srv_lift": "Safety relief valve lifts",
+  "subtitle.bwr.msiv_slam": "Main steam isolation valve shuts",
+  "subtitle.bwr.scram_buzzer": "Scram buzzer sounds",
+  "subtitle.bwr.edg_start": "Emergency diesel generator starts",
+  "subtitle.bwr.edg_run": "Emergency diesel generator runs",
+  "subtitle.bwr.geiger_click": "Geiger counter clicks"
 }
