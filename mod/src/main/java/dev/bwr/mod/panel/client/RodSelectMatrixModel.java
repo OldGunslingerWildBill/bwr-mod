@@ -172,7 +172,7 @@ final class RodSelectMatrixModel extends CoreDisplayModel {
         for (int rod = 0; s.coordinates && rod < s.map.rodCount(); rod++) {
             float x = s.ox + FcdLayout.buttonX(s.map, s.tile, rod);
             float y = s.oy + FcdLayout.buttonY(s.map, s.tile, rod);
-            fitted(context, s.map.label(rod), x + t / 2.0f, y + t / 2.0f, t * 0.74f, t * 0.4f, s.textZ, INK);
+            fitted(context, s.map.label(rod), x + t / 2.0f, y + t / 2.0f, t * 0.74f, t * 0.5f, s.textZ, INK, TILE_FILL, TILE_WIDTH_FILL);
         }
     }
 }

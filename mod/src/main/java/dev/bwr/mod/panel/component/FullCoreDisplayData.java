@@ -34,6 +34,36 @@ public final class FullCoreDisplayData extends CoreDisplayData {
     public String style = COLUMBIA;
     public String edgeNumbers = EDGE_AUTO;
 
+    public FullCoreDisplayData() {
+        tileCells = defaultTile();
+    }
+
+    @Override
+    public int defaultTile() {
+        return FcdLayout.defaultTile(layoutStyle());
+    }
+
+    /** What a component of {@code style} placed with this footprint would start at (the wrench uses it when the style changes). */
+    public int defaultTileFor(FcdLayout.Style style, int width, int height) {
+        return fittingTile(FcdLayout.defaultTile(style), width, height, style);
+    }
+
+    private int fittingTile(int top, int width, int height, FcdLayout.Style style) {
+        CoreRodMap map = dev.bwr.mod.panel.fcd.FcdSnapshot.referenceCells().map();
+        for (int tile = Math.min(top, FcdLayout.MAX_TILE); tile > DEFAULT_TILE; tile--) {
+            int[] needed = needed(map, style, tile);
+            if (width >= needed[0] && height >= needed[1]) {
+                return tile;
+            }
+        }
+        return DEFAULT_TILE;
+    }
+
+    @Override
+    protected int[] neededAt(CoreRodMap map, int tile) {
+        return needed(map, layoutStyle(), tile);
+    }
+
     /** Whether the GE row and column numbers are drawn along the edges (with the grid lines of Browns Ferry). */
     public boolean edgeNumbersOn() {
         return EDGE_ON.equals(edgeNumbers) || EDGE_AUTO.equals(edgeNumbers) && layoutStyle() == FcdLayout.Style.BROWNS_FERRY;

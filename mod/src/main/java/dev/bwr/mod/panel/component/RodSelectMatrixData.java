@@ -14,6 +14,20 @@ public final class RodSelectMatrixData extends CoreDisplayData {
     /** The rod number the last press selected, 0 for none. */
     public int lastPressed;
 
+    public RodSelectMatrixData() {
+        tileCells = defaultTile();
+    }
+
+    @Override
+    public int defaultTile() {
+        return FcdLayout.defaultMatrixTile();
+    }
+
+    @Override
+    protected int[] neededAt(CoreRodMap map, int tile) {
+        return new int[] {FcdLayout.matrixWidth(map, tile), FcdLayout.matrixHeight(map, tile)};
+    }
+
     @Override
     public int[] neededCells() {
         CoreRodMap map = displayMap();

@@ -33,7 +33,13 @@ import java.util.List;
 public final class FcdLayout {
     public static final int MIN_TILE = 2;
     public static final int MAX_TILE = 6;
+    /**
+     * The tile size every display used before the defaults depended on the style: what a saved display without a
+     * {@code TileCells} key loads as, and the least a new display is given.
+     */
     public static final int DEFAULT_TILE = 3;
+    /** The span of either display: 8 blocks, in cells. */
+    public static final int SPAN_CELLS = 128;
 
     /** What the component draws. */
     public enum Style {
@@ -181,6 +187,40 @@ public final class FcdLayout {
 
     public static int clampTile(int tileCells) {
         return Math.max(MIN_TILE, Math.min(MAX_TILE, tileCells));
+    }
+
+    /**
+     * The largest tile size (up to {@link #MAX_TILE}) at which {@code map} drawn in {@code style} fits {@code width}
+     * x {@code height} cells, the caption and margins included (they are part of the needed size); {@link #MIN_TILE}
+     * when even that does not fit.
+     */
+    public static int largestTile(CoreRodMap map, Style style, int width, int height) {
+        for (int tile = MAX_TILE; tile > MIN_TILE; tile--) {
+            if (FcdLayout.of(map, style, tile).fits(width, height)) {
+                return tile;
+            }
+        }
+        return MIN_TILE;
+    }
+
+    /** The same for the rod select matrix. */
+    public static int largestMatrixTile(CoreRodMap map, int width, int height) {
+        for (int tile = MAX_TILE; tile > MIN_TILE; tile--) {
+            if (matrixWidth(map, tile) <= width && matrixHeight(map, tile) <= height) {
+                return tile;
+            }
+        }
+        return MIN_TILE;
+    }
+
+    /** What a new display of {@code style} defaults to: the largest tile at which the reference 185 rod core fits the 8 block span. */
+    public static int defaultTile(Style style) {
+        return largestTile(FcdSnapshot.referenceCells().map(), style, SPAN_CELLS, SPAN_CELLS);
+    }
+
+    /** What a new rod select matrix defaults to, by the same rule. */
+    public static int defaultMatrixTile() {
+        return largestMatrixTile(FcdSnapshot.referenceCells().map(), SPAN_CELLS, SPAN_CELLS);
     }
 
     public boolean fits(int width, int height) {

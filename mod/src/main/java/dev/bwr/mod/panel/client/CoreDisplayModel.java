@@ -165,32 +165,52 @@ abstract class CoreDisplayModel implements ComponentModel {
      * space makes a line break), as large as fits. {@code z} is the elevation of the print.
      */
     static void fitted(PanelRenderContext context, String text, float cx, float cy, float w, float h, float z, int ink) {
+        fitted(context, text, cx, cy, w, h, z, ink, CAP_FILL, WIDTH_FILL);
+    }
+
+    /**
+     * {@link #fitted(PanelRenderContext, String, float, float, float, float, float, int)} with the capitals filling
+     * {@code fill} of the box height and the text {@code widthFill} of its width at most.
+     */
+    static void fitted(PanelRenderContext context, String text, float cx, float cy, float w, float h, float z, int ink,
+                       float fill, float widthFill) {
         int split = text.indexOf(' ');
         if (split > 0) {
             String first = text.substring(0, split);
             String second = text.substring(split + 1);
             float lineH = h / 2.0f;
-            line(context, first, cx, cy - lineH / 2.0f, w, lineH, z, ink);
-            line(context, second, cx, cy + lineH / 2.0f, w, lineH, z, ink);
+            line(context, first, cx, cy - lineH / 2.0f, w, lineH, z, ink, fill, widthFill);
+            line(context, second, cx, cy + lineH / 2.0f, w, lineH, z, ink, fill, widthFill);
         } else {
-            line(context, text, cx, cy, w, h, z, ink);
+            line(context, text, cx, cy, w, h, z, ink, fill, widthFill);
         }
     }
 
     /** The caption above a display: one line (no break at a space), as large as fits the box, centred on {@code cx}. */
     static void caption(PanelRenderContext context, String text, float cx, float cy, float w, float h, float z, int ink) {
         if (!text.isEmpty()) {
-            line(context, text, cx, cy, w, h, z, ink);
+            line(context, text, cx, cy, w, h, z, ink, CAP_FILL, WIDTH_FILL);
         }
     }
 
-    private static void line(PanelRenderContext context, String text, float cx, float cy, float w, float h, float z, int ink) {
+    /** How much of a legend box the capitals fill by default (leaves room for the box's frame). */
+    static final float CAP_FILL = 0.62f;
+    static final float WIDTH_FILL = 0.9f;
+    /**
+     * The tile legends fill more: their box is the lamp window itself, so the text may come close to its edges (the
+     * frame around the window is the margin).
+     */
+    static final float TILE_FILL = 0.86f;
+    static final float TILE_WIDTH_FILL = 0.96f;
+
+    private static void line(PanelRenderContext context, String text, float cx, float cy, float w, float h, float z, int ink,
+                             float fill, float widthFill) {
         float pixels = context.font().width(text);
         if (pixels <= 0.0f) {
             return;
         }
         // A capital is 7 font pixels tall: fit the height first (a little under the box), then the width.
-        float scale = Math.min(h * 0.62f / 7.0f, w * 0.9f / pixels);
+        float scale = Math.min(h * fill / 7.0f, w * widthFill / pixels);
         context.textRotated(text, cx, cy, scale, 0.0f, z, ink, false, -pixels / 2.0f, -3.5f);
     }
 

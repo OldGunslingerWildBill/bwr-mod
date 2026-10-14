@@ -25,6 +25,14 @@ public abstract class CoreDisplayType extends PanelInputType {
         super(id);
     }
 
+    /** A display placed with {@code footprint} starts at the largest tile size of its look that the footprint holds. */
+    @Override
+    public ComponentData createData(Footprint footprint) {
+        CoreDisplayData data = (CoreDisplayData) createData();
+        data.tileCells = data.defaultTileFor(footprint.w(), footprint.h());
+        return data;
+    }
+
     @Override
     public final int maxSpanBlocks() {
         return SPAN_BLOCKS;

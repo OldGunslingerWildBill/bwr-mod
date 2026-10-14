@@ -377,6 +377,73 @@ public final class FcdDisplayTests {
         });
     }
 
+    // ---- default tile sizes: the largest at which the reference core fits the 8 block span
+
+    @GameTest(template = "empty", batch = "fcd")
+    public static void defaultTileSizesAreTheLargestThatFillTheEightBlockSpan(GameTestHelper h) {
+        CoreRodMap reference = FcdSnapshot.referenceCells().map();
+        h.assertTrue(reference.rodCount() == 185, "the reference core has 185 rods");
+        int columbia = FcdLayout.defaultTile(FcdLayout.Style.COLUMBIA);
+        int browns = FcdLayout.defaultTile(FcdLayout.Style.BROWNS_FERRY);
+        int matrix = FcdLayout.defaultMatrixTile();
+        h.assertTrue(columbia == 4 && FcdLayout.of(reference, FcdLayout.Style.COLUMBIA, 4).fits(128, 128)
+                && !FcdLayout.of(reference, FcdLayout.Style.COLUMBIA, 5).fits(128, 128), "Columbia: 4 fits 128 x 128, 5 does not: " + columbia);
+        h.assertTrue(browns == 3 && FcdLayout.of(reference, FcdLayout.Style.BROWNS_FERRY, 3).fits(128, 128)
+                && !FcdLayout.of(reference, FcdLayout.Style.BROWNS_FERRY, 4).fits(128, 128), "Browns Ferry: 3 fits, 4 does not: " + browns);
+        h.assertTrue(matrix == FcdLayout.MAX_TILE && FcdLayout.matrixWidth(reference, matrix) <= 128
+                && FcdLayout.matrixHeight(reference, matrix) <= 128, "matrix: the largest allowed size fits: " + matrix);
+        // A new display's data starts there, and the saved-without-a-key default stays the old 3.
+        h.assertTrue(new FullCoreDisplayData().tileCells == 4 && new RodSelectMatrixData().tileCells == FcdLayout.MAX_TILE,
+                "a new component's data starts at the style's default");
+        FullCoreDisplayData browned = new FullCoreDisplayData();
+        CompoundTag keyless = new CompoundTag();
+        browned.load(keyless);
+        h.assertTrue(browned.tileCells == 3 && ((RodSelectMatrixData) loadKeyless()).tileCells == 3,
+                "a save without TileCells loads as 3, as before");
+        CompoundTag chosen = new CompoundTag();
+        chosen.putInt("TileCells", 5);
+        browned.load(chosen);
+        h.assertTrue(browned.tileCells == 5, "a saved size is kept as saved");
+        // Placed with a footprint, the default is the largest the footprint holds, never below the old 3.
+        h.assertTrue(tileAt(ComponentTypes.FULL_CORE_DISPLAY, 128, 128) == 4 && tileAt(ComponentTypes.FULL_CORE_DISPLAY, 96, 96) == 3
+                && tileAt(ComponentTypes.FULL_CORE_DISPLAY, 112, 112) == 3 && tileAt(ComponentTypes.FULL_CORE_DISPLAY, 48, 48) == 3,
+                "display: 128 holds 4, smaller footprints keep 3");
+        h.assertTrue(tileAt(ComponentTypes.ROD_SELECT_MATRIX, 128, 128) == 6 && tileAt(ComponentTypes.ROD_SELECT_MATRIX, 112, 112) == 6
+                && tileAt(ComponentTypes.ROD_SELECT_MATRIX, 80, 80) == 4 && tileAt(ComponentTypes.ROD_SELECT_MATRIX, 64, 64) == 3
+                && tileAt(ComponentTypes.ROD_SELECT_MATRIX, 16, 16) == 3, "matrix: the largest the footprint holds, at least 3");
+        h.succeed();
+    }
+
+    private static CoreDisplayData loadKeyless() {
+        RodSelectMatrixData data = new RodSelectMatrixData();
+        data.load(new CompoundTag());
+        return data;
+    }
+
+    private static int tileAt(ComponentType type, int w, int h) {
+        return ((CoreDisplayData) new PanelComponent(1, type, 0, 0, Footprint.of(w, h), "T-1").data()).tileCells;
+    }
+
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 200)
+    public static void switchingTheLookKeepsAChosenTileAndMovesADefaultOne(GameTestHelper h) {
+        FcdTestSupport.Run.start(h, ORIGIN, 6, 9, 9, run -> {
+            run.wall(8, 8);
+            PanelBlockEntity block = run.panel(0, 0);
+            PanelComponent display = PanelOps.placeDirect(run.level, run.wallAt(0, 0), 0, 0, ComponentTypes.FULL_CORE_DISPLAY,
+                    Footprint.of(128, 128));
+            FullCoreDisplayData data = (FullCoreDisplayData) display.data();
+            h.assertTrue(data.tileCells == 4 && data.style.equals("columbia"), "placed at 128 x 128: Columbia, 4 cells");
+            h.assertTrue(configureStyle(run, block, display, "browns_ferry") && data.style.equals("browns_ferry") && data.tileCells == 3,
+                    "the default follows the new look: 3 cells for Browns Ferry, which fits");
+            h.assertTrue(data.fits(128, 128), "and it fits the component");
+            h.assertTrue(configureStyle(run, block, display, "columbia") && data.style.equals("columbia") && data.tileCells == 4,
+                    "and back: 4 cells for Columbia");
+            h.assertTrue(configure(run, block, display, "TileCells", 2) && data.tileCells == 2, "a player's choice of 2 cells");
+            h.assertTrue(configureStyle(run, block, display, "browns_ferry") && data.style.equals("browns_ferry") && data.tileCells == 2,
+                    "a chosen size is not touched by a change of look");
+        });
+    }
+
     private static boolean press(FcdTestSupport.Run run, PanelBlockEntity block, PanelComponent component, double value) {
         return PanelOps.operate(run.player, block.getBlockPos(), component.id(), OperateAction.PRESS, value);
     }

@@ -60,7 +60,11 @@ import java.util.List;
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
 public final class FcdClientCheck {
     /** One stage: which displays it has, how far the camera stands, and whether it fires a scram before the picture. */
-    private record Stage(String name, boolean columbia, boolean browns, boolean matrix, int distance, boolean scram) {
+    private record Stage(String name, boolean columbia, boolean browns, boolean matrix, double distance, boolean scram,
+                         double focusX, double focusY) {
+        Stage(String name, boolean columbia, boolean browns, boolean matrix, double distance, boolean scram) {
+            this(name, columbia, browns, matrix, distance, scram, 0.0, 0.0);
+        }
     }
 
     private static final List<Stage> ALL = List.of(
@@ -77,7 +81,13 @@ public final class FcdClientCheck {
             new Stage("browns-close", false, true, false, 3, false),
             new Stage("matrix-close", false, false, true, 3, false),
             new Stage("columbia-labels", true, false, false, 3, false),
-            new Stage("nameplates", false, false, false, 3, false));
+            new Stage("nameplates", false, false, false, 3, false),
+            // reading distance: a player standing a block and a half from the wall, looking at the core's middle and at a
+            // spot beside it (focus offsets are blocks from the middle of the wall, x to the player's left, y up)
+            new Stage("columbia-legends", true, false, false, 1.6, false),
+            new Stage("columbia-legends-edge", true, false, false, 1.6, false, 1.4, 1.6),
+            new Stage("matrix-legends", false, false, true, 1.6, false),
+            new Stage("browns-legends", false, true, false, 1.6, false));
 
     private static final String OPTION = System.getProperty("bwr.fcdClientStages", "");
     private static final List<Stage> STAGES = chosen();
@@ -103,6 +113,11 @@ public final class FcdClientCheck {
             picked.add(found);
         }
         return picked;
+    }
+
+    /** Blocks the wall of a stage is high: the displays use the whole 8 block span they are given. */
+    private static int rows(Stage stage) {
+        return stage.name().equals("nameplates") ? 2 : stage.columbia() || stage.matrix() ? 8 : stage.browns() ? 5 : 4;
     }
 
     private static int offset(int index) {
@@ -158,9 +173,9 @@ public final class FcdClientCheck {
                     player.getAbilities().flying = true;
                     player.onUpdateAbilities();
                     level.setDayTime(6000);
-                    int rows = current.name().equals("nameplates") ? 2 : current.columbia() ? 6 : current.browns() ? 5 : 4;
-                    double cameraY = wall.getY() - rows / 2.0 + 0.5 - 1.62;
-                    player.connection.teleport(centreX, cameraY, wall.getZ() - current.distance(), 0, 0);
+                    int rows = rows(current);
+                    double cameraY = wall.getY() - rows / 2.0 + 0.5 - 1.62 + current.focusY();
+                    player.connection.teleport(centreX + current.focusX(), cameraY, wall.getZ() - current.distance(), 0, 0);
                 } catch (Throwable t) {
                     failure = t;
                 }
@@ -277,8 +292,8 @@ public final class FcdClientCheck {
         int matrixAt = -1;
         if (stage.columbia()) {
             columbiaAt = x;
-            x += 6;
-            rows = Math.max(rows, 6);
+            x += 8;
+            rows = Math.max(rows, 8);
         }
         if (stage.browns()) {
             brownsAt = x;
@@ -287,8 +302,8 @@ public final class FcdClientCheck {
         }
         if (stage.matrix()) {
             matrixAt = x;
-            x += 4;
-            rows = Math.max(rows, 4);
+            x += 8;
+            rows = Math.max(rows, 8);
         }
         cols = x;
         for (int row = 0; row < rows; row++) {
@@ -297,11 +312,11 @@ public final class FcdClientCheck {
                         .setValue(PanelBlock.FACING, Direction.NORTH), 3);
             }
         }
-        if (columbiaAt >= 0) place(level, wall.relative(Direction.WEST, columbiaAt), ComponentTypes.FULL_CORE_DISPLAY, 96, 96, reactor,
-                FullCoreDisplayData.COLUMBIA, stage.name().equals("columbia-labels"));
+        if (columbiaAt >= 0) place(level, wall.relative(Direction.WEST, columbiaAt), ComponentTypes.FULL_CORE_DISPLAY, 128, 128, reactor,
+                FullCoreDisplayData.COLUMBIA, stage.name().equals("columbia-labels") || stage.name().startsWith("columbia-legends"));
         if (brownsAt >= 0) place(level, wall.relative(Direction.WEST, brownsAt), ComponentTypes.FULL_CORE_DISPLAY, 128, 80, reactor,
                 FullCoreDisplayData.BROWNS_FERRY, true);
-        if (matrixAt >= 0) place(level, wall.relative(Direction.WEST, matrixAt), ComponentTypes.ROD_SELECT_MATRIX, 64, 64, reactor, null, true);
+        if (matrixAt >= 0) place(level, wall.relative(Direction.WEST, matrixAt), ComponentTypes.ROD_SELECT_MATRIX, 128, 128, reactor, null, true);
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 if (level.getBlockEntity(wall.relative(Direction.WEST, col).below(row)) instanceof PanelBlockEntity be) be.syncFull();

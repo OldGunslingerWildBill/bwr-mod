@@ -57,6 +57,9 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
         float dotZ = 0.9f;
         /** Digit window of the module in cells relative to the module's top-left: x, y, w, h. */
         float[] digits;
+        /** The upper and lower lamp windows of a Columbia tile, in cells relative to the tile's top-left: x, y, w, h. */
+        float[] upperWindow;
+        float[] lowerWindow;
 
         State(PanelComponent component, float aspect) {
             FullCoreDisplayData data = (FullCoreDisplayData) component.data();
@@ -81,6 +84,11 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
                     textZ = tile.topZ() + 0.05f;
                     dotZ = 0.15f;
                 }
+                // The legends go in the windows the tile really has (a baked tile's are narrower than the procedural ones).
+                upperWindow = tile != null && tile.bounds("upper") != null ? tile.bounds("upper")
+                        : new float[] {upperX(t), upperY(t), windowW(t), windowH(t)};
+                lowerWindow = tile != null && tile.bounds("lower") != null ? tile.bounds("lower")
+                        : new float[] {upperX(t), lowerY(t), windowW(t), windowH(t)};
             } else {
                 tile = null;
                 blank = null;
@@ -498,17 +506,19 @@ final class FullCoreDisplayModel extends CoreDisplayModel {
         FcdLayout layout = s.layout;
         CoreRodMap map = layout.map();
         float t = layout.tile();
-        float hw = windowW(t);
-        float hh = windowH(t);
+        // The legend of each lamp is as large as its window allows: the box is the lamp window itself.
+        float[] upperBox = s.upperWindow;
+        float[] lowerBox = s.lowerWindow;
         for (int rod = 0; rod < map.rodCount(); rod++) {
             for (int which = FcdLayout.TILE_A; which <= FcdLayout.TILE_C; which++) {
                 float x = s.ox + layout.tileX(rod, which);
                 float y = s.oy + layout.tileY(rod, which);
                 String upper = which == FcdLayout.TILE_A ? (s.coordinates ? map.label(rod) : "") : COLUMBIA_UPPER_TEXT[which];
                 String lower = COLUMBIA_LOWER_TEXT[which];
-                float cx = x + t / 2.0f;
-                fitted(context, upper, cx, y + upperY(t) + hh / 2.0f, hw, hh, s.textZ, INK);
-                fitted(context, lower, cx, y + lowerY(t) + hh / 2.0f, hw, hh, s.textZ, INK);
+                fitted(context, upper, x + upperBox[0] + upperBox[2] / 2.0f, y + upperBox[1] + upperBox[3] / 2.0f,
+                        upperBox[2], upperBox[3], s.textZ, INK, TILE_FILL, TILE_WIDTH_FILL);
+                fitted(context, lower, x + lowerBox[0] + lowerBox[2] / 2.0f, y + lowerBox[1] + lowerBox[3] / 2.0f,
+                        lowerBox[2], lowerBox[3], s.textZ, INK, TILE_FILL, TILE_WIDTH_FILL);
             }
         }
         if (s.edge) {
