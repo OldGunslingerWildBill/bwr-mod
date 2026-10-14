@@ -228,8 +228,9 @@ public final class PanelFoundationTests {
             helper.assertTrue(BuiltInRegistries.ITEM.getKey(item).equals(type.id()), type.id() + " item id differs");
             helper.assertTrue(!type.footprints().isEmpty(), type.id() + " has no footprint");
             for (Footprint footprint : type.footprints()) {
-                helper.assertTrue(footprint.w() <= Footprint.MAX_CELLS && footprint.h() <= Footprint.MAX_CELLS,
-                        type.id() + " footprint exceeds 4x4 blocks");
+                int maxCells = PanelGeometry.GRID * type.maxSpanBlocks();
+                helper.assertTrue(footprint.w() <= maxCells && footprint.h() <= maxCells,
+                        type.id() + " footprint exceeds its " + type.maxSpanBlocks() + "x" + type.maxSpanBlocks() + " block span");
             }
             helper.assertTrue(ComponentTypes.get(type.id()) == type, type.id() + " is not found by id");
             helper.assertTrue(!type.labelPrefix().isEmpty(), type.id() + " has no label prefix");
