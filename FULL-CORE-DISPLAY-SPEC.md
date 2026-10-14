@@ -189,6 +189,6 @@ headless `blender --background --factory-startup`.
 
 | Track | State | Resume from |
 | --- | --- | --- |
-| models (`fcd-models`) | not started | section 6 |
+| models (`fcd-models`) | done: all 10 models exported, previews checked, face counts within budget (`art/models/panel/fcd`, `art/models/panel/oiltight`, READMEs list parts and anchors) | wire the style table and the code track's part names to the exported ids |
 | code (`fcd-code`) | not started | section 5, items 1 to 8 in order |
 | integration (Claude) | not started | merge both, client screenshots against the photos |
