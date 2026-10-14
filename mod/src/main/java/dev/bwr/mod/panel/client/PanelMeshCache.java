@@ -62,6 +62,14 @@ final class PanelMeshCache implements AutoCloseable {
     private int quads;
     private long signature;
     private boolean built;
+    /** The captured legends of the components that cache them: one vertex buffer per text render type used. */
+    private final Map<RenderType, VertexBuffer> legendBuffers = new java.util.LinkedHashMap<>();
+    private long legendSignature;
+    private boolean legendsBuilt;
+    private boolean legendsFailed;
+    private int legendVertices;
+    private int legendRebuilds;
+    private static int totalLegendRebuilds;
     /** Set when a rebuild threw: this block draws on the per frame path from then on, and says so once. */
     private boolean failed;
     private long lastUsed;
@@ -116,6 +124,20 @@ final class PanelMeshCache implements AutoCloseable {
     /** Time spent in rebuilds since the game started, nanoseconds, for checks. */
     static long totalRebuildNanos() {
         return totalRebuildNanos;
+    }
+
+    /** Text vertices held in legend buffers right now, for checks. */
+    static int cachedLegendVertices() {
+        int total = 0;
+        for (PanelMeshCache cache : CACHES.values()) {
+            total += cache.legendVertices;
+        }
+        return total;
+    }
+
+    /** Legend captures since the game started, for checks. */
+    static int totalLegendRebuilds() {
+        return totalLegendRebuilds;
     }
 
     /** How often the buffer of {@code be} was rebuilt (0 when it has none), for checks. */
@@ -209,6 +231,103 @@ final class PanelMeshCache implements AutoCloseable {
         }
     }
 
+    // ---- legends
+
+    /** Whether the legend buffers hold the text the signature describes. */
+    boolean legendsCurrent(long signature) {
+        return legendsBuilt && legendSignature == signature;
+    }
+
+    /** False once a legend capture threw: the legends are then drawn per frame. */
+    boolean legendsUsable() {
+        return !legendsFailed;
+    }
+
+    /**
+     * Captures the legends of every component whose model caches them into text vertex buffers, one per render type
+     * the font asks for. The same code as the per frame path writes them (a {@link PanelRenderContext} with an
+     * identity pose), so the pictures are identical; it runs again only when the signature changes.
+     */
+    void rebuildLegends(PanelBlockEntity be, List<PanelComponent> components, int light, Font font, long signature) {
+        long started = System.nanoTime();
+        Map<RenderType, BufferBuilder> builders = new java.util.LinkedHashMap<>();
+        Map<RenderType, ByteBufferBuilder> bytes = new java.util.LinkedHashMap<>();
+        MultiBufferSource source = type -> builders.computeIfAbsent(type, key -> {
+            ByteBufferBuilder memory = new ByteBufferBuilder(1 << 16);
+            bytes.put(key, memory);
+            return new BufferBuilder(memory, key.mode(), key.format());
+        });
+        boolean clean = false;
+        try {
+            CAPTURE.begin(be, IDENTITY, source, light, OVERLAY, 0.0f, PanelRenderContext.LOD_FULL, font);
+            for (int i = 0; i < components.size(); i++) {
+                PanelComponent component = components.get(i);
+                ComponentType componentType = component.type();
+                if (componentType == null) {
+                    continue;
+                }
+                ComponentModel model = ComponentModels.get(componentType.id());
+                if (model.legendsCached()) {
+                    CAPTURE.beginComponent(component);
+                    model.emitLegends(CAPTURE, component);
+                }
+            }
+            closeLegends();
+            for (Map.Entry<RenderType, BufferBuilder> entry : builders.entrySet()) {
+                MeshData mesh = entry.getValue().build();
+                if (mesh != null) {
+                    legendVertices += mesh.drawState().vertexCount();
+                    VertexBuffer vertexBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
+                    vertexBuffer.bind();
+                    vertexBuffer.upload(mesh);
+                    VertexBuffer.unbind();
+                    legendBuffers.put(entry.getKey(), vertexBuffer);
+                }
+            }
+            legendSignature = signature;
+            legendsBuilt = true;
+            legendRebuilds++;
+            totalLegendRebuilds++;
+            totalRebuildNanos += System.nanoTime() - started;
+            clean = true;
+        } catch (RuntimeException e) {
+            legendsFailed = true;
+            LOGGER.warn("Panel block {} could not build its legend cache; drawing its text per frame", be.getBlockPos(), e);
+        } finally {
+            for (ByteBufferBuilder memory : bytes.values()) {
+                memory.close();
+            }
+            if (!clean) {
+                closeLegends();
+            }
+        }
+    }
+
+    private void closeLegends() {
+        for (VertexBuffer vertexBuffer : legendBuffers.values()) {
+            vertexBuffer.close();
+        }
+        legendBuffers.clear();
+        legendVertices = 0;
+        legendsBuilt = false;
+    }
+
+    /** Draws the captured legends for the block whose camera-relative pose is {@code pose}. */
+    void drawLegends(PoseStack.Pose pose) {
+        if (legendBuffers.isEmpty()) {
+            return;
+        }
+        MODEL_VIEW.set(RenderSystem.getModelViewMatrix()).mul(pose.pose());
+        for (Map.Entry<RenderType, VertexBuffer> entry : legendBuffers.entrySet()) {
+            RenderType type = entry.getKey();
+            type.setupRenderState();
+            entry.getValue().bind();
+            entry.getValue().drawWithShader(MODEL_VIEW, RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+            VertexBuffer.unbind();
+            type.clearRenderState();
+        }
+    }
+
     // ---- drawing
 
     /** Draws the buffer for the block whose camera-relative pose is {@code pose}. */
@@ -233,5 +352,6 @@ final class PanelMeshCache implements AutoCloseable {
         }
         built = false;
         quads = 0;
+        closeLegends();
     }
 }

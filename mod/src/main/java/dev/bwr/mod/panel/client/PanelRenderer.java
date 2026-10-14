@@ -122,6 +122,8 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
                               PoseStack pose, int light, net.minecraft.client.gui.Font font) {
         float aspect = context.rowAspect();
         long signature = PanelMeshCache.seed(light, PanelModels.generation(), aspect, count);
+        long legendSignature = signature;
+        boolean cachedLegends = false;
         for (int i = 0; i < count; i++) {
             PanelComponent component = components.get(i);
             ComponentType type = component.type();
@@ -133,6 +135,11 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
             signature = PanelMeshCache.mix(signature, component.id());
             signature = PanelMeshCache.mix(signature, component.revision());
             signature = PanelMeshCache.mix(signature, model.poseKey(context, component));
+            if (model.legendsCached()) {
+                // Printed legends depend on the revision only (never on a pose), so a lamp coming on rebuilds no text.
+                cachedLegends = true;
+                legendSignature = PanelMeshCache.mix(PanelMeshCache.mix(legendSignature, component.id()), component.revision());
+            }
         }
         if (!cache.isCurrent(signature)) {
             cache.rebuild(be, components, light, font, signature);
@@ -164,12 +171,26 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
             return;
         }
         // Text, then glass, each for the whole block: one render type switch each instead of one per component.
+        // Models whose legends are static have them in the block's text buffers: captured once, drawn with one call.
+        boolean legendBuffers = false;
+        if (cachedLegends) {
+            if (cache.legendsUsable() && !cache.legendsCurrent(legendSignature)) {
+                cache.rebuildLegends(be, components, light, font, legendSignature);
+            }
+            legendBuffers = cache.legendsUsable();
+            if (legendBuffers) {
+                cache.drawLegends(pose.last());
+            }
+        }
         for (int i = 0; i < count; i++) {
             PanelComponent component = components.get(i);
             ComponentType type = component.type();
             if (type != null) {
-                context.beginComponent(component);
-                ComponentModels.get(type.id()).renderLegends(context, component);
+                ComponentModel model = ComponentModels.get(type.id());
+                if (!(legendBuffers && model.legendsCached())) {
+                    context.beginComponent(component);
+                    model.renderLegends(context, component);
+                }
             }
         }
         for (int i = 0; i < count; i++) {
@@ -224,6 +245,16 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
     /** Block buffers currently alive, for checks. */
     public static int debugCachedBlocks() {
         return PanelMeshCache.cachedBlocks();
+    }
+
+    /** Text vertices held in block legend buffers right now, for checks. */
+    public static int debugCachedLegendVertices() {
+        return PanelMeshCache.cachedLegendVertices();
+    }
+
+    /** Legend captures since the game started, for checks. */
+    public static int debugLegendRebuilds() {
+        return PanelMeshCache.totalLegendRebuilds();
     }
 
     /** Quads held in block buffers right now (each is four 36 byte vertices), for checks. */
