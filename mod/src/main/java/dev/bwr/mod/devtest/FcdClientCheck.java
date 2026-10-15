@@ -87,6 +87,8 @@ public final class FcdClientCheck {
             new Stage("columbia+matrix-far", true, false, true, 38, false),
             new Stage("browns+matrix-far", false, true, true, 38, false),
             new Stage("columbia-scram", true, false, false, 9, true),
+            // C2: frame cost for the 3 s of steady display before a scram and the 8 s after it, when every rod moves at once
+            new Stage("columbia-scram-perf", true, false, false, 9, true),
             new Stage("columbia-close", true, false, false, 3, false),
             new Stage("browns-close", false, true, false, 3, false),
             new Stage("matrix-close", false, false, true, 3, false),
@@ -105,6 +107,10 @@ public final class FcdClientCheck {
     private static int age, joined, stage;
     private static long began, lastFrame;
     private static final ArrayList<Double> FRAME_MS = new ArrayList<>();
+    /** Steady frames before the scram of the {@code -scram-perf} stage (FRAME_MS holds the frames after it). */
+    private static final ArrayList<Double> PRE_SCRAM_MS = new ArrayList<>();
+    private static int rebuildsAtScram = -1, legendRebuildsAtScram = -1;
+    private static double rebuildMillisAtScram;
     private static volatile Throwable failure;
     private static volatile boolean scrammed;
     private static long scramAt;
@@ -174,6 +180,8 @@ public final class FcdClientCheck {
             rebuildsAtWindow = -1;
             legendsAtWindow = -1;
             FRAME_MS.clear();
+            PRE_SCRAM_MS.clear();
+            rebuildsAtScram = legendRebuildsAtScram = -1;
             began = 0;
             requestedAt = System.nanoTime();
             builtView = probeView = null;
@@ -322,7 +330,8 @@ public final class FcdClientCheck {
         if (problem != null || readyFrames < 20 || began == 0) {
             throw new AssertionError("FCD capture attempted before readiness: " + problem);
         }
-        if (!current.scram() && FRAME_MS.size() < 100) throw new AssertionError("Too few frames for the FCD benchmark: " + FRAME_MS.size());
+        boolean scramPerf = current.name().equals("columbia-scram-perf");
+        if ((!current.scram() || scramPerf) && FRAME_MS.size() < 100) throw new AssertionError("Too few frames for the FCD benchmark: " + FRAME_MS.size());
         boolean displays = current.columbia() || current.browns() || current.matrix();
         boolean cached = !Boolean.getBoolean("bwr.panelImmediate") && !"false".equals(System.getProperty("bwr.fcdLegendCache"));
         if (displays && cached && !current.scram()) {
@@ -356,6 +365,23 @@ public final class FcdClientCheck {
         LogUtils.getLogger().info("FCD PERFORMANCE stage={} gpu cache: {} blocks hold {} quads and {} legend vertices; {} buffers built so far in {} ms, {} legend captures",
                 current.name(), PanelRenderer.debugCachedBlocks(), PanelRenderer.debugCachedQuads(), PanelRenderer.debugCachedLegendVertices(),
                 PanelRenderer.debugRebuilds(), PanelRenderer.debugRebuildMillis(), PanelRenderer.debugLegendRebuilds());
+        if (scramPerf) {
+            Collections.sort(PRE_SCRAM_MS);
+            int m = PRE_SCRAM_MS.size();
+            double preSum = 0;
+            for (double ms : PRE_SCRAM_MS) preSum += ms;
+            LogUtils.getLogger().info("FCD SCRAM PERFORMANCE steady before the scram: frames={} meanMs={} p95Ms={}; during and after it (8 s): frames={} meanMs={} p50Ms={} p95Ms={} maxMs={}; "
+                            + "block buffers rebuilt {} times and legends captured {} times since the scram",
+                    m, m == 0 ? 0 : preSum / m, m == 0 ? 0 : PRE_SCRAM_MS.get((int) (m * .95)), n, mean, p50, p95, n == 0 ? 0 : FRAME_MS.get(n - 1),
+                    PanelRenderer.debugRebuilds() - rebuildsAtScram, PanelRenderer.debugLegendRebuilds() - legendRebuildsAtScram);
+            int over8 = 0, over16 = 0;
+            for (double ms : FRAME_MS) {
+                if (ms > 8) over8++;
+                if (ms > 16) over16++;
+            }
+            LogUtils.getLogger().info("FCD SCRAM PERFORMANCE after the scram: {} frames over 8 ms, {} over 16 ms; {} ms spent rebuilding block buffers",
+                    over8, over16, PanelRenderer.debugRebuildMillis() - rebuildMillisAtScram);
+        }
         saveScreenshot(mc, current.name());
         LogUtils.getLogger().info("FCD CAPTURE VERIFIED stage={} screen=none camera={} yaw={} pitch={} readyFrames={} panels={}",
                 current.name(), mc.gameRenderer.getMainCamera().getPosition(), mc.gameRenderer.getMainCamera().getYRot(),
@@ -388,6 +414,16 @@ public final class FcdClientCheck {
             LogUtils.getLogger().info("FCD READINESS stage={} ready afterMs={} panels={} camera={}", STAGES.get(stage).name(),
                     (now - requestedAt) / 1_000_000, builtView.cols * builtView.rows, mc.gameRenderer.getMainCamera().getPosition());
         }
+        boolean scramPerf = STAGES.get(stage).name().equals("columbia-scram-perf");
+        if (scramPerf && scrammed && rebuildsAtScram < 0) {
+            rebuildsAtScram = PanelRenderer.debugRebuilds();
+            legendRebuildsAtScram = PanelRenderer.debugLegendRebuilds();
+            rebuildMillisAtScram = PanelRenderer.debugRebuildMillis();
+        }
+        if (scramPerf && now - began > 3_000_000_000L && lastFrame != 0) {
+            double delta = (now - lastFrame) / 1_000_000.0;
+            if (delta > 0 && delta < 500) (scrammed ? FRAME_MS : PRE_SCRAM_MS).add(delta);
+        }
         if (now - began > 3_000_000_000L && lastFrame != 0 && !STAGES.get(stage).scram()) {
             if (rebuildsAtWindow < 0) {
                 rebuildsAtWindow = PanelRenderer.debugRebuilds();
@@ -398,7 +434,7 @@ public final class FcdClientCheck {
         }
         lastFrame = now;
         Stage current = STAGES.get(stage);
-        if (current.scram() ? scrammed && now - scramAt >= 900_000_000L : now - began >= 11_000_000_000L) capture(mc, current);
+        if (current.scram() ? scrammed && now - scramAt >= (scramPerf ? 8_000_000_000L : 900_000_000L) : now - began >= 11_000_000_000L) capture(mc, current);
     }
 
     private static String readinessProblem(Minecraft mc, View view) {

@@ -48,20 +48,33 @@ import java.util.List;
  * pushbuttons, lamps, knobs, round meters and edgewise meters), once with every component in the classic look and
  * once with the baked Blender models; the same two walls are also measured from beyond the 24-block full-detail
  * range. Select stages with {@code -PbwrPanelPerformanceStages=empty,classic,baked,classic-far,baked-far}
- * (default: all); the frame time of each is logged as {@code PANEL PERFORMANCE}.
+ * (default: those five); {@code annunciators-off} and {@code annunciators-flash} (C2) are the same wall with 50 annunciator
+ * windows, normal and then all flashing, and are chosen by name. The frame time of each is logged as {@code PANEL PERFORMANCE}.
  */
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
 public final class PanelPerformanceCheck {
-    /** Stage name, whether it has a wall, the look of its components, and how far the camera stands from the wall. */
-    private record Stage(String name, boolean wall, String style, int distance) {
+    /**
+     * Stage name, whether it has a wall, the look of its components, how far the camera stands from the wall, and
+     * whether 25 of the wall's blocks carry two annunciator windows each in place of their usual layout
+     * ({@link #ANN_OFF}: all 50 windows normal; {@link #ANN_FLASH}: all 50 in unacknowledged alarm, flashing).
+     */
+    private record Stage(String name, boolean wall, String style, int distance, int annunciators) {
+        Stage(String name, boolean wall, String style, int distance) {
+            this(name, wall, style, distance, 0);
+        }
     }
+
+    private static final int ANN_OFF = 1, ANN_FLASH = 2;
 
     private static final List<Stage> ALL = List.of(
             new Stage("empty", false, null, 15),
             new Stage("classic", true, PanelStyles.CLASSIC, 15),
             new Stage("baked", true, null, 15),
             new Stage("classic-far", true, PanelStyles.CLASSIC, 36),
-            new Stage("baked-far", true, null, 36));
+            new Stage("baked-far", true, null, 36),
+            // C2: the same wall with 50 annunciator windows, normal and then all flashing (not in the default list below)
+            new Stage("annunciators-off", true, null, 15, ANN_OFF),
+            new Stage("annunciators-flash", true, null, 15, ANN_FLASH));
 
     /** One component of a block layout: type, cells, look (style null: the one named for the layout), live value. */
     private record Spec(ComponentType type, int x, int y, int w, int h, String style, String variant, double value) {
@@ -127,7 +140,7 @@ public final class PanelPerformanceCheck {
     private PanelPerformanceCheck() {}
 
     private static List<Stage> chosen() {
-        if (OPTION.isBlank()) return ALL;
+        if (OPTION.isBlank()) return ALL.subList(0, 5);
         List<Stage> picked = new ArrayList<>();
         for (String name : OPTION.split(",")) {
             Stage found = null;
@@ -166,6 +179,7 @@ public final class PanelPerformanceCheck {
             return;
         }
         if (mc.player == null || mc.level == null || mc.getSingleplayerServer() == null || ++joined < 40) return;
+        if (stage >= STAGES.size()) return; // the last stage asked the client to stop; ticks may still arrive
         Stage current = STAGES.get(stage);
         if (!requested) {
             requested = true;
@@ -181,7 +195,7 @@ public final class PanelPerformanceCheck {
                 for (BlockPos pos : BlockPos.betweenClosed(new BlockPos(10 + offset, 117, offset),
                         new BlockPos(38 + offset, 117, 45 + offset)))
                     level.setBlock(pos, Blocks.SMOOTH_STONE.defaultBlockState(), 2);
-                if (current.wall()) build(level, new BlockPos(32 + offset, 125, 40 + offset), current.style());
+                if (current.wall()) build(level, new BlockPos(32 + offset, 125, 40 + offset), current.style(), current.annunciators());
                 player.setNoGravity(true);
                 player.getAbilities().flying = true;
                 player.onUpdateAbilities();
@@ -234,15 +248,33 @@ public final class PanelPerformanceCheck {
      * Fills a 16 x 8 block wall facing north whose top-right block (as the operator sees it) is {@code root} with
      * the block layouts, every component in {@code styleOverride} when given, else in the look its layout names.
      */
-    private static void build(net.minecraft.server.level.ServerLevel level, BlockPos root, String styleOverride) {
+    private static void build(net.minecraft.server.level.ServerLevel level, BlockPos root, String styleOverride, int annunciators) {
         for (int row = 0; row < 8; row++) for (int col = 0; col < 16; col++) {
             var pos = root.relative(Direction.WEST, col).below(row);
             level.setBlock(pos, BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState()
                     .setValue(PanelBlock.FACING, Direction.NORTH), 3);
         }
         int placed = 0;
+        int windows = 0;
         for (int row = 0; row < 8; row++) for (int col = 0; col < 16; col++) {
             var pos = root.relative(Direction.WEST, col).below(row);
+            if (annunciators != 0 && (col + row * 16) % 5 == 0 && windows < 50) {
+                // two 12 x 8 windows stacked in this block, 25 blocks, 50 windows
+                for (int k = 0; k < 2; k++) {
+                    PanelComponent window = PanelOps.placeDirect(level, pos, 0, 8 * k, ComponentTypes.ANNUNCIATOR, Footprint.of(12, 8));
+                    if (window == null) throw new AssertionError("Panel benchmark annunciator placement failed at " + pos);
+                    var data = (dev.bwr.mod.panel.component.AnnunciatorData) window.data();
+                    data.line1 = "HI PRESS";
+                    data.line2 = "RPV " + (windows + 1);
+                    data.color = windows % 3 == 0 ? 0xFFB000 : windows % 3 == 1 ? 0xE03020 : 0xF0F0F0;
+                    window.setSource(0, InputSources.constant(annunciators == ANN_FLASH ? 1.0 : 0.0));
+                    ((PanelBlockEntity) level.getBlockEntity(pos)).resample(window, true);
+                    window.touch();
+                    windows++;
+                    placed++;
+                }
+                continue;
+            }
             for (Spec spec : LAYOUTS.get((col + row * 3) % LAYOUTS.size())) {
                 PanelComponent component = PanelOps.placeDirect(level, pos, spec.x(), spec.y(), spec.type(),
                         Footprint.of(spec.w(), spec.h()));
@@ -274,7 +306,7 @@ public final class PanelPerformanceCheck {
         for (int row = 0; row < 8; row++) for (int col = 0; col < 16; col++) {
             if (level.getBlockEntity(root.relative(Direction.WEST, col).below(row)) instanceof PanelBlockEntity be) be.syncFull();
         }
-        LogUtils.getLogger().info("PANEL PERFORMANCE wall built: {} components in 128 blocks, style={}", placed,
-                styleOverride == null ? "baked" : styleOverride);
+        LogUtils.getLogger().info("PANEL PERFORMANCE wall built: {} components in 128 blocks, style={}, {} annunciator windows ({})", placed,
+                styleOverride == null ? "baked" : styleOverride, windows, annunciators == ANN_FLASH ? "flashing" : annunciators == ANN_OFF ? "normal" : "none");
     }
 }

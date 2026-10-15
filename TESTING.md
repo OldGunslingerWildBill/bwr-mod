@@ -28,6 +28,15 @@ anything is compared; the logged `APRM CALIBRATION GAMETEST` lines show the heat
 east, south and west in a disposable creative world and writes `grid-tie-and-meters.png` and `meters-arrows-close.png` to
 `run/turbineModelCheck/grid-check/`; the arrow on each meter's top face points toward its output.
 
+Flashing-lamp cost (C2) is measured by `-PbwrPanelPerformanceCheck -PbwrPanelPerformanceStages=annunciators-off,annunciators-flash`
+(the 16 x 8 wall with 50 annunciator windows, normal then all flashing) and by `-PbwrFcdClientCheck
+-PbwrFcdClientStages=columbia-scram-perf` (a 185-rod full core display, frames before and for 8 s after a scram). Flashing is drawn
+per frame from game time, so it never rebuilds a block buffer: the annunciator walls rebuilt exactly 128 buffers per stage, the same
+as the plain wall. Local results (one machine, frame times drift 2x between the first and later stages of one run, so compare
+pairs): flashing minus normal came out between -1.0 and +1.1 ms, about +0.3 ms on average over six pairs; the display during a
+scram averaged 0.50-0.60 ms (p95 0.7-1.0 ms) against 0.53-0.63 ms steady, with about 25 single-block rebuilds of about 2.4 ms in
+the 8 s, one frame over 16 ms. Neither is near the 2 ms limit, so no renderer change was made.
+
 Alpha.30 adds `CoreMeltProgressionTest` (9), `ContainmentHydrogenTest` (11),
 `SevereAccidentIntegrationTest` (4) and `NaturalCirculationTest` (6). They cover
 burst and gap release, latent-heat melting, relocation, flooded versus dry lower
