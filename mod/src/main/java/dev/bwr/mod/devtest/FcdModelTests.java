@@ -155,7 +155,7 @@ public final class FcdModelTests {
     /**
      * What the real-client check showed against the owner's SRV photos: the oiltight selectors turn to the bearings of
      * their legends (about 37.6 degrees either side), a two position one between the outer two legends, a dome lens
-     * is the lamp's colour whatever it is (the default red included), and a lit dome is shaded, not a flat disc.
+     * is the lamp's colour whatever it is (the default red included), and a lit dome is that colour edge to edge.
      */
     @GameTest(template = "empty", batch = "fcd")
     public static void srvSwitchesFollowThePhotographedLook(GameTestHelper h) throws IOException {
@@ -214,7 +214,8 @@ public final class FcdModelTests {
                 }
             };
             PartDraw.emit(sink, lens, Placement.fit(dome, 8, 8, 1.0f), 0.0f, 0.0f, 0x30D060, 1.0f, true, new float[PartDraw.SCRATCH]);
-            h.assertTrue(highest[0] >= 0xC8 && lowest[0] <= highest[0] - 40, "a lit dome: the face toward the viewer nearly at full colour, the flanks clearly darker: "
+            // The project owner's call (2026-10-15): a lit dome is the chosen colour across the whole lens, unshaded.
+            h.assertTrue(lowest[0] == 0xD0 && highest[0] == 0xD0, "a lit dome: every face the chosen green 0xD0: "
                     + lowest[0] + ".." + highest[0]);
         }
         h.succeed();

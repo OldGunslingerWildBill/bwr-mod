@@ -14,8 +14,13 @@ public final class PanelLampAppearanceTests {
             return PanelModelParser.parse(name,new String(in.readAllBytes(),StandardCharsets.UTF_8));
         } catch (Exception e) { throw new AssertionError(name,e); }
     }
+    /**
+     * The project owner's call (2026-10-15): a lit lens is the player's chosen colour across the whole lens, with no
+     * hot spot and no shading, so a red lamp always reads red. (This replaced Part B's white crown, which left a red dome
+     * mostly white.) The unlit lens is the same colour dimmed, and never whitened.
+     */
     @GameTest(template="empty")
-    public static void domeHasBrightCrownAndSaturatedShoulder(GameTestHelper h) {
+    public static void litDomeIsTheChosenColourEdgeToEdge(GameTestHelper h) {
         var m=model("light_dome_smooth"); var lens=m.part("lens");
         int[] lit=new int[lens.faceCount], off=new int[lens.faceCount]; int[] i={0};
         QuadSink sink=(a,b,c,d,e,f,g,j,k,l,n,o,rgb,normal,emissive)->lit[i[0]++]=rgb;
@@ -25,8 +30,9 @@ public final class PanelLampAppearanceTests {
         PartDraw.emit(dark,lens,Placement.fit(m,4,4),0,0,0x00CC66,0.22f,false,new float[PartDraw.SCRATCH]);
         int crown=0,shoulder=0;
         for(int f=0;f<lens.faceCount;f++) {
-            if(lens.normal(f,2)>.97) { crown++; h.assertTrue(((lit[f]>>16)&255)>100,"lit crown has no white hot spot"); }
-            if(lens.normal(f,2)<.5) { shoulder++; h.assertTrue(((lit[f]>>16)&255)<5,"shoulder lost its colour"); }
+            if(lens.normal(f,2)>.97) crown++;
+            if(lens.normal(f,2)<.5) shoulder++;
+            h.assertTrue((lit[f]&0xFFFFFF)==0x00CC66,"lit lens face "+f+" is "+Integer.toHexString(lit[f]&0xFFFFFF)+", not the chosen colour");
             h.assertTrue(((off[f]>>16)&255)==0,"unlit lens retains a hot spot");
         }
         h.assertTrue(crown>0&&shoulder>0,"asset must exercise crown and shoulder"); h.succeed();

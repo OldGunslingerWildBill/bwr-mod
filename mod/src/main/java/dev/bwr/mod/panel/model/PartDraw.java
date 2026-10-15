@@ -89,32 +89,18 @@ public final class PartDraw {
             float n0 = normals[f * 3];
             float n1 = normals[f * 3 + 1];
             float n2 = normals[f * 3 + 2];
-            float faceBrightness = brightness;
-            if (emissive) {
-                // A glowing face is not lit by the world, so a dome or a ribbed lens would read as a flat disc: shade it
-                // by how squarely it faces the viewer (a flat face, normal straight out, is untouched).
-                faceBrightness *= 0.6f + 0.4f * Math.max(0.0f, r20 * n0 + r21 * n1 + r22 * n2);
-            }
-            int rgb = faceColor(part, f, baseRgb, faceBrightness);
-            // The bulb transmits most strongly through the crown of a curved lens.
-            // Keep the shoulder saturated; flat annunciator/cap faces have no dome hot spot.
-            if (emissive && part.role == BakedPanelModel.Role.LAMP && part.faceCount >= 32) {
-                float facing = Math.max(0.0f, n2);
-                rgb = hotSpot(rgb, 0.9f * (float) Math.pow(facing, 20));
-            }
+            // A lit lens is one colour from edge to edge: exactly the colour the player set on the component (a #RRGGBB
+            // code in the config screen), with no shading and no hot spot, so a red lamp always reads red. That is the
+            // project owner's call; other glowing faces (segments, tiles) are flat and keep their authored colours.
+            int rgb = emissive && part.role == BakedPanelModel.Role.LAMP && baseRgb >= 0
+                    ? (brightness == 1.0f ? baseRgb : QuadSink.shade(baseRgb, brightness))
+                    : faceColor(part, f, baseRgb, brightness);
             sink.quad(scratch[0], scratch[1], scratch[2], scratch[3], scratch[4], scratch[5],
                     scratch[6], scratch[7], scratch[8], scratch[9], scratch[10], scratch[11],
                     rgb,
                     r00 * n0 + r01 * n1 + r02 * n2, r10 * n0 + r11 * n1 + r12 * n2, r20 * n0 + r21 * n1 + r22 * n2,
                     emissive);
         }
-    }
-
-    private static int hotSpot(int rgb, float amount) {
-        int r = (rgb >> 16) & 255, g = (rgb >> 8) & 255, b = rgb & 255;
-        return ((r + Math.round((255 - r) * amount)) << 16)
-                | ((g + Math.round((255 - g) * amount)) << 8)
-                | (b + Math.round((255 - b) * amount));
     }
 
     /** Emits a {@link BakedPanelModel.Role#GLASS} part as translucent quads in the part's own colours. */
