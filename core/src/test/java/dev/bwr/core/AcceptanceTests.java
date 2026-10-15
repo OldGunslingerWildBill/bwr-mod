@@ -99,6 +99,7 @@ public final class AcceptanceTests {
             TransientHarnessTest.class,
             dev.bwr.core.harness.ThermalTargetOperatorTest.class,
             dev.bwr.core.instrument.LprmSpatialTest.class, dev.bwr.core.instrument.LprmStartupTest.class,
+            dev.bwr.core.instrument.AprmCalibrationTest.class,
             dev.bwr.core.instrument.StartupDetectorLocationsTest.class,
             dev.bwr.core.kinetics.RodLatchDriftTest.class,
             SuppressionPoolTest.class,

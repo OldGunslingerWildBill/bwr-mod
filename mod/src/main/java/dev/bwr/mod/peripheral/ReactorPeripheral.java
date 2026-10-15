@@ -348,6 +348,74 @@ public class ReactorPeripheral implements IPeripheral {
     }
 
     // -----------------------------------------------------------------
+    // APRM calibration
+    //
+    // The real procedure is to compare each APRM with the core thermal power from a heat balance and adjust
+    // that APRM's gain until they agree. These three methods are the whole of it. They are measurements and
+    // one bare actuator: nothing here, and nothing in the mod, ever calibrates a channel on its own.
+    // APRM channels are numbered 1 to 6 like the panel designations ("APRM 3") and the signal keys
+    // ("aprm_3_gain"), unlike the 0-based SRM and IRM channels above. getAprmPercent() keeps reading APRM 2.
+    // -----------------------------------------------------------------
+
+    /**
+     * Heat-balance thermal power, MW: steam flow leaving the vessel times the enthalpy it carries above
+     * feedwater. <b>This is a measurement, not the simulation's power</b> ({@link #getStatus()}'s
+     * {@code thermalMW} is that), and it is only right while the plant is steady: steam out equal to
+     * feedwater in and dome pressure not moving. During a transient it lags or leads the true power as a
+     * real heat balance does; with no steam leaving it reads zero.
+     */
+    @LuaFunction(mainThread = true)
+    public final double getHeatBalancePower() throws LuaException {
+        return core().getHeatBalanceThermalPowerMW();
+    }
+
+    /**
+     * Everything needed to calibrate the APRMs in one table: {@code heatBalanceMW}, {@code heatBalancePercent}
+     * (percent of rated thermal power, the units an APRM reads in) and {@code channels}, a table indexed 1 to 6
+     * of {@code percent} (indicated), {@code gain} and {@code heatBalanceErrorPercent} (indicated minus heat
+     * balance, percentage points; positive is reading high). The procedure is
+     * {@code newGain = gain * heatBalancePercent / percent}, then {@link #setAprmGain(int, double)}.
+     */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> getAprmCalibration() throws LuaException {
+        ReactorCore c = core();
+        Map<String, Object> m = new HashMap<>();
+        m.put("heatBalanceMW", c.getHeatBalanceThermalPowerMW());
+        m.put("heatBalancePercent", c.getHeatBalancePercentOfRated());
+        Map<Integer, Object> channels = new HashMap<>();
+        for (int i = 0; i < ReactorCore.AVERAGE_POWER_RANGE_CHANNELS; i++) {
+            Map<String, Object> one = new HashMap<>();
+            one.put("percent", c.getAveragePowerRangePercent(i));
+            one.put("gain", c.getAveragePowerRangeGain(i));
+            one.put("heatBalanceErrorPercent", c.getAveragePowerRangeHeatBalanceErrorPercent(i));
+            channels.put(i + 1, one);
+        }
+        m.put("channels", channels);
+        return m;
+    }
+
+    /**
+     * Sets one APRM's gain: the calibration step, manual only. {@code channel} is 1 to 6; {@code gain} is
+     * accepted from {@value dev.bwr.core.instrument.AveragePowerRangeMonitor#MIN_OPERATOR_GAIN} to
+     * {@value dev.bwr.core.instrument.AveragePowerRangeMonitor#MAX_OPERATOR_GAIN} (a gameplay bound, not a
+     * citation). Anything else raises a Lua error and changes nothing. The gain is saved with the reactor.
+     */
+    @LuaFunction(mainThread = true)
+    public final void setAprmGain(int channel, double gain) throws LuaException {
+        int count = ReactorCore.AVERAGE_POWER_RANGE_CHANNELS;
+        if (channel < 1 || channel > count) {
+            throw new LuaException("no APRM " + channel + "; there are " + count + ", numbered 1 to " + count);
+        }
+        finite("APRM gain", gain);
+        core();
+        if (!dev.bwr.mod.signal.DeviceCommands.reactorAprmGain(be, channel - 1, gain)) {
+            throw new LuaException("APRM gain " + gain + " refused; it must be from "
+                    + dev.bwr.core.instrument.AveragePowerRangeMonitor.MIN_OPERATOR_GAIN + " to "
+                    + dev.bwr.core.instrument.AveragePowerRangeMonitor.MAX_OPERATOR_GAIN);
+        }
+    }
+
+    // -----------------------------------------------------------------
     // Period meters
     //
     // One per range instrument — four on the SRMs, eight on the IRMs — which

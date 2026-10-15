@@ -2,6 +2,7 @@ package dev.bwr.mod.signal.adapters;
 
 import dev.bwr.core.PhysicalConstants;
 import dev.bwr.core.ReactorCore;
+import dev.bwr.core.instrument.AveragePowerRangeMonitor;
 import dev.bwr.mod.containment.ContainmentEquipmentRegistry;
 import dev.bwr.mod.reactor.CoreRodMap;
 import dev.bwr.mod.reactor.LprmReadout;
@@ -47,7 +48,7 @@ final class ReactorSignals {
 
     private static double flag(boolean value) { return value ? 1.0 : 0.0; }
 
-    static final Schema<ReactorControllerBlockEntity> SCHEMA = new Schema<ReactorControllerBlockEntity>()
+    static final Schema<ReactorControllerBlockEntity> SCHEMA = withAprmCalibration(new Schema<ReactorControllerBlockEntity>()
             .bool("formed", "Reactor formed", ReactorControllerBlockEntity::isFormed)
             .number("power", "Total power", "fraction of rated", 0, 1.2, core(ReactorCore::getTotalPowerFractionOfRated))
             .number("neutron_power", "Neutron power", "fraction of rated", 0, 1.5, core(ReactorCore::getNeutronPowerFraction))
@@ -134,7 +135,39 @@ final class ReactorSignals {
                     (be, v) -> DeviceCommands.reactorHoldSelectedRod(be, -1, v >= 0.5))
             .toggle("selected_rod_withdraw_continuous", "Selected rod: withdraw continuously (1 holds, 0 releases)",
                     (be, v) -> DeviceCommands.reactorHoldSelectedRod(be, 1, v >= 0.5))
-            .dynamicCommands(ReactorSignals::rodCommands, ReactorSignals::rodCommand);
+            .dynamicCommands(ReactorSignals::rodCommands, ReactorSignals::rodCommand));
+
+    /** Six APRM channels, numbered from 1 like the rods. */
+    private static final int APRM_CHANNELS = ReactorCore.AVERAGE_POWER_RANGE_CHANNELS;
+
+    /**
+     * Heat-balance power and the per-APRM calibration signals and gain commands.
+     *
+     * <p>{@code heat_balance_mw} is a steam-flow and feedwater-enthalpy calculation, valid only while the
+     * plant is steady (see {@code ReactorCore.getHeatBalanceThermalPowerMW}); {@code thermal_mw} above is the
+     * simulation's own power. {@code aprm_<n>_gain} is both a signal and a bounded, manual-only command.
+     * Nothing here calibrates anything by itself.
+     */
+    private static Schema<ReactorControllerBlockEntity> withAprmCalibration(Schema<ReactorControllerBlockEntity> schema) {
+        schema.number("heat_balance_mw", "Heat-balance thermal power (steady state only)", "MW", 0,
+                        PhysicalConstants.RATED_THERMAL_MW * 1.2, core(ReactorCore::getHeatBalanceThermalPowerMW))
+                .number("heat_balance_percent", "Heat-balance thermal power (steady state only)", "% rated", 0, 120,
+                        core(ReactorCore::getHeatBalancePercentOfRated));
+        for (int n = 1; n <= APRM_CHANNELS; n++) {
+            final int channel = n - 1;
+            schema.number("aprm_" + n + "_percent", "APRM " + n + " indication", "%", 0, 125,
+                            core(c -> c.getAveragePowerRangePercent(channel)))
+                    .number("aprm_" + n + "_gain", "APRM " + n + " gain", "factor",
+                            AveragePowerRangeMonitor.MIN_OPERATOR_GAIN, AveragePowerRangeMonitor.MAX_OPERATOR_GAIN,
+                            core(c -> c.getAveragePowerRangeGain(channel)))
+                    .number("aprm_" + n + "_heat_balance_error", "APRM " + n + " minus heat balance", "% rated", -125, 125,
+                            core(c -> c.getAveragePowerRangeHeatBalanceErrorPercent(channel)))
+                    .command("aprm_" + n + "_gain", "APRM " + n + " gain", Kind.NUMBER,
+                            AveragePowerRangeMonitor.MIN_OPERATOR_GAIN, AveragePowerRangeMonitor.MAX_OPERATOR_GAIN,
+                            (be, value) -> DeviceCommands.reactorAprmGain(be, channel, value));
+        }
+        return schema;
+    }
 
     private static List<SignalSpec> rodSignals(ReactorControllerBlockEntity be) {
         ReactorCore core = be.core();

@@ -2497,6 +2497,66 @@ public final class ReactorCore {
         return averagePowerRangeMonitors[channel].getPercentOfRated();
     }
 
+    /**
+     * Heat-balance thermal power, MW: the steam that actually left the vessel over the last step times the
+     * enthalpy it carried away above feedwater, {@code m_steam * (h_steam(P) - h_feedwater)}.
+     *
+     * <h2>What this is, and is not</h2>
+     * It is the plant calculation a reactor engineer does by hand to calibrate the APRMs, built only from
+     * quantities a player can also read: steam flow leaving the vessel, dome pressure (for the saturated
+     * steam enthalpy) and the feedwater temperature. It is <b>not</b> {@link #getThermalPowerMW()}, which is
+     * the simulation's own bookkeeping of fission plus decay heat and which no real plant can read.
+     *
+     * <p>The two agree only when the plant is <b>steady</b>: steam out equals feedwater in and dome pressure
+     * is not moving. During a transient the vessel stores or releases energy, so the heat balance lags or
+     * leads the true power, exactly as a real one does, and a calibration made then is wrong. With no steam
+     * leaving (no outlet, closed MSIVs) the heat balance reads zero whatever the core is doing. It also does
+     * not count decay heat removed by shutdown cooling or heat lost to metal, and it knows nothing of a
+     * breached boundary. Deciding when it can be trusted is the operator's job.
+     */
+    public double getHeatBalanceThermalPowerMW() {
+        double steamKgPerS = vessel.getSteamRemovalKgPerS();
+        double rise = Saturation.vapourEnthalpyKJPerKg(vessel.getPressurePsia())
+                - vessel.getFeedwaterEnthalpyKJPerKg();
+        if (!(steamKgPerS > 0.0) || !(rise > 0.0)) {
+            return 0.0;
+        }
+        return steamKgPerS * rise / 1000.0;
+    }
+
+    /** {@link #getHeatBalanceThermalPowerMW()} as percent of rated thermal power, the units an APRM reads in. */
+    public double getHeatBalancePercentOfRated() {
+        return 100.0 * getHeatBalanceThermalPowerMW() / config.ratedThermalMW;
+    }
+
+    /**
+     * Indicated minus heat balance for one APRM, percentage points of rated thermal power. Positive means
+     * the channel reads high. A reading, not a verdict: it is meaningful only while
+     * {@link #getHeatBalanceThermalPowerMW()} is.
+     */
+    public double getAveragePowerRangeHeatBalanceErrorPercent(int channel) {
+        return getAveragePowerRangePercent(channel) - getHeatBalancePercentOfRated();
+    }
+
+    /** Gain adjustment factor of one APRM, 1.0 as built. */
+    public double getAveragePowerRangeGain(int channel) {
+        return averagePowerRangeMonitors[channel].getGainAdjustmentFactor();
+    }
+
+    /**
+     * Sets one APRM's gain: the manual calibration step. Refuses a gain outside
+     * [{@link AveragePowerRangeMonitor#MIN_OPERATOR_GAIN}, {@link AveragePowerRangeMonitor#MAX_OPERATOR_GAIN}]
+     * or a channel that does not exist, and changes nothing. Nothing in the core ever calls this.
+     *
+     * @return whether the gain was applied
+     */
+    public boolean setAveragePowerRangeGain(int channel, double gain) {
+        if (channel < 0 || channel >= averagePowerRangeMonitors.length) {
+            return false;
+        }
+        return averagePowerRangeMonitors[channel].setOperatorGain(gain);
+    }
+
     /** Period meter watching one source range monitor. */
     public PeriodMeter getSourceRangePeriodMeter(int channel) {
         return sourceRangePeriodMeters[channel];

@@ -453,6 +453,42 @@ public final class AveragePowerRangeMonitor extends NeutronDetector {
     }
 
     /**
+     * Lowest gain a player may dial in, {@value}. A <b>gameplay bound, not a citation</b>: real
+     * gain-adjustment trims are a few percent wide, and the heat-per-fission spread between the fuels this
+     * mod ships is -1.4% to +4.4%. The range is deliberately much wider so that a badly mis-set channel can
+     * be seen and put right, and narrow enough that a typo (0.01, 100) is refused rather than silently
+     * blinding or over-driving the channel.
+     */
+    public static final double MIN_OPERATOR_GAIN = 0.5;
+
+    /** Highest gain a player may dial in, {@value}. See {@link #MIN_OPERATOR_GAIN}. */
+    public static final double MAX_OPERATOR_GAIN = 2.0;
+
+    /** Whether {@code gain} is a value {@link #setOperatorGain} accepts. */
+    public static boolean isOperatorGainInRange(double gain) {
+        return Double.isFinite(gain) && gain >= MIN_OPERATOR_GAIN && gain <= MAX_OPERATOR_GAIN;
+    }
+
+    /**
+     * The calibration a player performs by hand: set this channel's gain from a heat balance. Refuses, and
+     * changes nothing, for a value that is not finite or lies outside
+     * [{@link #MIN_OPERATOR_GAIN}, {@link #MAX_OPERATOR_GAIN}].
+     *
+     * <p>Manual only. Nothing in the plant calls this; the gain is the operator's, and it persists with the
+     * rest of the rack. {@link #setGainAdjustmentFactor} stays unbounded for restoring saved state and for
+     * fixtures that stage a deliberately wild channel.
+     *
+     * @return whether the gain was applied
+     */
+    public boolean setOperatorGain(double gain) {
+        if (!isOperatorGainInRange(gain)) {
+            return false;
+        }
+        this.gainAdjustmentFactor = gain;
+        return true;
+    }
+
+    /**
      * Fission-product gamma contribution, percent of rated equivalent. Why an
      * APRM on a shut-down core does not read zero.
      */

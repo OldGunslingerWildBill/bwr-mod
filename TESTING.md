@@ -15,6 +15,15 @@ patch per change; 81,900) and `FcdModelTests` (style table and model file contra
 `-PbwrFcdLegendsPerFrame` and `-PbwrFcdProcedural`) measures frame cost and writes screenshots to
 `run/turbineModelCheck/fcd-check/`; it fails if the legend cache is not used.
 
+APRM calibration (heat balance, per-channel gain and error, the bounded manual `aprm_<n>_gain` command) is covered by
+the core test `AprmCalibrationTest` (6 checks: heat balance closes on the model power at a steady rated core and reads
+zero with no steam, a miscalibrated channel is recalibrated by hand to within 0.5 points, all six channels calibrate
+independently and the gains survive a state round trip, the bounds refuse and change nothing, nothing recalibrates by
+itself) and the GameTest `AprmCalibrationTests` (fixture origin 175,840; real formed 15 x 15 reactor and signal command
+path, plus the CC peripheral when CC is present; a save and reload). The GameTest fixture has no recirculation pumps, so
+it stages the core at power and runs it on the core with a stand-in turbine and feedwater pump until it is steady before
+anything is compared; the logged `APRM CALIBRATION GAMETEST` lines show the heat balance agreeing with the core.
+
 Alpha.30 adds `CoreMeltProgressionTest` (9), `ContainmentHydrogenTest` (11),
 `SevereAccidentIntegrationTest` (4) and `NaturalCirculationTest` (6). They cover
 burst and gap release, latent-heat melting, relocation, flooded versus dry lower

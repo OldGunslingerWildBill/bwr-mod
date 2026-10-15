@@ -122,6 +122,23 @@ public final class DeviceCommands {
         return true;
     }
 
+    /**
+     * Sets one APRM's gain, the manual calibration step. Manual only: nothing in the mod calls this except a
+     * player's panel control or Lua program.
+     *
+     * @param channelIndex zero-based APRM channel (0 to 5)
+     * @param gain         accepted from {@code AveragePowerRangeMonitor.MIN_OPERATOR_GAIN} to
+     *                     {@code MAX_OPERATOR_GAIN}; anything else, or an unformed reactor, is refused
+     * @return whether the gain was applied; a refusal changes nothing
+     */
+    public static boolean reactorAprmGain(ReactorControllerBlockEntity be, int channelIndex, double gain) {
+        var core = be.core();
+        if (core == null) return false;
+        if (!core.setAveragePowerRangeGain(channelIndex, gain)) return false;
+        be.setChanged();
+        return true;
+    }
+
     // --- Steam valves ----------------------------------------------------------------------------
 
     /** What both the MSIV peripheral's open/close/setOpen do: take computer control, set the demand. */

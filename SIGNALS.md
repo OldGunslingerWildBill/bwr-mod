@@ -45,6 +45,11 @@ Block entity `ReactorControllerBlockEntity`; CC peripheral `bwr_reactor`.
 | `thermal_mw` | Thermal power | MW | 0 to 4295 | NUMBER |
 | `period` | Reactor period | s | -100 to 100 | NUMBER |
 | `aprm_percent` | Average power range | % | 0 to 125 | NUMBER |
+| `heat_balance_mw` | Heat-balance thermal power (steady state only) | MW | 0 to 4295 | NUMBER |
+| `heat_balance_percent` | Heat-balance thermal power (steady state only) | % rated | 0 to 120 | NUMBER |
+| `aprm_<n>_percent` | APRM n indication (n from 1 to 6) | % | 0 to 125 | NUMBER |
+| `aprm_<n>_gain` | APRM n gain adjustment factor | factor | 0.5 to 2 | NUMBER |
+| `aprm_<n>_heat_balance_error` | APRM n indication minus heat balance | % rated | -125 to 125 | NUMBER |
 | `reactivity_dollars` | Reactivity | $ | -5 to 1 | NUMBER |
 | `pressure` | Dome pressure | psig | 0 to 1400 | NUMBER |
 | `level` | Indicated water level | in | -200 to 100 | NUMBER |
@@ -120,12 +125,42 @@ Block entity `ReactorControllerBlockEntity`; CC peripheral `bwr_reactor`.
 | `boron_injection` | Boron injection rate | NUMBER | 0 to 100 |
 | `containment_inerting` | Containment inerting | BOOLEAN | 0 to 1 |
 | `containment_vent` | Containment vent | BOOLEAN | 0 to 1 |
+| `aprm_<n>_gain` | APRM n gain (n from 1 to 6; manual calibration) | NUMBER | 0.5 to 2 |
 | `rod_<n>_position` | Rod n position (even notch labels only) | LEVEL | 0 to 48 |
 | `select_rod` | Select rod n (0 clears the selection) | LEVEL | 0 to 400 |
 | `selected_rod_insert` | Selected rod: insert one notch | PULSE |  |
 | `selected_rod_withdraw` | Selected rod: withdraw one notch | PULSE |  |
 | `selected_rod_insert_continuous` | Selected rod: insert continuously (1 holds, 0 releases) | BOOLEAN | 0 to 1 |
 | `selected_rod_withdraw_continuous` | Selected rod: withdraw continuously (1 holds, 0 releases) | BOOLEAN | 0 to 1 |
+
+### APRM calibration (heat balance, gain, error)
+
+The real procedure is to compare each APRM with core thermal power from a heat balance and adjust that APRM's
+gain until the two agree. The mod publishes the pieces and one bounded actuator; **it never calibrates a channel
+by itself** (no automatic calibration, no drift correction, no interlock), and a gain you set is saved with the
+reactor.
+
+* `heat_balance_mw` / `heat_balance_percent` are a **heat balance**, not the simulation's power: steam flow that
+  actually left the vessel times (saturated steam enthalpy at dome pressure minus feedwater enthalpy), divided by
+  rated thermal power for the percent. They are right only while the plant is **steady** (steam out equals feedwater
+  in, pressure not moving). In a transient the vessel stores or releases energy and they lag or lead the true power,
+  like a real heat balance; with no steam leaving (no outlet, MSIVs shut) they read 0 whatever the core is doing.
+  `thermal_mw` above is the simulator's own total power, which no real plant can read; keep the two apart. The
+  heat balance does not know about shutdown cooling, heat lost to metal, or a breached boundary.
+* `aprm_<n>_percent` is APRM n's indication (n from 1 to 6, as on the panels). `aprm_percent` is unchanged and
+  reads APRM 2. `aprm_<n>_gain` is its gain adjustment factor (1.0 as built) and `aprm_<n>_heat_balance_error` is
+  indicated minus heat-balance percent, in percentage points of rated: positive reads high. The error is only as
+  meaningful as the heat balance beside it.
+* `aprm_<n>_gain` is also a command. Procedure: `newGain = gain * heat_balance_percent / aprm_<n>_percent`, then
+  send it. **Bounds: 0.5 to 2.0**, a gameplay bound and not a citation (real gain-adjustment trims are a few percent;
+  the shipped fuels differ by -1.4 % to +4.4 % heat per fission). A value outside the bounds, NaN or infinite is
+  refused and changes nothing; an unformed reactor refuses too. The indication settles within a fraction of a second
+  (the averaging amplifier's 0.1 s lag). The channel also carries a constant gamma background (about 0.5 % rated), so a
+  channel that started far off lands a little short in one pass; repeat the procedure once and it closes.
+* CC (`bwr_reactor`): `getHeatBalancePower()` (MW), `getAprmCalibration()` (a table with `heatBalanceMW`,
+  `heatBalancePercent` and `channels[1..6]` of `percent`, `gain`, `heatBalanceErrorPercent`) and
+  `setAprmGain(channel, gain)` (channel 1 to 6, unlike the 0-based SRM and IRM channels; a refused value raises a Lua
+  error). Both paths run the same `DeviceCommands.reactorAprmGain`.
 
 ### Per-rod indications and LPRM strings (full core display)
 
