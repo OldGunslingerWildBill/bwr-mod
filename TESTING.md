@@ -24,6 +24,10 @@ path, plus the CC peripheral when CC is present; a save and reload). The GameTes
 it stages the core at power and runs it on the core with a stand-in turbine and feedwater pump until it is steady before
 anything is compared; the logged `APRM CALIBRATION GAMETEST` lines show the heat balance agreeing with the core.
 
+`:mod:runTurbineModelCheck -PbwrGridClientCheck` (class `GridClientCheck`) places the Grid Tie and four FE Meters facing north,
+east, south and west in a disposable creative world and writes `grid-tie-and-meters.png` and `meters-arrows-close.png` to
+`run/turbineModelCheck/grid-check/`; the arrow on each meter's top face points toward its output.
+
 Alpha.30 adds `CoreMeltProgressionTest` (9), `ContainmentHydrogenTest` (11),
 `SevereAccidentIntegrationTest` (4) and `NaturalCirculationTest` (6). They cover
 burst and gap release, latent-heat melting, relocation, flooded versus dry lower
