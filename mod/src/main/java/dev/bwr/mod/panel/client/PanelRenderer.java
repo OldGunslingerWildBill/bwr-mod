@@ -3,7 +3,6 @@ package dev.bwr.mod.panel.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.client.VisualEffectsConfig;
-import dev.bwr.mod.client.VisualEffectsMode;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.component.ComponentType;
 import dev.bwr.mod.panel.component.PanelComponent;
@@ -224,12 +223,14 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
     }
 
     /**
-     * Whether blocks keep their solid geometry in vertex buffers: on unless the client option turns it off, a
-     * shader pack is in use (it replaces the programs the buffers are drawn with), or {@code -Dbwr.panelImmediate}
-     * is set (a development switch to compare against the per frame path).
+     * Whether blocks keep their solid geometry in vertex buffers: on unless the client option turns it off or
+     * {@code -Dbwr.panelImmediate} is set (a development switch to compare against the per frame path). A shader
+     * pack does not turn it off: the buffers are drawn through the same render type as the per frame path, which
+     * Iris re-routes to the pack's own entity program, and without them a pack costs a fully populated baked wall
+     * 36 ms a frame instead of 6 ms (measured under Complementary Reimagined with Sodium and Iris).
      */
     private static boolean gpuCache() {
-        return !IMMEDIATE && VisualEffectsConfig.PANEL_GPU_CACHE.get() && !VisualEffectsMode.shaderPackInUse();
+        return !IMMEDIATE && VisualEffectsConfig.PANEL_GPU_CACHE.get();
     }
 
     /** Block buffers built so far, for checks. */

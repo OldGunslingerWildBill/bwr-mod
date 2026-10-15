@@ -83,6 +83,7 @@ neoForge {
             if (project.hasProperty('bwrPanelPerformanceCheck')) jvmArguments.add('-Dbwr.panelPerformanceCheck=true')
             if (project.hasProperty('bwrPanelPerformanceStages')) jvmArguments.add('-Dbwr.panelPerformanceStages=' + project.property('bwrPanelPerformanceStages'))
             if (project.hasProperty('bwrPanelImmediate')) jvmArguments.add('-Dbwr.panelImmediate=true')
+            if (project.hasProperty('bwrRenderProfile')) jvmArguments.add('-Dbwr.renderProfile=true')
             if (project.hasProperty('bwrFcdClientCheck')) jvmArguments.add('-Dbwr.fcdClientCheck=true')
             if (project.hasProperty('bwrFcdReadinessProbe')) jvmArguments.add('-Dbwr.fcdReadinessProbe=true')
             if (project.hasProperty('bwrFcdClientStages')) jvmArguments.add('-Dbwr.fcdClientStages=' + project.property('bwrFcdClientStages'))
@@ -112,6 +113,26 @@ neoForge {
             gameDirectory = file('run/panelCcCheck')
             jvmArguments.add('-Dbwr.panelCcCheck=true')
             programArguments.addAll('--nogui')
+        }
+        // C3: a real dedicated server and two real clients, driven by :mod:runMultiplayerCheck (see below and TESTING.md).
+        // Everything is on 127.0.0.1; the world is a disposable flat world made by the driver.
+        mpServer {
+            server()
+            gameDirectory = file('run/mpServer')
+            jvmArguments.addAll('-Dbwr.mpCheck=server', '-Dbwr.mp.dir=' + file('run/mp-check').absolutePath)
+            programArguments.addAll('--nogui')
+        }
+        mpClientA {
+            client()
+            gameDirectory = file('run/mpClientA')
+            programArguments.addAll('--username', 'BwrTesterA', '--quickPlayMultiplayer', 'localhost:25599', '--width', '960', '--height', '540')
+            jvmArguments.addAll('-Dbwr.mpCheck=client', '-Dbwr.mp.name=A', '-Dbwr.mp.dir=' + file('run/mp-check').absolutePath)
+        }
+        mpClientB {
+            client()
+            gameDirectory = file('run/mpClientB')
+            programArguments.addAll('--username', 'BwrTesterB', '--quickPlayMultiplayer', 'localhost:25599', '--width', '960', '--height', '540')
+            jvmArguments.addAll('-Dbwr.mpCheck=client', '-Dbwr.mp.name=B', '-Dbwr.mp.dir=' + file('run/mp-check').absolutePath)
         }
         luaExamplesCheck {
             server()
@@ -201,6 +222,208 @@ dependencies {
         // Tritium is registered by Generators. Dev runtime only; never bundled or required by BWR.
         if (!project.hasProperty('bwrNoMekanismGenerators')) {
             runtimeOnly "mekanism:Mekanism:${project.property('mekanismVersion')}:generators@jar"
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// OPTIONAL RENDER MODS (Sodium + Iris + a shader pack), RUN-ONLY.
+//
+//   -PbwrRenderMods=stable|newest   put that Sodium/Iris pair in the client run's mods/
+//   -PbwrShaderPack=<zip name>|none  start with that pack from shaderpacks/ enabled in config/iris.properties
+//   -PbwrRenderModsDir=<path>        folder holding stable/, newest/ and shaderpacks/
+//                                    (default: ../optional-client-mods next to the repo)
+//
+// They are copied into the RUN directory only, never into the repo, never into the jar, never declared in
+// neoforge.mods.toml and never on a compile classpath. Without -PbwrRenderMods every client run first deletes any
+// Sodium/Iris jar, their config files and the shader pack copy an earlier run left behind, so a plain run can never
+// silently keep Sodium. See TESTING.md ("Sodium, Iris and shader packs").
+// ---------------------------------------------------------------------------
+def renderModsMode = project.findProperty('bwrRenderMods')?.toString()
+def shaderPackName = project.findProperty('bwrShaderPack')?.toString()
+def renderModsDir = project.hasProperty('bwrRenderModsDir')
+        ? file(project.property('bwrRenderModsDir').toString())
+        : rootProject.file('../optional-client-mods')
+if (renderModsMode != null && !(renderModsMode in ['stable', 'newest', 'none'])) {
+    throw new GradleException("-PbwrRenderMods must be stable, newest or none, not '${renderModsMode}'")
+}
+if (shaderPackName in ['none', '']) shaderPackName = null
+if (shaderPackName != null && (renderModsMode == null || renderModsMode == 'none')) {
+    throw new GradleException('-PbwrShaderPack needs -PbwrRenderMods=stable|newest (shaders need Iris)')
+}
+
+// Every run that opens a client window (task name, run name). The multiplayer clients are added with their runs.
+def clientRunNames = ['client', 'refuellingCheck', 'reactorFitCheck', 'advancementClientCheck', 'soundClientCheck',
+                      'turbineModelCheck', 'mpClientA', 'mpClientB']
+
+def prepareRenderMods = { File gameDir ->
+    def modsFolder = new File(gameDir, 'mods')
+    def configFolder = new File(gameDir, 'config')
+    def packsFolder = new File(gameDir, 'shaderpacks')
+    // 1. Remove everything an earlier run may have left behind.
+    if (modsFolder.isDirectory()) modsFolder.listFiles().each { f ->
+        def n = f.name.toLowerCase()
+        if (f.isFile() && (n.startsWith('sodium') || n.startsWith('iris'))) f.delete()
+    }
+    ['iris.properties', 'iris-excluded.json', 'sodium-options.json', 'sodium-mixins.properties'].each {
+        new File(configFolder, it).delete()
+    }
+    if (packsFolder.isDirectory()) packsFolder.listFiles().each { f ->
+        if (f.isFile() && f.name.toLowerCase().endsWith('.zip')) f.delete()
+    }
+    if (renderModsMode == null || renderModsMode == 'none') {
+        logger.lifecycle("render mods: none (run ${gameDir.name}: any earlier Sodium/Iris jars, configs and packs removed)")
+        return
+    }
+    // 2. Copy the requested pair.
+    def pairDir = new File(renderModsDir, renderModsMode)
+    def jars = pairDir.isDirectory() ? pairDir.listFiles().findAll { it.name.endsWith('.jar') } : []
+    if (!jars.any { it.name.startsWith('sodium') } || !jars.any { it.name.startsWith('iris') }) {
+        throw new GradleException("No sodium*.jar and iris*.jar in ${pairDir} (see -PbwrRenderModsDir)")
+    }
+    modsFolder.mkdirs()
+    jars.each { jar ->
+        java.nio.file.Files.copy(jar.toPath(), new File(modsFolder, jar.name).toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    }
+    // 3. The pack, and Iris's own config so the pack is on from the first frame.
+    configFolder.mkdirs()
+    def props = new Properties()
+    if (shaderPackName != null) {
+        def zip = new File(renderModsDir, "shaderpacks/${shaderPackName}")
+        if (!zip.isFile()) throw new GradleException("Shader pack not found: ${zip}")
+        packsFolder.mkdirs()
+        java.nio.file.Files.copy(zip.toPath(), new File(packsFolder, zip.name).toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        props.setProperty('enableShaders', 'true')
+        props.setProperty('shaderPack', zip.name)
+    } else {
+        props.setProperty('enableShaders', 'false')
+    }
+    new File(configFolder, 'iris.properties').withOutputStream { props.store(it, 'written by mod/build.gradle (bwrRenderMods)') }
+    // Diagnostics: -PbwrSodiumDisable=features.render.gui.font,features.render.immediate.buffer_builder.intrinsics switches
+    // those Sodium mixin groups off (config/sodium-mixins.properties), to tell a Sodium optimisation from a mod defect.
+    def disabled = project.findProperty('bwrSodiumDisable')?.toString()
+    if (disabled) {
+        def mixinProps = new Properties()
+        disabled.split(',').each { mixinProps.setProperty('mixin.' + it.trim(), 'false') }
+        new File(configFolder, 'sodium-mixins.properties').withOutputStream { mixinProps.store(it, 'written by mod/build.gradle (bwrSodiumDisable)') }
+    }
+    logger.lifecycle("render mods: ${renderModsMode} pair ${jars.collect { it.name }.sort()} pack=${shaderPackName ?: 'none'} (run ${gameDir.name})")
+}
+
+clientRunNames.each { runName ->
+    tasks.matching { it.name == 'run' + runName.capitalize() }.configureEach { task ->
+        task.doFirst {
+            prepareRenderMods(neoForge.runs.getByName(runName).gameDirectory.get().asFile)
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// C3: :mod:runMultiplayerCheck. One Gradle invocation that starts a real dedicated server (run/mpServer, offline mode,
+// 127.0.0.1:25599, a flat world made fresh each time, spawn protection off), waits for it to listen, starts two real
+// game clients (BwrTesterA and BwrTesterB, their own game directories, quick-play into the server), and waits for the
+// verdict the server writes. The server conducts the scenarios (MpServerCheck), the clients act through the real
+// connection (MpClientCheck). Phase 1 ends with the server stopping itself; the driver then starts it again on the same
+// world (phase 2) while the clients reconnect, to prove what persists. Fails the build on MP CHECK FAIL, a dead process
+// or a timeout. Logs and screenshots: mod/run/mp-check/, mod/run/mpClientA|B/mp-check/. The render-mod properties
+// (-PbwrRenderMods, -PbwrShaderPack) apply to both clients, so the same check can be run under Sodium/Iris.
+// ---------------------------------------------------------------------------
+tasks.register('runMultiplayerCheck') {
+    group = 'verification'
+    description = 'Dedicated server plus two real clients on localhost: panels, FCD, rod select matrix, items, rejoin, restart.'
+    ['runMpServer', 'runMpClientA', 'runMpClientB'].each { n ->
+        dependsOn({ tasks.getByName(n).taskDependencies })
+    }
+    doLast {
+        def mpDir = file('run/mp-check')
+        def serverDir = file('run/mpServer')
+        project.delete(mpDir, serverDir)
+        mpDir.mkdirs()
+        serverDir.mkdirs()
+        new File(serverDir, 'eula.txt').text = 'eula=true\n'
+        new File(serverDir, 'server.properties').text = [
+                'online-mode=false', 'server-ip=127.0.0.1', 'server-port=25599', 'spawn-protection=0',
+                'gamemode=survival', 'force-gamemode=true', 'difficulty=peaceful', 'level-type=minecraft\\:flat',
+                'generate-structures=false', 'spawn-monsters=false', 'spawn-animals=false', 'spawn-npcs=false',
+                'allow-flight=true', 'max-tick-time=-1', 'view-distance=8', 'simulation-distance=8',
+                'enforce-secure-profile=false', 'enable-command-block=false', 'player-idle-timeout=0',
+                'motd=BWR multiplayer check'].join('\n') + '\n'
+        ['mpClientA', 'mpClientB'].each { prepareRenderMods(neoForge.runs.getByName(it).gameDirectory.get().asFile) }
+
+        def launch = { String runName, String tag ->
+            def t = tasks.getByName('run' + runName.capitalize())
+            def gameDir = neoForge.runs.getByName(runName).gameDirectory.get().asFile
+            gameDir.mkdirs()
+            t.environment.putAll(t.environmentProperty.get())
+            t.classpath(t.classpathProvider)
+            t.workingDir = gameDir
+            def log = new File(mpDir, tag + '.log')
+            def pb = new ProcessBuilder(t.commandLine).directory(gameDir).redirectErrorStream(true).redirectOutput(log)
+            t.environment.each { k, v -> pb.environment().put(k.toString(), v.toString()) }
+            logger.lifecycle("multiplayer check: starting ${tag} (log ${log})")
+            [process: pb.start(), log: log, tag: tag, done: false]
+        }
+        def alive = { p -> p.process.isAlive() }
+        def logHas = { p, text -> p.log.isFile() && p.log.text.contains(text) }
+        def procs = []
+        def stopAll = { procs.each { if (it.process.isAlive()) it.process.destroyForcibly() } }
+        long started = System.currentTimeMillis()
+        def elapsed = { (System.currentTimeMillis() - started) / 1000 }
+        def readResult = {
+            def f = new File(mpDir, 'result.properties')
+            if (!f.isFile()) return null
+            def props = new Properties()
+            f.withInputStream { props.load(it) }
+            props.getProperty('result')
+        }
+        def waitFor = { String what, int seconds, Closure condition ->
+            long until = System.currentTimeMillis() + seconds * 1000L
+            while (!condition()) {
+                if (System.currentTimeMillis() > until) throw new GradleException("multiplayer check: timed out waiting for ${what}")
+                Thread.sleep(500)
+            }
+        }
+        try {
+            def server = launch('mpServer', 'server-1')
+            procs << server
+            waitFor('the server to listen', 400) { logHas(server, 'Done (') || !alive(server) }
+            if (!alive(server)) throw new GradleException("multiplayer check: the server died while starting, see ${server.log}")
+            def clientA = launch('mpClientA', 'clientA')
+            procs << clientA
+            Thread.sleep(6000)
+            def clientB = launch('mpClientB', 'clientB')
+            procs << clientB
+            def phase1Done = false
+            while (true) {
+                def result = readResult()
+                if (result != null) {
+                    if (result == 'MP CHECK PHASE 1 DONE' && !phase1Done) {
+                        phase1Done = true
+                        logger.lifecycle("multiplayer check: phase 1 passed after ${elapsed()} s; restarting the server")
+                        waitFor('the server to stop', 120) { !alive(server) }
+                        new File(mpDir, 'result.properties').delete()
+                        server = launch('mpServer', 'server-2')
+                        procs << server
+                        waitFor('the restarted server to listen', 400) { logHas(server, 'Done (') || !alive(server) }
+                        continue
+                    }
+                    if (result.startsWith('MP CHECK PASS')) {
+                        logger.lifecycle("MP CHECK PASS (${elapsed()} s)")
+                        waitFor('the clients and the server to close', 90) { !alive(clientA) && !alive(clientB) && !alive(server) }
+                        break
+                    }
+                    throw new GradleException(result + " (see ${mpDir} and the clients' mp-check folders)")
+                }
+                if (!alive(server)) throw new GradleException("multiplayer check: the server exited without a verdict, see ${server.log}")
+                if (!alive(clientA)) throw new GradleException("multiplayer check: client A exited without a verdict, see ${clientA.log}")
+                if (!alive(clientB)) throw new GradleException("multiplayer check: client B exited without a verdict, see ${clientB.log}")
+                if (elapsed() > 1500) throw new GradleException('multiplayer check: no verdict after 25 minutes')
+                Thread.sleep(1000)
+            }
+        } finally {
+            stopAll()
         }
     }
 }

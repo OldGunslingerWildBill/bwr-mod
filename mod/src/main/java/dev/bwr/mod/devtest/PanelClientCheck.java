@@ -85,6 +85,8 @@ public final class PanelClientCheck {
     private static boolean started, built, requested;
     private static volatile Throwable buildFailure;
     private static volatile Vec3 heldCamera;
+    /** Where the server put the player for the stage's picture, set after the teleport (null until it has been sent). */
+    private static volatile Vec3 wantedCamera;
     private static volatile float heldYaw, heldPitch;
     private static int age, joined, stage, shown, captures;
     private static BlockPos switchOwner;
@@ -116,6 +118,7 @@ public final class PanelClientCheck {
             return;
         }
         if (mc.player == null || mc.level == null || mc.getSingleplayerServer() == null || ++joined < 35) return;
+        RenderEnvironment.log("panel");
         if (!requested) {
             // -PbwrPanelClientStages=srv,night: only the stages whose name contains one of the words (all by default).
             while (stage < NAMES.length && !chosen(NAMES[stage])) stage++;
@@ -132,6 +135,7 @@ public final class PanelClientCheck {
             }
             requested = true;
             shown = 0;
+            wantedCamera = null;
             mc.setScreen(null);
             int selected = stage;
             mc.options.hideGui = selected < 5 || selected == 7 || selected == 8 || selected >= BAKED_FIRST;
@@ -188,6 +192,7 @@ public final class PanelClientCheck {
                     player.setItemInHand(InteractionHand.MAIN_HAND, linker);
                 } else player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
                 player.connection.teleport(camera.x, camera.y, camera.z, yaw, pitch);
+                wantedCamera = camera;
             });
         }
         if (stage == 7 && heldCamera != null) {
@@ -198,6 +203,10 @@ public final class PanelClientCheck {
             mc.player.yRotO = heldYaw;
             mc.player.xRotO = heldPitch;
         }
+        // The picture is counted from the moment the player stands where the server put it: on a loaded machine the teleport
+        // can arrive late, and a photograph taken on the way is not the stage's picture.
+        Vec3 wanted = wantedCamera;
+        if (wanted == null || mc.player.position().distanceToSqr(wanted) > 0.25) return;
         if (++shown == 70 && (stage == 5 || stage == 6)) {
             if (!(mc.level.getBlockEntity(switchOwner) instanceof PanelBlockEntity be)
                     || be.component(switchId) == null) throw new AssertionError("Switch was not synchronized for UI preview");
@@ -246,6 +255,8 @@ public final class PanelClientCheck {
                                 : PanelModelShowcase.verify(mc, stage - BAKED_FIRST), dev.bwr.mod.panel.model.PanelModels.loadedCount());
             }
             try (var shot = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
+                // Saved before the pixel assertions below, so a failing stage leaves its picture to look at.
+                shot.writeToFile(directory.resolve(NAMES[stage] + ".png"));
                 if (stage == 7) {
                     int orangePixels = 0;
                     for (int y = 0; y < shot.getHeight(); y++) for (int x = 0; x < shot.getWidth(); x++) {
@@ -254,6 +265,23 @@ public final class PanelClientCheck {
                     }
                     if (orangePixels < 100) throw new AssertionError(
                             "Linker outline was submitted but is not visible in the framebuffer: " + orangePixels);
+                }
+                if (NAMES[stage].equals("baked-closeup-round-meter")) {
+                    // The printed scale of a meter sits just behind its window, so it must show through it. Dark pixels
+                    // around the "40" and "60" of the first dial (fixed 1280 x 720 camera): a window that wrote depth
+                    // hid every numeral of every meter under Sodium and Iris (0 dark pixels here, 140 to 175 when drawn).
+                    int[][] numerals = {{212, 262, 252, 292}, {292, 262, 332, 292}};
+                    for (int[] box : numerals) {
+                        int dark = 0;
+                        for (int y = box[1]; y < box[3]; y++) for (int x = box[0]; x < box[2]; x++) {
+                            int abgr = shot.getPixelRGBA(x, y);
+                            int luma = ((abgr & 0xFF) * 3 + (abgr >> 8 & 0xFF) * 6 + (abgr >> 16 & 0xFF)) / 10;
+                            if (luma < 70) dark++;
+                        }
+                        LogUtils.getLogger().info("PANEL CLIENT CHECK meter numerals {}: {} dark pixels", java.util.Arrays.toString(box), dark);
+                        if (dark < 60) throw new AssertionError("The scale numerals of the round meter are not visible through its window: "
+                                + dark + " dark pixels in " + java.util.Arrays.toString(box));
+                    }
                 }
                 if (stage == 8) {
                     // Lit lamps, tiles and segments must be full-bright against the night world: count saturated
@@ -269,7 +297,6 @@ public final class PanelClientCheck {
                     if (red < 100 || amber < 300) throw new AssertionError(
                             "Lit lamps or segments are not full-bright at night: red=" + red + " amber=" + amber);
                 }
-                shot.writeToFile(directory.resolve(NAMES[stage] + ".png"));
             }
         } catch (IOException ex) {
             throw new IllegalStateException("Panel screenshot failed", ex);

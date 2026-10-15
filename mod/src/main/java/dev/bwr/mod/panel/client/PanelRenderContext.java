@@ -1,7 +1,9 @@
 package dev.bwr.mod.panel.client;
 
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.PanelGeometry;
 import dev.bwr.mod.panel.component.PanelComponent;
@@ -30,8 +32,34 @@ public final class PanelRenderContext implements QuadSink {
     private static final ResourceLocation WHITE = ResourceLocation.withDefaultNamespace("textures/misc/white.png");
     /** Untextured, vertex coloured, lit, double sided: the one render type all procedural geometry uses. */
     public static final RenderType SOLID = RenderType.entityCutoutNoCull(WHITE);
-    /** Translucent, vertex coloured and lit: meter windows. Drawn after the solid geometry it covers. */
-    public static final RenderType GLASS = RenderType.entityTranslucent(WHITE);
+    /**
+     * Translucent, vertex coloured and lit: meter windows. Drawn after the solid geometry it covers, and, unlike the
+     * vanilla {@code entity_translucent} type it is made from, it does not write depth. The printed scale of a meter
+     * sits just behind its window, so a window that wrote depth would hide the text whenever a renderer draws it before
+     * the text. That is what Sodium and Iris do to the translucent types of a block entity: with a window writing depth
+     * every numeral, unit and tag of every meter vanished.
+     */
+    public static final RenderType GLASS = Glass.TYPE;
+
+    /** Subclassing only reaches the protected shared render states. */
+    private static final class Glass extends RenderType {
+        private Glass() {
+            super("bwr_panel_glass", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, true, () -> {
+            }, () -> {
+            });
+        }
+
+        static final RenderType TYPE = create("bwr_panel_glass", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536,
+                true, true, RenderType.CompositeState.builder()
+                        .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                        .setTextureState(new TextureStateShard(WHITE, false, false))
+                        .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                        .setCullState(NO_CULL)
+                        .setLightmapState(LIGHTMAP)
+                        .setOverlayState(OVERLAY)
+                        .setWriteMaskState(COLOR_WRITE)
+                        .createCompositeState(true));
+    }
 
     private final Matrix4f basis = new Matrix4f();
     private final Matrix4f textMatrix = new Matrix4f();

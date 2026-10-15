@@ -172,6 +172,8 @@ public final class FcdClientCheck {
             return;
         }
         if (mc.player == null || mc.level == null || mc.getSingleplayerServer() == null || ++joined < 40) return;
+        RenderEnvironment.log("fcd");
+        RenderEnvironment.startProfile();
         Stage current = STAGES.get(stage);
         if (!requested) {
             requested = true;
@@ -331,6 +333,15 @@ public final class FcdClientCheck {
             throw new AssertionError("FCD capture attempted before readiness: " + problem);
         }
         boolean scramPerf = current.name().equals("columbia-scram-perf");
+        RenderEnvironment.dumpProfile(current.name());
+        if (FRAME_MS.size() < 100 && (!current.scram() || scramPerf)) {
+            // Logged before the assertion below, so a stage that cannot reach 100 frames still leaves its numbers.
+            double slow = 0;
+            for (double ms : FRAME_MS) slow += ms;
+            LogUtils.getLogger().info("FCD PERFORMANCE stage={} only {} frames in the window (mean {} ms); block buffers built {} times, legends captured {} times, {} legend vertices cached",
+                    current.name(), FRAME_MS.size(), FRAME_MS.isEmpty() ? 0 : slow / FRAME_MS.size(), PanelRenderer.debugRebuilds(),
+                    PanelRenderer.debugLegendRebuilds(), PanelRenderer.debugCachedLegendVertices());
+        }
         if ((!current.scram() || scramPerf) && FRAME_MS.size() < 100) throw new AssertionError("Too few frames for the FCD benchmark: " + FRAME_MS.size());
         boolean displays = current.columbia() || current.browns() || current.matrix();
         boolean cached = !Boolean.getBoolean("bwr.panelImmediate") && !"false".equals(System.getProperty("bwr.fcdLegendCache"));
@@ -411,6 +422,7 @@ public final class FcdClientCheck {
         if (++readyFrames < 20) return;
         if (began == 0) {
             began = now;
+            RenderEnvironment.dumpProfile("before-" + STAGES.get(stage).name());
             LogUtils.getLogger().info("FCD READINESS stage={} ready afterMs={} panels={} camera={}", STAGES.get(stage).name(),
                     (now - requestedAt) / 1_000_000, builtView.cols * builtView.rows, mc.gameRenderer.getMainCamera().getPosition());
         }

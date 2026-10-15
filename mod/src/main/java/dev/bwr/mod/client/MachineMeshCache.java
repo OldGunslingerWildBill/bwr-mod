@@ -60,17 +60,18 @@ public final class MachineMeshCache {
     }
     public static void draw(Object key,Consumer<Builder> geometry,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
         RenderSystem.assertOnRenderThread();
+        // A shader pack replaces the programs of the render types, and Iris hands block entities its own wrapper instead of
+        // a BufferSource. The wrapper used to fail the check below, so with a pack on every machine was rebuilt quad by
+        // quad through Iris's extended vertex path each frame (about 120 ms for a reactor and its drives). It is drawn from
+        // a buffer through the render type instead, so the pack's own program is the one that shades it.
+        if(shader!=null&&isPackSource(buffers)){drawThroughRenderType(key,geometry,pose,light,overlay);return;}
         // Destruction/outline consumers must retain Minecraft's special vertex path.
         if(shader==null||!(buffers instanceof MultiBufferSource.BufferSource)){
             geometry.accept(new Builder(pose,buffers.getBuffer(Sheets.cutoutBlockSheet()),light,overlay));return;
         }
         var mesh=MESHES.get(key);
         if(mesh==null){
-            mesh=compile(geometry);MESHES.put(key,mesh);bytes+=mesh.bytes();
-            var it=MESHES.entrySet().iterator();
-            while(MESHES.size()>1&&(bytes>MAX_BYTES||MESHES.size()>MAX_ENTRIES)){
-                var old=it.next().getValue();bytes-=old.bytes();old.close();it.remove();
-            }
+            mesh=compile(geometry,0,0);MESHES.put(key,mesh);bytes+=mesh.bytes();trim();
         }
         if(mesh.buffer()==null)return;
         var type=Sheets.cutoutBlockSheet();var previousShader=RenderSystem.getShader();
@@ -87,10 +88,45 @@ public final class MachineMeshCache {
             VertexBuffer.unbind();type.clearRenderState();RenderSystem.setShader(()->previousShader);
         }
     }
-    private static Mesh compile(Consumer<Builder> geometry){
+    /** What a shader pack's block entity pass is given: Iris's wrapper around the real buffer source (named, never linked). */
+    static boolean isPackSource(MultiBufferSource buffers){
+        return !(buffers instanceof MultiBufferSource.BufferSource)&&buffers.getClass().getName().startsWith("net.irisshaders.");
+    }
+    /** The part of a variant key that is not the geometry: the light and overlay the vertices carry. */
+    private record Lit(Object key,int light,int overlay){}
+    /**
+     * The same mesh, with the light of this block and the overlay baked into its vertices (one buffer per geometry, light and
+     * overlay), drawn through the render type's own program with the pose as the model-view matrix. The program is the
+     * shader pack's when one is in use, so the mod's cached_machine program is never involved.
+     */
+    private static void drawThroughRenderType(Object key,Consumer<Builder> geometry,PoseStack pose,int light,int overlay){
+        var lit=new Lit(key,light,overlay);
+        var mesh=MESHES.get(lit);
+        if(mesh==null){
+            mesh=compile(geometry,light,overlay);MESHES.put(lit,mesh);bytes+=mesh.bytes();trim();
+        }
+        if(mesh.buffer()==null)return;
+        var type=Sheets.cutoutBlockSheet();
+        type.setupRenderState();
+        try{
+            var modelView=new org.joml.Matrix4f(RenderSystem.getModelViewMatrix()).mul(pose.last().pose());
+            mesh.buffer().bind();
+            mesh.buffer().drawWithShader(modelView,RenderSystem.getProjectionMatrix(),RenderSystem.getShader());
+            draws++;
+        }finally{
+            VertexBuffer.unbind();type.clearRenderState();
+        }
+    }
+    private static void trim(){
+        var it=MESHES.entrySet().iterator();
+        while(MESHES.size()>1&&(bytes>MAX_BYTES||MESHES.size()>MAX_ENTRIES)){
+            var old=it.next().getValue();bytes-=old.bytes();old.close();it.remove();
+        }
+    }
+    private static Mesh compile(Consumer<Builder> geometry,int light,int overlay){
         try(var storage=new ByteBufferBuilder(256*1024)){
             var vertices=new BufferBuilder(storage,VertexFormat.Mode.QUADS,DefaultVertexFormat.NEW_ENTITY);
-            geometry.accept(new Builder(new PoseStack(),vertices,0,0));
+            geometry.accept(new Builder(new PoseStack(),vertices,light,overlay));
             var data=vertices.build();
             if(data==null)return new Mesh(null,0);
             long size=(long)data.drawState().vertexCount()*DefaultVertexFormat.NEW_ENTITY.getVertexSize();

@@ -179,6 +179,7 @@ public final class PanelPerformanceCheck {
             return;
         }
         if (mc.player == null || mc.level == null || mc.getSingleplayerServer() == null || ++joined < 40) return;
+        RenderEnvironment.log("panel-performance");
         if (stage >= STAGES.size()) return; // the last stage asked the client to stop; ticks may still arrive
         Stage current = STAGES.get(stage);
         if (!requested) {
@@ -217,6 +218,12 @@ public final class PanelPerformanceCheck {
         LogUtils.getLogger().info("PANEL PERFORMANCE stage={} gpu cache: {} blocks hold {} quads, {} buffers built so far in {} ms",
                 current.name(), PanelRenderer.debugCachedBlocks(), PanelRenderer.debugCachedQuads(), PanelRenderer.debugRebuilds(),
                 PanelRenderer.debugRebuildMillis());
+        if (current.wall() && !Boolean.getBoolean("bwr.panelImmediate") && PanelRenderer.debugCachedBlocks() == 0) {
+            // A wall that is drawn must be drawn from block buffers, shader pack or not: without them the baked wall costs
+            // 30 to 40 ms a frame (it did under every shader pack, which switched the cache off).
+            throw new AssertionError("Panel wall stage " + current.name() + " was drawn without block buffers (shader pack in use: "
+                    + dev.bwr.mod.client.VisualEffectsMode.shaderPackInUse() + ")");
+        }
         try {
             var directory = mc.gameDirectory.toPath().resolve("panel-performance");
             Files.createDirectories(directory);

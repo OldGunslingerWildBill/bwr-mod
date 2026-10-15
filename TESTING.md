@@ -284,6 +284,110 @@ time alone creates no new topology. Timing is reported rather than used as a
 hardware-dependent pass/fail limit. These measurements cover plumbing work,
 not whole-plant or multiplayer TPS.
 
+## Sodium, Iris and shader packs (C1)
+
+Sodium, Iris and a shader pack are optional, run-only test dependencies. They are never bundled in the jar, never declared in
+`neoforge.mods.toml` and never referenced at compile time (the checks ask the mod list and, by reflection, Iris's public API
+whether a pack is in use; see `RenderEnvironment`). The player note is `docs/shader-packs.md`.
+
+Properties of the client runs (`:mod:runTurbineModelCheck`, `runClient`, the multiplayer clients and the other client runs):
+
+| Property | Meaning |
+| --- | --- |
+| `-PbwrRenderMods=stable` | Sodium 0.6.13 and Iris 1.8.12 into the run's `mods/` |
+| `-PbwrRenderMods=newest` | Sodium 0.8.13 and Iris 1.8.14-beta.1 |
+| `-PbwrShaderPack=ComplementaryReimagined_r5.9.3.zip` | the pack (from `shaderpacks/`) is copied to the run's `shaderpacks/` and enabled in `config/iris.properties` |
+| `-PbwrShaderPack=none`, or no property | Iris on with shaders off (with a pair), or nothing |
+| `-PbwrRenderModsDir=<path>` | the folder with `stable/`, `newest/` and `shaderpacks/` (default `../optional-client-mods` next to the repo) |
+| `-PbwrSodiumDisable=a.b,c.d` | diagnostics: switches those Sodium mixin groups off (`config/sodium-mixins.properties`) |
+| `-PbwrRenderProfile` | diagnostics: samples the render thread every 2 ms and logs the busiest frames per FCD stage |
+
+Without `-PbwrRenderMods` every client run first deletes `sodium*` and `iris*` jars from its `mods/`, `iris.properties`,
+`iris-excluded.json`, `sodium-options.json`, `sodium-mixins.properties` and the `.zip` packs in `shaderpacks/`, so a plain run never
+keeps Sodium; the line `render mods: ...` at the top of the run says what was set up. Each check logs
+`RENDER ENV check=... sodium=<version|none> iris=<version|none> shaderPackInUse=<bool>` once the world is up.
+
+The release jars load in the dev environment as they are (FML reads `<gameDir>/mods` in dev, and NeoForge 1.21.1 runs with
+Mojang names), so nothing had to be remapped. The `Reference map 'iris.refmap.json' ... could not be read` warnings are
+Iris's own and harmless in a dev run.
+
+Commands (one JVM each, a real window opens; the panel check takes about 3 minutes, the FCD check 7, the performance pair 1):
+
+```powershell
+$g = '.\gradlew.bat'; $c = '--offline', '--console=plain'
+& $g :mod:runTurbineModelCheck -PbwrPanelClientCheck @c                                  # vanilla
+& $g :mod:runTurbineModelCheck -PbwrPanelClientCheck -PbwrRenderMods=stable @c           # stable pair, no pack
+& $g :mod:runTurbineModelCheck -PbwrPanelClientCheck -PbwrRenderMods=stable -PbwrShaderPack=ComplementaryReimagined_r5.9.3.zip @c
+& $g :mod:runTurbineModelCheck -PbwrPanelClientCheck -PbwrRenderMods=newest -PbwrShaderPack=ComplementaryReimagined_r5.9.3.zip @c
+# the same four with -PbwrFcdClientCheck, and with
+#   -PbwrPanelPerformanceCheck -PbwrPanelPerformanceStages=annunciators-off,annunciators-flash
+# frame times of the full core display during a scram: -PbwrFcdClientCheck -PbwrFcdClientStages=columbia-scram-perf
+```
+
+The default panel stages stop at `board-night-close` on vanilla (see the limitations), so the runs below pass
+`-PbwrPanelClientStages=board-day-wide,board-controls-close,board-annunciators,board-lod-28m,board-night-lamps,wrench-config,linker-binding,baked,slope`
+(every stage but `board-night-close`, plus `linker-outline` where no pack is on).
+
+Results on the development machine (Ryzen 7 5800X3D, RTX 5080, 1280 x 720; the machine was also running another long Java
+job, so only numbers within one table are comparable, and the stable + Complementary performance pair ran with an unfocused
+window, `active=false`). The screenshots of the four configurations were compared with their vanilla twins: the panel stages
+(board day, close, annunciators, 28 m level of detail, night lamps, wrench and linker screens, 18 baked boards and close-ups,
+7 sloped bench and console boards) and the FCD stages (Columbia and Browns Ferry displays, the rod select matrix, the far and
+close views, scram, legends at reading distance and the nameplates):
+
+| Configuration | wall, 50 annunciators normal / flashing (mean ms) | full core display, 8 s around a scram (mean / p95 ms) | verdict |
+| --- | --- | --- | --- |
+| vanilla | 3.62 / 4.23 | 0.53 / 0.79 | reference |
+| Sodium 0.6.13 + Iris 1.8.12, no pack | 2.51 / 2.47 | 0.50 / 0.73 | same pictures |
+| the same with Complementary Reimagined r5.9.3 | 6.32 / 7.60 | 1.32 / 1.80 | pictures match, in the pack's look |
+| Sodium 0.8.13 + Iris 1.8.14-beta.1 with Complementary | 6.18 / 5.68 | 1.18 / 1.50 | same as the stable pair |
+
+What the pictures show. Without a pack Sodium and Iris change nothing visible except the surface of sloped boards (benchboard
+and console), which is a little darker and greyer: that is the board's own block face, meshed by Sodium with its own shading;
+the components on it are identical. With Complementary every element is relit by the pack: lamps, annunciator windows, LCD
+and segment displays and the lit tiles of the core displays keep their glow (they are drawn full bright, and stand out against
+the pack's dark night), meters keep needles, dials, numerals and units, engraved text, the FCD cell legends and the rod select
+labels stay crisp down to the 1.6 block reading distance, glass windows are clear, and the wrench and linker screens are the
+same. No z-fighting, no black or missing face and no text through a wall was seen. Colour grading, shadows (a panel casts one
+in the pack) and fog differ, which is the pack.
+
+Real defects the work found, all fixed in the mod, each with a check:
+
+1. **Meter numerals vanished under Sodium and Iris, with or without a pack.** The meter window was drawn with the vanilla
+   `entity_translucent` render type, which writes depth, and the printed scale sits just behind it; Sodium and Iris draw the
+   translucent type before the text, so every numeral, unit and tag behind a window disappeared. `PanelRenderContext.GLASS`
+   is now the same type without the depth write. Check: stage `baked-closeup-round-meter` of the panel client check counts
+   dark pixels where the first dial's `40` and `60` are (142 and 149 on vanilla and with Sodium, 117 to 122 under a pack, 0
+   before the fix; the assertion needs 60).
+2. **A shader pack switched the panel block buffers off,** so a fully populated baked wall was rebuilt vertex by vertex every
+   frame: 36 to 39 ms a frame instead of 6 ms. The buffers go through the same render type as the per frame path, which Iris
+   re-routes, so they stay on under a pack. Check: `PanelPerformanceCheck` fails if a wall stage ends with no block buffers.
+3. **The machine mesh cache missed under a pack** (the vessel, the drives and other machines): the pack's shadow pass hands
+   block entity renderers an Iris wrapper that is not a `BufferSource`, and the cache then rebuilt every quad on the CPU every
+   frame (a 15 x 15 reactor with its 185 drives: 127 ms a frame, and the FCD stage could not reach 100 frames). Those draws
+   now go through a cached buffer with the light baked in, drawn with the render type's own program (the pack's). Check: the
+   existing FCD frame count assertion (it failed with 66 frames before; the stage now runs 6,000).
+
+Known limitations (test environment, not defects; no assertion was edited):
+
+* **`board-night-close` fails on vanilla as well** (`red=0 amber=5306`): the check wants lamp pixels of at least 215 in the red
+  channel, and the full bright lamp quads come out at `0xBC1B1B` because the entity shader still applies the face's directional
+  shade. It fails without any optional mod, so the runs above leave that one stage out. The picture is saved before the
+  assertion now, so it can be looked at (looked at in all four configurations: the lit tiles, LCDs and segments glow at night in
+  each, with bloom under the pack). The reviewer should decide whether the assertion (written for earlier lamp
+  models) should be re-based.
+* **`linker-outline` under a pack:** it looks for pixels of exactly `0xFF9933` (the orange of the bound-device outline), which a
+  pack's tone mapping never leaves exact. The outline is drawn (about 10,450 orange-ish pixels around the device with and
+  without a pack, and `LinkerHighlight.debugDraws()` counts it); the stage is left out of the pack runs.
+* **`-PbwrMachineRenderCheck` with Sodium** fails at its `offscreen` stage (`Offscreen models still submitted`) with Sodium
+  alone, no pack: Sodium culls block entities by section, not one by one, so a renderer is called for every machine in a visible
+  section even while it is behind the camera (`SodiumWorldRenderer.renderBlockEntity` has no per block entity frustum test).
+  The vanilla run passes all seven stages, and the `gpu-day` stage passes under both mod sets.
+* Under Complementary a good part of the cost is the pack's shadow pass drawing every panel and machine a second time.
+* Two runs hit a transient before the pass that is reported: a start-up `ExceptionInInitializerError` in FML's early window
+  (`FileSystemNotFoundException`, once, in the stable pair no-pack panel run) and one `Baked showcase block missing on the
+  client` (newest pair, the showcase blocks had not arrived yet). Both passed on rerun without any change.
+
 ## GUI performance check
 
 `gradlew.bat :mod:runTurbineModelCheck -PbwrGuiPerformanceCheck` creates a
