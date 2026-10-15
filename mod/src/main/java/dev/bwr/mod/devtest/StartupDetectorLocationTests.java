@@ -21,10 +21,7 @@ public final class StartupDetectorLocationTests {
                         &&signals.read(prefix+"lprm_string").orElse(-1)==d.stringIndex()+1,"location signal disagrees");
             }
             if(net.neoforged.fml.ModList.get().isLoaded("computercraft")) {
-                try {
-                    var cc=new dev.bwr.mod.peripheral.ReactorPeripheral(run.be).getDetectorLocations();
-                    h.assertTrue(cc.size()==12&&((java.util.Map<?,?>)cc.get(1)).get("placement").equals("typical"),"CC missing typical placement metadata");
-                } catch(dan200.computercraft.api.lua.LuaException e) { throw new AssertionError(e); }
+                StartupDetectorLocationCcChecks.typicalPlacementMetadata(h,run.be);
             }
         });
     }
