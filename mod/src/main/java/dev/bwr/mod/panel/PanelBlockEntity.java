@@ -939,8 +939,37 @@ public final class PanelBlockEntity extends BlockEntity {
         }
     }
 
+    /**
+     * A control somebody is holding down (a pushbutton on {@code selected_rod_withdraw_continuous}, a spring return switch
+     * on a handle position) is let go by {@code PanelTimers} a moment after the last press; but that timer is dropped for a
+     * panel whose chunk is no longer loaded, and what the control commanded lives in the plant device, which may be in a
+     * chunk that stays loaded. So when the panel goes (its chunk unloads, or the block is removed) it lets go of whatever is
+     * still held, the way the timer would have, and the release reaches the plant. Server only; never loads a chunk.
+     */
+    private void releaseHeldControls() {
+        if (!(level instanceof ServerLevel server) || owned.isEmpty()) {
+            return;
+        }
+        for (PanelComponent component : new ArrayList<>(owned)) {
+            ComponentType type = component.type();
+            if (type == null || !type.holdable()) {
+                continue;
+            }
+            boolean held = false;
+            for (int i = 0; i < component.outputCount(); i++) {
+                held |= component.output(i) != 0.0;
+            }
+            if (held) {
+                PanelTimers.cancel(server, worldPosition, component.id());
+                type.operate(new ComponentType.OperateContext(server, null, this, component),
+                        dev.bwr.mod.panel.component.OperateAction.RELEASE, 0.0);
+            }
+        }
+    }
+
     @Override
     public void setRemoved() {
+        releaseHeldControls();
         dev.bwr.mod.advancement.PlantMilestones.unloaded(this);
         super.setRemoved();
         PanelSampler.untrack(this);
@@ -950,6 +979,7 @@ public final class PanelBlockEntity extends BlockEntity {
 
     @Override
     public void onChunkUnloaded() {
+        releaseHeldControls();
         dev.bwr.mod.advancement.PlantMilestones.unloaded(this);
         super.onChunkUnloaded();
     }

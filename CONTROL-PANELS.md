@@ -246,6 +246,9 @@ pushbuttons (the `guarded_yellow` button variant is the large yellow one under a
 `selected_rod_insert_continuous` / `selected_rod_withdraw_continuous` (held: the sink must be *follow* so the release
 sends 0; the linker defaults these two to follow). They move the selected rod only, through the same drive network
 and with the same CRD power and water rules as `rod_<n>_position`. Details and CC calls are in `SIGNALS.md`.
+A held button lets go by itself a second and a half after the player's last press (the client repeats the press while the key
+is down), when its panel's chunk unloads and when the block is removed, so a player who drops off the network, or whose panel
+unloads while the reactor stays loaded, never leaves a rod running. The selection itself is reactor state: it survives a rejoin.
 
 **There are no rod blocks, no sequence control and no worth minimiser.** RWM, RSCS and RBM are protection logic and
 the mod never provides them; build them from the signals with CC or relays if you want them.

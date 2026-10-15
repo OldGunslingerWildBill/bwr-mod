@@ -15,6 +15,10 @@ patch per change; 81,900) and `FcdModelTests` (style table and model file contra
 `-PbwrFcdLegendsPerFrame` and `-PbwrFcdProcedural`) measures frame cost and writes screenshots to
 `run/turbineModelCheck/fcd-check/`; it fails if the legend cache is not used.
 
+The multiplayer check (`:mod:runMultiplayerCheck`, a dedicated server and two real clients) and the GameTest `PanelHeldControlTests` (a held rod control
+is released when its panel chunk unloads; fixture 85,900) are described under "Dedicated server and two real clients (C3)" below. The
+required GameTest count is 292 (291 before C3).
+
 APRM calibration (heat balance, per-channel gain and error, the bounded manual `aprm_<n>_gain` command) is covered by
 the core test `AprmCalibrationTest` (6 checks: heat balance closes on the model power at a steady rated core and reads
 zero with no steam, a miscalibrated channel is recalibrated by hand to within 0.5 points, all six channels calibrate
@@ -387,6 +391,89 @@ Known limitations (test environment, not defects; no assertion was edited):
 * Two runs hit a transient before the pass that is reported: a start-up `ExceptionInInitializerError` in FML's early window
   (`FileSystemNotFoundException`, once, in the stable pair no-pack panel run) and one `Baked showcase block missing on the
   client` (newest pair, the showcase blocks had not arrived yet). Both passed on rerun without any change.
+
+## Dedicated server and two real clients (C3)
+
+`:mod:runMultiplayerCheck` proves the control panels, the full core display binding and the rod select matrix on a real
+dedicated server with two real game clients at the same time. One Gradle invocation does all of it (about four and a half minutes on the development
+machine; two windows of 960 x 540 open, and the machine needs a few GB of free memory for three JVMs):
+
+```powershell
+.\gradlew.bat :mod:runMultiplayerCheck --offline --console=plain
+# the same with both clients under Sodium, Iris and a shader pack:
+.\gradlew.bat :mod:runMultiplayerCheck -PbwrRenderMods=stable -PbwrShaderPack=ComplementaryReimagined_r5.9.3.zip --offline --console=plain
+```
+
+The driver task (in `mod/build.gradle`) writes a fresh `run/mpServer` (`eula=true`; `server.properties` with `online-mode=false`,
+`server-ip=127.0.0.1`, `server-port=25599`, `spawn-protection=0`, a flat world with a single bedrock layer, survival, peaceful),
+starts the `mpServer` run (type server, `--nogui`), waits for `Done (`, starts `mpClientA` and `mpClientB` (`--username
+BwrTesterA` / `BwrTesterB`, their own game directories `run/mpClientA` and `run/mpClientB`, `--quickPlayMultiplayer
+127.0.0.1:25599`) and waits for the verdict. Everything is on 127.0.0.1: nothing listens on another interface, nothing goes to the
+internet (the client talks to the address as an IP because `localhost` resolves to IPv6 first under the dev JVM's settings and
+the server does not listen there). The build fails on `MP CHECK FAIL <reason>`, on a process that dies, and after 25 minutes.
+Logs are `run/mp-check/server-1.log`, `server-2.log`, `clientA.log`, `clientB.log`; screenshots are in
+`run/mpClientA/mp-check/` and `run/mpClientB/mp-check/`.
+
+The server conducts (`MpServerCheck`). When the first player joins it builds the fixture: a formed 15 x 15 reactor with its drives
+supplied and every rod at notch 12, an MSIV, and a panel wall of 10 x 6 blocks with a full core display, a rod select matrix, a
+control switch (to the MSIV), three meters (MSIV position, selected rod, one to bind), four pushbuttons wired to
+`selected_rod_withdraw`, `_insert` and the two continuous commands, lamps and a spare pushbutton. Each player is given a
+wrench, a linker (already holding the reactor), two lamps and two pushbuttons, and stands in front of the controls in survival. It
+writes one step file at a time into `run/mp-check/` (what each player should do), waits until the rods are at rest and for a sync
+interval, reads back what each client saw, compares it with its own state, and writes `MP CHECK PASS` or `MP CHECK FAIL`.
+The clients (`MpClientCheck`) act only through what a real player sends: the mod's own payloads (`PanelPayloads.Operate`, `Place`,
+`Remove`, `Configure`, `LinkerOpen`, `Bind`), inventory and hotbar clicks, the movement keys, and the Disconnect and Join a player
+does; they never touch a server object. After every step they write what their own client level holds (the FCD and matrix
+snapshots, the switch, the meters, the binding, every label, their inventory) and take the step's screenshot. The server never
+trusts them: it compares every number with the reactor and the panel it holds.
+
+| Scenario | What is asserted |
+| --- | --- |
+| S0 | both clients show the same fixture (labels, FCD, matrix, switch, meters) as the server |
+| S1 | A selects a rod on the matrix and steps it twice while B turns the switch, with the two packets in the same tick, A first and B first, and again the other way round (B selects and steps, A turns the switch): nothing lost or doubled, and both FCDs, both matrices and both switches equal the reactor and each other |
+| S2 | both bind the same meter to different signals with the linker at once, same tick, A first and B first: the later packet wins deterministically, the clients and the server agree, no sink appeared |
+| S3 | both remove the same component at once (exactly one item comes out), each removes a different one, both place on the same spot (one lamp stands, the loser keeps the item), each places and renames through `Configure`: the ledger of every bwr item (both inventories, item entities, every component on the panel) is the same before and after every step and the clients agree on every label |
+| S4 | A selects rod 100, holds the continuous withdraw button, repeating the press as the client does, and drops off the network while holding: the hold is gone within a second and a half, the rod stops, nothing continues, the selection stays (it is reactor state), B sees the stopped rod, A rejoins and its FCD equals the reactor in every cell |
+| S5 | B leaves and rejoins while A keeps stepping: no step lost, B resyncs |
+| S6, S7 | the server stops (the driver then starts it again on the same world) with both players on, both clients rejoin on their own: panel, bindings, labels, switch, selection, matrix, rod demands and the item ledger are exactly what they were, and both can operate again |
+
+Result on the development machine: `MP CHECK PASS` in 246 seconds on vanilla and in 251 seconds with both clients under Sodium 0.8.13, Iris
+1.8.14-beta.1 and Complementary Reimagined, after the last change (earlier passes before the Disconnect fix below took 268 and 269 seconds; the runs
+before those stopped on defects of the check itself, which were fixed). What the screenshots show (all looked at, side by side for
+the two clients): both players see the same wall, in the same state, at every step. The selected rod's button on the matrix and the
+highlighted rod on the FCD move together; the meters and the switch agree; dropped items lie in the same places on both screens;
+the other player's body is visible beside the camera; after A leaves, B's screen shows the message and the unchanged wall; after
+the restart the wall, the dropped items and the selection are as before.
+
+### A real bug it led to
+
+A held rod motion control is let go by `PanelTimers` a second and a half after the last press (the fail-safe that covers a client
+that stops repeating its press), and the dedicated server run confirmed that a player who drops off the network stops the rod. The
+timer, however, drops the entry of a panel whose chunk is no longer loaded, while the "held" flag lives in the reactor controller,
+which may be in a chunk that stays loaded. A player who held the control and left with nobody else near the panel therefore left
+the rod withdrawing for good: the release never reached the reactor. `PanelHeldControlTests` (GameTest, fixture 85,900) shows it:
+it fails without the fix (`the rod's continuous withdraw is still held after the panel that held it unloaded`, five ticks after the
+last press, with the chunk already gone). A panel now lets go of its held controls when its chunk unloads or the block is removed
+(`PanelBlockEntity.releaseHeldControls`), exactly as the timer would have, and the release reaches the plant. The multiplayer check
+keeps the panel chunks loaded (the other player stands next to them), so it covers the timer case and the GameTest the unload case.
+
+### Limits
+
+* The clients send the payloads a click, the wrench and the linker screens send; they do not aim a camera and click (the server
+  still re-checks reach, permission and the item in hand for every one). The binding screen is opened by the server's real
+  `LinkerScreen` payload and closed by the client.
+* The player's Disconnect button closes the connection and the server sees it at once (`lost connection: Disconnected`). A client that
+  vanishes without closing it (a crash, a cable) is noticed only after the server's keep-alive timeout, 15 to 30 seconds. The first
+  versions of this check disconnected without closing the connection by mistake and so waited for that timeout, which is slower
+  than the step's limit under Sodium and Iris. The held control's fail-safe does not depend on either.
+* The server and the clients exchange step files and acknowledgements through the run directory (`run/mp-check/`), on the same
+  machine; nothing of that goes through the game.
+* The check does not run with CC:Tweaked absent for any reason of its own (it names no CC type); a `-PbwrNoCC` run of the client and
+  server works the same way.
+* Concurrency is as fine as one server tick: two packets that arrive in the same tick are handled one after the other on the
+  server thread, in arrival order; the deterministic winner of the bind race is the later one.
+* One early attempt ended with client B's JVM gone without a trace before it joined (no crash report, no log line; the machine was
+  loaded by another long job); the next runs passed. It was seen once.
 
 ## GUI performance check
 

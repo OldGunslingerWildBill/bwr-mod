@@ -125,13 +125,13 @@ neoForge {
         mpClientA {
             client()
             gameDirectory = file('run/mpClientA')
-            programArguments.addAll('--username', 'BwrTesterA', '--quickPlayMultiplayer', 'localhost:25599', '--width', '960', '--height', '540')
+            programArguments.addAll('--username', 'BwrTesterA', '--quickPlayMultiplayer', '127.0.0.1:25599', '--width', '960', '--height', '540')
             jvmArguments.addAll('-Dbwr.mpCheck=client', '-Dbwr.mp.name=A', '-Dbwr.mp.dir=' + file('run/mp-check').absolutePath)
         }
         mpClientB {
             client()
             gameDirectory = file('run/mpClientB')
-            programArguments.addAll('--username', 'BwrTesterB', '--quickPlayMultiplayer', 'localhost:25599', '--width', '960', '--height', '540')
+            programArguments.addAll('--username', 'BwrTesterB', '--quickPlayMultiplayer', '127.0.0.1:25599', '--width', '960', '--height', '540')
             jvmArguments.addAll('-Dbwr.mpCheck=client', '-Dbwr.mp.name=B', '-Dbwr.mp.dir=' + file('run/mp-check').absolutePath)
         }
         luaExamplesCheck {
@@ -346,6 +346,7 @@ tasks.register('runMultiplayerCheck') {
         new File(serverDir, 'server.properties').text = [
                 'online-mode=false', 'server-ip=127.0.0.1', 'server-port=25599', 'spawn-protection=0',
                 'gamemode=survival', 'force-gamemode=true', 'difficulty=peaceful', 'level-type=minecraft\\:flat',
+                'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1}],"biome":"minecraft:plains","structure_overrides":[]}',
                 'generate-structures=false', 'spawn-monsters=false', 'spawn-animals=false', 'spawn-npcs=false',
                 'allow-flight=true', 'max-tick-time=-1', 'view-distance=8', 'simulation-distance=8',
                 'enforce-secure-profile=false', 'enable-command-block=false', 'player-idle-timeout=0',
@@ -360,7 +361,15 @@ tasks.register('runMultiplayerCheck') {
             t.classpath(t.classpathProvider)
             t.workingDir = gameDir
             def log = new File(mpDir, tag + '.log')
-            def pb = new ProcessBuilder(t.commandLine).directory(gameDir).redirectErrorStream(true).redirectOutput(log)
+            // JavaExec only puts its executable, class path and main class together when it runs. This is what it would run:
+            // the toolchain's java, the JVM arguments (which include the -D properties and MDG's VM argument file), the class
+            // path, the main class and the program arguments (MDG's argument file).
+            def command = [t.javaLauncher.get().executablePath.asFile.absolutePath]
+            command.addAll(t.jvmArgs)
+            t.allJvmArgs.each { if (!command.contains(it)) command.add(it) }
+            command.addAll(['-cp', t.classpath.asPath, t.mainClass.get()])
+            command.addAll(t.args)
+            def pb = new ProcessBuilder(command).directory(gameDir).redirectErrorStream(true).redirectOutput(log)
             t.environment.each { k, v -> pb.environment().put(k.toString(), v.toString()) }
             logger.lifecycle("multiplayer check: starting ${tag} (log ${log})")
             [process: pb.start(), log: log, tag: tag, done: false]
@@ -416,9 +425,9 @@ tasks.register('runMultiplayerCheck') {
                     }
                     throw new GradleException(result + " (see ${mpDir} and the clients' mp-check folders)")
                 }
-                if (!alive(server)) throw new GradleException("multiplayer check: the server exited without a verdict, see ${server.log}")
-                if (!alive(clientA)) throw new GradleException("multiplayer check: client A exited without a verdict, see ${clientA.log}")
-                if (!alive(clientB)) throw new GradleException("multiplayer check: client B exited without a verdict, see ${clientB.log}")
+                if (!alive(server)) throw new GradleException("multiplayer check: the server exited (code ${server.process.exitValue()}) without a verdict, see ${server.log}")
+                if (!alive(clientA)) throw new GradleException("multiplayer check: client A exited (code ${clientA.process.exitValue()}) without a verdict, see ${clientA.log}")
+                if (!alive(clientB)) throw new GradleException("multiplayer check: client B exited (code ${clientB.process.exitValue()}) without a verdict, see ${clientB.log}")
                 if (elapsed() > 1500) throw new GradleException('multiplayer check: no verdict after 25 minutes')
                 Thread.sleep(1000)
             }
