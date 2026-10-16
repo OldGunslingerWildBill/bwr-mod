@@ -323,6 +323,26 @@ clientRunNames.each { runName ->
 }
 
 // ---------------------------------------------------------------------------
+// :mod:runTurbineGameTest keeps its world between runs (run/turbineGameTest/world) so the fixtures find the previous
+// run's blocks, and that world also keeps every ItemEntity a fixture left behind: a fixture that clears a reactor
+// pops each loaded fuel assembly (ReactorControllerBlock.onRemove), the chunk unloads and the items are saved, and
+// the next run force-loads the chunk and ticks them again. They despawn only after 6000 ticks of being loaded, which
+// is about thirty runs, so a long-lived run directory ends up with tens of thousands of items in the force-loaded
+// fixture chunks; each one's collision check scans its whole section, the server tick goes quadratic and the 'fcd'
+// batch (11 s in a young world) takes seven minutes. No test relies on an entity surviving from an earlier run, so the
+// stored entities are dropped before the server starts (blocks, chunk tickets and level data stay).
+// ---------------------------------------------------------------------------
+tasks.matching { it.name == 'runTurbineGameTest' }.configureEach { task ->
+    task.doFirst {
+        def entities = new File(neoForge.runs.getByName('turbineGameTest').gameDirectory.get().asFile, 'world/entities')
+        if (entities.isDirectory()) {
+            entities.deleteDir()
+            logger.lifecycle('turbineGameTest: stored entities of earlier runs removed (world/entities)')
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // C3: :mod:runMultiplayerCheck. One Gradle invocation that starts a real dedicated server (run/mpServer, offline mode,
 // 127.0.0.1:25599, a flat world made fresh each time, spawn protection off), waits for it to listen, starts two real
 // game clients (BwrTesterA and BwrTesterB, their own game directories, quick-play into the server), and waits for the

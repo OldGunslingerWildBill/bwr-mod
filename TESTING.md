@@ -136,7 +136,10 @@ The dedicated dev server needs `eula=true` in
 `online-mode=false` in its `server.properties`; it must be a disposable test
 world. Use separate fresh run directories when switching optional-mod sets to
 avoid old-world missing-registry warnings. The CI jobs already have separate
-workspaces. GameTests use `mod/run/turbineGameTest`.
+workspaces. GameTests use `mod/run/turbineGameTest`; its blocks persist between runs, but `:mod:runTurbineGameTest`
+deletes the stored entities (`world/entities`) first. Fixtures that clear a loaded reactor drop its fuel assemblies as
+items, the chunk saves them, and thirty runs later tens of thousands of them made the `fcd` batch take seven minutes
+instead of eleven seconds (every item's collision check scans its whole chunk section).
 
 The full physics acceptance suite includes long transients and currently takes
 about 15 minutes on the development machine. Filtered runs are available via
