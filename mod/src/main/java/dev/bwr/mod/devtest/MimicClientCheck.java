@@ -88,6 +88,7 @@ public final class MimicClientCheck {
     private static final BlockPos BOUND_WALL = new BlockPos(112, Y + 2, 30);
     private static final BlockPos PREVIEW_WALL = new BlockPos(152, Y + 2, 30);
     private static final BlockPos SHAPES_WALL = new BlockPos(192, Y + 2, 30);
+    private static final BlockPos ARROWS_WALL = new BlockPos(232, Y + 2, 30);
     private static final BlockPos VALVE = new BlockPos(112, Y, 50);
 
     private record Ctx(ServerLevel level, ServerPlayer player) {
@@ -229,6 +230,49 @@ public final class MimicClientCheck {
         path(level, SHAPES_WALL, PanelType.VERTICAL, roundedStraight, 26, 30, 36, 18, 46, 30);
     }
 
+    /** A line from the left half of the arrows wall, with its arrow settings. */
+    private static MimicStyle arrowLine(int color, int width, int size, boolean ownColor, int arrowColor, boolean both) {
+        MimicStyle style = style(color, width, false, both ? MimicStyle.END_ARROW : MimicStyle.END_NONE, MimicStyle.END_ARROW, 0);
+        style.arrowSize = size;
+        style.arrowOwnColor = ownColor;
+        style.arrowColor = arrowColor;
+        return style;
+    }
+
+    /**
+     * Arrows of every kind on one 3 x 2 wall: on the left, lines with arrow heads from automatic up to 8 cells, in the
+     * line's colour and in their own, one with a head at each end and a dashed one with arrows along it; on the right, a
+     * curve and a rounded elbow with arrows along them that follow the path.
+     */
+    private static void arrowsScene(ServerLevel level) {
+        wall(level, PanelType.VERTICAL, ARROWS_WALL, 3, 2);
+        PanelComponent plate = PanelOps.placeDirect(level, ARROWS_WALL, 2, 0, ComponentTypes.NAMEPLATE, Footprint.of(24, 4));
+        if (plate != null) {
+            ((NameplateData) plate.data()).text = "ARROWS";
+            plate.touch();
+        }
+        path(level, ARROWS_WALL, PanelType.VERTICAL, arrowLine(0x2E7DE0, 2, 0, false, 0, false), 2, 6, 20, 6);
+        path(level, ARROWS_WALL, PanelType.VERTICAL, arrowLine(0x20B040, 2, 4, false, 0, true), 2, 11, 20, 11);
+        path(level, ARROWS_WALL, PanelType.VERTICAL, arrowLine(0xFFB000, 3, 6, true, 0xE02020, false), 2, 17, 20, 17);
+        path(level, ARROWS_WALL, PanelType.VERTICAL, arrowLine(0xE02020, 4, 8, true, 0xF0F0E0, false), 2, 24, 20, 24);
+        MimicStyle dashed = arrowLine(0xF0F0E0, 2, 3, true, 0xFFB000, false);
+        dashed.dashed = true;
+        dashed.flowEvery = 8;
+        path(level, ARROWS_WALL, PanelType.VERTICAL, dashed, 2, 30, 22, 30);
+        MimicStyle curve = style(0xFFB000, 2, false, MimicStyle.END_NONE, MimicStyle.END_ARROW, 8);
+        curve.corners = MimicStyle.CORNERS_CURVED;
+        curve.arrowSize = 3;
+        curve.arrowOwnColor = true;
+        curve.arrowColor = 0xE02020;
+        path(level, ARROWS_WALL, PanelType.VERTICAL, curve, 26, 10, 31, 4, 37, 12, 43, 5, 46, 8);
+        MimicStyle elbow = style(0x20B040, 3, false, MimicStyle.END_DOT, MimicStyle.END_ARROW, 16);
+        elbow.route = MimicStyle.ROUTE_ELBOW;
+        elbow.corners = MimicStyle.CORNERS_ROUNDED;
+        elbow.radius = 4;
+        elbow.arrowSize = 6;
+        path(level, ARROWS_WALL, PanelType.VERTICAL, elbow, 26, 16, 45, 29);
+    }
+
     /** The scene of the bound path: a closed valve, a path lit by its demand, a still dashed path beside it. */
     private static void boundScene(ServerLevel level) {
         wall(level, PanelType.VERTICAL, BOUND_WALL, 3, 2);
@@ -315,6 +359,14 @@ public final class MimicClientCheck {
                 mc -> wallReady(mc, SHAPES_WALL, PanelType.VERTICAL, 2),
                 mc -> need(PanelRenderer.debugCachedQuads() > 200, "the shapes wall's block buffers hold " + PanelRenderer.debugCachedQuads() + " quads"),
                 null));
+        STEPS.add(new Step("arrows-wall", ctx -> arrowsScene(ctx.level()), PanelType.VERTICAL, ARROWS_WALL, 2.6, 24, 16, 24, 16, 70,
+                mc -> wallReady(mc, ARROWS_WALL, PanelType.VERTICAL, 2),
+                mc -> need(PanelRenderer.debugCachedQuads() > 200, "the arrows wall's block buffers hold " + PanelRenderer.debugCachedQuads() + " quads"),
+                null));
+        STEPS.add(new Step("arrows-close-sizes", ctx -> { }, PanelType.VERTICAL, ARROWS_WALL, 1.15, 12, 18, 12, 18, 20,
+                mc -> wallReady(mc, ARROWS_WALL, PanelType.VERTICAL, 2), mc -> { }, null));
+        STEPS.add(new Step("arrows-close-curves", ctx -> { }, PanelType.VERTICAL, ARROWS_WALL, 1.15, 36, 16, 36, 16, 20,
+                mc -> wallReady(mc, ARROWS_WALL, PanelType.VERTICAL, 2), mc -> { }, null));
         STEPS.add(new Step("bound-off", ctx -> boundScene(ctx.level()), PanelType.VERTICAL, BOUND_WALL, 3.0, 24, 16, 24, 16, 70,
                 mc -> wallReady(mc, BOUND_WALL, PanelType.VERTICAL, 1) && litIs(mc, false), mc -> need(litIs(mc, false), "dim"), null));
         STEPS.add(new Step("bound-on", ctx -> openValve(ctx.level(), true), PanelType.VERTICAL, BOUND_WALL, 3.0, 24, 16, 24, 16, 30,
