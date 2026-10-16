@@ -24,6 +24,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
@@ -104,7 +105,8 @@ public final class PanelBlock extends BaseEntityBlock {
         boolean component = stack.getItem() instanceof ComponentItem;
         boolean wrench = stack.getItem() instanceof PanelWrenchItem;
         boolean linker = stack.getItem() instanceof PanelLinkerItem;
-        if (!component && !wrench && !linker) {
+        boolean tape = stack.getItem() instanceof dev.bwr.mod.panel.mimic.MimicTapeItem;
+        if (!component && !wrench && !linker && !tape) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (level.isClientSide()) {
@@ -117,10 +119,25 @@ public final class PanelBlock extends BaseEntityBlock {
         if (!PanelOps.cellAt(be, sender.getEyePosition(), sender.getLookAngle(), cell)) {
             return ItemInteractionResult.CONSUME;
         }
-        if (linker) {
+        if (tape) {
+            // The vanilla path of the mimic tape; the client input hook normally sends the exact cursor in a packet.
+            double[] exact = new double[2];
+            PanelGeometry.Frame frame = PanelGeometry.frame(panelType(), state.getValue(FACING));
+            Vec3 eye = sender.getEyePosition();
+            Vec3 look = sender.getLookAngle();
+            if (PanelGeometry.rayToCell(frame, pos.getX(), pos.getY(), pos.getZ(), eye.x, eye.y, eye.z, look.x, look.y,
+                    look.z, exact)) {
+                dev.bwr.mod.panel.mimic.MimicOps.use(sender, hand, pos, exact[0], exact[1]);
+            }
+        } else if (linker) {
             PanelBlockEntity.Claim claim = be.claimAt(cell[0], cell[1]);
             if (claim != null && !sender.isShiftKeyDown()) {
                 dev.bwr.mod.panel.wiring.WiringOps.openScreen(sender, claim.owner(), claim.id());
+            } else if (claim == null && !sender.isShiftKeyDown()) {
+                var path = mimicUnderCursor(be, sender);
+                if (path != null) {
+                    dev.bwr.mod.panel.wiring.WiringOps.openScreen(sender, pos, -path.localId());
+                }
             }
         } else if (component) {
             if (sender.isShiftKeyDown()) {
@@ -136,9 +153,30 @@ public final class PanelBlock extends BaseEntityBlock {
                 } else {
                     PanelSync.sendOpenConfig(sender, claim.owner(), claim.id());
                 }
+            } else if (!sender.isShiftKeyDown()) {
+                // No component under the cursor: the wrench opens the style screen of a mimic path there.
+                var path = mimicUnderCursor(be, sender);
+                if (path != null) {
+                    net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sender,
+                            new dev.bwr.mod.panel.mimic.MimicPayloads.OpenConfig(pos, path.localId()));
+                }
             }
         }
         return ItemInteractionResult.CONSUME;
+    }
+
+    /** The mimic path under the player's look ray on this block, or null. */
+    private dev.bwr.mod.panel.mimic.MimicPath mimicUnderCursor(PanelBlockEntity be, ServerPlayer player) {
+        if (be.mimicCount() == 0) {
+            return null;
+        }
+        double[] exact = new double[2];
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getLookAngle();
+        BlockPos pos = be.getBlockPos();
+        PanelGeometry.Frame frame = PanelGeometry.frame(be.panelType(), be.facing());
+        return PanelGeometry.rayToCell(frame, pos.getX(), pos.getY(), pos.getZ(), eye.x, eye.y, eye.z, look.x, look.y,
+                look.z, exact) ? dev.bwr.mod.panel.mimic.MimicOps.pick(be, exact[0], exact[1]) : null;
     }
 
     @Override

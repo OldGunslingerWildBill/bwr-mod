@@ -74,7 +74,7 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
                        int light, int overlay) {
         List<PanelComponent> components = be.owned();
         int count = components.size();
-        if (count == 0) {
+        if (count == 0 && be.mimicCount() == 0) {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();
@@ -90,15 +90,20 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
         context.begin(be, pose, buffers, light, overlay, time, lod, minecraft.font);
         PanelMeshCache cache = gpuCache() ? PanelMeshCache.of(be) : null;
         if (cache == null || !cache.usable()) {
-            renderImmediate(components, count);
+            renderImmediate(be, components, count);
         } else {
             renderCached(be, cache, components, count, pose, light, minecraft.font);
         }
     }
 
     /** Every vertex of every component goes through the CPU every frame. */
-    private void renderImmediate(List<PanelComponent> components, int count) {
+    private void renderImmediate(PanelBlockEntity be, List<PanelComponent> components, int count) {
         float aspect = context.rowAspect();
+        if (be.mimicCount() > 0) {
+            context.beginLayer();
+            MimicLayer.emitBase(context, be);
+            MimicLayer.renderDynamic(context, be);
+        }
         for (int i = 0; i < count; i++) {
             PanelComponent component = components.get(i);
             ComponentType type = component.type();
@@ -121,6 +126,7 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
                               PoseStack pose, int light, net.minecraft.client.gui.Font font) {
         float aspect = context.rowAspect();
         long signature = PanelMeshCache.seed(light, PanelModels.generation(), aspect, count);
+        signature = PanelMeshCache.mix(signature, MimicLayer.signature(be));
         long legendSignature = signature;
         boolean cachedLegends = false;
         for (int i = 0; i < count; i++) {
@@ -144,6 +150,8 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
             cache.rebuild(be, components, light, font, signature);
             if (!cache.usable()) {
                 // Poses are already read for this frame; the models draw them from the state they hold.
+                context.beginLayer();
+                MimicLayer.emitBase(context, be);
                 for (int i = 0; i < count; i++) {
                     PanelComponent component = components.get(i);
                     ComponentType type = component.type();
@@ -158,6 +166,7 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
         if (cache.usable()) {
             cache.draw(pose.last());
         }
+        MimicLayer.renderDynamic(context, be);
         for (int i = 0; i < count; i++) {
             PanelComponent component = components.get(i);
             ComponentType type = component.type();
@@ -286,6 +295,6 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
         double dx = camera.x - (be.getBlockPos().getX() + 0.5);
         double dy = camera.y - (be.getBlockPos().getY() + 0.5);
         double dz = camera.z - (be.getBlockPos().getZ() + 0.5);
-        return be.ownedCount() > 0 && dx * dx + dy * dy + dz * dz <= COMPONENT_SQ;
+        return (be.ownedCount() > 0 || be.mimicCount() > 0) && dx * dx + dy * dy + dz * dz <= COMPONENT_SQ;
     }
 }

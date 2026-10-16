@@ -109,6 +109,10 @@ public final class WiringOps {
         if (!(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
             return Result.NO_SUCH_COMPONENT;
         }
+        if (request.id() < 0) {
+            // A negative id addresses a mimic path on the block (-localId), which has a single plant input.
+            return dev.bwr.mod.panel.mimic.MimicOps.bind(player, level, linker, owner, request);
+        }
         PanelComponent component = owner.component(request.id());
         if (component == null || component.type() == null) {
             return Result.NO_SUCH_COMPONENT;
@@ -253,7 +257,7 @@ public final class WiringOps {
     }
 
     /** Shared checks for a plant binding: the linker's device, dimension, range, permission, and the key. */
-    private static Result checkDevice(ServerPlayer player, ServerLevel level, ItemStack linker, BlockPos panel,
+    public static Result checkDevice(ServerPlayer player, ServerLevel level, ItemStack linker, BlockPos panel,
                                       PanelPayloads.Bind request, boolean command) {
         GlobalPos link = PanelLinkerItem.linked(linker);
         if (link == null) {
@@ -315,9 +319,15 @@ public final class WiringOps {
                 || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
             return null;
         }
-        PanelComponent component = owner.component(id);
-        if (component == null || component.type() == null) {
-            return null;
+        if (id < 0) {
+            if (owner.mimicPath(-id) == null) {
+                return null;
+            }
+        } else {
+            PanelComponent component = owner.component(id);
+            if (component == null || component.type() == null) {
+                return null;
+            }
         }
         GlobalPos link = PanelLinkerItem.linked(PanelLinkerItem.held(player));
         int status = PanelPayloads.LINK_OK;

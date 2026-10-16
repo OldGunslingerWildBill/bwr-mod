@@ -111,7 +111,8 @@ public final class PanelClientOperate {
         }
         Minecraft minecraft = Minecraft.getInstance();
         ItemStack stack = minecraft.player == null ? ItemStack.EMPTY : minecraft.player.getItemInHand(event.getHand());
-        if (stack.getItem() instanceof ComponentItem || stack.getItem() instanceof PanelWrenchItem || !aim(minecraft)) {
+        if (stack.getItem() instanceof ComponentItem || stack.getItem() instanceof PanelWrenchItem
+                || stack.getItem() instanceof dev.bwr.mod.panel.mimic.MimicTapeItem || !aim(minecraft)) {
             return;
         }
         ComponentType type = AIM.component.type();

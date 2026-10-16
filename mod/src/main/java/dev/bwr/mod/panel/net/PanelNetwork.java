@@ -41,6 +41,7 @@ public final class PanelNetwork {
         registrar.playToClient(PanelPayloads.Content.TYPE, PanelPayloads.Content.STREAM_CODEC, PanelNetwork::handleContent);
         registrar.playToClient(PanelPayloads.OpenConfig.TYPE, PanelPayloads.OpenConfig.STREAM_CODEC,
                 PanelNetwork::handleOpenConfig);
+        dev.bwr.mod.panel.mimic.MimicPayloads.register(registrar);
     }
 
     // ---- server

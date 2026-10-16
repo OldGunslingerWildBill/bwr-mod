@@ -61,7 +61,7 @@ public final class PanelSync {
     @SubscribeEvent
     public static void onChunkWatch(ChunkWatchEvent.Sent event) {
         for (BlockEntity be : event.getChunk().getBlockEntities().values()) {
-            if (be instanceof PanelBlockEntity panel && panel.ownedCount() + panel.foreignClaims().size() > 0) {
+            if (be instanceof PanelBlockEntity panel && panel.ownedCount() + panel.foreignClaims().size() + panel.mimicCount() > 0) {
                 PacketDistributor.sendToPlayer(event.getPlayer(),
                         new PanelPayloads.State(panel.getBlockPos(), panel.savePanel(true)));
             }

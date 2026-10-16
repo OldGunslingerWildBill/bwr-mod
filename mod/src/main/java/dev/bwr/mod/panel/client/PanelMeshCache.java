@@ -188,6 +188,9 @@ final class PanelMeshCache implements AutoCloseable {
             BufferBuilder builder = new BufferBuilder(scratch, type.mode(), type.format());
             building = builder;
             CAPTURE.begin(be, IDENTITY, CAPTURE_SOURCE, light, OVERLAY, 0.0f, PanelRenderContext.LOD_FULL, font);
+            // The mimic paths go in first: they lie on the face below every component.
+            CAPTURE.beginLayer();
+            MimicLayer.emitBase(CAPTURE, be);
             for (int i = 0; i < components.size(); i++) {
                 PanelComponent component = components.get(i);
                 ComponentType componentType = component.type();

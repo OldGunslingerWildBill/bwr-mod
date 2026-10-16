@@ -108,6 +108,13 @@ public final class PanelClientInput {
             if (claim != null && !minecraft.player.isShiftKeyDown()) {
                 PacketDistributor.sendToServer(new PanelPayloads.LinkerOpen(claim.owner(), claim.id()));
                 event.setSwingHand(true);
+            } else if (claim == null && !minecraft.player.isShiftKeyDown()) {
+                // No component there: a mimic path under the crosshair is wired like one (its id is -localId).
+                dev.bwr.mod.panel.mimic.MimicPath path = pathUnderCrosshair(minecraft);
+                if (path != null) {
+                    PacketDistributor.sendToServer(new PanelPayloads.LinkerOpen(target.block.getBlockPos(), -path.localId()));
+                    event.setSwingHand(true);
+                }
             }
             event.setCanceled(true);
         } else if (stack.getItem() instanceof PanelWrenchItem) {
@@ -119,9 +126,22 @@ public final class PanelClientInput {
                     PanelClientHooks.openConfig(claim.owner(), claim.id());
                 }
                 event.setSwingHand(true);
+            } else if (!minecraft.player.isShiftKeyDown()) {
+                // No component there: the wrench opens the style screen of a mimic path under the crosshair.
+                dev.bwr.mod.panel.mimic.MimicPath path = pathUnderCrosshair(minecraft);
+                if (path != null) {
+                    PanelClientHooks.openMimicConfig(target.block.getBlockPos(), path.localId());
+                    event.setSwingHand(true);
+                }
             }
             event.setCanceled(true);
         }
+    }
+
+    /** The mimic path under the crosshair on a panel face, or null. */
+    private static dev.bwr.mod.panel.mimic.MimicPath pathUnderCrosshair(Minecraft minecraft) {
+        MimicClientInput.Aim aim = MimicClientInput.aim(minecraft);
+        return aim == null ? null : dev.bwr.mod.panel.mimic.MimicOps.pick(aim.block, aim.cu, aim.cv);
     }
 
     /** The component under the crosshair on a panel face, or null (used by the linker's device outline). */
