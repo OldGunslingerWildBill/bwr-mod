@@ -50,6 +50,7 @@ public final class CoreModelClientCheck {
                 for(int x=8;x<=13;x++)for(int z=8;z<=13;z++)l.setChunkForced(x,z,true);
                 try {
                     if(selected==0||selected>=3&&selected<=7) {
+                        FixtureCleanup.drainFuel(l,MIN.offset(-3,-3,-3),MIN.offset(24,25,24));
                         for(var p:BlockPos.betweenClosed(MIN.offset(-3,-3,-3),MIN.offset(24,25,24)))l.setBlock(p,Blocks.AIR.defaultBlockState(),2);
                         var be=CompactCoreRegressionTests.build(l,MIN,w,d,h,selected==6);
                         SpargerRegressionTests.rings(l,be);SpargerRegressionTests.validate(be);

@@ -49,6 +49,7 @@ public final class InternalPumpClientCheck {
                 player.setNoGravity(true);player.getAbilities().flying=true;player.onUpdateAbilities();
                 for(int x=8;x<=13;x++)for(int z=8;z<=13;z++)l.setChunkForced(x,z,true);
                 try {
+                    FixtureCleanup.drainFuel(l,MIN.offset(-5,-6,-5),MIN.offset(24,25,24));
                     for(var p:BlockPos.betweenClosed(MIN.offset(-5,-6,-5),MIN.offset(24,25,24)))l.setBlock(p,Blocks.AIR.defaultBlockState(),2);
                     var be=CompactCoreRegressionTests.build(l,MIN,width,width,height,false);
                     BlockPos first=null;

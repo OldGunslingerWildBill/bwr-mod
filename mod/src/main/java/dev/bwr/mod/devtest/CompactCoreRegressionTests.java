@@ -29,6 +29,8 @@ public final class CompactCoreRegressionTests {
     static ReactorControllerBlockEntity build(ServerLevel level,BlockPos min,int width,int depth,int height,boolean legacy) throws Exception {
         for(int x=(min.getX()-16)>>4;x<=(min.getX()+width+16)>>4;x++)
             for(int z=(min.getZ()-16)>>4;z<=(min.getZ()+depth+16)>>4;z++)level.getChunk(x,z);
+        // A controller left by an earlier run or test still holds its fuel; overwriting it below would pop that fuel.
+        FixtureCleanup.drainFuel(level,min.offset(-1,-2,-1),min.offset(width,height,depth));
         for(int x=-1;x<=width;x++)for(int z=-1;z<=depth;z++)for(int y=-2;y<=height;y++) {
             boolean shell=y>=-1&&(x==-1||x==width||z==-1||z==depth||y==-1||y==height);
             level.setBlock(min.offset(x,y,z),(shell?BwrBlocks.REACTOR_VESSEL.get():Blocks.AIR).defaultBlockState(),2);
@@ -94,7 +96,7 @@ public final class CompactCoreRegressionTests {
         h.assertTrue(restored.core().getRodPositionNotches(184)==moving&&restored.rods().getCommandedNotchLabel(184)==28,"reload lost physical motion or standing demand");
         var recovered=restored.takeFuelForRemoval();
         h.assertTrue(recovered.size()==1&&dev.bwr.mod.fuel.FuelAssemblies.dataOf(recovered.getFirst()).equals(exposure),"reload lost peripheral bundle exposure");
-        level.removeBlock(p,false);h.succeed();
+        FixtureCleanup.drainAt(level,p);level.removeBlock(p,false);h.succeed();
     }
 
     @GameTest(template="empty",timeoutTicks=400)
@@ -115,7 +117,7 @@ public final class CompactCoreRegressionTests {
         level.setBlockEntity(restored);level.setBlock(floor,BwrBlocks.REACTOR_VESSEL.get().defaultBlockState(),2);validate(restored);
         h.assertTrue(restored.isFormed()&&restored.assemblyCount()==225&&restored.rods().getCommandedNotchLabel(0)==28,"legacy demand or capacity lost");
         h.assertTrue(restored.core().getCoreLoading().loadedAssemblyCount()==1,"legacy inventory lost");
-        level.removeBlock(p,false);h.succeed();
+        FixtureCleanup.drainAt(level,p);level.removeBlock(p,false);h.succeed();
     }
 
     @GameTest(template="empty",timeoutTicks=400)
@@ -141,6 +143,6 @@ public final class CompactCoreRegressionTests {
         ControlRodDriveBlockEntity.serverTick(level,first,da.getBlockState(),da);
         ControlRodDriveBlockEntity.serverTick(level,second,db.getBlockState(),db);
         h.assertTrue(da.hardware().canPerformNormalMotion()&&db.hardware().canPerformNormalMotion(),"touching compact drives cannot share bottom-face supplies");
-        level.removeBlock(be.getBlockPos(),false);h.succeed();
+        FixtureCleanup.drainAt(level,be.getBlockPos());level.removeBlock(be.getBlockPos(),false);h.succeed();
     }
 }

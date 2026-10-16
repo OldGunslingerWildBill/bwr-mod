@@ -29,6 +29,7 @@ public final class PumpAssemblyRuntimeCheck {
     private static PumpAssemblyBlock[] blocks() { return new PumpAssemblyBlock[]{BwrBlocks.LPCS_PUMP.get(),BwrBlocks.RHR_PUMP.get(),BwrBlocks.HPCS_PUMP.get(),
             BwrBlocks.MOTOR_FEED_PUMP.get(),BwrBlocks.TURBINE_FEED_PUMP.get(),BwrBlocks.JET_PUMP.get(),BwrBlocks.RIP_PUMP.get(),BwrBlocks.RECIRCULATION_PUMP.get()}; }
     private static void clear(ServerLevel l) {
+        FixtureCleanup.drainFuel(l,new BlockPos(155,190,125),new BlockPos(191,235,153));
         for(BlockPos p:BlockPos.betweenClosed(new BlockPos(155,190,125),new BlockPos(191,235,153))) if(!l.getBlockState(p).isAir()) l.removeBlock(p,false);
         l.getEntitiesOfClass(ItemEntity.class,new AABB(155,190,125,192,236,154)).forEach(net.minecraft.world.entity.Entity::discard);
     }
@@ -178,6 +179,7 @@ public final class PumpAssemblyRuntimeCheck {
     }
     private static ReactorControllerBlockEntity vessel(ServerLevel l,int width,int height,int depth) {
         int right=159+width,top=195+height,back=128+depth;
+        FixtureCleanup.drainFuel(l,new BlockPos(158,194,127),new BlockPos(right,top,back));
         for(BlockPos p:BlockPos.betweenClosed(new BlockPos(158,194,127),new BlockPos(right,top,back))) {
             boolean wall=p.getX()==158 || p.getX()==right || p.getY()==194 || p.getY()==top || p.getZ()==127 || p.getZ()==back;
             l.setBlock(p,(wall?BwrBlocks.REACTOR_VESSEL.get():Blocks.AIR).defaultBlockState(),3);

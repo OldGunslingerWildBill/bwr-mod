@@ -40,7 +40,7 @@ public final class InternalPumpRegressionTests {
             h.assertTrue(be.assemblyCount()==expected.assemblyCount()&&be.assemblyCount()<base.assemblyCount(),"core not reduced");
             h.assertTrue(be.structure().internalPumpPositions().size()==sites.size(),"mounts missed after rotation");
             for(var root:be.structure().internalPumpPositions())h.assertTrue(RecirculationNetwork.installedRip(l,be.structure(),root),"valid pump not bound");
-            l.removeBlock(be.getBlockPos(),false);
+            FixtureCleanup.drainAt(l,be.getBlockPos());l.removeBlock(be.getBlockPos(),false);
         }
         h.succeed();
     }
@@ -99,7 +99,7 @@ public final class InternalPumpRegressionTests {
         int newDrive=base.drives().indexOf(new CompactCoreLayout.Drive(site.x(),site.z()));
         h.assertTrue(newDrive>=0&&be.core().getRodPositionNotches(newDrive)==0&&be.rods().getCommandedNotchIndices()[newDrive]==0,"restored drive must start fully inserted");
         h.assertTrue(be.core().toState().accumulatorCharge()[newDrive]==0,"restored drive invented accumulator water");
-        l.removeBlock(controller,false);h.succeed();
+        FixtureCleanup.drainAt(l,controller);l.removeBlock(controller,false);h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=300)
     public static void ripNeedsValidMountAndRealPower(GameTestHelper h)throws Exception {
@@ -119,11 +119,11 @@ public final class InternalPumpRegressionTests {
         h.assertTrue(RecirculationNetwork.measure(l,be,List.of(root)).internalPumps()==0,"broken pump retained flow");
         h.assertTrue(energy.receiveEnergy(100,false)==0,"broken pump retains cached FE capability");
         validate(be);h.assertTrue(!be.isFormed(),"missing mounting flange still forms");
-        l.removeBlock(be.getBlockPos(),false);
+        FixtureCleanup.drainAt(l,be.getBlockPos());l.removeBlock(be.getBlockPos(),false);
         var other=CompactCoreRegressionTests.build(l,min.offset(50,0,0),15,15,false);
         install(l,min.offset(50,0,0),new InternalPumpLayout.Mount(6,6),Direction.NORTH);validate(other);
         h.assertTrue(!other.isFormed(),"central invalid RIP location accepted");
-        l.removeBlock(other.getBlockPos(),false);h.succeed();
+        FixtureCleanup.drainAt(l,other.getBlockPos());l.removeBlock(other.getBlockPos(),false);h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=400)
     public static void ripAlpha19SaveGainsPerimeterWithoutLosingFuelOrDriveState(GameTestHelper h)throws Exception {
@@ -176,7 +176,7 @@ public final class InternalPumpRegressionTests {
         var saved=be.saveWithFullMetadata(l.registryAccess());be.onChunkUnloaded();l.removeBlockEntity(controller);
         be=(ReactorControllerBlockEntity)net.minecraft.world.level.block.entity.BlockEntity.loadStatic(controller,state,saved,l.registryAccess());l.setBlockEntity(be);validate(be);
         h.assertTrue(be.isFormed()&&be.core().getCoreLoading().assemblyAt(extra)!=null,"extra fuel lost on reload");
-        l.removeBlock(controller,false);h.succeed();
+        FixtureCleanup.drainAt(l,controller);l.removeBlock(controller,false);h.succeed();
     }
     private static boolean alpha19Inside(int x,int z,int limit,double q) {
         return 225L*((long)x*x*225+(long)z*z*225)<=(long)limit*15*15*15*15*q*q;

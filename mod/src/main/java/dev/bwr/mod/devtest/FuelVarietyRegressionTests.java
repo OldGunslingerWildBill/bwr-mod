@@ -76,7 +76,7 @@ public final class FuelVarietyRegressionTests {
         var pending=(ReactorControllerBlockEntity)net.minecraft.world.level.block.entity.BlockEntity.loadStatic(pos,state,saved,l.registryAccess());
         var recovered=pending.takeFuelForRemoval();
         h.assertTrue(recovered.size()==2&&recovered.stream().anyMatch(s->s.is(BwrItems.SPECIALTY_ROD.get())&&SpecialtyRodItem.data(s).equals(data)),"Unformed recovery lost target");
-        h.assertTrue(pending.takeFuelForRemoval().isEmpty(),"Pending target recovered twice");l.removeBlock(pos,false);h.succeed();
+        h.assertTrue(pending.takeFuelForRemoval().isEmpty(),"Pending target recovered twice");FixtureCleanup.drainAt(l,pos);l.removeBlock(pos,false);h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=200)
     public static void targetHarvestIsSingleUse(GameTestHelper h) {

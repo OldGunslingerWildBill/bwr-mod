@@ -40,6 +40,8 @@ final class FcdTestSupport {
 
     /** Empties the reactor volume, the drive layer and the panel area. */
     static void clear(ServerLevel level, BlockPos min, int width, int depth) {
+        // The controller holds the fuel of the previous run or test; take it out first so removing the block pops nothing.
+        FixtureCleanup.drainFuel(level, min.offset(-4, -3, -1), min.offset(width + 1, HEIGHT + 4, depth + 1));
         for (int x = -4; x <= width + 1; x++) {
             for (int y = -3; y <= HEIGHT + 4; y++) {
                 for (int z = -1; z <= depth + 1; z++) {
@@ -93,6 +95,9 @@ final class FcdTestSupport {
     static void release(ServerLevel level, BlockPos min, int width, int depth) {
         clear(level, min, width, depth);
         clearWall(level, min);
+        // Safety net: nothing of ours may stay behind in the saved chunks. The box reaches far below the fixture
+        // because a dropped item falls out of it, and stays inside this fixture's own X/Z footprint.
+        FixtureCleanup.discardItems(level, min.offset(-6, -80, -3), min.offset(width + 3, HEIGHT + 4, depth + 3));
         hold(level, min, width, depth, false);
     }
 

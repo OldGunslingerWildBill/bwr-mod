@@ -594,8 +594,12 @@ public final class PhaseLAdvancementTests {
         }
 
         void clear() {
+            // Fuel goes out of the controller first, so removing it pops nothing into the saved chunk.
+            FixtureCleanup.drainFuel(level, origin.offset(-12, -6, -12), origin.offset(30, 18, 20));
             for (var pos : BlockPos.betweenClosed(origin.offset(-12, -6, -12), origin.offset(30, 18, 20)))
                 if (!level.getBlockState(pos).isAir()) level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+            // Safety net: drops of the removed panels and machines (they fall out of the box) stay out of the saved chunk.
+            FixtureCleanup.discardItems(level, origin.offset(-12, -80, -12), origin.offset(30, 18, 20));
         }
 
         void releaseWhenTestEnds() {

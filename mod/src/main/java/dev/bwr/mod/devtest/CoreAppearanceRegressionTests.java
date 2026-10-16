@@ -35,11 +35,11 @@ public final class CoreAppearanceRegressionTests {
             tag.putIntArray("VisualCoreCells",new int[]{-1});
             h.assertTrue(VesselCoreAppearance.read(tag,env)==null,"malformed visual index accepted");
             h.assertTrue(VesselCoreAppearance.read(new CompoundTag(),env)==null,"old packet invented a core");
-            h.getLevel().removeBlock(be.getBlockPos(),false);
+            FixtureCleanup.drainAt(h.getLevel(),be.getBlockPos());h.getLevel().removeBlock(be.getBlockPos(),false);
         }
         var old=CompactCoreRegressionTests.build(h.getLevel(),new BlockPos(5350,190,5100),15,15,true);
         var legacy=VesselCoreAppearance.capture(old);
         h.assertTrue(legacy.layoutVersion()==1&&legacy.cells().size()==225&&legacy.drives().size()==49,"legacy visual converted to compact");
-        h.getLevel().removeBlock(old.getBlockPos(),false);h.succeed();
+        FixtureCleanup.drainAt(h.getLevel(),old.getBlockPos());h.getLevel().removeBlock(old.getBlockPos(),false);h.succeed();
     }
 }

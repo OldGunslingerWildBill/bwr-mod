@@ -344,6 +344,7 @@ public final class CoriumMeltTests {
 
         /** The reactor would otherwise keep melting and dosing after the test. */
         void close() {
+            FixtureCleanup.drainAt(level, controller.getBlockPos());
             level.removeBlock(controller.getBlockPos(), false);
         }
     }

@@ -47,6 +47,7 @@ public final class SpargerRegressionTests {
             h.assertTrue(VesselAppearance.read(tag).spargers().isEmpty(),"legacy snapshot failed");
             var breach=be.structure().interiorMin().west().above();l.setBlock(breach,Blocks.AIR.defaultBlockState(),2);validate(be);
             h.assertTrue(!be.isFormed()&&VesselAppearance.read(be.getUpdateTag(l.registryAccess()))==null,"broken vessel retained ring");
+            FixtureCleanup.drainAt(l,be.getBlockPos());
             l.removeBlock(be.getBlockPos(),false);
         }
         h.succeed();
