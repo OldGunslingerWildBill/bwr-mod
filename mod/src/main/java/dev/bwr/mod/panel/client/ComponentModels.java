@@ -71,6 +71,7 @@ public final class ComponentModels {
         register(ComponentTypes.MIMIC_SYMBOL.id(), new MimicSymbolModel());
         register(ComponentTypes.FULL_CORE_DISPLAY.id(), new FullCoreDisplayModel());
         register(ComponentTypes.ROD_SELECT_MATRIX.id(), new RodSelectMatrixModel());
+        register(ComponentTypes.PAPERLESS_RECORDER.id(), new RecorderModel());
     }
 
     /**
@@ -84,7 +85,7 @@ public final class ComponentModels {
     public static void register(ResourceLocation typeId, ComponentModel model) {
         // FCD and rod matrix already fit geometry to the real row aspect.
         MODELS.put(typeId, model instanceof StyledComponentModel || model instanceof FullCoreDisplayModel
-                || model instanceof RodSelectMatrixModel ? model : new ProportionedComponentModel(model));
+                || model instanceof RodSelectMatrixModel || model instanceof RecorderModel ? model : new ProportionedComponentModel(model));
     }
 
     public static ComponentModel get(ResourceLocation typeId) {

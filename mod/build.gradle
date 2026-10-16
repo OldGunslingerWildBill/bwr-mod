@@ -74,6 +74,8 @@ neoForge {
             if (project.hasProperty('bwrTankPanelCheck')) jvmArguments.add('-Dbwr.tankPanelCheck=true')
             if (project.hasProperty('bwrAlphaClientCheck')) jvmArguments.add('-Dbwr.alphaClientCheck=true')
             if (project.hasProperty('bwrGridClientCheck')) jvmArguments.add('-Dbwr.gridClientCheck=true')
+            if (project.hasProperty('bwrRecorderClientCheck')) jvmArguments.addAll('-Dbwr.recorderClientCheck=true', '-Dbwr.recorderTiming=true')
+            if (project.hasProperty('bwrRecorderClientStages')) jvmArguments.add('-Dbwr.recorderClientStages=' + project.property('bwrRecorderClientStages'))
             if (project.hasProperty('bwrCreativePerformanceCheck')) jvmArguments.add('-Dbwr.creativePerformanceCheck=true')
             if (project.hasProperty('bwrGuiPerformanceCheck')) jvmArguments.add('-Dbwr.guiPerformanceCheck=true')
             if (project.hasProperty('bwrPanelClientCheck')) jvmArguments.add('-Dbwr.panelClientCheck=true')
