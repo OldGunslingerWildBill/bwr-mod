@@ -17,6 +17,7 @@ order and plug into the same wiring; the worked example below names them as the 
 | Component items | Right-click a panel face to place (sneak-click cycles the size). The ghost is green when it fits |
 | Panel wrench | Right-click a component: label, colours and other settings. Sneak-right-click removes it |
 | **Panel linker** | Wires components. See below |
+| **Mimic tape** | Draws flow lines with arrows on the board face: see section 2d |
 
 ### Component sizes
 
@@ -45,6 +46,7 @@ may span up to 8 x 8, because a 185-rod core is 96 cells across.
 | Graphic display | 32x32 (2 x 2 blocks), 16x16, 48x48, 64x64 and rectangles; 2 pixels per cell |
 | Mimic line | 3 cells thick: 16x3, 8x3, 4x3, 3x3, 32x3, 64x3 and vertical; corners and tees 6x6 to 16x16 |
 | Mimic symbol | 6x6, 8x8, 10x10, 12x12 |
+| Mimic path (tape, not a component) | none: free points on the cell grid, 2 to 64 points, across blocks |
 | Nameplate | 4 cells tall: 16x4, 8x4, 24x4, 32x4, 48x4, 64x4, 24x6, 32x8; valve plates 32x10, 24x8, 32x12 |
 | Full core display | 96x96, 128x128, 64x64, 80x80, 112x112, 48x48, 128x96, 128x80, 112x80 (up to **8 x 8 blocks**) |
 | Rod select matrix | 64x64, 48x48, 80x80, 96x96, 112x112, 128x128, 32x32 (up to 8 x 8 blocks) |
@@ -303,6 +305,80 @@ history (360 dots a channel), the alarm states and the log are saved; the server
 bucket on their own. Cost: the screen is one texture per recorder, repainted only when a dot closes, once a second for the values and
 on a blink or a key, never per frame; see TESTING.md.
 
+## 2d. Mimic tape: flow lines and arrows on the board
+
+Real control boards carry mimic buses, flow paths of coloured tape on the face that run behind and between the switches and
+lamps, with arrows for the direction of flow and dots at junctions. The **mimic tape** (`bwr:mimic_tape`, a stack of tape from a
+cheap shapeless recipe: paper, blue dye, an iron nugget) draws them. It is separate from the `mimic_line` pieces and the
+`mimic_symbol` valves, pumps and tanks, which stay as they are and mix with it freely.
+
+A path is **not a component**. It reserves no cells, so a component can be placed over it (it draws on the face just above the
+paint and below every component), and it can run across several panel blocks of the wall. It is **indication only**: it has no
+outputs and drives nothing, and a bound path only changes its own colour.
+
+### Drawing
+
+Hold the tape and look at a panel face. The ghost marker shows the grid point the next click takes (points snap to the 16 per block
+cell grid); the points and lines drawn so far show live.
+
+* **Right-click** a face to add a point; each new point makes a segment from the previous one. Segments are **orthogonal** (along
+  whichever axis the cursor is farther from the last point). **Sneak** for free angles: a segment within 8 degrees of an axis or of a
+  45 degree diagonal snaps to it, anything else is kept as clicked.
+* **Right-click the air**, a block that is not a panel, or **sneak-click the last point** to finish the path. A path of one point is
+  dropped. Using the tape on **another plane** (another facing, another board type or slope, another wall) also finishes it; that click
+  starts nothing.
+* A path may run across **coplanar** panel blocks: the blocks of the group (same type and facing, neighbours in the wall; a benchboard
+  wall continues down the slope). It never crosses to a non-coplanar board and every point, and every segment between points, must lie
+  over a loaded block of the group (a hole in the wall stops it). It never loads a chunk. A path that crosses blocks is stored as a copy
+  in each block it touches, in that block's own cell space, under one shared path id: erasing, restyling or binding one piece updates
+  them all (in the loaded blocks).
+* **At most 64 points to a path and 128 paths touching a panel block**; over a limit the server refuses with a message and changes
+  nothing.
+* **Cost:** one tape per 32 cells of path length (measured on the board, at least one), taken when the path is finished; creative mode
+  costs nothing. Short of tape, the path stays in the stack so it can be finished once there is enough. The half drawn path is stored on
+  the tape stack itself.
+
+### Modes
+
+**Sneak and scroll** with the tape switches **draw**, **erase** and **edit** (the tooltip and the action bar name the mode; switching
+drops a half drawn path). **Erase** removes the path under the cursor (all its pieces); **edit** opens its style screen. The panel
+**wrench** opens the same screen on any path that has no component over the cursor, and the panel **linker** opens the binding screen.
+In erase and edit the path under the cursor is outlined in red or cyan.
+
+### Style (per path)
+
+| Setting | Values |
+| --- | --- |
+| Colour | the control room palette (red, green, white, amber, blue and the default blue) or `#RRGGBB` |
+| Width | 1, 2 (default), 3 or 4 cells |
+| Line | solid or dashed |
+| Start and end | plain, **arrow** or **dot**; the default is an arrow at the end |
+| Flow arrows | off, or an arrowhead every 8, 16 or 32 cells along the path |
+| Moving arrows | for a bound path that is lit: the flow arrows move along it (default on) |
+| Lit above | for a bound path: the level of the signal above which it is lit (default 0) |
+
+**Junctions** are automatic: a dot is drawn where a path's point lies on another path, on the inside of one of its segments (a tee).
+Two paths that only cross, or meet end to end, get no dot; an end that carries an arrow keeps the arrow.
+
+### Binding a signal (optional, indication only)
+
+Sneak-right-click a plant device with the linker, then right-click a path (with no component over the cursor): the screen lists the
+device's signals. Bound, the path is drawn in its colour while the signal is **above its threshold** and dim grey otherwise, as a
+bound `mimic_line` does; with flow arrows on, the arrows move along a lit path (a function of game time on each client: nothing is
+sent) and sit still and grey on a dim one. **Only plant signals can be bound** (one input per path, the same checks as for a
+component: same dimension, within `linkRange`, loaded, permitted). A path has no output, so nothing here commands the plant.
+
+### Saves, sync, rendering
+
+The paths are saved in the panel block entity under `MimicPaths` (with `NextMimicId`), written only when the block has paths, so a
+panel without any saves exactly as before and an older save loads unchanged. A damaged entry is dropped. They are sent with the full
+panel state when something changes; a bound path's value travels as an ordinary value delta (addressed as `-localId`), batched like
+every other, with no packet of its own. Rendering is baked: the lines, ends, junction dots and the arrows of an unbound path are flat
+quads (mitred corners, triangular heads) recorded once into the block's GPU buffer with the components' static geometry, clipped to
+the block so a path across blocks has no overdraw; only what a signal changes (the lit overlay and the moving arrows) is drawn per
+frame. It works on vertical, benchboard and console boards (a line is as thick and an arrow as true on a slope as on a wall) and with
+and without shader packs.
+
 ## 3. Worked example: a small reactor control room
 
 A vertical board five blocks wide and three high (one group, 80 x 48 cells; see the component sizes above). Link the reactor controller once,
@@ -445,9 +521,10 @@ the existing `bwr_reactor` / `bwr_msiv` API.)
 * A binding to an unknown (future or malformed) kind is preserved untouched and reads no signal.
 * Redstone input and output share the back face. A panel reading the same conductor block it powers ignores
   its own output, so it cannot latch itself.
+* Mimic paths: at most 64 points per path and 128 paths per panel block (fixed, not configurable); see section 2d.
 * `bwr-panels.toml`: `sampleTicks` (2), `linkRange` (64), `maxGroupColumns` (16), `maxGroupRows` (8),
   `maxComponentsPerBlock` (64), `maxLabelLength` (16).
-* Network protocol version 19 (the recorder's free message packet `panel_recorder_message`). Packets: `panel_linker_open` and `panel_bind` (client to server, validated:
+* Network protocol version 20 (the mimic tape's `mimic_use`, `mimic_mode`, `mimic_configure` and `mimic_open_config`; 19 added the recorder's free message packet `panel_recorder_message`). Packets: `panel_linker_open` and `panel_bind` (client to server, validated:
   reach, claim permission, the linker's own device, dimension, range, key exists, momentary value within the
   command's range), `panel_linker_screen`
   (server to client), and `panel_content` (server to client: bounded display content patches, at most one per

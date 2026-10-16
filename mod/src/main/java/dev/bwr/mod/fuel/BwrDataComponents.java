@@ -40,6 +40,18 @@ public final class BwrDataComponents {
                     .persistent(com.mojang.serialization.Codec.intRange(0, 63))
                     .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT).build());
 
+    /** The mode of a mimic tape: 0 draw (the default, not stored), 1 erase, 2 edit. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> MIMIC_MODE =
+            DATA_COMPONENTS.register("mimic_mode", () -> DataComponentType.<Integer>builder()
+                    .persistent(com.mojang.serialization.Codec.intRange(0, 2))
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT).build());
+
+    /** The path a mimic tape is drawing: the panel block of its first point and the points so far. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<dev.bwr.mod.panel.mimic.MimicDraft>> MIMIC_DRAFT =
+            DATA_COMPONENTS.register("mimic_draft", () -> DataComponentType.<dev.bwr.mod.panel.mimic.MimicDraft>builder()
+                    .persistent(dev.bwr.mod.panel.mimic.MimicDraft.CODEC)
+                    .networkSynchronized(dev.bwr.mod.panel.mimic.MimicDraft.STREAM_CODEC).build());
+
     /** The plant device a panel linker has stored (dimension and absolute position). */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<net.minecraft.core.GlobalPos>> LINKED_DEVICE =
             DATA_COMPONENTS.register("linked_device", () -> DataComponentType.<net.minecraft.core.GlobalPos>builder()

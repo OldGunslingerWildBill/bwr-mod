@@ -122,6 +122,13 @@ public final class PanelRenderContext implements QuadSink {
     private float fittedZ(float z) { return classicPlacement==null?z:classicPlacement.z(z); }
     private float fittedScale(float scale) { return classicPlacement==null?scale:classicPlacement.length(scale); }
 
+    /** Starts drawing the block's mimic layer: its coordinates are the block's own cells, with no component origin. */
+    void beginLayer() {
+        classicPlacement = null;
+        this.originU = 0.0;
+        this.originV = 0.0;
+    }
+
     void beginComponent(PanelComponent component) {
         classicPlacement=null;
         this.originU = component.x();

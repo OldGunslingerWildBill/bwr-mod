@@ -58,9 +58,13 @@ public final class PanelPerformanceCheck {
      * whether 25 of the wall's blocks carry two annunciator windows each in place of their usual layout
      * ({@link #ANN_OFF}: all 50 windows normal; {@link #ANN_FLASH}: all 50 in unacknowledged alarm, flashing).
      */
-    private record Stage(String name, boolean wall, String style, int distance, int annunciators) {
+    private record Stage(String name, boolean wall, String style, int distance, int annunciators, int mimicPaths) {
         Stage(String name, boolean wall, String style, int distance) {
-            this(name, wall, style, distance, 0);
+            this(name, wall, style, distance, 0, 0);
+        }
+
+        Stage(String name, boolean wall, String style, int distance, int annunciators) {
+            this(name, wall, style, distance, annunciators, 0);
         }
     }
 
@@ -74,7 +78,10 @@ public final class PanelPerformanceCheck {
             new Stage("baked-far", true, null, 36),
             // C2: the same wall with 50 annunciator windows, normal and then all flashing (not in the default list below)
             new Stage("annunciators-off", true, null, 15, ANN_OFF),
-            new Stage("annunciators-flash", true, null, 15, ANN_FLASH));
+            new Stage("annunciators-flash", true, null, 15, ANN_FLASH),
+            // The same wall as "baked" with 100 mimic tape paths drawn on it (not in the default list): compare in pairs,
+            // baked, mimic, baked, mimic (see TESTING.md, "Mimic tape").
+            new Stage("mimic", true, null, 15, 0, 100));
 
     /** One component of a block layout: type, cells, look (style null: the one named for the layout), live value. */
     private record Spec(ComponentType type, int x, int y, int w, int h, String style, String variant, double value) {
@@ -197,6 +204,14 @@ public final class PanelPerformanceCheck {
                         new BlockPos(38 + offset, 117, 45 + offset)))
                     level.setBlock(pos, Blocks.SMOOTH_STONE.defaultBlockState(), 2);
                 if (current.wall()) build(level, new BlockPos(32 + offset, 125, 40 + offset), current.style(), current.annunciators());
+                if (current.mimicPaths() > 0) {
+                    BlockPos root = new BlockPos(32 + offset, 125, 40 + offset);
+                    int placed = MimicClientCheck.scatter(level, root, 16, 8, current.mimicPaths());
+                    for (int row = 0; row < 8; row++) for (int col = 0; col < 16; col++) {
+                        if (level.getBlockEntity(root.relative(Direction.WEST, col).below(row)) instanceof PanelBlockEntity be) be.syncFull();
+                    }
+                    LogUtils.getLogger().info("PANEL PERFORMANCE mimic paths placed: {}", placed);
+                }
                 player.setNoGravity(true);
                 player.getAbilities().flying = true;
                 player.onUpdateAbilities();

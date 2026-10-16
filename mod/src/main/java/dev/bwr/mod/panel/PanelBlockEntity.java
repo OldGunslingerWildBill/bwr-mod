@@ -7,6 +7,8 @@ import dev.bwr.mod.panel.component.ComponentType;
 import dev.bwr.mod.panel.component.Footprint;
 import dev.bwr.mod.panel.component.InputSource;
 import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.mimic.MimicPath;
+import dev.bwr.mod.panel.mimic.MimicStyle;
 import dev.bwr.mod.panel.wiring.PanelSampler;
 import dev.bwr.mod.panel.wiring.PanelWiring;
 import dev.bwr.mod.panel.wiring.RedstoneSink;
@@ -85,6 +87,19 @@ public final class PanelBlockEntity extends BlockEntity {
     private AABB renderBounds;
     /** Redstone strength emitted from the back face (strongest redstone sink); -1 until first computed. */
     private int redstoneOut = -1;
+    /**
+     * The mimic layer (spec 3): flow lines drawn on this block's face with the mimic tape. Not components: they hold no
+     * cells. A path that crosses blocks has a copy here in this block's cell space, sharing a path id with the others.
+     */
+    private final List<MimicPath> mimic = new ArrayList<>();
+    private final List<MimicPath> mimicView = Collections.unmodifiableList(mimic);
+    private int nextMimicId = 1;
+    /** Bumped when the paths change in a way that changes how they draw (client mesh signature). */
+    private int mimicRevision;
+    /** What the last load or change left in the paths' saved form, to tell a real change from a repeat of the same state. */
+    private ListTag mimicSaved = new ListTag();
+    /** Client only: the baked mesh of the mimic layer, owned by the renderer. */
+    public Object mimicClientCache;
 
     public PanelBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.PANEL.get(), pos, state);
@@ -328,6 +343,101 @@ public final class PanelBlockEntity extends BlockEntity {
         if (foreign.removeIf(claim -> claim.owner().equals(owner) && claim.id() == id)) {
             structureChanged();
         }
+    }
+
+    // ---- mimic layer
+
+    public List<MimicPath> mimicPaths() {
+        return mimicView;
+    }
+
+    public int mimicCount() {
+        return mimic.size();
+    }
+
+    public int mimicRevision() {
+        return mimicRevision;
+    }
+
+    /** This block's copy with that local id, or null. */
+    public MimicPath mimicPath(int localId) {
+        for (MimicPath path : mimic) {
+            if (path.localId() == localId) {
+                return path;
+            }
+        }
+        return null;
+    }
+
+    /** This block's copy of the path with that shared id, or null. */
+    public MimicPath mimicByPathId(long pathId) {
+        for (MimicPath path : mimic) {
+            if (path.pathId() == pathId) {
+                return path;
+            }
+        }
+        return null;
+    }
+
+    /** Adds a copy of a path (points in this block's cell space). The caller checked the limits and syncs. */
+    public MimicPath addMimicPath(long pathId, int[] points, MimicStyle style) {
+        MimicPath path = new MimicPath(pathId, nextMimicId++, points, style);
+        mimic.add(path);
+        mimicChanged();
+        PanelSampler.track(this);
+        return path;
+    }
+
+    /** Removes this block's copy of the path; returns whether there was one. */
+    public boolean removeMimicPath(long pathId) {
+        boolean removed = mimic.removeIf(path -> path.pathId() == pathId);
+        if (removed) {
+            mimicChanged();
+            PanelSampler.track(this);
+        }
+        return removed;
+    }
+
+    /** Removes every path in this block; returns how many there were. */
+    public int clearMimicPaths() {
+        int count = mimic.size();
+        if (count > 0) {
+            mimic.clear();
+            mimicChanged();
+            PanelSampler.track(this);
+        }
+        return count;
+    }
+
+    /** A path was added, removed, restyled or rebound: the saved form and the client mesh are stale. */
+    public void mimicChanged() {
+        mimicRevision++;
+        setChanged();
+    }
+
+    /** Server: reads the path's input now and stores it; changes go out as an ordinary value delta. */
+    public void resampleMimic(MimicPath path) {
+        if (level == null || level.isClientSide()) {
+            return;
+        }
+        setMimicValue(path, path.bound()
+                ? path.source().sample(new InputSource.SampleContext(level, this, null, 0)) : Double.NaN);
+        PanelSampler.track(this);
+    }
+
+    private void setMimicValue(MimicPath path, double value) {
+        if (path.storeValue(value)) {
+            queue(new ValueDelta(-path.localId(), false, 0, value));
+        }
+    }
+
+    private boolean hasLiveMimic() {
+        for (MimicPath path : mimic) {
+            if (path.source().isLive()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ---- ownership consistency (see PanelConsistency)
@@ -636,6 +746,14 @@ public final class PanelBlockEntity extends BlockEntity {
 
     /** Client: applies a received delta. */
     public void applyDelta(ValueDelta delta) {
+        if (delta.id() < 0) {
+            // A negative id addresses a mimic path (-localId); its value only changes how the dynamic pass draws it.
+            MimicPath path = mimicPath(-delta.id());
+            if (path != null) {
+                path.storeValue(delta.value());
+            }
+            return;
+        }
         PanelComponent component = component(delta.id());
         if (component == null) {
             return;
@@ -659,7 +777,7 @@ public final class PanelBlockEntity extends BlockEntity {
                 return true;
             }
         }
-        return false;
+        return hasLiveMimic();
     }
 
     /** Server: re-reads every live input and stores changes (queued as deltas). Called by {@link PanelSampler}. */
@@ -685,6 +803,13 @@ public final class PanelBlockEntity extends BlockEntity {
             }
             if (!redstoneOnly && component.data() != null) {
                 component.data().sampleContent(level, this, component);
+            }
+        }
+        if (!redstoneOnly) {
+            for (MimicPath path : mimic) {
+                if (path.source().isLive()) {
+                    setMimicValue(path, path.source().sample(new InputSource.SampleContext(level, this, null, 0)));
+                }
             }
         }
     }
@@ -816,6 +941,15 @@ public final class PanelBlockEntity extends BlockEntity {
             claims.add(entry);
         }
         tag.put("Claims", claims);
+        if (!mimic.isEmpty()) {
+            // Written only when there are paths, so a panel without any saves exactly as before.
+            ListTag paths = new ListTag();
+            for (MimicPath path : mimic) {
+                paths.add(path.save(network));
+            }
+            tag.put("MimicPaths", paths);
+            tag.putInt("NextMimicId", nextMimicId);
+        }
         return tag;
     }
 
@@ -848,12 +982,36 @@ public final class PanelBlockEntity extends BlockEntity {
                     entry.getInt("Id"), x0, y0, x1, y1));
         }
         nextId = Math.max(tag.getInt("NextId"), highest + 1);
+        loadMimic(tag);
         grid = null;
         renderBounds = null;
         for (PanelComponent component : owned) {
             if (component.type() != null) {
                 component.type().onLoaded(component);
             }
+        }
+    }
+
+    /** Reads the mimic layer of a saved or network form; a panel saved without one has none. */
+    private void loadMimic(CompoundTag tag) {
+        mimic.clear();
+        int highest = 0;
+        ListTag paths = tag.getList("MimicPaths", Tag.TAG_COMPOUND);
+        for (int i = 0; i < paths.size() && mimic.size() < dev.bwr.mod.panel.mimic.MimicOps.MAX_PATHS_PER_BLOCK; i++) {
+            MimicPath path = MimicPath.load(paths.getCompound(i), highest + 1);
+            if (path != null) {
+                mimic.add(path);
+                highest = Math.max(highest, path.localId());
+            }
+        }
+        nextMimicId = Math.max(Math.max(1, tag.getInt("NextMimicId")), highest + 1);
+        ListTag saved = new ListTag();
+        for (MimicPath path : mimic) {
+            saved.add(path.save(false));
+        }
+        if (!saved.equals(mimicSaved)) {
+            mimicSaved = saved;
+            mimicRevision++;
         }
     }
 
@@ -868,7 +1026,7 @@ public final class PanelBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
-        if (!owned.isEmpty() || !foreign.isEmpty()) {
+        if (!owned.isEmpty() || !foreign.isEmpty() || !mimic.isEmpty()) {
             tag.put(KEY, savePanel(false));
         }
     }
@@ -929,6 +1087,11 @@ public final class PanelBlockEntity extends BlockEntity {
                     }
                 }
                 redstoneOut = computeRedstone();
+                for (MimicPath path : mimic) {
+                    if (path.bound()) {
+                        path.storeValue(path.source().sample(new InputSource.SampleContext(level, this, null, 0)));
+                    }
+                }
                 PanelSampler.track(this);
                 for (PanelComponent component : owned) {
                     if (component.outputCount() > 0) {

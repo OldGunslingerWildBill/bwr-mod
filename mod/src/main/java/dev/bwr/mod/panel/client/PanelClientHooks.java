@@ -17,9 +17,30 @@ public final class PanelClientHooks {
                 || !(minecraft.level.getBlockEntity(payload.pos()) instanceof PanelBlockEntity be)) {
             return;
         }
+        if (payload.id() < 0) {
+            // A negative id is a mimic path of the block (-localId).
+            dev.bwr.mod.panel.mimic.MimicPath path = be.mimicPath(-payload.id());
+            if (path != null) {
+                minecraft.setScreen(new MimicBindScreen(be, path, payload));
+            }
+            return;
+        }
         PanelComponent component = be.component(payload.id());
         if (component != null && component.type() != null) {
             minecraft.setScreen(new BindScreen(be, component, payload));
+        }
+    }
+
+    /** Opens the style screen of a mimic path the client already knows about. */
+    public static void openMimicConfig(BlockPos owner, int localId) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || !minecraft.level.isLoaded(owner)
+                || !(minecraft.level.getBlockEntity(owner) instanceof PanelBlockEntity be)) {
+            return;
+        }
+        dev.bwr.mod.panel.mimic.MimicPath path = be.mimicPath(localId);
+        if (path != null) {
+            minecraft.setScreen(new MimicPathScreen(be, path));
         }
     }
 

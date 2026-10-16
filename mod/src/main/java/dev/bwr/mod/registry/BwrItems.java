@@ -97,6 +97,9 @@ public final class BwrItems {
                     dev.bwr.mod.panel.component.ComponentTypes.ANNUNCIATOR.id()));
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> BAR_GRAPH = ITEMS.register("bar_graph", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.BAR_GRAPH.id()));
+    /** Draws flow lines with arrows on control boards (MIMIC-TAPE-SPEC.md). A stack of tape; each path costs some. */
+    public static final DeferredItem<dev.bwr.mod.panel.mimic.MimicTapeItem> MIMIC_TAPE =
+            ITEMS.register("mimic_tape", () -> new dev.bwr.mod.panel.mimic.MimicTapeItem(new Item.Properties()));
     public static final DeferredItem<dev.bwr.mod.panel.component.PanelKeyItem> PANEL_KEY =
             ITEMS.register("panel_key", () -> new dev.bwr.mod.panel.component.PanelKeyItem(new Item.Properties().stacksTo(1)));
 
@@ -327,6 +330,7 @@ public final class BwrItems {
                         output.accept(CONTROL_PANEL_CONSOLE.get());
                         output.accept(PANEL_WRENCH.get());
                         output.accept(PANEL_LINKER.get());
+                        output.accept(MIMIC_TAPE.get());
                         output.accept(NAMEPLATE.get());
                         output.accept(LAMP.get());
                         output.accept(PUSHBUTTON.get());
