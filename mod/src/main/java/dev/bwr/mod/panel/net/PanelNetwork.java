@@ -29,6 +29,8 @@ public final class PanelNetwork {
         registrar.playToServer(PanelPayloads.Configure.TYPE, PanelPayloads.Configure.STREAM_CODEC,
                 PanelNetwork::handleConfigure);
         registrar.playToServer(PanelPayloads.Operate.TYPE, PanelPayloads.Operate.STREAM_CODEC, PanelNetwork::handleOperate);
+        registrar.playToServer(PanelPayloads.RecorderMessage.TYPE, PanelPayloads.RecorderMessage.STREAM_CODEC,
+                PanelNetwork::handleRecorderMessage);
         registrar.playToServer(PanelPayloads.LinkerOpen.TYPE, PanelPayloads.LinkerOpen.STREAM_CODEC,
                 PanelNetwork::handleLinkerOpen);
         registrar.playToServer(PanelPayloads.Bind.TYPE, PanelPayloads.Bind.STREAM_CODEC, PanelNetwork::handleBind);
@@ -65,6 +67,12 @@ public final class PanelNetwork {
     private static void handleOperate(PanelPayloads.Operate payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer sender) {
             PanelOps.operate(sender, payload.pos(), payload.id(), OperateAction.byId(payload.action()), payload.value());
+        }
+    }
+
+    private static void handleRecorderMessage(PanelPayloads.RecorderMessage payload, IPayloadContext context) {
+        if (context.player() instanceof ServerPlayer sender) {
+            PanelOps.recorderMessage(sender, payload.pos(), payload.id(), payload.text());
         }
     }
 

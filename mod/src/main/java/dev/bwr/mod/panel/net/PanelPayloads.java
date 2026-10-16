@@ -87,6 +87,21 @@ public final class PanelPayloads {
         }
     }
 
+    /** Write free text on a recorder's trend (the FUNC strip's Free message); the text is cleaned and bounded by the server. */
+    public record RecorderMessage(BlockPos pos, int id, String text) implements CustomPacketPayload {
+        public static final Type<RecorderMessage> TYPE = new Type<>(BwrMod.id("panel_recorder_message"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, RecorderMessage> STREAM_CODEC = StreamCodec.composite(
+                BlockPos.STREAM_CODEC, RecorderMessage::pos,
+                ByteBufCodecs.VAR_INT, RecorderMessage::id,
+                ByteBufCodecs.stringUtf8(256), RecorderMessage::text,
+                RecorderMessage::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     // ---- server to client
 
     /** The whole panel state of one block entity (components, claims, live values). */

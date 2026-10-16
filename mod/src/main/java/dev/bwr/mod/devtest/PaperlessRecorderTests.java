@@ -552,7 +552,7 @@ public final class PaperlessRecorderTests {
         // FUNC: the strip, the soft keys, Next.
         ui.press(RecorderKey.FUNC, data);
         same(h, ui.mode, RecorderUi.Mode.FUNC, "FUNC opens the soft key strip");
-        same(h, String.join(",", ui.softLabels(RecorderStyle.DX1000)), "ALARM ACK,MESSAGE,FREE MSG,START,NEXT", "strip labels");
+        same(h, String.join(",", ui.softLabels(RecorderStyle.DX1000)), "ALM ACK,MESSAGE,FREE,START,NEXT", "strip labels");
         ui.press(RecorderKey.SOFT5, data);
         same(h, String.join(",", ui.softLabels(RecorderStyle.DX1000)), "STOP,,,,NEXT", "the next page");
         RecorderActions.apply(data, ui.press(RecorderKey.SOFT1, data).action());
@@ -575,11 +575,14 @@ public final class PaperlessRecorderTests {
         // The DX2000's cover: closed, only the soft keys and the cover tab answer.
         PaperlessRecorderData big = new PaperlessRecorderData(RecorderStyle.DX2000);
         RecorderUi bigUi = new RecorderUi();
-        check(h, !bigUi.press(RecorderKey.DISP, big).handled(), "DISP is behind the closed cover");
-        check(h, bigUi.press(RecorderKey.SOFT1, big).handled(), "soft keys are not");
+        check(h, !bigUi.press(RecorderKey.FUNC, big).handled() && !bigUi.press(RecorderKey.SOFT1, big).handled()
+                && !bigUi.press(RecorderKey.MENU, big).handled(), "FUNC, the soft keys and MENU are behind the closed cover");
+        check(h, bigUi.press(RecorderKey.DISP, big).handled() && bigUi.mode == RecorderUi.Mode.MENU, "the DISP/ENTER ring is not");
+        bigUi.mode = RecorderUi.Mode.NONE;
         RecorderActions.apply(big, bigUi.press(RecorderKey.COVER_TAB, big).action());
         check(h, big.coverOpen, "the tab opens the cover");
-        check(h, bigUi.press(RecorderKey.DISP, big).handled() && bigUi.mode == RecorderUi.Mode.MENU, "and the keys answer");
+        check(h, bigUi.press(RecorderKey.FUNC, big).handled() && bigUi.mode == RecorderUi.Mode.FUNC, "and the keys answer");
+        bigUi.mode = RecorderUi.Mode.NONE;
         same(h, RecorderUi.menu(RecorderStyle.DX2000).size(), 10, "the DX2000 menu has circular and four 4-panel layouts");
         RecorderActions.apply(big, RecorderActions.QUAD_BASE + 2);
         same(h, big.screen, RecorderScreen.FOUR_PANEL, "four-panel");
@@ -992,6 +995,41 @@ public final class PaperlessRecorderTests {
             backToDx1000.putInt("Channels", 48);
             s.configure(block, rec, backToDx1000);
             check(helper, rec.inputCount() == 12, "a DX1000 never has more than 12: " + rec.inputCount());
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void keyPressesAndFreeMessagesAreValidatedByTheServer(GameTestHelper helper) {
+        Stage.run(helper, 5, s -> {
+            s.wall(3, 2);
+            PanelBlockEntity block = s.be(s.at(0, 0));
+            PanelComponent rec = s.recorder(block, Footprint.of(32, 32));
+            PaperlessRecorderData data = dataOf(rec);
+            BlockPos pos = block.getBlockPos();
+            // Free message: text is cleaned of control characters and cut to 32, blanks are refused.
+            check(helper, PanelOps.recorderMessage(s.player, pos, rec.id(), "  PUMP A TRIP  "), "a free message");
+            same(helper, data.messageEntries().get(0).text(), "PUMP A TRIP", "cleaned and stripped");
+            check(helper, PanelOps.recorderMessage(s.player, pos, rec.id(), "X".repeat(100)), "a long message");
+            same(helper, data.messageEntries().get(1).text().length(), 32, "cut to 32 characters");
+            check(helper, !PanelOps.recorderMessage(s.player, pos, rec.id(), "   "), "a blank message is refused");
+            check(helper, !PanelOps.recorderMessage(s.player, pos, rec.id() + 50, "HELLO"), "an unknown component is refused");
+            PanelComponent pushbutton = PanelOps.placeDirect(s.level, s.be(s.at(2, 0)).getBlockPos(), 2, 2, ComponentTypes.PUSHBUTTON, Footprint.of(6, 6));
+            check(helper, pushbutton != null && !PanelOps.recorderMessage(s.player, s.at(2, 0), pushbutton.id(), "HELLO"),
+                    "another component type is refused");
+            // Keys: only codes the recorder knows, only a number, only a press, only within reach.
+            check(helper, !PanelOps.operate(s.player, pos, rec.id(), OperateAction.PRESS, 0), "code 0 means nothing");
+            check(helper, !PanelOps.operate(s.player, pos, rec.id(), OperateAction.PRESS, 9), "code 9 means nothing");
+            check(helper, !PanelOps.operate(s.player, pos, rec.id(), OperateAction.PRESS, 2.5), "a fraction is refused");
+            check(helper, !PanelOps.operate(s.player, pos, rec.id(), OperateAction.PRESS, Double.NaN), "NaN is refused");
+            check(helper, !PanelOps.operate(s.player, pos, rec.id(), OperateAction.TURN, RecorderActions.STOP), "only a press is a key");
+            check(helper, data.running, "none of that stopped it");
+            check(helper, PanelOps.operate(s.player, pos, rec.id(), OperateAction.PRESS, RecorderActions.STOP) && !data.running, "STOP");
+            check(helper, !PanelOps.recorderMessage(s.player, pos, rec.id(), "WHILE STOPPED"), "nothing is written while memory sampling is stopped");
+            check(helper, PanelOps.operate(s.player, pos, rec.id(), OperateAction.PRESS, RecorderActions.START) && data.running, "START");
+            s.player.setPos(s.origin.getX() + 80, s.origin.getY(), s.origin.getZ());
+            check(helper, !PanelOps.operate(s.player, pos, rec.id(), OperateAction.PRESS, RecorderActions.STOP) && data.running,
+                    "a player out of reach cannot press a key");
+            check(helper, !PanelOps.recorderMessage(s.player, pos, rec.id(), "TOO FAR"), "or write a message");
         });
     }
 }

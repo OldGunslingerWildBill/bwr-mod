@@ -17,8 +17,8 @@ import java.util.List;
  *   <li>FUNC opens the soft-key strip; the soft keys then mean what the strip labels say. The strip's last soft
  *       keys page it (DX1000: soft 5 is Next; DX2000: soft 6 is Previous, soft 7 Next).</li>
  *   <li>MENU opens the setup screen; USER and the favourite key do nothing but click.</li>
- *   <li>The DX2000's key-panel cover hides every key but the soft keys while it is closed: the cover tab is the only
- *       other key that answers.</li>
+ *   <li>The DX2000's key-panel cover hides the soft keys and every other key but DISP/ENTER and the arrows while it
+ *       is closed (the model's cover covers them, as on the real unit); the cover tab opens it.</li>
  * </ul>
  */
 public final class RecorderUi {
@@ -45,7 +45,7 @@ public final class RecorderUi {
     }
 
     /** The FUNC strip's items, in order. */
-    public static final String[] FUNC_ITEMS = {"ALARM ACK", "MESSAGE", "FREE MSG", "START", "STOP"};
+    public static final String[] FUNC_ITEMS = {"ALM ACK", "MESSAGE", "FREE", "START", "STOP"};
 
     public Mode mode = Mode.NONE;
     public int cursor;
@@ -124,6 +124,14 @@ public final class RecorderUi {
         return labels;
     }
 
+    /** Whether the closed key-panel cover of a DX2000 sits over {@code key}: everything but the DISP/ENTER ring. */
+    public static boolean behindCover(RecorderKey key) {
+        return switch (key) {
+            case DISP, UP, DOWN, LEFT, RIGHT, COVER_TAB -> false;
+            default -> true;
+        };
+    }
+
     /** A key was pressed. */
     public Result press(RecorderKey key, PaperlessRecorderData data) {
         lastKey = key;
@@ -131,7 +139,7 @@ public final class RecorderUi {
         if (key == RecorderKey.COVER_TAB) {
             return style.hasCover() ? Result.action(RecorderActions.COVER_TOGGLE) : Result.IGNORED;
         }
-        if (!key.isSoft() && style.hasCover() && !data.coverOpen) {
+        if (style.hasCover() && !data.coverOpen && behindCover(key)) {
             return Result.IGNORED;
         }
         if (key == RecorderKey.MENU) {

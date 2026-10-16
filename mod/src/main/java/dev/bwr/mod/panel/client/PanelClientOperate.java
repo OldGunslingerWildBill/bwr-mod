@@ -116,6 +116,15 @@ public final class PanelClientOperate {
         }
         ComponentType type = AIM.component.type();
         boolean repeat = useWasDown;
+        if (AIM.component.data() instanceof dev.bwr.mod.panel.component.PaperlessRecorderData) {
+            // A recorder's face is a row of keys: the click is resolved against the bezel's key boxes on this client.
+            if (!repeat) {
+                RecorderClientKeys.click(AIM.owner, AIM.component, AIM.cellX, AIM.cellY);
+            }
+            event.setSwingHand(!repeat);
+            event.setCanceled(true);
+            return;
+        }
         if (!repeat || type.holdable()) {
             // A real click, or the repeat of a held control (which refreshes the server's fail-safe).
             send(AIM.owner, AIM.component, OperateAction.PRESS, type.clickValue(AIM.component, AIM.cellX, AIM.cellY));

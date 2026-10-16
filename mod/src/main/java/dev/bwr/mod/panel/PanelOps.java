@@ -278,6 +278,21 @@ public final class PanelOps {
     }
 
     /**
+     * Free message of a paperless recorder: the text is written on its trend. Same reach and permission rules as a key
+     * press; the text is cleaned and cut to the message length by the recorder.
+     */
+    public static boolean recorderMessage(ServerPlayer player, BlockPos ownerPos, int id, String text) {
+        ServerLevel level = player.serverLevel();
+        if (text == null || !inReach(player, ownerPos) || !AssemblyAccess.permitted(level, player, ownerPos) || !level.isLoaded(ownerPos)
+                || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
+            return false;
+        }
+        PanelComponent component = owner.component(id);
+        return component != null && component.data() instanceof dev.bwr.mod.panel.component.PaperlessRecorderData recorder
+                && recorder.addMessage(text);
+    }
+
+    /**
      * A bare-handed right-click on cell {@code (cx, cy)} of {@code clicked}: forwards
      * to the owner of whatever component covers the cell, possibly in another block.
      */
