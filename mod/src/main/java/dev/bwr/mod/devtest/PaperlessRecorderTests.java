@@ -675,8 +675,9 @@ public final class PaperlessRecorderTests {
         }
 
         private void hold(boolean force) {
-            for (int x = (origin.getX() - 40) >> 4; x <= (origin.getX() + 40) >> 4; x++) {
-                for (int z = (origin.getZ() - 16) >> 4; z <= (origin.getZ() + 16) >> 4; z++) {
+            // just what the wall, the valve and the player need: a handful of chunks, so releasing them is cheap
+            for (int x = (origin.getX() - 26) >> 4; x <= (origin.getX() + 6) >> 4; x++) {
+                for (int z = (origin.getZ() - 8) >> 4; z <= (origin.getZ() + 8) >> 4; z++) {
                     level.setChunkForced(x, z, force);
                     if (force) {
                         level.getChunk(x, z);
@@ -1037,5 +1038,24 @@ public final class PaperlessRecorderTests {
                     "a player out of reach cannot press a key");
             check(helper, !PanelOps.recorderMessage(s.player, pos, rec.id(), "TOO FAR"), "or write a message");
         });
+    }
+
+    @GameTest(template = "empty")
+    public static void theRecorderHasAnItemARecipeAndNamesForEveryPort(GameTestHelper helper) {
+        var level = helper.getLevel();
+        check(helper, BwrItems.PAPERLESS_RECORDER.get().type() == ComponentTypes.PAPERLESS_RECORDER, "the item places the recorder type");
+        var recipe = level.getRecipeManager().byKey(dev.bwr.mod.BwrMod.id("paperless_recorder"));
+        check(helper, recipe.isPresent() && recipe.get().value().getResultItem(level.registryAccess()).is(BwrItems.PAPERLESS_RECORDER.get()),
+                "the recorder can be crafted");
+        PaperlessRecorderData dx2000 = new PaperlessRecorderData(RecorderStyle.DX2000);
+        dx2000.channels = 48;
+        var ports = ComponentTypes.PAPERLESS_RECORDER.inputPorts(dx2000);
+        same(helper, ports.size(), 48, "a DX2048 has 48 ports");
+        same(helper, ports.get(0).key(), "ch01", "first port key");
+        same(helper, ports.get(47).key(), "ch48", "last port key");
+        for (var port : ports) {
+            check(helper, port.labelKey().startsWith("component.bwr.port.ch"), "port label key " + port.labelKey());
+        }
+        helper.succeed();
     }
 }
