@@ -16,6 +16,7 @@ import dev.bwr.mod.panel.mimic.MimicMode;
 import dev.bwr.mod.panel.mimic.MimicOps;
 import dev.bwr.mod.panel.mimic.MimicOps.Result;
 import dev.bwr.mod.panel.mimic.MimicPath;
+import dev.bwr.mod.panel.mimic.MimicRoute;
 import dev.bwr.mod.panel.mimic.MimicStyle;
 import dev.bwr.mod.panel.mimic.MimicTapeItem;
 import dev.bwr.mod.panel.net.PanelPayloads;
@@ -621,7 +622,12 @@ public final class MimicTapeTests {
             edit.putInt("StartEnd", MimicStyle.END_DOT);
             edit.putInt("EndEnd", MimicStyle.END_NONE);
             edit.putInt("FlowEvery", 16);
-            edit.putBoolean("Animate", false);
+            edit.putString("Route", MimicStyle.ROUTE_ELBOW);
+            edit.putString("Corners", MimicStyle.CORNERS_ROUNDED);
+            edit.putInt("Radius", 5);
+            edit.putInt("ArrowSize", 6);
+            edit.putBoolean("ArrowOwnColor", true);
+            edit.putInt("ArrowColor", 0xFFB000);
             edit.putDouble("Threshold", 0.25);
             check(helper, MimicOps.configure(s.player, left.getBlockPos(), path.localId(), edit), "configure");
 
@@ -646,7 +652,10 @@ public final class MimicTapeTests {
             check(helper, back.pathId() == path.pathId() && back.localId() == path.localId() && points(back).equals(points(path)),
                     "id and points survive");
             check(helper, style.color == 0x20B040 && style.width == 4 && style.dashed && style.startEnd == MimicStyle.END_DOT
-                            && style.endEnd == MimicStyle.END_NONE && style.flowEvery == 16 && !style.animate && style.threshold == 0.25,
+                            && style.endEnd == MimicStyle.END_NONE && style.flowEvery == 16 && style.threshold == 0.25
+                            && MimicStyle.ROUTE_ELBOW.equals(style.route) && MimicStyle.CORNERS_ROUNDED.equals(style.corners)
+                            && style.radius == 5 && style.arrowSize == 6 && style.arrowOwnColor && style.arrowColor == 0xFFB000
+                            && style.arrowRgb() == 0xFFB000,
                     "style survives: " + style.toTag());
             check(helper, back.source() instanceof PlantSource p && p.key().equals("position") && p.device().equals(s.devices),
                     "the binding survives with its absolute position");
@@ -898,6 +907,135 @@ public final class MimicTapeTests {
                 check(helper, outputEventsNear(s.origin) == events, "no panel output was operated, so nothing could be wired onward");
                 check(helper, path.source().isLive() && block.mimicPaths().get(0).bound(), "it is an indication only: a live source and no sink");
             });
+        });
+    }
+
+    // ---- shapes and waypoints (owner's change 2026-10-16: draw.io-like connectors, static)
+
+    private static MimicStyle shape(String route, String corners) {
+        MimicStyle style = new MimicStyle();
+        style.route = route;
+        style.corners = corners;
+        return style;
+    }
+
+    @GameTest(template = "empty")
+    public static void elbowRoundedAndCurvedShapesFollowTheirRules(GameTestHelper helper) {
+        // Elbow: two right-angle turns through the middle of the longer axis.
+        double[] elbow = MimicRoute.expand(new int[] {0, 0, 10, 6}, shape(MimicStyle.ROUTE_ELBOW, MimicStyle.CORNERS_SHARP), 1.0);
+        check(helper, java.util.Arrays.equals(elbow, new double[] {0, 0, 5, 0, 5, 6, 10, 6}),
+                "elbow route " + java.util.Arrays.toString(elbow));
+        double[] tall = MimicRoute.expand(new int[] {0, 0, 4, 12}, shape(MimicStyle.ROUTE_ELBOW, MimicStyle.CORNERS_SHARP), 1.0);
+        check(helper, java.util.Arrays.equals(tall, new double[] {0, 0, 0, 6, 4, 6, 4, 12}),
+                "a taller step turns at its vertical middle " + java.util.Arrays.toString(tall));
+        double[] straight = MimicRoute.expand(new int[] {0, 0, 10, 6}, new MimicStyle(), 1.0);
+        check(helper, java.util.Arrays.equals(straight, new double[] {0, 0, 10, 6}), "straight and sharp leaves the points alone");
+
+        // Rounded: the ends stay, the corner is cut by an arc that keeps to the inside of the corner.
+        MimicStyle rounded = shape(MimicStyle.ROUTE_STRAIGHT, MimicStyle.CORNERS_ROUNDED);
+        rounded.radius = 3;
+        double[] fillet = MimicRoute.expand(new int[] {0, 0, 10, 0, 10, 10}, rounded, 1.0);
+        int n = fillet.length / 2;
+        check(helper, n > 5 && fillet[0] == 0 && fillet[1] == 0 && fillet[n * 2 - 2] == 10 && fillet[n * 2 - 1] == 10,
+                "a rounded corner keeps both ends and adds the arc: " + n + " points");
+        double nearestToCorner = Double.MAX_VALUE;
+        for (int i = 0; i < n; i++) {
+            double x = fillet[i * 2];
+            double y = fillet[i * 2 + 1];
+            check(helper, x >= -1e-9 && x <= 10 + 1e-9 && y >= -1e-9 && y <= 10 + 1e-9, "the fillet stays inside the corner");
+            nearestToCorner = Math.min(nearestToCorner, Math.hypot(10 - x, y));
+        }
+        // A radius-3 fillet of a right angle passes 3 * (sqrt 2 - 1) = 1.24 cells from the corner.
+        check(helper, Math.abs(nearestToCorner - 3 * (Math.sqrt(2) - 1)) < 0.05, "the corner is cut by the radius: " + nearestToCorner);
+
+        // Curved: one smooth curve through every clicked point.
+        int[] clicked = {0, 0, 8, 8, 16, 0, 24, 8};
+        double[] curve = MimicRoute.expand(clicked, shape(MimicStyle.ROUTE_STRAIGHT, MimicStyle.CORNERS_CURVED), 1.0);
+        check(helper, curve.length / 2 > 20, "a curve is tessellated finely: " + curve.length / 2);
+        for (int i = 0; i < clicked.length; i += 2) {
+            boolean through = false;
+            for (int k = 0; k < curve.length; k += 2) {
+                through |= Math.abs(curve[k] - clicked[i]) < 1e-6 && Math.abs(curve[k + 1] - clicked[i + 1]) < 1e-6;
+            }
+            check(helper, through, "the curve passes through clicked point " + clicked[i] + "," + clicked[i + 1]);
+        }
+        // No two neighbouring curve pieces turn sharply (it is smooth, not a polyline with corners).
+        for (int k = 4; k < curve.length; k += 2) {
+            double ax = curve[k - 2] - curve[k - 4];
+            double ay = curve[k - 1] - curve[k - 3];
+            double bx = curve[k] - curve[k - 2];
+            double by = curve[k + 1] - curve[k - 1];
+            double cos = (ax * bx + ay * by) / Math.max(1e-12, Math.hypot(ax, ay) * Math.hypot(bx, by));
+            check(helper, cos > 0.8, "a curve has no sharp kink (cos " + cos + " at piece " + k / 2 + ")");
+        }
+
+        // Picking follows the drawn shape: an elbow path is picked on its vertical leg, which the straight line between
+        // its two points misses.
+        MimicPath elbowPath = new MimicPath(7L, 1, new int[] {2, 2, 14, 14}, shape(MimicStyle.ROUTE_ELBOW, MimicStyle.CORNERS_SHARP));
+        MimicPath straightPath = new MimicPath(8L, 2, new int[] {2, 2, 14, 14}, new MimicStyle());
+        check(helper, MimicGeometry.distance(elbowPath, 8, 12, 1.0) < 1e-6, "the elbow's vertical leg is under (8, 12)");
+        check(helper, MimicGeometry.distance(straightPath, 8, 12, 1.0) > MimicGeometry.pickTolerance(straightPath),
+                "while the straight diagonal is not");
+        check(helper, MimicGeometry.pick(java.util.List.of(elbowPath), 8, 12, 1.0) == elbowPath, "so the elbow path is picked there");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void waypointsAreMovedInsertedAndDeletedInEditModeKeepingStyleAndBinding(GameTestHelper helper) {
+        Stage.run(helper, 12, s -> {
+            s.wall(2, 1);
+            PanelBlockEntity left = s.be(s.at(0, 0));
+            PanelBlockEntity right = s.be(s.at(1, 0));
+            s.msiv(s.devices);
+            check(helper, s.place(left, 2, 4, 12, 4).result() == Result.OK, "a path in the left block");
+            MimicPath path = left.mimicPaths().get(0);
+            s.tape(1);
+            CompoundTag edit = new CompoundTag();
+            edit.putString("Corners", MimicStyle.CORNERS_CURVED);
+            edit.putInt("ArrowSize", 5);
+            check(helper, MimicOps.configure(s.player, left.getBlockPos(), path.localId(), edit), "make it curved with big arrows");
+            s.linker(s.devices);
+            check(helper, s.bindPath(left, path, WiringOps.BindKind.PLANT, "position") == WiringOps.Result.OK, "bind it");
+            ItemStack stack = s.tape(1);
+            MimicOps.cycleMode(s.player, InteractionHand.MAIN_HAND, 2);
+            check(helper, MimicTapeItem.mode(stack) == MimicMode.EDIT, "edit mode");
+
+            // Pick up the end waypoint and put it down in the right-hand block: the path now spans both blocks.
+            check(helper, s.use(left, 12.3, 4.2) == Result.OK, "a click on a waypoint picks it up");
+            check(helper, left.mimicPaths().get(0).pointCount() == 2, "picking it up changes nothing yet");
+            check(helper, s.use(right, 6.0, 10.0) == Result.OK, "the next click puts it down");
+            MimicPath moved = left.mimicPaths().get(0);
+            check(helper, points(moved).equals("[2, 4, 22, 10]"), "the waypoint moved, in the left block's cells: " + points(moved));
+            MimicPath twin = right.mimicByPathId(moved.pathId());
+            check(helper, twin != null && points(twin).equals("[-14, 4, 6, 10]"), "and the right block got its copy: " + twin);
+            for (MimicPath piece : new MimicPath[] {moved, twin}) {
+                check(helper, MimicStyle.CORNERS_CURVED.equals(piece.style().corners) && piece.style().arrowSize == 5,
+                        "the style came along: " + piece.style().toTag());
+                check(helper, piece.source() instanceof PlantSource p && p.key().equals("position"), "and the binding");
+            }
+
+            // Sneak-click on the line inserts a waypoint; sneak-click on a waypoint removes it.
+            s.player.setShiftKeyDown(true);
+            try {
+                check(helper, s.use(left, 8.0, 5.8) == Result.OK && left.mimicPaths().get(0).pointCount() == 3,
+                        "sneak-click on the line adds a waypoint: " + left.mimicPaths().get(0));
+                MimicPath three = left.mimicPaths().get(0);
+                check(helper, three.x(1) == 8 && three.y(1) == 6, "where the cursor was, on the grid: " + points(three));
+                check(helper, s.use(left, 8.2, 6.1) == Result.OK && left.mimicPaths().get(0).pointCount() == 2,
+                        "sneak-click on a waypoint removes it");
+                check(helper, s.use(left, 2.0, 4.0) == Result.BAD_ARGUMENTS && left.mimicPaths().get(0).pointCount() == 2,
+                        "the last two points cannot be removed");
+            } finally {
+                s.player.setShiftKeyDown(false);
+            }
+
+            // A move that would stack two waypoints is refused and leaves the path as it was.
+            String before = points(left.mimicPaths().get(0));
+            check(helper, s.use(left, 2.0, 4.0) == Result.OK, "pick up the first waypoint");
+            check(helper, s.use(right, 6.0, 10.0) == Result.SAME_POINT, "dropping it on the other one is refused");
+            MimicPath kept = left.mimicPaths().get(0);
+            check(helper, points(kept).equals(before) && kept.source() instanceof PlantSource
+                    && right.mimicByPathId(kept.pathId()) != null, "the path, its copy and its binding are untouched");
         });
     }
 

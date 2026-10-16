@@ -84,11 +84,48 @@ public final class MimicGeometry {
         return Math.sqrt(ex * ex + ey * ey);
     }
 
-    /** Distance from {@code (px, py)} to the polyline. */
+    /** Distance from {@code (px, py)} to the path as it is drawn (its elbows, fillets or curve, see {@link MimicRoute}). */
     public static double distance(MimicPath path, double px, double py, double aspect) {
         double best = Double.MAX_VALUE;
+        if (path.style().shaped()) {
+            double[] drawn = MimicRoute.expand(path.points(), path.style(), aspect);
+            for (int i = 2; i + 1 < drawn.length; i += 2) {
+                best = Math.min(best, distanceToSegment(px, py, drawn[i - 2], drawn[i - 1], drawn[i], drawn[i + 1], aspect));
+            }
+            return best;
+        }
         for (int i = 1; i < path.pointCount(); i++) {
             best = Math.min(best, distanceToSegment(px, py, path.x(i - 1), path.y(i - 1), path.x(i), path.y(i), aspect));
+        }
+        return best;
+    }
+
+    /** Index of the clicked point (waypoint) of {@code path} nearest {@code (px, py)} within {@code tolerance}, or -1. */
+    public static int nearestPoint(MimicPath path, double px, double py, double aspect, double tolerance) {
+        int best = -1;
+        double bestDistance = tolerance;
+        for (int i = 0; i < path.pointCount(); i++) {
+            double dx = path.x(i) - px;
+            double dy = (path.y(i) - py) * aspect;
+            double d = Math.sqrt(dx * dx + dy * dy);
+            if (d <= bestDistance) {
+                best = i;
+                bestDistance = d;
+            }
+        }
+        return best;
+    }
+
+    /** Index of the straight segment between clicked points {@code i - 1} and {@code i} nearest the cursor (>= 1). */
+    public static int nearestSegment(MimicPath path, double px, double py, double aspect) {
+        int best = 1;
+        double bestDistance = Double.MAX_VALUE;
+        for (int i = 1; i < path.pointCount(); i++) {
+            double d = distanceToSegment(px, py, path.x(i - 1), path.y(i - 1), path.x(i), path.y(i), aspect);
+            if (d < bestDistance) {
+                best = i;
+                bestDistance = d;
+            }
         }
         return best;
     }

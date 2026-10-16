@@ -8,8 +8,10 @@ import net.minecraft.nbt.Tag;
 import java.util.List;
 
 /**
- * How one mimic path is drawn (spec 2): colour, width, solid or dashed, what each end looks like, optional arrows
- * along the path, and, for a bound path, whether those arrows move and the level above which the path counts as lit.
+ * How one mimic path is drawn (spec 2 and the owner's changes): colour, width, solid or dashed, its shape (straight
+ * or elbow routing between the clicked points; sharp, rounded or curved corners, like draw.io connectors), what each
+ * end looks like, the arrow heads' size and colour, optional arrows along the path, and, for a bound path, the level
+ * above which it counts as lit. Everything is static: nothing on a path moves.
  * Pure data with an NBT form that carries a default for every key, so a save written before a key existed (or with a
  * bad value) loads as the default.
  */
@@ -27,6 +29,21 @@ public final class MimicStyle {
     /** Spacing choices for the arrows along a path, in cells; 0 turns them off. */
     public static final int[] FLOW_CHOICES = {0, 8, 16, 32};
 
+    /** How the path runs between the clicked points: straight, or elbow (right-angle bends, like draw.io's orthogonal). */
+    public static final String ROUTE_STRAIGHT = "straight";
+    public static final String ROUTE_ELBOW = "elbow";
+    public static final List<String> ROUTES = List.of(ROUTE_STRAIGHT, ROUTE_ELBOW);
+    /** What its corners look like: sharp (mitred), rounded (a fillet of {@link #radius}) or curved (one smooth curve). */
+    public static final String CORNERS_SHARP = "sharp";
+    public static final String CORNERS_ROUNDED = "rounded";
+    public static final String CORNERS_CURVED = "curved";
+    public static final List<String> CORNERS = List.of(CORNERS_SHARP, CORNERS_ROUNDED, CORNERS_CURVED);
+    public static final int MIN_RADIUS = 1;
+    public static final int MAX_RADIUS = 8;
+    public static final int DEFAULT_RADIUS = 3;
+    /** Arrow head length in cells; 0 is automatic (it follows the line width). */
+    public static final int MAX_ARROW_SIZE = 8;
+
     /** Tolerance for "the signal is above the threshold" and the threshold's range. */
     public static final double MAX_THRESHOLD = 1.0e6;
 
@@ -38,7 +55,12 @@ public final class MimicStyle {
             ConfigField.integer("StartEnd", "screen.bwr.mimic_path.start", END_NONE, END_DOT),
             ConfigField.integer("EndEnd", "screen.bwr.mimic_path.end", END_NONE, END_DOT),
             ConfigField.integer("FlowEvery", "screen.bwr.mimic_path.flow", 0, 32),
-            ConfigField.bool("Animate", "screen.bwr.mimic_path.animate"),
+            ConfigField.choice("Route", "screen.bwr.mimic_path.route", ROUTES),
+            ConfigField.choice("Corners", "screen.bwr.mimic_path.corners", CORNERS),
+            ConfigField.integer("Radius", "screen.bwr.mimic_path.radius", MIN_RADIUS, MAX_RADIUS),
+            ConfigField.integer("ArrowSize", "screen.bwr.mimic_path.arrow_size", 0, MAX_ARROW_SIZE),
+            ConfigField.bool("ArrowOwnColor", "screen.bwr.mimic_path.arrow_own_color"),
+            ConfigField.color("ArrowColor", "screen.bwr.mimic_path.arrow_color"),
             ConfigField.decimal("Threshold", "screen.bwr.mimic_path.threshold", -MAX_THRESHOLD, MAX_THRESHOLD));
 
     public int color = DEFAULT_COLOR;
@@ -47,7 +69,14 @@ public final class MimicStyle {
     public int startEnd = END_NONE;
     public int endEnd = END_ARROW;
     public int flowEvery;
-    public boolean animate = true;
+    public String route = ROUTE_STRAIGHT;
+    public String corners = CORNERS_SHARP;
+    public int radius = DEFAULT_RADIUS;
+    /** Arrow head length in cells, 0 for automatic. */
+    public int arrowSize;
+    /** Whether the arrow heads have their own colour ({@link #arrowColor}) instead of the line's. */
+    public boolean arrowOwnColor;
+    public int arrowColor = DEFAULT_COLOR;
     /** A bound path is lit while its signal is above this. */
     public double threshold;
 
@@ -59,7 +88,12 @@ public final class MimicStyle {
         copy.startEnd = startEnd;
         copy.endEnd = endEnd;
         copy.flowEvery = flowEvery;
-        copy.animate = animate;
+        copy.route = route;
+        copy.corners = corners;
+        copy.radius = radius;
+        copy.arrowSize = arrowSize;
+        copy.arrowOwnColor = arrowOwnColor;
+        copy.arrowColor = arrowColor;
         copy.threshold = threshold;
         return copy;
     }
@@ -88,7 +122,12 @@ public final class MimicStyle {
         tag.putInt("StartEnd", startEnd);
         tag.putInt("EndEnd", endEnd);
         tag.putInt("FlowEvery", flowEvery);
-        tag.putBoolean("Animate", animate);
+        tag.putString("Route", route);
+        tag.putString("Corners", corners);
+        tag.putInt("Radius", radius);
+        tag.putInt("ArrowSize", arrowSize);
+        tag.putBoolean("ArrowOwnColor", arrowOwnColor);
+        tag.putInt("ArrowColor", arrowColor);
         tag.putDouble("Threshold", threshold);
     }
 
@@ -103,7 +142,15 @@ public final class MimicStyle {
         endEnd = tag.contains("EndEnd", Tag.TAG_ANY_NUMERIC)
                 ? Math.max(END_NONE, Math.min(END_DOT, tag.getInt("EndEnd"))) : END_ARROW;
         flowEvery = tag.contains("FlowEvery", Tag.TAG_ANY_NUMERIC) ? snapFlow(tag.getInt("FlowEvery")) : 0;
-        animate = !tag.contains("Animate", Tag.TAG_ANY_NUMERIC) || tag.getBoolean("Animate");
+        // A saved "Animate" key (from before paths were made static) is ignored.
+        route = ROUTES.contains(tag.getString("Route")) ? tag.getString("Route") : ROUTE_STRAIGHT;
+        corners = CORNERS.contains(tag.getString("Corners")) ? tag.getString("Corners") : CORNERS_SHARP;
+        radius = tag.contains("Radius", Tag.TAG_ANY_NUMERIC)
+                ? Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, tag.getInt("Radius"))) : DEFAULT_RADIUS;
+        arrowSize = tag.contains("ArrowSize", Tag.TAG_ANY_NUMERIC)
+                ? Math.max(0, Math.min(MAX_ARROW_SIZE, tag.getInt("ArrowSize"))) : 0;
+        arrowOwnColor = tag.contains("ArrowOwnColor", Tag.TAG_ANY_NUMERIC) && tag.getBoolean("ArrowOwnColor");
+        arrowColor = tag.contains("ArrowColor", Tag.TAG_ANY_NUMERIC) ? tag.getInt("ArrowColor") & 0xFFFFFF : DEFAULT_COLOR;
         double level = tag.contains("Threshold", Tag.TAG_ANY_NUMERIC) ? tag.getDouble("Threshold") : 0.0;
         threshold = Double.isFinite(level) ? Math.max(-MAX_THRESHOLD, Math.min(MAX_THRESHOLD, level)) : 0.0;
     }
@@ -116,6 +163,21 @@ public final class MimicStyle {
     /** How far the decorations (arrow heads, end dots) reach beyond the centre line of a path of {@code width}. */
     public static double reach(int width) {
         return width * 1.1 + 1.5;
+    }
+
+    /** How far this path's decorations reach, its arrow size included. */
+    public double reach() {
+        return Math.max(reach(width), arrowSize > 0 ? arrowSize * 0.55 + 0.5 : 0.0);
+    }
+
+    /** The colour the arrow heads are drawn in. */
+    public int arrowRgb() {
+        return arrowOwnColor ? arrowColor : color;
+    }
+
+    /** Whether the path has anything but straight segments with sharp corners. */
+    public boolean shaped() {
+        return !ROUTE_STRAIGHT.equals(route) || !CORNERS_SHARP.equals(corners);
     }
 
     /** Whether the arrows along the path are drawn at all. */

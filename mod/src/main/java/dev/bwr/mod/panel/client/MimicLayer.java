@@ -10,13 +10,12 @@ import java.util.List;
 /**
  * Draws the mimic paths of one panel block (spec 3). The paths are flat quads on the face, below the components:
  * <ul>
- *   <li>the <b>baked</b> mesh holds everything that does not move: the lines, ends, junction dots and, for a path with
- *       no signal bound, its arrows. It is rebuilt only when the paths change or the board's row aspect does, and it
- *       goes into the block's GPU buffer with the components' static geometry ({@link PanelMeshCache}), so a wall with
- *       a hundred paths costs one draw call;</li>
- *   <li>the <b>dynamic</b> pass draws what a bound path does with its signal: the base is dim grey, and while the
- *       signal is above its threshold the same line is drawn again in its colour, with the arrows moving along it (a
- *       function of game time, nothing is sent). A bound path with no signal shows still grey arrows.</li>
+ *   <li>the <b>baked</b> mesh holds every path: lines, ends, arrows and junction dots. It is rebuilt only when the
+ *       paths change or the board's row aspect does, and it goes into the block's GPU buffer with the components'
+ *       static geometry ({@link PanelMeshCache}), so a wall with a hundred paths costs one draw call;</li>
+ *   <li>the <b>dynamic</b> pass only switches a bound path between dim grey and its colours: while the signal is above
+ *       the threshold, a pre-built lit copy of the path is drawn over the grey one. Nothing moves (owner's change
+ *       2026-10-16: static lines only).</li>
  * </ul>
  * Paths are indication only: the signal changes colours, nothing else.
  */
@@ -34,19 +33,12 @@ final class MimicLayer {
     private static final float LIT_Z = 0.18f;
     private static final float LIT_ARROW_Z = 0.20f;
     private static final float LIT_DOT_Z = 0.22f;
-    /** Cells a moving arrow travels per tick (8 cells a second). */
-    private static final float ARROW_SPEED = 0.4f;
 
     private static final MimicMesher BAKER = new MimicMesher();
-    private static final MimicMesher PAINTER = new MimicMesher();
 
-    /** What a bound path needs each frame; built with the baked mesh. */
+    /** The lit copy of a bound path, drawn over its grey base while the signal is up; built with the baked mesh. */
     private static final class Live {
         StaticMesh lit = StaticMesh.EMPTY;
-        StaticMesh dimArrows = StaticMesh.EMPTY;
-        StaticMesh litArrows = StaticMesh.EMPTY;
-        PathGeometry geometry;
-        int rank;
     }
 
     private static final class Cache {
@@ -97,16 +89,17 @@ final class MimicLayer {
             int rank = index % 4;
             float lineZ = LINE_Z + RANK_STEP * rank;
             int base = path.bound() ? DIM : style.color;
+            int arrows = path.bound() ? DIM : style.arrowRgb();
             BAKER.paint(base, lineZ);
-            BAKER.body(geometry, style);
-            if (!path.bound() && style.hasFlowArrows()) {
-                BAKER.paint(base, lineZ + ARROW_STEP);
+            BAKER.body(geometry, style, arrows, lineZ + ARROW_STEP);
+            if (style.hasFlowArrows()) {
+                BAKER.paint(arrows, lineZ + ARROW_STEP);
                 BAKER.flow(geometry, style, style.flowEvery / 2.0f);
             }
             BAKER.paint(base, DOT_Z);
-            junctions(BAKER, geometry, path, paths);
+            junctions(BAKER, path, paths, aspect);
             if (path.bound()) {
-                live[index] = liveOf(geometry, path, paths, aspect, rank, lineZ);
+                live[index] = liveOf(geometry, path, paths, aspect, rank);
                 any = true;
             }
         }
@@ -117,51 +110,44 @@ final class MimicLayer {
         cache.aspect = aspect;
     }
 
-    private static Live liveOf(PathGeometry geometry, MimicPath path, List<MimicPath> paths, float aspect, int rank,
-                               float lineZ) {
+    private static Live liveOf(PathGeometry geometry, MimicPath path, List<MimicPath> paths, float aspect, int rank) {
         MimicStyle style = path.style();
         Live live = new Live();
-        live.geometry = geometry;
-        live.rank = rank;
         MeshBuilder lit = new MeshBuilder();
         MimicMesher mesher = new MimicMesher();
         mesher.begin(lit, aspect, true);
-        mesher.paint(style.color, LIT_Z + 0.01f * rank);
-        mesher.body(geometry, style);
-        mesher.paint(style.color, LIT_DOT_Z);
-        junctions(mesher, geometry, path, paths);
-        live.lit = lit.build();
+        float litZ = LIT_Z + 0.01f * rank;
+        mesher.paint(style.color, litZ);
+        mesher.body(geometry, style, style.arrowRgb(), LIT_ARROW_Z + 0.01f * rank);
         if (style.hasFlowArrows()) {
-            MeshBuilder dim = new MeshBuilder();
-            mesher.begin(dim, aspect, true);
-            mesher.paint(DIM, lineZ + ARROW_STEP);
+            mesher.paint(style.arrowRgb(), LIT_ARROW_Z + 0.01f * rank);
             mesher.flow(geometry, style, style.flowEvery / 2.0f);
-            live.dimArrows = dim.build();
-            MeshBuilder still = new MeshBuilder();
-            mesher.begin(still, aspect, true);
-            mesher.paint(style.color, LIT_ARROW_Z + 0.01f * rank);
-            mesher.flow(geometry, style, style.flowEvery / 2.0f);
-            live.litArrows = still.build();
         }
+        mesher.paint(style.color, LIT_DOT_Z);
+        junctions(mesher, path, paths, aspect);
+        live.lit = lit.build();
         return live;
     }
 
-    /** A dot on every vertex of the path that lies on another path (spec 2: T junctions; plain crossings get none). */
-    private static void junctions(MimicMesher mesher, PathGeometry geometry, MimicPath path, List<MimicPath> paths) {
+    /**
+     * A dot on every clicked point of the path that lies on another path (spec 2: T junctions; plain crossings get
+     * none). The dot sits on the clicked point itself, which every route and corner shape passes through or meets.
+     */
+    private static void junctions(MimicMesher mesher, MimicPath path, List<MimicPath> paths, float aspect) {
         if (paths.size() < 2) {
             return;
         }
         float radius = MimicMesher.dotRadius(path.style().width);
         for (int v = 0; v < path.pointCount(); v++) {
             if (MimicGeometry.junction(path, v, paths)) {
-                mesher.circle(geometry.x[v], geometry.y[v], radius);
+                mesher.circle(path.x(v), path.y(v) * aspect, radius);
             }
         }
     }
 
     // ---- per frame
 
-    /** Draws what a bound path changes with its signal; a block with none costs one field read. */
+    /** Draws the lit copy of each bound path whose signal is up; a block with none costs one field read. */
     static void renderDynamic(PanelRenderContext context, PanelBlockEntity be) {
         if (be.mimicCount() == 0) {
             return;
@@ -172,33 +158,11 @@ final class MimicLayer {
         }
         List<MimicPath> paths = be.mimicPaths();
         context.beginLayer();
-        boolean painterReady = false;
         for (int index = 0; index < cache.live.length && index < paths.size(); index++) {
             Live live = cache.live[index];
-            if (live == null) {
-                continue;
+            if (live != null && paths.get(index).lit()) {
+                live.lit.emit(context);
             }
-            MimicPath path = paths.get(index);
-            MimicStyle style = path.style();
-            if (!path.lit()) {
-                live.dimArrows.emit(context);
-                continue;
-            }
-            live.lit.emit(context);
-            if (!style.hasFlowArrows()) {
-                continue;
-            }
-            if (!style.animate) {
-                live.litArrows.emit(context);
-                continue;
-            }
-            if (!painterReady) {
-                PAINTER.begin(context, context.rowAspect(), true);
-                painterReady = true;
-            }
-            float phase = (context.gameTime() * ARROW_SPEED) % style.flowEvery;
-            PAINTER.paint(style.color, LIT_ARROW_Z + 0.01f * live.rank);
-            PAINTER.flow(live.geometry, style, phase);
         }
     }
 }

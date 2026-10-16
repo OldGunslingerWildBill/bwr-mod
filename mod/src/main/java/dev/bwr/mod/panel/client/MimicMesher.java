@@ -8,9 +8,8 @@ import dev.bwr.mod.panel.mimic.MimicStyle;
  * real board lengths and converted to grid cells on the way out ({@code y / aspect}).
  *
  * <p>With clipping on, every polygon is cut to the cell rectangle of the block being drawn (a path that runs across
- * several blocks is drawn by each of them, one piece each, with no overdraw). Methods allocate nothing except the
- * line builder, which allocates its joint table once per call, so the per frame use (moving arrows) is arrow heads
- * only.
+ * several blocks is drawn by each of them, one piece each, with no overdraw). Everything is baked when the panel's
+ * mesh is built; nothing here runs per frame.
  */
 final class MimicMesher {
     /** The cell rectangle of a block is grown by this much so two neighbouring pieces overlap and leave no seam. */
@@ -48,7 +47,10 @@ final class MimicMesher {
         this.z = z;
     }
 
-    // ---- sizes (shared by the baked arrows and the moving ones)
+    private final float[] at = new float[2];
+    private final float[] at2 = new float[2];
+
+    // ---- sizes
 
     static float arrowLength(int width) {
         return 2.5f + 1.1f * width;
@@ -56,6 +58,17 @@ final class MimicMesher {
 
     static float arrowHalfWidth(int width) {
         return 0.5f * width + 1.2f;
+    }
+
+    /** Arrow head length for a style: its own size when set, otherwise one that follows the line width. */
+    static float arrowLength(MimicStyle style) {
+        return style.arrowSize > 0 ? style.arrowSize : arrowLength(style.width);
+    }
+
+    /** Half the arrow head's base for a style; always wider than the line it ends. */
+    static float arrowHalfWidth(MimicStyle style) {
+        float half = style.arrowSize > 0 ? style.arrowSize * 0.45f : arrowHalfWidth(style.width);
+        return Math.max(half, style.width / 2.0f + 0.6f);
     }
 
     static float dotRadius(int width) {
@@ -194,10 +207,13 @@ final class MimicMesher {
             miter(g, v, half, joint);
         }
         float period = on + off;
+        float keepFrom = trimStart;
+        float keepTo = g.total - trimEnd;
         for (int s = 0; s < segments; s++) {
             float length = g.segmentLength(s);
-            float from = s == 0 ? trimStart : 0.0f;
-            float to = s == segments - 1 ? length - trimEnd : length;
+            // The part of this segment between the two trims (an arrow head may cover several short curve pieces).
+            float from = Math.max(0.0f, keepFrom - g.cum[s]);
+            float to = Math.min(length, keepTo - g.cum[s]);
             if (to - from <= 1.0e-3f) {
                 continue;
             }
@@ -299,63 +315,84 @@ final class MimicMesher {
     // ---- whole path
 
     /**
-     * Draws the line of a path with its two ends: arrow heads (the line is shortened to the head), dots or nothing.
-     * Does not draw the arrows along the path or the junction dots.
+     * Draws the line of a path with its two ends: arrow heads (the line is shortened under the head), dots or nothing.
+     * The line and the dots take the current paint; the arrow heads are drawn in {@code arrowRgb} at {@code arrowZ}
+     * (a style may give its arrows their own colour). Does not draw the arrows along the path or the junction dots.
      */
-    void body(PathGeometry g, MimicStyle style) {
+    void body(PathGeometry g, MimicStyle style, int arrowRgb, float arrowZ) {
+        if (g.n < 2 || g.total <= 1.0e-4f) {
+            return;
+        }
+        int lineRgb = rgb;
+        float lineZ = z;
         float half = style.width / 2.0f;
         float on = 3.0f + 0.5f * style.width;
         float off = 2.0f + 0.5f * style.width;
-        float length = arrowLength(style.width);
-        float wing = arrowHalfWidth(style.width);
-        int segments = g.n - 1;
-        float startLength = 0.0f;
-        float endLength = 0.0f;
-        if (style.startEnd == MimicStyle.END_ARROW) {
-            startLength = Math.min(length, g.segmentLength(0) * (segments == 1 && style.endEnd == MimicStyle.END_ARROW ? 0.45f : 0.9f));
-        }
-        if (style.endEnd == MimicStyle.END_ARROW) {
-            endLength = Math.min(length, g.segmentLength(segments - 1) * (segments == 1 && style.startEnd == MimicStyle.END_ARROW ? 0.45f : 0.9f));
-        }
+        float length = arrowLength(style);
+        float wing = arrowHalfWidth(style);
+        boolean startArrow = style.startEnd == MimicStyle.END_ARROW;
+        boolean endArrow = style.endEnd == MimicStyle.END_ARROW;
+        float limit = g.total * (startArrow && endArrow ? 0.45f : 0.9f);
+        float startLength = startArrow ? Math.min(length, limit) : 0.0f;
+        float endLength = endArrow ? Math.min(length, limit) : 0.0f;
         line(g, half, style.dashed, on, off, startLength * 0.9f, endLength * 0.9f);
         int last = g.n - 1;
-        if (startLength > 0.0f) {
-            head(g.x[0], g.y[0], -g.dx[0], -g.dy[0], startLength, wing * startLength / length);
-        } else if (style.startEnd == MimicStyle.END_DOT) {
+        if (style.startEnd == MimicStyle.END_DOT) {
             circle(g.x[0], g.y[0], dotRadius(style.width));
         }
-        if (endLength > 0.0f) {
-            head(g.x[last], g.y[last], g.dx[last - 1], g.dy[last - 1], endLength, wing * endLength / length);
-        } else if (style.endEnd == MimicStyle.END_DOT) {
+        if (style.endEnd == MimicStyle.END_DOT) {
             circle(g.x[last], g.y[last], dotRadius(style.width));
         }
+        paint(arrowRgb, arrowZ);
+        if (startLength > 0.0f) {
+            // Points back along the path: from where the head's base sits towards the first point.
+            g.pointAt(startLength, at);
+            headAlong(g.x[0], g.y[0], at[0], at[1], startLength, wing * startLength / length);
+        }
+        if (endLength > 0.0f) {
+            g.pointAt(g.total - endLength, at);
+            headAlong(g.x[last], g.y[last], at[0], at[1], endLength, wing * endLength / length);
+        }
+        paint(lineRgb, lineZ);
+    }
+
+    /** An arrow head with its tip at {@code (tipX, tipY)}, pointing away from {@code (fromX, fromY)}. */
+    private void headAlong(float tipX, float tipY, float fromX, float fromY, float length, float halfWidth) {
+        float ex = tipX - fromX;
+        float ey = tipY - fromY;
+        float l = (float) Math.sqrt(ex * ex + ey * ey);
+        if (l < 1.0e-5f) {
+            return;
+        }
+        head(tipX, tipY, ex / l, ey / l, length, halfWidth);
     }
 
     /**
-     * The arrows along a path, one every {@code style.flowEvery} cells starting {@code phase} cells in. An arrow that
-     * would run past a corner or into an end arrow is left out.
+     * The arrows along a path, one every {@code style.flowEvery} cells starting {@code phase} cells in, in the current
+     * paint. Each points along the path where it sits (on a curve, along the curve); one that would sit across a sharp
+     * corner, or run into an end arrow, is left out.
      */
     void flow(PathGeometry g, MimicStyle style, float phase) {
         float period = style.flowEvery;
         if (period <= 0.0f) {
             return;
         }
-        float length = arrowLength(style.width);
-        float wing = arrowHalfWidth(style.width);
+        float length = arrowLength(style);
+        float wing = arrowHalfWidth(style);
         float startGap = style.startEnd == MimicStyle.END_ARROW ? length * 1.4f : length * 0.6f;
         float endGap = style.endEnd == MimicStyle.END_ARROW ? length * 1.4f : length * 0.6f;
         for (float s = phase; s <= g.total; s += period) {
-            if (s < startGap || s > g.total - endGap) {
+            if (s < startGap || s + length > g.total - endGap) {
                 continue;
             }
-            int segment = g.segmentAt(s);
-            float along = s - g.cum[segment];
-            if (along - length / 2.0f < 0.0f || along + length / 2.0f > g.segmentLength(segment)) {
-                continue;
+            g.pointAt(s, at);
+            g.pointAt(s + length, at2);
+            float cx = at2[0] - at[0];
+            float cy = at2[1] - at[1];
+            if (Math.sqrt(cx * cx + cy * cy) < length * 0.85f) {
+                continue; // folded round a corner
             }
-            float cx = g.x[segment] + g.dx[segment] * (along + length / 2.0f);
-            float cy = g.y[segment] + g.dy[segment] * (along + length / 2.0f);
-            head(cx, cy, g.dx[segment], g.dy[segment], length, wing);
+            headAlong(at2[0], at2[1], at[0], at[1], length, wing);
         }
     }
 }

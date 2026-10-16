@@ -1,6 +1,7 @@
 package dev.bwr.mod.panel.client;
 
 import dev.bwr.mod.panel.mimic.MimicPath;
+import dev.bwr.mod.panel.mimic.MimicRoute;
 
 /**
  * One mimic path prepared for drawing: its points in real board lengths (a row counts {@code aspect} columns, so a
@@ -20,11 +21,25 @@ final class PathGeometry {
     final float[] cum;
     final float total;
 
+    /** The path as it is drawn: its clicked points expanded by its route and corners ({@link MimicRoute}). */
     PathGeometry(MimicPath path, float aspect) {
-        this(path.points(), aspect);
+        this(MimicRoute.expand(path.points(), path.style(), aspect), aspect);
     }
 
     PathGeometry(int[] points, float aspect) {
+        this(toDoubles(points), aspect);
+    }
+
+    private static double[] toDoubles(int[] points) {
+        double[] out = new double[points.length];
+        for (int i = 0; i < points.length; i++) {
+            out[i] = points[i];
+        }
+        return out;
+    }
+
+    /** {@code points} in grid cells (flat x, y pairs); stored in board lengths. */
+    PathGeometry(double[] points, float aspect) {
         n = points.length / 2;
         x = new float[n];
         y = new float[n];
@@ -32,8 +47,8 @@ final class PathGeometry {
         dy = new float[Math.max(1, n - 1)];
         cum = new float[n];
         for (int i = 0; i < n; i++) {
-            x[i] = points[i * 2];
-            y[i] = points[i * 2 + 1] * aspect;
+            x[i] = (float) points[i * 2];
+            y[i] = (float) (points[i * 2 + 1] * aspect);
         }
         for (int i = 0; i + 1 < n; i++) {
             float ex = x[i + 1] - x[i];
@@ -62,5 +77,19 @@ final class PathGeometry {
 
     float segmentLength(int segment) {
         return cum[segment + 1] - cum[segment];
+    }
+
+    /** The point at distance {@code s} along the path (clamped to its ends), into {@code out[0], out[1]}. */
+    void pointAt(float s, float[] out) {
+        if (n < 2) {
+            out[0] = n > 0 ? x[0] : 0.0f;
+            out[1] = n > 0 ? y[0] : 0.0f;
+            return;
+        }
+        float d = Math.max(0.0f, Math.min(total, s));
+        int segment = segmentAt(d);
+        float along = d - cum[segment];
+        out[0] = x[segment] + dx[segment] * along;
+        out[1] = y[segment] + dy[segment] * along;
     }
 }

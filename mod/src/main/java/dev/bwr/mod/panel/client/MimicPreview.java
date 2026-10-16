@@ -158,7 +158,7 @@ public final class MimicPreview {
         if (points.length >= 4) {
             PathGeometry geometry = new PathGeometry(points, aspect);
             MESHER.paint(style.color, 0.0f);
-            MESHER.body(geometry, style);
+            MESHER.body(geometry, style, style.arrowRgb(), 0.05f);
         }
         MESHER.paint(0xFFFFFF, 0.1f);
         for (int i = 0; i + 1 < points.length; i += 2) {
@@ -183,7 +183,7 @@ public final class MimicPreview {
                 ghost.endEnd = MimicStyle.END_NONE;
                 ghost.width = 1;
                 MESHER.paint(0xFFFFFF, 0.0f);
-                MESHER.body(geometry, ghost);
+                MESHER.body(geometry, ghost, 0xFFFFFF, 0.0f);
             }
         }
         MESHER.paint(0xFFFF60, 0.2f);
@@ -203,7 +203,12 @@ public final class MimicPreview {
         style.flowEvery = 0;
         PathGeometry geometry = new PathGeometry(path, aspect);
         MESHER.paint(rgb, 0.0f);
-        MESHER.body(geometry, style);
+        MESHER.body(geometry, style, rgb, 0.0f);
+        // The clicked points (waypoints), which EDIT mode moves, inserts and deletes.
+        MESHER.paint(0xFFFFFF, 0.15f);
+        for (int i = 0; i < path.pointCount(); i++) {
+            MESHER.circle(path.x(i), path.y(i) * aspect, 1.1f);
+        }
         return true;
     }
 }

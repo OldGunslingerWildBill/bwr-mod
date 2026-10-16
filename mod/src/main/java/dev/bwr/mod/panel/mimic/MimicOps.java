@@ -274,7 +274,10 @@ public final class MimicOps {
     private static List<PanelBlockEntity> touchedBlocks(ServerLevel level, PanelGroup group, BlockPos anchor, int[] points,
                                                         int width) {
         int[] bounds = MimicGeometry.bounds(points);
-        int reach = (int) Math.ceil(MimicStyle.reach(width));
+        // Room for whatever the style can later become without re-placing the path: the widest line, the largest arrow
+        // heads and a curve's overshoot past its points. A copy in a block it does not reach just draws nothing there.
+        int reach = (int) Math.ceil(Math.max(MimicStyle.reach(Math.max(width, MimicStyle.MAX_WIDTH)),
+                MimicStyle.MAX_ARROW_SIZE * 0.55 + 0.5) + MimicRoute.OVERSHOOT_MARGIN);
         int anchorColumn = group.columnOf(anchor);
         int anchorRow = group.rowOf(anchor);
         int firstColumn = Math.floorDiv(bounds[0] - reach, PanelGeometry.GRID);
@@ -359,14 +362,169 @@ public final class MimicOps {
         return Result.OK;
     }
 
+    /** Cells from a waypoint within which a click grabs or deletes it. */
+    private static final double WAYPOINT_TOLERANCE = 1.6;
+
+    /** A waypoint picked up in EDIT mode, waiting for the click that puts it down. Not saved; one per player. */
+    private record Grab(BlockPos block, long pathId, int index) {
+    }
+
+    private static final java.util.Map<java.util.UUID, Grab> GRABS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * EDIT mode, like editing a draw.io connector's waypoints: a click on a waypoint picks it up and the next click
+     * puts it down there; sneak-click on a waypoint deletes it, sneak-click on the line inserts one; a click on the line
+     * elsewhere opens the path's style screen.
+     */
     private static Result edit(ServerPlayer player, PanelBlockEntity block, double cu, double cv) {
+        double aspect = PanelGeometry.frame(block.panelType(), block.facing()).vLength;
+        Grab grab = GRABS.remove(player.getUUID());
+        if (grab != null) {
+            return moveWaypoint(player, grab, block, cu, cv);
+        }
+        // A waypoint near the cursor, on any path of this block.
+        for (MimicPath candidate : block.mimicPaths()) {
+            int index = MimicGeometry.nearestPoint(candidate, cu, cv, aspect, WAYPOINT_TOLERANCE);
+            if (index < 0) {
+                continue;
+            }
+            if (player.isShiftKeyDown()) {
+                return deleteWaypoint(player, block, candidate, index);
+            }
+            GRABS.put(player.getUUID(), new Grab(block.getBlockPos(), candidate.pathId(), index));
+            say(player, BwrText.tr("message.bwr.mimic_tape.grabbed", "Waypoint %s picked up: click where it goes", index + 1));
+            return Result.OK;
+        }
         MimicPath path = pick(block, cu, cv);
         if (path == null) {
             say(player, BwrText.tr("message.bwr.mimic_tape.nothing_here", "No path there"));
             return Result.NO_PATH;
         }
+        if (player.isShiftKeyDown()) {
+            return insertWaypoint(player, block, path, cu, cv, aspect);
+        }
         PacketDistributor.sendToPlayer(player, new MimicPayloads.OpenConfig(block.getBlockPos(), path.localId()));
         return Result.OPENED;
+    }
+
+    /** Drops a grabbed waypoint (a mode switch or a cancelled edit). */
+    public static void dropGrab(ServerPlayer player) {
+        GRABS.remove(player.getUUID());
+    }
+
+    private static Result moveWaypoint(ServerPlayer player, Grab grab, PanelBlockEntity clicked, double cu, double cv) {
+        ServerLevel level = player.serverLevel();
+        if (!level.isLoaded(grab.block()) || !(level.getBlockEntity(grab.block()) instanceof PanelBlockEntity owner)) {
+            return Result.NOT_LOADED;
+        }
+        MimicPath path = owner.mimicByPathId(grab.pathId());
+        PanelGroup group = owner.group();
+        if (path == null || group == null || !group.contains(clicked.getBlockPos()) || grab.index() >= path.pointCount()) {
+            say(player, BwrText.tr("message.bwr.mimic_tape.grab_lost", "That waypoint is no longer there"));
+            return Result.NO_PATH;
+        }
+        // The cursor in the owner block's cell space, rounded to the grid.
+        int column = group.columnOf(clicked.getBlockPos()) - group.columnOf(owner.getBlockPos());
+        int row = group.rowOf(clicked.getBlockPos()) - group.rowOf(owner.getBlockPos());
+        int x = (int) Math.round(cu + PanelGeometry.GRID * column);
+        int y = (int) Math.round(cv + PanelGeometry.GRID * row);
+        int[] points = path.points();
+        points[grab.index() * 2] = x;
+        points[grab.index() * 2 + 1] = y;
+        return replacePoints(player, owner, path, points, "message.bwr.mimic_tape.moved", "Waypoint moved");
+    }
+
+    private static Result insertWaypoint(ServerPlayer player, PanelBlockEntity block, MimicPath path, double cu, double cv,
+                                         double aspect) {
+        if (path.pointCount() >= MAX_POINTS) {
+            say(player, BwrText.tr("message.bwr.mimic_tape.too_many_points", "A path has at most %s points; finish it", MAX_POINTS));
+            return Result.TOO_MANY_POINTS;
+        }
+        int at = MimicGeometry.nearestSegment(path, cu, cv, aspect);
+        int x = (int) Math.round(cu);
+        int y = (int) Math.round(cv);
+        int[] old = path.points();
+        int[] points = new int[old.length + 2];
+        System.arraycopy(old, 0, points, 0, at * 2);
+        points[at * 2] = x;
+        points[at * 2 + 1] = y;
+        System.arraycopy(old, at * 2, points, at * 2 + 2, old.length - at * 2);
+        return replacePoints(player, block, path, points, "message.bwr.mimic_tape.inserted", "Waypoint added");
+    }
+
+    private static Result deleteWaypoint(ServerPlayer player, PanelBlockEntity block, MimicPath path, int index) {
+        if (path.pointCount() <= 2) {
+            say(player, BwrText.tr("message.bwr.mimic_tape.last_two", "A path needs two points; erase it instead"));
+            return Result.BAD_ARGUMENTS;
+        }
+        int[] old = path.points();
+        int[] points = new int[old.length - 2];
+        System.arraycopy(old, 0, points, 0, index * 2);
+        System.arraycopy(old, index * 2 + 2, points, index * 2, old.length - index * 2 - 2);
+        return replacePoints(player, block, path, points, "message.bwr.mimic_tape.deleted", "Waypoint removed");
+    }
+
+    /**
+     * Gives a path new points (in {@code owner}'s cell space): every copy is taken off and the path placed again with
+     * its style and binding, so it reaches whatever blocks its new shape touches. When the new points cannot be placed
+     * (off the board, a block full, a zero length segment) the old copies are put back exactly as they were.
+     */
+    public static Result replacePoints(ServerPlayer player, PanelBlockEntity owner, MimicPath path, int[] points,
+                                       String messageKey, String fallback) {
+        ServerLevel level = player.serverLevel();
+        if (MimicGeometry.hasZeroSegment(points)) {
+            say(player, BwrText.tr("message.bwr.mimic_tape.same_point", "Two waypoints would be on the same spot"));
+            return Result.SAME_POINT;
+        }
+        long pathId = path.pathId();
+        List<PanelBlockEntity> copies = copies(level, owner, pathId);
+        for (PanelBlockEntity copy : copies) {
+            if (!AssemblyAccess.permitted(level, player, copy.getBlockPos())) {
+                say(player, BwrText.tr("message.bwr.mimic_tape.not_permitted", "You cannot modify this board"));
+                return Result.NOT_PERMITTED;
+            }
+        }
+        MimicStyle style = path.style().copy();
+        dev.bwr.mod.panel.component.InputSource source = path.source();
+        List<int[]> oldPoints = new ArrayList<>();
+        List<MimicStyle> oldStyles = new ArrayList<>();
+        List<dev.bwr.mod.panel.component.InputSource> oldSources = new ArrayList<>();
+        for (PanelBlockEntity copy : copies) {
+            MimicPath piece = copy.mimicByPathId(pathId);
+            oldPoints.add(piece.points());
+            oldStyles.add(piece.style().copy());
+            oldSources.add(piece.source());
+            copy.removeMimicPath(pathId);
+        }
+        Placed placed = place(level, player, owner.getBlockPos(), points, style);
+        if (placed.result() != Result.OK) {
+            for (int i = 0; i < copies.size(); i++) {
+                PanelBlockEntity copy = copies.get(i);
+                copy.addMimicPath(pathId, oldPoints.get(i), oldStyles.get(i));
+                MimicPath restored = copy.mimicByPathId(pathId);
+                if (restored != null) {
+                    restored.setSource(oldSources.get(i));
+                    copy.resampleMimic(restored);
+                }
+                copy.mimicChanged();
+                copy.syncFull();
+            }
+            return placed.result();
+        }
+        for (PanelBlockEntity copy : copies) {
+            copy.syncFull();
+        }
+        if (source != dev.bwr.mod.panel.component.InputSources.NONE) {
+            for (PanelBlockEntity copy : copies(level, owner, placed.pathId())) {
+                MimicPath target = copy.mimicByPathId(placed.pathId());
+                target.setSource(source);
+                copy.resampleMimic(target);
+                copy.mimicChanged();
+                copy.syncFull();
+            }
+        }
+        say(player, BwrText.tr(messageKey, fallback));
+        return Result.OK;
     }
 
     /** The path under a cursor on this block, by the same rule the client uses for its highlight. */
@@ -473,6 +631,7 @@ public final class MimicOps {
         }
         MimicMode next = MimicTapeItem.mode(stack).step(steps);
         cancelDraft(player, stack);
+        dropGrab(player);
         MimicTapeItem.setMode(stack, next);
         say(player, BwrText.tr("message.bwr.mimic_tape.mode", "Mimic tape: %s", Component.translatable(next.translationKey())));
         return true;

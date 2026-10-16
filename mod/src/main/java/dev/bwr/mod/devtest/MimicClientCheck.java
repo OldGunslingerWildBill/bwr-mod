@@ -87,6 +87,7 @@ public final class MimicClientCheck {
     private static final BlockPos BENCH_WALL = new BlockPos(72, Y + 2, 30);
     private static final BlockPos BOUND_WALL = new BlockPos(112, Y + 2, 30);
     private static final BlockPos PREVIEW_WALL = new BlockPos(152, Y + 2, 30);
+    private static final BlockPos SHAPES_WALL = new BlockPos(192, Y + 2, 30);
     private static final BlockPos VALVE = new BlockPos(112, Y, 50);
 
     private record Ctx(ServerLevel level, ServerPlayer player) {
@@ -197,6 +198,37 @@ public final class MimicClientCheck {
         path(level, wall, type, style(0xE02020, 2, false, MimicStyle.END_DOT, MimicStyle.END_DOT, 8), 3, 28, 31, 28);
     }
 
+    /**
+     * Every line shape on one 3 x 2 wall (owner's change 2026-10-16, like draw.io connectors): an elbow route with sharp
+     * corners, the same rounded, a smooth curve through four points, and a straight path with rounded corners; arrow heads
+     * of different sizes, and arrows with their own colour.
+     */
+    private static void shapesScene(ServerLevel level) {
+        wall(level, PanelType.VERTICAL, SHAPES_WALL, 3, 2);
+        symbol(level, SHAPES_WALL, PanelType.VERTICAL, 2, 3, MimicSymbolData.PUMP, 1);
+        symbol(level, SHAPES_WALL, PanelType.VERTICAL, 38, 22, MimicSymbolData.TANK, 0);
+        MimicStyle elbow = style(0x2E7DE0, 3, false, MimicStyle.END_NONE, MimicStyle.END_ARROW, 0);
+        elbow.route = MimicStyle.ROUTE_ELBOW;
+        path(level, SHAPES_WALL, PanelType.VERTICAL, elbow, 10, 7, 24, 14);
+        MimicStyle roundedElbow = style(0x20B040, 2, false, MimicStyle.END_DOT, MimicStyle.END_ARROW, 0);
+        roundedElbow.route = MimicStyle.ROUTE_ELBOW;
+        roundedElbow.corners = MimicStyle.CORNERS_ROUNDED;
+        roundedElbow.radius = 4;
+        roundedElbow.arrowSize = 6;
+        path(level, SHAPES_WALL, PanelType.VERTICAL, roundedElbow, 28, 4, 44, 14);
+        MimicStyle curved = style(0xFFB000, 2, false, MimicStyle.END_NONE, MimicStyle.END_ARROW, 12);
+        curved.corners = MimicStyle.CORNERS_CURVED;
+        curved.arrowOwnColor = true;
+        curved.arrowColor = 0xE02020;
+        curved.arrowSize = 4;
+        path(level, SHAPES_WALL, PanelType.VERTICAL, curved, 4, 26, 12, 18, 22, 28, 32, 20);
+        MimicStyle roundedStraight = style(0xF0F0E0, 2, true, MimicStyle.END_ARROW, MimicStyle.END_ARROW, 0);
+        roundedStraight.corners = MimicStyle.CORNERS_ROUNDED;
+        roundedStraight.radius = 3;
+        roundedStraight.arrowSize = 3;
+        path(level, SHAPES_WALL, PanelType.VERTICAL, roundedStraight, 26, 30, 36, 18, 46, 30);
+    }
+
     /** The scene of the bound path: a closed valve, a path lit by its demand, a still dashed path beside it. */
     private static void boundScene(ServerLevel level) {
         wall(level, PanelType.VERTICAL, BOUND_WALL, 3, 2);
@@ -279,6 +311,10 @@ public final class MimicClientCheck {
         STEPS.add(new Step("bench-flow", ctx -> flowDiagram(ctx.level(), PanelType.BENCHBOARD, BENCH_WALL), PanelType.BENCHBOARD,
                 BENCH_WALL, 3.4, 24, 16, 24, 16, 70, mc -> wallReady(mc, BENCH_WALL, PanelType.BENCHBOARD, 2),
                 mc -> need(PanelRenderer.debugCachedQuads() > 200, "the bench wall's block buffers hold quads"), null));
+        STEPS.add(new Step("wall-shapes", ctx -> shapesScene(ctx.level()), PanelType.VERTICAL, SHAPES_WALL, 3.0, 24, 16, 24, 16, 70,
+                mc -> wallReady(mc, SHAPES_WALL, PanelType.VERTICAL, 2),
+                mc -> need(PanelRenderer.debugCachedQuads() > 200, "the shapes wall's block buffers hold " + PanelRenderer.debugCachedQuads() + " quads"),
+                null));
         STEPS.add(new Step("bound-off", ctx -> boundScene(ctx.level()), PanelType.VERTICAL, BOUND_WALL, 3.0, 24, 16, 24, 16, 70,
                 mc -> wallReady(mc, BOUND_WALL, PanelType.VERTICAL, 1) && litIs(mc, false), mc -> need(litIs(mc, false), "dim"), null));
         STEPS.add(new Step("bound-on", ctx -> openValve(ctx.level(), true), PanelType.VERTICAL, BOUND_WALL, 3.0, 24, 16, 24, 16, 30,
