@@ -47,6 +47,7 @@ final class MimicMesher {
         this.z = z;
     }
 
+    private static final float COS_45 = 0.707f;
     private final float[] at = new float[2];
     private final float[] at2 = new float[2];
 
@@ -344,13 +345,14 @@ final class MimicMesher {
             circle(g.x[last], g.y[last], dotRadius(style.width));
         }
         paint(arrowRgb, arrowZ);
+        float look = Math.min(1.0f, g.total * 0.25f);
         if (startLength > 0.0f) {
-            // Points back along the path: from where the head's base sits towards the first point.
-            g.pointAt(startLength, at);
+            // Points back along the path, along its direction at the first point.
+            g.pointAt(look, at);
             headAlong(g.x[0], g.y[0], at[0], at[1], startLength, wing * startLength / length);
         }
         if (endLength > 0.0f) {
-            g.pointAt(g.total - endLength, at);
+            g.pointAt(g.total - look, at);
             headAlong(g.x[last], g.y[last], at[0], at[1], endLength, wing * endLength / length);
         }
         paint(lineRgb, lineZ);
@@ -385,14 +387,28 @@ final class MimicMesher {
             if (s < startGap || s + length > g.total - endGap) {
                 continue;
             }
-            g.pointAt(s, at);
-            g.pointAt(s + length, at2);
-            float cx = at2[0] - at[0];
-            float cy = at2[1] - at[1];
-            if (Math.sqrt(cx * cx + cy * cy) < length * 0.85f) {
-                continue; // folded round a corner
+            // Leave out an arrow that would sit on a bend: the path turns more than 45 degrees under it.
+            int first = g.segmentAt(s);
+            int lastSegment = g.segmentAt(s + length);
+            if (g.dx[first] * g.dx[lastSegment] + g.dy[first] * g.dy[lastSegment] < COS_45) {
+                continue;
             }
-            headAlong(at2[0], at2[1], at[0], at[1], length, wing);
+            // Centred on the line, pointing along it where it sits (on a curve, along the curve).
+            float middle = s + length / 2.0f;
+            g.pointAt(middle, at);
+            g.pointAt(Math.max(0.0f, middle - 0.5f), at2);
+            float ex = at[0] - at2[0];
+            float ey = at[1] - at2[1];
+            g.pointAt(Math.min(g.total, middle + 0.5f), at2);
+            ex += at2[0] - at[0];
+            ey += at2[1] - at[1];
+            float l = (float) Math.sqrt(ex * ex + ey * ey);
+            if (l < 1.0e-5f) {
+                continue;
+            }
+            ex /= l;
+            ey /= l;
+            head(at[0] + ex * length / 2.0f, at[1] + ey * length / 2.0f, ex, ey, length, wing);
         }
     }
 }
