@@ -341,7 +341,11 @@ cell grid); the points and lines drawn so far show live.
 ### Modes
 
 **Sneak and scroll** with the tape switches **draw**, **erase** and **edit** (the tooltip and the action bar name the mode; switching
-drops a half drawn path). **Erase** removes the path under the cursor (all its pieces); **edit** opens its style screen. The panel
+drops a half drawn path). **Erase** removes the path under the cursor (all its pieces). **Edit** works like editing a draw.io
+connector: **click a waypoint** (a clicked point; they show as white dots on the outlined path) to pick it up and **click again** where
+it should go (it may move into a neighbouring block of the wall); **sneak-click a waypoint** to remove it, **sneak-click the line** to
+add one where the cursor is; a plain click on the line elsewhere opens the style screen. A moved path keeps its style and binding; a
+move that would stack two waypoints, or leave the board, is refused and changes nothing. The panel
 **wrench** opens the same screen on any path that has no component over the cursor, and the panel **linker** opens the binding screen.
 In erase and edit the path under the cursor is outlined in red or cyan.
 
@@ -352,9 +356,13 @@ In erase and edit the path under the cursor is outlined in red or cyan.
 | Colour | the control room palette (red, green, white, amber, blue and the default blue) or `#RRGGBB` |
 | Width | 1, 2 (default), 3 or 4 cells |
 | Line | solid or dashed |
+| Route | **straight** between the clicked points, or **elbow**: two right-angle turns between each pair of points (draw.io's orthogonal connector) |
+| Corners | **sharp**, **rounded** (each corner a round fillet of the corner radius) or **curved** (one smooth curve through all the points) |
+| Corner radius | 1 to 8 cells, for rounded corners (default 3) |
 | Start and end | plain, **arrow** or **dot**; the default is an arrow at the end |
-| Flow arrows | off, or an arrowhead every 8, 16 or 32 cells along the path |
-| Moving arrows | for a bound path that is lit: the flow arrows move along it (default on) |
+| Arrow size | automatic (follows the width) or 1 to 8 cells long |
+| Arrow colour | the line's colour (leave blank) or its own `#RRGGBB` |
+| Flow arrows | off, or an arrowhead every 8, 16 or 32 cells along the path; they point along the path, round curves too |
 | Lit above | for a bound path: the level of the signal above which it is lit (default 0) |
 
 **Junctions** are automatic: a dot is drawn where a path's point lies on another path, on the inside of one of its segments (a tee).
@@ -364,8 +372,7 @@ Two paths that only cross, or meet end to end, get no dot; an end that carries a
 
 Sneak-right-click a plant device with the linker, then right-click a path (with no component over the cursor): the screen lists the
 device's signals. Bound, the path is drawn in its colour while the signal is **above its threshold** and dim grey otherwise, as a
-bound `mimic_line` does; with flow arrows on, the arrows move along a lit path (a function of game time on each client: nothing is
-sent) and sit still and grey on a dim one. **Only plant signals can be bound** (one input per path, the same checks as for a
+bound `mimic_line` does. Nothing moves: paths are static lines (the project owner's call). **Only plant signals can be bound** (one input per path, the same checks as for a
 component: same dimension, within `linkRange`, loaded, permitted). A path has no output, so nothing here commands the plant.
 
 ### Saves, sync, rendering
@@ -375,8 +382,8 @@ panel without any saves exactly as before and an older save loads unchanged. A d
 panel state when something changes; a bound path's value travels as an ordinary value delta (addressed as `-localId`), batched like
 every other, with no packet of its own. Rendering is baked: the lines, ends, junction dots and the arrows of an unbound path are flat
 quads (mitred corners, triangular heads) recorded once into the block's GPU buffer with the components' static geometry, clipped to
-the block so a path across blocks has no overdraw; only what a signal changes (the lit overlay and the moving arrows) is drawn per
-frame. It works on vertical, benchboard and console boards (a line is as thick and an arrow as true on a slope as on a wall) and with
+the block so a path across blocks has no overdraw; only a bound path's lit overlay is drawn per frame, and it is pre-built.
+Rounded and curved shapes are tessellated into short pieces when the mesh is built (at most 1024 points a path). It works on vertical, benchboard and console boards (a line is as thick and an arrow as true on a slope as on a wall) and with
 and without shader packs.
 
 ## 3. Worked example: a small reactor control room

@@ -20,8 +20,6 @@ public final class MimicRoute {
     private MimicRoute() {
     }
 
-    /** Cells a curve may run outside the box of its points (a Catmull-Rom curve overshoots a little at sharp turns). */
-    public static final int OVERSHOOT_MARGIN = 3;
     /** Straight pieces per fillet and per curve span; enough to look round at 1 to 2 blocks. */
     private static final int FILLET_STEPS = 8;
     private static final int CURVE_STEPS = 12;

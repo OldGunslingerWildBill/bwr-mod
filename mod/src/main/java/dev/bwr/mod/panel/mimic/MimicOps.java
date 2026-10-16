@@ -239,7 +239,8 @@ public final class MimicOps {
                 return new Placed(Result.OFF_BOARD, 0L, 0);
             }
         }
-        List<PanelBlockEntity> touched = touchedBlocks(level, group, anchor, points, style.width);
+        double aspect = PanelGeometry.frame(anchorBlock.panelType(), anchorBlock.facing()).vLength;
+        List<PanelBlockEntity> touched = touchedBlocks(level, group, anchor, points, style, aspect);
         if (touched.isEmpty()) {
             return new Placed(Result.OFF_BOARD, 0L, 0);
         }
@@ -270,20 +271,30 @@ public final class MimicOps {
         return new Placed(Result.OK, pathId, touched.size());
     }
 
-    /** Every loaded block of the group that a path with these points and this width draws on. */
+    /**
+     * Every loaded block of the group that a path with these points draws on in {@code style}: the box of the path as
+     * it is drawn (its elbows, fillets or curve, {@link MimicRoute}) grown by how far its line and decorations reach.
+     */
     private static List<PanelBlockEntity> touchedBlocks(ServerLevel level, PanelGroup group, BlockPos anchor, int[] points,
-                                                        int width) {
-        int[] bounds = MimicGeometry.bounds(points);
-        // Room for whatever the style can later become without re-placing the path: the widest line, the largest arrow
-        // heads and a curve's overshoot past its points. A copy in a block it does not reach just draws nothing there.
-        int reach = (int) Math.ceil(Math.max(MimicStyle.reach(Math.max(width, MimicStyle.MAX_WIDTH)),
-                MimicStyle.MAX_ARROW_SIZE * 0.55 + 0.5) + MimicRoute.OVERSHOOT_MARGIN);
+                                                        MimicStyle style, double aspect) {
+        double[] drawn = MimicRoute.expand(points, style, aspect);
+        double minX = Double.MAX_VALUE;
+        double minY = Double.MAX_VALUE;
+        double maxX = -Double.MAX_VALUE;
+        double maxY = -Double.MAX_VALUE;
+        for (int i = 0; i + 1 < drawn.length; i += 2) {
+            minX = Math.min(minX, drawn[i]);
+            maxX = Math.max(maxX, drawn[i]);
+            minY = Math.min(minY, drawn[i + 1]);
+            maxY = Math.max(maxY, drawn[i + 1]);
+        }
+        double reach = style.sideReach(points.length / 2);
         int anchorColumn = group.columnOf(anchor);
         int anchorRow = group.rowOf(anchor);
-        int firstColumn = Math.floorDiv(bounds[0] - reach, PanelGeometry.GRID);
-        int lastColumn = Math.floorDiv(bounds[2] + reach, PanelGeometry.GRID);
-        int firstRow = Math.floorDiv(bounds[1] - reach, PanelGeometry.GRID);
-        int lastRow = Math.floorDiv(bounds[3] + reach, PanelGeometry.GRID);
+        int firstColumn = (int) Math.floor((minX - reach) / PanelGeometry.GRID);
+        int lastColumn = (int) Math.floor((maxX + reach) / PanelGeometry.GRID);
+        int firstRow = (int) Math.floor((minY - reach) / PanelGeometry.GRID);
+        int lastRow = (int) Math.floor((maxY + reach) / PanelGeometry.GRID);
         List<PanelBlockEntity> touched = new ArrayList<>();
         for (int row = firstRow; row <= lastRow; row++) {
             for (int column = firstColumn; column <= lastColumn; column++) {
@@ -471,6 +482,12 @@ public final class MimicOps {
      */
     public static Result replacePoints(ServerPlayer player, PanelBlockEntity owner, MimicPath path, int[] points,
                                        String messageKey, String fallback) {
+        return replacePoints(player, owner, path, points, path.style().copy(), messageKey, fallback);
+    }
+
+    /** {@link #replacePoints} with a new style; no message when {@code messageKey} is null. */
+    public static Result replacePoints(ServerPlayer player, PanelBlockEntity owner, MimicPath path, int[] points,
+                                       MimicStyle newStyle, String messageKey, String fallback) {
         ServerLevel level = player.serverLevel();
         if (MimicGeometry.hasZeroSegment(points)) {
             say(player, BwrText.tr("message.bwr.mimic_tape.same_point", "Two waypoints would be on the same spot"));
@@ -484,7 +501,7 @@ public final class MimicOps {
                 return Result.NOT_PERMITTED;
             }
         }
-        MimicStyle style = path.style().copy();
+        MimicStyle style = newStyle.copy();
         dev.bwr.mod.panel.component.InputSource source = path.source();
         List<int[]> oldPoints = new ArrayList<>();
         List<MimicStyle> oldStyles = new ArrayList<>();
@@ -523,7 +540,9 @@ public final class MimicOps {
                 copy.syncFull();
             }
         }
-        say(player, BwrText.tr(messageKey, fallback));
+        if (messageKey != null) {
+            say(player, BwrText.tr(messageKey, fallback));
+        }
         return Result.OK;
     }
 
@@ -572,12 +591,38 @@ public final class MimicOps {
                 return false;
             }
         }
+        MimicStyle next = path.style().copy();
+        next.apply(edit);
+        double aspect = PanelGeometry.frame(block.panelType(), block.facing()).vLength;
+        if (!sameBlocks(level, block, path.points(), path.style(), next, aspect)) {
+            // The new shape or arrows reach other blocks: the path is placed again with the new style, keeping its
+            // points and binding, so it has a copy exactly where it now draws.
+            return replacePoints(player, block, path, path.points(), next, null, null) == Result.OK;
+        }
         for (PanelBlockEntity copy : copies) {
             copy.mimicByPathId(path.pathId()).style().apply(edit);
             copy.mimicChanged();
             copy.syncFull();
         }
         return true;
+    }
+
+    /** Whether a path drawn in {@code before} and in {@code after} covers the same blocks of its group. */
+    private static boolean sameBlocks(ServerLevel level, PanelBlockEntity block, int[] points, MimicStyle before,
+                                      MimicStyle after, double aspect) {
+        PanelGroup group = block.group();
+        if (group == null) {
+            return true;
+        }
+        java.util.Set<BlockPos> a = new java.util.HashSet<>();
+        for (PanelBlockEntity b : touchedBlocks(level, group, block.getBlockPos(), points, before, aspect)) {
+            a.add(b.getBlockPos());
+        }
+        java.util.Set<BlockPos> c = new java.util.HashSet<>();
+        for (PanelBlockEntity b : touchedBlocks(level, group, block.getBlockPos(), points, after, aspect)) {
+            c.add(b.getBlockPos());
+        }
+        return a.equals(c);
     }
 
     /** A bind request addressed to a path ({@code -localId}); see {@link WiringOps#bind}. */

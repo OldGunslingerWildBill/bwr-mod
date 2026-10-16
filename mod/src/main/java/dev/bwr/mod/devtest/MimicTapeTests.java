@@ -1036,6 +1036,29 @@ public final class MimicTapeTests {
             MimicPath kept = left.mimicPaths().get(0);
             check(helper, points(kept).equals(before) && kept.source() instanceof PlantSource
                     && right.mimicByPathId(kept.pathId()) != null, "the path, its copy and its binding are untouched");
+
+            // A style that reaches further (wider line, bigger arrows) gives the neighbouring block its copy, and a
+            // path that stays inside its block gives the neighbour nothing.
+            check(helper, s.place(left, 13, 4, 13, 12).result() == Result.OK, "a short path near the edge");
+            MimicPath near = left.mimicPaths().get(left.mimicPaths().size() - 1);
+            check(helper, right.mimicByPathId(near.pathId()) == null, "at width 2 it does not reach the right block");
+            s.linker(s.devices);
+            check(helper, s.bindPath(left, near, WiringOps.BindKind.PLANT, "position") == WiringOps.Result.OK, "bind it");
+            s.tape(1);
+            CompoundTag wider = new CompoundTag();
+            wider.putInt("Width", 4);
+            wider.putInt("ArrowSize", 8);
+            check(helper, MimicOps.configure(s.player, left.getBlockPos(), near.localId(), wider), "widen it");
+            MimicPath widened = null;
+            for (MimicPath candidate : left.mimicPaths()) {
+                if (points(candidate).equals("[13, 4, 13, 12]")) {
+                    widened = candidate;
+                }
+            }
+            check(helper, widened != null && widened.style().width == 4 && widened.style().arrowSize == 8, "the wider path is there");
+            MimicPath reached = right.mimicByPathId(widened.pathId());
+            check(helper, reached != null && reached.style().width == 4, "and now the right block holds its copy");
+            check(helper, widened.source() instanceof PlantSource && reached.source() instanceof PlantSource, "bound in both");
         });
     }
 

@@ -165,9 +165,23 @@ public final class MimicStyle {
         return width * 1.1 + 1.5;
     }
 
-    /** How far this path's decorations reach, its arrow size included. */
-    public double reach() {
-        return Math.max(reach(width), arrowSize > 0 ? arrowSize * 0.55 + 0.5 : 0.0);
+    /**
+     * How far this path's drawing reaches sideways from its centre line (arrow heads point along the path and end at
+     * its points, so only their half width counts): half the line, the half width of any arrow head, the radius of end
+     * and junction dots, and, for a path with sharp corners, the outside of a mitred or bevelled corner.
+     */
+    public double sideReach(int pointCount) {
+        double half = width / 2.0;
+        double dot = 0.5 * width + 1.0;
+        double reach = Math.max(half, dot);
+        if (startEnd == END_ARROW || endEnd == END_ARROW || flowEvery > 0) {
+            double arrowHalf = arrowSize > 0 ? arrowSize * 0.45 : 0.5 * width + 1.2;
+            reach = Math.max(reach, Math.max(arrowHalf, half + 0.6));
+        }
+        if (pointCount > 2 && !CORNERS_ROUNDED.equals(corners) && !CORNERS_CURVED.equals(corners)) {
+            reach = Math.max(reach, half * 3.0);
+        }
+        return reach + 0.1;
     }
 
     /** The colour the arrow heads are drawn in. */
