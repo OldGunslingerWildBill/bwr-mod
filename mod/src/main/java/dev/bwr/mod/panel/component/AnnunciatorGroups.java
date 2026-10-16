@@ -39,6 +39,10 @@ public final class AnnunciatorGroups {
             }
             boolean any = false;
             for (PanelComponent component : be.owned()) {
+                if (acknowledge && component.data() instanceof PaperlessRecorderData recorder && recorder.ackGroup == number
+                        && recorder.acknowledgeAll() > 0) {
+                    changed++; // the recorder's own patch carries the change; no full resend
+                }
                 if (component.type() instanceof AnnunciatorType && component.data() instanceof AnnunciatorData data
                         && data.group == number && (acknowledge ? data.logic.acknowledge() : data.logic.reset())) {
                     component.touch();

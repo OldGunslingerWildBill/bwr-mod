@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": ["GGG", "ACA", "III"], "key": {"G": {"item": "minecraft:glass_pane"}, "A": {"item": "minecraft:paper"}, "C": {"item": "bwr:strip_chart"}, "I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:paperless_recorder", "count": 1}}

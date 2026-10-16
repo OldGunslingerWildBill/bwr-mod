@@ -155,6 +155,15 @@ public abstract class ComponentType {
         return false;
     }
 
+    /**
+     * Whether the panel sampler must keep calling {@link ComponentData#sampleContent} for this component even though
+     * none of its inputs is a live source (a recorder whose channels are wired to constants or to CC still has a
+     * clock to keep). Defaults to no.
+     */
+    public boolean keepsSampling(PanelComponent component) {
+        return false;
+    }
+
     /** Whether a bare-handed click does anything (makes the client swing the arm). Override with {@link #use}. */
     public boolean isInteractive() {
         return false;

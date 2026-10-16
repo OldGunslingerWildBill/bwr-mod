@@ -655,6 +655,9 @@ public final class PanelBlockEntity extends BlockEntity {
                     return true;
                 }
             }
+            if (component.type() != null && component.type().keepsSampling(component)) {
+                return true;
+            }
         }
         return false;
     }

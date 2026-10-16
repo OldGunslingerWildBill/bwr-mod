@@ -47,6 +47,8 @@ public final class ComponentTypes {
     // -- core displays (full core display spec) --
     public static final ComponentType FULL_CORE_DISPLAY = register(new FullCoreDisplayType());
     public static final ComponentType ROD_SELECT_MATRIX = register(new RodSelectMatrixType());
+    // -- recorders --
+    public static final ComponentType PAPERLESS_RECORDER = register(new PaperlessRecorderType());
     // ----------------------------------------------------------------------------
 
     /** Forces class initialisation. */
