@@ -72,10 +72,10 @@ final class RecorderPerformance {
         }
         for (int i = 0; i < 5; i++) {
             boolean big = i == 4;
-            BlockPos at = big ? panel(8, 0) : panel(i * 2, 0);
+            BlockPos at = big ? panel(5, 0) : panel(i, 0);
             PanelBlockEntity be = (PanelBlockEntity) level.getBlockEntity(at);
             PanelComponent rec = PanelOps.placeDirect(level, at, 0, 0, ComponentTypes.PAPERLESS_RECORDER,
-                    big ? Footprint.of(48, 48) : Footprint.of(32, 32));
+                    big ? Footprint.of(32, 32) : Footprint.of(16, 16));
             if (rec == null) {
                 throw new AssertionError("performance recorder " + i + " did not fit");
             }
@@ -128,7 +128,7 @@ final class RecorderPerformance {
             player.setNoGravity(true);
             player.getAbilities().flying = true;
             player.onUpdateAbilities();
-            player.connection.teleport(40.0, 112.0 - player.getEyeHeight() + 0.0, 86.0, 0.0f, 0.0f);
+            player.connection.teleport(41.5, 112.0 - player.getEyeHeight() + 0.0, 92.0, 0.0f, 0.0f);
         });
     }
 

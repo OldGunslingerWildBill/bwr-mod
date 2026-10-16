@@ -1084,28 +1084,59 @@ public final class PaperlessRecorderData extends ComponentData {
 
     // ---- persistence
 
-    private static void putInt(CompoundTag tag, String key, int value, int fallback) {
-        if (value != fallback) {
+    private void putInt(CompoundTag tag, String key, int value, int fallback) {
+        if (dense || value != fallback) {
             tag.putInt(key, value);
         }
     }
 
-    private static void putBool(CompoundTag tag, String key, boolean value, boolean fallback) {
-        if (value != fallback) {
+    private void putBool(CompoundTag tag, String key, boolean value, boolean fallback) {
+        if (dense || value != fallback) {
             tag.putBoolean(key, value);
         }
     }
 
-    private static void putDouble(CompoundTag tag, String key, double value, double fallback) {
-        if (Double.compare(value, fallback) != 0) {
+    private void putDouble(CompoundTag tag, String key, double value, double fallback) {
+        if (dense || Double.compare(value, fallback) != 0) {
             tag.putDouble(key, value);
         }
     }
 
-    private static void putText(CompoundTag tag, String key, String value, String fallback) {
-        if (!value.equals(fallback)) {
+    private void putText(CompoundTag tag, String key, String value, String fallback) {
+        if (dense || !value.equals(fallback)) {
             tag.putString(key, value);
         }
+    }
+
+    /** While true {@link #save} writes every setting, not only the ones that differ from their default. */
+    private boolean dense;
+
+    /**
+     * Every setting as a key, defaults included (no history, state or log): what a setup screen compares to find
+     * which settings an edit changed, so that it can send only those.
+     */
+    public CompoundTag denseConfigTag() {
+        dense = true;
+        try {
+            CompoundTag tag = new CompoundTag();
+            save(tag);
+            for (String key : new ArrayList<>(tag.getAllKeys())) {
+                if (!isSettingKey(key)) {
+                    tag.remove(key);
+                }
+            }
+            return tag;
+        } finally {
+            dense = false;
+        }
+    }
+
+    private static boolean isSettingKey(String key) {
+        return switch (key) {
+            case "DotSeq", "DotAge", "DotStarted", "AlarmStates", "Log", "LogSeq", "Msgs", "MsgSeq", "Screen", "Group", "Running",
+                    "CoverOpen", "Quad" -> false;
+            default -> !key.endsWith("Dots");
+        };
     }
 
     @Override

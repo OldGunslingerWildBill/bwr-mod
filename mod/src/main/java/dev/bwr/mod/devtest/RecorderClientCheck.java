@@ -216,6 +216,13 @@ public final class RecorderClientCheck {
                 ui.press(RecorderKey.ESC, d);
                 ui.press(RecorderKey.FUNC, d);
             }, rig -> true));
+            // as a player sees them: from reading distance, about 2.5 blocks
+            for (String bg : new String[] {"white", "black"}) {
+                SHOTS.add(screen("dx1000-trend-reading-" + bg, 1, false, RecorderScreen.TREND, bg, "horizontal"));
+                SHOTS.add(screen("dx1000-digital-reading-" + bg, 1, false, RecorderScreen.DIGITAL, bg, "horizontal"));
+            }
+            SHOTS.add(screen("dx2000-trend-reading-white", 2, false, RecorderScreen.TREND, "white", "horizontal"));
+            SHOTS.add(screen("dx2000-digital-reading-white", 2, false, RecorderScreen.DIGITAL, "white", "horizontal"));
             // the bezels
             SHOTS.add(new Shot("dx1000-bezel", 1, false, null, rig -> {
                 RecorderUi ui = RecorderClientStats.ui(rig.c(Minecraft.getInstance(), 1));
@@ -261,9 +268,9 @@ public final class RecorderClientCheck {
         }
         RIG.level = level;
         RIG.be1 = (PanelBlockEntity) level.getBlockEntity(panel(0, 0));
-        RIG.s1 = PanelOps.placeDirect(level, panel(0, 0), 0, 0, ComponentTypes.PAPERLESS_RECORDER, Footprint.of(32, 32));
+        RIG.s1 = PanelOps.placeDirect(level, panel(0, 0), 0, 0, ComponentTypes.PAPERLESS_RECORDER, Footprint.of(16, 16));
         RIG.be2 = (PanelBlockEntity) level.getBlockEntity(panel(3, 0));
-        RIG.s2 = PanelOps.placeDirect(level, panel(3, 0), 0, 0, ComponentTypes.PAPERLESS_RECORDER, Footprint.of(48, 48));
+        RIG.s2 = PanelOps.placeDirect(level, panel(3, 0), 0, 0, ComponentTypes.PAPERLESS_RECORDER, Footprint.of(32, 32));
         if (RIG.s1 == null || RIG.s2 == null) {
             throw new AssertionError("recorders did not fit");
         }
@@ -362,15 +369,26 @@ public final class RecorderClientCheck {
     // ---- camera
 
     static double[] face(int target, boolean close) {
-        // world x/y of the screen centre (close) or the bezel centre, and the distance for each framing
+        // world x/y of the screen centre (close) or the bezel centre, and the distance for each framing.
+        // A DX1000 is one block (16 cells), a DX2000 two blocks: both fixtures are at the default sizes.
         if (target == 1) {
-            double x = 41 - (close ? 2.8345 : 2.8345) / RecorderLayout.DX1000_INCHES * 2.0;
-            double y = TOP_Y - (close ? 2.380 : 2.8345) / RecorderLayout.DX1000_INCHES * 2.0;
-            return new double[] {x, y, close ? 1.25 : 2.5};
+            double x = 41 - 2.8345 / RecorderLayout.DX1000_INCHES;
+            double y = TOP_Y - (close ? 2.380 : 2.8345) / RecorderLayout.DX1000_INCHES;
+            return new double[] {x, y, close ? 0.7 : 1.4};
         }
-        double x = 38 - 5.6693 / RecorderLayout.DX2000_INCHES * 3.0;
-        double y = TOP_Y - (close ? 4.666 : 5.6693) / RecorderLayout.DX2000_INCHES * 3.0;
-        return new double[] {x, y, close ? 1.75 : 3.4};
+        double x = 38 - 5.6693 / RecorderLayout.DX2000_INCHES * 2.0;
+        double y = TOP_Y - (close ? 4.666 : 5.6693) / RecorderLayout.DX2000_INCHES * 2.0;
+        return new double[] {x, y, close ? 1.2 : 2.3};
+    }
+
+    /** The bezel centre seen from the distance a player reads a panel from: about 2.5 blocks (3 for the larger DX2000). */
+    static double[] reading(int target) {
+        double[] view = face(target, false);
+        return new double[] {view[0], view[1], target == 1 ? 2.5 : 3.0};
+    }
+
+    private static double[] viewOf(Shot shot) {
+        return shot.name().contains("-reading") ? reading(shot.target()) : face(shot.target(), shot.close());
     }
 
     static void teleport(Minecraft mc, double x, double y, double z) {
@@ -381,6 +399,7 @@ public final class RecorderClientCheck {
             player.setNoGravity(true);
             player.getAbilities().flying = true;
             player.onUpdateAbilities();
+            player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
             player.connection.teleport(x, y - player.getEyeHeight(), z, 0.0f, 0.0f);
         });
     }
@@ -449,6 +468,10 @@ public final class RecorderClientCheck {
             return;
         }
         if (shot >= SHOTS.size()) {
+            if (wants("keys") && !RecorderKeyChecks.done()) {
+                RecorderKeyChecks.step(mc, server);
+                return;
+            }
             if (wants("performance")) {
                 performancePhase = true;
                 return;
@@ -461,7 +484,7 @@ public final class RecorderClientCheck {
         if (!requested) {
             requested = true;
             frames = 0;
-            double[] view = face(current.target(), current.close());
+            double[] view = viewOf(current);
             teleport(mc, view[0], view[1], FACE_Z - view[2]);
             if (current.server() != null) {
                 Consumer<Rig> action = current.server();
@@ -473,9 +496,12 @@ public final class RecorderClientCheck {
             current.client().accept(RIG);
         }
         PanelComponent client = RIG.c(mc, current.target());
-        double[] view = face(current.target(), current.close());
-        boolean placed = Math.abs(mc.player.getX() - view[0]) < 0.05 && Math.abs(mc.player.getEyeY() - view[1]) < 0.05
-                && Math.abs(mc.player.getZ() - (FACE_Z - view[2])) < 0.05;
+        double[] view = viewOf(current);
+        boolean placed = Math.abs(mc.player.getX() - view[0]) < 0.15 && Math.abs(mc.player.getEyeY() - view[1]) < 0.15
+                && Math.abs(mc.player.getZ() - (FACE_Z - view[2])) < 0.7; // the distance only frames the picture
+        if (!placed && ++waiting % 40 == 0) {
+            teleport(mc, view[0], view[1], FACE_Z - view[2]); // something pushed the player off its mark: put it back
+        }
         boolean ready = client != null && placed && current.ready().test(RIG);
         if (!ready) {
             frames = 0;

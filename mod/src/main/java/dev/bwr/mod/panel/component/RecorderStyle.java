@@ -113,8 +113,12 @@ public enum RecorderStyle {
         return List.of(DX1000.id, DX2000.id);
     }
 
-    /** Which style a freshly placed recorder of {@code footprint} is: 3 x 3 blocks and larger are a DX2000, as in the item. */
+    /**
+     * Which style a freshly placed recorder of {@code footprint} is: from 32 cells (2 x 2 blocks) a DX2000, which is always
+     * twice a DX1000 of the same setting (DX1000 12, 16, 20, 24 cells; DX2000 24, 32, 40, 48), smaller a DX1000. The one size
+     * both makes have, 24 cells, is a DX1000; a DX2000 of 24 cells is a DX1000 of that size switched in the setup screen.
+     */
     public static RecorderStyle forFootprint(Footprint footprint) {
-        return footprint != null && footprint.w() >= 48 && footprint.h() >= 48 ? DX2000 : DX1000;
+        return footprint != null && footprint.w() >= 32 && footprint.h() >= 32 ? DX2000 : DX1000;
     }
 }

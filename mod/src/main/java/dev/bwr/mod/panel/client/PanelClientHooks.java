@@ -32,7 +32,9 @@ public final class PanelClientHooks {
         }
         PanelComponent component = be.component(id);
         if (component != null && component.type() != null) {
-            minecraft.setScreen(new ConfigScreen(be, component));
+            // A recorder has far more settings than the generic screen can show: it has its own, with tabs.
+            minecraft.setScreen(component.data() instanceof dev.bwr.mod.panel.component.PaperlessRecorderData
+                    ? new RecorderSetupScreen(be, component) : new ConfigScreen(be, component));
         }
     }
 }

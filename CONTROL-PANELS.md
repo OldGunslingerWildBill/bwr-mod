@@ -39,6 +39,7 @@ may span up to 8 x 8, because a 185-rod core is 96 cells across.
 | Round dial | 12x12, 16x16, 20x20, 24x24, 32x32 |
 | Edgewise meter | vertical 6x16, 6x24, 8x24, 8x32; horizontal 16x6, 24x6, 24x8, 32x8 |
 | Strip-chart recorder | 16x16, 24x16, 32x24 |
+| Paperless recorder | DX1000 16x16 (one block, the default), 12, 20, 24; DX2000 32x32 (2 x 2, twice a DX1000), 40, 48; all square |
 | 7- and 16-segment display | 5 cells wide per digit, 8 tall: 20x8 (4 digits), 1 to 12 digits |
 | Character LCD | 3 cells wide per character, 4 tall per row: 48x8 (16 x 2), 1 to 4 rows of 8 to 20 characters |
 | Graphic display | 32x32 (2 x 2 blocks), 16x16, 48x48, 64x64 and rectangles; 2 pixels per cell |
@@ -253,6 +254,55 @@ unloads while the reactor stays loaded, never leaves a rod running. The selectio
 **There are no rod blocks, no sequence control and no worth minimiser.** RWM, RSCS and RBM are protection logic and
 the mod never provides them; build them from the signals with CC or relays if you want them.
 
+## 2c. Paperless recorder (Yokogawa DX1000 and DX2000)
+
+`paperless_recorder` is a multi channel recorder with the look and the keys of a Yokogawa DX1000 or DX2000. Put any plant
+signal on any channel with the linker (a plant signal, a component, redstone, CC or a constant) and give each channel its own
+tag, unit, span, colour and up to four alarms. **It records and indicates only: alarms drive nothing, it has no outputs, and
+the one thing a player does to an alarm is acknowledge it.**
+
+| | DX1000 | DX2000 |
+| --- | --- | --- |
+| Footprint (cells, square) | 12, **16** (one block, default), 20, 24 | 32 (two blocks, default), 40, 48: always twice a DX1000 |
+| Channels | 2, 4, 6 or 12 | 4, 8, 10, 20, 30, 40 or 48 |
+| Groups | 10 of up to 6 channels | 36 of up to 10 |
+| Screen | 320 x 240 | 640 x 480 |
+| Extra screens | | four-panel (MIX, all trend, all digital, all bar) and the circular trend |
+
+A new recorder is a DX1000 at one block and a DX2000 at 2 x 2 (right-click air with the item cycles the size; the make follows the size, 32 cells and up is a DX2000); the make and the
+channel count are set on the setup screen. One input port per channel (`ch01` ... `ch48`); the binding screen pages its port
+selector twelve at a time when a recorder has more.
+
+**Screens** (DISP/ENTER opens the display selection menu): trend (horizontal, vertical or wide; 30 dots to a division, every dot the
+minimum and maximum of its time, trend intervals 5 s to 10 h per division, trip lines, messages), digital, bar, overview (a tile
+per channel, coloured by its most urgent alarm), alarm summary (the last 200 alarm events) and, on the DX2000, the four-panel
+and circular displays. The status bar shows the group, the in-game date and time (or the real clock, a setting), the history held
+and the alarm icon (flashing red while an alarm is unacknowledged, flashing green when they have cleared but not been acknowledged).
+The background is white or black.
+
+**Keys** are the model's own parts and are clicked on the face: DISP/ENTER and the arrows (up and down move in the menu; outside it
+left and right change the group and up and down step trend, digital and bar), FUNC (soft keys: alarm ACK, message 1 to 10, free
+message, START, STOP; the last soft key pages), START and STOP (memory sampling: while stopped no dot is closed and nothing is
+logged, the alarms still indicate), ESC, MENU (the setup screen), USER and the favourite key (a click and nothing else). The DX2000's
+key-panel cover hides the soft keys and every key but DISP/ENTER and the arrows while it is closed; its tab opens and closes it
+(saved with the component). The menu and the FUNC strip are client side: each player sees their own.
+
+**Alarms** are H, L, T and t (delayed, seconds), R and r (rate of rise and fall over 1 to 32 scans of one second), each with a
+hysteresis, a level (1 to 4) and a colour, and may be hidden (not indicated, not logged). With hold indication (the default) an
+alarm flashes until it is acknowledged; a cleared one flashes green until it is. ACK is FUNC then the alarm ACK soft key, or a panel
+pushbutton with the `ack` role and the same group number as the recorder's `AckGroup` (default 1). A signal with no value holds an
+alarm's state and shows `-----`; beyond 105 percent of the span a value reads `+Over` or `-Over`.
+
+**Setup screen** (the MENU key or the wrench): tabs Channels (a paged list; click one to edit it), Alarms, Groups, Display and
+Messages. It sends the ordinary configure packet, which the server validates per setting and accepts only from a player holding the
+panel wrench; without one the screen says so. The settings are flattened keys (`Ch03Tag`, `Ch03Al2Type`, `G01C4`) and only
+non-default ones are saved, so old saves load unchanged.
+
+Sampling rides the panel sampler (no ticker of its own): a recorder with anything bound is sampled every `sampleTicks`. The
+history (360 dots a channel), the alarm states and the log are saved; the server records, clients are sent small patches and never
+bucket on their own. Cost: the screen is one texture per recorder, repainted only when a dot closes, once a second for the values and
+on a blink or a key, never per frame; see TESTING.md.
+
 ## 3. Worked example: a small reactor control room
 
 A vertical board five blocks wide and three high (one group, 80 x 48 cells; see the component sizes above). Link the reactor controller once,
@@ -397,7 +447,7 @@ the existing `bwr_reactor` / `bwr_msiv` API.)
   its own output, so it cannot latch itself.
 * `bwr-panels.toml`: `sampleTicks` (2), `linkRange` (64), `maxGroupColumns` (16), `maxGroupRows` (8),
   `maxComponentsPerBlock` (64), `maxLabelLength` (16).
-* Network protocol version 16. Packets: `panel_linker_open` and `panel_bind` (client to server, validated:
+* Network protocol version 19 (the recorder's free message packet `panel_recorder_message`). Packets: `panel_linker_open` and `panel_bind` (client to server, validated:
   reach, claim permission, the linker's own device, dimension, range, key exists, momentary value within the
   command's range), `panel_linker_screen`
   (server to client), and `panel_content` (server to client: bounded display content patches, at most one per

@@ -507,10 +507,16 @@ public final class PaperlessRecorderTests {
         same(h, RecorderStyle.DX1000.textureWidth() * 1000 + RecorderStyle.DX1000.textureHeight(), 320_240, "320 x 240");
         same(h, Arrays.toString(RecorderStyle.DX1000.channelOptions()), "[2, 4, 6, 12]", "DX1000 sizes");
         same(h, Arrays.toString(RecorderStyle.DX2000.channelOptions()), "[4, 8, 10, 20, 30, 40, 48]", "DX2000 sizes");
-        same(h, RecorderStyle.forFootprint(Footprint.of(32, 32)), RecorderStyle.DX1000, "2 x 2 blocks");
-        same(h, RecorderStyle.forFootprint(Footprint.of(48, 48)), RecorderStyle.DX2000, "3 x 3 blocks");
-        same(h, ComponentTypes.PAPERLESS_RECORDER.createData(Footprint.of(48, 48)) instanceof PaperlessRecorderData d
-                ? d.style : null, RecorderStyle.DX2000, "a recorder placed at 3 x 3 is a DX2000");
+        same(h, RecorderStyle.forFootprint(Footprint.of(16, 16)), RecorderStyle.DX1000, "1 x 1 block");
+        same(h, RecorderStyle.forFootprint(Footprint.of(24, 24)), RecorderStyle.DX1000, "24 cells");
+        same(h, RecorderStyle.forFootprint(Footprint.of(32, 32)), RecorderStyle.DX2000, "2 x 2 blocks");
+        same(h, ComponentTypes.PAPERLESS_RECORDER.createData(Footprint.of(32, 32)) instanceof PaperlessRecorderData d
+                ? d.style : null, RecorderStyle.DX2000, "a recorder placed at 2 x 2 is a DX2000");
+        same(h, ComponentTypes.PAPERLESS_RECORDER.footprints().get(0), Footprint.of(16, 16), "the default size is one block (a DX1000)");
+        same(h, ComponentTypes.PAPERLESS_RECORDER.footprints().get(1), Footprint.of(32, 32), "and the next is a DX2000, twice as large");
+        for (Footprint f : ComponentTypes.PAPERLESS_RECORDER.footprints()) {
+            h.assertTrue(f.w() == f.h() && f.w() >= 12 && f.w() <= 48, "square, 12 to 48 cells: " + f);
+        }
         for (int channels : RecorderStyle.DX2000.channelOptions()) {
             PaperlessRecorderData d = new PaperlessRecorderData(RecorderStyle.DX2000);
             d.channels = channels;
@@ -779,7 +785,7 @@ public final class PaperlessRecorderTests {
         Stage.run(helper, 0, s -> {
             s.wall(2, 2);
             PanelBlockEntity block = s.be(s.at(0, 0));
-            PanelComponent rec = s.recorder(block, Footprint.of(32, 32));
+            PanelComponent rec = s.recorder(block, Footprint.of(16, 16));
             PaperlessRecorderData data = dataOf(rec);
             var valve = s.msiv(s.devices);
             valve.energy().receiveEnergy(1_000_000, false); // electrical energy is what opens it
@@ -822,7 +828,7 @@ public final class PaperlessRecorderTests {
         Stage.run(helper, 1, s -> {
             s.wall(2, 2);
             PanelBlockEntity block = s.be(s.at(0, 0));
-            PanelComponent rec = s.recorder(block, Footprint.of(32, 32));
+            PanelComponent rec = s.recorder(block, Footprint.of(16, 16));
             PaperlessRecorderData data = dataOf(rec);
             CompoundTag config = new CompoundTag();
             config.putInt("Interval", 0);
@@ -851,7 +857,7 @@ public final class PaperlessRecorderTests {
         Stage.run(helper, 2, s -> {
             s.wall(2, 2);
             PanelBlockEntity block = s.be(s.at(0, 0));
-            PanelComponent rec = s.recorder(block, Footprint.of(32, 32));
+            PanelComponent rec = s.recorder(block, Footprint.of(16, 16));
             PaperlessRecorderData data = dataOf(rec);
             CompoundTag config = new CompoundTag();
             config.putInt("Interval", 0);
@@ -904,7 +910,7 @@ public final class PaperlessRecorderTests {
         Stage.run(helper, 3, s -> {
             s.wall(3, 2);
             PanelBlockEntity block = s.be(s.at(0, 0));
-            PanelComponent rec = s.recorder(block, Footprint.of(32, 32));
+            PanelComponent rec = s.recorder(block, Footprint.of(16, 16));
             PaperlessRecorderData data = dataOf(rec);
             PanelBlockEntity pbBlock = s.be(s.at(2, 0));
             PanelComponent button = PanelOps.placeDirect(s.level, pbBlock.getBlockPos(), 2, 2, ComponentTypes.PUSHBUTTON, Footprint.of(6, 6));
@@ -970,7 +976,7 @@ public final class PaperlessRecorderTests {
         Stage.run(helper, 4, s -> {
             s.wall(2, 2);
             PanelBlockEntity block = s.be(s.at(0, 0));
-            PanelComponent rec = s.recorder(block, Footprint.of(32, 32));
+            PanelComponent rec = s.recorder(block, Footprint.of(16, 16));
             s.msiv(s.devices);
             check(helper, rec.inputCount() == 12, "a DX1012 has 12 ports");
             CompoundTag five = new CompoundTag();
@@ -1003,7 +1009,7 @@ public final class PaperlessRecorderTests {
         Stage.run(helper, 5, s -> {
             s.wall(3, 2);
             PanelBlockEntity block = s.be(s.at(0, 0));
-            PanelComponent rec = s.recorder(block, Footprint.of(32, 32));
+            PanelComponent rec = s.recorder(block, Footprint.of(16, 16));
             PaperlessRecorderData data = dataOf(rec);
             BlockPos pos = block.getBlockPos();
             // Free message: text is cleaned of control characters and cut to 32, blanks are refused.

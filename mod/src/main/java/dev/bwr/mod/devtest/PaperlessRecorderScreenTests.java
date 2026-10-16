@@ -43,7 +43,7 @@ public final class PaperlessRecorderScreenTests {
 
     static PanelComponent scenario(RecorderStyle style, int channels, String background, int interval) {
         PanelComponent rec = new PanelComponent(1, ComponentTypes.PAPERLESS_RECORDER, 0, 0,
-                style == RecorderStyle.DX2000 ? Footprint.of(48, 48) : Footprint.of(32, 32), "REC-1");
+                style == RecorderStyle.DX2000 ? Footprint.of(32, 32) : Footprint.of(16, 16), "REC-1");
         PaperlessRecorderData data = (PaperlessRecorderData) rec.data();
         RecorderScenario.configure(data, channels, background, interval);
         long end = RecorderScenario.fill(data, channels, NOW);
@@ -246,7 +246,7 @@ public final class PaperlessRecorderScreenTests {
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void theBezelLayoutCoversEveryKeyAndHitTestsThem(GameTestHelper h) {
         for (RecorderStyle style : RecorderStyle.values()) {
-            RecorderLayout layout = RecorderLayout.of(style, null, style == RecorderStyle.DX2000 ? 48 : 32, style == RecorderStyle.DX2000 ? 48 : 32, 1.0f);
+            RecorderLayout layout = RecorderLayout.of(style, null, style == RecorderStyle.DX2000 ? 32 : 16, style == RecorderStyle.DX2000 ? 32 : 16, 1.0f);
             for (RecorderKey key : RecorderKey.values()) {
                 RecorderLayout.Box box = layout.key(key);
                 if (key.softNumber() > style.softKeys() || key == RecorderKey.COVER_TAB && !style.hasCover()) {
@@ -262,7 +262,7 @@ public final class PaperlessRecorderScreenTests {
             h.assertTrue(layout.keyAt(layout.cellX(layout.screen.centreX()), layout.cellY(layout.screen.centreY()), false) == null,
                     "the screen is not a key");
         }
-        RecorderLayout dx2000 = RecorderLayout.of(RecorderStyle.DX2000, null, 48, 48, 1.0f);
+        RecorderLayout dx2000 = RecorderLayout.of(RecorderStyle.DX2000, null, 32, 32, 1.0f);
         RecorderLayout.Box start = dx2000.key(RecorderKey.START);
         h.assertTrue(dx2000.keyAt(dx2000.cellX(start.centreX()), dx2000.cellY(start.centreY()), true) == null, "a closed cover swallows START");
         RecorderLayout.Box tab = dx2000.key(RecorderKey.COVER_TAB);

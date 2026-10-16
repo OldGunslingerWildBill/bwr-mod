@@ -26,6 +26,9 @@ public final class BindScreen extends Screen {
     private KeyList list;
     private EditBox filterBox;
     private Button apply;
+    /** Ports a selector page shows; a component with more has a pager above the selector. */
+    static final int PORTS_PER_PAGE = 12;
+    private int portPage = -1;
 
     public BindScreen(PanelBlockEntity block, PanelComponent component, PanelPayloads.LinkerScreen device) {
         super(Component.translatable("screen.bwr.panel_bind.title", component.label()));
@@ -38,15 +41,42 @@ public final class BindScreen extends Screen {
         boolean scaled = model.hasPorts() && (model.usesScale() || model.usesSinkMode() || model.usesTransform());
         boolean presets = model.hasPorts() && model.usesTransform();
         int currentRows = model.port != null && model.port.output() ? model.sinkCount() + 1 : 1;
-        layout = new BindLayout(width, height, currentRows, listed, scaled, presets);
+        boolean pager = model.hasPorts() && model.choices.size() > PORTS_PER_PAGE;
+        layout = new BindLayout(width, height, currentRows, listed, scaled, presets, pager);
         if (!model.hasPorts()) {
             addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), button -> onClose())
                     .bounds(layout.left, layout.portY, layout.width, 20).build());
             return;
         }
 
+        List<BindModel.PortChoice> shown = model.choices;
+        if (pager) {
+            int pages = (model.choices.size() + PORTS_PER_PAGE - 1) / PORTS_PER_PAGE;
+            if (portPage < 0 || portPage >= pages) {
+                portPage = Math.max(0, model.choices.indexOf(model.port)) / PORTS_PER_PAGE;
+            }
+            shown = model.choices.subList(portPage * PORTS_PER_PAGE, Math.min(model.choices.size(), (portPage + 1) * PORTS_PER_PAGE));
+            if (!shown.contains(model.port)) {
+                model.choose(shown.get(0));
+            }
+            int quarter = layout.width / 4;
+            Button previous = Button.builder(Component.literal("<"), button -> {
+                portPage--;
+                model.choose(model.choices.get(portPage * PORTS_PER_PAGE));
+                rebuildWidgets();
+            }).bounds(layout.left, layout.pagerY, quarter - 2, 20).build();
+            previous.active = portPage > 0;
+            addRenderableWidget(previous);
+            Button following = Button.builder(Component.literal(">"), button -> {
+                portPage++;
+                model.choose(model.choices.get(portPage * PORTS_PER_PAGE));
+                rebuildWidgets();
+            }).bounds(layout.left + layout.width - quarter + 2, layout.pagerY, quarter - 2, 20).build();
+            following.active = portPage < pages - 1;
+            addRenderableWidget(following);
+        }
         addRenderableWidget(CycleButton.<BindModel.PortChoice>builder(BindModel.PortChoice::text)
-                .withValues(model.choices).withInitialValue(model.port)
+                .withValues(shown).withInitialValue(model.port)
                 .displayOnlyValue()
                 .create(layout.left, layout.portY, layout.width, 20, Component.empty(), (button, value) -> {
                     model.choose(value);
@@ -180,6 +210,11 @@ public final class BindScreen extends Screen {
                                 + model.device.device().toShortString())
                 : Component.translatable("screen.bwr.panel_bind.link." + model.device.status());
         graphics.drawString(font, status, layout.left, layout.statusY, model.deviceUsable() ? 0x9FE0FF : 0xFFB070);
+        if (model.hasPorts() && model.choices.size() > PORTS_PER_PAGE) {
+            int pages = (model.choices.size() + PORTS_PER_PAGE - 1) / PORTS_PER_PAGE;
+            graphics.drawCenteredString(font, Component.translatable("screen.bwr.panel_bind.page", portPage + 1, pages),
+                    layout.left + layout.width / 2, layout.pagerY + 6, 0xCCCCCC);
+        }
         if (model.hasPorts()) {
             if (model.port != null && !model.port.output()) {
                 graphics.drawString(font, Component.translatable("screen.bwr.panel_bind.current",

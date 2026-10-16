@@ -14,6 +14,8 @@ public final class BindLayout {
     public final int top;
     public final int titleY;
     public final int statusY;
+    /** Row of the port page buttons; only meaningful when the layout was made with a pager. */
+    public final int pagerY;
     public final int portY;
     public final int modeY;
     public final int currentY;
@@ -33,12 +35,22 @@ public final class BindLayout {
      */
     public BindLayout(int screenWidth, int screenHeight, int currentRows, boolean listed, boolean scaled,
                       boolean presets) {
+        this(screenWidth, screenHeight, currentRows, listed, scaled, presets, false);
+    }
+
+    /**
+     * @param pager whether a row of page buttons sits above the port selector (a component with more ports than fit a
+     *              selector, such as a 48 channel recorder)
+     */
+    public BindLayout(int screenWidth, int screenHeight, int currentRows, boolean listed, boolean scaled,
+                      boolean presets, boolean pager) {
         this.width = Math.min(340, screenWidth - 20);
         this.left = (screenWidth - width) / 2;
         this.top = 6;
         this.titleY = top + 4;
         this.statusY = titleY + 14;
-        this.portY = statusY + 16;
+        this.pagerY = statusY + 16;
+        this.portY = statusY + 16 + (pager ? ROW : 0);
         this.modeY = portY + ROW;
         this.currentY = modeY + ROW + 4;
         int y = currentY + Math.max(1, currentRows) * ROW + 2;

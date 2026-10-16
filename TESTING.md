@@ -392,6 +392,24 @@ Known limitations (test environment, not defects; no assertion was edited):
   (`FileSystemNotFoundException`, once, in the stable pair no-pack panel run) and one `Baked showcase block missing on the
   client` (newest pair, the showcase blocks had not arrived yet). Both passed on rerun without any change.
 
+## Paperless recorder (DX1000 / DX2000)
+
+GameTests: `RecorderAlarmLogicTests` (the alarm state machine, no world), `PaperlessRecorderTests` (dots and their minimum and
+maximum, stop and start, the alarm log, ACK from the FUNC soft key and from a bound acknowledge pushbutton, patches that keep a client
+copy equal, saves and old saves, validation, the makes' limits, ports, keys, free messages; fixture origin 88,900, 64 blocks apart)
+and `PaperlessRecorderScreenTests` (every screen of both makes painted headless in white and black and written to
+`run/turbineGameTest/recorder-screens/`, the blink, the paint cost, the key layout). The required GameTest count is 317.
+
+`:mod:runTurbineModelCheck -PbwrRecorderClientCheck` (class `RecorderClientCheck`, stage groups `-PbwrRecorderClientStages=shots,keys,performance`)
+places a DX1000 and a DX2000 with the valves' signals bound and a recorded history, photographs every screen in white and black,
+both bezels (the DX2000's cover closed and open), the menu, the FUNC strip, an alarm before and after ACK and each screen from
+reading distance, into `run/turbineModelCheck/recorder-check/`; clicks every face key through the real click handler and checks
+what the client and the server did; opens the setup screen from MENU and the wrench, edits and sends it, and pages the bind
+screen's 48 ports; and measures four DX1000s at 12 channels and a DX2000 at 48, 5 s per division, against the same wall with no
+recorders. Result on the development machine: the recorders' render path 0.13 ms and screen painting 0.011 ms per frame (a repaint
+is 0.39 ms, 8 a second for each recorder: a new dot every 3.3 ticks and the one second refresh), frame time 0.72 ms against 0.45 ms
+without them (delta 0.27 ms); the gate is under 1 ms.
+
 ## Dedicated server and two real clients (C3)
 
 `:mod:runMultiplayerCheck` proves the control panels, the full core display binding and the rod select matrix on a real

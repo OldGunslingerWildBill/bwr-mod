@@ -17,9 +17,13 @@ import java.util.List;
  * closes dots and runs the alarms in {@code sampleContent}; the client only draws what it was sent.
  */
 public final class PaperlessRecorderType extends ComponentType {
-    /** 2 x 2 blocks (a DX1000), 3 x 3 (a DX2000), then the smaller and the larger. */
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(32, 32), Footprint.of(48, 48),
-            Footprint.of(16, 16), Footprint.of(64, 64));
+    /**
+     * Square, in the scale of the other instruments (a 4.3 inch meter is 16 cells, one block): a DX1000 at 16 cells (the default),
+     * a DX2000 at 32 (twice a DX1000, the second size), then the other settings of each make: DX1000 12, 20, 24; DX2000 40, 48.
+     * (The DX2000's 24 is the DX1000's 24; see {@link RecorderStyle#forFootprint}.)
+     */
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(16, 16), Footprint.of(32, 32),
+            Footprint.of(12, 12), Footprint.of(20, 20), Footprint.of(24, 24), Footprint.of(40, 40), Footprint.of(48, 48));
     private static final List<ConfigField> SCHEMA = PaperlessRecorderData.schema();
     private static final List<PortSpec> PORTS = ports();
 
