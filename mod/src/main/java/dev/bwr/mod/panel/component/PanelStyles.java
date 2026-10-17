@@ -133,6 +133,11 @@ public final class PanelStyles {
             row("rotary_selector", WESTINGHOUSE, "mini_slim", false, "w2_mini_slim", "w2_mini_slimline", "w2_mini"),
             row("rotary_selector", OILTIGHT, "knob", true, FcdModels.SELECTOR_KNOB),
             row("rotary_selector", OILTIGHT, "lever", false, FcdModels.SELECTOR_LEVER),
+            // The owner's SRV valve switches (art/models/panel/imported): OPEN/CLOSE and OPEN/AUTO/CLOSE.
+            row("rotary_selector", OILTIGHT, "srv_open_close", false, "srv_open_close"),
+            row("rotary_selector", OILTIGHT, "srv_open_auto_close", false, "srv_open_auto_close"),
+            // The owner's WL-2 multi-position selector (channel or mode selection).
+            row("rotary_selector", WESTINGHOUSE, "wl2", false, "wl2_selector"),
             // key switch
             row("key_switch", GE, "key", true, "ge_sb_keyed").keyed(GE_KEY),
             row("key_switch", WESTINGHOUSE, "key", true, "w2_key").keyed(W2_KEY),
@@ -144,6 +149,8 @@ public final class PanelStyles {
             row("pushbutton", GE, "guarded", false, "pb_guarded"),
             row("pushbutton", GE, "illuminated", false, "pb_illuminated"),
             row("pushbutton", GE, "guarded_yellow", false, FcdModels.GUARDED_YELLOW),
+            // The owner's pushbutton (art/models/panel/imported/button-1.obj), with a recolourable cap.
+            row("pushbutton", GE, "button_1", false, "button_1"),
             row("lamp", GE, "round", true, "light_round"),
             row("lamp", GE, "round_plate", false, "light_round_plate"),
             row("lamp", GE, "et16", false, "light_et16"),
