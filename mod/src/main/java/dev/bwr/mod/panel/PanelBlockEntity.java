@@ -552,10 +552,10 @@ public final class PanelBlockEntity extends BlockEntity {
     /** The item that places {@code component} again, set to the same footprint; empty if the type is unknown. */
     public static ItemStack stackFor(PanelComponent component) {
         ComponentType type = component.type();
-        if (type == null || type.item() == net.minecraft.world.item.Items.AIR) {
+        if (type == null || type.itemFor(component) == net.minecraft.world.item.Items.AIR) {
             return ItemStack.EMPTY;
         }
-        ItemStack stack = new ItemStack(type.item());
+        ItemStack stack = new ItemStack(type.itemFor(component));
         int variant = type.footprints().indexOf(new Footprint(component.w(), component.h()));
         if (variant > 0) {
             stack.set(BwrDataComponents.COMPONENT_VARIANT.get(), variant);

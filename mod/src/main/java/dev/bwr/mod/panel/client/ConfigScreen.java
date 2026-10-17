@@ -30,6 +30,7 @@ public final class ConfigScreen extends Screen {
     private final ConfigModel model;
     private final String typeKey;
     private ConfigLayout layout;
+    private ScrollRows rows;
     private Button done;
     private final List<Object[]> labels = new ArrayList<>();
 
@@ -44,6 +45,7 @@ public final class ConfigScreen extends Screen {
     @Override
     protected void init() {
         layout = new ConfigLayout(width, height, model.rowCount());
+        rows = new ScrollRows(layout);
         labels.clear();
         int row = 0;
 
@@ -59,20 +61,20 @@ public final class ConfigScreen extends Screen {
             int y = layout.rowY(row);
             rowLabel(row, Component.translatable(field.labelKey()));
             switch (field.kind()) {
-                case ENUM -> addRenderableWidget(CycleButton.<String>builder(value -> Component.translatable(
+                case ENUM -> rows.add(addRenderableWidget(CycleButton.<String>builder(value -> Component.translatable(
                                 "component.bwr.option." + field.key() + "." + value))
                         .withValues(field.options()).withInitialValue(fieldRow.text).displayOnlyValue()
                         .create(layout.widgetX, y, layout.widgetWidth, layout.rowHeight - 2, Component.empty(),
                                 (button, value) -> {
                                     fieldRow.text = value;
                                     refresh();
-                                }));
-                case BOOL -> addRenderableWidget(CycleButton.onOffBuilder(Boolean.parseBoolean(fieldRow.text)).displayOnlyValue()
+                                })));
+                case BOOL -> rows.add(addRenderableWidget(CycleButton.onOffBuilder(Boolean.parseBoolean(fieldRow.text)).displayOnlyValue()
                         .create(layout.widgetX, y, layout.widgetWidth, layout.rowHeight - 2, Component.empty(),
                                 (button, value) -> {
                                     fieldRow.text = Boolean.toString(value);
                                     refresh();
-                                }));
+                                })));
                 default -> {
                     EditBox box = box(row, fieldRow.text, field.kind() == ConfigField.Kind.TEXT ? field.maxLength() : 24);
                     box.setResponder(value -> {
@@ -88,21 +90,21 @@ public final class ConfigScreen extends Screen {
             int y = layout.rowY(row);
             rowLabel(row, Component.translatable(input.port.labelKey()));
             if (input.bound != null) {
-                Button bound = addRenderableWidget(Button.builder(input.bound, button -> {
-                }).bounds(layout.widgetX, y, layout.widgetWidth, layout.rowHeight - 2).build());
+                Button bound = rows.add(addRenderableWidget(Button.builder(input.bound, button -> {
+                }).bounds(layout.widgetX, y, layout.widgetWidth, layout.rowHeight - 2).build()));
                 bound.active = false;
                 row++;
                 continue;
             }
             int half = layout.widgetWidth / 2;
-            addRenderableWidget(CycleButton.booleanBuilder(Component.translatable("screen.bwr.panel_config.constant"),
+            rows.add(addRenderableWidget(CycleButton.booleanBuilder(Component.translatable("screen.bwr.panel_config.constant"),
                             Component.translatable("screen.bwr.panel_config.none"))
                     .withInitialValue(input.constant).displayOnlyValue()
                     .create(layout.widgetX, y, half - 2, layout.rowHeight - 2, Component.empty(),
                             (button, value) -> {
                                 input.constant = value;
                                 refresh();
-                            }));
+                            })));
             EditBox value = new EditBox(font, layout.widgetX + half, y, layout.widgetWidth - half, layout.rowHeight - 2,
                     Component.empty());
             value.setValue(input.valueText);
@@ -110,7 +112,7 @@ public final class ConfigScreen extends Screen {
                 input.valueText = text;
                 refresh();
             });
-            addRenderableWidget(value);
+            rows.add(addRenderableWidget(value));
             row++;
         }
 
@@ -130,7 +132,7 @@ public final class ConfigScreen extends Screen {
                 Component.empty());
         box.setMaxLength(Math.max(1, maxLength));
         box.setValue(value);
-        addRenderableWidget(box);
+        rows.add(addRenderableWidget(box));
         return box;
     }
 
@@ -152,13 +154,16 @@ public final class ConfigScreen extends Screen {
         graphics.drawString(font, Component.translatable("screen.bwr.panel_config.title",
                 Component.translatable(typeKey)), layout.left, layout.titleY(), 0xFFFFFF);
         for (Object[] entry : labels) {
-            graphics.drawString(font, (Component) entry[1], layout.left, layout.rowY((Integer) entry[0]) + 5, 0xCCCCCC);
+            int labelRow = (Integer) entry[0];
+            if (rows.visible(labelRow)) {
+                graphics.drawString(font, (Component) entry[1], layout.left, rows.y(labelRow) + 5, 0xCCCCCC);
+            }
         }
         int row = 1;
         for (ConfigModel.FieldRow fieldRow : model.fields) {
-            if (fieldRow.field.kind() == ConfigField.Kind.COLOR) {
+            if (fieldRow.field.kind() == ConfigField.Kind.COLOR && rows.visible(row)) {
                 Integer color = ConfigModel.parseColor(fieldRow.text);
-                int y = layout.rowY(row);
+                int y = rows.y(row);
                 graphics.fill(layout.left + layout.labelWidth - 16, y + 2, layout.left + layout.labelWidth - 4,
                         y + layout.rowHeight - 4, color == null ? 0xFF000000 : 0xFF000000 | color);
             }
@@ -169,6 +174,13 @@ public final class ConfigScreen extends Screen {
         for (Renderable widget : renderables) {
             widget.render(graphics, mouseX, mouseY, partial);
         }
+        rows.renderScrollbar(graphics);
+    }
+
+    /** The wheel over a selector turns it (vanilla); anywhere else it scrolls the rows when they overflow. */
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY) || rows.scroll(scrollY);
     }
 
     @Override

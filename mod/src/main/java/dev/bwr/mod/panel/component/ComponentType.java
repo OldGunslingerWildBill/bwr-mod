@@ -222,6 +222,14 @@ public abstract class ComponentType {
         return item == null ? Items.AIR : item;
     }
 
+    /**
+     * The item a removed {@code component} drops: the type's own item, unless a type has more than one (the paperless
+     * recorder drops the DX1000 or the DX2000 item, by its make).
+     */
+    public Item itemFor(PanelComponent component) {
+        return item();
+    }
+
     /** Server-side handle for {@link #operate}. */
     public record OperateContext(ServerLevel level, ServerPlayer player, PanelBlockEntity owner,
                                  PanelComponent component) {

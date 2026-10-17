@@ -19,13 +19,23 @@ import java.util.List;
  * block and the client input hook (a component item never places like a
  * block); this class only knows its type and which of the type's footprints the
  * stack is set to. Right-click in the air cycles the footprint.
+ *
+ * <p>An item may be limited to some of its type's footprints (the Yokogawa DX1000 and DX2000 are two items of the
+ * paperless recorder, and the size picks the make): it starts at the first of them and cycles only through them.
  */
 public final class ComponentItem extends Item {
     private final ResourceLocation typeId;
+    /** The footprint indices this item may use, the first being where a new stack starts; null for all of them. */
+    private final int[] variants;
 
     public ComponentItem(Properties properties, ResourceLocation typeId) {
+        this(properties, typeId, null);
+    }
+
+    public ComponentItem(Properties properties, ResourceLocation typeId, int[] variants) {
         super(properties);
         this.typeId = typeId;
+        this.variants = variants == null || variants.length == 0 ? null : variants.clone();
     }
 
     public ResourceLocation typeId() {
@@ -39,6 +49,17 @@ public final class ComponentItem extends Item {
     public static int variant(ItemStack stack, ComponentType type) {
         Integer stored = stack.get(BwrDataComponents.COMPONENT_VARIANT.get());
         int count = type.footprints().size();
+        int[] allowed = stack.getItem() instanceof ComponentItem item ? item.variants : null;
+        if (allowed != null) {
+            if (stored != null) {
+                for (int index : allowed) {
+                    if (index == stored) {
+                        return Math.max(0, Math.min(count - 1, index));
+                    }
+                }
+            }
+            return Math.max(0, Math.min(count - 1, allowed[0]));
+        }
         if (stored != null) return Math.max(0, Math.min(count - 1, stored));
         // Only new, unconfigured stacks take the model preference. Saved size
         // indices and placed component dimensions remain authoritative.
@@ -62,7 +83,17 @@ public final class ComponentItem extends Item {
             return;
         }
         ComponentType type = item.type();
-        int next = (variant(stack, type) + 1) % type.footprints().size();
+        int current = variant(stack, type);
+        int next = (current + 1) % type.footprints().size();
+        if (item.variants != null) {
+            int at = 0;
+            for (int i = 0; i < item.variants.length; i++) {
+                if (item.variants[i] == current) {
+                    at = i;
+                }
+            }
+            next = item.variants[(at + 1) % item.variants.length];
+        }
         stack.set(BwrDataComponents.COMPONENT_VARIANT.get(), next);
         Footprint footprint = type.footprints().get(next);
         player.displayClientMessage(Component.translatable("message.bwr.panel.footprint",
@@ -80,7 +111,7 @@ public final class ComponentItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         ComponentType type = type();
-        if (type == null || type.footprints().size() < 2) {
+        if (type == null || type.footprints().size() < 2 || (variants != null && variants.length < 2)) {
             return InteractionResultHolder.pass(stack);
         }
         if (!level.isClientSide()) {
@@ -95,7 +126,9 @@ public final class ComponentItem extends Item {
         if (footprint != null) {
             tooltip.add(Component.translatable("tooltip.bwr.panel.footprint", footprint.w(), footprint.h())
                     .withStyle(ChatFormatting.GRAY));
-            tooltip.add(Component.translatable("tooltip.bwr.panel.footprint_hint").withStyle(ChatFormatting.DARK_GRAY));
+            if (type().footprints().size() > 1 && (variants == null || variants.length > 1)) {
+                tooltip.add(Component.translatable("tooltip.bwr.panel.footprint_hint").withStyle(ChatFormatting.DARK_GRAY));
+            }
         }
     }
 }

@@ -39,6 +39,13 @@ public final class PaperlessRecorderType extends ComponentType {
         return List.copyOf(list);
     }
 
+    /** A DX2000 drops the DX2000 item, so it is placed again as a DX2000. */
+    @Override
+    public net.minecraft.world.item.Item itemFor(PanelComponent component) {
+        return component.data() instanceof PaperlessRecorderData data && data.style == RecorderStyle.DX2000
+                ? dev.bwr.mod.registry.BwrItems.PAPERLESS_RECORDER_DX2000.get() : item();
+    }
+
     @Override
     public List<Footprint> footprints() {
         return FOOTPRINTS;

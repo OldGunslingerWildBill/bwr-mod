@@ -53,6 +53,7 @@ public final class MimicPathScreen extends Screen {
     private int flow;
     private String thresholdText;
     private ConfigLayout layout;
+    private ScrollRows rows;
     private Button done;
     private EditBox colorBox;
 
@@ -83,6 +84,7 @@ public final class MimicPathScreen extends Screen {
     @Override
     protected void init() {
         layout = new ConfigLayout(width, height, LABELS.length);
+        rows = new ScrollRows(layout);
         int h = layout.rowHeight - 2;
         int row = 0;
 
@@ -94,7 +96,7 @@ public final class MimicPathScreen extends Screen {
             colorText = value;
             refresh();
         });
-        addRenderableWidget(colorBox);
+        rows.add(addRenderableWidget(colorBox));
         for (int i = 0; i < PALETTE.length; i++) {
             int rgb = PALETTE[i];
             Button swatch = Button.builder(Component.empty(), button -> {
@@ -104,55 +106,55 @@ public final class MimicPathScreen extends Screen {
             }).bounds(layout.widgetX + i * 22, layout.rowY(row), 20, h).build();
             swatch.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
                     Component.translatable("screen.bwr.mimic_path.palette." + PALETTE_NAMES[i])));
-            addRenderableWidget(swatch);
+            rows.add(addRenderableWidget(swatch));
         }
         row++;
 
-        addRenderableWidget(CycleButton.<Integer>builder(value -> Component.literal(Integer.toString(value)))
+        rows.add(addRenderableWidget(CycleButton.<Integer>builder(value -> Component.literal(Integer.toString(value)))
                 .withValues(List.of(1, 2, 3, 4)).withInitialValue(lineWidth).displayOnlyValue()
                 .create(layout.widgetX, layout.rowY(row++), layout.widgetWidth, h, Component.empty(),
-                        (button, value) -> lineWidth = value));
-        addRenderableWidget(CycleButton.booleanBuilder(Component.translatable("screen.bwr.mimic_path.dashed.on"),
+                        (button, value) -> lineWidth = value)));
+        rows.add(addRenderableWidget(CycleButton.booleanBuilder(Component.translatable("screen.bwr.mimic_path.dashed.on"),
                         Component.translatable("screen.bwr.mimic_path.dashed.off"))
                 .withInitialValue(dashed).displayOnlyValue()
                 .create(layout.widgetX, layout.rowY(row++), layout.widgetWidth, h, Component.empty(),
-                        (button, value) -> dashed = value));
-        addRenderableWidget(CycleButton.<String>builder(value -> Component.translatable("screen.bwr.mimic_path.route." + value))
+                        (button, value) -> dashed = value)));
+        rows.add(addRenderableWidget(CycleButton.<String>builder(value -> Component.translatable("screen.bwr.mimic_path.route." + value))
                 .withValues(MimicStyle.ROUTES).withInitialValue(route).displayOnlyValue()
                 .create(layout.widgetX, layout.rowY(row++), layout.widgetWidth, h, Component.empty(),
-                        (button, value) -> route = value));
-        addRenderableWidget(CycleButton.<String>builder(value -> Component.translatable("screen.bwr.mimic_path.corners." + value))
+                        (button, value) -> route = value)));
+        rows.add(addRenderableWidget(CycleButton.<String>builder(value -> Component.translatable("screen.bwr.mimic_path.corners." + value))
                 .withValues(MimicStyle.CORNERS).withInitialValue(corners).displayOnlyValue()
                 .create(layout.widgetX, layout.rowY(row++), layout.widgetWidth, h, Component.empty(),
-                        (button, value) -> corners = value));
+                        (button, value) -> corners = value)));
         List<Integer> radii = new ArrayList<>();
         for (int r = MimicStyle.MIN_RADIUS; r <= MimicStyle.MAX_RADIUS; r++) {
             radii.add(r);
         }
-        addRenderableWidget(CycleButton.<Integer>builder(value -> Component.translatable("screen.bwr.mimic_path.cells", value))
+        rows.add(addRenderableWidget(CycleButton.<Integer>builder(value -> Component.translatable("screen.bwr.mimic_path.cells", value))
                 .withValues(radii).withInitialValue(radius).displayOnlyValue()
                 .create(layout.widgetX, layout.rowY(row++), layout.widgetWidth, h, Component.empty(),
-                        (button, value) -> radius = value));
-        addRenderableWidget(CycleButton.<Integer>builder(value -> Component.translatable("screen.bwr.mimic_path.end." + value))
+                        (button, value) -> radius = value)));
+        rows.add(addRenderableWidget(CycleButton.<Integer>builder(value -> Component.translatable("screen.bwr.mimic_path.end." + value))
                 .withValues(List.of(MimicStyle.END_NONE, MimicStyle.END_ARROW, MimicStyle.END_DOT))
                 .withInitialValue(startEnd).displayOnlyValue()
                 .create(layout.widgetX, layout.rowY(row++), layout.widgetWidth, h, Component.empty(),
-                        (button, value) -> startEnd = value));
-        addRenderableWidget(CycleButton.<Integer>builder(value -> Component.translatable("screen.bwr.mimic_path.end." + value))
+                        (button, value) -> startEnd = value)));
+        rows.add(addRenderableWidget(CycleButton.<Integer>builder(value -> Component.translatable("screen.bwr.mimic_path.end." + value))
                 .withValues(List.of(MimicStyle.END_NONE, MimicStyle.END_ARROW, MimicStyle.END_DOT))
                 .withInitialValue(endEnd).displayOnlyValue()
                 .create(layout.widgetX, layout.rowY(row++), layout.widgetWidth, h, Component.empty(),
-                        (button, value) -> endEnd = value));
+                        (button, value) -> endEnd = value)));
         List<Integer> sizes = new ArrayList<>();
         for (int s = 0; s <= MimicStyle.MAX_ARROW_SIZE; s++) {
             sizes.add(s);
         }
-        addRenderableWidget(CycleButton.<Integer>builder(value -> value == 0
+        rows.add(addRenderableWidget(CycleButton.<Integer>builder(value -> value == 0
                         ? Component.translatable("screen.bwr.mimic_path.arrow_size.auto")
                         : Component.translatable("screen.bwr.mimic_path.cells", value))
                 .withValues(sizes).withInitialValue(arrowSize).displayOnlyValue()
                 .create(layout.widgetX, layout.rowY(row++), layout.widgetWidth, h, Component.empty(),
-                        (button, value) -> arrowSize = value));
+                        (button, value) -> arrowSize = value)));
         EditBox arrowColor = new EditBox(font, layout.widgetX, layout.rowY(row++), layout.widgetWidth, h,
                 Component.translatable("screen.bwr.mimic_path.arrow_color"));
         arrowColor.setMaxLength(8);
@@ -162,13 +164,13 @@ public final class MimicPathScreen extends Screen {
             arrowColorText = value;
             refresh();
         });
-        addRenderableWidget(arrowColor);
-        addRenderableWidget(CycleButton.<Integer>builder(value -> value == 0
+        rows.add(addRenderableWidget(arrowColor));
+        rows.add(addRenderableWidget(CycleButton.<Integer>builder(value -> value == 0
                         ? Component.translatable("screen.bwr.mimic_path.flow.off")
                         : Component.translatable("screen.bwr.mimic_path.flow.every", value))
                 .withValues(List.of(0, 8, 16, 32)).withInitialValue(flow).displayOnlyValue()
                 .create(layout.widgetX, layout.rowY(row++), layout.widgetWidth, h, Component.empty(),
-                        (button, value) -> flow = value));
+                        (button, value) -> flow = value)));
         EditBox threshold = new EditBox(font, layout.widgetX, layout.rowY(row++), layout.widgetWidth, h,
                 Component.translatable("screen.bwr.mimic_path.threshold"));
         threshold.setMaxLength(16);
@@ -177,7 +179,7 @@ public final class MimicPathScreen extends Screen {
             thresholdText = value;
             refresh();
         });
-        addRenderableWidget(threshold);
+        rows.add(addRenderableWidget(threshold));
 
         done = addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> {
             if (valid()) {
@@ -247,20 +249,27 @@ public final class MimicPathScreen extends Screen {
         graphics.drawString(font, title, layout.left, layout.titleY(), 0xFFFFFF);
         boolean rounded = MimicStyle.CORNERS_ROUNDED.equals(corners);
         for (int i = 0; i < LABELS.length; i++) {
+            if (!rows.visible(i)) {
+                continue;
+            }
             boolean faded = (i == ROW_THRESHOLD && !bound) || (i == ROW_RADIUS && !rounded);
             graphics.drawString(font, Component.translatable("screen.bwr.mimic_path." + LABELS[i]), layout.left,
-                    layout.rowY(i) + 5, faded ? 0x777777 : 0xCCCCCC);
-        }
-        for (int i = 0; i < PALETTE.length; i++) {
-            graphics.fill(layout.widgetX + i * 22 + 3, layout.rowY(0) + 3, layout.widgetX + i * 22 + 17,
-                    layout.rowY(0) + layout.rowHeight - 5, 0xFF000000 | PALETTE[i]);
+                    rows.y(i) + 5, faded ? 0x777777 : 0xCCCCCC);
         }
         Integer color = parsedColor();
-        graphics.fill(layout.left + layout.labelWidth - 16, layout.rowY(0) + 2, layout.left + layout.labelWidth - 4,
-                layout.rowY(0) + layout.rowHeight - 4, color == null ? 0xFF000000 : 0xFF000000 | color);
+        if (rows.visible(0)) {
+            for (int i = 0; i < PALETTE.length; i++) {
+                graphics.fill(layout.widgetX + i * 22 + 3, rows.y(0) + 3, layout.widgetX + i * 22 + 17,
+                        rows.y(0) + layout.rowHeight - 5, 0xFF000000 | PALETTE[i]);
+            }
+            graphics.fill(layout.left + layout.labelWidth - 16, rows.y(0) + 2, layout.left + layout.labelWidth - 4,
+                    rows.y(0) + layout.rowHeight - 4, color == null ? 0xFF000000 : 0xFF000000 | color);
+        }
         Integer arrow = arrowColorText.isBlank() ? color : parsedArrowColor();
-        graphics.fill(layout.left + layout.labelWidth - 16, layout.rowY(ROW_ARROW_COLOR) + 2, layout.left + layout.labelWidth - 4,
-                layout.rowY(ROW_ARROW_COLOR) + layout.rowHeight - 4, arrow == null ? 0xFF000000 : 0xFF000000 | arrow);
+        if (rows.visible(ROW_ARROW_COLOR)) {
+            graphics.fill(layout.left + layout.labelWidth - 16, rows.y(ROW_ARROW_COLOR) + 2, layout.left + layout.labelWidth - 4,
+                    rows.y(ROW_ARROW_COLOR) + layout.rowHeight - 4, arrow == null ? 0xFF000000 : 0xFF000000 | arrow);
+        }
         if (!bound) {
             graphics.drawString(font, Component.translatable("screen.bwr.mimic_path.unbound"), layout.left,
                     layout.buttonY - 10, 0x999999);
@@ -268,6 +277,13 @@ public final class MimicPathScreen extends Screen {
         for (Renderable widget : renderables) {
             widget.render(graphics, mouseX, mouseY, partial);
         }
+        rows.renderScrollbar(graphics);
+    }
+
+    /** The wheel over a selector turns it (vanilla); anywhere else it scrolls the rows when they overflow. */
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY) || rows.scroll(scrollY);
     }
 
     @Override

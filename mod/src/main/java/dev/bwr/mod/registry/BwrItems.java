@@ -117,9 +117,14 @@ public final class BwrItems {
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> STRIP_CHART =
             ITEMS.register("strip_chart", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.STRIP_CHART.id()));
+    /** The Yokogawa DX1000: the paperless recorder at its one size, 16 cells (one block). */
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> PAPERLESS_RECORDER =
             ITEMS.register("paperless_recorder", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
-                    dev.bwr.mod.panel.component.ComponentTypes.PAPERLESS_RECORDER.id()));
+                    dev.bwr.mod.panel.component.ComponentTypes.PAPERLESS_RECORDER.id(), new int[] {0}));
+    /** The Yokogawa DX2000: the same recorder at its one size, 32 cells (2 x 2 blocks). */
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> PAPERLESS_RECORDER_DX2000 =
+            ITEMS.register("paperless_recorder_dx2000", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.PAPERLESS_RECORDER.id(), new int[] {1}));
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> SEVEN_SEGMENT_DISPLAY =
             ITEMS.register("seven_segment_display", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.SEVEN_SEGMENT_DISPLAY.id()));
@@ -348,6 +353,7 @@ public final class BwrItems {
                         output.accept(EDGEWISE_GAUGE_HORIZONTAL.get());
                         output.accept(STRIP_CHART.get());
                         output.accept(PAPERLESS_RECORDER.get());
+                        output.accept(PAPERLESS_RECORDER_DX2000.get());
                         output.accept(SEVEN_SEGMENT_DISPLAY.get());
                         output.accept(SIXTEEN_SEGMENT_DISPLAY.get());
                         output.accept(CHARACTER_LCD.get());
