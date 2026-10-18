@@ -64,9 +64,11 @@ public final class NetworkingClientCheck {
     private static final BlockPos VALVE_B = new BlockPos(7095, 124, 7098);
     /** A valve nothing is wired to: the linkable one. */
     private static final BlockPos VALVE_C = new BlockPos(7099, 123, 7099);
+    /** An FE meter (power in FE per tick) for the Power units screen. */
+    private static final BlockPos METER = new BlockPos(7107, 124, 7098);
     private static final Vec3 STAND = new Vec3(7099.5, 125.4, 7096.0);
     private static final String[] NAMES = {"net-hover-gauge-line", "net-hover-device-fanout", "net-linkable-glow",
-            "net-networking-screen", "net-name-before", "net-name-after"};
+            "net-networking-screen", "net-name-before", "net-name-after", "net-config-screen", "net-config-power"};
 
     private static boolean started, built, requested;
     private static volatile Throwable buildFailure;
@@ -75,8 +77,8 @@ public final class NetworkingClientCheck {
     private static int age, joined, stage, shown, captures;
     private static BlockPos gaugeOwner;
     private static int gaugeId;
-    private static final int[] IDS = new int[5];
-    private static final BlockPos[] OWNERS = new BlockPos[5];
+    private static final int[] IDS = new int[6];
+    private static final BlockPos[] OWNERS = new BlockPos[6];
 
     private NetworkingClientCheck() {}
 
@@ -205,7 +207,31 @@ public final class NetworkingClientCheck {
             push.onPress();
         }
         if (stage == 5 && shown == 56) mc.setScreen(null);
-        if (stage == 3 && shown < 90 || stage == 5 && shown < 100 || stage != 3 && stage != 5 && shown < 60) return;
+        if (stage == 6 || stage == 7) {
+            // The wrench screen of a dial (caption, Measures, Use machine name) and of a dial on a power signal (Power units).
+            int index = stage == 6 ? 0 : 5;
+            if (shown == 10 && stage == 7) {
+                // Pick kW as the screen's Done would: through the server's configure path, with the real panel wrench.
+                server.execute(() -> {
+                    var player = server.getPlayerList().getPlayer(uuid);
+                    player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BwrItems.PANEL_WRENCH.get()));
+                    var edit = new net.minecraft.nbt.CompoundTag();
+                    var config = new net.minecraft.nbt.CompoundTag();
+                    config.putString("PowerUnits", "kW");
+                    edit.put("Config", config);
+                    if (!PanelOps.configure(player, OWNERS[5], IDS[5], edit)) throw new IllegalStateException("configure refused");
+                });
+            }
+            if (shown == 30) {
+                var be = (PanelBlockEntity) mc.level.getBlockEntity(OWNERS[index]);
+                mc.setScreen(new dev.bwr.mod.panel.client.ConfigScreen(be, be.component(IDS[index])));
+            }
+            if (shown == 45 && mc.screen != null) {
+                for (int i = 0; i < 6; i++) mc.screen.mouseScrolled(10, 10, 0, -3); // to the bottom rows
+            }
+            if (shown < 70) return;
+            if (!(mc.screen instanceof dev.bwr.mod.panel.client.ConfigScreen)) throw new AssertionError("The wrench screen is not open");
+        } else if (stage == 3 && shown < 90 || stage == 5 && shown < 100 || stage != 3 && stage != 5 && shown < 60) return;
         if (stage == 3 && !(mc.screen instanceof NetworkingScreen)) throw new AssertionError("The Networking screen is not open");
         if (stage == 0 && NetworkLines.debugLines() == 0) throw new AssertionError("No line was drawn from the hovered gauge: hit="
                 + mc.hitResult + " hover=" + dev.bwr.mod.panel.client.NetworkHover.current(mc) + " main=" + mc.player.getMainHandItem()
@@ -233,7 +259,7 @@ public final class NetworkingClientCheck {
             if (stage == 5) {
                 var level = mc.level;
                 int named = 0;
-                for (int i = 0; i < OWNERS.length; i++) {
+                for (int i = 0; i < 5; i++) {
                     var be = (PanelBlockEntity) level.getBlockEntity(OWNERS[i]);
                     var component = be.component(IDS[i]);
                     boolean linkedToA = i == 0 || i == 1 || i == 3;
@@ -285,6 +311,7 @@ public final class NetworkingClientCheck {
         var a = valve(level, VALVE_A);
         valve(level, VALVE_B);
         valve(level, VALVE_C);
+        level.setBlock(METER, BwrBlocks.FE_METER.get().defaultBlockState(), 3);
         MachineNames.setName(level.getBlockEntity(VALVE_B), "FWP-2");
 
         // 0: a dial on valve A, 1: a dial on valve A, 2: a segment display on valve B, 3: a button that commands valve A,
@@ -299,8 +326,10 @@ public final class NetworkingClientCheck {
         button.addSink(0, new PlantSink(VALVE_A, "open", 1, PlantSink.Mode.MOMENTARY, 1));
         PanelComponent cc = PanelOps.placeDirect(level, blockAt(0, 1), 2, 2, ComponentTypes.DIAL_GAUGE, Footprint.of(12, 12));
         cc.setSource(0, new CcSource());
-        PanelComponent[] all = {dialA, dialB, digits, button, cc};
-        BlockPos[] owners = {blockAt(0, 0), blockAt(1, 0), blockAt(2, 0), blockAt(3, 0), blockAt(0, 1)};
+        PanelComponent powerDial = PanelOps.placeDirect(level, blockAt(1, 1), 2, 2, ComponentTypes.DIAL_GAUGE, Footprint.of(12, 12));
+        powerDial.setSource(0, new PlantSource(METER, "fe_per_tick_now", 1, 0));
+        PanelComponent[] all = {dialA, dialB, digits, button, cc, powerDial};
+        BlockPos[] owners = {blockAt(0, 0), blockAt(1, 0), blockAt(2, 0), blockAt(3, 0), blockAt(0, 1), blockAt(1, 1)};
         for (int i = 0; i < all.length; i++) {
             IDS[i] = all[i].id();
             OWNERS[i] = owners[i];
