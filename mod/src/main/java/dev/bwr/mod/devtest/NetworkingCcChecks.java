@@ -62,10 +62,12 @@ final class NetworkingCcChecks {
             BlockPos modemPos = s.at(0, 0).relative(Direction.SOUTH);
             BlockPos poolPos = modemPos.relative(Direction.SOUTH);
             BlockPos meterPos = modemPos.above();
+            BlockPos poolPos2 = modemPos.east(); // a second pool: the one that will share a port with the first
             Block modem = BuiltInRegistries.BLOCK.get(ResourceLocation.parse("computercraft:wired_modem_full"));
             s.check(modem != Blocks.AIR, "fixture: CC's full wired modem block exists");
             var pool = s.pool(poolPos);
             var meter = s.meter(meterPos);
+            var pool2 = s.pool(poolPos2);
             MachineNames.setName(pool, "RHR-1");
             MachinePorts.set(pool, 7);
             MachinePorts.set(meter, 8);
@@ -150,7 +152,7 @@ final class NetworkingCcChecks {
                 }
 
                 // A duplicate port: two machines on port 7, nothing guessed.
-                MachinePorts.set(meter, 7);
+                MachinePorts.set(pool2, 7); // two pools, both with a level signal, on port 7
                 s.check(CcPortBridge.machinesOnPort(block, 7).size() == 2, "two machines on port 7");
                 block.resample(anyGauge, true);
                 anyGauge.setSource(0, new CcPortSource(7, "level", 1.0, 0.0));
@@ -171,7 +173,7 @@ final class NetworkingCcChecks {
                         "the binding screen lookup reports the conflict");
                 var found = WiringOps.ccPortScreenFor(s.player, block.getBlockPos(), anyGauge.id(), 9);
                 s.check(found.status() == PanelPayloads.LINK_PORT_EMPTY, "and an empty port");
-                MachinePorts.set(meter, 8);
+                MachinePorts.clear(pool2);
                 var good = WiringOps.ccPortScreenFor(s.player, block.getBlockPos(), anyGauge.id(), 8);
                 s.check(good.status() == PanelPayloads.LINK_OK && good.ccPort() == 8
                         && good.signals().stream().anyMatch(e -> e.key().equals("mw_now") && e.quantity() == Quantity.POWER.ordinal()),
@@ -191,6 +193,7 @@ final class NetworkingCcChecks {
                 s.check(Double.isNaN(block.component(1).input(0)), "and the binding reads no signal");
                 s.level.removeBlock(poolPos, false);
                 s.level.removeBlock(meterPos, false);
+                s.level.removeBlock(poolPos2, false);
             });
         });
     }
