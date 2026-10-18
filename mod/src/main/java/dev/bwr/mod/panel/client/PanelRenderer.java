@@ -115,7 +115,25 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
             context.beginComponent(component);
             cache.mesh.emit(context);
             model.renderDynamic(context, component);
+            drawCaption(context, component);
         }
+    }
+
+    /**
+     * The printed caption under a component (set from a machine name): white text centred below the footprint, shrunk
+     * to fit the wider of the component and one block. Full detail only; empty for most components.
+     */
+    private static void drawCaption(PanelRenderContext context, PanelComponent component) {
+        String caption = component.caption();
+        if (caption.isEmpty() || context.lod() < PanelRenderContext.LOD_FULL) {
+            return;
+        }
+        float textWidth = context.font().width(caption);
+        if (textWidth <= 0.0f) {
+            return;
+        }
+        float scale = Math.min(0.2f, Math.max(component.w(), 16.0f) / textWidth);
+        context.text(caption, (component.w() - textWidth * scale) / 2.0f, component.h() + 0.5f, scale, 1.2f, 0xFFFFFF, false);
     }
 
     /**
@@ -199,6 +217,13 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
                     context.beginComponent(component);
                     model.renderLegends(context, component);
                 }
+            }
+        }
+        for (int i = 0; i < count; i++) {
+            PanelComponent component = components.get(i);
+            if (component.type() != null && !component.caption().isEmpty()) {
+                context.beginComponent(component);
+                drawCaption(context, component);
             }
         }
         for (int i = 0; i < count; i++) {

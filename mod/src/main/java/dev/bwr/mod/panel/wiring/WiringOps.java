@@ -3,6 +3,7 @@ package dev.bwr.mod.panel.wiring;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.PanelConfig;
 import dev.bwr.mod.panel.PanelGroup;
+import dev.bwr.mod.panel.LinkTools;
 import dev.bwr.mod.panel.PanelLinkerItem;
 import dev.bwr.mod.panel.PanelOps;
 import dev.bwr.mod.panel.component.InputSource;
@@ -27,11 +28,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The validated server side of the panel linker: opening the binding screen and binding or unbinding one
+ * The validated server side of the panel linker and the Networking Wrench: opening the binding screen and binding or unbinding one
  * port. The C2S packets and the GameTests both come through here, so there is one set of rules:
  * <ul>
- *   <li>the player holds a linker, is in reach of the panel block and is permitted on it;</li>
- *   <li>a plant binding needs the device the linker stores (never one the client names), in the player's own
+ *   <li>the player holds a linker or a Networking Wrench ({@link LinkTools#held}), is in reach of the panel block and is permitted on it;</li>
+ *   <li>a plant binding needs the device the tool stores (never one the client names), in the player's own
  *       dimension, within {@link PanelConfig#linkRange()} of the panel block, permitted for the player, loaded,
  *       with a signal (input) or command (output) of that key;</li>
  *   <li>a component binding needs a component of the same group, with that output, other than the target;</li>
@@ -64,7 +65,9 @@ public final class WiringOps {
         OK, NOT_HOLDING_LINKER, OUT_OF_REACH, NOT_PERMITTED, NO_SUCH_COMPONENT, BAD_PORT, BAD_VALUE, NO_LINK,
         WRONG_DIMENSION, OUT_OF_RANGE, DEVICE_MISMATCH, NO_DEVICE, NO_SUCH_KEY, NOT_IN_GROUP, TOO_MANY,
         /** The component type refused the device (a core display bound to a non-reactor, or too small for the core). */
-        REFUSED
+        REFUSED,
+        /** The gauge is set to measure one quantity and the signal is another (a level gauge offered a kW signal). */
+        MEASURES_MISMATCH
     }
 
     /** A bind result with, for {@link Result#REFUSED}, the reason the component type gave. */
@@ -78,7 +81,8 @@ public final class WiringOps {
     public static Outcome bindDetailed(ServerPlayer player, PanelPayloads.Bind request) {
         lastRefusal = null;
         Result result = bind(player, request);
-        net.minecraft.network.chat.Component detail = result == Result.REFUSED ? lastRefusal : null;
+        net.minecraft.network.chat.Component detail = result == Result.REFUSED || result == Result.MEASURES_MISMATCH
+                ? lastRefusal : null;
         lastRefusal = null;
         return new Outcome(result, detail);
     }
@@ -95,7 +99,7 @@ public final class WiringOps {
         if (kind == null) {
             return Result.BAD_VALUE;
         }
-        ItemStack linker = PanelLinkerItem.held(player);
+        ItemStack linker = LinkTools.held(player);
         if (linker.isEmpty()) {
             return Result.NOT_HOLDING_LINKER;
         }
@@ -148,13 +152,19 @@ public final class WiringOps {
                 if (checked != Result.OK) {
                     return checked;
                 }
+                SignalSpec bound = specOf(level, request.device(), request.key());
+                if (bound != null && measuresMismatch(component, request.port(), bound)) {
+                    return Result.MEASURES_MISMATCH;
+                }
                 net.minecraft.network.chat.Component refusal = component.type().refuseBinding(level, component,
                         request.port(), request.device());
                 if (refusal != null) {
                     lastRefusal = refusal;
                     return Result.REFUSED;
                 }
-                source = new PlantSource(request.device(), request.key(), request.scale(), request.offset());
+                double scale = bound == null ? request.scale()
+                        : PowerUnitsOps.scaleForBind(component, bound, request.scale(), request.offset());
+                source = new PlantSource(request.device(), request.key(), scale, request.offset());
             }
             case COMPONENT -> {
                 BlockPos refOwner = request.refOwner();
@@ -238,6 +248,35 @@ public final class WiringOps {
         return Result.OK;
     }
 
+    /** The signal {@code key} of the device at {@code device}, or null. */
+    public static SignalSpec specOf(ServerLevel level, BlockPos device, String key) {
+        SignalProvider provider = SignalProviders.at(level, device);
+        if (provider != null) {
+            for (SignalSpec spec : provider.signals()) {
+                if (spec.key().equals(key)) {
+                    return spec;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Whether binding {@code signal} to input {@code port} of {@code component} breaks its {@code Measures} setting (a
+     * gauge set to LEVEL offered a POWER signal); sets the reason the player is shown. A component that measures ANY
+     * (the default) never mismatches.
+     */
+    private static boolean measuresMismatch(PanelComponent component, int port, SignalSpec signal) {
+        dev.bwr.mod.signal.Quantity wanted = component.data().measures(port);
+        dev.bwr.mod.signal.Quantity actual = dev.bwr.mod.signal.Quantity.of(signal);
+        if (wanted == null || wanted == actual) {
+            return false;
+        }
+        lastRefusal = dev.bwr.mod.text.BwrText.tr("message.bwr.panel_bind.measures_mismatch",
+                "This gauge measures %s; %s is %s", wanted.name(), signal.label(), actual.name());
+        return true;
+    }
+
     private static boolean validScale(double scale) {
         return Double.isFinite(scale) && scale != 0.0 && Math.abs(scale) <= MAX_SCALE;
     }
@@ -314,7 +353,7 @@ public final class WiringOps {
     /** The screen contents {@link #openScreen} would send, or null when the player may not open it. */
     public static PanelPayloads.LinkerScreen screenFor(ServerPlayer player, BlockPos ownerPos, int id) {
         ServerLevel level = player.serverLevel();
-        if (PanelLinkerItem.held(player).isEmpty() || !PanelOps.inReach(player, ownerPos) || !level.isLoaded(ownerPos)
+        if (LinkTools.held(player).isEmpty() || !PanelOps.inReach(player, ownerPos) || !level.isLoaded(ownerPos)
                 || !AssemblyAccess.permitted(level, player, ownerPos)
                 || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
             return null;
@@ -329,7 +368,7 @@ public final class WiringOps {
                 return null;
             }
         }
-        GlobalPos link = PanelLinkerItem.linked(PanelLinkerItem.held(player));
+        GlobalPos link = PanelLinkerItem.linked(LinkTools.held(player));
         int status = PanelPayloads.LINK_OK;
         BlockPos device = BlockPos.ZERO;
         String name = "";
@@ -353,7 +392,8 @@ public final class WiringOps {
                 for (SignalSpec spec : provider.signals()) {
                     if (spec.kind() != Kind.TEXT && signals.size() < PanelPayloads.MAX_LISTED) {
                         signals.add(new PanelPayloads.SignalEntry(clip(spec.key(), PanelPayloads.MAX_KEY),
-                                clip(spec.label(), PanelPayloads.MAX_LABEL), clip(spec.unit(), PanelPayloads.MAX_KEY)));
+                                clip(spec.label(), PanelPayloads.MAX_LABEL), clip(spec.unit(), PanelPayloads.MAX_KEY),
+                                dev.bwr.mod.signal.Quantity.of(spec).ordinal()));
                     }
                 }
                 for (CommandSpec spec : provider.commands()) {
@@ -365,7 +405,11 @@ public final class WiringOps {
                 }
             }
         }
-        return new PanelPayloads.LinkerScreen(ownerPos, id, status, device, name, signals, commands);
+        String machineName = "";
+        if (status == PanelPayloads.LINK_OK) {
+            machineName = dev.bwr.mod.panel.MachineNames.name(dev.bwr.mod.signal.DeviceResolver.resolve(level, device));
+        }
+        return new PanelPayloads.LinkerScreen(ownerPos, id, status, device, name, signals, commands, machineName);
     }
 
     private static String clip(String text, int max) {

@@ -28,6 +28,29 @@ public abstract class ComponentData {
     /** Reads what {@link #save} wrote. Missing keys mean "default". Must not throw on bad input. */
     public abstract void load(CompoundTag tag);
 
+    /**
+     * The quantity input {@code inputIndex} is set to measure ({@code Measures}), or null for ANY (the default, and
+     * what every component without the setting reports). {@code WiringOps.bind} refuses a signal of another quantity
+     * and the binding screen lists only matching ones.
+     */
+    public dev.bwr.mod.signal.Quantity measures(int inputIndex) {
+        return null;
+    }
+
+    /** The {@code Power units} setting, or null for a component that has none (the default). */
+    public PowerUnitsState powerState() {
+        return null;
+    }
+
+    /** Server: shows {@code text} as the units of the component (the Units text of a gauge); others ignore it. */
+    public void setUnitsText(String text) {
+    }
+
+    /** Server: sets the scale (the Min and Max of a gauge); returns whether the component has one and took it. */
+    public boolean setRange(double min, double max) {
+        return false;
+    }
+
     // ---- host link and content patches (for types with bulk content: displays, recorders)
 
     /** What a data object may ask of the block entity that owns its component. Set by {@link #attach}. */

@@ -13,6 +13,10 @@ public final class BarGraphData extends ComponentData {
     public double warn = 75.0;
     public double alarm = 90.0;
     public int color = DEFAULT_COLOR;
+    /** What the bar measures; null is ANY. Saved only when set. */
+    public dev.bwr.mod.signal.Quantity measures;
+    /** The Power units setting; saved only when not the default. */
+    public final PowerUnitsState power = new PowerUnitsState();
 
     private static double read(CompoundTag tag, String key, double fallback) {
         double value = tag.getDouble(key);
@@ -26,6 +30,8 @@ public final class BarGraphData extends ComponentData {
         tag.putDouble("Warn", warn);
         tag.putDouble("Alarm", alarm);
         tag.putInt("Color", color);
+        Measures.save(tag, measures);
+        power.save(tag);
     }
 
     @Override
@@ -38,5 +44,27 @@ public final class BarGraphData extends ComponentData {
         warn = read(tag, "Warn", 75.0);
         alarm = read(tag, "Alarm", 90.0);
         color = tag.contains("Color", Tag.TAG_ANY_NUMERIC) ? tag.getInt("Color") & 0xFFFFFF : DEFAULT_COLOR;
+        measures = Measures.load(tag);
+        power.load(tag);
+    }
+
+    @Override
+    public PowerUnitsState powerState() {
+        return power;
+    }
+
+    @Override
+    public boolean setRange(double newMin, double newMax) {
+        min = Math.max(-LIMIT, Math.min(LIMIT, newMin));
+        max = Math.max(-LIMIT, Math.min(LIMIT, newMax));
+        if (!(max > min)) {
+            max = min + 1.0;
+        }
+        return true;
+    }
+
+    @Override
+    public dev.bwr.mod.signal.Quantity measures(int inputIndex) {
+        return measures;
     }
 }

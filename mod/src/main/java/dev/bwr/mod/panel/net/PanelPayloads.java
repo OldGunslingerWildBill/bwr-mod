@@ -227,8 +227,16 @@ public final class PanelPayloads {
         }
     }
 
-    /** One readable signal of the linked device, as listed on the binding screen. */
-    public record SignalEntry(String key, String label, String unit) {
+    /**
+     * One readable signal of the linked device, as listed on the binding screen. {@code quantity} is a
+     * {@link dev.bwr.mod.signal.Quantity} ordinal (what it measures), so the screen can list only what a gauge that
+     * {@code Measures} one quantity accepts; the server re-checks every bind.
+     */
+    public record SignalEntry(String key, String label, String unit, int quantity) {
+        /** An entry whose quantity is taken from its unit as a plain number (a signal with no kind to hand). */
+        public SignalEntry(String key, String label, String unit) {
+            this(key, label, unit, dev.bwr.mod.signal.Quantity.of(key, unit, dev.bwr.mod.signal.Kind.NUMBER).ordinal());
+        }
     }
 
     /**
@@ -242,9 +250,19 @@ public final class PanelPayloads {
         }
     }
 
-    /** Opens the binding screen: the component and the linked device's signals and commands. */
+    /**
+     * Opens the binding screen: the component and the linked device's signals and commands. {@code machineName} is the
+     * machine's own name (its equipment tag), or "" when it has none.
+     */
     public record LinkerScreen(BlockPos pos, int id, int status, BlockPos device, String deviceName,
-                               List<SignalEntry> signals, List<CommandEntry> commands) implements CustomPacketPayload {
+                               List<SignalEntry> signals, List<CommandEntry> commands, String machineName)
+            implements CustomPacketPayload {
+        /** A screen for a device without a name (every screen before machine names existed). */
+        public LinkerScreen(BlockPos pos, int id, int status, BlockPos device, String deviceName,
+                            List<SignalEntry> signals, List<CommandEntry> commands) {
+            this(pos, id, status, device, deviceName, signals, commands, "");
+        }
+
         public static final Type<LinkerScreen> TYPE = new Type<>(BwrMod.id("panel_linker_screen"));
         public static final StreamCodec<RegistryFriendlyByteBuf, LinkerScreen> STREAM_CODEC = StreamCodec.of(
                 (buf, screen) -> {
@@ -258,6 +276,7 @@ public final class PanelPayloads {
                         buf.writeUtf(entry.key, MAX_KEY);
                         buf.writeUtf(entry.label, MAX_LABEL);
                         buf.writeUtf(entry.unit, MAX_KEY);
+                        buf.writeVarInt(entry.quantity);
                     }
                     buf.writeVarInt(screen.commands.size());
                     for (CommandEntry entry : screen.commands) {
@@ -268,6 +287,7 @@ public final class PanelPayloads {
                         buf.writeDouble(entry.min);
                         buf.writeDouble(entry.max);
                     }
+                    buf.writeUtf(screen.machineName, MAX_LABEL);
                 },
                 buf -> {
                     BlockPos pos = buf.readBlockPos();
@@ -281,7 +301,8 @@ public final class PanelPayloads {
                     }
                     List<SignalEntry> signals = new ArrayList<>(signalCount);
                     for (int i = 0; i < signalCount; i++) {
-                        signals.add(new SignalEntry(buf.readUtf(MAX_KEY), buf.readUtf(MAX_LABEL), buf.readUtf(MAX_KEY)));
+                        signals.add(new SignalEntry(buf.readUtf(MAX_KEY), buf.readUtf(MAX_LABEL), buf.readUtf(MAX_KEY),
+                                buf.readVarInt()));
                     }
                     int commandCount = buf.readVarInt();
                     if (commandCount < 0 || commandCount > MAX_LISTED) {
@@ -292,7 +313,7 @@ public final class PanelPayloads {
                         commands.add(new CommandEntry(buf.readUtf(MAX_KEY), buf.readUtf(MAX_LABEL), buf.readBoolean(),
                                 buf.readVarInt(), buf.readDouble(), buf.readDouble()));
                     }
-                    return new LinkerScreen(pos, id, status, device, name, signals, commands);
+                    return new LinkerScreen(pos, id, status, device, name, signals, commands, buf.readUtf(MAX_LABEL));
                 });
 
         @Override

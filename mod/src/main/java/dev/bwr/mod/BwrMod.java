@@ -65,6 +65,7 @@ public final class BwrMod {
         dev.bwr.mod.registry.BwrParticles.PARTICLES.register(modBus);
         dev.bwr.mod.registry.BwrMenus.MENUS.register(modBus);
         dev.bwr.mod.fuel.BwrDataComponents.DATA_COMPONENTS.register(modBus);
+        dev.bwr.mod.registry.BwrAttachments.ATTACHMENTS.register(modBus);
 
         // The two packets every screen runs on: a snapshot down, a command up.
         // Both handlers only touch Player#containerMenu, which is common code,

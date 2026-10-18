@@ -70,6 +70,8 @@ public final class BindModel {
     /** Plant output sink mode: false follows the output (value x scale), true sends {@link #fixedText} on a rise. */
     public boolean momentary;
     public String fixedText = "1";
+    /** Whether changing port or mode preselects the best fitting entry again (set by {@link #preselect}). */
+    private boolean autoSelect;
 
     public BindModel(PanelBlockEntity block, PanelComponent component, PanelPayloads.LinkerScreen device) {
         this.block = block;
@@ -107,6 +109,9 @@ public final class BindModel {
         }
         scaleText = defaultScale();
         resetTransform();
+        if (autoSelect) {
+            preselect();
+        }
     }
 
     public List<Mode> modes() {
@@ -122,6 +127,9 @@ public final class BindModel {
         resetMomentary();
         scaleText = defaultScale();
         resetTransform();
+        if (autoSelect) {
+            preselect();
+        }
     }
 
     /** An input's transform starts at the current plant binding's (so editing keeps it) or at identity. */
@@ -242,7 +250,11 @@ public final class BindModel {
                             + "  [" + command.key() + "]"), BlockPos.ZERO, 0, 0));
                 }
             } else {
+                dev.bwr.mod.signal.Quantity wanted = measures();
                 for (PanelPayloads.SignalEntry signal : device.signals()) {
+                    if (wanted != null && signal.quantity() != wanted.ordinal()) {
+                        continue; // a gauge that measures one quantity is offered only the signals of that quantity
+                    }
                     all.add(new Entry(signal.key(), Component.literal(signal.label()
                             + (signal.unit().isEmpty() ? "" : " (" + signal.unit() + ")") + "  [" + signal.key() + "]"),
                             BlockPos.ZERO, 0, 0));
@@ -277,6 +289,63 @@ public final class BindModel {
             }
         }
         return matching;
+    }
+
+    /** What the selected input is set to measure (the gauge setting {@code Measures}), or null for ANY. */
+    public dev.bwr.mod.signal.Quantity measures() {
+        return port != null && !port.output() ? component.data().measures(port.index()) : null;
+    }
+
+    /**
+     * Preselects the best fitting entry of the current port and mode, so one click on Apply confirms (the Networking
+     * Wrench does this; the Panel Linker does not). A lamp or annunciator input prefers a BOOLEAN signal, any other
+     * input the first numeric one that the component's Measures setting accepts; an output prefers the first command
+     * a switch or button can send. Nothing is bound until Apply.
+     */
+    public void preselect() {
+        autoSelect = true;
+        if (port == null || mode != Mode.PLANT || !deviceUsable()) {
+            return;
+        }
+        List<Entry> all = entries();
+        if (all.isEmpty()) {
+            return;
+        }
+        if (port.output()) {
+            for (Entry entry : all) {
+                PanelPayloads.CommandEntry command = command(entry.key());
+                if (command != null && command.kind() != Kind.TEXT.ordinal()) {
+                    select(entry);
+                    return;
+                }
+            }
+            return;
+        }
+        if (component.source(port.index()) instanceof PlantSource bound && bound.device().equals(device.device())) {
+            for (Entry entry : all) {
+                if (entry.key().equals(bound.key())) {
+                    select(entry); // editing a binding to this device keeps its signal
+                    return;
+                }
+            }
+        }
+        String type = component.type().id().getPath();
+        boolean wantsBoolean = type.equals("lamp") || type.equals("annunciator");
+        int boolQuantity = dev.bwr.mod.signal.Quantity.BOOLEAN.ordinal();
+        Entry best = null;
+        for (Entry entry : all) {
+            int quantity = -1;
+            for (PanelPayloads.SignalEntry signal : device.signals()) {
+                if (signal.key().equals(entry.key())) {
+                    quantity = signal.quantity();
+                }
+            }
+            if (wantsBoolean == (quantity == boolQuantity)) {
+                best = entry;
+                break;
+            }
+        }
+        select(best != null ? best : all.get(0));
     }
 
     /** Whether Apply has everything it needs. */

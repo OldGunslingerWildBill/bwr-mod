@@ -30,6 +30,12 @@ public final class PanelConfig {
     public static final ModConfigSpec.IntValue LINK_RANGE = BUILDER
             .comment("Farthest a panel may be linked to a plant device, in blocks (same dimension only)")
             .defineInRange("linkRange", 64, 1, 1024);
+    public static final ModConfigSpec.IntValue NETWORK_LINE_SHARE_DISTANCE = BUILDER
+            .comment("How far from a player holding the Networking Wrench other players see the wrench lines they are pointing at, in blocks (same dimension only). 0 shares nothing. Never more than linkRange")
+            .defineInRange("networkLineShareDistance", 32, 0, 1024);
+    public static final ModConfigSpec.DoubleValue FE_TO_JOULES = BUILDER
+            .comment("Joules in one FE, for the gauge power units: 100 FE/t is 100 x 20 x 2.5 = 5000 W = 5 kW at the default. A pack can match another mod's ratio")
+            .defineInRange("feToJoules", 2.5, 0.001, 1000.0);
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     /** Defensive reads: a GameTest or a very early caller may run before the file is loaded. */
@@ -55,5 +61,15 @@ public final class PanelConfig {
 
     public static int maxLabelLength() {
         return SPEC.isLoaded() ? MAX_LABEL_LENGTH.get() : 16;
+    }
+
+    /** The share distance in blocks: the configured value, never more than {@link #linkRange()}; 0 means not shared. */
+    public static int networkLineShareDistance() {
+        return SPEC.isLoaded() ? Math.min(NETWORK_LINE_SHARE_DISTANCE.get(), linkRange()) : Math.min(32, linkRange());
+    }
+
+    /** Joules in one FE (default 2.5): the conversion behind the gauge power units. */
+    public static double feToJoules() {
+        return SPEC.isLoaded() ? FE_TO_JOULES.get() : 2.5;
     }
 }

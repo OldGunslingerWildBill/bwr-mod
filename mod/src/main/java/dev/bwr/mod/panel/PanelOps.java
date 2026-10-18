@@ -223,6 +223,9 @@ public final class PanelOps {
                 }
             }
         }
+        if (edit.contains("Caption", Tag.TAG_STRING)) {
+            component.setCaption(ConfigSchema.cleanText(edit.getString("Caption"), MachineNames.MAX_CAPTION).strip());
+        }
         if (edit.contains("Config", Tag.TAG_COMPOUND)) {
             CompoundTag merged = ConfigSchema.merge(type.configSchema(), component.data().toTag(), edit.getCompound("Config"));
             type.adjustConfig(component, merged);
@@ -231,11 +234,18 @@ public final class PanelOps {
                 // A setting whose drawing would not fit the component is refused as a whole, and says why.
                 player.displayClientMessage(refusal, true);
             } else {
+                net.minecraft.network.chat.Component powerNote = dev.bwr.mod.panel.wiring.PowerUnitsOps.apply(level, component, merged);
+                if (powerNote != null) {
+                    player.displayClientMessage(powerNote, true);
+                }
                 component.data().load(merged);
                 component.syncPorts();
                 type.onLoaded(component); // latched outputs and derived state follow the new config
                 component.touch();
             }
+        }
+        if (edit.getBoolean("FitRange") && dev.bwr.mod.panel.wiring.PowerUnitsOps.fitRange(level, component)) {
+            component.touch();
         }
         if (edit.contains("Inputs", Tag.TAG_LIST)) {
             ListTag list = edit.getList("Inputs", Tag.TAG_COMPOUND);

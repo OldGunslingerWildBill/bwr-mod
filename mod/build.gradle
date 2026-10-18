@@ -96,6 +96,7 @@ neoForge {
             if (project.hasProperty('bwrSpargerCheck')) jvmArguments.add('-Dbwr.spargerCheck=true')
             if (project.hasProperty('bwrCoreModelCheck')) jvmArguments.add('-Dbwr.coreModelCheck=true')
             if (project.hasProperty('bwrRipModelCheck')) jvmArguments.add('-Dbwr.ripModelCheck=true')
+            if (project.hasProperty('bwrNetworkingClientCheck')) jvmArguments.add('-Dbwr.networkingClientCheck=true')
         }
 
         // Builds a reactor, a suppression pool and a turbine outlet in a real

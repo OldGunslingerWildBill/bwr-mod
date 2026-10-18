@@ -33,6 +33,7 @@ public final class ConfigScreen extends Screen {
     private ScrollRows rows;
     private Button done;
     private final List<Object[]> labels = new ArrayList<>();
+    private final List<Object[]> warningRows = new ArrayList<>();
 
     public ConfigScreen(PanelBlockEntity owner, PanelComponent component) {
         super(Component.translatable("screen.bwr.panel_config"));
@@ -47,6 +48,7 @@ public final class ConfigScreen extends Screen {
         layout = new ConfigLayout(width, height, model.rowCount());
         rows = new ScrollRows(layout);
         labels.clear();
+        warningRows.clear();
         int row = 0;
 
         EditBox label = box(row++, model.label, 64);
@@ -55,6 +57,13 @@ public final class ConfigScreen extends Screen {
             refresh();
         });
         rowLabel(row - 1, Component.translatable("component.bwr.field.label"));
+
+        EditBox caption = box(row++, model.caption, dev.bwr.mod.panel.MachineNames.MAX_CAPTION);
+        caption.setResponder(value -> {
+            model.caption = value;
+            refresh();
+        });
+        rowLabel(row - 1, Component.translatable("component.bwr.field.caption_text"));
 
         for (ConfigModel.FieldRow fieldRow : model.fields) {
             ConfigField field = fieldRow.field;
@@ -94,6 +103,11 @@ public final class ConfigScreen extends Screen {
                 }).bounds(layout.widgetX, y, layout.widgetWidth, layout.rowHeight - 2).build()));
                 bound.active = false;
                 row++;
+                if (input.warning != null) {
+                    // A yellow note on the row below; the binding keeps working and nothing unbinds it.
+                    warningRows.add(new Object[] {row, input.warning});
+                    row++;
+                }
                 continue;
             }
             int half = layout.widgetWidth / 2;
@@ -113,6 +127,31 @@ public final class ConfigScreen extends Screen {
                 refresh();
             });
             rows.add(addRenderableWidget(value));
+            row++;
+        }
+
+        if (model.powerApplicable) {
+            // Part 6: what the power unit does to the range, and "Fit range" (applied by the server on Done).
+            warningRows.add(new Object[] {row, null});
+            row++;
+            int y = layout.rowY(row);
+            rowLabel(row, Component.translatable("screen.bwr.panel_config.fit_range_label"));
+            rows.add(addRenderableWidget(Button.builder(Component.translatable("screen.bwr.panel_config.fit_range"), button -> {
+                model.fitRange = true;
+                button.setMessage(Component.translatable("screen.bwr.panel_config.fit_range_set"));
+            }).bounds(layout.widgetX, y, layout.widgetWidth, layout.rowHeight - 2).build()));
+            row++;
+        }
+        if (model.lineLinked) {
+            // Networking section: a line link can take its caption from the machine's name (a click, never automatic).
+            int y = layout.rowY(row);
+            rowLabel(row, Component.translatable("screen.bwr.panel_config.networking"));
+            rows.add(addRenderableWidget(Button.builder(Component.translatable("screen.bwr.panel_config.use_machine_name"),
+                    button -> {
+                        PacketDistributor.sendToServer(new dev.bwr.mod.panel.networking.NetworkingPayloads.UseMachineName(
+                                owner, componentId));
+                        onClose();
+                    }).bounds(layout.widgetX, y, layout.widgetWidth, layout.rowHeight - 2).build()));
             row++;
         }
 
@@ -159,7 +198,16 @@ public final class ConfigScreen extends Screen {
                 graphics.drawString(font, (Component) entry[1], layout.left, rows.y(labelRow) + 5, 0xCCCCCC);
             }
         }
-        int row = 1;
+        for (Object[] entry : warningRows) {
+            int warningRow = (Integer) entry[0];
+            if (rows.visible(warningRow)) {
+                // A null entry is the power note, built fresh so it follows the Min and Max being typed.
+                Component note = entry[1] == null ? model.powerNote() : (Component) entry[1];
+                graphics.drawString(font, font.substrByWidth(note, layout.width - 8).getString(), layout.left + 4,
+                        rows.y(warningRow) + 5, entry[1] == null ? 0xC8E8FF : 0xFFDD33);
+            }
+        }
+        int row = 2;
         for (ConfigModel.FieldRow fieldRow : model.fields) {
             if (fieldRow.field.kind() == ConfigField.Kind.COLOR && rows.visible(row)) {
                 Integer color = ConfigModel.parseColor(fieldRow.text);

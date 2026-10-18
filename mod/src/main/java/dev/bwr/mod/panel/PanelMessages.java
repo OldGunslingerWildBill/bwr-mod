@@ -26,6 +26,7 @@ public final class PanelMessages {
             case NOT_IN_GROUP -> BwrText.tr("message.bwr.panel_bind.result.not_in_group", "Choose a component in the same panel group");
             case TOO_MANY -> BwrText.tr("message.bwr.panel_bind.result.too_many", "This output already has the maximum number of connections");
             case REFUSED -> BwrText.tr("message.bwr.panel_bind.result.refused", "This component cannot take that device");
+            case MEASURES_MISMATCH -> BwrText.tr("message.bwr.panel_bind.result.measures_mismatch", "This gauge measures a different quantity");
         };
     }
 

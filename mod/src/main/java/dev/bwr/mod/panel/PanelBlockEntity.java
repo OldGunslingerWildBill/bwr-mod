@@ -924,7 +924,11 @@ public final class PanelBlockEntity extends BlockEntity {
         tag.putInt("NextId", nextId);
         ListTag components = new ListTag();
         for (PanelComponent component : owned) {
-            components.add(network ? component.saveWithValues() : component.save());
+            CompoundTag entry = network ? component.saveWithValues() : component.save();
+            if (network) {
+                dev.bwr.mod.panel.wiring.MeasuresCheck.annotate(level, component, entry);
+            }
+            components.add(entry);
         }
         tag.put("Components", components);
         ListTag claims = new ListTag();
@@ -990,6 +994,7 @@ public final class PanelBlockEntity extends BlockEntity {
                 component.type().onLoaded(component);
             }
         }
+        dev.bwr.mod.panel.wiring.PanelNetworkIndex.invalidate(); // the wrench's client side reverse index follows state packets
     }
 
     /** Reads the mimic layer of a saved or network form; a panel saved without one has none. */
@@ -1064,6 +1069,9 @@ public final class PanelBlockEntity extends BlockEntity {
     public void setLevel(Level level) {
         super.setLevel(level);
         invalidateGroups();
+        if (level != null && level.isClientSide()) {
+            dev.bwr.mod.panel.wiring.PanelNetworkIndex.attached(this);
+        }
     }
 
     @Override
@@ -1141,6 +1149,9 @@ public final class PanelBlockEntity extends BlockEntity {
         PanelSampler.untrack(this);
         PanelConsistency.forget(this);
         invalidateGroups();
+        if (level != null && level.isClientSide()) {
+            dev.bwr.mod.panel.wiring.PanelNetworkIndex.detached(this);
+        }
     }
 
     @Override
@@ -1148,6 +1159,9 @@ public final class PanelBlockEntity extends BlockEntity {
         releaseHeldControls();
         dev.bwr.mod.advancement.PlantMilestones.unloaded(this);
         super.onChunkUnloaded();
+        if (level != null && level.isClientSide()) {
+            dev.bwr.mod.panel.wiring.PanelNetworkIndex.detached(this);
+        }
     }
 
     // ---- rendering support (common code, no client classes)

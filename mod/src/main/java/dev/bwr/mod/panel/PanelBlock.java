@@ -104,7 +104,7 @@ public final class PanelBlock extends BaseEntityBlock {
                                               InteractionHand hand, BlockHitResult hit) {
         boolean component = stack.getItem() instanceof ComponentItem;
         boolean wrench = stack.getItem() instanceof PanelWrenchItem;
-        boolean linker = stack.getItem() instanceof PanelLinkerItem;
+        boolean linker = stack.getItem() instanceof PanelLinkerItem || stack.getItem() instanceof NetworkingWrenchItem;
         boolean tape = stack.getItem() instanceof dev.bwr.mod.panel.mimic.MimicTapeItem;
         if (!component && !wrench && !linker && !tape) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;

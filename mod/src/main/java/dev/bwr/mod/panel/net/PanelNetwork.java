@@ -42,6 +42,7 @@ public final class PanelNetwork {
         registrar.playToClient(PanelPayloads.OpenConfig.TYPE, PanelPayloads.OpenConfig.STREAM_CODEC,
                 PanelNetwork::handleOpenConfig);
         dev.bwr.mod.panel.mimic.MimicPayloads.register(registrar);
+        dev.bwr.mod.panel.networking.NetworkingNet.register(registrar);
     }
 
     // ---- server
@@ -83,7 +84,8 @@ public final class PanelNetwork {
         }
     }
 
-    private static void handleBind(PanelPayloads.Bind payload, IPayloadContext context) {
+    /** Public so the GameTests can drive the real handler with a decoded payload. */
+    public static void handleBind(PanelPayloads.Bind payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer sender) {
             var outcome = WiringOps.bindDetailed(sender, payload);
             if (outcome.result() != WiringOps.Result.OK) {

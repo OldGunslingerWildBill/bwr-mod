@@ -33,6 +33,10 @@ public final class BindScreen extends Screen {
     public BindScreen(PanelBlockEntity block, PanelComponent component, PanelPayloads.LinkerScreen device) {
         super(Component.translatable("screen.bwr.panel_bind.title", component.label()));
         this.model = new BindModel(block, component, device);
+        var player = net.minecraft.client.Minecraft.getInstance().player;
+        if (player != null && !dev.bwr.mod.panel.LinkTools.heldWrench(player).isEmpty()) {
+            model.preselect(); // the Networking Wrench offers the best fitting signal, so one click confirms
+        }
     }
 
     @Override
@@ -206,7 +210,8 @@ public final class BindScreen extends Screen {
         graphics.drawString(font, title, layout.left, layout.titleY, 0xFFFFFF);
         Component status = model.deviceUsable()
                 ? Component.translatable("screen.bwr.panel_bind.device",
-                        Component.translatable(model.device.deviceName()).getString() + " "
+                        (model.device.machineName().isEmpty() ? "" : model.device.machineName() + " - ")
+                                + Component.translatable(model.device.deviceName()).getString() + " "
                                 + model.device.device().toShortString())
                 : Component.translatable("screen.bwr.panel_bind.link." + model.device.status());
         graphics.drawString(font, status, layout.left, layout.statusY, model.deviceUsable() ? 0x9FE0FF : 0xFFB070);

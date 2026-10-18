@@ -44,6 +44,10 @@ public final class SegmentDisplayData extends ComponentData implements PanelText
     public String align = RIGHT;
     /** Latched text from {@link #setText}, shown when {@link #format} is empty. */
     public String text = "";
+    /** What the display measures; null is ANY. Saved only when set. */
+    public dev.bwr.mod.signal.Quantity measures;
+    /** The Power units setting; saved only when not the default. */
+    public final PowerUnitsState power = new PowerUnitsState();
 
     private boolean stale = true;
     private boolean patchPending;
@@ -152,6 +156,8 @@ public final class SegmentDisplayData extends ComponentData implements PanelText
         tag.putInt("Color", color);
         tag.putString("Align", align);
         tag.putString("Text", text);
+        Measures.save(tag, measures);
+        power.save(tag);
     }
 
     @Override
@@ -161,14 +167,29 @@ public final class SegmentDisplayData extends ComponentData implements PanelText
         String mode = tag.getString("Align");
         align = ALIGNS.contains(mode) ? mode : RIGHT;
         text = ConfigSchema.cleanText(tag.getString("Text"), MAX_TEXT);
+        measures = Measures.load(tag);
+        power.load(tag);
         stale = true;
+    }
+
+    @Override
+    public PowerUnitsState powerState() {
+        return power;
+    }
+
+    @Override
+    public dev.bwr.mod.signal.Quantity measures(int inputIndex) {
+        return measures;
     }
 
     /** Config fields of both segment displays. */
     public static List<ConfigField> schema() {
-        return List.of(
+        List<ConfigField> fields = new java.util.ArrayList<>(List.of(
                 ConfigField.text("Format", "component.bwr.field.format", MAX_FORMAT),
                 ConfigField.color("Color", "component.bwr.field.segment_color"),
-                ConfigField.choice("Align", "component.bwr.field.align", ALIGNS));
+                ConfigField.choice("Align", "component.bwr.field.align", ALIGNS),
+                Measures.field()));
+        fields.addAll(PowerUnitsState.fields());
+        return List.copyOf(fields);
     }
 }

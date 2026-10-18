@@ -104,9 +104,12 @@ public final class Schema<T extends BlockEntity> {
         return new Bound(be);
     }
 
+    /** The machine name every provider reports as a TEXT signal (see {@code MachineNames}); "" when it has none. */
+    public static final SignalSpec NAME_SIGNAL = new SignalSpec("name", "Machine name", "", 0, 0, Kind.TEXT);
+
     private final class Bound implements SignalProvider {
         private final T be;
-        private final List<SignalSpec> fixedSignals = List.copyOf(specs.values());
+        private final List<SignalSpec> fixedSignals = withName(specs);
         private final List<CommandSpec> fixedCommands = List.copyOf(commandSpecs.values());
 
         Bound(T be) { this.be = be; }
@@ -133,6 +136,9 @@ public final class Schema<T extends BlockEntity> {
         @Override public Optional<String> readText(String key) {
             Function<T, String> reader = textReaders.get(key);
             if (!live()) return Optional.empty();
+            if (reader == null && key.equals(NAME_SIGNAL.key()) && !specs.containsKey(key)) {
+                return Optional.of(dev.bwr.mod.panel.MachineNames.name(be));
+            }
             if (reader == null) return extraText == null ? Optional.empty() : extraText.apply(be, key);
             return Optional.ofNullable(reader.apply(be));
         }
@@ -152,5 +158,12 @@ public final class Schema<T extends BlockEntity> {
                     && (!Double.isFinite(value) || value < spec.min() - 1e-9 || value > spec.max() + 1e-9)) return false;
             return commandBodies.get(key).run(be, value);
         }
+    }
+
+    /** The declared signals plus the machine name, unless the device declares a signal of that key itself. */
+    private static List<SignalSpec> withName(Map<String, SignalSpec> declared) {
+        List<SignalSpec> all = new ArrayList<>(declared.values());
+        if (!declared.containsKey(NAME_SIGNAL.key())) all.add(NAME_SIGNAL);
+        return List.copyOf(all);
     }
 }
