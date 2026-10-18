@@ -48,6 +48,15 @@ public final class Placement {
         return fit(model.footprintW, model.footprintH, cellsW, cellsH, rowAspect);
     }
 
+    /**
+     * A placement with the given scale (cells across per inch), anchored with the footprint's top-left corner at
+     * {@code (offsetX, offsetY)} cells: for a model that shares its component with printed scale and legends and
+     * so is not centred (the bar gauge).
+     */
+    public static Placement of(float scale, float rowAspect, float offsetX, float offsetY) {
+        return new Placement(scale, scale / rowAspect, offsetX, offsetY);
+    }
+
     public static Placement fit(BakedPanelModel model, float cellsW, float cellsH) {
         return fit(model, cellsW, cellsH, 1.0f);
     }

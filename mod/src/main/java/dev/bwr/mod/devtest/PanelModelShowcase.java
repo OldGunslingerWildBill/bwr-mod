@@ -14,6 +14,7 @@ import dev.bwr.mod.panel.component.KeySwitchData;
 import dev.bwr.mod.panel.component.LampData;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.component.PanelStyles;
+import dev.bwr.mod.panel.component.PushTurnData;
 import dev.bwr.mod.panel.component.PushbuttonData;
 import dev.bwr.mod.panel.component.RotarySelectorData;
 import dev.bwr.mod.panel.component.SetpointKnobData;
@@ -52,13 +53,16 @@ final class PanelModelShowcase {
     private PanelModelShowcase() {
     }
 
-    static final int GROUPS = 8;
+    static final int GROUPS = 9;
     private static final int COLS = 5;
     private static final int ROWS = 4;
     /** Top-left block of group 0 as seen from the north; further groups step west, columns run west. */
     private static final BlockPos CORNER = new BlockPos(5083, 127, 5100);
     /** The (type, style, variant) combinations placed, to prove the showcase covers the whole table. */
     private static final Set<String> SHOWN = new LinkedHashSet<>();
+    /** Component types drawn from one fixed model, by type path: not in the style table. */
+    private static final java.util.Map<String, String> FIXED_MODELS = java.util.Map.of("bar_gauge", "bar_gauge",
+            "rps_trip", "rps_trip_assembly", "push_turn_switch", "push_turn_switch");
 
     /** Screenshot names, one per stage: the seven boards, the lights at night, then four close-ups to read the legends. */
     static final String[] NAMES = {"baked-control-switches", "baked-selectors-ge", "baked-selectors-westinghouse",
@@ -66,15 +70,16 @@ final class PanelModelShowcase {
             "baked-night-lights", "baked-closeup-control-switch", "baked-closeup-selector-westinghouse",
             "baked-closeup-round-meter", "baked-closeup-edgewise-meters", "baked-srv-overview",
             "baked-srv-closeup-selector-knob", "baked-srv-closeup-selector-lever", "baked-srv-closeup-lamps",
-            "baked-srv-closeup-guarded-button", "baked-srv-night"};
+            "baked-srv-closeup-guarded-button", "baked-srv-night", "baked-owner-overview", "baked-owner-closeup-narrow-trio",
+            "baked-owner-closeup-wide-and-pressure", "baked-owner-closeup-rps-and-push-turn"};
     /** The group each stage shows. */
-    private static final int[] GROUP_OF = {0, 1, 2, 3, 4, 5, 6, 4, 0, 2, 5, 6, 7, 7, 7, 7, 7, 7};
+    private static final int[] GROUP_OF = {0, 1, 2, 3, 4, 5, 6, 4, 0, 2, 5, 6, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8};
     /** The cell (within the group) the camera looks at, and how far away it stands in blocks. */
     private static final int[][] FOCUS = {{40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32},
             {17 + 6, 22 + 8}, {17 + 6, 2 + 7}, {20 + 8, 2 + 8}, {10 + 4, 2 + 12},
-            {40, 32}, {30, 9}, {30, 27}, {70, 22}, {70, 52}, {40, 32}};
+            {40, 32}, {30, 9}, {30, 27}, {70, 22}, {70, 52}, {40, 32}, {40, 32}, {22, 14}, {60, 14}, {68, 44}};
     private static final double[] DISTANCE = {4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 1.7, 1.5, 1.8, 2.6,
-            4.2, 1.9, 1.9, 2.4, 1.2, 4.2};
+            4.2, 1.9, 1.9, 2.4, 1.2, 4.2, 4.2, 1.9, 1.9, 1.9};
 
     static boolean night(int stage) {
         return stage == 7 || stage == 17;
@@ -123,6 +128,7 @@ final class PanelModelShowcase {
         roundMeters(level);
         edgewiseMeters(level);
         srvSwitches(level);
+        ownerHardware(level);
         for (int g = 0; g < GROUPS; g++) {
             for (int c = 0; c < COLS; c++) {
                 for (int r = 0; r < ROWS; r++) {
@@ -269,6 +275,101 @@ final class PanelModelShowcase {
         }
     }
 
+    /** A component of a type that has no style table row (the owner's bar gauge, RPS trip assembly, push-to-turn switch). */
+    private static PanelComponent putFixed(ServerLevel level, int group, ComponentType type, int x, int y, int w, int h) {
+        BlockPos anchor = block(group, x / 16, y / 16);
+        PanelComponent component = PanelOps.placeDirect(level, anchor, x % 16, y % 16, type, Footprint.of(w, h));
+        if (component == null) {
+            throw new AssertionError("Baked showcase placement refused " + type.id() + " " + w + "x" + h + " at group "
+                    + group + " cell " + x + "," + y);
+        }
+        component.touch();
+        return component;
+    }
+
+    /** A bar gauge showing {@code value}, with its own label (the caption under it). */
+    private static PanelComponent barGauge(ServerLevel level, int x, int y, int w, int h, String preset, double value, String label) {
+        PanelComponent component = putFixed(level, 8, ComponentTypes.BAR_GAUGE, x, y, w, h);
+        GaugeData data = (GaugeData) component.data();
+        data.apply(preset);
+        component.setLabel(label);
+        component.setSource(0, InputSources.constant(value));
+        owner(level, 8, x, y).resample(component, true);
+        return component;
+    }
+
+    /**
+     * Group 8, the owner's CAD hardware (NEW-HARDWARE-SPEC.md): the narrow range RPV level trio, a wide range scale and a
+     * custom pressure scale of the bar gauge at one block and two blocks tall, the "Modern" pushbutton, the SRV switches and
+     * the WL-2 selector from the style table.
+     */
+    private static void ownerHardware(ServerLevel level) {
+        double[] narrow = {18.0, 34.0, 52.0};
+        String[] names = {"RFW-LI-606A", "RFW-LI-606B", "RFW-LI-606C"};
+        for (int i = 0; i < 3; i++) {
+            barGauge(level, 2 + i * 14, 2, 12, 24, GaugeData.PRESET_NARROW, narrow[i], names[i]);
+        }
+        barGauge(level, 46, 2, 12, 24, GaugeData.PRESET_WIDE, -40.0, "MS-LI-604");
+        PanelComponent pressure = barGauge(level, 60, 2, 12, 24, GaugeData.PRESET_CUSTOM, 10.6, "RFW-PI-605");
+        GaugeData custom = (GaugeData) pressure.data();
+        custom.min = 0.0;
+        custom.max = 12.0;
+        custom.units = "PSIG x 100";
+        custom.bandLow[0] = 11.0;
+        custom.bandHigh[0] = 12.0;
+        custom.bandColor[0] = GaugeData.BAND_RED;
+        for (int i = 1; i < GaugeData.MAX_BANDS; i++) {
+            custom.bandLow[i] = 0.0;
+            custom.bandHigh[i] = 0.0;
+        }
+        pressure.touch();
+        owner(level, 8, 60, 2).resample(pressure, true);
+        // the default size and the narrow size
+        barGauge(level, 2, 30, 10, 16, GaugeData.PRESET_NARROW, 30.0, "LI-1");
+        barGauge(level, 14, 30, 8, 16, GaugeData.PRESET_WIDE, 20.0, "LI-2");
+        // the table's owner looks: the Modern pushbutton released, held and recoloured; the SRV switches and the WL-2
+        for (int col = 0; col < 3; col++) {
+            int x = 26 + col * 10;
+            PanelComponent component = put(level, 8, ComponentTypes.PUSHBUTTON, x, 32, 8, 8, PanelStyles.GE, "button_1");
+            if (col == 2) {
+                ((PushbuttonData) component.data()).color = 0x2060E0;
+            }
+            owner(level, 8, x, 32).setOutput(component, 0, col == 1 ? 1.0 : 0.0);
+        }
+        for (int col = 0; col < 3; col++) {
+            int x = 2 + col * 12;
+            PanelComponent component = put(level, 8, ComponentTypes.ROTARY_SELECTOR, x, 50, 10, 12, PanelStyles.OILTIGHT,
+                    col == 0 ? "srv_open_close" : "srv_open_auto_close");
+            RotarySelectorData data = (RotarySelectorData) component.data();
+            data.positions = col == 0 ? 2 : 3;
+            data.names = col == 0 ? "OPEN,CLOSE" : "OPEN,AUTO,CLOSE";
+            data.position = col == 2 ? 2 : col;
+            component.syncPorts();
+            component.type().onLoaded(component);
+        }
+        // the RPS trip assembly, one button held, and the push-to-turn switches: AUTO at rest, and ARM pushed in
+        PanelComponent rps = putFixed(level, 8, ComponentTypes.RPS_TRIP, 56, 30, 24, 12);
+        rps.setLabel("RPS-1");
+        owner(level, 8, 56, 30).setOutput(rps, 1, 1.0);
+        for (int i = 0; i < 2; i++) {
+            PanelComponent knob = putFixed(level, 8, ComponentTypes.PUSH_TURN_SWITCH, 58 + i * 11, 46, 10, 10);
+            knob.setLabel(i == 0 ? "ADS A" : "ADS B");
+            PushTurnData data = (PushTurnData) knob.data();
+            data.position = i;
+            knob.type().onLoaded(knob);
+            if (i == 1) {
+                owner(level, 8, 58 + i * 11, 46).setOutput(knob, 1, 1.0);
+            }
+        }
+        PanelComponent wl2 = put(level, 8, ComponentTypes.ROTARY_SELECTOR, 40, 46, 16, 16, PanelStyles.WESTINGHOUSE, "wl2");
+        RotarySelectorData wl2Data = (RotarySelectorData) wl2.data();
+        wl2Data.positions = 5;
+        wl2Data.names = "A,B,C,D,E";
+        wl2Data.position = 1;
+        wl2.syncPorts();
+        wl2.type().onLoaded(wl2);
+    }
+
     private static void keysAndKnobs(ServerLevel level) {
         String[][] keys = {{PanelStyles.GE, "key"}, {PanelStyles.WESTINGHOUSE, "key"}, {PanelStyles.WESTINGHOUSE, "tumbler"}};
         for (int row = 0; row < keys.length; row++) {
@@ -391,7 +492,10 @@ final class PanelModelShowcase {
                 for (PanelComponent component : be.owned()) {
                     var tag = component.data().toTag();
                     String type = component.type().id().getPath();
-                    boolean expected = PanelStyles.resolve(type, tag.getString("Style"), tag.getString("Variant"), PanelModels::has) != null;
+                    // The owner's fixed-model types have no style table row: baked exactly when their one model is loaded.
+                    String fixed = FIXED_MODELS.get(type);
+                    boolean expected = fixed != null ? PanelModels.has(fixed)
+                            : PanelStyles.resolve(type, tag.getString("Style"), tag.getString("Variant"), PanelModels::has) != null;
                     boolean actual = RenderCache.of(component).usesBaked();
                     total++;
                     if (actual) {

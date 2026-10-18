@@ -51,5 +51,6 @@ public final class SignalAdapters {
         SignalProviders.register(ContainmentVaultDoorBlockEntity.class, ContainmentSignals.VAULT_DOOR::bind);
         SignalProviders.register(ContainmentAirlockBlockEntity.class, ContainmentSignals.AIRLOCK::bind);
         SignalProviders.register(ContainmentEquipmentBlockEntity.class, ContainmentSignals.EQUIPMENT::bind);
+        SignalProviders.register(dev.bwr.mod.eccs.AdsControllerBlockEntity.class, AdsSignals.CONTROLLER::bind);
     }
 }

@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": ["IGI", "IDI", "IRI"], "key": {"G": {"item": "minecraft:glass_pane"}, "I": {"item": "minecraft:iron_ingot"}, "D": {"item": "minecraft:black_dye"}, "R": {"item": "minecraft:redstone"}}, "result": {"id": "bwr:bar_gauge", "count": 1}}

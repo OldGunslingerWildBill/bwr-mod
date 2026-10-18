@@ -100,6 +100,12 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
     public int getDivision(){return division;}
     private volatile boolean open;
     private volatile boolean computerControlled;
+    /**
+     * The valve's ADS permit ({@code ads_allow} on a panel): true until a switch the player wired says the ADS may not
+     * open this valve (its OPEN/AUTO/CLOSE switch in CLOSE). It only decides whether an ADS controller may hold this
+     * valve open; the valve itself still answers redstone and Lua as always.
+     */
+    private volatile boolean adsAllowed = true;
     private volatile double lastFlowKgPerS;
     private volatile boolean dischargeSubmerged;
     private volatile DischargePath dischargePath = DischargePath.NONE;
@@ -142,6 +148,17 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
         division=next;setChanged();
         if(level!=null)for(var controller:dev.bwr.mod.eccs.AssemblyPlumbing.nearby(level,worldPosition,dev.bwr.mod.eccs.AdsControllerBlockEntity.class))controller.markBindingDirty();
     }
+    public boolean isAdsAllowed() {
+        return adsAllowed;
+    }
+
+    public void setAdsAllowed(boolean allowed) {
+        if (adsAllowed != allowed) {
+            adsAllowed = allowed;
+            setChanged();
+        }
+    }
+
     public void setOpen(boolean open) {
         this.open = open;
         if(level!=null&&!level.isClientSide()&&getBlockState().getValue(SafetyReliefValveBlock.OPEN)!=open)
@@ -434,6 +451,9 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
         tag.putBoolean("Open", open);
         tag.putBoolean("ComputerControlled", computerControlled);
         tag.putBoolean("Submerged", dischargeSubmerged);
+        if (!adsAllowed) {
+            tag.putBoolean("AdsInhibited", true); // only when it is not the default: older saves are unchanged
+        }
     }
 
     @Override
@@ -443,6 +463,7 @@ public class SafetyReliefValveBlockEntity extends BlockEntity {
         open = tag.getBoolean("Open");
         computerControlled = tag.getBoolean("ComputerControlled");
         dischargeSubmerged = tag.getBoolean("Submerged");
+        adsAllowed = !tag.getBoolean("AdsInhibited");
         // The path is derived rather than saved, so the NBT written by this
         // class is byte-for-byte what it was before quenchers existed and no
         // save needs migrating either way. A valve reloads reading as the

@@ -39,6 +39,9 @@ may span up to 8 x 8, because a 185-rod core is 96 cells across.
 | Bar graph | 3x24, 3x12, 3x16, 3x32 and the same lying down (24x3 ...); one segment per 2 cells |
 | Round dial | 12x12, 16x16, 20x20, 24x24, 32x32 |
 | Edgewise meter | vertical 6x16, 6x24, 8x24, 8x32; horizontal 16x6, 24x6, 24x8, 32x8 |
+| Bar gauge | 10x16 (one block tall), 8x16, 12x24, 16x32 |
+| RPS trip assembly | 16x8, 24x12, 32x16 |
+| Push-to-turn switch | 8x8, 12x12, 16x16 |
 | Strip-chart recorder | 16x16, 24x16, 32x24 |
 | Paperless recorder | DX1000 16x16 (one block, the default), 12, 20, 24; DX2000 32x32 (2 x 2, twice a DX1000), 40, 48; all square |
 | 7- and 16-segment display | 5 cells wide per digit, 8 tall: 20x8 (4 digits), 1 to 12 digits |

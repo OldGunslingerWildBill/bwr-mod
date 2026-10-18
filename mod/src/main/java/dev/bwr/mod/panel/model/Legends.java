@@ -4,7 +4,9 @@ import dev.bwr.mod.panel.component.ControlSwitchData;
 import dev.bwr.mod.panel.component.GaugeData;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.component.PanelStyles;
+import dev.bwr.mod.panel.component.PushTurnData;
 import dev.bwr.mod.panel.component.RotarySelectorData;
+import dev.bwr.mod.panel.component.RpsTripData;
 import dev.bwr.mod.panel.component.SetpointKnobData;
 import dev.bwr.mod.panel.display.PanelFormat;
 
@@ -166,6 +168,22 @@ public final class Legends {
         }
         if (component.data() instanceof GaugeData data && lower.equals("units")) {
             return data.units;
+        }
+        if (component.data() instanceof RpsTripData data) {
+            // The two engraved legends of an RPS trip assembly, one over each button.
+            return switch (lower) {
+                case "legend_a" -> data.legendA;
+                case "legend_b" -> data.legendB;
+                default -> null;
+            };
+        }
+        if (component.data() instanceof PushTurnData data) {
+            // AUTO at the left, ARM at the right of a push-to-turn switch.
+            return switch (lower) {
+                case "pos1" -> data.legend1;
+                case "pos2" -> data.legend2;
+                default -> null;
+            };
         }
         if (component.data() instanceof SetpointKnobData) {
             // The knob's scale is the 0 to 100 percent it outputs.

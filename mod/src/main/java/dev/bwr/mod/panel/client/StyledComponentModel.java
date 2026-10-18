@@ -13,11 +13,18 @@ final class StyledComponentModel implements ComponentModel {
     private final ComponentModel classic;
     private final BakedComponentModel.Kind kind;
     private final String type;
+    /** The one model of a type that has no styles (bar gauge, RPS trip assembly, push-to-turn switch), or null. */
+    private final String fixedModelId;
 
     StyledComponentModel(ComponentModel classic, BakedComponentModel.Kind kind, String type) {
+        this(classic, kind, type, null);
+    }
+
+    StyledComponentModel(ComponentModel classic, BakedComponentModel.Kind kind, String type, String fixedModelId) {
         this.classic = new ProportionedComponentModel(classic);
         this.kind = kind;
         this.type = type;
+        this.fixedModelId = fixedModelId;
     }
 
     @Override
@@ -27,7 +34,8 @@ final class StyledComponentModel implements ComponentModel {
 
     @Override
     public void buildStatic(QuadSink sink, PanelComponent component, float rowAspect) {
-        BakedComponentModel baked = BakedComponentModel.create(component, kind, type, rowAspect);
+        BakedComponentModel baked = fixedModelId == null ? BakedComponentModel.create(component, kind, type, rowAspect)
+                : BakedComponentModel.createFixed(component, kind, type, fixedModelId, rowAspect);
         RenderCache.of(component).baked = baked;
         if (baked == null) {
             classic.buildStatic(sink, component, rowAspect);

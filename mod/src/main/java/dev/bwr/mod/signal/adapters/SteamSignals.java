@@ -34,6 +34,11 @@ final class SteamSignals {
                 if (v != Math.rint(v)) return false;
                 be.setDivision((int) v);
                 return true;
+            })
+            .bool("ads_allowed", "ADS may open this valve", SafetyReliefValveBlockEntity::isAdsAllowed)
+            .toggle("ads_allow", "ADS may open this valve", (be, v) -> {
+                be.setAdsAllowed(v >= 0.5);
+                return true;
             });
 
     static final Schema<TurbineValveBlockEntity> TURBINE_VALVE = new Schema<TurbineValveBlockEntity>()

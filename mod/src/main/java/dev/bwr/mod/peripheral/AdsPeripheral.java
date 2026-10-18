@@ -44,6 +44,10 @@ public class AdsPeripheral implements IPeripheral {
         if(division<0||division>4)throw new dan200.computercraft.api.lua.LuaException("Division must be 0 through 4");
         be.setDivision(division);
     }
+    /** Whether the allow input lets the bank open (true unless something wired to it, or this program, cleared it). */
+    @LuaFunction(mainThread=true) public boolean isAllowed(){return be.isAllowed();}
+    /** The allow input: false keeps the bank from being held open, true (the default) lets it, as before. */
+    @LuaFunction(mainThread=true) public void setAllowed(boolean allowed){be.setAllowed(allowed);}
     @Override
     public String getType() {
         return "bwr_ads";
@@ -151,6 +155,7 @@ public class AdsPeripheral implements IPeripheral {
         Map<String, Object> m = new HashMap<>();
         m.put("division",be.getDivision());
         m.put("open", be.isOpen());
+        m.put("allowed", be.isAllowed());
         m.put("valves", be.getValveCount());
         m.put("valvesOpen", be.getHeldOpenCount());
         m.put("valveDemand", be.getValveDemandFraction());
