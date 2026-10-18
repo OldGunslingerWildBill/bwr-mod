@@ -1,6 +1,7 @@
 package dev.bwr.mod.devtest;
 
 import dev.bwr.mod.panel.MachineNames;
+import dev.bwr.mod.panel.MachinePorts;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.networking.NetworkingNet;
@@ -106,13 +107,12 @@ public final class NetworkingNameTests {
             s.wire(s.plantOut(blockD, button, 0, s.devices, "open"));
             s.wrench(second);
             s.wire(s.plantIn(blockB, gaugeB, 0, second, "position", 100, 0));
-            // Gauge C reads RHR-1 through the CC network, not through a line link.
-            s.wrench(null);
-            s.wire(new dev.bwr.mod.panel.net.PanelPayloads.Bind(blockC.getBlockPos(), gaugeC.id(), false, 0,
-                    BindKind.CC.ordinal(), BlockPos.ZERO, "", BlockPos.ZERO, 0, 0, 1.0));
+            // Gauge C reads RHR-1 through a CC port (CC:Tweaked not needed to hold the binding), not through a line link.
+            MachinePorts.set(rhr1, 7);
+            gaugeC.setSource(0, new dev.bwr.mod.panel.wiring.CcPortSource(7, "position", 100, 0));
             s.check(gaugeA.source(0) instanceof dev.bwr.mod.panel.wiring.PlantSource
                             && gaugeB.source(0) instanceof dev.bwr.mod.panel.wiring.PlantSource
-                            && gaugeC.source(0) instanceof dev.bwr.mod.panel.wiring.CcSource
+                            && gaugeC.source(0) instanceof dev.bwr.mod.panel.wiring.CcPortSource
                             && button.sinks(0).size() == 1,
                     "fixture: A and B line-linked, the button commands RHR-1, C is a CC binding");
             s.check(gaugeA.caption().isEmpty() && gaugeB.caption().isEmpty() && gaugeC.caption().isEmpty()

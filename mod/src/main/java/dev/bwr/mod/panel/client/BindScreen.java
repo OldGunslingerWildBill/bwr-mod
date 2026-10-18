@@ -25,6 +25,7 @@ public final class BindScreen extends Screen {
     private BindLayout layout;
     private KeyList list;
     private EditBox filterBox;
+    private EditBox portBox;
     private Button apply;
     /** Ports a selector page shows; a component with more has a pager above the selector. */
     static final int PORTS_PER_PAGE = 12;
@@ -107,14 +108,34 @@ public final class BindScreen extends Screen {
         }
 
         if (listed) {
-            filterBox = new EditBox(font, layout.left, layout.filterY, layout.width, 20,
-                    Component.translatable("screen.bwr.panel_bind.filter"));
-            filterBox.setValue(model.filter);
-            filterBox.setResponder(value -> {
-                model.filter = value;
-                list.refill();
-            });
-            addRenderableWidget(filterBox);
+            if (model.mode == BindModel.Mode.CCNET) {
+                // The CC network mode: a port of the panel's CC network, looked up on the server.
+                portBox = new EditBox(font, layout.left, layout.filterY, layout.width - 72, 20,
+                        Component.translatable("screen.bwr.panel_bind.cc_port"));
+                portBox.setMaxLength(4);
+                portBox.setFilter(text -> text.chars().allMatch(Character::isDigit));
+                portBox.setHint(Component.translatable("screen.bwr.panel_bind.cc_port"));
+                portBox.setValue(model.portText);
+                portBox.setResponder(value -> model.portText = value);
+                addRenderableWidget(portBox);
+                addRenderableWidget(Button.builder(Component.translatable("screen.bwr.panel_bind.cc_lookup"), button -> {
+                    int number = model.portNumber();
+                    if (number >= 0) {
+                        model.rememberLookup();
+                        PacketDistributor.sendToServer(new dev.bwr.mod.panel.networking.NetworkingScreenPayloads.CcPortLookup(
+                                model.owner, model.componentId, number));
+                    }
+                }).bounds(layout.left + layout.width - 68, layout.filterY, 68, 20).build());
+            } else {
+                filterBox = new EditBox(font, layout.left, layout.filterY, layout.width, 20,
+                        Component.translatable("screen.bwr.panel_bind.filter"));
+                filterBox.setValue(model.filter);
+                filterBox.setResponder(value -> {
+                    model.filter = value;
+                    list.refill();
+                });
+                addRenderableWidget(filterBox);
+            }
             list = new KeyList(layout.width, layout.listHeight, layout.listY);
             list.setX(layout.left);
             addRenderableWidget(list);
@@ -208,13 +229,17 @@ public final class BindScreen extends Screen {
         renderBackground(graphics, mouseX, mouseY, partial);
         graphics.fill(layout.left - 6, layout.top, layout.left + layout.width + 6, layout.bottom + 4, 0xC0101010);
         graphics.drawString(font, title, layout.left, layout.titleY, 0xFFFFFF);
-        Component status = model.deviceUsable()
+        boolean ccMode = model.mode == BindModel.Mode.CCNET;
+        Component status = ccMode ? ccStatus() : model.device.ccPort() >= 0
+                ? Component.translatable("screen.bwr.panel_bind.cc_hint")
+                : model.deviceUsable()
                 ? Component.translatable("screen.bwr.panel_bind.device",
                         (model.device.machineName().isEmpty() ? "" : model.device.machineName() + " - ")
                                 + Component.translatable(model.device.deviceName()).getString() + " "
                                 + model.device.device().toShortString())
                 : Component.translatable("screen.bwr.panel_bind.link." + model.device.status());
-        graphics.drawString(font, status, layout.left, layout.statusY, model.deviceUsable() ? 0x9FE0FF : 0xFFB070);
+        graphics.drawString(font, status, layout.left, layout.statusY,
+                ccMode ? (model.ccUsable() ? 0x9FE0FF : 0xFFDD33) : model.deviceUsable() ? 0x9FE0FF : 0xFFB070);
         if (model.hasPorts() && model.choices.size() > PORTS_PER_PAGE) {
             int pages = (model.choices.size() + PORTS_PER_PAGE - 1) / PORTS_PER_PAGE;
             graphics.drawCenteredString(font, Component.translatable("screen.bwr.panel_bind.page", portPage + 1, pages),
@@ -245,6 +270,24 @@ public final class BindScreen extends Screen {
         for (var widget : renderables) {
             widget.render(graphics, mouseX, mouseY, partial);
         }
+    }
+
+    /** The status line of the CC network mode: what the last port lookup found. */
+    private Component ccStatus() {
+        var device = model.device;
+        if (device.ccPort() < 0) {
+            return Component.translatable("screen.bwr.panel_bind.cc_type_port");
+        }
+        String port = dev.bwr.mod.panel.MachinePorts.format(device.ccPort());
+        return switch (device.status()) {
+            case PanelPayloads.LINK_OK -> Component.translatable("screen.bwr.panel_bind.cc_found", port,
+                    (device.machineName().isEmpty() ? "" : device.machineName() + " - ")
+                            + Component.translatable(device.deviceName()).getString());
+            case PanelPayloads.LINK_PORT_CONFLICT -> Component.translatable("screen.bwr.panel_bind.cc_conflict", port,
+                    device.machineName());
+            case PanelPayloads.LINK_PORT_EMPTY -> Component.translatable("screen.bwr.panel_bind.cc_empty", port);
+            default -> Component.translatable("screen.bwr.panel_bind.link." + device.status());
+        };
     }
 
     @Override

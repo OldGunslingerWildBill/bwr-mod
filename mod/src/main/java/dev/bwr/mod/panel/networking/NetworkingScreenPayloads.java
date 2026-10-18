@@ -26,6 +26,21 @@ public final class NetworkingScreenPayloads {
     private static final int MAX_LABEL = 96;
     private static final int MAX_TEXT = NetworkingPayloads.MAX_TEXT;
 
+    /** The binding screen CC network mode: look up the machine on a port of the CC network of the panel. */
+    public record CcPortLookup(BlockPos pos, int id, int port) implements CustomPacketPayload {
+        public static final Type<CcPortLookup> TYPE = new Type<>(BwrMod.id("network_cc_port_lookup"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, CcPortLookup> STREAM_CODEC = StreamCodec.composite(
+                BlockPos.STREAM_CODEC, CcPortLookup::pos,
+                net.minecraft.network.codec.ByteBufCodecs.VAR_INT, CcPortLookup::id,
+                net.minecraft.network.codec.ByteBufCodecs.VAR_INT, CcPortLookup::port,
+                CcPortLookup::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     /** Ask the server for the Networking screen of a device (opening it, or refreshing it after an unlink). */
     public record Open(BlockPos device) implements CustomPacketPayload {
         public static final Type<Open> TYPE = new Type<>(BwrMod.id("network_open"));

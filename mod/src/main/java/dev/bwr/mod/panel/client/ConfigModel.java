@@ -174,7 +174,7 @@ public final class ConfigModel {
      * binding has now (so it is right on a server with its own FE ratio). Empty when the setting does not apply.
      */
     public Component powerNote() {
-        if (!powerApplicable || !(component.source(0) instanceof dev.bwr.mod.panel.wiring.PlantSource plant)) {
+        if (!powerApplicable) {
             return Component.empty();
         }
         String rawUnit = component.boundUnit(0);
@@ -192,7 +192,7 @@ public final class ConfigModel {
                 high = row.text;
             }
         }
-        return Component.translatable("screen.bwr.panel_config.power_note", low, high, rawUnit, format(plant.scale()), shown);
+        return Component.translatable("screen.bwr.panel_config.power_note", low, high, rawUnit, format(dev.bwr.mod.panel.wiring.WiringOps.scaleOf(component.source(0))), shown);
     }
 
     /** Accepts {@code #RRGGBB} or {@code RRGGBB}; null if it is not six hex digits. */

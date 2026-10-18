@@ -234,7 +234,7 @@ public final class PanelOps {
                 // A setting whose drawing would not fit the component is refused as a whole, and says why.
                 player.displayClientMessage(refusal, true);
             } else {
-                net.minecraft.network.chat.Component powerNote = dev.bwr.mod.panel.wiring.PowerUnitsOps.apply(level, component, merged);
+                net.minecraft.network.chat.Component powerNote = dev.bwr.mod.panel.wiring.PowerUnitsOps.apply(level, owner, component, merged);
                 if (powerNote != null) {
                     player.displayClientMessage(powerNote, true);
                 }
@@ -244,7 +244,7 @@ public final class PanelOps {
                 component.touch();
             }
         }
-        if (edit.getBoolean("FitRange") && dev.bwr.mod.panel.wiring.PowerUnitsOps.fitRange(level, component)) {
+        if (edit.getBoolean("FitRange") && dev.bwr.mod.panel.wiring.PowerUnitsOps.fitRange(level, owner, component)) {
             component.touch();
         }
         if (edit.contains("Inputs", Tag.TAG_LIST)) {

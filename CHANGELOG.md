@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased: Networking Wrench, machine names, gauge Measures and FE power units
+
+- Added the **Networking Wrench**, a second wiring tool beside the unchanged Panel Linker (either stores the device in the same slot, so a bind is the same bind). Right-click selects a device, sneak-right-click opens its **Networking screen** (name, caption template, every signal with its live value, unit, quantity and readers, every command, the linked components with Unlink, and *Name linked components*). While it is held, a device under the crosshair is outlined white, the selected one yellow, and hovering a bound component or a device draws see-through lines (read cyan, command orange, at most 64). Nearby players see the same lines, fainter and tinted with your name colour, within `networkLineShareDistance` (server, default 32) and `networkLineViewDistance` (client, default 32).
+- Added **machine names** (equipment tags, up to 24 characters; saved only when set), the `name` TEXT signal on every device, component **captions** (printed under a component), and the two buttons that fill captions from a name: *Name linked components* and *Use machine name*. They touch line links only (never CC port bindings), respect the panel edit permission and never fire a sink.
+- Added gauge **Measures** (default ANY): a gauge set to LEVEL lists and accepts only level signals; `bind` refuses a mismatch with the reason. Old mismatched bindings keep working and show a warning. Each signal now has a quantity worked out from its unit (SIGNALS.md). `generated_fe_tick`, `delivered_fe_tick` and `buffer_delta_fe_tick` now read `FE/t` (they said `FE`).
+- Added gauge **Power units** (Raw, W, kW, MW; kJ and MJ for stored energy) through the existing binding scale, `feToJoules` (default 2.5), and *Fit range*.
+- Added **CC port bindings** (CC:Tweaked only): a machine gets a port 0000 to 9999 set by hand (`setPort(n)` or its Networking screen), and a panel input can read a signal of the machine on a port of its CC wired network. Two machines on one port read no signal. Every machine peripheral also has `getName`, `setName`, `getPort` and `setPort`.
+- The network protocol version is now 21.
+
 ## 0.1.0-alpha.32 (unreleased) — Full core display, rod select matrix and SRV switches
 
 - Added reactor rod selection: signal `selected_rod`, commands `select_rod`, `selected_rod_insert` / `_withdraw` (one notch) and `selected_rod_insert_continuous` / `_withdraw_continuous` (held), and CC `selectRod`, `getSelectedRod`, `stepSelectedRodIn` / `Out`, `setSelectedRodInsertHeld` / `WithdrawHeld`. They move only the selected rod through the existing drive network, honouring CRD power and water. The selection is saved; old saves load with none.

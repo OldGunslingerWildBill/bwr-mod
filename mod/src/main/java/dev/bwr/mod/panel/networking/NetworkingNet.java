@@ -20,6 +20,8 @@ public final class NetworkingNet {
         registrar.playToServer(NetworkingPayloads.UseMachineName.TYPE, NetworkingPayloads.UseMachineName.STREAM_CODEC,
                 NetworkingNet::handleUseMachineName);
         registrar.playToServer(NetworkingPayloads.Edit.TYPE, NetworkingPayloads.Edit.STREAM_CODEC, NetworkingNet::handleEdit);
+        registrar.playToServer(NetworkingScreenPayloads.CcPortLookup.TYPE, NetworkingScreenPayloads.CcPortLookup.STREAM_CODEC,
+                NetworkingNet::handleCcPortLookup);
         registrar.playToServer(NetworkingScreenPayloads.Open.TYPE, NetworkingScreenPayloads.Open.STREAM_CODEC,
                 NetworkingNet::handleOpen);
         registrar.playToServer(NetworkingScreenPayloads.ValuesRequest.TYPE, NetworkingScreenPayloads.ValuesRequest.STREAM_CODEC,
@@ -53,7 +55,16 @@ public final class NetworkingNet {
 
     public static void handleEdit(NetworkingPayloads.Edit payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer sender) {
-            NetworkingOps.edit(sender, payload.device(), payload.name(), payload.template());
+            NetworkingOps.edit(sender, payload.device(), payload.name(), payload.template(), payload.port());
+        }
+    }
+
+    public static void handleCcPortLookup(NetworkingScreenPayloads.CcPortLookup payload, IPayloadContext context) {
+        if (context.player() instanceof ServerPlayer sender) {
+            var screen = dev.bwr.mod.panel.wiring.WiringOps.ccPortScreenFor(sender, payload.pos(), payload.id(), payload.port());
+            if (screen != null) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sender, screen);
+            }
         }
     }
 

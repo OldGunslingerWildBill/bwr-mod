@@ -16,13 +16,13 @@ public final class MeasuresCheck {
     private MeasuresCheck() {
     }
 
-    /** The quantity of the signal input {@code input} is line-linked to when it is not the quantity measured, else -1. */
-    public static int mismatch(ServerLevel level, PanelComponent component, int input) {
+    /** The quantity of the signal input {@code input} is wired to (line link or CC port) when it is not the quantity measured, else -1. */
+    public static int mismatch(ServerLevel level, dev.bwr.mod.panel.PanelBlockEntity panel, PanelComponent component, int input) {
         Quantity wanted = component.data().measures(input);
-        if (wanted == null || !(component.source(input) instanceof PlantSource plant)) {
+        if (wanted == null) {
             return -1;
         }
-        SignalSpec spec = WiringOps.specOf(level, plant.device(), plant.key());
+        SignalSpec spec = WiringOps.boundSpec(level, panel, component.source(input));
         if (spec == null) {
             return -1;
         }
@@ -31,14 +31,14 @@ public final class MeasuresCheck {
     }
 
     /** Adds a {@code Mismatch} list to a component's network form when any input disagrees. */
-    public static void annotate(Level level, PanelComponent component, CompoundTag network) {
+    public static void annotate(Level level, dev.bwr.mod.panel.PanelBlockEntity panel, PanelComponent component, CompoundTag network) {
         if (!(level instanceof ServerLevel server) || component.type() == null) {
             return;
         }
         int[] found = new int[component.inputCount()];
         boolean any = false;
         for (int i = 0; i < found.length; i++) {
-            found[i] = mismatch(server, component, i);
+            found[i] = mismatch(server, panel, component, i);
             any |= found[i] >= 0;
         }
         if (any) {
@@ -50,8 +50,7 @@ public final class MeasuresCheck {
             net.minecraft.nbt.ListTag units = new net.minecraft.nbt.ListTag();
             boolean bound = false;
             for (int i = 0; i < quantities.length; i++) {
-                SignalSpec spec = component.source(i) instanceof PlantSource plant
-                        ? WiringOps.specOf(server, plant.device(), plant.key()) : null;
+                SignalSpec spec = WiringOps.boundSpec(server, panel, component.source(i));
                 quantities[i] = spec == null ? -1 : Quantity.of(spec).ordinal();
                 units.add(net.minecraft.nbt.StringTag.valueOf(spec == null ? "" : spec.unit()));
                 bound |= spec != null;

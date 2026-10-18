@@ -27,6 +27,10 @@ public final class BwrAttachments {
     public static final Supplier<AttachmentType<String>> MACHINE_NAME = ATTACHMENTS.register("machine_name",
             () -> AttachmentType.builder(() -> "").serialize(Codec.STRING, name -> !name.isEmpty()).build());
 
+    /** The CC port of a machine (0 to 9999), saved only when set; -1 is "no port". */
+    public static final Supplier<AttachmentType<Integer>> MACHINE_PORT = ATTACHMENTS.register("machine_port",
+            () -> AttachmentType.builder(() -> -1).serialize(Codec.INT, port -> port >= 0).build());
+
     public static final Supplier<AttachmentType<String>> MACHINE_TEMPLATE = ATTACHMENTS.register("machine_template",
             () -> AttachmentType.builder(() -> DEFAULT_TEMPLATE)
                     .serialize(Codec.STRING, template -> !DEFAULT_TEMPLATE.equals(template)).build());

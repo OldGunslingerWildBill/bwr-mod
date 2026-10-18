@@ -86,13 +86,26 @@ public final class NetworkingPayloads {
     /** Longest name and template a client may send (the server cleans and cuts them further). */
     public static final int MAX_TEXT = 64;
 
-    /** The Networking screen's Done: the machine's name and caption template. */
-    public record Edit(BlockPos device, String name, String template) implements CustomPacketPayload {
+    /** {@link Edit#port} values: leave the port as it is, or give the machine no port. Any other value is a port to set. */
+    public static final int PORT_KEEP = -1;
+    public static final int PORT_CLEAR = 10_000;
+
+    /**
+     * The Networking screen's Done: the machine's name, caption template and CC port. {@code port} is
+     * {@link #PORT_KEEP}, {@link #PORT_CLEAR} or a port from 0 to 9999; anything else is refused whole.
+     */
+    public record Edit(BlockPos device, String name, String template, int port) implements CustomPacketPayload {
+        /** An edit that leaves the CC port alone (every edit before ports existed). */
+        public Edit(BlockPos device, String name, String template) {
+            this(device, name, template, PORT_KEEP);
+        }
+
         public static final Type<Edit> TYPE = new Type<>(BwrMod.id("network_edit"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Edit> STREAM_CODEC = StreamCodec.composite(
                 BlockPos.STREAM_CODEC, Edit::device,
                 ByteBufCodecs.stringUtf8(MAX_TEXT), Edit::name,
                 ByteBufCodecs.stringUtf8(MAX_TEXT), Edit::template,
+                ByteBufCodecs.VAR_INT, Edit::port,
                 Edit::new);
 
         @Override

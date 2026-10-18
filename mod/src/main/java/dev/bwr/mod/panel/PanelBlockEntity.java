@@ -926,7 +926,7 @@ public final class PanelBlockEntity extends BlockEntity {
         for (PanelComponent component : owned) {
             CompoundTag entry = network ? component.saveWithValues() : component.save();
             if (network) {
-                dev.bwr.mod.panel.wiring.MeasuresCheck.annotate(level, component, entry);
+                dev.bwr.mod.panel.wiring.MeasuresCheck.annotate(level, this, component, entry);
             }
             components.add(entry);
         }
@@ -1149,6 +1149,7 @@ public final class PanelBlockEntity extends BlockEntity {
         PanelSampler.untrack(this);
         PanelConsistency.forget(this);
         invalidateGroups();
+        dev.bwr.mod.panel.wiring.CcPortBridge.panelRemoved(this);
         if (level != null && level.isClientSide()) {
             dev.bwr.mod.panel.wiring.PanelNetworkIndex.detached(this);
         }
@@ -1159,6 +1160,7 @@ public final class PanelBlockEntity extends BlockEntity {
         releaseHeldControls();
         dev.bwr.mod.advancement.PlantMilestones.unloaded(this);
         super.onChunkUnloaded();
+        dev.bwr.mod.panel.wiring.CcPortBridge.panelRemoved(this);
         if (level != null && level.isClientSide()) {
             dev.bwr.mod.panel.wiring.PanelNetworkIndex.detached(this);
         }

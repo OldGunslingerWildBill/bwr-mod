@@ -171,12 +171,12 @@ public final class NetworkingMeasuresTests {
             s.wire(s.plantIn(block, gauge, 0, meterPos, "mw_now", 1, 0));
             s.check(gauge.source(0) instanceof PlantSource, "fixture: wired while the gauge measured anything");
             CompoundTag before = gauge.save();
-            s.check(MeasuresCheck.mismatch(s.level, gauge, 0) == -1, "no warning while it measures ANY");
+            s.check(MeasuresCheck.mismatch(s.level, block, gauge, 0) == -1, "no warning while it measures ANY");
 
             // The player (or an update) now sets it to LEVEL: the binding stays, and the warning appears.
             s.configure(block, gauge, measures("LEVEL"));
             s.check(gauge.source(0) instanceof PlantSource p && p.key().equals("mw_now"), "nothing unbinds on its own");
-            s.check(MeasuresCheck.mismatch(s.level, gauge, 0) == Quantity.POWER.ordinal(), "the mismatch is reported: POWER");
+            s.check(MeasuresCheck.mismatch(s.level, block, gauge, 0) == Quantity.POWER.ordinal(), "the mismatch is reported: POWER");
             CompoundTag network = block.savePanel(true);
             PanelComponent client = PanelComponent.load(network.getList("Components", 10).getCompound(0));
             s.check(client.mismatch(0) == Quantity.POWER.ordinal(), "the client learns it with the full state");

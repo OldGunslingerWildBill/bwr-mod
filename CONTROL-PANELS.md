@@ -17,6 +17,7 @@ order and plug into the same wiring; the worked example below names them as the 
 | Component items | Right-click a panel face to place (sneak-click cycles the size). The ghost is green when it fits |
 | Panel wrench | Right-click a component: label, colours and other settings. Sneak-right-click removes it |
 | **Panel linker** | Wires components. See below |
+| **Networking Wrench** | Selects a device, shows its lines and Networking screen, names machines and wires components. See below |
 | **Mimic tape** | Draws flow lines with arrows on the board face: see section 2d |
 
 ### Component sizes
@@ -88,6 +89,98 @@ the last operation. The switch's "Target red after" setting picks which operatio
 
 The wrench screen shows linker-made inputs read-only ("Plant position @ x, y, z", "Redstone", ...) and
 saving it never unwires them; unwire with the linker.
+
+### The Networking Wrench
+
+A second wiring tool beside the Panel Linker (the linker is unchanged and still works as above). It stores the
+selected device in the same slot, so either tool makes exactly the same binding. **Line linking means the
+Networking Wrench**: a direct plant binding (a plant signal into an input, a plant command out of an output).
+
+* **Right-click a plant device** to select it: the action bar shows its name (see *Machine names*) and its signal
+  count. Right-click it again, or sneak-right-click the air, to deselect. A block that reports no signals is refused.
+* **Sneak-right-click a device** to open its **Networking screen**: the machine name and caption template, every
+  signal with its live value, unit, quantity and how many components read it, every command and how many send it,
+  and the components linked to it, each with an *Unlink* button. *Name linked components* copies the machine name
+  to those components. Values refresh once a second while the screen is open; nothing is sent per tick.
+* **Right-click a panel component** with a device selected to open the binding screen as the linker does, with the
+  best fitting compatible signal already chosen (a lamp prefers an on/off signal, a gauge the first signal its
+  Measures setting accepts): one click on Apply confirms. Nothing binds until you press Apply.
+* **Lines, while the wrench is held** (drawn through walls, only from data your client already has):
+  a signal-providing device under the crosshair gets a **white outline** (linkable) and the selected device
+  stays **yellow** until you clear it. **Hovering a bound component** draws a line from its face to each device it reads
+  (cyan) or commands (orange), together with the linker's outline of those devices. **Hovering a device** draws a
+  line to every component of the loaded panels that is line-linked to it (at most 64 lines). Only line links get
+  lines; a CC port binding gets none.
+* **Shared lines.** When you hold the wrench and point at a device or component, players within
+  `networkLineShareDistance` blocks (server config `bwr-panels.toml`, default 32, 0 shares nothing, never more than
+  `linkRange`) see the same lines from their own loaded panels, a little fainter and tinted with your name colour, so one
+  player can show the others how a board is wired. Each player can lower or switch off what they see with
+  `networkLineViewDistance` (client config `bwr-visuals.toml`, default 32, 0 hides other players' lines); the smaller of
+  the two values applies, and your own lines always draw up to `linkRange`. Only the target travels (one small packet
+  when it changes, at most four a second); the lines are drawn from the receiver's own panel data.
+
+Nothing here acts by itself: selecting, binding, naming and unlinking are each a click, and the same checks as the
+linker apply (same dimension, `linkRange`, loaded, permitted).
+
+### Machine names, captions and the name push
+
+Every plant device can carry a **name**, its equipment tag (RHR-1, RHR-2, ...): up to 24 characters, typed on its
+Networking screen or set from Lua with `setName(text)` (read with `getName()`). The name belongs to the machine as a
+whole (every cell of a multiblock shares it), is saved with it only when it is not empty, and old saves have none. A
+machine with no name is shown as its block name and position. Every device reports it as the `name` TEXT signal.
+
+Components can print a **caption** under themselves (the *Caption* row of the wrench screen; saved only when not empty).
+Two buttons fill captions from a machine name, both a player's click and never automatic:
+
+* **Name linked components** on the machine's Networking screen sets the caption of every component, on the loaded
+  panels within `linkRange` blocks, whose first **line link** names this machine.
+* **Use machine name** in the Networking section of one component's wrench screen does the same for that component.
+
+The caption comes from the machine's **template**, default `{name}`; `{signal}` is the label of the bound signal and
+`{unit}` its unit, so `{name} {signal}` gives RHR-1 Valve position. A component bound to several machines takes its
+caption from its first line link. Panels you may not edit are left alone and counted; the action bar reports how many
+components were named; no sink fires and no signal changes. A machine with no name gives nothing to push.
+
+**CC port bindings are never named.** On a CC wired network one name would reach every machine on that network, so
+CC setups are named by hand (or by your own program).
+
+### Gauge compatibility: Measures
+
+Every gauge-like component (dial, edgewise meters, bar graph, segment displays) has a **Measures** setting: ANY (the
+default: it takes any signal, exactly as before) or a quantity: LEVEL, PRESSURE, TEMPERATURE, RATE, FLOW, POWER, ENERGY,
+POSITION, PERCENT, SPEED, CHEMISTRY or COUNT. Each signal has a quantity worked out from its unit (SIGNALS.md): a signal
+in in, m or mB is a LEVEL, psig a PRESSURE, MW, kW, W, FE/t or FE/s a POWER, and so on; a fraction or percent is a LEVEL only
+when the signal key says level. A gauge that is not ANY lists only matching signals on the binding screen and the server
+**refuses** any other: "This gauge measures LEVEL; mw now is POWER". The same check applies to a line link and to a CC
+port. A save made before the setting existed may hold a mismatched binding: it still loads and works, the wrench screen
+shows a yellow "Measures LEVEL, but wired to POWER" note, and nothing unbinds on its own.
+
+### Gauge power units
+
+A gauge wired to a POWER signal in W, kW, MW, FE/t or FE/s shows a **Power units** setting (Raw, W, kW, MW), and one wired
+to stored energy (FE) offers Raw, kJ, MJ and never W. Picking a unit sets the **scale of the binding** (the same
+`raw x scale + offset` as the Scale field, so it costs nothing at run time) and the Units text of the gauge. One FE is
+`feToJoules` joules (server config `bwr-panels.toml`, default 2.5): a signal in FE per tick is 20 x 2.5 = 50 W per unit, so
+100 FE/t reads 5.0 kW and 0.005 MW; one in FE per second is 2.5 W per unit, so 2000 FE/s reads 5.0 kW. An FE rate whose unit
+does not say per tick or per second gets a Per tick / Per second selector. Min and Max are not changed by a unit: the screen
+shows the range as it stands and what one unit of the source reads, and **Fit range** sets Min and Max from the signal
+range converted the same way when you press Done. A custom Scale you typed is never overridden by a unit picked earlier.
+
+### CC network bindings by port (CC:Tweaked only)
+
+This is **not line linking**: it sets nothing up automatically, names nothing and draws no lines. A machine on a CC wired
+network is reached by a **CC port**, a number from **0000 to 9999** that you set by hand on the machine's Networking screen
+or with `setPort(n)` (read with `getPort()`; `setPort(10000)` and `setPort(-1)` are refused). The port is saved as one
+number only when set; a machine with no port cannot be reached through CC.
+
+On the panel side the binding screen has a **CC network** mode: type a port, press *Look up*, pick a signal of the machine
+that answers there and press Apply. The panel joins a CC wired network when a wired modem or network cable touches it; the
+machines are the ones on that network (a modem next to them, right-clicked to connect). A port nobody answers on, or that
+two machines share, reads **no signal** and says so ("Port 0042 is used by 2 machines"); nothing is guessed. Gauge
+compatibility and power units apply in full; `linkRange` and the panel's dimension apply; an unloaded machine reads no
+signal and sampling never loads a chunk.
+
+Every machine peripheral also has `getName()`, `setName(text)`, `getPort()` and `setPort(n)`.
 
 ## 2. What a port can be wired to
 
@@ -520,6 +613,21 @@ end
 
 (Wire `DISP-POWER`'s input to **CC** in the binding screen first. The reactor and MSIV peripheral calls are
 the existing `bwr_reactor` / `bwr_msiv` API.)
+
+### Machine peripherals: names and CC ports
+
+Every plant machine peripheral (not the panel) has four more calls, besides its own. They are the program's own
+doing: nothing names or numbers machines in bulk.
+
+| Call | Returns | Description |
+| --- | --- | --- |
+| `getName()` | string | The machine's name (its equipment tag), `""` when it has none |
+| `setName(text)` | string | Sets the name (cleaned, at most 24 characters) and returns it; `""` clears it |
+| `getPort()` | number or nil | The CC port, 0 to 9999, or nil when none is set |
+| `setPort(n)` | number | Sets the CC port; an error unless `n` is a whole number from 0 to 9999 |
+
+A panel input can read a machine by port (the binding screen's *CC network* mode). Two machines on one port on the
+same wired network make that port read no signal; the wrench Networking screen shows the conflict.
 
 ## 5. Saves, limits, behaviour worth knowing
 

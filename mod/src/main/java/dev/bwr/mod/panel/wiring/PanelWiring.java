@@ -37,6 +37,7 @@ public final class PanelWiring {
         InputSources.register(ComponentSource.KIND, ComponentSource::load);
         InputSources.register(RedstoneSource.KIND, tag -> RedstoneSource.INSTANCE);
         InputSources.register(CcSource.KIND, CcSource::load);
+        InputSources.register(CcPortSource.KIND, CcPortSource::load);
         OutputSinks.register(PlantSink.KIND, PlantSink::load);
         OutputSinks.register(RedstoneSink.KIND, RedstoneSink::load);
         PanelBus.addOutputListener(PanelWiring::outputChanged);

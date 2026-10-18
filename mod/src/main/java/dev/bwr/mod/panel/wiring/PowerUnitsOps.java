@@ -29,7 +29,8 @@ public final class PowerUnitsOps {
      * that does not fit the bound signal (W for stored energy) is dropped: {@code merged} keeps the old one. Returns a
      * reason for the player when it refused, else null.
      */
-    public static Component apply(ServerLevel level, PanelComponent component, CompoundTag merged) {
+    public static Component apply(ServerLevel level, dev.bwr.mod.panel.PanelBlockEntity panel, PanelComponent component,
+                                  CompoundTag merged) {
         PowerUnitsState state = component.data().powerState();
         if (state == null) {
             return null;
@@ -46,8 +47,8 @@ public final class PowerUnitsOps {
         int[] inputs = new int[component.inputCount()];
         SignalSpec[] specs = new SignalSpec[inputs.length];
         for (int i = 0; i < inputs.length; i++) {
-            if (component.source(i) instanceof PlantSource plant) {
-                specs[i] = WiringOps.specOf(level, plant.device(), plant.key());
+            {
+                specs[i] = WiringOps.boundSpec(level, panel, component.source(i));
                 if (specs[i] != null && !PowerUnits.offers(Quantity.of(specs[i]), units)) {
                     merged.putString(PowerUnitsState.UNITS_KEY, state.units);
                     merged.putString(PowerUnitsState.RATE_KEY, state.rate);
@@ -58,11 +59,11 @@ public final class PowerUnitsOps {
         }
         boolean first = true;
         for (int i = 0; i < inputs.length; i++) {
-            if (specs[i] == null || !(component.source(i) instanceof PlantSource plant)) {
+            if (specs[i] == null) {
                 continue;
             }
             double scale = PowerUnits.scale(specs[i].unit(), specs[i].key(), units, perSecond, PanelConfig.feToJoules());
-            component.setSource(i, new PlantSource(plant.device(), plant.key(), scale, plant.offset()));
+            component.setSource(i, WiringOps.rescaled(component.source(i), scale));
             if (first && merged.contains("Units")) {
                 merged.putString("Units", PowerUnits.unitsText(units, specs[i].unit()));
             }
@@ -88,17 +89,16 @@ public final class PowerUnitsOps {
      * "Fit range": sets the Min and Max of the component from the range of the signal it is line-linked to, converted
      * the same way as the reading (range x scale + offset). Returns whether a range was set.
      */
-    public static boolean fitRange(ServerLevel level, PanelComponent component) {
+    public static boolean fitRange(ServerLevel level, dev.bwr.mod.panel.PanelBlockEntity panel, PanelComponent component) {
         for (int i = 0; i < component.inputCount(); i++) {
-            if (!(component.source(i) instanceof PlantSource plant)) {
-                continue;
-            }
-            SignalSpec spec = WiringOps.specOf(level, plant.device(), plant.key());
+            SignalSpec spec = WiringOps.boundSpec(level, panel, component.source(i));
             if (spec == null) {
                 continue;
             }
-            double a = spec.min() * plant.scale() + plant.offset();
-            double b = spec.max() * plant.scale() + plant.offset();
+            double scale = WiringOps.scaleOf(component.source(i));
+            double offset = WiringOps.offsetOf(component.source(i));
+            double a = spec.min() * scale + offset;
+            double b = spec.max() * scale + offset;
             double low = Math.min(a, b);
             double high = Math.max(a, b);
             if (Double.isFinite(low) && Double.isFinite(high) && low < high && component.data().setRange(low, high)) {

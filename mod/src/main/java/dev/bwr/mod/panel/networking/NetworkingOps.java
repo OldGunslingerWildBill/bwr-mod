@@ -1,6 +1,7 @@
 package dev.bwr.mod.panel.networking;
 
 import dev.bwr.mod.panel.LinkTools;
+import dev.bwr.mod.panel.MachinePorts;
 import dev.bwr.mod.panel.MachineNames;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.PanelConfig;
@@ -87,12 +88,32 @@ public final class NetworkingOps {
      * allowed; the name and template are cleaned, an empty name clears it.
      */
     public static boolean edit(ServerPlayer player, BlockPos device, String name, String template) {
+        return edit(player, device, name, template, NetworkingPayloads.PORT_KEEP);
+    }
+
+    /**
+     * {@link #edit(ServerPlayer, BlockPos, String, String)} with the CC port: {@code port} is
+     * {@link NetworkingPayloads#PORT_KEEP}, {@link NetworkingPayloads#PORT_CLEAR} or a port from 0 to 9999. Any other
+     * number is refused and nothing at all is changed. The port is only ever set here or from Lua; nothing numbers
+     * machines by itself.
+     */
+    public static boolean edit(ServerPlayer player, BlockPos device, String name, String template, int port) {
         BlockEntity owner = checkedDevice(player, device);
         if (owner == null) {
             return false;
         }
+        boolean keep = port == NetworkingPayloads.PORT_KEEP;
+        boolean clear = port == NetworkingPayloads.PORT_CLEAR;
+        if (!keep && !clear && !MachinePorts.valid(port)) {
+            return false;
+        }
         MachineNames.setName(owner, name);
         MachineNames.setTemplate(owner, template);
+        if (clear) {
+            MachinePorts.clear(owner);
+        } else if (!keep) {
+            MachinePorts.set(owner, port);
+        }
         return true;
     }
 
@@ -297,7 +318,9 @@ public final class NetworkingOps {
             }
         }
         return new NetworkingScreenPayloads.ScreenData(owner.getBlockPos(), owner.getBlockState().getBlock().getDescriptionId(),
-                MachineNames.name(owner), MachineNames.template(owner), -1, 0, false, signals, commands, links);
+                MachineNames.name(owner), MachineNames.template(owner), MachinePorts.get(owner),
+                dev.bwr.mod.panel.wiring.CcPortBridge.machinesSharingPort(owner),
+                dev.bwr.mod.BwrMod.isComputerCraftPresent(), signals, commands, links);
     }
 
     private static void addLink(List<NetworkingScreenPayloads.NetLink> links, PanelBlockEntity panel, PanelComponent component,

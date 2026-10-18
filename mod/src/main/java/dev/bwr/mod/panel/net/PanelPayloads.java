@@ -160,6 +160,9 @@ public final class PanelPayloads {
     public static final int LINK_WRONG_DIMENSION = 2;
     public static final int LINK_OUT_OF_RANGE = 3;
     public static final int LINK_MISSING = 4;
+    /** CC network lookups: no machine answers on the port; two or more do (nothing is guessed). */
+    public static final int LINK_PORT_EMPTY = 5;
+    public static final int LINK_PORT_CONFLICT = 6;
 
     /** Ask the server to open the binding screen for a component (linker in hand). */
     public record LinkerOpen(BlockPos pos, int id) implements CustomPacketPayload {
@@ -255,12 +258,18 @@ public final class PanelPayloads {
      * machine's own name (its equipment tag), or "" when it has none.
      */
     public record LinkerScreen(BlockPos pos, int id, int status, BlockPos device, String deviceName,
-                               List<SignalEntry> signals, List<CommandEntry> commands, String machineName)
+                               List<SignalEntry> signals, List<CommandEntry> commands, String machineName, int ccPort)
             implements CustomPacketPayload {
         /** A screen for a device without a name (every screen before machine names existed). */
         public LinkerScreen(BlockPos pos, int id, int status, BlockPos device, String deviceName,
                             List<SignalEntry> signals, List<CommandEntry> commands) {
-            this(pos, id, status, device, deviceName, signals, commands, "");
+            this(pos, id, status, device, deviceName, signals, commands, "", -1);
+        }
+
+        /** A screen for the wrench's own device (not a CC port lookup). */
+        public LinkerScreen(BlockPos pos, int id, int status, BlockPos device, String deviceName,
+                            List<SignalEntry> signals, List<CommandEntry> commands, String machineName) {
+            this(pos, id, status, device, deviceName, signals, commands, machineName, -1);
         }
 
         public static final Type<LinkerScreen> TYPE = new Type<>(BwrMod.id("panel_linker_screen"));
@@ -288,6 +297,7 @@ public final class PanelPayloads {
                         buf.writeDouble(entry.max);
                     }
                     buf.writeUtf(screen.machineName, MAX_LABEL);
+                    buf.writeVarInt(screen.ccPort + 1);
                 },
                 buf -> {
                     BlockPos pos = buf.readBlockPos();
@@ -313,7 +323,8 @@ public final class PanelPayloads {
                         commands.add(new CommandEntry(buf.readUtf(MAX_KEY), buf.readUtf(MAX_LABEL), buf.readBoolean(),
                                 buf.readVarInt(), buf.readDouble(), buf.readDouble()));
                     }
-                    return new LinkerScreen(pos, id, status, device, name, signals, commands, buf.readUtf(MAX_LABEL));
+                    String machineName = buf.readUtf(MAX_LABEL);
+                    return new LinkerScreen(pos, id, status, device, name, signals, commands, machineName, buf.readVarInt() - 1);
                 });
 
         @Override

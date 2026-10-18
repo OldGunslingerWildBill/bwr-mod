@@ -1,6 +1,7 @@
 package dev.bwr.mod.panel.client;
 
 import dev.bwr.mod.panel.MachineNames;
+import dev.bwr.mod.panel.MachinePorts;
 import dev.bwr.mod.panel.net.PanelPayloads;
 import dev.bwr.mod.panel.networking.NetworkingPayloads;
 import dev.bwr.mod.panel.networking.NetworkingScreenPayloads;
@@ -39,6 +40,7 @@ public final class NetworkingScreen extends Screen {
     private List<String> values = List.of();
     private String nameText;
     private String templateText;
+    private String portText;
     private ConfigLayout layout;
     private ScrollRows rows;
     private final List<TextRow> texts = new ArrayList<>();
@@ -53,6 +55,7 @@ public final class NetworkingScreen extends Screen {
         this.data = data;
         this.nameText = data.name();
         this.templateText = data.template();
+        this.portText = data.port() < 0 ? "" : MachinePorts.format(data.port());
     }
 
     /** The server sent the screen (opening it, or refreshing it): shows it, keeping what was typed when it is already open. */
@@ -86,7 +89,8 @@ public final class NetworkingScreen extends Screen {
     }
 
     private int rowCount() {
-        return 3 + 1 + data.signals().size() + 1 + data.commands().size() + 1 + Math.max(1, data.links().size());
+        return 3 + (data.cc() ? 2 : 0) + 1 + data.signals().size() + 1 + data.commands().size() + 1
+                + Math.max(1, data.links().size());
     }
 
     @Override
@@ -106,6 +110,18 @@ public final class NetworkingScreen extends Screen {
         text(row++, () -> Component.translatable("screen.bwr.networking.where", Component.translatable(data.typeKey()),
                 at.getX(), at.getY(), at.getZ()), 0x9FE0FF, false);
 
+        if (data.cc()) {
+            // CC port (part 7): set by hand, 0000 to 9999; a port two machines share reads nothing and says so.
+            EditBox port = box(row++, portText, 4);
+            port.setFilter(value -> value.chars().allMatch(Character::isDigit));
+            port.setHint(Component.translatable("screen.bwr.networking.port_none"));
+            port.setResponder(value -> portText = value);
+            text(row - 1, () -> Component.translatable("screen.bwr.networking.port"), 0xCCCCCC, false);
+            text(row++, () -> data.port() >= 0 && data.portUsers() > 1
+                    ? Component.translatable("screen.bwr.networking.port_conflict", MachinePorts.format(data.port()), data.portUsers())
+                    : Component.translatable("screen.bwr.networking.port_note"),
+                    data.port() >= 0 && data.portUsers() > 1 ? 0xFFDD33 : 0x999999, false);
+        }
         text(row++, () -> Component.translatable("screen.bwr.networking.signals", data.signals().size()), 0xFFFFFF, true);
         for (int i = 0; i < data.signals().size(); i++) {
             int index = i;
@@ -157,7 +173,21 @@ public final class NetworkingScreen extends Screen {
     }
 
     private void sendEdit() {
-        PacketDistributor.sendToServer(new NetworkingPayloads.Edit(data.device(), nameText, templateText));
+        int port = NetworkingPayloads.PORT_KEEP;
+        if (data.cc()) {
+            String typed = portText.trim();
+            if (typed.isEmpty()) {
+                port = NetworkingPayloads.PORT_CLEAR;
+            } else {
+                try {
+                    int value = Integer.parseInt(typed);
+                    port = MachinePorts.valid(value) ? value : NetworkingPayloads.PORT_KEEP;
+                } catch (NumberFormatException e) {
+                    port = NetworkingPayloads.PORT_KEEP;
+                }
+            }
+        }
+        PacketDistributor.sendToServer(new NetworkingPayloads.Edit(data.device(), nameText, templateText, port));
     }
 
     private void unlink(NetworkingScreenPayloads.NetLink link) {
@@ -211,7 +241,7 @@ public final class NetworkingScreen extends Screen {
             if (row.heading()) {
                 graphics.fill(layout.left, y + 9, layout.left + layout.width, y + 10, 0x60FFFFFF);
             }
-            boolean label = row.row() < 2 && !row.heading();
+            boolean label = row.row() < 2 && !row.heading() || row.row() == 3 && data.cc() && !row.heading();
             int limit = label ? layout.labelWidth - 4 : layout.width - row.reserve();
             graphics.drawString(font, font.substrByWidth(line, limit).getString(), layout.left, y, row.color());
         }
