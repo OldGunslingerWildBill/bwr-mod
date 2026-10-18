@@ -29,8 +29,8 @@ This file is generated from the adapter sources in `dev.bwr.mod.signal.adapters`
 signal is added. Coverage: reactor controller, MSIV, SRV, turbine valves, turbine steam outlet, RPV steam
 outlet, feedwater pump, recirculation pump, ECCS pumps, suppression pool, RHR heat exchanger, condenser,
 condensate tank, cooling, power module, containment controller, penetrations, vault door, airlock, and
-containment atmosphere equipment. The ADS controller, SLC tank, water discharge and other passive hardware
-have CC peripherals but are not in v1 coverage.
+containment atmosphere equipment, and the ADS controller (its three switch inputs, below). The SLC tank, water
+discharge and other passive hardware have CC peripherals but are not in v1 coverage.
 
 ## Reactor controller
 
@@ -250,11 +250,46 @@ Block entity `SafetyReliefValveBlockEntity`; CC peripheral `bwr_safety_relief_va
 | `discharge_submerged` | Discharge submerged |  | 0 to 1 | BOOLEAN |
 | `flow` | Relief flow | kg/s | 0 to 42 | NUMBER |
 | `division` | ADS division | division | 0 to 4 | LEVEL |
+| `ads_allowed` | ADS may open this valve |  | 0 to 1 | BOOLEAN |
 
 | Command key | Label | Kind | Range |
 | --- | --- | --- | --- |
 | `open` | Open / close | BOOLEAN | 0 to 1 |
 | `division` | ADS division | LEVEL | 0 to 4 |
+| `ads_allow` | ADS may open this valve | BOOLEAN | 0 to 1 |
+
+`ads_allow` is the valve's own ADS permit and is 1 unless something wired to it clears it. The OPEN/AUTO/CLOSE
+switch of a relief valve is what players wire here: AUTO only means "the ADS may open this valve", CLOSE means it
+may not. It only decides whether an ADS controller may hold the valve open; redstone and Lua still work the valve.
+
+## ADS controller
+
+Block entity `AdsControllerBlockEntity`; CC peripheral `bwr_ads`. The controller opens its valves only when a program or
+a player's hands tell it to; these are the inputs the control room's ADS switches are wired to, not logic.
+
+| Signal key | Label | Unit | Range | Kind |
+| --- | --- | --- | --- | --- |
+| `open` | Bank open requested |  | 0 to 1 | BOOLEAN |
+| `allowed` | Allowed to open |  | 0 to 1 | BOOLEAN |
+| `activate_a` | Manual activation A |  | 0 to 1 | BOOLEAN |
+| `activate_b` | Manual activation B |  | 0 to 1 | BOOLEAN |
+| `valves` | Relief valves available | valves | 0 to 64 | NUMBER |
+| `valves_open` | Relief valves held open | valves | 0 to 64 | NUMBER |
+| `nitrogen` | Nitrogen charge | fraction | 0 to 1 | NUMBER |
+
+| Command key | Label | Kind | Range |
+| --- | --- | --- | --- |
+| `ads_allow` | Allow ADS to open | BOOLEAN | 0 to 1 |
+| `ads_activate_a` | Manual activation A | BOOLEAN | 0 to 1 |
+| `ads_activate_b` | Manual activation B | BOOLEAN | 0 to 1 |
+
+- `ads_allow` is 1 unless something wired to it clears it (a controller from before this input behaves as before). While
+  it is 0 no valve is held open, whatever else asks; an open request stays on record and takes effect again when it is
+  set. `bwr_ads` has `isAllowed()` and `setAllowed(bool)`.
+- `ads_activate_a` and `ads_activate_b` are the two manual activation switches ("push both to activate"). Bringing both
+  to 1 together, while allowed, opens the bank once (and claims it for control, like `start()`); letting go does
+  nothing, and a program still has to `stop()` it. Wire each to the position of a push-to-turn switch. They are not
+  saved: they are held switches.
 
 ## Turbine stop, control and bypass valves
 

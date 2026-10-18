@@ -52,6 +52,7 @@ public final class ComponentTypes {
     // -- the owner's CAD hardware (NEW-HARDWARE-SPEC.md) --
     public static final ComponentType BAR_GAUGE = register(new BarGaugeType());
     public static final ComponentType RPS_TRIP = register(new RpsTripType());
+    public static final ComponentType PUSH_TURN_SWITCH = register(new PushTurnSwitchType());
     // ----------------------------------------------------------------------------
 
     /** Forces class initialisation. */

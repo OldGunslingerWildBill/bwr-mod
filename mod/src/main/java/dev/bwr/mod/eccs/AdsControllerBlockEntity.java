@@ -108,6 +108,16 @@ public class AdsControllerBlockEntity extends BlockEntity {
     private volatile double nitrogenCharge = 1.0;
     private volatile boolean computerControlled;
 
+    // The bindable inputs of the control room's ADS switches (ads_allow, ads_activate_a, ads_activate_b: see
+    // AdsSignals). They are inputs, not logic: the controller does what the player's wiring and programs tell it.
+    /** The "allow" input: the bank may be opened. True until something the player wired says otherwise. */
+    private volatile boolean allowed = true;
+    /** The two manual activation inputs. Not saved: they are held switches, read afresh from the panel. */
+    private volatile boolean activateA;
+    private volatile boolean activateB;
+    /** Whether the present both-held state has already opened the bank (server thread only). */
+    private boolean manualActivated;
+
     private BlockPos reactorPos;
     private final List<BlockPos> valves = new ArrayList<>();
     private final Set<BlockPos> held = new LinkedHashSet<>();
@@ -149,7 +159,7 @@ public class AdsControllerBlockEntity extends BlockEntity {
         ReactorCore core = reactor != null ? reactor.core() : null;
         double domePsig = core != null ? core.getPressurePsig() : 0.0;
 
-        int wanted = (nitrogenCharge > 0.0 && open)
+        int wanted = (nitrogenCharge > 0.0 && open && allowed)
                 ? (int) Math.round(Math.min(1.0, Math.max(0.0, valveDemandFraction)) * valves.size())
                 : 0;
 
@@ -200,6 +210,9 @@ public class AdsControllerBlockEntity extends BlockEntity {
             if(srv.getDivision()!=division){
                 if(held.remove(vp))setValve(level,vp,srv,false);
                 it.remove();continue;
+            }
+            if (shouldHold && !srv.isAdsAllowed()) {
+                shouldHold = false; // the valve's own ADS permit (ads_allow) is off: the ADS may not hold it open
             }
             if (shouldHold) {
                 opened++;
@@ -446,6 +459,64 @@ public class AdsControllerBlockEntity extends BlockEntity {
         });
     }
 
+    /**
+     * The "allow" input ({@code ads_allow}): whether the bank may be held open. Cleared, an open request stays on
+     * record but no valve is held open until it is set again; set (the default), the controller behaves as it always
+     * has. What drives it is wiring the player made, for example the OPEN/AUTO/CLOSE switch of the relief valves.
+     */
+    public void setAllowed(boolean allowed) {
+        PlantActuators.run(this, () -> {
+            this.allowed = allowed;
+            setChanged();
+            applyManualActivation();
+        });
+    }
+
+    public boolean isAllowed() {
+        return allowed;
+    }
+
+    /** The first manual activation input ({@code ads_activate_a}), a push-to-turn switch held in ARM. */
+    public void setActivateA(boolean on) {
+        PlantActuators.run(this, () -> {
+            this.activateA = on;
+            applyManualActivation();
+        });
+    }
+
+    /** The second manual activation input ({@code ads_activate_b}). */
+    public void setActivateB(boolean on) {
+        PlantActuators.run(this, () -> {
+            this.activateB = on;
+            applyManualActivation();
+        });
+    }
+
+    public boolean isActivateA() {
+        return activateA;
+    }
+
+    public boolean isActivateB() {
+        return activateB;
+    }
+
+    /**
+     * Both activation inputs held at once, while the bank is allowed, opens it like {@link #setOpen} does for a
+     * program (and claims it the way a program's {@code start()} does); it acts once per time both are brought
+     * together and does nothing on letting go. Server thread.
+     */
+    private void applyManualActivation() {
+        boolean both = activateA && activateB;
+        if (!both) {
+            manualActivated = false;
+        } else if (allowed && !manualActivated) {
+            manualActivated = true;
+            computerControlled = true;
+            open = true;
+            setChanged();
+        }
+    }
+
     // --- Measurements ---------------------------------------------------
 
     /** Relief valves this controller can actually use — present and submerged. */
@@ -522,6 +593,9 @@ public class AdsControllerBlockEntity extends BlockEntity {
         tag.putDouble("ValveDemand", valveDemandFraction);
         tag.putDouble("Nitrogen", nitrogenCharge);
         tag.putBoolean("ComputerControlled", computerControlled);
+        if (!allowed) {
+            tag.putBoolean("Inhibited", true); // saved only when it is not the default
+        }
         tag.putInt("Energy", energy.getEnergyStored());
         if (reactorPos != null) {
             tag.putLong("Reactor", reactorPos.asLong());
@@ -557,6 +631,7 @@ public class AdsControllerBlockEntity extends BlockEntity {
         nitrogenCharge = tag.contains("Nitrogen")
                 ? clampFraction(tag.getDouble("Nitrogen"), 1.0) : 1.0;
         computerControlled = tag.getBoolean("ComputerControlled");
+        allowed = !tag.getBoolean("Inhibited");
         energy.setStored(tag.getInt("Energy"));
         reactorPos = tag.contains("Reactor") ? BlockPos.of(tag.getLong("Reactor")) : null;
         held.clear();

@@ -77,6 +77,8 @@ public final class ComponentModels {
                 BakedComponentModel.Kind.EDGEWISE, ComponentTypes.BAR_GAUGE.id().getPath(), "bar_gauge"));
         register(ComponentTypes.RPS_TRIP.id(), new StyledComponentModel(new RpsTripModel(), BakedComponentModel.Kind.RPS_TRIP,
                 ComponentTypes.RPS_TRIP.id().getPath(), "rps_trip_assembly"));
+        register(ComponentTypes.PUSH_TURN_SWITCH.id(), new StyledComponentModel(new PushTurnModel(),
+                BakedComponentModel.Kind.PUSH_TURN, ComponentTypes.PUSH_TURN_SWITCH.id().getPath(), "push_turn_switch"));
     }
 
     /**

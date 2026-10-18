@@ -157,6 +157,10 @@ public final class BwrItems {
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> RPS_TRIP =
             ITEMS.register("rps_trip", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.RPS_TRIP.id()));
+    /** The ADS manual activation push-to-turn switch (NEW-HARDWARE-SPEC.md). */
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> PUSH_TURN_SWITCH =
+            ITEMS.register("push_turn_switch", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.PUSH_TURN_SWITCH.id()));
     public static final DeferredItem<BlockItem> CONTROL_ROD_DRIVE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_ROD_DRIVE);
     public static final DeferredItem<BlockItem> CORE_SPRAY_SPARGER =
@@ -372,6 +376,7 @@ public final class BwrItems {
                         output.accept(ROD_SELECT_MATRIX.get());
                         output.accept(BAR_GAUGE.get());
                         output.accept(RPS_TRIP.get());
+                        output.accept(PUSH_TURN_SWITCH.get());
                     })
                     .build());
 }
