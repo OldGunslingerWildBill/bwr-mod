@@ -60,9 +60,11 @@ import java.nio.file.Files;
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
 public final class NetworkingClientCheck {
     private static final BlockPos BOARD = new BlockPos(7100, 127, 7100);
-    private static final BlockPos VALVE_A = new BlockPos(7103, 123, 7096);
-    private static final BlockPos VALVE_B = new BlockPos(7096, 123, 7096);
-    private static final Vec3 STAND = new Vec3(7099.5, 125.4, 7094.0);
+    private static final BlockPos VALVE_A = new BlockPos(7103, 124, 7098);
+    private static final BlockPos VALVE_B = new BlockPos(7095, 124, 7098);
+    /** A valve nothing is wired to: the linkable one. */
+    private static final BlockPos VALVE_C = new BlockPos(7099, 123, 7099);
+    private static final Vec3 STAND = new Vec3(7099.5, 125.4, 7096.0);
     private static final String[] NAMES = {"net-hover-gauge-line", "net-hover-device-fanout", "net-linkable-glow",
             "net-networking-screen", "net-name-before", "net-name-after"};
 
@@ -81,6 +83,16 @@ public final class NetworkingClientCheck {
     @SubscribeEvent
     public static void tick(ClientTickEvent.Post ignored) {
         if (!Boolean.getBoolean("bwr.networkingClientCheck")) return;
+        try {
+            step();
+        } catch (Throwable failure) {
+            // A failed check ends the run (and the game) with the reason, instead of leaving a window open.
+            LogUtils.getLogger().error("NETWORKING CLIENT CHECK FAILED at stage {}", stage < NAMES.length ? NAMES[stage] : "end", failure);
+            Minecraft.getInstance().stop();
+        }
+    }
+
+    private static void step() {
         Minecraft mc = Minecraft.getInstance();
         if (buildFailure != null) throw new IllegalStateException("Networking showcase build failed", buildFailure);
         if (++age > 3000) throw new IllegalStateException("Networking client check timed out at stage " + stage);
@@ -89,7 +101,7 @@ public final class NetworkingClientCheck {
             mc.options.pauseOnLostFocus = false;
             mc.options.cloudStatus().set(net.minecraft.client.CloudStatus.OFF);
             mc.options.renderDistance().set(10);
-            mc.options.fov().set(90);
+            mc.options.fov().set(100);
             mc.options.guiScale().set(2);
             mc.createWorldOpenFlows().createFreshLevel("bwr-networking-client-" + System.currentTimeMillis(),
                     new LevelSettings("Networking client check", GameType.CREATIVE, false, Difficulty.PEACEFUL,
@@ -131,9 +143,9 @@ public final class NetworkingClientCheck {
                 Vec3 target = switch (selected) {
                     case 0 -> faceCenter(level, 0);
                     case 1 -> Vec3.atCenterOf(VALVE_A.above());
-                    case 2 -> Vec3.atCenterOf(VALVE_B.above());
+                    case 2 -> Vec3.atCenterOf(VALVE_C.above());
                     case 3 -> Vec3.atCenterOf(VALVE_A.above());
-                    default -> new Vec3(7099.5, 123.5, 7101.0); // the floor behind the board: nothing to point at
+                    default -> new Vec3(7099.5, 124.0, 7100.5); // below the board: nothing to point at
                 };
                 Vec3 delta = target.subtract(eye);
                 float yaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90);
@@ -195,7 +207,10 @@ public final class NetworkingClientCheck {
         if (stage == 5 && shown == 56) mc.setScreen(null);
         if (stage == 3 && shown < 90 || stage == 5 && shown < 100 || stage != 3 && stage != 5 && shown < 60) return;
         if (stage == 3 && !(mc.screen instanceof NetworkingScreen)) throw new AssertionError("The Networking screen is not open");
-        if (stage == 0 && NetworkLines.debugLines() == 0) throw new AssertionError("No line was drawn from the hovered gauge");
+        if (stage == 0 && NetworkLines.debugLines() == 0) throw new AssertionError("No line was drawn from the hovered gauge: hit="
+                + mc.hitResult + " hover=" + dev.bwr.mod.panel.client.NetworkHover.current(mc) + " main=" + mc.player.getMainHandItem()
+                + " pos=" + mc.player.position() + " yaw=" + mc.player.getYRot() + " pitch=" + mc.player.getXRot()
+                + " aim=" + aim + " screen=" + mc.screen);
         try {
             var directory = mc.gameDirectory.toPath().resolve("networking-client-check");
             Files.createDirectories(directory);
@@ -213,7 +228,7 @@ public final class NetworkingClientCheck {
                 LogUtils.getLogger().info("NETWORKING CLIENT CHECK {}: cyan={} orange={} yellow={} white={}", NAMES[stage], cyan, orange, yellow, white);
                 if (stage == 0 && cyan < 60) throw new AssertionError("The hover line to the valve is not visible: cyan=" + cyan);
                 if (stage == 1 && (cyan < 60 || orange < 30)) throw new AssertionError("The fan-out is not visible: cyan=" + cyan + " orange=" + orange);
-                if (stage == 2 && (yellow < 40 || NetworkLines.debugGlows() == 0)) throw new AssertionError("The selected valve is not yellow: " + yellow);
+                if (stage == 2 && (yellow < 25 || white < 100 || NetworkLines.debugGlows() == 0)) throw new AssertionError("The selected valve is not yellow or the linkable one not white: yellow=" + yellow + " white=" + white);
             }
             if (stage == 5) {
                 var level = mc.level;
@@ -269,6 +284,7 @@ public final class NetworkingClientCheck {
                     .setValue(PanelBlock.FACING, Direction.NORTH), 3);
         var a = valve(level, VALVE_A);
         valve(level, VALVE_B);
+        valve(level, VALVE_C);
         MachineNames.setName(level.getBlockEntity(VALVE_B), "FWP-2");
 
         // 0: a dial on valve A, 1: a dial on valve A, 2: a segment display on valve B, 3: a button that commands valve A,

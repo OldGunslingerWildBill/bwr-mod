@@ -1072,6 +1072,6 @@
   "message.bwr.panel_bind.result.port_conflict": "Two machines share that port",
   "screen.bwr.networking.port": "CC port",
   "screen.bwr.networking.port_none": "none",
-  "screen.bwr.networking.port_note": "0000 to 9999, set by hand; a machine with no port cannot be reached through CC",
+  "screen.bwr.networking.port_note": "0000-9999, set by hand; no port means no CC access",
   "screen.bwr.networking.port_conflict": "Port %s is used by %s machines on this CC network: nothing is read from it"
 }

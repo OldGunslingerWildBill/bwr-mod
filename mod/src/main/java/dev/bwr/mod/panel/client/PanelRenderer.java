@@ -132,7 +132,7 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
         if (textWidth <= 0.0f) {
             return;
         }
-        float scale = Math.min(0.2f, Math.max(component.w(), 16.0f) / textWidth);
+        float scale = Math.min(0.26f, Math.max(component.w(), 16.0f) / textWidth);
         context.text(caption, (component.w() - textWidth * scale) / 2.0f, component.h() + 0.5f, scale, 1.2f, 0xFFFFFF, false);
     }
 
