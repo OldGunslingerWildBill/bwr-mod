@@ -71,15 +71,15 @@ final class PanelModelShowcase {
             "baked-closeup-round-meter", "baked-closeup-edgewise-meters", "baked-srv-overview",
             "baked-srv-closeup-selector-knob", "baked-srv-closeup-selector-lever", "baked-srv-closeup-lamps",
             "baked-srv-closeup-guarded-button", "baked-srv-night", "baked-owner-overview", "baked-owner-closeup-narrow-trio",
-            "baked-owner-closeup-wide-and-pressure", "baked-owner-closeup-rps-and-push-turn"};
+            "baked-owner-closeup-wide-and-pressure", "baked-owner-closeup-rps-and-push-turn", "baked-owner-closeup-srv-switches"};
     /** The group each stage shows. */
-    private static final int[] GROUP_OF = {0, 1, 2, 3, 4, 5, 6, 4, 0, 2, 5, 6, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8};
+    private static final int[] GROUP_OF = {0, 1, 2, 3, 4, 5, 6, 4, 0, 2, 5, 6, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8};
     /** The cell (within the group) the camera looks at, and how far away it stands in blocks. */
     private static final int[][] FOCUS = {{40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32},
             {17 + 6, 22 + 8}, {17 + 6, 2 + 7}, {20 + 8, 2 + 8}, {10 + 4, 2 + 12},
-            {40, 32}, {30, 9}, {30, 27}, {70, 22}, {70, 52}, {40, 32}, {40, 32}, {22, 14}, {60, 14}, {68, 44}};
+            {40, 32}, {30, 9}, {30, 27}, {70, 22}, {70, 52}, {40, 32}, {40, 32}, {22, 14}, {60, 14}, {68, 44}, {19, 56}};
     private static final double[] DISTANCE = {4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 1.7, 1.5, 1.8, 2.6,
-            4.2, 1.9, 1.9, 2.4, 1.2, 4.2, 4.2, 1.9, 1.9, 1.9};
+            4.2, 1.9, 1.9, 2.4, 1.2, 4.2, 4.2, 1.9, 1.9, 1.9, 1.5};
 
     static boolean night(int stage) {
         return stage == 7 || stage == 17;
@@ -342,7 +342,8 @@ final class PanelModelShowcase {
                     col == 0 ? "srv_open_close" : "srv_open_auto_close");
             RotarySelectorData data = (RotarySelectorData) component.data();
             data.positions = col == 0 ? 2 : 3;
-            data.names = col == 0 ? "OPEN,CLOSE" : "OPEN,AUTO,CLOSE";
+            // in the order the owner's switches are engraved: Close at the left, Open at the right
+            data.names = col == 0 ? "CLOSE,OPEN" : "CLOSE,AUTO,OPEN";
             data.position = col == 2 ? 2 : col;
             component.syncPorts();
             component.type().onLoaded(component);

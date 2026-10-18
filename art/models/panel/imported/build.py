@@ -9,6 +9,9 @@ come from the material names. Each model is turned into the panel_export convent
 +Y up, footprint top-left at the origin), geometry behind the panel is dropped, the dense CAD meshes are reduced to
 the face budget (planar dissolve first, then collapse), parts are tagged with their roles, pivots and travel, legend
 anchors are added, and the model is exported to mod/src/main/resources/assets/bwr/models/panel/<id>.json.
+
+The SRV switches and the RPS trip assembly are not decimated: they are rebuilt as clean solids from the dimensions
+measured on their OBJ files (see "rebuilt solids" below), and the bar gauge is built to the owner's simulator picture.
 """
 import math
 import os
@@ -176,6 +179,153 @@ def merge(objs, name):
     return objs[0]
 
 
+# ---------------------------------------------------------------- rebuilt solids
+#
+# The bar gauge, the SRV switches and the RPS trip assembly are rebuilt as clean low-poly solids from dimensions
+# measured on the owner's OBJ files instead of being imported and decimated: the planar dissolve merged the CAD's
+# finely faceted cylinders into twisted n-gons (the SRV knobs came out as grey mushrooms, the RPS cup guards
+# collapsed) and the engraved text decimated into noise (the game prints legends at the label anchors instead).
+#
+# Orientation: Fusion writes these files Y-up with the part lying on its back, so the panel's up is -Z of the OBJ:
+# the engraved text reads right way round with right = +X, up = -Z, out = +Y, a proper rotation. import_obj() maps
+# (x, z, y), a mirror image, which turned these models upside down (the SRV legend tab under the knob, the RPS label
+# pads under the guards, the text upside down). The dimensions here are in the correct frame: centimetres, x right,
+# y up, z out of the panel, origin at the OBJ origin (the handle's shaft).
+
+
+def obj_bounds(file_name):
+    """Per-group bounds of an OBJ in that frame: {group: ((x0, x1), (y0, y1), (z0, z1))}, centimetres."""
+    verts, groups, cur = [], {}, None
+    with open(os.path.join(OBJ_DIR, file_name), encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            if line.startswith("v "):
+                x, y, z = (float(t) for t in line.split()[1:4])
+                verts.append((x, -z, y))
+            elif line.startswith("g "):
+                cur = line[2:].strip()
+            elif line.startswith("f "):
+                groups.setdefault(cur, set()).update(int(t.split("/")[0]) - 1 for t in line.split()[1:])
+    return {g: tuple((min(verts[i][k] for i in idx), max(verts[i][k] for i in idx)) for k in range(3))
+            for g, idx in groups.items()}
+
+
+def expect(bounds, group, want, file_name, tol=0.02):
+    """Stops the build when the OBJ no longer has the dimensions its rebuild was measured from."""
+    got = bounds[group]
+    for k, axis in enumerate("xyz"):
+        if abs(got[k][0] - want[k][0]) > tol or abs(got[k][1] - want[k][1]) > tol:
+            raise ValueError("%s %s: %s %s is not the measured %s; re-measure the rebuild"
+                             % (file_name, group, axis, tuple(round(v, 3) for v in got[k]), want[k]))
+
+
+def newell(pts):
+    nx = ny = nz = 0.0
+    for i, (x0, y0, z0) in enumerate(pts):
+        x1, y1, z1 = pts[(i + 1) % len(pts)]
+        nx += (y0 - y1) * (z0 + z1)
+        ny += (z0 - z1) * (x0 + x1)
+        nz += (x0 - x1) * (y0 + y1)
+    return nx, ny, nz
+
+
+class Solid:
+    """The faces of one part, authored in the rebuild frame."""
+
+    def __init__(self):
+        self.faces = []
+
+    def face(self, pts, colour, outward=None):
+        """One planar face (3 or more corners); wound so its normal agrees with the direction outward."""
+        if outward is not None:
+            n = newell(pts)
+            if n[0] * outward[0] + n[1] * outward[1] + n[2] * outward[2] < 0:
+                pts = pts[::-1]
+        self.faces.append((list(pts), colour))
+
+
+def lathe(solid, cx, cy, profile, segments, colours):
+    """A surface of revolution about the panel normal through (cx, cy). profile: (r, z) points walked with the solid
+    on the left (up an outer wall, inward over a top, down a bore); colours: one per profile segment, or one."""
+    if isinstance(colours, str):
+        colours = [colours] * (len(profile) - 1)
+    for i in range(len(profile) - 1):
+        (ra, za), (rb, zb) = profile[i], profile[i + 1]
+        nr, nz = zb - za, ra - rb
+        for k in range(segments):
+            t0, t1 = 2 * math.pi * k / segments, 2 * math.pi * (k + 1) / segments
+            tm = (t0 + t1) / 2
+            pts = []
+            for r, z, t in ((ra, za, t0), (ra, za, t1), (rb, zb, t1), (rb, zb, t0)):
+                p = (cx + r * math.cos(t), cy + r * math.sin(t), z)
+                if not pts or max(abs(p[j] - pts[-1][j]) for j in range(3)) > 1e-7:
+                    pts.append(p)
+            if len(pts) > 3 and max(abs(pts[0][j] - pts[-1][j]) for j in range(3)) < 1e-7:
+                pts.pop()
+            if len(pts) >= 3:
+                solid.face(pts, colours[i], (nr * math.cos(tm), nr * math.sin(tm), nz))
+
+
+def prism(solid, outline, z0, z1, top, side):
+    """An upright prism over a counter-clockwise outline [(x, y)]; no top face when top is None."""
+    if top is not None:
+        solid.face([(x, y, z1) for x, y in outline], top, (0, 0, 1))
+    for i in range(len(outline)):
+        (xa, ya), (xb, yb) = outline[i], outline[(i + 1) % len(outline)]
+        solid.face([(xa, ya, z0), (xb, yb, z0), (xb, yb, z1), (xa, ya, z1)], side, (yb - ya, xa - xb, 0))
+
+
+def flat(solid, outline, z, colour):
+    solid.face([(x, y, z) for x, y in outline], colour, (0, 0, 1))
+
+
+def rect(x0, y0, x1, y1):
+    return [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+
+
+def arc(cx, cy, r, a0, a1, steps):
+    """Points on a circle from a0 to a1 degrees (counter-clockwise when a1 > a0), both ends included."""
+    return [(cx + r * math.cos(math.radians(a0 + (a1 - a0) * i / steps)),
+             cy + r * math.sin(math.radians(a0 + (a1 - a0) * i / steps))) for i in range(steps + 1)]
+
+
+class Frame:
+    """The rebuild frame of one model mapped onto the panel_export convention: the footprint's top-left corner at the
+    origin, +Y up, inches. (x0, y1) is the footprint's top-left corner in the rebuild frame, w x h its size; unit
+    converts rebuild units to inches (centimetres by default) and margin (inches) is kept clear all round."""
+
+    def __init__(self, x0, y1, w, h, unit=CM, margin=0.04):
+        self.x0, self.y1, self.unit, self.margin = x0, y1, unit, margin
+        self.w = round(w * unit + 2 * margin, 4)
+        self.h = round(h * unit + 2 * margin, 4)
+
+    def x(self, x):
+        return (x - self.x0) * self.unit + self.margin
+
+    def y(self, y):
+        return (y - self.y1) * self.unit - self.margin
+
+    def z(self, z):
+        return z * self.unit
+
+
+def make_object(name, solid, frame):
+    """A mesh object of a Solid's faces in panel_export space, one material per colour."""
+    mesh = bpy.data.meshes.new(name)
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    bm = bmesh.new()
+    slots = {}
+    for pts, colour in solid.faces:
+        if colour not in slots:
+            slots[colour] = len(slots)
+            mesh.materials.append(px.material("mat_" + colour, colour))
+        face = bm.faces.new([bm.verts.new((frame.x(x), frame.y(y), frame.z(z))) for x, y, z in pts])
+        face.material_index = slots[colour]
+    bm.to_mesh(mesh)
+    bm.free()
+    return obj
+
+
 # ---------------------------------------------------------------- models
 
 def prepare(file_name, margin=0.04):
@@ -212,24 +362,58 @@ def build_button_1():
 
 
 def build_rot_switch(file_name, model_id, positions):
-    """The owner's SRV control switch: a grey plate and a turning handle; OPEN/CLOSE or OPEN/AUTO/CLOSE."""
-    parts, w, h, ox, oy = prepare(file_name)
-    reduce(parts["Body"], 320)
-    px.tag(parts["Body"], part="body")
-    handle = parts["Handle"]
-    reduce(handle, 300)
-    # The handle turns about its own centre: the OBJ origin, which prepare() moved to (ox, oy). It is modelled
-    # pointing down at the legends engraved on the plate; the game turns handles from upright, so it is turned over
-    # and the position anchors sit on the engraved legends: the handle swings down to point at each.
-    pivot = (ox, oy, 0.0)
-    turn_half(handle, pivot)
-    px.tag(handle, part="handle", pivot=pivot, axis=(0, 0, 1))
-    legend_y = pivot[1] - 2.0 * CM
-    xs = {2: [-1.15, 1.15], 3: [-1.25, 0.0, 1.25]}[positions]
-    for i, dx in enumerate(xs):
-        x = pivot[0] + dx * CM
-        px.label("pos%d" % (i + 1), x, legend_y, surface_z(parts["Body"], x, legend_y), 0.11)
-    return model_id, w, h, "Owner's CAD model %s (Fusion)" % file_name, 700
+    """The owner's SRV control switch (references/gauges/owner-srv-switch-render.png), rebuilt from the OBJ's
+    dimensions: a round grey base with a 45 degree chamfered rim, a legend tab above it engraved "Close | Open" (or
+    "Close | Auto | Open"), and the handle that turns in the base: a white disc with a straight bar across it, flared
+    at both ends, with a slot line at its pointer end. The handle points up at the tab as modelled, so it needs no
+    turning over, and the position anchors sit on the engraved legends either side of the separators: the game turns
+    the handle to the bearing of each (about 17 degrees either side, 20 for the three position plate)."""
+    b = obj_bounds(file_name)
+    expect(b, "Body", ((-1.8, 1.8), (-1.8, 2.5), (0.0, 1.3)), file_name)
+    expect(b, "Handle", ((-1.5, 1.5), (-1.5, 1.5), (0.0, 2.15)), file_name)
+    px.clear_scene()
+    frame = Frame(-1.8, 2.5, 3.6, 4.3)
+
+    body = Solid()
+    # Base: r 1.8 to 1.0 high, chamfered in to the bore (r 1.5) at 1.3; the bore wall down to below the disc.
+    lathe(body, 0.0, 0.0, [(1.8, 0.0), (1.8, 1.0), (1.5, 1.3), (1.5, 1.2)], 32, ["9A9EA2", "B0B4B8", "5E6266"])
+    # Legend tab: 2.7 wide, up to 2.5 above the shaft, 0.8 high, rounded top corners (its foot is inside the base).
+    tab = [(-1.35, 0.9), (1.35, 0.9)] + arc(1.05, 2.2, 0.3, 0.0, 90.0, 4) + arc(-1.05, 2.2, 0.3, 90.0, 180.0, 4)
+    prism(body, tab, 0.0, 0.8, "CDD0D3", "9A9EA2")
+    legends, separators, cap = {2: ([-0.68, 0.68], [0.0], 0.085),
+                                3: ([-0.80, 0.0, 0.80], [-0.35, 0.35], 0.062)}[positions]
+    for x in separators:
+        flat(body, rect(x - 0.05, 1.9, x + 0.05, 2.4), 0.82, "4E5155")
+    make_object("body", body, frame)
+
+    handle = Solid()
+    lathe(handle, 0.0, 0.0, [(1.48, 1.0), (1.48, 1.25), (0.0, 1.25)], 32, ["C4C4C0", "FAFAF7"])
+    # The bar: 3 long, 0.30 wide at the middle flaring to 0.58 at the ends, from the disc (1.25) to 2.15 with a small
+    # chamfer round its top.
+    widths = [(0.0, 0.15), (0.4, 0.16), (0.8, 0.20), (1.1, 0.235), (1.3, 0.265), (1.48, 0.29)]
+    ts = [-t for t, _ in reversed(widths[1:])] + [t for t, _ in widths]
+    half = dict(widths)
+    outer = [(half[abs(t)], t) for t in ts] + [(-half[abs(t)], t) for t in reversed(ts)]
+    inner = [(half[abs(t)] - 0.04, max(-1.44, min(1.44, t))) for t in ts] + \
+            [(-half[abs(t)] + 0.04, max(-1.44, min(1.44, t))) for t in reversed(ts)]
+    prism(handle, outer, 1.25, 2.10, None, "C2C5C8")
+    for i in range(len(outer)):
+        j = (i + 1) % len(outer)
+        (xa, ya), (xb, yb) = outer[i], outer[j]
+        handle.face([(xa, ya, 2.10), (xb, yb, 2.10), (inner[j][0], inner[j][1], 2.15), (inner[i][0], inner[i][1], 2.15)],
+                    "D2D5D8", (yb - ya, xa - xb, 0.06))
+    n = len(ts)
+    for i in range(n - 1):
+        right_a, right_b = inner[i], inner[i + 1]
+        left_a, left_b = inner[2 * n - 1 - i], inner[2 * n - 2 - i]
+        handle.face([(left_a[0], left_a[1], 2.15), (right_a[0], right_a[1], 2.15), (right_b[0], right_b[1], 2.15),
+                     (left_b[0], left_b[1], 2.15)], "E2E4E6", (0, 0, 1))
+    flat(handle, rect(-0.06, 0.74, 0.06, 1.36), 2.17, "3A3C40")
+    pivot = (frame.x(0.0), frame.y(0.0), 0.0)
+    px.tag(make_object("handle", handle, frame), part="handle", pivot=pivot, axis=(0, 0, 1))
+    for i, x in enumerate(legends):
+        px.label("pos%d" % (i + 1), frame.x(x), frame.y(2.15), frame.z(0.8) + 0.01, cap)
+    return model_id, frame.w, frame.h, "Owner's CAD model %s (Fusion), rebuilt from its dimensions" % file_name, 700
 
 
 def build_wl2():
@@ -252,31 +436,72 @@ def build_wl2():
 
 
 def build_bar_gauge():
-    """The owner's edgewise bar gauge: a black case with a satin bezel and a pointer that slides along the scale."""
-    parts, w, h, ox, oy = prepare("bar-gauge.obj")
-    px.tag(parts["body"], part="body")
-    pointer = parts["pointer"]
-    # Modelled at mid-scale; park it at the bottom of the scale and let it travel the scale length upward.
-    travel = 16.0 * CM
-    shift([pointer], 0.0, -travel / 2, 0.0)
-    px.tag(pointer, part="needle", role="needle", travel=travel, axis=(0, 1, 0))
-    return "bar_gauge", w, h, "Owner's CAD model bar-gauge.obj (Fusion), 5 x 20 cm", 400
+    """The bar gauge's channel and pointer, built to the owner's simulator picture
+    (references/gauges/owner-bar-gauge-target-look.png), not to bar-gauge.obj: the CAD part is a curved black bulge
+    across the whole face with the pointer on its left edge pointing right, the picture (the look the owner wants) a
+    narrow flat black channel right of the scale with a grey triangular pointer inside it, pointing left at the ticks.
+
+    Inches, authored directly: the channel is 0.5 wide, 8 long and stands 0.15 off the panel; the pointer is a low
+    two-faceted triangle on the channel (light upper facet, darker lower one, as in the picture), modelled at the scale
+    minimum 0.3 above the channel foot and travelling 7.4 up to the maximum. The case, the white face, the caps, the
+    scale, the units and the tag plate are printed around this model by the game (BarGaugeFace), which reads the
+    pointer's travel and the channel's height from this file."""
+    px.clear_scene()
+    w, h, top, end = 0.5, 8.0, 0.15, 0.3
+    frame = Frame(0.0, 0.0, w, h, unit=1.0, margin=0.0)
+    channel = Solid()
+    prism(channel, [(0.0, -h), (w, -h), (w, 0.0), (0.0, 0.0)], 0.0, top, "101010", "101010")
+    make_object("body", channel, frame)
+    pointer = Solid()
+    yc = -(h - end)
+    edge, ridge = top + 0.012, top + 0.04
+    tip, upper, lower, mid = (0.07, yc, edge), (0.45, yc + 0.2, edge), (0.45, yc - 0.2, edge), (0.45, yc, ridge)
+    pointer.face([tip, mid, upper], "D0D3D6", (0, 0.3, 1))
+    pointer.face([tip, lower, mid], "9A9EA2", (0, -0.3, 1))
+    pointer.face([(0.45, yc + 0.2, top), (0.45, yc - 0.2, top), lower, mid, upper], "8E9296", (1, 0, 0))
+    pointer.face([(0.07, yc, top), (0.45, yc + 0.2, top), upper, tip], "B8BCC0", (-0.2, 0.38, 0))
+    pointer.face([(0.07, yc, top), tip, lower, (0.45, yc - 0.2, top)], "8E9296", (-0.2, -0.38, 0))
+    px.tag(make_object("pointer", pointer, frame), part="needle", role="needle", travel=h - 2 * end, axis=(0, 1, 0))
+    return "bar_gauge", w, h, "Owner's simulator look (references/gauges/owner-bar-gauge-target-look.png): channel and pointer", 400
 
 
 def build_rps_trip():
-    """The owner's RPS trip assembly: a black body with red guards and two red trip buttons, A and B."""
-    parts, w, h, ox, oy = prepare("RPS-Trip-Assembly.obj")
-    reduce(parts["Body"], 600)
-    px.tag(parts["Body"], part="body")
-    for side, key in (("a", "RPS A Movable"), ("b", "RPS B Movable")):
-        cap = parts[key]
-        reduce(cap, 200)
-        px.tag(cap, part="cap_" + side, travel=0.15, axis=(0, 0, -1))
-    for side, dx in (("a", -3.0), ("b", 3.0)):
-        x = ox + dx * CM
-        # Above the button on the plain top band: below it the CAD has small raised plates with its own engraved text.
-        px.label("legend_" + side, x, -0.3, surface_z(parts["Body"], x, -0.3), 0.18)
-    return "rps_trip_assembly", w, h, "Owner's CAD model RPS-Trip-Assembly.obj (Fusion)", 1100
+    """The owner's RPS trip assembly (references/gauges/owner-rps-trip-render.png), rebuilt from the OBJ's
+    dimensions: a red 12 x 6 plate with 1 cm chamfered corners; round of each button a raised flange with a label pad
+    above it (where the CAD engraves "RPS A Manual Trip"; the game prints the editable legend there instead); a tall
+    cup guard on the flange; and inside the cup the recessed red button with three concentric ripples, which slides
+    0.15 in while it is held."""
+    b = obj_bounds("RPS-Trip-Assembly.obj")
+    expect(b, "Body", ((-6.0, 6.0), (-3.0, 3.0), (0.0, 2.3)), "RPS-Trip-Assembly.obj")
+    for key, cx in (("RPS A Movable", -3.0), ("RPS B Movable", 3.0)):
+        expect(b, key, ((cx - 1.15, cx + 1.15), (-1.15, 1.15), (0.2, 1.9)), "RPS-Trip-Assembly.obj")
+    px.clear_scene()
+    frame = Frame(-6.0, 3.0, 12.0, 6.0)
+    body = Solid()
+    plate = [(-5.0, -3.0), (5.0, -3.0), (6.0, -2.0), (6.0, 2.0), (5.0, 3.0), (-5.0, 3.0), (-6.0, 2.0), (-6.0, -2.0)]
+    prism(body, plate, 0.0, 0.2, "B01818", "8E1414")
+    # The flange (r 1.85) and its label pad (3 wide, up to 2.6) are one raised plateau 0.2 thick; above it the cup:
+    # r 1.45 to 1.3 high, tapering to 1.35 at the rim (2.3), bore 1.25, its inside in shadow as in the render.
+    seam = math.degrees(math.atan2(math.sqrt(1.85 ** 2 - 1.5 ** 2), 1.5))
+    for cx in (-3.0, 3.0):
+        pad = arc(cx, 0.0, 1.85, 180.0 - seam, 360.0 + seam, 22) + arc(cx + 1.25, 2.35, 0.25, 0.0, 90.0, 3) \
+            + arc(cx - 1.25, 2.35, 0.25, 90.0, 180.0, 3)
+        prism(body, pad, 0.2, 0.4, "B41A1A", "8E1414")
+        lathe(body, cx, 0.0, [(1.45, 0.4), (1.45, 1.3), (1.35, 2.3), (1.25, 2.3), (1.25, 0.4)], 32,
+              ["A81616", "B01818", "C42828", "6E0E0E"])
+    make_object("body", body, frame)
+    # The button: r 1.15, its top 1.8 at the edge rising to 1.9, three grooves (r 0.37, 0.57, 0.77) between ridges.
+    ripples = [(1.15, 0.45), (1.15, 1.80), (1.08, 1.88), (0.88, 1.89), (0.77, 1.81), (0.67, 1.89), (0.57, 1.81),
+               (0.47, 1.89), (0.37, 1.81), (0.27, 1.90), (0.0, 1.90)]
+    for side, cx in (("a", -3.0), ("b", 3.0)):
+        cap = Solid()
+        lathe(cap, cx, 0.0, ripples, 28, ["B81A1A"] + ["D42020"] * (len(ripples) - 2))
+        px.tag(make_object("cap_" + side, cap, frame), part="cap_" + side, travel=0.15, axis=(0, 0, -1))
+        # On the label pad above the guard, where the CAD engraves its legend: high on the pad, so the tall guard
+        # does not hide it from a player looking up at the assembly.
+        px.label("legend_" + side, frame.x(cx), frame.y(2.27), frame.z(0.4) + 0.01, 0.115)
+    return "rps_trip_assembly", frame.w, frame.h, \
+        "Owner's CAD model RPS-Trip-Assembly.obj (Fusion), rebuilt from its dimensions", 1100
 
 
 BUILDERS = {

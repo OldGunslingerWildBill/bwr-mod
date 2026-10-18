@@ -59,10 +59,54 @@ def clear():
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
 
+def bar_gauge_face(data):
+    """The case and printed face the game draws round the bar gauge's channel (BarGaugeFace), at the default 10 x 16
+    cells with the narrow range scale: returns (faces [(corners in model inches, hex)], w, h, dx, dy), where the model
+    is shifted by (dx, dy) inches to sit in the dressed footprint w x h."""
+    cw, ch = data["footprint"]["w"], data["footprint"]["h"]
+    w, h = 10.0, 16.0
+    tag = 0.96
+    case_top, face_top, face_bottom = 0.1 + tag + 0.2, 0.1 + tag + 0.2 + 0.075 * h, h - 0.085 * h
+    scale = min((face_bottom - face_top) / ch, 0.16 * w / cw)
+    ox, oy = 0.6 * w - cw * scale / 2, face_top + (face_bottom - face_top - ch * scale) / 2
+    rail, tick_right = max(0.25, 0.035 * w), ox
+    tick_left = tick_right - max(0.8, min(2.2, 0.14 * w))
+    low, high = oy + (ch - 0.3) * scale, oy + 0.3 * scale  # scale minimum and maximum rows (pointer 0.3 in from the ends)
+    out = []
+
+    def box(x, y, bw, bh, z, rgb):
+        c = [(x, y), (x + bw, y), (x + bw, y + bh), (x, y + bh)]
+        out.append(([(px / scale, py / scale, z / scale) for px, py in c], rgb))
+
+    zf = max(0.1, 0.15 * scale - 0.07)
+    box(0.12 * w, 0.1, 0.76 * w, tag, zf + 0.12, "E6E6E1")
+    box(0, case_top, w, face_top - case_top, zf + 0.6, "BFC3C7")
+    box(0, face_bottom, w, h - face_bottom, zf + 0.6, "BFC3C7")
+    box(0, face_top, rail, face_bottom - face_top, zf + 0.3, "BFC3C7")
+    box(w - rail, face_top, rail, face_bottom - face_top, zf + 0.3, "BFC3C7")
+    box(rail, face_top, w - 2 * rail, face_bottom - face_top, zf, "F6F5EE")
+    box(w / 2 - 0.3, (face_bottom + h) / 2 - 0.3, 0.6, 0.6, zf + 0.62, "2B2C2E")
+    row = lambda v: low + (high - low) * v / 60.0
+    for lo, hi, rgb in ((0, 10, "A80E0E"), (10, 20, "C4B02A"), (45, 55, "C4B02A"), (55, 60, "A80E0E")):
+        box(tick_left, row(hi), tick_right - tick_left, row(lo) - row(hi), zf + 0.02, rgb)
+    for v in range(0, 61, 5):
+        length = (tick_right - tick_left) * (1.0 if v % 10 == 0 else 0.5)
+        box(tick_right - length, row(v) - 0.1, length, 0.2, zf + 0.04, "141414")
+        if v % 10 == 0:  # the numbers, as dark dashes at this size
+            box(tick_left - 1.6, row(v) - 0.3, 1.2, 0.6, zf + 0.04, "3A3A3A")
+    return out, w / scale, h / scale, ox / scale, oy / scale
+
+
 def build(model):
     """The model as one mesh with a face-corner colour attribute; returns its size (w, h) in inches."""
     data = json.load(open(os.path.join(MODELS, model + ".json"), encoding="utf-8"))
     verts, faces, cols = [], [], []
+    dx = dy = 0.0
+    if model == "bar_gauge":
+        extra, fw, fh, dx, dy = bar_gauge_face(data)
+        data["footprint"] = {"w": fw, "h": fh}
+        data["parts"] = [{"role": "paint", "faces": [{"v": v, "c": c} for v, c in extra]}] + [
+            dict(p, faces=[dict(f, v=[(x + dx, y + dy, z) for x, y, z in f["v"]]) for f in p["faces"]]) for p in data["parts"]]
     for part in data["parts"]:
         if part["role"] == "glass":
             continue
