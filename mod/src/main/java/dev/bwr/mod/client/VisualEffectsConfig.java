@@ -13,7 +13,15 @@ public final class VisualEffectsConfig {
     public static final ModConfigSpec.BooleanValue PANEL_GPU_CACHE = BUILDER
             .comment("Control panels keep the solid geometry of each panel block in a vertex buffer on the GPU, which is much faster with detailed component models. Turn off if panels draw wrongly with a render mod or shader pack (the buffers are drawn through the game's own entity render type, so a pack's program shades them like any other block entity).")
             .define("panelGpuCache", true);
+    public static final ModConfigSpec.IntValue NETWORK_LINE_VIEW_DISTANCE = BUILDER
+            .comment("How far away, in blocks, other players' Networking Wrench lines are drawn for you. Lower it, or set 0 to hide them. The smaller of this and the server's networkLineShareDistance applies.")
+            .defineInRange("networkLineViewDistance", 32, 0, 1024);
     public static final ModConfigSpec SPEC = BUILDER.build();
+
+    /** The configured view distance; the default before the file is loaded. */
+    public static int networkLineViewDistance() {
+        return SPEC.isLoaded() ? NETWORK_LINE_VIEW_DISTANCE.get() : 32;
+    }
 
     private VisualEffectsConfig() {}
 }

@@ -44,6 +44,16 @@ public final class PanelComponent {
     private int w;
     private int h;
     private String label;
+    /** Printed caption under the component (empty draws none); set from a machine name, saved only when not empty. */
+    private String caption = "";
+    /**
+     * Client: per input, the {@link dev.bwr.mod.signal.Quantity} ordinal of the signal it is wired to when that is not
+     * the quantity the component is set to measure, else -1. Sent by the server with the full state, never saved.
+     */
+    private int[] mismatch = new int[0];
+    /** Client: per input, the quantity ordinal and unit of the signal it is line-linked to (power units need them); -1 and "". */
+    private int[] boundQuantity = new int[0];
+    private String[] boundUnit = new String[0];
     private InputSource[] sources = new InputSource[0];
     private double[] inputs = new double[0];
     private double[] outputs = new double[0];
@@ -128,6 +138,37 @@ public final class PanelComponent {
     public void setLabel(String label) {
         this.label = label;
         touch();
+    }
+
+    /** The quantity ordinal input {@code index} is wired to against its Measures setting, or -1 when it agrees. */
+    public int mismatch(int index) {
+        return index >= 0 && index < mismatch.length ? mismatch[index] : -1;
+    }
+
+    /** The {@code Quantity} ordinal of the signal input {@code index} is line-linked to, or -1 (not known to this client). */
+    public int boundQuantity(int index) {
+        return index >= 0 && index < boundQuantity.length ? boundQuantity[index] : -1;
+    }
+
+    /** The unit of the signal input {@code index} is line-linked to, or "". */
+    public String boundUnit(int index) {
+        return index >= 0 && index < boundUnit.length ? boundUnit[index] : "";
+    }
+
+    /** The printed caption, or "" for none. */
+    public String caption() {
+        return caption;
+    }
+
+    /** Sets the caption (cleaned and cut by the caller); returns whether it changed. */
+    public boolean setCaption(String text) {
+        String clean = text == null ? "" : text;
+        if (clean.equals(caption)) {
+            return false;
+        }
+        caption = clean;
+        touch();
+        return true;
     }
 
     /** Bumped on every change that affects how the component draws. */
@@ -267,6 +308,9 @@ public final class PanelComponent {
         tag.putInt("W", w);
         tag.putInt("H", h);
         tag.putString("Label", label);
+        if (!caption.isEmpty()) {
+            tag.putString("Caption", caption);
+        }
         tag.put("Data", data.toTag());
         ListTag list = new ListTag();
         for (InputSource source : sources) {
@@ -319,6 +363,7 @@ public final class PanelComponent {
         }
         PanelComponent component = new PanelComponent(id, type, x, y, w, h);
         component.label = tag.getString("Label");
+        component.caption = ConfigSchema.cleanText(tag.getString("Caption"), dev.bwr.mod.panel.MachineNames.MAX_CAPTION);
         component.data.load(tag.getCompound("Data"));
         component.syncPorts();
         ListTag list = tag.getList("Inputs", Tag.TAG_COMPOUND);
@@ -334,6 +379,13 @@ public final class PanelComponent {
                 fields.remove("Output");
                 component.sinks.get(output).add(OutputSinks.load(fields));
             }
+        }
+        component.mismatch = tag.getIntArray("Mismatch");
+        component.boundQuantity = tag.getIntArray("BoundQuantity");
+        ListTag units = tag.getList("BoundUnit", Tag.TAG_STRING);
+        component.boundUnit = new String[units.size()];
+        for (int i = 0; i < units.size(); i++) {
+            component.boundUnit[i] = units.getString(i);
         }
         ListTag in = tag.getList("InValues", Tag.TAG_DOUBLE);
         for (int i = 0; i < in.size() && i < component.inputs.length; i++) {

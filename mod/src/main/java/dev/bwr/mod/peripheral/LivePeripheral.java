@@ -18,18 +18,33 @@ public final class LivePeripheral implements IDynamicPeripheral {
     private final Supplier<IPeripheral> resolve;
     private final Method[] methods;
     private final String[] names;
+    private final boolean machine;
+    /** The four methods every machine peripheral has besides its own (the panel is not a machine). */
+    private static final String[] MACHINE_METHODS={"getName","setName","getPort","setPort"};
     private static final Map<Class<?>,Method[]> SCHEMAS=new java.util.concurrent.ConcurrentHashMap<>();
     public LivePeripheral(Level level,BlockPos anchor,Block block,String type,Class<? extends IPeripheral> schema,Supplier<IPeripheral> resolve) {
         this.level=level;this.anchor=anchor.immutable();this.block=block;this.type=type;this.resolve=resolve;
         methods=SCHEMAS.computeIfAbsent(schema,c->Arrays.stream(c.getMethods()).filter(m->m.isAnnotationPresent(LuaFunction.class))
                 .sorted(Comparator.comparing(Method::getName)).toArray(Method[]::new));
-        names=Arrays.stream(methods).map(Method::getName).toArray(String[]::new);
+        machine=!PanelPeripheral.TYPE.equals(type);
+        String[] own=Arrays.stream(methods).map(Method::getName).toArray(String[]::new);
+        if(machine){
+            names=Arrays.copyOf(own,own.length+MACHINE_METHODS.length);
+            System.arraycopy(MACHINE_METHODS,0,names,own.length,MACHINE_METHODS.length);
+        }else names=own;
     }
+    /** The level this face is in. */
+    public Level level(){return level;}
+    /** The block this face is on (a machine cell; {@code DeviceResolver} finds the machine from it). */
+    public BlockPos anchor(){return anchor;}
+    /** Whether this is a plant machine (every type but the panel). */
+    public boolean isMachine(){return machine;}
     @Override public String getType(){return type;}
     @Override public Object getTarget(){return this;}
     @Override public String[] getMethodNames(){return names.clone();}
     @Override public boolean equals(IPeripheral other){return other instanceof LivePeripheral p&&p.level==level&&p.anchor.equals(anchor)&&p.block==block&&p.type.equals(type);}
     @Override public MethodResult callMethod(IComputerAccess computer,ILuaContext context,int index,IArguments args)throws LuaException {
+        if(machine&&index>=methods.length&&index<methods.length+MACHINE_METHODS.length)return machineMethod(index-methods.length,context,args);
         if(index<0||index>=methods.length)throw new LuaException("Unknown machine method");
         Method method=methods[index];Class<?>[] types=method.getParameterTypes();Object[] converted=new Object[types.length];
         for(int i=0;i<types.length;i++) {
@@ -43,6 +58,28 @@ public final class LivePeripheral implements IDynamicPeripheral {
         }
         // Resolve after scheduling, not while still on the computer thread.
         return context.executeMainThreadTask(()->invoke(method,converted));
+    }
+    /**
+     * {@code getName()}, {@code setName(text)}, {@code getPort()} and {@code setPort(n)} on every machine: its equipment
+     * tag and its CC port (0 to 9999; nil when none). A name or a port is only ever set by the program's own call; nothing
+     * here names or numbers machines in bulk.
+     */
+    private MethodResult machineMethod(int which,ILuaContext context,IArguments args)throws LuaException {
+        String text=which==1?args.getString(0):null;
+        int port=which==3?args.getInt(0):0;
+        if(which==3&&!dev.bwr.mod.panel.MachinePorts.valid(port))throw new LuaException("Port must be 0 to "+dev.bwr.mod.panel.MachinePorts.MAX_PORT);
+        return context.executeMainThreadTask(()->{
+            if(level.getServer()==null||!level.getServer().isSameThread())throw new LuaException("Machine access requires server thread");
+            if(!level.isLoaded(anchor)||!level.getBlockState(anchor).is(block))throw new LuaException("Machine connection removed or unloaded");
+            var owner=dev.bwr.mod.signal.DeviceResolver.resolve(level,anchor);
+            if(owner==null||dev.bwr.mod.signal.SignalProviders.of(owner)==null)throw new LuaException("Machine controller unavailable; assemble and load the machine");
+            switch(which){
+                case 0:return new Object[]{dev.bwr.mod.panel.MachineNames.name(owner)};
+                case 1:dev.bwr.mod.panel.MachineNames.setName(owner,text);return new Object[]{dev.bwr.mod.panel.MachineNames.name(owner)};
+                case 2:{int current=dev.bwr.mod.panel.MachinePorts.get(owner);return new Object[]{current==dev.bwr.mod.panel.MachinePorts.NONE?null:(Object)current};}
+                default:dev.bwr.mod.panel.MachinePorts.set(owner,port);return new Object[]{port};
+            }
+        });
     }
     /** A Lua array of strings (the rows of a panel blit), bounded so a script cannot hand over a huge table. */
     public static String[] tableStrings(LuaTable<?,?> table)throws LuaException {

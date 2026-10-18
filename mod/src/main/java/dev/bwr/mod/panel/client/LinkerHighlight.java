@@ -25,7 +25,7 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import java.util.OptionalDouble;
 
 /**
- * While a panel linker is held and the crosshair is on a bound component, draws a see-through outline around
+ * While a panel linker or a Networking Wrench is held and the crosshair is on a bound component, draws a see-through outline around
  * every plant device that component reads from (cyan) or commands (orange), so a long wiring run can be
  * followed to its end across a room or a wall. Client only; reads the bindings the full-state packet already
  * carries.
@@ -40,7 +40,7 @@ public final class LinkerHighlight {
     public static long debugDraws() { return debugDraws; }
 
     /** Lines that ignore depth, so the outline shows through blocks. Subclassing only reaches the shared states. */
-    private static final class Types extends RenderType {
+    static final class Types extends RenderType {
         private Types() {
             super("bwr_linker_lines", DefaultVertexFormat.POSITION_COLOR_NORMAL, VertexFormat.Mode.LINES, 256, false,
                     false, () -> {
@@ -67,8 +67,8 @@ public final class LinkerHighlight {
         }
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null
-                || !(minecraft.player.getMainHandItem().getItem() instanceof PanelLinkerItem
-                || minecraft.player.getOffhandItem().getItem() instanceof PanelLinkerItem)) {
+                || !(dev.bwr.mod.panel.LinkTools.isTool(minecraft.player.getMainHandItem())
+                || dev.bwr.mod.panel.LinkTools.isTool(minecraft.player.getOffhandItem()))) {
             return;
         }
         PanelComponent hovered = PanelClientInput.hoveredComponent(minecraft);

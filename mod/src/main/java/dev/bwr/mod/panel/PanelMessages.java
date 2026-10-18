@@ -26,6 +26,10 @@ public final class PanelMessages {
             case NOT_IN_GROUP -> BwrText.tr("message.bwr.panel_bind.result.not_in_group", "Choose a component in the same panel group");
             case TOO_MANY -> BwrText.tr("message.bwr.panel_bind.result.too_many", "This output already has the maximum number of connections");
             case REFUSED -> BwrText.tr("message.bwr.panel_bind.result.refused", "This component cannot take that device");
+            case MEASURES_MISMATCH -> BwrText.tr("message.bwr.panel_bind.result.measures_mismatch", "This gauge measures a different quantity");
+            case NO_CC -> BwrText.tr("message.bwr.panel_bind.result.no_cc", "CC:Tweaked is not installed");
+            case PORT_EMPTY -> BwrText.tr("message.bwr.panel_bind.result.port_empty", "No machine answers on that port of this CC network");
+            case PORT_CONFLICT -> BwrText.tr("message.bwr.panel_bind.result.port_conflict", "Two machines share that port");
         };
     }
 

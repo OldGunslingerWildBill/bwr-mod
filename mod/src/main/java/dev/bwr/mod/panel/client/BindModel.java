@@ -8,6 +8,7 @@ import dev.bwr.mod.panel.component.OutputSink;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.component.PortSpec;
 import dev.bwr.mod.panel.net.PanelPayloads;
+import dev.bwr.mod.panel.wiring.CcPortSource;
 import dev.bwr.mod.panel.wiring.CcSource;
 import dev.bwr.mod.panel.wiring.ComponentSource;
 import dev.bwr.mod.panel.wiring.PlantSink;
@@ -33,7 +34,9 @@ import java.util.Locale;
 public final class BindModel {
     /** What to wire a port to. Outputs offer PLANT and REDSTONE; inputs offer all four. */
     public enum Mode {
-        PLANT, COMPONENT, REDSTONE, CC;
+        PLANT, COMPONENT, REDSTONE, CC,
+        /** A signal of the machine on a CC port of the panel's CC network (offered only when CC:Tweaked is installed). */
+        CCNET;
 
         public String translationKey() {
             return "screen.bwr.panel_bind.mode." + name().toLowerCase(Locale.ROOT);
@@ -70,6 +73,14 @@ public final class BindModel {
     /** Plant output sink mode: false follows the output (value x scale), true sends {@link #fixedText} on a rise. */
     public boolean momentary;
     public String fixedText = "1";
+    /** Whether changing port or mode preselects the best fitting entry again (set by {@link #preselect}). */
+    private boolean autoSelect;
+    /** The port typed in the CC network mode (up to four digits). */
+    public String portText = "";
+    /** Where a CC port lookup came from, so the screen the answer opens is on the same component and port. */
+    private static BlockPos lookupOwner;
+    private static int lookupComponent;
+    private static int lookupPortChoice;
 
     public BindModel(PanelBlockEntity block, PanelComponent component, PanelPayloads.LinkerScreen device) {
         this.block = block;
@@ -87,6 +98,36 @@ public final class BindModel {
             choices.add(new PortChoice(true, i, outputs.get(i)));
         }
         choose(choices.isEmpty() ? null : choices.get(0));
+        if (device.ccPort() >= 0 && modes().contains(Mode.CCNET)) {
+            // The answer to a CC port lookup: back on the port the player was editing, in the CC network mode.
+            if (owner.equals(lookupOwner) && componentId == lookupComponent && lookupPortChoice < choices.size()) {
+                choose(choices.get(lookupPortChoice));
+            }
+            setMode(Mode.CCNET);
+            portText = dev.bwr.mod.panel.MachinePorts.format(device.ccPort());
+        }
+    }
+
+    /** Remembers which port the CC lookup is for (the screen that answers it opens on the same one). */
+    public void rememberLookup() {
+        lookupOwner = owner;
+        lookupComponent = componentId;
+        lookupPortChoice = Math.max(0, choices.indexOf(port));
+    }
+
+    /** The typed port as a number, or -1 when it is not 0 to 9999. */
+    public int portNumber() {
+        try {
+            int value = Integer.parseInt(portText.trim());
+            return dev.bwr.mod.panel.MachinePorts.valid(value) ? value : -1;
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    /** Whether the machine of the last CC port lookup can be bound to. */
+    public boolean ccUsable() {
+        return device.ccPort() >= 0 && device.status() == PanelPayloads.LINK_OK;
     }
 
     public boolean hasPorts() {
@@ -94,7 +135,7 @@ public final class BindModel {
     }
 
     public boolean deviceUsable() {
-        return device.status() == PanelPayloads.LINK_OK;
+        return device.status() == PanelPayloads.LINK_OK && device.ccPort() < 0;
     }
 
     public void choose(PortChoice choice) {
@@ -107,11 +148,17 @@ public final class BindModel {
         }
         scaleText = defaultScale();
         resetTransform();
+        if (autoSelect) {
+            preselect();
+        }
     }
 
     public List<Mode> modes() {
         if (port != null && port.output()) {
             return List.of(Mode.PLANT, Mode.REDSTONE);
+        }
+        if (dev.bwr.mod.BwrMod.isComputerCraftPresent()) {
+            return List.of(Mode.PLANT, Mode.COMPONENT, Mode.REDSTONE, Mode.CC, Mode.CCNET);
         }
         return List.of(Mode.PLANT, Mode.COMPONENT, Mode.REDSTONE, Mode.CC);
     }
@@ -122,6 +169,9 @@ public final class BindModel {
         resetMomentary();
         scaleText = defaultScale();
         resetTransform();
+        if (autoSelect) {
+            preselect();
+        }
     }
 
     /** An input's transform starts at the current plant binding's (so editing keeps it) or at identity. */
@@ -130,6 +180,10 @@ public final class BindModel {
         if (port != null && !port.output() && mode == Mode.PLANT && component.source(port.index()) instanceof PlantSource plant) {
             scaleText = trim(plant.scale());
             offsetText = trim(plant.offset());
+        }
+        if (port != null && !port.output() && mode == Mode.CCNET && component.source(port.index()) instanceof CcPortSource cc) {
+            scaleText = trim(cc.scale());
+            offsetText = trim(cc.offset());
         }
     }
 
@@ -216,12 +270,12 @@ public final class BindModel {
 
     /** Whether the list of choices is shown for the current mode. */
     public boolean listed() {
-        return mode == Mode.PLANT && deviceUsable() || mode == Mode.COMPONENT;
+        return mode == Mode.PLANT && deviceUsable() || mode == Mode.COMPONENT || mode == Mode.CCNET;
     }
 
     /** Whether the Scale and Offset fields of a plant input (displayed = raw x scale + offset) are shown. */
     public boolean usesTransform() {
-        return port != null && !port.output() && mode == Mode.PLANT;
+        return port != null && !port.output() && (mode == Mode.PLANT || mode == Mode.CCNET);
     }
 
     public boolean usesScale() {
@@ -235,14 +289,18 @@ public final class BindModel {
             return all;
         }
         String needle = filter.toLowerCase(Locale.ROOT).strip();
-        if (mode == Mode.PLANT && deviceUsable()) {
+        if (mode == Mode.PLANT && deviceUsable() || mode == Mode.CCNET && ccUsable() && !port.output()) {
             if (port.output()) {
                 for (PanelPayloads.CommandEntry command : device.commands()) {
                     all.add(new Entry(command.key(), Component.literal(command.label() + (command.pulse() ? " (pulse)" : "")
                             + "  [" + command.key() + "]"), BlockPos.ZERO, 0, 0));
                 }
             } else {
+                dev.bwr.mod.signal.Quantity wanted = measures();
                 for (PanelPayloads.SignalEntry signal : device.signals()) {
+                    if (wanted != null && signal.quantity() != wanted.ordinal()) {
+                        continue; // a gauge that measures one quantity is offered only the signals of that quantity
+                    }
                     all.add(new Entry(signal.key(), Component.literal(signal.label()
                             + (signal.unit().isEmpty() ? "" : " (" + signal.unit() + ")") + "  [" + signal.key() + "]"),
                             BlockPos.ZERO, 0, 0));
@@ -279,6 +337,63 @@ public final class BindModel {
         return matching;
     }
 
+    /** What the selected input is set to measure (the gauge setting {@code Measures}), or null for ANY. */
+    public dev.bwr.mod.signal.Quantity measures() {
+        return port != null && !port.output() ? component.data().measures(port.index()) : null;
+    }
+
+    /**
+     * Preselects the best fitting entry of the current port and mode, so one click on Apply confirms (the Networking
+     * Wrench does this; the Panel Linker does not). A lamp or annunciator input prefers a BOOLEAN signal, any other
+     * input the first numeric one that the component's Measures setting accepts; an output prefers the first command
+     * a switch or button can send. Nothing is bound until Apply.
+     */
+    public void preselect() {
+        autoSelect = true;
+        if (port == null || mode != Mode.PLANT || !deviceUsable()) {
+            return;
+        }
+        List<Entry> all = entries();
+        if (all.isEmpty()) {
+            return;
+        }
+        if (port.output()) {
+            for (Entry entry : all) {
+                PanelPayloads.CommandEntry command = command(entry.key());
+                if (command != null && command.kind() != Kind.TEXT.ordinal()) {
+                    select(entry);
+                    return;
+                }
+            }
+            return;
+        }
+        if (component.source(port.index()) instanceof PlantSource bound && bound.device().equals(device.device())) {
+            for (Entry entry : all) {
+                if (entry.key().equals(bound.key())) {
+                    select(entry); // editing a binding to this device keeps its signal
+                    return;
+                }
+            }
+        }
+        String type = component.type().id().getPath();
+        boolean wantsBoolean = type.equals("lamp") || type.equals("annunciator");
+        int boolQuantity = dev.bwr.mod.signal.Quantity.BOOLEAN.ordinal();
+        Entry best = null;
+        for (Entry entry : all) {
+            int quantity = -1;
+            for (PanelPayloads.SignalEntry signal : device.signals()) {
+                if (signal.key().equals(entry.key())) {
+                    quantity = signal.quantity();
+                }
+            }
+            if (wantsBoolean == (quantity == boolQuantity)) {
+                best = entry;
+                break;
+            }
+        }
+        select(best != null ? best : all.get(0));
+    }
+
     /** Whether Apply has everything it needs. */
     public boolean canApply() {
         if (port == null) {
@@ -290,6 +405,7 @@ public final class BindModel {
         }
         return switch (mode) {
             case PLANT, COMPONENT -> selected != null;
+            case CCNET -> selected != null && ccUsable() && portNumber() == device.ccPort();
             case REDSTONE, CC -> true;
         };
     }
@@ -319,14 +435,16 @@ public final class BindModel {
             case COMPONENT -> WiringOps.BindKind.COMPONENT;
             case REDSTONE -> WiringOps.BindKind.REDSTONE;
             case CC -> WiringOps.BindKind.CC;
+            case CCNET -> WiringOps.BindKind.CC_PORT;
         };
         Entry entry = selected;
         boolean plant = mode == Mode.PLANT && entry != null;
+        boolean keyed = (plant || mode == Mode.CCNET && entry != null);
         return new PanelPayloads.Bind(owner, componentId, port.output(), port.index(), kind.ordinal(),
-                plant ? device.device() : BlockPos.ZERO, plant ? entry.key() : "",
+                plant ? device.device() : BlockPos.ZERO, keyed ? entry.key() : "",
                 mode == Mode.COMPONENT && entry != null ? entry.refOwner() : BlockPos.ZERO,
                 mode == Mode.COMPONENT && entry != null ? entry.refId() : 0,
-                mode == Mode.COMPONENT && entry != null ? entry.refOutput() : 0,
+                mode == Mode.COMPONENT && entry != null ? entry.refOutput() : mode == Mode.CCNET ? device.ccPort() : 0,
                 (usesScale() || usesTransform()) && scale() != null ? scale() : 1.0,
                 usesFixed() ? PlantSink.Mode.MOMENTARY.ordinal() : PlantSink.Mode.FOLLOW.ordinal(),
                 usesFixed() && fixed() != null ? fixed() : 0.0,
@@ -382,6 +500,10 @@ public final class BindModel {
                         device.getZ(), trim(plant.scale()), trim(plant.offset()));
             }
             return Component.translatable("source.bwr.panel.plant", plant.key(), device.getX(), device.getY(), device.getZ());
+        }
+        if (source instanceof CcPortSource cc) {
+            return Component.translatable("source.bwr.panel.cc_port", dev.bwr.mod.panel.MachinePorts.format(cc.port()), cc.key(),
+                    trim(cc.scale()), trim(cc.offset()));
         }
         if (source instanceof ComponentSource reference) {
             return Component.translatable("source.bwr.panel.component", referenceLabel(reference));

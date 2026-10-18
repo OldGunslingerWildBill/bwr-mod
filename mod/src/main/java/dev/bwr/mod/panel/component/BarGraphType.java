@@ -16,12 +16,13 @@ public final class BarGraphType extends ComponentType {
     public static final List<Footprint> FOOTPRINTS = List.of(
             Footprint.of(3, 24), Footprint.of(3, 12), Footprint.of(3, 16), Footprint.of(3, 32),
             Footprint.of(24, 3), Footprint.of(12, 3), Footprint.of(16, 3), Footprint.of(32, 3));
-    private static final List<ConfigField> SCHEMA = List.of(
+    private static final List<ConfigField> SCHEMA = java.util.stream.Stream.concat(java.util.stream.Stream.of(
             ConfigField.decimal("Min", "component.bwr.field.min", -BarGraphData.LIMIT, BarGraphData.LIMIT),
             ConfigField.decimal("Max", "component.bwr.field.max", -BarGraphData.LIMIT, BarGraphData.LIMIT),
             ConfigField.decimal("Warn", "component.bwr.field.warn", -BarGraphData.LIMIT, BarGraphData.LIMIT),
             ConfigField.decimal("Alarm", "component.bwr.field.alarm", -BarGraphData.LIMIT, BarGraphData.LIMIT),
-            ConfigField.color("Color", "component.bwr.field.segment_color"));
+            ConfigField.color("Color", "component.bwr.field.segment_color"),
+            Measures.field()), PowerUnitsState.fields().stream()).toList();
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("value"));
 
     BarGraphType() {

@@ -48,6 +48,10 @@ public final class GaugeData extends ComponentData {
     public String variant;
     /** Bar gauge only: the scale preset last chosen ({@link #PRESETS}); a preset fills the range, units and bands in when it is chosen. */
     public String preset = PRESET_CUSTOM;
+    /** What the gauge measures; null is ANY (every signal, as before the setting existed). Saved only when set. */
+    public dev.bwr.mod.signal.Quantity measures;
+    /** The Power units setting; saved only when not the default. */
+    public final PowerUnitsState power = new PowerUnitsState();
 
     /** Data for a gauge of type path {@code type}, with the look a new component of that type starts with. */
     public GaugeData(String type) {
@@ -147,6 +151,8 @@ public final class GaugeData extends ComponentData {
         if (!bar) {
             fields.addAll(PanelStyles.fields(type));
         }
+        fields.add(Measures.field());
+        fields.addAll(PowerUnitsState.fields());
         return List.copyOf(fields);
     }
 
@@ -187,6 +193,8 @@ public final class GaugeData extends ComponentData {
             return;
         }
         PanelStyles.save(tag, style, variant);
+        Measures.save(tag, measures);
+        power.save(tag);
     }
 
     @Override
@@ -212,6 +220,30 @@ public final class GaugeData extends ComponentData {
         }
         style = PanelStyles.loadStyle(type, tag);
         variant = PanelStyles.loadVariant(type, tag, style);
+        measures = Measures.load(tag);
+        power.load(tag);
+    }
+
+    @Override
+    public PowerUnitsState powerState() {
+        return power;
+    }
+
+    @Override
+    public void setUnitsText(String text) {
+        units = ConfigSchema.cleanText(text, MAX_UNITS);
+    }
+
+    @Override
+    public boolean setRange(double newMin, double newMax) {
+        min = Math.max(-LIMIT, Math.min(LIMIT, newMin));
+        max = Math.max(-LIMIT, Math.min(LIMIT, newMax));
+        return true;
+    }
+
+    @Override
+    public dev.bwr.mod.signal.Quantity measures(int inputIndex) {
+        return measures;
     }
 
     static double number(CompoundTag tag, String key, double fallback, double low, double high) {

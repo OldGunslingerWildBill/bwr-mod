@@ -24,6 +24,30 @@ when nothing is there or the chunk is not loaded. It never loads a chunk and nev
   bound and the device also reports `rated_flow` for scaling.
 * A command whose key equals a signal key (for example `open` on a valve) is the writable half of that
   signal; the two lists are separate.
+* Every device also has a `name` TEXT signal: its machine name (the equipment tag set on the Networking screen or with
+  `setName`), empty when it has none. It is not listed in the per-device tables below.
+* Every signal has a **quantity** worked out from its unit and kind (`dev.bwr.mod.signal.Quantity`), the table a gauge's
+  Measures setting uses so a water level gauge can never be wired to a kW signal:
+
+  | Quantity | Units |
+  | --- | --- |
+  | LEVEL | in, m, mB; fraction or % only when the key contains `level` |
+  | PRESSURE | psig, psi, psia, inHg |
+  | TEMPERATURE | degC, degF |
+  | RATE | degC/h |
+  | FLOW | kg/s, gpm, Mlb/hr |
+  | POWER | MW, W, kW, FE/t, FE/s (and a plain FE on a rate key) |
+  | ENERGY | FE, MJ, MWh |
+  | POSITION | fraction open, notch, rod |
+  | PERCENT | %, fraction, % rated, fraction of rated |
+  | SPEED | rpm |
+  | CHEMISTRY | ppm, ppm/min |
+  | COUNT | everything else |
+  | BOOLEAN | the BOOLEAN kind |
+  | TEXT | the TEXT kind |
+
+* Units fixed to say what the key says: `generated_fe_tick`, `delivered_fe_tick` and `buffer_delta_fe_tick` are per-tick
+  rates and now read `FE/t` (they said `FE`).
 
 This file is generated from the adapter sources in `dev.bwr.mod.signal.adapters`; keep it in step when a
 signal is added. Coverage: reactor controller, MSIV, SRV, turbine valves, turbine steam outlet, RPV steam
@@ -566,9 +590,9 @@ Block entity `PowerModuleBlockEntity`; CC peripheral `bwr_hp_turbine / bwr_lp_tu
 | `delivered_mw_1min` | Delivered over 1200 ticks | MW | nonnegative | NUMBER |
 | `delivered_mwh` | Lifetime delivered energy | MWh | nonnegative | NUMBER |
 | `generated_mw_1s` | Generated over 20 ticks | MW | nonnegative | NUMBER |
-| `generated_fe_tick` | Generated last completed tick | FE | nonnegative | NUMBER |
-| `delivered_fe_tick` | Delivered last completed tick | FE | nonnegative | NUMBER |
-| `buffer_delta_fe_tick` | Storage change last completed tick | FE | signed | NUMBER |
+| `generated_fe_tick` | Generated last completed tick | FE/t | nonnegative | NUMBER |
+| `delivered_fe_tick` | Delivered last completed tick | FE/t | nonnegative | NUMBER |
+| `buffer_delta_fe_tick` | Storage change last completed tick | FE/t | signed | NUMBER |
 | `sample_ticks` | Completed samples since load | ticks | 0 to 1200 | NUMBER |
 | `window_ready_1s` | One-second history ready | | 0 to 1 | BOOLEAN |
 | `window_ready_1min` | One-minute history ready | | 0 to 1 | BOOLEAN |
