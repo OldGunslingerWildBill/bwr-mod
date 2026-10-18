@@ -39,6 +39,7 @@ ICONS = {
     "rod_select_matrix": "rod_select_button",
     # The owner's CAD hardware (NEW-HARDWARE-SPEC.md): one model each.
     "bar_gauge": "bar_gauge",
+    "rps_trip": "rps_trip_assembly",
 }
 
 LAMP_LIT = {"white": (0.95, 0.95, 0.85), "red": (0.88, 0.12, 0.12)}

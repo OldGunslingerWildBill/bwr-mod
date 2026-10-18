@@ -75,6 +75,8 @@ public final class ComponentModels {
         // the owner's CAD hardware: one fixed model each, the vertical edgewise strip as the fallback look of the bar gauge
         register(ComponentTypes.BAR_GAUGE.id(), new StyledComponentModel(new EdgewiseGaugeModel(true),
                 BakedComponentModel.Kind.EDGEWISE, ComponentTypes.BAR_GAUGE.id().getPath(), "bar_gauge"));
+        register(ComponentTypes.RPS_TRIP.id(), new StyledComponentModel(new RpsTripModel(), BakedComponentModel.Kind.RPS_TRIP,
+                ComponentTypes.RPS_TRIP.id().getPath(), "rps_trip_assembly"));
     }
 
     /**

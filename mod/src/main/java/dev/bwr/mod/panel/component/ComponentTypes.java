@@ -51,6 +51,7 @@ public final class ComponentTypes {
     public static final ComponentType PAPERLESS_RECORDER = register(new PaperlessRecorderType());
     // -- the owner's CAD hardware (NEW-HARDWARE-SPEC.md) --
     public static final ComponentType BAR_GAUGE = register(new BarGaugeType());
+    public static final ComponentType RPS_TRIP = register(new RpsTripType());
     // ----------------------------------------------------------------------------
 
     /** Forces class initialisation. */

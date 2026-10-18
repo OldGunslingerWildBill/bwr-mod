@@ -153,6 +153,10 @@ public final class BwrItems {
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> BAR_GAUGE =
             ITEMS.register("bar_gauge", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.BAR_GAUGE.id()));
+    /** The owner's two guarded RPS trip buttons, A and B (NEW-HARDWARE-SPEC.md). */
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> RPS_TRIP =
+            ITEMS.register("rps_trip", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.RPS_TRIP.id()));
     public static final DeferredItem<BlockItem> CONTROL_ROD_DRIVE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_ROD_DRIVE);
     public static final DeferredItem<BlockItem> CORE_SPRAY_SPARGER =
@@ -367,6 +371,7 @@ public final class BwrItems {
                         output.accept(FULL_CORE_DISPLAY.get());
                         output.accept(ROD_SELECT_MATRIX.get());
                         output.accept(BAR_GAUGE.get());
+                        output.accept(RPS_TRIP.get());
                     })
                     .build());
 }
