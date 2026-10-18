@@ -301,6 +301,75 @@ public final class BarGaugeTests {
         helper.succeed();
     }
 
+    /**
+     * The look of the owner's simulator (references/gauges/owner-bar-gauge-target-look.png): the numbers on the left,
+     * the ticks and bands right of them up against a narrow black channel a little right of the middle, the grey
+     * pointer inside the channel pointing left at the scale, the units right of the channel, and the label on a tag
+     * plate above the case. (The first version had it the other way round: a wide curved channel filling the face, the
+     * pointer on its left edge pointing right, and the label under the gauge.)
+     */
+    @GameTest(template = "empty")
+    public static void barGaugeIsLaidOutLikeTheOwnersSimulator(GameTestHelper helper) {
+        BakedPanelModel model = HardwareStage.shipped("bar_gauge");
+        BakedPanelModel.Part needle = model.part("needle");
+        float tipX = Float.MAX_VALUE;
+        float tipY = 0.0f;
+        float low = Float.MAX_VALUE;
+        float high = -Float.MAX_VALUE;
+        float right = -Float.MAX_VALUE;
+        for (int f = 0; f < needle.faceCount; f++) {
+            for (int c = 0; c < 4; c++) {
+                float x = needle.corner(f, c, 0);
+                float y = needle.corner(f, c, 1);
+                if (x < tipX) {
+                    tipX = x;
+                    tipY = y;
+                }
+                right = Math.max(right, x);
+                low = Math.min(low, y);
+                high = Math.max(high, y);
+            }
+        }
+        helper.assertTrue(tipX >= -1.0e-4f && right <= model.footprintW + 1.0e-4f, "the pointer lies inside the channel: x " + tipX + ".." + right);
+        helper.assertTrue(Math.abs(tipY - (low + high) / 2.0f) < 0.02f && right - tipX > 0.5f * model.footprintW,
+                "the pointer's tip is its leftmost corner, on its middle row: it points left at the scale");
+        for (Footprint footprint : ComponentTypes.BAR_GAUGE.footprints()) {
+            for (float aspect : new float[] {1.0f, 1.41f}) {
+                GaugeData data = bar();
+                data.apply(GaugeData.PRESET_WIDE);
+                BarGaugeFace face = new BarGaugeFace(model, data, footprint.w(), footprint.h(), aspect);
+                String where = footprint + " aspect " + aspect + ": ";
+                float channelLeft = face.place.x(0.0f);
+                float channelRight = face.place.x(model.footprintW);
+                float middle = (channelLeft + channelRight) / 2.0f;
+                helper.assertTrue(channelRight - channelLeft <= 0.2f * footprint.w(), where + "a narrow channel: " + (channelRight - channelLeft));
+                helper.assertTrue(middle > 0.5f * footprint.w() && middle < 0.7f * footprint.w(), where + "a little right of the middle: " + middle);
+                Recorder recorder = new Recorder();
+                face.emitStatic(recorder);
+                float scaleLeft = Float.MAX_VALUE;
+                for (int colour : new int[] {BarGaugeFace.INK, GaugeData.BAND_RED}) {
+                    for (float[] q : recorder.of(colour)) {
+                        float minX = Math.min(Math.min(q[0], q[3]), Math.min(q[6], q[9]));
+                        float maxX = Math.max(Math.max(q[0], q[3]), Math.max(q[6], q[9]));
+                        helper.assertTrue(maxX <= channelLeft + 1.0e-3f, where + "ticks and bands end at the channel's left edge: " + maxX);
+                        scaleLeft = Math.min(scaleLeft, minX);
+                    }
+                }
+                for (Legends.Item item : face.legends("BG-1")) {
+                    if (item.align() == BakedPanelModel.Align.RIGHT) {
+                        helper.assertTrue(item.x() <= scaleLeft, where + "number " + item.text() + " is left of the ticks");
+                    } else if (item.text().length() == 1) {
+                        helper.assertTrue(item.x() > channelRight, where + "unit letter " + item.text() + " is right of the channel");
+                    } else {
+                        helper.assertTrue(item.text().equals("BG-1") && item.y() < face.row(1.0) && item.y() > 0.0f,
+                                where + "the label is on the tag plate above the gauge: row " + item.y());
+                    }
+                }
+            }
+        }
+        helper.succeed();
+    }
+
     private static List<String> numerals(BarGaugeFace face) {
         List<String> out = new ArrayList<>();
         for (Legends.Item item : face.legends("BG-1")) {
