@@ -149,6 +149,10 @@ public final class BwrItems {
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> ROD_SELECT_MATRIX =
             ITEMS.register("rod_select_matrix", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.ROD_SELECT_MATRIX.id()));
+    /** The owner's vertical bar gauge (NEW-HARDWARE-SPEC.md). */
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> BAR_GAUGE =
+            ITEMS.register("bar_gauge", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.BAR_GAUGE.id()));
     public static final DeferredItem<BlockItem> CONTROL_ROD_DRIVE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_ROD_DRIVE);
     public static final DeferredItem<BlockItem> CORE_SPRAY_SPARGER =
@@ -362,6 +366,7 @@ public final class BwrItems {
                         output.accept(MIMIC_SYMBOL.get());
                         output.accept(FULL_CORE_DISPLAY.get());
                         output.accept(ROD_SELECT_MATRIX.get());
+                        output.accept(BAR_GAUGE.get());
                     })
                     .build());
 }

@@ -66,6 +66,13 @@ def import_obj(path):
             x, y, z = o.matrix_world @ v.co
             v.co = (x * CM, -y * CM, z * CM)
         o.matrix_world.identity()
+        # The axis swap above is a reflection, which turns every face inside out (the exported normals pointed into
+        # the panel and the game lit the models from behind): turn them back to face outward.
+        bm = bmesh.new()
+        bm.from_mesh(mesh)
+        bmesh.ops.reverse_faces(bm, faces=bm.faces[:])
+        bm.to_mesh(mesh)
+        bm.free()
         for slot in o.material_slots:
             if slot.material is not None:
                 hex_rgb = colour_for(slot.material.name)

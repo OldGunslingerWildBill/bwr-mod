@@ -72,6 +72,9 @@ public final class ComponentModels {
         register(ComponentTypes.FULL_CORE_DISPLAY.id(), new FullCoreDisplayModel());
         register(ComponentTypes.ROD_SELECT_MATRIX.id(), new RodSelectMatrixModel());
         register(ComponentTypes.PAPERLESS_RECORDER.id(), new RecorderModel());
+        // the owner's CAD hardware: one fixed model each, the vertical edgewise strip as the fallback look of the bar gauge
+        register(ComponentTypes.BAR_GAUGE.id(), new StyledComponentModel(new EdgewiseGaugeModel(true),
+                BakedComponentModel.Kind.EDGEWISE, ComponentTypes.BAR_GAUGE.id().getPath(), "bar_gauge"));
     }
 
     /**

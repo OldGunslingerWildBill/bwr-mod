@@ -49,6 +49,8 @@ public final class ComponentTypes {
     public static final ComponentType ROD_SELECT_MATRIX = register(new RodSelectMatrixType());
     // -- recorders --
     public static final ComponentType PAPERLESS_RECORDER = register(new PaperlessRecorderType());
+    // -- the owner's CAD hardware (NEW-HARDWARE-SPEC.md) --
+    public static final ComponentType BAR_GAUGE = register(new BarGaugeType());
     // ----------------------------------------------------------------------------
 
     /** Forces class initialisation. */

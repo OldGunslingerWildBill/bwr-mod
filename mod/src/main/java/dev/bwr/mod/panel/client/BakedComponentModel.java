@@ -58,13 +58,19 @@ import java.util.List;
 final class BakedComponentModel {
     /** Which component type is being drawn: decides how state becomes pose. */
     enum Kind {
-        CONTROL_SWITCH, ROTARY_SELECTOR, KEY_SWITCH, PUSHBUTTON, LAMP, SETPOINT_KNOB, DIAL_GAUGE, EDGEWISE
+        CONTROL_SWITCH, ROTARY_SELECTOR, KEY_SWITCH, PUSHBUTTON, LAMP, SETPOINT_KNOB, DIAL_GAUGE, EDGEWISE,
+        /** The RPS trip assembly: two caps, {@code cap_a} and {@code cap_b}, each slides while its output is 1. */
+        RPS_TRIP,
+        /** The push-to-turn switch: one knob that turns to AUTO or ARM and slides in while pushed. */
+        PUSH_TURN
     }
 
     /** Brightness of an unlit lamp lens (the classic models use the same factor). */
     static final float LAMP_OFF = 0.22f;
     /** Name of the optional demand-marker part of an edgewise meter. */
     static final String DEMAND = "demand";
+    /** Name of the second cap of an RPS trip assembly (the first, {@code cap_a}, follows the common slide). */
+    static final String CAP_B = "cap_b";
     /** Name of a tumbler lock's plug: turns 0 locked, 90 degrees unlocked (the key switch is on). */
     static final String PLUG = "plug";
     static final float PLUG_UNLOCKED_DEG = 90.0f;
@@ -73,6 +79,10 @@ final class BakedComponentModel {
 
     private final Kind kind;
     private final Placement place;
+    /** The printed face of a bar gauge (scale, bands, units, caption), or null for every other model. */
+    private final BarGaugeFace face;
+    /** The colour bands laid on a baked switchboard meter, or null when it has none in use. */
+    private final BandOverlay bands;
     private final BakedPanelModel.Part[] staticParts;
     private final int[] staticBase;
     private final BakedPanelModel.Part[] dynamicParts;
@@ -91,6 +101,7 @@ final class BakedComponentModel {
     // The pose of the moving parts this frame, set by updatePose.
     private float poseAngle;
     private float poseSlide;
+    private float poseSlideB;
     private float poseDemand = Float.NaN;
     private boolean poseLit;
     private int poseFlagRgb = FlagState.NEUTRAL;
@@ -100,8 +111,16 @@ final class BakedComponentModel {
         int needleRgb = resolved.needleRgb();
         this.kind = kind;
         this.continuous = kind == Kind.DIAL_GAUGE || kind == Kind.EDGEWISE;
-        this.place = Placement.fit(model, component.w(), component.h(), rowAspect);
         ComponentData data = component.data();
+        if (data instanceof GaugeData gauge && gauge.isBarGauge()) {
+            this.face = new BarGaugeFace(model, gauge, component.w(), component.h(), rowAspect);
+            this.place = face.place;
+        } else {
+            this.face = null;
+            this.place = Placement.fit(model, component.w(), component.h(), rowAspect);
+        }
+        this.bands = data instanceof GaugeData gauge && face == null && (kind == Kind.DIAL_GAUGE || kind == Kind.EDGEWISE)
+                ? BandOverlay.of(model, place, gauge, kind == Kind.DIAL_GAUGE) : null;
         this.legendCapRgb = Recolour.configuredColour(data);
         List<BakedPanelModel.Part> statics = new ArrayList<>();
         List<BakedPanelModel.Part> dynamics = new ArrayList<>();
@@ -122,7 +141,11 @@ final class BakedComponentModel {
         this.glassParts = glass.toArray(new BakedPanelModel.Part[0]);
         this.staticBase = bases(staticParts, data, needleRgb);
         this.dynamicBase = bases(dynamicParts, data, needleRgb);
-        this.items = Legends.items(model, place, type, component, resolved.key()).toArray(new Legends.Item[0]);
+        List<Legends.Item> legends = Legends.items(model, place, type, component, resolved.key());
+        if (face != null) {
+            legends.addAll(face.legends(component.label()));
+        }
+        this.items = legends.toArray(new Legends.Item[0]);
         this.itemWidth = new float[items.length];
         this.detents = switch (kind) {
             case ROTARY_SELECTOR -> Detents.angles(model, ((RotarySelectorData) data).positions);
@@ -131,6 +154,18 @@ final class BakedComponentModel {
                     : new float[] {Poses.keyAngle(false), Poses.keyAngle(true)};
             default -> new float[1];
         };
+    }
+
+    /**
+     * The model that draws a bar gauge, an RPS trip assembly or a push-to-turn switch: one fixed model (they have no
+     * style table row, so no styles and variants), or null when the model file is not loaded and the classic look is
+     * drawn instead.
+     */
+    static BakedComponentModel createFixed(PanelComponent component, Kind kind, String type, String modelId, float rowAspect) {
+        BakedPanelModel model = PanelModels.get(modelId);
+        return model == null ? null
+                : new BakedComponentModel(model, new PanelStyles.Resolved(modelId, PanelStyles.NO_COLOUR, null), component, kind,
+                        type, rowAspect);
     }
 
     /**
@@ -187,8 +222,14 @@ final class BakedComponentModel {
     // ---- drawing
 
     void buildStatic(QuadSink sink) {
+        if (face != null) {
+            face.emitStatic(sink);
+        }
         for (int i = 0; i < staticParts.length; i++) {
             PartDraw.emit(sink, staticParts[i], place, 0.0f, 0.0f, staticBase[i], 1.0f, false, scratch);
+        }
+        if (bands != null) {
+            bands.emit(sink);
         }
     }
 
@@ -208,6 +249,7 @@ final class BakedComponentModel {
     void updatePose(PanelRenderContext context, PanelComponent component) {
         float angle = 0.0f;
         float slide = 0.0f;
+        float slideB = 0.0f;
         float demand = Float.NaN;
         boolean lit = false;
         int flagRgb = FlagState.NEUTRAL;
@@ -237,6 +279,14 @@ final class BakedComponentModel {
                         && !(LampData.FAST.equals(data.flash) && !context.blinkOn(4.0f));
             }
             case SETPOINT_KNOB -> angle = Poses.knobAngle(component.output(0));
+            case RPS_TRIP -> {
+                slide = Poses.capSlide(component.output(0) > 0.5);
+                slideB = Poses.capSlide(component.output(1) > 0.5);
+            }
+            case PUSH_TURN -> {
+                angle = Poses.detentAngle(component.output(0) > 0.5 ? 1 : 0, 2);
+                slide = Poses.capSlide(component.output(1) > 0.5);
+            }
             case DIAL_GAUGE -> {
                 GaugeData data = (GaugeData) component.data();
                 float position = GaugeScratch.of(component).follow((float) data.fraction(component.input(0)),
@@ -258,6 +308,7 @@ final class BakedComponentModel {
         }
         poseAngle = angle;
         poseSlide = slide;
+        poseSlideB = slideB;
         poseDemand = demand;
         poseLit = lit;
         poseFlagRgb = flagRgb;
@@ -273,6 +324,7 @@ final class BakedComponentModel {
         }
         long key = Float.floatToIntBits(poseAngle);
         key = key * 31 + Float.floatToIntBits(poseSlide);
+        key = key * 31 + Float.floatToIntBits(poseSlideB);
         key = key * 31 + (poseLit ? 1 : 0);
         return key * 31 + poseFlagRgb;
     }
@@ -295,7 +347,7 @@ final class BakedComponentModel {
     private void emitMoving(QuadSink sink) {
         for (int i = 0; i < dynamicParts.length; i++) {
             BakedPanelModel.Part part = dynamicParts[i];
-            float partSlide = part.hasTravel ? poseSlide : 0.0f;
+            float partSlide = part.hasTravel ? (kind == Kind.RPS_TRIP && part.name.equals(CAP_B) ? poseSlideB : poseSlide) : 0.0f;
             if (part.name.equals(DEMAND)) {
                 if (Float.isNaN(poseDemand)) {
                     continue; // no demand signal: the marker is not shown
