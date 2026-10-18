@@ -441,13 +441,15 @@ def build_bar_gauge():
     across the whole face with the pointer on its left edge pointing right, the picture (the look the owner wants) a
     narrow flat black channel right of the scale with a grey triangular pointer inside it, pointing left at the ticks.
 
-    Inches, authored directly: the channel is 0.5 wide, 8 long and stands 0.15 off the panel; the pointer is a low
-    two-faceted triangle on the channel (light upper facet, darker lower one, as in the picture), modelled at the scale
-    minimum 0.3 above the channel foot and travelling 7.4 up to the maximum. The case, the white face, the caps, the
-    scale, the units and the tag plate are printed around this model by the game (BarGaugeFace), which reads the
-    pointer's travel and the channel's height from this file."""
+    Inches, authored directly: the channel is 0.6 wide, 8 long and stands 0.15 off the panel (in the picture it is
+    about a fifteenth of the face's height); the pointer is a low two-faceted triangle on the channel (light upper
+    facet, darker lower one, as in the picture) spanning most of its width, modelled at the scale minimum 0.3 above
+    the channel foot and travelling 7.4 up to the maximum. The case, the white face, the caps, the scale, the units and
+    the tag plate are printed around this model by the game (BarGaugeFace), which reads the pointer's travel and the
+    channel's height from this file."""
     px.clear_scene()
-    w, h, top, end = 0.5, 8.0, 0.15, 0.3
+    w, h, top, end = 0.6, 8.0, 0.15, 0.3
+    tip_x, base_x, half = 0.08, 0.54, 0.225
     frame = Frame(0.0, 0.0, w, h, unit=1.0, margin=0.0)
     channel = Solid()
     prism(channel, [(0.0, -h), (w, -h), (w, 0.0), (0.0, 0.0)], 0.0, top, "101010", "101010")
@@ -455,12 +457,13 @@ def build_bar_gauge():
     pointer = Solid()
     yc = -(h - end)
     edge, ridge = top + 0.012, top + 0.04
-    tip, upper, lower, mid = (0.07, yc, edge), (0.45, yc + 0.2, edge), (0.45, yc - 0.2, edge), (0.45, yc, ridge)
+    tip, upper = (tip_x, yc, edge), (base_x, yc + half, edge)
+    lower, mid = (base_x, yc - half, edge), (base_x, yc, ridge)
     pointer.face([tip, mid, upper], "D0D3D6", (0, 0.3, 1))
     pointer.face([tip, lower, mid], "9A9EA2", (0, -0.3, 1))
-    pointer.face([(0.45, yc + 0.2, top), (0.45, yc - 0.2, top), lower, mid, upper], "8E9296", (1, 0, 0))
-    pointer.face([(0.07, yc, top), (0.45, yc + 0.2, top), upper, tip], "B8BCC0", (-0.2, 0.38, 0))
-    pointer.face([(0.07, yc, top), tip, lower, (0.45, yc - 0.2, top)], "8E9296", (-0.2, -0.38, 0))
+    pointer.face([(base_x, yc + half, top), (base_x, yc - half, top), lower, mid, upper], "8E9296", (1, 0, 0))
+    pointer.face([(tip_x, yc, top), (base_x, yc + half, top), upper, tip], "B8BCC0", (-half, base_x - tip_x, 0))
+    pointer.face([(tip_x, yc, top), tip, lower, (base_x, yc - half, top)], "8E9296", (-half, tip_x - base_x, 0))
     px.tag(make_object("pointer", pointer, frame), part="needle", role="needle", travel=h - 2 * end, axis=(0, 1, 0))
     return "bar_gauge", w, h, "Owner's simulator look (references/gauges/owner-bar-gauge-target-look.png): channel and pointer", 400
 

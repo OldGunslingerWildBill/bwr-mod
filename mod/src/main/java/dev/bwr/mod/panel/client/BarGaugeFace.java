@@ -213,9 +213,10 @@ public final class BarGaugeFace {
         if (!units.isEmpty()) {
             float middle = (row(0.0) + row(1.0)) / 2.0f;
             float scaleLength = Math.abs(row(0.0) - row(1.0)) * rowAspect;
-            float pitch = Math.min(cap * 1.65f, scaleLength / (units.length() + 1));
+            // As in the picture: the letters a little smaller than the numbers, about 1.7 letter heights apart.
+            float pitch = Math.min(cap * 1.35f, scaleLength / (units.length() + 1));
             float room = w - rail - channelRight - 0.3f;
-            float unitCap = Math.min(cap, Math.min(pitch / 1.45f, room * 7.0f / 5.0f));
+            float unitCap = Math.min(0.8f * cap, Math.min(pitch / 1.45f, room * 7.0f / 5.0f));
             float x = (channelRight + w - rail) / 2.0f;
             float y = middle - pitch / rowAspect * (units.length() - 1) / 2.0f;
             for (int i = 0; i < units.length(); i++) {
