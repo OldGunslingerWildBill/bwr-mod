@@ -275,7 +275,7 @@ def build_rps_trip():
     for side, dx in (("a", -3.0), ("b", 3.0)):
         x = ox + dx * CM
         # Above the button on the plain top band: below it the CAD has small raised plates with its own engraved text.
-        px.label("legend_" + side, x, -0.42, surface_z(parts["Body"], x, -0.42), 0.18)
+        px.label("legend_" + side, x, -0.3, surface_z(parts["Body"], x, -0.3), 0.18)
     return "rps_trip_assembly", w, h, "Owner's CAD model RPS-Trip-Assembly.obj (Fusion)", 1100
 
 
