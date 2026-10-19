@@ -55,24 +55,25 @@ import java.util.List;
  */
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
 public final class FurnitureClientCheck {
-    private static final int X0 = 5400;
-    private static final int Z0 = 5400;
+    private static final int X0 = 5393;   // the room, walls included, fills one chunk (5392..5407) so one light section answers
+    private static final int Z0 = 5393;
     private static final int FLOOR = 119;
     private static final int Y = FLOOR + 1;
 
     private static final String[] NAMES = {"room-overview-ne", "room-overview-sw", "desks-front", "desks-close",
-            "cabinets-front", "wall-displays", "back-to-back-pair"};
+            "cabinets-front", "wall-displays", "back-to-back-pair", "item-icons"};
     /** Eye position then target, in room coordinates (x, y above the floor, z): the camera stands where the eye is. */
     private static final double[][] VIEWS = {
-            {14.5, 4.6, 0.6, 3.0, 1.9, 7.0},
-            {1.0, 4.6, 10.8, 11.0, 2.2, 2.0},
-            {9.6, 2.5, 7.8, 3.6, 0.9, 3.5},
+            {12.2, 3.8, 3.4, 2.0, 1.4, 7.0},
+            {1.0, 3.7, 10.8, 9.0, 1.9, 2.0},
+            {8.5, 2.5, 6.8, 3.6, 0.9, 3.5},
             {6.2, 2.0, 5.0, 3.5, 1.0, 3.2},
-            {10.5, 2.6, 3.8, 15.5, 2.1, 3.4},
-            {8.0, 3.2, 6.6, 8.5, 3.6, 0.5},
-            {13.4, 2.4, 11.2, 10.0, 1.4, 8.6},
+            {8.5, 2.6, 3.8, 13.5, 2.1, 3.4},
+            {8.0, 3.0, 6.6, 8.5, 3.0, 0.5},
+            {12.4, 2.4, 11.2, 10.0, 1.4, 8.6},
+            {8.5, 2.6, 3.8, 13.5, 2.1, 3.4},
     };
-    private static final int[] FOV = {75, 75, 70, 60, 60, 70, 65};
+    private static final int[] FOV = {75, 75, 70, 60, 60, 70, 65, 60};
 
     private static boolean started;
     private static boolean requested;
@@ -107,6 +108,7 @@ public final class FurnitureClientCheck {
             mc.options.cloudStatus().set(CloudStatus.OFF);
             mc.options.renderDistance().set(8);
             mc.options.guiScale().set(2);
+            mc.options.gamma().set(1.0);
             mc.createWorldOpenFlows().createFreshLevel("bwr-furniture-check-" + System.currentTimeMillis(),
                     new LevelSettings("Furniture check", GameType.CREATIVE, false, Difficulty.PEACEFUL, true,
                             new GameRules(), WorldDataConfiguration.DEFAULT),
@@ -173,11 +175,27 @@ public final class FurnitureClientCheck {
         mc.player.yRotO = wantedYaw;
         mc.player.xRotO = wantedPitch;
         // the first picture waits longer: the room's chunks are meshed while the player arrives
-        if (++shown < (stage == 0 ? 160 : 90)) {
+        shown++;
+        if (shown == 40 && NAMES[stage].equals("item-icons")) {
+            mc.setScreen(new IconScreen());
+        }
+        if (shown < (stage == 0 ? 220 : 90)) {
             return;
         }
         if (stage == 0) {
             verifyModels(mc);
+        }
+        if (stage == 0) {
+            var server = mc.getSingleplayerServer();
+            server.execute(() -> LogUtils.getLogger().info("FURNITURE CLIENT CHECK server light: block {} sky {}",
+                    server.overworld().getBrightness(net.minecraft.world.level.LightLayer.BLOCK, at(8, 1, 5)),
+                    server.overworld().getBrightness(net.minecraft.world.level.LightLayer.SKY, at(8, 1, 5))));
+        }
+        {
+            BlockPos probe = at(8, 1, 5);
+            LogUtils.getLogger().info("FURNITURE CLIENT CHECK light at {}: block {} sky {} (stage {})", probe,
+                    mc.level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, probe),
+                    mc.level.getBrightness(net.minecraft.world.level.LightLayer.SKY, probe), NAMES[stage]);
         }
         try {
             var directory = mc.gameDirectory.toPath().resolve("furniture-check");
@@ -196,6 +214,38 @@ public final class FurnitureClientCheck {
         if (++stage == NAMES.length) {
             LogUtils.getLogger().info("FURNITURE CLIENT CHECK PASS: {} pictures, every furniture state has a baked model with its textures", NAMES.length);
             mc.stop();
+        }
+    }
+
+    /** The furniture items as the inventory draws them, at six times the size. */
+    private static final class IconScreen extends net.minecraft.client.gui.screens.Screen {
+        IconScreen() {
+            super(net.minecraft.network.chat.Component.empty());
+        }
+
+        @Override
+        public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+            graphics.fill(0, 0, width, height, 0xFF202830);
+            Block[] blocks = {BwrBlocks.RELAY_CABINET.get(), BwrBlocks.RELAY_CABINET_PLAIN.get(), BwrBlocks.OPERATOR_DESK.get(),
+                    BwrBlocks.OPERATOR_DESK_ROUND.get(), BwrBlocks.OPERATOR_DESK_CORNER.get(), BwrBlocks.SUPERVISOR_DESK.get(),
+                    BwrBlocks.MIMIC_BAND_CREAM.get(), BwrBlocks.MIMIC_BAND_BLACK.get(), BwrBlocks.WALL_DISPLAY.get(),
+                    BwrBlocks.WALL_DISPLAY_WIDE.get(), BwrBlocks.CONTROL_STAND.get(), BwrBlocks.CONTROL_PANEL_BENCHBOARD.get()};
+            float scale = 5.0f;
+            int cell = 16 * (int) scale + 24;
+            for (int i = 0; i < blocks.length; i++) {
+                int col = i % 4;
+                int row = i / 4;
+                graphics.pose().pushPose();
+                graphics.pose().translate(width / 2.0f - 2 * cell + col * cell + 12, 20 + row * (cell - 6), 0);
+                graphics.pose().scale(scale, scale, 1.0f);
+                graphics.renderItem(new ItemStack(blocks[i]), 0, 0);
+                graphics.pose().popPose();
+            }
+        }
+
+        @Override
+        public boolean isPauseScreen() {
+            return false;
         }
     }
 
@@ -259,7 +309,7 @@ public final class FurnitureClientCheck {
     }
 
     private static void set(ServerLevel level, BlockPos pos, BlockState state) {
-        level.setBlock(pos, state, 2);
+        level.setBlock(pos, state, 3);
     }
 
     private static void furnish(ServerLevel level, BlockPos pos, Block block, Direction facing, DeskMonitor monitor) {
@@ -272,23 +322,27 @@ public final class FurnitureClientCheck {
     }
 
     private static void build(ServerLevel level) {
-        for (int cx = (X0 - 16) >> 4; cx <= (X0 + 32) >> 4; cx++) {
-            for (int cz = (Z0 - 16) >> 4; cz <= (Z0 + 32) >> 4; cz++) {
+        for (int cx = (X0 - 24) >> 4; cx <= (X0 + 24) >> 4; cx++) {
+            for (int cz = (Z0 - 24) >> 4; cz <= (Z0 + 24) >> 4; cz++) {
                 level.setChunkForced(cx, cz, true);
                 level.getChunk(cx, cz);
             }
         }
-        // shell: floor, walls, ceiling with light strips; interior 16 wide (x 0..15), 12 deep (z 0..11), 6 high
-        for (int x = -1; x <= 16; x++) {
+        // shell: floor, walls, ceiling with a grid of flush lanterns and hidden light blocks under them; interior 14 wide (x 0..13),
+        // 12 deep (z 0..11) and 5 high
+        for (int x = -1; x <= 14; x++) {
             for (int z = -1; z <= 12; z++) {
                 set(level, new BlockPos(X0 + x, FLOOR, Z0 + z), Blocks.GRAY_CONCRETE.defaultBlockState());
-                boolean light = (x % 4 == 2) && z >= 1 && z <= 10 && (z % 3 == 1);
-                set(level, new BlockPos(X0 + x, Y + 6, Z0 + z),
-                        (light ? Blocks.SEA_LANTERN : Blocks.LIGHT_GRAY_CONCRETE).defaultBlockState());
-                for (int y = 0; y < 6; y++) {
-                    boolean wall = x == -1 || x == 16 || z == -1 || z == 12;
-                    set(level, new BlockPos(X0 + x, Y + y, Z0 + z),
-                            (wall ? Blocks.LIGHT_GRAY_CONCRETE : Blocks.AIR).defaultBlockState());
+                boolean lit = x >= 1 && x <= 13 && z >= 1 && z <= 10 && x % 3 == 1 && z % 3 == 1;
+                set(level, new BlockPos(X0 + x, Y + 5, Z0 + z),
+                        (lit ? Blocks.SEA_LANTERN : Blocks.LIGHT_GRAY_CONCRETE).defaultBlockState());
+                for (int y = 0; y < 5; y++) {
+                    boolean wall = x == -1 || x == 14 || z == -1 || z == 12;
+                    BlockState state = wall ? Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState() : Blocks.AIR.defaultBlockState();
+                    if (lit && y == 3) {
+                        state = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 15);
+                    }
+                    set(level, new BlockPos(X0 + x, Y + y, Z0 + z), state);
                 }
             }
         }
@@ -323,7 +377,7 @@ public final class FurnitureClientCheck {
         level.setBlock(at(7, 0, 4), level.getBlockState(at(7, 0, 4)).setValue(DeskBase.MONITOR, DeskMonitor.CRT), 3);
         // relay cabinets along the east wall, fronts to the room
         for (int z = 1; z <= 7; z++) {
-            furnish(level, at(15, 0, z), BwrBlocks.RELAY_CABINET.get(), Direction.WEST, null);
+            furnish(level, at(13, 0, z), BwrBlocks.RELAY_CABINET.get(), Direction.WEST, null);
         }
         // two rows of plain-back cabinets standing back to back, a two block aisle in front of the second row
         for (int x = 9; x <= 11; x++) {
@@ -331,16 +385,25 @@ public final class FurnitureClientCheck {
             furnish(level, at(x, 0, 9), BwrBlocks.RELAY_CABINET_PLAIN.get(), Direction.SOUTH, null);
         }
         // one standard cabinet in the open, to show its service door at the back
-        furnish(level, at(13, 0, 9), BwrBlocks.RELAY_CABINET.get(), Direction.NORTH, null);
+        furnish(level, at(12, 0, 9), BwrBlocks.RELAY_CABINET.get(), Direction.NORTH, null);
         // two control stands in front of the cream mimic wall
         furnish(level, at(2, 0, 9), BwrBlocks.CONTROL_STAND.get(), Direction.EAST, null);
         furnish(level, at(2, 0, 10), BwrBlocks.CONTROL_STAND.get(), Direction.EAST, null);
         // north wall: a cream mimic band, a 2 x 2 and a 3 x 2 display above it
-        for (int x = 4; x <= 13; x++) {
+        for (int x = 4; x <= 12; x++) {
             furnish(level, at(x, 1, 0), BwrBlocks.MIMIC_BAND_CREAM.get(), Direction.SOUTH, null);
         }
         furnish(level, at(7, 2, 0), BwrBlocks.WALL_DISPLAY.get(), Direction.SOUTH, null);
         furnish(level, at(12, 2, 0), BwrBlocks.WALL_DISPLAY_WIDE.get(), Direction.SOUTH, null);
+        // blocks set in one go inside chunks that have only just loaded: ask the light engine to look at every one again
+        var lights = level.getChunkSource().getLightEngine();
+        for (int x = -1; x <= 14; x++) {
+            for (int z = -1; z <= 12; z++) {
+                for (int y = -1; y <= 6; y++) {
+                    lights.checkBlock(new BlockPos(X0 + x, Y + y, Z0 + z));
+                }
+            }
+        }
     }
 
     // ---- a few components, so the existing board reads as a board and not as bare paint
@@ -370,8 +433,8 @@ public final class FurnitureClientCheck {
                 put(level, bench, ComponentTypes.PUSHBUTTON, 0, 4, 8, 8, ge, "flush", 0);
                 put(level, bench, ComponentTypes.PUSHBUTTON, 8, 4, 8, 8, ge, "mushroom", 0);
             } else {
-                for (int k = 0; k < 4; k++) {
-                    put(level, bench, ComponentTypes.LAMP, 2 + k * 4, 6, 4, 4, ge, k % 2 == 0 ? "round" : "square", k == 2 ? 0 : 1);
+                for (int k = 0; k < 3; k++) {
+                    put(level, bench, ComponentTypes.LAMP, 1 + k * 5, 6, 4, 4, ge, k % 2 == 0 ? "round" : "square", k == 1 ? 0 : 1);
                 }
             }
         }
