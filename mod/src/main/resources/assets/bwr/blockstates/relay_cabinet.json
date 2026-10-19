@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=north,half=lower": {
+      "model": "bwr:block/furniture/cabinet_lower"
+    },
+    "facing=north,half=upper": {
+      "model": "bwr:block/furniture/cabinet_upper"
+    },
+    "facing=east,half=lower": {
+      "model": "bwr:block/furniture/cabinet_lower",
+      "y": 90
+    },
+    "facing=east,half=upper": {
+      "model": "bwr:block/furniture/cabinet_upper",
+      "y": 90
+    },
+    "facing=south,half=lower": {
+      "model": "bwr:block/furniture/cabinet_lower",
+      "y": 180
+    },
+    "facing=south,half=upper": {
+      "model": "bwr:block/furniture/cabinet_upper",
+      "y": 180
+    },
+    "facing=west,half=lower": {
+      "model": "bwr:block/furniture/cabinet_lower",
+      "y": 270
+    },
+    "facing=west,half=upper": {
+      "model": "bwr:block/furniture/cabinet_upper",
+      "y": 270
+    }
+  }
+}

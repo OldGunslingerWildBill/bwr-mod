@@ -1,0 +1,117 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_corner"
+      }
+    },
+    {
+      "when": {
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_corner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_corner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_corner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_corner_flat"
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_corner_flat",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_corner_flat",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_corner_flat",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_corner_crt"
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_corner_crt",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_corner_crt",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_corner_crt",
+        "y": 270
+      }
+    }
+  ]
+}

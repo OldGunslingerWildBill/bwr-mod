@@ -1,0 +1,254 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "mirrored": "false",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round"
+      }
+    },
+    {
+      "when": {
+        "mirrored": "false",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "mirrored": "false",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "mirrored": "false",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "mirrored": "true",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_mirrored"
+      }
+    },
+    {
+      "when": {
+        "mirrored": "true",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_mirrored",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "mirrored": "true",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_mirrored",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "mirrored": "true",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_mirrored",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "mirrored": "false",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_flat"
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "mirrored": "false",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_flat",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "mirrored": "false",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_flat",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "mirrored": "false",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_flat",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "mirrored": "false",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_crt"
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "mirrored": "false",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_crt",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "mirrored": "false",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_crt",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "mirrored": "false",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_crt",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "mirrored": "true",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_flat_mirrored"
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "mirrored": "true",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_flat_mirrored",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "mirrored": "true",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_flat_mirrored",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "mirrored": "true",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_flat_mirrored",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "mirrored": "true",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_crt_mirrored"
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "mirrored": "true",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_crt_mirrored",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "mirrored": "true",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_crt_mirrored",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "mirrored": "true",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_round_crt_mirrored",
+        "y": 270
+      }
+    }
+  ]
+}

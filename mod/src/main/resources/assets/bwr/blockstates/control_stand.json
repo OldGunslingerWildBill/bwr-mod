@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/furniture/control_stand"
+    },
+    "facing=east": {
+      "model": "bwr:block/furniture/control_stand",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/furniture/control_stand",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/furniture/control_stand",
+      "y": 270
+    }
+  }
+}

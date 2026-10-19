@@ -1,0 +1,94 @@
+{
+  "variants": {
+    "col=0,facing=north,row=0": {
+      "model": "bwr:block/furniture/wall_display_3x2_00"
+    },
+    "col=0,facing=north,row=1": {
+      "model": "bwr:block/furniture/wall_display_3x2_01"
+    },
+    "col=1,facing=north,row=0": {
+      "model": "bwr:block/furniture/wall_display_3x2_10"
+    },
+    "col=1,facing=north,row=1": {
+      "model": "bwr:block/furniture/wall_display_3x2_11"
+    },
+    "col=2,facing=north,row=0": {
+      "model": "bwr:block/furniture/wall_display_3x2_20"
+    },
+    "col=2,facing=north,row=1": {
+      "model": "bwr:block/furniture/wall_display_3x2_21"
+    },
+    "col=0,facing=east,row=0": {
+      "model": "bwr:block/furniture/wall_display_3x2_00",
+      "y": 90
+    },
+    "col=0,facing=east,row=1": {
+      "model": "bwr:block/furniture/wall_display_3x2_01",
+      "y": 90
+    },
+    "col=1,facing=east,row=0": {
+      "model": "bwr:block/furniture/wall_display_3x2_10",
+      "y": 90
+    },
+    "col=1,facing=east,row=1": {
+      "model": "bwr:block/furniture/wall_display_3x2_11",
+      "y": 90
+    },
+    "col=2,facing=east,row=0": {
+      "model": "bwr:block/furniture/wall_display_3x2_20",
+      "y": 90
+    },
+    "col=2,facing=east,row=1": {
+      "model": "bwr:block/furniture/wall_display_3x2_21",
+      "y": 90
+    },
+    "col=0,facing=south,row=0": {
+      "model": "bwr:block/furniture/wall_display_3x2_00",
+      "y": 180
+    },
+    "col=0,facing=south,row=1": {
+      "model": "bwr:block/furniture/wall_display_3x2_01",
+      "y": 180
+    },
+    "col=1,facing=south,row=0": {
+      "model": "bwr:block/furniture/wall_display_3x2_10",
+      "y": 180
+    },
+    "col=1,facing=south,row=1": {
+      "model": "bwr:block/furniture/wall_display_3x2_11",
+      "y": 180
+    },
+    "col=2,facing=south,row=0": {
+      "model": "bwr:block/furniture/wall_display_3x2_20",
+      "y": 180
+    },
+    "col=2,facing=south,row=1": {
+      "model": "bwr:block/furniture/wall_display_3x2_21",
+      "y": 180
+    },
+    "col=0,facing=west,row=0": {
+      "model": "bwr:block/furniture/wall_display_3x2_00",
+      "y": 270
+    },
+    "col=0,facing=west,row=1": {
+      "model": "bwr:block/furniture/wall_display_3x2_01",
+      "y": 270
+    },
+    "col=1,facing=west,row=0": {
+      "model": "bwr:block/furniture/wall_display_3x2_10",
+      "y": 270
+    },
+    "col=1,facing=west,row=1": {
+      "model": "bwr:block/furniture/wall_display_3x2_11",
+      "y": 270
+    },
+    "col=2,facing=west,row=0": {
+      "model": "bwr:block/furniture/wall_display_3x2_20",
+      "y": 270
+    },
+    "col=2,facing=west,row=1": {
+      "model": "bwr:block/furniture/wall_display_3x2_21",
+      "y": 270
+    }
+  }
+}

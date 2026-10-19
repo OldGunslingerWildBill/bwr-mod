@@ -1099,5 +1099,16 @@
   "screen.bwr.networking.port": "CC port",
   "screen.bwr.networking.port_none": "none",
   "screen.bwr.networking.port_note": "0000-9999, set by hand; no port means no CC access",
-  "screen.bwr.networking.port_conflict": "Port %s is used by %s machines on this CC network: nothing is read from it"
+  "screen.bwr.networking.port_conflict": "Port %s is used by %s machines on this CC network: nothing is read from it",
+  "block.bwr.relay_cabinet": "Relay Cabinet",
+  "block.bwr.relay_cabinet_plain": "Relay Cabinet (Plain Back)",
+  "block.bwr.operator_desk": "Operator Desk",
+  "block.bwr.operator_desk_round": "Operator Desk (Round End)",
+  "block.bwr.operator_desk_corner": "Operator Desk (L Corner)",
+  "block.bwr.supervisor_desk": "Supervisor Desk",
+  "block.bwr.mimic_band_cream": "Mimic Band (Cream)",
+  "block.bwr.mimic_band_black": "Mimic Band (Black)",
+  "block.bwr.wall_display": "Wall Display",
+  "block.bwr.wall_display_wide": "Wall Display (Wide)",
+  "block.bwr.control_stand": "Control Stand"
 }

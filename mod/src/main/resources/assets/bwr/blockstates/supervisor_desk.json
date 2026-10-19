@@ -1,0 +1,160 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "part": "drawers",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/supervisor_drawers"
+      }
+    },
+    {
+      "when": {
+        "part": "drawers",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/supervisor_drawers",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "part": "drawers",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/supervisor_drawers",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "part": "drawers",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/supervisor_drawers",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "part": "knee",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/supervisor_knee"
+      }
+    },
+    {
+      "when": {
+        "part": "knee",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/supervisor_knee",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "part": "knee",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/supervisor_knee",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "part": "knee",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/supervisor_knee",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_flat"
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_flat",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_flat",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "monitor": "flat",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_flat",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_crt"
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_crt",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_crt",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "monitor": "crt",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bwr:block/furniture/desk_crt",
+        "y": 270
+      }
+    }
+  ]
+}

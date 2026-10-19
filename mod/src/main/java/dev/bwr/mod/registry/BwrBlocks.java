@@ -403,4 +403,48 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.panel.PanelBlock> CONTROL_PANEL_CONSOLE =
             BLOCKS.register("control_panel_console",
                     () -> new dev.bwr.mod.panel.PanelBlock(panelBoard(), dev.bwr.mod.panel.PanelType.CONSOLE));
+
+    // --- Control-room furniture (ROOM-FURNITURE.md): decorative, no block entities ---------------------
+
+    /** Painted steel furniture for control rooms; breaks with any tool. */
+    private static BlockBehaviour.Properties furniture() {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_LIGHT_GREEN)
+                .strength(1.5F, 6.0F)
+                .sound(SoundType.METAL);
+    }
+
+    public static final DeferredBlock<dev.bwr.mod.furniture.RelayCabinetBlock> RELAY_CABINET =
+            BLOCKS.register("relay_cabinet",
+                    () -> new dev.bwr.mod.furniture.RelayCabinetBlock(furniture(), false));
+    public static final DeferredBlock<dev.bwr.mod.furniture.RelayCabinetBlock> RELAY_CABINET_PLAIN =
+            BLOCKS.register("relay_cabinet_plain",
+                    () -> new dev.bwr.mod.furniture.RelayCabinetBlock(furniture(), true));
+    public static final DeferredBlock<dev.bwr.mod.furniture.DeskBlock> OPERATOR_DESK =
+            BLOCKS.register("operator_desk",
+                    () -> new dev.bwr.mod.furniture.DeskBlock(furniture()));
+    public static final DeferredBlock<dev.bwr.mod.furniture.RoundDeskBlock> OPERATOR_DESK_ROUND =
+            BLOCKS.register("operator_desk_round",
+                    () -> new dev.bwr.mod.furniture.RoundDeskBlock(furniture()));
+    public static final DeferredBlock<dev.bwr.mod.furniture.CornerDeskBlock> OPERATOR_DESK_CORNER =
+            BLOCKS.register("operator_desk_corner",
+                    () -> new dev.bwr.mod.furniture.CornerDeskBlock(furniture()));
+    public static final DeferredBlock<dev.bwr.mod.furniture.SupervisorDeskBlock> SUPERVISOR_DESK =
+            BLOCKS.register("supervisor_desk",
+                    () -> new dev.bwr.mod.furniture.SupervisorDeskBlock(furniture()));
+    public static final DeferredBlock<dev.bwr.mod.furniture.MimicBandBlock> MIMIC_BAND_CREAM =
+            BLOCKS.register("mimic_band_cream",
+                    () -> new dev.bwr.mod.furniture.MimicBandBlock(furniture(), false));
+    public static final DeferredBlock<dev.bwr.mod.furniture.MimicBandBlock> MIMIC_BAND_BLACK =
+            BLOCKS.register("mimic_band_black",
+                    () -> new dev.bwr.mod.furniture.MimicBandBlock(furniture(), true));
+    public static final DeferredBlock<dev.bwr.mod.furniture.WallDisplayBlock> WALL_DISPLAY =
+            BLOCKS.register("wall_display",
+                    () -> new dev.bwr.mod.furniture.WallDisplayBlock(furniture(), 2));
+    public static final DeferredBlock<dev.bwr.mod.furniture.WallDisplayBlock> WALL_DISPLAY_WIDE =
+            BLOCKS.register("wall_display_wide",
+                    () -> new dev.bwr.mod.furniture.WallDisplayBlock(furniture(), 3));
+    public static final DeferredBlock<dev.bwr.mod.furniture.ControlStandBlock> CONTROL_STAND =
+            BLOCKS.register("control_stand",
+                    () -> new dev.bwr.mod.furniture.ControlStandBlock(furniture()));
 }

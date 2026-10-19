@@ -1,0 +1,68 @@
+newmtl paint
+Kd 0.654902 0.737255 0.682353
+map_Kd minecraft:block/white_concrete
+
+newmtl bezel
+Kd 0.490196 0.572549 0.517647
+map_Kd minecraft:block/white_concrete
+
+newmtl top
+Kd 0.737255 0.803922 0.756863
+map_Kd minecraft:block/white_concrete
+
+newmtl trim
+Kd 0.227451 0.247059 0.258824
+map_Kd minecraft:block/white_concrete
+
+newmtl dark
+Kd 0.121569 0.137255 0.149020
+map_Kd minecraft:block/white_concrete
+
+newmtl handle
+Kd 0.764706 0.784314 0.788235
+map_Kd minecraft:block/white_concrete
+
+newmtl casing
+Kd 0.294118 0.317647 0.333333
+map_Kd minecraft:block/white_concrete
+
+newmtl louvre
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/furniture/louvre
+
+newmtl indicator
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/furniture/indicator
+
+newmtl screen_flat
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/furniture/screen_flat
+
+newmtl screen_crt
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/furniture/screen_crt
+
+newmtl keyboard
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/furniture/keyboard
+
+newmtl stand_panel
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/furniture/stand_panel
+
+newmtl mimic_cream
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/furniture/mimic_cream
+
+newmtl mimic_black
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/furniture/mimic_black
+
+newmtl display_2x2
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/furniture/display_2x2
+
+newmtl display_3x2
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/furniture/display_3x2
+
