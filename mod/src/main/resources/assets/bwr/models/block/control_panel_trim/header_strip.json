@@ -1,0 +1,13 @@
+{
+  "loader": "neoforge:obj",
+  "model": "bwr:models/block/control_panel_trim/header_strip.obj",
+  "automatic_culling": false,
+  "shade_quads": true,
+  "flip_v": true,
+  "emissive_ambient": true,
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "bwr:block/control_panel/bezel"
+  },
+  "render_type": "minecraft:solid"
+}

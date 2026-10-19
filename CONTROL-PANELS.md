@@ -192,6 +192,25 @@ signal and sampling never loads a chunk.
 
 Every machine peripheral also has `getName()`, `setName(text)`, `getPort()` and `setPort(n)`.
 
+### Trim blocks: finishing a control room
+
+Nothing mounts on these; they are decoration with a collision shape that follows the model, no block entity and no
+ticking, so a whole room of them costs only its model. Each has a facing like a panel (the operator's side: it
+faces you when you place it). Crafted from panels and iron; see the recipes.
+
+| Block | Use |
+| --- | --- |
+| End cap (flat, benchboard, console, rounded) | A 2 px cheek with the exact cross-section of its panel, closing the open end of a run. It goes in the block beside the last panel and takes its side from the panel it is placed against (sneak flips it) |
+| Annunciator header strip, and with a canopy | A half-height block on top of a vertical board, tilted forward 12 degrees, with a grid of window tiles (decorative in this version). The canopy has a projecting top hood |
+| Panel base cabinet | One block high, under a vertical board (or as a counter), with a dark recessed toe-kick |
+| Panel foot apron | A low non-slip plate on the floor in front of benchboards and consoles |
+| Panel toe-kick strip | A low dark skirting strip along a wall |
+| Corner (vertical or benchboard; inside, outside, 45 degree) | Closes the corners of a U- or horseshoe-shaped room. The corner sits at the far left of its block as you look at it, so the four directions you can look give the four corners. A vertical *inside* corner is an L, the *45 degree* one fills the L with a diagonal, and the *outside* one is the post where two runs turn the outside of a corner. The benchboard corners are the valley, the hip and a diagonal facet. They carry no mounting face |
+
+The panel bodies are modelled in Blender (`art/models/control_panel_trim/`): the mounting face is exactly where it
+was, and the detail is behind it (module seams on the face, service-door backs, bevelled back edges, a dark
+recessed toe-kick at the foot of the benchboard and console backs, a console front lip).
+
 ## 2. What a port can be wired to
 
 Every component has numbered **inputs** (it displays them) or **outputs** (a control produces them). **An
