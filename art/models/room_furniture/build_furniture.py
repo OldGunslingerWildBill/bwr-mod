@@ -56,6 +56,7 @@ def build_models():
     m["supervisor_drawers"] = g.supervisor((0, 0, 0, 1, 1, 1)).finish(single_block=True)
     m["supervisor_knee"] = g.supervisor((1, 0, 0, 2, 1, 1)).finish(single_block=True)
     m["supervisor_item"] = g.supervisor().finish(recentre=True)
+    m["control_stand"] = g.control_stand()
     m["mimic_band_cream"] = g.mimic_band("cream")
     m["mimic_band_black"] = g.mimic_band("black")
     for width in (2, 3):
@@ -225,6 +226,7 @@ def main():
         collection.objects.link(obj)
         objects[name] = obj
         counts[name] = len(faces)
+    bpy.context.preferences.filepaths.save_version = 0   # no .blend1 backup next to the file
     bpy.ops.wm.save_as_mainfile(filepath=BLEND)
     for name, obj in objects.items():
         export_obj(obj, os.path.join(OUT, name + ".obj"))
@@ -246,7 +248,7 @@ def main():
             objects[cname] = obj
         views = {
             "cabinet_item": (-32, 20), "cabinet_plain_item": (-32, 20), "supervisor_item": (28, 28),
-            "mimic_band_cream": (15, 15), "mimic_band_black": (15, 15),
+            "mimic_band_cream": (15, 15), "mimic_band_black": (15, 15), "control_stand": (25, 24),
             "wall_display_2x2_item": (20, 14), "wall_display_3x2_item": (20, 14),
             "prev_desk_flat": (25, 28), "prev_desk_crt": (-25, 28), "prev_round_crt": (25, 28),
             "prev_round_flat_m": (-25, 28), "prev_corner_crt": (25, 28), "prev_corner_flat": (-25, 28),

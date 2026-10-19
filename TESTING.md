@@ -32,6 +32,16 @@ anything is compared; the logged `APRM CALIBRATION GAMETEST` lines show the heat
 east, south and west in a disposable creative world and writes `grid-tie-and-meters.png` and `meters-arrows-close.png` to
 `run/turbineModelCheck/grid-check/`; the arrow on each meter's top face points toward its output.
 
+The control-room furniture (ROOM-FURNITURE.md) adds the GameTest class `RoomFurnitureTests` (11 tests, fixtures around 110,000 /
+110,000, each run once the fixture chunks answer entity lookups so drop counts are real): registration with item, recipe, loot
+table, lang name and creative tab entry; every piece placed through the real item for all four facings with the footprint
+checked; every block of every multi-block piece broken through the real player game mode (survival: the whole piece goes and
+exactly one item drops; creative: nothing drops) and removed by command or neighbour update; nothing placed when any block of
+the footprint is blocked or the top is above the build limit; the desk monitor cycle and the round desk flip; shapes for every
+facing (desk height 0.75 m, free kick space); and every state surviving a save. `:mod:runTurbineModelCheck -PbwrFurnitureClientCheck`
+(class `FurnitureClientCheck`) builds a small control room in a disposable world, checks that every furniture state bakes to quads
+with no missing texture, and writes seven pictures to `run/turbineModelCheck/furniture-check/`.
+
 Flashing-lamp cost (C2) is measured by `-PbwrPanelPerformanceCheck -PbwrPanelPerformanceStages=annunciators-off,annunciators-flash`
 (the 16 x 8 wall with 50 annunciator windows, normal then all flashing) and by `-PbwrFcdClientCheck
 -PbwrFcdClientStages=columbia-scram-perf` (a 185-rod full core display, frames before and for 8 s after a scram). Flashing is drawn

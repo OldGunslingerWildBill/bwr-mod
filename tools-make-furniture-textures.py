@@ -133,6 +133,19 @@ def keyboard():
     return c
 
 
+def stand_panel():
+    c = Canvas(16, 16, (38, 43, 47))
+    c.outline(0, 0, 16, 16, (20, 23, 25))
+    for i, col in enumerate(((214, 48, 40), (232, 170, 34), (70, 200, 96))):
+        c.rect(2 + i * 4, 2, 4 + i * 4, 4, col)
+    c.rect(2, 6, 7, 9, (196, 52, 44))
+    c.rect(9, 6, 14, 9, (60, 170, 92))
+    c.circle(5, 12, 2, (210, 214, 216), fill=(70, 76, 80))
+    c.rect(10, 11, 14, 14, (22, 25, 27))
+    c.rect(11, 12, 13, 13, (190, 194, 196))
+    return c
+
+
 def mimic(cream):
     """32 x 32 tile; the bus lines run through both side edges at rows 10 and 22."""
     if cream:
@@ -223,6 +236,7 @@ def main():
     screen_flat().save("screen_flat")
     screen_crt().save("screen_crt")
     keyboard().save("keyboard")
+    stand_panel().save("stand_panel")
     mimic(True).save("mimic_cream")
     mimic(False).save("mimic_black")
     display(2).save("display_2x2")

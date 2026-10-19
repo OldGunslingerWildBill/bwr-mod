@@ -30,6 +30,7 @@ MATERIALS = {
     "screen_flat": ((255, 255, 255), "screen_flat"),
     "screen_crt": ((255, 255, 255), "screen_crt"),
     "keyboard": ((255, 255, 255), "keyboard"),
+    "stand_panel": ((255, 255, 255), "stand_panel"),
     "mimic_cream": ((255, 255, 255), "mimic_cream"),
     "mimic_black": ((255, 255, 255), "mimic_black"),
     "display_2x2": ((255, 255, 255), "display_2x2"),
@@ -168,7 +169,8 @@ class Builder:
         if face == "w":
             return (fz, fy)
         if face == "u":
-            return (fx, 1.0 - fz)
+            # read from the front (-z): the image's top is the far edge and its right is -x, so keys and buttons are upright
+            return (1.0 - fx, fz)
         return (fx, fz)
 
     def quad(self, mat, pts, uvs, outward):
@@ -444,3 +446,17 @@ def wall_display(width, height=2, clip=None):
     # a thin dark backing closes the sides of the screen so it does not look like a hole from an angle
     b.box((0.0, 0.0, screen_z), (width, height, ztop), "trim", skip="nsud")
     return b
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Control stand: a narrow pedestal column with a small tilted top carrying a lamp and button panel.
+# ---------------------------------------------------------------------------------------------------------------------
+
+def control_stand():
+    b = Builder("control_stand")
+    b.box((0.18, 0.0, 0.18), (0.82, 0.06, 0.82), "dark", skip="d")
+    b.box((0.34, 0.06, 0.34), (0.66, 0.80, 0.66), {"n": "paint", "e": "bezel", "w": "bezel", "s": "bezel"})
+    tilt = rot_x(-18.0, (0.85, 0.5))                       # the back edge rises toward the operator's eye line
+    b.box((0.16, 0.80, 0.22), (0.84, 0.90, 0.78), {"u": "stand_panel", "n": "trim", "s": "trim", "e": "trim", "w": "trim", "d": "trim"},
+          xform=tilt)
+    return b.finish(single_block=True)

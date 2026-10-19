@@ -1109,5 +1109,6 @@
   "block.bwr.mimic_band_cream": "Mimic Band (Cream)",
   "block.bwr.mimic_band_black": "Mimic Band (Black)",
   "block.bwr.wall_display": "Wall Display",
-  "block.bwr.wall_display_wide": "Wall Display (Wide)"
+  "block.bwr.wall_display_wide": "Wall Display (Wide)",
+  "block.bwr.control_stand": "Control Stand"
 }

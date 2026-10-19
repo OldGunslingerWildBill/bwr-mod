@@ -285,6 +285,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.WALL_DISPLAY);
     public static final DeferredItem<BlockItem> WALL_DISPLAY_WIDE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.WALL_DISPLAY_WIDE);
+    public static final DeferredItem<BlockItem> CONTROL_STAND =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_STAND);
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> FUEL_TAB = TABS.register("fuel", () ->
             CreativeModeTab.builder().title(Component.translatable("itemGroup.bwr.fuel"))
@@ -412,6 +414,7 @@ public final class BwrItems {
                         output.accept(MIMIC_BAND_BLACK.get());
                         output.accept(WALL_DISPLAY.get());
                         output.accept(WALL_DISPLAY_WIDE.get());
+                        output.accept(CONTROL_STAND.get());
                     })
                     .build());
 }

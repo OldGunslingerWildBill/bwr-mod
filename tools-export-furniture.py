@@ -132,6 +132,11 @@ def main():
         write(os.path.join(im, block + ".json"), item_model(block, 0.6))
         write(os.path.join(lt, block + ".json"), loot(block))
 
+    # control stand
+    write(os.path.join(bs, "control_stand.json"), variants_by_facing("control_stand"))
+    write(os.path.join(im, "control_stand.json"), item_model("control_stand", 0.6))
+    write(os.path.join(lt, "control_stand.json"), loot("control_stand"))
+
     # wall displays: one model per block of the frame
     for block, width, scale in (("wall_display", 2, 0.33), ("wall_display_wide", 3, 0.24)):
         variants = {}

@@ -46,6 +46,10 @@ newmtl keyboard
 Kd 1.000000 1.000000 1.000000
 map_Kd bwr:block/furniture/keyboard
 
+newmtl stand_panel
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/furniture/stand_panel
+
 newmtl mimic_cream
 Kd 1.000000 1.000000 1.000000
 map_Kd bwr:block/furniture/mimic_cream

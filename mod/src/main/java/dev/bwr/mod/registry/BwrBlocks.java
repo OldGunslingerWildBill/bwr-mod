@@ -444,4 +444,7 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.furniture.WallDisplayBlock> WALL_DISPLAY_WIDE =
             BLOCKS.register("wall_display_wide",
                     () -> new dev.bwr.mod.furniture.WallDisplayBlock(furniture(), 3));
+    public static final DeferredBlock<dev.bwr.mod.furniture.ControlStandBlock> CONTROL_STAND =
+            BLOCKS.register("control_stand",
+                    () -> new dev.bwr.mod.furniture.ControlStandBlock(furniture()));
 }
