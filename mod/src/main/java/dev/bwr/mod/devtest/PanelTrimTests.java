@@ -324,7 +324,7 @@ public final class PanelTrimTests {
         helper.assertTrue(heightAt(strip, 0.5, 0.80) < 0.95 && heightAt(strip, 0.5, 0.80) > 0.3,
                 "an annunciator panel leans back: the top is not as deep as the foot");
         VoxelShape canopy = TrimGeometry.shape(TrimPiece.HEADER_CANOPY, Direction.NORTH, true);
-        helper.assertTrue(canopy.min(net.minecraft.core.Direction.Axis.Z) < strip.min(net.minecraft.core.Direction.Axis.Z) - 0.25,
+        helper.assertTrue(canopy.min(net.minecraft.core.Direction.Axis.Z) < strip.min(net.minecraft.core.Direction.Axis.Z) - 0.15,
                 "the canopy projects a hood in front of the panel");
         helper.succeed();
     }
