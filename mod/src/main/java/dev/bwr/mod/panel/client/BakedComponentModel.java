@@ -53,7 +53,8 @@ import java.util.List;
  * See {@link Poses}: a control switch handle swings -45, 0, +45 degrees for CLOSE, NORMAL, OPEN; a selector
  * steps 45 degrees per detent about its middle; a key turns a quarter; the setpoint knob sweeps 270 degrees; a
  * dial pointer sweeps 250 degrees and an edgewise pointer slides its travel, both over the gauge scale with the
- * configured lag; a pushbutton cap slides its travel while held.
+ * configured lag (the bar gauge's pointer instead turns about the axis of its curved face, riding the arc: see
+ * {@link BarGaugeFace}); a pushbutton cap slides its travel while held.
  */
 final class BakedComponentModel {
     /** Which component type is being drawn: decides how state becomes pose. */
@@ -79,8 +80,11 @@ final class BakedComponentModel {
 
     private final Kind kind;
     private final Placement place;
-    /** The printed face of a bar gauge (scale, bands, units, caption), or null for every other model. */
+    /** The layout and printed scale of a bar gauge (see {@link BarGaugeFace}), or null for every other model. */
     private final BarGaugeFace face;
+    /** A bar gauge's case model ({@link BarGaugeFace#CASE_MODEL}), drawn through the face's case placement; empty otherwise. */
+    private final BakedPanelModel.Part[] caseParts;
+    private final int[] caseBase;
     /** The colour bands laid on a baked switchboard meter, or null when it has none in use. */
     private final BandOverlay bands;
     private final BakedPanelModel.Part[] staticParts;
@@ -141,6 +145,17 @@ final class BakedComponentModel {
         this.glassParts = glass.toArray(new BakedPanelModel.Part[0]);
         this.staticBase = bases(staticParts, data, needleRgb);
         this.dynamicBase = bases(dynamicParts, data, needleRgb);
+        BakedPanelModel caseModel = face != null ? PanelModels.get(BarGaugeFace.CASE_MODEL) : null;
+        List<BakedPanelModel.Part> caseList = new ArrayList<>();
+        if (caseModel != null) {
+            for (int i = 0; i < caseModel.partCount(); i++) {
+                if (!caseModel.part(i).moving() && caseModel.part(i).role != BakedPanelModel.Role.GLASS) {
+                    caseList.add(caseModel.part(i));
+                }
+            }
+        }
+        this.caseParts = caseList.toArray(new BakedPanelModel.Part[0]);
+        this.caseBase = bases(caseParts, data, needleRgb);
         List<Legends.Item> legends = Legends.items(model, place, type, component, resolved.key());
         if (face != null) {
             legends.addAll(face.legends(component.label()));
@@ -223,6 +238,9 @@ final class BakedComponentModel {
 
     void buildStatic(QuadSink sink) {
         if (face != null) {
+            for (int i = 0; i < caseParts.length; i++) {
+                PartDraw.emit(sink, caseParts[i], face.casePlace, 0.0f, 0.0f, caseBase[i], 1.0f, false, scratch);
+            }
             face.emitStatic(sink);
         }
         for (int i = 0; i < staticParts.length; i++) {
@@ -296,8 +314,12 @@ final class BakedComponentModel {
             case EDGEWISE -> {
                 GaugeData data = (GaugeData) component.data();
                 GaugeScratch scratchState = GaugeScratch.of(component);
-                slide = Poses.pointerSlide(scratchState.follow((float) data.fraction(component.input(0)),
-                        data.damping, context.gameTime()));
+                float position = scratchState.follow((float) data.fraction(component.input(0)), data.damping, context.gameTime());
+                if (face != null) {
+                    angle = face.pointerTurn(position); // the bar gauge's pointer rides the arc of its face
+                } else {
+                    slide = Poses.pointerSlide(position);
+                }
                 double wanted = component.input(1);
                 if (Double.isNaN(wanted)) {
                     scratchState.markerPrimed = false;
@@ -347,6 +369,12 @@ final class BakedComponentModel {
     private void emitMoving(QuadSink sink) {
         for (int i = 0; i < dynamicParts.length; i++) {
             BakedPanelModel.Part part = dynamicParts[i];
+            if (face != null && part.role == BakedPanelModel.Role.NEEDLE && part.hasTravel) {
+                // Turned about the arc's axis behind the panel, so its tip stays on the face and on the scale's row.
+                PartDraw.emitTurnedAboutX(sink, part, place, poseAngle, face.arcY(), face.arcZ(), dynamicBase[i], 1.0f, false,
+                        scratch);
+                continue;
+            }
             float partSlide = part.hasTravel ? (kind == Kind.RPS_TRIP && part.name.equals(CAP_B) ? poseSlideB : poseSlide) : 0.0f;
             if (part.name.equals(DEMAND)) {
                 if (Float.isNaN(poseDemand)) {
@@ -409,7 +437,7 @@ final class BakedComponentModel {
             // A legend printed on a lamp lens reads dark against the lit lens and light against the dim one.
             int ink = item.onLamp() ? Legends.lampInk(legendCapRgb >= 0 ? legendCapRgb : item.surfaceRgb(), lit) : item.ink();
             context.textRotated(item.text(), item.x(), item.y(), item.capCells() / Legends.CAP_PIXELS, item.rotation(),
-                    item.z() + TEXT_LIFT, ink, item.onLamp(), dx, -Legends.CAP_PIXELS / 2.0f);
+                    item.tilt(), item.z() + TEXT_LIFT, ink, item.onLamp(), dx, -Legends.CAP_PIXELS / 2.0f);
         }
     }
 }

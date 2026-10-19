@@ -84,13 +84,14 @@ public final class ConfigScreen extends Screen {
                                     fieldRow.text = Boolean.toString(value);
                                     refresh();
                                 })));
-                default -> {
-                    EditBox box = box(row, fieldRow.text, field.kind() == ConfigField.Kind.TEXT ? field.maxLength() : 24);
-                    box.setResponder(value -> {
-                        fieldRow.text = value;
-                        refresh();
-                    });
+                case COLOR -> {
+                    if (field.swatchNames().isEmpty()) {
+                        textField(row, fieldRow, 24);
+                    } else {
+                        swatchColour(row, fieldRow, field);
+                    }
                 }
+                default -> textField(row, fieldRow, field.kind() == ConfigField.Kind.TEXT ? field.maxLength() : 24);
             }
             row++;
         }
@@ -164,6 +165,52 @@ public final class ConfigScreen extends Screen {
         addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), button -> onClose())
                 .bounds(layout.left + layout.width / 2 + 2, layout.buttonY, layout.width / 2 - 2, 20).build());
         refresh();
+    }
+
+    private void textField(int row, ConfigModel.FieldRow fieldRow, int maxLength) {
+        EditBox box = box(row, fieldRow.text, maxLength);
+        box.setResponder(value -> {
+            fieldRow.text = value;
+            refresh();
+        });
+    }
+
+    /**
+     * A colour with named choices (the bar gauge's bands: Nominal white, Caution yellow, Danger red): the names on a
+     * button in the left half, the colour code in the right half. Picking a name fills its code in; typing a code shows
+     * the name it matches, or "Other colour". Only the code is sent, so a name saves exactly what its code would.
+     */
+    private void swatchColour(int row, ConfigModel.FieldRow fieldRow, ConfigField field) {
+        int y = layout.rowY(row);
+        int half = layout.widgetWidth / 2;
+        List<String> choices = new ArrayList<>(field.swatchNames());
+        choices.add(ConfigField.SWATCH_CUSTOM);
+        EditBox code = new EditBox(font, layout.widgetX + half, y, layout.widgetWidth - half, layout.rowHeight - 2,
+                Component.empty());
+        code.setMaxLength(24);
+        code.setValue(fieldRow.text);
+        CycleButton<String> named = CycleButton.<String>builder(name -> Component.translatable("component.bwr.swatch." + name))
+                .withValues(choices).withInitialValue(swatchOf(field, fieldRow.text)).displayOnlyValue()
+                .create(layout.widgetX, y, half - 2, layout.rowHeight - 2, Component.empty(), (button, name) -> {
+                    int rgb = field.swatchColor(name);
+                    if (rgb >= 0) {
+                        code.setValue(String.format(java.util.Locale.ROOT, "#%06X", rgb));
+                    }
+                });
+        code.setResponder(value -> {
+            fieldRow.text = value;
+            named.setValue(swatchOf(field, value));
+            refresh();
+        });
+        rows.add(addRenderableWidget(named));
+        rows.add(addRenderableWidget(code));
+    }
+
+    /** The swatch a colour code matches, or {@link ConfigField#SWATCH_CUSTOM}. */
+    private static String swatchOf(ConfigField field, String text) {
+        Integer rgb = ConfigModel.parseColor(text);
+        String name = rgb == null ? null : field.swatchName(rgb);
+        return name == null ? ConfigField.SWATCH_CUSTOM : name;
     }
 
     private EditBox box(int row, String value, int maxLength) {

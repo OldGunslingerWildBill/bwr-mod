@@ -59,54 +59,78 @@ def clear():
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
 
-def bar_gauge_face(data):
-    """The case and printed face the game draws round the bar gauge's channel (BarGaugeFace), at the default 10 x 16
-    cells with the narrow range scale: returns (faces [(corners in model inches, hex)], w, h, dx, dy), where the model
-    is shifted by (dx, dy) inches to sit in the dressed footprint w x h."""
-    cw, ch = data["footprint"]["w"], data["footprint"]["h"]
-    w, h = 10.0, 16.0
-    tag = 0.96
-    case_top, face_top, face_bottom = 0.1 + tag + 0.2, 0.1 + tag + 0.2 + 0.075 * h, h - 0.085 * h
-    scale = min((face_bottom - face_top) / ch, 0.16 * w / cw)
-    ox, oy = 0.6 * w - cw * scale / 2, face_top + (face_bottom - face_top - ch * scale) / 2
-    rail, tick_right = max(0.25, 0.035 * w), ox
-    tick_left = tick_right - max(0.8, min(2.2, 0.14 * w))
-    low, high = oy + (ch - 0.3) * scale, oy + 0.3 * scale  # scale minimum and maximum rows (pointer 0.3 in from the ends)
-    out = []
+# The curved bar gauge as BarGaugeFace lays it out (inches, the case model's frame: y down from its top, z out): the
+# channel model's corner on the case, the arc's axis behind the panel and the face's radius.
+CM = 1.0 / 2.54
+BAR_CHANNEL = (2.52 * CM, 2.90 * CM)
+BAR_ARC = (11.05 * CM, -14.0 * CM)
+BAR_FACE_R = (math.sqrt(10.0 ** 2 + 14.0 ** 2) - 0.2) * CM
 
-    def box(x, y, bw, bh, z, rgb):
-        c = [(x, y), (x + bw, y), (x + bw, y + bh), (x, y + bh)]
-        out.append(([(px / scale, py / scale, z / scale) for px, py in c], rgb))
 
-    zf = max(0.1, 0.15 * scale - 0.07)
-    box(0.12 * w, 0.1, 0.76 * w, tag, zf + 0.12, "E6E6E1")
-    box(0, case_top, w, face_top - case_top, zf + 0.6, "BFC3C7")
-    box(0, face_bottom, w, h - face_bottom, zf + 0.6, "BFC3C7")
-    box(0, face_top, rail, face_bottom - face_top, zf + 0.3, "BFC3C7")
-    box(w - rail, face_top, rail, face_bottom - face_top, zf + 0.3, "BFC3C7")
-    box(rail, face_top, w - 2 * rail, face_bottom - face_top, zf, "F6F5EE")
-    box(w / 2 - 0.3, (face_bottom + h) / 2 - 0.3, 0.6, 0.6, zf + 0.62, "2B2C2E")
-    row = lambda v: low + (high - low) * v / 60.0
+def bar_gauge_parts(channel):
+    """The whole bar gauge in the case model's frame: the case model, the channel model on it with its pointer turned
+    along the arc to 40 % of the narrow range scale, and the printed scale (bands, ticks, the numbers as dark dashes at
+    this size) on the curved face, as the game draws them. Returns (parts, w, h)."""
+    case = json.load(open(os.path.join(MODELS, "bar_gauge_case.json"), encoding="utf-8"))
+    cx, cy = BAR_CHANNEL
+    ay, az = BAR_ARC
+    needle = next(p for p in channel["parts"] if p["name"] == "needle")
+    corners = [v for f in needle["faces"] for v in f["v"]]
+    low = (min(v[1] for v in corners) + max(v[1] for v in corners)) / 2 + cy
+    travel = needle["travel"]
+    tip = min(corners, key=lambda v: v[0])
+    tip_r = math.hypot(tip[1] + cy - ay, tip[2] - az)
+    rest = math.atan2(ay - (tip[1] + cy), tip[2] - az)
+
+    def height(fraction):          # case y of a scale position, as seen head-on
+        return low - travel * fraction
+
+    def angle(y, r):
+        return math.asin(max(-1.0, min(1.0, (ay - y) / r)))
+
+    def point(x, a, r):
+        return (x, ay - r * math.sin(a), az + r * math.cos(a))
+
+    turn = angle(height(0.4), tip_r) - rest
+    c, s = math.cos(turn), math.sin(turn)
+
+    def turned(v):                 # about the arc's axis, positive up the face (y down here)
+        dy, dz = v[1] + cy - ay, v[2] - az
+        return (v[0] + cx, ay + c * dy - s * dz, az + s * dy + c * dz)
+
+    parts = [dict(p) for p in case["parts"]]
+    for p in channel["parts"]:
+        move = turned if p["name"] == "needle" else (lambda v: (v[0] + cx, v[1] + cy, v[2]))
+        parts.append(dict(p, faces=[dict(f, v=[move(v) for v in f["v"]]) for f in p["faces"]]))
+    printed = []
+
+    def strip(x0, x1, f0, f1, lift, rgb, pieces):
+        r = BAR_FACE_R + lift
+        a0, a1 = angle(height(f0), r), angle(height(f1), r)
+        for i in range(pieces):
+            b0, b1 = a0 + (a1 - a0) * i / pieces, a0 + (a1 - a0) * (i + 1) / pieces
+            printed.append(([point(x0, b0, r), point(x1, b0, r), point(x1, b1, r), point(x0, b1, r)], rgb))
+
+    right = cx
     for lo, hi, rgb in ((0, 10, "A80E0E"), (10, 20, "C4B02A"), (45, 55, "C4B02A"), (55, 60, "A80E0E")):
-        box(tick_left, row(hi), tick_right - tick_left, row(lo) - row(hi), zf + 0.02, rgb)
+        strip(1.86 * CM, right, lo / 60.0, hi / 60.0, 0.01, rgb, 4)
     for v in range(0, 61, 5):
-        length = (tick_right - tick_left) * (1.0 if v % 10 == 0 else 0.5)
-        box(tick_right - length, row(v) - 0.1, length, 0.2, zf + 0.04, "141414")
-        if v % 10 == 0:  # the numbers, as dark dashes at this size
-            box(tick_left - 1.6, row(v) - 0.3, 1.2, 0.6, zf + 0.04, "3A3A3A")
-    return out, w / scale, h / scale, ox / scale, oy / scale
+        f, d = v / 60.0, 0.06 / 60.0
+        strip((1.72 if v % 10 == 0 else 2.10) * CM, right, f - d, f + d, 0.02, "141414", 1)
+        if v % 10 == 0:
+            strip(0.75 * CM, 1.55 * CM, f - 3 * d, f + 3 * d, 0.02, "3A3A3A", 1)
+    parts.append({"role": "paint", "faces": [{"v": v, "c": rgb} for v, rgb in printed]})
+    return parts, case["footprint"]["w"], case["footprint"]["h"]
 
 
 def build(model):
     """The model as one mesh with a face-corner colour attribute; returns its size (w, h) in inches."""
     data = json.load(open(os.path.join(MODELS, model + ".json"), encoding="utf-8"))
     verts, faces, cols = [], [], []
-    dx = dy = 0.0
     if model == "bar_gauge":
-        extra, fw, fh, dx, dy = bar_gauge_face(data)
+        parts, fw, fh = bar_gauge_parts(data)
         data["footprint"] = {"w": fw, "h": fh}
-        data["parts"] = [{"role": "paint", "faces": [{"v": v, "c": c} for v, c in extra]}] + [
-            dict(p, faces=[dict(f, v=[(x + dx, y + dy, z) for x, y, z in f["v"]]) for f in p["faces"]]) for p in data["parts"]]
+        data["parts"] = parts
     for part in data["parts"]:
         if part["role"] == "glass":
             continue

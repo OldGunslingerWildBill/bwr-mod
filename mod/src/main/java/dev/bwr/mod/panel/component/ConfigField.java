@@ -18,6 +18,8 @@ import java.util.List;
  *   <li>{@link Kind#DOUBLE}: finite double in {@code [min, max]}</li>
  *   <li>{@link Kind#ENUM}: string, one of {@link #options()}</li>
  * </ul>
+ * A colour field may also carry named choices ({@link #color(String, String, List)}): {@link #options()} then holds
+ * {@code name=RRGGBB} swatches the wrench screen offers beside the colour box.
  *
  * @param key       NBT key; also the suffix of the translation key
  *                  {@code component.bwr.field.<key>} unless {@code labelKey} is set
@@ -27,12 +29,60 @@ public record ConfigField(String key, Kind kind, String labelKey, double min, do
                           int maxLength, List<String> options) {
     public enum Kind { TEXT, COLOR, BOOL, INT, DOUBLE, ENUM }
 
+    /** The choice a colour with swatches shows when its colour is none of them; its name is {@code component.bwr.swatch.custom}. */
+    public static final String SWATCH_CUSTOM = "custom";
+
     public static ConfigField text(String key, String labelKey, int maxLength) {
         return new ConfigField(key, Kind.TEXT, labelKey, 0, 0, maxLength, List.of());
     }
 
     public static ConfigField color(String key, String labelKey) {
         return new ConfigField(key, Kind.COLOR, labelKey, 0, 0xFFFFFF, 0, List.of());
+    }
+
+    /**
+     * A colour with named choices: {@code swatches} are {@code name=RRGGBB} entries (see {@link #swatch}), shown in the
+     * wrench screen as {@code component.bwr.swatch.<name>}. The value is still any colour and is saved exactly as a
+     * typed code would be: picking a name only fills its code in.
+     */
+    public static ConfigField color(String key, String labelKey, List<String> swatches) {
+        return new ConfigField(key, Kind.COLOR, labelKey, 0, 0xFFFFFF, 0, List.copyOf(swatches));
+    }
+
+    /** One swatch entry for {@link #color(String, String, List)}. */
+    public static String swatch(String name, int rgb) {
+        return name + "=" + String.format(java.util.Locale.ROOT, "%06X", rgb & 0xFFFFFF);
+    }
+
+    /** The names of a colour field's swatches, in order; empty for any other field. */
+    public List<String> swatchNames() {
+        if (kind != Kind.COLOR) {
+            return List.of();
+        }
+        return options.stream().map(entry -> entry.substring(0, entry.indexOf('='))).toList();
+    }
+
+    /** The colour of the swatch {@code name}, or -1 when this field has no such swatch. */
+    public int swatchColor(String name) {
+        if (kind == Kind.COLOR) {
+            for (String entry : options) {
+                int at = entry.indexOf('=');
+                if (entry.substring(0, at).equals(name)) {
+                    return Integer.parseInt(entry.substring(at + 1), 16);
+                }
+            }
+        }
+        return -1;
+    }
+
+    /** The name of the swatch whose colour is {@code rgb}, or null when none is. */
+    public String swatchName(int rgb) {
+        for (String name : swatchNames()) {
+            if (swatchColor(name) == (rgb & 0xFFFFFF)) {
+                return name;
+            }
+        }
+        return null;
     }
 
     public static ConfigField bool(String key, String labelKey) {

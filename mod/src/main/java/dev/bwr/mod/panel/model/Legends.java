@@ -54,9 +54,17 @@ public final class Legends {
      * @param x,y,z   anchor in component cells and elevation
      * @param capCells cap height in cells
      * @param rotation clockwise degrees
+     * @param tilt     degrees the text leans back about the anchor's row line, for text printed on a surface that is
+     *                 curved along its length (the bar gauge's face): the angle of the surface at the anchor, positive
+     *                 where it faces up (above the crown of the curve), 0 for text lying flat on the panel
      */
     public record Item(String text, float x, float y, float z, float capCells, float rotation,
-                       BakedPanelModel.Align align, int ink, boolean onLamp, int surfaceRgb) {
+                       BakedPanelModel.Align align, int ink, boolean onLamp, int surfaceRgb, float tilt) {
+        /** Text lying flat on the panel. */
+        public Item(String text, float x, float y, float z, float capCells, float rotation,
+                    BakedPanelModel.Align align, int ink, boolean onLamp, int surfaceRgb) {
+            this(text, x, y, z, capCells, rotation, align, ink, onLamp, surfaceRgb, 0.0f);
+        }
     }
 
     /** Choose ink from the actual cap colour and state, including player recolouring. */

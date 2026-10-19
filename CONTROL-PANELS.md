@@ -59,6 +59,13 @@ The GE target pistol and W-2 heavy-duty pistol prefer 12x16 so their handles fit
 items use the GE target pistol and that larger size. Explicit item sizes and already placed components
 keep their dimensions; changing a placed switch's style does not resize its occupied panel area.
 
+The bar gauge keeps the proportions of the owner's CAD part (a case 5 by 20 cm with its tag plate above), so it is
+centred in whichever size it has, with panel showing either side. Its white face is curved along its length, standing
+3 cm proud at the middle; the scale, the colour bands, the numbers and the units are printed on the curve, and the
+pointer rides it in the black channel. Each of its four bands has a colour code with three named choices beside it:
+**Nominal** (white), **Caution** (yellow) and **Danger** (red); any other code still works, and a band saves its
+colour as it always did. On the presets a nominal range is simply the white face between the bands.
+
 Engraved text, captions and labels scale with their component. Components placed before this size change keep
 the size they were placed at; a display's digit, character and segment counts follow its width, so an old
 display shows fewer digits or characters than before.
