@@ -373,6 +373,7 @@ public final class PanelTrimTests {
                 case VERTICAL -> "vertical";
                 case BENCHBOARD -> "benchboard";
                 case CONSOLE -> "console";
+                case BACK_PANEL -> "back";
             };
             PanelGeometry.Frame frame = PanelGeometry.frame(type, Direction.NORTH);
             double[][] expected = {

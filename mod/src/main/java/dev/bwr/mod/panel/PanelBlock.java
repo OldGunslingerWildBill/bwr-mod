@@ -42,6 +42,7 @@ public final class PanelBlock extends BaseEntityBlock {
     private static final MapCodec<PanelBlock> CODEC_VERTICAL = simpleCodec(p -> new PanelBlock(p, PanelType.VERTICAL));
     private static final MapCodec<PanelBlock> CODEC_BENCHBOARD = simpleCodec(p -> new PanelBlock(p, PanelType.BENCHBOARD));
     private static final MapCodec<PanelBlock> CODEC_CONSOLE = simpleCodec(p -> new PanelBlock(p, PanelType.CONSOLE));
+    private static final MapCodec<PanelBlock> CODEC_BACK_PANEL = simpleCodec(p -> new PanelBlock(p, PanelType.BACK_PANEL));
 
     private final PanelType type;
 
@@ -61,6 +62,7 @@ public final class PanelBlock extends BaseEntityBlock {
             case VERTICAL -> CODEC_VERTICAL;
             case BENCHBOARD -> CODEC_BENCHBOARD;
             case CONSOLE -> CODEC_CONSOLE;
+            case BACK_PANEL -> CODEC_BACK_PANEL;
         };
     }
 

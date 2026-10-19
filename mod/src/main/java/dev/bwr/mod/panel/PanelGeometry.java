@@ -162,6 +162,12 @@ public final class PanelGeometry {
                 drop = 1.0;
                 forward = 0.0;
             }
+            case BACK_PANEL -> {
+                ly0 = 1.0;
+                f0 = 1.0;
+                drop = 1.0;
+                forward = 0.0;
+            }
             case BENCHBOARD -> {
                 ly0 = 1.0;
                 f0 = 0.0;
@@ -190,6 +196,7 @@ public final class PanelGeometry {
         VoxelShape shape = Shapes.empty();
         switch (type) {
             case VERTICAL -> shape = box(facing, 0, 0, 0, 1, 1, VERTICAL_DEPTH);
+            case BACK_PANEL -> shape = box(facing, 0, 0, 0, 1, 1, 1);
             case BENCHBOARD -> {
                 for (int k = 0; k < 8; k++) {
                     shape = Shapes.join(shape, box(facing, 0, 0, k / 8.0, 1, 1.0 - k / 8.0, (k + 1) / 8.0),

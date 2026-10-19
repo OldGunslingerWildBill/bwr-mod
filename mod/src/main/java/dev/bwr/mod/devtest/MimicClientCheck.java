@@ -123,6 +123,7 @@ public final class MimicClientCheck {
             case VERTICAL -> BwrBlocks.CONTROL_PANEL_VERTICAL.get();
             case BENCHBOARD -> BwrBlocks.CONTROL_PANEL_BENCHBOARD.get();
             case CONSOLE -> BwrBlocks.CONTROL_PANEL_CONSOLE.get();
+            case BACK_PANEL -> BwrBlocks.CONTROL_PANEL_BACK.get();
         };
         // A floor and clear air around the wall, so the picture is of the wall.
         for (BlockPos p : BlockPos.betweenClosed(wall.offset(-columns - 6, -rows - 8, -12), wall.offset(8, rows + 6, 6))) {

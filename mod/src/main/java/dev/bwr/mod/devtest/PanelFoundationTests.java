@@ -200,6 +200,7 @@ public final class PanelFoundationTests {
                 case VERTICAL -> BwrBlocks.CONTROL_PANEL_VERTICAL.get();
                 case BENCHBOARD -> BwrBlocks.CONTROL_PANEL_BENCHBOARD.get();
                 case CONSOLE -> BwrBlocks.CONTROL_PANEL_CONSOLE.get();
+                case BACK_PANEL -> BwrBlocks.CONTROL_PANEL_BACK.get();
             };
             level.setBlock(pos, block.defaultBlockState().setValue(PanelBlock.FACING, facing), 3);
         }
@@ -451,6 +452,29 @@ public final class PanelFoundationTests {
                     "no placement through a missing block");
             s.after(() -> helper.assertTrue(s.drops(BwrItems.LAMP.get()).size() == 1,
                     "the corner lamp item dropped: " + s.items()));
+        });
+    }
+
+    /** The owner's 2 x 2 x 1 m back panel is four full-depth blocks: one board, face at the block front. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void backPanelsAreFullDepthAndJoinIntoOneBoard(GameTestHelper helper) {
+        PanelGeometry.Frame frame = PanelGeometry.frame(PanelType.BACK_PANEL, Direction.NORTH);
+        helper.assertTrue(Math.abs(frame.oz) < 1e-9 && Math.abs(frame.nz + 1) < 1e-9 && Math.abs(frame.vLength - 1) < 1e-9,
+                "the face is upright at the operator side of the block: oz " + frame.oz + ", nz " + frame.nz);
+        Stage.run(helper, 10, s -> {
+            for (int r = 0; r < 2; r++) {
+                for (int c = 0; c < 2; c++) {
+                    s.panel(s.at(c, r), PanelType.BACK_PANEL, FACING);
+                }
+            }
+            helper.assertTrue(s.level.getBlockState(s.at(0, 0)).getCollisionShape(s.level, s.at(0, 0)).bounds()
+                    .equals(new net.minecraft.world.phys.AABB(0, 0, 0, 1, 1, 1)), "a back panel block is a full block");
+            // A 6 x 6 lamp on the corner covers all four blocks, so they are one board.
+            helper.assertTrue(s.place(BwrItems.LAMP.get(), 1, s.at(0, 0), 15, 15) == PanelGroup.Result.OK, "corner straddle");
+            PanelBlockEntity first = s.be(s.at(0, 0));
+            int id = first.owned().get(0).id();
+            helper.assertTrue(s.be(s.at(1, 0)).claimAt(0, 15).id() == id && s.be(s.at(0, 1)).claimAt(15, 0).id() == id
+                    && s.be(s.at(1, 1)).claimAt(0, 0).id() == id, "all four back panel blocks reserve the lamp");
         });
     }
 

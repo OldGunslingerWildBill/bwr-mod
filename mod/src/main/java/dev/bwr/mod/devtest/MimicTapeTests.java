@@ -252,6 +252,7 @@ public final class MimicTapeTests {
                 case VERTICAL -> BwrBlocks.CONTROL_PANEL_VERTICAL.get();
                 case BENCHBOARD -> BwrBlocks.CONTROL_PANEL_BENCHBOARD.get();
                 case CONSOLE -> BwrBlocks.CONTROL_PANEL_CONSOLE.get();
+                case BACK_PANEL -> BwrBlocks.CONTROL_PANEL_BACK.get();
             };
             level.setBlock(pos, block.defaultBlockState().setValue(PanelBlock.FACING, facing), 3);
         }

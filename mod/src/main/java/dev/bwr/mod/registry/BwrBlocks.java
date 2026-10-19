@@ -403,6 +403,9 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.panel.PanelBlock> CONTROL_PANEL_CONSOLE =
             BLOCKS.register("control_panel_console",
                     () -> new dev.bwr.mod.panel.PanelBlock(panelBoard(), dev.bwr.mod.panel.PanelType.CONSOLE));
+    public static final DeferredBlock<dev.bwr.mod.panel.PanelBlock> CONTROL_PANEL_BACK =
+            BLOCKS.register("control_panel_back",
+                    () -> new dev.bwr.mod.panel.PanelBlock(panelBoard(), dev.bwr.mod.panel.PanelType.BACK_PANEL));
 
     // --- Control-room furniture (ROOM-FURNITURE.md): decorative, no block entities ---------------------
 

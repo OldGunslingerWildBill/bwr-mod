@@ -18,12 +18,15 @@ import net.minecraft.core.Direction;
  *       operator.</li>
  *   <li>{@link #CONSOLE}: a 15 degree desk; the slope does not land on the block
  *       grid, so a console group is a single row.</li>
+ *   <li>{@link #BACK_PANEL}: a full-depth upright board (the owner's 2 x 2 x 1 m back panel is four of these);
+ *       it joins like {@link #VERTICAL}, with the face at the front of the block.</li>
  * </ul>
  */
 public enum PanelType {
     VERTICAL("control_panel_vertical", "PNL"),
     BENCHBOARD("control_panel_benchboard", "BNC"),
-    CONSOLE("control_panel_console", "CON");
+    CONSOLE("control_panel_console", "CON"),
+    BACK_PANEL("control_panel_back", "BCK");
 
     private final String registryName;
     private final String shortName;
@@ -52,7 +55,7 @@ public enum PanelType {
      */
     public BlockPos nextRow(BlockPos pos, Direction facing) {
         return switch (this) {
-            case VERTICAL -> pos.below();
+            case VERTICAL, BACK_PANEL -> pos.below();
             case BENCHBOARD -> pos.below().relative(facing);
             case CONSOLE -> null;
         };
@@ -61,7 +64,7 @@ public enum PanelType {
     /** The block one group row further up the face, or {@code null}. */
     public BlockPos previousRow(BlockPos pos, Direction facing) {
         return switch (this) {
-            case VERTICAL -> pos.above();
+            case VERTICAL, BACK_PANEL -> pos.above();
             case BENCHBOARD -> pos.above().relative(facing.getOpposite());
             case CONSOLE -> null;
         };
