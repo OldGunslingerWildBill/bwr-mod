@@ -81,13 +81,13 @@ final class PanelModelShowcase {
             {40, 32}, {30, 9}, {30, 27}, {70, 22}, {70, 52}, {40, 32}, {40, 32}, {22, 14}, {60, 14}, {68, 44}, {19, 56},
             {22, 14}};
     private static final double[] DISTANCE = {4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 1.7, 1.5, 1.8, 2.6,
-            4.2, 1.9, 1.9, 2.4, 1.2, 4.2, 4.2, 1.9, 1.9, 1.9, 1.5, 0.75};
+            4.2, 1.9, 1.9, 2.4, 1.2, 4.2, 4.2, 1.9, 1.9, 1.9, 1.5, 1.05};
     /**
      * How far the camera stands to the side (blocks toward +X, the board's left as seen from the front) and above the
      * focus: zero but for the bar gauge side view, which looks along the narrow range trio from the left and a little
      * above so the curve of the faces shows against the caps and the panel.
      */
-    private static final double[] SIDE = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.45};
+    private static final double[] SIDE = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.1};
     private static final double[] RISE = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.35};
 
     static boolean night(int stage) {

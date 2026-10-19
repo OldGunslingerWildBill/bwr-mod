@@ -113,12 +113,12 @@ def bar_gauge_parts(channel):
 
     right = cx
     for lo, hi, rgb in ((0, 10, "A80E0E"), (10, 20, "C4B02A"), (45, 55, "C4B02A"), (55, 60, "A80E0E")):
-        strip(1.86 * CM, right, lo / 60.0, hi / 60.0, 0.01, rgb, 4)
+        strip(1.90 * CM, right, lo / 60.0, hi / 60.0, 0.01, rgb, 4)
     for v in range(0, 61, 5):
         f, d = v / 60.0, 0.06 / 60.0
-        strip((1.72 if v % 10 == 0 else 2.10) * CM, right, f - d, f + d, 0.02, "141414", 1)
+        strip((1.80 if v % 10 == 0 else 2.12) * CM, right, f - d, f + d, 0.02, "141414", 1)
         if v % 10 == 0:
-            strip(0.75 * CM, 1.55 * CM, f - 3 * d, f + 3 * d, 0.02, "3A3A3A", 1)
+            strip(0.85 * CM, 1.65 * CM, f - 3 * d, f + 3 * d, 0.02, "3A3A3A", 1)
     parts.append({"role": "paint", "faces": [{"v": v, "c": rgb} for v, rgb in printed]})
     return parts, case["footprint"]["w"], case["footprint"]["h"]
 

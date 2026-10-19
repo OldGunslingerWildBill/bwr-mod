@@ -77,12 +77,12 @@ public final class BarGaugeFace {
     static final float TAG_Z = 0.15f * CM;
     // ---- the printed scale, across the face (case model x): the numbers' right end, the left ends of the major ticks,
     // the bands and the minor ticks; all of them run to the channel's left edge.
-    static final float NUMBERS_RIGHT = 1.60f * CM;
-    public static final float TICK_LEFT = 1.72f * CM;
-    static final float BAND_LEFT = 1.86f * CM;
-    static final float MINOR_LEFT = 2.10f * CM;
+    static final float NUMBERS_RIGHT = 1.70f * CM;
+    public static final float TICK_LEFT = 1.80f * CM;
+    static final float BAND_LEFT = 1.90f * CM;
+    static final float MINOR_LEFT = 2.12f * CM;
     /** Largest cap heights of the numbers and the units letters, and the units' letter pitch (the picture's). */
-    private static final float NUMBER_CAP = 0.47f * CM;
+    private static final float NUMBER_CAP = 0.52f * CM;
     private static final float UNIT_CAP = 0.42f * CM;
     private static final float UNIT_PITCH = 0.83f * CM;
     /** Real thickness of the ticks (major, minor), and the least they may be in cells so they never vanish. */
