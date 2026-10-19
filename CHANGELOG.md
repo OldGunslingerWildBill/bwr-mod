@@ -8,6 +8,7 @@
 - Added gauge **Power units** (Raw, W, kW, MW; kJ and MJ for stored energy) through the existing binding scale, `feToJoules` (default 2.5), and *Fit range*.
 - Added **CC port bindings** (CC:Tweaked only): a machine gets a port 0000 to 9999 set by hand (`setPort(n)` or its Networking screen), and a panel input can read a signal of the machine on a port of its CC wired network. Two machines on one port read no signal. Every machine peripheral also has `getName`, `setName`, `getPort` and `setPort`.
 - The network protocol version is now 21.
+- The **bar gauge** is curved like the owner's CAD part: a real case 5 by 20 cm (kept to those proportions and centred in its size) whose white face bulges 3 cm along an arc between raised side rails, grey top and bottom caps (a dark dot on the bottom one) and the tag plate above. The ticks, colour bands, numbers and units are printed on the curved face and lean with it; the pointer rides the arc in its black channel, still reading exactly against the ticks. Band colours offer **Nominal** (white), **Caution** (yellow) and **Danger** (red) beside the colour code. Saves are unchanged.
 
 ## 0.1.0-alpha.32 (unreleased) — Full core display, rod select matrix and SRV switches
 

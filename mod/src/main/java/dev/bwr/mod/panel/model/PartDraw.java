@@ -38,16 +38,35 @@ public final class PartDraw {
      */
     public static void emit(QuadSink sink, BakedPanelModel.Part part, Placement place, float angleDeg, float slide,
                             int baseRgb, float brightness, boolean emissive, float[] scratch) {
+        float distance = part.hasTravel && slide != 0.0f ? part.travel * slide : 0.0f;
+        emit(sink, part, place, part.hasPivot ? angleDeg : 0.0f, part.pivotX, part.pivotY, part.pivotZ,
+                part.axisX, part.axisY, part.axisZ, part.axisX * distance, part.axisY * distance, part.axisZ * distance,
+                baseRgb, brightness, emissive, scratch);
+    }
+
+    /**
+     * Emits every face of {@code part} turned {@code angleDeg} about the line through {@code (y, z) = (pivotY, pivotZ)}
+     * parallel to the model's x axis, whatever pivot or travel the part has of its own: the bar gauge's pointer, which
+     * rides the arc of the curved face about that arc's axis behind the panel (where a model file may not put a pivot).
+     * A positive angle turns the part up the face.
+     */
+    public static void emitTurnedAboutX(QuadSink sink, BakedPanelModel.Part part, Placement place, float angleDeg,
+                                        float pivotY, float pivotZ, int baseRgb, float brightness, boolean emissive,
+                                        float[] scratch) {
+        emit(sink, part, place, angleDeg, 0.0f, pivotY, pivotZ, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, baseRgb, brightness,
+                emissive, scratch);
+    }
+
+    private static void emit(QuadSink sink, BakedPanelModel.Part part, Placement place, float angleDeg,
+                             float px, float py, float pz, float ax, float ay, float az, float tx, float ty, float tz,
+                             int baseRgb, float brightness, boolean emissive, float[] scratch) {
         // Rotation matrix about the pivot (identity when there is nothing to turn).
         float r00 = 1, r01 = 0, r02 = 0, r10 = 0, r11 = 1, r12 = 0, r20 = 0, r21 = 0, r22 = 1;
-        if (part.hasPivot && angleDeg != 0.0f) {
+        if (angleDeg != 0.0f) {
             double radians = Math.toRadians(angleDeg);
             float c = (float) Math.cos(radians);
             float s = (float) Math.sin(radians);
             float k = 1.0f - c;
-            float ax = part.axisX;
-            float ay = part.axisY;
-            float az = part.axisZ;
             r00 = c + k * ax * ax;
             r01 = k * ax * ay - s * az;
             r02 = k * ax * az + s * ay;
@@ -58,18 +77,6 @@ public final class PartDraw {
             r21 = k * az * ay + s * ax;
             r22 = c + k * az * az;
         }
-        float tx = 0;
-        float ty = 0;
-        float tz = 0;
-        if (part.hasTravel && slide != 0.0f) {
-            float distance = part.travel * slide;
-            tx = part.axisX * distance;
-            ty = part.axisY * distance;
-            tz = part.axisZ * distance;
-        }
-        float px = part.pivotX;
-        float py = part.pivotY;
-        float pz = part.pivotZ;
         float scale = place.scale;
         float rowScale = place.rowScale;
         float ox = place.offsetX;

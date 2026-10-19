@@ -71,15 +71,24 @@ final class PanelModelShowcase {
             "baked-closeup-round-meter", "baked-closeup-edgewise-meters", "baked-srv-overview",
             "baked-srv-closeup-selector-knob", "baked-srv-closeup-selector-lever", "baked-srv-closeup-lamps",
             "baked-srv-closeup-guarded-button", "baked-srv-night", "baked-owner-overview", "baked-owner-closeup-narrow-trio",
-            "baked-owner-closeup-wide-and-pressure", "baked-owner-closeup-rps-and-push-turn", "baked-owner-closeup-srv-switches"};
+            "baked-owner-closeup-wide-and-pressure", "baked-owner-closeup-rps-and-push-turn", "baked-owner-closeup-srv-switches",
+            "baked-owner-bar-gauge-side"};
     /** The group each stage shows. */
-    private static final int[] GROUP_OF = {0, 1, 2, 3, 4, 5, 6, 4, 0, 2, 5, 6, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8};
+    private static final int[] GROUP_OF = {0, 1, 2, 3, 4, 5, 6, 4, 0, 2, 5, 6, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8};
     /** The cell (within the group) the camera looks at, and how far away it stands in blocks. */
     private static final int[][] FOCUS = {{40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32}, {40, 32},
             {17 + 6, 22 + 8}, {17 + 6, 2 + 7}, {20 + 8, 2 + 8}, {10 + 4, 2 + 12},
-            {40, 32}, {30, 9}, {30, 27}, {70, 22}, {70, 52}, {40, 32}, {40, 32}, {22, 14}, {60, 14}, {68, 44}, {19, 56}};
+            {40, 32}, {30, 9}, {30, 27}, {70, 22}, {70, 52}, {40, 32}, {40, 32}, {22, 14}, {60, 14}, {68, 44}, {19, 56},
+            {22, 14}};
     private static final double[] DISTANCE = {4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 1.7, 1.5, 1.8, 2.6,
-            4.2, 1.9, 1.9, 2.4, 1.2, 4.2, 4.2, 1.9, 1.9, 1.9, 1.5};
+            4.2, 1.9, 1.9, 2.4, 1.2, 4.2, 4.2, 1.9, 1.9, 1.9, 1.5, 1.05};
+    /**
+     * How far the camera stands to the side (blocks toward +X, the board's left as seen from the front) and above the
+     * focus: zero but for the bar gauge side view, which looks along the narrow range trio from the left and a little
+     * above so the curve of the faces shows against the caps and the panel.
+     */
+    private static final double[] SIDE = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.1};
+    private static final double[] RISE = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.35};
 
     static boolean night(int stage) {
         return stage == 7 || stage == 17;
@@ -100,7 +109,7 @@ final class PanelModelShowcase {
 
     /** Where the camera stands (its feet) for a stage: facing the board from the north, eyes level with the focus. */
     static Vec3 camera(int stage) {
-        return new Vec3(worldX(GROUP_OF[stage], FOCUS[stage][0]), worldY(FOCUS[stage][1]) - 1.62,
+        return new Vec3(worldX(GROUP_OF[stage], FOCUS[stage][0]) + SIDE[stage], worldY(FOCUS[stage][1]) - 1.62 + RISE[stage],
                 CORNER.getZ() + 0.75 - DISTANCE[stage]);
     }
 

@@ -75,6 +75,28 @@ public final class BarGaugeTests {
         static float maxY(float[] q) {
             return Math.max(Math.max(q[1], q[4]), Math.max(q[7], q[10]));
         }
+
+        /**
+         * Unbroken runs of quads along the scale, as {min row, max row}, the lowest on the scale (largest rows) first: a
+         * band on the curved face is several quads end to end, and two bands of one colour are separate runs.
+         */
+        static List<float[]> runs(List<float[]> quads) {
+            List<float[]> spans = new ArrayList<>();
+            for (float[] q : quads) {
+                spans.add(new float[] {minY(q), maxY(q)});
+            }
+            spans.sort((a, b) -> Float.compare(b[1], a[1]));
+            List<float[]> out = new ArrayList<>();
+            for (float[] span : spans) {
+                float[] last = out.isEmpty() ? null : out.get(out.size() - 1);
+                if (last != null && span[1] >= last[0] - 1.0e-4f) {
+                    last[0] = Math.min(last[0], span[0]);
+                } else {
+                    out.add(span.clone());
+                }
+            }
+            return out;
+        }
     }
 
     private static GaugeData bar() {
@@ -267,12 +289,14 @@ public final class BarGaugeTests {
         Recorder recorder = new Recorder();
         face.emitStatic(recorder);
         helper.assertTrue(recorder.of(BarGaugeFace.INK).size() == 61, "narrow scale ticks: " + recorder.of(BarGaugeFace.INK).size());
-        helper.assertTrue(recorder.of(GaugeData.BAND_RED).size() == 2 && recorder.of(GaugeData.BAND_YELLOW).size() == 2,
+        // Each band follows the curved face in several quads: count unbroken runs of a colour along the scale.
+        List<float[]> redRuns = Recorder.runs(recorder.of(GaugeData.BAND_RED));
+        helper.assertTrue(redRuns.size() == 2 && Recorder.runs(recorder.of(GaugeData.BAND_YELLOW)).size() == 2,
                 "narrow bands: 2 red, 2 yellow");
-        float[] firstRed = recorder.of(GaugeData.BAND_RED).get(0);
-        helper.assertTrue(Math.abs(Recorder.maxY(firstRed) - face.row(0.0)) < 1.0e-4f
-                        && Math.abs(Recorder.minY(firstRed) - face.row(10.0 / 60.0)) < 1.0e-4f,
-                "the first red band runs from 0 to 10 inches: " + Recorder.minY(firstRed) + ".." + Recorder.maxY(firstRed));
+        float[] firstRed = redRuns.get(0);
+        helper.assertTrue(Math.abs(firstRed[1] - face.row(0.0)) < 1.0e-4f
+                        && Math.abs(firstRed[0] - face.row(10.0 / 60.0)) < 1.0e-4f,
+                "the first red band runs from 0 to 10 inches: " + firstRed[0] + ".." + firstRed[1]);
         List<String> numbers = numerals(face);
         helper.assertTrue(numbers.equals(List.of("0", "10", "20", "30", "40", "50", "60")), "narrow numbers: " + numbers);
         helper.assertTrue(units(face).equals("INCHES"), "units one letter per line: " + units(face));
@@ -285,7 +309,7 @@ public final class BarGaugeTests {
         wideFace.emitStatic(wideRecorder);
         helper.assertTrue(numerals(wideFace).equals(List.of("-150", "-120", "-90", "-60", "-30", "0", "30", "60")),
                 "wide numbers: " + numerals(wideFace));
-        helper.assertTrue(wideRecorder.of(GaugeData.BAND_RED).size() == 2 && wideRecorder.of(GaugeData.BAND_YELLOW).isEmpty(),
+        helper.assertTrue(Recorder.runs(wideRecorder.of(GaugeData.BAND_RED)).size() == 2 && wideRecorder.of(GaugeData.BAND_YELLOW).isEmpty(),
                 "wide bands: two red");
         helper.assertTrue(wideRecorder.of(BarGaugeFace.INK).size() == 71, "wide scale ticks: " + wideRecorder.of(BarGaugeFace.INK).size());
         // The nice steps for other ranges, including a 0 to 12 pressure scale numbered every 2 as in the reference picture.

@@ -304,12 +304,28 @@ public final class PanelRenderContext implements QuadSink {
      */
     public void textRotated(String text, float x, float y, float scale, float rotDegrees, float z, int rgb,
                             boolean emissive, float dx, float dy) {
+        textRotated(text, x, y, scale, rotDegrees, 0.0f, z, rgb, emissive, dx, dy);
+    }
+
+    /**
+     * {@link #textRotated(String, float, float, float, float, float, int, boolean, float, float)} on a surface that is
+     * curved along its length: the text also leans back by {@code tiltDegrees} about the row line through its anchor,
+     * so it lies on the tangent of the surface there (positive where the surface faces up). The tilt is a true angle on
+     * a sloped board too: it is applied after the rows are brought to real lengths.
+     */
+    public void textRotated(String text, float x, float y, float scale, float rotDegrees, float tiltDegrees, float z, int rgb,
+                            boolean emissive, float dx, float dy) {
         double u = originU + fittedX(x);
         double v = originV + fittedY(y);
         textMatrix.set(pose.pose());
         textMatrix.translate((float) frame.x(u, v, fittedZ(z)), (float) frame.y(u, v, fittedZ(z)), (float) frame.z(u, v, fittedZ(z)));
         textMatrix.mul(basis);
         textMatrix.scale(1.0f, 1.0f / rowAspect(), 1.0f);
+        if (tiltDegrees != 0.0f) {
+            // Text space runs y down the face and z into it: a surface facing up has its downward tangent leaning out of
+            // the panel, which is a turn of minus the tilt about x.
+            textMatrix.rotateX((float) Math.toRadians(-tiltDegrees));
+        }
         if (rotDegrees != 0.0f) {
             textMatrix.rotateZ((float) Math.toRadians(rotDegrees));
         }

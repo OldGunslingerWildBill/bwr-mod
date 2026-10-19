@@ -10,8 +10,9 @@ come from the material names. Each model is turned into the panel_export convent
 the face budget (planar dissolve first, then collapse), parts are tagged with their roles, pivots and travel, legend
 anchors are added, and the model is exported to mod/src/main/resources/assets/bwr/models/panel/<id>.json.
 
-The SRV switches and the RPS trip assembly are not decimated: they are rebuilt as clean solids from the dimensions
-measured on their OBJ files (see "rebuilt solids" below), and the bar gauge is built to the owner's simulator picture.
+The SRV switches, the RPS trip assembly and the bar gauge are not decimated: they are rebuilt as clean solids from
+the dimensions measured on their OBJ files (see "rebuilt solids" below); the bar gauge, two models (its curved case,
+and the channel with the pointer), is laid out like the owner's simulator picture.
 """
 import math
 import os
@@ -435,37 +436,232 @@ def build_wl2():
     return "wl2_selector", w, h, "Owner's CAD model WL-2 B.obj (Fusion)", 700
 
 
-def build_bar_gauge():
-    """The bar gauge's channel and pointer, built to the owner's simulator picture
-    (references/gauges/owner-bar-gauge-target-look.png), not to bar-gauge.obj: the CAD part is a curved black bulge
-    across the whole face with the pointer on its left edge pointing right, the picture (the look the owner wants) a
-    narrow flat black channel right of the scale with a grey triangular pointer inside it, pointing left at the ticks.
+# ---------------------------------------------------------------- the curved bar gauge
+#
+# Two models built to the owner's CAD part bar-gauge.obj and laid out like the owner's simulator picture
+# (references/gauges/owner-bar-gauge-target-look.png):
+#
+#   bar_gauge_case  the 5 x 20 cm case: the white face curved along its length on the CAD's arc, raised side rails
+#                   on the CAD rim's arc, grey top and bottom caps (a dark round dot on the bottom one) and the tag
+#                   plate above. The face is left open over the channel.
+#   bar_gauge       the narrow black channel that fills that slot, following the arc, and the grey pointer in it
+#                   pointing left at the scale.
+#
+# Measured on the OBJ (centimetres, in the rebuild frame: x right, y up, z out; y = 0 is the middle of the length):
+# the satin rim is a circular arc about an axis parallel to x through y = 0, z = -14, of radius sqrt(10^2 + 14^2) =
+# 17.205 (it meets the panel at y = +-10 and stands 3.205 at the middle); the enamel face is the same arc 0.2 lower
+# (radius 17.005). obj_arc() refits both every build and stops it if the file changes.
+#
+# The game prints the scale, the bands, the numbers and the units on the curved face (BarGaugeFace), and places the
+# two models by the same numbers, written there in inches (CASE_W, CHANNEL_X/Y, ARC_Y/Z, FACE_R ...): keep the two in
+# step. CurvedBarGaugeTests checks the shipped files against BarGaugeFace.
+#
+# The pointer is modelled at the scale minimum, lying on the arc, with its tip at the middle of its own height.
+# Its travel (15.2 cm) is the rise of the pointer from the scale minimum to the maximum as seen head-on; the game moves
+# it along the arc, turning it about the arc's axis, so that seen head-on its height is linear in the reading.
 
-    Inches, authored directly: the channel is 0.6 wide, 8 long and stands 0.15 off the panel (in the picture it is
-    about a fifteenth of the face's height); the pointer is a low two-faceted triangle on the channel (light upper
-    facet, darker lower one, as in the picture) spanning most of its width, modelled at the scale minimum 0.3 above
-    the channel foot and travelling 7.4 up to the maximum. The case, the white face, the caps, the scale, the units and
-    the tag plate are printed around this model by the game (BarGaugeFace), which reads the pointer's travel and the
-    channel's height from this file."""
+ARC_Z = -14.0                       # the arc's axis, behind the panel
+RIM_R = math.sqrt(10.0 ** 2 + 14.0 ** 2)
+FACE_R = RIM_R - 0.2                # the face, 0.2 under the rim as in the CAD
+CHANNEL_R = FACE_R - 0.12           # the channel floor, a shallow slot in the face
+CASE_W, HALF_LEN = 5.0, 10.0        # the case, 5 x 20
+CAP = 1.85                          # cap length at each end (so the face shows between y = +-8.15)
+FACE_HALF = HALF_LEN - CAP
+CAP_Z, CHAMFER = 1.5, 0.15          # the caps are flat-topped blocks 1.5 high with chamfered long edges
+RAIL = 0.4                          # side rails x 0..0.4 and 4.6..5, as the CAD rim
+CHANNEL_X0, CHANNEL_X1 = 2.52, 3.60  # the channel, a little right of the middle (0.50 to 0.72 of the width)
+TAG_GAP, TAG_H, TAG_X0, TAG_X1, TAG_Z = 0.25, 0.8, 0.35, 4.65, 0.15
+TOP = HALF_LEN + TAG_GAP + TAG_H    # the footprint's top edge
+SCALE_HALF = FACE_HALF - 0.55       # the scale's ends, 0.55 in from the caps (the picture's margin)
+SEGMENTS = 24                       # facets along the arc
+POINTER_TIP, POINTER_BASE, POINTER_HALF = 0.05, 1.03, 0.4  # across the channel from its left edge; half its height
+CASE_GREY, CAP_GREY, FACE_WHITE, CHANNEL_BLACK = "C3C6CB", "A4A8B2", "F6F5EE", "0E0E0E"
+
+
+def obj_arc(file_name, x, material):
+    """(centre y, centre z, radius) of the circle through the OBJ's vertices at x of faces in material, rebuild frame."""
+    verts, faces, cur = [], [], None
+    with open(os.path.join(OBJ_DIR, file_name), encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            if line.startswith("v "):
+                vx, vy, vz = (float(t) for t in line.split()[1:4])
+                verts.append((vx, -vz, vy))
+            elif line.startswith("usemtl"):
+                cur = line.split(None, 1)[1].strip()
+            elif line.startswith("f ") and material in (cur or ""):
+                faces.append([int(t.split("/")[0]) - 1 for t in line.split()[1:]])
+    pts = sorted({(round(verts[i][1], 6), round(verts[i][2], 6)) for f in faces for i in f
+                  if abs(verts[i][0] - x) < 1e-4 and verts[i][2] > 0.05})
+    (y1, z1), (y2, z2), (y3, z3) = pts[0], pts[len(pts) // 2], pts[-1]
+    d = 2 * (y1 * (z2 - z3) + y2 * (z3 - z1) + y3 * (z1 - z2))
+    cy = ((y1 * y1 + z1 * z1) * (z2 - z3) + (y2 * y2 + z2 * z2) * (z3 - z1) + (y3 * y3 + z3 * z3) * (z1 - z2)) / d
+    cz = ((y1 * y1 + z1 * z1) * (y3 - y2) + (y2 * y2 + z2 * z2) * (y1 - y3) + (y3 * y3 + z3 * z3) * (y2 - y1)) / d
+    r = math.hypot(y1 - cy, z1 - cz)
+    worst = max(abs(math.hypot(py - cy, pz - cz) - r) for py, pz in pts)
+    if worst > 1e-3:
+        raise ValueError("%s: the vertices at x %.2f (%s) are not on one circle (off by %.4f)" % (file_name, x, material, worst))
+    return cy, cz, r
+
+
+def check_bar_gauge_obj():
+    """Stops the build when bar-gauge.obj no longer has the dimensions the rebuild below was measured from."""
+    b = obj_bounds("bar-gauge.obj")
+    expect(b, "body", ((0.0, 5.0), (-10.0, 10.0), (-0.2, 3.185)), "bar-gauge.obj")
+    expect(b, "pointer", ((0.398, 1.406), (-0.527, 0.574), (3.022, 3.209)), "bar-gauge.obj")
+    for x, material, radius in ((0.0, "Steel", RIM_R), (0.4, "Enamel", FACE_R)):
+        cy, cz, r = obj_arc("bar-gauge.obj", x, material)
+        if abs(cy) > 2e-3 or abs(cz - ARC_Z) > 2e-3 or abs(r - radius) > 2e-3:
+            raise ValueError("bar-gauge.obj %s arc: centre (%.4f, %.4f) radius %.4f is not the measured (0, %.1f) %.4f"
+                             % (material, cy, cz, r, ARC_Z, radius))
+
+
+def arc_angles(radius, half=FACE_HALF, n=SEGMENTS):
+    """The facet angles (radians, up positive) of an arc of this radius that ends at y = +-half."""
+    a = math.asin(half / radius)
+    return [-a + 2 * a * i / n for i in range(n + 1)]
+
+
+def on_arc(radius, angle):
+    """(y, z) of the point at this angle on the arc of this radius."""
+    return radius * math.sin(angle), ARC_Z + radius * math.cos(angle)
+
+
+def arc_strip(solid, x0, x1, radius, colour):
+    """A strip of the curved surface between x0 and x1."""
+    angles = arc_angles(radius)
+    for a, b in zip(angles, angles[1:]):
+        (ya, za), (yb, zb) = on_arc(radius, a), on_arc(radius, b)
+        m = (a + b) / 2
+        solid.face([(x0, ya, za), (x1, ya, za), (x1, yb, zb), (x0, yb, zb)], colour, (0, math.sin(m), math.cos(m)))
+
+
+def arc_wall(solid, x, low, high, outward_x, colour):
+    """A wall in the plane x between two arcs (high a radius, or None for the panel itself)."""
+    lows = arc_angles(low) if low is not None else None
+    highs = arc_angles(high)
+    for i in range(SEGMENTS):
+        ya, za = on_arc(high, highs[i])
+        yb, zb = on_arc(high, highs[i + 1])
+        if lows is None:
+            bottom = [(x, yb, 0.0), (x, ya, 0.0)]
+        else:
+            (yc, zc), (yd, zd) = on_arc(low, lows[i + 1]), on_arc(low, lows[i])
+            bottom = [(x, yc, zc), (x, yd, zd)]
+        solid.face([(x, ya, za), (x, yb, zb)] + bottom, colour, (outward_x, 0, 0))
+
+
+def cap_block(solid, y_inner, y_outer, colour):
+    """A cap across the case from y_inner (against the face) to y_outer, flat-topped with both long edges chamfered."""
+    s = 1.0 if y_outer > y_inner else -1.0
+    profile = [(y_inner, 0.0), (y_inner, CAP_Z - CHAMFER), (y_inner + s * CHAMFER, CAP_Z),
+               (y_outer - s * CHAMFER, CAP_Z), (y_outer, CAP_Z - CHAMFER), (y_outer, 0.0)]
+    for (ya, za), (yb, zb) in zip(profile, profile[1:]):
+        # outward: away from the cap's middle line in the y-z plane
+        ny, nz = (zb - za) * s, (ya - yb) * s
+        solid.face([(0.0, ya, za), (CASE_W, ya, za), (CASE_W, yb, zb), (0.0, yb, zb)], colour, (0, -ny, -nz))
+    for x, nx in ((0.0, -1.0), (CASE_W, 1.0)):
+        solid.face([(x, y, z) for y, z in profile], colour, (nx, 0, 0))
+
+
+def build_bar_gauge_case():
+    """The bar gauge's case (see the notes above): face, rails, caps with the dot, tag plate."""
+    check_bar_gauge_obj()
     px.clear_scene()
-    w, h, top, end = 0.6, 8.0, 0.15, 0.3
-    tip_x, base_x, half = 0.08, 0.54, 0.225
-    frame = Frame(0.0, 0.0, w, h, unit=1.0, margin=0.0)
+    frame = Frame(0.0, TOP, CASE_W, TOP + HALF_LEN, margin=0.0)
+    make_object("case", case_solid(), frame)
+    return "bar_gauge_case", frame.w, frame.h, \
+        "Owner's CAD model bar-gauge.obj (Fusion), curved face and rim on its arc; owner's simulator layout", 600
+
+
+def case_solid():
+    body = Solid()
+    # the white face either side of the channel slot, and the rails on the rim's arc
+    arc_strip(body, RAIL, CHANNEL_X0, FACE_R, FACE_WHITE)
+    arc_strip(body, CHANNEL_X1, CASE_W - RAIL, FACE_R, FACE_WHITE)
+    arc_strip(body, 0.0, RAIL, RIM_R, CASE_GREY)
+    arc_strip(body, CASE_W - RAIL, CASE_W, RIM_R, CASE_GREY)
+    # the rails' inner steps down to the face, and the case's sides down to the panel
+    arc_wall(body, RAIL, FACE_R, RIM_R, 1.0, CASE_GREY)
+    arc_wall(body, CASE_W - RAIL, FACE_R, RIM_R, -1.0, CASE_GREY)
+    arc_wall(body, 0.0, None, RIM_R, -1.0, CASE_GREY)
+    arc_wall(body, CASE_W, None, RIM_R, 1.0, CASE_GREY)
+    cap_block(body, FACE_HALF, HALF_LEN, CAP_GREY)
+    cap_block(body, -FACE_HALF, -HALF_LEN, CAP_GREY)
+    # the round dark dot in the middle of the bottom cap
+    lathe(body, CASE_W / 2, -(FACE_HALF + HALF_LEN) / 2, [(0.28, CAP_Z), (0.28, CAP_Z + 0.04), (0.0, CAP_Z + 0.04)], 16,
+          "2B2C2E")
+    prism(body, rect(TAG_X0, HALF_LEN + TAG_GAP, TAG_X1, TOP), 0.0, TAG_Z, "E6E6E1", "C9C9C4")
+    return body
+
+
+def pointer_solid():
+    """The pointer at the scale minimum: a low two-faceted wedge pointing left, its tip a single point at the middle of
+    its height (the reading point), turned about the arc's axis down to where it reads the scale minimum."""
+    w_bot, w_edge, w_ridge = CHANNEL_R + 0.005, FACE_R + 0.02, FACE_R + 0.07
+    # With the tip half way between the pointer's lowest and highest faces, its height is the middle of the pointer's
+    # own extent at any turn below the middle (the extremes are a base corner on each face).
+    w_tip = (w_bot + w_edge) / 2
+    turn = math.asin(-SCALE_HALF / w_tip)
+    tip_x, base_x, half = CHANNEL_X0 + POINTER_TIP, CHANNEL_X0 + POINTER_BASE, POINTER_HALF
+
+    def placed(x, v, w):
+        return x, v * math.cos(turn) + w * math.sin(turn), ARC_Z - v * math.sin(turn) + w * math.cos(turn)
+
+    tip = placed(tip_x, 0.0, w_tip)
+    upper, lower, ridge = placed(base_x, half, w_edge), placed(base_x, -half, w_edge), placed(base_x, 0.0, w_ridge)
+    upper_bot, lower_bot = placed(base_x, half, w_bot), placed(base_x, -half, w_bot)
+    up = (0.0, math.cos(turn), -math.sin(turn))     # the arc's up direction at the pointer
+    out = (0.0, math.sin(turn), math.cos(turn))     # out of the face there
+    s = Solid()
+    s.face([tip, ridge, upper], "D0D3D6", tuple(o + 0.3 * u for o, u in zip(out, up)))
+    s.face([tip, lower, ridge], "9A9EA2", tuple(o - 0.3 * u for o, u in zip(out, up)))
+    s.face([upper_bot, lower_bot, lower, ridge, upper], "8E9296", (1, 0, 0))
+    s.face([tip, upper, upper_bot], "B8BCC0", up)
+    s.face([tip, lower_bot, lower], "8E9296", tuple(-u for u in up))
+    return s
+
+
+def build_bar_gauge():
+    """The bar gauge's channel and pointer (see the notes above): the model the game places the scale against."""
+    check_bar_gauge_obj()
+    px.clear_scene()
+    frame = Frame(CHANNEL_X0, FACE_HALF, CHANNEL_X1 - CHANNEL_X0, 2 * FACE_HALF, margin=0.0)
+    make_object("body", channel_solid(), frame)
+    px.tag(make_object("pointer", pointer_solid(), frame), part="needle", role="needle",
+           travel=round(2 * SCALE_HALF * CM, 5), axis=(0, 1, 0))
+    return "bar_gauge", frame.w, frame.h, \
+        "Owner's CAD model bar-gauge.obj (Fusion) and simulator layout: the curved channel and its pointer", 400
+
+
+def channel_solid():
     channel = Solid()
-    prism(channel, [(0.0, -h), (w, -h), (w, 0.0), (0.0, 0.0)], 0.0, top, "101010", "101010")
-    make_object("body", channel, frame)
-    pointer = Solid()
-    yc = -(h - end)
-    edge, ridge = top + 0.012, top + 0.04
-    tip, upper = (tip_x, yc, edge), (base_x, yc + half, edge)
-    lower, mid = (base_x, yc - half, edge), (base_x, yc, ridge)
-    pointer.face([tip, mid, upper], "D0D3D6", (0, 0.3, 1))
-    pointer.face([tip, lower, mid], "9A9EA2", (0, -0.3, 1))
-    pointer.face([(base_x, yc + half, top), (base_x, yc - half, top), lower, mid, upper], "8E9296", (1, 0, 0))
-    pointer.face([(tip_x, yc, top), (base_x, yc + half, top), upper, tip], "B8BCC0", (-half, base_x - tip_x, 0))
-    pointer.face([(tip_x, yc, top), tip, lower, (base_x, yc - half, top)], "8E9296", (-half, tip_x - base_x, 0))
-    px.tag(make_object("pointer", pointer, frame), part="needle", role="needle", travel=h - 2 * end, axis=(0, 1, 0))
-    return "bar_gauge", w, h, "Owner's simulator look (references/gauges/owner-bar-gauge-target-look.png): channel and pointer", 400
+    arc_strip(channel, CHANNEL_X0, CHANNEL_X1, CHANNEL_R, CHANNEL_BLACK)
+    arc_wall(channel, CHANNEL_X0, CHANNEL_R, FACE_R, 1.0, CHANNEL_BLACK)
+    arc_wall(channel, CHANNEL_X1, CHANNEL_R, FACE_R, -1.0, CHANNEL_BLACK)
+    return channel
+
+
+def preview_bar_gauge():
+    """Both models together in the case's frame, with the pointer at the minimum, middle and maximum of the scale."""
+    frame = Frame(0.0, TOP, CASE_W, TOP + HALF_LEN, margin=0.0)
+    w, h = frame.w, frame.h
+    for name, fraction in (("min", 0.0), ("mid", 0.5), ("max", 1.0)):
+        px.clear_scene()
+        make_object("case", case_solid(), frame)
+        make_object("channel", channel_solid(), frame)
+        pointer = make_object("pointer", pointer_solid(), frame)
+        # turned about the arc's axis so the tip rises linearly as seen head-on, as the game does
+        w_tip = (CHANNEL_R + 0.005 + FACE_R + 0.02) / 2
+        rest = math.asin(-SCALE_HALF / w_tip)
+        goal = math.asin((-SCALE_HALF + 2 * SCALE_HALF * fraction) / w_tip)
+        from mathutils import Matrix
+        pivot = (0.0, frame.y(0.0), frame.z(ARC_Z))
+        turn = Matrix.Translation(pivot) @ Matrix.Rotation(-(goal - rest), 4, "X") @ Matrix.Translation(
+            tuple(-c for c in pivot))
+        pointer.data.transform(turn)
+        os.makedirs(PREVIEW_DIR, exist_ok=True)
+        views = ("front", "three_quarter", "side") if name == "mid" else ("front",)
+        px.preview(os.path.join(PREVIEW_DIR, "bar_gauge_assembled_" + name), w, h, views=views)
 
 
 def build_rps_trip():
@@ -513,6 +709,7 @@ BUILDERS = {
     "srv_open_auto_close": lambda: build_rot_switch("rot-swt-open-auto-close.obj", "srv_open_auto_close", 3),
     "wl2_selector": build_wl2,
     "bar_gauge": build_bar_gauge,
+    "bar_gauge_case": build_bar_gauge_case,
     "rps_trip_assembly": build_rps_trip,
 }
 
@@ -526,6 +723,8 @@ def main():
         if "--no-preview" not in args:
             os.makedirs(PREVIEW_DIR, exist_ok=True)
             px.preview(os.path.join(PREVIEW_DIR, model_id), w, h)
+    if "--no-preview" not in args and ("bar_gauge" in only or "bar_gauge_case" in only):
+        preview_bar_gauge()
 
 
 main()

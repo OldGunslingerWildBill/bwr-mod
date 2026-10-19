@@ -10,156 +10,223 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The printed face and case of a bar gauge around its model (a narrow black channel with a grey triangular pointer
- * inside it), laid out like the owner's simulator picture (references/gauges/owner-bar-gauge-target-look.png). It is
- * worked out once per component revision. Top to bottom:
+ * The layout of a bar gauge and the scale printed on its curved face, worked out once per component revision.
+ *
+ * <h3>The gauge</h3>
+ * Two models built from the owner's CAD part (art/models/panel/imported/build.py, bar-gauge.obj) and laid out like the
+ * owner's simulator picture (references/gauges/owner-bar-gauge-target-look.png):
  * <ul>
- *   <li>a small white tag plate carrying the component's label, on the panel above the case;</li>
- *   <li>the grey case: a top cap, the white face between two thin side rails, and a bottom cap with a round dark
- *       screw head in its middle;</li>
- *   <li>on the face, from the left: the numbers (at "nice" steps, 1, 2, 2.5, 3 or 5 times a power of ten, at most
- *       {@link #MAX_MAJORS} of them), the ticks to their right (a minor tick every tenth of a numbered step, half as
- *       long, against the channel), the colour bands as a narrow strip behind the ticks, then the channel a little
- *       right of the middle, and right of the channel the units written down the face one letter per line.</li>
+ *   <li>{@value #CASE_MODEL}: the 5 x 20 cm case, its white face curved along its length on a circular arc about an
+ *       axis 14 cm behind the panel (radius 17.0 cm, standing 3 cm proud at the middle), raised side rails on the CAD
+ *       rim's arc, grey top and bottom caps (a dark dot on the bottom one) and the tag plate above;</li>
+ *   <li>{@code bar_gauge}, the component's own model: the narrow black channel, a little right of the middle, that fills
+ *       the slot in the face and follows the arc, and the grey pointer in it pointing left at the scale.</li>
  * </ul>
- * The channel runs the height of the face. The pointer is the model's {@code needle} part, which slides from its
- * modelled place (the scale minimum) up the model's travel (the scale maximum); the ticks are laid out between those
- * two points, so the pointer always reads against them. Everything is placed through one {@link Placement}, so the
- * face keeps its real proportions on the sloped boards.
+ * The case keeps the CAD's proportions and is centred in the component (the panel shows either side of it, as in the
+ * picture); the channel sits in it where the build put it. Both share one scale, so the arcs meet. The numbers here
+ * are the build's, converted to the model files' inches; BarGaugeTests checks the shipped files against them.
+ *
+ * <h3>The scale</h3>
+ * The pointer is modelled at the scale minimum, and the model's travel is how far it rises to the maximum as seen
+ * head-on; {@link #row} is linear between the two, as the old flat gauge was and as the owner's picture is (its
+ * numbers are evenly spaced). The game moves the pointer along the arc by turning it about the arc's axis
+ * ({@link #pointerTurn}) through exactly the angle that puts its tip on that row. Everything printed is placed the
+ * same way: a mark for scale position {@code f} at radius {@code r} sits at the angle whose height on the panel is
+ * {@code row(f)}, lies on the arc's tangent there, and stands a little above the face so it does not fight it:
+ * <ul>
+ *   <li>ticks: a minor tick every tenth of a numbered step (fewer when they would crowd), majors twice as long, against
+ *       the channel's left edge;</li>
+ *   <li>the colour bands as strips behind the ticks, in pieces of at most {@value #MAX_BAND_STEP_DEG} degrees so they
+ *       follow the curve;</li>
+ *   <li>the numbers left of the ticks at "nice" steps (1, 2, 2.5, 3 or 5 times a power of ten, at most
+ *       {@link #MAX_MAJORS} of them), and the units down the face right of the channel, one letter per line, each
+ *       leaning back with the face ({@link Legends.Item#tilt()});</li>
+ *   <li>the component's label on the tag plate.</li>
+ * </ul>
  */
 public final class BarGaugeFace {
-    static final int CASE = 0xBFC3C7;
+    /** The case model, drawn under the component's own (channel and pointer) model when it is loaded. */
+    public static final String CASE_MODEL = "bar_gauge_case";
     static final int FACE = 0xF6F5EE;
-    /** The tag plate above the case. */
     static final int TAG = 0xE6E6E1;
-    /** The screw head on the bottom cap: dark, but not {@link #INK}, which only the ticks are drawn in. */
-    static final int SCREW = 0x2B2C2E;
+    /** Ticks and numbers; nothing else on the gauge is drawn in it. */
     public static final int INK = 0x141414;
     /** Largest number of numbered ticks on the scale. */
     public static final int MAX_MAJORS = 8;
-    /** Rows above the tag plate, and between it and the case. */
-    private static final float TAG_TOP = 0.1f;
-    private static final float TAG_GAP = 0.2f;
-    /** Tag plate, top cap and bottom cap heights as shares of the component's real height (rows times the row aspect). */
-    private static final float TAG_SHARE = 0.06f;
-    private static final float CAP_TOP_SHARE = 0.075f;
-    private static final float CAP_BOTTOM_SHARE = 0.085f;
-    /** Where the channel's centre sits across the gauge, and the widest it may get, as shares of the width. */
-    private static final float CHANNEL_CENTRE = 0.6f;
-    private static final float CHANNEL_MAX = 0.16f;
-    /** Columns between a number's right end and its tick. */
-    private static final float NUMERAL_GAP = 0.25f;
-    /** Height of the channel when a model does not say (inches above the panel). */
-    private static final float DEFAULT_CHANNEL_TOP = 0.15f;
 
+    private static final float CM = 1.0f / 2.54f;
+    // ---- the gauge as art/models/panel/imported/build.py builds it (centimetres there), in the models' inches
+    /** The case model's footprint. */
+    public static final float CASE_W = 5.0f * CM;
+    public static final float CASE_FOOTPRINT_H = 21.05f * CM;
+    /** Where the channel model's footprint corner sits on the case model's. */
+    public static final float CHANNEL_X = 2.52f * CM;
+    public static final float CHANNEL_Y = 2.90f * CM;
+    /** The arc's axis on the case model (down from its footprint's top edge; elevation) and the face's radius. */
+    public static final float ARC_Y = 11.05f * CM;
+    public static final float ARC_Z = -14.0f * CM;
+    public static final float FACE_R = (float) ((Math.sqrt(10.0 * 10.0 + 14.0 * 14.0) - 0.2) * CM);
+    /** The face between the rails (case model x). */
+    static final float FACE_LEFT = 0.4f * CM;
+    static final float FACE_RIGHT = 4.6f * CM;
+    /** The tag plate: across, down, and its top's elevation. */
+    static final float TAG_X0 = 0.35f * CM;
+    static final float TAG_X1 = 4.65f * CM;
+    static final float TAG_Y0 = 0.0f;
+    static final float TAG_Y1 = 0.8f * CM;
+    static final float TAG_Z = 0.15f * CM;
+    // ---- the printed scale, across the face (case model x): the numbers' right end, the left ends of the major ticks,
+    // the bands and the minor ticks; all of them run to the channel's left edge.
+    static final float NUMBERS_RIGHT = 1.70f * CM;
+    public static final float TICK_LEFT = 1.80f * CM;
+    static final float BAND_LEFT = 1.90f * CM;
+    static final float MINOR_LEFT = 2.12f * CM;
+    /** Largest cap heights of the numbers and the units letters, and the units' letter pitch (the picture's). */
+    private static final float NUMBER_CAP = 0.52f * CM;
+    private static final float UNIT_CAP = 0.42f * CM;
+    private static final float UNIT_PITCH = 0.83f * CM;
+    /** Real thickness of the ticks (major, minor), and the least they may be in cells so they never vanish. */
+    private static final float MAJOR_THICK = 0.11f * CM;
+    private static final float MINOR_THICK = 0.055f * CM;
+    private static final float MAJOR_MIN_CELLS = 0.12f;
+    private static final float MINOR_MIN_CELLS = 0.07f;
+    /** How far the bands, the ticks and the text stand off the face, cells (the renderer lifts text a little more). */
+    public static final float BAND_LIFT = 0.02f;
+    public static final float TICK_LIFT = 0.04f;
+    public static final float TEXT_LIFT = 0.06f;
+    /** Most degrees of arc one quad of a band strip spans. */
+    public static final double MAX_BAND_STEP_DEG = 2.0;
+
+    /** The channel model's placement in the component (the pointer and everything printed are placed through it). */
     public final Placement place;
+    /** The case model's placement: the CAD's proportions, centred in the component. */
+    public final Placement casePlace;
     private final GaugeData data;
-    private final float w;
-    private final float h;
     private final float rowAspect;
-    /** Pointer centre at the scale minimum and maximum, model inches down from the top. */
+    /** Pointer centre at the scale minimum and maximum, channel model inches down from its top. */
     private final float lowY;
     private final float highY;
-    /** Rows: the tag plate's height, the case's top edge, the face's top and bottom edges. */
-    private final float tagRows;
-    private final float caseTop;
-    private final float faceTop;
-    private final float faceBottom;
-    /** Columns: the side rails' width, the ticks' right end (the channel's left edge) and left end, the channel's right edge. */
-    private final float rail;
-    private final float tickRight;
-    private final float tickLeft;
+    /** The arc's axis in the channel model (inches down; elevation). */
+    private final float arcY;
+    private final float arcZ;
+    /** The pointer's tip: its distance from the arc's axis and its angle there as modelled (radians, up positive). */
+    private final double tipRadius;
+    private final double tipRest;
+    /** The channel's edges, cells. */
+    private final float channelLeft;
     private final float channelRight;
-    /** Elevations (1/16 block): the face just under the channel's top, the rails, the caps and the tag plate above it. */
-    private final float zFace;
-    private final float zRail;
-    private final float zCap;
-    private final float zTag;
+    /** The channel model's width, inches (the units are centred between the channel and the right rail). */
+    private final float channelW;
 
     public BarGaugeFace(BakedPanelModel model, GaugeData data, float w, float h, float rowAspect) {
         this.data = data;
-        this.w = w;
-        this.h = h;
         this.rowAspect = rowAspect;
+        this.casePlace = Placement.fit(CASE_W, CASE_FOOTPRINT_H, w, h, rowAspect);
+        this.place = Placement.of(casePlace.scale, rowAspect, casePlace.x(CHANNEL_X), casePlace.y(CHANNEL_Y));
         BakedPanelModel.Part needle = model.part("needle");
         float minY = Float.MAX_VALUE;
         float maxY = -Float.MAX_VALUE;
+        float tipX = Float.MAX_VALUE;
+        float tipY = 0.0f;
+        float tipZ = 0.0f;
         for (int f = 0; f < needle.faceCount; f++) {
             for (int c = 0; c < 4; c++) {
+                float x = needle.corner(f, c, 0);
                 float y = needle.corner(f, c, 1);
                 minY = Math.min(minY, y);
                 maxY = Math.max(maxY, y);
+                if (x < tipX) {
+                    tipX = x;
+                    tipY = y;
+                    tipZ = needle.corner(f, c, 2);
+                }
             }
         }
         this.lowY = (minY + maxY) / 2.0f;
         this.highY = lowY + needle.axisY * needle.travel;
-        this.tagRows = Math.max(0.9f, Math.min(2.0f, TAG_SHARE * h * rowAspect)) / rowAspect;
-        this.caseTop = TAG_TOP + tagRows + TAG_GAP;
-        this.faceTop = caseTop + CAP_TOP_SHARE * h;
-        this.faceBottom = h - CAP_BOTTOM_SHARE * h;
-        float faceRows = faceBottom - faceTop;
-        float scale = Math.min(faceRows * rowAspect / model.footprintH, CHANNEL_MAX * w / model.footprintW);
-        float channelRows = model.footprintH * scale / rowAspect;
-        this.place = Placement.of(scale, rowAspect, CHANNEL_CENTRE * w - model.footprintW * scale / 2.0f,
-                faceTop + (faceRows - channelRows) / 2.0f);
-        this.rail = Math.max(0.25f, 0.035f * w);
-        this.tickRight = place.x(0.0f);
-        this.tickLeft = tickRight - Math.max(0.8f, Math.min(2.2f, 0.14f * w));
+        this.arcY = ARC_Y - CHANNEL_Y;
+        this.arcZ = ARC_Z;
+        this.tipRadius = Math.hypot(tipY - arcY, tipZ - arcZ);
+        this.tipRest = Math.atan2(arcY - tipY, tipZ - arcZ);
+        this.channelW = model.footprintW;
+        this.channelLeft = place.x(0.0f);
         this.channelRight = place.x(model.footprintW);
-        this.zFace = Math.max(0.1f, place.z(channelTop(model)) - 0.07f);
-        this.zCap = zFace + Math.max(0.3f, 0.06f * w);
-        this.zRail = (zFace + zCap) / 2.0f;
-        this.zTag = zFace + 0.12f;
     }
 
-    /** Placement for a bar gauge model of {@code w x h} cells (see the constructor): the model sits right of the scale. */
-    public static Placement placement(BakedPanelModel model, GaugeData data, float w, float h, float rowAspect) {
-        return new BarGaugeFace(model, data, w, h, rowAspect).place;
-    }
-
-    /** The top of the channel: the highest corner of every part but the pointer, model inches. */
-    private static float channelTop(BakedPanelModel model) {
-        float top = -Float.MAX_VALUE;
-        for (int i = 0; i < model.partCount(); i++) {
-            BakedPanelModel.Part part = model.part(i);
-            if (part.role == BakedPanelModel.Role.NEEDLE) {
-                continue;
-            }
-            for (int f = 0; f < part.faceCount; f++) {
-                for (int c = 0; c < 4; c++) {
-                    top = Math.max(top, part.corner(f, c, 2));
-                }
-            }
-        }
-        return top > 0.0f ? top : DEFAULT_CHANNEL_TOP;
-    }
+    // ---- the arc
 
     /** Row of the scale position {@code fraction} (0 minimum .. 1 maximum). */
     public float row(double fraction) {
-        return place.y(lowY + (highY - lowY) * (float) Math.max(0.0, Math.min(1.0, fraction)));
+        return place.y(inchesAt(fraction));
     }
 
-    /** Records the tag plate, the case, the face, the bands and the ticks. */
+    /** Channel model inches (down) of the scale position {@code fraction}, as seen head-on. */
+    private float inchesAt(double fraction) {
+        return lowY + (highY - lowY) * (float) Math.max(0.0, Math.min(1.0, fraction));
+    }
+
+    /** The angle on the arc of radius {@code radius} (inches) whose height is {@code inches}: radians, up positive. */
+    private double angleAt(float inches, double radius) {
+        return Math.asin(Math.max(-1.0, Math.min(1.0, (arcY - inches) / radius)));
+    }
+
+    /** The angle of scale position {@code fraction} on the arc of radius {@code radius}. */
+    public double angle(double fraction, double radius) {
+        return angleAt(inchesAt(fraction), radius);
+    }
+
+    /**
+     * Degrees the pointer turns about the arc's axis from where it is modelled to read {@code fraction}: the turn that
+     * puts its tip on {@link #row}. Positive turns it up the face (see {@code PartDraw.emitTurnedAboutX}).
+     */
+    public float pointerTurn(double fraction) {
+        return (float) Math.toDegrees(angle(fraction, tipRadius) - tipRest);
+    }
+
+    /** The arc's axis in the channel model: inches down from its top, and elevation (behind the panel). */
+    public float arcY() {
+        return arcY;
+    }
+
+    public float arcZ() {
+        return arcZ;
+    }
+
+    /** The face's radius plus a lift of {@code liftCells} cells, inches. */
+    public double radius(float liftCells) {
+        return FACE_R + liftCells / place.scale;
+    }
+
+    /** Row of the point at {@code angle} on the arc of radius {@code radius}. */
+    public float rowOnArc(double radius, double angle) {
+        return place.y((float) (arcY - radius * Math.sin(angle)));
+    }
+
+    /** Elevation (cells) of the point at {@code angle} on the arc of radius {@code radius}. */
+    public float zOnArc(double radius, double angle) {
+        return place.z((float) (arcZ + radius * Math.cos(angle)));
+    }
+
+    // ---- the printed scale
+
+    /** Records the bands and the ticks on the face. */
     public void emitStatic(QuadSink sink) {
-        float faceRows = faceBottom - faceTop;
-        sink.box(0.12f * w, TAG_TOP, 0.76f * w, tagRows, 0.0f, zTag, TAG, false);
-        sink.box(0.0f, caseTop, w, faceTop - caseTop, 0.0f, zCap, CASE, false);
-        sink.box(0.0f, faceBottom, w, h - faceBottom, 0.0f, zCap, CASE, false);
-        sink.box(0.0f, faceTop, rail, faceRows, 0.0f, zRail, CASE, false);
-        sink.box(w - rail, faceTop, rail, faceRows, 0.0f, zRail, CASE, false);
-        sink.rect(rail, faceTop, w - 2.0f * rail, faceRows, zFace, FACE, false);
-        screw(sink, w / 2.0f, (faceBottom + h) / 2.0f, 0.2f * (h - faceBottom) * rowAspect, zCap + 0.02f);
-        float zBand = zFace + 0.02f;
-        float zTick = zFace + 0.04f;
+        float bandLeft = casePlace.x(BAND_LEFT);
+        double bandRadius = radius(BAND_LIFT);
         for (int i = 0; i < data.bandCount(); i++) {
             if (data.bandHigh[i] > data.bandLow[i]) {
-                float top = row(data.fraction(data.bandHigh[i]));
-                float bottom = row(data.fraction(data.bandLow[i]));
-                if (bottom > top) {
-                    sink.rect(tickLeft, top, tickRight - tickLeft, bottom - top, zBand, data.bandColor[i], false);
+                double low = data.fraction(data.bandLow[i]);
+                double high = data.fraction(data.bandHigh[i]);
+                if (high > low) {
+                    strip(sink, bandLeft, low, high, bandRadius, data.bandColor[i]);
                 }
             }
         }
+        double tickRadius = radius(TICK_LIFT);
+        float majorLeft = casePlace.x(TICK_LEFT);
+        float minorLeft = casePlace.x(MINOR_LEFT);
+        float majorHalf = Math.max(MAJOR_MIN_CELLS, MAJOR_THICK * place.scale) / place.scale / 2.0f;
+        float minorHalf = Math.max(MINOR_MIN_CELLS, MINOR_THICK * place.scale) / place.scale / 2.0f;
         double step = majorStep();
         int subdivisions = subdivisions(step);
         double minor = step / subdivisions;
@@ -167,31 +234,40 @@ public final class BarGaugeFace {
         long last = (long) Math.floor(data.max / minor + 1.0e-9);
         for (long k = first; k <= last; k++) {
             boolean major = k % subdivisions == 0;
-            float y = row(data.fraction(k * minor));
-            float length = major ? tickRight - tickLeft : (tickRight - tickLeft) * 0.5f;
-            float thickness = (major ? Math.max(0.16f, 0.02f * w) : Math.max(0.08f, 0.011f * w)) / rowAspect;
-            sink.rect(tickRight - length, y - thickness / 2.0f, length, thickness, zTick, INK, false);
+            double centre = angle(data.fraction(k * minor), tickRadius);
+            double half = (major ? majorHalf : minorHalf) / tickRadius;
+            onArc(sink, major ? majorLeft : minorLeft, channelLeft, centre - half, centre + half, tickRadius, INK);
         }
     }
 
-    /** A round screw head of radius {@code radius} columns at {@code (x, y)}: a 16-gon in eight quads. */
-    private void screw(QuadSink sink, float x, float y, float radius, float z) {
-        float[] px = new float[17];
-        float[] py = new float[17];
-        for (int i = 0; i <= 16; i++) {
-            double a = Math.PI * 2.0 * i / 16.0;
-            px[i] = x + radius * (float) Math.cos(a);
-            py[i] = y + radius / rowAspect * (float) Math.sin(a);
-        }
-        for (int i = 0; i < 16; i += 2) {
-            sink.quad(x, y, z, px[i], py[i], z, px[i + 1], py[i + 1], z, px[i + 2], py[i + 2], z, SCREW, QuadSink.NORMAL_FACE, false);
+    /** A band from scale position {@code low} to {@code high}: quads of at most {@link #MAX_BAND_STEP_DEG} degrees each. */
+    private void strip(QuadSink sink, float left, double low, double high, double radius, int rgb) {
+        double from = angle(low, radius);
+        double to = angle(high, radius);
+        int pieces = Math.max(1, (int) Math.ceil((to - from) / Math.toRadians(MAX_BAND_STEP_DEG) - 1.0e-9));
+        double previous = from;
+        for (int i = 1; i <= pieces; i++) {
+            double next = i == pieces ? to : from + (to - from) * i / pieces;
+            onArc(sink, left, channelLeft, previous, next, radius, rgb);
+            previous = next;
         }
     }
 
-    /** The numerals, the vertical units and the label on the tag plate, in cells. {@code caption} is the component's label. */
+    /** One quad on the arc of radius {@code radius} from column {@code x0} to {@code x1} and from angle {@code a0} to {@code a1}. */
+    private void onArc(QuadSink sink, float x0, float x1, double a0, double a1, double radius, int rgb) {
+        float y0 = rowOnArc(radius, a0);
+        float z0 = zOnArc(radius, a0);
+        float y1 = rowOnArc(radius, a1);
+        float z1 = zOnArc(radius, a1);
+        double middle = (a0 + a1) / 2.0;
+        sink.quad(x0, y0, z0, x1, y0, z0, x1, y1, z1, x0, y1, z1, rgb,
+                0.0f, (float) -Math.sin(middle), (float) Math.cos(middle), false);
+    }
+
+    /** The numerals, the units down the face and the label on the tag plate, in cells. {@code caption} is the component's label. */
     public List<Legends.Item> legends(String caption) {
         List<Legends.Item> items = new ArrayList<>();
-        float zText = zFace + 0.06f;
+        double textRadius = radius(TEXT_LIFT);
         double step = majorStep();
         long first = (long) Math.ceil(data.min / step - 1.0e-9);
         long last = (long) Math.floor(data.max / step + 1.0e-9);
@@ -203,34 +279,42 @@ public final class BarGaugeFace {
             widest = Math.max(widest, textCaps(text));
         }
         float spacing = Math.abs(row(data.fraction(data.min + step)) - row(0.0)) * rowAspect;
-        float cap = Math.max(0.3f, Math.min(0.075f * w, Math.min((tickLeft - NUMERAL_GAP - rail - 0.15f) / widest, 0.6f * spacing)));
+        float room = (NUMBERS_RIGHT - FACE_LEFT - 0.08f * CM) * place.scale;
+        float cap = Math.max(0.15f, Math.min(NUMBER_CAP * place.scale, Math.min(room / widest, 0.6f * spacing)));
+        float numbersRight = casePlace.x(NUMBERS_RIGHT);
         for (int i = 0; i < numerals.size(); i++) {
-            double value = Math.round((first + i) * step * 1.0e6) / 1.0e6;
-            items.add(new Legends.Item(numerals.get(i), tickLeft - NUMERAL_GAP, row(data.fraction(value)), zText, cap, 0.0f,
-                    BakedPanelModel.Align.RIGHT, INK, false, FACE));
+            double fraction = data.fraction(Math.round((first + i) * step * 1.0e6) / 1.0e6);
+            double a = angle(fraction, textRadius);
+            items.add(new Legends.Item(numerals.get(i), numbersRight, row(fraction), zOnArc(textRadius, a), cap, 0.0f,
+                    BakedPanelModel.Align.RIGHT, INK, false, FACE, (float) Math.toDegrees(a)));
         }
         String units = data.units;
         if (!units.isEmpty()) {
-            float middle = (row(0.0) + row(1.0)) / 2.0f;
-            float scaleLength = Math.abs(row(0.0) - row(1.0)) * rowAspect;
-            // As in the picture: the letters a little smaller than the numbers, about 1.7 letter heights apart.
-            float pitch = Math.min(cap * 1.35f, scaleLength / (units.length() + 1));
-            float room = w - rail - channelRight - 0.3f;
-            float unitCap = Math.min(0.8f * cap, Math.min(pitch / 1.45f, room * 7.0f / 5.0f));
-            float x = (channelRight + w - rail) / 2.0f;
-            float y = middle - pitch / rowAspect * (units.length() - 1) / 2.0f;
+            // As in the picture: one letter per line down the middle of the face right of the channel, about two letter
+            // heights apart, centred on the scale's middle.
+            float scaleLength = Math.abs(highY - lowY);
+            float pitch = Math.min(UNIT_PITCH, scaleLength / (units.length() + 1));
+            float roomRight = FACE_RIGHT - (CHANNEL_X + channelW) - 0.15f * CM;
+            float letterCap = Math.min(UNIT_CAP, Math.min(pitch / 1.75f, roomRight * 7.0f / 5.0f)) * place.scale;
+            float x = casePlace.x((CHANNEL_X + channelW + FACE_RIGHT) / 2.0f);
+            float middle = (lowY + highY) / 2.0f;
             for (int i = 0; i < units.length(); i++) {
                 char c = units.charAt(i);
                 if (c != ' ') {
-                    items.add(new Legends.Item(String.valueOf(c), x, y + i * pitch / rowAspect, zText, unitCap, 0.0f,
-                            BakedPanelModel.Align.CENTER, INK, false, FACE));
+                    float inches = middle + pitch * (i - (units.length() - 1) / 2.0f);
+                    double a = angleAt(inches, textRadius);
+                    items.add(new Legends.Item(String.valueOf(c), x, place.y(inches), zOnArc(textRadius, a), letterCap, 0.0f,
+                            BakedPanelModel.Align.CENTER, INK, false, FACE, (float) Math.toDegrees(a)));
                 }
             }
         }
         if (!caption.isEmpty()) {
-            float fit = (0.76f * w - 0.4f) / textCaps(caption);
-            items.add(new Legends.Item(caption, w / 2.0f, TAG_TOP + tagRows / 2.0f, zTag, Math.min(0.55f * tagRows * rowAspect, fit),
-                    0.0f, BakedPanelModel.Align.CENTER, INK, false, TAG));
+            float tagW = TAG_X1 - TAG_X0;
+            float tagH = TAG_Y1 - TAG_Y0;
+            float fit = (tagW - 0.3f * CM) / textCaps(caption);
+            items.add(new Legends.Item(caption, casePlace.x((TAG_X0 + TAG_X1) / 2.0f), casePlace.y((TAG_Y0 + TAG_Y1) / 2.0f),
+                    casePlace.z(TAG_Z), casePlace.length(Math.min(0.55f * tagH, fit)), 0.0f, BakedPanelModel.Align.CENTER,
+                    INK, false, TAG));
         }
         return items;
     }
@@ -239,8 +323,6 @@ public final class BarGaugeFace {
     private static float textCaps(String text) {
         return (6.0f * text.length() - 1.0f) / Legends.CAP_PIXELS;
     }
-
-    // ---- the scale
 
     /** The numbered step: 1, 2, 2.5, 3, 5 or 10 times a power of ten, giving at most {@link #MAX_MAJORS} numbered ticks. */
     public double majorStep() {

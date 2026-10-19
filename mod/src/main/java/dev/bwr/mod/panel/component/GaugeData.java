@@ -32,6 +32,18 @@ public final class GaugeData extends ComponentData {
     /** Danger and caution colours of the presets (the dark red and the olive yellow of the plant's switchboard scales). */
     public static final int BAND_RED = 0xA80E0E;
     public static final int BAND_YELLOW = 0xC4B02A;
+    /** Nominal colour: white (on the presets a nominal range is simply the white face showing between the bands). */
+    public static final int BAND_WHITE = 0xFFFFFF;
+    /**
+     * The named band colours the bar gauge's wrench offers beside the colour code: NOMINAL ranges white, CAUTION ranges
+     * yellow, DANGER ranges red. A band still saves its colour as a plain number, so picking one saves what typing its
+     * code would, and old saves keep the colours they had.
+     */
+    public static final String NOMINAL = "nominal";
+    public static final String CAUTION = "caution";
+    public static final String DANGER = "danger";
+    public static final List<String> BAND_SWATCHES = List.of(ConfigField.swatch(NOMINAL, BAND_WHITE),
+            ConfigField.swatch(CAUTION, BAND_YELLOW), ConfigField.swatch(DANGER, BAND_RED));
 
     public double min = 0.0;
     public double max = 100.0;
@@ -146,7 +158,9 @@ public final class GaugeData extends ComponentData {
         for (int i = 1; i <= (bar ? MAX_BANDS : BANDS); i++) {
             fields.add(ConfigField.decimal("Band" + i + "Low", "component.bwr.field.band" + i + "_low", -LIMIT, LIMIT));
             fields.add(ConfigField.decimal("Band" + i + "High", "component.bwr.field.band" + i + "_high", -LIMIT, LIMIT));
-            fields.add(ConfigField.color("Band" + i + "Color", "component.bwr.field.band" + i + "_color"));
+            String colour = "Band" + i + "Color";
+            String label = "component.bwr.field.band" + i + "_color";
+            fields.add(bar ? ConfigField.color(colour, label, BAND_SWATCHES) : ConfigField.color(colour, label));
         }
         if (!bar) {
             fields.addAll(PanelStyles.fields(type));
