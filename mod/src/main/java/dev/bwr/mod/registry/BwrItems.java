@@ -295,6 +295,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_CORNER_BENCH_OUTSIDE);
     public static final DeferredItem<BlockItem> CONTROL_PANEL_CORNER_BENCH_CHAMFER =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_CORNER_BENCH_CHAMFER);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_HEADER_VENT =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_HEADER_VENT);
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> FUEL_TAB = TABS.register("fuel", () ->
             CreativeModeTab.builder().title(Component.translatable("itemGroup.bwr.fuel"))
@@ -427,6 +429,7 @@ public final class BwrItems {
                         output.accept(CONTROL_PANEL_CORNER_BENCH_INSIDE.get());
                         output.accept(CONTROL_PANEL_CORNER_BENCH_OUTSIDE.get());
                         output.accept(CONTROL_PANEL_CORNER_BENCH_CHAMFER.get());
+                        output.accept(CONTROL_PANEL_HEADER_VENT.get());
                     })
                     .build());
 }

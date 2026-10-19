@@ -13,6 +13,7 @@ public enum TrimPiece {
     END_CAP_ROUND("control_panel_end_cap_round"),
     HEADER_STRIP("control_panel_header_strip"),
     HEADER_CANOPY("control_panel_header_canopy"),
+    HEADER_VENT("control_panel_header_vent"),
     PLINTH_KICK("control_panel_plinth_kick"),
     PLINTH_APRON("control_panel_plinth_apron"),
     PLINTH_BASE("control_panel_plinth_base"),

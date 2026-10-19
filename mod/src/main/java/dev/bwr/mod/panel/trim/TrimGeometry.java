@@ -25,13 +25,12 @@ public final class TrimGeometry {
 
     static final double VERTICAL_DEPTH = 0.25;
     static final double CAP = 0.125;
-    static final double TAN12 = Math.tan(Math.toRadians(12.0));
+    static final double TAN5 = Math.tan(Math.toRadians(5.0));
     static final double TAN15 = Math.tan(Math.toRadians(15.0));
     static final double CONSOLE_TOP = 0.375;
-    static final double HEADER_HEIGHT = 0.5;
-    static final double HOOD_BOTTOM = 0.4688;
-    static final double HOOD_TOP = 0.5625;
-    static final double HOOD_REACH = 0.55;
+    static final double HEADER_HEIGHT = 1.0;
+    static final double HOOD_BOTTOM = 0.9375;
+    static final double HOOD_REACH = 0.42;
     static final double KICK = 0.125;
 
     /** A box in the local frame: {lx0, ly0, f0, lx1, ly1, f1}. */
@@ -59,7 +58,7 @@ public final class TrimGeometry {
                 boxes.add(b(0, 0, 0.0, CAP * 0.5, 1, VERTICAL_DEPTH));
                 boxes.add(b(CAP * 0.5, 0, 0.0625, CAP, 1, VERTICAL_DEPTH - 0.0625));
             }
-            case HEADER_STRIP -> header(boxes, false);
+            case HEADER_STRIP, HEADER_VENT -> header(boxes, false);
             case HEADER_CANOPY -> header(boxes, true);
             case PLINTH_KICK -> boxes.add(b(0, 0, 0, 1, KICK, KICK));
             case PLINTH_APRON -> boxes.add(b(0, 0, 0, 1, KICK, 1));
@@ -99,14 +98,17 @@ public final class TrimGeometry {
         return union(facing, boxes);
     }
 
-    /** A header strip: leans forward 12 degrees from the face of the board it sits on; a canopy adds the hood. */
+    /**
+     * An annunciator panel: a full block of the upper board, flush with the face of the vertical board below it and
+     * leaning back 5 degrees as it rises; a canopy adds the hood across the top.
+     */
     private static void header(List<double[]> boxes, boolean hood) {
         for (int k = 0; k < 4; k++) {
-            double y1 = (k + 1) * HEADER_HEIGHT / 4.0;
-            boxes.add(b(0, k * HEADER_HEIGHT / 4.0, 0, 1, y1, VERTICAL_DEPTH + y1 * TAN12));
+            double y0 = k * HEADER_HEIGHT / 4.0;
+            boxes.add(b(0, y0, 0, 1, (k + 1) * HEADER_HEIGHT / 4.0, VERTICAL_DEPTH - y0 * TAN5));
         }
         if (hood) {
-            boxes.add(b(0, HOOD_BOTTOM, 0, 1, HOOD_TOP, HOOD_REACH));
+            boxes.add(b(0, HOOD_BOTTOM, 0, 1, HEADER_HEIGHT, HOOD_REACH));
         }
     }
 

@@ -1,6 +1,15 @@
 package dev.bwr.mod.devtest;
 
 import dev.bwr.mod.panel.PanelBlock;
+import dev.bwr.mod.panel.PanelBlockEntity;
+import dev.bwr.mod.panel.PanelOps;
+import dev.bwr.mod.panel.component.ComponentType;
+import dev.bwr.mod.panel.component.ComponentTypes;
+import dev.bwr.mod.panel.component.ControlSwitchData;
+import dev.bwr.mod.panel.component.Footprint;
+import dev.bwr.mod.panel.component.InputSources;
+import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.component.PanelStyles;
 import dev.bwr.mod.panel.trim.PanelEndCapBlock;
 import dev.bwr.mod.panel.trim.PanelTrimBlock;
 import dev.bwr.mod.registry.BwrBlocks;
@@ -45,17 +54,20 @@ final class PanelTrimShowcase {
     private static final int ISLAND_X = 5320;
     private static final int ISLAND_Z = 5205;
 
-    static final String[] NAMES = {"trim-room-wide", "trim-room-corner-west", "trim-room-bench-low", "trim-room-headers",
-            "trim-room-console", "trim-island-corner", "trim-island-rear"};
+    static final String[] NAMES = {"trim-room-wide", "trim-room-dark", "trim-room-corner-west", "trim-room-bench-low",
+            "trim-room-annunciators", "trim-room-console", "trim-island-corner", "trim-island-close", "trim-island-ends",
+            "trim-island-rear"};
     private static final double[][] EYE = {
-            {5304.5, 129.2, 5192.5}, {5303.8, 128.3, 5203.5}, {5306.5, 127.0, 5199.0}, {5305.0, 128.9, 5203.0},
-            {5304.0, 127.6, 5198.5}, {5316.5, 128.4, 5200.5}, {5327.0, 128.6, 5212.5}};
+            {5304.5, 129.4, 5198.0}, {5304.5, 129.0, 5200.0}, {5303.2, 128.4, 5204.5}, {5306.5, 127.1, 5200.5},
+            {5305.0, 128.8, 5207.6}, {5304.0, 127.7, 5198.5}, {5313.0, 128.6, 5199.5}, {5316.5, 128.0, 5202.0},
+            {5326.0, 127.9, 5202.5}, {5323.0, 128.2, 5211.0}};
     private static final double[][] LOOK = {
-            {5304.5, 127.2, 5208.5}, {5300.8, 127.3, 5209.0}, {5305.5, 126.7, 5208.0}, {5305.0, 128.2, 5210.7},
-            {5304.5, 126.6, 5203.5}, {5321.5, 127.0, 5206.5}, {5321.5, 127.0, 5206.5}};
+            {5304.5, 128.0, 5208.5}, {5304.5, 128.0, 5208.5}, {5300.8, 128.2, 5209.0}, {5305.5, 127.5, 5208.0},
+            {5305.0, 128.6, 5210.5}, {5304.5, 126.6, 5203.5}, {5321.0, 127.4, 5206.0}, {5320.8, 127.2, 5205.8},
+            {5324.0, 127.4, 5205.4}, {5321.5, 127.4, 5207.0}};
 
     static boolean night(int stage) {
-        return false;
+        return stage == 1;
     }
 
     static Vec3 camera(int stage) {
@@ -88,6 +100,61 @@ final class PanelTrimShowcase {
         PLACED.add(new BlockPos(x, y, z));
     }
 
+    /** Mounts one component on a panel block at a cell, drawn as the default style, with a constant reading. */
+    private static void mount(ServerLevel level, BlockPos pos, int cx, int cy, int w, int h, ComponentType type,
+                              String variant, double value) {
+        PanelComponent component = PanelOps.placeDirect(level, pos, cx, cy, type, Footprint.of(w, h));
+        if (component == null) {
+            throw new AssertionError("Trim showcase: placement refused " + type.id() + " at " + pos);
+        }
+        PanelModelShowcase.look(component, PanelStyles.GE, variant);
+        if (component.data() instanceof ControlSwitchData d) {
+            d.spring = false;
+            d.position = (int) value;
+            component.type().onLoaded(component);
+        } else if (component.inputCount() > 0) {
+            component.setSource(0, InputSources.constant(value));
+            ((PanelBlockEntity) level.getBlockEntity(pos)).resample(component, true);
+        }
+        component.touch();
+    }
+
+    /** A few instruments on the boards so the trim is seen around a finished room, not bare blocks. */
+    private static void instruments(ServerLevel level) {
+        double[] readings = {68, 30, 55, 80, 45, 62, 25, 74};
+        for (int i = 0; i < 8; i++) {
+            BlockPos board = new BlockPos(XW + 1 + i, Y0 + 1, ZB);
+            mount(level, board, 0, 0, 16, 16, ComponentTypes.DIAL_GAUGE, i % 2 == 0 ? "standard" : "red_pointer", readings[i]);
+            BlockPos desk = new BlockPos(XW + 2 + i, Y0, ZB - 1);
+            if (i < 6) {
+                mount(level, desk, 2, 0, 12, 16, ComponentTypes.CONTROL_SWITCH, "pistol", i % 3 - 1);
+            }
+        }
+        for (int z = ZB - 4; z <= ZB - 1; z++) {
+            mount(level, new BlockPos(XW, Y0 + 1, z), 0, 0, 16, 16, ComponentTypes.DIAL_GAUGE, "standard", 40 + 10 * (z - ZB));
+            mount(level, new BlockPos(XE, Y0 + 1, z), 0, 0, 16, 16, ComponentTypes.DIAL_GAUGE, "red_pointer", 60 - 10 * (z - ZB));
+        }
+        for (int i = 0; i < 4; i++) {
+            mount(level, new BlockPos(XW + 3 + i, Y0, ZB - 7), 2, 2, 12, 12, ComponentTypes.DIAL_GAUGE, "standard", 30 + 15 * i);
+        }
+        for (int i = 1; i <= 3; i++) {
+            mount(level, new BlockPos(ISLAND_X + i, Y0 + 1, ISLAND_Z), 0, 0, 16, 16, ComponentTypes.DIAL_GAUGE,
+                    i % 2 == 0 ? "red_pointer" : "standard", 30 + 20 * i);
+            mount(level, new BlockPos(ISLAND_X, Y0 + 1, ISLAND_Z + i), 0, 0, 16, 16, ComponentTypes.DIAL_GAUGE,
+                    i % 2 == 0 ? "standard" : "red_pointer", 80 - 20 * i);
+        }
+        for (BlockPos pos : BlockPos.betweenClosed(new BlockPos(XW, Y0, ZB - 7), new BlockPos(XE, Y0 + 1, ZB))) {
+            if (level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
+                be.syncFull();
+            }
+        }
+        for (BlockPos pos : BlockPos.betweenClosed(new BlockPos(ISLAND_X, Y0 + 1, ISLAND_Z), new BlockPos(ISLAND_X + 3, Y0 + 1, ISLAND_Z + 3))) {
+            if (level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
+                be.syncFull();
+            }
+        }
+    }
+
     static void build(ServerLevel level) {
         PLACED.clear();
         // the floor and the walls
@@ -101,11 +168,11 @@ final class PanelTrimShowcase {
         }
         for (int y = Y0; y <= Y0 + 5; y++) {
             for (int x = XW - 1; x <= XE + 1; x++) {
-                level.setBlock(new BlockPos(x, y, ZB + 1), Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState(), 2);
+                level.setBlock(new BlockPos(x, y, ZB + 1), Blocks.WHITE_CONCRETE.defaultBlockState(), 2);
             }
             for (int z = 5196; z <= ZB + 1; z++) {
-                level.setBlock(new BlockPos(XW - 1, y, z), Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState(), 2);
-                level.setBlock(new BlockPos(XE + 1, y, z), Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState(), 2);
+                level.setBlock(new BlockPos(XW - 1, y, z), Blocks.WHITE_CONCRETE.defaultBlockState(), 2);
+                level.setBlock(new BlockPos(XE + 1, y, z), Blocks.WHITE_CONCRETE.defaultBlockState(), 2);
             }
         }
         Block vertical = BwrBlocks.CONTROL_PANEL_VERTICAL.get();
@@ -116,6 +183,7 @@ final class PanelTrimShowcase {
         Block kick = BwrBlocks.CONTROL_PANEL_PLINTH_KICK.get();
         Block strip = BwrBlocks.CONTROL_PANEL_HEADER_STRIP.get();
         Block canopy = BwrBlocks.CONTROL_PANEL_HEADER_CANOPY.get();
+        Block vent = BwrBlocks.CONTROL_PANEL_HEADER_VENT.get();
         Block cornerIn = BwrBlocks.CONTROL_PANEL_CORNER_VERTICAL_INSIDE.get();
         Block cornerChamfer = BwrBlocks.CONTROL_PANEL_CORNER_VERTICAL_CHAMFER.get();
         Block cornerOut = BwrBlocks.CONTROL_PANEL_CORNER_VERTICAL_OUTSIDE.get();
@@ -129,16 +197,20 @@ final class PanelTrimShowcase {
         for (int x = XW + 1; x <= XE - 1; x++) {
             put(level, x, Y0, ZB, base, Direction.NORTH);
             put(level, x, Y0 + 1, ZB, vertical, Direction.NORTH);
-            put(level, x, Y0 + 2, ZB, (x == XW + 2 || x == XE - 2) ? canopy : strip, Direction.NORTH);
+            put(level, x, Y0 + 2, ZB, switch (x - XW - 1) {
+                case 2, 5 -> vent;
+                case 4 -> canopy;
+                default -> strip;
+            }, Direction.NORTH);
         }
         // side runs; their headers
         for (int z = ZB - 4; z <= ZB - 1; z++) {
             put(level, XW, Y0, z, base, Direction.EAST);
             put(level, XW, Y0 + 1, z, vertical, Direction.EAST);
-            put(level, XW, Y0 + 2, z, strip, Direction.EAST);
+            put(level, XW, Y0 + 2, z, z == ZB - 2 ? vent : strip, Direction.EAST);
             put(level, XE, Y0, z, base, Direction.WEST);
             put(level, XE, Y0 + 1, z, vertical, Direction.WEST);
-            put(level, XE, Y0 + 2, z, strip, Direction.WEST);
+            put(level, XE, Y0 + 2, z, z == ZB - 2 ? vent : strip, Direction.WEST);
         }
         // the two back corners, on their own bases (the corner of a facing sits at its back left)
         put(level, XW, Y0, ZB, base, Direction.EAST);
@@ -191,6 +263,7 @@ final class PanelTrimShowcase {
         }
         cap(level, ISLAND_X + 4, Y0 + 1, ISLAND_Z, capRound, Direction.NORTH, PanelEndCapBlock.Side.LEFT);
         cap(level, ISLAND_X, Y0 + 1, ISLAND_Z + 4, capFlat, Direction.WEST, PanelEndCapBlock.Side.RIGHT);
+        instruments(level);
     }
 
     // ---- checking (client)

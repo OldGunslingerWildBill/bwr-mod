@@ -450,4 +450,7 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelTrimBlock> CONTROL_PANEL_CORNER_BENCH_CHAMFER =
             BLOCKS.register("control_panel_corner_bench_chamfer",
                     () -> new dev.bwr.mod.panel.trim.PanelTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.CORNER_BENCH_CHAMFER));
+    public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelTrimBlock> CONTROL_PANEL_HEADER_VENT =
+            BLOCKS.register("control_panel_header_vent",
+                    () -> new dev.bwr.mod.panel.trim.PanelTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.HEADER_VENT));
 }

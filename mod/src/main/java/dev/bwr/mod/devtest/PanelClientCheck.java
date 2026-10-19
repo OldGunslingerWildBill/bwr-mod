@@ -192,6 +192,7 @@ public final class PanelClientCheck {
                 player.getAbilities().flying = true;
                 player.onUpdateAbilities();
                 level.setDayTime(selected == 4 || selected == 8 || selected >= BAKED_FIRST && selected < SLOPE_FIRST && PanelModelShowcase.night(selected - BAKED_FIRST)
+                        || selected >= TRIM_FIRST && PanelTrimShowcase.night(selected - TRIM_FIRST)
                         ? 18_000 : 6_000);
                 level.setWeatherParameters(6000, 0, false, false);
                 if (selected == 7) {
@@ -214,7 +215,11 @@ public final class PanelClientCheck {
         // The picture is counted from the moment the player stands where the server put it: on a loaded machine the teleport
         // can arrive late, and a photograph taken on the way is not the stage's picture.
         Vec3 wanted = wantedCamera;
-        if (wanted == null || mc.player.position().distanceToSqr(wanted) > 0.25) return;
+        if (wanted == null || mc.player.position().distanceToSqr(wanted) > 0.25) {
+            if (age % 200 == 0) LogUtils.getLogger().info("PANEL CLIENT CHECK waiting for the camera of stage {}: wanted {}, at {}",
+                    NAMES[stage], wanted, mc.player.position());
+            return;
+        }
         if (++shown == 70 && (stage == 5 || stage == 6)) {
             if (!(mc.level.getBlockEntity(switchOwner) instanceof PanelBlockEntity be)
                     || be.component(switchId) == null) throw new AssertionError("Switch was not synchronized for UI preview");

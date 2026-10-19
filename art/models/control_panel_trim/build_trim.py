@@ -47,10 +47,15 @@ CONSOLE_TOP = 0.375                      # PanelGeometry.CONSOLE_TOP
 CONSOLE_FRONT = CONSOLE_TOP - T15        # the face at the front edge
 VERTICAL_DEPTH = 0.25                    # PanelGeometry.VERTICAL_DEPTH
 CAP = 0.125                              # thickness of an end cap, 2 px
-HEADER_H = 0.5
-HEADER_FRONT = VERTICAL_DEPTH + HEADER_H * T12
+LEAN = math.radians(5.0)                 # an annunciator panel leans back from the board's face
+TB = math.tan(LEAN)
+NK = 1.0 / math.hypot(1.0, TB)
+RECESS = 0.05                            # how far the annunciator box is set into the panel
+HOOD_V = 0.9375                          # where a canopy's hood starts, and how far it projects
+HOOD_F = 0.42
 
-MATERIALS = ["face", "paint", "bezel", "back", "kick", "cheek", "hood", "apron", "cabinet", "annunciator"]
+MATERIALS = ["face", "paint", "bezel", "back", "kick", "cheek", "hood", "apron", "cabinet", "annunciator",
+             "annunciator_lit", "vent"]
 # Materials whose texture is stretched over the polygon's own bounding box rather than laid on the block grid.
 FIT = {"back", "cheek", "cabinet"}
 
@@ -175,6 +180,8 @@ class Model:
         for i in range(n):
             f0, y0, mat = profile[i]
             f1, y1, _ = profile[(i + 1) % n]
+            if mat is None:
+                continue                  # an edge the caller builds itself (a header's face)
             mat = remap.get(mat, mat)
             df, dy = f1 - f0, y1 - y0
             length = math.hypot(df, dy)
@@ -264,15 +271,10 @@ CONSOLE_PROFILE = [(K, 0.0, "bezel"),
                    (0.0, K, "kick"),
                    (K, K, "kick")]
 
-HEADER_STRIP_PROFILE = [(0.0, 0.0, "bezel"), (VERTICAL_DEPTH, 0.0, "annunciator"), (HEADER_FRONT, HEADER_H, "bezel"),
-                        (0.0, HEADER_H, "back")]
-
-HOOD_Y = 0.4688                                 # where the windows stop under the hood
-HOOD_F = 0.55                                   # how far the hood projects
-HOOD_TOP = 0.5625
-HEADER_CANOPY_PROFILE = [(0.0, 0.0, "bezel"), (VERTICAL_DEPTH, 0.0, "annunciator"),
-                         (VERTICAL_DEPTH + HOOD_Y * T12, HOOD_Y, "hood"), (HOOD_F, HOOD_Y, "hood"),
-                         (HOOD_F, HOOD_TOP, "hood"), (0.0, HOOD_TOP, "back")]
+HEADER_STRIP_PROFILE = [(0.0, 0.0, "bezel"), (VERTICAL_DEPTH, 0.0, None), (VERTICAL_DEPTH - TB, 1.0, "bezel"),
+                        (0.0, 1.0, "back")]
+HEADER_CANOPY_PROFILE = [(0.0, 0.0, "bezel"), (VERTICAL_DEPTH, 0.0, None), (VERTICAL_DEPTH - HOOD_V * TB, HOOD_V, "hood"),
+                         (HOOD_F, HOOD_V, "hood"), (HOOD_F, 1.0, "hood"), (0.0, 1.0, "back")]
 
 APRON_PROFILE = [(0.0, 0.0, "kick"), (1.0, 0.0, "kick"), (1.0, PX, "kick"), (1.0 - PX, K, "apron"), (0.0, K, "kick")]
 
@@ -369,25 +371,65 @@ def round_cap(m, side):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Header strips, sitting on top of a vertical board, tilted forward 12 degrees.
+# Annunciator panels: a full block of the upper board, leaning back 5 degrees, flush with the vertical board below it.
+# The face is a 128 x 128 picture (make_textures.py) mapped over the whole panel: board paint, screws, and a dark
+# recessed box with a 4 x 3 grid of big windows, the numbers 1-4 above and the letters A-C beside them, a caption
+# strip under them and a nameplate below. The box is real geometry set back 0.8 px from the board; a few lit
+# windows are separate bright quads (emissive, see the Ka lines of the mtl).
+
+BOX = (6.0 / 128, 122.0 / 128, 1.0 - 99.0 / 128, 1.0 - 15.0 / 128)           # u0, u1, v0, v1 of the recessed box
+VENT_BOX = (36.0 / 128, 92.0 / 128, 1.0 - 111.0 / 128, 1.0 - 10.0 / 128)
+
+
+def fp(u, v, off=0.0):
+    """A point of the panel's face (u across to the operator's right, v up the face), set back by off."""
+    return (u, v - off * TB * NK, VERTICAL_DEPTH - v * TB - off * NK)
+
+
+def recessed_face(m, vmax, surround, floor, box):
+    u0, u1, v0, v1 = box
+    n = (0.0, TB, 1.0)
+
+    def quad(mat, corners, off, hint):
+        pts = [fp(u, v, off) for u, v in corners]
+        m.add(mat, pts, hint, [(u, v) for u, v in corners])
+
+    quad(surround, [(0, 0), (u0, 0), (u0, vmax), (0, vmax)], 0.0, n)
+    quad(surround, [(u1, 0), (1, 0), (1, vmax), (u1, vmax)], 0.0, n)
+    quad(surround, [(u0, 0), (u1, 0), (u1, v0), (u0, v0)], 0.0, n)
+    if vmax > v1:
+        quad(surround, [(u0, v1), (u1, v1), (u1, vmax), (u0, vmax)], 0.0, n)
+    # the walls of the recess, dark
+    for (ua, va), (ub, vb), hint in (((u0, v0), (u0, v1), (1, 0, 0)), ((u1, v0), (u1, v1), (-1, 0, 0)),
+                                     ((u0, v0), (u1, v0), (0, 1, -TB)), ((u0, v1), (u1, v1), (0, -1, TB))):
+        m.add("kick", [fp(ua, va, 0.0), fp(ub, vb, 0.0), fp(ub, vb, RECESS), fp(ua, va, RECESS)], hint,
+              [(0, 0), (1, 0), (1, 1), (0, 1)])
+    quad(floor, [(u0, v0), (u1, v0), (u1, v1), (u0, v1)], RECESS, n)
+
+
+def lit_window(m, x0, y0, x1, y1, tile):
+    """A bright quad over some of the box's windows (pixel box of the 128 picture); tile = (u0, u1) in the lit picture."""
+    u0, u1 = x0 / 128.0, x1 / 128.0
+    v0, v1 = 1.0 - y1 / 128.0, 1.0 - y0 / 128.0
+    off = RECESS - 0.003
+    pts = [fp(u0, v0, off), fp(u1, v0, off), fp(u1, v1, off), fp(u0, v1, off)]
+    m.add("annunciator_lit", pts, (0.0, TB, 1.0), [(tile[0], 0), (tile[1], 0), (tile[1], 1), (tile[0], 1)])
+
 
 def header(shape):
     m = Model("header_" + shape)
-    profile = HEADER_STRIP_PROFILE if shape == "strip" else HEADER_CANOPY_PROFILE
-    n = len(profile)
-    for i in range(n):
-        f0, y0, mat = profile[i]
-        f1, y1, _ = profile[(i + 1) % n]
-        df, dy = f1 - f0, y1 - y0
-        length = math.hypot(df, dy)
-        hint = (0.0, -df / length, dy / length)
-        pts = [(0, y0, f0), (1, y0, f0), (1, y1, f1), (0, y1, f1)]
-        uv = None
-        if mat == "annunciator":
-            uv = [(0, 0), (1, 0), (1, 1), (0, 1)] if y1 > y0 else [(0, 1), (1, 1), (1, 0), (0, 0)]
-        m.add(mat, pts, hint, uv)
-    m.add("bezel", [(0, y, f) for f, y, _ in profile], (-1, 0, 0))
-    m.add("bezel", [(1, y, f) for f, y, _ in profile], (1, 0, 0))
+    canopy = shape == "canopy"
+    vmax = HOOD_V if canopy else 1.0
+    if shape == "vent":
+        recessed_face(m, vmax, "vent", "vent", VENT_BOX)
+    else:
+        recessed_face(m, vmax, "annunciator", "annunciator", BOX)
+        # lit windows: the white pair B1 B2, the amber C3 and the red A4 (make_textures.py has the pixel layout)
+        lit_window(m, 19, 47, 66, 64, (0.0, 47.0 / 91))
+        lit_window(m, 69, 67, 91, 84, (47.0 / 91, 69.0 / 91))
+        lit_window(m, 94, 27, 116, 44, (69.0 / 91, 1.0))
+    profile = HEADER_CANOPY_PROFILE if canopy else HEADER_STRIP_PROFILE
+    m.prism(profile, 0.0, 1.0, "bezel", "bezel")
     return m
 
 
@@ -483,6 +525,7 @@ for shape in ("flat", "bench", "console", "round"):
         TRIM.append(("control_panel_trim", "end_cap_%s_%s" % (shape, side), (lambda s=shape, d=side: end_cap(s, d))))
 TRIM += [("control_panel_trim", "header_strip", lambda: header("strip")),
          ("control_panel_trim", "header_canopy", lambda: header("canopy")),
+         ("control_panel_trim", "header_vent", lambda: header("vent")),
          ("control_panel_trim", "plinth_kick", lambda: plinth("kick")),
          ("control_panel_trim", "plinth_apron", lambda: plinth("apron")),
          ("control_panel_trim", "plinth_base", lambda: plinth("base")),
@@ -493,7 +536,9 @@ TRIM += [("control_panel_trim", "header_strip", lambda: header("strip")),
          ("control_panel_trim", "corner_bench_outside", corner_bench_outside),
          ("control_panel_trim", "corner_bench_chamfer", corner_bench_chamfer)]
 
-MTL = "".join("newmtl %s\nKd 1.000000 1.000000 1.000000\nmap_Kd bwr:block/control_panel/%s\n\n" % (n, n)
+# Ka is what an emissive_ambient model lights a material with (the header models turn it on): only the lit windows glow.
+MTL = "".join("newmtl %s\nKd 1.000000 1.000000 1.000000\nKa %s\nmap_Kd bwr:block/control_panel/%s\n\n"
+              % (n, "1.000000 1.000000 1.000000" if n == "annunciator_lit" else "0.000000 0.000000 0.000000", n)
               for n in MATERIALS)
 
 
@@ -621,7 +666,7 @@ def main():
     rows = [["vertical", "benchboard", "console"],
             ["end_cap_flat_right", "end_cap_bench_right", "end_cap_console_right", "end_cap_round_right",
              "end_cap_flat_left", "end_cap_round_left"],
-            ["header_strip", "header_canopy", "plinth_kick", "plinth_apron", "plinth_base"],
+            ["header_strip", "header_canopy", "header_vent", "plinth_kick", "plinth_apron", "plinth_base"],
             ["corner_vertical_inside", "corner_vertical_outside", "corner_vertical_chamfer",
              "corner_bench_inside", "corner_bench_outside", "corner_bench_chamfer"]]
     if "--no-preview" not in sys.argv:

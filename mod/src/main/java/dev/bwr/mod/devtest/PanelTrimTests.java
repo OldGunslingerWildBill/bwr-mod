@@ -195,7 +195,7 @@ public final class PanelTrimTests {
     @GameTest(template = "empty")
     public static void trimBlocksFaceTheOperatorLikePanelsDo(GameTestHelper helper) {
         try (Stage stage = new Stage(helper)) {
-            BlockPos target = ORIGIN.above();
+            BlockPos target = ORIGIN;
             for (TrimPiece piece : TrimPiece.values()) {
                 Block block = blockOf(piece);
                 for (Direction looking : HORIZONTAL) {
@@ -233,7 +233,7 @@ public final class PanelTrimTests {
             for (Direction facing : HORIZONTAL) {
                 // the operator looks toward -facing; a run on the cap's left (clockwise of the facing) makes a right cap
                 Direction looking = facing.getOpposite();
-                BlockPos target = ORIGIN.above();
+                BlockPos target = ORIGIN;
                 for (BlockPos neighbour : new BlockPos[] {target.relative(facing.getClockWise()), target.relative(facing.getCounterClockWise())}) {
                     stage.level.setBlock(neighbour, Blocks.AIR.defaultBlockState(), 2);
                 }
@@ -316,14 +316,16 @@ public final class PanelTrimTests {
             helper.assertTrue(Math.abs(heightAt(inside, 0.03, z) - heightAt(bench, 0.5, z)) < 1.0e-9,
                     "the inside bench corner does not meet a benchboard on its open side at slice " + k);
         }
-        // a header strip sits on a vertical board: flush with its face at the bottom, half a block tall, leaning forward
+        // an annunciator panel sits on a vertical board: a full block tall, flush with its face at the bottom, leaning back
         VoxelShape strip = TrimGeometry.shape(TrimPiece.HEADER_STRIP, Direction.NORTH, true);
-        helper.assertTrue(Math.abs(strip.max(net.minecraft.core.Direction.Axis.Y) - 0.5) < 1.0e-9, "a header strip is half a block tall");
-        helper.assertTrue(strip.min(net.minecraft.core.Direction.Axis.Z) < 1.0 - 0.25 - 1.0e-9
-                && strip.min(net.minecraft.core.Direction.Axis.Z) > 1.0 - 0.40, "a header strip leans forward past the board's face");
+        helper.assertTrue(Math.abs(strip.max(net.minecraft.core.Direction.Axis.Y) - 1.0) < 1.0e-9, "an annunciator panel is a block tall");
+        helper.assertTrue(Math.abs(strip.min(net.minecraft.core.Direction.Axis.Z) - 0.75) < 1.0e-9,
+                "an annunciator panel is as deep as a vertical board at its foot: " + strip.bounds());
+        helper.assertTrue(heightAt(strip, 0.5, 0.80) < 0.95 && heightAt(strip, 0.5, 0.80) > 0.3,
+                "an annunciator panel leans back: the top is not as deep as the foot");
         VoxelShape canopy = TrimGeometry.shape(TrimPiece.HEADER_CANOPY, Direction.NORTH, true);
-        helper.assertTrue(canopy.min(net.minecraft.core.Direction.Axis.Z) < strip.min(net.minecraft.core.Direction.Axis.Z) - 0.1,
-                "the canopy projects a hood in front of the strip");
+        helper.assertTrue(canopy.min(net.minecraft.core.Direction.Axis.Z) < strip.min(net.minecraft.core.Direction.Axis.Z) - 0.25,
+                "the canopy projects a hood in front of the panel");
         helper.succeed();
     }
 
@@ -431,7 +433,7 @@ public final class PanelTrimTests {
         }
         for (String model : models) {
             List<Face> faces = readObj("/assets/bwr/models/block/control_panel_trim/" + model + ".obj");
-            helper.assertTrue(!faces.isEmpty() && faces.size() <= 24, model + " has " + faces.size() + " faces");
+            helper.assertTrue(!faces.isEmpty() && faces.size() <= 28, model + " has " + faces.size() + " faces");
             for (Face face : faces) {
                 helper.assertTrue(face.corners().size() <= 4, model + " has a face with more than four corners");
                 helper.assertTrue(materials.contains(face.material()), model + " uses the unknown material " + face.material());

@@ -1,40 +1,60 @@
 newmtl face
 Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/face
 
 newmtl paint
 Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/paint
 
 newmtl bezel
 Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/bezel
 
 newmtl back
 Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/back
 
 newmtl kick
 Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/kick
 
 newmtl cheek
 Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/cheek
 
 newmtl hood
 Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/hood
 
 newmtl apron
 Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/apron
 
 newmtl cabinet
 Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/cabinet
 
 newmtl annunciator
 Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/annunciator
+
+newmtl annunciator_lit
+Kd 1.000000 1.000000 1.000000
+Ka 1.000000 1.000000 1.000000
+map_Kd bwr:block/control_panel/annunciator_lit
+
+newmtl vent
+Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
+map_Kd bwr:block/control_panel/vent
 

@@ -17,7 +17,9 @@ textures, not in extra geometry, because these blocks tile across whole rooms:
   hood        the dark top hood of the annunciator canopy
   apron       the foot plate, an anti-slip diagonal rib pattern
   cabinet     the front of the plinth base, a pair of doors
-  annunciator the window tiles of the header strip: 4 x 2 tiles, 64 x 32 pixels
+  annunciator the annunciator panel: a recessed box of 4 x 3 big windows with labels and a caption, 128 x 128 pixels
+  annunciator_lit  the bright (glowing) windows laid over some of those, 91 x 17
+  vent        a louvre grille panel, 128 x 128
 """
 import os
 import struct
@@ -153,33 +155,106 @@ def cabinet():
     return 16, 16, px
 
 
+FONT = {
+    "1": (".#.", "##.", ".#.", ".#.", "###"), "2": ("##.", "..#", ".#.", "#..", "###"),
+    "3": ("##.", "..#", ".#.", "..#", "##."), "4": ("#.#", "#.#", "###", "..#", "..#"),
+    "A": (".#.", "#.#", "###", "#.#", "#.#"), "B": ("##.", "#.#", "##.", "#.#", "##."),
+    "C": (".##", "#..", "#..", "#..", ".##")}
+
+# The annunciator picture, 128 x 128 pixels over one block of the leaning panel (y = 0 at the top). Layout, in pixels:
+# the box is x 6..121, y 15..98; windows are 22 x 17 at x = 19 + 25 * column, y = 27 + 20 * row (columns 1-4, rows A-C);
+# the numbers sit at y 20..24, the letters at x 11..13, the caption at y 87..92 and the nameplate at y 104..114.
+# build_trim.py lights windows B1+B2 (19..65, 47..63), C3 (69..90, 67..83) and A4 (94..115, 27..43) with annunciator_lit.
+WIN_W, WIN_H = 22, 17
+WINDOWS = {  # (row, column): (body, legend)
+    (0, 0): "red", (0, 1): "red", (0, 2): "white", (0, 3): "red",
+    (1, 0): "white", (1, 1): "white", (1, 2): "red", (1, 3): "red",
+    (2, 0): "white", (2, 1): "amber", (2, 2): "amber", (2, 3): "red"}
+TILE = {"red": ((0xA8, 0x2A, 0x24), (0xE6, 0xA2, 0x5A)), "white": ((0xC9, 0xC3, 0xAC), (0x4A, 0x46, 0x3A)),
+        "amber": ((0xB8, 0x96, 0x2E), (0x3F, 0x32, 0x10))}
+LIT = {"white": ((0xFF, 0xF6, 0xD8), (0x6A, 0x5C, 0x30)), "amber": ((0xFF, 0xDC, 0x50), (0x5A, 0x40, 0x10)),
+       "red": ((0xFF, 0x4A, 0x32), (0xFF, 0xD8, 0xA0))}
+
+
+def glyph(px, ch, x, y, colour):
+    for dy, row in enumerate(FONT[ch]):
+        for dx, c in enumerate(row):
+            if c == "#":
+                px[y + dy][x + dx] = colour
+
+
+def window(px, x0, y0, body, legend):
+    lit = tuple(min(255, c + 22) for c in body)
+    shade = tuple(max(0, c - 40) for c in body)
+    rect(px, x0, y0, x0 + WIN_W - 1, y0 + WIN_H - 1, body)
+    for x in range(x0, x0 + WIN_W):
+        px[y0][x] = lit
+        px[y0 + WIN_H - 1][x] = shade
+    for y in range(y0, y0 + WIN_H):
+        px[y][x0] = lit
+        px[y][x0 + WIN_W - 1] = shade
+    rect(px, x0 + 4, y0 + 6, x0 + WIN_W - 5, y0 + 6, legend)         # two lines of legend
+    rect(px, x0 + 6, y0 + 10, x0 + WIN_W - 7, y0 + 10, legend)
+
+
+def screw(px, x, y):
+    rect(px, x, y, x + 2, y + 2, (0x9A, 0xA4, 0x9E))
+    px[y + 1][x + 1] = (0x3A, 0x40, 0x3C)
+
+
 def annunciator():
-    """4 x 2 window tiles of 16 pixels each. Pale windows with two lines of engraved legend; one amber, one red."""
-    width, height = 64, 32
-    px = grid(width, height, (0x25, 0x2C, 0x28))
-    tints = {(1, 0): (0xE8, 0xC4, 0x6A), (2, 1): (0xDE, 0x7A, 0x6E)}
-    for row in range(2):
-        for col in range(4):
-            x0, y0 = col * 16, row * 16
-            body = tints.get((col, row), (0xE9, 0xE4, 0xCF))
-            lit = tuple(min(255, c + 14) for c in body)
-            shade = tuple(max(0, c - 34) for c in body)
-            rect(px, x0 + 1, y0 + 1, x0 + 14, y0 + 14, (0x15, 0x1A, 0x17))          # the tile's bezel
-            rect(px, x0 + 2, y0 + 2, x0 + 13, y0 + 13, body)
-            for x in range(x0 + 2, x0 + 14):
-                px[y0 + 2][x] = lit
-                px[y0 + 13][x] = shade
-            for y in range(y0 + 2, y0 + 14):
-                px[y][x0 + 13] = shade
-            legend = (0x5C, 0x5A, 0x50)
-            rect(px, x0 + 4, y0 + 5, x0 + 11, y0 + 5, legend)
-            rect(px, x0 + 4, y0 + 8, x0 + 9, y0 + 8, legend)
-            rect(px, x0 + 4, y0 + 10, x0 + 11, y0 + 10, legend)
-    return width, height, px
+    px = grid(128, 128, PAINT)
+    edges(px, PAINT_LIGHT, PAINT_DARK)
+    for x, y in ((2, 7), (123, 7), (2, 102), (123, 102)):
+        screw(px, x, y)
+    rect(px, 6, 15, 121, 98, (0x17, 0x19, 0x1A))                       # the box: a dark, nearly black bezel
+    frame(px, 6, 15, 121, 98, (0x3A, 0x41, 0x3E))
+    frame(px, 7, 16, 120, 97, (0x0C, 0x0D, 0x0E))
+    for column, ch in enumerate("1234"):
+        glyph(px, ch, 19 + 25 * column + 9, 20, (0xB8, 0xBC, 0xB4))
+    for row, ch in enumerate("ABC"):
+        glyph(px, ch, 11, 27 + 20 * row + 6, (0xB8, 0xBC, 0xB4))
+    for (row, column), tint in WINDOWS.items():
+        body, legend = TILE[tint]
+        window(px, 19 + 25 * column, 27 + 20 * row, body, legend)
+    rect(px, 40, 87, 88, 92, (0x1F, 0x23, 0x22))                       # the caption strip
+    for x in range(44, 85, 3):
+        px[89][x] = px[89][x + 1] = (0x7C, 0x82, 0x7E)
+    rect(px, 34, 104, 94, 114, (0x12, 0x14, 0x15))                     # the nameplate below
+    frame(px, 34, 104, 94, 114, (0x4A, 0x52, 0x4E))
+    for x in range(40, 89, 4):
+        px[107][x] = px[107][x + 1] = px[107][x + 2] = (0xC8, 0xCC, 0xC4)
+        px[111][x + 1] = px[111][x + 2] = (0x9C, 0xA2, 0x9E)
+    return 128, 128, px
+
+
+def annunciator_lit():
+    """Bright windows: white pair (47 wide, the dark gap between them kept), amber, red; 91 x 17 pixels."""
+    px = grid(91, WIN_H, (0x17, 0x19, 0x1A))
+    window(px, 0, 0, *LIT["white"])
+    window(px, 25, 0, *LIT["white"])
+    window(px, 47, 0, *LIT["amber"])
+    window(px, 69, 0, *LIT["red"])
+    return 91, WIN_H, px
+
+
+def vent():
+    """A vent louvre panel: board paint with a dark recessed grille of vertical slats."""
+    px = grid(128, 128, PAINT)
+    edges(px, PAINT_LIGHT, PAINT_DARK)
+    for x, y in ((2, 4), (123, 4), (2, 120), (123, 120)):
+        screw(px, x, y)
+    rect(px, 36, 10, 91, 110, (0x14, 0x17, 0x16))
+    frame(px, 36, 10, 91, 110, (0x3A, 0x41, 0x3E))
+    for x in range(40, 88, 4):
+        rect(px, x, 14, x + 1, 106, (0x5E, 0x68, 0x63))
+        rect(px, x + 2, 14, x + 2, 106, (0x0A, 0x0C, 0x0B))
+    return 128, 128, px
 
 
 TEXTURES = {"face": face, "paint": paint, "bezel": bezel, "back": back, "kick": kick, "cheek": cheek,
-            "hood": hood, "apron": apron, "cabinet": cabinet, "annunciator": annunciator}
+            "hood": hood, "apron": apron, "cabinet": cabinet, "annunciator": annunciator,
+            "annunciator_lit": annunciator_lit, "vent": vent}
 
 
 def main():
