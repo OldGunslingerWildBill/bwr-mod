@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "building", "pattern": ["III", "IDI", "IRI"], "key": {"I": {"item": "minecraft:iron_ingot"}, "D": {"item": "minecraft:iron_door"}, "R": {"item": "minecraft:redstone"}}, "result": {"id": "bwr:relay_cabinet", "count": 1}}

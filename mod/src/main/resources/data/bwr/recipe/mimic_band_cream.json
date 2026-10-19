@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shapeless", "category": "building", "ingredients": [{"item": "bwr:control_panel_vertical"}, {"item": "minecraft:bone_meal"}], "result": {"id": "bwr:mimic_band_cream", "count": 1}}

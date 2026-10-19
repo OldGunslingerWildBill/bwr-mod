@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "building", "pattern": ["III", "IRI", "III"], "key": {"I": {"item": "minecraft:iron_ingot"}, "R": {"item": "minecraft:redstone"}}, "result": {"id": "bwr:relay_cabinet_plain", "count": 1}}

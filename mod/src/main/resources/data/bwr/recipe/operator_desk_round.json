@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shapeless", "category": "building", "ingredients": [{"item": "bwr:operator_desk"}, {"item": "minecraft:iron_nugget"}], "result": {"id": "bwr:operator_desk_round", "count": 1}}

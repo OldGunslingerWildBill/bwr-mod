@@ -264,6 +264,28 @@ public final class BwrItems {
     public static final DeferredItem<Item> TRITIUM_SAMPLE = ITEMS.register("tritium_sample", () -> new dev.bwr.mod.fuel.TritiumSampleItem(new Item.Properties()));
     public static final DeferredItem<Item> DOPED_SILICON = ITEMS.registerSimpleItem("doped_silicon");
 
+    // --- Control-room furniture (ROOM-FURNITURE.md) ---
+    public static final DeferredItem<BlockItem> RELAY_CABINET =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.RELAY_CABINET);
+    public static final DeferredItem<BlockItem> RELAY_CABINET_PLAIN =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.RELAY_CABINET_PLAIN);
+    public static final DeferredItem<BlockItem> OPERATOR_DESK =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.OPERATOR_DESK);
+    public static final DeferredItem<BlockItem> OPERATOR_DESK_ROUND =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.OPERATOR_DESK_ROUND);
+    public static final DeferredItem<BlockItem> OPERATOR_DESK_CORNER =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.OPERATOR_DESK_CORNER);
+    public static final DeferredItem<BlockItem> SUPERVISOR_DESK =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.SUPERVISOR_DESK);
+    public static final DeferredItem<BlockItem> MIMIC_BAND_CREAM =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.MIMIC_BAND_CREAM);
+    public static final DeferredItem<BlockItem> MIMIC_BAND_BLACK =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.MIMIC_BAND_BLACK);
+    public static final DeferredItem<BlockItem> WALL_DISPLAY =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.WALL_DISPLAY);
+    public static final DeferredItem<BlockItem> WALL_DISPLAY_WIDE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.WALL_DISPLAY_WIDE);
+
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> FUEL_TAB = TABS.register("fuel", () ->
             CreativeModeTab.builder().title(Component.translatable("itemGroup.bwr.fuel"))
                     .icon(() -> FUEL_ASSEMBLY.get().getDefaultInstance()).displayItems((parameters, output) -> {
@@ -380,6 +402,16 @@ public final class BwrItems {
                         output.accept(BAR_GAUGE.get());
                         output.accept(RPS_TRIP.get());
                         output.accept(PUSH_TURN_SWITCH.get());
+                        output.accept(RELAY_CABINET.get());
+                        output.accept(RELAY_CABINET_PLAIN.get());
+                        output.accept(OPERATOR_DESK.get());
+                        output.accept(OPERATOR_DESK_ROUND.get());
+                        output.accept(OPERATOR_DESK_CORNER.get());
+                        output.accept(SUPERVISOR_DESK.get());
+                        output.accept(MIMIC_BAND_CREAM.get());
+                        output.accept(MIMIC_BAND_BLACK.get());
+                        output.accept(WALL_DISPLAY.get());
+                        output.accept(WALL_DISPLAY_WIDE.get());
                     })
                     .build());
 }

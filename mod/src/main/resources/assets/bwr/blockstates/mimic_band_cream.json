@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/furniture/mimic_band_cream"
+    },
+    "facing=east": {
+      "model": "bwr:block/furniture/mimic_band_cream",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/furniture/mimic_band_cream",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/furniture/mimic_band_cream",
+      "y": 270
+    }
+  }
+}

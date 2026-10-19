@@ -1,0 +1,36 @@
+{
+  "parent": "bwr:block/furniture/supervisor_item",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.36,
+        0.36,
+        0.36
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.241,
+        0.241,
+        0.241
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.299,
+        0.299,
+        0.299
+      ]
+    }
+  }
+}
