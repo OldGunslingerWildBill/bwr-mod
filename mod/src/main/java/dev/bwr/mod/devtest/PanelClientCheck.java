@@ -62,16 +62,21 @@ public final class PanelClientCheck {
     private static final int BAKED_FIRST = 9;
     /** The first stage of the sloped boards (see {@link PanelSlopeShowcase}): benchboard and console groups after the vertical boards. */
     private static final int SLOPE_FIRST = BAKED_FIRST + PanelModelShowcase.NAMES.length;
+    /** The first stage of the control-room trim showroom (see {@link PanelTrimShowcase}), after the sloped boards. */
+    private static final int TRIM_FIRST = SLOPE_FIRST + PanelSlopeShowcase.NAMES.length;
     private static final String[] NAMES = names();
 
     private static String[] names() {
         String[] original = {"board-day-wide", "board-controls-close", "board-annunciators",
                 "board-lod-28m", "board-night-lamps", "wrench-config", "linker-binding", "linker-outline", "board-night-close"};
-        String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length + PanelSlopeShowcase.NAMES.length];
+        String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length + PanelSlopeShowcase.NAMES.length
+                + PanelTrimShowcase.NAMES.length];
         System.arraycopy(original, 0, all, 0, original.length);
         System.arraycopy(PanelModelShowcase.NAMES, 0, all, BAKED_FIRST, PanelModelShowcase.NAMES.length);
         System.arraycopy(PanelSlopeShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length,
                 PanelSlopeShowcase.NAMES.length);
+        System.arraycopy(PanelTrimShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length
+                + PanelSlopeShowcase.NAMES.length, PanelTrimShowcase.NAMES.length);
         return all;
     }
     private static final String STAGE_FILTER = System.getProperty("bwr.panelClientStages", "");
@@ -151,13 +156,15 @@ public final class PanelClientCheck {
                         build(level);
                         PanelModelShowcase.build(level);
                         PanelSlopeShowcase.build(level);
+                        PanelTrimShowcase.build(level);
                         built = true;
                     } catch (Throwable failure) {
                         buildFailure = failure;
                         return;
                     }
                 }
-                Vec3 camera = selected >= SLOPE_FIRST ? PanelSlopeShowcase.camera(selected - SLOPE_FIRST)
+                Vec3 camera = selected >= TRIM_FIRST ? PanelTrimShowcase.camera(selected - TRIM_FIRST)
+                        : selected >= SLOPE_FIRST ? PanelSlopeShowcase.camera(selected - SLOPE_FIRST)
                         : selected >= BAKED_FIRST ? PanelModelShowcase.camera(selected - BAKED_FIRST) : (switch (selected) {
                     case 0 -> new Vec3(93, 125, 79);
                     case 1, 5, 6, 8 -> new Vec3(94, 125, 92);
@@ -166,7 +173,8 @@ public final class PanelClientCheck {
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = selected >= SLOPE_FIRST ? PanelSlopeShowcase.target(selected - SLOPE_FIRST)
+                Vec3 target = selected >= TRIM_FIRST ? PanelTrimShowcase.target(selected - TRIM_FIRST)
+                        : selected >= SLOPE_FIRST ? PanelSlopeShowcase.target(selected - SLOPE_FIRST)
                         : selected >= BAKED_FIRST ? PanelModelShowcase.target(selected - BAKED_FIRST) : (selected == 7 ? new Vec3(96.375, 127.5, 100.75)
                         : selected == 2 ? new Vec3(94, 120.5, 100)
                         : selected == 1 || selected == 5 || selected == 6 || selected == 8
@@ -251,7 +259,8 @@ public final class PanelClientCheck {
             if (stage >= BAKED_FIRST) {
                 // Every component must draw baked exactly when a loaded model exists for its look.
                 LogUtils.getLogger().info("PANEL CLIENT CHECK baked models {}: {} components drawn from baked models ({} loaded)",
-                        NAMES[stage], stage >= SLOPE_FIRST ? PanelSlopeShowcase.verify(mc, stage - SLOPE_FIRST)
+                        NAMES[stage], stage >= TRIM_FIRST ? PanelTrimShowcase.verify(mc, stage - TRIM_FIRST)
+                                : stage >= SLOPE_FIRST ? PanelSlopeShowcase.verify(mc, stage - SLOPE_FIRST)
                                 : PanelModelShowcase.verify(mc, stage - BAKED_FIRST), dev.bwr.mod.panel.model.PanelModels.loadedCount());
             }
             try (var shot = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased: control room trim blocks and remodelled panel bodies
+
+- The three panel bodies (vertical, benchboard, console) are remodelled in Blender with the **mounting face exactly where it was** (a game test reads the shipped OBJ files back and checks the face polygon's four corners against `PanelGeometry`, and that nothing else is in front of that plane). Detail: seafoam face and bezel textures with module seams, service-door backs, bevelled back edges on the vertical board, a dark recessed 2 px toe-kick on the back of the benchboard and console, a front lip on the console. Ids, states and group joining are unchanged, so placed boards just look better.
+- Added 15 decorative trim blocks, none with a block entity: **end caps** (flat, benchboard, console, rounded; they take the side of the run they are placed against), **annunciator header strips** (a half-height block tilted forward 12 degrees with a grid of window tiles; a canopy variant with a projecting hood), **plinths** (base cabinet with a toe-kick, foot apron, toe-kick strip) and **corner fillers** (vertical and benchboard; inside, outside and 45 degree).
+
 ## Unreleased: Networking Wrench, machine names, gauge Measures and FE power units
 
 - Added the **Networking Wrench**, a second wiring tool beside the unchanged Panel Linker (either stores the device in the same slot, so a bind is the same bind). Right-click selects a device, sneak-right-click opens its **Networking screen** (name, caption template, every signal with its live value, unit, quantity and readers, every command, the linked components with Unlink, and *Name linked components*). While it is held, a device under the crosshair is outlined white, the selected one yellow, and hovering a bound component or a device draws see-through lines (read cyan, command orange, at most 64). Nearby players see the same lines, fainter and tinted with your name colour, within `networkLineShareDistance` (server, default 32) and `networkLineViewDistance` (client, default 32).
