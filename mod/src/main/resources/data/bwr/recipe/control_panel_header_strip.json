@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "building", "pattern": ["GG", "VV"], "key": {"G": {"item": "minecraft:glass_pane"}, "V": {"item": "bwr:control_panel_vertical"}}, "result": {"id": "bwr:control_panel_header_strip", "count": 2}}

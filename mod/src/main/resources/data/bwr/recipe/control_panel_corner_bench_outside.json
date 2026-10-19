@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shapeless", "category": "building", "ingredients": [{"item": "bwr:control_panel_benchboard"}, {"item": "minecraft:iron_ingot"}], "result": {"id": "bwr:control_panel_corner_bench_outside", "count": 2}}

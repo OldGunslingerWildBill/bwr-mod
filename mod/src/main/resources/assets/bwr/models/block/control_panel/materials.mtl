@@ -1,8 +1,40 @@
 newmtl face
-Kd 0.654902 0.737255 0.682353
-map_Kd minecraft:block/white_concrete
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/control_panel/face
+
+newmtl paint
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/control_panel/paint
 
 newmtl bezel
-Kd 0.490196 0.572549 0.517647
-map_Kd minecraft:block/white_concrete
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/control_panel/bezel
+
+newmtl back
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/control_panel/back
+
+newmtl kick
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/control_panel/kick
+
+newmtl cheek
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/control_panel/cheek
+
+newmtl hood
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/control_panel/hood
+
+newmtl apron
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/control_panel/apron
+
+newmtl cabinet
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/control_panel/cabinet
+
+newmtl annunciator
+Kd 1.000000 1.000000 1.000000
+map_Kd bwr:block/control_panel/annunciator
 

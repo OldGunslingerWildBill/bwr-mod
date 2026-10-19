@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "building", "pattern": ["III"], "key": {"I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:control_panel_plinth_kick", "count": 6}}

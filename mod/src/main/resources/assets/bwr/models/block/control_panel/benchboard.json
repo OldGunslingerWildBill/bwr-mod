@@ -7,7 +7,7 @@
   "emissive_ambient": false,
   "ambientocclusion": false,
   "textures": {
-    "particle": "minecraft:block/white_concrete"
+    "particle": "bwr:block/control_panel/bezel"
   },
   "render_type": "minecraft:solid"
 }

@@ -264,6 +264,38 @@ public final class BwrItems {
     public static final DeferredItem<Item> TRITIUM_SAMPLE = ITEMS.register("tritium_sample", () -> new dev.bwr.mod.fuel.TritiumSampleItem(new Item.Properties()));
     public static final DeferredItem<Item> DOPED_SILICON = ITEMS.registerSimpleItem("doped_silicon");
 
+    // Control panel trim (the blocks of BwrBlocks, listed after the component items).
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_END_CAP_FLAT =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_END_CAP_FLAT);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_END_CAP_BENCH =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_END_CAP_BENCH);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_END_CAP_CONSOLE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_END_CAP_CONSOLE);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_END_CAP_ROUND =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_END_CAP_ROUND);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_HEADER_STRIP =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_HEADER_STRIP);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_HEADER_CANOPY =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_HEADER_CANOPY);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_PLINTH_KICK =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_PLINTH_KICK);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_PLINTH_APRON =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_PLINTH_APRON);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_PLINTH_BASE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_PLINTH_BASE);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_CORNER_VERTICAL_INSIDE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_CORNER_VERTICAL_INSIDE);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_CORNER_VERTICAL_OUTSIDE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_CORNER_VERTICAL_OUTSIDE);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_CORNER_VERTICAL_CHAMFER =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_CORNER_VERTICAL_CHAMFER);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_CORNER_BENCH_INSIDE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_CORNER_BENCH_INSIDE);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_CORNER_BENCH_OUTSIDE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_CORNER_BENCH_OUTSIDE);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_CORNER_BENCH_CHAMFER =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_CORNER_BENCH_CHAMFER);
+
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> FUEL_TAB = TABS.register("fuel", () ->
             CreativeModeTab.builder().title(Component.translatable("itemGroup.bwr.fuel"))
                     .icon(() -> FUEL_ASSEMBLY.get().getDefaultInstance()).displayItems((parameters, output) -> {
@@ -380,6 +412,21 @@ public final class BwrItems {
                         output.accept(BAR_GAUGE.get());
                         output.accept(RPS_TRIP.get());
                         output.accept(PUSH_TURN_SWITCH.get());
+                        output.accept(CONTROL_PANEL_END_CAP_FLAT.get());
+                        output.accept(CONTROL_PANEL_END_CAP_BENCH.get());
+                        output.accept(CONTROL_PANEL_END_CAP_CONSOLE.get());
+                        output.accept(CONTROL_PANEL_END_CAP_ROUND.get());
+                        output.accept(CONTROL_PANEL_HEADER_STRIP.get());
+                        output.accept(CONTROL_PANEL_HEADER_CANOPY.get());
+                        output.accept(CONTROL_PANEL_PLINTH_KICK.get());
+                        output.accept(CONTROL_PANEL_PLINTH_APRON.get());
+                        output.accept(CONTROL_PANEL_PLINTH_BASE.get());
+                        output.accept(CONTROL_PANEL_CORNER_VERTICAL_INSIDE.get());
+                        output.accept(CONTROL_PANEL_CORNER_VERTICAL_OUTSIDE.get());
+                        output.accept(CONTROL_PANEL_CORNER_VERTICAL_CHAMFER.get());
+                        output.accept(CONTROL_PANEL_CORNER_BENCH_INSIDE.get());
+                        output.accept(CONTROL_PANEL_CORNER_BENCH_OUTSIDE.get());
+                        output.accept(CONTROL_PANEL_CORNER_BENCH_CHAMFER.get());
                     })
                     .build());
 }

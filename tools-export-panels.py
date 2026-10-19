@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Generate the placeholder control panel body meshes (CONTROL-PANELS-SPEC section 1).
+"""SUPERSEDED: the bodies are now modelled in Blender, see art/models/control_panel_trim/build_trim.py (which also
+makes the trim blocks and the textures). Running this script would overwrite them with the old bare placeholders; it
+stays only as the record of the original meshes.
+
+Generate the placeholder control panel body meshes (CONTROL-PANELS-SPEC section 1).
 
 Writes models/block/control_panel/{vertical,benchboard,console}.obj plus one shared
 materials.mtl, in the control-board palette (spec section 9). The geometry here must agree
