@@ -17,6 +17,8 @@ import java.util.List;
  *   <li>{@link Kind#INT}: int in {@code [min, max]}</li>
  *   <li>{@link Kind#DOUBLE}: finite double in {@code [min, max]}</li>
  *   <li>{@link Kind#ENUM}: string, one of {@link #options()}</li>
+ *   <li>{@link Kind#SLIDER}: int in {@code [min, max]} set with a slider, {@link #defaultValue()} when the data does not
+ *       hold one (a slider setting is saved only when it is not its default)</li>
  * </ul>
  * A colour field may also carry named choices ({@link #color(String, String, List)}): {@link #options()} then holds
  * {@code name=RRGGBB} swatches the wrench screen offers beside the colour box.
@@ -24,10 +26,15 @@ import java.util.List;
  * @param key       NBT key; also the suffix of the translation key
  *                  {@code component.bwr.field.<key>} unless {@code labelKey} is set
  * @param labelKey  translation key for the screen label
+ * @param defaultValue what a {@link Kind#SLIDER} reads when the data has no value for it; 0 for every other kind
  */
 public record ConfigField(String key, Kind kind, String labelKey, double min, double max,
-                          int maxLength, List<String> options) {
-    public enum Kind { TEXT, COLOR, BOOL, INT, DOUBLE, ENUM }
+                          int maxLength, List<String> options, double defaultValue) {
+    public enum Kind { TEXT, COLOR, BOOL, INT, DOUBLE, ENUM, SLIDER }
+
+    public ConfigField(String key, Kind kind, String labelKey, double min, double max, int maxLength, List<String> options) {
+        this(key, kind, labelKey, min, max, maxLength, options, 0.0);
+    }
 
     /** The choice a colour with swatches shows when its colour is none of them; its name is {@code component.bwr.swatch.custom}. */
     public static final String SWATCH_CUSTOM = "custom";
@@ -99,5 +106,18 @@ public record ConfigField(String key, Kind kind, String labelKey, double min, do
 
     public static ConfigField choice(String key, String labelKey, List<String> options) {
         return new ConfigField(key, Kind.ENUM, labelKey, 0, options.size() - 1, 0, List.copyOf(options));
+    }
+
+    /**
+     * A whole number from {@code min} to {@code max} in steps of {@code step}, set with a slider in the wrench screen and
+     * reading {@code defaultValue} when the data does not hold it. The step is kept in {@link #maxLength()}.
+     */
+    public static ConfigField slider(String key, String labelKey, int min, int max, int step, int defaultValue) {
+        return new ConfigField(key, Kind.SLIDER, labelKey, min, max, Math.max(1, step), List.of(), defaultValue);
+    }
+
+    /** The step of a {@link Kind#SLIDER}; 1 for any other field. */
+    public int step() {
+        return kind == Kind.SLIDER ? Math.max(1, maxLength) : 1;
     }
 }

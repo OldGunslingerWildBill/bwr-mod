@@ -3,6 +3,12 @@ package dev.bwr.mod.panel.client;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.component.ThumbwheelData;
 import dev.bwr.mod.panel.component.ThumbwheelType;
+import dev.bwr.mod.panel.model.BakedPanelModel;
+import dev.bwr.mod.panel.model.GaugeScale;
+import dev.bwr.mod.panel.model.Legends;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Thumbwheel: one dark window per 3 x 6 digit cell with a raise mark above and a lower mark below, the digit lit
@@ -46,6 +52,26 @@ final class ThumbwheelModel implements ComponentModel {
             ModelDraw.centreText(context, digit, i * pw + 0.6f * k, 1.5f * k, pw - 1.2f * k, component.h() - 3.0f * k, 1.8f,
                     data.color, true);
         }
+    }
+
+    /** The digits as {@link ModelDraw#centreText} places them in their windows. */
+    @Override
+    public List<Legends.Item> textLayout(PanelComponent component, float rowAspect) {
+        int digits = ThumbwheelType.digits(component);
+        long value = Math.max(0L, Math.round(component.output(0)));
+        float k = scale(component);
+        float pw = DW * k;
+        float bw = pw - 1.2f * k;
+        float bh = component.h() - 3.0f * k;
+        List<Legends.Item> items = new ArrayList<>();
+        for (int i = 0; i < digits; i++) {
+            String digit = DIGITS[ThumbwheelData.digit(value, digits, i)];
+            float scale = ModelDraw.centreScale(GaugeScale.textPixels(digit), bw, bh, rowAspect);
+            items.add(new Legends.Item(digit, i * pw + 0.6f * k + bw / 2.0f, 1.5f * k + bh / 2.0f - 0.5f * scale * rowAspect,
+                    1.8f, Legends.CAP_PIXELS * scale, 0.0f, BakedPanelModel.Align.CENTER, ((ThumbwheelData) component.data()).color,
+                    false, ModelDraw.RECESS));
+        }
+        return items;
     }
 
     /** How much the 3 x 6 digit cell is scaled to fit the component's height: 1 normally, 1/3 on a real size one. */

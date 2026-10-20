@@ -1,6 +1,9 @@
 package dev.bwr.mod.panel.client;
 
 import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.model.Legends;
+
+import java.util.List;
 
 /**
  * The model registered for a component type that has baked looks: it draws the baked model the component's
@@ -102,5 +105,13 @@ final class StyledComponentModel implements ComponentModel {
         } else {
             baked.renderGlass(context);
         }
+    }
+
+    /** The baked model's legends when the component draws baked, else the classic look's text. */
+    @Override
+    public List<Legends.Item> textLayout(PanelComponent component, float rowAspect) {
+        BakedComponentModel baked = fixedModelId == null ? BakedComponentModel.create(component, kind, type, rowAspect)
+                : BakedComponentModel.createFixed(component, kind, type, fixedModelId, rowAspect);
+        return baked == null ? classic.textLayout(component, rowAspect) : baked.legendItems();
     }
 }

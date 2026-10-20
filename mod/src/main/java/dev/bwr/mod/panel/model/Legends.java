@@ -103,6 +103,7 @@ public final class Legends {
             }
         }
         if (component.data() instanceof GaugeData data) {
+            int numeralsFrom = items.size();
             BakedPanelModel.Part needle = needle(model);
             BakedPanelModel.Label min = model.label("scale_min");
             BakedPanelModel.Label max = model.label("scale_max");
@@ -134,8 +135,152 @@ public final class Legends {
                     items.add(item(numeral(data, t), scale, place, at[0], at[1], at[2]));
                 }
             }
+            textSize(items, numeralsFrom, data.textFactor(), place, model);
         }
         return items;
+    }
+
+    /**
+     * A meter's Text size ({@link GaugeScale}): every legend's cap height times {@code factor}. Smaller is always allowed;
+     * bigger only as far as a legend stays inside the model's footprint and clear of every legend it was clear of at
+     * the model's own size, the numerals (from {@code numeralsFrom}) all by the same amount so they stay one size. At
+     * 100 % the model's sizes stand untouched.
+     */
+    static void textSize(List<Item> items, int numeralsFrom, float factor, Placement place, BakedPanelModel model) {
+        if (factor == 1.0f || items.isEmpty()) {
+            return;
+        }
+        int n = items.size();
+        float[] grow = new float[n];
+        java.util.Arrays.fill(grow, factor);
+        if (factor > 1.0f) {
+            float rowAspect = place.scale / place.rowScale;
+            float[] footprint = {place.x(0.0f), place.y(0.0f), place.x(model.footprintW), place.y(model.footprintH)};
+            float[] window = window(model, place);
+            for (int i = 0; i < n; i++) {
+                Item own = items.get(i);
+                // Text printed on the scale stays inside the window (the bezel's lip covers its edge); anything else
+                // (a caption on the case) inside the footprint.
+                float[] bounds = window != null && inside(box(own, 1.0f, rowAspect), window) ? window : footprint;
+                grow[i] = Math.min(grow[i], largest(factor, f -> inside(box(own, f, rowAspect), bounds)));
+                for (int j = i + 1; j < n; j++) {
+                    Item a = items.get(i);
+                    Item b = items.get(j);
+                    if (overlap(box(a, 1.0f, rowAspect), box(b, 1.0f, rowAspect))) {
+                        continue; // the model drew them touching: not this setting's business
+                    }
+                    // Kept a narrow space apart, so "80" and "100" never run together into "80100".
+                    float pair = largest(factor, f -> !overlap(pad(box(a, f, rowAspect), a, f), pad(box(b, f, rowAspect), b, f)));
+                    grow[i] = Math.min(grow[i], pair);
+                    grow[j] = Math.min(grow[j], pair);
+                }
+            }
+            float numerals = factor;
+            for (int i = numeralsFrom; i < n; i++) {
+                numerals = Math.min(numerals, grow[i]);
+            }
+            for (int i = numeralsFrom; i < n; i++) {
+                grow[i] = numerals;
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            Item it = items.get(i);
+            items.set(i, new Item(it.text(), it.x(), it.y(), it.z(), it.capCells() * grow[i], it.rotation(), it.align(),
+                    it.ink(), it.onLamp(), it.surfaceRgb(), it.tilt()));
+        }
+    }
+
+    /** How far inside the edge of a meter's window its text stays when it grows, model inches. */
+    private static final float WINDOW_MARGIN = 0.05f;
+    /** Half the space kept between two legends that grow, in cap heights. */
+    private static final float SPACE = 0.3f;
+
+    /** The box round a model's glass (its window), less {@link #WINDOW_MARGIN}, in component cells; null without glass. */
+    private static float[] window(BakedPanelModel model, Placement place) {
+        float[] out = {Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+        boolean any = false;
+        for (int p = 0; p < model.partCount(); p++) {
+            BakedPanelModel.Part part = model.part(p);
+            if (part.role != BakedPanelModel.Role.GLASS) {
+                continue;
+            }
+            for (int f = 0; f < part.faceCount; f++) {
+                for (int c = 0; c < 4; c++) {
+                    out[0] = Math.min(out[0], part.corner(f, c, 0));
+                    out[1] = Math.min(out[1], part.corner(f, c, 1));
+                    out[2] = Math.max(out[2], part.corner(f, c, 0));
+                    out[3] = Math.max(out[3], part.corner(f, c, 1));
+                    any = true;
+                }
+            }
+        }
+        return any ? new float[] {place.x(out[0] + WINDOW_MARGIN), place.y(out[1] + WINDOW_MARGIN),
+                place.x(out[2] - WINDOW_MARGIN), place.y(out[3] - WINDOW_MARGIN)} : null;
+    }
+
+    /** {@code box} grown by {@link #SPACE} of {@code item}'s cap height at scale {@code f} all round (rows as columns: a hair generous on a slope). */
+    private static float[] pad(float[] box, Item item, double f) {
+        float d = (float) (SPACE * item.capCells() * f);
+        return new float[] {box[0] - d, box[1] - d, box[2] + d, box[3] + d};
+    }
+
+    /** The largest {@code f} in 1 .. {@code factor} for which {@code ok} holds, assuming it holds below some f and not above. */
+    private static float largest(float factor, java.util.function.DoublePredicate ok) {
+        if (ok.test(factor)) {
+            return factor;
+        }
+        float low = 1.0f;
+        float high = factor;
+        for (int k = 0; k < 24; k++) {
+            float mid = (low + high) / 2.0f;
+            if (ok.test(mid)) {
+                low = mid;
+            } else {
+                high = mid;
+            }
+        }
+        return low;
+    }
+
+    /**
+     * The box {@code item} covers, {x0, y0, x1, y1} in component columns and rows: its text ({@link GaugeScale#textCaps}
+     * wide, a cap high, placed by its alignment and centred on its anchor's row, as the renderer draws it) turned by its
+     * rotation, with its cap height times {@code scale}.
+     */
+    public static float[] box(Item item, double scale, float rowAspect) {
+        float cap = (float) (item.capCells() * scale);
+        float w = GaugeScale.textCaps(item.text()) * cap;
+        float x0 = switch (item.align()) {
+            case LEFT -> 0.0f;
+            case CENTER -> -w / 2.0f;
+            case RIGHT -> -w;
+        };
+        double r = Math.toRadians(item.rotation());
+        float cos = (float) Math.cos(r);
+        float sin = (float) Math.sin(r);
+        float[] out = {Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+        for (int c = 0; c < 4; c++) {
+            float x = c == 0 || c == 3 ? x0 : x0 + w;
+            float y = c < 2 ? -cap / 2.0f : cap / 2.0f;
+            float px = item.x() + x * cos - y * sin;
+            float py = item.y() + (x * sin + y * cos) / rowAspect;
+            out[0] = Math.min(out[0], px);
+            out[1] = Math.min(out[1], py);
+            out[2] = Math.max(out[2], px);
+            out[3] = Math.max(out[3], py);
+        }
+        return out;
+    }
+
+    /** Whether two {@link #box}es overlap (touching edges do not). */
+    public static boolean overlap(float[] a, float[] b) {
+        return a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3];
+    }
+
+    /** Whether {@code box} lies inside {@code bounds} (same layout), allowing a hair for float noise. */
+    public static boolean inside(float[] box, float[] bounds) {
+        float eps = 1.0e-4f;
+        return box[0] >= bounds[0] - eps && box[1] >= bounds[1] - eps && box[2] <= bounds[2] + eps && box[3] <= bounds[3] + eps;
     }
 
     /**

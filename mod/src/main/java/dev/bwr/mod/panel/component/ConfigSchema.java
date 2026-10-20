@@ -43,7 +43,8 @@ public final class ConfigSchema {
                         result.putBoolean(key, incoming.getBoolean(key));
                     }
                 }
-                case INT -> {
+                case INT, SLIDER -> {
+                    // A slider is an int like any other here: whatever the client sends is clamped to its range.
                     if (incoming.contains(key, Tag.TAG_ANY_NUMERIC)) {
                         long value = incoming.getInt(key);
                         result.putInt(key, (int) Math.max((long) field.min(), Math.min((long) field.max(), value)));

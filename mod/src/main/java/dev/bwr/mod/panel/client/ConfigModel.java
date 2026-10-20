@@ -38,7 +38,7 @@ public final class ConfigModel {
                 case TEXT, ENUM -> text;
                 case COLOR -> parseColor(text);
                 case BOOL -> Boolean.parseBoolean(text);
-                case INT -> {
+                case INT, SLIDER -> {
                     try {
                         yield (int) Math.max(field.min(), Math.min(field.max(), Integer.parseInt(text.trim())));
                     } catch (NumberFormatException e) {
@@ -161,6 +161,9 @@ public final class ConfigModel {
             case COLOR -> String.format(Locale.ROOT, "#%06X", data.getInt(key) & 0xFFFFFF);
             case BOOL -> Boolean.toString(data.getBoolean(key));
             case INT -> Integer.toString(data.getInt(key));
+            // A slider setting is saved only when it is not its default, so a missing key reads as the default.
+            case SLIDER -> Integer.toString(data.contains(key, net.minecraft.nbt.Tag.TAG_ANY_NUMERIC) ? data.getInt(key)
+                    : (int) field.defaultValue());
             case DOUBLE -> format(data.getDouble(key));
         };
     }
@@ -193,6 +196,20 @@ public final class ConfigModel {
             }
         }
         return Component.translatable("screen.bwr.panel_config.power_note", low, high, rawUnit, format(dev.bwr.mod.panel.wiring.WiringOps.scaleOf(component.source(0))), shown);
+    }
+
+    /** The value a {@link ConfigField.Kind#SLIDER} at {@code position} (0 at its left end .. 1 at its right) stands for, on its step. */
+    public static int sliderValue(ConfigField field, double position) {
+        double raw = field.min() + (field.max() - field.min()) * Math.max(0.0, Math.min(1.0, position));
+        int step = field.step();
+        long snapped = Math.round((raw - field.min()) / step) * step + (long) field.min();
+        return (int) Math.max((long) field.min(), Math.min((long) field.max(), snapped));
+    }
+
+    /** Where a {@link ConfigField.Kind#SLIDER} showing {@code value} sits, 0 .. 1. */
+    public static double sliderPosition(ConfigField field, int value) {
+        double span = field.max() - field.min();
+        return span <= 0.0 ? 0.0 : Math.max(0.0, Math.min(1.0, (value - field.min()) / span));
     }
 
     /** Accepts {@code #RRGGBB} or {@code RRGGBB}; null if it is not six hex digits. */
@@ -240,7 +257,7 @@ public final class ConfigModel {
             Object value = row.parsed();
             switch (row.field.kind()) {
                 case TEXT, ENUM -> config.putString(row.field.key(), (String) value);
-                case COLOR, INT -> config.putInt(row.field.key(), (Integer) value);
+                case COLOR, INT, SLIDER -> config.putInt(row.field.key(), (Integer) value);
                 case BOOL -> config.putBoolean(row.field.key(), (Boolean) value);
                 case DOUBLE -> config.putDouble(row.field.key(), (Double) value);
             }

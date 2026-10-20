@@ -4,6 +4,7 @@ import dev.bwr.mod.panel.component.BarGraphData;
 import dev.bwr.mod.panel.component.BarGraphLogic;
 import dev.bwr.mod.panel.component.BarGraphType;
 import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.model.GaugeScale;
 
 /**
  * Segmented bar graph: a dark housing with one segment per
@@ -17,6 +18,8 @@ final class BarGraphModel implements ComponentModel {
     private static final float SEG = BarGraphType.SEGMENT_CELLS;
     private static final float GAP = 0.25f;
     private static final float PAD = 0.4f;
+    /** The thickness the big bars are drawn at, cells. */
+    private static final float DESIGN_THICK = 3.0f;
     /** A real size bar (under 3 cells thick) has two segments per cell: its LEDs are far finer than the big bars. */
     private static final float THIN_SEG = 0.5f;
 
@@ -28,8 +31,13 @@ final class BarGraphModel implements ComponentModel {
         return GAP * seg / SEG;
     }
 
+    /**
+     * The housing round the segments: {@value #PAD} cells on a bar {@value #DESIGN_THICK} cells thick or more, the same
+     * share of a thinner one ({@link GaugeScale}). (It was 0.2 of the thickness under 2 cells: a real size bar's housing
+     * was half as heavy again as the big bars'.)
+     */
     private static float pad(PanelComponent component) {
-        return Math.min(PAD, 0.2f * Math.min(component.w(), component.h()));
+        return GaugeScale.least(PAD, GaugeScale.sizeFactor(Math.min(component.w(), component.h()), DESIGN_THICK));
     }
 
     private static boolean vertical(PanelComponent component) {

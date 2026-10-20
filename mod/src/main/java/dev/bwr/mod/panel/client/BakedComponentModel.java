@@ -19,6 +19,7 @@ import dev.bwr.mod.panel.model.PanelModels;
 import dev.bwr.mod.panel.model.PartDraw;
 import dev.bwr.mod.panel.model.Placement;
 import dev.bwr.mod.panel.model.Poses;
+import dev.bwr.mod.panel.model.PrintedTicks;
 import dev.bwr.mod.panel.model.Recolour;
 
 import java.util.ArrayList;
@@ -136,6 +137,9 @@ final class BakedComponentModel {
             } else if (part.moving() || part.role == BakedPanelModel.Role.LAMP || part.role == BakedPanelModel.Role.FLAG
                     || part.name.equals(DEMAND)) {
                 dynamics.add(part);
+            } else if (data instanceof GaugeData gauge && face == null) {
+                // A meter's graduations are faces of its body: the Tick size resizes them (GaugeScale).
+                statics.add(PrintedTicks.resize(model, part, gauge.tickFactor()));
             } else {
                 statics.add(part);
             }
@@ -222,6 +226,11 @@ final class BakedComponentModel {
         }
         BakedPanelModel model = PanelModels.get(resolved.modelId());
         return model == null ? null : new BakedComponentModel(model, resolved, component, kind, type, rowAspect);
+    }
+
+    /** The text this model prints, as laid out for the component's current revision (see {@link ComponentModel#textLayout}). */
+    List<Legends.Item> legendItems() {
+        return List.of(items);
     }
 
     // ---- colour

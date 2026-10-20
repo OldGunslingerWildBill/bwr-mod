@@ -127,6 +127,19 @@ Engraved text, captions and labels scale with their component. Components placed
 the size they were placed at; a display's digit, character and segment counts follow its width, so an old
 display shows fewer digits or characters than before.
 
+#### Gauge text and tick size
+
+Every gauge prints its numbers, units, labels and tick marks in proportion to itself (`GaugeScale`): a 1x3 bar
+gauge is the 10x16 one scaled down, with numbers the same share of its face (they used to keep a least height of 0.15
+cell, twice their share on a 1x3 gauge). A least size that stops something vanishing shrinks with the gauge below the
+size its art was drawn for; at that size and above nothing changed. The wrench screen of the dial, the two edgewise
+meters and the bar gauge has two sliders, **Text size** and **Tick size**, 50 % to 200 % in steps of 5, default
+100 %. They multiply the printed text and the ticks' thickness and length (the baked GE meters' printed graduations
+too). Text only grows as far as it stays on the face and clear of its neighbours (a bar gauge's numbers also step
+aside for longer ticks), so near 200 % some text stops growing. Each setting is saved with the component only when
+it is not 100 %, and the server clamps it to the range. `GaugeScaleGuardTests` draws every gauge-like type at all its
+sizes and fails if text or ticks grow relatively bigger on a small one, or text leaves the face or overlaps.
+
 ### Looks: style and variant
 
 Control switches, rotary selectors, key switches, pushbuttons, lamps, setpoint knobs and the three meter types

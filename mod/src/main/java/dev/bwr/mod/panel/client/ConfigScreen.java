@@ -5,6 +5,7 @@ import dev.bwr.mod.panel.component.ConfigField;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.net.PanelPayloads;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
@@ -84,6 +85,8 @@ public final class ConfigScreen extends Screen {
                                     fieldRow.text = Boolean.toString(value);
                                     refresh();
                                 })));
+                case SLIDER -> rows.add(addRenderableWidget(new PercentSlider(layout.widgetX, y, layout.widgetWidth,
+                        layout.rowHeight - 2, fieldRow, this::refresh)));
                 case COLOR -> {
                     if (field.swatchNames().isEmpty()) {
                         textField(row, fieldRow, 24);
@@ -204,6 +207,39 @@ public final class ConfigScreen extends Screen {
         });
         rows.add(addRenderableWidget(named));
         rows.add(addRenderableWidget(code));
+    }
+
+    /**
+     * A {@link ConfigField.Kind#SLIDER} setting (a gauge's Text size and Tick size): a vanilla slider showing the value in
+     * percent, moving in the field's steps and writing the value into the row's text, which is sent like an int field.
+     */
+    private static final class PercentSlider extends AbstractSliderButton {
+        private final ConfigModel.FieldRow row;
+        private final Runnable changed;
+
+        PercentSlider(int x, int y, int width, int height, ConfigModel.FieldRow row, Runnable changed) {
+            super(x, y, width, height, Component.empty(), ConfigModel.sliderPosition(row.field, current(row)));
+            this.row = row;
+            this.changed = changed;
+            updateMessage();
+        }
+
+        private static int current(ConfigModel.FieldRow row) {
+            Object parsed = row.parsed();
+            return parsed instanceof Integer value ? value : (int) row.field.defaultValue();
+        }
+
+        @Override
+        protected void updateMessage() {
+            setMessage(Component.translatable("screen.bwr.panel_config.percent",
+                    ConfigModel.sliderValue(row.field, value)));
+        }
+
+        @Override
+        protected void applyValue() {
+            row.text = Integer.toString(ConfigModel.sliderValue(row.field, value));
+            changed.run();
+        }
     }
 
     /** The swatch a colour code matches, or {@link ConfigField#SWATCH_CUSTOM}. */
