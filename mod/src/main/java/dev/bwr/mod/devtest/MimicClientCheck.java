@@ -124,6 +124,7 @@ public final class MimicClientCheck {
             case BENCHBOARD -> BwrBlocks.CONTROL_PANEL_BENCHBOARD.get();
             case CONSOLE -> BwrBlocks.CONTROL_PANEL_CONSOLE.get();
             case BACK_PANEL -> BwrBlocks.CONTROL_PANEL_BACK.get();
+            case DUPLEX_BOARD, DUPLEX_BENCH, DUPLEX_HEADER -> throw new UnsupportedOperationException("a duplex cell comes with its column");
         };
         // A floor and clear air around the wall, so the picture is of the wall.
         for (BlockPos p : BlockPos.betweenClosed(wall.offset(-columns - 6, -rows - 8, -12), wall.offset(8, rows + 6, 6))) {

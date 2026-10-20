@@ -64,19 +64,23 @@ public final class PanelClientCheck {
     private static final int SLOPE_FIRST = BAKED_FIRST + PanelModelShowcase.NAMES.length;
     /** The first stage of the control-room trim showroom (see {@link PanelTrimShowcase}), after the sloped boards. */
     private static final int TRIM_FIRST = SLOPE_FIRST + PanelSlopeShowcase.NAMES.length;
+    /** The first stage of the duplex board (see {@link PanelDuplexShowcase}), after the trim showroom. */
+    private static final int DUPLEX_FIRST = TRIM_FIRST + PanelTrimShowcase.NAMES.length;
     private static final String[] NAMES = names();
 
     private static String[] names() {
         String[] original = {"board-day-wide", "board-controls-close", "board-annunciators",
                 "board-lod-28m", "board-night-lamps", "wrench-config", "linker-binding", "linker-outline", "board-night-close"};
         String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length + PanelSlopeShowcase.NAMES.length
-                + PanelTrimShowcase.NAMES.length];
+                + PanelTrimShowcase.NAMES.length + PanelDuplexShowcase.NAMES.length];
         System.arraycopy(original, 0, all, 0, original.length);
         System.arraycopy(PanelModelShowcase.NAMES, 0, all, BAKED_FIRST, PanelModelShowcase.NAMES.length);
         System.arraycopy(PanelSlopeShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length,
                 PanelSlopeShowcase.NAMES.length);
         System.arraycopy(PanelTrimShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length
                 + PanelSlopeShowcase.NAMES.length, PanelTrimShowcase.NAMES.length);
+        System.arraycopy(PanelDuplexShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length
+                + PanelSlopeShowcase.NAMES.length + PanelTrimShowcase.NAMES.length, PanelDuplexShowcase.NAMES.length);
         return all;
     }
     private static final String STAGE_FILTER = System.getProperty("bwr.panelClientStages", "");
@@ -157,13 +161,15 @@ public final class PanelClientCheck {
                         PanelModelShowcase.build(level);
                         PanelSlopeShowcase.build(level);
                         PanelTrimShowcase.build(level);
+                        PanelDuplexShowcase.build(level);
                         built = true;
                     } catch (Throwable failure) {
                         buildFailure = failure;
                         return;
                     }
                 }
-                Vec3 camera = selected >= TRIM_FIRST ? PanelTrimShowcase.camera(selected - TRIM_FIRST)
+                Vec3 camera = selected >= DUPLEX_FIRST ? PanelDuplexShowcase.camera(selected - DUPLEX_FIRST)
+                        : selected >= TRIM_FIRST ? PanelTrimShowcase.camera(selected - TRIM_FIRST)
                         : selected >= SLOPE_FIRST ? PanelSlopeShowcase.camera(selected - SLOPE_FIRST)
                         : selected >= BAKED_FIRST ? PanelModelShowcase.camera(selected - BAKED_FIRST) : (switch (selected) {
                     case 0 -> new Vec3(93, 125, 79);
@@ -173,7 +179,8 @@ public final class PanelClientCheck {
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = selected >= TRIM_FIRST ? PanelTrimShowcase.target(selected - TRIM_FIRST)
+                Vec3 target = selected >= DUPLEX_FIRST ? PanelDuplexShowcase.target(selected - DUPLEX_FIRST)
+                        : selected >= TRIM_FIRST ? PanelTrimShowcase.target(selected - TRIM_FIRST)
                         : selected >= SLOPE_FIRST ? PanelSlopeShowcase.target(selected - SLOPE_FIRST)
                         : selected >= BAKED_FIRST ? PanelModelShowcase.target(selected - BAKED_FIRST) : (selected == 7 ? new Vec3(96.375, 127.5, 100.75)
                         : selected == 2 ? new Vec3(94, 120.5, 100)
@@ -192,7 +199,8 @@ public final class PanelClientCheck {
                 player.getAbilities().flying = true;
                 player.onUpdateAbilities();
                 level.setDayTime(selected == 4 || selected == 8 || selected >= BAKED_FIRST && selected < SLOPE_FIRST && PanelModelShowcase.night(selected - BAKED_FIRST)
-                        || selected >= TRIM_FIRST && PanelTrimShowcase.night(selected - TRIM_FIRST)
+                        || selected >= TRIM_FIRST && selected < DUPLEX_FIRST && PanelTrimShowcase.night(selected - TRIM_FIRST)
+                        || selected >= DUPLEX_FIRST && PanelDuplexShowcase.night(selected - DUPLEX_FIRST)
                         ? 18_000 : 6_000);
                 level.setWeatherParameters(6000, 0, false, false);
                 if (selected == 7) {
@@ -264,7 +272,8 @@ public final class PanelClientCheck {
             if (stage >= BAKED_FIRST) {
                 // Every component must draw baked exactly when a loaded model exists for its look.
                 LogUtils.getLogger().info("PANEL CLIENT CHECK baked models {}: {} components drawn from baked models ({} loaded)",
-                        NAMES[stage], stage >= TRIM_FIRST ? PanelTrimShowcase.verify(mc, stage - TRIM_FIRST)
+                        NAMES[stage], stage >= DUPLEX_FIRST ? PanelDuplexShowcase.verify(mc, stage - DUPLEX_FIRST)
+                                : stage >= TRIM_FIRST ? PanelTrimShowcase.verify(mc, stage - TRIM_FIRST)
                                 : stage >= SLOPE_FIRST ? PanelSlopeShowcase.verify(mc, stage - SLOPE_FIRST)
                                 : PanelModelShowcase.verify(mc, stage - BAKED_FIRST), dev.bwr.mod.panel.model.PanelModels.loadedCount());
             }

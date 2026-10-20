@@ -35,9 +35,10 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  *
  * <p>All three styles are one class because they differ only in geometry
  * ({@link PanelGeometry}) and in which neighbours continue the plane
- * ({@link PanelType}).
+ * ({@link PanelType}). The duplex board ({@link DuplexPanelBlock}) extends it: one block whose cells carry different
+ * styles, so the style of a panel block is asked of its state ({@link #panelType(BlockState)}).
  */
-public final class PanelBlock extends BaseEntityBlock {
+public class PanelBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     private static final MapCodec<PanelBlock> CODEC_VERTICAL = simpleCodec(p -> new PanelBlock(p, PanelType.VERTICAL));
     private static final MapCodec<PanelBlock> CODEC_BENCHBOARD = simpleCodec(p -> new PanelBlock(p, PanelType.BENCHBOARD));
@@ -52,7 +53,8 @@ public final class PanelBlock extends BaseEntityBlock {
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
-    public PanelType panelType() {
+    /** The style of the panel face of a block in this state, or {@code null} for a state with no face to mount on. */
+    public PanelType panelType(BlockState state) {
         return type;
     }
 
@@ -63,6 +65,7 @@ public final class PanelBlock extends BaseEntityBlock {
             case BENCHBOARD -> CODEC_BENCHBOARD;
             case CONSOLE -> CODEC_CONSOLE;
             case BACK_PANEL -> CODEC_BACK_PANEL;
+            case DUPLEX_BOARD, DUPLEX_BENCH, DUPLEX_HEADER -> DuplexPanelBlock.CODEC;
         };
     }
 
@@ -124,7 +127,7 @@ public final class PanelBlock extends BaseEntityBlock {
         if (tape) {
             // The vanilla path of the mimic tape; the client input hook normally sends the exact cursor in a packet.
             double[] exact = new double[2];
-            PanelGeometry.Frame frame = PanelGeometry.frame(panelType(), state.getValue(FACING));
+            PanelGeometry.Frame frame = PanelGeometry.frame(panelType(state), state.getValue(FACING));
             Vec3 eye = sender.getEyePosition();
             Vec3 look = sender.getLookAngle();
             if (PanelGeometry.rayToCell(frame, pos.getX(), pos.getY(), pos.getZ(), eye.x, eye.y, eye.z, look.x, look.y,

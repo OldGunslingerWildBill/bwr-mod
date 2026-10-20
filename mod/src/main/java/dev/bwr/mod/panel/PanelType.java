@@ -21,12 +21,26 @@ import net.minecraft.core.Direction;
  *   <li>{@link #BACK_PANEL}: a full-depth upright board (the owner's 2 x 2 x 1 m back panel is four of these);
  *       it joins like {@link #VERTICAL}, with the face at the front of the block.</li>
  * </ul>
+ *
+ * <p>The three surfaces of the duplex board ({@link DuplexPanelBlock}, the owner's Fusion control board, one item per
+ * 1 x 2 x 4 column) are types of their own, so each joins only the same surface of the neighbouring columns:
+ * <ul>
+ *   <li>{@link #DUPLEX_BOARD}: the vertical board, two rows per column, face at the front of the block like
+ *       {@link #BACK_PANEL};</li>
+ *   <li>{@link #DUPLEX_BENCH}: the bench in front of it, falling from 1.0 at the board to 0.75 at the operator
+ *       (about 14 degrees), a single row;</li>
+ *   <li>{@link #DUPLEX_HEADER}: the tilted annunciator face overhanging the operator, from the board's top edge to
+ *       half a block forward one block up (facing forward and down, 26.6 degrees from vertical), a single row.</li>
+ * </ul>
  */
 public enum PanelType {
     VERTICAL("control_panel_vertical", "PNL"),
     BENCHBOARD("control_panel_benchboard", "BNC"),
     CONSOLE("control_panel_console", "CON"),
-    BACK_PANEL("control_panel_back", "BCK");
+    BACK_PANEL("control_panel_back", "BCK"),
+    DUPLEX_BOARD("control_panel_duplex", "DXB"),
+    DUPLEX_BENCH("control_panel_duplex", "DXN"),
+    DUPLEX_HEADER("control_panel_duplex", "DXH");
 
     private final String registryName;
     private final String shortName;
@@ -46,7 +60,7 @@ public enum PanelType {
 
     /** Whether blocks of this style can stack into more than one row. */
     public boolean hasRows() {
-        return this != CONSOLE;
+        return this != CONSOLE && this != DUPLEX_BENCH && this != DUPLEX_HEADER;
     }
 
     /**
@@ -55,18 +69,18 @@ public enum PanelType {
      */
     public BlockPos nextRow(BlockPos pos, Direction facing) {
         return switch (this) {
-            case VERTICAL, BACK_PANEL -> pos.below();
+            case VERTICAL, BACK_PANEL, DUPLEX_BOARD -> pos.below();
             case BENCHBOARD -> pos.below().relative(facing);
-            case CONSOLE -> null;
+            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER -> null;
         };
     }
 
     /** The block one group row further up the face, or {@code null}. */
     public BlockPos previousRow(BlockPos pos, Direction facing) {
         return switch (this) {
-            case VERTICAL, BACK_PANEL -> pos.above();
+            case VERTICAL, BACK_PANEL, DUPLEX_BOARD -> pos.above();
             case BENCHBOARD -> pos.above().relative(facing.getOpposite());
-            case CONSOLE -> null;
+            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER -> null;
         };
     }
 

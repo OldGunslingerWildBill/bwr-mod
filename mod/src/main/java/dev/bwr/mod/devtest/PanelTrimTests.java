@@ -374,6 +374,9 @@ public final class PanelTrimTests {
                 case BENCHBOARD -> "benchboard";
                 case CONSOLE -> "console";
                 case BACK_PANEL -> "back";
+                case DUPLEX_BOARD -> "duplex_board";
+                case DUPLEX_BENCH -> "duplex_bench";
+                case DUPLEX_HEADER -> "duplex_header";
             };
             PanelGeometry.Frame frame = PanelGeometry.frame(type, Direction.NORTH);
             double[][] expected = {

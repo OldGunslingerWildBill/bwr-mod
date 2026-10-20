@@ -1,0 +1,100 @@
+{
+  "variants": {
+    "cell=bench,facing=north": {
+      "model": "bwr:block/control_panel/duplex_bench",
+      "y": 0
+    },
+    "cell=base,facing=north": {
+      "model": "bwr:block/control_panel/duplex_base",
+      "y": 0
+    },
+    "cell=board_lower,facing=north": {
+      "model": "bwr:block/control_panel/duplex_board",
+      "y": 0
+    },
+    "cell=board_upper,facing=north": {
+      "model": "bwr:block/control_panel/duplex_board",
+      "y": 0
+    },
+    "cell=top,facing=north": {
+      "model": "bwr:block/control_panel/duplex_top",
+      "y": 0
+    },
+    "cell=header,facing=north": {
+      "model": "bwr:block/control_panel/duplex_header",
+      "y": 0
+    },
+    "cell=bench,facing=east": {
+      "model": "bwr:block/control_panel/duplex_bench",
+      "y": 90
+    },
+    "cell=base,facing=east": {
+      "model": "bwr:block/control_panel/duplex_base",
+      "y": 90
+    },
+    "cell=board_lower,facing=east": {
+      "model": "bwr:block/control_panel/duplex_board",
+      "y": 90
+    },
+    "cell=board_upper,facing=east": {
+      "model": "bwr:block/control_panel/duplex_board",
+      "y": 90
+    },
+    "cell=top,facing=east": {
+      "model": "bwr:block/control_panel/duplex_top",
+      "y": 90
+    },
+    "cell=header,facing=east": {
+      "model": "bwr:block/control_panel/duplex_header",
+      "y": 90
+    },
+    "cell=bench,facing=south": {
+      "model": "bwr:block/control_panel/duplex_bench",
+      "y": 180
+    },
+    "cell=base,facing=south": {
+      "model": "bwr:block/control_panel/duplex_base",
+      "y": 180
+    },
+    "cell=board_lower,facing=south": {
+      "model": "bwr:block/control_panel/duplex_board",
+      "y": 180
+    },
+    "cell=board_upper,facing=south": {
+      "model": "bwr:block/control_panel/duplex_board",
+      "y": 180
+    },
+    "cell=top,facing=south": {
+      "model": "bwr:block/control_panel/duplex_top",
+      "y": 180
+    },
+    "cell=header,facing=south": {
+      "model": "bwr:block/control_panel/duplex_header",
+      "y": 180
+    },
+    "cell=bench,facing=west": {
+      "model": "bwr:block/control_panel/duplex_bench",
+      "y": 270
+    },
+    "cell=base,facing=west": {
+      "model": "bwr:block/control_panel/duplex_base",
+      "y": 270
+    },
+    "cell=board_lower,facing=west": {
+      "model": "bwr:block/control_panel/duplex_board",
+      "y": 270
+    },
+    "cell=board_upper,facing=west": {
+      "model": "bwr:block/control_panel/duplex_board",
+      "y": 270
+    },
+    "cell=top,facing=west": {
+      "model": "bwr:block/control_panel/duplex_top",
+      "y": 270
+    },
+    "cell=header,facing=west": {
+      "model": "bwr:block/control_panel/duplex_header",
+      "y": 270
+    }
+  }
+}

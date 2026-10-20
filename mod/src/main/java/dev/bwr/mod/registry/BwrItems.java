@@ -69,6 +69,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_CONSOLE);
     public static final DeferredItem<BlockItem> CONTROL_PANEL_BACK =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_BACK);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_DUPLEX =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_DUPLEX);
     public static final DeferredItem<dev.bwr.mod.panel.PanelWrenchItem> PANEL_WRENCH =
             ITEMS.register("panel_wrench", () -> new dev.bwr.mod.panel.PanelWrenchItem(new Item.Properties().stacksTo(1)));
     // One item per component type, registered under the type's own id. Add a line per new type.
@@ -408,6 +410,7 @@ public final class BwrItems {
                         output.accept(CONTROL_PANEL_BENCHBOARD.get());
                         output.accept(CONTROL_PANEL_CONSOLE.get());
                         output.accept(CONTROL_PANEL_BACK.get());
+                        output.accept(CONTROL_PANEL_DUPLEX.get());
                         output.accept(PANEL_WRENCH.get());
                         output.accept(PANEL_LINKER.get());
                         output.accept(NETWORKING_WRENCH.get());

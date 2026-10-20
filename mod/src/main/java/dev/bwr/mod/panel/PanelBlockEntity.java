@@ -106,7 +106,8 @@ public final class PanelBlockEntity extends BlockEntity {
     }
 
     public PanelType panelType() {
-        return ((PanelBlock) getBlockState().getBlock()).panelType();
+        BlockState state = getBlockState();
+        return ((PanelBlock) state.getBlock()).panelType(state);
     }
 
     public Direction facing() {
@@ -156,7 +157,10 @@ public final class PanelBlockEntity extends BlockEntity {
             return;
         }
         Direction facing = state.getValue(PanelBlock.FACING);
-        PanelType type = block.panelType();
+        PanelType type = block.panelType(state);
+        if (type == null) {
+            return; // a duplex column's body cell: no face, no group
+        }
         BlockPos[] around = {PanelType.nextColumn(pos, facing), PanelType.previousColumn(pos, facing),
                 type.nextRow(pos, facing), type.previousRow(pos, facing)};
         for (BlockPos neighbour : around) {
@@ -499,7 +503,7 @@ public final class PanelBlockEntity extends BlockEntity {
                 }
                 BlockState state = server.getBlockState(rect.pos());
                 invalid = !(state.getBlock() instanceof PanelBlock block)
-                        || block.panelType() != panelType()
+                        || block.panelType(state) != panelType()
                         || state.getValue(PanelBlock.FACING) != facing()
                         || !(server.getBlockEntity(rect.pos()) instanceof PanelBlockEntity other)
                         || !other.foreign.contains(new Claim(worldPosition, component.id(),

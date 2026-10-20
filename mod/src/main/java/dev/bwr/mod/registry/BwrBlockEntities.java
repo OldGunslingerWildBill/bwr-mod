@@ -190,12 +190,13 @@ public final class BwrBlockEntities {
                     BwrBlocks.MOTOR_FEED_PUMP.get(),
                     BwrBlocks.TURBINE_FEED_PUMP.get()).build(null));
 
-    /** One type for all the control panel blocks (vertical, benchboard, console, back panel). */
+    /** One type for all the control panel blocks (vertical, benchboard, console, back panel, the duplex board's panel cells). */
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.panel.PanelBlockEntity>>
             PANEL = BLOCK_ENTITIES.register("panel",
             () -> BlockEntityType.Builder.of(dev.bwr.mod.panel.PanelBlockEntity::new,
                     BwrBlocks.CONTROL_PANEL_VERTICAL.get(),
                     BwrBlocks.CONTROL_PANEL_BENCHBOARD.get(),
                     BwrBlocks.CONTROL_PANEL_CONSOLE.get(),
-                    BwrBlocks.CONTROL_PANEL_BACK.get()).build(null));
+                    BwrBlocks.CONTROL_PANEL_BACK.get(),
+                    BwrBlocks.CONTROL_PANEL_DUPLEX.get()).build(null));
 }
