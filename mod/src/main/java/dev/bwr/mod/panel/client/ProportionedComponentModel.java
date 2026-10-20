@@ -28,6 +28,7 @@ final class ProportionedComponentModel implements ComponentModel {
         RenderCache.of(c).classicSink=placed;
         source.buildStatic(placed,c);
     }
+    @Override public long staticKey(PanelComponent c) { return source.staticKey(c); }
     @Override public long poseKey(PanelRenderContext ctx,PanelComponent c) { return source.poseKey(ctx,c); }
     @Override public void emitPosed(QuadSink sink,PanelComponent c) {
         source.emitPosed(RenderCache.of(c).classicSink.target(sink),c);

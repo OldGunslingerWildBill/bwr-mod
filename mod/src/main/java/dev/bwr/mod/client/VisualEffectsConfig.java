@@ -16,7 +16,15 @@ public final class VisualEffectsConfig {
     public static final ModConfigSpec.IntValue NETWORK_LINE_VIEW_DISTANCE = BUILDER
             .comment("How far away, in blocks, other players' Networking Wrench lines are drawn for you. Lower it, or set 0 to hide them. The smaller of this and the server's networkLineShareDistance applies.")
             .defineInRange("networkLineViewDistance", 32, 0, 1024);
+    public static final ModConfigSpec.BooleanValue PANEL_TEXT_FADE = BUILDER
+            .comment("Printed text on control panels fades out with distance: once a glyph is only a few screen pixels tall it turns to speckle, so it is replaced by a soft strip in the text's colour, like ink seen from afar. Turn off to always draw the text, however small.")
+            .define("panelTextFade", true);
     public static final ModConfigSpec SPEC = BUILDER.build();
+
+    /** Whether panel text fades with distance; on until the file is loaded. */
+    public static boolean panelTextFade() {
+        return !SPEC.isLoaded() || PANEL_TEXT_FADE.get();
+    }
 
     /** The configured view distance; the default before the file is loaded. */
     public static int networkLineViewDistance() {

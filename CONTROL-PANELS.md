@@ -46,6 +46,7 @@ hold with a size chosen keeps it, and a component already on a panel keeps the s
 | Thumbwheel | 3 cells wide per digit, 6 tall: 9x6 (3 digits), 3x6 to 24x6 (1 to 8 digits); **real** 1 cell wide per digit, 2 tall: 3x2 (3 digits), 1x2 to 8x2 |
 | Lamp | 4x4, 6x6, **real** 1x1 |
 | Annunciator window | 12x8, 16x12, **real** 1x1, 2x2 |
+| Annunciator control module | 24x6, **real** 2x1, 4x2 |
 | Bar graph | 3x24, 3x12, 3x16, 3x32 and the same lying down (24x3 ...); one segment per 2 cells; **real** 1x3, 3x1, 1x6, 6x1 (two segments per cell) |
 | Round dial | 12x12, 16x16, 20x20, 24x24, 32x32, **real** 2x2, 3x3 |
 | Edgewise meter | vertical 6x16, 6x24, 8x24, 8x32, **real** 1x3; horizontal 16x6, 24x6, 24x8, 32x8, **real** 3x1 |
@@ -115,6 +116,31 @@ the window. A bar graph under 3 cells thick has two segments per cell, a segment
 cells tall has one digit per cell. Everything 3 cells across or more draws exactly as before. A block can own up to
 256 components by default now (`maxComponentsPerBlock`, was 64: a block face of 1x1 windows holds 256); a
 `bwr-panels.toml` written by an earlier version keeps its own value, delete the line to take the new default.
+
+**Annunciator boxes.** Annunciator windows that touch along a whole side draw as ONE box, like the reference boards: a
+thin dark gap between the windows and one shared dark recessed frame, with a bezel lip, round the group. Nothing is
+configured and nothing is sent: each client works the frame out from the windows of the panel group it already has
+(`AnnunciatorBoxes`, a pure edge detection in `AnnunciatorBox`), so windows in different blocks of one group join, a
+window beside a gap or another part keeps its own frame on that side, and an L of windows gets an inside corner. A window
+by itself looks like a bezelled tile as before. Lit colour and flash are unchanged: the tile is full-bright when lit (a
+dim version of its colour when off), the lettering is a dark tone of the colour on a white or amber tile and light on a
+red one, and dim when off. The legend is up to **four lines** (Engraved line 1 to 4 in the wrench screen; lines 3 and 4
+are saved only when used), each centred, one scale for all (`AnnunciatorLayout`). Not done: the row and column labels
+of the decorative header strip.
+
+**Annunciator control module** (`annunciator_control`, 2x1 real, 24x6 and 4x2 also): ACK, RESET, SILENCE and TEST
+pushbuttons in one part. Each output (`ack`, `reset`, `silence`, `test`) is 1 while held, like a pushbutton, and only
+one button is held at a time; the quarter of the face a click lands on picks the button. ACK and RESET do what a
+pushbutton with that role does (`AnnunciatorGroups`, once per press, for the module's **Annunciator group**), nothing
+more. SILENCE has no horn to silence, so it is an output only. TEST lights every window of the module's group while it
+is held (a lamp test the client draws from the synced output); it changes no alarm state and sends nothing to the plant.
+
+**Distance fade of text.** Small printed text (annunciator legends, gauge numbers, captions) turns to speckle from across
+a room. The panel renderer works out, once per component per frame, how tall a glyph is on the screen (`TextFade`: the
+distance and the projection of the level pass); below 4.5 pixels of cap height the glyphs fade out, and by 2 pixels they
+are gone and a soft strip in the text's colour, at most half opaque, stands in for the line (one quad, from the length of
+the string; nothing is laid out per glyph). The blend is continuous, so there is no boundary to flicker at. The client
+option `panelTextFade` (default on, in `bwr-visuals.toml`) turns it off.
 
 The bar gauge keeps the proportions of the owner's CAD part (a case 5 by 20 cm with its tag plate above), so it is
 centred in whichever size it has, with panel showing either side. Its white face is curved along its length, standing

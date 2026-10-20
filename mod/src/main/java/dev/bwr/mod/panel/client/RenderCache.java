@@ -29,6 +29,13 @@ public final class RenderCache {
     public float textX2;
     public float textY2;
 
+    /** An annunciator window's joined sides and inside corners ({@link dev.bwr.mod.panel.model.AnnunciatorBox}); 0 for a lone window. */
+    public int boxEdges;
+    /** The panel group's annunciator state the window was last scanned with (see {@link AnnunciatorBoxes}); null before the first scan. */
+    AnnunciatorBoxes.State boxState;
+    /** What the static mesh was built for beyond the revision: {@link ComponentModel#staticKey}. */
+    long staticKey;
+
     /** A model's own per-component client state (damped needle position, cached labels). Never saved. */
     public Object scratch;
 

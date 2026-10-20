@@ -23,12 +23,20 @@ public final class AnnunciatorData extends ComponentData {
 
     public String line1 = "";
     public String line2 = "";
+    /** Lines 3 and 4 of the legend (a window prints up to four); saved only when not empty, so an old save is unchanged. */
+    public String line3 = "";
+    public String line4 = "";
     public int color = DEFAULT_COLOR;
     public String condition = AnnunciatorLogic.ABOVE;
     public double setpoint = 0.5;
     public int group = MIN_GROUP;
     public String resetMode = RESET_AUTO;
     public final AnnunciatorLogic logic = new AnnunciatorLogic();
+
+    /** The legend's non-empty lines, top to bottom (at most four); allocates, so call it once per revision. */
+    public String[] legend() {
+        return java.util.stream.Stream.of(line1, line2, line3, line4).filter(line -> !line.isEmpty()).toArray(String[]::new);
+    }
 
     /** Whether the alarm condition holds for this input value. */
     public boolean alarming(double input) {
@@ -39,6 +47,12 @@ public final class AnnunciatorData extends ComponentData {
     public void save(CompoundTag tag) {
         tag.putString("Line1", line1);
         tag.putString("Line2", line2);
+        if (!line3.isEmpty()) {
+            tag.putString("Line3", line3);
+        }
+        if (!line4.isEmpty()) {
+            tag.putString("Line4", line4);
+        }
         tag.putInt("Color", color);
         tag.putString("Condition", condition);
         tag.putDouble("Setpoint", setpoint);
@@ -52,6 +66,8 @@ public final class AnnunciatorData extends ComponentData {
     public void load(CompoundTag tag) {
         line1 = ConfigSchema.cleanText(tag.getString("Line1"), MAX_TEXT);
         line2 = ConfigSchema.cleanText(tag.getString("Line2"), MAX_TEXT);
+        line3 = ConfigSchema.cleanText(tag.getString("Line3"), MAX_TEXT);
+        line4 = ConfigSchema.cleanText(tag.getString("Line4"), MAX_TEXT);
         color = tag.contains("Color", Tag.TAG_ANY_NUMERIC) ? tag.getInt("Color") & 0xFFFFFF : DEFAULT_COLOR;
         String savedCondition = tag.getString("Condition");
         condition = CONDITIONS.contains(savedCondition) ? savedCondition : AnnunciatorLogic.ABOVE;
