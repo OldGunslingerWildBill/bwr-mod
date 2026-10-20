@@ -601,6 +601,7 @@ public final class GuiScreenCheck {
             scenarios = build();
             directory = mc.gameDirectory.toPath().resolve("gui-check");
             fill(mc.player.getInventory());
+            mc.options.hideGui = true;
             applyScale(mc, SCALES[0]);
         }
         boolean small = scaleIndex >= SCALES.length;
@@ -622,6 +623,8 @@ public final class GuiScreenCheck {
             opened = true;
             wait = 0;
             mc.setScreen(sc.make().apply(mc.player.getInventory()));
+            // Park the pointer in the corner so no tooltip or hover state hides the layout in the picture.
+            org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), 3, 3);
             sc.setup().accept(mc.screen);
             return;
         }
