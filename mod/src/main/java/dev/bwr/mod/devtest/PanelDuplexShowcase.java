@@ -46,7 +46,7 @@ final class PanelDuplexShowcase {
     private static final int COLUMNS = 4;
 
     static final String[] NAMES = {"duplex-front", "duplex-three-quarter", "duplex-side"};
-    private static final double[][] EYE = {{5403.0, 128.3, 5253.5}, {5397.6, 129.6, 5254.2}, {5394.5, 128.2, 5260.4}};
+    private static final double[][] EYE = {{5403.0, 128.3, 5255.6}, {5399.0, 129.4, 5256.0}, {5397.2, 128.2, 5260.4}};
     private static final double[][] LOOK = {{5403.0, 128.1, 5261.0}, {5403.0, 128.0, 5260.6}, {5403.0, 128.0, 5260.4}};
 
     static boolean night(int stage) {
