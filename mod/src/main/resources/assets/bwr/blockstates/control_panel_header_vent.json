@@ -1,83 +1,19 @@
 {
   "variants": {
-    "facing=north,finish=seafoam": {
+    "facing=north": {
       "model": "bwr:block/control_panel_trim/header_vent",
       "y": 0
     },
-    "facing=east,finish=seafoam": {
+    "facing=east": {
       "model": "bwr:block/control_panel_trim/header_vent",
       "y": 90
     },
-    "facing=south,finish=seafoam": {
+    "facing=south": {
       "model": "bwr:block/control_panel_trim/header_vent",
       "y": 180
     },
-    "facing=west,finish=seafoam": {
+    "facing=west": {
       "model": "bwr:block/control_panel_trim/header_vent",
-      "y": 270
-    },
-    "facing=north,finish=cream": {
-      "model": "bwr:block/control_panel_trim/header_vent_cream",
-      "y": 0
-    },
-    "facing=east,finish=cream": {
-      "model": "bwr:block/control_panel_trim/header_vent_cream",
-      "y": 90
-    },
-    "facing=south,finish=cream": {
-      "model": "bwr:block/control_panel_trim/header_vent_cream",
-      "y": 180
-    },
-    "facing=west,finish=cream": {
-      "model": "bwr:block/control_panel_trim/header_vent_cream",
-      "y": 270
-    },
-    "facing=north,finish=tan": {
-      "model": "bwr:block/control_panel_trim/header_vent_tan",
-      "y": 0
-    },
-    "facing=east,finish=tan": {
-      "model": "bwr:block/control_panel_trim/header_vent_tan",
-      "y": 90
-    },
-    "facing=south,finish=tan": {
-      "model": "bwr:block/control_panel_trim/header_vent_tan",
-      "y": 180
-    },
-    "facing=west,finish=tan": {
-      "model": "bwr:block/control_panel_trim/header_vent_tan",
-      "y": 270
-    },
-    "facing=north,finish=grey": {
-      "model": "bwr:block/control_panel_trim/header_vent_grey",
-      "y": 0
-    },
-    "facing=east,finish=grey": {
-      "model": "bwr:block/control_panel_trim/header_vent_grey",
-      "y": 90
-    },
-    "facing=south,finish=grey": {
-      "model": "bwr:block/control_panel_trim/header_vent_grey",
-      "y": 180
-    },
-    "facing=west,finish=grey": {
-      "model": "bwr:block/control_panel_trim/header_vent_grey",
-      "y": 270
-    },
-    "facing=north,finish=light_blue": {
-      "model": "bwr:block/control_panel_trim/header_vent_light_blue",
-      "y": 0
-    },
-    "facing=east,finish=light_blue": {
-      "model": "bwr:block/control_panel_trim/header_vent_light_blue",
-      "y": 90
-    },
-    "facing=south,finish=light_blue": {
-      "model": "bwr:block/control_panel_trim/header_vent_light_blue",
-      "y": 180
-    },
-    "facing=west,finish=light_blue": {
-      "model": "bwr:block/control_panel_trim/header_vent_light_blue",
       "y": 270
     }
   }

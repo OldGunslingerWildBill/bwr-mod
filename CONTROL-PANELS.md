@@ -47,9 +47,8 @@ block of the piece that finish. Pick block gives the finished item.
 furniture's `paint`, `bezel`, `top` and the mimic and display `frame`) have a `neoforge_TintIndex`; their textures are grey
 (`art/models/control_panel_trim/make_textures.py`, level 230), and `PanelFinishColors` multiplies in the finish colour for
 blocks and for item icons. Dark trim, kick plinths, hoods, screens, louvres and handles have no tint and keep their colour.
-The annunciator strip and the vent have a texture per finish (`annunciator_<finish>.png`, `vent_<finish>.png`) and a model
-per finish, picked by the blockstate. Colours are in `PanelFinish.java`; a new finish is one more enum value, one more loot
-table child per block and two more header textures.
+The annunciator strip, canopy and vent are pictures of a window box and a grille, and keep their seafoam border in every
+finish. Colours are in `PanelFinish.java`; a new finish is one more enum value and one more loot table child per block.
 
 ### Component sizes
 

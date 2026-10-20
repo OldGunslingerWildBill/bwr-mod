@@ -1,7 +1,5 @@
 package dev.bwr.mod.devtest;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
 import dev.bwr.mod.furniture.AssemblyBlock;
 import dev.bwr.mod.panel.DuplexCell;
@@ -114,7 +112,10 @@ public final class PanelFinishTests {
 
     private static void clearArea(ServerLevel level, BlockPos floor) {
         for (BlockPos pos : BlockPos.betweenClosed(floor.offset(-6, 0, -6), floor.offset(6, 5, 6))) {
-            level.setBlock(pos, pos.getY() == floor.getY() ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), 2);
+            // No shape updates and no drops: a multi-block piece cleared block by block would otherwise fall apart and drop its
+            // item (the origin cell's loot) into the next case, which counts drops.
+            level.setBlock(pos, pos.getY() == floor.getY() ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(),
+                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS);
         }
     }
 
@@ -585,7 +586,7 @@ public final class PanelFinishTests {
     }
 
     @GameTest(template = "empty")
-    public static void thePaintedTexturesAreGreyAndTheHeadersHaveATextureForEveryFinish(GameTestHelper h) throws IOException {
+    public static void thePaintedTexturesAreGrey(GameTestHelper h) throws IOException {
         for (String name : List.of("face", "paint", "bezel", "back", "cheek", "cabinet")) {
             try (InputStream in = PanelFinishTests.class.getResourceAsStream("/assets/bwr/textures/block/control_panel/" + name + ".png")) {
                 check(h, in != null, name + ".png is missing");
@@ -604,39 +605,6 @@ public final class PanelFinishTests {
         try (InputStream in = PanelFinishTests.class.getResourceAsStream("/assets/bwr/textures/block/control_panel/paint.png")) {
             int grey = ImageIO.read(in).getRGB(8, 8) & 0xFF;
             check(h, grey == PanelFinish.PANEL_NEUTRAL, "the paint texture is " + grey + ", the neutral level is " + PanelFinish.PANEL_NEUTRAL);
-        }
-        for (String header : List.of("header_strip", "header_canopy", "header_vent")) {
-            String blockstate = "/assets/bwr/blockstates/control_panel_" + header + ".json";
-            try (InputStream in = PanelFinishTests.class.getResourceAsStream(blockstate)) {
-                check(h, in != null, blockstate + " is missing");
-                JsonObject variants = JsonParser.parseString(new String(in.readAllBytes(), StandardCharsets.UTF_8))
-                        .getAsJsonObject().getAsJsonObject("variants");
-                for (PanelFinish finish : PanelFinish.values()) {
-                    for (Direction facing : Direction.Plane.HORIZONTAL) {
-                        String key = "facing=" + facing.getSerializedName() + ",finish=" + finish.getSerializedName();
-                        check(h, variants.has(key), blockstate + " has no variant " + key);
-                        String model = variants.getAsJsonObject(key).get("model").getAsString();
-                        try (InputStream m = PanelFinishTests.class.getResourceAsStream("/assets/bwr/models/"
-                                + model.substring("bwr:".length()) + ".json")) {
-                            check(h, m != null, model + " is missing");
-                            String text = new String(m.readAllBytes(), StandardCharsets.UTF_8);
-                            String texture = header.equals("header_vent") ? "vent" : "annunciator";
-                            String want = finish == PanelFinish.SEAFOAM ? "control_panel/" + texture + "\"" : "control_panel/" + texture + "_"
-                                    + finish.getSerializedName() + "\"";
-                            check(h, text.contains(want), model + " does not use the " + finish + " " + texture + " texture");
-                        }
-                    }
-                }
-            }
-            for (PanelFinish finish : PanelFinish.values()) {
-                if (finish != PanelFinish.SEAFOAM) {
-                    String texture = header.equals("header_vent") ? "vent" : "annunciator";
-                    try (InputStream t = PanelFinishTests.class.getResourceAsStream("/assets/bwr/textures/block/control_panel/" + texture + "_"
-                            + finish.getSerializedName() + ".png")) {
-                        check(h, t != null, texture + "_" + finish.getSerializedName() + ".png is missing");
-                    }
-                }
-            }
         }
         h.succeed();
     }

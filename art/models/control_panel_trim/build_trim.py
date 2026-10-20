@@ -538,11 +538,11 @@ TRIM += [("control_panel_trim", "header_strip", lambda: header("strip")),
 
 # Ka is what an emissive_ambient model lights a material with (the header models turn it on): only the lit windows glow.
 # The painted materials carry a tint index for the finish (PanelFinish.java: 0 paint, 1 bezel; their textures are grey, see
-# make_textures.py). annunciator and vent are '#' references the model json fills in, one texture per finish.
+# make_textures.py).
 TINT_INDEX = {"face": 0, "paint": 0, "cheek": 0, "cabinet": 0, "bezel": 1, "back": 1}
 MTL = "".join("newmtl %s\nKd 1.000000 1.000000 1.000000\nKa %s\nmap_Kd %s\n%s\n"
               % (n, "1.000000 1.000000 1.000000" if n == "annunciator_lit" else "0.000000 0.000000 0.000000",
-                 "#" + n if n in ("annunciator", "vent") else "bwr:block/control_panel/" + n,
+                 "bwr:block/control_panel/" + n,
                  "neoforge_TintIndex %d\n" % TINT_INDEX[n] if n in TINT_INDEX else "")
               for n in MATERIALS)
 

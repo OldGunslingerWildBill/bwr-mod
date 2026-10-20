@@ -153,7 +153,7 @@ public final class PanelTrimTests {
             helper.assertTrue(!state.isRandomlyTicking() && !state.hasBlockEntity(), piece + " must not tick or hold an entity");
             helper.assertTrue(state.hasProperty(PanelTrimBlock.FACING), piece + " has no facing");
             helper.assertTrue(state.hasProperty(PanelEndCapBlock.SIDE) == piece.isEndCap(), piece + ": side property mismatch");
-            helper.assertTrue(block.getStateDefinition().getPossibleStates().size() == (piece.isEndCap() ? 8 : 4),
+            helper.assertTrue(block.getStateDefinition().getPossibleStates().size() == (piece.isEndCap() ? 8 : 4) * 5,
                     piece + ": states " + block.getStateDefinition().getPossibleStates().size());
             helper.assertTrue(block.asItem() instanceof BlockItem, piece + " has no block item");
             helper.assertTrue(BuiltInRegistries.ITEM.getKey(block.asItem()).getPath().equals(piece.registryName()),
@@ -176,10 +176,11 @@ public final class PanelTrimTests {
     public static void panelBodiesKeepTheirIdsAndStates(GameTestHelper helper) {
         for (Block block : new Block[] {BwrBlocks.CONTROL_PANEL_VERTICAL.get(), BwrBlocks.CONTROL_PANEL_BENCHBOARD.get(),
                 BwrBlocks.CONTROL_PANEL_CONSOLE.get()}) {
-            helper.assertTrue(block.getStateDefinition().getProperties().size() == 1
-                            && block.getStateDefinition().getProperties().iterator().next() == PanelBlock.FACING,
-                    block + " must keep the single facing property so old saves load");
-            helper.assertTrue(block.getStateDefinition().getPossibleStates().size() == 4, block + " must keep its 4 states");
+            helper.assertTrue(block.getStateDefinition().getProperties().size() == 2
+                            && block.getStateDefinition().getProperties().contains(PanelBlock.FACING)
+                            && block.getStateDefinition().getProperties().contains(dev.bwr.mod.panel.PanelFinish.FINISH),
+                    block + " must keep the single facing property (and the finish) so old saves load");
+            helper.assertTrue(block.getStateDefinition().getPossibleStates().size() == 4 * 5, block + " must keep its 4 states (times 5 finishes)");
         }
         helper.assertTrue(BuiltInRegistries.BLOCK.getKey(BwrBlocks.CONTROL_PANEL_VERTICAL.get()).equals(
                 ResourceLocation.fromNamespaceAndPath("bwr", "control_panel_vertical")), "vertical id");

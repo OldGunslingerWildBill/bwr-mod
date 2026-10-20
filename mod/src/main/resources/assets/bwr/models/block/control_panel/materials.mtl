@@ -52,7 +52,7 @@ neoforge_TintIndex 0
 newmtl annunciator
 Kd 1.000000 1.000000 1.000000
 Ka 0.000000 0.000000 0.000000
-map_Kd #annunciator
+map_Kd bwr:block/control_panel/annunciator
 
 newmtl annunciator_lit
 Kd 1.000000 1.000000 1.000000
@@ -62,5 +62,5 @@ map_Kd bwr:block/control_panel/annunciator_lit
 newmtl vent
 Kd 1.000000 1.000000 1.000000
 Ka 0.000000 0.000000 0.000000
-map_Kd #vent
+map_Kd bwr:block/control_panel/vent
 
