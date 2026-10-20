@@ -20,6 +20,12 @@ textures, not in extra geometry, because these blocks tile across whole rooms:
   annunciator the annunciator panel: a recessed box of 4 x 3 big windows with labels and a caption, 128 x 128 pixels
   annunciator_lit  the bright (glowing) windows laid over some of those, 91 x 17
   vent        a louvre grille panel, 128 x 128
+
+Finishes: the painted textures (face, paint, bezel, back, cheek, cabinet) are written in GREY, not seafoam: every
+pixel is the seafoam picture's pixel divided by the seafoam colour of its kind (paint or bezel), times the grey level
+NEUTRAL (= PanelFinish.PANEL_NEUTRAL, 230). The models give those materials a tint index (0 paint, 1 bezel) and
+PanelFinish colours them, so one texture serves every finish and seafoam renders as before. annunciator and vent keep
+their seafoam border and come in one copy per finish (finish_variants()), picked by the blockstate.
 """
 import os
 import struct
@@ -77,6 +83,22 @@ def frame(px, x0, y0, x1, y1, colour):
         px[y0][x] = px[y1][x] = colour
     for y in range(y0, y1 + 1):
         px[y][x0] = px[y][x1] = colour
+
+
+# Which painted textures are written grey, and the seafoam colour that becomes the tint colour (paint -> tint 0, bezel -> 1).
+NEUTRAL = 230
+GREY_OF = {"face": PAINT, "paint": PAINT, "cheek": PAINT, "cabinet": PAINT, "bezel": BEZEL, "back": BEZEL}
+
+# The paint colours of the finishes other than seafoam (PanelFinish.java): paint, light edge, dark edge ratios as seafoam's.
+FINISH_PAINT = {"cream": (0xDD, 0xD6, 0xBB), "tan": (0xC2, 0xAE, 0x8A), "grey": (0xB4, 0xB9, 0xBC), "light_blue": (0x9C, 0xC4, 0xD6)}
+
+
+def to_grey(px, ref):
+    """The same picture in grey: each pixel is NEUTRAL times its mean channel ratio to the colour `ref`."""
+    out = []
+    for row in px:
+        out.append([(min(255, round(NEUTRAL * sum(c / r for c, r in zip(p, ref)) / 3.0)),) * 3 for p in row])
+    return out
 
 
 def face():
@@ -252,17 +274,46 @@ def vent():
     return 128, 128, px
 
 
+def recolour(px, src, dst):
+    """The picture with the seafoam paint family replaced by the same family of another finish: each pixel's channel
+    ratio to `src` (seafoam paint) times `dst`. Dark and coloured pixels (the annunciator box) scale with it, so only
+    the paint border should hold pixels near `src`: pixels far from the paint family are kept."""
+    out = []
+    for row in px:
+        new = []
+        for p in row:
+            ratios = [c / r for c, r in zip(p, src)]
+            if 0.75 <= min(ratios) and max(ratios) <= 1.25 and max(ratios) - min(ratios) < 0.12:
+                new.append(tuple(min(255, round(d * sum(ratios) / 3.0)) for d in dst))
+            else:
+                new.append(p)
+        out.append(new)
+    return out
+
+
 TEXTURES = {"face": face, "paint": paint, "bezel": bezel, "back": back, "kick": kick, "cheek": cheek,
             "hood": hood, "apron": apron, "cabinet": cabinet, "annunciator": annunciator,
             "annunciator_lit": annunciator_lit, "vent": vent}
 
 
+FINISH_VARIANT_TEXTURES = ("annunciator", "vent")
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
+    count = 0
     for name, make in TEXTURES.items():
         width, height, px = make()
+        if name in GREY_OF:
+            px = to_grey(px, GREY_OF[name])
         write_png(os.path.join(OUT, name + ".png"), width, height, px)
-    print("wrote", len(TEXTURES), "textures to", OUT)
+        count += 1
+    for name in FINISH_VARIANT_TEXTURES:                    # annunciator and vent: one copy per finish
+        width, height, px = TEXTURES[name]()
+        for finish, paint in FINISH_PAINT.items():
+            write_png(os.path.join(OUT, "%s_%s.png" % (name, finish)), width, height, recolour(px, PAINT, paint))
+            count += 1
+    print("wrote", count, "textures to", OUT)
 
 
 if __name__ == "__main__":

@@ -6,8 +6,105 @@
       "bonus_rolls": 0.0,
       "entries": [
         {
-          "type": "minecraft:item",
-          "name": "bwr:wall_display"
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "bwr:wall_display",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:wall_display",
+                  "properties": {
+                    "finish": "cream"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "cream"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:wall_display",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:wall_display",
+                  "properties": {
+                    "finish": "tan"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "tan"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:wall_display",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:wall_display",
+                  "properties": {
+                    "finish": "grey"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "grey"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:wall_display",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:wall_display",
+                  "properties": {
+                    "finish": "light_blue"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "light_blue"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:wall_display"
+            }
+          ]
         }
       ],
       "conditions": [

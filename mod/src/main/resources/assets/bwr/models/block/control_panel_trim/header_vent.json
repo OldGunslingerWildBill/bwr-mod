@@ -7,7 +7,8 @@
   "emissive_ambient": true,
   "ambientocclusion": false,
   "textures": {
-    "particle": "bwr:block/control_panel/bezel"
+    "particle": "bwr:block/control_panel/bezel",
+    "vent": "bwr:block/control_panel/vent"
   },
   "render_type": "minecraft:solid"
 }

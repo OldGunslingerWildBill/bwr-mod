@@ -2,21 +2,25 @@ newmtl face
 Kd 1.000000 1.000000 1.000000
 Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/face
+neoforge_TintIndex 0
 
 newmtl paint
 Kd 1.000000 1.000000 1.000000
 Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/paint
+neoforge_TintIndex 0
 
 newmtl bezel
 Kd 1.000000 1.000000 1.000000
 Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/bezel
+neoforge_TintIndex 1
 
 newmtl back
 Kd 1.000000 1.000000 1.000000
 Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/back
+neoforge_TintIndex 1
 
 newmtl kick
 Kd 1.000000 1.000000 1.000000
@@ -27,6 +31,7 @@ newmtl cheek
 Kd 1.000000 1.000000 1.000000
 Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/cheek
+neoforge_TintIndex 0
 
 newmtl hood
 Kd 1.000000 1.000000 1.000000
@@ -42,11 +47,12 @@ newmtl cabinet
 Kd 1.000000 1.000000 1.000000
 Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/control_panel/cabinet
+neoforge_TintIndex 0
 
 newmtl annunciator
 Kd 1.000000 1.000000 1.000000
 Ka 0.000000 0.000000 0.000000
-map_Kd bwr:block/control_panel/annunciator
+map_Kd #annunciator
 
 newmtl annunciator_lit
 Kd 1.000000 1.000000 1.000000
@@ -56,5 +62,5 @@ map_Kd bwr:block/control_panel/annunciator_lit
 newmtl vent
 Kd 1.000000 1.000000 1.000000
 Ka 0.000000 0.000000 0.000000
-map_Kd bwr:block/control_panel/vent
+map_Kd #vent
 

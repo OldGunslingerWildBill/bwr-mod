@@ -1,5 +1,6 @@
 package dev.bwr.mod.furniture;
 
+import dev.bwr.mod.panel.PanelFinish;
 import dev.bwr.mod.world.AssemblyAccess;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -42,6 +43,7 @@ public abstract class AssemblyBlock extends Block {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
+        builder.add(PanelFinish.FINISH);
     }
 
     // ---- footprint (single block unless a subclass says otherwise)
@@ -177,5 +179,13 @@ public abstract class AssemblyBlock extends Block {
     @Override
     protected BlockState rotate(BlockState state, Rotation rotation) {
         return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /** Pick block gives the item with this block's finish. */
+    @Override
+    public net.minecraft.world.item.ItemStack getCloneItemStack(BlockState state, net.minecraft.world.phys.HitResult target,
+                                                                net.minecraft.world.level.LevelReader level,
+                                                                BlockPos pos, net.minecraft.world.entity.player.Player player) {
+        return PanelFinish.withFinish(super.getCloneItemStack(state, target, level, pos, player), PanelFinish.of(state));
     }
 }

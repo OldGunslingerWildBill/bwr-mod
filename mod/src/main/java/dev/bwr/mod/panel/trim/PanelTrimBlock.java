@@ -1,6 +1,7 @@
 package dev.bwr.mod.panel.trim;
 
 import com.mojang.serialization.MapCodec;
+import dev.bwr.mod.panel.PanelFinish;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
@@ -60,6 +61,7 @@ public class PanelTrimBlock extends Block {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
+        builder.add(PanelFinish.FINISH);
     }
 
     @Override
@@ -86,5 +88,13 @@ public class PanelTrimBlock extends Block {
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
+    }
+
+    /** Pick block gives the item with this block's finish. */
+    @Override
+    public net.minecraft.world.item.ItemStack getCloneItemStack(BlockState state, net.minecraft.world.phys.HitResult target,
+                                                                net.minecraft.world.level.LevelReader level,
+                                                                net.minecraft.core.BlockPos pos, net.minecraft.world.entity.player.Player player) {
+        return PanelFinish.withFinish(super.getCloneItemStack(state, target, level, pos, player), PanelFinish.of(state));
     }
 }

@@ -7,7 +7,8 @@
   "emissive_ambient": true,
   "ambientocclusion": false,
   "textures": {
-    "particle": "bwr:block/control_panel/bezel"
+    "particle": "bwr:block/control_panel/bezel",
+    "annunciator": "bwr:block/control_panel/annunciator"
   },
   "render_type": "minecraft:solid"
 }
