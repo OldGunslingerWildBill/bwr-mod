@@ -520,9 +520,7 @@ public final class RecorderClientCheck {
         }
         var dir = mc.gameDirectory.toPath().resolve("recorder-check");
         Files.createDirectories(dir);
-        try (var image = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
-            image.writeToFile(dir.resolve(current.name() + ".png"));
-        }
+        CheckShots.save(mc,dir.resolve(current.name() + ".png"));
         int[] picture = RecorderClientStats.picture(client);
         PaperlessRecorderData data = (PaperlessRecorderData) client.data();
         boolean white = data.background.equals("white");

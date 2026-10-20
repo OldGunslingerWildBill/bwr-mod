@@ -475,8 +475,7 @@ public final class MimicClientCheck {
         }
         Path directory = mc.gameDirectory.toPath().resolve("mimic-check");
         Files.createDirectories(directory);
-        NativeImage shot = Screenshot.takeScreenshot(mc.getMainRenderTarget());
-        shot.writeToFile(directory.resolve(step.name() + ".png"));
+        NativeImage shot = CheckShots.saveKeeping(mc, directory.resolve(step.name() + ".png"));
         step.verify().accept(mc);
         if (step.differsFrom() != null) {
             NativeImage other = SHOTS.get(step.differsFrom());

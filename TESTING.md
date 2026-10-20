@@ -223,6 +223,29 @@ The Blender export check verifies all 144 new hardware output files are current.
 Current artifacts and transcripts are recorded in BUILD-STATUS.md. Benchmarks
 measure the local test scene and do not guarantee FPS in every modpack.
 
+### Client check screenshots: 1920 x 1080, supersampled
+
+Every picture the client checks of `:mod:runTurbineModelCheck` save (panel incl. its trim, duplex, realscale and owner stages,
+furniture, networking, mimic, and the other checks of that run config) is a **1920 x 1080 PNG, anti-aliased by 2 x 2
+supersampling**, written by the one helper `dev.bwr.mod.devtest.CheckShots` (`save`, or `saveKeeping` when the check also reads
+pixels). The run config opens a 1920 x 1080 *windowed* client (`--width 1920 --height 1080`); a decorated window cannot be 1080
+high on a 1080p monitor (Windows caps the client area, 1061 high here), so the saved picture does not depend on the window:
+`CheckShots` renders the same frame once more into a 3840 x 2160 main render target (the window is never made larger; the `Window`
+temporarily reports the doubled framebuffer size and GUI scale, so the GUI, scissor boxes and line widths stay consistent),
+reads it back and averages every 2 x 2 block (area filter) down to 1920 x 1080. The extra frame costs about 60 ms and the
+1080p PNG write another 125 ms or so (188 ms a shot in all, against 125 ms for a plain 1920 x 1061 capture).
+
+* `-PbwrNoShotAA` saves the plain framebuffer at window size instead (debugging; 1920 x 1061 on a 1080p monitor).
+  `-PbwrShotPlainCopy` also writes `<name>-plain.png` next to each picture for comparisons. With Iris loaded the plain
+  framebuffer is saved (Iris replaces the pipeline).
+* The checks' **pixel assertions read the plain live framebuffer capture** (taken first, at window size), never the saved
+  supersampled file, so they measure what the game draws. Where a number was tuned at 1280 x 720 it is scaled, never lowered:
+  the round-meter numeral boxes of `PanelClientCheck` are mapped by `s = height / 720` about the picture centre with the
+  dark-pixel gate `60 * s * s`; `CoolingClientCheck.brightVaporPixels` scales its region and sampling step by `width / 1280`
+  (the constant 1000 is unchanged because the sampling density is). Both are the old values at 1280 x 720.
+* Other run configs (`refuellingCheck`, `reactorFitCheck`, `advancementClientCheck`, the multiplayer clients) keep their own
+  window sizes and their own plain screenshot calls.
+
 ### Minecraft-facing coverage
 
 The concrete suppression update had **24 required GameTests**, including six

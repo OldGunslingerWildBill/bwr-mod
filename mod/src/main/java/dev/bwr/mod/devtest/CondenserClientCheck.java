@@ -112,7 +112,7 @@ public final class CondenserClientCheck {
         }
         try{
             var dir=mc.gameDirectory.toPath().resolve("condenser-check");java.nio.file.Files.createDirectories(dir);
-            try(var shot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve(NAMES[stage]+".png"));}
+            CheckShots.save(mc,dir.resolve(NAMES[stage]+".png"));
         }catch(java.io.IOException e){throw new IllegalStateException(e);}
         LogUtils.getLogger().info("CONDENSER CLIENT CHECK: captured {}",NAMES[stage]);requested=false;
         if(++stage==NAMES.length){LogUtils.getLogger().info("CONDENSER CLIENT CHECK PASS: LP fit, eight pipe ports, shell seams, panel, green/red previews and unsneaked underside placement");mc.stop();}

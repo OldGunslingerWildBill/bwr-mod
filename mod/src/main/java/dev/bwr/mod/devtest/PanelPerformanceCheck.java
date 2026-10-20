@@ -242,9 +242,7 @@ public final class PanelPerformanceCheck {
         try {
             var directory = mc.gameDirectory.toPath().resolve("panel-performance");
             Files.createDirectories(directory);
-            try (var shot = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
-                shot.writeToFile(directory.resolve(current.name() + ".png"));
-            }
+            CheckShots.save(mc,directory.resolve(current.name() + ".png"));
         } catch (IOException ex) {
             throw new IllegalStateException("Panel benchmark screenshot failed", ex);
         }

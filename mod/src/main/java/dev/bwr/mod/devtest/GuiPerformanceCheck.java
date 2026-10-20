@@ -71,7 +71,7 @@ public final class GuiPerformanceCheck {
                 mc.screen==null?"world":mc.screen.getClass().getSimpleName(),frames/seconds,frames==0?0:renderNanos/1e6/frames,mc.isWindowActive());
             if(mc.screen!=null)try{
                 var dir=mc.gameDirectory.toPath().resolve("gui-performance");java.nio.file.Files.createDirectories(dir);
-                try(var shot=net.minecraft.client.Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve("stage-"+stage+".png"));}
+                CheckShots.save(mc,dir.resolve("stage-"+stage+".png"));
             }catch(java.io.IOException ex){throw new IllegalStateException(ex);}
             requested=false;
             if(++stage==8){LogUtils.getLogger().info("GUI PERFORMANCE COMPLETE");mc.stop();}

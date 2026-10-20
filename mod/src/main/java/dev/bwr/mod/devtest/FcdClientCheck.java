@@ -534,9 +534,7 @@ public final class FcdClientCheck {
         try {
             var directory = mc.gameDirectory.toPath().resolve("fcd-check");
             Files.createDirectories(directory);
-            try (var shot = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
-                shot.writeToFile(directory.resolve(name + ".png"));
-            }
+            CheckShots.save(mc,directory.resolve(name + ".png"));
         } catch (IOException ex) {
             throw new IllegalStateException("FCD check screenshot failed", ex);
         }

@@ -104,7 +104,7 @@ public final class SpargerClientCheck {
         mc.player.setPos(camera.x,camera.y,camera.z);mc.player.setYRot(yaw);mc.player.setXRot(pitch);mc.player.setDeltaMovement(Vec3.ZERO);mc.options.hideGui=true;mc.getToasts().clear();
         if(shown<140)return;
         var dir=mc.gameDirectory.toPath().resolve("sparger-check");java.nio.file.Files.createDirectories(dir);
-        try(var shot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve(NAMES[stage]+".png"));}
+        CheckShots.save(mc,dir.resolve(NAMES[stage]+".png"));
         com.mojang.logging.LogUtils.getLogger().info("SPARGER CLIENT CHECK: {}",NAMES[stage]);requested=false;
         if(++stage==NAMES.length){com.mojang.logging.LogUtils.getLogger().info("SPARGER CLIENT CHECK PASS: four sizes, materials, gaps, repair and unforming");mc.stop();}
     }

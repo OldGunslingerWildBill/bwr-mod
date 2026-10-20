@@ -200,8 +200,7 @@ public final class FurnitureClientCheck {
         try {
             var directory = mc.gameDirectory.toPath().resolve("furniture-check");
             Files.createDirectories(directory);
-            try (var shot = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
-                shot.writeToFile(directory.resolve(NAMES[stage] + ".png"));
+            try (var shot = CheckShots.saveKeeping(mc, directory.resolve(NAMES[stage] + ".png"))) {
                 if (isMostlyOneColour(shot)) {
                     throw new AssertionError("Furniture screenshot " + NAMES[stage] + " is a flat colour: nothing rendered");
                 }

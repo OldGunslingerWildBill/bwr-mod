@@ -109,7 +109,7 @@ public final class InternalPumpClientCheck {
         if(shown==140)uploads=dev.bwr.mod.client.MachineMeshCache.uploadCount();if(shown<170)return;
         if(dev.bwr.mod.client.MachineMeshCache.uploadCount()!=uploads)throw new AssertionError("RIP core uploads every frame");
         var dir=mc.gameDirectory.toPath().resolve("rip-model-check");java.nio.file.Files.createDirectories(dir);
-        try(var shot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve(NAMES[stage]+".png"));}
+        CheckShots.save(mc,dir.resolve(NAMES[stage]+".png"));
         com.mojang.logging.LogUtils.getLogger().info("RIP MODEL CHECK: {} assemblies={} drives={}",NAMES[stage],core.cells().size(),core.drives().size());requested=false;
         if(++stage==NAMES.length){com.mojang.logging.LogUtils.getLogger().info("RIP MODEL CHECK PASS: nine views, ABWR shroud dimensions, expanded fuel geometry, CRD materials, mount guides, panel, stable GPU cache");mc.stop();}
     }

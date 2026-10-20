@@ -110,7 +110,7 @@ public final class PowerModuleClientCheck {
         if(!ready||++shown<60)return;
         mc.options.hideGui=stage<2||stage==5;mc.getToasts().clear();
         if(shown<65)return;
-        try{var dir=mc.gameDirectory.toPath().resolve("power-check");java.nio.file.Files.createDirectories(dir);try(var shot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve(NAMES[stage]+".png"));}}
+        try{var dir=mc.gameDirectory.toPath().resolve("power-check");java.nio.file.Files.createDirectories(dir);CheckShots.save(mc,dir.resolve(NAMES[stage]+".png"));}
         catch(java.io.IOException e){throw new IllegalStateException(e);}
         LogUtils.getLogger().info("POWER CLIENT CHECK: rendered {}",NAMES[stage]);mc.player.closeContainer();requested=false;mc.options.hideGui=false;
         if(++stage==NAMES.length){LogUtils.getLogger().info("POWER CLIENT CHECK PASS: assembled train, Blender valves, three readout panels and two synchronized valve controls");mc.stop();}

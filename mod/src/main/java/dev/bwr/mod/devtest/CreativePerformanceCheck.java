@@ -47,7 +47,7 @@ public final class CreativePerformanceCheck {
         if(System.nanoTime()-began>12_000_000_000L){double seconds=(System.nanoTime()-began)/1e9-3;
             LogUtils.getLogger().info("CREATIVE PERFORMANCE stage={} fps={} screenCPUms={}",stage,frames/seconds,frames==0?0:renderNanos/1e6/frames);
             var dir=mc.gameDirectory.toPath().resolve("creative-performance");java.nio.file.Files.createDirectories(dir);
-            try(var shot=net.minecraft.client.Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve("stage-"+stage+".png"));}
+            CheckShots.save(mc,dir.resolve("stage-"+stage+".png"));
             requested=false;if(++stage==4){LogUtils.getLogger().info("CREATIVE PERFORMANCE COMPLETE");mc.stop();}
         }
     }

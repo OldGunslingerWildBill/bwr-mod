@@ -74,7 +74,7 @@ public final class CompactCoreClientCheck {
         mc.getToasts().clear();
         try {
             var dir=mc.gameDirectory.toPath().resolve("compact-core-check");java.nio.file.Files.createDirectories(dir);
-            try(var image=Screenshot.takeScreenshot(mc.getMainRenderTarget())) {image.writeToFile(dir.resolve(NAMES[stage]+".png"));}
+            CheckShots.save(mc,dir.resolve(NAMES[stage]+".png"));
         } catch(java.io.IOException ex) {throw new IllegalStateException(ex);}
         com.mojang.logging.LogUtils.getLogger().info("COMPACT CORE CLIENT: captured {}",NAMES[stage]);
         requested=false;

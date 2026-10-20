@@ -66,8 +66,7 @@ public final class CoolingClientCheck {
         if((stage<3||stage>=5)&&mc.screen!=null||stage>=3&&stage<5&&!(mc.player.containerMenu instanceof CoolingMenu m&&m.present))return;
         var c=CAMERAS[Math.min(stage,6)];mc.player.getAbilities().flying=true;mc.player.setDeltaMovement(Vec3.ZERO);mc.player.setPos(c[0],c[1],c[2]);mc.player.setYRot((float)c[3]);mc.player.setXRot((float)c[4]);
         if(++shown<(stage>=10?850:stage>=6?(stage==6?200:160):90))return;mc.options.hideGui=stage<3||stage>=5;mc.getToasts().clear();if(shown<95)return;
-        try{var dir=mc.gameDirectory.toPath().resolve("cooling-check");java.nio.file.Files.createDirectories(dir);try(var shot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){
-            shot.writeToFile(dir.resolve(NAMES[stage]+".png"));
+        try{var dir=mc.gameDirectory.toPath().resolve("cooling-check");java.nio.file.Files.createDirectories(dir);try(var shot=CheckShots.saveKeeping(mc,dir.resolve(NAMES[stage]+".png"))){
             if(stage==11&&brightVaporPixels(shot)<1000)throw new AssertionError("GPU vapor drew no visible plume");
         }}catch(java.io.IOException ex){throw new IllegalStateException(ex);}
         if(stage==1){var fan=(CoolingBlockEntity)mc.level.getBlockEntity(ROOTS[1]);if(fan.vaporActivity()<=0||Math.abs(fan.fanAngle-fan.previousFanAngle-6)>0.01)throw new AssertionError("Mechanical vapor activity/fan direction or speed incorrect at 50% power");}
@@ -103,8 +102,11 @@ public final class CoolingClientCheck {
     }
     private static int brightVaporPixels(com.mojang.blaze3d.platform.NativeImage image){
         int bright=0;
-        for(int y=0;y<Math.min(500,image.getHeight());y+=2)
-            for(int x=100;x<Math.min(1000,image.getWidth());x+=2){
+        // The region and the sampling step were tuned on a 1280 x 720 picture: scale both with the picture width (k=1 at 1280),
+        // so the same part of the screen is sampled at the same density and the 1000 threshold keeps its meaning.
+        double k=image.getWidth()/1280.0;int step=(int)Math.round(2*k);
+        for(int y=0;y<Math.min((int)(500*k),image.getHeight());y+=step)
+            for(int x=(int)(100*k);x<Math.min((int)(1000*k),image.getWidth());x+=step){
                 int rgba=image.getPixelRGBA(x,y);
                 if((rgba&255)>220&&((rgba>>>8)&255)>220&&((rgba>>>16)&255)>220)bright++;
             }

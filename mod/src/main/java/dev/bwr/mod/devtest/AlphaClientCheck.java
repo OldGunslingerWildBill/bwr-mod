@@ -59,7 +59,7 @@ public final class AlphaClientCheck {
         boolean ready=stage==0?mc.screen==null&&mc.player.getY()>110:stage==2?mc.player.containerMenu instanceof PumpControlMenu pumpMenu&&pumpMenu.present:mc.player.containerMenu instanceof ServiceMenu service&&service.kind>0;
         if(ready&&++shown>55){
             var dir=mc.gameDirectory.toPath().resolve("alpha-check");java.nio.file.Files.createDirectories(dir);
-            try(var shot=net.minecraft.client.Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve(NAMES[stage]+".png"));}
+            CheckShots.save(mc,dir.resolve(NAMES[stage]+".png"));
             LogUtils.getLogger().info("ALPHA CLIENT PASS {}",NAMES[stage]);
             if(++stage==NAMES.length){LogUtils.getLogger().info("ALPHA CLIENT COMPLETE");mc.stop();}else requested=false;
         }

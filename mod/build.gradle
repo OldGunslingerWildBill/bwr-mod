@@ -56,8 +56,11 @@ neoForge {
         turbineModelCheck {
             client()
             gameDirectory = file('run/turbineModelCheck')
-            programArguments.addAll('--width', '1280', '--height', '720')
+            programArguments.addAll('--width', '1920', '--height', '1080')
             jvmArguments.add('-Dbwr.turbineModelCheck=true')
+            // Screenshots: 1920 x 1080 windowed, saved 2 x 2 supersampled (dev.bwr.mod.devtest.CheckShots). -PbwrNoShotAA saves the plain framebuffer.
+            if (project.hasProperty('bwrNoShotAA')) jvmArguments.add('-Dbwr.noShotAA=true')
+            if (project.hasProperty('bwrShotPlainCopy')) jvmArguments.add('-Dbwr.shotPlainCopy=true')
             if (project.hasProperty('bwrPumpPanelCheck')) jvmArguments.add('-Dbwr.pumpPanelCheck=true')
             if (project.hasProperty('bwrTerryPanelCheck')) jvmArguments.add('-Dbwr.terryPanelCheck=true')
             if (project.hasProperty('bwrPowerPanelCheck')) jvmArguments.add('-Dbwr.powerPanelCheck=true')
