@@ -101,6 +101,8 @@ neoForge {
             if (project.hasProperty('bwrRipModelCheck')) jvmArguments.add('-Dbwr.ripModelCheck=true')
             if (project.hasProperty('bwrNetworkingClientCheck')) jvmArguments.add('-Dbwr.networkingClientCheck=true')
             if (project.hasProperty('bwrFurnitureClientCheck')) jvmArguments.add('-Dbwr.furnitureClientCheck=true')
+            if (project.hasProperty('bwrGuiScreenCheck')) jvmArguments.add('-Dbwr.guiScreenCheck=true')
+            if (project.hasProperty('bwrGuiCheckLenient')) jvmArguments.add('-Dbwr.guiCheckLenient=true')
         }
 
         // Builds a reactor, a suppression pool and a turbine outlet in a real
