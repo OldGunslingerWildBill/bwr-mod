@@ -69,13 +69,16 @@ public final class PanelClientCheck {
     private static final int DUPLEX_FIRST = TRIM_FIRST + PanelTrimShowcase.NAMES.length;
     /** The first stage of the real size board (see {@link PanelRealScaleShowcase}), after the duplex board. */
     private static final int REAL_FIRST = DUPLEX_FIRST + PanelDuplexShowcase.NAMES.length;
+    /** The first stage of the gauges' Text size and Tick size (see {@link PanelTextSizeShowcase}), after the real size board. */
+    private static final int TEXTSIZE_FIRST = REAL_FIRST + PanelRealScaleShowcase.NAMES.length;
     private static final String[] NAMES = names();
 
     private static String[] names() {
         String[] original = {"board-day-wide", "board-controls-close", "board-annunciators",
                 "board-lod-28m", "board-night-lamps", "wrench-config", "linker-binding", "linker-outline", "board-night-close"};
         String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length + PanelSlopeShowcase.NAMES.length
-                + PanelTrimShowcase.NAMES.length + PanelDuplexShowcase.NAMES.length + PanelRealScaleShowcase.NAMES.length];
+                + PanelTrimShowcase.NAMES.length + PanelDuplexShowcase.NAMES.length + PanelRealScaleShowcase.NAMES.length
+                + PanelTextSizeShowcase.NAMES.length];
         System.arraycopy(original, 0, all, 0, original.length);
         System.arraycopy(PanelModelShowcase.NAMES, 0, all, BAKED_FIRST, PanelModelShowcase.NAMES.length);
         System.arraycopy(PanelSlopeShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length,
@@ -85,6 +88,7 @@ public final class PanelClientCheck {
         System.arraycopy(PanelDuplexShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length
                 + PanelSlopeShowcase.NAMES.length + PanelTrimShowcase.NAMES.length, PanelDuplexShowcase.NAMES.length);
         System.arraycopy(PanelRealScaleShowcase.NAMES, 0, all, REAL_FIRST, PanelRealScaleShowcase.NAMES.length);
+        System.arraycopy(PanelTextSizeShowcase.NAMES, 0, all, TEXTSIZE_FIRST, PanelTextSizeShowcase.NAMES.length);
         return all;
     }
     private static final String STAGE_FILTER = System.getProperty("bwr.panelClientStages", "");
@@ -167,13 +171,15 @@ public final class PanelClientCheck {
                         PanelTrimShowcase.build(level);
                         PanelDuplexShowcase.build(level);
                         PanelRealScaleShowcase.build(level);
+                        PanelTextSizeShowcase.build(level);
                         built = true;
                     } catch (Throwable failure) {
                         buildFailure = failure;
                         return;
                     }
                 }
-                Vec3 camera = selected >= REAL_FIRST ? PanelRealScaleShowcase.camera(selected - REAL_FIRST)
+                Vec3 camera = selected >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.camera(selected - TEXTSIZE_FIRST)
+                        : selected >= REAL_FIRST ? PanelRealScaleShowcase.camera(selected - REAL_FIRST)
                         : selected >= DUPLEX_FIRST ? PanelDuplexShowcase.camera(selected - DUPLEX_FIRST)
                         : selected >= TRIM_FIRST ? PanelTrimShowcase.camera(selected - TRIM_FIRST)
                         : selected >= SLOPE_FIRST ? PanelSlopeShowcase.camera(selected - SLOPE_FIRST)
@@ -185,7 +191,8 @@ public final class PanelClientCheck {
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = selected >= REAL_FIRST ? PanelRealScaleShowcase.target(selected - REAL_FIRST)
+                Vec3 target = selected >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.target(selected - TEXTSIZE_FIRST)
+                        : selected >= REAL_FIRST ? PanelRealScaleShowcase.target(selected - REAL_FIRST)
                         : selected >= DUPLEX_FIRST ? PanelDuplexShowcase.target(selected - DUPLEX_FIRST)
                         : selected >= TRIM_FIRST ? PanelTrimShowcase.target(selected - TRIM_FIRST)
                         : selected >= SLOPE_FIRST ? PanelSlopeShowcase.target(selected - SLOPE_FIRST)
@@ -208,7 +215,7 @@ public final class PanelClientCheck {
                 level.setDayTime(selected == 4 || selected == 8 || selected >= BAKED_FIRST && selected < SLOPE_FIRST && PanelModelShowcase.night(selected - BAKED_FIRST)
                         || selected >= TRIM_FIRST && selected < DUPLEX_FIRST && PanelTrimShowcase.night(selected - TRIM_FIRST)
                         || selected >= DUPLEX_FIRST && selected < REAL_FIRST && PanelDuplexShowcase.night(selected - DUPLEX_FIRST)
-                        || selected >= REAL_FIRST && PanelRealScaleShowcase.night(selected - REAL_FIRST)
+                        || selected >= REAL_FIRST && selected < TEXTSIZE_FIRST && PanelRealScaleShowcase.night(selected - REAL_FIRST)
                         ? 18_000 : 6_000);
                 level.setWeatherParameters(6000, 0, false, false);
                 if (selected == 7) {
@@ -297,7 +304,8 @@ public final class PanelClientCheck {
             if (stage >= BAKED_FIRST) {
                 // Every component must draw baked exactly when a loaded model exists for its look.
                 LogUtils.getLogger().info("PANEL CLIENT CHECK baked models {}: {} components drawn from baked models ({} loaded)",
-                        NAMES[stage], stage >= REAL_FIRST ? PanelRealScaleShowcase.verify(mc, stage - REAL_FIRST)
+                        NAMES[stage], stage >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.verify(mc, stage - TEXTSIZE_FIRST)
+                                : stage >= REAL_FIRST ? PanelRealScaleShowcase.verify(mc, stage - REAL_FIRST)
                                 : stage >= DUPLEX_FIRST ? PanelDuplexShowcase.verify(mc, stage - DUPLEX_FIRST)
                                 : stage >= TRIM_FIRST ? PanelTrimShowcase.verify(mc, stage - TRIM_FIRST)
                                 : stage >= SLOPE_FIRST ? PanelSlopeShowcase.verify(mc, stage - SLOPE_FIRST)
