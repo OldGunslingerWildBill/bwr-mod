@@ -90,6 +90,10 @@ public final class BarGaugeFace {
     private static final float MINOR_THICK = 0.055f * CM;
     private static final float MAJOR_MIN_CELLS = 0.12f;
     private static final float MINOR_MIN_CELLS = 0.07f;
+    /** Closest minor ticks may stand, cells, before fewer are drawn. */
+    private static final float MINOR_MIN_SPACING = 0.14f;
+    /** A gauge this many cells tall or taller uses the cell minimums above as they are; a smaller one scales them down. */
+    private static final float FULL_SIZE_CELLS = 16.0f;
     /** How far the bands, the ticks and the text stand off the face, cells (the renderer lifts text a little more). */
     public static final float BAND_LIFT = 0.02f;
     public static final float TICK_LIFT = 0.04f;
@@ -225,8 +229,8 @@ public final class BarGaugeFace {
         double tickRadius = radius(TICK_LIFT);
         float majorLeft = casePlace.x(TICK_LEFT);
         float minorLeft = casePlace.x(MINOR_LEFT);
-        float majorHalf = Math.max(MAJOR_MIN_CELLS, MAJOR_THICK * place.scale) / place.scale / 2.0f;
-        float minorHalf = Math.max(MINOR_MIN_CELLS, MINOR_THICK * place.scale) / place.scale / 2.0f;
+        float majorHalf = Math.max(MAJOR_MIN_CELLS * sizeFactor(), MAJOR_THICK * place.scale) / place.scale / 2.0f;
+        float minorHalf = Math.max(MINOR_MIN_CELLS * sizeFactor(), MINOR_THICK * place.scale) / place.scale / 2.0f;
         double step = majorStep();
         int subdivisions = subdivisions(step);
         double minor = step / subdivisions;
@@ -342,13 +346,21 @@ public final class BarGaugeFace {
         return 10.0 * magnitude;
     }
 
+    /**
+     * 1 for a gauge {@value #FULL_SIZE_CELLS} cells tall or more, less for a smaller one: the cell minimums of tick
+     * thickness and spacing shrink with the gauge, so a real-size gauge is the big one scaled down, not fat ticks.
+     */
+    public float sizeFactor() {
+        return Math.min(1.0f, casePlace.scale * CASE_FOOTPRINT_H / FULL_SIZE_CELLS);
+    }
+
     /** Minor ticks per numbered step: 10, fewer when they would crowd each other (a tick spacing under 0.14 cell) or when the step is 2.5. */
     private int subdivisions(double step) {
         float scaleRows = Math.abs(row(1.0) - row(0.0));
         double steps = Math.max(1.0e-9, (data.max - data.min) / step);
         int base = Math.abs(step / Math.pow(10.0, Math.floor(Math.log10(step))) - 2.5) < 1.0e-9 ? 5 : 10;
         for (int sub : new int[] {base, 5, 2, 1}) {
-            if (sub <= base && scaleRows * rowAspect / (steps * sub) >= 0.14f) {
+            if (sub <= base && scaleRows * rowAspect / (steps * sub) >= MINOR_MIN_SPACING * sizeFactor()) {
                 return sub;
             }
         }

@@ -280,6 +280,36 @@ public final class BarGaugeTests {
         helper.succeed();
     }
 
+    /** A real-size gauge is the big one scaled down: every inch ticked, and hairline ticks, not blobs as thick as the gaps. */
+    @GameTest(template = "empty")
+    public static void aRealSizeGaugeKeepsThinTicks(GameTestHelper helper) {
+        BakedPanelModel model = HardwareStage.shipped("bar_gauge");
+        BarGaugeFace big = new BarGaugeFace(model, bar(), 10, 16, 1.0f);
+        helper.assertTrue(big.sizeFactor() == 1.0f, "the 10x16 gauge keeps its cell minimums: " + big.sizeFactor());
+        BarGaugeFace small = new BarGaugeFace(model, bar(), 1, 3, 1.0f);
+        Recorder recorder = new Recorder();
+        small.emitStatic(recorder);
+        List<float[]> ticks = recorder.of(BarGaugeFace.INK);
+        helper.assertTrue(ticks.size() == 61, "a 1x3 gauge still ticks every inch: " + ticks.size());
+        // Its ticks are no fatter for their spacing than the big gauge's: the same picture, smaller.
+        Recorder bigTicks = new Recorder();
+        big.emitStatic(bigTicks);
+        float bigWorst = worstThickness(bigTicks.of(BarGaugeFace.INK), Math.abs(big.row(1.0 / 60.0) - big.row(0.0)));
+        float smallWorst = worstThickness(ticks, Math.abs(small.row(1.0 / 60.0) - small.row(0.0)));
+        helper.assertTrue(smallWorst <= bigWorst * 1.05f,
+                "a 1x3 tick is " + smallWorst + " of its spacing thick, the 10x16 gauge's " + bigWorst);
+        helper.succeed();
+    }
+
+    /** The thickest tick, as a share of the tick spacing. */
+    private static float worstThickness(List<float[]> ticks, float spacing) {
+        float worst = 0.0f;
+        for (float[] tick : ticks) {
+            worst = Math.max(worst, (Recorder.maxY(tick) - Recorder.minY(tick)) / spacing);
+        }
+        return worst;
+    }
+
     @GameTest(template = "empty")
     public static void scaleTicksBandsAndNumbersMatchTheReferencePictures(GameTestHelper helper) {
         BakedPanelModel model = HardwareStage.shipped("bar_gauge");
