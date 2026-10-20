@@ -29,7 +29,7 @@ import java.util.List;
 
 /**
  * The real size part of the panel client check: one 4 m duplex board filled the way a real control board is, every
- * instrument and control at its real size (see CONTROL-PANELS.md, "Real sizes"). Vertical board with rows of dials,
+ * instrument and control at its default real size (see CONTROL-PANELS.md, "Real sizes"). Vertical board with rows of dials,
  * edgewise meters and bar gauges, a tilted header block of annunciator windows, and a bench of control switches,
  * selectors, pushbuttons and lamps. Stages: the whole board from the front, the header, the bench, a close-up from
  * about a block away to show the small dials can be read, and the size picker open over the board.
@@ -37,8 +37,8 @@ import java.util.List;
  * <p>Plan: the same as {@link PanelDuplexShowcase}, 40 blocks further east: the bench of the leftmost column is at
  * x 5444, z 5260, the columns run west to x 5441, the back blocks are at z 5261 and the floor is at y 125.
  *
- * <p>The bar gauges are 1 x 3 cells, which is not on the bar gauge's list of sizes yet (its tests assume a case at
- * least 11 cells tall): they are placed directly to show what the real size will look like.
+ * <p>Every part is at the size a bare item places: twice its real size in each dimension (a dial 4 x 4, a lamp 2 x 2, a
+ * bar gauge 2 x 6), so a board holds a quarter of the parts it did at the exact real sizes.
  */
 final class PanelRealScaleShowcase {
     private PanelRealScaleShowcase() {
@@ -100,7 +100,7 @@ final class PanelRealScaleShowcase {
         return component;
     }
 
-    /** A component at the first (real) size of its type. */
+    /** A component at the size a new item of its type starts at (twice its real size). */
     private static PanelComponent real(ServerLevel level, BlockPos pos, int cx, int cy, ComponentType type) {
         Footprint size = type.footprints().get(type.realDefaultIndex());
         return put(level, pos, cx, cy, type, size.w(), size.h());
@@ -144,11 +144,11 @@ final class PanelRealScaleShowcase {
         }
     }
 
-    /** Rows of 2 x 2 dials, 1 x 3 edgewise meters and bar gauges, 3 x 1 horizontal edgewise meters, displays and knobs. */
+    /** Rows of 4 x 4 dials, 2 x 6 edgewise meters and bar gauges, 6 x 2 horizontal edgewise meters, displays and knobs. */
     private static void vertical(ServerLevel level, BlockPos pos, int c, boolean upper) {
-        for (int row = 0; row < 2; row++) {
-            for (int i = 0; i < 5; i++) {
-                PanelComponent dial = real(level, pos, i * 3, row * 3, ComponentTypes.DIAL_GAUGE);
+        for (int row = 0; row < (upper ? 2 : 1); row++) {
+            for (int i = 0; i < 4; i++) {
+                PanelComponent dial = real(level, pos, i * 4, row * 4, ComponentTypes.DIAL_GAUGE);
                 PanelModelShowcase.look(dial, PanelStyles.GE, (i + row + c) % 3 == 0 ? "red_pointer" : "standard");
                 reading(level, pos, dial, 18 + (index * 37) % 70);
             }
@@ -156,45 +156,42 @@ final class PanelRealScaleShowcase {
         if (upper) {
             for (int i = 0; i < 8; i++) {
                 if (i % 2 == 0) {
-                    PanelComponent strip = real(level, pos, i * 2, 6, ComponentTypes.EDGEWISE_GAUGE_VERTICAL);
+                    PanelComponent strip = real(level, pos, i * 2, 8, ComponentTypes.EDGEWISE_GAUGE_VERTICAL);
                     PanelModelShowcase.look(strip, PanelStyles.GE, i % 4 == 0 ? "red_pointer" : "standard");
                     reading(level, pos, strip, 20 + (index * 29) % 70);
                 } else {
-                    PanelComponent bar = put(level, pos, i * 2, 6, ComponentTypes.BAR_GAUGE, 1, 3);
+                    PanelComponent bar = real(level, pos, i * 2, 8, ComponentTypes.BAR_GAUGE);
                     reading(level, pos, bar, 15 + (index * 31) % 75);
                 }
             }
-            for (int row = 0; row < 3; row++) {
-                for (int i = 0; i < 4; i++) {
-                    PanelComponent strip = real(level, pos, i * 4, 10 + row * 2, ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL);
-                    reading(level, pos, strip, 10 + (index * 23) % 85);
-                }
+            for (int i = 0; i < 2; i++) {
+                PanelComponent strip = real(level, pos, i * 6, 14, ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL);
+                reading(level, pos, strip, 10 + (index * 23) % 85);
             }
         } else {
-            for (int i = 0; i < 3; i++) {
-                PanelComponent seven = real(level, pos, i * 5, 6, ComponentTypes.SEVEN_SEGMENT_DISPLAY);
-                reading(level, pos, seven, 1000 + 337 * (index % 7));
-            }
-            for (int i = 0; i < 4; i++) {
-                real(level, pos, i * 4, 9, ComponentTypes.THUMBWHEEL);
-            }
-            for (int i = 0; i < 8; i++) {
-                real(level, pos, i * 2, 12, ComponentTypes.SETPOINT_KNOB);
+            PanelComponent seven = real(level, pos, 0, 4, ComponentTypes.SEVEN_SEGMENT_DISPLAY);
+            reading(level, pos, seven, 1000 + 337 * (index % 7));
+            real(level, pos, 8, 4, ComponentTypes.THUMBWHEEL);
+            for (int i = 0; i < 2; i++) {
+                real(level, pos, 14, 4 + i * 2, ComponentTypes.SETPOINT_KNOB);
             }
             for (int i = 0; i < 8; i++) {
-                PanelComponent graph = real(level, pos, i * 2, 13, ComponentTypes.BAR_GRAPH);
+                PanelComponent graph = real(level, pos, i * 2, 8, ComponentTypes.BAR_GRAPH);
                 reading(level, pos, graph, 5 + (index * 13) % 90);
+            }
+            for (int i = 0; i < 8; i++) {
+                real(level, pos, i * 2, 14, ComponentTypes.SETPOINT_KNOB);
             }
         }
     }
 
-    /** The tilted header: a block of annunciator windows, 2.8 in each, some in alarm, some acknowledged. */
+    /** The tilted header: a block of annunciator windows, 5.6 in each (twice the real window), some in alarm, some acknowledged. */
     private static void header(ServerLevel level, BlockPos pos, int c) {
-        for (int row = 0; row < 8; row++) {
-            for (int i = 0; i < 16; i++) {
-                PanelComponent tile = real(level, pos, i, row, ComponentTypes.ANNUNCIATOR);
+        for (int row = 0; row < 4; row++) {
+            for (int i = 0; i < 8; i++) {
+                PanelComponent tile = real(level, pos, i * 2, row * 2, ComponentTypes.ANNUNCIATOR);
                 AnnunciatorData d = (AnnunciatorData) tile.data();
-                String[] text = ALARMS[(c * 128 + row * 16 + i) % ALARMS.length];
+                String[] text = ALARMS[(c * 32 + row * 8 + i) % ALARMS.length];
                 d.line1 = text[0];
                 d.line2 = text[1];
                 int state = (row * 7 + i * 3 + c) % 11;
@@ -209,37 +206,33 @@ final class PanelRealScaleShowcase {
         }
     }
 
-    /** The bench: breaker switches, lamps, pushbuttons, selectors, key switches, toggles. */
+    /** The bench: breaker switches, selectors, key switches, lamps, pushbuttons, push-turn switches, RPS trips, toggles. */
     private static void bench(ServerLevel level, BlockPos pos, int c) {
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 4; i++) {
             PanelComponent sw = real(level, pos, i * 2, 0, ComponentTypes.CONTROL_SWITCH);
             ControlSwitchData d = (ControlSwitchData) sw.data();
             d.spring = false;
             d.position = (i + c) % 3 - 1;
             sw.type().onLoaded(sw);
             sw.touch();
+            real(level, pos, 8 + i * 2, 0, ComponentTypes.ROTARY_SELECTOR);
+            real(level, pos, i * 2, 4, ComponentTypes.KEY_SWITCH);
         }
-        for (int i = 0; i < 16; i++) {
-            PanelComponent lamp = real(level, pos, i, 3, ComponentTypes.LAMP);
+        for (int i = 0; i < 8; i++) {
+            PanelComponent lamp = real(level, pos, 8 + (i % 4) * 2, 4 + (i / 4) * 2, ComponentTypes.LAMP);
             LampData d = (LampData) lamp.data();
             d.color = (i + c) % 3 == 0 ? 0xE02020 : (i + c) % 3 == 1 ? 0x20C040 : 0xF0A000;
             reading(level, pos, lamp, (i + c) % 4 == 0 ? 0 : 1);
         }
-        for (int i = 0; i < 16; i++) {
-            PanelComponent button = real(level, pos, i, 4, ComponentTypes.PUSHBUTTON);
+        for (int i = 0; i < 8; i++) {
+            PanelComponent button = real(level, pos, i * 2, 8, ComponentTypes.PUSHBUTTON);
             PanelModelShowcase.look(button, PanelStyles.GE, i % 5 == 0 ? "mushroom" : i % 3 == 0 ? "extended" : "flush");
         }
-        for (int i = 0; i < 8; i++) {
-            real(level, pos, i * 2, 6, ComponentTypes.ROTARY_SELECTOR);
-        }
         for (int i = 0; i < 4; i++) {
-            real(level, pos, i * 2, 9, ComponentTypes.KEY_SWITCH);
+            real(level, pos, i * 2, 10, ComponentTypes.PUSH_TURN_SWITCH);
         }
-        for (int i = 0; i < 4; i++) {
-            real(level, pos, 8 + i * 2, 9, ComponentTypes.PUSH_TURN_SWITCH);
-        }
-        for (int i = 0; i < 4; i++) {
-            real(level, pos, 8 + i * 2, 11, ComponentTypes.RPS_TRIP);
+        for (int i = 0; i < 2; i++) {
+            real(level, pos, 8 + i * 4, 10, ComponentTypes.RPS_TRIP);
         }
         for (int i = 0; i < 8; i++) {
             real(level, pos, i * 2, 12, ComponentTypes.TOGGLE_SWITCH);

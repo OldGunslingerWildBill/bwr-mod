@@ -27,7 +27,9 @@ public final class PushTurnSwitchType extends PanelInputType {
     public static final String ID_PATH = "push_turn_switch";
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 8), Footprint.of(12, 12), Footprint.of(16, 16),
             // real size: the ADS push-to-turn switch, about 6 cm
-            Footprint.of(1, 1));
+            Footprint.of(1, 1),
+            // twice the real switch, where a new item starts
+            Footprint.of(2, 2));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.bool("Spring", "component.bwr.field.spring_return"),
             ConfigField.text("Legend1", "component.bwr.field.legend_1", PushTurnData.MAX_LEGEND),
@@ -40,7 +42,13 @@ public final class PushTurnSwitchType extends PanelInputType {
 
     @Override
     public int realSizes() {
-        return 1;
+        return 2;
+    }
+
+    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    @Override
+    public Footprint realDefaultFootprint() {
+        return Footprint.of(2, 2);
     }
 
     @Override

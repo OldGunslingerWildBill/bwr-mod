@@ -18,8 +18,8 @@ public final class BarGaugeType extends ComponentType {
     public static final String ID_PATH = GaugeData.BAR_GAUGE;
     public static final List<Footprint> FOOTPRINTS = List.of(
             Footprint.of(10, 16), Footprint.of(8, 16), Footprint.of(12, 24), Footprint.of(16, 32),
-            // real size: the owner's CAD case, 5 x 21 cm, about 1 x 3 cells
-            Footprint.of(1, 3));
+            // real size: the owner's CAD case, 5 x 21 cm, about 1 x 3 cells, and twice that, where a new item starts
+            Footprint.of(1, 3), Footprint.of(2, 6));
     private static final List<ConfigField> SCHEMA = GaugeData.schema(ID_PATH);
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("value"));
 
@@ -29,7 +29,13 @@ public final class BarGaugeType extends ComponentType {
 
     @Override
     public int realSizes() {
-        return 1;
+        return 2;
+    }
+
+    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    @Override
+    public Footprint realDefaultFootprint() {
+        return Footprint.of(2, 6);
     }
 
     @Override

@@ -528,17 +528,21 @@ public final class BarGaugeTests {
         });
     }
 
-    /** The bar gauge has a real size (the 5 x 21 cm case is about 1 x 3 cells): last in the list, so old sizes keep their indices, and where a new item starts. */
+    /**
+     * The bar gauge has a real size (the 5 x 21 cm case is about 1 x 3 cells) and twice it, 2 x 6, where a new item starts:
+     * both last in the list, so old sizes keep their indices.
+     */
     @GameTest(template = "empty")
     public static void theBarGaugeHasARealSizeAtTheEndOfItsList(GameTestHelper helper) {
         ComponentType type = ComponentTypes.BAR_GAUGE;
         List<Footprint> sizes = type.footprints();
-        helper.assertTrue(sizes.size() == 5 && type.realSizes() == 1, "four old sizes and one real size: " + sizes);
+        helper.assertTrue(sizes.size() == 6 && type.realSizes() == 2, "four old sizes and two real ones: " + sizes);
         helper.assertTrue(sizes.subList(0, 4).equals(List.of(Footprint.of(10, 16), Footprint.of(8, 16), Footprint.of(12, 24),
                 Footprint.of(16, 32))), "the old sizes keep their indices: " + sizes);
-        helper.assertTrue(sizes.get(4).equals(Footprint.of(1, 3)) && type.realDefaultIndex() == 4, "the real size is 1 x 3 and last");
-        helper.assertTrue(ComponentItem.footprint(new net.minecraft.world.item.ItemStack(BwrItems.BAR_GAUGE.get())).equals(Footprint.of(1, 3)),
-                "a new bar gauge item places the real size");
+        helper.assertTrue(sizes.get(4).equals(Footprint.of(1, 3)) && sizes.get(5).equals(Footprint.of(2, 6)) && type.realDefaultIndex() == 5,
+                "the real size is 1 x 3, the default twice it, both last");
+        helper.assertTrue(ComponentItem.footprint(new net.minecraft.world.item.ItemStack(BwrItems.BAR_GAUGE.get())).equals(Footprint.of(2, 6)),
+                "a new bar gauge item places the doubled real size");
         helper.assertTrue(type.designSide() == 8, "its caption is in proportion from the smallest big size (8 cells): " + type.designSide());
         helper.succeed();
     }

@@ -16,7 +16,9 @@ public final class DialGaugeType extends ComponentType {
             Footprint.of(12, 12), Footprint.of(16, 16), Footprint.of(20, 20), Footprint.of(24, 24),
             Footprint.of(32, 32),
             // real sizes: a 4-1/4 in and a 6 in switchboard meter
-            Footprint.of(2, 2), Footprint.of(3, 3));
+            Footprint.of(2, 2), Footprint.of(3, 3),
+            // twice the real 4-1/4 in meter, where a new item starts
+            Footprint.of(4, 4));
     private static final List<ConfigField> SCHEMA = GaugeData.schema(ID_PATH);
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("value"));
 
@@ -26,7 +28,13 @@ public final class DialGaugeType extends ComponentType {
 
     @Override
     public int realSizes() {
-        return 2;
+        return 3;
+    }
+
+    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    @Override
+    public Footprint realDefaultFootprint() {
+        return Footprint.of(4, 4);
     }
 
     @Override

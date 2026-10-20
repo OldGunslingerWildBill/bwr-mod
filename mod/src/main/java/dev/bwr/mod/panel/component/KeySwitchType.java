@@ -14,7 +14,9 @@ import java.util.List;
 public final class KeySwitchType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 8), Footprint.of(8, 10),
             // real size: a keyed escutcheon, 3 x 4 in
-            Footprint.of(1, 2));
+            Footprint.of(1, 2),
+            // twice the real escutcheon, where a new item starts
+            Footprint.of(2, 4));
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(KeySwitchData.TYPE, List.of(
             ConfigField.bool("RequireKey", "component.bwr.field.require_key"),
             ConfigField.text("KeyCode", "component.bwr.field.key_code", KeySwitchData.MAX_CODE)));
@@ -26,7 +28,13 @@ public final class KeySwitchType extends PanelInputType {
 
     @Override
     public int realSizes() {
-        return 1;
+        return 2;
+    }
+
+    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    @Override
+    public Footprint realDefaultFootprint() {
+        return Footprint.of(2, 4);
     }
 
     @Override

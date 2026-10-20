@@ -24,7 +24,9 @@ import java.util.List;
 public final class ControlSwitchType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 12), Footprint.of(12, 16),
             // real sizes: a breaker control switch escutcheon, about 6 x 9 cm, and the model's own 4.4 x 6.6 in
-            Footprint.of(1, 2), Footprint.of(2, 3));
+            Footprint.of(1, 2), Footprint.of(2, 3),
+            // twice the real escutcheon, where a new item starts
+            Footprint.of(2, 4));
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(ControlSwitchData.TYPE, List.of(
             ConfigField.bool("Spring", "component.bwr.field.spring"),
             ConfigField.text("CloseText", "component.bwr.field.close_text", ControlSwitchData.MAX_TEXT),
@@ -42,7 +44,13 @@ public final class ControlSwitchType extends PanelInputType {
 
     @Override
     public int realSizes() {
-        return 2;
+        return 3;
+    }
+
+    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    @Override
+    public Footprint realDefaultFootprint() {
+        return Footprint.of(2, 4);
     }
 
     @Override

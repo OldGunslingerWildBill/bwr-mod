@@ -35,7 +35,7 @@ import java.util.UUID;
 
 /**
  * Real size controls: every instrument and control has its real size appended to its footprint list and a new item
- * starts there; the big sizes stay on the list (they are reached by cycling or the size picker) and indices stored in
+ * starts at twice that in each dimension (also appended); the big sizes stay on the list (they are reached by cycling or the size picker) and indices stored in
  * old item stacks and sizes saved in old components mean what they always did.
  */
 @GameTestHolder("bwr")
@@ -121,7 +121,12 @@ public final class RealScaleTests {
                         name + ": the real size " + f + " is not smaller than the old default " + old.get(0));
                 h.assertTrue(!old.contains(f), name + ": real size " + f + " repeats an old size");
             }
-            h.assertTrue(type.realDefaultIndex() == old.size(), name + ": a new item starts at the first real size");
+            // A new item starts at twice the first real size in each dimension (owner's decision, gauge polish); the exact
+            // real size stays on the list, right after the old sizes.
+            Footprint firstReal = sizes.get(old.size());
+            h.assertTrue(type.realDefaultIndex() >= old.size() && sizes.get(type.realDefaultIndex()).equals(
+                            Footprint.of(2 * firstReal.w(), 2 * firstReal.h())),
+                    name + ": a new item starts at twice the first real size " + firstReal + ", not at " + sizes.get(type.realDefaultIndex()));
         }
         h.succeed();
     }
@@ -215,11 +220,23 @@ public final class RealScaleTests {
             List<ComponentType> types = List.of(ComponentTypes.DIAL_GAUGE, ComponentTypes.CONTROL_SWITCH, ComponentTypes.LAMP,
                     ComponentTypes.ANNUNCIATOR, ComponentTypes.EDGEWISE_GAUGE_VERTICAL,
                     ComponentTypes.PUSHBUTTON, ComponentTypes.SEVEN_SEGMENT_DISPLAY, ComponentTypes.THUMBWHEEL);
+            // An item holding an old index still places the old big size. (Placed first and picked up again with the wrench,
+            // since the doubled real size parts that follow fill the board to row 10 and the old dial needs 12.)
+            PanelBlockEntity be = s.be();
+            ItemStack old = new ItemStack(BwrItems.DIAL_GAUGE.get());
+            old.set(BwrDataComponents.COMPONENT_VARIANT.get(), 0);
+            s.player.setItemInHand(InteractionHand.MAIN_HAND, old);
+            helper.assertTrue(PanelOps.place(s.player, InteractionHand.MAIN_HAND, s.origin, 0, 0) == PanelGroup.Result.OK,
+                    "placing an old dial index");
+            int oldId = be.claimAt(0, 0).id();
+            PanelComponent big = be.component(oldId);
+            helper.assertTrue(big.w() == 12 && big.h() == 12, "an old index 0 dial is 12x12, not " + big.w() + "x" + big.h());
+            s.player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BwrItems.PANEL_WRENCH.get()));
+            helper.assertTrue(PanelOps.remove(s.player, s.origin, oldId) && be.owned().isEmpty(), "the old dial is picked up again");
             // Real size parts are only a few cells across, so a dense row of them fits where one old dial filled the board.
             int cx = 0;
             int cy = 0;
             int rowHeight = 0;
-            PanelBlockEntity be = s.be();
             for (ComponentType type : types) {
                 Footprint real = type.footprints().get(type.realDefaultIndex());
                 if (cx + real.w() > 16) {
@@ -239,15 +256,44 @@ public final class RealScaleTests {
                 rowHeight = Math.max(rowHeight, real.h());
             }
             helper.assertTrue(be.owned().size() == types.size(), "all of them are on one block face: " + be.owned().size());
-            // An item holding an old index still places the old big size.
-            ItemStack old = new ItemStack(BwrItems.DIAL_GAUGE.get());
-            old.set(BwrDataComponents.COMPONENT_VARIANT.get(), 0);
-            s.player.setItemInHand(InteractionHand.MAIN_HAND, old);
-            helper.assertTrue(PanelOps.place(s.player, InteractionHand.MAIN_HAND, s.origin, 0, 4) == PanelGroup.Result.OK,
-                    "placing an old dial index");
-            PanelComponent big = be.component(be.claimAt(0, 4).id());
-            helper.assertTrue(big.w() == 12 && big.h() == 12, "an old index 0 dial is 12x12, not " + big.w() + "x" + big.h());
         });
+    }
+
+    /** The owner's decision: a new item starts at twice the real size in each dimension, the exact real size one pick away. */
+    @GameTest(template = "empty")
+    public static void theDefaultIsTwiceTheRealSizeAndTheExactRealSizeStaysSelectable(GameTestHelper h) {
+        Object[][] expected = {
+                {ComponentTypes.DIAL_GAUGE, Footprint.of(4, 4), Footprint.of(2, 2)},
+                {ComponentTypes.CONTROL_SWITCH, Footprint.of(2, 4), Footprint.of(1, 2)},
+                {ComponentTypes.LAMP, Footprint.of(2, 2), Footprint.of(1, 1)},
+                {ComponentTypes.ANNUNCIATOR, Footprint.of(2, 2), Footprint.of(1, 1)},
+                {ComponentTypes.BAR_GAUGE, Footprint.of(2, 6), Footprint.of(1, 3)},
+                {ComponentTypes.BAR_GRAPH, Footprint.of(2, 6), Footprint.of(1, 3)},
+                {ComponentTypes.EDGEWISE_GAUGE_VERTICAL, Footprint.of(2, 6), Footprint.of(1, 3)},
+                {ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL, Footprint.of(6, 2), Footprint.of(3, 1)},
+                {ComponentTypes.SEVEN_SEGMENT_DISPLAY, Footprint.of(8, 4), Footprint.of(4, 2)},
+                {ComponentTypes.SIXTEEN_SEGMENT_DISPLAY, Footprint.of(8, 4), Footprint.of(4, 2)},
+                {ComponentTypes.THUMBWHEEL, Footprint.of(6, 4), Footprint.of(3, 2)},
+                {ComponentTypes.KEY_SWITCH, Footprint.of(2, 4), Footprint.of(1, 2)},
+                {ComponentTypes.ROTARY_SELECTOR, Footprint.of(2, 4), Footprint.of(1, 2)},
+                {ComponentTypes.SETPOINT_KNOB, Footprint.of(2, 2), Footprint.of(1, 1)},
+                {ComponentTypes.TOGGLE_SWITCH, Footprint.of(2, 2), Footprint.of(1, 1)},
+                {ComponentTypes.PUSHBUTTON, Footprint.of(2, 2), Footprint.of(1, 1)},
+                {ComponentTypes.PUSH_TURN_SWITCH, Footprint.of(2, 2), Footprint.of(1, 1)},
+                {ComponentTypes.RPS_TRIP, Footprint.of(4, 2), Footprint.of(2, 1)}};
+        for (Object[] row : expected) {
+            ComponentType type = (ComponentType) row[0];
+            Footprint twice = (Footprint) row[1];
+            Footprint exact = (Footprint) row[2];
+            h.assertTrue(ComponentItem.footprint(new ItemStack(type.item())).equals(twice), type.id() + ": a bare stack is not " + twice);
+            h.assertTrue(ComponentItem.footprint(type.item().getDefaultInstance()).equals(twice), type.id() + ": the creative entry is not " + twice);
+            h.assertTrue(type.footprints().contains(exact), type.id() + ": the exact real size " + exact + " is gone");
+            int exactIndex = type.footprints().indexOf(exact);
+            ItemStack picked = new ItemStack(type.item());
+            picked.set(BwrDataComponents.COMPONENT_VARIANT.get(), exactIndex);
+            h.assertTrue(ComponentItem.footprint(picked).equals(exact), type.id() + ": the exact real size cannot be picked");
+        }
+        h.succeed();
     }
 
     // ---- the size picker's payload

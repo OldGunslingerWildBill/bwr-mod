@@ -22,6 +22,8 @@ public final class SegmentDisplayType extends ComponentType {
     public static final int COMPACT_DIGIT_H = 2;
     /** Digits of the real size displays, the first being where a new item starts: a 4 digit panel meter window. */
     private static final int[] COMPACT_DIGIT_COUNTS = {4, 1, 2, 3, 6, 8};
+    /** Twice the real size, where a new item starts: 4 digits, each 2 cells wide and 4 tall. */
+    private static final Footprint DOUBLE_DEFAULT = Footprint.of(4 * 2 * COMPACT_DIGIT_W, 2 * COMPACT_DIGIT_H);
     private static final List<ConfigField> SCHEMA = SegmentDisplayData.schema();
     private static final List<PortSpec> INPUTS = List.of(
             PortSpec.of("v0"), PortSpec.of("v1"), PortSpec.of("v2"), PortSpec.of("v3"));
@@ -39,6 +41,7 @@ public final class SegmentDisplayType extends ComponentType {
         for (int digits : COMPACT_DIGIT_COUNTS) {
             list.add(Footprint.of(digits * COMPACT_DIGIT_W, COMPACT_DIGIT_H));
         }
+        list.add(DOUBLE_DEFAULT);
         this.footprints = List.copyOf(list);
     }
 
@@ -46,14 +49,20 @@ public final class SegmentDisplayType extends ComponentType {
         return sixteen;
     }
 
-    /** Cells one digit is across on a display {@code cellsHigh} cells tall: five for the big digits, one for a real size one. */
+    /** Cells one digit is across on a display {@code cellsHigh} cells tall: five for the big digits, one for a real size one, two on the doubled one (a digit is half as wide as it is tall). */
     public static int digitWidth(int cellsHigh) {
-        return cellsHigh >= DIGIT_H ? DIGIT_W : COMPACT_DIGIT_W;
+        return cellsHigh >= DIGIT_H ? DIGIT_W : Math.max(COMPACT_DIGIT_W, cellsHigh / COMPACT_DIGIT_H * COMPACT_DIGIT_W);
     }
 
     @Override
     public int realSizes() {
-        return COMPACT_DIGIT_COUNTS.length;
+        return COMPACT_DIGIT_COUNTS.length + 1;
+    }
+
+    /** A new item starts at twice the real size, in each dimension. */
+    @Override
+    public Footprint realDefaultFootprint() {
+        return DOUBLE_DEFAULT;
     }
 
     @Override

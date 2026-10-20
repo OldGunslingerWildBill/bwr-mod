@@ -13,7 +13,9 @@ import java.util.List;
 public final class RotarySelectorType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 10), Footprint.of(12, 14),
             // real sizes: a selector escutcheon, about 6 x 9 cm, and a larger 9 x 11 cm one
-            Footprint.of(1, 2), Footprint.of(2, 3));
+            Footprint.of(1, 2), Footprint.of(2, 3),
+            // twice the real escutcheon, where a new item starts
+            Footprint.of(2, 4));
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(RotarySelectorData.TYPE, List.of(
             ConfigField.integer("Positions", "component.bwr.field.positions",
                     RotarySelectorData.MIN_POSITIONS, RotarySelectorData.MAX_POSITIONS),
@@ -27,7 +29,13 @@ public final class RotarySelectorType extends PanelInputType {
 
     @Override
     public int realSizes() {
-        return 2;
+        return 3;
+    }
+
+    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    @Override
+    public Footprint realDefaultFootprint() {
+        return Footprint.of(2, 4);
     }
 
     @Override

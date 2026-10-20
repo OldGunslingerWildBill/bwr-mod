@@ -12,7 +12,9 @@ import java.util.List;
 public final class ToggleSwitchType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 8), Footprint.of(8, 10),
             // real size: a heavy duty toggle on its plate, about 6 cm
-            Footprint.of(1, 1));
+            Footprint.of(1, 1),
+            // twice the real toggle, where a new item starts
+            Footprint.of(2, 2));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.color("Color", "component.bwr.field.lever_color"));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("state"));
@@ -23,7 +25,13 @@ public final class ToggleSwitchType extends PanelInputType {
 
     @Override
     public int realSizes() {
-        return 1;
+        return 2;
+    }
+
+    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    @Override
+    public Footprint realDefaultFootprint() {
+        return Footprint.of(2, 2);
     }
 
     @Override
