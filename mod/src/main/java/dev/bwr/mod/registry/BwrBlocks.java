@@ -455,7 +455,7 @@ public final class BwrBlocks {
             BLOCKS.register("control_stand",
                     () -> new dev.bwr.mod.furniture.ControlStandBlock(furniture()));
 
-    // --- Control panel trim (decoration only: no block entity, nothing mounts on these) ---------------
+    // --- Control panel trim (decoration, except the header strip, canopy and chamfers: MountableTrimBlock) ----
     public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelEndCapBlock> CONTROL_PANEL_END_CAP_FLAT =
             BLOCKS.register("control_panel_end_cap_flat",
                     () -> new dev.bwr.mod.panel.trim.PanelEndCapBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.END_CAP_FLAT));
@@ -468,12 +468,12 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelEndCapBlock> CONTROL_PANEL_END_CAP_ROUND =
             BLOCKS.register("control_panel_end_cap_round",
                     () -> new dev.bwr.mod.panel.trim.PanelEndCapBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.END_CAP_ROUND));
-    public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelTrimBlock> CONTROL_PANEL_HEADER_STRIP =
+    public static final DeferredBlock<dev.bwr.mod.panel.trim.MountableTrimBlock> CONTROL_PANEL_HEADER_STRIP =
             BLOCKS.register("control_panel_header_strip",
-                    () -> new dev.bwr.mod.panel.trim.PanelTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.HEADER_STRIP));
-    public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelTrimBlock> CONTROL_PANEL_HEADER_CANOPY =
+                    () -> new dev.bwr.mod.panel.trim.MountableTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.HEADER_STRIP));
+    public static final DeferredBlock<dev.bwr.mod.panel.trim.MountableTrimBlock> CONTROL_PANEL_HEADER_CANOPY =
             BLOCKS.register("control_panel_header_canopy",
-                    () -> new dev.bwr.mod.panel.trim.PanelTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.HEADER_CANOPY));
+                    () -> new dev.bwr.mod.panel.trim.MountableTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.HEADER_CANOPY));
     public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelTrimBlock> CONTROL_PANEL_PLINTH_KICK =
             BLOCKS.register("control_panel_plinth_kick",
                     () -> new dev.bwr.mod.panel.trim.PanelTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.PLINTH_KICK));
@@ -489,18 +489,18 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelTrimBlock> CONTROL_PANEL_CORNER_VERTICAL_OUTSIDE =
             BLOCKS.register("control_panel_corner_vertical_outside",
                     () -> new dev.bwr.mod.panel.trim.PanelTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.CORNER_VERTICAL_OUTSIDE));
-    public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelTrimBlock> CONTROL_PANEL_CORNER_VERTICAL_CHAMFER =
+    public static final DeferredBlock<dev.bwr.mod.panel.trim.MountableTrimBlock> CONTROL_PANEL_CORNER_VERTICAL_CHAMFER =
             BLOCKS.register("control_panel_corner_vertical_chamfer",
-                    () -> new dev.bwr.mod.panel.trim.PanelTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.CORNER_VERTICAL_CHAMFER));
+                    () -> new dev.bwr.mod.panel.trim.MountableTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.CORNER_VERTICAL_CHAMFER));
     public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelTrimBlock> CONTROL_PANEL_CORNER_BENCH_INSIDE =
             BLOCKS.register("control_panel_corner_bench_inside",
                     () -> new dev.bwr.mod.panel.trim.PanelTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.CORNER_BENCH_INSIDE));
     public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelTrimBlock> CONTROL_PANEL_CORNER_BENCH_OUTSIDE =
             BLOCKS.register("control_panel_corner_bench_outside",
                     () -> new dev.bwr.mod.panel.trim.PanelTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.CORNER_BENCH_OUTSIDE));
-    public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelTrimBlock> CONTROL_PANEL_CORNER_BENCH_CHAMFER =
+    public static final DeferredBlock<dev.bwr.mod.panel.trim.MountableTrimBlock> CONTROL_PANEL_CORNER_BENCH_CHAMFER =
             BLOCKS.register("control_panel_corner_bench_chamfer",
-                    () -> new dev.bwr.mod.panel.trim.PanelTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.CORNER_BENCH_CHAMFER));
+                    () -> new dev.bwr.mod.panel.trim.MountableTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.CORNER_BENCH_CHAMFER));
     public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelTrimBlock> CONTROL_PANEL_HEADER_VENT =
             BLOCKS.register("control_panel_header_vent",
                     () -> new dev.bwr.mod.panel.trim.PanelTrimBlock(panelBoard(), dev.bwr.mod.panel.trim.TrimPiece.HEADER_VENT));

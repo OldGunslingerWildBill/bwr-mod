@@ -177,7 +177,8 @@ public final class PanelGroup {
                         row--;
                     }
                 }
-                if (next == null || found.containsKey(next) || !isMember(level, next, type, facing, assumed)) {
+                if (next == null || (step < 2 && !type.hasColumns()) || found.containsKey(next)
+                        || !isMember(level, next, type, facing, assumed)) {
                     continue;
                 }
                 if (found.size() >= HARD_LIMIT) {
@@ -284,7 +285,7 @@ public final class PanelGroup {
                 int y0 = Math.max(cy - j * PanelGeometry.GRID, 0);
                 int x1 = Math.min(cx + footprint.w() - i * PanelGeometry.GRID, PanelGeometry.GRID);
                 int y1 = Math.min(cy + footprint.h() - j * PanelGeometry.GRID, PanelGeometry.GRID);
-                if (!target.isFree(x0, y0, x1, y1)) {
+                if (!target.isFree(x0, y0, x1, y1) || !target.cellsUsable(x0, y0, x1, y1)) {
                     return new Placement(Result.BLOCKED, List.of());
                 }
                 rects.add(new Rect(pos, x0, y0, x1, y1));

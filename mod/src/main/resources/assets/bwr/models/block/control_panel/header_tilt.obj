@@ -1,0 +1,26 @@
+# Mounting-plane reference solid for PanelType.HEADER_TILT (what PanelTrimTests.theMountingFacePlaneOfTheRemodelledBodiesIsUnchanged reads). Not rendered: the block models are control_panel_trim/header_strip.obj. The face polygon is the whole 16 x 16 grid; the grid is the annunciator panel, 5 degrees back from the board face.
+mtllib materials.mtl
+v 1.000000 1.000000 0.837489
+v 0.000000 1.000000 0.837489
+v 0.000000 0.000000 0.750000
+v 1.000000 0.000000 0.750000
+v 1.000000 1.000000 1.000000
+v 0.000000 1.000000 1.000000
+v 0.000000 0.000000 1.000000
+v 1.000000 0.000000 1.000000
+vn 0.000000 0.087156 -0.996195
+vn 0.000000 -0.087156 0.996195
+vt 0 1
+vt 1 1
+vt 1 0
+vt 0 0
+s 0
+usemtl face
+f 1/1/1 2/2/1 3/3/1 4/4/1
+usemtl back
+f 8/1/2 7/2/2 6/3/2 5/4/2
+usemtl bezel
+f 1/1/1 2/2/1 6/3/1 5/4/1
+f 2/1/1 3/2/1 7/3/1 6/4/1
+f 3/1/1 4/2/1 8/3/1 7/4/1
+f 4/1/1 1/2/1 5/3/1 8/4/1
