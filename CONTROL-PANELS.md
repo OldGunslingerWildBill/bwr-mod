@@ -264,18 +264,36 @@ Every machine peripheral also has `getName()`, `setName(text)`, `getPort()` and 
 
 ### Trim blocks: finishing a control room
 
-Nothing mounts on these; they are decoration with a collision shape that follows the model, no block entity and no
-ticking, so a whole room of them costs only its model. Each has a facing like a panel (the operator's side: it
+Most of these are decoration with a collision shape that follows the model, no block entity and no ticking, so a
+whole room of them costs only its model. The exceptions are the annunciator header strip, its canopy and the two
+45 degree chamfer corners, which take components (below). Each has a facing like a panel (the operator's side: it
 faces you when you place it). Crafted from panels and iron; see the recipes.
 
 | Block | Use |
 | --- | --- |
 | End cap (flat, benchboard, console, rounded) | A 2 px cheek with the exact cross-section of its panel, closing the open end of a run. It goes in the block beside the last panel and takes its side from the panel it is placed against (sneak flips it) |
-| Annunciator header strip, and with a canopy | A half-height block on top of a vertical board, tilted forward 12 degrees, with a grid of window tiles (decorative in this version). The canopy has a projecting top hood |
+| Annunciator header strip, and with a canopy | A full block on top of a vertical board, flush with its face at the foot and leaning back 5 degrees, with a grid of window tiles. **Takes components** on the leaning face. The canopy has a projecting top hood over the top row of cells |
 | Panel base cabinet | One block high, under a vertical board (or as a counter), with a dark recessed toe-kick |
 | Panel foot apron | A low non-slip plate on the floor in front of benchboards and consoles |
 | Panel toe-kick strip | A low dark skirting strip along a wall |
-| Corner (vertical or benchboard; inside, outside, 45 degree) | Closes the corners of a U- or horseshoe-shaped room. The corner sits at the far left of its block as you look at it, so the four directions you can look give the four corners. A vertical *inside* corner is an L, the *45 degree* one fills the L with a diagonal, and the *outside* one is the post where two runs turn the outside of a corner. The benchboard corners are the valley, the hip and a diagonal facet. They carry no mounting face |
+| Corner (vertical or benchboard; inside, outside, 45 degree) | Closes the corners of a U- or horseshoe-shaped room. The corner sits at the far left of its block as you look at it, so the four directions you can look give the four corners. A vertical *inside* corner is an L, the *45 degree* one fills the L with a diagonal, and the *outside* one is the post where two runs turn the outside of a corner. The benchboard corners are the valley, the hip and a diagonal facet. Only the two *45 degree* (chamfer) corners carry a mounting face |
+
+#### Mounting on the angled trim
+
+The header strip, the canopy and the two chamfer corners are panel blocks (the panel block entity, groups, claims, the
+ghost, the wrench and the drops are all the panel's own). Their faces are not square to the block, so each is a panel
+style of its own, and the 16 x 16 grid is laid on the face the model draws. A cell is 1/16 block wide along the
+face, as everywhere, so a part is its real size on a chamfer too.
+
+| Block | Style | Face | Joins |
+| --- | --- | --- | --- |
+| Header strip, canopy | `HEADER_TILT` | the leaning annunciator panel, 5 degrees back from the board face; a row is 1/cos 5 degrees long | sideways, strip and canopy together, to the operator's right and left. **One row**: the next block up is 0.0875 further back, which is not on the block grid (as the console), so a strip never grows upward. The canopy's hood takes the top row of cells |
+| Vertical chamfer | `CHAMFER_VERTICAL` | the diagonal facet filling the inside corner of two vertical boards, 0.71 block wide, normal toward the operator's right-front; **11 of the 16 columns** are on it | **up and down** into a taller facet; never sideways (the facet of the next block along is not on its plane). A part wider than 11 cells does not fit |
+| Bench chamfer | `CHAMFER_BENCH` | the triangle (1.41 block along its top, a block tall) that fills the inside corner of two benchboards, normal pointing up and toward the operator's right-front; only the cells wholly on the triangle are usable | nothing: a group of one |
+
+Looking at a diagonal face works as on any other: the cell under the crosshair, the green or red ghost and the wrench
+outline all come from the face's own plane. A placed block that had no block entity (a world saved before) gets one
+when its chunk loads.
 
 The panel bodies are modelled in Blender (`art/models/control_panel_trim/`): the mounting face is exactly where it
 was, and the detail is behind it (module seams on the face, service-door backs, bevelled back edges, a dark

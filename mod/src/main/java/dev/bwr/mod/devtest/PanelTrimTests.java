@@ -144,13 +144,28 @@ public final class PanelTrimTests {
         Set<Block> seen = new HashSet<>();
         for (TrimPiece piece : TrimPiece.values()) {
             Block block = blockOf(piece);
-            helper.assertTrue(block != Blocks.AIR && block instanceof PanelTrimBlock, piece + " is not registered as a trim block");
+            boolean mountable = piece.mountType() != null;
+            helper.assertTrue(block != Blocks.AIR && (mountable || block instanceof PanelTrimBlock), piece + " is not registered as a trim block");
             helper.assertTrue(seen.add(block), piece + " shares its block");
-            helper.assertTrue(((PanelTrimBlock) block).piece() == piece, piece + " block carries another piece");
+            if (mountable) {
+                // the four angled pieces are panel blocks: the panel block entity of their own panel type
+                helper.assertTrue(block instanceof PanelBlock panelBlock
+                                && panelBlock.panelType(block.defaultBlockState()) == piece.mountType()
+                                && block.defaultBlockState().hasBlockEntity()
+                                && panelBlock.newBlockEntity(ORIGIN, block.defaultBlockState())
+                                instanceof dev.bwr.mod.panel.PanelBlockEntity panelEntity
+                                && panelEntity.panelType() == piece.mountType(),
+                        piece + " is not a panel block with a panel block entity of " + piece.mountType());
+                helper.assertTrue(((dev.bwr.mod.panel.trim.MountableTrimBlock) block).piece() == piece, piece + " block carries another piece");
+            } else {
+                helper.assertTrue(((PanelTrimBlock) block).piece() == piece, piece + " block carries another piece");
+            }
             helper.assertTrue(block instanceof PanelEndCapBlock == piece.isEndCap(), piece + ": end cap class mismatch");
-            helper.assertTrue(!(block instanceof EntityBlock), piece + " must have no block entity");
+            if (!mountable) {
+                helper.assertTrue(!(block instanceof EntityBlock), piece + " must have no block entity");
+            }
             BlockState state = block.defaultBlockState();
-            helper.assertTrue(!state.isRandomlyTicking() && !state.hasBlockEntity(), piece + " must not tick or hold an entity");
+            helper.assertTrue(!state.isRandomlyTicking() && (mountable || !state.hasBlockEntity()), piece + " must not tick or hold an entity");
             helper.assertTrue(state.hasProperty(PanelTrimBlock.FACING), piece + " has no facing");
             helper.assertTrue(state.hasProperty(PanelEndCapBlock.SIDE) == piece.isEndCap(), piece + ": side property mismatch");
             helper.assertTrue(block.getStateDefinition().getPossibleStates().size() == (piece.isEndCap() ? 8 : 4),
@@ -220,7 +235,8 @@ public final class PanelTrimTests {
                     && stage.level.getBlockState(target).getValue(PanelTrimBlock.FACING) == Direction.SOUTH,
                     "the placed header strip is " + stage.level.getBlockState(target));
             helper.assertTrue(stack.getCount() == 2, "one item used, " + stack.getCount() + " left");
-            helper.assertTrue(stage.level.getBlockEntity(target) == null, "a trim block has no block entity");
+            helper.assertTrue(stage.level.getBlockEntity(target) instanceof dev.bwr.mod.panel.PanelBlockEntity panelEntity
+                    && panelEntity.panelType() == PanelType.HEADER_TILT, "a header strip has a panel block entity of HEADER_TILT");
         }
         helper.succeed();
     }
@@ -377,6 +393,9 @@ public final class PanelTrimTests {
                 case DUPLEX_BOARD -> "duplex_board";
                 case DUPLEX_BENCH -> "duplex_bench";
                 case DUPLEX_HEADER -> "duplex_header";
+                case HEADER_TILT -> "header_tilt";
+                case CHAMFER_VERTICAL -> "chamfer_vertical";
+                case CHAMFER_BENCH -> "chamfer_bench";
             };
             PanelGeometry.Frame frame = PanelGeometry.frame(type, Direction.NORTH);
             double[][] expected = {

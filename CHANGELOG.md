@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased: components on the angled trim (header strips, canopies, chamfer corners)
+
+- The **annunciator header strip, the canopy and the two 45 degree chamfer corners** (vertical and benchboard) now take components like any panel (CONTROL-PANELS.md, "Mounting on the angled trim"). They are panel blocks with the panel block entity under the same ids, models, recipes, drops and states, so a world saved before loads: a block that had no block entity gets one when its chunk loads (and, failing that, the first time anything asks for it), and breaking one drops what is mounted on it.
+- Three new panel styles: `HEADER_TILT` (the face as the model draws it, leaning back 5 degrees; strips and canopies join sideways into one row, never upward), `CHAMFER_VERTICAL` (the diagonal facet, 11 of 16 columns; stacks into rows, never joins sideways) and `CHAMFER_BENCH` (the triangular facet; a group of one). A grid cell is still 1/16 block along the face, so parts keep their real size; the cells that are not on a facet (and a canopy's hood row) take nothing.
+- Existing exhaustive `PanelType` switches in the tests gained the new arms; the registration test of `PanelTrimTests` now expects the four pieces to be panel blocks with a panel block entity (the other trim pieces are unchanged and still have none).
+
 ## Unreleased: gauge text and ticks in proportion, Text size and Tick size
 
 - Gauge **text and ticks scale with the gauge** (CONTROL-PANELS.md, "Gauge text and tick size"): the numbers of a small bar gauge are no longer held at a least height of 0.15 cell, the classic dial's least tick and pointer widths and the classic edgewise meter's margins, ticks, pointer and flag shrink with a meter smaller than its art, and a 1-cell bar graph's housing is the big bars' share. The big sizes look as before.
