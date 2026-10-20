@@ -19,8 +19,9 @@ public final class PanelConfig {
             .comment("Tallest a panel group may be, in blocks. A block that would make a group taller is refused")
             .defineInRange("maxGroupRows", 8, 1, 64);
     public static final ModConfigSpec.IntValue MAX_COMPONENTS_PER_BLOCK = BUILDER
-            .comment("Most components one panel block may own (anchor in that block)")
-            .defineInRange("maxComponentsPerBlock", 64, 1, 256);
+            .comment("Most components one panel block may own (anchor in that block). Real size parts are a cell or two across,",
+                    "so a full block face holds up to 256; a config file written by an older version keeps its 64")
+            .defineInRange("maxComponentsPerBlock", 256, 1, 256);
     public static final ModConfigSpec.IntValue SAMPLE_TICKS = BUILDER
             .comment("Minimum ticks between samples of a panel group's linked signals (used by the signal layer)")
             .defineInRange("sampleTicks", 2, 1, 200);
@@ -48,7 +49,7 @@ public final class PanelConfig {
     }
 
     public static int maxComponentsPerBlock() {
-        return SPEC.isLoaded() ? MAX_COMPONENTS_PER_BLOCK.get() : 64;
+        return SPEC.isLoaded() ? MAX_COMPONENTS_PER_BLOCK.get() : 256;
     }
 
     public static int sampleTicks() {

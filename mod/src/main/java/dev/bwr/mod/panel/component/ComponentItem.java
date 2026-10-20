@@ -61,8 +61,12 @@ public final class ComponentItem extends Item {
             return Math.max(0, Math.min(count - 1, allowed[0]));
         }
         if (stored != null) return Math.max(0, Math.min(count - 1, stored));
-        // Only new, unconfigured stacks take the model preference. Saved size
-        // indices and placed component dimensions remain authoritative.
+        // Only new, unconfigured stacks take a default. Saved size indices and placed component dimensions
+        // remain authoritative. A type with real sizes starts at the first of them; the others at the size their
+        // baked model reads best at.
+        if (type.realDefaultIndex() >= 0) {
+            return type.realDefaultIndex();
+        }
         String path = type.id().getPath();
         String style = PanelStyles.newStyle(path);
         return Math.max(0, Math.min(count - 1,
@@ -77,25 +81,73 @@ public final class ComponentItem extends Item {
         return item.type().footprints().get(variant(stack, item.type()));
     }
 
-    /** Server: moves the stack to the next footprint of its type and says so on the action bar. */
+    /** Server: moves the stack to the next larger footprint of its type (the smallest after the largest) and says so on the action bar. */
     public static void cycle(ItemStack stack, Player player) {
         if (!(stack.getItem() instanceof ComponentItem item) || item.type() == null) {
             return;
         }
         ComponentType type = item.type();
         int current = variant(stack, type);
-        int next = (current + 1) % type.footprints().size();
-        if (item.variants != null) {
-            int at = 0;
-            for (int i = 0; i < item.variants.length; i++) {
-                if (item.variants[i] == current) {
-                    at = i;
-                }
-            }
-            next = item.variants[(at + 1) % item.variants.length];
-        }
+        int next = nextVariant(item, type, current);
         stack.set(BwrDataComponents.COMPONENT_VARIANT.get(), next);
-        Footprint footprint = type.footprints().get(next);
+        announce(player, type, next);
+    }
+
+    /** The size after {@code current} in the order smallest to largest, wrapping; limited to this item's sizes. */
+    private static int nextVariant(ComponentItem item, ComponentType type, int current) {
+        int[] order = type.sizeOrder();
+        int at = 0;
+        for (int i = 0; i < order.length; i++) {
+            if (order[i] == current) {
+                at = i;
+            }
+        }
+        for (int step = 1; step <= order.length; step++) {
+            int candidate = order[(at + step) % order.length];
+            if (item.allows(candidate)) {
+                return candidate;
+            }
+        }
+        return current;
+    }
+
+    /** The footprint indices this item offers, smallest to biggest (what the size picker lists). */
+    public int[] sizes() {
+        return java.util.Arrays.stream(type().sizeOrder()).filter(this::allows).toArray();
+    }
+
+    /** Whether this item may be set to footprint index {@code index} (a limited item, like a DX1000, only to its own). */
+    private boolean allows(int index) {
+        if (variants == null) {
+            return true;
+        }
+        for (int allowed : variants) {
+            if (allowed == index) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Server: sets the stack to footprint index {@code index} (the size picker). Refused, changing nothing, when the
+     * stack is not a component item, the index is not one of its type's sizes, or this item may not use it.
+     */
+    public static boolean select(ItemStack stack, Player player, int index) {
+        if (!(stack.getItem() instanceof ComponentItem item) || item.type() == null) {
+            return false;
+        }
+        ComponentType type = item.type();
+        if (index < 0 || index >= type.footprints().size() || !item.allows(index)) {
+            return false;
+        }
+        stack.set(BwrDataComponents.COMPONENT_VARIANT.get(), index);
+        announce(player, type, index);
+        return true;
+    }
+
+    private static void announce(Player player, ComponentType type, int index) {
+        Footprint footprint = type.footprints().get(index);
         player.displayClientMessage(Component.translatable("message.bwr.panel.footprint",
                 Component.translatable(type.translationKey()), footprint.w(), footprint.h()), true);
     }

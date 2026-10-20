@@ -11,7 +11,9 @@ import java.util.List;
  * set it exactly (SET).
  */
 public final class SetpointKnobType extends PanelInputType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 8), Footprint.of(12, 12));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 8), Footprint.of(12, 12),
+            // real sizes: a 2-1/4 in knob and a 4 in one
+            Footprint.of(1, 1), Footprint.of(2, 2));
     /** A click moves the knob by this many steps. */
     public static final double CLICK_STEPS = 5.0;
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(SetpointKnobData.TYPE, List.of(
@@ -21,6 +23,11 @@ public final class SetpointKnobType extends PanelInputType {
 
     SetpointKnobType() {
         super(BwrMod.id("setpoint_knob"));
+    }
+
+    @Override
+    public int realSizes() {
+        return 2;
     }
 
     @Override

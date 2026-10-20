@@ -11,7 +11,9 @@ import java.util.List;
  * the client, so a flashing lamp costs no packets and no ticks.
  */
 public final class LampType extends ComponentType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(4, 4), Footprint.of(6, 6));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(4, 4), Footprint.of(6, 6),
+            // real size: a 30.5 mm indicating light
+            Footprint.of(1, 1));
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(LampData.TYPE, List.of(
             ConfigField.color("Color", "component.bwr.field.color"),
             ConfigField.choice("Flash", "component.bwr.field.flash", LampData.FLASH_MODES)));
@@ -19,6 +21,11 @@ public final class LampType extends ComponentType {
 
     LampType() {
         super(BwrMod.id("lamp"));
+    }
+
+    @Override
+    public int realSizes() {
+        return 1;
     }
 
     @Override

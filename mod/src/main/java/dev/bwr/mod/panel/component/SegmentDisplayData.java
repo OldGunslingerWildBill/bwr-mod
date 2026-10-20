@@ -63,9 +63,10 @@ public final class SegmentDisplayData extends ComponentData implements PanelText
         return sixteen;
     }
 
-    /** Number of digits: five cells each, at least one. */
+    /** Number of digits: five cells each (one cell each on a real size display, see {@link SegmentDisplayType#digitWidth}), at least one. */
     public int digits() {
-        return host() == null ? 8 : Math.max(1, host().cellsWide() / SegmentDisplayType.DIGIT_W);
+        return host() == null ? 8
+                : Math.max(1, host().cellsWide() / SegmentDisplayType.digitWidth(host().cellsHigh()));
     }
 
     /**

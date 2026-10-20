@@ -8,9 +8,18 @@ import dev.bwr.mod.panel.model.PlacedQuadSink;
 final class ProportionedComponentModel implements ComponentModel {
     private final ComponentModel source;
     ProportionedComponentModel(ComponentModel source) { this.source=source; }
+
+    /**
+     * How much of its elevation a placeholder keeps: the parts are drawn a cell or two proud, which suits a
+     * component a few cells across; a real size one (a cell or two) would grow a post. Components 3 cells across
+     * or more (every size before real sizes) keep their elevation as drawn.
+     */
+    static float elevationFactor(PanelComponent c) {
+        return Math.min(1.0f, Math.min(c.w(), c.h()) / 3.0f);
+    }
     @Override public void buildStatic(QuadSink sink,PanelComponent c) { buildStatic(sink,c,1); }
     @Override public void buildStatic(QuadSink sink,PanelComponent c,float aspect) {
-        var fit=Placement.fit(c.w(),c.h(),c.w(),c.h(),aspect);
+        var fit=Placement.fit(c.w(),c.h(),c.w(),c.h(),aspect).withElevation(elevationFactor(c));
         var placed=new PlacedQuadSink(sink,fit);
         RenderCache.of(c).classicSink=placed;
         source.buildStatic(placed,c);

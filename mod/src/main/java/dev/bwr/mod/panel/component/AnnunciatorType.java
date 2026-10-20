@@ -16,7 +16,9 @@ import java.util.List;
  * full-state sync and the save.
  */
 public final class AnnunciatorType extends ComponentType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(12, 8), Footprint.of(16, 12));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(12, 8), Footprint.of(16, 12),
+            // real sizes: one window tile, 2.8125 x 2.625 in, and a double size one
+            Footprint.of(1, 1), Footprint.of(2, 2));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.text("Line1", "component.bwr.field.line1", AnnunciatorData.MAX_TEXT),
             ConfigField.text("Line2", "component.bwr.field.line2", AnnunciatorData.MAX_TEXT),
@@ -29,6 +31,11 @@ public final class AnnunciatorType extends ComponentType {
 
     AnnunciatorType() {
         super(BwrMod.id("annunciator"));
+    }
+
+    @Override
+    public int realSizes() {
+        return 2;
     }
 
     @Override

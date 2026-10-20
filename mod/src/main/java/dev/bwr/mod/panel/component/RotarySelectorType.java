@@ -11,7 +11,9 @@ import java.util.List;
  * the ends rather than wrapping.
  */
 public final class RotarySelectorType extends PanelInputType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 10), Footprint.of(12, 14));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 10), Footprint.of(12, 14),
+            // real sizes: a selector escutcheon, about 6 x 9 cm, and a larger 9 x 11 cm one
+            Footprint.of(1, 2), Footprint.of(2, 3));
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(RotarySelectorData.TYPE, List.of(
             ConfigField.integer("Positions", "component.bwr.field.positions",
                     RotarySelectorData.MIN_POSITIONS, RotarySelectorData.MAX_POSITIONS),
@@ -21,6 +23,11 @@ public final class RotarySelectorType extends PanelInputType {
 
     RotarySelectorType() {
         super(BwrMod.id("rotary_selector"));
+    }
+
+    @Override
+    public int realSizes() {
+        return 2;
     }
 
     @Override

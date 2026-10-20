@@ -44,6 +44,21 @@ public final class PanelClientHooks {
         }
     }
 
+    /** Opens the size picker for the component item held in the given hand. */
+    public static void openSizePicker(boolean offHand) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            return;
+        }
+        net.minecraft.world.item.ItemStack held = minecraft.player.getItemInHand(
+                offHand ? net.minecraft.world.InteractionHand.OFF_HAND : net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (held.getItem() instanceof dev.bwr.mod.panel.component.ComponentItem item && item.type() != null
+                && item.sizes().length > 1) {
+            minecraft.setScreen(new SizePickerScreen(item, dev.bwr.mod.panel.component.ComponentItem.variant(held, item.type()),
+                    offHand));
+        }
+    }
+
     /** Opens the wrench screen for a component the client already knows about. */
     public static void openConfig(BlockPos owner, int id) {
         Minecraft minecraft = Minecraft.getInstance();

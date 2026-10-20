@@ -15,7 +15,9 @@ public final class BarGraphType extends ComponentType {
     public static final int SEGMENT_CELLS = 2;
     public static final List<Footprint> FOOTPRINTS = List.of(
             Footprint.of(3, 24), Footprint.of(3, 12), Footprint.of(3, 16), Footprint.of(3, 32),
-            Footprint.of(24, 3), Footprint.of(12, 3), Footprint.of(16, 3), Footprint.of(32, 3));
+            Footprint.of(24, 3), Footprint.of(12, 3), Footprint.of(16, 3), Footprint.of(32, 3),
+            // real sizes: an LED bar column or row, one cell thick (estimate)
+            Footprint.of(1, 3), Footprint.of(3, 1), Footprint.of(1, 6), Footprint.of(6, 1));
     private static final List<ConfigField> SCHEMA = java.util.stream.Stream.concat(java.util.stream.Stream.of(
             ConfigField.decimal("Min", "component.bwr.field.min", -BarGraphData.LIMIT, BarGraphData.LIMIT),
             ConfigField.decimal("Max", "component.bwr.field.max", -BarGraphData.LIMIT, BarGraphData.LIMIT),
@@ -27,6 +29,11 @@ public final class BarGraphType extends ComponentType {
 
     BarGraphType() {
         super(BwrMod.id("bar_graph"));
+    }
+
+    @Override
+    public int realSizes() {
+        return 4;
     }
 
     @Override

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased: real size control panel components
+
+- The **instruments and controls start at their real size** (CONTROL-PANELS.md, "Real sizes"): dial gauge 2x2 cells (12.5 cm), edgewise meters 1x3 / 3x1, control switch 1x2, key switch 1x2, rotary selector 1x2, setpoint knob 1x1, toggle switch 1x1, thumbwheel 1x2 per digit, lamp 1x1, pushbutton 1x1, RPS trip assembly 2x1, push-to-turn switch 1x1, annunciator window 1x1, segment displays 1x2 per digit and bar graphs 1 cell thick. Before, every one of them was five to ten times its real size, so a 4 m board held a handful of parts.
+- The real sizes are **appended** to each footprint list, so stored item sizes and placed components are unchanged; a bare item (no stored size) now places the real size. The big sizes are reached by cycling (right-click air or sneak-click a panel), which now goes from the smallest to the biggest, or with the new **size picker**: Alt+click with a component item in hand opens a scrollable list of every size with its cells and real size in centimetres, an outline and a marker on the current one (new packet `panel_set_size`, validated like the cycling). The network protocol version is now 22.
+- Small placeholders scale their elevation, bezels, corner flags and segments with the component, so 1-cell parts are not posts; segment displays and thumbwheels get one digit per cell at the real size and bar graphs two segments per cell.
+- A block may own up to 256 components by default (was 64).
+- The **bar gauge** has no real size yet: its tests assume a case at least 11 cells tall (see CONTROL-PANELS.md).
+
 ## Unreleased: control room trim blocks and remodelled panel bodies
 
 - The three panel bodies (vertical, benchboard, console) are remodelled in Blender with the **mounting face exactly where it was** (a game test reads the shipped OBJ files back and checks the face polygon's four corners against `PanelGeometry`, and that nothing else is in front of that plane). Detail: seafoam face and bezel textures with module seams, service-door backs, bevelled back edges on the vertical board, a dark recessed 2 px toe-kick on the back of the benchboard and console, a front lip on the console. Ids, states and group joining are unchanged, so placed boards just look better.

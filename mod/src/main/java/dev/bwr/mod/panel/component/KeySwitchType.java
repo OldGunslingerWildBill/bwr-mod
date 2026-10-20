@@ -12,7 +12,9 @@ import java.util.List;
  * on the action bar.
  */
 public final class KeySwitchType extends PanelInputType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 8), Footprint.of(8, 10));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 8), Footprint.of(8, 10),
+            // real size: a keyed escutcheon, 3 x 4 in
+            Footprint.of(1, 2));
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(KeySwitchData.TYPE, List.of(
             ConfigField.bool("RequireKey", "component.bwr.field.require_key"),
             ConfigField.text("KeyCode", "component.bwr.field.key_code", KeySwitchData.MAX_CODE)));
@@ -20,6 +22,11 @@ public final class KeySwitchType extends PanelInputType {
 
     KeySwitchType() {
         super(BwrMod.id("key_switch"));
+    }
+
+    @Override
+    public int realSizes() {
+        return 1;
     }
 
     @Override

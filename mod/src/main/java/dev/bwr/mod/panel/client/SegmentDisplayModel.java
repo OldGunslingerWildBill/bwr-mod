@@ -89,11 +89,15 @@ final class SegmentDisplayModel implements ComponentModel {
         float[][] table = sixteen ? SIXTEEN : SEVEN;
         sink.box(0, 0, component.w(), component.h(), 0, 1.0f, GLASS, false);
         int dim = QuadSink.shade(data.color, 0.13f);
-        int digits = Math.max(1, component.w() / SegmentDisplayType.DIGIT_W);
+        float pitch = SegmentDisplayType.digitWidth(component.h());
+        float sx = pitch / DW;
+        float sy = component.h() / DH;
+        float sw = (float) Math.sqrt(sx * sy);
+        int digits = Math.max(1, (int) (component.w() / pitch));
         for (int digit = 0; digit < digits; digit++) {
-            float dx = digit * DW;
+            float dx = digit * pitch;
             for (float[] s : table) {
-                Shapes.bar(sink, dx + s[0], s[1], dx + s[2], s[3], s[4], 1.05f, dim, false);
+                Shapes.bar(sink, dx + s[0] * sx, s[1] * sy, dx + s[2] * sx, s[3] * sy, s[4] * sw, 1.05f, dim, false);
             }
         }
     }
@@ -104,16 +108,20 @@ final class SegmentDisplayModel implements ComponentModel {
         int[] masks = data.masks(component);
         float[][] table = sixteen ? SIXTEEN : SEVEN;
         int color = data.color;
+        float pitch = SegmentDisplayType.digitWidth(component.h());
+        float sx = pitch / DW;
+        float sy = component.h() / DH;
+        float sw = (float) Math.sqrt(sx * sy);
         for (int digit = 0; digit < masks.length; digit++) {
             int mask = masks[digit];
             if (mask == 0) {
                 continue;
             }
-            float dx = digit * DW;
+            float dx = digit * pitch;
             for (int bit = 0; bit < table.length; bit++) {
                 if ((mask >> bit & 1) != 0) {
                     float[] s = table[bit];
-                    Shapes.bar(context, dx + s[0], s[1], dx + s[2], s[3], s[4], 1.2f, color, true);
+                    Shapes.bar(context, dx + s[0] * sx, s[1] * sy, dx + s[2] * sx, s[3] * sy, s[4] * sw, 1.2f, color, true);
                 }
             }
         }

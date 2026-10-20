@@ -155,7 +155,7 @@ public final class PanelDisplayTests {
 
         PanelGroup.Result place(Item item, int variant, BlockPos pos, int cx, int cy) {
             ItemStack stack = new ItemStack(item);
-            if (variant > 0) {
+            if (variant >= 0) { // A bare stack starts at the real size now; the fixture requests index 0 itself.
                 stack.set(dev.bwr.mod.fuel.BwrDataComponents.COMPONENT_VARIANT.get(), variant);
             }
             player.setItemInHand(InteractionHand.MAIN_HAND, stack);

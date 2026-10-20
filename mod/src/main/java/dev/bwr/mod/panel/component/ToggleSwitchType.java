@@ -10,13 +10,20 @@ import java.util.List;
  * scrolling up switches it on and down off.
  */
 public final class ToggleSwitchType extends PanelInputType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 8), Footprint.of(8, 10));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 8), Footprint.of(8, 10),
+            // real size: a heavy duty toggle on its plate, about 6 cm
+            Footprint.of(1, 1));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.color("Color", "component.bwr.field.lever_color"));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("state"));
 
     ToggleSwitchType() {
         super(BwrMod.id("toggle_switch"));
+    }
+
+    @Override
+    public int realSizes() {
+        return 1;
     }
 
     @Override

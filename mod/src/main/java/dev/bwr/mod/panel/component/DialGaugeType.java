@@ -14,12 +14,19 @@ public final class DialGaugeType extends ComponentType {
     public static final String ID_PATH = "dial_gauge";
     public static final List<Footprint> FOOTPRINTS = List.of(
             Footprint.of(12, 12), Footprint.of(16, 16), Footprint.of(20, 20), Footprint.of(24, 24),
-            Footprint.of(32, 32));
+            Footprint.of(32, 32),
+            // real sizes: a 4-1/4 in and a 6 in switchboard meter
+            Footprint.of(2, 2), Footprint.of(3, 3));
     private static final List<ConfigField> SCHEMA = GaugeData.schema(ID_PATH);
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("value"));
 
     DialGaugeType() {
         super(BwrMod.id(ID_PATH));
+    }
+
+    @Override
+    public int realSizes() {
+        return 2;
     }
 
     @Override

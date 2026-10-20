@@ -11,7 +11,9 @@ import java.util.List;
  * behaviour only and never touches the plant.
  */
 public final class PushbuttonType extends PanelInputType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 6), Footprint.of(8, 8));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 6), Footprint.of(8, 8),
+            // real size: a 30.5 mm oiltight pushbutton
+            Footprint.of(1, 1));
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(PushbuttonData.TYPE, List.of(
             ConfigField.color("Color", "component.bwr.field.cap_color"),
             ConfigField.choice("Role", "component.bwr.field.role", PushbuttonData.ROLES),
@@ -20,6 +22,11 @@ public final class PushbuttonType extends PanelInputType {
 
     PushbuttonType() {
         super(BwrMod.id("pushbutton"));
+    }
+
+    @Override
+    public int realSizes() {
+        return 1;
     }
 
     @Override

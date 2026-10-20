@@ -42,6 +42,24 @@ public final class PanelPayloads {
         }
     }
 
+    /**
+     * Set the component item in hand to footprint index {@code variant} of its type (the size picker, opened with
+     * Alt+click). The server checks the hand holds a component item and that the index is one of its sizes
+     * ({@link dev.bwr.mod.panel.component.ComponentItem#select}).
+     */
+    public record SetSize(boolean offHand, int variant) implements CustomPacketPayload {
+        public static final Type<SetSize> TYPE = new Type<>(BwrMod.id("panel_set_size"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, SetSize> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.BOOL, SetSize::offHand,
+                ByteBufCodecs.VAR_INT, SetSize::variant,
+                SetSize::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     /** Remove a component with the wrench in hand. */
     public record Remove(BlockPos pos, int id) implements CustomPacketPayload {
         public static final Type<Remove> TYPE = new Type<>(BwrMod.id("panel_remove"));
