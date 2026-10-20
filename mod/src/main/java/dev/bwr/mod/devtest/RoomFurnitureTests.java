@@ -545,7 +545,7 @@ public final class RoomFurnitureTests {
         }
         check(h, states == 5 * (8 + 8 + 12 + 24 + 12 + 24 + 4 + 4 + 24 + 24 + 4), "unexpected state count " + states);
         // the panel bodies are untouched
-        check(h, BwrBlocks.CONTROL_PANEL_VERTICAL.get().getStateDefinition().getPossibleStates().size() == 4, "panel states changed");
+        check(h, BwrBlocks.CONTROL_PANEL_VERTICAL.get().getStateDefinition().getPossibleStates().size() == 4 * 5, "panel states changed (4 facings, 5 finishes)");
         h.succeed();
     }
 
