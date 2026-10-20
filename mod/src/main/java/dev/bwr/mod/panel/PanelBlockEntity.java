@@ -251,6 +251,24 @@ public final class PanelBlockEntity extends BlockEntity {
         return true;
     }
 
+    /**
+     * Whether every cell of {@code [x0,x1) x [y0,y1)} lies on this block's mounting surface: all of them on a board,
+     * bench or console, fewer on the angled trim blocks ({@link PanelGeometry#cellUsable}, and a canopy's hood takes
+     * the top row).
+     */
+    public boolean cellsUsable(int x0, int y0, int x1, int y1) {
+        BlockState state = getBlockState();
+        PanelBlock block = (PanelBlock) state.getBlock();
+        for (int y = y0; y < y1; y++) {
+            for (int x = x0; x < x1; x++) {
+                if (!block.cellUsable(state, x, y)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     /** All claims by other blocks on this one. */
     public List<Claim> foreignClaims() {
         return Collections.unmodifiableList(foreign);

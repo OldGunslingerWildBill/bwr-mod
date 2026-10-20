@@ -58,6 +58,15 @@ public class PanelBlock extends BaseEntityBlock {
         return type;
     }
 
+    /**
+     * Whether cell {@code (cx, cy)} of this block's grid is on its mounting surface (see
+     * {@link PanelGeometry#cellUsable}); a component can only stand on usable cells.
+     */
+    public boolean cellUsable(BlockState state, int cx, int cy) {
+        PanelType style = panelType(state);
+        return style != null && PanelGeometry.cellUsable(style, cx, cy);
+    }
+
     @Override
     protected MapCodec<? extends BaseEntityBlock> codec() {
         return switch (type) {
@@ -66,6 +75,8 @@ public class PanelBlock extends BaseEntityBlock {
             case CONSOLE -> CODEC_CONSOLE;
             case BACK_PANEL -> CODEC_BACK_PANEL;
             case DUPLEX_BOARD, DUPLEX_BENCH, DUPLEX_HEADER -> DuplexPanelBlock.CODEC;
+            case HEADER_TILT, CHAMFER_VERTICAL, CHAMFER_BENCH ->
+                    throw new IllegalStateException("angled trim blocks answer with their own codec");
         };
     }
 

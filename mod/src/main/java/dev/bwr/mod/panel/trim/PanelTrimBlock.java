@@ -19,9 +19,10 @@ import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * A decorative control-room trim block: a header strip, a plinth or a corner filler (end caps are
- * {@link PanelEndCapBlock}). It has a facing and nothing else: no block entity, no ticker, no mounting face and no
- * interaction, so a whole room of them costs only its model.
+ * A decorative control-room trim block: a vent header, a plinth or a corner filler (end caps are
+ * {@link PanelEndCapBlock}; the header strip, canopy and chamfer corners are {@link MountableTrimBlock}s). It has a
+ * facing and nothing else: no block entity, no ticker, no mounting face and no interaction, so a whole room of them
+ * costs only its model.
  *
  * <p>The facing is the direction the operator stands in, as on a panel block, so placing one looks like placing a
  * panel: the model's front is toward the player.

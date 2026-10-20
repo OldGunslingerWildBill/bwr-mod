@@ -52,6 +52,19 @@ public final class PanelGeometry {
     public static final double DUPLEX_BENCH_FRONT = 0.75;
     public static final double DUPLEX_HEADER_REACH = 0.5;
 
+    /**
+     * The angled trim blocks (see {@link PanelType#HEADER_TILT} and the chamfers). The header panel is the vertical
+     * board's face at its foot, leaning back 5 degrees over one block of height; the vertical chamfer facet runs from
+     * (0.75, 0.25) to (0.25, 0.75) and the bench chamfer facet is the plane lx + ly + f = 2 (local frame, see
+     * {@link #wx}), exactly as the models draw them.
+     */
+    public static final double HEADER_TILT_TAN = Math.tan(Math.toRadians(5.0));
+    /** Cells along the chamfer facet that lie wholly on it: its length is 0.5 * sqrt(2) block = 11.31 cells. */
+    public static final int CHAMFER_VERTICAL_COLUMNS = 11;
+    private static final double CHAMFER_VERTICAL_FACET = 0.5 * Math.sqrt(2.0);
+    /** Half the bench chamfer's top edge in cells (1.414 blocks / 2 * 16) and the cell rows it narrows over. */
+    private static final double CHAMFER_BENCH_HALF_TOP_CELLS = Math.sqrt(2.0) / 2.0 * GRID;
+
     /** The face of one panel style for one facing. All vectors are in block space. */
     public static final class Frame {
         /** Block-space position of the top-left corner of cell (0,0). */
@@ -158,7 +171,56 @@ public final class PanelGeometry {
         return 0.5 + (lx - 0.5) * right.getStepZ() + (f - 0.5) * facing.getStepZ();
     }
 
+    /** World-space step of a local displacement (lx to the operator's right, ly up, f toward the operator). */
+    private static double dx(Direction facing, double dlx, double df) {
+        return dlx * facing.getCounterClockWise().getStepX() + df * facing.getStepX();
+    }
+
+    private static double dz(Direction facing, double dlx, double df) {
+        return dlx * facing.getCounterClockWise().getStepZ() + df * facing.getStepZ();
+    }
+
+    /**
+     * A frame given in the local frame: origin of cell (0, 0) as (lx, ly, f), the step for one cell across and one
+     * cell down, and the outward unit normal. A cell is 1/16 block wide along the face (the elevation unit), whatever
+     * the slant.
+     */
+    private static Frame localFrame(Direction facing, double[] origin, double[] across, double[] down, double[] normal) {
+        return new Frame(wx(facing, origin[0], origin[2]), origin[1], wz(facing, origin[0], origin[2]),
+                dx(facing, across[0], across[2]), across[1], dz(facing, across[0], across[2]),
+                dx(facing, down[0], down[2]), down[1], dz(facing, down[0], down[2]),
+                dx(facing, normal[0], normal[2]), normal[1], dz(facing, normal[0], normal[2]));
+    }
+
     private static Frame buildFrame(PanelType type, Direction facing) {
+        switch (type) {
+            case CHAMFER_VERTICAL -> {
+                // The facet from its left end B = (0.25, 0.75) to A = (0.75, 0.25) at the operator's right, normal
+                // toward (+lx, +f). 11 whole cells sit on it (the margin 0.157 cell at each end is left unused).
+                double r = Math.sqrt(0.5);
+                double margin = (CHAMFER_VERTICAL_FACET * GRID - CHAMFER_VERTICAL_COLUMNS) / 2.0 / GRID;
+                return localFrame(facing, new double[] {0.25 + r * margin, 1.0, 0.75 - r * margin},
+                        new double[] {r / GRID, 0.0, -r / GRID}, new double[] {0.0, -1.0 / GRID, 0.0},
+                        new double[] {r, 0.0, r});
+            }
+            case CHAMFER_BENCH -> {
+                // The triangle (lx, ly, f) = (0, 1, 1), (1, 1, 0), (1, 0, 1): its top edge is 1.414 long, cell 0 starts
+                // 0.207 along it so that the 16 cells are centred, and the rows run down the line of steepest slope
+                // to the apex one block below (0.5, -1, 0.5 per block of rows).
+                double r = Math.sqrt(0.5);
+                double start = (Math.sqrt(2.0) - 1.0) / 2.0;
+                double s3 = 1.0 / Math.sqrt(3.0);
+                return localFrame(facing, new double[] {r * start, 1.0, 1.0 - r * start},
+                        new double[] {r / GRID, 0.0, -r / GRID}, new double[] {0.5 / GRID, -1.0 / GRID, 0.5 / GRID},
+                        new double[] {s3, s3, s3});
+            }
+            default -> {
+                return buildAxisFrame(type, facing);
+            }
+        }
+    }
+
+    private static Frame buildAxisFrame(PanelType type, Direction facing) {
         double ly0;
         double f0;
         double drop; // y lost going one block down the face
@@ -175,6 +237,14 @@ public final class PanelGeometry {
                 f0 = 1.0;
                 drop = 1.0;
                 forward = 0.0;
+            }
+            case HEADER_TILT -> {
+                // Flush with the vertical board's face at the foot of the block (f = 0.25) and leaning back as it
+                // rises: row 0 is the top edge, 0.0875 further back, and one block down the face comes 0.0875 forward.
+                ly0 = 1.0;
+                f0 = VERTICAL_DEPTH - HEADER_TILT_TAN;
+                drop = 1.0;
+                forward = HEADER_TILT_TAN;
             }
             case DUPLEX_BENCH -> {
                 ly0 = 1.0;
@@ -219,6 +289,13 @@ public final class PanelGeometry {
         switch (type) {
             case VERTICAL -> shape = box(facing, 0, 0, 0, 1, 1, VERTICAL_DEPTH);
             case BACK_PANEL -> shape = box(facing, 0, 0, 0, 1, 1, 1);
+            // The angled trim pieces: the outline is the trim block's own (the canopy adds a hood to the strip's).
+            case HEADER_TILT -> shape = dev.bwr.mod.panel.trim.TrimGeometry.shape(
+                    dev.bwr.mod.panel.trim.TrimPiece.HEADER_STRIP, facing, true);
+            case CHAMFER_VERTICAL -> shape = dev.bwr.mod.panel.trim.TrimGeometry.shape(
+                    dev.bwr.mod.panel.trim.TrimPiece.CORNER_VERTICAL_CHAMFER, facing, true);
+            case CHAMFER_BENCH -> shape = dev.bwr.mod.panel.trim.TrimGeometry.shape(
+                    dev.bwr.mod.panel.trim.TrimPiece.CORNER_BENCH_CHAMFER, facing, true);
             case DUPLEX_BOARD -> shape = box(facing, 0, 0, DUPLEX_SLAB_REAR, 1, 1, 1);
             case DUPLEX_BENCH -> {
                 for (int k = 0; k < 8; k++) {
@@ -250,6 +327,30 @@ public final class PanelGeometry {
             }
         }
         return shape.optimize();
+    }
+
+    /**
+     * Whether cell {@code (cx, cy)} of a block of this style lies on its mounting surface, so that a component can
+     * stand there. Every cell of a board, bench or console does; the grid of a chamfer is a full 16 x 16 square laid
+     * on a facet that is smaller than it:
+     * <ul>
+     *   <li>{@link PanelType#CHAMFER_VERTICAL}: the facet is 11.31 cells wide, so columns 0 to 10;</li>
+     *   <li>{@link PanelType#CHAMFER_BENCH}: the facet is a triangle that narrows from 22.6 cells at the top to a point
+     *       at the bottom, so a cell is usable when both its lower corners are on the triangle.</li>
+     * </ul>
+     */
+    public static boolean cellUsable(PanelType type, int cx, int cy) {
+        if (cx < 0 || cy < 0 || cx >= GRID || cy >= GRID) {
+            return false;
+        }
+        return switch (type) {
+            case CHAMFER_VERTICAL -> cx < CHAMFER_VERTICAL_COLUMNS;
+            case CHAMFER_BENCH -> {
+                double half = CHAMFER_BENCH_HALF_TOP_CELLS * (1.0 - (cy + 1) / (double) GRID);
+                yield Math.max(Math.abs(cx - GRID / 2.0), Math.abs(cx + 1 - GRID / 2.0)) <= half + 1.0e-9;
+            }
+            default -> true;
+        };
     }
 
     /** A box given in the local frame, rotated to world for {@code facing}. */
