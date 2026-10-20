@@ -1,5 +1,6 @@
 package dev.bwr.mod.panel.component;
 
+import dev.bwr.mod.panel.model.GaugeScale;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 
@@ -64,6 +65,12 @@ public final class GaugeData extends ComponentData {
     public dev.bwr.mod.signal.Quantity measures;
     /** The Power units setting; saved only when not the default. */
     public final PowerUnitsState power = new PowerUnitsState();
+    /**
+     * The wrench's Text size and Tick size, percent ({@link GaugeScale}): they multiply the printed numbers, units and
+     * labels, and the tick marks' thickness and length. Saved only when not 100, so older saves load and save unchanged.
+     */
+    public int textSize = GaugeScale.DEFAULT_PERCENT;
+    public int tickSize = GaugeScale.DEFAULT_PERCENT;
 
     /** Data for a gauge of type path {@code type}, with the look a new component of that type starts with. */
     public GaugeData(String type) {
@@ -162,12 +169,26 @@ public final class GaugeData extends ComponentData {
             String label = "component.bwr.field.band" + i + "_color";
             fields.add(bar ? ConfigField.color(colour, label, BAND_SWATCHES) : ConfigField.color(colour, label));
         }
+        fields.add(ConfigField.slider(GaugeScale.TEXT_SIZE, "component.bwr.field.text_size", GaugeScale.MIN_PERCENT,
+                GaugeScale.MAX_PERCENT, GaugeScale.STEP_PERCENT, GaugeScale.DEFAULT_PERCENT));
+        fields.add(ConfigField.slider(GaugeScale.TICK_SIZE, "component.bwr.field.tick_size", GaugeScale.MIN_PERCENT,
+                GaugeScale.MAX_PERCENT, GaugeScale.STEP_PERCENT, GaugeScale.DEFAULT_PERCENT));
         if (!bar) {
             fields.addAll(PanelStyles.fields(type));
         }
         fields.add(Measures.field());
         fields.addAll(PowerUnitsState.fields());
         return List.copyOf(fields);
+    }
+
+    /** What the Text size setting multiplies the printed text by (1 at 100 %). */
+    public float textFactor() {
+        return GaugeScale.factor(textSize);
+    }
+
+    /** What the Tick size setting multiplies the tick marks' thickness and length by (1 at 100 %). */
+    public float tickFactor() {
+        return GaugeScale.factor(tickSize);
     }
 
     /** The scale length; never zero, so a mis-set range cannot divide by zero. */
@@ -199,6 +220,12 @@ public final class GaugeData extends ComponentData {
             tag.putDouble("Band" + (i + 1) + "High", bandHigh[i]);
             tag.putInt("Band" + (i + 1) + "Color", bandColor[i]);
         }
+        if (textSize != GaugeScale.DEFAULT_PERCENT) {
+            tag.putInt(GaugeScale.TEXT_SIZE, textSize);
+        }
+        if (tickSize != GaugeScale.DEFAULT_PERCENT) {
+            tag.putInt(GaugeScale.TICK_SIZE, tickSize);
+        }
         if (isBarGauge()) {
             // One fixed look: no style or variant. The preset is saved only once the player has picked one.
             if (!PRESET_CUSTOM.equals(preset)) {
@@ -227,6 +254,8 @@ public final class GaugeData extends ComponentData {
             bandColor[i] = tag.contains(key + "Color", Tag.TAG_ANY_NUMERIC) ? tag.getInt(key + "Color") & 0xFFFFFF
                     : defaultColor[i];
         }
+        textSize = percent(tag, GaugeScale.TEXT_SIZE);
+        tickSize = percent(tag, GaugeScale.TICK_SIZE);
         if (isBarGauge()) {
             String saved = tag.getString("Preset");
             preset = PRESETS.contains(saved) ? saved : PRESET_CUSTOM;
@@ -258,6 +287,11 @@ public final class GaugeData extends ComponentData {
     @Override
     public dev.bwr.mod.signal.Quantity measures(int inputIndex) {
         return measures;
+    }
+
+    /** A slider setting: the default when the tag has none, else brought into the sliders' range. */
+    private static int percent(CompoundTag tag, String key) {
+        return tag.contains(key, Tag.TAG_ANY_NUMERIC) ? GaugeScale.clampPercent(tag.getInt(key)) : GaugeScale.DEFAULT_PERCENT;
     }
 
     static double number(CompoundTag tag, String key, double fallback, double low, double high) {

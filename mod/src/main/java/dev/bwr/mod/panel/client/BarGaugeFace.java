@@ -3,6 +3,7 @@ package dev.bwr.mod.panel.client;
 import dev.bwr.mod.panel.component.GaugeData;
 import dev.bwr.mod.panel.display.PanelFormat;
 import dev.bwr.mod.panel.model.BakedPanelModel;
+import dev.bwr.mod.panel.model.GaugeScale;
 import dev.bwr.mod.panel.model.Legends;
 import dev.bwr.mod.panel.model.Placement;
 
@@ -43,6 +44,12 @@ import java.util.List;
  *       leaning back with the face ({@link Legends.Item#tilt()});</li>
  *   <li>the component's label on the tag plate.</li>
  * </ul>
+ *
+ * <h3>Sizes</h3>
+ * Everything printed follows {@link GaugeScale}: the text is a fixed share of the case (its real cap heights, shrunk to
+ * the room on the face and the spacing of the numbers), the ticks' least thickness and crowding limit shrink with the
+ * gauge below {@value #FULL_SIZE_CELLS} cells ({@link #sizeFactor}), and the wrench's Text size and Tick size multiply
+ * both. Longer ticks push the numbers left rather than running into them.
  */
 public final class BarGaugeFace {
     /** The case model, drawn under the component's own (channel and pointer) model when it is loaded. */
@@ -94,6 +101,12 @@ public final class BarGaugeFace {
     private static final float MINOR_MIN_SPACING = 0.14f;
     /** A gauge this many cells tall or taller uses the cell minimums above as they are; a smaller one scales them down. */
     private static final float FULL_SIZE_CELLS = 16.0f;
+    /** The longest a major tick may grow (Tick size), as a share of the face from the left rail to the channel. */
+    private static final float MAX_TICK_SHARE = 0.55f;
+    /** The room grown numbers keep from the left rail and from the ends of the face, inches. */
+    private static final float GROWN_MARGIN = 0.25f * CM;
+    /** Gap between the numbers' right end and the major ticks' left end, inches. */
+    private static final float NUMBER_GAP = 0.10f * CM;
     /** How far the bands, the ticks and the text stand off the face, cells (the renderer lifts text a little more). */
     public static final float BAND_LIFT = 0.02f;
     public static final float TICK_LIFT = 0.04f;
@@ -121,6 +134,8 @@ public final class BarGaugeFace {
     private final float channelRight;
     /** The channel model's width, inches (the units are centred between the channel and the right rail). */
     private final float channelW;
+    /** The channel model's length, inches: the face runs from its top to its bottom. */
+    private final float channelH;
 
     public BarGaugeFace(BakedPanelModel model, GaugeData data, float w, float h, float rowAspect) {
         this.data = data;
@@ -153,6 +168,7 @@ public final class BarGaugeFace {
         this.tipRadius = Math.hypot(tipY - arcY, tipZ - arcZ);
         this.tipRest = Math.atan2(arcY - tipY, tipZ - arcZ);
         this.channelW = model.footprintW;
+        this.channelH = model.footprintH;
         this.channelLeft = place.x(0.0f);
         this.channelRight = place.x(model.footprintW);
     }
@@ -227,10 +243,14 @@ public final class BarGaugeFace {
             }
         }
         double tickRadius = radius(TICK_LIFT);
-        float majorLeft = casePlace.x(TICK_LEFT);
-        float minorLeft = casePlace.x(MINOR_LEFT);
-        float majorHalf = Math.max(MAJOR_MIN_CELLS * sizeFactor(), MAJOR_THICK * place.scale) / place.scale / 2.0f;
-        float minorHalf = Math.max(MINOR_MIN_CELLS * sizeFactor(), MINOR_THICK * place.scale) / place.scale / 2.0f;
+        float lengthFactor = tickLengthFactor();
+        float majorLeft = casePlace.x(CHANNEL_X - (CHANNEL_X - TICK_LEFT) * lengthFactor);
+        float minorLeft = casePlace.x(CHANNEL_X - (CHANNEL_X - MINOR_LEFT) * lengthFactor);
+        float tick = data.tickFactor();
+        float majorHalf = Math.max(GaugeScale.least(MAJOR_MIN_CELLS, sizeFactor()), MAJOR_THICK * place.scale) * tick
+                / place.scale / 2.0f;
+        float minorHalf = Math.max(GaugeScale.least(MINOR_MIN_CELLS, sizeFactor()), MINOR_THICK * place.scale) * tick
+                / place.scale / 2.0f;
         double step = majorStep();
         int subdivisions = subdivisions(step);
         double minor = step / subdivisions;
@@ -282,10 +302,18 @@ public final class BarGaugeFace {
             numerals.add(text);
             widest = Math.max(widest, textCaps(text));
         }
+        // All in proportion to the case (GaugeScale): the picture's cap height times Text size, shrunk to the room left
+        // of the ticks and to 0.6 of the spacing of the numbers, so they never leave the face or touch each other.
         float spacing = Math.abs(row(data.fraction(data.min + step)) - row(0.0)) * rowAspect;
-        float room = (NUMBERS_RIGHT - FACE_LEFT - 0.08f * CM) * place.scale;
-        float cap = Math.max(0.15f, Math.min(NUMBER_CAP * place.scale, Math.min(room / widest, 0.6f * spacing)));
-        float numbersRight = casePlace.x(NUMBERS_RIGHT);
+        float right = numbersRight();
+        float room = (right - FACE_LEFT - 0.08f * CM) * place.scale;
+        float natural = NUMBER_CAP * place.scale;
+        // Grown by Text size, the numbers also keep clear of the raised rail and of the caps at the ends of the face.
+        float endRoom = Math.min(inchesAt(1.0), channelH - inchesAt(0.0));
+        float grow = Math.min((right - FACE_LEFT - GROWN_MARGIN) / widest, 2.0f * (endRoom - GROWN_MARGIN)) * place.scale;
+        float cap = GaugeScale.textCap(natural, data.textFactor(),
+                Math.min(Math.min(room / widest, 0.6f * spacing), Math.max(natural, grow)));
+        float numbersRight = casePlace.x(right);
         for (int i = 0; i < numerals.size(); i++) {
             double fraction = data.fraction(Math.round((first + i) * step * 1.0e6) / 1.0e6);
             double a = angle(fraction, textRadius);
@@ -297,9 +325,10 @@ public final class BarGaugeFace {
             // As in the picture: one letter per line down the middle of the face right of the channel, about two letter
             // heights apart, centred on the scale's middle.
             float scaleLength = Math.abs(highY - lowY);
-            float pitch = Math.min(UNIT_PITCH, scaleLength / (units.length() + 1));
+            float text = data.textFactor();
+            float pitch = Math.min(UNIT_PITCH * Math.max(1.0f, text), scaleLength / (units.length() + 1));
             float roomRight = FACE_RIGHT - (CHANNEL_X + channelW) - 0.15f * CM;
-            float letterCap = Math.min(UNIT_CAP, Math.min(pitch / 1.75f, roomRight * 7.0f / 5.0f)) * place.scale;
+            float letterCap = GaugeScale.textCap(UNIT_CAP, text, Math.min(pitch / 1.75f, roomRight * 7.0f / 5.0f)) * place.scale;
             float x = casePlace.x((CHANNEL_X + channelW + FACE_RIGHT) / 2.0f);
             float middle = (lowY + highY) / 2.0f;
             for (int i = 0; i < units.length(); i++) {
@@ -315,17 +344,35 @@ public final class BarGaugeFace {
         if (!caption.isEmpty()) {
             float tagW = TAG_X1 - TAG_X0;
             float tagH = TAG_Y1 - TAG_Y0;
-            float fit = (tagW - 0.3f * CM) / textCaps(caption);
+            float fit = Math.min((tagW - 0.3f * CM) / textCaps(caption), 0.8f * tagH);
             items.add(new Legends.Item(caption, casePlace.x((TAG_X0 + TAG_X1) / 2.0f), casePlace.y((TAG_Y0 + TAG_Y1) / 2.0f),
-                    casePlace.z(TAG_Z), casePlace.length(Math.min(0.55f * tagH, fit)), 0.0f, BakedPanelModel.Align.CENTER,
-                    INK, false, TAG));
+                    casePlace.z(TAG_Z), casePlace.length(GaugeScale.textCap(0.55f * tagH, data.textFactor(), fit)), 0.0f,
+                    BakedPanelModel.Align.CENTER, INK, false, TAG));
         }
         return items;
     }
 
-    /** Width of {@code text} in cap heights: the font's letters are 6 pixels apart and a cap is {@link Legends#CAP_PIXELS} high. */
+    /**
+     * Width of {@code text} in cap heights, every letter taken 6 pixels apart (a cap is {@link Legends#CAP_PIXELS} high).
+     * A little wide for narrow letters, but it is what the gauge has always been laid out with, so the big gauges keep
+     * their look ({@link GaugeScale#textCaps} has the font's real widths).
+     */
     private static float textCaps(String text) {
         return (6.0f * text.length() - 1.0f) / Legends.CAP_PIXELS;
+    }
+
+    /**
+     * How much longer than drawn the ticks are: the Tick size, but a major tick never reaches further left than
+     * {@value #MAX_TICK_SHARE} of the way from the channel to the left rail.
+     */
+    private float tickLengthFactor() {
+        return GaugeScale.tickLengthFactor(CHANNEL_X - TICK_LEFT, data.tickFactor(), MAX_TICK_SHARE * (CHANNEL_X - FACE_LEFT));
+    }
+
+    /** The numbers' right end (case model x): where the picture has it, or further left when longer ticks need the room. */
+    private float numbersRight() {
+        float majorLeft = CHANNEL_X - (CHANNEL_X - TICK_LEFT) * tickLengthFactor();
+        return Math.min(NUMBERS_RIGHT, majorLeft - NUMBER_GAP);
     }
 
     /** The numbered step: 1, 2, 2.5, 3, 5 or 10 times a power of ten, giving at most {@link #MAX_MAJORS} numbered ticks. */
@@ -351,7 +398,7 @@ public final class BarGaugeFace {
      * thickness and spacing shrink with the gauge, so a real-size gauge is the big one scaled down, not fat ticks.
      */
     public float sizeFactor() {
-        return Math.min(1.0f, casePlace.scale * CASE_FOOTPRINT_H / FULL_SIZE_CELLS);
+        return GaugeScale.sizeFactor(casePlace.scale * CASE_FOOTPRINT_H, FULL_SIZE_CELLS);
     }
 
     /** Minor ticks per numbered step: 10, fewer when they would crowd each other (a tick spacing under 0.14 cell) or when the step is 2.5. */
@@ -360,7 +407,8 @@ public final class BarGaugeFace {
         double steps = Math.max(1.0e-9, (data.max - data.min) / step);
         int base = Math.abs(step / Math.pow(10.0, Math.floor(Math.log10(step))) - 2.5) < 1.0e-9 ? 5 : 10;
         for (int sub : new int[] {base, 5, 2, 1}) {
-            if (sub <= base && scaleRows * rowAspect / (steps * sub) >= MINOR_MIN_SPACING * sizeFactor()) {
+            if (sub <= base && scaleRows * rowAspect / (steps * sub)
+                    >= GaugeScale.least(MINOR_MIN_SPACING, sizeFactor()) * Math.max(1.0f, data.tickFactor())) {
                 return sub;
             }
         }

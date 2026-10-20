@@ -1,8 +1,12 @@
 package dev.bwr.mod.panel.client;
 
 import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.model.Legends;
 import dev.bwr.mod.panel.model.Placement;
 import dev.bwr.mod.panel.model.PlacedQuadSink;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** Preserves the vertical placeholder's proportions on every panel slope. */
 final class ProportionedComponentModel implements ComponentModel {
@@ -48,5 +52,15 @@ final class ProportionedComponentModel implements ComponentModel {
     @Override public void renderGlass(PanelRenderContext ctx,PanelComponent c) {
         ctx.classicPlacement(RenderCache.of(c).classicSink.placement);
         try { source.renderGlass(ctx,c); } finally { ctx.classicPlacement(null); }
+    }
+    /** The placeholder's text, mapped through the same fit as its geometry. */
+    @Override public List<Legends.Item> textLayout(PanelComponent c, float aspect) {
+        var fit=Placement.fit(c.w(),c.h(),c.w(),c.h(),aspect).withElevation(elevationFactor(c));
+        List<Legends.Item> out=new ArrayList<>();
+        for (Legends.Item i : source.textLayout(c,aspect)) {
+            out.add(new Legends.Item(i.text(),fit.x(i.x()),fit.y(i.y()),fit.z(i.z()),fit.length(i.capCells()),i.rotation(),
+                    i.align(),i.ink(),i.onLamp(),i.surfaceRgb(),i.tilt()));
+        }
+        return out;
     }
 }

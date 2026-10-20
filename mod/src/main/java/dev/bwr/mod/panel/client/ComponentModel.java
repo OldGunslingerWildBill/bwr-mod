@@ -1,6 +1,9 @@
 package dev.bwr.mod.panel.client;
 
 import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.model.Legends;
+
+import java.util.List;
 
 /**
  * Draws one component type, client side. This is the seam where a baked
@@ -91,5 +94,16 @@ public interface ComponentModel {
 
     /** Translucent geometry drawn last of all, over everything it covers; nothing by default (see {@link #renderLive}). */
     default void renderGlass(PanelRenderContext context, PanelComponent component) {
+    }
+
+    /**
+     * The text this model prints on {@code component} as it stands (scale numbers, units, captions, digits, window
+     * lettering), in component cells, laid out exactly as the renderer lays it out on a face whose rows are
+     * {@code rowAspect} columns long, with widths from {@link dev.bwr.mod.panel.model.GaugeScale#textPixels} rather than
+     * the font. What the gauge models draw comes from here, and the scaling checks (GaugeScaleGuardTests) read it.
+     * Empty for a model that prints nothing. Allocates; never called per frame.
+     */
+    default List<Legends.Item> textLayout(PanelComponent component, float rowAspect) {
+        return List.of();
     }
 }

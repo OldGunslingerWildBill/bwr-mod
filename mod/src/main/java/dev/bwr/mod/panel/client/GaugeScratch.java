@@ -1,7 +1,7 @@
 package dev.bwr.mod.panel.client;
 
-import dev.bwr.mod.panel.component.GaugeData;
 import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.model.Legends;
 
 /**
  * Per-component client state of a gauge, kept in {@link RenderCache#scratch}:
@@ -17,12 +17,9 @@ final class GaugeScratch {
     float dt;
 
     int textRevision = -1;
-    String minLabel = "";
-    String maxLabel = "";
-    String units = "";
-    float minWidth;
-    float maxWidth;
-    float unitsWidth;
+    /** The classic look's printed text for {@link #textRevision}, and each string's width in font pixels. */
+    Legends.Item[] text = new Legends.Item[0];
+    float[] textWidth = new float[0];
 
     static GaugeScratch of(PanelComponent component) {
         RenderCache cache = RenderCache.of(component);
@@ -61,17 +58,28 @@ final class GaugeScratch {
         return marker;
     }
 
-    /** Fills the label text and widths for the current config. Runs once per revision. */
-    void layoutText(PanelRenderContext context, PanelComponent component, GaugeData data) {
-        if (textRevision == component.revision()) {
-            return;
+    /**
+     * Draws the classic look's printed text, laid out by {@code model}'s own {@link ComponentModel#textLayout} once per
+     * revision (in the classic look's cells, which the context maps onto the panel). Full detail only.
+     */
+    void drawText(PanelRenderContext context, PanelComponent component, ComponentModel model) {
+        if (textRevision != component.revision()) {
+            textRevision = component.revision();
+            text = model.textLayout(component, 1.0f).toArray(new Legends.Item[0]);
+            textWidth = new float[text.length];
+            for (int i = 0; i < text.length; i++) {
+                textWidth[i] = context.font().width(text[i].text());
+            }
         }
-        textRevision = component.revision();
-        minLabel = dev.bwr.mod.panel.display.PanelFormat.formatNumber(data.min, "");
-        maxLabel = dev.bwr.mod.panel.display.PanelFormat.formatNumber(data.max, "");
-        units = data.units;
-        minWidth = context.font().width(minLabel);
-        maxWidth = context.font().width(maxLabel);
-        unitsWidth = context.font().width(units);
+        for (int i = 0; i < text.length; i++) {
+            Legends.Item item = text[i];
+            float dx = switch (item.align()) {
+                case LEFT -> 0.0f;
+                case CENTER -> -textWidth[i] / 2.0f;
+                case RIGHT -> -textWidth[i];
+            };
+            context.textRotated(item.text(), item.x(), item.y(), item.capCells() / Legends.CAP_PIXELS, item.rotation(),
+                    item.z(), item.ink(), false, dx, -Legends.CAP_PIXELS / 2.0f);
+        }
     }
 }

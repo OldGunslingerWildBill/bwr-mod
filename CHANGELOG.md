@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased: gauge text and ticks in proportion, Text size and Tick size
+
+- Gauge **text and ticks scale with the gauge** (CONTROL-PANELS.md, "Gauge text and tick size"): the numbers of a small bar gauge are no longer held at a least height of 0.15 cell, the classic dial's least tick and pointer widths and the classic edgewise meter's margins, ticks, pointer and flag shrink with a meter smaller than its art, and a 1-cell bar graph's housing is the big bars' share. The big sizes look as before.
+- The dial, edgewise and bar gauges have **Text size** and **Tick size** sliders (50 % to 200 %, default 100 %) in the wrench screen. Saved only when not 100 %, so saves are unchanged; the server clamps them.
+
 ## Unreleased: real size control panel components
 
 - The **instruments and controls start at their real size** (CONTROL-PANELS.md, "Real sizes"): dial gauge 2x2 cells (12.5 cm), edgewise meters 1x3 / 3x1, control switch 1x2, key switch 1x2, rotary selector 1x2, setpoint knob 1x1, toggle switch 1x1, thumbwheel 1x2 per digit, lamp 1x1, pushbutton 1x1, RPS trip assembly 2x1, push-to-turn switch 1x1, annunciator window 1x1, segment displays 1x2 per digit and bar graphs 1 cell thick. Before, every one of them was five to ten times its real size, so a 4 m board held a handful of parts.

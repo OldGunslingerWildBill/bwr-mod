@@ -62,9 +62,14 @@ final class ModelDraw {
             return;
         }
         float width = Math.max(1, context.font().width(text));
-        float scale = Math.min(bw / width, bh / (8.0f * context.rowAspect()));
+        float scale = centreScale(width, bw, bh, context.rowAspect());
         float x = bx + (bw - width * scale) / 2.0f;
         float y = by + (bh - 8.0f * scale * context.rowAspect()) / 2.0f;
         context.text(text, x, y, scale, z, rgb, emissive);
+    }
+
+    /** The font scale {@link #centreText} draws a line {@code width} font pixels wide at in a {@code bw x bh} box. */
+    static float centreScale(float width, float bw, float bh, float rowAspect) {
+        return Math.min(bw / Math.max(1.0f, width), bh / (8.0f * rowAspect));
     }
 }
