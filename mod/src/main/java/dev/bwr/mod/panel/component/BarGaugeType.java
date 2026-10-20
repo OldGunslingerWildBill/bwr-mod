@@ -17,12 +17,19 @@ import java.util.List;
 public final class BarGaugeType extends ComponentType {
     public static final String ID_PATH = GaugeData.BAR_GAUGE;
     public static final List<Footprint> FOOTPRINTS = List.of(
-            Footprint.of(10, 16), Footprint.of(8, 16), Footprint.of(12, 24), Footprint.of(16, 32));
+            Footprint.of(10, 16), Footprint.of(8, 16), Footprint.of(12, 24), Footprint.of(16, 32),
+            // real size: the owner's CAD case, 5 x 21 cm, about 1 x 3 cells
+            Footprint.of(1, 3));
     private static final List<ConfigField> SCHEMA = GaugeData.schema(ID_PATH);
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("value"));
 
     BarGaugeType() {
         super(BwrMod.id(ID_PATH));
+    }
+
+    @Override
+    public int realSizes() {
+        return 1;
     }
 
     @Override

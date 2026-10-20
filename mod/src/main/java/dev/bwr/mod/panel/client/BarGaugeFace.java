@@ -88,10 +88,18 @@ public final class BarGaugeFace {
     public static final float TICK_LEFT = 1.80f * CM;
     static final float BAND_LEFT = 1.90f * CM;
     static final float MINOR_LEFT = 2.12f * CM;
-    /** Largest cap heights of the numbers and the units letters, and the units' letter pitch (the picture's). */
-    private static final float NUMBER_CAP = 0.52f * CM;
-    private static final float UNIT_CAP = 0.42f * CM;
+    /**
+     * Largest cap heights of the numbers and the units letters, and the units' letter pitch (the picture's). The caps are
+     * raised over the first layout's (0.52 and 0.42 cm: numbers 12 %, units 19 %) because, measured on a screenshot of the
+     * game against the owner's reference (references/gauges/owner-bar-gauge-text-proportions.png), a number came out 11 %
+     * and a units letter 17 % shorter as a share of the case: the game's font draws its digits 5 x 7 pixels, narrower and
+     * lower than the picture's. (CONTROL-PANELS.md, Gauge text size.)
+     */
+    private static final float NUMBER_CAP = 0.58f * CM;
+    private static final float UNIT_CAP = 0.50f * CM;
     private static final float UNIT_PITCH = 0.83f * CM;
+    /** The units letters' cap height is at most the letter pitch over this (the picture has it near 1.4; the first layout 1.75). */
+    private static final float UNIT_PITCH_PER_CAP = 1.6f;
     /** Real thickness of the ticks (major, minor), and the least they may be in cells so they never vanish. */
     private static final float MAJOR_THICK = 0.11f * CM;
     private static final float MINOR_THICK = 0.055f * CM;
@@ -328,7 +336,7 @@ public final class BarGaugeFace {
             float text = data.textFactor();
             float pitch = Math.min(UNIT_PITCH * Math.max(1.0f, text), scaleLength / (units.length() + 1));
             float roomRight = FACE_RIGHT - (CHANNEL_X + channelW) - 0.15f * CM;
-            float letterCap = GaugeScale.textCap(UNIT_CAP, text, Math.min(pitch / 1.75f, roomRight * 7.0f / 5.0f)) * place.scale;
+            float letterCap = GaugeScale.textCap(UNIT_CAP, text, Math.min(pitch / UNIT_PITCH_PER_CAP, roomRight * 7.0f / 5.0f)) * place.scale;
             float x = casePlace.x((CHANNEL_X + channelW + FACE_RIGHT) / 2.0f);
             float middle = (lowY + highY) / 2.0f;
             for (int i = 0; i < units.length(); i++) {

@@ -85,6 +85,33 @@ public final class GaugeScale {
         return Math.max(1.0f, Math.min(factor, maxLength / length));
     }
 
+    /** Cells per font pixel of the caption printed under a component at its design size and above (a cap is 7 pixels). */
+    public static final float CAPTION_PIXEL = 0.26f;
+    /** The width, cells, a caption may use at the design size even under a narrower component: one block. */
+    public static final float CAPTION_ROOM = 16.0f;
+    /** The gap, cells, between a component of the design size and its caption. */
+    public static final float CAPTION_GAP = 0.5f;
+
+    /**
+     * What the printed caption's size, room and gap are multiplied by for a {@code w x h} cell component whose type's
+     * smaller sizes start at {@code designSide} cells ({@code ComponentType.designSide}): 1 at the design size and
+     * above (the caption big components have always had), less for a real size one, so the caption is in proportion to
+     * the part, not as tall as it is.
+     */
+    public static float captionFactor(float w, float h, float designSide) {
+        return sizeFactor(Math.min(w, h), designSide);
+    }
+
+    /**
+     * Cells per font pixel of the caption of a {@code w x h} component, {@code textPixels} wide in the font: the size
+     * of the design size shrunk by {@link #captionFactor}, and further to fit the wider of the component and one block
+     * (also shrunk by the factor).
+     */
+    public static float captionScale(float w, float h, float designSide, float textPixels) {
+        float factor = captionFactor(w, h, designSide);
+        return Math.min(CAPTION_PIXEL * factor, Math.max(w, CAPTION_ROOM * factor) / Math.max(1.0f, textPixels));
+    }
+
     /**
      * Width of {@code text} in pixels of the default font (the advance of each glyph, as {@code Font.width} adds them
      * up), without needing the font: layouts are worked out on either side (and in tests) with this, and the renderer

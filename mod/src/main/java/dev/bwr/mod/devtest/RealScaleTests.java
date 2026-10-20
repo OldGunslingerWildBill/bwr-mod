@@ -48,9 +48,9 @@ public final class RealScaleTests {
     private static final int ORIGIN_Z = 146_000;
 
     /**
-     * The footprint lists as they were before real sizes: the first entries of each list never move. The bar gauge is
-     * not here: its real size (1x3) would fail BarGaugeTests, which assume the case is at least 11 cells tall (see
-     * CONTROL-PANELS.md, "Real sizes").
+     * The footprint lists as they were before real sizes: the first entries of each list never move. The bar gauge got
+     * its real size (1x3) last: its BarGaugeTests assumed a case at least 11 cells tall until their margins were made
+     * relative to the case (see CONTROL-PANELS.md, "Real sizes").
      */
     private static final List<Object[]> LEGACY = List.of(
             legacy(ComponentTypes.DIAL_GAUGE, 12, 12, 16, 16, 20, 20, 24, 24, 32, 32),
@@ -69,7 +69,9 @@ public final class RealScaleTests {
             legacy(ComponentTypes.ANNUNCIATOR, 12, 8, 16, 12),
             legacy(ComponentTypes.SEVEN_SEGMENT_DISPLAY, 20, 8, 5, 8, 10, 8, 15, 8, 25, 8, 30, 8, 40, 8, 50, 8, 60, 8),
             legacy(ComponentTypes.SIXTEEN_SEGMENT_DISPLAY, 20, 8, 5, 8, 10, 8, 15, 8, 25, 8, 30, 8, 40, 8, 50, 8, 60, 8),
-            legacy(ComponentTypes.BAR_GRAPH, 3, 24, 3, 12, 3, 16, 3, 32, 24, 3, 12, 3, 16, 3, 32, 3));
+            legacy(ComponentTypes.BAR_GRAPH, 3, 24, 3, 12, 3, 16, 3, 32, 24, 3, 12, 3, 16, 3, 32, 3),
+            // The owner's bar gauge, real size since the gauge polish (its layout tests are relative to the case).
+            legacy(ComponentTypes.BAR_GAUGE, 10, 16, 8, 16, 12, 24, 16, 32));
 
     private static Object[] legacy(ComponentType type, int... sizes) {
         List<Footprint> list = new ArrayList<>();

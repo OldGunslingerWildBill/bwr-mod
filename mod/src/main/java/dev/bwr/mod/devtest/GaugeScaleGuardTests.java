@@ -44,7 +44,12 @@ import java.util.function.Consumer;
  *       a real size bar graph's finer LEDs are 0.75). Every other size may be no more than {@value #BIG_HIGH} times
  *       the design size's share.</li>
  *   <li>Fit: at every size, and at Text size 50, 100 and 200 %, every piece of text lies inside the drawn component
- *       and clear of every other.</li>
+ *       and clear of every other; for a round dial (a probe with a face colour) inside the face of the dial, not just
+ *       the component, so none of it is printed on the bezel.</li>
+ *   <li>Captions: the caption printed under every component ({@code PanelRenderer.drawCaption}, laid out by
+ *       {@link GaugeScale#captionScale}) is in proportion to a real size component (the same share of it as at the
+ *       design size, never as tall as the part), fits under it, and is exactly what it always was at every size that is
+ *       not a real size.</li>
  *   <li>Coverage: every registered component type is either probed here or listed in {@link #NOT_GAUGES} with the
  *       reason, so a new type fails until someone decides.</li>
  * </ul>
@@ -64,16 +69,26 @@ public final class GaugeScaleGuardTests {
     private static final int CLASSIC_INK = 0x202020;
     private static final int GE_INK = 0x1A1A1A;
     private static final int ENGRAVED = 0xE8E8E8;
+    /** The classic dial's cream face (DialGaugeModel): the disc its labels must stay inside. */
+    private static final int CLASSIC_FACE = 0xE9E5D4;
+    /** The captions the guard prints under every component: a short one, and one long enough to need the width limit. */
+    static final List<String> CAPTIONS = List.of("TURBINE", "FEEDWATER CONTROL VALVE B");
 
     /**
      * One gauge-like look to check: a type, how a component of it is set up, the colours of its marks, sizes beyond its
      * list, and whether it is a row of digits (a segment display, a thumbwheel): those are measured against their
      * height and every size compared with the design size, since a row of digits keeps its digits' shape at any length.
+     * {@code faceRgb} is the colour of the round face the text must stay inside (the classic dial's cream disc), or 0.
      */
     record Probe(String name, ComponentType type, Consumer<PanelComponent> setup, MarkColours marks, List<Footprint> extraSizes,
-                 boolean digitRow) {
+                 boolean digitRow, int faceRgb) {
         Probe(String name, ComponentType type, Consumer<PanelComponent> setup, MarkColours marks, List<Footprint> extraSizes) {
-            this(name, type, setup, marks, extraSizes, false);
+            this(name, type, setup, marks, extraSizes, false, 0);
+        }
+
+        Probe(String name, ComponentType type, Consumer<PanelComponent> setup, MarkColours marks, List<Footprint> extraSizes,
+              boolean digitRow) {
+            this(name, type, setup, marks, extraSizes, digitRow, 0);
         }
 
         @Override
@@ -110,10 +125,10 @@ public final class GaugeScaleGuardTests {
 
     /** Every gauge-like look. A new gauge type goes here (or, if it prints nothing, in {@link #NOT_GAUGES}). */
     static final List<Probe> PROBES = List.of(
-            // The real size bar gauge is not on the type's list yet (CONTROL-PANELS.md): checked here all the same.
-            new Probe("bar gauge", ComponentTypes.BAR_GAUGE, gauge(null), colours(BarGaugeFace.INK), List.of(Footprint.of(1, 3))),
+            new Probe("bar gauge", ComponentTypes.BAR_GAUGE, gauge(null), colours(BarGaugeFace.INK), List.of()),
             new Probe("dial gauge GE", ComponentTypes.DIAL_GAUGE, gauge(PanelStyles.GE), colours(GE_INK), List.of()),
-            new Probe("dial gauge classic", ComponentTypes.DIAL_GAUGE, gauge(PanelStyles.CLASSIC), colours(CLASSIC_INK), List.of()),
+            new Probe("dial gauge classic", ComponentTypes.DIAL_GAUGE, gauge(PanelStyles.CLASSIC), colours(CLASSIC_INK), List.of(),
+                    false, CLASSIC_FACE),
             new Probe("edgewise vertical GE", ComponentTypes.EDGEWISE_GAUGE_VERTICAL, gauge(PanelStyles.GE), colours(GE_INK), List.of()),
             new Probe("edgewise vertical classic", ComponentTypes.EDGEWISE_GAUGE_VERTICAL, gauge(PanelStyles.CLASSIC),
                     colours(CLASSIC_INK), List.of()),
@@ -177,11 +192,18 @@ public final class GaugeScaleGuardTests {
 
     /**
      * What a component draws at one size, measured: the box round everything drawn ({x0, y0, x1, y1}), its smaller side
-     * (what shares are of), each mark's thickness and length, and the text.
+     * (what shares are of), each mark's thickness and length, the text, the radius of the round face it is printed on (0
+     * without one) and the captions printed under it ({cap height, x0, y0, x1, y1} of each, in cells).
      */
-    record Shot(Footprint size, float[] bounds, float ref, List<float[]> marks, List<Legends.Item> text) {
+    record Shot(Footprint size, float[] bounds, float ref, List<float[]> marks, List<Legends.Item> text, float faceRadius,
+                List<float[]> captions) {
         float textShare(int i) {
             return text.get(i).capCells() / ref;
+        }
+
+        /** The cap height of caption {@code i} as a share of the component's smaller side. */
+        float captionShare(int i) {
+            return captions.get(i)[0] / Math.min(size.w(), size.h());
         }
 
         /** {max thickness, min thickness, max length, min length} of the marks, shares of {@link #ref}; null without marks. */
@@ -251,7 +273,34 @@ public final class GaugeScaleGuardTests {
                 }
             }
         }
-        return new Shot(size, bounds, ref, marks, model.textLayout(component, 1.0f));
+        float faceRadius = 0.0f;
+        if (probe.faceRgb() != 0) {
+            for (int i = 0; i < recorder.quads.size(); i++) {
+                if (recorder.colours.get(i) == probe.faceRgb()) {
+                    float[] q = recorder.quads.get(i);
+                    for (int c = 0; c < 4; c++) {
+                        faceRadius = Math.max(faceRadius, (float) Math.hypot(q[c * 3] - size.w() / 2.0f, q[c * 3 + 1] - size.h() / 2.0f));
+                    }
+                }
+            }
+        }
+        return new Shot(size, bounds, ref, marks, model.textLayout(component, 1.0f), faceRadius, captions(probe.type(), size));
+    }
+
+    /** Where {@link #CAPTIONS} are printed under a {@code size} component of {@code type}, as GaugeScale lays them out. */
+    static List<float[]> captions(ComponentType type, Footprint size) {
+        List<float[]> out = new ArrayList<>();
+        float designSide = type.designSide();
+        float factor = GaugeScale.captionFactor(size.w(), size.h(), designSide);
+        for (String caption : CAPTIONS) {
+            float pixels = GaugeScale.textPixels(caption);
+            float scale = GaugeScale.captionScale(size.w(), size.h(), designSide, pixels);
+            float width = pixels * scale;
+            float top = size.h() + GaugeScale.CAPTION_GAP * factor;
+            out.add(new float[] {Legends.CAP_PIXELS * scale, (size.w() - width) / 2.0f, top, (size.w() + width) / 2.0f,
+                    top + Legends.CAP_PIXELS * scale});
+        }
+        return out;
     }
 
     /** {thickness, length} of a flat, non-degenerate quad (its shorter and longer side); null for any other. */
@@ -335,6 +384,14 @@ public final class GaugeScaleGuardTests {
                 ratio(where + "text '" + shot.text().get(i).text() + "'", shot.textShare(i), against.textShare(i), low, high, failures);
             }
         }
+        if (!probe.digitRow() && low > 0.0f) {
+            // A real size part's caption against the same shape bigger. (A row of digits has no one shape: a longer display
+            // has more room, so its caption is not compared. A size that is not a real size is held to its old caption by
+            // captionFailures, so it is not compared with the design size either.)
+            for (int i = 0; i < shot.captions().size(); i++) {
+                ratio(where + "caption '" + CAPTIONS.get(i) + "'", shot.captionShare(i), against.captionShare(i), low, high, failures);
+            }
+        }
         float[] a = shot.markShares();
         float[] b = against.markShares();
         if ((a == null) != (b == null)) {
@@ -386,11 +443,63 @@ public final class GaugeScaleGuardTests {
                     failures.add(where + "'" + item.text() + "' leaves the component: " + java.util.Arrays.toString(box)
                             + " outside " + java.util.Arrays.toString(bounds));
                 }
+                if (shot.faceRadius() > 0.0f) {
+                    // Every corner of the text lies inside the round face, so none of it is printed on the bezel.
+                    float cx = size.w() / 2.0f;
+                    float cy = size.h() / 2.0f;
+                    for (float x : new float[] {box[0], box[2]}) {
+                        for (float y : new float[] {box[1], box[3]}) {
+                            if (Math.hypot(x - cx, y - cy) > shot.faceRadius() + 1.0e-4f) {
+                                failures.add(where + "'" + item.text() + "' reaches past the face (radius " + shot.faceRadius()
+                                        + "): corner " + (x - cx) + ", " + (y - cy) + " from the centre");
+                            }
+                        }
+                    }
+                }
             }
             for (int i = 0; i < boxes.size(); i++) {
                 for (int j = i + 1; j < boxes.size(); j++) {
                     if (Legends.overlap(boxes.get(i), boxes.get(j))) {
                         failures.add(where + "'" + shot.text().get(i).text() + "' runs into '" + shot.text().get(j).text() + "'");
+                    }
+                }
+            }
+        }
+        return failures;
+    }
+
+    /**
+     * The failures of the caption check at every size of {@code probe}: under the component, no taller than 0.65 of its
+     * smaller side, within the wider of it and one block (both shrunk with a real size part), and exactly the caption
+     * of old (0.26 cell per pixel, 16 cells of room, a 0.5 cell gap) at every size that is not a real size.
+     */
+    static List<String> captionFailures(Probe probe) {
+        List<String> failures = new ArrayList<>();
+        ComponentType type = probe.type();
+        int firstReal = type.footprints().size() - type.realSizes();
+        for (Footprint size : sizes(probe)) {
+            boolean real = type.footprints().indexOf(size) >= firstReal && type.realSizes() > 0;
+            float factor = GaugeScale.captionFactor(size.w(), size.h(), type.designSide());
+            List<float[]> captions = captions(type, size);
+            for (int i = 0; i < captions.size(); i++) {
+                float[] c = captions.get(i);
+                String where = probe + " " + size + " caption '" + CAPTIONS.get(i) + "': ";
+                float width = c[3] - c[1];
+                if (c[2] < size.h() - 1.0e-4f) {
+                    failures.add(where + "starts at row " + c[2] + ", inside the component (" + size.h() + " rows)");
+                }
+                if (c[0] > 0.65f * Math.min(size.w(), size.h()) + 1.0e-4f) {
+                    failures.add(where + "is " + c[0] + " cells tall, over 0.65 of the part's " + Math.min(size.w(), size.h()));
+                }
+                if (width > Math.max(size.w(), 16.0f * factor) + 1.0e-3f) {
+                    failures.add(where + "is " + width + " cells wide, wider than the part and a block shrunk to " + 16.0f * factor);
+                }
+                if (!real) {
+                    float pixels = GaugeScale.textPixels(CAPTIONS.get(i));
+                    float old = Math.min(0.26f, Math.max(size.w(), 16.0f) / pixels);
+                    if (Math.abs(c[0] - Legends.CAP_PIXELS * old) > 1.0e-4f || Math.abs(c[2] - (size.h() + 0.5f)) > 1.0e-4f) {
+                        failures.add(where + "is not what it always was at a size that is not a real size: cap " + c[0] + " not "
+                                + Legends.CAP_PIXELS * old + ", row " + c[2] + " not " + (size.h() + 0.5f));
                     }
                 }
             }
@@ -468,6 +577,17 @@ public final class GaugeScaleGuardTests {
         helper.succeed();
     }
 
+    /** The caption under a component is in proportion to it, fits, and is unchanged for every size but the real sizes. */
+    @GameTest(template = "empty")
+    public static void captionsAreInProportionToTheComponentAndUnchangedForBigOnes(GameTestHelper helper) {
+        List<String> failures = new ArrayList<>();
+        for (Probe probe : PROBES) {
+            failures.addAll(captionFailures(probe));
+        }
+        assertNone(helper, failures, "captions");
+        helper.succeed();
+    }
+
     /** Every probe draws something measurable, so a probe that silently records nothing cannot pass vacuously. */
     @GameTest(template = "empty")
     public static void everyProbeDrawsTextOrMarks(GameTestHelper helper) {
@@ -523,6 +643,38 @@ public final class GaugeScaleGuardTests {
                     helper.assertTrue(Math.abs(cap / shot.ref() / share - 1.0f) < 0.02f,
                             "the 1 x 3 gauge's numbers are the same share of it as the 10 x 16 gauge's: " + share + " vs " + cap / shot.ref());
                 }
+            }
+        });
+        helper.succeed();
+    }
+
+    /**
+     * The numbers and units letters of the bar gauge are as tall, as a share of its case, as the owner's reference
+     * (references/gauges/owner-bar-gauge-text-proportions.png): measured on that picture a number is 0.11 of the case's
+     * width tall and a units letter 0.10 (the game's font draws smaller, so the design is a little over: 0.116 and 0.10).
+     * Checked at every size of the gauge, 1 x 3 included, at the default Text size.
+     */
+    @GameTest(template = "empty")
+    public static void barGaugeNumbersAndUnitsAreAsTallAsTheReference(GameTestHelper helper) {
+        Probe probe = PROBES.get(0);
+        withModels(() -> {
+            for (Footprint size : probe.type().footprints()) {
+                Shot shot = shot(probe, size, GaugeScale.DEFAULT_PERCENT, GaugeScale.DEFAULT_PERCENT);
+                float caseWidth = 5.0f / 2.54f * dev.bwr.mod.panel.model.Placement
+                        .fit(BarGaugeFace.CASE_W, BarGaugeFace.CASE_FOOTPRINT_H, size.w(), size.h()).scale;
+                float number = 0.0f;
+                float letter = 0.0f;
+                for (Legends.Item item : shot.text()) {
+                    if (item.align() == BakedPanelModel.Align.RIGHT) {
+                        number = Math.max(number, item.capCells());
+                    } else if (item.text().length() == 1) {
+                        letter = Math.max(letter, item.capCells());
+                    }
+                }
+                helper.assertTrue(number / caseWidth >= 0.11f && number / caseWidth <= 0.13f,
+                        size + ": a number is " + number / caseWidth + " of the case's width tall (the reference's is 0.11)");
+                helper.assertTrue(letter / caseWidth >= 0.095f && letter / caseWidth <= 0.12f,
+                        size + ": a units letter is " + letter / caseWidth + " of the case's width tall (the reference's is 0.10)");
             }
         });
         helper.succeed();

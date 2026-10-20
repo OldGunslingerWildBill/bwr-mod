@@ -104,6 +104,19 @@ public abstract class ComponentType {
     }
 
     /**
+     * The smaller side, in cells, of the smallest size that is not a real size: below it a part is a real size one,
+     * and what is printed around it (the caption) is scaled down with it ({@code GaugeScale.captionFactor}).
+     */
+    public final int designSide() {
+        List<Footprint> list = footprints();
+        int side = Integer.MAX_VALUE;
+        for (int i = 0; i < list.size() - realSizes(); i++) {
+            side = Math.min(side, Math.min(list.get(i).w(), list.get(i).h()));
+        }
+        return side == Integer.MAX_VALUE ? 1 : side;
+    }
+
+    /**
      * The footprint indices from the smallest size to the biggest (by area, then width, then list position): the
      * order the item cycles through and the size picker lists. The list itself keeps its order, because saved item
      * stacks hold indices into it.

@@ -267,9 +267,12 @@ public final class BarGaugeTests {
                     previous = face.row(fraction);
                 }
                 // The scale and the channel sit inside the component, with the caption zone under them.
-                helper.assertTrue(face.row(0.0) > 0 && face.row(0.0) < footprint.h() - 1.5f && face.row(1.0) > 0.5f,
+                // The margins are shares of the case (1.5 and 0.5 cells of its 16 tall), so the layout is tested alike at every size.
+                float caseH = BarGaugeFace.CASE_FOOTPRINT_H * face.casePlace.rowScale;
+                float caseW = BarGaugeFace.CASE_W * face.casePlace.scale;
+                helper.assertTrue(face.row(0.0) > 0 && face.row(0.0) < footprint.h() - (1.5f / 16.0f) * caseH && face.row(1.0) > (0.5f / 16.0f) * caseH,
                         footprint + ": scale rows " + face.row(1.0) + ".." + face.row(0.0));
-                helper.assertTrue(face.place.offsetX > 1.5f && face.place.offsetX + model.footprintW * face.place.scale < footprint.w(),
+                helper.assertTrue(face.place.offsetX - face.casePlace.offsetX > 0.4f * caseW && face.place.offsetX + model.footprintW * face.place.scale < footprint.w(),
                         footprint + ": the channel fits to the right of the scale");
             }
         }
@@ -396,7 +399,7 @@ public final class BarGaugeTests {
                 float channelLeft = face.place.x(0.0f);
                 float channelRight = face.place.x(model.footprintW);
                 float middle = (channelLeft + channelRight) / 2.0f;
-                helper.assertTrue(channelRight - channelLeft <= 0.2f * footprint.w(), where + "a narrow channel: " + (channelRight - channelLeft));
+                helper.assertTrue(channelRight - channelLeft <= 0.25f * (BarGaugeFace.CASE_W * face.casePlace.scale), where + "a narrow channel: " + (channelRight - channelLeft));
                 helper.assertTrue(middle > 0.5f * footprint.w() && middle < 0.7f * footprint.w(), where + "a little right of the middle: " + middle);
                 Recorder recorder = new Recorder();
                 face.emitStatic(recorder);
@@ -523,5 +526,20 @@ public final class BarGaugeTests {
                     && reloaded.save().equals(saved), "the bar gauge reloads and re-saves unchanged");
             helper.assertTrue(reloaded.w() == 10 && reloaded.h() == 16, "its footprint is kept");
         });
+    }
+
+    /** The bar gauge has a real size (the 5 x 21 cm case is about 1 x 3 cells): last in the list, so old sizes keep their indices, and where a new item starts. */
+    @GameTest(template = "empty")
+    public static void theBarGaugeHasARealSizeAtTheEndOfItsList(GameTestHelper helper) {
+        ComponentType type = ComponentTypes.BAR_GAUGE;
+        List<Footprint> sizes = type.footprints();
+        helper.assertTrue(sizes.size() == 5 && type.realSizes() == 1, "four old sizes and one real size: " + sizes);
+        helper.assertTrue(sizes.subList(0, 4).equals(List.of(Footprint.of(10, 16), Footprint.of(8, 16), Footprint.of(12, 24),
+                Footprint.of(16, 32))), "the old sizes keep their indices: " + sizes);
+        helper.assertTrue(sizes.get(4).equals(Footprint.of(1, 3)) && type.realDefaultIndex() == 4, "the real size is 1 x 3 and last");
+        helper.assertTrue(ComponentItem.footprint(new net.minecraft.world.item.ItemStack(BwrItems.BAR_GAUGE.get())).equals(Footprint.of(1, 3)),
+                "a new bar gauge item places the real size");
+        helper.assertTrue(type.designSide() == 8, "its caption is in proportion from the smallest big size (8 cells): " + type.designSide());
+        helper.succeed();
     }
 }
