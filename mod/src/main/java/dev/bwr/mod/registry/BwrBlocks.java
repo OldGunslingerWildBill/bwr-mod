@@ -406,6 +406,10 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.panel.PanelBlock> CONTROL_PANEL_BACK =
             BLOCKS.register("control_panel_back",
                     () -> new dev.bwr.mod.panel.PanelBlock(panelBoard(), dev.bwr.mod.panel.PanelType.BACK_PANEL));
+    /** The duplex board: one item places a 1 x 2 x 4 column (bench, board, tilted header); see DuplexPanelBlock. */
+    public static final DeferredBlock<dev.bwr.mod.panel.DuplexPanelBlock> CONTROL_PANEL_DUPLEX =
+            BLOCKS.register("control_panel_duplex",
+                    () -> new dev.bwr.mod.panel.DuplexPanelBlock(panelBoard()));
 
     // --- Control-room furniture (ROOM-FURNITURE.md): decorative, no block entities ---------------------
 

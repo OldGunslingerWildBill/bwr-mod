@@ -173,6 +173,7 @@
   "block.bwr.control_panel_benchboard": "Control Panel (Benchboard)",
   "block.bwr.control_panel_console": "Control Panel (Console)",
   "block.bwr.control_panel_back": "Control Panel (Back Panel)",
+  "block.bwr.control_panel_duplex": "Control Panel (Duplex Board)",
   "block.bwr.control_panel_end_cap_flat": "Control Panel End Cap (Flat)",
   "block.bwr.control_panel_end_cap_bench": "Control Panel End Cap (Benchboard)",
   "block.bwr.control_panel_end_cap_console": "Control Panel End Cap (Console)",

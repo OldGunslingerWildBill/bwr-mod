@@ -43,6 +43,14 @@ public final class PanelGeometry {
     /** Height of the back edge of the console desk. */
     private static final double CONSOLE_TOP = 0.375;
     private static final double VERTICAL_DEPTH = 0.25;
+    /**
+     * The duplex board (the owner's profile, one block = 1 m): the slab behind the board face is 0.8 deep, so the rear
+     * 0.2 of the back blocks is empty; the bench falls from 1.0 at the board to 0.75 at its front edge; the tilted
+     * header face rises from the board's top edge to half a block forward at the top of its block.
+     */
+    public static final double DUPLEX_SLAB_REAR = 0.2;
+    public static final double DUPLEX_BENCH_FRONT = 0.75;
+    public static final double DUPLEX_HEADER_REACH = 0.5;
 
     /** The face of one panel style for one facing. All vectors are in block space. */
     public static final class Frame {
@@ -162,11 +170,25 @@ public final class PanelGeometry {
                 drop = 1.0;
                 forward = 0.0;
             }
-            case BACK_PANEL -> {
+            case BACK_PANEL, DUPLEX_BOARD -> {
                 ly0 = 1.0;
                 f0 = 1.0;
                 drop = 1.0;
                 forward = 0.0;
+            }
+            case DUPLEX_BENCH -> {
+                ly0 = 1.0;
+                f0 = 0.0;
+                drop = 1.0 - DUPLEX_BENCH_FRONT;
+                forward = 1.0;
+            }
+            case DUPLEX_HEADER -> {
+                // Row 0 is the top edge, half a block out; down the face goes back to the board's top edge, so the
+                // normal points forward and down.
+                ly0 = 1.0;
+                f0 = DUPLEX_HEADER_REACH;
+                drop = 1.0;
+                forward = -DUPLEX_HEADER_REACH;
             }
             case BENCHBOARD -> {
                 ly0 = 1.0;
@@ -197,6 +219,22 @@ public final class PanelGeometry {
         switch (type) {
             case VERTICAL -> shape = box(facing, 0, 0, 0, 1, 1, VERTICAL_DEPTH);
             case BACK_PANEL -> shape = box(facing, 0, 0, 0, 1, 1, 1);
+            case DUPLEX_BOARD -> shape = box(facing, 0, 0, DUPLEX_SLAB_REAR, 1, 1, 1);
+            case DUPLEX_BENCH -> {
+                for (int k = 0; k < 8; k++) {
+                    shape = Shapes.join(shape,
+                            box(facing, 0, 0, k / 8.0, 1, 1.0 - (1.0 - DUPLEX_BENCH_FRONT) * k / 8.0, (k + 1) / 8.0),
+                            BooleanOp.OR);
+                }
+            }
+            case DUPLEX_HEADER -> {
+                // Slices of the wedge, each reaching the face at its own top, so a ray to the face always finds it.
+                for (int k = 0; k < 8; k++) {
+                    shape = Shapes.join(shape,
+                            box(facing, 0, k / 8.0, 0, 1, (k + 1) / 8.0, DUPLEX_HEADER_REACH * (k + 1) / 8.0),
+                            BooleanOp.OR);
+                }
+            }
             case BENCHBOARD -> {
                 for (int k = 0; k < 8; k++) {
                     shape = Shapes.join(shape, box(facing, 0, 0, k / 8.0, 1, 1.0 - k / 8.0, (k + 1) / 8.0),

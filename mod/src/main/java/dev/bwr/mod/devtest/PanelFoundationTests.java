@@ -201,6 +201,7 @@ public final class PanelFoundationTests {
                 case BENCHBOARD -> BwrBlocks.CONTROL_PANEL_BENCHBOARD.get();
                 case CONSOLE -> BwrBlocks.CONTROL_PANEL_CONSOLE.get();
                 case BACK_PANEL -> BwrBlocks.CONTROL_PANEL_BACK.get();
+                case DUPLEX_BOARD, DUPLEX_BENCH, DUPLEX_HEADER -> throw new UnsupportedOperationException("a duplex cell comes with its column");
             };
             level.setBlock(pos, block.defaultBlockState().setValue(PanelBlock.FACING, facing), 3);
         }

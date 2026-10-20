@@ -130,7 +130,7 @@ public final class PanelGroup {
             return false;
         }
         BlockState state = level.getBlockState(pos);
-        return state.getBlock() instanceof PanelBlock block && block.panelType() == type
+        return state.getBlock() instanceof PanelBlock block && block.panelType(state) == type
                 && state.getValue(PanelBlock.FACING) == facing;
     }
 
