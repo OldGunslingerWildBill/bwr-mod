@@ -25,6 +25,7 @@ public final class PanelNetwork {
 
     public static void register(PayloadRegistrar registrar) {
         registrar.playToServer(PanelPayloads.Place.TYPE, PanelPayloads.Place.STREAM_CODEC, PanelNetwork::handlePlace);
+        registrar.playToServer(PanelPayloads.SetSize.TYPE, PanelPayloads.SetSize.STREAM_CODEC, PanelNetwork::handleSetSize);
         registrar.playToServer(PanelPayloads.Remove.TYPE, PanelPayloads.Remove.STREAM_CODEC, PanelNetwork::handleRemove);
         registrar.playToServer(PanelPayloads.Configure.TYPE, PanelPayloads.Configure.STREAM_CODEC,
                 PanelNetwork::handleConfigure);
@@ -51,6 +52,15 @@ public final class PanelNetwork {
         if (context.player() instanceof ServerPlayer sender) {
             PanelOps.place(sender, payload.offHand() ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND,
                     payload.pos(), payload.cx(), payload.cy());
+        }
+    }
+
+    /** Public so the GameTests can drive the real handler with a decoded payload. */
+    public static void handleSetSize(PanelPayloads.SetSize payload, IPayloadContext context) {
+        if (context.player() instanceof ServerPlayer sender) {
+            net.minecraft.world.item.ItemStack held = sender.getItemInHand(
+                    payload.offHand() ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND);
+            dev.bwr.mod.panel.component.ComponentItem.select(held, sender, payload.variant());
         }
     }
 

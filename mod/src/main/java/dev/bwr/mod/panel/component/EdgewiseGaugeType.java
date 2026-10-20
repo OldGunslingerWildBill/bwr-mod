@@ -24,12 +24,20 @@ public final class EdgewiseGaugeType extends ComponentType {
         this.vertical = vertical;
         this.schema = GaugeData.schema(vertical ? VERTICAL_PATH : HORIZONTAL_PATH);
         this.footprints = vertical
-                ? List.of(Footprint.of(6, 16), Footprint.of(6, 24), Footprint.of(8, 24), Footprint.of(8, 32))
-                : List.of(Footprint.of(16, 6), Footprint.of(24, 6), Footprint.of(24, 8), Footprint.of(32, 8));
+                ? List.of(Footprint.of(6, 16), Footprint.of(6, 24), Footprint.of(8, 24), Footprint.of(8, 32),
+                        // real size: a 6 in GE Type 180 edgewise meter, 2.3 x 6.1 in
+                        Footprint.of(1, 3))
+                : List.of(Footprint.of(16, 6), Footprint.of(24, 6), Footprint.of(24, 8), Footprint.of(32, 8),
+                        Footprint.of(3, 1));
     }
 
     public boolean vertical() {
         return vertical;
+    }
+
+    @Override
+    public int realSizes() {
+        return 1;
     }
 
     @Override

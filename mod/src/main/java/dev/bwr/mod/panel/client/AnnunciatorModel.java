@@ -15,13 +15,19 @@ final class AnnunciatorModel implements ComponentModel {
     private static final float BORDER = 0.75f;
     private static final float TEXT_Z = 1.9f;
 
+    /** The bezel's width: 0.75 cells, less on a real size window (a tile is 1 to 2 cells across) so it never closes the tile. */
+    private static float border(PanelComponent component) {
+        return Math.min(BORDER, 0.1f * Math.min(component.w(), component.h()));
+    }
+
     @Override
     public void buildStatic(QuadSink sink, PanelComponent component) {
         AnnunciatorData data = (AnnunciatorData) component.data();
         float w = component.w();
         float h = component.h();
+        float border = border(component);
         sink.box(0, 0, w, h, 0, 1.0f, ModelDraw.HOUSING, false);
-        sink.box(BORDER, BORDER, w - 2 * BORDER, h - 2 * BORDER, 0.6f, 1.5f, QuadSink.shade(data.color, 0.2f), false);
+        sink.box(border, border, w - 2 * border, h - 2 * border, 0.6f, 1.5f, QuadSink.shade(data.color, 0.2f), false);
     }
 
     @Override
@@ -29,14 +35,17 @@ final class AnnunciatorModel implements ComponentModel {
         AnnunciatorData data = (AnnunciatorData) component.data();
         float w = component.w();
         float h = component.h();
+        float border = border(component);
         AnnunciatorLogic.Display display = data.logic.display();
         boolean lit = display == AnnunciatorLogic.Display.STEADY
                 || display == AnnunciatorLogic.Display.FLASH && context.blinkOn(4.0f);
         if (lit) {
-            context.box(BORDER, BORDER, w - 2 * BORDER, h - 2 * BORDER, 0.6f, 1.6f, data.color, true);
+            context.box(border, border, w - 2 * border, h - 2 * border, 0.6f, 1.6f, data.color, true);
         }
         if (Double.isNaN(component.input(0))) {
-            context.rect(w - 2.25f, BORDER + 0.3f, 1.5f, 0.9f, 1.8f, ModelDraw.NO_SIGNAL, false);
+            // The grey corner flag: 1.5 x 0.9 cells, proportionally smaller on a window under 8 cells across.
+            float k = Math.min(1.0f, Math.min(w, h) / 8.0f);
+            context.rect(w - 2.25f * k, border + 0.3f * k, 1.5f * k, 0.9f * k, 1.8f, ModelDraw.NO_SIGNAL, false);
         }
         if (context.lod() < PanelRenderContext.LOD_FULL || data.line1.isEmpty() && data.line2.isEmpty()) {
             return;
@@ -58,8 +67,10 @@ final class AnnunciatorModel implements ComponentModel {
     private static void fit(PanelRenderContext context, PanelComponent component, AnnunciatorData data, RenderCache cache) {
         float w = component.w();
         float h = component.h();
-        float innerW = w - 2 * BORDER - 0.9f;
-        float innerH = h - 2 * BORDER - 0.6f;
+        float border = border(component);
+        float margin = Math.min(1.0f, Math.min(w, h) / 8.0f);
+        float innerW = w - 2 * border - 0.9f * margin;
+        float innerH = h - 2 * border - 0.6f * margin;
         int lines = (data.line1.isEmpty() ? 0 : 1) + (data.line2.isEmpty() ? 0 : 1);
         float width1 = Math.max(1, context.font().width(data.line1));
         float width2 = Math.max(1, context.font().width(data.line2));

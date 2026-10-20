@@ -11,6 +11,7 @@ import dev.bwr.mod.panel.PanelType;
 import dev.bwr.mod.panel.client.BindScreen;
 import dev.bwr.mod.panel.client.ConfigScreen;
 import dev.bwr.mod.panel.client.PanelClientInput;
+import dev.bwr.mod.panel.client.SizePickerScreen;
 import dev.bwr.mod.panel.client.LinkerHighlight;
 import dev.bwr.mod.panel.client.PanelRenderContext;
 import dev.bwr.mod.panel.component.*;
@@ -66,13 +67,15 @@ public final class PanelClientCheck {
     private static final int TRIM_FIRST = SLOPE_FIRST + PanelSlopeShowcase.NAMES.length;
     /** The first stage of the duplex board (see {@link PanelDuplexShowcase}), after the trim showroom. */
     private static final int DUPLEX_FIRST = TRIM_FIRST + PanelTrimShowcase.NAMES.length;
+    /** The first stage of the real size board (see {@link PanelRealScaleShowcase}), after the duplex board. */
+    private static final int REAL_FIRST = DUPLEX_FIRST + PanelDuplexShowcase.NAMES.length;
     private static final String[] NAMES = names();
 
     private static String[] names() {
         String[] original = {"board-day-wide", "board-controls-close", "board-annunciators",
                 "board-lod-28m", "board-night-lamps", "wrench-config", "linker-binding", "linker-outline", "board-night-close"};
         String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length + PanelSlopeShowcase.NAMES.length
-                + PanelTrimShowcase.NAMES.length + PanelDuplexShowcase.NAMES.length];
+                + PanelTrimShowcase.NAMES.length + PanelDuplexShowcase.NAMES.length + PanelRealScaleShowcase.NAMES.length];
         System.arraycopy(original, 0, all, 0, original.length);
         System.arraycopy(PanelModelShowcase.NAMES, 0, all, BAKED_FIRST, PanelModelShowcase.NAMES.length);
         System.arraycopy(PanelSlopeShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length,
@@ -81,6 +84,7 @@ public final class PanelClientCheck {
                 + PanelSlopeShowcase.NAMES.length, PanelTrimShowcase.NAMES.length);
         System.arraycopy(PanelDuplexShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length
                 + PanelSlopeShowcase.NAMES.length + PanelTrimShowcase.NAMES.length, PanelDuplexShowcase.NAMES.length);
+        System.arraycopy(PanelRealScaleShowcase.NAMES, 0, all, REAL_FIRST, PanelRealScaleShowcase.NAMES.length);
         return all;
     }
     private static final String STAGE_FILTER = System.getProperty("bwr.panelClientStages", "");
@@ -162,13 +166,15 @@ public final class PanelClientCheck {
                         PanelSlopeShowcase.build(level);
                         PanelTrimShowcase.build(level);
                         PanelDuplexShowcase.build(level);
+                        PanelRealScaleShowcase.build(level);
                         built = true;
                     } catch (Throwable failure) {
                         buildFailure = failure;
                         return;
                     }
                 }
-                Vec3 camera = selected >= DUPLEX_FIRST ? PanelDuplexShowcase.camera(selected - DUPLEX_FIRST)
+                Vec3 camera = selected >= REAL_FIRST ? PanelRealScaleShowcase.camera(selected - REAL_FIRST)
+                        : selected >= DUPLEX_FIRST ? PanelDuplexShowcase.camera(selected - DUPLEX_FIRST)
                         : selected >= TRIM_FIRST ? PanelTrimShowcase.camera(selected - TRIM_FIRST)
                         : selected >= SLOPE_FIRST ? PanelSlopeShowcase.camera(selected - SLOPE_FIRST)
                         : selected >= BAKED_FIRST ? PanelModelShowcase.camera(selected - BAKED_FIRST) : (switch (selected) {
@@ -179,7 +185,8 @@ public final class PanelClientCheck {
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = selected >= DUPLEX_FIRST ? PanelDuplexShowcase.target(selected - DUPLEX_FIRST)
+                Vec3 target = selected >= REAL_FIRST ? PanelRealScaleShowcase.target(selected - REAL_FIRST)
+                        : selected >= DUPLEX_FIRST ? PanelDuplexShowcase.target(selected - DUPLEX_FIRST)
                         : selected >= TRIM_FIRST ? PanelTrimShowcase.target(selected - TRIM_FIRST)
                         : selected >= SLOPE_FIRST ? PanelSlopeShowcase.target(selected - SLOPE_FIRST)
                         : selected >= BAKED_FIRST ? PanelModelShowcase.target(selected - BAKED_FIRST) : (selected == 7 ? new Vec3(96.375, 127.5, 100.75)
@@ -200,7 +207,8 @@ public final class PanelClientCheck {
                 player.onUpdateAbilities();
                 level.setDayTime(selected == 4 || selected == 8 || selected >= BAKED_FIRST && selected < SLOPE_FIRST && PanelModelShowcase.night(selected - BAKED_FIRST)
                         || selected >= TRIM_FIRST && selected < DUPLEX_FIRST && PanelTrimShowcase.night(selected - TRIM_FIRST)
-                        || selected >= DUPLEX_FIRST && PanelDuplexShowcase.night(selected - DUPLEX_FIRST)
+                        || selected >= DUPLEX_FIRST && selected < REAL_FIRST && PanelDuplexShowcase.night(selected - DUPLEX_FIRST)
+                        || selected >= REAL_FIRST && PanelRealScaleShowcase.night(selected - REAL_FIRST)
                         ? 18_000 : 6_000);
                 level.setWeatherParameters(6000, 0, false, false);
                 if (selected == 7) {
@@ -238,7 +246,24 @@ public final class PanelClientCheck {
                     List.of(new PanelPayloads.SignalEntry("position", "Valve position", "fraction open")),
                     List.of(new PanelPayloads.CommandEntry("open", "Open / close", false)))));
         }
+        boolean picker = NAMES[stage].startsWith("realscale-picker");
+        if (shown == 70 && picker) {
+            // The size picker, as Alt+click on a held item opens it, over the real size board: a dial gauge (7 sizes), and
+            // for the scrolled picture a thumbwheel (15 sizes: the list overflows and scrolls).
+            var item = (ComponentItem) (NAMES[stage].endsWith("scrolled") ? BwrItems.THUMBWHEEL : BwrItems.DIAL_GAUGE).get();
+            if (NAMES[stage].endsWith("scrolled")) {
+                // A big GUI scale makes the screen short enough that the 15 sizes overflow and the list scrolls.
+                mc.options.guiScale().set(4);
+                mc.resizeDisplay();
+            }
+            mc.setScreen(new SizePickerScreen(item, ComponentItem.variant(new ItemStack(item), item.type()), false));
+        }
+        if (shown == 85 && NAMES[stage].endsWith("scrolled") && mc.screen != null) {
+            mc.screen.mouseScrolled(640, 300, 0, -3);
+        }
         if (shown < 105) return;
+        if (picker && !(mc.screen instanceof SizePickerScreen))
+            throw new AssertionError("The size picker was closed before its screenshot");
         if ((stage == 5 || stage == 6) && mc.screen == null)
             throw new AssertionError("The wrench / linker screen was closed before its screenshot (stage " + stage + ")");
         PanelComponent hovered = stage == 7 ? PanelClientInput.hoveredComponent(mc) : null;
@@ -272,7 +297,8 @@ public final class PanelClientCheck {
             if (stage >= BAKED_FIRST) {
                 // Every component must draw baked exactly when a loaded model exists for its look.
                 LogUtils.getLogger().info("PANEL CLIENT CHECK baked models {}: {} components drawn from baked models ({} loaded)",
-                        NAMES[stage], stage >= DUPLEX_FIRST ? PanelDuplexShowcase.verify(mc, stage - DUPLEX_FIRST)
+                        NAMES[stage], stage >= REAL_FIRST ? PanelRealScaleShowcase.verify(mc, stage - REAL_FIRST)
+                                : stage >= DUPLEX_FIRST ? PanelDuplexShowcase.verify(mc, stage - DUPLEX_FIRST)
                                 : stage >= TRIM_FIRST ? PanelTrimShowcase.verify(mc, stage - TRIM_FIRST)
                                 : stage >= SLOPE_FIRST ? PanelSlopeShowcase.verify(mc, stage - SLOPE_FIRST)
                                 : PanelModelShowcase.verify(mc, stage - BAKED_FIRST), dev.bwr.mod.panel.model.PanelModels.loadedCount());
@@ -323,6 +349,10 @@ public final class PanelClientCheck {
             }
         } catch (IOException ex) {
             throw new IllegalStateException("Panel screenshot failed", ex);
+        }
+        if (picker && NAMES[stage].endsWith("scrolled")) {
+            mc.options.guiScale().set(2);
+            mc.resizeDisplay();
         }
         LogUtils.getLogger().info("PANEL CLIENT CHECK: {}", NAMES[stage]);
         captures++;
@@ -406,7 +436,9 @@ public final class PanelClientCheck {
                 throw new AssertionError("No showcase space for " + type.id() + " " + sizes.get(0));
             }
             // The largest option that still fits the rest of the board (the biggest ones are 4 blocks long).
-            for (int i = sizes.size() - 1; i >= 1; i--) if (fit(level, type, sizes.get(i), 70, occupied)) break;
+            // (the biggest by area: the real sizes are appended to the lists, so the last entry is no longer the biggest)
+            int[] order = type.sizeOrder();
+            for (int i = order.length - 1; i >= 1; i--) if (fit(level, type, sizes.get(order[i]), 70, occupied)) break;
         }
         // The desk is a separate connected group and tests the sloped face geometry.
         PanelOps.placeDirect(level, BENCH, 1, 2, ComponentTypes.NAMEPLATE, Footprint.of(12, 4));

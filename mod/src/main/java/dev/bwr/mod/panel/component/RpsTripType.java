@@ -16,7 +16,9 @@ import java.util.List;
  */
 public final class RpsTripType extends PanelInputType {
     public static final String ID_PATH = "rps_trip";
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(16, 8), Footprint.of(24, 12), Footprint.of(32, 16));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(16, 8), Footprint.of(24, 12), Footprint.of(32, 16),
+            // real size: the owner's two guarded buttons, 4.8 x 2.4 in
+            Footprint.of(2, 1));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.text("LegendA", "component.bwr.field.legend_a", RpsTripData.MAX_LEGEND),
             ConfigField.text("LegendB", "component.bwr.field.legend_b", RpsTripData.MAX_LEGEND));
@@ -24,6 +26,11 @@ public final class RpsTripType extends PanelInputType {
 
     RpsTripType() {
         super(BwrMod.id(ID_PATH));
+    }
+
+    @Override
+    public int realSizes() {
+        return 1;
     }
 
     @Override

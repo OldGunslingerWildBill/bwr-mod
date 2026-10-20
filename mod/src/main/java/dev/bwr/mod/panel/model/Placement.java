@@ -21,12 +21,24 @@ public final class Placement {
     /** Cell position of the footprint's top-left corner within the component. */
     public final float offsetX;
     public final float offsetY;
+    /** Factor on every elevation: 1, or less for a placeholder part drawn on a real size (a few cells wide) component. */
+    public final float elevation;
 
     private Placement(float scale, float rowScale, float offsetX, float offsetY) {
+        this(scale, rowScale, offsetX, offsetY, 1.0f);
+    }
+
+    private Placement(float scale, float rowScale, float offsetX, float offsetY, float elevation) {
         this.scale = scale;
         this.rowScale = rowScale;
         this.offsetX = offsetX;
         this.offsetY = offsetY;
+        this.elevation = elevation;
+    }
+
+    /** This placement with every elevation multiplied by {@code factor}, so a flat drawing keeps its look at a small size. */
+    public Placement withElevation(float factor) {
+        return new Placement(scale, rowScale, offsetX, offsetY, elevation * factor);
     }
 
     /**
@@ -73,7 +85,7 @@ public final class Placement {
 
     /** Elevation (1/16 block) of a model z (inches). */
     public float z(float inches) {
-        return inches * scale;
+        return inches * scale * elevation;
     }
 
     /** Length in column widths of a model length in inches (text heights; true on every panel type). */

@@ -14,6 +14,7 @@ public final class PanelFootprintDefaultTests {
         var type=ComponentTypes.CONTROL_SWITCH;
         var item=net.minecraft.core.registries.BuiltInRegistries.ITEM.get(type.id());
         var fresh=new ItemStack(item);
+        fresh.set(BwrDataComponents.COMPONENT_VARIANT.get(),1); // a bare stack is the real size now: the old default is requested
         h.assertTrue(ComponentItem.footprint(fresh).equals(Footprint.of(12,16)),"new GE target pistol ignored preferred size");
         fresh.set(BwrDataComponents.COMPONENT_VARIANT.get(),0);
         h.assertTrue(ComponentItem.footprint(fresh).equals(Footprint.of(8,12)),"stored small size changed");

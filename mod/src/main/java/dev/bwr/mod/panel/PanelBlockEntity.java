@@ -561,7 +561,8 @@ public final class PanelBlockEntity extends BlockEntity {
         }
         ItemStack stack = new ItemStack(type.itemFor(component));
         int variant = type.footprints().indexOf(new Footprint(component.w(), component.h()));
-        if (variant > 0) {
+        if (variant >= 0) {
+            // Always stored, also for index 0: a bare stack starts at the real size, not at the first entry.
             stack.set(BwrDataComponents.COMPONENT_VARIANT.get(), variant);
         }
         return stack;

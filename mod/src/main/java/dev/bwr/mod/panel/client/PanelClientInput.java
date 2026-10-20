@@ -15,6 +15,7 @@ import dev.bwr.mod.panel.net.PanelPayloads;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
@@ -82,6 +83,15 @@ public final class PanelClientInput {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null && minecraft.screen == null && Screen.hasAltDown()
+                && minecraft.player.getItemInHand(event.getHand()).getItem() instanceof ComponentItem item
+                && item.type() != null && item.sizes().length > 1) {
+            // Alt+click with a component item, on a panel or in the air: pick its size from a list.
+            PanelClientHooks.openSizePicker(event.getHand() == InteractionHand.OFF_HAND);
+            event.setCanceled(true);
+            event.setSwingHand(false);
+            return;
+        }
         Target target = target(minecraft);
         if (!target.valid) {
             return;

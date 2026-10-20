@@ -17,6 +17,11 @@ public final class SegmentDisplayType extends ComponentType {
     public static final int DIGIT_W = 5;
     public static final int DIGIT_H = 8;
     private static final int[] DIGIT_COUNTS = {4, 1, 2, 3, 5, 6, 8, 10, 12};
+    /** A real size display (shorter than one big digit) is one cell wide and two tall per digit. */
+    public static final int COMPACT_DIGIT_W = 1;
+    public static final int COMPACT_DIGIT_H = 2;
+    /** Digits of the real size displays, the first being where a new item starts: a 4 digit panel meter window. */
+    private static final int[] COMPACT_DIGIT_COUNTS = {4, 1, 2, 3, 6, 8};
     private static final List<ConfigField> SCHEMA = SegmentDisplayData.schema();
     private static final List<PortSpec> INPUTS = List.of(
             PortSpec.of("v0"), PortSpec.of("v1"), PortSpec.of("v2"), PortSpec.of("v3"));
@@ -31,11 +36,24 @@ public final class SegmentDisplayType extends ComponentType {
         for (int digits : DIGIT_COUNTS) {
             list.add(Footprint.of(digits * DIGIT_W, DIGIT_H));
         }
+        for (int digits : COMPACT_DIGIT_COUNTS) {
+            list.add(Footprint.of(digits * COMPACT_DIGIT_W, COMPACT_DIGIT_H));
+        }
         this.footprints = List.copyOf(list);
     }
 
     public boolean sixteen() {
         return sixteen;
+    }
+
+    /** Cells one digit is across on a display {@code cellsHigh} cells tall: five for the big digits, one for a real size one. */
+    public static int digitWidth(int cellsHigh) {
+        return cellsHigh >= DIGIT_H ? DIGIT_W : COMPACT_DIGIT_W;
+    }
+
+    @Override
+    public int realSizes() {
+        return COMPACT_DIGIT_COUNTS.length;
     }
 
     @Override

@@ -17,13 +17,27 @@ final class BarGraphModel implements ComponentModel {
     private static final float SEG = BarGraphType.SEGMENT_CELLS;
     private static final float GAP = 0.25f;
     private static final float PAD = 0.4f;
+    /** A real size bar (under 3 cells thick) has two segments per cell: its LEDs are far finer than the big bars. */
+    private static final float THIN_SEG = 0.5f;
+
+    private static float seg(PanelComponent component) {
+        return Math.min(component.w(), component.h()) < 3 ? THIN_SEG : SEG;
+    }
+
+    private static float gap(float seg) {
+        return GAP * seg / SEG;
+    }
+
+    private static float pad(PanelComponent component) {
+        return Math.min(PAD, 0.2f * Math.min(component.w(), component.h()));
+    }
 
     private static boolean vertical(PanelComponent component) {
         return component.h() >= component.w();
     }
 
     private static int segments(PanelComponent component) {
-        return Math.max(1, (int) ((vertical(component) ? component.h() : component.w()) / SEG));
+        return Math.max(1, (int) ((vertical(component) ? component.h() : component.w()) / seg(component)));
     }
 
     private static int bandColor(BarGraphData data, int band) {
@@ -38,13 +52,16 @@ final class BarGraphModel implements ComponentModel {
         sink.box(0, 0, w, h, 0, 1.0f, ModelDraw.HOUSING, false);
         boolean vertical = vertical(component);
         int segments = segments(component);
+        float seg = seg(component);
+        float gap = gap(seg);
+        float pad = pad(component);
         for (int i = 0; i < segments; i++) {
             int band = BarGraphLogic.band(i, data.min, data.max, segments, data.warn, data.alarm);
             int dim = QuadSink.shade(bandColor(data, band), 0.22f);
             if (vertical) {
-                sink.box(PAD, h - (i + 1) * SEG + GAP, w - 2 * PAD, SEG - 2 * GAP, 1.0f, 1.5f, dim, false);
+                sink.box(pad, h - (i + 1) * seg + gap, w - 2 * pad, seg - 2 * gap, 1.0f, 1.5f, dim, false);
             } else {
-                sink.box(i * SEG + GAP, PAD, SEG - 2 * GAP, h - 2 * PAD, 1.0f, 1.5f, dim, false);
+                sink.box(i * seg + gap, pad, seg - 2 * gap, h - 2 * pad, 1.0f, 1.5f, dim, false);
             }
         }
     }
@@ -58,6 +75,9 @@ final class BarGraphModel implements ComponentModel {
         int segments = segments(component);
         double value = component.input(0);
         boolean noSignal = Double.isNaN(value);
+        float seg = seg(component);
+        float gap = gap(seg);
+        float pad = pad(component);
         int lit = BarGraphLogic.lit(value, data.min, data.max, segments);
         for (int i = 0; i < segments; i++) {
             boolean on = i < lit;
@@ -67,9 +87,9 @@ final class BarGraphModel implements ComponentModel {
             int color = noSignal ? ModelDraw.NO_SIGNAL
                     : bandColor(data, BarGraphLogic.band(i, data.min, data.max, segments, data.warn, data.alarm));
             if (vertical) {
-                context.box(PAD, h - (i + 1) * SEG + GAP, w - 2 * PAD, SEG - 2 * GAP, 1.0f, 1.8f, color, !noSignal);
+                context.box(pad, h - (i + 1) * seg + gap, w - 2 * pad, seg - 2 * gap, 1.0f, 1.8f, color, !noSignal);
             } else {
-                context.box(i * SEG + GAP, PAD, SEG - 2 * GAP, h - 2 * PAD, 1.0f, 1.8f, color, !noSignal);
+                context.box(i * seg + gap, pad, seg - 2 * gap, h - 2 * pad, 1.0f, 1.8f, color, !noSignal);
             }
         }
     }

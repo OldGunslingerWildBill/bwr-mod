@@ -22,7 +22,9 @@ import java.util.List;
  * was put, including across a restart.
  */
 public final class ControlSwitchType extends PanelInputType {
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 12), Footprint.of(12, 16));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 12), Footprint.of(12, 16),
+            // real sizes: a breaker control switch escutcheon, about 6 x 9 cm, and the model's own 4.4 x 6.6 in
+            Footprint.of(1, 2), Footprint.of(2, 3));
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(ControlSwitchData.TYPE, List.of(
             ConfigField.bool("Spring", "component.bwr.field.spring"),
             ConfigField.text("CloseText", "component.bwr.field.close_text", ControlSwitchData.MAX_TEXT),
@@ -36,6 +38,11 @@ public final class ControlSwitchType extends PanelInputType {
 
     ControlSwitchType() {
         super(BwrMod.id("control_switch"));
+    }
+
+    @Override
+    public int realSizes() {
+        return 2;
     }
 
     @Override

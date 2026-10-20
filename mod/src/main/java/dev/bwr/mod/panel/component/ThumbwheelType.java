@@ -18,10 +18,18 @@ public final class ThumbwheelType extends PanelInputType {
     /** Cells one digit occupies across and down. */
     public static final int DIGIT_W = 3;
     public static final int DIGIT_H = 6;
+    /** Cells one digit of a real size thumbwheel (shorter than {@link #DIGIT_H}) is across and down. */
+    public static final int COMPACT_DIGIT_W = 1;
+    public static final int COMPACT_DIGIT_H = 2;
     public static final List<Footprint> FOOTPRINTS = List.of(
             Footprint.of(3 * DIGIT_W, DIGIT_H), Footprint.of(DIGIT_W, DIGIT_H), Footprint.of(2 * DIGIT_W, DIGIT_H),
             Footprint.of(4 * DIGIT_W, DIGIT_H), Footprint.of(5 * DIGIT_W, DIGIT_H), Footprint.of(6 * DIGIT_W, DIGIT_H),
-            Footprint.of(7 * DIGIT_W, DIGIT_H), Footprint.of(8 * DIGIT_W, DIGIT_H));
+            Footprint.of(7 * DIGIT_W, DIGIT_H), Footprint.of(8 * DIGIT_W, DIGIT_H),
+            // real sizes: one digit is one cell wide and two tall; the first is a 3 digit setpoint
+            Footprint.of(3 * COMPACT_DIGIT_W, COMPACT_DIGIT_H), Footprint.of(COMPACT_DIGIT_W, COMPACT_DIGIT_H),
+            Footprint.of(2 * COMPACT_DIGIT_W, COMPACT_DIGIT_H), Footprint.of(4 * COMPACT_DIGIT_W, COMPACT_DIGIT_H),
+            Footprint.of(5 * COMPACT_DIGIT_W, COMPACT_DIGIT_H), Footprint.of(6 * COMPACT_DIGIT_W, COMPACT_DIGIT_H),
+            Footprint.of(8 * COMPACT_DIGIT_W, COMPACT_DIGIT_H));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.color("Color", "component.bwr.field.digit_color"));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("value"));
@@ -55,13 +63,23 @@ public final class ThumbwheelType extends PanelInputType {
         return "TW";
     }
 
+    /** Cells one digit is across on a thumbwheel {@code cellsHigh} cells tall: three, or one on a real size one. */
+    public static int digitWidth(int cellsHigh) {
+        return cellsHigh >= DIGIT_H ? DIGIT_W : COMPACT_DIGIT_W;
+    }
+
+    @Override
+    public int realSizes() {
+        return 7;
+    }
+
     /** Number of digits: the width in whole digit cells, at least one. */
     public static int digits(PanelComponent component) {
-        return Math.max(1, Math.min(ThumbwheelData.MAX_DIGITS, component.w() / DIGIT_W));
+        return Math.max(1, Math.min(ThumbwheelData.MAX_DIGITS, component.w() / digitWidth(component.h())));
     }
 
     private static int digitAt(PanelComponent component, double cellX) {
-        return Math.max(0, Math.min(digits(component) - 1, (int) Math.floor(cellX / DIGIT_W)));
+        return Math.max(0, Math.min(digits(component) - 1, (int) Math.floor(cellX / digitWidth(component.h()))));
     }
 
     @Override

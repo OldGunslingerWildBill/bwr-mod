@@ -73,7 +73,8 @@ public abstract class ComponentType {
 
     /**
      * Sizes the item can be placed at, in cells. Index 0 is the fallback default;
-     * a new stack may use its baked variant's preferred index. The
+     * a new stack starts at the real size if the type has one ({@link #realSizes}), else at its baked variant's
+     * preferred index. The
      * item remembers an index; right-clicking air with it cycles. A footprint
      * may never exceed {@link Footprint#MAX_CELLS} either way.
      *
@@ -84,6 +85,36 @@ public abstract class ComponentType {
      * then drops at the default size.
      */
     public abstract List<Footprint> footprints();
+
+    /**
+     * How many of the LAST footprints in {@link #footprints()} are real sizes (what the part measures on a real
+     * board, rounded to whole cells; see CONTROL-PANELS.md). The first of them is where a new, unconfigured item
+     * starts; the rest are the other real sizes. 0 for a type that has no real size (recorders, displays, mimic
+     * pieces), which then starts at index 0 or its model's preferred size. They are appended so that the indices
+     * stored in item stacks never move.
+     */
+    public int realSizes() {
+        return 0;
+    }
+
+    /** The index a new item of this type starts at when it has real sizes, else -1. */
+    public final int realDefaultIndex() {
+        int real = realSizes();
+        return real <= 0 ? -1 : footprints().size() - real;
+    }
+
+    /**
+     * The footprint indices from the smallest size to the biggest (by area, then width, then list position): the
+     * order the item cycles through and the size picker lists. The list itself keeps its order, because saved item
+     * stacks hold indices into it.
+     */
+    public final int[] sizeOrder() {
+        List<Footprint> list = footprints();
+        return java.util.stream.IntStream.range(0, list.size()).boxed()
+                .sorted(java.util.Comparator.<Integer>comparingInt(i -> list.get(i).w() * list.get(i).h())
+                        .thenComparingInt(i -> list.get(i).w()).thenComparingInt(i -> i))
+                .mapToInt(Integer::intValue).toArray();
+    }
 
     /**
      * How many blocks this type may span either way. Most types stay within 4 (64 cells); the core displays need up
