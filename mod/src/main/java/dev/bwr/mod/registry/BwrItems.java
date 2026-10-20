@@ -167,6 +167,10 @@ public final class BwrItems {
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> PUSH_TURN_SWITCH =
             ITEMS.register("push_turn_switch", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.PUSH_TURN_SWITCH.id()));
+    /** The manual/auto controller station (a hand-auto station: PV and setpoint pointers, demand bar, AUTO/MAN, RAISE/LOWER). */
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> CONTROLLER_STATION =
+            ITEMS.register("controller_station", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.CONTROLLER_STATION.id()));
     public static final DeferredItem<BlockItem> CONTROL_ROD_DRIVE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_ROD_DRIVE);
     public static final DeferredItem<BlockItem> CORE_SPRAY_SPARGER =
@@ -444,6 +448,7 @@ public final class BwrItems {
                         output.accept(BAR_GAUGE.get());
                         output.accept(RPS_TRIP.get());
                         output.accept(PUSH_TURN_SWITCH.get());
+                        output.accept(CONTROLLER_STATION.get());
                         output.accept(RELAY_CABINET.get());
                         output.accept(RELAY_CABINET_PLAIN.get());
                         output.accept(OPERATOR_DESK.get());

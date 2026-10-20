@@ -1135,5 +1135,16 @@
   "block.bwr.mimic_band_black": "Mimic Band (Black)",
   "block.bwr.wall_display": "Wall Display",
   "block.bwr.wall_display_wide": "Wall Display (Wide)",
-  "block.bwr.control_stand": "Control Stand"
+  "block.bwr.control_stand": "Control Stand",
+  "item.bwr.controller_station": "Controller Station (Manual/Auto)",
+  "component.bwr.controller_station": "Controller Station (Manual/Auto)",
+  "component.bwr.field.demand_step": "Demand step per press (%)",
+  "component.bwr.field.setpoint_step": "Setpoint step per press (% of span)",
+  "component.bwr.port.pv": "Process variable",
+  "component.bwr.port.setpoint": "Setpoint",
+  "component.bwr.port.auto_demand": "Auto demand (%)",
+  "component.bwr.port.mode": "Mode (1 = AUTO)",
+  "component.bwr.port.raise": "Raise (held)",
+  "component.bwr.port.lower": "Lower (held)",
+  "message.bwr.station.in_auto": "The station is in AUTO: switch to MAN to set its demand"
 }

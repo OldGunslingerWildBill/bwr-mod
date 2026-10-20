@@ -247,6 +247,13 @@ public abstract class ComponentType {
     public void onLoaded(PanelComponent component) {
     }
 
+    /**
+     * The component was just placed on a panel (server, once, before its first sample): put any output that is not
+     * zero by default in place ({@link #onLoaded} does the same for a saved one). Nothing by default.
+     */
+    public void onPlaced(PanelComponent component) {
+    }
+
     /** The registered item that places this type. */
     public final Item item() {
         Item item = BuiltInRegistries.ITEM.get(id);

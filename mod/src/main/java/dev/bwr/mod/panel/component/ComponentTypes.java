@@ -53,6 +53,8 @@ public final class ComponentTypes {
     public static final ComponentType BAR_GAUGE = register(new BarGaugeType());
     public static final ComponentType RPS_TRIP = register(new RpsTripType());
     public static final ComponentType PUSH_TURN_SWITCH = register(new PushTurnSwitchType());
+    // -- control hardware the research found missing (CR-PANELS-*-RESEARCH.md, "Gaps") --
+    public static final ComponentType CONTROLLER_STATION = register(new ControllerStationType());
     // ----------------------------------------------------------------------------
 
     /** Forces class initialisation. */

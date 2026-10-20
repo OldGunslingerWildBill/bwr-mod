@@ -158,7 +158,8 @@ public final class GaugeScaleGuardTests {
             Map.entry("paperless_recorder", "a recorder: its screen is a pixel canvas texture and its case a placed model; "
                     + "no size below 12 x 12"),
             Map.entry("rps_trip", "a control: its two legends are baked"),
-            Map.entry("push_turn_switch", "a control: its legends are baked"));
+            Map.entry("push_turn_switch", "a control: its legends are baked"),
+            Map.entry("controller_station", "a control station: every printed length is a share of its height and the scaling is checked by ControllerStationTests.printedTextScalesWithTheStationAndStaysOnIt"));
 
     // ---- recording
 
