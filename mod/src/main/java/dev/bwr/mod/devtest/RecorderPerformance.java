@@ -203,9 +203,7 @@ final class RecorderPerformance {
                     try {
                         var dir = mc.gameDirectory.toPath().resolve("recorder-check");
                         java.nio.file.Files.createDirectories(dir);
-                        try (var image = net.minecraft.client.Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
-                            image.writeToFile(dir.resolve("performance-wall.png"));
-                        }
+                        CheckShots.save(mc,dir.resolve("performance-wall.png"));
                     } catch (java.io.IOException e) {
                         throw new IllegalStateException(e);
                     }

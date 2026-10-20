@@ -47,7 +47,7 @@ public final class CondensateTankClientCheck {
         shown++;
         if(stage==2){var m=(CondensateTankMenu)mc.player.containerMenu;if(shown==20)m.sendCommand(0,7,10);if(shown==70&&m.height!=8)throw new AssertionError("Read-only tank menu accepted obsolete resize command: "+m.notice);}
         if(shown<90)return;mc.options.hideGui=stage!=2;mc.getToasts().clear();if(shown<95)return;
-        try{var dir=mc.gameDirectory.toPath().resolve("tank-check");java.nio.file.Files.createDirectories(dir);try(var shot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve(NAMES[stage]+".png"));}}catch(java.io.IOException e){throw new IllegalStateException(e);}
+        try{var dir=mc.gameDirectory.toPath().resolve("tank-check");java.nio.file.Files.createDirectories(dir);CheckShots.save(mc,dir.resolve(NAMES[stage]+".png"));}catch(java.io.IOException e){throw new IllegalStateException(e);}
         LogUtils.getLogger().info("CONDENSATE TANK CLIENT CHECK: captured {}",NAMES[stage]);requested=false;
         if(++stage==NAMES.length){LogUtils.getLogger().info("CONDENSATE TANK CLIENT CHECK PASS: three automatically formed sizes, joined flanges, read-only status screen and visible dismantled casings");mc.stop();}
     }

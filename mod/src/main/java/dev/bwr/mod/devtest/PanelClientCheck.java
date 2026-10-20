@@ -303,9 +303,9 @@ public final class PanelClientCheck {
                                 : stage >= SLOPE_FIRST ? PanelSlopeShowcase.verify(mc, stage - SLOPE_FIRST)
                                 : PanelModelShowcase.verify(mc, stage - BAKED_FIRST), dev.bwr.mod.panel.model.PanelModels.loadedCount());
             }
-            try (var shot = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
-                // Saved before the pixel assertions below, so a failing stage leaves its picture to look at.
-                shot.writeToFile(directory.resolve(NAMES[stage] + ".png"));
+            // Saved (supersampled) before the pixel assertions below, so a failing stage leaves its picture to look at; the
+            // assertions read the plain live framebuffer capture it returns, at window size.
+            try (var shot = CheckShots.saveKeeping(mc, directory.resolve(NAMES[stage] + ".png"))) {
                 if (stage == 7) {
                     int orangePixels = 0;
                     for (int y = 0; y < shot.getHeight(); y++) for (int x = 0; x < shot.getWidth(); x++) {
@@ -317,9 +317,22 @@ public final class PanelClientCheck {
                 }
                 if (NAMES[stage].equals("baked-closeup-round-meter")) {
                     // The printed scale of a meter sits just behind its window, so it must show through it. Dark pixels
-                    // around the "40" and "60" of the first dial (fixed 1280 x 720 camera): a window that wrote depth
-                    // hid every numeral of every meter under Sodium and Iris (0 dark pixels here, 140 to 175 when drawn).
-                    int[][] numerals = {{212, 262, 252, 292}, {292, 262, 332, 292}};
+                    // around the "40" and "60" of the first dial (fixed camera). The boxes were measured on a 1280 x 720
+                    // window; the field of view is vertical, so a window of height H shows the same scene scaled by
+                    // s = H / 720 about its centre. The boxes are mapped the same way (identity at 1280 x 720) and the
+                    // dark-pixel gate is scaled by the pixel area s * s, so it asks for the same share of the box. A window
+                    // that wrote depth hid every numeral of every meter under Sodium and Iris (0 dark pixels here, 140 to
+                    // 175 when drawn at 1280 x 720).
+                    double s = shot.getHeight() / 720.0;
+                    int minDark = (int) Math.round(60 * s * s);
+                    int[][] baseBoxes = {{212, 262, 252, 292}, {292, 262, 332, 292}};
+                    int[][] numerals = new int[baseBoxes.length][4];
+                    for (int i = 0; i < baseBoxes.length; i++) {
+                        for (int c = 0; c < 4; c += 2) {
+                            numerals[i][c] = (int) Math.round(shot.getWidth() / 2.0 + (baseBoxes[i][c] - 640) * s);
+                            numerals[i][c + 1] = (int) Math.round(shot.getHeight() / 2.0 + (baseBoxes[i][c + 1] - 360) * s);
+                        }
+                    }
                     for (int[] box : numerals) {
                         int dark = 0;
                         for (int y = box[1]; y < box[3]; y++) for (int x = box[0]; x < box[2]; x++) {
@@ -328,8 +341,8 @@ public final class PanelClientCheck {
                             if (luma < 70) dark++;
                         }
                         LogUtils.getLogger().info("PANEL CLIENT CHECK meter numerals {}: {} dark pixels", java.util.Arrays.toString(box), dark);
-                        if (dark < 60) throw new AssertionError("The scale numerals of the round meter are not visible through its window: "
-                                + dark + " dark pixels in " + java.util.Arrays.toString(box));
+                        if (dark < minDark) throw new AssertionError("The scale numerals of the round meter are not visible through its window: "
+                                + dark + " dark pixels (need " + minDark + ") in " + java.util.Arrays.toString(box));
                     }
                 }
                 if (stage == 8) {

@@ -116,7 +116,7 @@ public final class MachineRenderCheck {
         if(stage!=1&&stage!=3&&MachineMeshCache.drawCount()<=stableDraws)throw new AssertionError("GPU path not active");
         if(stage==6&&MachineMeshCache.uploadCount()<=reloadUploads)throw new AssertionError("Resource reload did not rebuild GPU meshes");
         LogUtils.getLogger().info("MACHINE RENDER {} frames={} fps={} rendererCPUms={} calls/frame={} meshes={} bytes={} uploads={}",NAMES[stage],frames,frames/((System.nanoTime()-began)/1e9-2),totalCpu/1e6/frames,(double)totalCalls/frames,MachineMeshCache.cachedMeshes(),MachineMeshCache.cachedBytes(),MachineMeshCache.uploadCount());
-        try{var dir=mc.gameDirectory.toPath().resolve("machine-render-check");java.nio.file.Files.createDirectories(dir);try(var shot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve(NAMES[stage]+".png"));}}catch(java.io.IOException ex){throw new IllegalStateException(ex);}
+        try{var dir=mc.gameDirectory.toPath().resolve("machine-render-check");java.nio.file.Files.createDirectories(dir);CheckShots.save(mc,dir.resolve(NAMES[stage]+".png"));}catch(java.io.IOException ex){throw new IllegalStateException(ex);}
         requested=false;
         if(++stage==NAMES.length){MachineMeshCache.clear();if(MachineMeshCache.cachedBytes()!=0||MachineMeshCache.cachedMeshes()!=0)throw new AssertionError("GPU cache did not close");LogUtils.getLogger().info("MACHINE RENDER CHECK PASS: cached/CPU comparison, steady uploads, full bounds, offscreen rejection, night, reload and cleanup");mc.stop();}
     }

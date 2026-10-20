@@ -153,9 +153,7 @@ final class RecorderKeyChecks {
         try {
             var dir = mc.gameDirectory.toPath().resolve("recorder-check");
             Files.createDirectories(dir);
-            try (var image = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
-                image.writeToFile(dir.resolve(name + ".png"));
-            }
+            CheckShots.save(mc,dir.resolve(name + ".png"));
             LogUtils.getLogger().info("RECORDER CLIENT PASS {}", name);
         } catch (java.io.IOException e) {
             throw new IllegalStateException(e);

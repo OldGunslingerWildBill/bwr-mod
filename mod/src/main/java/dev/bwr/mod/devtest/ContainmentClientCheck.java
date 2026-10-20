@@ -142,9 +142,7 @@ public final class ContainmentClientCheck {
         try {
             var directory = mc.gameDirectory.toPath().resolve("containment-client-check");
             Files.createDirectories(directory);
-            try (var shot = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
-                shot.writeToFile(directory.resolve(NAMES[stage] + ".png"));
-            }
+            CheckShots.save(mc,directory.resolve(NAMES[stage] + ".png"));
         } catch (IOException ex) {
             throw new IllegalStateException("Containment screenshot failed", ex);
         }

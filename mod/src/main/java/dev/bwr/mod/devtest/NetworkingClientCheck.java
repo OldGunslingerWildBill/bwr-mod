@@ -240,8 +240,7 @@ public final class NetworkingClientCheck {
         try {
             var directory = mc.gameDirectory.toPath().resolve("networking-client-check");
             Files.createDirectories(directory);
-            try (var shot = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
-                shot.writeToFile(directory.resolve(NAMES[stage] + ".png"));
+            try (var shot = CheckShots.saveKeeping(mc, directory.resolve(NAMES[stage] + ".png"))) {
                 int cyan = 0, orange = 0, yellow = 0, white = 0;
                 for (int y = 0; y < shot.getHeight(); y++) for (int x = 0; x < shot.getWidth(); x++) {
                     int abgr = shot.getPixelRGBA(x, y);

@@ -95,7 +95,7 @@ public final class CoreModelClientCheck {
         if(shown==140)stableUploads=MachineMeshCache.uploadCount();if(shown<170)return;
         if(MachineMeshCache.uploadCount()!=stableUploads)throw new AssertionError("Stationary core reuploads each frame");
         var dir=mc.gameDirectory.toPath().resolve("core-model-check");java.nio.file.Files.createDirectories(dir);
-        try(var shot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve(NAMES[stage]+".png"));}
+        CheckShots.save(mc,dir.resolve(NAMES[stage]+".png"));
         com.mojang.logging.LogUtils.getLogger().info("CORE MODEL CHECK: {} uploads={} cacheBytes={}",NAMES[stage],stableUploads,MachineMeshCache.cachedBytes());requested=false;
         if(++stage==NAMES.length){com.mojang.logging.LogUtils.getLogger().info("CORE MODEL CHECK PASS: four sizes, legacy, inventory, shroud clearance, materials, GPU cache and unforming");mc.stop();}
     }

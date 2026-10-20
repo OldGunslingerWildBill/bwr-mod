@@ -96,9 +96,7 @@ public final class GridClientCheck {
         if (ready && ++shown > 55) {
             var dir = mc.gameDirectory.toPath().resolve("grid-check");
             java.nio.file.Files.createDirectories(dir);
-            try (var shot = net.minecraft.client.Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
-                shot.writeToFile(dir.resolve(NAMES[stage] + ".png"));
-            }
+            CheckShots.save(mc,dir.resolve(NAMES[stage] + ".png"));
             LogUtils.getLogger().info("GRID CLIENT PASS {}", NAMES[stage]);
             if (++stage == NAMES.length) {
                 LogUtils.getLogger().info("GRID CLIENT COMPLETE");

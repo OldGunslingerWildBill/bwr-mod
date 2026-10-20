@@ -189,7 +189,7 @@ public final class RvuClientCheck {
         if((stage==2||stage==3)&&uploads!=previousUploads)throw new AssertionError("Changing water level rebuilt static geometry");
         previousUploads=uploads;
         var dir=mc.gameDirectory.toPath().resolve("rvu-check");java.nio.file.Files.createDirectories(dir);
-        try(var shot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve(NAMES[stage]+".png"));}
+        CheckShots.save(mc,dir.resolve(NAMES[stage]+".png"));
         com.mojang.logging.LogUtils.getLogger().info("RVU CHECK {} level={} meshUploads={}",NAMES[stage],be.clientWaterLevelIn(0),uploads);requested=false;
         if(++stage==NAMES.length){com.mojang.logging.LogUtils.getLogger().info("RVU CLIENT CHECK PASS");mc.stop();}
         else if(Boolean.getBoolean("bwr.rvuAccident")) {

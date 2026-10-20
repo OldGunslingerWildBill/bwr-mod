@@ -79,7 +79,7 @@ public final class TerryPanelClientCheck {
         if(++shown<(panel?30:120))return;
         try {
             var folder=mc.gameDirectory.toPath().resolve("terry-check");java.nio.file.Files.createDirectories(folder);
-            try(var picture=Screenshot.takeScreenshot(mc.getMainRenderTarget())){picture.writeToFile(folder.resolve(NAMES[stage]+".png"));}
+            CheckShots.save(mc,folder.resolve(NAMES[stage]+".png"));
             LogUtils.getLogger().info("TERRY CLIENT CHECK: {}",NAMES[stage]);
         } catch(java.io.IOException e){throw new IllegalStateException(e);}
         mc.player.closeContainer();requested=false;

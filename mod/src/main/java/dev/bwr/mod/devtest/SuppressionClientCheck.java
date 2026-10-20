@@ -116,7 +116,7 @@ public final class SuppressionClientCheck {
             if(model==mc.getModelManager().getMissingModel()||count==0)throw new AssertionError("Missing suppression model: "+state);
         }
         mc.player.setPos(camera.x,camera.y,camera.z);mc.player.setYRot(yaw);mc.player.setXRot(pitch);mc.player.setDeltaMovement(Vec3.ZERO);mc.options.hideGui=stage<2||stage>=5;mc.getToasts().clear();if(shown<110)return;
-        try{var dir=mc.gameDirectory.toPath().resolve("suppression-check");java.nio.file.Files.createDirectories(dir);try(var shot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){shot.writeToFile(dir.resolve(NAMES[stage]+".png"));}}catch(java.io.IOException ex){throw new IllegalStateException(ex);}
+        try{var dir=mc.gameDirectory.toPath().resolve("suppression-check");java.nio.file.Files.createDirectories(dir);CheckShots.save(mc,dir.resolve(NAMES[stage]+".png"));}catch(java.io.IOException ex){throw new IllegalStateException(ex);}
         com.mojang.logging.LogUtils.getLogger().info("SUPPRESSION CLIENT CHECK: {}",NAMES[stage]);requested=false;
         if(++stage==NAMES.length){com.mojang.logging.LogUtils.getLogger().info("SUPPRESSION CLIENT CHECK PASS: concrete basin, four flange orientations, live water level, spray command/flow, wall-port panels and detailed pump models");mc.stop();}
     }

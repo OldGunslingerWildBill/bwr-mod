@@ -97,7 +97,7 @@ public final class VesselClientCheck {
         mc.options.hideGui=true;mc.getToasts().clear();if(shown<130)return;
         try {
             var dir=mc.gameDirectory.toPath().resolve("vessel-check");java.nio.file.Files.createDirectories(dir);
-            try(var image=Screenshot.takeScreenshot(mc.getMainRenderTarget())){image.writeToFile(dir.resolve(NAMES[stage]+".png"));}
+            CheckShots.save(mc,dir.resolve(NAMES[stage]+".png"));
         }catch(java.io.IOException ex){throw new IllegalStateException(ex);}
         com.mojang.logging.LogUtils.getLogger().info("VESSEL CLIENT CHECK: {}",NAMES[stage]);requested=false;
         if(++stage==NAMES.length){com.mojang.logging.LogUtils.getLogger().info("VESSEL CLIENT CHECK PASS: four sizes, materials, open head, break/repair and controller removal");mc.stop();}

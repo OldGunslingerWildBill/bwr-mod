@@ -140,7 +140,7 @@ public final class PumpPanelClientCheck {
         if(!ready || ++shown<20)return;
         try {
             var directory=mc.gameDirectory.toPath().resolve("panel-check");java.nio.file.Files.createDirectories(directory);
-            try(var screenshot=Screenshot.takeScreenshot(mc.getMainRenderTarget())){screenshot.writeToFile(directory.resolve(NAMES[stage]+".png"));}
+            CheckShots.save(mc,directory.resolve(NAMES[stage]+".png"));
             LogUtils.getLogger().info("PUMP PANEL CLIENT CHECK: rendered and synchronized {}",NAMES[stage]);
         } catch(java.io.IOException e){throw new IllegalStateException("Could not save panel check",e);}
         mc.player.closeContainer();requested=false;
