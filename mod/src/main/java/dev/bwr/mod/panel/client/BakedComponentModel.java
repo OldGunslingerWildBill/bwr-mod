@@ -345,6 +345,11 @@ final class BakedComponentModel {
         poseFlagRgb = flagRgb;
     }
 
+    /** The angle of the last pose, in degrees (for checks). */
+    float drawnAngle() {
+        return poseAngle;
+    }
+
     /**
      * A key for the geometry {@link #emitPosed} would draw in the current pose: equal keys mean equal geometry.
      * Zero for a meter, whose moving parts are drawn live and never recorded.

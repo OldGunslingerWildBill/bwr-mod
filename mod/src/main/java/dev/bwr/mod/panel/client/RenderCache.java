@@ -37,6 +37,11 @@ public final class RenderCache {
         return baked != null;
     }
 
+    /** The angle the baked model last posed its moving parts at, in degrees; NaN for the classic look. For checks. */
+    public float drawnAngle() {
+        return baked == null ? Float.NaN : baked.drawnAngle();
+    }
+
     /** The cache of {@code component}, created on first use. */
     public static RenderCache of(PanelComponent component) {
         if (component.clientCache instanceof RenderCache cache) {
