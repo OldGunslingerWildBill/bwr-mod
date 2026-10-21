@@ -1,29 +1,44 @@
 package dev.bwr.mod.gui.client;
 
 import dev.bwr.mod.gui.CondenserMenu;
-import net.minecraft.client.gui.GuiGraphics;
+import dev.bwr.mod.gui.client.style.BwrStyle;
+import dev.bwr.mod.gui.client.style.BwrStyle.Status;
+import dev.bwr.mod.gui.client.style.Layout;
+import dev.bwr.mod.gui.client.style.UiElement;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
+/** Read-only instrumentation of the surface condenser: its water and steam inventories and what it is doing with them. */
 public class CondenserScreen extends BwrScreen<CondenserMenu> {
-    public CondenserScreen(CondenserMenu menu,Inventory inv,Component title){super(menu,inv,title,null,330,240);}
-    @Override protected void renderBg(GuiGraphics g,float partial,int x,int y){
-        g.fill(leftPos,topPos,leftPos+imageWidth,topPos+imageHeight,0xFF171D26);
-        g.fill(leftPos,topPos,leftPos+imageWidth,topPos+23,0xFF293A4E);g.renderOutline(leftPos,topPos,imageWidth,imageHeight,0xFF58708A);
+
+    public CondenserScreen(CondenserMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title, 400, 168);
     }
-    @Override protected void renderLabels(GuiGraphics g,int x,int y){g.drawString(font,title,10,8,TEXT_BRIGHT,false);}
-    @Override protected void renderContent(GuiGraphics g,int x,int y){
-        text(g,menu.present&&menu.ready?"Surface condenser":"Waiting for complete, loaded condenser",12,32,TEXT);
-        readout(g,"Cold cooling water",big(menu.cold)+" kg",12,53,298,ACCENT);
-        readout(g,"Hot cooling water",big(menu.hot)+" kg",12,70,298,TEXT_BRIGHT);
-        readout(g,"Hotwell / condensate",big(menu.condensate)+" kg",12,87,298,TEXT_BRIGHT);
-        readout(g,"Buffered steam",num(menu.steam,1)+" kg",12,104,298,TEXT_BRIGHT);
-        readout(g,"Steam condensed",num(menu.steamRate,1)+" kg/s",12,123,298,TEXT_BRIGHT);
-        readout(g,"Cooling-water flow",big(menu.coolingRate)+" kg/s",12,140,298,TEXT_BRIGHT);
-        readout(g,"Heat rejected",num(menu.rejectedMW,1)+" MW",12,157,298,TEXT_BRIGHT);
-        text(g,"Cooling water: "+num(menu.coldC,1)+" -> "+num(menu.hotC,1)+" C",12,180,TEXT_DIM);
-        text(g,"Hotwell: "+num(menu.condensateC,1)+" C",12,194,TEXT_DIM);
-        text(g,"Backpressure: "+num(menu.pressure,2)+" psia | "+num(menu.vacuum,1)+" inHg vacuum",12,208,TEXT_DIM);
-        text(g,"Round side ports: hotwell makeup water in",12,224,TEXT_DIM);
+
+    private boolean running() {
+        return menu.present && menu.ready;
+    }
+
+    @Override
+    protected UiElement buildUi() {
+        var inventory = Layout.card("Water and steam",
+                Layout.row("Cold cooling water", () -> big(menu.cold), "kg").tip("Cooling water waiting to be pumped through the tubes."),
+                Layout.row("Hot cooling water", () -> big(menu.hot), "kg").tip("Cooling water that has passed through the tubes."),
+                Layout.row("Hotwell water", () -> big(menu.condensate), "kg").tip("Hotwell / condensate: condensed steam collected in the hotwell."),
+                Layout.row("Buffered steam", () -> num(menu.steam, 1), "kg"),
+                Layout.row("Cooling water in", () -> num(menu.coldC, 1), "C"),
+                Layout.row("Cooling water out", () -> num(menu.hotC, 1), "C"),
+                Layout.row("Hotwell temperature", () -> num(menu.condensateC, 1), "C"));
+        var performance = Layout.card("Performance",
+                Layout.row("Steam condensed", () -> num(menu.steamRate, 1), "kg/s"),
+                Layout.row("Cooling-water flow", () -> big(menu.coolingRate), "kg/s"),
+                Layout.row("Heat rejected", () -> num(menu.rejectedMW, 1), "MW"),
+                Layout.row("Backpressure", () -> num(menu.pressure, 2), "psia"),
+                Layout.row("Vacuum", () -> num(menu.vacuum, 1), "inHg"));
+        return Layout.column(BwrStyle.SP2,
+                Layout.statusLine(() -> running() ? Status.NORMAL : Status.CAUTION,
+                        () -> running() ? "Surface condenser" : "Waiting for complete, loaded condenser", null),
+                Layout.split(BwrStyle.SP2, inventory, performance).stackBelow(360),
+                Layout.note("Round side ports: hotwell makeup water in."));
     }
 }

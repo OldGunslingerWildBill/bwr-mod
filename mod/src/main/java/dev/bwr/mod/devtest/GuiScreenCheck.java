@@ -5,12 +5,19 @@ import dev.bwr.core.turbine.CoolingWaterUnit.Design;
 import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.gui.*;
 import dev.bwr.mod.gui.client.*;
+import dev.bwr.mod.gui.client.style.BwrButton;
+import dev.bwr.mod.gui.client.style.BwrEditBox;
+import dev.bwr.mod.gui.client.style.BwrTab;
+import dev.bwr.mod.gui.client.style.Ui;
 import dev.bwr.mod.reactor.VesselState;
 import dev.bwr.mod.registry.BwrItems;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratedElementType;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.narration.NarrationThunk;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.BlockPos;
@@ -34,7 +41,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -50,6 +59,16 @@ import java.util.function.Function;
  * <p>Besides the two real scales the screens are also laid out once at 320 x 240 and 427 x 240, the smallest GUI
  * size the game ever gives a screen (it picks the largest scale that leaves at least 320 x 240), by resizing the
  * screen directly; that run is checked, not photographed.
+ *
+ * <p>What is asserted, per screen and size:
+ * <ul>
+ *   <li>no visible widget, panel or slot lies outside the window, no widget outside its panel, no two widgets overlap
+ *       and no widget covers a slot;</li>
+ *   <li>every string the style draws lies inside the panel (horizontally always, vertically unless it is scrolled
+ *       content, which is clipped by design) - text is cut with an ellipsis and a tooltip, never left to run over;</li>
+ *   <li>(once per screen) every enabled control can be reached with Tab, has a tooltip and a narration title, and a
+ *       focused tab is activated by Space.</li>
+ * </ul>
  */
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
 public final class GuiScreenCheck {
@@ -58,10 +77,16 @@ public final class GuiScreenCheck {
     private static final int[][] SMALL = {{320, 240}, {427, 240}};
 
     /** One screen in one state. {@code setup} may click a tab or move the mouse once the screen is open. */
-    private record Scenario(String name, Function<Inventory, Screen> make, Consumer<Screen> setup) {
+    private record Scenario(String name, Function<Inventory, Screen> make, Consumer<Screen> setup, Consumer<Screen> late, boolean interactive) {
         Scenario(String name, Function<Inventory, Screen> make) {
             this(name, make, s -> {
-            });
+            }, s -> {
+            }, false);
+        }
+
+        Scenario(String name, Function<Inventory, Screen> make, Consumer<Screen> setup) {
+            this(name, make, setup, s -> {
+            }, false);
         }
     }
 
@@ -403,6 +428,38 @@ public final class GuiScreenCheck {
             m.present = true;
             return new SuppressionPoolScreen(m, i, t("Suppression Tank"));
         }));
+        // the keyboard, pointer and alarm states of the style
+        s.add(new Scenario("reactor-flux-alarms", i -> {
+            var m = new ReactorPanelMenu(99, i, P);
+            reactorLive(m, true);
+            return new ReactorPanelScreen(m, i, t("Reactor Control Panel"));
+        }));
+        s.add(new Scenario("reactor-map-focus", i -> {
+            var m = new ReactorPanelMenu(99, i, P);
+            reactorLive(m, false);
+            return new ReactorPanelScreen(m, i, t("Reactor Control Panel"));
+        }, screen -> focusGrid(screen, 3), screen -> {
+        }, true));
+        s.add(new Scenario("pump-hover-and-focus", i -> new PumpControlScreen(pump(i, false, "rhr"), i, t("RHR / LPCI Pump")),
+                screen -> focusButton(screen, "Apply"), screen -> hoverButton(screen, "Control: Panel"), true));
+        s.add(new Scenario("pump-invalid-entry", i -> new PumpControlScreen(pump(i, false, "rhr"), i, t("RHR / LPCI Pump")),
+                screen -> typeInto(screen, "140"), screen -> {
+        }, true));
+        s.add(new Scenario("terry-ports", i -> new TerryTurbineScreen(terry(i, false), i, t("HPCI Terry Turbine Pump")),
+                screen -> click(screen, "PORTS")));
+        s.add(new Scenario("reactor-info-scrolled", i -> {
+            var m = new ReactorPanelMenu(99, i, P);
+            reactorLive(m, true);
+            return new ReactorPanelScreen(m, i, t("Reactor Control Panel"));
+        }, screen -> {
+            click(screen, "INFO");
+        }, screen -> screen.mouseScrolled(screen.width / 2.0, screen.height / 2.0, 0, -6), true));
+        s.add(new Scenario("refuelling-selection", i -> {
+            var m = new RefuellingMenu(99, i, P);
+            refuel(m);
+            return new RefuellingScreen(m, i, t("Refuelling Floor"));
+        }, screen -> focusGrid(screen, 6), screen -> {
+        }, true));
         s.add(new Scenario("service-slc-tank", i -> service(i, 1, 0, false, "Boron tank assembled", "Solution: 12,400.00 / 15,000 kg",
                 "Dissolved borate: 1,340.25 kg", "Elemental boron: 21,300.00 ppm", "Water temperature: 31.20 C", "Fill water through the top flange.",
                 "Use borate charges on the tank to dissolve them.", "Bottom front flange feeds the SLC pump.")));
@@ -533,18 +590,74 @@ public final class GuiScreenCheck {
         LOG.warn("GUI SCREEN CHECK: no button '{}' on {}", label, screen.getClass().getSimpleName());
     }
 
+    private static void focusGrid(Screen screen, int steps) {
+        for (GuiEventListener c : screen.children()) {
+            if (c instanceof LatticeGridWidget grid && grid.visible) {
+                screen.setFocused(grid);
+                for (int i = 0; i < steps; i++) {
+                    grid.keyPressed(i % 3 == 2 ? 264 : 262, 0, 0);
+                }
+                grid.keyPressed(257, 0, 0);
+                return;
+            }
+        }
+    }
+
+    private static void focusButton(Screen screen, String label) {
+        for (GuiEventListener c : screen.children()) {
+            if (c instanceof BwrButton b && b.getMessage().getString().equals(label)) {
+                screen.setFocused(b);
+                return;
+            }
+        }
+    }
+
+    private static void hoverButton(Screen screen, String label) {
+        Minecraft mc = Minecraft.getInstance();
+        for (GuiEventListener c : screen.children()) {
+            if (c instanceof BwrButton b && b.getMessage().getString().equals(label)) {
+                double scale = mc.getWindow().getGuiScale();
+                org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), (b.getX() + b.getWidth() / 2.0) * scale,
+                        (b.getY() + b.getHeight() / 2.0) * scale);
+                return;
+            }
+        }
+    }
+
+    private static void typeInto(Screen screen, String text) {
+        for (GuiEventListener c : screen.children()) {
+            if (c instanceof BwrEditBox box) {
+                box.setValue(text);
+                screen.setFocused(box);
+                return;
+            }
+        }
+    }
+
     // -----------------------------------------------------------------
     // Checks
     // -----------------------------------------------------------------
 
-    /** Everything the screen draws that has a rectangle: widgets, the panel and the slots must lie inside the window. */
+    /** Everything the screen draws that has a rectangle must lie inside the window, and widgets and slots must not collide. */
     static List<String> bounds(String name, Screen screen, int w, int h) {
         List<String> out = new ArrayList<>();
+        List<AbstractWidget> widgets = new ArrayList<>();
         for (GuiEventListener c : screen.children()) {
             if (c instanceof AbstractWidget a && a.visible) {
+                widgets.add(a);
                 if (a.getX() < 0 || a.getY() < 0 || a.getX() + a.getWidth() > w || a.getY() + a.getHeight() > h) {
                     out.add(name + ": widget '" + a.getMessage().getString() + "' " + a.getX() + "," + a.getY() + " "
                             + a.getWidth() + "x" + a.getHeight() + " outside " + w + "x" + h);
+                }
+            }
+        }
+        for (int i = 0; i < widgets.size(); i++) {
+            for (int j = i + 1; j < widgets.size(); j++) {
+                AbstractWidget p = widgets.get(i);
+                AbstractWidget q = widgets.get(j);
+                if (p.getX() < q.getX() + q.getWidth() && q.getX() < p.getX() + p.getWidth()
+                        && p.getY() < q.getY() + q.getHeight() && q.getY() < p.getY() + p.getHeight()) {
+                    out.add(name + ": widgets '" + p.getMessage().getString() + "' and '" + q.getMessage().getString() + "' overlap");
                 }
             }
         }
@@ -553,10 +666,119 @@ public final class GuiScreenCheck {
             if (x < 0 || y < 0 || x + pw > w || y + ph > h) {
                 out.add(name + ": panel " + x + "," + y + " " + pw + "x" + ph + " outside " + w + "x" + h);
             }
+            for (AbstractWidget wd : widgets) {
+                if (wd.getX() < x || wd.getY() < y || wd.getX() + wd.getWidth() > x + pw || wd.getY() + wd.getHeight() > y + ph) {
+                    out.add(name + ": widget '" + wd.getMessage().getString() + "' is outside its panel");
+                }
+            }
             for (var slot : a.getMenu().slots) {
                 if (slot.x < 0 || slot.y < 0 || slot.x + 16 > pw || slot.y + 16 > ph) {
                     out.add(name + ": slot " + slot.index + " at " + slot.x + "," + slot.y + " outside its panel " + pw + "x" + ph);
                 }
+                for (AbstractWidget wd : widgets) {
+                    int sx = x + slot.x, sy = y + slot.y;
+                    if (wd.getX() < sx + 16 && sx < wd.getX() + wd.getWidth() && wd.getY() < sy + 16 && sy < wd.getY() + wd.getHeight()) {
+                        out.add(name + ": widget '" + wd.getMessage().getString() + "' covers slot " + slot.index);
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    /** Every string the style drew lies inside the panel: across always, down unless it was clipped scrolled content. */
+    static List<String> textInsidePanel(String name, Screen screen, List<Ui.DrawnText> drawn) {
+        List<String> out = new ArrayList<>();
+        if (!(screen instanceof AbstractContainerScreen<?> a)) {
+            return out;
+        }
+        int left = a.getGuiLeft(), top = a.getGuiTop(), right = left + a.getXSize(), bottom = top + a.getYSize();
+        for (Ui.DrawnText t : drawn) {
+            boolean across = t.x() >= left && t.x() + t.width() <= right;
+            boolean down = t.clipped() || (t.y() >= top && t.y() + t.height() <= bottom);
+            if (!across || !down) {
+                out.add(name + ": text '" + t.text() + "' at " + t.x() + "," + t.y() + " " + t.width() + "x" + t.height()
+                        + " leaves its panel " + left + "," + top + " " + a.getXSize() + "x" + a.getYSize());
+            }
+        }
+        return out;
+    }
+
+    /**
+     * A body that needs scrolling is a fallback for a window too small for the screen. The screens fit the smallest 16:9
+     * GUI size (427 x 240) and every real scale of a 1080p window without it; at 320 x 240 (4:3 monitors) they may scroll.
+     */
+    static List<String> noBodyScroll(String name, Screen screen, boolean required) {
+        List<String> out = new ArrayList<>();
+        if (required && screen instanceof BwrScreen<?> b && b.bodyScrolls()) {
+            out.add(name + ": the body does not fit and scrolls");
+        }
+        return out;
+    }
+
+    /** Collects what a widget says to a screen reader. */
+    private static final class Say implements NarrationElementOutput {
+        final List<String> titles = new ArrayList<>();
+        boolean any;
+
+        @Override
+        public void add(NarratedElementType type, NarrationThunk<?> thunk) {
+            thunk.getText(text -> {
+                any = true;
+                if (type == NarratedElementType.TITLE) {
+                    titles.add(text);
+                }
+            });
+        }
+
+        @Override
+        public NarrationElementOutput nest() {
+            return this;
+        }
+    }
+
+    /** Keyboard and narration: every enabled control is reachable with Tab, has a tooltip and says its name. */
+    static List<String> accessibility(String name, Screen screen) {
+        List<String> out = new ArrayList<>();
+        List<AbstractWidget> controls = new ArrayList<>();
+        for (GuiEventListener c : screen.children()) {
+            if (c instanceof AbstractWidget a && a.visible && a.active) {
+                controls.add(a);
+            }
+        }
+        for (AbstractWidget control : controls) {
+            Say say = new Say();
+            control.updateNarration(say);
+            if (say.titles.stream().allMatch(String::isBlank)) {
+                out.add(name + ": control " + control.getClass().getSimpleName() + " at " + control.getX() + "," + control.getY() + " has no narration title");
+            }
+            boolean map = control instanceof LatticeGridWidget;
+            if (!map && control.getTooltip() == null) {
+                out.add(name + ": control '" + control.getMessage().getString() + "' has no tooltip");
+            }
+        }
+        Set<GuiEventListener> reached = new HashSet<>();
+        screen.clearFocus();
+        for (int i = 0; i < controls.size() + 2; i++) {
+            screen.keyPressed(258, 0, 0);
+            reached.add(screen.getFocused());
+        }
+        for (AbstractWidget control : controls) {
+            if (!reached.contains(control)) {
+                out.add(name + ": control '" + control.getMessage().getString() + "' cannot be reached with Tab");
+            }
+        }
+        screen.clearFocus();
+        // a focused tab is activated by Space
+        for (AbstractWidget control : controls) {
+            if (control instanceof BwrTab tab && !tab.isSelected()) {
+                screen.setFocused(tab);
+                screen.keyPressed(32, 0, 0);
+                if (!tab.isSelected()) {
+                    out.add(name + ": Space did not select tab '" + tab.getMessage().getString() + "'");
+                }
+                screen.clearFocus();
+                break;
             }
         }
         return out;
@@ -600,6 +822,7 @@ public final class GuiScreenCheck {
             built = true;
             scenarios = build();
             directory = mc.gameDirectory.toPath().resolve("gui-check");
+            clearPictures();
             fill(mc.player.getInventory());
             mc.options.hideGui = true;
             applyScale(mc, SCALES[0]);
@@ -626,21 +849,37 @@ public final class GuiScreenCheck {
             // Park the pointer in the corner so no tooltip or hover state hides the layout in the picture.
             org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), 3, 3);
             sc.setup().accept(mc.screen);
+            Ui.startProbe();
             return;
         }
         if (small) {
             int[] size = SMALL[scaleIndex - SCALES.length];
+            Ui.endProbe();
+            if (sc.interactive()) {
+                next();
+                return;
+            }
             mc.screen.resize(mc, size[0], size[1]);
-            violations.addAll(bounds(sc.name() + " @" + size[0] + "x" + size[1], mc.screen, size[0], size[1]));
+            String at = sc.name() + " @" + size[0] + "x" + size[1];
+            violations.addAll(bounds(at, mc.screen, size[0], size[1]));
+            violations.addAll(noBodyScroll(at, mc.screen, size[0] >= 400));
             next();
             return;
         }
-        if (++wait < 8) {
+        if (wait < 4) {
+            org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), 3, 3);
+        }
+        if (++wait == 5) {
+            sc.late().accept(mc.screen);
+        }
+        if (wait < 9) {
             return;
         }
         int w = mc.getWindow().getGuiScaledWidth(), h = mc.getWindow().getGuiScaledHeight();
         String label = sc.name() + " @scale" + SCALES[scaleIndex];
         violations.addAll(bounds(label, mc.screen, w, h));
+        violations.addAll(noBodyScroll(label, mc.screen, true));
+        violations.addAll(textInsidePanel(label, mc.screen, Ui.endProbe()));
         try {
             Path folder = directory.resolve("scale" + SCALES[scaleIndex]);
             Files.createDirectories(folder);
@@ -648,7 +887,26 @@ public final class GuiScreenCheck {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
+        if (scaleIndex == 0 && !sc.interactive()) {
+            violations.addAll(accessibility(label, mc.screen));
+        }
         next();
+    }
+
+    /** Removes the pictures of an earlier run, so a folder never mixes two runs. */
+    private static void clearPictures() {
+        for (int scale : SCALES) {
+            Path folder = directory.resolve("scale" + scale);
+            if (Files.isDirectory(folder)) {
+                try (var files = Files.list(folder)) {
+                    for (Path file : (Iterable<Path>) files::iterator) {
+                        Files.deleteIfExists(file);
+                    }
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+        }
     }
 
     private static void next() {
@@ -663,7 +921,25 @@ public final class GuiScreenCheck {
         wait = 0;
     }
 
+    /** Escape closes a machine screen, with an edit box focused or not. */
+    private static void escapeCloses(Minecraft mc) {
+        Inventory inventory = mc.player.getInventory();
+        for (boolean typing : new boolean[]{false, true}) {
+            Screen screen = new PumpControlScreen(pump(inventory, false, "rhr"), inventory, t("RHR / LPCI Pump"));
+            mc.setScreen(screen);
+            if (typing) {
+                typeInto(screen, "50");
+            }
+            screen.keyPressed(256, 0, 0);
+            if (mc.screen == screen) {
+                violations.add("pump panel: Escape did not close the screen" + (typing ? " while the speed field was focused" : ""));
+                mc.setScreen(null);
+            }
+        }
+    }
+
     private static void finish(Minecraft mc) {
+        escapeCloses(mc);
         try {
             Files.createDirectories(directory);
             Files.writeString(directory.resolve("violations.txt"), String.join("\n", violations) + "\n");
@@ -673,12 +949,12 @@ public final class GuiScreenCheck {
         for (String v : violations) {
             LOG.warn("GUI SCREEN CHECK VIOLATION {}", v);
         }
-        mc.setScreen(null);
         boolean lenient = Boolean.getBoolean("bwr.guiCheckLenient");
         if (!violations.isEmpty() && !lenient) {
             mc.stop();
             throw new AssertionError("GUI SCREEN CHECK FAIL: " + violations.size() + " violations, first: " + violations.get(0));
         }
+        mc.setScreen(null);
         LOG.info("GUI SCREEN CHECK {}: {} screens x 2 scales + 2 minimum sizes, {} violations", violations.isEmpty() ? "PASS" : "DONE (lenient)",
                 scenarios.size(), violations.size());
         mc.stop();

@@ -810,7 +810,7 @@ print(f"Registered blocks          : {len(blocks)}")
 print(f"Registered items           : {len(all_items)}  ({len(block_items)} block items + {len(extra_items)} standalone)")
 print(f"Block models               : {len([k for k in models if '/models/block/' in k])}")
 print(f"Item models                : {len([k for k in models if '/models/item/' in k])}")
-print(f"Textures on disk           : block={len(os.listdir(os.path.join(RES,'assets/bwr/textures/block')))} item={len(os.listdir(os.path.join(RES,'assets/bwr/textures/item')))} gui={len(os.listdir(os.path.join(RES,'assets/bwr/textures/gui')))}"
+print(f"Textures on disk           : block={len(os.listdir(os.path.join(RES,'assets/bwr/textures/block')))} item={len(os.listdir(os.path.join(RES,'assets/bwr/textures/item')))} gui={len(os.listdir(os.path.join(RES,'assets/bwr/textures/gui'))) if os.path.isdir(os.path.join(RES,'assets/bwr/textures/gui')) else 0}"
       f"  ({len(textures_on_disk)} .png total)")
 print(f"Concrete texture refs      : {tex_refs} from models, {len(java_tex_refs)} from Java "
       f"({sum(len(v) for v in java_tex_refs.values())} call site(s))")

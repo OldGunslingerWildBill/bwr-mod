@@ -1,5 +1,7 @@
 package dev.bwr.mod.gui.client;
 
+import dev.bwr.mod.gui.client.style.BwrStyle;
+import dev.bwr.mod.gui.client.style.Ui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarratedElementType;
@@ -24,6 +26,11 @@ import java.util.function.IntConsumer;
  * Legacy fuel uses a 31x31 lattice and compact fuel a 42x42 lattice. Only
  * occupied geometry is drawn: the bounding box of the supplied cells sets the
  * scale, and two-pixel cells keep maximum cores within the panel.
+ *
+ * <h2>Keyboard</h2>
+ * Focused (Tab), the arrow keys move a cursor along the lattice, Enter or Space select the cursor cell exactly as a click
+ * does, plus and minus zoom and Home fits the view. The cursor cell is outlined and its tooltip text is shown and narrated,
+ * so the map is usable without a mouse. The widget draws its own inset well and a focus ring.
  */
 public class LatticeGridWidget extends AbstractWidget {
 
@@ -87,6 +94,7 @@ public class LatticeGridWidget extends AbstractWidget {
     private int selected = -1;
     private int marked = -1;
     private int hovered = -1;
+    private int cursor = -1;
     private boolean multiSelect, zoomable, panning;
     private final java.util.LinkedHashSet<Integer> selection = new java.util.LinkedHashSet<>();
     private int zoomSteps;
@@ -211,10 +219,14 @@ public class LatticeGridWidget extends AbstractWidget {
     protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         measure();
         hovered = isMouseOver(mouseX, mouseY) ? cellAt(mouseX, mouseY) : -1;
+        if (cursor >= cells.count()) {
+            cursor = -1;
+        }
+        Ui.well(graphics, getX(), getY(), getWidth(), getHeight());
 
         // GuiGraphics otherwise flushes after each fill: a large core made
         // over a thousand draw calls for tiny squares on every frame.
-        graphics.enableScissor(getX(), getY(), getX() + getWidth(), getY() + getHeight());
+        graphics.enableScissor(getX() + 1, getY() + 1, getX() + getWidth() - 1, getY() + getHeight() - 1);
         graphics.drawManaged(() -> {
             int width = Math.max(1, cells.latticeWidth());
             for (int i = 0; i < cells.count(); i++) {
@@ -231,9 +243,19 @@ public class LatticeGridWidget extends AbstractWidget {
                 } else if (i == hovered) {
                     outline(graphics, x, y, 0xFF9FD2FF);
                 }
+                if (i == cursor && isFocused()) {
+                    outline(graphics, x, y, BwrStyle.ACCENT);
+                    if (cellPx > 4) {
+                        graphics.fill(x + 1, y + 1, x + 2, y + 2, 0xFF000000);
+                        graphics.fill(x + cellPx - 3, y + cellPx - 3, x + cellPx - 2, y + cellPx - 2, 0xFF000000);
+                    }
+                }
             }
         });
         graphics.disableScissor();
+        if (isFocused()) {
+            Ui.focusRing(graphics, getX(), getY(), getWidth(), getHeight());
+        }
     }
 
     private void outline(GuiGraphics graphics, int x, int y, int colour) {
@@ -246,13 +268,24 @@ public class LatticeGridWidget extends AbstractWidget {
 
     /** Tooltip for whatever is under the cursor. Empty when nothing is. */
     public List<Component> hoverTooltip() {
-        return hovered >= 0 ? cells.tooltip(hovered) : List.of();
+        if (hovered >= 0) {
+            return cells.tooltip(hovered);
+        }
+        return isFocused() && cursor >= 0 && cursor < cells.count() ? cells.tooltip(cursor) : List.of();
     }
 
     @Override
     public void onClick(double mouseX, double mouseY) {
         measure();
         int cell = cellAt(mouseX, mouseY);
+        if (cell >= 0) {
+            cursor = cell;
+        }
+        activate(cell);
+    }
+
+    /** Selects (or, on a refuelling map, toggles) a cell: what a click on it does. */
+    private void activate(int cell) {
         if (cell >= 0) {
             selected = cell;
             if (multiSelect && !selection.add(cell)) {
@@ -289,5 +322,120 @@ public class LatticeGridWidget extends AbstractWidget {
     @Override
     protected void updateWidgetNarration(NarrationElementOutput output) {
         output.add(NarratedElementType.TITLE, Component.translatable("gui.bwr.core_map"));
+        List<Component> lines = hoverTooltip();
+        if (!lines.isEmpty()) {
+            StringBuilder text = new StringBuilder();
+            for (Component line : lines) {
+                text.append(text.length() == 0 ? "" : ". ").append(line.getString());
+            }
+            output.add(NarratedElementType.HINT, Component.literal(text.toString()));
+        }
+        if (isFocused()) {
+            output.add(NarratedElementType.USAGE, Component.literal(
+                    "Arrow keys move over the map, Enter or Space select, plus and minus zoom, Home fits"));
+        }
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (!isFocused() || cells.count() == 0) {
+            return false;
+        }
+        switch (keyCode) {
+            case 263 -> moveCursor(-1, 0);
+            case 262 -> moveCursor(1, 0);
+            case 265 -> moveCursor(0, -1);
+            case 264 -> moveCursor(0, 1);
+            case 257, 335, 32 -> {
+                if (cursor < 0) {
+                    cursor = nearestToCentre();
+                }
+                activate(cursor);
+            }
+            case 61, 334 -> zoomBy(1);
+            case 45, 333 -> zoomBy(-1);
+            case 268 -> resetView();
+            default -> {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private int nearestToCentre() {
+        measure();
+        int width = Math.max(1, cells.latticeWidth());
+        double cx = minColumn + columns / 2.0;
+        double cy = minRow + rows / 2.0;
+        int best = 0;
+        double bestDistance = Double.MAX_VALUE;
+        for (int i = 0; i < cells.count(); i++) {
+            int index = cells.latticeIndex(i);
+            double d = Math.hypot(index % width - cx, index / width - cy);
+            if (d < bestDistance) {
+                bestDistance = d;
+                best = i;
+            }
+        }
+        return best;
+    }
+
+    /** Moves the keyboard cursor one lattice step in a direction, skipping over gaps in a round core. */
+    private void moveCursor(int dx, int dy) {
+        if (cursor < 0 || cursor >= cells.count()) {
+            cursor = nearestToCentre();
+            return;
+        }
+        int width = Math.max(1, cells.latticeWidth());
+        int index = cells.latticeIndex(cursor);
+        int column = index % width;
+        int row = index / width;
+        for (int step = 1; step <= Math.max(columns, rows); step++) {
+            int c = column + dx * step;
+            int r = row + dy * step;
+            if (c < minColumn || r < minRow || c >= minColumn + columns || r >= minRow + rows) {
+                return;
+            }
+            int wanted = r * width + c;
+            for (int i = 0; i < cells.count(); i++) {
+                if (cells.latticeIndex(i) == wanted) {
+                    cursor = i;
+                    revealCursor();
+                    return;
+                }
+            }
+        }
+    }
+
+    private void zoomBy(int steps) {
+        if (!zoomable) {
+            return;
+        }
+        zoomSteps = Math.clamp(zoomSteps + steps, 0, 11);
+        measure();
+        revealCursor();
+    }
+
+    /** Pans a zoomed map so the cursor cell is inside the view. */
+    private void revealCursor() {
+        measure();
+        if (cursor < 0 || cursor >= cells.count()) {
+            return;
+        }
+        int width = Math.max(1, cells.latticeWidth());
+        int index = cells.latticeIndex(cursor);
+        int x = originX + (index % width - minColumn) * cellPx;
+        int y = originY + (index / width - minRow) * cellPx;
+        if (x < getX()) {
+            panX += getX() - x;
+        } else if (x + cellPx > getX() + getWidth()) {
+            panX -= x + cellPx - (getX() + getWidth());
+        }
+        if (y < getY()) {
+            panY += getY() - y;
+        } else if (y + cellPx > getY() + getHeight()) {
+            panY -= y + cellPx - (getY() + getHeight());
+        }
+        measure();
     }
 }
