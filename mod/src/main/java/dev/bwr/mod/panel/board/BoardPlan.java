@@ -1,5 +1,7 @@
 package dev.bwr.mod.panel.board;
 
+import dev.bwr.mod.panel.DeskHalf;
+import dev.bwr.mod.panel.DeskPanelBlock;
 import dev.bwr.mod.panel.DuplexCell;
 import dev.bwr.mod.panel.DuplexPanelBlock;
 import dev.bwr.mod.panel.PanelBlock;
@@ -89,6 +91,10 @@ public final class BoardPlan {
             }
             return;
         }
+        if (frame.kind() == Kind.DESK || frame.kind() == Kind.DESK_WIDE) {
+            addDesks(frame, base);
+            return;
+        }
         BlockState state = switch (frame.kind()) {
             case VERTICAL -> BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState();
             case BENCHBOARD -> BwrBlocks.CONTROL_PANEL_BENCHBOARD.get().defaultBlockState();
@@ -106,6 +112,26 @@ public final class BoardPlan {
             for (int c = 0; c < frame.columns(); c++) {
                 blocks.add(new Block(blockOf(frame, base, c, row), state, item));
             }
+        }
+    }
+
+    /**
+     * A run of control desks. A 2 m desk is two blocks: the right half, as the operator sees it, is the one whose item
+     * pays for the desk (the item places both halves, the left one to the operator's left), the left half costs nothing.
+     */
+    private void addDesks(Frame frame, BlockPos base) {
+        if (frame.kind() == Kind.DESK) {
+            BlockState desk = BwrBlocks.CONTROL_PANEL_DESK.get().defaultBlockState().setValue(PanelBlock.FACING, facing);
+            for (int c = 0; c < frame.columns(); c++) {
+                blocks.add(new Block(base.relative(right(), c), desk, BwrItems.CONTROL_PANEL_DESK.get()));
+            }
+            return;
+        }
+        BlockState wide = BwrBlocks.CONTROL_PANEL_DESK_WIDE.get().defaultBlockState().setValue(PanelBlock.FACING, facing);
+        for (int c = 0; c < frame.columns(); c++) {
+            blocks.add(new Block(base.relative(right(), 2 * c + 1), wide.setValue(DeskPanelBlock.HALF, DeskHalf.RIGHT),
+                    BwrItems.CONTROL_PANEL_DESK_WIDE.get()));
+            blocks.add(new Block(base.relative(right(), 2 * c), wide.setValue(DeskPanelBlock.HALF, DeskHalf.LEFT), null));
         }
     }
 

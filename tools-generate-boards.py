@@ -5,12 +5,12 @@ The JSON files are the source of truth for the game (see BoardTemplateParser for
 shapes that ship. A shipped board is a BLANK SHAPE named by its form (a vertical board, a benchboard, a duplex board ...):
 panel blocks placed the way they are meant to be run together, with no components, no mimic tape, no reserved spaces and
 no notes. What goes on a board is the player's business (a board is not tied to a reactor function), so nothing here names
-a system. A data pack can still ship a full board with components: the format has not changed.
+a system. A data pack can still ship a full board with components (the format only gained the desk kinds).
 
     python tools-generate-boards.py            # rewrite the board files (and delete the retired ones)
     python tools-generate-boards.py --check    # fail when the files on disk differ from what this would write
 
-Every board is placed unwired (there is nothing to wire). Frames follow BoardTemplate.Kind: at is [right, up, forward] in
+Every board is placed unwired (there is nothing to wire). Frames follow BoardTemplate.Kind (duplex, vertical, benchboard, console, back_panel, desk, desk_wide): at is [right, up, forward] in
 blocks from the board's origin (the top left block for a run, the bench of the left column for a duplex).
 """
 import json
@@ -20,7 +20,7 @@ import sys
 ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "mod/src/main/resources/data/bwr/panel_board")
 
-COLUMNS = 4   # blocks (metres) wide: wide enough to be a board, small enough to place anywhere
+COLUMNS = 4   # blocks (metres) wide: wide enough to be a board, small enough to place anywhere (for desk_wide, columns counts 2 m desks)
 
 
 def run(kind, rows, at):
@@ -47,6 +47,12 @@ BOARDS = [
     ("duplex_board", "Duplex board",
      "Four duplex columns: the board two blocks high, the tilted header above it and the bench in front. Blank: mount what you like on it.",
      [run("duplex", 1, (0, 0, 0))]),
+    ("control_desk_1m", "Control desk (1 m)",
+     "A run of four 1 m control desks, each one block wide: a level top at operator desk height. Blank: mount what you like on it.",
+     [run("desk", 1, (0, 0, 0))]),
+    ("control_desk_2m", "Control desk (2 m)",
+     "Two 2 m control desks side by side, four blocks wide in all (each desk is one item and two blocks). Blank: mount what you like on it.",
+     [dict(run("desk_wide", 1, (0, 0, 0)), columns=COLUMNS // 2)]),
 ]
 
 

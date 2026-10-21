@@ -1,0 +1,19 @@
+{
+ "format": 1,
+ "title": "Control desk (1 m)",
+ "description": "A run of four 1 m control desks, each one block wide: a level top at operator desk height. Blank: mount what you like on it.",
+ "order": 7,
+ "frames": [
+  {
+   "id": "main",
+   "kind": "desk",
+   "columns": 4,
+   "rows": 1,
+   "at": [
+    0,
+    0,
+    0
+   ]
+  }
+ ]
+}

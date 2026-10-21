@@ -70,7 +70,7 @@ public final class PremadeBoardTests {
     private static final int FLOOR_Y = 100;
     /** The shipped shapes, in blueprint order: blank boards named by their form. */
     private static final String[] SHIPPED = {"vertical_board", "back_panel", "benchboard", "console",
-            "back_panel_with_benchboard", "duplex_board"};
+            "back_panel_with_benchboard", "duplex_board", "control_desk_1m", "control_desk_2m"};
 
     private interface Body {
         void run(ServerLevel level, BlockPos floor) throws Exception;
@@ -154,6 +154,53 @@ public final class PremadeBoardTests {
     // ---- the shipped templates
 
     @GameTest(template = "empty")
+    public static void deskFramesAreOneRowSixCellsDeepAndCostTheDeskItems(GameTestHelper h) {
+        // the parser: a desk frame is a single row whose face is 16 cells per block by 6 deep
+        BoardTemplateParser.Result one = parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk\",\"columns\":4}],"
+                + "\"components\":[{\"on\":\"a.face\",\"type\":\"bwr:lamp\",\"size\":[2,2],\"at\":[62,4]}]}");
+        check(h, one.ok(), "a desk with a lamp on its last cell: " + one.problems());
+        BoardTemplate.Surface face = one.template().surface("a.face");
+        check(h, face.width() == 64 && face.height() == 6 && face.panelType() == dev.bwr.mod.panel.PanelType.DESK,
+                "a 4 desk face is 64 x 6 cells: " + face);
+        check(h, mentions(parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk\",\"columns\":2}],\"components\":["
+                + "{\"on\":\"a.face\",\"type\":\"bwr:lamp\",\"size\":[2,2],\"at\":[4,5]}]}"), "not inside"), "the air in front of the desk takes nothing");
+        check(h, mentions(parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk\",\"columns\":2,\"rows\":2}]}"), "one row"),
+                "a desk has one row");
+        BoardTemplateParser.Result wide = parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk_wide\",\"columns\":2}]}");
+        check(h, wide.ok() && wide.template().surface("a.face").width() == 64, "two 2 m desks are 64 cells wide: " + wide.problems());
+        check(h, mentions(parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk_wide\",\"columns\":9}]}"), "columns must be 1 to 8"),
+                "a run of 2 m desks counts both blocks of each against the widest group");
+        check(h, mentions(parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk\",\"columns\":2},"
+                + "{\"id\":\"b\",\"kind\":\"desk_wide\",\"columns\":1}]}"), "also used by another frame"), "desks share no block");
+        // the plan: 1 m desks one block each, 2 m desks right half (pays) and left half (free), both facing as the board
+        for (Direction facing : Direction.Plane.HORIZONTAL) {
+            BoardPlan small = new BoardPlan(shipped(h, "control_desk_1m"), BlockPos.ZERO, facing);
+            check(h, small.blocks().size() == 4 && small.blocks().stream().allMatch(b -> b.item() == BwrItems.CONTROL_PANEL_DESK.get()
+                    && b.state().getValue(PanelBlock.FACING) == facing), "1 m desks: " + small.blocks());
+            BoardPlan big = new BoardPlan(shipped(h, "control_desk_2m"), BlockPos.ZERO, facing);
+            check(h, big.blocks().size() == 4 && big.panelPositions().size() == 4, "2 m desks are four panel blocks: " + big.blocks());
+            for (BoardPlan.Block block : big.blocks()) {
+                var half = block.state().getValue(dev.bwr.mod.panel.DeskPanelBlock.HALF);
+                check(h, block.state().getValue(PanelBlock.FACING) == facing && block.item() == (half == dev.bwr.mod.panel.DeskHalf.RIGHT
+                        ? BwrItems.CONTROL_PANEL_DESK_WIDE.get() : null), "a 2 m desk half: " + block);
+                // the other half is where the desk item puts it: the left half to the operator's left of the right one
+                if (half == dev.bwr.mod.panel.DeskHalf.RIGHT) {
+                    BlockPos left = dev.bwr.mod.panel.DeskHalf.LEFT.at(block.pos(), facing);
+                    check(h, big.blocks().stream().anyMatch(b -> b.pos().equals(left)
+                            && b.state().getValue(dev.bwr.mod.panel.DeskPanelBlock.HALF) == dev.bwr.mod.panel.DeskHalf.LEFT),
+                            "no left half beside the right half at " + block.pos());
+                }
+            }
+        }
+        // survival costs the desk items, one per 1 m desk and one per 2 m desk (not per block)
+        Map<Item, Integer> small = BoardPlacer.materials(new BoardPlan(shipped(h, "control_desk_1m"), BlockPos.ZERO, Direction.NORTH));
+        Map<Item, Integer> big = BoardPlacer.materials(new BoardPlan(shipped(h, "control_desk_2m"), BlockPos.ZERO, Direction.NORTH));
+        check(h, small.size() == 1 && small.get(BwrItems.CONTROL_PANEL_DESK.get()) == 4, "1 m desk bill: " + small);
+        check(h, big.size() == 1 && big.get(BwrItems.CONTROL_PANEL_DESK_WIDE.get()) == 2, "2 m desk bill: " + big);
+        h.succeed();
+    }
+
+    @GameTest(template = "empty")
     public static void everyShippedBoardParsesAndValidates(GameTestHelper h) {
         var manager = h.getLevel().getServer().getResourceManager();
         Map<ResourceLocation, net.minecraft.server.packs.resources.Resource> files =
@@ -222,8 +269,10 @@ public final class PremadeBoardTests {
             check(h, !plan.blocks().isEmpty() && !plan.panelPositions().isEmpty() && plan.panelPositions().size() <= plan.blocks().size(),
                     name + ": no panel blocks");
             for (BoardPlan.Block block : plan.blocks()) {
-                // a duplex column also has body cells with no item (the item of its column pays for them)
-                boolean bodyCell = block.item() == null && block.state().getBlock() instanceof dev.bwr.mod.panel.DuplexPanelBlock;
+                // a duplex column also has body cells with no item (the item of its column pays for them), and so has the left
+                // half of a 2 m desk
+                boolean bodyCell = block.item() == null && (block.state().getBlock() instanceof dev.bwr.mod.panel.DuplexPanelBlock
+                        || block.state().getBlock() instanceof dev.bwr.mod.panel.DeskPanelBlock);
                 check(h, block.state().getBlock() instanceof PanelBlock && (bodyCell || block.item() != null
                         && block.item() != net.minecraft.world.item.Items.AIR), name + ": " + block.state() + " is not a panel block with an item");
             }

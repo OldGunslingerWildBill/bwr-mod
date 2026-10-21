@@ -140,8 +140,8 @@ public final class BoardClientCheck {
         }
         if (shots == null) {
             boards = BoardTemplates.ordered();
-            if (boards.size() < 6) {
-                throw new AssertionError("Fewer than six premade boards loaded: " + boards.size());
+            if (boards.size() < 8) {
+                throw new AssertionError("Fewer than eight premade boards loaded: " + boards.size());
             }
             shots = new ArrayList<>();
             for (int i = 0; i < boards.size(); i++) {

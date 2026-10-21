@@ -737,9 +737,9 @@ components, labels and tape for a data pack.)
   the mimic tape its paths need (one per 32 cells, like drawing it). If anything is missing, nothing is placed and the missing
   items are listed (`Missing for Duplex board: 4 x Control Panel (Duplex Board)`). The blueprint is not used up.
 
-### The six shapes
+### The eight shapes
 
-The blueprint ships six blank shapes, each **four blocks (4 m) wide**, named by their physical form, in this cycling order. They
+The blueprint ships eight blank shapes, each **four blocks (4 m) wide**, named by their physical form, in this cycling order. They
 come from the frames the first five boards (rod control, RPV level, RPS, ECCS, neutron monitoring) were built from, with the
 function taken out: they carry **no components, no labels or captions, no mimic tape, no reserved spaces and no notes**, and no
 name of a plant system. (The old per-function boards were removed; a blueprint saved with one of their ids places the first
@@ -753,18 +753,23 @@ shape, the vertical board.)
 | **Console** (`console`) | console, 4 x 1 | 4 `control_panel_console` |
 | **Back panel with benchboard** (`back_panel_with_benchboard`) | back panel 4 x 2 above a benchboard 4 x 1 in front | 8 back + 4 benchboard |
 | **Duplex board** (`duplex_board`) | duplex, 4 columns: the board two blocks high, the tilted header and the bench | 4 `control_panel_duplex` (one item per column) |
+| **Control desk (1 m)** (`control_desk_1m`) | desk, 4 columns: four 1 m desks side by side, one run | 4 `control_panel_desk` |
+| **Control desk (2 m)** (`control_desk_2m`) | desk_wide, 2 columns: two 2 m desks side by side, one run | 2 `control_panel_desk_wide` (each is two blocks) |
 
-The template format only has the five frame kinds above (`duplex`, `vertical`, `benchboard`, `console`, `back_panel`), so the
-control desks, the header strip and canopy, the chamfer corners, the plinths and the end caps are not blueprint shapes; place
-those by hand. (A new frame kind would be a change to the parser and the placer, which the blueprint keeps as they are.)
+The control desks are placed as a run, like the others: a 1 m desk is one block and one item; a 2 m desk is two blocks placed by one
+item (its right half, as the operator sees it, is the block whose item pays; the left half is placed to the operator's left and
+costs nothing), both halves facing the way the board faces. A run of desks is one panel group, so a part can span the seams. A
+desk's face is 16 cells per block by 6 deep (the top), so the cells beyond 6 take nothing in a template either. Four blocks is
+the width of the other shapes; it is two 2 m desks or four 1 m ones. The header strip and canopy, the chamfer corners, the
+plinths and the end caps are not blueprint shapes (no frame kind for them); place those by hand.
 
-`tools-generate-boards.py` writes the six files (`--check` fails when they differ).
+`tools-generate-boards.py` writes the eight files (`--check` fails when they differ).
 
 ### The template format (`data/<namespace>/panel_board/<name>.json`)
 
 A data pack adds a board by shipping a file; `/reload` loads it and the blueprint finds it. The server sends the boards to the
 clients when they join and on `/reload`. A file with any problem is logged (every problem with the entry it belongs to) and
-left out; the other boards still load. `tools-generate-boards.py` writes the six shipped shapes (`python tools-generate-boards.py`;
+left out; the other boards still load. `tools-generate-boards.py` writes the eight shipped shapes (`python tools-generate-boards.py`;
 `--check` fails when the files differ from it); the JSON is the source, and the script is only the list of shapes.
 
 ```json
@@ -785,7 +790,8 @@ left out; the other boards still load. `tools-generate-boards.py` writes the six
 ```
 
 * **frames** are runs of panel blocks. `kind` is `duplex` (one item per column: surfaces `board` 2 blocks tall, `header`,
-  `bench`), `vertical`, `benchboard`, `console` or `back_panel` (surface `face`). `at` is `[right, up, forward]` in blocks from the
+  `bench`), `vertical`, `benchboard`, `console`, `back_panel`, `desk` (1 m control desks, one block each, one row) or `desk_wide` (2 m
+  control desks: `columns` counts desks, two blocks each, one row; the item places both halves) (surface `face`; a desk's face is 6 cells deep). `at` is `[right, up, forward]` in blocks from the
   board's origin (right of the operator, up, toward the operator); for a duplex it is the bench of the left column, for the
   rest the top left block (rows go down, on a benchboard also toward the operator). A surface is named `<frame>.<part>`, for
   example `main.bench`; its cells are 16 per block, x to the operator's right and y down. Frames may not share a block, a group
