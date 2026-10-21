@@ -493,6 +493,7 @@
   "screen.bwr.panel_size.row_current": "> %s x %s cells   %s   (current)",
   "tooltip.bwr.panel_wrench.use": "Right-click a component to configure it",
   "tooltip.bwr.panel_wrench.remove": "Sneak + right-click to remove it",
+  "tooltip.bwr.panel_wrench.finish": "Sneak + right-click a bare spot of a panel, or any furniture or trim, to change its finish",
   "item.bwr.panel_linker": "Panel Linker",
   "tooltip.bwr.panel_linker.empty": "No device linked",
   "tooltip.bwr.panel_linker.device": "Device at %s, %s, %s (%s)",
@@ -1135,5 +1136,11 @@
   "block.bwr.mimic_band_black": "Mimic Band (Black)",
   "block.bwr.wall_display": "Wall Display",
   "block.bwr.wall_display_wide": "Wall Display (Wide)",
-  "block.bwr.control_stand": "Control Stand"
+  "block.bwr.control_stand": "Control Stand",
+  "message.bwr.panel_finish": "Finish: %s",
+  "finish.bwr.seafoam": "Seafoam",
+  "finish.bwr.cream": "Cream",
+  "finish.bwr.tan": "Tan",
+  "finish.bwr.grey": "Grey",
+  "finish.bwr.light_blue": "Light blue"
 }

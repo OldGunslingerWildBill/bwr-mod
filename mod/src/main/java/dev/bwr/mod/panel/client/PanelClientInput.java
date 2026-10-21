@@ -144,6 +144,9 @@ public final class PanelClientInput {
                     event.setSwingHand(true);
                 }
             }
+            if (claim == null && minecraft.player.isShiftKeyDown()) {
+                return; // sneak-click on a bare spot steps the finish through the vanilla path (PanelBlock.useItemOn)
+            }
             event.setCanceled(true);
         }
     }

@@ -15,10 +15,40 @@ order and plug into the same wiring; the worked example below names them as the 
 | --- | --- |
 | Panel blocks (vertical, benchboard, console) | Place them side by side; blocks of one style and facing whose faces line up form a **group** |
 | Component items | Right-click a panel face to place (sneak-click cycles the size). The ghost is green when it fits |
-| Panel wrench | Right-click a component: label, colours and other settings. Sneak-right-click removes it |
+| Panel wrench | Right-click a component: label, colours and other settings. Sneak-right-click removes it. Sneak-right-click on a bare spot of a panel (or on trim or furniture) changes its **finish**, see "Finishes" |
 | **Panel linker** | Wires components. See below |
 | **Networking Wrench** | Selects a device, shows its lines and Networking screen, names machines and wires components. See below |
 | **Mimic tape** | Draws flow lines with arrows on the board face: see section 2d |
+
+### Finishes
+
+Panel bodies, trim blocks and the room furniture come in five paint finishes, as seen in real plants:
+
+| Finish | Paint | Bezel | Where it comes from |
+| --- | --- | --- | --- |
+| seafoam (default) | `A7BCAE` | `7D9284` | the original GE green; every block placed before finishes existed |
+| cream | `DDD6BB` | `A8A38E` | US and French rooms, VVER-440 (CR-FURNITURE-PWR-RESEARCH.md) |
+| tan | `C2AE8A` | `9A8A6C` | Shearon Harris beige with brown trim |
+| grey | `B4B9BC` | `8A9092` | Sizewell B, Qinshan pale grey |
+| light blue | `9CC4D6` | `7499AA` | the owner's simulator (its panel is `5F8A9B` in the screenshot, under that game's lighting) |
+
+**Changing it:** hold the panel wrench and **sneak-right-click** a bare spot of a panel (no component under the crosshair),
+or any end cap, header, plinth, corner or piece of furniture. Each click steps to the next finish (the chat bar names it).
+Clicking a mounted component with the same gesture still removes the component, so the finish gesture only works where
+that would do nothing. A multi-block piece (a duplex column, a 2 high cabinet, the supervisor desk, a wall display)
+changes as one; a single panel changes alone, so a run can be mixed. Grouping and mounting do not look at the finish:
+components span blocks of different finishes, and they are untouched by a repaint.
+
+**Saves and items:** the finish is the blockstate property `finish`; a block with none (an old save) is seafoam. A dropped
+block keeps its finish as the item's vanilla `block_state` component (none for seafoam), and placing the item gives every
+block of the piece that finish. Pick block gives the finished item.
+
+**How it is drawn:** the painted materials of the OBJ models (`face`, `paint`, `bezel`, `back`, `cheek`, `cabinet`, and the
+furniture's `paint`, `bezel`, `top` and the mimic and display `frame`) have a `neoforge_TintIndex`; their textures are grey
+(`art/models/control_panel_trim/make_textures.py`, level 230), and `PanelFinishColors` multiplies in the finish colour for
+blocks and for item icons. Dark trim, kick plinths, hoods, screens, louvres and handles have no tint and keep their colour.
+The annunciator strip, canopy and vent are pictures of a window box and a grille, and keep their seafoam border in every
+finish. Colours are in `PanelFinish.java`; a new finish is one more enum value and one more loot table child per block.
 
 ### Component sizes
 

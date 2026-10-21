@@ -1,18 +1,26 @@
 newmtl paint
-Kd 0.654902 0.737255 0.682353
+Kd 1.000000 1.000000 1.000000
 map_Kd minecraft:block/white_concrete
+neoforge_TintIndex 4
 
 newmtl bezel
-Kd 0.490196 0.572549 0.517647
+Kd 1.000000 1.000000 1.000000
 map_Kd minecraft:block/white_concrete
+neoforge_TintIndex 5
 
 newmtl top
-Kd 0.737255 0.803922 0.756863
+Kd 1.000000 1.000000 1.000000
 map_Kd minecraft:block/white_concrete
+neoforge_TintIndex 6
 
 newmtl trim
 Kd 0.227451 0.247059 0.258824
 map_Kd minecraft:block/white_concrete
+
+newmtl frame
+Kd 1.000000 1.000000 1.000000
+map_Kd minecraft:block/white_concrete
+neoforge_TintIndex 7
 
 newmtl dark
 Kd 0.121569 0.137255 0.149020
