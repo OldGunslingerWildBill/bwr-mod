@@ -1,78 +1,144 @@
 package dev.bwr.mod.gui.client;
 
 import dev.bwr.mod.gui.PumpControlMenu;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.*;
+import dev.bwr.mod.gui.client.style.BwrButton;
+import dev.bwr.mod.gui.client.style.BwrEditBox;
+import dev.bwr.mod.gui.client.style.BwrStyle;
+import dev.bwr.mod.gui.client.style.BwrStyle.Status;
+import dev.bwr.mod.gui.client.style.BwrStyle.Type;
+import dev.bwr.mod.gui.client.style.Layout;
+import dev.bwr.mod.gui.client.style.UiElement;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+
 import java.util.Locale;
 
-/** Compact manual controls. Readouts come from the server's pump, not client estimates. */
+/**
+ * Compact manual controls for the powered pumps (RHR, LPCS, HPCS, SLC, feed and recirculation). Readouts come from the
+ * server's pump, not client estimates. Controls lock while a computer holds the pump, and say so.
+ */
 public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
-    private EditBox speed;
-    private Button apply,run,control,suction,mode;
-    private double displayedTarget=Double.NaN;
-    public PumpControlScreen(PumpControlMenu menu,Inventory inv,Component title) {super(menu,inv,title,null,260,234);}
-    @Override protected void init() {
-        super.init();
-        speed=addRenderableWidget(new EditBox(font,leftPos+90,topPos+132,64,20,Component.literal("Speed percent")));
-        speed.setMaxLength(6);speed.setFilter(s->s.matches("[0-9]{0,3}(\\.[0-9]{0,1})?"));
-        apply=button("Apply",164,132,84,()->applySpeed());
-        run=button("Start",12,158,112,()->menu.sendCommand(PumpControlMenu.RUN,menu.running?0:1));
-        control=button("Control: Panel",132,158,116,()->menu.sendCommand(PumpControlMenu.CONTROL,menu.recirculation?(menu.control==2?0:2):(menu.control+1)%3));
-        suction=button("Suction",12,184,236,()->menu.sendCommand(PumpControlMenu.SUCTION,menu.poolSuction?0:1));
-        mode=button("Mode",12,208,236,()->menu.sendCommand(PumpControlMenu.MODE,
-                menu.shutdownCooling?0:menu.poolCooling?2:1));
+    private static final String LOCKED = "Locked: a computer holds the controls. ";
+
+    private BwrEditBox speed;
+    private BwrButton apply;
+    private BwrButton run;
+    private BwrButton control;
+    private BwrButton suction;
+    private BwrButton mode;
+    private double displayedTarget = Double.NaN;
+
+    public PumpControlScreen(PumpControlMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title, 392, 208);
     }
-    private Button button(String label,int x,int y,int w,Runnable action) {
-        return addRenderableWidget(Button.builder(Component.literal(label),b->action.run()).bounds(leftPos+x,topPos+y,w,20).build());
-    }
-    private Integer percent() {
-        try {double v=Double.parseDouble(speed.getValue());return Double.isFinite(v) && v>=0 && v<=100?(int)Math.round(v*10):null;}catch(NumberFormatException e){return null;}
-    }
-    private void applySpeed() {Integer value=percent();if(value!=null)menu.sendCommand(PumpControlMenu.SPEED,value);}
-    @Override public boolean keyPressed(int key,int scan,int modifiers) {
-        if(speed.isFocused() && (key==257 || key==335)){applySpeed();return true;}
-        if(speed.isFocused() && key!=256)return speed.keyPressed(key,scan,modifiers);
-        return super.keyPressed(key,scan,modifiers);
-    }
-    @Override protected void containerTick() {
-        super.containerTick();
-        if(!speed.isFocused() && Double.compare(displayedTarget,menu.target)!=0) {
-            speed.setValue(String.format(Locale.ROOT,"%.1f",menu.target*100));displayedTarget=menu.target;
+
+    @Override
+    protected UiElement buildUi() {
+        if (speed == null) {
+            speed = new BwrEditBox(font, Component.literal("Speed percent"),
+                    Component.literal("Type the speed demand as a percentage from 0 to 100, one decimal at most, then press Enter or Apply."),
+                    6, PercentInput.FILTER, this::applySpeed);
+            apply = BwrButton.primary("Apply", "Send the typed speed demand to the pump.", b -> applySpeed());
+            run = BwrButton.secondary("Start", "Start the pump.",
+                    b -> menu.sendCommand(PumpControlMenu.RUN, menu.running ? 0 : 1));
+            control = BwrButton.secondary("Control: Panel", "Choose who controls this pump.",
+                    b -> menu.sendCommand(PumpControlMenu.CONTROL, menu.recirculation ? (menu.control == 2 ? 0 : 2) : (menu.control + 1) % 3));
+            suction = BwrButton.secondary("Suction", "Choose the water source.",
+                    b -> menu.sendCommand(PumpControlMenu.SUCTION, menu.poolSuction ? 0 : 1));
+            mode = BwrButton.secondary("Mode", "Choose what the pump does.",
+                    b -> menu.sendCommand(PumpControlMenu.MODE, menu.shutdownCooling ? 0 : menu.poolCooling ? 2 : 1));
         }
-        speed.setEditable(menu.present && menu.control!=2);
-        apply.active=menu.present && menu.control!=2 && percent()!=null;
-        run.active=menu.present && menu.control!=2;run.setMessage(Component.literal(menu.running?"Stop":"Start"));
-        control.active=menu.present;control.setMessage(Component.literal("Control: "+switch(menu.control){case 1->"Redstone";case 2->"Computer";default->"Panel";}));
-        suction.visible=menu.eccs&&!menu.slc;suctions();
-        mode.visible=menu.rhr;mode.active=menu.control!=2;
-        mode.setMessage(Component.literal(menu.shutdownCooling?"Mode: Shutdown cooling"
-                :menu.poolCooling?"Mode: Pool cooling":"Mode: Reactor injection"));
+        var status = Layout.card("Status",
+                Layout.statusLine(() -> !menu.present ? Status.CAUTION : menu.running ? Status.NORMAL : Status.OFF,
+                        () -> !menu.present ? "Waiting for pump..." : menu.running ? "Running" : "Stopped",
+                        () -> menu.present ? menu.drive : ""),
+                Layout.row("Target", () -> pct(menu.target), "%"),
+                Layout.row("Actual", () -> pct(menu.actual), "%"),
+                Layout.meter("Actual speed", () -> menu.actual, null, () -> ""),
+                Layout.row(() -> menu.recirculation ? "Core-flow share" : "Water flow", () -> num(menu.flow, 1), "kg/s")
+                        .tip(() -> java.util.List.of(Component.literal(menu.recirculation
+                                ? "Core-flow contribution: this pump's share of core circulation."
+                                : "Water flow delivered by the pump."))),
+                Layout.row(() -> menu.recirculation ? "Vessel pressure" : "Pressure rise", () -> num(menu.pressure, 1), "psi")
+                        .tip(() -> java.util.List.of(Component.literal(menu.recirculation
+                                ? "Vessel pressure."
+                                : "Discharge differential pressure."))),
+                Layout.row("Water temperature", () -> Double.isFinite(menu.temperature) ? num(menu.temperature, 1) : "Unavailable",
+                        () -> Double.isFinite(menu.temperature) ? "C" : ""),
+                Layout.row(() -> menu.turbine ? "Drive" : "Stored energy", () -> menu.turbine ? "Steam" : big(menu.energy),
+                        () -> menu.turbine ? "" : "FE"),
+                Layout.row("Inlet buffer", () -> big(menu.buffer) + " / 2,000", "kg").showIf(() -> !menu.rhr && !menu.slc && !menu.recirculation),
+                Layout.gap(BwrStyle.SP1),
+                Layout.line(() -> menu.connection, Type.CAPTION));
+        var controls = Layout.card("Control",
+                Layout.line(() -> "Speed (%)", Type.CAPTION),
+                Layout.controls(BwrStyle.SP1).add(speed, 1).fixed(apply, 52),
+                Layout.gap(BwrStyle.SP1),
+                Layout.controls(BwrStyle.SP1).add(run, 1),
+                Layout.gap(BwrStyle.SP1),
+                Layout.controls(BwrStyle.SP1).add(control, 1),
+                Layout.gap(BwrStyle.SP1).showIf(() -> menu.eccs && !menu.slc || menu.rhr),
+                Layout.controls(BwrStyle.SP1).add(suction, 1).showIf(() -> menu.eccs && !menu.slc),
+                Layout.gap(BwrStyle.SP1).showIf(() -> menu.rhr),
+                Layout.controls(BwrStyle.SP1).add(mode, 1).showIf(() -> menu.rhr),
+                Layout.note("Suction: finite boron tank").showIf(() -> menu.slc),
+                Layout.note(() -> menu.recirculation ? "Speed determines circulation demand." : "Suction: tank / piped water")
+                        .showIf(() -> !menu.eccs),
+                Layout.note("Computer owns the controls.").status(() -> Status.INFO).showIf(() -> menu.control == 2));
+        var split = Layout.split(BwrStyle.SP2).stackBelow(360);
+        split.add(status, 1);
+        split.fixed(controls, 168);
+        return split;
     }
-    private void suctions() {
-        suction.active=menu.present && menu.control!=2;
-        suction.setMessage(Component.literal(menu.poolSuction?"Suction: Suppression pool":"Suction: Tank / piped water"));
+
+    @Override
+    protected UiElement buildTitleItems() {
+        return Layout.titleItems(Layout.chip(() -> Status.INFO, () -> "COMPUTER CONTROL").showIf(() -> menu.present && menu.control == 2));
     }
-    @Override protected void renderBg(GuiGraphics g,float partial,int mx,int my) {
-        g.fill(leftPos,topPos,leftPos+imageWidth,topPos+imageHeight,0xFF171D26);
-        g.fill(leftPos,topPos,leftPos+imageWidth,topPos+23,0xFF293A4E);
-        g.renderOutline(leftPos,topPos,imageWidth,imageHeight,0xFF58708A);
+
+    private Integer percent() {
+        return PercentInput.perMille(speed.getValue());
     }
-    @Override protected void renderLabels(GuiGraphics g,int x,int y) {
-        g.drawString(font,font.plainSubstrByWidth(title.getString(),240),10,8,TEXT_BRIGHT,false);
+
+    private void applySpeed() {
+        Integer value = percent();
+        if (value != null) {
+            menu.sendCommand(PumpControlMenu.SPEED, value);
+        }
     }
-    @Override protected void renderContent(GuiGraphics g,int mx,int my) {
-        text(g,menu.present?menu.drive+" / "+(menu.running?"Running":"Stopped"):"Waiting for pump...",12,29,menu.running?GOOD:TEXT_DIM);
-        readout(g,"Target / actual",pct(menu.target)+" / "+pct(menu.actual),12,43,248,TEXT_BRIGHT);
-        readout(g,menu.recirculation?"Core-flow contribution":"Water flow",num(menu.flow,1)+" kg/s",12,57,248,TEXT_BRIGHT);
-        readout(g,menu.recirculation?"Vessel pressure":"Discharge differential",num(menu.pressure,1)+" psi",12,71,248,TEXT_BRIGHT);
-        readout(g,"Water temperature",Double.isFinite(menu.temperature)?num(menu.temperature,1)+" C":"Unavailable",12,85,248,TEXT_BRIGHT);
-        readout(g,menu.turbine?"Drive":"Stored energy",menu.turbine?"Steam":big(menu.energy)+" FE",12,99,248,TEXT_BRIGHT);
-        text(g,font.plainSubstrByWidth(menu.connection,236),12,115,TEXT_DIM);
-        text(g,"Speed (%)",12,138,TEXT);
-        if(menu.slc)text(g,"Suction: finite boron tank",12,189,TEXT_DIM);
-        if(!menu.eccs)text(g,menu.recirculation?"Speed determines circulation demand.":"Suction: tank / piped water",12,189,TEXT_DIM);
-        if(!menu.rhr&&!menu.slc)text(g,menu.control==2?"Computer owns the controls.":menu.recirculation?"Flow is this pump's share of core circulation.":"Inlet buffer: "+big(menu.buffer)+" / 2,000 kg",12,215,TEXT_DIM);
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        if (!speed.isFocused() && Double.compare(displayedTarget, menu.target) != 0) {
+            speed.setValue(String.format(Locale.ROOT, "%.1f", menu.target * 100));
+            displayedTarget = menu.target;
+        }
+        boolean locked = menu.control == 2;
+        speed.setEditable(menu.present && !locked);
+        speed.setInvalid(!speed.getValue().isEmpty() && !locked && percent() == null);
+        apply.active = menu.present && !locked && percent() != null;
+        apply.setTooltipText(locked ? LOCKED + "Take control back with the Control button." : "Send the typed speed demand to the pump.");
+        run.active = menu.present && !locked;
+        run.setMessage(Component.literal(menu.running ? "Stop" : "Start"));
+        run.setTooltipText(locked ? LOCKED : menu.running ? "Stop the pump." : "Start the pump.");
+        control.active = menu.present;
+        control.setMessage(Component.literal("Control: " + switch (menu.control) {
+            case 1 -> "Redstone";
+            case 2 -> "Computer";
+            default -> "Panel";
+        }));
+        control.setTooltipText(menu.recirculation
+                ? "Who controls this pump: the panel or a computer. Click to switch."
+                : "Who controls this pump: the panel, redstone or a computer. Click to cycle.");
+        suction.active = menu.present && !locked;
+        suction.setMessage(Component.literal(menu.poolSuction ? "Suction: Suppression pool" : "Suction: Tank / piped water"));
+        suction.setTooltipText(locked ? LOCKED : menu.poolSuction
+                ? "Water source: the suppression pool. Click to draw from the condensate tank or piped water instead."
+                : "Water source: the condensate tank or piped water. Click to draw from the suppression pool instead.");
+        mode.active = !locked;
+        mode.setMessage(Component.literal(menu.shutdownCooling ? "Mode: Shutdown cooling"
+                : menu.poolCooling ? "Mode: Pool cooling" : "Mode: Reactor injection"));
+        mode.setTooltipText(locked ? LOCKED : "What the RHR pump does: reactor injection, shutdown cooling or suppression pool cooling. Click to step through them.");
     }
 }

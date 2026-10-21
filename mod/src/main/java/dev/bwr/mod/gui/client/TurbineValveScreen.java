@@ -1,41 +1,88 @@
 package dev.bwr.mod.gui.client;
 
 import dev.bwr.mod.gui.TurbineValveMenu;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.*;
+import dev.bwr.mod.gui.client.style.BwrButton;
+import dev.bwr.mod.gui.client.style.BwrEditBox;
+import dev.bwr.mod.gui.client.style.BwrStyle;
+import dev.bwr.mod.gui.client.style.BwrStyle.Type;
+import dev.bwr.mod.gui.client.style.Layout;
+import dev.bwr.mod.gui.client.style.UiElement;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
+/** A turbine control valve (any opening from 0 to 100 %) or stop valve (fully open or fully closed). */
 public class TurbineValveScreen extends BwrScreen<TurbineValveMenu> {
-    private EditBox percent;private Button apply,less,more,open,close;private boolean seeded;
-    public TurbineValveScreen(TurbineValveMenu m,Inventory inv,Component title){super(m,inv,title,null,300,224);}
-    @Override protected void init(){
-        super.init();percent=addRenderableWidget(new EditBox(font,leftPos+113,topPos+125,58,20,Component.literal("Valve opening percent")));
-        percent.setMaxLength(5);percent.setFilter(s->s.matches("[0-9]{0,3}(\\.[0-9]?)?"));
-        apply=button("Apply",181,125,54,()->{Integer n=value();if(n!=null)menu.sendCommand(0,n);});
-        less=button("-0.1",12,155,56,()->adjust(-1));more=button("+0.1",74,155,56,()->adjust(1));
-        close=button("Close",146,155,64,()->menu.sendCommand(0,0));open=button("Open",216,155,72,()->menu.sendCommand(0,1000));
+    private BwrEditBox percent;
+    private BwrButton apply;
+    private BwrButton less;
+    private BwrButton more;
+    private BwrButton open;
+    private BwrButton close;
+    private boolean seeded;
+
+    public TurbineValveScreen(TurbineValveMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title, 368, 160);
     }
-    private Button button(String text,int x,int y,int width,Runnable action){return addRenderableWidget(Button.builder(Component.literal(text),b->action.run()).bounds(leftPos+x,topPos+y,width,20).build());}
-    private Integer value(){try{double p=Double.parseDouble(percent.getValue());return Double.isFinite(p)&&p>=0&&p<=100?(int)Math.round(p*10):null;}catch(NumberFormatException e){return null;}}
-    private void adjust(int step){int p=Math.max(0,Math.min(1000,(int)Math.round(menu.target*1000)+step));percent.setValue(num(p/10.0,1));menu.sendCommand(0,p);}
-    @Override protected void containerTick(){
-        super.containerTick();if(menu.present&&!seeded){percent.setValue(num(menu.target*100,1));seeded=true;}
-        percent.visible=apply.visible=less.visible=more.visible=!menu.stop;
-        apply.active=menu.present&&value()!=null;less.active=more.active=close.active=open.active=menu.present;
+
+    @Override
+    protected UiElement buildUi() {
+        if (percent == null) {
+            percent = new BwrEditBox(font, Component.literal("Valve opening percent"),
+                    Component.literal("Type the valve opening as a percentage from 0 to 100, one decimal at most, then press Enter or Apply."),
+                    5, PercentInput.FILTER, this::applyTyped);
+            apply = BwrButton.primary("Apply", "Send the typed opening to the valve.", b -> applyTyped());
+            less = BwrButton.secondary("-0.1", "Lower the requested opening by 0.1 percentage points.", b -> adjust(-1));
+            more = BwrButton.secondary("+0.1", "Raise the requested opening by 0.1 percentage points.", b -> adjust(1));
+            close = BwrButton.secondary("Close", "Command the valve fully closed (0 %).", b -> menu.sendCommand(0, 0));
+            open = BwrButton.secondary("Open", "Command the valve fully open (100 %).", b -> menu.sendCommand(0, 1000));
+        }
+        var position = Layout.card("Position",
+                Layout.row("Requested opening", () -> num(menu.target * 100, 1), "%"),
+                Layout.row("Actual opening", () -> num(menu.position * 100, 1), "%"),
+                Layout.meter("Valve position", () -> menu.position, null, () -> ""),
+                Layout.gap(BwrStyle.SP1),
+                Layout.row("Steam flow", () -> grouped(menu.flow, 2), "kg/s"));
+        var command = Layout.card("Command",
+                Layout.note(() -> menu.stop ? "Stop valve: fully open or fully closed." : "Set opening (%)"),
+                Layout.controls(BwrStyle.SP1).add(percent, 1).fixed(apply, 56).showIf(() -> !menu.stop),
+                Layout.gap(BwrStyle.SP1).showIf(() -> !menu.stop),
+                Layout.controls(BwrStyle.SP1).add(less, 1).add(more, 1).showIf(() -> !menu.stop),
+                Layout.gap(BwrStyle.SP1),
+                Layout.controls(BwrStyle.SP1).add(close, 1).add(open, 1));
+        return Layout.column(BwrStyle.SP2,
+                Layout.split(BwrStyle.SP2, position, command).stackBelow(340),
+                Layout.note("Controls the steam supply through this line. Connect pipes to the two opposing flanges."));
     }
-    @Override public boolean keyPressed(int key,int scan,int mods){
-        if(percent.isFocused()&&key!=256){if(key==257){Integer n=value();if(n!=null)menu.sendCommand(0,n);return true;}return percent.keyPressed(key,scan,mods);}return super.keyPressed(key,scan,mods);
+
+    private Integer value() {
+        return PercentInput.perMille(percent.getValue());
     }
-    @Override protected void renderBg(GuiGraphics g,float p,int x,int y){g.fill(leftPos,topPos,leftPos+imageWidth,topPos+imageHeight,0xFF171D26);g.fill(leftPos,topPos,leftPos+imageWidth,topPos+24,0xFF293A4E);g.renderOutline(leftPos,topPos,imageWidth,imageHeight,0xFF58708A);}
-    @Override protected void renderLabels(GuiGraphics g,int x,int y){g.drawString(font,title,10,8,TEXT_BRIGHT,false);}
-    @Override protected void renderContent(GuiGraphics g,int x,int y){
-        readout(g,"Requested opening",num(menu.target*100,1)+" %",12,36,288,TEXT_BRIGHT);
-        readout(g,"Actual opening",num(menu.position*100,1)+" %",12,53,288,ACCENT);
-        bar(g,12,73,276,10,menu.position,ACCENT);
-        readout(g,"Steam flow",num(menu.flow,2)+" kg/s",12,96,288,GOOD);
-        text(g,menu.stop?"Stop valve: fully open or fully closed.":"Set opening (%)",12,132,TEXT);
-        text(g,"Controls the steam supply through this line.",12,187,TEXT_DIM);
-        text(g,"Connect pipes to the two opposing flanges.",12,202,TEXT_DIM);
+
+    private void applyTyped() {
+        Integer n = value();
+        if (n != null) {
+            menu.sendCommand(0, n);
+        }
+    }
+
+    private void adjust(int step) {
+        int p = Math.max(0, Math.min(1000, (int) Math.round(menu.target * 1000) + step));
+        percent.setValue(num(p / 10.0, 1));
+        menu.sendCommand(0, p);
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        if (menu.present && !seeded) {
+            percent.setValue(num(menu.target * 100, 1));
+            seeded = true;
+        }
+        percent.setInvalid(!percent.getValue().isEmpty() && value() == null);
+        apply.active = menu.present && value() != null;
+        less.active = menu.present;
+        more.active = menu.present;
+        close.active = menu.present;
+        open.active = menu.present;
     }
 }

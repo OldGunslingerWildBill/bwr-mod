@@ -1,62 +1,93 @@
 package dev.bwr.mod.gui.client;
 
-import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.gui.SuppressionPoolMenu;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
+import dev.bwr.mod.gui.client.style.BwrButton;
+import dev.bwr.mod.gui.client.style.BwrStyle;
+import dev.bwr.mod.gui.client.style.BwrStyle.Status;
+import dev.bwr.mod.gui.client.style.Layout;
+import dev.bwr.mod.gui.client.style.UiElement;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
-/** Operator-selected filling/spray and measured pool condition. */
+/** Operator-selected filling/spray (concrete tank) or RHR duty (legacy dug pool), and the measured pool condition. */
 public class SuppressionPoolScreen extends BwrScreen<SuppressionPoolMenu> {
-    public static final ResourceLocation TEXTURE=BwrMod.id("textures/gui/suppression_pool.png");
     private FractionSlider rhr;
-    private Button fill,spray;
-    public SuppressionPoolScreen(SuppressionPoolMenu menu,Inventory inventory,Component title) {
-        super(menu,inventory,title,TEXTURE,310,274);
+    private BwrButton fill;
+    private BwrButton spray;
+
+    public SuppressionPoolScreen(SuppressionPoolMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title, 400, 200);
     }
-    @Override protected void init() {
-        super.init();
-        fill=addRenderableWidget(Button.builder(Component.literal("Regular fill"),b->menu.sendCommand(SuppressionPoolMenu.CMD_FILL_MODE,0)).bounds(leftPos+12,topPos+219,140,20).build());
-        spray=addRenderableWidget(Button.builder(Component.literal("Tank spray"),b->menu.sendCommand(SuppressionPoolMenu.CMD_FILL_MODE,1)).bounds(leftPos+158,topPos+219,140,20).build());
-        rhr=addRenderableWidget(new FractionSlider(leftPos+12,topPos+219,286,20,"RHR DUTY",menu.rhrDuty,f->menu.sendCommand(SuppressionPoolMenu.CMD_SET_RHR_DUTY,(int)Math.round(f*1000))));
-        follow();
-    }
-    private void follow() {
-        fill.visible=spray.visible=menu.concrete;rhr.visible=!menu.concrete;
-        fill.active=menu.formed&&menu.sprayMode;spray.active=menu.formed&&!menu.sprayMode;
-        rhr.active=menu.formed&&!menu.concrete;if(!rhr.isFocused())rhr.follow(menu.rhrDuty);
-    }
-    @Override protected void containerTick(){super.containerTick();follow();}
-    @Override protected void renderBg(GuiGraphics g,float partial,int x,int y) {
-        g.fill(leftPos,topPos,leftPos+imageWidth,topPos+imageHeight,0xff171e27);
-        g.fill(leftPos,topPos,leftPos+imageWidth,topPos+22,0xff293a4e);
-        g.renderOutline(leftPos,topPos,imageWidth,imageHeight,0xff61738a);
-    }
-    @Override protected void renderLabels(GuiGraphics g,int x,int y){g.drawString(font,title,12,7,TEXT_BRIGHT,false);}
-    @Override protected void renderContent(GuiGraphics g,int x,int y) {
-        if(!menu.present){text(g,"No pool controller here.",12,32,ALARM);return;}
-        if(!menu.formed){
-            text(g,"Tank shell incomplete.",12,32,ALARM);
-            text(g,"Build a concrete floor, walls and roof.",12,48,TEXT);
-            text(g,"Fit outward steam and water wall ports.",12,62,TEXT);
-            text(g,"Sneak-click the controller for build details.",12,82,TEXT_DIM);return;
+
+    @Override
+    protected UiElement buildUi() {
+        if (rhr == null) {
+            fill = BwrButton.secondary("Regular fill", "Fill the pool from the return port, with no spray.",
+                    b -> menu.sendCommand(SuppressionPoolMenu.CMD_FILL_MODE, 0));
+            spray = BwrButton.secondary("Tank spray", "Send the inlet water through the spray header, which condenses steam.",
+                    b -> menu.sendCommand(SuppressionPoolMenu.CMD_FILL_MODE, 1));
+            rhr = new FractionSlider("RHR duty", "Drag, or use the arrow keys, to set the RHR cooling duty. The physical duty follows it.",
+                    menu.rhrDuty, f -> menu.sendCommand(SuppressionPoolMenu.CMD_SET_RHR_DUTY, (int) Math.round(f * 1000)));
         }
-        readout(g,"Water inventory",big(menu.massKg)+" / "+big(menu.capacityKg)+" kg",12,32,298,TEXT_BRIGHT);
-        bar(g,12,46,286,7,menu.massKg/Math.max(1,menu.capacityKg),ACCENT);
-        readout(g,"Water temperature",num(menu.temperatureC,2)+" C",12,61,298,menu.boiling?WARN:TEXT_BRIGHT);
-        readout(g,"Subcooling to saturation",num(menu.subcoolingC,1)+" C",12,75,298,TEXT_BRIGHT);
-        readout(g,"Bulk condensation",pct(menu.condensationEffectiveness),12,89,298,TEXT_BRIGHT);
-        readout(g,"Steam escaping bulk + spray",num(menu.uncondensedSteamKgPerS,2)+" kg/s",12,103,298,menu.uncondensedSteamKgPerS>0?WARN:TEXT_BRIGHT);
-        readout(g,"Physical RHR cooling",num(menu.rhrDutyMW(),2)+" MW",12,117,298,TEXT_BRIGHT);
-        readout(g,"Spray header inventory",big(menu.sprayHeaderKg)+" kg",12,131,298,ACCENT);
-        readout(g,"Water spraying / steam captured",num(menu.sprayFlow,1)+" / "+num(menu.sprayCondensed,1)+" kg/s",12,145,298,ACCENT);
-        readout(g,"Natural cooling",num(menu.passiveCoolingMW * 1000,1)+" kW",12,159,298,TEXT_BRIGHT);
-        text(g,menu.concrete?"Inlet mode: "+(menu.sprayMode?"SPRAY":"REGULAR FILL"):"Legacy dug pool",12,200,TEXT_BRIGHT);
-        readout(g,"Steam received",num(menu.steamIn,2)+" kg/s",12,173,298,ACCENT);
-        readout(g,"Steam inlet buffer",num(menu.steamBuffer,1)+" kg",12,187,298,TEXT_BRIGHT);
-        text(g,menu.massKg<=0?"Empty: pump water into the amber return port.":"Spray uses supplied water; heat stays in the pool.",12,248,menu.massKg<=0?WARN:TEXT_DIM);
-        text(g,"Leave room for spray water and condensed steam.",12,261,TEXT_DIM);
+        var water = Layout.card("Pool water",
+                Layout.row("Water inventory", () -> big(menu.massKg), "kg"),
+                Layout.row("Capacity", () -> big(menu.capacityKg), "kg"),
+                Layout.meter("Pool fill", () -> menu.massKg / Math.max(1, menu.capacityKg), null,
+                        () -> pct(menu.massKg / Math.max(1, menu.capacityKg)) + "%"),
+                Layout.row("Water temperature", () -> num(menu.temperatureC, 2), "C").status(() -> menu.boiling ? Status.CAUTION : Status.NONE)
+                        .tip(() -> java.util.List.of(Component.literal(menu.boiling ? "The pool water is at saturation (boiling)." : "Pool water temperature."))),
+                Layout.row("Subcooling", () -> num(menu.subcoolingC, 1), "C").tip("Subcooling to saturation temperature."),
+                Layout.row("Physical RHR cooling", () -> num(menu.rhrDutyMW(), 2), "MW"),
+                Layout.row("Natural cooling", () -> num(menu.passiveCoolingMW * 1000, 1), "kW"));
+        var steam = Layout.card("Steam and spray",
+                Layout.row("Steam received", () -> num(menu.steamIn, 2), "kg/s"),
+                Layout.row("Steam inlet buffer", () -> num(menu.steamBuffer, 1), "kg"),
+                Layout.row("Bulk condensation", () -> pct(menu.condensationEffectiveness), "%"),
+                Layout.row("Steam escaping", () -> num(menu.uncondensedSteamKgPerS, 2), "kg/s")
+                        .status(() -> menu.uncondensedSteamKgPerS > 0 ? Status.CAUTION : Status.NONE)
+                        .tip(() -> java.util.List.of(Component.literal("Steam escaping the bulk water and the spray without condensing."))),
+                Layout.row("Spray header", () -> big(menu.sprayHeaderKg), "kg").tip("Spray header inventory."),
+                Layout.row("Water spraying", () -> num(menu.sprayFlow, 1), "kg/s"),
+                Layout.row("Steam captured", () -> num(menu.sprayCondensed, 1), "kg/s").tip("Steam captured (condensed) by the spray."));
+        var controls = Layout.column(BwrStyle.SP2,
+                Layout.controls(BwrStyle.SP2).label(() -> "Inlet mode: " + (menu.sprayMode ? "SPRAY" : "REGULAR FILL"), 124)
+                        .add(fill, 1).add(spray, 1).showIf(() -> menu.concrete),
+                Layout.controls(BwrStyle.SP2).add(rhr, 1).showIf(() -> !menu.concrete));
+        return Layout.column(BwrStyle.SP2,
+                Layout.note("No pool controller here.").body().status(() -> Status.ALARM).showIf(() -> !menu.present),
+                Layout.column(BwrStyle.SP1,
+                        Layout.note("Tank shell incomplete.").body().status(() -> Status.ALARM),
+                        Layout.note("Build a concrete floor, walls and roof.").body(),
+                        Layout.note("Fit outward steam and water wall ports.").body(),
+                        Layout.note("Sneak-click the controller for build details."))
+                        .showIf(() -> menu.present && !menu.formed),
+                Layout.column(BwrStyle.SP2,
+                        Layout.split(BwrStyle.SP2, water, steam).stackBelow(360),
+                        controls,
+                        Layout.note(() -> menu.massKg <= 0 ? "Empty: pump water into the amber return port."
+                                : "Spray uses supplied water; heat stays in the pool.")
+                                .status(() -> menu.massKg <= 0 ? Status.CAUTION : Status.NONE),
+                        Layout.note("Leave room for spray water and condensed steam."))
+                        .showIf(() -> menu.present && menu.formed));
+    }
+
+    @Override
+    protected UiElement buildTitleItems() {
+        return Layout.titleItems(Layout.chip(() -> menu.concrete ? Status.NONE : Status.INFO, () -> menu.concrete ? "" : "LEGACY DUG POOL")
+                .showIf(() -> menu.present && menu.formed));
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        fill.active = menu.formed && menu.sprayMode;
+        spray.active = menu.formed && !menu.sprayMode;
+        rhr.active = menu.formed && !menu.concrete;
+        if (!rhr.isFocused()) {
+            rhr.follow(menu.rhrDuty);
+        }
+        fill.setTooltipText(menu.sprayMode ? "Fill the pool from the return port, with no spray." : "Regular fill is the current inlet mode.");
+        spray.setTooltipText(menu.sprayMode ? "Tank spray is the current inlet mode."
+                : "Send the inlet water through the spray header, which condenses steam.");
     }
 }

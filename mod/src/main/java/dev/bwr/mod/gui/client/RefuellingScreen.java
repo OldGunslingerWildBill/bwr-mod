@@ -1,12 +1,15 @@
 package dev.bwr.mod.gui.client;
 
-import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.gui.CoreMapSnapshot;
 import dev.bwr.mod.gui.RefuellingMenu;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
+import dev.bwr.mod.gui.client.style.BwrButton;
+import dev.bwr.mod.gui.client.style.BwrStyle;
+import dev.bwr.mod.gui.client.style.BwrStyle.Status;
+import dev.bwr.mod.gui.client.style.BwrStyle.Type;
+import dev.bwr.mod.gui.client.style.Layout;
+import dev.bwr.mod.gui.client.style.Ui;
+import dev.bwr.mod.gui.client.style.UiElement;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 import java.util.ArrayList;
@@ -28,119 +31,191 @@ import java.util.Locale;
  * press SWAP. Exposure travels with the bundle, so a partly-burned assembly
  * moved to the periphery keeps everything that has happened to it and simply
  * burns slower from now on.
+ *
+ * <p>Layout: the menu's inventory slots fix the panel at 320 x 230 (the inventory sits at x 48, y 148 and 206), so the
+ * map and the statistics fill what is above the inventory and the four actions stand beside it.
  */
 public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
-
-    public static final ResourceLocation TEXTURE = BwrMod.id("textures/gui/refuelling.png");
-
-    private static final int WIDTH = 256;
-    private static final int HEIGHT = 230;
-
-    private static final int GRID_X = 8;
-    private static final int GRID_Y = 30;
-    private static final int GRID_W = 146;
-    private static final int GRID_H = 84;
-
-    private static final int DETAIL_X = 164;
-    private static final int DETAIL_RIGHT = 246;
 
     private enum Overlay {
         BURNUP, KINF
     }
 
+    private static final int MAP_COLUMN = 164;
+    private static final int TOP_HEIGHT = 112;
+
     private Overlay overlay = Overlay.BURNUP;
 
     private LatticeGridWidget grid;
-    private Button burnupTab;
-    private Button kinfTab;
-    private Button loadButton;
-    private Button unloadButton;
-    private Button markButton;
-    private Button swapButton;
+    private BwrButton loadButton;
+    private BwrButton unloadButton;
+    private BwrButton markButton;
+    private BwrButton swapButton;
+    private BwrButton clearButton;
+    private BwrButton fitButton;
 
     public RefuellingScreen(RefuellingMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, TEXTURE, WIDTH, HEIGHT);
+        super(menu, inventory, title, 320, 230);
     }
 
     @Override
-    protected void init() {
-        super.init();
+    protected boolean trayLimitsBody() {
+        return false;
+    }
 
-        burnupTab = addRenderableWidget(Button.builder(Component.literal("BURNUP"),
-                        b -> overlay = Overlay.BURNUP)
-                .bounds(leftPos + 6, topPos + 14, 52, 12).build());
-        kinfTab = addRenderableWidget(Button.builder(Component.literal("K-INF"),
-                        b -> overlay = Overlay.KINF)
-                .bounds(leftPos + 60, topPos + 14, 46, 12).build());
+    @Override
+    protected UiElement buildUi() {
+        if (grid == null) {
+            grid = new LatticeGridWidget(0, 0, 100, 84, cell -> {
+            });
+            grid.enableRefuellingControls();
+            loadButton = BwrButton.secondary("LOAD", "Load the selected empty positions in click order, using held fuel first, then inventory.",
+                    b -> menu.sendBatch(true, grid.selectedCells()));
+            unloadButton = BwrButton.secondary("UNLOAD", "Unload the selected occupied positions. Items drop beside you if your inventory is full.",
+                    b -> menu.sendBatch(false, grid.selectedCells()));
+            markButton = BwrButton.secondary("MARK", "Mark the selected position as the source of a swap.", b -> {
+                grid.setMarked(grid.marked() == grid.selected() ? -1 : grid.selected());
+                grid.clearSelection();
+            });
+            swapButton = BwrButton.secondary("SWAP", "Swap the marked position with the selected one.", b -> {
+                menu.sendCommand(RefuellingMenu.CMD_SWAP, grid.marked(), grid.selected());
+                grid.setMarked(-1);
+            });
+            clearButton = BwrButton.secondary("CLEAR", "Clear selected positions and the swap mark.", b -> {
+                grid.clearSelection();
+                grid.setMarked(-1);
+            });
+            fitButton = BwrButton.secondary("FIT", "Fit the core to the map. Scroll to zoom and right-drag to pan; with the map focused use the arrow keys, plus, minus and Home.",
+                    b -> grid.resetView());
+        }
 
-        grid = addRenderableWidget(new LatticeGridWidget(
-                leftPos + GRID_X, topPos + GRID_Y, GRID_W, GRID_H, cell -> {
-        }));
-        grid.enableRefuellingControls();
-        addRenderableWidget(Button.builder(Component.literal("CLEAR"), b->{grid.clearSelection();grid.setMarked(-1);})
-                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Clear selected positions and the swap mark.")))
-                .bounds(leftPos+110,topPos+14,40,12).build());
-        addRenderableWidget(Button.builder(Component.literal("FIT"), b->grid.resetView())
-                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Fit the core to the map. Scroll to zoom; right-drag to pan.")))
-                .bounds(leftPos+152,topPos+14,28,12).build());
+        var map = Layout.column(BwrStyle.SP1,
+                Layout.fill(grid, 84),
+                Layout.legend(() -> overlay == Overlay.BURNUP ? "Fresh" : "0.90",
+                        () -> overlay == Overlay.BURNUP ? big(Math.max(1.0, menu.peakBurnup)) + " MWd/t" : "1.25 k-inf",
+                        f -> overlay == Overlay.BURNUP ? LatticeColours.burnup(f) : LatticeColours.kInf(f)));
 
-        int row = topPos + 129;
-        loadButton = addRenderableWidget(Button.builder(Component.literal("LOAD"),
-                        b -> menu.sendBatch(true, grid.selectedCells()))
-                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Load selected empty positions in click order, using held fuel first, then inventory.")))
-                .bounds(leftPos + 8, row, 54, 16).build());
-        unloadButton = addRenderableWidget(Button.builder(Component.literal("UNLOAD"),
-                        b -> menu.sendBatch(false, grid.selectedCells()))
-                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Unload selected occupied positions. Items drop beside you if your inventory is full.")))
-                .bounds(leftPos + 66, row, 58, 16).build());
-        markButton = addRenderableWidget(Button.builder(Component.literal("MARK"),
-                        b -> {grid.setMarked(grid.marked() == grid.selected() ? -1 : grid.selected());grid.clearSelection();})
-                .bounds(leftPos + 128, row, 52, 16).build());
-        swapButton = addRenderableWidget(Button.builder(Component.literal("SWAP"), b -> {
-                    menu.sendCommand(RefuellingMenu.CMD_SWAP, grid.marked(), grid.selected());
-                    grid.setMarked(-1);
-                })
-                .bounds(leftPos + 184, row, 56, 16).build());
+        var stats = Layout.card("",
+                Layout.row("Fuel", () -> menu.loadedAssemblies + "/" + menu.assemblyCount).dense()
+                        .tip("Fuel bundles loaded out of the core's positions."),
+                Layout.row("k-inf", () -> num(menu.aggregateKInf, 4)).dense().tip("Infinite-medium multiplication factor of the whole loading."),
+                Layout.row("k ARO", () -> num(menu.kEffAllRodsOut, 4)).dense().status(() -> menu.endOfCycle ? Status.CAUTION : Status.NONE)
+                        .tip(() -> List.of(Component.literal("Effective multiplication factor with all rods out."),
+                                Component.literal(menu.endOfCycle ? "Flagged by the core model as end of cycle." : "Not at end of cycle."))),
+                Layout.row("beta", () -> num(menu.effectiveBeta, 5)).dense().tip("Effective delayed neutron fraction."),
+                Layout.row("burn av", () -> big(menu.averageBurnup), "MWd/t").dense().tip("Average burnup of the loaded bundles."),
+                Layout.row("burn pk", () -> big(menu.peakBurnup), "MWd/t").dense().tip("Peak burnup of any bundle."),
+                Layout.row("peaking", () -> map() == null ? "-" : num(map().peakingFactor(), 2)).dense()
+                        .tip("Radial peaking factor: the hottest bundle's power over the core average."),
+                Layout.row("in hand", () -> String.valueOf(menu.bundlesInInventory)).dense()
+                        .tip("Fuel bundles in your inventory, available to LOAD."))
+                .compact();
+        var selection = Layout.note(this::selectionText).maxLines(2);
+        var side = Layout.column(BwrStyle.SP1, stats, selection);
+
+        var top = Layout.split(BwrStyle.SP1);
+        top.fixed(map, MAP_COLUMN);
+        top.add(side, 1);
+
+        int[] tray = relativeTray();
+        int actionsX = tray == null ? 216 : tray[0] + tray[2] + BwrStyle.SP1;
+        var actions = Layout.card("Actions",
+                Layout.controls(BwrStyle.SP1).add(loadButton, 1).add(unloadButton, 1),
+                Layout.gap(BwrStyle.SP1),
+                Layout.controls(BwrStyle.SP1).add(markButton, 1).add(swapButton, 1))
+                .compact();
+        actions.tip("The vessel head is off: bundles are lifted out through the top of the open vessel.");
+        var lower = Layout.split(0);
+        lower.fixed(Layout.gap(0), actionsX - BwrStyle.SP2);
+        lower.add(actions, 1);
+
+        return Layout.column(BwrStyle.SP1,
+                Layout.note("Waiting for the core...").body().status(() -> Status.INFO).showIf(() -> !ready()),
+                Layout.sized(TOP_HEIGHT, top).showIf(this::ready),
+                lower);
+    }
+
+    @Override
+    protected UiElement buildTitleItems() {
+        return Layout.titleItems(
+                Layout.tabs(new String[]{"BURNUP", "K-INF"},
+                        new String[]{"Colour each position by burnup, from fresh to the core's peak.",
+                                "Colour each position by k-infinity: what the bundle is still worth."},
+                        () -> overlay.ordinal(), i -> overlay = Overlay.values()[i]),
+                Layout.controls(BwrStyle.SP1).fixed(clearButton, 46).fixed(fitButton, 30));
+    }
+
+    private boolean ready() {
+        return menu.open && menu.map != null;
+    }
+
+    private CoreMapSnapshot map() {
+        return menu.map;
     }
 
     @Override
     protected void containerTick() {
         super.containerTick();
-        burnupTab.active = overlay != Overlay.BURNUP;
-        kinfTab.active = overlay != Overlay.KINF;
         grid.setCells(cells());
 
         CoreMapSnapshot map = menu.map;
         int selected = grid.selected();
         boolean valid = map != null && selected >= 0 && selected < map.coreSlotCount;
-        int[] selection=grid.selectedCells();
-        boolean empty=false,occupied=false;
-        if(map!=null)for(int cell:selection)if(cell<map.coreSlotCount){if(map.isOccupied(cell))occupied=true;else empty=true;}
+        int[] selection = grid.selectedCells();
+        boolean empty = false;
+        boolean occupied = false;
+        if (map != null) {
+            for (int cell : selection) {
+                if (cell < map.coreSlotCount) {
+                    if (map.isOccupied(cell)) {
+                        occupied = true;
+                    } else {
+                        empty = true;
+                    }
+                }
+            }
+        }
         loadButton.active = empty && menu.bundlesInInventory > 0;
         unloadButton.active = occupied;
-        markButton.active = valid && selection.length==1;
-        swapButton.active = valid && selection.length==1 && grid.marked() >= 0 && grid.marked() != selected;
-    }
+        markButton.active = valid && selection.length == 1;
+        swapButton.active = valid && selection.length == 1 && grid.marked() >= 0 && grid.marked() != selected;
 
-    @Override public boolean mouseClicked(double x,double y,int button) {
-        if(button==1 && grid.isMouseOver(x,y))return grid.mouseClicked(x,y,button);
-        return super.mouseClicked(x,y,button);
-    }
-    @Override public boolean mouseDragged(double x,double y,int button,double dx,double dy) {
-        if(button==1 && grid.mouseDragged(x,y,button,dx,dy))return true;
-        return super.mouseDragged(x,y,button,dx,dy);
-    }
-    @Override public boolean mouseReleased(double x,double y,int button) {
-        if(button==1 && grid.mouseReleased(x,y,button))return true;
-        return super.mouseReleased(x,y,button);
+        if (!loadButton.active) {
+            loadButton.setTooltipText(!empty ? "To load: select one or more empty positions on the map first."
+                    : "You have no fuel bundles in your inventory to load.");
+        } else {
+            loadButton.setTooltipText("Load the selected empty positions in click order, using held fuel first, then inventory.");
+        }
+        unloadButton.setTooltipText(occupied ? "Unload the selected occupied positions. Items drop beside you if your inventory is full."
+                : "To unload: select one or more occupied positions on the map first.");
+        markButton.setTooltipText(markButton.active ? (grid.marked() == selected ? "Remove the swap mark."
+                : "Mark the selected position as the source of a swap.") : "To mark: select exactly one position first.");
+        swapButton.setTooltipText(swapButton.active ? "Swap the marked position with the selected one."
+                : "To swap: mark one position, then select a different one.");
     }
 
     @Override
-    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, titleLabelX, titleLabelY, TEXT_BRIGHT, false);
-        String head = "head off";
-        graphics.drawString(font, head, imageWidth - 6 - font.width(head), titleLabelY,
-                ACCENT, false);
+    public boolean mouseClicked(double x, double y, int button) {
+        if (button == 1 && grid.isMouseOver(x, y)) {
+            return grid.mouseClicked(x, y, button);
+        }
+        return super.mouseClicked(x, y, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
+        if (button == 1 && grid.mouseDragged(x, y, button, dx, dy)) {
+            return true;
+        }
+        return super.mouseDragged(x, y, button, dx, dy);
+    }
+
+    @Override
+    public boolean mouseReleased(double x, double y, int button) {
+        if (button == 1 && grid.mouseReleased(x, y, button)) {
+            return true;
+        }
+        return super.mouseReleased(x, y, button);
     }
 
     @Override
@@ -148,58 +223,33 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
         return menu.map == null ? List.of() : grid.hoverTooltip();
     }
 
-    @Override
-    protected void renderContent(GuiGraphics graphics, int mouseX, int mouseY) {
-        if (!menu.open || menu.map == null) {
-            text(graphics, "Waiting for the core...", 12, 40, TEXT_DIM);
-            return;
-        }
-        detail(graphics);
-    }
-
-    private void detail(GuiGraphics graphics) {
+    /** What is selected on the map, and the swap mark. */
+    private String selectionText() {
         CoreMapSnapshot map = menu.map;
-        int y = 32;
-        readout(graphics, "FUEL", menu.loadedAssemblies + "/" + menu.assemblyCount,
-                DETAIL_X, y, DETAIL_RIGHT, TEXT_BRIGHT);
-        readout(graphics, "k-inf", num(menu.aggregateKInf, 4), DETAIL_X, y += 10,
-                DETAIL_RIGHT, TEXT_BRIGHT);
-        readout(graphics, "k ARO", num(menu.kEffAllRodsOut, 4), DETAIL_X, y += 10,
-                DETAIL_RIGHT, menu.endOfCycle ? WARN : GOOD);
-        readout(graphics, "beta", num(menu.effectiveBeta, 5), DETAIL_X, y += 10,
-                DETAIL_RIGHT, TEXT_BRIGHT);
-        readout(graphics, "burn av", big(menu.averageBurnup), DETAIL_X, y += 10,
-                DETAIL_RIGHT, TEXT_BRIGHT);
-        readout(graphics, "burn pk", big(menu.peakBurnup), DETAIL_X, y += 10,
-                DETAIL_RIGHT, TEXT_BRIGHT);
-        readout(graphics, "peaking", num(map.peakingFactor(), 2), DETAIL_X, y += 10,
-                DETAIL_RIGHT, TEXT_BRIGHT);
-        readout(graphics, "in hand", String.valueOf(menu.bundlesInInventory), DETAIL_X, y += 10,
-                DETAIL_RIGHT, TEXT_BRIGHT);
-
+        if (map == null) {
+            return "";
+        }
         int selected = grid.selected();
-        String selectedLine;
+        String line;
         if (selected < 0 || selected >= map.coreSlotCount) {
-            selectedLine = "Wheel zoom / Drag RMB to pan";
-        } else if (grid.selectedCells().length>1) {
-            selectedLine = grid.selectedCells().length + " selected | Click to toggle";
+            line = "Wheel zooms; right-drag pans.";
+        } else if (grid.selectedCells().length > 1) {
+            line = grid.selectedCells().length + " selected | Click to toggle";
         } else if (!map.isOccupied(selected)) {
-            selectedLine = String.format(Locale.ROOT, "Position %d: empty.", selected);
+            line = String.format(Locale.ROOT, "Position %d: empty.", selected);
         } else if (map.isInsert(selected)) {
-            selectedLine = Component.translatable("insert.bwr." + map.insertId(selected)).getString()
+            line = Component.translatable("insert.bwr." + map.insertId(selected)).getString()
                     + String.format(Locale.ROOT, " | %.1f%%", 100 * map.insertProgress[selected]);
         } else {
-            selectedLine = String.format(Locale.ROOT,
-                    "Position %d: %s, %.2f%% fissile, %,.0f MWd/t, k-inf %.4f",
-                    selected, map.fuelTypeName(selected),
-                    map.enrichmentWeightFraction[selected] * 100.0,
+            line = String.format(Locale.ROOT, "Position %d: %s, %.2f%% fissile, %,.0f MWd/t, k-inf %.4f",
+                    selected, map.fuelTypeName(selected), map.enrichmentWeightFraction[selected] * 100.0,
                     map.burnupMwdPerTonne[selected], map.kInf[selected]);
         }
-        text(graphics, font.plainSubstrByWidth(selectedLine, GRID_W), 8, 116, TEXT);
         if (grid.marked() >= 0) {
-            text(graphics, "Marked: " + grid.marked(),
-                    164, 112, 0xFFFFC24A);
+            // two lines at most: the selection gets one, the mark the other
+            line = Ui.fit(line, Type.CAPTION, 120) + "\nMarked: " + grid.marked();
         }
+        return line;
     }
 
     private LatticeGridWidget.Cells cells() {
@@ -229,20 +279,16 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
             @Override
             public int colour(int cell) {
                 if (!map.isOccupied(cell)) {
-                    return 0xFF191C20;
+                    return LatticeColours.EMPTY;
                 }
-                if (map.isInsert(cell)) return 0xFFB886D6;
+                if (map.isInsert(cell)) {
+                    return LatticeColours.INSERT;
+                }
                 if (overlay == Overlay.BURNUP) {
-                    // Fresh is green, spent is red.
-                    double f = Math.min(1.0, map.burnupMwdPerTonne[cell] / peakBurnup);
-                    int r = (int) Math.round(60 + 180 * f);
-                    int g = (int) Math.round(200 - 150 * f);
-                    return 0xFF000000 | (r << 16) | (g << 8) | 70;
+                    return LatticeColours.burnup(Math.min(1.0, map.burnupMwdPerTonne[cell] / peakBurnup));
                 }
                 // k-inf: below 1.0 is dark, well above is bright.
-                double f = Math.max(0.0, Math.min(1.0, (map.kInf[cell] - 0.90) / 0.35));
-                int v = (int) Math.round(50 + 190 * f);
-                return 0xFF000000 | (v << 16) | (v << 8) | (v / 2 + 40);
+                return LatticeColours.kInf((map.kInf[cell] - 0.90) / 0.35);
             }
 
             @Override
@@ -253,7 +299,9 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                     out.add(Component.literal("Select it and press LOAD to place a bundle."));
                     return out;
                 }
-                if (map.isInsert(cell)) return map.insertTooltip(cell);
+                if (map.isInsert(cell)) {
+                    return map.insertTooltip(cell);
+                }
                 out.add(Component.literal(String.format(Locale.ROOT, "Position %d - %s",
                         cell, map.fuelTypeName(cell))));
                 out.add(Component.literal(String.format(Locale.ROOT, "%.2f%% fissile as fabricated",

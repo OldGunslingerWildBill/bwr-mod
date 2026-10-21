@@ -1,155 +1,514 @@
 package dev.bwr.mod.gui.client;
 
 import dev.bwr.mod.gui.BwrMenu;
+import dev.bwr.mod.gui.client.style.BwrEditBox;
+import dev.bwr.mod.gui.client.style.BwrStyle;
+import dev.bwr.mod.gui.client.style.BwrStyle.Status;
+import dev.bwr.mod.gui.client.style.BwrStyle.Type;
+import dev.bwr.mod.gui.client.style.Ui;
+import dev.bwr.mod.gui.client.style.UiElement;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarratedElementType;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
- * Shared chrome for the mod's screens: the panel background, a small set of
- * drawing helpers, and the colour palette.
+ * The base of every machine screen: the window (panel, title bar, optional title-bar tabs and chips), the layout engine
+ * that places a tree of {@link UiElement}s in the body, the inventory tray with its slot wells for screens that have
+ * slots, a scroll container for a body that does not fit, keyboard and narration support, and the number formatting
+ * helpers.
+ *
+ * <h2>How a screen is written</h2>
+ * A subclass passes its preferred size, builds its widgets (buttons, fields, sliders) once in its constructor or in
+ * {@link #buildUi()}, and returns the root of its element tree from {@link #buildUi()}. It never positions anything:
+ * the elements do. State that decides whether a control is enabled is set in {@code containerTick}, as before.
+ *
+ * <h2>Sizes</h2>
+ * The panel is as large as the screen asks for but never larger than the window less a margin, and every screen is
+ * designed to fit 320 x 240, the smallest GUI size the game gives a screen. A body that still does not fit scrolls
+ * (mouse wheel, Page Up and Down, Home and End, and Tab reveals the next control).
  *
  * <h2>On colour</h2>
- * Colour here is typography, not logic. A pressure that has climbed past the
- * design limit is drawn in red so a player's eye finds it, and that is the
- * entire extent of it — no code anywhere reads a colour, and nothing in the
- * plant behaves differently because a number went orange. The thresholds these
- * helpers use are the published design figures from {@code REFERENCE-DATA.md}
- * so that the colouring means something, but they are not setpoints: nothing
- * trips at them, because nothing in this mod trips at anything.
+ * Colour here is typography, not logic. A pressure that has climbed past the design limit is drawn in amber or red,
+ * with a shape and a word beside it, so a player's eye finds it, and that is the entire extent of it: no code reads a
+ * colour, and nothing in the plant behaves differently because a number turned amber. The thresholds used are the
+ * published design figures from {@code REFERENCE-DATA.md}; they are not setpoints, because nothing in this mod trips at
+ * anything.
  */
 public abstract class BwrScreen<T extends BwrMenu> extends AbstractContainerScreen<T> {
 
-    // --- palette ------------------------------------------------------
-    public static final int TEXT = 0xFFC8CDD4;
-    public static final int TEXT_DIM = 0xFF7C848F;
-    public static final int TEXT_BRIGHT = 0xFFF2F4F7;
-    public static final int GOOD = 0xFF6FD08C;
-    public static final int WARN = 0xFFE8B44A;
-    public static final int ALARM = 0xFFE05A5A;
-    public static final int ACCENT = 0xFF6FA8DC;
+    private final int preferredWidth;
+    private final int preferredHeight;
 
-    private final ResourceLocation background;
+    private UiElement root;
+    private UiElement titleItems;
+    private final List<AbstractWidget> flow = new ArrayList<>();
+    private final Set<AbstractWidget> scrolledOut = new HashSet<>();
 
-    protected BwrScreen(T menu, Inventory inventory, Component title,
-                        ResourceLocation background, int width, int height) {
+    private int bodyX;
+    private int bodyY;
+    private int bodyW;
+    private int bodyH;
+    private int scroll;
+    private int scrollMax;
+    private int trayX;
+    private int trayY;
+    private int trayW;
+    private int trayH;
+    private boolean titleCut;
+    private int titleRight;
+    private boolean narratedOnce;
+    private boolean fixedSize;
+
+    private static final int TRAY_PAD = 3;
+
+    protected BwrScreen(T menu, Inventory inventory, Component title, int preferredWidth, int preferredHeight) {
         super(menu, inventory, title);
-        this.background = background;
-        this.imageWidth = width;
-        this.imageHeight = height;
-        this.titleLabelX = 6;
-        this.titleLabelY = 3;
-        this.inventoryLabelX = 6;
-        this.inventoryLabelY = height - 94;
+        this.preferredWidth = preferredWidth;
+        this.preferredHeight = preferredHeight;
+        this.imageWidth = preferredWidth;
+        this.imageHeight = preferredHeight;
     }
 
-    @Override
-    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
-        graphics.blit(background, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+    // ---------------------------------------------------------------
+    // Subclass hooks
+    // ---------------------------------------------------------------
+
+    /** The body: a tree of elements. Called on every (re)initialisation, so it may create widgets. */
+    protected abstract UiElement buildUi();
+
+    /** Things at the right of the title bar (tabs, a status chip), laid out right to left; null for none. */
+    protected UiElement buildTitleItems() {
+        return null;
     }
 
-    /**
-     * Fixed render order: panel, then widgets and slots, then the screen's own
-     * readouts, then tooltips on top of all of it. Screens override
-     * {@link #renderContent} rather than this, because drawing text after the
-     * tooltip pass would put readouts on top of the tooltip a player is trying
-     * to read.
-     */
+    // ---------------------------------------------------------------
+    // Initialisation and layout
+    // ---------------------------------------------------------------
+
     @Override
-    public final void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        super.render(graphics, mouseX, mouseY, partialTick);
-        // Keep readouts in one batch; slots and tooltips retain their own ordering.
-        graphics.drawManaged(() -> renderContent(graphics, mouseX, mouseY));
-        renderTooltip(graphics, mouseX, mouseY);
-        java.util.List<net.minecraft.network.chat.Component> extra = hoverTooltip();
-        if (!extra.isEmpty()) {
-            graphics.renderComponentTooltip(font, extra, mouseX, mouseY);
+    protected void init() {
+        // A screen with slots keeps the size the menu's slot positions were laid out for; the others shrink to the window.
+        boolean fixed = !menu.slots.isEmpty();
+        fixedSize = fixed;
+        int usable = width - 2 * BwrStyle.WINDOW_MARGIN;
+        if (usable < 320 && width >= 320) {
+            // the smallest GUI size the game gives a screen is 320 wide: a panel may use all of it
+            usable = 320;
+        }
+        // A screen with slots keeps its height (the slot positions are the menu's) but may be narrower, down to the slots.
+        int slotsRight = 0;
+        for (Slot slot : menu.slots) {
+            slotsRight = Math.max(slotsRight, slot.x + 16 + 1 + TRAY_PAD + BwrStyle.SP2);
+        }
+        imageWidth = Math.min(preferredWidth, Math.max(Math.max(160, slotsRight), usable));
+        imageHeight = fixed ? preferredHeight : Math.min(preferredHeight, Math.max(120, height - 2 * BwrStyle.WINDOW_MARGIN));
+        super.init();
+
+        root = buildUi();
+        titleItems = buildTitleItems();
+        flow.clear();
+        scrolledOut.clear();
+        if (titleItems != null) {
+            titleItems.collectWidgets(flow::add);
+        }
+        root.collectWidgets(flow::add);
+        for (AbstractWidget widget : flow) {
+            addRenderableWidget(widget);
+        }
+        relayout();
+    }
+
+    /** Positions the body, the title items and the tray for the menu's current state. Cheap; called every frame. */
+    protected final void relayout() {
+        if (root == null) {
+            return;
+        }
+        if (!fixedSize) {
+            // As tall as the content needs, never shorter than the design height and never taller than the window.
+            int wanted = BwrStyle.TITLE_BAR + BwrStyle.SP2 + root.naturalHeight(imageWidth - 2 * BwrStyle.SP2) + BwrStyle.SP2;
+            int most = Math.max(120, height - 2 * BwrStyle.WINDOW_MARGIN);
+            imageHeight = Math.min(Math.max(preferredHeight, wanted), most);
+            topPos = (height - imageHeight) / 2;
+        }
+        computeTray();
+        bodyX = leftPos + BwrStyle.SP2;
+        bodyY = topPos + BwrStyle.TITLE_BAR + BwrStyle.SP2;
+        bodyW = imageWidth - 2 * BwrStyle.SP2;
+        int bottom = trayW > 0 && trayLimitsBody() ? trayY - BwrStyle.SP1 : topPos + imageHeight - BwrStyle.SP2;
+        bodyH = Math.max(BwrStyle.ROW, bottom - bodyY);
+
+        int natural = root.naturalHeight(bodyW);
+        scrollMax = Math.max(0, natural - bodyH);
+        scroll = Math.max(0, Math.min(scroll, scrollMax));
+        if (scrollMax > 0) {
+            root.place(bodyX, bodyY - scroll, bodyW - BwrStyle.SP1, natural);
+        } else {
+            root.place(bodyX, bodyY, bodyW, bodyH);
+        }
+
+        scrolledOut.clear();
+        if (scrollMax > 0) {
+            List<AbstractWidget> body = new ArrayList<>();
+            root.collectWidgets(body::add);
+            for (AbstractWidget widget : body) {
+                if (widget.visible && (widget.getY() < bodyY || widget.getY() + widget.getHeight() > bodyY + bodyH)) {
+                    widget.visible = false;
+                    scrolledOut.add(widget);
+                }
+            }
+        }
+
+        if (titleItems != null) {
+            int available = imageWidth - 2 * BwrStyle.SP2;
+            int pw = Math.min(available, titleItems.preferredWidth(available));
+            titleItems.place(leftPos + imageWidth - BwrStyle.SP2 - pw, topPos + 2, pw, BwrStyle.TITLE_BAR - 4);
+            titleRight = leftPos + imageWidth - BwrStyle.SP2 - pw - BwrStyle.SP2;
+        } else {
+            titleRight = leftPos + imageWidth - BwrStyle.SP2;
         }
     }
 
-    /** The screen's readouts. Drawn above the panel, below any tooltip. */
-    protected void renderContent(GuiGraphics graphics, int mouseX, int mouseY) {
+    /** The inventory tray as {@code {x, y, width, height}} relative to the panel, from the menu's slots; null without any. */
+    protected final int[] relativeTray() {
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        for (Slot slot : menu.slots) {
+            if (isTraySlot(slot)) {
+                minX = Math.min(minX, slot.x - 1);
+                minY = Math.min(minY, slot.y - 1);
+                maxX = Math.max(maxX, slot.x + 17);
+                maxY = Math.max(maxY, slot.y + 17);
+            }
+        }
+        return minX == Integer.MAX_VALUE ? null
+                : new int[]{minX - TRAY_PAD, minY - TRAY_PAD, maxX - minX + 2 * TRAY_PAD, maxY - minY + 2 * TRAY_PAD};
     }
 
-    /** Tooltip for a non-slot widget, such as a lattice cell. */
-    protected java.util.List<net.minecraft.network.chat.Component> hoverTooltip() {
-        return java.util.List.of();
+    private void computeTray() {
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        for (Slot slot : menu.slots) {
+            if (isTraySlot(slot)) {
+                minX = Math.min(minX, slot.x - 1);
+                minY = Math.min(minY, slot.y - 1);
+                maxX = Math.max(maxX, slot.x + 17);
+                maxY = Math.max(maxY, slot.y + 17);
+            }
+        }
+        if (minX == Integer.MAX_VALUE) {
+            trayW = 0;
+            trayH = 0;
+            return;
+        }
+        trayX = leftPos + minX - TRAY_PAD;
+        trayY = topPos + minY - TRAY_PAD;
+        trayW = maxX - minX + 2 * TRAY_PAD;
+        trayH = maxY - minY + 2 * TRAY_PAD;
     }
 
-    // --- drawing helpers ----------------------------------------------
-
-    /** One line of text at panel-relative coordinates. */
-    protected void text(GuiGraphics graphics, String value, int x, int y, int colour) {
-        graphics.drawString(font, value, leftPos + x, topPos + y, colour, false);
+    /** Whether a slot belongs to the player's inventory tray (drawn as one card) rather than to the machine. */
+    protected boolean isTraySlot(Slot slot) {
+        return slot.container instanceof Inventory;
     }
 
-    /** A "label  value" pair with the value right-aligned to {@code rightEdge}. */
-    protected void readout(GuiGraphics graphics, String label, String value,
-                           int x, int y, int rightEdge, int valueColour) {
-        graphics.drawString(font, label, leftPos + x, topPos + y, TEXT_DIM, false);
-        int width = font.width(value);
-        graphics.drawString(font, value, leftPos + rightEdge - width, topPos + y,
-                valueColour, false);
+    /**
+     * Whether the body ends where the inventory tray begins (the default). A screen that keeps its machine cards beside
+     * the tray rather than above it returns false and lays its own columns out so that nothing sits over the tray.
+     */
+    protected boolean trayLimitsBody() {
+        return true;
     }
 
-    /** A horizontal bar filled to {@code fraction}. */
-    protected void bar(GuiGraphics graphics, int x, int y, int width, int height,
-                       double fraction, int colour) {
-        int left = leftPos + x;
-        int top = topPos + y;
-        graphics.fill(left, top, left + width, top + height, 0xFF15181C);
-        int filled = (int) Math.round(Math.max(0.0, Math.min(1.0, fraction)) * (width - 2));
-        graphics.fill(left + 1, top + 1, left + 1 + filled, top + height - 1, colour);
-        graphics.renderOutline(left, top, width, height, 0xFF4A525C);
+    /** True while the body is taller than the window allows and is being scrolled (the style's screens fit 426 x 240 without it). */
+    public final boolean bodyScrolls() {
+        return scrollMax > 0;
     }
 
-    // --- formatting ---------------------------------------------------
+    /** Where the player-inventory tray starts, relative to the panel, or -1 without slots. Screens use it to place side cards. */
+    protected final int trayLeft() {
+        return trayW > 0 ? trayX - leftPos : -1;
+    }
 
+    protected final int trayRight() {
+        return trayW > 0 ? trayX - leftPos + trayW : -1;
+    }
+
+    protected final int bodyLeft() {
+        return bodyX;
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        relayout();
+    }
+
+    // ---------------------------------------------------------------
+    // Drawing
+    // ---------------------------------------------------------------
+
+    @Override
+    protected void renderBg(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
+        relayout();
+        Ui.panel(g, leftPos, topPos, imageWidth, imageHeight);
+
+        // title
+        String title = this.title.getString();
+        int titleX = leftPos + BwrStyle.SP2;
+        int room = titleRight - titleX;
+        String shown = Ui.fit(title, Type.TITLE, room);
+        titleCut = !shown.equals(title);
+        Ui.text(g, shown, titleX, topPos + (BwrStyle.TITLE_BAR - 8) / 2, Type.TITLE);
+        if (titleItems != null) {
+            titleItems.render(g, mouseX, mouseY);
+        }
+
+        // inventory tray, then the body, then the slot wells on top of both (a machine's own slot sits inside a card)
+        if (trayW > 0) {
+            Ui.card(g, trayX, trayY, trayW, trayH);
+        }
+        if (scrollMax > 0) {
+            g.enableScissor(bodyX, bodyY, bodyX + bodyW, bodyY + bodyH);
+            Ui.clipped(true);
+        }
+        root.render(g, mouseX, mouseY);
+        if (scrollMax > 0) {
+            Ui.clipped(false);
+            g.disableScissor();
+            renderScrollbar(g);
+        }
+        for (Slot slot : menu.slots) {
+            Ui.slotWell(g, leftPos + slot.x, topPos + slot.y);
+        }
+    }
+
+    private void renderScrollbar(GuiGraphics g) {
+        int x = bodyX + bodyW - 3;
+        g.fill(x, bodyY, x + 3, bodyY + bodyH, BwrStyle.INSET);
+        int thumb = Math.max(12, bodyH * bodyH / (bodyH + scrollMax));
+        int top = bodyY + (int) ((long) (bodyH - thumb) * scroll / Math.max(1, scrollMax));
+        g.fill(x, top, x + 3, top + thumb, BwrStyle.BORDER_STRONG);
+    }
+
+    /** No vanilla labels: the title is drawn by {@link #renderBg}, in the style's title bar. */
+    @Override
+    protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
+    }
+
+    /**
+     * Fixed render order: panel, then the elements, widgets and slots, then tooltips on top of all of it. Screens
+     * override the element tree and {@link #hoverTooltip} rather than this.
+     */
+    @Override
+    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        super.render(g, mouseX, mouseY, partialTick);
+        renderTooltip(g, mouseX, mouseY);
+        if (hoveredSlot != null && hoveredSlot.hasItem()) {
+            return;
+        }
+        List<Component> tip = hoverTooltip();
+        if (tip.isEmpty() && titleCut && mouseY >= topPos && mouseY < topPos + BwrStyle.TITLE_BAR
+                && mouseX >= leftPos && mouseX < titleRight) {
+            tip = List.of(this.title);
+        }
+        if (tip.isEmpty()) {
+            tip = root == null ? List.of() : root.tooltipAt(mouseX, mouseY);
+        }
+        if (!tip.isEmpty()) {
+            g.renderComponentTooltip(font, tip, mouseX, mouseY);
+        }
+    }
+
+    /** Tooltip for something that is not an element or a slot, such as a lattice cell. Empty by default. */
+    protected List<Component> hoverTooltip() {
+        return List.of();
+    }
+
+    // ---------------------------------------------------------------
+    // Keyboard, wheel and narration
+    // ---------------------------------------------------------------
+
+    @Override
+    public boolean keyPressed(int key, int scan, int modifiers) {
+        // An edit box swallows ordinary keys so that typing the inventory key does not close the screen.
+        if (getFocused() instanceof BwrEditBox box && box.isFocused()) {
+            if (key == 256) {
+                onClose();
+                return true;
+            }
+            if (key == 257 || key == 335) {
+                box.submit();
+                return true;
+            }
+            if (key != 258 && key != 264 && key != 265) {
+                box.keyPressed(key, scan, modifiers);
+                return true;
+            }
+        }
+        if (root != null && (key == 266 || key == 267) && !(getFocused() instanceof BwrEditBox) && root.page(key == 266 ? -1 : 1)) {
+            return true;
+        }
+        if (scrollMax > 0 || !scrolledOut.isEmpty()) {
+            if (key == 258 && revealForTab(!hasShiftDown())) {
+                return true;
+            }
+            if (!(getFocused() instanceof BwrEditBox)) {
+                int page = Math.max(BwrStyle.ROW, bodyH - BwrStyle.ROW);
+                switch (key) {
+                    case 266 -> {
+                        scrollBy(-page);
+                        return true;
+                    }
+                    case 267 -> {
+                        scrollBy(page);
+                        return true;
+                    }
+                    case 268 -> {
+                        scrollBy(-scrollMax);
+                        return true;
+                    }
+                    case 269 -> {
+                        scrollBy(scrollMax);
+                        return true;
+                    }
+                    default -> {
+                    }
+                }
+            }
+        }
+        return super.keyPressed(key, scan, modifiers);
+    }
+
+    /** Tab towards a control that is scrolled out of view: scroll it in and focus it. */
+    private boolean revealForTab(boolean forward) {
+        int current = -1;
+        for (int i = 0; i < flow.size(); i++) {
+            if (flow.get(i) == getFocused()) {
+                current = i;
+            }
+        }
+        int step = forward ? 1 : -1;
+        for (int i = current + step; i >= 0 && i < flow.size(); i += step) {
+            AbstractWidget candidate = flow.get(i);
+            if (scrolledOut.contains(candidate)) {
+                int target = candidate.getY() + scroll - bodyY - (bodyH - candidate.getHeight()) / 2;
+                scroll = Math.max(0, Math.min(scrollMax, target));
+                relayout();
+                if (candidate.visible) {
+                    setFocused(candidate);
+                    return true;
+                }
+                return false;
+            }
+            if (candidate.visible && candidate.active) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private void scrollBy(int pixels) {
+        scroll = Math.max(0, Math.min(scrollMax, scroll + pixels));
+        relayout();
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (super.mouseScrolled(mouseX, mouseY, scrollX, scrollY)) {
+            return true;
+        }
+        if (root != null && scrollY != 0.0 && root.scroll(mouseX, mouseY, scrollY)) {
+            return true;
+        }
+        if (scrollMax > 0 && scrollY != 0.0 && mouseX >= leftPos && mouseX < leftPos + imageWidth
+                && mouseY >= topPos && mouseY < topPos + imageHeight) {
+            scrollBy((int) Math.round(-scrollY * BwrStyle.ROW * 2));
+            return true;
+        }
+        return false;
+    }
+
+    /** What a screen reader should say when the screen opens: the title and every readout, once. */
+    @Override
+    protected void updateNarratedWidget(NarrationElementOutput output) {
+        if (!narratedOnce && root != null) {
+            narratedOnce = true;
+            List<String> lines = new ArrayList<>();
+            root.narrate(lines);
+            if (!lines.isEmpty()) {
+                output.add(NarratedElementType.HINT, Component.literal(String.join(". ", lines)));
+            }
+        }
+        super.updateNarratedWidget(output);
+    }
+
+    // ---------------------------------------------------------------
+    // Status helpers (colour is typography: see the class comment)
+    // ---------------------------------------------------------------
+
+    /** Dome pressure: 1250 psig is the design limit and 1375 the code limit from {@code REFERENCE-DATA.md}. */
+    protected static Status pressureStatus(double psig) {
+        if (psig >= 1375.0) {
+            return Status.ALARM;
+        }
+        return psig >= 1250.0 ? Status.CAUTION : Status.NONE;
+    }
+
+    /** Peak cladding temperature: 1200 C is the Zr-water onset, 1477 C the 10CFR50.46 limit. */
+    protected static Status cladStatus(double celsius) {
+        if (celsius >= 1200.0) {
+            return Status.ALARM;
+        }
+        return celsius >= 1000.0 ? Status.CAUTION : Status.NONE;
+    }
+
+    protected static Status fractionStatus(double fraction, double cautionAbove, double alarmAbove) {
+        if (fraction >= alarmAbove) {
+            return Status.ALARM;
+        }
+        return fraction >= cautionAbove ? Status.CAUTION : Status.NONE;
+    }
+
+    // ---------------------------------------------------------------
+    // Formatting
+    // ---------------------------------------------------------------
+
+    /** A fraction as a percentage without its sign: "12.3". Pair with the unit "%". */
     protected static String pct(double fraction) {
-        return String.format(Locale.ROOT, "%.1f%%", fraction * 100.0);
+        return String.format(Locale.ROOT, "%.1f", fraction * 100.0);
     }
 
     protected static String num(double value, int decimals) {
         return String.format(Locale.ROOT, "%." + decimals + "f", value);
     }
 
+    /** A number with thousands separators and no decimals. */
     protected static String big(double value) {
         return String.format(Locale.ROOT, "%,.0f", value);
     }
 
+    /** A number with thousands separators and the given decimals. */
+    protected static String grouped(double value, int decimals) {
+        return String.format(Locale.ROOT, "%,." + decimals + "f", value);
+    }
+
     protected static String sci(double value) {
         return String.format(Locale.ROOT, "%.2e", value);
-    }
-
-    /**
-     * Colour for a dome pressure readout. 1250 psig is the design limit and
-     * 1375 the code limit from {@code REFERENCE-DATA.md}; passing either changes
-     * the colour of the text and nothing else whatsoever.
-     */
-    protected static int pressureColour(double psig) {
-        if (psig >= 1375.0) {
-            return ALARM;
-        }
-        return psig >= 1250.0 ? WARN : TEXT_BRIGHT;
-    }
-
-    /** Peak cladding temperature colour: 1200 C is the Zr-water onset, 1477 C the 10CFR50.46 limit. */
-    protected static int cladColour(double celsius) {
-        if (celsius >= 1200.0) {
-            return ALARM;
-        }
-        return celsius >= 1000.0 ? WARN : TEXT_BRIGHT;
-    }
-
-    protected static int fractionColour(double fraction, double warnAbove, double alarmAbove) {
-        if (fraction >= alarmAbove) {
-            return ALARM;
-        }
-        return fraction >= warnAbove ? WARN : TEXT_BRIGHT;
     }
 
     /** Blue for cold, through white, to orange-red for a hot bundle. */
