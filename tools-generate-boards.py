@@ -48,7 +48,7 @@ BOARDS = [
      "Four duplex columns: the board two blocks high, the tilted header above it and the bench in front. Blank: mount what you like on it.",
      [run("duplex", 1, (0, 0, 0))]),
     ("control_desk_1m", "Control desk (1 m)",
-     "A run of four 1 m control desks, each one block wide: a level top at operator desk height. Blank: mount what you like on it.",
+     "A run of four 1 m control desks, each one block wide: a flat top at operator desk height. Blank: mount what you like on it.",
      [run("desk", 1, (0, 0, 0))]),
     ("control_desk_2m", "Control desk (2 m)",
      "Two 2 m control desks side by side, four blocks wide in all (each desk is one item and two blocks). Blank: mount what you like on it.",
