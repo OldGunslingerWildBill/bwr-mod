@@ -136,6 +136,28 @@ public final class PanelOps {
         return component;
     }
 
+    /**
+     * {@link #placeDirect} for a caller that places many components in a row (a premade board): the component gets
+     * {@code label} (the group's next free {@code PREFIX-n} when it is null or empty), and the touched blocks are NOT
+     * synced; the caller calls {@link PanelBlockEntity#syncFull} on every block it touched once, at the end.
+     */
+    public static PanelComponent placeDirectQuiet(ServerLevel level, BlockPos anchor, int cx, int cy, ComponentType type,
+                                                  Footprint footprint, String label) {
+        PanelGroup.Placement placement = PanelGroup.checkPlacement(level, anchor, cx, cy, footprint, type.maxSpanBlocks());
+        if (!placement.ok()) {
+            return null;
+        }
+        PanelBlockEntity be = (PanelBlockEntity) level.getBlockEntity(anchor);
+        String use = label == null || label.isEmpty() ? be.group().nextLabel(level, type.labelPrefix()) : label;
+        return be.addComponent(type, cx, cy, footprint, use, placement.rects());
+    }
+
+    /** Why {@link #placeDirectQuiet} would refuse the same placement, or OK. */
+    public static PanelGroup.Result checkDirect(ServerLevel level, BlockPos anchor, int cx, int cy, ComponentType type,
+                                                Footprint footprint) {
+        return PanelGroup.checkPlacement(level, anchor, cx, cy, footprint, type.maxSpanBlocks()).result();
+    }
+
     // ---- remove
 
     /** Removes a component and drops its item. The player must hold the wrench. */

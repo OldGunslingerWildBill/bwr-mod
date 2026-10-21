@@ -1,0 +1,1476 @@
+{
+ "format": 1,
+ "title": "RPV level, pressure and flow",
+ "description": "The how-is-the-reactor board: nine level indicators on the five BWR/4 ranges with the trip level bands, three pressure ranges, core, steam and feed flow, a seven trace recorder and a vessel temperature recorder.",
+ "source": "CR-PANELS-BWR-RESEARCH.md board 2 (GE BWR/4: levels 0 to +60 narrow, -150 to +60 wide, 0 to +180 upset, 0 to +400 shutdown, -308 to -108 fuel zone; pressure 850-1050, 0-1200, 0-1500 psig)",
+ "order": 2,
+ "todo": [
+  "Feedwater (master level controller, reactor feed pump M/A) and recirculation (master flow controller, M/A transfer stations) controls are reserved on main.bench for the manual/auto controller station part.",
+  "A level scale with printed numbered trip marks (research section 4, gap 12) would replace the bands and the TRIP LEVELS plate."
+ ],
+ "frames": [
+  {
+   "id": "main",
+   "kind": "duplex",
+   "columns": 5,
+   "at": [
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "components": [
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    2,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RPV LEVEL",
+    "Line2": "HIGH L8"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    4,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RPV LEVEL",
+    "Line2": "HIGH L7"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    6,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RPV LEVEL",
+    "Line2": "LOW L4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    8,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RPV LEVEL",
+    "Line2": "LOW L3"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    10,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RPV LEVEL",
+    "Line2": "LOW L2"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    12,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RPV LEVEL",
+    "Line2": "LOW L1"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    14,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RPV PRESS",
+    "Line2": "HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    16,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RPV PRESS",
+    "Line2": "LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    2,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "LEVEL",
+    "Line2": "DEVIATION"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    4,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "LVL INST",
+    "Line2": "DISAGREE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    6,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "FW STARTUP",
+    "Line2": "LVL LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    8,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "FW CTRL",
+    "Line2": "TROUBLE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    10,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "SRV",
+    "Line2": "OPEN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    12,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RPV METAL",
+    "Line2": "TEMP HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    14,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RPV HEAD",
+    "Line2": "TEMP LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    16,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RPV HEAD",
+    "Line2": "VENT OPEN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    2,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "RPV PRESS",
+    "Line2": "1025 PSIG"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    4,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "RPV PRESS",
+    "Line2": "1043 PSIG"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    6,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "RPV PRESS",
+    "Line2": "1120 PSIG"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    8,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    10,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    12,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    14,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    16,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    62,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "CORE FLOW",
+    "Line2": "LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    64,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "CORE FLOW",
+    "Line2": "HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    66,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "JET PUMP",
+    "Line2": "DP HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    68,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "JET PUMP",
+    "Line2": "FLOW LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    70,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RECIRC A",
+    "Line2": "FLOW HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    72,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RECIRC B",
+    "Line2": "FLOW HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    74,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "STEAM FLOW",
+    "Line2": "HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    76,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "FEEDWATER",
+    "Line2": "FLOW HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    62,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "CORE PLATE",
+    "Line2": "DP HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    64,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "CORE PLATE",
+    "Line2": "DP LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    66,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "FLOW",
+    "Line2": "MISMATCH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    68,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "LOOP A",
+    "Line2": "FLOW LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    70,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "LOOP B",
+    "Line2": "FLOW LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    72,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "STM FLOW",
+    "Line2": "FW MISMATCH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    74,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    76,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:nameplate",
+   "at": [
+    28,
+    2
+   ],
+   "size": [
+    24,
+    4
+   ],
+   "config": {
+    "Text": "RPV LEVEL / PRESS / FLOW",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:nameplate",
+   "at": [
+    28,
+    7
+   ],
+   "size": [
+    24,
+    8
+   ],
+   "config": {
+    "Text": "TRIP LEVELS (IN.)",
+    "Text2": "L8 +56.5    L7 +40    L4 +33.5",
+    "Text3": "L3 +12.5   L2 -38   L1 -132.5",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    0,
+    0
+   ],
+   "size": [
+    64,
+    4
+   ],
+   "config": {
+    "Text": "RPV LEVEL, PRESSURE AND FLOW",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    64,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "P603 / P619",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    0,
+    5
+   ],
+   "size": [
+    48,
+    4
+   ],
+   "config": {
+    "Text": "LEVEL IN. ABOVE INSTRUMENT ZERO",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:bar_gauge",
+   "at": [
+    3,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "LVL-NAR-A",
+   "caption": "NA",
+   "config": {
+    "Preset": "custom",
+    "Min": 0,
+    "Max": 60,
+    "Units": "INCHES",
+    "Band1Low": 0,
+    "Band1High": 12.5,
+    "Band1Color": "A80E0E",
+    "Band2Low": 12.5,
+    "Band2High": 33.5,
+    "Band2Color": "C4B02A",
+    "Band3Low": 40,
+    "Band3High": 56.5,
+    "Band3Color": "C4B02A",
+    "Band4Low": 56.5,
+    "Band4High": 60,
+    "Band4Color": "A80E0E"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:bar_gauge",
+   "at": [
+    10,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "LVL-NAR-B",
+   "caption": "NB",
+   "config": {
+    "Preset": "custom",
+    "Min": 0,
+    "Max": 60,
+    "Units": "INCHES",
+    "Band1Low": 0,
+    "Band1High": 12.5,
+    "Band1Color": "A80E0E",
+    "Band2Low": 12.5,
+    "Band2High": 33.5,
+    "Band2Color": "C4B02A",
+    "Band3Low": 40,
+    "Band3High": 56.5,
+    "Band3Color": "C4B02A",
+    "Band4Low": 56.5,
+    "Band4High": 60,
+    "Band4Color": "A80E0E"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:bar_gauge",
+   "at": [
+    17,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "LVL-NAR-C",
+   "caption": "NC",
+   "config": {
+    "Preset": "custom",
+    "Min": 0,
+    "Max": 60,
+    "Units": "INCHES",
+    "Band1Low": 0,
+    "Band1High": 12.5,
+    "Band1Color": "A80E0E",
+    "Band2Low": 12.5,
+    "Band2High": 33.5,
+    "Band2Color": "C4B02A",
+    "Band3Low": 40,
+    "Band3High": 56.5,
+    "Band3Color": "C4B02A",
+    "Band4Low": 56.5,
+    "Band4High": 60,
+    "Band4Color": "A80E0E"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:bar_gauge",
+   "at": [
+    24,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "LVL-WIDE-A",
+   "caption": "WA",
+   "config": {
+    "Preset": "custom",
+    "Min": -150,
+    "Max": 60,
+    "Units": "INCHES",
+    "Band1Low": -150,
+    "Band1High": -132.5,
+    "Band1Color": "A80E0E",
+    "Band2Low": -132.5,
+    "Band2High": 12.5,
+    "Band2Color": "C4B02A",
+    "Band3Low": 56.5,
+    "Band3High": 60,
+    "Band3Color": "A80E0E",
+    "Band4Low": 0,
+    "Band4High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:bar_gauge",
+   "at": [
+    31,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "LVL-WIDE-B",
+   "caption": "WB",
+   "config": {
+    "Preset": "custom",
+    "Min": -150,
+    "Max": 60,
+    "Units": "INCHES",
+    "Band1Low": -150,
+    "Band1High": -132.5,
+    "Band1Color": "A80E0E",
+    "Band2Low": -132.5,
+    "Band2High": 12.5,
+    "Band2Color": "C4B02A",
+    "Band3Low": 56.5,
+    "Band3High": 60,
+    "Band3Color": "A80E0E",
+    "Band4Low": 0,
+    "Band4High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_vertical",
+   "at": [
+    38,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "LVL-UPSET",
+   "caption": "UP",
+   "config": {
+    "Min": 0,
+    "Max": 180,
+    "Units": "INCHES",
+    "Band1Low": 56.5,
+    "Band1High": 180,
+    "Band1Color": "A80E0E",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_vertical",
+   "at": [
+    45,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "LVL-SHUTDOWN",
+   "caption": "SD",
+   "config": {
+    "Min": 0,
+    "Max": 400,
+    "Units": "INCHES",
+    "Band1Low": 0,
+    "Band1High": 0,
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_vertical",
+   "at": [
+    52,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "LVL-FZ-A",
+   "caption": "FA",
+   "config": {
+    "Min": -308,
+    "Max": -108,
+    "Units": "INCHES",
+    "Band1Low": -308,
+    "Band1High": -158,
+    "Band1Color": "A80E0E",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_vertical",
+   "at": [
+    59,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "LVL-FZ-B",
+   "caption": "FB",
+   "config": {
+    "Min": -308,
+    "Max": -108,
+    "Units": "INCHES",
+    "Band1Low": -308,
+    "Band1High": -158,
+    "Band1Color": "A80E0E",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    0,
+    20
+   ],
+   "size": [
+    32,
+    4
+   ],
+   "config": {
+    "Text": "RPV PRESSURE  (PSIG)",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    3,
+    25
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "PRESS-NARROW",
+   "caption": "NARR",
+   "config": {
+    "Min": 850,
+    "Max": 1050,
+    "Units": "PSIG",
+    "Band1Low": 1025,
+    "Band1High": 1043,
+    "Band1Color": "C4B02A",
+    "Band2Low": 1043,
+    "Band2High": 1050,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    13,
+    25
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "PRESS-NORMAL",
+   "caption": "NORM",
+   "config": {
+    "Min": 0,
+    "Max": 1200,
+    "Units": "PSIG",
+    "Band1Low": 1025,
+    "Band1High": 1043,
+    "Band1Color": "C4B02A",
+    "Band2Low": 1043,
+    "Band2High": 1200,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    23,
+    25
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "PRESS-WIDE",
+   "caption": "WIDE",
+   "config": {
+    "Min": 0,
+    "Max": 1500,
+    "Units": "PSIG",
+    "Band1Low": 1025,
+    "Band1High": 1043,
+    "Band1Color": "C4B02A",
+    "Band2Low": 1120,
+    "Band2High": 1500,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    32,
+    20
+   ],
+   "size": [
+    32,
+    4
+   ],
+   "config": {
+    "Text": "FLOW  (MLB/HR)",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_horizontal",
+   "at": [
+    35,
+    26
+   ],
+   "size": [
+    6,
+    2
+   ],
+   "label": "FLOW-CORE",
+   "caption": "CORE",
+   "config": {
+    "Min": 0,
+    "Max": 120,
+    "Units": "MLB/HR",
+    "Band1Low": 105,
+    "Band1High": 120,
+    "Band1Color": "C4B02A",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_horizontal",
+   "at": [
+    44,
+    26
+   ],
+   "size": [
+    6,
+    2
+   ],
+   "label": "FLOW-STEAM",
+   "caption": "STEAM",
+   "config": {
+    "Min": 0,
+    "Max": 16,
+    "Units": "MLB/HR",
+    "Band1Low": 14,
+    "Band1High": 16,
+    "Band1Color": "C4B02A",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_horizontal",
+   "at": [
+    53,
+    26
+   ],
+   "size": [
+    6,
+    2
+   ],
+   "label": "FLOW-FEED",
+   "caption": "FEED",
+   "config": {
+    "Min": 0,
+    "Max": 16,
+    "Units": "MLB/HR",
+    "Band1Low": 14,
+    "Band1High": 16,
+    "Band1Color": "C4B02A",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:paperless_recorder",
+   "at": [
+    64,
+    16
+   ],
+   "size": [
+    16,
+    16
+   ],
+   "label": "REC-7TRACE",
+   "config": {
+    "Channels": 12,
+    "Ch01Tag": "APRM PWR",
+    "Ch01Unit": "%",
+    "Ch01Lo": 0,
+    "Ch01Hi": 125,
+    "Ch02Tag": "RX PRESS",
+    "Ch02Unit": "PSIG",
+    "Ch02Lo": 0,
+    "Ch02Hi": 1200,
+    "Ch03Tag": "RX STM FLOW",
+    "Ch03Unit": "MLB/HR",
+    "Ch03Lo": 0,
+    "Ch03Hi": 16,
+    "Ch04Tag": "TURB STM FLOW",
+    "Ch04Unit": "MLB/HR",
+    "Ch04Lo": 0,
+    "Ch04Hi": 16,
+    "Ch05Tag": "FW FLOW",
+    "Ch05Unit": "MLB/HR",
+    "Ch05Lo": 0,
+    "Ch05Hi": 16,
+    "Ch06Tag": "RX LVL NAR",
+    "Ch06Unit": "IN",
+    "Ch06Lo": 0,
+    "Ch06Hi": 60,
+    "Ch07Tag": "CORE FLOW",
+    "Ch07Unit": "MLB/HR",
+    "Ch07Lo": 0,
+    "Ch07Hi": 120,
+    "Ch08On": false,
+    "Ch09On": false,
+    "Ch10On": false,
+    "Ch11On": false,
+    "Ch12On": false
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:seven_segment_display",
+   "at": [
+    64,
+    5
+   ],
+   "size": [
+    15,
+    8
+   ],
+   "label": "LVL-READOUT",
+   "caption": "LEVEL",
+   "config": {
+    "Format": "{0:3.0f}",
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    0,
+    0
+   ],
+   "size": [
+    24,
+    4
+   ],
+   "config": {
+    "Text": "FEEDWATER LEVEL CONTROL",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    24,
+    0
+   ],
+   "size": [
+    24,
+    4
+   ],
+   "config": {
+    "Text": "RECIRC FLOW CONTROL",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    72,
+    0
+   ],
+   "size": [
+    8,
+    4
+   ],
+   "config": {
+    "Text": "ANN",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:annunciator_control",
+   "at": [
+    74,
+    6
+   ],
+   "size": [
+    4,
+    2
+   ],
+   "label": "ANN-CTRL"
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:strip_chart",
+   "at": [
+    56,
+    0
+   ],
+   "size": [
+    16,
+    16
+   ],
+   "label": "REC-VESSEL-TEMP",
+   "config": {
+    "Pens": 2,
+    "Min": 0,
+    "Max": 600,
+    "Span": 600
+   }
+  }
+ ],
+ "reserved": [
+  {
+   "on": "main.bench",
+   "at": [
+    0,
+    4
+   ],
+   "size": [
+    24,
+    12
+   ],
+   "for": "bwr:controller_station",
+   "note": "Feedwater master level controller (FWCS): TODO controller station: when the manual/auto controller station part exists, place it here (setpoint and measured value indicators, AUTO/MAN buttons with lamps, raise/lower buttons) and delete this entry. See CR-PANELS-BWR-RESEARCH.md section 4, gap 1."
+  },
+  {
+   "on": "main.bench",
+   "at": [
+    24,
+    4
+   ],
+   "size": [
+    24,
+    12
+   ],
+   "for": "bwr:controller_station",
+   "note": "Recirculation master flow controller and the M/A transfer stations: TODO controller station: when the manual/auto controller station part exists, place it here (setpoint and measured value indicators, AUTO/MAN buttons with lamps, raise/lower buttons) and delete this entry. See CR-PANELS-BWR-RESEARCH.md section 4, gap 1."
+  }
+ ],
+ "mimic": [
+  {
+   "on": "main.board",
+   "points": [
+    [
+     1,
+     4
+    ],
+    [
+     63,
+     4
+    ],
+    [
+     63,
+     19
+    ],
+    [
+     1,
+     19
+    ],
+    [
+     1,
+     4
+    ]
+   ],
+   "style": {
+    "Color": "101010",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 0,
+    "FlowEvery": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     1,
+     20
+    ],
+    [
+     31,
+     20
+    ],
+    [
+     31,
+     31
+    ],
+    [
+     1,
+     31
+    ],
+    [
+     1,
+     20
+    ]
+   ],
+   "style": {
+    "Color": "101010",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 0,
+    "FlowEvery": 0
+   }
+  }
+ ]
+}

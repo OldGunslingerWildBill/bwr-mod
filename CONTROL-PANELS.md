@@ -652,6 +652,100 @@ the block so a path across blocks has no overdraw; only a bound path's lit overl
 Rounded and curved shapes are tessellated into short pieces when the mesh is built (at most 1024 points a path). It works on vertical, benchboard and console boards (a line is as thick and an arrow as true on a slope as on a wall) and with
 and without shader packs.
 
+## 2e. Premade boards: the board blueprint
+
+A **board blueprint** (`bwr:board_blueprint`) puts a whole realistic BWR control board in the world in one click: the panel
+blocks, every instrument, switch, lamp, nameplate and annunciator window on them with its real labels, ranges and bands, and
+the mimic tape and demarcation lines. **Nothing is wired**: no component has a source or a sink, and nothing acts on the
+plant. You wire it with the Networking Wrench like any board you built by hand.
+
+### Using it
+
+* One item for every board; the board it places is part of the stack. The creative tab holds one stack per board. In your
+  hand, **right-click the air** to step to the next board (**sneak**: the one before it); the name and tooltip say which.
+  (A selector screen would be one more screen to keep in step with the data packs; stepping is enough for a handful of
+  boards. Crafting: paper, blue dye, an iron nugget and a vertical panel, shapeless.)
+* While it is held and the crosshair is on a block, an **outline of the whole board** is drawn there, through walls: green
+  when the board fits, and when something is in the way the blocked blocks are red and the rest yellow. The action bar says
+  which. The outline is the shape of each panel block, so a duplex column shows its bench wedge and tilted header.
+* **Right-click the block** to place it. The block in front of the clicked face (or the clicked block if it can be replaced)
+  is the board's **front left corner as the operator sees it**; the panels face you, and the board stands to your right and
+  away from you.
+* It is **refused, and nothing changes**, when a block is in the way (the first is named), part of the board is outside the
+  world or in an unloaded chunk, you may not build there (the same rule as placing a component: spawn protection, claims), the
+  board would make a panel group wider or taller than `maxGroupColumns` / `maxGroupRows`, or a block would hold more components
+  than `maxComponentsPerBlock` allows.
+* **Creative: free.** **Survival: the board is paid for from your inventory** when it is placed: the panel blocks (one duplex
+  item per column), one item for every component (any size of the item pays for it; a DX2000 recorder needs the DX2000 item) and
+  the mimic tape its paths need (one per 32 cells, like drawing it). If anything is missing, nothing is placed and the missing
+  items are listed (`Missing for RPS scram and mode switch: 96 x Annunciator, ...`). The blueprint is not used up.
+
+### The five boards
+
+Each carries one **annunciator control module** (ACK, RESET, SILENCE, TEST) for its annunciator windows. All are laid out at about twice the exact real size (a dial 4 x 4 cells, a switch 2 x 4, a lamp 2 x 2: the exact real sizes were
+too small to read), from `CR-PANELS-BWR-RESEARCH.md` (the number is the board in that report). Labels follow its conventions:
+white laminate with black engraving above controls and below indicators (nameplates above, captions below), black plates for
+system titles, valve switches CLOSE left and OPEN right with a green (closed) and a red (open) lamp, annunciator tiles red for
+reactor protection information, amber for inoperable, white for off normal. Black demarcation lines round the systems are
+mimic tape.
+
+| Board (file) | Frames | Contents |
+| --- | --- | --- |
+| **Rod control** (`rod_control`, board 1) | back panel wall 10 x 5 and a benchboard 10 x 1 | full core display (Columbia, 64 x 64) and rod select matrix (48 x 48), the four rod display, ACT CTL DISAGREE and ROD DRIFT lamps; RWM / RSCS annunciators, six error and interlock lamps, rod group display, RWM NORM / BYP key; on the bench INSERT, WITHDRAW, CONT INS, CONT W/D, drift TEST and RESET, SEQ A/B, INSERT/WITHDRAW, ALL/FREE and F.I./BYPASS selectors. **Reserved:** the LED rod pattern map (amber/red LED per rod: no such part yet) |
+| **RPV level, pressure and flow** (`rpv_level_pressure_flow`, board 2) | duplex, 5 columns | nine level indicators (narrow A-C and wide A-B bar gauges, upset, shutdown, two fuel zone edgewise meters) with the L1/L3/L4/L8 bands, three pressure dials (850-1050, 0-1200, 0-1500 psig) with the 1025/1043/1120 marks, core, steam and feed flow, the seven trace recorder (APRM power, pressure, steam, turbine steam, feed flow, narrow level, core flow), a vessel temperature recorder, alarm windows, the trip level plaque. **Reserved (TODO):** the feedwater master level controller and the recirculation master flow controller / M/A stations |
+| **RPS scram and mode switch** (`reactor_scram_rps`, board 3) | duplex, 5 columns | two guarded manual scram assemblies (A1/B1, A2/B2), the four position mode switch (SHUTDOWN, REFUEL, STARTUP, RUN) and its key, scram reset (RESET A / B), two guarded ARI buttons, the SDV bypass key, eight white scram group lamps, the mode and setpoint plaques, 96 scram annunciator windows for trip systems A and B. **Reserved:** the IRM / APRM bypass joysticks |
+| **ECCS bench** (`eccs_p601`, boards 4 and 6) | duplex, 13 columns | divisions I and II, each with RHR and core spray: pump pistol-grip switches and valve CLOSE/OPEN selectors with green and red lamps (ten per division), the LPCI (blue) and core spray (green) mimic with pump, valve and tank symbols, pump pressure dials and flow meters, ARM / DEPRESS guarded buttons, 42 alarm windows; the ADS section with 7 ADS and 4 relief valve open/auto/close selectors (red stripe on the ADS valves), AUTO INHIBIT and INITIATE push-turn switches (turn to arm, then push), ADS reset buttons and the backup transfer key |
+| **Neutron monitoring** (`neutron_monitoring`, board 10) | duplex, 6 columns | eight IRMs (0-125 divisions, bands at 5, 108 and 120) with range selectors, six APRM bar gauges (0-125 %, red from 118 %), sixteen LPRM dials, four SRM count rates, two two-pen recorders, four bypass switches, alarm windows. The IRM range switch is a 6 position selector (the real one has 10) |
+
+### The template format (`data/<namespace>/panel_board/<name>.json`)
+
+A data pack adds a board by shipping a file; `/reload` loads it and the blueprint finds it. The server sends the boards to the
+clients when they join and on `/reload`. A file with any problem is logged (every problem with the entry it belongs to) and
+left out; the other boards still load. `tools-generate-boards.py` writes the five shipped files (`python tools-generate-boards.py`;
+`--check` fails when the files differ from it) and is a good example of a layout script, but the JSON is the source.
+
+```json
+{
+  "format": 1,
+  "title": "RPS scram and mode switch", "description": "...", "source": "CR-PANELS-BWR-RESEARCH.md board 3", "order": 3,
+  "todo": ["comments for whoever extends the board"],
+  "frames": [ {"id": "main", "kind": "duplex", "columns": 5, "at": [0, 0, 0]} ],
+  "components": [
+    {"on": "main.bench", "type": "bwr:lamp", "at": [3, 4], "size": [2, 2], "label": "RHR-A-RUN", "caption": "RUN",
+     "config": {"Color": "E02020", "Style": "ge", "Variant": "round"}},
+    {"on": "main.bench", "type": "bwr:lamp", "at": [3, 8], "size": [2, 2], "label": "SCR-{name}",
+     "repeat": {"count": 4, "step": [6, 0]}, "names": ["A", "B", "C", "D"]}
+  ],
+  "reserved": [ {"on": "main.board", "at": [0, 0], "size": [24, 12], "for": "bwr:controller_station", "note": "TODO ..."} ],
+  "mimic": [ {"on": "main.board", "points": [[2, 2], [30, 2]], "style": {"Color": "2E7DE0", "FlowEvery": 16, "EndEnd": 1}} ]
+}
+```
+
+* **frames** are runs of panel blocks. `kind` is `duplex` (one item per column: surfaces `board` 2 blocks tall, `header`,
+  `bench`), `vertical`, `benchboard`, `console` or `back_panel` (surface `face`). `at` is `[right, up, forward]` in blocks from the
+  board's origin (right of the operator, up, toward the operator); for a duplex it is the bench of the left column, for the
+  rest the top left block (rows go down, on a benchboard also toward the operator). A surface is named `<frame>.<part>`, for
+  example `main.bench`; its cells are 16 per block, x to the operator's right and y down. Frames may not share a block, a group
+  may be at most 16 x 8 blocks.
+* **components** say which surface, which `type`, where (`at`, cells), how big (`size`, **required**: a board never takes a
+  type's default size, so it cannot change when a default does; a size has to be one of the type's sizes, or one of the doubled
+  real sizes the parser knows, such as a dial 4 x 4 or a lamp 2 x 2), and then `label` (the component's wiring tag, at most 16
+  characters, unique in the board), `caption` (the printed text under it) and `config`: any field of the part's wrench screen
+  by its key (`Min`, `Band1Low`, `Text`, `Names`, `Style`, `Variant`, ...), checked against the real field: a number in range,
+  a text not too long, a choice from its list, a colour as a number or an `"RRGGBB"` string. `repeat` (`count`, or `cols` and
+  `rows`, and a `step` in cells) makes copies; in `label`, `caption` and the text values of `config`, `{n}` is the copy number
+  from 1, `{i}` from 0, `{col}` and `{row}` its place in the grid and `{name}` the copy's entry of `names`.
+* **reserved** keeps a space empty for a part that does not exist yet (`for` is its future type id, `note` says what goes
+  there). It is checked like a component (inside the surface, over nothing) and left empty when the board is placed. This is
+  the "commented TODO" of the format, and it is where the **manual/auto controller station** (feedwater, recirculation),
+  the **joystick bypass switch** and the **LED rod pattern display** go: replace the entry with a component when the part exists.
+* **mimic** are tape paths (2 to 64 points, in cells of the surface; `style` is any field of the mimic path screen).
+* Wiring is not part of a template.
+
+The checks (`BoardTemplateParser`): every type and size exists, every component lies inside its surface and spans no more
+blocks than its type allows, nothing overlaps (components and reserved spaces together), labels are unique, no panel block holds
+more components than `maxComponentsPerBlock` (256 by default), every frame fits the group limits.
+
 ## 3. Worked example: a small reactor control room
 
 A vertical board five blocks wide and three high (one group, 80 x 48 cells; see the component sizes above). Link the reactor controller once,

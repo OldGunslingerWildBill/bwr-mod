@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: premade control boards and the board blueprint
+
+- Added the **board blueprint** (`bwr:board_blueprint`, CONTROL-PANELS.md section 2e): one item that places a whole premade control board in one click, with an outline ghost (green fits, red blocked) while it is held. Right-click the air to pick the next board; right-click a block to place it, the clicked spot being the front left corner of the board and the panels facing the player. Creative is free; survival takes the panel blocks, one item per component and the mimic tape from the inventory and lists what is missing; a blocked, out of world, unloaded, protected or over-limit site is refused and nothing changes. Boards are placed **unwired**.
+- Boards are **data**: `data/<namespace>/panel_board/<name>.json` (panel frames, components with type, cell, explicit size and any wrench setting, reserved spaces for parts that do not exist yet, mimic tape), loaded with the data packs, synced to clients, validated as a whole (every problem is logged, a bad file is skipped).
+- Five boards ship, laid out at about twice the exact real size from `CR-PANELS-BWR-RESEARCH.md`: **rod control**, **RPV level, pressure and flow**, **RPS scram and mode switch**, the **ECCS bench (P601)** with the ADS / SRV section, and **neutron monitoring**. Space is reserved (and marked as a TODO in the template) for the manual/auto controller station (feedwater, recirculation), the joystick bypass switch and the LED rod pattern display.
+- `PanelOps.placeDirectQuiet` (a component with a given label and no per-component sync) for bulk placement. New data component `bwr:board_template`. Old saves are unaffected.
+
 ## Unreleased: paint finishes for panels, trim and furniture
 
 - Every **panel body** (vertical, benchboard, console, back panel, duplex), every **trim block** (end caps, header strip, canopy and vent, plinths, corners) and every piece of **room furniture** (cabinets, desks, mimic bands, wall displays, control stand) has a paint **finish**: **seafoam** (the look they always had, and the default), **cream**, **tan**, **grey** and **light blue** (the owner's simulator). It is a blockstate property `finish`, so a saved block that has none, which is every block placed before, loads as seafoam and looks exactly as it did (CONTROL-PANELS.md, "Finishes").

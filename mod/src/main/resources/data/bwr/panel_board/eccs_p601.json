@@ -1,0 +1,4994 @@
+{
+ "format": 1,
+ "title": "ECCS bench (P601)",
+ "description": "The reactor core cooling board: RHR / LPCI and low pressure core spray for divisions I and II with their pump and valve switches and red/green lamps, flow and pressure meters, the mimic, and the ADS / SRV section.",
+ "source": "CR-PANELS-BWR-RESEARCH.md boards 4 and 6 (GE P601 reactor core cooling; ADS switches of the BWR/4 manual)",
+ "order": 4,
+ "todo": [
+  "Valve switches are rotary selectors with a green and a red lamp each; a valve symbol with an embedded lamp (research board 4, Missing) would fold the mimic symbol and the two lamps together.",
+  "RHR is shown for the LPCI mode (blue) and core spray (green); the other modes (pool cooling, spray, shutdown cooling) are valves on the bench but have no mimic path of their own yet."
+ ],
+ "frames": [
+  {
+   "id": "main",
+   "kind": "duplex",
+   "columns": 13,
+   "at": [
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "components": [
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    2,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "LPCI A",
+    "Line2": "INITIATED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    4,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "CS A",
+    "Line2": "INITIATED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    6,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RHR A",
+    "Line2": "PUMP TRIP"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    8,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "CS A",
+    "Line2": "PUMP TRIP"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    10,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RHR A",
+    "Line2": "MIN FL OPEN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    12,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "CS A",
+    "Line2": "MIN FL OPEN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    14,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RHR A",
+    "Line2": "SUCT P LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    16,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "CS A",
+    "Line2": "SUCT P LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    18,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RHR A",
+    "Line2": "FLOW LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    20,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "CS A",
+    "Line2": "FLOW LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    22,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "CS A HDR",
+    "Line2": "DP LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    24,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RHR A",
+    "Line2": "XTIE OPEN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    26,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "DIV I",
+    "Line2": "DC LOST"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    28,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "DIV I",
+    "Line2": "ECCS TRIP"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    2,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RHR A",
+    "Line2": "INJ VLV OPEN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    4,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "CS A",
+    "Line2": "INJ VLV OPEN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    6,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RHR A",
+    "Line2": "SDC ISOL"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    8,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RHR A",
+    "Line2": "HX BYPASS"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    10,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RHR A",
+    "Line2": "POOL COOLING"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    12,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RHR A",
+    "Line2": "SPRAY ON"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    14,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "SUPP POOL",
+    "Line2": "TEMP HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    16,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "SUPP POOL",
+    "Line2": "LEVEL LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    18,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "SUPP POOL",
+    "Line2": "LEVEL HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    20,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "DIV I",
+    "Line2": "ECCS INOP"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    22,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    24,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    26,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    28,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    2,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "RHR A",
+    "Line2": "RUNNING"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    4,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "CS A",
+    "Line2": "RUNNING"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    6,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "RHR A",
+    "Line2": "SHUTDN COOL"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    8,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "RHR A",
+    "Line2": "TEST"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    10,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "CS A",
+    "Line2": "TEST"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    12,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    14,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    16,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    18,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    20,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    22,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    24,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    26,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    28,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:nameplate",
+   "at": [
+    34,
+    2
+   ],
+   "size": [
+    24,
+    4
+   ],
+   "config": {
+    "Text": "DIVISION I",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:nameplate",
+   "at": [
+    34,
+    7
+   ],
+   "size": [
+    24,
+    6
+   ],
+   "config": {
+    "Text": "RHR A    LPCI",
+    "Text2": "CORE SPRAY A",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    0,
+    0
+   ],
+   "size": [
+    64,
+    4
+   ],
+   "config": {
+    "Text": "DIV I  RHR A / CORE SPRAY A",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    64,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "P601",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    2,
+    6
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "SP-A",
+   "caption": "SUPP POOL",
+   "config": {
+    "Symbol": "tank"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    18,
+    6
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "MIM-RHR-A",
+   "caption": "RHR PUMP A",
+   "config": {
+    "Symbol": "pump"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    32,
+    6
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "MIM-INJ-A",
+   "caption": "LPCI INJ",
+   "config": {
+    "Symbol": "valve"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    46,
+    6
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "RPV-A",
+   "caption": "RPV",
+   "config": {
+    "Symbol": "tank"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    2,
+    19
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "SP2-A",
+   "caption": "SUPP POOL",
+   "config": {
+    "Symbol": "tank"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    18,
+    19
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "MIM-CS-A",
+   "caption": "CS PUMP A",
+   "config": {
+    "Symbol": "pump"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    32,
+    19
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "MIM-CSINJ-A",
+   "caption": "CS INJ",
+   "config": {
+    "Symbol": "valve"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    46,
+    19
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "SPARGER-A",
+   "caption": "SPARGER",
+   "config": {
+    "Symbol": "tank"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    57,
+    6
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "RHR-A-PRESS",
+   "caption": "RHR A",
+   "config": {
+    "Min": 0,
+    "Max": 400,
+    "Units": "PSIG",
+    "Band1Low": 238,
+    "Band1High": 400,
+    "Band1Color": "A80E0E",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    69,
+    6
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "CS-A-PRESS",
+   "caption": "CS A",
+   "config": {
+    "Min": 0,
+    "Max": 600,
+    "Units": "PSIG",
+    "Band1Low": 500,
+    "Band1High": 600,
+    "Band1Color": "A80E0E",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_horizontal",
+   "at": [
+    57,
+    16
+   ],
+   "size": [
+    6,
+    2
+   ],
+   "label": "RHR-A-FLOW",
+   "caption": "RHR A",
+   "config": {
+    "Min": 0,
+    "Max": 5000,
+    "Units": "GPM",
+    "Band1Low": 0,
+    "Band1High": 800,
+    "Band1Color": "C4B02A",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_horizontal",
+   "at": [
+    69,
+    16
+   ],
+   "size": [
+    6,
+    2
+   ],
+   "label": "CS-A-FLOW",
+   "caption": "CS A",
+   "config": {
+    "Min": 0,
+    "Max": 5000,
+    "Units": "GPM",
+    "Band1Low": 0,
+    "Band1High": 650,
+    "Band1Color": "C4B02A",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    54,
+    21
+   ],
+   "size": [
+    24,
+    4
+   ],
+   "config": {
+    "Text": "ECCS MANUAL INIT",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:pushbutton",
+   "at": [
+    58,
+    26
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ARM-A",
+   "caption": "ARM",
+   "config": {
+    "Color": "C02020",
+    "Variant": "guarded"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:pushbutton",
+   "at": [
+    70,
+    26
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "DEPRESS-A",
+   "caption": "DEPRESS",
+   "config": {
+    "Color": "C02020",
+    "Variant": "guarded"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    0,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "RHR PUMP A",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    3,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RHR-P-A-STP",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:control_switch",
+   "at": [
+    7,
+    4
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "RHR-P-A",
+   "config": {
+    "CloseText": "STOP",
+    "NormalText": "AUTO",
+    "OpenText": "START",
+    "RedText": "RUN",
+    "GreenText": "STOP",
+    "FlagRed": "open"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    11,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RHR-P-A-RUN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    16,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "SUPP POOL SUCT",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    19,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SP-SUCT-A-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    23,
+    4
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SP-SUCT-A",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    27,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SP-SUCT-A-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    32,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "LPCI INJECTION",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    35,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "LPCI-INJ-A-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    39,
+    4
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "LPCI-INJ-A",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    43,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "LPCI-INJ-A-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    48,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "HX BYPASS",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    51,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "HX-BYP-A-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    55,
+    4
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "HX-BYP-A",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    59,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "HX-BYP-A-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    64,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "HX OUTLET",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    67,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "HX-OUT-A-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    71,
+    4
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "HX-OUT-A",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    75,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "HX-OUT-A-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    0,
+    8
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "CS PUMP A",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    3,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "CS-P-A-STP",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:control_switch",
+   "at": [
+    7,
+    12
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "CS-P-A",
+   "config": {
+    "CloseText": "STOP",
+    "NormalText": "AUTO",
+    "OpenText": "START",
+    "RedText": "RUN",
+    "GreenText": "STOP",
+    "FlagRed": "open"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    11,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "CS-P-A-RUN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    16,
+    8
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "CS INJECTION",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    19,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "CS-INJ-A-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    23,
+    12
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "CS-INJ-A",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    27,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "CS-INJ-A-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    32,
+    8
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "CS MIN FLOW",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    35,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "CS-MIN-A-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    39,
+    12
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "CS-MIN-A",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    43,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "CS-MIN-A-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    48,
+    8
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "RHR TEST RTN",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    51,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RHR-TST-A-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    55,
+    12
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "RHR-TST-A",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    59,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RHR-TST-A-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    64,
+    8
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "DW SPRAY",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    67,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "DW-SPRAY-A-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    71,
+    12
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "DW-SPRAY-A",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    75,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "DW-SPRAY-A-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    82,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "LPCI B",
+    "Line2": "INITIATED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    84,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "CS B",
+    "Line2": "INITIATED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    86,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RHR B",
+    "Line2": "PUMP TRIP"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    88,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "CS B",
+    "Line2": "PUMP TRIP"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    90,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RHR B",
+    "Line2": "MIN FL OPEN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    92,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "CS B",
+    "Line2": "MIN FL OPEN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    94,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RHR B",
+    "Line2": "SUCT P LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    96,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "CS B",
+    "Line2": "SUCT P LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    98,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RHR B",
+    "Line2": "FLOW LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    100,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "CS B",
+    "Line2": "FLOW LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    102,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "CS B HDR",
+    "Line2": "DP LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    104,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RHR B",
+    "Line2": "XTIE OPEN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    106,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "DIV II",
+    "Line2": "DC LOST"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    108,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "DIV II",
+    "Line2": "ECCS TRIP"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    82,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RHR B",
+    "Line2": "INJ VLV OPEN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    84,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "CS B",
+    "Line2": "INJ VLV OPEN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    86,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RHR B",
+    "Line2": "SDC ISOL"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    88,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RHR B",
+    "Line2": "HX BYPASS"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    90,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RHR B",
+    "Line2": "POOL COOLING"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    92,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RHR B",
+    "Line2": "SPRAY ON"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    94,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "SUPP POOL",
+    "Line2": "TEMP HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    96,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "SUPP POOL",
+    "Line2": "LEVEL LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    98,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "SUPP POOL",
+    "Line2": "LEVEL HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    100,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "DIV II",
+    "Line2": "ECCS INOP"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    102,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    104,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    106,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    108,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    82,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "RHR B",
+    "Line2": "RUNNING"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    84,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "CS B",
+    "Line2": "RUNNING"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    86,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "RHR B",
+    "Line2": "SHUTDN COOL"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    88,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "RHR B",
+    "Line2": "TEST"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    90,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "CS B",
+    "Line2": "TEST"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    92,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    94,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    96,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    98,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    100,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    102,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    104,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    106,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    108,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:nameplate",
+   "at": [
+    114,
+    2
+   ],
+   "size": [
+    24,
+    4
+   ],
+   "config": {
+    "Text": "DIVISION II",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:nameplate",
+   "at": [
+    114,
+    7
+   ],
+   "size": [
+    24,
+    6
+   ],
+   "config": {
+    "Text": "RHR B    LPCI",
+    "Text2": "CORE SPRAY B",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    80,
+    0
+   ],
+   "size": [
+    64,
+    4
+   ],
+   "config": {
+    "Text": "DIV II  RHR B / CORE SPRAY B",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    144,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "P601",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    82,
+    6
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "SP-B",
+   "caption": "SUPP POOL",
+   "config": {
+    "Symbol": "tank"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    98,
+    6
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "MIM-RHR-B",
+   "caption": "RHR PUMP B",
+   "config": {
+    "Symbol": "pump"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    112,
+    6
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "MIM-INJ-B",
+   "caption": "LPCI INJ",
+   "config": {
+    "Symbol": "valve"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    126,
+    6
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "RPV-B",
+   "caption": "RPV",
+   "config": {
+    "Symbol": "tank"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    82,
+    19
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "SP2-B",
+   "caption": "SUPP POOL",
+   "config": {
+    "Symbol": "tank"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    98,
+    19
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "MIM-CS-B",
+   "caption": "CS PUMP B",
+   "config": {
+    "Symbol": "pump"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    112,
+    19
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "MIM-CSINJ-B",
+   "caption": "CS INJ",
+   "config": {
+    "Symbol": "valve"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:mimic_symbol",
+   "at": [
+    126,
+    19
+   ],
+   "size": [
+    8,
+    8
+   ],
+   "label": "SPARGER-B",
+   "caption": "SPARGER",
+   "config": {
+    "Symbol": "tank"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    137,
+    6
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "RHR-B-PRESS",
+   "caption": "RHR B",
+   "config": {
+    "Min": 0,
+    "Max": 400,
+    "Units": "PSIG",
+    "Band1Low": 238,
+    "Band1High": 400,
+    "Band1Color": "A80E0E",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    149,
+    6
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "CS-B-PRESS",
+   "caption": "CS B",
+   "config": {
+    "Min": 0,
+    "Max": 600,
+    "Units": "PSIG",
+    "Band1Low": 500,
+    "Band1High": 600,
+    "Band1Color": "A80E0E",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_horizontal",
+   "at": [
+    137,
+    16
+   ],
+   "size": [
+    6,
+    2
+   ],
+   "label": "RHR-B-FLOW",
+   "caption": "RHR B",
+   "config": {
+    "Min": 0,
+    "Max": 5000,
+    "Units": "GPM",
+    "Band1Low": 0,
+    "Band1High": 800,
+    "Band1Color": "C4B02A",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_horizontal",
+   "at": [
+    149,
+    16
+   ],
+   "size": [
+    6,
+    2
+   ],
+   "label": "CS-B-FLOW",
+   "caption": "CS B",
+   "config": {
+    "Min": 0,
+    "Max": 5000,
+    "Units": "GPM",
+    "Band1Low": 0,
+    "Band1High": 650,
+    "Band1Color": "C4B02A",
+    "Band2Low": 0,
+    "Band2High": 0,
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    134,
+    21
+   ],
+   "size": [
+    24,
+    4
+   ],
+   "config": {
+    "Text": "ECCS MANUAL INIT",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:pushbutton",
+   "at": [
+    138,
+    26
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ARM-B",
+   "caption": "ARM",
+   "config": {
+    "Color": "C02020",
+    "Variant": "guarded"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:pushbutton",
+   "at": [
+    150,
+    26
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "DEPRESS-B",
+   "caption": "DEPRESS",
+   "config": {
+    "Color": "C02020",
+    "Variant": "guarded"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    80,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "RHR PUMP B",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    83,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RHR-P-B-STP",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:control_switch",
+   "at": [
+    87,
+    4
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "RHR-P-B",
+   "config": {
+    "CloseText": "STOP",
+    "NormalText": "AUTO",
+    "OpenText": "START",
+    "RedText": "RUN",
+    "GreenText": "STOP",
+    "FlagRed": "open"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    91,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RHR-P-B-RUN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    96,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "SUPP POOL SUCT",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    99,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SP-SUCT-B-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    103,
+    4
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SP-SUCT-B",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    107,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SP-SUCT-B-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    112,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "LPCI INJECTION",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    115,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "LPCI-INJ-B-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    119,
+    4
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "LPCI-INJ-B",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    123,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "LPCI-INJ-B-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    128,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "HX BYPASS",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    131,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "HX-BYP-B-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    135,
+    4
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "HX-BYP-B",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    139,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "HX-BYP-B-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    144,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "HX OUTLET",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    147,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "HX-OUT-B-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    151,
+    4
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "HX-OUT-B",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    155,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "HX-OUT-B-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    80,
+    8
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "CS PUMP B",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    83,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "CS-P-B-STP",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:control_switch",
+   "at": [
+    87,
+    12
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "CS-P-B",
+   "config": {
+    "CloseText": "STOP",
+    "NormalText": "AUTO",
+    "OpenText": "START",
+    "RedText": "RUN",
+    "GreenText": "STOP",
+    "FlagRed": "open"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    91,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "CS-P-B-RUN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    96,
+    8
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "CS INJECTION",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    99,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "CS-INJ-B-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    103,
+    12
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "CS-INJ-B",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    107,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "CS-INJ-B-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    112,
+    8
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "CS MIN FLOW",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    115,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "CS-MIN-B-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    119,
+    12
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "CS-MIN-B",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    123,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "CS-MIN-B-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    128,
+    8
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "RHR TEST RTN",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    131,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RHR-TST-B-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    135,
+    12
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "RHR-TST-B",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    139,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RHR-TST-B-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    144,
+    8
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "DW SPRAY",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    147,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "DW-SPRAY-B-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rotary_selector",
+   "at": [
+    151,
+    12
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "DW-SPRAY-B",
+   "config": {
+    "Positions": 2,
+    "Names": "CLOSE,OPEN"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:lamp",
+   "at": [
+    155,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "DW-SPRAY-B-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    162,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "ADS",
+    "Line2": "INITIATED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    164,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "ADS",
+    "Line2": "TIMER ON"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    166,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "SRV",
+    "Line2": "OPEN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    168,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "SRV",
+    "Line2": "LEAKING"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    162,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "ADS DIV I",
+    "Line2": "INHIBITED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    164,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "ADS DIV II",
+    "Line2": "INHIBITED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    166,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "ADS",
+    "Line2": "LOGIC INOP"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    168,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "ADS",
+    "Line2": "AIR LOW"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    162,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "ADS DIV I",
+    "Line2": "ARMED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    164,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "ADS DIV II",
+    "Line2": "ARMED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    166,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    168,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:nameplate",
+   "at": [
+    174,
+    2
+   ],
+   "size": [
+    24,
+    4
+   ],
+   "config": {
+    "Text": "ADS / SRV",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:nameplate",
+   "at": [
+    174,
+    7
+   ],
+   "size": [
+    24,
+    6
+   ],
+   "config": {
+    "Text": "ADS: L1 AND L3 AND",
+    "Text2": "LPCI/CS PUMP, 105 SEC",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    160,
+    0
+   ],
+   "size": [
+    48,
+    4
+   ],
+   "config": {
+    "Text": "ADS / SAFETY RELIEF VALVES",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    160,
+    5
+   ],
+   "size": [
+    8,
+    4
+   ],
+   "config": {
+    "Text": "ADS A",
+    "Plate": "ECECE4",
+    "Ink": "151515",
+    "Stripe": true
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    160,
+    10
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-A-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    163,
+    9
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SRV-A",
+   "config": {
+    "Positions": 3,
+    "Names": "CLOSE,AUTO,OPEN",
+    "Style": "oiltight",
+    "Variant": "srv_open_auto_close"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    166,
+    10
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-A-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    168,
+    5
+   ],
+   "size": [
+    8,
+    4
+   ],
+   "config": {
+    "Text": "ADS B",
+    "Plate": "ECECE4",
+    "Ink": "151515",
+    "Stripe": true
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    168,
+    10
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-B-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    171,
+    9
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SRV-B",
+   "config": {
+    "Positions": 3,
+    "Names": "CLOSE,AUTO,OPEN",
+    "Style": "oiltight",
+    "Variant": "srv_open_auto_close"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    174,
+    10
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-B-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    176,
+    5
+   ],
+   "size": [
+    8,
+    4
+   ],
+   "config": {
+    "Text": "ADS C",
+    "Plate": "ECECE4",
+    "Ink": "151515",
+    "Stripe": true
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    176,
+    10
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-C-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    179,
+    9
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SRV-C",
+   "config": {
+    "Positions": 3,
+    "Names": "CLOSE,AUTO,OPEN",
+    "Style": "oiltight",
+    "Variant": "srv_open_auto_close"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    182,
+    10
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-C-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    184,
+    5
+   ],
+   "size": [
+    8,
+    4
+   ],
+   "config": {
+    "Text": "ADS D",
+    "Plate": "ECECE4",
+    "Ink": "151515",
+    "Stripe": true
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    184,
+    10
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-D-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    187,
+    9
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SRV-D",
+   "config": {
+    "Positions": 3,
+    "Names": "CLOSE,AUTO,OPEN",
+    "Style": "oiltight",
+    "Variant": "srv_open_auto_close"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    190,
+    10
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-D-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    192,
+    5
+   ],
+   "size": [
+    8,
+    4
+   ],
+   "config": {
+    "Text": "ADS E",
+    "Plate": "ECECE4",
+    "Ink": "151515",
+    "Stripe": true
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    192,
+    10
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-E-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    195,
+    9
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SRV-E",
+   "config": {
+    "Positions": 3,
+    "Names": "CLOSE,AUTO,OPEN",
+    "Style": "oiltight",
+    "Variant": "srv_open_auto_close"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    198,
+    10
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-E-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    200,
+    5
+   ],
+   "size": [
+    8,
+    4
+   ],
+   "config": {
+    "Text": "ADS F",
+    "Plate": "ECECE4",
+    "Ink": "151515",
+    "Stripe": true
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    200,
+    10
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-F-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    203,
+    9
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SRV-F",
+   "config": {
+    "Positions": 3,
+    "Names": "CLOSE,AUTO,OPEN",
+    "Style": "oiltight",
+    "Variant": "srv_open_auto_close"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    206,
+    10
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-F-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    160,
+    14
+   ],
+   "size": [
+    8,
+    4
+   ],
+   "config": {
+    "Text": "ADS G",
+    "Plate": "ECECE4",
+    "Ink": "151515",
+    "Stripe": true
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    160,
+    19
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-G-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    163,
+    18
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SRV-G",
+   "config": {
+    "Positions": 3,
+    "Names": "CLOSE,AUTO,OPEN",
+    "Style": "oiltight",
+    "Variant": "srv_open_auto_close"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    166,
+    19
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-G-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    168,
+    14
+   ],
+   "size": [
+    8,
+    4
+   ],
+   "config": {
+    "Text": "SRV H",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    168,
+    19
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-H-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    171,
+    18
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SRV-H",
+   "config": {
+    "Positions": 3,
+    "Names": "CLOSE,AUTO,OPEN",
+    "Style": "oiltight",
+    "Variant": "srv_open_auto_close"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    174,
+    19
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-H-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    176,
+    14
+   ],
+   "size": [
+    8,
+    4
+   ],
+   "config": {
+    "Text": "SRV J",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    176,
+    19
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-J-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    179,
+    18
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SRV-J",
+   "config": {
+    "Positions": 3,
+    "Names": "CLOSE,AUTO,OPEN",
+    "Style": "oiltight",
+    "Variant": "srv_open_auto_close"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    182,
+    19
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-J-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    184,
+    14
+   ],
+   "size": [
+    8,
+    4
+   ],
+   "config": {
+    "Text": "SRV K",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    184,
+    19
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-K-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    187,
+    18
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SRV-K",
+   "config": {
+    "Positions": 3,
+    "Names": "CLOSE,AUTO,OPEN",
+    "Style": "oiltight",
+    "Variant": "srv_open_auto_close"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    190,
+    19
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-K-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    192,
+    14
+   ],
+   "size": [
+    8,
+    4
+   ],
+   "config": {
+    "Text": "SRV L",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    192,
+    19
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-L-CLS",
+   "config": {
+    "Color": "20C040"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    195,
+    18
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SRV-L",
+   "config": {
+    "Positions": 3,
+    "Names": "CLOSE,AUTO,OPEN",
+    "Style": "oiltight",
+    "Variant": "srv_open_auto_close"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:lamp",
+   "at": [
+    198,
+    19
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "SRV-L-OPN",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    160,
+    23
+   ],
+   "size": [
+    32,
+    8
+   ],
+   "config": {
+    "Text": "RED STRIPE = ADS VALVE",
+    "Text2": "SET PRESSURES ON",
+    "Text3": "VALVE PLATES",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    192,
+    23
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "BACKUP XFER",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:key_switch",
+   "at": [
+    198,
+    27
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "ADS-XFER",
+   "caption": "KEY"
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    192,
+    10
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "ANN ACK / RESET",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:annunciator_control",
+   "at": [
+    198,
+    14
+   ],
+   "size": [
+    4,
+    2
+   ],
+   "label": "ANN-CTRL"
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    160,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "ADS INHIBIT I",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:push_turn_switch",
+   "at": [
+    167,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ADS-INH-I",
+   "config": {
+    "Spring": false,
+    "Legend1": "AUTO",
+    "Legend2": "INHIBIT"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    160,
+    8
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "ADS INITIATE I",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:push_turn_switch",
+   "at": [
+    167,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ADS-INI-I",
+   "config": {
+    "Spring": true,
+    "Legend1": "SAFE",
+    "Legend2": "ARM"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    176,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "ADS INHIBIT II",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:push_turn_switch",
+   "at": [
+    183,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ADS-INH-II",
+   "config": {
+    "Spring": false,
+    "Legend1": "AUTO",
+    "Legend2": "INHIBIT"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    176,
+    8
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "ADS INITIATE II",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:push_turn_switch",
+   "at": [
+    183,
+    13
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ADS-INI-II",
+   "config": {
+    "Spring": true,
+    "Legend1": "SAFE",
+    "Legend2": "ARM"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    192,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "ADS RESET",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:pushbutton",
+   "at": [
+    196,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ADS-RST-I",
+   "caption": "DIV I",
+   "config": {
+    "Color": "C02020"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:pushbutton",
+   "at": [
+    202,
+    5
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ADS-RST-II",
+   "caption": "DIV II",
+   "config": {
+    "Color": "C02020"
+   }
+  }
+ ],
+ "reserved": [],
+ "mimic": [
+  {
+   "on": "main.board",
+   "points": [
+    [
+     10,
+     10
+    ],
+    [
+     18,
+     10
+    ]
+   ],
+   "style": {
+    "Color": "2E7DE0",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 1,
+    "FlowEvery": 16,
+    "Route": "elbow"
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     26,
+     10
+    ],
+    [
+     32,
+     10
+    ]
+   ],
+   "style": {
+    "Color": "2E7DE0",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 1,
+    "FlowEvery": 16,
+    "Route": "elbow"
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     40,
+     10
+    ],
+    [
+     46,
+     10
+    ]
+   ],
+   "style": {
+    "Color": "2E7DE0",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 1,
+    "FlowEvery": 16,
+    "Route": "elbow"
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     10,
+     23
+    ],
+    [
+     18,
+     23
+    ]
+   ],
+   "style": {
+    "Color": "30A050",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 1,
+    "FlowEvery": 16,
+    "Route": "elbow"
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     26,
+     23
+    ],
+    [
+     32,
+     23
+    ]
+   ],
+   "style": {
+    "Color": "30A050",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 1,
+    "FlowEvery": 16,
+    "Route": "elbow"
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     40,
+     23
+    ],
+    [
+     46,
+     23
+    ]
+   ],
+   "style": {
+    "Color": "30A050",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 1,
+    "FlowEvery": 16,
+    "Route": "elbow"
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     90,
+     10
+    ],
+    [
+     98,
+     10
+    ]
+   ],
+   "style": {
+    "Color": "2E7DE0",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 1,
+    "FlowEvery": 16,
+    "Route": "elbow"
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     106,
+     10
+    ],
+    [
+     112,
+     10
+    ]
+   ],
+   "style": {
+    "Color": "2E7DE0",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 1,
+    "FlowEvery": 16,
+    "Route": "elbow"
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     120,
+     10
+    ],
+    [
+     126,
+     10
+    ]
+   ],
+   "style": {
+    "Color": "2E7DE0",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 1,
+    "FlowEvery": 16,
+    "Route": "elbow"
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     90,
+     23
+    ],
+    [
+     98,
+     23
+    ]
+   ],
+   "style": {
+    "Color": "30A050",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 1,
+    "FlowEvery": 16,
+    "Route": "elbow"
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     106,
+     23
+    ],
+    [
+     112,
+     23
+    ]
+   ],
+   "style": {
+    "Color": "30A050",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 1,
+    "FlowEvery": 16,
+    "Route": "elbow"
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     120,
+     23
+    ],
+    [
+     126,
+     23
+    ]
+   ],
+   "style": {
+    "Color": "30A050",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 1,
+    "FlowEvery": 16,
+    "Route": "elbow"
+   }
+  }
+ ]
+}
