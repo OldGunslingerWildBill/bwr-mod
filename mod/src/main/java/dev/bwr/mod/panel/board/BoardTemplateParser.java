@@ -53,7 +53,8 @@ import java.util.Set;
  *   "mimic": [ {"on": "main.board", "points": [[2, 2], [30, 2]], "style": {"Color": "2E7DE0", "FlowEvery": 16}} ]
  * }
  * }</pre>
- * {@code kind} is one of duplex, vertical, benchboard, console, back_panel. {@code at} of a frame is
+ * {@code kind} is one of duplex, vertical, benchboard, console, back_panel, desk (1 m control desks, one block each) and
+ * desk_wide (2 m control desks, two blocks each). {@code at} of a frame is
  * {@code [right, up, forward]} in blocks from the origin of the board. A repeat gives {@code count}, or {@code cols}
  * and {@code rows}, and a {@code step} in cells; in {@code label}, {@code caption} and the text values of
  * {@code config}, {@code {n}} is the 1-based number of the copy, {@code {i}} the 0-based one, {@code {col}} and
@@ -218,19 +219,20 @@ public final class BoardTemplateParser {
                 }
                 Kind kind = Kind.byId(text(object, "kind", where, "", 24));
                 if (kind == null) {
-                    problem(where + ": kind must be one of duplex, vertical, benchboard, console, back_panel");
+                    problem(where + ": kind must be one of duplex, vertical, benchboard, console, back_panel, desk, desk_wide");
                     continue;
                 }
                 int columns = integer(object, "columns", where, 1);
                 int rows = integer(object, "rows", where, 1);
-                if (kind == Kind.DUPLEX || kind == Kind.CONSOLE) {
+                if (kind == Kind.DUPLEX || kind == Kind.CONSOLE || kind == Kind.DESK || kind == Kind.DESK_WIDE) {
                     if (object.has("rows") && rows != 1) {
                         problem(where + ": a " + kind.id() + " frame has one row of blocks (rows must be 1 or left out)");
                     }
                     rows = 1;
                 }
-                if (columns < 1 || columns > limits.maxColumns()) {
-                    problem(where + ": columns must be 1 to " + limits.maxColumns() + " (the widest panel group)");
+                int perColumn = kind == Kind.DESK_WIDE ? 2 : 1; // a 2 m desk is two blocks wide
+                if (columns < 1 || columns * perColumn > limits.maxColumns()) {
+                    problem(where + ": columns must be 1 to " + limits.maxColumns() / perColumn + " (the widest panel group)");
                 }
                 if (rows < 1 || rows > limits.maxRows()) {
                     problem(where + ": rows must be 1 to " + limits.maxRows() + " (the tallest panel group)");
@@ -256,7 +258,7 @@ public final class BoardTemplateParser {
         /** The (right, up, forward) block offsets a frame occupies, with the duplex body cells. */
         static List<int[]> blocksOf(Frame frame) {
             List<int[]> list = new ArrayList<>();
-            for (int c = 0; c < frame.columns(); c++) {
+            for (int c = 0; c < frame.blockColumns(); c++) {
                 if (frame.kind() == Kind.DUPLEX) {
                     for (dev.bwr.mod.panel.DuplexCell cell : dev.bwr.mod.panel.DuplexCell.values()) {
                         list.add(new int[] {frame.right() + c, frame.up() + cell.up(), frame.forward() - cell.back()});

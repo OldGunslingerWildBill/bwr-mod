@@ -1,0 +1,19 @@
+{
+ "format": 1,
+ "title": "Benchboard",
+ "description": "A run of four benchboard blocks, the 45 degree desk. Blank: mount what you like on it.",
+ "order": 3,
+ "frames": [
+  {
+   "id": "main",
+   "kind": "benchboard",
+   "columns": 4,
+   "rows": 1,
+   "at": [
+    0,
+    0,
+    0
+   ]
+  }
+ ]
+}

@@ -42,7 +42,11 @@ public record BoardTemplate(ResourceLocation id, String title, String descriptio
         VERTICAL("vertical"),
         BENCHBOARD("benchboard"),
         CONSOLE("console"),
-        BACK_PANEL("back_panel");
+        BACK_PANEL("back_panel"),
+        /** A run of 1 m control desks, one block each, one row (surface: face, 16 cells per block by 6 deep). */
+        DESK("desk"),
+        /** A run of 2 m control desks: {@code columns} desks, two blocks each (the item places both halves). */
+        DESK_WIDE("desk_wide");
 
         private final String id;
 
@@ -70,6 +74,11 @@ public record BoardTemplate(ResourceLocation id, String title, String descriptio
      * benchboard also toward the operator).
      */
     public record Frame(String id, Kind kind, int columns, int rows, int right, int up, int forward) {
+        /** How many blocks wide the frame is: {@code columns}, or two for each 2 m desk. */
+        public int blockColumns() {
+            return kind == Kind.DESK_WIDE ? columns * 2 : columns;
+        }
+
         /** The mounting surfaces of this frame, in a fixed order. */
         public List<Surface> surfaces() {
             return switch (kind) {
@@ -81,6 +90,7 @@ public record BoardTemplate(ResourceLocation id, String title, String descriptio
                 case BENCHBOARD -> List.of(new Surface(id + ".face", this, "face", PanelType.BENCHBOARD, columns, rows));
                 case CONSOLE -> List.of(new Surface(id + ".face", this, "face", PanelType.CONSOLE, columns, 1));
                 case BACK_PANEL -> List.of(new Surface(id + ".face", this, "face", PanelType.BACK_PANEL, columns, rows));
+                case DESK, DESK_WIDE -> List.of(new Surface(id + ".face", this, "face", PanelType.DESK, blockColumns(), 1));
             };
         }
     }
@@ -91,8 +101,9 @@ public record BoardTemplate(ResourceLocation id, String title, String descriptio
             return columns * PanelGeometry.GRID;
         }
 
+        /** The cells of the surface: a desk's top is {@link PanelGeometry#DESK_ROWS} cells deep (the rest of the block is air). */
         public int height() {
-            return rows * PanelGeometry.GRID;
+            return panelType == PanelType.DESK ? PanelGeometry.DESK_ROWS : rows * PanelGeometry.GRID;
         }
     }
 

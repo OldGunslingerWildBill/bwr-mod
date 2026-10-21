@@ -191,8 +191,8 @@ public final class BoardPlacer {
     /** The live config limits the template must fit, or null. (The parser checked the shipped defaults.) */
     public static String limits(BoardTemplate template) {
         for (BoardTemplate.Frame frame : template.frames()) {
-            if (frame.columns() > PanelConfig.maxColumns() || frame.rows() > PanelConfig.maxRows()) {
-                return "the frame '" + frame.id() + "' is " + frame.columns() + " x " + frame.rows()
+            if (frame.blockColumns() > PanelConfig.maxColumns() || frame.rows() > PanelConfig.maxRows()) {
+                return "the frame '" + frame.id() + "' is " + frame.blockColumns() + " x " + frame.rows()
                         + " blocks; a panel group may be " + PanelConfig.maxColumns() + " x " + PanelConfig.maxRows()
                         + " (bwr-panels.toml)";
             }
