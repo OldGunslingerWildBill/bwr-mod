@@ -322,7 +322,7 @@ def rps_board():
             [("RPV LEVEL", "LOW L3"), ("RPV PRESS", "HIGH"), ("DW PRESS", "HIGH"), ("MSIV", "CLOSURE"), ("TSV", "CLOSURE"),
              ("TCV FAST", "CLOSURE"), ("SDV LEVEL", "HIGH"), ("MODE SW", "SHUTDOWN")],
             [("APRM", "UPSCALE"), ("APRM", "FLOW BIAS"), ("APRM", "INOP"), ("IRM", "UPSCALE"), ("IRM", "INOP"),
-             ("MAN SCRAM", s + "1 " + s + "2"), ("AUTO SCRAM", "CHAN " + s + "1"), ("AUTO SCRAM", "CHAN " + s + "2")],
+             ("MAN SCRAM", s + "1"), ("AUTO SCRAM", "CHAN " + s + "1"), ("AUTO SCRAM", "CHAN " + s + "2")],
             [("SRM", "INOP"), ("RBM", "ROD BLOCK"), ("TURB", "TRIP"), ("MAIN COND", "VACUUM LOW"), ("RECIRC", "TRIP"),
              ("RPS " + s, "TRIPPED"), ("SCRAM", "DISCH VOL"), ("SCRAM", "AIR HEADER")],
             [("RPS " + s, "GROUP 1"), ("RPS " + s, "GROUP 2"), ("RPS " + s, "GROUP 3"), ("RPS " + s, "GROUP 4"),
@@ -330,7 +330,7 @@ def rps_board():
             [("RPS " + s, "BYPASSED"), ("IRM " + s, "BYPASSED"), ("APRM " + s, "BYPASSED"), ("SDV", "BYPASSED"),
              ("RPS " + s + " MG", "TROUBLE"), ("RPS " + s, "UNDERVOLT"), ("RPS " + s, "OVERVOLT"), ("SCRAM", "SOLENOID")],
             [("RPS " + s, "POWER ON"), ("MODE SW", "REFUEL"), ("MODE SW", "STARTUP"), ("MODE SW", "RUN"), ("ARI", "ARMED"),
-             ("SCRAM", "RESET"), None, None]]
+             ("SCRAM", "RESET"), ("BKUP SCRAM", s + "2"), None]]
     colours = [RED, RED, RED, RED, AMBER, WHITE]
     annunciator_box(b, H, 2, 2, ANN, rows("A"), colours)
     annunciator_box(b, H, 62, 2, ANN, rows("B"), colours)
@@ -354,22 +354,30 @@ def rps_board():
     b.add(V, "annunciator_control", 70, 11, ANN_CTRL, label="ANN-CTRL")
 
     # -- bench: manual scram, mode switch and key, scram reset, ARI, the bypass joysticks to come
-    b.plate(N, 0, 0, 16, 4, "MAN SCRAM")
-    b.add(N, "rps_trip", 1, 5, RPS, label="MAN-SCRAM-1", caption="A1 B1", config={"LegendA": "SCRAM A1", "LegendB": "SCRAM B1"})
-    b.add(N, "rps_trip", 10, 5, RPS, label="MAN-SCRAM-2", caption="A2 B2", config={"LegendA": "SCRAM A2", "LegendB": "SCRAM B2"})
+    # The manual scram is the A1 and B1 trip channels. A2 and B2 are BACKUP channels, kept apart (the far end of the bench) so a
+    # fire that destroys A1 / B1 leaves them; each button keeps its own output (a, b), so A1/B1 are wired to the trip and A2/B2 to
+    # the backup channels. The legends are the assembly's own, short enough for the part.
+    b.plate(N, 0, 0, 16, 4, "MAN SCRAM A1/B1")
+    b.add(N, "rps_trip", 6, 5, RPS, label="MAN-SCRAM-A1B1", config={"LegendA": "A1", "LegendB": "B1"})
     b.plate(N, 16, 0, 24, 4, "REACTOR MODE")
     rotary(b, N, 23, 5, ROT_BIG, ["SHUTDOWN", "REFUEL", "STARTUP", "RUN"], label="MODE-SW", style="westinghouse", variant="wl2")
-    b.add(N, "key_switch", 31, 6, KEY, label="MODE-KEY", caption="MODE KEY")
+    b.add(N, "key_switch", 31, 6, KEY, label="MODE-KEY")
     b.plate(N, 40, 0, 16, 4, "SCRAM RESET")
-    b.add(N, "control_switch", 46, 5, SW_BIG, label="SCRAM-RESET", caption="RESET A / B",
+    b.add(N, "control_switch", 46, 5, SW_BIG, label="SCRAM-RESET",
           config={"Spring": True, "CloseText": "RESET A", "NormalText": "NORMAL", "OpenText": "RESET B", "RedText": "SCRAM",
                   "GreenText": "RESET"})
     b.plate(N, 56, 0, 8, 4, "ARI")
-    push(b, N, 56, 6, caption="A", label="ARI-A", colour="C02020", variant="guarded")
-    push(b, N, 60, 6, caption="B", label="ARI-B", colour="C02020", variant="guarded")
-    b.plate(N, 64, 0, 16, 4, "IRM/APRM BYPASS")
-    b.reserve(N, 64, 4, 16, 12, "bwr:joystick_bypass_switch", JOYSTICK_TODO)
-    b.todo += ["The IRM / APRM bypass joysticks of P603 (CR-PANELS-BWR-RESEARCH.md board 3) have no part yet: see the reserved space on main.bench.",
+    push(b, N, 56, 6, label="ARI-A", colour="C02020", variant="guarded")
+    push(b, N, 60, 6, label="ARI-B", colour="C02020", variant="guarded")
+    b.plate(N, 64, 0, 16, 4, "BACKUP A2/B2", style="red")
+    b.add(N, "rps_trip", 70, 5, RPS, label="BKUP-SCRAM-A2B2", config={"LegendA": "BK A2", "LegendB": "BK B2"})
+    b.plate(N, 64, 9, 16, 4, "FIRE BACKUP")
+    b.plate(V, 64, 21, 16, 4, "IRM/APRM BYPASS")
+    b.reserve(V, 64, 26, 16, 5, "bwr:joystick_bypass_switch", JOYSTICK_TODO)
+    b.todo += ["The IRM / APRM bypass joysticks of P603 (CR-PANELS-BWR-RESEARCH.md board 3) have no part yet: see the reserved space on main.board.",
+               "The manual scram is the A1 / B1 trip channels; the A2 / B2 assembly at the far end of main.bench is the fire BACKUP and "
+               "keeps its own outputs. The research report is silent on the physical separation of the backup channels: the owner's rule "
+               "(a fire that destroys A1 must not take A2) decides the placement.",
                "Scram group lamps are single white lamps; a scram group lamp matrix part (research gap 4) would replace the two rows on main.board."]
     return b
 

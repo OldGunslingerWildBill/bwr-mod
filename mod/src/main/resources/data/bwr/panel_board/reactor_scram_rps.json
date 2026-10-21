@@ -5,7 +5,8 @@
  "source": "CR-PANELS-BWR-RESEARCH.md board 3 (GE BWR/4 panels P603, P609, P611)",
  "order": 3,
  "todo": [
-  "The IRM / APRM bypass joysticks of P603 (CR-PANELS-BWR-RESEARCH.md board 3) have no part yet: see the reserved space on main.bench.",
+  "The IRM / APRM bypass joysticks of P603 (CR-PANELS-BWR-RESEARCH.md board 3) have no part yet: see the reserved space on main.board.",
+  "The manual scram is the A1 / B1 trip channels; the A2 / B2 assembly at the far end of main.bench is the fire BACKUP and keeps its own outputs. The research report is silent on the physical separation of the backup channels: the owner's rule (a fire that destroys A1 must not take A2) decides the placement.",
   "Scram group lamps are single white lamps; a scram group lamp matrix part (research gap 4) would replace the two rows on main.board."
  ],
  "frames": [
@@ -256,7 +257,7 @@
    "config": {
     "Color": "E02020",
     "Line1": "MAN SCRAM",
-    "Line2": "A1 A2"
+    "Line2": "A1"
    }
   },
   {
@@ -815,7 +816,9 @@
     2
    ],
    "config": {
-    "Color": "F4F4F4"
+    "Color": "F4F4F4",
+    "Line1": "BKUP SCRAM",
+    "Line2": "A2"
    }
   },
   {
@@ -1068,7 +1071,7 @@
    "config": {
     "Color": "E02020",
     "Line1": "MAN SCRAM",
-    "Line2": "B1 B2"
+    "Line2": "B1"
    }
   },
   {
@@ -1627,7 +1630,9 @@
     2
    ],
    "config": {
-    "Color": "F4F4F4"
+    "Color": "F4F4F4",
+    "Line1": "BKUP SCRAM",
+    "Line2": "B2"
    }
   },
   {
@@ -2013,7 +2018,7 @@
     4
    ],
    "config": {
-    "Text": "MAN SCRAM",
+    "Text": "MAN SCRAM A1/B1",
     "Plate": "ECECE4",
     "Ink": "151515"
    }
@@ -2022,36 +2027,17 @@
    "on": "main.bench",
    "type": "bwr:rps_trip",
    "at": [
-    1,
+    6,
     5
    ],
    "size": [
     4,
     2
    ],
-   "label": "MAN-SCRAM-1",
-   "caption": "A1 B1",
+   "label": "MAN-SCRAM-A1B1",
    "config": {
-    "LegendA": "SCRAM A1",
-    "LegendB": "SCRAM B1"
-   }
-  },
-  {
-   "on": "main.bench",
-   "type": "bwr:rps_trip",
-   "at": [
-    10,
-    5
-   ],
-   "size": [
-    4,
-    2
-   ],
-   "label": "MAN-SCRAM-2",
-   "caption": "A2 B2",
-   "config": {
-    "LegendA": "SCRAM A2",
-    "LegendB": "SCRAM B2"
+    "LegendA": "A1",
+    "LegendB": "B1"
    }
   },
   {
@@ -2101,8 +2087,7 @@
     2,
     4
    ],
-   "label": "MODE-KEY",
-   "caption": "MODE KEY"
+   "label": "MODE-KEY"
   },
   {
    "on": "main.bench",
@@ -2133,7 +2118,6 @@
     6
    ],
    "label": "SCRAM-RESET",
-   "caption": "RESET A / B",
    "config": {
     "Spring": true,
     "CloseText": "RESET A",
@@ -2172,7 +2156,6 @@
     2
    ],
    "label": "ARI-A",
-   "caption": "A",
    "config": {
     "Color": "C02020",
     "Variant": "guarded"
@@ -2190,7 +2173,6 @@
     2
    ],
    "label": "ARI-B",
-   "caption": "B",
    "config": {
     "Color": "C02020",
     "Variant": "guarded"
@@ -2208,6 +2190,57 @@
     4
    ],
    "config": {
+    "Text": "BACKUP A2/B2",
+    "Plate": "A81818",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:rps_trip",
+   "at": [
+    70,
+    5
+   ],
+   "size": [
+    4,
+    2
+   ],
+   "label": "BKUP-SCRAM-A2B2",
+   "config": {
+    "LegendA": "BK A2",
+    "LegendB": "BK B2"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    64,
+    9
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "FIRE BACKUP",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    64,
+    21
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
     "Text": "IRM/APRM BYPASS",
     "Plate": "ECECE4",
     "Ink": "151515"
@@ -2216,14 +2249,14 @@
  ],
  "reserved": [
   {
-   "on": "main.bench",
+   "on": "main.board",
    "at": [
     64,
-    4
+    26
    ],
    "size": [
     16,
-    12
+    5
    ],
    "for": "bwr:joystick_bypass_switch",
    "note": "TODO joystick bypass switch: the four-way bypass joystick does not exist yet (CR-PANELS-BWR-RESEARCH.md section 4, gap 2); place it here and delete this entry."
