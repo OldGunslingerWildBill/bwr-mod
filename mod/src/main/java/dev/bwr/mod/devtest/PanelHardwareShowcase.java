@@ -86,6 +86,14 @@ final class PanelHardwareShowcase {
     }
 
     static void build(ServerLevel level) {
+        // Keep the walls and the reactor loaded for the whole check: an LED display of an unloaded reactor goes dark, and a chunk
+        // that unloads and loads again would leave it so.
+        for (int cx = 5500 >> 4; cx <= 5560 >> 4; cx++) {
+            for (int cz = 5265 >> 4; cz <= 5300 >> 4; cz++) {
+                level.setChunkForced(cx, cz, true);
+                level.getChunk(cx, cz);
+            }
+        }
         PLACED.clear();
         mounted = 0;
         for (int x = 5500; x <= 5532; x++) {

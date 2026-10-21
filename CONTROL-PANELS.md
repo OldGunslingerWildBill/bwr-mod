@@ -83,6 +83,11 @@ hold with a size chosen keeps it, and a component already on a panel keeps the s
 | Bar gauge | 10x16 (one block tall), 8x16, 12x24, 16x32 (no real size yet: see "Real sizes") |
 | RPS trip assembly | 16x8, 24x12, 32x16, **real** 2x1 |
 | Push-to-turn switch | 8x8, 12x12, 16x16, **real** 1x1 |
+| Controller station (manual/auto) | 8x16, 12x24; the real tail, **twice real** first: 6x12 (new items start here), **real** 3x6, 4x8, **real** 2x4 |
+| Synchroscope | 12x16, 15x20, 20x26; **twice real** 6x8 (default), **real** 3x4, 4x6, **real** 2x3 |
+| Two-pen strip recorder | 16x16, 24x24, 32x32; **twice real** 6x6 (default), **real** 3x3, 4x4, **real** 2x2 |
+| Joystick bypass switch | 8x8, 12x12, 16x16; **twice real** 2x2 (default), **real** 1x1, 4x4 |
+| LED rod pattern display | 51x51; **twice real** 34x34 (2 cells a rod, default), **real** 17x17 (1 cell a rod, the 185 rod core), **real** 26x26 (the biggest core) |
 | Strip-chart recorder | 16x16, 24x16, 32x24 |
 | Paperless recorder | DX1000 16x16 (one block, the default), 12, 20, 24; DX2000 32x32 (2 x 2, twice a DX1000), 40, 48; all square |
 | 7- and 16-segment display | 5 cells wide per digit, 8 tall: 20x8 (4 digits), 1 to 12 digits; **real** 1 cell wide per digit, 2 tall: 4x2 (4 digits), 1x2 to 8x2 |
@@ -817,3 +822,62 @@ same wired network make that port read no signal; the wrench Networking screen s
   command's range), `panel_linker_screen`
   (server to client), and `panel_content` (server to client: bounded display content patches, at most one per
   component per tick).
+
+
+## 6. Control hardware from the research gaps (CR-PANELS-BWR / PWR research, "Gaps")
+
+Five parts the two research reports found missing. All are drawn in code (no Blender model), start at **twice their real
+size** (the exact real size is the next size up in the list: right-click air with the item or Alt+click for the picker) and
+**decide nothing**: outputs change only when a player operates a control, and displays only show what they are bound to.
+
+### 6.1 Controller station (`bwr:controller_station`)
+
+A manual/auto station (GE / Bailey / Foxboro hand-auto): one scale with the **process variable pointer** (red, right of the
+line) and the **setpoint pointer** (green, left) over the span Min to Max, the **demand bar** beside it (amber in MAN, green in
+AUTO), **AUTO** and **MAN** lamp pushbuttons, **RAISE** and **LOWER** pushbuttons (hold to keep stepping, about five steps a
+second; the mouse wheel steps too).
+
+| | |
+| --- | --- |
+| Inputs | `pv` (process variable, in the scale units), `setpoint` (optional: bound = remote setpoint, unbound = the station's own), `auto_demand` (0 to 100 %, what the bar shows in AUTO) |
+| Outputs | `demand` (0 to 100), `mode` (0 MAN, 1 AUTO), `raise` and `lower` (1 only while held), `setpoint` (the local setpoint, in the scale units) |
+| Config | Min, Max, Units, Step (% of demand per press), Setpoint step (% of span per press) |
+
+* **MAN:** RAISE / LOWER / wheel move `demand` by Step. A program may also SET it.
+* **AUTO:** with no bound setpoint they move the local setpoint (Setpoint step); with a bound setpoint they move nothing (the
+  `raise` / `lower` pulses still show). The bar shows `auto_demand`; the `demand` output stays where MAN left it. A program may not
+  set the demand in AUTO.
+* **MAN after AUTO** is bumpless: `demand` takes the value the bar showed (when `auto_demand` has a signal).
+* There is **no control law in the station**. Wire `demand` and `mode` where you want them, and bind `auto_demand` to whatever you
+  wrote (a CC program through a CC binding, a plant controller signal) that should run it in AUTO.
+* Saved: mode (only AUTO), demand (only when not 0), local setpoint (as a fraction of the span, only when not mid-span).
+  Premade boards should place it by the id `bwr:controller_station`.
+
+### 6.2 Synchroscope (`bwr:synchroscope`)
+
+A round meter: 12 o'clock is in phase, clockwise is FAST (the generator leads). Inputs `phase` (degrees, -180 to 180: the grid
+tie `phase_degrees`) and `slip` (Hz, positive when fast: its `slip_hz`). With only `slip` the pointer turns by itself at the slip
+rate (a turn a second per hertz); with `phase` it follows it the short way round; with both it dead reckons between samples. The
+two lamps under the dial are the synchronising lamps across the open breaker: the left is the dark lamp (dark when in phase), the
+right the bright lamp (full when in phase). No outputs. Config: reverse sense, the two lamp colours.
+
+### 6.3 Two-pen strip recorder (`bwr:two_pen_recorder`)
+
+The strip chart with exactly two pens, red and green, inputs `pen1` and `pen2`, each pen on its own scale (Min / Max and Min2 /
+Max2), paper span 10 s to an hour. The chart scrolls **upward** from the pens at the bottom edge; each pen holds its last value
+between changes. History is recorded on change (a pen that does not move costs nothing) and saved like the strip chart history.
+
+### 6.4 Joystick bypass switch (`bwr:joystick_switch`)
+
+A Square-D style joystick with five positions. Click the plate on the side you want; click the middle to centre. Outputs `up`,
+`down`, `left`, `right` (never two at once) and `position` (0 centre, 1 up, 2 down, 3 left, 4 right). Config: **Spring return**
+(the lever returns to the centre when the use key is let go, with the usual fail-safe; the four way spring joystick) and the four
+legends. Without the spring it stays where it was put, also across a restart.
+
+### 6.5 LED rod pattern display (`bwr:led_rod_display`)
+
+Two small LEDs, amber over red, for every rod in core layout. Like the full core display it has one input, `core`, bound with the
+linker to the reactor controller (`formed` is the natural signal), reads the same snapshot and is dark when nothing formed is
+bound. Pattern (config): **position**, amber a rod that is withdrawn but not fully out, red a rod fully out; **fault**, amber a
+rod with accumulator trouble, red a rod drifting. The selected rod of the reactor is framed in white. Tile 1 to 3 cells a rod. No
+outputs. It keeps the 4 block limit of ordinary components (the 8 blocks of the full core display are its own).
