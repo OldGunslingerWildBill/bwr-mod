@@ -167,3 +167,53 @@ raw text lines from the server and up to three buttons.
 * Status as text and shape as well as colour (above).
 * The full text of anything cut.
 * A visible "who holds control" state on every pump panel.
+
+---
+
+# What replaced it
+
+## The design system (`gui/client/style`)
+
+**Tokens** (`BwrStyle`, pure Java, no Minecraft type, so a GameTest can read the numbers).
+* Surfaces: panel `#12161C`, card `#1A2028`, raised control `#252D38` (hover `#2E3844`, pressed `#161B22`), well `#0C0F13`, title bar
+  `#1B2D42`; borders `#3A4552` and `#66768A`; focus ring white.
+* Text: primary `#EDF1F5`, secondary `#AAB5C2`, disabled `#939EAB`, accent `#80C4FF`; status colours NORMAL `#62D690`, CAUTION
+  `#F2B93B`, ALARM `#FF7B7B`, INFO `#6FBAFF`, OFF (secondary). Buttons: primary `#1F63A8`, danger `#A33030`, white text on both.
+* Contrast, measured by `BwrStyle.textPairs()` (60 pairs) and enforced at 4.5:1 by `GuiStyleTokenTests`: primary text 12.2 to
+  16.9, secondary 6.7 to 9.2, disabled 5.1 to 7.1, accent 7.5 to 10.3, NORMAL 7.6 to 10.6, CAUTION 7.8 to 10.8, ALARM 5.5 to 7.7,
+  INFO 6.7 to 9.3 on every surface; white on the primary button 6.2, on the danger button 6.9. Graphic parts (focus ring, borders,
+  status icons, meter fill) are held to 3:1.
+* Spacing: a 4 px scale, `SP1`..`SP5` = 4, 8, 12, 16, 24; control height 20, title bar 20, tab 16, meter 8, row 12 (dense 10).
+* Type: vanilla font at whole-number scales only (fractional sizes blur the bitmap font at GUI scale 1 to 3): TITLE (bold), HEADER
+  (upper case, accent), BODY, CAPTION (secondary) and DISPLAY (2x).
+* Status: each status has a colour, a silhouette (circle, triangle, diamond, square, ring) and a word, so colour is never the only
+  signal.
+
+**Primitives.** Drawing: panel, card, well, rule, slot well, focus ring, status icon, typed text with truncation (`Ui`). Layout
+elements (`Layout`, each a `UiElement`): column, split (weights or fixed widths, optional stacking on a narrow screen), card
+(title, optional status, compact), section header, label-value row (unit column, status, dense), note (wrapped, line limit), line,
+status line, bar meter (labelled, quarter ticks), colour legend, row of controls, tabs, one-widget box, scroll area, spacer, title
+bar items and chip. Widgets: `BwrButton` (primary, secondary, danger; hover, pressed, focus, disabled), `BwrEditBox` (invalid
+state), `BwrTab`, `FractionSlider`, `LatticeGridWidget`. The base screen adds the window, the scroll container, the inventory tray
+and slot wells, tooltips and narration.
+
+**Layout rules.** Outer padding 8, card padding 8 (4 compact), gaps 4 or 8; values right-aligned and units in their own column;
+no screen does pixel arithmetic, the element tree does; a label or value that does not fit is cut with an ellipsis and the row's
+tooltip carries the whole text; a panel is as tall as its content needs (never taller than the window) and at most 400 wide, never
+wider than the window; side-by-side cards stack on a narrow window; a body that still does not fit scrolls.
+
+**Accessibility.** Tab and Shift-Tab visit every control in layout order; Enter and Space activate; Escape closes, also from a
+focused text field (where typed letters no longer reach the inventory key); Left and Right switch tabs; the slider takes the arrow
+keys (1 %, Shift 10 %, Page Up and Down 10 %, Home and End); the core map takes the arrow keys, Enter or Space, plus and minus
+and Home, outlines its cursor cell and narrates it; every control has a tooltip, shown on keyboard focus as well, and a disabled
+control's tooltip says why; the screen announces its readouts to a screen reader when it opens.
+
+## Outcome
+
+* `GuiScreenCheck` on the old screens: 39 violations. On the new ones: 0, over 49 screen states, GUI scale 2 and 4, 427 x 240 and
+  320 x 240, plus the keyboard, tooltip, narration and text-overflow assertions it did not have.
+* Fixed outright: every fault in the per-screen list above that was a layout fault (the overprinted fabricator and refuelling rows,
+  the SCRAM indicator over the FLUX tab, the legacy pump's bar through its text, the invisible fabricator title, the inverted tab
+  states, the cut-off status strings, all six screens that did not fit 320 x 240, the two that left a 1080p window at GUI scale 4).
+* Not changed: all text is still English literals (translation of the machine screens is a separate job), and the legacy
+  `RecirculationPumpScreen` is still not opened by anything.

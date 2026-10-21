@@ -545,15 +545,16 @@ modpack/shader performance. This harness is not part of headless CI.
 ## Machine screen check and style tokens
 
 `gradlew.bat :mod:runTurbineModelCheck -PbwrGuiScreenCheck` (class `GuiScreenCheck`) opens every machine screen (14 menu types,
-52 states: formed and unformed, computer-held, alarm values, a long title, every cooling design, the four service panels, both
+49 states: formed and unformed, computer-held, alarm values, a long title, every cooling design, the four service panels, both
 refuelling overlays, the Terry PORTS tab, the INFO tab scrolled) with fabricated client-side menu data (no machine or server round trip:
 a screen's layout is a function of its menu's public fields) at GUI scale 2 and GUI scale 4 in a 1920 x 1080 window, and saves a
 supersampled 1920 x 1080 picture of each to `gui-check/scale2/` and `gui-check/scale4/` of the run directory
-(`mod/run/turbineModelCheck`). It then lays every screen out again at 320 x 240 and 427 x 240, the smallest GUI sizes the game gives a
+(`mod/run/turbineModelCheck`); the pointer is a fake one (the screen is drawn with a pointer the check places, off the screen unless a
+state is about hover), and eight screens are also photographed laid out for 320 x 240 and 427 x 240 (`gui-check/floor/`). It then lays every screen out again at 320 x 240 and 427 x 240, the smallest GUI sizes the game gives a
 screen (the game picks the largest scale that leaves at least 320 x 240). It asserts, per screen and size:
 
 * no visible widget, panel or slot lies outside the window, no widget lies outside its panel, no two widgets overlap, no widget
-  covers an inventory slot;
+  covers an inventory slot, and the body does not need scrolling at either real scale or at 427 x 240 (it may at 320 x 240);
 * every string the style draws lies inside the panel (across always, down unless it is scrolled content, which is clipped by
   design): text is cut with an ellipsis and a tooltip, never left to run over;
 * once per screen: every enabled control can be reached with Tab, has a tooltip and a narration title, and a focused tab is selected
