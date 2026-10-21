@@ -402,7 +402,7 @@ public final class ControlDeskTests {
             expect(h, verdict(level, left, 0, 6, 2, 2), PanelGroup.Result.BLOCKED, "a part beyond the front edge of the top");
             expect(h, verdict(level, left, 0, 10, 2, 2), PanelGroup.Result.BLOCKED, "a part in row 10");
             expect(h, verdict(level, left, 4, 4, 2, 2), PanelGroup.Result.OK, "a part wholly on the top, rows 4 and 5");
-            expect(h, verdict(level, left, 0, 4, 2, 14), PanelGroup.Result.OUTSIDE_GROUP, "a part reaching into the next block, which a desk has none of");
+            expect(h, verdict(level, left, 0, 4, 2, 14), PanelGroup.Result.BLOCKED, "a part reaching past the front edge toward the next row, which a desk has none of");
             expect(h, verdict(level, left, 0, 0, 12, 12), PanelGroup.Result.BLOCKED, "a 12 x 12 gauge is deeper than the top");
             check(h, leftPanel.cellsUsable(0, 0, 16, 6) && !leftPanel.cellsUsable(0, 0, 16, 7), "usable cells of a block entity");
         });
