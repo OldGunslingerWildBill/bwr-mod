@@ -28,6 +28,8 @@ public final class ScaleNumbers {
     /** {@code value} written in {@code notation}. */
     public static String format(double value, Notation notation) {
         if (notation == Notation.COMPACT) {
+            // A value worked out as a fraction of the range carries float noise (1000.00006): seven digits are all it has.
+            value = Double.isFinite(value) ? new java.math.BigDecimal(value).round(new java.math.MathContext(7)).doubleValue() : value;
             double magnitude = Math.abs(value);
             double unit = magnitude >= 1.0e6 ? 1.0e6 : magnitude >= 1.0e3 ? 1.0e3 : 0.0;
             if (unit > 0.0) {

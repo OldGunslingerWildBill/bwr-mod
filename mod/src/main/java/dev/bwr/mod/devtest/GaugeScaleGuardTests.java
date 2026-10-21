@@ -462,6 +462,9 @@ public final class GaugeScaleGuardTests {
             String where = probe + " " + size + " text " + text + " %"
                     + (range == null ? "" : ", range " + range[0] + ".." + range[1]) + ": ";
             float[] bounds = shot.bounds();
+            if (probe.faceRgb() != 0 && !(shot.faceRadius() > 0.0f)) {
+                failures.add(where + "no face of colour " + Integer.toHexString(probe.faceRgb()) + " was drawn: the face check would be vacuous");
+            }
             List<float[]> boxes = new ArrayList<>();
             for (Legends.Item item : shot.text()) {
                 float[] box = Legends.box(item, 1.0, 1.0f);
@@ -631,6 +634,21 @@ public final class GaugeScaleGuardTests {
                 for (double[] range : RANGES) {
                     for (int text : new int[] {GaugeScale.MIN_PERCENT, GaugeScale.DEFAULT_PERCENT, GaugeScale.MAX_PERCENT}) {
                         failures.addAll(fitFailures(probe, text, range));
+                    }
+                    // One notation per scale: never "0 1000 2000 3000 4000 5k" (a float-noisy 1000.00006 once missed the k).
+                    for (Footprint size : sizes(probe)) {
+                        boolean compact = false;
+                        boolean plainThousands = false;
+                        for (Legends.Item item : shot(probe, size, GaugeScale.DEFAULT_PERCENT, GaugeScale.DEFAULT_PERCENT, range).text()) {
+                            if (item.text().matches("-?[0-9.]+[kM]")) {
+                                compact = true;
+                            } else if (item.text().matches("-?[0-9]{4,}")) {
+                                plainThousands = true;
+                            }
+                        }
+                        if (compact && plainThousands) {
+                            failures.add(probe + " " + size + " range " + range[0] + ".." + range[1] + ": numbers in two notations");
+                        }
                     }
                 }
             }
