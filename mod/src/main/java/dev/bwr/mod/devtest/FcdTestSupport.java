@@ -4,8 +4,11 @@ import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import dev.bwr.mod.rods.ControlRodDriveBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 /**
  * Shared fixture of the full core display tests: a real formed reactor of a chosen interior size in a far-away,
@@ -36,6 +39,25 @@ final class FcdTestSupport {
                 }
             }
         }
+    }
+
+    /**
+     * Whether block entities tick in every chunk {@link #hold} forces: vanilla's {@code LevelChunk.isTicking} test,
+     * block ticking status and the chunk's entities loaded. The entities load asynchronously, so a chunk that is
+     * loaded and forced can leave its block entities unticked for a tick or for many on a busy machine, and a drive
+     * that does not tick never reports the supplies it lost.
+     */
+    static boolean ticking(ServerLevel level, BlockPos min, int width, int depth) {
+        for (int x = (min.getX() - 20) >> 4; x <= (min.getX() + width + 20) >> 4; x++) {
+            for (int z = (min.getZ() - 20) >> 4; z <= (min.getZ() + depth + 20) >> 4; z++) {
+                LevelChunk chunk = level.getChunkSource().getChunkNow(x, z);
+                if (chunk == null || !chunk.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING)
+                        || !level.areEntitiesLoaded(ChunkPos.asLong(x, z))) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /** Empties the reactor volume, the drive layer and the panel area. */
@@ -126,9 +148,10 @@ final class FcdTestSupport {
     }
 
     /**
-     * A timed test on a formed reactor: {@code body} runs two ticks after the chunks are forced (an earlier run's
-     * entities are not accessible before that), registers {@link #then} steps, and the fixture is released and the
-     * test succeeded after the last step, or released and failed in any other outcome.
+     * A timed test on a formed reactor: {@code body} runs once every forced chunk ticks its block entities, two ticks
+     * after the chunks are forced at the earliest (an earlier run's entities are not accessible before that; a fixed
+     * delay alone let a drive in a late chunk keep reporting supplies it had lost), registers {@link #then} steps, and
+     * the fixture is released and the test succeeded after the last step, or released and failed in any other outcome.
      */
     static final class Run {
         final GameTestHelper helper;
@@ -153,20 +176,30 @@ final class FcdTestSupport {
             this.depth = depth;
         }
 
-        /** Forces the chunks now, builds the reactor and runs {@code body} two ticks later. */
+        /** Forces the chunks now, then builds the reactor and runs {@code body} once every chunk ticks (see {@link #ticking}). */
         static void start(GameTestHelper helper, int origin, int slot, int width, int depth,
                           java.util.function.Consumer<Run> body) {
             Run run = new Run(helper, slot(origin, slot), width, depth);
             hold(run.level, run.min, width, depth, true);
-            helper.runAfterDelay(2, () -> {
+            run.begin(2, 0, body);
+        }
+
+        private void begin(int delay, int polls, java.util.function.Consumer<Run> body) {
+            helper.runAfterDelay(delay, () -> {
                 try {
-                    run.be = formed(helper, run.min, width, depth);
-                    body.accept(run);
+                    if (!ticking(level, min, width, depth)) {
+                        // A loaded run has been seen to take 58 ticks; 80 still fails inside the default 100 tick timeout.
+                        helper.assertTrue(polls < 80, "fixture chunks never started ticking block entities");
+                        begin(1, polls + 1, body);
+                        return;
+                    }
+                    be = formed(helper, min, width, depth);
+                    body.accept(this);
                 } catch (RuntimeException | Error e) {
-                    run.release();
+                    release();
                     throw e;
                 }
-                run.next();
+                next();
             });
         }
 
