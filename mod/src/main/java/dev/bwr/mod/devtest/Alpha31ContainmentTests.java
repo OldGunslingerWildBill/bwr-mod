@@ -32,7 +32,13 @@ public final class Alpha31ContainmentTests {
         for (int i = 0; i < 32; i++) {
             ContainmentControllerBlockEntity.serverTick(level, controller.getBlockPos(),
                     level.getBlockState(controller.getBlockPos()), controller);
-            if (!controller.isScanning()) return;
+            if (!controller.isScanning()) {
+                // A sealed room's first ratings finish over the ticks after its survey (about 5 ms of work a tick).
+                for (int j = 0; j < 32 && controller.isSealed() && !controller.strengthReady(); j++)
+                    ContainmentControllerBlockEntity.serverTick(level, controller.getBlockPos(),
+                            level.getBlockState(controller.getBlockPos()), controller);
+                return;
+            }
         }
         throw new AssertionError("containment scan exceeded 32 ticks");
     }

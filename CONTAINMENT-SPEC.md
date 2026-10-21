@@ -63,7 +63,7 @@ a slow revalidation timer, the same pattern as `ReactorControllerBlockEntity`.
 - **Unloaded chunks:** if the search would enter an unloaded chunk, stop and
   **keep the last good result**, flagged stale. Never force-load.
 - Run the search spread over several ticks, with a cell budget per tick (config,
-  default 20,000). Don't block one tick on 200,000 cells.
+  default and maximum 4,000, about 5 ms). Don't block one tick on 200,000 cells.
 
 ### 2.2 Invalidation
 

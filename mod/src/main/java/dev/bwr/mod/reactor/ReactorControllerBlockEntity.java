@@ -207,6 +207,16 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private net.minecraft.nbt.ListTag pendingFuelRestore;
     private Object fuelDefinitionRevision;
 
+    /**
+     * The 1 Hz nodal flux solve iterates on the shared {@code bwr-flux-N} pool and its answer is applied
+     * {@link ReactorCore#DEFERRED_NODAL_APPLY_TICKS} ticks after it starts, so it costs the server thread only the
+     * assembly of the problem. {@code -Dbwr.fluxAsync=false} iterates on the server thread instead, applied on the
+     * same tick, with bit-identical results (for comparing the two).
+     */
+    static final ReactorCore.NodalRefresh NODAL_REFRESH =
+            Boolean.parseBoolean(System.getProperty("bwr.fluxAsync", "true"))
+                    ? ReactorCore.NodalRefresh.DEFERRED_ASYNC : ReactorCore.NodalRefresh.DEFERRED_INLINE;
+
     public ReactorControllerBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.REACTOR_CONTROLLER.get(), pos, state);
     }
@@ -281,6 +291,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         probe = dev.bwr.mod.TickProbe.start();
         core.step();
         dev.bwr.mod.TickProbe.stop("  Reactor.core.step", probe);
+        dev.bwr.mod.TickProbe.add("    Reactor.flux start (assemble)", core.getLastStepNodalBeginNanos());
+        dev.bwr.mod.TickProbe.add("    Reactor.flux wait for worker", core.getLastStepNodalWaitNanos());
         probe = dev.bwr.mod.TickProbe.start();
         rodNetwork.postStep();
         severeEffects.afterStep(this);
@@ -633,7 +645,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             // The rod numbers mean other rods after a drive remap, so a selection does not survive one.
             int keptSelection = driveLayoutChanged ? 0 : pendingSelectedRod > 0 ? pendingSelectedRod : rodSelection.selected();
             pendingSelectedRod = 0;
+            if (core != null) core.discardPendingNodalRefresh();
             core = new ReactorCore(config, new dev.bwr.core.fuel.CoreLoading(found.latticeWidth()));
+            core.setNodalRefresh(NODAL_REFRESH);
             core.seedRodColletFailures(getBlockPos().asLong() ^ 0x43ad3672b16f0e95L);
             // Install before restoring: fromState re-solves the saved rod pattern.
             installRodLatticeMap(found);
@@ -768,6 +782,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     }
 
     @Override public void setRemoved() {
+        if (core != null) core.discardPendingNodalRefresh();
         dev.bwr.mod.advancement.PlantMilestones.unloaded(this);
         VesselJetAccess.update(level,getBlockPos(),null);
         VesselDriveAccess.update(level,getBlockPos(),null);
@@ -779,6 +794,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     }
 
     @Override public void onChunkUnloaded() {
+        if (core != null) core.discardPendingNodalRefresh();
         dev.bwr.mod.advancement.PlantMilestones.unloaded(this);
         VesselJetAccess.update(level,getBlockPos(),null);
         VesselDriveAccess.update(level,getBlockPos(),null);

@@ -95,6 +95,7 @@ public final class AcceptanceTests {
             ReactorCoreScramTest.class,
             ReactorCoreTickTest.class,
             ReactorStateRoundTripTest.class,
+            DeferredNodalRefreshTest.class,
             CriticalDefectRegressionTest.class,
             TransientHarnessTest.class,
             dev.bwr.core.harness.ThermalTargetOperatorTest.class,

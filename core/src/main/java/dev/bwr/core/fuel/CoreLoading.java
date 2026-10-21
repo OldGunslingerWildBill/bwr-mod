@@ -327,6 +327,41 @@ public final class CoreLoading {
     public void invalidateWeights() {
         synchronized (weightLock) {
             cachedWeights = null;
+            weightsRevision++;
+        }
+    }
+
+    /** Counts {@link #invalidateWeights()} calls, so a caller can tell whether the loading changed since it looked. */
+    private long weightsRevision;
+
+    public long weightsRevision() {
+        synchronized (weightLock) {
+            return weightsRevision;
+        }
+    }
+
+    /**
+     * Install weights a power weight source computed earlier, as if
+     * {@link #powerWeights()} had just asked the source and got {@code raw} back: the same
+     * check and the same normalisation. For a nodal solve that ran on another thread.
+     */
+    public void installWeights(double[] raw) {
+        if (raw == null || raw.length != positions.length) {
+            throw new IllegalArgumentException("installed "
+                    + (raw == null ? "null" : raw.length + " weights") + ", expected " + positions.length);
+        }
+        synchronized (weightLock) {
+            cachedWeights = normalise(raw);
+        }
+    }
+
+    /**
+     * Run {@code action} holding the monitor the lazy weight computation takes, so that no
+     * reader on another thread can start a solve of the installed source in the middle of it.
+     */
+    public <T> T withWeightLock(java.util.function.Supplier<T> action) {
+        synchronized (weightLock) {
+            return action.get();
         }
     }
 
@@ -652,6 +687,15 @@ public final class CoreLoading {
      * @param seconds       elapsed time, seconds
      */
     public void advanceBurnup(double coreThermalMW, double seconds) {
+        advanceBurnup(coreThermalMW, seconds, false);
+    }
+
+    /**
+     * {@link #advanceBurnup(double, double)}, optionally leaving the weights it burned with
+     * in place instead of invalidating them, for a caller that installs the next weights
+     * itself a little later ({@link #installWeights}).
+     */
+    public void advanceBurnup(double coreThermalMW, double seconds, boolean keepWeights) {
         if (!(coreThermalMW > 0.0) || !(seconds > 0.0) || loadedAssemblyCount() == 0) {
             return;
         }
@@ -662,7 +706,9 @@ public final class CoreLoading {
                 assembly.accumulateBurnup(weights[i] * coreThermalMW, seconds);
             }
         }
-        invalidateWeights();
+        if (!keepWeights) {
+            invalidateWeights();
+        }
     }
 
     // ---------------------------------------------------------------

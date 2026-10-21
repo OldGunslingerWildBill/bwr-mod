@@ -14,8 +14,9 @@ public final class ContainmentConfig {
             .comment("Maximum interior span along each axis, in blocks")
             .defineInRange("maxSpan", 128, 8, 512);
     public static final ModConfigSpec.IntValue SCAN_CELLS_PER_TICK = BUILDER
-            .comment("Maximum cells one controller examines in one tick")
-            .defineInRange("scanCellsPerTick", 20_000, 100, 100_000);
+            .comment("Maximum cells one controller examines in one tick (about 5 ms of server time at 4000; a"
+                    + " larger room is surveyed over several ticks)")
+            .defineInRange("scanCellsPerTick", 4_000, 100, 4_000);
     public static final ModConfigSpec.IntValue REVALIDATE_TICKS = BUILDER
             .comment("Slow backstop survey interval, in ticks")
             .defineInRange("revalidateTicks", 600, 20, 72_000);

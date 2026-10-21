@@ -83,10 +83,23 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
             controller.dirty = false;
             controller.sinceScan = 0;
         }
-        if (controller.scan != null) controller.scan.advance(server, controller,
-                ContainmentConfig.SCAN_CELLS_PER_TICK.get());
-        controller.updateStrength(server, Math.min(4_000, ContainmentConfig.SCAN_CELLS_PER_TICK.get()));
+        if (controller.scan != null) {
+            // A survey tick spends the whole budget, its completion and first ratings included.
+            long probe = dev.bwr.mod.TickProbe.start();
+            controller.scan.advance(server, controller, ContainmentConfig.SCAN_CELLS_PER_TICK.get());
+            dev.bwr.mod.TickProbe.stop("  Containment.survey", probe);
+            return;
+        }
+        long probe = dev.bwr.mod.TickProbe.start();
+        controller.updateStrength(server, ContainmentConfig.SCAN_CELLS_PER_TICK.get() / FACE_COST_IN_CELLS);
+        dev.bwr.mod.TickProbe.stop("  Containment.strength", probe);
     }
+
+    /**
+     * Rating one boundary face (a column of up to {@code strengthScanDepth} wall layers and the air behind it) costs
+     * about as much as surveying three cells, so a tick rates {@code scanCellsPerTick / 3} faces.
+     */
+    private static final int FACE_COST_IN_CELLS = 3;
 
     public void markDirty() {
         dirty = true;
@@ -290,7 +303,8 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         return lines;
     }
 
-    private void completed(Scan finished, Level level) {
+    private void completed(Scan finished, Level level, int cellsThisTick) {
+        long probe = dev.bwr.mod.TickProbe.start();
         sealed = true;
         stale = false;
         leak = null;
@@ -308,7 +322,9 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         linkedPools = FormedSuppressionPoolRegistry.controllers(level).stream()
                 .map(BlockEntity::getBlockPos).filter(this::encloses).toList();
         var sprays = new ArrayList<BlockPos>();
-        for (long cell : finished.visited) {
+        // The survey noted the spray headers it passed; walking the cells in the same order keeps the list's order.
+        if (!finished.sprayCells.isEmpty()) for (long cell : finished.visited) {
+            if (!finished.sprayCells.contains(cell)) continue;
             BlockPos at = BlockPos.of(cell);
             if (level.isLoaded(at) && level.getBlockState(at).is(BwrBlocks.CONTAINMENT_SPRAY_HEADER.get())) sprays.add(at);
         }
@@ -316,7 +332,11 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         scan = null;
         strengthDirty = true;
         ContainmentControllerRegistry.index(this);
-        updateStrength(level, Math.min(4_000, ContainmentConfig.SCAN_CELLS_PER_TICK.get()));
+        dev.bwr.mod.TickProbe.stop("  Containment.complete", probe);
+        // Whatever this tick's budget the survey left over goes to the first ratings, so a small room is rated in
+        // the tick its survey completes and a large one over the following ticks.
+        updateStrength(level, Math.max(0, ContainmentConfig.SCAN_CELLS_PER_TICK.get() - cellsThisTick)
+                / FACE_COST_IN_CELLS);
         dev.bwr.mod.advancement.PlantMilestones.containmentSurveyCompleted(this);
         setChanged();
     }
@@ -577,6 +597,8 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         private final LongOpenHashSet visited = new LongOpenHashSet();
         private final Long2LongOpenHashMap parents = new Long2LongOpenHashMap();
         private final List<BoundaryFace> boundary = new ArrayList<>();
+        /** Visited cells that held a spray header when the survey passed them. */
+        private final LongOpenHashSet sprayCells = new LongOpenHashSet();
         private int minX, minY, minZ, maxX, maxY, maxZ;
         private BlockPos firstCrossing;
         /** Interior cells holding gas. Water is passable for the seal but is not free volume. */
@@ -594,7 +616,8 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
         void advance(ServerLevel level, ContainmentControllerBlockEntity controller, int budget) {
             int limit = ContainmentConfig.MAX_INTERIOR_CELLS.get();
             int span = ContainmentConfig.MAX_SPAN.get();
-            for (int count = 0; count < budget && !queue.isEmpty(); count++) {
+            int count = 0;
+            for (; count < budget && !queue.isEmpty(); count++) {
                 BlockPos current = queue.removeFirst();
                 for (Direction direction : Direction.values()) {
                     BlockPos next = current.relative(direction);
@@ -614,6 +637,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                     if (!visited.add(next.asLong())) continue;
                     parents.put(next.asLong(), current.asLong());
                     if (state.getFluidState().isEmpty()) gasCells++;
+                    if (state.is(BwrBlocks.CONTAINMENT_SPRAY_HEADER.get())) sprayCells.add(next.asLong());
                     if (controller.min != null && controller.max != null
                             && firstCrossing == null && !inside(next, controller.min, controller.max))
                         firstCrossing = next.immutable();
@@ -628,7 +652,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                     }
                 }
             }
-            if (queue.isEmpty()) controller.completed(this, level);
+            if (queue.isEmpty()) controller.completed(this, level, count);
         }
 
         /**

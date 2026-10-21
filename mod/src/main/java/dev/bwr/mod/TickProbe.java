@@ -104,6 +104,17 @@ public final class TickProbe {
         s.currentCalls++;
     }
 
+    /** Adds time measured elsewhere (a wait inside a section) to a system's bucket, as if it had been a section. */
+    public static void add(String system, long nanos) {
+        if (!ENABLED || nanos <= 0) {
+            return;
+        }
+        register();
+        Stat s = STATS.computeIfAbsent(system, k -> new Stat());
+        s.current += nanos;
+        s.currentCalls++;
+    }
+
     private static final long[] ALLOC_STACK = new long[64];
     private static int depth;
     /** Only built when the probe is on, so a production server never touches the management classes. */

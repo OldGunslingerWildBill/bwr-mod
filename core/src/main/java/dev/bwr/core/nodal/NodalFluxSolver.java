@@ -324,6 +324,12 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
     private double lastEigenvalueResidual;
     private double lastFluxResidual;
     private FluxSolution lastSolution;
+    /**
+     * Counts every event after which a {@link Deferred} solve begun earlier no longer
+     * describes this solver: a solve, another begin, a new rod map, a new mesh. A
+     * deferred answer is adopted only while this still holds the value it was begun at.
+     */
+    private long generation;
 
     /** A solver for a core, at {@link NodalMesh#DEFAULT_AXIAL_NODES} axial nodes. */
     public NodalFluxSolver(CoreConfig config, CoreLoading loading) {
@@ -442,6 +448,7 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
         this.rodLatticeMap = map;
         this.rodLatticeMapIsExplicit = map != null;
         this.rodLatticeMapDirty = true;
+        generation++;
     }
 
     /** True when the mapping in force came from {@link #setRodLatticeMap}, not from the default. */
@@ -673,6 +680,7 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
      * handed straight back when the problem has not moved at all.
      */
     public FluxSolution solve() {
+        generation++;
         ensureMesh();
         int nodeCount = mesh.nodeCount();
         if (nodeCount == 0) {
@@ -708,6 +716,185 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
     /** The most recent solve, or a fresh one if there has not been a solve yet. */
     public FluxSolution lastSolution() {
         return lastSolution == null ? solve() : lastSolution;
+    }
+
+    // ---------------------------------------------------------------
+    // The same solve, split so that the iteration can run elsewhere
+    // ---------------------------------------------------------------
+
+    /**
+     * One {@link #solve()} taken apart at the only seam it has. Everything that reads the
+     * core loading, the rods and the void (assembling the matrix, the memo test, the
+     * analytic seed) happens in {@link #beginSolve()}, on the calling thread. The power
+     * iteration and the collection of the result happen in {@link #run()}, on any thread,
+     * on private copies of the assembled arrays. {@link #adopt} hands the answer to the
+     * solver afterwards. The iteration is the same code as {@code solve()} runs, on the
+     * same numbers, so the answer is bit for bit the one {@code solve()} would have given
+     * at the moment {@code beginSolve()} was called, whichever thread runs it and however
+     * late it is adopted.
+     *
+     * <p>Nothing {@code run()} touches is shared: the copy holds no core loading, and the
+     * mesh, the rod map and the neighbour table it shares are never written after they are
+     * built. Until {@code adopt} the solver keeps its previous answer in
+     * {@link #lastSolution()}.
+     */
+    public static final class Deferred {
+        private final NodalFluxSolver owner;
+        private final long generation;
+        private final NodalMesh mesh;
+        /** The iteration's private copy; null when the answer was known at once. */
+        private final NodalFluxSolver work;
+        private volatile FluxSolution result;
+
+        private Deferred(NodalFluxSolver owner, NodalFluxSolver work, FluxSolution known) {
+            this.owner = owner;
+            this.generation = owner.generation;
+            this.mesh = owner.mesh;
+            this.work = work;
+            this.result = known;
+        }
+
+        /** Iterate and collect, unless that is done already. Any one thread. */
+        public void run() {
+            if (result == null) {
+                result = work.collect(work.powerIterate());
+            }
+        }
+
+        /**
+         * Iterate a second private copy of the same problem on the calling thread and return its answer, leaving
+         * this solve untouched. Only before {@link #run()} has started. For checking that where the iteration runs
+         * changes nothing.
+         */
+        public FluxSolution iterateCopy() {
+            if (work == null) {
+                return result;
+            }
+            NodalFluxSolver twin = new NodalFluxSolver(work, work.flux);
+            return twin.collect(twin.powerIterate());
+        }
+
+        /** True when both answers are the same in every bit of every array and scalar. */
+        public static boolean identical(FluxSolution a, FluxSolution b) {
+            return java.util.Arrays.equals(a.nodeFlux(), b.nodeFlux())
+                    && java.util.Arrays.equals(a.assemblyWeights(), b.assemblyWeights())
+                    && java.util.Arrays.equals(a.assemblyFlux(), b.assemblyFlux())
+                    && java.util.Arrays.equals(a.axialShape(), b.axialShape())
+                    && java.util.Arrays.equals(a.rodFluxWeights(), b.rodFluxWeights())
+                    && Double.doubleToRawLongBits(a.multiplicationFactor()) == Double.doubleToRawLongBits(b.multiplicationFactor())
+                    && Double.doubleToRawLongBits(a.nonLeakageProbability()) == Double.doubleToRawLongBits(b.nonLeakageProbability())
+                    && a.iterations() == b.iterations();
+        }
+
+        /** True once {@link #run()} has finished, or when nothing needed iterating. */
+        public boolean isDone() {
+            return result != null;
+        }
+
+        /** The answer, once {@link #run()} has finished. */
+        public FluxSolution solution() {
+            FluxSolution answer = result;
+            if (answer == null) {
+                throw new IllegalStateException("the deferred nodal solve has not run");
+            }
+            return answer;
+        }
+    }
+
+    /**
+     * The first half of {@link #solve()}: assemble the problem from the inputs as they are
+     * now. It reads the core loading, so it belongs on the thread that owns the loading.
+     * The solver's own answer does not change until {@link #adopt} is called.
+     */
+    public Deferred beginSolve() {
+        generation++;
+        ensureMesh();
+        if (mesh.nodeCount() == 0) {
+            assembledProblemStored = false;
+            return new Deferred(this, null, emptySolution());
+        }
+        buildNodeData();
+        buildCoupling();
+        if (assembledProblemIsUnmoved()) {
+            return new Deferred(this, null, collect(0));
+        }
+        double[] seed = new double[mesh.nodeCount()];
+        seedFluxFromGeometry(seed);
+        return new Deferred(this, new NodalFluxSolver(this, seed), null);
+    }
+
+    /**
+     * The second half of {@link #solve()}: take the answer of a deferred solve as this
+     * solver's own, exactly as if {@code solve()} had returned it at
+     * {@link #beginSolve()}. Refused (false, nothing changes) when anything has happened to
+     * the solver since then that a plain {@code solve()} would have seen: another solve or
+     * begin, a new rod map or a new mesh.
+     *
+     * @throws IllegalStateException when the solve has not run
+     */
+    public boolean adopt(Deferred deferred) {
+        if (deferred.owner != this || deferred.generation != generation || deferred.mesh != mesh) {
+            return false;
+        }
+        FluxSolution answer = deferred.solution();
+        NodalFluxSolver work = deferred.work;
+        if (work != null) {
+            // The converged flux and the problem it solves become the memo, as
+            // rememberAssembledProblem() and the iteration leave them in solve().
+            int nodes = mesh.nodeCount();
+            System.arraycopy(work.flux, 0, flux, 0, nodes);
+            multiplicationFactor = work.multiplicationFactor;
+            lastEigenvalueResidual = work.lastEigenvalueResidual;
+            lastFluxResidual = work.lastFluxResidual;
+            System.arraycopy(work.nuSigmaFVolume, 0, storedNuSigmaFVolume, 0, nodes);
+            System.arraycopy(work.removal, 0, storedRemoval, 0, nodes);
+            System.arraycopy(work.coupling, 0, storedCoupling, 0, nodes * NodalMesh.FACES);
+            storedShiftFloor = work.shiftFloor;
+            storedMeshSignature = work.meshSignature;
+            storedSweepsPerIteration = work.sweepsPerIteration;
+            storedOverRelaxation = work.overRelaxation;
+            storedShiftMargin = work.shiftMargin;
+            storedMaximumIterations = work.maximumIterations;
+            storedTolerance = work.tolerance;
+            assembledProblemStored = true;
+        }
+        lastSolution = answer;
+        return true;
+    }
+
+    /**
+     * The private copy a {@link Deferred} iterates: the problem {@code assembled} has just
+     * built, seeded the way {@link #solve()} seeds it, with fresh working arrays. It has no
+     * core loading, because nothing the iteration does reads one.
+     */
+    private NodalFluxSolver(NodalFluxSolver assembled, double[] seed) {
+        this.loading = null;
+        this.axialNodes = assembled.axialNodes;
+        this.rodPositionNotches = assembled.rodPositionNotches.clone();
+        this.rodLatticeMap = assembled.rodLatticeMap;
+        this.mesh = assembled.mesh;
+        this.meshSignature = assembled.meshSignature;
+        int nodes = mesh.nodeCount();
+        this.flux = seed.clone();
+        this.previousFlux = new double[nodes];
+        this.nuSigmaFVolume = assembled.nuSigmaFVolume.clone();
+        this.absorptionVolume = assembled.absorptionVolume.clone();
+        this.removal = assembled.removal.clone();
+        this.shiftedRemoval = new double[nodes];
+        this.coupling = assembled.coupling.clone();
+        this.sweepNeighbour = assembled.sweepNeighbour;
+        this.fissionRate = new double[nodes];
+        this.assemblyAccumulator = new double[mesh.positionCount()];
+        this.axialAccumulator = new double[mesh.axialNodes()];
+        this.rodAccumulator = new double[rodPositionNotches.length];
+        this.rodPositionCount = assembled.rodPositionCount.clone();
+        this.sweepsPerIteration = assembled.sweepsPerIteration;
+        this.overRelaxation = assembled.overRelaxation;
+        this.shiftMargin = assembled.shiftMargin;
+        this.maximumIterations = assembled.maximumIterations;
+        this.tolerance = assembled.tolerance;
+        this.shiftFloor = assembled.shiftFloor;
+        this.multiplicationFactor = 1.0;
     }
 
     /**
@@ -777,6 +964,7 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
     }
 
     private void allocate() {
+        generation++;
         int nodes = mesh.nodeCount();
         flux = new double[nodes];
         previousFlux = new double[nodes];
@@ -850,11 +1038,15 @@ public final class NodalFluxSolver implements CoreLoading.PowerWeightSource {
      * the memo in {@link #solve()}.
      */
     private void seedFluxFromGeometry() {
+        seedFluxFromGeometry(flux);
+    }
+
+    private void seedFluxFromGeometry(double[] target) {
         for (int node = 0; node < mesh.nodeCount(); node++) {
             int position = mesh.positionOfNode(node);
             double height = mesh.axialCentreHeightFraction(mesh.axialOfNode(node));
             double axial = Math.sin(Math.PI * height);
-            flux[node] = Math.max(1.0e-6, loading.geometricFluxShape(position) * axial);
+            target[node] = Math.max(1.0e-6, loading.geometricFluxShape(position) * axial);
         }
     }
 

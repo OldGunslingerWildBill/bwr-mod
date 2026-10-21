@@ -329,6 +329,46 @@ public final class ReactorCore {
     private long tickCount;
     private double secondsSinceAggregateRefresh;
     private boolean burnupEnabled = true;
+
+    /**
+     * How the once-per-interval nodal refresh runs. The answer is the same in all three
+     * modes; what differs is the tick it is applied on and the thread that iterates.
+     */
+    public enum NodalRefresh {
+        /** Solve and apply in the refresh tick, on the stepping thread. The default, and what the core tests run. */
+        IMMEDIATE,
+        /**
+         * Assemble and iterate in the refresh tick, on the stepping thread, and apply
+         * {@link #DEFERRED_NODAL_APPLY_TICKS} ticks later. Identical, bit for bit, to
+         * {@link #DEFERRED_ASYNC}; it exists so that the two can be compared.
+         */
+        DEFERRED_INLINE,
+        /**
+         * Assemble in the refresh tick, iterate on {@link dev.bwr.core.nodal.FluxSolveExecutor},
+         * apply {@link #DEFERRED_NODAL_APPLY_TICKS} ticks later, waiting then if the worker
+         * has not finished. The tick of the apply never depends on the worker.
+         */
+        DEFERRED_ASYNC,
+        /**
+         * {@link #DEFERRED_ASYNC}, and each solve iterated a second time on the stepping thread; the apply counts
+         * whether the pool's answer and that one are identical ({@link #getNodalRefreshChecks()}). For tests.
+         */
+        DEFERRED_ASYNC_CHECKED
+    }
+
+    /** Ticks between the start of a deferred nodal refresh and its apply (or the interval, if that is shorter). */
+    public static final int DEFERRED_NODAL_APPLY_TICKS = 20;
+
+    private NodalRefresh nodalRefresh = NodalRefresh.IMMEDIATE;
+    private NodalFluxSolver.Deferred pendingNodal;
+    private java.util.concurrent.CompletableFuture<Void> pendingNodalTask;
+    private long pendingNodalApplyTick;
+    private long pendingNodalWeightsRevision;
+    private FluxSolution pendingNodalCheck;
+    private long nodalChecks;
+    private long nodalCheckMismatches;
+    private long nodalBeginNanos;
+    private long nodalWaitNanos;
     private double cachedAggregateBeta = Double.NaN;
 
     /**
@@ -844,6 +884,8 @@ public final class ReactorCore {
         if (!(dtSeconds > 0.0) || !Double.isFinite(dtSeconds)) {
             return;
         }
+        nodalBeginNanos = 0L;
+        nodalWaitNanos = 0L;
 
         // --- 1. Hardware. Rod drives move, accumulators drain or recharge, the
         //        recirculation loop answers its demand through the pump lag.
@@ -1224,17 +1266,169 @@ public final class ReactorCore {
      * changes fast — {@code SPEC.md} section 1.3.
      */
     private void stepAggregateRefresh(double totalPowerFraction, double dtSeconds) {
+        if (pendingNodal != null && tickCount >= pendingNodalApplyTick) {
+            applyPendingNodalRefresh();
+        }
         secondsSinceAggregateRefresh += dtSeconds;
         double interval = Math.max(1, config.nodalSolveIntervalTicks) * config.tickSeconds;
         if (secondsSinceAggregateRefresh < interval) {
             return;
         }
+        // Deferred only while the weights are the nodal solve's: it is that solve's
+        // answer the apply installs as the weights.
+        boolean deferred = nodalRefresh != NodalRefresh.IMMEDIATE && loading.powerWeightSource() == nodalFlux;
         if (burnupEnabled) {
+            // A deferred refresh keeps the weights this burnup step used until its
+            // apply installs the next ones, so nothing in between re-solves.
             loading.advanceBurnup(totalPowerFraction * config.ratedThermalMW,
-                    secondsSinceAggregateRefresh);
+                    secondsSinceAggregateRefresh, deferred);
         }
         secondsSinceAggregateRefresh = 0.0;
-        refreshNodalShape();
+        if (deferred) {
+            beginNodalRefresh();
+        } else {
+            refreshNodalShape();
+        }
+    }
+
+    /**
+     * Choose how the nodal refresh runs; see {@link NodalRefresh}. Going back to
+     * {@code IMMEDIATE} drops a refresh in flight, exactly as a save and reload does.
+     */
+    public void setNodalRefresh(NodalRefresh mode) {
+        this.nodalRefresh = java.util.Objects.requireNonNull(mode, "mode");
+        if (mode == NodalRefresh.IMMEDIATE) {
+            discardPendingNodalRefresh();
+        }
+    }
+
+    public NodalRefresh getNodalRefresh() {
+        return nodalRefresh;
+    }
+
+    /** True between the start of a deferred nodal refresh and its apply. */
+    public boolean hasPendingNodalRefresh() {
+        return pendingNodal != null;
+    }
+
+    /**
+     * Drop a deferred nodal refresh that has not been applied: its worker task is cancelled
+     * if it has not started, and its answer is thrown away if it has. For a reactor that is
+     * unloaded or removed; nothing waits and nothing is thrown. The core keeps the shape it
+     * had, as a core restored from a save does until its next refresh.
+     */
+    public void discardPendingNodalRefresh() {
+        if (pendingNodalTask != null) {
+            pendingNodalTask.cancel(false);
+        }
+        pendingNodal = null;
+        pendingNodalTask = null;
+        pendingNodalCheck = null;
+    }
+
+    /**
+     * The first half of {@link #refreshNodalShape()} for a deferred refresh: push the rods
+     * and void in and assemble the problem, here and now, then iterate it here or hand it to
+     * the pool. Nothing the core reports changes until the apply.
+     */
+    private void beginNodalRefresh() {
+        if (pendingNodal != null) {
+            applyPendingNodalRefresh();
+        }
+        long beginStart = System.nanoTime();
+        nodalFlux.setRodPositions(rodPositionNotches);
+        nodalFlux.setVoidProfile(voidModel.getBoilingBoundaryFraction(),
+                voidModel.getExitVoidFraction());
+        NodalFluxSolver.Deferred deferred = loading.withWeightLock(nodalFlux::beginSolve);
+        pendingNodal = deferred;
+        pendingNodalWeightsRevision = loading.weightsRevision();
+        pendingNodalApplyTick = tickCount
+                + Math.min(DEFERRED_NODAL_APPLY_TICKS, Math.max(1, config.nodalSolveIntervalTicks));
+        if (!deferred.isDone()) {
+            if (nodalRefresh == NodalRefresh.DEFERRED_ASYNC_CHECKED) {
+                pendingNodalCheck = deferred.iterateCopy();
+            }
+            if (nodalRefresh != NodalRefresh.DEFERRED_INLINE) {
+                pendingNodalTask = java.util.concurrent.CompletableFuture.runAsync(deferred::run,
+                        dev.bwr.core.nodal.FluxSolveExecutor.shared());
+            } else {
+                deferred.run();
+            }
+        }
+        nodalBeginNanos += System.nanoTime() - beginStart;
+    }
+
+    /** Deferred solves whose pool answer was compared with an inline one ({@link NodalRefresh#DEFERRED_ASYNC_CHECKED}). */
+    public long getNodalRefreshChecks() {
+        return nodalChecks;
+    }
+
+    /** Of {@link #getNodalRefreshChecks()}, how many differed in any bit. */
+    public long getNodalRefreshCheckMismatches() {
+        return nodalCheckMismatches;
+    }
+
+    /**
+     * Wall time the last {@link #step()} spent starting a deferred nodal refresh (assembling, and iterating too when
+     * inline) and waiting for the pool at an apply, nanoseconds; for profiling. Measured, never used.
+     */
+    public long getLastStepNodalBeginNanos() {
+        return nodalBeginNanos;
+    }
+
+    public long getLastStepNodalWaitNanos() {
+        return nodalWaitNanos;
+    }
+
+    /**
+     * The second half of {@link #refreshNodalShape()}: the solve's answer becomes the
+     * weights, the rod flux weights, the LPRM readings and the aggregates. Dropped,
+     * changing nothing, when the loading or the solver changed in between (a refuel, a
+     * forced refresh), because those did their own refresh.
+     */
+    private void applyPendingNodalRefresh() {
+        NodalFluxSolver.Deferred deferred = pendingNodal;
+        java.util.concurrent.CompletableFuture<Void> task = pendingNodalTask;
+        FluxSolution check = pendingNodalCheck;
+        pendingNodal = null;
+        pendingNodalTask = null;
+        pendingNodalCheck = null;
+        if (task != null) {
+            long waitStart = System.nanoTime();
+            try {
+                task.join();
+            } catch (java.util.concurrent.CompletionException failed) {
+                Throwable cause = failed.getCause();
+                if (cause instanceof RuntimeException runtime) {
+                    throw runtime;
+                }
+                if (cause instanceof Error error) {
+                    throw error;
+                }
+                throw failed;
+            } finally {
+                nodalWaitNanos += System.nanoTime() - waitStart;
+            }
+        }
+        if (check != null) {
+            nodalChecks++;
+            if (!NodalFluxSolver.Deferred.identical(check, deferred.solution())) {
+                nodalCheckMismatches++;
+            }
+        }
+        boolean adopted = loading.withWeightLock(() -> {
+            if (loading.weightsRevision() != pendingNodalWeightsRevision || !nodalFlux.adopt(deferred)) {
+                return false;
+            }
+            loading.installWeights(deferred.solution().assemblyWeights());
+            return true;
+        });
+        if (!adopted) {
+            return;
+        }
+        installRodFluxWeights();
+        sampleLprms();
+        refreshFuelAggregates();
     }
 
     /**
@@ -1260,6 +1454,8 @@ public final class ReactorCore {
     public void refreshFuelDefinitions() { refreshNodalShape(); }
 
     private void refreshNodalShape() {
+        // A refresh now supersedes one still in flight.
+        discardPendingNodalRefresh();
         nodalFlux.setRodPositions(rodPositionNotches);
         nodalFlux.setVoidProfile(voidModel.getBoilingBoundaryFraction(),
                 voidModel.getExitVoidFraction());
@@ -3016,6 +3212,7 @@ public final class ReactorCore {
         elapsedSeconds = state.elapsedSeconds();
         tickCount = 0L;
         secondsSinceAggregateRefresh = 0.0;
+        discardPendingNodalRefresh();
 
         // The spatial flux map is derived, not persisted, so it is re-solved here
         // from the rods and void that were. Only the map: the scalars the solve
