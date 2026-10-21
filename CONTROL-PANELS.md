@@ -23,7 +23,7 @@ order and plug into the same wiring; the worked example below names them as the 
 ### Component sizes
 
 A panel block face is a 16 x 16 grid of cells (one cell is 1/16 block, 6.25 cm). **The instruments and controls
-start at their real size** (see "Real sizes" below); the older, bigger sizes are one click away. Right-click air
+start at twice their real size** (see "Real sizes" below); the older, bigger sizes are one click away. Right-click air
 with the item (or sneak-click a panel) to cycle through the sizes **from the smallest to the biggest**, or
 **Alt+click** with the item in hand to open the size picker: a list of every size of that type with its size in
 cells, its real size in centimetres, an outline of the footprint and a marker on the current one; click a row to
@@ -41,20 +41,20 @@ hold with a size chosen keeps it, and a component already on a panel keeps the s
 | Toggle switch | 6x8, 8x10, **real** 1x1 |
 | Key switch | 6x8, 8x10, **real** 1x2 |
 | Rotary selector | 8x10, 12x14 (the extra rows hold the position name), **real** 1x2, 2x3 |
-| Setpoint knob | 8x8, 12x12, **real** 1x1, 2x2 |
-| Control switch | 8x12, 12x16, **real** 1x2, 2x3 |
-| Thumbwheel | 3 cells wide per digit, 6 tall: 9x6 (3 digits), 3x6 to 24x6 (1 to 8 digits); **real** 1 cell wide per digit, 2 tall: 3x2 (3 digits), 1x2 to 8x2 |
-| Lamp | 4x4, 6x6, **real** 1x1 |
-| Annunciator window | 12x8, 16x12, **real** 1x1, 2x2 |
-| Bar graph | 3x24, 3x12, 3x16, 3x32 and the same lying down (24x3 ...); one segment per 2 cells; **real** 1x3, 3x1, 1x6, 6x1 (two segments per cell) |
-| Round dial | 12x12, 16x16, 20x20, 24x24, 32x32, **real** 2x2, 3x3 |
-| Edgewise meter | vertical 6x16, 6x24, 8x24, 8x32, **real** 1x3; horizontal 16x6, 24x6, 24x8, 32x8, **real** 3x1 |
-| Bar gauge | 10x16 (one block tall), 8x16, 12x24, 16x32 (no real size yet: see "Real sizes") |
-| RPS trip assembly | 16x8, 24x12, 32x16, **real** 2x1 |
-| Push-to-turn switch | 8x8, 12x12, 16x16, **real** 1x1 |
+| Setpoint knob | 8x8, 12x12, **real** 1x1, 2x2 (the 2x2 is the default) |
+| Control switch | 8x12 (the default), 12x16, **real** 1x2, 2x3 |
+| Thumbwheel | 3 cells wide per digit, 6 tall: 9x6 (3 digits), 3x6 to 24x6 (1 to 8 digits); **real** 1 cell wide per digit, 2 tall: 3x2 (3 digits), 1x2 to 8x2; **default** 6x4 (3 digits, 2 wide and 4 tall each) |
+| Lamp | 4x4, 6x6, **real** 1x1, **default** 2x2 |
+| Annunciator window | 12x8, 16x12, **real** 1x1, 2x2 (the 2x2 is the default) |
+| Bar graph | 3x24, 3x12, 3x16, 3x32 and the same lying down (24x3 ...); one segment per 2 cells; **real** 1x3, 3x1, 1x6, 6x1 (two segments per cell), **default** 2x6 |
+| Round dial | 12x12, 16x16, 20x20, 24x24, 32x32, **real** 2x2, 3x3, **default** 4x4 |
+| Edgewise meter | vertical 6x16, 6x24, 8x24, 8x32, **real** 1x3, **default** 2x6; horizontal 16x6, 24x6, 24x8, 32x8, **real** 3x1, **default** 6x2 |
+| Bar gauge | 10x16 (one block tall), 8x16, 12x24, 16x32, **real** 1x3, **default** 2x6 |
+| RPS trip assembly | 16x8, 24x12, 32x16, **real** 2x1, **default** 4x2 |
+| Push-to-turn switch | 8x8, 12x12, 16x16, **real** 1x1, **default** 2x2 |
 | Strip-chart recorder | 16x16, 24x16, 32x24 |
 | Paperless recorder | DX1000 16x16 (one block, the default), 12, 20, 24; DX2000 32x32 (2 x 2, twice a DX1000), 40, 48; all square |
-| 7- and 16-segment display | 5 cells wide per digit, 8 tall: 20x8 (4 digits), 1 to 12 digits; **real** 1 cell wide per digit, 2 tall: 4x2 (4 digits), 1x2 to 8x2 |
+| 7- and 16-segment display | 5 cells wide per digit, 8 tall: 20x8 (4 digits), 1 to 12 digits; **real** 1 cell wide per digit, 2 tall: 4x2 (4 digits), 1x2 to 8x2; **default** 8x4 (4 digits, 2 wide and 4 tall each) |
 | Character LCD | 3 cells wide per character, 4 tall per row: 48x8 (16 x 2), 1 to 4 rows of 8 to 20 characters |
 | Graphic display | 32x32 (2 x 2 blocks), 16x16, 48x48, 64x64 and rectangles; 2 pixels per cell |
 | Mimic line | 3 cells thick: 16x3, 8x3, 4x3, 3x3, 32x3, 64x3 and vertical; corners and tees 6x6 to 16x16 |
@@ -65,7 +65,9 @@ hold with a size chosen keeps it, and a component already on a panel keeps the s
 | Rod select matrix | 64x64, 48x48, 80x80, 96x96, 112x112, 128x128, 32x32 (up to 8 x 8 blocks) |
 
 The GE target pistol and W-2 heavy-duty pistol read best at 12x16 (their style table row says so, and the
-showcases use it); a new control-switch item is now the real size, and 12x16 is one click away. Explicit item
+showcases use it); a new control-switch item is 8x12, the first size of its list, and 12x16 is one click away. The
+control switch is the one type that does not start at twice its real size: the owner placed the 8x12 and the 12x16 side
+by side and found the 8x12 exactly the right size (the 12x16 is for other panels). Explicit item
 sizes and already placed components keep their dimensions; changing a placed switch's style does not resize its
 occupied panel area.
 
@@ -73,40 +75,43 @@ occupied panel area.
 
 A real control board about 4 m wide holds dozens of instruments, but with the sizes above only a few fit: each part
 was five to ten times its real size. The instruments and controls below now have a real size, rounded to whole cells
-(1 cell = 6.25 cm = 2.46 in, at least 1 cell), as the first size a new item places. The paperless recorders (their
+(1 cell = 6.25 cm = 2.46 in, at least 1 cell). A new item places **twice that in each dimension** (the owner's
+decision after the first release: at the exact real size the parts were too small to work); the exact real size is
+the next pick down. The paperless recorders (their
 DX1000 and DX2000 sizes are fixed), the core displays, the rod select matrix, the LCD and graphic displays, the strip
 chart, the nameplates and the mimic pieces are unchanged.
 
-| Part | Real size | Source | Cells (the default first) |
+| Part | Real size | Source | Exact real cells, then the default |
 | --- | --- | --- | --- |
-| Round dial | GE AB-40 meter cover 4.33 in (11 cm); 6 in round meter | model README (art/models/panel/meters); 6 in is an estimate | 2x2, 3x3 |
-| Edgewise meter | GE Type 180, 6.04 x 2.29 in (15.3 x 5.8 cm) | model README (meters) | vertical 1x3, horizontal 3x1 |
-| Control switch | breaker control escutcheon about 2.5 x 3.5 in (6 x 9 cm); the GE target pistol model itself is 4.4 x 6.6 in (11 x 17 cm) | estimate; model README (ge_sb) | 1x2, 2x3 |
-| Key switch | keyed escutcheon 3 x 4 in (7.6 x 10 cm) | model README (ge_sb) | 1x2 |
-| Rotary selector | GE selector plate 3.5 x 4.4 in (8.9 x 11 cm); oiltight knob plate 2 x 2.5 in | model README (ge_sb, oiltight) | 1x2, 2x3 |
-| Setpoint knob | 2.25 in knob (5.7 cm); 4 in knob | model README (pushbuttons); 4 in is an estimate | 1x1, 2x2 |
-| Toggle switch | heavy duty toggle on its plate, about 6 cm | estimate | 1x1 |
-| Pushbutton | 30.5 mm oiltight operator, plate 2 in (5.1 cm) | model README (pushbuttons) | 1x1 |
-| Lamp | 30.5 mm indicating light, 1.1 to 1.7 in (2.8 to 4.3 cm) | model README (pushbuttons, oiltight) | 1x1 |
-| RPS trip assembly | the owner's CAD, 4.8 x 2.44 in (12.2 x 6.2 cm) | NEW-HARDWARE-SPEC.md | 2x1 |
-| Push-to-turn switch | the owner's CAD, 2.3 x 2.2 in (5.8 x 5.6 cm) | NEW-HARDWARE-SPEC.md | 1x1 |
-| Annunciator window | tile 2.8125 x 2.625 in (7.1 x 6.7 cm); a double size window | CR-PANELS-BWR-RESEARCH.md; the double size is not real | 1x1, 2x2 |
-| 7- and 16-segment display | a 4 digit panel meter window; each digit is made 1 x 2 cells (6 x 12.5 cm), larger than a real LED digit (about 1 x 1.4 cm) because a cell is the smallest step | estimate | 4x2 (4 digits), 1x2, 2x2, 3x2, 6x2, 8x2 |
-| Thumbwheel | a real digit is under 1 cm wide; each digit is made 1 x 2 cells | estimate | 3x2 (3 digits), 1x2, 2x2, 4x2, 5x2, 6x2, 8x2 |
-| Bar graph | an LED bar column or row, one cell thick | estimate | 1x3, 3x1, 1x6, 6x1 |
-| Bar gauge | the owner's CAD, a case 5 x 20 cm (0.8 x 3.4 cells) | NEW-HARDWARE-SPEC.md | none yet: it would be 1x3 |
+| Round dial | GE AB-40 meter cover 4.33 in (11 cm); 6 in round meter | model README (art/models/panel/meters); 6 in is an estimate | 2x2, 3x3; **4x4** |
+| Edgewise meter | GE Type 180, 6.04 x 2.29 in (15.3 x 5.8 cm) | model README (meters) | vertical 1x3, horizontal 3x1; **2x6**, **6x2** |
+| Control switch | breaker control escutcheon about 2.5 x 3.5 in (6 x 9 cm); the GE target pistol model itself is 4.4 x 6.6 in (11 x 17 cm) | estimate; model README (ge_sb) | 1x2, 2x3; the default is **8x12** (see below) |
+| Key switch | keyed escutcheon 3 x 4 in (7.6 x 10 cm) | model README (ge_sb) | 1x2; **2x4** |
+| Rotary selector | GE selector plate 3.5 x 4.4 in (8.9 x 11 cm); oiltight knob plate 2 x 2.5 in | model README (ge_sb, oiltight) | 1x2, 2x3; **2x4** |
+| Setpoint knob | 2.25 in knob (5.7 cm); 4 in knob | model README (pushbuttons); 4 in is an estimate | 1x1, **2x2** |
+| Toggle switch | heavy duty toggle on its plate, about 6 cm | estimate | 1x1; **2x2** |
+| Pushbutton | 30.5 mm oiltight operator, plate 2 in (5.1 cm) | model README (pushbuttons) | 1x1; **2x2** |
+| Lamp | 30.5 mm indicating light, 1.1 to 1.7 in (2.8 to 4.3 cm) | model README (pushbuttons, oiltight) | 1x1; **2x2** |
+| RPS trip assembly | the owner's CAD, 4.8 x 2.44 in (12.2 x 6.2 cm) | NEW-HARDWARE-SPEC.md | 2x1; **4x2** |
+| Push-to-turn switch | the owner's CAD, 2.3 x 2.2 in (5.8 x 5.6 cm) | NEW-HARDWARE-SPEC.md | 1x1; **2x2** |
+| Annunciator window | tile 2.8125 x 2.625 in (7.1 x 6.7 cm); a double size window | CR-PANELS-BWR-RESEARCH.md; the double size is not real | 1x1, **2x2** |
+| 7- and 16-segment display | a 4 digit panel meter window; each digit is made 1 x 2 cells (6 x 12.5 cm), larger than a real LED digit (about 1 x 1.4 cm) because a cell is the smallest step | estimate | 4x2 (4 digits), 1x2, 2x2, 3x2, 6x2, 8x2; **8x4** (4 digits) |
+| Thumbwheel | a real digit is under 1 cm wide; each digit is made 1 x 2 cells | estimate | 3x2 (3 digits), 1x2, 2x2, 4x2, 5x2, 6x2, 8x2; **6x4** (3 digits) |
+| Bar graph | an LED bar column or row, one cell thick | estimate | 1x3, 3x1, 1x6, 6x1; **2x6** |
+| Bar gauge | the owner's CAD, a case 5 x 20 cm (0.8 x 3.4 cells) | NEW-HARDWARE-SPEC.md | 1x3; **2x6** |
 
 The sizes are appended at the end of each list, so the index an item stack stores (the `component_variant` it was
 cycled to) and the size saved with every placed component mean what they always did; a bare stack (no stored size)
-is the one thing that changed, and it now places the first real size. The cycling and the picker list the sizes by
+is the one thing that changed, and it now places twice the first real size (the doubled sizes are appended after the
+exact real ones, on the list like any other: a dial's list is 12x12 ... 32x32, 2x2, 3x3, 4x4). The cycling and the picker list the sizes by
 area, smallest first. A component dropped from a panel always keeps its size in the item (also the first entry of a
 list, which used to be left unset).
 
-**Bar gauge.** Its real size, 1x3, draws well (the curved face, the numbers and the pointer all show), but it is not
-on the list yet: three assertions of `BarGaugeTests` (and the layout they check) assume a case at least 11 cells tall.
-They want the scale at least 1.5 cells clear of the bottom (`scale rows`), the channel to the right of 1.5 cells of
-scale (`offsetX > 1.5`), and a channel under a fifth of the width, which a 1 or 2 cell wide gauge cannot give. Until
-those thresholds are made relative to the size, the bar gauge keeps its four sizes and a bare stack places 10x16.
+**Bar gauge.** Its real size is 1x3 and a new one places 2x6. Its three size-assuming assertions in `BarGaugeTests`
+(the scale at least 1.5 cells clear of the bottom and 0.5 of the top, the channel right of 1.5 cells of scale, and a
+channel under a fifth of the width) are now shares of the case, so they test the same layout at every size: 1.5 and
+0.5 cells of its 16 tall (0.09375 and 0.03125 of the case's height), the channel at least 0.4 of the case's width
+from its case's left edge, and a channel of at most 0.25 of the case's width (the CAD's is 0.216).
 
 Small parts keep their look: the procedural placeholders (annunciator, toggle, bar graph, thumbwheel, segment
 display, and every classic look) scale their elevation with a component under 3 cells across, so a 1-cell lamp is not
@@ -139,6 +144,24 @@ too). Text only grows as far as it stays on the face and clear of its neighbours
 aside for longer ticks), so near 200 % some text stops growing. Each setting is saved with the component only when
 it is not 100 %, and the server clamps it to the range. `GaugeScaleGuardTests` draws every gauge-like type at all its
 sizes and fails if text or ticks grow relatively bigger on a small one, or text leaves the face or overlaps.
+
+**Round dial labels.** The classic dial prints its units and its minimum and maximum inside the face at every size and
+Text size: the units under the hub, the two end labels side by side under them in the gap of the scale (the bottom
+90 degrees, the only part of the face the bands and ticks leave free). The text shrinks to the largest size at which
+every corner of every piece stays inside the face (the guard test measures the face from the dial's own drawing), so
+past about 110 % of the default a dial's text stops growing. The red OFF flag sits above the hub, clear of them.
+
+**Captions.** The caption printed under a component is 0.26 cell per font pixel with a 0.5 cell gap and up to one
+block of width at its design size and above, as it always was. A part smaller than the type's smallest ordinary size
+(its design size: a dial's 12 cells, a bar gauge's 8) gets the caption scaled by `GaugeScale.captionFactor`, its smaller
+side over the design size, size, gap and room together, so a 4x4 dial's caption is a third of a big dial's, not as tall
+as the part.
+
+**Bar gauge text.** The bar gauge's numbers and units letters were measured on a screenshot against the owner's reference
+(references/gauges/owner-bar-gauge-text-proportions.png): as a share of the case's width, the game's numbers were 11 %
+shorter and the units letters 17 % shorter, the font being lower than the picture's. The design caps are raised to 0.58
+cm (numbers) and 0.50 cm (units) of the 5 cm case, a guard test holds them there at every size, and the Text size slider
+range is unchanged.
 
 ### Looks: style and variant
 

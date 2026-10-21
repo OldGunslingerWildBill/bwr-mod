@@ -206,16 +206,35 @@ final class PanelRealScaleShowcase {
         }
     }
 
-    /** The bench: breaker switches, selectors, key switches, lamps, pushbuttons, push-turn switches, RPS trips, toggles. */
+    /**
+     * The bench. The control switch starts at 8 x 12, so the columns alternate: an even column has two breaker switches with
+     * a row of lamps and a row of pushbuttons under them; an odd column has selectors, key switches, lamps, pushbuttons,
+     * push-turn switches, RPS trips and toggles.
+     */
     private static void bench(ServerLevel level, BlockPos pos, int c) {
+        if (c % 2 == 0) {
+            for (int i = 0; i < 2; i++) {
+                PanelComponent sw = real(level, pos, i * 8, 0, ComponentTypes.CONTROL_SWITCH);
+                ControlSwitchData d = (ControlSwitchData) sw.data();
+                d.spring = false;
+                d.position = (i + c) % 3 - 1;
+                sw.type().onLoaded(sw);
+                sw.touch();
+            }
+            for (int i = 0; i < 8; i++) {
+                PanelComponent lamp = real(level, pos, i * 2, 12, ComponentTypes.LAMP);
+                LampData d = (LampData) lamp.data();
+                d.color = (i + c) % 3 == 0 ? 0xE02020 : (i + c) % 3 == 1 ? 0x20C040 : 0xF0A000;
+                reading(level, pos, lamp, (i + c) % 4 == 0 ? 0 : 1);
+                PanelComponent button = real(level, pos, i * 2, 14, ComponentTypes.PUSHBUTTON);
+                PanelModelShowcase.look(button, PanelStyles.GE, i % 5 == 0 ? "mushroom" : i % 3 == 0 ? "extended" : "flush");
+            }
+            return;
+        }
+        for (int i = 0; i < 8; i++) {
+            real(level, pos, i * 2, 0, ComponentTypes.ROTARY_SELECTOR);
+        }
         for (int i = 0; i < 4; i++) {
-            PanelComponent sw = real(level, pos, i * 2, 0, ComponentTypes.CONTROL_SWITCH);
-            ControlSwitchData d = (ControlSwitchData) sw.data();
-            d.spring = false;
-            d.position = (i + c) % 3 - 1;
-            sw.type().onLoaded(sw);
-            sw.touch();
-            real(level, pos, 8 + i * 2, 0, ComponentTypes.ROTARY_SELECTOR);
             real(level, pos, i * 2, 4, ComponentTypes.KEY_SWITCH);
         }
         for (int i = 0; i < 8; i++) {

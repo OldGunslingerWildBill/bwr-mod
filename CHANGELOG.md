@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: gauge polish and twice the real size
+
+- **Real size defaults are twice as big** in each dimension for every type that has real sizes: dial 4x4, edgewise 2x6 / 6x2, bar gauge 2x6, bar graph 2x6, key switch and rotary selector 2x4, lamp, pushbutton, toggle, push-to-turn switch, setpoint knob and annunciator window 2x2, RPS trip 4x2, segment display 8x4 and thumbwheel 6x4 (digits 2 cells wide, 4 tall). The **control switch** is the exception: a new one is 8x12 (the owner found it exactly the right size next to the 12x16). A bare, creative or crafted stack places that; the exact real sizes stay on the lists (cycle or Alt+click) and nothing placed or stored moves (the new sizes are appended).
+- The **bar gauge has a real size** (1x3, and 2x6 as the default); its layout tests are relative to the case. Its numbers and units are 12 and 19 % bigger, measured against the owner's reference picture.
+- The **classic dial's labels** (minimum, maximum, units) stay inside the face at every size and Text size; the OFF flag moved above the hub.
+- **Captions** under a real size part scale with it (`GaugeScale.captionFactor`); at the design size and above they are unchanged.
+
 ## Unreleased: gauge text and ticks in proportion, Text size and Tick size
 
 - Gauge **text and ticks scale with the gauge** (CONTROL-PANELS.md, "Gauge text and tick size"): the numbers of a small bar gauge are no longer held at a least height of 0.15 cell, the classic dial's least tick and pointer widths and the classic edgewise meter's margins, ticks, pointer and flag shrink with a meter smaller than its art, and a 1-cell bar graph's housing is the big bars' share. The big sizes look as before.

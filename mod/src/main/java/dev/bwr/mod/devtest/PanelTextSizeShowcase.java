@@ -44,7 +44,7 @@ final class PanelTextSizeShowcase {
     }
 
     static final String[] NAMES = {"textsize-real", "textsize-real-bars", "textsize-big", "textsize-classic-dials",
-            "textsize-captions-real", "textsize-bar-reference", "textsize-bar-reference-real"};
+            "textsize-captions-real", "textsize-bar-reference", "textsize-bar-reference-real", "textsize-switch-sizes"};
     private static final BlockPos REAL = new BlockPos(5490, 127, 5261);
     private static final BlockPos FIRST_BIG = new BlockPos(5486, 127, 5261);
     /** The five settings, left to right: {text %, tick %}. */
@@ -52,14 +52,16 @@ final class PanelTextSizeShowcase {
     /** The polish blocks: three dial blocks (Text size 60, 100, 160 %), left to right x 5481, 5480, 5479, and the bar gauge block. */
     private static final BlockPos FIRST_DIALS = new BlockPos(5481, 127, 5261);
     private static final BlockPos BAR_REFERENCE = new BlockPos(5478, 127, 5261);
+    /** Two blocks with a GE control switch each, 8 x 12 and 12 x 16, for comparing with the owner's picture of the two sizes. */
+    private static final BlockPos SWITCHES = new BlockPos(5477, 127, 5261);
     private static final int[] DIAL_TEXT = {60, 100, 160};
     private static final double[][] EYE = {{5490.5, 127.5, 5260.9}, {5490.5, 127.72, 5261.2}, {5484.5, 127.5, 5259.3},
-            {5480.5, 126.5, 5260.2}, {5480.31, 127.7, 5261.4}, {5478.56, 127.5, 5260.9}, {5478.22, 127.9, 5261.6}};
+            {5480.5, 126.5, 5260.2}, {5480.31, 127.7, 5261.4}, {5478.56, 127.5, 5260.9}, {5478.22, 127.9, 5261.6}, {5476.5, 127.5, 5260.8}};
     private static final double[][] LOOK = {{5490.5, 127.5, 5262.0}, {5490.5, 127.72, 5262.0}, {5484.5, 127.5, 5262.0},
-            {5480.5, 126.5, 5262.0}, {5480.31, 127.7, 5262.0}, {5478.56, 127.5, 5262.0}, {5478.22, 127.9, 5262.0}};
+            {5480.5, 126.5, 5262.0}, {5480.31, 127.7, 5262.0}, {5478.56, 127.5, 5262.0}, {5478.22, 127.9, 5262.0}, {5476.5, 127.5, 5262.0}};
 
     /** The gauges of the polish blocks, and how many of them have a Text size set (every dial block but the 100 % one: 10). */
-    private static final int POLISH = 3 * 5 + 3;
+    private static final int POLISH = 3 * 5 + 3 + 2;
     private static final int POLISH_SIZED = 2 * 5;
     private static final List<BlockPos> PLACED = new ArrayList<>();
     private static int mounted;
@@ -143,6 +145,8 @@ final class PanelTextSizeShowcase {
             blocks.add(FIRST_DIALS.west(i));
         }
         blocks.add(BAR_REFERENCE);
+        blocks.add(SWITCHES);
+        blocks.add(SWITCHES.west());
         for (BlockPos pos : blocks) {
             level.setBlock(pos, panel, 3);
             level.setBlock(pos.below(), panel, 3);
@@ -181,6 +185,17 @@ final class PanelTextSizeShowcase {
         putPolish(level, BAR_REFERENCE, 0, 0, ComponentTypes.BAR_GAUGE, 10, 16, null, 100, "REACTOR LEVEL NARROW RANGE", GaugeData.PRESET_NARROW, 41);
         putPolish(level, BAR_REFERENCE, 11, 0, ComponentTypes.BAR_GAUGE, 1, 3, null, 100, "NARROW", GaugeData.PRESET_NARROW, 41);
         putPolish(level, BAR_REFERENCE, 13, 0, ComponentTypes.BAR_GAUGE, 1, 3, null, 100, "WIDE", GaugeData.PRESET_WIDE, -40);
+        for (int i = 0; i < 2; i++) {
+            BlockPos pos = SWITCHES.west(i);
+            Footprint size = i == 0 ? Footprint.of(8, 12) : Footprint.of(12, 16);
+            PanelComponent sw = PanelOps.placeDirect(level, pos, i == 0 ? 4 : 2, i == 0 ? 2 : 0, ComponentTypes.CONTROL_SWITCH, size);
+            if (sw == null) {
+                throw new AssertionError("Text size showcase: control switch " + size + " refused");
+            }
+            sw.setLabel("CS-" + (i + 1));
+            sw.touch();
+            mounted++;
+        }
         for (BlockPos pos : PLACED) {
             if (level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
                 be.syncFull();
