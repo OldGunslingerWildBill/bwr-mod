@@ -34,10 +34,10 @@ public final class ServiceScreen extends BwrScreen<ServiceMenu> {
     @Override
     protected UiElement buildUi() {
         if (toggle == null) {
-            toggle = BwrButton.primary("Open", "Send the open or close command.", b -> menu.sendCommand(1, 0));
-            division = BwrButton.secondary("Division", "Cycle through divisions 1 to 4. Only valves of the same division are commanded together.",
+            toggle = BwrButton.primary("Open valve", "Open or close it.", b -> menu.sendCommand(1, 0));
+            division = BwrButton.secondary("Division", "Move it to the next division, from 1 to 4. Only valves in the same division are commanded together.",
                     b -> menu.sendCommand(2, 0));
-            redstone = BwrButton.secondary("Use redstone", "Hand the valve back to redstone: it then follows the redstone signal at its position.",
+            redstone = BwrButton.secondary("Use redstone", "Hand the valve back to redstone, so that it follows the redstone signal at its position.",
                     b -> menu.sendCommand(3, 0));
         }
         UiElement[] lines = new UiElement[MAX_LINES];
@@ -69,8 +69,8 @@ public final class ServiceScreen extends BwrScreen<ServiceMenu> {
 
     private String stateWord() {
         return switch (menu.kind) {
-            case 2, 3 -> menu.active ? "OPEN" : "CLOSED";
-            case 4 -> menu.active ? "ENABLED" : "DISABLED";
+            case 2, 3 -> menu.active ? "Open" : "Closed";
+            case 4 -> menu.active ? "Enabled" : "Disabled";
             default -> "";
         };
     }
@@ -78,11 +78,13 @@ public final class ServiceScreen extends BwrScreen<ServiceMenu> {
     @Override
     protected void containerTick() {
         super.containerTick();
-        toggle.setMessage(Component.literal(menu.active ? "Close" : "Open"));
+        toggle.setMessage(Component.literal(menu.kind == 4 ? (menu.active ? "Switch off" : "Switch on") : (menu.active ? "Close valve" : "Open valve")));
         toggle.setTooltipText(menu.kind == 4
-                ? "Switch the discharge port on or off."
-                : menu.active ? "Command the valve closed." : "Command the valve open.");
-        division.setMessage(Component.literal("Division: " + menu.division));
+                ? (menu.active ? "The discharge port is on. Click to switch it off." : "The discharge port is off. Click to switch it on.")
+                : menu.active ? "The valve is open. Click to tell it to close." : "The valve is closed. Click to tell it to open.");
+        division.setMessage(Component.literal("In division " + menu.division));
+        division.setTooltipText("This valve is in division " + menu.division
+                + ". Click to move it to the next division, from 1 to 4. Only valves in the same division are commanded together.");
     }
 
     /** One of the server's lines, drawn as a state line, a label-value row or a note, whichever it is. */
