@@ -28,6 +28,11 @@ final class AnnunciatorControlModel implements ComponentModel {
         return Math.min(pitch * 0.92f, h * BUTTON_SHARE * 0.96f);
     }
 
+    /** A button stands out in proportion to its size, so the real size module's caps are not posts. */
+    private static float stand(float bezel) {
+        return Math.min(1.0f, bezel / 3.0f);
+    }
+
     private static float bezelX(float w, int i, float bezel) {
         float pitch = w / AnnunciatorControlType.BUTTONS;
         return pitch * i + (pitch - bezel) / 2.0f;
@@ -44,11 +49,12 @@ final class AnnunciatorControlModel implements ComponentModel {
         sink.box(0, 0, w, h, 0, HOUSING_TOP, ModelDraw.HOUSING, false);
         float bezel = bezel(w, h);
         float ring = bezel * 0.1f;
+        float stand = stand(bezel);
         for (int i = 0; i < AnnunciatorControlType.BUTTONS; i++) {
             float x = bezelX(w, i, bezel);
             float y = bezelY(h, bezel);
-            sink.box(x, y, bezel, bezel, 1.0f, 1.3f, ModelDraw.BEZEL, false);
-            sink.box(x + ring, y + ring, bezel - 2 * ring, bezel - 2 * ring, 1.0f, 1.5f, ModelDraw.RECESS, false);
+            sink.box(x, y, bezel, bezel, HOUSING_TOP, HOUSING_TOP + 0.3f * stand, ModelDraw.BEZEL, false);
+            sink.box(x + ring, y + ring, bezel - 2 * ring, bezel - 2 * ring, HOUSING_TOP, HOUSING_TOP + 0.5f * stand, ModelDraw.RECESS, false);
         }
     }
 
@@ -63,9 +69,8 @@ final class AnnunciatorControlModel implements ComponentModel {
             int color = held ? CAPS[i] : QuadSink.shade(CAPS[i], 0.8f);
             float x = bezelX(w, i, bezel) + inset;
             float y = bezelY(h, bezel) + inset;
-            // A button stands out in proportion to its size, so the real size module's caps are not posts.
-            float stand = Math.min(1.0f, bezel / 3.0f);
-            context.box(x, y, bezel - 2 * inset, bezel - 2 * inset, HOUSING_TOP, HOUSING_TOP + (held ? 1.0f : 2.2f) * stand, color, held);
+            float stand = stand(bezel);
+            context.box(x, y, bezel - 2 * inset, bezel - 2 * inset, HOUSING_TOP, HOUSING_TOP + (held ? 0.9f : 2.2f) * stand, color, held);
         }
         if (context.lod() < PanelRenderContext.LOD_FULL) {
             return;
