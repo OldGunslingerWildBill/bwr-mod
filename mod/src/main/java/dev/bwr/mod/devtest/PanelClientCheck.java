@@ -145,7 +145,8 @@ public final class PanelClientCheck {
         if (!Boolean.getBoolean("bwr.panelClientCheck")) return;
         Minecraft mc = Minecraft.getInstance();
         if (buildFailure != null) throw new IllegalStateException("Panel showcase build failed", buildFailure);
-        if (++age > Math.max(4200, 600 + 120 * NAMES.length)) throw new IllegalStateException("Panel client check timed out at " + stage);
+        // The breaker spring stage drives nine switches through every operation, far more than one stage's 120 ticks.
+        if (++age > Math.max(4200, 600 + 120 * NAMES.length + 6000)) throw new IllegalStateException("Panel client check timed out at " + stage);
         if (!started && mc.screen != null && mc.getOverlay() == null) {
             started = true;
             mc.options.pauseOnLostFocus = false;
