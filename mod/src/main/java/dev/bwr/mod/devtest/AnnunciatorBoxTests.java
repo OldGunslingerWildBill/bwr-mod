@@ -355,7 +355,8 @@ public final class AnnunciatorBoxTests {
         helper.assertTrue(outputs.size() == 4 && outputs.get(0).key().equals("ack") && outputs.get(1).key().equals("reset")
                 && outputs.get(2).key().equals("silence") && outputs.get(3).key().equals("test"), "outputs: ack, reset, silence, test");
         helper.assertTrue(type.inputPorts(type.createData()).isEmpty() && type.isInteractive() && type.holdable(), "held like a pushbutton, no inputs");
-        helper.assertTrue(type.footprints().get(type.realDefaultIndex()).equals(Footprint.of(2, 1)), "real size 2 x 1 cells");
+        helper.assertTrue(type.footprints().get(type.realDefaultIndex()).equals(Footprint.of(4, 2)) && type.footprints().contains(Footprint.of(2, 1)),
+                "a new item is 4 x 2 cells (twice the real size 2 x 1, which stays on the list)");
         // A click picks the quarter of the face it lands on.
         for (double width : new double[] {2, 4, 24}) {
             helper.assertTrue(AnnunciatorControlType.buttonAt(width, 0.01) == 0 && AnnunciatorControlType.buttonAt(width, width * 0.3) == 1

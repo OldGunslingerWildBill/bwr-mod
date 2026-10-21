@@ -334,7 +334,8 @@ public final class PanelAngledMountTests {
         fixture(h, 1, (level, floor) -> {
             FakePlayer player = player(level, "AngledMount", GameType.SURVIVAL);
             BlockPos pos = floor.above(2);
-            int gauge = ComponentTypes.DIAL_GAUGE.realDefaultIndex();
+            // the exact real size 2x2 (a new item starts at twice that, 4x4, which no longer fits beside the lamp on the small faces)
+            int gauge = ComponentTypes.DIAL_GAUGE.footprints().indexOf(dev.bwr.mod.panel.component.Footprint.of(2, 2));
             check(h, gauge >= 0, "the dial gauge has a real size");
             // a 4 x 4 lamp (variant 0) at a cell that is on every face, and the real-size gauge at another
             int[][] lampAt = {{6, 6}, {6, 6}, {3, 3}, {6, 2}};
