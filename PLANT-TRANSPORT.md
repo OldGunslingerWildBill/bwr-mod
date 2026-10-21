@@ -17,7 +17,7 @@ their names. New measurement peripherals include:
 | --- | --- | --- |
 | Condenser | `bwr_condenser` | `getStatus()`: inventories, cooling/steam flow, heat rejected, water temperatures, `backpressurePsia`, `vacuumInHg` |
 | Four-port RHR exchanger | `bwr_rhr_heat_exchanger` | `getStatus()`: primary/secondary flow, water inventory, temperatures, transferred heat |
-| Fuel fabricator | `bwr_fuel_fabricator` | `getStatus()`: batch mass, enrichment, energy and finished assemblies |
+| Fuel fabricator | `bwr_fuel_fabricator` | `getStatus()`: batch mass, enrichment, energy, finished assemblies, the item route's target (`target`), the uranium it holds in ingots (`uraniumHeldIngots`) and the depleted uranium it holds (`depletedUranium`) |
 | Physical control-rod drive | `bwr_control_rod_drive` | `getStatus()`: attachment, rod index/notch, accumulator, water, power and health |
 | RPV water/recirculation penetration | `bwr_rpv_water_port` | `getStatus()`: reactor connection, vessel pressure and water temperature |
 | Jet-pump assembly | `bwr_jet_pump` | `getStatus()`: passive hardware, size and assembly completeness |

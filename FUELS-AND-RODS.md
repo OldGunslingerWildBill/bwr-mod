@@ -23,8 +23,9 @@ the mod's calibrated model, not a library of validated commercial fuel designs
 or an isotope-by-isotope depletion calculation. Natural uranium is a weak,
 subcritical experimental loading in this BWR model.
 
-The fuel fabricator selects uranium, MOX and plutonium grades from the actual
-incoming enrichment, without granting additional fissile inventory. The
+The fuel fabricator's chemical route selects uranium, MOX and plutonium grades
+from the actual incoming enrichment, without granting additional fissile
+inventory (its item route, below, makes the uranium grade the player picks). The
 gadolinia variant and thorium grades are available from the creative tab or
 datapack recipes; there is no new thorium processing chain. Existing fuel
 crafting remains compatible. Every fuel definition remains datapack editable
@@ -43,6 +44,117 @@ by the fabricator. Their definitions, icons and item IDs remain for saved rods
 and datapack compatibility. Fabrication still records the actual input fissile
 fraction, including values between catalogue grades; it never creates extra
 fissile inventory or upgrades old fuel.
+
+## Fuel fabricator: the item route
+
+The fabricator has two ways in, and they take turns.
+
+- **Chemical route (unchanged).** Mekanism chemicals through the machine's
+  tanks; the enrichment of the assembly is the ratio of fissile fuel to matrix
+  the player feeds. Needs Mekanism.
+- **Item route (new).** Uranium and steel *items* in, an assembly and depleted
+  uranium out. Needs only items: Mekanism supplies them in a normal game, but
+  any mod that tags its uranium and steel works, and the machine loads and runs
+  with Mekanism absent.
+
+The machine has four slots, and hoppers and pipes use them through the item
+capability: **uranium in**, **steel in**, **assembly out** and **depleted
+uranium out**. The assembly is slot 0 (where the single output slot always was),
+depleted uranium slot 1, uranium slot 2, steel slot 3. A hopper above feeds the
+inputs (the top face shows only the inputs); a hopper below collects the
+outputs (the bottom face shows only the outputs); the four sides show all four.
+Outputs can only be taken, inputs only given, and a pipe cannot pull an input
+back out (the GUI can). The Mekanism chemical tanks stay on Mekanism's own
+capability.
+
+### What counts as uranium and steel
+
+By item tag, so any mod's items work:
+
+| Input | Tag | Counts as |
+|---|---|---|
+| Uranium ingot | `c:ingots/uranium` | 1 ingot |
+| Raw uranium | `c:raw_materials/uranium` | 1 ingot (it smelts to one) |
+| Yellow cake | `bwr:fabricator_feed/yellow_cake` (optional, holds `mekanism:yellow_cake_uranium`) | half an ingot (a Mekanism enrichment chamber makes two from one ingot) |
+| Steel | `c:ingots/steel` | 1 steel |
+
+Depleted uranium is tagged `c:ingots/depleted_uranium` and is **not** a
+uranium ingot, so the machine will not take it back as feed.
+
+### Choosing the enrichment, and what it costs
+
+The screen has a selector over the uranium ladder (0.71 %, 2.70 %, 3.50 %,
+4.95 %, 8.00 %, 19.75 %, 20.00 %). The retired 1.2 % and 1.4 % grades are not
+offered, as in the creative tab. A fabricator starts on 3.50 % (`leu`); the
+choice is saved with the block only when it is not that default.
+
+The uranium an assembly takes is the **mass balance of an enrichment plant**,
+not a price list. An assembly is 4 ingots' worth of enriched product, and the
+natural uranium needed to make that much at assay `xp`, with natural feed
+`xf` = 0.711 % and 0.25 % tails `xt`, is
+
+    feed / product = (xp - xt) / (xf - xt)        depleted uranium = feed - product
+
+The uranium that did not become product comes back as **depleted uranium
+ingots**. Feed is rounded up and depleted uranium rounded down, so the machine
+can lose to rounding but never gain. Steel is the cladding and structure, a
+fixed 4 ingots whatever the enrichment. Fabrication takes 100 ticks plus 3 per
+uranium ingot at 200 FE a tick.
+
+| Assembly | Feed per product | Uranium ingots | Steel | Depleted uranium back | Time | Energy |
+|---|---|---|---|---|---|---|
+| 0.711 % natural (`natural_uranium`) | 1.00 | 4 | 4 | 0 | 5.6 s | 22,400 FE |
+| 2.70 % (`uranium_27`) | 5.31 | 22 | 4 | 17 | 8.3 s | 33,200 FE |
+| 3.50 % (`leu`) | 7.05 | 29 | 4 | 24 | 9.4 s | 37,400 FE |
+| 4.95 % (`uranium_495`) | 10.19 | 41 | 4 | 36 | 11.2 s | 44,600 FE |
+| 8.00 % (`uranium_8`) | 16.81 | 68 | 4 | 63 | 15.2 s | 60,800 FE |
+| 19.75 % (`uranium_1975`) | 42.30 | 170 | 4 | 165 | 30.5 s | 122,000 FE |
+| 20.00 % (`heu`) | 42.84 | 172 | 4 | 167 | 30.8 s | 123,200 FE |
+| *1.20 % (retired)* | *2.06* | *9* | *4* | *4* | | |
+| *1.40 % (retired)* | *2.49* | *10* | *4* | *5* | | |
+
+The formula is `dev.bwr.core.fuel.EnrichmentMassBalance` and nowhere else
+(unit test `EnrichmentMassBalanceTest`, hand-worked numbers); the cost of a
+fuel type follows its `nominal_enrichment`, so a datapack that retunes a grade
+retunes its cost. An assembly the item route makes is the same data the
+chemical route stamps on a fresh bundle: that fuel type, its nominal
+enrichment, 180 kg of heavy metal, no burnup.
+
+### How the machine takes its inputs
+
+A 20 % assembly takes 172 ingots and a stack holds 64, so the machine takes
+uranium out of its slot into an internal store, only as far as the selected
+assembly needs. Steel and the finished work are committed together when the
+time is up: nothing is consumed by an assembly that does not happen, and with
+too little of either input, or no power, the machine does nothing. The
+depleted uranium of one assembly can also be more than a stack (167 for 20 %),
+so what the slot cannot hold waits and moves into it as it is emptied; the
+machine stops if it would hold more than 512. Breaking the block drops
+everything it holds (the uranium it had taken in comes back as ingots).
+
+The item route waits while a chemical batch is part built and the chemical
+route waits while an item assembly is made; they share the output slot and the
+energy buffer. A fabricator with nothing to do costs a boolean test a tick.
+
+A fabricator placed before this change loads with empty item slots, on the
+default target, with its chemical tanks, batch, energy and output exactly as
+they were (`FuelFabricatorItemRouteTests`).
+
+Depleted uranium has **no use in a reactor yet**. See the note at the end of
+the CHANGELOG entry for why.
+
+## Recipes: what is craftable
+
+`python tools-audit-recipes.py` checks every recipe parses and every registered
+item is the result of a recipe, except these, which are not craftable on
+purpose:
+
+| Item | Why |
+|---|---|
+| `cobalt_sample`, `tritium_sample`, `doped_silicon` | Products of irradiating a target in a reactor |
+| `corium` | Made by a core melting through its vessel |
+| `depleted_uranium` | The fuel fabricator's byproduct |
+| `rcic_turbine_pump`, `hpci_turbine_pump`, `suppression_pool_quencher` | Retired blocks kept so old worlds load (the Terry-style `rcic_twl` and `hpci_turbine` and the suppression pool steam inlet replaced them); `tools-audit-assets.py` fails any recipe that produces or uses them |
 
 ## Specialty rods
 
