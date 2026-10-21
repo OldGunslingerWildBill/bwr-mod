@@ -1,0 +1,19 @@
+{
+ "format": 1,
+ "title": "Duplex board",
+ "description": "Four duplex columns: the board two blocks high, the tilted header above it and the bench in front. Blank: mount what you like on it.",
+ "order": 6,
+ "frames": [
+  {
+   "id": "main",
+   "kind": "duplex",
+   "columns": 4,
+   "rows": 1,
+   "at": [
+    0,
+    0,
+    0
+   ]
+  }
+ ]
+}

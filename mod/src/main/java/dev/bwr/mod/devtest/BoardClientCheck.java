@@ -39,9 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Disposable real-client check of the premade control boards: places every shipped board in a fresh flat world with the
- * real placer (the way the board blueprint does), checks every component reached the client, and photographs each board
- * from the front and from a three-quarter view, plus close-ups of its busiest parts (1920 x 1080, supersampled, in
+ * Disposable real-client check of the premade control boards (blank shapes named by their form): places every shipped
+ * board in a fresh flat world with the real placer (the way the board blueprint does), checks every component reached
+ * the client (there are none) and photographs each shape from the front, a three-quarter view and the bench (1920 x 1080, supersampled, in
  * {@code run/turbineModelCheck/board-client-check/}). Also holds the board blueprint in the player's hand over the empty
  * floor beside the board and checks that its ghost was drawn. Opt-in ({@code -PbwrBoardClientCheck}); not shipped.
  *
@@ -85,12 +85,11 @@ public final class BoardClientCheck {
         return new BlockPos(X0 + 30, FLOOR_Y, Z0);
     }
 
-    /** The photographs of a placed board: front, three-quarter, and four close-ups (left, centre left, centre right, right) of the face. */
+    /** The photographs of a placed board: front, three-quarter and the bench view (the boards are blank: no close-ups). */
     private static List<Shot> shotsFor(int index, BoardTemplate template) {
         BoardPlan plan = new BoardPlan(template, origin(index), Direction.NORTH);
         var bounds = plan.bounds();
         // Facing north: the operator's right is west (smaller x); the board occupies x from maxX down to minX.
-        double right0 = bounds.maxX;
         double width = bounds.maxX - bounds.minX;
         double height = bounds.maxY - bounds.minY;
         double centreX = (bounds.minX + bounds.maxX) / 2.0;
@@ -107,12 +106,6 @@ public final class BoardClientCheck {
                 new Vec3(centreX - width * 0.04, centreY - 0.3, faceZ)));
         list.add(new Shot(index, name + "-bench", new Vec3(centreX, FLOOR_Y + 1 + 3.4, bench - Math.max(3.0, width * 0.3)),
                 new Vec3(centreX, FLOOR_Y + 1 + 0.9, bench + 0.4)));
-        // close-ups: four windows along the board, from 1.8 blocks away
-        for (int i = 0; i < 4; i++) {
-            double x = right0 - width * (0.125 + 0.25 * i);
-            list.add(new Shot(index, name + "-close-" + (i + 1), new Vec3(x, FLOOR_Y + 1 + 2.0, bench - 2.2),
-                    new Vec3(x, FLOOR_Y + 1 + 1.6, faceZ)));
-        }
         return list;
     }
 
@@ -147,8 +140,8 @@ public final class BoardClientCheck {
         }
         if (shots == null) {
             boards = BoardTemplates.ordered();
-            if (boards.size() < 5) {
-                throw new AssertionError("Fewer than five premade boards loaded: " + boards.size());
+            if (boards.size() < 6) {
+                throw new AssertionError("Fewer than six premade boards loaded: " + boards.size());
             }
             shots = new ArrayList<>();
             for (int i = 0; i < boards.size(); i++) {
@@ -210,8 +203,8 @@ public final class BoardClientCheck {
                     BlockPos ghost = ghostOrigin();
                     BlockPos obstacle = new BlockPos(ghost.getX() + 2, FLOOR_Y + 2, ghost.getZ() - 1);
                     level.setBlock(obstacle, shot.name().endsWith("blocked") ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), 3);
-                    BoardTemplate rps = BoardTemplates.get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("bwr", "reactor_scram_rps"));
-                    player.setItemInHand(InteractionHand.MAIN_HAND, BoardBlueprintItem.stackFor(rps.id()));
+                    BoardTemplate shape = BoardTemplates.get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("bwr", "duplex_board"));
+                    player.setItemInHand(InteractionHand.MAIN_HAND, BoardBlueprintItem.stackFor(shape.id()));
                 }
                 player.connection.teleport(camera.x, camera.y, camera.z, yaw, pitch);
                 wantedCamera = camera;

@@ -1,0 +1,30 @@
+{
+ "format": 1,
+ "title": "Back panel with benchboard",
+ "description": "A back panel two high with a benchboard in front of it, four blocks wide. Blank: mount what you like on it.",
+ "order": 5,
+ "frames": [
+  {
+   "id": "wall",
+   "kind": "back_panel",
+   "columns": 4,
+   "rows": 2,
+   "at": [
+    0,
+    2,
+    -1
+   ]
+  },
+  {
+   "id": "bench",
+   "kind": "benchboard",
+   "columns": 4,
+   "rows": 1,
+   "at": [
+    0,
+    0,
+    0
+   ]
+  }
+ ]
+}

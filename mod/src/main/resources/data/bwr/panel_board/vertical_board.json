@@ -1,0 +1,19 @@
+{
+ "format": 1,
+ "title": "Vertical board",
+ "description": "Four vertical panel blocks wide and two high, a flat board standing on the floor. Blank: mount what you like on it.",
+ "order": 1,
+ "frames": [
+  {
+   "id": "main",
+   "kind": "vertical",
+   "columns": 4,
+   "rows": 2,
+   "at": [
+    0,
+    1,
+    0
+   ]
+  }
+ ]
+}

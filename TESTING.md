@@ -640,19 +640,21 @@ reports. The release JAR excludes all development fixture code.
 ## Premade control boards (the board blueprint)
 
 The GameTest class `PremadeBoardTests` (fixtures around 163,700 / 163,700, 64 blocks apart) covers CONTROL-PANELS.md section 2e:
-every shipped `panel_board` file parses and validates and is the board the data pack loader registered; each of the five boards
-keeps its key parts; the parser refuses each kind of bad template with a reason (unknown type, off the surface, overlap,
+every shipped `panel_board` file parses and validates and is the board the data pack loader registered; the six shipped shapes
+(vertical board, back panel, benchboard, console, back panel with benchboard, duplex board) are the expected ids in order, blank (no
+components, reserved spaces, mimic tape or notes), named by form, made of valid panel blocks, and a blueprint with a retired id
+places the first shape; the parser refuses each kind of bad template with a reason (unknown type, off the surface, overlap,
 a size the type does not have, a missing size, an unknown config field, a value out of range, a label too long or used twice,
 frames sharing a block, a span of too many blocks, a crowded block, a mimic path of one spot, a reserved space over a
-component); `repeat` and `names` expand; every board placed through `BoardPlacer` in a fresh world has exactly its panel blocks
-and components (type, place, size, label, caption and every setting), leaves its reserved spaces empty, has its mimic paths
-and comes out **unwired**; a board faces all four ways; a blocked, out of world or forbidden (permission hook) site is refused
+component); `repeat` and `names` expand; every shape placed through `BoardPlacer` in a fresh world has exactly its panel blocks (and,
+for a data pack board, its components with type, place, size, label, caption and every setting, empty reserved spaces and mimic
+paths, **unwired**); a board faces all four ways; a blocked, out of world or forbidden (permission hook) site is refused
 with nothing placed; survival refuses with the missing items listed, consumes exactly the bill (panels, parts, tape) and leaves
 spare items alone; the blueprint item cycles and places through `useOn`; the sync packet round trips.
 
-The client check `-PbwrBoardClientCheck` (`BoardClientCheck`, run through `:mod:runTurbineModelCheck`) places the five boards with
+The client check `-PbwrBoardClientCheck` (`BoardClientCheck`, run through `:mod:runTurbineModelCheck`) places the six shapes with
 the real placer, checks every component reached the client, and writes 1920 x 1080 pictures of each (front, three-quarter and
-four close-ups) and of the blueprint ghost (fits, and with a block in the way) to `run/turbineModelCheck/board-client-check/`.
-`-PbwrBoardClientStages=rod_control-front` filters by picture name.
+bench) and of the blueprint ghost (fits, and with a block in the way) to `run/turbineModelCheck/board-client-check/`.
+`-PbwrBoardClientStages=duplex_board-front` filters by picture name.
 
 `python tools-generate-boards.py --check` fails when the shipped JSON differs from the generator.
