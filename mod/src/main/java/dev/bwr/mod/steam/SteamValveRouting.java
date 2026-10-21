@@ -59,7 +59,7 @@ public final class SteamValveRouting {
         for(var route:dev.bwr.mod.piping.PipeTopology.routes(level,graph)) {
             var node=route.node();
             if(node.state()!=null&&node.state().getBlock() instanceof AdsReliefValveBlock
-                    &&level.isLoaded(node.pos())&&level.getBlockEntity(node.pos()) instanceof SafetyReliefValveBlockEntity relief
+                    &&dev.bwr.mod.world.LoadedWorld.blockEntity(level, node.pos()) instanceof SafetyReliefValveBlockEntity relief
                     &&relief.isOpen()&&relief.isDischargeSubmerged())best=Math.max(best,route.opening());
             if(node.kind()!=dev.bwr.mod.piping.PipeTopology.Kind.END)continue;
             var s=node.state();boolean sink;

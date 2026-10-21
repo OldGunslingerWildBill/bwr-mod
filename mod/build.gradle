@@ -40,7 +40,14 @@ neoForge {
         turbineGameTest {
             type = 'gameTestServer'
             gameDirectory = file('run/turbineGameTest')
-            systemProperty 'neoforge.enabledGameTestNamespaces', 'bwr'
+            // 'bwrtick' holds the tick-cost and chunk-boundary tests (TickBudgetTests, ChunkLinkTests, ...); -PbwrOnlyTick
+            // runs just those, in about a minute, while they are being developed. The default runs everything.
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrOnlyTick') ? 'bwrtick' : 'bwr,bwrtick'
+            // Developer-only tick profiler (dev.bwr.mod.TickProbe): per-system microseconds per server tick, printed by
+            // the TickBudgetTests plant profile as "TICK PROBE" lines. Off (and costless) without this property.
+            if (project.hasProperty('bwrTickProbe')) jvmArguments.add('-Dbwr.tickProbe=true')
+            // -PbwrJfr=<file.jfr> records a Java Flight Recorder profile of the whole run (jfr print / summary read it).
+            if (project.hasProperty('bwrJfr')) jvmArguments.add('-XX:StartFlightRecording=filename=' + project.property('bwrJfr') + ',settings=profile,dumponexit=true')
         }
         advancementClientCheck {
             client()
@@ -118,6 +125,22 @@ neoForge {
             server()
             gameDirectory = file('run/peripheralCheck')
             jvmArguments.add('-Dbwr.peripheralRuntimeCheck=true')
+            programArguments.addAll('--nogui')
+        }
+        // Dedicated-server boot check (:mod:runServerBootCheck, verdict in the doLast block below). A fresh disposable
+        // flat world each time; the JVM writes a class-load log so the verdict can see client classes on a server.
+        serverBootCheck {
+            server()
+            gameDirectory = file('run/serverBootCheck')
+            jvmArguments.addAll('-Dbwr.serverBootCheck=true',
+                    '-Xlog:class+load:file=' + file('run/serverBootCheck-classload.log').absolutePath)
+            programArguments.addAll('--nogui')
+        }
+        // Old-save check (:mod:runSaveCompatCheck [-PbwrSaveWorld=<world folder>], see the doFirst/doLast block below).
+        saveCompatCheck {
+            server()
+            gameDirectory = file('run/saveCompatCheck')
+            jvmArguments.add('-Dbwr.saveCompat.source=' + file(project.findProperty('bwrSaveWorld')?.toString() ?: 'src/test-worlds/alpha40').absolutePath)
             programArguments.addAll('--nogui')
         }
         panelCcCheck {
@@ -333,6 +356,123 @@ clientRunNames.each { runName ->
 }
 
 // ---------------------------------------------------------------------------
+// :mod:runServerBootCheck [-PbwrNoCC] boots a real dedicated server (fresh flat world, offline, port 25598), waits for
+// "Done", lets 200 ticks run (dev.bwr.mod.devtest.ServerBootCheck) and stops it. Afterwards this block fails the build
+// when: "Done" or the stop line is missing; the log has an ERROR from dev.bwr / the mod's logger, or any
+// NoClassDefFoundError / ClassNotFoundException / Missing registry / client-class text; or the JVM's class-load log shows a
+// client class loaded (net.minecraft.client, blaze3d, neoforge.client, any dev.bwr ...client package). WARN lines from
+// the mod are printed but do not fail the build. Logs: mod/run/serverBootCheck/logs/latest.log and
+// mod/run/serverBootCheck-classload.log.
+// ---------------------------------------------------------------------------
+tasks.matching { it.name == 'runServerBootCheck' }.configureEach { task ->
+    task.doFirst {
+        def dir = neoForge.runs.getByName('serverBootCheck').gameDirectory.get().asFile
+        project.delete(dir, file('run/serverBootCheck-classload.log'))
+        dir.mkdirs()
+        new File(dir, 'eula.txt').text = 'eula=true' + System.lineSeparator()
+        new File(dir, 'server.properties').text = [
+                'online-mode=false', 'server-ip=127.0.0.1', 'server-port=25598', 'level-type=minecraft\\:flat',
+                'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1}],"biome":"minecraft:plains","structure_overrides":[]}',
+                'generate-structures=false', 'spawn-monsters=false', 'spawn-animals=false', 'spawn-npcs=false',
+                'view-distance=4', 'simulation-distance=4', 'max-tick-time=-1', 'motd=BWR server boot check'].join(System.lineSeparator()) + System.lineSeparator()
+    }
+    task.doLast {
+        def dir = neoForge.runs.getByName('serverBootCheck').gameDirectory.get().asFile
+        def logFile = new File(dir, 'logs/latest.log')
+        def problems = []
+        if (!logFile.isFile()) throw new GradleException("serverBootCheck: no ${logFile}")
+        def lines = logFile.readLines('UTF-8')
+        if (!lines.any { it.contains('Done (') }) problems << 'the server never printed "Done"'
+        if (!lines.any { it.contains('BWR SERVER BOOT CHECK: 200 ticks ran, stopping') }) problems << 'the 200-tick stop line is missing'
+        def sweep = lines.find { it.contains('BWR SERVER BOOT CHECK: link sweep') }
+        if (sweep == null) problems << 'the link sweep line is missing'
+        else {
+            logger.lifecycle('serverBootCheck: ' + sweep.substring(sweep.indexOf('BWR SERVER')))
+            if (!sweep.contains(', 0 failed')) problems << 'link sweep failures: ' + sweep.trim()
+        }
+        def badText = ~/NoClassDefFoundError|ClassNotFoundException|Missing registry|net\.minecraft\.client|com\.mojang\.blaze3d|neoforge\.client\.|IncompatibleClassChangeError|Exception in thread/
+        def ours = ~/dev\.bwr|\[bwr\]|\[BWR|bwr\//
+        lines.each { l ->
+            if (l.contains('/ERROR]') && (l =~ ours || l =~ badText)) problems << 'ERROR: ' + l.trim()
+            else if (l =~ badText && !l.contains('LanServerPinger')) problems << 'bad text: ' + l.trim()
+            else if (l.contains('/WARN]') && (l =~ ours)) logger.lifecycle('serverBootCheck WARN (not failing): ' + l.trim())
+        }
+        // Loaded on a server by design: vanilla's DedicatedServer and NeoForge's own common types live in these packages, and the
+        // dev.bwr ones sit in a client package by name but import nothing client-side (a ModConfigSpec and pure geometry).
+        def allowedClientClasses = ['net.minecraft.client.server.LanServerPinger',
+                'net.neoforged.neoforge.client.loading.NoVizFallback',
+                'net.neoforged.neoforge.client.extensions.IMenuProviderExtension',
+                'net.neoforged.neoforge.client.model.data.ModelProperty',
+                'dev.bwr.mod.client.VisualEffectsConfig', 'dev.bwr.mod.client.VisualEffectsConfig$Mode',
+                'dev.bwr.mod.panel.client.QuadSink', 'dev.bwr.mod.panel.client.BarGaugeFace'] as Set
+        def loadFile = file('run/serverBootCheck-classload.log')
+        if (!loadFile.isFile()) problems << 'no class-load log'
+        else {
+            def seen = new LinkedHashSet()
+            loadFile.eachLine('UTF-8') { l ->
+                def m = l =~ /\]\[info\]\[class,load\]\s+(\S+)\s+source:/
+                if (m.find()) {
+                    def c = m.group(1)
+                    if (c =~ /^(net\.minecraft\.client\.|com\.mojang\.blaze3d\.|net\.neoforged\.neoforge\.client\.|dev\.bwr\.[\w.]*\.?client\.)/ && !allowedClientClasses.contains(c)) seen << c
+                }
+            }
+            seen.take(40).each { problems << 'client class loaded on the server: ' + it }
+            logger.lifecycle("serverBootCheck: class-load log scanned, ${seen.size()} client classes loaded")
+        }
+        if (problems) throw new GradleException('serverBootCheck FAILED:' + System.lineSeparator() + '  ' + problems.unique().take(60).join(System.lineSeparator() + '  '))
+        logger.lifecycle('serverBootCheck: PASS (Done reached, 200 ticks, clean stop, no client classes, no mod errors)')
+    }
+}
+
+// ---------------------------------------------------------------------------
+// :mod:runSaveCompatCheck [-PbwrSaveWorld=<folder of a world saved by an older build>] [-PbwrNoCC]  (default: the committed
+// alpha.40 fixture, mod/src/test-worlds/alpha40, see its README.txt)
+// Copies that world (never written to; refuses anything inside the Modrinth profile, which is the owner's own game) to
+// run/saveCompatCheck/world, boots a dedicated server on the copy and lets dev.bwr.mod.devtest.SaveCompatCheck compare the
+// loaded world with the raw region files: block ids and states, block entity data (panel components and bindings, wrench
+// bindings, reactor/pump state), player item stacks, and again after 100 ticks. Fails the build unless the log holds
+// "BWR SAVE COMPAT CHECK: PASS" and no ERROR line from the mod or about a missing class. Detail:
+// mod/run/saveCompatCheck/save-compat-report.txt.
+// ---------------------------------------------------------------------------
+tasks.matching { it.name == 'runSaveCompatCheck' }.configureEach { task ->
+    task.doFirst {
+        def src = file(project.findProperty('bwrSaveWorld')?.toString() ?: 'src/test-worlds/alpha40')
+        if (!new File(src, 'level.dat').isFile()) throw new GradleException("${src} is not a world folder (no level.dat)")
+        if (src.absolutePath.toLowerCase().contains('modrinthapp')) {
+            throw new GradleException("Refusing to read ${src}: copy the owner's world to a scratch folder first")
+        }
+        def dir = neoForge.runs.getByName('saveCompatCheck').gameDirectory.get().asFile
+        project.delete(dir)
+        dir.mkdirs()
+        copy {
+            from src
+            into new File(dir, 'world')
+            exclude 'session.lock'
+        }
+        new File(dir, 'eula.txt').text = 'eula=true' + System.lineSeparator()
+        new File(dir, 'server.properties').text = ['online-mode=false', 'server-ip=127.0.0.1', 'server-port=25597',
+                'level-name=world', 'spawn-monsters=false', 'spawn-animals=false', 'spawn-npcs=false', 'view-distance=4',
+                'simulation-distance=4', 'max-tick-time=-1', 'motd=BWR save compat check'].join(System.lineSeparator()) + System.lineSeparator()
+    }
+    task.doLast {
+        def dir = neoForge.runs.getByName('saveCompatCheck').gameDirectory.get().asFile
+        def lines = new File(dir, 'logs/latest.log').readLines('UTF-8')
+        def problems = []
+        lines.findAll { it.contains('BWR SAVE COMPAT CHECK') }.each { logger.lifecycle(it.replaceFirst(/^\[[^\]]*\] \[[^\]]*\] \[[^\]]*\]: /, '')) }
+        if (!lines.any { it.contains('BWR SAVE COMPAT CHECK: PASS') }) problems << 'no "BWR SAVE COMPAT CHECK: PASS" line'
+        def ours = ~/dev\.bwr|\[bwr\]|\[BWR|bwr\//
+        def badText = ~/NoClassDefFoundError|ClassNotFoundException|Missing registry|Failed to load|Couldn't load|Skipping BlockEntity|Exception in thread/
+        lines.each { l ->
+            if (l.contains('SAVE COMPAT CHECK: PROBLEM') || l.contains('SAVE COMPAT CHECK: FAIL')) return
+            if (l.contains('/ERROR]') && (l =~ ours || l =~ badText)) problems << 'ERROR: ' + l.trim()
+            else if (l =~ badText) problems << 'bad text: ' + l.trim()
+        }
+        if (problems) throw new GradleException('saveCompatCheck FAILED:' + System.lineSeparator() + '  ' + problems.unique().take(60).join(System.lineSeparator() + '  ') + System.lineSeparator() + '  (details: ' + new File(dir, 'save-compat-report.txt') + ')')
+        logger.lifecycle('saveCompatCheck: PASS')
+    }
+}
+
+// ---------------------------------------------------------------------------
 // :mod:runTurbineGameTest keeps its world between runs (run/turbineGameTest/world) so the fixtures find the previous
 // run's blocks, and that world also keeps every ItemEntity a fixture left behind: a fixture that clears a reactor
 // pops each loaded fuel assembly (ReactorControllerBlock.onRemove), the chunk unloads and the items are saved, and
@@ -481,6 +621,7 @@ tasks.named('jar', Jar).configure {
     exclude 'dev/bwr/mod/devtest/**'
     exclude 'assets/bwr/shaders/core/test_broken_gpu.*'
     exclude 'data/bwr/structure/empty.nbt'
+    exclude 'data/bwrtick/**'
     from(rootProject.file('LICENSE')) { into 'META-INF' }
     from(rootProject.file('NOTICE')) { into 'META-INF' }
     from(rootProject.file('THIRD-PARTY-NOTICES.md')) { into 'META-INF' }

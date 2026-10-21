@@ -16,7 +16,7 @@ public record DeviceReference(String dimension,BlockPos pos,UUID id) {
         if(origin==null||origin.getServer()==null)return null;
         var name=ResourceLocation.tryParse(dimension);if(name==null)return null;
         var world=origin.getServer().getLevel(ResourceKey.create(Registries.DIMENSION,name));
-        return world!=null&&world.isLoaded(pos)?world.getBlockEntity(pos):null;
+        return world!=null?dev.bwr.mod.world.LoadedWorld.blockEntity(world,pos):null;
     }
     public CompoundTag save(){var t=new CompoundTag();t.putString("Dimension",dimension);t.putLong("Pos",pos.asLong());t.putUUID("Id",id);return t;}
     public static DeviceReference load(CompoundTag t){

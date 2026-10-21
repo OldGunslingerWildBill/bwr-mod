@@ -51,6 +51,15 @@ public final class PanelSampler {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
+        long probe = dev.bwr.mod.TickProbe.start();
+        try {
+            sample(event);
+        } finally {
+            dev.bwr.mod.TickProbe.stop("PanelSampler", probe);
+        }
+    }
+
+    private static void sample(ServerTickEvent.Post event) {
         if (LIVE.isEmpty() || event.getServer().getTickCount() % PanelConfig.sampleTicks() != 0) {
             return;
         }

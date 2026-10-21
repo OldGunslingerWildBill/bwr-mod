@@ -74,7 +74,9 @@ public final class CondensateTankDismantling extends SavedData {
     }
 
     @SubscribeEvent public static void tick(ServerTickEvent.Post event){
-        for(var level:event.getServer().getAllLevels())if(level.getGameTime()%20==0)get(level).process(level);
+        long probe=dev.bwr.mod.TickProbe.start();
+        try{for(var level:event.getServer().getAllLevels())if(level.getGameTime()%20==0)get(level).process(level);}
+        finally{dev.bwr.mod.TickProbe.stop("CondensateTankDismantling",probe);}
     }
     @Override public CompoundTag save(CompoundTag tag,HolderLookup.Provider registries){
         var plans=new ListTag();for(var entry:pending.entrySet()){

@@ -44,7 +44,7 @@ public final class DeviceReadouts {
         Level level = room.getLevel();
         if (level == null) return null;
         for (BlockPos pos : room.linkedReactors())
-            if (level.isLoaded(pos) && level.getBlockEntity(pos) instanceof ReactorControllerBlockEntity reactor
+            if (dev.bwr.mod.world.LoadedWorld.blockEntity(level, pos) instanceof ReactorControllerBlockEntity reactor
                     && reactor.isFormed()) return reactor;
         return null;
     }

@@ -455,10 +455,10 @@ public class RpvSteamOutletBlockEntity extends BlockEntity {
         var it = lineIsolationValves.iterator();
         while (it.hasNext()) {
             BlockPos p = it.next();
-            if (!level.isLoaded(p)) {
+            if (!dev.bwr.mod.world.LoadedWorld.available(level, p)) {
                 continue;
             }
-            if (!(level.getBlockEntity(p)
+            if (!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, p)
                     instanceof dev.bwr.mod.steam.MainSteamIsolationValveBlockEntity valve)) {
                 it.remove(); // the valve was broken or replaced
                 continue;

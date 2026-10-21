@@ -60,8 +60,8 @@ public class AdsControllerBlock extends BaseEntityBlock {
         if (level.isClientSide()) {
             return null;
         }
-        return createTickerHelper(type, dev.bwr.mod.registry.BwrBlockEntities.ADS_CONTROLLER.get(),
-                AdsControllerBlockEntity::serverTick);
+        return dev.bwr.mod.TickProbe.wrap(createTickerHelper(type, dev.bwr.mod.registry.BwrBlockEntities.ADS_CONTROLLER.get(),
+                AdsControllerBlockEntity::serverTick));
     }
 
     @Override

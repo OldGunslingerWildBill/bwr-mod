@@ -25,14 +25,14 @@ public final class DeviceResolver {
 
     /** The owning block entity, or null for an unloaded position, an empty cell or an unassembled part. */
     public static BlockEntity resolve(Level level, BlockPos pos) {
-        if (!level.isLoaded(pos)) return null;
-        BlockState state = level.getBlockState(pos);
+        BlockState state = dev.bwr.mod.world.LoadedWorld.state(level, pos);
+        if (state == null) return null;
         BlockEntity be;
         if (state.getBlock() instanceof ContainmentVaultDoorBlock vault) be = vault.owner(level, pos, state);
         else if (state.getBlock() instanceof ContainmentAirlockBlock airlock) be = airlock.owner(level, pos, state);
         else if (state.getBlock() instanceof ProcessAssembly) be = PumpAssemblyCapabilities.controller(level, pos, state);
         else if (state.getBlock() instanceof MainSteamIsolationValveBlock msiv) be = msiv.controller(level, pos, state);
-        else be = level.getBlockEntity(pos);
+        else be = dev.bwr.mod.world.LoadedWorld.blockEntity(level, pos);
         if (be == null || be.isRemoved()) return null;
         if (be instanceof CondenserBlockEntity part) be = part.owner();
         else if (be instanceof CoolingBlockEntity part) be = part.owner();

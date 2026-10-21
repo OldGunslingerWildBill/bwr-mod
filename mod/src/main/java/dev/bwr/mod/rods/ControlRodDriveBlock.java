@@ -80,8 +80,8 @@ public class ControlRodDriveBlock extends BaseEntityBlock {
         if (level.isClientSide()) {
             return null;
         }
-        return createTickerHelper(type, BwrBlockEntities.CONTROL_ROD_DRIVE.get(),
-                ControlRodDriveBlockEntity::serverTick);
+        return dev.bwr.mod.TickProbe.wrap(createTickerHelper(type, BwrBlockEntities.CONTROL_ROD_DRIVE.get(),
+                ControlRodDriveBlockEntity::serverTick));
     }
 
     /**

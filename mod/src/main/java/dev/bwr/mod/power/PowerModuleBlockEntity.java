@@ -55,7 +55,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
     public double generatedFELastTick(){return lastGeneratedFE;}
     public double bufferDeltaFELastTick(){return lastBufferDelta;}
     public double damage() { return damage; }
-    public boolean live(){return level!=null&&!isRemoved()&&level.isLoaded(worldPosition)&&level.getBlockEntity(worldPosition)==this;}
+    public boolean live(){return level!=null&&!isRemoved()&&dev.bwr.mod.world.LoadedWorld.blockEntity(level, worldPosition)==this;}
     void beginAccounting(){
         long now=level.getGameTime();if(now==accountingTick)return;
         if(accountingTick!=Long.MIN_VALUE){
@@ -87,7 +87,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
     public dev.bwr.mod.condenser.CondenserBlockEntity condenser(){
         if(level==null||block().generator()||block().highPressure())return null;
         var p=worldPosition.below(6);
-        return level.isLoaded(p)&&level.getBlockEntity(p) instanceof dev.bwr.mod.condenser.CondenserBlockEntity c
+        return dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof dev.bwr.mod.condenser.CondenserBlockEntity c
                 &&c.owner()==c&&c.layout()!=dev.bwr.mod.condenser.CondenserLayout.LEGACY
                 &&c.getBlockState().getValue(dev.bwr.mod.condenser.CondenserBlock.FACING)==c.layout().facingForTurbine(getBlockState().getValue(PumpAssemblyBlock.FACING))
                 &&c.ready()?c:null;
@@ -149,7 +149,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
                 inlet.offer(packet);source.record(packet.mass());
             } else if(source.entity() instanceof RpvSteamOutletBlockEntity nozzle) {
                 var pos=nozzle.getControllerPos();
-                if(pos!=null&&level.isLoaded(pos)&&level.getBlockEntity(pos) instanceof ReactorControllerBlockEntity c&&c.isFormed()) {
+                if(pos!=null&&dev.bwr.mod.world.LoadedWorld.blockEntity(level, pos) instanceof ReactorControllerBlockEntity c&&c.isFormed()) {
                     double pressure=Saturation.psiaFromPsig(c.core().getPressurePsig());
                     // The vessel already applied its downstream valve opening. Do not square it here.
                     double raw=nozzle.getLineOpenFraction()>0?nozzle.getLastFlowKgPerS()/nozzle.getLineOpenFraction()/20:0;

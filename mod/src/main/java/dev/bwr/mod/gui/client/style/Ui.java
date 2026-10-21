@@ -165,6 +165,17 @@ public final class Ui {
     // Text
     // ---------------------------------------------------------------
 
+    /**
+     * A label that was written in capitals, as the style shows it: in sentence case ("LOAD" shows as "Load", "K-INF" as
+     * "K-inf"). The label itself, which a screen reader says and a lookup matches, is not changed. Other text is returned as it is.
+     */
+    public static String sentence(String s) {
+        if (s.length() > 1 && s.chars().anyMatch(Character::isLetter) && s.equals(s.toUpperCase(Locale.ROOT))) {
+            return s.charAt(0) + s.substring(1).toLowerCase(Locale.ROOT);
+        }
+        return s;
+    }
+
     /** The string as the type shows it (the header type is upper case). */
     public static String styled(String s, Type type) {
         return type.upper ? s.toUpperCase(Locale.ROOT) : s;

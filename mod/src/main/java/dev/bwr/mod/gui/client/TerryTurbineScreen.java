@@ -24,7 +24,8 @@ public final class TerryTurbineScreen extends BwrScreen<TerryTurbineMenu> {
     private static final String[] PORT_NAMES = {"Steam admission", "Steam exhaust", "Water suction", "Water discharge"};
     private static final String[] PORT_PIPES = {"High-pressure steam pipe", "High-pressure steam pipe",
             "Water pipe or Mekanism mechanical pipe", "High-pressure water pipe"};
-    private static final String LOCKED = "Locked: a computer holds the controls. ";
+    private static final String LOCKED = "This is locked because a computer is controlling the turbine. ";
+    private static final String TAKE_BACK = "Use the control button to take control back.";
 
     private BwrEditBox speed;
     private BwrButton apply;
@@ -45,43 +46,45 @@ public final class TerryTurbineScreen extends BwrScreen<TerryTurbineMenu> {
     @Override
     protected UiElement buildUi() {
         if (speed == null) {
-            speed = new BwrEditBox(font, Component.literal("Shaft speed percent"),
-                    Component.literal("Type the shaft speed demand as a percentage from 0 to 100, one decimal at most, then press Enter or Apply."),
+            speed = new BwrEditBox(font, Component.literal("Shaft speed demand in percent"),
+                    Component.literal("Type the shaft speed you want as a percentage from 0 to 100, with at most one decimal, then press Enter or Apply speed."),
                     5, PercentInput.FILTER, this::applySpeed);
-            apply = BwrButton.primary("Apply speed", "Send the typed speed demand to the turbine.", b -> applySpeed());
+            apply = BwrButton.primary("Apply speed", "Send the typed shaft speed to the turbine.", b -> applySpeed());
             run = BwrButton.secondary("Start turbine", "Start the turbine.",
                     b -> menu.sendCommand(TerryTurbineMenu.RUN, menu.running ? 0 : 1));
-            control = BwrButton.secondary("Control: Panel", "Choose who controls this turbine.",
+            control = BwrButton.secondary("Controlled from this panel", "Choose who controls this turbine.",
                     b -> menu.sendCommand(TerryTurbineMenu.CONTROL, (menu.control + 1) % 3));
-            suction = BwrButton.secondary("Water source", "Choose the water source.",
+            suction = BwrButton.secondary("Water source", "Choose where the turbine pump takes its water from.",
                     b -> menu.sendCommand(TerryTurbineMenu.SUCTION, menu.poolSuction ? 0 : 1));
         }
-        var steam = Layout.card("Steam circuit",
-                Layout.row("Admission", () -> num(menu.inletPressure, 1), "psig"),
-                Layout.row("Exhaust", () -> num(menu.exhaustPressure, 1), "psig"),
+        var steam = Layout.card("Steam",
+                Layout.row("Inlet pressure", () -> num(menu.inletPressure, 1), "psig"),
+                Layout.row("Exhaust pressure", () -> num(menu.exhaustPressure, 1), "psig"),
                 Layout.row("Steam used", () -> num(menu.steamFlow, 2), "kg/s"));
-        var water = Layout.card("Water circuit",
-                Layout.row("Delivered", () -> num(menu.flow, 1), "kg/s"),
-                Layout.row("Water load", () -> num(menu.pressure, 1), "psi"),
-                Layout.row("Inlet water", () -> Double.isFinite(menu.temperature) ? num(menu.temperature, 1) : "Unavailable",
+        var water = Layout.card("Water",
+                Layout.row("Water delivered", () -> num(menu.flow, 1), "kg/s"),
+                Layout.row("Pressure rise", () -> num(menu.pressure, 1), "psi"),
+                Layout.row("Inlet temperature", () -> Double.isFinite(menu.temperature) ? num(menu.temperature, 1) : "Unavailable",
                         () -> Double.isFinite(menu.temperature) ? "C" : ""));
         var operate = Layout.column(BwrStyle.SP1,
                 Layout.statusLine(() -> !menu.present ? Status.CAUTION : menu.running ? Status.NORMAL : Status.OFF,
-                        () -> !menu.present ? "Waiting for turbine..." : menu.running ? "Steam drive | Run command active" : "Steam drive | Stopped",
+                        () -> !menu.present ? "Waiting for the turbine to report"
+                                : menu.running ? "Running on steam at " + Math.round(menu.actual * 100) + "% of its " + Math.round(menu.target * 100) + "% target"
+                                : "Stopped",
                         () -> readyPorts() + " of 4 ports linked"),
                 Layout.column(0,
-                        Layout.row("Shaft speed / target", () -> pct(menu.actual) + " / " + pct(menu.target), "%"),
+                        Layout.row("Shaft speed and target", () -> pct(menu.actual) + " / " + pct(menu.target), "%"),
                         Layout.meter("Shaft speed", () -> menu.actual, null, () -> "")),
                 Layout.split(BwrStyle.SP2, steam, water).stackBelow(340),
                 Layout.column(BwrStyle.SP1,
-                        Layout.controls(BwrStyle.SP1).label("Shaft speed (%)", 92).add(speed, 1).fixed(apply, 92),
+                        Layout.controls(BwrStyle.SP1).label("Shaft speed demand (%)", 124).add(speed, 1).fixed(apply, 92),
                         Layout.controls(BwrStyle.SP1).add(run, 1).add(control, 1),
                         Layout.controls(BwrStyle.SP1).add(suction, 1))).showIf(() -> tab == 0);
         var ports = Layout.column(BwrStyle.SP2,
-                Layout.card("Connections and world coordinates",
+                Layout.card("Pipe connections and where they are",
                         new PortRow(0), new PortRow(1), new PortRow(2), new PortRow(3)),
-                Layout.note("Each flange takes the pipe named in its tooltip. A port is Linked when a route of the right pipe reaches it; "
-                        + "Water suction reads Water ready when it holds water and Dry / shut when it does not."))
+                Layout.note("Each flange takes the pipe named in its tooltip. A port is linked when a route of the right pipe reaches it. "
+                        + "The water suction port says it has water when it holds some, and dry or shut when it does not."))
                 .showIf(() -> tab == 1);
         return Layout.column(0, operate, ports);
     }
@@ -89,9 +92,9 @@ public final class TerryTurbineScreen extends BwrScreen<TerryTurbineMenu> {
     @Override
     protected UiElement buildTitleItems() {
         return Layout.titleItems(
-                Layout.chip(() -> Status.INFO, () -> "COMPUTER CONTROL").showIf(() -> menu.present && menu.control == 2),
+                Layout.chip(() -> Status.INFO, () -> "Computer in control").showIf(() -> menu.present && menu.control == 2),
                 Layout.tabs(new String[]{"OPERATE", "PORTS"},
-                        new String[]{"Readouts and controls", "Where each pipe connects, in world coordinates, and whether it is linked"},
+                        new String[]{"The readings and the controls.", "Where each pipe connects, in world coordinates, and whether it is linked."},
                         () -> tab, i -> tab = i));
     }
 
@@ -125,25 +128,33 @@ public final class TerryTurbineScreen extends BwrScreen<TerryTurbineMenu> {
         }
         boolean manual = manual();
         boolean locked = menu.control == 2;
+        String why = !menu.present ? "The turbine has not reported yet, so there is nothing to control. " : locked ? LOCKED : "";
+        String back = locked ? TAKE_BACK : "";
         speed.setEditable(manual);
         speed.setInvalid(!speed.getValue().isEmpty() && manual && percent() == null);
         apply.active = manual && percent() != null;
-        apply.setTooltipText(locked ? LOCKED + "Take control back with the Control button." : "Send the typed speed demand to the turbine.");
+        apply.setTooltipText(!why.isEmpty() ? why + back : percent() == null
+                ? "The speed has to be a number from 0 to 100, with at most one decimal." : "Send the typed shaft speed to the turbine.");
         run.active = manual;
         run.setMessage(Component.literal(menu.running ? "Stop turbine" : "Start turbine"));
-        run.setTooltipText(locked ? LOCKED : menu.running ? "Stop the turbine." : "Start the turbine.");
+        run.setTooltipText(!why.isEmpty() ? why + back : menu.running ? "Stop the turbine." : "Start the turbine.");
         control.active = menu.present;
-        control.setMessage(Component.literal("Control: " + switch (menu.control) {
-            case 1 -> "Redstone";
-            case 2 -> "Computer";
-            default -> "Panel";
+        control.setMessage(Component.literal(switch (menu.control) {
+            case 1 -> "Controlled by redstone";
+            case 2 -> "Controlled by a computer";
+            default -> "Controlled from this panel";
         }));
-        control.setTooltipText("Who controls this turbine: the panel, redstone or a computer. Click to cycle.");
+        control.setTooltipText(!menu.present ? why : switch (menu.control) {
+            case 1 -> "A redstone signal starts and stops this turbine. Click to hand control to a computer.";
+            case 2 -> "A computer controls this turbine. Click to take control back to this panel.";
+            default -> "This panel controls this turbine. Click to switch to redstone control.";
+        });
         suction.active = manual;
-        suction.setMessage(Component.literal(menu.poolSuction ? "Water source: Suppression pool" : "Water source: Condensate tank / piped water"));
-        suction.setTooltipText(locked ? LOCKED : menu.poolSuction
-                ? "Water source: the suppression pool. Click to draw from the condensate tank or piped water instead."
-                : "Water source: the condensate tank or piped water. Click to draw from the suppression pool instead.");
+        suction.setMessage(Component.literal(menu.poolSuction ? "Taking water from the suppression pool"
+                : "Taking water from the condensate tank or piped supply"));
+        suction.setTooltipText(!why.isEmpty() ? why + back : menu.poolSuction
+                ? "The turbine pump is taking water from the suppression pool. Click to take it from the condensate tank or piped supply instead."
+                : "The turbine pump is taking water from the condensate tank or piped supply. Click to take it from the suppression pool instead.");
     }
 
     /** One flange: its name, its world position (cut with a tooltip if it does not fit) and whether it is linked. */
@@ -162,7 +173,7 @@ public final class TerryTurbineScreen extends BwrScreen<TerryTurbineMenu> {
 
         private String stateWord() {
             boolean ready = menu.portReady[index];
-            return ready ? (index == 2 ? "Water ready" : "Linked") : (index == 2 ? "Dry / shut" : "No route");
+            return ready ? (index == 2 ? "Has water" : "Linked") : (index == 2 ? "Dry or shut" : "No pipe route");
         }
 
         @Override

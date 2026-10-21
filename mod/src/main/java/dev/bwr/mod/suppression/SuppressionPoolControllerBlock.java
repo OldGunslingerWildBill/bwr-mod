@@ -48,10 +48,10 @@ public class SuppressionPoolControllerBlock extends BaseEntityBlock {
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
                                                                   BlockEntityType<T> type) {
         if (level.isClientSide()) {
-            return createTickerHelper(type,BwrBlockEntities.SUPPRESSION_POOL.get(),SuppressionPoolBlockEntity::clientTick);
+            return dev.bwr.mod.TickProbe.wrap(createTickerHelper(type,BwrBlockEntities.SUPPRESSION_POOL.get(),SuppressionPoolBlockEntity::clientTick));
         }
-        return createTickerHelper(type, BwrBlockEntities.SUPPRESSION_POOL.get(),
-                SuppressionPoolBlockEntity::serverTick);
+        return dev.bwr.mod.TickProbe.wrap(createTickerHelper(type, BwrBlockEntities.SUPPRESSION_POOL.get(),
+                SuppressionPoolBlockEntity::serverTick));
     }
 
     @Override

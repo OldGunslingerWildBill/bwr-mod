@@ -98,8 +98,8 @@ public class FeedwaterPumpBlock extends BaseEntityBlock {
         if (level.isClientSide()) {
             return null;
         }
-        return createTickerHelper(type, BwrBlockEntities.FEEDWATER_PUMP.get(),
-                FeedwaterPumpBlockEntity::serverTick);
+        return dev.bwr.mod.TickProbe.wrap(createTickerHelper(type, BwrBlockEntities.FEEDWATER_PUMP.get(),
+                FeedwaterPumpBlockEntity::serverTick));
     }
 
     @Override

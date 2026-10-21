@@ -266,7 +266,7 @@ public class RecirculationPumpBlockEntity extends BlockEntity {
 
     public void bindController(ReactorControllerBlockEntity controller) {
         if(level!=null && controllerPos!=null && !controllerPos.equals(controller.getBlockPos())
-                && level.isLoaded(controllerPos) && level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity old)
+                && dev.bwr.mod.world.LoadedWorld.blockEntity(level, controllerPos) instanceof ReactorControllerBlockEntity old)
             old.removePump(getBlockPos());
         this.controllerPos = controller.getBlockPos();
         controller.addPump(getBlockPos());
@@ -325,8 +325,7 @@ public class RecirculationPumpBlockEntity extends BlockEntity {
         return RecirculationNetwork.connectedController(level,from);
     }
     private void detachController() {
-        if(level!=null && controllerPos!=null && level.isLoaded(controllerPos)
-                && level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity old) old.removePump(getBlockPos());
+        if(level!=null && controllerPos!=null && dev.bwr.mod.world.LoadedWorld.blockEntity(level, controllerPos) instanceof ReactorControllerBlockEntity old) old.removePump(getBlockPos());
         controllerPos=null;coreFlowContributionKgPerS=0;
     }
     @Override public void setRemoved() {
