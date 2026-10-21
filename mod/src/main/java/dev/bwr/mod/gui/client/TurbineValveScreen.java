@@ -27,14 +27,14 @@ public class TurbineValveScreen extends BwrScreen<TurbineValveMenu> {
     @Override
     protected UiElement buildUi() {
         if (percent == null) {
-            percent = new BwrEditBox(font, Component.literal("Valve opening percent"),
-                    Component.literal("Type the valve opening as a percentage from 0 to 100, one decimal at most, then press Enter or Apply."),
+            percent = new BwrEditBox(font, Component.literal("Valve opening in percent"),
+                    Component.literal("Type how far open you want the valve as a percentage from 0 to 100, with at most one decimal, then press Enter or Apply."),
                     5, PercentInput.FILTER, this::applyTyped);
             apply = BwrButton.primary("Apply", "Send the typed opening to the valve.", b -> applyTyped());
-            less = BwrButton.secondary("-0.1", "Lower the requested opening by 0.1 percentage points.", b -> adjust(-1));
-            more = BwrButton.secondary("+0.1", "Raise the requested opening by 0.1 percentage points.", b -> adjust(1));
-            close = BwrButton.secondary("Close", "Command the valve fully closed (0 %).", b -> menu.sendCommand(0, 0));
-            open = BwrButton.secondary("Open", "Command the valve fully open (100 %).", b -> menu.sendCommand(0, 1000));
+            less = BwrButton.secondary("Less (-0.1)", "Close the valve a little: lower the requested opening by 0.1 percentage points.", b -> adjust(-1));
+            more = BwrButton.secondary("More (+0.1)", "Open the valve a little: raise the requested opening by 0.1 percentage points.", b -> adjust(1));
+            close = BwrButton.secondary("Close valve", "Tell the valve to close all the way (0%).", b -> menu.sendCommand(0, 0));
+            open = BwrButton.secondary("Open valve", "Tell the valve to open all the way (100%).", b -> menu.sendCommand(0, 1000));
         }
         var position = Layout.card("Position",
                 Layout.row("Requested opening", () -> num(menu.target * 100, 1), "%"),
@@ -43,7 +43,7 @@ public class TurbineValveScreen extends BwrScreen<TurbineValveMenu> {
                 Layout.gap(BwrStyle.SP1),
                 Layout.row("Steam flow", () -> grouped(menu.flow, 2), "kg/s"));
         var command = Layout.card("Command",
-                Layout.note(() -> menu.stop ? "Stop valve: fully open or fully closed." : "Set opening (%)"),
+                Layout.note(() -> menu.stop ? "A stop valve is either fully open or fully closed." : "Opening you want (%)"),
                 Layout.controls(BwrStyle.SP1).add(percent, 1).fixed(apply, 56).showIf(() -> !menu.stop),
                 Layout.gap(BwrStyle.SP1).showIf(() -> !menu.stop),
                 Layout.controls(BwrStyle.SP1).add(less, 1).add(more, 1).showIf(() -> !menu.stop),
@@ -51,7 +51,7 @@ public class TurbineValveScreen extends BwrScreen<TurbineValveMenu> {
                 Layout.controls(BwrStyle.SP1).add(close, 1).add(open, 1));
         return Layout.column(BwrStyle.SP2,
                 Layout.split(BwrStyle.SP2, position, command).stackBelow(340),
-                Layout.note("Controls the steam supply through this line. Connect pipes to the two opposing flanges."));
+                Layout.note("This valve controls the steam supply through this line. Connect pipes to its two opposite flanges."));
     }
 
     private Integer value() {

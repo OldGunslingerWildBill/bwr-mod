@@ -69,11 +69,11 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
             grid = new LatticeGridWidget(0, 0, 100, 84, cell -> {
             });
             grid.enableRefuellingControls();
-            loadButton = BwrButton.secondary("LOAD", "Load the selected empty positions in click order, using held fuel first, then inventory.",
+            loadButton = BwrButton.secondary("LOAD", "Load fuel into the selected empty positions, in the order you clicked them. Fuel in your hand goes first, then fuel from your inventory.",
                     b -> menu.sendBatch(true, grid.selectedCells()));
-            unloadButton = BwrButton.secondary("UNLOAD", "Unload the selected occupied positions. Items drop beside you if your inventory is full.",
+            unloadButton = BwrButton.secondary("UNLOAD", "Take the fuel out of the selected positions. Whatever does not fit in your inventory drops beside you.",
                     b -> menu.sendBatch(false, grid.selectedCells()));
-            markButton = BwrButton.secondary("MARK", "Mark the selected position as the source of a swap.", b -> {
+            markButton = BwrButton.secondary("MARK", "Mark the selected position as the one to swap from.", b -> {
                 grid.setMarked(grid.marked() == grid.selected() ? -1 : grid.selected());
                 grid.clearSelection();
             });
@@ -81,11 +81,11 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                 menu.sendCommand(RefuellingMenu.CMD_SWAP, grid.marked(), grid.selected());
                 grid.setMarked(-1);
             });
-            clearButton = BwrButton.secondary("CLEAR", "Clear selected positions and the swap mark.", b -> {
+            clearButton = BwrButton.secondary("CLEAR", "Clear the selected positions and the swap mark.", b -> {
                 grid.clearSelection();
                 grid.setMarked(-1);
             });
-            fitButton = BwrButton.secondary("FIT", "Fit the core to the map. Scroll to zoom and right-drag to pan; with the map focused use the arrow keys, plus, minus and Home.",
+            fitButton = BwrButton.secondary("FIT", "Fit the whole core in the map. Scroll to zoom and right-drag to pan. With the map focused, the arrow keys, plus, minus and Home do the same.",
                     b -> grid.resetView());
         }
 
@@ -97,18 +97,18 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
 
         var stats = Layout.card("",
                 Layout.row("Fuel", () -> menu.loadedAssemblies + "/" + menu.assemblyCount).dense()
-                        .tip("Fuel bundles loaded out of the core's positions."),
-                Layout.row("k-inf", () -> num(menu.aggregateKInf, 4)).dense().tip("Infinite-medium multiplication factor of the whole loading."),
+                        .tip("How many of the core's positions have a fuel bundle in them."),
+                Layout.row("k-inf", () -> num(menu.aggregateKInf, 4)).dense().tip("The infinite-medium multiplication factor (k-inf) of the whole loading."),
                 Layout.row("k ARO", () -> num(menu.kEffAllRodsOut, 4)).dense().status(() -> menu.endOfCycle ? Status.CAUTION : Status.NONE)
-                        .tip(() -> List.of(Component.literal("Effective multiplication factor with all rods out."),
-                                Component.literal(menu.endOfCycle ? "Flagged by the core model as end of cycle." : "Not at end of cycle."))),
-                Layout.row("beta", () -> num(menu.effectiveBeta, 5)).dense().tip("Effective delayed neutron fraction."),
-                Layout.row("burn av", () -> big(menu.averageBurnup), "MWd/t").dense().tip("Average burnup of the loaded bundles."),
-                Layout.row("burn pk", () -> big(menu.peakBurnup), "MWd/t").dense().tip("Peak burnup of any bundle."),
-                Layout.row("peaking", () -> map() == null ? "-" : num(map().peakingFactor(), 2)).dense()
-                        .tip("Radial peaking factor: the hottest bundle's power over the core average."),
-                Layout.row("in hand", () -> String.valueOf(menu.bundlesInInventory)).dense()
-                        .tip("Fuel bundles in your inventory, available to LOAD."))
+                        .tip(() -> List.of(Component.literal("The effective multiplication factor with all rods out (ARO)."),
+                                Component.literal(menu.endOfCycle ? "The core model says the cycle has ended." : "The cycle has not ended."))),
+                Layout.row("Beta", () -> num(menu.effectiveBeta, 5)).dense().tip("The effective delayed neutron fraction."),
+                Layout.row("Avg burn", () -> big(menu.averageBurnup), "MWd/t").dense().tip("The average burnup of the loaded bundles."),
+                Layout.row("Peak burn", () -> big(menu.peakBurnup), "MWd/t").dense().tip("The highest burnup of any bundle."),
+                Layout.row("Peaking", () -> map() == null ? "-" : num(map().peakingFactor(), 2)).dense()
+                        .tip("The radial peaking factor: the hottest bundle's power divided by the core average."),
+                Layout.row("In hand", () -> String.valueOf(menu.bundlesInInventory)).dense()
+                        .tip("The fuel bundles in your inventory that you can load."))
                 .compact();
         var selection = Layout.note(this::selectionText).maxLines(2);
         var side = Layout.column(BwrStyle.SP1, stats, selection);
@@ -130,7 +130,7 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
         lower.add(actions, 1);
 
         return Layout.column(BwrStyle.SP1,
-                Layout.note("Waiting for the core...").body().status(() -> Status.INFO).showIf(() -> !ready()),
+                Layout.note("Waiting for the core to report").body().status(() -> Status.INFO).showIf(() -> !ready()),
                 Layout.sized(TOP_HEIGHT, top).showIf(this::ready),
                 lower);
     }
@@ -139,8 +139,8 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
     protected UiElement buildTitleItems() {
         return Layout.titleItems(
                 Layout.tabs(new String[]{"BURNUP", "K-INF"},
-                        new String[]{"Colour each position by burnup, from fresh to the core's peak.",
-                                "Colour each position by k-infinity: what the bundle is still worth."},
+                        new String[]{"Colour each position by its burnup, from fresh fuel up to the core's highest.",
+                                "Colour each position by its k-infinity, which shows what the bundle is still worth."},
                         () -> overlay.ordinal(), i -> overlay = Overlay.values()[i]),
                 Layout.controls(BwrStyle.SP1).fixed(clearButton, 46).fixed(fitButton, 30));
     }
@@ -181,17 +181,17 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
         swapButton.active = valid && selection.length == 1 && grid.marked() >= 0 && grid.marked() != selected;
 
         if (!loadButton.active) {
-            loadButton.setTooltipText(!empty ? "To load: select one or more empty positions on the map first."
+            loadButton.setTooltipText(!empty ? "To load fuel, first select one or more empty positions on the map."
                     : "You have no fuel bundles in your inventory to load.");
         } else {
-            loadButton.setTooltipText("Load the selected empty positions in click order, using held fuel first, then inventory.");
+            loadButton.setTooltipText("Load fuel into the selected empty positions, in the order you clicked them. Fuel in your hand goes first, then fuel from your inventory.");
         }
-        unloadButton.setTooltipText(occupied ? "Unload the selected occupied positions. Items drop beside you if your inventory is full."
-                : "To unload: select one or more occupied positions on the map first.");
+        unloadButton.setTooltipText(occupied ? "Take the fuel out of the selected positions. Whatever does not fit in your inventory drops beside you."
+                : "To unload fuel, first select one or more occupied positions on the map.");
         markButton.setTooltipText(markButton.active ? (grid.marked() == selected ? "Remove the swap mark."
-                : "Mark the selected position as the source of a swap.") : "To mark: select exactly one position first.");
+                : "Mark the selected position as the one to swap from.") : "To mark a position, first select exactly one on the map.");
         swapButton.setTooltipText(swapButton.active ? "Swap the marked position with the selected one."
-                : "To swap: mark one position, then select a different one.");
+                : "To swap, first mark one position, then select a different one.");
     }
 
     @Override
@@ -232,22 +232,22 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
         int selected = grid.selected();
         String line;
         if (selected < 0 || selected >= map.coreSlotCount) {
-            line = "Wheel zooms; right-drag pans.";
+            line = "Scroll to zoom, and right-drag to pan.";
         } else if (grid.selectedCells().length > 1) {
-            line = grid.selectedCells().length + " selected | Click to toggle";
+            line = grid.selectedCells().length + " selected. Click a position to add or remove it.";
         } else if (!map.isOccupied(selected)) {
             line = String.format(Locale.ROOT, "Position %d: empty.", selected);
         } else if (map.isInsert(selected)) {
             line = Component.translatable("insert.bwr." + map.insertId(selected)).getString()
                     + String.format(Locale.ROOT, " | %.1f%%", 100 * map.insertProgress[selected]);
         } else {
-            line = String.format(Locale.ROOT, "Position %d: %s, %.2f%% fissile, %,.0f MWd/t, k-inf %.4f",
+            line = String.format(Locale.ROOT, "Position %d: %s, %.2f%% fissile, burnup %,.0f MWd/t, k-inf %.4f",
                     selected, map.fuelTypeName(selected), map.enrichmentWeightFraction[selected] * 100.0,
                     map.burnupMwdPerTonne[selected], map.kInf[selected]);
         }
         if (grid.marked() >= 0) {
             // two lines at most: the selection gets one, the mark the other
-            line = Ui.fit(line, Type.CAPTION, 120) + "\nMarked: " + grid.marked();
+            line = Ui.fit(line, Type.CAPTION, 120) + "\nMarked position: " + grid.marked();
         }
         return line;
     }
@@ -296,7 +296,7 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                 List<Component> out = new ArrayList<>();
                 if (!map.isOccupied(cell)) {
                     out.add(Component.literal("Position " + cell + ": empty"));
-                    out.add(Component.literal("Select it and press LOAD to place a bundle."));
+                    out.add(Component.literal("Select it and press Load to place a bundle."));
                     return out;
                 }
                 if (map.isInsert(cell)) {
@@ -304,14 +304,14 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                 }
                 out.add(Component.literal(String.format(Locale.ROOT, "Position %d - %s",
                         cell, map.fuelTypeName(cell))));
-                out.add(Component.literal(String.format(Locale.ROOT, "%.2f%% fissile as fabricated",
+                out.add(Component.literal(String.format(Locale.ROOT, "%.2f%% fissile when it was made",
                         map.enrichmentWeightFraction[cell] * 100.0)));
                 out.add(Component.literal(String.format(Locale.ROOT, "burnup %,.0f MWd/t",
                         map.burnupMwdPerTonne[cell])));
                 out.add(Component.literal(String.format(Locale.ROOT, "k-inf %.4f",
                         map.kInf[cell])));
                 out.add(Component.literal(String.format(Locale.ROOT,
-                        "last power share %.0f%% of the hottest bundle",
+                        "its last power was %.0f%% of the hottest bundle's",
                         map.relativeFlux[cell] * 100.0)));
                 return out;
             }

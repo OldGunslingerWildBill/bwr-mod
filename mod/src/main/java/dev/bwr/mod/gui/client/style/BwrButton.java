@@ -85,7 +85,7 @@ public final class BwrButton extends Button {
         if (tooltipText == null) {
             return;
         }
-        String label = getMessage().getString();
+        String label = Ui.sentence(getMessage().getString());
         boolean cut = Ui.overflows(label, BwrStyle.Type.BODY, getWidth() - FACE_PAD);
         String wanted = cut ? label + ": " + tooltipText : tooltipText;
         if (!wanted.equals(tooltipFor)) {
@@ -148,7 +148,7 @@ public final class BwrButton extends Button {
             // a one pixel top highlight gives the raised look without a texture
             g.fill(x + 1, y + 1, x + w - 1, y + 2, 0x18FFFFFF);
         }
-        String label = Ui.fit(getMessage().getString(), BwrStyle.Type.BODY, w - FACE_PAD);
+        String label = Ui.fit(Ui.sentence(getMessage().getString()), BwrStyle.Type.BODY, w - FACE_PAD);
         int ty = y + (h - 8) / 2 + (down ? 1 : 0);
         Ui.textCentred(g, label, x + w / 2, ty, BwrStyle.Type.BODY, text);
         if (isFocused()) {

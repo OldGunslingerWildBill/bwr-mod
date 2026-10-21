@@ -63,7 +63,7 @@ public final class BwrTab extends Button {
             // the selected tab joins the content: no line under it
             g.fill(x + 1, y + h - 1, x + w - 1, y + h, BwrStyle.SURFACE);
         }
-        String label = Ui.fit(getMessage().getString(), BwrStyle.Type.BODY, w - BwrStyle.SP2);
+        String label = Ui.fit(Ui.sentence(getMessage().getString()), BwrStyle.Type.BODY, w - BwrStyle.SP2);
         int colour = !active ? BwrStyle.TEXT_DISABLED : on ? BwrStyle.TEXT_PRIMARY : BwrStyle.TEXT_SECONDARY;
         Ui.textCentred(g, label, x + w / 2, y + (h - 8) / 2 + (on ? 1 : 0), BwrStyle.Type.BODY, colour);
         if (isFocused()) {

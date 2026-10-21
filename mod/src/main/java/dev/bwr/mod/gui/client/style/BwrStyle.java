@@ -156,6 +156,8 @@ public final class BwrStyle {
         TITLE(1, true, false, TEXT_PRIMARY),
         /** A section header: upper case, accent. */
         HEADER(1, false, true, ACCENT),
+        /** A section heading in plain sentence case ("Pump", "Water", "Controls"), in the same accent. */
+        SECTION(1, false, false, ACCENT),
         /** Everything you read. */
         BODY(1, false, false, TEXT_PRIMARY),
         /** Units, help and secondary detail. */

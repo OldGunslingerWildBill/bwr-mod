@@ -72,21 +72,21 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
     protected UiElement buildUi() {
         if (grid == null) {
             grid = new LatticeGridWidget(0, 0, 100, 84, this::onCellClicked);
-            scram = BwrButton.danger("SCRAM", "Scram: de-energise the drives and insert every rod. It acts at once; nothing is checked first.",
+            scram = BwrButton.danger("Scram", "Scram the reactor: this cuts power to the drives and inserts every rod at once. Nothing is checked first.",
                     b -> menu.sendCommand(ReactorPanelMenu.CMD_SCRAM));
-            resetScram = BwrButton.secondary("RESET", "Reset the scram signal so the drives can be driven out again.",
+            resetScram = BwrButton.secondary("Reset", "Reset the scram signal, so the rods can be driven out again.",
                     b -> menu.sendCommand(ReactorPanelMenu.CMD_RESET_SCRAM));
-            head = BwrButton.secondary("HEAD OFF", "Ask the vessel to take its head off or put it back. It refuses, and says why, if that is physically impossible.",
+            head = BwrButton.secondary("Lift head", "Ask the vessel to take its head off. It refuses, and tells you why, if that is physically impossible.",
                     b -> toggleHead());
-            refuel = BwrButton.secondary("REFUEL", "Open the refuelling floor. Only possible with the head off.",
+            refuel = BwrButton.secondary("Refuel", "Open the refuelling floor. This only works with the vessel head off.",
                     b -> menu.sendCommand(ReactorPanelMenu.CMD_OPEN_REFUELLING));
-            rodIn = BwrButton.secondary("ROD IN", "Step the selected rod in by one notch, or every rod if none is selected.",
+            rodIn = BwrButton.secondary("Insert rod", "Push the selected rod in by one notch, or every rod if none is selected.",
                     b -> menu.sendCommand(ReactorPanelMenu.CMD_ROD_STEP, selectedRod, -1));
-            rodOut = BwrButton.secondary("ROD OUT", "Step the selected rod out by one notch, or every rod if none is selected.",
+            rodOut = BwrButton.secondary("Pull rod", "Pull the selected rod out by one notch, or every rod if none is selected.",
                     b -> menu.sendCommand(ReactorPanelMenu.CMD_ROD_STEP, selectedRod, 1));
-            allIn = BwrButton.secondary("ALL IN 00", "Demand every rod fully inserted (notch 00).",
+            allIn = BwrButton.secondary("All in (00)", "Tell every rod to go all the way in (notch 00).",
                     b -> menu.sendCommand(ReactorPanelMenu.CMD_ROD_NOTCH, -1, 0));
-            allOut = BwrButton.secondary("ALL OUT 48", "Demand every rod fully withdrawn (notch 48).",
+            allOut = BwrButton.secondary("All out (48)", "Tell every rod to go all the way out (notch 48).",
                     b -> menu.sendCommand(ReactorPanelMenu.CMD_ROD_NOTCH, -1, 48));
         }
 
@@ -129,8 +129,8 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
     @Override
     protected UiElement buildTitleItems() {
         return Layout.titleItems(Layout.tabs(new String[]{"FLUX", "RODS", "INFO"},
-                new String[]{"Colour each fuel bundle by its share of core power.",
-                        "Show every control rod by its insertion, 00 fully in to 48 fully out. Click a rod to select it for ROD IN and ROD OUT.",
+                new String[]{"Colour each fuel bundle by its share of the core's power.",
+                        "Show every control rod by how far in it is, from 00 fully in to 48 fully out. Click a rod to select it for the Insert rod and Pull rod buttons.",
                         "Planning estimates, recirculation sizing and the condition of the core."},
                 () -> overlay.ordinal(), i -> setOverlay(Overlay.values()[i])));
     }
@@ -142,67 +142,68 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                         () -> overlay == Overlay.FLUX ? "100 %" : "48 out",
                         f -> overlay == Overlay.FLUX ? heatColour(f) : LatticeColours.rod(f))
                         .tip(() -> List.of(Component.literal(overlay == Overlay.FLUX
-                                ? "Each bundle's power as a share of the hottest bundle's, 0 to 100 %."
-                                : "Dark: rod fully inserted (00). Bright green: fully withdrawn (48). Amber: moving to a new demand."))),
-                Layout.line(() -> selectedRod < 0 ? "ROD IN / OUT: all rods" : "ROD IN / OUT: rod " + (selectedRod + 1),
+                                ? "Each bundle's power as a share of the hottest bundle's, from 0 to 100%."
+                                : "Dark means the rod is fully in (00). Bright green means it is fully out (48). Amber means it is moving to a new position."))),
+                Layout.line(() -> selectedRod < 0 ? "The rod buttons move all rods" : "The rod buttons move rod " + (selectedRod + 1),
                         Type.CAPTION).showIf(() -> overlay == Overlay.RODS));
     }
 
     private UiElement readouts() {
         return Layout.column(0,
                 Layout.statusLine(() -> menu.vesselState == VesselState.REFUELING ? Status.INFO : Status.NONE,
-                        () -> capitalised(menu.vesselState.getSerializedName()), () -> menu.scramActive ? "SCRAM" : "")
+                        () -> capitalised(menu.vesselState.getSerializedName()), () -> menu.scramActive ? "Scram active" : "")
                         .rightStatus(() -> menu.scramActive ? Status.ALARM : Status.NONE)
-                        .tip(() -> List.of(Component.literal("Vessel state: " + menu.vesselState.getSerializedName()),
-                                Component.literal(menu.scramActive ? "A scram is active: the drives are de-energised." : "No scram active."))),
+                        .tip(() -> List.of(Component.literal("The vessel is in the " + menu.vesselState.getSerializedName() + " state."),
+                                Component.literal(menu.scramActive ? "A scram is active, so the drives have no power." : "There is no scram active."))),
                 Layout.gap(BwrStyle.SP1),
                 // power
                 Layout.row("Power", () -> pct(menu.powerFractionOfRated), "%").dense()
                         .status(() -> fractionStatus(menu.powerFractionOfRated, 1.05, 1.20))
-                        .tip("Total power as a fraction of rated. Amber from 105 %, red from 120 %: colour and shape only, nothing trips."),
-                Layout.row("Thermal", () -> big(menu.thermalMW), "MWth").dense(),
+                        .tip("The reactor's total power as a share of its rated power. It turns amber from 105% and red from 120%. That is only a colour and a shape; nothing trips."),
+                Layout.row("Heat output", () -> big(menu.thermalMW), "MWth").dense()
+                        .tip("The heat the core is producing, in megawatts thermal."),
                 Layout.gap(BwrStyle.SP1),
                 // pressure and level
                 Layout.row("Pressure", () -> big(menu.pressurePsig), "psig").dense().status(() -> pressureStatus(menu.pressurePsig))
-                        .tip("Dome pressure. Amber from the 1,250 psig design limit, red from the 1,375 psig code limit: colour and shape only."),
-                Layout.row("dP/dt", () -> num(menu.pressureRatePsiPerS, 1), "psi/s").dense().tip("Rate of change of dome pressure."),
+                        .tip("The pressure in the steam dome. It turns amber from the 1,250 psig design limit and red from the 1,375 psig code limit. That is only a colour and a shape."),
+                Layout.row("dP/dt", () -> num(menu.pressureRatePsiPerS, 1), "psi/s").dense().tip("How fast the dome pressure is rising or falling, in psi per second."),
                 Layout.row("Level", () -> num(menu.indicatedLevelIn, 1), "in").dense()
                         .status(() -> menu.uncoveredFuelFraction > 0.0 ? Status.ALARM : Status.NONE)
-                        .tip("Indicated water level. Red while any fuel is uncovered."),
-                Layout.row("Flow", () -> pct(menu.coreFlowFraction), "%").dense().tip("Core flow as a fraction of rated."),
-                Layout.row("Steam", () -> big(menu.steamKgPerS), "kg/s").dense().tip("Steam generation."),
+                        .tip("The water level the instruments show. It is red while any fuel is uncovered."),
+                Layout.row("Core flow", () -> pct(menu.coreFlowFraction), "%").dense().tip("The flow of water through the core as a share of its rated flow."),
+                Layout.row("Steam flow", () -> big(menu.steamKgPerS), "kg/s").dense().tip("How much steam the reactor is making."),
                 Layout.gap(BwrStyle.SP1),
                 // neutronics: the instrument ladder. The count rate is what reads anything at all on a shutdown core, and the
                 // two period indications are what the player cross-checks. Neither is coloured: deciding which channel to
                 // believe is the job this panel exists to hand them.
                 Layout.row("Reactivity", () -> num(menu.reactivityDollars, 2), "$").dense()
                         .status(() -> menu.reactivityDollars >= 1.0 ? Status.ALARM : Status.NONE)
-                        .tip("Reactivity in dollars. Red at or above 1.00: prompt critical."),
-                Layout.row("SRM rate", () -> sci(menu.srmCountsPerSecond), "cps").dense().tip("Source range monitor count rate."),
+                        .tip("The reactivity in dollars. It is red at or above 1.00, which is prompt critical."),
+                Layout.row("SRM rate", () -> sci(menu.srmCountsPerSecond), "cps").dense().tip("The count rate on the source range monitor (SRM), in counts per second."),
                 Layout.row("SRM period", () -> periodValue(menu.srmPeriodSeconds), () -> periodUnit(menu.srmPeriodSeconds)).dense()
-                        .tip("Source range monitor period meter. A saturated channel can read a negative period on a climbing core."),
+                        .tip("The period on the source range monitor (SRM). A saturated channel can read a negative period while the core is climbing."),
                 Layout.row("IRM period", () -> periodValue(menu.irmPeriodSeconds), () -> periodUnit(menu.irmPeriodSeconds)).dense()
-                        .tip("Intermediate range monitor period meter. Cross-check it against the source range channel."),
+                        .tip("The period on the intermediate range monitor (IRM). Check it against the source range channel."),
                 Layout.gap(BwrStyle.SP1),
                 // fuel
-                Layout.row("Fuel temp", () -> big(menu.fuelTemperatureC), "C").dense(),
-                Layout.row("Peak clad", () -> big(menu.peakCladTemperatureC), "C").dense().status(() -> cladStatus(menu.peakCladTemperatureC))
-                        .tip("Peak cladding temperature. Amber from 1,000 C; red from 1,200 C, the zirconium-water reaction onset."),
-                Layout.row("Void", () -> pct(menu.voidFraction), "%").dense().tip("Core void fraction."),
+                Layout.row("Fuel temp", () -> big(menu.fuelTemperatureC), "C").dense().tip("The average temperature of the fuel."),
+                Layout.row("Peak cladding", () -> big(menu.peakCladTemperatureC), "C").dense().status(() -> cladStatus(menu.peakCladTemperatureC))
+                        .tip("The hottest fuel cladding temperature. It turns amber from 1,000 C and red from 1,200 C, where the zirconium-water reaction starts."),
+                Layout.row("Void", () -> pct(menu.voidFraction), "%").dense().tip("The share of the core's volume that is steam rather than water."),
                 Layout.row("Accum.", () -> menu.chargedAccumulators + "/" + menu.rodCount).dense()
                         .status(() -> menu.chargedAccumulators < menu.rodCount ? Status.CAUTION : Status.NORMAL)
-                        .tip("Control rod drive accumulators charged, out of all rods. Caution while any is not."));
+                        .tip("How many control rod drive accumulators are charged, out of all the rods. It shows a caution while any is not."));
     }
 
     /** The planning estimates and the core's condition: what used to be spread over hover regions, as rows with tips. */
     private UiElement info() {
         var c = (java.util.function.Supplier<dev.bwr.mod.gui.ReactorConfigurationInfo>) () -> menu.configuration;
         List<Component> planning = List.of(
-                Component.literal("Fuel rating = reference MW x loaded-slot fraction."),
-                Component.literal("Power estimate = reference MW x min(fuel fraction, flow ceiling)."),
-                Component.literal("Steam equivalent uses current pressure and feedwater temperature."),
+                Component.literal("Fuel rating is the reference power times the share of fuel slots that are loaded."),
+                Component.literal("Power estimate is the reference power times the smaller of the fuel share and the flow ceiling."),
+                Component.literal("The steam equivalent uses the current pressure and feedwater temperature."),
                 Component.literal("These are planning estimates, not operating limits."),
-                Component.literal("Actual output depends on rods, fuel condition and water supply."));
+                Component.literal("What the reactor really makes depends on the rods, the fuel condition and the water supply."));
         var content = Layout.column(BwrStyle.SP1,
                 Layout.section("Fuel and configuration"),
                 Layout.row("Fuel bundles", () -> menu.loadedAssemblies + " / " + menu.assemblyCount)
@@ -214,7 +215,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.row("Decay heat", () -> pct(menu.decayHeatFraction), "%"),
                 Layout.section("Recirculation"),
                 Layout.row("Jets matched / needed", () -> c.get().matchedJetAssemblies() + " / " + c.get().requiredJets()).tip(this::jetTooltip),
-                Layout.row("RCP / RIP installed", () -> c.get().externalPumps() + " / " + c.get().internalPumps()).tip(this::jetTooltip),
+                Layout.row("External / internal pumps installed", () -> c.get().externalPumps() + " / " + c.get().internalPumps()).tip(this::jetTooltip),
                 Layout.row("Flow ceiling", () -> pct(c.get().flowCeilingFraction()), "%").tip(this::jetTooltip),
                 Layout.row("Flow ceiling mass flow", () -> big(c.get().flowCeilingKgPerS()), "kg/s").tip(this::jetTooltip),
                 Layout.row("Vessel interior volume", () -> String.valueOf(c.get().interiorVolume()), "blocks^3").tip(this::volumeTooltip),
@@ -226,7 +227,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.row("Average burnup", () -> big(menu.averageBurnup), "MWd/t"),
                 Layout.row("Effective beta", () -> num(menu.betaEffective, 5)),
                 Layout.row("Xenon", () -> pct(menu.xenonFraction), "%"),
-                Layout.row("APRM", () -> num(menu.aprmPercent, 1), "%"),
+                Layout.row("APRM average power", () -> num(menu.aprmPercent, 1), "%"),
                 Layout.row("Oxidation", () -> pct(menu.oxidationFraction), "%")
                         .status(() -> menu.oxidationFraction > 0 ? Status.CAUTION : Status.NONE),
                 Layout.row("Hydrogen", () -> num(menu.hydrogenKg, 1), "kg"),
@@ -234,14 +235,14 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                         .status(() -> menu.uncoveredFuelFraction > 0 ? Status.CAUTION : Status.NONE),
                 Layout.row("Spray ring complete", () -> pct(menu.sprayRingCompleteness), "%"),
                 Layout.section("Live output"),
-                Layout.row("MWth / steam kg/s", () -> big(menu.thermalMW) + " / " + big(menu.steamKgPerS)),
-                Layout.note("* Planning estimates; hover a row for its basis."));
+                Layout.row("Heat output / steam flow", () -> big(menu.thermalMW) + " / " + big(menu.steamKgPerS)),
+                Layout.note("* These are planning estimates. Hover over a row to see how it is worked out."));
         return Layout.card("", Layout.scrollArea(60, content));
     }
 
     private List<Component> fuelTypeTooltip() {
         List<Component> lines = new ArrayList<>();
-        lines.add(Component.literal("Loaded fuel; FLUX shows each bundle"));
+        lines.add(Component.literal("The fuel loaded; the Flux tab shows each bundle."));
         if (menu.map != null) {
             var counts = new java.util.LinkedHashMap<String, Integer>();
             for (int i = 0; i < menu.map.coreSlotCount; i++) {
@@ -257,25 +258,25 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
     private List<Component> jetTooltip() {
         var c = menu.configuration;
         return List.of(
-                Component.literal("Jets must have a matching assembly across the vessel."),
-                Component.literal("Place bases 1 or 2 blocks above the bottom shell; face oppositely."),
-                Component.literal("Each RCP supports up to " + dev.bwr.core.flow.RecirculationSizing.JETS_PER_EXTERNAL_PUMP + " normal placed jet assemblies."),
-                Component.literal("Targets assume normal jets and full-speed external pumps."),
-                Component.literal("Full-flow estimate: " + c.requiredExternalPumps() + " RCPs with jets, or "
-                        + (int) Math.ceil(c.requiredJets() / dev.bwr.core.flow.RecirculationSizing.INTERNAL_PUMP_UNITS) + " RIPs."),
-                Component.literal("RIPs need valid floor mounts and FE; hold a RIP to show mounting sites."),
-                Component.literal("Unmatched jets: " + c.unmatchedJetAssemblies() + "; internal pumps: " + c.internalPumps()),
-                Component.literal("Required core flow: " + big(c.requiredFlowKgPerS()) + " kg/s"),
-                Component.literal("Actual core flow: " + big(menu.coreFlowKgPerS) + " kg/s"));
+                Component.literal("Each jet needs a matching jet assembly on the opposite side of the vessel."),
+                Component.literal("Place the bases 1 or 2 blocks above the bottom shell, facing each other."),
+                Component.literal("Each external recirculation pump (RCP) supports up to " + dev.bwr.core.flow.RecirculationSizing.JETS_PER_EXTERNAL_PUMP + " normal jet assemblies."),
+                Component.literal("The targets assume normal jets and external pumps at full speed."),
+                Component.literal("For full flow you need about " + c.requiredExternalPumps() + " external pumps with jets, or "
+                        + (int) Math.ceil(c.requiredJets() / dev.bwr.core.flow.RecirculationSizing.INTERNAL_PUMP_UNITS) + " internal pumps (RIPs)."),
+                Component.literal("Internal pumps need valid floor mounts and FE; hold one to see where it can be mounted."),
+                Component.literal("Jets without a match: " + c.unmatchedJetAssemblies() + ". Internal pumps: " + c.internalPumps() + "."),
+                Component.literal("Core flow needed: " + big(c.requiredFlowKgPerS()) + " kg/s"),
+                Component.literal("Core flow now: " + big(menu.coreFlowKgPerS) + " kg/s"));
     }
 
     private List<Component> volumeTooltip() {
         var c = menu.configuration;
         return List.of(
-                Component.literal("Whole interior: width x height x depth; shell excluded."),
-                Component.literal("12 jets x cube root(volume / 200), rounded up to pairs."),
-                Component.literal("Geometric sizing; lowering water level does not reduce the target."),
-                Component.literal("Water: " + big(menu.coolantTemperatureC) + " C; inlet subcooling: " + big(c.inletSubcoolingKJPerKg()) + " kJ/kg"));
+                Component.literal("This is the whole inside of the vessel (width times height times depth), not counting the shell."),
+                Component.literal("The jets needed are 12 times the cube root of (volume divided by 200), rounded up to pairs."),
+                Component.literal("It is sized by geometry, so lowering the water level does not lower the target."),
+                Component.literal("Water: " + big(menu.coolantTemperatureC) + " C. Inlet subcooling: " + big(c.inletSubcoolingKJPerKg()) + " kJ/kg."));
     }
 
     private void setOverlay(Overlay next) {
@@ -300,10 +301,10 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
     @Override
     protected void containerTick() {
         super.containerTick();
-        head.setMessage(Component.literal(menu.vesselState == VesselState.REFUELING ? "HEAD ON" : "HEAD OFF"));
+        head.setMessage(Component.literal(menu.vesselState == VesselState.REFUELING ? "Seat head" : "Lift head"));
         head.setTooltipText(menu.vesselState == VesselState.REFUELING
-                ? "Ask the vessel to put its head back on. It refuses, and says why, if that is physically impossible."
-                : "Ask the vessel to take its head off. It refuses, and says why, if pressure or anything else makes that impossible.");
+                ? "The head is off. Ask the vessel to put its head back on. It refuses, and tells you why, if that is physically impossible."
+                : "The head is on. Ask the vessel to take its head off. It refuses, and tells you why, if pressure or anything else makes that impossible.");
         grid.setCells(overlay == Overlay.FLUX ? fluxCells() : rodCells());
     }
 
