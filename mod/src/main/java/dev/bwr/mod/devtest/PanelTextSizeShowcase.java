@@ -31,6 +31,10 @@ import java.util.List;
  *   <li>Five blocks to its right, one per setting, each a 8 x 16 bar gauge and a 6 x 16 GE edgewise meter.</li>
  * </ul>
  * Stages: the real size block from a block away, a close-up of its bar gauges and edgewise meters, and the big row.
+ * Then the gauge polish: classic dials (12 x 12 with a caption in the lower block, and in the upper block the real size 2 x 2 and 3 x 3, and
+ * bar gauges, with captions, at Text size 60, 100 and 160 % in the three columns x 5481..5479), a close-up of the real size captions, and the bar gauge at 100 % beside the owner's
+ * reference (references/gauges/owner-bar-gauge-text-proportions.png): the big 10 x 16 and two real sizes in the block
+ * x 5478, from a block away and close up.
  *
  * <p>Plan: the real size block at x 5490, the big row at x 5486 down to 5482 (left to right as seen from the north),
  * all at y 127 and z 5261, facing north, on a floor at y 125. The area x 5476..5494, z 5250..5266 is cleared first.
@@ -39,14 +43,31 @@ final class PanelTextSizeShowcase {
     private PanelTextSizeShowcase() {
     }
 
-    static final String[] NAMES = {"textsize-real", "textsize-real-bars", "textsize-big"};
+    static final String[] NAMES = {"textsize-real", "textsize-real-bars", "textsize-big", "textsize-classic-dials",
+            "textsize-captions-real", "textsize-bar-reference", "textsize-bar-reference-real", "textsize-switch-sizes", "textsize-ranges", "textsize-side-on", "textsize-side-bench"};
     private static final BlockPos REAL = new BlockPos(5490, 127, 5261);
     private static final BlockPos FIRST_BIG = new BlockPos(5486, 127, 5261);
     /** The five settings, left to right: {text %, tick %}. */
     static final int[][] SETTINGS = {{100, 100}, {60, 100}, {160, 100}, {100, 60}, {100, 160}};
-    private static final double[][] EYE = {{5490.5, 127.5, 5260.9}, {5490.5, 127.72, 5261.2}, {5484.5, 127.5, 5259.3}};
-    private static final double[][] LOOK = {{5490.5, 127.5, 5262.0}, {5490.5, 127.72, 5262.0}, {5484.5, 127.5, 5262.0}};
+    /** The polish blocks: three dial blocks (Text size 60, 100, 160 %), left to right x 5481, 5480, 5479, and the bar gauge block. */
+    private static final BlockPos FIRST_DIALS = new BlockPos(5481, 127, 5261);
+    private static final BlockPos BAR_REFERENCE = new BlockPos(5478, 127, 5261);
+    /** Two blocks with a GE control switch each, 8 x 12 and 12 x 16, for comparing with the owner's picture of the two sizes. */
+    private static final BlockPos SWITCHES = new BlockPos(5493, 127, 5261);
+    /** The range blocks: a vertical board and a benchboard, each with captions, GE meters on wide scales, and a nameplate. */
+    private static final BlockPos RANGES = new BlockPos(5477, 127, 5261);
+    private static final BlockPos BENCH = new BlockPos(5476, 127, 5261);
+    private static final int[] DIAL_TEXT = {60, 100, 160};
+    private static final double[][] EYE = {{5490.5, 127.5, 5260.9}, {5490.5, 127.72, 5261.2}, {5484.5, 127.5, 5259.3},
+            {5480.5, 126.5, 5260.2}, {5480.31, 127.7, 5261.4}, {5478.56, 127.5, 5260.9}, {5478.22, 127.9, 5261.45}, {5493.0, 127.5, 5260.1},
+            {5477.5, 127.0, 5260.1}, {5481.0, 127.45, 5261.25}, {5479.0, 127.3, 5260.4}};
+    private static final double[][] LOOK = {{5490.5, 127.5, 5262.0}, {5490.5, 127.72, 5262.0}, {5484.5, 127.5, 5262.0},
+            {5480.5, 126.5, 5262.0}, {5480.31, 127.7, 5262.0}, {5478.56, 127.5, 5262.0}, {5478.22, 127.9, 5262.0}, {5493.0, 127.5, 5262.0},
+            {5477.5, 127.0, 5262.0}, {5477.2, 127.45, 5261.45}, {5476.5, 127.3, 5261.5}};
 
+    /** The gauges of the polish blocks, and how many of them have a Text size set (every dial block but the 100 % one: 10). */
+    private static final int POLISH = 3 * 5 + 3 + 2 + 7;
+    private static final int POLISH_SIZED = 2 * 5;
     private static final List<BlockPos> PLACED = new ArrayList<>();
     private static int mounted;
 
@@ -82,6 +103,78 @@ final class PanelTextSizeShowcase {
         return component;
     }
 
+    /** A gauge of the polish blocks: its own Text size, caption and (for a bar gauge) scale preset. */
+    private static void putPolish(ServerLevel level, BlockPos pos, int x, int y, ComponentType type, int w, int h, String style,
+                                  int text, String caption, String preset, double reading) {
+        PanelComponent component = PanelOps.placeDirect(level, pos, x, y, type, Footprint.of(w, h));
+        if (component == null) {
+            throw new AssertionError("Text size showcase: placement refused " + type.id() + " " + w + "x" + h + " at " + pos + " " + x + "," + y);
+        }
+        GaugeData data = (GaugeData) component.data();
+        if (style != null) {
+            data.style = style;
+            data.variant = PanelStyles.defaultVariant(data.type, style);
+        }
+        if (preset != null) {
+            data.apply(preset);
+        } else if (!data.isBarGauge()) {
+            data.units = "MPa";
+        }
+        data.textSize = text;
+        component.setLabel(type == ComponentTypes.BAR_GAUGE ? "RFW-LI" : component.label());
+        component.setCaption(caption);
+        component.setSource(0, InputSources.constant(reading));
+        ((PanelBlockEntity) level.getBlockEntity(pos)).resample(component, true);
+        component.touch();
+        mounted++;
+    }
+
+    /** A GE gauge with its own scale range, units and caption. */
+    private static void putRange(ServerLevel level, BlockPos pos, int x, int y, ComponentType type, int w, int h, double min, double max,
+                                 String units, String caption, double reading) {
+        PanelComponent component = PanelOps.placeDirect(level, pos, x, y, type, Footprint.of(w, h));
+        if (component == null) {
+            throw new AssertionError("Text size showcase: placement refused " + type.id() + " " + w + "x" + h + " at " + pos + " " + x + "," + y);
+        }
+        GaugeData data = (GaugeData) component.data();
+        data.style = PanelStyles.GE;
+        data.variant = PanelStyles.defaultVariant(data.type, PanelStyles.GE);
+        data.min = min;
+        data.max = max;
+        data.units = units;
+        component.setCaption(caption);
+        component.setSource(0, InputSources.constant(min + (max - min) * reading));
+        ((PanelBlockEntity) level.getBlockEntity(pos)).resample(component, true);
+        component.touch();
+        mounted++;
+    }
+
+    /** The range blocks: wide scales (0 to 5000 GPM, 0 to 60000), captions, a nameplate, on a vertical board and a benchboard. */
+    private static void buildRanges(ServerLevel level) {
+        var vertical = BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState().setValue(PanelBlock.FACING, Direction.NORTH);
+        var bench = BwrBlocks.CONTROL_PANEL_BENCHBOARD.get().defaultBlockState().setValue(PanelBlock.FACING, Direction.NORTH);
+        level.setBlock(RANGES, vertical, 3);
+        level.setBlock(RANGES.below(), vertical, 3);
+        level.setBlock(BENCH, bench, 3);
+        PLACED.add(RANGES);
+        PLACED.add(RANGES.below());
+        PLACED.add(BENCH);
+        // the owner's picture: a pressure dial captioned RHR B over a flow meter on 0 to 5000 GPM captioned RHR A
+        putRange(level, RANGES, 3, 0, ComponentTypes.DIAL_GAUGE, 10, 10, 0, 400, "PSIG", "RHR B", 0.18);
+        putRange(level, RANGES.below(), 0, 1, ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL, 16, 6, 0, 5000, "GPM", "RHR A", 0.2);
+        putRange(level, RANGES.below(), 0, 10, ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL, 6, 2, 0, 60000, "GPM", "RHR C", 0.6);
+        putRange(level, RANGES.below(), 8, 10, ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL, 6, 2, 0, 1200, "GPM", "RHR D", 0.5);
+        PanelComponent plate = PanelOps.placeDirect(level, BENCH, 0, 12, ComponentTypes.NAMEPLATE, Footprint.of(16, 4));
+        if (plate == null) {
+            throw new AssertionError("Text size showcase: nameplate refused");
+        }
+        ((dev.bwr.mod.panel.component.NameplateData) plate.data()).text = "RHR PUMP B DISCHARGE";
+        plate.touch();
+        mounted++;
+        putRange(level, BENCH, 2, 0, ComponentTypes.DIAL_GAUGE, 8, 8, -150, 60, "IN", "BENCH", 0.5);
+        putRange(level, BENCH, 10, 0, ComponentTypes.DIAL_GAUGE, 4, 4, 0, 5000, "GPM", "RHR", 0.4);
+    }
+
     static void build(ServerLevel level) {
         PLACED.clear();
         mounted = 0;
@@ -99,10 +192,20 @@ final class PanelTextSizeShowcase {
         for (int i = 0; i < SETTINGS.length; i++) {
             blocks.add(FIRST_BIG.west(i));
         }
+        for (int i = 0; i < DIAL_TEXT.length; i++) {
+            blocks.add(FIRST_DIALS.west(i));
+        }
+        blocks.add(BAR_REFERENCE);
+        blocks.add(SWITCHES);
+        blocks.add(SWITCHES.west());
+        // (the range blocks are placed below, the bench one as a benchboard)
         for (BlockPos pos : blocks) {
             level.setBlock(pos, panel, 3);
             level.setBlock(pos.below(), panel, 3);
             PLACED.add(pos);
+        }
+        for (int i = 0; i < DIAL_TEXT.length; i++) {
+            PLACED.add(FIRST_DIALS.west(i).below());
         }
         for (int s = 0; s < SETTINGS.length; s++) {
             int x = s * 3;
@@ -116,6 +219,35 @@ final class PanelTextSizeShowcase {
             BlockPos big = FIRST_BIG.west(s);
             put(level, big, 0, 0, ComponentTypes.BAR_GAUGE, 8, 16, null, s, 41);
             put(level, big, 9, 0, ComponentTypes.EDGEWISE_GAUGE_VERTICAL, 6, 16, PanelStyles.GE, s, 55);
+        }
+        // Polish: a classic 12 x 12 dial with a caption, the real size classic dials and a real size bar gauge with captions,
+        // and a big bar gauge with one, at Text size 60, 100 and 160 %.
+        for (int i = 0; i < DIAL_TEXT.length; i++) {
+            BlockPos pos = FIRST_DIALS.west(i);
+            int text = DIAL_TEXT[i];
+            // The upper block: a big bar gauge, and beside it the real size parts, each with a caption; the block below it:
+            // the 12 x 12 dial, three rows down so the caption above it does not run into it.
+            putPolish(level, pos, 0, 0, ComponentTypes.BAR_GAUGE, 8, 16, null, text, "RX LEVEL", null, 41);
+            putPolish(level, pos, 9, 0, ComponentTypes.DIAL_GAUGE, 2, 2, PanelStyles.CLASSIC, text, "RPV", null, 62);
+            putPolish(level, pos, 12, 0, ComponentTypes.DIAL_GAUGE, 3, 3, PanelStyles.CLASSIC, text, "CORE FLOW", null, 62);
+            putPolish(level, pos, 9, 5, ComponentTypes.BAR_GAUGE, 1, 3, null, text, "LEVEL", null, 41);
+            putPolish(level, pos.below(), 0, 3, ComponentTypes.DIAL_GAUGE, 12, 12, PanelStyles.CLASSIC, text, "PRESSURE", null, 62);
+        }
+        // The bar gauge at 100 % next to the owner's reference: the big 10 x 16, a real size narrow range and wide range gauge.
+        putPolish(level, BAR_REFERENCE, 0, 0, ComponentTypes.BAR_GAUGE, 10, 16, null, 100, "REACTOR LEVEL NARROW RANGE", GaugeData.PRESET_NARROW, 41);
+        putPolish(level, BAR_REFERENCE, 11, 0, ComponentTypes.BAR_GAUGE, 1, 3, null, 100, "NARROW", GaugeData.PRESET_NARROW, 41);
+        putPolish(level, BAR_REFERENCE, 13, 0, ComponentTypes.BAR_GAUGE, 1, 3, null, 100, "WIDE", GaugeData.PRESET_WIDE, -40);
+        buildRanges(level);
+        for (int i = 0; i < 2; i++) {
+            BlockPos pos = SWITCHES.west(i);
+            Footprint size = i == 0 ? Footprint.of(8, 12) : Footprint.of(12, 16);
+            PanelComponent sw = PanelOps.placeDirect(level, pos, i == 0 ? 4 : 2, i == 0 ? 2 : 0, ComponentTypes.CONTROL_SWITCH, size);
+            if (sw == null) {
+                throw new AssertionError("Text size showcase: control switch " + size + " refused");
+            }
+            sw.setLabel("CS-" + (i + 1));
+            sw.touch();
+            mounted++;
         }
         for (BlockPos pos : PLACED) {
             if (level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
@@ -138,7 +270,8 @@ final class PanelTextSizeShowcase {
                 }
             }
         }
-        if (components != mounted || sized != mounted / SETTINGS.length * (SETTINGS.length - 1)) {
+        // (The polish blocks have Text size 60 and 160 % on two blocks of three: 10 of their 16 gauges are sized.)
+        if (components != mounted || sized != (mounted - POLISH) / SETTINGS.length * (SETTINGS.length - 1) + POLISH_SIZED) {
             throw new AssertionError("Text size showcase " + NAMES[stage] + ": " + components + " of " + mounted
                     + " components on the client, " + sized + " with a size set");
         }

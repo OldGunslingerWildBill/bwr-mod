@@ -12,6 +12,13 @@
 - Five new panel components the research reports found missing (CONTROL-PANELS.md, section 6): a **manual/auto controller station** (`bwr:controller_station`: PV and setpoint pointers on one scale, demand bar, AUTO/MAN, RAISE/LOWER; outputs demand, mode, raise, lower, setpoint; no control law, nothing moves by itself), a **synchroscope** (phase and slip inputs, two synchronising lamps), a **two-pen strip recorder** (the strip chart with two coloured pens, each on its own scale), a **joystick bypass switch** (centre, up, down, left, right, optional spring return) and an **LED rod pattern display** (amber and red LED per rod from the full core display snapshot).
 - New items start at **twice their real size**; the exact real size stays selectable. Old saves are unaffected: the types are new, `StripChartData` is only no longer final, and `ComponentType.onPlaced` is a no-op for every type but the station.
 
+## Unreleased: gauge polish and twice the real size
+
+- **Real size defaults are twice as big** in each dimension for every type that has real sizes: dial 4x4, edgewise 2x6 / 6x2, bar gauge 2x6, bar graph 2x6, key switch and rotary selector 2x4, lamp, pushbutton, toggle, push-to-turn switch, setpoint knob and annunciator window 2x2, RPS trip 4x2, segment display 8x4 and thumbwheel 6x4 (digits 2 cells wide, 4 tall). The **control switch** is the exception: a new one is 8x12 (the owner found it exactly the right size next to the 12x16). A bare, creative or crafted stack places that; the exact real sizes stay on the lists (cycle or Alt+click) and nothing placed or stored moves (the new sizes are appended).
+- The **bar gauge has a real size** (1x3, and 2x6 as the default); its layout tests are relative to the case. Its numbers and units are 12 and 19 % bigger, measured against the owner's reference picture.
+- The **classic dial's labels** (minimum, maximum, units) stay inside the face at every size and Text size; the OFF flag moved above the hub.
+- **Captions** under a real size part scale with it (`GaugeScale.captionFactor`); at the design size and above they are unchanged.
+
 ## Unreleased: paint finishes for panels, trim and furniture
 
 - Every **panel body** (vertical, benchboard, console, back panel, duplex), every **trim block** (end caps, header strip, canopy and vent, plinths, corners) and every piece of **room furniture** (cabinets, desks, mimic bands, wall displays, control stand) has a paint **finish**: **seafoam** (the look they always had, and the default), **cream**, **tan**, **grey** and **light blue** (the owner's simulator). It is a blockstate property `finish`, so a saved block that has none, which is every block placed before, loads as seafoam and looks exactly as it did (CONTROL-PANELS.md, "Finishes").

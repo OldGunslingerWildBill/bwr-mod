@@ -29,7 +29,9 @@ public final class ThumbwheelType extends PanelInputType {
             Footprint.of(3 * COMPACT_DIGIT_W, COMPACT_DIGIT_H), Footprint.of(COMPACT_DIGIT_W, COMPACT_DIGIT_H),
             Footprint.of(2 * COMPACT_DIGIT_W, COMPACT_DIGIT_H), Footprint.of(4 * COMPACT_DIGIT_W, COMPACT_DIGIT_H),
             Footprint.of(5 * COMPACT_DIGIT_W, COMPACT_DIGIT_H), Footprint.of(6 * COMPACT_DIGIT_W, COMPACT_DIGIT_H),
-            Footprint.of(8 * COMPACT_DIGIT_W, COMPACT_DIGIT_H));
+            Footprint.of(8 * COMPACT_DIGIT_W, COMPACT_DIGIT_H),
+            // twice the real 3 digit setpoint (a digit 2 wide and 4 tall), where a new item starts
+            Footprint.of(3 * 2 * COMPACT_DIGIT_W, 2 * COMPACT_DIGIT_H));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.color("Color", "component.bwr.field.digit_color"));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("value"));
@@ -65,12 +67,18 @@ public final class ThumbwheelType extends PanelInputType {
 
     /** Cells one digit is across on a thumbwheel {@code cellsHigh} cells tall: three, or one on a real size one. */
     public static int digitWidth(int cellsHigh) {
-        return cellsHigh >= DIGIT_H ? DIGIT_W : COMPACT_DIGIT_W;
+        return cellsHigh >= DIGIT_H ? DIGIT_W : Math.max(COMPACT_DIGIT_W, cellsHigh / COMPACT_DIGIT_H * COMPACT_DIGIT_W);
     }
 
     @Override
     public int realSizes() {
-        return 7;
+        return 8;
+    }
+
+    /** A new item starts at twice the real size, in each dimension. */
+    @Override
+    public Footprint realDefaultFootprint() {
+        return FOOTPRINTS.get(FOOTPRINTS.size() - 1);
     }
 
     /** Number of digits: the width in whole digit cells, at least one. */

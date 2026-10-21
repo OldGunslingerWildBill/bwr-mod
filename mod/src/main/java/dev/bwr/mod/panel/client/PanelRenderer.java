@@ -7,6 +7,7 @@ import dev.bwr.mod.client.VisualEffectsConfig;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.component.ComponentType;
 import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.model.GaugeScale;
 import dev.bwr.mod.panel.model.PanelModels;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import net.minecraft.client.Minecraft;
@@ -127,7 +128,8 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
 
     /**
      * The printed caption under a component (set from a machine name): white text centred below the footprint, shrunk
-     * to fit the wider of the component and one block. Full detail only; empty for most components.
+     * to fit the wider of the component and one block, and in proportion to a real size component ({@link GaugeScale}).
+     * Full detail only; empty for most components.
      */
     private static void drawCaption(PanelRenderContext context, PanelComponent component) {
         String caption = component.caption();
@@ -138,8 +140,9 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
         if (textWidth <= 0.0f) {
             return;
         }
-        float scale = Math.min(0.26f, Math.max(component.w(), 16.0f) / textWidth);
-        context.text(caption, (component.w() - textWidth * scale) / 2.0f, component.h() + 0.5f, scale, 1.2f, 0xFFFFFF, false);
+        // 0.26 cell per pixel and a 0.5 cell gap at the design size and above; less for a real size part (GaugeScale).
+        GaugeScale.Caption place = GaugeScale.caption(component.w(), component.h(), component.type().designSide(), textWidth);
+        context.text(caption, place.x(), place.y(), place.scale(), place.z(), 0xFFFFFF, false);
     }
 
     /**

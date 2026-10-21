@@ -110,7 +110,7 @@ final class EdgewiseGaugeModel implements ComponentModel {
         float k = sizeFactor(component);
         float inset = INSET * k;
         sink.box(0, 0, w, h, 0, 1.0f, BEZEL, false);
-        sink.rect(inset, inset, w - 2.0f * inset, h - 2.0f * inset, 1.05f, FACE, false);
+        sink.rect(inset, inset, w - 2.0f * inset, h - 2.0f * inset, GaugeScale.CLASSIC_FACE_Z, FACE, false);
         for (int i = 0; i < GaugeData.BANDS; i++) {
             if (data.bandHigh[i] > data.bandLow[i]) {
                 strip(sink, position(component, (float) data.fraction(data.bandLow[i])),
@@ -177,7 +177,7 @@ final class EdgewiseGaugeModel implements ComponentModel {
         float fit = Math.min((t - 2.0f * UNITS_MARGIN * k) / Math.max(1, GaugeScale.textPixels(data.units)),
                 (pad(component) - top - 0.1f * k) / 8.0f);
         float scale = GaugeScale.textCap(UNITS_TEXT * k, data.textFactor(), fit);
-        items.add(new Legends.Item(data.units, t / 2.0f, top + Legends.CAP_PIXELS / 2.0f * scale, 1.2f,
+        items.add(new Legends.Item(data.units, t / 2.0f, top + Legends.CAP_PIXELS / 2.0f * scale, GaugeScale.CLASSIC_TEXT_Z,
                 Legends.CAP_PIXELS * scale, 0.0f, BakedPanelModel.Align.CENTER, INK, false, FACE));
         return items;
     }

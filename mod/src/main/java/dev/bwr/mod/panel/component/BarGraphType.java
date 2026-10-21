@@ -17,7 +17,9 @@ public final class BarGraphType extends ComponentType {
             Footprint.of(3, 24), Footprint.of(3, 12), Footprint.of(3, 16), Footprint.of(3, 32),
             Footprint.of(24, 3), Footprint.of(12, 3), Footprint.of(16, 3), Footprint.of(32, 3),
             // real sizes: an LED bar column or row, one cell thick (estimate)
-            Footprint.of(1, 3), Footprint.of(3, 1), Footprint.of(1, 6), Footprint.of(6, 1));
+            Footprint.of(1, 3), Footprint.of(3, 1), Footprint.of(1, 6), Footprint.of(6, 1),
+            // twice the real size (an LED bar column), where a new item starts
+            Footprint.of(2, 6));
     private static final List<ConfigField> SCHEMA = java.util.stream.Stream.concat(java.util.stream.Stream.of(
             ConfigField.decimal("Min", "component.bwr.field.min", -BarGraphData.LIMIT, BarGraphData.LIMIT),
             ConfigField.decimal("Max", "component.bwr.field.max", -BarGraphData.LIMIT, BarGraphData.LIMIT),
@@ -33,7 +35,13 @@ public final class BarGraphType extends ComponentType {
 
     @Override
     public int realSizes() {
-        return 4;
+        return 5;
+    }
+
+    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    @Override
+    public Footprint realDefaultFootprint() {
+        return Footprint.of(2, 6);
     }
 
     @Override

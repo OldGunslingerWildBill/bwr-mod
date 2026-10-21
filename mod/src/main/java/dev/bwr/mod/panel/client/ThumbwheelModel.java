@@ -31,7 +31,7 @@ final class ThumbwheelModel implements ComponentModel {
         float pw = DW * k;
         for (int i = 0; i < digits; i++) {
             float x = i * pw;
-            sink.box(x + 0.3f * k, 1.4f * k, pw - 0.6f * k, h - 2.8f * k, 1.0f, 1.5f, ModelDraw.RECESS, false);
+            sink.box(x + 0.3f * k, 1.4f * k, pw - 0.6f * k, h - 2.8f * k, 1.0f, GaugeScale.THUMBWHEEL_RECESS_TOP, ModelDraw.RECESS, false);
             sink.rect(x + 0.9f * k, 0.35f * k, pw - 1.8f * k, MARK * k, 1.3f, ModelDraw.ENGRAVED, false);
             sink.rect(x + 0.9f * k, h - 0.35f * k - MARK * k, pw - 1.8f * k, MARK * k, 1.3f, ModelDraw.ENGRAVED, false);
         }
@@ -49,7 +49,7 @@ final class ThumbwheelModel implements ComponentModel {
         float pw = DW * k;
         for (int i = 0; i < digits; i++) {
             String digit = DIGITS[ThumbwheelData.digit(value, digits, i)];
-            ModelDraw.centreText(context, digit, i * pw + 0.6f * k, 1.5f * k, pw - 1.2f * k, component.h() - 3.0f * k, 1.8f,
+            ModelDraw.centreText(context, digit, i * pw + 0.6f * k, 1.5f * k, pw - 1.2f * k, component.h() - 3.0f * k, GaugeScale.THUMBWHEEL_TEXT_Z,
                     data.color, true);
         }
     }
@@ -68,7 +68,7 @@ final class ThumbwheelModel implements ComponentModel {
             String digit = DIGITS[ThumbwheelData.digit(value, digits, i)];
             float scale = ModelDraw.centreScale(GaugeScale.textPixels(digit), bw, bh, rowAspect);
             items.add(new Legends.Item(digit, i * pw + 0.6f * k + bw / 2.0f, 1.5f * k + bh / 2.0f - 0.5f * scale * rowAspect,
-                    1.8f, Legends.CAP_PIXELS * scale, 0.0f, BakedPanelModel.Align.CENTER, ((ThumbwheelData) component.data()).color,
+                    GaugeScale.THUMBWHEEL_TEXT_Z, Legends.CAP_PIXELS * scale, 0.0f, BakedPanelModel.Align.CENTER, ((ThumbwheelData) component.data()).color,
                     false, ModelDraw.RECESS));
         }
         return items;

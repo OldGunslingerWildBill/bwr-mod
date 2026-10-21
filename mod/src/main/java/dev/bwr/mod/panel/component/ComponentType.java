@@ -97,10 +97,33 @@ public abstract class ComponentType {
         return 0;
     }
 
+    /**
+     * The size a new item of this type starts at when it has real sizes, else null: twice the real size of the part in
+     * each dimension (the real sizes themselves stay on the list, to cycle to or pick). A type with real sizes overrides
+     * this with its doubled size, which is on its list; the default is the first of the real sizes.
+     */
+    public Footprint realDefaultFootprint() {
+        int real = realSizes();
+        return real <= 0 ? null : footprints().get(footprints().size() - real);
+    }
+
     /** The index a new item of this type starts at when it has real sizes, else -1. */
     public final int realDefaultIndex() {
-        int real = realSizes();
-        return real <= 0 ? -1 : footprints().size() - real;
+        Footprint start = realDefaultFootprint();
+        return start == null ? -1 : footprints().indexOf(start);
+    }
+
+    /**
+     * The smaller side, in cells, of the smallest size that is not a real size: below it a part is a real size one,
+     * and what is printed around it (the caption) is scaled down with it ({@code GaugeScale.captionFactor}).
+     */
+    public final int designSide() {
+        List<Footprint> list = footprints();
+        int side = Integer.MAX_VALUE;
+        for (int i = 0; i < list.size() - realSizes(); i++) {
+            side = Math.min(side, Math.min(list.get(i).w(), list.get(i).h()));
+        }
+        return side == Integer.MAX_VALUE ? 1 : side;
     }
 
     /**

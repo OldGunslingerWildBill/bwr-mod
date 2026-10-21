@@ -18,7 +18,9 @@ public final class RpsTripType extends PanelInputType {
     public static final String ID_PATH = "rps_trip";
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(16, 8), Footprint.of(24, 12), Footprint.of(32, 16),
             // real size: the owner's two guarded buttons, 4.8 x 2.4 in
-            Footprint.of(2, 1));
+            Footprint.of(2, 1),
+            // twice the real assembly, where a new item starts
+            Footprint.of(4, 2));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.text("LegendA", "component.bwr.field.legend_a", RpsTripData.MAX_LEGEND),
             ConfigField.text("LegendB", "component.bwr.field.legend_b", RpsTripData.MAX_LEGEND));
@@ -30,7 +32,13 @@ public final class RpsTripType extends PanelInputType {
 
     @Override
     public int realSizes() {
-        return 1;
+        return 2;
+    }
+
+    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    @Override
+    public Footprint realDefaultFootprint() {
+        return Footprint.of(4, 2);
     }
 
     @Override

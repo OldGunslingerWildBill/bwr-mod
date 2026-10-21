@@ -45,6 +45,16 @@ public final class ControlSwitchType extends PanelInputType {
         return 2;
     }
 
+    /**
+     * Not twice the real size like the other types: the owner placed the 8 x 12 and the 12 x 16 GE switch side by side and
+     * found the smaller exactly the right size (the larger is for other panels), so a new item starts at 8 x 12, the
+     * first size of the list ({@link ComponentType#realDefaultFootprint}). The real sizes stay on the list.
+     */
+    @Override
+    public Footprint realDefaultFootprint() {
+        return FOOTPRINTS.get(0);
+    }
+
     @Override
     public List<Footprint> footprints() {
         return FOOTPRINTS;

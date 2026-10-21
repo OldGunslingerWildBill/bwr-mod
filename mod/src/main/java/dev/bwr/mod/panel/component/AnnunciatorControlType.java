@@ -41,6 +41,12 @@ public final class AnnunciatorControlType extends PanelInputType {
         return 2;
     }
 
+    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    @Override
+    public Footprint realDefaultFootprint() {
+        return Footprint.of(4, 2);
+    }
+
     @Override
     public List<Footprint> footprints() {
         return FOOTPRINTS;

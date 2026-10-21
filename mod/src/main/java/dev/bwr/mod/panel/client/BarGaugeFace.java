@@ -1,11 +1,11 @@
 package dev.bwr.mod.panel.client;
 
 import dev.bwr.mod.panel.component.GaugeData;
-import dev.bwr.mod.panel.display.PanelFormat;
 import dev.bwr.mod.panel.model.BakedPanelModel;
 import dev.bwr.mod.panel.model.GaugeScale;
 import dev.bwr.mod.panel.model.Legends;
 import dev.bwr.mod.panel.model.Placement;
+import dev.bwr.mod.panel.model.ScaleNumbers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,10 +88,18 @@ public final class BarGaugeFace {
     public static final float TICK_LEFT = 1.80f * CM;
     static final float BAND_LEFT = 1.90f * CM;
     static final float MINOR_LEFT = 2.12f * CM;
-    /** Largest cap heights of the numbers and the units letters, and the units' letter pitch (the picture's). */
-    private static final float NUMBER_CAP = 0.52f * CM;
-    private static final float UNIT_CAP = 0.42f * CM;
+    /**
+     * Largest cap heights of the numbers and the units letters, and the units' letter pitch (the picture's). The caps are
+     * raised over the first layout's (0.52 and 0.42 cm: numbers 12 %, units 19 %) because, measured on a screenshot of the
+     * game against the owner's reference (references/gauges/owner-bar-gauge-text-proportions.png), a number came out 11 %
+     * and a units letter 17 % shorter as a share of the case: the game's font draws its digits 5 x 7 pixels, narrower and
+     * lower than the picture's. (CONTROL-PANELS.md, Gauge text size.)
+     */
+    private static final float NUMBER_CAP = 0.58f * CM;
+    private static final float UNIT_CAP = 0.50f * CM;
     private static final float UNIT_PITCH = 0.83f * CM;
+    /** The units letters' cap height is at most the letter pitch over this (the picture has it near 1.4; the first layout 1.75). */
+    private static final float UNIT_PITCH_PER_CAP = 1.6f;
     /** Real thickness of the ticks (major, minor), and the least they may be in cells so they never vanish. */
     private static final float MAJOR_THICK = 0.11f * CM;
     private static final float MINOR_THICK = 0.055f * CM;
@@ -295,12 +303,9 @@ public final class BarGaugeFace {
         double step = majorStep();
         long first = (long) Math.ceil(data.min / step - 1.0e-9);
         long last = (long) Math.floor(data.max / step + 1.0e-9);
-        List<String> numerals = new ArrayList<>();
-        float widest = 1.0f;
-        for (long k = first; k <= last; k++) {
-            String text = PanelFormat.formatNumber(Math.round(k * step * 1.0e6) / 1.0e6, "");
-            numerals.add(text);
-            widest = Math.max(widest, textCaps(text));
+        double[] values = new double[(int) Math.max(0, last - first + 1)];
+        for (int i = 0; i < values.length; i++) {
+            values[i] = Math.round((first + i) * step * 1.0e6) / 1.0e6;
         }
         // All in proportion to the case (GaugeScale): the picture's cap height times Text size, shrunk to the room left
         // of the ticks and to 0.6 of the spacing of the numbers, so they never leave the face or touch each other.
@@ -308,6 +313,9 @@ public final class BarGaugeFace {
         float right = numbersRight();
         float room = (right - FACE_LEFT - 0.08f * CM) * place.scale;
         float natural = NUMBER_CAP * place.scale;
+        // Full numbers while they fit the room left of the ticks at the design size, else k and M (ScaleNumbers).
+        List<String> numerals = ScaleNumbers.labels(values, strings -> room / widestOf(strings) >= natural);
+        float widest = widestOf(numerals);
         // Grown by Text size, the numbers also keep clear of the raised rail and of the caps at the ends of the face.
         float endRoom = Math.min(inchesAt(1.0), channelH - inchesAt(0.0));
         float grow = Math.min((right - FACE_LEFT - GROWN_MARGIN) / widest, 2.0f * (endRoom - GROWN_MARGIN)) * place.scale;
@@ -328,7 +336,7 @@ public final class BarGaugeFace {
             float text = data.textFactor();
             float pitch = Math.min(UNIT_PITCH * Math.max(1.0f, text), scaleLength / (units.length() + 1));
             float roomRight = FACE_RIGHT - (CHANNEL_X + channelW) - 0.15f * CM;
-            float letterCap = GaugeScale.textCap(UNIT_CAP, text, Math.min(pitch / 1.75f, roomRight * 7.0f / 5.0f)) * place.scale;
+            float letterCap = GaugeScale.textCap(UNIT_CAP, text, Math.min(pitch / UNIT_PITCH_PER_CAP, roomRight * 7.0f / 5.0f)) * place.scale;
             float x = casePlace.x((CHANNEL_X + channelW + FACE_RIGHT) / 2.0f);
             float middle = (lowY + highY) / 2.0f;
             for (int i = 0; i < units.length(); i++) {
@@ -359,6 +367,15 @@ public final class BarGaugeFace {
      */
     private static float textCaps(String text) {
         return (6.0f * text.length() - 1.0f) / Legends.CAP_PIXELS;
+    }
+
+    /** The widest of {@code texts} in cap heights, at least 1. */
+    private static float widestOf(List<String> texts) {
+        float widest = 1.0f;
+        for (String text : texts) {
+            widest = Math.max(widest, textCaps(text));
+        }
+        return widest;
     }
 
     /**
