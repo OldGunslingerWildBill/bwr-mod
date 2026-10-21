@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": [" L ", "BIB", " R "], "key": {"L": {"item": "minecraft:lever"}, "B": {"item": "minecraft:stone_button"}, "I": {"item": "minecraft:iron_ingot"}, "R": {"item": "minecraft:redstone"}}, "result": {"id": "bwr:joystick_switch", "count": 1}}

@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": [" D ", "LRL", "III"], "key": {"D": {"item": "bwr:dial_gauge"}, "L": {"item": "bwr:lamp"}, "R": {"item": "minecraft:redstone"}, "I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:synchroscope", "count": 1}}

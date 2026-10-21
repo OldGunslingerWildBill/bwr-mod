@@ -7,6 +7,11 @@
 - Five boards ship, laid out at about twice the exact real size from `CR-PANELS-BWR-RESEARCH.md`: **rod control**, **RPV level, pressure and flow**, **RPS scram and mode switch**, the **ECCS bench (P601)** with the ADS / SRV section, and **neutron monitoring**. Space is reserved (and marked as a TODO in the template) for the manual/auto controller station (feedwater, recirculation), the joystick bypass switch and the LED rod pattern display.
 - `PanelOps.placeDirectQuiet` (a component with a given label and no per-component sync) for bulk placement. New data component `bwr:board_template`. Old saves are unaffected.
 
+## Unreleased: control hardware (controller station, synchroscope, two-pen recorder, joystick switch, LED rod display)
+
+- Five new panel components the research reports found missing (CONTROL-PANELS.md, section 6): a **manual/auto controller station** (`bwr:controller_station`: PV and setpoint pointers on one scale, demand bar, AUTO/MAN, RAISE/LOWER; outputs demand, mode, raise, lower, setpoint; no control law, nothing moves by itself), a **synchroscope** (phase and slip inputs, two synchronising lamps), a **two-pen strip recorder** (the strip chart with two coloured pens, each on its own scale), a **joystick bypass switch** (centre, up, down, left, right, optional spring return) and an **LED rod pattern display** (amber and red LED per rod from the full core display snapshot).
+- New items start at **twice their real size**; the exact real size stays selectable. Old saves are unaffected: the types are new, `StripChartData` is only no longer final, and `ComponentType.onPlaced` is a no-op for every type but the station.
+
 ## Unreleased: paint finishes for panels, trim and furniture
 
 - Every **panel body** (vertical, benchboard, console, back panel, duplex), every **trim block** (end caps, header strip, canopy and vent, plinths, corners) and every piece of **room furniture** (cabinets, desks, mimic bands, wall displays, control stand) has a paint **finish**: **seafoam** (the look they always had, and the default), **cream**, **tan**, **grey** and **light blue** (the owner's simulator). It is a blockstate property `finish`, so a saved block that has none, which is every block placed before, loads as seafoam and looks exactly as it did (CONTROL-PANELS.md, "Finishes").

@@ -79,6 +79,12 @@ public final class ComponentModels {
                 ComponentTypes.RPS_TRIP.id().getPath(), "rps_trip_assembly"));
         register(ComponentTypes.PUSH_TURN_SWITCH.id(), new StyledComponentModel(new PushTurnModel(),
                 BakedComponentModel.Kind.PUSH_TURN, ComponentTypes.PUSH_TURN_SWITCH.id().getPath(), "push_turn_switch"));
+        // control hardware the research found missing: drawn in code
+        register(ComponentTypes.CONTROLLER_STATION.id(), new ControllerStationModel());
+        register(ComponentTypes.SYNCHROSCOPE.id(), new SynchroscopeModel());
+        register(ComponentTypes.TWO_PEN_RECORDER.id(), new TwoPenRecorderModel());
+        register(ComponentTypes.JOYSTICK_SWITCH.id(), new JoystickModel());
+        register(ComponentTypes.LED_ROD_DISPLAY.id(), new LedRodDisplayModel());
         register(ComponentTypes.ANNUNCIATOR_CONTROL.id(), new AnnunciatorControlModel());
     }
 

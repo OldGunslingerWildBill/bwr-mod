@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": ["GGG", "PRP", "III"], "key": {"G": {"item": "minecraft:glass_pane"}, "P": {"item": "bwr:pushbutton"}, "R": {"item": "minecraft:redstone"}, "I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:controller_station", "count": 1}}

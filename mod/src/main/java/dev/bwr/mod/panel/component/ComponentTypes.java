@@ -53,6 +53,12 @@ public final class ComponentTypes {
     public static final ComponentType BAR_GAUGE = register(new BarGaugeType());
     public static final ComponentType RPS_TRIP = register(new RpsTripType());
     public static final ComponentType PUSH_TURN_SWITCH = register(new PushTurnSwitchType());
+    // -- control hardware the research found missing (CR-PANELS-*-RESEARCH.md, "Gaps") --
+    public static final ComponentType CONTROLLER_STATION = register(new ControllerStationType());
+    public static final ComponentType SYNCHROSCOPE = register(new SynchroscopeType());
+    public static final ComponentType TWO_PEN_RECORDER = register(new TwoPenRecorderType());
+    public static final ComponentType JOYSTICK_SWITCH = register(new JoystickType());
+    public static final ComponentType LED_ROD_DISPLAY = register(new LedRodDisplayType());
     // -- annunciator boxes --
     public static final ComponentType ANNUNCIATOR_CONTROL = register(new AnnunciatorControlType());
     // ----------------------------------------------------------------------------

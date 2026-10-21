@@ -293,6 +293,7 @@ public final class PanelBlockEntity extends BlockEntity {
             PanelComponent component = new PanelComponent(nextId++, type, x, y, footprint, label);
             owned.add(component);
             attachData(component);
+            type.onPlaced(component);
             structureChanged();
             for (PanelGroup.Rect rect : rects) {
                 if (rect.pos().equals(worldPosition)) {

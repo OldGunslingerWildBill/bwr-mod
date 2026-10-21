@@ -28,7 +28,7 @@ import java.util.List;
  * Times are absolute game ticks in memory and relative ages when saved, so a
  * reloaded world, or a client with a slightly different clock, still lines up.
  */
-public final class StripChartData extends ComponentData {
+public class StripChartData extends ComponentData {
     public static final int MAX_PENS = 4;
     public static final int CAPACITY = 160;
     public static final int COLUMNS = 120;
