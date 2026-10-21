@@ -1,8 +1,9 @@
 package dev.bwr.mod.panel.trim;
 
 /**
- * Every decorative control-room trim block, one per registry name. They carry no block entity and no mounting
- * face: the mounting stays on the three {@link dev.bwr.mod.panel.PanelType} bodies. The geometry of each piece
+ * Every control-room trim block, one per registry name. Most are decoration: no block entity, no mounting face. The
+ * header strip, the canopy and the two chamfer corners ({@link #mountType()}) are {@link MountableTrimBlock}s whose
+ * angled face takes components. The geometry of each piece
  * (what the collision shape and the model are built from) is in {@link TrimGeometry}; the models are
  * {@code art/models/control_panel_trim/build_trim.py}'s.
  */
@@ -32,6 +33,19 @@ public enum TrimPiece {
 
     public String registryName() {
         return registryName;
+    }
+
+    /**
+     * The mounting style of a piece whose angled face takes components ({@link MountableTrimBlock}), or {@code null}
+     * for the pieces that stay decoration.
+     */
+    public dev.bwr.mod.panel.PanelType mountType() {
+        return switch (this) {
+            case HEADER_STRIP, HEADER_CANOPY -> dev.bwr.mod.panel.PanelType.HEADER_TILT;
+            case CORNER_VERTICAL_CHAMFER -> dev.bwr.mod.panel.PanelType.CHAMFER_VERTICAL;
+            case CORNER_BENCH_CHAMFER -> dev.bwr.mod.panel.PanelType.CHAMFER_BENCH;
+            default -> null;
+        };
     }
 
     /** An end cap closes one open side of a run and so has a side; every other piece is symmetric. */

@@ -5,7 +5,8 @@ import dev.bwr.mod.BwrMod;
 import java.util.List;
 
 /**
- * Annunciator window, 4x3 (spec 2.1): a backlit tile with two engraved lines.
+ * Annunciator window, 4x3 (spec 2.1): a backlit tile with up to four engraved lines; windows that touch draw as one
+ * grouped box (the client's {@code AnnunciatorBoxes}).
  * The alarm condition (input above / below / equal to a setpoint) is display
  * behaviour only; the sequence is ISA-18.1 A, see {@link AnnunciatorLogic}.
  * Acknowledge and reset come from a pushbutton configured with that role for the
@@ -22,6 +23,8 @@ public final class AnnunciatorType extends ComponentType {
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.text("Line1", "component.bwr.field.line1", AnnunciatorData.MAX_TEXT),
             ConfigField.text("Line2", "component.bwr.field.line2", AnnunciatorData.MAX_TEXT),
+            ConfigField.text("Line3", "component.bwr.field.line3", AnnunciatorData.MAX_TEXT),
+            ConfigField.text("Line4", "component.bwr.field.line4", AnnunciatorData.MAX_TEXT),
             ConfigField.color("Color", "component.bwr.field.tile_color"),
             ConfigField.choice("Condition", "component.bwr.field.condition", AnnunciatorData.CONDITIONS),
             ConfigField.decimal("Setpoint", "component.bwr.field.setpoint", -AnnunciatorData.LIMIT, AnnunciatorData.LIMIT),
