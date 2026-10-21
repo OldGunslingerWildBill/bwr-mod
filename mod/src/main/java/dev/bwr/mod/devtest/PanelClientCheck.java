@@ -77,6 +77,8 @@ public final class PanelClientCheck {
     private static final int ANGLED_FIRST = HARDWARE_FIRST + PanelHardwareShowcase.NAMES.length;
     /** The first stage of the annunciator boxes and the text fade (see {@link PanelAnnunciatorShowcase}), after the angled trim. */
     private static final int ANNUN_FIRST = ANGLED_FIRST + PanelAngledShowcase.NAMES.length;
+    /** The stage of the breaker spring check (see {@link PanelSpringCheck}), after the annunciator boxes. */
+    private static final int SPRING_FIRST = ANNUN_FIRST + PanelAnnunciatorShowcase.NAMES.length;
     private static final String[] NAMES = names();
 
     private static String[] names() {
@@ -84,7 +86,7 @@ public final class PanelClientCheck {
                 "board-lod-28m", "board-night-lamps", "wrench-config", "linker-binding", "linker-outline", "board-night-close"};
         String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length + PanelSlopeShowcase.NAMES.length
                 + PanelTrimShowcase.NAMES.length + PanelDuplexShowcase.NAMES.length + PanelRealScaleShowcase.NAMES.length
-                + PanelTextSizeShowcase.NAMES.length + PanelAngledShowcase.NAMES.length + PanelAnnunciatorShowcase.NAMES.length + PanelHardwareShowcase.NAMES.length];
+                + PanelTextSizeShowcase.NAMES.length + PanelAngledShowcase.NAMES.length + PanelAnnunciatorShowcase.NAMES.length + PanelHardwareShowcase.NAMES.length + 1];
         System.arraycopy(original, 0, all, 0, original.length);
         System.arraycopy(PanelModelShowcase.NAMES, 0, all, BAKED_FIRST, PanelModelShowcase.NAMES.length);
         System.arraycopy(PanelSlopeShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length,
@@ -98,6 +100,7 @@ public final class PanelClientCheck {
         System.arraycopy(PanelHardwareShowcase.NAMES, 0, all, HARDWARE_FIRST, PanelHardwareShowcase.NAMES.length);
         System.arraycopy(PanelAngledShowcase.NAMES, 0, all, ANGLED_FIRST, PanelAngledShowcase.NAMES.length);
         System.arraycopy(PanelAnnunciatorShowcase.NAMES, 0, all, ANNUN_FIRST, PanelAnnunciatorShowcase.NAMES.length);
+        all[all.length - 1] = PanelSpringCheck.NAME;
         return all;
     }
     private static final String STAGE_FILTER = System.getProperty("bwr.panelClientStages", "");
@@ -179,7 +182,7 @@ public final class PanelClientCheck {
             shown = 0;
             // The text fade is a client option: every stage draws with it on, except the ones that say -nofade.
             if (dev.bwr.mod.client.VisualEffectsConfig.SPEC.isLoaded()) {
-                dev.bwr.mod.client.VisualEffectsConfig.PANEL_TEXT_FADE.set(stage < ANNUN_FIRST || PanelAnnunciatorShowcase.fadeOn(stage - ANNUN_FIRST));
+                dev.bwr.mod.client.VisualEffectsConfig.PANEL_TEXT_FADE.set(stage < ANNUN_FIRST || stage >= SPRING_FIRST || PanelAnnunciatorShowcase.fadeOn(stage - ANNUN_FIRST));
             }
             PanelRenderContext.debugResetFadedLines();
             wantedCamera = null;
@@ -205,13 +208,15 @@ public final class PanelClientCheck {
                         PanelAngledShowcase.build(level);
                         PanelAnnunciatorShowcase.build(level);
                         PanelHardwareShowcase.build(level);
+                        PanelSpringCheck.build(level);
                         built = true;
                     } catch (Throwable failure) {
                         buildFailure = failure;
                         return;
                     }
                 }
-                Vec3 camera = selected >= ANNUN_FIRST ? PanelAnnunciatorShowcase.camera(selected - ANNUN_FIRST)
+                Vec3 camera = selected >= SPRING_FIRST ? PanelSpringCheck.camera()
+                        : selected >= ANNUN_FIRST ? PanelAnnunciatorShowcase.camera(selected - ANNUN_FIRST)
                         : selected >= ANGLED_FIRST ? PanelAngledShowcase.camera(selected - ANGLED_FIRST)
                         : selected >= HARDWARE_FIRST ? PanelHardwareShowcase.camera(selected - HARDWARE_FIRST)
                         : selected >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.camera(selected - TEXTSIZE_FIRST)
@@ -227,7 +232,8 @@ public final class PanelClientCheck {
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = selected >= ANNUN_FIRST ? PanelAnnunciatorShowcase.target(selected - ANNUN_FIRST)
+                Vec3 target = selected >= SPRING_FIRST ? PanelSpringCheck.target()
+                        : selected >= ANNUN_FIRST ? PanelAnnunciatorShowcase.target(selected - ANNUN_FIRST)
                         : selected >= ANGLED_FIRST ? PanelAngledShowcase.target(selected - ANGLED_FIRST)
                         : selected >= HARDWARE_FIRST ? PanelHardwareShowcase.target(selected - HARDWARE_FIRST)
                         : selected >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.target(selected - TEXTSIZE_FIRST)
@@ -243,7 +249,7 @@ public final class PanelClientCheck {
                 Vec3 delta = target.subtract(camera.add(0, player.getEyeHeight(), 0));
                 float yaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90);
                 float pitch = (float) -Math.toDegrees(Math.atan2(delta.y, Math.hypot(delta.x, delta.z)));
-                if (selected == 7 || selected >= ANNUN_FIRST) {
+                if (selected == 7 || selected >= ANNUN_FIRST && selected < SPRING_FIRST) {
                     heldCamera = camera;
                     heldYaw = yaw;
                     heldPitch = pitch;
@@ -256,7 +262,7 @@ public final class PanelClientCheck {
                         || selected >= DUPLEX_FIRST && selected < REAL_FIRST && PanelDuplexShowcase.night(selected - DUPLEX_FIRST)
                         || selected >= REAL_FIRST && selected < TEXTSIZE_FIRST && PanelRealScaleShowcase.night(selected - REAL_FIRST)
                         || selected >= ANGLED_FIRST && selected < ANNUN_FIRST && PanelAngledShowcase.night(selected - ANGLED_FIRST)
-                        || selected >= ANNUN_FIRST && PanelAnnunciatorShowcase.night(selected - ANNUN_FIRST)
+                        || selected >= ANNUN_FIRST && selected < SPRING_FIRST && PanelAnnunciatorShowcase.night(selected - ANNUN_FIRST)
                         ? 18_000 : 6_000);
                 level.setWeatherParameters(6000, 0, false, false);
                 if (selected == 7) {
@@ -309,6 +315,7 @@ public final class PanelClientCheck {
         if (shown == 85 && NAMES[stage].endsWith("scrolled") && mc.screen != null) {
             mc.screen.mouseScrolled(640, 300, 0, -3);
         }
+        if (NAMES[stage].equals(PanelSpringCheck.NAME) && shown >= 70 && !PanelSpringCheck.tick(mc)) return;
         if (shown < 105) return;
         if (picker && !(mc.screen instanceof SizePickerScreen))
             throw new AssertionError("The size picker was closed before its screenshot");
@@ -345,7 +352,7 @@ public final class PanelClientCheck {
             if (stage >= BAKED_FIRST) {
                 // Every component must draw baked exactly when a loaded model exists for its look.
                 LogUtils.getLogger().info("PANEL CLIENT CHECK baked models {}: {} components drawn from baked models ({} loaded)",
-                        NAMES[stage], stage >= ANNUN_FIRST ? PanelAnnunciatorShowcase.verify(mc, stage - ANNUN_FIRST)
+                        NAMES[stage], stage >= SPRING_FIRST ? 0 : stage >= ANNUN_FIRST ? PanelAnnunciatorShowcase.verify(mc, stage - ANNUN_FIRST)
                                 : stage >= ANGLED_FIRST ? PanelAngledShowcase.verify(mc, stage - ANGLED_FIRST)
                                 : stage >= HARDWARE_FIRST ? PanelHardwareShowcase.verify(mc, stage - HARDWARE_FIRST)
                                 : stage >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.verify(mc, stage - TEXTSIZE_FIRST)
@@ -355,7 +362,7 @@ public final class PanelClientCheck {
                                 : stage >= SLOPE_FIRST ? PanelSlopeShowcase.verify(mc, stage - SLOPE_FIRST)
                                 : PanelModelShowcase.verify(mc, stage - BAKED_FIRST), dev.bwr.mod.panel.model.PanelModels.loadedCount());
             }
-            if (stage >= ANNUN_FIRST) {
+            if (stage >= ANNUN_FIRST && stage < SPRING_FIRST) {
                 // The fade is really on or off: a faded line is drawn as a strip, and only when the option is on.
                 int faded = PanelRenderContext.debugFadedLines();
                 boolean far = NAMES[stage].contains("-far-") || NAMES[stage].contains("-mid-");
