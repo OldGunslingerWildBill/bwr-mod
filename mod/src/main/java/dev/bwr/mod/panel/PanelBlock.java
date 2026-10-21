@@ -58,6 +58,15 @@ public class PanelBlock extends BaseEntityBlock {
         return type;
     }
 
+    /**
+     * Whether cell {@code (cx, cy)} of this block's grid is on its mounting surface (see
+     * {@link PanelGeometry#cellUsable}); a component can only stand on usable cells.
+     */
+    public boolean cellUsable(BlockState state, int cx, int cy) {
+        PanelType style = panelType(state);
+        return style != null && PanelGeometry.cellUsable(style, cx, cy);
+    }
+
     @Override
     protected MapCodec<? extends BaseEntityBlock> codec() {
         return switch (type) {
@@ -66,12 +75,15 @@ public class PanelBlock extends BaseEntityBlock {
             case CONSOLE -> CODEC_CONSOLE;
             case BACK_PANEL -> CODEC_BACK_PANEL;
             case DUPLEX_BOARD, DUPLEX_BENCH, DUPLEX_HEADER -> DuplexPanelBlock.CODEC;
+            case HEADER_TILT, CHAMFER_VERTICAL, CHAMFER_BENCH ->
+                    throw new IllegalStateException("angled trim blocks answer with their own codec");
         };
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
+        builder.add(PanelFinish.FINISH);
     }
 
     @Override
@@ -122,6 +134,9 @@ public class PanelBlock extends BaseEntityBlock {
         }
         int[] cell = new int[2];
         if (!PanelOps.cellAt(be, sender.getEyePosition(), sender.getLookAngle(), cell)) {
+            if (wrench && sender.isShiftKeyDown()) {
+                PanelFinishes.cycle(level, pos, sender); // off the mounting plane (a side, the top): nothing to remove there
+            }
             return ItemInteractionResult.CONSUME;
         }
         if (tape) {
@@ -165,6 +180,9 @@ public class PanelBlock extends BaseEntityBlock {
                     net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sender,
                             new dev.bwr.mod.panel.mimic.MimicPayloads.OpenConfig(pos, path.localId()));
                 }
+            } else {
+                // Sneak-click on a bare spot (no component, nothing to remove): the wrench steps the panel's finish.
+                PanelFinishes.cycle(level, pos, sender);
             }
         }
         return ItemInteractionResult.CONSUME;
@@ -284,5 +302,13 @@ public class PanelBlock extends BaseEntityBlock {
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
+    }
+
+    /** Pick block gives the item with this block's finish. */
+    @Override
+    public net.minecraft.world.item.ItemStack getCloneItemStack(BlockState state, net.minecraft.world.phys.HitResult target,
+                                                                net.minecraft.world.level.LevelReader level,
+                                                                BlockPos pos, net.minecraft.world.entity.player.Player player) {
+        return PanelFinish.withFinish(super.getCloneItemStack(state, target, level, pos, player), PanelFinish.of(state));
     }
 }

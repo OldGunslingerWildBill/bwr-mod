@@ -20,6 +20,12 @@ textures, not in extra geometry, because these blocks tile across whole rooms:
   annunciator the annunciator panel: a recessed box of 4 x 3 big windows with labels and a caption, 128 x 128 pixels
   annunciator_lit  the bright (glowing) windows laid over some of those, 91 x 17
   vent        a louvre grille panel, 128 x 128
+
+Finishes: the painted textures (face, paint, bezel, back, cheek, cabinet) are written in GREY, not seafoam: every
+pixel is the seafoam picture's pixel divided by the seafoam colour of its kind (paint or bezel), times the grey level
+NEUTRAL (= PanelFinish.PANEL_NEUTRAL, 230). The models give those materials a tint index (0 paint, 1 bezel) and
+PanelFinish colours them, so one texture serves every finish and seafoam renders as before. annunciator and vent keep
+their seafoam border in every finish (they are a picture of a box and a grille, not a painted surface).
 """
 import os
 import struct
@@ -77,6 +83,18 @@ def frame(px, x0, y0, x1, y1, colour):
         px[y0][x] = px[y1][x] = colour
     for y in range(y0, y1 + 1):
         px[y][x0] = px[y][x1] = colour
+
+
+# Which painted textures are written grey, and the seafoam colour that becomes the tint colour (paint -> tint 0, bezel -> 1).
+NEUTRAL = 230
+GREY_OF = {"face": PAINT, "paint": PAINT, "cheek": PAINT, "cabinet": PAINT, "bezel": BEZEL, "back": BEZEL}
+
+def to_grey(px, ref):
+    """The same picture in grey: each pixel is NEUTRAL times its mean channel ratio to the colour `ref`."""
+    out = []
+    for row in px:
+        out.append([(min(255, round(NEUTRAL * sum(c / r for c, r in zip(p, ref)) / 3.0)),) * 3 for p in row])
+    return out
 
 
 def face():
@@ -259,10 +277,14 @@ TEXTURES = {"face": face, "paint": paint, "bezel": bezel, "back": back, "kick": 
 
 def main():
     os.makedirs(OUT, exist_ok=True)
+    count = 0
     for name, make in TEXTURES.items():
         width, height, px = make()
+        if name in GREY_OF:
+            px = to_grey(px, GREY_OF[name])
         write_png(os.path.join(OUT, name + ".png"), width, height, px)
-    print("wrote", len(TEXTURES), "textures to", OUT)
+        count += 1
+    print("wrote", count, "textures to", OUT)
 
 
 if __name__ == "__main__":

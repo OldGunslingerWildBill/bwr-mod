@@ -167,6 +167,10 @@ public final class BwrItems {
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> PUSH_TURN_SWITCH =
             ITEMS.register("push_turn_switch", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.PUSH_TURN_SWITCH.id()));
+    /** The ACK, RESET, SILENCE and TEST pushbuttons of an annunciator box in one part. */
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> ANNUNCIATOR_CONTROL =
+            ITEMS.register("annunciator_control", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.ANNUNCIATOR_CONTROL.id()));
     public static final DeferredItem<BlockItem> CONTROL_ROD_DRIVE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_ROD_DRIVE);
     public static final DeferredItem<BlockItem> CORE_SPRAY_SPARGER =
@@ -447,6 +451,7 @@ public final class BwrItems {
                         output.accept(BAR_GAUGE.get());
                         output.accept(RPS_TRIP.get());
                         output.accept(PUSH_TURN_SWITCH.get());
+                        output.accept(ANNUNCIATOR_CONTROL.get());
                         output.accept(RELAY_CABINET.get());
                         output.accept(RELAY_CABINET_PLAIN.get());
                         output.accept(OPERATOR_DESK.get());

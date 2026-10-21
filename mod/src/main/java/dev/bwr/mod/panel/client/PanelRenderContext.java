@@ -7,12 +7,15 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.PanelGeometry;
 import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.model.Legends;
+import dev.bwr.mod.panel.model.TextFade;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 /**
  * Per-frame drawing state handed to {@link ComponentModel#renderDynamic} and
@@ -81,6 +84,23 @@ public final class PanelRenderContext implements QuadSink {
     private float gameTime;
     private double originU;
     private double originV;
+    /**
+     * The distance fade of printed text (see {@link TextFade}): screen pixels one block spans at distance 1, 0 when the
+     * fade is off (the default: a capture into a text buffer never fades), and the camera relative to the block.
+     */
+    private float fadeFocal;
+    private double camX;
+    private double camY;
+    private double camZ;
+    /** The component being drawn: its size, and the screen pixels one of its cells spans, or -1 until a text asks for it. */
+    private float componentW;
+    private float componentH;
+    private float cellPixels = -1.0f;
+    private final Vector3f stripCorner = new Vector3f();
+    /** Lines drawn as a strip (fully or partly faded) since {@link #debugResetFadedLines}, for checks. */
+    private static int fadedLines;
+    private static int fadeFrames;
+    private static float lastFadeTime = Float.NaN;
 
     /** Starts drawing the components of one panel block. */
     void begin(PanelBlockEntity be, PoseStack stack, MultiBufferSource buffers, int light, int overlay,
@@ -94,6 +114,7 @@ public final class PanelRenderContext implements QuadSink {
         this.lod = lod;
         this.gameTime = time;
         this.font = font;
+        this.fadeFocal = 0.0f;
         PanelGeometry.Frame f = PanelGeometry.frame(be.panelType(), be.facing());
         this.frame = f;
         setNormal(NORMAL_FACE, (float) f.nx, (float) f.ny, (float) f.nz);
@@ -122,15 +143,72 @@ public final class PanelRenderContext implements QuadSink {
     private float fittedZ(float z) { return classicPlacement==null?z:classicPlacement.z(z); }
     private float fittedScale(float scale) { return classicPlacement==null?scale:classicPlacement.length(scale); }
 
+    /**
+     * Turns the distance fade of text on for this block, after {@link #begin}: {@code focalPixels} is half the window
+     * height times the projection's focal length (the pixels one block spans at distance 1), and the camera is given
+     * relative to the block's origin, in blocks.
+     */
+    void fade(float focalPixels, double relX, double relY, double relZ) {
+        this.fadeFocal = focalPixels;
+        if (gameTime != lastFadeTime) {
+            lastFadeTime = gameTime;
+            fadeFrames++;
+        }
+        this.camX = relX;
+        this.camY = relY;
+        this.camZ = relZ;
+    }
+
+    /**
+     * Screen pixels one cell of the component being drawn spans, at its centre: once per component per frame, on the
+     * first text that asks; infinite (no fade) when the fade is off.
+     */
+    private float pixelsPerCell() {
+        if (fadeFocal <= 0.0f) {
+            return Float.POSITIVE_INFINITY;
+        }
+        if (cellPixels < 0.0f) {
+            double u = originU + componentW * 0.5;
+            double v = originV + componentH * 0.5;
+            double dx = frame.x(u, v, 0.0) - camX;
+            double dy = frame.y(u, v, 0.0) - camY;
+            double dz = frame.z(u, v, 0.0) - camZ;
+            cellPixels = fadeFocal / (float) Math.max(0.05, Math.sqrt(dx * dx + dy * dy + dz * dz)) / PanelGeometry.GRID;
+        }
+        return cellPixels;
+    }
+
+    /** Lines the distance fade has changed since the last reset, for checks. */
+    public static int debugFadedLines() {
+        return fadedLines;
+    }
+
+    /** Frames since the last reset in which the fade was on for some block, for checks. */
+    public static int debugFadeFrames() {
+        return fadeFrames;
+    }
+
+    public static void debugResetFadedLines() {
+        fadedLines = 0;
+        fadeFrames = 0;
+        lastFadeTime = Float.NaN;
+    }
+
     /** Starts drawing the block's mimic layer: its coordinates are the block's own cells, with no component origin. */
     void beginLayer() {
         classicPlacement = null;
+        componentW = 0.0f;
+        componentH = 0.0f;
+        cellPixels = -1.0f;
         this.originU = 0.0;
         this.originV = 0.0;
     }
 
     void beginComponent(PanelComponent component) {
         classicPlacement=null;
+        componentW = component.w();
+        componentH = component.h();
+        cellPixels = -1.0f;
         this.originU = component.x();
         this.originV = component.y();
     }
@@ -287,10 +365,63 @@ public final class PanelRenderContext implements QuadSink {
         textMatrix.translate((float) frame.x(u, v, fittedZ(z)), (float) frame.y(u, v, fittedZ(z)), (float) frame.z(u, v, fittedZ(z)));
         textMatrix.mul(basis);
         textMatrix.scale(fittedScale(scale), fittedScale(scale) / rowAspect(), fittedScale(scale));
-        font.drawInBatch(text, 0.0f, 0.0f, 0xFF000000 | rgb, false, textMatrix, buffers,
-                Font.DisplayMode.POLYGON_OFFSET, 0, packedLight(emissive, light));
+        int color = fadedColor(text, 0.0f, 0.0f, fittedScale(scale), rgb, emissive);
+        if (color != 0) {
+            font.drawInBatch(text, 0.0f, 0.0f, color, false, textMatrix, buffers,
+                    Font.DisplayMode.POLYGON_OFFSET, 0, packedLight(emissive, light));
+        }
         consumer = null;
         glassConsumer = null;
+    }
+
+    /**
+     * The colour (alpha first) a line of text is drawn in once the distance fade has had its say, or 0 when it is gone.
+     * Where the glyphs are smaller than a few screen pixels they fade out and a plain strip in the same colour, which is
+     * what the ink looks like from afar, is drawn instead ({@link TextFade}); the line is laid out from the length of the
+     * string alone, so a faded line costs one quad. {@link #textMatrix} must already be set for the line; {@code
+     * (x, y)} is its top-left in font pixels and {@code cellsPerPixel} the true size of a font pixel.
+     */
+    private int fadedColor(String text, float x, float y, float cellsPerPixel, int rgb, boolean emissive) {
+        float cap = Legends.CAP_PIXELS * cellsPerPixel * pixelsPerCell();
+        if (!(cap < TextFade.FULL_PX)) {
+            return 0xFF000000 | rgb;
+        }
+        fadedLines++;
+        strip(text.length(), x, y, TextFade.stripAlpha(cap), rgb, emissive);
+        float alpha = TextFade.textAlpha(cap);
+        return alpha < 0.03f ? 0 : (int) (alpha * 255.0f) << 24 | rgb;
+    }
+
+    /** A soft strip where a line of {@code chars} characters would be: the middle of the cap height, in the text's colour. */
+    private void strip(int chars, float x, float y, float alpha, int rgb, boolean emissive) {
+        int a = (int) (alpha * 255.0f);
+        if (a < 2 || chars <= 0) {
+            return;
+        }
+        VertexConsumer out = buffers.getBuffer(GLASS);
+        float x1 = x + chars * 5.6f - 1.0f;
+        float top = y + 1.5f;
+        float bottom = y + 5.5f;
+        int packed = packedLight(emissive, light);
+        float nx = emissive ? 0.0f : normals[FACE_AT];
+        float ny = emissive ? 1.0f : normals[FACE_AT + 1];
+        float nz = emissive ? 0.0f : normals[FACE_AT + 2];
+        stripVertex(out, x, top, rgb, a, packed, nx, ny, nz);
+        stripVertex(out, x, bottom, rgb, a, packed, nx, ny, nz);
+        stripVertex(out, x1, bottom, rgb, a, packed, nx, ny, nz);
+        stripVertex(out, x1, top, rgb, a, packed, nx, ny, nz);
+        consumer = null;
+        glassConsumer = null;
+    }
+
+    private void stripVertex(VertexConsumer out, float x, float y, int rgb, int alpha, int packed, float nx, float ny, float nz) {
+        textMatrix.transformPosition(x, y, 0.0f, stripCorner);
+        out.addVertex(stripCorner.x, stripCorner.y, stripCorner.z)
+                .setColor(rgb >> 16 & 0xFF, rgb >> 8 & 0xFF, rgb & 0xFF, alpha)
+                .setUv(0.5f, 0.5f)
+                .setOverlay(overlay)
+                .setLight(packed)
+                .setNormal(pose, nx, ny, nz);
     }
 
     /**
@@ -330,8 +461,11 @@ public final class PanelRenderContext implements QuadSink {
             textMatrix.rotateZ((float) Math.toRadians(rotDegrees));
         }
         textMatrix.scale(fittedScale(scale));
-        font.drawInBatch(text, dx, dy, 0xFF000000 | rgb, false, textMatrix, buffers,
-                Font.DisplayMode.POLYGON_OFFSET, 0, packedLight(emissive, light));
+        int color = fadedColor(text, dx, dy, fittedScale(scale), rgb, emissive);
+        if (color != 0) {
+            font.drawInBatch(text, dx, dy, color, false, textMatrix, buffers,
+                    Font.DisplayMode.POLYGON_OFFSET, 0, packedLight(emissive, light));
+        }
         consumer = null;
         glassConsumer = null;
     }

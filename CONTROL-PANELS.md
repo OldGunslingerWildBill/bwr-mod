@@ -15,10 +15,40 @@ order and plug into the same wiring; the worked example below names them as the 
 | --- | --- |
 | Panel blocks (vertical, benchboard, console) | Place them side by side; blocks of one style and facing whose faces line up form a **group** |
 | Component items | Right-click a panel face to place (sneak-click cycles the size). The ghost is green when it fits |
-| Panel wrench | Right-click a component: label, colours and other settings. Sneak-right-click removes it |
+| Panel wrench | Right-click a component: label, colours and other settings. Sneak-right-click removes it. Sneak-right-click on a bare spot of a panel (or on trim or furniture) changes its **finish**, see "Finishes" |
 | **Panel linker** | Wires components. See below |
 | **Networking Wrench** | Selects a device, shows its lines and Networking screen, names machines and wires components. See below |
 | **Mimic tape** | Draws flow lines with arrows on the board face: see section 2d |
+
+### Finishes
+
+Panel bodies, trim blocks and the room furniture come in five paint finishes, as seen in real plants:
+
+| Finish | Paint | Bezel | Where it comes from |
+| --- | --- | --- | --- |
+| seafoam (default) | `A7BCAE` | `7D9284` | the original GE green; every block placed before finishes existed |
+| cream | `DDD6BB` | `A8A38E` | US and French rooms, VVER-440 (CR-FURNITURE-PWR-RESEARCH.md) |
+| tan | `C2AE8A` | `9A8A6C` | Shearon Harris beige with brown trim |
+| grey | `B4B9BC` | `8A9092` | Sizewell B, Qinshan pale grey |
+| light blue | `9CC4D6` | `7499AA` | the owner's simulator (its panel is `5F8A9B` in the screenshot, under that game's lighting) |
+
+**Changing it:** hold the panel wrench and **sneak-right-click** a bare spot of a panel (no component under the crosshair),
+or any end cap, header, plinth, corner or piece of furniture. Each click steps to the next finish (the chat bar names it).
+Clicking a mounted component with the same gesture still removes the component, so the finish gesture only works where
+that would do nothing. A multi-block piece (a duplex column, a 2 high cabinet, the supervisor desk, a wall display)
+changes as one; a single panel changes alone, so a run can be mixed. Grouping and mounting do not look at the finish:
+components span blocks of different finishes, and they are untouched by a repaint.
+
+**Saves and items:** the finish is the blockstate property `finish`; a block with none (an old save) is seafoam. A dropped
+block keeps its finish as the item's vanilla `block_state` component (none for seafoam), and placing the item gives every
+block of the piece that finish. Pick block gives the finished item.
+
+**How it is drawn:** the painted materials of the OBJ models (`face`, `paint`, `bezel`, `back`, `cheek`, `cabinet`, and the
+furniture's `paint`, `bezel`, `top` and the mimic and display `frame`) have a `neoforge_TintIndex`; their textures are grey
+(`art/models/control_panel_trim/make_textures.py`, level 230), and `PanelFinishColors` multiplies in the finish colour for
+blocks and for item icons. Dark trim, kick plinths, hoods, screens, louvres and handles have no tint and keep their colour.
+The annunciator strip, canopy and vent are pictures of a window box and a grille, and keep their seafoam border in every
+finish. Colours are in `PanelFinish.java`; a new finish is one more enum value and one more loot table child per block.
 
 ### Component sizes
 
@@ -46,6 +76,7 @@ hold with a size chosen keeps it, and a component already on a panel keeps the s
 | Thumbwheel | 3 cells wide per digit, 6 tall: 9x6 (3 digits), 3x6 to 24x6 (1 to 8 digits); **real** 1 cell wide per digit, 2 tall: 3x2 (3 digits), 1x2 to 8x2 |
 | Lamp | 4x4, 6x6, **real** 1x1 |
 | Annunciator window | 12x8, 16x12, **real** 1x1, 2x2 |
+| Annunciator control module | 24x6, **real** 2x1, 4x2 |
 | Bar graph | 3x24, 3x12, 3x16, 3x32 and the same lying down (24x3 ...); one segment per 2 cells; **real** 1x3, 3x1, 1x6, 6x1 (two segments per cell) |
 | Round dial | 12x12, 16x16, 20x20, 24x24, 32x32, **real** 2x2, 3x3 |
 | Edgewise meter | vertical 6x16, 6x24, 8x24, 8x32, **real** 1x3; horizontal 16x6, 24x6, 24x8, 32x8, **real** 3x1 |
@@ -115,6 +146,31 @@ the window. A bar graph under 3 cells thick has two segments per cell, a segment
 cells tall has one digit per cell. Everything 3 cells across or more draws exactly as before. A block can own up to
 256 components by default now (`maxComponentsPerBlock`, was 64: a block face of 1x1 windows holds 256); a
 `bwr-panels.toml` written by an earlier version keeps its own value, delete the line to take the new default.
+
+**Annunciator boxes.** Annunciator windows that touch along a whole side draw as ONE box, like the reference boards: a
+thin dark gap between the windows and one shared dark recessed frame, with a bezel lip, round the group. Nothing is
+configured and nothing is sent: each client works the frame out from the windows of the panel group it already has
+(`AnnunciatorBoxes`, a pure edge detection in `AnnunciatorBox`), so windows in different blocks of one group join, a
+window beside a gap or another part keeps its own frame on that side, and an L of windows gets an inside corner. A window
+by itself looks like a bezelled tile as before. Lit colour and flash are unchanged: the tile is full-bright when lit (a
+dim version of its colour when off), the lettering is a dark tone of the colour on a white or amber tile and light on a
+red one, and dim when off. The legend is up to **four lines** (Engraved line 1 to 4 in the wrench screen; lines 3 and 4
+are saved only when used), each centred, one scale for all (`AnnunciatorLayout`). Not done: the row and column labels
+of the decorative header strip.
+
+**Annunciator control module** (`annunciator_control`, 2x1 real, 24x6 and 4x2 also): ACK, RESET, SILENCE and TEST
+pushbuttons in one part. Each output (`ack`, `reset`, `silence`, `test`) is 1 while held, like a pushbutton, and only
+one button is held at a time; the quarter of the face a click lands on picks the button. ACK and RESET do what a
+pushbutton with that role does (`AnnunciatorGroups`, once per press, for the module's **Annunciator group**), nothing
+more. SILENCE has no horn to silence, so it is an output only. TEST lights every window of the module's group while it
+is held (a lamp test the client draws from the synced output); it changes no alarm state and sends nothing to the plant.
+
+**Distance fade of text.** Small printed text (annunciator legends, gauge numbers, captions) turns to speckle from across
+a room. The panel renderer works out, once per component per frame, how tall a glyph is on the screen (`TextFade`: the
+distance and the projection of the level pass); below 4.5 pixels of cap height the glyphs fade out, and by 2 pixels they
+are gone and a soft strip in the text's colour, at most half opaque, stands in for the line (one quad, from the length of
+the string; nothing is laid out per glyph). The blend is continuous, so there is no boundary to flicker at. The client
+option `panelTextFade` (default on, in `bwr-visuals.toml`) turns it off.
 
 The bar gauge keeps the proportions of the owner's CAD part (a case 5 by 20 cm with its tag plate above), so it is
 centred in whichever size it has, with panel showing either side. Its white face is curved along its length, standing
@@ -264,18 +320,36 @@ Every machine peripheral also has `getName()`, `setName(text)`, `getPort()` and 
 
 ### Trim blocks: finishing a control room
 
-Nothing mounts on these; they are decoration with a collision shape that follows the model, no block entity and no
-ticking, so a whole room of them costs only its model. Each has a facing like a panel (the operator's side: it
+Most of these are decoration with a collision shape that follows the model, no block entity and no ticking, so a
+whole room of them costs only its model. The exceptions are the annunciator header strip, its canopy and the two
+45 degree chamfer corners, which take components (below). Each has a facing like a panel (the operator's side: it
 faces you when you place it). Crafted from panels and iron; see the recipes.
 
 | Block | Use |
 | --- | --- |
 | End cap (flat, benchboard, console, rounded) | A 2 px cheek with the exact cross-section of its panel, closing the open end of a run. It goes in the block beside the last panel and takes its side from the panel it is placed against (sneak flips it) |
-| Annunciator header strip, and with a canopy | A half-height block on top of a vertical board, tilted forward 12 degrees, with a grid of window tiles (decorative in this version). The canopy has a projecting top hood |
+| Annunciator header strip, and with a canopy | A full block on top of a vertical board, flush with its face at the foot and leaning back 5 degrees, with a grid of window tiles. **Takes components** on the leaning face. The canopy has a projecting top hood over the top row of cells |
 | Panel base cabinet | One block high, under a vertical board (or as a counter), with a dark recessed toe-kick |
 | Panel foot apron | A low non-slip plate on the floor in front of benchboards and consoles |
 | Panel toe-kick strip | A low dark skirting strip along a wall |
-| Corner (vertical or benchboard; inside, outside, 45 degree) | Closes the corners of a U- or horseshoe-shaped room. The corner sits at the far left of its block as you look at it, so the four directions you can look give the four corners. A vertical *inside* corner is an L, the *45 degree* one fills the L with a diagonal, and the *outside* one is the post where two runs turn the outside of a corner. The benchboard corners are the valley, the hip and a diagonal facet. They carry no mounting face |
+| Corner (vertical or benchboard; inside, outside, 45 degree) | Closes the corners of a U- or horseshoe-shaped room. The corner sits at the far left of its block as you look at it, so the four directions you can look give the four corners. A vertical *inside* corner is an L, the *45 degree* one fills the L with a diagonal, and the *outside* one is the post where two runs turn the outside of a corner. The benchboard corners are the valley, the hip and a diagonal facet. Only the two *45 degree* (chamfer) corners carry a mounting face |
+
+#### Mounting on the angled trim
+
+The header strip, the canopy and the two chamfer corners are panel blocks (the panel block entity, groups, claims, the
+ghost, the wrench and the drops are all the panel's own). Their faces are not square to the block, so each is a panel
+style of its own, and the 16 x 16 grid is laid on the face the model draws. A cell is 1/16 block wide along the
+face, as everywhere, so a part is its real size on a chamfer too.
+
+| Block | Style | Face | Joins |
+| --- | --- | --- | --- |
+| Header strip, canopy | `HEADER_TILT` | the leaning annunciator panel, 5 degrees back from the board face; a row is 1/cos 5 degrees long | sideways, strip and canopy together, to the operator's right and left. **One row**: the next block up is 0.0875 further back, which is not on the block grid (as the console), so a strip never grows upward. The canopy's hood takes the top row of cells |
+| Vertical chamfer | `CHAMFER_VERTICAL` | the diagonal facet filling the inside corner of two vertical boards, 0.71 block wide, normal toward the operator's right-front; **11 of the 16 columns** are on it | **up and down** into a taller facet; never sideways (the facet of the next block along is not on its plane). A part wider than 11 cells does not fit |
+| Bench chamfer | `CHAMFER_BENCH` | the triangle (1.41 block along its top, a block tall) that fills the inside corner of two benchboards, normal pointing up and toward the operator's right-front; only the cells wholly on the triangle are usable | nothing: a group of one |
+
+Looking at a diagonal face works as on any other: the cell under the crosshair, the green or red ghost and the wrench
+outline all come from the face's own plane. A placed block that had no block entity (a world saved before) gets one
+when its chunk loads.
 
 The panel bodies are modelled in Blender (`art/models/control_panel_trim/`): the mounting face is exactly where it
 was, and the detail is behind it (module seams on the face, service-door backs, bevelled back edges, a dark
