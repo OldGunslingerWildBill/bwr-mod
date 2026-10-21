@@ -219,10 +219,13 @@ public final class PremadeBoardTests {
                 }
             }
             BoardPlan plan = new BoardPlan(template, BlockPos.ZERO, Direction.NORTH);
-            check(h, !plan.blocks().isEmpty() && plan.panelPositions().size() == plan.blocks().size(), name + ": the plan's blocks are not all panels");
+            check(h, !plan.blocks().isEmpty() && !plan.panelPositions().isEmpty() && plan.panelPositions().size() <= plan.blocks().size(),
+                    name + ": no panel blocks");
             for (BoardPlan.Block block : plan.blocks()) {
-                check(h, block.state().getBlock() instanceof PanelBlock && block.item() != net.minecraft.world.item.Items.AIR,
-                        name + ": " + block.state() + " is not a panel block with an item");
+                // a duplex column also has body cells with no item (the item of its column pays for them)
+                boolean bodyCell = block.item() == null && block.state().getBlock() instanceof dev.bwr.mod.panel.DuplexPanelBlock;
+                check(h, block.state().getBlock() instanceof PanelBlock && (bodyCell || block.item() != null
+                        && block.item() != net.minecraft.world.item.Items.AIR), name + ": " + block.state() + " is not a panel block with an item");
             }
             check(h, BoardPlacer.limits(template) == null, name + ": " + BoardPlacer.limits(template));
         }
