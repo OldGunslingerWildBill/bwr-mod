@@ -70,8 +70,9 @@ public final class ControllerStationTests {
         helper.assertTrue(out.equals(List.of("demand", "mode", "raise", "lower", "setpoint")), "outputs: " + out);
         helper.assertTrue(type.isInteractive() && type.holdable() && type.scrollable(), "operated, held and scrolled");
         List<Footprint> sizes = type.footprints();
-        helper.assertTrue(type.realSizes() == 2 && sizes.get(type.realDefaultIndex()).equals(Footprint.of(3, 6))
-                && sizes.contains(Footprint.of(2, 4)), "a new item starts at the real 3 x 6: " + sizes);
+        helper.assertTrue(type.realSizes() == 4 && sizes.get(type.realDefaultIndex()).equals(Footprint.of(6, 12))
+                && sizes.contains(Footprint.of(3, 6)) && sizes.contains(Footprint.of(2, 4)) && sizes.contains(Footprint.of(4, 8)),
+                "a new item starts at twice the real size, 6 x 12, and the exact 3 x 6 and 2 x 4 are listed: " + sizes);
         helper.succeed();
     }
 

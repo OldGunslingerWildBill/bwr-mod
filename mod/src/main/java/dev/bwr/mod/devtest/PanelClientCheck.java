@@ -71,6 +71,8 @@ public final class PanelClientCheck {
     private static final int REAL_FIRST = DUPLEX_FIRST + PanelDuplexShowcase.NAMES.length;
     /** The first stage of the gauges' Text size and Tick size (see {@link PanelTextSizeShowcase}), after the real size board. */
     private static final int TEXTSIZE_FIRST = REAL_FIRST + PanelRealScaleShowcase.NAMES.length;
+    /** The first stage of the control hardware (see {@link PanelHardwareShowcase}), after the Text size and Tick size stages. */
+    private static final int HARDWARE_FIRST = TEXTSIZE_FIRST + PanelTextSizeShowcase.NAMES.length;
     private static final String[] NAMES = names();
 
     private static String[] names() {
@@ -78,7 +80,7 @@ public final class PanelClientCheck {
                 "board-lod-28m", "board-night-lamps", "wrench-config", "linker-binding", "linker-outline", "board-night-close"};
         String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length + PanelSlopeShowcase.NAMES.length
                 + PanelTrimShowcase.NAMES.length + PanelDuplexShowcase.NAMES.length + PanelRealScaleShowcase.NAMES.length
-                + PanelTextSizeShowcase.NAMES.length];
+                + PanelTextSizeShowcase.NAMES.length + PanelHardwareShowcase.NAMES.length];
         System.arraycopy(original, 0, all, 0, original.length);
         System.arraycopy(PanelModelShowcase.NAMES, 0, all, BAKED_FIRST, PanelModelShowcase.NAMES.length);
         System.arraycopy(PanelSlopeShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length,
@@ -89,6 +91,7 @@ public final class PanelClientCheck {
                 + PanelSlopeShowcase.NAMES.length + PanelTrimShowcase.NAMES.length, PanelDuplexShowcase.NAMES.length);
         System.arraycopy(PanelRealScaleShowcase.NAMES, 0, all, REAL_FIRST, PanelRealScaleShowcase.NAMES.length);
         System.arraycopy(PanelTextSizeShowcase.NAMES, 0, all, TEXTSIZE_FIRST, PanelTextSizeShowcase.NAMES.length);
+        System.arraycopy(PanelHardwareShowcase.NAMES, 0, all, HARDWARE_FIRST, PanelHardwareShowcase.NAMES.length);
         return all;
     }
     private static final String STAGE_FILTER = System.getProperty("bwr.panelClientStages", "");
@@ -172,13 +175,15 @@ public final class PanelClientCheck {
                         PanelDuplexShowcase.build(level);
                         PanelRealScaleShowcase.build(level);
                         PanelTextSizeShowcase.build(level);
+                        PanelHardwareShowcase.build(level);
                         built = true;
                     } catch (Throwable failure) {
                         buildFailure = failure;
                         return;
                     }
                 }
-                Vec3 camera = selected >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.camera(selected - TEXTSIZE_FIRST)
+                Vec3 camera = selected >= HARDWARE_FIRST ? PanelHardwareShowcase.camera(selected - HARDWARE_FIRST)
+                        : selected >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.camera(selected - TEXTSIZE_FIRST)
                         : selected >= REAL_FIRST ? PanelRealScaleShowcase.camera(selected - REAL_FIRST)
                         : selected >= DUPLEX_FIRST ? PanelDuplexShowcase.camera(selected - DUPLEX_FIRST)
                         : selected >= TRIM_FIRST ? PanelTrimShowcase.camera(selected - TRIM_FIRST)
@@ -191,7 +196,8 @@ public final class PanelClientCheck {
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = selected >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.target(selected - TEXTSIZE_FIRST)
+                Vec3 target = selected >= HARDWARE_FIRST ? PanelHardwareShowcase.target(selected - HARDWARE_FIRST)
+                        : selected >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.target(selected - TEXTSIZE_FIRST)
                         : selected >= REAL_FIRST ? PanelRealScaleShowcase.target(selected - REAL_FIRST)
                         : selected >= DUPLEX_FIRST ? PanelDuplexShowcase.target(selected - DUPLEX_FIRST)
                         : selected >= TRIM_FIRST ? PanelTrimShowcase.target(selected - TRIM_FIRST)
@@ -304,7 +310,8 @@ public final class PanelClientCheck {
             if (stage >= BAKED_FIRST) {
                 // Every component must draw baked exactly when a loaded model exists for its look.
                 LogUtils.getLogger().info("PANEL CLIENT CHECK baked models {}: {} components drawn from baked models ({} loaded)",
-                        NAMES[stage], stage >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.verify(mc, stage - TEXTSIZE_FIRST)
+                        NAMES[stage], stage >= HARDWARE_FIRST ? PanelHardwareShowcase.verify(mc, stage - HARDWARE_FIRST)
+                                : stage >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.verify(mc, stage - TEXTSIZE_FIRST)
                                 : stage >= REAL_FIRST ? PanelRealScaleShowcase.verify(mc, stage - REAL_FIRST)
                                 : stage >= DUPLEX_FIRST ? PanelDuplexShowcase.verify(mc, stage - DUPLEX_FIRST)
                                 : stage >= TRIM_FIRST ? PanelTrimShowcase.verify(mc, stage - TRIM_FIRST)
@@ -449,9 +456,10 @@ public final class PanelClientCheck {
         for (ComponentType type : all) {
             placedTypes++;
             // The core displays take 6 and 4 blocks across at their first size: more of this board than is left, and
-            // they have their own real-client check (FcdClientCheck, -PbwrFcdClientCheck).
+            // they have their own real-client check (FcdClientCheck, -PbwrFcdClientCheck); the LED rod display has its own stages.
             if (type == ComponentTypes.GRAPHIC_DISPLAY || type == ComponentTypes.FULL_CORE_DISPLAY
-                    || type == ComponentTypes.ROD_SELECT_MATRIX) continue;
+                    || type == ComponentTypes.ROD_SELECT_MATRIX
+                    || type == ComponentTypes.LED_ROD_DISPLAY) continue; // (the LED display: its sizes hold a whole core; see PanelHardwareShowcase)
             var sizes = type.footprints();
             if (!fit(level, type, sizes.get(0), 28, occupied)) {
                 throw new AssertionError("No showcase space for " + type.id() + " " + sizes.get(0));

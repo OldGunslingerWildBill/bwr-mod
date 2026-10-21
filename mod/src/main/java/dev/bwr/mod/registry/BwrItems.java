@@ -171,6 +171,22 @@ public final class BwrItems {
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> CONTROLLER_STATION =
             ITEMS.register("controller_station", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.CONTROLLER_STATION.id()));
+    /** The synchroscope: a round phase meter with two synchronising lamps. */
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> SYNCHROSCOPE =
+            ITEMS.register("synchroscope", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.SYNCHROSCOPE.id()));
+    /** The two pen strip recorder: the strip chart with two coloured pens, each on its own scale. */
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> TWO_PEN_RECORDER =
+            ITEMS.register("two_pen_recorder", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.TWO_PEN_RECORDER.id()));
+    /** The joystick bypass switch: a Square-D style four way lever with up, down, left, right and centre. */
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> JOYSTICK_SWITCH =
+            ITEMS.register("joystick_switch", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.JOYSTICK_SWITCH.id()));
+    /** The LED rod pattern display: two small LEDs, amber and red, for every rod, in core layout. */
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> LED_ROD_DISPLAY =
+            ITEMS.register("led_rod_display", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.LED_ROD_DISPLAY.id()));
     public static final DeferredItem<BlockItem> CONTROL_ROD_DRIVE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_ROD_DRIVE);
     public static final DeferredItem<BlockItem> CORE_SPRAY_SPARGER =
@@ -449,6 +465,10 @@ public final class BwrItems {
                         output.accept(RPS_TRIP.get());
                         output.accept(PUSH_TURN_SWITCH.get());
                         output.accept(CONTROLLER_STATION.get());
+                        output.accept(SYNCHROSCOPE.get());
+                        output.accept(TWO_PEN_RECORDER.get());
+                        output.accept(JOYSTICK_SWITCH.get());
+                        output.accept(LED_ROD_DISPLAY.get());
                         output.accept(RELAY_CABINET.get());
                         output.accept(RELAY_CABINET_PLAIN.get());
                         output.accept(OPERATOR_DESK.get());

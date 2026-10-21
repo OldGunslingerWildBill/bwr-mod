@@ -38,10 +38,12 @@ import java.util.List;
  */
 public final class ControllerStationType extends PanelInputType {
     public static final String ID_PATH = "controller_station";
-    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 12), Footprint.of(8, 16), Footprint.of(12, 24),
-            // real sizes: a 3 x 6 cell station (19 x 37 cm, a DIN-style 144 x 288 mm station is 2.3 x 4.6 cells but would not
-            // hold a legible scale), and a compact 2 x 4
-            Footprint.of(3, 6), Footprint.of(2, 4));
+    public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 16), Footprint.of(12, 24),
+            // The real tail (see realSizes): each real size is listed twice over, first twice its size (the size a new item
+            // starts at, since the real size alone proved too small to read) and then its exact real size. A 3 x 6 cell
+            // station is 19 x 37 cm (a DIN-style 144 x 288 mm one is 2.3 x 4.6 cells but would not hold a legible scale);
+            // the compact one is 2 x 4.
+            Footprint.of(6, 12), Footprint.of(3, 6), Footprint.of(4, 8), Footprint.of(2, 4));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.decimal("Min", "component.bwr.field.min", -ControllerStationData.LIMIT, ControllerStationData.LIMIT),
             ConfigField.decimal("Max", "component.bwr.field.max", -ControllerStationData.LIMIT, ControllerStationData.LIMIT),
@@ -71,7 +73,7 @@ public final class ControllerStationType extends PanelInputType {
 
     @Override
     public int realSizes() {
-        return 2;
+        return 4;
     }
 
     @Override
