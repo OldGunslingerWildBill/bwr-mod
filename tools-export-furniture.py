@@ -63,9 +63,18 @@ def loot(block, conditions=None):
         pool_conditions.append({"condition": "minecraft:block_state_property", "block": "bwr:" + block,
                                 "properties": conditions})
     pool_conditions.append({"condition": "minecraft:survives_explosion"})
+    # The item keeps the block's paint finish (PanelFinish.java) as its minecraft:block_state component, for every finish but
+    # seafoam: a seafoam drop has no component, so it still stacks with a crafted item.
+    children = [{"type": "minecraft:item", "name": "bwr:" + block,
+                 "conditions": [{"condition": "minecraft:block_state_property", "block": "bwr:" + block,
+                                 "properties": {"finish": finish}}],
+                 "functions": [{"function": "minecraft:set_components",
+                                "components": {"minecraft:block_state": {"finish": finish}}}]}
+                for finish in ("cream", "tan", "grey", "light_blue")]
+    children.append({"type": "minecraft:item", "name": "bwr:" + block})
     return {"type": "minecraft:block", "pools": [{
         "rolls": 1.0, "bonus_rolls": 0.0,
-        "entries": [{"type": "minecraft:item", "name": "bwr:" + block}],
+        "entries": [{"type": "minecraft:alternatives", "children": children}],
         "conditions": pool_conditions}]}
 
 

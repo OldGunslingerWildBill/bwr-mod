@@ -1,0 +1,26 @@
+# Mounting-plane reference solid for PanelType.CHAMFER_VERTICAL (what PanelTrimTests.theMountingFacePlaneOfTheRemodelledBodiesIsUnchanged reads). Not rendered: the block models are control_panel_trim/corner_vertical_chamfer.obj. The face polygon is the whole 16 x 16 grid; only columns 0 to 10 lie on the facet (PanelGeometry.cellUsable); the rest of the grid runs into the walls beside it.
+mtllib materials.mtl
+v 0.743068 1.000000 0.256932
+v 0.035961 1.000000 0.964039
+v 0.035961 0.000000 0.964039
+v 0.743068 0.000000 0.256932
+v 0.771352 1.000000 0.285216
+v 0.064245 1.000000 0.992323
+v 0.064245 0.000000 0.992323
+v 0.771352 0.000000 0.285216
+vn -0.707107 0.000000 -0.707107
+vn 0.707107 0.000000 0.707107
+vt 0.000000 1.000000
+vt 1.000000 1.000000
+vt 1.000000 0.000000
+vt 0.000000 0.000000
+s 0
+usemtl face
+f 1/1/1 2/2/1 3/3/1 4/4/1
+usemtl back
+f 8/1/2 7/2/2 6/3/2 5/4/2
+usemtl bezel
+f 1/1/1 2/2/1 6/3/1 5/4/1
+f 2/1/1 3/2/1 7/3/1 6/4/1
+f 3/1/1 4/2/1 8/3/1 7/4/1
+f 4/1/1 1/2/1 5/3/1 8/4/1

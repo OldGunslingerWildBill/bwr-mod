@@ -444,7 +444,7 @@ public final class DuplexPanelTests {
             check(h, copy.claimAt(2, 0) != null && copy.claimAt(2, 0).owner().equals(upper.getBlockPos()),
                     "the lower board's reservation for the gauge above survives its save");
             check(h, List.of(DuplexCell.values()).size() == BwrBlocks.CONTROL_PANEL_DUPLEX.get().getStateDefinition()
-                    .getPossibleStates().size() / 4, "six cells, four facings");
+                    .getPossibleStates().size() / (4 * 5), "six cells, four facings, five finishes");
         });
     }
 }

@@ -59,6 +59,8 @@ public final class ComponentTypes {
     public static final ComponentType TWO_PEN_RECORDER = register(new TwoPenRecorderType());
     public static final ComponentType JOYSTICK_SWITCH = register(new JoystickType());
     public static final ComponentType LED_ROD_DISPLAY = register(new LedRodDisplayType());
+    // -- annunciator boxes --
+    public static final ComponentType ANNUNCIATOR_CONTROL = register(new AnnunciatorControlType());
     // ----------------------------------------------------------------------------
 
     /** Forces class initialisation. */

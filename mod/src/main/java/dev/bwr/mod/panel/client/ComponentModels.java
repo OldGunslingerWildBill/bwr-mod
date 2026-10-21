@@ -85,6 +85,7 @@ public final class ComponentModels {
         register(ComponentTypes.TWO_PEN_RECORDER.id(), new TwoPenRecorderModel());
         register(ComponentTypes.JOYSTICK_SWITCH.id(), new JoystickModel());
         register(ComponentTypes.LED_ROD_DISPLAY.id(), new LedRodDisplayModel());
+        register(ComponentTypes.ANNUNCIATOR_CONTROL.id(), new AnnunciatorControlModel());
     }
 
     /**

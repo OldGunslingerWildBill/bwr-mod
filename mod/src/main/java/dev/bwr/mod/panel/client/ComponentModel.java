@@ -39,6 +39,15 @@ public interface ComponentModel {
     }
 
     /**
+     * Something besides the component's own revision that its static geometry depends on, read each frame: the
+     * renderer builds the mesh again when it changes. An annunciator window's mesh depends on which neighbours it
+     * touches. 0 for a model whose mesh follows the revision alone, which is every other one.
+     */
+    default long staticKey(PanelComponent component) {
+        return 0L;
+    }
+
+    /**
      * Draws the moving parts. {@link PanelRenderContext#lod()} says how much
      * detail is worth drawing; skip text and fine detail unless it is
      * {@link PanelRenderContext#LOD_FULL}.
