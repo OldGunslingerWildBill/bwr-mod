@@ -12,14 +12,19 @@ one metre, as in every other model of the mod. As usual for the owner's Fusion e
 real forward (toward the operator); rendering the file headless shows the sloped underside, where the operator's knees
 go, on the -Y side. PROFILE is the cross-section as (forward m, up m), with forward 0 the back of the desk:
 
-    the flat back at forward 0, 0.575 up; the narrow shelf along the back from 0 to 0.075 at 0.575; the riser down to
-    (0.125, 0.40); the flat top, the operating surface, from 0.125 to 0.5 forward at 0.40; the sloped front falling from
-    the front edge (0.5, 0.40) back under the desk to (0.2, 0), the knee space; the floor from 0.2 back to 0.
+    the flat back at forward 0, 0.925 up; the narrow shelf along the back from 0 to 0.075 at 0.925; the riser down to
+    (0.125, 0.75); the flat top, the operating surface, from 0.125 to 0.5 forward at 0.75; the sloped front falling from
+    the front edge (0.5, 0.75) back under the desk to (0.2, 0), the knee space; the floor from 0.2 back to 0.
+
+THE HEIGHT. The owner's desk top is 0.40 m, low next to the operator desks (0.75 m, ROOM-FURNITURE.md), and the owner
+chose "stretch to desk height": the part below the top is stretched vertically from 0.40 to 0.75 (the sloped front steeper:
+it still runs from the front edge of the top down to the floor); everything at or above the top is the owner's, unchanged
+in size (the riser and the shelf stay 0.175 above the top). STRETCH below maps the owner's z (cm).
 
 (The owner's file has extra collinear points on the long edges and the riser; they are dropped, the shape is the same.)
 
 THE BLOCK. One desk is one block wide, standing against the back of its block, so the top (the mounting face) is a
-16 x 6 cell grid, 0.375 block deep, level, 0.40 up. The 2 m desk is the same block twice side by side; the model of each
+16 x 6 cell grid, 0.375 block deep, level, 0.75 up. The 2 m desk is the same block twice side by side; the model of each
 half is the one 1 m model, and an item model shows both. The mounting face is the only 'face' polygon, exactly the
 corners PanelGeometry puts the grid on (checked here and by PanelTrimTests). The rest of the desk takes the paint
 (riser, tint index 0), the bezel (shelf top, ends: tint index 1), the back (service door side) and the dark kick (the
@@ -48,14 +53,23 @@ PREVIEW = os.path.join(ROOT, "tmp", "desk-preview")
 # Listed front-top, riser foot, riser head, back-top, back-foot, front-foot: a closed loop.
 SOURCE_PROFILE = [(-30.0, 40.0), (7.5, 40.0), (12.5, 57.5), (20.0, 57.5), (20.0, 0.0), (0.0, 0.0)]
 BACK_Y = 20.0
-PROFILE = [((BACK_Y - y) / 100.0, z / 100.0) for y, z in SOURCE_PROFILE]
-TOP = 0.40
+SOURCE_TOP = 40.0                  # cm, the owner's top height
+TOP = 0.75                         # the stretched top: the height of the operator desks
+SHELF = TOP + 0.175                # the back shelf: 17.5 cm above the top, as drawn
+
+
+def stretch(z):
+    """The owner's height (cm) to block height: the part below the top stretched to TOP, the part above kept as drawn."""
+    return z / SOURCE_TOP * TOP if z <= SOURCE_TOP else TOP + (z - SOURCE_TOP) / 100.0
+
+
+PROFILE = [((BACK_Y - y) / 100.0, stretch(z)) for y, z in SOURCE_PROFILE]
 FACE_BACK = 0.125      # forward of the back edge of the top (the foot of the riser)
 FACE_FRONT = 0.5       # forward of the front edge of the top
 
 # The two ends of the extrusion: the cross-section is concave at the foot of the riser, so each end is two convex quads.
 END_QUADS = [[(0.0, 0.0), (0.2, 0.0), (FACE_FRONT, TOP), (FACE_BACK, TOP)],
-             [(0.0, 0.0), (FACE_BACK, TOP), (0.075, 0.575), (0.0, 0.575)]]
+             [(0.0, 0.0), (FACE_BACK, TOP), (0.075, SHELF), (0.0, SHELF)]]
 
 MATERIALS = ["face", "paint", "bezel", "back", "kick", "cheek", "hood", "apron", "cabinet", "annunciator",
              "annunciator_lit", "vent"]
@@ -326,8 +340,8 @@ def main():
     check_face(one)
     report = {"desk": export(to_mesh("desk", one, materials), "desk")}
     # the item models are centred on the middle of their cube (the gui and hand transforms turn them about it): the
-    # desk is 0.575 high and stands at the back of its block, so lift it and bring it forward to the centre
-    centre = (0.0, 0.5 - 0.575 / 2.0, -(0.75 - 0.5))
+    # desk is 0.925 high and stands at the back of its block, so lower it and bring it forward to the centre
+    centre = (0.0, 0.5 - SHELF / 2.0, -(0.75 - 0.5))
     report["desk_item"] = export(to_mesh("desk_item", one, materials, centre), "desk_item")
     # the 2 m desk: both blocks, centred on the item's block (x -0.5 .. 1.5)
     two = [(mat, [(lx - 0.5, y, f) for lx, y, f in pts], uv)

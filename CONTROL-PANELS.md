@@ -386,9 +386,9 @@ recessed toe-kick at the foot of the benchboard and console backs, a console fro
 ### Control desks (1 m and 2 m)
 
 Two small desks from the owner's Fusion models (`Control Desk 1m.obj`, `Control Desk.obj`, modelled in centimetres: one block is
-one metre): a level **operating top**, 0.40 m high, 1 m wide and 0.375 m deep, behind it a riser up to a narrow shelf along the
-back (0.575 m high), and a front that falls away under the top to the floor (the operator's knee space). The desk stands against the
-back of its block, so the front half of the block is free. The shape is the owner's; it is drawn plain on purpose, so you mount what
+one metre): a level **operating top**, 0.75 m high (the height of the operator desks), 1 m wide and 0.375 m deep, behind it a riser up to a narrow
+shelf along the back (0.925 m high), and a front that falls away under the top to the floor (the operator's knee space). The desk stands against the
+back of its block, so the front half of the block is free. The shape is the owner's, except for the height: his top is 0.40 m, so the part below the top is stretched to 0.75 m (the top, the riser and the shelf keep his sizes; the shelf stands 0.175 m above the top); it is drawn plain on purpose, so you mount what
 you like on it. The mounting face is the top, a level plane with the normal straight up: **16 columns by 6 rows** of the usual 1/16
 block cells, row 0 at the back, rows running toward the operator (a part keeps its real size, as everywhere: a dial 4 x 4 fits,
 a 12 x 12 gauge does not). The cells that are not on the top (rows 6 to 15, the air in front of the desk) take nothing.

@@ -193,12 +193,12 @@ public final class ControlDeskTests {
     @GameTest(template = "empty")
     public static void deskFrameIsALevelTopSixRowsDeepStandingAtTheBackOfTheBlock(GameTestHelper h) {
         // North-facing, the operator at -Z: the grid starts at the foot of the riser (0.125 from the back of the block, so
-        // z = 0.875) and runs 6 cells, 0.375 block, toward the operator to the front edge of the top (z = 0.5), 0.40 up.
+        // z = 0.875) and runs 6 cells, 0.375 block, toward the operator to the front edge of the top (z = 0.5), 0.75 up.
         PanelGeometry.Frame north = PanelGeometry.frame(PanelType.DESK, Direction.NORTH);
-        check(h, near(north.x(0, 0, 0), 1.0) && near(north.y(0, 0, 0), 0.40) && near(north.z(0, 0, 0), 0.875),
+        check(h, near(north.x(0, 0, 0), 1.0) && near(north.y(0, 0, 0), 0.75) && near(north.z(0, 0, 0), 0.875),
                 "cell (0,0) is the operator's left corner of the back edge of the top: " + north.x(0, 0, 0) + ","
                         + north.y(0, 0, 0) + "," + north.z(0, 0, 0));
-        check(h, near(north.x(16, 6, 0), 0.0) && near(north.y(16, 6, 0), 0.40) && near(north.z(16, 6, 0), 0.5),
+        check(h, near(north.x(16, 6, 0), 0.0) && near(north.y(16, 6, 0), 0.75) && near(north.z(16, 6, 0), 0.5),
                 "cell (16,6) is the right corner of the front edge");
         for (Direction facing : Direction.Plane.HORIZONTAL) {
             PanelGeometry.Frame f = PanelGeometry.frame(PanelType.DESK, facing);
@@ -232,7 +232,7 @@ public final class ControlDeskTests {
             PanelGeometry.Frame f = PanelGeometry.frame(PanelType.DESK, facing);
             var shape = PanelGeometry.shape(PanelType.DESK, facing);
             check(h, near(shape.max(Direction.Axis.Y), PanelGeometry.DESK_BACK_HEIGHT) && !shape.isEmpty(),
-                    facing + ": the outline reaches the shelf at the back, 0.575 up");
+                    facing + ": the outline reaches the shelf at the back, 0.925 up");
             for (double[] probe : new double[][] {{0.5, 0.5}, {8, 3}, {15.5, 5.5}, {2, 5}, {14, 0.25}}) {
                 Vec3 point = new Vec3(f.x(probe[0], probe[1], 0), f.y(probe[0], probe[1], 0), f.z(probe[0], probe[1], 0));
                 // from straight above and from the operator's side, 30 degrees up

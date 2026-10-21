@@ -22,7 +22,7 @@ import net.minecraft.core.Direction;
  *       it joins like {@link #VERTICAL}, with the face at the front of the block.</li>
  * </ul>
  *
- * <p>The control desks ({@link #DESK}, the owner's two small Fusion desks) are a body of their own: a level top 0.40 up
+ * <p>The control desks ({@link #DESK}, the owner's two small Fusion desks) are a body of their own: a level top 0.75 up (the height of the operator desks)
  * and 0.375 deep (the grid is 16 columns by {@link PanelGeometry#DESK_ROWS} rows, not 16 by 16), with a raised shelf
  * along the back. They join sideways like the vertical board, but are a single row: there is no block further down
  * the face.

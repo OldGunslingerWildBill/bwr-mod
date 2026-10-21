@@ -53,17 +53,17 @@ public final class PanelGeometry {
     public static final double DUPLEX_HEADER_REACH = 0.5;
 
     /**
-     * The control desks (the owner's two Fusion desks, 1 block = 1 m, models in centimetres): the desk stands against the
+     * The control desks (the owner's two Fusion desks, 1 block = 1 m, models in centimetres, the part below the top stretched to the 0.75 m of the operator desks): the desk stands against the
      * back of its block and is {@link #DESK_FRONT} deep; the level top, the operating surface, is {@link #DESK_TOP} up
      * and runs from the foot of the riser ({@link #DESK_FACE_BACK} forward) to the front edge, so the grid is
      * {@link #DESK_ROWS} rows deep (0.375 block = 6 cells). Behind it the riser climbs to the shelf along the back, which
      * is {@link #DESK_BACK_HEIGHT} up. Below the front edge the desk is cut back, to {@link #DESK_FOOT} forward at the
      * floor, for the operator's knees.
      */
-    public static final double DESK_TOP = 0.40;
+    public static final double DESK_TOP = 0.75;
     public static final double DESK_FACE_BACK = 0.125;
     public static final double DESK_FRONT = 0.5;
-    public static final double DESK_BACK_HEIGHT = 0.575;
+    public static final double DESK_BACK_HEIGHT = 0.925;
     public static final double DESK_SHELF = 0.075;
     public static final double DESK_FOOT = 0.2;
     public static final int DESK_ROWS = 6;

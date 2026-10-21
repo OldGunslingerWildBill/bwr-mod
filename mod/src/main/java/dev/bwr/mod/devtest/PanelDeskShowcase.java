@@ -37,7 +37,7 @@ import java.util.List;
  * <p>Plan: every desk faces north (the operator stands at smaller z), the floor is at y 125 and the desks stand on it:
  * the seafoam row at z 5262 has a 1 m desk (empty) at x 5800, a 1 m desk (loaded) at x 5802, a 2 m desk (empty) at
  * x 5805 and 5806 and a 2 m desk (loaded) at x 5808 and 5809; the tan row is the same at z 5254; the light blue run is a
- * 1 m desk at x 5800, a 2 m desk at x 5801 and 5802 and a 1 m desk at x 5803, at z 5258, and a lone seafoam 1 m desk at x 5815 for the side view. The left half of a 2 m desk is
+ * 1 m desk at x 5800, a 2 m desk at x 5801 and 5802 and a 1 m desk at x 5803, at z 5258, and a lone seafoam 1 m desk at x 5815 for the side view, with an operator desk three blocks north of it (z 5255) for the side by side picture. The left half of a 2 m desk is
  * the block to the operator's left, which is east for a desk facing north.
  */
 final class PanelDeskShowcase {
@@ -50,12 +50,12 @@ final class PanelDeskShowcase {
     private static final int RUN_Z = 5258;
 
     static final String[] NAMES = {"desk-1m-seafoam", "desk-2m-seafoam", "desk-1m-tan", "desk-2m-tan", "desk-run-light-blue",
-            "desk-side-seafoam"};
+            "desk-side-seafoam", "desk-side-beside-operator-desk"};
     // eye position and look target of each picture (feet are 1.62 below the eye)
-    private static final double[][] EYE = {{5801.5, 127.6, 5260.6}, {5807.5, 127.9, 5260.0}, {5801.5, 127.6, 5252.6},
-            {5807.5, 127.9, 5252.0}, {5802.0, 127.7, 5256.2}, {5817.8, 127.9, 5258.2}};
-    private static final double[][] LOOK = {{5801.5, 126.25, 5262.7}, {5807.5, 126.25, 5262.7}, {5801.5, 126.25, 5254.7},
-            {5807.5, 126.25, 5254.7}, {5802.0, 126.25, 5258.7}, {5815.5, 126.3, 5258.7}};
+    private static final double[][] EYE = {{5801.5, 127.95, 5260.6}, {5807.5, 128.25, 5260.0}, {5801.5, 127.95, 5252.6},
+            {5807.5, 128.25, 5252.0}, {5802.0, 128.05, 5256.2}, {5817.8, 128.2, 5258.2}, {5820.0, 128.3, 5257.4}};
+    private static final double[][] LOOK = {{5801.5, 126.65, 5262.7}, {5807.5, 126.65, 5262.7}, {5801.5, 126.65, 5254.7},
+            {5807.5, 126.65, 5254.7}, {5802.0, 126.65, 5258.7}, {5815.5, 126.65, 5258.7}, {5815.5, 126.65, 5257.4}};
 
     static boolean night(int stage) {
         return false;
@@ -196,6 +196,9 @@ final class PanelDeskShowcase {
             loadBlock(level, new BlockPos(x, 126, RUN_Z), x - 5800, x % 2 == 1 ? 1 : 2);
         }
         desk(level, 5815, RUN_Z, PanelFinish.SEAFOAM); // alone, for the side view
+        // and an operator desk (0.75 m high) two blocks in front of it, to compare the heights from the side
+        level.setBlock(new BlockPos(5815, 126, RUN_Z - 3), BwrBlocks.OPERATOR_DESK.get().defaultBlockState()
+                .setValue(dev.bwr.mod.furniture.AssemblyBlock.FACING, FACING), 3);
         for (BlockPos pos : PLACED) {
             if (level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
                 be.syncFull();
