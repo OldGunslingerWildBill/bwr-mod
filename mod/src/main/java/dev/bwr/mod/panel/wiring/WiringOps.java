@@ -114,6 +114,9 @@ public final class WiringOps {
         if (linker.isEmpty()) {
             return Result.NOT_HOLDING_LINKER;
         }
+        if (!AssemblyAccess.mayEdit(player)) {
+            return Result.NOT_PERMITTED;
+        }
         BlockPos ownerPos = request.pos();
         if (!PanelOps.inReach(player, ownerPos) || !level.isLoaded(ownerPos)) {
             return Result.OUT_OF_REACH;
@@ -466,8 +469,8 @@ public final class WiringOps {
     /** The screen contents {@link #openScreen} would send, or null when the player may not open it. */
     public static PanelPayloads.LinkerScreen screenFor(ServerPlayer player, BlockPos ownerPos, int id) {
         ServerLevel level = player.serverLevel();
-        if (LinkTools.held(player).isEmpty() || !PanelOps.inReach(player, ownerPos) || !level.isLoaded(ownerPos)
-                || !AssemblyAccess.permitted(level, player, ownerPos)
+        if (!AssemblyAccess.mayEdit(player) || LinkTools.held(player).isEmpty() || !PanelOps.inReach(player, ownerPos)
+                || !level.isLoaded(ownerPos) || !AssemblyAccess.permitted(level, player, ownerPos)
                 || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
             return null;
         }
@@ -534,8 +537,8 @@ public final class WiringOps {
      */
     public static PanelPayloads.LinkerScreen ccPortScreenFor(ServerPlayer player, BlockPos ownerPos, int id, int port) {
         ServerLevel level = player.serverLevel();
-        if (LinkTools.held(player).isEmpty() || !PanelOps.inReach(player, ownerPos) || !level.isLoaded(ownerPos)
-                || !AssemblyAccess.permitted(level, player, ownerPos)
+        if (!AssemblyAccess.mayEdit(player) || LinkTools.held(player).isEmpty() || !PanelOps.inReach(player, ownerPos)
+                || !level.isLoaded(ownerPos) || !AssemblyAccess.permitted(level, player, ownerPos)
                 || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
             return null;
         }

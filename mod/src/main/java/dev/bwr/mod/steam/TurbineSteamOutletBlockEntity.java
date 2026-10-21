@@ -243,9 +243,20 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
         return Math.max(0,Math.min(commandedFlowKgPerS-received,
                 (BUFFER_CAPACITY_MB-bufferedMilliBuckets-pendingExhaustMb)/MILLIBUCKETS_PER_TICK_PER_KG_PER_S));
     }
+    private boolean warnedExhaustClamp;
     public void receivePumpExhaustKgPerS(long tick,double flow) {
         if(!(flow>0) || !Double.isFinite(flow)) return;
-        if(flow>pumpExhaustCapacityKgPerS(tick)+1e-8) throw new IllegalStateException("Exhaust exceeded reserved receiver capacity");
+        double capacity=pumpExhaustCapacityKgPerS(tick);
+        if(flow>capacity+1e-8) {
+            // A ticker must not throw (that is a crash report): take what the receiver has room for and say so once.
+            if(!warnedExhaustClamp) {
+                warnedExhaustClamp=true;
+                org.slf4j.LoggerFactory.getLogger(TurbineSteamOutletBlockEntity.class).warn(
+                        "Pump exhaust {} kg/s exceeded the reserved receiver capacity {} kg/s at {}; clamped",flow,capacity,getBlockPos());
+            }
+            flow=capacity;
+            if(!(flow>0)) return;
+        }
         if(exhaustTick!=tick) { exhaustTick=tick; acceptedExhaustKgPerS=0; }
         acceptedExhaustKgPerS+=flow;
         pendingExhaustMb+=flow*MILLIBUCKETS_PER_TICK_PER_KG_PER_S;

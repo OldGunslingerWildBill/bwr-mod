@@ -73,7 +73,7 @@ public final class NetworkingOps {
      */
     public static BlockEntity checkedDevice(ServerPlayer player, BlockPos pos) {
         ServerLevel level = player.serverLevel();
-        if (LinkTools.heldWrench(player).isEmpty() || !PanelOps.inReach(player, pos) || !level.isLoaded(pos)
+        if (!AssemblyAccess.mayEdit(player) || LinkTools.heldWrench(player).isEmpty() || !PanelOps.inReach(player, pos) || !level.isLoaded(pos)
                 || !AssemblyAccess.permitted(level, player, pos)) {
             return null;
         }
@@ -175,7 +175,7 @@ public final class NetworkingOps {
      */
     public static boolean useMachineName(ServerPlayer player, BlockPos panelPos, int id) {
         ServerLevel level = player.serverLevel();
-        if (LinkTools.heldWrench(player).isEmpty() || !PanelOps.inReach(player, panelPos) || !level.isLoaded(panelPos)
+        if (!AssemblyAccess.mayEdit(player) || LinkTools.heldWrench(player).isEmpty() || !PanelOps.inReach(player, panelPos) || !level.isLoaded(panelPos)
                 || !AssemblyAccess.permitted(level, player, panelPos)
                 || !(level.getBlockEntity(panelPos) instanceof PanelBlockEntity panel)) {
             return false;

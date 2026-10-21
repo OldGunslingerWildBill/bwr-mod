@@ -126,13 +126,13 @@ public final class PanelClientOperate {
             event.setCanceled(true);
             return;
         }
+        if (heldOwner != null && (!heldOwner.equals(AIM.owner.getBlockPos()) || heldId != AIM.component.id())) {
+            // The crosshair moved off the held control with the key still down, onto another held control or onto one
+            // that is not holdable (a repeat of that does nothing below): let go of the first now, or it would stay
+            // operated until the server's fail-safe.
+            releaseHeld(minecraft);
+        }
         if (!repeat || type.holdable()) {
-            if (type.holdable() && heldOwner != null
-                    && (!heldOwner.equals(AIM.owner.getBlockPos()) || heldId != AIM.component.id())) {
-                // The crosshair moved from one held control to another with the key still down: let go of the first now,
-                // or it would stay operated until the server's fail-safe.
-                releaseHeld(minecraft);
-            }
             // A real click, or the repeat of a held control (which refreshes the server's fail-safe).
             send(AIM.owner, AIM.component, OperateAction.PRESS, type.clickValue(AIM.component, AIM.cellX, AIM.cellY));
             if (type.holdable()) {

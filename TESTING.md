@@ -47,6 +47,11 @@ patch per change; 81,900) and `FcdModelTests` (style table and model file contra
 `-PbwrFcdLegendsPerFrame` and `-PbwrFcdProcedural`) measures frame cost and writes screenshots to
 `run/turbineModelCheck/fcd-check/`; it fails if the legend cache is not used.
 
+The audit fixes of 2026-10-21 add the GameTest class `AuditFixTests` (fixtures at 230,000 / 230,000 and east, 232,000 and 234,000): game modes
+(spectator and adventure against every panel, mimic, wiring and networking packet), the per-player rate limits and their cleanup on logout,
+Spring on a latched joystick and control switch reaching the sinks, the 2 m desk against the group size cap, the mimic draft codec, the client
+panel index, and (CC:Tweaked present) the CC port machine cache after an empty answer (`AuditCcChecks`).
+
 The multiplayer check (`:mod:runMultiplayerCheck`, a dedicated server and two real clients) and the GameTest `PanelHeldControlTests` (a held rod control
 is released when its panel chunk unloads; fixture 85,900) are described under "Dedicated server and two real clients (C3)" below. The
 required GameTest count is 292 (291 before C3).

@@ -103,6 +103,12 @@ public final class JoystickType extends PanelInputType {
         applyOutputs(component, ((JoystickData) component.data()).position);
     }
 
+    @Override
+    public void configured(OperateContext context, double[] outputsBefore) {
+        // Spring switched on for a lever that sits off centre: the load centred it, and the plant must hear the centre.
+        announceMoved(context, outputsBefore);
+    }
+
     private static void applyOutputs(PanelComponent component, int position) {
         for (int i = 0; i < 4; i++) {
             component.storeOutput(i, position == i + 1 ? 1.0 : 0.0);

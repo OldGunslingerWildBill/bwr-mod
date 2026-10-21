@@ -62,6 +62,22 @@ public abstract class PanelInputType extends ComponentType implements PanelTimer
         context.owner().setChanged();
     }
 
+    /**
+     * For {@link ComponentType#configured}: every output that is not what it was before the edit is put back and set
+     * again through {@code setOutput}, so the sinks and listeners see the change and the delta is queued, in output
+     * order (a joystick's directions let go before its position changes).
+     */
+    protected static void announceMoved(OperateContext context, double[] outputsBefore) {
+        PanelComponent component = context.component();
+        for (int i = 0; i < outputsBefore.length && i < component.outputCount(); i++) {
+            double now = component.output(i);
+            if (Double.doubleToLongBits(now) != Double.doubleToLongBits(outputsBefore[i])) {
+                component.storeOutput(i, outputsBefore[i]);
+                context.setOutput(i, now);
+            }
+        }
+    }
+
     protected static double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
     }
