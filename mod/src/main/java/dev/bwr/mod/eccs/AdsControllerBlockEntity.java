@@ -306,7 +306,7 @@ public class AdsControllerBlockEntity extends BlockEntity {
 
     public void setDivision(int value){
         int next=Math.clamp(value,0,4);if(next==division)return;
-        if(level!=null)for(BlockPos vp:held)if(level.isLoaded(vp)&&level.getBlockEntity(vp) instanceof SafetyReliefValveBlockEntity srv)setValve(level,vp,srv,false);
+        if(level!=null)for(BlockPos vp:held)if(dev.bwr.mod.world.LoadedWorld.blockEntity(level, vp) instanceof SafetyReliefValveBlockEntity srv)setValve(level,vp,srv,false);
         division=next;bindingDirty=true;ticksSinceRebind=REBIND_INTERVAL_TICKS;setChanged();
     }
     public void markBindingDirty() {
@@ -367,22 +367,35 @@ public class AdsControllerBlockEntity extends BlockEntity {
 
     private void rebind(Level level) {
         BlockPos from = getBlockPos();
-        reactorPos = null;
+        List<BlockPos> previous = new ArrayList<>(valves);
+        BlockPos[] foundReactor = new BlockPos[1];
         valves.clear();
-        for (BlockPos p : BlockPos.betweenClosed(
+        // Section by section (see BlockScan), not 117,649 block reads.
+        boolean complete = dev.bwr.mod.world.BlockScan.scan(level,
                 from.offset(-SEARCH_RADIUS, -SEARCH_RADIUS, -SEARCH_RADIUS),
-                from.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS))) {
-            if (!level.isLoaded(p)) continue;
-            BlockState s = level.getBlockState(p);
-            if (reactorPos == null && s.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
-                reactorPos = p.immutable();
-            } else if ((s.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock)
-                    && level.getBlockEntity(p) instanceof SafetyReliefValveBlockEntity srv) {
-                // A valve venting into air suppresses nothing and is not part of
-                // a depressurisation the containment can survive, so it is not
-                // counted. That is validation of plumbing, not a permissive.
-                if (srv.getDivision()==division && srv.revalidateDischarge(level)) {
-                    valves.add(p.immutable());
+                from.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS),
+                s -> s.is(BwrBlocks.REACTOR_CONTROLLER.get()) || s.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock,
+                (p, s) -> {
+                    if (foundReactor[0] == null && s.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
+                        foundReactor[0] = p.immutable();
+                    } else if ((s.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock)
+                            && level.getBlockEntity(p) instanceof SafetyReliefValveBlockEntity srv) {
+                        // A valve venting into air suppresses nothing and is not part of
+                        // a depressurisation the containment can survive, so it is not
+                        // counted. That is validation of plumbing, not a permissive.
+                        if (srv.getDivision()==division && srv.revalidateDischarge(level)) {
+                            valves.add(p.immutable());
+                        }
+                    }
+                    return true;
+                });
+        // What could not be read is not gone: a reactor or a valve in a chunk that is not loaded stays in the binding,
+        // so a bank does not lose valves for thirty seconds (until the next scan) after a chunk comes back.
+        reactorPos = dev.bwr.mod.world.BlockScan.rebound(level, complete, foundReactor[0], reactorPos, BwrBlocks.REACTOR_CONTROLLER.get());
+        if (!complete) {
+            for (BlockPos old : previous) {
+                if (!valves.contains(old) && !dev.bwr.mod.world.BlockScan.readable(level, old)) {
+                    valves.add(old);
                 }
             }
         }
@@ -406,10 +419,10 @@ public class AdsControllerBlockEntity extends BlockEntity {
     }
 
     private ReactorControllerBlockEntity reactor(Level level) {
-        if (reactorPos == null || !level.isLoaded(reactorPos)) {
+        if (reactorPos == null) {
             return null;
         }
-        return level.getBlockEntity(reactorPos) instanceof ReactorControllerBlockEntity c ? c : null;
+        return dev.bwr.mod.world.LoadedWorld.blockEntity(level, reactorPos) instanceof ReactorControllerBlockEntity c ? c : null;
     }
 
     // --- Actuators ------------------------------------------------------

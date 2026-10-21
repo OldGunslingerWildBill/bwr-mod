@@ -481,10 +481,10 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
         var it = feedNozzles.iterator();
         while (it.hasNext()) {
             BlockPos p = it.next();
-            if (!level.isLoaded(p)) {
+            if (!dev.bwr.mod.world.LoadedWorld.available(level, p)) {
                 continue;
             }
-            if (!(level.getBlockEntity(p) instanceof RpvSteamOutletBlockEntity nozzle)) {
+            if (!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof RpvSteamOutletBlockEntity nozzle)) {
                 it.remove(); // the nozzle was broken or replaced
                 continue;
             }
@@ -535,6 +535,13 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
         feedNozzles.addAll(survey.nozzles());
         nozzleFed = !feedNozzles.isEmpty();
 
+        if (!nozzleFed && controllerPos != null && !withinSearchRadius(controllerPos)) {
+            // A controller further away than the proximity scan reaches could only have been learned through a steam
+            // line to its nozzle. The line is gone (a tube broken, a chunk unloaded): the outlet must not fall back to
+            // drawing the commanded flow straight out of that vessel as if it were welded to it.
+            controllerPos = null;
+            setChanged();
+        }
         msivPositions.clear();
         if (nozzleFed) {
             msivPositions.addAll(survey.isolationValves());
@@ -548,6 +555,13 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
         scanNeighbourhood(level, !nozzleFed);
     }
 
+    private boolean withinSearchRadius(BlockPos pos) {
+        BlockPos here = getBlockPos();
+        return Math.abs(pos.getX() - here.getX()) <= SEARCH_RADIUS
+                && Math.abs(pos.getY() - here.getY()) <= SEARCH_RADIUS
+                && Math.abs(pos.getZ() - here.getZ()) <= SEARCH_RADIUS;
+    }
+
     /**
      * The controller of the reactor whose shell these nozzles are welded into.
      *
@@ -558,15 +572,12 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
      */
     private BlockPos controllerFromNozzles(Level level) {
         for (BlockPos p : feedNozzles) {
-            if (!level.isLoaded(p)) {
-                continue;
-            }
-            if (!(level.getBlockEntity(p) instanceof RpvSteamOutletBlockEntity nozzle)) {
+            if (!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof RpvSteamOutletBlockEntity nozzle)) {
                 continue;
             }
             BlockPos candidate = nozzle.getControllerPos();
-            if (candidate != null && level.isLoaded(candidate)
-                    && level.getBlockEntity(candidate) instanceof ReactorControllerBlockEntity) {
+            if (candidate != null
+                    && dev.bwr.mod.world.LoadedWorld.blockEntity(level, candidate) instanceof ReactorControllerBlockEntity) {
                 return candidate.immutable();
             }
         }
@@ -596,22 +607,24 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
 
         int r = SEARCH_RADIUS;
         BlockPos from = getBlockPos();
-        for (BlockPos p : BlockPos.betweenClosed(from.offset(-r, -r, -r), from.offset(r, r, r))) {
-            // Never read a block out of an unloaded chunk: Level.getBlockState
-            // will generate terrain to answer, and a 25-block cube around an
-            // outlet reaches into four chunk columns.
-            if (!level.isLoaded(p)) {
-                continue;
-            }
-            BlockState s = level.getBlockState(p);
-            if (collectValves && s.is(BwrBlocks.MSIV.get())) {
-                msivPositions.add(p.immutable());
-            } else if (needController && controllerPos == null
-                    && s.is(BwrBlocks.REACTOR_CONTROLLER.get())
-                    && level.getBlockEntity(p) instanceof ReactorControllerBlockEntity c) {
-                bindController(c);
-            }
-        }
+        // Never read a block out of an unloaded chunk: Level.getBlockState will
+        // generate terrain to answer, and a 25-block cube around an outlet
+        // reaches into four chunk columns. BlockScan reads only the sections
+        // whose palette can hold a valve or a controller, in the same order as
+        // the block-by-block loop it replaces (15,625 reads every two seconds).
+        dev.bwr.mod.world.BlockScan.scan(level, from.offset(-r, -r, -r), from.offset(r, r, r),
+                s -> (collectValves && s.is(BwrBlocks.MSIV.get()))
+                        || (needController && s.is(BwrBlocks.REACTOR_CONTROLLER.get())),
+                (p, s) -> {
+                    if (collectValves && s.is(BwrBlocks.MSIV.get())) {
+                        msivPositions.add(p.immutable());
+                    } else if (needController && controllerPos == null
+                            && s.is(BwrBlocks.REACTOR_CONTROLLER.get())
+                            && level.getBlockEntity(p) instanceof ReactorControllerBlockEntity c) {
+                        bindController(c);
+                    }
+                    return collectValves || (needController && controllerPos == null);
+                });
     }
 
     /**
@@ -636,10 +649,10 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
         var it = msivPositions.iterator();
         while (it.hasNext()) {
             BlockPos p = it.next();
-            if (!level.isLoaded(p)) {
+            if (!dev.bwr.mod.world.LoadedWorld.available(level, p)) {
                 continue;
             }
-            if (!(level.getBlockEntity(p) instanceof MainSteamIsolationValveBlockEntity valve)) {
+            if (!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof MainSteamIsolationValveBlockEntity valve)) {
                 it.remove();
                 continue;
             }
@@ -700,10 +713,7 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
         }
         double total = 0.0;
         for (BlockPos p : feedNozzles) {
-            if (!level.isLoaded(p)) {
-                continue;
-            }
-            if (level.getBlockEntity(p) instanceof RpvSteamOutletBlockEntity nozzle
+            if (dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof RpvSteamOutletBlockEntity nozzle
                     && nozzle.isPartOfFormedReactor()) {
                 total += nozzle.getLastFlowKgPerS();
             }
@@ -750,7 +760,9 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
         if (level == null || level.isClientSide() || controllerPos == null) {
             return;
         }
-        if (!(level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity controller)) {
+        // setRemoved also runs when this chunk unloads; the reactor may be further away than this chunk is, and
+        // reading it from here would load its chunk just to tell it about an outlet that is only going away for now.
+        if (!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, controllerPos) instanceof ReactorControllerBlockEntity controller)) {
             return;
         }
         long gameTime = level.getGameTime();
@@ -889,10 +901,12 @@ public class TurbineSteamOutletBlockEntity extends BlockEntity {
     }
 
     public ReactorControllerBlockEntity controller(Level level) {
+        // An outlet at the end of a long line has its reactor tens of blocks away, in a chunk that may not be loaded;
+        // reading it unguarded loaded that chunk (every tick, so it stayed loaded) from here.
         if (level == null || controllerPos == null) {
             return null;
         }
-        return level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity c ? c : null;
+        return dev.bwr.mod.world.LoadedWorld.blockEntity(level, controllerPos) instanceof ReactorControllerBlockEntity c ? c : null;
     }
 
     /** True when this outlet is bound to a reactor that has actually formed. */

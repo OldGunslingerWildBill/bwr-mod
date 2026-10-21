@@ -55,7 +55,8 @@ public final class AssemblyAccess {
                 for(var cell:part.layout().cells)cells.add(part.layout().world(part.root(),state.getValue(CondenserBlock.FACING),cell));
             } else if(be instanceof CoolingBlockEntity part && state.getBlock() instanceof CoolingBlock block) {
                 for(var cell:part.layout().cells)cells.add(part.layout().world(part.root(),state.getValue(CoolingBlock.FACING),cell));
-            } else if(be instanceof CondensateStorageTankBlockEntity part && state.getValue(CondensateStorageTankBlock.ASSEMBLED)) {
+            } else if(be instanceof CondensateStorageTankBlockEntity part && state.getValue(CondensateStorageTankBlock.ASSEMBLED)
+                    && CondensateTankShape.valid(part.diameter,part.height)) {
                 for(var offset:CondensateTankShape.get(part.diameter,part.height).cells.keySet())cells.add(part.root().offset(offset));
             }
         }

@@ -61,7 +61,7 @@ public class CoolingBlock extends BaseEntityBlock implements SimpleWaterloggedBl
     @Override public BlockEntity newBlockEntity(BlockPos p,BlockState s){return new CoolingBlockEntity(p,s);}
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level l,BlockState s,BlockEntityType<T> type){
         if(!s.getValue(CONTROLLER))return null;
-        return createTickerHelper(type,BwrBlockEntities.COOLING.get(),l.isClientSide()?CoolingBlockEntity::clientTick:CoolingBlockEntity::serverTick);
+        return dev.bwr.mod.TickProbe.wrap(createTickerHelper(type,BwrBlockEntities.COOLING.get(),l.isClientSide()?CoolingBlockEntity::clientTick:CoolingBlockEntity::serverTick));
     }
     @Override public BlockState getStateForPlacement(BlockPlaceContext ctx){
         var state=defaultBlockState().setValue(FACING,ctx.getHorizontalDirection().getOpposite())

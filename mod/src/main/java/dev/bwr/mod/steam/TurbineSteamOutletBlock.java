@@ -70,8 +70,8 @@ public class TurbineSteamOutletBlock extends BaseEntityBlock implements SteamLin
         if (level.isClientSide()) {
             return null;
         }
-        return createTickerHelper(type, BwrBlockEntities.TURBINE_STEAM_OUTLET.get(),
-                TurbineSteamOutletBlockEntity::serverTick);
+        return dev.bwr.mod.TickProbe.wrap(createTickerHelper(type, BwrBlockEntities.TURBINE_STEAM_OUTLET.get(),
+                TurbineSteamOutletBlockEntity::serverTick));
     }
 
     @Override
@@ -130,12 +130,18 @@ public class TurbineSteamOutletBlock extends BaseEntityBlock implements SteamLin
 
     private static ReactorControllerBlockEntity findController(Level level, BlockPos from) {
         int r = TurbineSteamOutletBlockEntity.SEARCH_RADIUS;
-        for (BlockPos p : BlockPos.betweenClosed(from.offset(-r, -r, -r), from.offset(r, r, r))) {
-            if (level.getBlockState(p).is(BwrBlocks.REACTOR_CONTROLLER.get())
-                    && level.getBlockEntity(p) instanceof ReactorControllerBlockEntity c) {
-                return c;
-            }
-        }
-        return null;
+        // Placement-time search: loaded sections only (the old loop read every block of the cube, which a chunk
+        // that was not loaded answered by loading it).
+        ReactorControllerBlockEntity[] found = new ReactorControllerBlockEntity[1];
+        dev.bwr.mod.world.BlockScan.scan(level, from.offset(-r, -r, -r), from.offset(r, r, r),
+                s -> s.is(BwrBlocks.REACTOR_CONTROLLER.get()),
+                (p, s) -> {
+                    if (level.getBlockEntity(p) instanceof ReactorControllerBlockEntity c) {
+                        found[0] = c;
+                        return false;
+                    }
+                    return true;
+                });
+        return found[0];
     }
 }

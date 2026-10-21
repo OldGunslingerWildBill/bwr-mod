@@ -569,7 +569,7 @@ public final class Layout {
                         right -= ww + BwrStyle.SP1 + BwrStyle.ICON + BwrStyle.SP2;
                     }
                 }
-                Ui.text(g, Ui.fit(title, Type.HEADER, right - x - pad), x + pad, y + pad + 1, Type.HEADER);
+                Ui.text(g, Ui.fit(title, Type.SECTION, right - x - pad), x + pad, y + pad + 1, Type.SECTION);
                 Ui.rule(g, x + pad, y + pad + BwrStyle.ROW - 1, w - 2 * pad);
             }
             inner.render(g, mx, my);
@@ -625,7 +625,7 @@ public final class Layout {
 
         @Override
         public void render(GuiGraphics g, int mx, int my) {
-            Ui.text(g, Ui.fit(title, Type.HEADER, w), x, y + 1, Type.HEADER);
+            Ui.text(g, Ui.fit(title, Type.SECTION, w), x, y + 1, Type.SECTION);
             Ui.rule(g, x, y + BwrStyle.ROW - 1, w);
         }
 

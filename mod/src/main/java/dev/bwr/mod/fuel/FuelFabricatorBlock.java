@@ -54,8 +54,8 @@ public class FuelFabricatorBlock extends BaseEntityBlock {
         if (level.isClientSide()) {
             return null;
         }
-        return createTickerHelper(type, BwrBlockEntities.FUEL_FABRICATOR.get(),
-                FuelFabricatorBlockEntity::serverTick);
+        return dev.bwr.mod.TickProbe.wrap(createTickerHelper(type, BwrBlockEntities.FUEL_FABRICATOR.get(),
+                FuelFabricatorBlockEntity::serverTick));
     }
 
     @Override

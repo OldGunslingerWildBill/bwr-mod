@@ -588,43 +588,52 @@ public class EccsPumpBlockEntity extends BlockEntity {
 
     private void rebind(Level level) {
         BlockPos from = getBlockPos();
-        reactorPos = null;
-        poolPos = null;
-        tankPos = null;
-        for (BlockPos p : BlockPos.betweenClosed(
+        BlockPos[] found = new BlockPos[3];
+        // Section by section (see BlockScan), not 117,649 block reads: the three blocks are almost never in a section.
+        boolean complete = dev.bwr.mod.world.BlockScan.scan(level,
                 from.offset(-SEARCH_RADIUS, -SEARCH_RADIUS, -SEARCH_RADIUS),
-                from.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS))) {
-            if (!level.isLoaded(p)) continue;
-            BlockState s = level.getBlockState(p);
-            if (reactorPos == null && s.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
-                reactorPos = p.immutable();
-            } else if (poolPos == null && s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get())) {
-                poolPos = p.immutable();
-            } else if (tankPos == null && s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())) {
-                tankPos = p.immutable();
-            }
-        }
+                from.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS),
+                s -> s.is(BwrBlocks.REACTOR_CONTROLLER.get()) || s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get())
+                        || s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get()),
+                (p, s) -> {
+                    if (found[0] == null && s.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
+                        found[0] = p.immutable();
+                    } else if (found[1] == null && s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get())) {
+                        found[1] = p.immutable();
+                    } else if (found[2] == null && s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())) {
+                        found[2] = p.immutable();
+                    }
+                    return found[0] == null || found[1] == null || found[2] == null;
+                });
+        // A part of the cube that could not be read (a chunk not loaded) is not evidence that the reactor, the pool
+        // or the tank went away. Clearing the binding then lost it until the next scan, up to thirty seconds after the
+        // chunk came back; keep what was bound unless the block it points at is plainly gone.
+        reactorPos = dev.bwr.mod.world.BlockScan.rebound(level, complete, found[0], reactorPos, BwrBlocks.REACTOR_CONTROLLER.get());
+        poolPos = dev.bwr.mod.world.BlockScan.rebound(level, complete, found[1], poolPos, BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get());
+        tankPos = dev.bwr.mod.world.BlockScan.rebound(level, complete, found[2], tankPos, BwrBlocks.CONDENSATE_STORAGE_TANK.get());
     }
 
+
+
     private ReactorControllerBlockEntity reactor(Level level) {
-        if (reactorPos == null || !level.isLoaded(reactorPos)) {
+        if (reactorPos == null) {
             return null;
         }
-        return level.getBlockEntity(reactorPos) instanceof ReactorControllerBlockEntity c ? c : null;
+        return dev.bwr.mod.world.LoadedWorld.blockEntity(level, reactorPos) instanceof ReactorControllerBlockEntity c ? c : null;
     }
 
     private SuppressionPoolBlockEntity pool(Level level) {
-        if (poolPos == null || !level.isLoaded(poolPos)) {
+        if (poolPos == null) {
             return null;
         }
-        return level.getBlockEntity(poolPos) instanceof SuppressionPoolBlockEntity p ? p : null;
+        return dev.bwr.mod.world.LoadedWorld.blockEntity(level, poolPos) instanceof SuppressionPoolBlockEntity p ? p : null;
     }
 
     private CondensateStorageTankBlockEntity tank(Level level) {
-        if (tankPos == null || !level.isLoaded(tankPos)) {
+        if (tankPos == null) {
             return null;
         }
-        return level.getBlockEntity(tankPos) instanceof CondensateStorageTankBlockEntity t ? t : null;
+        return dev.bwr.mod.world.LoadedWorld.blockEntity(level, tankPos) instanceof CondensateStorageTankBlockEntity t ? t : null;
     }
 
     // -----------------------------------------------------------------

@@ -22,6 +22,8 @@ public final class CompactCoreClientCheck {
     private static final BlockPos MIN=new BlockPos(145,200,145);
     private static boolean started,requested;
     private static int age,joined,stage,shown;
+    /** Container id of the menu the previous stage ended with: a stale menu must not satisfy the next stage's wait. */
+    private static int previousMenu=-1;
     private static final String[] NAMES={"reference-fuel","reference-drives","reference-refuelling","maximum-fuel","maximum-drives"};
     @SubscribeEvent public static void tick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
         if(!Boolean.getBoolean("bwr.compactCorePanelCheck"))return;
@@ -54,6 +56,9 @@ public final class CompactCoreClientCheck {
                 else ReactorPanelMenu.open(player,be);
             });
         }
+        // The server swaps the menu in a task of its own. Until the new menu arrives the previous stage's menu is still open, and
+        // counting it would send the command with a stale container id, which the server drops (a flaky failure under load).
+        if(mc.player.containerMenu.containerId==previousMenu)return;
         if(stage==2) {
             if(!(mc.player.containerMenu instanceof RefuellingMenu m)||m.map==null||m.map.coreSlotCount!=764)return;
         } else {
@@ -77,7 +82,7 @@ public final class CompactCoreClientCheck {
             CheckShots.save(mc,dir.resolve(NAMES[stage]+".png"));
         } catch(java.io.IOException ex) {throw new IllegalStateException(ex);}
         com.mojang.logging.LogUtils.getLogger().info("COMPACT CORE CLIENT: captured {}",NAMES[stage]);
-        requested=false;
+        requested=false;previousMenu=mc.player.containerMenu.containerId;
         if(++stage==NAMES.length) {com.mojang.logging.LogUtils.getLogger().info("COMPACT CORE CLIENT PASS: reference/max maps, refuelling and last-drive commands");mc.stop();}
     }
 }

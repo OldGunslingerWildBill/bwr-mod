@@ -58,7 +58,7 @@ public final class ContainmentSteamCoupling {
         }
         double drySteam = breakSteam;
         if (room != null) for (BlockPos pos : room.linkedSprayHeaders()) {
-            if (!level.isLoaded(pos) || !(level.getBlockEntity(pos) instanceof ContainmentSprayHeaderBlockEntity header))
+            if (!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, pos) instanceof ContainmentSprayHeaderBlockEntity header))
                 continue;
             var sample = header.takeForRoom(now, .05);
             if (wetwell != null && wetwell.isWetwellSprayHeader(pos)) {

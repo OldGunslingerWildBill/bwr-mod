@@ -17,7 +17,11 @@ public final class GridService {
     }
     public static void loaded(GridDevice device){LOADED.add(device);}
     public static void unloaded(GridDevice device){LOADED.remove(device);}
-    private static void tick(ServerTickEvent.Post event){for(var device:List.copyOf(LOADED))if(device.live())device.tickDevice();else LOADED.remove(device);}
+    private static void tick(ServerTickEvent.Post event){
+        long probe=dev.bwr.mod.TickProbe.start();
+        try{for(var device:List.copyOf(LOADED))if(device.live())device.tickDevice();else LOADED.remove(device);}
+        finally{dev.bwr.mod.TickProbe.stop("GridService",probe);}
+    }
     private static void unloadLevel(LevelEvent.Unload event){LOADED.removeIf(d->d.getLevel()==event.getLevel());}
     private static void stopped(ServerStoppedEvent event){LOADED.clear();}
 }

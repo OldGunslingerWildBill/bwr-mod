@@ -457,7 +457,7 @@ public final class GuiScreenCheck {
         }, screen -> {
         }, screen -> focusGrid(screen, 3), true));
         s.add(new Scenario("pump-hover-and-focus", i -> new PumpControlScreen(pump(i, false, "rhr"), i, t("RHR / LPCI Pump")),
-                screen -> focusButton(screen, "Apply"), screen -> hoverButton(screen, "Control: Panel"), true));
+                screen -> focusButton(screen, "Apply"), screen -> hoverButton(screen, "Controlled from this panel"), true));
         s.add(new Scenario("pump-invalid-entry", i -> new PumpControlScreen(pump(i, false, "rhr"), i, t("RHR / LPCI Pump")),
                 screen -> typeInto(screen, "140"), screen -> {
         }, true));

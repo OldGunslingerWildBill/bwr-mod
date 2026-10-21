@@ -101,8 +101,7 @@ public final class WaterLineNetwork {
                 for(var route:dev.bwr.mod.piping.PipeTopology.routes(level,graph)) {
                     var end=route.node();
                     if(end.kind()!=dev.bwr.mod.piping.PipeTopology.Kind.END || route.opening()<=0)continue;
-                    var p=end.pos();if(!level.isLoaded(p))continue;
-                    var state=level.getBlockState(p);var face=end.face();
+                    var p=end.pos();var state=dev.bwr.mod.world.LoadedWorld.state(level,p);if(state==null)continue;var face=end.face();
                     boolean receiver=state.is(BwrBlocks.CONTROL_ROD_DRIVE.get())||state.is(BwrBlocks.WATER_DISCHARGE_PORT.get())||state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())
                             || state.is(BwrBlocks.SUPPRESSION_POOL_RETURN.get())
                             || state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock
@@ -114,7 +113,9 @@ public final class WaterLineNetwork {
                             && state.getValue(dev.bwr.mod.condenser.CondenserBlock.PORT).inlet()
                             || state.getBlock() instanceof ProcessAssembly assembly&&assembly.portAt(state,face)==AssemblyPort.WATER_SUCTION;
                     if(!receiver)continue;
-                    var sink=level.getCapability(Capabilities.FluidHandler.BLOCK,p,face);
+                    // The block and its entity are handed over, so the lookup reads nothing through the level: a sink
+                    // many chunks down the pipe must not be kept loaded by the fill that serves it.
+                    var sink=Capabilities.FluidHandler.BLOCK.getCapability(level,p,state,dev.bwr.mod.world.LoadedWorld.blockEntity(level,p),face);
                     var identity=dev.bwr.mod.world.LiveCapabilities.fluidIdentity(sink);
                     if(identity!=null&&unique.add(identity))sinks.add(new Sink(p.immutable(),sink));
                 }

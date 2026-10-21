@@ -16,9 +16,13 @@ import java.util.Locale;
 /**
  * Compact manual controls for the powered pumps (RHR, LPCS, HPCS, SLC, feed and recirculation). Readouts come from the
  * server's pump, not client estimates. Controls lock while a computer holds the pump, and say so.
+ *
+ * <p>The words follow one rule: a button that cycles through states says the state it is in, and its tooltip says what
+ * a click does; a button that does one thing says what it does.
  */
 public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
-    private static final String LOCKED = "Locked: a computer holds the controls. ";
+    private static final String LOCKED = "This is locked because a computer is controlling the pump. ";
+    private static final String TAKE_BACK = "Use the control button to take control back.";
 
     private BwrEditBox speed;
     private BwrButton apply;
@@ -35,43 +39,45 @@ public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
     @Override
     protected UiElement buildUi() {
         if (speed == null) {
-            speed = new BwrEditBox(font, Component.literal("Speed percent"),
-                    Component.literal("Type the speed demand as a percentage from 0 to 100, one decimal at most, then press Enter or Apply."),
+            speed = new BwrEditBox(font, Component.literal("Speed demand in percent"),
+                    Component.literal("Type the speed you want as a percentage from 0 to 100, with at most one decimal, then press Enter or Apply."),
                     6, PercentInput.FILTER, this::applySpeed);
-            apply = BwrButton.primary("Apply", "Send the typed speed demand to the pump.", b -> applySpeed());
-            run = BwrButton.secondary("Start", "Start the pump.",
+            apply = BwrButton.primary("Apply", "Send the typed speed to the pump.", b -> applySpeed());
+            run = BwrButton.secondary("Start pump", "Start the pump.",
                     b -> menu.sendCommand(PumpControlMenu.RUN, menu.running ? 0 : 1));
-            control = BwrButton.secondary("Control: Panel", "Choose who controls this pump.",
+            control = BwrButton.secondary("Controlled from this panel", "Choose who controls this pump.",
                     b -> menu.sendCommand(PumpControlMenu.CONTROL, menu.recirculation ? (menu.control == 2 ? 0 : 2) : (menu.control + 1) % 3));
-            suction = BwrButton.secondary("Suction", "Choose the water source.",
+            suction = BwrButton.secondary("Suction", "Choose where the pump takes its water from.",
                     b -> menu.sendCommand(PumpControlMenu.SUCTION, menu.poolSuction ? 0 : 1));
             mode = BwrButton.secondary("Mode", "Choose what the pump does.",
                     b -> menu.sendCommand(PumpControlMenu.MODE, menu.shutdownCooling ? 0 : menu.poolCooling ? 2 : 1));
         }
-        var status = Layout.card("Status",
+        var status = Layout.card("Pump",
                 Layout.statusLine(() -> !menu.present ? Status.CAUTION : menu.running ? Status.NORMAL : Status.OFF,
-                        () -> !menu.present ? "Waiting for pump..." : menu.running ? "Running" : "Stopped",
-                        () -> menu.present ? menu.drive : ""),
-                Layout.row("Target", () -> pct(menu.target), "%"),
-                Layout.row("Actual", () -> pct(menu.actual), "%"),
+                        () -> !menu.present ? "Waiting for the pump to report"
+                                : menu.running ? "Running at " + Math.round(menu.actual * 100) + "% of its " + Math.round(menu.target * 100) + "% target"
+                                : "Stopped",
+                        null),
+                Layout.row("Target speed", () -> pct(menu.target), "%"),
+                Layout.row("Actual speed", () -> pct(menu.actual), "%"),
                 Layout.meter("Actual speed", () -> menu.actual, null, () -> ""),
-                Layout.row(() -> menu.recirculation ? "Core-flow share" : "Water flow", () -> num(menu.flow, 1), "kg/s")
+                Layout.row(() -> menu.recirculation ? "Share of core flow" : "Water flow", () -> num(menu.flow, 1), "kg/s")
                         .tip(() -> java.util.List.of(Component.literal(menu.recirculation
-                                ? "Core-flow contribution: this pump's share of core circulation."
-                                : "Water flow delivered by the pump."))),
+                                ? "How much of the core's circulation this pump supplies."
+                                : "How much water the pump is delivering."))),
                 Layout.row(() -> menu.recirculation ? "Vessel pressure" : "Pressure rise", () -> num(menu.pressure, 1), "psi")
                         .tip(() -> java.util.List.of(Component.literal(menu.recirculation
-                                ? "Vessel pressure."
-                                : "Discharge differential pressure."))),
+                                ? "The pressure in the reactor vessel."
+                                : "How much pressure the pump adds between its suction and its discharge."))),
                 Layout.row("Water temperature", () -> Double.isFinite(menu.temperature) ? num(menu.temperature, 1) : "Unavailable",
                         () -> Double.isFinite(menu.temperature) ? "C" : ""),
-                Layout.row(() -> menu.turbine ? "Drive" : "Stored energy", () -> menu.turbine ? "Steam" : big(menu.energy),
-                        () -> menu.turbine ? "" : "FE"),
+                Layout.row("Drive", () -> menu.present ? menu.drive : "-"),
+                Layout.row("Stored energy", () -> big(menu.energy), "FE").showIf(() -> !menu.turbine),
                 Layout.row("Inlet buffer", () -> big(menu.buffer) + " / 2,000", "kg").showIf(() -> !menu.rhr && !menu.slc && !menu.recirculation),
                 Layout.gap(BwrStyle.SP1),
-                Layout.line(() -> menu.connection, Type.CAPTION));
-        var controls = Layout.card("Control",
-                Layout.line(() -> "Speed (%)", Type.CAPTION),
+                Layout.line(() -> Words.sentence(menu.connection), Type.CAPTION));
+        var controls = Layout.card("Controls",
+                Layout.line(() -> "Speed demand (%)", Type.CAPTION),
                 Layout.controls(BwrStyle.SP1).add(speed, 1).fixed(apply, 52),
                 Layout.gap(BwrStyle.SP1),
                 Layout.controls(BwrStyle.SP1).add(run, 1),
@@ -81,10 +87,12 @@ public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
                 Layout.controls(BwrStyle.SP1).add(suction, 1).showIf(() -> menu.eccs && !menu.slc),
                 Layout.gap(BwrStyle.SP1).showIf(() -> menu.rhr),
                 Layout.controls(BwrStyle.SP1).add(mode, 1).showIf(() -> menu.rhr),
-                Layout.note("Suction: finite boron tank").showIf(() -> menu.slc),
-                Layout.note(() -> menu.recirculation ? "Speed determines circulation demand." : "Suction: tank / piped water")
+                Layout.note("Water comes from the finite boron tank.").showIf(() -> menu.slc),
+                Layout.note(() -> menu.recirculation ? "The speed sets how much water the pump circulates."
+                        : "Water comes from the tank or the piped supply.")
                         .showIf(() -> !menu.eccs),
-                Layout.note("Computer owns the controls.").status(() -> Status.INFO).showIf(() -> menu.control == 2));
+                Layout.note("A computer is in control.").status(() -> Status.INFO)
+                        .showIf(() -> menu.control == 2));
         var split = Layout.split(BwrStyle.SP2).stackBelow(360);
         split.add(status, 1);
         split.fixed(controls, 168);
@@ -93,7 +101,7 @@ public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
 
     @Override
     protected UiElement buildTitleItems() {
-        return Layout.titleItems(Layout.chip(() -> Status.INFO, () -> "COMPUTER CONTROL").showIf(() -> menu.present && menu.control == 2));
+        return Layout.titleItems(Layout.chip(() -> Status.INFO, () -> "Computer in control").showIf(() -> menu.present && menu.control == 2));
     }
 
     private Integer percent() {
@@ -115,30 +123,42 @@ public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
             displayedTarget = menu.target;
         }
         boolean locked = menu.control == 2;
+        String why = !menu.present ? "The pump has not reported yet, so there is nothing to control. " : locked ? LOCKED : "";
         speed.setEditable(menu.present && !locked);
         speed.setInvalid(!speed.getValue().isEmpty() && !locked && percent() == null);
         apply.active = menu.present && !locked && percent() != null;
-        apply.setTooltipText(locked ? LOCKED + "Take control back with the Control button." : "Send the typed speed demand to the pump.");
+        apply.setTooltipText(locked ? why + TAKE_BACK
+                : !menu.present ? why
+                : percent() == null ? "The speed has to be a number from 0 to 100, with at most one decimal."
+                : "Send the typed speed to the pump.");
         run.active = menu.present && !locked;
-        run.setMessage(Component.literal(menu.running ? "Stop" : "Start"));
-        run.setTooltipText(locked ? LOCKED : menu.running ? "Stop the pump." : "Start the pump.");
+        run.setMessage(Component.literal(menu.running ? "Stop pump" : "Start pump"));
+        run.setTooltipText(!why.isEmpty() ? why + (locked ? TAKE_BACK : "") : menu.running ? "Stop the pump." : "Start the pump.");
         control.active = menu.present;
-        control.setMessage(Component.literal("Control: " + switch (menu.control) {
-            case 1 -> "Redstone";
-            case 2 -> "Computer";
-            default -> "Panel";
+        control.setMessage(Component.literal(switch (menu.control) {
+            case 1 -> "Controlled by redstone";
+            case 2 -> "Controlled by a computer";
+            default -> "Controlled from this panel";
         }));
-        control.setTooltipText(menu.recirculation
-                ? "Who controls this pump: the panel or a computer. Click to switch."
-                : "Who controls this pump: the panel, redstone or a computer. Click to cycle.");
+        control.setTooltipText(!menu.present ? why : menu.recirculation
+                ? (menu.control == 2 ? "A computer controls this pump. Click to take control back to this panel."
+                : "This panel controls this pump. Click to hand control to a computer.")
+                : switch (menu.control) {
+                    case 1 -> "A redstone signal starts and stops this pump. Click to hand control to a computer.";
+                    case 2 -> "A computer controls this pump. Click to take control back to this panel.";
+                    default -> "This panel controls this pump. Click to switch to redstone control.";
+                });
         suction.active = menu.present && !locked;
-        suction.setMessage(Component.literal(menu.poolSuction ? "Suction: Suppression pool" : "Suction: Tank / piped water"));
-        suction.setTooltipText(locked ? LOCKED : menu.poolSuction
-                ? "Water source: the suppression pool. Click to draw from the condensate tank or piped water instead."
-                : "Water source: the condensate tank or piped water. Click to draw from the suppression pool instead.");
+        suction.setMessage(Component.literal(menu.poolSuction ? "Taking water from the pool" : "Taking tank or piped water"));
+        suction.setTooltipText(!why.isEmpty() ? why + (locked ? TAKE_BACK : "") : menu.poolSuction
+                ? "The pump is taking water from the suppression pool. Click to take it from the condensate tank or piped water instead."
+                : "The pump is taking water from the condensate tank or piped water. Click to take it from the suppression pool instead.");
         mode.active = !locked;
-        mode.setMessage(Component.literal(menu.shutdownCooling ? "Mode: Shutdown cooling"
-                : menu.poolCooling ? "Mode: Pool cooling" : "Mode: Reactor injection"));
-        mode.setTooltipText(locked ? LOCKED : "What the RHR pump does: reactor injection, shutdown cooling or suppression pool cooling. Click to step through them.");
+        mode.setMessage(Component.literal(menu.shutdownCooling ? "In shutdown cooling mode"
+                : menu.poolCooling ? "In pool cooling mode" : "In reactor injection mode"));
+        mode.setTooltipText(locked ? why + TAKE_BACK : menu.shutdownCooling
+                ? "The pump is cooling the shut-down reactor through the heat exchanger. Click to switch to reactor injection mode."
+                : menu.poolCooling ? "The pump is cooling the suppression pool through the heat exchangers. Click to switch to shutdown cooling mode."
+                : "The pump is putting water into the reactor. Click to switch to pool cooling mode.");
     }
 }
