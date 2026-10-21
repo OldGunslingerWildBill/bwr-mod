@@ -1,7 +1,9 @@
 package dev.bwr.mod.gui;
 
+import dev.bwr.mod.fuel.FabricatorItemView;
 import dev.bwr.mod.fuel.FuelFabrication;
 import dev.bwr.mod.fuel.FuelFabricatorBlockEntity;
+import dev.bwr.mod.fuel.FuelItemRoute;
 import dev.bwr.mod.registry.BwrBlocks;
 import dev.bwr.mod.registry.BwrMenus;
 import net.minecraft.core.BlockPos;
@@ -21,29 +23,47 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The fuel fabricator's screen: the output slot, how far along the current
- * bundle is, and what the batch would come out as if it finished now.
+ * The fuel fabricator's screen: the four slots of the item route (uranium and
+ * steel in, assembly and depleted uranium out), the selector that picks the
+ * enrichment of the item route's assembly, how far along each route's current
+ * bundle is, and what the chemical batch would come out as if it finished now.
  *
- * <p>The "input" side of this machine is not an item slot. Heavy metal arrives
- * as Mekanism chemicals through the {@code FuelFeed}, which is the whole point
- * of SPEC 2.4 — the player's existing enrichment plumbing is the enrichment
- * control. So the input is shown as feed status lines and a running fissile
- * fraction rather than as a stack, and the only slot is the one the finished
- * bundle appears in.
+ * <p>The chemical route has no slot and no dial. Heavy metal arrives as Mekanism
+ * chemicals through the {@code FuelFeed}, which is the whole point of SPEC 2.4 —
+ * the player's existing enrichment plumbing is the enrichment control. Its
+ * readout is a measurement of the pile, not a target: a player who wants HEU
+ * feeds the machine more fissile material. The selector is only for the item
+ * route, where ingots carry no enrichment of their own.
  *
- * <p>The enrichment readout is a measurement of the pile, not a target. There
- * is no dial: a player who wants HEU feeds the machine more fissile material.
+ * <p>The target travels as a menu command carrying an index into
+ * {@link FuelItemRoute#TARGETS}; the server checks the index and the block
+ * entity checks the name, so a forged value changes nothing.
  */
 public class FuelFabricatorMenu extends BwrMenu {
 
-    /** Output slot position, matching the well drawn in the panel texture. */
-    private static final int OUTPUT_X = 116;
-    private static final int OUTPUT_Y = 35;
-    private static final int INVENTORY_X = 8;
-    private static final int INVENTORY_Y = 84;
-    private static final int HOTBAR_Y = 142;
+    /** Command: select the item route's assembly, argument a = index into {@link FuelItemRoute#TARGETS}. */
+    public static final int CMD_TARGET = 1;
 
-    private static final int OUTPUT_SLOT_COUNT = 1;
+    /**
+     * The four machine slots, in the order they were added to this menu (which
+     * is not the order a pipe sees: {@link FabricatorItemView}).
+     */
+    public static final int SLOT_ASSEMBLY = 0;
+    public static final int SLOT_TAILS = 1;
+    public static final int SLOT_URANIUM = 2;
+    public static final int SLOT_STEEL = 3;
+
+    /** Slot positions, relative to the panel; the screen's captions are laid out to sit over them. */
+    public static final int SLOT_Y = 100;
+    public static final int URANIUM_X = 26;
+    public static final int STEEL_X = 63;
+    public static final int ASSEMBLY_X = 100;
+    public static final int TAILS_X = 137;
+    private static final int INVENTORY_X = 8;
+    private static final int INVENTORY_Y = 142;
+    private static final int HOTBAR_Y = 200;
+
+    private static final int OUTPUT_SLOT_COUNT = 4;
     private static final int PLAYER_SLOT_COUNT = 36;
 
     /**
@@ -63,6 +83,19 @@ public class FuelFabricatorMenu extends BwrMenu {
     public String wouldFabricate = "";
     public List<String> feedLines = new ArrayList<>();
 
+    /** Item route: the selected target (an index into {@link FuelItemRoute#TARGETS}), its cost, and its progress. */
+    public int targetIndex = TARGET_DEFAULT_INDEX;
+    public boolean hasCost;
+    public int costIngots;
+    public int costSteel;
+    public int costTails;
+    public int costWorkTicks;
+    public int uraniumHeldUnits;
+    public int workTicks;
+    public int tailsHeld;
+
+    private static final int TARGET_DEFAULT_INDEX = Math.max(0, FuelItemRoute.TARGETS.indexOf(FuelItemRoute.DEFAULT_TARGET));
+
     /** Client constructor. */
     public FuelFabricatorMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf extra) {
         this(containerId, inventory, extra.readBlockPos());
@@ -74,12 +107,24 @@ public class FuelFabricatorMenu extends BwrMenu {
 
         FuelFabricatorBlockEntity be = blockEntity(FuelFabricatorBlockEntity.class);
         IItemHandler output = be != null ? be.output() : new ItemStackHandler(1);
-        addSlot(new SlotItemHandler(output, 0, OUTPUT_X, OUTPUT_Y) {
+        IItemHandler tails = be != null ? be.tailsOut() : new ItemStackHandler(1);
+        IItemHandler uranium = be != null ? be.uraniumIn() : new ItemStackHandler(1);
+        IItemHandler steel = be != null ? be.steelIn() : new ItemStackHandler(1);
+        addSlot(new SlotItemHandler(output, 0, ASSEMBLY_X, SLOT_Y) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false; // bundles appear here; nothing goes in
             }
         });
+        addSlot(new SlotItemHandler(tails, 0, TAILS_X, SLOT_Y) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return false; // depleted uranium appears here; nothing goes in
+            }
+        });
+        // The input slots take only what the machine would use: a uranium ingot, ore or cake, and steel.
+        addSlot(new SlotItemHandler(uranium, 0, URANIUM_X, SLOT_Y));
+        addSlot(new SlotItemHandler(steel, 0, STEEL_X, SLOT_Y));
         addPlayerInventory(inventory, INVENTORY_X, INVENTORY_Y, HOTBAR_Y);
     }
 
@@ -115,6 +160,19 @@ public class FuelFabricatorMenu extends BwrMenu {
         buf.writeVarInt(be.energy().getMaxEnergyStored());
 
         buf.writeUtf(wouldFabricate(be), 64);
+
+        buf.writeVarInt(Math.max(0, FuelItemRoute.TARGETS.indexOf(be.target())));
+        FuelItemRoute.Cost cost = be.itemCost();
+        buf.writeBoolean(cost != null);
+        if (cost != null) {
+            buf.writeVarInt(cost.ingots());
+            buf.writeVarInt(cost.steel());
+            buf.writeVarInt(cost.tails());
+            buf.writeVarInt(cost.workTicks());
+        }
+        buf.writeVarInt(be.uraniumHeldUnits());
+        buf.writeVarInt(be.itemWorkTicks());
+        buf.writeVarInt(be.tailsHeld());
 
         List<String> lines = be.feed().statusLines();
         int count = Math.min(lines.size(), 6);
@@ -173,6 +231,23 @@ public class FuelFabricatorMenu extends BwrMenu {
         energyCapacity = buf.readVarInt();
         wouldFabricate = buf.readUtf(64);
 
+        targetIndex = Math.max(0, Math.min(FuelItemRoute.TARGETS.size() - 1, buf.readVarInt()));
+        hasCost = buf.readBoolean();
+        if (hasCost) {
+            costIngots = buf.readVarInt();
+            costSteel = buf.readVarInt();
+            costTails = buf.readVarInt();
+            costWorkTicks = buf.readVarInt();
+        } else {
+            costIngots = 0;
+            costSteel = 0;
+            costTails = 0;
+            costWorkTicks = 0;
+        }
+        uraniumHeldUnits = buf.readVarInt();
+        workTicks = buf.readVarInt();
+        tailsHeld = buf.readVarInt();
+
         int count = buf.readVarInt();
         List<String> lines = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
@@ -183,8 +258,15 @@ public class FuelFabricatorMenu extends BwrMenu {
 
     @Override
     public void handleCommand(ServerPlayer sender, int command, int a, int b) {
-        // Nothing to command. The machine has no mode, no recipe selection and
-        // no start button: it runs when it has feed and power.
+        // One command: pick the item route's assembly. There is no mode and no
+        // start button; the machine runs when it has feed and power.
+        if (command != CMD_TARGET || a < 0 || a >= FuelItemRoute.TARGETS.size()) {
+            return;
+        }
+        FuelFabricatorBlockEntity be = fabricator();
+        if (be != null && be.setTarget(FuelItemRoute.TARGETS.get(a))) {
+            markSnapshotDirty();
+        }
     }
 
     @Override
@@ -206,13 +288,21 @@ public class FuelFabricatorMenu extends BwrMenu {
             }
             slot.onQuickCraft(stack, original);
         } else {
-            // Nothing may be shift-clicked into the output slot, so a stack in
-            // the player's inventory only moves between hotbar and main.
-            boolean fromHotbar = index >= OUTPUT_SLOT_COUNT + 27;
-            boolean moved = fromHotbar
-                    ? moveItemStackTo(stack, OUTPUT_SLOT_COUNT, OUTPUT_SLOT_COUNT + 27, false)
-                    : moveItemStackTo(stack, OUTPUT_SLOT_COUNT + 27,
-                            OUTPUT_SLOT_COUNT + PLAYER_SLOT_COUNT, false);
+            // Nothing may be shift-clicked into the output slots. Uranium and
+            // steel go to their own input slot; anything else only moves
+            // between hotbar and main.
+            boolean moved;
+            if (FuelItemRoute.uraniumUnits(stack) > 0) {
+                moved = moveItemStackTo(stack, SLOT_URANIUM, SLOT_URANIUM + 1, false);
+            } else if (FuelItemRoute.isSteel(stack)) {
+                moved = moveItemStackTo(stack, SLOT_STEEL, SLOT_STEEL + 1, false);
+            } else {
+                boolean fromHotbar = index >= OUTPUT_SLOT_COUNT + 27;
+                moved = fromHotbar
+                        ? moveItemStackTo(stack, OUTPUT_SLOT_COUNT, OUTPUT_SLOT_COUNT + 27, false)
+                        : moveItemStackTo(stack, OUTPUT_SLOT_COUNT + 27,
+                                OUTPUT_SLOT_COUNT + PLAYER_SLOT_COUNT, false);
+            }
             if (!moved) {
                 return ItemStack.EMPTY;
             }

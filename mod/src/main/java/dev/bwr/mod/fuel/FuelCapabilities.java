@@ -6,7 +6,7 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
 /**
  * The capabilities the fabricator exposes that do not involve Mekanism: the
- * output slot and the energy buffer. Both are plain NeoForge, so this class is
+ * four item slots ({@link FabricatorItemView}) and the energy buffer. Both are plain NeoForge, so this class is
  * safe to load on any install.
  *
  * <p>Mekanism's own chemical capability is registered separately in
@@ -21,7 +21,7 @@ public final class FuelCapabilities {
         event.registerBlockEntity(
                 Capabilities.ItemHandler.BLOCK,
                 BwrBlockEntities.FUEL_FABRICATOR.get(),
-                (be, side) -> be.output());
+                (be, side) -> be.itemView(side));
 
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,

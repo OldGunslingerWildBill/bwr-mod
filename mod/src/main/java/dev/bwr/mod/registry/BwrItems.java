@@ -295,6 +295,12 @@ public final class BwrItems {
     public static final DeferredItem<Item> COBALT_SAMPLE = ITEMS.registerSimpleItem("cobalt_sample");
     public static final DeferredItem<Item> TRITIUM_SAMPLE = ITEMS.register("tritium_sample", () -> new dev.bwr.mod.fuel.TritiumSampleItem(new Item.Properties()));
     public static final DeferredItem<Item> DOPED_SILICON = ITEMS.registerSimpleItem("doped_silicon");
+    /**
+     * What the fuel fabricator's item route returns from the uranium that did not become enriched product
+     * (the tails of the mass balance in {@code EnrichmentMassBalance}). It is a plain ingot, deliberately not
+     * tagged as a uranium ingot, so the fabricator will not take it back as feed.
+     */
+    public static final DeferredItem<Item> DEPLETED_URANIUM = ITEMS.registerSimpleItem("depleted_uranium");
 
     // --- Control-room furniture (ROOM-FURNITURE.md) ---
     public static final DeferredItem<BlockItem> RELAY_CABINET =
@@ -362,7 +368,7 @@ public final class BwrItems {
                     .icon(() -> FUEL_ASSEMBLY.get().getDefaultInstance()).displayItems((parameters, output) -> {
                         for (var type : FuelTypes.catalogue()) output.accept(FuelAssemblyItem.stackOf(FUEL_ASSEMBLY.get(), FuelAssemblyData.fresh(type)));
                         for (var kind : dev.bwr.core.fuel.CoreInsert.Kind.values()) output.accept(dev.bwr.mod.fuel.SpecialtyRodItem.stack(new dev.bwr.mod.fuel.CoreInsertData(kind, 0)));
-                        for (var item : java.util.List.of(IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, COBALT_SAMPLE, TRITIUM_SAMPLE, DOPED_SILICON)) output.accept(item.get());
+                        for (var item : java.util.List.of(IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, COBALT_SAMPLE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM)) output.accept(item.get());
                     }).build());
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB =

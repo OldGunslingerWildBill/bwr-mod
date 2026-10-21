@@ -71,6 +71,9 @@ public class FuelFabricatorBlock extends BaseEntityBlock {
             if (player.isShiftKeyDown()
                     || !(player instanceof net.minecraft.server.level.ServerPlayer sp)) {
                 ItemStack finished = be.output().extractItem(0, 1, false);
+                if (finished.isEmpty()) {
+                    finished = be.tailsOut().extractItem(0, 64, false);
+                }
                 if (!finished.isEmpty()) {
                     if (!player.getInventory().add(finished)) {
                         Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), finished);
@@ -89,17 +92,18 @@ public class FuelFabricatorBlock extends BaseEntityBlock {
 
     /**
      * A finished bundle is 180 kg of enriched heavy metal. Breaking the machine
-     * drops it rather than deleting it — the partly-accumulated batch is lost,
-     * which is a real cost, but a completed assembly is not silently voided.
+     * drops it rather than deleting it — the partly-accumulated chemical batch is
+     * lost, which is a real cost, but a completed assembly is not silently voided.
+     * Everything the item route holds (the depleted uranium, the input slots and
+     * the uranium taken in for the assembly under way) is dropped too.
      */
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos,
                             BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock())
                 && level.getBlockEntity(pos) instanceof FuelFabricatorBlockEntity be) {
-            ItemStack finished = be.output().extractItem(0, 1, false);
-            if (!finished.isEmpty()) {
-                Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), finished);
+            for (ItemStack drop : be.removalDrops()) {
+                Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), drop);
             }
         }
         super.onRemove(state, level, pos, newState, movedByPiston);

@@ -100,7 +100,8 @@ public final class BwrPeripheralSupport {
             if(c!=null&&c.isFormed()){m.put("pressurePsig",c.core().getPressurePsig());m.put("waterC",c.core().getCoolantTemperatureC());}return m;
         });
         if(be instanceof dev.bwr.mod.fuel.FuelFabricatorBlockEntity b)return new HardwarePeripheral("bwr_fuel_fabricator",()->Map.of(
-                "batchHeavyMetalKg",b.batchHeavyMetalKg(),"enrichment",b.batchEnrichmentWeightFraction(),"energyFE",b.energy().getEnergyStored(),"outputCount",b.output().getStackInSlot(0).getCount()));
+                "batchHeavyMetalKg",b.batchHeavyMetalKg(),"enrichment",b.batchEnrichmentWeightFraction(),"energyFE",b.energy().getEnergyStored(),"outputCount",b.output().getStackInSlot(0).getCount(),
+                "target",b.target(),"uraniumHeldIngots",b.uraniumHeldUnits()/(double)dev.bwr.mod.fuel.FuelItemRoute.UNITS_PER_INGOT,"depletedUranium",b.tailsHeld()));
         if(be instanceof dev.bwr.mod.rods.ControlRodDriveBlockEntity b)return new HardwarePeripheral("bwr_control_rod_drive",()->Map.of(
                 "attached",b.isAttached(),"rodIndex",b.rodIndex(),"notch",b.notchLabel(),"accumulatorCharge",b.accumulatorCharge(),"energyFE",b.energyStoredFe(),"waterKg",b.waterStoredMb(),"health",b.health()));
         return null;
