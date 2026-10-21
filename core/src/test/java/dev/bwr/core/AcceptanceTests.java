@@ -7,6 +7,7 @@ import dev.bwr.core.accident.QuenchSpikeRefloodTest;
 import dev.bwr.core.accident.SevereAccidentEscalationTest;
 import dev.bwr.core.boundary.BoundaryStressTest;
 import dev.bwr.core.feedwater.FeedwaterPumpTest;
+import dev.bwr.core.fuel.DepletedUraniumTest;
 import dev.bwr.core.fuel.EnrichmentMassBalanceTest;
 import dev.bwr.core.fuel.FuelTypeSpecTest;
 import dev.bwr.core.fuel.HeatPerFissionTest;
@@ -121,6 +122,7 @@ public final class AcceptanceTests {
             NodalFluxSolverTest.class,
             FuelTypeSpecTest.class,
             EnrichmentMassBalanceTest.class,
+            DepletedUraniumTest.class,
             MixedCoreTest.class,
             HeatPerFissionTest.class,
             FeedwaterPumpTest.class,

@@ -1,7 +1,7 @@
 # Fuel and specialty rods — alpha.21
 
 Open **Realistic BWR: Fuel & Rods** in the creative inventory. The machine tab
-now contains plant hardware; this tab contains 17 selectable fuel grades, eight specialty
+now contains plant hardware; this tab contains 18 selectable fuel grades, eight specialty
 rod cassettes, empty irradiation rods, target charges and samples. All icons
 are small PNGs rendered from the Blender studio in `art/models/fuel_icons/`.
 Items still represent one logical core position, not a placeable fuel block.
@@ -11,6 +11,7 @@ Items still represent one logical core position, not a placeable fuel block.
 | Family | Available grades | Meaning |
 |---|---|---|
 | Uranium | 0.711%, intermediate 2.70%, high BWR 3.50%, 4.95%, 8.00%, 19.75%, 20.00% | U-235 weight fraction in the simplified fuel model |
+| Depleted uranium | 0.25% | A blanket that absorbs when fresh and breeds plutonium over burnup |
 | Gadolinia uranium | 3.50% | Additional burnable absorption compared with the standard 3.50% assembly |
 | Mixed oxide | Lean 4.5%, standard 7%, rich 9.5% | Effective fissile fractions for gameplay, **not total plutonium percentages** |
 | Plutonium | Lean 4%, standard 6%, rich 8.5% | Existing Pu-dominated kinetics family, extended with experimental grades |
@@ -140,8 +141,7 @@ A fabricator placed before this change loads with empty item slots, on the
 default target, with its chemical tanks, batch, energy and output exactly as
 they were (`FuelFabricatorItemRouteTests`).
 
-Depleted uranium has **no use in a reactor yet**. See the note at the end of
-the CHANGELOG entry for why.
+Depleted uranium is a fuel type of its own, a blanket (next section).
 
 ## Recipes: what is craftable
 
@@ -155,6 +155,44 @@ purpose:
 | `corium` | Made by a core melting through its vessel |
 | `depleted_uranium` | The fuel fabricator's byproduct |
 | `rcic_turbine_pump`, `hpci_turbine_pump`, `suppression_pool_quencher` | Retired blocks kept so old worlds load (the Terry-style `rcic_twl` and `hpci_turbine` and the suppression pool steam inlet replaced them); `tools-audit-assets.py` fails any recipe that produces or uses them |
+
+## Depleted uranium as a fuel (blanket)
+
+`depleted_uranium` (`data/bwr/fuel_type/depleted_uranium.json`, also a compiled
+preset) is the fuel type of the uranium the fabricator's item route returns. It
+is a **blanket**: loaded among fuel it absorbs neutrons while it is fresh, and
+U-238 capture breeds plutonium into it as it burns, so its k-infinity climbs
+with burnup. It never becomes a fuel in its own right. It is in the Fuel & Rods
+creative tab like the other grades.
+
+**Making one.** Craft it: four depleted uranium ingots (`c:ingots/depleted_uranium`)
+round four steel ingots (`c:ingots/steel`), in a ring (steel at the corners):
+
+    S D S
+    D . D
+    S D S
+
+The result is a fresh 180 kg depleted uranium assembly, the same data as the
+creative tab's. Only the steel tag needs a mod behind it (Mekanism's steel is in
+it); the machine's item route does not make it, because it has no target for
+the tails.
+
+| Field | Value | Why |
+|---|---|---|
+| `nominal_enrichment` | 0.0025 | The tails assay of the fabricator's mass balance (0.25 % U-235) |
+| `k_inf_base` | 0.262 | Not tuned by hand: natural uranium's 0.5802 at 0.711 % carried down to 0.25 % along the mod's own enrichment-utilisation curve (`FuelAssembly.baseKInf`). Fresh it is far below 1, so it is a net absorber, and well below natural uranium, which cannot sustain a chain either |
+| `conversion_gain_k_inf` | 0.036 | Thorium's 0.1 scaled by the thermal capture ratio of the fertile isotope, U-238 2.7 b against Th-232 7.4 b (0.37). The same mechanism and the same 20,000 MWd/t saturation as thorium (`FuelAssembly.burnupPenaltyKInf`) |
+| `depletion_rate` | 5e-7 per MWd/t | LEU's 6.5e-6 scaled by fissile content (0.25 % against 3.5 %): there is almost no U-235 to burn. It has to be below the initial breeding slope (0.036 / 20,000 = 1.8e-6) for k-infinity to rise |
+| `beta` | 0.006502 | Like natural uranium, as asked. (Real U-238 fast fission has a larger delayed fraction, so this is the conservative side for control margin) |
+| `prompt_lifetime_seconds`, `doppler_coeff_per_c`, `heat_per_fission_mev` | 4e-5, -1.6e-5, 202.5 | Like natural uranium |
+| `gad_content` | 0 | No burnable poison: there is no excess reactivity to hold down |
+
+Resulting k-infinity: 0.262 fresh, 0.271 at 10 GWd/t, 0.275 at 20 GWd/t, peaking
+near 0.275 around 25 GWd/t and then falling as the little U-235 is used. Twenty
+in the middle of the default core lower k_eff(all rods out) from 1.0864 to
+1.0858: a blanket costs reactivity in proportion to how much of the core it
+replaces (`DepletedUraniumTest`, `DepletedUraniumTests`). These are model values in the
+mod's calibrated style, not a depletion calculation; a datapack may retune them.
 
 ## Specialty rods
 

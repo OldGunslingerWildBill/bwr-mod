@@ -537,7 +537,7 @@ public final class FuelFabricatorItemRouteTests {
     /**
      * The recipe set as the server loaded it: every bwr item has a crafting recipe except the ones that are not meant to be
      * crafted (the same list, with reasons, as NO_RECIPE in tools-audit-recipes.py), and nothing on that list has one.
-     * The Mekanism-gated recipes only exist with Mekanism.
+     * The Mekanism-gated fabricator recipe only exists with Mekanism (the fuel assembly has one without it, the depleted uranium recipe).
      */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void everyCraftableItemHasARecipeAndTheRestDoNot(GameTestHelper h) {
@@ -549,7 +549,6 @@ public final class FuelFabricatorItemRouteTests {
         var notCrafted = new java.util.HashSet<String>(List.of("cobalt_sample", "tritium_sample", "doped_silicon", "corium", "depleted_uranium",
                 "rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_quencher"));
         if (!ModList.get().isLoaded("mekanism")) {
-            notCrafted.add("fuel_assembly");
             notCrafted.add("fuel_fabricator");
         }
         for (var id : BuiltInRegistries.ITEM.keySet()) {

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": {
+      "tag": "c:ingots/steel"
+    },
+    "D": {
+      "tag": "c:ingots/depleted_uranium"
+    }
+  },
+  "pattern": [
+    "SDS",
+    "D D",
+    "SDS"
+  ],
+  "result": {
+    "id": "bwr:fuel_assembly",
+    "count": 1,
+    "components": {
+      "bwr:fuel_assembly": {
+        "fuel_type": "depleted_uranium",
+        "enrichment": 0.0025,
+        "heavy_metal_kg": 180.0,
+        "burnup_mwd_per_tonne": 0.0,
+        "gadolinia_remaining": 1.0
+      }
+    }
+  }
+}

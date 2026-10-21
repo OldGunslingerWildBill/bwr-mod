@@ -263,7 +263,10 @@ public record FuelType(
             new FuelType("plutonium_lean", 1.1895392749244715, 0.002099, 2e-05, 5e-06, -1.4e-05, 0.01, 211.5, 0.04, 0.0),
             new FuelType("plutonium_rich", 1.375113633445469, 0.002099, 2e-05, 5e-06, -1.4e-05, 0.03, 211.5, 0.085, 0.0),
             new FuelType("thorium_lean", 0.907809208546494, 0.00266, 4.2e-05, 3e-06, -1.9e-05, 0, 199.7, 0.02, 0.1),
-            new FuelType("thorium_rich", 1.2004178272980501, 0.00266, 4.2e-05, 3e-06, -1.9e-05, 0.01, 199.7, 0.05, 0.1));
+            new FuelType("thorium_rich", 1.2004178272980501, 0.00266, 4.2e-05, 3e-06, -1.9e-05, 0.01, 199.7, 0.05, 0.1),
+            // Depleted uranium, 0.25 % U-235 (the tails of the enrichment mass balance): an absorber and
+            // U-238 breeding blanket. See FUELS-AND-RODS.md for why each number is what it is.
+            new FuelType("depleted_uranium", 0.262, 0.006502, 4e-05, 5e-07, -1.6e-05, 0, 202.5, 0.0025, 0.036));
 
     public static List<FuelType> presets() {
         return CATALOG;

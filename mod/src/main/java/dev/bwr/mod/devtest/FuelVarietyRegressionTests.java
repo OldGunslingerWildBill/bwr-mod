@@ -31,7 +31,7 @@ public final class FuelVarietyRegressionTests {
         h.assertTrue(FuelFabrication.select(FuelFabrication.Family.URANIUM,.027).name().equals("uranium_27"),"Fabricator ignores low enrichment grades");
         h.assertTrue(FuelFabrication.select(FuelFabrication.Family.URANIUM,.2).name().equals("heu"),"HEU compatibility lost");
         h.assertTrue(FuelFabrication.select(FuelFabrication.Family.URANIUM,.035).name().equals("leu"),"BWR high grade not selected");
-        h.assertTrue(FuelTypes.catalogue().size()==17&&FuelTypes.catalogue().stream().noneMatch(t->t.name().equals("uranium_12")||t.name().equals("uranium_14")),"Retired fuel still offered");
+        h.assertTrue(FuelTypes.catalogue().size()==18&&FuelTypes.catalogue().stream().noneMatch(t->t.name().equals("uranium_12")||t.name().equals("uranium_14")),"Retired fuel still offered");
         for(String legacy:new String[]{"uranium_12","uranium_14"}) {
             var type=FuelTypes.byNameOrPreset(legacy);
             var original=new FuelAssemblyData(legacy,type.nominalEnrichmentWeightFraction(),180,21,.4);

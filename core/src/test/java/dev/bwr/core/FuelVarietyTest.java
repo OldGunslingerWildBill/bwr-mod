@@ -9,8 +9,8 @@ public final class FuelVarietyTest {
     private static void near(double a, double b) { check(Math.abs(a-b) < 1e-10, a + " != " + b); }
     private static FuelType type(String name) { return FuelType.presets().stream().filter(t -> t.name().equals(name)).findFirst().orElseThrow(); }
     public static void test01_catalogAndUraniumCurve() {
-        check(FuelType.presets().size() == 19, "Missing fuel grades");
-        check(FuelType.presets().stream().map(FuelType::name).distinct().count() == 19, "Duplicate grade");
+        check(FuelType.presets().size() == 20, "Missing fuel grades");
+        check(FuelType.presets().stream().map(FuelType::name).distinct().count() == 20, "Duplicate grade");
         double previous = 0;
         for (String name : new String[]{"natural_uranium", "uranium_12", "uranium_14", "uranium_27", "leu", "uranium_495", "uranium_8"}) {
             var fuel = new FuelAssembly(type(name)); check(fuel.baseKInf() > previous, "Enrichment curve regressed: " + name); previous = fuel.baseKInf();

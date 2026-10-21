@@ -83,6 +83,9 @@ public class FuelAssemblyItem extends Item {
         if (type.name().equals("natural_uranium")) tooltip.add(line(BwrText.tr(
                 "status.bwr.fuel_assembly_item.experimental_bwr_loading_cannot_sustain_a_chain_reaction",
                 "Experimental BWR loading; cannot sustain a chain reaction alone.")));
+        if (type.name().equals("depleted_uranium")) tooltip.add(line(BwrText.tr(
+                "status.bwr.fuel_assembly_item.depleted_uranium_blanket",
+                "Blanket: absorbs neutrons when fresh and breeds plutonium as it burns.")));
         if (data.enrichmentWeightFraction() >= 0.05 || type.name().startsWith("plutonium") || type.name().startsWith("thorium"))
             tooltip.add(line(BwrText.tr(
                     "status.bwr.fuel_assembly_item.experimental_fuel_option_simplified_nuclear_data",

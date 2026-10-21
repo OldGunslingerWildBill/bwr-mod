@@ -117,6 +117,12 @@
         "bwr:fuel_variant": 18
       },
       "model": "bwr:item/fuel/thorium_rich"
+    },
+    {
+      "predicate": {
+        "bwr:fuel_variant": 19
+      },
+      "model": "bwr:item/fuel/depleted_uranium"
     }
   ]
 }
