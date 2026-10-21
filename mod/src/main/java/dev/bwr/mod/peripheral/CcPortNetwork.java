@@ -132,8 +132,7 @@ public final class CcPortNetwork implements CcPortBridge.Network {
             if (cachedVersion == version && cachedPorts == ports) {
                 return;
             }
-            cachedVersion = version;
-            cachedPorts = ports;
+            boolean complete = true;
             Map<BlockEntity, Boolean> seen = new IdentityHashMap<>();
             List<BlockEntity> all = new ArrayList<>();
             Map<Integer, List<BlockEntity>> grouped = new HashMap<>();
@@ -143,10 +142,15 @@ public final class CcPortNetwork implements CcPortBridge.Network {
                 }
                 Level level = live.level();
                 if (level == null || !level.isLoaded(live.anchor())) {
+                    complete = false; // its chunk is not loaded yet: it may be in a moment, and nothing tells us then
                     continue;
                 }
                 BlockEntity owner = DeviceResolver.resolve(level, live.anchor());
-                if (owner == null || SignalProviders.of(owner) == null || seen.put(owner, Boolean.TRUE) != null) {
+                if (owner == null) {
+                    complete = false; // a multiblock part that has no owner yet
+                    continue;
+                }
+                if (SignalProviders.of(owner) == null || seen.put(owner, Boolean.TRUE) != null) {
                     continue;
                 }
                 all.add(owner);
@@ -157,6 +161,14 @@ public final class CcPortNetwork implements CcPortBridge.Network {
             }
             machines = List.copyOf(all);
             byPort = grouped;
+            if (complete) {
+                cachedVersion = version;
+                cachedPorts = ports;
+            } else {
+                // An answer that left a machine out because it could not be reached yet is not kept: ask again next time,
+                // so the machine appears as soon as its chunk or owner does.
+                cachedVersion = -1;
+            }
         }
     }
 

@@ -60,6 +60,28 @@ public final class PanelNetworkIndex {
         invalidate();
     }
 
+    /**
+     * Forgets every panel and what was computed from them: the client left its world (disconnect, level unload).
+     * Vanilla drops a client level without calling {@code setRemoved} on its block entities, so this set would keep
+     * every panel, and through it the whole old level, alive.
+     */
+    public static void clear() {
+        synchronized (CLIENT_PANELS) {
+            CLIENT_PANELS.clear();
+        }
+        cachedFor = null;
+        cachedLevel = null;
+        cachedRefs = List.of();
+        invalidate();
+    }
+
+    /** Panels held, for tests. */
+    public static int tracked() {
+        synchronized (CLIENT_PANELS) {
+            return CLIENT_PANELS.size();
+        }
+    }
+
     /** The generation, so a caller can tell whether anything it computed from the index is stale. */
     public static int generation() {
         return generation;

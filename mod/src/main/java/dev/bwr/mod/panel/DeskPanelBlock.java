@@ -77,10 +77,11 @@ public final class DeskPanelBlock extends PanelBlock {
                     || !level.isUnobstructed(right.setValue(HALF, half), at, collision))) {
                 return null;
             }
-            // A desk that would grow a run past the configured group size is not placed.
-            if (!PanelGroup.placementAllowed(level, at, PanelType.DESK, facing)) {
-                return null;
-            }
+        }
+        // A desk that would grow a run past the configured group size is not placed. Both halves are measured together:
+        // each alone could fit while the pair makes the run one block too long.
+        if (!PanelGroup.placementAllowed(level, java.util.List.of(origin, DeskHalf.LEFT.at(origin, facing)), PanelType.DESK, facing)) {
+            return null;
         }
         return right;
     }

@@ -102,6 +102,18 @@ final class PanelMeshCache implements AutoCloseable {
         }
     }
 
+    /**
+     * Closes every buffer and forgets every block now: the level was unloaded or the player disconnected. {@link #sweep}
+     * only runs while a level renders, so without this the video memory (and the old block entities) would stay held at
+     * the title screen.
+     */
+    static void releaseAll() {
+        for (PanelMeshCache cache : CACHES.values()) {
+            cache.close();
+        }
+        CACHES.clear();
+    }
+
     /** Number of blocks holding a buffer, for checks. */
     static int cachedBlocks() {
         return CACHES.size();

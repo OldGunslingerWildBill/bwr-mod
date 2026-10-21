@@ -122,8 +122,8 @@ public final class PanelGroup {
     // ---- construction
 
     /** Whether a block at {@code pos} would belong to a group of this type and facing. */
-    static boolean isMember(Level level, BlockPos pos, PanelType type, Direction facing, BlockPos assumed) {
-        if (pos.equals(assumed)) {
+    static boolean isMember(Level level, BlockPos pos, PanelType type, Direction facing, Set<BlockPos> assumed) {
+        if (assumed.contains(pos)) {
             return true;
         }
         if (!level.isLoaded(pos)) {
@@ -142,6 +142,12 @@ public final class PanelGroup {
      *                may be null
      */
     public static PanelGroup compute(Level level, BlockPos start, PanelType type, Direction facing, BlockPos assumed) {
+        return computeAssuming(level, start, type, facing, assumed == null ? Set.of() : Set.of(assumed));
+    }
+
+    /** {@link #compute} with several positions treated as members (a multi-block piece that is about to be placed). */
+    public static PanelGroup computeAssuming(Level level, BlockPos start, PanelType type, Direction facing,
+                                             Set<BlockPos> assumed) {
         Map<BlockPos, int[]> found = new HashMap<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         BlockPos origin = start.immutable();
@@ -215,9 +221,46 @@ public final class PanelGroup {
         return new PanelGroup(type, facing, List.copyOf(ordered), cellOf, blockAt, columns, rows, oversize);
     }
 
+    /**
+     * Whether a block next to a member, in the board's own directions, is in a chunk that is not loaded. The group only
+     * holds loaded blocks, so the board may well go on there; an edit that has to reach every copy of a mimic path
+     * cannot know it did.
+     */
+    public boolean bordersUnloaded(Level level) {
+        for (BlockPos pos : members) {
+            for (int step = 0; step < 4; step++) {
+                BlockPos next = switch (step) {
+                    case 0 -> PanelType.nextColumn(pos, facing);
+                    case 1 -> PanelType.previousColumn(pos, facing);
+                    case 2 -> type.nextRow(pos, facing);
+                    default -> type.previousRow(pos, facing);
+                };
+                if (next == null || (step < 2 && !type.hasColumns()) || level.isOutsideBuildHeight(next)) {
+                    continue;
+                }
+                if (!level.isLoaded(next)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /** Whether placing a panel block at {@code pos} keeps its group within the configured size. */
     public static boolean placementAllowed(Level level, BlockPos pos, PanelType type, Direction facing) {
-        return !compute(level, pos, type, facing, pos).oversize();
+        return placementAllowed(level, Set.of(pos), type, facing);
+    }
+
+    /**
+     * {@link #placementAllowed(Level, BlockPos, PanelType, Direction)} for a piece that puts several blocks of one panel
+     * type into the same group (the two halves of a desk, the two board blocks of a duplex column): the group is measured
+     * once with all of them in it. Testing each alone lets two halves that are each one under the cap make a group one
+     * over it. All {@code positions} must be adjacent in the board's directions.
+     */
+    public static boolean placementAllowed(Level level, java.util.Collection<BlockPos> positions, PanelType type,
+                                           Direction facing) {
+        Set<BlockPos> assumed = Set.copyOf(positions);
+        return !computeAssuming(level, assumed.iterator().next(), type, facing, assumed).oversize();
     }
 
     // ---- component queries

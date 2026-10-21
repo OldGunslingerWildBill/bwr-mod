@@ -42,7 +42,8 @@ public final class NetworkingNet {
 
     /** Public so the GameTests can drive the real handler with a decoded payload. */
     public static void handleNameLinked(NetworkingPayloads.NameLinked payload, IPayloadContext context) {
-        if (context.player() instanceof ServerPlayer sender) {
+        if (context.player() instanceof ServerPlayer sender
+                && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.NAME_LINKED)) {
             NetworkingOps.nameLinked(sender, payload.device());
         }
     }
@@ -60,7 +61,8 @@ public final class NetworkingNet {
     }
 
     public static void handleCcPortLookup(NetworkingScreenPayloads.CcPortLookup payload, IPayloadContext context) {
-        if (context.player() instanceof ServerPlayer sender) {
+        if (context.player() instanceof ServerPlayer sender
+                && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.OPEN_SCREEN)) {
             var screen = dev.bwr.mod.panel.wiring.WiringOps.ccPortScreenFor(sender, payload.pos(), payload.id(), payload.port());
             if (screen != null) {
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sender, screen);
@@ -69,7 +71,8 @@ public final class NetworkingNet {
     }
 
     public static void handleOpen(NetworkingScreenPayloads.Open payload, IPayloadContext context) {
-        if (context.player() instanceof ServerPlayer sender) {
+        if (context.player() instanceof ServerPlayer sender
+                && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.OPEN_SCREEN)) {
             NetworkingOps.openScreen(sender, payload.device());
         }
     }

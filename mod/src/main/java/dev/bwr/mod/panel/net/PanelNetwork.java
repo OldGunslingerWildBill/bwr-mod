@@ -57,7 +57,7 @@ public final class PanelNetwork {
 
     /** Public so the GameTests can drive the real handler with a decoded payload. */
     public static void handleSetSize(PanelPayloads.SetSize payload, IPayloadContext context) {
-        if (context.player() instanceof ServerPlayer sender) {
+        if (context.player() instanceof ServerPlayer sender && dev.bwr.mod.world.AssemblyAccess.mayOperate(sender)) {
             net.minecraft.world.item.ItemStack held = sender.getItemInHand(
                     payload.offHand() ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND);
             dev.bwr.mod.panel.component.ComponentItem.select(held, sender, payload.variant());
@@ -71,13 +71,15 @@ public final class PanelNetwork {
     }
 
     private static void handleConfigure(PanelPayloads.Configure payload, IPayloadContext context) {
-        if (context.player() instanceof ServerPlayer sender) {
+        if (context.player() instanceof ServerPlayer sender
+                && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.CONFIGURE)) {
             PanelOps.configure(sender, payload.pos(), payload.id(), payload.edit());
         }
     }
 
     private static void handleOperate(PanelPayloads.Operate payload, IPayloadContext context) {
-        if (context.player() instanceof ServerPlayer sender) {
+        if (context.player() instanceof ServerPlayer sender
+                && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.OPERATE)) {
             PanelOps.operate(sender, payload.pos(), payload.id(), OperateAction.byId(payload.action()), payload.value());
         }
     }
@@ -89,7 +91,8 @@ public final class PanelNetwork {
     }
 
     private static void handleLinkerOpen(PanelPayloads.LinkerOpen payload, IPayloadContext context) {
-        if (context.player() instanceof ServerPlayer sender) {
+        if (context.player() instanceof ServerPlayer sender
+                && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.OPEN_SCREEN)) {
             WiringOps.openScreen(sender, payload.pos(), payload.id());
         }
     }

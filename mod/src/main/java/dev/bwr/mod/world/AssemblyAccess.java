@@ -21,6 +21,20 @@ public final class AssemblyAccess {
     public static boolean permitted(Level level, LivingEntity actor, BlockPos pos) {
         return !(actor instanceof Player player) || level.mayInteract(player,pos);
     }
+    /**
+     * Operating a control (press, turn, hold, recorder text): everyone but a spectator, so adventure maps work. The
+     * custom panel packets bypass the vanilla game-mode gates, so they ask here.
+     */
+    public static boolean mayOperate(Player player) {
+        return !player.isSpectator();
+    }
+    /**
+     * Placing, removing, configuring, wiring and renaming: a player who may build and is not a spectator, the same test
+     * {@code CondensateTankAssembly.resize} applies. Adventure mode is refused.
+     */
+    public static boolean mayEdit(Player player) {
+        return !player.isSpectator() && player.mayBuild();
+    }
     public static List<BlockPos> cells(Level level,BlockPos pos,BlockState state) {
         List<BlockPos> cells=new ArrayList<>();
         if(state.getBlock() instanceof PumpAssemblyBlock block) {

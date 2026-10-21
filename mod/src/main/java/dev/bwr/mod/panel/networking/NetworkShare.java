@@ -62,8 +62,17 @@ public final class NetworkShare {
         if (kind < NetworkingPayloads.KIND_NONE || kind > NetworkingPayloads.KIND_COMPONENT) {
             return -1;
         }
+        if (!dev.bwr.mod.world.AssemblyAccess.mayOperate(sender)) {
+            return -1;
+        }
         if (LinkTools.heldWrench(sender).isEmpty()) {
             kind = NetworkingPayloads.KIND_NONE;
+        }
+        if (kind == NetworkingPayloads.KIND_NONE
+                && !dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.HOVER_CLEAR)) {
+            // A clear is not subject to the 3-tick spacing (it must always follow a target), but a stream of them
+            // is a flood: each one goes to every player in range.
+            return -1;
         }
         long now = sender.level().getGameTime();
         Long last = LAST.get(sender.getUUID());
