@@ -54,7 +54,7 @@ public final class PowerModuleClientCheck {
                 var player=server.getPlayerList().getPlayer(uuid);var l=player.serverLevel();player.getAbilities().flying=true;player.setNoGravity(true);player.onUpdateAbilities();
                 if(selected==0){
                     for(int x=7;x<=12;x++)for(int z=7;z<=10;z++){l.setChunkForced(x,z,true);l.getChunk(x,z);}
-                    for(var p:BlockPos.betweenClosed(new BlockPos(124,214,137),new BlockPos(182,214,150)))l.setBlock(p,net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState(),3);
+                    for(var p:BlockPos.betweenClosed(new BlockPos(124,208,137),new BlockPos(182,208,150)))l.setBlock(p,net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState(),3);
                     modules=PowerModuleRuntimeCheck.makeTrain(l,215,145);
                     var reactor=PumpAssemblyRuntimeCheck.vessel(l);reactor.core().initialiseHotShutdown();
                     var nozzlePos=new BlockPos(164,201,127);l.setBlock(nozzlePos,BwrBlocks.RPV_STEAM_OUTLET.get().defaultBlockState(),3);
@@ -67,13 +67,7 @@ public final class PowerModuleClientCheck {
                         var v=(dev.bwr.mod.steam.TurbineValveBlockEntity)l.getBlockEntity(p);v.setTarget(1);v.stroke(3);
                     }
                     var nozzle=(RpvSteamOutletBlockEntity)l.getBlockEntity(nozzlePos);nozzle.noteController(reactor.getBlockPos());nozzle.setComputerControlled(true);nozzle.setPosition(1);nozzle.refreshAttachment(l);nozzle.refreshLine(l);
-                    // LP return lines into finite storage tanks, using actual Mekanism mechanical pipes.
-                    for(int i=2;i<6;i++){var m=modules.get(i);var p=m.block().portPosition(m.getBlockPos(),m.getBlockState(),AssemblyPort.WATER_DISCHARGE);
-                        var face=m.block().portFace(m.getBlockState(),AssemblyPort.WATER_DISCHARGE);
-                        var mek=net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse("mekanism:ultimate_mechanical_pipe"));
-                        l.setBlock(p.relative(face,3),BwrBlocks.CONDENSATE_STORAGE_TANK.get().defaultBlockState(),3);
-                        for(int j=1;j<3;j++)l.setBlock(p.relative(face,j),mek.defaultBlockState(),3);
-                    }
+                    // LPs no longer have a water outlet: their exhaust goes to the condensers that makeTrain attaches beneath them.
                     l.setDayTime(6000);l.setWeatherParameters(6000,0,false,false);
                     player.connection.teleport(154,233,103,0,18);return;
                 }
@@ -82,7 +76,7 @@ public final class PowerModuleClientCheck {
                 if(selected==5){player.connection.teleport(180,225,148,26,25);return;}
                 if(selected>=6){var p=selected==6?CONTROL:STOP;player.connection.teleport(p.getX()+.5,p.getY()+1,p.getZ()-2,0,15);TurbineValveMenu.open(player,p);return;}
                 var m=modules.get(selected==2?0:selected==3?2:6);var p=m.getBlockPos();
-                var anchor=m.block().generator()?m.block().terminal(p,m.getBlockState()):m.block().portPosition(p,m.getBlockState(),m.block().highPressure()?AssemblyPort.STEAM_EXHAUST:AssemblyPort.WATER_DISCHARGE);
+                var anchor=m.block().generator()?m.block().terminal(p,m.getBlockState()):m.block().portPosition(p,m.getBlockState(),m.block().highPressure()?AssemblyPort.STEAM_EXHAUST:AssemblyPort.STEAM_INLET);
                 player.connection.teleport(anchor.getX()+.5,anchor.getY()+1,anchor.getZ()-3.5,0,12);
                 PowerModuleMenu.open(player,p,anchor);
             });

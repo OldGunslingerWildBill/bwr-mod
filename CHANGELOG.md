@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased: GPU mesh cache budget
+
+- The machine mesh cache (`MachineMeshCache`) now holds 256 MB instead of 96 MB. A reactor with the largest (21 x 21) core keeps about 90 MB in the four meshes it draws every frame (vessel, drives, core, jets); together with anything else in view that went over 96 MB, so the cache dropped one of them every frame and uploaded it again, every frame, for as long as the reactor was in view (the RIP model check caught it as "RIP core uploads every frame"). Smaller reactors were never affected. No saved data changes.
+
 ## Unreleased: control desks (1 m and 2 m)
 
 - Added the owner's two small Fusion **control desks** as mountable panel bodies (CONTROL-PANELS.md, "Control desks"): **Control Panel (Desk, 1 m)** (`bwr:control_panel_desk`, one block) and **Control Panel (Desk, 2 m)** (`bwr:control_panel_desk_wide`, two blocks placed by one item, the second to the operator's left). The shape is the owner's (units are centimetres, one block is one metre): a level top 0.375 m deep, a riser and a narrow shelf behind it 0.175 m above the top, and a front that falls away under the top for the knee space; the desk stands against the back of its block. The owner's top is 0.40 m high, which is low next to the operator desks, so on the owner's instruction ("stretch to desk height") the part below the top is stretched vertically to put the top at **0.75 m**, the height of the operator desks; the top, the riser and the shelf keep the owner's sizes (shelf 0.925 m), and the sloped front still runs from the front edge of the top to the floor, a little steeper. The model keeps the owner's outline (the extra collinear points of the Fusion mesh are dropped: 10 faces instead of 420 triangles); `art/models/control_desk/build_desk.py` rebuilds it headless in Blender and checks it against both source files.

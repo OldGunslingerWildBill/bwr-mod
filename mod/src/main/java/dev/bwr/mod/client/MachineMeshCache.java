@@ -25,7 +25,9 @@ import net.neoforged.neoforge.event.level.LevelEvent;
  * Cache keys describe geometry, never a world or block entity. All GL ownership is on the render thread. */
 @EventBusSubscriber(modid=BwrMod.MOD_ID,value=Dist.CLIENT)
 public final class MachineMeshCache {
-    private static final long MAX_BYTES=96L*1024*1024;
+    // One reactor with the largest (21 x 21) core is about 90 MB of meshes in the four entries it draws every frame. With a smaller
+    // budget trim() evicts one of them each frame and the core is uploaded again every frame; the budget must hold the largest reactor.
+    private static final long MAX_BYTES=256L*1024*1024;
     private static final int MAX_ENTRIES=128;
     private static final LinkedHashMap<Object,Mesh> MESHES=new LinkedHashMap<>(16,.75f,true);
     private static ShaderInstance shader;
