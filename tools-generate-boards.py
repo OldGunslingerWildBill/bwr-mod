@@ -361,14 +361,14 @@ def rps_board():
     b.add(N, "rps_trip", 6, 5, RPS, label="MAN-SCRAM-A1B1", config={"LegendA": "A1", "LegendB": "B1"})
     b.plate(N, 16, 0, 24, 4, "REACTOR MODE")
     rotary(b, N, 23, 5, ROT_BIG, ["SHUTDOWN", "REFUEL", "STARTUP", "RUN"], label="MODE-SW", style="westinghouse", variant="wl2")
-    b.add(N, "key_switch", 31, 6, KEY, label="MODE-KEY", caption="MODE KEY")
+    b.add(N, "key_switch", 31, 6, KEY, label="MODE-KEY")
     b.plate(N, 40, 0, 16, 4, "SCRAM RESET")
-    b.add(N, "control_switch", 46, 5, SW_BIG, label="SCRAM-RESET", caption="RESET A / B",
+    b.add(N, "control_switch", 46, 5, SW_BIG, label="SCRAM-RESET",
           config={"Spring": True, "CloseText": "RESET A", "NormalText": "NORMAL", "OpenText": "RESET B", "RedText": "SCRAM",
                   "GreenText": "RESET"})
     b.plate(N, 56, 0, 8, 4, "ARI")
-    push(b, N, 56, 6, caption="A", label="ARI-A", colour="C02020", variant="guarded")
-    push(b, N, 60, 6, caption="B", label="ARI-B", colour="C02020", variant="guarded")
+    push(b, N, 56, 6, label="ARI-A", colour="C02020", variant="guarded")
+    push(b, N, 60, 6, label="ARI-B", colour="C02020", variant="guarded")
     b.plate(N, 64, 0, 16, 4, "BACKUP A2/B2", style="red")
     b.add(N, "rps_trip", 70, 5, RPS, label="BKUP-SCRAM-A2B2", config={"LegendA": "BK A2", "LegendB": "BK B2"})
     b.plate(N, 64, 9, 16, 4, "FIRE BACKUP")

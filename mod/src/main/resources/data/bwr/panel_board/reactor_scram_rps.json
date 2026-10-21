@@ -2087,8 +2087,7 @@
     2,
     4
    ],
-   "label": "MODE-KEY",
-   "caption": "MODE KEY"
+   "label": "MODE-KEY"
   },
   {
    "on": "main.bench",
@@ -2119,7 +2118,6 @@
     6
    ],
    "label": "SCRAM-RESET",
-   "caption": "RESET A / B",
    "config": {
     "Spring": true,
     "CloseText": "RESET A",
@@ -2158,7 +2156,6 @@
     2
    ],
    "label": "ARI-A",
-   "caption": "A",
    "config": {
     "Color": "C02020",
     "Variant": "guarded"
@@ -2176,7 +2173,6 @@
     2
    ],
    "label": "ARI-B",
-   "caption": "B",
    "config": {
     "Color": "C02020",
     "Variant": "guarded"
