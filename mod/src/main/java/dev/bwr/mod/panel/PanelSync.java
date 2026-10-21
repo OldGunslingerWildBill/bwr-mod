@@ -70,6 +70,15 @@ public final class PanelSync {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
+        long probe = dev.bwr.mod.TickProbe.start();
+        try {
+            tickSync();
+        } finally {
+            dev.bwr.mod.TickProbe.stop("PanelSync", probe);
+        }
+    }
+
+    private static void tickSync() {
         if (!DISPLAY_DIRTY.isEmpty()) {
             // Drawing calls from CC arrive in bursts; however many there were, the client gets one state per tick.
             java.util.List<PanelBlockEntity> displays = new ArrayList<>(DISPLAY_DIRTY);

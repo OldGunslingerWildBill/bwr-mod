@@ -34,7 +34,7 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
     public boolean energyFace(BlockPos pos,BlockState s,Direction side) { return generator() && side==terminalFace(s) && pos.equals(terminal(origin(pos,s),s)); }
     @Override public BlockEntity newBlockEntity(BlockPos pos,BlockState s) { return s.getValue(CELL)==controllerCell(s)?new PowerModuleBlockEntity(pos,s):null; }
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level,BlockState s,BlockEntityType<T> type) {
-        return level.isClientSide()||s.getValue(CELL)!=controllerCell(s)?null:createTickerHelper(type,BwrBlockEntities.POWER_MODULE.get(),PowerModuleBlockEntity::serverTick);
+        return level.isClientSide()||s.getValue(CELL)!=controllerCell(s)?null:dev.bwr.mod.TickProbe.wrap(createTickerHelper(type,BwrBlockEntities.POWER_MODULE.get(),PowerModuleBlockEntity::serverTick));
     }
     @Override protected InteractionResult useWithoutItem(BlockState s,Level level,BlockPos pos,Player player,BlockHitResult hit) {
         if(player instanceof ServerPlayer sp)dev.bwr.mod.gui.PowerModuleMenu.open(sp,origin(pos,s),pos);

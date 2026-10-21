@@ -37,7 +37,7 @@ public class TurbineValveBlock extends BaseEntityBlock implements SteamLinePort 
     @Override protected BlockState mirror(BlockState s,Mirror m){return s.rotate(m.getRotation(s.getValue(FACING)));}
     @Override public BlockEntity newBlockEntity(BlockPos p,BlockState s){return new TurbineValveBlockEntity(p,s);}
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level l,BlockState s,BlockEntityType<T> type){
-        return l.isClientSide()?null:createTickerHelper(type,BwrBlockEntities.TURBINE_VALVE.get(),TurbineValveBlockEntity::serverTick);
+        return l.isClientSide()?null:dev.bwr.mod.TickProbe.wrap(createTickerHelper(type,BwrBlockEntities.TURBINE_VALVE.get(),TurbineValveBlockEntity::serverTick));
     }
     @Override protected InteractionResult useWithoutItem(BlockState s,Level l,BlockPos p,Player who,BlockHitResult hit){
         if(who instanceof ServerPlayer sp)dev.bwr.mod.gui.TurbineValveMenu.open(sp,p);

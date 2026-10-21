@@ -94,8 +94,8 @@ public class EccsPumpBlock extends BaseEntityBlock {
         if (level.isClientSide()) {
             return null;
         }
-        return createTickerHelper(type, dev.bwr.mod.registry.BwrBlockEntities.ECCS_PUMP.get(),
-                EccsPumpBlockEntity::serverTick);
+        return dev.bwr.mod.TickProbe.wrap(createTickerHelper(type, dev.bwr.mod.registry.BwrBlockEntities.ECCS_PUMP.get(),
+                EccsPumpBlockEntity::serverTick));
     }
 
     @Override

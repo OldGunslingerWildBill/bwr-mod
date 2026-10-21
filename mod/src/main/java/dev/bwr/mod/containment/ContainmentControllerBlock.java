@@ -31,8 +31,8 @@ public final class ContainmentControllerBlock extends BaseEntityBlock {
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
                                                                              BlockEntityType<T> type) {
         if (level.isClientSide()) return null;
-        return createTickerHelper(type, BwrBlockEntities.CONTAINMENT_CONTROLLER.get(),
-                ContainmentControllerBlockEntity::serverTick);
+        return dev.bwr.mod.TickProbe.wrap(createTickerHelper(type, BwrBlockEntities.CONTAINMENT_CONTROLLER.get(),
+                ContainmentControllerBlockEntity::serverTick));
     }
 
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,

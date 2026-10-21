@@ -66,6 +66,15 @@ public final class PanelTimers {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
+        long probe = dev.bwr.mod.TickProbe.start();
+        try {
+            tickTimers(event);
+        } finally {
+            dev.bwr.mod.TickProbe.stop("PanelTimers", probe);
+        }
+    }
+
+    private static void tickTimers(ServerTickEvent.Post event) {
         List<Entry> fire = null;
         List<Entry> leaving = null;
         synchronized (PanelTimers.class) {

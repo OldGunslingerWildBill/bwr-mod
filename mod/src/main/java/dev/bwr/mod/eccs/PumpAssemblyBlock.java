@@ -151,9 +151,9 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level,BlockState s,BlockEntityType<T> type) {
         if(level.isClientSide() || s.getValue(CELL)!=controllerCell(s)) return null;
         return switch(kind) {
-            case SLC,LPCS,RHR,HPCS -> createTickerHelper(type,BwrBlockEntities.ECCS_PUMP.get(),EccsPumpBlockEntity::serverTick);
-            case MOTOR_FEED,TURBINE_FEED -> createTickerHelper(type,BwrBlockEntities.FEEDWATER_PUMP.get(),FeedwaterPumpBlockEntity::serverTick);
-            case RIP,RCP -> createTickerHelper(type,BwrBlockEntities.RECIRCULATION_PUMP.get(),RecirculationPumpBlockEntity::serverTick);
+            case SLC,LPCS,RHR,HPCS -> dev.bwr.mod.TickProbe.wrap(createTickerHelper(type,BwrBlockEntities.ECCS_PUMP.get(),EccsPumpBlockEntity::serverTick));
+            case MOTOR_FEED,TURBINE_FEED -> dev.bwr.mod.TickProbe.wrap(createTickerHelper(type,BwrBlockEntities.FEEDWATER_PUMP.get(),FeedwaterPumpBlockEntity::serverTick));
+            case RIP,RCP -> dev.bwr.mod.TickProbe.wrap(createTickerHelper(type,BwrBlockEntities.RECIRCULATION_PUMP.get(),RecirculationPumpBlockEntity::serverTick));
             case SLC_TANK,JET,HP_TURBINE,LP_TURBINE,GENERATOR -> null;
         };
     }

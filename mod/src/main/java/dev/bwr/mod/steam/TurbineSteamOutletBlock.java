@@ -70,8 +70,8 @@ public class TurbineSteamOutletBlock extends BaseEntityBlock implements SteamLin
         if (level.isClientSide()) {
             return null;
         }
-        return createTickerHelper(type, BwrBlockEntities.TURBINE_STEAM_OUTLET.get(),
-                TurbineSteamOutletBlockEntity::serverTick);
+        return dev.bwr.mod.TickProbe.wrap(createTickerHelper(type, BwrBlockEntities.TURBINE_STEAM_OUTLET.get(),
+                TurbineSteamOutletBlockEntity::serverTick));
     }
 
     @Override

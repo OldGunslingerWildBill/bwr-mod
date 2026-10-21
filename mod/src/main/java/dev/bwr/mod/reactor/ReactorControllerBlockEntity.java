@@ -229,7 +229,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             structureDirty = true;
         }
         if (structureDirty) {
+            long probe = dev.bwr.mod.TickProbe.start();
             revalidate(level);
+            dev.bwr.mod.TickProbe.stop("  Reactor.revalidate", probe);
             structureDirty = false;
         }
         if (core == null || structure == null) {
@@ -240,17 +242,21 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         dev.bwr.mod.advancement.PlantMilestones.beforeReactorStep(this);
         dev.bwr.mod.config.GameplayConfig.applyTo(core);
 
+        long probe = dev.bwr.mod.TickProbe.start();
         refreshFuelDefinitions();
         gatherPumpFlow(level);
         applyVesselSteamDischarge(level);
+        dev.bwr.mod.TickProbe.stop("  Reactor.pumps+nozzles", probe);
 
         // Order matters. The drive network moves rods and spends accumulator
         // charge before the physics steps, then writes hardware condition back
         // afterwards, so the core sees a consistent rod configuration for the
         // whole tick.
+        probe = dev.bwr.mod.TickProbe.start();
         rodSelection.tick(rodNetwork, core);
         rodNetwork.preStep(config.tickSeconds);
         boundaryEffects.apply(this,vesselEnvelope);
+        dev.bwr.mod.TickProbe.stop("  Reactor.rods+boundary", probe);
         var containmentController = dev.bwr.mod.containment.ContainmentControllerRegistry
                 .linkedReactor(level, getBlockPos());
         if (containmentController == null) {
@@ -272,15 +278,21 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
         dev.bwr.mod.containment.ContainmentEquipmentRegistry.apply(this, containmentController);
         dev.bwr.mod.containment.ContainmentSteamCoupling.beforeReactorStep(this, containmentController);
+        probe = dev.bwr.mod.TickProbe.start();
         core.step();
+        dev.bwr.mod.TickProbe.stop("  Reactor.core.step", probe);
+        probe = dev.bwr.mod.TickProbe.start();
         rodNetwork.postStep();
         severeEffects.afterStep(this);
         dev.bwr.mod.advancement.PlantMilestones.afterReactorStep(this);
         refreshHeadAccess();
+        dev.bwr.mod.TickProbe.stop("  Reactor.post", probe);
 
         if (++sinceSync >= SYNC_INTERVAL_TICKS) {
             sinceSync = 0;
+            probe = dev.bwr.mod.TickProbe.start();
             syncToClients();
+            dev.bwr.mod.TickProbe.stop("  Reactor.syncToClients", probe);
         }
         setChanged();
     }
@@ -1386,6 +1398,15 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        long probe = dev.bwr.mod.TickProbe.start();
+        try {
+            return buildUpdateTag(registries);
+        } finally {
+            dev.bwr.mod.TickProbe.stop("  Reactor.getUpdateTag (per tracked chunk update)", probe);
+        }
+    }
+
+    private CompoundTag buildUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = super.getUpdateTag(registries);
         tag.putString("VesselState", vesselState.getSerializedName());
         tag.putBoolean("Formed", isFormed());

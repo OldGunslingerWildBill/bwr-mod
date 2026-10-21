@@ -65,8 +65,8 @@ public class ReactorControllerBlock extends BaseEntityBlock {
         if (level.isClientSide()) {
             return null;
         }
-        return createTickerHelper(type, BwrBlockEntities.REACTOR_CONTROLLER.get(),
-                ReactorControllerBlockEntity::serverTick);
+        return dev.bwr.mod.TickProbe.wrap(createTickerHelper(type, BwrBlockEntities.REACTOR_CONTROLLER.get(),
+                ReactorControllerBlockEntity::serverTick));
     }
 
     /**

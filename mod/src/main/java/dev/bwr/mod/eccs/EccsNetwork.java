@@ -100,6 +100,15 @@ public final class EccsNetwork {
     }
 
     private static void onServerTickPost(ServerTickEvent.Post event) {
+        long probe = dev.bwr.mod.TickProbe.start();
+        try {
+            applyBuses(event);
+        } finally {
+            dev.bwr.mod.TickProbe.stop("EccsNetwork", probe);
+        }
+    }
+
+    private static void applyBuses(ServerTickEvent.Post event) {
         MinecraftServer server = event.getServer();
         long gameTime = server.overworld().getGameTime();
 
