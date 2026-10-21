@@ -28,7 +28,7 @@ public class CondensateTankScreen extends BwrScreen<CondensateTankMenu> {
                 Layout.row("Diameter / height", () -> menu.diameter + " / " + menu.height, "blocks").showIf(() -> menu.assembled),
                 Layout.row("Construction blocks", () -> big(menu.blocks), "").showIf(() -> menu.assembled),
                 Layout.note("Dismantle and rebuild the shell to change its size.").showIf(() -> menu.assembled),
-                Layout.row("Square base", () -> "odd width 3-15", "blocks").showIf(() -> !menu.assembled),
+                Layout.row("Base width", () -> "odd, 3-15", "blocks").tip("Square base: an odd width from 3 to 15 blocks.").showIf(() -> !menu.assembled),
                 Layout.row("Height", () -> "3-24", "blocks").showIf(() -> !menu.assembled),
                 Layout.note("Build the floor, four walls and roof from tank blocks. Leave the interior empty. The final block forms the tank automatically.")
                         .showIf(() -> !menu.assembled));

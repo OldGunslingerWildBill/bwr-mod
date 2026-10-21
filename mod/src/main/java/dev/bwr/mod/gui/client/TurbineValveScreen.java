@@ -43,7 +43,7 @@ public class TurbineValveScreen extends BwrScreen<TurbineValveMenu> {
                 Layout.gap(BwrStyle.SP1),
                 Layout.row("Steam flow", () -> grouped(menu.flow, 2), "kg/s"));
         var command = Layout.card("Command",
-                Layout.line(() -> menu.stop ? "Stop valve: fully open or fully closed." : "Set opening (%)", Type.CAPTION),
+                Layout.note(() -> menu.stop ? "Stop valve: fully open or fully closed." : "Set opening (%)"),
                 Layout.controls(BwrStyle.SP1).add(percent, 1).fixed(apply, 56).showIf(() -> !menu.stop),
                 Layout.gap(BwrStyle.SP1).showIf(() -> !menu.stop),
                 Layout.controls(BwrStyle.SP1).add(less, 1).add(more, 1).showIf(() -> !menu.stop),
