@@ -65,4 +65,10 @@ public final class BwrDataComponents {
                     .persistent(FuelAssemblyData.CODEC)
                     .networkSynchronized(FuelAssemblyData.STREAM_CODEC)
                     .build());
+
+    /** The premade board a board blueprint places (a {@code panel_board} template id); none stored means the first board. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<net.minecraft.resources.ResourceLocation>> BOARD_TEMPLATE =
+            DATA_COMPONENTS.register("board_template", () -> DataComponentType.<net.minecraft.resources.ResourceLocation>builder()
+                    .persistent(net.minecraft.resources.ResourceLocation.CODEC)
+                    .networkSynchronized(net.minecraft.resources.ResourceLocation.STREAM_CODEC).build());
 }

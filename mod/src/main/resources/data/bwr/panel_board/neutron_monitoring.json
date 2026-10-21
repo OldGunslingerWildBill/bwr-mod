@@ -1,0 +1,2087 @@
+{
+ "format": 1,
+ "title": "Neutron monitoring",
+ "description": "Startup to power: eight IRMs on the 125 division scale with their range switches, six APRM bar graphs with the 118 percent scram band, sixteen LPRM meters, four SRM count rates and two two pen recorders.",
+ "source": "CR-PANELS-BWR-RESEARCH.md board 10 (GE BWR/4 chapter 5: IRM rod block 108/125, scram 120/125, downscale 5/125; APRM fixed scram 118 percent, flow biased 0.66W + 51)",
+ "order": 5,
+ "todo": [
+  "The IRM range switch has 10 positions on the real plant; the rotary selector part stops at 6, so R1 to R6 stand in for it (research board 10).",
+  "IRM / APRM / RBM bypass joysticks (research gap 2) would sit with the bypass switches on main.board.",
+  "LPRM meters are single dials; a grouped LPRM meter bank is a layout choice, not a part."
+ ],
+ "frames": [
+  {
+   "id": "main",
+   "kind": "duplex",
+   "columns": 6,
+   "at": [
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "components": [
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    2,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "APRM",
+    "Line2": "UPSCALE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    4,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "APRM",
+    "Line2": "FLOW BIAS"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    6,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "APRM",
+    "Line2": "INOP"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    8,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "IRM",
+    "Line2": "UPSCALE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    10,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "IRM",
+    "Line2": "INOP"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    12,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "SRM",
+    "Line2": "INOP"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    14,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "RBM",
+    "Line2": "UPSCALE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    16,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "E02020",
+    "Line1": "LPRM",
+    "Line2": "UPSCALE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    2,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "APRM",
+    "Line2": "ROD BLOCK"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    4,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "IRM",
+    "Line2": "ROD BLOCK"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    6,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "SRM",
+    "Line2": "ROD BLOCK"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    8,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RBM",
+    "Line2": "ROD BLOCK"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    10,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "APRM",
+    "Line2": "DOWNSCALE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    12,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "IRM",
+    "Line2": "DOWNSCALE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    14,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "SRM",
+    "Line2": "DOWNSCALE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    16,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RBM",
+    "Line2": "DOWNSCALE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    2,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "APRM",
+    "Line2": "BYPASSED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    4,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "IRM",
+    "Line2": "BYPASSED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    6,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "SRM",
+    "Line2": "BYPASSED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    8,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "RBM",
+    "Line2": "BYPASSED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    10,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "LPRM",
+    "Line2": "BYPASSED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    12,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "TIP",
+    "Line2": "BYPASSED"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    14,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    16,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    78,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "SRM",
+    "Line2": "PERIOD SHORT"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    80,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "IRM",
+    "Line2": "PERIOD SHORT"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    82,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "SRM DET",
+    "Line2": "NOT FULL IN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    84,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "IRM DET",
+    "Line2": "NOT FULL IN"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    86,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "LPRM",
+    "Line2": "DOWNSCALE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    88,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "LPRM",
+    "Line2": "HIGH"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    90,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "APRM",
+    "Line2": "DISAGREE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    92,
+    2
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "APRM",
+    "Line2": "CAL"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    78,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "TIP",
+    "Line2": "MACHINE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    80,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "TIP",
+    "Line2": "SHEAR VLV"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    82,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "TIP",
+    "Line2": "IN CORE"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    84,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "OPRM",
+    "Line2": "ALARM"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    86,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4",
+    "Line1": "OPRM",
+    "Line2": "TRIP"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    88,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    90,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:annunciator",
+   "at": [
+    92,
+    4
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F4F4F4"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:nameplate",
+   "at": [
+    34,
+    2
+   ],
+   "size": [
+    24,
+    4
+   ],
+   "config": {
+    "Text": "NEUTRON MONITORING",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.header",
+   "type": "bwr:nameplate",
+   "at": [
+    34,
+    7
+   ],
+   "size": [
+    24,
+    8
+   ],
+   "config": {
+    "Text": "TRIP SETPOINTS",
+    "Text2": "APRM SCRAM 118 PCT",
+    "Text3": "IRM SCRAM 120/125",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    0,
+    0
+   ],
+   "size": [
+    64,
+    4
+   ],
+   "config": {
+    "Text": "SRM / IRM / APRM / LPRM / RBM",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    64,
+    0
+   ],
+   "size": [
+    32,
+    4
+   ],
+   "config": {
+    "Text": "P603",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    0,
+    5
+   ],
+   "size": [
+    32,
+    4
+   ],
+   "config": {
+    "Text": "IRM  (125 DIVISIONS)",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_vertical",
+   "at": [
+    3,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "IRM-A",
+   "caption": "A",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "DIV",
+    "Band1Low": 0,
+    "Band1High": 5,
+    "Band1Color": "C4B02A",
+    "Band2Low": 108,
+    "Band2High": 120,
+    "Band2Color": "C4B02A",
+    "Band3Low": 120,
+    "Band3High": 125,
+    "Band3Color": "A80E0E"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    3,
+    19
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "IRM-A-RNG",
+   "config": {
+    "Positions": 6,
+    "Names": "R1,R2,R3,R4,R5,R6"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_vertical",
+   "at": [
+    7,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "IRM-B",
+   "caption": "B",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "DIV",
+    "Band1Low": 0,
+    "Band1High": 5,
+    "Band1Color": "C4B02A",
+    "Band2Low": 108,
+    "Band2High": 120,
+    "Band2Color": "C4B02A",
+    "Band3Low": 120,
+    "Band3High": 125,
+    "Band3Color": "A80E0E"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    7,
+    19
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "IRM-B-RNG",
+   "config": {
+    "Positions": 6,
+    "Names": "R1,R2,R3,R4,R5,R6"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_vertical",
+   "at": [
+    11,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "IRM-C",
+   "caption": "C",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "DIV",
+    "Band1Low": 0,
+    "Band1High": 5,
+    "Band1Color": "C4B02A",
+    "Band2Low": 108,
+    "Band2High": 120,
+    "Band2Color": "C4B02A",
+    "Band3Low": 120,
+    "Band3High": 125,
+    "Band3Color": "A80E0E"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    11,
+    19
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "IRM-C-RNG",
+   "config": {
+    "Positions": 6,
+    "Names": "R1,R2,R3,R4,R5,R6"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_vertical",
+   "at": [
+    15,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "IRM-D",
+   "caption": "D",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "DIV",
+    "Band1Low": 0,
+    "Band1High": 5,
+    "Band1Color": "C4B02A",
+    "Band2Low": 108,
+    "Band2High": 120,
+    "Band2Color": "C4B02A",
+    "Band3Low": 120,
+    "Band3High": 125,
+    "Band3Color": "A80E0E"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    15,
+    19
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "IRM-D-RNG",
+   "config": {
+    "Positions": 6,
+    "Names": "R1,R2,R3,R4,R5,R6"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_vertical",
+   "at": [
+    19,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "IRM-E",
+   "caption": "E",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "DIV",
+    "Band1Low": 0,
+    "Band1High": 5,
+    "Band1Color": "C4B02A",
+    "Band2Low": 108,
+    "Band2High": 120,
+    "Band2Color": "C4B02A",
+    "Band3Low": 120,
+    "Band3High": 125,
+    "Band3Color": "A80E0E"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    19,
+    19
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "IRM-E-RNG",
+   "config": {
+    "Positions": 6,
+    "Names": "R1,R2,R3,R4,R5,R6"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_vertical",
+   "at": [
+    23,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "IRM-F",
+   "caption": "F",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "DIV",
+    "Band1Low": 0,
+    "Band1High": 5,
+    "Band1Color": "C4B02A",
+    "Band2Low": 108,
+    "Band2High": 120,
+    "Band2Color": "C4B02A",
+    "Band3Low": 120,
+    "Band3High": 125,
+    "Band3Color": "A80E0E"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    23,
+    19
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "IRM-F-RNG",
+   "config": {
+    "Positions": 6,
+    "Names": "R1,R2,R3,R4,R5,R6"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_vertical",
+   "at": [
+    27,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "IRM-G",
+   "caption": "G",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "DIV",
+    "Band1Low": 0,
+    "Band1High": 5,
+    "Band1Color": "C4B02A",
+    "Band2Low": 108,
+    "Band2High": 120,
+    "Band2Color": "C4B02A",
+    "Band3Low": 120,
+    "Band3High": 125,
+    "Band3Color": "A80E0E"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    27,
+    19
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "IRM-G-RNG",
+   "config": {
+    "Positions": 6,
+    "Names": "R1,R2,R3,R4,R5,R6"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:edgewise_gauge_vertical",
+   "at": [
+    31,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "IRM-H",
+   "caption": "H",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "DIV",
+    "Band1Low": 0,
+    "Band1High": 5,
+    "Band1Color": "C4B02A",
+    "Band2Low": 108,
+    "Band2High": 120,
+    "Band2Color": "C4B02A",
+    "Band3Low": 120,
+    "Band3High": 125,
+    "Band3Color": "A80E0E"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:rotary_selector",
+   "at": [
+    31,
+    19
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "IRM-H-RNG",
+   "config": {
+    "Positions": 6,
+    "Names": "R1,R2,R3,R4,R5,R6"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:control_switch",
+   "at": [
+    3,
+    25
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "IRM-BYPASS",
+   "caption": "IRM BYP",
+   "config": {
+    "Spring": false,
+    "CloseText": "NORMAL",
+    "NormalText": "",
+    "OpenText": "BYPASS",
+    "RedText": "BYPASS",
+    "GreenText": "NORMAL"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:control_switch",
+   "at": [
+    11,
+    25
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "APRM-BYPASS",
+   "caption": "APRM BYP",
+   "config": {
+    "Spring": false,
+    "CloseText": "NORMAL",
+    "NormalText": "",
+    "OpenText": "BYPASS",
+    "RedText": "BYPASS",
+    "GreenText": "NORMAL"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:control_switch",
+   "at": [
+    19,
+    25
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "SRM-BYPASS",
+   "caption": "SRM BYP",
+   "config": {
+    "Spring": false,
+    "CloseText": "NORMAL",
+    "NormalText": "",
+    "OpenText": "BYPASS",
+    "RedText": "BYPASS",
+    "GreenText": "NORMAL"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:control_switch",
+   "at": [
+    27,
+    25
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "RBM-BYPASS",
+   "caption": "RBM BYP",
+   "config": {
+    "Spring": false,
+    "CloseText": "NORMAL",
+    "NormalText": "",
+    "OpenText": "BYPASS",
+    "RedText": "BYPASS",
+    "GreenText": "NORMAL"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    38,
+    5
+   ],
+   "size": [
+    32,
+    4
+   ],
+   "config": {
+    "Text": "APRM  (PERCENT POWER)",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:bar_gauge",
+   "at": [
+    41,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "APRM-A",
+   "caption": "A",
+   "config": {
+    "Preset": "custom",
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT PWR",
+    "Band1Low": 100,
+    "Band1High": 118,
+    "Band1Color": "C4B02A",
+    "Band2Low": 118,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0,
+    "Band4Low": 0,
+    "Band4High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:bar_gauge",
+   "at": [
+    46,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "APRM-B",
+   "caption": "B",
+   "config": {
+    "Preset": "custom",
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT PWR",
+    "Band1Low": 100,
+    "Band1High": 118,
+    "Band1Color": "C4B02A",
+    "Band2Low": 118,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0,
+    "Band4Low": 0,
+    "Band4High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:bar_gauge",
+   "at": [
+    51,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "APRM-C",
+   "caption": "C",
+   "config": {
+    "Preset": "custom",
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT PWR",
+    "Band1Low": 100,
+    "Band1High": 118,
+    "Band1Color": "C4B02A",
+    "Band2Low": 118,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0,
+    "Band4Low": 0,
+    "Band4High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:bar_gauge",
+   "at": [
+    56,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "APRM-D",
+   "caption": "D",
+   "config": {
+    "Preset": "custom",
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT PWR",
+    "Band1Low": 100,
+    "Band1High": 118,
+    "Band1Color": "C4B02A",
+    "Band2Low": 118,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0,
+    "Band4Low": 0,
+    "Band4High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:bar_gauge",
+   "at": [
+    61,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "APRM-E",
+   "caption": "E",
+   "config": {
+    "Preset": "custom",
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT PWR",
+    "Band1Low": 100,
+    "Band1High": 118,
+    "Band1Color": "C4B02A",
+    "Band2Low": 118,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0,
+    "Band4Low": 0,
+    "Band4High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:bar_gauge",
+   "at": [
+    66,
+    10
+   ],
+   "size": [
+    2,
+    6
+   ],
+   "label": "APRM-F",
+   "caption": "F",
+   "config": {
+    "Preset": "custom",
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT PWR",
+    "Band1Low": 100,
+    "Band1High": 118,
+    "Band1Color": "C4B02A",
+    "Band2Low": 118,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0,
+    "Band4Low": 0,
+    "Band4High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    72,
+    5
+   ],
+   "size": [
+    24,
+    4
+   ],
+   "config": {
+    "Text": "LPRM  (W / CM2)",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    74,
+    10
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-A1",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    78,
+    10
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-A2",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    74,
+    14
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-A3",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    78,
+    14
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-A4",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    85,
+    10
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-B1",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    89,
+    10
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-B2",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    85,
+    14
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-B3",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    89,
+    14
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-B4",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    74,
+    21
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-C1",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    78,
+    21
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-C2",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    74,
+    25
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-C3",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    78,
+    25
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-C4",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    85,
+    21
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-D1",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    89,
+    21
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-D2",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    85,
+    25
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-D3",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:dial_gauge",
+   "at": [
+    89,
+    25
+   ],
+   "size": [
+    4,
+    4
+   ],
+   "label": "LPRM-D4",
+   "config": {
+    "Min": 0,
+    "Max": 125,
+    "Units": "PCT",
+    "Band1Low": 100,
+    "Band1High": 115,
+    "Band1Color": "C4B02A",
+    "Band2Low": 115,
+    "Band2High": 125,
+    "Band2Color": "A80E0E",
+    "Band3Low": 0,
+    "Band3High": 0
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:strip_chart",
+   "at": [
+    0,
+    0
+   ],
+   "size": [
+    16,
+    16
+   ],
+   "label": "REC-IRM-1",
+   "config": {
+    "Pens": 2,
+    "Min": 0,
+    "Max": 125,
+    "Span": 600
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:strip_chart",
+   "at": [
+    16,
+    0
+   ],
+   "size": [
+    16,
+    16
+   ],
+   "label": "REC-APRM-1",
+   "config": {
+    "Pens": 2,
+    "Min": 0,
+    "Max": 125,
+    "Span": 600
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    32,
+    0
+   ],
+   "size": [
+    32,
+    4
+   ],
+   "config": {
+    "Text": "SRM  COUNTS PER SECOND",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:seven_segment_display",
+   "at": [
+    33,
+    6
+   ],
+   "size": [
+    15,
+    8
+   ],
+   "label": "SRM-A-CPS",
+   "caption": "SRM A",
+   "config": {
+    "Format": "{0:3.0f}",
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:seven_segment_display",
+   "at": [
+    49,
+    6
+   ],
+   "size": [
+    15,
+    8
+   ],
+   "label": "SRM-B-CPS",
+   "caption": "SRM B",
+   "config": {
+    "Format": "{0:3.0f}",
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:seven_segment_display",
+   "at": [
+    65,
+    6
+   ],
+   "size": [
+    15,
+    8
+   ],
+   "label": "SRM-C-CPS",
+   "caption": "SRM C",
+   "config": {
+    "Format": "{0:3.0f}",
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:seven_segment_display",
+   "at": [
+    81,
+    6
+   ],
+   "size": [
+    15,
+    8
+   ],
+   "label": "SRM-D-CPS",
+   "caption": "SRM D",
+   "config": {
+    "Format": "{0:3.0f}",
+    "Color": "F0A000"
+   }
+  }
+ ],
+ "reserved": [],
+ "mimic": [
+  {
+   "on": "main.board",
+   "points": [
+    [
+     1,
+     4
+    ],
+    [
+     33,
+     4
+    ],
+    [
+     33,
+     31
+    ],
+    [
+     1,
+     31
+    ],
+    [
+     1,
+     4
+    ]
+   ],
+   "style": {
+    "Color": "101010",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 0,
+    "FlowEvery": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     37,
+     4
+    ],
+    [
+     70,
+     4
+    ],
+    [
+     70,
+     20
+    ],
+    [
+     37,
+     20
+    ],
+    [
+     37,
+     4
+    ]
+   ],
+   "style": {
+    "Color": "101010",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 0,
+    "FlowEvery": 0
+   }
+  },
+  {
+   "on": "main.board",
+   "points": [
+    [
+     73,
+     4
+    ],
+    [
+     95,
+     4
+    ],
+    [
+     95,
+     31
+    ],
+    [
+     73,
+     31
+    ],
+    [
+     73,
+     4
+    ]
+   ],
+   "style": {
+    "Color": "101010",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 0,
+    "FlowEvery": 0
+   }
+  }
+ ]
+}

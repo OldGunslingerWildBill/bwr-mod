@@ -1,0 +1,1100 @@
+{
+ "format": 1,
+ "title": "Rod control (P603)",
+ "description": "Reactor manual control: the full core display and the rod select matrix side by side on a vertical section, the four rod motion buttons under the matrix, rod drift test and reset, the four rod display, and the RWM / RSCS section with its error lamps, selectors and a space for the rod pattern map.",
+ "source": "CR-PANELS-BWR-RESEARCH.md board 1 (GE BWR/4 reactor manual control system; NMP-2 RSCS panel)",
+ "order": 1,
+ "todo": [
+  "The RSCS / RWM rod pattern (an amber and a red LED per rod) is reserved on wall.face for the LED rod pattern display part; until then the full core display shows the pattern.",
+  "The fault map (LED core map of a faulty transponder) of research board 1 has no part and no space yet."
+ ],
+ "frames": [
+  {
+   "id": "wall",
+   "kind": "back_panel",
+   "columns": 10,
+   "rows": 5,
+   "at": [
+    0,
+    5,
+    -1
+   ]
+  },
+  {
+   "id": "bench",
+   "kind": "benchboard",
+   "columns": 10,
+   "rows": 1,
+   "at": [
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "components": [
+  {
+   "on": "wall.face",
+   "type": "bwr:nameplate",
+   "at": [
+    0,
+    0
+   ],
+   "size": [
+    64,
+    4
+   ],
+   "config": {
+    "Text": "FULL CORE DISPLAY",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:nameplate",
+   "at": [
+    64,
+    0
+   ],
+   "size": [
+    48,
+    4
+   ],
+   "config": {
+    "Text": "ROD SELECT",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:nameplate",
+   "at": [
+    112,
+    0
+   ],
+   "size": [
+    48,
+    4
+   ],
+   "config": {
+    "Text": "RWM / RSCS",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:full_core_display",
+   "at": [
+    0,
+    6
+   ],
+   "size": [
+    64,
+    64
+   ],
+   "label": "FCD",
+   "config": {
+    "FcdStyle": "columbia",
+    "TileCells": 2,
+    "CoordLegends": true
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:nameplate",
+   "at": [
+    0,
+    72
+   ],
+   "size": [
+    64,
+    4
+   ],
+   "config": {
+    "Text": "SELECTED ROD LIT   DRIFT / SCRAM",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:rod_select_matrix",
+   "at": [
+    64,
+    6
+   ],
+   "size": [
+    48,
+    48
+   ],
+   "label": "ROD-SELECT",
+   "config": {
+    "TileCells": 2,
+    "CoordLegends": true
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:nameplate",
+   "at": [
+    64,
+    56
+   ],
+   "size": [
+    48,
+    4
+   ],
+   "config": {
+    "Text": "FOUR ROD DISPLAY  (POSITION)",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:seven_segment_display",
+   "at": [
+    66,
+    61
+   ],
+   "size": [
+    10,
+    8
+   ],
+   "label": "ROD-N",
+   "caption": "N",
+   "config": {
+    "Format": "{0:02.0f}",
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:seven_segment_display",
+   "at": [
+    78,
+    61
+   ],
+   "size": [
+    10,
+    8
+   ],
+   "label": "ROD-W",
+   "caption": "W",
+   "config": {
+    "Format": "{0:02.0f}",
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:seven_segment_display",
+   "at": [
+    90,
+    61
+   ],
+   "size": [
+    10,
+    8
+   ],
+   "label": "ROD-E",
+   "caption": "E",
+   "config": {
+    "Format": "{0:02.0f}",
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:seven_segment_display",
+   "at": [
+    102,
+    61
+   ],
+   "size": [
+    10,
+    8
+   ],
+   "label": "ROD-S",
+   "caption": "S",
+   "config": {
+    "Format": "{0:02.0f}",
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:lamp",
+   "at": [
+    70,
+    73
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ACT-DISAGREE",
+   "caption": "ACT CTL DISAGREE",
+   "config": {
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:lamp",
+   "at": [
+    100,
+    73
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ROD-DRIFT",
+   "caption": "ROD DRIFT",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    114,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "ROD DRIFT",
+    "Line2": ""
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    116,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RWM",
+    "Line2": "INSERT ERR"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    118,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RWM",
+    "Line2": "WITHDR ERR"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    120,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RWM",
+    "Line2": "SELECT ERR"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    122,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RWM",
+    "Line2": "NOTCH ERR"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    124,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RSCS",
+    "Line2": "ABOVE LPSP"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    126,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RWM",
+    "Line2": "INOP"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    128,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RWM",
+    "Line2": "BYPASSED"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    114,
+    8
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "ROD BLOCK",
+    "Line2": ""
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    116,
+    8
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RBM",
+    "Line2": "ROD BLOCK"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    118,
+    8
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "APRM",
+    "Line2": "ROD BLOCK"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    120,
+    8
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "IRM",
+    "Line2": "ROD BLOCK"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    122,
+    8
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "SRM",
+    "Line2": "ROD BLOCK"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    124,
+    8
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "ROD SEL",
+    "Line2": "DISAGREE"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    126,
+    8
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RSCS",
+    "Line2": "INOP"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:annunciator",
+   "at": [
+    128,
+    8
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "config": {
+    "Color": "F0A000",
+    "Line1": "RSCS",
+    "Line2": "BYPASSED"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:lamp",
+   "at": [
+    120,
+    16
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RWM-INS-ERR",
+   "caption": "INSERT ERR",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:lamp",
+   "at": [
+    136,
+    16
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RWM-WD-ERR",
+   "caption": "WITHDRAW ERR",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:lamp",
+   "at": [
+    152,
+    16
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RWM-SEL-ERR",
+   "caption": "SELECT ERR",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:lamp",
+   "at": [
+    120,
+    24
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RWM-NTC-ERR",
+   "caption": "NOTCH ERR",
+   "config": {
+    "Color": "E02020"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:lamp",
+   "at": [
+    136,
+    24
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RSCS-LPSP",
+   "caption": "ABOVE LPSP",
+   "config": {
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:lamp",
+   "at": [
+    152,
+    24
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "RWM-INTLK",
+   "caption": "INTERLOCKS",
+   "config": {
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:nameplate",
+   "at": [
+    114,
+    32
+   ],
+   "size": [
+    24,
+    4
+   ],
+   "config": {
+    "Text": "ROD GROUP / SEQUENCE",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:seven_segment_display",
+   "at": [
+    117,
+    37
+   ],
+   "size": [
+    20,
+    8
+   ],
+   "label": "RWM-GROUP",
+   "caption": "GROUP",
+   "config": {
+    "Format": "{0:4.0f}",
+    "Color": "F0A000"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:nameplate",
+   "at": [
+    140,
+    32
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "RWM NORM/BYP",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:key_switch",
+   "at": [
+    147,
+    37
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "RWM-BYPASS",
+   "caption": "KEY"
+  },
+  {
+   "on": "wall.face",
+   "type": "bwr:nameplate",
+   "at": [
+    114,
+    50
+   ],
+   "size": [
+    32,
+    4
+   ],
+   "config": {
+    "Text": "RSCS ROD PATTERN",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:nameplate",
+   "at": [
+    0,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "FCD TEST",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:pushbutton",
+   "at": [
+    7,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "FCD-LAMP-TEST",
+   "caption": "LAMP TEST"
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:nameplate",
+   "at": [
+    20,
+    0
+   ],
+   "size": [
+    24,
+    4
+   ],
+   "config": {
+    "Text": "ROD DRIFT",
+    "Plate": "1E4A9A",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:pushbutton",
+   "at": [
+    25,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "DRIFT-TEST",
+   "caption": "TEST"
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:pushbutton",
+   "at": [
+    35,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "DRIFT-RESET",
+   "caption": "RESET"
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:nameplate",
+   "at": [
+    64,
+    0
+   ],
+   "size": [
+    48,
+    4
+   ],
+   "config": {
+    "Text": "ROD MOTION",
+    "Plate": "141414",
+    "Ink": "F0F0F0"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:pushbutton",
+   "at": [
+    72,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ROD-INSERT",
+   "caption": "INSERT",
+   "config": {
+    "Color": "D08020",
+    "Variant": "extended"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:pushbutton",
+   "at": [
+    82,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ROD-WITHDRAW",
+   "caption": "WITHDRAW",
+   "config": {
+    "Color": "E8E8E8",
+    "Variant": "extended"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:pushbutton",
+   "at": [
+    92,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ROD-CONT-INS",
+   "caption": "CONT INS",
+   "config": {
+    "Color": "D08020"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:pushbutton",
+   "at": [
+    102,
+    6
+   ],
+   "size": [
+    2,
+    2
+   ],
+   "label": "ROD-CONT-WD",
+   "caption": "CONT W/D",
+   "config": {
+    "Color": "E8E8E8"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:nameplate",
+   "at": [
+    112,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "SEQ A / B",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:rotary_selector",
+   "at": [
+    119,
+    5
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "RWM-SEQ",
+   "config": {
+    "Positions": 2,
+    "Names": "SEQ A,SEQ B"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:nameplate",
+   "at": [
+    128,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "INSERT / WITHDRAW",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:rotary_selector",
+   "at": [
+    135,
+    5
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "RWM-DIR",
+   "config": {
+    "Positions": 2,
+    "Names": "INSERT,WITHDR"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:nameplate",
+   "at": [
+    144,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "ALL / FREE RODS",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:rotary_selector",
+   "at": [
+    151,
+    5
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "RWM-ALL",
+   "config": {
+    "Positions": 2,
+    "Names": "ALL,FREE"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:nameplate",
+   "at": [
+    44,
+    0
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "RODS F.I. / BYP",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "bench.face",
+   "type": "bwr:rotary_selector",
+   "at": [
+    51,
+    5
+   ],
+   "size": [
+    2,
+    4
+   ],
+   "label": "RWM-FI",
+   "config": {
+    "Positions": 2,
+    "Names": "F.I.,BYPASS"
+   }
+  }
+ ],
+ "reserved": [
+  {
+   "on": "wall.face",
+   "at": [
+    114,
+    55
+   ],
+   "size": [
+    44,
+    22
+   ],
+   "for": "bwr:led_rod_pattern_display",
+   "note": "RSCS / RWM rod pattern map with an amber and a red LED per rod (ALL RODS / FREE RODS, RODS F.I. / BYPASS): an LED rod pattern display part does not exist yet (CR-PANELS-BWR-RESEARCH.md section 4, gap 5). Place it here."
+  }
+ ],
+ "mimic": [
+  {
+   "on": "wall.face",
+   "points": [
+    [
+     63,
+     5
+    ],
+    [
+     112,
+     5
+    ],
+    [
+     112,
+     79
+    ],
+    [
+     63,
+     79
+    ],
+    [
+     63,
+     5
+    ]
+   ],
+   "style": {
+    "Color": "101010",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 0,
+    "FlowEvery": 0
+   }
+  },
+  {
+   "on": "wall.face",
+   "points": [
+    [
+     113,
+     5
+    ],
+    [
+     159,
+     5
+    ],
+    [
+     159,
+     77
+    ],
+    [
+     113,
+     77
+    ],
+    [
+     113,
+     5
+    ]
+   ],
+   "style": {
+    "Color": "101010",
+    "Width": 1,
+    "StartEnd": 0,
+    "EndEnd": 0,
+    "FlowEvery": 0
+   }
+  }
+ ]
+}

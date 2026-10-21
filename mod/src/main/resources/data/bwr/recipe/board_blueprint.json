@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shapeless", "category": "equipment", "ingredients": [{"item": "minecraft:paper"}, {"item": "minecraft:blue_dye"}, {"item": "minecraft:iron_nugget"}, {"item": "bwr:control_panel_vertical"}], "result": {"id": "bwr:board_blueprint", "count": 1}}

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: premade control boards and the board blueprint
+
+- Added the **board blueprint** (`bwr:board_blueprint`, CONTROL-PANELS.md section 2e): one item that places a whole premade control board in one click, with an outline ghost (green fits, red blocked) while it is held. Right-click the air to pick the next board; right-click a block to place it, the clicked spot being the front left corner of the board and the panels facing the player. Creative is free; survival takes the panel blocks, one item per component and the mimic tape from the inventory and lists what is missing; a blocked, out of world, unloaded, protected or over-limit site is refused and nothing changes. Boards are placed **unwired**.
+- Boards are **data**: `data/<namespace>/panel_board/<name>.json` (panel frames, components with type, cell, explicit size and any wrench setting, reserved spaces for parts that do not exist yet, mimic tape), loaded with the data packs, synced to clients, validated as a whole (every problem is logged, a bad file is skipped).
+- Five boards ship, laid out at about twice the exact real size from `CR-PANELS-BWR-RESEARCH.md`: **rod control**, **RPV level, pressure and flow**, **RPS scram and mode switch**, the **ECCS bench (P601)** with the ADS / SRV section, and **neutron monitoring**. Space is reserved (and marked as a TODO in the template) for the manual/auto controller station (feedwater, recirculation), the joystick bypass switch and the LED rod pattern display.
+- `PanelOps.placeDirectQuiet` (a component with a given label and no per-component sync) for bulk placement. New data component `bwr:board_template`. Old saves are unaffected.
+
 ## Unreleased: gauge text and ticks in proportion, Text size and Tick size
 
 - Gauge **text and ticks scale with the gauge** (CONTROL-PANELS.md, "Gauge text and tick size"): the numbers of a small bar gauge are no longer held at a least height of 0.15 cell, the classic dial's least tick and pointer widths and the classic edgewise meter's margins, ticks, pointer and flag shrink with a meter smaller than its art, and a 1-cell bar graph's housing is the big bars' share. The big sizes look as before.
