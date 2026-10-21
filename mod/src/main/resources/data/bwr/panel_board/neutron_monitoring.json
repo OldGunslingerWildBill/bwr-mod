@@ -1151,7 +1151,7 @@
     4
    ],
    "label": "IRM-BYPASS",
-   "caption": "IRM BYP",
+   "caption": "IRM",
    "config": {
     "Spring": false,
     "CloseText": "NORMAL",
@@ -1173,7 +1173,7 @@
     4
    ],
    "label": "APRM-BYPASS",
-   "caption": "APRM BYP",
+   "caption": "APRM",
    "config": {
     "Spring": false,
     "CloseText": "NORMAL",
@@ -1195,7 +1195,7 @@
     4
    ],
    "label": "SRM-BYPASS",
-   "caption": "SRM BYP",
+   "caption": "SRM",
    "config": {
     "Spring": false,
     "CloseText": "NORMAL",
@@ -1217,7 +1217,7 @@
     4
    ],
    "label": "RBM-BYPASS",
-   "caption": "RBM BYP",
+   "caption": "RBM",
    "config": {
     "Spring": false,
     "CloseText": "NORMAL",

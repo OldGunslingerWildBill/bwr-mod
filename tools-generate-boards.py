@@ -342,7 +342,7 @@ def rps_board():
     for trip, y in (("A", 6), ("B", 17)):
         b.plate(V, 2, y, 24, 4, "RPS %s SCRAM GROUPS" % trip)
         for g in range(4):
-            b.lamp(V, 4 + 6 * g, y + 5, WHITE, caption="GRP %d" % (g + 1), label="SCR-GRP-%s%d" % (trip, g + 1))
+            b.lamp(V, 4 + 6 * g, y + 5, WHITE, caption="%d" % (g + 1), label="SCR-GRP-%s%d" % (trip, g + 1))
     b.plate(V, 0, 27, 32, 4, "WHITE LAMP LIT = GROUP SCRAMMED")
     b.plate(V, 32, 6, 32, 8, "REACTOR MODE SWITCH", "1 SHUTDOWN    2 REFUEL", "3 STARTUP/HS    4 RUN")
     b.plate(V, 32, 15, 32, 8, "RPS SETPOINTS", "L3 +12.5 IN    1043 PSIG", "DW 1.69 PSIG    APRM 118 PCT")
@@ -352,8 +352,8 @@ def rps_board():
 
     # -- bench: manual scram, mode switch and key, scram reset, ARI, the bypass joysticks to come
     b.plate(N, 0, 0, 16, 4, "MAN SCRAM")
-    b.add(N, "rps_trip", 2, 5, RPS, label="MAN-SCRAM-1", caption="A1 / B1", config={"LegendA": "SCRAM A1", "LegendB": "SCRAM B1"})
-    b.add(N, "rps_trip", 10, 5, RPS, label="MAN-SCRAM-2", caption="A2 / B2", config={"LegendA": "SCRAM A2", "LegendB": "SCRAM B2"})
+    b.add(N, "rps_trip", 1, 5, RPS, label="MAN-SCRAM-1", caption="A1 B1", config={"LegendA": "SCRAM A1", "LegendB": "SCRAM B1"})
+    b.add(N, "rps_trip", 10, 5, RPS, label="MAN-SCRAM-2", caption="A2 B2", config={"LegendA": "SCRAM A2", "LegendB": "SCRAM B2"})
     b.plate(N, 16, 0, 24, 4, "REACTOR MODE")
     rotary(b, N, 23, 5, ROT_BIG, ["SHUTDOWN", "REFUEL", "STARTUP", "RUN"], label="MODE-SW", style="westinghouse", variant="wl2")
     b.add(N, "key_switch", 31, 6, KEY, label="MODE-KEY", caption="MODE KEY")
@@ -407,27 +407,27 @@ def rpv_board():
     wide = [(-150, -132.5, red), (-132.5, 12.5, yel), (56.5, 60, red)]
     x = lambda i: 3 + 7 * i
     for i, name in enumerate("ABC"):
-        bar(b, V, x(i), 10, BARGAUGE, 0, 60, "INCHES", narrow, caption="NAR " + name, label="LVL-NAR-" + name)
+        bar(b, V, x(i), 10, BARGAUGE, 0, 60, "INCHES", narrow, caption="N" + name, label="LVL-NAR-" + name)
     for i, name in enumerate("AB"):
-        bar(b, V, x(3 + i), 10, BARGAUGE, -150, 60, "INCHES", wide, caption="WIDE " + name, label="LVL-WIDE-" + name)
-    edge(b, V, True, x(5), 10, EDGE_V, 0, 180, "INCHES", [(56.5, 180, red)], caption="UPSET", label="LVL-UPSET")
-    edge(b, V, True, x(6), 10, EDGE_V, 0, 400, "INCHES", [], caption="S/D", label="LVL-SHUTDOWN")
+        bar(b, V, x(3 + i), 10, BARGAUGE, -150, 60, "INCHES", wide, caption="W" + name, label="LVL-WIDE-" + name)
+    edge(b, V, True, x(5), 10, EDGE_V, 0, 180, "INCHES", [(56.5, 180, red)], caption="UP", label="LVL-UPSET")
+    edge(b, V, True, x(6), 10, EDGE_V, 0, 400, "INCHES", [], caption="SD", label="LVL-SHUTDOWN")
     for i, name in enumerate("AB"):
-        edge(b, V, True, x(7 + i), 10, EDGE_V, -308, -108, "INCHES", [(-308, -158, red)], caption="FZ " + name,
+        edge(b, V, True, x(7 + i), 10, EDGE_V, -308, -108, "INCHES", [(-308, -158, red)], caption="F" + name,
              label="LVL-FZ-" + name)
     b.rect(V, 1, 4, 62, 15)
     # pressure
     b.plate(V, 0, 20, 32, 4, "RPV PRESSURE  (PSIG)")
     p_yel = (1025, 1043, yel)
-    dial(b, V, 3, 25, DIAL, 850, 1050, "PSIG", [p_yel, (1043, 1050, red)], caption="NARROW", label="PRESS-NARROW")
-    dial(b, V, 13, 25, DIAL, 0, 1200, "PSIG", [p_yel, (1043, 1200, red)], caption="NORMAL", label="PRESS-NORMAL")
+    dial(b, V, 3, 25, DIAL, 850, 1050, "PSIG", [p_yel, (1043, 1050, red)], caption="NARR", label="PRESS-NARROW")
+    dial(b, V, 13, 25, DIAL, 0, 1200, "PSIG", [p_yel, (1043, 1200, red)], caption="NORM", label="PRESS-NORMAL")
     dial(b, V, 23, 25, DIAL, 0, 1500, "PSIG", [p_yel, (1120, 1500, red)], caption="WIDE", label="PRESS-WIDE")
     b.rect(V, 1, 20, 30, 11)
     # flow
     b.plate(V, 32, 20, 32, 4, "FLOW  (MLB/HR)")
-    edge(b, V, False, 35, 26, EDGE_H, 0, 120, "MLB/HR", [(105, 120, yel)], caption="CORE FLOW", label="FLOW-CORE")
-    edge(b, V, False, 44, 26, EDGE_H, 0, 16, "MLB/HR", [(14, 16, yel)], caption="STEAM FLOW", label="FLOW-STEAM")
-    edge(b, V, False, 53, 26, EDGE_H, 0, 16, "MLB/HR", [(14, 16, yel)], caption="FEED FLOW", label="FLOW-FEED")
+    edge(b, V, False, 35, 26, EDGE_H, 0, 120, "MLB/HR", [(105, 120, yel)], caption="CORE", label="FLOW-CORE")
+    edge(b, V, False, 44, 26, EDGE_H, 0, 16, "MLB/HR", [(14, 16, yel)], caption="STEAM", label="FLOW-STEAM")
+    edge(b, V, False, 53, 26, EDGE_H, 0, 16, "MLB/HR", [(14, 16, yel)], caption="FEED", label="FLOW-FEED")
     # the seven chart set of the training plants (CR-PANELS-BWR-RESEARCH.md board 2)
     traces = [("APRM PWR", "%", 0, 125), ("RX PRESS", "PSIG", 0, 1200), ("RX STM FLOW", "MLB/HR", 0, 16),
               ("TURB STM FLOW", "MLB/HR", 0, 16), ("FW FLOW", "MLB/HR", 0, 16), ("RX LVL NAR", "IN", 0, 60),
@@ -493,7 +493,7 @@ def neutron_board():
              caption=name, label="IRM-" + name)
         rotary(b, V, 3 + 4 * i, 19, ROT, ["R1", "R2", "R3", "R4", "R5", "R6"], label="IRM-%s-RNG" % name)
     for i, name in enumerate(("IRM", "APRM", "SRM", "RBM")):
-        b.add(V, "control_switch", 3 + 8 * i, 25, SW, caption=name + " BYP", label=name + "-BYPASS",
+        b.add(V, "control_switch", 3 + 8 * i, 25, SW, caption=name, label=name + "-BYPASS",
               config={"Spring": False, "CloseText": "NORMAL", "NormalText": "", "OpenText": "BYPASS", "RedText": "BYPASS",
                       "GreenText": "NORMAL"})
     b.rect(V, 1, 4, 32, 27)
@@ -570,11 +570,11 @@ def eccs_division(b, x0, loop):
     b.line(V, [(x0 + 26, 23), (x0 + 32, 23)], colour="30A050")
     b.line(V, [(x0 + 40, 23), (x0 + 46, 23)], colour="30A050")
     # meters
-    dial(b, V, x0 + 57, 6, DIAL, 0, 400, "PSIG", [(238, 400, BAND_RED)], caption="RHR %s PRESS" % l, label="RHR-%s-PRESS" % l)
-    dial(b, V, x0 + 69, 6, DIAL, 0, 600, "PSIG", [(500, 600, BAND_RED)], caption="CS %s PRESS" % l, label="CS-%s-PRESS" % l)
-    edge(b, V, False, x0 + 57, 16, EDGE_H, 0, 5000, "GPM", [(0, 800, BAND_YELLOW)], caption="RHR %s FLOW" % l,
+    dial(b, V, x0 + 57, 6, DIAL, 0, 400, "PSIG", [(238, 400, BAND_RED)], caption="RHR " + l, label="RHR-%s-PRESS" % l)
+    dial(b, V, x0 + 69, 6, DIAL, 0, 600, "PSIG", [(500, 600, BAND_RED)], caption="CS " + l, label="CS-%s-PRESS" % l)
+    edge(b, V, False, x0 + 57, 16, EDGE_H, 0, 5000, "GPM", [(0, 800, BAND_YELLOW)], caption="RHR " + l,
          label="RHR-%s-FLOW" % l)
-    edge(b, V, False, x0 + 69, 16, EDGE_H, 0, 5000, "GPM", [(0, 650, BAND_YELLOW)], caption="CS %s FLOW" % l,
+    edge(b, V, False, x0 + 69, 16, EDGE_H, 0, 5000, "GPM", [(0, 650, BAND_YELLOW)], caption="CS " + l,
          label="CS-%s-FLOW" % l)
     b.plate(V, x0 + 54, 21, 24, 4, "ECCS MANUAL INIT")
     push(b, V, x0 + 58, 26, caption="ARM", label="ARM-" + l, colour="C02020", variant="guarded")
@@ -675,7 +675,7 @@ def rod_board():
          ("RSCS", "ABOVE LPSP"), ("RWM", "INOP"), ("RWM", "BYPASSED")],
         [("ROD BLOCK", ""), ("RBM", "ROD BLOCK"), ("APRM", "ROD BLOCK"), ("IRM", "ROD BLOCK"), ("SRM", "ROD BLOCK"),
          ("ROD SEL", "DISAGREE"), ("RSCS", "INOP"), ("RSCS", "BYPASSED")]], [AMBER, AMBER])
-    for i, (cap, tag) in enumerate((("INSERT ERR", "RWM-INS-ERR"), ("WITHDRAW ERR", "RWM-WD-ERR"), ("SELECT ERR", "RWM-SEL-ERR"),
+    for i, (cap, tag) in enumerate((("INSERT ERR", "RWM-INS-ERR"), ("WITHDR ERR", "RWM-WD-ERR"), ("SELECT ERR", "RWM-SEL-ERR"),
                                     ("NOTCH ERR", "RWM-NTC-ERR"), ("ABOVE LPSP", "RSCS-LPSP"), ("INTERLOCKS", "RWM-INTLK"))):
         b.lamp(W, 120 + 16 * (i % 3), 16 + 8 * (i // 3), RED if i < 4 else AMBER, caption=cap, label=tag)
     b.plate(W, 114, 32, 24, 4, "ROD GROUP / SEQUENCE")
@@ -695,10 +695,10 @@ def rod_board():
     push(b, N, 25, 6, caption="TEST", label="DRIFT-TEST")
     push(b, N, 35, 6, caption="RESET", label="DRIFT-RESET")
     b.plate(N, 64, 0, 48, 4, "ROD MOTION", style="black")
-    push(b, N, 72, 6, caption="INSERT", label="ROD-INSERT", colour="D08020", variant="extended")
-    push(b, N, 82, 6, caption="WITHDRAW", label="ROD-WITHDRAW", colour="E8E8E8", variant="extended")
-    push(b, N, 92, 6, caption="CONT INS", label="ROD-CONT-INS", colour="D08020")
-    push(b, N, 102, 6, caption="CONT W/D", label="ROD-CONT-WD", colour="E8E8E8")
+    push(b, N, 70, 6, caption="INSERT", label="ROD-INSERT", colour="D08020", variant="extended")
+    push(b, N, 82, 6, caption="WITHDR", label="ROD-WITHDRAW", colour="E8E8E8", variant="extended")
+    push(b, N, 94, 6, caption="C INS", label="ROD-CONT-INS", colour="D08020")
+    push(b, N, 106, 6, caption="C WD", label="ROD-CONT-WD", colour="E8E8E8")
     for i, (plate, names, tag) in enumerate((("SEQ A / B", ["SEQ A", "SEQ B"], "RWM-SEQ"),
                                              ("INSERT / WITHDRAW", ["INSERT", "WITHDR"], "RWM-DIR"),
                                              ("ALL / FREE RODS", ["ALL", "FREE"], "RWM-ALL"))):

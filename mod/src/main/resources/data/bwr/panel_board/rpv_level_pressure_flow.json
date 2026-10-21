@@ -786,7 +786,7 @@
     6
    ],
    "label": "LVL-NAR-A",
-   "caption": "NAR A",
+   "caption": "NA",
    "config": {
     "Preset": "custom",
     "Min": 0,
@@ -818,7 +818,7 @@
     6
    ],
    "label": "LVL-NAR-B",
-   "caption": "NAR B",
+   "caption": "NB",
    "config": {
     "Preset": "custom",
     "Min": 0,
@@ -850,7 +850,7 @@
     6
    ],
    "label": "LVL-NAR-C",
-   "caption": "NAR C",
+   "caption": "NC",
    "config": {
     "Preset": "custom",
     "Min": 0,
@@ -882,7 +882,7 @@
     6
    ],
    "label": "LVL-WIDE-A",
-   "caption": "WIDE A",
+   "caption": "WA",
    "config": {
     "Preset": "custom",
     "Min": -150,
@@ -913,7 +913,7 @@
     6
    ],
    "label": "LVL-WIDE-B",
-   "caption": "WIDE B",
+   "caption": "WB",
    "config": {
     "Preset": "custom",
     "Min": -150,
@@ -944,7 +944,7 @@
     6
    ],
    "label": "LVL-UPSET",
-   "caption": "UPSET",
+   "caption": "UP",
    "config": {
     "Min": 0,
     "Max": 180,
@@ -970,7 +970,7 @@
     6
    ],
    "label": "LVL-SHUTDOWN",
-   "caption": "S/D",
+   "caption": "SD",
    "config": {
     "Min": 0,
     "Max": 400,
@@ -995,7 +995,7 @@
     6
    ],
    "label": "LVL-FZ-A",
-   "caption": "FZ A",
+   "caption": "FA",
    "config": {
     "Min": -308,
     "Max": -108,
@@ -1021,7 +1021,7 @@
     6
    ],
    "label": "LVL-FZ-B",
-   "caption": "FZ B",
+   "caption": "FB",
    "config": {
     "Min": -308,
     "Max": -108,
@@ -1064,7 +1064,7 @@
     4
    ],
    "label": "PRESS-NARROW",
-   "caption": "NARROW",
+   "caption": "NARR",
    "config": {
     "Min": 850,
     "Max": 1050,
@@ -1091,7 +1091,7 @@
     4
    ],
    "label": "PRESS-NORMAL",
-   "caption": "NORMAL",
+   "caption": "NORM",
    "config": {
     "Min": 0,
     "Max": 1200,
@@ -1162,7 +1162,7 @@
     2
    ],
    "label": "FLOW-CORE",
-   "caption": "CORE FLOW",
+   "caption": "CORE",
    "config": {
     "Min": 0,
     "Max": 120,
@@ -1188,7 +1188,7 @@
     2
    ],
    "label": "FLOW-STEAM",
-   "caption": "STEAM FLOW",
+   "caption": "STEAM",
    "config": {
     "Min": 0,
     "Max": 16,
@@ -1214,7 +1214,7 @@
     2
    ],
    "label": "FLOW-FEED",
-   "caption": "FEED FLOW",
+   "caption": "FEED",
    "config": {
     "Min": 0,
     "Max": 16,

@@ -1743,7 +1743,7 @@
     2
    ],
    "label": "SCR-GRP-A1",
-   "caption": "GRP 1",
+   "caption": "1",
    "config": {
     "Color": "F4F4F4"
    }
@@ -1760,7 +1760,7 @@
     2
    ],
    "label": "SCR-GRP-A2",
-   "caption": "GRP 2",
+   "caption": "2",
    "config": {
     "Color": "F4F4F4"
    }
@@ -1777,7 +1777,7 @@
     2
    ],
    "label": "SCR-GRP-A3",
-   "caption": "GRP 3",
+   "caption": "3",
    "config": {
     "Color": "F4F4F4"
    }
@@ -1794,7 +1794,7 @@
     2
    ],
    "label": "SCR-GRP-A4",
-   "caption": "GRP 4",
+   "caption": "4",
    "config": {
     "Color": "F4F4F4"
    }
@@ -1828,7 +1828,7 @@
     2
    ],
    "label": "SCR-GRP-B1",
-   "caption": "GRP 1",
+   "caption": "1",
    "config": {
     "Color": "F4F4F4"
    }
@@ -1845,7 +1845,7 @@
     2
    ],
    "label": "SCR-GRP-B2",
-   "caption": "GRP 2",
+   "caption": "2",
    "config": {
     "Color": "F4F4F4"
    }
@@ -1862,7 +1862,7 @@
     2
    ],
    "label": "SCR-GRP-B3",
-   "caption": "GRP 3",
+   "caption": "3",
    "config": {
     "Color": "F4F4F4"
    }
@@ -1879,7 +1879,7 @@
     2
    ],
    "label": "SCR-GRP-B4",
-   "caption": "GRP 4",
+   "caption": "4",
    "config": {
     "Color": "F4F4F4"
    }
@@ -1992,7 +1992,7 @@
    "on": "main.bench",
    "type": "bwr:rps_trip",
    "at": [
-    2,
+    1,
     5
    ],
    "size": [
@@ -2000,7 +2000,7 @@
     2
    ],
    "label": "MAN-SCRAM-1",
-   "caption": "A1 / B1",
+   "caption": "A1 B1",
    "config": {
     "LegendA": "SCRAM A1",
     "LegendB": "SCRAM B1"
@@ -2018,7 +2018,7 @@
     2
    ],
    "label": "MAN-SCRAM-2",
-   "caption": "A2 / B2",
+   "caption": "A2 B2",
    "config": {
     "LegendA": "SCRAM A2",
     "LegendB": "SCRAM B2"

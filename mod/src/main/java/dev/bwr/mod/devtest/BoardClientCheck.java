@@ -96,18 +96,21 @@ public final class BoardClientCheck {
         double centreX = (bounds.minX + bounds.maxX) / 2.0;
         double faceZ = bounds.minZ + 1.0; // the face of the duplex board and of the back panels is at the back-row front
         double centreY = FLOOR_Y + 1 + Math.min(2.2, height * 0.5);
-        double distance = Math.max(width / 2.0, height * 0.9) * 0.95 + 2.0;
+        double distance = Math.max(width / 2.0, height * 0.9) * 0.95 + 2.5;
         List<Shot> list = new ArrayList<>();
         String name = template.id().getPath();
-        double bench = bounds.maxZ; // front of the front blocks
-        list.add(new Shot(index, name + "-front", new Vec3(centreX, FLOOR_Y + 1 + 1.7 + height * 0.18, bench + distance),
+        double bench = bounds.minZ; // the front blocks; the operator stands at smaller z
+        list.add(new Shot(index, name + "-front", new Vec3(centreX, FLOOR_Y + 1 + 2.6, bench - distance),
                 new Vec3(centreX, centreY, faceZ)));
-        list.add(new Shot(index, name + "-three-quarter", new Vec3(centreX + width * 0.42, FLOOR_Y + 1 + 2.2 + height * 0.12, bench + distance * 0.8),
-                new Vec3(centreX - width * 0.12, centreY - 0.2, faceZ)));
+        double wide = Math.max(width * 0.42, height * 1.1) + 2.5;
+        list.add(new Shot(index, name + "-three-quarter", new Vec3(centreX + width * 0.38, FLOOR_Y + 1 + 3.0, bench - wide),
+                new Vec3(centreX - width * 0.04, centreY - 0.3, faceZ)));
+        list.add(new Shot(index, name + "-bench", new Vec3(centreX, FLOOR_Y + 1 + 3.4, bench - Math.max(3.0, width * 0.3)),
+                new Vec3(centreX, FLOOR_Y + 1 + 0.9, bench + 0.4)));
         // close-ups: four windows along the board, from 1.8 blocks away
         for (int i = 0; i < 4; i++) {
             double x = right0 - width * (0.125 + 0.25 * i);
-            list.add(new Shot(index, name + "-close-" + (i + 1), new Vec3(x, FLOOR_Y + 1 + 2.0, bench + 2.2),
+            list.add(new Shot(index, name + "-close-" + (i + 1), new Vec3(x, FLOOR_Y + 1 + 2.0, bench - 2.2),
                     new Vec3(x, FLOOR_Y + 1 + 1.6, faceZ)));
         }
         return list;
@@ -130,7 +133,7 @@ public final class BoardClientCheck {
             mc.options.pauseOnLostFocus = false;
             mc.options.cloudStatus().set(CloudStatus.OFF);
             mc.options.renderDistance().set(12);
-            mc.options.fov().set(60);
+            mc.options.fov().set(70);
             mc.options.guiScale().set(2);
             mc.createWorldOpenFlows().createFreshLevel("bwr-board-client-" + System.currentTimeMillis(),
                     new LevelSettings("Board client check", GameType.CREATIVE, false, Difficulty.PEACEFUL, true,
@@ -153,7 +156,7 @@ public final class BoardClientCheck {
             }
             // the blueprint's ghost over the empty floor east of the first board: fits (green), and with a block in the way
             BlockPos ghost = ghostOrigin();
-            Vec3 eye = new Vec3(ghost.getX() + 2.0, FLOOR_Y + 7.5, ghost.getZ() + 9.5);
+            Vec3 eye = new Vec3(ghost.getX() + 2.0, FLOOR_Y + 3.6, ghost.getZ() + 4.2); // within reach of the target; the camera is third person
             Vec3 look = new Vec3(ghost.getX() + 0.5, FLOOR_Y + 1.0, ghost.getZ() + 0.5);
             shots.add(new Shot(-1, "blueprint-ghost-fits", eye, look));
             shots.add(new Shot(-1, "blueprint-ghost-blocked", eye, look));
@@ -174,6 +177,8 @@ public final class BoardClientCheck {
             mc.setScreen(null);
             mc.options.hideGui = true;
             Shot shot = shots.get(stage);
+            mc.options.setCameraType(shot.board() < 0 ? net.minecraft.client.CameraType.THIRD_PERSON_BACK
+                    : net.minecraft.client.CameraType.FIRST_PERSON);
             var server = mc.getSingleplayerServer();
             var uuid = mc.player.getUUID();
             server.execute(() -> {

@@ -926,7 +926,7 @@
     4
    ],
    "label": "RHR-A-PRESS",
-   "caption": "RHR A PRESS",
+   "caption": "RHR A",
    "config": {
     "Min": 0,
     "Max": 400,
@@ -952,7 +952,7 @@
     4
    ],
    "label": "CS-A-PRESS",
-   "caption": "CS A PRESS",
+   "caption": "CS A",
    "config": {
     "Min": 0,
     "Max": 600,
@@ -978,7 +978,7 @@
     2
    ],
    "label": "RHR-A-FLOW",
-   "caption": "RHR A FLOW",
+   "caption": "RHR A",
    "config": {
     "Min": 0,
     "Max": 5000,
@@ -1004,7 +1004,7 @@
     2
    ],
    "label": "CS-A-FLOW",
-   "caption": "CS A FLOW",
+   "caption": "CS A",
    "config": {
     "Min": 0,
     "Max": 5000,
@@ -2644,7 +2644,7 @@
     4
    ],
    "label": "RHR-B-PRESS",
-   "caption": "RHR B PRESS",
+   "caption": "RHR B",
    "config": {
     "Min": 0,
     "Max": 400,
@@ -2670,7 +2670,7 @@
     4
    ],
    "label": "CS-B-PRESS",
-   "caption": "CS B PRESS",
+   "caption": "CS B",
    "config": {
     "Min": 0,
     "Max": 600,
@@ -2696,7 +2696,7 @@
     2
    ],
    "label": "RHR-B-FLOW",
-   "caption": "RHR B FLOW",
+   "caption": "RHR B",
    "config": {
     "Min": 0,
     "Max": 5000,
@@ -2722,7 +2722,7 @@
     2
    ],
    "label": "CS-B-FLOW",
-   "caption": "CS B FLOW",
+   "caption": "CS B",
    "config": {
     "Min": 0,
     "Max": 5000,

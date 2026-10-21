@@ -560,7 +560,7 @@
     2
    ],
    "label": "RWM-WD-ERR",
-   "caption": "WITHDRAW ERR",
+   "caption": "WITHDR ERR",
    "config": {
     "Color": "E02020"
    }
@@ -813,7 +813,7 @@
    "on": "bench.face",
    "type": "bwr:pushbutton",
    "at": [
-    72,
+    70,
     6
    ],
    "size": [
@@ -839,7 +839,7 @@
     2
    ],
    "label": "ROD-WITHDRAW",
-   "caption": "WITHDRAW",
+   "caption": "WITHDR",
    "config": {
     "Color": "E8E8E8",
     "Variant": "extended"
@@ -849,7 +849,7 @@
    "on": "bench.face",
    "type": "bwr:pushbutton",
    "at": [
-    92,
+    94,
     6
    ],
    "size": [
@@ -857,7 +857,7 @@
     2
    ],
    "label": "ROD-CONT-INS",
-   "caption": "CONT INS",
+   "caption": "C INS",
    "config": {
     "Color": "D08020"
    }
@@ -866,7 +866,7 @@
    "on": "bench.face",
    "type": "bwr:pushbutton",
    "at": [
-    102,
+    106,
     6
    ],
    "size": [
@@ -874,7 +874,7 @@
     2
    ],
    "label": "ROD-CONT-WD",
-   "caption": "CONT W/D",
+   "caption": "C WD",
    "config": {
     "Color": "E8E8E8"
    }
