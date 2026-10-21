@@ -129,6 +129,13 @@ neoForge {
                     '-Xlog:class+load:file=' + file('run/serverBootCheck-classload.log').absolutePath)
             programArguments.addAll('--nogui')
         }
+        // Old-save check (:mod:runSaveCompatCheck [-PbwrSaveWorld=<world folder>], see the doFirst/doLast block below).
+        saveCompatCheck {
+            server()
+            gameDirectory = file('run/saveCompatCheck')
+            jvmArguments.add('-Dbwr.saveCompat.source=' + file(project.findProperty('bwrSaveWorld')?.toString() ?: 'src/test-worlds/alpha40').absolutePath)
+            programArguments.addAll('--nogui')
+        }
         panelCcCheck {
             server()
             gameDirectory = file('run/panelCcCheck')
@@ -407,6 +414,54 @@ tasks.matching { it.name == 'runServerBootCheck' }.configureEach { task ->
         }
         if (problems) throw new GradleException('serverBootCheck FAILED:' + System.lineSeparator() + '  ' + problems.unique().take(60).join(System.lineSeparator() + '  '))
         logger.lifecycle('serverBootCheck: PASS (Done reached, 200 ticks, clean stop, no client classes, no mod errors)')
+    }
+}
+
+// ---------------------------------------------------------------------------
+// :mod:runSaveCompatCheck [-PbwrSaveWorld=<folder of a world saved by an older build>] [-PbwrNoCC]  (default: the committed
+// alpha.40 fixture, mod/src/test-worlds/alpha40, see its README.txt)
+// Copies that world (never written to; refuses anything inside the Modrinth profile, which is the owner's own game) to
+// run/saveCompatCheck/world, boots a dedicated server on the copy and lets dev.bwr.mod.devtest.SaveCompatCheck compare the
+// loaded world with the raw region files: block ids and states, block entity data (panel components and bindings, wrench
+// bindings, reactor/pump state), player item stacks, and again after 100 ticks. Fails the build unless the log holds
+// "BWR SAVE COMPAT CHECK: PASS" and no ERROR line from the mod or about a missing class. Detail:
+// mod/run/saveCompatCheck/save-compat-report.txt.
+// ---------------------------------------------------------------------------
+tasks.matching { it.name == 'runSaveCompatCheck' }.configureEach { task ->
+    task.doFirst {
+        def src = file(project.findProperty('bwrSaveWorld')?.toString() ?: 'src/test-worlds/alpha40')
+        if (!new File(src, 'level.dat').isFile()) throw new GradleException("${src} is not a world folder (no level.dat)")
+        if (src.absolutePath.toLowerCase().contains('modrinthapp')) {
+            throw new GradleException("Refusing to read ${src}: copy the owner's world to a scratch folder first")
+        }
+        def dir = neoForge.runs.getByName('saveCompatCheck').gameDirectory.get().asFile
+        project.delete(dir)
+        dir.mkdirs()
+        copy {
+            from src
+            into new File(dir, 'world')
+            exclude 'session.lock'
+        }
+        new File(dir, 'eula.txt').text = 'eula=true' + System.lineSeparator()
+        new File(dir, 'server.properties').text = ['online-mode=false', 'server-ip=127.0.0.1', 'server-port=25597',
+                'level-name=world', 'spawn-monsters=false', 'spawn-animals=false', 'spawn-npcs=false', 'view-distance=4',
+                'simulation-distance=4', 'max-tick-time=-1', 'motd=BWR save compat check'].join(System.lineSeparator()) + System.lineSeparator()
+    }
+    task.doLast {
+        def dir = neoForge.runs.getByName('saveCompatCheck').gameDirectory.get().asFile
+        def lines = new File(dir, 'logs/latest.log').readLines('UTF-8')
+        def problems = []
+        lines.findAll { it.contains('BWR SAVE COMPAT CHECK') }.each { logger.lifecycle(it.replaceFirst(/^\[[^\]]*\] \[[^\]]*\] \[[^\]]*\]: /, '')) }
+        if (!lines.any { it.contains('BWR SAVE COMPAT CHECK: PASS') }) problems << 'no "BWR SAVE COMPAT CHECK: PASS" line'
+        def ours = ~/dev\.bwr|\[bwr\]|\[BWR|bwr\//
+        def badText = ~/NoClassDefFoundError|ClassNotFoundException|Missing registry|Failed to load|Couldn't load|Skipping BlockEntity|Exception in thread/
+        lines.each { l ->
+            if (l.contains('SAVE COMPAT CHECK: PROBLEM') || l.contains('SAVE COMPAT CHECK: FAIL')) return
+            if (l.contains('/ERROR]') && (l =~ ours || l =~ badText)) problems << 'ERROR: ' + l.trim()
+            else if (l =~ badText) problems << 'bad text: ' + l.trim()
+        }
+        if (problems) throw new GradleException('saveCompatCheck FAILED:' + System.lineSeparator() + '  ' + problems.unique().take(60).join(System.lineSeparator() + '  ') + System.lineSeparator() + '  (details: ' + new File(dir, 'save-compat-report.txt') + ')')
+        logger.lifecycle('saveCompatCheck: PASS')
     }
 }
 

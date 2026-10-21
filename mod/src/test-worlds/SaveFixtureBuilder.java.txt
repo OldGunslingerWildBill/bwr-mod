@@ -1,0 +1,167 @@
+package dev.bwr.mod.devtest;
+
+import dev.bwr.mod.panel.MachineNames;
+import dev.bwr.mod.panel.MachinePorts;
+import dev.bwr.mod.panel.PanelBlockEntity;
+import dev.bwr.mod.panel.component.ComponentType;
+import dev.bwr.mod.panel.component.ComponentTypes;
+import dev.bwr.mod.panel.component.Footprint;
+import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.wiring.CcPortSource;
+import dev.bwr.mod.panel.wiring.ComponentSource;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * NOT part of the mod's tests: builds, in the persistent GameTest world and WITHOUT cleaning up, the content an old-save
+ * check needs (see SaveCompatCheck): a wall of panels carrying every catalogue component, plant / component / CC-port
+ * bindings made through the real Bind payload, a machine with a name and a CC port, and every bwr block in up to eight
+ * of its block states. Copy this file and SaveStage.java into an older checkout's devtest package, run
+ * :mod:runTurbineGameTest there, and the world folder is the fixture.
+ */
+@GameTestHolder("bwr")
+@PrefixGameTestTemplate(false)
+public final class SaveFixtureBuilder {
+    private SaveFixtureBuilder() {
+    }
+
+    /** One cell of these is removed again on the first ticks (alpha.40 does the same): they only live inside their assembly. */
+    private static final java.util.Set<String> NEED_THEIR_MULTIBLOCK = java.util.Set.of("arabelle_condenser",
+            "circulating_water_pump", "hpci_turbine", "mechanical_draft_tower", "natural_draft_tower", "rcic_twl",
+            "makeup_water_pump", "screened_water_intake");
+
+    @GameTest(template = "empty", timeoutTicks = 1200)
+    public static void zzBuildSaveFixture(GameTestHelper helper) {
+        SaveStage.run(helper, 0, s -> {
+            List<ComponentType> types = new ArrayList<>(ComponentTypes.all());
+            int columns = 8;
+            int rows = (types.size() + columns - 1) / columns;
+            s.wall(columns, rows);
+            var valve = s.msiv(s.devices);
+            MachineNames.setName(valve, "RHR-1");
+            MachinePorts.set(valve, 7);
+            List<String> log = new ArrayList<>();
+            PanelComponent firstGauge = null;
+            PanelComponent firstButton = null;
+            PanelBlockEntity buttonBlock = null;
+            int placed = 0;
+            for (int i = 0; i < types.size(); i++) {
+                ComponentType type = types.get(i);
+                BlockPos block = s.at(i % columns, i / columns);
+                PanelComponent component = null;
+                for (Footprint footprint : type.footprints()) {
+                    try {
+                        component = dev.bwr.mod.panel.PanelOps.placeDirect(s.level, block, 1, 1, type, footprint);
+                    } catch (RuntimeException e) {
+                        log.add(type.id() + " threw " + e);
+                    }
+                    if (component != null) {
+                        break;
+                    }
+                }
+                if (component == null) {
+                    log.add(type.id() + " did not fit on one panel block");
+                    continue;
+                }
+                placed++;
+                PanelBlockEntity be = s.be(block);
+                if (firstGauge == null && type == ComponentTypes.DIAL_GAUGE) {
+                    firstGauge = component;
+                    s.wrench(s.devices);
+                    s.wire(s.plantIn(be, component, 0, s.devices, "position", 100, 0));
+                }
+                if (firstButton == null && type == ComponentTypes.PUSHBUTTON) {
+                    firstButton = component;
+                    buttonBlock = be;
+                    s.wrench(s.devices);
+                    s.wire(s.plantOut(be, component, 0, s.devices, "open"));
+                }
+                if (type == ComponentTypes.EDGEWISE_GAUGE_VERTICAL && firstButton != null) {
+                    component.setSource(0, new ComponentSource(buttonBlock.getBlockPos(), firstButton.id(), 0));
+                }
+                if (type == ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL) {
+                    component.setSource(0, new CcPortSource(7, "position", 100, 0));
+                }
+                be.setChanged();
+            }
+            // The wide ones (displays, matrices) get their own 3 x 3 patch of panels below the wall.
+            int patch = 0;
+            for (ComponentType type : types) {
+                if (type != ComponentTypes.CHARACTER_LCD && type != ComponentTypes.GRAPHIC_DISPLAY
+                        && type != ComponentTypes.FULL_CORE_DISPLAY && type != ComponentTypes.ROD_SELECT_MATRIX
+                        && type != ComponentTypes.BAR_GAUGE) {
+                    continue;
+                }
+                int left = patch++ * 3;
+                for (int r = 0; r < 3; r++) {
+                    for (int c = 0; c < 3; c++) {
+                        s.level.setBlock(s.at(left + c, rows + 1 + r), dev.bwr.mod.registry.BwrBlocks.CONTROL_PANEL_VERTICAL.get()
+                                .defaultBlockState().setValue(dev.bwr.mod.panel.PanelBlock.FACING, SaveStage.FACING), 3);
+                    }
+                }
+                PanelComponent component = null;
+                for (Footprint footprint : type.footprints()) {
+                    try {
+                        component = dev.bwr.mod.panel.PanelOps.placeDirect(s.level, s.at(left, rows + 1), 1, 1, type, footprint);
+                    } catch (RuntimeException e) {
+                        log.add(type.id() + " threw " + e);
+                    }
+                    if (component != null) {
+                        placed++;
+                        log.add(type.id() + " placed with " + footprint);
+                        break;
+                    }
+                }
+                if (component == null) {
+                    log.add(type.id() + " did not fit on 3 x 3 panels");
+                }
+            }
+            System.out.println("SAVE FIXTURE: " + placed + " of " + types.size() + " component types placed; " + log);
+
+            // Every bwr block in up to eight of its states, side by side in a plane 20 blocks below the wall.
+            int x = 0;
+            int z = 0;
+            int count = 0;
+            BlockPos base = s.origin.offset(-60, -20, 8);
+            for (Block block : BuiltInRegistries.BLOCK) {
+                var key = BuiltInRegistries.BLOCK.getKey(block);
+                if (!"bwr".equals(key.getNamespace()) || NEED_THEIR_MULTIBLOCK.contains(key.getPath())) {
+                    continue;
+                }
+                // The default state, then the same block turned to each facing it accepts (other properties stay at their
+                // defaults: a half-assembled multiblock state is not something a world can legitimately hold).
+                List<BlockState> states = new ArrayList<>();
+                states.add(block.defaultBlockState());
+                for (var property : block.getStateDefinition().getProperties()) {
+                    if (property instanceof net.minecraft.world.level.block.state.properties.DirectionProperty dp) {
+                        for (var value : dp.getPossibleValues()) {
+                            BlockState turned = block.defaultBlockState().setValue(dp, value);
+                            if (!states.contains(turned) && states.size() < 8) {
+                                states.add(turned);
+                            }
+                        }
+                    }
+                }
+                for (BlockState state : states) {
+                    BlockPos pos = base.offset(x, 0, z);
+                    s.level.setBlock(pos, state, 2);
+                    count++;
+                    if (++x >= 64) {
+                        x = 0;
+                        z++;
+                    }
+                }
+            }
+            System.out.println("SAVE FIXTURE: " + count + " block states placed");
+        });
+    }
+}
