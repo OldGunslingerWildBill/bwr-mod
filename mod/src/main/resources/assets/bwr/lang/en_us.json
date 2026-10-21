@@ -205,6 +205,10 @@
   "component.bwr.option.Flash.slow": "Flash slow",
   "component.bwr.option.Flash.fast": "Flash fast",
   "component.bwr.port.state": "State",
+  "component.bwr.port.ack": "Acknowledge",
+  "component.bwr.port.reset": "Reset",
+  "component.bwr.port.silence": "Silence",
+  "component.bwr.port.test": "Lamp test",
   "item.bwr.pushbutton": "Pushbutton",
   "item.bwr.toggle_switch": "Toggle Switch",
   "item.bwr.rotary_selector": "Rotary Selector",
@@ -246,6 +250,8 @@
   "component.bwr.field.digit_color": "Digit colour",
   "component.bwr.field.line1": "Engraved line 1",
   "component.bwr.field.line2": "Engraved line 2",
+  "component.bwr.field.line3": "Engraved line 3",
+  "component.bwr.field.line4": "Engraved line 4",
   "component.bwr.field.tile_color": "Tile colour",
   "component.bwr.field.condition": "Alarm when input is",
   "component.bwr.field.setpoint": "Alarm setpoint",
@@ -1142,5 +1148,7 @@
   "finish.bwr.cream": "Cream",
   "finish.bwr.tan": "Tan",
   "finish.bwr.grey": "Grey",
-  "finish.bwr.light_blue": "Light blue"
+  "finish.bwr.light_blue": "Light blue",
+  "item.bwr.annunciator_control": "Annunciator Control Module",
+  "component.bwr.annunciator_control": "Annunciator Control Module"
 }

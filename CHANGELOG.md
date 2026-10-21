@@ -13,6 +13,12 @@
 - Three new panel styles: `HEADER_TILT` (the face as the model draws it, leaning back 5 degrees; strips and canopies join sideways into one row, never upward), `CHAMFER_VERTICAL` (the diagonal facet, 11 of 16 columns; stacks into rows, never joins sideways) and `CHAMFER_BENCH` (the triangular facet; a group of one). A grid cell is still 1/16 block along the face, so parts keep their real size; the cells that are not on a facet (and a canopy's hood row) take nothing.
 - Existing exhaustive `PanelType` switches in the tests gained the new arms; the registration test of `PanelTrimTests` now expects the four pieces to be panel blocks with a panel block entity (the other trim pieces are unchanged and still have none).
 
+## Unreleased: annunciator boxes, the control module, distance fade of text
+
+- Annunciator windows that touch now draw as **one grouped box** (a thin dark gap between them, one shared dark recessed frame with a bezel lip round the group, found on each client from the windows of the panel group; CONTROL-PANELS.md, "Annunciator boxes"). Lit colour and flash are as before; the lettering follows the window's colour scheme. The legend is up to **four lines** (Engraved line 3 and 4, saved only when used, so old saves load unchanged).
+- Added the **Annunciator Control Module** (ACK, RESET, SILENCE and TEST pushbuttons in one part, real size 2x1 cells): momentary outputs `ack`, `reset`, `silence` and `test`; ACK and RESET do what a pushbutton with that role does for the module's group, TEST is a lamp test (lights the group's windows while held, changes no alarm state). It acts only when pressed.
+- **Distance fade of text**: printed text whose glyphs are only a few screen pixels tall fades out and a soft strip in the text's colour stands in for it, instead of turning to speckle. Computed per component per frame, no per-glyph work; client option `panelTextFade` (default on, `bwr-visuals.toml`) turns it off.
+
 ## Unreleased: gauge text and ticks in proportion, Text size and Tick size
 
 - Gauge **text and ticks scale with the gauge** (CONTROL-PANELS.md, "Gauge text and tick size"): the numbers of a small bar gauge are no longer held at a least height of 0.15 cell, the classic dial's least tick and pointer widths and the classic edgewise meter's margins, ticks, pointer and flag shrink with a meter smaller than its art, and a 1-cell bar graph's housing is the big bars' share. The big sizes look as before.

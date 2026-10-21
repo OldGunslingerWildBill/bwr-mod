@@ -53,6 +53,8 @@ public final class ComponentTypes {
     public static final ComponentType BAR_GAUGE = register(new BarGaugeType());
     public static final ComponentType RPS_TRIP = register(new RpsTripType());
     public static final ComponentType PUSH_TURN_SWITCH = register(new PushTurnSwitchType());
+    // -- annunciator boxes --
+    public static final ComponentType ANNUNCIATOR_CONTROL = register(new AnnunciatorControlType());
     // ----------------------------------------------------------------------------
 
     /** Forces class initialisation. */
