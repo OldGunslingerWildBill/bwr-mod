@@ -2,10 +2,10 @@ package dev.bwr.mod.panel.client;
 
 import dev.bwr.mod.panel.component.GaugeData;
 import dev.bwr.mod.panel.component.PanelComponent;
-import dev.bwr.mod.panel.display.PanelFormat;
 import dev.bwr.mod.panel.model.BakedPanelModel;
 import dev.bwr.mod.panel.model.GaugeScale;
 import dev.bwr.mod.panel.model.Legends;
+import dev.bwr.mod.panel.model.ScaleNumbers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +70,7 @@ final class DialGaugeModel implements ComponentModel {
         float face = radius * 0.9f;
         sink.box(0, 0, w, h, 0, 1.0f, BEZEL, false);
         Shapes.disc(sink, cx, cy, radius * 0.97f, 1.02f, RIM, 32, false);
-        Shapes.disc(sink, cx, cy, face, 1.05f, FACE, 32, false);
+        Shapes.disc(sink, cx, cy, face, GaugeScale.CLASSIC_FACE_Z, FACE, 32, false);
         float step = (float) Math.toRadians(4.0);
         for (int i = 0; i < GaugeData.BANDS; i++) {
             if (data.bandHigh[i] > data.bandLow[i]) {
@@ -139,14 +139,17 @@ final class DialGaugeModel implements ComponentModel {
         float face = face(component);
         float cx = component.w() / 2.0f;
         float cy = component.h() / 2.0f;
-        String min = PanelFormat.formatNumber(data.min, "");
-        String max = PanelFormat.formatNumber(data.max, "");
         boolean units = !data.units.isEmpty();
-        float minCaps = GaugeScale.textCaps(min);
-        float maxCaps = GaugeScale.textCaps(max);
         float unitsCaps = units ? GaugeScale.textCaps(data.units) : 0.0f;
         // The scale (cells per font pixel) of a cap of c face radii is c * face / CAP_PIXELS.
         float asked = Legends.CAP_PIXELS * TEXT * data.textFactor();
+        // Full numbers when both fit at the size asked, else k and M (ScaleNumbers).
+        List<String> ends = ScaleNumbers.labels(new double[] {data.min, data.max}, strings ->
+                arrange(asked, GaugeScale.textCaps(strings.get(0)), GaugeScale.textCaps(strings.get(1)), unitsCaps, units) != null);
+        String min = ends.get(0);
+        String max = ends.get(1);
+        float minCaps = GaugeScale.textCaps(min);
+        float maxCaps = GaugeScale.textCaps(max);
         float low = 0.0f;
         float high = asked;
         if (arrange(high, minCaps, maxCaps, unitsCaps, units) == null) {
@@ -170,12 +173,12 @@ final class DialGaugeModel implements ComponentModel {
         }
         float half = cap / 2.0f;
         List<Legends.Item> items = new ArrayList<>();
-        items.add(new Legends.Item(min, cx - face * layout[0], cy + face * layout[1] + half, 1.2f, cap, 0.0f,
+        items.add(new Legends.Item(min, cx - face * layout[0], cy + face * layout[1] + half, GaugeScale.CLASSIC_TEXT_Z, cap, 0.0f,
                 BakedPanelModel.Align.LEFT, INK, false, FACE));
-        items.add(new Legends.Item(max, cx + face * layout[0], cy + face * layout[1] + half, 1.2f, cap, 0.0f,
+        items.add(new Legends.Item(max, cx + face * layout[0], cy + face * layout[1] + half, GaugeScale.CLASSIC_TEXT_Z, cap, 0.0f,
                 BakedPanelModel.Align.RIGHT, INK, false, FACE));
         if (units) {
-            items.add(new Legends.Item(data.units, cx, cy + face * UNITS_TOP + half, 1.2f, cap, 0.0f,
+            items.add(new Legends.Item(data.units, cx, cy + face * UNITS_TOP + half, GaugeScale.CLASSIC_TEXT_Z, cap, 0.0f,
                     BakedPanelModel.Align.CENTER, INK, false, FACE));
         }
         return items;

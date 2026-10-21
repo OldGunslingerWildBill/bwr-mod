@@ -71,6 +71,8 @@ public final class GaugeScaleGuardTests {
     private static final int ENGRAVED = 0xE8E8E8;
     /** The classic dial's cream face (DialGaugeModel): the disc its labels must stay inside. */
     private static final int CLASSIC_FACE = 0xE9E5D4;
+    /** The typical scale ranges every gauge is checked with (the default 0 to 100 hides how wide the numbers of the others are). */
+    static final double[][] RANGES = {{0, 100}, {0, 1200}, {0, 5000}, {0, 60000}, {-150, 60}};
     /** The captions the guard prints under every component: a short one, and one long enough to need the width limit. */
     static final List<String> CAPTIONS = List.of("TURBINE", "FEEDWATER CONTROL VALVE B");
 
@@ -239,18 +241,32 @@ public final class GaugeScaleGuardTests {
     }
 
     static PanelComponent component(Probe probe, Footprint size, int textSize, int tickSize) {
+        return component(probe, size, textSize, tickSize, null);
+    }
+
+    /** As {@link #component(Probe, Footprint, int, int)}, a gauge with its scale from {@code range[0]} to {@code range[1]} if given. */
+    static PanelComponent component(Probe probe, Footprint size, int textSize, int tickSize, double[] range) {
         PanelComponent component = new PanelComponent(1, probe.type(), 0, 0, size, probe.type().labelPrefix() + "-1");
         probe.setup().accept(component);
         if (component.data() instanceof GaugeData data) {
             data.textSize = textSize;
             data.tickSize = tickSize;
+            if (range != null) {
+                data.min = range[0];
+                data.max = range[1];
+            }
         }
         return component;
     }
 
     /** Draws {@code probe} at {@code size} through its registered model and measures it. */
     static Shot shot(Probe probe, Footprint size, int textSize, int tickSize) {
-        PanelComponent component = component(probe, size, textSize, tickSize);
+        return shot(probe, size, textSize, tickSize, null);
+    }
+
+    /** {@link #shot(Probe, Footprint, int, int)} of a gauge with its scale from {@code range[0]} to {@code range[1]}. */
+    static Shot shot(Probe probe, Footprint size, int textSize, int tickSize, double[] range) {
+        PanelComponent component = component(probe, size, textSize, tickSize, range);
         ComponentModel model = ComponentModels.get(probe.type().id());
         Recorder recorder = new Recorder();
         model.buildStatic(recorder, component, 1.0f);
@@ -431,10 +447,20 @@ public final class GaugeScaleGuardTests {
 
     /** The failures of the fit check: every piece of text inside what is drawn and clear of every other. */
     static List<String> fitFailures(Probe probe, int text) {
+        return fitFailures(probe, text, null);
+    }
+
+    /**
+     * {@link #fitFailures(Probe, int)} of a gauge with its scale from {@code range[0]} to {@code range[1]} (null: the default
+     * 0 to 100). The first version of this check only ever drew 0 to 100, whose numbers are short at every size, so a range in
+     * the thousands ("40005000" on a GE meter) went unseen: see {@link #RANGES}.
+     */
+    static List<String> fitFailures(Probe probe, int text, double[] range) {
         List<String> failures = new ArrayList<>();
         for (Footprint size : sizes(probe)) {
-            Shot shot = shot(probe, size, text, GaugeScale.DEFAULT_PERCENT);
-            String where = probe + " " + size + " text " + text + " %: ";
+            Shot shot = shot(probe, size, text, GaugeScale.DEFAULT_PERCENT, range);
+            String where = probe + " " + size + " text " + text + " %"
+                    + (range == null ? "" : ", range " + range[0] + ".." + range[1]) + ": ";
             float[] bounds = shot.bounds();
             List<float[]> boxes = new ArrayList<>();
             for (Legends.Item item : shot.text()) {
@@ -586,6 +612,113 @@ public final class GaugeScaleGuardTests {
             failures.addAll(captionFailures(probe));
         }
         assertNone(helper, failures, "captions");
+        helper.succeed();
+    }
+
+    /**
+     * No two numbers of a scale touch, whatever its range (0 to 100, 1200, 5000, 60000 and -150 to 60), at every size and
+     * Text size 50, 100 and 200 %: full numbers where they fit their spacing, else k and M ({@code ScaleNumbers}), else
+     * smaller; and every number stays on the gauge. Closes the gap of the first fit test, which drew only 0 to 100.
+     */
+    @GameTest(template = "empty")
+    public static void scaleLabelsNeverOverlapForTypicalRangesAtEverySize(GameTestHelper helper) {
+        List<String> failures = new ArrayList<>();
+        withModels(() -> {
+            for (Probe probe : PROBES) {
+                if (!(probe.type().createData() instanceof GaugeData)) {
+                    continue;
+                }
+                for (double[] range : RANGES) {
+                    for (int text : new int[] {GaugeScale.MIN_PERCENT, GaugeScale.DEFAULT_PERCENT, GaugeScale.MAX_PERCENT}) {
+                        failures.addAll(fitFailures(probe, text, range));
+                    }
+                }
+            }
+        });
+        assertNone(helper, failures, "ranges");
+        helper.succeed();
+    }
+
+    /**
+     * The compact notation of the one shared formatter: full numbers while they fit, else the fewest digits with k and M.
+     * (The probes' own overlap checks above go through the real gauges.)
+     */
+    @GameTest(template = "empty")
+    public static void theSharedScaleFormatterWritesKAndMCompactly(GameTestHelper helper) {
+        var compact = dev.bwr.mod.panel.model.ScaleNumbers.Notation.COMPACT;
+        var full = dev.bwr.mod.panel.model.ScaleNumbers.Notation.FULL;
+        Object[][] cases = {{0.0, "0"}, {500.0, "500"}, {1000.0, "1k"}, {2500.0, "2.5k"}, {5000.0, "5k"}, {60000.0, "60k"},
+                {-150.0, "-150"}, {-2500.0, "-2.5k"}, {1250.0, "1.25k"}, {1234.0, "1234"}, {1.0e6, "1M"}, {2.5e6, "2.5M"}};
+        for (Object[] row : cases) {
+            String got = dev.bwr.mod.panel.model.ScaleNumbers.format((Double) row[0], compact);
+            helper.assertTrue(got.equals(row[1]), "compact " + row[0] + " is " + got + ", not " + row[1]);
+        }
+        helper.assertTrue(dev.bwr.mod.panel.model.ScaleNumbers.format(5000.0, full).equals("5000"), "full numbers stay full");
+        helper.assertTrue(dev.bwr.mod.panel.model.ScaleNumbers.labels(new double[] {0, 5000}, strings -> true).get(1).equals("5000"),
+                "numbers that fit are written in full");
+        helper.assertTrue(dev.bwr.mod.panel.model.ScaleNumbers.labels(new double[] {0, 5000}, strings -> false).get(1).equals("5k"),
+                "numbers that do not fit are written compactly");
+        helper.succeed();
+    }
+
+    /**
+     * Printed text stands a hair above the surface it is printed on (GaugeScale.TEXT_EPSILON, the annunciator's rule), so
+     * it does not float off the panel when seen from the side: the caption under every component above the board face, a
+     * nameplate's lines and tag text above its plate and tag, a classic dial's and meter's text above their face, a
+     * thumbwheel's digits above their recess; at every size, on every panel frame (sloped benches and consoles included),
+     * measured in blocks between the text and the surface point under it through the real frames.
+     */
+    @GameTest(template = "empty")
+    public static void captionsNameplatesAndClassicTextSitAHairAboveTheirSurfaceOnEveryPanelFrame(GameTestHelper helper) {
+        List<String> failures = new ArrayList<>();
+        double epsilonBlocks = GaugeScale.TEXT_EPSILON / 16.0 + 1.0e-9;
+        int[] checked = {0};
+        withModels(() -> {
+            for (dev.bwr.mod.panel.PanelType type : dev.bwr.mod.panel.PanelType.values()) {
+                var frame = dev.bwr.mod.panel.PanelGeometry.frame(type, net.minecraft.core.Direction.NORTH);
+                java.util.function.BiConsumer<String, float[]> check = (what, zs) -> {
+                    // zs: text elevation, surface elevation (1/16 block); measured at a few points of the face.
+                    for (double[] at : new double[][] {{0.0, 0.0}, {7.5, 3.25}, {16.0, 16.0}}) {
+                        double dx = frame.x(at[0], at[1], zs[0]) - frame.x(at[0], at[1], zs[1]);
+                        double dy = frame.y(at[0], at[1], zs[0]) - frame.y(at[0], at[1], zs[1]);
+                        double dz = frame.z(at[0], at[1], zs[0]) - frame.z(at[0], at[1], zs[1]);
+                        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                        checked[0]++;
+                        if (!(zs[0] > zs[1]) || distance > epsilonBlocks) {
+                            failures.add(type + " " + what + ": stands " + (zs[0] > zs[1] ? "" : "BELOW and ") + distance
+                                    + " blocks from its surface (at most " + epsilonBlocks + ")");
+                        }
+                    }
+                };
+                // The caption of every type at every size, laid out as the renderer does.
+                for (ComponentType component : ComponentTypes.all()) {
+                    for (Footprint size : component.footprints()) {
+                        for (String caption : CAPTIONS) {
+                            var place = GaugeScale.caption(size.w(), size.h(), component.designSide(), GaugeScale.textPixels(caption));
+                            check.accept("caption of " + component.id().getPath() + " " + size, new float[] {place.z(), 0.0f});
+                        }
+                    }
+                }
+                check.accept("nameplate line", new float[] {GaugeScale.NAMEPLATE_TEXT_Z, GaugeScale.NAMEPLATE_TOP});
+                check.accept("nameplate tag text", new float[] {GaugeScale.NAMEPLATE_TAG_TEXT_Z, GaugeScale.NAMEPLATE_TAG_Z});
+                check.accept("thumbwheel digit", new float[] {GaugeScale.THUMBWHEEL_TEXT_Z, GaugeScale.THUMBWHEEL_RECESS_TOP});
+                // The classic dial's and meters' text, as their real models lay it out, at every size.
+                for (Probe probe : PROBES) {
+                    if (probe.name().contains("classic") && probe.type().createData() instanceof GaugeData) {
+                        for (Footprint size : sizes(probe)) {
+                            for (Legends.Item item : shot(probe, size, GaugeScale.DEFAULT_PERCENT, GaugeScale.DEFAULT_PERCENT).text()) {
+                                // (A part under 3 cells across has every elevation scaled, the face and its text alike.)
+                                float factor = dev.bwr.mod.panel.model.Placement.elevationFactor(size.w(), size.h());
+                                check.accept(probe + " " + size + " '" + item.text() + "'",
+                                        new float[] {item.z(), GaugeScale.CLASSIC_FACE_Z * factor});
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        helper.assertTrue(checked[0] > 3000, "the loop looked at every frame, type and size: " + checked[0]);
+        assertNone(helper, failures, "flush text");
         helper.succeed();
     }
 

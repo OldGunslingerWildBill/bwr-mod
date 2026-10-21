@@ -141,10 +141,8 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
             return;
         }
         // 0.26 cell per pixel and a 0.5 cell gap at the design size and above; less for a real size part (GaugeScale).
-        float designSide = component.type().designSide();
-        float scale = GaugeScale.captionScale(component.w(), component.h(), designSide, textWidth);
-        float gap = GaugeScale.CAPTION_GAP * GaugeScale.captionFactor(component.w(), component.h(), designSide);
-        context.text(caption, (component.w() - textWidth * scale) / 2.0f, component.h() + gap, scale, 1.2f, 0xFFFFFF, false);
+        GaugeScale.Caption place = GaugeScale.caption(component.w(), component.h(), component.type().designSide(), textWidth);
+        context.text(caption, place.x(), place.y(), place.scale(), place.z(), 0xFFFFFF, false);
     }
 
     /**

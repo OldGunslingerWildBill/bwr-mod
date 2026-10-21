@@ -176,11 +176,12 @@ final class PanelAngledShowcase {
             BlockPos pos = new BlockPos(5704 - c, FLOOR + 4, 5310);
             put(level, pos, run[c], NORTH);
             boolean canopy = run[c] == BwrBlocks.CONTROL_PANEL_HEADER_CANOPY.get();
-            for (int row = canopy ? 1 : 0; row < (canopy ? 13 : 14); row++) {
-                for (int i = 0; i < 16; i++) {
-                    PanelComponent tile = real(level, pos, i, row, ComponentTypes.ANNUNCIATOR);
+            // windows start at 2 x 2 cells (twice the real size), so a quarter of the tiles of the exact real size
+            for (int row = canopy ? 1 : 0; row + 2 <= (canopy ? 13 : 14); row += 2) {
+                for (int i = 0; i < 8; i++) {
+                    PanelComponent tile = real(level, pos, i * 2, row, ComponentTypes.ANNUNCIATOR);
                     AnnunciatorData d = (AnnunciatorData) tile.data();
-                    String[] text = ALARMS[(c * 53 + row * 16 + i) % ALARMS.length];
+                    String[] text = ALARMS[(c * 53 + row * 8 + i) % ALARMS.length];
                     d.line1 = text[0];
                     d.line2 = text[1];
                     int state = (row * 7 + i * 3 + c) % 11;
@@ -221,9 +222,10 @@ final class PanelAngledShowcase {
         for (int row = 0; row < 3; row++) {
             int y = FLOOR + 1 + row;
             for (BlockPos pos : new BlockPos[] {new BlockPos(5725, y, 5330), new BlockPos(5719, y, 5330)}) {
-                int placed = dials(level, pos, 3, 5, 4, 0, 0);
-                if (placed != 20) {
-                    throw new AssertionError("Angled showcase: " + placed + " of 20 dials fit the chamfer at " + pos);
+                // 4 x 4 dials (twice the real size) at a pitch of 4: a quarter of the 20 of the exact real size
+                int placed = dials(level, pos, 4, 4, 4, 0, 0);
+                if (placed < 6) {
+                    throw new AssertionError("Angled showcase: only " + placed + " dials fit the chamfer at " + pos);
                 }
             }
         }

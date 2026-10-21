@@ -2,6 +2,7 @@ package dev.bwr.mod.panel.client;
 
 import dev.bwr.mod.panel.component.NameplateData;
 import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.model.GaugeScale;
 
 /**
  * Black engraved nameplate: a flat plate with a thin raised rim and up to three lines of text, stacked and centred.
@@ -13,7 +14,7 @@ import dev.bwr.mod.panel.component.PanelComponent;
  */
 final class NameplateModel implements ComponentModel {
     private static final float RIM = 0.25f;
-    private static final float PLATE_TOP = 0.8f;
+    private static final float PLATE_TOP = GaugeScale.NAMEPLATE_TOP;
     private static final float MARGIN = 0.6f;
     private static final int TAG_INK = 0xFFFFFF;
 
@@ -140,7 +141,7 @@ final class NameplateModel implements ComponentModel {
         }
         if (!plan.tag.isEmpty()) {
             sink.rect(plan.tagX, plan.bandY + (h - MARGIN * 0.6f - plan.bandY - plan.tagH) / 2.0f, plan.tagW, plan.tagH,
-                    PLATE_TOP + 0.04f, data.tagColor, false);
+                    GaugeScale.NAMEPLATE_TAG_Z, data.tagColor, false);
         }
     }
 
@@ -151,7 +152,7 @@ final class NameplateModel implements ComponentModel {
         }
         NameplateData data = (NameplateData) component.data();
         Plan plan = plan(component, context.rowAspect(), context.font());
-        float z = PLATE_TOP + 0.06f;
+        float z = GaugeScale.NAMEPLATE_TEXT_Z;
         for (int i = 0; i < plan.lineCount; i++) {
             context.text(plan.lines[i], plan.lineX[i], plan.lineY[i], plan.lineScale, z, data.ink, false);
         }
@@ -160,7 +161,7 @@ final class NameplateModel implements ComponentModel {
             context.text(plan.cornerLeft, plan.cornerLeftX, textY, plan.bandScale, z, data.ink, false);
         }
         if (!plan.tag.isEmpty()) {
-            context.text(plan.tag, plan.tagTextX, textY, plan.bandScale, z + 0.02f, TAG_INK, false);
+            context.text(plan.tag, plan.tagTextX, textY, plan.bandScale, GaugeScale.NAMEPLATE_TAG_TEXT_Z, TAG_INK, false);
         }
         if (!plan.cornerRight.isEmpty()) {
             context.text(plan.cornerRight, plan.cornerRightX, textY, plan.bandScale, z, data.ink, false);

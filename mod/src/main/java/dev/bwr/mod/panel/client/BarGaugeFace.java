@@ -1,11 +1,11 @@
 package dev.bwr.mod.panel.client;
 
 import dev.bwr.mod.panel.component.GaugeData;
-import dev.bwr.mod.panel.display.PanelFormat;
 import dev.bwr.mod.panel.model.BakedPanelModel;
 import dev.bwr.mod.panel.model.GaugeScale;
 import dev.bwr.mod.panel.model.Legends;
 import dev.bwr.mod.panel.model.Placement;
+import dev.bwr.mod.panel.model.ScaleNumbers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -303,12 +303,9 @@ public final class BarGaugeFace {
         double step = majorStep();
         long first = (long) Math.ceil(data.min / step - 1.0e-9);
         long last = (long) Math.floor(data.max / step + 1.0e-9);
-        List<String> numerals = new ArrayList<>();
-        float widest = 1.0f;
-        for (long k = first; k <= last; k++) {
-            String text = PanelFormat.formatNumber(Math.round(k * step * 1.0e6) / 1.0e6, "");
-            numerals.add(text);
-            widest = Math.max(widest, textCaps(text));
+        double[] values = new double[(int) Math.max(0, last - first + 1)];
+        for (int i = 0; i < values.length; i++) {
+            values[i] = Math.round((first + i) * step * 1.0e6) / 1.0e6;
         }
         // All in proportion to the case (GaugeScale): the picture's cap height times Text size, shrunk to the room left
         // of the ticks and to 0.6 of the spacing of the numbers, so they never leave the face or touch each other.
@@ -316,6 +313,9 @@ public final class BarGaugeFace {
         float right = numbersRight();
         float room = (right - FACE_LEFT - 0.08f * CM) * place.scale;
         float natural = NUMBER_CAP * place.scale;
+        // Full numbers while they fit the room left of the ticks at the design size, else k and M (ScaleNumbers).
+        List<String> numerals = ScaleNumbers.labels(values, strings -> room / widestOf(strings) >= natural);
+        float widest = widestOf(numerals);
         // Grown by Text size, the numbers also keep clear of the raised rail and of the caps at the ends of the face.
         float endRoom = Math.min(inchesAt(1.0), channelH - inchesAt(0.0));
         float grow = Math.min((right - FACE_LEFT - GROWN_MARGIN) / widest, 2.0f * (endRoom - GROWN_MARGIN)) * place.scale;
@@ -367,6 +367,15 @@ public final class BarGaugeFace {
      */
     private static float textCaps(String text) {
         return (6.0f * text.length() - 1.0f) / Legends.CAP_PIXELS;
+    }
+
+    /** The widest of {@code texts} in cap heights, at least 1. */
+    private static float widestOf(List<String> texts) {
+        float widest = 1.0f;
+        for (String text : texts) {
+            widest = Math.max(widest, textCaps(text));
+        }
+        return widest;
     }
 
     /**

@@ -85,6 +85,28 @@ public final class GaugeScale {
         return Math.max(1.0f, Math.min(factor, maxLength / length));
     }
 
+    /**
+     * Printed text stands this far above the surface it is printed on, in 1/16 block (the annunciator's rule,
+     * {@code AnnunciatorBox.TEXT_EPSILON}): a hair, so it neither fights the surface nor floats off it when a panel is seen
+     * from the side, at every size and on every panel frame (a sloped bench included). The surfaces: the board face for a
+     * caption ({@link #CAPTION_Z}), the dial's and meter's face ({@link #CLASSIC_FACE_Z}), a nameplate's top
+     * ({@link #NAMEPLATE_TOP}).
+     */
+    public static final float TEXT_EPSILON = 0.06f;
+    /** The board face the caption under a component is printed on is at elevation 0. */
+    public static final float CAPTION_Z = TEXT_EPSILON;
+    /** The face of a classic dial and edgewise meter (the cream disc or strip), and the elevation of their text. */
+    public static final float CLASSIC_FACE_Z = 1.05f;
+    public static final float CLASSIC_TEXT_Z = CLASSIC_FACE_Z + TEXT_EPSILON;
+    /** A nameplate's top, and the elevation of its lines, corner fields, and tag text (the tag stands 0.04 above the plate). */
+    public static final float NAMEPLATE_TOP = 0.8f;
+    public static final float NAMEPLATE_TEXT_Z = NAMEPLATE_TOP + TEXT_EPSILON;
+    public static final float NAMEPLATE_TAG_Z = NAMEPLATE_TOP + 0.04f;
+    public static final float NAMEPLATE_TAG_TEXT_Z = NAMEPLATE_TAG_Z + TEXT_EPSILON;
+    /** The recess of a thumbwheel digit (its top, and the elevation of the digit). */
+    public static final float THUMBWHEEL_RECESS_TOP = 1.5f;
+    public static final float THUMBWHEEL_TEXT_Z = THUMBWHEEL_RECESS_TOP + TEXT_EPSILON;
+
     /** Cells per font pixel of the caption printed under a component at its design size and above (a cap is 7 pixels). */
     public static final float CAPTION_PIXEL = 0.26f;
     /** The width, cells, a caption may use at the design size even under a narrower component: one block. */
@@ -100,6 +122,21 @@ public final class GaugeScale {
      */
     public static float captionFactor(float w, float h, float designSide) {
         return sizeFactor(Math.min(w, h), designSide);
+    }
+
+    /** Where a caption is printed: top-left (cells), cells per font pixel and elevation (1/16 block). */
+    public record Caption(float x, float y, float scale, float z) {
+    }
+
+    /**
+     * The layout of the caption of a {@code w x h} component whose type's design side is {@code designSide}, {@code textPixels}
+     * wide in the font: centred under it, in proportion ({@link #captionScale}), a hair above the board face ({@link #CAPTION_Z}).
+     * The renderer and the guard tests both lay captions out with this.
+     */
+    public static Caption caption(float w, float h, float designSide, float textPixels) {
+        float scale = captionScale(w, h, designSide, textPixels);
+        float gap = CAPTION_GAP * captionFactor(w, h, designSide);
+        return new Caption((w - textPixels * scale) / 2.0f, h + gap, scale, CAPTION_Z);
     }
 
     /**

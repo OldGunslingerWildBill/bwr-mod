@@ -111,6 +111,8 @@ public final class Legends {
             boolean radial = needle != null && needle.hasPivot;
             int count = radial || type.equals("dial_gauge") ? DIAL_NUMERALS : STRIP_NUMERALS;
             int numbered = numberedScaleCount(model);
+            // Where each numeral goes (its anchor, position and fraction of the range), before its text is chosen.
+            List<Spot> spots = new ArrayList<>();
             if (numbered >= 2) {
                 // scale0 .. scaleN-1: one anchor per numeral, low end first, each with its own alignment.
                 for (int i = 0; i < numbered; i++) {
@@ -120,24 +122,96 @@ public final class Legends {
                     if (!radial && (i == 0 || i == numbered - 1)) {
                         insetEnd(model, label, numbered, at);
                     }
-                    items.add(item(numeral(data, t), label, place, at[0], at[1], at[2]));
+                    spots.add(new Spot(label, at[0], at[1], at[2], t));
                 }
             } else if (min != null && max != null) {
                 for (int i = 0; i < count; i++) {
                     float t = i / (float) (count - 1);
-                    items.add(item(numeral(data, t), min, place, lerp(min.x, max.x, t), lerp(min.y, max.y, t),
-                            lerp(min.z, max.z, t)));
+                    spots.add(new Spot(min, lerp(min.x, max.x, t), lerp(min.y, max.y, t), lerp(min.z, max.z, t), t));
                 }
             } else if (scale != null && needle != null) {
                 for (int i = 0; i < count; i++) {
                     float t = i / (float) (count - 1);
                     float[] at = scalePoint(needle, scale, t, radial);
-                    items.add(item(numeral(data, t), scale, place, at[0], at[1], at[2]));
+                    spots.add(new Spot(scale, at[0], at[1], at[2], t));
+                }
+            }
+            if (!spots.isEmpty()) {
+                double[] values = new double[spots.size()];
+                for (int i = 0; i < values.length; i++) {
+                    values[i] = data.min + (data.max - data.min) * spots.get(i).t;
+                }
+                float rowAspect = place.scale / place.rowScale;
+                // Full numbers where they stay clear of each other at their spacing, else k and M (ScaleNumbers).
+                List<String> texts = ScaleNumbers.labels(values, strings -> numeralsClear(numerals(spots, strings, place), rowAspect));
+                List<Item> numerals = numerals(spots, texts, place);
+                // Whatever is left touching (a very long number) is printed smaller, all numerals alike.
+                float shrink = numeralShrink(numerals, rowAspect);
+                for (Item numeral : numerals) {
+                    items.add(shrink == 1.0f ? numeral : new Item(numeral.text(), numeral.x(), numeral.y(), numeral.z(),
+                            numeral.capCells() * shrink, numeral.rotation(), numeral.align(), numeral.ink(), numeral.onLamp(),
+                            numeral.surfaceRgb(), numeral.tilt()));
                 }
             }
             textSize(items, numeralsFrom, data.textFactor(), place, model);
         }
         return items;
+    }
+
+    /** One numeral's place: the label it is printed like, where it goes (model inches) and its fraction of the range. */
+    private record Spot(BakedPanelModel.Label label, float x, float y, float z, float t) {
+    }
+
+    private static List<Item> numerals(List<Spot> spots, List<String> texts, Placement place) {
+        List<Item> out = new ArrayList<>(spots.size());
+        for (int i = 0; i < spots.size(); i++) {
+            Spot spot = spots.get(i);
+            out.add(item(texts.get(i), spot.label, place, spot.x, spot.y, spot.z));
+        }
+        return out;
+    }
+
+    /** The space kept on each side of a numeral when asking whether two are clear, in cap heights. */
+    private static final float NUMERAL_SPACE = 0.15f;
+    /** The space kept when numerals that are still too long after k and M are shrunk: just not touching. */
+    private static final float TOUCHING_SPACE = 0.05f;
+
+    /** Whether no two of {@code numerals} touch, each with {@link #NUMERAL_SPACE} of its cap height round it. */
+    private static boolean numeralsClear(List<Item> numerals, float rowAspect) {
+        return numeralShrinkFits(numerals, 1.0f, rowAspect, NUMERAL_SPACE);
+    }
+
+    private static boolean numeralShrinkFits(List<Item> numerals, double f, float rowAspect, float space) {
+        for (int a = 0; a < numerals.size(); a++) {
+            for (int b = a + 1; b < numerals.size(); b++) {
+                Item x = numerals.get(a);
+                Item y = numerals.get(b);
+                float[] boxA = pad(box(x, f, rowAspect), x, f, space);
+                float[] boxB = pad(box(y, f, rowAspect), y, f, space);
+                if (overlap(boxA, boxB)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /** The factor, 1 or less, that makes the numerals clear of each other (not below 0.2). */
+    private static float numeralShrink(List<Item> numerals, float rowAspect) {
+        if (numeralShrinkFits(numerals, 1.0, rowAspect, TOUCHING_SPACE)) {
+            return 1.0f;
+        }
+        float low = 0.2f;
+        float high = 1.0f;
+        for (int k = 0; k < 24; k++) {
+            float mid = (low + high) / 2.0f;
+            if (numeralShrinkFits(numerals, mid, rowAspect, TOUCHING_SPACE)) {
+                low = mid;
+            } else {
+                high = mid;
+            }
+        }
+        return low;
     }
 
     /**
@@ -220,7 +294,11 @@ public final class Legends {
 
     /** {@code box} grown by {@link #SPACE} of {@code item}'s cap height at scale {@code f} all round (rows as columns: a hair generous on a slope). */
     private static float[] pad(float[] box, Item item, double f) {
-        float d = (float) (SPACE * item.capCells() * f);
+        return pad(box, item, f, SPACE);
+    }
+
+    private static float[] pad(float[] box, Item item, double f, float space) {
+        float d = (float) (space * item.capCells() * f);
         return new float[] {box[0] - d, box[1] - d, box[2] + d, box[3] + d};
     }
 
