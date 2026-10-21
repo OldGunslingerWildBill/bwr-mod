@@ -63,7 +63,9 @@ final class AnnunciatorControlModel implements ComponentModel {
             int color = held ? CAPS[i] : QuadSink.shade(CAPS[i], 0.8f);
             float x = bezelX(w, i, bezel) + inset;
             float y = bezelY(h, bezel) + inset;
-            context.box(x, y, bezel - 2 * inset, bezel - 2 * inset, 1.0f, held ? 2.0f : 3.2f, color, held);
+            // A button stands out in proportion to its size, so the real size module's caps are not posts.
+            float stand = Math.min(1.0f, bezel / 3.0f);
+            context.box(x, y, bezel - 2 * inset, bezel - 2 * inset, HOUSING_TOP, HOUSING_TOP + (held ? 1.0f : 2.2f) * stand, color, held);
         }
         if (context.lod() < PanelRenderContext.LOD_FULL) {
             return;
