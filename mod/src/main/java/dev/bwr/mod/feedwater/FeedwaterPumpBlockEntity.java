@@ -374,8 +374,7 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
             ticksSinceRebind++;
         }
         boolean reactorMissing = reactorPos == null
-                || !(level.isLoaded(reactorPos)
-                     && level.getBlockEntity(reactorPos) instanceof ReactorControllerBlockEntity);
+                || !(dev.bwr.mod.world.LoadedWorld.blockEntity(level, reactorPos) instanceof ReactorControllerBlockEntity);
         int interval = (bindingDirty || reactorMissing)
                 ? REBIND_INTERVAL_TICKS : BOUND_REBIND_INTERVAL_TICKS;
         if (ticksSinceRebind < interval) {
@@ -384,23 +383,23 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
         ticksSinceRebind = 0;
         bindingDirty = false;
 
-        BlockPos foundReactor = null;
-        BlockPos foundTank = null;
         BlockPos here = getBlockPos();
-        for (BlockPos p : BlockPos.betweenClosed(
+        BlockPos[] found = new BlockPos[2];
+        // Section by section (see BlockScan), not 117,649 block reads.
+        dev.bwr.mod.world.BlockScan.scan(level,
                 here.offset(-SEARCH_RADIUS, -SEARCH_RADIUS, -SEARCH_RADIUS),
-                here.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS))) {
-            if (!level.isLoaded(p)) continue;
-            BlockState s = level.getBlockState(p);
-            if (foundReactor == null && s.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
-                foundReactor = p.immutable();
-            } else if (foundTank == null && s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())) {
-                foundTank = p.immutable();
-            }
-            if (foundReactor != null && foundTank != null) {
-                break;
-            }
-        }
+                here.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS),
+                s -> s.is(BwrBlocks.REACTOR_CONTROLLER.get()) || s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get()),
+                (p, s) -> {
+                    if (found[0] == null && s.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
+                        found[0] = p.immutable();
+                    } else if (found[1] == null && s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())) {
+                        found[1] = p.immutable();
+                    }
+                    return found[0] == null || found[1] == null;
+                });
+        BlockPos foundReactor = found[0];
+        BlockPos foundTank = found[1];
         // A reactor that is merely out of a loaded chunk has not gone away, so
         // an unsuccessful scan only clears a binding it actually replaced.
         if (foundReactor != null) {
@@ -410,17 +409,17 @@ public class FeedwaterPumpBlockEntity extends BlockEntity {
     }
 
     private ReactorControllerBlockEntity reactor(Level level) {
-        if (reactorPos == null || !level.isLoaded(reactorPos)) {
+        if (reactorPos == null) {
             return null;
         }
-        return level.getBlockEntity(reactorPos) instanceof ReactorControllerBlockEntity c ? c : null;
+        return dev.bwr.mod.world.LoadedWorld.blockEntity(level, reactorPos) instanceof ReactorControllerBlockEntity c ? c : null;
     }
 
     private CondensateStorageTankBlockEntity tank(Level level) {
-        if (tankPos == null || !level.isLoaded(tankPos)) {
+        if (tankPos == null) {
             return null;
         }
-        return level.getBlockEntity(tankPos) instanceof CondensateStorageTankBlockEntity t
+        return dev.bwr.mod.world.LoadedWorld.blockEntity(level, tankPos) instanceof CondensateStorageTankBlockEntity t
                 ? t : null;
     }
 

@@ -86,7 +86,7 @@ public class MainSteamIsolationValveBlock extends BaseEntityBlock implements Ste
     }
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level l, BlockState s, BlockEntityType<T> type) {
         return l.isClientSide() || s.getValue(PART)!=0 ? null
-                : createTickerHelper(type, BwrBlockEntities.MSIV.get(), MainSteamIsolationValveBlockEntity::serverTick);
+                : dev.bwr.mod.TickProbe.wrap(createTickerHelper(type, BwrBlockEntities.MSIV.get(), MainSteamIsolationValveBlockEntity::serverTick));
     }
     @Override public BlockState getStateForPlacement(BlockPlaceContext ctx) {
         var s=placementState().setValue(FACING,ctx.getHorizontalDirection().getOpposite());

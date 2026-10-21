@@ -161,7 +161,12 @@ public final class PanelConsistency {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
-        drain();
+        long probe = dev.bwr.mod.TickProbe.start();
+        try {
+            drain();
+        } finally {
+            dev.bwr.mod.TickProbe.stop("PanelConsistency", probe);
+        }
     }
 
     @SubscribeEvent

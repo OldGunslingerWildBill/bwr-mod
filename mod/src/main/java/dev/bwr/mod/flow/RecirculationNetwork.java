@@ -125,7 +125,7 @@ public final class RecirculationNetwork {
             jetCapacity+=2*Math.min(a.getValue(JetPumpBlock.SIZE).flowMultiplier(),b.getValue(JetPumpBlock.SIZE).flowMultiplier());
         }
         List<RecirculationPumpBlockEntity> external=new ArrayList<>();
-        for(BlockPos p:new LinkedHashSet<>(pumps)) if(level.isLoaded(p) && level.getBlockEntity(p) instanceof RecirculationPumpBlockEntity be) {
+        for(BlockPos p:new LinkedHashSet<>(pumps)) if(dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof RecirculationPumpBlockEntity be) {
             be.reportCoreFlowKgPerS(0);
             if(installedRip(level,controller.structure(),p)) {
                 double part=RecirculationSizing.INTERNAL_PUMP_UNITS*be.getActualSpeedFraction();

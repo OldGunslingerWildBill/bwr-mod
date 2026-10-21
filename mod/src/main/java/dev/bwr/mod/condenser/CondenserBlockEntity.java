@@ -109,9 +109,9 @@ public class CondenserBlockEntity extends BlockEntity {
             // Geometry is shared and event-invalidated; current source inventories are resolved below.
             var survey=SteamLineNetwork.survey(level,at);if(survey.truncated())continue;
             for(var source:survey.nozzles()){
-                if(!level.isLoaded(source)||!(level.getBlockEntity(source) instanceof RpvSteamOutletBlockEntity nozzle))continue;
+                if(!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, source) instanceof RpvSteamOutletBlockEntity nozzle))continue;
                 var controller=nozzle.getControllerPos();
-                if(controller==null||!level.isLoaded(controller)||!(level.getBlockEntity(controller) instanceof ReactorControllerBlockEntity reactor)||!reactor.isFormed())continue;
+                if(controller==null||!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, controller) instanceof ReactorControllerBlockEntity reactor)||!reactor.isFormed())continue;
                 double pressure=Saturation.psiaFromPsig(reactor.core().getPressurePsig());double h=Saturation.vapourEnthalpyKJPerKg(pressure);
                 double heat=Math.max(1,h-Saturation.subcooledLiquidEnthalpyKJPerKg(SurfaceCondenser.CONDENSATE_C));
                 double wanted=Math.min(plant.steam.space(),budget/heat);if(wanted<=0)continue;

@@ -4,6 +4,38 @@ The repository maintainer owns the release checks below. Contributors should
 run the checks affected by their changes; the GitHub workflow repeats the
 headless checks on every push and pull request, and supports manual dispatch.
 
+## Server tick cost and chunk boundaries (GameTest namespace `bwrtick`)
+
+Two development tools and their tests live in the `bwrtick` namespace, so `-PbwrOnlyTick` runs just them (about a minute,
+instead of the whole suite) while they are being worked on; the normal `:mod:runTurbineGameTest` runs everything.
+
+**Tick cost.** `dev.bwr.mod.TickProbe` times our block entity tickers, our server tick handlers and the scheduled ticks of
+the assembly blocks with `System.nanoTime` and reads the allocation counter of the server thread. It is off (and costs a
+static boolean test) unless the JVM has `-Dbwr.tickProbe=true`; with Gradle, `-PbwrTickProbe`. `TickBudgetTests` builds a whole
+plant in force-loaded chunks (`PlantKit`: a formed, fuelled 15 x 15 reactor with all 185 drives, two recirculation
+pumps, two main steam lines with MSIV and turbine outlet, a suppression pool with an RHR loop, feed, HPCS and LPCS pumps with
+tanks, a condenser, a cooling tower and circulating pump, a sealed 21-block containment room, two boards of 24 panel gauges
+bound to plant devices with the linker, a fake player watching the chunk so that update packets are built), lets it settle
+and measures 700 ticks. With the probe on it prints `TICK PROBE` lines (mean and worst microseconds and kilobytes per
+server tick, per system, plus `SPIKE` lines for any system that used 8 ms in one tick), `SIGNAL COST`, `CABLE COST` and
+`SCAN COST` tables, and with CC present `CC COST` (what one pass of every getter of each peripheral costs the server thread).
+What the test **asserts** is work, not time, so it is stable on a loaded machine: over the window no pipe graph may have been
+rebuilt more than 40 times, no rod bank re-surveyed more than 5 times, and the sectioned scans may not have read more than
+200,000 blocks. `-PbwrJfr=<file.jfr>` records a Java Flight Recorder profile of the run (`jfr print --events jdk.ExecutionSample`).
+
+**Chunk boundaries.** `ChunkLinkTests` lays steam lines and a water line along X across chunk borders and takes chunks away
+by dropping their tickets and waiting until the chunk object is gone, then brings them back through the ticket system with the
+plant running (`ChunkLab`, `Script`). A forced chunk keeps everything within two chunks loaded, so a chunk only unloads when
+every forced chunk is three or more away: a line that must lose a middle chunk is seven chunks long. The cases: the outlet
+chunk of a four chunk line unloads and reloads; the middle chunk, holding an isolation valve, of a seven chunk line unloads;
+the reactor chunk unloads under an outlet that keeps its ticket; a tube is broken and put back on each side of a chunk border
+(and the two tubes at the border must grow arms toward each other); every chunk of the plant is saved and read back; a line
+that crosses the world border at the largest block coordinates; a water pipe 97 blocks long to a tank, with water conservation
+checked to the millibucket; an old single-block pump whose first scan cannot see its tank's chunk. Every test also fails if
+something of ours loaded a chunk by reading a block in it (`ChunkEvent.Load` with one of our frames on the stack), logged a
+warning or error (`LogWatch`), or rebuilt the network on every tick. `SyncLoadAudit` does the same watching over the whole
+GameTest run and prints `SYNC LOAD AUDIT` lines for any chunk our code loaded synchronously. The one known path is the containment room scan (`ContainmentControllerBlockEntity$Scan.advance`): `Level.isLoaded` follows tickets, so a boundary chunk that has a ticket but is still being read makes the following `getBlockState` wait for it. The acceptance tests that force chunks and scan in the same tick depend on exactly that read (a chunk loaded this tick is not yet visible to `getChunkNow`), so it was left as it is; the wait is for a load already in flight, never a new one.
+
 ## Automated checks
 
 The full core display adds GameTest classes `FcdRodTests` (rod selection, steps, continuous stepping; fixture

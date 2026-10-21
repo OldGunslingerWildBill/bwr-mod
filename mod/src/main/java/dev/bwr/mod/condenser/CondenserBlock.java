@@ -48,7 +48,7 @@ public class CondenserBlock extends BaseEntityBlock implements SteamLinePort {
     public static boolean acceptsWater(BlockState s,Direction side){return s.getBlock() instanceof CondenserBlock&&s.getValue(PORT).water()&&side==portFace(s);}
     @Override public BlockEntity newBlockEntity(BlockPos p,BlockState s){return new CondenserBlockEntity(p,s);}
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level l,BlockState s,BlockEntityType<T> type){
-        return l.isClientSide()||!s.getValue(CONTROLLER)?null:createTickerHelper(type,BwrBlockEntities.CONDENSER.get(),CondenserBlockEntity::serverTick);
+        return l.isClientSide()||!s.getValue(CONTROLLER)?null:dev.bwr.mod.TickProbe.wrap(createTickerHelper(type,BwrBlockEntities.CONDENSER.get(),CondenserBlockEntity::serverTick));
     }
     @Override public BlockState getStateForPlacement(BlockPlaceContext ctx){
         ctx=CondenserPlacement.align(ctx);

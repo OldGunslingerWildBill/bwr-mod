@@ -30,7 +30,7 @@ public class RhrHeatExchangerBlock extends BaseEntityBlock implements ProcessAss
     @Override public BlockState getStateForPlacement(BlockPlaceContext c){return defaultBlockState().setValue(FACING,c.getHorizontalDirection().getOpposite());}
     @Override protected RenderShape getRenderShape(BlockState s){return RenderShape.MODEL;}
     @Override public BlockEntity newBlockEntity(BlockPos p,BlockState s){return new RhrHeatExchangerBlockEntity(p,s);}
-    @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level l,BlockState s,BlockEntityType<T> t){return l.isClientSide()?null:createTickerHelper(t,BwrBlockEntities.RHR_HEAT_EXCHANGER.get(),RhrHeatExchangerBlockEntity::serverTick);}
+    @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level l,BlockState s,BlockEntityType<T> t){return l.isClientSide()?null:dev.bwr.mod.TickProbe.wrap(createTickerHelper(t,BwrBlockEntities.RHR_HEAT_EXCHANGER.get(),RhrHeatExchangerBlockEntity::serverTick));}
     public static Direction primaryIn(BlockState s){return s.getValue(FACING);}
     public static Direction primaryOut(BlockState s){return primaryIn(s).getOpposite();}
     public static Direction coldIn(BlockState s){return primaryIn(s).getCounterClockWise();}

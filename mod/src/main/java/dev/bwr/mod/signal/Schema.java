@@ -31,6 +31,13 @@ public final class Schema<T extends BlockEntity> {
     private final Map<String, Function<T, String>> textReaders = new LinkedHashMap<>();
     private final Map<String, CommandSpec> commandSpecs = new LinkedHashMap<>();
     private final Map<String, Command<T>> commandBodies = new LinkedHashMap<>();
+    /**
+     * The fixed signal and command lists every provider of this schema reports. They are the same for every device of
+     * the type, so they are built once; they used to be rebuilt (copied from the maps, name signal appended) each time
+     * a provider was bound, and a provider is bound for every read a panel input makes.
+     */
+    private volatile List<SignalSpec> fixedSignalList;
+    private volatile List<CommandSpec> fixedCommandList;
     private Function<T, List<SignalSpec>> extraSignals;
     private BiFunction<T, String, OptionalDouble> extraReader;
     private Function<T, List<CommandSpec>> extraCommands;
@@ -58,12 +65,14 @@ public final class Schema<T extends BlockEntity> {
         SignalSpec spec = new SignalSpec(key, label, "", 0, 0, Kind.TEXT);
         specs.put(key, spec);
         textReaders.put(key, reader);
+        fixedSignalList = null;
         return this;
     }
 
     public Schema<T> command(String key, String label, Kind kind, double min, double max, Command<T> body) {
         commandSpecs.put(key, new CommandSpec(key, label, kind, min, max));
         commandBodies.put(key, body);
+        fixedCommandList = null;
         return this;
     }
 
@@ -97,6 +106,7 @@ public final class Schema<T extends BlockEntity> {
     private Schema<T> add(SignalSpec spec, ToDoubleFunction<T> reader) {
         specs.put(spec.key(), spec);
         readers.put(spec.key(), reader);
+        fixedSignalList = null;
         return this;
     }
 
@@ -104,13 +114,31 @@ public final class Schema<T extends BlockEntity> {
         return new Bound(be);
     }
 
+    private List<SignalSpec> fixedSignals() {
+        List<SignalSpec> list = fixedSignalList;
+        if (list == null) {
+            list = withName(specs);
+            fixedSignalList = list;
+        }
+        return list;
+    }
+
+    private List<CommandSpec> fixedCommands() {
+        List<CommandSpec> list = fixedCommandList;
+        if (list == null) {
+            list = List.copyOf(commandSpecs.values());
+            fixedCommandList = list;
+        }
+        return list;
+    }
+
     /** The machine name every provider reports as a TEXT signal (see {@code MachineNames}); "" when it has none. */
     public static final SignalSpec NAME_SIGNAL = new SignalSpec("name", "Machine name", "", 0, 0, Kind.TEXT);
 
     private final class Bound implements SignalProvider {
         private final T be;
-        private final List<SignalSpec> fixedSignals = withName(specs);
-        private final List<CommandSpec> fixedCommands = List.copyOf(commandSpecs.values());
+        private final List<SignalSpec> fixedSignals = fixedSignals();
+        private final List<CommandSpec> fixedCommands = fixedCommands();
 
         Bound(T be) { this.be = be; }
 

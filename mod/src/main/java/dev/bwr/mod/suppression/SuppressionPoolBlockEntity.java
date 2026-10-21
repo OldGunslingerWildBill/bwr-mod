@@ -307,10 +307,9 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             var graph=dev.bwr.mod.piping.PipeTopology.get(level,inlet,null,true,false);
             for(var route:dev.bwr.mod.piping.PipeTopology.routes(level,graph,true)){
                 // Relief valves meter their own discharge. Never claim a second parallel allocation through them.
-                if(route.opening()<=0||!level.isLoaded(route.node().pos())
-                        ||!(level.getBlockEntity(route.node().pos()) instanceof dev.bwr.mod.reactor.RpvSteamOutletBlockEntity nozzle))continue;
+                if(route.opening()<=0||!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, route.node().pos()) instanceof dev.bwr.mod.reactor.RpvSteamOutletBlockEntity nozzle))continue;
                 var cp=nozzle.getControllerPos();
-                if(cp==null||!level.isLoaded(cp)||!(level.getBlockEntity(cp) instanceof ReactorControllerBlockEntity reactor)||!reactor.isFormed())continue;
+                if(cp==null||!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, cp) instanceof ReactorControllerBlockEntity reactor)||!reactor.isFormed())continue;
                 double psia=dev.bwr.core.thermal.Saturation.psiaFromPsig(reactor.core().getPressurePsig());
                 double h=dev.bwr.core.thermal.Saturation.vapourEnthalpyKJPerKg(psia);
                 double wanted=receiveSteam(STEAM_INLET_KG_PER_S/20,h,psia,true);
@@ -396,8 +395,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
     }
     public double physicalCoolingMW() {
         if(level==null)return 0;
-        physicalCooling.entrySet().removeIf(e->level.getGameTime()-e.getValue().tick()>1||!level.isLoaded(e.getKey())
-                ||!(level.getBlockEntity(e.getKey()) instanceof RhrHeatExchangerBlockEntity));
+        physicalCooling.entrySet().removeIf(e->level.getGameTime()-e.getValue().tick()>1||!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, e.getKey()) instanceof RhrHeatExchangerBlockEntity));
         return physicalCooling.values().stream().mapToDouble(DutyReport::duty).sum();
     }
     private final net.neoforged.neoforge.fluids.capability.IFluidHandler suctionWater=poolWater(true),returnWater=poolWater(false);
@@ -791,6 +789,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         // the old value meant a broken reactor controller left a stale position
         // behind that resolved to nothing, which is the state that used to make
         // the pool fall back to rated dome pressure.
+        BlockPos previousReactor = reactorPos;
         reactorPos = null;
         waterBlocks = 0;
 
@@ -810,26 +809,35 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
         concreteLayout=ConcreteBasin.inspect(level,getBlockPos(),concreteMode,closedTank);
         if(concreteLayout!=null&&concreteLayout.problem()==null)closedTank=concreteLayout.enclosed();
         List<BlockPos> boxValves = new ArrayList<>();
-        for (BlockPos p : BlockPos.betweenClosed(min, max)) {
-            if(!level.isLoaded(p)) continue;
-            BlockState found = level.getBlockState(p);
-            if ((found.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock)
-                    && level.getBlockEntity(p) instanceof SafetyReliefValveBlockEntity) {
-                boxValves.add(p.immutable());
-            } else if (found.is(BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get())&&concreteLayout!=null&&concreteLayout.ports().contains(p)) {
-                quenchers.add(p.immutable());
-            } else if (found.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get())) {
-                if (containsConcrete(p) || SuppressionPoolQuencherBlock.isSubmerged(level, p)) {
-                    quenchers.add(p.immutable());
-                } else {
-                    result.degrade(p.immutable(), BwrText.tr(
-                            "status.bwr.suppression_pool.this_quencher_has_no_water_above_it_so",
-                            "this quencher has no water above it, so it admits steam to the containment airspace rather than to the pool"));
-                }
-            } else if (found.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
-                reactorPos = p.immutable();
-            }
-        }
+        // Section by section (BlockScan), in the order the block-by-block loop used: 117,649 reads became the few
+        // sections whose palette can hold a valve, a quencher, a steam inlet or a controller.
+        boolean boxComplete = dev.bwr.mod.world.BlockScan.scan(level, min, max,
+                s -> s.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock
+                        || s.is(BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get())
+                        || s.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get())
+                        || s.is(BwrBlocks.REACTOR_CONTROLLER.get()),
+                (p, found) -> {
+                    if ((found.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock)
+                            && level.getBlockEntity(p) instanceof SafetyReliefValveBlockEntity) {
+                        boxValves.add(p.immutable());
+                    } else if (found.is(BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get())&&concreteLayout!=null&&concreteLayout.ports().contains(p)) {
+                        quenchers.add(p.immutable());
+                    } else if (found.is(BwrBlocks.SUPPRESSION_POOL_QUENCHER.get())) {
+                        if (containsConcrete(p) || SuppressionPoolQuencherBlock.isSubmerged(level, p)) {
+                            quenchers.add(p.immutable());
+                        } else {
+                            result.degrade(p.immutable(), BwrText.tr(
+                                    "status.bwr.suppression_pool.this_quencher_has_no_water_above_it_so",
+                                    "this quencher has no water above it, so it admits steam to the containment airspace rather than to the pool"));
+                        }
+                    } else if (found.is(BwrBlocks.REACTOR_CONTROLLER.get())) {
+                        reactorPos = p.immutable();
+                    }
+                    return true;
+                });
+        // The reactor in a part of the box that could not be read has not gone away: without this the pool lost its
+        // reactor (and fell back to rated dome pressure) until the next revalidation, thirty seconds later.
+        reactorPos = dev.bwr.mod.world.BlockScan.rebound(level, boxComplete, reactorPos, previousReactor, BwrBlocks.REACTOR_CONTROLLER.get());
 
         Basin basin;
         if(concreteLayout!=null) {

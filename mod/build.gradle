@@ -40,7 +40,14 @@ neoForge {
         turbineGameTest {
             type = 'gameTestServer'
             gameDirectory = file('run/turbineGameTest')
-            systemProperty 'neoforge.enabledGameTestNamespaces', 'bwr'
+            // 'bwrtick' holds the tick-cost and chunk-boundary tests (TickBudgetTests, ChunkLinkTests, ...); -PbwrOnlyTick
+            // runs just those, in about a minute, while they are being developed. The default runs everything.
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrOnlyTick') ? 'bwrtick' : 'bwr,bwrtick'
+            // Developer-only tick profiler (dev.bwr.mod.TickProbe): per-system microseconds per server tick, printed by
+            // the TickBudgetTests plant profile as "TICK PROBE" lines. Off (and costless) without this property.
+            if (project.hasProperty('bwrTickProbe')) jvmArguments.add('-Dbwr.tickProbe=true')
+            // -PbwrJfr=<file.jfr> records a Java Flight Recorder profile of the whole run (jfr print / summary read it).
+            if (project.hasProperty('bwrJfr')) jvmArguments.add('-XX:StartFlightRecording=filename=' + project.property('bwrJfr') + ',settings=profile,dumponexit=true')
         }
         advancementClientCheck {
             client()
@@ -614,6 +621,7 @@ tasks.named('jar', Jar).configure {
     exclude 'dev/bwr/mod/devtest/**'
     exclude 'assets/bwr/shaders/core/test_broken_gpu.*'
     exclude 'data/bwr/structure/empty.nbt'
+    exclude 'data/bwrtick/**'
     from(rootProject.file('LICENSE')) { into 'META-INF' }
     from(rootProject.file('NOTICE')) { into 'META-INF' }
     from(rootProject.file('THIRD-PARTY-NOTICES.md')) { into 'META-INF' }

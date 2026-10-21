@@ -33,7 +33,7 @@ public final class SignalProviders {
 
     /** The provider for the device at {@code pos}, or null when there is none or its chunk is not loaded. */
     public static SignalProvider at(Level level, BlockPos pos) {
-        if (level == null || level.isClientSide() || pos == null || !level.isLoaded(pos)) return null;
+        if (level == null || level.isClientSide() || pos == null || !dev.bwr.mod.world.LoadedWorld.available(level, pos)) return null;
         return of(DeviceResolver.resolve(level, pos));
     }
 
