@@ -79,6 +79,21 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
         BlockPos grid(int cell) { return new BlockPos(cell%width,cell/(width*depth),(cell/width)%depth); }
         BlockPos offset(int cell) { return grid(cell).subtract(grid(controller)); }
         int count() { return width*height*depth; }
+        private final int[][] turned=new int[4][];
+        /** Every cell's offset from the controller, already turned to {@code facing}, as x, y, z triples. */
+        int[] turned(Direction facing) {
+            int k=facing.get2DDataValue();
+            int[] t=turned[k];
+            if(t==null) {
+                t=new int[count()*3];
+                for(int i=0;i<count();i++) {
+                    BlockPos o=TurbineAssemblyBlock.turn(offset(i),facing);
+                    t[3*i]=o.getX();t[3*i+1]=o.getY();t[3*i+2]=o.getZ();
+                }
+                turned[k]=t;
+            }
+            return t;
+        }
     }
     protected static Layout loadLayout(String id) { return new Layout(id); }
     protected Layout layout(BlockState state) { return model; }
@@ -125,9 +140,31 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
     @Override public boolean acceptsSteamLineOn(BlockState s,Direction d) { var port=portAt(s,d); return port!=null && port.isSteam(); }
     @Override public boolean complete(Level level,BlockPos root,BlockState s) {
         if(!isFull(s)) return true;
-        for(int i=0;i<cellCount(s);i++) {
-            BlockPos p=root.offset(TurbineAssemblyBlock.turn(cellOffset(s,i),s.getValue(FACING)));
-            if(!level.isLoaded(p) || !owned(level.getBlockState(p),s,i)) return false;
+        // The answer is the same as asking every cell, one position at a time, whether it is loaded and ours. It is
+        // asked of the cells' chunks instead (a footprint is in one to four of them) and their states are read from
+        // those chunks directly, with offsets turned once per layout and facing instead of per cell and per call.
+        // Panels, cables and the pump itself ask this many times a second; it used to cost tens of microseconds each.
+        Layout layout=layout(s);
+        int[] turned=layout.turned(s.getValue(FACING));
+        int count=layout.count();
+        BlockPos.MutableBlockPos cursor=new BlockPos.MutableBlockPos();
+        long chunkKey=Long.MIN_VALUE;
+        boolean chunkLoaded=false;
+        net.minecraft.world.level.chunk.LevelChunk chunk=null;
+        for(int i=0;i<count;i++) {
+            int x=root.getX()+turned[3*i],y=root.getY()+turned[3*i+1],z=root.getZ()+turned[3*i+2];
+            cursor.set(x,y,z);
+            if(level.isOutsideBuildHeight(cursor)) return false;
+            long key=net.minecraft.world.level.ChunkPos.asLong(x>>4,z>>4);
+            if(key!=chunkKey) {
+                chunkKey=key;
+                chunkLoaded=level.isLoaded(cursor);
+                chunk=chunkLoaded?level.getChunkSource().getChunkNow(x>>4,z>>4):null;
+            }
+            if(!chunkLoaded) return false;
+            // A chunk that is loaded by ticket but not finished (no chunk object yet) is read the old way, which waits.
+            BlockState actual=chunk!=null?chunk.getBlockState(cursor):level.getBlockState(cursor);
+            if(!owned(actual,s,i)) return false;
         }
         return true;
     }
@@ -184,10 +221,18 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
         if(!level.isClientSide() && isFull(s)) level.scheduleTick(pos,this,20);
     }
     @Override protected void tick(BlockState s,ServerLevel level,BlockPos pos,RandomSource random) {
-        BlockPos root=origin(pos,s);
-        if(level.isLoaded(root) && !owned(level.getBlockState(root),s,controllerCell(s))) { level.removeBlock(pos,false); return; }
-        if(dev.bwr.mod.world.AssemblyAccess.allLoaded(level,pos,s) && !complete(level,root,s)) { level.destroyBlock(root,true); return; }
-        level.scheduleTick(pos,this,40);
+        long probe=dev.bwr.mod.TickProbe.start();
+        try {
+            BlockPos root=origin(pos,s);
+            if(level.isLoaded(root) && !owned(level.getBlockState(root),s,controllerCell(s))) { level.removeBlock(pos,false); return; }
+            // Every cell of an assembly has its own scheduled tick, so the whole-footprint check used to run once per
+            // cell: N cells read N blocks each, N squared reads every two seconds per pump. The controller cell checks
+            // the footprint once, as TurbineAssemblyBlock does; the others only check that the controller still owns them.
+            if(s.getValue(CELL)==controllerCell(s) && dev.bwr.mod.world.AssemblyAccess.allLoaded(level,pos,s) && !complete(level,root,s)) { level.destroyBlock(root,true); return; }
+            level.scheduleTick(pos,this,40);
+        } finally {
+            dev.bwr.mod.TickProbe.stop("PumpAssemblyBlock.tick (scheduled, every cell)", probe);
+        }
     }
     @Override public BlockState playerWillDestroy(Level level,BlockPos pos,BlockState s,Player player) {
         if(!level.isClientSide() && s.getValue(CELL)!=controllerCell(s) && !player.isCreative() && player.hasCorrectToolForDrops(s)) {

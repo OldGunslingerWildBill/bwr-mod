@@ -106,8 +106,9 @@ public final class TickProbe {
 
     private static final long[] ALLOC_STACK = new long[64];
     private static int depth;
-    private static final com.sun.management.ThreadMXBean THREADS =
-            (com.sun.management.ThreadMXBean) java.lang.management.ManagementFactory.getThreadMXBean();
+    /** Only built when the probe is on, so a production server never touches the management classes. */
+    private static final com.sun.management.ThreadMXBean THREADS = ENABLED
+            ? (com.sun.management.ThreadMXBean) java.lang.management.ManagementFactory.getThreadMXBean() : null;
 
     private static long allocatedBytes() {
         return THREADS.getCurrentThreadAllocatedBytes();

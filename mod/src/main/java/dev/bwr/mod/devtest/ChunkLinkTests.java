@@ -200,6 +200,35 @@ public final class ChunkLinkTests {
         }
     }
 
+    /**
+     * Counts how many different cached graphs one network went through: the pipe cache hands out the same graph object
+     * until something invalidates it, so a network rebuilt every tick shows a new object every tick. (The global build
+     * counter would also count the other tests running beside this one.)
+     */
+    private static final class GraphWatch {
+        final java.util.Map<Object, Boolean> seen = new java.util.IdentityHashMap<>();
+        private final java.util.function.Supplier<Object> graph;
+
+        GraphWatch(java.util.function.Supplier<Object> graph) {
+            this.graph = graph;
+        }
+
+        void sample() {
+            Object g = graph.get();
+            if (g != null) {
+                seen.put(g, Boolean.TRUE);
+            }
+        }
+
+        void reset() {
+            seen.clear();
+        }
+
+        int distinct() {
+            return seen.size();
+        }
+    }
+
     private static void noSyncLoads(ChunkLab lab, String phase) {
         if (!lab.syncLoads.isEmpty()) {
             throw new AssertionError(phase + ": our code loaded chunks by reading blocks in them: " + lab.syncLoads);
@@ -237,9 +266,12 @@ public final class ChunkLinkTests {
         LogWatch log = LogWatch.begin();
         SteamLine line = new SteamLine(h, lab, X0, Z0 + slot * SLOT_Z, chunks, withMsiv);
         int row = line.row();
-        long[] builds = new long[2];
         double[] mark = new double[2];
-        Script script = new Script(h, 1500, line::meter, () -> {
+        GraphWatch graphs = new GraphWatch(() -> PipeTopology.cached(line.level, line.outlet, null, true, false));
+        Script script = new Script(h, 1500, () -> {
+            line.meter();
+            graphs.sample();
+        }, () -> {
             try {
                 line.remove();
             } finally {
@@ -258,7 +290,6 @@ public final class ChunkLinkTests {
             h.assertTrue(line.delivering(), "steam line never connected: " + line.describe());
             h.assertTrue(line.exportedMb > 0, "no steam reached the outlet over 150 ticks: " + line.describe());
             mark[0] = line.exportedMb;
-            builds[0] = PipeTopology.buildCount();
             lab.syncLoads.clear();
         });
         script.then(40, () -> {
@@ -278,7 +309,7 @@ public final class ChunkLinkTests {
         }
         script.then(1, () -> {
             mark[1] = line.exportedMb;
-            builds[1] = PipeTopology.buildCount();
+            graphs.reset();
         });
         script.then(120, () -> {
             for (int g : gone) {
@@ -288,8 +319,7 @@ public final class ChunkLinkTests {
             quiet(log, "while the chunk is missing");
             h.assertTrue(line.exportedMb - mark[1] < 1.0,
                     "steam still arrived at the outlet through a missing chunk: " + (line.exportedMb - mark[1]) + " mB");
-            long rebuilt = PipeTopology.buildCount() - builds[1];
-            h.assertTrue(rebuilt <= 12, "the steam line was rebuilt " + rebuilt + " times in 120 ticks with nothing changing");
+            h.assertTrue(graphs.distinct() <= 4, "the steam line was rebuilt " + graphs.distinct() + " times in 120 ticks with nothing changing");
             h.assertTrue(line.reactor() != null && line.reactor().isFormed(), "the reactor lost its structure while a far chunk was missing");
         });
         script.then(1, () -> {
@@ -526,8 +556,11 @@ public final class ChunkLinkTests {
         LogWatch log = LogWatch.begin();
         // 29,999,968 is a chunk start; the default border sits at 29,999,984, in the middle of chunk 1.
         SteamLine line = new SteamLine(h, lab, 29_999_968, 1_000_000, 2, false);
-        long[] builds = new long[1];
-        Script script = new Script(h, 800, line::meter, () -> {
+        GraphWatch graphs = new GraphWatch(() -> PipeTopology.cached(line.level, line.outlet, null, true, false));
+        Script script = new Script(h, 800, () -> {
+            line.meter();
+            graphs.sample();
+        }, () -> {
             try {
                 line.remove();
             } finally {
@@ -546,10 +579,10 @@ public final class ChunkLinkTests {
         script.then(200, () -> {
             h.assertTrue(line.reactor() != null && line.reactor().isFormed(), "reactor did not form at the edge of the world");
             lab.syncLoads.clear();
-            builds[0] = PipeTopology.buildCount();
+            graphs.reset();
         });
         script.then(200, () -> {
-            h.assertTrue(PipeTopology.buildCount() - builds[0] <= 12, "the line was rebuilt every tick beyond the world border");
+            h.assertTrue(graphs.distinct() <= 4, "the line was rebuilt " + graphs.distinct() + " times in 200 ticks beyond the world border");
             h.assertTrue(line.reactor().isFormed(), "reactor left unformed by a line that ends beyond the world border");
             noSyncLoads(lab, "world border");
             quiet(log, "world border");
@@ -577,9 +610,10 @@ public final class ChunkLinkTests {
         BlockPos last = new BlockPos(x0 + 16 * 6 + 8, Y, z0 + 7);
         BlockPos tankPos = last.east();
         long[] accepted = new long[1];
-        long[] builds = new long[1];
         long[] mark = new long[1];
+        GraphWatch graphs = new GraphWatch(() -> PipeTopology.cached(level, first, null, false, false));
         Runnable pump = () -> {
+            graphs.sample();
             if (!level.isLoaded(first)) {
                 return;
             }
@@ -615,18 +649,20 @@ public final class ChunkLinkTests {
             h.assertTrue(Math.abs(accepted[0] - tank.storedKg()) <= 2, "water not conserved while whole: accepted "
                     + accepted[0] + ", in tank " + tank.storedKg());
             lab.syncLoads.clear();
-            builds[0] = PipeTopology.buildCount();
             for (int c = 1; c <= 5; c++) {
                 lab.unforce((x0 >> 4) + c, row);
             }
         });
         script.await(() -> "chunk 3 to unload: " + lab.describe((x0 >> 4) + 3, row), 400, () -> !lab.loaded((x0 >> 4) + 3, row));
-        script.then(1, () -> mark[0] = accepted[0]);
+        script.then(1, () -> {
+            mark[0] = accepted[0];
+            graphs.reset();
+        });
         script.then(120, () -> {
             h.assertTrue(accepted[0] == mark[0], "water was accepted into a pipe cut by an unloaded chunk: " + (accepted[0] - mark[0]));
             noSyncLoads(lab, "water line with a chunk gone");
             quiet(log, "water line with a chunk gone");
-            h.assertTrue(PipeTopology.buildCount() - builds[0] <= 12, "the water line was rebuilt every tick");
+            h.assertTrue(graphs.distinct() <= 4, "the water line was rebuilt " + graphs.distinct() + " times in 120 ticks with nothing changing");
         });
         script.then(1, () -> {
             for (int c = 1; c <= 5; c++) {

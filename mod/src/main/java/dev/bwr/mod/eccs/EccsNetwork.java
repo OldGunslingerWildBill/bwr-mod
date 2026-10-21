@@ -94,7 +94,7 @@ public final class EccsNetwork {
         ReactorEccsBus bus = existingBusFor(level, reactorPos);
         if (bus != null) {
             bus.withdraw(machinePos);
-            if (level.isLoaded(reactorPos) && level.getBlockEntity(reactorPos) instanceof ReactorControllerBlockEntity reactor)
+            if (dev.bwr.mod.world.LoadedWorld.blockEntity(level, reactorPos) instanceof ReactorControllerBlockEntity reactor)
                 bus.applyTo(reactor.core(), level.getGameTime());
         }
     }

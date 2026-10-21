@@ -304,8 +304,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         double speed=dev.bwr.core.flow.RecirculationSizing.speedForDemand(fraction,
                 dev.bwr.mod.flow.RecirculationNetwork.sizing(structure).requiredJets(),
                 measured.jetUnits(),measured.externalPumps(),measured.internalPumps());
-        for(BlockPos p:pumpPositions) if(level.isLoaded(p)
-                && level.getBlockEntity(p) instanceof RecirculationPumpBlockEntity pump
+        for(BlockPos p:pumpPositions) if(dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof RecirculationPumpBlockEntity pump
                 && (dev.bwr.mod.flow.RecirculationNetwork.installedRip(level,structure,p)
                     || dev.bwr.mod.flow.RecirculationNetwork.connectedController(level,p)==this)) {
             pump.setComputerControlled(true);
@@ -317,7 +316,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         var iterator = pumpPositions.iterator();
         while (iterator.hasNext()) {
             BlockPos p = iterator.next();
-            if (!level.isLoaded(p)) {
+            if (!dev.bwr.mod.world.LoadedWorld.available(level, p)) {
                 // Not "the pump is gone", only "we cannot see it from here".
                 // Level.getBlockEntity returns null for an unloaded chunk
                 // exactly as it does for a removed block, and the association is
@@ -329,7 +328,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 // registration; it contributes nothing while it is not ticking.
                 continue;
             }
-            if (!(level.getBlockEntity(p) instanceof RecirculationPumpBlockEntity pump)) {
+            if (!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof RecirculationPumpBlockEntity pump)) {
                 iterator.remove(); // pump was broken or replaced
                 continue;
             }
@@ -468,10 +467,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         double domePressurePsig = core.getPressurePsig();
         double total = 0.0;
         for (BlockPos p : structure.steamOutletPositions()) {
-            if (!level.isLoaded(p)) {
-                continue;
-            }
-            if (level.getBlockEntity(p) instanceof RpvSteamOutletBlockEntity nozzle) {
+            if (dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof RpvSteamOutletBlockEntity nozzle) {
                 nozzle.refreshAttachmentPeriodically(level);
                 nozzle.noteController(getBlockPos());
                 total += nozzle.flowKgPerS(domePressurePsig);
@@ -605,7 +601,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         savedInteriorDepth = depth;
         setChanged();
         for (BlockPos portPos : found.waterInjectionPositions())
-            if (level.isLoaded(portPos) && level.getBlockEntity(portPos) instanceof RpvWaterInjectionPortBlockEntity port)
+            if (dev.bwr.mod.world.LoadedWorld.blockEntity(level, portPos) instanceof RpvWaterInjectionPortBlockEntity port)
                 port.noteController(getBlockPos());
         boolean rebuild = core == null || core.getControlRodCount() != found.controlRodCount() || driveLayoutChanged;
 

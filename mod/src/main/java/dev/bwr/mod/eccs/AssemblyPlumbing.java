@@ -98,8 +98,8 @@ public final class AssemblyPlumbing {
         if(!line.valid()) return null;
         T found=null;
         for(BlockPos p:line.ends()) {
-            if(!level.isLoaded(p))return null;
-            Object candidate=level.getBlockEntity(p);
+            if(!dev.bwr.mod.world.LoadedWorld.available(level,p))return null;
+            Object candidate=dev.bwr.mod.world.LoadedWorld.blockEntity(level,p);
             if(candidate instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlockEntity port)candidate=port.owner();
             if(!type.isInstance(candidate))return null;
             T next=type.cast(candidate);
@@ -114,7 +114,7 @@ public final class AssemblyPlumbing {
         if (!line.valid()) return null;
         ReactorControllerBlockEntity found = null;
         for (BlockPos p : line.ends()) {
-            if (!level.isLoaded(p) || !(level.getBlockEntity(p) instanceof dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity port)) return null;
+            if (!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity port)) return null;
             if (level.getBlockState(p).getBlock() instanceof dev.bwr.mod.reactor.RecirculationPortBlock) return null;
             var next = port.controller();
             if (next == null || found != null && found != next) return null;
@@ -127,7 +127,7 @@ public final class AssemblyPlumbing {
         if (!line.valid()) return null;
         ReactorControllerBlockEntity found = null;
         for (BlockPos p : line.ends()) {
-            if (!level.isLoaded(p) || !(level.getBlockEntity(p) instanceof dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity port)
+            if (!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity port)
                     || !(level.getBlockState(p).getBlock() instanceof dev.bwr.mod.reactor.RecirculationPortBlock recirc)
                     || !recirc.isOutlet()) return null;
             var next = port.controller();
@@ -139,7 +139,7 @@ public final class AssemblyPlumbing {
     public static List<RpvSteamOutletBlockEntity> nozzles(Level level,Line line) {
         List<RpvSteamOutletBlockEntity> result=new ArrayList<>();
         if(line.valid()) for(BlockPos p:line.ends())
-            if(level.isLoaded(p) && level.getBlockEntity(p) instanceof RpvSteamOutletBlockEntity n
+            if(dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof RpvSteamOutletBlockEntity n
                     && n.isPartOfFormedReactor() && n.getPosition()>0) result.add(n);
         return result;
     }
@@ -147,7 +147,7 @@ public final class AssemblyPlumbing {
         ReactorControllerBlockEntity found=null;
         for(var n:nozzles) {
             BlockPos p=n.getControllerPos();
-            if(p!=null && level.isLoaded(p) && level.getBlockEntity(p) instanceof ReactorControllerBlockEntity c && c.isFormed()) {
+            if(p!=null && dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof ReactorControllerBlockEntity c && c.isFormed()) {
                 if(found!=null && found!=c) return null;
                 found=c;
             }

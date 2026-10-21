@@ -26,7 +26,10 @@ public final class PipeTopology {
     private PipeTopology() {}
     public enum Kind { START, JUNCTION, VALVE, END }
     public record Node(BlockPos pos, Direction face, Kind kind, BlockState state) {}
-    public record Graph(Node start, Map<Node,List<Node>> edges, Set<BlockPos> cells, boolean truncated) {
+    public record Graph(Node start, Map<Node,List<Node>> edges, Set<BlockPos> cells, boolean truncated, RouteMemo memo) {
+        public Graph(Node start, Map<Node,List<Node>> edges, Set<BlockPos> cells, boolean truncated) {
+            this(start,edges,cells,truncated,new RouteMemo());
+        }
         public List<Node> neighbours(Node n) { return edges.getOrDefault(n,List.of()); }
         public List<Node> ends() { return edges.keySet().stream().filter(n->n.kind==Kind.END).toList(); }
     }
@@ -41,6 +44,12 @@ public final class PipeTopology {
         final ICapabilityInvalidationListener listener=()->{dirty=true;return false;};
     }
     public static long buildCount(){return builds;}
+    /** The graph currently cached for this start, or null: never builds, never reads the world (for tests and diagnostics). */
+    public static Graph cached(Level level,BlockPos start,Direction out,boolean steam,boolean foreign) {
+        var cache=CACHE.get(level);
+        var entry=cache==null?null:cache.get(new Key(start.immutable(),out,steam,foreign));
+        return entry==null||entry.dirty?null:entry.graph;
+    }
     public static Graph get(Level level,BlockPos start,Direction out,boolean steam,boolean foreign) {
         var key=new Key(start.immutable(),out,steam,foreign);
         var cache=CACHE.computeIfAbsent(level,l->new LinkedHashMap<>(32,.75f,true));
@@ -136,6 +145,68 @@ public final class PipeTopology {
     @SubscribeEvent public static void unload(LevelEvent.Unload event) {if(event.getLevel() instanceof Level level)CACHE.remove(level);}
 
     public record Route(Node node,double opening,List<TurbineValveBlockEntity> valves) {}
+
+    /**
+     * The last answer of {@link #routes} for one graph, and the valve readings it was computed from.
+     *
+     * <p>The route walk is a function of two things: the graph, which is immutable, and what the valves in it say right
+     * now (whether each is loaded, which block entity stands there, how far it is open). Pumps, nozzle claims and
+     * recirculation circuits ask for the routes of the same graph on every tick, and the valves almost never move, so
+     * the walk (a map, a queue and a record per node, every call) was repeated for an answer that had not changed.
+     * This keeps the answer and re-reads only the valves, which is a handful of lookups; when every reading is the one
+     * the answer was computed from, the answer is returned as it was. Any difference recomputes it, so the result is
+     * always exactly what a fresh walk would give.
+     */
+    public static final class RouteMemo {
+        private Node[] valves;
+        private volatile Answer plain;
+        private volatile Answer withoutRelief;
+
+        private Node[] valves(Graph graph) {
+            Node[] found=valves;
+            if(found==null) {
+                var list=new ArrayList<Node>();
+                for(var node:graph.edges.keySet())if(node.kind==Kind.VALVE)list.add(node);
+                found=list.toArray(new Node[0]);valves=found;
+            }
+            return found;
+        }
+    }
+    /** One walk's result with the readings of every valve of the graph at that moment. */
+    private record Answer(boolean[] available, java.lang.ref.WeakReference<net.minecraft.world.level.block.entity.BlockEntity>[] entities,
+                          long[] state, List<Route> routes) {
+        boolean matches(Level level,Node[] valves) {
+            for(int i=0;i<valves.length;i++) {
+                boolean now=dev.bwr.mod.world.LoadedWorld.available(level,valves[i].pos);
+                if(now!=available[i])return false;
+                var be=now?dev.bwr.mod.world.LoadedWorld.blockEntity(level,valves[i].pos):null;
+                if((entities[i]==null?null:entities[i].get())!=be)return false;
+                if(stateOf(be)!=state[i])return false;
+            }
+            return true;
+        }
+    }
+    /** Everything a valve contributes to a walk, as one number: its stroke, or open/closed for a relief valve. */
+    private static long stateOf(net.minecraft.world.level.block.entity.BlockEntity be) {
+        if(be instanceof MainSteamIsolationValveBlockEntity v)return Double.doubleToLongBits(v.getPosition());
+        if(be instanceof dev.bwr.mod.containment.ContainmentPenetrationBlockEntity v)return Double.doubleToLongBits(v.position());
+        if(be instanceof SafetyReliefValveBlockEntity v)return v.isOpen()?1L:0L;
+        if(be instanceof TurbineValveBlockEntity v)return Double.doubleToLongBits(v.position());
+        return 0L;
+    }
+    @SuppressWarnings("unchecked")
+    private static Answer read(Level level,Node[] valves,List<Route> routes) {
+        var available=new boolean[valves.length];
+        var entities=(java.lang.ref.WeakReference<net.minecraft.world.level.block.entity.BlockEntity>[])new java.lang.ref.WeakReference[valves.length];
+        var state=new long[valves.length];
+        for(int i=0;i<valves.length;i++) {
+            available[i]=dev.bwr.mod.world.LoadedWorld.available(level,valves[i].pos);
+            var be=available[i]?dev.bwr.mod.world.LoadedWorld.blockEntity(level,valves[i].pos):null;
+            entities[i]=be==null?null:new java.lang.ref.WeakReference<>(be);
+            state[i]=stateOf(be);
+        }
+        return new Answer(available,entities,state,routes);
+    }
     /** Live valve settings are evaluated on the compressed graph, including zero-opening paths. */
     public static List<Route> routes(Level level,Graph graph) {
         return routes(level,graph,false);
@@ -143,6 +214,18 @@ public final class PipeTopology {
     /** Relief valves own their discharge allocation; passive sinks must not pull through them again. */
     public static List<Route> routes(Level level,Graph graph,boolean excludeRelief) {
         if(graph.truncated)return List.of();
+        var memo=graph.memo;var valves=memo.valves(graph);
+        var known=excludeRelief?memo.withoutRelief:memo.plain;
+        if(known!=null&&known.matches(level,valves))return known.routes;
+        // The valves are read first and the walk reads them again a moment later, on the same thread with nothing
+        // in between that could move one, so the readings stored with the answer are the ones it used.
+        var readings=read(level,valves,null);
+        var computed=walk(level,graph,excludeRelief);
+        var answer=new Answer(readings.available,readings.entities,readings.state,computed);
+        if(excludeRelief)memo.withoutRelief=answer;else memo.plain=answer;
+        return computed;
+    }
+    private static List<Route> walk(Level level,Graph graph,boolean excludeRelief) {
         Map<Node,Route> best=new LinkedHashMap<>();var queue=new ArrayDeque<Route>();
         var first=new Route(graph.start,1,List.of());best.put(graph.start,first);queue.add(first);
         while(!queue.isEmpty()) {
@@ -150,8 +233,8 @@ public final class PipeTopology {
             for(var next:graph.neighbours(current.node)) {
                 double opening=current.opening;var valves=current.valves;
                 if(next.kind==Kind.VALVE) {
-                    if(!level.isLoaded(next.pos))continue;
-                    var be=level.getBlockEntity(next.pos);
+                    if(!dev.bwr.mod.world.LoadedWorld.available(level,next.pos))continue;
+                    var be=dev.bwr.mod.world.LoadedWorld.blockEntity(level,next.pos);
                     if(excludeRelief&&be instanceof SafetyReliefValveBlockEntity)continue;
                     if(be instanceof MainSteamIsolationValveBlockEntity v)opening=Math.min(opening,v.getPosition());
                     if(be instanceof dev.bwr.mod.containment.ContainmentPenetrationBlockEntity v)

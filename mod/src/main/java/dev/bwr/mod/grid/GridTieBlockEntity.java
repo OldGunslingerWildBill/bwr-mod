@@ -32,7 +32,7 @@ public final class GridTieBlockEntity extends GridDevice {
         if(!live()||positions==null||positions.size()>32)return false;
         var next=new java.util.ArrayList<DeviceReference>();var ids=new java.util.HashSet<java.util.UUID>();
         for(var pos:positions){
-            if(pos==null||!level.isLoaded(pos)||!(level.getBlockEntity(pos) instanceof FeMeterBlockEntity m)||!m.live()||!ids.add(m.deviceId()))return false;
+            if(pos==null||!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, pos) instanceof FeMeterBlockEntity m)||!m.live()||!ids.add(m.deviceId()))return false;
             next.add(new DeviceReference(level.dimension().location().toString(),pos,m.deviceId()));
         }
         meters.clear();meters.addAll(next);setChanged();return true;
