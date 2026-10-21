@@ -96,6 +96,9 @@ public class LatticeGridWidget extends AbstractWidget {
     private int hovered = -1;
     private int cursor = -1;
     private boolean multiSelect, zoomable, panning;
+    /** While a left drag paints the selection: true adds the cells passed over, false removes them; null otherwise. */
+    private Boolean paintAdd;
+    private int lastPainted = -1;
     private final java.util.LinkedHashSet<Integer> selection = new java.util.LinkedHashSet<>();
     private int zoomSteps;
     private double panX, panY;
@@ -192,6 +195,20 @@ public class LatticeGridWidget extends AbstractWidget {
         originY = (int)Math.round(getY() + (getHeight() - rows * cellPx) / 2.0 + panY);
     }
 
+    /** Screen centre of a cell and the cell size, as last laid out (for the GUI client check). */
+    public double[] cellCentre(int cell) {
+        measure();
+        int width = Math.max(1, cells.latticeWidth());
+        int index = cells.latticeIndex(cell);
+        return new double[] {originX + (index % width - minColumn + 0.5) * cellPx, originY + (index / width - minRow + 0.5) * cellPx, cellPx};
+    }
+
+    /** The cell under a screen point, or -1 (for the GUI client check). */
+    public int cellAtPoint(double x, double y) {
+        measure();
+        return cellAt(x, y);
+    }
+
     private int cellAt(double mouseX, double mouseY) {
         if (!isMouseOver(mouseX, mouseY) || cells.count() == 0) return -1;
         int width = Math.max(1, cells.latticeWidth());
@@ -282,6 +299,31 @@ public class LatticeGridWidget extends AbstractWidget {
             cursor = cell;
         }
         activate(cell);
+        if (multiSelect && cell >= 0) {
+            paintAdd = selection.contains(cell); // the press decides whether the drag adds or removes
+            lastPainted = cell;
+        }
+    }
+
+    /** A left drag over a refuelling map: every cell passed over joins (or leaves) the selection, in drag order. */
+    private boolean paint(double x, double y) {
+        measure();
+        int cell = cellAt(x, y);
+        if (cell >= 0 && cell != lastPainted) {
+            lastPainted = cell;
+            cursor = cell;
+            if (paintAdd) {
+                selection.add(cell);
+                selected = cell;
+            } else {
+                selection.remove(cell);
+                selected = selection.isEmpty() ? -1 : selection.getLast();
+            }
+            if (onSelect != null) {
+                onSelect.accept(cell);
+            }
+        }
+        return true;
     }
 
     /** Selects (or, on a refuelling map, toggles) a cell: what a click on it does. */
@@ -312,10 +354,12 @@ public class LatticeGridWidget extends AbstractWidget {
     }
     @Override public boolean mouseDragged(double x,double y,int button,double dx,double dy) {
         if (panning && button==1) {panX+=dx;panY+=dy;measure();return true;}
+        if (button == 0 && paintAdd != null) return paint(x, y);
         return super.mouseDragged(x,y,button,dx,dy);
     }
     @Override public boolean mouseReleased(double x,double y,int button) {
         if(button==1 && panning){panning=false;return true;}
+        if (button == 0 && paintAdd != null) { paintAdd = null; lastPainted = -1; return true; }
         return super.mouseReleased(x,y,button);
     }
 

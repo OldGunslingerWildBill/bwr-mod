@@ -476,6 +476,12 @@ public final class GuiScreenCheck {
             return new RefuellingScreen(m, i, t("Refuelling Floor"));
         }, screen -> {
         }, screen -> focusGrid(screen, 6), true));
+        s.add(new Scenario("refuelling-drag", i -> {
+            var m = new RefuellingMenu(99, i, P);
+            refuel(m);
+            return new RefuellingScreen(m, i, t("Refuelling Floor"));
+        }, screen -> {
+        }, GuiScreenCheck::dragSelect, true));
         s.add(new Scenario("service-slc-tank", i -> service(i, 1, 0, false, "Boron tank assembled", "Solution: 12,400.00 / 15,000 kg",
                 "Dissolved borate: 1,340.25 kg", "Elemental boron: 21,300.00 ppm", "Water temperature: 31.20 C", "Fill water through the top flange.",
                 "Use borate charges on the tank to dissolve them.", "Bottom front flange feeds the SLC pump.")));
@@ -604,6 +610,60 @@ public final class GuiScreenCheck {
             }
         }
         LOG.warn("GUI SCREEN CHECK: no button '{}' on {}", label, screen.getClass().getSimpleName());
+    }
+
+    /**
+     * A left drag across three neighbouring positions selects all three in drag order, through the screen's own mouse
+     * handlers; a drag that starts on a selected position deselects what it passes over.
+     */
+    private static void dragSelect(Screen screen) {
+        for (GuiEventListener c : screen.children()) {
+            if (c instanceof LatticeGridWidget grid && grid.visible) {
+                grid.clearSelection();
+                int start = -1;
+                double[] at = null;
+                for (int cell = 0; cell < 2000 && start < 0; cell++) {
+                    try {
+                        double[] centre = grid.cellCentre(cell);
+                        int b = grid.cellAtPoint(centre[0] + centre[2], centre[1]);
+                        int d = grid.cellAtPoint(centre[0] + 2 * centre[2], centre[1]);
+                        if (grid.cellAtPoint(centre[0], centre[1]) == cell && b >= 0 && d >= 0 && b != cell && d != b) {
+                            start = cell;
+                            at = centre;
+                        }
+                    } catch (IndexOutOfBoundsException e) {
+                        break;
+                    }
+                }
+                if (start < 0) {
+                    violations.add("refuelling-drag: no three neighbouring positions to drag over");
+                    return;
+                }
+                int second = grid.cellAtPoint(at[0] + at[2], at[1]);
+                int third = grid.cellAtPoint(at[0] + 2 * at[2], at[1]);
+                drag(screen, at[0], at[1], at[2]);
+                int[] picked = grid.selectedCells();
+                if (!java.util.Arrays.equals(picked, new int[] {start, second, third})) {
+                    violations.add("refuelling-drag: dragging over " + start + "," + second + "," + third + " selected "
+                            + java.util.Arrays.toString(picked));
+                }
+                drag(screen, at[0], at[1], at[2]); // starts on a selected position: removes as it goes
+                if (grid.selectedCells().length != 0) {
+                    violations.add("refuelling-drag: a drag from a selected position left " + java.util.Arrays.toString(grid.selectedCells()));
+                }
+                drag(screen, at[0], at[1], at[2]); // select them again for the picture
+                return;
+            }
+        }
+        violations.add("refuelling-drag: no core map on the screen");
+    }
+
+    private static void drag(Screen screen, double x, double y, double cell) {
+        screen.mouseClicked(x, y, 0);
+        for (double step = 1; step <= 2 * cell; step++) {
+            screen.mouseDragged(x + step, y, 0, 1, 0);
+        }
+        screen.mouseReleased(x + 2 * cell, y, 0);
     }
 
     private static void focusGrid(Screen screen, int steps) {

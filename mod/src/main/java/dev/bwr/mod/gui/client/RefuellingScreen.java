@@ -204,7 +204,7 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
 
     @Override
     public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
-        if (button == 1 && grid.mouseDragged(x, y, button, dx, dy)) {
+        if ((button == 0 || button == 1) && grid.mouseDragged(x, y, button, dx, dy)) {
             return true;
         }
         return super.mouseDragged(x, y, button, dx, dy);
@@ -212,7 +212,7 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
 
     @Override
     public boolean mouseReleased(double x, double y, int button) {
-        if (button == 1 && grid.mouseReleased(x, y, button)) {
+        if ((button == 0 || button == 1) && grid.mouseReleased(x, y, button)) {
             return true;
         }
         return super.mouseReleased(x, y, button);
