@@ -16,6 +16,19 @@ public final class AnnunciatorBox {
     private AnnunciatorBox() {
     }
 
+    // Elevations above the face in 1/16 block (before the component's elevation factor, which scales them all alike): the
+    // dark base, the recessed tile, the lit tile, the grey no-signal flag, the legend, the corner pieces, the bezel lip.
+    // The legend is a hair above the face it is printed on (TEXT_EPSILON), whatever the window's size or the panel's slope.
+    public static final float BASE_Z = 0.8f;
+    public static final float TILE_Z = 1.0f;
+    public static final float LIT_Z = 1.12f;
+    public static final float FLAG_Z = 1.16f;
+    public static final float TEXT_Z = 1.17f;
+    public static final float NOTCH_Z = 1.2f;
+    public static final float LIP_Z = 1.3f;
+    /** The most the legend may stand above the lit face, in 1/16 block (before the elevation factor). */
+    public static final float TEXT_EPSILON = 0.06f;
+
     /** Joined sides, bits 0..3 of an edge word. */
     public static final int LEFT = 1;
     public static final int TOP = 2;

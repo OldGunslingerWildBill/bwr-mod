@@ -19,7 +19,7 @@ final class ProportionedComponentModel implements ComponentModel {
      * or more (every size before real sizes) keep their elevation as drawn.
      */
     static float elevationFactor(PanelComponent c) {
-        return Math.min(1.0f, Math.min(c.w(), c.h()) / 3.0f);
+        return Placement.elevationFactor(c.w(), c.h());
     }
     @Override public void buildStatic(QuadSink sink,PanelComponent c) { buildStatic(sink,c,1); }
     @Override public void buildStatic(QuadSink sink,PanelComponent c,float aspect) {

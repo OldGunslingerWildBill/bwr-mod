@@ -13,7 +13,9 @@ final class AnnunciatorControlModel implements ComponentModel {
     /** Cap colours: white, blue, amber, green. */
     static final int[] CAPS = {0xE6E2D0, 0x4FA0E0, 0xE8A820, 0x30B050};
     /** The buttons' share of the module's height; the legends take the rest. */
-    private static final float BUTTON_SHARE = 0.66f;
+    /** The housing's top face: the legends are printed on it, a hair above. */
+    private static final float HOUSING_TOP = 1.0f;
+    private static final float BUTTON_SHARE = 0.6f;
 
     private static final class Widths {
         final int[] pixels = new int[LEGENDS.length];
@@ -39,7 +41,7 @@ final class AnnunciatorControlModel implements ComponentModel {
     public void buildStatic(QuadSink sink, PanelComponent component) {
         float w = component.w();
         float h = component.h();
-        sink.box(0, 0, w, h, 0, 1.0f, ModelDraw.HOUSING, false);
+        sink.box(0, 0, w, h, 0, HOUSING_TOP, ModelDraw.HOUSING, false);
         float bezel = bezel(w, h);
         float ring = bezel * 0.1f;
         for (int i = 0; i < AnnunciatorControlType.BUTTONS; i++) {
@@ -77,13 +79,13 @@ final class AnnunciatorControlModel implements ComponentModel {
         }
         float pitch = w / AnnunciatorControlType.BUTTONS;
         float labelTop = h * BUTTON_SHARE + h * 0.03f;
-        float labelHeight = h - labelTop - h * 0.04f;
+        float labelHeight = h - labelTop - h * 0.14f;
         float rowAspect = context.rowAspect();
         for (int i = 0; i < LEGENDS.length; i++) {
             float scale = Math.min(pitch * 0.92f / widths.pixels[i], labelHeight / (8.0f * rowAspect));
             float x = pitch * i + (pitch - widths.pixels[i] * scale) / 2.0f;
             float y = labelTop + (labelHeight - 8.0f * scale * rowAspect) / 2.0f;
-            context.text(LEGENDS[i], x, y, scale, 1.8f, ModelDraw.ENGRAVED, false);
+            context.text(LEGENDS[i], x, y, scale, HOUSING_TOP + 0.05f, ModelDraw.ENGRAVED, false);
         }
     }
 }

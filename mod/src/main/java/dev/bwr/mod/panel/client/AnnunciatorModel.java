@@ -24,14 +24,14 @@ import java.util.function.ToIntFunction;
  * grey flag in the corner. The text fit is computed once per revision and neighbour change.
  */
 final class AnnunciatorModel implements ComponentModel {
-    // Elevations above the face in 1/16 block: the dark base, the recessed tile, the lit tile, the corner pieces, the bezel lip, the text.
-    private static final float BASE_Z = 0.8f;
-    private static final float TILE_Z = 1.0f;
-    private static final float LIT_Z = 1.3f;
-    private static final float NOTCH_Z = 1.5f;
-    private static final float LIP_Z = 1.7f;
-    private static final float FLAG_Z = 1.8f;
-    private static final float TEXT_Z = 2.0f;
+    // Elevations: see AnnunciatorBox. The legend sits a hair above the lit face, not a fixed lift above the base.
+    private static final float BASE_Z = AnnunciatorBox.BASE_Z;
+    private static final float TILE_Z = AnnunciatorBox.TILE_Z;
+    private static final float LIT_Z = AnnunciatorBox.LIT_Z;
+    private static final float NOTCH_Z = AnnunciatorBox.NOTCH_Z;
+    private static final float LIP_Z = AnnunciatorBox.LIP_Z;
+    private static final float FLAG_Z = AnnunciatorBox.FLAG_Z;
+    private static final float TEXT_Z = AnnunciatorBox.TEXT_Z;
     /** The dark recessed box of the reference annunciators, the bezel lip round it, and the window colour schemes' defaults. */
     static final int BOX_DARK = 0x17191A;
     static final int BOX_LIP = 0x3A413E;
@@ -64,16 +64,16 @@ final class AnnunciatorModel implements ComponentModel {
         sink.box(0, 0, w, h, 0, BASE_Z, BOX_DARK, false);
         // The bezel lip runs along each side that is not joined to a neighbour.
         if ((edges & AnnunciatorBox.LEFT) == 0) {
-            sink.rect(0, 0, lip, h, LIP_Z, BOX_LIP, false);
+            sink.box(0, 0, lip, h, BASE_Z, LIP_Z, BOX_LIP, false);
         }
         if ((edges & AnnunciatorBox.RIGHT) == 0) {
-            sink.rect(w - lip, 0, lip, h, LIP_Z, BOX_LIP, false);
+            sink.box(w - lip, 0, lip, h, BASE_Z, LIP_Z, BOX_LIP, false);
         }
         if ((edges & AnnunciatorBox.TOP) == 0) {
-            sink.rect(0, 0, w, lip, LIP_Z, BOX_LIP, false);
+            sink.box(0, 0, w, lip, BASE_Z, LIP_Z, BOX_LIP, false);
         }
         if ((edges & AnnunciatorBox.BOTTOM) == 0) {
-            sink.rect(0, h - lip, w, lip, LIP_Z, BOX_LIP, false);
+            sink.box(0, h - lip, w, lip, BASE_Z, LIP_Z, BOX_LIP, false);
         }
         float tileW = w - in[0] - in[2];
         float tileH = h - in[1] - in[3];
@@ -90,8 +90,8 @@ final class AnnunciatorModel implements ComponentModel {
         if ((edges & bit) == 0) {
             return;
         }
-        sink.rect(x, y, frame, frame, NOTCH_Z, BOX_DARK, false);
-        sink.rect(dx > 0 ? x : x + frame - lip, dy > 0 ? y : y + frame - lip, lip, lip, LIP_Z, BOX_LIP, false);
+        sink.box(x, y, frame, frame, BASE_Z, NOTCH_Z, BOX_DARK, false);
+        sink.box(dx > 0 ? x : x + frame - lip, dy > 0 ? y : y + frame - lip, lip, lip, BASE_Z, LIP_Z, BOX_LIP, false);
     }
 
     @Override
@@ -106,12 +106,12 @@ final class AnnunciatorModel implements ComponentModel {
                 || display == AnnunciatorLogic.Display.FLASH && context.blinkOn(4.0f)
                 || AnnunciatorBoxes.testing(cache, data.group);
         if (lit) {
-            context.rect(in[0], in[1], w - in[0] - in[2], h - in[1] - in[3], LIT_Z, data.color, true);
+            context.box(in[0], in[1], w - in[0] - in[2], h - in[1] - in[3], TILE_Z, LIT_Z, data.color, true);
         }
         if (Double.isNaN(component.input(0))) {
             // The grey corner flag: 1.5 x 0.9 cells, proportionally smaller on a window under 8 cells across.
             float k = Math.min(1.0f, Math.min(w, h) / 8.0f);
-            context.rect(w - in[2] - 1.5f * k - 0.75f * k, in[1] + 0.3f * k, 1.5f * k, 0.9f * k, FLAG_Z, ModelDraw.NO_SIGNAL, false);
+            context.box(w - in[2] - 1.5f * k - 0.75f * k, in[1] + 0.3f * k, 1.5f * k, 0.9f * k, TILE_Z, FLAG_Z, ModelDraw.NO_SIGNAL, false);
         }
         if (context.lod() < PanelRenderContext.LOD_FULL) {
             return;

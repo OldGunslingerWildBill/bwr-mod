@@ -43,19 +43,23 @@ final class PanelAnnunciatorShowcase {
     }
 
     static final String[] NAMES = {"annun-box-real-close", "annun-box-real", "annun-box-big", "annun-box-test",
-            "annun-mid-fade", "annun-mid-nofade", "annun-far-fade", "annun-far-nofade"};
+            "annun-mid-fade", "annun-mid-nofade", "annun-far-fade", "annun-far-nofade", "annun-side-vertical", "annun-side-header"};
     private static final BlockPos REAL = new BlockPos(5518, 127, 5261);
     private static final BlockPos BIG = new BlockPos(5516, 127, 5261);
     private static final BlockPos TEST = new BlockPos(5512, 127, 5261);
     /** The real size duplex board's first bench (see {@link PanelRealScaleShowcase}); the fade stages look at it. */
     private static final double BOARD_X = 5443.0;
-    private static final double[][] EYE = {{5518.5, 128.2, 5260.0}, {5518.5, 128.1, 5258.6}, {5514.5, 128.1, 5258.0},
-            {5512.5, 128.1, 5259.0}, {BOARD_X, 128.4, 5252.0}, {BOARD_X, 128.4, 5252.0}, {BOARD_X, 128.4, 5244.0}, {BOARD_X, 128.4, 5244.0}};
-    private static final double[][] LOOK = {{5518.5, 128.1, 5262.0}, {5518.5, 128.1, 5262.0}, {5514.5, 127.6, 5262.0},
-            {5512.5, 128.1, 5262.0}, {BOARD_X, 128.9, 5261.0}, {BOARD_X, 128.9, 5261.0}, {BOARD_X, 128.9, 5261.0}, {BOARD_X, 128.9, 5261.0}};
+    private static final double[][] EYE = {{5518.5, 127.72, 5261.25}, {5518.5, 127.72, 5260.45}, {5515.5, 127.1, 5260.1},
+            {5512.5, 127.72, 5261.25}, {BOARD_X, 128.4, 5252.0}, {BOARD_X, 128.4, 5252.0}, {BOARD_X, 128.4, 5244.0}, {BOARD_X, 128.4, 5244.0},
+            {5519.2, 127.78, 5261.3}, {5446.2, 129.55, 5260.2}};
+    private static final double[][] LOOK = {{5518.5, 127.72, 5262.5}, {5518.5, 127.72, 5262.5}, {5515.5, 127.1, 5262.5},
+            {5512.5, 127.72, 5262.5}, {BOARD_X, 128.9, 5261.0}, {BOARD_X, 128.9, 5261.0}, {BOARD_X, 128.9, 5261.0}, {BOARD_X, 128.9, 5261.0},
+            {5518.4, 127.72, 5262.5}, {5443.9, 129.7, 5260.6}};
 
     private static final List<BlockPos> PLACED = new ArrayList<>();
     private static int mounted;
+    /** Buttons to hold once everything is synced (a full sync resets outputs): {pos, module, button}. */
+    private static final List<Object[]> HELD = new ArrayList<>();
 
     static Vec3 camera(int stage) {
         return new Vec3(EYE[stage][0], EYE[stage][1] - 1.62, EYE[stage][2]);
@@ -76,7 +80,7 @@ final class PanelAnnunciatorShowcase {
 
     /** Whether the stage looks at the realscale board, and so needs that showcase built. */
     static boolean looksAtBoard(int stage) {
-        return NAMES[stage].contains("fade");
+        return NAMES[stage].contains("fade") || NAMES[stage].endsWith("-header");
     }
 
     private static final String[][] LEGENDS = {
@@ -115,7 +119,7 @@ final class PanelAnnunciatorShowcase {
             throw new AssertionError("Annunciator showcase: module refused at " + pos + " " + x + "," + y);
         }
         if (pressed >= 0) {
-            ((PanelBlockEntity) level.getBlockEntity(pos)).setOutput(c, pressed, 1.0);
+            HELD.add(new Object[] {pos, c, pressed});
         }
         mounted++;
         return c;
@@ -128,6 +132,7 @@ final class PanelAnnunciatorShowcase {
 
     static void build(ServerLevel level) {
         PLACED.clear();
+        HELD.clear();
         mounted = 0;
         for (int x = 5504; x <= 5522; x++) {
             for (int z = 5250; z <= 5266; z++) {
@@ -156,6 +161,9 @@ final class PanelAnnunciatorShowcase {
             if (level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
                 be.syncFull();
             }
+        }
+        for (Object[] held : HELD) {
+            ((PanelBlockEntity) level.getBlockEntity((BlockPos) held[0])).setOutput((PanelComponent) held[1], (Integer) held[2], 1.0);
         }
     }
 

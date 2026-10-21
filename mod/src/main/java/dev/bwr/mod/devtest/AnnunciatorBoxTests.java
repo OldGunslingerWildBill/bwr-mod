@@ -171,6 +171,55 @@ public final class AnnunciatorBoxTests {
         });
     }
 
+    // ---- the legend sits on its window
+
+    /**
+     * The owner's report: legends hovered in front of the tiles. The legend's elevation must be a hair above the face it is
+     * printed on, at every window size (the small ones scale their elevation, the text must scale with it) and on every
+     * panel frame (vertical, sloped, the duplex header): measured as the world distance between the point of the legend and
+     * the point of the lit face above the same cell, through the real model layout and the real frames.
+     */
+    @GameTest(template = "empty")
+    public static void legendsSitAHairAboveTheirWindowAtEverySizeAndOnEveryPanelFrame(GameTestHelper helper) {
+        List<String> failures = new ArrayList<>();
+        double epsilonBlocks = AnnunciatorBox.TEXT_EPSILON / 16.0 + 1.0e-9;
+        ComponentModel model = ComponentModels.get(ComponentTypes.ANNUNCIATOR.id());
+        int checked = 0;
+        for (dev.bwr.mod.panel.PanelType type : dev.bwr.mod.panel.PanelType.values()) {
+            var frame = dev.bwr.mod.panel.PanelGeometry.frame(type, net.minecraft.core.Direction.NORTH);
+            for (Footprint size : ComponentTypes.ANNUNCIATOR.footprints()) {
+                PanelComponent window = new PanelComponent(1, ComponentTypes.ANNUNCIATOR, 0, 0, size, "");
+                AnnunciatorData data = (AnnunciatorData) window.data();
+                data.line1 = "RPV";
+                data.line2 = "LEVEL";
+                data.line3 = "LOW";
+                float factor = dev.bwr.mod.panel.model.Placement.elevationFactor(size.w(), size.h());
+                float faceZ = dev.bwr.mod.panel.model.Placement.fit(size.w(), size.h(), size.w(), size.h(), (float) frame.vLength)
+                        .withElevation(factor).z(AnnunciatorBox.LIT_Z);
+                for (var item : model.textLayout(window, (float) frame.vLength)) {
+                    double u = item.x();
+                    double v = item.y();
+                    double dx = frame.x(u, v, item.z()) - frame.x(u, v, faceZ);
+                    double dy = frame.y(u, v, item.z()) - frame.y(u, v, faceZ);
+                    double dz = frame.z(u, v, item.z()) - frame.z(u, v, faceZ);
+                    double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                    boolean above = item.z() > faceZ;
+                    checked++;
+                    if (!above || distance > epsilonBlocks * factor) {
+                        failures.add(type + " " + size + ": legend " + item.text() + " stands " + (above ? "" : "BELOW and ")
+                                + distance + " blocks from the face (at most " + epsilonBlocks * factor + ")");
+                    }
+                }
+            }
+        }
+        helper.assertTrue(checked >= 7 * 4 * 3, "the loop looked at every size and frame: " + checked);
+        helper.assertTrue(failures.isEmpty(), failures.size() + " legends float: " + failures.subList(0, Math.min(5, failures.size())));
+        // The legend also clears the flag and the face under it, and lies under the bezel pieces.
+        helper.assertTrue(AnnunciatorBox.TEXT_Z > AnnunciatorBox.LIT_Z && AnnunciatorBox.TEXT_Z > AnnunciatorBox.FLAG_Z
+                && AnnunciatorBox.TEXT_Z < AnnunciatorBox.LIP_Z, "the legend is on top of the face and flag, under the bezel lip");
+        helper.succeed();
+    }
+
     // ---- legend layout (pure)
 
     private static final int[][] LINE_WIDTHS = {{30}, {30, 22}, {66, 40, 12}, {66, 66, 66, 66}, {6, 6, 6, 6}, {1}, {72, 5, 61, 44}};

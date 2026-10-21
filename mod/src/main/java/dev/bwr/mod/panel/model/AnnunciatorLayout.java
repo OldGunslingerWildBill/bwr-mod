@@ -61,7 +61,7 @@ public final class AnnunciatorLayout {
 
     /** The window body when it is dark: a dim version of its colour. */
     public static int offBody(int color) {
-        return shade(color, 0.62f);
+        return shade(color, 0.85f);
     }
 
     /** Whether a body colour is light enough to take dark lettering (white and amber are, red is not). */

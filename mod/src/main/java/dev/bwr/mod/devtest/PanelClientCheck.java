@@ -115,6 +115,22 @@ public final class PanelClientCheck {
 
     private PanelClientCheck() {}
 
+    /**
+     * The held camera, enforced once per frame as well as per tick: any input to the window (the mouse turning the player
+     * between two ticks) must not move the camera of a picture.
+     */
+    @SubscribeEvent
+    public static void hold(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre ignored) {
+        if (!Boolean.getBoolean("bwr.panelClientCheck") || heldCamera == null || stage < ANNUN_FIRST && stage != 7) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        mc.player.setPos(heldCamera.x, heldCamera.y, heldCamera.z);
+        mc.player.setYRot(heldYaw);
+        mc.player.setXRot(heldPitch);
+        mc.player.yRotO = heldYaw;
+        mc.player.xRotO = heldPitch;
+    }
+
     @SubscribeEvent
     public static void tick(ClientTickEvent.Post ignored) {
         if (!Boolean.getBoolean("bwr.panelClientCheck")) return;
@@ -215,7 +231,7 @@ public final class PanelClientCheck {
                 Vec3 delta = target.subtract(camera.add(0, player.getEyeHeight(), 0));
                 float yaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90);
                 float pitch = (float) -Math.toDegrees(Math.atan2(delta.y, Math.hypot(delta.x, delta.z)));
-                if (selected == 7) {
+                if (selected == 7 || selected >= ANNUN_FIRST) {
                     heldCamera = camera;
                     heldYaw = yaw;
                     heldPitch = pitch;
@@ -239,7 +255,7 @@ public final class PanelClientCheck {
                 wantedCamera = camera;
             });
         }
-        if (stage == 7 && heldCamera != null) {
+        if ((stage == 7 || stage >= ANNUN_FIRST) && heldCamera != null) {
             mc.player.setPos(heldCamera.x, heldCamera.y, heldCamera.z);
             mc.player.setDeltaMovement(Vec3.ZERO);
             mc.player.setYRot(heldYaw);
