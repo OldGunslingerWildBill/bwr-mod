@@ -446,6 +446,32 @@ recorders. Result on the development machine: the recorders' render path 0.13 ms
 is 0.39 ms, 8 a second for each recorder: a new dot every 3.3 ticks and the one second refresh), frame time 0.72 ms against 0.45 ms
 without them (delta 0.27 ms); the gate is under 1 ms.
 
+## Dedicated server boot and old saves
+
+Both checks are Gradle run tasks (start them through `run-mc.ps1` like every game run; `-PbwrNoCC` works for both) and fail the
+build with a list of problems.
+
+`:mod:runServerBootCheck` boots a real dedicated server on a fresh flat world (offline, port 25598), waits for "Done", links
+every common class of the mod (`Class.forName` without initialising, then `getDeclaredMethods`, so the JVM verifies it and
+resolves its signature types; the server's Minecraft jar has no client classes, and NeoForge refuses to load them) and lets 200
+ticks run (`dev.bwr.mod.devtest.ServerBootCheck`). Then Gradle fails the build on: no "Done", an ERROR line from the mod or
+about a missing class or registry, a class that failed to link, or a client class in the JVM's class-load log (net.minecraft.client,
+blaze3d, neoforge.client, any `dev.bwr...client` package) other than the few vanilla/NeoForge/pure-data ones listed in
+`mod/build.gradle`. Logs: `mod/run/serverBootCheck/logs/latest.log`, `mod/run/serverBootCheck-classload.log`. Client-only calls in
+common code are deliberate in five places (the `playToClient` handlers that call `PanelClientHooks`, `NetworkingScreen`,
+`NetworkShareClient`, and `CoolingBlockEntity.clientTick`); none runs on a server.
+
+`:mod:runSaveCompatCheck [-PbwrSaveWorld=<world folder>]` loads a world written by an older build on a dedicated server and
+compares it with the raw region files (`dev.bwr.mod.devtest.SaveCompatCheck`): block ids and states (a missing id or property
+silently becomes air or a default), every block entity (panel components and bindings, wrench bindings and machine names,
+reactor and pump state: all saved values must still be there), the player files' item stacks, `data/bwr_*.dat`, and again after 100
+ticks (nothing of the mod's may disappear on its first ticks). The default world is the committed alpha.40 fixture
+`mod/src/test-worlds/alpha40` (see its README.txt for how it was made and how to regenerate it); any other world folder can be
+given. The world is copied to `mod/run/saveCompatCheck/world` first and never written back; the task refuses a path inside
+the Modrinth profile, so copy the owner's world to a scratch folder first. Detail: `mod/run/saveCompatCheck/save-compat-report.txt`.
+A zero that the mod fills with a default (`CoriumPool.Radius`) is reported, not failed; physics values are compared exactly at load
+(before the first tick) and only listed after 100 ticks.
+
 ## Dedicated server and two real clients (C3)
 
 `:mod:runMultiplayerCheck` proves the control panels, the full core display binding and the rod select matrix on a real

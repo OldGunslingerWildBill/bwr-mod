@@ -11,3 +11,5 @@ gradlew.bat text eol=crlf
 # Binaries git must not touch.
 *.png  binary
 *.jar  binary
+*.mca  binary
+*.dat  binary
