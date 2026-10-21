@@ -37,7 +37,7 @@ import java.util.List;
  * <p>Plan: every desk faces north (the operator stands at smaller z), the floor is at y 125 and the desks stand on it:
  * the seafoam row at z 5262 has a 1 m desk (empty) at x 5800, a 1 m desk (loaded) at x 5802, a 2 m desk (empty) at
  * x 5805 and 5806 and a 2 m desk (loaded) at x 5808 and 5809; the tan row is the same at z 5254; the light blue run is a
- * 1 m desk at x 5800, a 2 m desk at x 5801 and 5802 and a 1 m desk at x 5803, at z 5258. The left half of a 2 m desk is
+ * 1 m desk at x 5800, a 2 m desk at x 5801 and 5802 and a 1 m desk at x 5803, at z 5258, and a lone seafoam 1 m desk at x 5815 for the side view. The left half of a 2 m desk is
  * the block to the operator's left, which is east for a desk facing north.
  */
 final class PanelDeskShowcase {
@@ -52,10 +52,10 @@ final class PanelDeskShowcase {
     static final String[] NAMES = {"desk-1m-seafoam", "desk-2m-seafoam", "desk-1m-tan", "desk-2m-tan", "desk-run-light-blue",
             "desk-side-seafoam"};
     // eye position and look target of each picture (feet are 1.62 below the eye)
-    private static final double[][] EYE = {{5801.0, 127.95, 5260.2}, {5807.5, 128.3, 5259.2}, {5801.0, 127.95, 5252.2},
-            {5807.5, 128.3, 5251.2}, {5802.0, 128.1, 5255.4}, {5797.4, 127.0, 5261.7}};
-    private static final double[][] LOOK = {{5801.5, 126.3, 5262.7}, {5807.5, 126.3, 5262.7}, {5801.5, 126.3, 5254.7},
-            {5807.5, 126.3, 5254.7}, {5802.0, 126.3, 5258.7}, {5800.0, 126.3, 5262.75}};
+    private static final double[][] EYE = {{5801.5, 127.6, 5260.6}, {5807.5, 127.9, 5260.0}, {5801.5, 127.6, 5252.6},
+            {5807.5, 127.9, 5252.0}, {5802.0, 127.7, 5256.2}, {5817.8, 127.9, 5258.2}};
+    private static final double[][] LOOK = {{5801.5, 126.25, 5262.7}, {5807.5, 126.25, 5262.7}, {5801.5, 126.25, 5254.7},
+            {5807.5, 126.25, 5254.7}, {5802.0, 126.25, 5258.7}, {5815.5, 126.3, 5258.7}};
 
     static boolean night(int stage) {
         return false;
@@ -195,6 +195,7 @@ final class PanelDeskShowcase {
             // east is the operator's left: 5803 and 5801 are the left blocks of their pairs
             loadBlock(level, new BlockPos(x, 126, RUN_Z), x - 5800, x % 2 == 1 ? 1 : 2);
         }
+        desk(level, 5815, RUN_Z, PanelFinish.SEAFOAM); // alone, for the side view
         for (BlockPos pos : PLACED) {
             if (level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
                 be.syncFull();
