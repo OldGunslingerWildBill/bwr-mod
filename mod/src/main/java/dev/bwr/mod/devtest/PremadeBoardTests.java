@@ -202,6 +202,20 @@ public final class PremadeBoardTests {
         BoardTemplate rps = shipped(h, "reactor_scram_rps");
         check(h, count(rps, "bwr:rps_trip") == 2 && has(rps, "bwr:key_switch") && has(rps, "bwr:rotary_selector")
                 && count(rps, "bwr:lamp") == 8, "RPS: " + summary(rps));
+        // the manual scram is the A1 / B1 channels; A2 / B2 is the fire backup, apart from it, with its own outputs and legends
+        var trips = rps.components().stream().filter(c -> c.type().id().toString().equals("bwr:rps_trip")).toList();
+        var primary = trips.stream().filter(c -> c.label().equals("MAN-SCRAM-A1B1")).findFirst().orElse(null);
+        var backup = trips.stream().filter(c -> c.label().equals("BKUP-SCRAM-A2B2")).findFirst().orElse(null);
+        check(h, primary != null && backup != null && trips.size() == 2, "RPS: a primary A1/B1 and a backup A2/B2 assembly: " + trips);
+        check(h, primary.config().getString("LegendA").equals("A1") && primary.config().getString("LegendB").equals("B1")
+                && backup.config().getString("LegendA").contains("A2") && backup.config().getString("LegendB").contains("B2")
+                && backup.config().getString("LegendA").startsWith("BK"), "RPS legends: " + primary.config() + " " + backup.config());
+        check(h, primary.caption().isEmpty() && backup.caption().isEmpty(), "RPS assemblies carry their own legends, no loose caption");
+        check(h, backup.x() - primary.x() >= 32, "RPS: the backup is apart from the primary: " + primary.x() + " and " + backup.x());
+        for (var comp : List.of(primary, backup)) {
+            var data = comp.type().createData();
+            check(h, comp.type().outputPorts(data).size() == 2, "each assembly has separate outputs for its two buttons");
+        }
         BoardTemplate eccs = shipped(h, "eccs_p601");
         check(h, count(eccs, "bwr:push_turn_switch") == 4 && count(eccs, "bwr:control_switch") == 4
                 && count(eccs, "bwr:rotary_selector") >= 22 && !eccs.mimic().isEmpty() && has(eccs, "bwr:mimic_symbol"),
