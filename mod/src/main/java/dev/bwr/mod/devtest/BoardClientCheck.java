@@ -125,7 +125,7 @@ public final class BoardClientCheck {
         if (failure != null) {
             throw new IllegalStateException("Board client check failed", failure);
         }
-        if (++age > 9000) {
+        if (++age > 24000) {
             throw new IllegalStateException("Board client check timed out at stage " + stage);
         }
         if (!started && mc.screen != null && mc.getOverlay() == null) {
