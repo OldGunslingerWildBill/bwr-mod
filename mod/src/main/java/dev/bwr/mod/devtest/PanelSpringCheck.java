@@ -13,7 +13,6 @@ import dev.bwr.mod.panel.component.Footprint;
 import dev.bwr.mod.panel.component.OperateAction;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.component.PanelStyles;
-import dev.bwr.mod.panel.model.Poses;
 import dev.bwr.mod.panel.net.PanelPayloads;
 import dev.bwr.mod.registry.BwrBlocks;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -196,6 +195,7 @@ final class PanelSpringCheck {
     /** Client ticks seen by the stage, and the one the use key was let go at (-1 when not waiting for the spring). */
     private static int ticks;
     private static int releasedAt = -1;
+    private static boolean outputSeen;
 
     /** The frame the game last drew, as pixels (what is on the screen, whatever the caches did). */
     private static int[] frame(Minecraft mc) {
@@ -260,9 +260,21 @@ final class PanelSpringCheck {
             lo = Math.min(lo, v);
             hi = Math.max(hi, v);
             if (releasedAt >= 0 && v == 0.0) {
-                LogUtils.getLogger().info("BREAKER SPRING latency {}: the client handle was at NORMAL {} ticks after the key was let go",
-                        rig.name(), ticks - releasedAt);
-                releasedAt = -1;
+                if (!outputSeen) {
+                    outputSeen = true;
+                    LogUtils.getLogger().info("BREAKER SPRING latency {}: the client output was NORMAL {} ticks after the key was let go",
+                            rig.name(), ticks - releasedAt);
+                }
+                float drawn = RenderCache.of(be.component(rig.id())).drawnAngle();
+                require(Float.isNaN(drawn) || drawn == 0.0f || ticks - releasedAt < 60, rig.name()
+                        + ": the output is at NORMAL but the handle is still drawn at " + drawn + " degrees "
+                        + (ticks - releasedAt) + " ticks after the key was let go");
+                if (Float.isNaN(drawn) || drawn == 0.0f) {
+                    LogUtils.getLogger().info("BREAKER SPRING latency {}: the drawn handle was at NORMAL {} ticks after the key was let go",
+                            rig.name(), ticks - releasedAt);
+                    releasedAt = -1;
+                    outputSeen = false;
+                }
             }
         }
         var server = mc.getSingleplayerServer();
@@ -292,9 +304,9 @@ final class PanelSpringCheck {
     private static void expectAt(Minecraft mc, Rig rig, int expected, String when) {
         PanelComponent component = client(mc, rig);
         double server = current < serverOut.length ? serverOut[current] : Double.NaN;
-        float drawn = RenderCache.of(component).drawnAngle();
-        boolean angleOk = Float.isNaN(drawn) || drawn == Poses.controlSwitchAngle(expected);
-        require(component.output(0) == expected && server == expected && angleOk,
+        // The drawn angle is read once per rendered frame, so it may trail the output by a frame or two (more under a shader
+        // pack): it is only required to be right when the frame has caught up, which the latency check in sample() enforces.
+        require(component.output(0) == expected && server == expected,
                 rig.name() + " " + when + ": expected the handle at " + expected + " but " + describe(mc, rig));
     }
 
@@ -465,6 +477,30 @@ final class PanelSpringCheck {
         });
         add("flick: settle", SETTLE, mc -> expectAt(mc, rig, 0, "after a flick"));
         cycle("long hold, longer than the fail-safe", 46);
+        // The crosshair moves from one held switch to another with the key still down: the first must let go at once.
+        Rig other = RIGS.get(1);
+        add("hand-over: hold the first switch", 6, mc -> {
+            current = 0;
+            begin();
+            aim(mc, rig, 0.15);
+            down(mc);
+        });
+        add("hand-over: move to the second switch", 8, mc -> {
+            expectAt(mc, rig, -1, "held on CLOSE before the crosshair moved on");
+            aim(mc, other, 0.15);
+        });
+        add("hand-over: check", 1, mc -> {
+            expectAt(mc, rig, 0, "after the crosshair moved to another switch with the key still down (the first one must be let go)");
+            current = 1;
+        });
+        add("hand-over: second held", SETTLE, mc -> {
+            expectAt(mc, other, -1, "the switch the crosshair moved to is held on CLOSE");
+            up(mc);
+        });
+        add("hand-over: both let go", SETTLE, mc -> {
+            expectAt(mc, other, 0, "after the key was let go");
+            current = 0;
+        });
         inHand(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.APPLE), InteractionHand.MAIN_HAND);
         cycle("an apple in the main hand", 12);
         inHand(net.minecraft.world.item.ItemStack.EMPTY, InteractionHand.MAIN_HAND);

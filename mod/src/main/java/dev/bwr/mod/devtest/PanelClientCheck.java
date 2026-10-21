@@ -179,7 +179,7 @@ public final class PanelClientCheck {
             shown = 0;
             // The text fade is a client option: every stage draws with it on, except the ones that say -nofade.
             if (dev.bwr.mod.client.VisualEffectsConfig.SPEC.isLoaded()) {
-                dev.bwr.mod.client.VisualEffectsConfig.PANEL_TEXT_FADE.set(stage < ANNUN_FIRST || PanelAnnunciatorShowcase.fadeOn(stage - ANNUN_FIRST));
+                dev.bwr.mod.client.VisualEffectsConfig.PANEL_TEXT_FADE.set(stage < ANNUN_FIRST || stage >= SPRING_FIRST || PanelAnnunciatorShowcase.fadeOn(stage - ANNUN_FIRST));
             }
             PanelRenderContext.debugResetFadedLines();
             wantedCamera = null;
@@ -243,7 +243,7 @@ public final class PanelClientCheck {
                 Vec3 delta = target.subtract(camera.add(0, player.getEyeHeight(), 0));
                 float yaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90);
                 float pitch = (float) -Math.toDegrees(Math.atan2(delta.y, Math.hypot(delta.x, delta.z)));
-                if (selected == 7 || selected >= ANNUN_FIRST) {
+                if (selected == 7 || selected >= ANNUN_FIRST && selected < SPRING_FIRST) {
                     heldCamera = camera;
                     heldYaw = yaw;
                     heldPitch = pitch;
@@ -355,7 +355,7 @@ public final class PanelClientCheck {
                                 : stage >= SLOPE_FIRST ? PanelSlopeShowcase.verify(mc, stage - SLOPE_FIRST)
                                 : PanelModelShowcase.verify(mc, stage - BAKED_FIRST), dev.bwr.mod.panel.model.PanelModels.loadedCount());
             }
-            if (stage >= ANNUN_FIRST) {
+            if (stage >= ANNUN_FIRST && stage < SPRING_FIRST) {
                 // The fade is really on or off: a faded line is drawn as a strip, and only when the option is on.
                 int faded = PanelRenderContext.debugFadedLines();
                 boolean far = NAMES[stage].contains("-far-") || NAMES[stage].contains("-mid-");

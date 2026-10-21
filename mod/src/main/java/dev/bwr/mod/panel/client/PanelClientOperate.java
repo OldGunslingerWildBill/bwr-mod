@@ -127,6 +127,12 @@ public final class PanelClientOperate {
             return;
         }
         if (!repeat || type.holdable()) {
+            if (type.holdable() && heldOwner != null
+                    && (!heldOwner.equals(AIM.owner.getBlockPos()) || heldId != AIM.component.id())) {
+                // The crosshair moved from one held control to another with the key still down: let go of the first now,
+                // or it would stay operated until the server's fail-safe.
+                releaseHeld(minecraft);
+            }
             // A real click, or the repeat of a held control (which refreshes the server's fail-safe).
             send(AIM.owner, AIM.component, OperateAction.PRESS, type.clickValue(AIM.component, AIM.cellX, AIM.cellY));
             if (type.holdable()) {
@@ -155,14 +161,19 @@ public final class PanelClientOperate {
         Minecraft minecraft = Minecraft.getInstance();
         boolean down = minecraft.options.keyUse.isDown();
         if (heldOwner != null && (!down || minecraft.screen != null || minecraft.level == null)) {
-            if (minecraft.level != null && minecraft.level.getBlockEntity(heldOwner) instanceof PanelBlockEntity owner) {
-                PanelComponent component = owner.component(heldId);
-                if (component != null) {
-                    send(owner, component, OperateAction.RELEASE, 0.0);
-                }
-            }
-            heldOwner = null;
+            releaseHeld(minecraft);
         }
         useWasDown = down;
+    }
+
+    /** Sends RELEASE for the control held down and forgets it. */
+    private static void releaseHeld(Minecraft minecraft) {
+        if (minecraft.level != null && minecraft.level.getBlockEntity(heldOwner) instanceof PanelBlockEntity owner) {
+            PanelComponent component = owner.component(heldId);
+            if (component != null) {
+                send(owner, component, OperateAction.RELEASE, 0.0);
+            }
+        }
+        heldOwner = null;
     }
 }
