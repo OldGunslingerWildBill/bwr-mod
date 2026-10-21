@@ -331,7 +331,7 @@ public final class ReactorCore {
     private boolean burnupEnabled = true;
 
     /**
-     * How the once-per-interval nodal refresh runs. The answer is the same in all three
+     * How the once-per-interval nodal refresh runs. Every solve's answer is the same in all
      * modes; what differs is the tick it is applied on and the thread that iterates.
      */
     public enum NodalRefresh {
