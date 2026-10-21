@@ -35,7 +35,7 @@ Panel bodies, trim blocks and the room furniture come in five paint finishes, as
 **Changing it:** hold the panel wrench and **sneak-right-click** a bare spot of a panel (no component under the crosshair),
 or any end cap, header, plinth, corner or piece of furniture. Each click steps to the next finish (the chat bar names it).
 Clicking a mounted component with the same gesture still removes the component, so the finish gesture only works where
-that would do nothing. A multi-block piece (a duplex column, a 2 high cabinet, the supervisor desk, a wall display)
+that would do nothing. A multi-block piece (a duplex column, a 2 m control desk, a 2 high cabinet, the supervisor desk, a wall display)
 changes as one; a single panel changes alone, so a run can be mixed. Grouping and mounting do not look at the finish:
 components span blocks of different finishes, and they are untouched by a repaint.
 
@@ -382,6 +382,34 @@ when its chunk loads.
 The panel bodies are modelled in Blender (`art/models/control_panel_trim/`): the mounting face is exactly where it
 was, and the detail is behind it (module seams on the face, service-door backs, bevelled back edges, a dark
 recessed toe-kick at the foot of the benchboard and console backs, a console front lip).
+
+### Control desks (1 m and 2 m)
+
+Two small desks from the owner's Fusion models (`Control Desk 1m.obj`, `Control Desk.obj`, modelled in centimetres: one block is
+one metre): a level **operating top**, 0.40 m high, 1 m wide and 0.375 m deep, behind it a riser up to a narrow shelf along the
+back (0.575 m high), and a front that falls away under the top to the floor (the operator's knee space). The desk stands against the
+back of its block, so the front half of the block is free. The shape is the owner's; it is drawn plain on purpose, so you mount what
+you like on it. The mounting face is the top, a level plane with the normal straight up: **16 columns by 6 rows** of the usual 1/16
+block cells, row 0 at the back, rows running toward the operator (a part keeps its real size, as everywhere: a dial 4 x 4 fits,
+a 12 x 12 gauge does not). The cells that are not on the top (rows 6 to 15, the air in front of the desk) take nothing.
+
+| Block | Item | Size | Style |
+| --- | --- | --- | --- |
+| Control Panel (Desk, 1 m) | `bwr:control_panel_desk` | 1 x 1 x 1, one block | `DESK` |
+| Control Panel (Desk, 2 m) | `bwr:control_panel_desk_wide` | 2 x 1 x 1, two blocks | `DESK`, both blocks |
+
+* **Joining.** Desks of the `DESK` style and one facing join sideways, to the operator's right and left, into one face: a 1 m desk,
+  a 2 m desk and another 1 m desk are one run 64 cells wide, and a part can span the seams. A desk is a single row (nothing joins in
+  front of or behind it) and joins nothing but desks.
+* **The 2 m desk** is placed by one item, from the block you click: that block is the desk's right half (as the operator sees it) and
+  the second block goes to the operator's left, like the supervisor desk. Both blocks are panel blocks; if the second is in the way,
+  nothing is placed. Breaking either half removes the desk with one drop (the right half's loot), and every mounted part drops as on
+  any panel. A desk that loses a half some other way falls apart and gives its item back.
+* **Finishes.** The whole desk takes the finish (the top and the riser are the paint, the shelf and the ends the bezel, the back the
+  service door texture); only the dark sloped front and the floor keep their colour. The wrench cycles the finish of both halves of a
+  2 m desk together.
+* **Recipes.** 1 m desk: a console over a vertical board. 2 m desk: two 1 m desks side by side.
+* **Saves.** New blocks only: no existing block, state or saved value changed.
 
 ## 2. What a port can be wired to
 

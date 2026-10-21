@@ -1,0 +1,116 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_desk",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:control_panel_desk",
+                  "properties": {
+                    "finish": "cream"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "cream"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_desk",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:control_panel_desk",
+                  "properties": {
+                    "finish": "tan"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "tan"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_desk",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:control_panel_desk",
+                  "properties": {
+                    "finish": "grey"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "grey"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_desk",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:control_panel_desk",
+                  "properties": {
+                    "finish": "light_blue"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "light_blue"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_desk"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "variants": {
+    "facing=north,half=right": {
+      "model": "bwr:block/control_panel/desk",
+      "y": 0
+    },
+    "facing=east,half=right": {
+      "model": "bwr:block/control_panel/desk",
+      "y": 90
+    },
+    "facing=south,half=right": {
+      "model": "bwr:block/control_panel/desk",
+      "y": 180
+    },
+    "facing=west,half=right": {
+      "model": "bwr:block/control_panel/desk",
+      "y": 270
+    },
+    "facing=north,half=left": {
+      "model": "bwr:block/control_panel/desk",
+      "y": 0
+    },
+    "facing=east,half=left": {
+      "model": "bwr:block/control_panel/desk",
+      "y": 90
+    },
+    "facing=south,half=left": {
+      "model": "bwr:block/control_panel/desk",
+      "y": 180
+    },
+    "facing=west,half=left": {
+      "model": "bwr:block/control_panel/desk",
+      "y": 270
+    }
+  }
+}

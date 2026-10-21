@@ -79,6 +79,8 @@ public final class PanelClientCheck {
     private static final int ANNUN_FIRST = ANGLED_FIRST + PanelAngledShowcase.NAMES.length;
     /** The stage of the breaker spring check (see {@link PanelSpringCheck}), after the annunciator boxes. */
     private static final int SPRING_FIRST = ANNUN_FIRST + PanelAnnunciatorShowcase.NAMES.length;
+    /** The first stage of the control desks (see {@link PanelDeskShowcase}), after the breaker spring stage. */
+    private static final int DESK_FIRST = SPRING_FIRST + 1;
     private static final String[] NAMES = names();
 
     private static String[] names() {
@@ -86,7 +88,8 @@ public final class PanelClientCheck {
                 "board-lod-28m", "board-night-lamps", "wrench-config", "linker-binding", "linker-outline", "board-night-close"};
         String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length + PanelSlopeShowcase.NAMES.length
                 + PanelTrimShowcase.NAMES.length + PanelDuplexShowcase.NAMES.length + PanelRealScaleShowcase.NAMES.length
-                + PanelTextSizeShowcase.NAMES.length + PanelAngledShowcase.NAMES.length + PanelAnnunciatorShowcase.NAMES.length + PanelHardwareShowcase.NAMES.length + 1];
+                + PanelTextSizeShowcase.NAMES.length + PanelAngledShowcase.NAMES.length + PanelAnnunciatorShowcase.NAMES.length + PanelHardwareShowcase.NAMES.length + 1
+                + PanelDeskShowcase.NAMES.length];
         System.arraycopy(original, 0, all, 0, original.length);
         System.arraycopy(PanelModelShowcase.NAMES, 0, all, BAKED_FIRST, PanelModelShowcase.NAMES.length);
         System.arraycopy(PanelSlopeShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length,
@@ -100,7 +103,8 @@ public final class PanelClientCheck {
         System.arraycopy(PanelHardwareShowcase.NAMES, 0, all, HARDWARE_FIRST, PanelHardwareShowcase.NAMES.length);
         System.arraycopy(PanelAngledShowcase.NAMES, 0, all, ANGLED_FIRST, PanelAngledShowcase.NAMES.length);
         System.arraycopy(PanelAnnunciatorShowcase.NAMES, 0, all, ANNUN_FIRST, PanelAnnunciatorShowcase.NAMES.length);
-        all[all.length - 1] = PanelSpringCheck.NAME;
+        all[SPRING_FIRST] = PanelSpringCheck.NAME;
+        System.arraycopy(PanelDeskShowcase.NAMES, 0, all, DESK_FIRST, PanelDeskShowcase.NAMES.length);
         return all;
     }
     private static final String STAGE_FILTER = System.getProperty("bwr.panelClientStages", "");
@@ -210,13 +214,15 @@ public final class PanelClientCheck {
                         PanelAnnunciatorShowcase.build(level);
                         PanelHardwareShowcase.build(level);
                         PanelSpringCheck.build(level);
+                        PanelDeskShowcase.build(level);
                         built = true;
                     } catch (Throwable failure) {
                         buildFailure = failure;
                         return;
                     }
                 }
-                Vec3 camera = selected >= SPRING_FIRST ? PanelSpringCheck.camera()
+                Vec3 camera = selected >= DESK_FIRST ? PanelDeskShowcase.camera(selected - DESK_FIRST)
+                        : selected >= SPRING_FIRST ? PanelSpringCheck.camera()
                         : selected >= ANNUN_FIRST ? PanelAnnunciatorShowcase.camera(selected - ANNUN_FIRST)
                         : selected >= ANGLED_FIRST ? PanelAngledShowcase.camera(selected - ANGLED_FIRST)
                         : selected >= HARDWARE_FIRST ? PanelHardwareShowcase.camera(selected - HARDWARE_FIRST)
@@ -233,7 +239,8 @@ public final class PanelClientCheck {
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = selected >= SPRING_FIRST ? PanelSpringCheck.target()
+                Vec3 target = selected >= DESK_FIRST ? PanelDeskShowcase.target(selected - DESK_FIRST)
+                        : selected >= SPRING_FIRST ? PanelSpringCheck.target()
                         : selected >= ANNUN_FIRST ? PanelAnnunciatorShowcase.target(selected - ANNUN_FIRST)
                         : selected >= ANGLED_FIRST ? PanelAngledShowcase.target(selected - ANGLED_FIRST)
                         : selected >= HARDWARE_FIRST ? PanelHardwareShowcase.target(selected - HARDWARE_FIRST)
@@ -353,7 +360,7 @@ public final class PanelClientCheck {
             if (stage >= BAKED_FIRST) {
                 // Every component must draw baked exactly when a loaded model exists for its look.
                 LogUtils.getLogger().info("PANEL CLIENT CHECK baked models {}: {} components drawn from baked models ({} loaded)",
-                        NAMES[stage], stage >= SPRING_FIRST ? 0 : stage >= ANNUN_FIRST ? PanelAnnunciatorShowcase.verify(mc, stage - ANNUN_FIRST)
+                        NAMES[stage], stage >= DESK_FIRST ? PanelDeskShowcase.verify(mc, stage - DESK_FIRST) : stage >= SPRING_FIRST ? 0 : stage >= ANNUN_FIRST ? PanelAnnunciatorShowcase.verify(mc, stage - ANNUN_FIRST)
                                 : stage >= ANGLED_FIRST ? PanelAngledShowcase.verify(mc, stage - ANGLED_FIRST)
                                 : stage >= HARDWARE_FIRST ? PanelHardwareShowcase.verify(mc, stage - HARDWARE_FIRST)
                                 : stage >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.verify(mc, stage - TEXTSIZE_FIRST)

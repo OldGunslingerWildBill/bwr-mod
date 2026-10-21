@@ -22,6 +22,11 @@ import net.minecraft.core.Direction;
  *       it joins like {@link #VERTICAL}, with the face at the front of the block.</li>
  * </ul>
  *
+ * <p>The control desks ({@link #DESK}, the owner's two small Fusion desks) are a body of their own: a level top 0.40 up
+ * and 0.375 deep (the grid is 16 columns by {@link PanelGeometry#DESK_ROWS} rows, not 16 by 16), with a raised shelf
+ * along the back. They join sideways like the vertical board, but are a single row: there is no block further down
+ * the face.
+ *
  * <p>The three surfaces of the duplex board ({@link DuplexPanelBlock}, the owner's Fusion control board, one item per
  * 1 x 2 x 4 column) are types of their own, so each joins only the same surface of the neighbouring columns:
  * <ul>
@@ -57,6 +62,7 @@ public enum PanelType {
     DUPLEX_BOARD("control_panel_duplex", "DXB"),
     DUPLEX_BENCH("control_panel_duplex", "DXN"),
     DUPLEX_HEADER("control_panel_duplex", "DXH"),
+    DESK("control_panel_desk", "DSK"),
     HEADER_TILT("control_panel_header_strip", "HDR"),
     CHAMFER_VERTICAL("control_panel_corner_vertical_chamfer", "CHV"),
     CHAMFER_BENCH("control_panel_corner_bench_chamfer", "CHB");
@@ -80,7 +86,7 @@ public enum PanelType {
     /** Whether blocks of this style can stack into more than one row. */
     public boolean hasRows() {
         return this != CONSOLE && this != DUPLEX_BENCH && this != DUPLEX_HEADER && this != HEADER_TILT
-                && this != CHAMFER_BENCH;
+                && this != CHAMFER_BENCH && this != DESK;
     }
 
     /**
@@ -99,7 +105,7 @@ public enum PanelType {
         return switch (this) {
             case VERTICAL, BACK_PANEL, DUPLEX_BOARD, CHAMFER_VERTICAL -> pos.below();
             case BENCHBOARD -> pos.below().relative(facing);
-            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER, HEADER_TILT, CHAMFER_BENCH -> null;
+            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER, HEADER_TILT, CHAMFER_BENCH, DESK -> null;
         };
     }
 
@@ -108,7 +114,7 @@ public enum PanelType {
         return switch (this) {
             case VERTICAL, BACK_PANEL, DUPLEX_BOARD, CHAMFER_VERTICAL -> pos.above();
             case BENCHBOARD -> pos.above().relative(facing.getOpposite());
-            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER, HEADER_TILT, CHAMFER_BENCH -> null;
+            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER, HEADER_TILT, CHAMFER_BENCH, DESK -> null;
         };
     }
 

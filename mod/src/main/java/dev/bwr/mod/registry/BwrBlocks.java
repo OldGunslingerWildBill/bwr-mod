@@ -406,6 +406,13 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.panel.PanelBlock> CONTROL_PANEL_BACK =
             BLOCKS.register("control_panel_back",
                     () -> new dev.bwr.mod.panel.PanelBlock(panelBoard(), dev.bwr.mod.panel.PanelType.BACK_PANEL));
+    /** The owner's control desks: a 1 m desk (one block) and a 2 m desk (two blocks, see DeskPanelBlock), a level top 0.40 up. */
+    public static final DeferredBlock<dev.bwr.mod.panel.PanelBlock> CONTROL_PANEL_DESK =
+            BLOCKS.register("control_panel_desk",
+                    () -> new dev.bwr.mod.panel.PanelBlock(panelBoard(), dev.bwr.mod.panel.PanelType.DESK));
+    public static final DeferredBlock<dev.bwr.mod.panel.DeskPanelBlock> CONTROL_PANEL_DESK_WIDE =
+            BLOCKS.register("control_panel_desk_wide",
+                    () -> new dev.bwr.mod.panel.DeskPanelBlock(panelBoard()));
     /** The duplex board: one item places a 1 x 2 x 4 column (bench, board, tilted header); see DuplexPanelBlock. */
     public static final DeferredBlock<dev.bwr.mod.panel.DuplexPanelBlock> CONTROL_PANEL_DUPLEX =
             BLOCKS.register("control_panel_duplex",

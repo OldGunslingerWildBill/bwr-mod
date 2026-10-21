@@ -33,6 +33,8 @@
     "bwr:control_panel_console",
     "bwr:control_panel_back",
     "bwr:control_panel_duplex",
+    "bwr:control_panel_desk",
+    "bwr:control_panel_desk_wide",
     "bwr:control_panel_end_cap_flat",
     "bwr:control_panel_end_cap_bench",
     "bwr:control_panel_end_cap_console",

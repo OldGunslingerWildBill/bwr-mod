@@ -32,6 +32,9 @@ public final class AssemblyAccess {
         } else if(state.getBlock() instanceof dev.bwr.mod.panel.DuplexPanelBlock) {
             BlockPos root=dev.bwr.mod.panel.DuplexPanelBlock.origin(pos,state);
             for(var cell:dev.bwr.mod.panel.DuplexCell.values())cells.add(cell.at(root,state.getValue(dev.bwr.mod.panel.PanelBlock.FACING)));
+        } else if(state.getBlock() instanceof dev.bwr.mod.panel.DeskPanelBlock) {
+            BlockPos root=dev.bwr.mod.panel.DeskPanelBlock.origin(pos,state);
+            for(var half:dev.bwr.mod.panel.DeskHalf.values())cells.add(half.at(root,state.getValue(dev.bwr.mod.panel.PanelBlock.FACING)));
         } else if(level.isLoaded(pos)) {
             var be=level.getBlockEntity(pos);
             if(be instanceof CondenserBlockEntity part) {

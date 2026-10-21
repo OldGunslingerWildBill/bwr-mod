@@ -391,6 +391,7 @@ public final class PanelTrimTests {
                 case BENCHBOARD -> "benchboard";
                 case CONSOLE -> "console";
                 case BACK_PANEL -> "back";
+                case DESK -> "desk";
                 case DUPLEX_BOARD -> "duplex_board";
                 case DUPLEX_BENCH -> "duplex_bench";
                 case DUPLEX_HEADER -> "duplex_header";
@@ -399,11 +400,12 @@ public final class PanelTrimTests {
                 case CHAMFER_BENCH -> "chamfer_bench";
             };
             PanelGeometry.Frame frame = PanelGeometry.frame(type, Direction.NORTH);
+            int rows = PanelGeometry.rows(type); // 16, except the 6 rows of a desk top
             double[][] expected = {
                     {frame.x(0, 0, 0), frame.y(0, 0, 0), frame.z(0, 0, 0)},
                     {frame.x(16, 0, 0), frame.y(16, 0, 0), frame.z(16, 0, 0)},
-                    {frame.x(16, 16, 0), frame.y(16, 16, 0), frame.z(16, 16, 0)},
-                    {frame.x(0, 16, 0), frame.y(0, 16, 0), frame.z(0, 16, 0)}};
+                    {frame.x(16, rows, 0), frame.y(16, rows, 0), frame.z(16, rows, 0)},
+                    {frame.x(0, rows, 0), frame.y(0, rows, 0), frame.z(0, rows, 0)}};
             List<Face> faces = readObj("/assets/bwr/models/block/control_panel/" + name + ".obj");
             List<Face> mounting = faces.stream().filter(f -> f.material().equals("face")).toList();
             helper.assertTrue(mounting.size() == 1 && mounting.get(0).corners().size() == 4,
@@ -417,7 +419,11 @@ public final class PanelTrimTests {
             for (Face face : faces) {
                 for (double[] c : face.corners()) {
                     double above = (c[0] - frame.ox) * frame.nx + (c[1] - frame.oy) * frame.ny + (c[2] - frame.oz) * frame.nz;
-                    helper.assertTrue(above < 1.0e-5, name + " " + face.material() + " reaches " + above + " in front of the mounting plane");
+                    // a desk's riser and shelf rise above its level top, but only behind the grid (before its row 0)
+                    double down = ((c[0] - frame.ox) * frame.vx + (c[1] - frame.oy) * frame.vy + (c[2] - frame.oz) * frame.vz)
+                            / (frame.vx * frame.vx + frame.vy * frame.vy + frame.vz * frame.vz);
+                    helper.assertTrue(above < 1.0e-5 || (type == PanelType.DESK && down < 1.0e-5),
+                            name + " " + face.material() + " reaches " + above + " in front of the mounting plane");
                     if (face.material().equals("face")) {
                         helper.assertTrue(Math.abs(above) < 1.0e-5, name + " face corner off the plane by " + above);
                     }

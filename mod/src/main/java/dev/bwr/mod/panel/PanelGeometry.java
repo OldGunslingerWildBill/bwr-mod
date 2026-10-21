@@ -53,6 +53,22 @@ public final class PanelGeometry {
     public static final double DUPLEX_HEADER_REACH = 0.5;
 
     /**
+     * The control desks (the owner's two Fusion desks, 1 block = 1 m, models in centimetres): the desk stands against the
+     * back of its block and is {@link #DESK_FRONT} deep; the level top, the operating surface, is {@link #DESK_TOP} up
+     * and runs from the foot of the riser ({@link #DESK_FACE_BACK} forward) to the front edge, so the grid is
+     * {@link #DESK_ROWS} rows deep (0.375 block = 6 cells). Behind it the riser climbs to the shelf along the back, which
+     * is {@link #DESK_BACK_HEIGHT} up. Below the front edge the desk is cut back, to {@link #DESK_FOOT} forward at the
+     * floor, for the operator's knees.
+     */
+    public static final double DESK_TOP = 0.40;
+    public static final double DESK_FACE_BACK = 0.125;
+    public static final double DESK_FRONT = 0.5;
+    public static final double DESK_BACK_HEIGHT = 0.575;
+    public static final double DESK_SHELF = 0.075;
+    public static final double DESK_FOOT = 0.2;
+    public static final int DESK_ROWS = 6;
+
+    /**
      * The angled trim blocks (see {@link PanelType#HEADER_TILT} and the chamfers). The header panel is the vertical
      * board's face at its foot, leaning back 5 degrees over one block of height; the vertical chamfer facet runs from
      * (0.75, 0.25) to (0.25, 0.75) and the bench chamfer facet is the plane lx + ly + f = 2 (local frame, see
@@ -246,6 +262,13 @@ public final class PanelGeometry {
                 drop = 1.0;
                 forward = HEADER_TILT_TAN;
             }
+            case DESK -> {
+                // Level: nothing is lost going down the face (toward the operator), the normal is straight up.
+                ly0 = DESK_TOP;
+                f0 = DESK_FACE_BACK;
+                drop = 0.0;
+                forward = 1.0;
+            }
             case DUPLEX_BENCH -> {
                 ly0 = 1.0;
                 f0 = 0.0;
@@ -296,6 +319,18 @@ public final class PanelGeometry {
                     dev.bwr.mod.panel.trim.TrimPiece.CORNER_VERTICAL_CHAMFER, facing, true);
             case CHAMFER_BENCH -> shape = dev.bwr.mod.panel.trim.TrimGeometry.shape(
                     dev.bwr.mod.panel.trim.TrimPiece.CORNER_BENCH_CHAMFER, facing, true);
+            case DESK -> {
+                // The solid under the top: the front falls from the foot to the top edge, in slices that reach the
+                // slope at their tops, so a ray to the face always finds it; then the riser and shelf behind the face.
+                for (int k = 0; k < 8; k++) {
+                    double top = DESK_TOP * (k + 1) / 8.0;
+                    shape = Shapes.join(shape,
+                            box(facing, 0, DESK_TOP * k / 8.0, 0, 1, top,
+                                    DESK_FOOT + (DESK_FRONT - DESK_FOOT) * top / DESK_TOP),
+                            BooleanOp.OR);
+                }
+                shape = Shapes.join(shape, box(facing, 0, DESK_TOP, 0, 1, DESK_BACK_HEIGHT, DESK_FACE_BACK), BooleanOp.OR);
+            }
             case DUPLEX_BOARD -> shape = box(facing, 0, 0, DUPLEX_SLAB_REAR, 1, 1, 1);
             case DUPLEX_BENCH -> {
                 for (int k = 0; k < 8; k++) {
@@ -335,6 +370,7 @@ public final class PanelGeometry {
      * on a facet that is smaller than it:
      * <ul>
      *   <li>{@link PanelType#CHAMFER_VERTICAL}: the facet is 11.31 cells wide, so columns 0 to 10;</li>
+     *   <li>{@link PanelType#DESK}: the level top is {@link #DESK_ROWS} rows deep, so rows 0 to 5;</li>
      *   <li>{@link PanelType#CHAMFER_BENCH}: the facet is a triangle that narrows from 22.6 cells at the top to a point
      *       at the bottom, so a cell is usable when both its lower corners are on the triangle.</li>
      * </ul>
@@ -345,12 +381,18 @@ public final class PanelGeometry {
         }
         return switch (type) {
             case CHAMFER_VERTICAL -> cx < CHAMFER_VERTICAL_COLUMNS;
+            case DESK -> cy < DESK_ROWS;
             case CHAMFER_BENCH -> {
                 double half = CHAMFER_BENCH_HALF_TOP_CELLS * (1.0 - (cy + 1) / (double) GRID);
                 yield Math.max(Math.abs(cx - GRID / 2.0), Math.abs(cx + 1 - GRID / 2.0)) <= half + 1.0e-9;
             }
             default -> true;
         };
+    }
+
+    /** How many rows of the 16-cell grid of a block of this style are mounting surface: all 16, but 6 on a desk top. */
+    public static int rows(PanelType type) {
+        return type == PanelType.DESK ? DESK_ROWS : GRID;
     }
 
     /** A box given in the local frame, rotated to world for {@code facing}. */

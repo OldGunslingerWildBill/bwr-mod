@@ -38,6 +38,12 @@ public final class PanelFinishes {
             for (DuplexCell cell : DuplexCell.values()) {
                 cells.add(cell.at(origin, facing));
             }
+        } else if (block instanceof DeskPanelBlock) {
+            Direction facing = state.getValue(PanelBlock.FACING);
+            BlockPos origin = DeskPanelBlock.origin(pos, state);
+            for (DeskHalf half : DeskHalf.values()) {
+                cells.add(half.at(origin, facing));
+            }
         } else if (block instanceof AssemblyBlock assembly && assembly.cellCount() > 1) {
             Direction facing = state.getValue(AssemblyBlock.FACING);
             BlockPos origin = assembly.origin(pos, state);

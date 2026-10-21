@@ -44,6 +44,7 @@ public class PanelBlock extends BaseEntityBlock {
     private static final MapCodec<PanelBlock> CODEC_BENCHBOARD = simpleCodec(p -> new PanelBlock(p, PanelType.BENCHBOARD));
     private static final MapCodec<PanelBlock> CODEC_CONSOLE = simpleCodec(p -> new PanelBlock(p, PanelType.CONSOLE));
     private static final MapCodec<PanelBlock> CODEC_BACK_PANEL = simpleCodec(p -> new PanelBlock(p, PanelType.BACK_PANEL));
+    private static final MapCodec<PanelBlock> CODEC_DESK = simpleCodec(p -> new PanelBlock(p, PanelType.DESK));
 
     private final PanelType type;
 
@@ -74,6 +75,7 @@ public class PanelBlock extends BaseEntityBlock {
             case BENCHBOARD -> CODEC_BENCHBOARD;
             case CONSOLE -> CODEC_CONSOLE;
             case BACK_PANEL -> CODEC_BACK_PANEL;
+            case DESK -> CODEC_DESK; // the 2 m desk (DeskPanelBlock) answers with its own codec
             case DUPLEX_BOARD, DUPLEX_BENCH, DUPLEX_HEADER -> DuplexPanelBlock.CODEC;
             case HEADER_TILT, CHAMFER_VERTICAL, CHAMFER_BENCH ->
                     throw new IllegalStateException("angled trim blocks answer with their own codec");

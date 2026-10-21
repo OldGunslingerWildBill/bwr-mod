@@ -617,7 +617,8 @@ public final class FurnitureClientCheck {
         public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
             graphics.fill(0, 0, width, height, 0xFF202830);
             Block[] blocks = {BwrBlocks.CONTROL_PANEL_VERTICAL.get(), BwrBlocks.CONTROL_PANEL_BENCHBOARD.get(),
-                    BwrBlocks.CONTROL_PANEL_CONSOLE.get(), BwrBlocks.CONTROL_PANEL_DUPLEX.get(), BwrBlocks.CONTROL_PANEL_END_CAP_FLAT.get(),
+                    BwrBlocks.CONTROL_PANEL_CONSOLE.get(), BwrBlocks.CONTROL_PANEL_DUPLEX.get(), BwrBlocks.CONTROL_PANEL_DESK.get(),
+                    BwrBlocks.CONTROL_PANEL_DESK_WIDE.get(), BwrBlocks.CONTROL_PANEL_END_CAP_FLAT.get(),
                     BwrBlocks.CONTROL_PANEL_HEADER_STRIP.get(), BwrBlocks.CONTROL_PANEL_PLINTH_BASE.get(), BwrBlocks.RELAY_CABINET.get(),
                     BwrBlocks.OPERATOR_DESK.get(), BwrBlocks.SUPERVISOR_DESK.get(), BwrBlocks.WALL_DISPLAY.get(), BwrBlocks.MIMIC_BAND_CREAM.get()};
             float scale = 3.2f;

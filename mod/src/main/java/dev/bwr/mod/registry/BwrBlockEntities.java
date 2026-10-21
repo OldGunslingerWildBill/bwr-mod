@@ -199,6 +199,8 @@ public final class BwrBlockEntities {
                     BwrBlocks.CONTROL_PANEL_CONSOLE.get(),
                     BwrBlocks.CONTROL_PANEL_BACK.get(),
                     BwrBlocks.CONTROL_PANEL_DUPLEX.get(),
+                    BwrBlocks.CONTROL_PANEL_DESK.get(),
+                    BwrBlocks.CONTROL_PANEL_DESK_WIDE.get(),
                     BwrBlocks.CONTROL_PANEL_HEADER_STRIP.get(),
                     BwrBlocks.CONTROL_PANEL_HEADER_CANOPY.get(),
                     BwrBlocks.CONTROL_PANEL_CORNER_VERTICAL_CHAMFER.get(),
