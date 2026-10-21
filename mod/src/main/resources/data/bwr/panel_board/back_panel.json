@@ -1,0 +1,19 @@
+{
+ "format": 1,
+ "title": "Back panel",
+ "description": "Four full-depth back panel blocks wide and two high, an upright board. Blank: mount what you like on it.",
+ "order": 2,
+ "frames": [
+  {
+   "id": "main",
+   "kind": "back_panel",
+   "columns": 4,
+   "rows": 2,
+   "at": [
+    0,
+    1,
+    0
+   ]
+  }
+ ]
+}

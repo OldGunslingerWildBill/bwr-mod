@@ -68,8 +68,9 @@ public final class PremadeBoardTests {
     private static final int ORIGIN_X = 163_700;
     private static final int ORIGIN_Z = 163_700;
     private static final int FLOOR_Y = 100;
-    private static final String[] SHIPPED = {"rod_control", "rpv_level_pressure_flow", "reactor_scram_rps", "eccs_p601",
-            "neutron_monitoring"};
+    /** The shipped shapes, in blueprint order: blank boards named by their form. */
+    private static final String[] SHIPPED = {"vertical_board", "back_panel", "benchboard", "console",
+            "back_panel_with_benchboard", "duplex_board", "control_desk_1m", "control_desk_2m"};
 
     private interface Body {
         void run(ServerLevel level, BlockPos floor) throws Exception;
@@ -153,6 +154,53 @@ public final class PremadeBoardTests {
     // ---- the shipped templates
 
     @GameTest(template = "empty")
+    public static void deskFramesAreOneRowSixCellsDeepAndCostTheDeskItems(GameTestHelper h) {
+        // the parser: a desk frame is a single row whose face is 16 cells per block by 6 deep
+        BoardTemplateParser.Result one = parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk\",\"columns\":4}],"
+                + "\"components\":[{\"on\":\"a.face\",\"type\":\"bwr:lamp\",\"size\":[2,2],\"at\":[62,4]}]}");
+        check(h, one.ok(), "a desk with a lamp on its last cell: " + one.problems());
+        BoardTemplate.Surface face = one.template().surface("a.face");
+        check(h, face.width() == 64 && face.height() == 6 && face.panelType() == dev.bwr.mod.panel.PanelType.DESK,
+                "a 4 desk face is 64 x 6 cells: " + face);
+        check(h, mentions(parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk\",\"columns\":2}],\"components\":["
+                + "{\"on\":\"a.face\",\"type\":\"bwr:lamp\",\"size\":[2,2],\"at\":[4,5]}]}"), "not inside"), "the air in front of the desk takes nothing");
+        check(h, mentions(parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk\",\"columns\":2,\"rows\":2}]}"), "one row"),
+                "a desk has one row");
+        BoardTemplateParser.Result wide = parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk_wide\",\"columns\":2}]}");
+        check(h, wide.ok() && wide.template().surface("a.face").width() == 64, "two 2 m desks are 64 cells wide: " + wide.problems());
+        check(h, mentions(parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk_wide\",\"columns\":9}]}"), "columns must be 1 to 8"),
+                "a run of 2 m desks counts both blocks of each against the widest group");
+        check(h, mentions(parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk\",\"columns\":2},"
+                + "{\"id\":\"b\",\"kind\":\"desk_wide\",\"columns\":1}]}"), "also used by another frame"), "desks share no block");
+        // the plan: 1 m desks one block each, 2 m desks right half (pays) and left half (free), both facing as the board
+        for (Direction facing : Direction.Plane.HORIZONTAL) {
+            BoardPlan small = new BoardPlan(shipped(h, "control_desk_1m"), BlockPos.ZERO, facing);
+            check(h, small.blocks().size() == 4 && small.blocks().stream().allMatch(b -> b.item() == BwrItems.CONTROL_PANEL_DESK.get()
+                    && b.state().getValue(PanelBlock.FACING) == facing), "1 m desks: " + small.blocks());
+            BoardPlan big = new BoardPlan(shipped(h, "control_desk_2m"), BlockPos.ZERO, facing);
+            check(h, big.blocks().size() == 4 && big.panelPositions().size() == 4, "2 m desks are four panel blocks: " + big.blocks());
+            for (BoardPlan.Block block : big.blocks()) {
+                var half = block.state().getValue(dev.bwr.mod.panel.DeskPanelBlock.HALF);
+                check(h, block.state().getValue(PanelBlock.FACING) == facing && block.item() == (half == dev.bwr.mod.panel.DeskHalf.RIGHT
+                        ? BwrItems.CONTROL_PANEL_DESK_WIDE.get() : null), "a 2 m desk half: " + block);
+                // the other half is where the desk item puts it: the left half to the operator's left of the right one
+                if (half == dev.bwr.mod.panel.DeskHalf.RIGHT) {
+                    BlockPos left = dev.bwr.mod.panel.DeskHalf.LEFT.at(block.pos(), facing);
+                    check(h, big.blocks().stream().anyMatch(b -> b.pos().equals(left)
+                            && b.state().getValue(dev.bwr.mod.panel.DeskPanelBlock.HALF) == dev.bwr.mod.panel.DeskHalf.LEFT),
+                            "no left half beside the right half at " + block.pos());
+                }
+            }
+        }
+        // survival costs the desk items, one per 1 m desk and one per 2 m desk (not per block)
+        Map<Item, Integer> small = BoardPlacer.materials(new BoardPlan(shipped(h, "control_desk_1m"), BlockPos.ZERO, Direction.NORTH));
+        Map<Item, Integer> big = BoardPlacer.materials(new BoardPlan(shipped(h, "control_desk_2m"), BlockPos.ZERO, Direction.NORTH));
+        check(h, small.size() == 1 && small.get(BwrItems.CONTROL_PANEL_DESK.get()) == 4, "1 m desk bill: " + small);
+        check(h, big.size() == 1 && big.get(BwrItems.CONTROL_PANEL_DESK_WIDE.get()) == 2, "2 m desk bill: " + big);
+        h.succeed();
+    }
+
+    @GameTest(template = "empty")
     public static void everyShippedBoardParsesAndValidates(GameTestHelper h) {
         var manager = h.getLevel().getServer().getResourceManager();
         Map<ResourceLocation, net.minecraft.server.packs.resources.Resource> files =
@@ -191,50 +239,62 @@ public final class PremadeBoardTests {
     }
 
     @GameTest(template = "empty")
-    public static void theShippedBoardsAreTheFiveOfTheResearchAndKeepTheirKeyParts(GameTestHelper h) {
-        BoardTemplate rod = shipped(h, "rod_control");
-        check(h, has(rod, "bwr:full_core_display") && has(rod, "bwr:rod_select_matrix") && count(rod, "bwr:pushbutton") >= 7
-                && has(rod, "bwr:key_switch") && !rod.reserved().isEmpty(), "rod control: " + summary(rod));
-        BoardTemplate level = shipped(h, "rpv_level_pressure_flow");
-        check(h, count(level, "bwr:bar_gauge") == 5 && has(level, "bwr:paperless_recorder") && has(level, "bwr:strip_chart")
-                && level.reserved().size() == 2 && level.reserved().stream().allMatch(r -> r.forType().equals("bwr:controller_station")),
-                "RPV level: " + summary(level));
-        BoardTemplate rps = shipped(h, "reactor_scram_rps");
-        check(h, count(rps, "bwr:rps_trip") == 2 && has(rps, "bwr:key_switch") && has(rps, "bwr:rotary_selector")
-                && count(rps, "bwr:lamp") == 8, "RPS: " + summary(rps));
-        // the manual scram is the A1 / B1 channels; A2 / B2 is the fire backup, apart from it, with its own outputs and legends
-        var trips = rps.components().stream().filter(c -> c.type().id().toString().equals("bwr:rps_trip")).toList();
-        var primary = trips.stream().filter(c -> c.label().equals("MAN-SCRAM-A1B1")).findFirst().orElse(null);
-        var backup = trips.stream().filter(c -> c.label().equals("BKUP-SCRAM-A2B2")).findFirst().orElse(null);
-        check(h, primary != null && backup != null && trips.size() == 2, "RPS: a primary A1/B1 and a backup A2/B2 assembly: " + trips);
-        check(h, primary.config().getString("LegendA").equals("A1") && primary.config().getString("LegendB").equals("B1")
-                && backup.config().getString("LegendA").contains("A2") && backup.config().getString("LegendB").contains("B2")
-                && backup.config().getString("LegendA").startsWith("BK"), "RPS legends: " + primary.config() + " " + backup.config());
-        check(h, primary.caption().isEmpty() && backup.caption().isEmpty(), "RPS assemblies carry their own legends, no loose caption");
-        check(h, backup.x() - primary.x() >= 32, "RPS: the backup is apart from the primary: " + primary.x() + " and " + backup.x());
-        for (var comp : List.of(primary, backup)) {
-            var data = comp.type().createData();
-            check(h, comp.type().outputPorts(data).size() == 2, "each assembly has separate outputs for its two buttons");
+    public static void theShippedBoardsAreBlankShapesNamedByTheirForm(GameTestHelper h) {
+        List<BoardTemplate> ordered = BoardTemplates.ordered();
+        List<String> ids = new ArrayList<>();
+        for (BoardTemplate each : ordered) {
+            if (each.id().getNamespace().equals("bwr")) {
+                ids.add(each.id().getPath());
+            }
         }
-        BoardTemplate eccs = shipped(h, "eccs_p601");
-        check(h, count(eccs, "bwr:push_turn_switch") == 4 && count(eccs, "bwr:control_switch") == 4
-                && count(eccs, "bwr:rotary_selector") >= 22 && !eccs.mimic().isEmpty() && has(eccs, "bwr:mimic_symbol"),
-                "ECCS: " + summary(eccs));
-        BoardTemplate neutron = shipped(h, "neutron_monitoring");
-        check(h, count(neutron, "bwr:bar_gauge") == 6 && count(neutron, "bwr:edgewise_gauge_vertical") == 8
-                && count(neutron, "bwr:strip_chart") == 2 && count(neutron, "bwr:dial_gauge") == 16, "neutron: " + summary(neutron));
-        for (BoardTemplate each : BoardTemplates.ordered()) {
-            check(h, count(each, "bwr:annunciator_control") == 1, each.id() + " has no annunciator control module: " + summary(each));
+        check(h, ids.equals(List.of(SHIPPED)), "the shipped boards, in blueprint order, are " + List.of(SHIPPED) + ", not " + ids);
+        for (String name : SHIPPED) {
+            BoardTemplate template = shipped(h, name);
+            // blank: panel blocks only, nothing mounted, no tape, no reserved space, no notes, and no reactor function in the name
+            check(h, template.components().isEmpty() && template.reserved().isEmpty() && template.mimic().isEmpty()
+                    && template.todo().isEmpty(), name + " is not blank: " + summary(template));
+            check(h, !template.frames().isEmpty() && !template.title().isBlank(), name + ": no frames or no title");
+            String words = (name + " " + template.title() + " " + template.description() + " " + template.source()).toLowerCase();
+            for (String function : List.of("rod", "rpv", "rps", "eccs", "p601", "neutron", "scram", "level", "reactor")) {
+                check(h, !words.contains(function), name + " names a plant function (" + function + "): " + words);
+            }
+            // every frame is a valid panel or trim block: it has a surface, and the plan makes only panel blocks that exist
+            for (BoardTemplate.Frame frame : template.frames()) {
+                check(h, !frame.surfaces().isEmpty() && frame.columns() >= 1 && frame.rows() >= 1, name + ": frame " + frame.id());
+                for (BoardTemplate.Surface surface : frame.surfaces()) {
+                    check(h, surface.width() > 0 && surface.height() > 0 && surface.panelType() != null, name + ": surface " + surface.id());
+                }
+            }
+            BoardPlan plan = new BoardPlan(template, BlockPos.ZERO, Direction.NORTH);
+            check(h, !plan.blocks().isEmpty() && !plan.panelPositions().isEmpty() && plan.panelPositions().size() <= plan.blocks().size(),
+                    name + ": no panel blocks");
+            for (BoardPlan.Block block : plan.blocks()) {
+                // a duplex column also has body cells with no item (the item of its column pays for them), and so has the left
+                // half of a 2 m desk
+                boolean bodyCell = block.item() == null && (block.state().getBlock() instanceof dev.bwr.mod.panel.DuplexPanelBlock
+                        || block.state().getBlock() instanceof dev.bwr.mod.panel.DeskPanelBlock);
+                check(h, block.state().getBlock() instanceof PanelBlock && (bodyCell || block.item() != null
+                        && block.item() != net.minecraft.world.item.Items.AIR), name + ": " + block.state() + " is not a panel block with an item");
+            }
+            check(h, BoardPlacer.limits(template) == null, name + ": " + BoardPlacer.limits(template));
+        }
+        // any board of any data pack, not only the shipped shapes: every component is a registered type with an item and a
+        // size, and no reserved space is left
+        for (BoardTemplate each : ordered) {
+            check(h, each.reserved().isEmpty(), each.id() + " still has a reserved space");
+            for (BoardTemplate.Comp comp : each.components()) {
+                check(h, ComponentTypes.get(comp.type().id()) == comp.type() && comp.type().item() != net.minecraft.world.item.Items.AIR
+                        && comp.w() > 0 && comp.h() > 0, each.id() + ": " + comp.type().id() + " is not a registered type with a size");
+            }
+        }
+        // a blueprint saved with an id that no longer exists (the five function boards were removed) falls back to the first board
+        for (String retired : List.of("rod_control", "rpv_level_pressure_flow", "reactor_scram_rps", "eccs_p601", "neutron_monitoring")) {
+            ItemStack old = BoardBlueprintItem.stackFor(ResourceLocation.fromNamespaceAndPath("bwr", retired));
+            check(h, BoardTemplates.get(ResourceLocation.fromNamespaceAndPath("bwr", retired)) == null, retired + " is still loaded");
+            check(h, BoardBlueprintItem.template(old) == ordered.get(0), "an old blueprint for " + retired + " must fall back to the first board");
+            check(h, !old.getHoverName().getString().isEmpty(), "an old blueprint has no name");
         }
         h.succeed();
-    }
-
-    private static boolean has(BoardTemplate template, String type) {
-        return count(template, type) > 0;
-    }
-
-    private static long count(BoardTemplate template, String type) {
-        return template.components().stream().filter(c -> c.type().id().toString().equals(type)).count();
     }
 
     private static String summary(BoardTemplate template) {
@@ -418,35 +478,20 @@ public final class PremadeBoardTests {
         return expected.equals(actual);
     }
 
-    @GameTest(template = "empty", timeoutTicks = 800)
-    public static void rodControlPlacesExactlyItsComponents(GameTestHelper h) {
-        fixture(h, 0, (level, floor) -> verifyPlaced(h, level, placeFree(h, level, floor, shipped(h, "rod_control"), Direction.NORTH)));
-    }
-
-    @GameTest(template = "empty", timeoutTicks = 800)
-    public static void rpvLevelPressureFlowPlacesExactlyItsComponents(GameTestHelper h) {
-        fixture(h, 1, (level, floor) -> verifyPlaced(h, level, placeFree(h, level, floor, shipped(h, "rpv_level_pressure_flow"), Direction.NORTH)));
-    }
-
-    @GameTest(template = "empty", timeoutTicks = 800)
-    public static void rpsScramPlacesExactlyItsComponents(GameTestHelper h) {
-        fixture(h, 2, (level, floor) -> verifyPlaced(h, level, placeFree(h, level, floor, shipped(h, "reactor_scram_rps"), Direction.NORTH)));
-    }
-
     @GameTest(template = "empty", timeoutTicks = 1200)
-    public static void eccsBenchPlacesExactlyItsComponents(GameTestHelper h) {
-        fixture(h, 3, (level, floor) -> verifyPlaced(h, level, placeFree(h, level, floor, shipped(h, "eccs_p601"), Direction.NORTH)));
-    }
-
-    @GameTest(template = "empty", timeoutTicks = 800)
-    public static void neutronMonitoringPlacesExactlyItsComponents(GameTestHelper h) {
-        fixture(h, 4, (level, floor) -> verifyPlaced(h, level, placeFree(h, level, floor, shipped(h, "neutron_monitoring"), Direction.NORTH)));
+    public static void everyShapePlacesExactlyItsPanelBlocks(GameTestHelper h) {
+        fixture(h, 0, (level, floor) -> {
+            for (String name : SHIPPED) {
+                verifyPlaced(h, level, placeFree(h, level, floor, shipped(h, name), Direction.NORTH));
+                clear(level, floor);
+            }
+        });
     }
 
     @GameTest(template = "empty", timeoutTicks = 1200)
     public static void aBoardFacesAnyWayAndIsRemovedWithItsParts(GameTestHelper h) {
         fixture(h, 5, (level, floor) -> {
-            BoardTemplate template = shipped(h, "reactor_scram_rps");
+            BoardTemplate template = shipped(h, "duplex_board");
             for (Direction facing : Direction.Plane.HORIZONTAL) {
                 BoardPlan plan = placeFree(h, level, floor, template, facing);
                 verifyPlaced(h, level, plan);
@@ -463,7 +508,7 @@ public final class PremadeBoardTests {
     @GameTest(template = "empty", timeoutTicks = 600)
     public static void aBlockedSiteIsRefusedAndNothingChanges(GameTestHelper h) {
         fixture(h, 6, (level, floor) -> {
-            BoardTemplate template = shipped(h, "neutron_monitoring");
+            BoardTemplate template = shipped(h, "duplex_board");
             FakePlayer player = player(level, "BoardBlocked", GameType.CREATIVE);
             BlockPos origin = floor.above();
             BoardPlan plan = new BoardPlan(template, origin, Direction.NORTH);
@@ -489,7 +534,7 @@ public final class PremadeBoardTests {
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void aSiteOutsideTheWorldIsRefused(GameTestHelper h) {
         fixture(h, 7, (level, floor) -> {
-            BoardTemplate template = shipped(h, "rod_control");
+            BoardTemplate template = shipped(h, "duplex_board");
             FakePlayer player = player(level, "BoardHigh", GameType.CREATIVE);
             BoardPlacer.Outcome high = BoardPlacer.place(level, player, template, new BlockPos(floor.getX(), level.getMaxBuildHeight() - 2, floor.getZ()),
                     Direction.NORTH);
@@ -503,7 +548,7 @@ public final class PremadeBoardTests {
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void aPlayerWhoMayNotBuildThereIsRefusedAndNothingChanges(GameTestHelper h) {
         fixture(h, 10, (level, floor) -> {
-            BoardTemplate template = shipped(h, "reactor_scram_rps");
+            BoardTemplate template = shipped(h, "duplex_board");
             FakePlayer player = player(level, "BoardForbidden", GameType.CREATIVE);
             BlockPos origin = floor.above();
             BoardPlan plan = new BoardPlan(template, origin, Direction.NORTH);
@@ -529,17 +574,14 @@ public final class PremadeBoardTests {
     @GameTest(template = "empty", timeoutTicks = 1000)
     public static void survivalPaysThePartsFromTheInventoryAndListsWhatIsMissing(GameTestHelper h) {
         fixture(h, 8, (level, floor) -> {
-            BoardTemplate template = shipped(h, "rod_control");
+            BoardTemplate template = shipped(h, "back_panel_with_benchboard");
             BlockPos origin = floor.above();
             BoardPlan plan = new BoardPlan(template, origin, Direction.NORTH);
             Map<Item, Integer> bill = BoardPlacer.materials(plan);
             int items = bill.values().stream().mapToInt(Integer::intValue).sum();
-            check(h, bill.get(BwrItems.CONTROL_PANEL_BACK.get()) == 50 && bill.get(BwrItems.CONTROL_PANEL_BENCHBOARD.get()) == 10,
-                    "panel blocks in the bill: " + bill);
-            check(h, bill.get(BwrItems.FULL_CORE_DISPLAY.get()) == 1 && bill.get(BwrItems.ROD_SELECT_MATRIX.get()) == 1
-                    && bill.get(BwrItems.MIMIC_TAPE.get()) >= 2, "parts in the bill: " + bill);
-            check(h, items == plan.blocks().size() + template.components().size() + bill.get(BwrItems.MIMIC_TAPE.get()),
-                    "the bill does not add up: " + items);
+            check(h, bill.get(BwrItems.CONTROL_PANEL_BACK.get()) == 8 && bill.get(BwrItems.CONTROL_PANEL_BENCHBOARD.get()) == 4
+                    && bill.size() == 2, "panel blocks in the bill: " + bill);
+            check(h, items == plan.blocks().size() + template.components().size(), "the bill does not add up: " + items);
             FakePlayer player = player(level, "BoardSurvival", GameType.SURVIVAL);
             // empty handed: refused, everything listed, nothing placed
             BoardPlacer.Outcome none = BoardPlacer.place(level, player, template, origin, Direction.NORTH);
@@ -566,7 +608,7 @@ public final class PremadeBoardTests {
             fill(player, bill, 0);
             player.getInventory().add(new ItemStack(BwrItems.LAMP.get(), 5));
             check(h, BoardPlacer.place(level, player, template, origin, Direction.NORTH).ok(), "placing with spare lamps");
-            check(h, BoardPlacer.count(player, BwrItems.LAMP.get()) == 5 + 0 && held(player, bill) == 5, "spare items must stay: " + held(player, bill));
+            check(h, BoardPlacer.count(player, BwrItems.LAMP.get()) == 5 && held(player, bill) == 0, "spare items must stay: " + held(player, bill));
         });
     }
 
@@ -624,7 +666,7 @@ public final class PremadeBoardTests {
                 check(h, BoardBlueprintItem.template(BoardBlueprintItem.stackFor(template.id())) == template, "stackFor " + template.id());
             }
             // use on the floor: the board stands where the click was, facing the player
-            BoardTemplate rps = shipped(h, "reactor_scram_rps");
+            BoardTemplate rps = shipped(h, "duplex_board");
             ItemStack rpsStack = BoardBlueprintItem.stackFor(rps.id());
             player.setItemInHand(InteractionHand.MAIN_HAND, rpsStack);
             BlockPos origin = floor.above();
@@ -645,7 +687,7 @@ public final class PremadeBoardTests {
 
     @GameTest(template = "empty")
     public static void theSyncPacketCarriesABoardToTheClientIntact(GameTestHelper h) {
-        BoardTemplate template = shipped(h, "eccs_p601");
+        BoardTemplate template = shipped(h, "duplex_board");
         String text = BoardTemplates.sources().get(template.id());
         check(h, text != null && text.length() < BoardTemplates.MAX_JSON_CHARS, "the board's JSON is kept for the sync: " + (text == null ? -1 : text.length()));
         RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), h.getLevel().registryAccess());

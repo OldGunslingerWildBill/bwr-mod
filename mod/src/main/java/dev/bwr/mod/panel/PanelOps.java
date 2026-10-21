@@ -90,7 +90,7 @@ public final class PanelOps {
         if (!(stack.getItem() instanceof ComponentItem item) || item.type() == null) {
             return PanelGroup.Result.BAD_ARGUMENTS;
         }
-        if (!inReach(player, anchor) || !AssemblyAccess.permitted(level, player, anchor)) {
+        if (!AssemblyAccess.mayEdit(player) || !inReach(player, anchor) || !AssemblyAccess.permitted(level, player, anchor)) {
             return PanelGroup.Result.BAD_ARGUMENTS;
         }
         ComponentType type = item.type();
@@ -163,8 +163,8 @@ public final class PanelOps {
     /** Removes a component and drops its item. The player must hold the wrench. */
     public static boolean remove(ServerPlayer player, BlockPos ownerPos, int id) {
         ServerLevel level = player.serverLevel();
-        if (heldWrench(player).isEmpty() || !inReach(player, ownerPos) || !level.isLoaded(ownerPos)
-                || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
+        if (!AssemblyAccess.mayEdit(player) || heldWrench(player).isEmpty() || !inReach(player, ownerPos)
+                || !level.isLoaded(ownerPos) || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
             return false;
         }
         PanelComponent component = owner.component(id);
@@ -227,8 +227,8 @@ public final class PanelOps {
      */
     public static boolean configure(ServerPlayer player, BlockPos ownerPos, int id, CompoundTag edit) {
         ServerLevel level = player.serverLevel();
-        if (heldWrench(player).isEmpty() || !inReach(player, ownerPos) || !AssemblyAccess.permitted(level, player, ownerPos)
-                || !level.isLoaded(ownerPos) || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
+        if (!AssemblyAccess.mayEdit(player) || heldWrench(player).isEmpty() || !inReach(player, ownerPos)
+                || !AssemblyAccess.permitted(level, player, ownerPos) || !level.isLoaded(ownerPos) || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
             return false;
         }
         PanelComponent component = owner.component(id);
@@ -260,9 +260,15 @@ public final class PanelOps {
                 if (powerNote != null) {
                     player.displayClientMessage(powerNote, true);
                 }
+                double[] outputsBefore = new double[component.outputCount()];
+                for (int i = 0; i < outputsBefore.length; i++) {
+                    outputsBefore[i] = component.output(i);
+                }
                 component.data().load(merged);
                 component.syncPorts();
                 type.onLoaded(component); // latched outputs and derived state follow the new config
+                // An output the edit itself moved (a latched control re-centred by Spring) reaches the sinks like a move.
+                type.configured(new ComponentType.OperateContext(level, player, owner, component), outputsBefore);
                 component.touch();
             }
         }
@@ -297,7 +303,7 @@ public final class PanelOps {
     /** A press / release / turn / set on an input component. */
     public static boolean operate(ServerPlayer player, BlockPos ownerPos, int id, OperateAction action, double value) {
         ServerLevel level = player.serverLevel();
-        if (action == null || !Double.isFinite(value) || Math.abs(value) > 1.0e6 || !inReach(player, ownerPos)
+        if (!AssemblyAccess.mayOperate(player) || action == null || !Double.isFinite(value) || Math.abs(value) > 1.0e6 || !inReach(player, ownerPos)
                 || !AssemblyAccess.permitted(level, player, ownerPos) || !level.isLoaded(ownerPos)
                 || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
             return false;
@@ -315,7 +321,7 @@ public final class PanelOps {
      */
     public static boolean recorderMessage(ServerPlayer player, BlockPos ownerPos, int id, String text) {
         ServerLevel level = player.serverLevel();
-        if (text == null || !inReach(player, ownerPos) || !AssemblyAccess.permitted(level, player, ownerPos) || !level.isLoaded(ownerPos)
+        if (!AssemblyAccess.mayOperate(player) || text == null || !inReach(player, ownerPos) || !AssemblyAccess.permitted(level, player, ownerPos) || !level.isLoaded(ownerPos)
                 || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
             return false;
         }

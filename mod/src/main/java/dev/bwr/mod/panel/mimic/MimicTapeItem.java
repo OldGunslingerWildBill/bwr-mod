@@ -46,7 +46,8 @@ public final class MimicTapeItem extends Item {
 
     /** The path being drawn with this stack, or null. */
     public static MimicDraft draft(ItemStack stack) {
-        return stack.get(BwrDataComponents.MIMIC_DRAFT.get());
+        MimicDraft draft = stack.get(BwrDataComponents.MIMIC_DRAFT.get());
+        return draft != null && draft.valid() ? draft : null; // a hand-made stack with an odd or empty list is no draft
     }
 
     /** The tape in either hand, main hand first, or empty. */

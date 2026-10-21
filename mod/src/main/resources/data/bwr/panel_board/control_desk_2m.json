@@ -1,0 +1,19 @@
+{
+ "format": 1,
+ "title": "Control desk (2 m)",
+ "description": "Two 2 m control desks side by side, four blocks wide in all (each desk is one item and two blocks). Blank: mount what you like on it.",
+ "order": 8,
+ "frames": [
+  {
+   "id": "main",
+   "kind": "desk_wide",
+   "columns": 2,
+   "rows": 1,
+   "at": [
+    0,
+    0,
+    0
+   ]
+  }
+ ]
+}

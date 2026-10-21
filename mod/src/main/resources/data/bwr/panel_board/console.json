@@ -1,0 +1,19 @@
+{
+ "format": 1,
+ "title": "Console",
+ "description": "A run of four console blocks, the 15 degree desk. Blank: mount what you like on it.",
+ "order": 4,
+ "frames": [
+  {
+   "id": "main",
+   "kind": "console",
+   "columns": 4,
+   "rows": 1,
+   "at": [
+    0,
+    0,
+    0
+   ]
+  }
+ ]
+}

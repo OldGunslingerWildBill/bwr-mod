@@ -116,10 +116,17 @@ public final class DuplexPanelBlock extends PanelBlock {
                     || !level.isUnobstructed(bench.setValue(CELL, cell), at, collision))) {
                 return null;
             }
-            // A column that would grow a surface past the configured group size is not placed (the upper board block
-            // is in the lower one's group).
-            if (cell.panelType() != null && cell != DuplexCell.BOARD_UPPER
-                    && !PanelGroup.placementAllowed(level, at, cell.panelType(), facing)) {
+        }
+        // A column that would grow a surface past the configured group size is not placed. The blocks of one surface are
+        // measured together (the two board blocks are one group), not one at a time.
+        java.util.Map<PanelType, java.util.List<BlockPos>> surfaces = new java.util.EnumMap<>(PanelType.class);
+        for (DuplexCell cell : DuplexCell.values()) {
+            if (cell.panelType() != null) {
+                surfaces.computeIfAbsent(cell.panelType(), type -> new java.util.ArrayList<>()).add(cell.at(origin, facing));
+            }
+        }
+        for (java.util.Map.Entry<PanelType, java.util.List<BlockPos>> surface : surfaces.entrySet()) {
+            if (!PanelGroup.placementAllowed(level, surface.getValue(), surface.getKey(), facing)) {
                 return null;
             }
         }

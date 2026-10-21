@@ -710,10 +710,11 @@ and without shader packs.
 
 ## 2e. Premade boards: the board blueprint
 
-A **board blueprint** (`bwr:board_blueprint`) puts a whole realistic BWR control board in the world in one click: the panel
-blocks, every instrument, switch, lamp, nameplate and annunciator window on them with its real labels, ranges and bands, and
-the mimic tape and demarcation lines. **Nothing is wired**: no component has a source or a sink, and nothing acts on the
-plant. You wire it with the Networking Wrench like any board you built by hand.
+A **board blueprint** (`bwr:board_blueprint`) puts a run of panel blocks in the world in one click, arranged the way they are
+meant to stand together. The shipped boards are **blank shapes named by their form** (a vertical board, a benchboard, a duplex
+board ...): panel blocks only, with no components, no mimic tape and no function, because a board is a board and you mount on it
+whatever you want. Nothing is wired, as there is nothing on it. (The template format below can still carry a full board with
+components, labels and tape for a data pack.)
 
 ### Using it
 
@@ -734,36 +735,47 @@ plant. You wire it with the Networking Wrench like any board you built by hand.
 * **Creative: free.** **Survival: the board is paid for from your inventory** when it is placed: the panel blocks (one duplex
   item per column), one item for every component (any size of the item pays for it; a DX2000 recorder needs the DX2000 item) and
   the mimic tape its paths need (one per 32 cells, like drawing it). If anything is missing, nothing is placed and the missing
-  items are listed (`Missing for RPS scram and mode switch: 96 x Annunciator, ...`). The blueprint is not used up.
+  items are listed (`Missing for Duplex board: 4 x Control Panel (Duplex Board)`). The blueprint is not used up.
 
-### The five boards
+### The eight shapes
 
-Each carries one **annunciator control module** (ACK, RESET, SILENCE, TEST) for its annunciator windows. All are laid out at about twice the exact real size (a dial 4 x 4 cells, a switch 2 x 4, a lamp 2 x 2: the exact real sizes were
-too small to read), from `CR-PANELS-BWR-RESEARCH.md` (the number is the board in that report). Labels follow its conventions:
-white laminate with black engraving above controls and below indicators (nameplates above, captions below), black plates for
-system titles, valve switches CLOSE left and OPEN right with a green (closed) and a red (open) lamp, annunciator tiles red for
-reactor protection information, amber for inoperable, white for off normal. Black demarcation lines round the systems are
-mimic tape.
+The blueprint ships eight blank shapes, each **four blocks (4 m) wide**, named by their physical form, in this cycling order. They
+come from the frames the first five boards (rod control, RPV level, RPS, ECCS, neutron monitoring) were built from, with the
+function taken out: they carry **no components, no labels or captions, no mimic tape, no reserved spaces and no notes**, and no
+name of a plant system. (The old per-function boards were removed; a blueprint saved with one of their ids places the first
+shape, the vertical board.)
 
-| Board (file) | Frames | Contents |
+| Shape (file) | Frames | Panel blocks |
 | --- | --- | --- |
-| **Rod control** (`rod_control`, board 1) | back panel wall 10 x 5 and a benchboard 10 x 1 | full core display (Columbia, 64 x 64) and rod select matrix (48 x 48), the four rod display, ACT CTL DISAGREE and ROD DRIFT lamps; RWM / RSCS annunciators, six error and interlock lamps, rod group display, RWM NORM / BYP key; on the bench INSERT, WITHDRAW, CONT INS, CONT W/D, drift TEST and RESET, SEQ A/B, INSERT/WITHDRAW, ALL/FREE and F.I./BYPASS selectors. **Reserved:** the LED rod pattern map (amber/red LED per rod: no such part yet) |
-| **RPV level, pressure and flow** (`rpv_level_pressure_flow`, board 2) | duplex, 5 columns | nine level indicators (narrow A-C and wide A-B bar gauges, upset, shutdown, two fuel zone edgewise meters) with the L1/L3/L4/L8 bands, three pressure dials (850-1050, 0-1200, 0-1500 psig) with the 1025/1043/1120 marks, core, steam and feed flow, the seven trace recorder (APRM power, pressure, steam, turbine steam, feed flow, narrow level, core flow), a vessel temperature recorder, alarm windows, the trip level plaque. **Reserved (TODO):** the feedwater master level controller and the recirculation master flow controller / M/A stations |
-| **RPS scram and mode switch** (`reactor_scram_rps`, board 3) | duplex, 5 columns | two guarded manual scram assemblies (A1/B1, A2/B2), the four position mode switch (SHUTDOWN, REFUEL, STARTUP, RUN) and its key, scram reset (RESET A / B), two guarded ARI buttons, the SDV bypass key, eight white scram group lamps, the mode and setpoint plaques, 96 scram annunciator windows for trip systems A and B. **Reserved:** the IRM / APRM bypass joysticks |
-| **ECCS bench** (`eccs_p601`, boards 4 and 6) | duplex, 13 columns | divisions I and II, each with RHR and core spray: pump pistol-grip switches and valve CLOSE/OPEN selectors with green and red lamps (ten per division), the LPCI (blue) and core spray (green) mimic with pump, valve and tank symbols, pump pressure dials and flow meters, ARM / DEPRESS guarded buttons, 42 alarm windows; the ADS section with 7 ADS and 4 relief valve open/auto/close selectors (red stripe on the ADS valves), AUTO INHIBIT and INITIATE push-turn switches (turn to arm, then push), ADS reset buttons and the backup transfer key |
-| **Neutron monitoring** (`neutron_monitoring`, board 10) | duplex, 6 columns | eight IRMs (0-125 divisions, bands at 5, 108 and 120) with range selectors, six APRM bar gauges (0-125 %, red from 118 %), sixteen LPRM dials, four SRM count rates, two two-pen recorders, four bypass switches, alarm windows. The IRM range switch is a 6 position selector (the real one has 10) |
+| **Vertical board** (`vertical_board`) | vertical, 4 x 2 | 8 `control_panel_vertical` |
+| **Back panel** (`back_panel`) | back panel, 4 x 2 | 8 `control_panel_back` |
+| **Benchboard** (`benchboard`) | benchboard, 4 x 1 | 4 `control_panel_benchboard` |
+| **Console** (`console`) | console, 4 x 1 | 4 `control_panel_console` |
+| **Back panel with benchboard** (`back_panel_with_benchboard`) | back panel 4 x 2 above a benchboard 4 x 1 in front | 8 back + 4 benchboard |
+| **Duplex board** (`duplex_board`) | duplex, 4 columns: the board two blocks high, the tilted header and the bench | 4 `control_panel_duplex` (one item per column) |
+| **Control desk (1 m)** (`control_desk_1m`) | desk, 4 columns: four 1 m desks side by side, one run | 4 `control_panel_desk` |
+| **Control desk (2 m)** (`control_desk_2m`) | desk_wide, 2 columns: two 2 m desks side by side, one run | 2 `control_panel_desk_wide` (each is two blocks) |
+
+The control desks are placed as a run, like the others: a 1 m desk is one block and one item; a 2 m desk is two blocks placed by one
+item (its right half, as the operator sees it, is the block whose item pays; the left half is placed to the operator's left and
+costs nothing), both halves facing the way the board faces. A run of desks is one panel group, so a part can span the seams. A
+desk's face is 16 cells per block by 6 deep (the top), so the cells beyond 6 take nothing in a template either. Four blocks is
+the width of the other shapes; it is two 2 m desks or four 1 m ones. The header strip and canopy, the chamfer corners, the
+plinths and the end caps are not blueprint shapes (no frame kind for them); place those by hand.
+
+`tools-generate-boards.py` writes the eight files (`--check` fails when they differ).
 
 ### The template format (`data/<namespace>/panel_board/<name>.json`)
 
 A data pack adds a board by shipping a file; `/reload` loads it and the blueprint finds it. The server sends the boards to the
 clients when they join and on `/reload`. A file with any problem is logged (every problem with the entry it belongs to) and
-left out; the other boards still load. `tools-generate-boards.py` writes the five shipped files (`python tools-generate-boards.py`;
-`--check` fails when the files differ from it) and is a good example of a layout script, but the JSON is the source.
+left out; the other boards still load. `tools-generate-boards.py` writes the eight shipped shapes (`python tools-generate-boards.py`;
+`--check` fails when the files differ from it); the JSON is the source, and the script is only the list of shapes.
 
 ```json
 {
   "format": 1,
-  "title": "RPS scram and mode switch", "description": "...", "source": "CR-PANELS-BWR-RESEARCH.md board 3", "order": 3,
+  "title": "My board", "description": "...", "source": "where the layout comes from (optional)", "order": 7,
   "todo": ["comments for whoever extends the board"],
   "frames": [ {"id": "main", "kind": "duplex", "columns": 5, "at": [0, 0, 0]} ],
   "components": [
@@ -778,7 +790,8 @@ left out; the other boards still load. `tools-generate-boards.py` writes the fiv
 ```
 
 * **frames** are runs of panel blocks. `kind` is `duplex` (one item per column: surfaces `board` 2 blocks tall, `header`,
-  `bench`), `vertical`, `benchboard`, `console` or `back_panel` (surface `face`). `at` is `[right, up, forward]` in blocks from the
+  `bench`), `vertical`, `benchboard`, `console`, `back_panel`, `desk` (1 m control desks, one block each, one row) or `desk_wide` (2 m
+  control desks: `columns` counts desks, two blocks each, one row; the item places both halves) (surface `face`; a desk's face is 6 cells deep). `at` is `[right, up, forward]` in blocks from the
   board's origin (right of the operator, up, toward the operator); for a duplex it is the bench of the left column, for the
   rest the top left block (rows go down, on a benchboard also toward the operator). A surface is named `<frame>.<part>`, for
   example `main.bench`; its cells are 16 per block, x to the operator's right and y down. Frames may not share a block, a group
@@ -793,8 +806,7 @@ left out; the other boards still load. `tools-generate-boards.py` writes the fiv
   from 1, `{i}` from 0, `{col}` and `{row}` its place in the grid and `{name}` the copy's entry of `names`.
 * **reserved** keeps a space empty for a part that does not exist yet (`for` is its future type id, `note` says what goes
   there). It is checked like a component (inside the surface, over nothing) and left empty when the board is placed. This is
-  the "commented TODO" of the format, and it is where the **manual/auto controller station** (feedwater, recirculation),
-  the **joystick bypass switch** and the **LED rod pattern display** go: replace the entry with a component when the part exists.
+  the "commented TODO" of the format. No shipped shape uses it.
 * **mimic** are tape paths (2 to 64 points, in cells of the surface; `style` is any field of the mimic path screen).
 * Wiring is not part of a template.
 
@@ -996,7 +1008,7 @@ second; the mouse wheel steps too).
 * There is **no control law in the station**. Wire `demand` and `mode` where you want them, and bind `auto_demand` to whatever you
   wrote (a CC program through a CC binding, a plant controller signal) that should run it in AUTO.
 * Saved: mode (only AUTO), demand (only when not 0), local setpoint (as a fraction of the span, only when not mid-span).
-  Premade boards should place it by the id `bwr:controller_station`.
+  A data pack board places it by the id `bwr:controller_station`.
 
 ### 6.2 Synchroscope (`bwr:synchroscope`)
 

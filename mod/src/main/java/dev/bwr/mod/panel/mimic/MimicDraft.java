@@ -1,6 +1,7 @@
 package dev.bwr.mod.panel.mimic;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -16,9 +17,11 @@ import java.util.List;
  * {@code x0, y0, x1, y1, ...} in that block's cell space.
  */
 public record MimicDraft(BlockPos anchor, List<Integer> points) {
-    public static final Codec<MimicDraft> CODEC = RecordCodecBuilder.create(i -> i.group(
+    public static final Codec<MimicDraft> CODEC = RecordCodecBuilder.<MimicDraft>create(i -> i.group(
             BlockPos.CODEC.fieldOf("anchor").forGetter(MimicDraft::anchor),
-            Codec.INT.listOf().fieldOf("points").forGetter(MimicDraft::points)).apply(i, MimicDraft::new));
+            Codec.INT.listOf().fieldOf("points").forGetter(MimicDraft::points)).apply(i, MimicDraft::new))
+            .validate(draft -> draft.valid() ? DataResult.success(draft)
+                    : DataResult.error(() -> "A mimic draft needs 1 to " + MimicOps.MAX_POINTS + " points as x, y pairs"));
     public static final StreamCodec<RegistryFriendlyByteBuf, MimicDraft> STREAM_CODEC = StreamCodec.composite(
             BlockPos.STREAM_CODEC, MimicDraft::anchor,
             ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(MimicOps.MAX_POINTS * 2 + 2)), MimicDraft::points,
@@ -26,6 +29,15 @@ public record MimicDraft(BlockPos anchor, List<Integer> points) {
 
     public MimicDraft {
         points = List.copyOf(points);
+    }
+
+    /**
+     * Whether the list is whole x, y pairs, at least one and at most {@link MimicOps#MAX_POINTS}. A draft is created with
+     * its first point, so an empty or odd list can only come from a hand-made stack, and drawing on it would index past the
+     * end.
+     */
+    public boolean valid() {
+        return points.size() >= 2 && points.size() % 2 == 0 && points.size() <= MimicOps.MAX_POINTS * 2;
     }
 
     public int pointCount() {

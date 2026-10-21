@@ -530,6 +530,7 @@
   "message.bwr.mimic_tape.too_many_paths": "A panel block holds at most %s paths",
   "message.bwr.mimic_tape.off_board": "That point is off the board",
   "message.bwr.mimic_tape.not_loaded": "The board is not loaded; path cancelled",
+  "message.bwr.mimic_tape.edge_unloaded": "Part of this board is in a chunk that is not loaded; come closer",
   "message.bwr.mimic_tape.not_permitted": "You cannot modify this board",
   "message.bwr.mimic_tape.grabbed": "Waypoint %s picked up: click where it goes",
   "message.bwr.mimic_tape.grab_lost": "That waypoint is no longer there",

@@ -271,6 +271,15 @@ public abstract class ComponentType {
     }
 
     /**
+     * A config edit from a player was just applied to {@code context.component()} (server): its data was loaded and
+     * {@link #onLoaded} ran, which stores latched outputs silently. {@code outputsBefore} are the outputs from before the
+     * edit. A type whose edit can move an output by itself (a latched control re-centred because Spring was switched on)
+     * announces the move to the plant here, through the same output path a player's move takes. Nothing by default.
+     */
+    public void configured(OperateContext context, double[] outputsBefore) {
+    }
+
+    /**
      * The component was just placed on a panel (server, once, before its first sample): put any output that is not
      * zero by default in place ({@link #onLoaded} does the same for a saved one). Nothing by default.
      */

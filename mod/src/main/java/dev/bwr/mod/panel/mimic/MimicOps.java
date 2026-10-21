@@ -85,7 +85,7 @@ public final class MimicOps {
         if (!PanelOps.inReach(player, clicked) || !level.isLoaded(clicked)) {
             return Result.OUT_OF_REACH;
         }
-        if (!AssemblyAccess.permitted(level, player, clicked)) {
+        if (!AssemblyAccess.mayEdit(player) || !AssemblyAccess.permitted(level, player, clicked)) {
             say(player, BwrText.tr("message.bwr.mimic_tape.not_permitted", "You cannot modify this board"));
             return Result.NOT_PERMITTED;
         }
@@ -355,6 +355,9 @@ public final class MimicOps {
     /** Removes every copy of a path from the loaded blocks of the group, if the player may touch all of them. */
     public static Result erasePath(ServerPlayer player, PanelBlockEntity block, long pathId) {
         ServerLevel level = player.serverLevel();
+        if (edgeUnloaded(player, level, block)) {
+            return Result.NOT_LOADED;
+        }
         List<PanelBlockEntity> copies = copies(level, block, pathId);
         if (copies.isEmpty()) {
             return Result.NO_PATH;
@@ -421,6 +424,16 @@ public final class MimicOps {
     /** Drops a grabbed waypoint (a mode switch or a cancelled edit). */
     public static void dropGrab(ServerPlayer player) {
         GRABS.remove(player.getUUID());
+    }
+
+    /** Forgets a player's grabbed waypoint (they left). */
+    public static void forget(java.util.UUID player) {
+        GRABS.remove(player);
+    }
+
+    /** Players with a grabbed waypoint, for tests. */
+    public static int grabCount() {
+        return GRABS.size();
     }
 
     private static Result moveWaypoint(ServerPlayer player, Grab grab, PanelBlockEntity clicked, double cu, double cv) {
@@ -494,6 +507,9 @@ public final class MimicOps {
             return Result.SAME_POINT;
         }
         long pathId = path.pathId();
+        if (edgeUnloaded(player, level, owner)) {
+            return Result.NOT_LOADED;
+        }
         List<PanelBlockEntity> copies = copies(level, owner, pathId);
         for (PanelBlockEntity copy : copies) {
             if (!AssemblyAccess.permitted(level, player, copy.getBlockPos())) {
@@ -552,6 +568,21 @@ public final class MimicOps {
         return MimicGeometry.pick(block.mimicPaths(), cu, cv, aspect);
     }
 
+    /**
+     * Known limit: a path's copies are found only in loaded blocks. An erase or an edit made while the board goes on in an
+     * unloaded chunk would leave the copies there behind (a stale fragment nothing could find again), so it is refused,
+     * with a message, until the whole board is loaded.
+     */
+    private static boolean edgeUnloaded(ServerPlayer player, ServerLevel level, PanelBlockEntity block) {
+        PanelGroup group = block.group();
+        if (group == null || !group.bordersUnloaded(level)) {
+            return false;
+        }
+        say(player, BwrText.tr("message.bwr.mimic_tape.edge_unloaded",
+                "Part of this board is in a chunk that is not loaded; come closer"));
+        return true;
+    }
+
     /** The loaded blocks of the block's group that hold a copy of the path, the given block first. */
     public static List<PanelBlockEntity> copies(ServerLevel level, PanelBlockEntity block, long pathId) {
         List<PanelBlockEntity> copies = new ArrayList<>();
@@ -576,13 +607,13 @@ public final class MimicOps {
     public static boolean configure(ServerPlayer player, BlockPos pos, int localId, CompoundTag edit) {
         ServerLevel level = player.serverLevel();
         boolean holding = !MimicTapeItem.held(player).isEmpty() || !PanelOps.heldWrench(player).isEmpty();
-        if (!holding || !PanelOps.inReach(player, pos) || !level.isLoaded(pos)
+        if (!holding || !AssemblyAccess.mayEdit(player) || !PanelOps.inReach(player, pos) || !level.isLoaded(pos)
                 || !AssemblyAccess.permitted(level, player, pos)
                 || !(level.getBlockEntity(pos) instanceof PanelBlockEntity block)) {
             return false;
         }
         MimicPath path = block.mimicPath(localId);
-        if (path == null) {
+        if (path == null || edgeUnloaded(player, level, block)) {
             return false;
         }
         List<PanelBlockEntity> copies = copies(level, block, path.pathId());
@@ -671,7 +702,7 @@ public final class MimicOps {
     /** Moves the mode of the tape in {@code hand} on by {@code steps}; an unfinished path is dropped. */
     public static boolean cycleMode(ServerPlayer player, InteractionHand hand, int steps) {
         ItemStack stack = player.getItemInHand(hand);
-        if (!(stack.getItem() instanceof MimicTapeItem)) {
+        if (!AssemblyAccess.mayOperate(player) || !(stack.getItem() instanceof MimicTapeItem)) {
             return false;
         }
         MimicMode next = MimicTapeItem.mode(stack).step(steps);

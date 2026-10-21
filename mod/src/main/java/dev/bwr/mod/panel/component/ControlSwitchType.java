@@ -112,6 +112,12 @@ public final class ControlSwitchType extends PanelInputType {
         publish(component, data.position);
     }
 
+    @Override
+    public void configured(OperateContext context, double[] outputsBefore) {
+        // Spring switched on for a switch that sits CLOSE or OPEN: the load put it at NORMAL, and the plant must hear it.
+        announceMoved(context, outputsBefore);
+    }
+
     private static void publish(PanelComponent component, int position) {
         component.storeOutput(0, position);
         component.storeOutput(1, position > 0 ? 1.0 : 0.0);
