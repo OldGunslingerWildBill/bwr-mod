@@ -68,7 +68,7 @@ public final class PanelFinishTests {
     private static final int ORIGIN_X = 193_700;
     private static final int ORIGIN_Z = 193_700;
     private static final int FLOOR_Y = 100;
-    private static final int EXPECTED_FINISH_BLOCKS = 32;
+    private static final int EXPECTED_FINISH_BLOCKS = 34;
 
     // ---- fixture helpers (the entity-safe fixture of RoomFurnitureTests, with a wrench)
 
