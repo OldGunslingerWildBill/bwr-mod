@@ -28,7 +28,7 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
     private static final int LEFT_COLUMN = 164;
 
     public FuelFabricatorScreen(FuelFabricatorMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 320, 166);
+        super(menu, inventory, title, 368, 166);
     }
 
     @Override
@@ -44,9 +44,7 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
         int innerWidth = LEFT_COLUMN - 2 * BwrStyle.SP2;
 
         var outputRow = Layout.split(0);
-        outputRow.add(Layout.column(0,
-                Layout.line(() -> "Output bundle", Type.BODY),
-                Layout.note("Appears in the slot when the batch completes.")), 1);
+        outputRow.add(Layout.note("Finished bundle appears in the slot.").body(), 1);
         outputRow.fixed(Layout.gap(0), innerWidth - captionWidth);
         var output = Layout.card("", outputRow);
 

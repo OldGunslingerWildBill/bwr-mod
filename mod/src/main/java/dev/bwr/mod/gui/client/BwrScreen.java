@@ -106,7 +106,12 @@ public abstract class BwrScreen<T extends BwrMenu> extends AbstractContainerScre
             // the smallest GUI size the game gives a screen is 320 wide: a panel may use all of it
             usable = 320;
         }
-        imageWidth = fixed ? preferredWidth : Math.min(preferredWidth, Math.max(160, usable));
+        // A screen with slots keeps its height (the slot positions are the menu's) but may be narrower, down to the slots.
+        int slotsRight = 0;
+        for (Slot slot : menu.slots) {
+            slotsRight = Math.max(slotsRight, slot.x + 16 + 1 + TRAY_PAD + BwrStyle.SP2);
+        }
+        imageWidth = Math.min(preferredWidth, Math.max(Math.max(160, slotsRight), usable));
         imageHeight = fixed ? preferredHeight : Math.min(preferredHeight, Math.max(120, height - 2 * BwrStyle.WINDOW_MARGIN));
         super.init();
 

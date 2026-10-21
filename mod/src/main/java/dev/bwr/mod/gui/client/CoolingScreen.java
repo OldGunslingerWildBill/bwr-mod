@@ -82,7 +82,7 @@ public class CoolingScreen extends BwrScreen<CoolingMenu> {
                 Layout.controls(BwrStyle.SP1).add(stop, 1)).showIf(this::motor);
         return Layout.column(BwrStyle.SP2,
                 Layout.statusLine(this::statusKind, this::statusText, null),
-                Layout.split(BwrStyle.SP2, water, drive).stackBelow(360),
+                Layout.split(BwrStyle.SP2).add(water, 3).add(drive, 2).stackBelow(360),
                 Layout.note(() -> menu.design == Design.INTAKE ? "Source water at two outer sides; lakebed mounting is OK."
                         : motor() ? "Connect water pipes to flanges; FE to electrical box."
                         : "Connect water pipes to the three basin flanges."));

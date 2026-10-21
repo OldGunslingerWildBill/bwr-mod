@@ -25,8 +25,8 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
                 Layout.row("Shaft speed", () -> num(menu.rpm, 0), "rpm"),
                 Layout.row("Train shaft power", () -> num(menu.trainMW, 2), "MW"),
                 // generator
-                Layout.row("Electrical output", () -> num(menu.electricMW, 2) + " / 1,500", "MW").showIf(() -> menu.generator),
-                Layout.meter("Electrical output against the 1,500 MW rating", () -> menu.electricMW / 1500.0, null, () -> "")
+                Layout.row("Electrical output", () -> num(menu.electricMW, 2), "MW").showIf(() -> menu.generator),
+                Layout.meter("Electrical output against the 1,500 MW rating", () -> menu.electricMW / 1500.0, null, () -> "of 1,500 MW")
                         .showIf(() -> menu.generator),
                 Layout.row("Generation", () -> big(menu.electricMW * 1e6 / EccsPower.WATTS_PER_FE_PER_TICK), "FE/t").showIf(() -> menu.generator),
                 Layout.row("Stored energy", () -> big(menu.energy), "FE").showIf(() -> menu.generator),
@@ -50,7 +50,7 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
                 Layout.note(() -> menu.hp ? "Pipe HP exhaust to LP inlets." : "Condenser: six blocks below, same facing.")
                         .showIf(() -> !menu.generator));
         return Layout.column(BwrStyle.SP2,
-                Layout.split(BwrStyle.SP2, readouts, connections).stackBelow(360),
+                Layout.split(BwrStyle.SP2).add(readouts, 3).add(connections, 2).stackBelow(360),
                 Layout.note(() -> menu.status).body());
     }
 

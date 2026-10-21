@@ -93,12 +93,7 @@ public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
 
     @Override
     protected UiElement buildTitleItems() {
-        return Layout.titleItems(Layout.chip(() -> menu.present && menu.control == 2 ? Status.INFO : Status.NONE,
-                () -> !menu.present ? "" : switch (menu.control) {
-                    case 1 -> "REDSTONE";
-                    case 2 -> "COMPUTER CONTROL";
-                    default -> "PANEL";
-                }));
+        return Layout.titleItems(Layout.chip(() -> Status.INFO, () -> "COMPUTER CONTROL").showIf(() -> menu.present && menu.control == 2));
     }
 
     private Integer percent() {

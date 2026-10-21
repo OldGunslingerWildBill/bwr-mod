@@ -139,10 +139,10 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
         return Layout.column(BwrStyle.SP1,
                 Layout.fill(grid, 60),
                 Layout.legend(() -> overlay == Overlay.FLUX ? "0 %" : "00 in",
-                        () -> overlay == Overlay.FLUX ? "100 % of peak" : "48 out",
+                        () -> overlay == Overlay.FLUX ? "100 %" : "48 out",
                         f -> overlay == Overlay.FLUX ? heatColour(f) : LatticeColours.rod(f))
                         .tip(() -> List.of(Component.literal(overlay == Overlay.FLUX
-                                ? "Each bundle's power as a share of the hottest bundle's."
+                                ? "Each bundle's power as a share of the hottest bundle's, 0 to 100 %."
                                 : "Dark: rod fully inserted (00). Bright green: fully withdrawn (48). Amber: moving to a new demand."))),
                 Layout.line(() -> selectedRod < 0 ? "ROD IN / OUT: all rods" : "ROD IN / OUT: rod " + (selectedRod + 1),
                         Type.CAPTION).showIf(() -> overlay == Overlay.RODS));
@@ -151,7 +151,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
     private UiElement readouts() {
         return Layout.column(0,
                 Layout.statusLine(() -> menu.vesselState == VesselState.REFUELING ? Status.INFO : Status.NONE,
-                        () -> menu.vesselState.getSerializedName(), () -> menu.scramActive ? "SCRAM" : "")
+                        () -> capitalised(menu.vesselState.getSerializedName()), () -> menu.scramActive ? "SCRAM" : "")
                         .rightStatus(() -> menu.scramActive ? Status.ALARM : Status.NONE)
                         .tip(() -> List.of(Component.literal("Vessel state: " + menu.vesselState.getSerializedName()),
                                 Component.literal(menu.scramActive ? "A scram is active: the drives are de-energised." : "No scram active."))),
@@ -310,6 +310,10 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
     @Override
     protected List<Component> hoverTooltip() {
         return menu.formed && overlay != Overlay.INFO ? grid.hoverTooltip() : List.of();
+    }
+
+    private static String capitalised(String s) {
+        return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     private static String periodValue(double seconds) {

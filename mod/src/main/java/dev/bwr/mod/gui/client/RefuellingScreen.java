@@ -123,7 +123,8 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                 Layout.controls(BwrStyle.SP1).add(loadButton, 1).add(unloadButton, 1),
                 Layout.gap(BwrStyle.SP1),
                 Layout.controls(BwrStyle.SP1).add(markButton, 1).add(swapButton, 1))
-                .status(() -> Status.INFO, () -> "HEAD OFF").compact();
+                .compact();
+        actions.tip("The vessel head is off: bundles are lifted out through the top of the open vessel.");
         var lower = Layout.split(0);
         lower.fixed(Layout.gap(0), actionsX - BwrStyle.SP2);
         lower.add(actions, 1);

@@ -36,6 +36,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -90,14 +91,29 @@ public final class GuiScreenCheck {
         }
     }
 
+    /** Screens also photographed at the smallest GUI sizes (laid out for 320 x 240 or 427 x 240, drawn at scale 2 in the corner). */
+    private static final Set<String> FLOOR_PICTURES = Set.of("reactor-flux", "reactor-info", "pump-rhr", "terry", "condenser", "refuelling-burnup", "fabricator", "pool-spray");
+
     private static boolean started, built;
     private static int age, joined, stage, scaleIndex, wait;
     private static boolean opened;
+    private static boolean resized;
+    /** Where the pointer is for the pictures, in GUI coordinates: off the screen unless a scenario puts it on a control. */
+    private static int pointerX = -1000, pointerY = -1000;
     private static List<Scenario> scenarios;
     private static final List<String> violations = new ArrayList<>();
     private static Path directory;
 
     private GuiScreenCheck() {
+    }
+
+    /** Draws the open screen with the fake pointer, so a picture never shows whatever the real pointer happens to hover. */
+    @SubscribeEvent
+    public static void render(ScreenEvent.Render.Pre event) {
+        if (Boolean.getBoolean("bwr.guiScreenCheck") && built && event.getScreen() == Minecraft.getInstance().screen) {
+            event.setCanceled(true);
+            event.getScreen().renderWithTooltip(event.getGuiGraphics(), pointerX, pointerY, event.getPartialTick());
+        }
     }
 
     // -----------------------------------------------------------------
@@ -438,8 +454,8 @@ public final class GuiScreenCheck {
             var m = new ReactorPanelMenu(99, i, P);
             reactorLive(m, false);
             return new ReactorPanelScreen(m, i, t("Reactor Control Panel"));
-        }, screen -> focusGrid(screen, 3), screen -> {
-        }, true));
+        }, screen -> {
+        }, screen -> focusGrid(screen, 3), true));
         s.add(new Scenario("pump-hover-and-focus", i -> new PumpControlScreen(pump(i, false, "rhr"), i, t("RHR / LPCI Pump")),
                 screen -> focusButton(screen, "Apply"), screen -> hoverButton(screen, "Control: Panel"), true));
         s.add(new Scenario("pump-invalid-entry", i -> new PumpControlScreen(pump(i, false, "rhr"), i, t("RHR / LPCI Pump")),
@@ -458,8 +474,8 @@ public final class GuiScreenCheck {
             var m = new RefuellingMenu(99, i, P);
             refuel(m);
             return new RefuellingScreen(m, i, t("Refuelling Floor"));
-        }, screen -> focusGrid(screen, 6), screen -> {
-        }, true));
+        }, screen -> {
+        }, screen -> focusGrid(screen, 6), true));
         s.add(new Scenario("service-slc-tank", i -> service(i, 1, 0, false, "Boron tank assembled", "Solution: 12,400.00 / 15,000 kg",
                 "Dissolved borate: 1,340.25 kg", "Elemental boron: 21,300.00 ppm", "Water temperature: 31.20 C", "Fill water through the top flange.",
                 "Use borate charges on the tank to dissolve them.", "Bottom front flange feeds the SLC pump.")));
@@ -613,12 +629,10 @@ public final class GuiScreenCheck {
     }
 
     private static void hoverButton(Screen screen, String label) {
-        Minecraft mc = Minecraft.getInstance();
         for (GuiEventListener c : screen.children()) {
             if (c instanceof BwrButton b && b.getMessage().getString().equals(label)) {
-                double scale = mc.getWindow().getGuiScale();
-                org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), (b.getX() + b.getWidth() / 2.0) * scale,
-                        (b.getY() + b.getHeight() / 2.0) * scale);
+                pointerX = b.getX() + b.getWidth() / 2;
+                pointerY = b.getY() + b.getHeight() / 2;
                 return;
             }
         }
@@ -846,8 +860,9 @@ public final class GuiScreenCheck {
             opened = true;
             wait = 0;
             mc.setScreen(sc.make().apply(mc.player.getInventory()));
-            // Park the pointer in the corner so no tooltip or hover state hides the layout in the picture.
-            org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), 3, 3);
+            pointerX = -1000;
+            pointerY = -1000;
+            resized = false;
             sc.setup().accept(mc.screen);
             Ui.startProbe();
             return;
@@ -859,15 +874,33 @@ public final class GuiScreenCheck {
                 next();
                 return;
             }
-            mc.screen.resize(mc, size[0], size[1]);
             String at = sc.name() + " @" + size[0] + "x" + size[1];
-            violations.addAll(bounds(at, mc.screen, size[0], size[1]));
-            violations.addAll(noBodyScroll(at, mc.screen, size[0] >= 400));
+            if (!resized) {
+                resized = true;
+                wait = 0;
+                mc.screen.resize(mc, size[0], size[1]);
+                Ui.startProbe();
+                violations.addAll(bounds(at, mc.screen, size[0], size[1]));
+                violations.addAll(noBodyScroll(at, mc.screen, size[0] >= 400));
+                if (!FLOOR_PICTURES.contains(sc.name())) {
+                    Ui.endProbe();
+                    next();
+                }
+                return;
+            }
+            if (++wait < 4) {
+                return;
+            }
+            violations.addAll(textInsidePanel(at, mc.screen, Ui.endProbe()));
+            try {
+                Path folder = directory.resolve("floor");
+                Files.createDirectories(folder);
+                CheckShots.save(mc, folder.resolve(String.format("%dx%d-%s.png", size[0], size[1], sc.name())));
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
             next();
             return;
-        }
-        if (wait < 4) {
-            org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), 3, 3);
         }
         if (++wait == 5) {
             sc.late().accept(mc.screen);

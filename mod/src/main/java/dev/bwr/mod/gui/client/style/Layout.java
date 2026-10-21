@@ -558,19 +558,19 @@ public final class Layout {
             Ui.card(g, x, y, w, h);
             String title = this.title.get();
             if (!title.isEmpty()) {
-                int right = x + w - BwrStyle.SP2;
+                int right = x + w - pad;
                 if (status != null) {
                     Status s = status.get();
                     if (s != Status.NONE) {
                         String word = statusWord == null ? s.label : statusWord.get();
                         int ww = Ui.width(word, Type.CAPTION);
-                        Ui.text(g, word, right - ww, y + BwrStyle.SP2 + 1, Type.CAPTION, s.colour);
-                        Ui.statusIcon(g, right - ww - BwrStyle.SP1 - BwrStyle.ICON, y + BwrStyle.SP2 + 1, s);
+                        Ui.text(g, word, right - ww, y + pad + 1, Type.CAPTION, s.colour);
+                        Ui.statusIcon(g, right - ww - BwrStyle.SP1 - BwrStyle.ICON, y + pad + 1, s);
                         right -= ww + BwrStyle.SP1 + BwrStyle.ICON + BwrStyle.SP2;
                     }
                 }
-                Ui.text(g, Ui.fit(title, Type.HEADER, right - x - BwrStyle.SP2), x + BwrStyle.SP2, y + BwrStyle.SP2 + 1, Type.HEADER);
-                Ui.rule(g, x + BwrStyle.SP2, y + BwrStyle.SP2 + BwrStyle.ROW - 1, w - 2 * BwrStyle.SP2);
+                Ui.text(g, Ui.fit(title, Type.HEADER, right - x - pad), x + pad, y + pad + 1, Type.HEADER);
+                Ui.rule(g, x + pad, y + pad + BwrStyle.ROW - 1, w - 2 * pad);
             }
             inner.render(g, mx, my);
         }
@@ -867,7 +867,21 @@ public final class Layout {
             int unitX = right - unitColumn;
             int valueRight = unitColumn > 0 ? unitX - BwrStyle.SP1 : right;
             int iconW = st == Status.NONE ? 0 : BwrStyle.ICON + BwrStyle.SP1;
-            int maxValue = valueRight - x - MIN_LABEL - BwrStyle.SP1 - iconW;
+            // Both fit: nothing is cut. Otherwise the longer one gives way, but neither is cut to less than a third.
+            int avail = valueRight - x - BwrStyle.SP2 - iconW;
+            int labelNeeded = Ui.width(lab, Type.BODY);
+            int valueNeeded = Ui.width(val, Type.BODY);
+            int maxValue = valueNeeded;
+            if (labelNeeded + valueNeeded > avail) {
+                if (valueNeeded <= avail / 2) {
+                    maxValue = valueNeeded;
+                } else if (labelNeeded <= avail / 2) {
+                    maxValue = avail - labelNeeded;
+                } else {
+                    maxValue = avail / 2;
+                }
+                maxValue = Math.max(MIN_LABEL, maxValue);
+            }
             String shownValue = Ui.fit(val, Type.BODY, maxValue);
             int valueX = valueRight - Ui.width(shownValue, Type.BODY);
             int labelMax = valueX - iconW - x - BwrStyle.SP2;
@@ -1438,6 +1452,8 @@ public final class Layout {
             String l = low.get();
             String hi = high.get();
             int lw = Ui.width(l, Type.CAPTION);
+            // the bar keeps at least 24 px: a caption that would squeeze it is cut
+            hi = Ui.fit(hi, Type.CAPTION, Math.max(0, w - lw - 24 - 2 * BwrStyle.SP2));
             int hw = Ui.width(hi, Type.CAPTION);
             int ty = y + (BwrStyle.ROW - 8) / 2;
             Ui.text(g, l, x, ty, Type.CAPTION);
