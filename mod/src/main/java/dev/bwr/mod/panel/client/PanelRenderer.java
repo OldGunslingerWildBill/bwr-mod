@@ -1,5 +1,6 @@
 package dev.bwr.mod.panel.client;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.client.VisualEffectsConfig;
@@ -88,7 +89,12 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
             return;
         }
         float time = be.getLevel() == null ? 0.0f : be.getLevel().getGameTime() + partial;
+        AnnunciatorBoxes.refresh(be, time);
         context.begin(be, pose, buffers, light, overlay, time, lod, minecraft.font);
+        if (lod == PanelRenderContext.LOD_FULL && VisualEffectsConfig.panelTextFade()) {
+            context.fade(fadeFocal(minecraft), camera.x - be.getBlockPos().getX(), camera.y - be.getBlockPos().getY(),
+                    camera.z - be.getBlockPos().getZ());
+        }
         PanelMeshCache cache = gpuCache() ? PanelMeshCache.of(be) : null;
         if (cache == null || !cache.usable()) {
             renderImmediate(be, components, count);
@@ -159,9 +165,10 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
                 continue;
             }
             ComponentModel model = ComponentModels.get(type.id());
-            currentMesh(component, model, aspect);
+            RenderCache current = currentMesh(component, model, aspect);
             signature = PanelMeshCache.mix(signature, component.id());
             signature = PanelMeshCache.mix(signature, component.revision());
+            signature = PanelMeshCache.mix(signature, current.staticKey);
             signature = PanelMeshCache.mix(signature, model.poseKey(context, component));
             if (model.legendsCached()) {
                 // Printed legends depend on the revision only (never on a pose), so a lamp coming on rebuilds no text.
@@ -249,14 +256,16 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
     private static RenderCache currentMesh(PanelComponent component, ComponentModel model, float aspect) {
         RenderCache cache = RenderCache.of(component);
         int generation = PanelModels.generation();
+        long staticKey = model.staticKey(component);
         if (cache.meshRevision != component.revision() || cache.modelGeneration != generation
-                || cache.meshRowAspect != aspect) {
+                || cache.meshRowAspect != aspect || cache.staticKey != staticKey) {
             MeshBuilder fresh = new MeshBuilder();
             model.buildStatic(fresh, component, aspect);
             cache.mesh = fresh.build();
             cache.meshRevision = component.revision();
             cache.modelGeneration = generation;
             cache.meshRowAspect = aspect;
+            cache.staticKey = staticKey;
         }
         return cache;
     }
@@ -270,6 +279,19 @@ public final class PanelRenderer implements BlockEntityRenderer<PanelBlockEntity
      */
     private static boolean gpuCache() {
         return !IMMEDIATE && VisualEffectsConfig.PANEL_GPU_CACHE.get();
+    }
+
+    /**
+     * Screen pixels one block spans at distance 1 for the text fade (half the framebuffer height times the projection's
+     * focal length, which follows the field of view and any zoom); the projection of the level pass is current while
+     * block entities draw.
+     */
+    private static float fadeFocal(Minecraft minecraft) {
+        float focal = RenderSystem.getProjectionMatrix().m11();
+        if (!(focal > 0.0f) || Float.isInfinite(focal)) {
+            focal = (float) (1.0 / Math.tan(Math.toRadians(minecraft.options.fov().get()) / 2.0));
+        }
+        return minecraft.getWindow().getHeight() * 0.5f * focal;
     }
 
     /** Block buffers built so far, for checks. */

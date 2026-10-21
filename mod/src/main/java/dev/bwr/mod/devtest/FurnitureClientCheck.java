@@ -5,15 +5,22 @@ import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.furniture.AssemblyBlock;
 import dev.bwr.mod.furniture.DeskBase;
 import dev.bwr.mod.furniture.DeskMonitor;
+import dev.bwr.mod.panel.DuplexCell;
+import dev.bwr.mod.panel.DuplexPanelBlock;
 import dev.bwr.mod.panel.PanelBlock;
 import dev.bwr.mod.panel.PanelBlockEntity;
+import dev.bwr.mod.panel.PanelFinish;
+import dev.bwr.mod.panel.PanelFinishes;
 import dev.bwr.mod.panel.PanelOps;
+import dev.bwr.mod.panel.client.PanelFinishColors;
 import dev.bwr.mod.panel.component.ComponentType;
 import dev.bwr.mod.panel.component.ComponentTypes;
 import dev.bwr.mod.panel.component.Footprint;
 import dev.bwr.mod.panel.component.InputSources;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.component.PanelStyles;
+import dev.bwr.mod.panel.trim.PanelEndCapBlock;
+import dev.bwr.mod.panel.trim.PanelTrimBlock;
 import dev.bwr.mod.registry.BwrBlocks;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.Minecraft;
@@ -60,20 +67,58 @@ public final class FurnitureClientCheck {
     private static final int FLOOR = 119;
     private static final int Y = FLOOR + 1;
 
-    private static final String[] NAMES = {"room-overview-ne", "room-overview-sw", "desks-front", "desks-close",
+    private static final String[] BASE_NAMES = {"room-overview-ne", "room-overview-sw", "desks-front", "desks-close",
             "cabinets-front", "wall-displays", "back-to-back-pair", "item-icons"};
+    /** The stages after the original eight: the same room in every finish (PanelFinish), two pictures each, then the item icons. */
+    private static final int FINISH_FIRST = BASE_NAMES.length;
+    private static final PanelFinish[] FINISHES = PanelFinish.values();
+    private static final String[] NAMES = names();
+
+    private static String[] names() {
+        String[] all = new String[BASE_NAMES.length + FINISHES.length * 2 + 1];
+        System.arraycopy(BASE_NAMES, 0, all, 0, BASE_NAMES.length);
+        for (int i = 0; i < FINISHES.length; i++) {
+            all[FINISH_FIRST + i * 2] = "finish-" + FINISHES[i].getSerializedName() + "-room";
+            all[FINISH_FIRST + i * 2 + 1] = "finish-" + FINISHES[i].getSerializedName() + "-trim";
+        }
+        all[all.length - 1] = "finish-icons";
+        return all;
+    }
     /** Eye position then target, in room coordinates (x, y above the floor, z): the camera stands where the eye is. */
-    private static final double[][] VIEWS = {
-            {12.2, 3.8, 3.4, 2.0, 1.4, 7.0},
-            {1.0, 3.7, 10.8, 9.0, 1.9, 2.0},
-            {8.5, 2.5, 6.8, 3.6, 0.9, 3.5},
-            {6.2, 2.0, 5.0, 3.5, 1.0, 3.2},
-            {8.5, 2.6, 3.8, 13.5, 2.1, 3.4},
-            {8.0, 3.0, 6.6, 8.5, 3.0, 0.5},
-            {12.4, 2.4, 11.2, 10.0, 1.4, 8.6},
-            {8.5, 2.6, 3.8, 13.5, 2.1, 3.4},
-    };
-    private static final int[] FOV = {75, 75, 70, 60, 60, 70, 65, 60};
+    private static final double[][] VIEWS = views();
+    private static final int[] FOV = fovs();
+
+    private static double[][] views() {
+        double[][] base = {
+                {12.2, 3.8, 3.4, 2.0, 1.4, 7.0},
+                {1.0, 3.7, 10.8, 9.0, 1.9, 2.0},
+                {8.5, 2.5, 6.8, 3.6, 0.9, 3.5},
+                {6.2, 2.0, 5.0, 3.5, 1.0, 3.2},
+                {8.5, 2.6, 3.8, 13.5, 2.1, 3.4},
+                {8.0, 3.0, 6.6, 8.5, 3.0, 0.5},
+                {12.4, 2.4, 11.2, 10.0, 1.4, 8.6},
+                {8.5, 2.6, 3.8, 13.5, 2.1, 3.4},
+        };
+        double[][] all = new double[NAMES.length][];
+        System.arraycopy(base, 0, all, 0, base.length);
+        for (int i = FINISH_FIRST; i < NAMES.length; i++) {
+            // each finish: the room from the north-east corner (the west wall run, the desks), then the south wall run with its trim
+            all[i] = (i - FINISH_FIRST) % 2 == 0 ? new double[] {12.6, 3.6, 2.2, 2.0, 1.2, 7.0}
+                    : new double[] {10.8, 2.7, 3.2, 5.6, 1.6, 10.6};
+        }
+        all[NAMES.length - 1] = base[7];
+        return all;
+    }
+
+    private static int[] fovs() {
+        int[] all = new int[NAMES.length];
+        int[] base = {75, 75, 70, 60, 60, 70, 65, 60};
+        System.arraycopy(base, 0, all, 0, base.length);
+        for (int i = FINISH_FIRST; i < NAMES.length; i++) {
+            all[i] = 72;
+        }
+        return all;
+    }
 
     private static boolean started;
     private static boolean requested;
@@ -144,6 +189,14 @@ public final class FurnitureClientCheck {
                         return;
                     }
                 }
+                if (selected >= FINISH_FIRST && selected < NAMES.length - 1) {
+                    try {
+                        finishStage(level, selected - FINISH_FIRST);
+                    } catch (Throwable failure) {
+                        buildFailure = failure;
+                        return;
+                    }
+                }
                 double[] v = VIEWS[selected];
                 Vec3 eye = new Vec3(X0 + v[0], Y + v[1], Z0 + v[2]);
                 Vec3 target = new Vec3(X0 + v[3], Y + v[4], Z0 + v[5]);
@@ -179,11 +232,17 @@ public final class FurnitureClientCheck {
         if (shown == 40 && NAMES[stage].equals("item-icons")) {
             mc.setScreen(new IconScreen());
         }
+        if (shown == 40 && NAMES[stage].equals("finish-icons")) {
+            mc.setScreen(new FinishIconScreen());
+        }
         if (shown < (stage == 0 ? 220 : 90)) {
             return;
         }
         if (stage == 0) {
             verifyModels(mc);
+        }
+        if (stage == FINISH_FIRST) {
+            verifyFinishModels(mc);
         }
         if (stage == 0) {
             var server = mc.getSingleplayerServer();
@@ -211,7 +270,8 @@ public final class FurnitureClientCheck {
         LogUtils.getLogger().info("FURNITURE CLIENT CHECK: {}", NAMES[stage]);
         requested = false;
         if (++stage == NAMES.length) {
-            LogUtils.getLogger().info("FURNITURE CLIENT CHECK PASS: {} pictures, every furniture state has a baked model with its textures", NAMES.length);
+            LogUtils.getLogger().info("FURNITURE CLIENT CHECK PASS: {} pictures, every furniture state has a baked model with its textures, "
+                    + "and the room in {} finishes", NAMES.length, FINISHES.length);
             mc.stop();
         }
     }
@@ -440,6 +500,142 @@ public final class FurnitureClientCheck {
         for (int i = 0; i < verticals.size(); i++) {
             BlockPos vertical = verticals.get(i);
             put(level, vertical, ComponentTypes.DIAL_GAUGE, 0, 0, 16, 16, ge, i % 3 == 2 ? "red_pointer" : "standard", 30 + (i * 37) % 60);
+        }
+    }
+
+    // ---- the same room in every finish
+
+    private static boolean extrasBuilt;
+
+    /** One stage of the finishes: the whole room takes the finish (every panel, trim and furniture block), after the extras exist. */
+    private static void finishStage(ServerLevel level, int index) {
+        if (!extrasBuilt) {
+            extrasBuilt = true;
+            buildFinishExtras(level);
+        }
+        PanelFinish finish = FINISHES[index / 2];
+        int changed = 0;
+        for (int x = -1; x <= 14; x++) {
+            for (int z = -1; z <= 12; z++) {
+                for (int y = 0; y < 5; y++) {
+                    BlockPos pos = at(x, y, z);
+                    BlockState state = level.getBlockState(pos);
+                    if (PanelFinishes.hasFinish(state) && state.getValue(PanelFinish.FINISH) != finish) {
+                        level.setBlock(pos, state.setValue(PanelFinish.FINISH, finish), Block.UPDATE_CLIENTS);
+                        changed++;
+                    }
+                }
+            }
+        }
+        LogUtils.getLogger().info("FURNITURE CLIENT CHECK finish {}: {} blocks changed", finish.getSerializedName(), changed);
+    }
+
+    /**
+     * What the original room has none of: a run along the south wall of a cabinet plinth, two vertical boards, an annunciator
+     * strip, canopy and vent above, with an end cap at each end, and one duplex column in the middle of the floor.
+     */
+    private static void buildFinishExtras(ServerLevel level) {
+        Direction north = Direction.NORTH;
+        for (int x = 4; x <= 8; x++) {
+            level.setBlock(at(x, 0, 11), BwrBlocks.CONTROL_PANEL_PLINTH_BASE.get().defaultBlockState().setValue(PanelTrimBlock.FACING, north), 3);
+            for (int y = 1; y <= 2; y++) {
+                level.setBlock(at(x, y, 11), BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState().setValue(PanelBlock.FACING, north), 3);
+            }
+            Block header = x % 2 == 0 ? BwrBlocks.CONTROL_PANEL_HEADER_STRIP.get() : BwrBlocks.CONTROL_PANEL_HEADER_CANOPY.get();
+            level.setBlock(at(x, 3, 11), header.defaultBlockState().setValue(PanelTrimBlock.FACING, north), 3);
+            level.setBlock(at(x, 4, 11), BwrBlocks.CONTROL_PANEL_HEADER_VENT.get().defaultBlockState().setValue(PanelTrimBlock.FACING, north), 3);
+        }
+        for (int y = 0; y <= 2; y++) {
+            Block cap = y == 0 ? BwrBlocks.CONTROL_PANEL_END_CAP_BENCH.get() : BwrBlocks.CONTROL_PANEL_END_CAP_FLAT.get();
+            level.setBlock(at(3, y, 11), cap.defaultBlockState().setValue(PanelTrimBlock.FACING, north)
+                    .setValue(PanelEndCapBlock.SIDE, PanelEndCapBlock.Side.LEFT), 3);
+            level.setBlock(at(9, y, 11), cap.defaultBlockState().setValue(PanelTrimBlock.FACING, north)
+                    .setValue(PanelEndCapBlock.SIDE, PanelEndCapBlock.Side.RIGHT), 3);
+        }
+        level.setBlock(at(10, 0, 11), BwrBlocks.CONTROL_PANEL_CORNER_VERTICAL_OUTSIDE.get().defaultBlockState()
+                .setValue(PanelTrimBlock.FACING, north), 3);
+        // a duplex column on the floor, bench at the front
+        BlockState bench = BwrBlocks.CONTROL_PANEL_DUPLEX.get().defaultBlockState().setValue(PanelBlock.FACING, north)
+                .setValue(DuplexPanelBlock.CELL, DuplexCell.BENCH);
+        BlockPos origin = at(5, 0, 6);
+        level.setBlock(origin, bench, 3);
+        BwrBlocks.CONTROL_PANEL_DUPLEX.get().setPlacedBy(level, origin, bench, null, ItemStack.EMPTY);
+        var lights = level.getChunkSource().getLightEngine();
+        for (int x = 2; x <= 11; x++) {
+            for (int z = 5; z <= 12; z++) {
+                for (int y = 0; y <= 5; y++) {
+                    lights.checkBlock(at(x, y, z));
+                }
+            }
+        }
+    }
+
+    /** Every finished block, in every finish, bakes to quads with real textures, and the painted quads are tinted. */
+    private static void verifyFinishModels(Minecraft mc) {
+        var renderer = mc.getBlockRenderer();
+        var missing = mc.getModelManager().getMissingModel();
+        int states = 0;
+        int tinted = 0;
+        List<String> wrong = new ArrayList<>();
+        for (Block block : PanelFinishColors.finishBlocks()) {
+            for (BlockState state : block.getStateDefinition().getPossibleStates()) {
+                var model = renderer.getBlockModel(state);
+                states++;
+                if (model == missing) {
+                    wrong.add(state + " has no model");
+                    continue;
+                }
+                boolean anyTint = false;
+                for (var quad : model.getQuads(state, null, RandomSource.create(1L), ModelData.EMPTY, null)) {
+                    if (quad.getSprite().contents().name().getPath().contains("missingno")) {
+                        wrong.add(state + " draws the missing texture");
+                        break;
+                    }
+                    anyTint |= quad.isTinted();
+                }
+                if (anyTint) {
+                    tinted++;
+                }
+            }
+        }
+        if (!wrong.isEmpty()) {
+            throw new AssertionError("Finished blocks without a proper baked model: " + wrong.subList(0, Math.min(8, wrong.size())));
+        }
+        if (tinted < states / 2) {
+            throw new AssertionError("Only " + tinted + " of " + states + " finished states have tinted quads");
+        }
+        LogUtils.getLogger().info("FURNITURE CLIENT CHECK finish models: {} states, {} with tinted quads, none missing", states, tinted);
+    }
+
+    /** One row of items per finish, at five times the size: the item colour handler follows the item's finish. */
+    private static final class FinishIconScreen extends net.minecraft.client.gui.screens.Screen {
+        FinishIconScreen() {
+            super(net.minecraft.network.chat.Component.empty());
+        }
+
+        @Override
+        public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+            graphics.fill(0, 0, width, height, 0xFF202830);
+            Block[] blocks = {BwrBlocks.CONTROL_PANEL_VERTICAL.get(), BwrBlocks.CONTROL_PANEL_BENCHBOARD.get(),
+                    BwrBlocks.CONTROL_PANEL_CONSOLE.get(), BwrBlocks.CONTROL_PANEL_DUPLEX.get(), BwrBlocks.CONTROL_PANEL_END_CAP_FLAT.get(),
+                    BwrBlocks.CONTROL_PANEL_HEADER_STRIP.get(), BwrBlocks.CONTROL_PANEL_PLINTH_BASE.get(), BwrBlocks.RELAY_CABINET.get(),
+                    BwrBlocks.OPERATOR_DESK.get(), BwrBlocks.SUPERVISOR_DESK.get(), BwrBlocks.WALL_DISPLAY.get(), BwrBlocks.MIMIC_BAND_CREAM.get()};
+            float scale = 3.2f;
+            int cell = (int) (16 * scale) + 6;
+            for (int row = 0; row < FINISHES.length; row++) {
+                for (int i = 0; i < blocks.length; i++) {
+                    graphics.pose().pushPose();
+                    graphics.pose().translate(width / 2.0f - blocks.length * cell / 2.0f + i * cell, 10 + row * (cell + 4), 0);
+                    graphics.pose().scale(scale, scale, 1.0f);
+                    graphics.renderItem(PanelFinish.withFinish(new ItemStack(blocks[i]), FINISHES[row]), 0, 0);
+                    graphics.pose().popPose();
+                }
+            }
+        }
+
+        @Override
+        public boolean isPauseScreen() {
+            return false;
         }
     }
 }

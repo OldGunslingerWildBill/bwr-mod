@@ -278,6 +278,7 @@ public final class RealScaleTests {
                 {ComponentTypes.CONTROL_SWITCH, Footprint.of(8, 12), Footprint.of(1, 2)},
                 {ComponentTypes.LAMP, Footprint.of(2, 2), Footprint.of(1, 1)},
                 {ComponentTypes.ANNUNCIATOR, Footprint.of(2, 2), Footprint.of(1, 1)},
+                {ComponentTypes.ANNUNCIATOR_CONTROL, Footprint.of(4, 2), Footprint.of(2, 1)},
                 {ComponentTypes.BAR_GAUGE, Footprint.of(2, 6), Footprint.of(1, 3)},
                 {ComponentTypes.BAR_GRAPH, Footprint.of(2, 6), Footprint.of(1, 3)},
                 {ComponentTypes.EDGEWISE_GAUGE_VERTICAL, Footprint.of(2, 6), Footprint.of(1, 3)},

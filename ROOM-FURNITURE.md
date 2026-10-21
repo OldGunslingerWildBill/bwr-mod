@@ -39,6 +39,13 @@ It shows nothing live.
 - **Mimic tape.** The tape draws on the panel bodies, which carry the block entity it needs. It does not work on the mimic
   bands; adding that needs a block entity and a renderer, which these blocks deliberately avoid.
 
+## Finishes
+
+Every piece takes one of five paint finishes (seafoam, the original; cream; tan; grey; light blue): sneak-right-click it with
+the panel wrench to step to the next, the whole piece at once. Desks, cabinets and the control stand paint their body, bezel
+and desktop; their dark trim, plinths, handles, louvres and screens stay. The thin housing of the mimic bands and wall
+displays takes a darker shade of the finish. The item and its drop keep the finish. See CONTROL-PANELS.md, "Finishes".
+
 ## Laying out a room
 
 These are guidance, not rules the blocks enforce.
@@ -75,8 +82,9 @@ iron ingot.
   exporter and writes the shared `materials.mtl`. Run it headless:
   `blender --background --factory-startup --python art/models/room_furniture/build_furniture.py -- --previews`
   (previews go to `tmp/furniture_preview/`).
-- Colours match the panel bodies (seafoam face `A7BCAE`, bezel `7D9284`) with dark grey trim; plain colours are
-  `minecraft:block/white_concrete` tinted by Kd, and only the louvres, indicator window, monitor screens, keyboard, the two
+- Colours match the panel bodies (seafoam face `A7BCAE`, bezel `7D9284`) with dark grey trim; the painted materials
+  (`paint`, `bezel`, `top`, `frame`) are `minecraft:block/white_concrete` with a `neoforge_TintIndex` (4 to 7) that the paint
+  finish colours (`PanelFinish`), the other plain colours are tinted by Kd, and only the louvres, indicator window, monitor screens, keyboard, the two
   mimic finishes and the two display pictures are real textures (`tools-make-furniture-textures.py`, standard library only).
 - `tools-export-furniture.py` writes the model, blockstate, item model and loot table JSON from the OBJ list.
 - Code is in `dev.bwr.mod.furniture`: `AssemblyBlock` (facing, footprint, one-item placement, whole-piece breaking) with

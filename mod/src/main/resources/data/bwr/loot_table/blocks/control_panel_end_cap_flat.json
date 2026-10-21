@@ -5,8 +5,105 @@
       "rolls": 1,
       "entries": [
         {
-          "type": "minecraft:item",
-          "name": "bwr:control_panel_end_cap_flat"
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_end_cap_flat",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:control_panel_end_cap_flat",
+                  "properties": {
+                    "finish": "cream"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "cream"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_end_cap_flat",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:control_panel_end_cap_flat",
+                  "properties": {
+                    "finish": "tan"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "tan"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_end_cap_flat",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:control_panel_end_cap_flat",
+                  "properties": {
+                    "finish": "grey"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "grey"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_end_cap_flat",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:control_panel_end_cap_flat",
+                  "properties": {
+                    "finish": "light_blue"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "light_blue"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_end_cap_flat"
+            }
+          ]
         }
       ],
       "conditions": [

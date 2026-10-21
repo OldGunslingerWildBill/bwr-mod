@@ -1,6 +1,7 @@
 package dev.bwr.mod.panel.trim;
 
 import com.mojang.serialization.MapCodec;
+import dev.bwr.mod.panel.PanelFinish;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.StringRepresentable;
@@ -81,6 +82,7 @@ public class PanelEndCapBlock extends PanelTrimBlock {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING, SIDE);
+        builder.add(PanelFinish.FINISH);
     }
 
     @Override

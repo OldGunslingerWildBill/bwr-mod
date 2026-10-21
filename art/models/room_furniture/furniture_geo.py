@@ -22,6 +22,7 @@ MATERIALS = {
     "bezel": ((0x7D, 0x92, 0x84), None),      # the panel bezel / unpainted edge colour
     "top": ((0xBC, 0xCD, 0xC1), None),        # desk laminate: a lighter seafoam
     "trim": ((0x3A, 0x3F, 0x42), None),       # dark grey trim
+    "frame": ((0x3A, 0x3F, 0x42), None),      # the thin housing of mimic bands and wall displays: tint 7 (dark in seafoam)
     "dark": ((0x1F, 0x23, 0x26), None),       # plinths and kick spaces
     "handle": ((0xC3, 0xC8, 0xC9), None),     # brushed aluminium handles
     "casing": ((0x4B, 0x51, 0x55), None),     # monitor and CRT housings
@@ -411,9 +412,9 @@ def supervisor(clip=None):
 def mimic_band(finish):
     b = Builder("mimic_band_" + finish)
     mat = "mimic_" + finish
-    b.box((0.0, 0.05, 0.875), (1.0, 0.95, 1.0), {"n": mat, "e": "trim", "w": "trim"}, skip="sud")
-    b.box((0.0, 0.0, 0.84), (1.0, 0.05, 1.0), "trim", skip="s")
-    b.box((0.0, 0.95, 0.84), (1.0, 1.0, 1.0), "trim", skip="s")
+    b.box((0.0, 0.05, 0.875), (1.0, 0.95, 1.0), {"n": mat, "e": "frame", "w": "frame"}, skip="sud")
+    b.box((0.0, 0.0, 0.84), (1.0, 0.05, 1.0), "frame", skip="s")
+    b.box((0.0, 0.95, 0.84), (1.0, 1.0, 1.0), "frame", skip="s")
     return b.finish(single_block=True)
 
 
@@ -439,12 +440,12 @@ def wall_display(width, height=2, clip=None):
             b.faces.append((mat, pts, uvs))   # already wound counter-clockwise seen from -z
     ztop = 1.0
     zf = 0.84
-    b.box((0.0, height - frame, zf), (width, height, ztop), "trim", skip="s")        # top bar
-    b.box((0.0, 0.0, zf), (width, frame, ztop), "trim", skip="s")                    # bottom bar
-    b.box((0.0, frame, zf), (frame, height - frame, ztop), "trim", skip="s")         # left bar
-    b.box((width - frame, frame, zf), (width, height - frame, ztop), "trim", skip="s")  # right bar
+    b.box((0.0, height - frame, zf), (width, height, ztop), "frame", skip="s")        # top bar
+    b.box((0.0, 0.0, zf), (width, frame, ztop), "frame", skip="s")                    # bottom bar
+    b.box((0.0, frame, zf), (frame, height - frame, ztop), "frame", skip="s")         # left bar
+    b.box((width - frame, frame, zf), (width, height - frame, ztop), "frame", skip="s")  # right bar
     # a thin dark backing closes the sides of the screen so it does not look like a hole from an angle
-    b.box((0.0, 0.0, screen_z), (width, height, ztop), "trim", skip="nsud")
+    b.box((0.0, 0.0, screen_z), (width, height, ztop), "frame", skip="nsud")
     return b
 
 
