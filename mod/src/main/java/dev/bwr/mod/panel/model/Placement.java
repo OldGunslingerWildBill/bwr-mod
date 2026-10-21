@@ -36,6 +36,15 @@ public final class Placement {
         this.elevation = elevation;
     }
 
+    /**
+     * The factor on every elevation of a placeholder drawn on a {@code w x h} cell component (see
+     * {@code ProportionedComponentModel}): 1 from 3 cells across, less below. It scales the parts and the text printed on
+     * them alike, so a legend that sits a hair above its face keeps doing so at every size.
+     */
+    public static float elevationFactor(int w, int h) {
+        return Math.min(1.0f, Math.min(w, h) / 3.0f);
+    }
+
     /** This placement with every elevation multiplied by {@code factor}, so a flat drawing keeps its look at a small size. */
     public Placement withElevation(float factor) {
         return new Placement(scale, rowScale, offsetX, offsetY, elevation * factor);

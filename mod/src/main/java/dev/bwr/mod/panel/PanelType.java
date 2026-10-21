@@ -32,6 +32,22 @@ import net.minecraft.core.Direction;
  *   <li>{@link #DUPLEX_HEADER}: the tilted annunciator face overhanging the operator, from the board's top edge to
  *       half a block forward one block up (facing forward and down, 26.6 degrees from vertical), a single row.</li>
  * </ul>
+ *
+ * <p>The angled trim blocks ({@link dev.bwr.mod.panel.trim.MountableTrimBlock}) mount components too, on faces that
+ * are neither level nor square to the block:
+ * <ul>
+ *   <li>{@link #HEADER_TILT}: the annunciator panel of the header strip and the canopy, a full block tall and leaning
+ *       back 5 degrees as it rises (normal 5 degrees above the horizon). It joins sideways, like the vertical board,
+ *       but is a single row: the next block up would be 0.0875 further back, which is not on the block grid (the same
+ *       reason the console is a single row), so a strip never grows upward into another strip;</li>
+ *   <li>{@link #CHAMFER_VERTICAL}: the 45 degree facet that fills the inside corner of two vertical boards. The
+ *       facet is vertical, so a stack of corner blocks is one tall face (rows), but the next facet sideways is not
+ *       on its plane (the facets of a diagonal run of blocks are 0.71 apart along it), so it never joins sideways;
+ *       only 11 of the 16 columns lie on the facet ({@link PanelGeometry#cellUsable});</li>
+ *   <li>{@link #CHAMFER_BENCH}: the triangular facet that fills the inside corner of two benchboards (normal
+ *       pointing up, toward the operator and to the operator's right). A single block: it joins nothing, and only
+ *       the cells that lie wholly on the triangle can be used.</li>
+ * </ul>
  */
 public enum PanelType {
     VERTICAL("control_panel_vertical", "PNL"),
@@ -40,7 +56,10 @@ public enum PanelType {
     BACK_PANEL("control_panel_back", "BCK"),
     DUPLEX_BOARD("control_panel_duplex", "DXB"),
     DUPLEX_BENCH("control_panel_duplex", "DXN"),
-    DUPLEX_HEADER("control_panel_duplex", "DXH");
+    DUPLEX_HEADER("control_panel_duplex", "DXH"),
+    HEADER_TILT("control_panel_header_strip", "HDR"),
+    CHAMFER_VERTICAL("control_panel_corner_vertical_chamfer", "CHV"),
+    CHAMFER_BENCH("control_panel_corner_bench_chamfer", "CHB");
 
     private final String registryName;
     private final String shortName;
@@ -60,7 +79,16 @@ public enum PanelType {
 
     /** Whether blocks of this style can stack into more than one row. */
     public boolean hasRows() {
-        return this != CONSOLE && this != DUPLEX_BENCH && this != DUPLEX_HEADER;
+        return this != CONSOLE && this != DUPLEX_BENCH && this != DUPLEX_HEADER && this != HEADER_TILT
+                && this != CHAMFER_BENCH;
+    }
+
+    /**
+     * Whether the neighbour to the operator's right or left can continue the face. False for the chamfers, whose face
+     * is a diagonal facet that does not meet the facet of the block beside it.
+     */
+    public boolean hasColumns() {
+        return this != CHAMFER_VERTICAL && this != CHAMFER_BENCH;
     }
 
     /**
@@ -69,18 +97,18 @@ public enum PanelType {
      */
     public BlockPos nextRow(BlockPos pos, Direction facing) {
         return switch (this) {
-            case VERTICAL, BACK_PANEL, DUPLEX_BOARD -> pos.below();
+            case VERTICAL, BACK_PANEL, DUPLEX_BOARD, CHAMFER_VERTICAL -> pos.below();
             case BENCHBOARD -> pos.below().relative(facing);
-            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER -> null;
+            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER, HEADER_TILT, CHAMFER_BENCH -> null;
         };
     }
 
     /** The block one group row further up the face, or {@code null}. */
     public BlockPos previousRow(BlockPos pos, Direction facing) {
         return switch (this) {
-            case VERTICAL, BACK_PANEL, DUPLEX_BOARD -> pos.above();
+            case VERTICAL, BACK_PANEL, DUPLEX_BOARD, CHAMFER_VERTICAL -> pos.above();
             case BENCHBOARD -> pos.above().relative(facing.getOpposite());
-            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER -> null;
+            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER, HEADER_TILT, CHAMFER_BENCH -> null;
         };
     }
 

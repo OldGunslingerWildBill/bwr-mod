@@ -1,10 +1,15 @@
 package dev.bwr.mod.panel;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
 
 import java.util.List;
 
@@ -31,5 +36,24 @@ public final class PanelWrenchItem extends Item {
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.bwr.panel_wrench.use").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.bwr.panel_wrench.remove").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.bwr.panel_wrench.finish").withStyle(ChatFormatting.GRAY));
+    }
+
+    /**
+     * Sneak-click on trim, furniture or a panel block's body (anywhere a panel does not take the click itself): steps the
+     * finish of the clicked piece. A panel's face is handled in {@link PanelBlock}: the same gesture on a bare spot.
+     */
+    @Override
+    public InteractionResult useOn(UseOnContext context) {
+        Player player = context.getPlayer();
+        Level level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        if (player == null || !player.isShiftKeyDown() || !PanelFinishes.hasFinish(level.getBlockState(pos))) {
+            return InteractionResult.PASS;
+        }
+        if (!level.isClientSide()) {
+            PanelFinishes.cycle(level, pos, player);
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 }
