@@ -163,7 +163,7 @@ public final class GaugeScaleGuardTests {
             Map.entry("synchroscope", "a round meter whose three legends are shares of its face radius; scaling checked by SynchroscopeTests"),
             Map.entry("two_pen_recorder", "a recorder: no scale text, only a header with two numbers and a mark, all shares of its case; sizes from 2 x 2"),
             Map.entry("joystick_switch", "a control: its four legends are shares of the plate and fitted to it (JoystickTests)"),
-            Map.entry("led_rod_display", "a core map: its LEDs are drawn in tiles of the bound core and its only text is a caption fitted to the margin (LedRodDisplayTests)")),
+            Map.entry("led_rod_display", "a core map: its LEDs are drawn in tiles of the bound core and its only text is a caption fitted to the margin (LedRodDisplayTests)"),
             Map.entry("annunciator_control", "four pushbuttons with fitted legends under them, no scale"));
 
     // ---- recording

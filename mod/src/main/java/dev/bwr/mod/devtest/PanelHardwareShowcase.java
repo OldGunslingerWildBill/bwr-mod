@@ -31,8 +31,8 @@ import java.util.List;
  * real size and at a big size, operated: stations in MAN with RAISE held and in AUTO, pointers off zero, lamps lit, a
  * recorder with two traces, joysticks in every position, and an LED display with a rod pattern (read from a real formed reactor, built high above the floor).
  *
- * <p>Plan: a wall of 4 x 3 vertical panel blocks, the first at x 5516, y 128, z 5261 (columns run west, rows down), and a wall
- * of 3 x 4 (the first at y 129) for the LED displays, the first at x 5528; both face north on a floor at y 125. The area x 5500..5532, z 5250..5266 is
+ * <p>Plan: a wall of 4 x 3 vertical panel blocks, the first at x 5516, y 128, z 5291 (columns run west, rows down), and a wall
+ * of 3 x 4 (the first at y 129) for the LED displays, the first at x 5528; both face north on a floor at y 125. The area x 5500..5532, z 5280..5296 is
  * cleared first.
  */
 final class PanelHardwareShowcase {
@@ -41,12 +41,12 @@ final class PanelHardwareShowcase {
 
     static final String[] NAMES = {"hardware-board", "hardware-station-default", "hardware-station-real", "hardware-instruments",
             "hardware-joysticks", "hardware-led"};
-    private static final BlockPos WALL = new BlockPos(5516, 128, 5261);
-    private static final BlockPos LED_WALL = new BlockPos(5528, 129, 5261);
-    private static final double[][] EYE = {{5515.0, 127.5, 5257.4}, {5516.73, 128.6, 5259.8}, {5516.73, 127.65, 5260.4},
-            {5515.0, 128.3, 5258.7}, {5513.5, 128.0, 5258.9}, {5527.5, 128.0, 5256.4}};
-    private static final double[][] LOOK = {{5515.0, 127.5, 5262.0}, {5516.73, 128.6, 5262.0}, {5516.73, 127.65, 5262.0},
-            {5515.0, 128.3, 5262.0}, {5513.5, 128.0, 5262.0}, {5527.5, 128.0, 5262.0}};
+    private static final BlockPos WALL = new BlockPos(5516, 128, 5291);
+    private static final BlockPos LED_WALL = new BlockPos(5528, 129, 5291);
+    private static final double[][] EYE = {{5515.0, 127.5, 5287.4}, {5516.73, 128.6, 5289.8}, {5516.73, 127.65, 5290.4},
+            {5515.0, 128.3, 5288.7}, {5513.5, 128.0, 5288.9}, {5527.5, 128.0, 5286.4}};
+    private static final double[][] LOOK = {{5515.0, 127.5, 5292.0}, {5516.73, 128.6, 5292.0}, {5516.73, 127.65, 5292.0},
+            {5515.0, 128.3, 5292.0}, {5513.5, 128.0, 5292.0}, {5527.5, 128.0, 5292.0}};
 
     static Vec3 camera(int stage) {
         return new Vec3(EYE[stage][0], EYE[stage][1] - 1.62, EYE[stage][2]);
@@ -89,7 +89,7 @@ final class PanelHardwareShowcase {
         PLACED.clear();
         mounted = 0;
         for (int x = 5500; x <= 5532; x++) {
-            for (int z = 5250; z <= 5266; z++) {
+            for (int z = 5280; z <= 5296; z++) {
                 level.setBlock(new BlockPos(x, 125, z), Blocks.SMOOTH_STONE.defaultBlockState(), 2);
                 for (int y = 126; y <= 133; y++) {
                     level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 2);
@@ -218,7 +218,7 @@ final class PanelHardwareShowcase {
     }
 
     /** The reactor behind the LED displays: a real formed 185 rod core, high above the floor and out of every picture. */
-    private static final BlockPos REACTOR_MIN = new BlockPos(5538, 170, 5240);
+    private static final BlockPos REACTOR_MIN = new BlockPos(5538, 170, 5270);
 
     /**
      * The LED displays read a real reactor, as they do in play (an unbound display is dark again whenever its chunk loads, so a
