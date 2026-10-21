@@ -61,6 +61,7 @@ BARGAUGE = (2, 6)
 RPS = (4, 2)
 PUSHTURN = (2, 2)
 ANN = (2, 2)
+ANN_CTRL = (4, 2)   # the annunciator control module (ACK, RESET, SILENCE, TEST), at its double size
 RECORDER = (16, 16)
 SEG_W, SEG_H = 5, 8        # a seven segment display: 5 cells per digit, 8 tall (the older sizes, about twice the real ones)
 PLATES = {(16, 4), (8, 4), (24, 4), (32, 4), (48, 4), (64, 4), (24, 6), (32, 8), (32, 10), (24, 8), (32, 12)}
@@ -69,7 +70,7 @@ T = {k: "bwr:" + k for k in (
     "nameplate lamp pushbutton toggle_switch rotary_selector control_switch key_switch setpoint_knob thumbwheel annunciator "
     "bar_graph dial_gauge edgewise_gauge_vertical edgewise_gauge_horizontal strip_chart seven_segment_display "
     "sixteen_segment_display character_lcd graphic_display mimic_line mimic_symbol full_core_display rod_select_matrix "
-    "paperless_recorder bar_gauge rps_trip push_turn_switch".split())}
+    "paperless_recorder bar_gauge rps_trip push_turn_switch annunciator_control".split())}
 
 PLATE_W, INK_B = "ECECE4", "151515"   # white laminate, black engraving (CR-PANELS-BWR-RESEARCH.md 2.6)
 PLATE_K, INK_W = "141414", "F0F0F0"   # black demarcation plate with white lettering: system titles
@@ -349,6 +350,8 @@ def rps_board():
     b.plate(V, 32, 25, 24, 6, "SDV HI LEVEL", "SCRAM BYPASS")
     b.add(V, "key_switch", 58, 24, KEY, label="SDV-BYPASS", caption="KEY")
     b.rect(V, 1, 5, 28, 21)
+    b.plate(V, 64, 6, 16, 4, "ANN ACK / RESET")
+    b.add(V, "annunciator_control", 70, 11, ANN_CTRL, label="ANN-CTRL")
 
     # -- bench: manual scram, mode switch and key, scram reset, ARI, the bypass joysticks to come
     b.plate(N, 0, 0, 16, 4, "MAN SCRAM")
@@ -448,6 +451,8 @@ def rpv_board():
               "Feedwater master level controller (FWCS): " + CONTROLLER_TODO)
     b.reserve(N, 24, 4, 24, 12, "bwr:controller_station",
               "Recirculation master flow controller and the M/A transfer stations: " + CONTROLLER_TODO)
+    b.plate(N, 72, 0, 8, 4, "ANN")
+    b.add(N, "annunciator_control", 74, 6, ANN_CTRL, label="ANN-CTRL")
     b.add(N, "strip_chart", 56, 0, (16, 16), label="REC-VESSEL-TEMP", config={"Pens": 2, "Min": 0, "Max": 600, "Span": 600})
     b.todo += ["Feedwater (master level controller, reactor feed pump M/A) and recirculation (master flow controller, M/A "
                "transfer stations) controls are reserved on main.bench for the manual/auto controller station part.",
@@ -502,6 +507,8 @@ def neutron_board():
         bar(b, V, 41 + 5 * i, 10, BARGAUGE, 0, 125, "PCT PWR", [(100, 118, yel), (118, 125, red)], caption=name,
             label="APRM-" + name)
     b.rect(V, 37, 4, 33, 16)
+    b.plate(V, 38, 22, 24, 4, "ANN ACK / RESET")
+    b.add(V, "annunciator_control", 45, 27, ANN_CTRL, label="ANN-CTRL")
     b.plate(V, 72, 5, 24, 4, "LPRM  (W / CM2)")
     for g, name in enumerate("ABCD"):
         gx, gy = 74 + (g % 2) * 11, 10 + (g // 2) * 11
@@ -626,6 +633,8 @@ def eccs_board():
     b.plate(V, x0, 23, 32, 8, "RED STRIPE = ADS VALVE", "SET PRESSURES ON", "VALVE PLATES")
     b.plate(V, x0 + 32, 23, 16, 4, "BACKUP XFER")
     b.add(V, "key_switch", x0 + 38, 27, KEY, label="ADS-XFER", caption="KEY")
+    b.plate(N, x0 + 32, 10, 16, 4, "ANN ACK / RESET")
+    b.add(N, "annunciator_control", x0 + 38, 14, ANN_CTRL, label="ANN-CTRL")
     # bench: inhibit, manual initiation (turn to arm, then push), reset
     for i, roman in enumerate(("I", "II")):
         b.plate(N, x0 + 16 * i, 0, 16, 4, "ADS INHIBIT " + roman)
@@ -670,6 +679,7 @@ def rod_board():
     b.lamp(W, 100, 73, RED, caption="ROD DRIFT", label="ROD-DRIFT")
     b.rect(W, 63, 5, 49, 74)
     # RWM / RSCS
+    b.add(W, "annunciator_control", 134, 7, ANN_CTRL, label="ANN-CTRL")
     annunciator_box(b, W, 114, 6, ANN, [
         [("ROD DRIFT", ""), ("RWM", "INSERT ERR"), ("RWM", "WITHDR ERR"), ("RWM", "SELECT ERR"), ("RWM", "NOTCH ERR"),
          ("RSCS", "ABOVE LPSP"), ("RWM", "INOP"), ("RWM", "BYPASSED")],

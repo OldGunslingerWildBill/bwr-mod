@@ -1428,6 +1428,36 @@
    "on": "main.board",
    "type": "bwr:nameplate",
    "at": [
+    38,
+    22
+   ],
+   "size": [
+    24,
+    4
+   ],
+   "config": {
+    "Text": "ANN ACK / RESET",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:annunciator_control",
+   "at": [
+    45,
+    27
+   ],
+   "size": [
+    4,
+    2
+   ],
+   "label": "ANN-CTRL"
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
     72,
     5
    ],

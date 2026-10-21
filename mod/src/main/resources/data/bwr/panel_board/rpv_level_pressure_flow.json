@@ -1331,6 +1331,36 @@
   },
   {
    "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
+    72,
+    0
+   ],
+   "size": [
+    8,
+    4
+   ],
+   "config": {
+    "Text": "ANN",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:annunciator_control",
+   "at": [
+    74,
+    6
+   ],
+   "size": [
+    4,
+    2
+   ],
+   "label": "ANN-CTRL"
+  },
+  {
+   "on": "main.bench",
    "type": "bwr:strip_chart",
    "at": [
     56,

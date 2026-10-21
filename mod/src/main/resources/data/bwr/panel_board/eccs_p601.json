@@ -4518,6 +4518,36 @@
    "on": "main.bench",
    "type": "bwr:nameplate",
    "at": [
+    192,
+    10
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "ANN ACK / RESET",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:annunciator_control",
+   "at": [
+    198,
+    14
+   ],
+   "size": [
+    4,
+    2
+   ],
+   "label": "ANN-CTRL"
+  },
+  {
+   "on": "main.bench",
+   "type": "bwr:nameplate",
+   "at": [
     160,
     0
    ],

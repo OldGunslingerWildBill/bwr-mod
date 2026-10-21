@@ -1972,6 +1972,36 @@
    "caption": "KEY"
   },
   {
+   "on": "main.board",
+   "type": "bwr:nameplate",
+   "at": [
+    64,
+    6
+   ],
+   "size": [
+    16,
+    4
+   ],
+   "config": {
+    "Text": "ANN ACK / RESET",
+    "Plate": "ECECE4",
+    "Ink": "151515"
+   }
+  },
+  {
+   "on": "main.board",
+   "type": "bwr:annunciator_control",
+   "at": [
+    70,
+    11
+   ],
+   "size": [
+    4,
+    2
+   ],
+   "label": "ANN-CTRL"
+  },
+  {
    "on": "main.bench",
    "type": "bwr:nameplate",
    "at": [

@@ -209,6 +209,9 @@ public final class PremadeBoardTests {
         BoardTemplate neutron = shipped(h, "neutron_monitoring");
         check(h, count(neutron, "bwr:bar_gauge") == 6 && count(neutron, "bwr:edgewise_gauge_vertical") == 8
                 && count(neutron, "bwr:strip_chart") == 2 && count(neutron, "bwr:dial_gauge") == 16, "neutron: " + summary(neutron));
+        for (BoardTemplate each : BoardTemplates.ordered()) {
+            check(h, count(each, "bwr:annunciator_control") == 1, each.id() + " has no annunciator control module: " + summary(each));
+        }
         h.succeed();
     }
 

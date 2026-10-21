@@ -261,6 +261,19 @@
   },
   {
    "on": "wall.face",
+   "type": "bwr:annunciator_control",
+   "at": [
+    134,
+    7
+   ],
+   "size": [
+    4,
+    2
+   ],
+   "label": "ANN-CTRL"
+  },
+  {
+   "on": "wall.face",
    "type": "bwr:annunciator",
    "at": [
     114,

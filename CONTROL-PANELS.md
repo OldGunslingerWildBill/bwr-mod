@@ -682,7 +682,7 @@ plant. You wire it with the Networking Wrench like any board you built by hand.
 
 ### The five boards
 
-All are laid out at about twice the exact real size (a dial 4 x 4 cells, a switch 2 x 4, a lamp 2 x 2: the exact real sizes were
+Each carries one **annunciator control module** (ACK, RESET, SILENCE, TEST) for its annunciator windows. All are laid out at about twice the exact real size (a dial 4 x 4 cells, a switch 2 x 4, a lamp 2 x 2: the exact real sizes were
 too small to read), from `CR-PANELS-BWR-RESEARCH.md` (the number is the board in that report). Labels follow its conventions:
 white laminate with black engraving above controls and below indicators (nameplates above, captions below), black plates for
 system titles, valve switches CLOSE left and OPEN right with a green (closed) and a red (open) lamp, annunciator tiles red for
