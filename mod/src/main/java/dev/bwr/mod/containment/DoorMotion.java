@@ -18,9 +18,12 @@ public final class DoorMotion {
     /** Open fraction of the swing at which the leaf stops blocking the opening. */
     public static final double CLEAR_SWING = 0.5;
 
-    /** Vault: ticks for a powered stroke and for a hand-wheel stroke (see CONTAINMENT-UPDATE.md). */
-    public static final int VAULT_POWERED_TICKS = 200;
-    public static final int VAULT_MANUAL_TICKS = 1200;
+    /** Vault: ticks for a powered stroke (2.5 s) and for a hand-wheel stroke (8 s) (see CONTAINMENT-UPDATE.md). */
+    public static final int VAULT_POWERED_TICKS = 50;
+    public static final int VAULT_MANUAL_TICKS = 160;
+    /** What a stroke took before the doors were retimed: saved mid-stroke doors of that age are rescaled on load. */
+    public static final int LEGACY_POWERED_TICKS = 200;
+    public static final int LEGACY_MANUAL_TICKS = 1200;
     /** Airlock: ticks for one leaf to travel from closed to open (or back). */
     public static final int AIRLOCK_LEAF_TICKS = 12;
 

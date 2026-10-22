@@ -125,7 +125,7 @@ public final class Alpha31OpeningsAcceptanceTests {
         copy.loadWithComponents(saved,level.registryAccess());
         helper.assertTrue(copy.state()==ContainmentVaultDoorBlockEntity.State.OPENING
                         &&copy.energy().getEnergyStored()==2_000
-                        &&saved.getLong("StrokeEnd")-saved.getLong("StrokeStart")==200,
+                        &&saved.getLong("StrokeEnd")-saved.getLong("StrokeStart")==50,
                 "vault state, energy or animation time failed NBT round-trip");
         hold(level,root,5,false);helper.succeed();
     }

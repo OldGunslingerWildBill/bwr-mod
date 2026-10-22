@@ -802,7 +802,7 @@
   "status.bwr.condenser_item.7_wide_x_6_high_x_9_deep": "7 wide x 6 high x 9 deep; place center foundation.",
   "status.bwr.containment_airlock.airlock_leaf_moved": "Airlock leaf moved",
   "status.bwr.containment_airlock.interlock_close_the_other_leaf_first": "Interlock: close the other leaf first",
-  "status.bwr.containment_vault_door.vault_door_handwheel_engaged_60_s": "Vault door handwheel engaged (60 s)",
+  "status.bwr.containment_vault_door.vault_door_handwheel_engaged_8_s": "Vault door handwheel engaged (8 s)",
   "status.bwr.containment_vault_door.vault_door_jammed_or_already_moving": "Vault door jammed or already moving",
   "status.bwr.cooling_item.right_click_for_controls_and_readings": "Right-click for controls and readings.",
   "status.bwr.cooling_item.submerge_source_water_below_and_beside_two_outer": "Submerge: source water below and beside two outer sides.",
