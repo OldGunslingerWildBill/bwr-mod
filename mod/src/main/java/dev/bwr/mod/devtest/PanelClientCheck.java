@@ -81,6 +81,8 @@ public final class PanelClientCheck {
     private static final int SPRING_FIRST = ANNUN_FIRST + PanelAnnunciatorShowcase.NAMES.length;
     /** The first stage of the control desks (see {@link PanelDeskShowcase}), after the breaker spring stage. */
     private static final int DESK_FIRST = SPRING_FIRST + 1;
+    /** The stages of the switch input check (see {@link PanelSwitchInputCheck}), after the control desks. */
+    private static final int INPUT_FIRST = DESK_FIRST + PanelDeskShowcase.NAMES.length;
     private static final String[] NAMES = names();
 
     private static String[] names() {
@@ -89,7 +91,7 @@ public final class PanelClientCheck {
         String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length + PanelSlopeShowcase.NAMES.length
                 + PanelTrimShowcase.NAMES.length + PanelDuplexShowcase.NAMES.length + PanelRealScaleShowcase.NAMES.length
                 + PanelTextSizeShowcase.NAMES.length + PanelAngledShowcase.NAMES.length + PanelAnnunciatorShowcase.NAMES.length + PanelHardwareShowcase.NAMES.length + 1
-                + PanelDeskShowcase.NAMES.length];
+                + PanelDeskShowcase.NAMES.length + PanelSwitchInputCheck.NAMES.length];
         System.arraycopy(original, 0, all, 0, original.length);
         System.arraycopy(PanelModelShowcase.NAMES, 0, all, BAKED_FIRST, PanelModelShowcase.NAMES.length);
         System.arraycopy(PanelSlopeShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length,
@@ -105,6 +107,7 @@ public final class PanelClientCheck {
         System.arraycopy(PanelAnnunciatorShowcase.NAMES, 0, all, ANNUN_FIRST, PanelAnnunciatorShowcase.NAMES.length);
         all[SPRING_FIRST] = PanelSpringCheck.NAME;
         System.arraycopy(PanelDeskShowcase.NAMES, 0, all, DESK_FIRST, PanelDeskShowcase.NAMES.length);
+        System.arraycopy(PanelSwitchInputCheck.NAMES, 0, all, INPUT_FIRST, PanelSwitchInputCheck.NAMES.length);
         return all;
     }
     private static final String STAGE_FILTER = System.getProperty("bwr.panelClientStages", "");
@@ -150,7 +153,7 @@ public final class PanelClientCheck {
         Minecraft mc = Minecraft.getInstance();
         if (buildFailure != null) throw new IllegalStateException("Panel showcase build failed", buildFailure);
         // The breaker spring stage drives nine switches through every operation, far more than one stage's 120 ticks.
-        if (++age > Math.max(4200, 600 + 120 * NAMES.length + 6000)) throw new IllegalStateException("Panel client check timed out at " + stage);
+        if (++age > Math.max(4200, 600 + 120 * NAMES.length + 6000 + PanelSwitchInputCheck.TICK_BUDGET)) throw new IllegalStateException("Panel client check timed out at " + stage);
         if (!started && mc.screen != null && mc.getOverlay() == null) {
             started = true;
             mc.options.pauseOnLostFocus = false;
@@ -215,13 +218,15 @@ public final class PanelClientCheck {
                         PanelHardwareShowcase.build(level);
                         PanelSpringCheck.build(level);
                         PanelDeskShowcase.build(level);
+                        for (int i = 0; i < PanelSwitchInputCheck.NAMES.length; i++) PanelSwitchInputCheck.prepare(level, i);
                         built = true;
                     } catch (Throwable failure) {
                         buildFailure = failure;
                         return;
                     }
                 }
-                Vec3 camera = selected >= DESK_FIRST ? PanelDeskShowcase.camera(selected - DESK_FIRST)
+                Vec3 camera = selected >= INPUT_FIRST ? PanelSwitchInputCheck.camera(selected - INPUT_FIRST)
+                        : selected >= DESK_FIRST ? PanelDeskShowcase.camera(selected - DESK_FIRST)
                         : selected >= SPRING_FIRST ? PanelSpringCheck.camera()
                         : selected >= ANNUN_FIRST ? PanelAnnunciatorShowcase.camera(selected - ANNUN_FIRST)
                         : selected >= ANGLED_FIRST ? PanelAngledShowcase.camera(selected - ANGLED_FIRST)
@@ -239,7 +244,8 @@ public final class PanelClientCheck {
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = selected >= DESK_FIRST ? PanelDeskShowcase.target(selected - DESK_FIRST)
+                Vec3 target = selected >= INPUT_FIRST ? PanelSwitchInputCheck.target(selected - INPUT_FIRST)
+                        : selected >= DESK_FIRST ? PanelDeskShowcase.target(selected - DESK_FIRST)
                         : selected >= SPRING_FIRST ? PanelSpringCheck.target()
                         : selected >= ANNUN_FIRST ? PanelAnnunciatorShowcase.target(selected - ANNUN_FIRST)
                         : selected >= ANGLED_FIRST ? PanelAngledShowcase.target(selected - ANGLED_FIRST)
@@ -324,6 +330,7 @@ public final class PanelClientCheck {
             mc.screen.mouseScrolled(640, 300, 0, -3);
         }
         if (NAMES[stage].equals(PanelSpringCheck.NAME) && shown >= 70 && !PanelSpringCheck.tick(mc)) return;
+        if (stage >= INPUT_FIRST && shown >= 70 && !PanelSwitchInputCheck.tick(mc, stage - INPUT_FIRST)) return;
         if (shown < 105) return;
         if (picker && !(mc.screen instanceof SizePickerScreen))
             throw new AssertionError("The size picker was closed before its screenshot");
@@ -360,7 +367,7 @@ public final class PanelClientCheck {
             if (stage >= BAKED_FIRST) {
                 // Every component must draw baked exactly when a loaded model exists for its look.
                 LogUtils.getLogger().info("PANEL CLIENT CHECK baked models {}: {} components drawn from baked models ({} loaded)",
-                        NAMES[stage], stage >= DESK_FIRST ? PanelDeskShowcase.verify(mc, stage - DESK_FIRST) : stage >= SPRING_FIRST ? 0 : stage >= ANNUN_FIRST ? PanelAnnunciatorShowcase.verify(mc, stage - ANNUN_FIRST)
+                        NAMES[stage], stage >= INPUT_FIRST ? 0 : stage >= DESK_FIRST ? PanelDeskShowcase.verify(mc, stage - DESK_FIRST) : stage >= SPRING_FIRST ? 0 : stage >= ANNUN_FIRST ? PanelAnnunciatorShowcase.verify(mc, stage - ANNUN_FIRST)
                                 : stage >= ANGLED_FIRST ? PanelAngledShowcase.verify(mc, stage - ANGLED_FIRST)
                                 : stage >= HARDWARE_FIRST ? PanelHardwareShowcase.verify(mc, stage - HARDWARE_FIRST)
                                 : stage >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.verify(mc, stage - TEXTSIZE_FIRST)

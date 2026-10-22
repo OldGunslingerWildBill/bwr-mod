@@ -302,6 +302,16 @@ public final class PanelOps {
 
     /** A press / release / turn / set on an input component. */
     public static boolean operate(ServerPlayer player, BlockPos ownerPos, int id, OperateAction action, double value) {
+        return operate(player, ownerPos, id, action, value, 0);
+    }
+
+    /**
+     * {@link #operate(ServerPlayer, BlockPos, int, OperateAction, double)} for a packet stamped with {@code seq} (0 =
+     * unstamped). The presses and releases of one hold are stamped in the order the player made them, so a PRESS that
+     * arrives after the RELEASE that ended its hold (packets reordered or delayed) is dropped instead of latching the
+     * control at CLOSE until the fail-safe, and the RELEASE is remembered for that purpose.
+     */
+    public static boolean operate(ServerPlayer player, BlockPos ownerPos, int id, OperateAction action, double value, int seq) {
         ServerLevel level = player.serverLevel();
         if (!AssemblyAccess.mayOperate(player) || action == null || !Double.isFinite(value) || Math.abs(value) > 1.0e6 || !inReach(player, ownerPos)
                 || !AssemblyAccess.permitted(level, player, ownerPos) || !level.isLoaded(ownerPos)
@@ -311,6 +321,19 @@ public final class PanelOps {
         PanelComponent component = owner.component(id);
         if (component == null || component.type() == null) {
             return false;
+        }
+        if (seq != 0 && component.type().holdable()) {
+            if (action == OperateAction.PRESS && component.staleHold(player.getUUID(), seq)) {
+                return true; // answered as handled: a late copy of a click that has already been let go
+            }
+            if (action == OperateAction.RELEASE) {
+                if (component.staleRelease(player.getUUID(), seq)) {
+                    return true; // let go of an older hold than the one now pressed: the newer press stands
+                }
+                component.noteRelease(player.getUUID(), seq);
+            } else if (action == OperateAction.PRESS) {
+                component.notePress(player.getUUID(), seq);
+            }
         }
         return component.type().operate(new ComponentType.OperateContext(level, player, owner, component), action, value);
     }

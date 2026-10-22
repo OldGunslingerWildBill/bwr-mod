@@ -198,7 +198,7 @@ final class PanelSpringCheck {
     private static boolean outputSeen;
 
     /** The frame the game last drew, as pixels (what is on the screen, whatever the caches did). */
-    private static int[] frame(Minecraft mc) {
+    static int[] frame(Minecraft mc) {
         try (NativeImage image = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
             int w = image.getWidth();
             int[] out = new int[w * image.getHeight()];
@@ -212,7 +212,7 @@ final class PanelSpringCheck {
     }
 
     /** How many pixels differ clearly (by more than 40 of 255 in brightness) between two frames. */
-    private static int differing(int[] a, int[] b) {
+    static int differing(int[] a, int[] b) {
         require(a != null && b != null && a.length == b.length, "the two frames have different sizes");
         int count = 0;
         for (int i = 0; i < a.length; i++) {

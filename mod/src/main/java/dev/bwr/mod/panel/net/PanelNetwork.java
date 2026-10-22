@@ -80,7 +80,7 @@ public final class PanelNetwork {
     private static void handleOperate(PanelPayloads.Operate payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer sender
                 && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.OPERATE)) {
-            PanelOps.operate(sender, payload.pos(), payload.id(), OperateAction.byId(payload.action()), payload.value());
+            PanelOps.operate(sender, payload.pos(), payload.id(), OperateAction.byId(payload.action()), payload.value(), payload.seq());
         }
     }
 

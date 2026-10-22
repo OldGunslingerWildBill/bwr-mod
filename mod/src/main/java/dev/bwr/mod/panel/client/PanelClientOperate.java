@@ -100,8 +100,18 @@ public final class PanelClientOperate {
         return true;
     }
 
+    /** Stamp of the last PRESS or RELEASE sent; they count up in the order the player made them (never 0). */
+    private static int stamp;
+
+    /** The next stamp. Public so the client checks can send a reordered pair of packets. */
+    public static int nextStamp() {
+        stamp = stamp == Integer.MAX_VALUE ? 1 : stamp + 1;
+        return stamp;
+    }
+
     private static void send(PanelBlockEntity owner, PanelComponent component, OperateAction action, double value) {
-        PacketDistributor.sendToServer(new PanelPayloads.Operate(owner.getBlockPos(), component.id(), action.ordinal(), value));
+        int seq = action == OperateAction.PRESS || action == OperateAction.RELEASE ? nextStamp() : 0;
+        PacketDistributor.sendToServer(new PanelPayloads.Operate(owner.getBlockPos(), component.id(), action.ordinal(), value, seq));
     }
 
     @SubscribeEvent
@@ -161,6 +171,11 @@ public final class PanelClientOperate {
         Minecraft minecraft = Minecraft.getInstance();
         boolean down = minecraft.options.keyUse.isDown();
         if (heldOwner != null && (!down || minecraft.screen != null || minecraft.level == null)) {
+            releaseHeld(minecraft);
+        } else if (heldOwner != null && !(aim(minecraft) && AIM.owner.getBlockPos().equals(heldOwner) && AIM.component.id() == heldId)) {
+            // The crosshair slid off the held control (onto bare panel, another block or the sky) with the key still down: the
+            // hand has let go of it, so it springs back now rather than when the key is let go or the server's fail-safe fires.
+            // Put back on it with the key still down, the next repeat of the click takes hold again.
             releaseHeld(minecraft);
         }
         useWasDown = down;

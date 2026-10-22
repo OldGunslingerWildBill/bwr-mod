@@ -345,6 +345,11 @@ final class BakedComponentModel {
         poseFlagRgb = flagRgb;
     }
 
+    /** The target flag colour of the last pose (for checks). */
+    int drawnFlagRgb() {
+        return poseFlagRgb;
+    }
+
     /** The angle of the last pose, in degrees (for checks). */
     float drawnAngle() {
         return poseAngle;
