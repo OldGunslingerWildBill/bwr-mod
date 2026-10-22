@@ -14,6 +14,11 @@ Checks:
      the result of some recipe, except the items listed in NO_RECIPE below, and
      every item listed there really has none (a stale entry is as wrong as a
      missing recipe)
+  4. the same, once per install: with Mekanism loaded and without it. A recipe's
+     neoforge:conditions (mod_loaded, not, and, or) are evaluated for each, so an
+     item whose only recipe is gated on Mekanism is reported (it would be
+     uncraftable without it), and so is a recipe with a condition this script
+     cannot evaluate. The fuel fabricator has two recipes, one for each case.
 
 The complement of tools-audit-assets.py, which checks recipes block by block:
 this one also covers the plain items and says, for each item with no recipe,
@@ -47,6 +52,9 @@ NO_RECIPE = {
     # Made by the reprocessing plant.
     "fission_product_waste": "what burning fuel leaves, the reprocessing plant's byproduct: nothing uses it, and a recipe would make fuel waste out of nothing",
 }
+
+# The installs the audit evaluates recipe conditions for. Every craftable item needs a live recipe in each.
+INSTALLS = {"with Mekanism": {"mekanism"}, "without Mekanism": set()}
 
 problems = []
 
@@ -96,7 +104,40 @@ def ingredient_ids(ing):
     return []
 
 
+def holds(condition, loaded):
+    """Whether one neoforge condition is true on an install with the mods in `loaded`; None if it is not understood."""
+    kind = condition.get("type") if isinstance(condition, dict) else None
+    if kind == "neoforge:mod_loaded":
+        return condition.get("modid") in loaded
+    if kind == "neoforge:not":
+        inner = holds(condition.get("value"), loaded)
+        return None if inner is None else not inner
+    if kind in ("neoforge:and", "neoforge:or"):
+        parts = [holds(c, loaded) for c in condition.get("values", [])]
+        if None in parts or not parts:
+            return None
+        return all(parts) if kind == "neoforge:and" else any(parts)
+    if kind == "neoforge:true":
+        return True
+    if kind == "neoforge:false":
+        return False
+    return None
+
+
+def live(recipe, loaded, name):
+    """Whether the recipe is loaded on an install with `loaded` (reports a condition it cannot evaluate)."""
+    for c in recipe.get("neoforge:conditions", []):
+        value = holds(c, loaded)
+        if value is None:
+            bad(f"{name}: condition {json.dumps(c)} is not one this audit can evaluate")
+            return False
+        if not value:
+            return False
+    return True
+
+
 produced = set()
+produced_in = {mode: set() for mode in INSTALLS}
 for name, r in recipes.items():
     kind = r.get("type")
     if not kind:
@@ -113,6 +154,9 @@ for name, r in recipes.items():
     rid = res["id"]
     if rid.startswith("bwr:"):
         produced.add(rid[4:])
+        for mode, loaded in INSTALLS.items():
+            if live(r, loaded, name):
+                produced_in[mode].add(rid[4:])
         if rid[4:] not in registered:
             bad(f"{name}: result {rid} is not a registered item")
     if kind == "minecraft:crafting_shaped":
@@ -150,6 +194,10 @@ for name, r in recipes.items():
 for name in sorted(registered - produced):
     if name not in NO_RECIPE:
         bad(f"item '{name}' has no recipe and is not in NO_RECIPE")
+for mode, made in produced_in.items():
+    for name in sorted(registered - made):
+        if name in produced and name not in NO_RECIPE:
+            bad(f"item '{name}' has no recipe that is loaded {mode} (every recipe for it is gated out)")
 for name, why in NO_RECIPE.items():
     if name not in registered:
         bad(f"NO_RECIPE lists '{name}', which is not a registered item")
