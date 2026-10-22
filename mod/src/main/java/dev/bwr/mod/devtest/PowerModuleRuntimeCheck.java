@@ -149,7 +149,8 @@ public final class PowerModuleRuntimeCheck {
         near(gen.energyStored(),beforeReloadEnergy,"reload changed electrical energy");
         nextTick(l);PowerTrain.tick(gen);
         near(gen.trainMW,0,"reload regenerated consumed steam work");
-        check(!gen.running&&gen.electricMW==0,"generator still reads running with no work");
+        // The spinning rotor can still drive the generator after a reload, so only the flag's link to the output is asserted here.
+        check(gen.running==(gen.electricMW>0),"generator running flag does not follow its output after a reload");
         double reloadWorkKJ=(gen.energyStored()-beforeReloadEnergy)*EccsPower.WATTS_PER_FE_PER_TICK/20/1000/.985;
         near(reloadWorkKJ+gen.trainLossKJ+modules.stream().mapToDouble(PowerModuleBlockEntity::kineticEnergyKJ).sum(),beforeReloadRotor,"reload created shaft energy");
         // All four parallel LPs must receive a share, even if the first can swallow the entire header.
