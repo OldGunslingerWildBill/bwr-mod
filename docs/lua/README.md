@@ -146,8 +146,8 @@ red tiles, the reason for the first one that is not green, and a power trend; pa
 containment pressure; page 3 the numbers with their limits. Touching the SAFETY, TRENDS or VALUES soft key shows that page
 (`plant_computer_touch`). The display must be set to the CC program in the wrench and have a grid of at least 24 x 12 characters
 (a 4 x 3 block display is 31 x 15). Name the panel and the reactor as for the other examples; the third argument is the label of
-the plant computer on the panel (`plantList()` names them). It is the one example that waits for events, so a frame is every
-interval and a touch is answered at once.
+the plant computer on the panel (`plantList()` names them). It updates in one coroutine and answers touches in another, so a touch is
+not lost while a frame is being drawn (every call to the display takes a server tick).
 
 The limits that make a function amber or red are a table at the top of the file and are this example's choices, not the mod's:
 the mod judges nothing. The program reads the reactor and writes a display; it issues no plant commands, and the picture is not
@@ -181,7 +181,7 @@ dispatch. It attaches actual BWR capability objects to computer sides, exercises
 successful operations and failures, and verifies block-entity readbacks. It
 does not substitute a hand-written Lua peripheral API or validate cable-network
 construction. The harness owns this runtime and its lifetime; no physical
-computer block ticker competes for the direct side bindings. Its 23 scenarios
+computer block ticker competes for the direct side bindings. Its 29 scenarios
 include a separate real computer block with repeatedly invalidated native sides,
 verifying that native scans cannot erase the ECCS attachment. Script names and
 source hashes appear in the check's output.

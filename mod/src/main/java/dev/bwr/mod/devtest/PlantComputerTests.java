@@ -716,6 +716,18 @@ public final class PlantComputerTests {
         float scaleFull = record(full.program(), full, 64, 48, true).texts.get(0).scale;
         helper.assertTrue(Math.abs(scaleFull / scaleHalf - 2.0f) < 0.05f, "the same field at 50 and 100 percent: " + scaleHalf + " and " + scaleFull);
         helper.assertTrue(half.layout().cols() == 62 && full.layout().cols() == 31, "and twice the columns");
+
+        // A line too long for its room is made smaller first (one size for the caption and the number), and cut only when
+        // even the least size would not hold it.
+        PlantComputerData tight = data();
+        PlantApi.set(tight, 1, "f", spec("type", "field", "col", 1, "row", 3, "w", 12, "text", "CAPTION TEXT", "unit", "kg/s", "value", 1234.5));
+        Recorder fitted = record(tight.program(), tight, 64, 48, true);
+        float base = PlantScreen.baseScale(tight.layout().cellW());
+        Recorder.Text caption = fitted.texts.stream().filter(t -> t.text.startsWith("CAPTION")).findFirst().orElseThrow();
+        Recorder.Text number = fitted.texts.stream().filter(t -> t.text.startsWith("1234.5")).findFirst().orElseThrow();
+        helper.assertTrue(caption.text.equals("CAPTION TEXT") && number.text.equals("1234.5 kg/s") && caption.scale == number.scale
+                        && caption.scale < base * 0.95f && caption.scale >= base * GaugeScale.MIN_TEXT_SHARE - 0.001f,
+                "a field 12 characters wide shrinks its text instead of cutting it: '" + caption.text + "' / '" + number.text + "' at " + caption.scale + " of " + base);
         helper.succeed();
     }
 

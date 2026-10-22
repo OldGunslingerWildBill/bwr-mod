@@ -204,7 +204,6 @@ local function frame()
         for i = 1, #FUNCTIONS do setValue(1, "csf" .. i, "off") end
         display("plantValue", 1, "msg", "REACTOR NOT FORMED")
         for _, id in ipairs({ "power", "neutron", "level", "pressure", "clad", "cont", "h2", "cool" }) do setValue(3, id, nil) end
-        display("plantFlush")
         return
     end
     for _, key in ipairs({ "power", "pressure", "level", "peakCladTemp", "containmentPressure", "containmentHydrogenPercent",
@@ -241,31 +240,34 @@ local function frame()
     setValue(3, "cont", s.containmentPressure)
     setValue(3, "h2", s.containmentHydrogenPercent)
     setValue(3, "cool", s.cooldownRateCPerHour)
-    display("plantFlush")
 end
 
 -- ---- run
 
-build()
+-- Every call to the display takes a server tick, like any peripheral call, so a frame of about twenty calls takes about a
+-- second of ticks, and an event that arrives meanwhile would be lost to a program that only looks for it between frames. The
+-- touches are therefore answered by a coroutine of their own, beside the one that updates.
 local shown = 0
-local timer = nil
-if count == 1 then
-    frame()
-    shown = 1
-else
-    frame()
-    shown = 1
-    timer = os.startTimer(interval)
-end
-while not count or shown < count do
-    local event, a, b, c, d = os.pullEvent()
-    if event == "timer" and a == timer then
+local function frames()
+    while not count or shown < count do
         frame()
         shown = shown + 1
-        timer = os.startTimer(interval)
-    elseif event == "plant_computer_touch" and a == panelName and b == label and d >= 1 and d <= 3 then
-        -- c is the page that was shown, d the soft key: the keys of every page are the three pages
-        display("plantSetPage", d)
+        if not count or shown < count then sleep(interval) end
     end
+end
+local function touches()
+    while true do
+        local _, name, tile, page, key = os.pullEvent("plant_computer_touch")
+        -- page is the page that was shown, key the soft key: the keys of every page are the three pages
+        if name == panelName and tile == label and key >= 1 and key <= 3 then display("plantSetPage", key) end
+    end
+end
+
+build()
+display("plantFlush")
+if count == 1 then
+    frames()
+else
+    parallel.waitForAny(frames, touches)
 end
 print("Updated " .. label .. " for " .. shown .. " frame(s).")

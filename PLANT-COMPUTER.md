@@ -158,3 +158,8 @@ how to run it and for the developer check (`:mod:runLuaExamplesCheck`) that runs
 
 A program that draws a whole page every second is well inside the limits (about 40 calls); update with `plantValue` and
 `plantPush` after the first frame, rather than `plantSet` again.
+
+**Every call takes a server tick**, as every peripheral call does (it runs on the server thread), so a frame of twenty calls
+takes about a second. An event that arrives while a program is inside a call is lost to a program that only looks for it between
+calls: listen for `plant_computer_touch` in a coroutine of its own (`parallel.waitForAny(updateLoop, touchLoop)`), as
+`spds.lua` does.

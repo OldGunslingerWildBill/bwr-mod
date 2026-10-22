@@ -98,7 +98,7 @@ public final class LuaExamplesCheck {
             new Scenario("panel-missing-reactor", "panel_display.lua", "No peripheral named", "left", "missing", "BWR-STATUS", "once"),
             new Scenario("spds-two-frames", "spds.lua", null, "left", "right", "SPDS", "2", ".05"),
             new Scenario("spds-unformed", "spds.lua", null, "left", "right", "SPDS", "once"),
-            new Scenario("spds-touch", "spds.lua", null, "left", "right", "SPDS", "20", ".2"),
+            new Scenario("spds-touch", "spds.lua", null, "left", "right", "SPDS", "12", ".2"),
             new Scenario("spds-builtin-display", "spds.lua", "built-in page", "left", "right", "SPDS", "once"),
             new Scenario("spds-missing-label", "spds.lua", "No plant computer labelled", "left", "right", "ABSENT", "once"),
             new Scenario("spds-small-display", "spds.lua", "at least 24 x 12", "left", "right", "SPDS", "once")
@@ -190,7 +190,7 @@ public final class LuaExamplesCheck {
                 phaseTicks = 0;
             } else if (phase == 2) {
                 // spds-touch: a player touches soft key 2 while the program runs; it must show its second page.
-                if (fixture.scenario.name().equals("spds-touch") && phaseTicks == 30) fixture.touch();
+                if (fixture.scenario.name().equals("spds-touch") && phaseTicks == 150) fixture.touch();
                 // The Lua filesystem and server tick run independently. The marker
                 // is written only after the entire JSON result has been closed.
                 if (!TOKEN.equals(fixture.read("l5-result-ready"))) return;
@@ -659,7 +659,7 @@ public final class LuaExamplesCheck {
             require(tiles[1].equals(level < taf ? "alarm" : "ok"), "core cooling follows the level: " + tiles[1] + " at " + level);
             double margin = level - taf;
             require(tiles[5].equals(margin < 20 ? "alarm" : margin < 120 ? "warn" : "ok"), "inventory follows the level: " + tiles[5] + " at " + level);
-            int frames = name.equals("spds-two-frames") ? 2 : name.equals("spds-touch") ? 20 : 1;
+            int frames = name.equals("spds-two-frames") ? 2 : name.equals("spds-touch") ? 12 : 1;
             require(program.element(0, "pwr1").count == frames && program.element(1, "lvl").count == frames
                     && program.element(1, "prs").count == frames, "one trend point a frame: " + program.element(0, "pwr1").count);
             require(!program.element(2, "pressure").valueText().equals("---") && !program.element(2, "level").valueText().equals("---"),
