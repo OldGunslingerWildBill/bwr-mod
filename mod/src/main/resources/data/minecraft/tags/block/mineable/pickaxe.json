@@ -70,6 +70,10 @@
     "bwr:spent_fuel_rack",
     "bwr:spent_fuel_pool_makeup_port",
     "bwr:spent_fuel_pool_cooling_in",
-    "bwr:spent_fuel_pool_cooling_out"
+    "bwr:spent_fuel_pool_cooling_out",
+    "bwr:uranium_ore",
+    "bwr:deepslate_uranium_ore",
+    "bwr:raw_uranium_block",
+    "bwr:uranium_block"
   ]
 }

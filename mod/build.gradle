@@ -43,8 +43,9 @@ neoForge {
             // 'bwrpool' holds the spent fuel pool tests (SpentFuelPoolTests); -PbwrOnlyPool runs just those.
             // 'bwrtick' holds the tick-cost and chunk-boundary tests (TickBudgetTests, ChunkLinkTests, ...); -PbwrOnlyTick
             // runs just those, in about a minute, while they are being developed. The default runs everything.
+            // 'bwruranium' is the uranium ore tests (UraniumOreTests); -PbwrOnlyUranium runs just those.
             // 'bwrplant' holds the plant computer tests (PlantComputerTests); -PbwrOnlyPlant runs just those.
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyPool') ? 'bwrpool' : 'bwr,bwrtick,bwrplant,bwrpool')
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyPool') ? 'bwrpool' : project.hasProperty('bwrOnlyUranium') ? 'bwruranium' : 'bwr,bwrtick,bwrplant,bwrpool,bwruranium')
             // Developer-only tick profiler (dev.bwr.mod.TickProbe): per-system microseconds per server tick, printed by
             // the TickBudgetTests plant profile as "TICK PROBE" lines. Off (and costless) without this property.
             if (project.hasProperty('bwrTickProbe')) jvmArguments.add('-Dbwr.tickProbe=true')
@@ -120,6 +121,7 @@ neoForge {
             if (project.hasProperty('bwrFurnitureClientCheck')) jvmArguments.add('-Dbwr.furnitureClientCheck=true')
             if (project.hasProperty('bwrBoardClientCheck')) jvmArguments.add('-Dbwr.boardClientCheck=true')
             if (project.hasProperty('bwrBoardClientStages')) jvmArguments.add('-Dbwr.boardClientStages=' + project.property('bwrBoardClientStages'))
+            if (project.hasProperty('bwrUraniumClientCheck')) jvmArguments.add('-Dbwr.uraniumClientCheck=true')
             if (project.hasProperty('bwrGuiScreenCheck')) jvmArguments.add('-Dbwr.guiScreenCheck=true')
             if (project.hasProperty('bwrGuiCheckLenient')) jvmArguments.add('-Dbwr.guiCheckLenient=true')
         }
@@ -144,6 +146,15 @@ neoForge {
             gameDirectory = file('run/serverBootCheck')
             jvmArguments.addAll('-Dbwr.serverBootCheck=true',
                     '-Xlog:class+load:file=' + file('run/serverBootCheck-classload.log').absolutePath)
+            programArguments.addAll('--nogui')
+        }
+        // Uranium worldgen check (:mod:runWorldgenCheck, verdict in the doLast block below): a dedicated server on a fresh
+        // normal world plus the datapack in src/devtest-pack (one flat dimension per biome group) that generates chunks and
+        // measures the uranium in them. See dev.bwr.mod.devtest.UraniumWorldgenCheck and URANIUM-ORE.md.
+        worldgenCheck {
+            server()
+            gameDirectory = file('run/worldgenCheck')
+            jvmArguments.add('-Dbwr.worldgenCheck=true')
             programArguments.addAll('--nogui')
         }
         // Old-save check (:mod:runSaveCompatCheck [-PbwrSaveWorld=<world folder>], see the doFirst/doLast block below).
@@ -435,6 +446,48 @@ tasks.matching { it.name == 'runServerBootCheck' }.configureEach { task ->
 }
 
 // ---------------------------------------------------------------------------
+// :mod:runWorldgenCheck [-PbwrNoCC] [-PbwrNoMekanism]: boots a dedicated server on a fresh world (seed 20261022, normal
+// terrain) with the datapack src/devtest-pack/bwr_check (flat dimensions flat_arid, flat_highland, flat_semi_arid,
+// flat_lowland, flat_aquatic, each in the group's biome), and lets dev.bwr.mod.devtest.UraniumWorldgenCheck generate chunks
+// and count the uranium blocks: density per biome group, a vein in real terrain, old chunks left alone. Fails the build
+// unless the log holds "BWR WORLDGEN CHECK: PASS" and has no ERROR from the mod. Everything it printed is repeated at the end.
+// ---------------------------------------------------------------------------
+tasks.matching { it.name == 'runWorldgenCheck' }.configureEach { task ->
+    task.doFirst {
+        def dir = neoForge.runs.getByName('worldgenCheck').gameDirectory.get().asFile
+        project.delete(dir)
+        dir.mkdirs()
+        copy {
+            from file('src/devtest-pack/bwr_check')
+            into new File(dir, 'world/datapacks/bwr_check')
+        }
+        new File(dir, 'eula.txt').text = 'eula=true' + System.lineSeparator()
+        new File(dir, 'server.properties').text = [
+                'online-mode=false', 'server-ip=127.0.0.1', 'server-port=25596', 'level-name=world', 'level-seed=20261022',
+                'level-type=minecraft\\:normal', 'generate-structures=false', 'initial-enabled-packs=vanilla,file/bwr_check',
+                'spawn-monsters=false', 'spawn-animals=false', 'spawn-npcs=false', 'view-distance=4', 'simulation-distance=4',
+                'max-tick-time=-1', 'motd=BWR worldgen check'].join(System.lineSeparator()) + System.lineSeparator()
+    }
+    task.doLast {
+        def dir = neoForge.runs.getByName('worldgenCheck').gameDirectory.get().asFile
+        def logFile = new File(dir, 'logs/latest.log')
+        if (!logFile.isFile()) throw new GradleException("worldgenCheck: no ${logFile}")
+        def lines = logFile.readLines('UTF-8')
+        def problems = []
+        lines.findAll { it.contains('BWR WORLDGEN CHECK') }.each { logger.lifecycle(it.replaceFirst(/^\[[^\]]*\] \[[^\]]*\] \[[^\]]*\]: /, '')) }
+        if (!lines.any { it.contains('BWR WORLDGEN CHECK: PASS') }) problems << 'no "BWR WORLDGEN CHECK: PASS" line'
+        def ours = ~/dev\.bwr|\[bwr\]|\[BWR|bwr\//
+        def badText = ~/NoClassDefFoundError|ClassNotFoundException|Missing registry|Failed to load|Couldn't load|Exception in thread|Detected setBlock in a far chunk/
+        lines.each { l ->
+            if (l.contains('/ERROR]') && (l =~ ours || l =~ badText)) problems << 'ERROR: ' + l.trim()
+            else if (l =~ badText) problems << 'bad text: ' + l.trim()
+        }
+        if (problems) throw new GradleException('worldgenCheck FAILED:' + System.lineSeparator() + '  ' + problems.unique().take(60).join(System.lineSeparator() + '  '))
+        logger.lifecycle('worldgenCheck: PASS')
+    }
+}
+
+// ---------------------------------------------------------------------------
 // :mod:runSaveCompatCheck [-PbwrSaveWorld=<folder of a world saved by an older build>] [-PbwrNoCC]  (default: the committed
 // alpha.40 fixture, mod/src/test-worlds/alpha40, see its README.txt)
 // Copies that world (never written to; refuses anything inside the Modrinth profile, which is the owner's own game) to
@@ -634,6 +687,7 @@ tasks.named('jar', Jar).configure {
     exclude 'data/bwrtick/**'
     exclude 'data/bwrplant/**'
     exclude 'data/bwrpool/**'
+    exclude 'data/bwruranium/**'
     from(rootProject.file('LICENSE')) { into 'META-INF' }
     from(rootProject.file('NOTICE')) { into 'META-INF' }
     from(rootProject.file('THIRD-PARTY-NOTICES.md')) { into 'META-INF' }

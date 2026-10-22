@@ -1318,5 +1318,11 @@
   "message.bwr.radiation_monitor.not_permitted": "You may not change this monitor here.",
   "component.bwr.option.Measures.DOSE_RATE": "Dose rate",
   "hud.bwr.survey_meter.title": "SURVEY METER",
-  "hud.bwr.survey_meter.dose": "Your dose %s"
+  "hud.bwr.survey_meter.dose": "Your dose %s",
+  "block.bwr.uranium_ore": "Uranium Ore",
+  "block.bwr.deepslate_uranium_ore": "Deepslate Uranium Ore",
+  "block.bwr.raw_uranium_block": "Block of Raw Uranium",
+  "block.bwr.uranium_block": "Block of Uranium",
+  "item.bwr.raw_uranium": "Raw Uranium",
+  "item.bwr.uranium_ingot": "Uranium Ingot"
 }

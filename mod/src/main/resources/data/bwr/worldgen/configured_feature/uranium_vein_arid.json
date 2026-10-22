@@ -1,0 +1,37 @@
+{
+  "type": "bwr:uranium_vein",
+  "config": {
+    "vein_chance": 0.85,
+    "ore_density": 0.34,
+    "raw_block_chance": 0.08,
+    "min_depth": 6,
+    "geometry": {
+      "cell_size": 384,
+      "min_y": -48,
+      "max_y": 52,
+      "length_min": 200,
+      "length_max": 360,
+      "half_width_min": 4.5,
+      "half_width_max": 8.0,
+      "half_thickness_min": 2.5,
+      "half_thickness_max": 4.5,
+      "branches_max": 2,
+      "salt": 0
+    },
+    "ore_stone": {
+      "Name": "bwr:uranium_ore"
+    },
+    "ore_deepslate": {
+      "Name": "bwr:deepslate_uranium_ore"
+    },
+    "raw_block": {
+      "Name": "bwr:raw_uranium_block"
+    },
+    "fill_stone": {
+      "Name": "minecraft:calcite"
+    },
+    "fill_deepslate": {
+      "Name": "minecraft:tuff"
+    }
+  }
+}

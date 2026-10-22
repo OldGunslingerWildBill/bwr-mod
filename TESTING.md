@@ -40,6 +40,20 @@ GameTest run and prints `SYNC LOAD AUDIT` lines for any chunk our code loaded sy
 
 **The two spikes it found.** The containment survey reads at most `scanCellsPerTick` = 4,000 cells a tick, its completion tick rates faces with what is left of that budget and later ticks rate 1,333 faces each (`Containment.survey`, `Containment.complete`, `Containment.strength` in the probe). The reactor's 1 Hz nodal flux solve is assembled on the server thread (`Reactor.flux start (assemble)`, about 2 ms) and iterated on the `bwr-flux-N` pool; its answer is applied 20 ticks (one refresh interval) later, waiting for the worker only if it is not done (`Reactor.flux wait for worker`). The GameTest server runs the plant unthrottled, about 1 ms a tick, so 20 ticks there are shorter than one solve and the probe shows the wait; at 20 ticks a second there is none (a core stepped at that pace: worst step 23.6 ms immediate, 2.4 ms on the pool). `FluxAsyncTests` (batch `fluxasync`) runs the plant fixture's reactor for 30 s with `DEFERRED_ASYNC_CHECKED`: every solve is iterated on the pool and again on the server thread from the same assembled problem, and the apply counts any difference in any bit; it asserts there were none, on at least 28 solves. Two runs of the whole plant fixture are not comparable for this: with both inline they already differ by about 0.01 % of power after 30 s, which is the fixture, not the solve. In the core, `DeferredNodalRefreshTest` checks that the split solve equals `solve()`, that a pool core and an inline core give identical records after 60 s of burnup, flow and rod motion, and that a refresh in flight survives a save and a discard. `-Dbwr.fluxAsync=false` runs the mod's reactors inline (same results, the solve on the server thread); the core acceptance suite runs `NodalRefresh.IMMEDIATE`, the old behaviour, because it calls `ReactorCore.step` directly.
 
+## Uranium ore and its world generation (URANIUM-ORE.md)
+
+- **GameTests** `UraniumOreTests` live in the namespace `bwruranium` (with its own `empty` template in `data/bwruranium/structure`); `-PbwrOnlyUranium` runs just
+  them in about a minute, the default run includes them. They need no world generation: the vein geometry is pure (`UraniumVeins`), the biome table is read back from the
+  loaded datapack, and the server option is tried on the real biome modifier with a copy of a biome's generation settings.
+- **`:mod:runWorldgenCheck`** boots a dedicated server on a fresh normal world (seed 20261022) with the datapack `mod/src/devtest-pack/bwr_check` (one flat dimension per biome group:
+  `bwr_check:flat_arid`, `_highland`, `_semi_arid`, `_lowland`, `_aquatic`), then, a step per tick: generates the same 64 x 64 chunks in each flat dimension and counts uranium blocks
+  (the only difference between them is the biome); generates the chunks round one vein of the real overworld; and generates a block of chunks with the option off, then the ring round it
+  with the option on, comparing every block state of the first block before and after. It prints `BWR WORLDGEN CHECK:` lines (the table, the largest connected vein bodies, the cost)
+  and ends with `PASS` or `FAIL: ...`; the Gradle task fails the build without PASS or on an ERROR from the mod or a `Detected setBlock in a far chunk` line. It takes about 13 minutes (the
+  chunk generation of the flat dimensions is most of it). Log: `mod/run/worldgenCheck/logs/latest.log`. `-PbwrNoCC` and `-PbwrNoMekanism` work as for the other run tasks.
+- **Pictures:** `:mod:runTurbineModelCheck -PbwrUraniumClientCheck` (class `UraniumClientCheck`) generates a normal world, finds an arid vein from the seed, digs an open cut down to its
+  mid-plane and saves four 1920 x 1080 pictures to `run/turbineModelCheck/uranium-check/`: the cut from the air, the ore close up, the blocks beside iron's, and the items.
+
 ## Automated checks
 
 The full core display adds GameTest classes `FcdRodTests` (rod selection, steps, continuous stepping; fixture

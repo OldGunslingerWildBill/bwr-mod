@@ -59,6 +59,11 @@ public final class GameplayConfig {
                     + "A fresh discharge is 100 to 300 kW; the default is reached in about one to two hours of cooling. "
                     + "Zero turns the check off. Assemblies with no recorded discharge time count as long-cooled")
             .defineInRange("reprocessingMaxDecayHeatKw", 50.0, 0.0, 100_000.0);
+    public static final ModConfigSpec.BooleanValue URANIUM_ORE_GENERATION = BUILDER
+            .comment("Generate this mod's uranium ore (small blobs and the large veins) in newly generated chunks. Never touches chunks that already exist. "
+                    + "Read when the server starts: changing it needs a restart to take effect on the biome lists (the vein feature itself re-reads it for every chunk). "
+                    + "To turn off Mekanism's uranium instead, use Mekanism's own world config.")
+            .define("uraniumOreGeneration", true);
 
     public static final ModConfigSpec SPEC = BUILDER.build();
 
@@ -71,6 +76,11 @@ public final class GameplayConfig {
     public static double reprocessingMaxDecayHeatKw() { return read(REPROCESSING_MAX_DECAY_HEAT_KW); }
     public static int tritiumSamplesPerRod() {
         return SPEC.isLoaded() ? TRITIUM_SAMPLES_PER_ROD.get() : TRITIUM_SAMPLES_PER_ROD.getDefault();
+    }
+
+    /** Whether new chunks get uranium ore. True until the server config says otherwise (and before it is loaded). */
+    public static boolean uraniumOreGeneration() {
+        return SPEC.isLoaded() ? URANIUM_ORE_GENERATION.get() : URANIUM_ORE_GENERATION.getDefault();
     }
 
     private static double read(ModConfigSpec.DoubleValue value) {

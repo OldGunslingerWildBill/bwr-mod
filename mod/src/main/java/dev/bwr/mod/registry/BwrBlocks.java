@@ -56,6 +56,26 @@ public final class BwrBlocks {
 
     public static final DeferredRegister.Blocks BLOCKS =
             DeferredRegister.createBlocks(BwrMod.MOD_ID);
+
+    // Uranium: the mod's own ore, so the fuel fabricator's item route does not depend on another mod for uranium.
+    // All four need an iron pickaxe (tag minecraft:needs_iron_tool); the ores drop raw uranium, with Fortune, and
+    // themselves with Silk Touch (data/bwr/loot_table/blocks). See URANIUM-ORE.md.
+    public static final DeferredBlock<Block> URANIUM_ORE =
+            BLOCKS.register("uranium_ore", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.STONE)
+                    .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.BASEDRUM)
+                    .requiresCorrectToolForDrops().strength(3.0f, 3.0f)));
+    public static final DeferredBlock<Block> DEEPSLATE_URANIUM_ORE =
+            BLOCKS.register("deepslate_uranium_ore", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.DEEPSLATE)
+                    .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.BASEDRUM)
+                    .requiresCorrectToolForDrops().strength(4.5f, 3.0f).sound(SoundType.DEEPSLATE)));
+    public static final DeferredBlock<Block> RAW_URANIUM_BLOCK =
+            BLOCKS.register("raw_uranium_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK)
+                    .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.BASEDRUM)
+                    .requiresCorrectToolForDrops().strength(5.0f, 6.0f)));
+    public static final DeferredBlock<Block> URANIUM_BLOCK =
+            BLOCKS.register("uranium_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY)
+                    .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.IRON_XYLOPHONE)
+                    .requiresCorrectToolForDrops().strength(5.0f, 6.0f).sound(SoundType.METAL)));
     public static final DeferredBlock<dev.bwr.mod.grid.GridTieBlock> GRID_TIE=BLOCKS.register("grid_tie",()->new dev.bwr.mod.grid.GridTieBlock(vesselSteel()));
 
     /** Wall-mounted area radiation monitor (a reading, a lamp, two booleans); it never acts on the plant. */
