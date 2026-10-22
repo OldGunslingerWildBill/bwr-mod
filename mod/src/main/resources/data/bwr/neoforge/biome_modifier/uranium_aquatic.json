@@ -1,0 +1,9 @@
+{
+  "type": "bwr:add_uranium_features",
+  "biomes": "#bwr:has_uranium/aquatic",
+  "features": [
+    "bwr:uranium_vein_aquatic",
+    "bwr:uranium_blob_aquatic"
+  ],
+  "step": "underground_ores"
+}

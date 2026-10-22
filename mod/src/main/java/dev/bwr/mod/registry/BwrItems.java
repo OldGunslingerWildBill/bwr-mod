@@ -324,6 +324,17 @@ public final class BwrItems {
      */
     public static final DeferredItem<Item> DEPLETED_URANIUM = ITEMS.registerSimpleItem("depleted_uranium");
     /**
+     * The mod's own uranium: raw ore from the ore blocks and veins, smelted to an ingot. Both carry the convention tags
+     * the fuel fabricator's item route reads ({@code c:raw_materials/uranium}, {@code c:ingots/uranium}), so the route
+     * works with no other mod; another mod's uranium counts exactly the same.
+     */
+    public static final DeferredItem<Item> RAW_URANIUM = ITEMS.registerSimpleItem("raw_uranium");
+    public static final DeferredItem<Item> URANIUM_INGOT = ITEMS.registerSimpleItem("uranium_ingot");
+    public static final DeferredItem<BlockItem> URANIUM_ORE = ITEMS.registerSimpleBlockItem(BwrBlocks.URANIUM_ORE);
+    public static final DeferredItem<BlockItem> DEEPSLATE_URANIUM_ORE = ITEMS.registerSimpleBlockItem(BwrBlocks.DEEPSLATE_URANIUM_ORE);
+    public static final DeferredItem<BlockItem> RAW_URANIUM_BLOCK = ITEMS.registerSimpleBlockItem(BwrBlocks.RAW_URANIUM_BLOCK);
+    public static final DeferredItem<BlockItem> URANIUM_BLOCK = ITEMS.registerSimpleBlockItem(BwrBlocks.URANIUM_BLOCK);
+    /**
      * Plutonium out of a reprocessing plant, in ninths of an ingot (a nugget), which is the unit the plant's
      * fractional accounting and the fabricator's MOX route both count in. Tagged {@code c:nuggets/plutonium} and
      * {@code c:ingots/plutonium}; nine nuggets and an ingot are crafted into each other.
@@ -403,7 +414,7 @@ public final class BwrItems {
                     .icon(() -> FUEL_ASSEMBLY.get().getDefaultInstance()).displayItems((parameters, output) -> {
                         for (var type : FuelTypes.catalogue()) output.accept(FuelAssemblyItem.stackOf(FUEL_ASSEMBLY.get(), FuelAssemblyData.fresh(type)));
                         for (var kind : dev.bwr.core.fuel.CoreInsert.Kind.values()) output.accept(dev.bwr.mod.fuel.SpecialtyRodItem.stack(new dev.bwr.mod.fuel.CoreInsertData(kind, 0)));
-                        for (var item : java.util.List.of(IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, COBALT_SAMPLE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM, PLUTONIUM_NUGGET, PLUTONIUM_INGOT, FISSION_PRODUCT_WASTE)) output.accept(item.get());
+                        for (var item : java.util.List.<net.neoforged.neoforge.registries.DeferredItem<? extends Item>>of(URANIUM_ORE, DEEPSLATE_URANIUM_ORE, RAW_URANIUM, RAW_URANIUM_BLOCK, URANIUM_INGOT, URANIUM_BLOCK, IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, COBALT_SAMPLE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM, PLUTONIUM_NUGGET, PLUTONIUM_INGOT, FISSION_PRODUCT_WASTE)) output.accept(item.get());
                     }).build());
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB =

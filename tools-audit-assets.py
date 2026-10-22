@@ -360,7 +360,9 @@ missing = {"blockstate": [], "blockmodel": [], "itemmodel": [], "loot": [], "rec
 RETIRED_BLOCKS = {"rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_quencher"}
 # Made by the world, not the player: corium exists only where a core melted
 # through a vessel, so a recipe for it would be the bug.
-WORLD_MADE_BLOCKS = {"corium"}
+# The two uranium ores are placed by world generation and mined (silk touch gives the block back); the raw uranium and
+# ingot recipes are what a player crafts with them.
+WORLD_MADE_BLOCKS = {"corium", "uranium_ore", "deepslate_uranium_ore"}
 
 # What each per-block gap actually costs in game. These strings go into the
 # bad() message so the report says why it matters and not just that a file is

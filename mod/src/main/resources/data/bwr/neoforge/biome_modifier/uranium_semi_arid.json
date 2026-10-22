@@ -1,0 +1,9 @@
+{
+  "type": "bwr:add_uranium_features",
+  "biomes": "#bwr:has_uranium/semi_arid",
+  "features": [
+    "bwr:uranium_vein_semi_arid",
+    "bwr:uranium_blob_semi_arid"
+  ],
+  "step": "underground_ores"
+}

@@ -549,7 +549,7 @@ public final class FuelFabricatorItemRouteTests {
         }
         // The fuel fabricator is craftable in both installs: one recipe with Mekanism, another without it.
         var notCrafted = new java.util.HashSet<String>(List.of("cobalt_sample", "tritium_sample", "doped_silicon", "corium", "depleted_uranium",
-                "fission_product_waste", "rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_quencher"));
+                "fission_product_waste", "uranium_ore", "deepslate_uranium_ore", "rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_quencher"));
         for (var id : BuiltInRegistries.ITEM.keySet()) {
             if (!id.getNamespace().equals("bwr")) {
                 continue;

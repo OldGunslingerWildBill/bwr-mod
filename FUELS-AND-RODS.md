@@ -78,7 +78,9 @@ capability.
 
 ### What counts as uranium and steel
 
-By item tag, so any mod's items work:
+By item tag, so any mod's items work. The mod's own ore (`bwr:uranium_ingot`, `bwr:raw_uranium`, see
+[URANIUM-ORE.md](URANIUM-ORE.md)) carries the two uranium tags, so the item route needs no other mod for uranium; Mekanism's uranium
+counts exactly the same:
 
 | Input | Tag | Counts as |
 |---|---|---|
