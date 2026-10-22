@@ -333,6 +333,7 @@ public final class RadiationToolsTests {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath("bwr", "test_pool");
         int providers = RadiationSources.providerCount();
         helper.assertTrue(RadiationField.doseRateMsvPerHour(level, spot) == 0.0, "fixture: background");
+        try {
         RadiationSources.emit(level, owner, spot.add(3.0, 0.0, 0.0), 1.0, 1.0);
         double point = RadiationField.doseRateMsvPerHour(level, spot);
         helper.assertTrue(near(point, DoseModel.pointSourceMsvPerH(1.0, 3.0, 1.0)) && point > 0.0,
@@ -348,9 +349,11 @@ public final class RadiationToolsTests {
             throw new IllegalStateException("a broken source");
         });
         helper.assertTrue(near(RadiationField.read(level, spot).other(), point / 2.0 + 2.5), "a provider that throws is skipped");
-        RadiationSources.unregister(ResourceLocation.fromNamespaceAndPath("bwr", "test_broken"));
-        RadiationSources.unregister(id);
-        RadiationSources.clear(level, owner);
+        } finally {
+            RadiationSources.unregister(ResourceLocation.fromNamespaceAndPath("bwr", "test_broken"));
+            RadiationSources.unregister(id);
+            RadiationSources.clear(level, owner);
+        }
         helper.assertTrue(RadiationField.doseRateMsvPerHour(level, spot) == 0.0 && RadiationSources.pointCount(level) == 0,
                 "unregistered and cleared, it is background again");
         helper.assertTrue(RadiationSources.providerCount() == providers, "no provider is left behind");
