@@ -73,6 +73,14 @@ public final class ReactorSevereAccidentEffects {
 
     private int pedestalWaitTicks;
 
+    /**
+     * The interior box of the containment room the last time this reactor was linked to one. A burn after the
+     * breach, when no sealed room links any more, is still a burn in that room, so the blast stays inside it
+     * instead of falling back to open space and taking the walls and the ground with it. Saved only when set.
+     */
+    private BlockPos roomMin;
+    private BlockPos roomMax;
+
     private final CoriumPool corium = new CoriumPool();
 
     private final AccidentBlast.Queue blasts = new AccidentBlast.Queue();
@@ -101,6 +109,11 @@ public final class ReactorSevereAccidentEffects {
         }
         var containmentController = dev.bwr.mod.containment.ContainmentControllerRegistry
                 .linkedReactor(level, pos);
+        if (containmentController != null && containmentController.interiorMin() != null
+                && containmentController.interiorMax() != null) {
+            roomMin = containmentController.interiorMin().immutable();
+            roomMax = containmentController.interiorMax().immutable();
+        }
         BlockPos breachedAt = null;
         for (ContainmentAtmosphere.EventDetail detail : core.getContainment().drainEventDetails()) {
             ContainmentAtmosphere.Event event = detail.event();
@@ -168,11 +181,21 @@ public final class ReactorSevereAccidentEffects {
     public void write(CompoundTag tag) {
         SevereAccidentNbt.writeCorium(tag, corium);
         blasts.write(tag);
+        if (roomMin != null && roomMax != null) {
+            tag.putLong("AccidentRoomMin", roomMin.asLong());
+            tag.putLong("AccidentRoomMax", roomMax.asLong());
+        }
     }
 
     public void read(CompoundTag tag) {
         SevereAccidentNbt.readCorium(tag, corium);
         blasts.read(tag);
+        roomMin = roomMax = null;
+        if (tag.contains("AccidentRoomMin", net.minecraft.nbt.Tag.TAG_LONG)
+                && tag.contains("AccidentRoomMax", net.minecraft.nbt.Tag.TAG_LONG)) {
+            roomMin = BlockPos.of(tag.getLong("AccidentRoomMin"));
+            roomMax = BlockPos.of(tag.getLong("AccidentRoomMax"));
+        }
     }
 
     private void onCoreEvent(ServerLevel level, ReactorControllerBlockEntity reactor, ReactorStructure structure,
@@ -226,8 +249,7 @@ public final class ReactorSevereAccidentEffects {
                                     ContainmentAtmosphere.EventDetail detail) {
         double x = pos.getX() + 0.5, y = pos.getY() + 2.0, z = pos.getZ() + 0.5;
         Vec3 fire = ignition(reactor.getBlockPos(), structure);
-        BlockPos[] box = room == null || room.interiorMin() == null || room.interiorMax() == null ? null
-                : new BlockPos[] {room.interiorMin(), room.interiorMax()};
+        BlockPos[] box = roomMin == null || roomMax == null ? null : new BlockPos[] {roomMin, roomMax};
         switch (detail.event()) {
             case HYDROGEN_FLAMMABLE -> notice(level, pos, BwrText.tr(
                     "status.bwr.reactor_severe_accident_effects.containment_hydrogen_concentration_is_flammable",

@@ -83,6 +83,7 @@ print("hydrogen %", room.getHydrogenPercent())
   walls and the pool surface is rate limited. CC `getContainment()` reports
   `pressureModel = "drywell_wetwell"`, `pressureNodeCount = 2`, and both
   pressures separately. Each volume remains internally lumped.
+- A hydrogen detonation or an overpressure failure opens the weakest spot with a hole sized by the excess pressure and the blast energy, through the standard explosion and block-break events, and the room then surveys unsealed. A hydrogen burn breaks weak fixtures inside the room but not its walls. See [SEVERE-ACCIDENT-UPDATE.md](SEVERE-ACCIDENT-UPDATE.md#accident-blasts).
 - Corium heats and ablates the basemat through the alpha.30 lumped accident
   model. It can fail containment, but has no free-flowing fluid mesh.
 - Valve and wall ratings are gameplay approximations inspired by engineering

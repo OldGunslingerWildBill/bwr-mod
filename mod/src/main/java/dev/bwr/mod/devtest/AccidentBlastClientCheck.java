@@ -41,7 +41,7 @@ public final class AccidentBlastClientCheck {
     private static final BlockPos ROOM = new BlockPos(100, 102, 100);
     private static final BlockPos HALL = new BlockPos(220, 102, 100);
     private static final String[] NAMES = {"1-detonation-before", "2-detonation-after", "3-head-failure-before",
-            "4-head-failure-after"};
+            "4-head-failure-after", "5-head-failure-side"};
     private static boolean started, requested;
     private static int age, joined, stage, shown;
     private static ReactorControllerBlockEntity roomReactor, hallReactor;
@@ -86,10 +86,12 @@ public final class AccidentBlastClientCheck {
                 }
                 Vec3 camera = switch (selected) {
                     case 0, 1 -> new Vec3(ROOM.getX() + 40, ROOM.getY() + 9, ROOM.getZ() + 6);
+                    case 4 -> new Vec3(HALL.getX() + 4, HALL.getY() + 15, HALL.getZ() + 50);
                     default -> new Vec3(HALL.getX() + 40, HALL.getY() + 24, HALL.getZ() + 34);
                 };
                 Vec3 target = switch (selected) {
                     case 0, 1 -> new Vec3(ROOM.getX() + 17, ROOM.getY() + 7, ROOM.getZ() + 4);
+                    case 4 -> new Vec3(HALL.getX() + 4, HALL.getY() + 16, HALL.getZ() + 4);
                     default -> new Vec3(HALL.getX() + 4, HALL.getY() + 14, HALL.getZ() + 4);
                 };
                 Vec3 delta = target.subtract(camera);
@@ -173,7 +175,18 @@ public final class AccidentBlastClientCheck {
     private static void detonate(ServerLevel level) {
         var gas = roomReactor.core().getContainment();
         var room = (ContainmentControllerBlockEntity) level.getBlockEntity(ROOM.offset(-6, 0, -6));
+        BlockPos at = room.getBlockPos();
+        // The world has been ticking the room since it was built: survey it again so the link is certain.
+        room.markDirty();
+        for (int i = 0; i < 64; i++) {
+            ContainmentControllerBlockEntity.serverTick(level, at, level.getBlockState(at), room);
+            if (!room.isScanning() && (!room.isSealed() || room.strengthReady())) break;
+        }
+        if (dev.bwr.mod.containment.ContainmentControllerRegistry.linkedReactor(level, roomReactor.getBlockPos()) == null)
+            throw new AssertionError("the room is not linked to its reactor at the detonation: " + room.statusLines()
+                    + " reactorFormed=" + roomReactor.isFormed() + " removed=" + roomReactor.isRemoved());
         gas.setFreeVolumeM3(room.freeVolume());
+        gas.setFailurePressurePsig(140.0); // the plank column rates 10 psig; the hydrogen has to detonate first
         gas.initialiseInerted();
         for (int i = 0; i < 1200; i++) gas.step(0.5, 0.0, 0.0, 1.0);
         gas.setInertingCommanded(false);

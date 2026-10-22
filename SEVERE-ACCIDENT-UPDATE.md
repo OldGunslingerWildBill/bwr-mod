@@ -204,7 +204,7 @@ distance where the blast has fallen to 1 psi), centred on the top of the vessel 
 valves are. A block breaks if the clipped pressure at its centre exceeds its rating; the room's own wall layers
 lie outside the interior box and are not swept (the walls fail by their column rating, below), so a room built of
 concrete keeps its walls through a burn that takes the glass, doors, lamps, signs, torches and loose panels out of
-it. With no containment controller the sweep is a sphere around the flame and nothing is spared by position.
+it. A reactor that has never been linked to a containment room sweeps a sphere around the flame and spares nothing by position. One that has been linked remembers the room's interior box (saved with the reactor): after a breach no sealed room links any more, but a later burn of the stored hydrogen in the breached room is still confined to it, so it cannot reach the remaining walls or the ground outside.
 Damage scales with the burned hydrogen mass because the mass sets the TNT equivalent and so the reach.
 
 | Hydrogen burned | Combustion | TNT (deflagration / detonation) | Glass breaks out to | Planks, doors | Stone |

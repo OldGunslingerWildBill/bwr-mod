@@ -305,6 +305,43 @@ public final class AccidentBlastTests {
         h.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 1200)
+    public static void aSecondBurnAfterTheBreachStaysInsideTheRoom(GameTestHelper h) throws Exception {
+        var plant = new Plant(h, new BlockPos(705_600, 190, 704_000), true, Blocks.STONE);
+        var level = plant.level;
+        // Things outside the room, in reach of an unconfined blast: a pane and a stone brick beyond the east wall, and
+        // the ground three rows under the floor.
+        BlockPos pane = new BlockPos(plant.hi.getX() + 6, plant.min.getY() + 6, plant.min.getZ() + 4);
+        BlockPos brick = pane.above(2);
+        BlockPos ground = new BlockPos(plant.min.getX() + 4, plant.lo.getY() - 3, plant.min.getZ() + 4);
+        load(level, pane.offset(-2, 0, -2), pane.offset(2, 0, 2));
+        level.setBlock(pane, Blocks.GLASS_PANE.defaultBlockState(), 2);
+        level.setBlock(brick, Blocks.STONE_BRICKS.defaultBlockState(), 2);
+        level.setBlock(ground, Blocks.SMOOTH_STONE.defaultBlockState(), 2);
+        detonateHydrogen(plant.gas(), plant.room.freeVolume());
+        plant.afterStep();
+        finish(plant);
+        h.assertTrue(level.getBlockState(plant.weakColumn).isAir(), "the first detonation did not breach");
+        h.assertTrue(level.getBlockState(pane).is(Blocks.GLASS_PANE) && level.getBlockState(brick).is(Blocks.STONE_BRICKS),
+                "the first detonation reached outside the room");
+        // The containment is breached, so no sealed room links to the reactor now. The gas, with the hole to breathe
+        // through, burns again.
+        h.assertTrue(dev.bwr.mod.containment.ContainmentControllerRegistry.linkedReactor(level, plant.reactor.getBlockPos()) == null,
+                "the breached room still links to its reactor");
+        h.assertTrue(plant.reactor.saveWithFullMetadata(level.registryAccess()).contains("AccidentRoomMin"),
+                "the remembered room was not saved");
+        int burns = plant.gas().getBurnCount();
+        for (int i = 0; i < 20_000 && plant.gas().getBurnCount() == burns; i++) plant.gas().step(0.5, 0.0, 0.0, 1.0);
+        h.assertTrue(plant.gas().getBurnCount() > burns, "the gas never burned again");
+        plant.afterStep();
+        finish(plant);
+        h.assertTrue(level.getBlockState(pane).is(Blocks.GLASS_PANE), "the second burn reached outside the room (pane)");
+        h.assertTrue(level.getBlockState(brick).is(Blocks.STONE_BRICKS), "the second burn reached outside the room (brick)");
+        h.assertTrue(level.getBlockState(ground).is(Blocks.SMOOTH_STONE), "the second burn broke the ground");
+        assertVesselIntact(h, plant, "by the second burn");
+        h.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 800)
     public static void overpressureFailureOpensTheWeakestSpotInProportion(GameTestHelper h) throws Exception {
         var plant = new Plant(h, new BlockPos(700_800, 190, 700_000), true, Blocks.STONE);
