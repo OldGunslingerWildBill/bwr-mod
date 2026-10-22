@@ -1229,5 +1229,14 @@
   "finish.bwr.grey": "Grey",
   "finish.bwr.light_blue": "Light blue",
   "item.bwr.annunciator_control": "Annunciator Control Module",
-  "component.bwr.annunciator_control": "Annunciator Control Module"
+  "component.bwr.annunciator_control": "Annunciator Control Module",
+  "status.bwr.boundary_break.recirculation_discharge": "Recirculation loop %s discharge",
+  "status.bwr.boundary_break.recirculation_suction": "Recirculation loop %s suction",
+  "status.bwr.boundary_break.feedwater": "Feedwater line %s",
+  "status.bwr.boundary_break.main_steam": "Main steam line %s",
+  "message.bwr.boundary_break.sealed": "%s break sealed",
+  "status.bwr.boundary_damage_readout.nozzle_break": "%s: open break at the vessel nozzle",
+  "status.bwr.boundary_damage_readout.line_break_open": "%s: open break at %s %s %s",
+  "status.bwr.boundary_damage_readout.line_break_isolated": "%s: break at %s %s %s, isolated from the vessel",
+  "status.bwr.boundary_damage_readout.break_sealed": "%s: break sealed"
 }

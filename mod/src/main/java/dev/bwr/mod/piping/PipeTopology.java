@@ -41,9 +41,16 @@ public final class PipeTopology {
         Graph graph;
         final Set<Long> chunks=new HashSet<>();
         // NeoForge retains listeners weakly. Keep one strong reference while this entry is live.
-        final ICapabilityInvalidationListener listener=()->{dirty=true;return false;};
+        final ICapabilityInvalidationListener listener=()->{stale();return false;};
+        void stale(){dirty=true;if(graph!=null)graph.memo.stale=true;}
     }
     public static long buildCount(){return builds;}
+    /**
+     * Whether {@code graph} is still the cached answer for its start: false once an edit, a capability invalidation,
+     * a chunk availability change or cache eviction made it out of date. One field read, no lookup and no world read,
+     * so a holder can poll it every tick and call {@link #get} only after it turns false.
+     */
+    public static boolean current(Graph graph){return graph!=null&&!graph.memo.stale;}
     /** The graph currently cached for this start, or null: never builds, never reads the world (for tests and diagnostics). */
     public static Graph cached(Level level,BlockPos start,Direction out,boolean steam,boolean foreign) {
         var cache=CACHE.get(level);
@@ -56,8 +63,8 @@ public final class PipeTopology {
         var entry=cache.get(key);
         if(entry!=null&&!entry.dirty)return entry.graph;
         entry=new Entry();entry.graph=build(level,key,entry);builds++;
-        cache.put(key,entry);
-        if(cache.size()>512)cache.remove(cache.keySet().iterator().next());
+        var replaced=cache.put(key,entry);if(replaced!=null)replaced.stale();
+        if(cache.size()>512){var eldest=cache.keySet().iterator().next();cache.remove(eldest).stale();}
         return entry.graph;
     }
     private static Graph build(Level level,Key key,Entry entry) {
@@ -140,9 +147,11 @@ public final class PipeTopology {
     private static void availabilityChanged(Level level,net.minecraft.world.level.ChunkPos chunk) {
         var cache=CACHE.get(level);if(cache==null)return;
         // Only our routes change; do not detach unrelated energy/fluid/modem capabilities.
-        for(var entry:cache.values())if(entry.chunks.contains(chunk.toLong()))entry.dirty=true;
+        for(var entry:cache.values())if(entry.chunks.contains(chunk.toLong()))entry.stale();
     }
-    @SubscribeEvent public static void unload(LevelEvent.Unload event) {if(event.getLevel() instanceof Level level)CACHE.remove(level);}
+    @SubscribeEvent public static void unload(LevelEvent.Unload event) {
+        if(event.getLevel() instanceof Level level){var gone=CACHE.remove(level);if(gone!=null)gone.values().forEach(Entry::stale);}
+    }
 
     public record Route(Node node,double opening,List<TurbineValveBlockEntity> valves) {}
 
@@ -158,6 +167,7 @@ public final class PipeTopology {
      * always exactly what a fresh walk would give.
      */
     public static final class RouteMemo {
+        private volatile boolean stale;
         private Node[] valves;
         private volatile Answer plain;
         private volatile Answer withoutRelief;

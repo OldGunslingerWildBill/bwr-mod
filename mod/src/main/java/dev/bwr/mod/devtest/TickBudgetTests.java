@@ -185,7 +185,7 @@ public final class TickBudgetTests {
     public static void plantTickProfileAndWorkBudget(GameTestHelper helper) {
         var level = helper.getLevel();
         PlantKit kit = new PlantKit(level, ORIGIN);
-        long[] before = new long[5];
+        long[] before = new long[6];
         Script script = new Script(helper, 1700, () -> {
             if (kit.reactor != null && level.getGameTime() % 20 == 0) {
                 kit.energise();
@@ -216,6 +216,7 @@ public final class TickBudgetTests {
             before[2] = BlockScan.scanCount();
             before[3] = BlockScan.cellsRead();
             before[4] = allocated();
+            before[5] = dev.bwr.mod.reactor.ReactorBoundaryEffects.lineEvaluations();
         });
         script.then(WINDOW, () -> {
             long bytes = allocated() - before[4];
@@ -223,6 +224,8 @@ public final class TickBudgetTests {
             System.out.printf(java.util.Locale.ROOT, "TICK WORK server thread allocated %.1f KB/tick, pipe graphs built %d, rod banks built %d, sectioned scans %d reading %d blocks%n",
                     bytes / 1024.0 / WINDOW, PipeTopology.buildCount() - before[0], ControlRodDriveSupplies.buildCount() - before[1],
                     BlockScan.scanCount() - before[2], BlockScan.cellsRead() - before[3]);
+            long lineEvaluations = dev.bwr.mod.reactor.ReactorBoundaryEffects.lineEvaluations() - before[5];
+            System.out.printf(java.util.Locale.ROOT, "TICK WORK pressure-boundary line evaluations %d in %d ticks%n", lineEvaluations, WINDOW);
             kit.status().forEach(l -> System.out.println("TICK PLANT end: " + l));
             // Work, not time: none of these may grow with the number of ticks in a steady plant.
             long graphs = PipeTopology.buildCount() - before[0];
@@ -231,6 +234,8 @@ public final class TickBudgetTests {
             helper.assertTrue(banks <= 5, "rod banks were re-surveyed " + banks + " times in " + WINDOW + " ticks of a steady plant");
             long cells = BlockScan.cellsRead() - before[3];
             helper.assertTrue(cells <= 200_000, "sectioned scans read " + cells + " blocks in " + WINDOW + " ticks of a steady plant");
+            // Each line is re-evaluated only after its cached pipe graph was replaced; a steady plant replaces none.
+            helper.assertTrue(lineEvaluations <= 40, "pressure-boundary lines were re-evaluated " + lineEvaluations + " times in " + WINDOW + " ticks of a steady plant");
         });
         script.then(1, () -> {
             signalCost(kit);

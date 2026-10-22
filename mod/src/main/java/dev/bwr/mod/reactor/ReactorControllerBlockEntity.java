@@ -52,10 +52,20 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private final ReactorBoundaryEffects boundaryEffects = new ReactorBoundaryEffects();
     private final ReactorSevereAccidentEffects severeEffects = new ReactorSevereAccidentEffects();
     public ReactorSevereAccidentEffects severeEffects() { return severeEffects; }
+    /** Nozzle and line breaks of the pressure boundary, for the screen and Lua. Server side. */
+    public ReactorBoundaryEffects boundaryEffects() { return boundaryEffects; }
+    /** The formed vessel's envelope on the server, or null while unformed. */
+    public VesselAppearance.Envelope vesselEnvelope() { return vesselEnvelope; }
     private int clientBoundaryMask;
     private long[] clientBoundaryLeaks = new long[0];
     public boolean clientHeadFailed(){return (clientBoundaryMask & ReactorBoundaryEffects.HEAD)!=0;}
     public long[] clientBoundaryLeaks(){return clientBoundaryLeaks;}
+    private long[] clientLineBreaks = new long[0];
+    private byte[] clientLineBreakJets = new byte[0];
+    /** Open pressure-boundary breaks along a line (not at a nozzle): their positions, for the plume. */
+    public long[] clientLineBreaks(){return clientLineBreaks;}
+    /** The outward direction of each of {@link #clientLineBreaks()}, as {@code Direction.get3DDataValue}. */
+    public byte[] clientLineBreakJets(){return clientLineBreakJets;}
 
     /** Client sync interval in ticks. 5 ticks is 4 Hz, per SPEC section 14. */
     private static final int SYNC_INTERVAL_TICKS = 5;
@@ -1236,6 +1246,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                     String.format(java.util.Locale.ROOT, "%.1f", lastSteamOutletFlowKgPerS),
                     String.format(java.util.Locale.ROOT, "%.1f", core.getSteamGenerationKgPerS())));
             out.addAll(BoundaryDamageReadout.statusComponents(core.getBoundaryStress()));
+            if(level!=null) out.addAll(BoundaryDamageReadout.breakComponents(boundaryEffects,level.getGameTime()));
             out.addAll(SevereAccidentReadout.statusComponents(core));
         }
         out.addAll(lastValidation.components());
@@ -1435,6 +1446,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             tag.putDouble("Power", core.getTotalPowerFractionOfRated());
             tag.putInt("VisualBoundaryMask",ReactorBoundaryEffects.mask(core));
             tag.putLongArray("VisualBoundaryLeaks",boundaryEffects.leakPositions());
+            long[] lineBreaks=boundaryEffects.lineBreakPositions();
+            if(lineBreaks.length>0) {
+                tag.putLongArray("VisualLineBreaks",lineBreaks);
+                tag.putByteArray("VisualLineBreakJets",boundaryEffects.lineBreakJets());
+            }
             tag.putDouble("Pressure", core.getPressurePsig());
             tag.putDouble("Level", core.getIndicatedLevelIn());
             // The free surface follows physical level, not reference-leg instrument error.
@@ -1449,6 +1465,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries) {
         clientBoundaryMask=tag.getInt("VisualBoundaryMask");
         clientBoundaryLeaks=tag.getLongArray("VisualBoundaryLeaks");
+        clientLineBreaks=tag.getLongArray("VisualLineBreaks");
+        clientLineBreakJets=tag.getByteArray("VisualLineBreakJets");
         boolean hadWater=clientWaterPresent;
         double previousWater=clientWaterLevelIn(0);
         vesselState = VesselState.byName(tag.getString("VesselState"));
