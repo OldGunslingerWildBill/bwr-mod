@@ -47,7 +47,7 @@ import java.nio.file.Files;
 /**
  * Disposable real-client check of the radiation tools (run with {@code -PbwrRadiationClientCheck} through run-mc.ps1), three
  * 1920 x 1080 pictures in {@code run/turbineModelCheck/radiation-client-check/}: the survey meter held beside a reactor with
- * a 5 % fission product release (the HUD readout), and a control board with a dial gauge and an annunciator wired to an area
+ * a 5 % fission product release (the HUD readout), and a control board (more than 256 blocks from the plant, so only its own source reads) with a dial gauge and an annunciator wired to an area
  * radiation monitor mounted beside it, before and during an alarm. Not shipped: the devtest package is stripped from the
  * release jar.
  */
@@ -55,11 +55,11 @@ import java.nio.file.Files;
 public final class RadiationClientCheck {
     private static final String[] NAMES = {"radiation-meter-hud", "radiation-monitor-normal", "radiation-monitor-alarm"};
     private static final BlockPos PLANT_MIN = new BlockPos(7300, 104, 7300);
-    private static final BlockPos BOARD = new BlockPos(7400, 110, 7400);
+    private static final BlockPos BOARD = new BlockPos(7700, 110, 7700);
     /** Stage 0: outside the vessel's west wall, looking east at it. */
     private static final Vec3 STAND_PLANT = new Vec3(PLANT_MIN.getX() - 7.0, PLANT_MIN.getY() + 2.0, PLANT_MIN.getZ() + 7.5);
     /** Stages 1 and 2: in front of the board, looking at it. */
-    private static final Vec3 STAND_BOARD = new Vec3(7398.8, 109.2, 7396.2);
+    private static final Vec3 STAND_BOARD = new Vec3(7698.8, 109.2, 7696.2);
     private static final Object SOURCE = new Object();
 
     private static boolean started, built, requested, standing;
@@ -135,7 +135,7 @@ public final class RadiationClientCheck {
                     Vec3 stand = current == 0 ? STAND_PLANT : STAND_BOARD;
                     Vec3 target = current == 0
                             ? new Vec3(PLANT_MIN.getX() + 0.5, PLANT_MIN.getY() + 3.0, PLANT_MIN.getZ() + 7.5)
-                            : new Vec3(7399.4, 109.1, 7401.0);
+                            : new Vec3(7699.4, 109.1, 7701.0);
                     if (current >= 1) {
                         // Stage 1: a weak source (below the alert setpoint); stage 2: 1.6 mSv/h, above the 1 mSv/h alarm.
                         double mSv = current == 1 ? 0.04 : 1.6;
@@ -165,8 +165,8 @@ public final class RadiationClientCheck {
                     player.onUpdateAbilities();
                     level.setDayTime(6_000);
                     level.setWeatherParameters(6000, 0, false, false);
-                    // The survey meter is held in every stage (the board shots show the hotbar and HUD the way a player sees them).
-                    player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BwrItems.SURVEY_METER.get()));
+                    // The survey meter is held for the HUD picture only; the board pictures are of the board.
+                    player.setItemInHand(InteractionHand.MAIN_HAND, current == 0 ? new ItemStack(BwrItems.SURVEY_METER.get()) : ItemStack.EMPTY);
                     player.connection.teleport(stand.x, stand.y, stand.z, yaw, pitch);
                     standing = true;
                 } catch (Throwable failure) {
@@ -225,7 +225,7 @@ public final class RadiationClientCheck {
         ReactorControllerBlockEntity reactor = CompactCoreRegressionTests.build(level, PLANT_MIN, 15, 15, false);
         reactor.core().getContainment().step(0.0, 0.0, 0.05, 1.0); // a 5 % gap release, airborne in containment
 
-        for (BlockPos pos : BlockPos.betweenClosed(new BlockPos(7388, 108, 7388), new BlockPos(7412, 108, 7406)))
+        for (BlockPos pos : BlockPos.betweenClosed(new BlockPos(7688, 108, 7688), new BlockPos(7712, 108, 7706)))
             level.setBlock(pos, Blocks.SMOOTH_STONE.defaultBlockState(), 2);
         for (int row = 0; row < 2; row++) {
             for (int col = 0; col < 2; col++) {
