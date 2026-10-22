@@ -26,7 +26,7 @@ public final class PanelInitialChunkSyncTests {
         var level = helper.getLevel();
         BlockPos pos = new BlockPos(54_900, 110, 54_900);
         int cx = pos.getX() >> 4, cz = pos.getZ() >> 4;
-        level.setChunkForced(cx, cz, true);
+        FixtureChunks.force(level, cx, cz, true);
         try {
             level.getChunk(cx, cz);
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
@@ -44,7 +44,7 @@ public final class PanelInitialChunkSyncTests {
                     "initial chunk did not include the live needle value");
         } finally {
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-            level.setChunkForced(cx, cz, false);
+            FixtureChunks.force(level, cx, cz, false);
         }
         helper.succeed();
     }

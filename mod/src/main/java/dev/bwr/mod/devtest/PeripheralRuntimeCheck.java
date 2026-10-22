@@ -950,7 +950,7 @@ public final class PeripheralRuntimeCheck {
     private static void build(ServerLevel level) {
         for (int cx = 0; cx <= 2; cx++) {
             for (int cz = 0; cz <= 2; cz++) {
-                level.setChunkForced(cx, cz, true);
+                FixtureChunks.force(level, cx, cz, true);
             }
         }
 

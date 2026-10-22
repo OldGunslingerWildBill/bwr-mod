@@ -349,7 +349,7 @@ public final class AuditFixTests {
         int cz = origin.getZ() >> 4;
         for (int cx = cx0; cx <= cx1; cx++) {
             for (int z = cz - 1; z <= cz + 1; z++) {
-                level.setChunkForced(cx, z, true);
+                FixtureChunks.force(level, cx, z, true);
                 level.getChunk(cx, z);
             }
         }
@@ -400,7 +400,7 @@ public final class AuditFixTests {
             clearStrip(level, origin);
             for (int cx = cx0; cx <= cx1; cx++) {
                 for (int z = cz - 1; z <= cz + 1; z++) {
-                    level.setChunkForced(cx, z, false);
+                    FixtureChunks.force(level, cx, z, false);
                 }
             }
         }

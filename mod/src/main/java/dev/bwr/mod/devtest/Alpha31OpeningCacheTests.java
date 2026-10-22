@@ -46,7 +46,7 @@ public final class Alpha31OpeningCacheTests {
         BlockPos center=new BlockPos(41100,200,41100);
         BlockPos lo=center.offset(-13,-13,-13), hi=center.offset(14,14,14);
         for(int cx=lo.getX()>>4;cx<=hi.getX()>>4;cx++)
-            for(int cz=lo.getZ()>>4;cz<=hi.getZ()>>4;cz++)level.setChunkForced(cx,cz,true);
+            for(int cz=lo.getZ()>>4;cz<=hi.getZ()>>4;cz++)FixtureChunks.force(level, cx,cz,true);
         // Reset this far-coordinate fixture: GameTest server worlds persist between runs.
         for(int x=-13;x<=14;x++)for(int z=-13;z<=14;z++)for(int y=-13;y<=14;y++) {
             boolean wall=x==-13||x==14||y==-13||y==14||z==-13||z==14;
@@ -74,7 +74,7 @@ public final class Alpha31OpeningCacheTests {
                         && controller.openings().size()==1&&controller.openings().contains(second),
                 "cached openings differ from wall after a penetration broke/replaced");
         for(int cx=lo.getX()>>4;cx<=hi.getX()>>4;cx++)
-            for(int cz=lo.getZ()>>4;cz<=hi.getZ()>>4;cz++)level.setChunkForced(cx,cz,false);
+            for(int cz=lo.getZ()>>4;cz<=hi.getZ()>>4;cz++)FixtureChunks.force(level, cx,cz,false);
         h.succeed();
     }
 }

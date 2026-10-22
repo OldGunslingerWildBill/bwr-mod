@@ -45,7 +45,7 @@ public final class PanelHeldControlTests {
         BlockPos panelAt = new BlockPos(ORIGIN + 700, 190, ORIGIN);
         int cx = panelAt.getX() >> 4, cz = panelAt.getZ() >> 4;
         FcdTestSupport.hold(level, min, 9, 9, true);
-        level.setChunkForced(cx, cz, true);
+        FixtureChunks.force(level, cx, cz, true);
         h.runAfterDelay(2, () -> {
             try {
                 ReactorControllerBlockEntity reactor = FcdTestSupport.formed(h, min, 9, 9);
@@ -62,7 +62,7 @@ public final class PanelHeldControlTests {
                 ComponentType.OperateContext press = new ComponentType.OperateContext(level, null, panel, button);
                 h.assertTrue(button.type().operate(press, OperateAction.PRESS, 1.0), "the press was refused");
                 h.assertTrue(reactor.selectedRodHeld(1), "the held button did not hold the rod's continuous withdraw");
-                level.setChunkForced(cx, cz, false); // nobody is near the panel any more
+                FixtureChunks.force(level, cx, cz, false); // nobody is near the panel any more
                 waitForUnload(h, level, reactor, panelAt, cx, cz, min, 0);
             } catch (RuntimeException | Error e) {
                 cleanUp(level, panelAt, cx, cz, min);
@@ -102,11 +102,11 @@ public final class PanelHeldControlTests {
 
     private static void cleanUp(ServerLevel level, BlockPos panelAt, int cx, int cz, BlockPos min) {
         try {
-            level.setChunkForced(cx, cz, true);
+            FixtureChunks.force(level, cx, cz, true);
             level.getChunk(cx, cz);
             level.setBlock(panelAt, Blocks.AIR.defaultBlockState(), 3);
         } finally {
-            level.setChunkForced(cx, cz, false);
+            FixtureChunks.force(level, cx, cz, false);
             FcdTestSupport.release(level, min, 9, 9);
         }
     }

@@ -42,7 +42,7 @@ public final class Alpha31PenetrationTests {
     private static void hold(ServerLevel level, BlockPos center, boolean forced) {
         for (int cx=(center.getX()-3)>>4; cx<=(center.getX()+3)>>4; cx++)
             for (int cz=(center.getZ()-3)>>4; cz<=(center.getZ()+3)>>4; cz++)
-                level.setChunkForced(cx,cz,forced);
+                FixtureChunks.force(level, cx,cz,forced);
     }
     private static void survey(ServerLevel level, ContainmentControllerBlockEntity controller) {
         controller.markDirty();

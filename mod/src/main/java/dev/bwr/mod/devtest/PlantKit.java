@@ -97,7 +97,7 @@ final class PlantKit {
     void hold(boolean force) {
         for (int x = lo.getX() >> 4; x <= hi.getX() >> 4; x++) {
             for (int z = lo.getZ() >> 4; z <= hi.getZ() >> 4; z++) {
-                level.setChunkForced(x, z, force);
+                FixtureChunks.force(level, this, x, z, force);
                 if (force) {
                     level.getChunk(x, z);
                 }

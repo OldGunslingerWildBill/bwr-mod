@@ -18,9 +18,9 @@ public final class GridCableBranchTests {
         if(!net.neoforged.fml.ModList.get().isLoaded("mekanism")){h.succeed();return;}
         var l=h.getLevel();var p=new BlockPos(101000,245,101000);var min=p.offset(-6,-2,-4);var max=p.offset(5,7,4);
         var owned=new java.util.ArrayList<net.minecraft.world.level.ChunkPos>();
-        EntityLookupProbe.onFinished(h,()->{for(var at:BlockPos.betweenClosed(min,max))l.setBlock(at,Blocks.AIR.defaultBlockState(),3);for(var c:owned)l.setChunkForced(c.x,c.z,false);});
+        EntityLookupProbe.onFinished(h,()->{for(var at:BlockPos.betweenClosed(min,max))l.setBlock(at,Blocks.AIR.defaultBlockState(),3);for(var c:owned)FixtureChunks.force(l, c.x,c.z,false);});
         for(int x=min.getX()>>4;x<=max.getX()>>4;x++)for(int z=min.getZ()>>4;z<=max.getZ()>>4;z++){
-            var c=new net.minecraft.world.level.ChunkPos(x,z);if(!l.getForcedChunks().contains(c.toLong())){owned.add(c);l.setChunkForced(x,z,true);}l.getChunk(x,z);
+            var c=new net.minecraft.world.level.ChunkPos(x,z);if(!l.getForcedChunks().contains(c.toLong())){owned.add(c);FixtureChunks.force(l, x,z,true);}l.getChunk(x,z);
         }
         for(var at:BlockPos.betweenClosed(min,max))l.setBlock(at,Blocks.AIR.defaultBlockState(),3);
         var gen=PowerModuleRuntimeCheck.place(l,BwrBlocks.NUCLEAR_GENERATOR.get(),p.offset(-3,-1,0),Direction.NORTH);

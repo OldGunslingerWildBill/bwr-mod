@@ -37,7 +37,7 @@ public final class PhaseLGameplayConfigTests {
         double cap = GameplayConfig.WALL_STRENGTH_CAP_PSIG.get();
         int yield = GameplayConfig.TRITIUM_SAMPLES_PER_ROD.get();
         try {
-            level.setChunkForced(cx, cz, true);
+            FixtureChunks.force(level, cx, cz, true);
             level.getChunk(cx, cz);
             level.setBlock(wall, Blocks.AIR.defaultBlockState(), 2);
             helper.assertTrue(GameplayConfig.SPEC.isLoaded(), "server gameplay config did not load");
@@ -81,7 +81,7 @@ public final class PhaseLGameplayConfigTests {
             GameplayConfig.TRITIUM_SAMPLES_PER_ROD.set(yield);
             GameplayConfig.refreshIrradiationTimes();
             level.setBlock(wall, Blocks.AIR.defaultBlockState(), 2);
-            level.setChunkForced(cx, cz, false);
+            FixtureChunks.force(level, cx, cz, false);
         }
     }
 

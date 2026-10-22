@@ -33,7 +33,7 @@ final class FcdTestSupport {
     static void hold(ServerLevel level, BlockPos min, int width, int depth, boolean force) {
         for (int x = (min.getX() - 20) >> 4; x <= (min.getX() + width + 20) >> 4; x++) {
             for (int z = (min.getZ() - 20) >> 4; z <= (min.getZ() + depth + 20) >> 4; z++) {
-                level.setChunkForced(x, z, force);
+                FixtureChunks.force(level, min, x, z, force);
                 if (force) {
                     level.getChunk(x, z);
                 }
@@ -165,6 +165,7 @@ final class FcdTestSupport {
         /** Scratch for steps that hand a number to a later step. */
         int stopDemand;
         double scratch;
+        private final FixtureWait.Timer wait = FixtureWait.start("core display fixture chunks");
         private final java.util.List<Runnable> steps = new java.util.ArrayList<>();
         private final java.util.List<Integer> delays = new java.util.ArrayList<>();
 
@@ -189,10 +190,12 @@ final class FcdTestSupport {
                 try {
                     if (!ticking(level, min, width, depth)) {
                         // A loaded run has been seen to take 58 ticks; 80 still fails inside the default 100 tick timeout.
+                        wait.notReady(level);
                         helper.assertTrue(polls < 80, "fixture chunks never started ticking block entities");
                         begin(1, polls + 1, body);
                         return;
                     }
+                    wait.ready();
                     be = formed(helper, min, width, depth);
                     body.accept(this);
                 } catch (RuntimeException | Error e) {

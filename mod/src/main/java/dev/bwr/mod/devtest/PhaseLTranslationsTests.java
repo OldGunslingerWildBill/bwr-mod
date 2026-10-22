@@ -48,7 +48,7 @@ public final class PhaseLTranslationsTests {
         List<Component> received = new ArrayList<>();
         Language original = Language.getInstance();
         try {
-            level.setChunkForced(cx, cz, true);
+            FixtureChunks.force(level, cx, cz, true);
             level.getChunk(cx, cz);
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
             level.setBlock(pos, BwrBlocks.CONTAINMENT_CONTROLLER.get().defaultBlockState(), 3);
@@ -111,7 +111,7 @@ public final class PhaseLTranslationsTests {
         } finally {
             Language.inject(original);
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-            level.setChunkForced(cx, cz, false);
+            FixtureChunks.force(level, cx, cz, false);
         }
     }
 

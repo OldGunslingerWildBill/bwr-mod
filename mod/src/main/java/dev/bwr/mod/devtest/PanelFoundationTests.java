@@ -77,6 +77,7 @@ public final class PanelFoundationTests {
         private Runnable afterCheck;
         private final EntityLookupProbe probe;
         private int polls;
+        private final FixtureWait.Timer wait = FixtureWait.start("panel stage chunks");
         private boolean released;
 
         private Stage(GameTestHelper helper, int slot) {
@@ -140,9 +141,11 @@ public final class PanelFoundationTests {
                     ready &= probe.live(origin.offset(x, 0, 0));
                 }
                 if (ready) {
+                    wait.ready();
                     then.run();
                     return;
                 }
+                wait.notReady(level);
                 if (++polls > 200) {
                     release();
                     helper.assertTrue(false, "the fixture chunks never answered entity lookups");
@@ -163,7 +166,7 @@ public final class PanelFoundationTests {
         private void hold(boolean force) {
             for (int x = (origin.getX() - 40) >> 4; x <= (origin.getX() + 40) >> 4; x++) {
                 for (int z = (origin.getZ() - 16) >> 4; z <= (origin.getZ() + 16) >> 4; z++) {
-                    level.setChunkForced(x, z, force);
+                    FixtureChunks.force(level, origin, x, z, force);
                     if (force) {
                         level.getChunk(x, z);
                     }

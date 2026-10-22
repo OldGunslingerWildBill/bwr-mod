@@ -36,7 +36,7 @@ public final class Alpha31BypassReviewTests {
         BlockPos min=new BlockPos(40200,190,40200);
         BlockPos lo=min.offset(-4,-4,-4), hi=min.offset(14,10,14);
         for(int cx=lo.getX()>>4;cx<=(hi.getX()+10)>>4;cx++)
-            for(int cz=lo.getZ()>>4;cz<=(hi.getZ()+10)>>4;cz++)level.setChunkForced(cx,cz,true);
+            for(int cz=lo.getZ()>>4;cz<=(hi.getZ()+10)>>4;cz++)FixtureChunks.force(level, cx,cz,true);
         for(int x=-4;x<=14;x++)for(int z=-4;z<=14;z++)for(int y=-4;y<=10;y++) {
             boolean wall=x==-4||x==14||z==-4||z==14||y==-4||y==10;
             level.setBlock(min.offset(x,y,z),(wall?Blocks.STONE:Blocks.AIR).defaultBlockState(),2);
@@ -124,7 +124,7 @@ public final class Alpha31BypassReviewTests {
             h.assertTrue(valve.position()==0&&containment.bypassFlowFraction(reactor)==0,
                     "isolated water sleeve still counted as bypass");
             for(int cx=lo.getX()>>4;cx<=(hi.getX()+10)>>4;cx++)
-                for(int cz=lo.getZ()>>4;cz<=(hi.getZ()+10)>>4;cz++)level.setChunkForced(cx,cz,false);
+                for(int cz=lo.getZ()>>4;cz<=(hi.getZ()+10)>>4;cz++)FixtureChunks.force(level, cx,cz,false);
             h.succeed();
         });
     }

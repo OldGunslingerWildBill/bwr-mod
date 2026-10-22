@@ -27,7 +27,7 @@ public final class PhaseJRhrHardwareTests {
         int cz0 = lo.getZ() >> 4, cz1 = hi.getZ() >> 4;
         try {
             for (int cx = cx0; cx <= cx1; cx++) for (int cz = cz0; cz <= cz1; cz++) {
-                level.setChunkForced(cx, cz, true);
+                FixtureChunks.force(level, cx, cz, true);
                 level.getChunk(cx, cz);
             }
             for (int x = lo.getX(); x <= hi.getX(); x++)
@@ -60,7 +60,7 @@ public final class PhaseJRhrHardwareTests {
             helper.succeed();
         } finally {
             for (int cx = cx0; cx <= cx1; cx++) for (int cz = cz0; cz <= cz1; cz++)
-                level.setChunkForced(cx, cz, false);
+                FixtureChunks.force(level, cx, cz, false);
         }
     }
 }

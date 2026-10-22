@@ -484,6 +484,7 @@ public final class ChunkLinkTests {
         int[] fuel = new int[1];
         double[] pressure = new double[1];
         double[] mark = new double[1];
+        double[] restoredPsi = new double[1];
         Script script = new Script(h, 1500, line::meter, () -> {
             try {
                 line.remove();
@@ -518,19 +519,34 @@ public final class ChunkLinkTests {
             return true;
         });
         script.then(40, () -> {
-            for (int c = -1; c <= line.chunks; c++) {
+            // From the far end back: the chunks are brought back in the order they are asked for, and the reactor (chunk 0)
+            // starts to run, and to climb, as soon as its own entities are back, so asking for it last keeps the outlet
+            // from being the late one.
+            for (int c = line.chunks; c >= -1; c--) {
                 lab.request(line.chunkX(c), line.row());
             }
         });
-        script.await(() -> "the reactor to be back and formed: " + line.describe(), 600,
+        // The plant is climbing in pressure (about 1.2 psi a tick in this fixture) before it is saved and after it is
+        // read back, so what the 60 psi below measures is how many ticks the reload leaves the parts of the line missing:
+        // each chunk's entities come back from disk on their own schedule and a block entity does not tick before that.
+        // Paced, that is a tick or two; at the server's unthrottled half a millisecond a tick it was 15 to 40.
+        script.awaitChunks(() -> "the reactor to be back and formed: " + line.describe(), 600,
                 () -> line.reactor() != null && line.reactor().isFormed());
+        script.then(0, () -> {
+            double restored = line.reactor().core().getPressurePsig();
+            restoredPsi[0] = restored;
+            h.assertTrue(Math.abs(restored - pressure[0]) < 10,
+                    "the reactor did not come back at the pressure it was saved at: " + pressure[0] + " -> " + restored);
+        });
         script.then(1, () -> mark[0] = line.exportedMb);
-        script.await(() -> "the line to deliver again: " + line.describe(), 400,
+        script.awaitChunks(() -> "the line to deliver again: " + line.describe(), 400,
                 () -> line.delivering() && line.exportedMb - mark[0] > 100);
         script.then(20, () -> {
             var r = line.reactor();
             h.assertTrue(r.core().getCoreLoading().loadedAssemblyCount() == fuel[0],
                     "fuel changed across the reload: " + fuel[0] + " -> " + r.core().getCoreLoading().loadedAssemblyCount());
+            com.mojang.logging.LogUtils.getLogger().info("CHUNK LINK RELOAD: pressure saved at {} psi, {} psi on the first tick of the reloaded reactor, {} psi after delivering again",
+                    pressure[0], restoredPsi[0], r.core().getPressurePsig());
             h.assertTrue(Math.abs(r.core().getPressurePsig() - pressure[0]) < 60,
                     "pressure jumped across the reload: " + pressure[0] + " -> " + r.core().getPressurePsig());
             int popped = h.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,

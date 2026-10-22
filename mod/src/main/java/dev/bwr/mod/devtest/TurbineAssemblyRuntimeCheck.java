@@ -81,7 +81,7 @@ public final class TurbineAssemblyRuntimeCheck {
                              z <= (f.root.getZ() + 5) >> 4; z++) {
                             if (!level.getForcedChunks().contains(ChunkPos.asLong(x, z))) {
                                 forced.add(new ChunkPos(x, z));
-                                level.setChunkForced(x, z, true);
+                                FixtureChunks.force(level, x, z, true);
                             }
                             level.getChunk(x, z);
                         }
@@ -118,7 +118,7 @@ public final class TurbineAssemblyRuntimeCheck {
                             FACINGS[rotation], e);
                 } finally {
                     for (ChunkPos chunk : forced) {
-                        level.setChunkForced(chunk.x, chunk.z, false);
+                        FixtureChunks.force(level, chunk.x, chunk.z, false);
                     }
                 }
             }

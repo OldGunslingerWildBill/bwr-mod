@@ -115,6 +115,7 @@ public final class MimicTapeTests {
         private final List<Integer> delays = new ArrayList<>();
         private boolean released;
         private int polls;
+        private final FixtureWait.Timer wait = FixtureWait.start("mimic stage chunks");
 
         private Stage(GameTestHelper helper, int slot) {
             this.helper = helper;
@@ -163,9 +164,11 @@ public final class MimicTapeTests {
                     ready &= probe.live(origin.offset(x, 0, 0));
                 }
                 if (ready) {
+                    wait.ready();
                     then.run();
                     return;
                 }
+                wait.notReady(level);
                 if (++polls > 200) {
                     release();
                     helper.assertTrue(false, "the fixture chunks never answered entity lookups");
@@ -202,7 +205,7 @@ public final class MimicTapeTests {
         private void hold(boolean force) {
             for (int x = (origin.getX() - 30) >> 4; x <= (origin.getX() + 8) >> 4; x++) {
                 for (int z = (origin.getZ() - 16) >> 4; z <= (origin.getZ() + 16) >> 4; z++) {
-                    level.setChunkForced(x, z, force);
+                    FixtureChunks.force(level, origin, x, z, force);
                     if (force) {
                         level.getChunk(x, z);
                     }

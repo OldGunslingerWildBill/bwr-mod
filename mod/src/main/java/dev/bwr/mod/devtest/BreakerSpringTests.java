@@ -86,7 +86,7 @@ public final class BreakerSpringTests {
     private static void hold(ServerLevel level, boolean force) {
         for (int x = (ORIGIN.getX() - 16) >> 4; x <= (ORIGIN.getX() + 16) >> 4; x++) {
             for (int z = (ORIGIN.getZ() - 16) >> 4; z <= (ORIGIN.getZ() + 16) >> 4; z++) {
-                level.setChunkForced(x, z, force);
+                FixtureChunks.force(level, x, z, force);
                 if (force) {
                     level.getChunk(x, z);
                 }

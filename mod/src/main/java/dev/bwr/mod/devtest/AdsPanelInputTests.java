@@ -56,7 +56,7 @@ public final class AdsPanelInputTests {
     public static void adsSignalsListTheThreeInputsAndPlainBehaviourIsUnchanged(GameTestHelper helper) {
         BlockPos at = new BlockPos(ORIGIN_X + 200, 110, ORIGIN_Z);
         var level = helper.getLevel();
-        level.setChunkForced(at.getX() >> 4, at.getZ() >> 4, true);
+        FixtureChunks.force(level, at.getX() >> 4, at.getZ() >> 4, true);
         level.getChunk(at.getX() >> 4, at.getZ() >> 4);
         try {
             level.setBlock(at, BwrBlocks.ADS_CONTROLLER.get().defaultBlockState(), 2);
@@ -86,7 +86,7 @@ public final class AdsPanelInputTests {
             helper.assertTrue(!ads.isOpen(), "one activation input alone opens nothing");
         } finally {
             level.setBlock(at, Blocks.AIR.defaultBlockState(), 2);
-            level.setChunkForced(at.getX() >> 4, at.getZ() >> 4, false);
+            FixtureChunks.force(level, at.getX() >> 4, at.getZ() >> 4, false);
         }
         helper.succeed();
     }

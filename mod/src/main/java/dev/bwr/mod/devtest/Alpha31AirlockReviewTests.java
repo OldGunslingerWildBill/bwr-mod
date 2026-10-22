@@ -24,7 +24,7 @@ public final class Alpha31AirlockReviewTests {
     private static void hold(ServerLevel level, BlockPos center, int radius, boolean forced) {
         for (int x = (center.getX() - radius) >> 4; x <= (center.getX() + radius) >> 4; x++)
             for (int z = (center.getZ() - radius) >> 4; z <= (center.getZ() + radius) >> 4; z++)
-                level.setChunkForced(x, z, forced);
+                FixtureChunks.force(level, center, x, z, forced);
     }
 
     private static void survey(ServerLevel level, ContainmentControllerBlockEntity controller) {

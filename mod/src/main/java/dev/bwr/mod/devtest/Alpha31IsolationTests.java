@@ -25,7 +25,7 @@ public final class Alpha31IsolationTests {
         // This fixture is far from the test structure and is inspected after 160 ticks.
         BlockPos sleeve = new BlockPos(35208, 230, 35208);
         int cx = sleeve.getX() >> 4, cz = sleeve.getZ() >> 4;
-        level.setChunkForced(cx, cz, true);
+        FixtureChunks.force(level, cx, cz, true);
         level.getChunk(cx, cz);
         BlockPos source = sleeve.west(), msivPos = sleeve.east(), sink = sleeve.east(2);
         // The GameTest world can survive another Gradle run. Replacing an
@@ -69,7 +69,7 @@ public final class Alpha31IsolationTests {
             helper.assertTrue(isolated == 0, "unpowered sleeve passed steam: " + isolated);
             for (BlockPos pos : new BlockPos[] {source, sleeve, msivPos, sink})
                 level.removeBlock(pos, false);
-            level.setChunkForced(cx, cz, false);
+            FixtureChunks.force(level, cx, cz, false);
             helper.succeed();
         });
     }

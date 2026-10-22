@@ -89,13 +89,12 @@ final class EntityLookupProbe {
                             net.minecraft.world.phys.AABB bounds, CheckedAction action) {
         ServerLevel level = helper.getLevel();
         var chunks = new java.util.ArrayList<ChunkPos>();
-        var owned = new java.util.ArrayList<ChunkPos>();
         EntityLookupProbe probe = new EntityLookupProbe(level, bounds.maxY + 2);
         boolean[] released = {false};
         Runnable release = onFinished(helper, () -> {
             released[0] = true;
             try { probe.forget(); } finally {
-                owned.forEach(c -> level.setChunkForced(c.x, c.z, false));
+                chunks.forEach(c -> FixtureChunks.force(level, probe, c.x, c.z, false));
             }
         });
         try {
@@ -103,14 +102,11 @@ final class EntityLookupProbe {
                 for (int z = net.minecraft.util.Mth.floor(bounds.minZ) >> 4; z <= net.minecraft.util.Mth.floor(bounds.maxZ) >> 4; z++) {
                     ChunkPos chunk = new ChunkPos(x, z);
                     chunks.add(chunk);
-                    if (!level.getForcedChunks().contains(chunk.toLong())) {
-                        owned.add(chunk);
-                        level.setChunkForced(x, z, true);
-                    }
+                    FixtureChunks.force(level, probe, x, z, true);
                     level.getChunk(x, z);
                 }
             }
-            await(helper, chunks, probe, action, release, released, 0);
+            await(helper, chunks, probe, action, release, released, FixtureWait.start("entity lookups of " + chunks.size() + " chunks"));
         } catch (RuntimeException | Error e) {
             release.run();
             throw e;
@@ -119,18 +115,20 @@ final class EntityLookupProbe {
 
     private static void await(net.minecraft.gametest.framework.GameTestHelper helper,
                               java.util.List<ChunkPos> chunks, EntityLookupProbe probe, CheckedAction action,
-                              Runnable release, boolean[] released, int polls) {
+                              Runnable release, boolean[] released, FixtureWait.Timer wait) {
         if (released[0]) return; // A timeout, failure or rerun must never restart the fixture.
         try {
             boolean ready = true;
             for (ChunkPos chunk : chunks) {
                 ready &= probe.live(new BlockPos((chunk.x << 4) + 8, (int) probe.probeY, (chunk.z << 4) + 8));
             }
-            if (!ready && polls < 160) {
-                helper.runAfterDelay(1, () -> await(helper, chunks, probe, action, release, released, polls + 1));
+            if (!ready && wait.polls() < 160) {
+                wait.notReady(probe.level);
+                helper.runAfterDelay(1, () -> await(helper, chunks, probe, action, release, released, wait));
                 return;
             }
             helper.assertTrue(ready, "fixture chunks never answered entity lookups");
+            wait.ready();
             try { action.run(); } finally { release.run(); }
         } catch (RuntimeException | Error e) {
             release.run();

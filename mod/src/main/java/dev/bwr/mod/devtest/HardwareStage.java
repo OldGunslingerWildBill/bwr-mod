@@ -79,7 +79,7 @@ final class HardwareStage {
     private void hold(boolean force) {
         for (int x = (origin.getX() - 8) >> 4; x <= (origin.getX() + 8) >> 4; x++) {
             for (int z = (origin.getZ() - 8) >> 4; z <= (origin.getZ() + 8) >> 4; z++) {
-                level.setChunkForced(x, z, force);
+                FixtureChunks.force(level, origin, x, z, force);
                 if (force) {
                     level.getChunk(x, z);
                 }
