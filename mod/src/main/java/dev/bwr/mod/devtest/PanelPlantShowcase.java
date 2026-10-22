@@ -35,7 +35,7 @@ import java.util.Map;
  *
  * <ul>
  *   <li>{@code plant-default-overview}, {@code -trends}, {@code -flows}: the built-in pages, bound to a real formed reactor
- *       staged at 80 percent power and run through a steam and feedwater upset, so the trends are that reactor's own history (the
+ *       staged at 80 percent power and run through a feedwater upset, so the trends are that reactor's own history (the
  *       trend page is given the history by running the very sampler the display uses, one point a simulated second);</li>
  *   <li>{@code plant-spds-safety}, {@code -trends}, {@code -values}: the SPDS program of {@code docs/lua/spds.lua}, its
  *       pages defined with the same {@link PlantApi} calls the {@code bwr_panel} peripheral makes for a program (the
@@ -147,7 +147,7 @@ final class PanelPlantShowcase {
         core.step();
     }
 
-    /** A real formed reactor at 80 percent power with a steam and feedwater upset behind it; its history fills {@link #POWER} and the others. */
+    /** A real formed reactor at 80 percent power with a feedwater upset behind it; its history fills {@link #POWER} and the others. */
     private static ReactorControllerBlockEntity reactor(ServerLevel level) {
         ReactorControllerBlockEntity reactor;
         try {
@@ -170,10 +170,10 @@ final class PanelPlantShowcase {
         }
         var signals = dev.bwr.mod.signal.SignalProviders.of(reactor);
         for (int point = 0; point < POWER.length; point++) {
-            // an upset in the history: the turbine takes 25 percent less steam for ten points, then the feedwater is 45 percent short
-            // for fifteen, then both are restored
-            double steam = point >= 6 && point < 16 ? 0.75 : 1.0;
-            double feed = point >= 28 && point < 43 ? 0.55 : 1.0;
+            // a feedwater upset in the middle of the history: 12 percent short for 15 points, then restored (a bigger one collapses
+            // this fixture's plant: it has no recirculation pumps)
+            double steam = 1.0;
+            double feed = point >= 22 && point < 37 ? 0.88 : 1.0;
             for (int i = 0; i < 20; i++) {
                 plantStep(core, feed, steam);
             }
