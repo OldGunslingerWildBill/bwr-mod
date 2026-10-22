@@ -18,7 +18,7 @@ The manual/auto controller station and the synchroscope were driven in real worl
 
 ### Tests
 
-- `ControllerSyncWiringTests` (batch `controllersync`): the station against seven real machines in MAN, AUTO and transfer, save and reload, a broken link, the reactor's boron and recirculation commands, the link screen's default scale and the round lamps; `ControllerSyncSynchroscopeTests`: the full synchronisation through panel buttons. Panel client check: five new stages in `PanelHardwareShowcase` (station in MAN at 40 %, station in AUTO, synchroscopes slow, fast, in phase and tied, the button legends, the lamps).
+- `ControllerSyncWiringTests` (batch `controllersync`): the station against seven real machines in MAN, AUTO and transfer, save and reload, a broken link, the reactor's boron and recirculation commands, the link screen's default scale and the round lamps; `ControllerSyncSynchroscopeTests`: the full synchronisation through panel buttons. Panel client check: five new stages in `PanelHardwareShowcase` (station in MAN at 40 %, station in AUTO and an unwired one with its no-signal flag, synchroscopes slow, fast, in phase and tied, the button legends, the lamps).
 - No existing assertion was changed. Two asks were left alone because existing assertions pin the present design (see the report): an AUTO control law in the station, and legends on the synchroscope's lamps.
 
 ## Unreleased: fuel fabricator item route, depleted uranium, recipe audit

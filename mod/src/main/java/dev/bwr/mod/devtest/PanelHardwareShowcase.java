@@ -195,6 +195,8 @@ final class PanelHardwareShowcase {
         bind(level, stations, auto, ControllerStationType.IN_PV, 61.4);
         bind(level, stations, auto, ControllerStationType.IN_AUTO_DEMAND, 55.0);
         auto.touch();
+        // A real size station with nothing wired to it (no PV): the process variable pointer is replaced by its red no-signal flag.
+        put(level, stations, 13, 0, ComponentTypes.CONTROLLER_STATION, Footprint.of(3, 6)).touch();
         BlockPos scopes = block(CHECK_WALL, 1, 0);
         level.setBlock(scopes, BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState().setValue(PanelBlock.FACING, Direction.NORTH), 3);
         PLACED.add(scopes);
