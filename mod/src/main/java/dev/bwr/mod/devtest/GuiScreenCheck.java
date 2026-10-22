@@ -51,7 +51,7 @@ import java.util.function.Function;
 
 /**
  * Opens every machine screen of the mod with fabricated client-side menu data (no machine, no server round trip: the
- * layout of a screen is a function of the menu's public fields), at GUI scale 2 and 4 in a 1920 x 1080 window, saves a
+ * layout of a screen is a function of the menu's public fields), at GUI scale 2, 3 and 4 in a 1920 x 1080 window, saves a
  * shot of each and checks that nothing a screen puts on the screen lies outside it.
  *
  * <p>Run it with {@code :mod:runTurbineModelCheck -PbwrGuiScreenCheck}. {@code -Dbwr.guiCheckLenient=true} (Gradle:
@@ -75,7 +75,7 @@ import java.util.function.Function;
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
 public final class GuiScreenCheck {
     private static final org.slf4j.Logger LOG = LogUtils.getLogger();
-    private static final int[] SCALES = {2, 4};
+    private static final int[] SCALES = {2, 3, 4};
     private static final int[][] SMALL = {{320, 240}, {427, 240}};
 
     /** One screen in one state. {@code setup} may click a tab or move the mouse once the screen is open. */
@@ -453,6 +453,28 @@ public final class GuiScreenCheck {
             m.workTicks = 0;
             m.tailsHeld = 167;
             m.getSlot(FuelFabricatorMenu.SLOT_TAILS).set(new ItemStack(BwrItems.DEPLETED_URANIUM.get(), 64));
+            return new FuelFabricatorScreen(m, i, t("Fuel Fabricator"));
+        }));
+        s.add(new Scenario("fabricator-feed", i -> {
+            // what a real Mekanism feed writes (FuelFabricatorBlockEntity.statusLines): the longest feed line, the 20 % grade, a type id
+            var m = new FuelFabricatorMenu(99, i, P);
+            m.present = true;
+            m.batchHeavyMetalKg = 142.5;
+            m.batchTargetKg = 180;
+            m.batchEnrichmentWeightFraction = 0.2;
+            m.energyStored = 99_999;
+            m.energyCapacity = 100_000;
+            m.wouldFabricate = "plutonium_rich";
+            m.feedLines = new ArrayList<>(List.of("Matrix tank: 10,000 / 10,000 mB of uranium_oxide (12.3 kg HM)", "Fissile tank empty"));
+            m.targetIndex = FuelItemRoute.TARGETS.size() - 1;
+            m.hasCost = true;
+            m.costIngots = 172;
+            m.costSteel = 4;
+            m.costTails = 167;
+            m.costWorkTicks = 616;
+            m.uraniumHeldUnits = 344;
+            m.workTicks = 300;
+            m.tailsHeld = 167;
             return new FuelFabricatorScreen(m, i, t("Fuel Fabricator"));
         }));
         s.add(new Scenario("fabricator-absent", i -> new FuelFabricatorScreen(new FuelFabricatorMenu(99, i, P), i, t("Fuel Fabricator"))));
@@ -1082,7 +1104,7 @@ public final class GuiScreenCheck {
             throw new AssertionError("GUI SCREEN CHECK FAIL: " + violations.size() + " violations, first: " + violations.get(0));
         }
         mc.setScreen(null);
-        LOG.info("GUI SCREEN CHECK {}: {} screens x 2 scales + 2 minimum sizes, {} violations", violations.isEmpty() ? "PASS" : "DONE (lenient)",
+        LOG.info("GUI SCREEN CHECK {}: {} screens x 3 scales + 2 minimum sizes, {} violations", violations.isEmpty() ? "PASS" : "DONE (lenient)",
                 scenarios.size(), violations.size());
         mc.stop();
     }

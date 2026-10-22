@@ -1,0 +1,44 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:mod_loaded",
+        "modid": "mekanism"
+      }
+    }
+  ],
+  "category": "building",
+  "key": {
+    "S": [
+      {
+        "tag": "c:ingots/steel"
+      },
+      {
+        "tag": "c:ingots/iron"
+      }
+    ],
+    "C": {
+      "item": "minecraft:comparator"
+    },
+    "A": {
+      "item": "minecraft:redstone_block"
+    },
+    "K": {
+      "item": "minecraft:blast_furnace"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    }
+  },
+  "pattern": [
+    "SCS",
+    "AKA",
+    "SVS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:fuel_fabricator"
+  }
+}

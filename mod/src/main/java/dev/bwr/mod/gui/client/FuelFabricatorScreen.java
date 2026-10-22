@@ -32,14 +32,21 @@ import java.util.Locale;
  */
 public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
 
+    /**
+     * 416 px, 48 more than the first version, all of it to the right column: the labels there ("Would make LEU 4.1% UO2
+     * assembly", a feed line) were cut at 184 px. A smaller window still shrinks the panel (to 320 at the smallest GUI size).
+     */
+    private static final int PANEL_WIDTH = 416;
     private static final int LEFT_COLUMN = 164;
+    /** The room a line of the item route card has: the column less the card's padding on both sides. */
+    private static final int LEFT_TEXT = LEFT_COLUMN - 2 * BwrStyle.SP2;
 
     private BwrButton previous;
     private BwrButton pick;
     private BwrButton next;
 
     public FuelFabricatorScreen(FuelFabricatorMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 368, 224);
+        super(menu, inventory, title, PANEL_WIDTH, 224);
     }
 
     @Override
@@ -82,6 +89,31 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
                 units / (double) FuelItemRoute.UNITS_PER_INGOT);
     }
 
+    /** The first of the candidates that fits {@code width} px in caption type, else the last (which the line then cuts). */
+    private static String firstThatFits(int width, String... candidates) {
+        for (String candidate : candidates) {
+            if (Ui.width(candidate, Type.CAPTION) <= width) {
+                return candidate;
+            }
+        }
+        return candidates[candidates.length - 1];
+    }
+
+    /**
+     * What the selected assembly costs, in the column's 148 px. The comma wording fits every grade of the ladder (the 20 %
+     * grade's three-digit "172" was the one that did not fit "Costs 172 uranium and 4 steel"); a datapack grade with a
+     * four- or five-digit cost falls back to shorter wording rather than being cut.
+     */
+    private String costText() {
+        if (!menu.hasCost) {
+            return firstThatFits(LEFT_TEXT, "This enrichment cannot be made", "Cannot be made");
+        }
+        return firstThatFits(LEFT_TEXT,
+                "Costs " + menu.costIngots + " uranium, " + menu.costSteel + " steel",
+                menu.costIngots + " uranium, " + menu.costSteel + " steel",
+                menu.costIngots + " U, " + menu.costSteel + " steel");
+    }
+
     private int steelLoaded() {
         return menu.getSlot(FuelFabricatorMenu.SLOT_STEEL).getItem().getCount();
     }
@@ -96,9 +128,7 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
         }
 
         var selector = Layout.controls(BwrStyle.SP1).fixed(previous, 24).add(pick, 1).fixed(next, 24);
-        var cost = Layout.line(() -> menu.hasCost
-                        ? "Costs " + menu.costIngots + " uranium and " + menu.costSteel + " steel"
-                        : "This enrichment cannot be made", Type.CAPTION)
+        var cost = Layout.line(this::costText, Type.CAPTION)
                 .tip(() -> menu.hasCost
                         ? List.of(Component.literal("One assembly takes " + menu.costIngots + " uranium ingots and " + menu.costSteel
                                         + " steel ingots and returns " + menu.costTails + " depleted uranium."),
@@ -115,22 +145,22 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
         var left = Layout.column(BwrStyle.SP2, item, Layout.flex());
 
         var assembly = Layout.card("Item assembly",
-                Layout.row("Uranium in", () -> ingots(menu.uraniumHeldUnits) + " / " + menu.costIngots, "ingots")
+                Layout.row("Uranium in", () -> ingots(menu.uraniumHeldUnits) + " / " + menu.costIngots, "ingots").dense()
                         .tip("The machine takes uranium out of its slot until it holds enough for one assembly."),
-                Layout.row("Steel in", () -> steelLoaded() + " / " + menu.costSteel, "ingots"),
-                Layout.row("Depleted U held", () -> String.valueOf(menu.tailsHeld), "ingots")
+                Layout.row("Steel in", () -> steelLoaded() + " / " + menu.costSteel, "ingots").dense(),
+                Layout.row("Depleted U held", () -> String.valueOf(menu.tailsHeld), "ingots").dense()
                         .tip("What did not become enriched product. It comes out of the depleted uranium slot, a stack at a time."),
                 Layout.meter("Item progress", () -> menu.costWorkTicks > 0 ? menu.workTicks / (double) menu.costWorkTicks : 0.0, null,
                         () -> menu.costWorkTicks > 0 ? pct(menu.workTicks / (double) menu.costWorkTicks) + "%" : "0.0%").label("Progress")).compact();
 
         var batch = Layout.card("Chemical batch",
-                Layout.row("Heavy metal", () -> String.format(Locale.ROOT, "%.1f / %.0f", menu.batchHeavyMetalKg, menu.batchTargetKg), "kg HM"),
-                Layout.row("Fissile", () -> pct(menu.batchEnrichmentWeightFraction), "%")
+                Layout.row("Heavy metal", () -> String.format(Locale.ROOT, "%.1f / %.0f", menu.batchHeavyMetalKg, menu.batchTargetKg), "kg HM").dense(),
+                Layout.row("Fissile", () -> pct(menu.batchEnrichmentWeightFraction), "%").dense()
                         .tip("This is measured from the heavy metal collected so far; it is not a setting. Feed in more fissile material to get a richer bundle."),
-                Layout.row("Would make", () -> menu.wouldFabricate.isEmpty() ? "-" : menu.wouldFabricate)
+                Layout.row("Would make", () -> menu.wouldFabricate.isEmpty() ? "-" : menu.wouldFabricate).dense()
                         .status(() -> menu.wouldFabricate.isEmpty() ? Status.NONE : Status.INFO),
                 Layout.meter("Batch progress", menu::progress, null, () -> pct(menu.progress()) + "%").label("Progress"),
-                Layout.line(() -> menu.feedLines.isEmpty() ? "No chemical feed is attached." : menu.feedLines.get(0), Type.CAPTION)).compact();
+                Layout.note(() -> menu.feedLines.isEmpty() ? "No chemical feed is attached." : menu.feedLines.get(0)).maxLines(2)).compact();
 
         var energy = Layout.card("",
                 Layout.meter("Stored energy", () -> menu.energyCapacity > 0 ? (double) menu.energyStored / menu.energyCapacity : 0.0,

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: fuel fabricator polish (recipe without Mekanism, GUI text that fits)
+
+- **A recipe for the fabricator without Mekanism.** `fuel_fabricator.json` (Mekanism parts) is unchanged. New `fuel_fabricator_no_mekanism.json`, loaded only when Mekanism is NOT (`neoforge:not` of `neoforge:mod_loaded`): four steel or iron ingots (`c:ingots/steel` or `c:ingots/iron`), a comparator, two redstone blocks, a blast furnace and a reactor vessel, in the Mekanism recipe's pattern. Exactly one of the two loads. Steel for the item route itself must still come from a mod that tags `c:ingots/steel`.
+- **Audits.** `tools-audit-recipes.py` now evaluates each recipe's `neoforge:conditions` (mod_loaded, not, and, or) for an install with Mekanism and one without, and fails an item whose every recipe is gated out in either (or a condition it cannot evaluate). The GameTest `everyCraftableItemHasARecipeAndTheRestDoNot` no longer excuses `fuel_fabricator` when Mekanism is absent (its only edit: the fabricator must have a recipe in both installs).
+- **Screen text.** The cost line reads "Costs 172 uranium, 4 steel" (the 20 % grade no longer ends in an ellipsis), falling back to shorter wording only for a datapack grade too costly to fit; the tooltip is unchanged. The panel is 416 px wide instead of 368 (a smaller window still shrinks it to the smallest GUI size), so the right column's "Would make" value fits, and the chemical feed line wraps to two lines instead of being cut. The GUI check also runs at GUI scale 3 now (2, 3 and 4) and has a new scenario, `fabricator-feed`, with a real Mekanism feed line.
+- **Tests.** GameTest `theFabricatorRecipeLoadsWithAndWithoutMekanism` (which of the two recipes is loaded, exactly one maker, and without Mekanism the vanilla recipe crafts from vanilla items and rejects a furnace or gold).
+
 ## Unreleased: fuel fabricator item route, depleted uranium, recipe audit
 
 The fuel fabricator can now make assemblies from uranium and steel *items*, with the enrichment chosen on its screen, and returns the uranium that did not become product as depleted uranium. The Mekanism chemical route is unchanged. GUI network protocol is now 23 (the fabricator's snapshot changed): update client and server together. Old saves load.

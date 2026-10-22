@@ -58,6 +58,13 @@ The fabricator has two ways in, and they take turns.
   any mod that tags its uranium and steel works, and the machine loads and runs
   with Mekanism absent.
 
+**Crafting the machine.** With Mekanism it is the recipe from Mekanism parts
+(`fuel_fabricator`); without Mekanism a vanilla recipe (`fuel_fabricator_no_mekanism`,
+gated on `neoforge:not` / `neoforge:mod_loaded`) takes its place: four steel or iron
+ingots, a comparator, two redstone blocks, a blast furnace and a reactor vessel. Exactly
+one of the two is loaded. Steel for the item route itself still has to come from a mod
+that tags `c:ingots/steel`; vanilla has none.
+
 The machine has four slots, and hoppers and pipes use them through the item
 capability: **uranium in**, **steel in**, **assembly out** and **depleted
 uranium out**. The assembly is slot 0 (where the single output slot always was),
