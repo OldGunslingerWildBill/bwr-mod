@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " C ",
+    "IGI",
+    "IRI"
+  ],
+  "key": {
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "R": {
+      "item": "minecraft:comparator"
+    }
+  },
+  "result": {
+    "id": "bwr:survey_meter",
+    "count": 1
+  }
+}

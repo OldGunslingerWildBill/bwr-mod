@@ -312,7 +312,7 @@ CC setups are named by hand (or by your own program).
 
 Every gauge-like component (dial, edgewise meters, bar graph, segment displays) has a **Measures** setting: ANY (the
 default: it takes any signal, exactly as before) or a quantity: LEVEL, PRESSURE, TEMPERATURE, RATE, FLOW, POWER, ENERGY,
-POSITION, PERCENT, SPEED, CHEMISTRY or COUNT. Each signal has a quantity worked out from its unit (SIGNALS.md): a signal
+POSITION, PERCENT, SPEED, CHEMISTRY, COUNT or DOSE_RATE (mSv/h, uSv/h, Sv/h: the area radiation monitor, see RADIATION.md). Each signal has a quantity worked out from its unit (SIGNALS.md): a signal
 in in, m or mB is a LEVEL, psig a PRESSURE, MW, kW, W, FE/t or FE/s a POWER, and so on; a fraction or percent is a LEVEL only
 when the signal key says level. A gauge that is not ANY lists only matching signals on the binding screen and the server
 **refuses** any other: "This gauge measures LEVEL; mw now is POWER". The same check applies to a line link and to a CC

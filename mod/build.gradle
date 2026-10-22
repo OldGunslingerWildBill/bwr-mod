@@ -42,7 +42,7 @@ neoForge {
             gameDirectory = file('run/turbineGameTest')
             // 'bwrtick' holds the tick-cost and chunk-boundary tests (TickBudgetTests, ChunkLinkTests, ...); -PbwrOnlyTick
             // runs just those, in about a minute, while they are being developed. The default runs everything.
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrOnlyTick') ? 'bwrtick' : 'bwr,bwrtick'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : 'bwr,bwrtick')
             // Developer-only tick profiler (dev.bwr.mod.TickProbe): per-system microseconds per server tick, printed by
             // the TickBudgetTests plant profile as "TICK PROBE" lines. Off (and costless) without this property.
             if (project.hasProperty('bwrTickProbe')) jvmArguments.add('-Dbwr.tickProbe=true')
@@ -111,6 +111,7 @@ neoForge {
             if (project.hasProperty('bwrCoreModelCheck')) jvmArguments.add('-Dbwr.coreModelCheck=true')
             if (project.hasProperty('bwrRipModelCheck')) jvmArguments.add('-Dbwr.ripModelCheck=true')
             if (project.hasProperty('bwrNetworkingClientCheck')) jvmArguments.add('-Dbwr.networkingClientCheck=true')
+            if (project.hasProperty('bwrRadiationClientCheck')) jvmArguments.add('-Dbwr.radiationClientCheck=true')
             if (project.hasProperty('bwrFurnitureClientCheck')) jvmArguments.add('-Dbwr.furnitureClientCheck=true')
             if (project.hasProperty('bwrBoardClientCheck')) jvmArguments.add('-Dbwr.boardClientCheck=true')
             if (project.hasProperty('bwrBoardClientStages')) jvmArguments.add('-Dbwr.boardClientStages=' + project.property('bwrBoardClientStages'))

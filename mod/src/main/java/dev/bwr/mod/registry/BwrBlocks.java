@@ -58,6 +58,17 @@ public final class BwrBlocks {
             DeferredRegister.createBlocks(BwrMod.MOD_ID);
     public static final DeferredBlock<dev.bwr.mod.grid.GridTieBlock> GRID_TIE=BLOCKS.register("grid_tie",()->new dev.bwr.mod.grid.GridTieBlock(vesselSteel()));
 
+    /** Wall-mounted area radiation monitor (a reading, a lamp, two booleans); it never acts on the plant. */
+    public static final DeferredBlock<dev.bwr.mod.radiation.AreaRadiationMonitorBlock> AREA_RADIATION_MONITOR =
+            BLOCKS.register("area_radiation_monitor", () -> new dev.bwr.mod.radiation.AreaRadiationMonitorBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_GRAY).strength(2.5F, 6.0F)
+                            .sound(SoundType.METAL).noOcclusion().requiresCorrectToolForDrops()
+                            .lightLevel(state -> switch (state.getValue(dev.bwr.mod.radiation.AreaRadiationMonitorBlock.LAMP)) {
+                                case 2 -> 8;
+                                case 1 -> 4;
+                                default -> 0;
+                            })));
+
     public static final DeferredBlock<dev.bwr.mod.grid.FeMeterBlock> FE_METER=BLOCKS.register("fe_meter",()->new dev.bwr.mod.grid.FeMeterBlock(vesselSteel()));
 
     /** Heavy steel-ish properties shared by the pressure boundary. */
