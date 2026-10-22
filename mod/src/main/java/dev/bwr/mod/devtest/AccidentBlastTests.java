@@ -579,7 +579,7 @@ public final class AccidentBlastTests {
     }
 
     @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 400)
-    public static void cancelledExplosionEventsAreHonoured(GameTestHelper h) {
+    public static void aPrunedDetonateListIsHonoured(GameTestHelper h) {
         var level = h.getLevel();
         BlockPos o = new BlockPos(703_600, 190, 700_000);
         clear(level, o.offset(-6, -3, -6), o.offset(6, 3, 6));
@@ -599,8 +599,16 @@ public final class AccidentBlastTests {
         }
         h.assertTrue(level.getBlockState(b).is(Blocks.GLASS_PANE), "a block pruned from the Detonate list still broke");
         h.assertTrue(level.getBlockState(a).isAir() && level.getBlockState(c).isAir(), "the unpruned panes did not break");
-        level.setBlock(a, Blocks.GLASS_PANE.defaultBlockState(), 2);
-        level.setBlock(c, Blocks.GLASS_PANE.defaultBlockState(), 2);
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 400)
+    public static void aCancelledExplosionStartDiscardsTheBlast(GameTestHelper h) {
+        var level = h.getLevel();
+        BlockPos o = new BlockPos(703_600, 190, 700_400);
+        clear(level, o.offset(-6, -3, -6), o.offset(6, 3, 6));
+        BlockPos a = o.east(2), c = o.west(2);
+        for (BlockPos p : List.of(a, c)) level.setBlock(p, Blocks.GLASS_PANE.defaultBlockState(), 2);
         java.util.function.Consumer<ExplosionEvent.Start> stop = event -> {
             if (event.getLevel() == level) event.setCanceled(true);
         };
@@ -686,11 +694,16 @@ public final class AccidentBlastTests {
         var reloaded = (ReactorControllerBlockEntity) BlockEntity.loadStatic(root, level.getBlockState(root), saved, level.registryAccess());
         level.setBlockEntity(reloaded);
         SpargerRegressionTests.validate(reloaded);
+        int head = dev.bwr.mod.reactor.ReactorBoundaryEffects.HEAD;
+        h.assertTrue((saved.getInt("AppliedBoundaryFailures") & head) != 0, "the head failure was not saved as applied");
+        h.assertTrue(reloaded.isFormed() && reloaded.structure() != null, "the reloaded reactor did not re-form: " + reloaded.statusLines());
         level.setBlock(above, Blocks.STONE_BRICKS.defaultBlockState(), 2);
         for (int i = 0; i < 5; i++)
             ReactorControllerBlockEntity.serverTick(level, root, level.getBlockState(root), reloaded);
         reloaded.severeEffects().blasts().runToCompletion(level, 20);
         h.assertTrue(reloaded.core().getBoundaryStress().isBroken(BoundaryComponent.REACTOR_VESSEL_HEAD), "reload healed the head");
+        h.assertTrue((reloaded.saveWithFullMetadata(level.registryAccess()).getInt("AppliedBoundaryFailures") & head) != 0,
+                "reload forgot that the head failure had been applied");
         h.assertTrue(level.getBlockState(above).is(Blocks.STONE_BRICKS), "reload replayed the head failure blast");
         h.assertTrue(reloaded.severeEffects().blasts().isEmpty(), "reload queued a blast");
 
