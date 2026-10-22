@@ -86,6 +86,26 @@ The owner reported that the legends of the RPS manual scram control (the "A1 B1 
 - 20 new stages `rps-legends-<face>-front|oblique` (ten faces, 1920 x 1080) place the plate and two assemblies with the legends A1 B1 and A2 B2 on each face, assert that the plate corners lie on the face of the block's model, and log the on-screen lean of the glyph vertical (0 straight on and on upright faces, large on sloped faces from the side).
 - Revert proofs: a shear injected into the legend basis fails the check with `lengths x/y/z ... cos(x,y)=0.287348 (shear 16.699 deg)`.
 
+## Unreleased: reactor panel draws in a fraction of the time
+
+The reactor panel screen cost about 2.2 ms of CPU a frame (15 x 15 and 21 x 21 cores alike, which is the largest core there is) and now costs about 0.25 ms, with the same pixels. Nothing about what it shows or how often it updates changed.
+
+### What was slow
+
+The cost was not the core map (a 21 x 21 core costs the same as a 15 x 15 one) and not the layout. `GuiGraphics` flushes after every fill and every string unless a screen holds its buffer open, so the panel made one GPU draw call for every frame line of a button, every row label, every value and every unit: a couple of hundred calls a frame, each a few microseconds of driver work. Under that, every string was rebuilt (a `Component`, then bidirectional reordering) and measured again each frame, several times over for the same text.
+
+### What changed
+
+- **One draw pass.** `BwrScreen` can draw its whole body, widgets and elements inside one held-open buffer (`batchedDrawing()`, off by default; the reactor panel turns it on, a screen with item slots must not). Inside it `Ui.text` holds strings back and draws them after the fills, just before a scissor changes (`Ui.enableScissor` and `Ui.disableScissor`, which the scroll areas and the core map now use) or at the end, each with the pose it was drawn under, so a run of strings is one draw call. Text lands over every fill of the same pass, which is what this screen draws anyway.
+- **Shaped text is kept.** `Ui` keeps each string's glyph sequence and width, per type, until the font, the language or the resources change (`UiTextCacheReload` also clears it on a reload), and the sentence-case form of a button label.
+- **The core map** works out each cell's colour once per client tick rather than every frame, and skips its clipping scissor when no cell reaches past the well (it only does when the map is zoomed or panned).
+
+### Checking it
+
+- `-PbwrGuiPerformanceCheck` now reports mean, median, p95 and max per stage (`GUI PERFORMANCE STATS`), takes `-PbwrGuiPerformanceStages=4,6` to run only some stages (4 is the 15 x 15 core, 6 the 21 x 21 one), and fails the reactor-panel stages if the best of three 3-second windows has a median over 0.8 ms (`-Dbwr.guiPerformanceBudgetMs`). `-PbwrJfr=<file>` now works for the client checks too (1 ms sampling).
+- `-PbwrGuiPerformancePixels` (with the stages above) freezes the panel's numbers at fixed values, then takes nine 1920 x 1080 pictures per core size (flux, hover, tooltip, rods with a selected rod, info, scrolled info, keyboard focus, button hover, button held down) and draws each one twice in the same session, once batched and once the legacy way (`Ui.setLegacyDrawing`), comparing every pixel of the panel. Any difference fails the check.
+- Measured on this PC, interleaved with the old drawing, three runs each: mean 2.17 ms (p95 3.4) before and 0.25 ms (p95 0.37) after on the 15 x 15 core, 1.83 ms (p95 2.8) and 0.26 ms (p95 0.37) on the 21 x 21 one. The old and the new build, screenshotted in the same scenarios, differ in 0 pixels of the panel.
+
 ## Unreleased: fuel fabricator item route, depleted uranium, recipe audit
 
 The fuel fabricator can now make assemblies from uranium and steel *items*, with the enrichment chosen on its screen, and returns the uranium that did not become product as depleted uranium. The Mekanism chemical route is unchanged. GUI network protocol is now 23 (the fabricator's snapshot changed): update client and server together. Old saves load.

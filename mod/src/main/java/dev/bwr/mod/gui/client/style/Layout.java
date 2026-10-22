@@ -729,11 +729,11 @@ public final class Layout {
 
         @Override
         public void render(GuiGraphics g, int mx, int my) {
-            g.enableScissor(x, y, x + w, y + h);
+            Ui.enableScissor(g, x, y, x + w, y + h);
             Ui.clipped(true);
             child.render(g, mx, my);
             Ui.clipped(false);
-            g.disableScissor();
+            Ui.disableScissor(g);
             if (maxOffset > 0) {
                 int bx = x + w - 3;
                 g.fill(bx, y, bx + 3, y + h, BwrStyle.INSET);

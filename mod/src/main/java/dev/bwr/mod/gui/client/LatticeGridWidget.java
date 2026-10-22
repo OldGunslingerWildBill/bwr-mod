@@ -243,8 +243,13 @@ public class LatticeGridWidget extends AbstractWidget {
 
         // GuiGraphics otherwise flushes after each fill: a large core made
         // over a thousand draw calls for tiny squares on every frame.
-        graphics.enableScissor(getX() + 1, getY() + 1, getX() + getWidth() - 1, getY() + getHeight() - 1);
-        graphics.drawManaged(() -> {
+        // The scissor only matters when a cell reaches past the well (a zoomed or panned map): without it, none does,
+        // and skipping it saves the draw calls it forces.
+        boolean clip = Ui.legacyDrawing() || !fitsInsideWell();
+        if (clip) {
+            Ui.enableScissor(graphics, getX() + 1, getY() + 1, getX() + getWidth() - 1, getY() + getHeight() - 1);
+        }
+        Ui.batch(graphics, () -> {
             int width = Math.max(1, cells.latticeWidth());
             for (int i = 0; i < cells.count(); i++) {
                 int index = cells.latticeIndex(i);
@@ -269,10 +274,21 @@ public class LatticeGridWidget extends AbstractWidget {
                 }
             }
         });
-        graphics.disableScissor();
+        if (clip) {
+            Ui.disableScissor(graphics);
+        }
         if (isFocused()) {
             Ui.focusRing(graphics, getX(), getY(), getWidth(), getHeight());
         }
+    }
+
+    /** True when every cell, and everything drawn on a cell, lies inside the scissor the cells are drawn through. */
+    private boolean fitsInsideWell() {
+        int left = originX;
+        int top = originY;
+        int right = originX + columns * cellPx - 1;
+        int bottom = originY + rows * cellPx - 1;
+        return left >= getX() + 1 && top >= getY() + 1 && right <= getX() + getWidth() - 1 && bottom <= getY() + getHeight() - 1;
     }
 
     private void outline(GuiGraphics graphics, int x, int y, int colour) {

@@ -309,6 +309,11 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
     }
 
     @Override
+    protected boolean batchedDrawing() {
+        return true;
+    }
+
+    @Override
     protected List<Component> hoverTooltip() {
         return menu.formed && overlay != Overlay.INFO ? grid.hoverTooltip() : List.of();
     }
@@ -338,6 +343,13 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
         if (map == null) {
             return null;
         }
+        // The snapshot never changes once it is read, and these cells are rebuilt every client tick, so each cell's
+        // colour is worked out once here rather than on every frame.
+        final int[] colours = new int[map.coreSlotCount];
+        for (int cell = 0; cell < colours.length; cell++) {
+            colours[cell] = map.isInsert(cell) ? LatticeColours.INSERT
+                    : !map.isOccupied(cell) ? LatticeColours.EMPTY : heatColour(map.relativeFlux[cell]);
+        }
         return new LatticeGridWidget.Cells() {
             @Override
             public int count() {
@@ -356,13 +368,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
 
             @Override
             public int colour(int cell) {
-                if (map.isInsert(cell)) {
-                    return LatticeColours.INSERT;
-                }
-                if (!map.isOccupied(cell)) {
-                    return LatticeColours.EMPTY;
-                }
-                return heatColour(map.relativeFlux[cell]);
+                return colours[cell];
             }
 
             @Override
@@ -410,6 +416,10 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
             return null;
         }
 
+        final int[] colours = new int[count];
+        for (int cell = 0; cell < count; cell++) {
+            colours[cell] = demand[cell] != notch[cell] ? LatticeColours.MOVING : LatticeColours.rod(notch[cell] / 48.0);
+        }
         return new LatticeGridWidget.Cells() {
             @Override
             public int count() {
@@ -429,8 +439,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
 
             @Override
             public int colour(int cell) {
-                boolean moving = demand[cell] != notch[cell];
-                return moving ? LatticeColours.MOVING : LatticeColours.rod(notch[cell] / 48.0);
+                return colours[cell];
             }
 
             @Override

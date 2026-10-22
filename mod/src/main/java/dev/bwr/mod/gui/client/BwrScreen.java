@@ -283,13 +283,13 @@ public abstract class BwrScreen<T extends BwrMenu> extends AbstractContainerScre
             Ui.card(g, trayX, trayY, trayW, trayH);
         }
         if (scrollMax > 0) {
-            g.enableScissor(bodyX, bodyY, bodyX + bodyW, bodyY + bodyH);
+            Ui.enableScissor(g, bodyX, bodyY, bodyX + bodyW, bodyY + bodyH);
             Ui.clipped(true);
         }
         root.render(g, mouseX, mouseY);
         if (scrollMax > 0) {
             Ui.clipped(false);
-            g.disableScissor();
+            Ui.disableScissor(g);
             renderScrollbar(g);
         }
         for (Slot slot : menu.slots) {
@@ -316,7 +316,11 @@ public abstract class BwrScreen<T extends BwrMenu> extends AbstractContainerScre
      */
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        super.render(g, mouseX, mouseY, partialTick);
+        if (batchedDrawing() && !Ui.legacyDrawing()) {
+            Ui.batch(g, () -> super.render(g, mouseX, mouseY, partialTick));
+        } else {
+            super.render(g, mouseX, mouseY, partialTick);
+        }
         renderTooltip(g, mouseX, mouseY);
         if (hoveredSlot != null && hoveredSlot.hasItem()) {
             return;
@@ -332,6 +336,15 @@ public abstract class BwrScreen<T extends BwrMenu> extends AbstractContainerScre
         if (!tip.isEmpty()) {
             g.renderComponentTooltip(font, tip, mouseX, mouseY);
         }
+    }
+
+    /**
+     * Whether the panel, its elements and its widgets are drawn into one held-open vertex buffer, with text after fills
+     * (see {@link Ui#batch}), instead of one draw call per fill and per string. Off by default. Turn it on only for a
+     * screen with no item slots (items are drawn in the same pass) and none of whose fills is drawn over its own text.
+     */
+    protected boolean batchedDrawing() {
+        return false;
     }
 
     /** Tooltip for something that is not an element or a slot, such as a lattice cell. Empty by default. */
