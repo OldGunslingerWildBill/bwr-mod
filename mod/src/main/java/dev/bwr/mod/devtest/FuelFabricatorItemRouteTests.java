@@ -537,7 +537,8 @@ public final class FuelFabricatorItemRouteTests {
     /**
      * The recipe set as the server loaded it: every bwr item has a crafting recipe except the ones that are not meant to be
      * crafted (the same list, with reasons, as NO_RECIPE in tools-audit-recipes.py), and nothing on that list has one.
-     * The Mekanism-gated fabricator recipe only exists with Mekanism (the fuel assembly has one without it, the depleted uranium recipe).
+     * The fuel fabricator has a recipe in both installs (see {@link #theFabricatorRecipeLoadsWithAndWithoutMekanism}); the fuel assembly
+     * has one without Mekanism too (the depleted uranium recipe).
      */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void everyCraftableItemHasARecipeAndTheRestDoNot(GameTestHelper h) {
@@ -546,11 +547,9 @@ public final class FuelFabricatorItemRouteTests {
         for (var holder : server.getRecipeManager().getAllRecipesFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING)) {
             made.add(BuiltInRegistries.ITEM.getKey(holder.value().getResultItem(h.getLevel().registryAccess()).getItem()));
         }
+        // The fuel fabricator is craftable in both installs: one recipe with Mekanism, another without it.
         var notCrafted = new java.util.HashSet<String>(List.of("cobalt_sample", "tritium_sample", "doped_silicon", "corium", "depleted_uranium",
-                "rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_quencher"));
-        if (!ModList.get().isLoaded("mekanism")) {
-            notCrafted.add("fuel_fabricator");
-        }
+                "fission_product_waste", "rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_quencher"));
         for (var id : BuiltInRegistries.ITEM.keySet()) {
             if (!id.getNamespace().equals("bwr")) {
                 continue;
@@ -559,6 +558,58 @@ public final class FuelFabricatorItemRouteTests {
             boolean should = !notCrafted.contains(id.getPath());
             h.assertTrue(has == should, id + (should ? " has no crafting recipe" : " has a crafting recipe but is not meant to be crafted"));
         }
+        h.succeed();
+    }
+
+    private static final ResourceLocation FABRICATOR_RECIPE = ResourceLocation.fromNamespaceAndPath("bwr", "fuel_fabricator");
+    private static final ResourceLocation FABRICATOR_RECIPE_NO_MEKANISM = ResourceLocation.fromNamespaceAndPath("bwr", "fuel_fabricator_no_mekanism");
+
+    /**
+     * The fabricator is craftable with and without Mekanism, by different recipes, never both: the Mekanism recipe (its parts) only
+     * with Mekanism, the vanilla one (steel or iron, comparator, redstone blocks, blast furnace, reactor vessel) only without it.
+     * Without Mekanism the vanilla recipe really loads and crafts from vanilla items.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void theFabricatorRecipeLoadsWithAndWithoutMekanism(GameTestHelper h) {
+        boolean mekanism = ModList.get().isLoaded("mekanism");
+        var manager = h.getLevel().getServer().getRecipeManager();
+        var gated = manager.byKey(FABRICATOR_RECIPE);
+        var plain = manager.byKey(FABRICATOR_RECIPE_NO_MEKANISM);
+        h.assertTrue(gated.isPresent() == mekanism, "the Mekanism recipe is " + (gated.isPresent() ? "loaded" : "missing") + " with Mekanism "
+                + (mekanism ? "loaded" : "absent"));
+        h.assertTrue(plain.isPresent() == !mekanism, "the vanilla recipe is " + (plain.isPresent() ? "loaded" : "missing") + " with Mekanism "
+                + (mekanism ? "loaded" : "absent"));
+        long makers = 0;
+        for (var holder : manager.getAllRecipesFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING)) {
+            if (holder.value().getResultItem(h.getLevel().registryAccess()).is(BwrBlocks.FUEL_FABRICATOR.get().asItem())) {
+                makers++;
+            }
+        }
+        h.assertTrue(makers == 1, makers + " crafting recipes make the fuel fabricator, expected exactly one");
+        if (!mekanism) {
+            var recipe = (net.minecraft.world.item.crafting.CraftingRecipe) plain.get().value();
+            h.assertTrue(recipe.getResultItem(h.getLevel().registryAccess()).is(BwrBlocks.FUEL_FABRICATOR.get().asItem()), "wrong result");
+            // 4 iron ingots (or steel), comparator, 2 redstone blocks, blast furnace, reactor vessel
+            var grid = net.minecraft.core.NonNullList.withSize(9, ItemStack.EMPTY);
+            ItemStack iron = new ItemStack(Items.IRON_INGOT);
+            grid.set(0, iron.copy());
+            grid.set(1, new ItemStack(Items.COMPARATOR));
+            grid.set(2, iron.copy());
+            grid.set(3, new ItemStack(Items.REDSTONE_BLOCK));
+            grid.set(4, new ItemStack(Items.BLAST_FURNACE));
+            grid.set(5, new ItemStack(Items.REDSTONE_BLOCK));
+            grid.set(6, iron.copy());
+            grid.set(7, new ItemStack(BwrBlocks.REACTOR_VESSEL.get().asItem()));
+            grid.set(8, iron.copy());
+            h.assertTrue(recipe.matches(net.minecraft.world.item.crafting.CraftingInput.of(3, 3, grid), h.getLevel()),
+                    "iron, comparator, redstone blocks, blast furnace and a reactor vessel did not craft a fuel fabricator");
+            grid.set(4, new ItemStack(Items.FURNACE));
+            h.assertTrue(!recipe.matches(net.minecraft.world.item.crafting.CraftingInput.of(3, 3, grid), h.getLevel()), "a furnace stood in for the blast furnace");
+            grid.set(4, new ItemStack(Items.BLAST_FURNACE));
+            grid.set(0, new ItemStack(Items.GOLD_INGOT));
+            h.assertTrue(!recipe.matches(net.minecraft.world.item.crafting.CraftingInput.of(3, 3, grid), h.getLevel()), "gold stood in for iron");
+        }
+        System.out.println("FUEL FABRICATOR RECIPE: " + (mekanism ? "Mekanism recipe loaded, vanilla one gated out" : "vanilla recipe loaded and crafts"));
         h.succeed();
     }
 

@@ -2,6 +2,7 @@ package dev.bwr.mod.registry;
 
 import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.gui.FuelFabricatorMenu;
+import dev.bwr.mod.gui.ReprocessingPlantMenu;
 import dev.bwr.mod.gui.ReactorPanelMenu;
 import dev.bwr.mod.gui.RecirculationPumpMenu;
 import dev.bwr.mod.gui.RefuellingMenu;
@@ -50,6 +51,11 @@ public final class BwrMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<FuelFabricatorMenu>> FUEL_FABRICATOR =
             MENUS.register("fuel_fabricator",
                     () -> IMenuTypeExtension.create(FuelFabricatorMenu::new));
+
+    /** Reprocessing plant: the spent assembly, what it will yield, what the plant holds, progress. */
+    public static final DeferredHolder<MenuType<?>, MenuType<ReprocessingPlantMenu>> REPROCESSING_PLANT =
+            MENUS.register("reprocessing_plant",
+                    () -> IMenuTypeExtension.create(ReprocessingPlantMenu::new));
 
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.PumpControlMenu>> PUMP_CONTROL =
             MENUS.register("pump_control", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.PumpControlMenu::new));

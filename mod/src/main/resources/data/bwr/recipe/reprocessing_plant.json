@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "O": {
+      "item": "minecraft:obsidian"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "F": {
+      "item": "minecraft:blast_furnace"
+    }
+  },
+  "pattern": [
+    "OVO",
+    "HFH",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:reprocessing_plant"
+  }
+}

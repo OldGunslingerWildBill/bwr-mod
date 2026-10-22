@@ -2,6 +2,7 @@ package dev.bwr.mod.fuel;
 
 import dev.bwr.core.fuel.EnrichmentMassBalance;
 import dev.bwr.core.fuel.FuelType;
+import dev.bwr.core.fuel.MoxMassBalance;
 import dev.bwr.mod.BwrMod;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
@@ -43,6 +44,15 @@ import java.util.function.ToIntFunction;
  * <p>Nothing here names Mekanism, so the item route works with or without it
  * (given some other mod's uranium and steel). The chemical route is separate and
  * unchanged.
+ *
+ * <h2>The MOX targets</h2>
+ * Three more targets make mixed oxide from the reprocessing plant's output: plutonium nuggets, depleted uranium as
+ * the matrix, and steel ({@link #MOX_TARGETS}). The plutonium fraction is the MOX fuel type's own nominal enrichment,
+ * the plutonium and the matrix come from {@link MoxMassBalance}, and nothing is returned (the matrix is part of the
+ * product). They are not on {@link #TARGETS}: that list is the uranium ladder, whose indexes the selector command and
+ * the saves know, and a MOX target is selected by its own id ({@code mox_lean}, {@code mox_standard}, {@code mox_rich};
+ * the middle one makes the fuel type {@code mox}). On a MOX target the machine's input slot takes plutonium and depleted
+ * uranium instead of uranium.
  */
 public final class FuelItemRoute {
 
@@ -73,7 +83,20 @@ public final class FuelItemRoute {
     public static final List<String> TARGETS = List.of(
             "natural_uranium", "uranium_27", "leu", "uranium_495", "uranium_8", "uranium_1975", "heu");
 
+    /**
+     * The MOX targets, by id, lowest plutonium first, and the fuel type each makes. The id of the standard grade is not
+     * its fuel type's name on purpose: {@code mox} itself is not a target (the uranium ladder's tests rely on that, and
+     * so do saves).
+     */
+    public static final List<String> MOX_TARGETS = List.of("mox_lean", "mox_standard", "mox_rich");
+    private static final List<String> MOX_FUELS = List.of("mox_lean", "mox", "mox_rich");
+
+    /** Every target the selector offers, the uranium ladder first, then the MOX grades: the index the screen counts in. */
+    public static final List<String> LADDER = java.util.stream.Stream.concat(TARGETS.stream(), MOX_TARGETS.stream()).toList();
+
     public static final TagKey<Item> URANIUM_INGOTS = tag("c", "ingots/uranium");
+    /** The matrix of a MOX assembly, and what the uranium route returns. */
+    public static final TagKey<Item> DEPLETED_INGOTS = tag("c", "ingots/depleted_uranium");
     public static final TagKey<Item> RAW_URANIUM = tag("c", "raw_materials/uranium");
     public static final TagKey<Item> YELLOW_CAKE = tag(BwrMod.MOD_ID, "fabricator_feed/yellow_cake");
     public static final TagKey<Item> STEEL_INGOTS = tag("c", "ingots/steel");
@@ -90,8 +113,20 @@ public final class FuelItemRoute {
      * @param steel     steel ingots consumed
      * @param tails     depleted uranium ingots returned
      * @param workTicks ticks of work at full power
+     * @param plutoniumNuggets plutonium nuggets consumed (a MOX target; 0 for a uranium one)
+     * @param matrix    depleted uranium ingots consumed as the matrix (a MOX target; 0 for a uranium one)
      */
-    public record Cost(String fuelType, int ingots, int steel, int tails, int workTicks) {
+    public record Cost(String fuelType, int ingots, int steel, int tails, int workTicks, int plutoniumNuggets, int matrix) {
+
+        /** A uranium target's cost. */
+        public Cost(String fuelType, int ingots, int steel, int tails, int workTicks) {
+            this(fuelType, ingots, steel, tails, workTicks, 0, 0);
+        }
+
+        /** True for a MOX target, whose inputs are plutonium and depleted uranium instead of uranium. */
+        public boolean isMox() {
+            return plutoniumNuggets > 0;
+        }
 
         /** The uranium in half ingots. */
         public int units() {
@@ -99,9 +134,14 @@ public final class FuelItemRoute {
         }
     }
 
-    /** True for a name on the ladder. */
+    /** True for a name the selector offers: on the uranium ladder or one of the MOX grades. */
     public static boolean isTarget(String name) {
-        return name != null && TARGETS.contains(name);
+        return name != null && (TARGETS.contains(name) || MOX_TARGETS.contains(name));
+    }
+
+    /** True for one of the MOX targets. */
+    public static boolean isMoxTarget(String name) {
+        return name != null && MOX_TARGETS.contains(name);
     }
 
     /**
@@ -112,6 +152,9 @@ public final class FuelItemRoute {
     public static Cost cost(String targetName) {
         if (!isTarget(targetName)) {
             return null;
+        }
+        if (isMoxTarget(targetName)) {
+            return moxCost(targetName);
         }
         FuelType type = FuelTypes.byNameOrPreset(targetName);
         if (type == null) {
@@ -126,6 +169,31 @@ public final class FuelItemRoute {
         } catch (IllegalArgumentException cannotMake) {
             return null;
         }
+    }
+
+    /** The cost of a MOX target: the fuel type's own plutonium fraction through {@link MoxMassBalance}; null if it cannot be made. */
+    private static Cost moxCost(String targetName) {
+        FuelType type = FuelTypes.byNameOrPreset(MOX_FUELS.get(MOX_TARGETS.indexOf(targetName)));
+        if (type == null) {
+            return null;
+        }
+        try {
+            int nuggets = MoxMassBalance.plutoniumNuggets(PRODUCT_INGOTS, type.nominalEnrichmentWeightFraction());
+            int matrix = MoxMassBalance.matrixIngots(PRODUCT_INGOTS, nuggets);
+            return new Cost(type.name(), 0, STEEL_PER_ASSEMBLY, 0, BASE_WORK_TICKS + TICKS_PER_INGOT * matrix, nuggets, matrix);
+        } catch (IllegalArgumentException cannotMake) {
+            return null;
+        }
+    }
+
+    /** Plutonium nuggets one item of this stack is worth (an ingot is nine); 0 when it is not plutonium. */
+    public static int plutoniumNuggets(ItemStack stack) {
+        return Reprocessing.plutoniumNuggets(stack);
+    }
+
+    /** True for depleted uranium, which is the matrix of a MOX assembly. */
+    public static boolean isMatrix(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(DEPLETED_INGOTS);
     }
 
     // --- what the inputs are worth ------------------------------------------

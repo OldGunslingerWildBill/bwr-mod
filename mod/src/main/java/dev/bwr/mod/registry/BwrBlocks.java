@@ -25,6 +25,7 @@ import dev.bwr.mod.feedwater.FeedwaterPumpBlock;
 import dev.bwr.mod.flow.JetPumpBlock;
 import dev.bwr.mod.flow.RecirculationPumpBlock;
 import dev.bwr.mod.fuel.FuelFabricatorBlock;
+import dev.bwr.mod.fuel.ReprocessingPlantBlock;
 import dev.bwr.mod.reactor.CoreSpraySpargerBlock;
 import dev.bwr.mod.reactor.ReactorControllerBlock;
 import dev.bwr.mod.reactor.ReactorVesselBlock;
@@ -207,6 +208,13 @@ public final class BwrBlocks {
      */
     public static final DeferredBlock<FuelFabricatorBlock> FUEL_FABRICATOR =
             BLOCKS.register("fuel_fabricator", () -> new FuelFabricatorBlock(machine()));
+
+    /**
+     * Takes a spent fuel assembly apart: plutonium, depleted uranium and fission-product waste.
+     * The other half of the fuel cycle the fabricator starts.
+     */
+    public static final DeferredBlock<ReprocessingPlantBlock> REPROCESSING_PLANT =
+            BLOCKS.register("reprocessing_plant", () -> new ReprocessingPlantBlock(machine()));
 
     // --- Emergency core cooling (SPEC section 9) ------------------------
     //

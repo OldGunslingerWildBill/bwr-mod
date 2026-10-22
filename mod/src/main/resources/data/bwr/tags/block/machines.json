@@ -15,6 +15,7 @@
       "id": "bwr:fuel_fabricator",
       "required": false
     },
+    "bwr:reprocessing_plant",
     "bwr:rcic_turbine_pump",
     "bwr:hpci_turbine_pump",
     "bwr:hpcs_pump",

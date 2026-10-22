@@ -17,7 +17,8 @@ their names. New measurement peripherals include:
 | --- | --- | --- |
 | Condenser | `bwr_condenser` | `getStatus()`: inventories, cooling/steam flow, heat rejected, water temperatures, `backpressurePsia`, `vacuumInHg` |
 | Four-port RHR exchanger | `bwr_rhr_heat_exchanger` | `getStatus()`: primary/secondary flow, water inventory, temperatures, transferred heat |
-| Fuel fabricator | `bwr_fuel_fabricator` | `getStatus()`: batch mass, enrichment, energy, finished assemblies, the item route's target (`target`), the uranium it holds in ingots (`uraniumHeldIngots`) and the depleted uranium it holds (`depletedUranium`) |
+| Fuel fabricator | `bwr_fuel_fabricator` | `getStatus()`: batch mass, enrichment, energy, finished assemblies, the item route's target (`target`), the uranium it holds in ingots (`uraniumHeldIngots`), the depleted uranium it holds (`depletedUranium`) and, on a MOX target (`mox_lean`, `mox_standard`, `mox_rich`), the plutonium nuggets (`plutoniumHeldNuggets`) and depleted uranium matrix ingots (`matrixHeldIngots`) it holds |
+| Reprocessing plant | `bwr_reprocessing_plant` | `getStatus()`: `energyFE`, `working`, `progress`, `hasAssembly` (with an assembly: `assemblyFuel`, `assemblyBurnupMwdPerTonne`, `accepted`), the fractions it holds (`plutoniumHeldNuggets`, `depletedUraniumHeldIngots`, `wasteHeld`) and its output slots (`plutoniumOut`, `depletedUraniumOut`, `wasteOut`) |
 | Physical control-rod drive | `bwr_control_rod_drive` | `getStatus()`: attachment, rod index/notch, accumulator, water, power and health |
 | RPV water/recirculation penetration | `bwr_rpv_water_port` | `getStatus()`: reactor connection, vessel pressure and water temperature |
 | Jet-pump assembly | `bwr_jet_pump` | `getStatus()`: passive hardware, size and assembly completeness |

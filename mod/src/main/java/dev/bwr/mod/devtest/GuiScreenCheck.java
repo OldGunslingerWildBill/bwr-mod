@@ -51,7 +51,7 @@ import java.util.function.Function;
 
 /**
  * Opens every machine screen of the mod with fabricated client-side menu data (no machine, no server round trip: the
- * layout of a screen is a function of the menu's public fields), at GUI scale 2 and 4 in a 1920 x 1080 window, saves a
+ * layout of a screen is a function of the menu's public fields), at GUI scale 2, 3 and 4 in a 1920 x 1080 window, saves a
  * shot of each and checks that nothing a screen puts on the screen lies outside it.
  *
  * <p>Run it with {@code :mod:runTurbineModelCheck -PbwrGuiScreenCheck}. {@code -Dbwr.guiCheckLenient=true} (Gradle:
@@ -75,7 +75,7 @@ import java.util.function.Function;
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
 public final class GuiScreenCheck {
     private static final org.slf4j.Logger LOG = LogUtils.getLogger();
-    private static final int[] SCALES = {2, 4};
+    private static final int[] SCALES = {2, 3, 4};
     private static final int[][] SMALL = {{320, 240}, {427, 240}};
 
     /** One screen in one state. {@code setup} may click a tab or move the mouse once the screen is open. */
@@ -93,7 +93,7 @@ public final class GuiScreenCheck {
     }
 
     /** Screens also photographed at the smallest GUI sizes (laid out for 320 x 240 or 427 x 240, drawn at scale 2 in the corner). */
-    private static final Set<String> FLOOR_PICTURES = Set.of("reactor-flux", "reactor-info", "pump-rhr", "terry", "condenser", "refuelling-burnup", "fabricator", "pool-spray");
+    private static final Set<String> FLOOR_PICTURES = Set.of("reactor-flux", "reactor-info", "pump-rhr", "terry", "condenser", "refuelling-burnup", "fabricator", "fabricator-mox", "reprocessor", "pool-spray");
 
     private static boolean started, built;
     private static int age, joined, stage, scaleIndex, wait;
@@ -455,7 +455,79 @@ public final class GuiScreenCheck {
             m.getSlot(FuelFabricatorMenu.SLOT_TAILS).set(new ItemStack(BwrItems.DEPLETED_URANIUM.get(), 64));
             return new FuelFabricatorScreen(m, i, t("Fuel Fabricator"));
         }));
+        s.add(new Scenario("fabricator-feed", i -> {
+            // what a real Mekanism feed writes (FuelFabricatorBlockEntity.statusLines): the longest feed line, the 20 % grade, a type id
+            var m = new FuelFabricatorMenu(99, i, P);
+            m.present = true;
+            m.batchHeavyMetalKg = 142.5;
+            m.batchTargetKg = 180;
+            m.batchEnrichmentWeightFraction = 0.2;
+            m.energyStored = 99_999;
+            m.energyCapacity = 100_000;
+            m.wouldFabricate = "plutonium_rich";
+            m.feedLines = new ArrayList<>(List.of("Matrix tank: 10,000 / 10,000 mB of uranium_oxide (12.3 kg HM)", "Fissile tank empty"));
+            m.targetIndex = FuelItemRoute.TARGETS.size() - 1;
+            m.hasCost = true;
+            m.costIngots = 172;
+            m.costSteel = 4;
+            m.costTails = 167;
+            m.costWorkTicks = 616;
+            m.uraniumHeldUnits = 344;
+            m.workTicks = 300;
+            m.tailsHeld = 167;
+            return new FuelFabricatorScreen(m, i, t("Fuel Fabricator"));
+        }));
         s.add(new Scenario("fabricator-absent", i -> new FuelFabricatorScreen(new FuelFabricatorMenu(99, i, P), i, t("Fuel Fabricator"))));
+        s.add(new Scenario("fabricator-mox", i -> {
+            // a MOX grade (standard, 7 %): 3 plutonium nuggets, 4 depleted uranium and 4 steel, part way through
+            var m = new FuelFabricatorMenu(99, i, P);
+            m.present = true;
+            m.energyStored = 74_000;
+            m.energyCapacity = 100_000;
+            m.targetIndex = FuelItemRoute.LADDER.indexOf("mox_standard");
+            m.hasCost = true;
+            m.costIngots = 0;
+            m.costSteel = 4;
+            m.costTails = 0;
+            m.costWorkTicks = 112;
+            m.moxTarget = true;
+            m.moxPlutonium = 3;
+            m.moxMatrix = 4;
+            m.moxPlutoniumHeld = 3;
+            m.moxMatrixHeld = 2;
+            m.workTicks = 40;
+            m.getSlot(FuelFabricatorMenu.SLOT_URANIUM).set(new ItemStack(BwrItems.PLUTONIUM_NUGGET.get(), 5));
+            m.getSlot(FuelFabricatorMenu.SLOT_STEEL).set(new ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 6));
+            m.getSlot(FuelFabricatorMenu.SLOT_TAILS).set(new ItemStack(BwrItems.DEPLETED_URANIUM.get(), 12));
+            return new FuelFabricatorScreen(m, i, t("Fuel Fabricator"));
+        }));
+        s.add(new Scenario("reprocessor", i -> {
+            // spent LEU at 45 GWd/t in the slot, part way through, with some of each product held
+            var m = new ReprocessingPlantMenu(99, i, P);
+            m.present = true;
+            m.energyStored = 62_000;
+            m.energyCapacity = 100_000;
+            m.workTicks = 120;
+            m.plutoniumGrains = 265_255;
+            m.uraniumGrains = 24_930_000;
+            m.wasteGrains = 1_200_000;
+            m.getSlot(ReprocessingPlantMenu.SLOT_INPUT).set(dev.bwr.mod.fuel.FuelAssemblyItem.stackOf(BwrItems.FUEL_ASSEMBLY.get(),
+                    new dev.bwr.mod.fuel.FuelAssemblyData("leu", 0.035, 180.0, 45000.0, 1.0)));
+            m.getSlot(ReprocessingPlantMenu.SLOT_PLUTONIUM).set(new ItemStack(BwrItems.PLUTONIUM_NUGGET.get(), 12));
+            m.getSlot(ReprocessingPlantMenu.SLOT_URANIUM).set(new ItemStack(BwrItems.DEPLETED_URANIUM.get(), 41));
+            m.getSlot(ReprocessingPlantMenu.SLOT_WASTE).set(new ItemStack(BwrItems.FISSION_PRODUCT_WASTE.get(), 18));
+            return new ReprocessingPlantScreen(m, i, t("Reprocessing Plant"));
+        }));
+        s.add(new Scenario("reprocessor-fresh", i -> {
+            // a fresh assembly sits in the slot (it cannot be put there by hand): the screen says it is refused
+            var m = new ReprocessingPlantMenu(99, i, P);
+            m.present = true;
+            m.energyStored = 0;
+            m.energyCapacity = 100_000;
+            m.getSlot(ReprocessingPlantMenu.SLOT_INPUT).set(new ItemStack(BwrItems.FUEL_ASSEMBLY.get()));
+            return new ReprocessingPlantScreen(m, i, t("Reprocessing Plant"));
+        }));
+        s.add(new Scenario("reprocessor-absent", i -> new ReprocessingPlantScreen(new ReprocessingPlantMenu(99, i, P), i, t("Reprocessing Plant"))));
         s.add(new Scenario("rhr-hx", i -> {
             var m = new RhrHeatExchangerMenu(99, i, P);
             m.present = true;
@@ -1082,7 +1154,7 @@ public final class GuiScreenCheck {
             throw new AssertionError("GUI SCREEN CHECK FAIL: " + violations.size() + " violations, first: " + violations.get(0));
         }
         mc.setScreen(null);
-        LOG.info("GUI SCREEN CHECK {}: {} screens x 2 scales + 2 minimum sizes, {} violations", violations.isEmpty() ? "PASS" : "DONE (lenient)",
+        LOG.info("GUI SCREEN CHECK {}: {} screens x 3 scales + 2 minimum sizes, {} violations", violations.isEmpty() ? "PASS" : "DONE (lenient)",
                 scenarios.size(), violations.size());
         mc.stop();
     }

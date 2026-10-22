@@ -2,7 +2,8 @@
 
 Open **Realistic BWR: Fuel & Rods** in the creative inventory. The machine tab
 now contains plant hardware; this tab contains 18 selectable fuel grades, eight specialty
-rod cassettes, empty irradiation rods, target charges and samples. All icons
+rod cassettes, empty irradiation rods, target charges and samples, and the three items of the fuel cycle
+(plutonium nuggets, plutonium ingots and fission-product waste). All icons
 are small PNGs rendered from the Blender studio in `art/models/fuel_icons/`.
 Items still represent one logical core position, not a placeable fuel block.
 
@@ -57,6 +58,13 @@ The fabricator has two ways in, and they take turns.
   uranium out. Needs only items: Mekanism supplies them in a normal game, but
   any mod that tags its uranium and steel works, and the machine loads and runs
   with Mekanism absent.
+
+**Crafting the machine.** With Mekanism it is the recipe from Mekanism parts
+(`fuel_fabricator`); without Mekanism a vanilla recipe (`fuel_fabricator_no_mekanism`,
+gated on `neoforge:not` / `neoforge:mod_loaded`) takes its place: four steel or iron
+ingots, a comparator, two redstone blocks, a blast furnace and a reactor vessel. Exactly
+one of the two is loaded. Steel for the item route itself still has to come from a mod
+that tags `c:ingots/steel`; vanilla has none.
 
 The machine has four slots, and hoppers and pipes use them through the item
 capability: **uranium in**, **steel in**, **assembly out** and **depleted
@@ -141,7 +149,43 @@ A fabricator placed before this change loads with empty item slots, on the
 default target, with its chemical tanks, batch, energy and output exactly as
 they were (`FuelFabricatorItemRouteTests`).
 
-Depleted uranium is a fuel type of its own, a blanket (next section).
+Depleted uranium is a fuel type of its own, a blanket (see below).
+
+### MOX targets: plutonium and depleted uranium in
+
+Three more steps on the selector make **mixed oxide** from what the reprocessing plant hands back: plutonium
+nuggets, depleted uranium ingots as the matrix, and steel, in; a fresh MOX assembly out and nothing returned (the
+matrix is part of the product). The selector steps through the uranium ladder and then `MOX 4.50 %`, `MOX 7.00 %`
+and `MOX 9.50 %`.
+
+The plutonium fraction is the MOX fuel type's own `nominal_enrichment` (its effective fissile fraction, a datapack
+number), counted as the plutonium's share of the four ingots of heavy metal, the same model as the uranium route and
+as the plant. Plutonium is counted in nuggets (a ninth of an ingot) and rounded **up**, the matrix is the rest of the
+four ingots rounded up to whole ingots, so, as on the uranium route, the machine can lose to rounding and never gain
+(`dev.bwr.core.fuel.MoxMassBalance`, `MoxMassBalanceTest`).
+
+| Selector step | Fuel type made | Plutonium fraction | Plutonium nuggets | Depleted uranium | Steel | Time | Energy |
+|---|---|---|---|---|---|---|---|
+| MOX 4.50 % (`mox_lean`) | `mox_lean` | 4.5 % of 36 nuggets = 1.62 | 2 | 4 | 4 | 5.6 s | 22,400 FE |
+| MOX 7.00 % (`mox_standard`) | `mox` | 7 % = 2.52 | 3 | 4 | 4 | 5.6 s | 22,400 FE |
+| MOX 9.50 % (`mox_rich`) | `mox_rich` | 9.5 % = 3.42 | 4 | 4 | 4 | 5.6 s | 22,400 FE |
+
+An ingot of plutonium counts as nine nuggets. Time is 100 ticks plus 3 per matrix ingot, 200 FE a tick, as the
+uranium route. The id of the standard grade is `mox_standard` and not `mox` on purpose: the fuel's name is not a
+target (the uranium ladder and the saves keep their meaning), and a save naming one loads as the default.
+
+**The slots.** The four slots a pipe sees are the same four, in the same order, and the sides are unchanged. On a MOX
+step the slot that takes uranium takes plutonium and depleted uranium instead (and refuses uranium); on a uranium
+step it refuses them. The two go into separate stores inside the machine, which are held up to twice what an
+assembly needs (6 plutonium nuggets and 8 depleted uranium for the standard grade), and the slot only accepts as much
+of an item as its store has room for, so a hopper that delivers one kind can never leave the slot holding the kind
+the machine is not waiting for. Switching back to a uranium step keeps what was held (it is dropped with the block).
+The screen's first caption reads `Pu, DU` on a MOX step, the cost line reads `Costs 3 plutonium, 4 depleted U, 4
+steel`, and the item assembly card shows both stores against their cost. The CC peripheral adds
+`plutoniumHeldNuggets` and `matrixHeldIngots` (`target` is the selector's id, for example `mox_standard`).
+
+**Saves.** Two new keys, `PlutoniumNuggets` and `MatrixIngots`, are written only when they hold something; the target
+is saved only when it is not the default, as before. An old fabricator loads exactly as it did.
 
 ## Recipes: what is craftable
 
@@ -154,6 +198,7 @@ purpose:
 | `cobalt_sample`, `tritium_sample`, `doped_silicon` | Products of irradiating a target in a reactor |
 | `corium` | Made by a core melting through its vessel |
 | `depleted_uranium` | The fuel fabricator's byproduct |
+| `fission_product_waste` | What burning fuel leaves, the reprocessing plant's byproduct: nothing uses it, and a recipe would make waste out of nothing |
 | `rcic_turbine_pump`, `hpci_turbine_pump`, `suppression_pool_quencher` | Retired blocks kept so old worlds load (the Terry-style `rcic_twl` and `hpci_turbine` and the suppression pool steam inlet replaced them); `tools-audit-assets.py` fails any recipe that produces or uses them |
 
 ## Depleted uranium as a fuel (blanket)
@@ -193,6 +238,118 @@ in the middle of the default core lower k_eff(all rods out) from 1.0864 to
 1.0858: a blanket costs reactivity in proportion to how much of the core it
 replaces (`DepletedUraniumTest`, `DepletedUraniumTests`). These are model values in the
 mod's calibrated style, not a depletion calculation; a datapack may retune them.
+
+## Reprocessing plant: closing the cycle
+
+The **Reprocessing Plant** (machine tab, styled like the fabricator) takes a **spent** fuel assembly apart: one with
+burnup above zero, from a reactor, a burned depleted uranium blanket or a burned MOX assembly. A fresh assembly is
+refused (at the slot, from a pipe, in the screen), and so is a thorium assembly (there is no plutonium chain in
+thorium fuel, and returning its U-233 as an uranium item would mislabel it). It makes three things:
+
+| Output | Item | Unit | What it is |
+|---|---|---|---|
+| Plutonium | `bwr:plutonium_nugget` (nine make a `bwr:plutonium_ingot`, crafted both ways) | a ninth of an ingot | The plutonium left in the assembly, bred or the MOX's own that survived. Tags `c:nuggets/plutonium`, `c:ingots/plutonium`. The fabricator's MOX route takes it. |
+| Recovered uranium | `bwr:depleted_uranium` | an ingot | The uranium that is left, whatever its enrichment (see below). |
+| Fission products | `bwr:fission_product_waste` | a ninth of an ingot | The heavy metal that was fissioned. Nothing uses it and nothing crafts it (it is in `tools-audit-recipes.py`'s exception list with that reason). |
+
+**Plutonium is counted in nuggets, not ingots,** because a spent assembly holds a fraction of one nugget of it (about
+a quarter at 45 GWd/t). The plant keeps every product as a fraction in the block (a fixed-point count of grains, a
+millionth of a nugget, saved as longs) and releases a whole item only when it holds one; the rest carries into the next
+assembly, and nothing rounds into or out of existence: the three amounts of one assembly always add up to its four
+ingots of heavy metal to the grain, and so do the items out plus what the plant holds, across any number of assemblies
+(`ReprocessingTests.fractionsOfPlutoniumAreConservedAcrossManyAssemblies`). Breaking the plant drops the whole items it
+holds; only the fraction of an item is lost with the block.
+
+### Recovered uranium is depleted uranium (and why)
+
+Reprocessed uranium is close to tails assay, so it comes back as `bwr:depleted_uranium`. Real reprocessed uranium keeps
+rather more U-235 than the 0.25 % tails of the fabricator's mass balance (spent 3.5 % fuel still holds about 0.8 to 1
+%), so putting it all in the tails item **throws that surplus away**: it can only lose, never gain, which keeps the
+cycle from minting fissile, keeps one uranium item in the mod, and sends the recovered uranium where depleted
+uranium already goes (blanket assemblies and the MOX matrix). It is deliberately not tagged as a uranium ingot, so the
+fabricator will not take it back as feed.
+
+### The model, and where its numbers come from
+
+One assembly is **4 ingot-units of heavy metal** (36 nuggets), as in the fabricator; the assembly's actual
+`heavy_metal_kg` does not enter (every fabricated assembly is 180 kg). With `B` the burnup in MWd/t, `e` the
+assembly's enrichment, and everything a fraction of the heavy metal (`dev.bwr.core.fuel.SpentFuel`):
+
+1. **Fission products** `phi = G * B`. This is exact bookkeeping: the heavy metal that was fissioned becomes fission
+   products. `G` comes from the fuel's own `heat_per_fission_mev` (energy per MWd over energy per fission, times the
+   mass of 235 u): 1.039e-6 per MWd/t at 202.5 MeV, about 1.04 g of heavy metal a MWd (`HeatPerFissionTest` is the
+   same energy basis).
+2. **Fissile left** `f` = `FuelAssembly.fissileEquivalentWeightFraction()`: the enrichment at which a fresh assembly
+   would have the k-infinity this one has now less the burnable poison, that is `baseKInf - burnupPenaltyKInf`, read
+   back through the inverse of the mod's own thermal-utilisation curve. So **fissile consumption is the fuel's
+   `depletion_rate`, and breeding is its `conversion_gain_k_inf`**, through the same enrichment response the core uses
+   (a fresh assembly gives back exactly its enrichment; a blanket gives back more than it started with).
+3. **Plutonium bred** `b = phi + f - e`: every fission destroys a fissile atom, so what was destroyed equals what
+   was there plus what was bred less what is left. The k-infinity curve flattens at high enrichment, where it cannot
+   see captures, so `b` is never below `0.15 * (1 - e) * phi` (`SpentFuel.MIN_CONVERSION`, the low end of what real
+   light-water lattices convert) and a 20 % assembly still makes a little.
+4. **Plutonium left** `p = (e_Pu + b) * f / (e + b)`, where `e_Pu` is `e` for a fuel that starts as plutonium (the
+   names `mox*` and `plutonium*`) and 0 for a uranium fuel: the U-235 and the plutonium burn at the same relative
+   rate, so the same fraction of each survives. (A datapack fuel with another name counts as a uranium fuel.)
+5. **Uranium left** `1 - phi - p`.
+
+The numbers it gives are in the range of real spent fuel (spent LWR fuel holds about 1 % plutonium, of which a bit
+over 0.6 % is fissile; this model counts fissile plutonium) and are not an isotopic depletion calculation: one
+constant (`MIN_CONVERSION`) and the choice of 235 u for the fissioned mass are not from the mod's data, everything
+else is. Retuning a fuel in a datapack retunes what its spent assemblies hold.
+
+| Spent assembly | Burnup GWd/t | Plutonium nuggets | Depleted uranium ingots | Waste items | Plutonium of the heavy metal |
+|---|---|---|---|---|---|
+| LEU 3.50 % | 20 | 0.202 | 3.894 | 0.748 | 0.56 % |
+| LEU 3.50 % | 29 | 0.243 | 3.852 | 1.085 | 0.68 % |
+| LEU 3.50 % | 45 | 0.265 | 3.783 | 1.683 | 0.74 % |
+| LEU 3.50 % | 60 | 0.253 | 3.722 | 2.245 | 0.70 % |
+| 4.95 % | 55 | 0.227 | 3.746 | 2.058 | 0.63 % |
+| HEU 20 % | 40 | 0.092 | 3.824 | 1.496 | 0.25 % |
+| Natural uranium | 7 | 0.108 | 3.959 | 0.262 | 0.30 % |
+| Natural uranium | 10 | 0.121 | 3.945 | 0.374 | 0.34 % |
+| Depleted uranium blanket | 5 | 0.063 | 3.972 | 0.187 | 0.17 % |
+| Depleted uranium blanket | 10 | 0.076 | 3.950 | 0.374 | 0.21 % |
+| Depleted uranium blanket | 20 | 0.085 | 3.907 | 0.748 | 0.24 % |
+| Depleted uranium blanket | 30 | 0.088 | 3.865 | 1.122 | 0.25 % |
+| MOX 7 % (recycled) | 45 | 0.998 | 3.705 | 1.655 | 2.77 % |
+| Plutonium 6 % (recycled) | 45 | 1.016 | 3.708 | 1.612 | 2.82 % |
+
+Per assembly of four ingots: the three columns add up to 4 ingots (36 nuggets: the plutonium and waste columns are in
+nuggets, the uranium in ingots). `SpentFuelTest` pins ten of these rows grain for grain against a separate
+implementation of the model, and `ReprocessingTests` pins six through the real block entity.
+
+What that means in play: the plant does not hand plutonium out cheaply. One standard MOX assembly needs 3 nuggets,
+which is the plutonium of about 11 spent LEU assemblies at 45 GWd/t, or of 35 depleted uranium blankets at 20 GWd/t
+(the blanket makes plutonium, but little of it stays: the mod's breeding gain is small and its bred plutonium is burned
+as it is made). Spent MOX gives back about a third of what went in plus what it bred, so a MOX loop slowly loses
+plutonium, as it does in life. These are model values a datapack may retune.
+
+### How the plant works
+
+- **Four slots**, through the item capability, in the fabricator's way: spent assembly in (slot 0), plutonium nuggets,
+  depleted uranium and waste out (1, 2, 3). A hopper above sees only the input, a hopper below only the outputs, the four
+  sides all four; the input cannot be pulled back out by a pipe, the outputs cannot be filled, and the input slot takes
+  only an irradiated, non-thorium assembly.
+- **Power and time:** 200 ticks and 150 FE a tick, 30,000 FE an assembly, from a 100,000 FE buffer (it takes energy
+  and gives none back). The assembly stays in the slot while it works and is consumed when the time is up; taking it
+  out first costs nothing. With too little energy it works only as far as the energy goes.
+- **Outputs that do not fit** (a slot holds 64) wait in the plant, and it does not start another assembly while a
+  product has a full stack waiting; it goes on as the slots are emptied. An idle plant costs a boolean test a tick.
+- **Saves.** `Energy` always; `WorkTicks`, `PlutoniumGrains`, `UraniumGrains`, `WasteGrains` and each slot
+  (`Input`, `PlutoniumOut`, `UraniumOut`, `WasteOut`) only when they hold something.
+- **Screen.** The spent assembly slot and the three product slots on the left, what the assembly in the slot will
+  yield (worked out on the client from the item, through the same arithmetic), what the plant holds in fractions,
+  progress and stored energy on the right. A fresh assembly that is somehow in the slot reads `This assembly is
+  refused`.
+- **CC peripheral** `bwr_reprocessing_plant`, `getStatus()`: `energyFE`, `working`, `progress`, `hasAssembly`, and with
+  an assembly `assemblyFuel`, `assemblyBurnupMwdPerTonne` and `accepted`; `plutoniumHeldNuggets`,
+  `depletedUraniumHeldIngots` and `wasteHeld` (fractions held), `plutoniumOut`, `depletedUraniumOut`, `wasteOut`
+  (the slots' counts).
+- **Recipe, ungated:** a reactor vessel between two obsidian on top, a blast furnace between two hoppers in the middle
+  and iron ingots (`c:ingots/iron`) along the bottom (`OVO` / `HFH` / `III`); it needs only vanilla items and the mod's own
+  reactor vessel, so it does not depend on Mekanism (the fabricator's recipe does). Nine plutonium nuggets craft an
+  ingot and an ingot crafts nine.
 
 ## Specialty rods
 

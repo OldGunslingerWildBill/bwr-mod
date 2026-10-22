@@ -9,6 +9,8 @@ import dev.bwr.core.boundary.BoundaryStressTest;
 import dev.bwr.core.feedwater.FeedwaterPumpTest;
 import dev.bwr.core.fuel.DepletedUraniumTest;
 import dev.bwr.core.fuel.EnrichmentMassBalanceTest;
+import dev.bwr.core.fuel.MoxMassBalanceTest;
+import dev.bwr.core.fuel.SpentFuelTest;
 import dev.bwr.core.fuel.FuelTypeSpecTest;
 import dev.bwr.core.fuel.HeatPerFissionTest;
 import dev.bwr.core.fuel.MixedCoreTest;
@@ -123,6 +125,8 @@ public final class AcceptanceTests {
             FuelTypeSpecTest.class,
             EnrichmentMassBalanceTest.class,
             DepletedUraniumTest.class,
+            SpentFuelTest.class,
+            MoxMassBalanceTest.class,
             MixedCoreTest.class,
             HeatPerFissionTest.class,
             FeedwaterPumpTest.class,
