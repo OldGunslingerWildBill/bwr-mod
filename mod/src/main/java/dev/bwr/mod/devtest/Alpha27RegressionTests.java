@@ -83,6 +83,7 @@ public final class Alpha27RegressionTests {
 
     @GameTest(template="empty",timeoutTicks=200)
     public static void realConfiguratorRotatesAndPersistsStraightAndCorner(GameTestHelper h) throws Exception {
+        if(!net.neoforged.fml.ModList.get().isLoaded("mekanism")){System.out.println("MEKANISM-ABSENT SKIP: realConfiguratorRotatesAndPersistsStraightAndCorner");h.succeed();return;}
         var level=h.getLevel();var player=player(level,"SpargerRotation");
         var block=BwrBlocks.CORE_SPRAY_SPARGER.get();
         var tool=configurator("ROTATE");
@@ -121,6 +122,7 @@ public final class Alpha27RegressionTests {
 
     @GameTest(template="empty",timeoutTicks=200)
     public static void heldItemsDoNotToggleLoopOrSwallowAdjacentPlacement(GameTestHelper h) throws Exception {
+        if(!net.neoforged.fml.ModList.get().isLoaded("mekanism")){System.out.println("MEKANISM-ABSENT SKIP: heldItemsDoNotToggleLoopOrSwallowAdjacentPlacement");h.succeed();return;}
         var level=h.getLevel();var player=player(level,"SpargerInteraction");
         var block=BwrBlocks.CORE_SPRAY_SPARGER.get();var p=new BlockPos(26480,220,26400);clear(level,p);
         player.setPos(Vec3.atCenterOf(p.south(2)));player.setYRot(Direction.NORTH.toYRot());
