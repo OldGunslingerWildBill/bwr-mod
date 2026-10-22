@@ -371,8 +371,10 @@ public final class ControllerStationPidTests {
                 h.assertTrue(reference != null, "the reference station is placed on the neighbouring panel");
                 ((ControllerStationData) reference.data()).spFraction = 0.2;
                 reference.type().onLoaded(reference);
-                h.assertTrue(rig.wire(new PanelPayloads.Bind(rig.panel, st.id(), false, ControllerStationType.IN_PV, WiringOps.BindKind.COMPONENT.ordinal(),
-                        BlockPos.ZERO, "", neighbour, reference.id(), ControllerStationType.OUT_SETPOINT, 1.0)) == WiringOps.Result.OK, "PV bound to the reference");
+                rig.select(rig.panel); // a wiring tool in hand, as for every binding
+                WiringOps.Result wired = rig.wire(new PanelPayloads.Bind(rig.panel, st.id(), false, ControllerStationType.IN_PV, WiringOps.BindKind.COMPONENT.ordinal(),
+                        BlockPos.ZERO, "", neighbour, reference.id(), ControllerStationType.OUT_SETPOINT, 1.0));
+                h.assertTrue(wired == WiringOps.Result.OK, "PV bound to the reference: " + wired);
                 ((dev.bwr.mod.panel.PanelBlockEntity) rig.level.getBlockEntity(neighbour)).pressOutput(reference, ControllerStationType.OUT_SETPOINT, 20.0); // a component source is pushed when the output is announced
                 h.assertTrue(st.input(ControllerStationType.IN_PV) == 20.0, "PV from the reference station: " + st.input(ControllerStationType.IN_PV));
                 h.assertTrue(!dev.bwr.mod.panel.wiring.PanelSampler.isTracked(rig.be()), "no live input: the panel is not sampled while in MAN");
