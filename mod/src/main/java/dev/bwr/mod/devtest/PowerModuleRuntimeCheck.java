@@ -122,7 +122,7 @@ public final class PowerModuleRuntimeCheck {
         var modules=makeTrain(l,245,133);var gen=modules.getLast();seed(modules.get(0),200);seed(modules.get(1),200);
         check(PowerTrain.members(gen).size()==7,"2HP/4LP train did not join");
         for(int i=2;i<6;i++)check(PowerSteamNetwork.sources(modules.get(i)).size()==2,"LP header did not reach both HP exhausts");
-        double exported=0, lossesKJ=0;
+        double exported=0, lossesKJ=0;int producing=0;
         double initialRotorKJ=modules.stream().mapToDouble(PowerModuleBlockEntity::kineticEnergyKJ).sum();
         for(int t=0;t<300;t++){
             nextTick(l);for(var m:modules)PowerTrain.tick(m);
@@ -130,7 +130,11 @@ public final class PowerModuleRuntimeCheck {
             exported+=gen.energy.extractEnergy(Integer.MAX_VALUE,false);
             lossesKJ+=gen.trainLossKJ;
             double mass=plantMass(modules);near(mass,400,"steam-to-water mass conservation");
+            // The generator's Running chip follows its real output, not steam flow (a generator has none).
+            check(gen.running==(gen.electricMW>0),"generator running flag does not follow its electrical output: running="+gen.running+" electricMW="+gen.electricMW);
+            if(gen.electricMW>0)producing++;
         }
+        check(producing>0,"generator never produced power in the parallel plant");
         double steam=modules.stream().filter(m->m.condenser()!=null).mapToDouble(m->m.condenser().plant().steam.mass()).sum();near(steam,400,"LP did not discharge all steam to condenser");
         near(modules.stream().mapToDouble(PowerModuleBlockEntity::waterStored).sum(),0,"LP still condensed water");
         // Owner-authorized Phase M update: account for the seeded physical rotor
@@ -145,6 +149,7 @@ public final class PowerModuleRuntimeCheck {
         near(gen.energyStored(),beforeReloadEnergy,"reload changed electrical energy");
         nextTick(l);PowerTrain.tick(gen);
         near(gen.trainMW,0,"reload regenerated consumed steam work");
+        check(!gen.running&&gen.electricMW==0,"generator still reads running with no work");
         double reloadWorkKJ=(gen.energyStored()-beforeReloadEnergy)*EccsPower.WATTS_PER_FE_PER_TICK/20/1000/.985;
         near(reloadWorkKJ+gen.trainLossKJ+modules.stream().mapToDouble(PowerModuleBlockEntity::kineticEnergyKJ).sum(),beforeReloadRotor,"reload created shaft energy");
         // All four parallel LPs must receive a share, even if the first can swallow the entire header.

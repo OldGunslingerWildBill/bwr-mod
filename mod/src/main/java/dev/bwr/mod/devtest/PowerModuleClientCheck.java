@@ -101,6 +101,8 @@ public final class PowerModuleClientCheck {
             if(Math.abs(v.target-target)>1e-6||Math.abs(v.position-target)>1e-6)throw new IllegalStateException("Valve command/stroke did not round-trip");
             if(stage==7&&v.flow>1e-6)throw new IllegalStateException("Closed stop valve still reports steam flow");
         }
+        if(ready&&stage==4&&shown>45&&mc.player.containerMenu instanceof PowerModuleMenu g&&(!g.generator||!g.running))
+            throw new IllegalStateException("Generator panel header reads Stopped while the generator is producing power");
         if(!ready||++shown<60)return;
         mc.options.hideGui=stage<2||stage==5;mc.getToasts().clear();
         if(shown<65)return;
