@@ -475,6 +475,8 @@ final class PanelSpringCheck {
             KeyMapping.set(key, true);
             KeyMapping.set(key, false);
         });
+        // The press and the release reach the server between client ticks, so the check waits for them to land (owner, 2026-10-21).
+        add("flick: let the press and release land", SETTLE, mc -> { });
         add("flick: settle", SETTLE, mc -> expectAt(mc, rig, 0, "after a flick"));
         cycle("long hold, longer than the fail-safe", 46);
         // The crosshair moves from one held switch to another with the key still down: the first must let go at once.
