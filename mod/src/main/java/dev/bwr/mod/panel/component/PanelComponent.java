@@ -60,6 +60,39 @@ public final class PanelComponent {
     /** Per output index, where that output goes (fan-out); see {@link OutputSink}. */
     private final List<List<OutputSink>> sinks = new ArrayList<>();
 
+    /** Server-only, never saved: who let go of this control last and the stamp of that RELEASE (see {@link #staleHold}). */
+    private java.util.UUID releasedBy;
+    private int releasedSeq;
+    /** ...and who pressed it last and the stamp of that PRESS (see {@link #staleRelease}). */
+    private java.util.UUID pressedBy;
+    private int pressedSeq;
+
+    /** Remembers the PRESS that {@code player} sent with stamp {@code seq}. */
+    public void notePress(java.util.UUID player, int seq) {
+        if (!player.equals(pressedBy) || seq - pressedSeq > 0) {
+            pressedBy = player;
+            pressedSeq = seq;
+        }
+    }
+
+    /** Whether a RELEASE stamped {@code seq} by {@code player} was made before that player's last PRESS (it arrived late). */
+    public boolean staleRelease(java.util.UUID player, int seq) {
+        return player.equals(pressedBy) && seq - pressedSeq < 0;
+    }
+
+    /** Remembers the RELEASE that {@code player} sent with stamp {@code seq}. */
+    public void noteRelease(java.util.UUID player, int seq) {
+        if (!player.equals(releasedBy) || seq - releasedSeq > 0) {
+            releasedBy = player;
+            releasedSeq = seq;
+        }
+    }
+
+    /** Whether a PRESS stamped {@code seq} by {@code player} was made before that player's last RELEASE (it arrived late). */
+    public boolean staleHold(java.util.UUID player, int seq) {
+        return player.equals(releasedBy) && seq - releasedSeq <= 0;
+    }
+
     /** Client-only render cache (static mesh), dropped whenever {@link #revision()} changes. */
     public Object clientCache;
     public int clientCacheRevision = -1;

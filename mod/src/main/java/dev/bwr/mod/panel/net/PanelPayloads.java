@@ -89,15 +89,25 @@ public final class PanelPayloads {
         }
     }
 
-    /** Press / release / turn / set on an input component. {@code action} is an OperateAction ordinal. */
-    public record Operate(BlockPos pos, int id, int action, double value) implements CustomPacketPayload {
+    /**
+     * Press / release / turn / set on an input component. {@code action} is an OperateAction ordinal. {@code seq} stamps the
+     * presses and releases of a held control in the order the player made them (0: unstamped, a program or an old client);
+     * the server uses it to throw away a press that reaches it after the release of the same hold
+     * ({@link dev.bwr.mod.panel.component.PanelComponent#staleHold}).
+     */
+    public record Operate(BlockPos pos, int id, int action, double value, int seq) implements CustomPacketPayload {
         public static final Type<Operate> TYPE = new Type<>(BwrMod.id("panel_operate"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Operate> STREAM_CODEC = StreamCodec.composite(
                 BlockPos.STREAM_CODEC, Operate::pos,
                 ByteBufCodecs.VAR_INT, Operate::id,
                 ByteBufCodecs.VAR_INT, Operate::action,
                 ByteBufCodecs.DOUBLE, Operate::value,
+                ByteBufCodecs.VAR_INT, Operate::seq,
                 Operate::new);
+
+        public Operate(BlockPos pos, int id, int action, double value) {
+            this(pos, id, action, value, 0);
+        }
 
         @Override
         public Type<? extends CustomPacketPayload> type() {

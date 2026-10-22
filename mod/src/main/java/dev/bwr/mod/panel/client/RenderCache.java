@@ -49,6 +49,11 @@ public final class RenderCache {
         return baked == null ? Float.NaN : baked.drawnAngle();
     }
 
+    /** The colour the baked model last drew the target flag of a control switch in (RGB); -1 for the classic look. For checks. */
+    public int drawnFlagRgb() {
+        return baked == null ? -1 : baked.drawnFlagRgb();
+    }
+
     /** The cache of {@code component}, created on first use. */
     public static RenderCache of(PanelComponent component) {
         if (component.clientCache instanceof RenderCache cache) {
