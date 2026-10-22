@@ -364,12 +364,16 @@ public final class ControllerStationPidTests {
                 ControllerStationData data = (ControllerStationData) st.data();
                 // PV comes from a second station's setpoint output (20 on its scale): a component source is pushed, not polled, so
                 // nothing but a station in AUTO keeps this panel sampled.
-                PanelComponent reference = rig.place(ComponentTypes.CONTROLLER_STATION, 4, 0, Footprint.of(3, 6));
+                BlockPos neighbour = root.west();
+                rig.level.setBlock(neighbour, BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState()
+                        .setValue(dev.bwr.mod.panel.PanelBlock.FACING, net.minecraft.core.Direction.NORTH), 3);
+                PanelComponent reference = dev.bwr.mod.panel.PanelOps.placeDirect(rig.level, neighbour, 0, 0, ComponentTypes.CONTROLLER_STATION, Footprint.of(3, 6));
+                h.assertTrue(reference != null, "the reference station is placed on the neighbouring panel");
                 ((ControllerStationData) reference.data()).spFraction = 0.2;
                 reference.type().onLoaded(reference);
                 h.assertTrue(rig.wire(new PanelPayloads.Bind(rig.panel, st.id(), false, ControllerStationType.IN_PV, WiringOps.BindKind.COMPONENT.ordinal(),
-                        BlockPos.ZERO, "", rig.panel, reference.id(), ControllerStationType.OUT_SETPOINT, 1.0)) == WiringOps.Result.OK, "PV bound to the reference");
-                rig.be().pressOutput(reference, ControllerStationType.OUT_SETPOINT, 20.0); // a component source is pushed when the output is announced
+                        BlockPos.ZERO, "", neighbour, reference.id(), ControllerStationType.OUT_SETPOINT, 1.0)) == WiringOps.Result.OK, "PV bound to the reference");
+                ((dev.bwr.mod.panel.PanelBlockEntity) rig.level.getBlockEntity(neighbour)).pressOutput(reference, ControllerStationType.OUT_SETPOINT, 20.0); // a component source is pushed when the output is announced
                 h.assertTrue(st.input(ControllerStationType.IN_PV) == 20.0, "PV from the reference station: " + st.input(ControllerStationType.IN_PV));
                 h.assertTrue(!dev.bwr.mod.panel.wiring.PanelSampler.isTracked(rig.be()), "no live input: the panel is not sampled while in MAN");
                 // An outside demand bound to auto_demand: AUTO follows it at once, the demand output follows it, the PID stays idle.
