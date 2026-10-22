@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased: controller station PID, dark-lamp synchronising lamps
+
+The owner's two decisions after the end-to-end check below.
+
+### Controller station: a built-in PID, in AUTO only
+
+- **It runs only while the player has selected AUTO.** A new station is still in MAN with OUT 0 and nothing runs in MAN. In AUTO the station moves `demand` so that the process variable follows the setpoint, once for every sample of the panel (0.1 s by default). No new port: the settings are config (the Panel Wrench screen) and the `demand` output carries the result, so a machine wired to `demand` follows the PID.
+- **The law** (`StationPid`, the velocity form on percentages of the span): `du = Kp * ( -dPV + dt / Ti * e - Td / dt * d2PVf )`, `e = SP - PV` (reverse action flips the signs). The proportional and derivative terms act on the measurement, so a setpoint change goes through the integral and never kicks OUT; the derivative is filtered (Td / 8).
+- **Config:** Kp 0.01 to 100 (default 0.5), Ti 0.5 to 3600 s (20), Td 0 to 600 s (0, off), reverse action (off), output low and high limits 0 to 100 (0 and 100). The defaults are conservative: slow, and stable on a plant with a unit gain and lags of a few seconds. All are saved only when not default, so old saves load as before.
+- **Bumpless both ways:** the state is the demand itself. Selecting AUTO starts from the demand MAN left (the first samples only learn the PV); selecting MAN keeps the last output. Nothing but the settings is saved.
+- **Anti-windup:** the new demand is clamped to the output limits and there is no separate integral, so OUT leaves a limit as soon as the error changes sign.
+- **No PV signal in AUTO** freezes OUT and forgets the memory (nothing winds up, nothing kicks when the signal returns); so does a gap of more than 5 s between samples.
+- **An outside demand overrides it:** with a signal on `auto_demand` AUTO follows it (at once when AUTO is selected, then on every sample) and the `demand` output follows it too, so the bar is always the output and MAN after AUTO never bumps. Take the signal away and the PID starts from where OUT is.
+- **The sampler:** a station in AUTO keeps its panel sampled (`ControllerStationType.keepsSampling`); a panel with a station in MAN and no live input costs nothing, as before.
+- **Proof, in a real plant run** (a real recirculation pump, a first order lag of 3 s accelerating and 11 s decelerating, `demand` wired to its `speed` command and `pv` to its measured speed through the Networking Wrench and the binding payload; SP steps are the RAISE button): tuned Kp 1, Ti 5 s: step 0 to 50 no overshoot, settled to 2 % in 28.8 s; 50 to 70 no overshoot, 21 s; 70 to 40 an undershoot of 1.7 % (the pump's slow way down), 20 s; the last minute within 0.5 %. The defaults (Kp 0.5, Ti 20 s): 40 to 70 no overshoot, 159 s. Disturbance: the actuator loses 40 % of its gain, the PV dips 8 % and is back within 2 % in 28.6 s with OUT 50 to 83. Limits 20 and 60: OUT never leaves them, and leaves the high limit within half a second when the SP drops (no windup). PV lost for two minutes: OUT frozen to the last bit, no jump when it returns. Transfers: AUTO leaves OUT at 37.0, MAN keeps the last output while the PV is pushed around.
+- **Existing assertions changed (authorised), old to new, in `ControllerStationTests`:**
+  - `inAutoTheBarShowsTheBoundDemandAndTheStationOnlyMovesItsOwnSetpoint`: `out(st, 0) == 30.0` "the station's own demand output is left where MAN left it" to `out(st, 0) == 70.0` "with an outside demand bound, the demand output follows it in AUTO"; `!op(SET 55) && out(st, 0) == 30.0` to `... == 70.0` (a program still may not SET the demand in AUTO); `out(st, 4) == 51.0 && out(st, 0) == 30.0` to `... == 70.0`; `out(st, 2) == 1.0 && out(st, 4) == 51.0 && out(st, 0) == 30.0` to `... == 70.0`.
+  - `nothingMovesByItselfNoControlLawRunsInTheStation`: `out(st, 0) == 0.0 && out(st, 1) == 1.0 && out(st, 4) == sp` "AUTO with a deviation: demand" to `out(st, 0) > 0.0 && ...` "the PID raises the demand"; and in MAN, `out(st, 0) == 0.0` "MAN with a different deviation: demand still" to `out(st, 0) == held` (the demand when MAN was pressed). The MAN and placement half (a new station is MAN, nothing runs in MAN) is covered by `autoStepResponseConvergesWithoutOscillationAndNothingRunsInMan`.
+  - The ports assertion is unchanged (no new port).
+
+### Synchronising lamps: the dark lamp method
+
+- **Both lamps follow one curve now.** Both are wired across the open breaker, so each sees the difference of the generator and the grid voltage, `2 V |sin(delta / 2)|` for equal voltages; the lamp's power goes as the square, so the brightness is `sin^2(delta / 2)` of the brightest: dark in phase, half at 90 degrees, full at 180 degrees out of phase, continuous in between, and it pulses at the slip frequency as the pointer turns. Before, the right lamp was the "bright lamp" (full in phase). With no signal or the breaker closed both are dark. The mod models no voltage magnitude, so there is no magnitude difference added. Sources: the Wikipedia article "Synchronization (alternating current)" (lamps dark when the generator voltage matches the system, bright when opposite), the NJIT ECE 342 lab 6 notes (the dark method: lamps across the open breaker, close when all are dark) and the phasor arithmetic for the 2 V sin(delta / 2). No legends were added (the dial still has three).
+- **Existing assertion changed (authorised), `SynchroscopeTests.pointerArithmeticWrapsAdvancesFollowsAndLightsTheLamps`:** `near(SyncMath.darkLamp(phase) + SyncMath.brightLamp(phase), 1.0)` "the lamps are complementary at" to `near(SyncMath.darkLamp(phase), sin^2(phase / 2)) && near(darkLamp(phase), darkLamp(-phase))` "both lamps follow sin^2(phase/2), the same either side, at". `SyncMath.brightLamp` is gone; `SyncMath.lampBrightness(index, phase)` is the one curve for either lamp. The lamp colour fields are now "Left lamp colour" and "Right lamp colour".
+- Tests: `ControllerStationPidTests` (batch `controllersync`: step response, disturbance, limits and windup, PV loss and transfers, outside demand and the real sampler, action/config/saves, the lamps). Client check: a station running its PID on a real control valve, and three synchroscopes at 0, 90 and 180 degrees.
+
 ## Unreleased: controller station and synchroscope verified end to end
 
 The manual/auto controller station and the synchroscope were driven in real worlds against real machines, through the Networking Wrench, the binding payload the panel link screen sends and the panel's own click path. Most of it was right already; the three things that were not are fixed.
@@ -13,13 +39,13 @@ The manual/auto controller station and the synchroscope were driven in real worl
 ### Checked and found right (no change)
 
 - **MAN:** RAISE, LOWER, a held RAISE, the wheel and the Step setting move OUT, and a turbine control valve, a bypass valve, a recirculation pump, a feedwater pump, an LPCS pump, a grid tie (`fixed_mw`, `remote_mw`) and the reactor's boron injection follow it exactly, from 0 % to 100 % (a real valve strokes to the demand); the SP is shown and drives nothing.
-- **AUTO:** RAISE and LOWER move the local SP only; selecting AUTO, saving and reloading the panel send nothing to the plant. The station has **no control law**, by design and by its tests: OUT in AUTO is whatever an outside source bound to `auto_demand` provides. The mode, OUT and SP survive a save, a placed station starts in MAN with OUT 0, and a missing machine, an unbound station or a zero span station do not throw.
+- **AUTO:** RAISE and LOWER move the local SP only; selecting AUTO, saving and reloading the panel send nothing to the plant. (At the time of this entry the station had no control law; it has a PID in AUTO now, see above.) The mode, OUT and SP survive a save, a placed station starts in MAN with OUT 0, and a missing machine, an unbound station or a zero span station do not throw.
 - **Synchroscope:** against a real HP/LP turbine and generator rolled and trimmed through the real control valve, the bound `phase_degrees` turns the pointer clockwise (FAST) for a fast generator and anticlockwise (SLOW) for a slow one, 360 degrees a second per hertz of slip; a CLOSE pushbutton wired to `close_breaker` closes in phase with no damage, the tied generator delivers and its FE equals the tie's, and TRIP opens it. Closing out of phase is allowed and damages the generator by the grid code's law (56 degrees: damage 1, failed).
 
 ### Tests
 
 - `ControllerSyncWiringTests` (batch `controllersync`): the station against seven real machines in MAN, AUTO and transfer, save and reload, a broken link, the reactor's boron and recirculation commands, the link screen's default scale and the round lamps; `ControllerSyncSynchroscopeTests`: the full synchronisation through panel buttons. Panel client check: five new stages in `PanelHardwareShowcase` (station in MAN at 40 %, station in AUTO and an unwired one with its no-signal flag, synchroscopes slow, fast, in phase and tied, the button legends, the lamps).
-- No existing assertion was changed. Two asks were left alone because existing assertions pin the present design (see the report): an AUTO control law in the station, and legends on the synchroscope's lamps.
+- No existing assertion was changed in this entry. Legends on the synchroscope's lamps were left alone (the dial's three-legend assertion pins it).
 
 ## Unreleased: fuel fabricator item route, depleted uranium, recipe audit
 

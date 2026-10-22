@@ -5,7 +5,6 @@ import dev.bwr.mod.panel.component.ComponentTypes;
 import dev.bwr.mod.panel.component.ControllerStationData;
 import dev.bwr.mod.panel.component.ControllerStationType;
 import dev.bwr.mod.panel.component.Footprint;
-import dev.bwr.mod.panel.component.InputSources;
 import dev.bwr.mod.panel.component.OperateAction;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.component.StationLayout;
@@ -363,9 +362,16 @@ public final class ControllerStationPidTests {
                 rig.start();
                 PanelComponent st = rig.place(ComponentTypes.CONTROLLER_STATION, 0, 0, Footprint.of(3, 6));
                 ControllerStationData data = (ControllerStationData) st.data();
-                // PV is a constant (not a live source): only a station in AUTO keeps its panel sampled.
-                st.setSource(ControllerStationType.IN_PV, InputSources.constant(20.0));
-                rig.be().resample(st, true);
+                // PV comes from a second station's setpoint output (20 on its scale): a component source is pushed, not polled, so
+                // nothing but a station in AUTO keeps this panel sampled.
+                PanelComponent reference = rig.place(ComponentTypes.CONTROLLER_STATION, 4, 0, Footprint.of(3, 6));
+                ((ControllerStationData) reference.data()).spFraction = 0.2;
+                reference.type().onLoaded(reference);
+                h.assertTrue(rig.wire(new PanelPayloads.Bind(rig.panel, st.id(), false, ControllerStationType.IN_PV, WiringOps.BindKind.COMPONENT.ordinal(),
+                        BlockPos.ZERO, "", rig.panel, reference.id(), ControllerStationType.OUT_SETPOINT, 1.0)) == WiringOps.Result.OK, "PV bound to the reference");
+                rig.be().pressOutput(reference, ControllerStationType.OUT_SETPOINT, 20.0); // a component source is pushed when the output is announced
+                h.assertTrue(st.input(ControllerStationType.IN_PV) == 20.0, "PV from the reference station: " + st.input(ControllerStationType.IN_PV));
+                h.assertTrue(!dev.bwr.mod.panel.wiring.PanelSampler.isTracked(rig.be()), "no live input: the panel is not sampled while in MAN");
                 // An outside demand bound to auto_demand: AUTO follows it at once, the demand output follows it, the PID stays idle.
                 rig.be().setInput(st, ControllerStationType.IN_AUTO_DEMAND, 64.0);
                 rig.op(st, OperateAction.SET, 30.0);
@@ -380,7 +386,8 @@ public final class ControllerStationPidTests {
                 rig.press(st, StationLayout.AUTO);
                 h.assertTrue(data.demand == 41.0, "the outside demand gone: OUT stays 41 until the PID moves it");
                 // The server's own sampler (real ticks) runs the PID of this station.
-                StringBuilder trace = new StringBuilder("tracked after AUTO " + dev.bwr.mod.panel.wiring.PanelSampler.isTracked(rig.be()) + "/" + rig.be().hasLiveInputs());
+                dev.bwr.mod.panel.PanelBlockEntity beBefore = rig.be();
+                StringBuilder trace = new StringBuilder("same block entity " + (rig.be() == beBefore) + ", tracked after AUTO " + dev.bwr.mod.panel.wiring.PanelSampler.isTracked(rig.be()) + "/" + rig.be().hasLiveInputs());
                 for (int delay : new int[] {1, 2, 3, 5, 10}) {
                     h.runAfterDelay(delay, () -> trace.append(" | +").append(delay).append(": tracked ").append(dev.bwr.mod.panel.wiring.PanelSampler.isTracked(rig.be()))
                             .append(" last ").append(data.pidLastStep).append(" ready ").append(data.pidReady).append(" demand ").append(data.demand));
@@ -391,7 +398,7 @@ public final class ControllerStationPidTests {
                         PanelComponent current = rig.be().component(st.id());
                         ControllerStationData now = (ControllerStationData) current.data();
                         h.assertTrue(now.demand > 41.0 && now.demand <= 100.0 && current.output(ControllerStationType.OUT_DEMAND) == now.demand,
-                                "the sampler raised OUT on its own while the PV was below the SP: " + now.demand + " (same component " + (current == st)
+                                "the sampler raised OUT on its own while the PV was below the SP: " + now.demand + " (same component " + (current == st) + ", same block entity " + (rig.be() == beBefore)
                                         + ", tracked " + dev.bwr.mod.panel.wiring.PanelSampler.isTracked(rig.be()) + ", auto " + now.auto + ", pv " + current.input(ControllerStationType.IN_PV)
                                         + ", ready " + now.pidReady + ", last " + now.pidLastStep + ", now " + h.getLevel().getGameTime() + ") " + trace);
                         done[0] = true;
