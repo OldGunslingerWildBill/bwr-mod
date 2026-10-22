@@ -59,6 +59,8 @@ public final class ComponentTypes {
     public static final ComponentType TWO_PEN_RECORDER = register(new TwoPenRecorderType());
     public static final ComponentType JOYSTICK_SWITCH = register(new JoystickType());
     public static final ComponentType LED_ROD_DISPLAY = register(new LedRodDisplayType());
+    // -- the plant computer / safety parameter display --
+    public static final ComponentType PLANT_COMPUTER = register(new PlantComputerType());
     // -- annunciator boxes --
     public static final ComponentType ANNUNCIATOR_CONTROL = register(new AnnunciatorControlType());
     // ----------------------------------------------------------------------------

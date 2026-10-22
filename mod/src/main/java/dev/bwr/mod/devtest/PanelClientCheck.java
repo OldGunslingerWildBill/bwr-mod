@@ -85,6 +85,8 @@ public final class PanelClientCheck {
     private static final int RPS_FIRST = DESK_FIRST + PanelDeskShowcase.NAMES.length;
     /** The stages of the switch input check (see {@link PanelSwitchInputCheck}), after the RPS legends. */
     private static final int INPUT_FIRST = RPS_FIRST + PanelRpsLegendShowcase.NAMES.length;
+    /** The stages of the plant computer (see {@link PanelPlantShowcase}): the built-in pages and the SPDS program, after the switch input check. */
+    private static final int PLANT_FIRST = INPUT_FIRST + PanelSwitchInputCheck.NAMES.length;
     private static final String[] NAMES = names();
 
     private static String[] names() {
@@ -93,7 +95,8 @@ public final class PanelClientCheck {
         String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length + PanelSlopeShowcase.NAMES.length
                 + PanelTrimShowcase.NAMES.length + PanelDuplexShowcase.NAMES.length + PanelRealScaleShowcase.NAMES.length
                 + PanelTextSizeShowcase.NAMES.length + PanelAngledShowcase.NAMES.length + PanelAnnunciatorShowcase.NAMES.length + PanelHardwareShowcase.NAMES.length + 1
-                + PanelDeskShowcase.NAMES.length + PanelRpsLegendShowcase.NAMES.length + PanelSwitchInputCheck.NAMES.length];
+                + PanelDeskShowcase.NAMES.length + PanelRpsLegendShowcase.NAMES.length + PanelSwitchInputCheck.NAMES.length
+                + PanelPlantShowcase.NAMES.length];
         System.arraycopy(original, 0, all, 0, original.length);
         System.arraycopy(PanelModelShowcase.NAMES, 0, all, BAKED_FIRST, PanelModelShowcase.NAMES.length);
         System.arraycopy(PanelSlopeShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length,
@@ -111,6 +114,7 @@ public final class PanelClientCheck {
         System.arraycopy(PanelDeskShowcase.NAMES, 0, all, DESK_FIRST, PanelDeskShowcase.NAMES.length);
         System.arraycopy(PanelRpsLegendShowcase.NAMES, 0, all, RPS_FIRST, PanelRpsLegendShowcase.NAMES.length);
         System.arraycopy(PanelSwitchInputCheck.NAMES, 0, all, INPUT_FIRST, PanelSwitchInputCheck.NAMES.length);
+        System.arraycopy(PanelPlantShowcase.NAMES, 0, all, PLANT_FIRST, PanelPlantShowcase.NAMES.length);
         return all;
     }
     private static final String STAGE_FILTER = System.getProperty("bwr.panelClientStages", "");
@@ -231,13 +235,15 @@ public final class PanelClientCheck {
                         PanelDeskShowcase.build(level);
                         PanelRpsLegendShowcase.build(level);
                         for (int i = 0; i < PanelSwitchInputCheck.NAMES.length; i++) PanelSwitchInputCheck.prepare(level, i);
+                        PanelPlantShowcase.build(level);
                         built = true;
                     } catch (Throwable failure) {
                         buildFailure = failure;
                         return;
                     }
                 }
-                Vec3 camera = selected >= INPUT_FIRST ? PanelSwitchInputCheck.camera(selected - INPUT_FIRST)
+                Vec3 camera = selected >= PLANT_FIRST ? PanelPlantShowcase.camera(selected - PLANT_FIRST)
+                        : selected >= INPUT_FIRST ? PanelSwitchInputCheck.camera(selected - INPUT_FIRST)
                         : selected >= RPS_FIRST ? PanelRpsLegendShowcase.camera(selected - RPS_FIRST)
                         : selected >= DESK_FIRST ? PanelDeskShowcase.camera(selected - DESK_FIRST)
                         : selected >= SPRING_FIRST ? PanelSpringCheck.camera()
@@ -257,7 +263,8 @@ public final class PanelClientCheck {
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = selected >= INPUT_FIRST ? PanelSwitchInputCheck.target(selected - INPUT_FIRST)
+                Vec3 target = selected >= PLANT_FIRST ? PanelPlantShowcase.target(selected - PLANT_FIRST)
+                        : selected >= INPUT_FIRST ? PanelSwitchInputCheck.target(selected - INPUT_FIRST)
                         : selected >= RPS_FIRST ? PanelRpsLegendShowcase.target(selected - RPS_FIRST)
                         : selected >= DESK_FIRST ? PanelDeskShowcase.target(selected - DESK_FIRST)
                         : selected >= SPRING_FIRST ? PanelSpringCheck.target()
@@ -381,6 +388,10 @@ public final class PanelClientCheck {
         try {
             var directory = mc.gameDirectory.toPath().resolve("panel-client-check");
             Files.createDirectories(directory);
+            if (stage >= PLANT_FIRST) {
+                LogUtils.getLogger().info("PANEL CLIENT CHECK plant computer {}: {} on the client, {} text sizes drawn so far", NAMES[stage],
+                        PanelPlantShowcase.verify(mc, stage - PLANT_FIRST), PanelRenderContext.debugBasisChecked());
+            }
             if (stage >= BAKED_FIRST) {
                 // Every component must draw baked exactly when a loaded model exists for its look.
                 LogUtils.getLogger().info("PANEL CLIENT CHECK baked models {}: {} components drawn from baked models ({} loaded)",
@@ -557,6 +568,7 @@ public final class PanelClientCheck {
             if (type == ComponentTypes.GRAPHIC_DISPLAY || type == ComponentTypes.FULL_CORE_DISPLAY
                     || type == ComponentTypes.ROD_SELECT_MATRIX
                     || type == ComponentTypes.LED_ROD_DISPLAY) continue; // (the LED display: its sizes hold a whole core; see PanelHardwareShowcase)
+            if (type == ComponentTypes.PLANT_COMPUTER) continue; // 4 x 3 blocks of screen: its own stages (PanelPlantShowcase)
             var sizes = type.footprints();
             if (!fit(level, type, sizes.get(0), 28, occupied)) {
                 throw new AssertionError("No showcase space for " + type.id() + " " + sizes.get(0));

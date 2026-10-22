@@ -40,6 +40,8 @@ public final class LivePeripheral implements IDynamicPeripheral {
     /** Whether this is a plant machine (every type but the panel). */
     public boolean isMachine(){return machine;}
     @Override public String getType(){return type;}
+    /** A panel also answers to the plant computer's type, so a program can find it with {@code peripheral.find}. */
+    @Override public java.util.Set<String> getAdditionalTypes(){return PanelPeripheral.TYPE.equals(type)?java.util.Set.of(PanelPeripheral.PLANT_TYPE):java.util.Set.of();}
     @Override public Object getTarget(){return this;}
     @Override public String[] getMethodNames(){return names.clone();}
     @Override public boolean equals(IPeripheral other){return other instanceof LivePeripheral p&&p.level==level&&p.anchor.equals(anchor)&&p.block==block&&p.type.equals(type);}
@@ -54,6 +56,8 @@ public final class LivePeripheral implements IDynamicPeripheral {
             else if(types[i]==String.class)converted[i]=args.getString(i);
             else if(types[i]==String[].class)converted[i]=tableStrings(args.getTableUnsafe(i));
             else if(types[i]==Map.class&&method.getDeclaringClass()==GridTiePeripheral.class&&method.getName().equals("setMeters"))converted[i]=meterPositions(args.getTableUnsafe(i));
+            else if(types[i]==Map.class&&method.getDeclaringClass()==PanelPeripheral.class)converted[i]=plainTable(args.getTable(i));
+            else if(types[i]==Object.class&&method.getDeclaringClass()==PanelPeripheral.class)converted[i]=plainValue(args.get(i));
             else throw new LuaException("Unsupported machine method argument");
         }
         // Resolve after scheduling, not while still on the computer thread.
@@ -80,6 +84,24 @@ public final class LivePeripheral implements IDynamicPeripheral {
                 default:dev.bwr.mod.panel.MachinePorts.set(owner,port);return new Object[]{port};
             }
         });
+    }
+    /** Most keys a table handed to a panel call may have. */
+    private static final int MAX_TABLE_KEYS=32;
+    /** A Lua table of named settings (a plant computer element) copied to plain Java: string keys; number, string or boolean values. */
+    public static Map<String,Object> plainTable(Map<?,?> table)throws LuaException {
+        if(table.size()>MAX_TABLE_KEYS)throw new LuaException("Table has too many entries (limit "+MAX_TABLE_KEYS+")");
+        var copy=new LinkedHashMap<String,Object>();
+        for(var entry:table.entrySet()){
+            if(!(entry.getKey() instanceof String key))throw new LuaException("Table keys must be strings");
+            copy.put(key,plainValue(entry.getValue()));
+        }
+        return copy;
+    }
+    /** A single Lua value for a panel call: nil, a number, a string or a boolean. */
+    public static Object plainValue(Object value)throws LuaException {
+        if(value==null||value instanceof Boolean||value instanceof String)return value;
+        if(value instanceof Number n)return n.doubleValue();
+        throw new LuaException("Expected nil, a number, a string or a boolean");
     }
     /** A Lua array of strings (the rows of a panel blit), bounded so a script cannot hand over a huge table. */
     public static String[] tableStrings(LuaTable<?,?> table)throws LuaException {

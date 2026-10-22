@@ -58,17 +58,23 @@ public final class PanelPerformanceCheck {
      * whether 25 of the wall's blocks carry two annunciator windows each in place of their usual layout
      * ({@link #ANN_OFF}: all 50 windows normal; {@link #ANN_FLASH}: all 50 in unacknowledged alarm, flashing).
      */
-    private record Stage(String name, boolean wall, String style, int distance, int annunciators, int mimicPaths) {
+    private record Stage(String name, boolean wall, String style, int distance, int annunciators, int mimicPaths, int plant) {
         Stage(String name, boolean wall, String style, int distance) {
-            this(name, wall, style, distance, 0, 0);
+            this(name, wall, style, distance, 0, 0, 0);
         }
 
         Stage(String name, boolean wall, String style, int distance, int annunciators) {
-            this(name, wall, style, distance, annunciators, 0);
+            this(name, wall, style, distance, annunciators, 0, 0);
+        }
+
+        Stage(String name, boolean wall, String style, int distance, int annunciators, int mimicPaths) {
+            this(name, wall, style, distance, annunciators, mimicPaths, 0);
         }
     }
 
     private static final int ANN_OFF = 1, ANN_FLASH = 2;
+    /** A wall of eight plant computers (4 x 3 blocks each) with a dense program: standing still, and with every number changing once a second. */
+    private static final int PLANT_IDLE = 1, PLANT_UPDATING = 2;
 
     private static final List<Stage> ALL = List.of(
             new Stage("empty", false, null, 15),
@@ -81,7 +87,11 @@ public final class PanelPerformanceCheck {
             new Stage("annunciators-flash", true, null, 15, ANN_FLASH),
             // The same wall as "baked" with 100 mimic tape paths drawn on it (not in the default list): compare in pairs,
             // baked, mimic, baked, mimic (see TESTING.md, "Mimic tape").
-            new Stage("mimic", true, null, 15, 0, 100));
+            new Stage("mimic", true, null, 15, 0, 100),
+            // The plant computer: eight displays, each with 8 numbers, 2 trends, 6 tiles, 2 soft keys (not in the default list):
+            // compare with "empty", and "plant-idle" with "plant-updating" for the cost of a change.
+            new Stage("plant-idle", true, null, 15, 0, 0, PLANT_IDLE),
+            new Stage("plant-updating", true, null, 15, 0, 0, PLANT_UPDATING));
 
     /** One component of a block layout: type, cells, look (style null: the one named for the layout), live value. */
     private record Spec(ComponentType type, int x, int y, int w, int h, String style, String variant, double value) {
@@ -203,7 +213,8 @@ public final class PanelPerformanceCheck {
                 for (BlockPos pos : BlockPos.betweenClosed(new BlockPos(10 + offset, 117, offset),
                         new BlockPos(38 + offset, 117, 45 + offset)))
                     level.setBlock(pos, Blocks.SMOOTH_STONE.defaultBlockState(), 2);
-                if (current.wall()) build(level, new BlockPos(32 + offset, 125, 40 + offset), current.style(), current.annunciators());
+                if (current.plant() > 0) buildPlant(level, new BlockPos(32 + offset, 125, 40 + offset));
+                else if (current.wall()) build(level, new BlockPos(32 + offset, 125, 40 + offset), current.style(), current.annunciators());
                 if (current.mimicPaths() > 0) {
                     BlockPos root = new BlockPos(32 + offset, 125, 40 + offset);
                     int placed = MimicClientCheck.scatter(level, root, 16, 8, current.mimicPaths());
@@ -220,6 +231,11 @@ public final class PanelPerformanceCheck {
                 player.connection.teleport(24 + offset, 124, 40 + offset - current.distance(), 0, 0);
             });
             mc.options.hideGui = true;
+        }
+        if (current.plant() == PLANT_UPDATING && age % 20 == 0 && System.nanoTime() - began > 2_000_000_000L) {
+            // Every number of every display moves once a second, as a program that redraws its values would.
+            int step = age / 20;
+            mc.getSingleplayerServer().execute(() -> updatePlant(step));
         }
         if (System.nanoTime() - began < 11_000_000_000L) return;
         if (FRAME_MS.size() < 100) throw new AssertionError("Too few frames for panel benchmark: " + FRAME_MS.size());
@@ -262,6 +278,44 @@ public final class PanelPerformanceCheck {
             if (delta > 0 && delta < 500) FRAME_MS.add(delta);
         }
         lastFrame = now;
+    }
+
+    private static final List<dev.bwr.mod.panel.component.PlantComputerData> PLANT_DISPLAYS = new ArrayList<>();
+
+    /** Eight plant computers on a 16 x 6 block wall: the program of {@code PlantComputerTests.richProgram} on page 1. */
+    private static void buildPlant(net.minecraft.server.level.ServerLevel level, BlockPos root) {
+        PLANT_DISPLAYS.clear();
+        for (int row = 0; row < 6; row++) for (int col = 0; col < 16; col++) {
+            level.setBlock(root.relative(Direction.WEST, col).below(row), BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState()
+                    .setValue(PanelBlock.FACING, Direction.NORTH), 3);
+        }
+        for (int j = 0; j < 2; j++) for (int i = 0; i < 4; i++) {
+            BlockPos anchor = root.relative(Direction.WEST, 4 * i).below(3 * j);
+            PanelComponent display = PanelOps.placeDirect(level, anchor, 0, 0, ComponentTypes.PLANT_COMPUTER, Footprint.of(64, 48));
+            if (display == null) throw new AssertionError("Panel benchmark plant computer placement failed at " + anchor);
+            var data = (dev.bwr.mod.panel.component.PlantComputerData) display.data();
+            PlantComputerTests.richProgram(data);
+            dev.bwr.mod.panel.plant.PlantApi.setPage(data, 1);
+            PLANT_DISPLAYS.add(data);
+        }
+        for (int row = 0; row < 6; row++) for (int col = 0; col < 16; col++) {
+            if (level.getBlockEntity(root.relative(Direction.WEST, col).below(row)) instanceof PanelBlockEntity be) be.syncFull();
+        }
+        LogUtils.getLogger().info("PANEL PERFORMANCE plant wall built: {} plant computers, {} elements each", PLANT_DISPLAYS.size(),
+                PLANT_DISPLAYS.get(0).program().elementCount());
+    }
+
+    private static void updatePlant(int step) {
+        for (int i = 0; i < PLANT_DISPLAYS.size(); i++) {
+            var data = PLANT_DISPLAYS.get(i);
+            try {
+                dev.bwr.mod.panel.plant.PlantApi.value(data, 1, "pw", 60.0 + (step * 7 + i * 3) % 50 + 0.1 * (step % 10));
+                dev.bwr.mod.panel.plant.PlantApi.value(data, 1, "lv", -50.0 + (step * 11 + i) % 90);
+                dev.bwr.mod.panel.plant.PlantApi.push(data, 1, "tr", 800.0 + 300.0 * Math.sin(step * 0.3 + i));
+            } catch (dev.bwr.mod.panel.plant.PlantState.Rejected e) {
+                throw new IllegalStateException("Panel benchmark plant update refused: " + e.getMessage(), e);
+            }
+        }
     }
 
     /**

@@ -1,6 +1,6 @@
 # Player Lua examples
 
-These five CC:Tweaked programs are the player's own automation, not part of the
+These six CC:Tweaked programs are the player's own automation, not part of the
 mod. Nothing installs, starts, or runs them automatically. They call the same
 peripherals available to a player in the current mod; no extra control API is
 added by these examples.
@@ -134,13 +134,32 @@ The last picture remains if the program stops or loses a peripheral; the console
 reports errors. The driver never commands the plant, and the picture is not an
 independent alarm or freshness indication after its computer stops.
 
+## Safety parameter display
+
+```text
+examples/spds.lua <panel_name> <reactor_name> <plant_computer_label> [once|frame_count] [interval_seconds=1]
+```
+
+[spds.lua](spds.lua) draws a plant computer ([PLANT-COMPUTER.md](../../PLANT-COMPUTER.md)) on a control panel: page 1 the six
+critical safety functions (reactivity control, core cooling, heat sink, RPV integrity, containment, inventory) as green / amber /
+red tiles, the reason for the first one that is not green, and a power trend; page 2 trends of power, level, pressure and
+containment pressure; page 3 the numbers with their limits. Touching the SAFETY, TRENDS or VALUES soft key shows that page
+(`plant_computer_touch`). The display must be set to the CC program in the wrench and have a grid of at least 24 x 12 characters
+(a 4 x 3 block display is 31 x 15). Name the panel and the reactor as for the other examples; the third argument is the label of
+the plant computer on the panel (`plantList()` names them). It is the one example that waits for events, so a frame is every
+interval and a touch is answered at once.
+
+The limits that make a function amber or red are a table at the top of the file and are this example's choices, not the mod's:
+the mod judges nothing. The program reads the reactor and writes a display; it issues no plant commands, and the picture is not
+an independent alarm (it stays as it was if the program stops).
+
 ## Scope of these examples
 
 Startup demonstrates one explicit recirculation/rod manoeuvre in the player's
 chosen startup sequence. Backup scram applies player-supplied limits while the
 program is running. ECCS start commands one named train. Containment isolation
-closes named valves and waits for their actual travel. The panel driver only
-reads the reactor and writes a display.
+closes named valves and waits for their actual travel. The panel driver and the SPDS only
+read the reactor and write a display.
 
 Choose settings and equipment for your own in-game build. These examples do not
 establish a complete operating procedure or prove a whole plant's readiness.

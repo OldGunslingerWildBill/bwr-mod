@@ -14,6 +14,12 @@ import dev.bwr.mod.panel.PanelOps;
 import dev.bwr.mod.panel.component.ComponentTypes;
 import dev.bwr.mod.panel.component.Footprint;
 import dev.bwr.mod.panel.component.GraphicDisplayData;
+import dev.bwr.mod.panel.component.OperateAction;
+import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.component.PlantComputerData;
+import dev.bwr.mod.panel.PanelBlockEntity;
+import dev.bwr.mod.panel.plant.PlantLayout;
+import dev.bwr.mod.panel.plant.PlantState;
 import dev.bwr.mod.panel.display.LcdFont;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import dev.bwr.mod.reactor.VesselState;
@@ -64,7 +70,7 @@ public final class LuaExamplesCheck {
     private static final String TOKEN = UUID.randomUUID().toString();
     private static final Path OUTPUT = Path.of("lua-examples-check", "results.json");
     private static final List<String> FILES = List.of("startup.lua", "backup_scram.lua", "eccs_start.lua",
-            "containment_isolation.lua", "panel_display.lua");
+            "containment_isolation.lua", "panel_display.lua", "spds.lua");
     private record Scenario(String name, String file, String error, String... args) { }
     private static final List<Scenario> DEFAULT_SCENARIOS = List.of(
             new Scenario("startup-motion", "startup.lua", null, "left", ".2", "1", "2", "15", ".05"),
@@ -89,7 +95,13 @@ public final class LuaExamplesCheck {
             new Scenario("panel-unformed-two-frames", "panel_display.lua", null, "left", "right", "BWR-STATUS", "2", ".05"),
             new Scenario("panel-missing-label", "panel_display.lua", "No panel component labelled", "left", "right", "ABSENT", "once"),
             new Scenario("panel-invalid-interval", "panel_display.lua", "Interval", "left", "right", "BWR-STATUS", "once", "bad"),
-            new Scenario("panel-missing-reactor", "panel_display.lua", "No peripheral named", "left", "missing", "BWR-STATUS", "once")
+            new Scenario("panel-missing-reactor", "panel_display.lua", "No peripheral named", "left", "missing", "BWR-STATUS", "once"),
+            new Scenario("spds-two-frames", "spds.lua", null, "left", "right", "SPDS", "2", ".05"),
+            new Scenario("spds-unformed", "spds.lua", null, "left", "right", "SPDS", "once"),
+            new Scenario("spds-touch", "spds.lua", null, "left", "right", "SPDS", "20", ".2"),
+            new Scenario("spds-builtin-display", "spds.lua", "built-in page", "left", "right", "SPDS", "once"),
+            new Scenario("spds-missing-label", "spds.lua", "No plant computer labelled", "left", "right", "ABSENT", "once"),
+            new Scenario("spds-small-display", "spds.lua", "at least 24 x 12", "left", "right", "SPDS", "once")
     );
     private static final List<Scenario> SCENARIOS = scenarios();
     private static List<Scenario> scenarios() {
@@ -177,6 +189,8 @@ public final class LuaExamplesCheck {
                 phase = 2;
                 phaseTicks = 0;
             } else if (phase == 2) {
+                // spds-touch: a player touches soft key 2 while the program runs; it must show its second page.
+                if (fixture.scenario.name().equals("spds-touch") && phaseTicks == 30) fixture.touch();
                 // The Lua filesystem and server tick run independently. The marker
                 // is written only after the entire JSON result has been closed.
                 if (!TOKEN.equals(fixture.read("l5-result-ready"))) return;
@@ -309,6 +323,9 @@ public final class LuaExamplesCheck {
         MainSteamIsolationValveBlockEntity msiv;
         ContainmentPenetrationBlockEntity penetration;
         GraphicDisplayData graphic;
+        PlantComputerData plant;
+        PanelComponent plantComponent;
+        PanelBlockEntity plantOwner;
         boolean closed;
 
         Fixture(ServerLevel level, int slot, Scenario scenario) {
@@ -321,7 +338,7 @@ public final class LuaExamplesCheck {
             hold(true);
             clear(); // Required even on the first run: the dedicated test world is reused.
             if (scenario.file().equals("startup.lua") || scenario.file().equals("backup_scram.lua")
-                    || scenario.file().equals("panel_display.lua")) buildReactor();
+                    || scenario.file().equals("panel_display.lua") || scenario.file().equals("spds.lua")) buildReactor();
             switch (scenario.file()) {
                 case "startup.lua", "backup_scram.lua" -> attach("left", reactor.getBlockPos(), "bwr_reactor");
                 case "eccs_start.lua" -> {
@@ -366,6 +383,23 @@ public final class LuaExamplesCheck {
                     attach("left", panel, "bwr_panel");
                     attach("right", reactor.getBlockPos(), "bwr_reactor");
                 }
+                case "spds.lua" -> {
+                    // A plant computer on a 4 x 3 block panel wall (a 2 x 2 wall and a 32 x 24 one for the small display).
+                    boolean small = scenario.name().equals("spds-small-display");
+                    BlockPos panel = origin.offset(12, 4, 0);
+                    for (int x = 0; x < (small ? 2 : 4); x++) for (int y = 0; y < (small ? 2 : 3); y++)
+                        level.setBlock(panel.offset(-x, -y, 0), BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState()
+                                .setValue(PanelBlock.FACING, Direction.NORTH), 3);
+                    plantComponent = PanelOps.placeDirect(level, panel, 0, 0, ComponentTypes.PLANT_COMPUTER,
+                            small ? Footprint.of(32, 24) : Footprint.of(64, 48));
+                    require(plantComponent != null, "plant computer fixture did not fit");
+                    plantComponent.setLabel("SPDS");
+                    plant = (PlantComputerData) plantComponent.data();
+                    plantOwner = (PanelBlockEntity) level.getBlockEntity(panel);
+                    if (scenario.name().equals("spds-builtin-display")) plant.mode = "overview";
+                    attach("left", panel, "bwr_panel");
+                    attach("right", reactor.getBlockPos(), "bwr_reactor");
+                }
                 default -> throw new AssertionError("unknown script fixture");
             }
             BlockPos computerPos = origin.offset(22, 0, 0);
@@ -398,7 +432,8 @@ public final class LuaExamplesCheck {
         }
 
         void buildReactor() throws Exception {
-            boolean unformed = scenario.name().equals("backup-unformed") || scenario.name().equals("panel-unformed-two-frames");
+            boolean unformed = scenario.name().equals("backup-unformed") || scenario.name().equals("panel-unformed-two-frames")
+                    || scenario.name().equals("spds-unformed");
             if (unformed) {
                 level.setBlock(origin, BwrBlocks.REACTOR_CONTROLLER.get().defaultBlockState(), 3);
                 reactor = (ReactorControllerBlockEntity) level.getBlockEntity(origin);
@@ -559,6 +594,7 @@ public final class LuaExamplesCheck {
                 if (name.equals("isolation-closure")) require(!penetration.demandOpen() && penetration.isIsolated(), "penetration did not close");
                 if (name.equals("isolation-refused")) require(penetration.demandOpen() && penetration.position() == 1, "non-valved service was changed despite refusal");
             }
+            if (plant != null) verifyPlant(out);
             if (graphic != null) {
                 int lit = 0;
                 for (int y = 0; y < graphic.height(); y++) for (int x = 0; x < graphic.width(); x++)
@@ -577,6 +613,67 @@ public final class LuaExamplesCheck {
                 } else require(lit == 0, "failed panel preflight changed pixels");
             }
             return out;
+        }
+
+        /** A player touches soft key 2 of the plant computer, as the client's click would. */
+        void touch() {
+            PlantLayout layout = plant.layout();
+            double click = plantComponent.type().clickValue(plantComponent, layout.left() + (layout.keyStart(2) + 0.5) * layout.cellW(),
+                    layout.top() + (layout.rows() - 0.5) * layout.cellH());
+            require(plantComponent.type().operate(new dev.bwr.mod.panel.component.ComponentType.OperateContext(level, null, plantOwner, plantComponent),
+                    OperateAction.PRESS, click), "the soft key was not there to touch");
+        }
+
+        /** What the plant computer shows after the program: its pages, the safety function tiles and trends. */
+        void verifyPlant(JsonObject out) {
+            PlantState program = plant.program();
+            String name = scenario.name();
+            out.addProperty("plant_pages", program.definedPages());
+            out.addProperty("plant_elements", program.elementCount());
+            out.addProperty("plant_page_shown", program.selected() + 1);
+            if (scenario.error() != null) {
+                require(program.isEmpty(), "a refused SPDS program drew something: " + program.elementCount() + " elements");
+                return;
+            }
+            require(program.definedPages() == 3 && program.page(0).title.equals("SAFETY FUNCTIONS"), "the SPDS has its three pages");
+            String[] tiles = new String[6];
+            for (int i = 1; i <= 6; i++) {
+                var tile = program.element(0, "csf" + i);
+                require(tile != null, "tile csf" + i + " is missing");
+                tiles[i - 1] = dev.bwr.mod.panel.plant.PlantColors.STATES.get(tile.state);
+            }
+            out.addProperty("plant_tiles", String.join(",", tiles));
+            if (name.equals("spds-unformed")) {
+                for (String state : tiles) require(state.equals("off"), "an unformed reactor leaves every tile off: " + String.join(",", tiles));
+                require(program.element(0, "msg").text.equals("REACTOR NOT FORMED"), "and says so: " + program.element(0, "msg").text);
+                require(program.element(0, "pwr1").count == 0 && program.element(2, "power").valueText().equals("---"), "no trend points and no numbers");
+                return;
+            }
+            // A cold, shut down, empty-containment fixture: reactivity, heat sink, RPV integrity and containment are green;
+            // the two level based functions follow the fixture's own indicated level by the script's published limits.
+            double level = reactor.core().getIndicatedLevelIn();
+            double taf = dev.bwr.core.PhysicalConstants.TAF_ON_INSTRUMENT_SCALE_IN;
+            out.addProperty("plant_indicated_level_in", level);
+            require(tiles[0].equals("ok") && tiles[2].equals("ok") && tiles[3].equals("ok") && tiles[4].equals("ok"),
+                    "reactivity, heat sink, RPV integrity and containment: " + String.join(",", tiles));
+            require(tiles[1].equals(level < taf ? "alarm" : "ok"), "core cooling follows the level: " + tiles[1] + " at " + level);
+            double margin = level - taf;
+            require(tiles[5].equals(margin < 20 ? "alarm" : margin < 120 ? "warn" : "ok"), "inventory follows the level: " + tiles[5] + " at " + level);
+            int frames = name.equals("spds-two-frames") ? 2 : name.equals("spds-touch") ? 20 : 1;
+            require(program.element(0, "pwr1").count == frames && program.element(1, "lvl").count == frames
+                    && program.element(1, "prs").count == frames, "one trend point a frame: " + program.element(0, "pwr1").count);
+            require(!program.element(2, "pressure").valueText().equals("---") && !program.element(2, "level").valueText().equals("---"),
+                    "page 3 shows numbers");
+            require(!program.element(0, "msg").text.equals("WAITING FOR DATA"), "the message line was written: " + program.element(0, "msg").text);
+            if (name.equals("spds-touch")) {
+                require(program.selected() == 1, "touching soft key 2 showed page 2, the page shown is " + (program.selected() + 1));
+            } else {
+                require(program.selected() == 0, "page 1 stays shown");
+            }
+            // the state a client would be sent is the state the program built
+            PlantState client = new PlantState();
+            require(client.loadFull(program.encodeFull()) && java.util.Arrays.equals(client.encodeFull(), program.encodeFull()),
+                    "the program's pages encode and decode");
         }
 
         void expectTextRow(int top, String text, int color) {
