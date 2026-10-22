@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "bwr:block/spent_fuel_pool_controller"
+  }
+}

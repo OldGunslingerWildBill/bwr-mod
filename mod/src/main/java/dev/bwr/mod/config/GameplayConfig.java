@@ -54,6 +54,12 @@ public final class GameplayConfig {
             .comment("Outward travel of an unlatched rod in notch spans per second; gameplay calibration")
             .defineInRange("rodDriftNotchesPerSecond", 0.1, 0.001, 24.0);
 
+    public static final ModConfigSpec.DoubleValue REPROCESSING_MAX_DECAY_HEAT_KW = BUILDER
+            .comment("Highest decay heat, in kW per assembly, at which the reprocessing plant will start on a spent assembly. "
+                    + "A fresh discharge is 100 to 300 kW; the default is reached in about one to two hours of cooling. "
+                    + "Zero turns the check off. Assemblies with no recorded discharge time count as long-cooled")
+            .defineInRange("reprocessingMaxDecayHeatKw", 50.0, 0.0, 100_000.0);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static double failureHazardPerSecond() { return read(FAILURE_HAZARD_PER_SECOND); }
@@ -62,6 +68,7 @@ public final class GameplayConfig {
     public static double contaminationDoseMultiplier() { return read(CONTAMINATION_DOSE_MULTIPLIER); }
     public static double wallStrengthK() { return read(WALL_STRENGTH_K); }
     public static double wallStrengthCapPsig() { return read(WALL_STRENGTH_CAP_PSIG); }
+    public static double reprocessingMaxDecayHeatKw() { return read(REPROCESSING_MAX_DECAY_HEAT_KW); }
     public static int tritiumSamplesPerRod() {
         return SPEC.isLoaded() ? TRITIUM_SAMPLES_PER_ROD.get() : TRITIUM_SAMPLES_PER_ROD.getDefault();
     }

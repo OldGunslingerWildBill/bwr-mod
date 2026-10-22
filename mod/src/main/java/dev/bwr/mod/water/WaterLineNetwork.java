@@ -44,6 +44,7 @@ public final class WaterLineNetwork {
         if(state.getBlock() instanceof dev.bwr.mod.rods.ControlRodDriveBlock)return true;
         if(state.getBlock() instanceof WaterDischargeBlock)return face==state.getValue(WaterDischargeBlock.FACING).getOpposite();
         if(state.getBlock() instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlock)return face==state.getValue(dev.bwr.mod.suppression.SuppressionPoolPortBlock.FACING);
+        if(state.getBlock() instanceof dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock)return face==state.getValue(dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock.FACING);
         if(state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock)return face.getAxis().isHorizontal();
         if(state.getBlock() instanceof dev.bwr.mod.containment.ContainmentSprayHeaderBlock)return true;
         if(state.getBlock() instanceof CondensateStorageTankBlock)return CondensateStorageTankBlock.acceptsWater(state,face);
@@ -104,6 +105,8 @@ public final class WaterLineNetwork {
                     var p=end.pos();var state=dev.bwr.mod.world.LoadedWorld.state(level,p);if(state==null)continue;var face=end.face();
                     boolean receiver=state.is(BwrBlocks.CONTROL_ROD_DRIVE.get())||state.is(BwrBlocks.WATER_DISCHARGE_PORT.get())||state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())
                             || state.is(BwrBlocks.SUPPRESSION_POOL_RETURN.get())
+                            || state.is(BwrBlocks.SPENT_FUEL_POOL_MAKEUP_PORT.get())
+                            || state.is(BwrBlocks.SPENT_FUEL_POOL_COOLING_IN.get())
                             || state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock
                             && face==dev.bwr.mod.suppression.RhrHeatExchangerBlock.coldIn(state)
                             || state.getBlock() instanceof dev.bwr.mod.cooling.CoolingBlock

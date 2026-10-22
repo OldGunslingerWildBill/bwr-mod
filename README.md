@@ -146,6 +146,8 @@ trains now exhaust to a separate condenser with bypass and cooling-water ports.
 **Turbine admission is controlled at the upstream valve.** Pump, ownership,
 inventory and chunk-lifecycle fixes include permanent regression checks.
 
+**Spent fuel pool:** a discharged assembly keeps its decay heat (315 kW at discharge for a 45 GWd/t assembly, 23 kW a day later), the reprocessing plant waits until it has cooled, and the pool is where it cools: a lined box with racks, a cooling train you build and run, makeup water you supply, and a heat balance that boils the water and uncovers the fuel if you let it. Nothing in it starts by itself. See [the spent fuel pool](SPENT-FUEL-POOL.md).
+
 **Fuel update:** a separate **Realistic BWR: Fuel & Rods** creative tab contains
 17 selectable fuel grades and eight specialty rods, with new Blender-rendered PNG icons.
 Uranium ranges from natural uranium through 20%; MOX, plutonium and thorium

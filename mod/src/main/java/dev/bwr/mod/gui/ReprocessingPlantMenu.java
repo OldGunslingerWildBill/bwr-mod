@@ -133,6 +133,25 @@ public class ReprocessingPlantMenu extends BwrMenu {
     private FuelAssemblyData cachedData;
     private SpentFuel.Split cachedSplit;
 
+    /** Decay power of the assembly in the input slot now, W, worked out on this side from the item and the game time. */
+    public double assemblyDecayWatts() {
+        var level = level();
+        return level == null ? 0.0 : dev.bwr.mod.fuel.SpentFuelHeat.decayWatts(assembly(), level.getGameTime());
+    }
+
+    /** True when the assembly in the slot is above the plant's decay heat limit and the plant has not started on it. */
+    public boolean assemblyTooHot() {
+        var level = level();
+        return level != null && workTicks == 0 && Reprocessing.accepts(assembly())
+                && dev.bwr.mod.fuel.SpentFuelHeat.tooHotToReprocess(assembly(), level.getGameTime());
+    }
+
+    /** Seconds until the assembly in the slot is cool enough, from the item and the game time. */
+    public double assemblySecondsUntilCool() {
+        var level = level();
+        return level == null ? 0.0 : dev.bwr.mod.fuel.SpentFuelHeat.secondsUntilReprocessable(assembly(), level.getGameTime());
+    }
+
     /** Work done on the assembly in the slot, 0..1. */
     public double progress() {
         return clampFraction(workTicks / (double) Reprocessing.WORK_TICKS);

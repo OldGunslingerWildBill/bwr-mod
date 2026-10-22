@@ -216,6 +216,31 @@ public final class BwrBlocks {
     public static final DeferredBlock<ReprocessingPlantBlock> REPROCESSING_PLANT =
             BLOCKS.register("reprocessing_plant", () -> new ReprocessingPlantBlock(machine()));
 
+    // --- Spent fuel pool (the fuel cycle: fabricator, reactor, pool, reprocessing plant) ----------
+
+    /** Lined concrete floor and walls of a spent fuel pool. */
+    public static final DeferredBlock<dev.bwr.mod.spentfuel.SpentFuelPoolWallBlock> SPENT_FUEL_POOL_WALL =
+            BLOCKS.register("spent_fuel_pool_wall", () -> new dev.bwr.mod.spentfuel.SpentFuelPoolWallBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(4.0F, 40.0F)
+                            .sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    /** The controller: one block of the shell, the pool's only ticker. */
+    public static final DeferredBlock<dev.bwr.mod.spentfuel.SpentFuelPoolControllerBlock> SPENT_FUEL_POOL_CONTROLLER =
+            BLOCKS.register("spent_fuel_pool_controller", () -> new dev.bwr.mod.spentfuel.SpentFuelPoolControllerBlock(machine()));
+    /** A rack of four cells that stands on the floor of the pool. */
+    public static final DeferredBlock<dev.bwr.mod.spentfuel.SpentFuelRackBlock> SPENT_FUEL_RACK =
+            BLOCKS.register("spent_fuel_rack", () -> new dev.bwr.mod.spentfuel.SpentFuelRackBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 30.0F)
+                            .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
+    public static final DeferredBlock<dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock> SPENT_FUEL_POOL_MAKEUP_PORT =
+            BLOCKS.register("spent_fuel_pool_makeup_port", () -> new dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock(
+                    machine(), dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock.Kind.MAKEUP));
+    public static final DeferredBlock<dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock> SPENT_FUEL_POOL_COOLING_IN =
+            BLOCKS.register("spent_fuel_pool_cooling_in", () -> new dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock(
+                    machine(), dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock.Kind.COOLING_IN));
+    public static final DeferredBlock<dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock> SPENT_FUEL_POOL_COOLING_OUT =
+            BLOCKS.register("spent_fuel_pool_cooling_out", () -> new dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock(
+                    machine(), dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock.Kind.COOLING_OUT));
+
     // --- Emergency core cooling (SPEC section 9) ------------------------
     //
     // Six injection machines, all the same block class carrying a different

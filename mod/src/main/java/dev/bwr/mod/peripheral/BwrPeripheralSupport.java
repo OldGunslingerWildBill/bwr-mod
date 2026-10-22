@@ -83,6 +83,7 @@ public final class BwrPeripheralSupport {
         if(be instanceof RecirculationPumpBlockEntity b)return new RecirculationPumpPeripheral(b);
         if(be instanceof ReactorControllerBlockEntity b)return new ReactorPeripheral(b);
         if(be instanceof ContainmentControllerBlockEntity b)return new ContainmentPeripheral(b);
+        if(be instanceof dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity b)return new SpentFuelPoolPeripheral(b);
         if(be instanceof SuppressionPoolBlockEntity b)return new SuppressionPoolPeripheral(b);
         if(be instanceof SuppressionPoolPortBlockEntity)return new SuppressionPoolPeripheral(null);
         if(be instanceof TurbineSteamOutletBlockEntity b)return new TurbineSteamOutletPeripheral(b);
@@ -107,7 +108,10 @@ public final class BwrPeripheralSupport {
             var m=new LinkedHashMap<String,Object>();var held=b.input().getStackInSlot(0);
             m.put("energyFE",b.energy().getEnergyStored());m.put("working",b.workTicks()>0);m.put("progress",b.workTicks()/(double)dev.bwr.mod.fuel.Reprocessing.WORK_TICKS);
             m.put("hasAssembly",!held.isEmpty());
-            if(!held.isEmpty()){var d=dev.bwr.mod.fuel.FuelAssemblies.dataOf(held);m.put("assemblyFuel",d.fuelTypeName());m.put("assemblyBurnupMwdPerTonne",d.burnupMwdPerTonne());m.put("accepted",dev.bwr.mod.fuel.Reprocessing.accepts(held));}
+            if(!held.isEmpty()){var d=dev.bwr.mod.fuel.FuelAssemblies.dataOf(held);m.put("assemblyFuel",d.fuelTypeName());m.put("assemblyBurnupMwdPerTonne",d.burnupMwdPerTonne());m.put("accepted",dev.bwr.mod.fuel.Reprocessing.accepts(held));
+                m.put("assemblyDecayHeatKW",b.inputDecayWatts()/1000.0);m.put("tooHot",b.isTooHot());
+                double cool=b.secondsUntilCool();m.put("secondsUntilCool",Double.isInfinite(cool)?-1.0:cool);}
+            m.put("decayHeatLimitKW",dev.bwr.mod.fuel.SpentFuelHeat.reprocessingLimitWatts()/1000.0);
             m.put("plutoniumHeldNuggets",b.plutoniumGrains()/(double)dev.bwr.mod.fuel.Reprocessing.GRAINS_PER_NUGGET);
             m.put("depletedUraniumHeldIngots",b.uraniumGrains()/(double)dev.bwr.mod.fuel.Reprocessing.GRAINS_PER_INGOT);
             m.put("wasteHeld",b.wasteGrains()/(double)dev.bwr.mod.fuel.Reprocessing.GRAINS_PER_NUGGET);

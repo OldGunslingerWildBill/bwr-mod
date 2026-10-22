@@ -63,6 +63,12 @@
     "bwr:mimic_band_black",
     "bwr:wall_display",
     "bwr:wall_display_wide",
-    "bwr:control_stand"
+    "bwr:control_stand",
+    "bwr:spent_fuel_pool_wall",
+    "bwr:spent_fuel_pool_controller",
+    "bwr:spent_fuel_rack",
+    "bwr:spent_fuel_pool_makeup_port",
+    "bwr:spent_fuel_pool_cooling_in",
+    "bwr:spent_fuel_pool_cooling_out"
   ]
 }
