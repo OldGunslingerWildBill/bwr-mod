@@ -162,8 +162,8 @@ has a fixed pressure rating (config).
   4×4 variant, in a wall plane with a frame. Use a placement preview, like the
   condenser's green/red preview.
 - States: CLOSED_SEALED, OPENING, OPEN, CLOSING, DAMAGED_JAMMED.
-- Swing time about 10 s when powered (FE buffer, like the MSIV). A handwheel
-  right-click works without power, slowly (about 60 s). Redstone and CC control
+- Swing time 2.5 s when powered (FE buffer, like the MSIV). A handwheel
+  right-click works without power, slower (8 s). Redstone and CC control
   are available.
 - Sealed only in CLOSED_SEALED. Any other state is a large leak path.
 - Rating: 200 psig. It's the strongest opening, but still weaker than a deep

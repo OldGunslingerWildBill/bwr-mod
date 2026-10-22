@@ -22,15 +22,17 @@ The vault doors (3x3 and 4x4) and the personnel airlock have new Blender models 
 
 | | before | now |
 | --- | --- | --- |
-| vault powered stroke | 200 ticks (10 s) | 200 ticks, unchanged (see "Stopped on" below) |
-| vault hand-wheel stroke | 1200 ticks (60 s) | 1200 ticks, unchanged |
-| vault latch step | none | the first 28 % of every stroke: the wheel turns 1.5 times and the dogs slide 0.26 blocks out of their keepers, then the leaf swings (82 degrees) |
-| vault walkable / solid again | at tick 0 of opening / at the end of closing | from half open: at tick 128 of a 200 tick opening, solid again from tick 72 of a closing |
+| vault powered stroke | 200 ticks (10 s) | 50 ticks (2.5 s) |
+| vault hand-wheel stroke | 1200 ticks (60 s) | 160 ticks (8 s); the message says "(8 s)" (key `..._engaged_8_s`) |
+| vault latch step | none | the first 28 % of every stroke (14 ticks of a powered one): the wheel turns 1.5 times and the dogs slide 0.26 blocks out of their keepers, then the leaf swings (82 degrees) |
+| vault walkable / solid again | at tick 0 of opening / at the end of closing | from half open: at tick 32 of a 50 tick opening, solid again from tick 18 of a closing |
 | vault FE | 8,000 FE a stroke | unchanged |
 | airlock leaf | 12 tick drawn swing, collision at once | 12 ticks (0.6 s, the same speed as the old drawing): 3 of wheel, 9 of swing; walkable from tick 8 of an opening; a leaf that is more than half open stays walkable until it is half shut |
 | airlock interlock | decided at once | decided at once (unchanged); the second leaf's drawn motion waits for the first to finish shutting, so the two are never drawn open together |
 
 **Stopped on.** `Alpha31VaultDoorTests.closedDoorSealsPoweredSwingLeaksAndReseals` asserts `StrokeEnd - StrokeStart == 200` ("powered vault swing is not 10 seconds") and `== 1200` ("manual handwheel stroke is not 60 seconds"). The vault's stroke length therefore stays 200 / 1200 here; the proposed 50 ticks (2.5 s) powered and 160 ticks (8 s) hand-wheel, with the two assertions changed to those numbers, is ready as a separate commit on branch `containment-doors-fast-vault`. A third assertion pins it too, found when that branch ran the suite: `Alpha31OpeningsAcceptanceTests.vaultPowerAndStrokeSurviveNbt` asserts a saved powered stroke of `== 200`. Nothing else in this entry depends on the stroke length (`DoorMotion.VAULT_POWERED_TICKS` / `VAULT_MANUAL_TICKS`).
+
+**Applied on this branch (the owner decides).** `Alpha31VaultDoorTests.closedDoorSealsPoweredSwingLeaksAndReseals` asserts `StrokeEnd - StrokeStart == 200` ("powered vault swing is not 10 seconds") and `== 1200` ("manual handwheel stroke is not 60 seconds"). Those two assertions were changed to 50 and 160 (and their messages to 2.5 s and 8 s), and so was a third found when the suite ran: `Alpha31OpeningsAcceptanceTests.vaultPowerAndStrokeSurviveNbt` asserts a saved powered stroke of `== 200` (now `== 50`). That is why this is a separate commit. A vault saved mid-stroke by an older build (a duration of exactly 200 or 1200 ticks) is rescaled on load to the same progress in the new length (`rescaleLegacyStroke`). New tests: `vaultStrokeMeetsTheTargets`, `vaultSavedMidStrokeBeforeTheRetimeFinishesInTheNewTime`.
 
 ### Collision follows the drawing
 

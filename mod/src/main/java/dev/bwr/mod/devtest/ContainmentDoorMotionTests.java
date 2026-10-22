@@ -221,6 +221,43 @@ public final class ContainmentDoorMotionTests {
         });
     }
 
+    /** The owner's targets: a vault door opens or closes in 2 to 3 seconds with power, and the hand-wheel is a fraction of a minute. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void vaultStrokeMeetsTheTargets(GameTestHelper helper) {
+        helper.assertTrue(ContainmentVaultDoorBlockEntity.POWERED_TICKS >= 40 && ContainmentVaultDoorBlockEntity.POWERED_TICKS <= 60,
+                "powered vault stroke is " + ContainmentVaultDoorBlockEntity.POWERED_TICKS + " ticks, not 2 to 3 seconds");
+        helper.assertTrue(ContainmentVaultDoorBlockEntity.MANUAL_TICKS <= 200 && ContainmentVaultDoorBlockEntity.MANUAL_TICKS > ContainmentVaultDoorBlockEntity.POWERED_TICKS,
+                "hand-wheel stroke is " + ContainmentVaultDoorBlockEntity.MANUAL_TICKS + " ticks");
+        helper.succeed();
+    }
+
+    /** A door saved half way through an old 60 s hand-wheel stroke (or 10 s powered one) finishes in the new time, from where it was. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void vaultSavedMidStrokeBeforeTheRetimeFinishesInTheNewTime(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos origin = new BlockPos(47612, 220, 47612);
+        chunks(level, origin, 8, true);
+        air(level, origin, 6);
+        var door = vault(level, origin, 3);
+        long now = level.getGameTime();
+        for (int legacy : new int[] {DoorMotion.LEGACY_MANUAL_TICKS, DoorMotion.LEGACY_POWERED_TICKS}) {
+            var tag = door.saveWithoutMetadata(level.registryAccess());
+            tag.putString("State", "OPENING");
+            tag.putLong("StrokeStart", now - legacy / 2);
+            tag.putLong("StrokeEnd", now + legacy / 2);
+            door.loadWithComponents(tag, level.registryAccess());
+            door.onLoad();
+            var saved = door.saveWithoutMetadata(level.registryAccess());
+            long target = legacy == DoorMotion.LEGACY_MANUAL_TICKS ? ContainmentVaultDoorBlockEntity.MANUAL_TICKS : ContainmentVaultDoorBlockEntity.POWERED_TICKS;
+            helper.assertTrue(saved.getLong("StrokeEnd") - saved.getLong("StrokeStart") == target,
+                    "an old " + legacy + " tick stroke was not rescaled to " + target + ": " + (saved.getLong("StrokeEnd") - saved.getLong("StrokeStart")));
+            helper.assertTrue(saved.getLong("StrokeEnd") - now == target / 2,
+                    "an old stroke saved half way did not have half of the new stroke left: " + (saved.getLong("StrokeEnd") - now));
+        }
+        chunks(level, origin, 8, false);
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void clientStrokeClockStartsAtArrivalAndJoinsOnTheServerClock(GameTestHelper helper) {
         var clock = new DoorMotion.StrokeClock();

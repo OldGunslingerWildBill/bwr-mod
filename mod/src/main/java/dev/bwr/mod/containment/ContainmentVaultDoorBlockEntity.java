@@ -128,7 +128,22 @@ public final class ContainmentVaultDoorBlockEntity extends BlockEntity {
     }
     @Override public void onLoad(){
         super.onLoad();
-        if(level instanceof ServerLevel&&(state==State.OPENING||state==State.CLOSING))finishStroke();
+        if(level instanceof ServerLevel server&&(state==State.OPENING||state==State.CLOSING)){
+            rescaleLegacyStroke(server.getGameTime());
+            finishStroke();
+        }
+    }
+    /**
+     * A stroke saved before the doors were retimed carries the old duration. Keep how far along it was and let it finish in the
+     * current time instead of running on for the old one (a hand-wheel stroke was a minute, a powered one ten seconds).
+     */
+    private void rescaleLegacyStroke(long now){
+        long duration=strokeEnd-strokeStart;
+        long target=duration==DoorMotion.LEGACY_POWERED_TICKS?POWERED_TICKS:duration==DoorMotion.LEGACY_MANUAL_TICKS?MANUAL_TICKS:duration;
+        if(target==duration||duration<=0)return;
+        double done=DoorMotion.clamp01((now-strokeStart)/(double)duration);
+        strokeStart=now-Math.round(done*target);strokeEnd=strokeStart+target;
+        setChanged();
     }
     @Override protected void saveAdditional(CompoundTag tag,HolderLookup.Provider registries){
         super.saveAdditional(tag,registries);
