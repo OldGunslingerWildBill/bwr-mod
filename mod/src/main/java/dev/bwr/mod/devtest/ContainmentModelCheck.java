@@ -2,6 +2,7 @@ package dev.bwr.mod.devtest;
 
 import com.mojang.logging.LogUtils;
 import dev.bwr.mod.containment.client.AirlockRenderer;
+import dev.bwr.mod.containment.client.DoorLens;
 import dev.bwr.mod.containment.client.VaultDoorRenderer;
 import dev.bwr.mod.registry.BwrBlocks;
 import net.minecraft.client.renderer.block.BlockModelShaper;
@@ -25,8 +26,14 @@ public final class ContainmentModelCheck {
             throw new AssertionError("Missing containment texture "+id);
     }
     public static void run(ModelEvent.BakingCompleted event){
-        for(var id:new ModelResourceLocation[]{VaultDoorRenderer.FRAME3,VaultDoorRenderer.LEAF3,
-                VaultDoorRenderer.FRAME4,VaultDoorRenderer.LEAF4,AirlockRenderer.FRAME,AirlockRenderer.INNER,AirlockRenderer.OUTER})
+        var parts=new java.util.ArrayList<>(java.util.List.of(VaultDoorRenderer.FRAME3,VaultDoorRenderer.LEAF3,
+                VaultDoorRenderer.FRAME4,VaultDoorRenderer.LEAF4,AirlockRenderer.FRAME,AirlockRenderer.INNER,AirlockRenderer.OUTER,
+                AirlockRenderer.WHEEL,AirlockRenderer.VALVE_WHEEL,DoorLens.RED,DoorLens.AMBER,DoorLens.GREEN));
+        for(int i=0;i<2;i++){
+            parts.add(VaultDoorRenderer.DOGS_RIGHT[i]);parts.add(VaultDoorRenderer.DOGS_TOP[i]);
+            parts.add(VaultDoorRenderer.DOGS_BOTTOM[i]);parts.add(VaultDoorRenderer.WHEEL[i]);
+        }
+        for(var id:parts)
             check(event.getModels().get(id),event,id.toString());
         for(var block:new net.minecraft.world.level.block.Block[]{BwrBlocks.CONTAINMENT_VAULT_DOOR.get(),
                 BwrBlocks.CONTAINMENT_VAULT_DOOR_4X4.get(),BwrBlocks.CONTAINMENT_AIRLOCK.get(),
@@ -41,6 +48,6 @@ public final class ContainmentModelCheck {
                 check(event.getModels().get(BlockModelShaper.stateToModelLocation(state)),event,id+" facing "+facing);
             }
         }
-        LogUtils.getLogger().info("CONTAINMENT MODEL CHECK PASS: vault, airlock and five Blender sleeves with all facings");
+        LogUtils.getLogger().info("CONTAINMENT MODEL CHECK PASS: vault, airlock, their latch dogs, wheels and lenses, and five Blender sleeves with all facings");
     }
 }

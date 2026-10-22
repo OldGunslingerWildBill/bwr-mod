@@ -97,6 +97,8 @@ neoForge {
             if (project.hasProperty('bwrPanelClientStages')) jvmArguments.add('-Dbwr.panelClientStages=' + project.property('bwrPanelClientStages'))
             if (project.hasProperty('bwrPanelFixtureModels')) jvmArguments.add('-Dbwr.panelFixtureModels=true')
             if (project.hasProperty('bwrContainmentClientCheck')) jvmArguments.add('-Dbwr.containmentClientCheck=true')
+            // Door pictures for the old/new comparison: -PbwrContainmentDoorShots=<label> saves run/turbineModelCheck/containment-door-shots/<label>/.
+            if (project.hasProperty('bwrContainmentDoorShots')) jvmArguments.add('-Dbwr.containmentDoorShots=' + project.property('bwrContainmentDoorShots'))
             if (project.hasProperty('bwrPanelPerformanceCheck')) jvmArguments.add('-Dbwr.panelPerformanceCheck=true')
             if (project.hasProperty('bwrPanelPerformanceStages')) jvmArguments.add('-Dbwr.panelPerformanceStages=' + project.property('bwrPanelPerformanceStages'))
             if (project.hasProperty('bwrPanelImmediate')) jvmArguments.add('-Dbwr.panelImmediate=true')

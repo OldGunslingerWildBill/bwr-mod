@@ -34,15 +34,18 @@ public final class ContainmentAirlockBlock extends BaseEntityBlock {
     public static final IntegerProperty CELL=IntegerProperty.create("cell",0,5);
     public static final BooleanProperty INNER_OPEN=BooleanProperty.create("inner_open");
     public static final BooleanProperty OUTER_OPEN=BooleanProperty.create("outer_open");
+    /** While a leaf is drawn moving its cells keep the old collision until it has swung clear: 0 follow the state, 1 solid, 2 clear. */
+    public static final IntegerProperty INNER_MOVE=IntegerProperty.create("inner_move",0,2);
+    public static final IntegerProperty OUTER_MOVE=IntegerProperty.create("outer_move",0,2);
     private static final ThreadLocal<Boolean> REMOVING=ThreadLocal.withInitial(()->false);
     private static final MapCodec<ContainmentAirlockBlock> CODEC=simpleCodec(ContainmentAirlockBlock::new);
     public ContainmentAirlockBlock(Properties properties){
         super(properties.noOcclusion());
         registerDefaultState(stateDefinition.any().setValue(FACING,Direction.SOUTH).setValue(CELL,0)
-                .setValue(INNER_OPEN,false).setValue(OUTER_OPEN,false));
+                .setValue(INNER_OPEN,false).setValue(OUTER_OPEN,false).setValue(INNER_MOVE,0).setValue(OUTER_MOVE,0));
     }
     @Override protected MapCodec<? extends BaseEntityBlock> codec(){return CODEC;}
-    @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> b){b.add(FACING,CELL,INNER_OPEN,OUTER_OPEN);}
+    @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> b){b.add(FACING,CELL,INNER_OPEN,OUTER_OPEN,INNER_MOVE,OUTER_MOVE);}
     @Override protected RenderShape getRenderShape(BlockState state){return state.getValue(CELL)==0?RenderShape.ENTITYBLOCK_ANIMATED:RenderShape.INVISIBLE;}
     @Override public ContainmentAirlockBlockEntity newBlockEntity(BlockPos pos,BlockState state){return state.getValue(CELL)==0?new ContainmentAirlockBlockEntity(pos,state):null;}
     public BlockPos cell(BlockPos root,Direction facing,int index){return root.relative(facing,index/2).above(index%2);}
@@ -80,8 +83,18 @@ public final class ContainmentAirlockBlock extends BaseEntityBlock {
         int depth=state.getValue(CELL)/2;
         return depth==0?!state.getValue(INNER_OPEN):depth==2&&!state.getValue(OUTER_OPEN);
     }
+    /** What an entity bumps into: the interlock state, except while a leaf is still swinging (see INNER_MOVE). */
+    public boolean blocks(BlockState state){
+        int depth=state.getValue(CELL)/2;
+        if(depth==1)return false;
+        int hold=state.getValue(depth==0?INNER_MOVE:OUTER_MOVE);
+        return hold==1||hold==0&&!state.getValue(depth==0?INNER_OPEN:OUTER_OPEN);
+    }
     @Override protected VoxelShape getCollisionShape(BlockState state,BlockGetter level,BlockPos pos,CollisionContext context){
-        return seals(state)?Shapes.block():Shapes.empty();
+        return blocks(state)?Shapes.block():Shapes.empty();
+    }
+    @Override protected void tick(BlockState state,net.minecraft.server.level.ServerLevel level,BlockPos pos,net.minecraft.util.RandomSource random){
+        if(state.getValue(CELL)==0&&level.getBlockEntity(pos) instanceof ContainmentAirlockBlockEntity owner)owner.settle();
     }
     @Override protected VoxelShape getShape(BlockState state,BlockGetter level,BlockPos pos,CollisionContext context){return Shapes.block();}
     @Override protected InteractionResult useWithoutItem(BlockState state,Level level,BlockPos pos,Player player,BlockHitResult hit){

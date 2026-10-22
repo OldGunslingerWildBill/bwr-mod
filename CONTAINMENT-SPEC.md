@@ -168,8 +168,15 @@ has a fixed pressure rating (config).
 - Sealed only in CLOSED_SEALED. Any other state is a large leak path.
 - Rating: 200 psig. It's the strongest opening, but still weaker than a deep
   reinforced-concrete wall, so in a mountain it becomes the weakest point.
-- Model: Blender-built like the other machines, with an animated swing and
-  dogging bars. The animation is client-side only.
+- Model: Blender-built like the other machines (`art/models/containment`): a
+  thick frame with keeper notches, a hinge groove and a status lamp column; a
+  ribbed leaf; latch dogs and a hand-wheel as their own meshes. A stroke first
+  turns the wheel and slides the dogs out of their keepers (the first 28 %),
+  then swings the leaf 82 degrees into the room about its hinge pin. The
+  animation is drawn on the client from the block entity's stroke times.
+- Collision follows the drawing: the seal breaks at the start of an opening
+  stroke, but the cells stay solid (`held`) until the leaf is half open, and a
+  closing leaf makes them solid again when it is half shut.
 
 ### 5.2 Personnel airlock — `bwr:containment_airlock`
 
@@ -182,6 +189,14 @@ has a fixed pressure rating (config).
   command that forces both doors open. Releasing it does not close either leaf;
   the medium leak persists until at least one leaf closes.
 - Rating: 120 psig.
+- Model: two D-shaped hatches in bulkhead plates, each with a hinge, a hand-wheel
+  on both faces and a lamp column (red open, amber moving, green shut and
+  latched); a pressure-equalising line with a valve wheel (decoration).
+- A leaf moves in 12 ticks: the wheel turns for 3, the leaf swings for 9. The
+  interlock is decided at once and is unchanged; what is drawn and what is
+  walkable follow the motion (`inner_move` / `outer_move` hold a leaf's cells
+  solid until it is half open, or open until it is half shut). The second
+  leaf's drawn motion waits for the first to finish shutting.
 
 ### 5.3 Penetrations
 
