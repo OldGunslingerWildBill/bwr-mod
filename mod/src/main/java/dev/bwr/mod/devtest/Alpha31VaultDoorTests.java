@@ -72,8 +72,8 @@ public final class Alpha31VaultDoorTests {
         hold(level,center,56,true);
         helper.assertTrue(door.setOpen(true,true),"powered vault refused opening command");
         var poweredSave=door.saveWithoutMetadata(level.registryAccess());
-        helper.assertTrue(poweredSave.getLong("StrokeEnd")-poweredSave.getLong("StrokeStart")==200,
-                "powered vault swing is not 10 seconds");
+        helper.assertTrue(poweredSave.getLong("StrokeEnd")-poweredSave.getLong("StrokeStart")==50,
+                "powered vault swing is not 2.5 seconds");
         survey(level,controller);
         helper.assertTrue(!controller.isSealed()&&door.state()==ContainmentVaultDoorBlockEntity.State.OPENING,
                 "swinging vault remained airtight: "+controller.statusLines()+" state="+door.state()
@@ -84,8 +84,8 @@ public final class Alpha31VaultDoorTests {
             helper.assertTrue(door.state()==ContainmentVaultDoorBlockEntity.State.CLOSING,
                     "manual closing sealed before stroke finished");
             var manualSave=door.saveWithoutMetadata(level.registryAccess());
-            helper.assertTrue(manualSave.getLong("StrokeEnd")-manualSave.getLong("StrokeStart")==1200,
-                    "manual handwheel stroke is not 60 seconds");
+            helper.assertTrue(manualSave.getLong("StrokeEnd")-manualSave.getLong("StrokeStart")==160,
+                    "manual handwheel stroke is not 8 seconds");
             door.jamBlownOpen();
             helper.assertTrue(door.state()==ContainmentVaultDoorBlockEntity.State.DAMAGED_JAMMED
                     &&!door.setOpen(false,false),"ruptured vault could be resealed");

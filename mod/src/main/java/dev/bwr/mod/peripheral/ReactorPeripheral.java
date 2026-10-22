@@ -1189,7 +1189,19 @@ public class ReactorPeripheral implements IPeripheral {
     /** The whole damage model as one table. See {@code BoundaryDamageReadout}. */
     @LuaFunction(mainThread = true)
     public final Map<String, Object> getBoundaryDamage() throws LuaException {
-        return BoundaryDamageReadout.toLua(core().getBoundaryStress());
+        var out = BoundaryDamageReadout.toLua(core().getBoundaryStress());
+        out.putAll(getBoundaryBreaks());
+        return out;
+    }
+
+    /**
+     * Every pressure-boundary break of this reactor, nozzle or along a line, and whether it is open to the vessel
+     * ({@code breaks}), plus the breaks sealed in the last minute ({@code sealed}). See {@code PORT-LOCA-UPDATE.md}.
+     */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> getBoundaryBreaks() throws LuaException {
+        core();
+        return BoundaryDamageReadout.breaksToLua(be.boundaryEffects(), be.getLevel() == null ? 0 : be.getLevel().getGameTime());
     }
 
     /**

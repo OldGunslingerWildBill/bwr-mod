@@ -15,9 +15,12 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 public final class ContainmentVaultDoorBlockEntity extends BlockEntity {
     public enum State { CLOSED_SEALED, OPENING, OPEN, CLOSING, DAMAGED_JAMMED }
     private static final int FE_CAPACITY=20_000, FE_STROKE=8_000;
+    /** Game ticks of a stroke: with power, and on the hand-wheel (see {@link DoorMotion}). */
+    public static final int POWERED_TICKS=DoorMotion.VAULT_POWERED_TICKS, MANUAL_TICKS=DoorMotion.VAULT_MANUAL_TICKS;
     private State state=State.CLOSED_SEALED;
     private int energyFe;
     private long strokeStart,strokeEnd;
+    private final DoorMotion.StrokeClock clientClock=new DoorMotion.StrokeClock();
     private boolean computerControlled;
     private final IEnergyStorage energy=new IEnergyStorage() {
         @Override public int receiveEnergy(int amount,boolean simulate){
@@ -38,14 +41,25 @@ public final class ContainmentVaultDoorBlockEntity extends BlockEntity {
     public IEnergyStorage energy(){return energy;}
     public boolean isComputerControlled(){return computerControlled;}
     public void setComputerControlled(boolean value){computerControlled=value;setChanged();}
-    public double swing(float partial){
+    /** Stroke position: 0 closed and latched, 1 fully open. */
+    public double position(float partial){
         if(level==null)return state==State.OPEN||state==State.DAMAGED_JAMMED?1:0;
         if(state==State.OPENING||state==State.CLOSING){
-            double t=Math.clamp((level.getGameTime()+partial-strokeStart)/(double)Math.max(1,strokeEnd-strokeStart),0,1);
+            double t=strokeFraction(partial);
             return state==State.OPENING?t:1-t;
         }
         return state==State.OPEN||state==State.DAMAGED_JAMMED?1:0;
     }
+    private double strokeFraction(float partial){
+        double duration=Math.max(1,strokeEnd-strokeStart),now=level.getGameTime()+partial;
+        return level.isClientSide()?clientClock.fraction(strokeStart,duration,state,now):DoorMotion.clamp01((now-strokeStart)/duration);
+    }
+    /** Open fraction of the leaf swing, 0 shut to 1 wide. */
+    public double swing(float partial){return DoorMotion.swing(position(partial),DoorMotion.VAULT_LATCH);}
+    /** How far the latch dogs have slid out of their keepers: 0 engaged, 1 clear. */
+    public double unlatched(float partial){return DoorMotion.unlatched(position(partial),DoorMotion.VAULT_LATCH);}
+    /** Turns of the hand-wheel so far. */
+    public double wheelTurns(float partial){return DoorMotion.wheelTurns(position(partial),DoorMotion.VAULT_LATCH);}
     public boolean handwheelToggle(){
         finishStroke();
         return (state==State.CLOSED_SEALED||state==State.OPEN)&&setOpen(state==State.CLOSED_SEALED,false);
@@ -59,39 +73,54 @@ public final class ContainmentVaultDoorBlockEntity extends BlockEntity {
         if(powered&&energyFe<FE_STROKE)return false;
         if(powered)energyFe-=FE_STROKE;
         state=open?State.OPENING:State.CLOSING;
-        strokeStart=level.getGameTime();strokeEnd=strokeStart+(powered?200:1200);
-        if(open)setSealed(false);
-        ((ServerLevel)level).scheduleTick(worldPosition,getBlockState().getBlock(),powered?200:1200);
+        strokeStart=level.getGameTime();strokeEnd=strokeStart+(powered?POWERED_TICKS:MANUAL_TICKS);
+        // The seal breaks at once (the leaf is unlatched), but the opening stays solid until the leaf has swung clear.
+        if(open)applyCells(false,true);
+        finishStroke();
         changed();
         return true;
     }
+    /**
+     * Brings the cells' collision in line with the stroke and finishes it when it is due. Idempotent: it is called from the
+     * scheduled tick, from {@link #state()}, and on load, and schedules the next point at which something changes.
+     * Opening: solid until the leaf is half open, then clear. Closing: clear until the leaf is half shut, then solid.
+     */
     public void finishStroke(){
         if(level==null||level.isClientSide()||state!=State.OPENING&&state!=State.CLOSING)return;
-        long remaining=strokeEnd-level.getGameTime();
-        if(remaining>0)return;
+        long now=level.getGameTime();
         boolean close=state==State.CLOSING;
-        state=close?State.CLOSED_SEALED:State.OPEN;
-        if(close)setSealed(true);
-        changed();
+        if(now>=strokeEnd){
+            state=close?State.CLOSED_SEALED:State.OPEN;
+            applyCells(close?Boolean.TRUE:null,false);
+            changed();
+            return;
+        }
+        long gate=strokeStart+DoorMotion.gateTicks(strokeEnd-strokeStart,DoorMotion.VAULT_LATCH,close);
+        boolean before=now<gate;
+        applyCells(null,close?!before:before);
+        ((ServerLevel)level).scheduleTick(worldPosition,getBlockState().getBlock(),(int)Math.max(1,Math.min(Integer.MAX_VALUE,(before?gate:strokeEnd)-now)));
     }
     public void jamBlownOpen(){
         if(level==null||level.isClientSide())return;
         state=State.DAMAGED_JAMMED;
         strokeStart=strokeEnd=level.getGameTime();
-        setSealed(false);
+        applyCells(false,false);
         changed();
     }
-    private void setSealed(boolean sealed){
+    /** Sets the seal and/or the animation hold on every cell of the leaf; null leaves a value alone. */
+    private void applyCells(Boolean sealed,Boolean held){
         var door=(ContainmentVaultDoorBlock)getBlockState().getBlock();
         for(int i=0;i<door.size()*door.size();i++) {
             BlockPos pos=door.cell(worldPosition,getBlockState().getValue(ContainmentVaultDoorBlock.FACING),i);
             if(!level.isLoaded(pos))continue;
             BlockState part=level.getBlockState(pos);
-            if(part.is(door)&&part.getValue(ContainmentVaultDoorBlock.CELL)==i
-                    &&part.getValue(ContainmentVaultDoorBlock.SEALED)!=sealed)
-                level.setBlock(pos,part.setValue(ContainmentVaultDoorBlock.SEALED,sealed),Block.UPDATE_ALL);
+            if(!part.is(door)||part.getValue(ContainmentVaultDoorBlock.CELL)!=i)continue;
+            BlockState next=part;
+            if(sealed!=null)next=next.setValue(ContainmentVaultDoorBlock.SEALED,sealed);
+            if(held!=null)next=next.setValue(ContainmentVaultDoorBlock.HELD,held);
+            if(next!=part)level.setBlock(pos,next,Block.UPDATE_ALL);
         }
-        ContainmentControllerRegistry.changed(level,worldPosition);
+        if(sealed!=null)ContainmentControllerRegistry.changed(level,worldPosition);
     }
     private void changed(){
         setChanged();
@@ -99,8 +128,22 @@ public final class ContainmentVaultDoorBlockEntity extends BlockEntity {
     }
     @Override public void onLoad(){
         super.onLoad();
-        if(level instanceof ServerLevel server&&(state==State.OPENING||state==State.CLOSING))
-            server.scheduleTick(worldPosition,getBlockState().getBlock(),Math.max(1,(int)Math.min(Integer.MAX_VALUE,strokeEnd-server.getGameTime())));
+        if(level instanceof ServerLevel server&&(state==State.OPENING||state==State.CLOSING)){
+            rescaleLegacyStroke(server.getGameTime());
+            finishStroke();
+        }
+    }
+    /**
+     * A stroke saved before the doors were retimed carries the old duration. Keep how far along it was and let it finish in the
+     * current time instead of running on for the old one (a hand-wheel stroke was a minute, a powered one ten seconds).
+     */
+    private void rescaleLegacyStroke(long now){
+        long duration=strokeEnd-strokeStart;
+        long target=duration==DoorMotion.LEGACY_POWERED_TICKS?POWERED_TICKS:duration==DoorMotion.LEGACY_MANUAL_TICKS?MANUAL_TICKS:duration;
+        if(target==duration||duration<=0)return;
+        double done=DoorMotion.clamp01((now-strokeStart)/(double)duration);
+        strokeStart=now-Math.round(done*target);strokeEnd=strokeStart+target;
+        setChanged();
     }
     @Override protected void saveAdditional(CompoundTag tag,HolderLookup.Provider registries){
         super.saveAdditional(tag,registries);

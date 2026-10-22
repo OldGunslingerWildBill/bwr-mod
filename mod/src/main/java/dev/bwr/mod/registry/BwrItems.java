@@ -22,6 +22,10 @@ public final class BwrItems {
     public static final DeferredRegister.Items ITEMS =
             DeferredRegister.createItems(BwrMod.MOD_ID);
     public static final DeferredItem<BlockItem> FE_METER=ITEMS.registerSimpleBlockItem(BwrBlocks.FE_METER);
+    public static final DeferredItem<BlockItem> AREA_RADIATION_MONITOR = ITEMS.register("area_radiation_monitor",
+            () -> new dev.bwr.mod.radiation.AreaRadiationMonitorItem(BwrBlocks.AREA_RADIATION_MONITOR.get(), new Item.Properties()));
+    public static final DeferredItem<dev.bwr.mod.radiation.SurveyMeterItem> SURVEY_METER =
+            ITEMS.register("survey_meter", () -> new dev.bwr.mod.radiation.SurveyMeterItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<BlockItem> GRID_TIE=ITEMS.registerSimpleBlockItem(BwrBlocks.GRID_TIE);
 
     public static final DeferredRegister<CreativeModeTab> TABS =
@@ -191,6 +195,10 @@ public final class BwrItems {
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> LED_ROD_DISPLAY =
             ITEMS.register("led_rod_display", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
                     dev.bwr.mod.panel.component.ComponentTypes.LED_ROD_DISPLAY.id()));
+    /** The plant computer: a safety parameter display for a CC program, or with built-in reactor pages. */
+    public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> PLANT_COMPUTER =
+            ITEMS.register("plant_computer", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
+                    dev.bwr.mod.panel.component.ComponentTypes.PLANT_COMPUTER.id()));
     /** The ACK, RESET, SILENCE and TEST pushbuttons of an annunciator box in one part. */
     public static final DeferredItem<dev.bwr.mod.panel.component.ComponentItem> ANNUNCIATOR_CONTROL =
             ITEMS.register("annunciator_control", () -> new dev.bwr.mod.panel.component.ComponentItem(new Item.Properties(),
@@ -457,6 +465,8 @@ public final class BwrItems {
                         output.accept(NUCLEAR_GENERATOR.get());
                         output.accept(GRID_TIE.get());
                         output.accept(FE_METER.get());
+                        output.accept(SURVEY_METER.get());
+                        output.accept(AREA_RADIATION_MONITOR.get());
                         output.accept(TURBINE_FEED_PUMP.get());
                         output.accept(CORIUM.get());
                         output.accept(CONTROL_PANEL_VERTICAL.get());
@@ -504,6 +514,7 @@ public final class BwrItems {
                         output.accept(TWO_PEN_RECORDER.get());
                         output.accept(JOYSTICK_SWITCH.get());
                         output.accept(LED_ROD_DISPLAY.get());
+                        output.accept(PLANT_COMPUTER.get());
                         output.accept(ANNUNCIATOR_CONTROL.get());
                         output.accept(RELAY_CABINET.get());
                         output.accept(RELAY_CABINET_PLAIN.get());

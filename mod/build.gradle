@@ -43,8 +43,8 @@ neoForge {
             // 'bwrtick' holds the tick-cost and chunk-boundary tests (TickBudgetTests, ChunkLinkTests, ...); -PbwrOnlyTick
             // runs just those, in about a minute, while they are being developed. The default runs everything.
             // 'bwrblast' holds the accident blast tests (AccidentBlastTests); -PbwrOnlyBlast runs just those.
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrOnlyTick') ? 'bwrtick'
-                    : project.hasProperty('bwrOnlyBlast') ? 'bwrblast' : 'bwr,bwrtick,bwrblast'
+            // 'bwrplant' holds the plant computer tests (PlantComputerTests); -PbwrOnlyPlant runs just those.
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyBlast') ? 'bwrblast' : 'bwr,bwrtick,bwrplant,bwrblast')
             // Developer-only tick profiler (dev.bwr.mod.TickProbe): per-system microseconds per server tick, printed by
             // the TickBudgetTests plant profile as "TICK PROBE" lines. Off (and costless) without this property.
             if (project.hasProperty('bwrTickProbe')) jvmArguments.add('-Dbwr.tickProbe=true')
@@ -100,6 +100,8 @@ neoForge {
             if (project.hasProperty('bwrPanelFixtureModels')) jvmArguments.add('-Dbwr.panelFixtureModels=true')
             if (project.hasProperty('bwrContainmentClientCheck')) jvmArguments.add('-Dbwr.containmentClientCheck=true')
             if (project.hasProperty('bwrAccidentBlastCheck')) jvmArguments.add('-Dbwr.accidentBlastClientCheck=true')
+            // Door pictures for the old/new comparison: -PbwrContainmentDoorShots=<label> saves run/turbineModelCheck/containment-door-shots/<label>/.
+            if (project.hasProperty('bwrContainmentDoorShots')) jvmArguments.add('-Dbwr.containmentDoorShots=' + project.property('bwrContainmentDoorShots'))
             if (project.hasProperty('bwrPanelPerformanceCheck')) jvmArguments.add('-Dbwr.panelPerformanceCheck=true')
             if (project.hasProperty('bwrPanelPerformanceStages')) jvmArguments.add('-Dbwr.panelPerformanceStages=' + project.property('bwrPanelPerformanceStages'))
             if (project.hasProperty('bwrPanelImmediate')) jvmArguments.add('-Dbwr.panelImmediate=true')
@@ -114,6 +116,7 @@ neoForge {
             if (project.hasProperty('bwrCoreModelCheck')) jvmArguments.add('-Dbwr.coreModelCheck=true')
             if (project.hasProperty('bwrRipModelCheck')) jvmArguments.add('-Dbwr.ripModelCheck=true')
             if (project.hasProperty('bwrNetworkingClientCheck')) jvmArguments.add('-Dbwr.networkingClientCheck=true')
+            if (project.hasProperty('bwrRadiationClientCheck')) jvmArguments.add('-Dbwr.radiationClientCheck=true')
             if (project.hasProperty('bwrFurnitureClientCheck')) jvmArguments.add('-Dbwr.furnitureClientCheck=true')
             if (project.hasProperty('bwrBoardClientCheck')) jvmArguments.add('-Dbwr.boardClientCheck=true')
             if (project.hasProperty('bwrBoardClientStages')) jvmArguments.add('-Dbwr.boardClientStages=' + project.property('bwrBoardClientStages'))

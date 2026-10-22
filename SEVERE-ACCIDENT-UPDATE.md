@@ -158,6 +158,9 @@ further at lower intensity. Creative and spectator players are exempt.
 | Hydrogen detonation | Explosion (radius 10) that damages entities, a loud report, a breach at the containment's weakest spot and heavy damage inside |
 | Containment overpressure failure | Notice, sound, a breach at the weakest spot and a jet that sweeps weak fixtures near it |
 
+**Measuring it.** The survey meter and the area radiation monitor read this hazard as a dose rate in mSv/h, with the
+distance falloff above and the core's own gamma behind its shielding (see [RADIATION.md](RADIATION.md)).
+
 Explosions damage the world, always. There is no switch for it: accident explosions break blocks whose
 blast resistance is exceeded, drop items under the vanilla explosion rules, and are the end of a plant's
 containment, not a decoration. What they do **not** break is the formed vessel, the reactor and containment

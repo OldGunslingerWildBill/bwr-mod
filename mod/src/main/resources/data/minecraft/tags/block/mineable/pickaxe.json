@@ -53,6 +53,7 @@
     "bwr:control_panel_corner_bench_chamfer",
     "bwr:grid_tie",
     "bwr:fe_meter",
+    "bwr:area_radiation_monitor",
     "bwr:relay_cabinet",
     "bwr:relay_cabinet_plain",
     "bwr:operator_desk",

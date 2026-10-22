@@ -119,7 +119,11 @@ public final class ContainmentClientCheck {
                 player.connection.teleport(camera.x, camera.y, camera.z, yaw, pitch);
             });
         }
-        if (++shown < (stage == 1 || stage == 2 ? 75 : stage == 4 ? 5 : 95)) return;
+        if (++shown < (stage == 1 || stage == 2 ? 20 : stage == 4 ? 5 : 95)) return;
+        // The doors' stroke length is a game setting, not something this picture should depend on: wait until the leaf is half open.
+        if ((stage == 1 || stage == 2) && shown < 1500
+                && mc.level.getBlockEntity(stage == 1 ? VAULT3 : VAULT4) instanceof ContainmentVaultDoorBlockEntity waiting
+                && waiting.swing(0) < 0.5) return;
         if (stage == 1 || stage == 2) {
             BlockPos doorPos = stage == 1 ? VAULT3 : VAULT4;
             if (!(mc.level.getBlockEntity(doorPos) instanceof ContainmentVaultDoorBlockEntity door)

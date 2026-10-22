@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class BwrGuiNetwork {
 
     /** Bumped when required menu payloads or their wire formats change. */
-    private static final String VERSION = "24";
+    private static final String VERSION = "25";
 
     private BwrGuiNetwork() {
     }

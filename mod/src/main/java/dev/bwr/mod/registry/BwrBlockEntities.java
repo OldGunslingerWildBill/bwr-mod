@@ -33,6 +33,9 @@ public final class BwrBlockEntities {
 
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
             DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, BwrMod.MOD_ID);
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.radiation.AreaRadiationMonitorBlockEntity>>
+            AREA_RADIATION_MONITOR = BLOCK_ENTITIES.register("area_radiation_monitor", () -> BlockEntityType.Builder.of(
+                    dev.bwr.mod.radiation.AreaRadiationMonitorBlockEntity::new, BwrBlocks.AREA_RADIATION_MONITOR.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.grid.FeMeterBlockEntity>> FE_METER=BLOCK_ENTITIES.register("fe_meter",()->BlockEntityType.Builder.of(dev.bwr.mod.grid.FeMeterBlockEntity::new,BwrBlocks.FE_METER.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.grid.GridTieBlockEntity>> GRID_TIE=
             BLOCK_ENTITIES.register("grid_tie",()->BlockEntityType.Builder.of(dev.bwr.mod.grid.GridTieBlockEntity::new,BwrBlocks.GRID_TIE.get()).build(null));

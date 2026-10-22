@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": ["GGG", "DCD", "III"], "key": {"G": {"item": "minecraft:glass_pane"}, "D": {"item": "bwr:graphic_display"}, "C": {"item": "minecraft:comparator"}, "I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:plant_computer", "count": 1}}

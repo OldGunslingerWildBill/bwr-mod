@@ -161,4 +161,59 @@ public final class BoundaryDamageReadout {
         }
         return out;
     }
+
+    /**
+     * One line per pressure-boundary break of a reactor, and one per break sealed in the last minute, for the
+     * controller's status text and the reactor screen. Facts only: where it is and whether it is open to the vessel.
+     */
+    public static List<Component> breakComponents(dev.bwr.mod.reactor.ReactorBoundaryEffects effects, long now) {
+        List<Component> out = new ArrayList<>();
+        if (effects == null) return out;
+        for (var b : effects.breaks()) {
+            if (b.nozzle()) {
+                out.add(BwrText.tr("status.bwr.boundary_damage_readout.nozzle_break",
+                        "%s: open break at the vessel nozzle", b.label()));
+            } else if (b.open()) {
+                out.add(BwrText.tr("status.bwr.boundary_damage_readout.line_break_open",
+                        "%s: open break at %s %s %s", b.label(), b.at().getX(), b.at().getY(), b.at().getZ()));
+            } else {
+                out.add(BwrText.tr("status.bwr.boundary_damage_readout.line_break_isolated",
+                        "%s: break at %s %s %s, isolated from the vessel", b.label(), b.at().getX(), b.at().getY(), b.at().getZ()));
+            }
+        }
+        for (var s : effects.recentlySealed(now)) {
+            out.add(BwrText.tr("status.bwr.boundary_damage_readout.break_sealed", "%s: break sealed", s.label()));
+        }
+        return out;
+    }
+
+    /** The same breaks as Lua tables: {@code breaks} (open and isolated) and {@code sealed} (the last minute). */
+    public static Map<String, Object> breaksToLua(dev.bwr.mod.reactor.ReactorBoundaryEffects effects, long now) {
+        Map<String, Object> out = new HashMap<>();
+        List<Map<String, Object>> breaks = new ArrayList<>();
+        List<Map<String, Object>> sealed = new ArrayList<>();
+        if (effects != null) {
+            for (var b : effects.breaks()) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("component", key(b.component()));
+                m.put("label", BwrText.english(b.label()));
+                m.put("kind", b.nozzle() ? "nozzle" : "line");
+                m.put("open", b.open());
+                m.put("x", b.at().getX()); m.put("y", b.at().getY()); m.put("z", b.at().getZ());
+                m.put("portX", b.port().getX()); m.put("portY", b.port().getY()); m.put("portZ", b.port().getZ());
+                breaks.add(m);
+            }
+            for (var s : effects.recentlySealed(now)) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("component", key(s.component()));
+                m.put("label", BwrText.english(s.label()));
+                m.put("x", s.at().getX()); m.put("y", s.at().getY()); m.put("z", s.at().getZ());
+                m.put("secondsAgo", (now - s.gameTime()) / 20.0);
+                sealed.add(m);
+            }
+        }
+        out.put("breaks", breaks);
+        out.put("sealed", sealed);
+        return out;
+    }
 }

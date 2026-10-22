@@ -1,5 +1,5 @@
 {
-  "parent": "bwr:block/containment/airlock_inner_leaf",
+  "parent": "bwr:block/containment/airlock_item",
   "display": {
     "gui": {
       "rotation": [

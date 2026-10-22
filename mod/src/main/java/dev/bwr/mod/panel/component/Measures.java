@@ -23,7 +23,7 @@ public final class Measures {
     /** The quantities a gauge can be set to measure: everything that is a number (not BOOLEAN or TEXT). */
     private static final List<Quantity> CHOICES = List.of(Quantity.LEVEL, Quantity.PRESSURE, Quantity.TEMPERATURE,
             Quantity.RATE, Quantity.FLOW, Quantity.POWER, Quantity.ENERGY, Quantity.POSITION, Quantity.PERCENT,
-            Quantity.SPEED, Quantity.CHEMISTRY, Quantity.COUNT);
+            Quantity.SPEED, Quantity.CHEMISTRY, Quantity.COUNT, Quantity.DOSE_RATE);
 
     /** The option strings of the config field: ANY first, then each quantity. */
     public static List<String> options() {

@@ -45,6 +45,7 @@ when nothing is there or the chunk is not loaded. It never loads a chunk and nev
   | COUNT | everything else |
   | BOOLEAN | the BOOLEAN kind |
   | TEXT | the TEXT kind |
+  | DOSE_RATE | mSv/h, uSv/h, Sv/h (appended after TEXT: no earlier quantity's number moved) |
 
 * Units fixed to say what the key says: `generated_fe_tick`, `delivered_fe_tick` and `buffer_delta_fe_tick` are per-tick
   rates and now read `FE/t` (they said `FE`).
@@ -711,6 +712,24 @@ right-click the open tie to bind it; sneak-right-click a meter, then right-click
 the tie to toggle its selection. Selection uses the existing configured panel
 link range, same-dimension loaded endpoints and world-edit permissions. Normal
 panel linking is unchanged. See [grid wiring](docs/grid-wiring.md) for a setup.
+
+## Area radiation monitor
+
+Block entity `AreaRadiationMonitorBlockEntity`; CC peripheral `bwr_radiation_monitor`. Dose rates are in **mSv/h**
+(quantity DOSE_RATE); how the plant's hazard model becomes mSv/h is in [RADIATION.md](RADIATION.md). The reading is at most
+5 ticks old; the booleans carry a 10 % hysteresis (they drop out below 90 % of their setpoint).
+
+| Signal key | CC status key | Unit | Range | Kind |
+| --- | --- | --- | --- | --- |
+| `dose_rate` | `doseRate` | mSv/h | 0 to 1000 | NUMBER |
+| `high_radiation` | `highRadiation` | | | BOOLEAN, at or above the alarm setpoint |
+| `radiation_alert` | `alert` | | | BOOLEAN, at or above the alert setpoint (a tenth of the alarm) |
+| `alarm_setpoint` | `alarmSetpoint` | mSv/h | 0 to 1000 | NUMBER |
+| `alert_setpoint` | `alertSetpoint` | mSv/h | 0 to 1000 | NUMBER |
+
+Command: `alarm_setpoint` (0.001 to 1,000,000 mSv/h), the writable half of the signal of the same key. CC methods:
+`getDoseRate`, `isHighRadiation`, `isAlert`, `getAlarmSetpoint`, `getAlertSetpoint`, `setAlarmSetpoint(mSvPerHour)` and
+`getStatus` (which also splits the dose rate into `airborne`, `deposited`, `release`, `core` and `other`).
 
 ## Containment controller
 

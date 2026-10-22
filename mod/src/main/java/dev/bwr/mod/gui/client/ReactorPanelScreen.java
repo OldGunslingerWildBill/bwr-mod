@@ -234,10 +234,23 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.row("Uncovered fuel", () -> pct(menu.uncoveredFuelFraction), "%")
                         .status(() -> menu.uncoveredFuelFraction > 0 ? Status.CAUTION : Status.NONE),
                 Layout.row("Spray ring complete", () -> pct(menu.sprayRingCompleteness), "%"),
+                Layout.section("Pressure boundary"),
+                Layout.note("No pipe breaks.").body().showIf(() -> menu.boundaryLines.isEmpty()),
+                boundaryLine(0), boundaryLine(1), boundaryLine(2), boundaryLine(3),
+                boundaryLine(4), boundaryLine(5), boundaryLine(6), boundaryLine(7),
                 Layout.section("Live output"),
                 Layout.row("Heat output / steam flow", () -> big(menu.thermalMW) + " / " + big(menu.steamKgPerS)),
                 Layout.note("* These are planning estimates. Hover over a row to see how it is worked out."));
         return Layout.card("", Layout.scrollArea(60, content));
+    }
+
+    /** One pressure-boundary break or seal: alarm while it is open to the vessel, caution while it is isolated. */
+    private UiElement boundaryLine(int index) {
+        return Layout.note(() -> index < menu.boundaryLines.size() ? menu.boundaryLines.get(index).getString() : "")
+                .body()
+                .status(() -> index >= menu.boundaryLineStates.length ? Status.NONE
+                        : switch (menu.boundaryLineStates[index]) { case 2 -> Status.ALARM; case 1 -> Status.CAUTION; default -> Status.NONE; })
+                .showIf(() -> index < menu.boundaryLines.size());
     }
 
     private List<Component> fuelTypeTooltip() {

@@ -26,7 +26,7 @@ The retained pressure-damage model accumulates stress and rolls increasing failu
 
 This update connects that damage to the world:
 
-- Main-steam, feedwater and recirculation failures break the connected BWR pipe immediately outside the relevant vessel port, and, since the accident blast update, whatever within one to two blocks of that break cannot take the jet (pipe whip and jet impingement, below). They still do not destroy unrelated nearby buildings. The failure stays recorded even if the pipe is replaced.
+- Main-steam, feedwater and recirculation failures break the connected BWR pipe immediately outside the relevant vessel port, and, since the accident blast update, whatever within one to two blocks of that break cannot take the jet (pipe whip and jet impingement, below). They still do not destroy unrelated nearby buildings. The failure stays recorded until the pipe is put back, which seals it (see [Sealing a break](PORT-LOCA-UPDATE.md#sealing-a-break)); the vessel head stays failed.
 - As of alpha.26, actual port elevations govern direct liquid loss; exposed ports vent steam. See [port-height LOCA behavior](PORT-LOCA-UPDATE.md).
 - Head failure replaces the intact crown with an original Blender model of a torn rim, peeled steel and sheared studs. The core becomes visible. Toggling refuelling cannot repair a failed head. Since the accident blast update it is also a steam burst and missile that breaks the world above the vessel (below).
 - Pressure-dependent jets use bounded client-side particles and fade out as pressure falls. As of alpha.26 the plumes are white.

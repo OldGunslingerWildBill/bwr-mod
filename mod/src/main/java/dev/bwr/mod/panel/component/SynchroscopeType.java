@@ -19,8 +19,9 @@ import java.util.List;
  *       samples and is pulled to the phase.</li>
  * </ul>
  * With neither, the pointer is parked at 12 o'clock behind a red flag. The two lamps are the synchronising lamps wired across the
- * open breaker: the left one is the dark lamp (its brightness is the voltage across it, dark when in phase), the right
- * one the bright lamp (full when in phase, dark at 180 degrees).
+ * open breaker (the dark lamp method): both follow the same curve, dark in phase and brightest at 180 degrees out of phase,
+ * with a continuous brightness in between that pulses at the slip frequency (see {@link SyncMath#darkLamp}); both are dark when
+ * there is no signal or the breaker is closed.
  *
  * <p>No outputs; nothing to operate. It displays two measurements and decides nothing: whether to close a breaker is the
  * player's call.

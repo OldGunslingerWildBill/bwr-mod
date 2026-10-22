@@ -181,7 +181,9 @@ public final class GaugeScaleGuardTests {
             Map.entry("two_pen_recorder", "a recorder: no scale text, only a header with two numbers and a mark, all shares of its case; sizes from 2 x 2"),
             Map.entry("joystick_switch", "a control: its four legends are shares of the plate and fitted to it (JoystickTests)"),
             Map.entry("led_rod_display", "a core map: its LEDs are drawn in tiles of the bound core and its only text is a caption fitted to the margin (LedRodDisplayTests)"),
-            Map.entry("annunciator_control", "four pushbuttons with fitted legends under them, no scale"));
+            Map.entry("annunciator_control", "four pushbuttons with fitted legends under them, no scale"),
+            Map.entry("plant_computer", "a screen of text on a character grid: the text is one size, a share of the character cell, which is a share "
+                    + "of the wrench's Text size, and is made smaller or cut to fit its room (PlantComputerTests.everyScreenKeepsItsShapesAndTextOnTheFace...)"));
 
     // ---- recording
 

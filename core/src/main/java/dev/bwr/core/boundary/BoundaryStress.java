@@ -400,6 +400,21 @@ public final class BoundaryStress {
         stress[component.ordinal()] = 0.0;
     }
 
+    /**
+     * The break is still there but no longer open to the vessel: a closed valve
+     * now stands between them. The broken flag clears, so the vessel stops
+     * draining through it, but the accumulated stress is kept, because no pipe
+     * was replaced. A later {@link #forceFailure} opens it again. A bare
+     * actuator like {@link #repair}; the world decides when a valve isolates.
+     * Does nothing to a terminal component: no valve isolates a vessel head.
+     */
+    public void isolate(BoundaryComponent component) {
+        if (component == null || component.isTerminal()) {
+            return;
+        }
+        broken[component.ordinal()] = false;
+    }
+
     /** Replace every component. */
     public void repairAll() {
         for (BoundaryComponent component : COMPONENTS) {
