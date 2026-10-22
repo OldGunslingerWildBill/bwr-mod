@@ -475,10 +475,43 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
     }
 
     /**
+     * The blocks a failure takes out of the wall, and where.
+     *
+     * @param centre  the weakest spot's wall block, now the reported leak
+     * @param normal  which way the weakest face looks (out of the room)
+     * @param rating  the weakest column's rating, psig
+     * @param blocks  every loaded wall block to remove, in a stable order
+     */
+    public record BreachPlan(BlockPos centre, Direction normal, double rating, List<BlockPos> blocks) {}
+
+    /** Most wall blocks one breach plan will hold. */
+    public static final int MAX_BREACH_BLOCKS = 8192;
+
+    /**
      * Physically opens only the least-rated continuous column after a core failure event.
      * A failure during a rating recompute uses the previous weakest spot, re-rated now.
      */
     public BlockPos ruptureWeakest(ServerLevel level) {
+        BreachPlan plan = planBreach(level, 0.0, 0.0);
+        if (plan == null) return null;
+        for (BlockPos pos : plan.blocks()) level.destroyBlock(pos, true);
+        return plan.centre();
+    }
+
+    /**
+     * Decide a breach and report the room as leaking, without removing any block: the caller removes
+     * {@link BreachPlan#blocks()} through whatever protection path it owes (explosion and block-break events).
+     *
+     * <p>The weakest column always goes. When {@code centreLoadPsi} exceeds its rating the hole grows into the
+     * neighbouring columns of the rating table: a column at distance {@code d} from the weakest spot goes when
+     * its rating is below {@code centreLoadPsi / (1 + (d / scaleBlocks)^2)} (see {@code BlastPhysics}), and goes
+     * whole. Vault doors, airlocks and sleeves jam or rupture as before, only at the weakest spot itself;
+     * a neighbouring one is left standing. A column with an unloaded layer is left standing too: no chunk is
+     * loaded for a breach.
+     *
+     * @return null when the room is not sealed, has no rated weakest spot, or its weakest column is unloaded
+     */
+    public BreachPlan planBreach(ServerLevel level, double centreLoadPsi, double scaleBlocks) {
         if (!sealed || weakest == null) return null;
         BoundaryFace face = new BoundaryFace(weakest.position(), weakest.normal());
         ContainmentStrength.Column column = ratings.get(face);
@@ -486,6 +519,7 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
                 ContainmentConfig.STRENGTH_SCAN_DEPTH.get());
         if (column == null) { stale = true; return null; }
         for (BlockPos pos : column.layers()) if (!level.isLoaded(pos)) { stale = true; return null; }
+        java.util.LinkedHashSet<BlockPos> blocks = new java.util.LinkedHashSet<>();
         if (level.getBlockState(weakest.position()).getBlock() instanceof ContainmentVaultDoorBlock door) {
             BlockState state = level.getBlockState(weakest.position());
             ContainmentVaultDoorBlockEntity owner = door.owner(level, weakest.position(), state);
@@ -500,13 +534,38 @@ public final class ContainmentControllerBlockEntity extends BlockEntity {
             BlockState state = level.getBlockState(weakest.position());
             level.setBlock(weakest.position(), state.setValue(ContainmentPenetrationBlock.RUPTURED, true),
                     net.minecraft.world.level.block.Block.UPDATE_ALL);
-        } else for (BlockPos pos : column.layers()) level.destroyBlock(pos, true);
+        } else blocks.addAll(column.layers());
+        if (centreLoadPsi > weakest.ratingPsig() && scaleBlocks > 0.0) {
+            List<BlockPos> neighbours = new ArrayList<>();
+            double reach = dev.bwr.core.accident.BlastPhysics.MAX_BREACH_RADIUS_BLOCKS;
+            for (Map.Entry<BoundaryFace, ContainmentStrength.Column> entry : ratings.entrySet()) {
+                if (entry.getKey().equals(face)) continue;
+                ContainmentStrength.Column other = entry.getValue();
+                BlockPos wall = entry.getKey().wall();
+                if (wall.distSqr(weakest.position()) > reach * reach) continue;
+                double distance = Math.sqrt(wall.distSqr(weakest.position()));
+                if (other.ratingPsig() >= dev.bwr.core.accident.BlastPhysics.breachLoadAt(
+                        centreLoadPsi, scaleBlocks, distance)) continue;
+                BlockState wallState = level.getBlockState(wall);
+                if (wallState.getBlock() instanceof ContainmentVaultDoorBlock
+                        || wallState.getBlock() instanceof ContainmentAirlockBlock
+                        || wallState.getBlock() instanceof ContainmentPenetrationBlock) continue;
+                boolean loaded = true;
+                for (BlockPos pos : other.layers()) if (!level.isLoaded(pos)) { loaded = false; break; }
+                if (loaded) neighbours.addAll(other.layers());
+            }
+            neighbours.sort(java.util.Comparator.comparingLong(BlockPos::asLong));
+            for (BlockPos pos : neighbours) {
+                if (blocks.size() >= MAX_BREACH_BLOCKS) break;
+                blocks.add(pos);
+            }
+        }
         sealed = false;
         leak = weakest.position();
         strengthReady = false;
         markDirty();
         setChanged();
-        return weakest.position();
+        return new BreachPlan(weakest.position(), weakest.normal(), weakest.ratingPsig(), List.copyOf(blocks));
     }
 
     @Override public void onLoad() {
