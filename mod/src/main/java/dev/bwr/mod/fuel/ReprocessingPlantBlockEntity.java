@@ -63,6 +63,8 @@ public class ReprocessingPlantBlockEntity extends BlockEntity {
     private long wasteGrains;
     private int workTicks;
     private boolean dirty = true;
+    /** The assembly in the slot is above the decay heat limit: look again once a second until it has cooled. */
+    private boolean waitingHot;
 
     private final ItemStackHandler input = new ItemStackHandler(1) {
         @Override
@@ -140,7 +142,10 @@ public class ReprocessingPlantBlockEntity extends BlockEntity {
     }
 
     private void tick() {
-        if (!dirty && workTicks == 0) {
+        if (!dirty && workTicks == 0 && !waitingHot) {
+            return;
+        }
+        if (waitingHot && !dirty && workTicks == 0 && level != null && level.getGameTime() % SpentFuelHeat.TICKS_PER_SECOND != 0) {
             return;
         }
         flush();
@@ -149,8 +154,17 @@ public class ReprocessingPlantBlockEntity extends BlockEntity {
             // nothing to do, or a product is piling up: wait for the slots to change
             workTicks = 0;
             dirty = false;
+            waitingHot = false;
             return;
         }
+        if (workTicks == 0 && isTooHot()) {
+            // Too hot to take apart: the plant does not start on it. The decay heat only falls, so once it has
+            // started an assembly is never stopped; this looks again once a second.
+            waitingHot = true;
+            dirty = false;
+            return;
+        }
+        waitingHot = false;
         if (energy.getEnergyStored() < Reprocessing.ENERGY_PER_TICK) {
             return;
         }
@@ -237,6 +251,22 @@ public class ReprocessingPlantBlockEntity extends BlockEntity {
         return side == Direction.DOWN ? viewOutputs : viewAll;
     }
 
+    /** Decay power of the assembly in the input slot now, W (zero for an empty slot). */
+    public double inputDecayWatts() {
+        return level == null ? 0.0 : SpentFuelHeat.decayWatts(input.getStackInSlot(0), level.getGameTime());
+    }
+
+    /** True if the assembly in the input slot is above the configured decay heat limit, so the plant will not start on it. */
+    public boolean isTooHot() {
+        ItemStack held = input.getStackInSlot(0);
+        return level != null && !held.isEmpty() && SpentFuelHeat.tooHotToReprocess(held, level.getGameTime());
+    }
+
+    /** Seconds until the assembly in the slot is cool enough (zero if it is, infinity if never). */
+    public double secondsUntilCool() {
+        return level == null ? 0.0 : SpentFuelHeat.secondsUntilReprocessable(input.getStackInSlot(0), level.getGameTime());
+    }
+
     /** Ticks of work done on the assembly in the slot, 0 if none is under way. */
     public int workTicks() {
         return workTicks;
@@ -303,6 +333,12 @@ public class ReprocessingPlantBlockEntity extends BlockEntity {
                     data.fuelTypeName(),
                     String.format(Locale.ROOT, "%,.0f", data.burnupMwdPerTonne()),
                     String.format(Locale.ROOT, "%.0f", 100.0 * workTicks / Reprocessing.WORK_TICKS)));
+        }
+        if (!held.isEmpty() && workTicks == 0 && isTooHot()) {
+            out.add(BwrText.tr("status.bwr.reprocessing_plant.too_hot",
+                    "Too hot: %s kW of decay heat, the plant waits for %s kW or less. Cool it in a spent fuel pool.",
+                    String.format(Locale.ROOT, "%.1f", inputDecayWatts() / 1000.0),
+                    String.format(Locale.ROOT, "%.0f", SpentFuelHeat.reprocessingLimitWatts() / 1000.0)));
         }
         out.add(BwrText.tr("status.bwr.reprocessing_plant.held",
                 "Held: %s plutonium nuggets, %s depleted uranium ingots, %s waste",

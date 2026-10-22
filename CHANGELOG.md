@@ -96,6 +96,35 @@ The plant models fission product releases, deposition and contamination, and wha
 - **Recipes, translations, tooltips** for the meter and the monitor; the recipe, translation and asset audits report 0 problems.
 - **Tests.** `DoseModelTest` in `:core:acceptance`; GameTests `RadiationToolsTests` and `RadiationCcTests` (reads 0 at background; non-zero and rising near a contaminated plant; distance falloff term by term and zero past 256 blocks; closed vessel low, open head high; dose accumulates, persists and resets; the API; the monitor drives a wired gauge and an annunciator; incompatible gauge kinds refused; setpoint saves; lamp hysteresis and the 5 tick reuse; CC fields; recipes). Client check `-PbwrRadiationClientCheck` (three 1920 x 1080 pictures). Dev tooling: `-PbwrGameTestNamespaces=<list>` selects GameTest namespaces for a run.
 
+## Unreleased: spent fuel pool (the fuel cycle gets its pause)
+
+Fabricator, reactor, **pool**, reprocessing plant, MOX. Spent fuel now keeps its decay heat on its way out of the core, a pool holds it while it cools, and the reprocessing plant will not take it until it has. New blocks, a new data component, new GameTests and a client check; old saves load unchanged. Design, numbers, sources and limits: SPENT-FUEL-POOL.md. The fuel cycle table is in FUELS-AND-RODS.md.
+
+### Decay heat of an assembly (core)
+
+- `AssemblyDecayHeat` evaluates the reactor's own eighteen-group decay heat fit (`DecayHeat`) in closed form for one assembly from its burnup (operating time at the core-average 26.6 MW/t) and the time since it left the core. A 45 GWd/t assembly: 315 kW at discharge, 62.6 kW after an hour, 22.8 kW after a day, 0.88 kW after a year; below 50 kW after 124 minutes. Unit tests: the tabulated ANS-5.1 curve (1.3 %), the reactor's group solution (1e-9), Way-Wigner (30 %, as a cross-check), shape, scale, time to cool.
+- `SpentFuelPool` and `SpentFuelPoolCooler` (pure Java): one body of water with ASHRAE evaporation (Antoine saturation pressure), passive loss, boiling at 100 C at 2257 kJ/kg, a level, the cooling train, makeup mixing, and fuel in air (180 kJ/K lumps, conduction and radiation, cladding burst at 565 C, zirconium ignition at 900 C, quench on reflood). `SpentFuelPoolTest` has twelve tests against hand calculations.
+
+### Discharge time
+
+- Unloading an assembly from a core stamps the game tick in a new data component `bwr:discharge_time` (`ReactorControllerBlockEntity.unloadAssembly`, and the fuel handed back when the controller is broken). It is separate from `FuelAssemblyData` on purpose: the refuelling code and its tests compare that record whole. No stamp means long-cooled (five years, a few kW at most), which is every old assembly. The item tooltip shows decay heat and time out of a core.
+
+### Spent fuel pool (blocks)
+
+- **Spent Fuel Pool Lining**, **Controller**, **Rack** and the **Makeup**, **Cooling Inlet** and **Cooling Outlet** ports. A rack is one single tier 4 m tall (assemblies are about 4.5 m): a column of exactly four rack blocks on the pool floor holding four assemblies, never on another rack (the pool refuses to form, with the reason); its top is always 4 m above the floor and "uncovered" means water below it. The pool must be deep enough for 3 m of shielding water over the rack tops (the real figure is about 7 m, scaled): a lined box 5 to 25 wide and deep and 8 to 16 high (interior at least 7 m), open at the top, surveyed by the controller (the pool's only ticker; lining, racks and ports have no block entity, found through a registry the controller fills). Capacity 1,000 kg a cell.
+- Assemblies go in by hand (right-click a rack; sneak with an empty hand takes one out), through the controller's item handler (hoppers, pipes), or by the CC program. The cooling train is built into the controller: a circulation pump (400 FE a tick, the player's switch) and a 6 MW plate exchanger fed with cold water at the blue port and drained at the cyan one. Nothing starts, stops or trips by itself.
+- Uncovered fuel heats, bursts, ignites and releases into a hazard index that doses nearby players through the reactor's contamination effects; makeup water quenches it.
+- Panel (per-rack heat, total heat, level, temperature, time to boil and to uncover, cooling), CC peripheral `bwr_spent_fuel_pool` (`getStatus`, `getRacks`, `getAssemblies`, `setCooling`), a translucent water surface and the reactor's Cherenkov glow on fresh fuel.
+- Saves: water, each assembly as its item (stamp included), fuel state, pump and cooler inventories, each key only when non-default.
+
+### Reprocessing plant
+
+- Will not start on an assembly above `reprocessingMaxDecayHeatKw` (`bwr-gameplay.toml`, default 50 kW, 0 off): the assembly is accepted into the slot and waits, the plant looks again once a second and starts by itself when it has cooled. Screen line, status text and peripheral fields (`assemblyDecayHeatKW`, `tooHot`, `secondsUntilCool`, `decayHeatLimitKW`).
+
+### Other changes
+
+- `ReactorSevereAccidentEffects.dose` is public (the pool doses players through it). `WaterLineNetwork` knows the three ports. New GameTest namespace `bwrpool` (`-PbwrOnlyPool`), client check `-PbwrSpentFuelPoolCheck`, GUI check scenarios `spent-fuel-pool*` and `reprocessor-hot`. `tools-make-spent-fuel-pool-assets.py` writes the textures, models, states, loot tables, recipes and tags.
+
 ## Unreleased: flaky GameTests (chunk forcing and waiting for the chunk system)
 
 Test-only; no game behaviour changed. Six GameTests failed now and then, the batch they were in and the load of the machine deciding which. Three causes, all in how the fixtures treat chunks.

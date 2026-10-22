@@ -233,6 +233,18 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.FUEL_FABRICATOR);
     public static final DeferredItem<BlockItem> REPROCESSING_PLANT =
             ITEMS.registerSimpleBlockItem(BwrBlocks.REPROCESSING_PLANT);
+    public static final DeferredItem<BlockItem> SPENT_FUEL_POOL_WALL =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.SPENT_FUEL_POOL_WALL);
+    public static final DeferredItem<BlockItem> SPENT_FUEL_POOL_CONTROLLER =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.SPENT_FUEL_POOL_CONTROLLER);
+    public static final DeferredItem<BlockItem> SPENT_FUEL_RACK =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.SPENT_FUEL_RACK);
+    public static final DeferredItem<BlockItem> SPENT_FUEL_POOL_MAKEUP_PORT =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.SPENT_FUEL_POOL_MAKEUP_PORT);
+    public static final DeferredItem<BlockItem> SPENT_FUEL_POOL_COOLING_IN =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.SPENT_FUEL_POOL_COOLING_IN);
+    public static final DeferredItem<BlockItem> SPENT_FUEL_POOL_COOLING_OUT =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.SPENT_FUEL_POOL_COOLING_OUT);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_CONTROLLER =
             ITEMS.registerSimpleBlockItem(BwrBlocks.SUPPRESSION_POOL_CONTROLLER);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_WALL =
@@ -439,6 +451,12 @@ public final class BwrItems {
                         output.accept(TURBINE_STEAM_OUTLET.get());
                         output.accept(FUEL_FABRICATOR.get());
                         output.accept(REPROCESSING_PLANT.get());
+                        output.accept(SPENT_FUEL_POOL_WALL.get());
+                        output.accept(SPENT_FUEL_POOL_CONTROLLER.get());
+                        output.accept(SPENT_FUEL_RACK.get());
+                        output.accept(SPENT_FUEL_POOL_MAKEUP_PORT.get());
+                        output.accept(SPENT_FUEL_POOL_COOLING_IN.get());
+                        output.accept(SPENT_FUEL_POOL_COOLING_OUT.get());
                         output.accept(SUPPRESSION_POOL_CONTROLLER.get());
                         output.accept(SUPPRESSION_POOL_WALL.get());
                         output.accept(SUPPRESSION_POOL_SUCTION.get());

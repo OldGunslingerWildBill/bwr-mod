@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/spent_fuel_pool_cooling_in"
+    },
+    "facing=east": {
+      "model": "bwr:block/spent_fuel_pool_cooling_in",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/spent_fuel_pool_cooling_in",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/spent_fuel_pool_cooling_in",
+      "y": 270
+    }
+  }
+}

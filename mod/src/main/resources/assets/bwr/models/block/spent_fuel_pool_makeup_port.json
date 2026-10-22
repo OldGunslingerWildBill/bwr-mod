@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "bwr:block/spent_fuel_pool_wall",
+    "side": "bwr:block/spent_fuel_pool_wall",
+    "front": "bwr:block/spent_fuel_pool_port_makeup"
+  }
+}

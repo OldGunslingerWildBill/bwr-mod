@@ -57,6 +57,10 @@ public final class BwrMenus {
             MENUS.register("reprocessing_plant",
                     () -> IMenuTypeExtension.create(ReprocessingPlantMenu::new));
 
+    /** Spent fuel pool: per-rack heat, water level and temperature, time to boil and to uncover, the cooling pump. */
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.SpentFuelPoolMenu>> SPENT_FUEL_POOL =
+            MENUS.register("spent_fuel_pool", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.SpentFuelPoolMenu::new));
+
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.PumpControlMenu>> PUMP_CONTROL =
             MENUS.register("pump_control", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.PumpControlMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.TerryTurbineMenu>> TERRY_TURBINE =

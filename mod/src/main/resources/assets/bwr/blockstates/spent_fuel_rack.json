@@ -1,0 +1,56 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "top": "false"
+      },
+      "apply": {
+        "model": "bwr:block/spent_fuel_rack"
+      }
+    },
+    {
+      "when": {
+        "top": "true"
+      },
+      "apply": {
+        "model": "bwr:block/spent_fuel_rack_top"
+      }
+    },
+    {
+      "when": {
+        "top": "true",
+        "cell_a": "true"
+      },
+      "apply": {
+        "model": "bwr:block/spent_fuel_rack_head_0"
+      }
+    },
+    {
+      "when": {
+        "top": "true",
+        "cell_b": "true"
+      },
+      "apply": {
+        "model": "bwr:block/spent_fuel_rack_head_1"
+      }
+    },
+    {
+      "when": {
+        "top": "true",
+        "cell_c": "true"
+      },
+      "apply": {
+        "model": "bwr:block/spent_fuel_rack_head_2"
+      }
+    },
+    {
+      "when": {
+        "top": "true",
+        "cell_d": "true"
+      },
+      "apply": {
+        "model": "bwr:block/spent_fuel_rack_head_3"
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "G": {
+      "item": "minecraft:gray_concrete"
+    },
+    "I": {
+      "tag": "c:ingots/iron"
+    }
+  },
+  "pattern": [
+    "GGG",
+    "III",
+    "GGG"
+  ],
+  "result": {
+    "count": 8,
+    "id": "bwr:spent_fuel_pool_wall"
+  }
+}

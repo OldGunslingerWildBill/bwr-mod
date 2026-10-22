@@ -344,7 +344,7 @@ public final class ReactorSevereAccidentEffects {
      * calibration: a cladding failure makes the reactor hall unpleasant, a melt
      * makes it lethal, and site releases reach further at lower intensity.
      */
-    static void dose(ServerPlayer player, double hazard) {
+    public static void dose(ServerPlayer player, double hazard) {
         int duration = DOSE_INTERVAL_TICKS + 20;
         if (hazard > 1.0e-4) {
             player.addEffect(new MobEffectInstance(MobEffects.HUNGER, duration, 0, false, true));

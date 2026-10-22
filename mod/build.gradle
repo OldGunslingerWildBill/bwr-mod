@@ -40,11 +40,12 @@ neoForge {
         turbineGameTest {
             type = 'gameTestServer'
             gameDirectory = file('run/turbineGameTest')
+            // 'bwrpool' holds the spent fuel pool tests (SpentFuelPoolTests); -PbwrOnlyPool runs just those.
             // 'bwrtick' holds the tick-cost and chunk-boundary tests (TickBudgetTests, ChunkLinkTests, ...); -PbwrOnlyTick
             // runs just those, in about a minute, while they are being developed. The default runs everything.
             // 'bwrblast' holds the accident blast tests (AccidentBlastTests); -PbwrOnlyBlast runs just those.
             // 'bwrplant' holds the plant computer tests (PlantComputerTests); -PbwrOnlyPlant runs just those.
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyBlast') ? 'bwrblast' : 'bwr,bwrtick,bwrplant,bwrblast')
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyPool') ? 'bwrpool' : project.hasProperty('bwrOnlyBlast') ? 'bwrblast' : 'bwr,bwrtick,bwrplant,bwrpool,bwrblast')
             // Developer-only tick profiler (dev.bwr.mod.TickProbe): per-system microseconds per server tick, printed by
             // the TickBudgetTests plant profile as "TICK PROBE" lines. Off (and costless) without this property.
             if (project.hasProperty('bwrTickProbe')) jvmArguments.add('-Dbwr.tickProbe=true')
@@ -84,6 +85,7 @@ neoForge {
             if (project.hasProperty('bwrGpuBenchmarkOnly')) jvmArguments.addAll('-Dbwr.coolingPanelCheck=true', '-Dbwr.gpuVisualsCheck=true', '-Dbwr.gpuBenchmarkOnly=true')
             if (project.hasProperty('bwrSuppressionPanelCheck')) jvmArguments.add('-Dbwr.suppressionPanelCheck=true')
             if (project.hasProperty('bwrTankPanelCheck')) jvmArguments.add('-Dbwr.tankPanelCheck=true')
+            if (project.hasProperty('bwrSpentFuelPoolCheck')) jvmArguments.add('-Dbwr.spentFuelPoolCheck=true')
             if (project.hasProperty('bwrAlphaClientCheck')) jvmArguments.add('-Dbwr.alphaClientCheck=true')
             if (project.hasProperty('bwrGridClientCheck')) jvmArguments.add('-Dbwr.gridClientCheck=true')
             if (project.hasProperty('bwrMimicClientCheck')) jvmArguments.add('-Dbwr.mimicClientCheck=true')
@@ -633,6 +635,8 @@ tasks.named('jar', Jar).configure {
     exclude 'data/bwr/structure/empty.nbt'
     exclude 'data/bwrtick/**'
     exclude 'data/bwrblast/**'
+    exclude 'data/bwrplant/**'
+    exclude 'data/bwrpool/**'
     from(rootProject.file('LICENSE')) { into 'META-INF' }
     from(rootProject.file('NOTICE')) { into 'META-INF' }
     from(rootProject.file('THIRD-PARTY-NOTICES.md')) { into 'META-INF' }
