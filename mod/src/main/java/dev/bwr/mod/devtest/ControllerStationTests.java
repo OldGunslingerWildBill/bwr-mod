@@ -125,19 +125,19 @@ public final class ControllerStationTests {
             press(s, st, StationLayout.AUTO);
             helper.assertTrue(out(st, 1) == 1.0, "AUTO: mode output 1");
             helper.assertTrue(ControllerStationType.shownDemand(st) == 70.0, "in AUTO the bar shows the bound demand: " + ControllerStationType.shownDemand(st));
-            helper.assertTrue(out(st, 0) == 30.0, "the station's own demand output is left where MAN left it");
-            helper.assertTrue(!op(s, st, OperateAction.SET, 55.0) && out(st, 0) == 30.0, "a program may not set the demand while in AUTO");
+            helper.assertTrue(out(st, 0) == 70.0, "with an outside demand bound, the demand output follows it in AUTO");
+            helper.assertTrue(!op(s, st, OperateAction.SET, 55.0) && out(st, 0) == 70.0, "a program may not set the demand while in AUTO");
             // No bound setpoint: RAISE and LOWER move the local setpoint (1 % of a 0 to 100 span a press).
             helper.assertTrue(out(st, 4) == 50.0, "the local setpoint starts mid-span: " + out(st, 4));
             press(s, st, StationLayout.RAISE);
             release(s, st);
-            helper.assertTrue(out(st, 4) == 51.0 && out(st, 0) == 30.0, "RAISE in AUTO moves the setpoint, not the demand: " + out(st, 4));
+            helper.assertTrue(out(st, 4) == 51.0 && out(st, 0) == 70.0, "RAISE in AUTO moves the setpoint, not the demand: " + out(st, 4));
             helper.assertTrue(ControllerStationType.shownSetpoint(st) == 51.0, "and the pointer shows it");
             // A bound setpoint is remote: the pointer follows it and RAISE moves nothing (the pulse still shows).
             panel.setInput(st, ControllerStationType.IN_SETPOINT, 40.0);
             helper.assertTrue(ControllerStationType.shownSetpoint(st) == 40.0, "the pointer follows the bound setpoint");
             press(s, st, StationLayout.RAISE);
-            helper.assertTrue(out(st, 2) == 1.0 && out(st, 4) == 51.0 && out(st, 0) == 30.0, "RAISE with a remote setpoint changes nothing but the pulse");
+            helper.assertTrue(out(st, 2) == 1.0 && out(st, 4) == 51.0 && out(st, 0) == 70.0, "RAISE with a remote setpoint changes nothing but the pulse");
             release(s, st);
             // Back to MAN: the demand takes over from the bar, so the output does not jump.
             press(s, st, StationLayout.MAN);
@@ -157,17 +157,18 @@ public final class ControllerStationTests {
             press(s, st, StationLayout.AUTO);
             op(s, st, OperateAction.TURN, 5.0);
             double sp = out(st, 4);
-            // A process variable far from the setpoint, in AUTO and in MAN, for a while: no output may move.
+            // A process variable far from the setpoint: in AUTO the PID (selected by the player) moves the demand; in MAN nothing moves it.
             panel.setInput(st, ControllerStationType.IN_PV, 5.0);
             panel.setInput(st, ControllerStationType.IN_SETPOINT, 80.0);
             helper.runAfterDelay(60, () -> {
-                helper.assertTrue(out(st, 0) == 0.0 && out(st, 1) == 1.0 && out(st, 4) == sp, "AUTO with a deviation: demand " + out(st, 0)
+                helper.assertTrue(out(st, 0) > 0.0 && out(st, 1) == 1.0 && out(st, 4) == sp, "AUTO with a deviation: the PID raises the demand: " + out(st, 0)
                         + " mode " + out(st, 1) + " setpoint " + out(st, 4));
                 helper.assertTrue(out(st, 2) == 0.0 && out(st, 3) == 0.0, "no button output is ever set by the station itself");
                 press(s, st, StationLayout.MAN);
+                double held = out(st, 0);
                 panel.setInput(st, ControllerStationType.IN_PV, 95.0);
                 helper.runAfterDelay(60, () -> {
-                    helper.assertTrue(out(st, 0) == 0.0, "MAN with a different deviation: demand still " + out(st, 0));
+                    helper.assertTrue(out(st, 0) == held, "MAN with a different deviation: demand still " + out(st, 0) + " (held " + held + ")");
                     helper.succeed();
                 });
             });

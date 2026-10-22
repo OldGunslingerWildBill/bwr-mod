@@ -35,16 +35,20 @@ public final class SyncMath {
     }
 
     /**
-     * How bright a synchronising lamp wired across the open breaker's poles is at {@code phaseDegrees}, 0 to 1: the
-     * voltage across it, sin squared of half the angle. Dark at 0 (the dark lamp method), full at 180.
+     * How bright a synchronising lamp is at {@code phaseDegrees}, 0 to 1, by the dark lamp method: both lamps are wired
+     * across the open breaker's poles, so each sees the difference of the generator and the grid voltage, whose size for
+     * equal voltages V is 2 V |sin(delta / 2)|. The lamp's power goes as the square of that, so the brightness, as a share
+     * of the brightest, is sin squared of half the angle: dark in phase (0 degrees), half at +-90, full at 180, and it
+     * pulses at the slip frequency while the pointer turns. The mod models no voltage magnitude, so there is no
+     * magnitude difference to add. Both lamps of the instrument follow this one curve.
      */
     public static double darkLamp(double phaseDegrees) {
         double s = Math.sin(Math.toRadians(phaseDegrees) / 2.0);
         return s * s;
     }
 
-    /** The complementary lamp (the bright lamp method): full at 0, dark at 180. */
-    public static double brightLamp(double phaseDegrees) {
-        return 1.0 - darkLamp(phaseDegrees);
+    /** The brightness of lamp {@code index} (0 left, 1 right) at {@code phaseDegrees}: both lamps are dark lamps, one curve. */
+    public static double lampBrightness(int index, double phaseDegrees) {
+        return darkLamp(phaseDegrees);
     }
 }
