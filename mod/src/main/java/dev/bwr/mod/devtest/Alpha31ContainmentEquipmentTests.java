@@ -83,7 +83,7 @@ public final class Alpha31ContainmentEquipmentTests {
             BlockPos origin = new BlockPos(46212 + i * 80, 190, 46212);
             for (int cx = (origin.getX() - 4) >> 4; cx <= (origin.getX() + 12) >> 4; cx++)
                 for (int cz = (origin.getZ() - 3) >> 4; cz <= (origin.getZ() + 9) >> 4; cz++)
-                    level.setChunkForced(cx, cz, true);
+                    FixtureChunks.force(level, cx, cz, true);
             var pool = i == 0 ? SuppressionBasinRegressionTests.build(level, origin)
                     : SuppressionTankRegressionTests.build(level, origin);
             for (int x = -3; x <= 11; x++) for (int z = -2; z <= 8; z++)
@@ -126,7 +126,7 @@ public final class Alpha31ContainmentEquipmentTests {
                 BlockPos origin = new BlockPos(46212 + i * 80, 190, 46212);
                 for (int cx = (origin.getX() - 4) >> 4; cx <= (origin.getX() + 12) >> 4; cx++)
                     for (int cz = (origin.getZ() - 3) >> 4; cz <= (origin.getZ() + 9) >> 4; cz++)
-                        level.setChunkForced(cx, cz, false);
+                        FixtureChunks.force(level, cx, cz, false);
             }
             helper.succeed();
         });

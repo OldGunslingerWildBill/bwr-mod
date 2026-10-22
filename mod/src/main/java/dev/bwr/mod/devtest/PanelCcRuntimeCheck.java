@@ -101,7 +101,7 @@ public final class PanelCcRuntimeCheck {
             if (age < 20) return;
             try {
                 var level = server.overworld();
-                level.setChunkForced(PANEL.getX() >> 4, PANEL.getZ() >> 4, true);
+                FixtureChunks.force(level, PANEL.getX() >> 4, PANEL.getZ() >> 4, true);
                 level.getChunk(PANEL.getX() >> 4, PANEL.getZ() >> 4);
                 for (int y = 109; y <= 112; y++) for (int x = 8; x <= 11; x++)
                     level.setBlock(new BlockPos(x, y, 10), Blocks.AIR.defaultBlockState(), 3);
@@ -177,7 +177,7 @@ public final class PanelCcRuntimeCheck {
                     if (result.split("\\|").length != 4)
                         throw new AssertionError("Lua result was " + result);
                     LogUtils.getLogger().info("PANEL CC CHECK PASS: {}", result);
-                    server.overworld().setChunkForced(PANEL.getX() >> 4, PANEL.getZ() >> 4, false);
+                    FixtureChunks.force(server.overworld(), PANEL.getX() >> 4, PANEL.getZ() >> 4, false);
                     server.halt(false);
                     stage = 3;
                 }

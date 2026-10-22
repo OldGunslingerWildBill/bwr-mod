@@ -26,7 +26,7 @@ public final class PanelChunkReloadTests {
         BlockPos first = new BlockPos(56_900, 110, 56_900);
         BlockPos second = first.west();
         int cx = first.getX() >> 4, cz = first.getZ() >> 4;
-        level.setChunkForced(cx, cz, true);
+        FixtureChunks.force(level, cx, cz, true);
         try {
             level.getChunk(cx, cz);
             for (BlockPos pos : new BlockPos[] {first, second}) {
@@ -39,11 +39,11 @@ public final class PanelChunkReloadTests {
             helper.assertTrue(PanelOps.placeDirect(level, second, 1, 1,
                     ComponentTypes.PUSHBUTTON, Footprint.of(3, 3)) != null, "second button did not fit");
         } finally {
-            level.setChunkForced(cx, cz, false);
+            FixtureChunks.force(level, cx, cz, false);
         }
         helper.runAfterDelay(100, () -> {
             boolean unloaded = !level.hasChunk(cx, cz);
-            level.setChunkForced(cx, cz, true);
+            FixtureChunks.force(level, cx, cz, true);
             try {
                 helper.assertTrue(unloaded, "fixture chunk did not unload before reload");
                 level.getChunk(cx, cz);
@@ -54,7 +54,7 @@ public final class PanelChunkReloadTests {
             } finally {
                 level.setBlock(first, Blocks.AIR.defaultBlockState(), 3);
                 level.setBlock(second, Blocks.AIR.defaultBlockState(), 3);
-                level.setChunkForced(cx, cz, false);
+                FixtureChunks.force(level, cx, cz, false);
             }
             helper.succeed();
         });

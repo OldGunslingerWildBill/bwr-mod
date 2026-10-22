@@ -86,7 +86,7 @@ public final class PanelTrimTests {
             level = helper.getLevel();
             for (int x = (ORIGIN.getX() - 16) >> 4; x <= (ORIGIN.getX() + 16) >> 4; x++) {
                 for (int z = (ORIGIN.getZ() - 16) >> 4; z <= (ORIGIN.getZ() + 16) >> 4; z++) {
-                    level.setChunkForced(x, z, true);
+                    FixtureChunks.force(level, x, z, true);
                     level.getChunk(x, z);
                 }
             }
@@ -130,7 +130,7 @@ public final class PanelTrimTests {
             clear();
             for (int x = (ORIGIN.getX() - 16) >> 4; x <= (ORIGIN.getX() + 16) >> 4; x++) {
                 for (int z = (ORIGIN.getZ() - 16) >> 4; z <= (ORIGIN.getZ() + 16) >> 4; z++) {
-                    level.setChunkForced(x, z, false);
+                    FixtureChunks.force(level, x, z, false);
                 }
             }
         }

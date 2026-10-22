@@ -29,7 +29,7 @@ public final class Alpha31AirlockRedstoneTests {
         BlockPos root = new BlockPos(45312, 220, 45312);
         for (int x = (root.getX() - 8) >> 4; x <= (root.getX() + 8) >> 4; x++)
             for (int z = (root.getZ() - 8) >> 4; z <= (root.getZ() + 8) >> 4; z++)
-                level.setChunkForced(x, z, true);
+                FixtureChunks.force(level, x, z, true);
         var block = BwrBlocks.CONTAINMENT_AIRLOCK.get();
         var state = block.defaultBlockState().setValue(ContainmentAirlockBlock.FACING, Direction.EAST);
         for (int i = 0; i < 6; i++) level.setBlock(block.cell(root, Direction.EAST, i), Blocks.AIR.defaultBlockState(), 2);
@@ -59,7 +59,7 @@ public final class Alpha31AirlockRedstoneTests {
         for (int i = 0; i < 6; i++) level.removeBlock(block.cell(root, Direction.EAST, i), false);
         for (int x = (root.getX() - 8) >> 4; x <= (root.getX() + 8) >> 4; x++)
             for (int z = (root.getZ() - 8) >> 4; z <= (root.getZ() + 8) >> 4; z++)
-                level.setChunkForced(x, z, false);
+                FixtureChunks.force(level, x, z, false);
         helper.succeed();
     }
 }

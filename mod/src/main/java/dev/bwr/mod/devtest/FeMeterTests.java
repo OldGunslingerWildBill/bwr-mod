@@ -67,8 +67,8 @@ public final class FeMeterTests {
         var l=h.getLevel();var p=ROOT.east(256);var chunk=new net.minecraft.world.level.ChunkPos(p);
         boolean owned=!l.getForcedChunks().contains(chunk.toLong());
         var min=p.offset(-6,-2,-4);var max=p.offset(5,7,4);
-        EntityLookupProbe.onFinished(h,()->{for(var at:BlockPos.betweenClosed(min,max))l.setBlock(at,Blocks.AIR.defaultBlockState(),3);if(owned)l.setChunkForced(chunk.x,chunk.z,false);});
-        if(owned)l.setChunkForced(chunk.x,chunk.z,true);l.getChunk(chunk.x,chunk.z);
+        EntityLookupProbe.onFinished(h,()->{for(var at:BlockPos.betweenClosed(min,max))l.setBlock(at,Blocks.AIR.defaultBlockState(),3);if(owned)FixtureChunks.force(l, chunk.x,chunk.z,false);});
+        if(owned)FixtureChunks.force(l, chunk.x,chunk.z,true);l.getChunk(chunk.x,chunk.z);
         for(var at:BlockPos.betweenClosed(min,max))l.setBlock(at,Blocks.AIR.defaultBlockState(),3);
         var gen=PowerModuleRuntimeCheck.place(l,BwrBlocks.NUCLEAR_GENERATOR.get(),p.offset(-3,-1,0),Direction.NORTH);
         var saved=gen.saveWithoutMetadata(l.registryAccess());saved.putDouble("Energy",10000);gen.loadWithComponents(saved,l.registryAccess());

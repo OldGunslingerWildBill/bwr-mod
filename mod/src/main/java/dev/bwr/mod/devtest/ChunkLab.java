@@ -62,19 +62,19 @@ final class ChunkLab implements AutoCloseable {
     // ------------------------------------------------------------------ forcing
 
     void force(int cx, int cz) {
-        level.setChunkForced(cx, cz, true);
+        FixtureChunks.force(level, this, cx, cz, true);
         forced.add(ChunkPos.asLong(cx, cz));
         level.getChunk(cx, cz);
     }
 
     /** Adds the ticket without loading the chunk, so the load is the server's, with the plant running. */
     void request(int cx, int cz) {
-        level.setChunkForced(cx, cz, true);
+        FixtureChunks.force(level, this, cx, cz, true);
         forced.add(ChunkPos.asLong(cx, cz));
     }
 
     void unforce(int cx, int cz) {
-        level.setChunkForced(cx, cz, false);
+        FixtureChunks.force(level, this, cx, cz, false);
         forced.remove(ChunkPos.asLong(cx, cz));
     }
 
@@ -97,7 +97,7 @@ final class ChunkLab implements AutoCloseable {
 
     void releaseAll() {
         for (long packed : new ArrayList<>(forced)) {
-            level.setChunkForced(ChunkPos.getX(packed), ChunkPos.getZ(packed), false);
+            FixtureChunks.force(level, this, ChunkPos.getX(packed), ChunkPos.getZ(packed), false);
         }
         forced.clear();
     }

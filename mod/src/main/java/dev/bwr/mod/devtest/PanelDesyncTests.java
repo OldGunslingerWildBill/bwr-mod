@@ -74,6 +74,7 @@ public final class PanelDesyncTests {
         private final List<Runnable> steps = new ArrayList<>();
         private final EntityLookupProbe probe;
         private int polls;
+        private final FixtureWait.Timer wait = FixtureWait.start("panel desync stage chunks");
         private boolean released;
 
         private Stage(GameTestHelper helper, int slot) {
@@ -114,9 +115,11 @@ public final class PanelDesyncTests {
         private void whenLive(GameTestHelper helper, Runnable then) {
             helper.runAfterDelay(1, () -> {
                 if (entitiesLive(at(4, 0)) && entitiesLive(at(5, 0))) {
+                    wait.ready();
                     then.run();
                     return;
                 }
+                wait.notReady(level);
                 if (++polls > 200) {
                     release();
                     helper.assertTrue(false, "the fixture chunks never answered entity lookups");
@@ -187,7 +190,7 @@ public final class PanelDesyncTests {
             level.getChunkSource().removeRegionTicket(HOLD, ownerChunk(), 0, ownerChunk());
             level.getChunkSource().removeRegionTicket(HOLD, coveredChunk(), 0, coveredChunk());
             for (ChunkPos chunk : new ChunkPos[] {ownerChunk(), coveredChunk()}) {
-                level.setChunkForced(chunk.x, chunk.z, force);
+                FixtureChunks.force(level, this, chunk.x, chunk.z, force);
                 if (force) {
                     level.getChunk(chunk.x, chunk.z);
                 }
@@ -416,8 +419,8 @@ public final class PanelDesyncTests {
                 }))
                 .thenExecuteAfter(3, () -> guard(s, () -> {
                     baseline[0] = s.waiting();
-                    level.setChunkForced(s.ownerChunk().x, s.ownerChunk().z, false);
-                    level.setChunkForced(s.coveredChunk().x, s.coveredChunk().z, false);
+                    FixtureChunks.force(level, s, s.ownerChunk().x, s.ownerChunk().z, false);
+                    FixtureChunks.force(level, s, s.coveredChunk().x, s.coveredChunk().z, false);
                     feasibilityHold(level, s.coveredChunk());
                 }))
                 .thenWaitUntil(() -> poll(helper, s, polls, level.isLoaded(coveredPos) && !level.isLoaded(ownerPos),
@@ -428,7 +431,7 @@ public final class PanelDesyncTests {
                     helper.assertTrue(s.drops().isEmpty(), "the unloaded owner was not told (and not loaded)");
                     helper.assertTrue(!level.isLoaded(ownerPos), "the owner chunk was not force-loaded by the break");
                     s.forgetLive(); // the owner chunk loads again: its entity lookups have to be seen to work again
-                    level.setChunkForced(s.ownerChunk().x, s.ownerChunk().z, true);
+                    FixtureChunks.force(level, s, s.ownerChunk().x, s.ownerChunk().z, true);
                 }))
                 .thenWaitUntil(() -> poll(helper, s, polls, level.isLoaded(ownerPos)
                         && s.be(ownerPos) != null && s.be(ownerPos).owned().isEmpty(), "waiting for the repair loaded=" + level.isLoaded(ownerPos) + " be=" + (level.isLoaded(ownerPos) ? s.be(ownerPos) + " state=" + level.getBlockState(ownerPos) + " col3=" + level.getBlockState(s.at(3, 0)).getBlock() + " col0=" + level.getBlockState(s.at(0, 0)).getBlock() : "-") + " covered=" + level.isLoaded(coveredPos) + " drops=" + s.drops().size()))
@@ -473,7 +476,7 @@ public final class PanelDesyncTests {
                     saved[0] = s.be(ownerPos).savePanel(false);
                     // The owner chunk moves from forced to a level-33 hold while the covered chunk is still forced.
                     feasibilityHold(level, s.ownerChunk());
-                    level.setChunkForced(s.ownerChunk().x, s.ownerChunk().z, false);
+                    FixtureChunks.force(level, s, s.ownerChunk().x, s.ownerChunk().z, false);
                 }))
                 .thenExecuteAfter(4, () -> guard(s, () -> {
                     helper.assertTrue(level.isLoaded(ownerPos) && level.isLoaded(coveredPos), "both chunks still loaded");
@@ -481,7 +484,7 @@ public final class PanelDesyncTests {
                     s.be(ownerPos).loadPanel(new CompoundTag());
                     s.be(coveredPos).loadPanel(new CompoundTag());
                     helper.assertTrue(s.drops().isEmpty(), "nothing dropped");
-                    level.setChunkForced(s.coveredChunk().x, s.coveredChunk().z, false);
+                    FixtureChunks.force(level, s, s.coveredChunk().x, s.coveredChunk().z, false);
                 }))
                 .thenWaitUntil(() -> poll(helper, s, polls, level.isLoaded(ownerPos) && !level.isLoaded(coveredPos),
                         "waiting for the covered chunk to unload"))
@@ -499,7 +502,7 @@ public final class PanelDesyncTests {
                             + baseline[0] + " " + PanelConsistency.describeWaiting(level));
                     helper.assertTrue(!level.isLoaded(coveredPos), "verification did not load the covered chunk");
                     helper.assertTrue(s.drops().size() == before[0], "no item yet");
-                    level.setChunkForced(s.coveredChunk().x, s.coveredChunk().z, true);
+                    FixtureChunks.force(level, s, s.coveredChunk().x, s.coveredChunk().z, true);
                 }))
                 .thenWaitUntil(() -> poll(helper, s, polls, level.isLoaded(ownerPos)
                         && s.be(ownerPos).owned().isEmpty(), "waiting for the deferred verification to repair the owner"))
@@ -520,6 +523,7 @@ public final class PanelDesyncTests {
             if (++polls[0] > 200) {
                 helper.testInfo.fail(new GameTestAssertException(waiting));
             }
+            FixtureWait.pace(helper.getLevel());
             helper.assertTrue(false, waiting);
         }
         polls[0] = 0;

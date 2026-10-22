@@ -576,7 +576,7 @@ public final class PanelAngledMountTests {
         BlockPos base = new BlockPos(ORIGIN_X + 6 * 32, FLOOR_Y + 2, ORIGIN_Z);
         int cx = base.getX() >> 4;
         int cz = base.getZ() >> 4;
-        level.setChunkForced(cx, cz, true);
+        FixtureChunks.force(level, cx, cz, true);
         try {
             LevelChunk chunk = level.getChunk(cx, cz);
             // what a world saved by alpha 44 holds: the block and its state, and no block entity
@@ -610,7 +610,7 @@ public final class PanelAngledMountTests {
                 level.setBlock(base.offset(i * 2, 0, 0), Blocks.AIR.defaultBlockState(), 2);
             }
             level.setBlock(base.offset(0, 0, 4), Blocks.AIR.defaultBlockState(), 2);
-            level.setChunkForced(cx, cz, false);
+            FixtureChunks.force(level, cx, cz, false);
         }
         h.succeed();
     }
@@ -625,7 +625,7 @@ public final class PanelAngledMountTests {
         BlockPos base = new BlockPos(ORIGIN_X + 7 * 32, FLOOR_Y + 2, ORIGIN_Z);
         int cx = base.getX() >> 4;
         int cz = base.getZ() >> 4;
-        level.setChunkForced(cx, cz, true);
+        FixtureChunks.force(level, cx, cz, true);
         LevelChunk chunk = level.getChunk(cx, cz);
         for (int i = 0; i < PIECES.length; i++) {
             BlockPos pos = base.offset(i * 2, 0, 0);
@@ -634,10 +634,10 @@ public final class PanelAngledMountTests {
             chunk.removeBlockEntity(pos);
             chunk.setUnsaved(true);
         }
-        level.setChunkForced(cx, cz, false);
-        h.runAfterDelay(120, () -> {
+        FixtureChunks.force(level, cx, cz, false);
+        whenUnloaded(h, level, cx, cz, () -> {
             boolean unloaded = !level.hasChunk(cx, cz);
-            level.setChunkForced(cx, cz, true);
+            FixtureChunks.force(level, cx, cz, true);
             try {
                 check(h, unloaded, "the fixture chunk did not unload before the reload");
                 LevelChunk loaded = level.getChunk(cx, cz);
@@ -657,9 +657,48 @@ public final class PanelAngledMountTests {
                 for (int i = 0; i < PIECES.length; i++) {
                     level.setBlock(base.offset(i * 2, 0, 0), Blocks.AIR.defaultBlockState(), 2);
                 }
-                level.setChunkForced(cx, cz, false);
+                FixtureChunks.force(level, cx, cz, false);
             }
             h.succeed();
+        });
+    }
+
+    /**
+     * Runs {@code then} once the chunk has really been unloaded, that is when its {@code ChunkEvent.Unload} has fired,
+     * or after 200 paced polls (ten seconds), when the check in {@code then} reports a chunk that never left.
+     *
+     * <p>{@code hasChunk} is not that moment. A chunk whose ticket is dropped stops answering it at once, but it is only
+     * saved and unloaded some ticks later (many, on a busy server), and a ticket added in between takes the same chunk
+     * object back out of the pending unloads: nothing is read from disk and no load event fires, so the blocks that
+     * were stripped of their entities in memory stay stripped. That was the failure "the load did not give the old
+     * block a panel block entity", seen only when the machine was loaded.
+     */
+    private static void whenUnloaded(GameTestHelper h, ServerLevel level, int cx, int cz, Runnable then) {
+        net.minecraft.world.level.ChunkPos pos = new net.minecraft.world.level.ChunkPos(cx, cz);
+        boolean[] gone = {false};
+        java.util.function.Consumer<net.neoforged.neoforge.event.level.ChunkEvent.Unload> listener = event -> {
+            if (event.getLevel() == level && event.getChunk().getPos().equals(pos)) {
+                gone[0] = true;
+            }
+        };
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(listener);
+        pollUnloaded(h, FixtureWait.start("trim chunk unload"), gone, level, () -> {
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(listener);
+            then.run();
+        });
+    }
+
+    private static void pollUnloaded(GameTestHelper h, FixtureWait.Timer wait, boolean[] gone, ServerLevel level, Runnable then) {
+        h.runAfterDelay(1, () -> {
+            if (!gone[0] && wait.polls() < 200) {
+                wait.notReady(level);
+                pollUnloaded(h, wait, gone, level, then);
+                return;
+            }
+            if (gone[0]) {
+                wait.ready();
+            }
+            then.run();
         });
     }
 }

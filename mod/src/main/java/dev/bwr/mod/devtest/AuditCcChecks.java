@@ -37,7 +37,7 @@ final class AuditCcChecks {
         BlockPos meterPos = panelPos.east(5);
         int cx = panelPos.getX() >> 4;
         int cz = panelPos.getZ() >> 4;
-        level.setChunkForced(cx, cz, true);
+        FixtureChunks.force(level, cx, cz, true);
         level.getChunk(cx, cz);
         try {
             level.setBlock(panelPos, BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState()
@@ -76,7 +76,7 @@ final class AuditCcChecks {
         } finally {
             level.setBlock(meterPos, Blocks.AIR.defaultBlockState(), 3);
             level.setBlock(panelPos, Blocks.AIR.defaultBlockState(), 3);
-            level.setChunkForced(cx, cz, false);
+            FixtureChunks.force(level, cx, cz, false);
         }
         helper.succeed();
     }

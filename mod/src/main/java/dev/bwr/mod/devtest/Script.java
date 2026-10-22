@@ -20,7 +20,7 @@ final class Script {
     private record Step(int delay, Runnable action) implements Item {
     }
 
-    private record Await(Supplier<String> what, BooleanSupplier condition, int maxTicks) implements Item {
+    private record Await(Supplier<String> what, BooleanSupplier condition, int maxTicks, boolean paced) implements Item {
     }
 
     private final GameTestHelper helper;
@@ -53,7 +53,18 @@ final class Script {
 
     /** As {@link #await(String, int, BooleanSupplier)}; the description is built when the wait times out. */
     Script await(Supplier<String> what, int maxTicks, BooleanSupplier condition) {
-        queue.add(new Await(what, condition, maxTicks));
+        queue.add(new Await(what, condition, maxTicks, false));
+        return this;
+    }
+
+    /**
+     * As {@link #await(Supplier, int, BooleanSupplier)} for a wait on chunks that are loading: every poll that finds the
+     * condition unmet takes the length of a real tick ({@link FixtureWait#pace}). The server otherwise runs a tick in half
+     * a millisecond while the IO threads that bring a chunk's entities back take tens, so a plant spread over several chunks
+     * would run for dozens of ticks with half its parts missing, which a real server (50 ms a tick) never does.
+     */
+    Script awaitChunks(Supplier<String> what, int maxTicks, BooleanSupplier condition) {
+        queue.add(new Await(what, condition, maxTicks, true));
         return this;
     }
 
@@ -95,6 +106,8 @@ final class Script {
                     current = null;
                 } else if (waited++ >= await.maxTicks()) {
                     throw new IllegalStateException("timed out waiting for: " + await.what().get());
+                } else if (await.paced()) {
+                    FixtureWait.pace(helper.getLevel());
                 }
             }
         } catch (RuntimeException | Error e) {

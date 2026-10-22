@@ -678,7 +678,7 @@ public final class PaperlessRecorderTests {
             // just what the wall, the valve and the player need: a handful of chunks, so releasing them is cheap
             for (int x = (origin.getX() - 26) >> 4; x <= (origin.getX() + 6) >> 4; x++) {
                 for (int z = (origin.getZ() - 8) >> 4; z <= (origin.getZ() + 8) >> 4; z++) {
-                    level.setChunkForced(x, z, force);
+                    FixtureChunks.force(level, origin, x, z, force);
                     if (force) {
                         level.getChunk(x, z);
                     }

@@ -20,7 +20,7 @@ public final class Alpha31VaultDoorTests {
     private Alpha31VaultDoorTests(){}
     private static void hold(ServerLevel level,BlockPos center,int radius,boolean force){
         for(int x=(center.getX()-radius)>>4;x<=(center.getX()+radius)>>4;x++)
-            for(int z=(center.getZ()-radius)>>4;z<=(center.getZ()+radius)>>4;z++)level.setChunkForced(x,z,force);
+            for(int z=(center.getZ()-radius)>>4;z<=(center.getZ()+radius)>>4;z++)FixtureChunks.force(level, center, x, z, force);
     }
     private static ContainmentControllerBlockEntity room(ServerLevel level,BlockPos center,int size){
         int radius=size+2;

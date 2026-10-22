@@ -588,7 +588,7 @@ public final class PhaseLAdvancementTests {
         void hold(boolean forced) {
             for (int x = (origin.getX() - 32) >> 4; x <= (origin.getX() + 32) >> 4; x++)
                 for (int z = (origin.getZ() - 32) >> 4; z <= (origin.getZ() + 32) >> 4; z++) {
-                    level.setChunkForced(x, z, forced);
+                    FixtureChunks.force(level, origin, x, z, forced);
                     if (forced) level.getChunk(x, z);
                 }
         }

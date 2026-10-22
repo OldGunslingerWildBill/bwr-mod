@@ -26,7 +26,7 @@ public final class Alpha31OpeningsAcceptanceTests {
     private Alpha31OpeningsAcceptanceTests(){}
     private static void hold(ServerLevel level,BlockPos center,int radius,boolean force){
         for(int x=(center.getX()-radius)>>4;x<=(center.getX()+radius)>>4;x++)
-            for(int z=(center.getZ()-radius)>>4;z<=(center.getZ()+radius)>>4;z++)level.setChunkForced(x,z,force);
+            for(int z=(center.getZ()-radius)>>4;z<=(center.getZ()+radius)>>4;z++)FixtureChunks.force(level, center, x, z, force);
     }
     private static void survey(ServerLevel level,ContainmentControllerBlockEntity c){
         c.markDirty();

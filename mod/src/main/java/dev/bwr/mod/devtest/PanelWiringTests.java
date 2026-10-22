@@ -316,7 +316,7 @@ public final class PanelWiringTests {
         private void hold(boolean force) {
             for (int x = (origin.getX() - 40) >> 4; x <= (origin.getX() + 40) >> 4; x++) {
                 for (int z = (origin.getZ() - 16) >> 4; z <= (origin.getZ() + 16) >> 4; z++) {
-                    level.setChunkForced(x, z, force);
+                    FixtureChunks.force(level, origin, x, z, force);
                     if (force) {
                         level.getChunk(x, z);
                     }
