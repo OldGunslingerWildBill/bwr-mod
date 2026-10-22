@@ -1,1 +1,1 @@
-{"type": "minecraft:crafting_shaped", "category": "building", "pattern": ["DD"], "key": {"D": {"item": "bwr:control_panel_desk"}}, "result": {"id": "bwr:control_panel_desk_wide", "count": 1}}
+{"type": "minecraft:crafting_shaped", "category": "building", "pattern": ["DID"], "key": {"D": {"item": "bwr:control_panel_desk"}, "I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:control_panel_desk_wide", "count": 1}}

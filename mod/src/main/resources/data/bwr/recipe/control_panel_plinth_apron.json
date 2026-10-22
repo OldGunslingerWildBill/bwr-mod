@@ -1,1 +1,1 @@
-{"type": "minecraft:crafting_shaped", "category": "building", "pattern": ["II", "II"], "key": {"I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:control_panel_plinth_apron", "count": 2}}
+{"type": "minecraft:crafting_shaped", "category": "building", "pattern": ["IVI"], "key": {"I": {"item": "minecraft:iron_ingot"}, "V": {"item": "bwr:control_panel_vertical"}}, "result": {"id": "bwr:control_panel_plinth_apron", "count": 2}}

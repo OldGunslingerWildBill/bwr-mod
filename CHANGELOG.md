@@ -1,5 +1,36 @@
 # Changelog
 
+## Unreleased: control-room recipes, recipe collision audit
+
+The placeholder control desk recipes are real now, the other control-room recipes were checked against each other, and the recipe audit
+finds collisions and circular recipes.
+
+### Recipes
+
+- **Control desks.** The 1 m desk (`control_panel_desk`) is a console over a vertical board over an iron ingot (9 ingots, was 8); the 2 m desk
+  (`control_panel_desk_wide`) is two desks with an iron ingot between them (19, was 16: it now costs a little more than two). Duplex
+  column: header strip and iron ingot over two vertical boards over a benchboard (13 ingots and a pane, was 10 with no header at all).
+- **Wall display (3 x 2).** It cost less iron than the 2 x 2 (6 ingots against 8) although it has six blocks to its four. It is now the 2 x 2
+  display between two black glass panes, under three ingots (11 ingots, 3 panes).
+- **Control stand** is a glass pane over a vertical board over an iron ingot; **header vent** takes iron bars (vertical board, two bars, an
+  ingot, makes two). The old versions were the same ingredients as the outside corner and the base plinth, so those could not be crafted.
+- **Same ingredients, same grid: the other collisions.** Six machine pairs had identical recipes, so one of each was uncraftable. Changed:
+  `makeup_water_pump` (hopper in place of the comparator), `natural_draft_tower` (white concrete in place of smooth stone),
+  `suppression_pool_drain` (black dye for blue), `turbine_control_valve` (repeater for the comparator), `full_core_display` (comparator
+  for the redstone), `grid_tie` (copper ingots for the redstone). Recipe ids and results are unchanged.
+- **Plinth apron** was 2 x 2 iron ingots, which is also vanilla's iron trapdoor recipe, so it could not be crafted at all (the new GameTest found it; the file audit cannot see vanilla). It is now ingot, vertical board, ingot in a row (2 made, still 2 ingots each).
+- None of the control-room recipes uses Mekanism; they are the same with and without it.
+
+### Audit and tests
+
+- `tools-audit-recipes.py` now fails on two crafting recipes with the same ingredient pattern (shaped against shaped, mirrored too, shapeless
+  against shapeless, and shaped against shapeless, unless their `neoforge:conditions` exclude each other) and on a circular dependency
+  among bwr items. It found 8 collisions in the old recipes.
+- `ControlRoomRecipeTests` (new GameTests): every desk and every other control-room piece is laid out in the grid exactly as its recipe says
+  (and mirrored) and the loaded recipe manager must return that recipe; the iron cost through every panel a desk is made from must grow
+  with its size; no ingredient may come from Mekanism.
+- CONTROL-PANELS.md has a recipe table for the control-room furniture.
+
 ## Unreleased: fuel fabricator item route, depleted uranium, recipe audit
 
 The fuel fabricator can now make assemblies from uranium and steel *items*, with the enrichment chosen on its screen, and returns the uranium that did not become product as depleted uranium. The Mekanism chemical route is unchanged. GUI network protocol is now 23 (the fabricator's snapshot changed): update client and server together. Old saves load.

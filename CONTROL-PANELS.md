@@ -408,8 +408,44 @@ a 12 x 12 gauge does not). The cells that are not on the top (rows 6 to 15, the 
 * **Finishes.** The whole desk takes the finish (the top and the riser are the paint, the shelf and the ends the bezel, the back the
   service door texture); only the dark sloped front and the floor keep their colour. The wrench cycles the finish of both halves of a
   2 m desk together.
-* **Recipes.** 1 m desk: a console over a vertical board. 2 m desk: two 1 m desks side by side.
+* **Recipes.** 1 m desk: a console over a vertical board over an iron ingot (the frame). 2 m desk: two 1 m desks with an iron
+  ingot between them as the joining bar. Full table under "Control-room recipes" below.
 * **Saves.** New blocks only: no existing block, state or saved value changed.
+
+### Control-room recipes
+
+Every panel, trim and furniture recipe, with its cost in **iron ingots per item made** (a vertical board V is 2 ingots and a
+quarter of a lime dye; a nugget counts a ninth; glass and dyes are listed apart). Cost grows with the piece: a bench or console
+board is three vertical boards, a 1 m desk a console plus a board plus a frame ingot, a 2 m desk two desks plus a bar, the
+six-block duplex column a bench, two boards, a header strip and a slab ingot. None uses Mekanism, so they are the same with
+and without it. `tools-audit-recipes.py` fails on two recipes with the same ingredient pattern and on circular dependencies;
+`ControlRoomRecipeTests` crafts each desk and each of these pieces through the recipe manager.
+
+| Item | Recipe | Makes | Iron |
+|---|---|---|---|
+| Vertical board | 8 iron ingots around a lime dye | 4 | 2 |
+| Back panel | 4 vertical boards (2 x 2) | 4 | 2 |
+| Benchboard | 3 vertical boards (L) | 1 | 6 |
+| Console | 2 vertical boards over 2 iron ingots | 1 | 6 |
+| **Desk, 1 m** | console over vertical board over iron ingot | 1 | 9 |
+| **Desk, 2 m** | desk, iron ingot, desk (a row) | 1 | 19 |
+| **Duplex column** | header strip and iron ingot over two vertical boards over a benchboard | 1 | 13 + 1 glass pane |
+| Header strip | 2 glass panes over 2 vertical boards | 2 | 2 + 1 glass pane |
+| Header canopy | header strip + iron ingot (shapeless) | 1 | 3 + 1 glass pane |
+| Header vent | vertical board + 2 iron bars + iron ingot (shapeless) | 2 | 1.5 + bars |
+| End cap: flat / bench / console | 1 vertical board / benchboard / console (shapeless) | 4 | 0.5 / 1.5 / 1.5 |
+| End cap: round | vertical board + iron nugget (shapeless) | 4 | 0.5 |
+| Plinth: kick / apron / base | 3 ingots in a row / ingot, board, ingot in a row / ingot, board, ingot in a column | 6 / 2 / 2 | 0.5 / 2 / 2 |
+| Corner, vertical: inside / outside / chamfer | 2 boards / board + ingot / 2 boards + nugget (shapeless) | 2 | 2 / 1.5 / 2 |
+| Corner, bench: inside / outside / chamfer | 2 benchboards / benchboard + ingot / 2 benchboards + nugget (shapeless) | 2 | 6 / 3.5 / 6 |
+| Operator desk | 5 iron ingots (a table: three over two legs) | 2 | 2.5 |
+| Operator desk: round end / L corner | operator desk + iron nugget / + iron ingot (shapeless) | 1 | 2.6 / 3.5 |
+| **Supervisor desk** | 2 operator desks over 2 iron ingots | 1 | 7 (two blocks) |
+| Relay cabinet / plain back | 7 or 8 ingots around an iron door and redstone / redstone | 1 | 9 / 8 |
+| Mimic band: cream / black | vertical board + bone meal / black dye (shapeless) | 1 | 2 + dye |
+| Wall display, 2 x 2 | 8 iron ingots around a black glass pane | 1 | 8 + 1 pane |
+| Wall display, 3 x 2 | 3 ingots over a row of pane, display, pane | 1 | 11 + 3 panes |
+| Control stand | glass pane over vertical board over iron ingot | 1 | 3 + 1 glass pane |
 
 ## 2. What a port can be wired to
 

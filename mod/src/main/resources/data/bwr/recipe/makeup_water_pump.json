@@ -13,7 +13,7 @@
       "item": "bwr:high_pressure_water_pipe"
     },
     "C": {
-      "item": "minecraft:comparator"
+      "item": "minecraft:hopper"
     }
   },
   "result": {

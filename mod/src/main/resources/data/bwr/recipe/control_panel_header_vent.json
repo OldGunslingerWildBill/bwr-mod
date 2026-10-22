@@ -1,1 +1,1 @@
-{"type": "minecraft:crafting_shapeless", "category": "building", "ingredients": [{"item": "bwr:control_panel_vertical"}, {"item": "minecraft:iron_ingot"}, {"item": "minecraft:iron_ingot"}], "result": {"id": "bwr:control_panel_header_vent", "count": 2}}
+{"type": "minecraft:crafting_shapeless", "category": "building", "ingredients": [{"item": "bwr:control_panel_vertical"}, {"item": "minecraft:iron_bars"}, {"item": "minecraft:iron_bars"}, {"item": "minecraft:iron_ingot"}], "result": {"id": "bwr:control_panel_header_vent", "count": 2}}
