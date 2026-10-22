@@ -64,6 +64,11 @@ finds collisions and circular recipes.
   with its size; no ingredient may come from Mekanism.
 - CONTROL-PANELS.md has a recipe table for the control-room furniture.
 
+## Unreleased: generator panel state, board check setup
+
+- **Generator panel chip.** The Running/Stopped chip on a nuclear generator's panel read Stopped while it was generating: `PowerModuleBlockEntity.running` was set from steam flow in `expand`, and a generator passes no steam. `generate` now sets it from the electrical output (running while it produces power). The Lua peripheral's `running` field for a generator follows the same value. New assertions: `PowerModuleRuntimeCheck` (running equals "electricMW above zero" on every tick of the parallel plant, the generator produces at least once, and the same link holds after a reload) and `PowerModuleClientCheck` (the generator panel's menu reads running while it produces).
+- **Board check `blueprint-ghost-blocked`.** The check set the obstacle block on the server and sampled the preview after a fixed number of client ticks, so a stalled server could leave the client without the block and the check saw "0 blocks in the way". The check now waits (bounded at 600 ticks) until the client level shows the obstacle before it samples; the assertion and its expected value are unchanged.
+
 ## Unreleased: fuel fabricator item route, depleted uranium, recipe audit
 
 The fuel fabricator can now make assemblies from uranium and steel *items*, with the enrichment chosen on its screen, and returns the uranium that did not become product as depleted uranium. The Mekanism chemical route is unchanged. GUI network protocol is now 23 (the fabricator's snapshot changed): update client and server together. Old saves load.

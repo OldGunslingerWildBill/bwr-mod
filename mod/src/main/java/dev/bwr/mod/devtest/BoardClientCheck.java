@@ -80,6 +80,12 @@ public final class BoardClientCheck {
         return new BlockPos(X0 - board * SPACING, FLOOR_Y + 1, Z0);
     }
 
+    /** The block that is placed in the ghost's way in the "blocked" stage (and removed in the "fits" stage). */
+    private static BlockPos obstaclePos() {
+        BlockPos ghost = ghostOrigin();
+        return new BlockPos(ghost.getX() + 2, FLOOR_Y + 2, ghost.getZ() - 1);
+    }
+
     /** The block the ghost stages look at: the floor east of the first board. */
     private static BlockPos ghostOrigin() {
         return new BlockPos(X0 + 30, FLOOR_Y, Z0);
@@ -200,8 +206,7 @@ public final class BoardClientCheck {
                 level.setWeatherParameters(6000, 0, false, false);
                 player.setItemInHand(InteractionHand.MAIN_HAND, net.minecraft.world.item.ItemStack.EMPTY);
                 if (shot.board() < 0) {
-                    BlockPos ghost = ghostOrigin();
-                    BlockPos obstacle = new BlockPos(ghost.getX() + 2, FLOOR_Y + 2, ghost.getZ() - 1);
+                    BlockPos obstacle = obstaclePos();
                     level.setBlock(obstacle, shot.name().endsWith("blocked") ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), 3);
                     BoardTemplate shape = BoardTemplates.get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("bwr", "duplex_board"));
                     player.setItemInHand(InteractionHand.MAIN_HAND, BoardBlueprintItem.stackFor(shape.id()));
@@ -219,6 +224,15 @@ public final class BoardClientCheck {
         }
         Shot shot = shots.get(stage);
         if (shot.board() < 0) {
+            // The obstacle is set on the server thread. Sample the preview only once this client's level shows it, however late the block
+            // update arrives (a busy machine can stall the server for longer than the fixed frame count above).
+            if (ghostDrawsAtStart < 0 && !obstacleVisible(mc, shot)) {
+                if (++obstacleWait > OBSTACLE_WAIT_TICKS) {
+                    throw new AssertionError(shot.name() + ": the client level never showed the obstacle block (" + mc.level.getBlockState(obstaclePos())
+                            + " after " + OBSTACLE_WAIT_TICKS + " ticks)");
+                }
+                return;
+            }
             ghostCheck(mc, shot);
             return;
         }
@@ -248,6 +262,15 @@ public final class BoardClientCheck {
     }
 
     private static long ghostDrawsAtStart = -1;
+    private static int obstacleWait;
+    /** Bound on the wait for the client to see the obstacle: 30 seconds of client ticks. */
+    private static final int OBSTACLE_WAIT_TICKS = 600;
+
+    /** True once the client level shows the stage's obstacle: stone for "blocked", air for "fits". */
+    private static boolean obstacleVisible(Minecraft mc, Shot shot) {
+        boolean stone = mc.level.getBlockState(obstaclePos()).is(Blocks.STONE);
+        return stone == shot.name().endsWith("blocked");
+    }
 
     /** The held blueprint draws its ghost at the crosshair; with a block in the way some blocks are not free. */
     private static void ghostCheck(Minecraft mc, Shot shot) {
@@ -280,9 +303,11 @@ public final class BoardClientCheck {
         } catch (IOException ex) {
             throw new IllegalStateException("Board screenshot failed", ex);
         }
-        LogUtils.getLogger().info("BOARD CLIENT CHECK: {} ({} of {} blocks in the way, {} ghost frames)", shot.name(), blocked,
-                plan.blocks().size(), BoardPreview.drawn() - ghostDrawsAtStart);
+        LogUtils.getLogger().info("BOARD CLIENT CHECK: {} ({} of {} blocks in the way, {} ghost frames, first block {}, crosshair on {})", shot.name(), blocked,
+                plan.blocks().size(), BoardPreview.drawn() - ghostDrawsAtStart, plan.blocks().getFirst().pos(),
+                mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult hit ? hit.getBlockPos() + " " + hit.getDirection() : "nothing");
         ghostDrawsAtStart = -1;
+        obstacleWait = 0;
         captures++;
         requested = false;
         stage++;

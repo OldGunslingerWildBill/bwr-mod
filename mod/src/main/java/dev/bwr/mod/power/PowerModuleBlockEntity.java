@@ -127,7 +127,8 @@ public class PowerModuleBlockEntity extends BlockEntity {
         double created=energyFe-before;generatedFE+=created;
         double whole=created+generatedCarry;long counted=(long)Math.floor(whole);
         generatedCarry=whole-counted;generated.record(counted);
-        electricMW=watts/1e6;status=watts>0?"Generating":energyFe>=ENERGY_CAPACITY-.001?"Energy buffer full":"No turbine work";
+        electricMW=watts/1e6;running=watts>0; // a generator runs when it is producing power; it has no steam flow of its own
+        status=watts>0?"Generating":energyFe>=ENERGY_CAPACITY-.001?"Energy buffer full":"No turbine work";
     }
     double expand(double workBudgetKJ) {
         if(workBudgetKJ<=0)return 0;
