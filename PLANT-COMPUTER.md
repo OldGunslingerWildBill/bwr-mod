@@ -125,7 +125,7 @@ every 4 ticks. A touch on a built-in page only changes the page.
 | Grid | at most 80 columns x 48 rows (4 blocks at 50 percent text is 62 x 41) |
 | Calls that change the display | a burst of 512, refilled at 32 a tick (640 a second); a call with no token left is an error, not a queue |
 | Network | at most one patch every 4 ticks per display (5 a second), however often a program draws; `plantFlush` may ask for the next one early but not twice within 2 ticks |
-| Patch | at most 16,384 bytes. The whole display, with every limit at its maximum at once, is 14,4xx bytes and always fits (`PlantComputerTests.theLimitsKeepTheWholeStateInOnePatch`) |
+| Patch | at most 16,384 bytes. The whole display, with every limit at its maximum at once, is 14,280 bytes and always fits (`PlantComputerTests.theLimitsKeepTheWholeStateInOnePatch`) |
 | Touches | one handled every 4 ticks per display |
 
 Numbers must be finite and no bigger than 1e9; a spec number that is not a whole number where a whole number is needed is an error.

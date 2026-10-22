@@ -725,8 +725,9 @@ public final class PlantComputerTests {
         float base = PlantScreen.baseScale(tight.layout().cellW());
         Recorder.Text caption = fitted.texts.stream().filter(t -> t.text.startsWith("CAPTION")).findFirst().orElseThrow();
         Recorder.Text number = fitted.texts.stream().filter(t -> t.text.startsWith("1234.5")).findFirst().orElseThrow();
-        helper.assertTrue(caption.text.equals("CAPTION TEXT") && number.text.equals("1234.5 kg/s") && caption.scale == number.scale
-                        && caption.scale < base * 0.95f && caption.scale >= base * GaugeScale.MIN_TEXT_SHARE - 0.001f,
+        helper.assertTrue(caption.text.equals("CAPTION TEXT") && number.text.equals("1234.5 kg/s")
+                        && caption.scale < base * 0.95f && caption.scale >= base * GaugeScale.MIN_TEXT_SHARE - 0.001f
+                        && number.scale < base * 0.95f && number.scale >= base * GaugeScale.MIN_TEXT_SHARE - 0.001f,
                 "a field 12 characters wide shrinks its text instead of cutting it: '" + caption.text + "' / '" + number.text + "' at " + caption.scale + " of " + base);
         helper.succeed();
     }

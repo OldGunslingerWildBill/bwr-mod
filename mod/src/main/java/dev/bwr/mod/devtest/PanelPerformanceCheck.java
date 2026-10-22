@@ -88,7 +88,7 @@ public final class PanelPerformanceCheck {
             // The same wall as "baked" with 100 mimic tape paths drawn on it (not in the default list): compare in pairs,
             // baked, mimic, baked, mimic (see TESTING.md, "Mimic tape").
             new Stage("mimic", true, null, 15, 0, 100),
-            // The plant computer: eight displays, each with 8 numbers, 2 trends, 6 tiles, 2 soft keys (not in the default list):
+            // The plant computer: eight displays, each with a text line, a number, a bar, a 60 point trend, 2 tiles and 2 soft keys (not in the default list):
             // compare with "empty", and "plant-idle" with "plant-updating" for the cost of a change.
             new Stage("plant-idle", true, null, 15, 0, 0, PLANT_IDLE),
             new Stage("plant-updating", true, null, 15, 0, 0, PLANT_UPDATING));
