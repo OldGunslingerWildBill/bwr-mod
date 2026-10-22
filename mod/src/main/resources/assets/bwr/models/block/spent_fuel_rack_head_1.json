@@ -1,0 +1,67 @@
+{
+  "textures": {
+    "head": "bwr:block/spent_fuel_assembly_head",
+    "particle": "bwr:block/spent_fuel_rack"
+  },
+  "elements": [
+    {
+      "from": [
+        10,
+        14,
+        2
+      ],
+      "to": [
+        14,
+        16,
+        6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            4,
+            12,
+            8
+          ],
+          "texture": "#head"
+        },
+        "south": {
+          "uv": [
+            4,
+            4,
+            12,
+            8
+          ],
+          "texture": "#head"
+        },
+        "east": {
+          "uv": [
+            4,
+            4,
+            12,
+            8
+          ],
+          "texture": "#head"
+        },
+        "west": {
+          "uv": [
+            4,
+            4,
+            12,
+            8
+          ],
+          "texture": "#head"
+        },
+        "up": {
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ],
+          "texture": "#head"
+        }
+      }
+    }
+  ]
+}

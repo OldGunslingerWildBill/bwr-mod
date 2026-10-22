@@ -66,6 +66,20 @@ public final class BwrDataComponents {
                     .networkSynchronized(FuelAssemblyData.STREAM_CODEC)
                     .build());
 
+    /**
+     * The game tick (the level's game time) at which a fuel assembly was taken out of a core. It is a separate
+     * component from {@link FuelAssemblyData} on purpose: the bundle's exposure record is compared whole by the
+     * refuelling code and its tests, and a discharge stamp is not part of what a bundle <i>is</i>. Absent on a
+     * bundle that never left a core under this version, which every reader treats as long-cooled
+     * ({@link SpentFuelHeat}).
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> DISCHARGE_TIME =
+            DATA_COMPONENTS.register("discharge_time", () -> DataComponentType.<Long>builder()
+                    .persistent(com.mojang.serialization.Codec.LONG.validate(
+                            t -> t >= 0L ? com.mojang.serialization.DataResult.success(t)
+                                    : com.mojang.serialization.DataResult.error(() -> "negative discharge time")))
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_LONG).build());
+
     /** The premade board a board blueprint places (a {@code panel_board} template id); none stored means the first board. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<net.minecraft.resources.ResourceLocation>> BOARD_TEMPLATE =
             DATA_COMPONENTS.register("board_template", () -> DataComponentType.<net.minecraft.resources.ResourceLocation>builder()

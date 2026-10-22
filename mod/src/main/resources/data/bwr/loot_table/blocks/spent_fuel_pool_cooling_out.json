@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "bwr:spent_fuel_pool_cooling_out"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "bwr:blocks/spent_fuel_pool_cooling_out"
+}

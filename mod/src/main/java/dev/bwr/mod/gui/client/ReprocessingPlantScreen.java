@@ -58,13 +58,18 @@ public class ReprocessingPlantScreen extends BwrScreen<ReprocessingPlantMenu> {
         if (!Reprocessing.accepts(held)) {
             return "This assembly is refused";
         }
+        if (menu.assemblyTooHot()) {
+            return String.format(Locale.ROOT, "Too hot: %.0f kW (limit %.0f)", menu.assemblyDecayWatts() / 1000.0,
+                    dev.bwr.mod.fuel.SpentFuelHeat.reprocessingLimitWatts() / 1000.0);
+        }
         return String.format(Locale.ROOT, "%s, burnup %.1f GWd/t", data.fuelTypeName(), data.burnupMwdPerTonne() / 1000.0);
     }
 
     @Override
     protected UiElement buildUi() {
         var input = Layout.line(this::inputLine, Type.CAPTION)
-                .tip("A fresh assembly (no burnup) is refused, and so is a thorium one: this plant makes plutonium and uranium.");
+                .tip("A fresh assembly (no burnup) is refused, and so is a thorium one: this plant makes plutonium and uranium. "
+                        + "An assembly whose decay heat is above the plant's limit waits until it has cooled: keep it in a spent fuel pool.");
         var slots = Layout.card("Spent fuel",
                 input,
                 Layout.gap(20),

@@ -1085,6 +1085,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
         ItemStack stack = new ItemStack(dev.bwr.mod.registry.BwrItems.FUEL_ASSEMBLY.get());
         dev.bwr.mod.fuel.FuelAssemblies.store(stack, assembly);
+        // The decay heat clock of the spent fuel pool and the reprocessing plant starts here, in game time, so it
+        // keeps running while the bundle is an item.
+        if (level != null) dev.bwr.mod.fuel.SpentFuelHeat.stamp(stack, level.getGameTime());
         dev.bwr.mod.advancement.PlantMilestones.fuelUnloaded(this, latticePosition);
         setChanged();
         return stack;
@@ -1137,8 +1140,12 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                     continue;
                 }
                 dev.bwr.mod.fuel.FuelAssemblyData.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE,entry.get("Fuel"))
-                        .result().ifPresent(data -> result.add(dev.bwr.mod.fuel.FuelAssemblyItem.stackOf(
-                                dev.bwr.mod.registry.BwrItems.FUEL_ASSEMBLY.get(),data)));
+                        .result().ifPresent(data -> {
+                            var stack = dev.bwr.mod.fuel.FuelAssemblyItem.stackOf(
+                                    dev.bwr.mod.registry.BwrItems.FUEL_ASSEMBLY.get(), data);
+                            if (level != null) dev.bwr.mod.fuel.SpentFuelHeat.stamp(stack, level.getGameTime());
+                            result.add(stack);
+                        });
             }
         }
         pendingFuelRestore=null;

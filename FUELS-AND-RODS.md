@@ -331,6 +331,13 @@ plutonium, as it does in life. These are model values a datapack may retune.
   depleted uranium and waste out (1, 2, 3). A hopper above sees only the input, a hopper below only the outputs, the four
   sides all four; the input cannot be pulled back out by a pipe, the outputs cannot be filled, and the input slot takes
   only an irradiated, non-thorium assembly.
+- **Too hot to start.** A spent assembly is accepted into the slot, but the plant does not start on one whose decay heat is
+  above `reprocessingMaxDecayHeatKw` (`bwr-gameplay.toml`, default 50 kW per assembly, 0 turns it off). It looks again
+  once a second and starts by itself when the assembly has cooled; an assembly it has started is never stopped. The heat
+  is worked out from the assembly's burnup and the game tick it was unloaded from a core (see the next section), so
+  it keeps falling while the assembly is a chest item, and an assembly with no recorded tick is long-cooled and goes
+  straight in. A 45 GWd/t assembly passes 50 kW after about two hours. The screen's first line reads `Too hot: 83 kW (limit 50)`, the
+  status text says so, and the peripheral adds `assemblyDecayHeatKW`, `tooHot`, `secondsUntilCool` and `decayHeatLimitKW`.
 - **Power and time:** 200 ticks and 150 FE a tick, 30,000 FE an assembly, from a 100,000 FE buffer (it takes energy
   and gives none back). The assembly stays in the slot while it works and is consumed when the time is up; taking it
   out first costs nothing. With too little energy it works only as far as the energy goes.
@@ -350,6 +357,19 @@ plutonium, as it does in life. These are model values a datapack may retune.
   and iron ingots (`c:ingots/iron`) along the bottom (`OVO` / `HFH` / `III`); it needs only vanilla items and the mod's own
   reactor vessel, so it does not depend on Mekanism (the fabricator's recipe does). Nine plutonium nuggets craft an
   ingot and an ingot crafts nine.
+
+## The fuel cycle, end to end
+
+| Step | Machine | What happens to the assembly |
+|---|---|---|
+| 1. Make | fuel fabricator | uranium and steel (or plutonium and depleted uranium for MOX) in; a fresh assembly out |
+| 2. Burn | reactor | burnup builds up on the item; unloading stamps the game tick it left the core (`bwr:discharge_time`) |
+| 3. **Cool** | **spent fuel pool** ([SPENT-FUEL-POOL.md](SPENT-FUEL-POOL.md)) | racked under water; its decay heat falls on the reactor's own curve (315 kW at discharge for a 45 GWd/t assembly, 63 kW after an hour, 23 kW after a day); the player has to keep the pool cooled and topped up, or it boils and uncovers the fuel |
+| 4. Take apart | reprocessing plant | refuses to start above 50 kW (configurable); plutonium, depleted uranium and waste out |
+| 5. Remake | fuel fabricator, MOX route | plutonium and depleted uranium make MOX; back to 2 |
+
+The pool is the reason the cycle has a pause in it: step 4 will not accept fresh discharges, and a fresh discharge left to itself in
+air runs away. Nothing automates any step; the player carries the assemblies (or pipes them) and runs the cooling.
 
 ## Specialty rods
 

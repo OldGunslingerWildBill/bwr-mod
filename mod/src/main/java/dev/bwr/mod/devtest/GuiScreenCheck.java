@@ -123,6 +123,50 @@ public final class GuiScreenCheck {
 
     private static final BlockPos P = BlockPos.ZERO;
 
+    /** A formed pool of {@code racks} racks; {@code uncovered} lowers the water under the fuel and lights the alarms. */
+    private static SpentFuelPoolMenu pool(boolean uncovered, int racks) {
+        var m = new SpentFuelPoolMenu(99, Minecraft.getInstance().player.getInventory(), P);
+        m.present = true;
+        m.formed = true;
+        m.footprint = 49;
+        m.depth = 7;
+        m.capacityKg = 343_000;
+        m.massKg = uncovered ? 28_000 : 269_500;
+        m.levelM = m.massKg / 49_000.0;
+        m.temperatureC = uncovered ? 100.0 : 41.3;
+        m.highestTopM = 4.0;
+        m.waterAboveFuelM = m.levelM - m.highestTopM;
+        m.assemblies = Math.min(racks * 4, 4 * racks - 3);
+        m.cells = racks * 4;
+        m.decayW = 1_480_000;
+        m.coveredDecayW = uncovered ? 0 : 1_480_000;
+        m.uncoveredDecayW = uncovered ? 1_480_000 : 0;
+        m.evaporationKgPerS = uncovered ? 0 : 0.011;
+        m.boilKgPerS = uncovered ? 0.58 : 0;
+        m.passiveLossW = 61_000;
+        m.coolingW = uncovered ? 0 : 1_320_000;
+        m.secondsToBoil = uncovered ? 0 : Double.POSITIVE_INFINITY;
+        m.secondsToUncover = uncovered ? 0 : Double.POSITIVE_INFINITY;
+        m.coolingEnabled = !uncovered;
+        m.coolingRunning = !uncovered;
+        m.energyFE = uncovered ? 0 : 61_000;
+        m.coldKg = 9_300;
+        m.hotKg = 640;
+        m.coldC = 13;
+        m.hotC = 24;
+        m.damagedAssemblies = uncovered ? 3 : 0;
+        m.burningAssemblies = uncovered ? 1 : 0;
+        var list = new ArrayList<SpentFuelPoolMenu.Rack>();
+        for (int r = 0; r < racks; r++) {
+            int n = r == racks - 1 ? 1 : 4;
+            list.add(new SpentFuelPoolMenu.Rack(new BlockPos(141 + r % 7, 211, 146 - (r / 7) % 4), 4.0,
+                    n, n * (r < 4 ? 41_000.0 : 12_500.0 - 100.0 * r), uncovered ? 640 + 60 * (r % 3) : 45.0, uncovered ? n : 0, uncovered && r < 2 ? 1 : 0,
+                    uncovered && r == 0 ? 1 : 0));
+        }
+        m.racks = list;
+        return m;
+    }
+
     private static Component t(String s) {
         return Component.literal(s);
     }
@@ -540,6 +584,29 @@ public final class GuiScreenCheck {
             m.getSlot(ReprocessingPlantMenu.SLOT_INPUT).set(new ItemStack(BwrItems.FUEL_ASSEMBLY.get()));
             return new ReprocessingPlantScreen(m, i, t("Reprocessing Plant"));
         }));
+        s.add(new Scenario("reprocessor-hot", i -> {
+            // a spent assembly that has just come out of a core sits in the slot: the plant waits for it to cool
+            var m = new ReprocessingPlantMenu(99, i, P);
+            m.present = true;
+            m.energyStored = 62_000;
+            m.energyCapacity = 100_000;
+            var hot = dev.bwr.mod.fuel.FuelAssemblyItem.stackOf(BwrItems.FUEL_ASSEMBLY.get(),
+                    new dev.bwr.mod.fuel.FuelAssemblyData("leu", 0.035, 180.0, 45000.0, 1.0));
+            dev.bwr.mod.fuel.SpentFuelHeat.stamp(hot, Minecraft.getInstance().level.getGameTime());
+            m.getSlot(ReprocessingPlantMenu.SLOT_INPUT).set(hot);
+            return new ReprocessingPlantScreen(m, i, t("Reprocessing Plant"));
+        }));
+        s.add(new Scenario("spent-fuel-pool", i -> new SpentFuelPoolScreen(pool(false, 8), i, t("Spent Fuel Pool"))));
+        s.add(new Scenario("spent-fuel-pool-many", i -> new SpentFuelPoolScreen(pool(false, 40), i, t("Spent Fuel Pool"))));
+        s.add(new Scenario("spent-fuel-pool-uncovered", i -> new SpentFuelPoolScreen(pool(true, 8), i, t("Spent Fuel Pool"))));
+        s.add(new Scenario("spent-fuel-pool-unformed", i -> {
+            var m = new SpentFuelPoolMenu(99, i, P);
+            m.present = true;
+            m.formed = false;
+            m.problem = "Complete the floor and the four walls up to the rim; missing at 3, 70, 12";
+            return new SpentFuelPoolScreen(m, i, t("Spent Fuel Pool"));
+        }));
+        s.add(new Scenario("spent-fuel-pool-absent", i -> new SpentFuelPoolScreen(new SpentFuelPoolMenu(99, i, P), i, t("Spent Fuel Pool"))));
         s.add(new Scenario("reprocessor-absent", i -> new ReprocessingPlantScreen(new ReprocessingPlantMenu(99, i, P), i, t("Reprocessing Plant"))));
         s.add(new Scenario("rhr-hx", i -> {
             var m = new RhrHeatExchangerMenu(99, i, P);

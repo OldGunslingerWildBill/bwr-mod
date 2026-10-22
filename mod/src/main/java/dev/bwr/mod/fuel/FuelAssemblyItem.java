@@ -129,6 +129,23 @@ public class FuelAssemblyItem extends Item {
                 String.format(java.util.Locale.ROOT, "%,.0f", data.burnupMwdPerTonne()),
                 String.format(java.util.Locale.ROOT, "%,.0f", FuelAssemblies.energyProducedMwd(assembly)))));
 
+        // Decay heat is a measurement of the bundle in hand, like its burnup: from the burnup and the tick it left a core.
+        if (data.isIrradiated() && context.level() != null) {
+            long now = context.level().getGameTime();
+            if (SpentFuelHeat.dischargeTime(stack) >= 0L) {
+                tooltip.add(line(BwrText.tr(
+                        "status.bwr.fuel_assembly_item.decay_heat",
+                        "Decay heat %s kW, out of a core for %s",
+                        String.format(java.util.Locale.ROOT, "%,.1f", SpentFuelHeat.decayWatts(stack, now) / 1000.0),
+                        dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity.duration(SpentFuelHeat.coolingSeconds(stack, now)))));
+            } else {
+                tooltip.add(line(BwrText.tr(
+                        "status.bwr.fuel_assembly_item.decay_heat_unrecorded",
+                        "No discharge time recorded: long-cooled, %s kW decay heat",
+                        String.format(java.util.Locale.ROOT, "%,.1f", SpentFuelHeat.decayWatts(stack, now) / 1000.0))));
+            }
+        }
+
         tooltip.add(line(BwrText.tr(
                 "status.bwr.fuel_assembly_item.k_inf_fresh",
                 "k-inf %s  (fresh %s)",

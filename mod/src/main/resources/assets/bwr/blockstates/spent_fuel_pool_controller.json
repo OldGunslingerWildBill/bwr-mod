@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "bwr:block/spent_fuel_pool_controller"
+    }
+  }
+}

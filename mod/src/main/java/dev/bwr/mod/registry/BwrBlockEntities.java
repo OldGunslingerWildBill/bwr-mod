@@ -140,6 +140,11 @@ public final class BwrBlockEntities {
             () -> BlockEntityType.Builder.of(ReprocessingPlantBlockEntity::new,
                     BwrBlocks.REPROCESSING_PLANT.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity>>
+            SPENT_FUEL_POOL = BLOCK_ENTITIES.register("spent_fuel_pool",
+            () -> BlockEntityType.Builder.of(dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity::new,
+                    BwrBlocks.SPENT_FUEL_POOL_CONTROLLER.get()).build(null));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SuppressionPoolBlockEntity>>
             SUPPRESSION_POOL = BLOCK_ENTITIES.register("suppression_pool",
             () -> BlockEntityType.Builder.of(SuppressionPoolBlockEntity::new,

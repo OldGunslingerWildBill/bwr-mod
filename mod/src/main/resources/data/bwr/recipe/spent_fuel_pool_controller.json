@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "W": {
+      "item": "bwr:spent_fuel_pool_wall"
+    },
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "C": {
+      "item": "minecraft:comparator"
+    },
+    "R": {
+      "item": "minecraft:redstone_block"
+    }
+  },
+  "pattern": [
+    "WIW",
+    "ICI",
+    "WRW"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:spent_fuel_pool_controller"
+  }
+}

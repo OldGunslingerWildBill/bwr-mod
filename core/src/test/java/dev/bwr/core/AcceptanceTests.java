@@ -108,6 +108,8 @@ public final class AcceptanceTests {
             dev.bwr.core.instrument.StartupDetectorLocationsTest.class,
             dev.bwr.core.kinetics.RodLatchDriftTest.class,
             SuppressionPoolTest.class,
+            dev.bwr.core.pool.SpentFuelPoolTest.class,
+            dev.bwr.core.thermal.AssemblyDecayHeatTest.class,
             BoundaryStressTest.class,
             dev.bwr.core.boundary.PortLocaTest.class,
             SevereAccidentEscalationTest.class,
