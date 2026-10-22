@@ -139,25 +139,20 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
                         : List.of(Component.literal("This fuel's enrichment is below natural uranium, which no enrichment plant can make.")));
         // MOX grades: the uranium cost line does not apply, this one does
         cost.showIf(() -> !menu.moxTarget);
+        // MOX grades, one line (the card has room for the one line the uranium cost uses): held / needed
         var moxCost = Layout.line(() -> firstThatFits(LEFT_TEXT,
-                        "Costs " + menu.moxPlutonium + " Pu, " + menu.moxMatrix + " depleted U, " + menu.costSteel + " steel",
-                        menu.moxPlutonium + " Pu, " + menu.moxMatrix + " DU, " + menu.costSteel + " steel"), Type.CAPTION)
+                        "Pu " + menu.moxPlutoniumHeld + " / " + menu.moxPlutonium + ", DU " + menu.moxMatrixHeld + " / " + menu.moxMatrix + ", steel " + menu.costSteel,
+                        "Pu " + menu.moxPlutoniumHeld + "/" + menu.moxPlutonium + ", DU " + menu.moxMatrixHeld + "/" + menu.moxMatrix + ", steel " + menu.costSteel), Type.CAPTION)
                 .tip(() -> List.of(Component.literal("One MOX assembly takes " + menu.moxPlutonium + " plutonium nuggets (nine to an ingot), "
                                 + menu.moxMatrix + " depleted uranium ingots as the matrix and " + menu.costSteel + " steel ingots, and returns nothing."),
-                        Component.literal("The plutonium is the fuel's own enrichment; the matrix is the rest of the four ingots of heavy metal. The input slot takes plutonium and depleted uranium on a MOX grade.")))
-                .showIf(() -> menu.moxTarget);
-        // what the machine has taken out of its slot so far, on a MOX grade (the left card, not the right column)
-        var moxHeld = Layout.line(() -> firstThatFits(LEFT_TEXT,
-                        "Held " + menu.moxPlutoniumHeld + " / " + menu.moxPlutonium + " Pu, " + menu.moxMatrixHeld + " / " + menu.moxMatrix + " DU",
-                        menu.moxPlutoniumHeld + "/" + menu.moxPlutonium + " Pu, " + menu.moxMatrixHeld + "/" + menu.moxMatrix + " DU"), Type.CAPTION)
-                .tip("Plutonium nuggets and depleted uranium ingots the machine has taken out of its slot, against what one MOX assembly needs.")
+                        Component.literal("Held by the machine so far / needed: plutonium " + menu.moxPlutoniumHeld + " / " + menu.moxPlutonium
+                                + ", depleted uranium " + menu.moxMatrixHeld + " / " + menu.moxMatrix + ". The plutonium is the fuel's own enrichment; the matrix is the rest of the four ingots of heavy metal. The input slot takes plutonium and depleted uranium on a MOX grade.")))
                 .showIf(() -> menu.moxTarget);
         var item = Layout.card("Item route",
                 selector,
                 Layout.gap(2),
                 cost,
                 moxCost,
-                moxHeld,
                 Layout.gap(2),
                 new SlotCaptions(),
                 Layout.gap(2),

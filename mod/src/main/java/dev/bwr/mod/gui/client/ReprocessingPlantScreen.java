@@ -67,7 +67,7 @@ public class ReprocessingPlantScreen extends BwrScreen<ReprocessingPlantMenu> {
                 .tip("A fresh assembly (no burnup) is refused, and so is a thorium one: this plant makes plutonium and uranium.");
         var slots = Layout.card("Spent fuel",
                 input,
-                Layout.gap(2),
+                Layout.gap(20),
                 new SlotCaptions(),
                 Layout.gap(2),
                 Layout.gap(18));
@@ -103,7 +103,7 @@ public class ReprocessingPlantScreen extends BwrScreen<ReprocessingPlantMenu> {
 
     /** The four captions over the slot wells, each centred on its slot: where the menu put them, so they cannot drift. */
     private final class SlotCaptions extends UiElement {
-        private static final String[] NAMES = {"Spent", "Plutonium", "Depleted", "Waste"};
+        private static final String[] NAMES = {"Spent", "Pu", "Dep. U", "Waste"};
         private static final String[] HELP = {
                 "A spent fuel assembly, from the reactor or taken out of it: one with burnup. Hoppers and pipes may fill this slot; a fresh assembly is refused.",
                 "Plutonium nuggets, nine to an ingot. The fabricator's MOX route takes them.",
