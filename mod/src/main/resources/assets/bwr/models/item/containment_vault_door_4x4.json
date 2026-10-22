@@ -1,5 +1,5 @@
 {
-  "parent": "bwr:block/containment/vault_4_leaf",
+  "parent": "bwr:block/containment/vault_4_item",
   "display": {
     "gui": {
       "rotation": [

@@ -44,6 +44,29 @@ The vessel's severe-accident atmosphere remains saved on the reactor.
    powered, connected valve and a clear discharge. Do not route the outlet
    back into the containment room.
 
+## The doors
+
+**Vault door.** Right-click the leaf for the hand-wheel, or power it (8,000 FE a
+stroke) and give it a redstone signal. A stroke first turns the hand-wheel and
+slides the latch dogs out of their keepers in the frame, then swings the leaf
+into the room about its hinge pin; closing runs the same steps backwards. The
+lamp column on the frame's side shows red open, amber moving, green shut and
+latched. The seal breaks the moment an opening stroke starts, as before, but you
+cannot walk through a leaf you can see across the opening: the opening stays
+solid until the leaf is half open, and a closing leaf makes it solid again when
+it is half shut.
+
+**Personnel airlock.** Two D-shaped hatches in bulkhead plates with a chamber
+between them. Each hatch turns its wheel (3 ticks), then swings into the chamber
+(9 ticks); its lamp columns, on both faces of its plate, show red open, amber
+moving, green shut and latched. The interlock is decided at once, as before,
+so the second hatch can be told to open the instant the first is told to shut;
+what you see and where you can walk follow the motion: a hatch is walkable from
+8 ticks after it is told to open, and the second hatch starts to move when the
+first has finished shutting, so the two are never drawn open together. The
+equalising line and its valve wheel in the chamber ceiling are decoration (the
+airlock has no pressure); the wheel turns while either hatch moves.
+
 ## Computer control and readouts
 
 The controller exposes a `bwr_containment` CC:Tweaked peripheral. Methods:

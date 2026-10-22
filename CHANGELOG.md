@@ -1,5 +1,42 @@
 # Changelog
 
+## Unreleased: containment doors (new models, collision that follows the drawing)
+
+The vault doors (3x3 and 4x4) and the personnel airlock have new Blender models whose moving parts move, and their collision now follows what is drawn. Same block ids, same footprints, same placement and sealing rules; old placed doors take the new models with no migration and old saves load.
+
+**Timings, as they were.** Vault door: a powered stroke 200 ticks (10 s) and a hand-wheel stroke 1200 ticks (60 s), saved as `StrokeStart`/`StrokeEnd`; a powered stroke takes 8,000 FE from a 20,000 FE buffer at its start (nothing per tick); no latch step (the dogging bars were static geometry); the seal broke at the first tick of an opening stroke and the cells stopped colliding at that same tick (so for 10 s a leaf that was drawn shut could be walked through), and a closing leaf made the cells solid only when it had finished. Airlock: the interlock state changes instantly (and is pinned that way by the tests, so there is nothing in it to speed up); the leaf swing was a client-only interpolation of 12 ticks (0.6 s) and the cells' collision followed the state at once, so a leaf was walkable while its first six ticks of swing were still drawn shut and solid while its last six were drawn open; there is no equalisation step and no power draw, and a redstone pulse or a click moves one leaf at a time.
+
+**Timings, now.**
+
+| | before | now |
+| --- | --- | --- |
+| vault powered stroke | 200 ticks (10 s) | 200 ticks, unchanged (see "Stopped on" below) |
+| vault hand-wheel stroke | 1200 ticks (60 s) | 1200 ticks, unchanged |
+| vault latch step | none | the first 28 % of every stroke: the wheel turns 1.5 times and the dogs slide 0.26 blocks out of their keepers, then the leaf swings (82 degrees) |
+| vault walkable / solid again | at tick 0 of opening / at the end of closing | from half open: at tick 128 of a 200 tick opening, solid again from tick 72 of a closing |
+| vault FE | 8,000 FE a stroke | unchanged |
+| airlock leaf | 12 tick drawn swing, collision at once | 12 ticks (0.6 s, the same speed as the old drawing): 3 of wheel, 9 of swing; walkable from tick 8 of an opening; a leaf that is more than half open stays walkable until it is half shut |
+| airlock interlock | decided at once | decided at once (unchanged); the second leaf's drawn motion waits for the first to finish shutting, so the two are never drawn open together |
+
+**Stopped on.** `Alpha31VaultDoorTests.closedDoorSealsPoweredSwingLeaksAndReseals` asserts `StrokeEnd - StrokeStart == 200` ("powered vault swing is not 10 seconds") and `== 1200` ("manual handwheel stroke is not 60 seconds"). The vault's stroke length therefore stays 200 / 1200 here; the proposed 50 ticks (2.5 s) powered and 160 ticks (8 s) hand-wheel, with the two assertions changed to those numbers, is ready as a separate commit on branch `containment-doors-fast-vault`. Nothing else in this entry depends on the stroke length (`DoorMotion.VAULT_POWERED_TICKS` / `VAULT_MANUAL_TICKS`).
+
+### Collision follows the drawing
+
+- **A vault leaf is solid until it has swung half open and solid again once it is half shut.** New block state property `held` on the vault cells (default false; collision is `sealed || held`). The seal still breaks at the first tick of an opening stroke, so the containment survey sees an opening vault as a leak exactly as before; only the walking-through part waits. `ContainmentVaultDoorBlockEntity.finishStroke` is now idempotent (scheduled tick, `state()` and chunk load all call it) and schedules the next point at which something changes (no ticker).
+- **An airlock leaf holds its cells' collision the same way.** New block state properties `inner_move` and `outer_move` (0 follows the interlock state, 1 solid although open, 2 clear although closed), set when a leaf starts to move and let go by a one-tick scheduled tick that runs only while a leaf is being held. `seals()` and everything the controller reads are unchanged; `blocks()` is what collision uses. Nothing new is saved: a hold left in the cells by a world closed mid-move is let go on the next tick after load.
+- **Client and server clocks.** The server decides collision from its own clock; the client times a stroke from the moment the stroke's packet arrives (`DoorMotion.StrokeClock`), which is also when the block updates that flip the collision arrive, so the drawn leaf and what the player bumps into do not drift apart with latency.
+
+### Models (Blender, headless; `art/models/containment/build_models.py`)
+
+- **Vault door.** A thick graphite frame with a groove for the hinge in its left jamb, three (3x3) or four (4x4) hinge knuckles on a pin, a black seal in the gap, keeper notches (ochre floors) for every latch dog, a status lamp column, and corner bolts; a ribbed armoured leaf with a gear housing, dog guide rails and an interior face with ribs and lock indicators; separate meshes for the latch dogs (right, top and bottom edge) and the hand-wheel. Triangles (frame + leaf + dogs + wheel): 3x3 860 + 828 + 144 + 252 = 2,084; 4x4 1,108 + 1,008 + 216 + 252 = 2,584 (before: 1,120 each).
+- **Personnel airlock.** Two D-shaped hatches in bulkhead plates with a hinge pin each, a hand-wheel on both faces of each hatch, a lamp column on both faces of each plate, an override lamp, a floor plate and a pressure-equalising line with a valve whose wheel turns while either hatch moves (decoration: the airlock has no pressure). Triangles: frame 1,148, each leaf 376, wheel 224 (drawn four times), valve wheel 180, three lenses 28 each (before: 408 + 96 + 96 = 600).
+- **Status lamps.** Red when a leaf is open, amber while it moves, green when it is shut and latched; one lit lens drawn at full brightness over a dark recess in the frame.
+- Inventory models are the whole closed door (`vault_3_item`, `vault_4_item`, `airlock_item`). The placement preview (`VaultDoorPlacementPreview`) now also draws the hand-wheel ring, the hinge pin and the sweep of the leaf in the door's own coordinate frame.
+
+### Checks
+
+- New `ContainmentDoorMotionTests`: the powered vault stroke against collision every tick in both directions (walkable exactly when the drawn swing is at least half, solid again before it shuts, sealed and unsealed at the right times), the 4x4 the same way, the airlock leaves the same way plus "never both drawn open", the whole airlock pass in ticks (outer walkable after 8 ticks, inner 20 ticks after the second command, because it waits for the outer to shut: about 1.4 s of door time), and the client stroke clock. `-PbwrContainmentDoorShots=<label>` (`ContainmentDoorShots`) saves 1920 x 1080 pictures of every door state for old/new comparison; `ContainmentClientCheck` now waits for the leaf to be half open instead of a fixed 75 ticks.
+
 ## Unreleased: flaky GameTests (chunk forcing and waiting for the chunk system)
 
 Test-only; no game behaviour changed. Six GameTests failed now and then, the batch they were in and the load of the machine deciding which. Three causes, all in how the fixtures treat chunks.

@@ -38,6 +38,8 @@ public final class ContainmentVaultDoorBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING=BlockStateProperties.HORIZONTAL_FACING;
     public static final IntegerProperty CELL=IntegerProperty.create("cell",0,15);
     public static final BooleanProperty SEALED=BooleanProperty.create("sealed");
+    /** The leaf is still across the opening while it swings: solid although the seal is already broken (or not yet made). */
+    public static final BooleanProperty HELD=BooleanProperty.create("held");
     private static final ThreadLocal<Boolean> REMOVING=ThreadLocal.withInitial(()->false);
     private static final MapCodec<ContainmentVaultDoorBlock> CODEC3=simpleCodec(p->new ContainmentVaultDoorBlock(p,3));
     private static final MapCodec<ContainmentVaultDoorBlock> CODEC4=simpleCodec(p->new ContainmentVaultDoorBlock(p,4));
@@ -48,11 +50,11 @@ public final class ContainmentVaultDoorBlock extends BaseEntityBlock {
         if(size!=3&&size!=4)throw new IllegalArgumentException("vault door size");
         this.size=size;
         registerDefaultState(stateDefinition.any().setValue(FACING,Direction.NORTH)
-                .setValue(CELL,0).setValue(SEALED,true));
+                .setValue(CELL,0).setValue(SEALED,true).setValue(HELD,false));
     }
     public int size(){return size;}
     @Override protected MapCodec<? extends BaseEntityBlock> codec(){return size==3?CODEC3:CODEC4;}
-    @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> b){b.add(FACING,CELL,SEALED);}
+    @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> b){b.add(FACING,CELL,SEALED,HELD);}
     @Override protected RenderShape getRenderShape(BlockState state){return state.getValue(CELL)==0?RenderShape.ENTITYBLOCK_ANIMATED:RenderShape.INVISIBLE;}
     @Override public ContainmentVaultDoorBlockEntity newBlockEntity(BlockPos pos,BlockState state){return state.getValue(CELL)==0?new ContainmentVaultDoorBlockEntity(pos,state):null;}
     public BlockPos root(BlockPos pos,BlockState state){
@@ -93,7 +95,7 @@ public final class ContainmentVaultDoorBlock extends BaseEntityBlock {
     }
     @Override protected VoxelShape getShape(BlockState state,BlockGetter level,BlockPos pos,CollisionContext context){return Shapes.block();}
     @Override protected VoxelShape getCollisionShape(BlockState state,BlockGetter level,BlockPos pos,CollisionContext context){
-        return state.getValue(SEALED)?Shapes.block():Shapes.empty();
+        return state.getValue(SEALED)||state.getValue(HELD)?Shapes.block():Shapes.empty();
     }
     @Override protected InteractionResult useWithoutItem(BlockState state,Level level,BlockPos pos,Player player,BlockHitResult hit){
         if(level.isClientSide())return InteractionResult.SUCCESS;
