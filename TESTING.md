@@ -284,6 +284,13 @@ reads it back and averages every 2 x 2 block (area filter) down to 1920 x 1080. 
   (the constant 1000 is unchanged because the sampling density is). Both are the old values at 1280 x 720.
 * Other run configs (`refuellingCheck`, `reactorFitCheck`, `advancementClientCheck`, the multiplayer clients) keep their own
   window sizes and their own plain screenshot calls.
+* **Legend orthogonality guard** (`PanelRpsLegendShowcase`, in `-PbwrPanelClientCheck`): before the first stage the check
+  asserts, for every `PanelType` x facing x mount angle x tilt, that the text basis the renderer builds
+  (`PanelRenderContext.textBasis` + `orientLegend`) has three axes of one length, pairwise orthogonal, not mirrored and (untilted)
+  in the face plane; every legend really drawn in the run is audited the same way from the matrix it was drawn with
+  (`PanelRenderContext.debugBasisAudit`). The stages `rps-legends-<face>-front|oblique` (`-PbwrPanelClientStages=rps-legends`) put
+  the RPS scram plate and legends on ten faces, assert the plate corners lie on the model's face of the block, and log the
+  on-screen lean of the glyph vertical. A glyph vertical leaning on a sloped face seen from the side is perspective, not a fault.
 
 ### Minecraft-facing coverage
 

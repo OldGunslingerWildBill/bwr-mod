@@ -69,6 +69,23 @@ finds collisions and circular recipes.
 - **Generator panel chip.** The Running/Stopped chip on a nuclear generator's panel read Stopped while it was generating: `PowerModuleBlockEntity.running` was set from steam flow in `expand`, and a generator passes no steam. `generate` now sets it from the electrical output (running while it produces power). The Lua peripheral's `running` field for a generator follows the same value. New assertions: `PowerModuleRuntimeCheck` (running equals "electricMW above zero" on every tick of the parallel plant, the generator produces at least once, and the same link holds after a reload) and `PowerModuleClientCheck` (the generator panel's menu reads running while it produces).
 - **Board check `blueprint-ghost-blocked`.** The check set the obstacle block on the server and sampled the preview after a fixed number of client ticks, so a stalled server could leave the client without the block and the check saw "0 blocks in the way". The check now waits (bounded at 600 ticks) until the client level shows the obstacle before it samples; the assertion and its expected value are unchanged.
 
+## Unreleased: RPS scram legends are not slanted (a view effect), with an orthogonality guard
+
+The owner reported that the legends of the RPS manual scram control (the "A1 B1 A2 B2" switch legends, the "MAN SCRAM" plate) look slanted, like italics. They are not: the text is laid out on an exact orthogonal basis on every panel type, and what looks like italics is the perspective of a sloped face seen from the side. Nothing in the renderer changed in behaviour.
+
+### Cause
+
+- **Not a shear in the text transform.** Every legend is drawn through one matrix (the face's column step, its row step brought to a true length by the row aspect, the face normal; then tilt, rotation, scale). For all 11 panel types, 4 facings, 8 mount angles, 3 tilts and 2 scales its three axes have the same length, are pairwise orthogonal, are not mirrored and lie in the face plane. The frames themselves are orthonormal.
+- **Not glyphs on the wrong plane.** The plane the legends are laid on is a face of the block's own model for the nine faces checked (the plate corners are within 0.0000 block of it), except the header strip, whose model has a field 0.05 block behind the rim the parts are mounted on (a design of the model, noted, not changed).
+- **It is perspective.** The glyph's vertical on a sloped face (bench, console, desk, chamfer, duplex bench) is not a vertical line in the world, so a camera that is not square to the face sees it leaning, at the same angle as the plate's own edge. A vertical board's text never leans from any side (a vertical line stays vertical), which is why "WHITE LAMP LIT" on the board above looked upright in the owner's picture and "MAN SCRAM" on the bench did not. The new pictures reproduce it: straight on, no lean; from the operator's left and low, the duplex bench's glyphs lean 69 degrees on the screen, the benchboard's 39, the console's 68.
+
+### Guard
+
+- `PanelRenderContext.textBasis` / `orientLegend` (the draw code of every legend, extracted, same maths) and `basisViolations`: lengths equal, axes orthogonal, not mirrored, in the face plane when untilted.
+- The panel client check asserts it by arithmetic for every `PanelType` x facing x mount angle x tilt (`PanelRpsLegendShowcase.verifyBasisMath`), and audits the matrix of every legend the renderer really draws in the run (`PanelRenderContext.debugBasisAudit`; about 90 000 legends in the RPS stages, none bad).
+- 20 new stages `rps-legends-<face>-front|oblique` (ten faces, 1920 x 1080) place the plate and two assemblies with the legends A1 B1 and A2 B2 on each face, assert that the plate corners lie on the face of the block's model, and log the on-screen lean of the glyph vertical (0 straight on and on upright faces, large on sloped faces from the side).
+- Revert proofs: a shear injected into the legend basis fails the check with `lengths x/y/z ... cos(x,y)=0.287348 (shear 16.699 deg)`.
+
 ## Unreleased: fuel fabricator item route, depleted uranium, recipe audit
 
 The fuel fabricator can now make assemblies from uranium and steel *items*, with the enrichment chosen on its screen, and returns the uranium that did not become product as depleted uranium. The Mekanism chemical route is unchanged. GUI network protocol is now 23 (the fabricator's snapshot changed): update client and server together. Old saves load.

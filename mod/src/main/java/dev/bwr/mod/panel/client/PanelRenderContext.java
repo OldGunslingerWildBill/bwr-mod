@@ -123,11 +123,136 @@ public final class PanelRenderContext implements QuadSink {
         setNormal(NORMAL_UP, (float) -f.downX, (float) -f.downY, (float) -f.downZ);
         setNormal(NORMAL_DOWN, (float) f.downX, (float) f.downY, (float) f.downZ);
         // Text space: x along the cell columns, y down the rows, z into the panel (so glyphs are not mirrored).
-        basis.identity()
+        textBasis(f, basis);
+    }
+
+    /**
+     * Text space of a panel face as a matrix: x along the cell columns (one font pixel is one cell step of the face, in
+     * block space), y down the rows (the face's own row step, which is {@link PanelGeometry.Frame#vLength} columns long on a
+     * slope) and z into the panel. Every legend is drawn through this one matrix ({@link #orientLegend} puts the real lengths
+     * back), and the panel client check reads it for the orthogonality guard.
+     */
+    public static Matrix4f textBasis(PanelGeometry.Frame f, Matrix4f dest) {
+        return dest.identity()
                 .m00((float) f.ux).m01((float) f.uy).m02((float) f.uz)
                 .m10((float) f.vx).m11((float) f.vy).m12((float) f.vz)
                 .m20((float) (-f.nx / PanelGeometry.GRID)).m21((float) (-f.ny / PanelGeometry.GRID))
                 .m22((float) (-f.nz / PanelGeometry.GRID));
+    }
+
+    /**
+     * Applies what turns the face's text space into true lengths and then orients one legend, to {@code m} (already holding
+     * the pose, the anchor translation and {@link #textBasis}): the row step is divided by the row aspect so a font pixel is
+     * square in the world on a slope, then the legend is tilted along its length (a surface curved along its rows) about the
+     * row line, then rotated in the surface about its anchor, then scaled to {@code scale} cells per font pixel. Rotating and
+     * scaling are similarities and the row aspect makes the two axes the same length, so the result stays an orthogonal basis
+     * (a glyph is never sheared) and, with no tilt, it lies in the surface.
+     */
+    public static Matrix4f orientLegend(Matrix4f m, float rowAspect, float rotDegrees, float tiltDegrees, float scale) {
+        m.scale(1.0f, 1.0f / rowAspect, 1.0f);
+        if (tiltDegrees != 0.0f) {
+            // Text space runs y down the face and z into it: a surface facing up has its downward tangent leaning out of
+            // the panel, which is a turn of minus the tilt about x.
+            m.rotateX((float) Math.toRadians(-tiltDegrees));
+        }
+        if (rotDegrees != 0.0f) {
+            m.rotateZ((float) Math.toRadians(rotDegrees));
+        }
+        return m.scale(scale);
+    }
+
+    // ---- the legend basis audit (checks only)
+
+    /** Relative tolerance of the orthogonality guard: float matrices, so a few parts in a million. */
+    public static final double BASIS_TOLERANCE = 2.0e-5;
+    private static boolean basisAudit;
+    private static int basisChecked;
+    private static int basisBad;
+    private static String basisFirstBad = "";
+    private final Matrix4f auditMatrix = new Matrix4f();
+
+    /** Turns the audit of every drawn legend on or off, and clears its counts. Off in play: the audit costs a matrix per line. */
+    public static void debugBasisAudit(boolean on) {
+        basisAudit = on;
+        basisChecked = 0;
+        basisBad = 0;
+        basisFirstBad = "";
+    }
+
+    /** Legends audited since {@link #debugBasisAudit}. */
+    public static int debugBasisChecked() {
+        return basisChecked;
+    }
+
+    /** Legends whose text basis was not a rotated, uniformly scaled copy of the face since {@link #debugBasisAudit}. */
+    public static int debugBasisBad() {
+        return basisBad;
+    }
+
+    /** What the first bad legend looked like, or empty. */
+    public static String debugBasisFirstBad() {
+        return basisFirstBad;
+    }
+
+    /**
+     * The violations of the text basis {@code m} (its three column vectors, the images of one font pixel along x, along y and
+     * into the panel) against the face of {@code frame}: empty when it is a rotation of the face's own axes with one uniform
+     * scale. That is the guard against a sheared (italic) or squashed legend and against glyphs off the surface: the three
+     * columns must have one length and be pairwise orthogonal, the system must not be mirrored, and without a tilt the x and y
+     * columns must lie in the face's plane and the z column must point into it. {@code tilted} turns the plane test off
+     * (a tilt leans the text out of the plane on purpose, for a surface curved along its rows).
+     */
+    public static String basisViolations(Matrix4f m, PanelGeometry.Frame frame, boolean tilted) {
+        double[] x = {m.m00(), m.m01(), m.m02()};
+        double[] y = {m.m10(), m.m11(), m.m12()};
+        double[] z = {m.m20(), m.m21(), m.m22()};
+        double lx = Math.sqrt(dot(x, x));
+        double ly = Math.sqrt(dot(y, y));
+        double lz = Math.sqrt(dot(z, z));
+        double tol = BASIS_TOLERANCE * Math.max(lx, Math.max(ly, lz));
+        StringBuilder out = new StringBuilder();
+        if (Math.abs(lx - ly) > tol || Math.abs(lx - lz) > tol) {
+            out.append(String.format(" lengths x/y/z %.7f/%.7f/%.7f (squashed);", lx, ly, lz));
+        }
+        double xy = dot(x, y) / (lx * ly);
+        double xz = dot(x, z) / (lx * lz);
+        double yz = dot(y, z) / (ly * lz);
+        if (Math.abs(xy) > BASIS_TOLERANCE || Math.abs(xz) > BASIS_TOLERANCE || Math.abs(yz) > BASIS_TOLERANCE) {
+            out.append(String.format(" cos(x,y)=%.6f (shear %.3f deg) cos(x,z)=%.6f cos(y,z)=%.6f;", xy,
+                    Math.toDegrees(Math.asin(Math.max(-1.0, Math.min(1.0, xy)))), xz, yz));
+        }
+        double[] cross = {x[1] * y[2] - x[2] * y[1], x[2] * y[0] - x[0] * y[2], x[0] * y[1] - x[1] * y[0]};
+        if (dot(cross, z) <= 0.0) {
+            out.append(" mirrored (x cross y does not point the way z does);");
+        }
+        if (!tilted) {
+            double[] n = {frame.nx, frame.ny, frame.nz};
+            double nx = dot(x, n) / lx;
+            double ny = dot(y, n) / ly;
+            double nz = dot(z, n) / lz;
+            if (Math.abs(nx) > BASIS_TOLERANCE || Math.abs(ny) > BASIS_TOLERANCE || nz > -1.0 + BASIS_TOLERANCE) {
+                out.append(String.format(" off the face plane: n.x=%.6f n.y=%.6f n.z=%.6f (want 0, 0, -1);", nx, ny, nz));
+            }
+        }
+        return out.toString();
+    }
+
+    private static double dot(double[] a, double[] b) {
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    }
+
+    /** Audits the text basis one legend line is about to be drawn with, read off {@link #textMatrix} (only while {@link #debugBasisAudit} is on). */
+    private void auditBasis(String text, float rotDegrees, float tiltDegrees) {
+        // the matrix the line really is drawn with, less the pose and the anchor: the linear part is the text basis
+        auditMatrix.set(pose.pose()).invertAffine().mul(textMatrix);
+        String bad = basisViolations(auditMatrix, frame, tiltDegrees != 0.0f);
+        basisChecked++;
+        if (!bad.isEmpty()) {
+            basisBad++;
+            if (basisFirstBad.isEmpty()) {
+                basisFirstBad = "\"" + text + "\" rot " + rotDegrees + " tilt " + tiltDegrees + ":" + bad;
+            }
+        }
     }
 
     private void setNormal(int kind, float x, float y, float z) {
@@ -364,7 +489,10 @@ public final class PanelRenderContext implements QuadSink {
         textMatrix.set(pose.pose());
         textMatrix.translate((float) frame.x(u, v, fittedZ(z)), (float) frame.y(u, v, fittedZ(z)), (float) frame.z(u, v, fittedZ(z)));
         textMatrix.mul(basis);
-        textMatrix.scale(fittedScale(scale), fittedScale(scale) / rowAspect(), fittedScale(scale));
+        orientLegend(textMatrix, rowAspect(), 0.0f, 0.0f, fittedScale(scale));
+        if (basisAudit) {
+            auditBasis(text, 0.0f, 0.0f);
+        }
         int color = fadedColor(text, 0.0f, 0.0f, fittedScale(scale), rgb, emissive);
         if (color != 0) {
             font.drawInBatch(text, 0.0f, 0.0f, color, false, textMatrix, buffers,
@@ -451,16 +579,10 @@ public final class PanelRenderContext implements QuadSink {
         textMatrix.set(pose.pose());
         textMatrix.translate((float) frame.x(u, v, fittedZ(z)), (float) frame.y(u, v, fittedZ(z)), (float) frame.z(u, v, fittedZ(z)));
         textMatrix.mul(basis);
-        textMatrix.scale(1.0f, 1.0f / rowAspect(), 1.0f);
-        if (tiltDegrees != 0.0f) {
-            // Text space runs y down the face and z into it: a surface facing up has its downward tangent leaning out of
-            // the panel, which is a turn of minus the tilt about x.
-            textMatrix.rotateX((float) Math.toRadians(-tiltDegrees));
+        orientLegend(textMatrix, rowAspect(), rotDegrees, tiltDegrees, fittedScale(scale));
+        if (basisAudit) {
+            auditBasis(text, rotDegrees, tiltDegrees);
         }
-        if (rotDegrees != 0.0f) {
-            textMatrix.rotateZ((float) Math.toRadians(rotDegrees));
-        }
-        textMatrix.scale(fittedScale(scale));
         int color = fadedColor(text, dx, dy, fittedScale(scale), rgb, emissive);
         if (color != 0) {
             font.drawInBatch(text, dx, dy, color, false, textMatrix, buffers,

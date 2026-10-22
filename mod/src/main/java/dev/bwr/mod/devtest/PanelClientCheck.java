@@ -81,6 +81,8 @@ public final class PanelClientCheck {
     private static final int SPRING_FIRST = ANNUN_FIRST + PanelAnnunciatorShowcase.NAMES.length;
     /** The first stage of the control desks (see {@link PanelDeskShowcase}), after the breaker spring stage. */
     private static final int DESK_FIRST = SPRING_FIRST + 1;
+    /** The first stage of the RPS scram legends on every panel face, straight on and oblique (see {@link PanelRpsLegendShowcase}), after the desks. */
+    private static final int RPS_FIRST = DESK_FIRST + PanelDeskShowcase.NAMES.length;
     private static final String[] NAMES = names();
 
     private static String[] names() {
@@ -89,7 +91,7 @@ public final class PanelClientCheck {
         String[] all = new String[BAKED_FIRST + PanelModelShowcase.NAMES.length + PanelSlopeShowcase.NAMES.length
                 + PanelTrimShowcase.NAMES.length + PanelDuplexShowcase.NAMES.length + PanelRealScaleShowcase.NAMES.length
                 + PanelTextSizeShowcase.NAMES.length + PanelAngledShowcase.NAMES.length + PanelAnnunciatorShowcase.NAMES.length + PanelHardwareShowcase.NAMES.length + 1
-                + PanelDeskShowcase.NAMES.length];
+                + PanelDeskShowcase.NAMES.length + PanelRpsLegendShowcase.NAMES.length];
         System.arraycopy(original, 0, all, 0, original.length);
         System.arraycopy(PanelModelShowcase.NAMES, 0, all, BAKED_FIRST, PanelModelShowcase.NAMES.length);
         System.arraycopy(PanelSlopeShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length,
@@ -105,6 +107,7 @@ public final class PanelClientCheck {
         System.arraycopy(PanelAnnunciatorShowcase.NAMES, 0, all, ANNUN_FIRST, PanelAnnunciatorShowcase.NAMES.length);
         all[SPRING_FIRST] = PanelSpringCheck.NAME;
         System.arraycopy(PanelDeskShowcase.NAMES, 0, all, DESK_FIRST, PanelDeskShowcase.NAMES.length);
+        System.arraycopy(PanelRpsLegendShowcase.NAMES, 0, all, RPS_FIRST, PanelRpsLegendShowcase.NAMES.length);
         return all;
     }
     private static final String STAGE_FILTER = System.getProperty("bwr.panelClientStages", "");
@@ -115,7 +118,7 @@ public final class PanelClientCheck {
         return false;
     }
 
-    private static boolean started, built, requested;
+    private static boolean started, built, requested, basisChecked;
     private static volatile Throwable buildFailure;
     private static volatile Vec3 heldCamera;
     /** Where the server put the player for the stage's picture, set after the teleport (null until it has been sent). */
@@ -173,9 +176,17 @@ public final class PanelClientCheck {
             // -PbwrPanelClientStages=srv,night: only the stages whose name contains one of the words (all by default).
             while (stage < NAMES.length && !chosen(NAMES[stage])) stage++;
             if (stage == NAMES.length) {
+                legendAuditVerdict();
                 LogUtils.getLogger().info("PANEL CLIENT CHECK PASS: {} component types, {} captures", placedTypes, captures);
                 mc.stop();
                 return;
+            }
+            if (!basisChecked) {
+                // The legend text basis is orthogonal and in the face plane for every panel type and mount angle, and every legend
+                // drawn in the run is audited for the same.
+                basisChecked = true;
+                PanelRpsLegendShowcase.verifyBasisMath();
+                PanelRenderContext.debugBasisAudit(true);
             }
             if (stage == 0) {
                 // The light a glowing element is drawn with: full bright, and the world light for everything else.
@@ -215,13 +226,15 @@ public final class PanelClientCheck {
                         PanelHardwareShowcase.build(level);
                         PanelSpringCheck.build(level);
                         PanelDeskShowcase.build(level);
+                        PanelRpsLegendShowcase.build(level);
                         built = true;
                     } catch (Throwable failure) {
                         buildFailure = failure;
                         return;
                     }
                 }
-                Vec3 camera = selected >= DESK_FIRST ? PanelDeskShowcase.camera(selected - DESK_FIRST)
+                Vec3 camera = selected >= RPS_FIRST ? PanelRpsLegendShowcase.camera(selected - RPS_FIRST)
+                        : selected >= DESK_FIRST ? PanelDeskShowcase.camera(selected - DESK_FIRST)
                         : selected >= SPRING_FIRST ? PanelSpringCheck.camera()
                         : selected >= ANNUN_FIRST ? PanelAnnunciatorShowcase.camera(selected - ANNUN_FIRST)
                         : selected >= ANGLED_FIRST ? PanelAngledShowcase.camera(selected - ANGLED_FIRST)
@@ -239,7 +252,8 @@ public final class PanelClientCheck {
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = selected >= DESK_FIRST ? PanelDeskShowcase.target(selected - DESK_FIRST)
+                Vec3 target = selected >= RPS_FIRST ? PanelRpsLegendShowcase.target(selected - RPS_FIRST)
+                        : selected >= DESK_FIRST ? PanelDeskShowcase.target(selected - DESK_FIRST)
                         : selected >= SPRING_FIRST ? PanelSpringCheck.target()
                         : selected >= ANNUN_FIRST ? PanelAnnunciatorShowcase.target(selected - ANNUN_FIRST)
                         : selected >= ANGLED_FIRST ? PanelAngledShowcase.target(selected - ANGLED_FIRST)
@@ -262,6 +276,9 @@ public final class PanelClientCheck {
                     heldYaw = yaw;
                     heldPitch = pitch;
                 } else heldCamera = null;
+                // The RPS legend pictures hold the camera above sloped faces, where the player's feet would stand in the panel block:
+                // those stages fly through blocks.
+                player.setGameMode(selected >= RPS_FIRST ? GameType.SPECTATOR : GameType.CREATIVE);
                 player.setNoGravity(true);
                 player.getAbilities().flying = true;
                 player.onUpdateAbilities();
@@ -360,7 +377,7 @@ public final class PanelClientCheck {
             if (stage >= BAKED_FIRST) {
                 // Every component must draw baked exactly when a loaded model exists for its look.
                 LogUtils.getLogger().info("PANEL CLIENT CHECK baked models {}: {} components drawn from baked models ({} loaded)",
-                        NAMES[stage], stage >= DESK_FIRST ? PanelDeskShowcase.verify(mc, stage - DESK_FIRST) : stage >= SPRING_FIRST ? 0 : stage >= ANNUN_FIRST ? PanelAnnunciatorShowcase.verify(mc, stage - ANNUN_FIRST)
+                        NAMES[stage], stage >= RPS_FIRST ? PanelRpsLegendShowcase.verify(mc, stage - RPS_FIRST) : stage >= DESK_FIRST ? PanelDeskShowcase.verify(mc, stage - DESK_FIRST) : stage >= SPRING_FIRST ? 0 : stage >= ANNUN_FIRST ? PanelAnnunciatorShowcase.verify(mc, stage - ANNUN_FIRST)
                                 : stage >= ANGLED_FIRST ? PanelAngledShowcase.verify(mc, stage - ANGLED_FIRST)
                                 : stage >= HARDWARE_FIRST ? PanelHardwareShowcase.verify(mc, stage - HARDWARE_FIRST)
                                 : stage >= TEXTSIZE_FIRST ? PanelTextSizeShowcase.verify(mc, stage - TEXTSIZE_FIRST)
@@ -449,9 +466,19 @@ public final class PanelClientCheck {
         captures++;
         requested = false;
         if (++stage == NAMES.length) {
+            legendAuditVerdict();
             LogUtils.getLogger().info("PANEL CLIENT CHECK PASS: {} component types, {} captures", placedTypes, captures);
             mc.stop();
         }
+    }
+
+    /** The legend basis audit over everything drawn in the run: no sheared, squashed, mirrored or off-plane text basis. */
+    private static void legendAuditVerdict() {
+        if (PanelRenderContext.debugBasisBad() != 0)
+            throw new AssertionError(PanelRenderContext.debugBasisBad() + " legends of the run were drawn on a text basis that is not orthogonal in its face: "
+                    + PanelRenderContext.debugBasisFirstBad());
+        LogUtils.getLogger().info("PANEL CLIENT CHECK legend basis audit: {} legends drawn in the run, {} with a sheared, squashed, mirrored or off-plane basis",
+                PanelRenderContext.debugBasisChecked(), PanelRenderContext.debugBasisBad());
     }
 
     private static void build(net.minecraft.server.level.ServerLevel level) {
