@@ -741,6 +741,26 @@ public final class AccidentBlastTests {
         h.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 400)
+    public static void theAppliedFailureFlagsSurviveAReload(GameTestHelper h) throws Exception {
+        var plant = new Plant(h, new BlockPos(702_400, 190, 700_000), false, Blocks.AIR);
+        var level = plant.level;
+        int head = dev.bwr.mod.reactor.ReactorBoundaryEffects.HEAD;
+        plant.reactor.core().getBoundaryStress().forceFailure(BoundaryComponent.REACTOR_VESSEL_HEAD, 1400);
+        ReactorControllerBlockEntity.serverTick(level, plant.reactor.getBlockPos(), plant.reactor.getBlockState(), plant.reactor);
+        finish(plant);
+        var saved = plant.reactor.saveWithFullMetadata(level.registryAccess());
+        h.assertTrue((saved.getInt("AppliedBoundaryFailures") & head) != 0, "the head failure was not saved as applied");
+        var root = plant.reactor.getBlockPos();
+        level.removeBlockEntity(root);
+        var reloaded = (ReactorControllerBlockEntity) BlockEntity.loadStatic(root, level.getBlockState(root), saved, level.registryAccess());
+        level.setBlockEntity(reloaded);
+        // Straight after the load, before anything ticks: the failure is still marked as done, so nothing will fire it again.
+        h.assertTrue((reloaded.saveWithFullMetadata(level.registryAccess()).getInt("AppliedBoundaryFailures") & head) != 0,
+                "a reload forgot that the head failure had been applied");
+        h.succeed();
+    }
+
     private static double sq(double v) {
         return v * v;
     }
