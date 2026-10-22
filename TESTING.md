@@ -732,3 +732,18 @@ bench) and of the blueprint ghost (fits, and with a block in the way) to `run/tu
 `-PbwrBoardClientStages=duplex_board-front` filters by picture name.
 
 `python tools-generate-boards.py --check` fails when the shipped JSON differs from the generator.
+
+## Plant computer (`bwr:plant_computer`, PLANT-COMPUTER.md)
+
+The GameTest class `PlantComputerTests` is in the namespace `bwrplant` (template `bwrplant:empty`): `-PbwrOnlyPlant` runs just its 16 tests in
+under a minute; the normal run includes it (`neoforge.enabledGameTestNamespaces` is `bwr,bwrtick,bwrplant`). Fixtures at 400,000 / 400,000 and
+408,000. `PlantComputerCcChecks` (CC types, only reached when CC is loaded) runs the peripheral calls against the real CC classes. The real
+`docs/lua/spds.lua` runs on a real CC computer in six scenarios of `:mod:runLuaExamplesCheck` (`spds-two-frames`, `spds-unformed`, `spds-touch`,
+`spds-builtin-display`, `spds-missing-label`, `spds-small-display`).
+
+Client: `-PbwrPanelClientCheck -PbwrPanelClientStages=plant` takes the eight plant computer pictures (1920 x 1080) into
+`run/turbineModelCheck/panel-client-check/` (`plant-default-overview`, `-trends`, `-flows`, `plant-spds-safety`, `-trends`, `-values`,
+`plant-no-program`, `plant-spds-fine-text`); the built-in pages read a real formed reactor, the SPDS pages are defined with the same `PlantApi`
+calls the peripheral makes. Performance: `-PbwrPanelPerformanceCheck -PbwrPanelPerformanceStages=empty,plant-idle,plant-updating` (eight
+displays on a 16 x 6 block wall, idle and with values changing once a second).
+

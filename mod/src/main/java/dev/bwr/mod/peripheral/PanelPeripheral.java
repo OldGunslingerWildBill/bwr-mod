@@ -10,6 +10,10 @@ import dev.bwr.mod.panel.PanelGroup;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.component.PanelDrawTarget;
 import dev.bwr.mod.panel.component.PanelTextTarget;
+import dev.bwr.mod.panel.component.PlantComputerData;
+import dev.bwr.mod.panel.plant.PlantApi;
+import dev.bwr.mod.panel.plant.PlantState;
+import dev.bwr.mod.panel.plant.PlantTouch;
 import dev.bwr.mod.panel.component.PortSpec;
 import dev.bwr.mod.panel.wiring.CcSource;
 import dev.bwr.mod.panel.wiring.PanelWiring;
@@ -33,6 +37,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *   <li>{@code setText(label, text)}: the text of a nameplate or text display;</li>
  *   <li>drawing, for components whose data implements {@link PanelDrawTarget}: {@code getSize, clear,
  *       setPixel, fill, drawText, blit, setPalette, write};</li>
+ *   <li>the plant computer calls ({@code plantList}, {@code plantInfo}, {@code plantClear}, {@code plantClearPage},
+ *       {@code plantSetPage}, {@code plantTitle}, {@code plantSet}, {@code plantValue}, {@code plantPush}, {@code plantRemove},
+ *       {@code plantFlush}), for components of type {@code bwr:plant_computer}: see {@link PlantApi} and PLANT-COMPUTER.md.
+ *       Every panel peripheral also answers to the type {@value #PLANT_TYPE}, so {@code peripheral.find("bwr_plant_computer")}
+ *       finds a panel that has one (call {@code plantList()} to see which);</li>
+ *   <li>event {@code plant_computer_touch(name, label, page, key)} when a player touches a soft key of a plant computer page
+ *       (read only: it only raises this event);</li>
  *   <li>event {@code bwr_panel_input(name, label, value, port)} whenever a player operates a control.
  *       {@code name} is the peripheral name the computer sees for the panel (the side, or the modem name such as
  *       {@code bwr_panel_3}), like {@code monitor_touch}'s first argument. A computer receives at most one event
@@ -45,6 +56,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public final class PanelPeripheral implements IPeripheral {
     public static final String TYPE = "bwr_panel";
     public static final String EVENT = "bwr_panel_input";
+    /** The type a panel peripheral also answers to, and the event a touched soft key raises. */
+    public static final String PLANT_TYPE = "bwr_plant_computer";
+    public static final String TOUCH_EVENT = "plant_computer_touch";
 
     private record Attachment(Level level, BlockPos pos, IComputerAccess computer, int computerId, String name) {
     }
@@ -65,6 +79,7 @@ public final class PanelPeripheral implements IPeripheral {
         if (!installed) {
             installed = true;
             PanelBus.addOutputListener(PanelPeripheral::onOutput);
+            PlantTouch.addListener(PanelPeripheral::onTouch);
         }
     }
 
@@ -115,9 +130,32 @@ public final class PanelPeripheral implements IPeripheral {
         }
     }
 
+    /** A soft key was touched: one event per attached computer of the panel group, like {@code bwr_panel_input}. */
+    private static void onTouch(ServerLevel level, PanelBlockEntity owner, PanelComponent component, int page, int key) {
+        PanelGroup group = owner == null ? null : owner.group();
+        if (ATTACHED.isEmpty() || group == null) {
+            return;
+        }
+        java.util.Set<Integer> notified = new java.util.HashSet<>();
+        for (Attachment attachment : ATTACHED) {
+            if (attachment.level == level && group.contains(attachment.pos) && notified.add(attachment.computerId)) {
+                try {
+                    attachment.computer.queueEvent(TOUCH_EVENT, attachment.name, component.label(), page, key);
+                } catch (RuntimeException e) {
+                    ATTACHED.remove(attachment);
+                }
+            }
+        }
+    }
+
     @Override
     public String getType() {
         return TYPE;
+    }
+
+    @Override
+    public java.util.Set<String> getAdditionalTypes() {
+        return java.util.Set.of(PLANT_TYPE);
     }
 
     @Override
@@ -373,5 +411,108 @@ public final class PanelPeripheral implements IPeripheral {
     public boolean write(String label, int row, int column, String text) throws LuaException {
         Surface surface = surface(label);
         return changed(surface, surface.target.write(row, column, text));
+    }
+
+    // ---- the plant computer (PlantApi): pages, elements, trends
+
+    private PlantComputerData plant(String label) throws LuaException {
+        Found found = find(label);
+        if (found.component.data() instanceof PlantComputerData data) {
+            return data;
+        }
+        throw new LuaException(label + " is not a plant computer");
+    }
+
+    private interface PlantCall<T> {
+        T run() throws PlantState.Rejected;
+    }
+
+    private static <T> T guarded(PlantCall<T> call) throws LuaException {
+        try {
+            return call.run();
+        } catch (PlantState.Rejected e) {
+            throw new LuaException(e.getMessage());
+        }
+    }
+
+    /** The plant computers of the panel group by label: {@code {label = {cols, rows, mode}}}. */
+    @LuaFunction(mainThread = true)
+    public Map<String, Object> plantList() {
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (Map.Entry<String, Found> keyed : keyed().entrySet()) {
+            if (keyed.getValue().component.data() instanceof PlantComputerData data) {
+                Map<String, Object> entry = new LinkedHashMap<>();
+                entry.put("cols", data.layout().cols());
+                entry.put("rows", data.layout().rows());
+                entry.put("mode", data.mode);
+                result.put(keyed.getKey(), entry);
+            }
+        }
+        return result;
+    }
+
+    /** Grid size, mode, page shown, counts and the limits of one plant computer. */
+    @LuaFunction(mainThread = true)
+    public Map<String, Object> plantInfo(String label) throws LuaException {
+        return PlantApi.info(plant(label));
+    }
+
+    /** Clears every page and shows page 1. Returns whether anything changed. */
+    @LuaFunction(mainThread = true)
+    public boolean plantClear(String label) throws LuaException {
+        PlantComputerData data = plant(label);
+        return guarded(() -> PlantApi.clear(data));
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean plantClearPage(String label, int page) throws LuaException {
+        PlantComputerData data = plant(label);
+        return guarded(() -> PlantApi.clearPage(data, page));
+    }
+
+    /** Shows page {@code page} (1 to 8). */
+    @LuaFunction(mainThread = true)
+    public boolean plantSetPage(String label, int page) throws LuaException {
+        PlantComputerData data = plant(label);
+        return guarded(() -> PlantApi.setPage(data, page));
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean plantTitle(String label, int page, String title) throws LuaException {
+        PlantComputerData data = plant(label);
+        return guarded(() -> PlantApi.title(data, page, title));
+    }
+
+    /** Defines or redefines an element from a table, e.g. {@code {type="field", col=2, row=3, text="POWER", unit="%"}}. */
+    @LuaFunction(mainThread = true)
+    public boolean plantSet(String label, int page, String id, Map<?, ?> spec) throws LuaException {
+        PlantComputerData data = plant(label);
+        return guarded(() -> PlantApi.set(data, page, id, spec));
+    }
+
+    /** Updates a field or bar number (nil: no data), a tile state ("ok", "warn", "alarm", "off") or a text. */
+    @LuaFunction(mainThread = true)
+    public boolean plantValue(String label, int page, String id, Object value) throws LuaException {
+        PlantComputerData data = plant(label);
+        return guarded(() -> PlantApi.value(data, page, id, value));
+    }
+
+    /** Adds a point to a trend. */
+    @LuaFunction(mainThread = true)
+    public boolean plantPush(String label, int page, String id, double value) throws LuaException {
+        PlantComputerData data = plant(label);
+        return guarded(() -> PlantApi.push(data, page, id, value));
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean plantRemove(String label, int page, String id) throws LuaException {
+        PlantComputerData data = plant(label);
+        return guarded(() -> PlantApi.remove(data, page, id));
+    }
+
+    /** Sends what changed with the next tick instead of the usual five a second. Returns whether it was asked for. */
+    @LuaFunction(mainThread = true)
+    public boolean plantFlush(String label) throws LuaException {
+        return plant(label).flush();
     }
 }

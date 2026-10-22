@@ -42,7 +42,8 @@ neoForge {
             gameDirectory = file('run/turbineGameTest')
             // 'bwrtick' holds the tick-cost and chunk-boundary tests (TickBudgetTests, ChunkLinkTests, ...); -PbwrOnlyTick
             // runs just those, in about a minute, while they are being developed. The default runs everything.
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrOnlyTick') ? 'bwrtick' : 'bwr,bwrtick'
+            // 'bwrplant' holds the plant computer tests (PlantComputerTests); -PbwrOnlyPlant runs just those.
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : 'bwr,bwrtick,bwrplant'
             // Developer-only tick profiler (dev.bwr.mod.TickProbe): per-system microseconds per server tick, printed by
             // the TickBudgetTests plant profile as "TICK PROBE" lines. Off (and costless) without this property.
             if (project.hasProperty('bwrTickProbe')) jvmArguments.add('-Dbwr.tickProbe=true')

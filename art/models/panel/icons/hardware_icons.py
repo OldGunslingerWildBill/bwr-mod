@@ -1,5 +1,5 @@
 """Inventory icons of the control hardware drawn in code (no Blender model): the controller station, the synchroscope,
-the two pen recorder, the joystick switch and the LED rod display.
+the two pen recorder, the joystick switch, the LED rod display and the plant computer.
 
     python art/models/panel/icons/hardware_icons.py
 
@@ -133,10 +133,35 @@ def led_rod_display():
     save(img, "led_rod_display")
 
 
+def plant_computer():
+    img, d = canvas()
+    rect(d, 1, 3, 31, 29, HOUSING)
+    rect(d, 2, 4, 30, 28, RECESS)
+    # a green / amber / red tile grid on the left, a trend line and a bar on the right
+    tiles = [(3, 5, GREEN), (9, 5, GREEN), (3, 11, AMBER), (9, 11, GREEN), (3, 17, GREEN), (9, 17, RED)]
+    for x, y, colour in tiles:
+        rect(d, x, y, x + 5, y + 5, tuple(c // 3 for c in colour))
+        rect(d, x + 0.5, y + 0.5, x + 4.5, y + 4.5, colour)
+    rect(d, 16, 5, 29, 14, (0x0A, 0x0B, 0x0C))
+    pts = [(17, 12), (19, 10.5), (21, 11.5), (23, 8.5), (25, 9), (27, 6.5), (28.5, 7)]
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        steps = 12
+        for i in range(steps + 1):
+            t = i / steps
+            disc(d, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, 0.55, (0x30, 0xD8, 0xE8))
+    rect(d, 16, 17, 29, 19.5, (0x1A, 0x1D, 0x20))
+    rect(d, 16, 17, 25, 19.5, (0x30, 0xD8, 0xE8))
+    rect(d, 3, 24, 29, 27, (0x1A, 0x1D, 0x20))
+    for i in range(3):
+        rect(d, 4 + i * 8.5, 24.5, 10.5 + i * 8.5, 26.5, (0x60, 0x66, 0x6C))
+    save(img, "plant_computer")
+
+
 if __name__ == "__main__":
     controller_station()
     synchroscope()
     two_pen_recorder()
     joystick_switch()
     led_rod_display()
-    print("wrote 5 icons to", OUT)
+    plant_computer()
+    print("wrote 6 icons to", OUT)

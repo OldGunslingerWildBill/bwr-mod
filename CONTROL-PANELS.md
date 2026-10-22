@@ -88,6 +88,7 @@ hold with a size chosen keeps it, and a component already on a panel keeps the s
 | Two-pen strip recorder | 16x16, 24x24, 32x32; **twice real** 6x6 (default), **real** 3x3, 4x4, **real** 2x2 |
 | Joystick bypass switch | 8x8, 12x12, 16x16; **twice real** 2x2 (default), **real** 1x1, 4x4 |
 | LED rod pattern display | 51x51; **twice real** 34x34 (2 cells a rod, default), **real** 17x17 (1 cell a rod, the 185 rod core), **real** 26x26 (the biggest core) |
+| Plant computer (safety parameter display) | 64x48 (4 x 3 blocks, the default), 32x24, 32x32, 48x32, 48x48, 64x32, 64x64 |
 | Strip-chart recorder | 16x16, 24x16, 32x24 |
 | Paperless recorder | DX1000 16x16 (one block, the default), 12, 20, 24; DX2000 32x32 (2 x 2, twice a DX1000), 40, 48; all square |
 | 7- and 16-segment display | 5 cells wide per digit, 8 tall: 20x8 (4 digits), 1 to 12 digits; **real** 1 cell wide per digit, 2 tall: 4x2 (4 digits), 1x2 to 8x2; **default** 8x4 (4 digits, 2 wide and 4 tall each) |
@@ -895,6 +896,15 @@ wiring, which is identical for every type.
 
 What the example shows: values flow plant to display with no player action; commands flow from controls to
 the plant only when someone operates a control; lamps and nameplates carry text.
+
+### 6.6 Plant computer (`bwr:plant_computer`)
+
+A safety parameter display: a lit screen of text, numbers, bars, trends and green / amber / red tiles, up to 4 x 4 blocks. A CC
+program draws it (`bwr_plant_computer`: pages, text lines, numeric fields with units and alarm colours, bars, trend plots, a
+safety function tile grid, soft keys that raise `plant_computer_touch`), or it shows a built-in page (reactor overview, trends,
+flows) read from the reactor its one input, `reactor`, is bound to with the Networking Wrench. Read only towards the plant: no
+outputs, no sinks. Full API, limits and how it works: [PLANT-COMPUTER.md](PLANT-COMPUTER.md); a complete SPDS program:
+`docs/lua/spds.lua`.
 
 ## 4. CC:Tweaked reference
 
