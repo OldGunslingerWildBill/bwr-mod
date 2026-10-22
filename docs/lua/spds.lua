@@ -130,10 +130,10 @@ local function build()
     put(3, "power", { type = "field", col = 1, row = 2, w = cols, text = "POWER", unit = "%", warnHigh = 105, alarmHigh = 120 })
     put(3, "neutron", { type = "field", col = 1, row = 3, w = cols, text = "NEUTRON POWER", unit = "%",
         warnHigh = LIMITS.neutronWarn * 100, alarmHigh = LIMITS.neutronAlarm * 100 })
-    put(3, "level", { type = "bar", col = 1, row = 4, w = cols, text = "LEVEL", unit = "in", min = -200, max = 100,
+    put(3, "level", { type = "bar", col = 1, row = 4, w = cols, text = "LEVEL", unit = "in", min = -200, max = 100, color = "cyan",
         warnLow = taf + LIMITS.levelMarginOk, alarmLow = taf + LIMITS.levelMarginWarn })
     put(3, "pressure", { type = "bar", col = 1, row = 5, w = cols, text = "PRESSURE", unit = "psig", min = 0, max = 1400,
-        decimals = 0, warnHigh = LIMITS.pressureWarn, alarmHigh = LIMITS.pressureAlarm })
+        color = "cyan", decimals = 0, warnHigh = LIMITS.pressureWarn, alarmHigh = LIMITS.pressureAlarm })
     put(3, "clad", { type = "field", col = 1, row = 6, w = cols, text = "CLAD TEMP", unit = "C", decimals = 0,
         warnHigh = LIMITS.cladWarn, alarmHigh = LIMITS.cladAlarm })
     put(3, "cont", { type = "field", col = 1, row = 7, w = cols, text = "CONT PRESS", unit = "psig",

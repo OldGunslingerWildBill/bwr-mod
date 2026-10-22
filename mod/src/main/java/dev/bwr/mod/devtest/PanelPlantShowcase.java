@@ -35,7 +35,7 @@ import java.util.Map;
  *
  * <ul>
  *   <li>{@code plant-default-overview}, {@code -trends}, {@code -flows}: the built-in pages, bound to a real formed reactor
- *       staged at 80 percent power and run through a feedwater upset, so the trends are that reactor's own history (the
+ *       staged at 80 percent power and run through a steam and feedwater upset, so the trends are that reactor's own history (the
  *       trend page is given the history by running the very sampler the display uses, one point a simulated second);</li>
  *   <li>{@code plant-spds-safety}, {@code -trends}, {@code -values}: the SPDS program of {@code docs/lua/spds.lua}, its
  *       pages defined with the same {@link PlantApi} calls the {@code bwr_panel} peripheral makes for a program (the
@@ -137,17 +137,17 @@ final class PanelPlantShowcase {
     // ---- the plant
 
     /** One tick of the stand-in turbine and feedwater pump, then of the core; {@code feed} scales the feedwater. */
-    private static void plantStep(ReactorCore core, double feed) {
+    private static void plantStep(ReactorCore core, double feed, double steam) {
         core.setRecirculationFlowFraction(0.0);
         double rise = Saturation.vapourEnthalpyKJPerKg(core.getPressurePsia())
                 - core.getPressureVessel().getFeedwaterEnthalpyKJPerKg();
         double flow = core.getThermalPowerMW() * 1000.0 / rise;
-        core.setTurbineSteamFlowKgPerS(flow);
+        core.setTurbineSteamFlowKgPerS(flow * steam);
         core.setFeedwaterFlowKgPerS(flow * feed);
         core.step();
     }
 
-    /** A real formed reactor at 80 percent power with a feedwater upset behind it; its history fills {@link #POWER} and the others. */
+    /** A real formed reactor at 80 percent power with a steam and feedwater upset behind it; its history fills {@link #POWER} and the others. */
     private static ReactorControllerBlockEntity reactor(ServerLevel level) {
         ReactorControllerBlockEntity reactor;
         try {
@@ -166,14 +166,16 @@ final class PanelPlantShowcase {
         core.initialiseAtTotalPowerFraction(0.8);
         reactor.rods().setCore(core);
         for (int i = 0; i < 2400; i++) {
-            plantStep(core, 1.0);
+            plantStep(core, 1.0, 1.0);
         }
         var signals = dev.bwr.mod.signal.SignalProviders.of(reactor);
         for (int point = 0; point < POWER.length; point++) {
-            // a feedwater upset in the middle of the history: 12 percent short for 15 points, then restored
-            double feed = point >= 22 && point < 37 ? 0.88 : 1.0;
+            // an upset in the history: the turbine takes 25 percent less steam for ten points, then the feedwater is 45 percent short
+            // for fifteen, then both are restored
+            double steam = point >= 6 && point < 16 ? 0.75 : 1.0;
+            double feed = point >= 28 && point < 43 ? 0.55 : 1.0;
             for (int i = 0; i < 20; i++) {
-                plantStep(core, feed);
+                plantStep(core, feed, steam);
             }
             POWER[point] = signals.read("power").orElse(0.0) * 100.0;
             LEVEL[point] = signals.read("level").orElse(0.0);
@@ -269,9 +271,9 @@ final class PanelPlantShowcase {
         PlantApi.set(data, 3, "power", spec("type", "field", "col", 1, "row", 2, "w", cols, "text", "POWER", "unit", "%", "warnHigh", 105.0, "alarmHigh", 120.0, "value", lastPower));
         PlantApi.set(data, 3, "neutron", spec("type", "field", "col", 1, "row", 3, "w", cols, "text", "NEUTRON POWER", "unit", "%", "warnHigh", 105.0, "alarmHigh", 120.0, "value", lastPower - 6.5));
         PlantApi.set(data, 3, "level", spec("type", "bar", "col", 1, "row", 4, "w", cols, "text", "LEVEL", "unit", "in", "min", -200.0, "max", 100.0,
-                "warnLow", taf + 120, "alarmLow", taf + 20, "value", LEVEL[LEVEL.length - 1]));
+                "warnLow", taf + 120, "alarmLow", taf + 20, "color", "cyan", "value", LEVEL[LEVEL.length - 1]));
         PlantApi.set(data, 3, "pressure", spec("type", "bar", "col", 1, "row", 5, "w", cols, "text", "PRESSURE", "unit", "psig", "min", 0.0, "max", 1400.0, "decimals", 0.0,
-                "warnHigh", 1100.0, "alarmHigh", 1250.0, "value", PRESSURE[PRESSURE.length - 1]));
+                "color", "cyan", "warnHigh", 1100.0, "alarmHigh", 1250.0, "value", PRESSURE[PRESSURE.length - 1]));
         PlantApi.set(data, 3, "clad", spec("type", "field", "col", 1, "row", 6, "w", cols, "text", "CLAD TEMP", "unit", "C", "decimals", 0.0, "warnHigh", 800.0, "alarmHigh", 1204.0, "value", 311.0));
         PlantApi.set(data, 3, "cont", spec("type", "field", "col", 1, "row", 7, "w", cols, "text", "CONT PRESS", "unit", "psig", "warnHigh", 2.0, "alarmHigh", 15.0, "value", 17.2));
         PlantApi.set(data, 3, "h2", spec("type", "field", "col", 1, "row", 8, "w", cols, "text", "CONT H2", "unit", "%", "warnHigh", 4.0, "alarmHigh", 6.0, "value", 1.3));

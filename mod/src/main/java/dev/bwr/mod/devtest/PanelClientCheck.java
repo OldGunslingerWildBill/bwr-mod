@@ -354,7 +354,7 @@ public final class PanelClientCheck {
             mc.screen.mouseScrolled(640, 300, 0, -3);
         }
         if (NAMES[stage].equals(PanelSpringCheck.NAME) && shown >= 70 && !PanelSpringCheck.tick(mc)) return;
-        if (stage >= INPUT_FIRST && shown >= 70 && !PanelSwitchInputCheck.tick(mc, stage - INPUT_FIRST)) return;
+        if (stage >= INPUT_FIRST && stage < PLANT_FIRST && shown >= 70 && !PanelSwitchInputCheck.tick(mc, stage - INPUT_FIRST)) return;
         if (shown < 105) return;
         if (picker && !(mc.screen instanceof SizePickerScreen))
             throw new AssertionError("The size picker was closed before its screenshot");
