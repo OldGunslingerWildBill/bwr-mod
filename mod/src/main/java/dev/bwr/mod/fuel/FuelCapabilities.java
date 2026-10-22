@@ -5,7 +5,7 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
 /**
- * The capabilities the fabricator exposes that do not involve Mekanism: the
+ * The capabilities the fabricator and the reprocessing plant expose that do not involve Mekanism: the
  * four item slots ({@link FabricatorItemView}) and the energy buffer. Both are plain NeoForge, so this class is
  * safe to load on any install.
  *
@@ -26,6 +26,17 @@ public final class FuelCapabilities {
         event.registerBlockEntity(
                 Capabilities.EnergyStorage.BLOCK,
                 BwrBlockEntities.FUEL_FABRICATOR.get(),
+                (be, side) -> be.energy());
+
+        // The reprocessing plant: the same pair, four slots (spent assembly in, three products out) and an energy buffer.
+        event.registerBlockEntity(
+                Capabilities.ItemHandler.BLOCK,
+                BwrBlockEntities.REPROCESSING_PLANT.get(),
+                (be, side) -> be.itemView(side));
+
+        event.registerBlockEntity(
+                Capabilities.EnergyStorage.BLOCK,
+                BwrBlockEntities.REPROCESSING_PLANT.get(),
                 (be, side) -> be.energy());
     }
 }

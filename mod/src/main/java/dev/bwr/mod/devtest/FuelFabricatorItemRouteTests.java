@@ -547,7 +547,7 @@ public final class FuelFabricatorItemRouteTests {
             made.add(BuiltInRegistries.ITEM.getKey(holder.value().getResultItem(h.getLevel().registryAccess()).getItem()));
         }
         var notCrafted = new java.util.HashSet<String>(List.of("cobalt_sample", "tritium_sample", "doped_silicon", "corium", "depleted_uranium",
-                "rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_quencher"));
+                "fission_product_waste", "rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_quencher"));
         if (!ModList.get().isLoaded("mekanism")) {
             notCrafted.add("fuel_fabricator");
         }

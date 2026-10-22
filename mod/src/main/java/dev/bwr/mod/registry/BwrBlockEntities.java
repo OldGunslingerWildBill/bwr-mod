@@ -12,6 +12,7 @@ import dev.bwr.mod.eccs.EccsPumpBlockEntity;
 import dev.bwr.mod.feedwater.FeedwaterPumpBlockEntity;
 import dev.bwr.mod.flow.RecirculationPumpBlockEntity;
 import dev.bwr.mod.fuel.FuelFabricatorBlockEntity;
+import dev.bwr.mod.fuel.ReprocessingPlantBlockEntity;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import dev.bwr.mod.reactor.RpvSteamOutletBlockEntity;
 import dev.bwr.mod.rods.ControlRodDriveBlockEntity;
@@ -130,6 +131,11 @@ public final class BwrBlockEntities {
             FUEL_FABRICATOR = BLOCK_ENTITIES.register("fuel_fabricator",
             () -> BlockEntityType.Builder.of(FuelFabricatorBlockEntity::new,
                     BwrBlocks.FUEL_FABRICATOR.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ReprocessingPlantBlockEntity>>
+            REPROCESSING_PLANT = BLOCK_ENTITIES.register("reprocessing_plant",
+            () -> BlockEntityType.Builder.of(ReprocessingPlantBlockEntity::new,
+                    BwrBlocks.REPROCESSING_PLANT.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SuppressionPoolBlockEntity>>
             SUPPRESSION_POOL = BLOCK_ENTITIES.register("suppression_pool",

@@ -208,6 +208,34 @@ public final class FuelAssembly {
         return depletion - bred;
     }
 
+    /**
+     * The fissile content, as a weight fraction of the heavy metal, that this
+     * assembly's k-infinity accounting says it holds now: the enrichment at
+     * which a fresh assembly of this fuel would have the same base k-infinity
+     * as this one has after depletion and breeding ({@link #baseKInf()} less
+     * {@link #burnupPenaltyKInf()}, so burnable poison is not counted, it is not
+     * fissile). It is the inverse of {@link #baseKInf()} along the same
+     * thermal-utilisation curve, so a fresh assembly gives back its own
+     * enrichment, one that has burned down gives less, and a breeder (depleted
+     * uranium, thorium) gives more than it started with.
+     *
+     * <p>This is the mod's own net fissile balance in mass terms, which is what
+     * spent-fuel reprocessing needs: depletion, breeding and the enrichment
+     * response all enter through the same three numbers the core already uses.
+     * It is net: uranium-235 and bred plutonium together, not separately.
+     */
+    public double fissileEquivalentWeightFraction() {
+        double nominal = thermalUtilisation(fuelType.nominalEnrichmentWeightFraction());
+        double target = baseKInf() - burnupPenaltyKInf();
+        if (!(target > 0.0)) {
+            return 0.0;
+        }
+        double utilisation = Math.min(target * nominal / fuelType.kInfBase(), 0.999999);
+        double e = utilisation * THERMAL_ABSORPTION_RATIO
+                / (1.0 - utilisation * (1.0 - THERMAL_ABSORPTION_RATIO));
+        return clamp(e, 0.0, 0.99);
+    }
+
     /** gadPenalty(gadRemaining): k-infinity held down by the remaining burnable poison. */
     public double gadPenaltyKInf() {
         double loading = fuelType.gadContentWeightFraction();

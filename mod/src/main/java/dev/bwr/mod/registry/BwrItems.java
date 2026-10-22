@@ -223,6 +223,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.TURBINE_STEAM_OUTLET);
     public static final DeferredItem<BlockItem> FUEL_FABRICATOR =
             ITEMS.registerSimpleBlockItem(BwrBlocks.FUEL_FABRICATOR);
+    public static final DeferredItem<BlockItem> REPROCESSING_PLANT =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.REPROCESSING_PLANT);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_CONTROLLER =
             ITEMS.registerSimpleBlockItem(BwrBlocks.SUPPRESSION_POOL_CONTROLLER);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_WALL =
@@ -301,6 +303,19 @@ public final class BwrItems {
      * tagged as a uranium ingot, so the fabricator will not take it back as feed.
      */
     public static final DeferredItem<Item> DEPLETED_URANIUM = ITEMS.registerSimpleItem("depleted_uranium");
+    /**
+     * Plutonium out of a reprocessing plant, in ninths of an ingot (a nugget), which is the unit the plant's
+     * fractional accounting and the fabricator's MOX route both count in. Tagged {@code c:nuggets/plutonium} and
+     * {@code c:ingots/plutonium}; nine nuggets and an ingot are crafted into each other.
+     */
+    public static final DeferredItem<Item> PLUTONIUM_NUGGET = ITEMS.registerSimpleItem("plutonium_nugget");
+    public static final DeferredItem<Item> PLUTONIUM_INGOT = ITEMS.registerSimpleItem("plutonium_ingot");
+    /**
+     * The fission products of a spent assembly, in ninths of an ingot of heavy metal that was fissioned. Nothing
+     * uses it and there is no recipe for it: it is what burning fuel leaves, kept as an item so the plant has
+     * somewhere to put it instead of deleting it.
+     */
+    public static final DeferredItem<Item> FISSION_PRODUCT_WASTE = ITEMS.registerSimpleItem("fission_product_waste");
 
     // --- Control-room furniture (ROOM-FURNITURE.md) ---
     public static final DeferredItem<BlockItem> RELAY_CABINET =
@@ -368,7 +383,7 @@ public final class BwrItems {
                     .icon(() -> FUEL_ASSEMBLY.get().getDefaultInstance()).displayItems((parameters, output) -> {
                         for (var type : FuelTypes.catalogue()) output.accept(FuelAssemblyItem.stackOf(FUEL_ASSEMBLY.get(), FuelAssemblyData.fresh(type)));
                         for (var kind : dev.bwr.core.fuel.CoreInsert.Kind.values()) output.accept(dev.bwr.mod.fuel.SpecialtyRodItem.stack(new dev.bwr.mod.fuel.CoreInsertData(kind, 0)));
-                        for (var item : java.util.List.of(IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, COBALT_SAMPLE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM)) output.accept(item.get());
+                        for (var item : java.util.List.of(IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, COBALT_SAMPLE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM, PLUTONIUM_NUGGET, PLUTONIUM_INGOT, FISSION_PRODUCT_WASTE)) output.accept(item.get());
                     }).build());
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB =
@@ -415,6 +430,7 @@ public final class BwrItems {
                         output.accept(RPV_STEAM_OUTLET.get());
                         output.accept(TURBINE_STEAM_OUTLET.get());
                         output.accept(FUEL_FABRICATOR.get());
+                        output.accept(REPROCESSING_PLANT.get());
                         output.accept(SUPPRESSION_POOL_CONTROLLER.get());
                         output.accept(SUPPRESSION_POOL_WALL.get());
                         output.accept(SUPPRESSION_POOL_SUCTION.get());

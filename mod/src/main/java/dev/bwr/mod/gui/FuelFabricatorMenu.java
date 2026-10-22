@@ -45,6 +45,12 @@ public class FuelFabricatorMenu extends BwrMenu {
     public static final int CMD_TARGET = 1;
 
     /**
+     * Command: select any of the selector's steps, argument a = index into {@link FuelItemRoute#LADDER} (the uranium
+     * ladder, then the MOX grades). {@link #CMD_TARGET} keeps its meaning and its range.
+     */
+    public static final int CMD_SELECT = 2;
+
+    /**
      * The four machine slots, in the order they were added to this menu (which
      * is not the order a pipe sees: {@link FabricatorItemView}).
      */
@@ -93,6 +99,13 @@ public class FuelFabricatorMenu extends BwrMenu {
     public int uraniumHeldUnits;
     public int workTicks;
     public int tailsHeld;
+
+    /** MOX route: the selected target makes MOX; what it costs in plutonium nuggets and depleted uranium, and what the machine holds. */
+    public boolean moxTarget;
+    public int moxPlutonium;
+    public int moxMatrix;
+    public int moxPlutoniumHeld;
+    public int moxMatrixHeld;
 
     private static final int TARGET_DEFAULT_INDEX = Math.max(0, FuelItemRoute.TARGETS.indexOf(FuelItemRoute.DEFAULT_TARGET));
 
@@ -161,7 +174,7 @@ public class FuelFabricatorMenu extends BwrMenu {
 
         buf.writeUtf(wouldFabricate(be), 64);
 
-        buf.writeVarInt(Math.max(0, FuelItemRoute.TARGETS.indexOf(be.target())));
+        buf.writeVarInt(Math.max(0, FuelItemRoute.LADDER.indexOf(be.target())));
         FuelItemRoute.Cost cost = be.itemCost();
         buf.writeBoolean(cost != null);
         if (cost != null) {
@@ -173,6 +186,13 @@ public class FuelFabricatorMenu extends BwrMenu {
         buf.writeVarInt(be.uraniumHeldUnits());
         buf.writeVarInt(be.itemWorkTicks());
         buf.writeVarInt(be.tailsHeld());
+        buf.writeBoolean(cost != null && cost.isMox());
+        if (cost != null && cost.isMox()) {
+            buf.writeVarInt(cost.plutoniumNuggets());
+            buf.writeVarInt(cost.matrix());
+            buf.writeVarInt(be.plutoniumHeldNuggets());
+            buf.writeVarInt(be.matrixHeldIngots());
+        }
 
         List<String> lines = be.feed().statusLines();
         int count = Math.min(lines.size(), 6);
@@ -231,7 +251,7 @@ public class FuelFabricatorMenu extends BwrMenu {
         energyCapacity = buf.readVarInt();
         wouldFabricate = buf.readUtf(64);
 
-        targetIndex = Math.max(0, Math.min(FuelItemRoute.TARGETS.size() - 1, buf.readVarInt()));
+        targetIndex = Math.max(0, Math.min(FuelItemRoute.LADDER.size() - 1, buf.readVarInt()));
         hasCost = buf.readBoolean();
         if (hasCost) {
             costIngots = buf.readVarInt();
@@ -247,6 +267,18 @@ public class FuelFabricatorMenu extends BwrMenu {
         uraniumHeldUnits = buf.readVarInt();
         workTicks = buf.readVarInt();
         tailsHeld = buf.readVarInt();
+        moxTarget = buf.readBoolean();
+        if (moxTarget) {
+            moxPlutonium = buf.readVarInt();
+            moxMatrix = buf.readVarInt();
+            moxPlutoniumHeld = buf.readVarInt();
+            moxMatrixHeld = buf.readVarInt();
+        } else {
+            moxPlutonium = 0;
+            moxMatrix = 0;
+            moxPlutoniumHeld = 0;
+            moxMatrixHeld = 0;
+        }
 
         int count = buf.readVarInt();
         List<String> lines = new ArrayList<>(count);
@@ -258,13 +290,16 @@ public class FuelFabricatorMenu extends BwrMenu {
 
     @Override
     public void handleCommand(ServerPlayer sender, int command, int a, int b) {
-        // One command: pick the item route's assembly. There is no mode and no
-        // start button; the machine runs when it has feed and power.
-        if (command != CMD_TARGET || a < 0 || a >= FuelItemRoute.TARGETS.size()) {
+        // One command: pick the item route's assembly (CMD_TARGET for the uranium ladder, CMD_SELECT for the whole
+        // selector, which adds the MOX grades). There is no mode and no start button; the machine runs when it
+        // has feed and power.
+        java.util.List<String> steps = command == CMD_TARGET ? FuelItemRoute.TARGETS
+                : command == CMD_SELECT ? FuelItemRoute.LADDER : null;
+        if (steps == null || a < 0 || a >= steps.size()) {
             return;
         }
         FuelFabricatorBlockEntity be = fabricator();
-        if (be != null && be.setTarget(FuelItemRoute.TARGETS.get(a))) {
+        if (be != null && be.setTarget(steps.get(a))) {
             markSnapshotDirty();
         }
     }
@@ -292,7 +327,9 @@ public class FuelFabricatorMenu extends BwrMenu {
             // steel go to their own input slot; anything else only moves
             // between hotbar and main.
             boolean moved;
-            if (FuelItemRoute.uraniumUnits(stack) > 0) {
+            FuelFabricatorBlockEntity be = fabricator();
+            if (be != null ? be.uraniumIn().isItemValid(0, stack) : FuelItemRoute.uraniumUnits(stack) > 0) {
+                // the uranium slot: uranium, or plutonium and depleted uranium while a MOX grade is selected
                 moved = moveItemStackTo(stack, SLOT_URANIUM, SLOT_URANIUM + 1, false);
             } else if (FuelItemRoute.isSteel(stack)) {
                 moved = moveItemStackTo(stack, SLOT_STEEL, SLOT_STEEL + 1, false);

@@ -101,7 +101,19 @@ public final class BwrPeripheralSupport {
         });
         if(be instanceof dev.bwr.mod.fuel.FuelFabricatorBlockEntity b)return new HardwarePeripheral("bwr_fuel_fabricator",()->Map.of(
                 "batchHeavyMetalKg",b.batchHeavyMetalKg(),"enrichment",b.batchEnrichmentWeightFraction(),"energyFE",b.energy().getEnergyStored(),"outputCount",b.output().getStackInSlot(0).getCount(),
-                "target",b.target(),"uraniumHeldIngots",b.uraniumHeldUnits()/(double)dev.bwr.mod.fuel.FuelItemRoute.UNITS_PER_INGOT,"depletedUranium",b.tailsHeld()));
+                "target",b.target(),"uraniumHeldIngots",b.uraniumHeldUnits()/(double)dev.bwr.mod.fuel.FuelItemRoute.UNITS_PER_INGOT,"depletedUranium",b.tailsHeld(),
+                "plutoniumHeldNuggets",b.plutoniumHeldNuggets(),"matrixHeldIngots",b.matrixHeldIngots()));
+        if(be instanceof dev.bwr.mod.fuel.ReprocessingPlantBlockEntity b)return new HardwarePeripheral("bwr_reprocessing_plant",()->{
+            var m=new LinkedHashMap<String,Object>();var held=b.input().getStackInSlot(0);
+            m.put("energyFE",b.energy().getEnergyStored());m.put("working",b.workTicks()>0);m.put("progress",b.workTicks()/(double)dev.bwr.mod.fuel.Reprocessing.WORK_TICKS);
+            m.put("hasAssembly",!held.isEmpty());
+            if(!held.isEmpty()){var d=dev.bwr.mod.fuel.FuelAssemblies.dataOf(held);m.put("assemblyFuel",d.fuelTypeName());m.put("assemblyBurnupMwdPerTonne",d.burnupMwdPerTonne());m.put("accepted",dev.bwr.mod.fuel.Reprocessing.accepts(held));}
+            m.put("plutoniumHeldNuggets",b.plutoniumGrains()/(double)dev.bwr.mod.fuel.Reprocessing.GRAINS_PER_NUGGET);
+            m.put("depletedUraniumHeldIngots",b.uraniumGrains()/(double)dev.bwr.mod.fuel.Reprocessing.GRAINS_PER_INGOT);
+            m.put("wasteHeld",b.wasteGrains()/(double)dev.bwr.mod.fuel.Reprocessing.GRAINS_PER_NUGGET);
+            m.put("plutoniumOut",b.plutoniumOut().getStackInSlot(0).getCount());m.put("depletedUraniumOut",b.uraniumOut().getStackInSlot(0).getCount());m.put("wasteOut",b.wasteOut().getStackInSlot(0).getCount());
+            return m;
+        });
         if(be instanceof dev.bwr.mod.rods.ControlRodDriveBlockEntity b)return new HardwarePeripheral("bwr_control_rod_drive",()->Map.of(
                 "attached",b.isAttached(),"rodIndex",b.rodIndex(),"notch",b.notchLabel(),"accumulatorCharge",b.accumulatorCharge(),"energyFE",b.energyStoredFe(),"waterKg",b.waterStoredMb(),"health",b.health()));
         return null;

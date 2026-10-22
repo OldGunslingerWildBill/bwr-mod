@@ -93,7 +93,7 @@ public final class GuiScreenCheck {
     }
 
     /** Screens also photographed at the smallest GUI sizes (laid out for 320 x 240 or 427 x 240, drawn at scale 2 in the corner). */
-    private static final Set<String> FLOOR_PICTURES = Set.of("reactor-flux", "reactor-info", "pump-rhr", "terry", "condenser", "refuelling-burnup", "fabricator", "pool-spray");
+    private static final Set<String> FLOOR_PICTURES = Set.of("reactor-flux", "reactor-info", "pump-rhr", "terry", "condenser", "refuelling-burnup", "fabricator", "fabricator-mox", "reprocessor", "pool-spray");
 
     private static boolean started, built;
     private static int age, joined, stage, scaleIndex, wait;
@@ -456,6 +456,56 @@ public final class GuiScreenCheck {
             return new FuelFabricatorScreen(m, i, t("Fuel Fabricator"));
         }));
         s.add(new Scenario("fabricator-absent", i -> new FuelFabricatorScreen(new FuelFabricatorMenu(99, i, P), i, t("Fuel Fabricator"))));
+        s.add(new Scenario("fabricator-mox", i -> {
+            // a MOX grade (standard, 7 %): 3 plutonium nuggets, 4 depleted uranium and 4 steel, part way through
+            var m = new FuelFabricatorMenu(99, i, P);
+            m.present = true;
+            m.energyStored = 74_000;
+            m.energyCapacity = 100_000;
+            m.targetIndex = FuelItemRoute.LADDER.indexOf("mox_standard");
+            m.hasCost = true;
+            m.costIngots = 0;
+            m.costSteel = 4;
+            m.costTails = 0;
+            m.costWorkTicks = 112;
+            m.moxTarget = true;
+            m.moxPlutonium = 3;
+            m.moxMatrix = 4;
+            m.moxPlutoniumHeld = 3;
+            m.moxMatrixHeld = 2;
+            m.workTicks = 40;
+            m.getSlot(FuelFabricatorMenu.SLOT_URANIUM).set(new ItemStack(BwrItems.PLUTONIUM_NUGGET.get(), 5));
+            m.getSlot(FuelFabricatorMenu.SLOT_STEEL).set(new ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 6));
+            m.getSlot(FuelFabricatorMenu.SLOT_TAILS).set(new ItemStack(BwrItems.DEPLETED_URANIUM.get(), 12));
+            return new FuelFabricatorScreen(m, i, t("Fuel Fabricator"));
+        }));
+        s.add(new Scenario("reprocessor", i -> {
+            // spent LEU at 45 GWd/t in the slot, part way through, with some of each product held
+            var m = new ReprocessingPlantMenu(99, i, P);
+            m.present = true;
+            m.energyStored = 62_000;
+            m.energyCapacity = 100_000;
+            m.workTicks = 120;
+            m.plutoniumGrains = 265_255;
+            m.uraniumGrains = 24_930_000;
+            m.wasteGrains = 1_200_000;
+            m.getSlot(ReprocessingPlantMenu.SLOT_INPUT).set(dev.bwr.mod.fuel.FuelAssemblyItem.stackOf(BwrItems.FUEL_ASSEMBLY.get(),
+                    new dev.bwr.mod.fuel.FuelAssemblyData("leu", 0.035, 180.0, 45000.0, 1.0)));
+            m.getSlot(ReprocessingPlantMenu.SLOT_PLUTONIUM).set(new ItemStack(BwrItems.PLUTONIUM_NUGGET.get(), 12));
+            m.getSlot(ReprocessingPlantMenu.SLOT_URANIUM).set(new ItemStack(BwrItems.DEPLETED_URANIUM.get(), 41));
+            m.getSlot(ReprocessingPlantMenu.SLOT_WASTE).set(new ItemStack(BwrItems.FISSION_PRODUCT_WASTE.get(), 18));
+            return new ReprocessingPlantScreen(m, i, t("Reprocessing Plant"));
+        }));
+        s.add(new Scenario("reprocessor-fresh", i -> {
+            // a fresh assembly sits in the slot (it cannot be put there by hand): the screen says it is refused
+            var m = new ReprocessingPlantMenu(99, i, P);
+            m.present = true;
+            m.energyStored = 0;
+            m.energyCapacity = 100_000;
+            m.getSlot(ReprocessingPlantMenu.SLOT_INPUT).set(new ItemStack(BwrItems.FUEL_ASSEMBLY.get()));
+            return new ReprocessingPlantScreen(m, i, t("Reprocessing Plant"));
+        }));
+        s.add(new Scenario("reprocessor-absent", i -> new ReprocessingPlantScreen(new ReprocessingPlantMenu(99, i, P), i, t("Reprocessing Plant"))));
         s.add(new Scenario("rhr-hx", i -> {
             var m = new RhrHeatExchangerMenu(99, i, P);
             m.present = true;

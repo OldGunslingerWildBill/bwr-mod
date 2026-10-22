@@ -66,6 +66,13 @@ import java.util.Locale;
  * An idle machine costs a boolean test per tick: the item route looks at its
  * inputs only when something about them changed.
  *
+ * <h2>MOX</h2>
+ * Three of the item route's targets make mixed oxide ({@link FuelItemRoute#MOX_TARGETS}): plutonium nuggets from the
+ * reprocessing plant, depleted uranium as the matrix and steel in, a fresh MOX assembly out, nothing returned. On one
+ * of them the input slot that takes uranium takes plutonium and depleted uranium instead (so a pipe set up for the
+ * four slots of the uranium route needs nothing new), each into its own store, held up to twice what an assembly needs
+ * so the slot is not left holding one when the other is wanted. The slot refuses what the stores have no room for.
+ *
  * <h2>What it does not do</h2>
  * It does not refuse to build anything. There is no interlock on enrichment, no
  * criticality check on the batch, no cap on how much plutonium a player may
@@ -115,6 +122,10 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
 
     /** Depleted uranium made but not yet moved into the output slot, ingots. */
     private int tailsPending;
+
+    /** MOX route stores, taken out of the input slot: plutonium in nuggets and depleted uranium matrix in ingots. */
+    private int plutoniumNuggets;
+    private int matrixIngots;
 
     /** Ticks of work done on the current item assembly; 0 when none is under way. */
     private int workTicks;
@@ -191,7 +202,24 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            return FuelItemRoute.uraniumUnits(stack) > 0;
+            // plutonium and depleted uranium on a MOX grade, uranium on the others: never the wrong one, which would jam the slot
+            return FuelItemRoute.isMoxTarget(target) ? moxFeedRoom(stack) > 0 : FuelItemRoute.uraniumUnits(stack) > 0;
+        }
+
+        /** On a MOX target a pipe may only fill what the stores have room for, so the slot cannot jam on the wrong item. */
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            if (isMoxFeed(stack)) {
+                int allowed = moxFeedRoom(stack);
+                if (allowed <= 0) {
+                    return stack;
+                }
+                if (allowed < stack.getCount()) {
+                    ItemStack rest = super.insertItem(slot, stack.copyWithCount(allowed), simulate);
+                    return stack.copyWithCount(stack.getCount() - allowed + rest.getCount());
+                }
+            }
+            return super.insertItem(slot, stack, simulate);
         }
     };
 
@@ -284,7 +312,11 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
             itemDirty = false;
             return false;
         }
-        absorbUranium(cost);
+        if (cost.isMox()) {
+            absorbMoxFeed(cost);
+        } else {
+            absorbUranium(cost);
+        }
         if (workTicks == 0) {
             if (!canMake(cost)) {
                 itemDirty = false;
@@ -323,10 +355,78 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         setChanged();
     }
 
+    /** Plutonium nuggets the store is held up to on a MOX target: twice an assembly's worth. */
+    private int plutoniumCap(FuelItemRoute.Cost cost) {
+        return 2 * cost.plutoniumNuggets();
+    }
+
+    private int matrixCap(FuelItemRoute.Cost cost) {
+        return 2 * cost.matrix();
+    }
+
+    /** True for a plutonium or depleted uranium item while a MOX target is selected. */
+    private boolean isMoxFeed(ItemStack stack) {
+        return FuelItemRoute.isMoxTarget(target)
+                && (FuelItemRoute.plutoniumNuggets(stack) > 0 || FuelItemRoute.isMatrix(stack));
+    }
+
+    /**
+     * How many of this item the input slot may take now, on a MOX target: what the store has room for less what already
+     * sits in the slot; 0 for anything else, off a MOX target, or when the slot holds another kind of item.
+     */
+    private int moxFeedRoom(ItemStack stack) {
+        if (!isMoxFeed(stack)) {
+            return 0;
+        }
+        FuelItemRoute.Cost cost = currentCost();
+        if (cost == null || !cost.isMox()) {
+            return 0;
+        }
+        ItemStack held = uraniumIn.getStackInSlot(0);
+        if (!held.isEmpty() && !ItemStack.isSameItemSameComponents(held, stack)) {
+            return 0;
+        }
+        int each = FuelItemRoute.plutoniumNuggets(stack);
+        int stored = each > 0 ? plutoniumNuggets : matrixIngots;
+        int cap = each > 0 ? plutoniumCap(cost) : matrixCap(cost);
+        int unit = Math.max(1, each);
+        int room = cap - stored - held.getCount() * unit;
+        return room <= 0 ? 0 : (room + unit - 1) / unit;
+    }
+
+    /** Moves plutonium or depleted uranium from the input slot into its store, as far as the store is held up to. */
+    private void absorbMoxFeed(FuelItemRoute.Cost cost) {
+        ItemStack held = uraniumIn.getStackInSlot(0);
+        if (held.isEmpty()) {
+            return;
+        }
+        int each = FuelItemRoute.plutoniumNuggets(held);
+        if (each <= 0 && !FuelItemRoute.isMatrix(held)) {
+            return;
+        }
+        int stored = each > 0 ? plutoniumNuggets : matrixIngots;
+        int cap = each > 0 ? plutoniumCap(cost) : matrixCap(cost);
+        int unit = Math.max(1, each);
+        int wanted = (cap - stored + unit - 1) / unit;
+        int taken = Math.min(wanted, held.getCount());
+        if (taken <= 0) {
+            return;
+        }
+        uraniumIn.extractItem(0, taken, false);
+        if (each > 0) {
+            plutoniumNuggets += taken * each;
+        } else {
+            matrixIngots += taken;
+        }
+        setChanged();
+    }
+
     private boolean canMake(FuelItemRoute.Cost cost) {
         return batchHeavyMetalKg <= 0.0
                 && output.getStackInSlot(OUTPUT_SLOT).isEmpty()
                 && uraniumUnits >= cost.units()
+                && plutoniumNuggets >= cost.plutoniumNuggets()
+                && matrixIngots >= cost.matrix()
                 && steelIn.getStackInSlot(0).getCount() >= cost.steel()
                 && tailsHeld() + cost.tails() <= TAILS_CAPACITY;
     }
@@ -335,6 +435,8 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         FuelType type = FuelTypes.byNameOrPreset(cost.fuelType());
         steelIn.extractItem(0, cost.steel(), false);
         uraniumUnits -= cost.units();
+        plutoniumNuggets -= cost.plutoniumNuggets();
+        matrixIngots -= cost.matrix();
         tailsPending += cost.tails();
         output.setStackInSlot(OUTPUT_SLOT, FuelAssemblyItem.stackOf(BwrItems.FUEL_ASSEMBLY.get(),
                 FuelAssemblyData.fresh(type != null ? type : FuelTypes.fallback())));
@@ -439,6 +541,20 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         return uraniumUnits;
     }
 
+    /** Plutonium nuggets and depleted uranium matrix ingots the machine holds for a MOX assembly. */
+    public int plutoniumHeldNuggets() {
+        return plutoniumNuggets;
+    }
+
+    public int matrixHeldIngots() {
+        return matrixIngots;
+    }
+
+    /** True while the selected target makes MOX. */
+    public boolean isMoxTarget() {
+        return FuelItemRoute.isMoxTarget(target);
+    }
+
     /** Ticks of work done on the assembly under way, 0 if none. */
     public int itemWorkTicks() {
         return workTicks;
@@ -465,6 +581,14 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
             drops.add(new ItemStack(BwrItems.DEPLETED_URANIUM.get(), Math.min(TAILS_STACK, left)));
         }
         tailsPending = 0;
+        for (int left = plutoniumNuggets; left > 0; left -= TAILS_STACK) {
+            drops.add(new ItemStack(BwrItems.PLUTONIUM_NUGGET.get(), Math.min(TAILS_STACK, left)));
+        }
+        plutoniumNuggets = 0;
+        for (int left = matrixIngots; left > 0; left -= TAILS_STACK) {
+            drops.add(new ItemStack(BwrItems.DEPLETED_URANIUM.get(), Math.min(TAILS_STACK, left)));
+        }
+        matrixIngots = 0;
         int ingots = uraniumUnits / FuelItemRoute.UNITS_PER_INGOT;
         uraniumUnits = 0;
         if (ingots > 0) {
@@ -517,7 +641,17 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
                     batchHeavyMetalKg, batchFissileKg, batchPlutoniumKg).fuelTypeName()));
         }
         FuelItemRoute.Cost cost = currentCost();
-        if (cost != null) {
+        if (cost != null && cost.isMox()) {
+            out.add(BwrText.tr(
+                    "status.bwr.fuel_fabricator.mox_route",
+                    "MOX route: %s takes %s plutonium nuggets, %s depleted uranium and %s steel",
+                    cost.fuelType(), cost.plutoniumNuggets(), cost.matrix(), cost.steel()));
+            out.add(BwrText.tr(
+                    "status.bwr.fuel_fabricator.mox_route_progress",
+                    "Taken in %s of %s plutonium and %s of %s depleted uranium, %s%% of the work done",
+                    plutoniumNuggets, cost.plutoniumNuggets(), matrixIngots, cost.matrix(),
+                    String.format(java.util.Locale.ROOT, "%.0f", 100.0 * workTicks / cost.workTicks())));
+        } else if (cost != null) {
             out.add(BwrText.tr(
                     "status.bwr.fuel_fabricator.item_route",
                     "Item route: %s takes %s uranium and %s steel and returns %s depleted uranium",
@@ -566,6 +700,12 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         if (tailsPending > 0) {
             tag.putInt("TailsPending", tailsPending);
         }
+        if (plutoniumNuggets > 0) {
+            tag.putInt("PlutoniumNuggets", plutoniumNuggets);
+        }
+        if (matrixIngots > 0) {
+            tag.putInt("MatrixIngots", matrixIngots);
+        }
         if (workTicks > 0) {
             tag.putInt("WorkTicks", workTicks);
         }
@@ -604,6 +744,8 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         target = FuelItemRoute.isTarget(saved) ? saved : FuelItemRoute.DEFAULT_TARGET;
         uraniumUnits = Math.max(0, Math.min(1_000_000, tag.getInt("UraniumUnits")));
         tailsPending = Math.max(0, Math.min(1_000_000, tag.getInt("TailsPending")));
+        plutoniumNuggets = Math.max(0, Math.min(1_000_000, tag.getInt("PlutoniumNuggets")));
+        matrixIngots = Math.max(0, Math.min(1_000_000, tag.getInt("MatrixIngots")));
         workTicks = Math.max(0, Math.min(1_000_000, tag.getInt("WorkTicks")));
         loadSlot(uraniumIn, tag, "UraniumIn", registries);
         loadSlot(steelIn, tag, "SteelIn", registries);

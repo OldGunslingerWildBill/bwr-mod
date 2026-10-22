@@ -48,22 +48,25 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
     }
 
     private int count() {
-        return FuelItemRoute.TARGETS.size();
+        return FuelItemRoute.LADDER.size();
     }
 
     private void step(int direction) {
         int index = Math.floorMod(menu.targetIndex + direction, count());
-        menu.sendCommand(FuelFabricatorMenu.CMD_TARGET, index);
+        menu.sendCommand(FuelFabricatorMenu.CMD_SELECT, index);
     }
 
     /** The assembly the selector is on: its fuel type, which the client has from the fuel sync, or null. */
     private FuelType targetType() {
-        return FuelTypes.byNameOrPreset(FuelItemRoute.TARGETS.get(Math.max(0, Math.min(count() - 1, menu.targetIndex))));
+        String name = FuelItemRoute.LADDER.get(Math.max(0, Math.min(count() - 1, menu.targetIndex)));
+        FuelItemRoute.Cost cost = FuelItemRoute.cost(name);
+        return FuelTypes.byNameOrPreset(cost != null ? cost.fuelType() : name);
     }
 
     private String targetLabel() {
         FuelType type = targetType();
-        return type == null ? "?" : String.format(Locale.ROOT, "%.2f %%", type.nominalEnrichmentWeightFraction() * 100.0);
+        String percent = type == null ? "?" : String.format(Locale.ROOT, "%.2f %%", type.nominalEnrichmentWeightFraction() * 100.0);
+        return menu.targetIndex >= FuelItemRoute.TARGETS.size() ? "MOX " + percent : percent;
     }
 
     @Override
@@ -104,19 +107,32 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
                                         + " steel ingots and returns " + menu.costTails + " depleted uranium."),
                                 Component.literal("The uranium grows with enrichment: it is the feed an enrichment plant needs for that product."))
                         : List.of(Component.literal("This fuel's enrichment is below natural uranium, which no enrichment plant can make.")));
+        // MOX grades: the uranium cost line does not apply, this one does
+        cost.showIf(() -> !menu.moxTarget);
+        var moxCost = Layout.line(() -> "Costs " + menu.moxPlutonium + " plutonium, " + menu.moxMatrix + " depleted U, " + menu.costSteel + " steel", Type.CAPTION)
+                .tip(() -> List.of(Component.literal("One MOX assembly takes " + menu.moxPlutonium + " plutonium nuggets (nine to an ingot), "
+                                + menu.moxMatrix + " depleted uranium ingots as the matrix and " + menu.costSteel + " steel ingots, and returns nothing."),
+                        Component.literal("The plutonium is the fuel's own enrichment; the matrix is the rest of the four ingots of heavy metal. The input slot takes plutonium and depleted uranium on a MOX grade.")))
+                .showIf(() -> menu.moxTarget);
         var item = Layout.card("Item route",
                 selector,
                 Layout.gap(2),
                 cost,
+                moxCost,
                 Layout.gap(2),
                 new SlotCaptions(),
                 Layout.gap(2),
                 Layout.gap(18));
         var left = Layout.column(BwrStyle.SP2, item, Layout.flex());
 
+        var moxIn = Layout.row("Pu, DU in", () -> menu.moxPlutoniumHeld + " / " + menu.moxPlutonium + ", " + menu.moxMatrixHeld + " / " + menu.moxMatrix, "")
+                .tip("Plutonium nuggets and depleted uranium ingots the machine has taken out of its slot, against what one MOX assembly needs.")
+                .showIf(() -> menu.moxTarget);
         var assembly = Layout.card("Item assembly",
+                moxIn,
                 Layout.row("Uranium in", () -> ingots(menu.uraniumHeldUnits) + " / " + menu.costIngots, "ingots")
-                        .tip("The machine takes uranium out of its slot until it holds enough for one assembly."),
+                        .tip("The machine takes uranium out of its slot until it holds enough for one assembly.")
+                        .showIf(() -> !menu.moxTarget),
                 Layout.row("Steel in", () -> steelLoaded() + " / " + menu.costSteel, "ingots"),
                 Layout.row("Depleted U held", () -> String.valueOf(menu.tailsHeld), "ingots")
                         .tip("What did not become enriched product. It comes out of the depleted uranium slot, a stack at a time."),
@@ -168,7 +184,7 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
         @Override
         public void render(GuiGraphics g, int mouseX, int mouseY) {
             for (int i = 0; i < NAMES.length; i++) {
-                Ui.textCentred(g, NAMES[i], centre(i), y + 1, Type.CAPTION, BwrStyle.TEXT_SECONDARY);
+                Ui.textCentred(g, i == 0 && menu.moxTarget ? "Pu, DU" : NAMES[i], centre(i), y + 1, Type.CAPTION, BwrStyle.TEXT_SECONDARY);
             }
         }
 
@@ -179,7 +195,9 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
             }
             for (int i = 0; i < NAMES.length; i++) {
                 if (Math.abs(mouseX - centre(i)) <= 18) {
-                    return List.of(Component.literal(HELP[i]));
+                    return List.of(Component.literal(i == 0 && menu.moxTarget
+                            ? "Plutonium nuggets or ingots and depleted uranium ingots, for the MOX grades. Hoppers and pipes may fill this slot."
+                            : HELP[i]));
                 }
             }
             return List.of();

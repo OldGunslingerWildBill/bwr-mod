@@ -44,6 +44,8 @@ NO_RECIPE = {
     "corium": "made by a core melting through its vessel; a recipe for it would be the bug",
     # Made by the fuel fabricator.
     "depleted_uranium": "byproduct of the fuel fabricator's item route",
+    # Made by the reprocessing plant.
+    "fission_product_waste": "what burning fuel leaves, the reprocessing plant's byproduct: nothing uses it, and a recipe would make fuel waste out of nothing",
 }
 
 problems = []
