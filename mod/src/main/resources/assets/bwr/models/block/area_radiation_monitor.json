@@ -1,0 +1,80 @@
+{
+  "textures": {
+    "particle": "bwr:block/area_radiation_monitor_body",
+    "body": "bwr:block/area_radiation_monitor_body",
+    "front": "bwr:block/area_radiation_monitor_front",
+    "lamp": "bwr:block/area_radiation_monitor_lamp_off"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        3,
+        10
+      ],
+      "to": [
+        13,
+        13,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#front",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#body"
+        },
+        "east": {
+          "texture": "#body"
+        },
+        "west": {
+          "texture": "#body"
+        },
+        "up": {
+          "texture": "#body"
+        },
+        "down": {
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "from": [
+        10.5,
+        10.5,
+        9
+      ],
+      "to": [
+        12.5,
+        12.5,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#lamp"
+        },
+        "south": {
+          "texture": "#lamp"
+        },
+        "east": {
+          "texture": "#lamp"
+        },
+        "west": {
+          "texture": "#lamp"
+        },
+        "up": {
+          "texture": "#lamp"
+        },
+        "down": {
+          "texture": "#lamp"
+        }
+      }
+    }
+  ]
+}

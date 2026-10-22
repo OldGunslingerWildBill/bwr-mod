@@ -189,3 +189,19 @@ source hashes appear in the check's output.
 The development harness is stripped from the production JAR. It does not install
 these examples into a player's world. Results and limits are recorded in the
 [L5 review report](../../PHASE-L5-REVIEW.md).
+
+## Reading the area radiation monitor
+
+An area radiation monitor is a peripheral of type `bwr_radiation_monitor` on any of its faces (see
+[RADIATION.md](../../RADIATION.md) for the units and where the numbers come from). Dose rates are in **mSv/h**:
+
+```lua
+local monitor = peripheral.wrap("bwr_radiation_monitor_0")   -- your own name, see the listing above
+local s = monitor.getStatus()
+print(s.doseRate, s.unit, s.highRadiation, s.alert, s.alarmSetpoint)
+print(s.airborne, s.deposited, s.release, s.core)             -- where the dose rate comes from
+monitor.setAlarmSetpoint(5)                                   -- mSv/h; its own lamp and outputs only
+```
+
+`getDoseRate()`, `isHighRadiation()`, `isAlert()`, `getAlarmSetpoint()` and `getAlertSetpoint()` read one value each. The
+monitor changes nothing in the plant; any trip or isolation on high radiation is a program you write.

@@ -31,6 +31,10 @@ public final class BwrAttachments {
     public static final Supplier<AttachmentType<Integer>> MACHINE_PORT = ATTACHMENTS.register("machine_port",
             () -> AttachmentType.builder(() -> -1).serialize(Codec.INT, port -> port >= 0).build());
 
+    /** A player's accumulated personal dose in mSv ({@code PlayerDoses}); saved only above zero, kept through death. */
+    public static final Supplier<AttachmentType<Double>> PLAYER_DOSE = ATTACHMENTS.register("player_dose",
+            () -> AttachmentType.builder(() -> 0.0).serialize(Codec.DOUBLE, dose -> dose > 0.0).copyOnDeath().build());
+
     public static final Supplier<AttachmentType<String>> MACHINE_TEMPLATE = ATTACHMENTS.register("machine_template",
             () -> AttachmentType.builder(() -> DEFAULT_TEMPLATE)
                     .serialize(Codec.STRING, template -> !DEFAULT_TEMPLATE.equals(template)).build());

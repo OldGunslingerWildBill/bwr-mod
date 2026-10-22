@@ -183,10 +183,23 @@ public final class ReactorSevereAccidentEffects {
             if (d2 > limit) {
                 continue;
             }
-            double hazard = plant / (1.0 + d2 / (PLANT_HALF_DISTANCE_BLOCKS * PLANT_HALF_DISTANCE_BLOCKS))
-                    + SITE_HAZARD_WEIGHT * site / (1.0 + d2 / (SITE_HALF_DISTANCE_BLOCKS * SITE_HALF_DISTANCE_BLOCKS));
+            double hazard = plantHazardAt(plant, d2) + siteHazardAt(site, d2);
             dose(player, hazard * dev.bwr.mod.config.GameplayConfig.contaminationDoseMultiplier());
         }
+    }
+
+    /**
+     * The in-plant part of the hazard at squared distance {@code d2} (blocks) from the controller: the plant index
+     * (airborne plus decaying deposited activity) over {@code 1 + d2 / 12^2}. Shared with the survey meter and the area
+     * monitor ({@code RadiationField}), so an instrument can never disagree with what the game does to a player.
+     */
+    public static double plantHazardAt(double plantIndex, double d2) {
+        return plantIndex / (1.0 + d2 / (PLANT_HALF_DISTANCE_BLOCKS * PLANT_HALF_DISTANCE_BLOCKS));
+    }
+
+    /** The environmental part of the hazard at squared distance {@code d2}: the weighted site index over {@code 1 + d2 / 64^2}. */
+    public static double siteHazardAt(double siteIndex, double d2) {
+        return SITE_HAZARD_WEIGHT * siteIndex / (1.0 + d2 / (SITE_HALF_DISTANCE_BLOCKS * SITE_HALF_DISTANCE_BLOCKS));
     }
 
     /**

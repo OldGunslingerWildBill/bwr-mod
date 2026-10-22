@@ -157,6 +157,9 @@ further at lower intensity. Creative and spectator players are exempt.
 | Hydrogen detonation | Explosion (radius 10) that damages entities, not blocks, plus a loud report |
 | Containment overpressure failure | Notice and explosion sound |
 
+**Measuring it.** The survey meter and the area radiation monitor read this hazard as a dose rate in mSv/h, with the
+distance falloff above and the core's own gamma behind its shielding (see [RADIATION.md](RADIATION.md)).
+
 Explosions do not destroy blocks, so the vessel stays formed and its damage stays
 readable. The endpoint is a contaminated, wrecked plant, not a crater (SPEC 8.4).
 Events fire once and are never replayed after a reload.

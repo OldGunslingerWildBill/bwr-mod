@@ -1,0 +1,73 @@
+{
+  "variants": {
+    "facing=north,lamp=0": {
+      "model": "bwr:block/area_radiation_monitor"
+    },
+    "facing=north,lamp=1": {
+      "model": "bwr:block/area_radiation_monitor_alert"
+    },
+    "facing=north,lamp=2": {
+      "model": "bwr:block/area_radiation_monitor_alarm"
+    },
+    "facing=south,lamp=0": {
+      "model": "bwr:block/area_radiation_monitor",
+      "y": 180
+    },
+    "facing=south,lamp=1": {
+      "model": "bwr:block/area_radiation_monitor_alert",
+      "y": 180
+    },
+    "facing=south,lamp=2": {
+      "model": "bwr:block/area_radiation_monitor_alarm",
+      "y": 180
+    },
+    "facing=east,lamp=0": {
+      "model": "bwr:block/area_radiation_monitor",
+      "y": 90
+    },
+    "facing=east,lamp=1": {
+      "model": "bwr:block/area_radiation_monitor_alert",
+      "y": 90
+    },
+    "facing=east,lamp=2": {
+      "model": "bwr:block/area_radiation_monitor_alarm",
+      "y": 90
+    },
+    "facing=west,lamp=0": {
+      "model": "bwr:block/area_radiation_monitor",
+      "y": 270
+    },
+    "facing=west,lamp=1": {
+      "model": "bwr:block/area_radiation_monitor_alert",
+      "y": 270
+    },
+    "facing=west,lamp=2": {
+      "model": "bwr:block/area_radiation_monitor_alarm",
+      "y": 270
+    },
+    "facing=up,lamp=0": {
+      "model": "bwr:block/area_radiation_monitor",
+      "x": 270
+    },
+    "facing=up,lamp=1": {
+      "model": "bwr:block/area_radiation_monitor_alert",
+      "x": 270
+    },
+    "facing=up,lamp=2": {
+      "model": "bwr:block/area_radiation_monitor_alarm",
+      "x": 270
+    },
+    "facing=down,lamp=0": {
+      "model": "bwr:block/area_radiation_monitor",
+      "x": 90
+    },
+    "facing=down,lamp=1": {
+      "model": "bwr:block/area_radiation_monitor_alert",
+      "x": 90
+    },
+    "facing=down,lamp=2": {
+      "model": "bwr:block/area_radiation_monitor_alarm",
+      "x": 90
+    }
+  }
+}

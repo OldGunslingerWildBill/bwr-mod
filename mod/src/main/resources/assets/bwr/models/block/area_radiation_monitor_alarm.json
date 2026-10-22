@@ -1,0 +1,6 @@
+{
+  "parent": "bwr:block/area_radiation_monitor",
+  "textures": {
+    "lamp": "bwr:block/area_radiation_monitor_lamp_alarm"
+  }
+}
