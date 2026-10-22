@@ -169,6 +169,7 @@ a vein passes through; the rest of generating a chunk of that dimension takes ab
 **Old chunks.** With the option off, an 8 x 8 block of chunks over a vein was generated: 0 uranium blocks and 0 vein blocks (the option works on
 live generation, blobs included). With the option on again, the 80 chunks round it were generated: 724 uranium blocks, 1,223 vein blocks, and **0 of
 the 64 first chunks changed** (every block state of each was hashed before and after).
+A mutation test that made the vein feature write 8 blocks past its own chunk into these neighbours changed nothing either: the generator itself discards writes into a chunk that is already finished (the neighbour is handed to a feature read-only), so a new chunk cannot alter an old one even by mistake; the feature never tries.
 
 The numbers above are from `mod/run/worldgenCheck/logs/latest.log` of one run; the world and the seed are fixed, so a run on the same code gives the same
 lines (only the timings move).
