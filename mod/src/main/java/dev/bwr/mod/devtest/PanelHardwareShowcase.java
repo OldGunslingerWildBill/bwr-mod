@@ -40,13 +40,19 @@ final class PanelHardwareShowcase {
     }
 
     static final String[] NAMES = {"hardware-board", "hardware-station-default", "hardware-station-real", "hardware-instruments",
-            "hardware-joysticks", "hardware-led"};
+            "hardware-joysticks", "hardware-led", "hardware-station-man-out40", "hardware-station-auto-tracking",
+            "hardware-sync-slow-fast-sync-tied", "hardware-station-button-legends", "hardware-sync-lamps-closeup"};
     private static final BlockPos WALL = new BlockPos(5516, 128, 5291);
+    /** The controller check wall (see {@link #controllerCheck}): a block of two stations and a block of four synchroscopes, west of the first wall's gap. */
+    private static final BlockPos CHECK_WALL = new BlockPos(5524, 128, 5291);
     private static final BlockPos LED_WALL = new BlockPos(5528, 129, 5291);
     private static final double[][] EYE = {{5515.0, 127.5, 5287.4}, {5516.73, 128.6, 5289.8}, {5516.73, 127.65, 5290.4},
-            {5515.0, 128.3, 5288.7}, {5513.5, 128.0, 5288.9}, {5527.5, 128.0, 5286.4}};
+            {5515.0, 128.3, 5288.7}, {5513.5, 128.0, 5288.9}, {5527.5, 128.0, 5286.4},
+            // The controller check: the station block, the same with the AUTO station, the synchroscope block, the station's buttons, the lamps.
+            {5524.81, 128.62, 5290.5}, {5524.375, 128.62, 5290.5}, {5523.5, 128.5, 5290.4}, {5524.81, 128.40, 5290.68}, {5523.81, 128.56, 5290.68}};
     private static final double[][] LOOK = {{5515.0, 127.5, 5292.0}, {5516.73, 128.6, 5292.0}, {5516.73, 127.65, 5292.0},
-            {5515.0, 128.3, 5292.0}, {5513.5, 128.0, 5292.0}, {5527.5, 128.0, 5292.0}};
+            {5515.0, 128.3, 5292.0}, {5513.5, 128.0, 5292.0}, {5527.5, 128.0, 5292.0},
+            {5524.81, 128.62, 5292.0}, {5524.375, 128.62, 5292.0}, {5523.5, 128.5, 5292.0}, {5524.81, 128.40, 5292.0}, {5523.81, 128.56, 5292.0}};
 
     static Vec3 camera(int stage) {
         return new Vec3(EYE[stage][0], EYE[stage][1] - 1.62, EYE[stage][2]);
@@ -118,6 +124,7 @@ final class PanelHardwareShowcase {
             }
         }
         stations(level);
+        controllerCheck(level);
         instruments(level);
         joysticks(level);
         leds(level);
@@ -161,6 +168,40 @@ final class PanelHardwareShowcase {
         station(level, b, put(level, b, 11, 0, ComponentTypes.CONTROLLER_STATION, Footprint.of(2, 4)), false, 40, 3.0, 6.0, 70, 0);
         BlockPos big = block(WALL, 0, 2);
         station(level, big, put(level, big, 0, 0, ComponentTypes.CONTROLLER_STATION, Footprint.of(8, 16)), true, 45, 5.8, 6.2, 66, 0);
+    }
+
+    /**
+     * The owner's controller and synchroscope check. A station block: the default size station in MAN with OUT at 40 % (PV 70,
+     * the local setpoint at mid scale) and one in AUTO tracking (SP 62, PV 61.4, the bar showing a bound demand of 55). A
+     * synchroscope block with four instruments at their default size: a slow generator (phase -70), a fast one (phase +70), in
+     * phase (phase 2, the green mark: the dark lamp out, the bright lamp full) and tied (the breaker closed: no phase and no
+     * slip, the pointer at SYNC behind its flag).
+     */
+    private static void controllerCheck(ServerLevel level) {
+        BlockPos stations = block(CHECK_WALL, 0, 0);
+        level.setBlock(stations, BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState().setValue(PanelBlock.FACING, Direction.NORTH), 3);
+        PLACED.add(stations);
+        PanelComponent man = defaultSize(level, stations, 0, 0, ComponentTypes.CONTROLLER_STATION);
+        ((ControllerStationData) man.data()).demand = 40.0;
+        man.type().onLoaded(man);
+        bind(level, stations, man, ControllerStationType.IN_PV, 70.0);
+        man.touch();
+        PanelComponent auto = defaultSize(level, stations, 7, 0, ComponentTypes.CONTROLLER_STATION);
+        ControllerStationData autoData = (ControllerStationData) auto.data();
+        autoData.auto = true;
+        autoData.demand = 40.0;
+        autoData.spFraction = 0.62;
+        auto.type().onLoaded(auto);
+        bind(level, stations, auto, ControllerStationType.IN_PV, 61.4);
+        bind(level, stations, auto, ControllerStationType.IN_AUTO_DEMAND, 55.0);
+        auto.touch();
+        BlockPos scopes = block(CHECK_WALL, 1, 0);
+        level.setBlock(scopes, BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState().setValue(PanelBlock.FACING, Direction.NORTH), 3);
+        PLACED.add(scopes);
+        bind(level, scopes, defaultSize(level, scopes, 0, 0, ComponentTypes.SYNCHROSCOPE), SynchroscopeType.IN_PHASE, -70.0);
+        bind(level, scopes, defaultSize(level, scopes, 7, 0, ComponentTypes.SYNCHROSCOPE), SynchroscopeType.IN_PHASE, 70.0);
+        bind(level, scopes, defaultSize(level, scopes, 0, 8, ComponentTypes.SYNCHROSCOPE), SynchroscopeType.IN_PHASE, 2.0);
+        defaultSize(level, scopes, 7, 8, ComponentTypes.SYNCHROSCOPE).touch();
     }
 
     private static void instruments(ServerLevel level) {

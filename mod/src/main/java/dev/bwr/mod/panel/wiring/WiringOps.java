@@ -512,11 +512,12 @@ public final class WiringOps {
                                 dev.bwr.mod.signal.Quantity.of(spec).ordinal()));
                     }
                 }
+                var deviceEntity = dev.bwr.mod.signal.DeviceResolver.resolve(level, device);
                 for (CommandSpec spec : provider.commands()) {
                     if (spec.kind() != Kind.TEXT && commands.size() < PanelPayloads.MAX_LISTED) {
                         commands.add(new PanelPayloads.CommandEntry(clip(spec.key(), PanelPayloads.MAX_KEY),
                                 clip(spec.label(), PanelPayloads.MAX_LABEL), spec.kind() == Kind.PULSE,
-                                spec.kind().ordinal(), spec.min(), spec.max()));
+                                spec.kind().ordinal(), spec.min(), shownMax(deviceEntity, spec)));
                     }
                 }
             }
@@ -526,6 +527,22 @@ public final class WiringOps {
             machineName = dev.bwr.mod.panel.MachineNames.name(dev.bwr.mod.signal.DeviceResolver.resolve(level, device));
         }
         return new PanelPayloads.LinkerScreen(ownerPos, id, status, device, name, signals, commands, machineName);
+    }
+
+    /**
+     * The top of a command's range as the binding screen shows it: the declared one, narrowed to what the device accepts
+     * right now. A grid tie declares its demand commands up to 48,000 MW (the engineering bound) but refuses anything over
+     * the server's {@code gridTieMaxMW} (1,500 by default), so a screen that offered 48,000 would start a 0 to 100 percent
+     * station at 480 MW a percent and the tie would refuse everything above 3 percent.
+     */
+    public static double shownMax(net.minecraft.world.level.block.entity.BlockEntity device, CommandSpec spec) {
+        if (device instanceof dev.bwr.mod.grid.GridTieBlockEntity && spec.kind() == Kind.NUMBER && switch (spec.key()) {
+            case "fixed_mw", "remote_mw", "curve_min_mw", "curve_max_mw" -> true;
+            default -> false;
+        }) {
+            return Math.min(spec.max(), dev.bwr.mod.grid.GridConfig.maximumMW());
+        }
+        return spec.max();
     }
 
     /**

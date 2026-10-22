@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased: controller station and synchroscope verified end to end
+
+The manual/auto controller station and the synchroscope were driven in real worlds against real machines, through the Networking Wrench, the binding payload the panel link screen sends and the panel's own click path. Most of it was right already; the three things that were not are fixed.
+
+### Fixed
+
+- **A station wired to a machine seemed not to drive it.** The panel link screen started every output binding at Scale 1, but the station's `demand` is 0 to 100 and most commands run 0 to 1 (a valve, a pump speed) or 0 to 1.2 (recirculation flow): the machine refused everything above 1 percent. The screen now starts a station's `demand` binding at the command's top divided by 100 (0.01, 0.012, 15 for a 1500 MW tie); any other output still starts at 1 and the field can still be edited (`BindModel.defaultOutputScale`).
+- **A grid tie's MW commands were listed up to 48,000 MW.** That is the engineering bound the tie declares; it refuses anything over the server's `gridTieMaxMW` (1,500 by default). The binding screen now lists `fixed_mw`, `remote_mw`, `curve_min_mw` and `curve_max_mw` up to the effective cap (`WiringOps.shownMax`), so the default scale above is right for a tie too. The commands themselves are unchanged.
+- **The synchroscope's two lamps looked like pushbuttons.** They were square caps in the same style as the station's AUTO and MAN buttons, with no legend, and nothing on the instrument can be pressed. They are now round lamp lenses in a bezel (the dim and lit states are round too).
+
+### Checked and found right (no change)
+
+- **MAN:** RAISE, LOWER, a held RAISE, the wheel and the Step setting move OUT, and a turbine control valve, a bypass valve, a recirculation pump, a feedwater pump, an LPCS pump, a grid tie (`fixed_mw`, `remote_mw`) and the reactor's boron injection follow it exactly, from 0 % to 100 % (a real valve strokes to the demand); the SP is shown and drives nothing.
+- **AUTO:** RAISE and LOWER move the local SP only; selecting AUTO, saving and reloading the panel send nothing to the plant. The station has **no control law**, by design and by its tests: OUT in AUTO is whatever an outside source bound to `auto_demand` provides. The mode, OUT and SP survive a save, a placed station starts in MAN with OUT 0, and a missing machine, an unbound station or a zero span station do not throw.
+- **Synchroscope:** against a real HP/LP turbine and generator rolled and trimmed through the real control valve, the bound `phase_degrees` turns the pointer clockwise (FAST) for a fast generator and anticlockwise (SLOW) for a slow one, 360 degrees a second per hertz of slip; a CLOSE pushbutton wired to `close_breaker` closes in phase with no damage, the tied generator delivers and its FE equals the tie's, and TRIP opens it. Closing out of phase is allowed and damages the generator by the grid code's law (56 degrees: damage 1, failed).
+
+### Tests
+
+- `ControllerSyncWiringTests` (batch `controllersync`): the station against seven real machines in MAN, AUTO and transfer, save and reload, a broken link, the reactor's boron and recirculation commands, the link screen's default scale and the round lamps; `ControllerSyncSynchroscopeTests`: the full synchronisation through panel buttons. Panel client check: five new stages in `PanelHardwareShowcase` (station in MAN at 40 %, station in AUTO, synchroscopes slow, fast, in phase and tied, the button legends, the lamps).
+- No existing assertion was changed. Two asks were left alone because existing assertions pin the present design (see the report): an AUTO control law in the station, and legends on the synchroscope's lamps.
+
 ## Unreleased: fuel fabricator item route, depleted uranium, recipe audit
 
 The fuel fabricator can now make assemblies from uranium and steel *items*, with the enrichment chosen on its screen, and returns the uranium that did not become product as depleted uranium. The Mekanism chemical route is unchanged. GUI network protocol is now 23 (the fabricator's snapshot changed): update client and server together. Old saves load.

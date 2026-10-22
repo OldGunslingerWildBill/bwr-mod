@@ -220,7 +220,29 @@ public final class BindModel {
                 // CLOSE sends the "off" end of the command; OPEN and a pushbutton send "on".
                 fixedText = output.equals("close") ? "0" : "1";
             }
+            // A controller station's demand is 0 to 100 percent: a 0 to N command wants N / 100 per percent, or the plant
+            // refuses everything above 1 percent and the station seems not to drive it. The player may still change it.
+            scaleText = defaultOutputScale(type, output, command, scaleText);
         }
+    }
+
+    /** The outputs that are 0 to 100 percent: the controller station's demand. */
+    static boolean percentOutput(String type, String output) {
+        return type.equals("controller_station") && output.equals("demand");
+    }
+
+    /**
+     * The scale a new plant binding of an output starts with. A controller station's demand is 0 to 100 percent, so a
+     * command that runs from 0 to N wants N / 100 per percent; left at 1, the plant refuses everything above 1 percent and
+     * the station seems not to drive the machine. Any other output, and any other kind of command (a boolean, a pulse, a
+     * level), keeps {@code current}. The player may type another scale.
+     */
+    public static String defaultOutputScale(String componentType, String output, PanelPayloads.CommandEntry command, String current) {
+        if (!percentOutput(componentType, output)) {
+            return current;
+        }
+        return command != null && command.kind() == Kind.NUMBER.ordinal() && !command.pulse() && command.min() == 0.0
+                && Double.isFinite(command.max()) && command.max() > 0.0 ? trim(command.max() / 100.0) : "1";
     }
 
     /**

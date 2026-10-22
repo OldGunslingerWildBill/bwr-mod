@@ -31,6 +31,8 @@ final class SynchroscopeModel implements ComponentModel {
     private static final double LAG = 0.12;
     /** Cap height of the printing, a share of the face radius. */
     private static final float CAP = 0.15f;
+    /** Sides of a round lamp lens. */
+    private static final int LAMP_SEGMENTS = 20;
 
     private static float radius(PanelComponent component) {
         return component.w() / 2.0f * 0.9f;
@@ -71,13 +73,12 @@ final class SynchroscopeModel implements ComponentModel {
         // The lamp strip.
         float stripY = w;
         sink.rect(w * 0.04f, stripY, w * 0.92f, h - w - w * 0.02f, 1.03f, STRIP, false);
+        // Round lamp lenses in a bezel, not square pushbutton caps: these two are indicators and nothing here can be pressed.
         float lens = lamp(component);
-        float rim = lens * 0.12f;
         for (int i = 0; i < 2; i++) {
-            float lx = lampCentreX(component, i) - lens / 2.0f;
-            float ly = lampCentreY(component) - lens / 2.0f;
-            sink.box(lx - rim, ly - rim, lens + 2 * rim, lens + 2 * rim, 0.9f, 1.4f, RIM, false);
-            sink.box(lx, ly, lens, lens, 1.0f, 1.8f, QuadSink.shade(i == 0 ? data.lamp1Color : data.lamp2Color, 0.22f), false);
+            Shapes.disc(sink, lampCentreX(component, i), lampCentreY(component), lens * 0.5f * 1.2f, 1.4f, RIM, LAMP_SEGMENTS, false);
+            Shapes.disc(sink, lampCentreX(component, i), lampCentreY(component), lens * 0.5f, 1.8f,
+                    QuadSink.shade(i == 0 ? data.lamp1Color : data.lamp2Color, 0.22f), LAMP_SEGMENTS, false);
         }
     }
 
@@ -128,9 +129,8 @@ final class SynchroscopeModel implements ComponentModel {
             return;
         }
         float lens = lamp(component);
-        float edge = lens * 0.08f;
-        context.box(lampCentreX(component, index) - lens / 2.0f + edge, lampCentreY(component) - lens / 2.0f + edge, lens - 2 * edge,
-                lens - 2 * edge, 1.0f, 1.9f, QuadSink.shade(colour, (float) (0.22 + 0.78 * brightness)), true);
+        Shapes.disc(context, lampCentreX(component, index), lampCentreY(component), lens * 0.5f * 0.92f, 1.9f,
+                QuadSink.shade(colour, (float) (0.22 + 0.78 * brightness)), LAMP_SEGMENTS, true);
     }
 
     /** SYNC under the zero mark, and SLOW and FAST on the two sides of the lower half. */

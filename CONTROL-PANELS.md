@@ -1007,6 +1007,12 @@ second; the mouse wheel steps too).
 * **MAN after AUTO** is bumpless: `demand` takes the value the bar showed (when `auto_demand` has a signal).
 * There is **no control law in the station**. Wire `demand` and `mode` where you want them, and bind `auto_demand` to whatever you
   wrote (a CC program through a CC binding, a plant controller signal) that should run it in AUTO.
+* **Wiring `demand` to a machine:** `demand` is 0 to 100, a command is usually 0 to 1 (a valve, a pump speed) or 0 to 1.2
+  (recirculation flow), so the Scale of the sink has to be the command's top divided by 100. The panel link screen now starts
+  a station's `demand` binding at that scale (0.01, 0.012, 15 for a 1500 MW grid tie, ...; any other output starts at 1 as
+  before, and you can still type another). Before, it started at 1 and the machine refused everything above 1 percent, so the
+  station seemed not to drive it. A grid tie's MW commands are listed up to the server's `gridTieMaxMW` (1,500 by default), not
+  the 48,000 MW engineering bound it declares, because it refuses anything over the cap.
 * Saved: mode (only AUTO), demand (only when not 0), local setpoint (as a fraction of the span, only when not mid-span).
   A data pack board places it by the id `bwr:controller_station`.
 
@@ -1017,6 +1023,13 @@ tie `phase_degrees`) and `slip` (Hz, positive when fast: its `slip_hz`). With on
 rate (a turn a second per hertz); with `phase` it follows it the short way round; with both it dead reckons between samples. The
 two lamps under the dial are the synchronising lamps across the open breaker: the left is the dark lamp (dark when in phase), the
 right the bright lamp (full when in phase). No outputs. Config: reverse sense, the two lamp colours.
+
+The two lamps are **indicators, not buttons** (they are round lenses; the dial is the only thing that moves, and nothing on the
+instrument can be pressed). Closing the breaker is a separate pushbutton wired to the grid tie's `close_breaker` (and `trip_breaker`
+to open it). Once the breaker is closed the tie publishes no phase and no slip (see GRID-TIE-SPEC.md 4.1), so the instrument has no
+signal: the pointer rests at 12 o'clock (SYNC) behind its red flag and both lamps go out, as a synchroscope is switched off after
+synchronising. The green triangle at 12 o'clock is the in-phase mark, not a window: the grid tie's own window (|angle| <= 10
+degrees and |slip| <= 0.067 Hz) is the `within_sync_window` signal.
 
 ### 6.3 Two-pen strip recorder (`bwr:two_pen_recorder`)
 
