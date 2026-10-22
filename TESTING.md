@@ -4,6 +4,10 @@ The repository maintainer owns the release checks below. Contributors should
 run the checks affected by their changes; the GitHub workflow repeats the
 headless checks on every push and pull request, and supports manual dispatch.
 
+## Accident blasts (GameTest namespace `bwrblast`)
+
+The physical accident blasts (`AccidentBlastTests`, fixtures from x = 700,000; see SEVERE-ACCIDENT-UPDATE.md) have their own namespace like `bwrtick`, so `-PbwrOnlyBlast` runs just them (about a minute). The default run includes them. Each test was proved to fail when the behaviour it covers is removed; the mutations and the failing lines are in the commit notes of the accident-blast branch. The client check `-PbwrAccidentBlastCheck` (`:mod:runTurbineModelCheck`) saves 1920 x 1080 pictures, before and after, of a hydrogen detonation breaching a containment room and of a vessel head failure, to `mod/run/turbineModelCheck/accident-blast-client-check/`.
+
 ## Server tick cost and chunk boundaries (GameTest namespace `bwrtick`)
 
 Two development tools and their tests live in the `bwrtick` namespace, so `-PbwrOnlyTick` runs just them (about a minute,

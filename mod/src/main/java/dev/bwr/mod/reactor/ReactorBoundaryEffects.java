@@ -1,6 +1,8 @@
 package dev.bwr.mod.reactor;
 
+import dev.bwr.core.accident.BlastPhysics;
 import dev.bwr.core.boundary.*;
+import dev.bwr.mod.accident.AccidentBlast;
 import dev.bwr.mod.piping.PipeTopology;
 import dev.bwr.mod.registry.BwrBlocks;
 import dev.bwr.mod.text.BwrText;
@@ -198,6 +200,13 @@ public final class ReactorBoundaryEffects {
             int bit=1<<c.ordinal(); if((broken&bit)==0 || (applied&bit)!=0) continue;
             if(c==BoundaryComponent.REACTOR_VESSEL_HEAD) {
                 l.playSound(null,reactor.getBlockPos(),SoundEvents.GENERIC_EXPLODE.value(),SoundSource.BLOCKS,16f,.65f);
+                // Steam burst and missile up through the head: a cone above the shell, sized by the stored energy.
+                double psig=failurePressure(reactor,c);
+                var vessel=reactor.core().getPressureVessel();
+                double dome=Math.clamp(vessel.getSteamDomeVolumeM3(),50.0,600.0);
+                double flash=BoundaryStress.HEAD_FAILURE_LIQUID_FRACTION*BoundaryStress.RATED_CORE_FLOW_KG_PER_S;
+                reactor.severeEffects().blasts().add(AccidentBlast.headCone(l,e.min(),e.max(),
+                        BlastPhysics.headFailureTntKg(psig,dome,flash),6.0f));
             } else {
                 if(e.ports().stream().anyMatch(p->!l.isLoaded(p)||!l.isLoaded(p.relative(e.face(p))))) continue;
                 var ports=e.ports().stream().filter(p->component(l.getBlockState(p))==c)
@@ -207,9 +216,13 @@ public final class ReactorBoundaryEffects {
                     var p=ports.getFirst(); var outside=p.relative(e.face(p)); var s=l.getBlockState(outside);
                     leaks.put(p.immutable(),c); connected.remove(p);
                     if(l.getBlockState(p).is(BwrBlocks.RECIRCULATION_INLET.get())) inletLeaks.add(p.immutable());
-                    if(s.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get()) || s.is(BwrBlocks.PRESSURISED_TUBE.get()))
-                        l.destroyBlock(outside,true);
-                    else if(attached(l,p,e,c)) heldLeaks.add(p.immutable());
+                    // Pipe whip and jet impingement: the adjacent pipe, and anything within one to two blocks
+                    // of the break that cannot take the jet. The rest of the line is spared, and the vessel
+                    // and its controller always are.
+                    reactor.severeEffects().blasts().add(AccidentBlast.pipeWhip(l,outside,failurePressure(reactor,c),3.0f)
+                            .protect(e.min().offset(1,1,1),e.max().offset(-1,-1,-1)));
+                    if(!(s.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get()) || s.is(BwrBlocks.PRESSURISED_TUBE.get())) && attached(l,p,e,c))
+                        heldLeaks.add(p.immutable());
                     l.playSound(null,p,SoundEvents.GENERIC_EXPLODE.value(),SoundSource.BLOCKS,5f,1.2f);
                 }
             }
@@ -229,6 +242,12 @@ public final class ReactorBoundaryEffects {
         for(var b:lineBreaks.values())
             if(b.live && e.ports().contains(b.port)) openings.add(opening(e,b.port,b.component,b.inlet));
         boundary.setOpenings(openings);
+    }
+    /** Pressure the component failed at, psig: the recorded failure, else the dome now. */
+    private static double failurePressure(ReactorControllerBlockEntity reactor,BoundaryComponent c) {
+        double psig=reactor.core().getPressurePsig();
+        for(var f:reactor.core().getBoundaryStress().getFailures()) if(f.component()==c) psig=f.pressurePsig();
+        return Double.isFinite(psig)?Math.max(0,psig):0;
     }
 
     /**

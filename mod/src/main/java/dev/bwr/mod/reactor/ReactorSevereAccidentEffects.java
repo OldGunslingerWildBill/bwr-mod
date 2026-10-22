@@ -3,10 +3,13 @@ package dev.bwr.mod.reactor;
 import dev.bwr.mod.text.BwrText;
 
 import dev.bwr.core.ReactorCore;
+import dev.bwr.core.accident.BlastPhysics;
 import dev.bwr.core.accident.ContainmentAtmosphere;
 import dev.bwr.core.accident.SevereAccident;
+import dev.bwr.mod.accident.AccidentBlast;
 import dev.bwr.mod.accident.CoriumConfig;
 import dev.bwr.mod.accident.CoriumPool;
+import dev.bwr.mod.containment.ContainmentControllerBlockEntity;
 import dev.bwr.mod.damage.SevereAccidentNbt;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -18,25 +21,30 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * World consequences of the severe accident and containment models.
  *
  * <p>Events come from the core exactly once and are never saved, so nothing
- * here replays after a reload. Hydrogen burns use real explosions with
- * {@link Level.ExplosionInteraction#NONE}: they hurt anyone nearby and knock
- * things about but do not delete the plant's blocks, which keeps the vessel
- * multiblock formed so its damage, corium and contamination remain readable.
- * The plant is wrecked and contaminated, not erased (SPEC 8.4).
+ * here replays after a reload. Explosions damage the world, always: the
+ * hydrogen burn, the detonation, the containment failure and the lower head
+ * failure each queue an {@link AccidentBlast} job sized from the energy the
+ * core reports (burned hydrogen, burn pressure, containment volume, debris
+ * fraction) through {@link BlastPhysics}. The job breaks blocks whose rating is
+ * below the local pressure, through the standard explosion and block-break
+ * events, and never loads a chunk. The formed vessel, the reactor and
+ * containment controllers survive every blast, so the plant's damage stays
+ * readable; everything else is subject to its blast resistance.
  *
  * <p>Contamination is applied as vanilla status effects to players near the
  * reactor, scaled by the decaying hazard indices from the containment model
  * and by distance. Creative and spectator players are exempt.
  *
- * <p>Ex-vessel corium is the one consequence that does change blocks: the
- * {@link CoriumPool} melts the floor under a failed vessel as the concrete
- * ablates, a few positions per tick, unless the server config turns world
- * alteration off. Unlike events, its progress is saved.
+ * <p>Ex-vessel corium changes blocks too: the {@link CoriumPool} melts the
+ * floor under a failed vessel as the concrete ablates, a few positions per
+ * tick, unless the server config turns that off. Unlike events, its progress
+ * is saved, and so are the blasts still to finish.
  */
 public final class ReactorSevereAccidentEffects {
 
@@ -58,12 +66,32 @@ public final class ReactorSevereAccidentEffects {
     /** Site releases are spread over a wide area; this weights them against in-plant activity. */
     public static final double SITE_HAZARD_WEIGHT = 20.0;
 
+    /** Ticks the corium pool waits for the pedestal blast before anchoring on whatever floor is there. */
+    public static final int PEDESTAL_WAIT_TICKS = 200;
+
     private int sinceDose;
+
+    private int pedestalWaitTicks;
+
+    /**
+     * The interior box of the containment room the last time this reactor was linked to one. A burn after the
+     * breach, when no sealed room links any more, is still a burn in that room, so the blast stays inside it
+     * instead of falling back to open space and taking the walls and the ground with it. Saved only when set.
+     */
+    private BlockPos roomMin;
+    private BlockPos roomMax;
 
     private final CoriumPool corium = new CoriumPool();
 
+    private final AccidentBlast.Queue blasts = new AccidentBlast.Queue();
+
     public CoriumPool corium() {
         return corium;
+    }
+
+    /** Blasts still to finish; saved with the reactor. */
+    public AccidentBlast.Queue blasts() {
+        return blasts;
     }
 
     public void afterStep(ReactorControllerBlockEntity reactor) {
@@ -75,22 +103,38 @@ public final class ReactorSevereAccidentEffects {
             return;
         }
         BlockPos pos = reactor.getBlockPos();
-        for (SevereAccident.Event event : core.getSevereAccident().drainEvents()) {
-            onCoreEvent(level, pos, event);
-        }
         ReactorStructure structure = reactor.structure();
-        corium.update(level, structure == null ? null : structure.interiorMin(),
-                structure == null ? null : structure.interiorMax(), core.getSevereAccident(),
-                CoriumConfig.alterWorld(), CoriumConfig.blocksPerTick());
+        for (SevereAccident.Event event : core.getSevereAccident().drainEvents()) {
+            onCoreEvent(level, reactor, structure, event);
+        }
         var containmentController = dev.bwr.mod.containment.ContainmentControllerRegistry
                 .linkedReactor(level, pos);
+        if (containmentController != null && containmentController.interiorMin() != null
+                && containmentController.interiorMax() != null) {
+            roomMin = containmentController.interiorMin().immutable();
+            roomMax = containmentController.interiorMax().immutable();
+        }
         BlockPos breachedAt = null;
-        for (ContainmentAtmosphere.Event event : core.getContainment().drainEvents()) {
+        for (ContainmentAtmosphere.EventDetail detail : core.getContainment().drainEventDetails()) {
+            ContainmentAtmosphere.Event event = detail.event();
             boolean failure = event == ContainmentAtmosphere.Event.HYDROGEN_DETONATION
                     || event == ContainmentAtmosphere.Event.CONTAINMENT_OVERPRESSURE_FAILURE;
             if (failure && breachedAt == null && containmentController != null)
-                breachedAt = containmentController.ruptureWeakest(level);
-            onContainmentEvent(level, failure && breachedAt != null ? breachedAt : pos, event);
+                breachedAt = breach(level, containmentController, detail);
+            onContainmentEvent(level, reactor, structure, containmentController,
+                    failure && breachedAt != null ? breachedAt : pos, detail);
+        }
+        if (!blasts.isEmpty()) {
+            blasts.run(level);
+        }
+        // The pool anchors on the first full-cube floor under the vessel, so it waits for the pedestal blast, but not
+        // for ever: a blast stuck on an unloaded chunk must not hold the corium back.
+        boolean pedestal = blasts.has(AccidentBlast.Kind.PEDESTAL);
+        pedestalWaitTicks = pedestal ? pedestalWaitTicks + 1 : 0;
+        if (!pedestal || pedestalWaitTicks > PEDESTAL_WAIT_TICKS) {
+            corium.update(level, structure == null ? null : structure.interiorMin(),
+                    structure == null ? null : structure.interiorMax(), core.getSevereAccident(),
+                    CoriumConfig.alterWorld(), CoriumConfig.blocksPerTick());
         }
         if (++sinceDose >= DOSE_INTERVAL_TICKS) {
             sinceDose = 0;
@@ -98,15 +142,65 @@ public final class ReactorSevereAccidentEffects {
         }
     }
 
+    /** Where hydrogen burns: the middle of the vessel top, where the release and the relief valves are. */
+    private static Vec3 ignition(BlockPos controller, ReactorStructure structure) {
+        if (structure == null) {
+            return new Vec3(controller.getX() + 0.5, controller.getY() + 2.0, controller.getZ() + 0.5);
+        }
+        BlockPos lo = structure.interiorMin(), hi = structure.interiorMax();
+        return new Vec3((lo.getX() + hi.getX() + 1) / 2.0, hi.getY() + 0.5, (lo.getZ() + hi.getZ() + 1) / 2.0);
+    }
+
+    /**
+     * Open the containment at its weakest spot, sized by the failure. The room reports the leak at once and the
+     * wall blocks go through the protected path of {@link AccidentBlast}.
+     *
+     * @return the weakest spot, or null if there was nothing to open (not sealed, or a boundary chunk unloaded)
+     */
+    private BlockPos breach(ServerLevel level, ContainmentControllerBlockEntity room,
+                            ContainmentAtmosphere.EventDetail detail) {
+        var weakest = room.weakestSpot();
+        if (weakest == null) {
+            return null;
+        }
+        boolean detonation = detail.event() == ContainmentAtmosphere.Event.HYDROGEN_DETONATION;
+        double load = detonation ? BlastPhysics.detonationPeakPsig(detail.peakPsig()) : detail.peakPsig();
+        double tnt = detonation ? BlastPhysics.detonationTntKg(detail.hydrogenBurnedKg())
+                : BlastPhysics.containmentBurstTntKg(detail.peakPsig(), detail.volumeM3());
+        double centreLoad = BlastPhysics.breachLoadPsi(load, weakest.ratingPsig());
+        var plan = room.planBreach(level, centreLoad, BlastPhysics.breachScaleBlocks(tnt));
+        if (plan == null) {
+            return null;
+        }
+        float radius = detonation ? 10.0f : 6.0f;
+        blasts.add(AccidentBlast.breach(plan.centre().getX() + 0.5, plan.centre().getY() + 0.5,
+                plan.centre().getZ() + 0.5, radius, plan.blocks()));
+        return plan.centre();
+    }
+
     public void write(CompoundTag tag) {
         SevereAccidentNbt.writeCorium(tag, corium);
+        blasts.write(tag);
+        if (roomMin != null && roomMax != null) {
+            tag.putLong("AccidentRoomMin", roomMin.asLong());
+            tag.putLong("AccidentRoomMax", roomMax.asLong());
+        }
     }
 
     public void read(CompoundTag tag) {
         SevereAccidentNbt.readCorium(tag, corium);
+        blasts.read(tag);
+        roomMin = roomMax = null;
+        if (tag.contains("AccidentRoomMin", net.minecraft.nbt.Tag.TAG_LONG)
+                && tag.contains("AccidentRoomMax", net.minecraft.nbt.Tag.TAG_LONG)) {
+            roomMin = BlockPos.of(tag.getLong("AccidentRoomMin"));
+            roomMax = BlockPos.of(tag.getLong("AccidentRoomMax"));
+        }
     }
 
-    private static void onCoreEvent(ServerLevel level, BlockPos pos, SevereAccident.Event event) {
+    private void onCoreEvent(ServerLevel level, ReactorControllerBlockEntity reactor, ReactorStructure structure,
+                             SevereAccident.Event event) {
+        BlockPos pos = reactor.getBlockPos();
         switch (event) {
             case CLADDING_FAILURE -> notice(level, pos, BwrText.tr(
                     "status.bwr.reactor_severe_accident_effects.reactor_fuel_cladding_failure_coolant_activity_rising",
@@ -123,8 +217,10 @@ public final class ReactorSevereAccidentEffects {
                         "status.bwr.reactor_severe_accident_effects.reactor_vessel_lower_head_failed_corium_on_the",
                         "Reactor: VESSEL LOWER HEAD FAILED. Corium on the drywell floor."));
                 level.playSound(null, pos, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 8f, 0.4f);
+                lowerHeadFailed(reactor);
             }
             case BASEMAT_MELT_THROUGH -> {
+                // The floor column itself is the corium pool's work, along the ablation depth.
                 notice(level, pos, BwrText.tr(
                         "status.bwr.reactor_severe_accident_effects.reactor_corium_has_penetrated_the_basemat_containment_lost",
                         "Reactor: corium has penetrated the basemat. Containment lost."));
@@ -133,15 +229,39 @@ public final class ReactorSevereAccidentEffects {
         }
     }
 
-    private static void onContainmentEvent(ServerLevel level, BlockPos pos, ContainmentAtmosphere.Event event) {
+    /**
+     * The debris leaves the vessel: the molten fuel-coolant interaction in the cavity breaks the pedestal under the
+     * footprint of the vessel. Queued once, from the core event.
+     */
+    public void lowerHeadFailed(ReactorControllerBlockEntity reactor) {
+        ReactorStructure structure = reactor.structure();
+        if (!(reactor.getLevel() instanceof ServerLevel level) || structure == null || reactor.core() == null) {
+            return;
+        }
+        var accident = reactor.core().getSevereAccident();
+        double tnt = BlastPhysics.lowerHeadTntKg(
+                accident.getLowerPlenumDebrisFraction() + accident.getExVesselFraction(), accident.getSizeScale());
+        blasts.add(AccidentBlast.pedestal(level, structure.interiorMin(), structure.interiorMax(), tnt, 4.0f));
+    }
+
+    private void onContainmentEvent(ServerLevel level, ReactorControllerBlockEntity reactor, ReactorStructure structure,
+                                    ContainmentControllerBlockEntity room, BlockPos pos,
+                                    ContainmentAtmosphere.EventDetail detail) {
         double x = pos.getX() + 0.5, y = pos.getY() + 2.0, z = pos.getZ() + 0.5;
-        switch (event) {
+        Vec3 fire = ignition(reactor.getBlockPos(), structure);
+        BlockPos[] box = roomMin == null || roomMax == null ? null : new BlockPos[] {roomMin, roomMax};
+        switch (detail.event()) {
             case HYDROGEN_FLAMMABLE -> notice(level, pos, BwrText.tr(
                     "status.bwr.reactor_severe_accident_effects.containment_hydrogen_concentration_is_flammable",
                     "Containment: hydrogen concentration is flammable."));
             case HYDROGEN_DEFLAGRATION -> {
                 notice(level, pos, BwrText.tr("status.bwr.reactor_severe_accident_effects.containment_hydrogen_burn", "Containment: HYDROGEN BURN."));
                 level.explode(null, x, y, z, 4.0f, Level.ExplosionInteraction.NONE);
+                // Room pressure falling with distance from the flame and clipped to the burn's AICC peak:
+                // weak fixtures go, walls and heavy blocks do not.
+                blasts.add(protect(AccidentBlast.interior(level, fire.x, fire.y, fire.z,
+                        BlastPhysics.deflagrationTntKg(detail.hydrogenBurnedKg()),
+                        Math.max(0.0, detail.peakPsig()), 4.0f, box), structure));
             }
             case HYDROGEN_DETONATION -> {
                 notice(level, pos, BwrText.tr(
@@ -149,14 +269,30 @@ public final class ReactorSevereAccidentEffects {
                         "Containment: HYDROGEN DETONATION. Containment destroyed."));
                 level.explode(null, x, y, z, 10.0f, Level.ExplosionInteraction.NONE);
                 level.playSound(null, pos, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 32f, 0.5f);
+                blasts.add(protect(AccidentBlast.interior(level, fire.x, fire.y, fire.z,
+                        BlastPhysics.detonationTntKg(detail.hydrogenBurnedKg()),
+                        BlastPhysics.detonationPeakPsig(detail.peakPsig()), 10.0f, box), structure));
             }
             case CONTAINMENT_OVERPRESSURE_FAILURE -> {
                 notice(level, pos, BwrText.tr(
                         "status.bwr.reactor_severe_accident_effects.containment_overpressure_failure_uncontrolled_release",
                         "Containment: OVERPRESSURE FAILURE. Uncontrolled release."));
                 level.playSound(null, pos, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 12f, 0.6f);
+                if (room != null && room.weakestSpot() != null && !pos.equals(reactor.getBlockPos())) {
+                    // The jet through the hole: the pressure difference across the failed wall, falling with the
+                    // burst's energy, sweeps weak fixtures near the breach.
+                    double rating = room.weakestSpot().ratingPsig();
+                    double excess = Math.max(0.0, BlastPhysics.breachLoadPsi(detail.peakPsig(), rating) - rating);
+                    blasts.add(protect(AccidentBlast.interior(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                            BlastPhysics.containmentBurstTntKg(detail.peakPsig(), detail.volumeM3()), excess, 6.0f, box),
+                            structure));
+                }
             }
         }
+    }
+
+    private static AccidentBlast.Job protect(AccidentBlast.Job job, ReactorStructure structure) {
+        return structure == null ? job : job.protect(structure.interiorMin(), structure.interiorMax());
     }
 
     private static void notice(ServerLevel level, BlockPos pos, Component text) {

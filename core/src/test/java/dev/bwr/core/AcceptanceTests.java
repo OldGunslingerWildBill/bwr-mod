@@ -121,6 +121,7 @@ public final class AcceptanceTests {
             dev.bwr.core.accident.ContainmentSteamTest.class,
             dev.bwr.core.accident.RhrContainmentScenarioTest.class,
             dev.bwr.core.accident.ContainmentStructurePhysicsTest.class,
+            dev.bwr.core.accident.BlastPhysicsTest.class,
             dev.bwr.core.accident.SevereAccidentIntegrationTest.class,
             NaturalCirculationTest.class,
             NodalFluxSolverTest.class,

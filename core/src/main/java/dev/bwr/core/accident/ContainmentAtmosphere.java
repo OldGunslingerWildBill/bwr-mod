@@ -41,6 +41,22 @@ public final class ContainmentAtmosphere {
         CONTAINMENT_OVERPRESSURE_FAILURE
     }
 
+    /**
+     * What the world adapter needs to size the physical damage of one event. The
+     * event itself is unchanged; this only carries the numbers the model already
+     * had when it raised it.
+     *
+     * @param event            the event
+     * @param hydrogenBurnedKg hydrogen consumed by the burn that raised it, kg (0 for a non-burn event)
+     * @param peakPsig         gauge pressure reached: the burn's adiabatic isochoric peak for a burn, the
+     *                         pressure at the failure for an overpressure failure
+     * @param hydrogenFraction hydrogen mole fraction in the burning compartment at ignition (0 if not a burn)
+     * @param volumeM3         free volume of the compartment concerned, m3 (the whole containment for a failure)
+     */
+    public record EventDetail(Event event, double hydrogenBurnedKg, double peakPsig,
+                              double hydrogenFraction, double volumeM3) {
+    }
+
     /** Why containment failed, if it has. */
     public enum FailureMode {
         NONE, OVERPRESSURE, DETONATION, BASEMAT_MELT_THROUGH
@@ -212,6 +228,17 @@ public final class ContainmentAtmosphere {
     private double lastBurnClockSeconds = Double.NEGATIVE_INFINITY;
 
     private final List<Event> pendingEvents = new ArrayList<>();
+    private final List<EventDetail> pendingDetails = new ArrayList<>();
+
+    private void emit(Event event, double burnedKg, double peakPsig, double xH2, double volume) {
+        pendingEvents.add(event);
+        pendingDetails.add(new EventDetail(event, finite(burnedKg), finite(peakPsig), finite(xH2), finite(volume)));
+    }
+
+    /** An event with no burn behind it: flammability, or a pressure failure at the current pressure. */
+    private void emitPlain(Event event) {
+        emit(event, 0.0, Math.max(getDrywellPressurePsig(), getWetwellPressurePsig()), 0.0, volumeM3);
+    }
 
     public ContainmentAtmosphere() {
         fillWithAir(AIR_OXYGEN_FRACTION);
@@ -489,7 +516,7 @@ public final class ContainmentAtmosphere {
         boolean flammable = xH2 >= FLAMMABILITY_FRACTION && xO2 >= OXYGEN_LIMIT_FRACTION
                 && !drywellSteamInerted();
         if (flammable && !flammableLatched) {
-            pendingEvents.add(Event.HYDROGEN_FLAMMABLE);
+            emitPlain(Event.HYDROGEN_FLAMMABLE);
         }
         flammableLatched = flammable;
         if (!drywellSteamInerted() && xO2 >= OXYGEN_LIMIT_FRACTION && xH2 >= IGNITION_FRACTION) {
@@ -503,7 +530,7 @@ public final class ContainmentAtmosphere {
         peakPressurePsig = Math.max(peakPressurePsig, psig);
         if (failureMode == FailureMode.NONE && psig > failurePressurePsig) {
             failureMode = FailureMode.OVERPRESSURE;
-            pendingEvents.add(Event.CONTAINMENT_OVERPRESSURE_FAILURE);
+            emitPlain(Event.CONTAINMENT_OVERPRESSURE_FAILURE);
         }
     }
 
@@ -764,7 +791,7 @@ public final class ContainmentAtmosphere {
         xH2 = wetwellHydrogenMol / wetwellTotalMol();
         xO2 = wetwellOxygenMol / wetwellTotalMol();
         boolean flammable = !steamInerted && xH2 >= FLAMMABILITY_FRACTION && xO2 >= OXYGEN_LIMIT_FRACTION;
-        if (flammable && !wetwellFlammableLatched) pendingEvents.add(Event.HYDROGEN_FLAMMABLE);
+        if (flammable && !wetwellFlammableLatched) emitPlain(Event.HYDROGEN_FLAMMABLE);
         wetwellFlammableLatched = flammable;
         if (!steamInerted && xH2 >= IGNITION_FRACTION && xO2 >= OXYGEN_LIMIT_FRACTION) {
             double peakPsia = wetwellPressurePa() / PA_PER_PSI * (1 + AICC_PRESSURE_SLOPE * xH2);
@@ -775,14 +802,15 @@ public final class ContainmentAtmosphere {
             wetwellLastBurnClockSeconds = clockSeconds;
             wetwellLastBurnPeakPsig = peakPsia - ATMOSPHERIC_PA / PA_PER_PSI;
             peakWetwellPressurePsig = Math.max(peakWetwellPressurePsig, wetwellLastBurnPeakPsig);
+            double burnedKg = burned / HYDROGEN_MOL_PER_KG;
             if (xH2 >= DETONATION_FRACTION) {
-                pendingEvents.add(Event.HYDROGEN_DETONATION);
+                emit(Event.HYDROGEN_DETONATION, burnedKg, wetwellLastBurnPeakPsig, xH2, wetwellVolumeM3);
                 if (failureMode == FailureMode.NONE) failureMode = FailureMode.DETONATION;
             } else {
-                pendingEvents.add(Event.HYDROGEN_DEFLAGRATION);
+                emit(Event.HYDROGEN_DEFLAGRATION, burnedKg, wetwellLastBurnPeakPsig, xH2, wetwellVolumeM3);
                 if (failureMode == FailureMode.NONE && wetwellLastBurnPeakPsig > failurePressurePsig) {
                     failureMode = FailureMode.OVERPRESSURE;
-                    pendingEvents.add(Event.CONTAINMENT_OVERPRESSURE_FAILURE);
+                    emit(Event.CONTAINMENT_OVERPRESSURE_FAILURE, 0.0, wetwellLastBurnPeakPsig, 0.0, volumeM3);
                 }
             }
         }
@@ -821,7 +849,7 @@ public final class ContainmentAtmosphere {
         peakPressurePsig = Math.max(peakPressurePsig, Math.max(peakDrywellPressurePsig, peakWetwellPressurePsig));
         if (failureMode == FailureMode.NONE && Math.max(dry, wet) > failurePressurePsig) {
             failureMode = FailureMode.OVERPRESSURE;
-            pendingEvents.add(Event.CONTAINMENT_OVERPRESSURE_FAILURE);
+            emitPlain(Event.CONTAINMENT_OVERPRESSURE_FAILURE);
         }
     }
 
@@ -838,16 +866,17 @@ public final class ContainmentAtmosphere {
         burnCount++;
         lastBurnPeakPsig = peakPsia - ATMOSPHERIC_PA / PA_PER_PSI;
         peakPressurePsig = Math.max(peakPressurePsig, lastBurnPeakPsig);
+        double burnedKg = burned / HYDROGEN_MOL_PER_KG;
         if (detonation) {
-            pendingEvents.add(Event.HYDROGEN_DETONATION);
+            emit(Event.HYDROGEN_DETONATION, burnedKg, lastBurnPeakPsig, xH2, drywellVolumeM3());
             if (failureMode == FailureMode.NONE) {
                 failureMode = FailureMode.DETONATION;
             }
         } else {
-            pendingEvents.add(Event.HYDROGEN_DEFLAGRATION);
+            emit(Event.HYDROGEN_DEFLAGRATION, burnedKg, lastBurnPeakPsig, xH2, drywellVolumeM3());
             if (failureMode == FailureMode.NONE && lastBurnPeakPsig > failurePressurePsig) {
                 failureMode = FailureMode.OVERPRESSURE;
-                pendingEvents.add(Event.CONTAINMENT_OVERPRESSURE_FAILURE);
+                emit(Event.CONTAINMENT_OVERPRESSURE_FAILURE, 0.0, lastBurnPeakPsig, 0.0, volumeM3);
             }
         }
     }
@@ -1027,7 +1056,23 @@ public final class ContainmentAtmosphere {
         }
         List<Event> events = List.copyOf(pendingEvents);
         pendingEvents.clear();
+        pendingDetails.clear();
         return events;
+    }
+
+    /**
+     * The same events as {@link #drainEvents()}, oldest first, with the burn mass, pressure and volume behind
+     * each. Draining either list clears both, so an event is delivered once. Not saved: a reload never replays.
+     */
+    public List<EventDetail> drainEventDetails() {
+        if (pendingDetails.isEmpty()) {
+            pendingEvents.clear();
+            return List.of();
+        }
+        List<EventDetail> details = List.copyOf(pendingDetails);
+        pendingDetails.clear();
+        pendingEvents.clear();
+        return details;
     }
 
     // ---------------------------------------------------------------
@@ -1170,6 +1215,7 @@ public final class ContainmentAtmosphere {
         if (nitrogenMol + oxygenMol + wetwellNitrogenMol + wetwellOxygenMol <= 0) fillWithAir(AIR_OXYGEN_FRACTION);
         pendingSteamInputs = SteamInputs.NONE;
         pendingEvents.clear();
+        pendingDetails.clear();
     }
 
     private static double finite(double v) {
