@@ -192,9 +192,17 @@ public final class UraniumClientCheck {
                 int top = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
                 for (int y = top; y >= floor - 2; y--) {
                     BlockPos pos = new BlockPos(x, y, z);
+                    var state = level.getBlockState(pos);
                     if (!level.getFluidState(pos).isEmpty()) {
                         level.setBlock(pos, Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS);
                         sealed++;
+                    } else if (!state.isAir()) {
+                        // the picture is about the vein: every other ore and every patch of other rock in the floor and the walls of the cut
+                        // becomes plain stone, so the vein's own calcite, tuff and uranium are the only things in it that differ
+                        Block replacement = plain(state, y > floor);
+                        if (replacement != null) {
+                            level.setBlock(pos, replacement.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS);
+                        }
                     }
                 }
             }
@@ -216,6 +224,24 @@ public final class UraniumClientCheck {
     }
 
     private static volatile double[] pitCentre, tangentAtMiddle;
+
+    /** What a block of the cut's floor ({@code above} false) or wall ({@code above} true) is hidden as, or null to keep it. */
+    private static Block plain(net.minecraft.world.level.block.state.BlockState state, boolean above) {
+        var id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        String path = id.getPath();
+        boolean deep = path.startsWith("deepslate_");
+        boolean ours = id.getNamespace().equals("bwr");
+        if (ours) {
+            return above ? Blocks.STONE : null;      // the vein is only ever at or under the floor; blobs in the wall are hidden too
+        }
+        if (path.endsWith("_ore") || path.startsWith("raw_")) return deep ? Blocks.DEEPSLATE : Blocks.STONE;
+        if (state.is(Blocks.GRANITE) || state.is(Blocks.DIORITE) || state.is(Blocks.ANDESITE) || state.is(Blocks.DIRT) || state.is(Blocks.COARSE_DIRT)
+                || state.is(Blocks.GRAVEL) || state.is(Blocks.CLAY) || state.is(Blocks.INFESTED_STONE)) return Blocks.STONE;
+        if (above && (state.is(Blocks.CALCITE) || state.is(Blocks.TUFF) || state.is(Blocks.AMETHYST_BLOCK) || state.is(Blocks.BUDDING_AMETHYST)
+                || state.is(Blocks.SMOOTH_BASALT) || state.is(Blocks.OBSIDIAN) || state.is(Blocks.CRYING_OBSIDIAN))) return Blocks.STONE;
+        if (state.is(Blocks.AMETHYST_BLOCK) || state.is(Blocks.BUDDING_AMETHYST) || state.is(Blocks.SMOOTH_BASALT)) return Blocks.STONE;
+        return null;
+    }
 
     /** True when the middle of a vein lies under dry land: the surface over a grid of points above it is well above sea level. */
     private static boolean dryLand(ServerLevel level, dev.bwr.mod.worldgen.UraniumVeins.Vein vein) {
