@@ -305,6 +305,19 @@ public final class GuiScreenCheck {
             reactorLive(m, false);
             return new ReactorPanelScreen(m, i, t("Reactor Control Panel"));
         }, screen -> click(screen, "INFO")));
+        s.add(new Scenario("reactor-info-breaks", i -> {
+            var m = new ReactorPanelMenu(99, i, P);
+            reactorLive(m, false);
+            m.boundaryLines = List.of(
+                    t("Recirculation loop B discharge: open break at -29999984 190 -29999984"),
+                    t("Feedwater line C: break at -29999984 190 -29999984, isolated from the vessel"),
+                    t("Main steam line A: open break at the vessel nozzle"),
+                    t("Recirculation loop A suction: break sealed"));
+            m.boundaryLineStates = new int[]{2, 1, 2, 0};
+            return new ReactorPanelScreen(m, i, t("Reactor Control Panel"));
+        }, screen -> {
+            click(screen, "INFO");
+        }, screen -> screen.mouseScrolled(screen.width / 2.0, screen.height / 2.0, 0, -40), true));
         s.add(new Scenario("reactor-unformed", i -> {
             var m = new ReactorPanelMenu(99, i, P);
             m.formed = false;

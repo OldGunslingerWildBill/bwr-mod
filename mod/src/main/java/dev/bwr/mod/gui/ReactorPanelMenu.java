@@ -133,6 +133,10 @@ public class ReactorPanelMenu extends BwrMenu {
     /** Null until the first map arrives. */
     public CoreMapSnapshot map;
     public ReactorConfigurationInfo configuration=ReactorConfigurationInfo.EMPTY;
+    /** Pressure-boundary breaks and recent seals, one line each, with 2 for an open break and 1 for an isolated one. */
+    public List<Component> boundaryLines = List.of();
+    public int[] boundaryLineStates = new int[0];
+    public static final int MAX_BOUNDARY_LINES = 8;
 
     // -----------------------------------------------------------------
 
@@ -250,6 +254,14 @@ public class ReactorPanelMenu extends BwrMenu {
             CoreMapSnapshot.write(buf, core, be.corePositions());
         }
         ReactorConfigurationInfo.capture(be).write(buf);
+        var breaks = be.boundaryEffects().breaks();
+        var lines = dev.bwr.mod.damage.BoundaryDamageReadout.breakComponents(be.boundaryEffects(), level().getGameTime());
+        int count = Math.min(lines.size(), MAX_BOUNDARY_LINES);
+        buf.writeVarInt(count);
+        for (int i = 0; i < count; i++) {
+            buf.writeUtf(Component.Serializer.toJson(lines.get(i), level().registryAccess()), 8192);
+            buf.writeByte(i < breaks.size() ? (breaks.get(i).open() ? 2 : 1) : 0);
+        }
     }
 
     @Override
@@ -326,6 +338,15 @@ public class ReactorPanelMenu extends BwrMenu {
             map = CoreMapSnapshot.read(buf);
         }
         configuration=ReactorConfigurationInfo.read(buf);
+        int count = Math.min(buf.readVarInt(), MAX_BOUNDARY_LINES);
+        List<Component> lines = new ArrayList<>(count);
+        int[] states = new int[count];
+        for (int i = 0; i < count; i++) {
+            lines.add(Component.Serializer.fromJson(buf.readUtf(8192), level().registryAccess()));
+            states[i] = buf.readByte();
+        }
+        boundaryLines = lines;
+        boundaryLineStates = states;
     }
 
     // -----------------------------------------------------------------

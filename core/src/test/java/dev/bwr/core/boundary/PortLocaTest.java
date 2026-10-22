@@ -101,4 +101,26 @@ public final class PortLocaTest {
         }
         Check.absolute(mass-out,v.getLiquidMassKg()+v.getSteamMassKg(),1e-5,"dry numerical floor must not manufacture steam");
     }
+    public static void test09_isolatedBreakStopsDrainingAndKeepsStressUntilRepaired() {
+        var b=new BoundaryStress();
+        for(int i=0;i<200;i++) b.step(1360,DT);
+        double worn=b.getStress(BoundaryComponent.FEEDWATER_LINE);
+        Check.greaterThan(0,worn,"overpressure must wear the feedwater line before the test isolates it");
+        b.forceFailure(BoundaryComponent.FEEDWATER_LINE,1000);
+        b.setOpenings(List.of(new BoundaryOpening(BoundaryComponent.FEEDWATER_LINE,-100,.02*BoundaryStress.RATED_CORE_FLOW_KG_PER_S,0)));
+        Check.isTrue(b.activeOpenings().size()==1,"an open break drains the vessel");
+        b.isolate(BoundaryComponent.FEEDWATER_LINE);
+        Check.isFalse(b.isBroken(BoundaryComponent.FEEDWATER_LINE),"a break behind a closed valve is not open to the vessel");
+        Check.isTrue(b.activeOpenings().isEmpty(),"an isolated break must not drain the vessel");
+        Check.exactly(1.0,b.feedwaterDeliveredFraction(),"an isolated break does not stop feed through the other lines");
+        Check.exactly(worn,b.getStress(BoundaryComponent.FEEDWATER_LINE),"isolating a break replaces no pipe: stress is kept");
+        b.forceFailure(BoundaryComponent.FEEDWATER_LINE,1000);
+        Check.isTrue(b.isBroken(BoundaryComponent.FEEDWATER_LINE)&&b.activeOpenings().size()==1,"opening the valve reopens the break");
+        b.repair(BoundaryComponent.FEEDWATER_LINE);
+        Check.isFalse(b.isBroken(BoundaryComponent.FEEDWATER_LINE),"new pipe closes the break");
+        Check.exactly(0,b.getStress(BoundaryComponent.FEEDWATER_LINE),"new pipe has no accumulated stress");
+        b.forceFailure(BoundaryComponent.REACTOR_VESSEL_HEAD,1700);
+        b.isolate(BoundaryComponent.REACTOR_VESSEL_HEAD);
+        Check.isTrue(b.isBroken(BoundaryComponent.REACTOR_VESSEL_HEAD),"no valve isolates a failed vessel head");
+    }
 }
