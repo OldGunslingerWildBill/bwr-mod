@@ -9,7 +9,9 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
+import net.minecraft.locale.Language;
 import net.minecraft.util.FormattedCharSequence;
+import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +56,137 @@ public final class Ui {
     /** Marks the start (true) or end (false) of drawing inside a scissor, so the probe knows the text may be clipped. */
     public static void clipped(boolean on) {
         clipDepth += on ? 1 : -1;
+    }
+
+    // ---------------------------------------------------------------
+    // Batching
+    // ---------------------------------------------------------------
+
+    private static int batchDepth;
+    private static boolean legacy;
+
+    /**
+     * Draws the way the style did before drawing was batched and its text cached: one draw call per fill and per string,
+     * every string shaped and measured afresh. The pictures are the same; the GUI check turns this on to prove it by
+     * drawing the reactor panel both ways and comparing the pixels.
+     */
+    public static void setLegacyDrawing(boolean on) {
+        legacy = on;
+        clearTextCache();
+    }
+
+    /** True while {@link #setLegacyDrawing} is on. */
+    public static boolean legacyDrawing() {
+        return legacy;
+    }
+    private static FormattedCharSequence[] queuedText = new FormattedCharSequence[128];
+    private static Matrix4f[] queuedPose = new Matrix4f[128];
+    private static int[] queuedX = new int[128];
+    private static int[] queuedY = new int[128];
+    private static int[] queuedColour = new int[128];
+    private static int[] queuedScale = new int[128];
+    private static int queued;
+    private static final Matrix4f SCRATCH = new Matrix4f();
+
+    /**
+     * Runs {@code drawing} with the GUI's vertex buffer held open, so that fills and text reach the GPU together instead
+     * of one draw call each ({@code GuiGraphics} flushes after every fill and every string otherwise, which made a
+     * control panel cost a couple of hundred draw calls a frame). Inside it {@link #text} is held back and drawn after the
+     * fills, at the end of the batch or just before a scissor changes ({@link #enableScissor}, {@link #disableScissor}),
+     * so that a run of strings is one draw call rather than one for every string between two fills (each string keeps the
+     * pose it was drawn under). That puts text over
+     * every fill drawn in the same batch: a screen that batches must not draw a fill over its own text. Safe to nest:
+     * only the outermost call opens and closes the batch.
+     */
+    public static void batch(GuiGraphics g, Runnable drawing) {
+        if (batchDepth > 0) {
+            drawing.run();
+            return;
+        }
+        batchDepth++;
+        try {
+            g.drawManaged(() -> {
+                drawing.run();
+                drawQueuedText(g);
+            });
+        } finally {
+            batchDepth--;
+            discardQueuedText();
+        }
+    }
+
+    /** {@link GuiGraphics#enableScissor}, after the text held back so far (it belongs outside the new scissor). */
+    public static void enableScissor(GuiGraphics g, int x1, int y1, int x2, int y2) {
+        drawQueuedText(g);
+        g.enableScissor(x1, y1, x2, y2);
+    }
+
+    /** {@link GuiGraphics#disableScissor}, after the text held back so far (it belongs inside the scissor being left). */
+    public static void disableScissor(GuiGraphics g) {
+        drawQueuedText(g);
+        g.disableScissor();
+    }
+
+    private static void queueText(GuiGraphics g, FormattedCharSequence text, int x, int y, int scale, int colour) {
+        if (queued == queuedText.length) {
+            int n = queued * 2;
+            queuedText = java.util.Arrays.copyOf(queuedText, n);
+            queuedPose = java.util.Arrays.copyOf(queuedPose, n);
+            queuedX = java.util.Arrays.copyOf(queuedX, n);
+            queuedY = java.util.Arrays.copyOf(queuedY, n);
+            queuedColour = java.util.Arrays.copyOf(queuedColour, n);
+            queuedScale = java.util.Arrays.copyOf(queuedScale, n);
+        }
+        queuedText[queued] = text;
+        if (queuedPose[queued] == null) {
+            queuedPose[queued] = new Matrix4f();
+        }
+        queuedPose[queued].set(g.pose().last().pose());
+        queuedX[queued] = x;
+        queuedY[queued] = y;
+        queuedColour[queued] = colour;
+        queuedScale[queued] = scale;
+        queued++;
+    }
+
+    private static void drawQueuedText(GuiGraphics g) {
+        int n = queued;
+        queued = 0;
+        Font font = font();
+        var buffers = g.bufferSource();
+        for (int i = 0; i < n; i++) {
+            // the same call GuiGraphics.drawString makes, with the pose the string was queued under
+            Matrix4f pose = queuedPose[i];
+            int scale = queuedScale[i];
+            if (scale == 1) {
+                font.drawInBatch(queuedText[i], (float) queuedX[i], (float) queuedY[i], queuedColour[i], false, pose, buffers,
+                        Font.DisplayMode.NORMAL, 0, FULL_BRIGHT);
+            } else {
+                SCRATCH.set(pose).translate(queuedX[i], queuedY[i], 0).scale(scale, scale, 1);
+                font.drawInBatch(queuedText[i], 0f, 0f, queuedColour[i], false, SCRATCH, buffers, Font.DisplayMode.NORMAL, 0, FULL_BRIGHT);
+            }
+            queuedText[i] = null;
+        }
+    }
+
+    private static final int FULL_BRIGHT = 15728880;
+
+    private static void discardQueuedText() {
+        java.util.Arrays.fill(queuedText, 0, queued, null);
+        queued = 0;
+    }
+
+    private static void drawNow(GuiGraphics g, Font font, FormattedCharSequence text, int x, int y, int scale, int colour) {
+        if (scale == 1) {
+            g.drawString(font, text, x, y, colour, false);
+            return;
+        }
+        var pose = g.pose();
+        pose.pushPose();
+        pose.translate(x, y, 0);
+        pose.scale(scale, scale, 1);
+        g.drawString(font, text, 0, 0, colour, false);
+        pose.popPose();
     }
 
     // ---------------------------------------------------------------
@@ -170,6 +303,21 @@ public final class Ui {
      * "K-inf"). The label itself, which a screen reader says and a lookup matches, is not changed. Other text is returned as it is.
      */
     public static String sentence(String s) {
+        if (legacy) {
+            return sentenceUncached(s);
+        }
+        String hit = SENTENCES.get(s);
+        if (hit == null) {
+            hit = sentenceUncached(s);
+            if (SENTENCES.size() >= SHAPED_LIMIT) {
+                SENTENCES.clear();
+            }
+            SENTENCES.put(s, hit);
+        }
+        return hit;
+    }
+
+    private static String sentenceUncached(String s) {
         if (s.length() > 1 && s.chars().anyMatch(Character::isLetter) && s.equals(s.toUpperCase(Locale.ROOT))) {
             return s.charAt(0) + s.substring(1).toLowerCase(Locale.ROOT);
         }
@@ -181,13 +329,73 @@ public final class Ui {
         return type.upper ? s.toUpperCase(Locale.ROOT) : s;
     }
 
-    private static FormattedCharSequence sequence(String s, Type type) {
+    /** One string as the style draws it: its glyph sequence and that sequence's width at scale 1. */
+    private record Shaped(FormattedCharSequence sequence, int width) {
+    }
+
+    /** Most strings a type keeps shaped, and most sentence-case labels kept: a screen shows well under a hundred of either, so this only stops a leak. */
+    private static final int SHAPED_LIMIT = 1024;
+    private static final java.util.HashMap<String, String> SENTENCES = new java.util.HashMap<>();
+    @SuppressWarnings("unchecked")
+    private static final java.util.HashMap<String, Shaped>[] SHAPED = new java.util.HashMap[Type.values().length];
+    private static Object shapedLanguage;
+    private static Font shapedFont;
+
+    static {
+        for (int i = 0; i < SHAPED.length; i++) {
+            SHAPED[i] = new java.util.HashMap<>();
+        }
+    }
+
+    /**
+     * Forgets every shaped string. Building a glyph sequence (bidirectional reordering) and measuring it is most of the
+     * cost of laying text out, and a panel draws the same few dozen strings every frame, so they are kept; a font or a
+     * language change (a resource reload) makes them stale.
+     */
+    public static void clearTextCache() {
+        for (var map : SHAPED) {
+            map.clear();
+        }
+        SENTENCES.clear();
+        shapedLanguage = null;
+        shapedFont = null;
+    }
+
+    private static Shaped shape(String s, Type type, Font font) {
         Component c = Component.literal(styled(s, type));
-        return (type.bold ? c.copy().withStyle(ChatFormatting.BOLD) : c).getVisualOrderText();
+        FormattedCharSequence sequence = (type.bold ? c.copy().withStyle(ChatFormatting.BOLD) : c).getVisualOrderText();
+        return new Shaped(sequence, font.width(sequence));
+    }
+
+    private static Shaped shaped(String s, Type type) {
+        Font font = font();
+        if (legacy) {
+            return shape(s, type, font);
+        }
+        Object language = Language.getInstance();
+        if (language != shapedLanguage || font != shapedFont) {
+            clearTextCache();
+            shapedLanguage = language;
+            shapedFont = font;
+        }
+        var map = SHAPED[type.ordinal()];
+        Shaped hit = map.get(s);
+        if (hit == null) {
+            if (map.size() >= SHAPED_LIMIT) {
+                map.clear();
+            }
+            hit = shape(s, type, font);
+            map.put(s, hit);
+        }
+        return hit;
+    }
+
+    private static FormattedCharSequence sequence(String s, Type type) {
+        return shaped(s, type).sequence();
     }
 
     public static int width(String s, Type type) {
-        return font().width(sequence(s, type)) * type.scale;
+        return shaped(s, type).width() * type.scale;
     }
 
     public static int height(Type type) {
@@ -203,16 +411,12 @@ public final class Ui {
         if (probing && !s.isEmpty()) {
             PROBE.add(new DrawnText(x, y, width(s, type), height(type), clipDepth > 0, s));
         }
-        if (type.scale == 1) {
-            g.drawString(font(), sequence(s, type), x, y, colour, false);
+        FormattedCharSequence sequence = sequence(s, type);
+        if (batchDepth > 0) {
+            queueText(g, sequence, x, y, type.scale, colour);
             return;
         }
-        var pose = g.pose();
-        pose.pushPose();
-        pose.translate(x, y, 0);
-        pose.scale(type.scale, type.scale, 1);
-        g.drawString(font(), sequence(s, type), 0, 0, colour, false);
-        pose.popPose();
+        drawNow(g, font(), sequence, x, y, type.scale, colour);
     }
 
     /** Right-aligns {@code s} so that it ends at {@code right}. */
