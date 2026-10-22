@@ -70,8 +70,9 @@ These are guidance, not rules the blocks enforce.
 Cabinet: iron ingots around an iron door and redstone. Plain-back cabinet: iron ingots around redstone. Operator desk: five
 iron ingots, two desks. Round end and corner desk: one operator desk and an iron nugget or an iron ingot. Supervisor desk: two
 operator desks and two iron ingots. Mimic band: a vertical control panel and bone meal (cream) or black dye. Wall display: iron
-ingots and black stained glass panes (one pane for the 2 x 2, three for the 3 x 2). Control stand: a vertical control panel over an
-iron ingot.
+ingots around one black stained glass pane (2 x 2); the 3 x 2 is a 2 x 2 display between two panes, under three ingots. Control
+stand: a glass pane over a vertical control panel over an iron ingot. The full table, with costs, is in CONTROL-PANELS.md,
+"Control-room recipes".
 
 ## How it is built
 

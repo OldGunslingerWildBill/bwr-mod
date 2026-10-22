@@ -1,1 +1,1 @@
-{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": ["LLL", "LRL", "III"], "key": {"L": {"item": "bwr:lamp"}, "R": {"item": "minecraft:redstone"}, "I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:full_core_display", "count": 1}}
+{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": ["LLL", "LRL", "III"], "key": {"L": {"item": "bwr:lamp"}, "R": {"item": "minecraft:comparator"}, "I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:full_core_display", "count": 1}}

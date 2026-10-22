@@ -191,6 +191,110 @@ for name, r in recipes.items():
             if ref.startswith("bwr:") and ref[4:] not in registered:
                 bad(f"{name}: ingredient {ref} is not a registered item")
 
+# ---- 4. collisions --------------------------------------------------------------------------------------------
+def canon_ing(ing):
+    """A stable text for one ingredient: its sorted item / tag ids (alternatives are one slot)."""
+    return "|".join(sorted(ingredient_ids(ing)))
+
+
+def condition_key(r):
+    return json.dumps(r.get("neoforge:conditions", []), sort_keys=True)
+
+
+def exclusive(a, b):
+    """True when two condition lists can never both hold: one is {not: X} and the other lists X."""
+    def negated(conds):
+        return {json.dumps(c["value"], sort_keys=True) for c in conds if isinstance(c, dict) and c.get("type") == "neoforge:not"}
+    def plain(conds):
+        return {json.dumps(c, sort_keys=True) for c in conds if isinstance(c, dict)}
+    ca, cb = r_conditions(a), r_conditions(b)
+    return bool(negated(ca) & plain(cb)) or bool(negated(cb) & plain(ca))
+
+
+def r_conditions(r):
+    c = r.get("neoforge:conditions", [])
+    return c if isinstance(c, list) else []
+
+
+def pattern_key(r):
+    """('shape', grid) for shaped, ('set', multiset) for shapeless; None for other recipe types.
+    A shaped recipe is also keyed by its multiset so it meets a shapeless twin."""
+    kind = r.get("type")
+    if kind == "minecraft:crafting_shaped":
+        pattern, key = r.get("pattern"), r.get("key")
+        if not (isinstance(pattern, list) and isinstance(key, dict) and pattern):
+            return None
+        grid = tuple(tuple(canon_ing(key[c]) if c != " " and c in key else "" for c in row) for row in pattern)
+        mirror = tuple(tuple(reversed(row)) for row in grid)
+        cells = sorted(c for row in grid for c in row if c)
+        return ("shape", min(grid, mirror)), ("set", tuple(cells))
+    if kind == "minecraft:crafting_shapeless":
+        ings = r.get("ingredients")
+        if not isinstance(ings, list):
+            return None
+        return (("set", tuple(sorted(canon_ing(i) for i in ings))),)
+    return None
+
+
+by_pattern = {}
+for name, r in recipes.items():
+    keys = pattern_key(r)
+    if keys:
+        for k in keys:
+            by_pattern.setdefault(k, []).append(name)
+reported = set()
+for k, names in sorted(by_pattern.items(), key=lambda kv: str(kv[0])):
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            if (a, b) in reported or exclusive(recipes[a], recipes[b]):
+                continue
+            # Two shaped recipes with the same ingredients in different arrangements do not collide.
+            if k[0] == "set" and all(recipes[n].get("type") == "minecraft:crafting_shaped" for n in (a, b)):
+                continue
+            reported.add((a, b))
+            bad(f"recipe collision: {a} and {b} have the same ingredient pattern ({k[0]})")
+
+# ---- 5. circular dependencies among bwr items ----------------------------------------------------------------
+deps = {}
+for name, r in recipes.items():
+    res = r.get("result")
+    if not (isinstance(res, dict) and str(res.get("id", "")).startswith("bwr:")):
+        continue
+    out = res["id"][4:]
+    if r.get("type") == "minecraft:crafting_shaped" and isinstance(r.get("key"), dict):
+        ings = list(r["key"].values())
+    elif r.get("type") == "minecraft:crafting_shapeless" and isinstance(r.get("ingredients"), list):
+        ings = r["ingredients"]
+    else:
+        continue
+    for ing in ings:
+        for ref in ingredient_ids(ing):
+            if ref.startswith("bwr:"):
+                deps.setdefault(out, set()).add(ref[4:])
+
+WHITE, GREY, BLACK = 0, 1, 2
+colour = {}
+cycles = []
+
+
+def visit(node, path):
+    colour[node] = GREY
+    path.append(node)
+    for nxt in sorted(deps.get(node, ())):
+        if colour.get(nxt, WHITE) == GREY:
+            cycles.append(path[path.index(nxt):] + [nxt])
+        elif colour.get(nxt, WHITE) == WHITE:
+            visit(nxt, path)
+    path.pop()
+    colour[node] = BLACK
+
+
+for node in sorted(deps):
+    if colour.get(node, WHITE) == WHITE:
+        visit(node, [])
+for cyc in cycles:
+    bad("circular recipe dependency: " + " -> ".join(cyc))
+
 for name in sorted(registered - produced):
     if name not in NO_RECIPE:
         bad(f"item '{name}' has no recipe and is not in NO_RECIPE")
@@ -205,6 +309,7 @@ for name, why in NO_RECIPE.items():
         bad(f"NO_RECIPE lists '{name}' ({why}) but a recipe produces it")
 
 craftable = len(registered) - len(NO_RECIPE)
+print(f"Recipe audit: {len(by_pattern)} ingredient patterns compared for collisions, {len(deps)} crafted bwr items checked for cycles")
 print(f"Recipe audit: {len(recipes)} recipes parsed, {len(registered)} registered items, "
       f"{craftable} craftable, {len(NO_RECIPE)} deliberately without a recipe")
 for name, why in sorted(NO_RECIPE.items()):
