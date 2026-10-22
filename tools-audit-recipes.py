@@ -256,6 +256,7 @@ for k, names in sorted(by_pattern.items(), key=lambda kv: str(kv[0])):
 
 # ---- 5. circular dependencies among bwr items ----------------------------------------------------------------
 deps = {}
+single = set()
 for name, r in recipes.items():
     res = r.get("result")
     if not (isinstance(res, dict) and str(res.get("id", "")).startswith("bwr:")):
@@ -267,10 +268,17 @@ for name, r in recipes.items():
         ings = r["ingredients"]
     else:
         continue
-    for ing in ings:
-        for ref in ingredient_ids(ing):
-            if ref.startswith("bwr:"):
-                deps.setdefault(out, set()).add(ref[4:])
+    refs = {ref for ing in ings for ref in ingredient_ids(ing)}
+    for ref in refs:
+        if ref.startswith("bwr:"):
+            deps.setdefault(out, set()).add(ref[4:])
+    if len(refs) == 1 and next(iter(refs)).startswith("bwr:"):
+        single.add((out, next(iter(refs))[4:]))
+
+# A storage pair (nine nuggets make an ingot, an ingot makes nine nuggets) is a two-way single-ingredient loop, not a circular recipe.
+for a, b in single:
+    if (b, a) in single:
+        deps[a].discard(b)
 
 WHITE, GREY, BLACK = 0, 1, 2
 colour = {}
