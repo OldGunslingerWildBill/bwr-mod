@@ -194,7 +194,7 @@ public final class AccidentBlastTests {
     // 1. Hydrogen deflagration
     // ------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 600)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 600)
     public static void deflagrationBreaksGlassButNotConcrete(GameTestHelper h) throws Exception {
         var plant = new Plant(h, new BlockPos(700_000, 190, 700_000), true, Blocks.GRAY_CONCRETE);
         var level = plant.level;
@@ -235,7 +235,7 @@ public final class AccidentBlastTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 400)
     public static void moreHydrogenBreaksFurtherAndEachPaneFollowsTheModel(GameTestHelper h) {
         var level = h.getLevel();
         BlockPos origin = new BlockPos(704_000, 190, 704_000);
@@ -268,7 +268,7 @@ public final class AccidentBlastTests {
     // 2. Detonation and overpressure failure: breach at the weakest spot
     // ------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 800)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 800)
     public static void detonationBreachesTheWeakestColumnAndTheRoomLeaks(GameTestHelper h) throws Exception {
         var plant = new Plant(h, new BlockPos(700_400, 190, 700_000), true, Blocks.STONE);
         var level = plant.level;
@@ -305,7 +305,7 @@ public final class AccidentBlastTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 1200)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 1200)
     public static void aSecondBurnAfterTheBreachStaysInsideTheRoom(GameTestHelper h) throws Exception {
         var plant = new Plant(h, new BlockPos(705_600, 190, 704_000), true, Blocks.STONE);
         var level = plant.level;
@@ -342,7 +342,7 @@ public final class AccidentBlastTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 800)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 800)
     public static void overpressureFailureOpensTheWeakestSpotInProportion(GameTestHelper h) throws Exception {
         var plant = new Plant(h, new BlockPos(700_800, 190, 700_000), true, Blocks.STONE);
         var level = plant.level;
@@ -367,7 +367,7 @@ public final class AccidentBlastTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 800)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 800)
     public static void breachGrowsWithEnergyAndExcessPressure(GameTestHelper h) throws Exception {
         var plant = new Plant(h, new BlockPos(704_800, 190, 704_000), true, Blocks.STONE);
         var level = plant.level;
@@ -403,7 +403,7 @@ public final class AccidentBlastTests {
     // 3. Vessel head failure
     // ------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 800)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 800)
     public static void headFailureConeBreaksAboveAndLeavesTheVesselFormed(GameTestHelper h) throws Exception {
         var plant = new Plant(h, new BlockPos(701_200, 190, 700_000), false, Blocks.AIR);
         var level = plant.level;
@@ -450,7 +450,7 @@ public final class AccidentBlastTests {
     // 4. Pipe break at pressure
     // ------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 400)
     public static void pipeBreakWhipIsBoundedToTwoBlocks(GameTestHelper h) throws Exception {
         var level = h.getLevel();
         BlockPos min = new BlockPos(701_600, 190, 700_000);
@@ -498,7 +498,7 @@ public final class AccidentBlastTests {
     // 5. Lower head failure
     // ------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 400)
     public static void lowerHeadFailureBreaksThePedestalUnderTheVessel(GameTestHelper h) throws Exception {
         var plant = new Plant(h, new BlockPos(704_400, 190, 704_000), false, Blocks.AIR);
         var level = plant.level;
@@ -537,7 +537,7 @@ public final class AccidentBlastTests {
     // 6. Protection: unbreakable blocks, events of other mods, chunks
     // ------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 400)
     public static void unbreakableBlocksSurviveAnyPressure(GameTestHelper h) {
         var level = h.getLevel();
         BlockPos o = new BlockPos(702_800, 190, 700_000);
@@ -559,7 +559,7 @@ public final class AccidentBlastTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 600)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 600)
     public static void aFormedVesselAndItsControllersSurviveAnyPressure(GameTestHelper h) throws Exception {
         var plant = new Plant(h, new BlockPos(705_200, 190, 704_000), false, Blocks.AIR);
         var level = plant.level;
@@ -585,7 +585,7 @@ public final class AccidentBlastTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 400)
     public static void cancelledBreakEventIsHonoured(GameTestHelper h) {
         var level = h.getLevel();
         BlockPos o = new BlockPos(703_200, 190, 700_000);
@@ -615,7 +615,7 @@ public final class AccidentBlastTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 400)
     public static void aPrunedDetonateListIsHonoured(GameTestHelper h) {
         var level = h.getLevel();
         BlockPos o = new BlockPos(703_600, 190, 700_000);
@@ -639,7 +639,7 @@ public final class AccidentBlastTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 400)
     public static void aCancelledExplosionStartDiscardsTheBlast(GameTestHelper h) {
         var level = h.getLevel();
         BlockPos o = new BlockPos(703_600, 190, 700_400);
@@ -663,7 +663,7 @@ public final class AccidentBlastTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 400)
     public static void blastInAnUnloadedChunkWaitsAndNeverLoadsIt(GameTestHelper h) {
         var level = h.getLevel();
         // The source is at the east edge of chunk A; the sweep reaches into chunk B, which nothing has loaded.
@@ -709,7 +709,7 @@ public final class AccidentBlastTests {
     // 7. Once, and never again after a reload
     // ------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 800)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 800)
     public static void aFailureBlastNeverReplaysAfterReload(GameTestHelper h) throws Exception {
         var plant = new Plant(h, new BlockPos(702_000, 190, 700_000), false, Blocks.AIR);
         var level = plant.level;
@@ -778,7 +778,7 @@ public final class AccidentBlastTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrblast", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 400)
     public static void theAppliedFailureFlagsSurviveAReload(GameTestHelper h) throws Exception {
         var plant = new Plant(h, new BlockPos(702_400, 190, 700_000), false, Blocks.AIR);
         var level = plant.level;
