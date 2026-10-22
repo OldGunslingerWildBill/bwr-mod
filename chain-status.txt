@@ -1,7 +1,0 @@
-﻿perf-1 exit 0
-client-full exit 0
-gate-normal exit 1
-gate-nocc exit 1
-savecompat exit 0
-serverboot exit 0
-gui-check exit 0
