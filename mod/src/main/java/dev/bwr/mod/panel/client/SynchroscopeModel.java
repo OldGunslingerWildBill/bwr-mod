@@ -114,10 +114,11 @@ final class SynchroscopeModel implements ComponentModel {
         if (!havePhase && !haveSlip) {
             context.rect(cx - face * 0.26f, cy + face * 0.52f, face * 0.52f, face * 0.18f, 1.2f, FLAG, false);
         }
-        // The lamps: dark when in phase (left), bright when in phase (right); with no signal both are off.
+        // The lamps: both are wired across the open breaker (dark lamp method), so both are dark in phase and brightest at
+        // 180 degrees, with a continuous brightness in between; with no signal (or a closed breaker) both are dark.
         if (havePhase || haveSlip) {
-            lamp(context, component, 0, data.lamp1Color, SyncMath.darkLamp(shown));
-            lamp(context, component, 1, data.lamp2Color, SyncMath.brightLamp(shown));
+            lamp(context, component, 0, data.lamp1Color, SyncMath.lampBrightness(0, shown));
+            lamp(context, component, 1, data.lamp2Color, SyncMath.lampBrightness(1, shown));
         }
         if (context.lod() >= PanelRenderContext.LOD_FULL) {
             scratch.drawText(context, component, this);
@@ -125,7 +126,7 @@ final class SynchroscopeModel implements ComponentModel {
     }
 
     private static void lamp(PanelRenderContext context, PanelComponent component, int index, int colour, double brightness) {
-        if (brightness < 0.04) {
+        if (brightness < 0.004) {
             return;
         }
         float lens = lamp(component);

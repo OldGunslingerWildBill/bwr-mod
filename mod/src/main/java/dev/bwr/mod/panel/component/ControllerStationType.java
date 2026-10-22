@@ -16,22 +16,22 @@ import java.util.List;
  *   <li>{@code setpoint}: optional. Bound, the setpoint pointer follows it and the station's setpoint is remote; unbound, the
  *       setpoint is the station's own (local).</li>
  *   <li>{@code auto_demand}: the demand, 0 to 100 percent, that an outside source provides (a CC program, a plant
- *       controller signal). In AUTO the demand bar shows it.</li>
+ *       controller signal). In AUTO it overrides the PID: the demand follows it.</li>
  * </ul>
  *
  * <h3>Outputs</h3>
- * {@code demand} (0 to 100, the station's own demand), {@code mode} (0 MAN, 1 AUTO), {@code raise} and {@code lower}
+ * {@code demand} (0 to 100: what the machine is told, in MAN and in AUTO), {@code mode} (0 MAN, 1 AUTO), {@code raise} and {@code lower}
  * (1 only while the button is held: momentary), {@code setpoint} (the local setpoint in the scale's units).
  *
  * <h3>What it does, and what it never does</h3>
- * <b>The station holds no control law and nothing acts by itself.</b> An output changes only when a player operates the
- * station. In MAN, RAISE and LOWER (and the mouse wheel over it) move the demand by Step percent; in AUTO with no bound
- * setpoint they move the local setpoint by Setpoint step percent of the span; in AUTO with a bound setpoint they move
- * nothing (only the momentary {@code raise} and {@code lower} outputs show the press, for a program that wants it). In AUTO
- * the demand bar shows the {@code auto_demand} input and the {@code demand} output stays where MAN left it. Pressing MAN
- * takes over from the demand the bar shows (bumpless: the {@code demand} output becomes {@code auto_demand} when that has a
- * signal). Wire {@code demand} (with {@code mode}) to an actuator, and bind {@code auto_demand} to whatever you wrote that
- * should run it in AUTO: the mod provides the hardware, you provide the logic.
+ * <b>Nothing runs in MAN, and a new station is in MAN at 0.</b> In MAN, RAISE and LOWER (and the mouse wheel over it) move the
+ * demand by Step percent. <b>The built-in PID runs only for a station the player has put in AUTO</b> ({@link StationPid}; its
+ * settings are the Kp, Ti, Td, Reverse, OutMin and OutMax config fields): it moves the demand so that the process variable follows
+ * the setpoint, at every sample of the panel. In AUTO, RAISE and LOWER move the local setpoint by Setpoint step percent of the
+ * span (with a bound setpoint they move nothing; only the momentary {@code raise} and {@code lower} outputs show the press). A
+ * signal on {@code auto_demand} overrides the PID: AUTO follows it and the {@code demand} output follows it too. Selecting AUTO
+ * starts from the demand MAN left and selecting MAN keeps the last output (bumpless both ways); no process variable signal freezes
+ * the output. Wire {@code demand} (with {@code mode}) to an actuator.
  *
  * <h3>Operating it</h3>
  * Click AUTO, MAN, RAISE or LOWER; hold the use key on RAISE or LOWER to keep stepping (about five steps a second).
@@ -49,7 +49,13 @@ public final class ControllerStationType extends PanelInputType {
             ConfigField.decimal("Max", "component.bwr.field.max", -ControllerStationData.LIMIT, ControllerStationData.LIMIT),
             ConfigField.text("Units", "component.bwr.field.units", ControllerStationData.MAX_UNITS),
             ConfigField.decimal("Step", "component.bwr.field.demand_step", ControllerStationData.MIN_STEP, ControllerStationData.MAX_STEP),
-            ConfigField.decimal("SpStep", "component.bwr.field.setpoint_step", ControllerStationData.MIN_STEP, ControllerStationData.MAX_STEP));
+            ConfigField.decimal("SpStep", "component.bwr.field.setpoint_step", ControllerStationData.MIN_STEP, ControllerStationData.MAX_STEP),
+            ConfigField.decimal("Kp", "component.bwr.field.pid_kp", ControllerStationData.MIN_KP, ControllerStationData.MAX_KP),
+            ConfigField.decimal("Ti", "component.bwr.field.pid_ti", ControllerStationData.MIN_TI, ControllerStationData.MAX_TI),
+            ConfigField.decimal("Td", "component.bwr.field.pid_td", 0.0, ControllerStationData.MAX_TD),
+            ConfigField.bool("Reverse", "component.bwr.field.pid_reverse"),
+            ConfigField.decimal("OutMin", "component.bwr.field.pid_out_min", 0.0, 99.0),
+            ConfigField.decimal("OutMax", "component.bwr.field.pid_out_max", 1.0, 100.0));
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("pv"), PortSpec.of("setpoint"), PortSpec.of("auto_demand"));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("demand"), PortSpec.of("mode"), PortSpec.of("raise"),
             PortSpec.of("lower"), PortSpec.of("setpoint"));
@@ -104,6 +110,12 @@ public final class ControllerStationType extends PanelInputType {
     @Override
     public String labelPrefix() {
         return "CS";
+    }
+
+    /** A station in AUTO keeps its panel sampled: the PID steps on the sampler's cadence even when no input is a live source. */
+    @Override
+    public boolean keepsSampling(PanelComponent component) {
+        return ((ControllerStationData) component.data()).auto;
     }
 
     @Override
@@ -214,9 +226,20 @@ public final class ControllerStationType extends PanelInputType {
         }
         if (data.auto != auto) {
             data.auto = auto;
+            // The PID starts afresh from the demand MAN left (bumpless); the panel is sampled while a station is in AUTO.
+            data.pidReady = false;
+            data.pidLastStep = Long.MIN_VALUE;
             markSaved(context);
         }
         context.setOutput(OUT_MODE, auto ? 1.0 : 0.0);
+        dev.bwr.mod.panel.wiring.PanelSampler.track(context.owner());
+        if (auto) {
+            // An outside demand takes over at once (the demand output follows it).
+            double external = component.input(IN_AUTO_DEMAND);
+            if (!Double.isNaN(external)) {
+                data.followDemand(context.owner(), component, Math.max(0.0, Math.min(100.0, external)));
+            }
+        }
     }
 
     private static void setDemand(OperateContext context, ControllerStationData data, double demand) {

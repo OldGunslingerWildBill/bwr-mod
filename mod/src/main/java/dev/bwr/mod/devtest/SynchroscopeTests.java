@@ -73,11 +73,12 @@ public final class SynchroscopeTests {
         double step = SyncMath.follow(170.0, -170.0, 0.12, 0.12);
         helper.assertTrue(step > 170.0 || step < -170.0, "from 170 towards -170 it goes up through 180, not down through 0: " + step);
         helper.assertTrue(near(SyncMath.follow(10.0, 40.0, 0.5, 0.0), 40.0), "no lag snaps to the target");
-        // The lamps: dark lamp dark in phase and full at 180, the bright lamp the other way round.
+        // The lamps: both are dark lamps (wired across the open breaker): dark in phase and full at 180.
         helper.assertTrue(near(SyncMath.darkLamp(0.0), 0.0) && near(SyncMath.darkLamp(180.0), 1.0) && near(SyncMath.darkLamp(90.0), 0.5)
                 && near(SyncMath.darkLamp(-90.0), 0.5), "dark lamp: 0, 0.5 at +-90, 1 at 180");
         for (double phase = -180.0; phase <= 180.0; phase += 15.0) {
-            helper.assertTrue(near(SyncMath.darkLamp(phase) + SyncMath.brightLamp(phase), 1.0), "the lamps are complementary at " + phase);
+            helper.assertTrue(near(SyncMath.darkLamp(phase), Math.pow(Math.sin(Math.toRadians(phase) / 2.0), 2.0))
+                    && near(SyncMath.darkLamp(phase), SyncMath.darkLamp(-phase)), "both lamps follow sin^2(phase/2), the same either side, at " + phase);
         }
         helper.succeed();
     }

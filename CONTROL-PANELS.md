@@ -1032,17 +1032,34 @@ second; the mouse wheel steps too).
 
 | | |
 | --- | --- |
-| Inputs | `pv` (process variable, in the scale units), `setpoint` (optional: bound = remote setpoint, unbound = the station's own), `auto_demand` (0 to 100 %, what the bar shows in AUTO) |
-| Outputs | `demand` (0 to 100), `mode` (0 MAN, 1 AUTO), `raise` and `lower` (1 only while held), `setpoint` (the local setpoint, in the scale units) |
-| Config | Min, Max, Units, Step (% of demand per press), Setpoint step (% of span per press) |
+| Inputs | `pv` (process variable, in the scale units), `setpoint` (optional: bound = remote setpoint, unbound = the station's own), `auto_demand` (0 to 100 %, an outside demand: when it has a signal AUTO follows it instead of the PID) |
+| Outputs | `demand` (0 to 100: what the machine is told, in MAN and in AUTO), `mode` (0 MAN, 1 AUTO), `raise` and `lower` (1 only while held), `setpoint` (the local setpoint, in the scale units) |
+| Config | Min, Max, Units, Step (% of demand per press), Setpoint step (% of span per press), and the AUTO PID: Kp, Ti, Td, reverse action, output low and high limits |
 
-* **MAN:** RAISE / LOWER / wheel move `demand` by Step. A program may also SET it.
-* **AUTO:** with no bound setpoint they move the local setpoint (Setpoint step); with a bound setpoint they move nothing (the
-  `raise` / `lower` pulses still show). The bar shows `auto_demand`; the `demand` output stays where MAN left it. A program may not
-  set the demand in AUTO.
-* **MAN after AUTO** is bumpless: `demand` takes the value the bar showed (when `auto_demand` has a signal).
-* There is **no control law in the station**. Wire `demand` and `mode` where you want them, and bind `auto_demand` to whatever you
-  wrote (a CC program through a CC binding, a plant controller signal) that should run it in AUTO.
+* **MAN:** RAISE / LOWER / wheel move `demand` by Step. A program may also SET it. **Nothing runs in MAN**: the demand is whatever
+  the hand left, and a new station is in MAN at 0.
+* **AUTO (the PID):** the station runs a PID, and only for as long as the player has selected AUTO, so that the process variable
+  follows the setpoint by moving `demand`. RAISE / LOWER / wheel move the local setpoint (Setpoint step); with a bound
+  setpoint they move nothing (the `raise` / `lower` pulses still show). A program may not set the demand in AUTO.
+* **The law** is the velocity form, on percentages of the scale's span, once for every sample of the panel (every
+  `sampleTicks`, 2 ticks = 0.1 s by default): `du = Kp * ( -dPV + dt / Ti * e - Td / dt * d2PVf )`, `e = SP - PV` (reverse
+  action flips the signs: the output rises as the PV rises). The proportional and derivative terms act on the measurement, so a
+  setpoint change goes through the integral only and never kicks the output; the derivative is filtered (time constant Td / 8).
+* **Defaults** (conservative: slow, and stable on a plant with a unit gain and lags of a few seconds): Kp 0.5, Ti 20 s, Td 0
+  (off), direct action, output limits 0 and 100. Tune for the plant: Kp 1 with Ti 5 s settles a recirculation pump to within 2 %
+  in 20 to 30 s without overshoot (the defaults take about 160 s); a plant with almost no lag (a valve position as the PV) rings
+  at Kp near 1, so keep Kp below 0.8 there. Kp 0.01 to 100, Ti 0.5 to 3600 s, Td 0 to 600 s, limits 0 to 100 with at least 1 between
+  them (otherwise both reset to 0 and 100).
+* **Bumpless both ways:** the state is the demand itself. Selecting AUTO starts from the demand MAN left (the first samples
+  only learn the PV), and selecting MAN keeps the last output. Nothing is saved for the PID except the settings, and those
+  only when not default; a reload starts it afresh the same way.
+* **Limits and anti-windup:** the new demand is clamped to the output limits, and there is no separate integral to run away, so
+  the output leaves a limit as soon as the error changes sign.
+* **No PV signal (NaN) in AUTO:** the PID freezes the demand and forgets its memory, so nothing winds up and nothing kicks when
+  the signal returns (a gap of more than 5 s between samples, an unloaded panel, is treated the same way).
+* **An outside demand overrides the PID:** with a signal on `auto_demand`, AUTO follows it (clamped to 0 to 100) and the
+  `demand` output follows it too, at once when AUTO is selected and on every sample after; the PID idles. Take the signal away
+  and the PID starts from where the demand is. So the bar is always the output, and MAN after AUTO never bumps.
 * **Wiring `demand` to a machine:** `demand` is 0 to 100, a command is usually 0 to 1 (a valve, a pump speed) or 0 to 1.2
   (recirculation flow), so the Scale of the sink has to be the command's top divided by 100. The panel link screen now starts
   a station's `demand` binding at that scale (0.01, 0.012, 15 for a 1500 MW grid tie, ...; any other output starts at 1 as
@@ -1057,8 +1074,11 @@ second; the mouse wheel steps too).
 A round meter: 12 o'clock is in phase, clockwise is FAST (the generator leads). Inputs `phase` (degrees, -180 to 180: the grid
 tie `phase_degrees`) and `slip` (Hz, positive when fast: its `slip_hz`). With only `slip` the pointer turns by itself at the slip
 rate (a turn a second per hertz); with `phase` it follows it the short way round; with both it dead reckons between samples. The
-two lamps under the dial are the synchronising lamps across the open breaker: the left is the dark lamp (dark when in phase), the
-right the bright lamp (full when in phase). No outputs. Config: reverse sense, the two lamp colours.
+two lamps under the dial are the synchronising lamps across the open breaker, wired the dark lamp way: each sees the difference of
+the generator and the grid voltage, 2 V |sin(delta / 2)| for equal voltages, so **both lamps are dark in phase and brightest at 180
+degrees out of phase** (their power goes as sin squared of half the angle: half bright at 90 degrees), with a continuous brightness
+in between that pulses at the slip frequency as the pointer turns. The mod models no voltage magnitude, so there is no magnitude
+difference added. No outputs. Config: reverse sense, the two lamp colours.
 
 The two lamps are **indicators, not buttons** (they are round lenses; the dial is the only thing that moves, and nothing on the
 instrument can be pressed). Closing the breaker is a separate pushbutton wired to the grid tie's `close_breaker` (and `trip_breaker`
