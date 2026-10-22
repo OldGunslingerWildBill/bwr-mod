@@ -5,12 +5,9 @@ import dev.bwr.mod.registry.BwrBlocks;
 import dev.bwr.mod.registry.BwrItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.entity.decoration.ItemFrame;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelSettings;
@@ -209,7 +206,9 @@ public final class UraniumClientCheck {
         floorAt = new double[] {cx, fy + 1, cz};
         // from the air: back along the vein, high, a little to the side
         double sx = -t[1], sz = t[0];
-        camera = new double[] {cx - t[0] * 58 + sx * 12, fy + 48, cz - t[1] * 58 + sz * 12};
+        // inside the open cut (clamped into it), high above the floor, so the view is not blocked by rock
+        double camX = Math.max(x0 + 3, Math.min(x1 - 3, cx - t[0] * 46 + sx * 8)), camZ = Math.max(z0 + 3, Math.min(z1 - 3, cz - t[1] * 46 + sz * 8));
+        camera = new double[] {camX, fy + 34, camZ};
         target = new double[] {cx + t[0] * 4, fy - 2, cz + t[1] * 4};
         pitCentre = new double[] {cx, fy, cz};
         tangentAtMiddle = t;
@@ -304,25 +303,27 @@ public final class UraniumClientCheck {
                 level.setBlock(new BlockPos(x - 3 + i * 2, SHOW_Y, z), bottom[i].defaultBlockState(), 2);
             }
         } else {
-            ItemStack[] row1 = {new ItemStack(BwrItems.RAW_URANIUM.get()), new ItemStack(BwrItems.URANIUM_INGOT.get()),
-                    new ItemStack(BwrItems.DEPLETED_URANIUM.get()), new ItemStack(BwrItems.PLUTONIUM_INGOT.get())};
-            ItemStack[] row2 = {new ItemStack(BwrItems.URANIUM_ORE.get()), new ItemStack(BwrItems.DEEPSLATE_URANIUM_ORE.get()),
-                    new ItemStack(BwrItems.RAW_URANIUM_BLOCK.get()), new ItemStack(BwrItems.URANIUM_BLOCK.get())};
+            String[] row1 = {"bwr:raw_uranium", "bwr:uranium_ingot", "bwr:depleted_uranium", "bwr:plutonium_ingot"};
+            String[] row2 = {"bwr:uranium_ore", "bwr:deepslate_uranium_ore", "bwr:raw_uranium_block", "bwr:uranium_block"};
             for (int i = 0; i < 4; i++) {
-                frame(level, new BlockPos(x - 3 + i * 2, SHOW_Y + 3, z - 3), row1[i]);
-                frame(level, new BlockPos(x - 3 + i * 2, SHOW_Y + 1, z - 3), row2[i]);
+                icon(level, x - 3 + i * 2 + 0.5, SHOW_Y + 3.6, z - 2.4, row1[i]);
+                icon(level, x - 3 + i * 2 + 0.5, SHOW_Y + 1.5, z - 2.4, row2[i]);
             }
         }
     }
 
-    private static void frame(ServerLevel level, BlockPos pos, ItemStack stack) {
-        ItemFrame frame = new ItemFrame(level, pos, Direction.SOUTH);
-        frame.setItem(stack, false);
-        level.addFreshEntity(frame);
+    /** An item shown the way the inventory shows it, 1.8 blocks across, always facing the camera. */
+    private static void icon(ServerLevel level, double x, double y, double z, String item) {
+        var server = level.getServer();
+        String command = String.format(java.util.Locale.ROOT,
+                "summon minecraft:item_display %.2f %.2f %.2f {item:{id:\"%s\",count:1},item_display:\"gui\",billboard:\"center\","
+                        + "transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[1.8f,1.8f,1.8f]},"
+                        + "brightness:{sky:15,block:15}}", x, y, z, item);
+        server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withLevel(level).withSuppressedOutput(), command);
     }
 
     private static double[] showCamera(int current) {
-        return current == 2 ? new double[] {showX() + 0.5, SHOW_Y + 0.05, showZ() + 3.3} : new double[] {showX() + 0.5, SHOW_Y + 0.9, showZ() + 0.6};
+        return current == 2 ? new double[] {showX() + 0.5, SHOW_Y + 0.05, showZ() + 4.4} : new double[] {showX() + 0.5, SHOW_Y + 0.9, showZ() + 1.8};
     }
 
     private static double[] showTarget(int current) {
