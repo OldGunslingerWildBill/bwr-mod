@@ -114,7 +114,7 @@ redstone or to CC:Tweaked. A control commands the plant only when someone operat
 - **Gauges.** Round dials, edgewise meters, curved bar gauges and bar graphs, with colour bands, units,
   and Text size and Tick size sliders. A gauge can be limited to one kind of signal (level, pressure,
   and so on), and shows FE as W, kW or MW.
-- **Switches and lamps.** Control switches (GE and Westinghouse styles) that spring back to NORMAL, key
+- **Switches and lamps.** Control switches (General Power and Westingapartment styles) that spring back to NORMAL, key
   switches, selectors, toggles, push-to-turn switches, a joystick switch, pushbuttons, the guarded
   two-button RPS trip, and lamps.
 - **Annunciators.** Windows that flash until acknowledged, then hold steady until the condition clears,

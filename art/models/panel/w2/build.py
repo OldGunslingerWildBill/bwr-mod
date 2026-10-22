@@ -269,7 +269,7 @@ def nameplate(c, target=False, key_bushing=False):
 def common_labels(c, face):
     z = face + 0.01
     px.label("caption", c[0], c[1] + 1.24, z, 0.10)       # DB p.14 table 3 lines 15/16
-    px.label("maker", c[0], c[1] - 1.31, z, 0.065)        # "Westinghouse" on every DB p.13 nameplate
+    px.label("maker", c[0], c[1] - 1.31, z, 0.065)        # "Westingapartment" on every DB p.13 nameplate (placeholder anchor; the game draws no maker legend)
 
 
 def switch_labels(c, face, pull_legend=True):
@@ -517,7 +517,7 @@ def check_inside(name, w, h, eps=1e-4):
 
 def label_overlay():
     """Temporary sample legends at the label anchors (preview only; never exported)."""
-    sample = {"caption": "CIRCUIT BREAKER", "maker": "Westinghouse", "top": "NORMAL", "left": "TRIP",
+    sample = {"caption": "CIRCUIT BREAKER", "maker": "Westingapartment", "top": "NORMAL", "left": "TRIP",
               "right": "CLOSE", "legend": "PULL TO LOCK"}
     made = []
     mat = material("101010")

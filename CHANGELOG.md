@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: real brand names out of the panel styles
+
+- **Display names only.** The panel Style choice that read "GE" now reads **General Power**, and "Westinghouse" now reads **Westingapartment** (`component.bwr.option.Style.ge` and `.westinghouse` in the language file). "Yokogawa" (the DX1000 and DX2000 recorders) and "Terry" are unchanged.
+- **Nothing saved or loaded changes.** The option keys (`ge`, `westinghouse`), the saved values, registry ids and the model files (`ge_sb_*`, `w2_*`, `ge_ab40`, `ge_180_*`) keep their names, so old worlds and data pack boards load as before. No texture or model carries a maker's lettering (the models are vertex coloured, and the game draws no maker legend), so none was regenerated.
+- README.md, CONTROL-PANELS.md and SIGNALS.md use the new names. Factual citations of real documents and designs (catalog dimensions, reference data, the real GE XX-YY coordinate convention in the specs) are left as written.
+- `neoforge.mods.toml` no longer says the plant can only be controlled with redstone without CC:Tweaked (panels exist), and TESTING.md no longer carries a fixed GameTest count that goes stale.
+
 ## Unreleased: reprocessing plant and the MOX route (the fuel cycle closes)
 
 A spent assembly can now be taken apart for plutonium and uranium, and the plutonium made into MOX fuel: uranium and steel make fuel in the fabricator, the reactor burns it, the **Reprocessing Plant** returns plutonium, depleted uranium and fission-product waste, and the fabricator makes MOX from the plutonium and the depleted uranium. GUI network protocol is now 24 (the fabricator's snapshot changed and there is a new menu): update client and server together. Old saves load. Numbers table, model and reasons: FUELS-AND-RODS.md.

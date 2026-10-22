@@ -626,7 +626,7 @@ def build_target_pistol(preview_on):
     px.label("left", sx - 0.64, sy + 0.42, z, 0.13, rot_deg=55)     # TRIP, reads up to the right
     px.label("right", sx + 0.64, sy + 0.42, z, 0.13, rot_deg=-55)   # CLOSE, reads down to the right
     px.label("lower_left", sx - 0.80, sy - 0.10, z, 0.085)          # PULL TO LOCK
-    px.label("bottom", sx, sy - 0.80, z, 0.085)                     # GENERAL ELECTRIC
+    px.label("bottom", sx, sy - 0.80, z, 0.085)                     # GENERAL POWER (a placeholder anchor; the game draws no maker legend)
 
     flag_mat = MATS["flag"]
 
