@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased: uranium ore (the mod's own uranium, with large veins)
+
+The fuel fabricator's item route no longer needs another mod for uranium: the mod has its own ore, raw uranium, ingot and storage blocks, and world generation that gives biomes different amounts of it. Old worlds load as they were (old chunks have no ore; chunks generated from now on do). Full description, biome table, measurements and safety notes: URANIUM-ORE.md.
+
+### Blocks, items, recipes
+
+- **New:** `uranium_ore`, `deepslate_uranium_ore`, `raw_uranium`, `raw_uranium_block`, `uranium_ingot`, `uranium_block` (fuel creative tab). All four blocks need an **iron pickaxe**. The ores drop raw uranium (Fortune adds the vanilla ore bonus, Silk Touch drops the ore); the storage blocks drop themselves.
+- **Recipes:** raw uranium, uranium ore and deepslate uranium ore smelt (200 ticks) or blast (100) to an ingot; nine raw uranium make a raw block, nine ingots a block, and each block makes nine back.
+- **Tags:** `c:ores/uranium`, `c:ores_in_ground/stone`, `c:ores_in_ground/deepslate`, `c:raw_materials/uranium`, `c:ingots/uranium`, `c:storage_blocks/uranium`, `c:storage_blocks/raw_uranium`, `minecraft:mineable/pickaxe`, `minecraft:needs_iron_tool`. The fabricator reads the two uranium tags already, so our ingot and raw uranium feed it with no code change, and Mekanism's uranium keeps working beside it.
+- **Textures** (`tools-make-uranium-assets.py`, Pillow): black pitch-like blobs in stone and deepslate with a few dull ochre weathering specks (real uraninite is black, not green), lumpy black raw block, dark metal block, and slab and lump icons in the style of the other fuel-cycle icons.
+
+### World generation (no noise router change)
+
+- **Super veins.** A custom feature `bwr:uranium_vein` places long winding ribbons of altered host rock (granite, tuff, calcite or andesite by group) with pockets of ore and the odd raw uranium block: 200 to 360 blocks long, 4,000 to 17,000 blocks of body, up to two side ribbons. Vanilla's noise settings and `NoiseRouter` are **not** changed or overridden. A vein is a pure function of the world seed and a 384 block grid cell, and every chunk places only the blocks inside its own 16 x 16 columns, so no chunk ever writes into another (loaded or not) and the slices of neighbouring chunks meet exactly in any generation order. Veins replace only host rock (`#bwr:uranium_host_rock`), and not within 6 blocks of the surface.
+- **Small blobs** beside them (vanilla's ore feature behind the server option).
+- **Biome groups by real geology**, in datapack JSON driven by biome tags and NeoForge biome modifiers (`data/bwr/neoforge/biome_modifier/uranium_<group>.json`): `arid` (desert, badlands: sandstone-hosted roll-front deposits; 85 % of cells have a vein, grade 34 %), `highland` (windswept hills, mountains: granite-hosted; 50 %, 28 %), `semi_arid` (savanna; 30 %, 24 %), `lowland` (plains, forests, taigas, jungles, swamps; 12 %, 18 %), `aquatic` (oceans, rivers, beaches; 2 %, 12 %). Every number is in the JSON (chance, grade, raw block share, vein shape, blob size and count, height range); each ordinary overworld biome is in exactly one group.
+- **Safety.** Only newly generated chunks get ore: nothing listens for a chunk loading, there is no retrogen, and generation writes only into the chunk it is placed in. New server option **`uraniumOreGeneration`** (`serverconfig/bwr-gameplay.toml`, default `true`): the mod's own biome modifier type `bwr:add_uranium_features` adds nothing when it is off (a NeoForge `neoforge:conditions` entry would be evaluated before the world config exists), and the vein and blob features read it for every chunk. Removing the mod leaves unknown blocks that load as air. Mekanism's own uranium generation is separate; a pack can turn either off (URANIUM-ORE.md).
+- **Measured** (`:mod:runWorldgenCheck`, same 64 x 64 chunks in five flat dimensions that differ only in biome): uranium blocks a chunk 12.55 arid, 5.39 highland, 2.62 semi-arid, 0.93 lowland, 0.10 aquatic. Largest connected vein body in the arid square 12,023 blocks, 159 x 23 x 182 (span 242 blocks); in real terrain 5,150 blocks, span 151, cut by the caves. The vein feature costs about 50 microseconds a chunk. With the option off a block of chunks over a vein got 0 uranium; the chunks generated round them afterwards got uranium and none of the first block changed.
+
+### Tests and checks
+
+- GameTests `UraniumOreTests` (new namespace `bwruranium`, `-PbwrOnlyUranium` runs just them): registration and iron-pickaxe level, all tags, recipes (smelting, blasting, nine to one both ways), loot (raw uranium, Silk Touch, Fortune III averaging 2.2, storage blocks), the fabricator making an assembly from our ingots and from raw uranium (and Mekanism's items counting when it is loaded), the vein shape (long, one connected body, the chunk slices add up to the whole vein block for block, no chunk given a block outside it), the grade scaling the ore, the biome table read back from the loaded datapack (exactly one group per ordinary biome, strictly falling numbers, the same shape in every group), and the server option on the biome modifier.
+- New `:mod:runWorldgenCheck` (a dedicated server on a fresh world plus the datapack in `mod/src/devtest-pack`; fails the build without `BWR WORLDGEN CHECK: PASS`) and client check `-PbwrUraniumClientCheck` (1920 x 1080 pictures of a vein, the blocks and the items). Both are dev-only (the devtest package is not in the jar).
+- `tools-audit-assets.py` lists the two ores as made by the world (no recipe), `tools-audit-recipes.py` as not craftable with the reason; neither lost a check.
+- `mod/build.gradle`: the default GameTest namespaces are now `bwr,bwrtick,bwruranium`.
+
 ## Unreleased: flaky GameTests (chunk forcing and waiting for the chunk system)
 
 Test-only; no game behaviour changed. Six GameTests failed now and then, the batch they were in and the load of the machine deciding which. Three causes, all in how the fixtures treat chunks.

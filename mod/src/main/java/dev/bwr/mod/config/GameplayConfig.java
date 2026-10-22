@@ -54,6 +54,12 @@ public final class GameplayConfig {
             .comment("Outward travel of an unlatched rod in notch spans per second; gameplay calibration")
             .defineInRange("rodDriftNotchesPerSecond", 0.1, 0.001, 24.0);
 
+    public static final ModConfigSpec.BooleanValue URANIUM_ORE_GENERATION = BUILDER
+            .comment("Generate this mod's uranium ore (small blobs and the large veins) in newly generated chunks. Never touches chunks that already exist. "
+                    + "Read when the server starts: changing it needs a restart to take effect on the biome lists (the vein feature itself re-reads it for every chunk). "
+                    + "To turn off Mekanism's uranium instead, use Mekanism's own world config.")
+            .define("uraniumOreGeneration", true);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static double failureHazardPerSecond() { return read(FAILURE_HAZARD_PER_SECOND); }
@@ -64,6 +70,11 @@ public final class GameplayConfig {
     public static double wallStrengthCapPsig() { return read(WALL_STRENGTH_CAP_PSIG); }
     public static int tritiumSamplesPerRod() {
         return SPEC.isLoaded() ? TRITIUM_SAMPLES_PER_ROD.get() : TRITIUM_SAMPLES_PER_ROD.getDefault();
+    }
+
+    /** Whether new chunks get uranium ore. True until the server config says otherwise (and before it is loaded). */
+    public static boolean uraniumOreGeneration() {
+        return SPEC.isLoaded() ? URANIUM_ORE_GENERATION.get() : URANIUM_ORE_GENERATION.getDefault();
     }
 
     private static double read(ModConfigSpec.DoubleValue value) {

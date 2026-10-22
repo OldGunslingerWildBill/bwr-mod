@@ -49,6 +49,10 @@ NO_RECIPE = {
     "corium": "made by a core melting through its vessel; a recipe for it would be the bug",
     # Made by the fuel fabricator.
     "depleted_uranium": "byproduct of the fuel fabricator's item route",
+    # Found in the ground: the ore blocks are what the uranium veins and ore blobs are made of (worldgen, URANIUM-ORE.md).
+    # Their drops (raw uranium, with Fortune and Silk Touch) are in data/bwr/loot_table/blocks.
+    "uranium_ore": "natural ore, placed by world generation; mined for raw uranium (silk touch gives the block)",
+    "deepslate_uranium_ore": "natural ore in deepslate, placed by world generation; mined for raw uranium (silk touch gives the block)",
     # Made by the reprocessing plant.
     "fission_product_waste": "what burning fuel leaves, the reprocessing plant's byproduct: nothing uses it, and a recipe would make fuel waste out of nothing",
 }

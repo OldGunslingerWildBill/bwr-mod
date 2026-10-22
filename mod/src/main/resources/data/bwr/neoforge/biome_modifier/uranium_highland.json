@@ -1,0 +1,9 @@
+{
+  "type": "bwr:add_uranium_features",
+  "biomes": "#bwr:has_uranium/highland",
+  "features": [
+    "bwr:uranium_vein_highland",
+    "bwr:uranium_blob_highland"
+  ],
+  "step": "underground_ores"
+}

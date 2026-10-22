@@ -63,6 +63,10 @@
     "bwr:mimic_band_black",
     "bwr:wall_display",
     "bwr:wall_display_wide",
-    "bwr:control_stand"
+    "bwr:control_stand",
+    "bwr:uranium_ore",
+    "bwr:deepslate_uranium_ore",
+    "bwr:raw_uranium_block",
+    "bwr:uranium_block"
   ]
 }

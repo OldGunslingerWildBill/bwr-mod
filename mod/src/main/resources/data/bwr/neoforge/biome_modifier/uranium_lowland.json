@@ -1,0 +1,9 @@
+{
+  "type": "bwr:add_uranium_features",
+  "biomes": "#bwr:has_uranium/lowland",
+  "features": [
+    "bwr:uranium_vein_lowland",
+    "bwr:uranium_blob_lowland"
+  ],
+  "step": "underground_ores"
+}

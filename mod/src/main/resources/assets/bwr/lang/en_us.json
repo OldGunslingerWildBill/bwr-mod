@@ -1229,5 +1229,11 @@
   "finish.bwr.grey": "Grey",
   "finish.bwr.light_blue": "Light blue",
   "item.bwr.annunciator_control": "Annunciator Control Module",
-  "component.bwr.annunciator_control": "Annunciator Control Module"
+  "component.bwr.annunciator_control": "Annunciator Control Module",
+  "block.bwr.uranium_ore": "Uranium Ore",
+  "block.bwr.deepslate_uranium_ore": "Deepslate Uranium Ore",
+  "block.bwr.raw_uranium_block": "Block of Raw Uranium",
+  "block.bwr.uranium_block": "Block of Uranium",
+  "item.bwr.raw_uranium": "Raw Uranium",
+  "item.bwr.uranium_ingot": "Uranium Ingot"
 }
