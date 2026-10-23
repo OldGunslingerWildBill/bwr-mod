@@ -245,6 +245,14 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.SPENT_FUEL_POOL_COOLING_IN);
     public static final DeferredItem<BlockItem> SPENT_FUEL_POOL_COOLING_OUT =
             ITEMS.registerSimpleBlockItem(BwrBlocks.SPENT_FUEL_POOL_COOLING_OUT);
+    public static final DeferredItem<BlockItem> REFUELLING_RAIL =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.REFUELLING_RAIL);
+    public static final DeferredItem<BlockItem> TRANSFER_CANAL =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.TRANSFER_CANAL);
+    public static final DeferredItem<BlockItem> CANAL_GATE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CANAL_GATE);
+    public static final DeferredItem<BlockItem> REFUELLING_BRIDGE_CONSOLE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.REFUELLING_BRIDGE_CONSOLE);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_CONTROLLER =
             ITEMS.registerSimpleBlockItem(BwrBlocks.SUPPRESSION_POOL_CONTROLLER);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_WALL =
@@ -468,6 +476,10 @@ public final class BwrItems {
                         output.accept(SPENT_FUEL_POOL_MAKEUP_PORT.get());
                         output.accept(SPENT_FUEL_POOL_COOLING_IN.get());
                         output.accept(SPENT_FUEL_POOL_COOLING_OUT.get());
+                        output.accept(REFUELLING_RAIL.get());
+                        output.accept(TRANSFER_CANAL.get());
+                        output.accept(CANAL_GATE.get());
+                        output.accept(REFUELLING_BRIDGE_CONSOLE.get());
                         output.accept(SUPPRESSION_POOL_CONTROLLER.get());
                         output.accept(SUPPRESSION_POOL_WALL.get());
                         output.accept(SUPPRESSION_POOL_SUCTION.get());

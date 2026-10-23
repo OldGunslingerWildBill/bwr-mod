@@ -1,0 +1,166 @@
+# The refuelling bridge and the cattle chute
+
+Fuel used to move by clicking the refuelling map: one click, one assembly, instantly, from the core into your pocket. A
+real plant does not do that. A **refuelling bridge** rides rails across the refuel floor, over the open reactor cavity and
+the spent fuel pool; a telescoping mast lowers a grapple, latches the handle of **one** assembly, lifts it, carries it, and
+sets it down in a core position or a pool rack. The whole way the fuel stays under water, and the cavity and the pool are
+joined by a water-filled slot with gates, the **cattle chute** (plant slang for the transfer canal). Nothing in it moves
+unless a player, or their program, says so.
+
+The old instant map is the server option `instantRefuelling` (`bwr-gameplay.toml`), **off by default**. With it off, the
+refuelling map still opens and still shows the whole core (burnup, k-inf), but its buttons stay dark and say how fuel moves
+now; with it on, it works exactly as it did. Existing worlds keep their fuel either way.
+
+## Building one
+
+All blocks are in the Realistic BWR creative tab (iron and gray concrete; the console also wants a comparator and glass panes).
+
+1. **Rails.** Two parallel runs of **Refuelling Rail**, on the refuel floor, at the same height, up to 40 blocks apart, overlapping
+   along their length by at least two blocks. A rail has an axis (the way you face when you place it); the bridge runs along it.
+   The reactor's interior and the pool's interior must both lie between the rails (inside their overlap, along the rails, and
+   between them, across). The reactor needs its head off (the refuelling vessel state); the pool needs to be formed.
+2. **The cattle chute.** A straight row of **Transfer Canal** blocks from the reactor shell to the pool wall, in a row that both
+   interiors share, filling every column between the two shells. It is a **trench**: a 4.5 m assembly stands upright in it, so the
+   canal blocks are stacked (the lowest has the floor, the highest the water surface). The top block is at the height of the rails
+   or up to four blocks below them. One or more **Canal Gate** blocks stand in the row (a gate is a canal block with a plate
+   across it; stack gates to make a gate the full depth). A bucket fills or drains the whole stack it is used on.
+3. **The console.** A **Refuelling Bridge Console** beside any rail block. Right-click it for the control screen; sneak-click for
+   what the bridge sees (rails, reactor, pool, chute, state).
+
+Gate and canal are player actions: an empty hand opens or closes a gate; a bucket drains or fills a canal. Nothing else ever does.
+
+## Using it
+
+The console opens the refuelling map as the bridge's control. Pick a core position on the map (click it), pick a rack cell
+(the arrows and the EMPTY and FUEL jumps step through the pool's racks, four cells to a rack), and queue the move:
+
+| Button | Does |
+|---|---|
+| TO POOL | the assembly in the selected core position goes to the chosen free rack cell |
+| TO CORE | the assembly in the chosen rack cell goes to the selected empty core position |
+| SET DOWN | after a halt, the assembly still on the grapple goes to the chosen free rack cell |
+| ABORT | stops where it is, forgets the queue (an assembly on the grapple stays on it) |
+| RESUME | after a halt (a closed gate, the hoist limit, a destination that filled up) tries the step again |
+| OVERRIDE | overrides the hoist limit (see below) |
+
+The screen shows the phase, the time left in it, the queue, the water over the core and over the racks, the chute (open, closed,
+drained, absent), what is on the grapple, and the reason for a halt. Up to 16 moves queue; they run one at a time.
+A move is refused at once, with the reason, if it cannot be done: no reactor or pool under the bridge, the head is on, the
+source is empty, the destination is taken, a position is out of reach, the chute is absent, or a gate is shut.
+
+### A move, phase by phase
+
+| Phase | What happens | Time |
+|---|---|---|
+| travel | the bridge runs along the rails and the trolley across them, mast retracted | the slower of 1.0 m/s along the rails and 0.6 m/s across |
+| lower | the mast telescopes down until the grapple sits on the handle | 0.6 m/s |
+| latch | the grapple closes. **Just before it the hoist limit is checked.** At its end the assembly leaves its seat (the reactor's own `unloadAssembly`, which stamps `bwr:discharge_time`; or the pool's `extractFrom`) and is on the grapple | 4 s |
+| lift | the assembly is raised 1.0 m off its seat | 0.3 m/s (loaded) |
+| carry | the loaded trolley goes to the other body of water, one leg per waypoint, through the chute between cavity and pool, all three axes together | 1.0 / 0.6 / 0.3 m/s |
+| set down | the assembly is lowered onto its new seat | 0.3 m/s |
+| release | the grapple opens; the assembly goes in (the reactor's `loadAssembly`, the pool's `insertAt`) | 4 s |
+| retract | the mast goes back up | 0.6 m/s |
+
+The speeds are real-ish: a bridge runs at fractions of a metre a second and a loaded hoist at about 10 cm/s; the game compresses them
+about threefold and keeps the ratios. Typical times from the GameTests (cavity to the far rack, 11 m apart): see the table at the end.
+
+The mast and grapple are drawn from the console's synced state (no entities, no per-tick packets: one update when a phase begins,
+the client advances the pose with its own clock). The operator's seat is the console beside the rails; riding the gantry was not built.
+
+## Water, depth and dose
+
+The top of the carried assembly, its handle where the grapple holds it, is the point that matters. The bridge tracks the metres of water
+over it, `cover = surface - handle`, at every tick of a move, in whichever body it is over:
+
+* **cavity**: the top of the drawn core plus the metres of water the reactor model has above the top of active fuel,
+  `(collapsed level - TAF) x 0.0254` (the same number `RadiationField` uses for an open head; 2.8 m for a cold shutdown vessel, 4.4 m at the
+  normal operating level);
+* **pool**: its own level, `floor + levelM`, so a boiled-down pool shows up at once;
+* **chute**: the surface of its top canal block (13/16 of the block); none if any block of its row is drained.
+
+**Registered radiation sources** (`RadiationSources`, so the Survey Meter and the Area Radiation Monitor read them):
+
+* the **carried assembly**: gamma power `0.5 x decay heat` (`AssemblyDecayHeat`, from its burnup and its discharge stamp, the model's
+  `GAMMA_FRACTION_OF_DECAY_HEAT`), a point source at the handle, through `e^(-7.07 x cover)` (`DoseModel.waterTransmission`, the law the
+  reactor model applies to an open head), nothing in air. Registered while it is carried, cleared when it is set down, the console is broken or the chunk unloads;
+* the **pool's stored fuel**: each rack with fuel is a point source at the middle of its top, the same gamma share of the decay heat of what it holds, through the water over
+  the rack top (none when the water has fallen below it). One provider for every pool in the level.
+
+For a just-discharged 45 GWd/t assembly (315 kW, 157 kW gamma) seen 4.5 m above its rack: about 4 uSv/h seated under 3 m of water, 4 mSv/h lifted a
+metre (2 m over the handle), and tens of Sv/h with the handle out of the water. Each metre of water is a factor of 1,200.
+Looking down is the conservative case: the model has the point source at the handle and counts only the water straight above it.
+
+### The hoist limit
+
+The bridge **refuses to lift an assembly higher than leaves 1.5 m of water over its handle** (the check is made for the whole route, every waypoint,
+just before the grapple latches, so a refusal leaves the assembly on its seat). It halts with the figures and waits. The player may **override** it
+(OVERRIDE on the screen, `setOverride(true)` from a program): the bridge then lifts the real 4.5 m, the whole length of the assembly, which in
+this game's shallow water brings the handle out of it, and the survey meter spikes. This is the machine's own limit, a player-facing interlock; it
+protects nothing in the plant and nothing reads it. It is not in the physics module: the `core` physics scan (`ReactorCoreTickTest.test07`) objected to a method
+named for it, and the decision now lives in the block entity (the core only measures the cover).
+
+Normal carries lift 1.0 m (game scale: the real lift is 4.5 m under 7 m of water); in the chute the assembly is held 2.0 m under the lowest of the three
+surfaces (cavity, pool, canal). With a 3 m full pool the cover is 2 m over a rack seat; with a cold shutdown vessel 1.8 m over the core.
+
+### The cattle chute, and how it couples the water
+
+**Decision: it does not.** An open gate is a path, not a pipe. The cavity's water is the reactor vessel's inventory (level from the collapsed level
+of the pressure vessel model, with its own pressure and temperature) and the pool's is a separate lumped body (mass and temperature, evaporation,
+boil-off, a cooling train). Joining them for level would need a flow law between two plant models and would make an open gate drain the pool into the
+vessel (or the reverse) by itself, an automatic action on the plant. Neither is cheap and the second is not allowed; and nothing a player sees needs it, because
+both bodies already have levels the bridge reads. So:
+
+* a **closed gate** isolates the pool from the cavity for the bridge: the move is refused (and a gate shut during a move stops the bridge in front of it,
+  with the assembly on the grapple, until a player opens it and resumes);
+* the chute is a third body of water with its own level (its blocks'): drain one column with a bucket and the chute is **drained**; the bridge halts at the hoist limit
+  (nothing would shield the assembly) and an overridden carry makes the meter spike as it passes through;
+* the chute must be deep enough that the assembly does not hang through its floor (a shape rule, not an override): in the GameTest world 9 stacked blocks.
+
+## Performance, chunks, saves
+
+* **One ticker while moving, none idle.** The console has no block entity ticker. A move schedules ordinary block ticks, one per game tick, only until the queue is empty or the
+  bridge halts. An idle or halted bridge has nothing scheduled (`aBridgeThatIsNotMovingHasNothingScheduledAndTicksOnlyWhileItMoves`). The reactor and the pool are read through their registries.
+* **Chunk safe.** It never loads or forces a chunk: if a chunk of the reactor or pool it works with is not loaded it waits where it is (time does not run for it), and the survey reads only loaded blocks.
+* **Saves.** The state of a move (phase, ticks done, the leg, the route, the queue, the assembly on the grapple) is saved with the console, only when non-default; an old world has none of it and loads as before.
+  Breaking the console drops what the grapple holds.
+* **Fuel is never duplicated or lost.** The assembly is in exactly one of: a core position, a rack cell, the grapple. It leaves its seat when the grapple latches and enters its new one when the grapple releases.
+  If the destination has filled up the bridge halts with the assembly on the grapple (SET DOWN or RESUME).
+
+## Computers
+
+CC:Tweaked peripheral `bwr_refuelling_bridge` on the console (every method runs on the server thread):
+
+| Method | Returns |
+|---|---|
+| `getStatus()` | `ready`, `problem`, `phase`, `busy`, `halted`, `progress`, `secondsLeftInPhase`, `queued`, `override`, `holding`, `carried`, `carriedCoverM`, `grapple {x,y,z}`, `haltReason`, `chute`, `reactorFound`, `poolFound`, `cavityWaterM`, `coreSlots`, `coreReady`, `poolWaterOverRacksM`, `rackCells`, `move` |
+| `getRacks()` | one table per rack: position, and four `cells` (`cell` number, `occupied`, `decayHeatKW`) |
+| `isCoreOccupied(index)` | whether core position `index` (the refuelling map's numbering, 0 in the middle) holds fuel |
+| `queueCoreToPool(coreIndex, cellIndex)`, `queuePoolToCore(cellIndex, coreIndex)`, `queueSetDown(cellIndex)` | `{ok, message}`; cell numbers are `rack * 4 + cell`, counting from 0 |
+| `abort()`, `resume()` | the same as the buttons |
+| `setOverride(bool)`, `getOverride()` | the hoist-limit override |
+| `setGate(open)`, `getChute()` | opens or closes every gate of the chute (returns how many); `"absent"`, `"open"`, `"closed"` or `"drained"` |
+
+```lua
+local bridge = peripheral.find("bwr_refuelling_bridge")
+local r = bridge.queueCoreToPool(12, 0)       -- the program's choice, nothing else queues a move
+if not r.ok then print(r.message) end
+while bridge.getStatus().busy do sleep(1) end
+```
+
+## Tests
+
+Core (`:core:acceptance`): `BridgeMotionTest` (legs take as long as the slowest axis, the water over the handle and the dose law against `DoseModel`, routes and the least cover, the chute floor margin).
+GameTests (`RefuellingBridgeTests`, namespace `bwrbridge`, `-PbwrOnlyBridge`): a full move from the core to the pool and back (phases in order, fuel conserved every tick, burnup and discharge stamp kept, minutes of
+travel); a closed gate refuses a move, stops a move in progress and resumes once opened; the hoist limit halts with the assembly still on its seat and an override continues; the dose rises when lifted and spikes out of the water;
+a drained chute halts and, overridden, spikes in the chute; a destination that fills up halts holding the assembly (set down elsewhere, abort); a move saved halfway and loaded again finishes the same job; an idle bridge has nothing scheduled
+and a moving one ticks once a tick on the real scheduler; the instant option on and off (the map says how to use the bridge when off); the screen's commands and snapshot. Client check `-PbwrRefuellingBridgeCheck`
+(`RefuellingBridgeClientCheck`) saves the pictures in `art/refuelling-bridge/`; the screens are in `-PbwrGuiScreenCheck`.
+
+## Honest limits
+
+* The operator does not ride the gantry; the console is beside the rails.
+* The bodies of water are drawn as they always were (the vessel's compressed water, the pool's surface, the canal block's water body) and the bridge's numbers are the physical ones: the drawn cavity surface and the
+  physical one can differ by a metre or two in a given build.
+* No collision: the assembly does not hit the rack tops it passes over; the lift is the game-scale 1 m.
+* One reactor and one pool per bridge (the nearest of each to the console between the rails). A pool-to-pool move works; a bridge with no reactor has no screen (the peripheral works).
+* Specialty inserts (rods, sources) move between core positions; the pool racks take fuel assemblies only.

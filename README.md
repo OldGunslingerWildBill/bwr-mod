@@ -148,11 +148,13 @@ inventory and chunk-lifecycle fixes include permanent regression checks.
 
 **Spent fuel pool:** a discharged assembly keeps its decay heat (315 kW at discharge for a 45 GWd/t assembly, 23 kW a day later), the reprocessing plant waits until it has cooled, and the pool is where it cools: a lined box with racks, a cooling train you build and run, makeup water you supply, and a heat balance that boils the water and uncovers the fuel if you let it. Nothing in it starts by itself. See [the spent fuel pool](SPENT-FUEL-POOL.md).
 
+**Refuelling bridge:** fuel no longer moves by clicking a map. A bridge rides rails over the open reactor and the spent fuel pool, a telescoping mast latches one assembly, lifts it, carries it through a water-filled, gated cattle chute and sets it down, in real time, under water; lift it out of the water and the survey meter spikes. The old instant map is the server option `instantRefuelling` (off by default). See [the refuelling bridge](REFUELLING-BRIDGE.md).
+
 **Fuel update:** a separate **Realistic BWR: Fuel & Rods** creative tab contains
 17 selectable fuel grades and eight specialty rods, with new Blender-rendered PNG icons.
 Uranium ranges from natural uranium through 20%; MOX, plutonium and thorium
 have lean/standard/rich variants. Fixed absorbers, startup sources and simple
-irradiation targets use the existing refuelling map. Original fuel tuning and
+irradiation targets use the refuelling map (and, by default, the refuelling bridge). Original fuel tuning and
 exposure are preserved. See [fuel grades, recipes and reference notes](FUELS-AND-RODS.md).
 Experimental grades are labeled; natural uranium is not self-sustaining in this
 BWR model. Specialty irradiation now takes 24–168 operating hours at rated

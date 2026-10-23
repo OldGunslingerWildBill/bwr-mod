@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "G": {
+      "item": "minecraft:gray_concrete"
+    }
+  },
+  "pattern": [
+    "I I",
+    "GGG",
+    "I I"
+  ],
+  "result": {
+    "count": 4,
+    "id": "bwr:refuelling_rail"
+  }
+}

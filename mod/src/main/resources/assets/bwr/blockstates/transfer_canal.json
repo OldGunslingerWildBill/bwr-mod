@@ -1,0 +1,60 @@
+{
+  "variants": {
+    "axis=x,floor=false,top=false,water=false": {
+      "model": "bwr:block/transfer_canal_nofloor_mid_dry"
+    },
+    "axis=x,floor=false,top=false,water=true": {
+      "model": "bwr:block/transfer_canal_nofloor_mid_wet"
+    },
+    "axis=x,floor=false,top=true,water=false": {
+      "model": "bwr:block/transfer_canal_nofloor_top_dry"
+    },
+    "axis=x,floor=false,top=true,water=true": {
+      "model": "bwr:block/transfer_canal_nofloor_top_wet"
+    },
+    "axis=x,floor=true,top=false,water=false": {
+      "model": "bwr:block/transfer_canal_floor_mid_dry"
+    },
+    "axis=x,floor=true,top=false,water=true": {
+      "model": "bwr:block/transfer_canal_floor_mid_wet"
+    },
+    "axis=x,floor=true,top=true,water=false": {
+      "model": "bwr:block/transfer_canal_floor_top_dry"
+    },
+    "axis=x,floor=true,top=true,water=true": {
+      "model": "bwr:block/transfer_canal_floor_top_wet"
+    },
+    "axis=z,floor=false,top=false,water=false": {
+      "model": "bwr:block/transfer_canal_nofloor_mid_dry",
+      "y": 90
+    },
+    "axis=z,floor=false,top=false,water=true": {
+      "model": "bwr:block/transfer_canal_nofloor_mid_wet",
+      "y": 90
+    },
+    "axis=z,floor=false,top=true,water=false": {
+      "model": "bwr:block/transfer_canal_nofloor_top_dry",
+      "y": 90
+    },
+    "axis=z,floor=false,top=true,water=true": {
+      "model": "bwr:block/transfer_canal_nofloor_top_wet",
+      "y": 90
+    },
+    "axis=z,floor=true,top=false,water=false": {
+      "model": "bwr:block/transfer_canal_floor_mid_dry",
+      "y": 90
+    },
+    "axis=z,floor=true,top=false,water=true": {
+      "model": "bwr:block/transfer_canal_floor_mid_wet",
+      "y": 90
+    },
+    "axis=z,floor=true,top=true,water=false": {
+      "model": "bwr:block/transfer_canal_floor_top_dry",
+      "y": 90
+    },
+    "axis=z,floor=true,top=true,water=true": {
+      "model": "bwr:block/transfer_canal_floor_top_wet",
+      "y": 90
+    }
+  }
+}

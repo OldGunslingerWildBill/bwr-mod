@@ -1,0 +1,105 @@
+{
+  "textures": {
+    "tie": "bwr:block/refuelling_rail_tie",
+    "rail": "bwr:block/refuelling_rail",
+    "particle": "bwr:block/refuelling_rail_tie"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#tie"
+        },
+        "south": {
+          "texture": "#tie"
+        },
+        "east": {
+          "texture": "#tie"
+        },
+        "west": {
+          "texture": "#tie"
+        },
+        "up": {
+          "texture": "#tie"
+        },
+        "down": {
+          "texture": "#tie"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        2,
+        3
+      ],
+      "to": [
+        16,
+        5,
+        5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#rail"
+        },
+        "south": {
+          "texture": "#rail"
+        },
+        "east": {
+          "texture": "#rail"
+        },
+        "west": {
+          "texture": "#rail"
+        },
+        "up": {
+          "texture": "#rail"
+        },
+        "down": {
+          "texture": "#rail"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        2,
+        11
+      ],
+      "to": [
+        16,
+        5,
+        13
+      ],
+      "faces": {
+        "north": {
+          "texture": "#rail"
+        },
+        "south": {
+          "texture": "#rail"
+        },
+        "east": {
+          "texture": "#rail"
+        },
+        "west": {
+          "texture": "#rail"
+        },
+        "up": {
+          "texture": "#rail"
+        },
+        "down": {
+          "texture": "#rail"
+        }
+      }
+    }
+  ]
+}

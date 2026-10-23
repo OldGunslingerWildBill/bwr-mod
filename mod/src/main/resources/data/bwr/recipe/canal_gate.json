@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "C": {
+      "item": "bwr:transfer_canal"
+    }
+  },
+  "pattern": [
+    "III",
+    "ICI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:canal_gate"
+  }
+}

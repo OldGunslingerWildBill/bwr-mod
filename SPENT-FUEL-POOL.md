@@ -37,6 +37,7 @@ rack tops. "Uncovered" means the water is below the rack top (4 m).
 
 ## Moving fuel
 
+- **The refuelling bridge** moves assemblies between the core and the racks, through the cattle chute and under water, one at a time, and is the normal way (see [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md)); the pool's stored fuel is also a registered radiation source behind the water over the racks.
 - **Carrying it.** Right-click a rack with an assembly (the cell under the cursor on the top face if it is free, else
   the first free cell; click the top of the column). Sneak with an empty hand takes one out (the cell under the cursor if it holds one, else the one
   that has cooled longest). A plain right-click reports the rack's cells. Right-click the controller with an assembly

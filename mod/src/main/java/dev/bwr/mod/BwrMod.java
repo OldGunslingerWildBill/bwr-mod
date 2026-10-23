@@ -110,6 +110,7 @@ public final class BwrMod {
                 net.neoforged.neoforge.event.AddReloadListenerEvent.class,
                 event -> event.addListener(new dev.bwr.mod.panel.board.BoardTemplates.Loader()));
 
+        dev.bwr.mod.refuelling.PoolRadiation.register();
         computerCraftPresent = ModList.get().isLoaded(CC_MOD_ID);
         mekanismPresent = ModList.get().isLoaded(MEKANISM_MOD_ID);
 

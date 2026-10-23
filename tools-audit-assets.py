@@ -124,6 +124,8 @@ for m in re.finditer(r'BLOCKS\.register\(\s*"([a-z0-9_]+)",\s*\(\)\s*->\s*new ([
         pr[pm.group(1)] = [str(v) for v in range(int(pm.group(2)), int(pm.group(3)) + 1)]
     if "BlockStateProperties.HORIZONTAL_FACING" in body:
         pr["facing"] = ["north", "east", "south", "west"]
+    if "BlockStateProperties.HORIZONTAL_AXIS" in body:
+        pr["axis"] = ["x", "z"]
     if re.search(r"BlockStateProperties\.FACING\b", body):
         pr["facing"] = ["north", "east", "south", "west", "up", "down"]
     if "extends PipeBlock" in body:

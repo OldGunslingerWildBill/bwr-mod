@@ -65,6 +65,12 @@ public final class GameplayConfig {
                     + "To turn off Mekanism's uranium instead, use Mekanism's own world config.")
             .define("uraniumOreGeneration", true);
 
+    public static final ModConfigSpec.BooleanValue INSTANT_REFUELLING = BUILDER
+            .comment("Old behaviour: load, unload and swap fuel instantly by clicking the refuelling map on the reactor panel. "
+                    + "Default off: fuel moves on the refuelling bridge (rails, a console, the cattle chute and the spent fuel pool; see REFUELLING-BRIDGE.md). "
+                    + "Existing worlds keep their fuel either way; with this off the map still shows the core but its buttons point you to the bridge")
+            .define("instantRefuelling", false);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static double failureHazardPerSecond() { return read(FAILURE_HAZARD_PER_SECOND); }
@@ -74,6 +80,11 @@ public final class GameplayConfig {
     public static double wallStrengthK() { return read(WALL_STRENGTH_K); }
     public static double wallStrengthCapPsig() { return read(WALL_STRENGTH_CAP_PSIG); }
     public static double reprocessingMaxDecayHeatKw() { return read(REPROCESSING_MAX_DECAY_HEAT_KW); }
+    /** Whether the refuelling map may move fuel instantly. False until the server config says otherwise (and before it is loaded). */
+    public static boolean instantRefuelling() {
+        return SPEC.isLoaded() ? INSTANT_REFUELLING.get() : INSTANT_REFUELLING.getDefault();
+    }
+
     public static int tritiumSamplesPerRod() {
         return SPEC.isLoaded() ? TRITIUM_SAMPLES_PER_ROD.get() : TRITIUM_SAMPLES_PER_ROD.getDefault();
     }

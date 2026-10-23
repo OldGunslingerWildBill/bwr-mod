@@ -110,6 +110,7 @@ public final class AcceptanceTests {
             SuppressionPoolTest.class,
             dev.bwr.core.pool.SpentFuelPoolTest.class,
             dev.bwr.core.thermal.AssemblyDecayHeatTest.class,
+            dev.bwr.core.refuelling.BridgeMotionTest.class,
             BoundaryStressTest.class,
             dev.bwr.core.boundary.PortLocaTest.class,
             SevereAccidentEscalationTest.class,
