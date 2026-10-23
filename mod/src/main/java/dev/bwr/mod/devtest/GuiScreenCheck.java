@@ -97,9 +97,9 @@ public final class GuiScreenCheck {
     }
 
     /** Screens also photographed at the smallest GUI sizes (laid out for 320 x 240 or 427 x 240, drawn at scale 2 in the corner). */
-    private static final Set<String> FLOOR_PICTURES = Set.of("reactor-flux", "reactor-info", "pump-rhr", "terry", "condenser", "refuelling-burnup", "fabricator", "fabricator-mox", "reprocessor", "pool-spray", "guide-contents", "guide-page-long");
+    private static final Set<String> FLOOR_PICTURES = Set.of("reactor-flux", "reactor-info", "pump-rhr", "terry", "condenser", "refuelling-burnup", "fabricator", "fabricator-mox", "reprocessor", "pool-spray", "guide-contents", "guide-page-long", "guide-page-icons", "guide-page-image-last", "guide-page-book-end");
 
-    private static boolean started, built;
+    private static boolean started, built, finished;
     private static int age, joined, stage, scaleIndex, wait;
     private static boolean opened;
     private static boolean resized;
@@ -721,6 +721,8 @@ public final class GuiScreenCheck {
         s.add(new Scenario("guide-page-icons", i -> guideAt(i, "first-plant", 1)));
         s.add(new Scenario("guide-page-image-last", i -> guideAt(i, "when-things-go-wrong", 6)));
         s.add(new Scenario("guide-page-options", i -> guideAt(i, "server-options", 4)));
+        s.add(new Scenario("guide-page-first", i -> guideAt(i, "what-this-is", 0)));
+        s.add(new Scenario("guide-page-book-end", i -> guideLast(i)));
         return s;
     }
 
@@ -733,6 +735,13 @@ public final class GuiScreenCheck {
             chapter = 0;
         }
         return new GuideScreen(book, i, chapter, page);
+    }
+
+    /** The guide open at the very last page of the book (no Next arrow, and the chapter's "More:" line). */
+    private static Screen guideLast(Inventory i) {
+        GuideBook.Book book = GuideClient.loadBook();
+        int chapter = book.chapters().size() - 1;
+        return new GuideScreen(book, i, chapter, book.chapters().get(chapter).pages().size() - 1);
     }
 
     /** The guide open at the page with the most text of the whole book: the hardest page to fit. */
@@ -1170,6 +1179,10 @@ public final class GuiScreenCheck {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
+        if (finished) {
+            // finish() can take longer than a tick, and the game then runs the ticks it owes before it notices the stop
+            return;
+        }
         if (++age > 12000) {
             throw new IllegalStateException("GUI screen check timed out at stage " + stage);
         }
@@ -1327,8 +1340,77 @@ public final class GuiScreenCheck {
         }
     }
 
+    /**
+     * The book itself: every page of the real book fits its two columns (the layout is the same at every scale, so one
+     * pass proves all of them); the arrow keys, the arrows, the ribbon and the contents links turn pages, Next goes on
+     * across a chapter's end, Back from the first page goes to the contents, and neither goes past the ends.
+     */
+    private static void guideTurns(Minecraft mc) {
+        Inventory inventory = mc.player.getInventory();
+        GuideBook.Book book = GuideClient.loadBook();
+        int total = 0;
+        for (int c = 0; c < book.chapters().size(); c++) {
+            for (int p = 0; p < book.chapters().get(c).pages().size(); p++) {
+                total++;
+                GuideScreen fit = new GuideScreen(book, inventory, c, p);
+                mc.setScreen(fit);
+                if (fit.textOverflows()) {
+                    violations.add("guide-fit: chapter " + c + " page " + p + " (" + book.chapters().get(c).id() + ") has more text than the two columns hold: " + fit.layoutNote());
+                }
+            }
+        }
+        LOG.info("GUI SCREEN CHECK: {} guide pages fit the book", total);
+
+        GuideProgress.forget();
+        GuideScreen g = new GuideScreen(book, inventory, -1, 0);
+        mc.setScreen(g);
+        expectGuide(g, -1, 0, "the contents open at the contents");
+        g.keyPressed(263, 0, 0);
+        expectGuide(g, -1, 0, "Left on the contents stays on the contents");
+        click(g, book.chapters().get(2).title());
+        expectGuide(g, 2, 0, "a chapter link on the contents opens that chapter");
+        click(g, "Contents");
+        expectGuide(g, -1, 0, "the ribbon goes back to the contents");
+        g.keyPressed(262, 0, 0);
+        expectGuide(g, 0, 0, "Right on the contents opens the first page");
+        g.keyPressed(263, 0, 0);
+        expectGuide(g, -1, 0, "Left on the first page goes to the contents");
+        g.keyPressed(262, 0, 0);
+        int pages = book.chapters().get(0).pages().size();
+        for (int i = 1; i < pages; i++) {
+            g.keyPressed(262, 0, 0);
+            expectGuide(g, 0, i, "Right turns to the next page");
+        }
+        click(g, "Next");
+        expectGuide(g, 1, 0, "Next on the last page of a chapter goes on to the next chapter");
+        click(g, "Back");
+        expectGuide(g, 0, pages - 1, "Back on the first page of a chapter goes to the last page of the one before");
+        g.keyPressed(269, 0, 0);
+        int lastChapter = book.chapters().size() - 1;
+        int lastPage = book.chapters().get(lastChapter).pages().size() - 1;
+        expectGuide(g, lastChapter, lastPage, "End opens the last page");
+        g.keyPressed(262, 0, 0);
+        expectGuide(g, lastChapter, lastPage, "Right on the last page stays there");
+        for (GuiEventListener c : g.children()) {
+            if (c instanceof net.minecraft.client.gui.components.Button b && b.getMessage().getString().equals("Next")) {
+                violations.add("guide-turns: the last page still has a Next arrow");
+            }
+        }
+        g.keyPressed(268, 0, 0);
+        expectGuide(g, -1, 0, "Home opens the contents");
+        mc.setScreen(null);
+    }
+
+    private static void expectGuide(GuideScreen g, int chapter, int page, String what) {
+        if (g.chapter() != chapter || g.page() != page) {
+            violations.add("guide-turns: " + what + " (wanted chapter " + chapter + " page " + page + ", got " + g.chapter() + " page " + g.page() + ")");
+        }
+    }
+
     private static void finish(Minecraft mc) {
+        finished = true;
         escapeCloses(mc);
+        guideTurns(mc);
         try {
             Files.createDirectories(directory);
             Files.writeString(directory.resolve("violations.txt"), String.join("\n", violations) + "\n");

@@ -1,7 +1,5 @@
 package dev.bwr.mod.guide.client;
 
-import dev.bwr.mod.gui.client.style.BwrStyle;
-import dev.bwr.mod.gui.client.style.UiElement;
 import dev.bwr.mod.guide.GuideBook;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -14,16 +12,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The strip of pictures above a page's text: its item icons (16 px, each with the item's name as a tooltip) and, to the
- * right of them, its optional image. An icon whose id is not registered (a mod that is not installed) is left out.
+ * The pictures of a page: its item icons (16 px, each on a small recessed square with the item's name as a tooltip) in
+ * rows that wrap at the width of a book column, and its optional image after them (on the last row of icons when it
+ * fits, else on a row of its own). An icon whose id is not registered (a mod that is not installed) is left out.
+ *
+ * <p>Everything here is in design pixels of the book; the screen draws it under a whole-number zoom, so it takes and
+ * returns design coordinates only.
  */
-final class GuideMedia extends UiElement {
+final class GuideMedia {
     private static final int ICON = 16;
     private static final int STEP = 20;
+    private static final int GAP = 4;
 
     private final List<ItemStack> icons = new ArrayList<>();
     private final GuideBook.Image image;
     private final ResourceLocation texture;
+    private int x;
+    private int y;
+    private int width;
+    private int perRow = 1;
+    private int imageX;
+    private int imageY;
+    private int height;
 
     GuideMedia(GuideBook.Page page) {
         for (String id : page.icons()) {
@@ -41,49 +51,72 @@ final class GuideMedia extends UiElement {
         return icons.isEmpty() && texture == null;
     }
 
-    @Override
-    protected int measure(int width) {
-        return Math.max(icons.isEmpty() ? 0 : ICON + 2, image == null ? 0 : image.size());
-    }
-
-    private int iconsRight() {
-        return x + icons.size() * STEP;
-    }
-
-    @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY) {
-        int iconY = y + (h - ICON) / 2;
-        for (int i = 0; i < icons.size(); i++) {
-            int ix = x + i * STEP;
-            if (ix + ICON > x + w) {
-                break;
+    /** Lays the pictures out with their top-left at {@code (x, y)} inside {@code width}; returns the height used. */
+    int place(int x, int y, int width) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.perRow = Math.max(1, (width + 2) / STEP);
+        int rows = (icons.size() + perRow - 1) / perRow;
+        int h = rows * STEP;
+        if (texture != null) {
+            int size = image.size();
+            int lastRowUsed = icons.isEmpty() ? 0 : ((icons.size() - 1) % perRow + 1) * STEP;
+            if (!icons.isEmpty() && lastRowUsed + GAP + size <= width) {
+                imageX = x + lastRowUsed + GAP;
+                imageY = y + (rows - 1) * STEP;
+                h = Math.max(h, (rows - 1) * STEP + size);
+            } else {
+                imageX = x;
+                imageY = y + h;
+                h += size;
             }
-            g.renderItem(icons.get(i), ix, iconY);
+        }
+        this.height = h;
+        return h;
+    }
+
+    int height() {
+        return height;
+    }
+
+    private int iconX(int i) {
+        return x + (i % perRow) * STEP;
+    }
+
+    private int iconY(int i) {
+        return y + (i / perRow) * STEP;
+    }
+
+    /** Draws the pictures; the pose is already the book's design space. */
+    void render(GuiGraphics g) {
+        for (int i = 0; i < icons.size(); i++) {
+            int ix = iconX(i);
+            int iy = iconY(i);
+            g.fill(ix - 1, iy - 1, ix + ICON + 1, iy + ICON + 1, 0x30301C08);
+            g.fill(ix - 1, iy - 1, ix + ICON + 1, iy, 0x50301C08);
+            g.fill(ix - 1, iy - 1, ix, iy + ICON + 1, 0x50301C08);
+            g.renderItem(icons.get(i), ix, iy);
         }
         if (texture != null) {
-            int ix = Math.min(iconsRight() + BwrStyle.SP2, x + w - image.size());
-            g.blit(texture, ix, y, image.size(), image.size(), 0, 0, image.textureSize(), image.textureSize(),
+            g.blit(texture, imageX, imageY, image.size(), image.size(), 0, 0, image.textureSize(), image.textureSize(),
                     image.textureSize(), image.textureSize());
         }
     }
 
-    @Override
-    public List<Component> tooltipAt(int mouseX, int mouseY) {
-        if (!contains(mouseX, mouseY)) {
-            return List.of();
-        }
-        int iconY = y + (h - ICON) / 2;
+    /** The name of the icon under the pointer, in design coordinates, or an empty list. */
+    List<Component> tooltipAt(int mouseX, int mouseY) {
         for (int i = 0; i < icons.size(); i++) {
-            int ix = x + i * STEP;
-            if (mouseX >= ix && mouseX < ix + ICON && mouseY >= iconY && mouseY < iconY + ICON) {
+            int ix = iconX(i);
+            int iy = iconY(i);
+            if (mouseX >= ix && mouseX < ix + ICON && mouseY >= iy && mouseY < iy + ICON) {
                 return List.of(icons.get(i).getHoverName());
             }
         }
         return List.of();
     }
 
-    @Override
-    public void narrate(List<String> out) {
+    void narrate(List<String> out) {
         if (!icons.isEmpty()) {
             List<String> names = new ArrayList<>();
             for (ItemStack s : icons) {
