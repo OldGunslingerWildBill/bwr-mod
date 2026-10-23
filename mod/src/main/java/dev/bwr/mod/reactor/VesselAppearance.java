@@ -20,8 +20,12 @@ public final class VesselAppearance {
             return List.copyOf(result);
         }
     }
-    public record Envelope(BlockPos min, BlockPos max, List<BlockPos> ports, List<Sparger> spargers, Map<BlockPos,PortKind> kinds,List<Jet> jets,List<BlockPos> driveCells) {
+    public record Envelope(BlockPos min, BlockPos max, List<BlockPos> ports, List<Sparger> spargers, Map<BlockPos,PortKind> kinds,List<Jet> jets,List<BlockPos> driveCells,
+                           CavitySeal.Visual cavity) {
         public Envelope { ports = List.copyOf(ports); spargers = List.copyOf(spargers); kinds=Map.copyOf(kinds); jets=List.copyOf(jets); driveCells=List.copyOf(driveCells); }
+        public Envelope(BlockPos min,BlockPos max,List<BlockPos> ports,List<Sparger> spargers,Map<BlockPos,PortKind> kinds,List<Jet> jets,List<BlockPos> driveCells) {this(min,max,ports,spargers,kinds,jets,driveCells,null);}
+        /** The same vessel with the cavity seal the survey found (null for none). */
+        public Envelope withCavity(CavitySeal.Visual seal) {return new Envelope(min,max,ports,spargers,kinds,jets,driveCells,seal);}
         public Envelope(BlockPos min,BlockPos max,List<BlockPos> ports,List<Sparger> spargers,Map<BlockPos,PortKind> kinds,List<Jet> jets) {this(min,max,ports,spargers,kinds,jets,List.of());}
         public Envelope(BlockPos min,BlockPos max,List<BlockPos> ports,List<Sparger> spargers,Map<BlockPos,PortKind> kinds) { this(min,max,ports,spargers,kinds,List.of()); }
         public Envelope(BlockPos min, BlockPos max, List<BlockPos> ports, List<Sparger> spargers) { this(min,max,ports,spargers,Map.of()); }
@@ -46,6 +50,7 @@ public final class VesselAppearance {
             tag.putLongArray("VisualJetRoots",jets.stream().mapToLong(j->j.root().asLong()).toArray());
             tag.putIntArray("VisualJetStates",jets.stream().mapToInt(j->j.facing().get2DDataValue()+(j.narrow()?4:0)).toArray());
             tag.putLongArray("VisualDriveCells",driveCells.stream().mapToLong(BlockPos::asLong).toArray());
+            if(cavity!=null)cavity.write(tag);
             for(var loop:CoreSpraySpargerBlock.Loop.values())tag.putLongArray("VisualSpargers_"+loop.getSerializedName(),
                     spargers.stream().filter(s->s.loop()==loop).mapToLong(s->s.pos().asLong()).toArray());
         }
@@ -87,7 +92,7 @@ public final class VesselAppearance {
             if(drives.size()<441 && p.getY()==min.getY()-1 && p.getX()>min.getX()&&p.getX()<max.getX()
                     &&p.getZ()>min.getZ()&&p.getZ()<max.getZ()&&seen.add(p))drives.add(p);
         }
-        var e=new Envelope(min,max,ports,spargers,kinds,jets,drives);
+        var e=new Envelope(min,max,ports,spargers,kinds,jets,drives,CavitySeal.Visual.read(tag,min,max));
         return e.width()>=7 && e.width()<=23 && e.depth()>=7 && e.depth()<=23
                 && e.height()>=10 && e.height()<=131 ? e : null;
     }

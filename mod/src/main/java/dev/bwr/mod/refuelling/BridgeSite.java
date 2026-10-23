@@ -44,7 +44,9 @@ import java.util.List;
  * <h2>Water surfaces</h2>
  * The pool's is its own level ({@code min.y + 1 + levelM}, as the pool draws it). The cavity's is the top of the drawn core
  * plus the metres of water the reactor model has above the top of active fuel ({@code (collapsed level - TAF) x 0.0254}, the
- * same number {@code RadiationField} uses for an open head). The chute's is the lower of the two, or none when drained.
+ * same number {@code RadiationField} uses for an open head). The reactor model's level includes the reactor well: water raised over the
+ * vessel flange into a sealed well adds its rise to the cover metre for metre (see {@code CavitySeal}). The chute's is the lower of
+ * the two, or none when drained.
  * The two bodies are not coupled: an open gate is a path, not a pipe (see REFUELLING-BRIDGE.md).
  */
 public final class BridgeSite {
@@ -275,7 +277,10 @@ public final class BridgeSite {
         return e.min().getY() + VesselInternalsGeometry.coreTop(e);
     }
 
-    /** Metres of water the reactor model has above the top of active fuel. */
+    /**
+     * Metres of water the reactor model has above the top of active fuel. Read from the vessel's collapsed level, which above the flange is the
+     * level of the flooded well (the well's cross-section replaces the vessel's there), so a flooded well satisfies the hoist limit.
+     */
     public static double cavityWaterM(ReactorControllerBlockEntity r) {
         return Math.max(0.0, (r.core().getCollapsedLevelIn() - PhysicalConstants.TAF_ON_INSTRUMENT_SCALE_IN) * 0.0254);
     }

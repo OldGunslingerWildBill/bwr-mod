@@ -133,6 +133,8 @@ public class ReactorPanelMenu extends BwrMenu {
     /** Null until the first map arrives. */
     public CoreMapSnapshot map;
     public ReactorConfigurationInfo configuration=ReactorConfigurationInfo.EMPTY;
+    /** The cavity seal survey and the water over the flange. */
+    public CavityInfo cavity=CavityInfo.EMPTY;
     /** Pressure-boundary breaks and recent seals, one line each, with 2 for an open break and 1 for an isolated one. */
     public List<Component> boundaryLines = List.of();
     public int[] boundaryLineStates = new int[0];
@@ -254,6 +256,7 @@ public class ReactorPanelMenu extends BwrMenu {
             CoreMapSnapshot.write(buf, core, be.corePositions());
         }
         ReactorConfigurationInfo.capture(be).write(buf);
+        CavityInfo.capture(be).write(buf, level().registryAccess());
         var breaks = be.boundaryEffects().breaks();
         var lines = dev.bwr.mod.damage.BoundaryDamageReadout.breakComponents(be.boundaryEffects(), level().getGameTime());
         int count = Math.min(lines.size(), MAX_BOUNDARY_LINES);
@@ -338,6 +341,7 @@ public class ReactorPanelMenu extends BwrMenu {
             map = CoreMapSnapshot.read(buf);
         }
         configuration=ReactorConfigurationInfo.read(buf);
+        cavity=CavityInfo.read(buf, level().registryAccess());
         int count = Math.min(buf.readVarInt(), MAX_BOUNDARY_LINES);
         List<Component> lines = new ArrayList<>(count);
         int[] states = new int[count];

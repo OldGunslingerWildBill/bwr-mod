@@ -56,6 +56,20 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     public ReactorBoundaryEffects boundaryEffects() { return boundaryEffects; }
     /** The formed vessel's envelope on the server, or null while unformed. */
     public VesselAppearance.Envelope vesselEnvelope() { return vesselEnvelope; }
+    /** The cavity seal survey of the formed reactor, or null while unformed (or before the first survey). */
+    public CavitySeal.Result cavity() { return cavity; }
+    /**
+     * Height of the water in the well and its annulus above the bottom of the vessel, blocks: 0 while the vessel holds nothing
+     * above the flange or there is no usable well. It is what the clients draw and what the bridge's chute meets.
+     */
+    public double wellSurfaceLocal() {
+        if (cavity == null || cavity.profile() == null || core == null) return 0;
+        var vessel = core.getPressureVessel();
+        double water = vessel.getWellWaterM3();
+        if (!(water > 0)) return 0;
+        return cavity.profile().surface(water,
+                (vessel.getCollapsedLevelIn() - dev.bwr.core.thermal.PressureVessel.FLANGE_LEVEL_IN) * dev.bwr.core.thermal.PressureVessel.METRES_PER_INCH);
+    }
     private int clientBoundaryMask;
     private long[] clientBoundaryLeaks = new long[0];
     public boolean clientHeadFailed(){return (clientBoundaryMask & ReactorBoundaryEffects.HEAD)!=0;}
@@ -138,6 +152,13 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     private ReactorStructure structure;
     private VesselAppearance.Envelope vesselEnvelope;
+    /**
+     * The cavity seal and well as last surveyed (server side; null while unformed). Derived from the blocks, so nothing of it is
+     * saved; the water that stands above the flange is, as an inventory, only while there is some (see {@code WellInventoryKg}).
+     */
+    private CavitySeal.Result cavity;
+    /** Liquid inventory saved with water over the flange, applied once the well is surveyed so the level reads as it was. */
+    private double pendingWellMassKg = -1;
     private VesselAppearance.Envelope clientVesselEnvelope;
     private VesselCoreAppearance clientCoreAppearance;
     private double[] clientBladeInsertion=new double[0];
@@ -266,6 +287,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         refreshFuelDefinitions();
         gatherPumpFlow(level);
         applyVesselSteamDischarge(level);
+        // The head is off: water the well cannot hold goes over the flange (see PressureVessel.Well). A fact about the hardware.
+        core.getPressureVessel().setWellSpilling(!vesselState.canHoldPressure());
         dev.bwr.mod.TickProbe.stop("  Reactor.pumps+nozzles", probe);
 
         // Order matters. The drive network moves rods and spends accumulator
@@ -566,6 +589,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
         if (found == null) {
             structure = null;
+            cavity = null;
             // The core is kept, not discarded: breaking one vessel block should
             // not delete a running transient and all its decay heat. That
             // promise is only worth anything because the rebuild test below
@@ -641,6 +665,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 // after the first there is nothing on disk left to restore from
                 // and the world in front of us is the only authority.
                 pendingRestore = core.toState();
+                pendingWellMassKg = core.getPressureVessel().getWellWaterM3() > 0 ? core.getPressureVessel().getLiquidMassKg() : -1;
                 pendingRatedCoreFlowKgPerS = core.getVoidModel().getRatedCoreFlowKgPerS();
                 pendingFuelRestore = writeCoreFuel();
                 pendingBoundaryRestore = BoundaryDamageNbt.write(core.getBoundaryStress());
@@ -782,6 +807,29 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             if(level.isLoaded(p)&&level.getBlockState(p).is(dev.bwr.mod.registry.BwrBlocks.CONTROL_ROD_DRIVE.get()))driveCells.add(p);
         }
         vesselEnvelope=new VesselAppearance.Envelope(min,max,visualPorts,visualSpargers,visualKinds,visualJets,driveCells);
+        surveyCavity(level);
+    }
+
+    /**
+     * The cavity seal and the well above it, surveyed with the structure (on formation and whenever it is revalidated, which a
+     * changed block next to the controller or the five second sweep triggers; never per tick). A block in an unloaded chunk leaves
+     * the last answer standing. The result is given to the vessel as the space above its flange, which changes how the water
+     * inventory reads as a level above the flange and nothing below it.
+     */
+    private void surveyCavity(Level level) {
+        var survey = CavitySeal.survey(level, vesselEnvelope);
+        if (survey == null) {
+            survey = cavity != null && cavity.bottomY() == vesselEnvelope.min().getY() && cavity.height() == vesselEnvelope.height() ? cavity : null;
+        }
+        cavity = survey;
+        if (survey != null && survey.visual() != null) vesselEnvelope = vesselEnvelope.withCavity(survey.visual());
+        if (core == null || survey == null) return;
+        var vessel = core.getPressureVessel();
+        vessel.setWell(survey.profile() != null ? survey.profile().toWell() : dev.bwr.core.thermal.PressureVessel.Well.none());
+        if (pendingWellMassKg > 0) {
+            vessel.restoreLiquidMassKg(pendingWellMassKg);
+            pendingWellMassKg = -1;
+        }
     }
 
     @Override public void onLoad() {
@@ -1287,6 +1335,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
         if (core != null) {
             tag.put("Core", ReactorStateNbt.write(core.toState()));
+            // Water over the flange: the level alone does not say how much sits in the annulus, so the inventory is kept too.
+            // Absent (and so default) while the vessel holds nothing above its flange, as in every older save.
+            if (pendingWellMassKg > 0) tag.putDouble("WellInventoryKg", pendingWellMassKg);
+            else if (core.getPressureVessel().getWellWaterM3() > 0) tag.putDouble("WellInventoryKg", core.getPressureVessel().getLiquidMassKg());
             // Overpressure damage is not part of ReactorState — it is a
             // property of the plant's metal rather than of its operating point
             // — so it is saved alongside rather than inside it.
@@ -1303,6 +1355,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             // of an accident that had been in progress.
             if (pendingRestore != null) {
                 tag.put("Core", ReactorStateNbt.write(pendingRestore));
+                if (pendingWellMassKg > 0) tag.putDouble("WellInventoryKg", pendingWellMassKg);
             }
             if (pendingBoundaryRestore != null) {
                 tag.put(BoundaryDamageNbt.KEY, pendingBoundaryRestore);
@@ -1364,6 +1417,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 ? tag.getList("CoreFuel", net.minecraft.nbt.Tag.TAG_COMPOUND)
                 : null;
         pendingRodDemand = tag.contains("RodDemand") ? tag.getIntArray("RodDemand") : null;
+        pendingWellMassKg = tag.contains("WellInventoryKg") ? tag.getDouble("WellInventoryKg") : -1;
         pendingSelectedRod = Math.max(0, tag.getInt("SelectedRod"));
         rodSelection.clear();
         structureDirty = true;
@@ -1463,6 +1517,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             // The free surface follows physical level, not reference-leg instrument error.
             tag.putDouble("VisualWaterLevel", core.getTwoPhaseLevelIn());
             tag.putBoolean("VisualWaterPresent",core.getPressureVessel().getLiquidMassKg()>0.001);
+            double wellSurface=wellSurfaceLocal();
+            if(wellSurface>0)tag.putDouble("VisualWellSurface",wellSurface);
             tag.putInt("ChargedAccumulators", core.getChargedAccumulatorCount());
         }
         return tag;
@@ -1511,6 +1567,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         clientWaterFrom=hadWater?previousWater:clientWaterLevel;
         clientWaterSyncTick=level==null?0:level.getGameTime();
         clientChargedAccumulators = tag.getInt("ChargedAccumulators");
+        double well=tag.getDouble("VisualWellSurface");
+        clientWellSurface=Double.isFinite(well)&&well>0?well:0;
     }
 
     @Override
@@ -1541,6 +1599,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private boolean clientWaterPresent;
     private double clientWaterLevel=-530,clientWaterFrom=-530;
     private long clientWaterSyncTick;
+    private double clientWellSurface;
+    /** Height of the water in the well above the bottom of the vessel, blocks, as last synced; 0 when there is none. */
+    public double clientWellSurface(){return clientWellSurface;}
 
     public boolean clientWaterPresent(){return clientWaterPresent;}
     public double clientWaterLevelIn(float partial) {
