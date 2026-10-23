@@ -111,6 +111,7 @@ public final class RadiationClientCheck {
         if (mc.player == null || mc.level == null || mc.getSingleplayerServer() == null || ++joined < 40) return;
         var server = mc.getSingleplayerServer();
         var uuid = mc.player.getUUID();
+        RenderEnvironment.log("radiation");
         if (!requested) {
             if (stage == NAMES.length) {
                 LogUtils.getLogger().info("RADIATION CLIENT CHECK PASS: {} captures", stage);

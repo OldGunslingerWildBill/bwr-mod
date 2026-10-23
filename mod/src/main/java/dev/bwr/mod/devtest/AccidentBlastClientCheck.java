@@ -45,9 +45,11 @@ public final class AccidentBlastClientCheck {
     private static final BlockPos HALL3 = new BlockPos(460, 102, 100);
     private static final String[] NAMES = {"1-detonation-before", "2-detonation-after", "3-head-failure-before",
             "4-head-failure-after", "5-head-failure-side", "6-head-in-flight", "7-head-landed", "8-head-held-under-plug",
-            "9-vessel-without-head"};
+            "9-vessel-without-head", "10-shield-plug-tiers"};
+    /** Ground-level row of the four plug materials (vanilla concrete, then the three shield plug tiers), 3 x 3 x 2 each. */
+    private static final BlockPos TIERS = new BlockPos(HALL3.getX() + 16, ROOM.getY() - 6, HALL3.getZ() - 40);
     /** Ticks to wait before each picture. */
-    private static final int[] WAIT = {160, 130, 130, 130, 130, 46, 230, 130, 40};
+    private static final int[] WAIT = {160, 130, 130, 130, 130, 46, 230, 130, 40, 60};
     private static boolean started, requested;
     private static int age, joined, stage, shown;
     private static ReactorControllerBlockEntity roomReactor, hallReactor, hall2Reactor, hall3Reactor;
@@ -72,6 +74,7 @@ public final class AccidentBlastClientCheck {
             return;
         }
         if (mc.player == null || mc.level == null || mc.getSingleplayerServer() == null || ++joined < 35) return;
+        RenderEnvironment.log("accident-blast");
         if (!requested) {
             requested = true;
             shown = 0;
@@ -99,6 +102,7 @@ public final class AccidentBlastClientCheck {
                     case 6 -> new Vec3(HALL2.getX() + 4, HALL2.getY() + 40, HALL2.getZ() + 60);
                     case 7 -> new Vec3(HALL3.getX() + 16, HALL3.getY() + HEIGHT - 1, HALL3.getZ() + 22);
                     case 8 -> new Vec3(HALL2.getX() + 26, HALL2.getY() + HEIGHT + 9, HALL2.getZ() + 28);
+                    case 9 -> new Vec3(TIERS.getX() + 7.5, TIERS.getY() + 3.2, TIERS.getZ() - 7);
                     default -> new Vec3(HALL.getX() + 40, HALL.getY() + 24, HALL.getZ() + 34);
                 };
                 Vec3 target = switch (selected) {
@@ -108,6 +112,7 @@ public final class AccidentBlastClientCheck {
                     case 6 -> new Vec3(HALL2.getX() + 4, HALL2.getY() + 12, HALL2.getZ() + 4);
                     case 7 -> new Vec3(HALL3.getX() + 4, HALL3.getY() + HEIGHT + 0.5, HALL3.getZ() + 4);
                     case 8 -> new Vec3(HALL2.getX() + 4, HALL2.getY() + HEIGHT - 2, HALL2.getZ() + 4);
+                    case 9 -> new Vec3(TIERS.getX() + 7.5, TIERS.getY() + 1.2, TIERS.getZ() + 1);
                     default -> new Vec3(HALL.getX() + 4, HALL.getY() + 14, HALL.getZ() + 4);
                 };
                 Vec3 delta = target.subtract(camera);
@@ -196,6 +201,7 @@ public final class AccidentBlastClientCheck {
         }
         hall2Reactor = CompactCoreRegressionTests.build(level, HALL2, WIDTH, DEPTH, HEIGHT, false);
         hall3Reactor = CompactCoreRegressionTests.build(level, HALL3, WIDTH, DEPTH, HEIGHT, false);
+        buildTiers(level);
         // A plug of three rows of obsidian over the third vessel, wider than its head.
         for (int r = 0; r < 3; r++)
             for (int x = -3; x < WIDTH + 3; x++)
@@ -207,6 +213,19 @@ public final class AccidentBlastClientCheck {
         for (int x = -3; x < WIDTH + 3; x++)
             for (int z = -3; z < DEPTH + 3; z++)
                 level.setBlock(new BlockPos(HALL3.getX() + x, HALL3.getY() + HEIGHT + 9, HALL3.getZ() + z), Blocks.STONE_BRICKS.defaultBlockState(), 2);
+    }
+
+    /** Vanilla concrete and the three shield plug tiers side by side on the ground, for the render-mod pictures. */
+    private static void buildTiers(ServerLevel level) {
+        net.minecraft.world.level.block.state.BlockState[] tiers = {Blocks.GRAY_CONCRETE.defaultBlockState(),
+                BwrBlocks.SHIELD_PLUG_CONCRETE.get().defaultBlockState(),
+                BwrBlocks.HEAVILY_REINFORCED_SHIELD_PLUG_CONCRETE.get().defaultBlockState(),
+                BwrBlocks.ULTRA_REINFORCED_SHIELD_PLUG_CONCRETE.get().defaultBlockState()};
+        for (int t = 0; t < tiers.length; t++)
+            for (int x = 0; x < 3; x++)
+                for (int y = 0; y < 3; y++)
+                    for (int z = 0; z < 2; z++)
+                        level.setBlock(TIERS.offset(t * 4 + x, y, z), tiers[t], 2);
     }
 
     /** Put the camera beside the resting head and look at it. */

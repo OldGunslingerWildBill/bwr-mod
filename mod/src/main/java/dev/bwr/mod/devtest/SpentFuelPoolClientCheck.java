@@ -71,6 +71,7 @@ public final class SpentFuelPoolClientCheck {
             return;
         }
         var server = mc.getSingleplayerServer();
+        RenderEnvironment.log("spent-fuel-pool");
         if (!requested) {
             requested = true;
             shown = 0;
