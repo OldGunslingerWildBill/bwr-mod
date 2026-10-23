@@ -297,6 +297,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         applyVesselSteamDischarge(level);
         // The head is off: water the well cannot hold goes over the flange (see PressureVessel.Well). A fact about the hardware.
         core.getPressureVessel().setWellSpilling(!vesselState.canHoldPressure());
+        drainCavity(level);
         dev.bwr.mod.TickProbe.stop("  Reactor.pumps+nozzles", probe);
 
         // Order matters. The drive network moves rods and spends accumulator
@@ -835,6 +836,36 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
     }
 
+    /** The cavity drain ports last found in this reactor's well area, re-read when a port came or went or the well was surveyed. */
+    private java.util.List<BlockPos> drainPorts = java.util.List.of();
+    private int drainGeneration = -1;
+
+    /** The loaded cavity drain ports in this reactor's well area, for the INFO tab and the computers. Server side. */
+    public java.util.List<CavityDrainPortBlockEntity> cavityDrains() {
+        if (level == null || level.isClientSide()) return java.util.List.of();
+        refreshDrainPorts();
+        var out = new java.util.ArrayList<CavityDrainPortBlockEntity>(drainPorts.size());
+        for (BlockPos p : drainPorts)
+            if (dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof CavityDrainPortBlockEntity port && !port.isRemoved()) out.add(port);
+        return out;
+    }
+
+    private void refreshDrainPorts() {
+        if (drainGeneration == CavityDrains.generation()) return;
+        drainGeneration = CavityDrains.generation();
+        drainPorts = cavity == null || vesselEnvelope == null ? java.util.List.of()
+                : CavityDrains.near(level, vesselEnvelope.min(), vesselEnvelope.max(), CavitySeal.WELL_EXTENT + 1);
+    }
+
+    /** Steps the drain ports in the well. No ports: one comparison and a return. */
+    private void drainCavity(Level level) {
+        refreshDrainPorts();
+        if (drainPorts.isEmpty()) return;
+        for (BlockPos p : drainPorts)
+            if (dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof CavityDrainPortBlockEntity port && !port.isRemoved())
+                port.step(this, config.tickSeconds);
+    }
+
     /** True when a survey has been made and none is running. */
     public boolean cavitySurveyDone() {
         return cavity != null && cavitySurvey == null;
@@ -853,6 +884,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         cavitySurvey = null;
         if (survey == null || vesselEnvelope == null) return;
         cavity = survey;
+        drainGeneration = -1;
         var previous = vesselEnvelope;
         vesselEnvelope = vesselEnvelope.withCavity(survey.visual());
         if (!java.util.Objects.equals(previous, vesselEnvelope)) syncToClients();

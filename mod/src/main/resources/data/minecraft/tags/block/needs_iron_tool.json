@@ -41,6 +41,8 @@
     "bwr:deepslate_uranium_ore",
     "bwr:raw_uranium_block",
     "bwr:uranium_block",
-    "bwr:shield_plug_concrete"
+    "bwr:shield_plug_concrete",
+    "bwr:motor_operated_water_valve",
+    "bwr:cavity_drain_port"
   ]
 }

@@ -207,6 +207,41 @@ public final class CavitySeal {
         }
 
         /**
+         * The inverse of {@link #surface}: the water over the flange (annulus first, then the well's layers), m3, that stands
+         * with its surface at {@code heightM} above the bottom of the vessel. Zero at or below the plate; the whole well's
+         * capacity at its top.
+         */
+        public double waterUpTo(double heightM) {
+            if (!(heightM > plateTop)) {
+                return 0.0;
+            }
+            double v = 0;
+            double h = plateTop;
+            for (int i = 0; i < annulusRise.length; i++) {
+                double top = h + annulusRise[i];
+                if (heightM < top) {
+                    return v + (heightM - h) * annulusArea[i];
+                }
+                v += annulusRise[i] * annulusArea[i];
+                h = top;
+            }
+            if (!(heightM > lip)) {
+                return v;
+            }
+            v = annulusM3();
+            h = lip;
+            for (int i = 0; i < wellRise.length; i++) {
+                double top = h + wellRise[i];
+                if (heightM < top) {
+                    return v + (heightM - h) * wellArea[i];
+                }
+                v += wellRise[i] * wellArea[i];
+                h = top;
+            }
+            return v;
+        }
+
+        /**
          * Height of the water surface above the bottom of the vessel, metres, for {@code waterM3} of liquid above the
          * flange volume (the annulus first). The lip while there is none.
          */

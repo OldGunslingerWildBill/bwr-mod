@@ -94,6 +94,10 @@ public final class BwrPeripheralSupport {
         if(be instanceof SafetyReliefValveBlockEntity b)return new SafetyReliefValvePeripheral(b);
         if(be instanceof MainSteamIsolationValveBlockEntity b)return new MainSteamIsolationValvePeripheral(b);
         if(be instanceof TurbineValveBlockEntity b)return new TurbineValvePeripheral(b);
+        if(be instanceof dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity b)return new MotorOperatedWaterValvePeripheral(b);
+        if(be instanceof CavityDrainPortBlockEntity b)return new HardwarePeripheral("bwr_cavity_drain_port",()->{
+            var m=new LinkedHashMap<String,Object>();m.put("state",b.state().key());m.put("flowKgPerS",b.flowKgPerS());m.put("depthM",b.depthM());
+            m.put("headM",b.headM());m.put("valveOpening",b.lineOpening());m.put("valves",b.valveCount());m.put("totalKg",b.totalKg());return m;});
         if(be instanceof CoolingBlockEntity b)return new CoolingPeripheral(b);
         if(be instanceof CondenserBlockEntity b)return new CondenserPeripheral(b);
         if(be instanceof RhrHeatExchangerBlockEntity b)return new HeatExchangerPeripheral(b);

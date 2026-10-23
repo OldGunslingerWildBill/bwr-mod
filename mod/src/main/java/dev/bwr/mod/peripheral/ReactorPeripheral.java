@@ -1209,7 +1209,7 @@ public class ReactorPeripheral implements IPeripheral {
      * the wall is too far); {@code vesselHeight} (H, blocks), {@code vesselTopY}, {@code deepestSealRowY} (top less round(H / 3)),
      * {@code deepestSealBelowTop}, {@code flangeRowY} and {@code sealRowY} (world y; the last only with a seal); {@code sealBelowTop}; {@code gapSides} (the sides with one block of gap); {@code wellUsable};
      * {@code wellTopY}; {@code waterOverFlangeM3}, {@code levelOverFlangeM}, {@code wellCapacityM3}; {@code spillKgPerS} and
-     * {@code spillTo} ("drywell" with no usable well, "refuel floor" over the top of one, "none").
+     * {@code drainCount}, {@code drainKgPerS} and {@code drains} (one table each cavity drain port: x, y, z, state, flowKgPerS, depthOverSillM, headM, valveOpening, valves, totalKg), {@code spillTo} ("drywell" with no usable well, "refuel floor" over the top of one, "none").
      */
     @LuaFunction(mainThread = true)
     public final Map<String, Object> getCavity() throws LuaException {
@@ -1244,6 +1244,26 @@ public class ReactorPeripheral implements IPeripheral {
         out.put("wellCapacityM3", c.profile() == null ? 0.0 : c.profile().toWell().capacityM3());
         out.put("spillKgPerS", vessel.getWellSpillKgPerS());
         out.put("spillTo", vessel.getWellSpillKgPerS() <= 0 ? "none" : c.wellUsable() ? "refuel floor" : "drywell");
+        var drains = new java.util.ArrayList<Map<String, Object>>();
+        double drainFlow = 0;
+        for (var port : be.cavityDrains()) {
+            Map<String, Object> d = new HashMap<>();
+            d.put("x", port.getBlockPos().getX());
+            d.put("y", port.getBlockPos().getY());
+            d.put("z", port.getBlockPos().getZ());
+            d.put("state", port.state().key());
+            d.put("flowKgPerS", port.flowKgPerS());
+            d.put("depthOverSillM", port.depthM());
+            d.put("headM", port.headM());
+            d.put("valveOpening", port.lineOpening());
+            d.put("valves", port.valveCount());
+            d.put("totalKg", port.totalKg());
+            drains.add(d);
+            drainFlow += port.flowKgPerS();
+        }
+        out.put("drainCount", drains.size());
+        out.put("drainKgPerS", drainFlow);
+        out.put("drains", drains);
         return out;
     }
 

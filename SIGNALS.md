@@ -51,7 +51,7 @@ when nothing is there or the chunk is not loaded. It never loads a chunk and nev
   rates and now read `FE/t` (they said `FE`).
 
 This file is generated from the adapter sources in `dev.bwr.mod.signal.adapters`; keep it in step when a
-signal is added. Coverage: reactor controller, MSIV, SRV, turbine valves, turbine steam outlet, RPV steam
+signal is added. Coverage: reactor controller, MSIV, SRV, turbine valves, motor-operated water valve, turbine steam outlet, RPV steam
 outlet, feedwater pump, recirculation pump, ECCS pumps, suppression pool, RHR heat exchanger, condenser,
 condensate tank, cooling, power module, containment controller, penetrations, vault door, airlock, and
 containment atmosphere equipment, and the ADS controller (its three switch inputs, below). The SLC tank, water
@@ -330,6 +330,34 @@ Block entity `TurbineValveBlockEntity`; CC peripheral `bwr_steam_stop_valve / bw
 | Command key | Label | Kind | Range |
 | --- | --- | --- | --- |
 | `position` | Opening demand | NUMBER | 0 to 1 |
+
+## Motor-operated water valve
+
+Block entity `MotorOperatedWaterValveBlockEntity`; CC peripheral `bwr_motor_operated_water_valve`. See [WATER-PLUMBING.md](WATER-PLUMBING.md#motor-operated-water-valve).
+
+| Signal key | Label | Unit | Range | Kind |
+| --- | --- | --- | --- | --- |
+| `target` | Demanded opening | fraction open | 0 to 1 | NUMBER |
+| `position` | Valve position | fraction open | 0 to 1 | NUMBER |
+| `open` | Fully open |  | 0 to 1 | BOOLEAN |
+| `closed` | Fully closed |  | 0 to 1 | BOOLEAN |
+| `flow` | Water flow | kg/s | 0 to 2500 | NUMBER |
+| `powered` | Motor powered |  | 0 to 1 | BOOLEAN |
+| `energy_fe` | Actuator energy | FE | 0 to 20000 | NUMBER |
+| `fail_mode` | Fail position (0 as-is, 1 open, 2 closed) | mode | 0 to 2 | LEVEL |
+| `rating_psi` | Pressure rating | psi | 0 to 5000 | NUMBER |
+| `wear_above_psig` | Wear and failure above | psig | 0 to 5000 | NUMBER |
+
+| Command key | Label | Kind | Range |
+| --- | --- | --- | --- |
+| `position` | Opening demand | NUMBER | 0 to 1 |
+| `open` | Open / close | BOOLEAN | 0 to 1 |
+| `fail_mode` | Fail position | LEVEL | 0 to 2 |
+
+`flow` is the water that passed the valve on a cavity drain line on the latest tick (kg/s); a pump line is throttled by the valve but not metered. `position` is a POSITION quantity.
+`open` as a command: 0.5 or more demands fully open, less demands closed. Any demand is the latest command (redstone included); `fail_mode` is refused for anything but 0, 1 or 2.
+
+The reactor's `getCavity()` (CC) now also lists the cavity drain ports; see [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#draining-the-well-the-cavity-drain-port). The ports have no signals of their own.
 
 ## Turbine steam outlet
 

@@ -117,6 +117,14 @@ public final class BwrBlockEntities {
             BLOCK_ENTITIES.register("turbine_valve", () -> BlockEntityType.Builder.of(dev.bwr.mod.steam.TurbineValveBlockEntity::new,
                     BwrBlocks.STEAM_STOP_VALVE.get(), BwrBlocks.TURBINE_CONTROL_VALVE.get(), BwrBlocks.BYPASS_STEAM_VALVE.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity>> MOTOR_OPERATED_WATER_VALVE =
+            BLOCK_ENTITIES.register("motor_operated_water_valve", () -> BlockEntityType.Builder.of(dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity::new,
+                    BwrBlocks.MOTOR_OPERATED_WATER_VALVE.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.reactor.CavityDrainPortBlockEntity>> CAVITY_DRAIN_PORT =
+            BLOCK_ENTITIES.register("cavity_drain_port", () -> BlockEntityType.Builder.of(dev.bwr.mod.reactor.CavityDrainPortBlockEntity::new,
+                    BwrBlocks.CAVITY_DRAIN_PORT.get()).build(null));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.condenser.CondenserBlockEntity>> CONDENSER =
             BLOCK_ENTITIES.register("condenser", () -> BlockEntityType.Builder.of(dev.bwr.mod.condenser.CondenserBlockEntity::new,
                     BwrBlocks.ARABELLE_CONDENSER.get()).build(null));

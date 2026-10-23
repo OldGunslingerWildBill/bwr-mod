@@ -227,6 +227,10 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.row("Well capacity", () -> num(menu.cavity.wellCapacityM3(), 1), "m3").tip(() -> cavityTooltip()),
                 Layout.row(() -> menu.cavity.spillsToDrywell() ? "Leak to the drywell" : "Overflow onto the floor", () -> big(menu.cavity.spillKgPerS()), "kg/s")
                         .status(() -> menu.cavity.spillKgPerS() > 0 ? Status.CAUTION : Status.NONE).tip(() -> cavityTooltip()),
+                Layout.row("Cavity drain flow", () -> big(menu.cavity.drainFlowKgPerS()), "kg/s")
+                        .status(() -> menu.cavity.drainFlowKgPerS() > 0 ? Status.NORMAL : Status.NONE).tip(() -> cavityTooltip())
+                        .showIf(() -> !menu.cavity.drains().isEmpty()),
+                drainLine(0), drainLine(1), drainLine(2), drainLine(3),
                 Layout.section("Drives and pumps"),
                 Layout.row("Drives powered", () -> String.valueOf(menu.poweredDrives)),
                 Layout.row("Drives with water", () -> String.valueOf(menu.waterSuppliedDrives)),
@@ -252,12 +256,29 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
         return Layout.card("", Layout.scrollArea(60, content));
     }
 
+    /** One cavity drain port: where it is, what its line is doing now, and what it passes. */
+    private UiElement drainLine(int index) {
+        return Layout.note(() -> {
+                    if (index >= menu.cavity.drains().size()) return "";
+                    var d = menu.cavity.drains().get(index);
+                    String head = "Drain port at " + d.x() + ", " + d.y() + ", " + d.z() + ": " + d.stateText().getString();
+                    return d.flowKgPerS() > 0 || d.headM() > 0
+                            ? head + " " + num(d.flowKgPerS(), 0) + " kg/s, " + num(d.depthM(), 2) + " m over the sill, valve " + num(d.opening() * 100.0, 0) + "% open."
+                            : head;
+                })
+                .body()
+                .status(() -> index >= menu.cavity.drains().size() ? Status.NONE
+                        : menu.cavity.drains().get(index).flowKgPerS() > 0 ? Status.NORMAL : Status.CAUTION)
+                .showIf(() -> index < menu.cavity.drains().size());
+    }
+
     private List<Component> cavityTooltip() {
         return List.of(
                 Component.literal("The cavity seal bridges the open vessel's flange to the wall of the reactor well, so water raised over the flange stays above the drywell."),
                 Component.literal("It forms where a wall is touching or one block away all round the vessel, at the highest such row from the flange down to a third of the vessel's height."),
                 Component.literal("Water over the flange fills the annulus down to the seal, then the well. Without a seal it leaks into the drywell and the level holds at the flange."),
-                Component.literal("Nothing floods by itself: the feed, condensate and residual heat removal pumps you run are what raise the water."));
+                Component.literal("Nothing floods by itself: the feed, condensate and residual heat removal pumps you run are what raise the water."),
+                Component.literal("A cavity drain port in the well wall or floor lowers it by gravity, through a motor-operated water valve and a pipe to a Condensate Storage Tank, down to the port's sill."));
     }
 
     /** One pressure-boundary break or seal: alarm while it is open to the vessel, caution while it is isolated. */

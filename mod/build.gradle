@@ -47,7 +47,7 @@ neoForge {
             // 'bwruranium' is the uranium ore tests (UraniumOreTests); -PbwrOnlyUranium runs just those.
             // 'bwrplant' holds the plant computer tests (PlantComputerTests); -PbwrOnlyPlant runs just those.
             // 'bwrbridge' holds the refuelling bridge tests (RefuellingBridgeTests); -PbwrOnlyBridge runs just those.
-            // 'bwrcavity' holds the cavity seal and reactor well tests (CavitySealTests); -PbwrOnlyCavity runs just those.
+            // 'bwrcavity' holds the cavity seal and reactor well tests (CavitySealTests, CavityDrainTests, WaterValveTests); -PbwrOnlyCavity runs just those.
             systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyPool') ? 'bwrpool' : project.hasProperty('bwrOnlyUranium') ? 'bwruranium' : project.hasProperty('bwrOnlyBlast') ? 'bwrblast' : project.hasProperty('bwrOnlyBridge') ? 'bwrbridge' : project.hasProperty('bwrOnlyCavity') ? 'bwrcavity' : 'bwr,bwrtick,bwrplant,bwrpool,bwruranium,bwrblast,bwrbridge,bwrcavity')
             // Developer-only tick profiler (dev.bwr.mod.TickProbe): per-system microseconds per server tick, printed by
             // the TickBudgetTests plant profile as "TICK PROBE" lines. Off (and costless) without this property.

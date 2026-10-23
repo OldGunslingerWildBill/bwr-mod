@@ -41,6 +41,8 @@ public final class WaterLineNetwork {
     public static boolean acceptsLineOn(BlockState state, Direction face) {
         if (state.getBlock() instanceof dev.bwr.mod.containment.ContainmentPenetrationBlock penetration)
             return penetration.acceptsWaterLineOn(state, face);
+        if(state.getBlock() instanceof MotorOperatedWaterValveBlock valve)return valve.acceptsWaterLineOn(state,face);
+        if(state.getBlock() instanceof dev.bwr.mod.reactor.CavityDrainPortBlock)return face==state.getValue(dev.bwr.mod.reactor.CavityDrainPortBlock.FACING);
         if(state.getBlock() instanceof dev.bwr.mod.rods.ControlRodDriveBlock)return true;
         if(state.getBlock() instanceof WaterDischargeBlock)return face==state.getValue(WaterDischargeBlock.FACING).getOpposite();
         if(state.getBlock() instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlock)return face==state.getValue(dev.bwr.mod.suppression.SuppressionPoolPortBlock.FACING);

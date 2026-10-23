@@ -694,8 +694,13 @@ public final class AccidentBlast {
         return removed;
     }
 
-    /** The two BWR pipe blocks a whip never takes beyond the break itself. */
+    /**
+     * The BWR line blocks a whip never takes beyond the break itself: the two pipes, and the motor-operated water valve, which is
+     * rated and wears as the pipe it sits in (it is part of the line, so it is spared like the rest of the broken line, and goes
+     * if it is the block at the break).
+     */
     private static boolean isPipe(BlockState state) {
-        return state.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get()) || state.is(BwrBlocks.PRESSURISED_TUBE.get());
+        return state.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get()) || state.is(BwrBlocks.PRESSURISED_TUBE.get())
+                || state.is(BwrBlocks.MOTOR_OPERATED_WATER_VALVE.get());
     }
 }

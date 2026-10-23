@@ -301,6 +301,8 @@ public final class BwrItems {
     public static final DeferredItem<BlockItem> STEAM_STOP_VALVE = ITEMS.registerSimpleBlockItem(BwrBlocks.STEAM_STOP_VALVE);
     public static final DeferredItem<BlockItem> TURBINE_CONTROL_VALVE = ITEMS.registerSimpleBlockItem(BwrBlocks.TURBINE_CONTROL_VALVE);
     public static final DeferredItem<BlockItem> BYPASS_STEAM_VALVE = ITEMS.registerSimpleBlockItem(BwrBlocks.BYPASS_STEAM_VALVE);
+    public static final DeferredItem<BlockItem> MOTOR_OPERATED_WATER_VALVE = ITEMS.registerSimpleBlockItem(BwrBlocks.MOTOR_OPERATED_WATER_VALVE);
+    public static final DeferredItem<BlockItem> CAVITY_DRAIN_PORT = ITEMS.registerSimpleBlockItem(BwrBlocks.CAVITY_DRAIN_PORT);
     public static final DeferredItem<BlockItem> ARABELLE_CONDENSER = ITEMS.register("arabelle_condenser",
             () -> new dev.bwr.mod.condenser.CondenserItem(BwrBlocks.ARABELLE_CONDENSER.get(), new Item.Properties()));
     public static final DeferredItem<BlockItem> NATURAL_DRAFT_TOWER = ITEMS.register("natural_draft_tower",()->new dev.bwr.mod.cooling.CoolingItem(BwrBlocks.NATURAL_DRAFT_TOWER.get(),new Item.Properties()));
@@ -463,6 +465,8 @@ public final class BwrItems {
                         output.accept(STEAM_STOP_VALVE.get());
                         output.accept(TURBINE_CONTROL_VALVE.get());
                         output.accept(BYPASS_STEAM_VALVE.get());
+                        output.accept(MOTOR_OPERATED_WATER_VALVE.get());
+                        output.accept(CAVITY_DRAIN_PORT.get());
                         output.accept(ARABELLE_CONDENSER.get());
                         output.accept(NATURAL_DRAFT_TOWER.get());
                         output.accept(MECHANICAL_DRAFT_TOWER.get());
