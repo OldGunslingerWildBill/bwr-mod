@@ -107,8 +107,11 @@ would put the plate below a nozzle. Nothing needed the quarter; a third was used
 
 Canal and gate blocks of the cattle chute count as wall (the chute meets the cavity there). Pipes and other partial blocks do not.
 
-**When it is surveyed.** On formation and whenever the reactor revalidates, which it does when a block next to the controller changes and on
-the five-second sweep it already did; never per tick and per block. A block in an unloaded chunk leaves the last answer standing (no chunk is
+**When it is surveyed.** A survey starts on formation and whenever the reactor revalidates, which it does when a block next to the controller changes and on
+the five-second sweep it already did; never per block. It is **spread over the ticks that follow**, at most 4000 block reads a tick
+(`CavitySeal.READS_PER_TICK`, about 0.65 ms), so no tick pays for the whole well: the worst case, a 23 x 23 x 62 vessel with a 48 layer well, is 124 000 reads, 9.5 ms
+in one go (the cost every sweep would have been) and 32 ticks of at most 0.65 ms spread. Until a survey finishes the last answer stands (the drawn seal and the
+vessel's well stay as they were); a newer revalidation replaces one still running. A block in an unloaded chunk leaves the last answer standing too (no chunk is
 ever loaded for it). Nothing of the seal is saved: an old world surveys it on its first tick. The result goes to the clients inside the
 vessel's picture, only when there is a seal.
 

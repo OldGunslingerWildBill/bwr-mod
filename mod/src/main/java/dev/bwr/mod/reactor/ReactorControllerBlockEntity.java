@@ -157,6 +157,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * saved; the water that stands above the flange is, as an inventory, only while there is some (see {@code WellInventoryKg}).
      */
     private CavitySeal.Result cavity;
+    /** The survey being stepped, or null. */
+    private CavitySeal.Survey cavitySurvey;
     /** Liquid inventory saved with water over the flange, applied once the well is surveyed so the level reads as it was. */
     private double pendingWellMassKg = -1;
     private VesselAppearance.Envelope clientVesselEnvelope;
@@ -278,6 +280,12 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         if (core == null || structure == null) {
             dev.bwr.mod.advancement.PlantMilestones.reactorUnavailable(this);
             return;
+        }
+
+        if (cavitySurvey != null) {
+            long cavityProbe = dev.bwr.mod.TickProbe.start();
+            if (cavitySurvey.step(CavitySeal.READS_PER_TICK)) applyCavitySurvey();
+            dev.bwr.mod.TickProbe.stop("  Reactor.cavitySurvey", cavityProbe);
         }
 
         dev.bwr.mod.advancement.PlantMilestones.beforeReactorStep(this);
@@ -590,6 +598,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         if (found == null) {
             structure = null;
             cavity = null;
+            cavitySurvey = null;
             // The core is kept, not discarded: breaking one vessel block should
             // not delete a running transient and all its decay heat. That
             // promise is only worth anything because the rebuild test below
@@ -807,23 +816,47 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             if(level.isLoaded(p)&&level.getBlockState(p).is(dev.bwr.mod.registry.BwrBlocks.CONTROL_ROD_DRIVE.get()))driveCells.add(p);
         }
         vesselEnvelope=new VesselAppearance.Envelope(min,max,visualPorts,visualSpargers,visualKinds,visualJets,driveCells);
-        surveyCavity(level);
+        surveyCavity();
     }
 
     /**
-     * The cavity seal and the well above it, surveyed with the structure (on formation and whenever it is revalidated, which a
-     * changed block next to the controller or the five second sweep triggers; never per tick). A block in an unloaded chunk leaves
-     * the last answer standing. The result is given to the vessel as the space above its flange, which changes how the water
-     * inventory reads as a level above the flange and nothing below it.
+     * The cavity seal and the well above it. A survey is started whenever the structure revalidates (formation, a changed block next to
+     * the controller, the five second sweep) and is then stepped {@link CavitySeal#READS_PER_TICK} block reads a tick (see {@link #tick}) until it
+     * finishes, so no tick pays for the whole of a large vessel's well (up to about 190 000 reads); a newer revalidation replaces one still
+     * running. Until it finishes the last answer stands (the drawn seal and the vessel's well are kept, so nothing flickers). A block in an
+     * unloaded chunk also leaves the last answer standing. The result is given to the vessel as the space above its flange, which changes how
+     * the water inventory reads as a level above the flange and nothing below it.
      */
-    private void surveyCavity(Level level) {
-        var survey = CavitySeal.survey(level, vesselEnvelope);
-        if (survey == null) {
-            survey = cavity != null && cavity.bottomY() == vesselEnvelope.min().getY() && cavity.height() == vesselEnvelope.height() ? cavity : null;
+    private void surveyCavity() {
+        cavitySurvey = new CavitySeal.Survey(level, vesselEnvelope);
+        // keep the picture the clients already have while the new survey runs
+        if (cavity != null && cavity.visual() != null && cavity.bottomY() == vesselEnvelope.min().getY() && cavity.height() == vesselEnvelope.height()) {
+            vesselEnvelope = vesselEnvelope.withCavity(cavity.visual());
         }
+    }
+
+    /** True when a survey has been made and none is running. */
+    public boolean cavitySurveyDone() {
+        return cavity != null && cavitySurvey == null;
+    }
+
+    /** Runs the rest of a pending cavity survey now, in one go. For tests and tools; the game steps it a few thousand reads a tick. */
+    public void finishCavitySurvey() {
+        if (cavitySurvey != null) {
+            cavitySurvey.step(Integer.MAX_VALUE);
+            applyCavitySurvey();
+        }
+    }
+
+    private void applyCavitySurvey() {
+        var survey = cavitySurvey.result();
+        cavitySurvey = null;
+        if (survey == null || vesselEnvelope == null) return;
         cavity = survey;
-        if (survey != null && survey.visual() != null) vesselEnvelope = vesselEnvelope.withCavity(survey.visual());
-        if (core == null || survey == null) return;
+        var previous = vesselEnvelope;
+        vesselEnvelope = vesselEnvelope.withCavity(survey.visual());
+        if (!java.util.Objects.equals(previous, vesselEnvelope)) syncToClients();
+        if (core == null) return;
         var vessel = core.getPressureVessel();
         vessel.setWell(survey.profile() != null ? survey.profile().toWell() : dev.bwr.core.thermal.PressureVessel.Well.none());
         if (pendingWellMassKg > 0) {

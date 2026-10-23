@@ -41,18 +41,26 @@ public final class CavitySealTests {
         var method = ReactorControllerBlockEntity.class.getDeclaredMethod("revalidate", Level.class);
         method.setAccessible(true);
         method.invoke(be, be.getLevel());
+        // the game steps the cavity survey a few thousand reads a tick; the tests that want its answer now take it
+        be.finishCavitySurvey();
     }
 
     /** A formed reactor and its walls to place. */
     private static final class Site {
         final ServerLevel level;
         final BlockPos min;
+        final int width;
+        final int depth;
+        final int height;
         ReactorControllerBlockEntity be;
 
         Site(ServerLevel level, BlockPos min, int width, int depth, int height) throws Exception {
             this.level = level;
             this.min = min;
-            // a 40-block clear field round the vessel: earlier runs leave walls
+            this.width = width;
+            this.depth = depth;
+            this.height = height;
+            // a clear field round the vessel: earlier runs leave walls
             for (int x = -12; x <= width + 12; x++) {
                 for (int z = -12; z <= depth + 12; z++) {
                     for (int y = -1; y <= height + 22; y++) {
@@ -89,11 +97,14 @@ public final class CavitySealTests {
             return be.cavity();
         }
 
+        /** Rows built above the vessel by the test beyond the 22 the field clears (the worst-case survey test). */
+        int extraRows = 22;
+
         void clear() {
             dev.bwr.mod.devtest.FixtureCleanup.drainAt(level, be.getBlockPos());
-            for (int x = -12; x <= 5 + 12; x++) {
-                for (int z = -12; z <= 5 + 12; z++) {
-                    for (int y = -3; y <= 8 + 22; y++) {
+            for (int x = -12; x <= width + 12; x++) {
+                for (int z = -12; z <= depth + 12; z++) {
+                    for (int y = -3; y <= height + extraRows + 4; y++) {
                         level.setBlock(min.offset(x, y, z), Blocks.AIR.defaultBlockState(), 2);
                     }
                 }
@@ -553,6 +564,69 @@ public final class CavitySealTests {
     }
 
     // ------------------------------------------------------------------------------------------------------------
+    // The worst case: the survey is spread over ticks
+    // ------------------------------------------------------------------------------------------------------------
+
+    @GameTest(template = "empty", templateNamespace = "bwrcavity", timeoutTicks = 2000)
+    public static void theWorstCaseSurveyIsSpreadOverTicksAndCostsLittleInAny(GameTestHelper h) throws Exception {
+        // 21 x 21 interior = a 23-wide vessel, the widest there is; 60 tall inside (H = 62, close to the 64 the structure walk allows); the shaft of
+        // touching walls goes far above it, so the well is as deep as a survey counts: 48 layers.
+        Site s = new Site(h.getLevel(), new BlockPos(94000 + 120 * 30, 40, 94300), 21, 21, 60);
+        s.extraRows = 60;
+        try {
+            h.assertTrue(s.be.isFormed(), "the reactor did not form: " + s.be.statusLines());
+            var env = s.env();
+            h.assertTrue(env.width() == 23 && env.height() == 62, "the largest vessel: " + env.width() + " x " + env.height());
+            s.ring(1, 5, 61 + 55);
+            // warm up, then the whole survey in one go: what one tick used to pay on every sweep
+            CavitySeal.survey(s.level, env);
+            var whole = new CavitySeal.Survey(s.level, env);
+            long t0 = System.nanoTime();
+            whole.step(Integer.MAX_VALUE);
+            long wholeNs = System.nanoTime() - t0;
+            var all = whole.result();
+            h.assertTrue(all != null && all.present() && all.wellUsable(), "the worst case seals: " + (all == null ? "null" : all.english()));
+            int layers = all.wellTopRow() - all.sealRow() + 1;
+            h.assertTrue(layers >= 40, "a deep well (layers " + layers + ")");
+            // the same survey, a budget a tick
+            var spread = new CavitySeal.Survey(s.level, env);
+            int steps = 0;
+            long maxNs = 0;
+            while (!spread.done() && steps < 2000) {
+                long a = System.nanoTime();
+                spread.step(CavitySeal.READS_PER_TICK);
+                maxNs = Math.max(maxNs, System.nanoTime() - a);
+                steps++;
+            }
+            var part = spread.result();
+            h.assertTrue(part != null && part.sealRow() == all.sealRow() && part.wellTopRow() == all.wellTopRow()
+                    && part.profile().toWell().equals(all.profile().toWell()) && part.visual().equals(all.visual()),
+                    "stepping gives the same answer as the whole survey");
+            h.assertTrue(whole.totalReads() == spread.totalReads(), "and reads the same blocks: " + whole.totalReads() + " vs " + spread.totalReads());
+            // no step began a read past its budget by more than one row of the ring (or one cell of the well)
+            h.assertTrue(spread.maxStepReads() <= CavitySeal.READS_PER_TICK + 400, "the most reads in one step: " + spread.maxStepReads());
+            h.assertTrue(steps >= whole.totalReads() / (CavitySeal.READS_PER_TICK + 400), "it took " + steps + " steps");
+            System.out.println("CAVITY SURVEY worst case (23 x 23 x 62, " + layers + " layers): " + whole.totalReads() + " reads; all at once "
+                    + wholeNs / 1000 + " us; spread over " + steps + " ticks at up to " + spread.maxStepReads() + " reads, the dearest tick "
+                    + maxNs / 1000 + " us");
+            h.assertTrue(maxNs < 8_000_000L, "one tick of the spread survey cost " + maxNs / 1000 + " us");
+            // and through the reactor's own tick: it finishes by itself, one budget a tick
+            s.be.markStructureDirty();
+            int ticks = 0;
+            s.tick();
+            while (!s.be.cavitySurveyDone() && ticks < 400) {
+                s.tick();
+                ticks++;
+            }
+            h.assertTrue(s.be.cavitySurveyDone() && s.be.cavity().present(), "the reactor's own ticks finish it: " + ticks);
+            h.assertTrue(ticks >= steps - 3, "and it takes the reactor as many ticks as the budget says (" + steps + "), not one: " + ticks);
+        } finally {
+            s.clear();
+        }
+        h.succeed();
+    }
+
+    // ------------------------------------------------------------------------------------------------------------
     // Save and reload, old saves
     // ------------------------------------------------------------------------------------------------------------
 
@@ -606,7 +680,18 @@ public final class CavitySealTests {
             CompoundTag saved = s.be.saveWithFullMetadata(s.level.registryAccess());
             // an old save has no cavity key at all (a seal is never saved), nor any visual keys
             h.assertTrue(!saved.contains("WellInventoryKg") && !saved.contains("VisualSeal"), "a seal is not saved: " + saved.getAllKeys());
-            reload(h, s, saved);
+            // loaded as the game loads it, then only ticked: the survey is stepped a few thousand reads a tick and finishes by itself
+            BlockPos pos = s.be.getBlockPos();
+            var state = s.be.getBlockState();
+            s.level.removeBlockEntity(pos);
+            s.be = (ReactorControllerBlockEntity) BlockEntity.loadStatic(pos, state, saved, s.level.registryAccess());
+            s.level.setBlockEntity(s.be);
+            int ticks = 0;
+            while (s.be.cavity() == null && ticks < 600) {
+                s.tick();
+                ticks++;
+            }
+            h.assertTrue(s.be.cavity() != null, "the first ticks survey the seal: none after " + ticks);
             h.assertTrue(s.be.isFormed(), "it forms on load");
             h.assertTrue(s.seal() != null && s.seal().present() && s.seal().gapMask() == 15, "and surveys its seal: " + (s.seal() == null ? "none" : s.seal().english()));
             // the update tag a client gets carries the seal and a client reads it back

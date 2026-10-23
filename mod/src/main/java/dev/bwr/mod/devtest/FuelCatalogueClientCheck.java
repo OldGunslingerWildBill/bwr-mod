@@ -15,12 +15,14 @@ final class FuelCatalogueClientCheck {
             else continue;
             var model=mc.getItemRenderer().getModel(stack,mc.level,mc.player,0);
             var quads=model.getQuads(null,null,RandomSource.create(0));
-            if(quads.isEmpty()||quads.stream().anyMatch(q->!q.getSprite().contents().name().getPath().equals("item/fuel/"+texture)))
+            // The depleted uranium INGOT owns item/fuel/depleted_uranium.png, so its assembly has its own PNG (alpha.48).
+            String sprite="depleted_uranium".equals(texture)?"depleted_uranium_assembly":texture;
+            if(quads.isEmpty()||quads.stream().anyMatch(q->!q.getSprite().contents().name().getPath().equals("item/fuel/"+sprite)))
                 throw new IllegalStateException("Wrong/missing fuel texture for "+texture);
             if(stack.getHoverName().getString().startsWith("fuel.bwr.")||stack.getHoverName().getString().startsWith("insert.bwr."))
                 throw new IllegalStateException("Untranslated fuel name");
         }
-        if(fuel!=17||rods!=8)throw new IllegalStateException("Fuel tab incomplete: "+fuel+"/"+rods);
+        if(fuel!=18||rods!=8)throw new IllegalStateException("Fuel tab incomplete: "+fuel+"/"+rods);
         if(BwrItems.TAB.get().getDisplayItems().stream().anyMatch(SpecialtyRodItem::isCoreItem))throw new IllegalStateException("Fuels still fill machine tab");
         com.mojang.logging.LogUtils.getLogger().info("FUEL CATALOGUE CLIENT PASS: {} grades, {} inserts; distinct PNGs and translated names",fuel,rods);
     }

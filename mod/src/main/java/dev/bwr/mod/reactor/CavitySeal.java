@@ -276,16 +276,6 @@ public final class CavitySeal {
     private CavitySeal() {
     }
 
-    /** True when a block stops water and bounds the ring: a full block, or a part of the cattle chute. */
-    private static boolean wall(Level level, BlockPos p, boolean[] unloaded) {
-        if (!level.isLoaded(p)) {
-            unloaded[0] = true;
-            return false;
-        }
-        var s = level.getBlockState(p);
-        return s.isCollisionShapeFullBlock(level, p) || s.getBlock() instanceof TransferCanalBlock || s.getBlock() instanceof CanalGateBlock;
-    }
-
     /** How far below the top of the vessel a seal may sit: a third of its height, rounded to the nearest block. */
     public static int maxDepth(int height) {
         return (int) Math.round(height / 3.0);
@@ -304,93 +294,281 @@ public final class CavitySeal {
     private record Row(int open, int gapMask, @Nullable Direction badSide, @Nullable BlockPos bad, int badGap) {
     }
 
-    /** One ring at world row {@code y}: how many columns find no wall within one block, and which sides carry a gap. */
-    private static Row ring(Level level, VesselAppearance.Envelope e, int y, boolean[] unloaded) {
-        int open = 0;
-        int mask = 0;
-        Direction badSide = null;
-        BlockPos bad = null;
-        int badGap = 0;
-        int x0 = e.min().getX();
-        int x1 = e.max().getX();
-        int z0 = e.min().getZ();
-        int z1 = e.max().getZ();
-        for (int side = 0; side < 4; side++) {
-            Direction d = SIDES[side];
-            boolean alongX = d.getAxis() == Direction.Axis.Z;
-            int lo = (alongX ? x0 : z0) - 1;
-            int hi = (alongX ? x1 : z1) + 1;
-            for (int c = lo; c <= hi; c++) {
-                BlockPos edge = alongX ? new BlockPos(c, y, d == Direction.NORTH ? z0 : z1) : new BlockPos(d == Direction.WEST ? x0 : x1, y, c);
-                if (wall(level, edge.relative(d, 1), unloaded)) {
-                    continue;
-                }
-                if (wall(level, edge.relative(d, 2), unloaded)) {
-                    mask |= 1 << side;
-                    continue;
-                }
-                open++;
-                if (badSide == null) {
-                    badSide = d;
-                    bad = edge.relative(d, 1).immutable();
-                    int away = 2;
-                    while (away < 12 && !wall(level, edge.relative(d, 1 + away), unloaded)) {
-                        away++;
-                    }
-                    badGap = away < 12 ? away : 99;
-                }
-            }
-        }
-        return new Row(open, mask, badSide, bad, badGap);
-    }
+    /** Block reads one {@link Survey#step} may begin (a little over a millisecond of server time at most; one row or one cell may run past it). */
+    public static final int READS_PER_TICK = 4000;
 
     /**
-     * Surveys the seal and, if there is one, the well. Null when a block that matters is in a chunk that is not loaded (the
-     * caller keeps what it had and tries again at the next revalidation).
+     * Surveys the seal and, if there is one, the well, all at once. Null when a block that matters is in a chunk that is not loaded.
+     * The reactor does not use this: it steps a {@link Survey} a few thousand block reads a tick so no tick pays for the whole of it.
      */
     @Nullable
     public static Result survey(Level level, VesselAppearance.Envelope e) {
-        int bottom = e.min().getY();
-        int h = e.height();
-        int lowest = lowestRow(e.max().getY(), h);
-        int flange = flangeRow(e);
-        boolean[] unloaded = {false};
-        if (lowest > flange) {
-            return new Result(false, h, bottom, lowest, flange, 0, 0, Failure.VESSEL_TOO_SHORT, 0, null, null, 0, 0, false, 0, null, null);
+        Survey survey = new Survey(level, e);
+        survey.step(Integer.MAX_VALUE);
+        return survey.result();
+    }
+
+    /**
+     * One survey, resumable: the ring scan row by row, then the well layer by layer and cell by cell. {@link #step} does up to a
+     * budget of block reads and says whether it has finished, so a large vessel's survey (up to about 190 000 reads) is spread over
+     * the ticks after the structure revalidates, like the containment survey. The answer stays null (nothing to apply) if a block it
+     * needed is in a chunk that is not loaded; no chunk is ever loaded for it.
+     */
+    public static final class Survey {
+        private enum Phase { RING, WELL, DONE }
+
+        private final Level level;
+        private final VesselAppearance.Envelope e;
+        private final int bottom;
+        private final int height;
+        private final int lowest;
+        private final int flange;
+        private final int x0;
+        private final int x1;
+        private final int z0;
+        private final int z1;
+        private int reads;
+        private int stepStart;
+        private int maxStepReads;
+        private boolean unloaded;
+        private Phase phase = Phase.RING;
+        private int ringRow;
+        private int sealRow = Integer.MIN_VALUE;
+        private int sealMask;
+        private int bestRow;
+        private Row best;
+        private Well well;
+        private int[] queue;
+        private BitSet cells;
+        private int layerY;
+        private int seed;
+        private int head;
+        private int tail;
+        private boolean seeded;
+        private boolean escaped;
+        private Result result;
+
+        public Survey(Level level, VesselAppearance.Envelope e) {
+            this.level = level;
+            this.e = e;
+            this.bottom = e.min().getY();
+            this.height = e.height();
+            this.lowest = lowestRow(e.max().getY(), height);
+            this.flange = flangeRow(e);
+            this.x0 = e.min().getX();
+            this.x1 = e.max().getX();
+            this.z0 = e.min().getZ();
+            this.z1 = e.max().getZ();
+            this.ringRow = flange;
+            this.bestRow = flange;
+            if (lowest > flange) {
+                result = new Result(false, height, bottom, lowest, flange, 0, 0, Failure.VESSEL_TOO_SHORT, 0, null, null, 0, 0, false, 0, null, null);
+                phase = Phase.DONE;
+            }
         }
-        int sealRow = Integer.MIN_VALUE;
-        int sealMask = 0;
-        int bestRow = flange;
-        Row best = null;
-        for (int y = flange; y >= lowest; y--) {
-            Row r = ring(level, e, y, unloaded);
-            if (unloaded[0]) {
-                return null;
+
+        public boolean done() {
+            return phase == Phase.DONE;
+        }
+
+        /** The answer once {@link #done}; null for none (a block was in an unloaded chunk). */
+        @Nullable
+        public Result result() {
+            return result;
+        }
+
+        public int totalReads() {
+            return reads;
+        }
+
+        /** The most block reads any one step made so far: its budget, and at most one row of the ring or one cell of the well more. */
+        public int maxStepReads() {
+            return maxStepReads;
+        }
+
+        /** Does up to {@code budget} block reads (more by at most one row or cell); true when the survey is finished. */
+        public boolean step(int budget) {
+            long limit = (long) reads + budget;
+            stepStart = reads;
+            while (phase != Phase.DONE && reads < limit) {
+                if (phase == Phase.RING) {
+                    ringStep();
+                } else {
+                    wellStep(limit);
+                }
+                if (unloaded) {
+                    result = null;
+                    phase = Phase.DONE;
+                }
+            }
+            maxStepReads = Math.max(maxStepReads, reads - stepStart);
+            return phase == Phase.DONE;
+        }
+
+        /** True when a block stops water and bounds the ring: a full block, or a part of the cattle chute. */
+        private boolean wall(BlockPos p) {
+            reads++;
+            if (!level.isLoaded(p)) {
+                unloaded = true;
+                return false;
+            }
+            var s = level.getBlockState(p);
+            return s.isCollisionShapeFullBlock(level, p) || s.getBlock() instanceof TransferCanalBlock || s.getBlock() instanceof CanalGateBlock;
+        }
+
+        private void ringStep() {
+            Row r = ring(ringRow);
+            if (unloaded) {
+                return;
             }
             if (r.open() == 0) {
-                sealRow = y;
+                sealRow = ringRow;
                 sealMask = r.gapMask();
-                break;
+                startWell();
+                return;
             }
             if (best == null || r.open() < best.open()) {
                 best = r;
-                bestRow = y;
+                bestRow = ringRow;
+            }
+            if (--ringRow < lowest) {
+                result = new Result(false, height, bottom, lowest, flange, 0, 0, Failure.WALL_TOO_FAR, bestRow, best.badSide(), best.bad(),
+                        best.badGap(), best.open(), false, 0, null, null);
+                phase = Phase.DONE;
             }
         }
-        if (sealRow == Integer.MIN_VALUE) {
-            return new Result(false, h, bottom, lowest, flange, 0, 0, Failure.WALL_TOO_FAR, bestRow, best == null ? null : best.badSide(),
-                    best == null ? null : best.bad(), best == null ? 0 : best.badGap(), best == null ? 0 : best.open(), false, 0, null, null);
+
+        /** One ring at world row {@code y}: how many columns find no wall within one block, and which sides carry a gap. */
+        private Row ring(int y) {
+            int open = 0;
+            int mask = 0;
+            Direction badSide = null;
+            BlockPos bad = null;
+            int badGap = 0;
+            for (int side = 0; side < 4; side++) {
+                Direction d = SIDES[side];
+                boolean alongX = d.getAxis() == Direction.Axis.Z;
+                int lo = (alongX ? x0 : z0) - 1;
+                int hi = (alongX ? x1 : z1) + 1;
+                for (int c = lo; c <= hi; c++) {
+                    BlockPos edge = alongX ? new BlockPos(c, y, d == Direction.NORTH ? z0 : z1) : new BlockPos(d == Direction.WEST ? x0 : x1, y, c);
+                    if (wall(edge.relative(d, 1))) {
+                        continue;
+                    }
+                    if (wall(edge.relative(d, 2))) {
+                        mask |= 1 << side;
+                        continue;
+                    }
+                    open++;
+                    if (badSide == null) {
+                        badSide = d;
+                        bad = edge.relative(d, 1).immutable();
+                        int away = 2;
+                        while (away < 12 && !wall(edge.relative(d, 1 + away))) {
+                            away++;
+                        }
+                        badGap = away < 12 ? away : 99;
+                    }
+                }
+            }
+            return new Row(open, mask, badSide, bad, badGap);
         }
-        Well well = well(level, e, sealRow, flange, unloaded);
-        if (unloaded[0]) {
-            return null;
+
+        private void startWell() {
+            well = new Well();
+            well.gridMinX = x0 - WELL_EXTENT;
+            well.gridMinZ = z0 - WELL_EXTENT;
+            well.sizeX = x1 - x0 + 1 + 2 * WELL_EXTENT;
+            well.sizeZ = z1 - z0 + 1 + 2 * WELL_EXTENT;
+            well.lastRow = sealRow - 1;
+            queue = new int[well.sizeX * well.sizeZ];
+            layerY = sealRow;
+            newLayer();
+            phase = Phase.WELL;
         }
-        boolean usable = well != null && well.lastRow >= flange;
-        Profile profile = usable ? profile(e, sealRow, flange, well) : null;
-        double plateTop = profile != null ? profile.plateTop() : plateTop(e, sealRow, flange);
-        Visual visual = new Visual(sealRow, sealMask, plateTop, sealRow == flange, usable ? well.shape(e, sealRow) : null);
-        return new Result(true, h, bottom, lowest, flange, sealRow, sealMask, Failure.NONE, sealRow, null, null, 0, 0, usable,
-                usable ? well.lastRow : (well == null ? sealRow : well.lastRow), profile, visual);
+
+        private void newLayer() {
+            cells = new BitSet(well.sizeX * well.sizeZ);
+            seed = 0;
+            head = 0;
+            tail = 0;
+            seeded = false;
+            escaped = false;
+        }
+
+        private void wellStep(long limit) {
+            if (!seeded) {
+                int depth = z1 - z0 + 1;
+                int total = (x1 - x0 + 1) * depth;
+                while (seed < total && reads < limit && !unloaded) {
+                    int x = x0 + seed / depth;
+                    int z = z0 + seed % depth;
+                    seed++;
+                    // Inside the vessel's own height the shell is the vessel; above it a block over the footprint is a ceiling.
+                    boolean open = layerY <= e.max().getY() || !wall(new BlockPos(x, layerY, z));
+                    if (open) {
+                        int cell = (z - well.gridMinZ) * well.sizeX + (x - well.gridMinX);
+                        cells.set(cell);
+                        queue[tail++] = cell;
+                    }
+                }
+                if (seed < total) {
+                    return;
+                }
+                seeded = true;
+                if (tail == 0) {
+                    finishWell();
+                    return;
+                }
+            }
+            while (head < tail && !escaped && reads < limit && !unloaded) {
+                int cell = queue[head++];
+                int gx = cell % well.sizeX;
+                int gz = cell / well.sizeX;
+                for (int k = 0; k < 4 && !escaped; k++) {
+                    int nx = gx + (k == 0 ? 1 : k == 1 ? -1 : 0);
+                    int nz = gz + (k == 2 ? 1 : k == 3 ? -1 : 0);
+                    if (wall(new BlockPos(well.gridMinX + nx, layerY, well.gridMinZ + nz))) {
+                        continue;
+                    }
+                    if (nx < 0 || nz < 0 || nx >= well.sizeX || nz >= well.sizeZ) {
+                        escaped = true;
+                        continue;
+                    }
+                    int next = nz * well.sizeX + nx;
+                    if (!cells.get(next)) {
+                        cells.set(next);
+                        queue[tail++] = next;
+                    }
+                }
+            }
+            if (unloaded || (head < tail && !escaped)) {
+                return;
+            }
+            if (escaped) {
+                finishWell();
+                return;
+            }
+            well.layers.add(cells);
+            well.counts.add(cells.cardinality());
+            well.lastRow = layerY;
+            if (++layerY >= sealRow + MAX_WELL_LAYERS) {
+                finishWell();
+                return;
+            }
+            newLayer();
+        }
+
+        private void finishWell() {
+            Well w = well.layers.isEmpty() ? null : well;
+            boolean usable = w != null && w.lastRow >= flange;
+            Profile profile = usable ? profile(e, sealRow, flange, w) : null;
+            double plateTop = profile != null ? profile.plateTop() : plateTop(e, sealRow, flange);
+            Visual visual = new Visual(sealRow, sealMask, plateTop, sealRow == flange, usable ? w.shape(e, sealRow) : null);
+            result = new Result(true, height, bottom, lowest, flange, sealRow, sealMask, Failure.NONE, sealRow, null, null, 0, 0, usable,
+                    usable ? w.lastRow : (w == null ? sealRow : w.lastRow), profile, visual);
+            phase = Phase.DONE;
+        }
     }
 
     private static double plateTop(VesselAppearance.Envelope e, int sealRow, int flange) {
@@ -420,74 +598,6 @@ public final class CavitySeal {
             }
             return new WellShape(sealRow, gridMinX, gridMinZ, sizeX, sizeZ, distinct, index);
         }
-    }
-
-    @Nullable
-    private static Well well(Level level, VesselAppearance.Envelope e, int sealRow, int flange, boolean[] unloaded) {
-        Well well = new Well();
-        int x0 = e.min().getX();
-        int x1 = e.max().getX();
-        int z0 = e.min().getZ();
-        int z1 = e.max().getZ();
-        well.gridMinX = x0 - WELL_EXTENT;
-        well.gridMinZ = z0 - WELL_EXTENT;
-        well.sizeX = x1 - x0 + 1 + 2 * WELL_EXTENT;
-        well.sizeZ = z1 - z0 + 1 + 2 * WELL_EXTENT;
-        well.lastRow = sealRow - 1;
-        int[] queue = new int[well.sizeX * well.sizeZ];
-        for (int y = sealRow; y < sealRow + MAX_WELL_LAYERS; y++) {
-            BitSet cells = new BitSet(well.sizeX * well.sizeZ);
-            int head = 0;
-            int tail = 0;
-            for (int x = x0; x <= x1; x++) {
-                for (int z = z0; z <= z1; z++) {
-                    // Inside the vessel's own height the shell is the vessel; above it a block over the footprint is a ceiling.
-                    boolean open = y <= e.max().getY() || !wall(level, new BlockPos(x, y, z), unloaded);
-                    if (open) {
-                        int cell = (z - well.gridMinZ) * well.sizeX + (x - well.gridMinX);
-                        cells.set(cell);
-                        queue[tail++] = cell;
-                    }
-                }
-            }
-            if (tail == 0) {
-                break;
-            }
-            boolean escaped = false;
-            while (head < tail && !escaped) {
-                int cell = queue[head++];
-                int gx = cell % well.sizeX;
-                int gz = cell / well.sizeX;
-                for (int k = 0; k < 4 && !escaped; k++) {
-                    int nx = gx + (k == 0 ? 1 : k == 1 ? -1 : 0);
-                    int nz = gz + (k == 2 ? 1 : k == 3 ? -1 : 0);
-                    int wx = well.gridMinX + nx;
-                    int wz = well.gridMinZ + nz;
-                    if (wall(level, new BlockPos(wx, y, wz), unloaded)) {
-                        continue;
-                    }
-                    if (nx < 0 || nz < 0 || nx >= well.sizeX || nz >= well.sizeZ) {
-                        escaped = true;
-                        continue;
-                    }
-                    int next = nz * well.sizeX + nx;
-                    if (!cells.get(next)) {
-                        cells.set(next);
-                        queue[tail++] = next;
-                    }
-                }
-            }
-            if (unloaded[0]) {
-                return null;
-            }
-            if (escaped) {
-                break;
-            }
-            well.layers.add(cells);
-            well.counts.add(cells.cardinality());
-            well.lastRow = y;
-        }
-        return well.layers.isEmpty() ? null : well;
     }
 
     private static Profile profile(VesselAppearance.Envelope e, int sealRow, int flange, Well well) {
