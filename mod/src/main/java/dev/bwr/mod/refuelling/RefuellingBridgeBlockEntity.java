@@ -171,6 +171,9 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
     /** Standing still although busy: a chunk it needs is not loaded (or a development hold); sent to clients so they stop extrapolating. */
     private boolean paused;
     private boolean devHold;
+    /** What the picture of the carried assembly needs, set when a phase begins: its Cherenkov strength (0..15) and the surface it hangs under. */
+    private int glow;
+    private double surfaceSeen = Double.NaN;
     // client
     private long clientSyncTick;
 
@@ -683,7 +686,7 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         BridgeMotion.Stop to = stopOf(move.to());
         boolean crosses = site.bodyAt(level, from.x(), from.z(), chute) != site.bodyAt(level, to.x(), to.z(), chute);
         BridgeMotion.Chute throughChute = crosses ? site.motionChute(chute) : null;
-        BridgeMotion.Route r = BridgeMotion.route(from, to, throughChute, override);
+        BridgeMotion.Route r = BridgeMotion.route(from, to, throughChute, override, site.homeY());
         if (crosses && BridgeMotion.chuteFloorMarginM(r, throughChute) < 0.0) {
             fault(server, Phase.LATCH, BwrText.tr("status.bwr.refuelling_bridge.chute_shallow",
                     "Stopped: the cattle chute is too shallow. A 4.5 m assembly would hang through its floor; stack the canal blocks deeper or fill the cavity and the pool higher."));
@@ -902,8 +905,31 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
                 BridgeMotion.transmission(carriedCover));
     }
 
+    private void refreshGlow() {
+        glow = 0;
+        surfaceSeen = Double.NaN;
+        if (carried.isEmpty() || !(level instanceof ServerLevel server) || pos == null) {
+            return;
+        }
+        double fraction = SpentFuelHeat.decayWatts(carried, server.getGameTime()) / dev.bwr.core.thermal.AssemblyDecayHeat.REFERENCE_OPERATING_POWER_W;
+        glow = (int) Math.round(15.0 * dev.bwr.mod.reactor.CherenkovAppearance.strength(fraction, true, true, 12.0));
+        Point at = tip();
+        surfaceSeen = site != null && site.ok() ? site.surfaceAt(server, at.x(), at.z(), chute) : Double.NaN;
+    }
+
+    /** The glow strength the client draws on the carried assembly (0 when none, or when it hangs in air). */
+    public int glow() {
+        return glow;
+    }
+
+    /** The surface of the water the carried assembly was under when the last phase began; NaN if none. */
+    public double surfaceSeen() {
+        return surfaceSeen;
+    }
+
     private void sync() {
         if (level != null && !level.isClientSide()) {
+            refreshGlow();
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
         }
     }
@@ -1045,6 +1071,8 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         carried = tag.contains("Carried") ? ItemStack.parse(registries, tag.get("Carried")).orElse(ItemStack.EMPTY) : ItemStack.EMPTY;
         override = tag.getBoolean("Override");
         paused = tag.getBoolean("Paused");
+        glow = tag.getInt("Glow");
+        surfaceSeen = tag.contains("Surface") ? tag.getDouble("Surface") : Double.NaN;
         if (tag.contains("Geom", Tag.TAG_COMPOUND)) {
             CompoundTag g = tag.getCompound("Geom");
             geom = new Geom(g.getBoolean("AlongX"), g.getInt("RailY"), g.getInt("ALo"), g.getInt("AHi"), g.getInt("CLow"), g.getInt("CHigh"));
@@ -1065,6 +1093,12 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         CompoundTag tag = saveWithoutMetadata(registries);
         if (paused && busy()) {
             tag.putBoolean("Paused", true);
+        }
+        if (glow > 0 && !carried.isEmpty()) {
+            tag.putInt("Glow", glow);
+            if (!Double.isNaN(surfaceSeen)) {
+                tag.putDouble("Surface", surfaceSeen);
+            }
         }
         return tag;
     }

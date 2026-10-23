@@ -12,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -104,10 +105,37 @@ public final class RefuellingBridgeRenderer implements BlockEntityRenderer<Refue
         box(out, p, steel, g, x + 0.02 + jaw, tipY - 0.34, z - 0.2, x + 0.06 + jaw, tipY, z + 0.2, work, true);
         // the assembly on the grapple, hanging by its handle
         if (!be.carried().isEmpty()) {
-            box(out, p, fuel, g, x - 0.12, tipY - BridgeMotion.ASSEMBLY_LENGTH_M, z - 0.12, x + 0.12, tipY - 0.34, z + 0.12, work, true);
-            box(out, p, fuel, g, x - 0.04, tipY - 0.34, z - 0.04, x + 0.04, tipY, z + 0.04, work, true);
+            box(out, p, fuel, g, x - 0.2, tipY - BridgeMotion.ASSEMBLY_LENGTH_M, z - 0.2, x + 0.2, tipY - 0.34, z + 0.2, work, true);
+            box(out, p, fuel, g, x - 0.06, tipY - 0.34, z - 0.06, x + 0.06, tipY, z + 0.06, work, true);
+            // hot fuel under water glows blue (the reactor's own Cherenkov strength, from the decay heat), until it is lifted out
+            if (be.glow() > 0 && tipY < be.surfaceSeen()) {
+                glow(buffers.getBuffer(RenderType.eyes(TextureAtlas.LOCATION_BLOCKS)), p, fuel, x, tipY - BridgeMotion.ASSEMBLY_LENGTH_M, z, tipY - 0.2,
+                        be.glow() / 15.0f);
+            }
         }
         pose.popPose();
+    }
+
+    /** A soft blue shell round the carried assembly: additive, so each vertex is premultiplied by its strength; fading towards the ends. */
+    private static void glow(VertexConsumer out, PoseStack.Pose p, TextureAtlasSprite sprite, double x, double y0, double z, double y1, float strength) {
+        double h = 0.3;
+        double[][] c = {{-h, -h}, {-h, h}, {h, h}, {h, -h}};
+        float u = sprite.getU(0.5f);
+        float v = sprite.getV(0.5f);
+        for (int i = 0; i < 4; i++) {
+            double[] a = c[i];
+            double[] b = c[(i + 1) % 4];
+            float s = 0.5f * strength;
+            glowVertex(out, p, x + a[0], y0, z + a[1], u, v, 0.1f * s);
+            glowVertex(out, p, x + b[0], y0, z + b[1], u, v, 0.1f * s);
+            glowVertex(out, p, x + b[0], y1, z + b[1], u, v, s);
+            glowVertex(out, p, x + a[0], y1, z + a[1], u, v, s);
+        }
+    }
+
+    private static void glowVertex(VertexConsumer out, PoseStack.Pose p, double x, double y, double z, float u, float v, float a) {
+        out.addVertex(p, (float) x, (float) y, (float) z).setColor(0.04f * a, 0.6f * a, a, a).setUv(u, v)
+                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(p, 0, 1, 0);
     }
 
     /** Half the gap between the jaws: wide while empty, closing during LATCH and holding shut with an assembly. */

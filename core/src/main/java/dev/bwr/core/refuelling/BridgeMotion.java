@@ -153,9 +153,17 @@ public final class BridgeMotion {
      * the two surfaces (an overridden lift stays as high as it is). {@code minCoverM} counts the drained chute as no cover.
      */
     public static Route route(Stop from, Stop to, Chute chute, boolean overridden) {
+        return route(from, to, chute, overridden, Double.POSITIVE_INFINITY);
+    }
+
+    /**
+     * {@link #route(Stop, Stop, Chute, boolean)} for a mast that cannot lift the grapple above {@code maxTipY} (fully retracted:
+     * the height of the rest position). The whole assembly cannot rise above it, however high the lift asks.
+     */
+    public static Route route(Stop from, Stop to, Chute chute, boolean overridden, double maxTipY) {
         double lift = lift(overridden);
-        double yFrom = from.seatTopY() + lift;
-        double yTo = to.seatTopY() + lift;
+        double yFrom = Math.min(maxTipY, from.seatTopY() + lift);
+        double yTo = Math.min(maxTipY, to.seatTopY() + lift);
         if (chute == null) {
             Waypoint[] w = {new Waypoint(new Point(from.x(), yFrom, from.z()), from.surfaceY()),
                     new Waypoint(new Point(to.x(), yTo, to.z()), to.surfaceY())};
@@ -163,7 +171,7 @@ public final class BridgeMotion {
         }
         double canalSurface = chute.filled() ? chute.surfaceY() : Double.NaN;
         double lowest = Math.min(Math.min(from.surfaceY(), to.surfaceY()), chute.filled() ? chute.surfaceY() : Double.MAX_VALUE);
-        double yChute = overridden ? Math.max(yFrom, yTo) : lowest - CHUTE_COVER_M;
+        double yChute = overridden ? Math.max(yFrom, yTo) : Math.min(maxTipY, lowest - CHUTE_COVER_M);
         Waypoint[] w = {
                 new Waypoint(new Point(from.x(), yFrom, from.z()), from.surfaceY()),
                 new Waypoint(new Point(chute.entryX(), yChute, chute.entryZ()), from.surfaceY()),

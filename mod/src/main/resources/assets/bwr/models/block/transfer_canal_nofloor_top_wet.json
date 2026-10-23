@@ -88,16 +88,7 @@
         "south": {
           "texture": "#water"
         },
-        "east": {
-          "texture": "#water"
-        },
-        "west": {
-          "texture": "#water"
-        },
         "up": {
-          "texture": "#water"
-        },
-        "down": {
           "texture": "#water"
         }
       }

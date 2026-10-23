@@ -141,9 +141,9 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                 Layout.controls(BwrStyle.SP1).add(markButton, 1).add(swapButton, 1))
                 .compact();
         actions.tip("The vessel head is off: bundles are lifted out through the top of the open vessel.");
-        var bridgeHint = Layout.card("Instant refuelling is off",
-                Layout.note("Move fuel with the refuelling bridge: rails over the reactor and the pool, a console, and a gated cattle chute between them. The buttons here stay dark. See REFUELLING-BRIDGE.md.")
-                        .maxLines(4))
+        var bridgeHint = Layout.card("Instant is off",
+                Layout.note("Use the refuelling bridge.")
+                        .maxLines(2).tip(() -> List.of(Component.literal(net.minecraft.network.chat.Component.translatable("status.bwr.refuelling_menu.instant_off").getString()))))
                 .compact();
         var lower = Layout.split(0);
         lower.fixed(Layout.gap(0), actionsX - BwrStyle.SP2);
@@ -153,9 +153,9 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
             var moves = Layout.card("",
                     Layout.controls(BwrStyle.SP1).label(this::cellText, 128).fixed(cellPrev, 22).fixed(cellNext, 22)
                             .fixed(cellEmpty, 48).fixed(cellFuel, 42),
-                    Layout.gap(BwrStyle.SP1),
+                    Layout.gap(1),
                     Layout.controls(BwrStyle.SP1).add(toPool, 1).add(toCore, 1).add(setDown, 1),
-                    Layout.gap(BwrStyle.SP1),
+                    Layout.gap(1),
                     Layout.controls(BwrStyle.SP1).add(abort, 1).add(resume, 1).add(override, 1))
                     .compact();
             return Layout.column(BwrStyle.SP1,
@@ -253,18 +253,19 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                         .tip("What the bridge is doing, and how many more moves are queued behind it."),
                 Layout.meter("Phase", () -> menu.bridgeBusy ? menu.bridgeProgress : 0.0, () -> menu.bridgeHalted ? Status.ALARM : Status.NONE,
                         () -> menu.bridgeBusy ? menu.bridgeSecondsLeft + " s left" : "-"),
-                Layout.row("Water", () -> String.format(Locale.ROOT, "%.1f m core, %s", menu.bridgeCavityWaterM,
-                        menu.bridgePool ? String.format(Locale.ROOT, "%.1f m racks", menu.bridgePoolCoverM) : "no pool")).dense()
+                Layout.row("Water", () -> String.format(Locale.ROOT, "%.1f / %s", menu.bridgeCavityWaterM,
+                        menu.bridgePool ? String.format(Locale.ROOT, "%.1f", menu.bridgePoolCoverM) : "-"), "m").dense()
                         .tip("Metres of water over the top of the core, and over the tops of the pool racks."),
                 Layout.row("Chute", () -> menu.bridgeChute.toLowerCase(Locale.ROOT)).dense()
                         .status(() -> menu.bridgeChute.equals("CLOSED") || menu.bridgeChute.equals("DRAINED") || menu.bridgeChute.equals("ABSENT")
                                 ? Status.CAUTION : Status.NONE)
                         .tip("The cattle chute between the cavity and the pool: open gates let the bridge through."),
-                Layout.row("Grapple", () -> menu.bridgeHolding ? "holding" : "empty").dense()
+                Layout.row("Grapple", () -> (menu.bridgeHolding ? "holding" : "empty") + (menu.bridgeOverride ? ", override" : "")).dense()
                         .status(() -> menu.bridgeOverride ? Status.CAUTION : Status.NONE)
                         .tip(() -> List.of(Component.literal(menu.bridgeHolding ? menu.bridgeCarried : "Nothing on the grapple."),
                                 Component.literal(menu.bridgeOverride ? "The hoist-limit interlock is overridden." : "The hoist-limit interlock is active."))),
-                Layout.note(() -> menu.bridgeMessage).maxLines(2).status(() -> menu.bridgeHalted ? Status.ALARM : Status.NONE))
+                Layout.note(() -> menu.bridgeMessage).maxLines(2).status(() -> menu.bridgeHalted ? Status.ALARM : Status.NONE)
+                        .tip(() -> List.of(Component.literal(menu.bridgeMessage))))
                 .compact();
     }
 

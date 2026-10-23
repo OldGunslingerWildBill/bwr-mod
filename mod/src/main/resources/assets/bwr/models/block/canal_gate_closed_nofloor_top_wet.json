@@ -88,16 +88,7 @@
         "south": {
           "texture": "#water"
         },
-        "east": {
-          "texture": "#water"
-        },
-        "west": {
-          "texture": "#water"
-        },
         "up": {
-          "texture": "#water"
-        },
-        "down": {
           "texture": "#water"
         }
       }
@@ -110,7 +101,7 @@
       ],
       "to": [
         9,
-        16,
+        20,
         14
       ],
       "faces": {

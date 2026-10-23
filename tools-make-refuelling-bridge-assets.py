@@ -221,7 +221,9 @@ def trough(floor, top, water, plate=None):
     if floor:
         elements.append(element([0, 0, 0], [16, 2, 16], "canal"))
     if water:
-        elements.append(element([0, y0, 2], [16, 13 if top else 16, 14], "water"))
+        # only the surface (in the top block) and the sides against the walls: no end faces between neighbours and no floor, so
+        # translucent layers never stack up and a view down the trench or from inside it stays clear
+        elements.append(element([0, y0, 2], [16, 13 if top else 16, 14], "water", ("north", "south", "up") if top else ("north", "south")))
     if plate:
         elements.append(element(plate[0], plate[1], "plate"))
     return elements
@@ -238,7 +240,7 @@ def canal_models():
                 if wet:
                     model["render_type"] = "minecraft:translucent"
                 write(os.path.join(MODELS, "block", "transfer_canal_%s.json" % suffix), model)
-                for openness, plate in (("closed", ([7, 2 if floor else 0, 2], [9, 16, 14])), ("open", ([7, 2 if floor else 0, 2], [9, 3 if floor else 1, 14]))):
+                for openness, plate in (("closed", ([7, 2 if floor else 0, 2], [9, 20 if top else 16, 14])), ("open", ([7, 2 if floor else 0, 2], [9, 3 if floor else 1, 14]))):
                     gate = {"textures": tex, "elements": trough(floor, top, wet, plate)}
                     if wet:
                         gate["render_type"] = "minecraft:translucent"

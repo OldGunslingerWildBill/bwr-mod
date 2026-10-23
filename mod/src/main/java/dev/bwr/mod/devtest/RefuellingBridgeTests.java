@@ -131,6 +131,7 @@ public final class RefuellingBridgeTests {
             h.assertTrue(f.reactor.core().getCoreLoading().assemblyAt(slot3).burnupMwdPerTonne() == 30000.0, "exposure intact");
             h.assertTrue(f.phases.get(0) == Phase.TRAVEL && f.phases.contains(Phase.TRANSIT), "phases back " + f.phases);
             h.assertTrue(back > 20 * 30, "the return takes time too: " + back);
+            System.out.println("REFUELLING BRIDGE: core to rack " + ticks + " ticks (" + ticks / 20 + " s), rack to core " + back + " ticks (" + back / 20 + " s), 11 m between the core and the racks");
         } finally {
             f.dispose();
         }
@@ -270,6 +271,7 @@ public final class RefuellingBridgeTests {
             double high = RadiationField.doseRateMsvPerHour(f.level, probe);
             h.assertTrue(f.bridge.carriedCoverM() == 0.0, "the handle is in the air: " + f.bridge.carriedCoverM());
             h.assertTrue(high > 1000.0 * lifted && high > 1000.0, "out of the water the meter spikes: " + high + " mSv/h against " + lifted);
+            System.out.println("REFUELLING BRIDGE DOSE: seated " + seated + " mSv/h, lifted 1 m (2 m of water) " + lifted + ", handle out of the water " + high);
             run(h, f, 1);
         } finally {
             f.dispose();

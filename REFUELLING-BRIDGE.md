@@ -21,9 +21,13 @@ All blocks are in the Realistic BWR creative tab (iron and gray concrete; the co
    between them, across). The reactor needs its head off (the refuelling vessel state); the pool needs to be formed.
 2. **The cattle chute.** A straight row of **Transfer Canal** blocks from the reactor shell to the pool wall, in a row that both
    interiors share, filling every column between the two shells. It is a **trench**: a 4.5 m assembly stands upright in it, so the
-   canal blocks are stacked (the lowest has the floor, the highest the water surface). The top block is at the height of the rails
-   or up to four blocks below them. One or more **Canal Gate** blocks stand in the row (a gate is a canal block with a plate
-   across it; stack gates to make a gate the full depth). A bucket fills or drains the whole stack it is used on.
+   canal blocks are stacked (the lowest has the floor, the highest the water surface; the model joins them as you place them). The
+   top block is at the height of the rails or up to four blocks below them, and the trench must be deep enough for the assembly
+   to hang clear of its floor (in the test world, 9 blocks; the bridge halts with the figures if it is not). One or more **Canal Gate**
+   blocks stand in the row (a gate is a canal block with a plate across it, raised when closed and sunk when open; stack gates to
+   make a gate the full depth: the bridge counts the row closed if any gate block in it is). A bucket fills or drains the whole stack it is used on.
+   The chute meets the cavity and the pool at their walls; the model takes the assembly through the wall at that depth (the real slot
+   is gated, and the vessel's shell is not something a player can cut).
 3. **The console.** A **Refuelling Bridge Console** beside any rail block. Right-click it for the control screen; sneak-click for
    what the bridge sees (rails, reactor, pool, chute, state).
 
@@ -62,7 +66,8 @@ source is empty, the destination is taken, a position is out of reach, the chute
 | retract | the mast goes back up | 0.6 m/s |
 
 The speeds are real-ish: a bridge runs at fractions of a metre a second and a loaded hoist at about 10 cm/s; the game compresses them
-about threefold and keeps the ratios. Typical times from the GameTests (cavity to the far rack, 11 m apart): see the table at the end.
+about threefold and keeps the ratios. Measured in the GameTests with a 5 x 5 reactor and the smallest pool, 11 m from the core to the racks: **49 s** core to rack and **46 s** rack to core
+(travel, lower, latch 4 s, lift, carry, set down, release 4 s, retract). A larger reactor with the pool further away takes proportionally longer; a queue of moves runs one after another.
 
 The mast and grapple are drawn from the console's synced state (no entities, no per-tick packets: one update when a phase begins,
 the client advances the pose with its own clock). The operator's seat is the console beside the rails; riding the gantry was not built.
@@ -73,8 +78,9 @@ The top of the carried assembly, its handle where the grapple holds it, is the p
 over it, `cover = surface - handle`, at every tick of a move, in whichever body it is over:
 
 * **cavity**: the top of the drawn core plus the metres of water the reactor model has above the top of active fuel,
-  `(collapsed level - TAF) x 0.0254` (the same number `RadiationField` uses for an open head; 2.8 m for a cold shutdown vessel, 4.4 m at the
-  normal operating level);
+  `(collapsed level - TAF) x 0.0254` (the same number `RadiationField` uses for an open head). A freshly formed cold vessel has only 1.2 m
+  over the fuel, so **the player floods the cavity before refuelling** (the normal operating level is 4.4 m over the fuel); the hoist limit
+  below says so when the water is too shallow;
 * **pool**: its own level, `floor + levelM`, so a boiled-down pool shows up at once;
 * **chute**: the surface of its top canal block (13/16 of the block); none if any block of its row is drained.
 
@@ -86,8 +92,9 @@ over it, `cover = surface - handle`, at every tick of a move, in whichever body 
 * the **pool's stored fuel**: each rack with fuel is a point source at the middle of its top, the same gamma share of the decay heat of what it holds, through the water over
   the rack top (none when the water has fallen below it). One provider for every pool in the level.
 
-For a just-discharged 45 GWd/t assembly (315 kW, 157 kW gamma) seen 4.5 m above its rack: about 4 uSv/h seated under 3 m of water, 4 mSv/h lifted a
-metre (2 m over the handle), and tens of Sv/h with the handle out of the water. Each metre of water is a factor of 1,200.
+For a just-discharged 45 GWd/t assembly (315 kW, 157 kW gamma) seen from the deck 4.5 m above its rack (`theDoseRisesWhenTheAssemblyIsLiftedAndSpikesOutOfTheWater`): **4.1 uSv/h**
+seated under 3 m of water, **8.0 mSv/h** lifted a metre (2 m over the handle), and **2.8e8 mSv/h** with the handle out of the water a few metres from the observer (the survey meter picture reads
+906 Sv/h from 9 m away). Each metre of water is a factor of 1,200.
 Looking down is the conservative case: the model has the point source at the handle and counts only the water straight above it.
 
 ### The hoist limit
@@ -100,7 +107,9 @@ protects nothing in the plant and nothing reads it. It is not in the physics mod
 named for it, and the decision now lives in the block entity (the core only measures the cover).
 
 Normal carries lift 1.0 m (game scale: the real lift is 4.5 m under 7 m of water); in the chute the assembly is held 2.0 m under the lowest of the three
-surfaces (cavity, pool, canal). With a 3 m full pool the cover is 2 m over a rack seat; with a cold shutdown vessel 1.8 m over the core.
+surfaces (cavity, pool, canal). With a 3 m full pool the cover is 2 m over a rack seat; with the cavity flooded to 3 m, 2 m over the core. The mast
+can only raise the grapple as high as its rest position (1 m over the rails), so even an overridden lift stops there: the handle then hangs in air
+if the surface is lower than that.
 
 ### The cattle chute, and how it couples the water
 
@@ -147,6 +156,13 @@ if not r.ok then print(r.message) end
 while bridge.getStatus().busy do sleep(1) end
 ```
 
+## Pictures (1920 x 1080, `art/refuelling-bridge/`)
+
+`chute-open-floor.png` and `chute-closed-floor.png` (the chute from the refuel floor, gate sunk and raised), `chute-open-side.png` and `chute-closed-side.png` (from the side),
+`bridge-span.png` (the gantry over the chute between the cavity and the pool), `mast-in-core.png` (the mast lowered into the core), `assembly-through-chute.png` (a hot assembly glowing
+in the water of the chute, seen from inside the trench), `assembly-in-rack.png` (just set into a rack), `control-screen.png` (the map as the bridge's control, mid move),
+`survey-meter-spike.png` (the Survey Meter HUD at 906 Sv/h with the handle out of the water), and the four screens of the GUI check (`gui-*.png`).
+
 ## Tests
 
 Core (`:core:acceptance`): `BridgeMotionTest` (legs take as long as the slowest axis, the water over the handle and the dose law against `DoseModel`, routes and the least cover, the chute floor margin).
@@ -164,3 +180,5 @@ and a moving one ticks once a tick on the real scheduler; the instant option on 
 * No collision: the assembly does not hit the rack tops it passes over; the lift is the game-scale 1 m.
 * One reactor and one pool per bridge (the nearest of each to the console between the rails). A pool-to-pool move works; a bridge with no reactor has no screen (the peripheral works).
 * Specialty inserts (rods, sources) move between core positions; the pool racks take fuel assemblies only.
+* Two consoles on the same rails are two independent bridges; the second does not know where the first is (nothing stops them sharing a column).
+* The assembly crosses the vessel's shell and the pool wall at the depth of the chute (see the build notes); nothing is cut in either.

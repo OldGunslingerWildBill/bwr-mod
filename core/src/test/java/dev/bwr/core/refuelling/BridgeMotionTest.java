@@ -67,6 +67,10 @@ public final class BridgeMotionTest {
         Route high = BridgeMotion.route(a, b, null, true);
         Check.absolute(104.5, high.waypoints()[0].at().y(), 1e-12, "the whole 4.5 m");
         Check.exactly(0.0, high.minCoverM(), "the handle is in the air");
+        // the mast only reaches so high: a rest position 3 m over the seats caps the lift
+        Route capped = BridgeMotion.route(a, b, null, true, 103.0);
+        Check.absolute(103.0, capped.waypoints()[0].at().y(), 1e-12, "the mast cannot lift the grapple above its rest height");
+        Check.absolute(1.4, capped.minCoverM(), 1e-9, "so a mast that cannot reach the surface keeps the handle under 1.4 m of water");
     }
 
     public static void test04_throughTheChuteTheAssemblyStaysTwoMetresUnderTheLowerSurface() {

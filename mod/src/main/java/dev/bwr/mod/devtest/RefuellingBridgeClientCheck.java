@@ -59,16 +59,16 @@ public final class RefuellingBridgeClientCheck {
     }
 
     private static final Shot[] SHOTS = {
-            new Shot(v(3.5, 9.0, 4.5), v(8.0, 8.4, 2.5)),
-            new Shot(v(3.5, 9.0, 4.5), v(8.0, 8.4, 2.5)),
-            new Shot(v(7.5, 10.2, -1.5), v(7.5, 8.2, 2.5)),
-            new Shot(v(7.5, 10.2, -1.5), v(7.5, 8.2, 2.5)),
-            new Shot(v(7.5, 17.0, -9.0), v(7.5, 8.0, 2.5)),
-            new Shot(v(10.0, 15.0, -4.0), v(2.5, 5.0, 2.5)),
-            new Shot(v(7.5, 14.5, -3.5), v(7.5, 6.5, 2.5)),
-            new Shot(v(10.0, 14.0, -5.0), v(11.0, 6.0, 6.0)),
+            new Shot(v(4.5, 10.4, -1.0), v(7.5, 8.6, 2.5)),
+            new Shot(v(4.5, 10.4, -1.0), v(7.5, 8.6, 2.5)),
+            new Shot(v(7.5, 10.9, -1.2), v(7.5, 8.6, 2.5)),
+            new Shot(v(7.5, 10.9, -1.2), v(7.5, 8.6, 2.5)),
+            new Shot(v(-6.0, 15.0, -9.0), v(7.5, 9.0, 2.5)),
+            new Shot(v(7.0, 15.5, -5.0), v(2.5, 6.0, 2.5)),
+            new Shot(v(6.1, 1.6, 2.5), v(8.7, 3.2, 2.5)),
+            new Shot(v(14.8, 11.0, 5.75), v(11.75, 6.6, 5.75)),
             new Shot(v(8.0, 11.0, 0.0), v(8.0, 8.0, 2.5)),
-            new Shot(v(12.0, 11.5, -1.0), v(11.0, 10.0, 7.0))};
+            new Shot(v(19.5, 11.5, 5.25), v(10.75, 9.2, 5.25))};
 
     private static boolean started, requested, standing, built;
     private static volatile Throwable failure;
@@ -133,6 +133,7 @@ public final class RefuellingBridgeClientCheck {
             }
             mc.options.hideGui = current != 8 && current != 9;
             mc.options.guiScale().set(current == 9 ? 2 : 3);
+            mc.options.fov().set(current == 6 ? 100 : 70);
             server.execute(() -> {
                 try {
                     ServerPlayer player = server.getPlayerList().getPlayer(uuid);
@@ -210,9 +211,12 @@ public final class RefuellingBridgeClientCheck {
             level.setBlock(at, Blocks.SMOOTH_STONE.defaultBlockState(), 3);
         }
         fixture = RefuellingBridgeFixture.build(level, O, 6);
-        // the refuel floor: deck wherever the reactor roof, the pool rim and the chute do not already stand
+        // the refuel floor: deck wherever the reactor roof, the pool and the chute do not already stand (the pool stays open)
         for (var at : BlockPos.betweenClosed(new BlockPos(O.getX() - 8, O.getY() + 8, O.getZ() - 8), new BlockPos(O.getX() + 26, O.getY() + 8, O.getZ() + 14))) {
-            if (level.getBlockState(at).isAir()) {
+            int dx = at.getX() - O.getX();
+            int dz = at.getZ() - O.getZ();
+            boolean poolWater = dx >= 9 && dx <= 17 && dz >= -2 && dz <= 6;
+            if (!poolWater && level.getBlockState(at).isAir()) {
                 level.setBlock(at, Blocks.SMOOTH_STONE.defaultBlockState(), 3);
             }
         }
@@ -223,7 +227,8 @@ public final class RefuellingBridgeClientCheck {
         long now = level.getGameTime();
         var racks = fixture.pool.racks;
         for (int k = 0; k < 6; k++) {
-            fixture.pool.be.insertAt(racks.get(k / 4), k % 4, SpentFuelPoolFixture.assembly(45000.0, k < 3 ? 0.0 : 86400.0 * 30, now));
+            // three just discharged in the first rack, three a month old in the second
+            fixture.pool.be.insertAt(racks.get(k < 3 ? 0 : 1), k < 3 ? k : k - 3, SpentFuelPoolFixture.assembly(45000.0, k < 3 ? 0.0 : 86400.0 * 30, now));
         }
         fixture.pool.be.simulateSeconds(1, now);
         LogUtils.getLogger().info("REFUELLING BRIDGE CLIENT CHECK server: bridge surveyed {}, chute {}, {} assemblies",
@@ -259,7 +264,7 @@ public final class RefuellingBridgeClientCheck {
                 bridge.devPlace(bridge.site().home());
                 f.openGate();
                 bridge.refreshSite();
-                check(bridge.queue(new Move(Loc.core(f.corePosition(0)), Loc.rack(f.pool.racks.get(1), 1))) == null, "queue core to pool");
+                check(bridge.queue(new Move(Loc.core(f.corePosition(0)), Loc.rack(f.pool.racks.get(1), 3))) == null, "queue core to pool");
                 stepUntil(bridge, level, () -> bridge.phase() == Phase.LATCH);
                 bridge.devHold(true);
             }
@@ -267,21 +272,21 @@ public final class RefuellingBridgeClientCheck {
                 bridge.devHold(false);
                 stepUntil(bridge, level, () -> bridge.phase() == Phase.TRANSIT
                         && bridge.site().bodyAt(level, bridge.tip().x(), bridge.tip().z(), bridge.chute()) == BridgeSite.Body.CHUTE
-                        && bridge.progress() > 0.5);
+                        && bridge.progress() > 0.75);
                 check(!bridge.carried().isEmpty(), "carrying");
                 bridge.devHold(true);
             }
             case 7 -> {
                 bridge.devHold(false);
                 stepUntil(bridge, level, () -> bridge.phase() == Phase.RAISE_EMPTY);
-                check(!f.pool.be.stackAt(f.pool.racks.get(1), 1).isEmpty(), "set into the rack");
+                check(!f.pool.be.stackAt(f.pool.racks.get(1), 3).isEmpty(), "set into the rack");
                 bridge.devHold(true);
             }
             case 8 -> {
                 bridge.devHold(false);
                 stepUntil(bridge, level, () -> false);
-                check(bridge.queue(new Move(Loc.core(f.corePosition(1)), Loc.rack(f.pool.racks.get(1), 2))) == null, "queue core to pool");
-                check(bridge.queue(new Move(Loc.rack(f.pool.racks.get(0), 0), Loc.core(f.corePosition(60)))) == null, "queue pool to core");
+                check(bridge.queue(new Move(Loc.core(f.corePosition(1)), Loc.rack(f.pool.racks.get(2), 0))) == null, "queue core to pool");
+                check(bridge.queue(new Move(Loc.rack(f.pool.racks.get(0), 0), Loc.core(f.corePosition(61)))) == null, "queue pool to core");
                 for (int i = 0; i < 700; i++) {
                     bridge.scheduledTick(level);
                 }
@@ -290,7 +295,6 @@ public final class RefuellingBridgeClientCheck {
             }
             case 9 -> {
                 bridge.devHold(false);
-                bridge.abort();
                 stepUntil(bridge, level, () -> false);
                 bridge.setOverride(true);
                 f.fillPool(7.0);
