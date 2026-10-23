@@ -159,6 +159,12 @@ well (water) | Cavity Drain Port | High-Pressure Water Pipe | Motor-Operated Wat
 * **Nothing per tick but the reactor's.** The port has no ticker; the formed reactor steps the ports in its well area once a tick (a single comparison when there are none) and re-reads the list only when a port
   came or went or the well was surveyed again. It reads the pipe survey the same way a pump does (a cached graph and a memoised route walk; no chunk is loaded). Nothing of the port is saved.
 
+![The drain port in the well wall, piped through a valve to the condensate tank](art/cavity-drain/drain-port-piped-to-cst.png)
+
+![The port's strainer in the wall of the flooded well](art/cavity-drain/drain-port-in-well-wall.png)
+
+![The INFO tab during a drain](art/cavity-drain/info-tab-during-drain.png)
+
 ### What the screen and the computers say
 
 INFO tab, "Cavity seal and well": the survey's verdict (present at y, row, H and the lowest allowed row, touching or with a gap; or absent, with the closest row and which side is

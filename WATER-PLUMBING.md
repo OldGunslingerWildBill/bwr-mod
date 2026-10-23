@@ -121,6 +121,8 @@ replaced) and spares the rest of the line, a valve beside the break included, li
 
 Models: `art/models/water_valves/build_models.py` (headless Blender), exported by `python tools-export-water-valves.py [--check]`.
 
+![The motor-operated water valve on a water line](art/cavity-drain/valve-on-water-line.png)
+
 ## Pipe compatibility
 
 Water and steam pipes now have round Blender-built fittings. Their default
