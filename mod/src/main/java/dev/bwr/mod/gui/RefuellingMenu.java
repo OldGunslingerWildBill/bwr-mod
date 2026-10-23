@@ -1,6 +1,11 @@
 package dev.bwr.mod.gui;
 
+import dev.bwr.mod.config.GameplayConfig;
+import dev.bwr.mod.refuelling.BridgeSite;
+import dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity;
+import dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity;
 import dev.bwr.mod.text.BwrText;
+import net.minecraft.world.inventory.ContainerLevelAccess;
 
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import dev.bwr.mod.reactor.VesselState;
@@ -15,6 +20,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -50,6 +56,18 @@ public class RefuellingMenu extends BwrMenu {
     public static final int CMD_UNLOAD = 1;
     /** a, b = core slots to exchange. */
     public static final int CMD_SWAP = 2;
+    /** Bridge: a = core slot index, b = pool cell index (rack index x 4 + cell). Queue a move from the core to the pool. */
+    public static final int CMD_BRIDGE_TO_POOL = 10;
+    /** Bridge: a = pool cell index, b = core slot index. Queue a move from the pool to the core. */
+    public static final int CMD_BRIDGE_TO_CORE = 11;
+    /** Bridge: stop where it is and forget the queue. */
+    public static final int CMD_BRIDGE_ABORT = 12;
+    /** Bridge: after a halt, try the step again. */
+    public static final int CMD_BRIDGE_RESUME = 13;
+    /** Bridge: a = 1 overrides the hoist-limit interlock, 0 restores it. */
+    public static final int CMD_BRIDGE_OVERRIDE = 14;
+    /** Bridge: a = pool cell index. Set the assembly on the grapple down in that cell. */
+    public static final int CMD_BRIDGE_SET_DOWN = 15;
 
     private static final int INVENTORY_X = 48;
     private static final int INVENTORY_Y = 148;
@@ -72,23 +90,87 @@ public class RefuellingMenu extends BwrMenu {
     public boolean endOfCycle;
     public int bundlesInInventory;
     public CoreMapSnapshot map;
+    /** The server lets this map move fuel instantly ({@code instantRefuelling}); off, its buttons point to the bridge. */
+    public boolean instant;
+
+    // --- the refuelling bridge, when this map is the bridge's control ------
+
+    /** True when the screen was opened from a bridge console. */
+    public boolean bridgeMode;
+    public BlockPos consolePos;
+    public String bridgePhase = "";
+    public boolean bridgeBusy;
+    public boolean bridgeHalted;
+    public double bridgeProgress;
+    public int bridgeSecondsLeft;
+    public int bridgeQueued;
+    public boolean bridgeOverride;
+    public boolean bridgeHolding;
+    public String bridgeCarried = "";
+    public String bridgeMessage = "";
+    public String bridgeChute = "ABSENT";
+    public double bridgeCavityWaterM;
+    public double bridgePoolCoverM = Double.NaN;
+    public double bridgeCarriedCoverM;
+    public boolean bridgePool;
+    /** One entry per rack of the bridge's pool: occupancy bits (cell k = bit k) and decay kW of each cell. */
+    public java.util.List<BridgeRack> bridgeRacks = new java.util.ArrayList<>();
+
+    public record BridgeRack(BlockPos pos, int mask, float[] decayKw) {
+    }
 
     /** Client constructor. */
     public RefuellingMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf extra) {
-        this(containerId, inventory, extra.readBlockPos());
+        this(containerId, inventory, extra.readBlockPos(), extra.readBoolean() ? extra.readBlockPos() : null);
     }
 
     public RefuellingMenu(int containerId, Inventory inventory, BlockPos pos) {
+        this(containerId, inventory, pos, null);
+    }
+
+    public RefuellingMenu(int containerId, Inventory inventory, BlockPos pos, BlockPos console) {
         super(BwrMenus.REFUELLING.get(), containerId, inventory, pos,
                 BwrBlocks.REACTOR_CONTROLLER.get());
-        addPlayerInventory(inventory, INVENTORY_X, INVENTORY_Y, HOTBAR_Y);
+        this.consolePos = console;
+        this.bridgeMode = console != null;
+        if (!bridgeMode) {
+            addPlayerInventory(inventory, INVENTORY_X, INVENTORY_Y, HOTBAR_Y);
+        }
     }
 
     public static void open(ServerPlayer player, ReactorControllerBlockEntity be) {
         player.openMenu(new SimpleMenuProvider(
                         (id, inventory, who) -> new RefuellingMenu(id, inventory, be.getBlockPos()),
                         Component.translatable("menu.bwr.refuelling")),
-                be.getBlockPos());
+                (RegistryFriendlyByteBuf buf) -> {
+                    buf.writeBlockPos(be.getBlockPos());
+                    buf.writeBoolean(false);
+                });
+    }
+
+    /** Opens the map as the control of the refuelling bridge whose console is {@code console}. */
+    public static void openBridge(ServerPlayer player, ReactorControllerBlockEntity be, RefuellingBridgeBlockEntity console) {
+        player.openMenu(new SimpleMenuProvider(
+                        (id, inventory, who) -> new RefuellingMenu(id, inventory, be.getBlockPos(), console.getBlockPos()),
+                        Component.translatable("menu.bwr.refuelling_bridge")),
+                (RegistryFriendlyByteBuf buf) -> {
+                    buf.writeBlockPos(be.getBlockPos());
+                    buf.writeBoolean(true);
+                    buf.writeBlockPos(console.getBlockPos());
+                });
+    }
+
+    @Override
+    public boolean stillValid(Player who) {
+        if (bridgeMode) {
+            return AbstractContainerMenu.stillValid(ContainerLevelAccess.create(who.level(), consolePos), who,
+                    BwrBlocks.REFUELLING_BRIDGE_CONSOLE.get());
+        }
+        return super.stillValid(who);
+    }
+
+    private RefuellingBridgeBlockEntity bridge() {
+        return bridgeMode && level().getBlockEntity(consolePos) instanceof RefuellingBridgeBlockEntity b ? b : null;
     }
 
     private ReactorControllerBlockEntity controller() {
@@ -114,7 +196,7 @@ public class RefuellingMenu extends BwrMenu {
     @Override
     protected void serverTick(ServerPlayer viewer) {
         ReactorControllerBlockEntity be = controller();
-        if (be == null || be.vesselState() != VesselState.REFUELING) {
+        if (be == null || (!bridgeMode && be.vesselState() != VesselState.REFUELING)) {
             viewer.closeContainer();
         }
     }
@@ -144,6 +226,53 @@ public class RefuellingMenu extends BwrMenu {
         buf.writeBoolean(loading.isEndOfCycle());
         buf.writeVarInt(countBundles(player));
         CoreMapSnapshot.write(buf, be.core(), be.corePositions());
+        buf.writeBoolean(GameplayConfig.instantRefuelling());
+        RefuellingBridgeBlockEntity bridge = bridge();
+        buf.writeBoolean(bridge != null);
+        if (bridge != null) {
+            writeBridge(buf, bridge, be);
+        }
+    }
+
+    private void writeBridge(FriendlyByteBuf buf, RefuellingBridgeBlockEntity bridge, ReactorControllerBlockEntity reactor) {
+        BridgeSite site = bridge.refreshSite();
+        buf.writeUtf(bridge.phase().name());
+        buf.writeBoolean(bridge.busy());
+        buf.writeDouble(bridge.progress());
+        buf.writeVarInt((bridge.phaseTicksLeft() + 19) / 20);
+        buf.writeVarInt(bridge.queued());
+        buf.writeBoolean(bridge.override());
+        buf.writeBoolean(!bridge.carried().isEmpty());
+        buf.writeUtf(bridge.carriedSummary());
+        Component halt = site.ok() ? bridge.haltMessage() : site.problem;
+        buf.writeUtf(halt == null ? "" : BwrText.english(halt));
+        buf.writeUtf(bridge.chute().state().name());
+        buf.writeDouble(BridgeSite.cavityWaterM(reactor));
+        SpentFuelPoolBlockEntity pool = site.ok() ? site.pool(level()) : null;
+        buf.writeBoolean(pool != null);
+        if (pool == null) {
+            return;
+        }
+        buf.writeDouble(BridgeSite.poolSurfaceY(pool) - (pool.layout().min().getY() + 1 + dev.bwr.mod.spentfuel.SpentFuelPoolLayout.RACK_HEIGHT));
+        buf.writeDouble(bridge.carriedCoverM());
+        var racks = pool.layout().racks();
+        long now = level().getGameTime();
+        buf.writeVarInt(racks.size());
+        for (BlockPos rack : racks) {
+            buf.writeBlockPos(rack);
+            int mask = 0;
+            for (int k = 0; k < 4; k++) {
+                if (!pool.stackAt(rack, k).isEmpty()) {
+                    mask |= 1 << k;
+                }
+            }
+            buf.writeByte(mask);
+            for (int k = 0; k < 4; k++) {
+                if ((mask & (1 << k)) != 0) {
+                    buf.writeFloat((float) (dev.bwr.mod.fuel.SpentFuelHeat.decayWatts(pool.stackAt(rack, k), now) / 1000.0));
+                }
+            }
+        }
     }
 
     @Override
@@ -163,6 +292,45 @@ public class RefuellingMenu extends BwrMenu {
         endOfCycle = buf.readBoolean();
         bundlesInInventory = buf.readVarInt();
         map = CoreMapSnapshot.read(buf);
+        instant = buf.readBoolean();
+        bridgeBusy = false;
+        if (buf.readBoolean()) {
+            readBridge(buf);
+        }
+    }
+
+    private void readBridge(FriendlyByteBuf buf) {
+        bridgePhase = buf.readUtf();
+        bridgeBusy = buf.readBoolean();
+        bridgeHalted = bridgePhase.equals("HALTED");
+        bridgeProgress = buf.readDouble();
+        bridgeSecondsLeft = buf.readVarInt();
+        bridgeQueued = buf.readVarInt();
+        bridgeOverride = buf.readBoolean();
+        bridgeHolding = buf.readBoolean();
+        bridgeCarried = buf.readUtf();
+        bridgeMessage = buf.readUtf();
+        bridgeChute = buf.readUtf();
+        bridgeCavityWaterM = buf.readDouble();
+        bridgePool = buf.readBoolean();
+        bridgeRacks = new java.util.ArrayList<>();
+        if (!bridgePool) {
+            return;
+        }
+        bridgePoolCoverM = buf.readDouble();
+        bridgeCarriedCoverM = buf.readDouble();
+        int racks = buf.readVarInt();
+        for (int i = 0; i < racks && i < 64; i++) {
+            BlockPos at = buf.readBlockPos();
+            int mask = buf.readByte();
+            float[] kw = new float[4];
+            for (int k = 0; k < 4; k++) {
+                if ((mask & (1 << k)) != 0) {
+                    kw[k] = buf.readFloat();
+                }
+            }
+            bridgeRacks.add(new BridgeRack(at, mask, kw));
+        }
     }
 
     // -----------------------------------------------------------------
@@ -173,6 +341,15 @@ public class RefuellingMenu extends BwrMenu {
     public void handleCommand(ServerPlayer sender, int command, int a, int b) {
         ReactorControllerBlockEntity be = controller();
         if (be == null || !be.isFormed()) {
+            return;
+        }
+        if (command >= CMD_BRIDGE_TO_POOL) {
+            handleBridge(sender, be, command, a, b);
+            markSnapshotDirty();
+            return;
+        }
+        if (!GameplayConfig.instantRefuelling()) {
+            refuse(sender, instantOffMessage());
             return;
         }
         Component blocked = be.refuellingBlockedMessage();
@@ -195,6 +372,61 @@ public class RefuellingMenu extends BwrMenu {
             }
         }
         markSnapshotDirty();
+    }
+
+    /** What the instant map says when {@code instantRefuelling} is off: how fuel moves instead. */
+    public static Component instantOffMessage() {
+        return BwrText.tr("status.bwr.refuelling_menu.instant_off",
+                "Instant refuelling is off on this server. Move fuel with the refuelling bridge: lay two parallel runs of refuelling rail over the reactor and the spent fuel pool, join the reactor to the pool with a row of transfer canal blocks and a gate, stand a bridge console beside a rail and right-click it. (The server option instantRefuelling turns the instant map back on.)");
+    }
+
+    private void handleBridge(ServerPlayer sender, ReactorControllerBlockEntity be, int command, int a, int b) {
+        RefuellingBridgeBlockEntity bridge = bridge();
+        if (bridge == null) {
+            return;
+        }
+        switch (command) {
+            case CMD_BRIDGE_ABORT -> bridge.abort();
+            case CMD_BRIDGE_RESUME -> bridge.resume();
+            case CMD_BRIDGE_OVERRIDE -> bridge.setOverride(a != 0);
+            case CMD_BRIDGE_TO_POOL, CMD_BRIDGE_TO_CORE, CMD_BRIDGE_SET_DOWN -> {
+                BridgeSite site = bridge.refreshSite();
+                SpentFuelPoolBlockEntity pool = site.ok() ? site.pool(level()) : null;
+                int[] positions = be.corePositions();
+                int cellIndex = command == CMD_BRIDGE_TO_POOL ? b : a;
+                int coreIndex = command == CMD_BRIDGE_TO_POOL ? a : b;
+                if (pool == null) {
+                    refuse(sender, BwrText.tr("status.bwr.refuelling_bridge.no_pool", "No formed spent fuel pool lies between the bridge's rails."));
+                    return;
+                }
+                var racks = pool.layout().racks();
+                if (cellIndex < 0 || cellIndex / 4 >= racks.size()) {
+                    return;
+                }
+                RefuellingBridgeBlockEntity.Loc cell = RefuellingBridgeBlockEntity.Loc.rack(racks.get(cellIndex / 4), cellIndex % 4);
+                RefuellingBridgeBlockEntity.Move move;
+                if (command == CMD_BRIDGE_SET_DOWN) {
+                    move = new RefuellingBridgeBlockEntity.Move(RefuellingBridgeBlockEntity.Loc.HELD, cell);
+                } else {
+                    if (!inRange(positions, coreIndex)) {
+                        return;
+                    }
+                    RefuellingBridgeBlockEntity.Loc core = RefuellingBridgeBlockEntity.Loc.core(positions[coreIndex]);
+                    move = command == CMD_BRIDGE_TO_POOL
+                            ? new RefuellingBridgeBlockEntity.Move(core, cell)
+                            : new RefuellingBridgeBlockEntity.Move(cell, core);
+                }
+                Component why = bridge.queue(move);
+                if (why != null) {
+                    refuse(sender, why);
+                } else {
+                    sender.displayClientMessage(BwrText.tr("status.bwr.refuelling_bridge.queued", "Move queued: %s to %s.",
+                            move.from().describe(), move.to().describe()), true);
+                }
+            }
+            default -> {
+            }
+        }
     }
 
     private void load(ServerPlayer sender, ReactorControllerBlockEntity be,
@@ -303,6 +535,10 @@ public class RefuellingMenu extends BwrMenu {
         }
         var be = controller();
         if (be == null || !be.isFormed()) {
+            return;
+        }
+        if (!GameplayConfig.instantRefuelling()) {
+            refuse(sender, instantOffMessage());
             return;
         }
         Component blocked = be.refuellingBlockedMessage();

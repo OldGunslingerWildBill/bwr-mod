@@ -54,6 +54,19 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
     private BwrButton clearButton;
     private BwrButton fitButton;
 
+    // the refuelling bridge (when the map is opened from a bridge console)
+    private BwrButton cellPrev;
+    private BwrButton cellNext;
+    private BwrButton cellEmpty;
+    private BwrButton cellFuel;
+    private BwrButton toPool;
+    private BwrButton toCore;
+    private BwrButton setDown;
+    private BwrButton abort;
+    private BwrButton resume;
+    private BwrButton override;
+    private int cellIndex;
+
     public RefuellingScreen(RefuellingMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 320, 230);
     }
@@ -89,6 +102,9 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                     b -> grid.resetView());
         }
 
+        if (menu.bridgeMode && toPool == null) {
+            buildBridgeButtons();
+        }
         var map = Layout.column(BwrStyle.SP1,
                 Layout.fill(grid, 84),
                 Layout.legend(() -> overlay == Overlay.BURNUP ? "Fresh" : "0.90",
@@ -111,7 +127,7 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                         .tip("The fuel bundles in your inventory that you can load."))
                 .compact();
         var selection = Layout.note(this::selectionText).maxLines(2);
-        var side = Layout.column(BwrStyle.SP1, stats, selection);
+        var side = Layout.column(BwrStyle.SP1, menu.bridgeMode ? bridgeCard() : stats, selection);
 
         var top = Layout.split(BwrStyle.SP1);
         top.fixed(map, MAP_COLUMN);
@@ -125,14 +141,132 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                 Layout.controls(BwrStyle.SP1).add(markButton, 1).add(swapButton, 1))
                 .compact();
         actions.tip("The vessel head is off: bundles are lifted out through the top of the open vessel.");
+        var bridgeHint = Layout.card("Instant is off",
+                Layout.note("Use the refuelling bridge.")
+                        .maxLines(2).tip(() -> List.of(Component.literal(net.minecraft.network.chat.Component.translatable("status.bwr.refuelling_menu.instant_off").getString()))))
+                .compact();
         var lower = Layout.split(0);
         lower.fixed(Layout.gap(0), actionsX - BwrStyle.SP2);
-        lower.add(actions, 1);
+        lower.add(Layout.column(0, actions.showIf(() -> menu.instant), bridgeHint.showIf(() -> !menu.instant)), 1);
 
+        if (menu.bridgeMode) {
+            var moves = Layout.card("",
+                    Layout.controls(BwrStyle.SP1).label(this::cellText, 128).fixed(cellPrev, 22).fixed(cellNext, 22)
+                            .fixed(cellEmpty, 48).fixed(cellFuel, 42),
+                    Layout.gap(1),
+                    Layout.controls(BwrStyle.SP1).add(toPool, 1).add(toCore, 1).add(setDown, 1),
+                    Layout.gap(1),
+                    Layout.controls(BwrStyle.SP1).add(abort, 1).add(resume, 1).add(override, 1))
+                    .compact();
+            return Layout.column(BwrStyle.SP1,
+                    Layout.note("Waiting for the core to report").body().status(() -> Status.INFO).showIf(() -> !ready()),
+                    Layout.sized(TOP_HEIGHT, top).showIf(this::ready),
+                    moves);
+        }
         return Layout.column(BwrStyle.SP1,
                 Layout.note("Waiting for the core to report").body().status(() -> Status.INFO).showIf(() -> !ready()),
                 Layout.sized(TOP_HEIGHT, top).showIf(this::ready),
                 lower);
+    }
+
+    // ------------------------------------------------------------------
+    // The bridge
+    // ------------------------------------------------------------------
+
+    private void buildBridgeButtons() {
+        cellPrev = BwrButton.secondary("<", "The previous cell of the pool racks.", b -> stepCell(-1));
+        cellNext = BwrButton.secondary(">", "The next cell of the pool racks.", b -> stepCell(1));
+        cellEmpty = BwrButton.secondary("EMPTY", "Jump to the next free cell of the racks.", b -> findCell(false));
+        cellFuel = BwrButton.secondary("FUEL", "Jump to the next rack cell that holds an assembly.", b -> findCell(true));
+        toPool = BwrButton.primary("TO POOL", "Queue a move: the bridge carries the assembly from the selected core position to the chosen rack cell, through the cattle chute.",
+                b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_TO_POOL, grid.selected(), cellIndex));
+        toCore = BwrButton.primary("TO CORE", "Queue a move: the bridge carries the assembly in the chosen rack cell to the selected empty core position.",
+                b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_TO_CORE, cellIndex, grid.selected()));
+        setDown = BwrButton.secondary("SET DOWN", "Set the assembly on the grapple down in the chosen empty rack cell (after a halt).",
+                b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_SET_DOWN, cellIndex));
+        abort = BwrButton.danger("ABORT", "Stop the bridge where it is and forget the queue. An assembly on the grapple stays on it.",
+                b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_ABORT));
+        resume = BwrButton.secondary("RESUME", "After a halt (a closed gate, the hoist limit), try the step again.",
+                b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_RESUME));
+        override = BwrButton.secondary("OVERRIDE", "Override the hoist-limit interlock: the bridge lifts the whole 4.5 m of the assembly whatever the water over it.",
+                b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_OVERRIDE, menu.bridgeOverride ? 0 : 1));
+    }
+
+    private int cellCount() {
+        return menu.bridgeRacks.size() * 4;
+    }
+
+    private boolean cellOccupied(int i) {
+        return i >= 0 && i < cellCount() && (menu.bridgeRacks.get(i / 4).mask() & (1 << (i % 4))) != 0;
+    }
+
+    private void stepCell(int d) {
+        int n = cellCount();
+        if (n > 0) {
+            cellIndex = Math.floorMod(cellIndex + d, n);
+        }
+    }
+
+    private void findCell(boolean occupied) {
+        int n = cellCount();
+        for (int k = 1; k <= n; k++) {
+            int i = (cellIndex + k) % n;
+            if (cellOccupied(i) == occupied) {
+                cellIndex = i;
+                return;
+            }
+        }
+    }
+
+    private String cellText() {
+        int n = cellCount();
+        if (n == 0) {
+            return "No pool between the rails";
+        }
+        cellIndex = Math.min(cellIndex, n - 1);
+        var rack = menu.bridgeRacks.get(cellIndex / 4);
+        int k = cellIndex % 4;
+        return String.format(Locale.ROOT, "Rack %d cell %d: %s", cellIndex / 4 + 1, k + 1,
+                cellOccupied(cellIndex) ? String.format(Locale.ROOT, "%.1f kW", rack.decayKw()[k]) : "free");
+    }
+
+    private static String phaseWord(String phase) {
+        return switch (phase) {
+            case "IDLE" -> "Idle";
+            case "TRAVEL" -> "Travelling to the source";
+            case "LOWER_EMPTY" -> "Lowering the mast";
+            case "LATCH" -> "Latching the handle";
+            case "RAISE_LOADED" -> "Lifting the assembly";
+            case "TRANSIT" -> "Carrying the assembly";
+            case "LOWER_LOADED" -> "Setting it down";
+            case "RELEASE" -> "Releasing the grapple";
+            case "RAISE_EMPTY" -> "Retracting the mast";
+            case "HALTED" -> "HALTED";
+            default -> phase;
+        };
+    }
+
+    private UiElement bridgeCard() {
+        return Layout.card("",
+                Layout.row("Bridge", () -> phaseWord(menu.bridgePhase) + (menu.bridgeQueued > 0 ? " (+" + menu.bridgeQueued + ")" : "")).dense()
+                        .status(() -> menu.bridgeHalted ? Status.ALARM : menu.bridgeBusy ? Status.INFO : Status.NONE)
+                        .tip("What the bridge is doing, and how many more moves are queued behind it."),
+                Layout.meter("Phase", () -> menu.bridgeBusy ? menu.bridgeProgress : 0.0, () -> menu.bridgeHalted ? Status.ALARM : Status.NONE,
+                        () -> menu.bridgeBusy ? menu.bridgeSecondsLeft + " s left" : "-"),
+                Layout.row("Water", () -> String.format(Locale.ROOT, "%.1f / %s", menu.bridgeCavityWaterM,
+                        menu.bridgePool ? String.format(Locale.ROOT, "%.1f", menu.bridgePoolCoverM) : "-"), "m").dense()
+                        .tip("Metres of water over the top of the core, and over the tops of the pool racks."),
+                Layout.row("Chute", () -> menu.bridgeChute.toLowerCase(Locale.ROOT)).dense()
+                        .status(() -> menu.bridgeChute.equals("CLOSED") || menu.bridgeChute.equals("DRAINED") || menu.bridgeChute.equals("ABSENT")
+                                ? Status.CAUTION : Status.NONE)
+                        .tip("The cattle chute between the cavity and the pool: open gates let the bridge through."),
+                Layout.row("Grapple", () -> (menu.bridgeHolding ? "holding" : "empty") + (menu.bridgeOverride ? ", override" : "")).dense()
+                        .status(() -> menu.bridgeOverride ? Status.CAUTION : Status.NONE)
+                        .tip(() -> List.of(Component.literal(menu.bridgeHolding ? menu.bridgeCarried : "Nothing on the grapple."),
+                                Component.literal(menu.bridgeOverride ? "The hoist-limit interlock is overridden." : "The hoist-limit interlock is active."))),
+                Layout.note(() -> menu.bridgeMessage).maxLines(2).status(() -> menu.bridgeHalted ? Status.ALARM : Status.NONE)
+                        .tip(() -> List.of(Component.literal(menu.bridgeMessage))))
+                .compact();
     }
 
     @Override
@@ -175,10 +309,14 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                 }
             }
         }
-        loadButton.active = empty && menu.bundlesInInventory > 0;
-        unloadButton.active = occupied;
-        markButton.active = valid && selection.length == 1;
-        swapButton.active = valid && selection.length == 1 && grid.marked() >= 0 && grid.marked() != selected;
+        if (menu.bridgeMode) {
+            containerTickBridge(valid, selected, map);
+            return;
+        }
+        loadButton.active = menu.instant && empty && menu.bundlesInInventory > 0;
+        unloadButton.active = menu.instant && occupied;
+        markButton.active = menu.instant && valid && selection.length == 1;
+        swapButton.active = menu.instant && valid && selection.length == 1 && grid.marked() >= 0 && grid.marked() != selected;
 
         if (!loadButton.active) {
             loadButton.setTooltipText(!empty ? "To load fuel, first select one or more empty positions on the map."
@@ -192,6 +330,29 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                 : "Mark the selected position as the one to swap from.") : "To mark a position, first select exactly one on the map.");
         swapButton.setTooltipText(swapButton.active ? "Swap the marked position with the selected one."
                 : "To swap, first mark one position, then select a different one.");
+    }
+
+    private void containerTickBridge(boolean valid, int selected, CoreMapSnapshot map) {
+        boolean coreFull = valid && map.isOccupied(selected);
+        boolean cell = cellCount() > 0;
+        boolean cellFull = cell && cellOccupied(cellIndex);
+        boolean room = menu.bridgeQueued < 15;
+        cellPrev.active = cell;
+        cellNext.active = cell;
+        cellEmpty.active = cell;
+        cellFuel.active = cell;
+        toPool.active = room && coreFull && cell && !cellFull && !menu.bridgeHolding;
+        toCore.active = room && valid && !coreFull && cellFull && !menu.bridgeHolding;
+        setDown.active = room && menu.bridgeHolding && cell && !cellFull && !menu.bridgeBusy;
+        abort.active = menu.bridgeBusy || menu.bridgeHalted || menu.bridgeQueued > 0;
+        resume.active = menu.bridgeHalted;
+        override.setMessage(Component.literal(menu.bridgeOverride ? "OVERRIDE ON" : "OVERRIDE"));
+        toPool.setTooltipText(toPool.active ? "Queue a move: the bridge carries the assembly from the selected core position to the chosen rack cell, through the cattle chute."
+                : menu.bridgeHolding ? "The grapple holds an assembly: set it down first."
+                : !coreFull ? "Select an occupied core position on the map." : "Choose a free rack cell.");
+        toCore.setTooltipText(toCore.active ? "Queue a move: the bridge carries the assembly in the chosen rack cell to the selected empty core position."
+                : menu.bridgeHolding ? "The grapple holds an assembly: set it down first."
+                : !cellFull ? "Choose a rack cell that holds an assembly." : "Select an empty core position on the map.");
     }
 
     @Override
@@ -244,6 +405,9 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
             line = String.format(Locale.ROOT, "Position %d: %s, %.2f%% fissile, burnup %,.0f MWd/t, k-inf %.4f",
                     selected, map.fuelTypeName(selected), map.enrichmentWeightFraction[selected] * 100.0,
                     map.burnupMwdPerTonne[selected], map.kInf[selected]);
+        }
+        if (menu.bridgeMode) {
+            return Ui.fit(line, Type.CAPTION, 130) + "\nCell: " + cellText();
         }
         if (grid.marked() >= 0) {
             // two lines at most: the selection gets one, the mark the other

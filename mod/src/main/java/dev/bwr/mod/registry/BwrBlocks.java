@@ -272,6 +272,27 @@ public final class BwrBlocks {
             BLOCKS.register("spent_fuel_pool_cooling_out", () -> new dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock(
                     machine(), dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock.Kind.COOLING_OUT));
 
+    // --- Refuelling bridge and the cattle chute (REFUELLING-BRIDGE.md) ----------------------------
+
+    /** A length of rail for the refuelling bridge. */
+    public static final DeferredBlock<dev.bwr.mod.refuelling.RefuellingRailBlock> REFUELLING_RAIL =
+            BLOCKS.register("refuelling_rail", () -> new dev.bwr.mod.refuelling.RefuellingRailBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 30.0F)
+                            .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
+    /** A lined trough of the cattle chute between the reactor cavity and the spent fuel pool. */
+    public static final DeferredBlock<dev.bwr.mod.refuelling.TransferCanalBlock> TRANSFER_CANAL =
+            BLOCKS.register("transfer_canal", () -> new dev.bwr.mod.refuelling.TransferCanalBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(4.0F, 40.0F)
+                            .sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+    /** A gate in the cattle chute. */
+    public static final DeferredBlock<dev.bwr.mod.refuelling.CanalGateBlock> CANAL_GATE =
+            BLOCKS.register("canal_gate", () -> new dev.bwr.mod.refuelling.CanalGateBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(4.0F, 40.0F)
+                            .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
+    /** The bridge's controls; the block entity is the bridge. */
+    public static final DeferredBlock<dev.bwr.mod.refuelling.RefuellingBridgeConsoleBlock> REFUELLING_BRIDGE_CONSOLE =
+            BLOCKS.register("refuelling_bridge_console", () -> new dev.bwr.mod.refuelling.RefuellingBridgeConsoleBlock(machine().noOcclusion()));
+
     // --- Emergency core cooling (SPEC section 9) ------------------------
     //
     // Six injection machines, all the same block class carrying a different

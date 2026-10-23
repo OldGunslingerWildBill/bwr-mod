@@ -1,0 +1,106 @@
+{
+  "textures": {
+    "steel": "bwr:block/refuelling_bridge_steel",
+    "mast": "bwr:block/refuelling_bridge_mast",
+    "assembly": "bwr:block/refuelling_assembly",
+    "particle": "bwr:block/refuelling_bridge_steel"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        5,
+        5,
+        5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#steel"
+        },
+        "south": {
+          "texture": "#steel"
+        },
+        "east": {
+          "texture": "#steel"
+        },
+        "west": {
+          "texture": "#steel"
+        },
+        "up": {
+          "texture": "#steel"
+        },
+        "down": {
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "from": [
+        6,
+        0,
+        0
+      ],
+      "to": [
+        11,
+        5,
+        5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#mast"
+        },
+        "south": {
+          "texture": "#mast"
+        },
+        "east": {
+          "texture": "#mast"
+        },
+        "west": {
+          "texture": "#mast"
+        },
+        "up": {
+          "texture": "#mast"
+        },
+        "down": {
+          "texture": "#mast"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        6,
+        0
+      ],
+      "to": [
+        3,
+        16,
+        3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#assembly"
+        },
+        "south": {
+          "texture": "#assembly"
+        },
+        "east": {
+          "texture": "#assembly"
+        },
+        "west": {
+          "texture": "#assembly"
+        },
+        "up": {
+          "texture": "#assembly"
+        },
+        "down": {
+          "texture": "#assembly"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "G": {
+      "item": "minecraft:gray_concrete"
+    },
+    "I": {
+      "tag": "c:ingots/iron"
+    }
+  },
+  "pattern": [
+    "G G",
+    "GIG"
+  ],
+  "result": {
+    "count": 4,
+    "id": "bwr:transfer_canal"
+  }
+}

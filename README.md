@@ -72,6 +72,10 @@ and `c:ingots/steel`. Sodium and Iris also work, with or without a shader pack
   until it has cooled. The pool is a lined box with full-height racks, a cooling train you run and
   makeup water you supply; let it go and the water boils off and the fuel uncovers.
   [SPENT-FUEL-POOL.md](SPENT-FUEL-POOL.md)
+- **Refuelling bridge.** A bridge on rails over the open reactor and the pool. Its mast latches one
+  assembly and carries it under water through a gated cattle chute, in real time; lift fuel out of
+  the water and the survey meter spikes. Instant refuelling is a server option, off by default.
+  [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md)
 - **MOX.** The fabricator also makes MOX (4.50, 7.00 and 9.50 %) from plutonium and depleted uranium.
 - **Specialty rods.** Boron carbide and hafnium absorbers, three startup neutron sources, and cobalt,
   tritium and silicon irradiation targets. [FUELS-AND-RODS.md](FUELS-AND-RODS.md#specialty-rods)

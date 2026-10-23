@@ -1,0 +1,159 @@
+{
+  "textures": {
+    "canal": "bwr:block/transfer_canal",
+    "water": "bwr:block/transfer_canal_water",
+    "plate": "bwr:block/canal_gate",
+    "particle": "bwr:block/transfer_canal"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#canal"
+        },
+        "south": {
+          "texture": "#canal"
+        },
+        "east": {
+          "texture": "#canal"
+        },
+        "west": {
+          "texture": "#canal"
+        },
+        "up": {
+          "texture": "#canal"
+        },
+        "down": {
+          "texture": "#canal"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        14
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#canal"
+        },
+        "south": {
+          "texture": "#canal"
+        },
+        "east": {
+          "texture": "#canal"
+        },
+        "west": {
+          "texture": "#canal"
+        },
+        "up": {
+          "texture": "#canal"
+        },
+        "down": {
+          "texture": "#canal"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#canal"
+        },
+        "south": {
+          "texture": "#canal"
+        },
+        "east": {
+          "texture": "#canal"
+        },
+        "west": {
+          "texture": "#canal"
+        },
+        "up": {
+          "texture": "#canal"
+        },
+        "down": {
+          "texture": "#canal"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        2,
+        2
+      ],
+      "to": [
+        16,
+        16,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#water"
+        },
+        "south": {
+          "texture": "#water"
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        2,
+        2
+      ],
+      "to": [
+        9,
+        16,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#plate"
+        },
+        "south": {
+          "texture": "#plate"
+        },
+        "east": {
+          "texture": "#plate"
+        },
+        "west": {
+          "texture": "#plate"
+        },
+        "up": {
+          "texture": "#plate"
+        },
+        "down": {
+          "texture": "#plate"
+        }
+      }
+    }
+  ],
+  "render_type": "minecraft:translucent"
+}

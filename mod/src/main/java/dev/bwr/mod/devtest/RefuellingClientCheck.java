@@ -42,7 +42,7 @@ public final class RefuellingClientCheck {
             server.execute(()->{try{
                 var p=server.getPlayerList().getPlayer(uuid);var l=p.serverLevel();
                 p.setNoGravity(true);p.getAbilities().flying=true;p.onUpdateAbilities();p.connection.teleport(ROOT.getX()-2,ROOT.getY(),ROOT.getZ(),-90,0);
-                var be=CompactCoreRegressionTests.build(l,MIN,15,15,25,false);be.setVesselState(VesselState.REFUELING);
+                dev.bwr.mod.config.GameplayConfig.INSTANT_REFUELLING.set(true); /* this check drives the instant map */ var be=CompactCoreRegressionTests.build(l,MIN,15,15,25,false);be.setVesselState(VesselState.REFUELING);
                 serverChecks(p,be);RefuellingMenu.open(p,be);
             }catch(Throwable ex){failure=ex;}});
         }

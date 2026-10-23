@@ -384,6 +384,33 @@ public final class GuiScreenCheck {
             m.open = false;
             return new RefuellingScreen(m, i, t("Refuelling Floor"));
         }));
+        s.add(new Scenario("refuelling-instant-off", i -> {
+            var m = new RefuellingMenu(99, i, P);
+            refuel(m);
+            m.instant = false;
+            return new RefuellingScreen(m, i, t("Refuelling Floor"));
+        }));
+        s.add(new Scenario("refuelling-bridge-idle", i -> {
+            var m = new RefuellingMenu(99, i, P, P);
+            refuel(m);
+            bridge(m, "IDLE", false, "");
+            return new RefuellingScreen(m, i, t("Refuelling Bridge"));
+        }));
+        s.add(new Scenario("refuelling-bridge-carrying", i -> {
+            var m = new RefuellingMenu(99, i, P, P);
+            refuel(m);
+            bridge(m, "TRANSIT", true, "");
+            return new RefuellingScreen(m, i, t("Refuelling Bridge"));
+        }, screen -> {
+        }, screen -> focusGrid(screen, 4), true));
+        s.add(new Scenario("refuelling-bridge-halted", i -> {
+            var m = new RefuellingMenu(99, i, P, P);
+            refuel(m);
+            bridge(m, "HALTED", false, "Hoist limit: lifting would leave only 0.8 m of water over the assembly (minimum 1.5 m). Add water, or override the interlock.");
+            m.bridgeOverride = true;
+            m.bridgeChute = "CLOSED";
+            return new RefuellingScreen(m, i, t("Refuelling Bridge"));
+        }));
         s.add(new Scenario("pump-rhr", i -> new PumpControlScreen(pump(i, false, "rhr"), i, t("RHR / LPCI Pump"))));
         s.add(new Scenario("pump-rhr-computer", i -> new PumpControlScreen(pump(i, true, "rhr"), i, t("RHR / LPCI Pump"))));
         s.add(new Scenario("pump-hpcs", i -> new PumpControlScreen(pump(i, false, "eccs"), i, t("HPCS Pump"))));
@@ -680,7 +707,28 @@ public final class GuiScreenCheck {
         return s;
     }
 
+    private static void bridge(RefuellingMenu m, String phase, boolean busy, String message) {
+        m.bridgePhase = phase;
+        m.bridgeBusy = busy;
+        m.bridgeHalted = phase.equals("HALTED");
+        m.bridgeProgress = busy ? 0.42 : 0.0;
+        m.bridgeSecondsLeft = busy ? 17 : 0;
+        m.bridgeQueued = busy ? 2 : 0;
+        m.bridgeHolding = busy;
+        m.bridgeCarried = "leu, burnup 21,400 MWd/t";
+        m.bridgeMessage = message;
+        m.bridgeChute = "OPEN";
+        m.bridgeCavityWaterM = 2.8;
+        m.bridgePool = true;
+        m.bridgePoolCoverM = 3.0;
+        m.bridgeRacks = new ArrayList<>();
+        for (int r = 0; r < 12; r++) {
+            m.bridgeRacks.add(new RefuellingMenu.BridgeRack(new net.minecraft.core.BlockPos(100 + r, 64, 100), r % 3 == 0 ? 0b0111 : 0b0001, new float[]{12.5f, 3.2f, 0.9f, 0f}));
+        }
+    }
+
     private static void refuel(RefuellingMenu m) {
+        m.instant = true;
         m.open = true;
         m.assemblyCount = 764;
         m.loadedAssemblies = 722;

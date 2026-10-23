@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "bwr:block/refuelling_rail"
+    },
+    "axis=z": {
+      "model": "bwr:block/refuelling_rail",
+      "y": 90
+    }
+  }
+}

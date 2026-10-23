@@ -1,0 +1,116 @@
+{
+  "variants": {
+    "axis=x,floor=false,open=false,top=false,water=false": {
+      "model": "bwr:block/canal_gate_closed_nofloor_mid_dry"
+    },
+    "axis=x,floor=false,open=true,top=false,water=false": {
+      "model": "bwr:block/canal_gate_open_nofloor_mid_dry"
+    },
+    "axis=x,floor=false,open=false,top=false,water=true": {
+      "model": "bwr:block/canal_gate_closed_nofloor_mid_wet"
+    },
+    "axis=x,floor=false,open=true,top=false,water=true": {
+      "model": "bwr:block/canal_gate_open_nofloor_mid_wet"
+    },
+    "axis=x,floor=false,open=false,top=true,water=false": {
+      "model": "bwr:block/canal_gate_closed_nofloor_top_dry"
+    },
+    "axis=x,floor=false,open=true,top=true,water=false": {
+      "model": "bwr:block/canal_gate_open_nofloor_top_dry"
+    },
+    "axis=x,floor=false,open=false,top=true,water=true": {
+      "model": "bwr:block/canal_gate_closed_nofloor_top_wet"
+    },
+    "axis=x,floor=false,open=true,top=true,water=true": {
+      "model": "bwr:block/canal_gate_open_nofloor_top_wet"
+    },
+    "axis=x,floor=true,open=false,top=false,water=false": {
+      "model": "bwr:block/canal_gate_closed_floor_mid_dry"
+    },
+    "axis=x,floor=true,open=true,top=false,water=false": {
+      "model": "bwr:block/canal_gate_open_floor_mid_dry"
+    },
+    "axis=x,floor=true,open=false,top=false,water=true": {
+      "model": "bwr:block/canal_gate_closed_floor_mid_wet"
+    },
+    "axis=x,floor=true,open=true,top=false,water=true": {
+      "model": "bwr:block/canal_gate_open_floor_mid_wet"
+    },
+    "axis=x,floor=true,open=false,top=true,water=false": {
+      "model": "bwr:block/canal_gate_closed_floor_top_dry"
+    },
+    "axis=x,floor=true,open=true,top=true,water=false": {
+      "model": "bwr:block/canal_gate_open_floor_top_dry"
+    },
+    "axis=x,floor=true,open=false,top=true,water=true": {
+      "model": "bwr:block/canal_gate_closed_floor_top_wet"
+    },
+    "axis=x,floor=true,open=true,top=true,water=true": {
+      "model": "bwr:block/canal_gate_open_floor_top_wet"
+    },
+    "axis=z,floor=false,open=false,top=false,water=false": {
+      "model": "bwr:block/canal_gate_closed_nofloor_mid_dry",
+      "y": 90
+    },
+    "axis=z,floor=false,open=true,top=false,water=false": {
+      "model": "bwr:block/canal_gate_open_nofloor_mid_dry",
+      "y": 90
+    },
+    "axis=z,floor=false,open=false,top=false,water=true": {
+      "model": "bwr:block/canal_gate_closed_nofloor_mid_wet",
+      "y": 90
+    },
+    "axis=z,floor=false,open=true,top=false,water=true": {
+      "model": "bwr:block/canal_gate_open_nofloor_mid_wet",
+      "y": 90
+    },
+    "axis=z,floor=false,open=false,top=true,water=false": {
+      "model": "bwr:block/canal_gate_closed_nofloor_top_dry",
+      "y": 90
+    },
+    "axis=z,floor=false,open=true,top=true,water=false": {
+      "model": "bwr:block/canal_gate_open_nofloor_top_dry",
+      "y": 90
+    },
+    "axis=z,floor=false,open=false,top=true,water=true": {
+      "model": "bwr:block/canal_gate_closed_nofloor_top_wet",
+      "y": 90
+    },
+    "axis=z,floor=false,open=true,top=true,water=true": {
+      "model": "bwr:block/canal_gate_open_nofloor_top_wet",
+      "y": 90
+    },
+    "axis=z,floor=true,open=false,top=false,water=false": {
+      "model": "bwr:block/canal_gate_closed_floor_mid_dry",
+      "y": 90
+    },
+    "axis=z,floor=true,open=true,top=false,water=false": {
+      "model": "bwr:block/canal_gate_open_floor_mid_dry",
+      "y": 90
+    },
+    "axis=z,floor=true,open=false,top=false,water=true": {
+      "model": "bwr:block/canal_gate_closed_floor_mid_wet",
+      "y": 90
+    },
+    "axis=z,floor=true,open=true,top=false,water=true": {
+      "model": "bwr:block/canal_gate_open_floor_mid_wet",
+      "y": 90
+    },
+    "axis=z,floor=true,open=false,top=true,water=false": {
+      "model": "bwr:block/canal_gate_closed_floor_top_dry",
+      "y": 90
+    },
+    "axis=z,floor=true,open=true,top=true,water=false": {
+      "model": "bwr:block/canal_gate_open_floor_top_dry",
+      "y": 90
+    },
+    "axis=z,floor=true,open=false,top=true,water=true": {
+      "model": "bwr:block/canal_gate_closed_floor_top_wet",
+      "y": 90
+    },
+    "axis=z,floor=true,open=true,top=true,water=true": {
+      "model": "bwr:block/canal_gate_open_floor_top_wet",
+      "y": 90
+    }
+  }
+}

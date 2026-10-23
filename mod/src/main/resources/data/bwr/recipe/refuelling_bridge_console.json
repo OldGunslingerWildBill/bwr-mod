@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "P": {
+      "item": "minecraft:glass_pane"
+    },
+    "C": {
+      "item": "minecraft:comparator"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "ICI",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:refuelling_bridge_console"
+  }
+}

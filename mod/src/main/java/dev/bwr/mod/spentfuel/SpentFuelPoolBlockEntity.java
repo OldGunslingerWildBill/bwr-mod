@@ -319,6 +319,11 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
     // ---------------------------------------------------------------
 
     private void scan() {
+        if (!registered && level != null && !level.isClientSide()) {
+            // a pool surveyed before its first tick (a bridge console asks the registry straight away) is known to it
+            SpentFuelPoolRegistry.register(this);
+            registered = true;
+        }
         structureDirty = false;
         long now = level.getGameTime();
         SpentFuelPoolLayout.Layout found = SpentFuelPoolLayout.inspect(level, worldPosition);
@@ -1009,6 +1014,38 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
                 coolingEnabled, coolingRunning, energy.getEnergyStored(),
                 cooler.coldKg(), cooler.hotKg(), cooler.coldTemperatureC(), cooler.hotTemperatureC(),
                 hazard, damaged, burning, rackViews);
+    }
+
+    /** One rack's contribution to the radiation field: where the heads of its assemblies are, and their decay heat. */
+    @FunctionalInterface
+    public interface RackSourceVisitor {
+        /**
+         * @param x       centre of the rack block, x
+         * @param topY    world Y of the rack top (the assembly heads)
+         * @param z       centre of the rack block, z
+         * @param decayW  summed decay heat of the assemblies in the rack, W
+         * @param coverM  metres of water over the rack top (zero or less: uncovered)
+         */
+        void accept(double x, double topY, double z, double decayW, double coverM);
+    }
+
+    /** Calls {@code visitor} for every rack that holds fuel with decay heat (read from the last second's numbers; no allocation). */
+    public void forEachRackSource(RackSourceVisitor visitor) {
+        if (!formed || layout == null) {
+            return;
+        }
+        double level = pool.levelM();
+        for (Rack rack : rackList) {
+            double watts = 0.0;
+            for (int k = 0; k < rack.stacks.length; k++) {
+                if (!rack.stacks[k].isEmpty()) {
+                    watts += rack.slots[k].decayW;
+                }
+            }
+            if (watts > 0.0) {
+                visitor.accept(rack.pos.getX() + 0.5, rack.pos.getY() + rack.topM, rack.pos.getZ() + 0.5, watts, level - rack.topM);
+            }
+        }
     }
 
     public Component problem() {

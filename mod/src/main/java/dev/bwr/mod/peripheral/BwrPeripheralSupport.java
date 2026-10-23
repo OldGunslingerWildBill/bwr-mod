@@ -85,6 +85,7 @@ public final class BwrPeripheralSupport {
         if(be instanceof ReactorControllerBlockEntity b)return new ReactorPeripheral(b);
         if(be instanceof ContainmentControllerBlockEntity b)return new ContainmentPeripheral(b);
         if(be instanceof dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity b)return new SpentFuelPoolPeripheral(b);
+        if(be instanceof dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity b)return new RefuellingBridgePeripheral(b);
         if(be instanceof SuppressionPoolBlockEntity b)return new SuppressionPoolPeripheral(b);
         if(be instanceof SuppressionPoolPortBlockEntity)return new SuppressionPoolPeripheral(null);
         if(be instanceof TurbineSteamOutletBlockEntity b)return new TurbineSteamOutletPeripheral(b);
