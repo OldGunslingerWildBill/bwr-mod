@@ -10,6 +10,10 @@ import dev.bwr.mod.gui.client.style.BwrButton;
 import dev.bwr.mod.gui.client.style.BwrEditBox;
 import dev.bwr.mod.gui.client.style.BwrTab;
 import dev.bwr.mod.gui.client.style.Ui;
+import dev.bwr.mod.guide.GuideBook;
+import dev.bwr.mod.guide.client.GuideClient;
+import dev.bwr.mod.guide.client.GuideProgress;
+import dev.bwr.mod.guide.client.GuideScreen;
 import dev.bwr.mod.reactor.VesselState;
 import dev.bwr.mod.registry.BwrItems;
 import net.minecraft.client.CloudStatus;
@@ -93,7 +97,7 @@ public final class GuiScreenCheck {
     }
 
     /** Screens also photographed at the smallest GUI sizes (laid out for 320 x 240 or 427 x 240, drawn at scale 2 in the corner). */
-    private static final Set<String> FLOOR_PICTURES = Set.of("reactor-flux", "reactor-info", "pump-rhr", "terry", "condenser", "refuelling-burnup", "fabricator", "fabricator-mox", "reprocessor", "pool-spray");
+    private static final Set<String> FLOOR_PICTURES = Set.of("reactor-flux", "reactor-info", "pump-rhr", "terry", "condenser", "refuelling-burnup", "fabricator", "fabricator-mox", "reprocessor", "pool-spray", "guide-contents", "guide-page-long");
 
     private static boolean started, built;
     private static int age, joined, stage, scaleIndex, wait;
@@ -704,7 +708,50 @@ public final class GuiScreenCheck {
                 "Relief outlet: downward to suppression pool", "Steam inlet: left-side flange")));
         s.add(new Scenario("service-discharge", i -> service(i, 4, 0, true, "Outfall mouth clear", "Water discharged: 1,204,500.00 kg",
                 "Flow: 22,310.00 / 60,000 kg/s", "Outlet temperature: 41.20 C", "Water leaves the plant into the environment.")));
+        // The in-game guide: the chapter list (with and without a bookmark) and pages of the real book, the longest one among them.
+        s.add(new Scenario("guide-contents", i -> {
+            GuideProgress.forget();
+            return new GuideScreen(GuideClient.loadBook(), i, -1, 0);
+        }));
+        s.add(new Scenario("guide-contents-continue", i -> {
+            GuideProgress.rememberOnly("fuel", 3);
+            return new GuideScreen(GuideClient.loadBook(), i, -1, 0);
+        }));
+        s.add(new Scenario("guide-page-long", i -> guideLongest(i)));
+        s.add(new Scenario("guide-page-icons", i -> guideAt(i, "first-plant", 1)));
+        s.add(new Scenario("guide-page-image-last", i -> guideAt(i, "when-things-go-wrong", 6)));
+        s.add(new Scenario("guide-page-options", i -> guideAt(i, "server-options", 4)));
         return s;
+    }
+
+    /** The guide open at {@code page} (zero based) of the chapter {@code id}. */
+    private static Screen guideAt(Inventory i, String id, int page) {
+        GuideBook.Book book = GuideClient.loadBook();
+        int chapter = book.indexOf(id);
+        if (chapter < 0) {
+            violations.add("guide: no chapter '" + id + "'");
+            chapter = 0;
+        }
+        return new GuideScreen(book, i, chapter, page);
+    }
+
+    /** The guide open at the page with the most text of the whole book: the hardest page to fit. */
+    private static Screen guideLongest(Inventory i) {
+        GuideBook.Book book = GuideClient.loadBook();
+        int bestChapter = 0, bestPage = 0, best = -1;
+        for (int c = 0; c < book.chapters().size(); c++) {
+            var pages = book.chapters().get(c).pages();
+            for (int p = 0; p < pages.size(); p++) {
+                // the last page of a chapter also carries the "More:" line
+                int length = pages.get(p).text().length() + (p == pages.size() - 1 ? 60 : 0) + 20 * pages.get(p).icons().size();
+                if (length > best) {
+                    best = length;
+                    bestChapter = c;
+                    bestPage = p;
+                }
+            }
+        }
+        return new GuideScreen(book, i, bestChapter, bestPage);
     }
 
     private static void bridge(RefuellingMenu m, String phase, boolean busy, String message) {
@@ -1024,6 +1071,18 @@ public final class GuiScreenCheck {
         return out;
     }
 
+    /**
+     * A guide page whose text is longer than the room for it scrolls inside its own area. The pages are written to fit
+     * the smallest 16:9 GUI size (427 x 240) and every real scale of a 1080p window without that, so it is a fault there.
+     */
+    static List<String> guideTextFits(String name, Screen screen, boolean required) {
+        List<String> out = new ArrayList<>();
+        if (required && screen instanceof GuideScreen g && g.textOverflows()) {
+            out.add(name + ": the guide page (chapter " + g.chapter() + ", page " + g.page() + ") does not fit and scrolls");
+        }
+        return out;
+    }
+
     /** Collects what a widget says to a screen reader. */
     private static final class Say implements NarrationElementOutput {
         final List<String> titles = new ArrayList<>();
@@ -1128,6 +1187,7 @@ public final class GuiScreenCheck {
         }
         if (!built) {
             built = true;
+            GuideProgress.suspended = true;
             scenarios = build();
             directory = mc.gameDirectory.toPath().resolve("gui-check");
             clearPictures();
@@ -1176,6 +1236,7 @@ public final class GuiScreenCheck {
                 Ui.startProbe();
                 violations.addAll(bounds(at, mc.screen, size[0], size[1]));
                 violations.addAll(noBodyScroll(at, mc.screen, size[0] >= 400));
+                violations.addAll(guideTextFits(at, mc.screen, size[0] >= 400));
                 if (!FLOOR_PICTURES.contains(sc.name())) {
                     Ui.endProbe();
                     next();
@@ -1206,6 +1267,7 @@ public final class GuiScreenCheck {
         String label = sc.name() + " @scale" + SCALES[scaleIndex];
         violations.addAll(bounds(label, mc.screen, w, h));
         violations.addAll(noBodyScroll(label, mc.screen, true));
+        violations.addAll(guideTextFits(label, mc.screen, true));
         violations.addAll(textInsidePanel(label, mc.screen, Ui.endProbe()));
         try {
             Path folder = directory.resolve("scale" + SCALES[scaleIndex]);

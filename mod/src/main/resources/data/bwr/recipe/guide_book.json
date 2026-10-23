@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {"item": "minecraft:book"},
+    {"item": "bwr:nameplate"}
+  ],
+  "result": {"id": "bwr:guide_book", "count": 1}
+}

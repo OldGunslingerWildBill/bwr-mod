@@ -1,0 +1,137 @@
+{
+  "title": "The control room",
+  "docs": [
+    "CONTROL-PANELS.md",
+    "ROOM-FURNITURE.md",
+    "PLANT-COMPUTER.md",
+    "SIGNALS.md"
+  ],
+  "pages": [
+    {
+      "title": "Boards and desks",
+      "text": [
+        "Panels are boards you cover with instruments and controls, then wire to the plant. Build them from panel blocks: vertical, bench, console, back and duplex bodies, and 1 m and 2 m control desks. Blocks of one style and facing whose faces line up join into one group, so a part can span the seams.",
+        "",
+        "A Board Blueprint places eight blank board shapes in one click. Right-click the air to pick the shape, then right-click a block: green means it fits. In survival the panel blocks are paid from your inventory. Sneak-right-click a bare spot with the Panel Wrench to change the paint finish."
+      ],
+      "icons": [
+        "bwr:control_panel_vertical",
+        "bwr:control_panel_benchboard",
+        "bwr:control_panel_console",
+        "bwr:control_panel_duplex",
+        "bwr:control_panel_desk",
+        "bwr:control_panel_desk_wide",
+        "bwr:board_blueprint"
+      ]
+    },
+    {
+      "title": "Placing parts",
+      "text": [
+        "Gauges, switches, lamps, annunciators, recorders and displays are items. Right-click a panel face to place one: the ghost is green when it fits. Sneak-click a panel with the item to cycle its size. A face is a 16 x 16 grid of cells, and a part keeps the size it was placed at.",
+        "",
+        "The Panel Wrench opens a part's settings: label, colours, ranges and bands. Sneak-right-click a part with the wrench to remove it. Put a nameplate beside what you place: colour should never be the only clue."
+      ],
+      "icons": [
+        "bwr:panel_wrench",
+        "bwr:nameplate",
+        "bwr:lamp",
+        "bwr:pushbutton",
+        "bwr:dial_gauge",
+        "bwr:annunciator",
+        "bwr:control_switch"
+      ]
+    },
+    {
+      "title": "Real-size parts and the size picker",
+      "text": [
+        "Most instruments start at twice real size so they are easy to read. Exact real size is one pick away. Right-click the air with a part item to cycle through its sizes, smallest to biggest, or Alt+click with the item in hand to open the size picker: a list of every size in cells and centimetres, with an outline of the footprint and a marker on the current one. Click a row to choose it.",
+        "",
+        "One cell is 1/16 of a block (6.25 cm). A part already on a panel keeps its size, so pick the size before you place it."
+      ],
+      "icons": [
+        "bwr:dial_gauge",
+        "bwr:edgewise_gauge_vertical",
+        "bwr:bar_gauge",
+        "bwr:bar_graph",
+        "bwr:seven_segment_display"
+      ]
+    },
+    {
+      "title": "The Networking Wrench: select and name",
+      "text": [
+        "The Networking Wrench wires a machine to a panel. Right-click a plant machine to select it: the action bar shows its name and how many signals it has. Right-click it again, or sneak-right-click the air, to deselect.",
+        "",
+        "Sneak-right-click a machine to open its Networking screen: its name, every signal with its live value and unit, every command, and the components linked to it, each with an Unlink button. Type a name there, such as RHR-1 (up to 24 characters). Name linked components copies the name to the captions of everything wired to it."
+      ],
+      "icons": [
+        "bwr:networking_wrench",
+        "bwr:panel_linker",
+        "bwr:rhr_pump"
+      ]
+    },
+    {
+      "title": "Wiring a gauge",
+      "text": [
+        "Wire the reactor's pressure to a dial first. Select the Reactor Controller with the Networking Wrench, then right-click the dial. The binding screen opens with a fitting signal already chosen: use the signal pressure (dome pressure, psig) and press Apply. Nothing binds until you do.",
+        "",
+        "While you hold the wrench, a machine under the crosshair gets a white outline (it can be linked) and the selected one stays yellow. Hover a wired part to see lines, drawn through walls, to what it reads (cyan) or commands (orange). The Panel Linker makes the same bindings."
+      ],
+      "icons": [
+        "bwr:dial_gauge",
+        "bwr:reactor_controller",
+        "bwr:networking_wrench"
+      ]
+    },
+    {
+      "title": "Switches, lamps and a scram button",
+      "text": [
+        "A control commands the plant only when someone operates it. Control switches spring back to NORMAL. Wire a switch with the same wrench: choose an output port, mode Plant and a command such as open or close.",
+        "",
+        "A pushbutton under a SCRAM nameplate, wired to the reactor's scram command, puts a scram on your panel: it fires once per press. The RPS trip is a guarded two-button version. Lamps show a state: label each with a nameplate. A toggle in Redstone mode can drive a horn or a lamp behind the board."
+      ],
+      "icons": [
+        "bwr:control_switch",
+        "bwr:pushbutton",
+        "bwr:rps_trip",
+        "bwr:toggle_switch",
+        "bwr:lamp",
+        "bwr:nameplate"
+      ]
+    },
+    {
+      "title": "Annunciators",
+      "text": [
+        "An annunciator window flashes until you acknowledge it, then holds steady until its condition clears, then goes out. Bind its condition input to a signal and set its alarm test (input above a setpoint, for example) in its wrench screen. Windows that touch along a side draw as one box.",
+        "",
+        "Add an Annunciator Control Module for ACK, RESET, SILENCE and TEST. ACK and RESET act on every window in the module's group, and TEST lights every window while you hold it. An annunciator only displays: it never commands the plant."
+      ],
+      "icons": [
+        "bwr:annunciator",
+        "bwr:annunciator_control",
+        "bwr:pushbutton"
+      ]
+    },
+    {
+      "title": "The controller station",
+      "text": [
+        "A controller station is a manual/auto station for one process: a red pointer for the measured value, a green one for the setpoint and a demand bar. A new station is in MAN at 0 demand. RAISE and LOWER (hold to keep stepping) move the demand; nothing runs by itself.",
+        "",
+        "Select AUTO and a built-in PID moves the demand to hold the value at the setpoint, only while you leave it in AUTO. Defaults: Kp 0.5, Ti 20 s, derivative off; tune them in the wrench screen. A wired outside demand overrides the PID. Wire the demand output to a machine with a scale of the command's top value divided by 100."
+      ],
+      "icons": [
+        "bwr:controller_station"
+      ]
+    },
+    {
+      "title": "The plant computer",
+      "text": [
+        "The plant computer is a safety parameter display: a lit screen of numbers, bars, trends and green, amber and red tiles. It is read-only and cannot act on the plant. Build a panel group at least 2 x 2 blocks (4 x 3 is the default) and mount it.",
+        "",
+        "For built-in pages with no code, open its wrench screen, set Display to overview, trends or flows, and bind its Reactor input to the reactor controller with the Networking Wrench. Or set Display to program and draw it from a CC:Tweaked program (chapter 7). Touch the soft keys on the bottom row to change page."
+      ],
+      "icons": [
+        "bwr:plant_computer"
+      ]
+    }
+  ]
+}

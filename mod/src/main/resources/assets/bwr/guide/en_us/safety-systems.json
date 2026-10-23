@@ -1,0 +1,110 @@
+{
+  "title": "Safety systems you build",
+  "docs": [
+    "ALPHA-HARDWARE.md",
+    "TERRY-TURBINES.md",
+    "SUPPRESSION-BASIN.md",
+    "CONTAINMENT-UPDATE.md"
+  ],
+  "pages": [
+    {
+      "title": "Scram",
+      "text": [
+        "A scram inserts every rod at once. The Scram button on the reactor screen does it, and it checks nothing first. Reset clears the signal so the rods can be driven out again. Each drive's accumulator charge and condition still matter, so keep the drives supplied.",
+        "",
+        "On a panel, wire a pushbutton to the reactor's scram command, or build the guarded RPS trip. A CC program can call scram() on the reactor peripheral (chapter 7). Test any scram you build before you rely on it."
+      ],
+      "icons": [
+        "bwr:rps_trip",
+        "bwr:pushbutton",
+        "bwr:control_rod_drive"
+      ]
+    },
+    {
+      "title": "Relief valves and ADS",
+      "text": [
+        "Pressure Relief Valves let steam out of the vessel. Pipe a valve's side steam inlet to an open RPV steam outlet and its downward outlet to a submerged suppression pool quencher. A relief valve must be metered by a Division cabinet (the ADS controller) or by a suppression pool controller.",
+        "",
+        "Set the cabinet and its valves to the same division, 1 to 4: divisions work independently. Open valves locally, with redstone or from a program. Nothing opens them automatically."
+      ],
+      "icons": [
+        "bwr:ads_relief_valve",
+        "bwr:ads_controller",
+        "bwr:suppression_pool_quencher"
+      ]
+    },
+    {
+      "title": "Emergency cooling pumps",
+      "text": [
+        "HPCS (high pressure core spray), LPCS (low pressure core spray) and RHR/LPCI (residual heat removal, with heat exchangers) are electric pumps. Each needs FE, a suction (the condensate tank or the suppression pool) and a discharge piped to an RPV Water Injection Port. Right-click a pump to set its speed and start it, or drive it from a panel or a program.",
+        "",
+        "Core spray rings (Core Spray Sparger blocks) go around the inside of the vessel: LPCS one block above the top of active fuel, HPCS four blocks above it."
+      ],
+      "icons": [
+        "bwr:hpcs_pump",
+        "bwr:lpcs_pump",
+        "bwr:rhr_pump",
+        "bwr:rhr_heat_exchanger",
+        "bwr:core_spray_sparger"
+      ]
+    },
+    {
+      "title": "RCIC, HPCI and SLC",
+      "text": [
+        "RCIC and HPCI are steam-driven Terry turbine pumps that need no electric power: steam in from a reactor steam outlet, exhaust to the suppression pool, water suction from the condensate tank or the pool, and discharge to an RPV Water Injection Port. Right-click either to set its speed and start it.",
+        "",
+        "SLC injects borated water. The SLC Boron Solution Tank holds 15,000 kg; add Borate Charges (25 kg each), then pipe it to an SLC Injection Pump and on to an injection port. The pump needs FE."
+      ],
+      "icons": [
+        "bwr:rcic_twl",
+        "bwr:hpci_turbine",
+        "bwr:slc_boron_tank",
+        "bwr:slc_pump",
+        "bwr:borate_charge"
+      ]
+    },
+    {
+      "title": "The suppression pool",
+      "text": [
+        "Steam from relief valves and the steam-driven pumps is condensed in a suppression pool. Build an enclosed tank of Suppression Pool Concrete (outside 5 to 25 blocks wide and deep, 4 to 16 high, at least 64 hollow interior cells), replace one shell block with a Suppression Pool Controller, and fit a steam inlet, a suction port and a return port facing outward.",
+        "",
+        "New pools start empty. Pump water in: an empty pool is not a heat sink. Cool it with an RHR heat exchanger, or let it cool slowly toward 25 C. Spray mode can condense steam that escapes the bulk water."
+      ],
+      "icons": [
+        "bwr:suppression_pool_controller",
+        "bwr:suppression_pool_wall",
+        "bwr:suppression_pool_steam_inlet",
+        "bwr:rhr_heat_exchanger"
+      ]
+    },
+    {
+      "title": "Containment",
+      "text": [
+        "Containment is a solid-walled room you build around the reactor and the suppression pool. A Containment Controller inside it surveys the volume and the leaks and rates the weakest wall column. Build floor, walls and roof from full solid blocks; several layers of strong material raise the rating. A pipe or a vanilla door in the wall leaks.",
+        "",
+        "Where a line crosses the wall use a containment steam or water penetration (it fails closed when its power runs out), and power and data penetrations for cables. Keep the wall's chunks loaded: the controller never loads them."
+      ],
+      "icons": [
+        "bwr:containment_controller",
+        "bwr:containment_steam_penetration",
+        "bwr:containment_water_penetration",
+        "bwr:containment_power_penetration"
+      ]
+    },
+    {
+      "title": "Doors, nitrogen and venting",
+      "text": [
+        "Access goes through a vault door (3 x 3 or 4 x 4) and a personnel airlock; each replaces the whole wall opening. A vault door takes 8,000 FE a stroke, or turn its hand-wheel. A redstone pulse cycles an airlock: inner open, inner close, outer open, outer close.",
+        "",
+        "A Containment Nitrogen Supply on an interior wall, with power and a Nitrogen Canister, can inert the room. A Wetwell Vent Valve beside the suppression pool shell, pointed at open air, vents it. You command both: chapter 6 says when."
+      ],
+      "icons": [
+        "bwr:containment_vault_door",
+        "bwr:containment_airlock",
+        "bwr:containment_nitrogen_supply",
+        "bwr:containment_vent_valve",
+        "bwr:nitrogen_canister"
+      ]
+    }
+  ]
+}
