@@ -110,6 +110,65 @@ public final class PressureVessel {
     public static final double NORMAL_COLLAPSED_LEVEL_IN = 8.0;
 
     /**
+     * Collapsed level, instrument scale inches, at which the free surface reaches the vessel flange: the lip of the open
+     * vessel. The game vessel is a deliberately compressed picture of the real one, and its drawn lip has always stood at the
+     * top of the 0 to +60 in narrow range band, so that is where the refuelling well begins (see {@link Well}).
+     */
+    public static final double FLANGE_LEVEL_IN = 60.0;
+
+    /**
+     * Most water the open vessel passes to a place it cannot be held, kg/s: over the flange into the drywell when there is no
+     * cavity seal, or over the top of the well onto the refuel floor. 4000 kg/s is twice the rated feedwater flow
+     * (1940 kg/s), so no pump line the player can run outpaces it and the level holds at the lip; it is a rate, not a clamp,
+     * so a larger flow shows. Only while {@link #setWellSpilling(boolean)} is on (the head is off).
+     */
+    public static final double WELL_SPILL_KG_PER_S = 4000.0;
+
+    /**
+     * The space the water can use above the flange: first the annulus outside the vessel body down to the cavity seal (it
+     * fills while the level in the vessel holds at the lip), then the well itself, layer by layer.
+     *
+     * @param annulusM3 volume between the seal plate and the flange outside the vessel body, m3 (0 for none)
+     * @param riseM     heights of the well's layers above the flange, m, lowest first
+     * @param areaM2    cross-section of each layer, m2
+     */
+    public record Well(double annulusM3, double[] riseM, double[] areaM2) {
+        public Well {
+            if (riseM.length != areaM2.length) {
+                throw new IllegalArgumentException("one area for each layer");
+            }
+            annulusM3 = Double.isFinite(annulusM3) ? Math.max(0.0, annulusM3) : 0.0;
+            riseM = riseM.clone();
+            areaM2 = areaM2.clone();
+        }
+
+        /** Water the well holds above the flange, m3: annulus plus every layer. */
+        public double capacityM3() {
+            double v = annulusM3;
+            for (int i = 0; i < riseM.length; i++) {
+                v += riseM[i] * areaM2[i];
+            }
+            return v;
+        }
+
+        /** A well with no space above the flange: nothing can be held there. */
+        public static Well none() {
+            return new Well(0.0, new double[0], new double[0]);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof Well w && w.annulusM3 == annulusM3 && java.util.Arrays.equals(w.riseM, riseM)
+                    && java.util.Arrays.equals(w.areaM2, areaM2);
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(annulusM3, java.util.Arrays.hashCode(riseM), java.util.Arrays.hashCode(areaM2));
+        }
+    }
+
+    /**
      * Volume of the two-phase (boiling) region, m3 — core plus upper plenum and
      * standpipes, the part of the vessel where voids exist and displace water
      * upward.
@@ -241,6 +300,10 @@ public final class PressureVessel {
         shutdownCoolingMW = Double.isFinite(duty) ? Math.max(0.0, duty) : 0.0;
     }
     private double liquidLeakKgPerS;
+    /** Null: the vessel has no well modelled and the level is volume over one area, as it always was. */
+    private Well well;
+    private boolean wellSpilling;
+    private double wellSpillKgPerS;
     private double steamLeakKgPerS;
     private double ruptureVolumeM3;
     private java.util.List<dev.bwr.core.boundary.BoundaryOpening> boundaryOpenings = java.util.List.of();
@@ -486,6 +549,7 @@ public final class PressureVessel {
             lastCapacity = capacity;
         }
 
+        spillWhatTheWellCannotHold(dtSeconds);
         this.steamGenerationKgPerS = lastBoiling;
         this.steamRemovalKgPerS = lastSteamOut;
         this.flashingKgPerS = lastFlashing;
@@ -589,6 +653,10 @@ public final class PressureVessel {
         double collapsedHeightM = liquidVolumeM3 / levelAreaM2;
         this.collapsedLevelIn = collapsedHeightM / METRES_PER_INCH
                 - PhysicalConstants.INSTRUMENT_ZERO_ABOVE_VESSEL_ZERO_IN;
+        if (well != null && collapsedLevelIn > FLANGE_LEVEL_IN) {
+            this.collapsedLevelIn = FLANGE_LEVEL_IN
+                    + riseForExtraM3(liquidVolumeM3 - volumeAtFlangeM3() - well.annulusM3()) / METRES_PER_INCH;
+        }
 
         // Voids only swell the level while there is a boiling region under
         // water to hold them. Below the top of active fuel the swell fades out,
@@ -1074,8 +1142,119 @@ public final class PressureVessel {
         double heightM = (finite(collapsedLevelIn)
                 + PhysicalConstants.INSTRUMENT_ZERO_ABOVE_VESSEL_ZERO_IN) * METRES_PER_INCH;
         double volumeM3 = Math.max(0.0, heightM) * levelAreaM2;
+        if (well != null && finite(collapsedLevelIn) > FLANGE_LEVEL_IN) {
+            volumeM3 = volumeAtFlangeM3() + well.annulusM3()
+                    + extraM3ForRise((collapsedLevelIn - FLANGE_LEVEL_IN) * METRES_PER_INCH);
+        }
         this.liquidMassKg = volumeM3 * Saturation.liquidDensityKgPerM3(getPressurePsia());
         recomputeLevels();
+    }
+
+    // ---------------------------------------------------------------
+    // The well above the flange
+    // ---------------------------------------------------------------
+
+    /**
+     * Gives the open vessel a well (or, with {@link Well#none()}, none: nothing above the flange can be held). The mapping
+     * between water volume and collapsed level changes only above {@link #FLANGE_LEVEL_IN}: inventory goes first into the
+     * annulus, with the level in the vessel standing at the lip, then up through the layers of the well. Below the flange it
+     * is the ordinary level area, bit for bit. Null removes the well and every level reads as it did without one.
+     * The water inventory is not touched; the level it reads is.
+     */
+    public void setWell(Well well) {
+        if (java.util.Objects.equals(this.well, well)) {
+            return;
+        }
+        this.well = well;
+        recomputeLevels();
+    }
+
+    public Well getWell() {
+        return well;
+    }
+
+    /**
+     * Whether water the well cannot hold leaves the vessel (the head is off). Off, the level has no ceiling, as before.
+     * Nothing in the model switches this: the controller sets it from the vessel state.
+     */
+    public void setWellSpilling(boolean spilling) {
+        this.wellSpilling = spilling;
+        if (!spilling) {
+            wellSpillKgPerS = 0.0;
+        }
+    }
+
+    /** Water that left the vessel for lack of anywhere to hold it on the last step, kg/s. */
+    public double getWellSpillKgPerS() {
+        return wellSpillKgPerS;
+    }
+
+    /** Volume of liquid the vessel holds when the surface is at the flange, m3. */
+    public double volumeAtFlangeM3() {
+        return (FLANGE_LEVEL_IN + PhysicalConstants.INSTRUMENT_ZERO_ABOVE_VESSEL_ZERO_IN) * METRES_PER_INCH * levelAreaM2;
+    }
+
+    /** Liquid volume above the volume at the flange, m3 (0 at or below the lip): the annulus and the well together. */
+    public double getWellWaterM3() {
+        double v = liquidMassKg / Saturation.liquidDensityKgPerM3(getPressurePsia());
+        return Math.max(0.0, v - volumeAtFlangeM3());
+    }
+
+    /** Most liquid the vessel can hold before it spills, kg, or infinity when it has no well modelled. */
+    public double getWellSpillThresholdKg() {
+        if (well == null) {
+            return Double.POSITIVE_INFINITY;
+        }
+        return (volumeAtFlangeM3() + well.capacityM3()) * Saturation.liquidDensityKgPerM3(getPressurePsia());
+    }
+
+    /** Rise above the flange for {@code extra} m3 poured on top of the annulus; extra <= 0 gives 0. */
+    private double riseForExtraM3(double extra) {
+        double rise = 0.0;
+        double left = extra;
+        if (!(left > 0.0)) {
+            return 0.0;
+        }
+        double lastArea = levelAreaM2;
+        for (int i = 0; i < well.riseM().length; i++) {
+            double area = well.areaM2()[i];
+            lastArea = area > 0.0 ? area : lastArea;
+            double layer = well.riseM()[i] * area;
+            if (left <= layer || !(area > 0.0)) {
+                return rise + (area > 0.0 ? left / area : 0.0);
+            }
+            left -= layer;
+            rise += well.riseM()[i];
+        }
+        return rise + left / lastArea;
+    }
+
+    /** Inverse of {@link #riseForExtraM3}: the volume above the annulus for a rise of {@code rise} metres. */
+    private double extraM3ForRise(double rise) {
+        double v = 0.0;
+        double left = rise;
+        double lastArea = levelAreaM2;
+        for (int i = 0; i < well.riseM().length && left > 0.0; i++) {
+            double area = well.areaM2()[i];
+            lastArea = area > 0.0 ? area : lastArea;
+            double take = Math.min(left, well.riseM()[i]);
+            v += take * area;
+            left -= take;
+        }
+        return v + Math.max(0.0, left) * lastArea;
+    }
+
+    private void spillWhatTheWellCannotHold(double dtSeconds) {
+        wellSpillKgPerS = 0.0;
+        if (well == null || !wellSpilling || !(dtSeconds > 0.0)) {
+            return;
+        }
+        double excess = liquidMassKg - getWellSpillThresholdKg();
+        if (excess > 0.0) {
+            double lost = Math.min(excess, WELL_SPILL_KG_PER_S * dtSeconds);
+            liquidMassKg -= lost;
+            wellSpillKgPerS = lost / dtSeconds;
+        }
     }
 
     /** Restore persisted dome pressure, psig. Persistence only. */

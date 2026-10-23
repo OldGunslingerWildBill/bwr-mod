@@ -72,6 +72,80 @@ about threefold and keeps the ratios. Measured in the GameTests with a 5 x 5 rea
 The mast and grapple are drawn from the console's synced state (no entities, no per-tick packets: one update when a phase begins,
 the client advances the pose with its own clock). The operator's seat is the console beside the rails; riding the gantry was not built.
 
+## The reactor well and the cavity seal
+
+A formed reactor's vessel is round and its block footprint is square, so a gap is left round the vessel wall and the concrete that
+surrounds it. In a real plant that gap is the **drywell**; it stays dry. Above the vessel is the **reactor well** (the cavity), a
+concrete shaft up to the refuel floor, and at flange height a **cavity seal** (a bellows and a seal plate) bridges the vessel flange to
+the wall of the well. With the head off, the water is raised out of the vessel over the flange and up the well, and the seal holds it
+above the drywell. The mod does the same, and the bridge reads the result.
+
+### The seal (formed with the vessel)
+
+The seal is part of the vessel's picture, a steel plate with a dark collar drawn from the round flange out to the square footprint and
+the surrounding blocks (the corner gaps included). It is **not a block a player places**: you build the wall, the seal appears.
+
+**The gap rule.** At one elevation (one row of blocks), looking outward from the vessel's block footprint all the way round the ring,
+corners included:
+
+* a full, solid block **touching** the vessel (gap 0) or **one block away** (gap 1) closes the ring at that column;
+* the ring closes at that row only if **every** column round it finds such a block;
+* more than one block of air anywhere round the ring: that row does not close. No seal forms at a row where it does not.
+
+**Where it forms.** Scanning down from the flange (the top of the vessel's body once the head is off; the dome rows above it go with the head), the
+**highest row that closes** takes the seal. It may be below the flange. It must be in the **upper third** of the vessel: at most `round(H / 3)` blocks below the
+top shell row, where H is the formed vessel's total height in blocks (the shell included) and `round` is to the nearest block (H = 10: 3 below the top; 11: 4;
+13: 4; 14: 5; the default 17 x 17 x 28: 9). A ring that closes only deeper than that is no seal. No row from the flange to that depth closes: no seal at all,
+and the INFO tab and the computer say which side is how many blocks too far, and where.
+
+*Why one third and not one quarter.* The owner's fallback was `round(H / 4)` if a third caused a real problem (a seal at or below the top of the active fuel or a port row,
+or annulus water clashing with the nozzle models). Checked: the top of the active fuel is 5.5 above the bottom of the smallest vessel (7 x 7 x 10, H = 10) and its deepest
+seal row is 6 above the bottom; on the default 17 x 17 x 28 the fuel top is 11 above the bottom and the deepest row is 18; on the largest (23 x 23 x 131) the fuel top is 11 and the
+deepest row 86. So a seal is never at or below the fuel. Port rows are the player's to place, so the rule cannot rule a clash out: the seal forms at the **highest** closing row, which is
+the flange for a shaft that closes all the way up (the steam outlets of the test vessels sit one to three rows below the flange), and only a wall the player builds open down to a deeper row
+would put the plate below a nozzle. Nothing needed the quarter; a third was used.
+
+Canal and gate blocks of the cattle chute count as wall (the chute meets the cavity there). Pipes and other partial blocks do not.
+
+**When it is surveyed.** A survey starts on formation and whenever the reactor revalidates, which it does when a block next to the controller changes and on
+the five-second sweep it already did; never per block. It is **spread over the ticks that follow**, at most 4000 block reads a tick
+(`CavitySeal.READS_PER_TICK`, about 0.65 ms), so no tick pays for the whole well: the worst case, a 23 x 23 x 62 vessel with a 48 layer well, is 124 000 reads, 9.5 ms
+in one go (the cost every sweep would have been) and 32 ticks of at most 0.65 ms spread. Until a survey finishes the last answer stands (the drawn seal and the
+vessel's well stay as they were); a newer revalidation replaces one still running. A block in an unloaded chunk leaves the last answer standing too (no chunk is
+ever loaded for it). Nothing of the seal is saved: an old world surveys it on its first tick. The result goes to the clients inside the
+vessel's picture, only when there is a seal.
+
+### The well
+
+From the seal row up, layer by layer: the vessel's footprint (the shell is gone with the head, and above the vessel a block over the footprint is
+a ceiling that ends the well) and every open cell joined to it within three blocks. A layer that leaks ends the well; its top is the top of the last closed
+layer, where the refuel floor is. The well is usable only if it reaches the flange.
+
+* **Water over the flange.** The model's flange lip stands at collapsed level **+60 in** (the top of the narrow range band, where the drawn vessel's lip has
+  always been). Below it the inventory and the level are exactly what they were. Above it the inventory first fills the **annulus** (outside the vessel
+  body, from the seal plate up to the lip: the level in the vessel *holds at the lip* while it fills), then rises through the well layer by layer, each layer its own
+  cross-section in m2 (one block is one metre). The collapsed level, the inventory (`liquidMassKg`) and `VesselWaterGeometry` stay one thing: the level above
+  the lip is `60 in + rise / 0.0254`, and the drawn surface is the same rise above the drawn lip.
+* **Head replaced while flooded.** Nothing moves. The water over the flange stays where it is, the level reads where it was, and it comes down only as the level
+  falls (the plant's own drains, boil-off). Closing the head is not refused and does not drain anything; it just stops the spill described next.
+* **Without a seal**, or with a seal under a wall that opens below the flange, or when the well is full: the head is off and the vessel can not hold the water, so it
+  leaves at the rate it arrives, up to **4000 kg/s** (`PressureVessel.WELL_SPILL_KG_PER_S`, twice the rated feedwater flow): into the drywell (no usable well: a refuelling seal failure)
+  or onto the refuel floor (over the top of a full well). The level holds at the lip (or the top). The INFO tab and `getCavity()` show the rate and where it goes.
+  With the head on there is no spill: the vessel is closed.
+* **Nothing floods by itself.** Only the player's feed, condensate and residual heat removal pumps (and a program's commands) put water in.
+
+### What the screen and the computers say
+
+INFO tab, "Cavity seal and well": the survey's verdict (present at y, row, H and the lowest allowed row, touching or with a gap; or absent, with the closest row and which side is
+how many blocks from the vessel at which x, z), the water over the flange, the level over the flange, the well's capacity and the leak (or overflow). CC:Tweaked
+`reactor.getCavity()` returns the same as a table (`sealPresent`, `sealReason`, `vesselHeight`, `lowestSealRowY`, `flangeRowY`, `sealRowY`, `gapSides`, `tooWideSide`,
+`tooWideGapBlocks`, `wellUsable`, `waterOverFlangeM3`, `levelOverFlangeM`, `wellCapacityM3`, `spillKgPerS`, `spillTo`).
+
+### Drawing
+
+The plate and collar are built into the vessel's cached mesh (one rebuild when the seal changes). The water in the well and the annulus is one translucent surface at the level the
+server sends (only while there is water over the lip), over the cells of the well at that height, in the pool's water tint: no water blocks. The core's Cherenkov glow reaches up to it.
+
 ## Water, depth and dose
 
 The top of the carried assembly, its handle where the grapple holds it, is the point that matters. The bridge tracks the metres of water
@@ -80,7 +154,8 @@ over it, `cover = surface - handle`, at every tick of a move, in whichever body 
 * **cavity**: the top of the drawn core plus the metres of water the reactor model has above the top of active fuel,
   `(collapsed level - TAF) x 0.0254` (the same number `RadiationField` uses for an open head). A freshly formed cold vessel has only 1.2 m
   over the fuel, so **the player floods the cavity before refuelling** (the normal operating level is 4.4 m over the fuel); the hoist limit
-  below says so when the water is too shallow;
+  below says so when the water is too shallow. Water over the vessel flange in a sealed well is part of that level (see
+  [the reactor well and the cavity seal](#the-reactor-well-and-the-cavity-seal)), so a flooded well adds its rise to the cover metre for metre;
 * **pool**: its own level, `floor + levelM`, so a boiled-down pool shows up at once;
 * **chute**: the surface of its top canal block (13/16 of the block); none if any block of its row is drained.
 

@@ -16,9 +16,10 @@ final class VesselCherenkovGlow {
     private static final ResourceLocation WATER=ResourceLocation.withDefaultNamespace("block/water_still");
     static {for(int i=0;i<=N;i++){X[i]=Math.cos(-i*Math.PI*2/N);Z[i]=Math.sin(-i*Math.PI*2/N);}}
     static void render(ReactorControllerBlockEntity be,VesselAppearance.Envelope e,VesselCoreAppearance core,float partial,PoseStack pose,MultiBufferSource buffers) {
-        double surface=VesselWaterGeometry.height(e,be.clientWaterLevelIn(partial));
+        double surface=Math.max(VesselWaterGeometry.height(e,be.clientWaterLevelIn(partial)),be.clientWellSurface());
         float strength=(float)CherenkovAppearance.strength(be.clientPowerFractionOfRated(),be.clientHasFuel(),be.clientWaterPresent(),surface);
         if(strength<.002)return;
+        strength*=(float)CherenkovAppearance.wellBoost(surface,VesselWaterGeometry.rim(e));
         double top=Math.min(surface-.035,VesselInternalsGeometry.coreTop(e)+.27);
         if(top<=2.02)return;
         double radius=ReactorCoreGeometry.fuelEnvelopeRadius(core)*1.01;
@@ -27,7 +28,9 @@ final class VesselCherenkovGlow {
         var p=pose.last();
         disk(out,p,sprite,e,radius,top,strength);
         // Gentle light at the surface fades with the depth above the core.
-        if(surface>top+.01)disk(out,p,sprite,e,radius,surface+.008,strength*(float)(.85/(1+(surface-top)*.12)));
+        // Water over the flange is a deep, clear pool: the light it throws up fades over it a quarter as fast as over the vessel's own water.
+        double lip=VesselWaterGeometry.rim(e),fade=Math.min(surface,lip)-top+Math.max(0,surface-lip)*.25;
+        if(surface>top+.01)disk(out,p,sprite,e,radius,surface+.008,strength*(float)(.85/(1+fade*.12)));
         double rx=e.width()*radius*.88,rz=e.depth()*radius*.88;
         for(int i=0;i<N;i++) {
             vertex(out,p,sprite,rx*X[i],2.02,rz*Z[i],.1f*strength);

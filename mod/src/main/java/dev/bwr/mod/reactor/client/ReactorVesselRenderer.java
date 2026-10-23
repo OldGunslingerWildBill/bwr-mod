@@ -99,6 +99,8 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
             if(core!=null&&!VesselGpuVisuals.cherenkov(be,e,core,partial,pose,buffers))
                 VesselCherenkovGlow.render(be,e,core,partial,pose,buffers);
         }
+        // Water over the flange, in the well and the annulus down to the cavity seal: outside the vessel, so seen with the head on too.
+        if(be.clientWellSurface()>0)VesselWellWater.render(e,be.clientWellSurface(),pose,buffers,light);
         pose.popPose();
         var player=Minecraft.getInstance().player;
         if(core!=null && core.layoutVersion()!=1 && player!=null && (player.getMainHandItem().is(BwrBlocks.RIP_PUMP.get().asItem())
@@ -127,6 +129,7 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
         // Positive overlap at both joints prevents sub-pixel cracks at every size.
         b.part(model("barrel"),0,1.16,0,w,flangeY-1.10f,d);
         b.part(model("flange"),0,flangeY,0,w,1,d);
+        CavitySealGeometry.build(b,e);
         if(failed)b.part(model("failed_head"),0,flangeY,0,w,headHeight/1.65f,d);
         if(closed) {
             b.part(model("head"),0,h-headHeight,0,w,headHeight/1.65f,d);

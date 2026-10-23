@@ -67,17 +67,18 @@ final class VesselGpuVisuals {
     static boolean cherenkov(ReactorControllerBlockEntity be, VesselAppearance.Envelope e,
                              VesselCoreAppearance core, float partial, PoseStack pose, MultiBufferSource buffers) {
         if (!available(VisualEffectsMode.Effect.CHERENKOV, buffers)) return false;
-        double surface = VesselWaterGeometry.height(e, be.clientWaterLevelIn(partial));
+        double surface = Math.max(VesselWaterGeometry.height(e, be.clientWaterLevelIn(partial)), be.clientWellSurface());
         float strength = (float)CherenkovAppearance.strength(be.clientPowerFractionOfRated(), be.clientHasFuel(),
                 be.clientWaterPresent(), surface);
         if (strength < .002f) return true; // zero means no draw on both paths
+        float lit = strength * (float)CherenkovAppearance.wellBoost(surface, VesselWaterGeometry.rim(e));
         double top = Math.min(surface - .035, VesselInternalsGeometry.coreTop(e) + .27);
         if (top <= 2.02) return true;
         double radius = ReactorCoreGeometry.fuelEnvelopeRadius(core) * 1.01;
         float time = be.getLevel() == null ? partial : be.getLevel().getGameTime() + partial;
         flush(buffers);
         return GpuVisualShaders.draw(VisualEffectsMode.Effect.CHERENKOV, shader -> {
-            shader.safeGetUniform("Strength").set(strength);
+            shader.safeGetUniform("Strength").set(lit);
             shader.safeGetUniform("CoreTop").set((float)top);
             shader.safeGetUniform("CoreBottom").set(2.02f);
             shader.safeGetUniform("Surface").set((float)surface);

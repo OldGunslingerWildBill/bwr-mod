@@ -157,6 +157,11 @@ public final class MachineMeshCache {
                     out.putBulkData(pose.last(),quad,brightness,1,1,1,1,lights,overlay,true);
             }
         }
+        /** One vertex of procedural geometry, in the current pose, lit as the rest of the assembly and tinted by r, g, b. */
+        public void vertex(double x,double y,double z,float u,float v,float nx,float ny,float nz,float r,float g,float b){
+            var last=pose.last();
+            out.addVertex(last,(float)x,(float)y,(float)z).setColor(r,g,b,1f).setUv(u,v).setOverlay(overlay).setLight(lights[0]).setNormal(last,nx,ny,nz);
+        }
         public void part(ModelResourceLocation id,double x,double y,double z,float sx,float sy,float sz){
             pose.pushPose();pose.translate(x,y,z);pose.scale(sx,sy,sz);model(id);pose.popPose();
         }

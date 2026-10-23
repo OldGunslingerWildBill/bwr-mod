@@ -32,6 +32,16 @@ Reference: [Oak Ridge National Laboratory's HFIR refuelling photo and explanatio
 show blue Cherenkov light from submerged irradiated fuel, including after shutdown.
 The brightness mapping used here is an artistic game-scale approximation.
 
+## Flooding the well (cavity seal)
+
+With the head off, water can be raised out of the vessel over the flange and up the **reactor well**, the shaft the player builds above the vessel. A **cavity seal**,
+drawn as part of the vessel (a steel plate and a dark collar from the round flange to the square footprint and the walls), forms where a wall of full blocks touches the
+vessel or stands one block away all the way round, at the highest such row from the flange down to at most `round(H / 3)` blocks below the top of the vessel (the upper third). The seal holds the
+water above the drywell; the INFO tab and `getCavity()` say whether it is present, and if not, which side is how many blocks too far. Without a seal the water leaks into the drywell
+(4000 kg/s at most) and the level holds at the flange. The water over the flange is part of the vessel's inventory and level (above the +60 in lip the well's cross-section replaces
+the vessel's), is drawn as one translucent surface in the well and the annulus, and is what the refuelling bridge reads as the water over the fuel. Nothing floods by itself: your feed,
+condensate and residual heat removal pumps do it. Full rules, volumes and tests: [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#the-reactor-well-and-the-cavity-seal).
+
 ## Placing spargers
 
 Use the same **Core Spray Sparger** item. Two perpendicular neighboring segments

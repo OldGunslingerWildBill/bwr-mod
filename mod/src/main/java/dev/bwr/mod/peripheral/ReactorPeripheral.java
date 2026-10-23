@@ -1205,6 +1205,49 @@ public class ReactorPeripheral implements IPeripheral {
     }
 
     /**
+     * The cavity seal and the well above the open vessel. {@code sealPresent}; {@code sealReason} (English: present, or absent and where
+     * the wall is too far); {@code vesselHeight} (H, blocks), {@code vesselTopY}, {@code deepestSealRowY} (top less round(H / 3)),
+     * {@code deepestSealBelowTop}, {@code flangeRowY} and {@code sealRowY} (world y; the last only with a seal); {@code sealBelowTop}; {@code gapSides} (the sides with one block of gap); {@code wellUsable};
+     * {@code wellTopY}; {@code waterOverFlangeM3}, {@code levelOverFlangeM}, {@code wellCapacityM3}; {@code spillKgPerS} and
+     * {@code spillTo} ("drywell" with no usable well, "refuel floor" over the top of one, "none").
+     */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> getCavity() throws LuaException {
+        var core = core();
+        var c = be.cavity();
+        if (c == null) throw new LuaException("the cavity seal has not been surveyed yet");
+        var vessel = core.getPressureVessel();
+        Map<String, Object> out = new HashMap<>();
+        out.put("sealPresent", c.present());
+        out.put("sealReason", c.english());
+        out.put("vesselHeight", c.height());
+        out.put("vesselTopY", c.topY());
+        out.put("deepestSealRowY", c.lowestRow());
+        out.put("deepestSealBelowTop", c.topY() - c.lowestRow());
+        out.put("flangeRowY", c.flangeRow());
+        if (c.present()) {
+            out.put("sealRowY", c.sealRow());
+            out.put("sealBelowTop", c.topY() - c.sealRow());
+            Map<String, Object> gaps = new HashMap<>();
+            for (int i = 0; i < dev.bwr.mod.reactor.CavitySeal.SIDES.length; i++) gaps.put(dev.bwr.mod.reactor.CavitySeal.SIDES[i].getName(), (c.gapMask() >> i & 1) != 0);
+            out.put("gapSides", gaps);
+        } else if (c.badPos() != null) {
+            out.put("tooWideSide", c.badSide().getName());
+            out.put("tooWideGapBlocks", c.badGap());
+            out.put("tooWideAt", Map.of("x", c.badPos().getX(), "y", c.bestRow(), "z", c.badPos().getZ()));
+        }
+        out.put("wellUsable", c.wellUsable());
+        if (c.wellUsable()) out.put("wellTopY", c.wellTopRow() + 1);
+        out.put("waterOverFlangeM3", vessel.getWellWaterM3());
+        out.put("levelOverFlangeM", Math.max(0.0, vessel.getCollapsedLevelIn() - dev.bwr.core.thermal.PressureVessel.FLANGE_LEVEL_IN)
+                * dev.bwr.core.thermal.PressureVessel.METRES_PER_INCH);
+        out.put("wellCapacityM3", c.profile() == null ? 0.0 : c.profile().toWell().capacityM3());
+        out.put("spillKgPerS", vessel.getWellSpillKgPerS());
+        out.put("spillTo", vessel.getWellSpillKgPerS() <= 0 ? "none" : c.wellUsable() ? "refuel floor" : "drywell");
+        return out;
+    }
+
+    /**
      * Fraction of one component's fatigue life used up, where 1.0 means it can
      * begin to fail. Key is the lowercase component name, e.g.
      * {@code "recirculation_line"}.

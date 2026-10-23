@@ -1397,5 +1397,11 @@
   "gui.bwr.guide.contents": "Contents",
   "gui.bwr.guide.contents_tip": "Back to the list of chapters.",
   "gui.bwr.guide.next": "Next",
-  "gui.bwr.guide.next_tip": "Next page. The Right arrow key does the same."
+  "gui.bwr.guide.next_tip": "Next page. The Right arrow key does the same.",
+  "status.bwr.cavity.present": "Present at y %s (%s blocks below the top of the vessel; at most %s allowed, a third of H = %s), %s",
+  "status.bwr.cavity.touching": "walls touching all round",
+  "status.bwr.cavity.gaps": "one block of gap on %s side(s)",
+  "status.bwr.cavity.well_open": "The wall opens below the flange, so the well cannot hold water.",
+  "status.bwr.cavity.too_short": "Absent: no row between y %s and y %s to seal at (vessel height %s).",
+  "status.bwr.cavity.absent": "Absent: no row from y %s down to y %s (deepest allowed: %s blocks below the top, a third of H = %s) has a wall within one block all round. Closest row y %s: the %s side is %s blocks from the vessel at x %s, z %s (%s columns open)."
 }
