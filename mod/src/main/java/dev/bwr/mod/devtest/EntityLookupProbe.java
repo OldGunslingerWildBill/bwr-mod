@@ -19,7 +19,8 @@ import java.util.Set;
  * logged trace: added at tick 0, found at tick 2), and longer on a busy machine, so a test that spawns or counts item
  * drops a fixed few ticks after forcing its fixture reads "got 0" now and then. A probe item (bedrock, which no test
  * counts) is added to the chunk and the answer is whether a lookup finds it; once it does it is removed and the chunk
- * counts as live until {@link #forget}.
+ * counts as live until {@link #forget}. A chunk is only live once its entities are loaded and it is block ticking too:
+ * block entities and scheduled ticks wait for that.
  */
 final class EntityLookupProbe {
     private final ServerLevel level;
@@ -56,6 +57,13 @@ final class EntityLookupProbe {
         }
         ItemEntity wanted = probe;
         if (level.getEntitiesOfClass(ItemEntity.class, wanted.getBoundingBox().inflate(0.5), e -> e == wanted).isEmpty()) {
+            return false;
+        }
+        // Entity lookups can work before the chunk's own entities are back; until they are, its block entities do not tick
+        // and its scheduled ticks do not run (ServerLevel.isPositionTickingWithEntitiesLoaded).
+        var loaded = level.getChunkSource().getChunkNow(chunk.x, chunk.z);
+        if (loaded == null || !loaded.getFullStatus().isOrAfter(net.minecraft.server.level.FullChunkStatus.BLOCK_TICKING)
+                || !level.areEntitiesLoaded(chunk.toLong())) {
             return false;
         }
         wanted.discard();
@@ -129,7 +137,11 @@ final class EntityLookupProbe {
             }
             helper.assertTrue(ready, "fixture chunks never answered entity lookups");
             wait.ready();
-            try { action.run(); } finally { release.run(); }
+            action.run();
+            // An action that goes on after it returns (a delay, a tick hook) still needs its chunks: they go when the test ends.
+            if (helper.testInfo.isDone()) {
+                release.run();
+            }
         } catch (RuntimeException | Error e) {
             release.run();
             throw e;

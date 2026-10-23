@@ -69,61 +69,80 @@ public final class ContainmentDoorMotionTests {
         return walkable(level, block.cell(root, Direction.EAST, depth * 2)) && walkable(level, block.cell(root, Direction.EAST, depth * 2 + 1));
     }
 
+    /**
+     * Sets a fixture up once its chunk is live and then runs a per-tick check, returned by {@code setup}. The hook itself
+     * is registered at once, in the test body: {@code onEachTick} enters one entry per remaining tick in the test's
+     * schedule, and doing that from inside a delayed callback (which the framework is iterating) corrupts the iteration
+     * and crashes the server.
+     */
+    private static void whenLiveEachTick(GameTestHelper helper, AABB bounds, java.util.function.Supplier<Runnable> setup) {
+        Runnable[] tick = {null};
+        helper.onEachTick(() -> {
+            if (tick[0] != null) {
+                tick[0].run();
+            }
+        });
+        EntityLookupProbe.runWhenLive(helper, bounds, () -> tick[0] = setup.get());
+    }
+
     @GameTest(template = "empty", timeoutTicks = 1500)
     public static void vaultIsSolidUntilTheLeafSwingsClearAndSolidAgainBeforeItShuts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos origin = new BlockPos(47312, 220, 47312);
-        chunks(level, origin, 8, true);
-        air(level, origin, 6);
-        var door = vault(level, origin, 3);
-        door.energy().receiveEnergy(20_000, false);
-        helper.assertTrue(!vaultWalkable(level, door), "a closed vault door could be walked through");
-        helper.assertTrue(door.setOpen(true, true), "powered opening refused");
-        var save = door.saveWithoutMetadata(level.registryAccess());
-        long total = save.getLong("StrokeEnd") - save.getLong("StrokeStart");
-        helper.assertTrue(total == ContainmentVaultDoorBlockEntity.POWERED_TICKS, "powered stroke is " + total + " ticks");
-        long gateOpen = DoorMotion.gateTicks(total, DoorMotion.VAULT_LATCH, false);
-        long gateClose = DoorMotion.gateTicks(total, DoorMotion.VAULT_LATCH, true);
-        helper.assertTrue(!level.getBlockState(door.getBlockPos()).getValue(ContainmentVaultDoorBlock.SEALED)
-                        && level.getBlockState(door.getBlockPos()).getValue(ContainmentVaultDoorBlock.HELD),
-                "an opening vault must break the seal at once and still stand across the opening: " + level.getBlockState(door.getBlockPos()));
-        long[] opening = {level.getGameTime(), -1};
-        long[] closing = {-1, -1};
-        helper.onEachTick(() -> {
-            boolean walk = vaultWalkable(level, door);
-            double swing = door.swing(0);
-            if (closing[0] < 0) {
-                long k = level.getGameTime() - opening[0];
-                if (walk && swing < 0.5 - EPS) helper.fail("opening vault walkable while drawn shut at tick " + k + " swing=" + swing);
-                if (!walk && swing > 0.5 + EPS) helper.fail("opening vault solid while drawn wide at tick " + k + " swing=" + swing);
-                if (level.getBlockState(door.getBlockPos()).getValue(ContainmentVaultDoorBlock.SEALED))
-                    helper.fail("opening vault sealed at tick " + k);
-                if (walk && opening[1] < 0) opening[1] = k;
-                if (door.state() == ContainmentVaultDoorBlockEntity.State.OPEN) {
-                    helper.assertTrue(k == total, "powered opening finished at tick " + k + ", not " + total);
-                    helper.assertTrue(opening[1] == gateOpen, "walkable from tick " + opening[1] + ", expected " + gateOpen);
-                    helper.assertTrue(walk && swing >= 1 - EPS, "an open vault is not clear and wide open");
-                    door.energy().receiveEnergy(20_000, false);
-                    helper.assertTrue(door.setOpen(false, true), "powered closing refused");
-                    closing[0] = level.getGameTime();
+        // The stroke is timed on the game clock and finishes on scheduled ticks, which wait for the chunk's entities: start it once they are back.
+        whenLiveEachTick(helper, new AABB(origin).inflate(8), () -> {
+            chunks(level, origin, 8, true);
+            air(level, origin, 6);
+            var door = vault(level, origin, 3);
+            door.energy().receiveEnergy(20_000, false);
+            helper.assertTrue(!vaultWalkable(level, door), "a closed vault door could be walked through");
+            helper.assertTrue(door.setOpen(true, true), "powered opening refused");
+            var save = door.saveWithoutMetadata(level.registryAccess());
+            long total = save.getLong("StrokeEnd") - save.getLong("StrokeStart");
+            helper.assertTrue(total == ContainmentVaultDoorBlockEntity.POWERED_TICKS, "powered stroke is " + total + " ticks");
+            long gateOpen = DoorMotion.gateTicks(total, DoorMotion.VAULT_LATCH, false);
+            long gateClose = DoorMotion.gateTicks(total, DoorMotion.VAULT_LATCH, true);
+            helper.assertTrue(!level.getBlockState(door.getBlockPos()).getValue(ContainmentVaultDoorBlock.SEALED)
+                            && level.getBlockState(door.getBlockPos()).getValue(ContainmentVaultDoorBlock.HELD),
+                    "an opening vault must break the seal at once and still stand across the opening: " + level.getBlockState(door.getBlockPos()));
+            long[] opening = {level.getGameTime(), -1};
+            long[] closing = {-1, -1};
+            return () -> {
+                boolean walk = vaultWalkable(level, door);
+                double swing = door.swing(0);
+                if (closing[0] < 0) {
+                    long k = level.getGameTime() - opening[0];
+                    if (walk && swing < 0.5 - EPS) helper.fail("opening vault walkable while drawn shut at tick " + k + " swing=" + swing);
+                    if (!walk && swing > 0.5 + EPS) helper.fail("opening vault solid while drawn wide at tick " + k + " swing=" + swing);
+                    if (level.getBlockState(door.getBlockPos()).getValue(ContainmentVaultDoorBlock.SEALED))
+                        helper.fail("opening vault sealed at tick " + k);
+                    if (walk && opening[1] < 0) opening[1] = k;
+                    if (door.state() == ContainmentVaultDoorBlockEntity.State.OPEN) {
+                        helper.assertTrue(k == total, "powered opening finished at tick " + k + ", not " + total);
+                        helper.assertTrue(opening[1] == gateOpen, "walkable from tick " + opening[1] + ", expected " + gateOpen);
+                        helper.assertTrue(walk && swing >= 1 - EPS, "an open vault is not clear and wide open");
+                        door.energy().receiveEnergy(20_000, false);
+                        helper.assertTrue(door.setOpen(false, true), "powered closing refused");
+                        closing[0] = level.getGameTime();
+                    }
+                    return;
                 }
-                return;
-            }
-            long k = level.getGameTime() - closing[0];
-            if (walk && swing < 0.5 - EPS) helper.fail("closing vault walkable while drawn shut at tick " + k + " swing=" + swing);
-            if (!walk && swing > 0.5 + EPS) helper.fail("closing vault solid while drawn wide at tick " + k + " swing=" + swing);
-            if (!walk && closing[1] < 0) closing[1] = k;
-            if (door.state() == ContainmentVaultDoorBlockEntity.State.CLOSED_SEALED) {
-                helper.assertTrue(k == total, "powered closing finished at tick " + k + ", not " + total);
-                helper.assertTrue(closing[1] == gateClose, "solid again from tick " + closing[1] + ", expected " + gateClose);
-                var root = level.getBlockState(door.getBlockPos());
-                helper.assertTrue(root.getValue(ContainmentVaultDoorBlock.SEALED) && !root.getValue(ContainmentVaultDoorBlock.HELD) && !walk,
-                        "a closed vault is not sealed and solid: " + root);
-                LogUtils.getLogger().info("VAULT DOOR TIMING: powered stroke " + total + " ticks (" + total / 20.0 + " s), walkable after "
-                        + opening[1] + " ticks opening, solid after " + closing[1] + " ticks closing");
-                chunks(level, origin, 8, false);
-                helper.succeed();
-            }
+                long k = level.getGameTime() - closing[0];
+                if (walk && swing < 0.5 - EPS) helper.fail("closing vault walkable while drawn shut at tick " + k + " swing=" + swing);
+                if (!walk && swing > 0.5 + EPS) helper.fail("closing vault solid while drawn wide at tick " + k + " swing=" + swing);
+                if (!walk && closing[1] < 0) closing[1] = k;
+                if (door.state() == ContainmentVaultDoorBlockEntity.State.CLOSED_SEALED) {
+                    helper.assertTrue(k == total, "powered closing finished at tick " + k + ", not " + total);
+                    helper.assertTrue(closing[1] == gateClose, "solid again from tick " + closing[1] + ", expected " + gateClose);
+                    var root = level.getBlockState(door.getBlockPos());
+                    helper.assertTrue(root.getValue(ContainmentVaultDoorBlock.SEALED) && !root.getValue(ContainmentVaultDoorBlock.HELD) && !walk,
+                            "a closed vault is not sealed and solid: " + root);
+                    LogUtils.getLogger().info("VAULT DOOR TIMING: powered stroke " + total + " ticks (" + total / 20.0 + " s), walkable after "
+                            + opening[1] + " ticks opening, solid after " + closing[1] + " ticks closing");
+                    chunks(level, origin, 8, false);
+                    helper.succeed();
+                }
+            };
         });
     }
 
@@ -131,22 +150,25 @@ public final class ContainmentDoorMotionTests {
     public static void bigVaultFollowsTheSameClearance(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos origin = new BlockPos(47412, 220, 47412);
-        chunks(level, origin, 8, true);
-        air(level, origin, 6);
-        var door = vault(level, origin, 4);
-        door.energy().receiveEnergy(20_000, false);
-        helper.assertTrue(door.setOpen(true, true), "powered opening of the 4x4 refused");
-        long[] start = {level.getGameTime()};
-        helper.onEachTick(() -> {
-            boolean walk = vaultWalkable(level, door);
-            double swing = door.swing(0);
-            if (walk && swing < 0.5 - EPS) helper.fail("4x4 vault walkable while drawn shut, swing=" + swing);
-            if (!walk && swing > 0.5 + EPS) helper.fail("4x4 vault solid while drawn wide, swing=" + swing);
-            if (door.state() == ContainmentVaultDoorBlockEntity.State.OPEN) {
-                helper.assertTrue(walk, "an open 4x4 vault is not clear");
-                chunks(level, origin, 8, false);
-                helper.succeed();
-            }
+        // The stroke is timed on the game clock and finishes on scheduled ticks, which wait for the chunk's entities: start it once they are back.
+        whenLiveEachTick(helper, new AABB(origin).inflate(8), () -> {
+            chunks(level, origin, 8, true);
+            air(level, origin, 6);
+            var door = vault(level, origin, 4);
+            door.energy().receiveEnergy(20_000, false);
+            helper.assertTrue(door.setOpen(true, true), "powered opening of the 4x4 refused");
+            long[] start = {level.getGameTime()};
+            return () -> {
+                boolean walk = vaultWalkable(level, door);
+                double swing = door.swing(0);
+                if (walk && swing < 0.5 - EPS) helper.fail("4x4 vault walkable while drawn shut, swing=" + swing);
+                if (!walk && swing > 0.5 + EPS) helper.fail("4x4 vault solid while drawn wide, swing=" + swing);
+                if (door.state() == ContainmentVaultDoorBlockEntity.State.OPEN) {
+                    helper.assertTrue(walk, "an open 4x4 vault is not clear");
+                    chunks(level, origin, 8, false);
+                    helper.succeed();
+                }
+            };
         });
     }
 
@@ -154,70 +176,73 @@ public final class ContainmentDoorMotionTests {
     public static void airlockLeavesAreSolidUntilSwungClearAndNeverBothDrawnOpen(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos root = new BlockPos(47512, 220, 47512);
-        chunks(level, root, 8, true);
-        air(level, root, 6);
-        var block = BwrBlocks.CONTAINMENT_AIRLOCK.get();
-        var state = block.defaultBlockState().setValue(ContainmentAirlockBlock.FACING, Direction.EAST);
-        level.setBlock(root, state, 3);
-        block.setPlacedBy(level, root, state, null, ItemStack.EMPTY);
-        var door = (ContainmentAirlockBlockEntity) level.getBlockEntity(root);
-        helper.assertTrue(!leafWalkable(level, block, root, 0) && !leafWalkable(level, block, root, 2) && leafWalkable(level, block, root, 1),
-                "a closed airlock's leaves are not both solid with a clear chamber between");
+        // The stroke is timed on the game clock and finishes on scheduled ticks, which wait for the chunk's entities: start it once they are back.
+        whenLiveEachTick(helper, new AABB(root).inflate(8), () -> {
+            chunks(level, root, 8, true);
+            air(level, root, 6);
+            var block = BwrBlocks.CONTAINMENT_AIRLOCK.get();
+            var state = block.defaultBlockState().setValue(ContainmentAirlockBlock.FACING, Direction.EAST);
+            level.setBlock(root, state, 3);
+            block.setPlacedBy(level, root, state, null, ItemStack.EMPTY);
+            var door = (ContainmentAirlockBlockEntity) level.getBlockEntity(root);
+            helper.assertTrue(!leafWalkable(level, block, root, 0) && !leafWalkable(level, block, root, 2) && leafWalkable(level, block, root, 1),
+                    "a closed airlock's leaves are not both solid with a clear chamber between");
 
-        // The pass, as a player makes it: outer opens, walks in, outer closes and inner opens, walks through.
-        // 'Human' time is a click and a step each time (STEP ticks); everything else is the doors.
-        final int STEP = 10;
-        long[] t = new long[8];       // 0 outer command, 1 outer walkable, 2 closing+inner command, 3 inner walkable
-        int[] phase = {0};
-        long[] doorTicks = {0};
-        helper.assertTrue(door.setOuterOpen(true, false), "outer leaf refused to open");
-        t[0] = level.getGameTime();
-        helper.assertTrue(!leafWalkable(level, block, root, 2), "outer leaf walkable the instant it was told to open");
-        var outerCell = level.getBlockState(block.cell(root, Direction.EAST, 4));
-        helper.assertTrue(outerCell.getValue(ContainmentAirlockBlock.OUTER_OPEN) && outerCell.getValue(ContainmentAirlockBlock.OUTER_MOVE) == 1,
-                "an opening leaf must hold its cells solid: " + outerCell);
-        helper.onEachTick(() -> {
-            long now = level.getGameTime();
-            double inner = door.innerSwing(0), outer = door.outerSwing(0);
-            boolean innerWalk = leafWalkable(level, block, root, 0), outerWalk = leafWalkable(level, block, root, 2);
-            if (inner > 1e-6 && outer > 1e-6) helper.fail("both leaves drawn open at once at tick " + (now - t[0]) + ": " + inner + " " + outer);
-            if (outerWalk && outer < 0.5 - EPS) helper.fail("outer leaf walkable while drawn shut at tick " + (now - t[0]) + " swing=" + outer + " holds: " + door.holds() + " now " + level.getGameTime() + " cell " + level.getBlockState(block.cell(root, Direction.EAST, 4)));
-            if (!outerWalk && outer > 0.5 + EPS) helper.fail("outer leaf solid while drawn wide at tick " + (now - t[0]) + " swing=" + outer + " holds: " + door.holds() + " now " + level.getGameTime() + " cell " + level.getBlockState(block.cell(root, Direction.EAST, 4)));
-            if (innerWalk && inner < 0.5 - EPS) helper.fail("inner leaf walkable while drawn shut at tick " + (now - t[0]) + " swing=" + inner);
-            if (!innerWalk && inner > 0.5 + EPS) helper.fail("inner leaf solid while drawn wide at tick " + (now - t[0]) + " swing=" + inner);
-            switch (phase[0]) {
-                case 0 -> {
-                    if (outerWalk) {
-                        t[1] = now;
-                        phase[0] = 1;
-                        helper.assertTrue(t[1] - t[0] == DoorMotion.gateTicks(DoorMotion.AIRLOCK_LEAF_TICKS, DoorMotion.AIRLOCK_LATCH, false),
-                                "outer leaf walkable after " + (t[1] - t[0]) + " ticks");
+            // The pass, as a player makes it: outer opens, walks in, outer closes and inner opens, walks through.
+            // 'Human' time is a click and a step each time (STEP ticks); everything else is the doors.
+            final int STEP = 10;
+            long[] t = new long[8];       // 0 outer command, 1 outer walkable, 2 closing+inner command, 3 inner walkable
+            int[] phase = {0};
+            long[] doorTicks = {0};
+            helper.assertTrue(door.setOuterOpen(true, false), "outer leaf refused to open");
+            t[0] = level.getGameTime();
+            helper.assertTrue(!leafWalkable(level, block, root, 2), "outer leaf walkable the instant it was told to open");
+            var outerCell = level.getBlockState(block.cell(root, Direction.EAST, 4));
+            helper.assertTrue(outerCell.getValue(ContainmentAirlockBlock.OUTER_OPEN) && outerCell.getValue(ContainmentAirlockBlock.OUTER_MOVE) == 1,
+                    "an opening leaf must hold its cells solid: " + outerCell);
+            return () -> {
+                long now = level.getGameTime();
+                double inner = door.innerSwing(0), outer = door.outerSwing(0);
+                boolean innerWalk = leafWalkable(level, block, root, 0), outerWalk = leafWalkable(level, block, root, 2);
+                if (inner > 1e-6 && outer > 1e-6) helper.fail("both leaves drawn open at once at tick " + (now - t[0]) + ": " + inner + " " + outer);
+                if (outerWalk && outer < 0.5 - EPS) helper.fail("outer leaf walkable while drawn shut at tick " + (now - t[0]) + " swing=" + outer + " holds: " + door.holds() + " now " + level.getGameTime() + " cell " + level.getBlockState(block.cell(root, Direction.EAST, 4)));
+                if (!outerWalk && outer > 0.5 + EPS) helper.fail("outer leaf solid while drawn wide at tick " + (now - t[0]) + " swing=" + outer + " holds: " + door.holds() + " now " + level.getGameTime() + " cell " + level.getBlockState(block.cell(root, Direction.EAST, 4)));
+                if (innerWalk && inner < 0.5 - EPS) helper.fail("inner leaf walkable while drawn shut at tick " + (now - t[0]) + " swing=" + inner);
+                if (!innerWalk && inner > 0.5 + EPS) helper.fail("inner leaf solid while drawn wide at tick " + (now - t[0]) + " swing=" + inner);
+                switch (phase[0]) {
+                    case 0 -> {
+                        if (outerWalk) {
+                            t[1] = now;
+                            phase[0] = 1;
+                            helper.assertTrue(t[1] - t[0] == DoorMotion.gateTicks(DoorMotion.AIRLOCK_LEAF_TICKS, DoorMotion.AIRLOCK_LATCH, false),
+                                    "outer leaf walkable after " + (t[1] - t[0]) + " ticks");
+                        }
                     }
-                }
-                case 1 -> {
-                    if (now - t[1] >= STEP) {
-                        helper.assertTrue(door.setOuterOpen(false, false) && door.setInnerOpen(true, false), "the interlock refused the second step");
-                        t[2] = now;
-                        phase[0] = 2;
+                    case 1 -> {
+                        if (now - t[1] >= STEP) {
+                            helper.assertTrue(door.setOuterOpen(false, false) && door.setInnerOpen(true, false), "the interlock refused the second step");
+                            t[2] = now;
+                            phase[0] = 2;
+                        }
                     }
-                }
-                case 2 -> {
-                    if (innerWalk) {
-                        t[3] = now;
-                        doorTicks[0] = (t[1] - t[0]) + (t[3] - t[2]);
-                        long total = t[3] - t[0] + STEP;   // plus the walk to the far side
-                        LogUtils.getLogger().info("AIRLOCK PASS: outer walkable after " + (t[1] - t[0]) + " ticks, inner walkable " + (t[3] - t[2])
-                                + " ticks after the second command; the doors take " + doorTicks[0] + " ticks (" + doorTicks[0] / 20.0
-                                + " s), the whole pass with " + STEP + "-tick steps " + total + " ticks (" + total / 20.0 + " s)");
-                        helper.assertTrue(total <= 160, "an airlock pass took " + total + " ticks");
-                        helper.assertTrue(!door.outerOpen() && door.innerOpen(), "interlock state after the pass");
-                        phase[0] = 3;
-                        chunks(level, root, 8, false);
-                        helper.succeed();
+                    case 2 -> {
+                        if (innerWalk) {
+                            t[3] = now;
+                            doorTicks[0] = (t[1] - t[0]) + (t[3] - t[2]);
+                            long total = t[3] - t[0] + STEP;   // plus the walk to the far side
+                            LogUtils.getLogger().info("AIRLOCK PASS: outer walkable after " + (t[1] - t[0]) + " ticks, inner walkable " + (t[3] - t[2])
+                                    + " ticks after the second command; the doors take " + doorTicks[0] + " ticks (" + doorTicks[0] / 20.0
+                                    + " s), the whole pass with " + STEP + "-tick steps " + total + " ticks (" + total / 20.0 + " s)");
+                            helper.assertTrue(total <= 160, "an airlock pass took " + total + " ticks");
+                            helper.assertTrue(!door.outerOpen() && door.innerOpen(), "interlock state after the pass");
+                            phase[0] = 3;
+                            chunks(level, root, 8, false);
+                            helper.succeed();
+                        }
                     }
+                    default -> { }
                 }
-                default -> { }
-            }
+            };
         });
     }
 
