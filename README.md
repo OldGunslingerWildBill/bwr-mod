@@ -190,7 +190,9 @@ its structure check says why in chat. Each step's detail is in the linked guide.
    tab asks for. [RECIRCULATION.md](RECIRCULATION.md)
 4. **Fuel.** Make assemblies in a Fuel Fabricator, or craft them with Mekanism yellow cake. Natural
    uranium will not sustain a chain reaction here, so choose 3.50 % (the selector's default) or higher.
-   Right-click the controller, lift the head and load the core from the refuelling map.
+   Lift the head, flood over the core, and move the assemblies in with the refuelling bridge
+   ([REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md)), or turn on the server option `instantRefuelling`
+   and load the core from the refuelling map.
 5. **Steam.** Pipe the steam outlet through a stop valve and a control valve to the HP turbines, then the
    HP exhaust to the LP turbines, with one condenser six blocks below each LP. Join turbines and the
    generator with touching shafts at one height. **New valves start closed.**
