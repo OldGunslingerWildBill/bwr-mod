@@ -8,7 +8,9 @@ Standard library plus Pillow. Everything is procedural (a seeded noise, no exter
   transfer_canal             a lined trough (the cattle chute), dry or with a water body; axis x or z
   canal_gate                 a trough with a plate across it, raised (closed) or sunk (open), dry or wet
   refuelling_bridge_console  the operator's desk with a screen
-  refuelling_bridge_steel / _mast / refuelling_assembly   textures drawn by the bridge's block entity renderer
+  refuelling_bridge_steel / _mast   the old box-model textures (now only the refuelling_bridge_parts preview model uses them)
+  refuelling_assembly, refuelling_bridge_plate   textures of the carried assembly and the girder's maker plate (the bridge's
+                             own models are Blender parts, art/models/refuelling_bridge, exported by tools-export-refuelling-bridge.py)
 """
 import json
 import os
@@ -169,6 +171,34 @@ def assembly_image():
     return img
 
 
+def plate_image():
+    """The maker's plate on the girder: generic, no brand. 160 x 40 (the quad is 1.6 m by 0.4 m)."""
+    from PIL import ImageFont
+    img = Image.new("RGBA", (160, 40), (226, 228, 224, 255))
+    d = ImageDraw.Draw(img)
+    d.rectangle((0, 0, 159, 39), outline=(70, 76, 82, 255))
+    d.rectangle((2, 2, 157, 37), outline=(150, 156, 160, 255))
+    lines = ("REFUELING PLATFORM", "MAIN HOIST  /  AUX HOIST")
+    font = None
+    for size in (14, 13, 12, 11, 10, 9):
+        for name in ("arialbd.ttf", "DejaVuSans-Bold.ttf", "LiberationSans-Bold.ttf"):
+            try:
+                candidate = ImageFont.truetype(name, size)
+            except OSError:
+                continue
+            if max(d.textlength(t, font=candidate) for t in lines) <= 148:
+                font = candidate
+                break
+        if font:
+            break
+    if font is None:
+        font = ImageFont.load_default()
+    for text, y in zip(lines, (6, 22)):
+        w = d.textlength(text, font=font)
+        d.text(((160 - w) / 2, y), text, fill=(30, 36, 44, 255), font=font)
+    return img
+
+
 def write(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="\n") as f:
@@ -184,7 +214,8 @@ def textures():
                         ("refuelling_bridge_console_top", console_top_image()),
                         ("refuelling_bridge_console_screen", console_screen_image()),
                         ("refuelling_bridge_steel", bridge_steel_image()), ("refuelling_bridge_mast", bridge_mast_image()),
-                        ("refuelling_assembly", assembly_image())):
+                        ("refuelling_assembly", assembly_image()),
+                        ("refuelling_bridge_plate", plate_image())):
         image.save(os.path.join(TEX, name + ".png"))
 
 
