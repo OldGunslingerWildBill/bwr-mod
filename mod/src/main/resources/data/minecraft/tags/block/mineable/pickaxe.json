@@ -81,6 +81,8 @@
     "bwr:uranium_block",
     "bwr:shield_plug_concrete",
     "bwr:heavily_reinforced_shield_plug_concrete",
-    "bwr:ultra_reinforced_shield_plug_concrete"
+    "bwr:ultra_reinforced_shield_plug_concrete",
+    "bwr:motor_operated_water_valve",
+    "bwr:cavity_drain_port"
   ]
 }

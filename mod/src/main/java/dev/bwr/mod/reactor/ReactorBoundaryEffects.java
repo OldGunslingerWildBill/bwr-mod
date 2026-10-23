@@ -123,7 +123,7 @@ public final class ReactorBoundaryEffects {
         if(s.getBlock() instanceof dev.bwr.mod.containment.ContainmentPenetrationBlock b)
             return b.service()==(steam ? dev.bwr.mod.containment.ContainmentPenetrationBlock.Service.STEAM
                                        : dev.bwr.mod.containment.ContainmentPenetrationBlock.Service.WATER);
-        if(!steam) return s.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get());
+        if(!steam) return s.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get()) || s.getBlock() instanceof dev.bwr.mod.water.MotorOperatedWaterValveBlock;
         return s.is(BwrBlocks.PRESSURISED_TUBE.get()) || s.is(BwrBlocks.MSIV.get())
                 || s.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock
                 || s.getBlock() instanceof dev.bwr.mod.steam.TurbineValveBlock;
@@ -227,7 +227,7 @@ public final class ReactorBoundaryEffects {
                     // and its controller always are.
                     reactor.severeEffects().blasts().add(AccidentBlast.pipeWhip(l,outside,failurePressure(reactor,c),3.0f)
                             .protect(e.min().offset(1,1,1),e.max().offset(-1,-1,-1)));
-                    if(!(s.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get()) || s.is(BwrBlocks.PRESSURISED_TUBE.get())) && attached(l,p,e,c))
+                    if(!(s.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get()) || s.is(BwrBlocks.PRESSURISED_TUBE.get()) || s.getBlock() instanceof dev.bwr.mod.water.MotorOperatedWaterValveBlock) && attached(l,p,e,c))
                         heldLeaks.add(p.immutable());
                     l.playSound(null,p,SoundEvents.GENERIC_EXPLODE.value(),SoundSource.BLOCKS,5f,1.2f);
                 }

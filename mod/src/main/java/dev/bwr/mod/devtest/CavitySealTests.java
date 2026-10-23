@@ -46,7 +46,7 @@ public final class CavitySealTests {
     }
 
     /** A formed reactor and its walls to place. */
-    private static final class Site {
+    static final class Site {
         final ServerLevel level;
         final BlockPos min;
         final int width;

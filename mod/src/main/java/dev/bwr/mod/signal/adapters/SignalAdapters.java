@@ -36,6 +36,7 @@ public final class SignalAdapters {
         SignalProviders.register(TurbineValveBlockEntity.class, SteamSignals.TURBINE_VALVE::bind);
         SignalProviders.register(TurbineSteamOutletBlockEntity.class, SteamSignals.TURBINE_OUTLET::bind);
         SignalProviders.register(RpvSteamOutletBlockEntity.class, SteamSignals.RPV_OUTLET::bind);
+        SignalProviders.register(dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity.class, WaterSignals.WATER_VALVE::bind);
         SignalProviders.register(FeedwaterPumpBlockEntity.class, PumpSignals.FEEDWATER::bind);
         SignalProviders.register(RecirculationPumpBlockEntity.class, PumpSignals.RECIRCULATION::bind);
         SignalProviders.register(EccsPumpBlockEntity.class, PumpSignals.ECCS::bind);

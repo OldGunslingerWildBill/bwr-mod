@@ -88,7 +88,8 @@ public final class PipeTopology {
                 boolean penetration=s.getBlock() instanceof dev.bwr.mod.containment.ContainmentPenetrationBlock b
                         && (key.steam ? b.service()==dev.bwr.mod.containment.ContainmentPenetrationBlock.Service.STEAM
                                       : b.service()==dev.bwr.mod.containment.ContainmentPenetrationBlock.Service.WATER);
-                boolean valve=penetration || key.steam&&(s.is(BwrBlocks.MSIV.get())
+                boolean motorValve=!key.steam&&s.getBlock() instanceof dev.bwr.mod.water.MotorOperatedWaterValveBlock;
+                boolean valve=penetration || motorValve || key.steam&&(s.is(BwrBlocks.MSIV.get())
                         ||s.getBlock() instanceof dev.bwr.mod.steam.SafetyReliefValveBlock
                         ||s.getBlock() instanceof TurbineValveBlock);
                 var next=new Node(pos,pipe||valve?null:d.getOpposite(),pipe?Kind.JUNCTION:valve?Kind.VALVE:Kind.END,s);
@@ -153,7 +154,13 @@ public final class PipeTopology {
         if(event.getLevel() instanceof Level level){var gone=CACHE.remove(level);if(gone!=null)gone.values().forEach(Entry::stale);}
     }
 
-    public record Route(Node node,double opening,List<TurbineValveBlockEntity> valves) {}
+    /**
+     * One reachable node, the narrowest opening on the way to it, and the valves on that way: the steam turbine valves, and the
+     * motor-operated water valves (a water route through at least one is a controlled route).
+     */
+    public record Route(Node node,double opening,List<TurbineValveBlockEntity> valves,List<dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity> waterValves) {
+        public Route(Node node,double opening,List<TurbineValveBlockEntity> valves){this(node,opening,valves,List.of());}
+    }
 
     /**
      * The last answer of {@link #routes} for one graph, and the valve readings it was computed from.
@@ -202,6 +209,7 @@ public final class PipeTopology {
         if(be instanceof dev.bwr.mod.containment.ContainmentPenetrationBlockEntity v)return Double.doubleToLongBits(v.position());
         if(be instanceof SafetyReliefValveBlockEntity v)return v.isOpen()?1L:0L;
         if(be instanceof TurbineValveBlockEntity v)return Double.doubleToLongBits(v.position());
+        if(be instanceof dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity v)return Double.doubleToLongBits(v.position());
         return 0L;
     }
     @SuppressWarnings("unchecked")
@@ -237,11 +245,11 @@ public final class PipeTopology {
     }
     private static List<Route> walk(Level level,Graph graph,boolean excludeRelief) {
         Map<Node,Route> best=new LinkedHashMap<>();var queue=new ArrayDeque<Route>();
-        var first=new Route(graph.start,1,List.of());best.put(graph.start,first);queue.add(first);
+        var first=new Route(graph.start,1,List.of(),List.of());best.put(graph.start,first);queue.add(first);
         while(!queue.isEmpty()) {
             var current=queue.remove();
             for(var next:graph.neighbours(current.node)) {
-                double opening=current.opening;var valves=current.valves;
+                double opening=current.opening;var valves=current.valves;var waterValves=current.waterValves;
                 if(next.kind==Kind.VALVE) {
                     if(!dev.bwr.mod.world.LoadedWorld.available(level,next.pos))continue;
                     var be=dev.bwr.mod.world.LoadedWorld.blockEntity(level,next.pos);
@@ -251,9 +259,10 @@ public final class PipeTopology {
                         opening=Math.min(opening,v.position());
                     if(be instanceof SafetyReliefValveBlockEntity v&&!v.isOpen())opening=0;
                     if(be instanceof TurbineValveBlockEntity v){opening=Math.min(opening,v.position());var copy=new ArrayList<>(valves);copy.add(v);valves=List.copyOf(copy);}
+                    if(be instanceof dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity v){opening=Math.min(opening,v.position());var copy=new ArrayList<>(waterValves);copy.add(v);waterValves=List.copyOf(copy);}
                 }
                 var previous=best.get(next);if(previous!=null&&previous.opening>=opening)continue;
-                var route=new Route(next,opening,valves);best.put(next,route);
+                var route=new Route(next,opening,valves,waterValves);best.put(next,route);
                 if(next.kind!=Kind.END)queue.add(route);
             }
         }

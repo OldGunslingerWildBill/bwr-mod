@@ -45,7 +45,10 @@ public final class CavityClientCheck {
     private static final BlockPos A = new BlockPos(200, 200, 200);
     private static final BlockPos B = new BlockPos(260, 200, 200);
     private static final BlockPos C = new BlockPos(320, 200, 200);
-    private static final String[] NAMES = {"seal-ring-dry", "well-flooded-glow", "info-tab", "too-wide-no-seal", "bridge-over-flooded-well"};
+    /** The drain scene: a touching-wall well, a drain port in its west wall, a valve on the line, a tank at the foot of it. */
+    private static final BlockPos D = new BlockPos(380, 200, 200);
+    private static final String[] NAMES = {"seal-ring-dry", "well-flooded-glow", "info-tab", "too-wide-no-seal", "bridge-over-flooded-well",
+            "valve-on-water-line", "drain-port-piped-to-cst", "drain-port-in-well-wall", "info-tab-during-drain"};
 
     private record Shot(Vec3 stand, Vec3 target) {
     }
@@ -60,13 +63,18 @@ public final class CavityClientCheck {
             new Shot(v(211.5, 227.0, 196.0), v(204.5, 212.5, 204.5)),
             new Shot(v(193.0, 205.0, 204.5), v(199.0, 203.0, 204.5)), // within reach of the controller, or the menu closes itself
             new Shot(v(271.5, 227.0, 196.0), v(264.5, 212.5, 204.5)),
-            new Shot(v(327.0, 215.5, 195.0), v(322.5, 205.0, 202.5))};
+            new Shot(v(327.0, 215.5, 195.0), v(322.5, 205.0, 202.5)),
+            new Shot(v(376.5, 215.6, 199.0), v(376.5, 215.5, 204.5)),
+            new Shot(v(362.0, 211.0, 197.0), v(373.0, 207.0, 204.5)),
+            new Shot(v(384.0, 221.0, 204.5), v(379.5, 215.5, 204.5)),
+            new Shot(v(374.0, 205.0, 205.8), v(379.0, 203.0, 204.5))};
 
     private static boolean started, requested, standing, built;
     private static volatile Throwable failure;
     private static volatile Vec3 aim;
     private static int age, joined, stage, shown;
-    private static ReactorControllerBlockEntity reactorA, reactorB;
+    private static ReactorControllerBlockEntity reactorA, reactorB, reactorD;
+    private static dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity valveD;
     private static RefuellingBridgeFixture fixture;
 
     private CavityClientCheck() {
@@ -122,10 +130,10 @@ public final class CavityClientCheck {
             shown = 0;
             standing = false;
             int current = stage;
-            if (current != 2) {
+            if (!infoStage(current)) {
                 mc.setScreen(null);
             }
-            mc.options.hideGui = current != 2;
+            mc.options.hideGui = !infoStage(current);
             mc.options.guiScale().set(3);
             server.execute(() -> {
                 try {
@@ -166,9 +174,10 @@ public final class CavityClientCheck {
         if (mc.player.position().distanceToSqr(shot.stand) > 0.25) {
             return;
         }
-        if (stage == 2) {
+        if (infoStage(stage)) {
             if (!(mc.screen instanceof dev.bwr.mod.gui.client.ReactorPanelScreen screen)
-                    || !(mc.player.containerMenu instanceof dev.bwr.mod.gui.ReactorPanelMenu menu) || !menu.formed || !menu.cavity.known()) {
+                    || !(mc.player.containerMenu instanceof dev.bwr.mod.gui.ReactorPanelMenu menu) || !menu.formed || !menu.cavity.known()
+                    || (stage == 8 && menu.cavity.drains().isEmpty())) {
                 if (age % 100 == 0) {
                     LogUtils.getLogger().info("CAVITY CLIENT CHECK waiting for the reactor screen: screen {} menu {} formed {} known {}", mc.screen,
                             mc.player.containerMenu.getClass().getSimpleName(),
@@ -184,7 +193,7 @@ public final class CavityClientCheck {
                 setInfo(screen);
                 mouseTo(mc, midX, midY);
             } else if (shown == 3) {
-                screen.mouseScrolled(midX, midY, 0, -Integer.getInteger("bwr.cavityScroll", 7));
+                screen.mouseScrolled(midX, midY, 0, -Integer.getInteger("bwr.cavityScroll", stage == 8 ? 10 : 7));
             } else if (shown == 8) {
                 mouseTo(mc, 2, 2); // no tooltip over the rows
             }
@@ -197,11 +206,15 @@ public final class CavityClientCheck {
         Files.createDirectories(dir);
         CheckShots.save(mc, dir.resolve(NAMES[stage] + ".png"));
         LogUtils.getLogger().info("CAVITY CLIENT CHECK: captured {}", NAMES[stage]);
-        if (stage == 2) {
+        if (infoStage(stage)) {
             mc.player.closeContainer();
         }
         requested = false;
         stage++;
+    }
+
+    private static boolean infoStage(int stage) {
+        return stage == 2 || stage == 8;
     }
 
     private static void mouseTo(Minecraft mc, double guiX, double guiY) {
@@ -255,6 +268,14 @@ public final class CavityClientCheck {
             }
             case 3 -> {
                 check(b != null && b.clientVesselEnvelope() != null && b.clientVesselEnvelope().cavity() == null, "client B draws a seal it should not have");
+            }
+            case 5, 6, 7, 8 -> {
+                var d = mc.level.getBlockEntity(D.offset(-1, 3, 4)) instanceof ReactorControllerBlockEntity r ? r : null;
+                check(d != null && d.clientVesselEnvelope() != null && d.clientVesselEnvelope().cavity() != null, "client D has no seal in its picture");
+                check(mc.level.getBlockState(new BlockPos(D.getX() - 2, D.getY() + 15, D.getZ() + 4)).is(dev.bwr.mod.registry.BwrBlocks.CAVITY_DRAIN_PORT.get()),
+                        "the drain port is in the client world");
+                check(mc.level.getBlockState(new BlockPos(D.getX() - 4, D.getY() + 15, D.getZ() + 4)).is(dev.bwr.mod.registry.BwrBlocks.MOTOR_OPERATED_WATER_VALVE.get()),
+                        "the valve is in the client world");
             }
             default -> {
             }
@@ -317,6 +338,7 @@ public final class CavityClientCheck {
         reactorB.markStructureDirty();
         reactorB.core().getPressureVessel().setCollapsedLevelIn(PressureVessel.FLANGE_LEVEL_IN - 0.2);
         reactorB.core().setFeedwaterFlowKgPerS(1500.0);
+        buildDrain(level);
         // the bridge floor
         for (var at : BlockPos.betweenClosed(new BlockPos(C.getX() - 12, C.getY() - 4, C.getZ() - 12), new BlockPos(C.getX() + 32, C.getY() - 4, C.getZ() + 20))) {
             level.setBlock(at, Blocks.SMOOTH_STONE.defaultBlockState(), 3);
@@ -340,8 +362,66 @@ public final class CavityClientCheck {
         LogUtils.getLogger().info("CAVITY CLIENT CHECK server: built A, B and the bridge floor");
     }
 
+    /**
+     * The drain scene: reactor D walled in touching all round with a deck, a Cavity Drain Port in its west wall three rows under the deck,
+     * a pipe, a Motor-Operated Water Valve, more pipe, a vertical run down to the east flange of an assembled 7 x 9 Condensate Storage Tank.
+     */
+    private static void buildDrain(ServerLevel level) throws Exception {
+        reactorD = reactor(level, D);
+        wallsAndDeck(level, reactorD, 1, 1, 1, 1, 19);
+        reactorD.markStructureDirty();
+        var env = reactorD.vesselEnvelope();
+        int x0 = env.min().getX();
+        int zc = (env.min().getZ() + env.max().getZ()) / 2;
+        int y = env.min().getY() + 19 - 3;
+        var port = new BlockPos(x0 - 1, y, zc);
+        level.setBlock(port, dev.bwr.mod.registry.BwrBlocks.CAVITY_DRAIN_PORT.get().defaultBlockState()
+                .setValue(dev.bwr.mod.reactor.CavityDrainPortBlock.FACING, net.minecraft.core.Direction.WEST), 3);
+        var pipe = dev.bwr.mod.registry.BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get().defaultBlockState();
+        level.setBlock(port.west(), pipe, 3);
+        valveD = WaterValveTests.valveAt(level, port.west(2), net.minecraft.core.Direction.WEST);
+        for (int i = 3; i <= 5; i++) {
+            level.setBlock(port.west(i), pipe, 3);
+        }
+        // the vertical run down to the tank's east flange (one block over the base, at the tank's centre z)
+        BlockPos foot = new BlockPos(port.getX() - 5, env.min().getY() - 1, zc);
+        for (int yy = y - 1; yy >= foot.getY(); yy--) {
+            level.setBlock(new BlockPos(foot.getX(), yy, zc), pipe, 3);
+        }
+        BlockPos root = new BlockPos(foot.getX() - 4, foot.getY() - 1, zc);
+        level.setBlock(root, dev.bwr.mod.registry.BwrBlocks.CONDENSATE_STORAGE_TANK.get().defaultBlockState(), 3);
+        var player = level.getServer().getPlayerList().getPlayers().get(0);
+        var tank = (dev.bwr.mod.eccs.CondensateStorageTankBlockEntity) level.getBlockEntity(root);
+        String made = dev.bwr.mod.eccs.CondensateTankAssembly.resize(tank, player, 7, 9);
+        check(made.startsWith("Assembled"), "the tank did not assemble: " + made);
+        // pipes placed by a program have no arms; a player's placement computes them from the neighbours, so do the same
+        var pipes = (dev.bwr.mod.water.HighPressureWaterPipeBlock) dev.bwr.mod.registry.BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get();
+        for (BlockPos at : BlockPos.betweenClosed(new BlockPos(foot.getX() - 1, env.min().getY() - 1, zc - 1), new BlockPos(port.getX() - 1, y + 1, zc + 1))) {
+            if (level.getBlockState(at).is(pipes)) {
+                level.setBlock(at.immutable(), pipes.stateWithConnections(level, at), 3);
+            }
+        }
+    }
+
     private static void act(ServerLevel level, ServerPlayer player, int stage) {
         switch (stage) {
+            case 5 -> {
+                // water 4 m over the port's sill, the valve powered and opening: the drain runs from here to the end of the check
+                var vessel = reactorD.core().getPressureVessel();
+                var env = reactorD.vesselEnvelope();
+                double portLocal = 19 - 3;
+                vessel.setCollapsedLevelIn(PressureVessel.FLANGE_LEVEL_IN + (portLocal + 4.0 - VesselWaterGeometry.rim(env)) / PressureVessel.METRES_PER_INCH);
+                WaterValveTests.power(valveD, 20_000);
+                valveD.setTarget(1.0);
+                LogUtils.getLogger().info("CAVITY CLIENT CHECK D: {} / well {} m3 / surface {} / sill {}", reactorD.cavity().english(),
+                        vessel.getWellWaterM3(), reactorD.wellSurfaceLocal(), portLocal);
+            }
+            case 6 -> LogUtils.getLogger().info("CAVITY CLIENT CHECK D drain: {}", reactorD.cavityDrains().stream().map(p -> p.state() + " " + p.flowKgPerS()).toList());
+            case 7 -> LogUtils.getLogger().info("CAVITY CLIENT CHECK D drain (inside the well): {}", reactorD.cavityDrains().stream().map(p -> p.state() + " " + p.flowKgPerS()).toList());
+            case 8 -> {
+                LogUtils.getLogger().info("CAVITY CLIENT CHECK D drain: {}", reactorD.cavityDrains().stream().map(p -> p.state() + " " + p.flowKgPerS()).toList());
+                dev.bwr.mod.gui.ReactorPanelMenu.open(player, reactorD);
+            }
             case 1 -> {
                 var vessel = reactorA.core().getPressureVessel();
                 vessel.setCollapsedLevelIn(PressureVessel.FLANGE_LEVEL_IN + 2.5 / PressureVessel.METRES_PER_INCH);

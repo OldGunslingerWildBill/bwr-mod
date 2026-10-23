@@ -33,8 +33,9 @@ public final class AssemblyPlumbing {
                 rebuilds++;
                 waterLines.remove(role);
                 dynamicWater.put(role,!role.isSteam()&&graph.edges().keySet().stream().anyMatch(node ->
-                        node.state()!=null && node.state().getBlock()
-                                instanceof dev.bwr.mod.containment.ContainmentPenetrationBlock));
+                        node.state()!=null && (node.state().getBlock()
+                                instanceof dev.bwr.mod.containment.ContainmentPenetrationBlock
+                                || node.state().getBlock() instanceof dev.bwr.mod.water.MotorOperatedWaterValveBlock)));
             }
             if(!role.isSteam()&&!dynamicWater.getOrDefault(role,false)&&waterLines.containsKey(role))
                 return waterLines.get(role);
@@ -67,7 +68,10 @@ public final class AssemblyPlumbing {
         var start=block.portPosition(root,state,role);
         var graph=dev.bwr.mod.piping.PipeTopology.get(level,start,block.portFace(state,role),role.isSteam(),false);
         if(graph.truncated())return new Line(List.of(),graph.cells(),false,0);
-        var ends=new LinkedHashSet<BlockPos>();boolean valid=true;double opening=role.isSteam()?0:1;
+        // A water line is full-bore unless a motor-operated valve is on it: then its flow is the most open route's opening.
+        boolean throttled=!role.isSteam()&&graph.edges().keySet().stream().anyMatch(node ->
+                node.state()!=null&&node.state().getBlock() instanceof dev.bwr.mod.water.MotorOperatedWaterValveBlock);
+        var ends=new LinkedHashSet<BlockPos>();boolean valid=true;double opening=role.isSteam()||throttled?0:1;
         for(var route:dev.bwr.mod.piping.PipeTopology.routes(level,graph)) {
             var node=route.node();if(node.kind()!=dev.bwr.mod.piping.PipeTopology.Kind.END||route.opening()<=0)continue;
             var next=node.pos();var s=node.state();

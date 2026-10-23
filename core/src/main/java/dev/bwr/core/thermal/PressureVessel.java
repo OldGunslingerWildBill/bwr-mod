@@ -1189,6 +1189,33 @@ public final class PressureVessel {
         return wellSpillKgPerS;
     }
 
+    /**
+     * Takes water out of the well, for a drain whose sill stands in it: up to {@code kg} of liquid, but never so much that the
+     * water over the flange (the annulus and the well, {@link #getWellWaterM3()}) falls below {@code keepWellM3}. A drain
+     * can only empty the well down to its own sill, and the vessel below the flange is not its to empty (the plant's own
+     * drains do that), so with {@code keepWellM3} at or above the water there is, nothing leaves. The level and the
+     * inventory stay one thing.
+     *
+     * @param kg         the most to take, kg (not finite or not positive: nothing)
+     * @param keepWellM3 the water over the flange to leave, m3 (not finite or negative: none, the whole well may go)
+     * @return the water taken, kg
+     */
+    public double drainWellWaterKg(double kg, double keepWellM3) {
+        if (!(kg > 0.0) || !Double.isFinite(kg)) {
+            return 0.0;
+        }
+        double keep = Double.isFinite(keepWellM3) ? Math.max(0.0, keepWellM3) : 0.0;
+        double room = getWellWaterM3() - keep;
+        if (!(room > 0.0)) {
+            return 0.0;
+        }
+        double taken = Math.min(kg, room * Saturation.liquidDensityKgPerM3(getPressurePsia()));
+        taken = Math.min(taken, liquidMassKg);
+        liquidMassKg -= taken;
+        recomputeLevels();
+        return taken;
+    }
+
     /** Volume of liquid the vessel holds when the surface is at the flange, m3. */
     public double volumeAtFlangeM3() {
         return (FLANGE_LEVEL_IN + PhysicalConstants.INSTRUMENT_ZERO_ABOVE_VESSEL_ZERO_IN) * METRES_PER_INCH * levelAreaM2;

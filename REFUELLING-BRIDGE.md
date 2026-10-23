@@ -134,12 +134,43 @@ layer, where the refuel floor is. The well is usable only if it reaches the flan
   With the head on there is no spill: the vessel is closed.
 * **Nothing floods by itself.** Only the player's feed, condensate and residual heat removal pumps (and a program's commands) put water in.
 
+### Draining the well: the Cavity Drain Port
+
+Nothing drains the well by itself, and the vessel body below the flange is drained the existing ways (RHR shutdown cooling, the recirculation outlet). To bring the well's water
+down again, build a **Cavity Drain Port** into the wall or floor of the well and pipe it back to a **Condensate Storage Tank**:
+
+```text
+well (water) | Cavity Drain Port | High-Pressure Water Pipe | Motor-Operated Water Valve | pipe | Condensate Storage Tank
+```
+
+* **Where it goes.** The port's flange (`FACING`, the side the pipe takes) points *out* of the well; place it looking out of the well. The block behind the flange, the wet cell, must be a
+  cell of the surveyed well's water (the survey that finds the cavity seal), and the port must stand **at or above the seal row**. It is a wall block (the seal survey still counts it as wall)
+  or a floor block (flange down). A port facing up, one whose wet face is outside the well, or one below the seal row passes nothing; the INFO tab says which.
+* **The sill and the stop.** The sill is the floor of the wet cell (the seal plate's height at the lowest). Water over the sill drains; **draining stops when the level reaches the sill**: the well's water
+  and the vessel's inventory (`liquidMassKg`, so `WellInventoryKg` and the level mapping) fall together, never below the sill's level. Below it the water stays (the plant's own drains take it from there).
+* **The flow law (gravity):** `Q = Cd A rho sqrt(2 g H) x opening`, `Cd = 0.6`, `A = 0.2 m2` (a 0.5 m bore), `rho = 1000 kg/m3`, capped at **1,500 kg/s** (7.5 m/s in the bore, reached
+  at about 8 m of head). `H` is the driving head: **the depth of water over the sill plus the line's elevation difference**, the sill's height less the height of the tank's inlet flange (its block centre).
+  1 m of head passes 531 kg/s, 4 m 1,063 kg/s. If the tank's inlet is above the water there is no head and no flow (the line is a siphon with no lift). `opening` is the opening of the
+  **narrowest Motor-Operated Water Valve on the route**, proportional (a 50 % valve passes half).
+* **It needs the player's valve.** A line with no motor-operated water valve on it passes nothing (the valve is the drain's isolation: realistic, and the smallest rule); a closed one passes nothing. The
+  valve moves only when the player moves it (redstone, a panel, a computer; 20 s a stroke, [WATER-PLUMBING.md](WATER-PLUMBING.md#motor-operated-water-valve)).
+* **It goes to the CST.** The line must reach a Condensate Storage Tank (an assembled one through a flange, or an old single block). A full tank stops the flow; room starts it again. The water goes in
+  at the vessel's coolant temperature (at most 100 C) and mixes by enthalpy like any water the tank takes. What leaves the vessel is exactly what the tank accepts.
+* **Nothing per tick but the reactor's.** The port has no ticker; the formed reactor steps the ports in its well area once a tick (a single comparison when there are none) and re-reads the list only when a port
+  came or went or the well was surveyed again. It reads the pipe survey the same way a pump does (a cached graph and a memoised route walk; no chunk is loaded). Nothing of the port is saved.
+
+![The drain port in the well wall, piped through a valve to the condensate tank](art/cavity-drain/drain-port-piped-to-cst.png)
+
+![The port's strainer in the wall of the flooded well](art/cavity-drain/drain-port-in-well-wall.png)
+
+![The INFO tab during a drain](art/cavity-drain/info-tab-during-drain.png)
+
 ### What the screen and the computers say
 
 INFO tab, "Cavity seal and well": the survey's verdict (present at y, row, H and the lowest allowed row, touching or with a gap; or absent, with the closest row and which side is
-how many blocks from the vessel at which x, z), the water over the flange, the level over the flange, the well's capacity and the leak (or overflow). CC:Tweaked
+how many blocks from the vessel at which x, z), the water over the flange, the level over the flange, the well's capacity and the leak (or overflow). With drain ports in the well it adds the **cavity drain flow** and a line per port: where it is, what its line is doing (draining, no valve, valve closed, no tank, tank full, down to the sill ...), the flow, the metres over the sill and the valve's opening. CC:Tweaked
 `reactor.getCavity()` returns the same as a table (`sealPresent`, `sealReason`, `vesselHeight`, `lowestSealRowY`, `flangeRowY`, `sealRowY`, `gapSides`, `tooWideSide`,
-`tooWideGapBlocks`, `wellUsable`, `waterOverFlangeM3`, `levelOverFlangeM`, `wellCapacityM3`, `spillKgPerS`, `spillTo`).
+`tooWideGapBlocks`, `wellUsable`, `waterOverFlangeM3`, `levelOverFlangeM`, `wellCapacityM3`, `spillKgPerS`, `spillTo`, and the drain ports: `drainCount`, `drainKgPerS`, `drains`, one table per port with `x`, `y`, `z`, `state` (`draining`, `no_valve`, `valve_closed`, `no_receiver`, `receiver_full`, `at_sill`, `no_water`, `no_head`, `not_in_well`, `below_seal`, `no_well`, `no_reactor`), `flowKgPerS`, `depthOverSillM`, `headM`, `valveOpening`, `valves`, `totalKg`). The port has its own `bwr_cavity_drain_port` face with `getStatus()`.
 
 ### Drawing
 

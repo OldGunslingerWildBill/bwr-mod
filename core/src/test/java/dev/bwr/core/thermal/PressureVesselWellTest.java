@@ -139,4 +139,37 @@ public final class PressureVesselWellTest {
         Check.exactly(mass, v.getLiquidMassKg(), "removing the well leaves the inventory alone");
         Check.greaterThan(level, v.getCollapsedLevelIn(), "and the level reads taller over the single area, as before");
     }
+    public static void test09_aDrainTakesWellWaterDownToItsSillAndNeverBelowTheFlange() {
+        PressureVessel v = cold();
+        v.setWell(well());
+        v.setCollapsedLevelIn(60.0 + 1.5 / PressureVessel.METRES_PER_INCH);
+        double rho = v.getLiquidMassKg() / (v.volumeAtFlangeM3() + v.getWellWaterM3());
+        double before = v.getWellWaterM3();
+        double massBefore = v.getLiquidMassKg();
+        // 4 m3 annulus + 80 m3 + 40 m3 (half of the second layer) = 124 m3 over the flange
+        Check.absolute(124.0, before, 1.0e-6, "the water over the flange");
+        // asking for ten tonnes takes ten tonnes
+        double taken = v.drainWellWaterKg(10000.0, 0.0);
+        Check.absolute(10000.0, taken, 1.0e-9, "a small request is met");
+        Check.absolute(massBefore - 10000.0, v.getLiquidMassKg(), 1.0e-6, "the inventory fell by what was taken");
+        Check.absolute(before - 10000.0 / rho, v.getWellWaterM3(), 1.0e-6, "and so did the water over the flange");
+        // a sill at 84 m3 (annulus plus the first layer) stops it there
+        taken = v.drainWellWaterKg(1.0e9, 84.0);
+        Check.absolute(84.0, v.getWellWaterM3(), 1.0e-6, "the level stops at the sill");
+        Check.absolute(0.0, v.drainWellWaterKg(1.0e9, 84.0), 1.0e-6, "nothing (bar rounding) more leaves at the sill");
+        // the whole well may go, and then the flange level is where it stops: the vessel below is not the well's to empty
+        v.drainWellWaterKg(1.0e9, 0.0);
+        Check.absolute(0.0, v.getWellWaterM3(), 1.0e-9, "emptied to the flange");
+        Check.absolute(60.0, v.getCollapsedLevelIn(), 1.0e-6, "the vessel is left full to the lip");
+        Check.absolute(0.0, v.drainWellWaterKg(1.0e9, 0.0), 1.0e-6, "a drain at the flange takes nothing from the vessel body");
+        Check.exactly(0.0, v.drainWellWaterKg(-5.0, 0.0), "a negative request takes nothing");
+        Check.exactly(0.0, v.drainWellWaterKg(Double.NaN, 0.0), "NaN takes nothing");
+        // level and inventory stay one thing after a drain
+        v.setCollapsedLevelIn(60.0 + 2.0 / PressureVessel.METRES_PER_INCH);
+        v.drainWellWaterKg(30000.0, 0.0);
+        PressureVessel same = cold();
+        same.setWell(well());
+        same.restoreLiquidMassKg(v.getLiquidMassKg());
+        Check.absolute(same.getCollapsedLevelIn(), v.getCollapsedLevelIn(), 1.0e-9, "the level is the one the inventory maps to");
+    }
 }

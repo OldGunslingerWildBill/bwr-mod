@@ -438,6 +438,12 @@ public final class BwrBlocks {
             BLOCKS.register("turbine_control_valve", () -> new TurbineValveBlock(machine()));
     public static final DeferredBlock<TurbineValveBlock> BYPASS_STEAM_VALVE =
             BLOCKS.register("bypass_steam_valve", () -> new TurbineValveBlock(machine()));
+    /** A motor-operated valve for BWR water lines; it throttles the line and counts as an isolation point. */
+    public static final DeferredBlock<dev.bwr.mod.water.MotorOperatedWaterValveBlock> MOTOR_OPERATED_WATER_VALVE =
+            BLOCKS.register("motor_operated_water_valve", () -> new dev.bwr.mod.water.MotorOperatedWaterValveBlock(machine()));
+    /** A drain through the wall or floor of the reactor well, piped to the Condensate Storage Tank through a valve. */
+    public static final DeferredBlock<dev.bwr.mod.reactor.CavityDrainPortBlock> CAVITY_DRAIN_PORT =
+            BLOCKS.register("cavity_drain_port", () -> new dev.bwr.mod.reactor.CavityDrainPortBlock(vesselSteel()));
     public static final DeferredBlock<CondenserBlock> ARABELLE_CONDENSER =
             BLOCKS.register("arabelle_condenser", () -> new CondenserBlock(machine()));
 

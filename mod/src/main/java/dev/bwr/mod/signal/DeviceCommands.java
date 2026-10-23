@@ -177,6 +177,26 @@ public final class DeviceCommands {
         return true;
     }
 
+    /** The motor-operated water valve's opening demand, 0 to 1. */
+    public static boolean waterValvePosition(dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity valve, double fraction) {
+        if (!Double.isFinite(fraction) || fraction < 0 || fraction > 1) return false;
+        return valve.setTarget(fraction);
+    }
+
+    /** Fully open or fully closed demand. */
+    public static boolean waterValveOpen(dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity valve, boolean open) {
+        return valve.setTarget(open ? 1.0 : 0.0);
+    }
+
+    /** The fail position: 0 as-is, 1 open, 2 closed. Anything else is refused. */
+    public static boolean waterValveFailMode(dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity valve, double level) {
+        if (!Double.isFinite(level) || level != Math.rint(level)) return false;
+        var mode = dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity.FailMode.byLevel((int) level);
+        if (mode == null) return false;
+        valve.setFailMode(mode);
+        return true;
+    }
+
     public static boolean turbineOutletFlow(TurbineSteamOutletBlockEntity be, double kgPerS) {
         if (!Double.isFinite(kgPerS)) return false;
         be.setComputerControlled(true);

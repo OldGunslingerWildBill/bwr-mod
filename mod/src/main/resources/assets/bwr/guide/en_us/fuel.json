@@ -78,16 +78,20 @@
       ]
     },
     {
-      "title": "Flood the well",
-      "text": [
-        "With the head off, raise the water out of the vessel over the flange with your own feed, condensate or residual heat removal pumps. Nothing floods by itself.",
-        "",
-        "A cavity seal, a steel plate drawn round the flange, keeps the water above the drywell. It forms where a wall of full blocks touches the vessel or stands one block off, all the way round, at the flange or lower, within the top third of the vessel. Without it the water leaks into the drywell and the level holds at the flange. The INFO tab says why there is no seal."
-      ],
-      "icons": [
-        "bwr:reactor_vessel"
-      ]
-    },
+        "title": "Flood the well",
+        "text": [
+          "With the head off, raise the water over the flange with your own feed, condensate or residual heat removal pumps. Nothing floods by itself.",
+          "",
+          "A cavity seal, a steel plate round the flange, keeps the water above the drywell. It forms where full blocks touch the vessel or stand one block off, all round, in the top third of the vessel. Without it the water leaks into the drywell. The INFO tab says why.",
+          "",
+          "To lower the well, set a Cavity Drain Port in its wall or floor, pipe it through a Motor-Operated Water Valve to a Condensate Storage Tank, and open the valve."
+        ],
+        "icons": [
+          "bwr:reactor_vessel",
+          "bwr:cavity_drain_port",
+          "bwr:motor_operated_water_valve"
+        ]
+      },
     {
       "title": "Moving fuel with the bridge",
       "text": [

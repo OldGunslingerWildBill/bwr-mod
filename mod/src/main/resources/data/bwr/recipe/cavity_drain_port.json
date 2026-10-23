@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "SPS",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "S": {
+      "item": "minecraft:iron_bars"
+    },
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    }
+  },
+  "result": {
+    "id": "bwr:cavity_drain_port",
+    "count": 1
+  }
+}
