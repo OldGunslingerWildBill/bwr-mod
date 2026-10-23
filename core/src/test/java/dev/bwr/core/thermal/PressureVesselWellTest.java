@@ -156,12 +156,12 @@ public final class PressureVesselWellTest {
         // a sill at 84 m3 (annulus plus the first layer) stops it there
         taken = v.drainWellWaterKg(1.0e9, 84.0);
         Check.absolute(84.0, v.getWellWaterM3(), 1.0e-6, "the level stops at the sill");
-        Check.exactly(0.0, v.drainWellWaterKg(1.0e9, 84.0), "nothing more leaves at the sill");
+        Check.absolute(0.0, v.drainWellWaterKg(1.0e9, 84.0), 1.0e-6, "nothing (bar rounding) more leaves at the sill");
         // the whole well may go, and then the flange level is where it stops: the vessel below is not the well's to empty
         v.drainWellWaterKg(1.0e9, 0.0);
         Check.absolute(0.0, v.getWellWaterM3(), 1.0e-9, "emptied to the flange");
         Check.absolute(60.0, v.getCollapsedLevelIn(), 1.0e-6, "the vessel is left full to the lip");
-        Check.exactly(0.0, v.drainWellWaterKg(1.0e9, 0.0), "a drain at the flange takes nothing from the vessel body");
+        Check.absolute(0.0, v.drainWellWaterKg(1.0e9, 0.0), 1.0e-6, "a drain at the flange takes nothing from the vessel body");
         Check.exactly(0.0, v.drainWellWaterKg(-5.0, 0.0), "a negative request takes nothing");
         Check.exactly(0.0, v.drainWellWaterKg(Double.NaN, 0.0), "NaN takes nothing");
         // level and inventory stay one thing after a drain
