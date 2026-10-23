@@ -325,6 +325,47 @@ public final class RefuellingBridgeTests {
         h.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = "bwrbridge", timeoutTicks = 200)
+    public static void aChuteThatIsTooShallowStopsTheBridgeBeforeTheAssemblyHangsThroughItsFloor(GameTestHelper h) throws Exception {
+        RefuellingBridgeFixture f = RefuellingBridgeFixture.build(h.getLevel(), at(11), 4);
+        try {
+            ready(h, f);
+            f.fillPool(7.0);
+            int slot = f.corePosition(0);
+            f.reactor.loadAssembly(slot, RefuellingBridgeFixture.fresh(30000.0));
+            f.shallowCanal(3);
+            f.bridge.refreshSite();
+            h.assertTrue(f.bridge.chute().state() == BridgeSite.ChuteState.OPEN, "a shallow chute is still a chute: " + f.bridge.chute().state());
+            h.assertTrue(f.bridge.queue(coreToCell(f, 0, 0, 0)) == null, "queued");
+            run(h, f, 1);
+            h.assertTrue(f.bridge.phase() == Phase.HALTED && english(f.bridge.haltMessage()).contains("too shallow"),
+                    "halted for the shallow chute: " + f.bridge.phase() + " " + english(f.bridge.haltMessage()));
+            h.assertTrue(f.reactor.core().getCoreLoading().isOccupied(slot) && f.bridge.carried().isEmpty(), "before the assembly was lifted");
+            f.bridge.resume();
+            h.assertTrue(f.bridge.phase() == Phase.HALTED, "resuming does not dig the chute deeper: " + f.bridge.phase());
+            // dig it deep again: stack the blocks back down to the old floor
+            for (int dy = 3; dy < RefuellingBridgeFixture.CANAL_DEPTH; dy++) {
+                for (BlockPos column : new BlockPos[]{f.canalNear, f.gate, f.canalFar}) {
+                    var block = column.equals(f.gate) ? dev.bwr.mod.registry.BwrBlocks.CANAL_GATE.get() : dev.bwr.mod.registry.BwrBlocks.TRANSFER_CANAL.get();
+                    var state = block.defaultBlockState().setValue(dev.bwr.mod.refuelling.TransferCanalBlock.AXIS, net.minecraft.core.Direction.Axis.X)
+                            .setValue(dev.bwr.mod.refuelling.TransferCanalBlock.TOP, false)
+                            .setValue(dev.bwr.mod.refuelling.TransferCanalBlock.FLOOR, dy == RefuellingBridgeFixture.CANAL_DEPTH - 1);
+                    if (column.equals(f.gate)) {
+                        state = state.setValue(dev.bwr.mod.refuelling.CanalGateBlock.OPEN, true);
+                    }
+                    f.level.setBlock(column.below(dy), state, 3);
+                }
+            }
+            f.bridge.resume();
+            h.assertTrue(f.bridge.busy(), "deep enough, it goes on: " + f.bridge.phase());
+            run(h, f, 1);
+            h.assertTrue(!f.pool.be.stackAt(f.pool.racks.get(0), 0).isEmpty(), "and the move completes");
+        } finally {
+            f.dispose();
+        }
+        h.succeed();
+    }
+
     // ------------------------------------------------------------------------------------------------------------
     // A destination that fills up, save and reload, idling
     // ------------------------------------------------------------------------------------------------------------

@@ -131,6 +131,15 @@ final class RefuellingBridgeFixture {
         }
     }
 
+    /** A shallow trench: only the top {@code keep} canal blocks of each column are left (the lowest of those takes the floor). */
+    void shallowCanal(int keep) {
+        for (int dy = keep; dy < CANAL_DEPTH; dy++) {
+            for (BlockPos column : new BlockPos[]{canalNear, gate, canalFar}) {
+                level.setBlock(column.below(dy), Blocks.AIR.defaultBlockState(), 3);
+            }
+        }
+    }
+
     /** What a bucket does to one column of the trench. */
     void setCanalWater(boolean wet) {
         for (int dy = 0; dy < CANAL_DEPTH; dy++) {
