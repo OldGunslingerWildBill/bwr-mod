@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "tag": "bwr:shield_plug_concrete_base"
+    },
+    "S": {
+      "tag": "c:ingots/steel"
+    }
+  },
+  "pattern": [
+    "CSC",
+    "SCS",
+    "CSC"
+  ],
+  "result": {
+    "count": 4,
+    "id": "bwr:shield_plug_concrete"
+  }
+}

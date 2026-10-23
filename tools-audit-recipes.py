@@ -192,7 +192,8 @@ for name, r in recipes.items():
                 ingredients += list(value.values()) if (field == "key" and isinstance(value, dict)) else [value]
     for ing in ingredients:
         for ref in ingredient_ids(ing):
-            if ref.startswith("bwr:") and ref[4:] not in registered:
+            # A bwr tag is defined by a file under data/bwr/tags/item; anything else must be a registered item.
+            if ref.startswith("bwr:") and ref[4:] not in registered                     and not os.path.isfile(os.path.join(RES, "data/bwr/tags/item", ref[4:] + ".json")):
                 bad(f"{name}: ingredient {ref} is not a registered item")
 
 # ---- 4. collisions --------------------------------------------------------------------------------------------

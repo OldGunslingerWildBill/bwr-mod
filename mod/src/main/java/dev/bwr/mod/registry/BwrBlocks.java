@@ -272,6 +272,24 @@ public final class BwrBlocks {
             BLOCKS.register("spent_fuel_pool_cooling_out", () -> new dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock(
                     machine(), dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock.Kind.COOLING_OUT));
 
+    // --- Shield plug concrete (stops a thrown vessel head; see SEVERE-ACCIDENT-UPDATE.md) ------------
+
+    /** Concrete and steel; blast resistance 1,800, stronger than Immersive Engineering's reinforced concrete (about 1,200). */
+    public static final DeferredBlock<dev.bwr.mod.accident.ShieldPlugConcreteBlock> SHIELD_PLUG_CONCRETE =
+            BLOCKS.register("shield_plug_concrete", () -> new dev.bwr.mod.accident.ShieldPlugConcreteBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(dev.bwr.mod.accident.ShieldPlugConcreteBlock.HARDNESS_1,
+                            dev.bwr.mod.accident.ShieldPlugConcreteBlock.RESISTANCE_1).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    /** Shield plug concrete with more steel and netherite; blast resistance 3,600. */
+    public static final DeferredBlock<dev.bwr.mod.accident.ShieldPlugConcreteBlock> HEAVILY_REINFORCED_SHIELD_PLUG_CONCRETE =
+            BLOCKS.register("heavily_reinforced_shield_plug_concrete", () -> new dev.bwr.mod.accident.ShieldPlugConcreteBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(dev.bwr.mod.accident.ShieldPlugConcreteBlock.HARDNESS_2,
+                            dev.bwr.mod.accident.ShieldPlugConcreteBlock.RESISTANCE_2).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    /** The heaviest tier, built from netherite; blast resistance 7,200. */
+    public static final DeferredBlock<dev.bwr.mod.accident.ShieldPlugConcreteBlock> ULTRA_REINFORCED_SHIELD_PLUG_CONCRETE =
+            BLOCKS.register("ultra_reinforced_shield_plug_concrete", () -> new dev.bwr.mod.accident.ShieldPlugConcreteBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(dev.bwr.mod.accident.ShieldPlugConcreteBlock.HARDNESS_3,
+                            dev.bwr.mod.accident.ShieldPlugConcreteBlock.RESISTANCE_3).sound(SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()));
+
     // --- Emergency core cooling (SPEC section 9) ------------------------
     //
     // Six injection machines, all the same block class carrying a different

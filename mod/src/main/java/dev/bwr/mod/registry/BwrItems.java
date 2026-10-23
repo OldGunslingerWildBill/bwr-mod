@@ -233,6 +233,12 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.FUEL_FABRICATOR);
     public static final DeferredItem<BlockItem> REPROCESSING_PLANT =
             ITEMS.registerSimpleBlockItem(BwrBlocks.REPROCESSING_PLANT);
+    public static final DeferredItem<BlockItem> SHIELD_PLUG_CONCRETE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.SHIELD_PLUG_CONCRETE);
+    public static final DeferredItem<BlockItem> HEAVILY_REINFORCED_SHIELD_PLUG_CONCRETE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.HEAVILY_REINFORCED_SHIELD_PLUG_CONCRETE);
+    public static final DeferredItem<BlockItem> ULTRA_REINFORCED_SHIELD_PLUG_CONCRETE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.ULTRA_REINFORCED_SHIELD_PLUG_CONCRETE);
     public static final DeferredItem<BlockItem> SPENT_FUEL_POOL_WALL =
             ITEMS.registerSimpleBlockItem(BwrBlocks.SPENT_FUEL_POOL_WALL);
     public static final DeferredItem<BlockItem> SPENT_FUEL_POOL_CONTROLLER =
@@ -462,6 +468,9 @@ public final class BwrItems {
                         output.accept(TURBINE_STEAM_OUTLET.get());
                         output.accept(FUEL_FABRICATOR.get());
                         output.accept(REPROCESSING_PLANT.get());
+                        output.accept(SHIELD_PLUG_CONCRETE.get());
+                        output.accept(HEAVILY_REINFORCED_SHIELD_PLUG_CONCRETE.get());
+                        output.accept(ULTRA_REINFORCED_SHIELD_PLUG_CONCRETE.get());
                         output.accept(SPENT_FUEL_POOL_WALL.get());
                         output.accept(SPENT_FUEL_POOL_CONTROLLER.get());
                         output.accept(SPENT_FUEL_RACK.get());

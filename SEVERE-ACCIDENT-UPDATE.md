@@ -262,9 +262,142 @@ the molten pool with corium (slag once frozen) along the ablation depth, one blo
 in the centre at melt-through. That is unchanged, and it still honours `coriumAltersWorld` (default on) because an
 existing test asserts it; the explosion damage has no such switch.
 
-### Vessel head failure
+### Vessel head failure: the head as a missile
 
-See STEAM-AND-ACCIDENT-UPDATE.md.
+The steam burst and cone are in STEAM-AND-ACCIDENT-UPDATE.md. Since this update the head is also thrown: a
+`ReactorHeadEntity` (the vessel's own `head` model, at the vessel's scale) leaves the flange with a launch speed
+worked out from the failure, is stopped by whatever stands above the vessel if that is strong enough, and otherwise
+flies, lands, digs a bounded crater and rests. The numbers are `dev.bwr.core.accident.HeadMissile` (pure arithmetic,
+checked by `HeadMissileTest`); the world side is `dev.bwr.mod.accident.HeadMissileLauncher` and `ReactorHeadEntity`.
+
+**Mass.** A BWR/6-class head weighs 80 to 100 t (studs, insulation and lifting rig included). The model uses 90 t on
+the 17 x 17 reference vessel and scales with the footprint (a dished plate on a flange): 15 t on a 7 x 7, 25 t on a
+9 x 9, 165 t on a 23 x 23.
+
+**Launch energy, from the reactor's state at the moment of failure.** Two limits; the head gets the smaller.
+
+- *What the vessel holds:* the stored energy of the failure, the same number that sizes the blast (the steam dome
+  expanding to atmosphere at the pressure the head let go at, with the dome volume the vessel model tracks, plus the
+  first second of flashing water: 30% of rated core flow at 0.3 MJ/kg at 1,400 psig, scaled with pressure, but never
+  more water than the vessel holds). **5%** of it can become the head's kinetic energy. The share is a game
+  calibration like the other yields in `BlastPhysics`: far below what is quoted for gas vessels that burst into a few
+  pieces, because the opening vents the dome as soon as the head lifts, and 40% of the same energy already goes to
+  the blast.
+- *What the steam can push with:* the force is the gauge pressure over the head's whole area,
+  `F = P * pi/4 * width * depth`. It acts only while the head is still on the flange; the vent opens after a stroke
+  of 0.1 of the equivalent radius, so the work is `(F - m g) * s`, and nothing at all if the steam cannot lift the
+  head's weight.
+
+A failure at a lower pressure has less stored energy and less force, so a weaker launch. 17 x 17 reference vessel,
+90 t head, dome 185 m3:
+
+| Failure pressure | Stored energy | Head kinetic energy | Free speed | Free rise (uncapped) |
+| --- | --- | --- | --- | --- |
+| 1,700 psig | 6.3 GJ | 315 MJ | 84 m/s | 356 blocks |
+| 1,375 psig (code limit) | 5.0 GJ | 250 MJ | 75 m/s | 283 blocks |
+| 1,000 psig | 3.5 GJ | 177 MJ | 63 m/s | 200 blocks |
+| 700 psig | 2.4 GJ | 119 MJ | 52 m/s | 135 blocks |
+| 400 psig | 1.3 GJ | 64 MJ | 38 m/s | 73 blocks |
+| 100 psig | 0.27 GJ | 13 MJ | 17 m/s | 15 blocks |
+
+The stored energy follows the steam dome the core model tracks (bounded to 50 to 600 m3), not the vessel's footprint, while the
+head's mass and the stack's capacity follow the footprint. A small vessel therefore throws a lighter head just as fast, over fewer
+blocks, and needs a thicker stack: an 11 x 11 vessel at the code limit needs 11 rows of lined concrete where the table below
+gives 5 for the 17 x 17 reference.
+
+**Height.** Free of everything the head would rise `E / (m g)`, which is hundreds of blocks. A flight never climbs
+more than **40 blocks** above the vessel top (launch speed `sqrt(2 g 40)` = 28 m/s, 1.4 blocks a tick, 5.7 s up and
+down), so a missile stays inside the loaded area and under the build limit. The cap does not decide containment; the
+full kinetic energy does. Gravity is 9.81 m/s2, a block is a metre.
+
+**What stops it: whatever stands above the vessel.** Any block does it, by its blast resistance; the three shield plug concrete tiers (below) are just very resistant blocks. The head rises through the world
+a row (one metre) at a time, starting at the first row above the vessel shell. A row is the blocks under the head's
+footprint (an ellipse of the vessel's outside width and depth). Every block resists on the rating the containment
+walls and the blasts already use, `ContainmentStrength.contribution`: `5.8 * sqrt(blast resistance)` psi, capped at
+250 psi a block, with data pack overrides applied. Pushing a block out takes that rating as a pressure over the
+block's one square metre through its one metre, `rating * 1 m2 * 1 m` (a block of blast resistance 40, 36.7 psi,
+absorbs 0.25 MJ; obsidian, 200.9 psi, 1.39 MJ); a row absorbs the sum over its blocks.
+
+- A head with at least a row's capacity left **breaks the row** (the protected path of the blasts, below) and goes
+  on, minus that capacity and `m g * 1 m` of height. Open rows cost only the height.
+- A head with less is **stopped** by the row. The row stands, it becomes the ceiling of the steam cone, and the head
+  stays under it.
+- A row with a block that cannot be broken (bedrock, a controller, a formed reactor), or one a protection mod would
+  not let the head break, stops it whatever the energy.
+- A head that is past 40 rows with energy left is not contained: it flies. One that runs out of energy before that
+  (punching through most of a stack, or a very weak launch) peaks and falls back onto the flange.
+
+So any block can be the stack, including another mod's reinforced concrete through whatever blast resistance it
+reports, and thickness is what matters. Rows (one metre each) that hold the head, for a failure at the rated dome
+pressure (1,025 psig) and at the 1,375 psig code limit, by vessel outside size (square footprints; the stored energy
+follows the steam dome, not the footprint, while the head and the rows follow it, so small vessels need the most):
+
+| Blocks (blast resistance, rating) | 7 x 7 | 11 x 11 | 17 x 17 (ref.) | 23 x 23 |
+| --- | --- | --- | --- | --- |
+| *Head mass, launch energy at 1,025 / 1,375 psig* | *15 t, 95 / 128 MJ* | *38 t, 181 / 250 MJ* | *90 t, 181 / 250 MJ* | *165 t, 181 / 250 MJ* |
+| Vanilla concrete (1.8, 7.8 psi) | over 40 / over 40 | 33 / over 40 | 15 / 20 | 8 / 11 |
+| Lined concrete (40, 36.7 psi) | 11 / 14 | 8 / 11 | 4 / 5 | 2 / 3 |
+| Obsidian, reinforced deepslate, Immersive Engineering reinforced concrete (about 1,200, 200.9 psi) | 2 / 3 | 2 / 2 | 1 / 1 | 1 / 1 |
+| Shield Plug Concrete (1,800, 246.1 psi) | 2 / 3 | 2 / 2 | 1 / 1 | 1 / 1 |
+| Heavily Reinforced Shield Plug Concrete (3,600, 348.0 psi) | 2 / 2 | 1 / 2 | 1 / 1 | 1 / 1 |
+| Ultra-Reinforced Shield Plug Concrete (7,200, 492.1 psi) | 1 / 2 | 1 / 1 | 1 / 1 | 1 / 1 |
+
+(Rows of the minimum that hold; the first figure is at 1,025 psig, the second at 1,375. Dome 185 m3 as in the core model's
+default. `HeadMissileTests` logs the same ladder for the 11 x 11 test vessel at 1,400 psig.)
+
+A head that is stopped within a row of the vessel top (a strong plug directly on the vessel) stays **lodged** under
+it, tilted a few degrees. One stopped higher rises that far and comes back down onto the flange it left, tilted and
+lifted on its high side. Either way it is then a static entity, and the cone is limited to below the stopping row:
+the plug and everything above it stand.
+
+**A head that gets through** drifts once it is above everything it broke and comes down clear of the vessel:
+the vessel's corner radius plus the head's radius plus 3 to 13 blocks from the vessel's axis (16 to 26 blocks for an
+11 x 11, 31 to 41 for a 23 x 23), in a direction picked from the vessel position and the time, tumbling a few degrees. Anything living in
+its path takes 200 damage. On landing it arrives with `1/2 m v2` (35 MJ falling 40 blocks as a 90 t head), breaks the
+blocks under its footprint for that energy, row by row, centre first when the energy covers only part of a row, at
+most **3 rows and 600 blocks**, through the same protected path, and settles tilted 2 to 7 degrees on what is left.
+Horizontal collisions in flight are not simulated: the drift starts above the column it cleared, and a wall in the
+way is passed through.
+
+**Protection, chunks, saves.**
+
+- The blocks the head breaks, in the stack and in the crater, go through the protected path of the blasts: Start, a
+  `BlockEvent.BreakEvent` per block with NeoForge's fake player (a cancelled one keeps its block, and the head is
+  stopped against it), Detonate, vanilla drops. The never-break rules are the blasts' too.
+- Nothing loads a chunk. A stack row over an unloaded chunk costs nothing but height; a falling head that has an
+  unloaded chunk under its footprint holds still that tick; an entity in an unloaded chunk is not ticked, so a head
+  whose landing place is unloaded simply waits there, in the air or on the ground, until the chunk loads.
+- The head is saved with its position, velocity, drift and state: a head saved in the air resumes the same flight
+  and lands in the same place; a resting one reloads in place and ticks nothing. The failure that throws it fires
+  once: it is tied to the same applied-failure flag as the blast and the sound, which is saved, so a reload throws
+  nothing, and an older save with a failed head keeps its damaged-head model and gets no missile. A vessel whose head
+  was off for refuelling throws nothing.
+- A player with a pickaxe, or in creative, hits a resting head and it is taken apart for scrap iron (`mass / 2 t`
+  ingots, 4 to 64).
+
+### Shield plug concrete
+
+Three real blocks that stop a head with fewer blocks than anything else. They have no behaviour of their own: blast
+resistance feeds the same `5.8 * sqrt(R)` psi rating and the same rows rule as every other block. The reference is
+Immersive Engineering's reinforced concrete, taken as about 1,200 blast resistance and 1.0 hardness (the owner's figures,
+not confirmed from IE itself), which is the same as obsidian's 1,200; all three tiers are stronger and slower to mine.
+
+| Tier | Blast resistance | Rating | Hardness | Tool | Recipe |
+| --- | --- | --- | --- | --- | --- |
+| Shield Plug Concrete | 1,800 | 246.1 psi | 4.0 | iron pickaxe | 4 blocks from 5 concrete (any vanilla concrete, or Immersive Engineering concrete) and 4 steel ingots |
+| Heavily Reinforced Shield Plug Concrete | 3,600 | 348.0 psi | 8.0 | diamond pickaxe | 5 Shield Plug Concrete, 2 steel ingots, 2 netherite ingots |
+| Ultra-Reinforced Shield Plug Concrete | 7,200 | 492.1 psi | 16.0 | diamond pickaxe | 5 Heavily Reinforced, 2 netherite blocks, 2 netherite ingots |
+
+What one block of each costs, counted in raw ingredients: tier 1, 1.25 concrete and 1 steel ingot; tier 2, 6.25 concrete,
+7 steel ingots and 2 netherite ingots; tier 3, 31 concrete, 35 steel ingots and 30 netherite ingots (2 blocks and 12 ingots).
+The recipes use the item tag `bwr:shield_plug_concrete_base` (`#c:concretes`, plus `immersiveengineering:concrete` when that
+mod is installed), `c:ingots/steel`, `c:ingots/netherite` and `c:storage_blocks/netherite`. Steel comes from Mekanism or
+Immersive Engineering; without either `c:ingots/steel` is empty and none of the three can be crafted (the same as the fuel
+fabricator's Mekanism recipe), though a block placed some other way still counts by its resistance.
+
+The containment wall rule caps one block at 250 psi, which would give the two upper tiers the rating of the first; their
+exact ratings are carried by the mod's own data pack override, `data/bwr/bwr_containment/strength.json`, so they are also
+worth that much in a containment wall. Regenerate the assets with `python tools-make-shield-plug-assets.py`.
 
 ### What survives, exactly
 

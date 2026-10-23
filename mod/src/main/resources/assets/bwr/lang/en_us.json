@@ -1324,5 +1324,13 @@
   "block.bwr.raw_uranium_block": "Block of Raw Uranium",
   "block.bwr.uranium_block": "Block of Uranium",
   "item.bwr.raw_uranium": "Raw Uranium",
-  "item.bwr.uranium_ingot": "Uranium Ingot"
+  "item.bwr.uranium_ingot": "Uranium Ingot",
+  "entity.bwr.reactor_head": "Reactor Vessel Head",
+  "status.bwr.reactor_head.needs_pickaxe": "The head is too heavy to move by hand; use a pickaxe.",
+  "block.bwr.shield_plug_concrete": "Shield Plug Concrete",
+  "item.bwr.shield_plug_concrete": "Shield Plug Concrete",
+  "block.bwr.heavily_reinforced_shield_plug_concrete": "Heavily Reinforced Shield Plug Concrete",
+  "item.bwr.heavily_reinforced_shield_plug_concrete": "Heavily Reinforced Shield Plug Concrete",
+  "block.bwr.ultra_reinforced_shield_plug_concrete": "Ultra-Reinforced Shield Plug Concrete",
+  "item.bwr.ultra_reinforced_shield_plug_concrete": "Ultra-Reinforced Shield Plug Concrete"
 }

@@ -40,11 +40,17 @@ public final class AccidentBlastClientCheck {
     private static final int WIDTH = 9, DEPTH = 9, HEIGHT = 12;
     private static final BlockPos ROOM = new BlockPos(100, 102, 100);
     private static final BlockPos HALL = new BlockPos(220, 102, 100);
+    /** The open-sky hall whose head is thrown, and the hall whose head a plug of obsidian holds. */
+    private static final BlockPos HALL2 = new BlockPos(340, 102, 100);
+    private static final BlockPos HALL3 = new BlockPos(460, 102, 100);
     private static final String[] NAMES = {"1-detonation-before", "2-detonation-after", "3-head-failure-before",
-            "4-head-failure-after", "5-head-failure-side"};
+            "4-head-failure-after", "5-head-failure-side", "6-head-in-flight", "7-head-landed", "8-head-held-under-plug",
+            "9-vessel-without-head"};
+    /** Ticks to wait before each picture. */
+    private static final int[] WAIT = {160, 130, 130, 130, 130, 46, 230, 130, 40};
     private static boolean started, requested;
     private static int age, joined, stage, shown;
-    private static ReactorControllerBlockEntity roomReactor, hallReactor;
+    private static ReactorControllerBlockEntity roomReactor, hallReactor, hall2Reactor, hall3Reactor;
 
     private AccidentBlastClientCheck() {}
 
@@ -52,7 +58,7 @@ public final class AccidentBlastClientCheck {
     public static void tick(ClientTickEvent.Post ignored) {
         if (!Boolean.getBoolean("bwr.accidentBlastClientCheck")) return;
         Minecraft mc = Minecraft.getInstance();
-        if (++age > 3600) throw new IllegalStateException("Accident blast client check timed out at " + stage);
+        if (++age > 7000) throw new IllegalStateException("Accident blast client check timed out at " + stage);
         if (!started && mc.screen != null && mc.getOverlay() == null) {
             started = true;
             mc.options.pauseOnLostFocus = false;
@@ -81,17 +87,27 @@ public final class AccidentBlastClientCheck {
                     if (selected == 0) build(level);
                     if (selected == 1) detonate(level);
                     if (selected == 3) failHead();
+                    if (selected == 5) hall2Reactor.core().getBoundaryStress().forceFailure(BoundaryComponent.REACTOR_VESSEL_HEAD, 1400);
+                    if (selected == 7) hall3Reactor.core().getBoundaryStress().forceFailure(BoundaryComponent.REACTOR_VESSEL_HEAD, 1400);
                 } catch (Exception e) {
                     throw new IllegalStateException("Accident blast scene failed at stage " + selected, e);
                 }
                 Vec3 camera = switch (selected) {
                     case 0, 1 -> new Vec3(ROOM.getX() + 40, ROOM.getY() + 9, ROOM.getZ() + 6);
                     case 4 -> new Vec3(HALL.getX() + 4, HALL.getY() + 15, HALL.getZ() + 50);
+                    case 5 -> new Vec3(HALL2.getX() + 4, HALL2.getY() + 38, HALL2.getZ() + 96);
+                    case 6 -> new Vec3(HALL2.getX() + 4, HALL2.getY() + 40, HALL2.getZ() + 60);
+                    case 7 -> new Vec3(HALL3.getX() + 16, HALL3.getY() + HEIGHT - 1, HALL3.getZ() + 22);
+                    case 8 -> new Vec3(HALL2.getX() + 26, HALL2.getY() + HEIGHT + 9, HALL2.getZ() + 28);
                     default -> new Vec3(HALL.getX() + 40, HALL.getY() + 24, HALL.getZ() + 34);
                 };
                 Vec3 target = switch (selected) {
                     case 0, 1 -> new Vec3(ROOM.getX() + 17, ROOM.getY() + 7, ROOM.getZ() + 4);
                     case 4 -> new Vec3(HALL.getX() + 4, HALL.getY() + 16, HALL.getZ() + 4);
+                    case 5 -> new Vec3(HALL2.getX() + 4, HALL2.getY() + 30, HALL2.getZ() + 4);
+                    case 6 -> new Vec3(HALL2.getX() + 4, HALL2.getY() + 12, HALL2.getZ() + 4);
+                    case 7 -> new Vec3(HALL3.getX() + 4, HALL3.getY() + HEIGHT + 0.5, HALL3.getZ() + 4);
+                    case 8 -> new Vec3(HALL2.getX() + 4, HALL2.getY() + HEIGHT - 2, HALL2.getZ() + 4);
                     default -> new Vec3(HALL.getX() + 4, HALL.getY() + 14, HALL.getZ() + 4);
                 };
                 Vec3 delta = target.subtract(camera);
@@ -105,7 +121,8 @@ public final class AccidentBlastClientCheck {
                 player.connection.teleport(camera.x, camera.y, camera.z, yaw, pitch);
             });
         }
-        if (++shown < (stage == 0 ? 160 : 130)) return;
+        if (stage == 6 && shown == WAIT[6] - 6) aimAtHead(mc);
+        if (++shown < WAIT[stage]) return;
         try {
             var directory = mc.gameDirectory.toPath().resolve("accident-blast-client-check");
             Files.createDirectories(directory);
@@ -129,7 +146,7 @@ public final class AccidentBlastClientCheck {
     private static void build(ServerLevel level) throws Exception {
         // A smooth stone ground over the whole show.
         BlockPos groundLo = new BlockPos(ROOM.getX() - 40, ROOM.getY() - 7, ROOM.getZ() - 40);
-        BlockPos groundHi = new BlockPos(HALL.getX() + 60, ROOM.getY() - 7, HALL.getZ() + 60);
+        BlockPos groundHi = new BlockPos(HALL3.getX() + 70, ROOM.getY() - 7, HALL.getZ() + 70);
         load(level, groundLo, groundHi);
         for (BlockPos p : BlockPos.betweenClosed(groundLo, groundHi)) level.setBlock(p, Blocks.SMOOTH_STONE.defaultBlockState(), 2);
 
@@ -170,6 +187,50 @@ public final class AccidentBlastClientCheck {
         for (int x = -12; x <= 20; x++) level.setBlock(new BlockPos(HALL.getX() + x, top + 12, HALL.getZ() - 12), Blocks.IRON_BLOCK.defaultBlockState(), 2);
         for (int z = -12; z <= 20; z++) level.setBlock(new BlockPos(HALL.getX() + 4, top + 11, HALL.getZ() + z), Blocks.IRON_BARS.defaultBlockState(), 2);
         level.setBlock(new BlockPos(HALL.getX() + 4, top + 6, HALL.getZ() + 4), Blocks.IRON_BLOCK.defaultBlockState(), 2);
+
+        // Two more vessels far enough apart not to disturb the first. Their chunks are kept loaded (this is a disposable world)
+        // so the heads they throw are ticked wherever the camera is.
+        for (BlockPos hall : new BlockPos[] {HALL2, HALL3}) {
+            for (int x = (hall.getX() - 70) >> 4; x <= (hall.getX() + 80) >> 4; x++)
+                for (int z = (hall.getZ() - 70) >> 4; z <= (hall.getZ() + 110) >> 4; z++) level.setChunkForced(x, z, true);
+        }
+        hall2Reactor = CompactCoreRegressionTests.build(level, HALL2, WIDTH, DEPTH, HEIGHT, false);
+        hall3Reactor = CompactCoreRegressionTests.build(level, HALL3, WIDTH, DEPTH, HEIGHT, false);
+        // A plug of three rows of obsidian over the third vessel, wider than its head.
+        for (int r = 0; r < 3; r++)
+            for (int x = -3; x < WIDTH + 3; x++)
+                for (int z = -3; z < DEPTH + 3; z++)
+                    level.setBlock(new BlockPos(HALL3.getX() + x, HALL3.getY() + HEIGHT + 1 + r, HALL3.getZ() + z), Blocks.OBSIDIAN.defaultBlockState(), 2);
+        // The plug shades the vessel top; four sea lanterns beside it let the camera see what is under it.
+        for (int[] corner : new int[][] {{-2, -2}, {WIDTH + 1, -2}, {-2, DEPTH + 1}, {WIDTH + 1, DEPTH + 1}})
+            level.setBlock(new BlockPos(HALL3.getX() + corner[0], HALL3.getY() + HEIGHT, HALL3.getZ() + corner[1]), Blocks.SEA_LANTERN.defaultBlockState(), 2);
+        for (int x = -3; x < WIDTH + 3; x++)
+            for (int z = -3; z < DEPTH + 3; z++)
+                level.setBlock(new BlockPos(HALL3.getX() + x, HALL3.getY() + HEIGHT + 9, HALL3.getZ() + z), Blocks.STONE_BRICKS.defaultBlockState(), 2);
+    }
+
+    /** Put the camera beside the resting head and look at it. */
+    private static void aimAtHead(Minecraft mc) {
+        var server = mc.getSingleplayerServer();
+        var uuid = mc.player.getUUID();
+        server.execute(() -> {
+            var player = server.getPlayerList().getPlayer(uuid);
+            if (player == null) return;
+            var level = player.serverLevel();
+            var heads = level.getEntitiesOfClass(dev.bwr.mod.accident.ReactorHeadEntity.class,
+                    new net.minecraft.world.phys.AABB(HALL2.getX() - 90, HALL2.getY() - 20, HALL2.getZ() - 90,
+                            HALL2.getX() + 100, HALL2.getY() + 90, HALL2.getZ() + 100));
+            if (heads.isEmpty()) throw new IllegalStateException("No reactor head to photograph");
+            var head = heads.get(0);
+            Vec3 target = head.position().add(0, 1.0, 0);
+            Vec3 camera = target.add(0, 14, 0).add(new Vec3(HALL2.getX() + 4 - target.x, 0, HALL2.getZ() + 4 - target.z).normalize().scale(-1).scale(34));
+            Vec3 delta = target.subtract(camera);
+            float yaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90);
+            float pitch = (float) -Math.toDegrees(Math.atan2(delta.y, Math.hypot(delta.x, delta.z)));
+            player.connection.teleport(camera.x, camera.y, camera.z, yaw, pitch);
+            LogUtils.getLogger().info("ACCIDENT BLAST CLIENT CHECK: head resting={} at {} tilt {}/{}", head.isResting(), head.position(),
+                    head.tiltXDegrees(), head.tiltZDegrees());
+        });
     }
 
     private static void detonate(ServerLevel level) {

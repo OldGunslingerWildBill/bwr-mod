@@ -202,11 +202,17 @@ public final class ReactorBoundaryEffects {
                 l.playSound(null,reactor.getBlockPos(),SoundEvents.GENERIC_EXPLODE.value(),SoundSource.BLOCKS,16f,.65f);
                 // Steam burst and missile up through the head: a cone above the shell, sized by the stored energy.
                 double psig=failurePressure(reactor,c);
-                var vessel=reactor.core().getPressureVessel();
-                double dome=Math.clamp(vessel.getSteamDomeVolumeM3(),50.0,600.0);
-                double flash=BoundaryStress.HEAD_FAILURE_LIQUID_FRACTION*BoundaryStress.RATED_CORE_FLOW_KG_PER_S;
-                reactor.severeEffects().blasts().add(AccidentBlast.headCone(l,e.min(),e.max(),
-                        BlastPhysics.headFailureTntKg(psig,dome,flash),6.0f));
+                double stored=headFailureEnergyJ(reactor,psig);
+                double tnt=BlastPhysics.tntKg(stored*BlastPhysics.STEAM_BURST_BLAST_YIELD);
+                // The head goes first: it breaks what it can in the column above and may be stopped by it. A head
+                // that is held under something leaves the cone a ceiling there. A vessel whose head was already
+                // off for refuelling has nothing to throw.
+                int ceiling=Integer.MAX_VALUE;
+                if(reactor.vesselState().canHoldPressure()) {
+                    var launch=dev.bwr.mod.accident.HeadMissileLauncher.launch(l,e.min(),e.max(),stored,psig);
+                    if(launch!=null) ceiling=launch.ceilingY();
+                }
+                reactor.severeEffects().blasts().add(AccidentBlast.headCone(l,e.min(),e.max(),tnt,6.0f,ceiling));
             } else {
                 if(e.ports().stream().anyMatch(p->!l.isLoaded(p)||!l.isLoaded(p.relative(e.face(p))))) continue;
                 var ports=e.ports().stream().filter(p->component(l.getBlockState(p))==c)
@@ -242,6 +248,19 @@ public final class ReactorBoundaryEffects {
         for(var b:lineBreaks.values())
             if(b.live && e.ports().contains(b.port)) openings.add(opening(e,b.port,b.component,b.inlet));
         boundary.setOpenings(openings);
+    }
+    /**
+     * Energy a head failure at {@code psig} releases, J, from the core's state now: the steam dome expanding at that
+     * pressure (its volume as the vessel model tracks it, bounded to 50..600 m3) plus the water that flashes in the
+     * first second, which is the rated share of core flow but never more than the liquid the vessel holds.
+     */
+    public static double headFailureEnergyJ(ReactorControllerBlockEntity reactor, double psig) {
+        var vessel=reactor.core().getPressureVessel();
+        double dome=Math.clamp(vessel.getSteamDomeVolumeM3(),50.0,600.0);
+        double flash=BoundaryStress.HEAD_FAILURE_LIQUID_FRACTION*BoundaryStress.RATED_CORE_FLOW_KG_PER_S;
+        double liquid=vessel.getLiquidMassKg();
+        if(Double.isFinite(liquid)) flash=Math.min(flash,Math.max(0.0,liquid));
+        return BlastPhysics.headFailureEnergyJ(psig,dome,flash);
     }
     /** Pressure the component failed at, psig: the recorded failure, else the dome now. */
     private static double failurePressure(ReactorControllerBlockEntity reactor,BoundaryComponent c) {
