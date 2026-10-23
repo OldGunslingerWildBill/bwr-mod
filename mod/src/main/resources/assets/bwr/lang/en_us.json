@@ -1381,5 +1381,21 @@
   "block.bwr.heavily_reinforced_shield_plug_concrete": "Heavily Reinforced Shield Plug Concrete",
   "item.bwr.heavily_reinforced_shield_plug_concrete": "Heavily Reinforced Shield Plug Concrete",
   "block.bwr.ultra_reinforced_shield_plug_concrete": "Ultra-Reinforced Shield Plug Concrete",
-  "item.bwr.ultra_reinforced_shield_plug_concrete": "Ultra-Reinforced Shield Plug Concrete"
+  "item.bwr.ultra_reinforced_shield_plug_concrete": "Ultra-Reinforced Shield Plug Concrete",
+  "item.bwr.guide_book": "Operator's Guide",
+  "tooltip.bwr.guide_book.use": "Right-click to read: what to build first, how to wire a panel and how not to melt the core.",
+  "gui.bwr.guide.title": "Realistic BWR guide",
+  "gui.bwr.guide.intro": "A short guide for new operators: what to build first, how to wire a panel and how not to melt the core. The guide remembers where you stopped.",
+  "gui.bwr.guide.continue": "Continue: %s, page %s",
+  "gui.bwr.guide.continue_tip": "Open the guide at the page where you stopped last time.",
+  "gui.bwr.guide.chapter_tip": "Chapter %s, %s pages. Opens at its first page.",
+  "gui.bwr.guide.position": "%s, page %s of %s",
+  "gui.bwr.guide.help": "Left and Right turn pages and Esc closes the book. Each chapter ends by naming the repository document to read next.",
+  "gui.bwr.guide.more": "More: %s",
+  "gui.bwr.guide.back": "Back",
+  "gui.bwr.guide.back_tip": "Previous page. The Left arrow key does the same.",
+  "gui.bwr.guide.contents": "Contents",
+  "gui.bwr.guide.contents_tip": "Back to the list of chapters.",
+  "gui.bwr.guide.next": "Next",
+  "gui.bwr.guide.next_tip": "Next page. The Right arrow key does the same."
 }

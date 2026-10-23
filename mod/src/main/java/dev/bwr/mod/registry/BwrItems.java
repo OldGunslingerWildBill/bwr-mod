@@ -26,6 +26,8 @@ public final class BwrItems {
             () -> new dev.bwr.mod.radiation.AreaRadiationMonitorItem(BwrBlocks.AREA_RADIATION_MONITOR.get(), new Item.Properties()));
     public static final DeferredItem<dev.bwr.mod.radiation.SurveyMeterItem> SURVEY_METER =
             ITEMS.register("survey_meter", () -> new dev.bwr.mod.radiation.SurveyMeterItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<dev.bwr.mod.guide.GuideBookItem> GUIDE_BOOK =
+            ITEMS.register("guide_book", () -> new dev.bwr.mod.guide.GuideBookItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<BlockItem> GRID_TIE=ITEMS.registerSimpleBlockItem(BwrBlocks.GRID_TIE);
 
     public static final DeferredRegister<CreativeModeTab> TABS =
@@ -516,6 +518,7 @@ public final class BwrItems {
                         output.accept(GRID_TIE.get());
                         output.accept(FE_METER.get());
                         output.accept(SURVEY_METER.get());
+                        output.accept(GUIDE_BOOK.get());
                         output.accept(AREA_RADIATION_MONITOR.get());
                         output.accept(TURBINE_FEED_PUMP.get());
                         output.accept(CORIUM.get());

@@ -1,0 +1,135 @@
+{
+  "title": "A first working plant",
+  "docs": [
+    "README.md",
+    "PRESSURE-VESSEL.md",
+    "COMPACT-CORE.md",
+    "RECIRCULATION.md",
+    "MODULAR-TURBINES.md",
+    "docs/grid-wiring.md"
+  ],
+  "pages": [
+    {
+      "title": "Plan the plant",
+      "text": [
+        "A working plant is ten steps, in this order: vessel and core, control rod drives, recirculation, fuel, steam, water, generator and load, a startup by hand, protection, and a control room.",
+        "",
+        "All plant blocks have crafting recipes. Only items the plant itself produces do not. Find them in the Realistic BWR creative tab or a recipe viewer.",
+        "",
+        "A vessel that fails its structure check says why in chat. Read the message and fix what it names. Turbines, towers and the vessel all have large footprints, so build big and leave room."
+      ]
+    },
+    {
+      "title": "1. Vessel and core",
+      "text": [
+        "Build a closed shell of Reactor Vessel blocks: 5 to 21 blocks wide and deep inside, and at least 8 tall. Put one Reactor Controller inside it. Add an RPV Steam Outlet, an RPV Water Injection Port and the recirculation ports, all facing outward.",
+        "",
+        "Under the floor place one Control Rod Drive per control blade, in the pattern in COMPACT-CORE.md (a 17 x 17 vessel uses 185). Drives that touch share one water pipe and one power cable. The controller reports the coordinates of any missing drive."
+      ],
+      "icons": [
+        "bwr:reactor_vessel",
+        "bwr:reactor_controller",
+        "bwr:rpv_steam_outlet",
+        "bwr:rpv_water_injection_port",
+        "bwr:control_rod_drive"
+      ]
+    },
+    {
+      "title": "2. Recirculation",
+      "text": [
+        "Put an RPV Recirculation Top Outlet in the upper half of a side wall and an RPV Recirculation Bottom Inlet in one of the lowest two rows, both facing outward. Place a DVSS Recirculation Pump (5 x 5, 10 high). Pipe the outlet to its blue rear flange and its teal front flange to the inlet.",
+        "",
+        "Inside the vessel install jet assemblies in matched, opposing pairs, 1 or 2 blocks above the bottom shell. The INFO tab of the reactor screen says how many your vessel needs: the smallest needs 12 and 2 full-speed pumps. Pumps need FE. Right-click a pump to set its speed and start it."
+      ],
+      "icons": [
+        "bwr:recirculation_outlet",
+        "bwr:recirculation_inlet",
+        "bwr:recirculation_pump",
+        "bwr:jet_pump",
+        "bwr:rip_pump"
+      ]
+    },
+    {
+      "title": "3. Fuel",
+      "text": [
+        "Make fuel assemblies in a Fuel Fabricator: uranium and steel ingots in, an assembly out. Natural uranium cannot sustain a chain reaction here, so choose 3.50 % (the default) or higher. At 3.50 % an assembly costs 29 uranium ingots and 4 steel, and some power.",
+        "",
+        "Uranium comes from this mod's own ore (chapter 4). Steel must come from a mod that supplies steel ingots, such as Mekanism.",
+        "",
+        "Fuel moves on the refuelling bridge (chapter 4). For a quick first plant a server owner can set instantRefuelling to true, which loads fuel by clicking the refuelling map."
+      ],
+      "icons": [
+        "bwr:fuel_fabricator",
+        "bwr:fuel_assembly",
+        "bwr:uranium_ingot"
+      ]
+    },
+    {
+      "title": "4. Steam",
+      "text": [
+        "Pipe the RPV Steam Outlet through a Steam Stop Valve and a Turbine Steam Control Valve to the HP turbines, then the HP exhaust to the LP turbines. Join the turbines and the generator end to end, shafts touching, at one height. One HP, three LP and one generator is a useful start.",
+        "",
+        "Put one condenser six blocks directly below each LP turbine: aim at the LP's underside and right-click to snap it into place. HP and generator are 5 x 5 x 9, LP is 7 x 5 x 7. New valves start closed."
+      ],
+      "icons": [
+        "bwr:steam_stop_valve",
+        "bwr:turbine_control_valve",
+        "bwr:hp_turbine",
+        "bwr:lp_turbine",
+        "bwr:arabelle_condenser"
+      ]
+    },
+    {
+      "title": "5. Water",
+      "text": [
+        "Condenser cooling water: hot outlets to a cooling tower, the tower basin to a Circulating Water Pump, the pump to the condenser's cold inlets. A Screened Water Intake and a Makeup Water Pump keep the tower topped up from a lake or river.",
+        "",
+        "Feedwater: pipe the condenser's condensate outlet to a Condensate Storage Tank, then to a feedwater pump (motor or turbine driven), then to the RPV Water Injection Port. Steam pipes and water pipes are separate systems."
+      ],
+      "icons": [
+        "bwr:mechanical_draft_tower",
+        "bwr:circulating_water_pump",
+        "bwr:screened_water_intake",
+        "bwr:makeup_water_pump",
+        "bwr:condensate_storage_tank",
+        "bwr:motor_feed_pump",
+        "bwr:turbine_feed_pump"
+      ]
+    },
+    {
+      "title": "6. Generator and grid tie",
+      "text": [
+        "Connect a consumer, or a Grid Tie, to the generator's copper terminal (output only). A Grid Tie is an export load with a breaker you close yourself. It starts open, unbound and at zero demand.",
+        "",
+        "Bind it to the generator with the Panel Linker. With the breaker open, bring the turbine to 1500 rpm with its control valve and match phase and slip: within 10 degrees and 0.067 Hz. Then close the breaker. A bad close still happens, and it damages the generator, as does running above 1650 rpm. Nothing trips for you."
+      ],
+      "icons": [
+        "bwr:nuclear_generator",
+        "bwr:grid_tie",
+        "bwr:fe_meter",
+        "bwr:panel_linker"
+      ]
+    },
+    {
+      "title": "7. Start up by hand",
+      "text": [
+        "With the vessel, fuel, drive power and water, recirculation, steam path and feedwater in place:",
+        "1. Start the recirculation pumps.",
+        "2. Press Reset on the reactor screen to clear the scram.",
+        "3. Pull rods out in small steps, watching the SRM period.",
+        "4. Open the stop valve.",
+        "5. Raise the control valve in 0.1 % steps.",
+        "",
+        "Rods move between notches labelled 0 (in) and 48 (out). Valve opening sets the steam supply, not a fixed electrical power. A full energy buffer or a blocked exhaust limits flow."
+      ]
+    },
+    {
+      "title": "8. Protection before you trust it",
+      "text": [
+        "Emergency cooling pumps, relief valves, SLC boron injection and a suppression pool exist, but they do nothing until you wire them to switches or write the logic. Before you run at power, build and test at least a scram you can reach, relief valves piped to a suppression pool, and an emergency pump that can reach the core.",
+        "",
+        "The Scram button on the reactor screen inserts every rod at once and checks nothing first. Chapter 5 lists the systems and chapter 3 shows how to put a scram on a panel."
+      ]
+    }
+  ]
+}

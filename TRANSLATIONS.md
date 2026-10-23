@@ -49,3 +49,10 @@ and wiring-result keys.
 
 The synthetic Spanish strings in `PhaseLTranslationsTests` test language
 selection and reordered arguments; they are not a shipped Spanish translation.
+
+## The in-game guide
+
+The Operator's Guide is data, not code: its pages are JSON under `assets/bwr/guide/<language>/`, and a translation is a copy of
+that folder (see [GUIDE.md](GUIDE.md)). Its buttons and tooltips are `gui.bwr.guide.*` lang keys, which this audit covers with the
+rest. `python tools-audit-guide.py` checks every chapter, page, icon id, image and referenced document, and that a translated chapter
+has the same pages as English.

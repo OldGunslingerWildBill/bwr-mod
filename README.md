@@ -175,6 +175,9 @@ redstone or to CC:Tweaked. A control commands the plant only when someone operat
 
 ## Getting started: a first working plant
 
+There is a short version of this section in the game: the **Operator's Guide** (a book and a nameplate; each player is also given
+one on first joining, a server option) opens with a right-click. See [GUIDE.md](GUIDE.md).
+
 All plant blocks have crafting recipes. Only items the plant itself produces do not. A vessel that fails
 its structure check says why in chat. Each step's detail is in the linked guide.
 

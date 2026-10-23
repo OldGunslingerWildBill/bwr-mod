@@ -35,6 +35,10 @@ public final class BwrAttachments {
     public static final Supplier<AttachmentType<Double>> PLAYER_DOSE = ATTACHMENTS.register("player_dose",
             () -> AttachmentType.builder(() -> 0.0).serialize(Codec.DOUBLE, dose -> dose > 0.0).copyOnDeath().build());
 
+    /** Set once a player has been given the guide book on joining; saved only when set, kept through death. */
+    public static final Supplier<AttachmentType<Boolean>> GUIDE_GIVEN = ATTACHMENTS.register("guide_given",
+            () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL, given -> given).copyOnDeath().build());
+
     public static final Supplier<AttachmentType<String>> MACHINE_TEMPLATE = ATTACHMENTS.register("machine_template",
             () -> AttachmentType.builder(() -> DEFAULT_TEMPLATE)
                     .serialize(Codec.STRING, template -> !DEFAULT_TEMPLATE.equals(template)).build());

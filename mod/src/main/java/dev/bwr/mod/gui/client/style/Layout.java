@@ -713,6 +713,11 @@ public final class Layout {
             return true;
         }
 
+        /** True while the child is taller than the viewport, that is, while the scroll bar shows. */
+        public boolean overflows() {
+            return maxOffset > 0;
+        }
+
         @Override
         protected void layout() {
             int inner = w - BwrStyle.SP2;

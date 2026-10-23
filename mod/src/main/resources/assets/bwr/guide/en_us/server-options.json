@@ -1,0 +1,89 @@
+{
+  "title": "Server options",
+  "docs": [
+    "README.md",
+    "PHASE-L1-REVIEW.md",
+    "URANIUM-ORE.md",
+    "REFUELLING-BRIDGE.md"
+  ],
+  "pages": [
+    {
+      "title": "Where the options live",
+      "text": [
+        "Options are TOML files, and each option has a comment in its file. bwr-gameplay.toml, bwr-grid.toml and bwr-server.toml are per world, in the world's serverconfig folder. bwr-common.toml and bwr-panels.toml are in the config folder, and so is the client-only bwr-visuals.toml.",
+        "",
+        "The next pages list every option with its default, file by file. This book itself is given to each player once, on first join, by giveGuideOnFirstJoin."
+      ]
+    },
+    {
+      "title": "bwr-gameplay.toml, part 1",
+      "text": [
+        "giveGuideOnFirstJoin = true",
+        "instantRefuelling = false (the refuelling map moves fuel instantly)",
+        "uraniumOreGeneration = true (new chunks only)",
+        "reprocessingMaxDecayHeatKw = 50.0 (0 turns the check off)",
+        "accidentProgressionMultiplier = 1.0",
+        "failureHazardPerSecond = 0.02 (random pipe boundary failure; 0 = off)",
+        "contaminationHalfLifeSeconds = 86400.0",
+        "contaminationDoseMultiplier = 1.0 (0 = no dose effects)"
+      ]
+    },
+    {
+      "title": "bwr-gameplay.toml, part 2",
+      "text": [
+        "wallStrengthK = 5.8",
+        "wallStrengthCapPsig = 250.0",
+        "rodColletFailureHazardPerSecond = 0.0 (random rod drift; 0 = off)",
+        "rodDriftNotchesPerSecond = 0.1",
+        "antimonyExposureHours = 48.0",
+        "cobaltExposureHours = 72.0",
+        "tritiumExposureHours = 168.0",
+        "siliconExposureHours = 24.0",
+        "tritiumSamplesPerRod = 1250"
+      ]
+    },
+    {
+      "title": "bwr-grid.toml and bwr-server.toml",
+      "text": [
+        "bwr-grid.toml (per world):",
+        "gridTieMaxMW = 1500.0",
+        "",
+        "bwr-server.toml (per world):",
+        "coriumAltersWorld = true (off: the accident is still simulated, but no blocks change)",
+        "coriumBlocksPerTick = 48"
+      ]
+    },
+    {
+      "title": "bwr-common.toml (containment)",
+      "text": [
+        "maxInteriorCells = 200000",
+        "maxSpan = 128",
+        "scanCellsPerTick = 4000",
+        "revalidateTicks = 600",
+        "strengthScanDepth = 16",
+        "penetrationContainmentPsig = 150.0",
+        "vaultDoorContainmentPsig = 200.0",
+        "airlockContainmentPsig = 120.0",
+        "steamPenetrationDesignPsig = 1250.0",
+        "steamPenetrationCodeLimitPsig = 1375.0",
+        "waterPenetrationDesignPsi = 2500.0",
+        "passThroughDesignPsi = 1480.0",
+        "powerPenetrationFePerTick = 100000"
+      ]
+    },
+    {
+      "title": "bwr-panels.toml and bwr-visuals.toml",
+      "text": [
+        "bwr-panels.toml (config folder):",
+        "maxGroupColumns = 16, maxGroupRows = 8",
+        "maxComponentsPerBlock = 256, maxLabelLength = 16",
+        "sampleTicks = 2, linkRange = 64",
+        "networkLineShareDistance = 32, feToJoules = 2.5",
+        "",
+        "bwr-visuals.toml (client only):",
+        "visualEffects = \"AUTO\", panelGpuCache = true",
+        "networkLineViewDistance = 32, panelTextFade = true"
+      ]
+    }
+  ]
+}

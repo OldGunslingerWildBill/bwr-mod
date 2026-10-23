@@ -1,0 +1,106 @@
+{
+  "title": "Fuel and fuel handling",
+  "docs": [
+    "FUELS-AND-RODS.md",
+    "URANIUM-ORE.md",
+    "SPENT-FUEL-POOL.md",
+    "REFUELLING-BRIDGE.md"
+  ],
+  "pages": [
+    {
+      "title": "Uranium ore",
+      "text": [
+        "The mod has its own uranium: Uranium Ore and Deepslate Uranium Ore, mined with an iron pickaxe or better. They drop raw uranium. Smelt or blast raw uranium or the ore into an ingot. Mekanism's uranium works the same way.",
+        "",
+        "Veins are long ribbons of altered rock, found by digging and in caves, never lying on the ground. They are richest in deserts and badlands, then highlands and savanna. Plains and forests have few, and oceans and rivers almost none. Only newly generated chunks have ore, so an old world gets it only in ground you have not explored yet."
+      ],
+      "icons": [
+        "bwr:uranium_ore",
+        "bwr:deepslate_uranium_ore",
+        "bwr:raw_uranium",
+        "bwr:uranium_ingot"
+      ]
+    },
+    {
+      "title": "The fuel fabricator",
+      "text": [
+        "Put uranium and steel ingots in, choose an enrichment from 0.71 to 20 %, and get a fuel assembly. Richer fuel costs more uranium, by real enrichment arithmetic. Uranium ingots per assembly:",
+        "0.71 % (natural): 4     2.70 %: 22     3.50 %: 29",
+        "4.95 %: 41     8.00 %: 68     20 %: 172",
+        "",
+        "Every assembly also takes 4 steel. Raw uranium counts as one ingot. The fabricator needs power, and hoppers and pipes can feed it. A Mekanism chemical route is still there."
+      ],
+      "icons": [
+        "bwr:fuel_fabricator",
+        "bwr:fuel_assembly",
+        "bwr:raw_uranium"
+      ]
+    },
+    {
+      "title": "Depleted uranium and MOX",
+      "text": [
+        "Enrichment returns the uranium that did not become product as depleted uranium ingots. Four of them with four steel, in a ring with the steel at the corners, craft a blanket assembly. Loaded among fuel it absorbs neutrons at first and breeds plutonium as it burns. It never becomes a fuel on its own.",
+        "",
+        "The fabricator also makes MOX (4.50, 7.00 and 9.50 %) from plutonium nuggets and depleted uranium, plus 4 steel. The reprocessing plant hands those back from spent fuel."
+      ],
+      "icons": [
+        "bwr:depleted_uranium",
+        "bwr:plutonium_nugget",
+        "bwr:plutonium_ingot"
+      ]
+    },
+    {
+      "title": "Spent fuel and the pool",
+      "text": [
+        "A discharged assembly keeps its decay heat: 315 kW at discharge for a 45 GWd/t assembly, 63 kW after an hour and 23 kW after a day. It waits in the spent fuel pool.",
+        "",
+        "Build a lined box of Spent Fuel Pool Lining (outside 5 to 25 blocks wide and deep, 8 to 16 high) with one Spent Fuel Pool Controller and racks: exactly four rack blocks stacked on the floor make one rack of four assemblies. Fit a makeup port and the cooling ports. You run the cooling and supply the makeup water. Let it go and the water boils off and the fuel uncovers."
+      ],
+      "icons": [
+        "bwr:spent_fuel_pool_controller",
+        "bwr:spent_fuel_pool_wall",
+        "bwr:spent_fuel_rack",
+        "bwr:spent_fuel_pool_makeup_port"
+      ]
+    },
+    {
+      "title": "The refuelling bridge",
+      "text": [
+        "Fuel moves on a refuelling bridge, one assembly at a time and always under water. Build two parallel runs of Refuelling Rail over the open reactor and the pool, a straight row of Transfer Canal blocks (the cattle chute) between the reactor and the pool with a Canal Gate in it, and a Refuelling Bridge Console beside a rail.",
+        "",
+        "Instant refuelling by clicking the refuelling map is a server option, off by default."
+      ],
+      "icons": [
+        "bwr:refuelling_rail",
+        "bwr:transfer_canal",
+        "bwr:canal_gate",
+        "bwr:refuelling_bridge_console"
+      ]
+    },
+    {
+      "title": "Moving fuel with the bridge",
+      "text": [
+        "The vessel head must be off and the cavity flooded first. In the console's map pick a core position and a rack cell, then TO POOL or TO CORE. A move takes about 50 seconds on the smallest plant.",
+        "",
+        "The bridge will not lift an assembly higher than leaves 1.5 m of water over it unless you override. An assembly lifted out of the water makes the survey meter spike."
+      ],
+      "icons": [
+        "bwr:refuelling_bridge_console",
+        "bwr:survey_meter"
+      ]
+    },
+    {
+      "title": "Reprocessing and the fuel cycle",
+      "text": [
+        "The Reprocessing Plant takes a spent assembly apart: plutonium nuggets, depleted uranium and fission product waste come out, in amounts worked out from that assembly's burnup. Fresh and thorium assemblies are refused. It needs no Mekanism.",
+        "",
+        "It will not start on an assembly whose decay heat is above 50 kW (the option reprocessingMaxDecayHeatKw), which takes about two hours in the pool. The cycle is make, burn, cool, reprocess, make MOX. Nothing automates a step: you carry the assemblies and run the cooling."
+      ],
+      "icons": [
+        "bwr:reprocessing_plant",
+        "bwr:plutonium_nugget",
+        "bwr:fission_product_waste"
+      ]
+    }
+  ]
+}

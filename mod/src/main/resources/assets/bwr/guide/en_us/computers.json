@@ -1,0 +1,41 @@
+{
+  "title": "Computers (CC:Tweaked)",
+  "docs": [
+    "docs/lua/README.md",
+    "CONTROL-PANELS.md",
+    "SIGNALS.md",
+    "PLANT-COMPUTER.md"
+  ],
+  "pages": [
+    {
+      "title": "CC:Tweaked basics",
+      "text": [
+        "CC:Tweaked is optional and installed separately. Most machines are peripherals that expose measurements and actuators, never judgements. Put a computer beside a machine, or join them with wired modems, then list what it sees:",
+        "for _, n in ipairs(peripheral.getNames()) do",
+        "  print(n, peripheral.getType(n))",
+        "end",
+        "",
+        "The reactor is a bwr_reactor. Use your own names, not the examples'. Every machine peripheral has getName(), setName(), getPort() and setPort(). A panel can read a machine by its CC port (0 to 9999)."
+      ]
+    },
+    {
+      "title": "Commands, and the house rule",
+      "text": [
+        "A program can set rods and flow, open and close valves, start pumps and call scram. Rod ids start at 1 and notches are 0 to 48:",
+        "local r = peripheral.wrap(\"bwr_reactor_0\")",
+        "r.setRodPosition(1, 28)",
+        "print(r.getStatus().scram)",
+        "",
+        "The house rule holds for programs too: nothing the mod does acts on its own, so every trip, pump start and load shed is a program you write. A program that exits leaves its commands in force."
+      ]
+    },
+    {
+      "title": "The example programs",
+      "text": [
+        "Six examples are in the docs/lua folder of the repository. They are not part of the mod and nothing installs them: startup.lua (one recirculation and rod manoeuvre), backup_scram.lua (scrams on limits you give it), eccs_start.lua (starts one named emergency pump), containment_isolation.lua (closes named valves), panel_display.lua (draws a reactor summary on a graphic display) and spds.lua (a plant computer program).",
+        "",
+        "Copy them into an examples folder on an in-game computer. Each file's header lists its arguments, and they need named targets. Read docs/lua/README.md first."
+      ]
+    }
+  ]
+}

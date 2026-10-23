@@ -71,6 +71,12 @@ public final class GameplayConfig {
                     + "Existing worlds keep their fuel either way; with this off the map still shows the core but its buttons point you to the bridge")
             .define("instantRefuelling", false);
 
+    public static final ModConfigSpec.BooleanValue GIVE_GUIDE_ON_FIRST_JOIN = BUILDER
+            .comment("Give each player one Operator's Guide (the in-game guide book) the first time they join this world, once only. "
+                    + "A player who has had one is never given another, whether or not they still have it; craft it with a book and a nameplate. "
+                    + "Off: nobody is given one, and players who have not had one get theirs when it is turned back on (see GUIDE.md)")
+            .define("giveGuideOnFirstJoin", true);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static double failureHazardPerSecond() { return read(FAILURE_HAZARD_PER_SECOND); }
@@ -83,6 +89,11 @@ public final class GameplayConfig {
     /** Whether the refuelling map may move fuel instantly. False until the server config says otherwise (and before it is loaded). */
     public static boolean instantRefuelling() {
         return SPEC.isLoaded() ? INSTANT_REFUELLING.get() : INSTANT_REFUELLING.getDefault();
+    }
+
+    /** Whether a player's first join gives them the guide book. True until the server config says otherwise (and before it is loaded). */
+    public static boolean giveGuideOnFirstJoin() {
+        return SPEC.isLoaded() ? GIVE_GUIDE_ON_FIRST_JOIN.get() : GIVE_GUIDE_ON_FIRST_JOIN.getDefault();
     }
 
     public static int tritiumSamplesPerRod() {

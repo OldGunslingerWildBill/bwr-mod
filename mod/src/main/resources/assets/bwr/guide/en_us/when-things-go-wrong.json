@@ -1,0 +1,84 @@
+{
+  "title": "When things go wrong",
+  "docs": [
+    "PORT-LOCA-UPDATE.md",
+    "SEVERE-ACCIDENT-UPDATE.md",
+    "RADIATION.md"
+  ],
+  "pages": [
+    {
+      "title": "Pipe breaks (LOCA)",
+      "text": [
+        "Remove a pipe next to a reactor nozzle it was connected to, or anywhere along a recirculation, feedwater or main steam line, and the vessel drains through that port: a loss-of-coolant accident. The leak rate follows the pressure, the water head and the nozzle's height.",
+        "",
+        "A break behind a closed valve (MSIV, stop or control valve, relief valve, containment penetration) is isolated: no leak until that valve opens. Nothing closes a valve for you. The reactor screen's INFO tab lists open breaks in red and isolated ones in amber."
+      ]
+    },
+    {
+      "title": "Sealing a break",
+      "text": [
+        "Put the pipe back and the break seals: for a nozzle break, a line back on the block outside the port; for a line break, pipe or the matching valve body back in the gap. A message such as Recirculation loop A discharge break sealed tells you. A component with several breaks is repaired only when the last one seals.",
+        "",
+        "Sealing stops the leak. It does not put the water back, and a failed vessel head stays failed. Pipe that never reached a pump or machine is just construction: removing it is not a break."
+      ]
+    },
+    {
+      "title": "Core damage stages",
+      "text": [
+        "If cooling is lost the core goes through stages. 1 uncovery, 2 cladding heatup and 3 zirconium-water reaction (above 1,200 C, making hydrogen) can still be recovered. From stage 4 the damage is permanent: 4 cladding failure (750 to 1,200 C, releasing fission products), 5 fuel melt and relocation (2,200 C), 6 lower head failure, 7 corium attacking the concrete.",
+        "",
+        "Water in the lower plenum quenches debris, so injecting into a melting core is still correct. A dry debris bed fails the lower head in about 35 minutes at rated pressure, and in about 80 minutes if you depressurise."
+      ]
+    },
+    {
+      "title": "Hydrogen and inerting",
+      "text": [
+        "Hot cladding makes hydrogen, and containment is not inerted unless you inert it. Hydrogen at 4.1 % or more with oxygen at 5 % or more is flammable; at 8 % it burns (a deflagration). If the mixture is above 13 % hydrogen when oxygen reaches 5 %, it detonates and always fails containment. Pressure above 140 psig also fails it.",
+        "",
+        "Inert in advance with the Containment Nitrogen Supply, which purges oxygen toward 2 %. Never de-inert with hydrogen inside. Venting through the suppression pool lowers pressure and scrubs fission products by a factor of 100."
+      ],
+      "icons": [
+        "bwr:containment_nitrogen_supply",
+        "bwr:nitrogen_canister",
+        "bwr:containment_vent_valve"
+      ]
+    },
+    {
+      "title": "Head failure and shield plugs",
+      "text": [
+        "A vessel head failure throws the head. What stops it is whatever stands above the vessel: each metre-thick row of blocks absorbs energy by its blast resistance. On the 17 x 17 reference vessel one row of obsidian or of any shield plug tier holds it, lined concrete needs five rows and vanilla concrete twenty. Smaller vessels need more rows.",
+        "",
+        "Shield Plug Concrete has three tiers, with blast resistance 1,800, 3,600 and 7,200 (obsidian is 1,200). A head that gets through lands far from the vessel, hurts what it hits and breaks blocks where it lands. A vessel opened for refuelling throws nothing."
+      ],
+      "icons": [
+        "bwr:shield_plug_concrete",
+        "bwr:heavily_reinforced_shield_plug_concrete",
+        "bwr:ultra_reinforced_shield_plug_concrete"
+      ]
+    },
+    {
+      "title": "Explosions break blocks",
+      "text": [
+        "Accident explosions always break blocks; there is no option to turn it off. A hydrogen burn breaks glass, doors, lamps and torches but not walls. A detonation or an overpressure failure breaches containment at its weakest spot, with a hole sized by the pressure. A head failure clears what is above the vessel, a lower head failure breaks the floor under it, and a pipe break at pressure whips the nearby pipes.",
+        "",
+        "What never breaks: the formed vessel, the reactor and containment controllers, and unbreakable blocks such as bedrock. Broken blocks drop items by the normal explosion rules."
+      ]
+    },
+    {
+      "title": "Radiation and the survey meter",
+      "text": [
+        "Fission products released from the fuel go airborne in containment, settle on plant surfaces or leave the site. Players nearby get hunger, then weakness and poison, then wither. Contamination halves every simulated day.",
+        "",
+        "The Survey Meter reads it. Hold it for the dose rate on your HUD and a Geiger click. Carry it anywhere in your inventory to record your own dose in mSv. Right-click for a reading, sneak-right-click to reset your dose. 1 mSv/h is a high radiation area. Area Radiation Monitors drive gauges and annunciators."
+      ],
+      "icons": [
+        "bwr:area_radiation_monitor"
+      ],
+      "image": {
+        "texture": "bwr:textures/item/survey_meter.png",
+        "textureSize": 16,
+        "size": 24
+      }
+    }
+  ]
+}

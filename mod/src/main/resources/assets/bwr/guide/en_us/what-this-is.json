@@ -1,0 +1,41 @@
+{
+  "title": "What this mod is",
+  "docs": [
+    "README.md",
+    "SPEC.md"
+  ],
+  "pages": [
+    {
+      "title": "A boiling water reactor and the plant around it",
+      "text": [
+        "Realistic BWR adds a boiling water reactor to Minecraft, with the plant around it: pumps, steam lines, turbines, a condenser, cooling, emergency cooling, containment and a grid connection.",
+        "",
+        "Power emerges from neutronics. You move control rods and change recirculation flow, and the core decides what it does. There is no commanded burn rate."
+      ],
+      "icons": [
+        "bwr:reactor_controller",
+        "bwr:hp_turbine",
+        "bwr:arabelle_condenser",
+        "bwr:nuclear_generator"
+      ]
+    },
+    {
+      "title": "You are the protection",
+      "text": [
+        "Nothing in the plant acts on your behalf. There are no automatic scrams, no automatic emergency cooling starts, no automatic valve closures and no built-in trips. A pump runs because you started it. A valve moves because you moved it.",
+        "",
+        "Protection is what you build and wire: panel switches, relief valves, emergency cooling pumps, or CC:Tweaked programs you write. Until you add it the plant has none, and a mistake can melt the core."
+      ]
+    },
+    {
+      "title": "What you need, and where to start",
+      "text": [
+        "Minecraft 1.21.1 with NeoForge. Mekanism and CC:Tweaked are optional and installed separately. Mekanism supplies steel, uranium and pipes that connect to the plant's ports; CC:Tweaked gives Lua control of nearly every machine.",
+        "",
+        "This is an early alpha: expect rough edges, and back up your worlds before updating.",
+        "",
+        "Chapter 2 builds a first plant and chapter 3 its control room. Chapter 4 is fuel, 5 the safety systems, 6 what happens when they fail, 7 computers and 8 the server options."
+      ]
+    }
+  ]
+}
