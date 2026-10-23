@@ -63,6 +63,7 @@ public final class ContainmentClientCheck {
             return;
         }
         if (mc.player == null || mc.level == null || mc.getSingleplayerServer() == null || ++joined < 35) return;
+        RenderEnvironment.log("containment");
         if (!requested) {
             requested = true;
             shown = 0;

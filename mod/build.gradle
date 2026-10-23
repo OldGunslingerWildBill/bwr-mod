@@ -105,6 +105,8 @@ neoForge {
             if (project.hasProperty('bwrPanelFixtureModels')) jvmArguments.add('-Dbwr.panelFixtureModels=true')
             if (project.hasProperty('bwrContainmentClientCheck')) jvmArguments.add('-Dbwr.containmentClientCheck=true')
             if (project.hasProperty('bwrAccidentBlastCheck')) jvmArguments.add('-Dbwr.accidentBlastClientCheck=true')
+            // One session with whatever else is in the run's mods/ folder (Essential, Effortless ...): builds and uses the new hardware.
+            if (project.hasProperty('bwrCompatSessionCheck')) jvmArguments.add('-Dbwr.compatSessionCheck=true')
             // Door pictures for the old/new comparison: -PbwrContainmentDoorShots=<label> saves run/turbineModelCheck/containment-door-shots/<label>/.
             if (project.hasProperty('bwrContainmentDoorShots')) jvmArguments.add('-Dbwr.containmentDoorShots=' + project.property('bwrContainmentDoorShots'))
             if (project.hasProperty('bwrPanelPerformanceCheck')) jvmArguments.add('-Dbwr.panelPerformanceCheck=true')

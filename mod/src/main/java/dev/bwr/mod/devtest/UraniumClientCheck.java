@@ -84,6 +84,7 @@ public final class UraniumClientCheck {
             return;
         }
         if (pit == null) return;   // the server is still digging
+        RenderEnvironment.log("uranium");
         if (!requested) {
             requested = true;
             shown = 0;

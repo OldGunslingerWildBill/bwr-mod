@@ -118,6 +118,7 @@ public final class RefuellingBridgeClientCheck {
         }
         var server = mc.getSingleplayerServer();
         var uuid = mc.player.getUUID();
+        RenderEnvironment.log("refuelling-bridge");
         if (!requested) {
             if (stage == NAMES.length) {
                 LogUtils.getLogger().info("REFUELLING BRIDGE CLIENT CHECK PASS: {} pictures", stage);

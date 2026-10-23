@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased: Sodium, Iris, shader and other-mod compatibility pass
+
+No game behaviour changed; no defect was found in the mod's own rendering, so no render code changed.
+
+- **Checked** under no render mods, Sodium 0.6.13 + Iris 1.8.12, Sodium 0.8.13 + Iris 1.8.14-beta.1, and the newer pair with Complementary Reimagined r5.9.3: the spent fuel pool (water, Cherenkov glow), the refuelling bridge, mast and canal water, the flying reactor head, the plant computer screens, the survey meter HUD, the containment doors, the area radiation monitor, the uranium ore and the shield plug blocks. 49 pictures per set-up, all looked at, and the logs of all runs: nothing missing, black, z-fighting or mis-ordered, the head and the HUD show everywhere, no exception, render-type error or mixin warning from bwr. Results, versions and known differences: `docs/shader-packs.md`, `TESTING.md` (C2).
+- **Other mods.** One session with Essential 1.5.0.1 and Effortless Structure 3.4.0 beside Mekanism, Mekanism Generators and CC:Tweaked (also with the newer Sodium/Iris pair and Complementary): join a world, build and use the pool, the bridge console, a radiation monitor and the plant computer; no error or conflict from bwr.
+- **Test additions** (devtest, not shipped). New client check `-PbwrCompatSessionCheck` (`CompatSessionCheck`); new stage `10-shield-plug-tiers` in `-PbwrAccidentBlastCheck` (vanilla concrete and the three shield plug tiers); the spent fuel pool, bridge, accident blast, radiation, containment and uranium checks now log `RENDER ENV` like the panel and FCD checks do.
+
 ## Unreleased: flaky GameTests, second round (fixtures released too early, timers started before the chunk was live)
 
 Test-only; no game behaviour changed.

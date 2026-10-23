@@ -134,6 +134,7 @@ public final class ContainmentDoorShots {
         }
         if (mc.player == null || mc.level == null || mc.getSingleplayerServer() == null || ++joined < 35) return;
         Stage current = stages[stage];
+        RenderEnvironment.log("containment-doors");
         if (!requested) {
             requested = true;
             shown = 0;

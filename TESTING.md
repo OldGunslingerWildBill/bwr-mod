@@ -496,6 +496,37 @@ Known limitations (test environment, not defects; no assertion was edited):
   (`FileSystemNotFoundException`, once, in the stable pair no-pack panel run) and one `Baked showcase block missing on the
   client` (newest pair, the showcase blocks had not arrived yet). Both passed on rerun without any change.
 
+### Compatibility pass, alpha.50 (C2)
+
+The client checks that put the hardware added after C1 on screen, run under the four set-ups above (each is one client JVM, about 2 to
+4 minutes, through run-mc.ps1):
+
+| Feature | Command (`:mod:runTurbineModelCheck`) | Pictures |
+| --- | --- | --- |
+| spent fuel pool, water, glow, ports, panel | `-PbwrSpentFuelPoolCheck` | `spent-fuel-pool-check/` (6) |
+| refuelling bridge, canal water, mast, control screen, survey meter HUD | `-PbwrRefuellingBridgeCheck` | `refuelling-bridge-check/` (10) |
+| vessel head entity (in flight, landed, held), shield plug tiers | `-PbwrAccidentBlastCheck` (stage `10-shield-plug-tiers`: vanilla concrete and the three tiers side by side) | `accident-blast-client-check/` (10) |
+| plant computer screens | `-PbwrPanelClientCheck -PbwrPanelClientStages=plant-` | `panel-client-check/` (8) |
+| area radiation monitor, survey meter HUD | `-PbwrRadiationClientCheck` | `radiation-client-check/` (3) |
+| containment vault doors and airlock | `-PbwrContainmentClientCheck` | `containment-client-check/` (8) |
+| uranium ore | `-PbwrUraniumClientCheck` | `uranium-check/` (4) |
+
+Each of them now logs `RENDER ENV check=... sodium=... iris=... shaderPackInUse=...` once the world is up. Add
+`-PbwrRenderMods=stable|newest` and `-PbwrShaderPack=ComplementaryReimagined_r5.9.3.zip` as above.
+
+`-PbwrCompatSessionCheck` (class `CompatSessionCheck`) is one session for running next to OTHER mods: it builds the refuelling floor, uses
+the bridge console and the pool controller through their real `useWithoutItem` (the real menus open and are checked on the client),
+places an area radiation monitor and drives it into alarm, builds the plant computer showcase, saves a picture of each
+(`compat-session-check/`) and logs `COMPAT SESSION CHECK PASS`. The pass copied Essential and Effortless Structure from the owner's pack
+into the run's `mods/` for it (and removed them again); read the log for errors from `bwr` and for mixin or shader warnings that appear
+only with the extra mods. Essential asks for consent to update itself and waits for the answer: delete the run's `essential/` folder
+before a run if it hangs at "Starting Essential Loader". Proof the check can fail: pointing the console use at an empty position logs
+`COMPAT SESSION CHECK FAILED at stage 1-bridge-console-menu ... using Block{minecraft:air} ... did nothing` and no PASS line.
+
+Findings and the known differences are in `docs/shader-packs.md`. A run is nondeterministic only where the picture waits on the game
+itself (the carried assembly in the bridge check was one step earlier in one of seven runs); none of the differences between set-ups
+is of that kind.
+
 ## Paperless recorder (DX1000 / DX2000)
 
 GameTests: `RecorderAlarmLogicTests` (the alarm state machine, no world), `PaperlessRecorderTests` (dots and their minimum and
