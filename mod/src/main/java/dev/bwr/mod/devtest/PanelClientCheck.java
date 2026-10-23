@@ -184,6 +184,7 @@ public final class PanelClientCheck {
             while (stage < NAMES.length && !chosen(NAMES[stage])) stage++;
             if (stage == NAMES.length) {
                 legendAuditVerdict();
+                leavingTheWorldReleasesThePanelState(mc);
                 LogUtils.getLogger().info("PANEL CLIENT CHECK PASS: {} component types, {} captures", placedTypes, captures);
                 mc.stop();
                 return;
@@ -594,6 +595,33 @@ public final class PanelClientCheck {
             throw new AssertionError("MSIV did not deliver a live position to the panel instruments: segment="
                     + seven.input(0) + " edgewise=" + edgewise.input(0));
         }
+    }
+
+    /**
+     * Audit findings 3 and 4 (AUDIT-2026-10-21.md): the client level is unloaded by the real event, as a disconnect or a
+     * world change does, and the GPU buffers of the panel mesh cache and the client's set of panels behind the wrench
+     * lines are both let go of. Run last, with the panels of the run still drawn.
+     */
+    private static boolean leaveChecked;
+
+    private static void leavingTheWorldReleasesThePanelState(Minecraft mc) {
+        if (leaveChecked) {
+            return; // the tick handler comes round again until the client has stopped
+        }
+        leaveChecked = true;
+        int blocks = dev.bwr.mod.panel.client.PanelRenderer.debugCachedBlocks();
+        int panels = dev.bwr.mod.panel.wiring.PanelNetworkIndex.tracked();
+        if (blocks <= 0 || panels <= 0) {
+            throw new AssertionError("Panel client check: nothing to release at the end of the run (cached blocks " + blocks
+                    + ", indexed panels " + panels + ")");
+        }
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.level.LevelEvent.Unload(mc.level));
+        if (dev.bwr.mod.panel.client.PanelRenderer.debugCachedBlocks() != 0 || dev.bwr.mod.panel.wiring.PanelNetworkIndex.tracked() != 0) {
+            throw new AssertionError("Panel client check: the level unload kept panel state: cached blocks "
+                    + dev.bwr.mod.panel.client.PanelRenderer.debugCachedBlocks() + " of " + blocks + ", indexed panels "
+                    + dev.bwr.mod.panel.wiring.PanelNetworkIndex.tracked() + " of " + panels);
+        }
+        LogUtils.getLogger().info("PANEL CLIENT CHECK leaving the world released {} cached blocks and {} indexed panels", blocks, panels);
     }
 
     private static boolean fit(net.minecraft.server.level.ServerLevel level, ComponentType type, Footprint size,
