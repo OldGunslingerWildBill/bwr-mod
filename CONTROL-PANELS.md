@@ -26,7 +26,7 @@ Panel bodies, trim blocks and the room furniture come in five paint finishes, as
 
 | Finish | Paint | Bezel | Where it comes from |
 | --- | --- | --- | --- |
-| seafoam (default) | `A7BCAE` | `7D9284` | the original GE green; every block placed before finishes existed |
+| seafoam (default) | `A7BCAE` | `7D9284` | the original General Power green; every block placed before finishes existed |
 | cream | `DDD6BB` | `A8A38E` | US and French rooms, VVER-440 (CR-FURNITURE-PWR-RESEARCH.md) |
 | tan | `C2AE8A` | `9A8A6C` | Shearon Harris beige with brown trim |
 | grey | `B4B9BC` | `8A9092` | Sizewell B, Qinshan pale grey |
@@ -101,7 +101,7 @@ hold with a size chosen keeps it, and a component already on a panel keeps the s
 | Full core display | 96x96, 128x128, 64x64, 80x80, 112x112, 48x48, 128x96, 128x80, 112x80 (up to **8 x 8 blocks**) |
 | Rod select matrix | 64x64, 48x48, 80x80, 96x96, 112x112, 128x128, 32x32 (up to 8 x 8 blocks) |
 
-The GE target pistol and W-2 heavy-duty pistol read best at 12x16 (their style table row says so, and the
+The General Power target pistol and the Westingapartment heavy-duty pistol read best at 12x16 (their style table row says so, and the
 showcases use it); a new control-switch item is 8x12, the first size of its list, and 12x16 is one click away. The
 control switch is the one type that does not start at twice its real size: the owner placed the 8x12 and the 12x16 side
 by side and found the 8x12 exactly the right size (the 12x16 is for other panels). Explicit item
@@ -122,7 +122,7 @@ chart, the nameplates and the mimic pieces are unchanged.
 | --- | --- | --- | --- |
 | Round dial | GE AB-40 meter cover 4.33 in (11 cm); 6 in round meter | model README (art/models/panel/meters); 6 in is an estimate | 2x2, 3x3; **4x4** |
 | Edgewise meter | GE Type 180, 6.04 x 2.29 in (15.3 x 5.8 cm) | model README (meters) | vertical 1x3, horizontal 3x1; **2x6**, **6x2** |
-| Control switch | breaker control escutcheon about 2.5 x 3.5 in (6 x 9 cm); the GE target pistol model itself is 4.4 x 6.6 in (11 x 17 cm) | estimate; model README (ge_sb) | 1x2, 2x3; the default is **8x12** (see below) |
+| Control switch | breaker control escutcheon about 2.5 x 3.5 in (6 x 9 cm); the General Power target pistol model itself is 4.4 x 6.6 in (11 x 17 cm) | estimate; model README (ge_sb) | 1x2, 2x3; the default is **8x12** (see below) |
 | Key switch | keyed escutcheon 3 x 4 in (7.6 x 10 cm) | model README (ge_sb) | 1x2; **2x4** |
 | Rotary selector | GE selector plate 3.5 x 4.4 in (8.9 x 11 cm); oiltight knob plate 2 x 2.5 in | model README (ge_sb, oiltight) | 1x2, 2x3; **2x4** |
 | Setpoint knob | 2.25 in knob (5.7 cm); 4 in knob | model README (pushbuttons); 4 in is an estimate | 1x1, **2x2** |
@@ -201,7 +201,7 @@ gauge is the 10x16 one scaled down, with numbers the same share of its face (the
 cell, twice their share on a 1x3 gauge). A least size that stops something vanishing shrinks with the gauge below the
 size its art was drawn for; at that size and above nothing changed. The wrench screen of the dial, the two edgewise
 meters and the bar gauge has two sliders, **Text size** and **Tick size**, 50 % to 200 % in steps of 5, default
-100 %. They multiply the printed text and the ticks' thickness and length (the baked GE meters' printed graduations
+100 %. They multiply the printed text and the ticks' thickness and length (the baked General Power meters' printed graduations
 too). Text only grows as far as it stays on the face and clear of its neighbours (a bar gauge's numbers also step
 aside for longer ticks), so near 200 % some text stops growing. Each setting is saved with the component only when
 it is not 100 %, and the server clamps it to the range. `GaugeScaleGuardTests` draws every gauge-like type at all its
@@ -228,8 +228,8 @@ range is unchanged.
 ### Looks: style and variant
 
 Control switches, rotary selectors, key switches, pushbuttons, lamps, setpoint knobs and the three meter types
-have a **Style** in the wrench screen: `classic` (the simple built-in look), `ge` and, for the three switch
-types, `westinghouse`. Types with several models also have a second choice: the **Handle** (pistol grip, heavy
+have a **Style** in the wrench screen: `classic` (the simple built-in look), `ge` (shown as General Power) and, for the three switch
+types, `westinghouse` (shown as Westingapartment). Types with several models also have a second choice: the **Handle** (pistol grip, heavy
 duty pistol; oval, knurled, lever, round notched, mini slimline; removable key, tumbler lock), the **Button**
 (flush, extended, mushroom, guarded, illuminated), the **Lens** (round, round with plate, ET-16 dome, square) or
 the **Pointer** (black, red). New components start as `ge` when the model ships and `classic` otherwise; saves
@@ -237,7 +237,7 @@ from before this feature load as `classic`. If a model file is missing the compo
 Cap, lens and knob colours still work: a colour you set recolours the model, and the default colour leaves the
 model's own. The control switch's target flag shows the plant state when its lamp inputs are wired, otherwise
 the last operation. The switch's "Target red after" setting picks which operation leaves it red: CLOSE
-(default, as on a GE breaker control switch) or OPEN (valves and pumps). The big breaker-control switches read best at their larger 12x16 size.
+(default, as on a General Power breaker control switch) or OPEN (valves and pumps). The big breaker-control switches read best at their larger 12x16 size.
 
 ### The linker
 
@@ -485,7 +485,7 @@ A plant command sink has a mode. **Follow** (the default for existing bindings) 
 every change. **Momentary** sends one fixed value when the output becomes non-zero and nothing when it
 returns to zero. Use it for controls that spring back or are pressed and released: a spring-return control
 switch goes OPEN = 1 then back to 0, so a follow sink on the MSIV's `open` would open the valve and shut it
-again on release. Real GE control switches are momentary and the equipment seals in; a momentary sink does
+again on release. Real breaker control switches are momentary and the equipment seals in; a momentary sink does
 the same. A pushbutton can start or stop a pump the same way (one button momentary 1, another momentary 0).
 
 The binding screen shows a mode button and a "send value" field for plant outputs, and defaults to
@@ -538,7 +538,7 @@ content patch only when something changed. Neither acts on the plant by itself.
 2. Sneak-right-click the **reactor controller** with the linker, then right-click the display with the linker, choose
    the input `Reactor`, mode *Plant*, and any signal (`formed` is the natural one: the binding only says *which*
    reactor), Apply.
-3. The layout comes from the core: its rod lattice, its numbering in the GE `XX-YY` convention and its LPRM strings.
+3. The layout comes from the core: its rod lattice, its numbering in the `XX-YY` rod coordinate convention and its LPRM strings.
    A smaller or compact core draws a smaller picture centred in the component.
 
 **Size and `tile_cells`.** The wrench screen has `Tile size (cells)` from 2 to 6. A new component starts at the
@@ -559,7 +559,7 @@ a device that is not a reactor controller is refused too.
 **Labels.** The wrench screen of both components has `Caption above` (for example `FULL CORE DISPLAY` or
 `ROD SELECT`, drawn in the margin above the picture; CC `setText` sets it) and `Rod coordinate legends` (on by
 default: the `18-31` on tiles, modules and buttons). The display also has `Edge row and column numbers`: automatic
-(on for Browns Ferry, off for Columbia), on, or off; on in Columbia style prints the GE row numbers and column numbers
+(on for Browns Ferry, off for Columbia), on, or off; on in Columbia style prints the row numbers and column numbers
 in the margin of the backplate. The rod coordinates and the LPRM string labels themselves always come from the core.
 
 **Unbound, unformed, unloaded.** An unbound display draws a dark 185-rod reference layout (the frame and dark tiles) so
@@ -590,13 +590,13 @@ and under it a small lamp cluster: ACCUM and SCRAM in the left column, SELECT (w
 DRIFT in the right, with FULL IN and FULL OUT as small lamps flanking the digits. Between module columns stand the
 **LPRM strips**: four lamps, level D at the top and A at the bottom as on the real display, with the string coordinate
 below (`08-49`). A level lamp is lit white while the chamber is in range, amber for upscale, blue when bypassed, red
-when failed, and dark for downscale or an unformed core. The GE coordinates run along the left (rows 03 ... 59) and the
+when failed, and dark for downscale or an unformed core. The coordinates run along the left (rows 03 ... 59) and the
 bottom (columns 02 ... 58) with black lines to the modules. The style draws no backplate: the board's own colour shows.
 The mod does not model SRM or IRM detectors by position, so the `SRM-A` and `IRM-C` labels of the real board are not drawn.
 
 Thresholds (wrench screen): `Accumulator trouble below` (default 0.9 of a full charge) and the LPRM `downscale below`
 (5 percent) and `upscale above` (110 percent). They are gameplay defaults: the core has no notion of a low accumulator,
-and no source for exact GE alarm values was found.
+and no source for exact alarm values was found.
 
 ### Selecting and moving rods from a benchboard
 
@@ -1035,7 +1035,7 @@ size** (the exact real size is the next size up in the list: right-click air wit
 
 ### 6.1 Controller station (`bwr:controller_station`)
 
-A manual/auto station (GE / Bailey / Foxboro hand-auto): one scale with the **process variable pointer** (red, right of the
+A manual/auto station (General Power / Bailey / Foxboro hand-auto): one scale with the **process variable pointer** (red, right of the
 line) and the **setpoint pointer** (green, left) over the span Min to Max, the **demand bar** beside it (amber in MAN, green in
 AUTO), **AUTO** and **MAN** lamp pushbuttons, **RAISE** and **LOWER** pushbuttons (hold to keep stepping, about five steps a
 second; the mouse wheel steps too).

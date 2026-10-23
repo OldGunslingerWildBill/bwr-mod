@@ -76,7 +76,7 @@ panel index, and (CC:Tweaked present) the CC port machine cache after an empty a
 
 The multiplayer check (`:mod:runMultiplayerCheck`, a dedicated server and two real clients) and the GameTest `PanelHeldControlTests` (a held rod control
 is released when its panel chunk unloads; fixture 85,900) are described under "Dedicated server and two real clients (C3)" below. The
-required GameTest count is 292 (291 before C3).
+GameTest run prints its own total of required tests at the end; that printed total is the count, so it is not repeated here.
 
 APRM calibration (heat balance, per-channel gain and error, the bounded manual `aprm_<n>_gain` command) is covered by
 the core test `AprmCalibrationTest` (6 checks: heat balance closes on the model power at a steady rated core and reads
@@ -500,7 +500,7 @@ GameTests: `RecorderAlarmLogicTests` (the alarm state machine, no world), `Paper
 maximum, stop and start, the alarm log, ACK from the FUNC soft key and from a bound acknowledge pushbutton, patches that keep a client
 copy equal, saves and old saves, validation, the makes' limits, ports, keys, free messages; fixture origin 88,900, 64 blocks apart)
 and `PaperlessRecorderScreenTests` (every screen of both makes painted headless in white and black and written to
-`run/turbineGameTest/recorder-screens/`, the blink, the paint cost, the key layout). The required GameTest count is 318.
+`run/turbineGameTest/recorder-screens/`, the blink, the paint cost, the key layout). The run's printed total is the required GameTest count.
 
 `:mod:runTurbineModelCheck -PbwrRecorderClientCheck` (class `RecorderClientCheck`, stage groups `-PbwrRecorderClientStages=shots,keys,performance`)
 places a DX1000 and a DX2000 with the valves' signals bound and a recorded history, photographs every screen in white and black,

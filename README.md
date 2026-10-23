@@ -4,169 +4,18 @@
 
 **By [OldGunslingerWildBill](https://github.com/OldGunslingerWildBill)**
 
-A working **Minecraft 1.21.1 / NeoForge** mod that adds a physically modeled
-boiling water reactor, modeled pumps, and connected steam and water systems.
-Power emerges from neutronics: move the control rods and change recirculation
-flow, and the reactor responds. There is no commanded burn rate.
+Realistic BWR adds a boiling water reactor to Minecraft 1.21.1 (NeoForge), with the plant around it:
+pumps, steam lines, turbines, a condenser, cooling, emergency cooling, containment and a grid connection.
+Power emerges from neutronics. You move control rods and change recirculation flow, and the core decides
+what it does. There is no commanded burn rate, and nothing in the plant acts on your behalf: you run it
+from a control room you build yourself.
 
-**Current version:** `0.1.0-alpha.32` — RHR containment physics and optional GPU visuals, October 13, 2026.
+![A furnished control room: vertical boards of gauges, a desk run, relay cabinets, mimic bands and a wall display](docs/images/control-room.jpg)
 
-Server operators can adjust the gameplay calibration in `serverconfig/bwr-gameplay.toml`;
-see the [Phase L1 settings guide](PHASE-L1-REVIEW.md) for defaults and effects.
+## Status
 
-The [CC:Tweaked Lua examples](docs/lua/README.md) cover startup rod movement,
-backup scram, ECCS starting, containment isolation, and a panel display driver.
-They are the player's own automation, installed and run by the player.
-
-**Alpha.31:** surround the reactor and a suppression pool with a solid containment
-room. Its controller surveys free volume and wall strength, reports leaks and
-openings, and links the vessel to the simulated atmosphere. Install rated steam,
-water, power and data penetrations, a vault door or interlocked airlock, then
-power isolation valves. A nitrogen supply and a wetwell vent are now real
-equipment; the vent works with a concrete basin or an enclosed suppression tank.
-The controller's status readout and CC:Tweaked methods expose hydrogen, oxygen,
-pressure, weakest spot and bypass flow. The dedicated controller GUI is deferred
-to the later GUI overhaul. See the [containment build guide](CONTAINMENT-UPDATE.md)
-and [alpha.31 project log](PROJECT-LOG.md).
-
-**Alpha.30:** a lost reactor now keeps going wrong in order. With the pumps off,
-natural circulation holds a reduced flow. An uncovered core bursts its cladding,
-melts at 2,200 °C, and relocates into the lower plenum. Water there saves the
-vessel; a dry plenum fails the lower head, and the corium attacks the concrete
-floor. Hydrogen fills a lumped containment, where it burns at 8%, detonates if
-oxygen reaches a rich mixture, or waits harmlessly if you inerted with nitrogen
-beforehand. Vent through the pool or risk overpressure failure. Releases
-contaminate the area around the plant. New CC methods report all of it; nothing
-acts automatically. See [severe accident behavior](SEVERE-ACCIDENT-UPDATE.md).
-
-**Alpha.29:** scroll over the refuelling map to zoom toward the cursor; right-drag
-to pan and use **FIT** to reset the view. Click multiple positions to select them,
-or click again to deselect. **LOAD/UNLOAD** acts on the selection; **CLEAR** clears
-it. Loading uses held fuel first and stops when supplies run out. Overflow from
-unloading drops beside the player. **MARK/SWAP** remains a single-pair operation.
-Update both clients and server: the menu network protocol is now 12.
-
-**Alpha.28:** active fuel height scales with vessel footprint and stops at nine
-blocks. Complete jet pumps at any valid interior perimeter elevation tuck inside
-the formed vessel. Control-drive housings follow the circular core beneath the
-bottom head, while their saved blocks and supply connections stay in place.
-The dedicated verification fixture is **17×17, 28 blocks from CRDs to cap**.
-See [reactor fit and building compatibility](REACTOR-FIT-UPDATE.md).
-
-**Alpha.27:** unassembled spray branches face the player on placement. Use the
-Mekanism Configurator in **Rotate** mode and right-click to turn a straight or
-corner segment 90 degrees; neighboring changes no longer undo manual rotations.
-Holding another sparger lets you extend the ring without accidentally switching
-the existing segment between LPCS and HPCS. See [sparger controls](CORE-SPARGERS.md).
-
-**Alpha.26:** reactor leaks emit white plumes. Disconnecting an established vessel
-pipe creates a persistent rupture. Liquid flow depends on gauge pressure,
-hydrostatic head and nozzle elevation; lower recirculation inlets have larger
-breaks than upper outlets. The rupture solver couples inventory loss, growing
-steam space, depressurization and flashing. Pipe failure hazards start above
-1,250 psig after accumulated wear; the head retains its separate 1,375-psig gate.
-See [LOCA behavior and limitations](PORT-LOCA-UPDATE.md).
-
-**Alpha.25:** installed jet pumps use new Blender parts with consistently scaled
-bends, diffusers and fittings. Only plain straight sections adjust in length,
-within limits, so taller vessels keep believable pump proportions.
-
-**Alpha.24:** jet pumps keep their tall construction models while building, then
-fit down alongside the outside of the core shroud when the vessel forms. Unforming
-restores the original models; saved blocks and paired-flow rules are preserved.
-See [jet-pump installation](JET-PUMP-INSTALLATION.md).
-
-**Alpha.23:** removing the head now opens the physical roof so players can enter
-the vessel. Submerged fuel has a Cherenkov-style blue glow tied to fission and
-decay power. Spargers automatically form Blender-built 90-degree corners and
-inherit their neighboring loop setting. See [open reactor access](OPEN-REACTOR-UPDATE.md).
-
-**Alpha.22:** suppression tank wall inlets accept relief steam without a separate
-quencher; a new controllable drain empties water outside while RHR retains its
-dedicated suction. RPV steam nozzles are always open; MSIVs provide isolation.
-High-pressure water and steam pipes can be waterlogged, and pumps share demand
-across connected intakes. Existing overpressure damage now breaks connected pipes
-and displays a Blender-built damaged head, steam jets and a one-time explosion
-sound. See [connections, controls and accident behavior](STEAM-AND-ACCIDENT-UPDATE.md).
-
-**RVU:** formed vessels have a Blender-built instrument panel and round steam,
-feedwater and recirculation nozzles in place of visible interface cubes. Their
-existing block positions, pipe connections, menus and computer access remain
-usable. Removing the head reveals water at the physical free-surface level,
-with smooth updates and no rebuilding of the static vessel mesh.
-The fuel catalogue now labels **2.70% intermediate** and **3.50% high BWR
-enrichment**; 1.20% and 1.40% are retired from new selections but remain readable
-in old saves. See [RVU details and placement](REACTOR-VISUAL-UPDATE.md).
-
-See the [full changelog](CHANGELOG.md) for the hardware, performance, condenser,
-fuel and irradiation updates.
-
-| Platform | Required version |
-| --- | --- |
-| Minecraft | 1.21.1 |
-| NeoForge | 21.1.248 |
-| Java | 21 |
-| Optional integrations | Mekanism and CC:Tweaked, installed separately |
-
-Reactors now display the actual loaded core beneath the removable head: fuel
-channels, lifting handles, support grids, shroud and bottom-entry cruciform blades.
-The artwork uses Columbia FSAR diagrams, while preserving existing saved core
-layouts. See [Columbia references and core models](COLUMBIA-CORE-REFERENCE.md).
-
-Reactor internal pumps now mount beneath the bottom head at scalable, highlighted
-sites. The visible RIP shroud now uses the GE ABWR vessel/shroud dimensions,
-with a continuous fuel array scaled to fit it. On a 17 × 17 vessel the annular
-gap is 1.62 blocks per side, down from 2.78. Additional pumps add powered flow
-without cutting holes or shrinking the core again. Alpha.20 fills usable perimeter gaps with real fuel slots: **476 assemblies /
-109 blades at 17 × 17**, and **1,084 / 253 at 23 × 23** with RIPs. Pump
-mounts stay in place; existing 17 × 17 RIP plants need eight additional drives.
-Ordinary 17 × 17 cores remain at 764 assemblies.
-A new Blender hydraulic control rod drive uses Columbia FSAR references.
-See [RIP placement, capacities and CRD model](INTERNAL-PUMPS.md).
-
-Core-spray segments now display as scaled circular headers with modeled nozzles
-inside formed reactors. The former ADS items are named **Pressure Relief Valve**
-and **Division**, with a **1–4** panel selector. Existing saves and CC programs
-keep their registry IDs and peripheral types. See [core spargers](CORE-SPARGERS.md).
-Large machine exteriors reuse GPU meshes, with separate fan animation and
-full-machine visibility checks. See [machine rendering](MACHINE-RENDERING.md)
-for scope, cache behavior and the repeatable client comparison.
-Cooling-tower vapor follows smooth random gusts and wind that varies with
-height, moving between upright columns and winding, drifting plumes.
-The preceding update rebuilt RCIC and HPCI as original Blender turbine/pump skids
-with round steam/water flanges, visible computer panels and dedicated GUIs.
-See the [Terry turbine connection and migration guide](TERRY-TURBINES.md).
-The plant also includes enclosed suppression tanks with dedicated steam inlets,
-measured steam heating, corrected cooling-tower fans and tall drifting vapor.
-The plant includes pumped tank filling and spray, Blender circulating/makeup pumps, physical RHR heat
-exchangers, rounded pressure vessels, and compact logical fuel layouts
-(764 assemblies in a 17 x 17 vessel), cooling towers, waterlogged intakes and
-automatically assembled cylindrical condensate tanks. Modular HP/LP turbine
-trains now exhaust to a separate condenser with bypass and cooling-water ports.
-**Turbine admission is controlled at the upstream valve.** Pump, ownership,
-inventory and chunk-lifecycle fixes include permanent regression checks.
-
-**Spent fuel pool:** a discharged assembly keeps its decay heat (315 kW at discharge for a 45 GWd/t assembly, 23 kW a day later), the reprocessing plant waits until it has cooled, and the pool is where it cools: a lined box with racks, a cooling train you build and run, makeup water you supply, and a heat balance that boils the water and uncovers the fuel if you let it. Nothing in it starts by itself. See [the spent fuel pool](SPENT-FUEL-POOL.md).
-
-**Fuel update:** a separate **Realistic BWR: Fuel & Rods** creative tab contains
-17 selectable fuel grades and eight specialty rods, with new Blender-rendered PNG icons.
-Uranium ranges from natural uranium through 20%; MOX, plutonium and thorium
-have lean/standard/rich variants. Fixed absorbers, startup sources and simple
-irradiation targets use the existing refuelling map. Original fuel tuning and
-exposure are preserved. See [fuel grades, recipes and reference notes](FUELS-AND-RODS.md).
-Experimental grades are labeled; natural uranium is not self-sustaining in this
-BWR model. Specialty irradiation now takes 24–168 operating hours at rated
-local flux. A completed tritium rod yields 1,250 samples, processable into
-12,500,000 mB (12,500 buckets) of tritium through a powered Chemical Oxidizer when Mekanism and
-Mekanism Generators are installed. Install
-alpha.23 on both client and server; GUI protocol remains 11.
-
-The first-publication candidate adds live CC:Tweaked faces across the machine
-registry, segmented water temperatures, condenser backpressure that affects LP
-work, event-invalidated pipe routing, and batched GUI rendering. All five R01–R05
-re-audit findings now have repairs and regression coverage. See the
-[transport, computer and performance guide](PLANT-TRANSPORT.md) and the
-[verification re-audit](PHASE-ONE-REAUDIT.md).
+**Early alpha preview. Current version: `0.1.0-alpha.49`.** Expect rough edges and changes between
+releases. **Back up your worlds before updating.** History is in [CHANGELOG.md](CHANGELOG.md).
 
 Source is publicly readable under the custom
 [Realistic BWR Source-Available License](LICENSE). Modified redistribution
@@ -174,496 +23,272 @@ and copying code/assets into another project require written approval, subject
 to the preserved rights for earlier MIT/MPL releases. Permitted redistribution
 must credit **OldGunslingerWildBill**. See [license and credit](#license-and-credit).
 
-## What is implemented
+## Requirements
 
-- **Rebuilt RCIC/HPCI turbine pumps:** Terry GS-inspired RCIC (5 × 4 × 5 blocks)
-  and C-frame-inspired HPCI (7 × 5 × 5 blocks), listed as width × height × depth.
-  Four round flanges separate steam admission/exhaust from water suction/discharge.
-  Dedicated panels show speed, steam consumption, water flow, pressures,
-  inlet temperature and world coordinates for every connection. Existing
-  installed CAD assemblies keep their size and plumbing until replaced.
-- **Physical SLC and relief hardware:** Blender-built boron solution tank and
-  powered SLC injection pump, Division cabinet and modeled Pressure Relief Valve.
-  SLC consumes finite borated solution through real piping into an RPV water
-  inlet or a feedwater cross-tie. Divisions have local, redstone and
-  CC:Tweaked commands. A new water discharge port provides a plant outfall.
-  See [connections, controls and migration](ALPHA-HARDWARE.md).
-- **Fast creative inventory:** complex machines use Blender-rendered inventory
-  icons while preserving their full placed and held models. The actual BWR
-  creative-tab slowdown was reproduced and corrected.
-- **Concrete suppression basins:** player-built enclosed tanks with steam inlet flanges, modeled concrete
-  walls and rims, directional suction/return flanges, and automatic formation.
-  New concrete pools start empty and must be filled through pipes. A live water
-  surface follows inventory. Choose **regular fill** or **tank spray** in
-  the panel or with CC `setFillMode("fill"/"spray")`. Spray consumes supplied
-  water and condenses steam within its finite heat-absorption limit.
-  Pools also cool naturally toward 25 C over time, without power or makeup
-  water; the panel reports natural heat loss separately from RHR cooling.
-  LPCI/RHR pumps connect directly for injection or circulation, or through a
-  Blender-built **four-port heat exchanger** with a separate cooling-water
-  circuit. Direct circulation does not provide free cooling. See the
-  [construction and RHR plumbing guide](SUPPRESSION-BASIN.md).
-- **Phase-one reliability fixes:** fuel recovery when a controller is removed,
-  exclusive reactor and suppression-basin ownership, persistent basin water,
-  protected multiblock placement/mining, reconnecting machine ports, hardware-based
-  recirculation commands, shared steam-valve accounting and live fuel-definition
-  reload. See [all 13 fixes and existing-world behavior](PHASE-ONE-FIXES.md).
-
-- **Condenser cooling-water loop:** Blender-built natural-draft and Columbia-style
-  circular induced-draft towers, circulating and makeup pumps, and a screened
-  lake/river intake. Waterlogged intake parts retain surrounding water and allow
-  lakebed mounting. The circular tower has 19 animated fans, detailed louvers,
-  rails and service access; the natural tower has revised concrete/support detail.
-  The circulating pump now has a detailed VCT-inspired exterior; the makeup
-  pump is a horizontal centrifugal assembly with a guarded coupling and finned
-  motor. New makeup pumps occupy **3 × 3 × 7 blocks**.
-  Finite reservoirs, 2% makeup loss, FE-driven motors/fans,
-  animated fans, local speed controls and CC peripherals. See the
-  [cooling-water build guide](COOLING-WATER.md) for sizes, ports and capacities.
-- **Condenser and steam bypass:** a closed, Blender-built **7 x 6 x 9** condenser
-  fitted beneath one LP turbine, with one upper front bypass-steam inlet, two
-  front hot-water outlets, two rear cold-water inlets, a separate condensate
-  outlet and two round side makeup-water inlets feeding the hotwell. Hold the condenser and click the LP turbine's underside to snap it
-  into place: green outline means it fits, red means it is blocked. Manual
-  foundation placement also works, with the LP six blocks directly above and
-  with the condenser facing 90 degrees clockwise from the LP. Main piping faces
-  the hall sides; adjacent seven-block LP modules each fit a condenser. Old
-  condenser sizes and orientations remain intact until drained and replaced.
-  A modeled bypass
-  valve provides 0-100% local and CC control. See the
-  [port, cooling-supply and CC guide](CONDENSER-AND-MSIV.md).
-- **Modeled MSIV:** a Blender-built three-block isolation valve with opposed
-  steam flanges, redstone/CC control and a four-second full closing stroke.
-  Connect an FE cable to an exposed non-steam face; opening draws 100 FE/t and
-  holding open draws 20 FE/t. The spring closes when stored power runs out.
-  CC modems work on every exposed part. Existing cube valves retain their
-  footprint and also require FE. See
-  [MSIV placement and condenser guide](CONDENSER-AND-MSIV.md).
-- **Steam valve control:** placeable Blender-built stop and fine control valves
-  regulate a common header feeding multiple HP turbines. HP exhaust supplies
-  the LP sections. Valve panels provide Open/Close and 0.1% adjustments; turbine
-  panels report operating data. See [steam valves and migration](STEAM-VALVES.md).
-- **Modular main turbine trains:** Blender-built TX-10-style HP and LP sections
-  and a TX-NLCH-style generator. Aligned end shafts join; steam is piped between
-  sections independently. LP exhaust discharges into a matching condenser below it;
-  water is collected at the condenser, not the LP turbine.
-  Turbine panels and CC readouts report flow, pressure, temperature estimates,
-  shaft speed and power. Each generator supports up to 1,500 MW electrical.
-  See [the turbine build guide](MODULAR-TURBINES.md) for connections, dimensions
-  and condenser placement.
-- **Reactor physics:** delayed-neutron kinetics, rod worth, spatial flux, void
-  and temperature feedback, xenon, fuel burnup, decay heat, vessel inventory,
-  pressure, and damage modeling.
-- **Continuous rod travel:** power and SRM period respond while rods move
-  between notch positions. Mid-travel positions survive saves; outages hold the
-  physical position, and reversal and scram start from it.
-- **Reactor screens:** operating instruments, fuel/flux information, and an
-  **INFO** tab with loaded bundles, jet matching, installed flow capacity, live
-  thermal/steam output, and labeled planning estimates.
-- **Volume-based recirculation:** width, depth and height determine the flow
-  target. Each external recirculation pump supports ten normal jet assemblies;
-  additional jets stop increasing flow at the drive limit. INFO shows the targets.
-- **Placeable pump models:** Terry RCIC, HPCI, HPCS, LPCS, RHR/LPCI, electric and
-  turbine feedwater, internal recirculation, jet assemblies, and a Blender-built
-  DVSS-style external recirculation pump.
-- **Modern pump connections:** centered round flanges on HPCS, LPCS, RHR/LPCI,
-  and both feedwater pumps, with odd-width footprints and larger RHR/feedwater
-  bodies. These models and the new pipe fittings are authored in Blender.
-- **Pump controls:** right-click a powered pump for numerical 0–100% speed,
-  Start/Stop, flow, pressure, and available temperature/supply information.
-  Manual, redstone, and computer modes are available where supported.
-- **Scalable condensate tanks:** cylindrical Blender models, 3–15 block odd
-  diameters and 3–24 block heights. Build a complete box of tank blocks with a
-  floor, walls and roof; it automatically becomes a cylindrical tank. Capacity
-  follows volume, and formation preserves the placed blocks’ combined water. Four side flanges connect to water pipes and pump suction.
-  Existing single-block tanks retain their saved water until converted.
-  Breaking a formed tank restores recoverable casings; drain it before dismantling.
-  See the [tank construction guide](CONDENSATE-TANK.md).
-- **Rounded pressure vessel:** a Blender-built steel barrel, bolted flange and
-  domed head appear when the reactor forms. Ports stay at their placed locations.
-  The rectangular construction/collision boundary remains; holding a vessel
-  block shows its outline. See [vessel appearance](PRESSURE-VESSEL.md).
-- **Separate pipe systems:** High-Pressure Water Pipe for water and High-Pressure
-  Steam Pipe for steam. Electric pumps use FE and have no steam-drive ports.
-  BWR pipe segments have no tickers. Machine transfers use an event-invalidated,
-  compressed connection graph; unchanged pipe networks are not rescanned each tick.
-- **Dyeable round pipes:** swept elbows, junctions and coupling rings. Right-click
-  with any of the 16 vanilla dyes to color the identification bands. Color is
-  cosmetic; water and steam stay separate.
-- **Integrations:** Mekanism water/steam connections and CC:Tweaked faces on
-  machine controllers and modeled assembly parts, including condensers and RHR
-  exchangers. Modems resolve the live owner after reload. Both mods are optional.
-- **Segmented water temperatures:** buffers mix incoming mass and energy; BWR
-  water pipes carry enthalpy without ticking or storing fluid per segment.
-  Condenser vacuum/backpressure now affects LP work. See
-  [transport and its compatibility limits](PLANT-TRANSPORT.md).
-- **Faster menus:** fuel cells and screen readouts are drawn in batches. Local
-  reactor-menu measurements improved from 109 to 205 FPS at 764 assemblies;
-  modpack performance still depends on the client and scene.
-
-The mod provides hardware and physics. The player provides control logic:
-automatic trips, ECCS actuation, and protection sequences are not built in.
-Manual controls and the scram actuator remain available.
-
-The condenser receives **LP exhaust and reactor bypass steam**. Cooling and
-condensate inventories are finite and separate. Water temperatures propagate
-between BWR buffers; condenser backpressure responds to coolant temperature and
-steam accumulation. The cutaway is an inspection asset;
-the in-game machine retains its shell panels.
-
-## Build a working steam plant
-
-```text
-RPV steam outlet
-  -> Steam Stop Valve -> Turbine Steam Control Valve -> HP inlet header
-                                                          |       |
-                                                         HP      HP
-                                                          |       |
-                                                          +---+---+
-                                                       crossover header
-                                                         | | | |
-                                                        LP LP LP LP
-                                                         | | | |
-                                                   condensers below LPs
-                                                         | | | |
-                                                    condensate return
-                                                          |
-                                        storage tank -> feedwater pump
-                                                          |
-                                                RPV Water Injection Port
-```
-
-1. Place turbine sections and a generator with **touching, aligned end shafts
-   at the same height**. Each module is one large placeable object. Steam pipes
-   connect the sections separately from the shafts.
-2. Feed the HP top inlets through a common steam header. Place the stop and
-   control valves before the branch if one valve should control all HP sections.
-   Use **High-Pressure Steam Pipe** at steam ports.
-3. Pipe HP side exhausts into LP top inlets. Put one compact condenser **six
-   blocks directly below each LP placement block**. Snap it by clicking the LP
-   underside; its front faces 90 degrees clockwise from the LP. Supply
-   its cold-water inlets, remove hot cooling water, and route its separate
-   condensate outlet to storage or feedwater suction. Use **Mekanism Mechanical
-   Pipes** or BWR water pipes. A powered makeup pump can feed either round side
-   hotwell inlet; this water stays separate from circulating cooling water.
-   Return feedwater through an RPV Water Injection Port.
-4. Connect an energy consumer or storage to the generator's **copper terminal**.
-   A full energy buffer, full condensate buffer or blocked exhaust limits flow.
-5. Right-click the valves: **new valves start closed**. Open the stop valve,
-   then adjust the control valve in **0.1% steps**. HP/LP panels report operation;
-   they no longer have local admission settings or Start/Stop buttons.
-
-| Module | Width × height × length | Game capacity |
+| | Version | Notes |
 | --- | --- | --- |
-| TX-10 Style HP Turbine | 5 × 5 × 9 | Up to 2,200 kg/s |
-| TX-10 Style LP Turbine | 7 × 5 × 7 | Up to 750 kg/s |
-| TX-NLCH Style Nuclear Generator | 5 × 5 × 9 | Up to 1,500 MW electrical |
+| Minecraft | 1.21.1 | |
+| NeoForge | 21.1.248 or newer | |
+| Java | 21 | |
+| Mekanism | 10.7 or newer, optional | Pipes that connect to the plant's water and steam ports; uranium and steel items; the fabricator's chemical route; the fuel assembly crafting recipe; with Mekanism Generators, tritium processing |
+| CC:Tweaked | 1.111 or newer, optional | Lua control of nearly every machine, and CC port bindings for panels |
 
-Valve opening controls steam supply, not a fixed electrical power percentage.
-HP sections share that supply, and LP sections consume their actual exhaust.
-Stored downstream steam can continue expanding briefly after the stop closes.
-The stop valve takes 0.5 seconds for a full stroke; the control valve takes two.
+Both optional mods are installed separately and are never bundled. The mod loads and runs without them.
+Without Mekanism, the fuel fabricator's item route still needs some mod that tags `c:ingots/uranium`
+and `c:ingots/steel`. Sodium and Iris also work, with or without a shader pack
+([notes](docs/shader-packs.md)).
 
-LP sections now require an external condenser. Missing or full condensers stop
-LP exhaust flow; cooling supply and condensate drainage are needed for sustained
-operation. Legacy LP water is moved into its matched condenser without loss. A
-moisture separator/reheater remains future work. Steam temperatures are saturation
-estimates; water enthalpy is preserved within BWR networks, with third-party
-component-handling limitations. These are game-scale models,
-not manufacturer performance simulations.
+## What is in it
 
-See [steam valves and their CC API](STEAM-VALVES.md) and
-[modular turbines](MODULAR-TURBINES.md) for the full connection and operating guide.
+### Reactor and core
+- Delayed-neutron kinetics, rod worth, spatial flux, void and temperature feedback, xenon, burnup, decay
+  heat, vessel inventory, pressure and damage. Rods move continuously between notches (labels 0 to 48).
+  See [SPEC.md](SPEC.md), [REFERENCE-DATA.md](REFERENCE-DATA.md) and [ROD-MOTION.md](ROD-MOTION.md).
+- Vessels from 7 x 7 outside (5 x 5 inside) up to 23 x 23. A 17 x 17 vessel holds 764 fuel assemblies
+  with 185 control rod drives, one drive per blade. [COMPACT-CORE.md](COMPACT-CORE.md)
+- Recirculation sized by vessel volume: jet assemblies with external DVSS pumps, or internal pumps.
+  The reactor screen's INFO tab says what a vessel needs. [RECIRCULATION.md](RECIRCULATION.md),
+  [INTERNAL-PUMPS.md](INTERNAL-PUMPS.md)
+- A reactor screen (flux map, rods, INFO) and a refuelling map with zoom and multi-select. The vessel
+  renders its real core with the head off. [PRESSURE-VESSEL.md](PRESSURE-VESSEL.md)
 
-## Reactor size limits
+![The inside of a 17 x 17 reactor vessel with the head removed, showing fuel channels, shroud and spray rings](docs/images/reactor-core.jpg)
 
-These dimensions describe the **vessel**, excluding external pumps and piping.
+### Fuel cycle
+- **Fuel Fabricator.** Put uranium and steel items in, choose an enrichment (0.71 to 20 %), get a fuel
+  assembly. Richer fuel costs more uranium by real enrichment arithmetic: 4 uranium for natural, 29 for
+  3.5 %, 172 for 20 %, plus 4 steel each. Hoppers and pipes can feed it. A Mekanism chemical route is
+  still there. [FUELS-AND-RODS.md](FUELS-AND-RODS.md)
+- **Depleted uranium.** Enrichment returns the uranium that did not become product as depleted uranium
+  ingots. Four of them with four steel make a blanket assembly that absorbs neutrons at first and breeds
+  plutonium as it burns.
+- **Reprocessing Plant.** A spent assembly goes in. Plutonium nuggets, depleted uranium and
+  fission-product waste come out, in amounts worked out from that assembly's own burnup. Fresh and
+  thorium assemblies are refused. It needs no Mekanism.
+- **Uranium ore.** The mod's own uranium: large veins plus small blobs, richest in deserts and
+  badlands, rare in oceans. Only new chunks get it; a server option turns it off.
+  [URANIUM-ORE.md](URANIUM-ORE.md)
+- **Spent fuel pool.** A discharged assembly keeps its decay heat, and the reprocessing plant waits
+  until it has cooled. The pool is a lined box with full-height racks, a cooling train you run and
+  makeup water you supply; let it go and the water boils off and the fuel uncovers.
+  [SPENT-FUEL-POOL.md](SPENT-FUEL-POOL.md)
+- **MOX.** The fabricator also makes MOX (4.50, 7.00 and 9.50 %) from plutonium and depleted uranium.
+- **Specialty rods.** Boron carbide and hafnium absorbers, three startup neutron sources, and cobalt,
+  tritium and silicon irradiation targets. [FUELS-AND-RODS.md](FUELS-AND-RODS.md#specialty-rods)
 
-| Dimension | Interior | Outside, including the one-block shell |
+![The Fuel Fabricator screen set to 3.50 % with its uranium, steel, fuel and depleted uranium slots](docs/images/fuel-fabricator.png)
+
+### Water and steam plant
+- Electric and steam-driven pumps with round flanges, pump panels, and separate pipe systems for
+  high-pressure water and steam. Pipes can be dyed. Transport is cached, not ticked.
+  [WATER-PLUMBING.md](WATER-PLUMBING.md), [PUMP-MODELS.md](PUMP-MODELS.md),
+  [MODERN-PUMPS-AND-PIPES.md](MODERN-PUMPS-AND-PIPES.md), [PLANT-TRANSPORT.md](PLANT-TRANSPORT.md)
+- MSIVs, steam stop and control valves, and a bypass valve. [STEAM-VALVES.md](STEAM-VALVES.md),
+  [CONDENSER-AND-MSIV.md](CONDENSER-AND-MSIV.md)
+- Modular HP and LP turbines and a generator of up to 1,500 MW. LP exhaust goes to a condenser fitted
+  under it. [MODULAR-TURBINES.md](MODULAR-TURBINES.md)
+- Cooling towers (natural-draft and circular mechanical-draft), circulating and makeup pumps, a lake
+  or river intake, and scalable cylindrical condensate tanks. [COOLING-WATER.md](COOLING-WATER.md),
+  [CONDENSATE-TANK.md](CONDENSATE-TANK.md)
+
+### Safety systems and accidents
+- Emergency cooling hardware: HPCS, LPCS, RHR/LPCI with heat exchangers, RCIC and HPCI Terry turbine
+  pumps, SLC boron injection, safety/relief valves and an ADS bank, with core spray rings inside the
+  vessel. [TERRY-TURBINES.md](TERRY-TURBINES.md), [ALPHA-HARDWARE.md](ALPHA-HARDWARE.md),
+  [CORE-SPARGERS.md](CORE-SPARGERS.md)
+- Suppression pools, including player-built concrete basins with spray and passive cooling.
+  [SUPPRESSION-BASIN.md](SUPPRESSION-BASIN.md)
+- Break a recirculation, feedwater or steam line anywhere up to its first closed valve and you get a
+  loss-of-coolant accident, with leak rate set by pressure, head and nozzle height. Put the pipe back
+  to seal it. [PORT-LOCA-UPDATE.md](PORT-LOCA-UPDATE.md)
+- Severe accidents unfold in order: cladding failure, core melt, relocation to the lower plenum,
+  lower-head failure, corium on the concrete, hydrogen burns or detonation, contamination. Blasts
+  break blocks by their blast resistance: glass goes first, a detonation breaches the weakest wall.
+  [SEVERE-ACCIDENT-UPDATE.md](SEVERE-ACCIDENT-UPDATE.md)
+- **Radiation tools.** A handheld survey meter (dose rate on your HUD, a Geiger click, your own
+  dose) and area radiation monitors that drive gauges and annunciators. [RADIATION.md](RADIATION.md)
+- **Containment** you build: a solid-walled room that a controller surveys for volume, leaks and its
+  weakest wall. Rated penetrations, vault doors, airlocks, a nitrogen supply and a wetwell vent.
+  [CONTAINMENT-UPDATE.md](CONTAINMENT-UPDATE.md)
+
+### Control room
+Panels are boards you cover with instruments and controls, then wire to the plant, to each other, to
+redstone or to CC:Tweaked. A control commands the plant only when someone operates it.
+[CONTROL-PANELS.md](CONTROL-PANELS.md)
+
+- **Boards, desks and trim.** Vertical, bench, console, back and duplex bodies, plus 1 m and 2 m control
+  desks, end caps, header strips, plinths and corners, in five paint finishes. A board blueprint places
+  eight blank shapes in one click. Relay cabinets, operator desks and wall displays fill the room.
+  [ROOM-FURNITURE.md](ROOM-FURNITURE.md)
+- **Real-size parts.** Most instruments start at twice real size, and exact real size is one pick away.
+  Alt+click a part item to open the size picker, a list of every size in cells and centimetres.
+- **Gauges.** Round dials, edgewise meters, curved bar gauges and bar graphs, with colour bands, units,
+  and Text size and Tick size sliders. A gauge can be limited to one kind of signal (level, pressure,
+  and so on), and shows FE as W, kW or MW.
+- **Switches and lamps.** Control switches (General Power and Westingapartment styles) that spring back to NORMAL, key
+  switches, selectors, toggles, push-to-turn switches, a joystick switch, pushbuttons, the guarded
+  two-button RPS trip, and lamps.
+- **Annunciators.** Windows that flash until acknowledged, then hold steady until the condition clears,
+  grouped into one box, with an ACK, RESET, SILENCE and TEST module.
+- **Controller station.** A manual/auto station with process-variable and setpoint pointers, a demand
+  bar, AUTO and MAN, RAISE and LOWER. In AUTO, and only after you select it, a built-in PID with
+  editable tuning moves the demand to hold the measured value at the setpoint; a wired outside
+  demand overrides it.
+- **Synchroscope.** A rotating pointer for phase and slip, with two dark-lamp synchronising lamps
+  (dark in phase, brightest at 180°), wired to a grid tie.
+- **Plant computer.** A safety parameter display: built-in reactor pages, or pages, trends and
+  status tiles your CC program draws. It cannot act on the plant. [PLANT-COMPUTER.md](PLANT-COMPUTER.md)
+- **Recorders and displays.** A paperless recorder (Yokogawa DX1000 and DX2000 style, up to 48
+  channels), strip charts and a two-pen recorder, seven- and sixteen-segment displays, LCD and graphic
+  displays, a full core display, a rod select matrix and an LED rod pattern display.
+- **Mimic.** Mimic tape draws flow lines and arrows across a board, and mimic symbols show valves,
+  pumps and tanks. They indicate only.
+- **Wiring.** The **Networking Wrench** selects a device, shows its signals, lets you name it (RHR-1),
+  and draws see-through lines from a component to what it reads and commands. The Panel Linker makes
+  the same bindings. [Networking Wrench](CONTROL-PANELS.md#the-networking-wrench),
+  [signal and command keys](SIGNALS.md)
+
+![Real-size dial, edgewise and bar gauges on a seafoam vertical board](docs/images/board-gauges.jpg)
+
+![Two controller stations and two synchroscopes, with their lamps and pushbuttons](docs/images/controller-station-synchroscope.jpg)
+
+### Grid tie and load following
+- A **Grid Tie** is a controllable export load on a generator, with a breaker you close yourself. Set a
+  fixed demand, follow a daily demand curve, or take a remote value. **FE Meters** sit inline and
+  report MW.
+- Before closing you bring the turbine to speed with its control valve and match phase and slip. A bad
+  close still happens, and it damages the generator. No automatic governor, synchroniser or trip is
+  supplied. [docs/grid-wiring.md](docs/grid-wiring.md), [GRID-TIE-SPEC.md](GRID-TIE-SPEC.md)
+
+### Automation with CC:Tweaked
+- Most machines are peripherals that expose measurements and actuators, never judgements. Five example programs cover startup, a backup scram monitor, ECCS start, containment
+  isolation and a panel display driver. [docs/lua/README.md](docs/lua/README.md)
+- **House rule: nothing acts automatically.** There are no built-in trips, no automatic ECCS start and
+  no protection logic. Scram setpoints, pump starts and load shedding are the player's own panel
+  wiring or Lua. The build checks that no such logic exists in the physics core.
+- A Realistic BWR advancement tab records plant milestones. It awards nothing and operates nothing.
+  [ADVANCEMENTS.md](ADVANCEMENTS.md)
+
+## Getting started: a first working plant
+
+All plant blocks have crafting recipes. Only items the plant itself produces do not. A vessel that fails
+its structure check says why in chat. Each step's detail is in the linked guide.
+
+1. **Vessel.** Build a closed shell of Reactor Vessel blocks, 5 to 21 blocks wide and deep inside and at
+   least 8 tall, with one Reactor Controller in it. Add an RPV Steam Outlet, an RPV Water Injection Port
+   and recirculation ports, all facing outward. [PRESSURE-VESSEL.md](PRESSURE-VESSEL.md)
+2. **Drives.** Under the floor, place one control rod drive per blade, in the pattern in
+   [COMPACT-CORE.md](COMPACT-CORE.md). Touching drives share one water and one FE connection.
+3. **Recirculation.** Install jet assemblies and an external pump (or internal pumps) to the size the INFO
+   tab asks for. [RECIRCULATION.md](RECIRCULATION.md)
+4. **Fuel.** Make assemblies in a Fuel Fabricator, or craft them with Mekanism yellow cake. Natural
+   uranium will not sustain a chain reaction here, so choose 3.50 % (the selector's default) or higher.
+   Right-click the controller, lift the head and load the core from the refuelling map.
+5. **Steam.** Pipe the steam outlet through a stop valve and a control valve to the HP turbines, then the
+   HP exhaust to the LP turbines, with one condenser six blocks below each LP. Join turbines and the
+   generator with touching shafts at one height. **New valves start closed.**
+6. **Water.** Feed the condenser cooling water (tower, circulating pump, intake, makeup). Return
+   condensate to a tank, then a feedwater pump, then the injection port.
+   [COOLING-WATER.md](COOLING-WATER.md), [WATER-PLUMBING.md](WATER-PLUMBING.md)
+7. **Load.** Connect a consumer, or a Grid Tie, to the generator's copper terminal.
+8. **Start up by hand.** Start the recirculation pumps, reset the scram and withdraw rods in small steps
+   while watching the SRM period. Open the stop valve, then raise the control valve in 0.1 % steps.
+   Valve opening sets steam supply, not a fixed electrical power. A full energy buffer or blocked
+   exhaust limits flow.
+9. **Add protection before you trust it.** ECCS pumps, relief valves, SLC and a suppression pool exist
+   but do nothing until you wire them to switches or write the logic.
+10. **Build the control room.** Make a Panel Wrench, Panel Linker and Networking Wrench, set boards and
+    parts, and wire the reactor's pressure to a dial first. The worked example is in
+    [CONTROL-PANELS.md](CONTROL-PANELS.md#3-worked-example-a-small-reactor-control-room).
+
+| Turbine module | Width x height x length | Capacity |
 | --- | --- | --- |
-| Width and depth | 5–21 blocks each | 7–23 blocks each |
-| Minimum height | 8 blocks | 10 blocks |
+| HP turbine | 5 x 5 x 9 | up to 2,200 kg/s |
+| LP turbine | 7 x 5 x 7 | up to 750 kg/s |
+| Nuclear generator | 5 x 5 x 9 | up to 1,500 MW electrical |
 
-**Maximum footprint: 23 × 23 blocks outside (21 × 21 inside).** Rectangular
-footprints are supported within those limits; fuel, rod-drive, and closed-shell
-requirements still apply.
-
-Height has no separate configured maximum, but the validator must find the
-bottom and top shell within **64 blocks in each direction** from the interior
-position beside the controller. With that position centered vertically, this
-implies a code-derived upper bound of **127 interior blocks / 129 outside**.
-A controller near the bottom allows less height. The tallest configuration has
-not been tested in-game; this is a validation bound, not a tested performance
-rating. Minecraft build-height limits also apply.
-
-The limits are defined in
-[`ReactorStructure.java`](mod/src/main/java/dev/bwr/mod/reactor/ReactorStructure.java).
-Larger geometry does not by itself promise proportionally greater thermal power;
-the INFO tab distinguishes live output from configuration estimates.
-
-## Compact fuel and control rods
-
-New reactors simulate individual fuel assemblies independently of Minecraft
-blocks, with one physical CRD below the floor for every blade.
-
-| Outside vessel footprint | Fuel assemblies | CRD blocks |
-| --- | ---: | ---: |
-| Minimum 7 × 7 | 88 | 21 |
-| Reference 17 × 17 | **764** | **185** |
-| Maximum 23 × 23 | 1,476 | 357 |
-
-The reference matches the requested Columbia counts using a symmetric game
-layout. Every blade shadows four local bundles, with additional peripheral
-fuel. GUI maps, physics and CC use the same stable layout. Face-adjacent CRDs
-share supplied water and FE: one water connection and one power connection
-on two exposed bottom faces can supply the whole connected group. Each drive
-retains individual consumption, condition, accumulators and gradual blade motion.
-
-**Existing reactors keep their legacy layout.** To convert, shut down, cool,
-defuel, replace the controller and rebuild the drive layer. A compact
-controller retains its formed footprint; resizing also requires replacing it
-after defuelling. Client and server must both use this update.
-
-See [the drive-layer pattern, size table and CC layout API](COMPACT-CORE.md).
-
-## Water and steam connections
-
-Typical feedwater or emergency injection circuit:
-
-```text
-Condensate Storage Tank / Mekanism return water
-  → pump water suction → pump water discharge
-  → High-Pressure Water Pipe → RPV Water Injection Port
-```
-
-Mekanism Mechanical Pipes can feed a pump's suction directly. Use BWR
-High-Pressure Water Pipe downstream to inject against vessel pressure. Tank and
-suppression-pool suction are separate selections on ECCS pumps.
-
-Steam-powered RCIC, HPCI, and turbine feedwater pumps also need their defined
-steam inlet and exhaust circuits. Use High-Pressure Steam Pipe for those ports.
-Steam and water networks do not join. Returned Mekanism turbine water can supply
-feedwater; no separate condenser block is required.
-
-See [Water plumbing and controls](WATER-PLUMBING.md),
-[pump footprints and ports](PUMP-MODELS.md), and
-[RCIC/HPCI connections](TERRY-TURBINES.md) for placement details.
-
-## External recirculation and jet pumps
-
-The DVSS recirculation pump reserves **5 × 10 × 5 blocks** (width × height ×
-depth). Its lower suction elbow connects continuously into the pump casing.
-
-![DVSS recirculation pump model](art/models/dvss/dvss_preview.png)
-
-Build two separate High-Pressure Water Pipe headers:
-
-```text
-RPV Recirculation Top Outlet → DVSS rear lower suction
-DVSS front discharge → RPV Recirculation Bottom Inlet
-```
-
-Both vessel ports must reach the same formed reactor. Supply FE, then use the
-pump panel or computer control to start it and set speed. This recirculates
-existing vessel water; it does not create inventory or cooling.
-
-New jet assemblies occupy **1 × 6 × 1 blocks**. Place their bases one or two
-blocks above the bottom shell, near the interior perimeter. Align assemblies
-across opposite walls in the **same row and at the same height**, facing each
-other. Off-center rows work. The previous diagonal arrangement remains supported.
-Each placed assembly contains two modeled jets; the INFO tab counts assemblies.
-
-The target uses whole interior volume: **12 × cube_root(volume / 200)**,
-rounded up to opposing pairs, with a minimum of 12 normal placed assemblies.
-Each full-speed external pump supports **ten normal assemblies' worth of flow**.
-
-| Outside footprint and height | Matched assemblies | Full-speed external pumps |
-| --- | ---: | ---: |
-| 7 × 7 footprint, 10 tall | 12 | 2 |
-| 7 × 7 footprint, 18 tall | 16 | 2 |
-| 23 × 23 footprint, 10 tall | 32 | 4 |
-| 23 × 23 footprint, 23 tall | 44 | 5 |
-
-For the 32-assembly target, two pumps cap at 62.5%, three at 93.75%, and four reach
-100%. Adding more jets cannot exceed pump capacity. A complete loop retains weak
-flow without jets. These are game balance values; actual delivery also depends
-on speed, power and complete piping. See [Recirculation](RECIRCULATION.md) for
-the volume rule, current INFO/CC readouts and upgrade details.
+Server settings live in `serverconfig/bwr-gameplay.toml` ([defaults](PHASE-L1-REVIEW.md)) and
+`bwr-grid.toml`. Panel limits are in `bwr-panels.toml` and client visuals in `bwr-visuals.toml`.
 
 ## Existing worlds
 
-- Existing suppression pools keep their inventories and legacy behavior. Adding
-  a new suction/return wall port enables the concrete-basin rules and physical
-  exchanger cooling. Complete the concrete shell before converting a dug pool.
-  See [suppression basin construction](SUPPRESSION-BASIN.md).
-- Existing circulating/makeup pumps retain their previous models and ports.
-  Replace them to get the new detailed geometry; allow room for the longer
-  makeup-pump skid. Flow and energy ratings are unchanged.
-- **Turbine control migration:** older HP/LP admission and running settings are
-  ignored. Existing directly fed sections now use available steam automatically.
-  Install upstream stop/control valves before operating the updated plant.
-  Stored steam, water and energy survive the update. CC scripts must replace
-  turbine `setAdmission` / `setRunning` calls with valve `setPosition`, `open`
-  and `close` calls. [Migration details](STEAM-VALVES.md#computercraft).
-- Saved compact pumps and older DVSS assemblies retain their original footprint
-  and controls. Pick up and replace them to use the current full-size models,
-  then reconnect their defined ports.
-- Saved two-column jet assemblies stay two columns wide until picked up and
-  replaced. Existing matched pairs remain supported.
-- Previously assembled HPCS, LPCS, RHR/LPCI and feedwater pumps keep their old
-  models and connections. Pick up and replace them to use the modern flanges and
-  larger footprints. [Dimensions and upgrade notes](MODERN-PUMPS-AND-PIPES.md).
-- Old RCIC/HPCI cube IDs remain loadable but are hidden from crafting and the
-  creative tab.
-- Replace steam tubes previously used for water with High-Pressure Water Pipe.
-  Pump discharge must reach an RPV Water Injection Port.
-- Older rod saves start from their recorded notches; new saves preserve
-  fractional travel. See [Rod motion](ROD-MOTION.md).
-- Existing reactors now use volume-based recirculation targets. Check INFO for
-  required jets and drives; larger vessels may need more hardware. Save migration
-  preserves physical flow and water rather than multiplying them on reload.
+Old saves load. Most updates keep saved machines as they were, so older pumps, turbines, condensers and
+reactors keep their size and ports until you pick them up and replace them. Two changes need action:
+
+- Older turbine admission settings are ignored. Install upstream stop and control valves, and change CC
+  scripts from `setAdmission` and `setRunning` to valve `setPosition`, `open` and `close`.
+  [STEAM-VALVES.md](STEAM-VALVES.md#computercraft)
+- Existing reactors use the volume-based recirculation targets. Check the INFO tab for the jets and
+  drives your vessel needs. To move to the compact core layout, shut down, defuel, replace the
+  controller and rebuild the drive layer. [COMPACT-CORE.md](COMPACT-CORE.md)
+
+Update the client and server together, since the GUI network protocol changes between releases. Further
+per-feature notes: [ALPHA-HARDWARE.md](ALPHA-HARDWARE.md), [PHASE-ONE-FIXES.md](PHASE-ONE-FIXES.md),
+[ROD-MOTION.md](ROD-MOTION.md).
 
 ## Build and install
 
-Use **JDK 21**. The project pins Minecraft **1.21.1** and NeoForge **21.1.248**.
-The development integrations use Mekanism **10.7.19.85** and CC:Tweaked **1.120.2**
-for Minecraft 1.21.1; neither is bundled in the mod JAR.
+Use JDK 21. From the repository root:
 
-From the repository root on Windows:
-
-```powershell
-.\gradlew.bat build
+```bash
+./gradlew build          # Windows: .\gradlew.bat build
 ```
 
-On Linux/macOS, use `./gradlew build`. The build runs the physics acceptance
-suite, including longer reactor transients, so allow several minutes.
-
-Install **`mod/build/libs/mod-0.1.0-alpha.5.jar`** in the Minecraft instance's
-`mods` folder with NeoForge. The physics core is already packaged inside it.
-Install compatible Mekanism and CC:Tweaked versions separately to use their
-integrations. Sources and generated models are tracked here; build outputs are
-not committed.
+The build runs the physics acceptance suite and takes several minutes. Put
+`mod/build/libs/mod-<version>.jar` in your instance's `mods` folder with NeoForge. The physics core is
+inside it. Install Mekanism and CC:Tweaked yourself if you want them. Neither is bundled.
 
 ## Development and verification
 
-See [Testing and CI](TESTING.md) for automated push/PR checks, the release
-checklist, test registration, and regression coverage for the original audit
-findings. [Issues 14–18](PHASE-TWO-FIXES.md) documents the follow-up fixes.
+- `core/` is pure Java physics with no Minecraft dependency. `mod/` holds the NeoForge blocks, screens,
+  networking and integrations. `art/models/` holds editable Blender sources. `tools-*.py` are
+  reproducible asset exporters and audits (Python 3.11 or newer).
+- The main checks:
 
-- `core/` — pure Java physics, independent of Minecraft.
-- `mod/` — NeoForge blocks, screens, networking, and integrations.
-- `art/models/dvss/` — editable Blender models, source meshes, and previews.
-- `art/models/modern/` — five revised pump models and dyeable pipe fittings in Blender.
-- `art/models/power_turbines/` — editable HP, LP and generator Blender scenes.
-- `art/models/steam_valves/` — editable stop/control valves and in-game previews.
-- `art/models/condenser_msiv/` — original condenser exterior/cutaway and modeled MSIV.
-- `art/models/condenser_ports/` — connectable condenser exterior and bypass valve, authored in Blender.
-- `art/models/cooling/` — natural/circular towers, two pumps, screened intake and animated fan, authored in Blender.
-- `art/models/condensate_tank/` — scalable tank shell, roof, plinth, flanges and ladder in Blender.
-- `tools-export-dvss.py` / `tools-narrow-jet.py` / `tools-export-modern.py` — reproducible game assets;
-  pass `--check` to verify generated output.
-- `tools-export-power-turbines.py` / `tools-export-steam-valves.py` — turbine and valve exporters;
-  both also support `--check`.
-
-Useful checks:
-
-The Python audit/export commands below require Python 3.11 or newer.
-
-```powershell
-.\gradlew.bat :core:check
+```bash
+./gradlew check build
 python tools-check-test-registration.py
-.\gradlew.bat :mod:runTurbineGameTest
-.\gradlew.bat :mod:runTurbineModelCheck -PbwrPumpPanelCheck
-.\gradlew.bat :mod:runTurbineModelCheck -PbwrPowerPanelCheck
-.\gradlew.bat :mod:runTurbineModelCheck -PbwrCompactCorePanelCheck
-.\gradlew.bat :mod:runTurbineModelCheck -PbwrVesselModelCheck
-.\gradlew.bat :mod:runTurbineModelCheck -PbwrGuiPerformanceCheck
+./gradlew :mod:runTurbineGameTest
+./gradlew :mod:runPeripheralCheck
 python tools-audit-assets.py
 python tools-check-jar.py
-python tools-export-steam-valves.py --check
-python tools-export-msiv.py --check
-python tools-export-condenser.py --check
-python tools-export-cooling.py --check
-python tools-export-condensate-tank.py --check
-python tools-export-reactor-vessel.py --check
-python tools-export-suppression.py --check
-.\gradlew.bat :core:acceptance --args=CoolingWater
-.\gradlew.bat :mod:runTurbineModelCheck -PbwrCoolingPanelCheck
 ```
 
-The alpha candidate passes **206 physics tests
-and all 46 required Minecraft GameTests**, including the original audit
-regressions and the R01–R05 repairs. Dedicated servers pass with CC:Tweaked and
-Mekanism both installed and absent. Computer coverage includes all six faces of
-44 machine block types; player control programs remain independent.
-
-The **creative inventory** slowdown was reproduced locally at **19 FPS** and
-improved to **561 FPS** by using Blender-rendered machine icons. Full world
-models remain intact. See [alpha hardware and migration](ALPHA-HARDWARE.md)
-for the SLC tank/pump, Divisions and water outfall.
-
-Local reactor-panel measurements improved from **109 to 205 FPS** for 764
-assemblies and **67 to 148 FPS** at maximum size after batching the fuel map.
-These are controlled local results, not modpack FPS guarantees. See
-[transport, computer connections and performance](PLANT-TRANSPORT.md) for
-settings, temperature compatibility limits and the event-driven pipe design.
-Final artifacts and executed checks are recorded in [BUILD-STATUS.md](BUILD-STATUS.md).
-
-Earlier verification milestones follow. The natural-cooling update passed **195 physics tests and all 24 required
-Minecraft GameTests**, including metered filling, finite spray capture, real RHR
-plumbing, passive cooldown, basin repair/reload and older pump compatibility. Seven client views
-checked Blender materials, water levels, spray headers, detailed pumps and live
-panels. The CC:Tweaked runtime check reported zero problems. See
-[suppression basin construction](SUPPRESSION-BASIN.md).
-
-The compact-core update passed **186 physics tests and all 18 required Minecraft
-GameTests**. Both optional-integration configurations booted successfully. Real
-client checks covered 764/185 and 1,476/357 layouts, refuelling, and commands to
-the last blade. See [compact-core construction and migration](COMPACT-CORE.md).
-
-The steam-valve gameplay update passed **12 valve scenarios**, **15 main-turbine
-scenarios**, **73 pump scenarios**, **96 RCIC/HPCI assembly scenarios**, two
-earlier plumbing scenarios and five focused turbine-physics tests. Actual
-client checks covered the models, connected train, readout panels and valve
-commands, including a 65.3% setting and zero flow after stop-valve closure.
-
-The condenser update has seven core heat/mass-balance tests and ten server
-scenarios covering the eight connections in four orientations, LP placement,
-Mekanism water transfer, CC bypass control, shared steam supply, persistence,
-teardown and replacement of legacy large units. Client tests exercise the real
-full-mesh renderer, including preservation of Blender material colors and the
-entity atlas shader. The opt-in `:mod:runTurbineModelCheck -PbwrCondenserPanelCheck`
-captures eleven views including round makeup fittings, adjacent LP/condenser
-modules, and normal snapping. Additional GameTests cover a powered makeup pump,
-shared hotwell space, heat conservation and adjacent-unit clearance.
-See [BUILD-STATUS.md](BUILD-STATUS.md)
-for exact scope, earlier results and artifact hashes.
-
-The earlier cooling revision passed **183 core tests**, **15 required GameTests**,
-**16 turbine**, **27 cooling** and **9 tank** runtime scenarios. Seven dedicated
-permission scenarios pass with optional integrations present and absent. Coverage
-includes a waterlogged lakebed intake, automatic tank formation, legacy saves,
-LP condenser backpressure and finite water/energy accounting. Client checks cover
-all five cooling models, 19 fan instances, submerged placement and the updated
-intake/tank screens. Full results are in [BUILD-STATUS.md](BUILD-STATUS.md).
+[TESTING.md](TESTING.md) lists the full gate set, the client screenshot checks, the dedicated server runs
+(with and without CC:Tweaked and Mekanism) and the CI workflow. [HANDOFF.md](HANDOFF.md) is the
+developer handoff, and [BUILD-STATUS.md](BUILD-STATUS.md) records results. Report problems on the
+[issue tracker](https://github.com/OldGunslingerWildBill/bwr-mod/issues).
 
 ## Further reading
 
-- [Computer faces, segmented temperatures, condenser vacuum and pipe performance](PLANT-TRANSPORT.md)
-- [Concrete suppression basins and four-port RHR cooling](SUPPRESSION-BASIN.md)
-- [Scalable condensate tank construction and ports](CONDENSATE-TANK.md)
-- [Cooling towers, circulating pumps, lake intake and makeup water](COOLING-WATER.md)
-- [Condenser ports, bypass valve, cooling supply and modeled MSIV](CONDENSER-AND-MSIV.md)
-- [Steam stop/control valves, shared admission, and CC migration](STEAM-VALVES.md)
-- [Modular main turbines, generator, and external condensers](MODULAR-TURBINES.md)
-- [Water plumbing, pump controls, and upgrade notes](WATER-PLUMBING.md)
-- [Pump model dimensions and port coordinates](PUMP-MODELS.md)
-- [Modern pump flanges, round pipes, and dye colors](MODERN-PUMPS-AND-PIPES.md)
-- [Rebuilt Terry RCIC/HPCI turbines and connections](TERRY-TURBINES.md)
-- [Legacy RCIC TWL and HPCI turbine assemblies](TURBINE-ASSEMBLIES.md)
-- [Recirculation, jet matching, and reactor INFO](RECIRCULATION.md)
-- [Continuous rod travel and persistence](ROD-MOTION.md)
-- [Design specification](SPEC.md) and [developer handoff](HANDOFF.md)
+**Overview:** [SPEC.md](SPEC.md), [CHANGELOG.md](CHANGELOG.md), [REFERENCE-DATA.md](REFERENCE-DATA.md),
+[ADVANCEMENTS.md](ADVANCEMENTS.md)
+
+**Reactor and fuel:** [COMPACT-CORE.md](COMPACT-CORE.md), [RECIRCULATION.md](RECIRCULATION.md),
+[INTERNAL-PUMPS.md](INTERNAL-PUMPS.md), [JET-PUMP-INSTALLATION.md](JET-PUMP-INSTALLATION.md),
+[PRESSURE-VESSEL.md](PRESSURE-VESSEL.md), [OPEN-REACTOR-UPDATE.md](OPEN-REACTOR-UPDATE.md),
+[COLUMBIA-CORE-REFERENCE.md](COLUMBIA-CORE-REFERENCE.md), [ROD-MOTION.md](ROD-MOTION.md),
+[FUELS-AND-RODS.md](FUELS-AND-RODS.md)
+
+**Water and steam:** [WATER-PLUMBING.md](WATER-PLUMBING.md), [PUMP-MODELS.md](PUMP-MODELS.md),
+[MODERN-PUMPS-AND-PIPES.md](MODERN-PUMPS-AND-PIPES.md), [TERRY-TURBINES.md](TERRY-TURBINES.md),
+[STEAM-VALVES.md](STEAM-VALVES.md), [MODULAR-TURBINES.md](MODULAR-TURBINES.md),
+[CONDENSER-AND-MSIV.md](CONDENSER-AND-MSIV.md), [COOLING-WATER.md](COOLING-WATER.md),
+[CONDENSATE-TANK.md](CONDENSATE-TANK.md), [PLANT-TRANSPORT.md](PLANT-TRANSPORT.md)
+
+**Safety and accidents:** [ALPHA-HARDWARE.md](ALPHA-HARDWARE.md), [CORE-SPARGERS.md](CORE-SPARGERS.md),
+[SUPPRESSION-BASIN.md](SUPPRESSION-BASIN.md), [STEAM-AND-ACCIDENT-UPDATE.md](STEAM-AND-ACCIDENT-UPDATE.md),
+[PORT-LOCA-UPDATE.md](PORT-LOCA-UPDATE.md), [SEVERE-ACCIDENT-UPDATE.md](SEVERE-ACCIDENT-UPDATE.md),
+[CONTAINMENT-UPDATE.md](CONTAINMENT-UPDATE.md), [CONTAINMENT-SPEC.md](CONTAINMENT-SPEC.md),
+[RHR-CONTAINMENT-SPEC.md](RHR-CONTAINMENT-SPEC.md)
+
+**Control room and grid:** [CONTROL-PANELS.md](CONTROL-PANELS.md), [ROOM-FURNITURE.md](ROOM-FURNITURE.md),
+[SIGNALS.md](SIGNALS.md), [FULL-CORE-DISPLAY-SPEC.md](FULL-CORE-DISPLAY-SPEC.md),
+[GRID-TIE-SPEC.md](GRID-TIE-SPEC.md), [docs/grid-wiring.md](docs/grid-wiring.md),
+[docs/lua/README.md](docs/lua/README.md)
+
+**Client:** [docs/shader-packs.md](docs/shader-packs.md), [GPU-VISUALS-UPDATE.md](GPU-VISUALS-UPDATE.md),
+[MACHINE-RENDERING.md](MACHINE-RENDERING.md)
 
 ## License and credit
 

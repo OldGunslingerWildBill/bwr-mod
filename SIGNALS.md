@@ -134,8 +134,8 @@ Block entity `ReactorControllerBlockEntity`; CC peripheral `bwr_reactor`.
 | `rod_<n>_full_in` | Rod n at notch 00 | | 0 to 1 | BOOLEAN |
 | `rod_<n>_full_out` | Rod n at notch 48 | | 0 to 1 | BOOLEAN |
 | `rod_<n>_accum_trouble` | Rod n accumulator below 0.9 of a full charge | | 0 to 1 | BOOLEAN |
-| `rod_<n>_lattice_x` | Rod n core x (GE XX of XX-YY) | | 0 to 99 | LEVEL |
-| `rod_<n>_lattice_y` | Rod n core y (GE YY of XX-YY) | | 0 to 99 | LEVEL |
+| `rod_<n>_lattice_x` | Rod n core x (XX of XX-YY) | | 0 to 99 | LEVEL |
+| `rod_<n>_lattice_y` | Rod n core y (YY of XX-YY) | | 0 to 99 | LEVEL |
 | `rod_<n>_label` | Rod n coordinate, `XX-YY` | | text | TEXT |
 | `lprm_count` | LPRM strings | strings | 0 to 100 | LEVEL |
 | `lprm_<s>_label` | LPRM string s coordinate, `XX-YY` | | text | TEXT |
@@ -192,7 +192,7 @@ reactor.
 These are plain facts for the full core display and for any program; none of them acts on the plant. They read no
 signal unless the reactor is formed. Rods and strings are numbered from 1.
 
-* **Coordinates.** `rod_<n>_label` is the rod's coordinate in the GE `XX-YY` convention and `rod_<n>_lattice_x/_y` are its
+* **Coordinates.** `rod_<n>_label` is the rod's coordinate in the `XX-YY` convention and `rod_<n>_lattice_x/_y` are its
   two numbers. Columns run 02, 06 ... 58 from west to east and rows 03, 07 ... 59 from south to north (so the number
   rises up the core, as on the Browns Ferry display); a core with fewer than 15 rods across is centred in that grid
   (its middle rod is `30-31`), a wider one starts at 02 and runs on. The rod number n is the drive's number, as for
@@ -208,7 +208,7 @@ signal unless the reactor is formed. Rods and strings are numbered from 1.
   `rodDriftNotchesPerSecond` controls travel, default 0.1. Both are gameplay calibrations.
   Fault state, physical travel, outstanding command and random sequence survive saves. A repaired collet
   catches the next notch. There is no automatic rod command or trip in response to a drift alarm.
-* **LPRM strings.** A string stands in the gap between four rods; the mod places one wherever the GE grid has a point
+* **LPRM strings.** A string stands in the gap between four rods; the mod places one wherever the display grid has a point
   (`x` a multiple of 8, `y` one more than a multiple of 8, as in `08-49`) with a rod on all four sides: 39 strings in the
   185-rod core, fewer in a smaller one. They are numbered in reading order (top row first, west to east). `lprm_<s>_label`
   is the coordinate. Each string has four levels, a (bottom) to d (top).
@@ -224,7 +224,7 @@ signal unless the reactor is formed. Rods and strings are numbered from 1.
   Initialization commissions fixed channel reference gains; later rod/void changes do not recalibrate them.
   Wiring, calibration, bypass and failure survive saves; old saves acquire healthy physical strings.
   `_downscale` below 5% and `_upscale` above 110% remain gameplay defaults for working, unbypassed chambers.
-  See REFERENCE-DATA.md for the GE-style assignment basis and the explicit layout approximations.
+  See REFERENCE-DATA.md for the assignment basis and the explicit layout approximations.
 
 ### Rod selection (rod select matrix and rod motion pushbuttons)
 
@@ -844,7 +844,7 @@ Block entity `ContainmentEquipmentBlockEntity`; CC peripheral `bwr_containment_v
 ### Startup detector locations
 
 `srm_<1-4>_lattice_x`, `_lattice_y`, `_lprm_string` and
-`irm_<1-8>_lattice_x`, `_lattice_y`, `_lprm_string` expose typical GE coordinates and the adjacent
+`irm_<1-8>_lattice_x`, `_lattice_y`, `_lprm_string` expose typical core coordinates and the adjacent
 LPRM string number. CC `getDetectorLocations()` also includes the fuel-lattice position and marks
 placement as `typical`. Browns Ferry FCD strips carry the matching SRM-A through D / IRM-A through H
 legends above them. These are representative placements, not an as-built plant map.
