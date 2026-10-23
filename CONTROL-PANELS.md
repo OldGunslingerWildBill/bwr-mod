@@ -439,7 +439,7 @@ and without it. `tools-audit-recipes.py` fails on two recipes with the same ingr
 | Plinth: kick / apron / base | 3 ingots in a row / ingot, board, ingot in a row / ingot, board, ingot in a column | 6 / 2 / 2 | 0.5 / 2 / 2 |
 | Corner, vertical: inside / outside / chamfer | 2 boards / board + ingot / 2 boards + nugget (shapeless) | 2 | 2 / 1.5 / 2 |
 | Corner, bench: inside / outside / chamfer | 2 benchboards / benchboard + ingot / 2 benchboards + nugget (shapeless) | 2 | 6 / 3.5 / 6 |
-| Operator desk | 5 iron ingots (a table: three over two legs) | 2 | 2.5 |
+| Operator desk | 5 iron ingots and a stick (three over iron, stick, iron; the plain three-over-two-legs shape is the vanilla iron helmet) | 2 | 2.5 |
 | Operator desk: round end / L corner | operator desk + iron nugget / + iron ingot (shapeless) | 1 | 2.6 / 3.5 |
 | **Supervisor desk** | 2 operator desks over 2 iron ingots | 1 | 7 (two blocks) |
 | Relay cabinet / plain back | 7 or 8 ingots around an iron door and redstone / redstone | 1 | 9 / 8 |
