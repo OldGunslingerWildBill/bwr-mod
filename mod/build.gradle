@@ -693,6 +693,7 @@ tasks.named('jar', Jar).configure {
     exclude 'data/bwrplant/**'
     exclude 'data/bwrpool/**'
     exclude 'data/bwruranium/**'
+    exclude 'data/bwrbridge/**'
     from(rootProject.file('LICENSE')) { into 'META-INF' }
     from(rootProject.file('NOTICE')) { into 'META-INF' }
     from(rootProject.file('THIRD-PARTY-NOTICES.md')) { into 'META-INF' }
