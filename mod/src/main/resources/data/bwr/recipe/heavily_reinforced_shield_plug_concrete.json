@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "P": {
+      "item": "bwr:shield_plug_concrete"
+    },
+    "S": {
+      "tag": "c:ingots/steel"
+    },
+    "N": {
+      "tag": "c:ingots/netherite"
+    }
+  },
+  "pattern": [
+    "PSP",
+    "NPN",
+    "PSP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:heavily_reinforced_shield_plug_concrete"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "H": {
+      "item": "bwr:heavily_reinforced_shield_plug_concrete"
+    },
+    "N": {
+      "tag": "c:ingots/netherite"
+    },
+    "B": {
+      "tag": "c:storage_blocks/netherite"
+    }
+  },
+  "pattern": [
+    "HNH",
+    "BHB",
+    "HNH"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:ultra_reinforced_shield_plug_concrete"
+  }
+}

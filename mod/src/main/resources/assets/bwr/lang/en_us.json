@@ -1373,5 +1373,13 @@
   "block.bwr.refuelling_bridge_console": "Refuelling Bridge Console",
   "item.bwr.refuelling_bridge_console": "Refuelling Bridge Console",
   "menu.bwr.refuelling_bridge": "Refuelling Bridge",
-  "status.bwr.refuelling_bridge.chute_shallow": "Stopped: the cattle chute is too shallow. A 4.5 m assembly would hang through its floor; stack the canal blocks deeper or fill the cavity and the pool higher."
+  "status.bwr.refuelling_bridge.chute_shallow": "Stopped: the cattle chute is too shallow. A 4.5 m assembly would hang through its floor; stack the canal blocks deeper or fill the cavity and the pool higher.",
+  "entity.bwr.reactor_head": "Reactor Vessel Head",
+  "status.bwr.reactor_head.needs_pickaxe": "The head is too heavy to move by hand; use a pickaxe.",
+  "block.bwr.shield_plug_concrete": "Shield Plug Concrete",
+  "item.bwr.shield_plug_concrete": "Shield Plug Concrete",
+  "block.bwr.heavily_reinforced_shield_plug_concrete": "Heavily Reinforced Shield Plug Concrete",
+  "item.bwr.heavily_reinforced_shield_plug_concrete": "Heavily Reinforced Shield Plug Concrete",
+  "block.bwr.ultra_reinforced_shield_plug_concrete": "Ultra-Reinforced Shield Plug Concrete",
+  "item.bwr.ultra_reinforced_shield_plug_concrete": "Ultra-Reinforced Shield Plug Concrete"
 }

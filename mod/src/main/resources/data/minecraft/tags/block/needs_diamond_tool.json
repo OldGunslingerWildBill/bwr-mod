@@ -1,6 +1,8 @@
 {
   "replace": false,
   "values": [
-    "bwr:corium"
+    "bwr:corium",
+    "bwr:heavily_reinforced_shield_plug_concrete",
+    "bwr:ultra_reinforced_shield_plug_concrete"
   ]
 }

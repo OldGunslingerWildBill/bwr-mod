@@ -78,6 +78,9 @@
     "bwr:uranium_ore",
     "bwr:deepslate_uranium_ore",
     "bwr:raw_uranium_block",
-    "bwr:uranium_block"
+    "bwr:uranium_block",
+    "bwr:shield_plug_concrete",
+    "bwr:heavily_reinforced_shield_plug_concrete",
+    "bwr:ultra_reinforced_shield_plug_concrete"
   ]
 }

@@ -343,6 +343,16 @@ public final class AccidentBlast {
      * @param shellMax the vessel shell's maximum corner
      */
     public static Job headCone(ServerLevel level, BlockPos shellMin, BlockPos shellMax, double tntKg, float radius) {
+        return headCone(level, shellMin, shellMax, tntKg, radius, Integer.MAX_VALUE);
+    }
+
+    /**
+     * A head failure whose head did not leave: the cone stops under {@code ceilingY} (the lowest height the cone must
+     * not touch, the underside of the shield plug row that stopped the head), so nothing from that row up is swept.
+     * {@code Integer.MAX_VALUE} is no ceiling. The limit is part of the saved sweep box, so a resumed job keeps it.
+     */
+    public static Job headCone(ServerLevel level, BlockPos shellMin, BlockPos shellMax, double tntKg, float radius,
+                               int ceilingY) {
         double axisX = (shellMin.getX() + shellMax.getX() + 1) / 2.0;
         double axisZ = (shellMin.getZ() + shellMax.getZ() + 1) / 2.0;
         int topY = shellMax.getY() + 1;
@@ -356,7 +366,8 @@ public final class AccidentBlast {
         Job job = region(Kind.CONE, axisX, topY - 0.5, axisZ, tntKg, 0.0, radius,
                 new double[] {axisX, axisZ, topY, inner, tan}, box);
         job.protect(shellMin.offset(1, 1, 1), shellMax.offset(-1, -1, -1));
-        if (reach <= 0.0) job.chunks.clear();
+        if (ceilingY != Integer.MAX_VALUE) job.box[4] = Math.min(job.box[4], ceilingY - 1);
+        if (reach <= 0.0 || job.box[4] < job.box[1]) job.chunks.clear();
         return job;
     }
 
@@ -538,6 +549,16 @@ public final class AccidentBlast {
             return true;
         }
 
+        /** {@link #breakable} without a job: the rules that hold for every blast (the missile and its crater use them). */
+        boolean breakableAnywhere(BlockPos pos, BlockState state) {
+            if (state.isAir() || state.getBlock() instanceof LiquidBlock) return false;
+            if (state.getDestroySpeed(level, pos) < 0.0f) return false;
+            if (state.getBlock() instanceof ReactorControllerBlock
+                    || state.getBlock() instanceof ContainmentControllerBlock) return false;
+            for (int[] box : formed) if (inside(box, pos.getX(), pos.getY(), pos.getZ())) return false;
+            return true;
+        }
+
         boolean stepRegion(Job job) {
             List<BlockPos> hits = new ArrayList<>();
             int k = 0;
@@ -608,28 +629,69 @@ public final class AccidentBlast {
         void breakBlocks(Job job, List<BlockPos> hits) {
             breaks -= hits.size();
             if (hits.isEmpty()) return;
-            hits.sort(Comparator.comparingLong(BlockPos::asLong));
-            Explosion explosion = new Explosion(level, null, job.cx, job.cy, job.cz, job.radius, false, interaction);
-            if (EventHooks.onExplosionStart(level, explosion)) {
-                return; // Cancelled by a protection mod: this slice is discarded, not retried.
-            }
             if (fake == null) fake = FakePlayerFactory.getMinecraft(level);
-            for (BlockPos pos : hits) {
-                BlockState state = level.getBlockState(pos);
-                if (state.isAir()) continue;
-                if (NeoForge.EVENT_BUS.post(new BlockEvent.BreakEvent(level, pos, state, fake)).isCanceled()) continue;
-                explosion.getToBlow().add(pos);
-            }
-            EventHooks.onExplosionDetonate(level, explosion, new ArrayList<>(), job.radius * 2.0);
-            if (explosion.getToBlow().isEmpty()) return;
-            int sample = Math.max(1, explosion.getToBlow().size() / 12);
-            for (int i = 0; i < explosion.getToBlow().size(); i += sample) {
-                BlockPos at = explosion.getToBlow().get(i);
-                level.sendParticles(ParticleTypes.EXPLOSION, at.getX() + 0.5, at.getY() + 0.5, at.getZ() + 0.5,
-                        1, 0.3, 0.3, 0.3, 0.0);
-            }
-            explosion.finalizeExplosion(false);
+            removeProtected(level, interaction, fake, job.cx, job.cy, job.cz, job.radius, hits);
         }
+    }
+
+    /** The never-break rules of every blast, for callers that break blocks on their own (see {@link #guard}). */
+    public static final class Guard {
+        private final Context context;
+
+        private Guard(ServerLevel level) {
+            this.context = new Context(level);
+        }
+
+        /** False for air and fluid, blocks that cannot be destroyed, reactor and containment controllers and the formed reactors' structure. */
+        public boolean mayBreak(BlockPos pos, BlockState state) {
+            return context.breakableAnywhere(pos, state);
+        }
+    }
+
+    /** A guard for one burst of work; it reads the formed reactors once, so make a new one each time. */
+    public static Guard guard(ServerLevel level) {
+        return new Guard(level);
+    }
+
+    /**
+     * The protected path for blocks something else has decided to break (the head missile's path and crater): the
+     * same sequence a blast slice runs. {@code ExplosionEvent.Start} may discard the lot, a {@link BlockEvent.BreakEvent}
+     * is posted for every block and a cancelled one spares it, {@code ExplosionEvent.Detonate} may prune the rest, and
+     * the survivors go through vanilla explosion finalisation and drop rules. Returns the positions that were removed;
+     * the caller treats the others as blocks that did not give way.
+     */
+    public static List<BlockPos> breakProtected(ServerLevel level, double x, double y, double z, float radius,
+                                                List<BlockPos> hits) {
+        Explosion.BlockInteraction interaction = level.getGameRules().getBoolean(GameRules.RULE_BLOCK_EXPLOSION_DROP_DECAY)
+                ? Explosion.BlockInteraction.DESTROY_WITH_DECAY : Explosion.BlockInteraction.DESTROY;
+        return removeProtected(level, interaction, FakePlayerFactory.getMinecraft(level), x, y, z, radius, hits);
+    }
+
+    private static List<BlockPos> removeProtected(ServerLevel level, Explosion.BlockInteraction interaction, FakePlayer fake,
+                                                  double x, double y, double z, float radius, List<BlockPos> hits) {
+        if (hits.isEmpty()) return List.of();
+        hits.sort(Comparator.comparingLong(BlockPos::asLong));
+        Explosion explosion = new Explosion(level, null, x, y, z, radius, false, interaction);
+        if (EventHooks.onExplosionStart(level, explosion)) {
+            return List.of(); // Cancelled by a protection mod: this slice is discarded, not retried.
+        }
+        for (BlockPos pos : hits) {
+            BlockState state = level.getBlockState(pos);
+            if (state.isAir()) continue;
+            if (NeoForge.EVENT_BUS.post(new BlockEvent.BreakEvent(level, pos, state, fake)).isCanceled()) continue;
+            explosion.getToBlow().add(pos);
+        }
+        EventHooks.onExplosionDetonate(level, explosion, new ArrayList<>(), radius * 2.0);
+        if (explosion.getToBlow().isEmpty()) return List.of();
+        List<BlockPos> removed = new ArrayList<>(explosion.getToBlow());
+        int sample = Math.max(1, removed.size() / 12);
+        for (int i = 0; i < removed.size(); i += sample) {
+            BlockPos at = removed.get(i);
+            level.sendParticles(ParticleTypes.EXPLOSION, at.getX() + 0.5, at.getY() + 0.5, at.getZ() + 0.5,
+                    1, 0.3, 0.3, 0.3, 0.0);
+        }
+        explosion.finalizeExplosion(false);
+        return removed;
     }
 
     /** The two BWR pipe blocks a whip never takes beyond the break itself. */

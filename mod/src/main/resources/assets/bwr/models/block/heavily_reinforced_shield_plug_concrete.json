@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "bwr:block/heavily_reinforced_shield_plug_concrete"
+  }
+}

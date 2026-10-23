@@ -28,7 +28,7 @@ This update connects that damage to the world:
 
 - Main-steam, feedwater and recirculation failures break the connected BWR pipe immediately outside the relevant vessel port, and, since the accident blast update, whatever within one to two blocks of that break cannot take the jet (pipe whip and jet impingement, below). They still do not destroy unrelated nearby buildings. The failure stays recorded until the pipe is put back, which seals it (see [Sealing a break](PORT-LOCA-UPDATE.md#sealing-a-break)); the vessel head stays failed.
 - As of alpha.26, actual port elevations govern direct liquid loss; exposed ports vent steam. See [port-height LOCA behavior](PORT-LOCA-UPDATE.md).
-- Head failure replaces the intact crown with an original Blender model of a torn rim, peeled steel and sheared studs. The core becomes visible. Toggling refuelling cannot repair a failed head. Since the accident blast update it is also a steam burst and missile that breaks the world above the vessel (below).
+- Head failure replaces the intact crown with an original Blender model of a torn rim, peeled steel and sheared studs. The core becomes visible. Toggling refuelling cannot repair a failed head. Since the accident blast update it is also a steam burst and missile that breaks the world above the vessel (below), and the head itself is thrown as an entity that a thick enough stack of blocks above the vessel holds in place or that flies off, lands and rests ([the head as a missile](SEVERE-ACCIDENT-UPDATE.md#vessel-head-failure-the-head-as-a-missile)).
 - Pressure-dependent jets use bounded client-side particles and fade out as pressure falls. As of alpha.26 the plumes are white.
 - A loud vanilla explosion sound plays once on head failure as a placeholder for the user's future audio. Failure effects are persisted so reloading does not repeat pipe destruction, the blast or the explosion sound.
 - Static vessel meshes rebuild on a damage-state transition, not each frame. Particle count and lifetime are bounded. No automatic scram, valve actuation or pump-start logic has been added.
@@ -77,6 +77,8 @@ and a roof over the vessel go, and a building beside it, a wall against its side
 not. The vessel multiblock stays formed and the damaged-head model stays: the blast starts above the shell and
 the shell, interior, ports and control rod drive row are protected by name. The sweep is spread over ticks
 (16,384 positions and 1,024 blocks per tick) and any part over an unloaded chunk waits until it loads.
+
+The head breaks the column above it first, and if that stack holds the head (see [the head as a missile](SEVERE-ACCIDENT-UPDATE.md#vessel-head-failure-the-head-as-a-missile)) the cone stops under the row that stopped it: the table above is the open-sky case, a head that got through. A vessel whose head was off for refuelling throws nothing and the cone is as above.
 
 
 ## References and scope
