@@ -408,15 +408,24 @@ public final class Ui {
     }
 
     public static void text(GuiGraphics g, String s, int x, int y, Type type, int colour) {
+        text(g, s, x, y, type, colour, 1);
+    }
+
+    /**
+     * Draws {@code s} enlarged by a whole {@code zoom} on top of the type's own scale, with {@code (x, y)} the top-left in
+     * screen pixels (so the probe sees where the text really is). The guide's book is laid out at a fixed design size and
+     * drawn zoomed to fit the window; text zoomed by a whole number stays crisp.
+     */
+    public static void text(GuiGraphics g, String s, int x, int y, Type type, int colour, int zoom) {
         if (probing && !s.isEmpty()) {
-            PROBE.add(new DrawnText(x, y, width(s, type), height(type), clipDepth > 0, s));
+            PROBE.add(new DrawnText(x, y, width(s, type) * zoom, height(type) * zoom, clipDepth > 0, s));
         }
         FormattedCharSequence sequence = sequence(s, type);
         if (batchDepth > 0) {
-            queueText(g, sequence, x, y, type.scale, colour);
+            queueText(g, sequence, x, y, type.scale * zoom, colour);
             return;
         }
-        drawNow(g, font(), sequence, x, y, type.scale, colour);
+        drawNow(g, font(), sequence, x, y, type.scale * zoom, colour);
     }
 
     /** Right-aligns {@code s} so that it ends at {@code right}. */
