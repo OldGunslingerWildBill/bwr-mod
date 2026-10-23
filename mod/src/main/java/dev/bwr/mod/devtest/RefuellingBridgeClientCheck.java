@@ -11,6 +11,9 @@ import dev.bwr.mod.refuelling.BridgeSite;
 import dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity;
 import dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity.Loc;
 import dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity.Move;
+import dev.bwr.mod.client.MachineMeshCache;
+import dev.bwr.mod.refuelling.RefuellingRailBlock;
+import dev.bwr.mod.registry.BwrBlocks;
 import dev.bwr.mod.registry.BwrItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -49,7 +52,9 @@ public final class RefuellingBridgeClientCheck {
 
     private static final BlockPos O = new BlockPos(200, 200, 200);
     private static final String[] NAMES = {"chute-open-floor", "chute-closed-floor", "chute-open-side", "chute-closed-side", "bridge-span",
-            "mast-in-core", "assembly-through-chute", "assembly-in-rack", "control-screen", "survey-meter-spike"};
+            "mast-in-core", "assembly-through-chute", "assembly-in-rack", "control-screen", "survey-meter-spike",
+            "model-over-pool", "model-walkway-side", "model-trolley-pool", "model-over-vessel", "model-trolley-closeup", "model-grapple-open",
+            "model-span-narrow", "model-span-wide"};
 
     private record Shot(Vec3 stand, Vec3 target) {
     }
@@ -68,7 +73,24 @@ public final class RefuellingBridgeClientCheck {
             new Shot(v(6.1, 1.6, 2.5), v(8.7, 3.2, 2.5)),
             new Shot(v(14.8, 11.0, 5.75), v(11.75, 6.6, 5.75)),
             new Shot(v(8.0, 11.0, 0.0), v(8.0, 8.0, 2.5)),
-            new Shot(v(19.5, 11.5, 5.25), v(10.75, 9.2, 5.25))};
+            new Shot(v(19.5, 11.5, 5.25), v(10.75, 9.2, 5.25)),
+            // the Blender model of the bridge: over the pool from the operator platform's side, from the walkway's side, the trolley close,
+            // over the open vessel, the grapple latching (placed when the move is held), and a narrow and a wide span (the extra rails)
+            new Shot(v(27.0, 12.0, 2.5), v(13.5, 10.8, 2.5)),
+            new Shot(v(0.5, 12.0, 2.5), v(13.5, 10.8, 2.5)),
+            new Shot(v(22.0, 13.0, 0.0), v(14.5, 11.2, 2.5)),
+            new Shot(v(15.5, 12.5, 2.5), v(2.5, 10.8, 2.5)),
+            new Shot(v(20.0, 13.4, 0.2), v(14.8, 11.6, 2.5)),
+            new Shot(v(15.6, 10.9, 0.4), v(13.5, 10.1, 2.5)),
+            new Shot(v(16.0, 12.0, -22.0), v(6.0, 10.8, -22.0)),
+            new Shot(v(59.5, 14.0, -12.0), v(33.5, 10.5, -12.0))};
+    private static long uploadsAtStart;
+    private static long framesAtStart;
+    private static long drawsAtStart;
+    private static long nanosAtStart;
+    private static long frames;
+    private static RefuellingBridgeBlockEntity narrow;
+    private static RefuellingBridgeBlockEntity wide;
 
     private static boolean started, requested, standing, built;
     private static volatile Throwable failure;
@@ -144,7 +166,7 @@ public final class RefuellingBridgeClientCheck {
                         built = true;
                     }
                     act(level, player, current);
-                    Shot shot = SHOTS[current];
+                    Shot shot = shot(current);
                     Vec3 delta = shot.target.subtract(shot.stand.add(0, player.getEyeHeight(), 0));
                     float yaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90);
                     float pitch = (float) -Math.toDegrees(Math.atan2(delta.y, Math.hypot(delta.x, delta.z)));
@@ -164,7 +186,7 @@ public final class RefuellingBridgeClientCheck {
         if (!standing || aim == null) {
             return;
         }
-        Shot shot = SHOTS[stage];
+        Shot shot = shot(stage);
         mc.player.setPos(shot.stand.x, shot.stand.y, shot.stand.z);
         mc.player.setDeltaMovement(Vec3.ZERO);
         mc.player.setYRot((float) aim.x);
@@ -177,8 +199,26 @@ public final class RefuellingBridgeClientCheck {
         if (stage == 8 && !(mc.player.containerMenu instanceof RefuellingMenu m && m.bridgeMode && m.map != null && m.bridgeBusy)) {
             return;
         }
+        if (shown == 40) {
+            uploadsAtStart = MachineMeshCache.uploadCount();
+            framesAtStart = frames;
+            drawsAtStart = MachineMeshCache.drawCount();
+            nanosAtStart = System.nanoTime();
+        }
         if (++shown < 110) {
             return;
+        }
+        if (stage >= 10) {
+            // the parts are cached meshes: once drawn they are never built again, however the pose changes (nothing is rebuilt per frame)
+            long rebuilt = MachineMeshCache.uploadCount() - uploadsAtStart;
+            if (rebuilt != 0) {
+                throw new AssertionError("The bridge's meshes were uploaded again while standing still: " + rebuilt);
+            }
+            long n = Math.max(1, frames - framesAtStart);
+            LogUtils.getLogger().info("REFUELLING BRIDGE CLIENT CHECK frame cost at {}: {} frames, {} fps, {} cached draws per frame, {} uploads, {} cached meshes, {} bytes of cached meshes",
+                    NAMES[stage], n, String.format("%.0f", n / ((System.nanoTime() - nanosAtStart) / 1e9)),
+                    String.format("%.1f", (MachineMeshCache.drawCount() - drawsAtStart) / (double) n), rebuilt, MachineMeshCache.cachedMeshes(),
+                    MachineMeshCache.cachedBytes());
         }
         if (stage == 9) {
             if (!RadiationClient.showing()) {
@@ -201,9 +241,37 @@ public final class RefuellingBridgeClientCheck {
         stage++;
     }
 
+    private static Shot shot(int stage) {
+        return SHOTS[stage];
+    }
+
+    @SubscribeEvent
+    public static void frame(net.neoforged.neoforge.client.event.RenderFrameEvent.Post ignored) {
+        frames++;
+    }
+
+    /** A bare pair of rails with a console and a strip of floor under each, no reactor and no pool: the bridge only needs its rails to be drawn. */
+    private static RefuellingBridgeBlockEntity extraBridge(ServerLevel level, int x0, int x1, int z1, int z2) {
+        int ry = O.getY() + 9;
+        for (int x = x0; x <= x1; x++) {
+            for (int z : new int[]{z1, z2}) {
+                level.setBlock(new BlockPos(x, ry, z), BwrBlocks.REFUELLING_RAIL.get().defaultBlockState()
+                        .setValue(RefuellingRailBlock.AXIS, net.minecraft.core.Direction.Axis.X), 2);
+                for (int dz = -1; dz <= 1; dz++) {
+                    level.setBlock(new BlockPos(x, ry - 1, z + dz), Blocks.SMOOTH_STONE.defaultBlockState(), 2);
+                }
+            }
+        }
+        BlockPos console = new BlockPos(x0, ry, Math.max(z1, z2) + 1);
+        level.setBlock(console, BwrBlocks.REFUELLING_BRIDGE_CONSOLE.get().defaultBlockState(), 2);
+        var be = (RefuellingBridgeBlockEntity) level.getBlockEntity(console);
+        check(be.refreshSite().ok(), "the extra bridge surveys its rails");
+        return be;
+    }
+
     private static void build(ServerLevel level) throws Exception {
-        for (int x = 4; x <= 14; x++) {
-            for (int z = 4; z <= 14; z++) {
+        for (int x = 3; x <= 17; x++) {
+            for (int z = 3; z <= 15; z++) {
                 level.setChunkForced(x, z, true);
                 level.getChunk(x, z);
             }
@@ -221,6 +289,9 @@ public final class RefuellingBridgeClientCheck {
                 level.setBlock(at, Blocks.SMOOTH_STONE.defaultBlockState(), 3);
             }
         }
+        narrow = extraBridge(level, O.getX() - 1, O.getX() + 14, O.getZ() - 20, O.getZ() - 24);
+        // the lit chunks of the fixture end at x = O + 39 and z = O - 24, so the extra rails stay inside them
+        wide = extraBridge(level, O.getX() + 28, O.getX() + 39, O.getZ() - 24, O.getZ());
         fixture.fillPool(7.0);
         for (int i = 0; i < 60; i++) {
             fixture.reactor.loadAssembly(fixture.corePosition(i), RefuellingBridgeFixture.fresh(18000.0 + 500.0 * i));
@@ -305,6 +376,22 @@ public final class RefuellingBridgeClientCheck {
                 bridge.devHold(true);
                 player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BwrItems.SURVEY_METER.get()));
             }
+            case 10, 11, 12, 14, 15 -> {
+                // the move of the survey-meter shot is finished first (the assembly set into its rack), then the pose is placed
+                bridge.devHold(false);
+                stepUntil(bridge, level, () -> false);
+                bridge.refreshSite();
+                // over the pool, the mast lowered five metres into the water
+                bridge.devPlace(stage == 15 ? new BridgeMotion.Point(O.getX() + 13.5, O.getY() + 10.1, O.getZ() + 2.5)
+                        : new BridgeMotion.Point(O.getX() + 13.5, O.getY() + 5.0, O.getZ() + 2.5));
+            }
+            case 13 -> {
+                bridge.devPlace(new BridgeMotion.Point(O.getX() + 2.5, O.getY() + 4.0, O.getZ() + 2.5));
+            }
+            case 16 -> {
+                narrow.devPlace(new BridgeMotion.Point(O.getX() + 6.0, O.getY() + 7.0, O.getZ() - 22.0));
+            }
+            case 17 -> wide.devPlace(new BridgeMotion.Point(O.getX() + 33.5, O.getY() + 7.0, O.getZ() - 12.0));
             default -> {
             }
         }

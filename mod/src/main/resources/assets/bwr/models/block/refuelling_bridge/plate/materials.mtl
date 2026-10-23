@@ -1,0 +1,7 @@
+newmtl mat_0
+Kd 0.23529411386590443 0.25098038810391454 0.2666666665577025
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_1
+Kd 1 1 1
+map_Kd bwr:block/refuelling_bridge_plate

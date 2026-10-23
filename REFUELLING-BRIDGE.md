@@ -69,8 +69,68 @@ The speeds are real-ish: a bridge runs at fractions of a metre a second and a lo
 about threefold and keeps the ratios. Measured in the GameTests with a 5 x 5 reactor and the smallest pool, 11 m from the core to the racks: **49 s** core to rack and **46 s** rack to core
 (travel, lower, latch 4 s, lift, carry, set down, release 4 s, retract). A larger reactor with the pool further away takes proportionally longer; a queue of moves runs one after another.
 
-The mast and grapple are drawn from the console's synced state (no entities, no per-tick packets: one update when a phase begins,
+The bridge is drawn from the console's synced state (no entities, no per-tick packets: one update when a phase begins,
 the client advances the pose with its own clock). The operator's seat is the console beside the rails; riding the gantry was not built.
+
+## The model
+
+The bridge is drawn as the real machine looks, a refuelling platform: a bright yellow steel gantry on the two rails, an A-frame with
+X bracing at each end down to a wheeled end truck, two deep box girders between the ends with a walkway along one of them (tubular
+handrails, an orange skirt hung on them, a console, cabinets and a hose coil on the deck, a cable festoon along the girder, a maker's
+plate), and a blue trolley on the girder tops carrying an operator platform with yellow rails and a console on the other side, two
+orange cable reels, an auxiliary hoist, cabinets and the telescoping grey mast with its grapple. It is not a block and not an entity:
+the block entity renderer draws cached meshes. Visual only: the blocks, the survey, the motion, the saves and the protocol are as before.
+
+![The refuelling platform over the pool, the mast lowered into the water](art/refuelling-bridge-model/model-over-pool.png)
+
+**Parts.** Blender, headless (`blender.exe --background --python art/models/refuelling_bridge/build_models.py`, which also saves
+`refuelling_bridge.blend` and Workbench review renders); `python tools-export-refuelling-bridge.py` bakes the OBJ models into
+`assets/bwr/models/block/refuelling_bridge/<part>/` (`--check` verifies them byte for byte). Flat colours from the mod's material
+approach (a white tile tinted by the material colour), except the two textured parts: the maker's plate (generic, no brand:
+"REFUELING PLATFORM, MAIN HOIST / AUX HOIST", `refuelling_bridge_plate.png`) and the carried assembly. Colours: safety yellow
+structure, blue trolley, grey mast, orange shroud and reels, galvanised handrails.
+
+| Part | What | Triangles |
+|---|---|---:|
+| `end_truck` | wheeled carriage, sill, two A-frames with X and portal bracing, end beam, ladder, drive motor, cabinets (one per rail; the second is the same part turned half a turn) | 1,176 |
+| `girder_plain` | one metre of everything plain and straight: two box girders, flanges, trolley rails, walkway deck, edge beam, handrails, orange skirt, festoon track; **stretched** along the span | 224 |
+| `girder_tile` | one metre of the detail: stiffeners, a deck outrigger, a handrail post, a skirt seam, the festoon cable; **tiled** once per metre | 172 |
+| `deck_clutter` | the walkway console with its monitor, two cabinets, a hose coil (only on a span of 6 blocks or more) | 460 |
+| `plate` | the maker's plate on the girder, 30 % along the span (a span of 3 or more) | 14 |
+| `trolley` | bogie and wheels, deck, hangers and braces, the operator platform with its yellow rails and console, reel stands, the auxiliary hoist, the mast head, cabinets, deck handrails | 1,668 |
+| `reel` | an orange cable reel with its black winding; two, turned by the renderer | 396 |
+| `mast_outer` | the fixed outer tube from the trolley down to 1.32 m over the rails, with flanges and depth bands | 372 |
+| `mast_tube`, `mast_collar` | a unit tube and a unit ring, scaled into each of three inner sections and their joints | 60 + 60 |
+| `grapple_head`, `grapple_jaw` | the grapple at the tip; one jaw (the renderer swings it, and turns it half a turn for the other) | 216 + 52 |
+| `assembly` | the carried fuel assembly, hanging from the tip | 84 |
+
+**How the span scales.** The rails can be 1 to 40 blocks apart (`cHigh - cLow`, already synced in the bridge's geometry), so the model
+is parts, not a picture. The girder mesh is built once per span length (a cache key of the span; nothing is rebuilt for a span that has
+been drawn): the plain section is stretched to the span (only plain straight sections stretch, as the jet-pump models do) and the
+detailed tile is repeated once per metre, so detail never stretches. The end trucks are drawn at the two rail centre lines, whatever the
+distance; the trolley and the mast move across the girders. The whole thing is 4.2 m long along the rails and **6.2 m tall above the
+floor of the rail block** (the girders' underside is 3.5 m up, the walkway 3.8 m), so the room needs that much head space, or the
+bridge pokes through the ceiling. Triangles for a span of 4 / 10 / 24 / 40 blocks: 6,430 / 7,922 / 10,330 / 13,082 (the extended mast
+and a carried assembly add 444). The old picture was 11 boxes.
+
+| Narrow, 4 blocks | Wide, 24 blocks |
+|---|---|
+| ![](art/refuelling-bridge-model/model-span-narrow.png) | ![](art/refuelling-bridge-model/model-span-wide.png) |
+
+**Animation (all from the synced leg; nothing new on the wire).** The bridge travels along the rails (the frame's position along them),
+the trolley across (the frame's offset from the first rail), the mast telescopes (the outer tube is fixed; the three inner sections each
+come out a third of the way, drawn as a unit tube scaled by the pose, with the normal matrix kept unscaled so the lighting does not change
+with the length), the grapple's jaws swing open and shut with the latch and release phases (as the old jaws moved), and the cable reels turn
+with the hoist (the cable paid out equals the height the grapple has moved) and stand still when it does. The assembly hangs from the
+tip with the same blue glow in the water as before. Rails along Z turn the frame a quarter turn.
+
+**Drawing.** Each part is a vertex buffer in `MachineMeshCache` (`MachineMeshCache.draw`, the path the reactor, tanks and towers use),
+uploaded once and drawn with a pose; there is nothing per frame but about 17 draws (the girders, two trucks, trolley, two reels, the
+outer mast, up to six scaled pieces of the inner mast, the grapple head, two jaws and the assembly). The check
+(`-PbwrRefuellingBridgeCheck`) fails if any mesh is uploaded again while a picture is standing still, and logs the cached draws per frame
+and the frame rate. The renderer's bounds reach 8 m above the rails.
+
+![The operator platform and trolley](art/refuelling-bridge-model/model-trolley-closeup.png)
 
 ## The reactor well and the cavity seal
 
@@ -262,7 +322,11 @@ if not r.ok then print(r.message) end
 while bridge.getStatus().busy do sleep(1) end
 ```
 
-## Pictures (1920 x 1080, `art/refuelling-bridge/`)
+## Pictures (1920 x 1080, `art/refuelling-bridge/` and `art/refuelling-bridge-model/`)
+
+The model's own set is in `art/refuelling-bridge-model/`: `model-over-pool.png`, `model-walkway-side.png`, `model-trolley-pool.png`, `model-over-vessel.png`,
+`model-trolley-closeup.png`, `model-grapple-open.png`, `model-span-narrow.png`, `model-span-wide.png` and the side by side with the reference photographs
+(`side-by-side-*.png`); the Workbench review renders of the Blender parts are in `art/models/refuelling_bridge/`.
 
 `chute-open-floor.png` and `chute-closed-floor.png` (the chute from the refuel floor, gate sunk and raised), `chute-open-side.png` and `chute-closed-side.png` (from the side),
 `bridge-span.png` (the gantry over the chute between the cavity and the pool), `mast-in-core.png` (the mast lowered into the core), `assembly-through-chute.png` (a hot assembly glowing
@@ -280,7 +344,10 @@ and a moving one ticks once a tick on the real scheduler; the instant option on 
 
 ## Honest limits
 
-* The operator does not ride the gantry; the console is beside the rails.
+* The operator does not ride the gantry; the console is beside the rails. The platform and walkway are pictures only: nothing can stand on them. A walkable deck would be more than collision boxes: the bridge and the
+  trolley move, so it needs a moving collider (a carrier entity or a rule that carries a player standing on it), not boxes fixed in the world; not built.
+* The model is 6.2 m tall and 4.2 m along the rails: a refuel floor with a lower ceiling, or something built along the rails closer than that to the bridge, is drawn through. At the
+  ends of the rails the bridge overhangs by up to 2 m, because the survey lets the grapple reach the ends.
 * The bodies of water are drawn as they always were (the vessel's compressed water, the pool's surface, the canal block's water body) and the bridge's numbers are the physical ones: the drawn cavity surface and the
   physical one can differ by a metre or two in a given build.
 * No collision: the assembly does not hit the rack tops it passes over; the lift is the game-scale 1 m.
