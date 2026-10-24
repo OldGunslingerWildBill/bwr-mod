@@ -3,6 +3,7 @@
   "docs": [
     "README.md",
     "PRESSURE-VESSEL.md",
+    "VESSEL-HEIGHT.md",
     "COMPACT-CORE.md",
     "RECIRCULATION.md",
     "MODULAR-TURBINES.md",
@@ -32,6 +33,18 @@
         "bwr:rpv_steam_outlet",
         "bwr:rpv_water_injection_port",
         "bwr:control_rod_drive"
+      ]
+    },
+    {
+      "title": "Taller and shorter vessels",
+      "text": [
+        "Height is physics. At 17 wide, a vessel about 39 high draws its separators and dryer at Columbia's proportions and the steam leaves 0.1% wet. Shorter squashes them: 28 high is 0.9% wet, 20 high 4%. Wet steam makes the turbine give less power and wears its blades.",
+        "",
+        "Taller adds a longer chimney, so stronger natural circulation, and more water: slower to heat up, more to lose before the fuel uncovers, a bigger blowdown. Keep the level between L3 and L8. The INFO tab shows moisture, carryunder and the band."
+      ],
+      "icons": [
+        "bwr:reactor_vessel",
+        "bwr:hp_turbine"
       ]
     },
     {

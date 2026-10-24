@@ -28,6 +28,8 @@ public class PowerModuleBlockEntity extends BlockEntity {
     private final Map<BlockPos,Double> exhaustClaims=new HashMap<>();
     public boolean running;
     public double rpm,flowKgPerS,shaftMW,electricMW,trainMW,inletPsia,outletPsia,inletC,outletC,rejectedMW;
+    /** Liquid in the steam this module was fed on its last working tick, percent of its mass: carryover from the vessel's separators. */
+    public double inletMoisturePercent;
     public int hpCount,lpCount,generatorCount;
     public String status="Stopped";
     private double energyFe,waterKg;
@@ -94,7 +96,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
     }
     private double outletRoom(){var c=condenser();return block().highPressure()?exhaust.space():c==null?0:c.plant().steam.space();}
     public static void serverTick(Level level,BlockPos pos,BlockState state,PowerModuleBlockEntity be) { PowerTrain.tick(be); }
-    void resetReadouts() { running=false;flowKgPerS=shaftMW=electricMW=trainMW=rejectedMW=trainLossKJ=0;inletPsia=outletPsia=inletC=outletC=0; }
+    void resetReadouts() { running=false;flowKgPerS=shaftMW=electricMW=trainMW=rejectedMW=trainLossKJ=inletMoisturePercent=0;inletPsia=outletPsia=inletC=outletC=0; }
     double headerDemandKg() {
         if(!hasWorkLoad||block().generator())return 0;
         double room=outletRoom();
@@ -156,15 +158,26 @@ public class PowerModuleBlockEntity extends BlockEntity {
                     double raw=nozzle.getLineOpenFraction()>0?nozzle.getLastFlowKgPerS()/nozzle.getLineOpenFraction()/20:0;
                     double limit=source.limit(Math.min(need,Math.min(nozzle.getLastFlowKgPerS()/20,raw*source.opening())*source.share()),raw);
                     double mass=nozzle.claimFlowKgPerS(level.getGameTime(),limit*20)/20;source.record(mass);
-                    inlet.offer(new SteamInventory.Packet(mass,Saturation.vapourEnthalpyKJPerKg(pressure),pressure));
+                    // The steam is as wet as the vessel's separators leave it (VESSEL-HEIGHT.md). Only the moisture over the
+                    // design 0.1 % lowers the enthalpy: the rated steam already contains that.
+                    double moisture=c.core().getSteamMoistureFraction();
+                    double wet=Math.max(0,moisture-PowerTurbine.DESIGN_MOISTURE);
+                    double enthalpy=Saturation.vapourEnthalpyKJPerKg(pressure)-wet*Saturation.latentHeatKJPerKg(pressure);
+                    inlet.offer(new SteamInventory.Packet(mass,enthalpy,pressure,moisture));
                 }
             }
         }
         inletPsia=inlet.pressure();inletC=inlet.mass()>0?Saturation.temperatureCelsiusFromPsia(inletPsia):0;
+        double inletMoisture=inlet.moisture();
         var result=PowerTurbine.expand(stage,inlet,stage==PowerTurbine.Stage.HP?exhaust:condenser.plant().steam,wanted,workBudgetKJ,stage==PowerTurbine.Stage.HP?PowerTurbine.outletPressure(stage,inlet.pressure()):condenser.plant().backpressurePsia());
         if(stage==PowerTurbine.Stage.HP && exhaustLedgerTick==level.getGameTime())exhaustOfferedKg+=result.mass();
         if(stage==PowerTurbine.Stage.LP&&result.mass()>0)condenser.setChanged();
         flowKgPerS=result.mass()*20;shaftMW=result.workKJ()*20/1000;
+        if(result.mass()>0){
+            inletMoisturePercent=inletMoisture*100;
+            // Blade wear is the turbine's existing damage (the one overspeed adds to), not a second counter.
+            addShaftDamage(PowerTurbine.erosionIncrement(result.mass(),inletMoisture));
+        }
         outletPsia=result.outletPressure();outletC=result.mass()>0?Saturation.temperatureCelsiusFromPsia(outletPsia):0;
         rejectedMW=result.rejectedHeatKJ()*20/1000;
         running=flowKgPerS>0;
@@ -217,7 +230,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
         t.putDouble("Energy",energyFe);t.putDouble("Water",waterKg);
         saveSteam(t,"Inlet",inlet);saveSteam(t,"Exhaust",exhaust);
     }
-    private static void saveSteam(CompoundTag t,String key,SteamInventory s){var p=new CompoundTag();p.putDouble("Mass",s.mass());p.putDouble("Enthalpy",s.enthalpy());p.putDouble("Pressure",s.pressure());t.put(key,p);}
+    private static void saveSteam(CompoundTag t,String key,SteamInventory s){var p=new CompoundTag();p.putDouble("Mass",s.mass());p.putDouble("Enthalpy",s.enthalpy());p.putDouble("Pressure",s.pressure());if(s.moisture()>0)p.putDouble("Moisture",s.moisture());t.put(key,p);}
     @Override protected void loadAdditional(CompoundTag t,HolderLookup.Provider registries) {
         super.loadAdditional(t,registries);running=false; // Legacy local Running/Valve commands are superseded by physical steam valves.
         // Numerical corruption bound, not a rated-speed clamp or operating limit.
@@ -229,6 +242,6 @@ public class PowerModuleBlockEntity extends BlockEntity {
         energyFe=finite(t.getDouble("Energy"),ENERGY_CAPACITY);waterKg=finite(t.getDouble("Water"),WATER_CAPACITY);
         loadSteam(t,"Inlet",inlet);loadSteam(t,"Exhaust",exhaust);lastTick=Long.MIN_VALUE;exhaustLedgerTick=Long.MIN_VALUE;exhaustClaims.clear();hasWorkLoad=false;
     }
-    private static void loadSteam(CompoundTag t,String key,SteamInventory s){var p=t.getCompound(key);s.restore(p.getDouble("Mass"),p.getDouble("Enthalpy"),p.getDouble("Pressure"));}
+    private static void loadSteam(CompoundTag t,String key,SteamInventory s){var p=t.getCompound(key);s.restore(p.getDouble("Mass"),p.getDouble("Enthalpy"),p.getDouble("Pressure"),p.getDouble("Moisture"));}
     private static double finite(double v,double max){return Double.isFinite(v)?Math.max(0,Math.min(max,v)):0;}
 }

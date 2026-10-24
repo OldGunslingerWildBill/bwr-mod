@@ -219,6 +219,16 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.row("Flow ceiling", () -> pct(c.get().flowCeilingFraction()), "%").tip(this::jetTooltip),
                 Layout.row("Flow ceiling mass flow", () -> big(c.get().flowCeilingKgPerS()), "kg/s").tip(this::jetTooltip),
                 Layout.row("Vessel interior volume", () -> String.valueOf(c.get().interiorVolume()), "blocks^3").tip(this::volumeTooltip),
+                Layout.section("Steam quality and vessel height"),
+                Layout.row("Steam moisture", () -> num(100.0 * c.get().steamMoisture(), 2), "%")
+                        .status(() -> c.get().steamMoisture() > 0.05 ? Status.ALARM : c.get().steamMoisture() > 0.01 ? Status.CAUTION : Status.NONE).tip(this::separationTooltip),
+                Layout.row("Carryunder", () -> num(100.0 * c.get().carryunder(), 2), "%")
+                        .status(() -> c.get().carryunder() > 0.03 ? Status.ALARM : c.get().carryunder() > 0.01 ? Status.CAUTION : Status.NONE).tip(this::separationTooltip),
+                Layout.row("Separator height", () -> num(100.0 * c.get().separatorRatio(), 0), "% of true").tip(this::separationTooltip),
+                Layout.row("Chimney factor", () -> num(c.get().chimneyFactor(), 2), "x").tip(this::separationTooltip),
+                Layout.row("Level in band", () -> bandText(c.get().levelBandPosition()))
+                        .status(() -> c.get().levelBandPosition() < 0.0 || c.get().levelBandPosition() > 1.0 ? Status.CAUTION : Status.NONE).tip(this::separationTooltip),
+                Layout.row("Core foot sat. rise", () -> num(c.get().coreInletSaturationRiseK(), 2), "K").tip(this::separationTooltip),
                 Layout.section("Steam dryer and separators"),
                 Layout.note(() -> menu.internalsSummary.getString()).body()
                         .status(() -> menu.internalsOut == 0 ? Status.NORMAL : Status.CAUTION),
@@ -321,6 +331,25 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Component.literal("Jets without a match: " + c.unmatchedJetAssemblies() + ". Internal pumps: " + c.internalPumps() + "."),
                 Component.literal("Core flow needed: " + big(c.requiredFlowKgPerS()) + " kg/s"),
                 Component.literal("Core flow now: " + big(menu.coreFlowKgPerS) + " kg/s"));
+    }
+
+    /** Where the water stands between the low level scram (L3) and the high level trip (L8) that bound the separators' band. */
+    private static String bandText(double position) {
+        if (position < 0.0) return "Low, " + num(-100.0 * position, 0) + "% under";
+        if (position > 1.0) return "High, " + num(100.0 * (position - 1.0), 0) + "% over";
+        return num(100.0 * position, 0) + "% of band";
+    }
+
+    private List<Component> separationTooltip() {
+        var c = menu.configuration;
+        return List.of(
+                Component.literal("Steam moisture is the water the steam carries to the turbine (carryover). A true-scale vessel in its band gives 0.1%."),
+                Component.literal("Carryunder is the steam the separators send down with the water. It thins the downcomer and cuts the core inlet subcooling."),
+                Component.literal("A shorter vessel squashes its separators and dryer, so both rise. Separator height is the drawn height over Columbia's proportions."),
+                Component.literal("The band runs from L3 (540.5 in) to L8 (582 in). Above it water is carried over; below it steam is carried under."),
+                Component.literal("The chimney factor is natural circulation against the 17x17x28 reference: taller is stronger, up to a cap."),
+                Component.literal("The saturation rise is how much hotter the water boils at the foot of the core, from the water standing over it."),
+                Component.literal("Wet steam lowers the turbine's output and wears its blades. Nothing trips; these are readings."));
     }
 
     private List<Component> volumeTooltip() {

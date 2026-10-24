@@ -13,6 +13,12 @@ The dryer and the separator assembly lift out with the refuelling bridge ([REFUE
 Its dimensions follow the existing reactor envelope: 7 to 23 blocks across, including rectangular builds; a rectangular footprint
 gives elliptical sections. This is game artwork drawn to real proportions, not a manufacturer CAD model.
 
+## Height is physics
+
+The drawn height of the vessel is no longer only a picture. Squashed separators give wet steam and carryunder, a taller chimney
+drives stronger natural circulation, and the dome and water the vessel holds follow its build. A 17 wide vessel reaches Columbia's
+proportions at 39 high. See [VESSEL-HEIGHT.md](VESSEL-HEIGHT.md).
+
 ## Building and connecting
 
 Build the same rectangular shell, floor, roof and physical control-rod drives

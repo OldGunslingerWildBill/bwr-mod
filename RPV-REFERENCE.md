@@ -91,6 +91,9 @@ half the horizontal scale (0.061), because the game vessel is twice as squat as 
 Every part above the core is compressed by the same factor, so the relative order and spacing stay real. A
 23x23x40 envelope gets 0.056, close to true proportions.
 
+Correction (vessel height physics): the code's `sUp` is `(flangeFace - coreTop) / 392 in`, 0.033 at 17x17x28, and it reaches `sH` (true scale) at
+17x17x39, not 43. See [VESSEL-HEIGHT.md](VESSEL-HEIGHT.md).
+
 ## 3. What is wrong with the current model (alpha.52)
 
 Screenshots, 1920x1080 from `-PbwrRvuCheck` and `-PbwrVesselModelCheck` (both passed), are in

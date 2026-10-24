@@ -202,6 +202,7 @@ public final class VoidModel {
 
     private double slipRatio = DEFAULT_SLIP_RATIO;
     private double feedwaterEnthalpyKJPerKg = DEFAULT_FEEDWATER_ENTHALPY_KJ_PER_KG;
+    private double subcoolingAdjustmentKJPerKg;
     private double recirculationTransitTimeConstantSeconds = DEFAULT_RECIRCULATION_TRANSIT_TIME_S;
     private double voidTransitTimeConstantSeconds = DEFAULT_VOID_TRANSIT_TIME_S;
     private int axialNodes = DEFAULT_AXIAL_NODES;
@@ -406,7 +407,24 @@ public final class VoidModel {
         }
         double rise = power * config.ratedThermalMW * 1000.0 / (flow * ratedCoreFlowKgPerS);
         double subcooling = rise * (liquidEnthalpy - feedwaterEnthalpyKJPerKg) / feedwaterRise;
+        if (subcoolingAdjustmentKJPerKg != 0.0) {
+            subcooling += subcoolingAdjustmentKJPerKg;
+        }
         return Math.max(0.0, subcooling);
+    }
+
+    /**
+     * Steam carried under into the downcomer arrives at the core inlet as enthalpy the feedwater must first condense, so
+     * it comes off the subcooling: {@code -x_carryunder * h_fg}. Zero by default, which leaves the equilibrium exactly as
+     * it was; the reactor sets it, per tick, from the separators' carryunder over design (see {@code SteamSeparation}).
+     * Negative values reduce the subcooling, positive add to it. A caller's value, not a state: it is not saved.
+     */
+    public void setSubcoolingAdjustmentKJPerKg(double kJPerKg) {
+        this.subcoolingAdjustmentKJPerKg = Double.isFinite(kJPerKg) ? kJPerKg : 0.0;
+    }
+
+    public double getSubcoolingAdjustmentKJPerKg() {
+        return subcoolingAdjustmentKJPerKg;
     }
 
     // ---------------------------------------------------------------

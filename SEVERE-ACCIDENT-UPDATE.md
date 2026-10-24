@@ -31,7 +31,9 @@ difference drives flow.
   reduced power instead of having zero core flow.
 
 These numbers are calibrated to the shape of a jet-pump BWR power/flow map. They
-are not a validated two-phase loop calculation for any plant.
+are not a validated two-phase loop calculation for any plant. They are the 17 x 17 x 28
+reference vessel's: the height of a built vessel scales them (chimney) and carryunder
+takes head off them; see [VESSEL-HEIGHT.md](VESSEL-HEIGHT.md).
 
 The reactor INFO readout shows the flow when natural circulation is setting it.
 CC: `getNaturalCirculationFlow()`; `getStatus().naturalCirculation`.

@@ -295,6 +295,35 @@ public final class PressureVessel {
     private double injectionEnthalpyKJPerKg = Saturation.subcooledLiquidEnthalpyKJPerKg(40.0);
     private double shutdownCoolingMW;
 
+    /**
+     * How many times the calibrated water inventory this vessel holds, 1 for the reference vessel. A build whose water
+     * column above the core is taller holds more water at the same level; see {@link VesselBuild}. It scales the level
+     * area, the two-phase region and the fill, so every level reads as it did and every inventory, heat capacity and
+     * stored energy follows.
+     */
+    private double inventoryScale = 1.0;
+
+    public double getInventoryScale() {
+        return inventoryScale;
+    }
+
+    /**
+     * Makes the vessel {@code ratio} times as large in inventory <i>at the same level</i>: the water in it, the level area
+     * and the two-phase region all scale, so the collapsed and indicated levels do not move. The steam dome is set
+     * separately ({@link #setSteamDomeVolumeM3}). Used when a vessel's build is first known and if it changes.
+     * A ratio of exactly 1 does nothing.
+     */
+    public void rescaleInventory(double ratio) {
+        if (!(ratio > 0.0) || !Double.isFinite(ratio) || ratio == 1.0) {
+            return;
+        }
+        inventoryScale *= ratio;
+        levelAreaM2 *= ratio;
+        twoPhaseRegionVolumeM3 *= ratio;
+        liquidMassKg *= ratio;
+        recomputeLevels();
+    }
+
     /** Heat removed by a measured RHR vessel loop this step, not an automatic demand. */
     public void setShutdownCoolingMW(double duty) {
         shutdownCoolingMW = Double.isFinite(duty) ? Math.max(0.0, duty) : 0.0;
@@ -338,9 +367,11 @@ public final class PressureVessel {
 
     private double exchangeMetalHeatMW(double dtSeconds) {
         double coolantC = getSaturationTemperatureC();
-        double transferJ = METAL_HEAT_CAPACITY_J_PER_K * (metalTemperatureC - coolantC)
+        // A taller build has more shell and more internals in the same proportion as it has more water (inventoryScale 1: as always).
+        double capacity = METAL_HEAT_CAPACITY_J_PER_K * inventoryScale;
+        double transferJ = capacity * (metalTemperatureC - coolantC)
                 * (1.0 - Math.exp(-dtSeconds / METAL_COUPLING_TIME_S));
-        metalTemperatureC -= transferJ / METAL_HEAT_CAPACITY_J_PER_K;
+        metalTemperatureC -= transferJ / capacity;
         return transferJ / dtSeconds / 1_000_000.0;
     }
 
@@ -1069,7 +1100,7 @@ public final class PressureVessel {
         ruptureVolumeM3 = 0; boundaryOpenings = java.util.List.of();
         this.pressurePsig = PhysicalConstants.RATED_DOME_PRESSURE_PSIG;
         this.metalTemperatureC = getSaturationTemperatureC();
-        this.liquidMassKg = config.coolantMassKg;
+        this.liquidMassKg = config.coolantMassKg * inventoryScale;
         recomputeLevels();
     }
 
@@ -1130,7 +1161,7 @@ public final class PressureVessel {
         ruptureVolumeM3 = 0; boundaryOpenings = java.util.List.of();
         this.pressurePsig = COLD_SHUTDOWN_PRESSURE_PSIG;
         this.metalTemperatureC = getSaturationTemperatureC();
-        this.liquidMassKg = config.coolantMassKg;
+        this.liquidMassKg = config.coolantMassKg * inventoryScale;
         recomputeLevels();
     }
 

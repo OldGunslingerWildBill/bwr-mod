@@ -1369,6 +1369,31 @@ public class ReactorPeripheral implements IPeripheral {
         return be.vesselState().getSerializedName();
     }
 
+    /**
+     * How well the separators and dryer are drying the steam, and what the vessel's height does to it (VESSEL-HEIGHT.md).
+     * Moisture and carryunder are percent by mass; {@code levelBandPosition} is 0 at L3, 1 at L8.
+     */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> getSteamSeparation() throws LuaException {
+        ReactorCore c = core();
+        double band = c.getSeparatorBandPosition();
+        Map<String, Object> m = new HashMap<>();
+        m.put("steamMoisturePercent", 100.0 * c.getSteamMoistureFraction());
+        m.put("carryunderPercent", 100.0 * c.getCarryunderFraction());
+        m.put("separatorHeightRatio", c.getSeparatorHeightRatio());
+        m.put("chimneyFactor", c.getChimneyFactor());
+        m.put("levelBandPosition", band);
+        m.put("levelBand", band < 0.0 ? "low" : band > 1.0 ? "high" : "in band");
+        m.put("levelVesselInches", c.getSeparatorLevelVesselIn());
+        m.put("bandLowInches", dev.bwr.core.thermal.SteamSeparation.L3_VESSEL_IN);
+        m.put("bandHighInches", dev.bwr.core.thermal.SteamSeparation.L8_VESSEL_IN);
+        m.put("coreInletHydrostaticRisePsi", c.getCoreInletHydrostaticRisePsi());
+        m.put("coreInletSaturationRiseK", c.getCoreInletSaturationRiseK());
+        m.put("steamDomeVolumeM3", c.getPressureVessel().getSteamDomeVolumeM3());
+        m.put("waterInventoryFactor", c.getPressureVessel().getInventoryScale());
+        return m;
+    }
+
     @LuaFunction(mainThread = true)
     public final Map<String, Object> getStatus() throws LuaException {
         Map<String, Object> m = new HashMap<>();
@@ -1389,6 +1414,9 @@ public class ReactorPeripheral implements IPeripheral {
         m.put("oxidation", c.getOxidationFraction());
         m.put("hydrogenKg", c.getHydrogenGeneratedKg());
         m.put("naturalCirculation", c.getNaturalCirculationFlowFraction());
+        m.put("steamMoisturePercent", 100.0 * c.getSteamMoistureFraction());
+        m.put("carryunderPercent", 100.0 * c.getCarryunderFraction());
+        m.put("levelBandPosition", c.getSeparatorBandPosition());
         m.put("coreDamageStage", c.getSevereAccident().getStage().number());
         m.put("containmentHydrogenPercent", c.getContainment().getHydrogenPercent());
         m.put("containmentPressure", c.getContainment().getPressurePsig());
