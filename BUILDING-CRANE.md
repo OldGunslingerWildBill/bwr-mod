@@ -80,7 +80,7 @@ A lift, phase by phase (the same phases as the bridge, with a crane's numbers):
 | release | unhooked; the load is in its new place | 5 s |
 | raise | the empty hook goes back up | 0.5 m/s |
 
-Measured in the GameTests with the 7 x 7 x 10 vessel, the stand 11 m from its middle and the rails 14 blocks above the floor: <<TIMES>>
+Measured in the GameTests with the 7 x 7 x 10 vessel, the stand 11 m from its middle and the rails 14 blocks above the floor: **head to the stand 108 s, dryer out 121 s, separators out 111 s, head back on 98 s** (each a whole lift: travel, lower, hook on, lift, carry, set down, unhook, raise).
 
 ## The head's states
 
@@ -124,7 +124,7 @@ names, no textures: flat colours from the mod's material approach.
 
 **How the span scales.** The rails can be 1 to 40 blocks apart, so the girder mesh is built once per span length (a cache key of the span; plain
 section stretched, detailed tile repeated each metre) and the end carriages are drawn at the two rail centre lines whatever the distance. The crane is
-2.7 m along the runway and 3.9 m tall over the rail block's floor (4.2 m with the trolley's cabinet), and its cab hangs 1.2 m under the girders, so the hall
+2.7 m along the runway and 4.0 m tall over the rail block's floor (the trolley's cabinet is the highest point), and its cab hangs 1.2 m under the girders, so the hall
 needs head room.
 
 **The head.** The head is drawn from the vessel's own head mesh (`VesselModel.buildHead`: flange forging, dome, crown nozzles, lugs) without its

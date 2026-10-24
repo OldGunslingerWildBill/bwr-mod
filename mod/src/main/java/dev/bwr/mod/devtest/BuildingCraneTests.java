@@ -516,9 +516,11 @@ public final class BuildingCraneTests {
             f.reactor().setStudsOff(74);
             Component why = f.crane.queueHead(true);
             h.assertTrue(why != null && english(why).contains("too low") && english(why).contains("Raise the rails to y"), "too low: " + english(why));
+            System.out.println("BUILDING CRANE RAILS (rails 9 blocks over the reactor's interior floor): " + english(why));
             f.reactor().setVesselState(VesselState.REFUELING);
             why = f.crane.queueInternal(VesselInternal.DRYER, true);
             h.assertTrue(why != null && english(why).contains("too low") && english(why).contains("dryer"), "and the dryer: " + english(why));
+            System.out.println("BUILDING CRANE RAILS: " + english(why));
         } finally {
             f.dispose();
         }
