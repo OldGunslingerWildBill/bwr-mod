@@ -463,6 +463,11 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
             return BwrText.tr("status.bwr.refuelling_bridge.same_place", "That move starts and ends in the same place.");
         }
         if (internalMove(m)) {
+            // The reactor building crane lifts the head, the dryer and the separators; the bridge moves fuel only (unless the legacy option is on).
+            // A load already on the hoist can still be set down.
+            if (m.from().kind() != Kind.HELD && !dev.bwr.mod.config.GameplayConfig.bridgeLiftsInternals()) {
+                return craneMessage();
+            }
             return refuseInternal(m);
         }
         ReactorControllerBlockEntity r = reactor();
@@ -559,6 +564,12 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         return a == Kind.INTERNAL || a == Kind.PAD || b == Kind.INTERNAL || b == Kind.PAD || (a == Kind.HELD && carriedInternal != null);
     }
 
+    /** Why the bridge will not lift the dryer or the separator assembly: the crane does. */
+    public static Component craneMessage() {
+        return BwrText.tr("status.bwr.refuelling_bridge.use_the_crane",
+                "The refuelling bridge moves fuel only. The reactor building crane lifts the vessel head, the steam dryer and the separator assembly.");
+    }
+
     /** The vessel's profile at this reactor (for the assemblies' heights). */
     static VesselProfile profileOf(ReactorControllerBlockEntity r) {
         var e = r.vesselEnvelope();
@@ -638,6 +649,9 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
     public Component queueInternal(VesselInternal which, boolean out) {
         if (level == null || level.isClientSide()) {
             return null;
+        }
+        if (!(carriedInternal == which && move == null) && !dev.bwr.mod.config.GameplayConfig.bridgeLiftsInternals()) {
+            return craneMessage();
         }
         refreshSite();
         if (site == null || !site.ok()) {

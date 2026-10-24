@@ -58,6 +58,11 @@ public final class VesselModel {
     // ---------------------------------------------------------------
 
     static void buildShell(MachineMeshCache.Builder b, VesselAppearance.Envelope e, boolean closed, boolean failed) {
+        buildShell(b, e, closed, failed, true);
+    }
+
+    /** {@code nuts}: whether the closed head carries its nuts and washers (off while the studs are detensioned; the renderer then draws any still on). */
+    static void buildShell(MachineMeshCache.Builder b, VesselAppearance.Envelope e, boolean closed, boolean failed, boolean nuts) {
         var p = VesselProfile.of(e, false);
         float w = e.width(), d = e.depth();
         // bottom head, cylinder (a small overlap at both joints), vessel flange forging
@@ -83,7 +88,7 @@ public final class VesselModel {
         if (closed) {
             b.pose.pushPose();
             b.pose.translate(0, p.flangeFace, 0);
-            buildHead(b, w, d, (float) p.headRise);
+            buildHead(b, w, d, (float) p.headRise, nuts);
             b.pose.popPose();
         }
     }
@@ -150,6 +155,11 @@ public final class VesselModel {
 
     /** The removable head, from its flange face up: flange forging, dome, crown nozzles, lifting lugs, nuts and washers. Shared with the thrown head. */
     public static void buildHead(MachineMeshCache.Builder b, float w, float d, float rise) {
+        buildHead(b, w, d, rise, true);
+    }
+
+    /** The removable head; {@code nuts} false leaves the nuts and washers off (the studs stay in the vessel's flange): a head the crane carries, or lays on its stand. */
+    public static void buildHead(MachineMeshCache.Builder b, float w, float d, float rise, boolean nuts) {
         double fl = VesselProfile.flangeHeight(rise);
         double sH = 2 * .448 * w / VesselProfile.IN_DIAMETER;
         b.part(m("rpv_head_flange"), 0, 0, 0, w, (float) fl, d);
@@ -171,6 +181,7 @@ public final class VesselModel {
             double y = rise * Math.sqrt(1 - .55 * .55);
             put(b, "rpv_lug", .55 * .46 * w * Math.cos(a), y - lug * .1, .55 * .46 * d * Math.sin(a), a, lug, lug, lug);
         }
+        if (!nuts) return;
         var p = VesselProfile.of((int) w, (int) d, 10, false);
         int studs = p.studCount();
         double rs = p.studRadius();

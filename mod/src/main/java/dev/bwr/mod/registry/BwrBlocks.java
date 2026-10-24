@@ -294,6 +294,22 @@ public final class BwrBlocks {
             BLOCKS.register("equipment_pad", () -> new dev.bwr.mod.refuelling.EquipmentPadBlock(
                     BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(4.0F, 40.0F)
                             .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
+    /** The reactor building crane's pendant console; the block entity is the crane. */
+    public static final DeferredBlock<dev.bwr.mod.refuelling.BuildingCraneConsoleBlock> BUILDING_CRANE_CONSOLE =
+            BLOCKS.register("building_crane_console", () -> new dev.bwr.mod.refuelling.BuildingCraneConsoleBlock(machine().noOcclusion()));
+    /** A length of runway beam and crane rail, high on a wall of the reactor hall. */
+    public static final DeferredBlock<dev.bwr.mod.refuelling.CraneRunwayRailBlock> CRANE_RUNWAY_RAIL =
+            BLOCKS.register("crane_runway_rail", () -> new dev.bwr.mod.refuelling.CraneRunwayRailBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 30.0F)
+                            .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
+    /** Where the crane lays the vessel head down while the vessel is open. */
+    public static final DeferredBlock<dev.bwr.mod.refuelling.HeadStandBlock> HEAD_STAND =
+            BLOCKS.register("head_stand", () -> new dev.bwr.mod.refuelling.HeadStandBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(4.0F, 40.0F)
+                            .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
+    /** The hydraulic power pack of the stud tensioner that detensions and retensions the closure studs. */
+    public static final DeferredBlock<dev.bwr.mod.reactor.StudTensionerBlock> STUD_TENSIONER =
+            BLOCKS.register("stud_tensioner", () -> new dev.bwr.mod.reactor.StudTensionerBlock(machine().noOcclusion()));
     /** The bridge's controls; the block entity is the bridge. */
     public static final DeferredBlock<dev.bwr.mod.refuelling.RefuellingBridgeConsoleBlock> REFUELLING_BRIDGE_CONSOLE =
             BLOCKS.register("refuelling_bridge_console", () -> new dev.bwr.mod.refuelling.RefuellingBridgeConsoleBlock(machine().noOcclusion()));

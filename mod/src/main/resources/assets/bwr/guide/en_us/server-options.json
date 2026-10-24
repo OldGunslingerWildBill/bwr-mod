@@ -39,7 +39,9 @@
         "cobaltExposureHours = 72.0",
         "tritiumExposureHours = 168.0",
         "siliconExposureHours = 24.0",
-        "tritiumSamplesPerRod = 1250"
+        "tritiumSamplesPerRod = 1250",
+        "instantHeadRemoval = false (the head button lifts and seats the head at once, with no tensioner or crane)",
+        "bridgeLiftsInternals = true (legacy: the bridge also lifts the dryer and separators; false leaves them to the crane)"
       ]
     },
     {

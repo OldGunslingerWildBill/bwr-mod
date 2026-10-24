@@ -71,6 +71,18 @@ public final class GameplayConfig {
                     + "Existing worlds keep their fuel either way; with this off the map still shows the core but its buttons point you to the bridge")
             .define("instantRefuelling", false);
 
+    public static final ModConfigSpec.BooleanValue INSTANT_HEAD_REMOVAL = BUILDER
+            .comment("Old behaviour: the reactor panel's HEAD OFF / head on button lifts and seats the vessel head at once, with no stud tensioner and no crane. "
+                    + "Default off: the head's studs are detensioned with a Stud Tensioner and the head is lifted onto a Head Stand by the reactor building crane "
+                    + "(see BUILDING-CRANE.md); the button then explains the procedure. A head that is already off in an existing world stays off either way")
+            .define("instantHeadRemoval", false);
+
+    public static final ModConfigSpec.BooleanValue BRIDGE_LIFTS_INTERNALS = BUILDER
+            .comment("Legacy (the alpha.53 dryer and separator lifts): the refuelling bridge can also lift the steam dryer and the separator assembly out of the open "
+                    + "vessel onto Equipment Storage Pads. Current behaviour is that the reactor building crane does those lifts and the refuelling bridge moves fuel only; "
+                    + "turn this off to get that (the bridge then refuses the lifts and points to the crane)")
+            .define("bridgeLiftsInternals", true);
+
     public static final ModConfigSpec.BooleanValue GIVE_GUIDE_ON_FIRST_JOIN = BUILDER
             .comment("Give each player one Operator's Guide (the in-game guide book) the first time they join this world, once only. "
                     + "A player who has had one is never given another, whether or not they still have it; craft it with a book and a nameplate. "
@@ -89,6 +101,16 @@ public final class GameplayConfig {
     /** Whether the refuelling map may move fuel instantly. False until the server config says otherwise (and before it is loaded). */
     public static boolean instantRefuelling() {
         return SPEC.isLoaded() ? INSTANT_REFUELLING.get() : INSTANT_REFUELLING.getDefault();
+    }
+
+    /** Whether the reactor panel's head button lifts and seats the head at once (no stud tensioner, no crane). False until the server config says otherwise. */
+    public static boolean instantHeadRemoval() {
+        return SPEC.isLoaded() ? INSTANT_HEAD_REMOVAL.get() : INSTANT_HEAD_REMOVAL.getDefault();
+    }
+
+    /** Whether the refuelling bridge still lifts the dryer and the separator assembly (the crane does it when this is off). */
+    public static boolean bridgeLiftsInternals() {
+        return SPEC.isLoaded() ? BRIDGE_LIFTS_INTERNALS.get() : BRIDGE_LIFTS_INTERNALS.getDefault();
     }
 
     /** Whether a player's first join gives them the guide book. True until the server config says otherwise (and before it is loaded). */

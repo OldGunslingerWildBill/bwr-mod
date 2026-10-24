@@ -161,6 +161,31 @@ public final class VesselProfile {
         return top + (hpcs ? .62 : .32) * (flange - top);
     }
 
+    /**
+     * The head's lifting point when the crane's strongback is rigged: the hook, above the head's mating face. The spreader sits
+     * 0.55 block under it and clears the crown nozzles; four slings run down to the head's lifting lugs.
+     */
+    public double headLift() {
+        return headRise + .9 + .04 * Math.max(width, depth);
+    }
+
+    /** Height of the spreader beam of the strongback above the head's mating face (the hook is {@link #STRONGBACK_DROP} higher). */
+    public double headSpreaderY() {
+        return headLift() - STRONGBACK_DROP;
+    }
+
+    public static final double STRONGBACK_DROP = .55;
+
+    /** Radius of the ring of four lifting lugs on the dome, blocks (they stand at 45, 135, 225 and 315 degrees). */
+    public double headLugRadius() {
+        return .55 * .46 * width;
+    }
+
+    /** Height of the top of the studs above the vessel's mating face when the nuts are off, blocks. */
+    public double studTop() {
+        return flangeHeight + 2.6 * studRadius();
+    }
+
     // the two removable assemblies: their lowest point and their lifting point (the top of the lifting eyes), vessel y
 
     public double separatorEyeRadius() {
@@ -190,5 +215,15 @@ public final class VesselProfile {
 
     public double dryerLift() {
         return dryerEyeY() + 2 * dryerEyeRadius() + .04;
+    }
+
+    /** Radius of the ring of the dryer's four lifting eyes along x, blocks (they stand at 45, 135, 225 and 315 degrees; along z it is this times {@link #ey}). */
+    public double dryerEyeRing() {
+        return .427 * width - .15;
+    }
+
+    /** Radius of the ring of the separator assembly's four lifting eyes along x, blocks. */
+    public double separatorEyeRing() {
+        return .55 * upperShroud * width;
     }
 }

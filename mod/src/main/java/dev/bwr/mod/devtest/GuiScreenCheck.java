@@ -127,6 +127,50 @@ public final class GuiScreenCheck {
 
     private static final BlockPos P = BlockPos.ZERO;
 
+    /** The crane's pendant in a phase: head on or off, a load on the hook, the halt message when halted. */
+    private static CraneMenu crane(String phase, boolean halted, boolean headOff, int internalsOut) {
+        var m = new CraneMenu(99, Minecraft.getInstance().player.getInventory(), P);
+        m.present = true;
+        m.ready = true;
+        m.reactorFound = true;
+        m.phase = phase;
+        m.busy = !phase.equals("IDLE") && !halted;
+        m.halted = halted;
+        m.progress = 0.42;
+        m.secondsLeft = 37;
+        m.queued = halted ? 0 : 1;
+        m.headOff = headOff;
+        m.studTotal = 74;
+        m.studsOff = headOff ? 74 : 0;
+        m.headWhere = headOff ? "on the hook" : "";
+        m.carried = m.busy && headOff ? "the vessel head" : halted ? "the steam dryer" : "";
+        m.internalsOut = internalsOut;
+        m.hookHeightM = m.busy ? -3.4 : 0.0;
+        m.spanBlocks = 23;
+        m.runwayBlocks = 26;
+        m.railY = 214;
+        m.message = halted ? "Stopped: the load cannot be set down at the equipment pad at 206,201,205 (occupied, or the reactor is no longer ready). It stays on the hook." : "";
+        m.move = m.busy ? "the head's seat on the vessel flange to the head stand at 202,208,191" : "";
+        return m;
+    }
+
+    /** The stud tensioner's screen: idle or working a pass, with or without a reactor flange in reach. */
+    private static StudTensionerMenu tensioner(int mode, boolean reactor) {
+        var m = new StudTensionerMenu(99, Minecraft.getInstance().player.getInventory(), P);
+        m.present = true;
+        m.reactorFound = reactor;
+        m.studTotal = reactor ? 74 : 0;
+        m.studsOff = reactor && mode == 1 ? 31 : 0;
+        m.mode = mode;
+        m.studProgress = 0.37;
+        m.energyFe = 14_500;
+        m.capacityFe = 24_000;
+        m.secondsLeft = reactor ? 43 * 4 : 0;
+        m.feLeft = 43L * 3000;
+        m.psig = 3.0;
+        return m;
+    }
+
     /** A formed pool of {@code racks} racks; {@code uncovered} lowers the water under the fuel and lights the alarms. */
     private static SpentFuelPoolMenu pool(boolean uncovered, int racks) {
         var m = new SpentFuelPoolMenu(99, Minecraft.getInstance().player.getInventory(), P);
@@ -639,6 +683,31 @@ public final class GuiScreenCheck {
         }));
         s.add(new Scenario("spent-fuel-pool-absent", i -> new SpentFuelPoolScreen(new SpentFuelPoolMenu(99, i, P), i, t("Spent Fuel Pool"))));
         s.add(new Scenario("reprocessor-absent", i -> new ReprocessingPlantScreen(new ReprocessingPlantMenu(99, i, P), i, t("Reprocessing Plant"))));
+        s.add(new Scenario("crane-lifting-head", i -> new CraneScreen(crane("TRANSIT", false, true, 0), i, t("Reactor Building Crane"))));
+        s.add(new Scenario("crane-halted", i -> new CraneScreen(crane("HALTED", true, false, 3), i, t("Reactor Building Crane"))));
+        s.add(new Scenario("crane-idle-head-on", i -> new CraneScreen(crane("IDLE", false, false, 0), i, t("Reactor Building Crane"))));
+        s.add(new Scenario("crane-no-runway", i -> {
+            var m = new CraneMenu(99, i, P);
+            m.present = true;
+            m.ready = false;
+            m.problem = "The crane needs a second run of runway rails parallel to this one, within 40 blocks, overlapping it by two blocks or more.";
+            return new CraneScreen(m, i, t("Reactor Building Crane"));
+        }));
+        s.add(new Scenario("crane-absent", i -> new CraneScreen(new CraneMenu(99, i, P), i, t("Reactor Building Crane"))));
+        s.add(new Scenario("tensioner-detensioning", i -> new StudTensionerScreen(tensioner(1, true), i, t("Stud Tensioner"))));
+        s.add(new Scenario("tensioner-idle-tight", i -> new StudTensionerScreen(tensioner(0, true), i, t("Stud Tensioner"))));
+        s.add(new Scenario("tensioner-out-of-power", i -> {
+            var m = tensioner(0, true);
+            m.studsOff = 31;
+            m.energyFe = 120;
+            m.message = "Stopped: out of power. The next stud needs 3000 FE and the pack holds 120. Supply power and start it again.";
+            return new StudTensionerScreen(m, i, t("Stud Tensioner"));
+        }));
+        s.add(new Scenario("tensioner-no-reactor", i -> {
+            var m = tensioner(0, false);
+            return new StudTensionerScreen(m, i, t("Stud Tensioner"));
+        }));
+        s.add(new Scenario("tensioner-absent", i -> new StudTensionerScreen(new StudTensionerMenu(99, i, P), i, t("Stud Tensioner"))));
         s.add(new Scenario("rhr-hx", i -> {
             var m = new RhrHeatExchangerMenu(99, i, P);
             m.present = true;

@@ -76,7 +76,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                     b -> menu.sendCommand(ReactorPanelMenu.CMD_SCRAM));
             resetScram = BwrButton.secondary("Reset", "Reset the scram signal, so the rods can be driven out again.",
                     b -> menu.sendCommand(ReactorPanelMenu.CMD_RESET_SCRAM));
-            head = BwrButton.secondary("Lift head", "Ask the vessel to take its head off. It refuses, and tells you why, if that is physically impossible.",
+            head = BwrButton.secondary("Lift head", "Ask the vessel to take its head off. Unless the server turns on instantHeadRemoval this explains the procedure: stud tensioner, then the reactor building crane.",
                     b -> toggleHead());
             refuel = BwrButton.secondary("Refuel", "Open the refuelling floor. This only works with the vessel head off.",
                     b -> menu.sendCommand(ReactorPanelMenu.CMD_OPEN_REFUELLING));
@@ -219,7 +219,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.row("Flow ceiling", () -> pct(c.get().flowCeilingFraction()), "%").tip(this::jetTooltip),
                 Layout.row("Flow ceiling mass flow", () -> big(c.get().flowCeilingKgPerS()), "kg/s").tip(this::jetTooltip),
                 Layout.row("Vessel interior volume", () -> String.valueOf(c.get().interiorVolume()), "blocks^3").tip(this::volumeTooltip),
-                Layout.section("Steam dryer and separators"),
+                Layout.section("Head, studs, dryer and separators"),
                 Layout.note(() -> menu.internalsSummary.getString()).body()
                         .status(() -> menu.internalsOut == 0 ? Status.NORMAL : Status.CAUTION),
                 Layout.section("Cavity seal and well"),
@@ -356,8 +356,8 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
         super.containerTick();
         head.setMessage(Component.literal(menu.vesselState == VesselState.REFUELING ? "Seat head" : "Lift head"));
         head.setTooltipText(menu.vesselState == VesselState.REFUELING
-                ? "The head is off. Ask the vessel to put its head back on. It refuses, and tells you why, if that is physically impossible."
-                : "The head is on. Ask the vessel to take its head off. It refuses, and tells you why, if pressure or anything else makes that impossible.");
+                ? "The head is off. Unless the server turns on instantHeadRemoval this explains how it goes back on: the crane sets it, then the stud tensioner brings the studs to load."
+                : "The head is on. Unless the server turns on instantHeadRemoval this explains how it comes off: depressurise, detension the studs, lift it with the crane.");
         grid.setCells(overlay == Overlay.FLUX ? fluxCells() : rodCells());
     }
 

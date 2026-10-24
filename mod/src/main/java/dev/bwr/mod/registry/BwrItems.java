@@ -263,6 +263,14 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.EQUIPMENT_PAD);
     public static final DeferredItem<BlockItem> REFUELLING_BRIDGE_CONSOLE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.REFUELLING_BRIDGE_CONSOLE);
+    public static final DeferredItem<BlockItem> BUILDING_CRANE_CONSOLE =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.BUILDING_CRANE_CONSOLE);
+    public static final DeferredItem<BlockItem> CRANE_RUNWAY_RAIL =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CRANE_RUNWAY_RAIL);
+    public static final DeferredItem<BlockItem> HEAD_STAND =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.HEAD_STAND);
+    public static final DeferredItem<BlockItem> STUD_TENSIONER =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.STUD_TENSIONER);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_CONTROLLER =
             ITEMS.registerSimpleBlockItem(BwrBlocks.SUPPRESSION_POOL_CONTROLLER);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_WALL =
@@ -498,6 +506,10 @@ public final class BwrItems {
                         output.accept(CANAL_GATE.get());
                         output.accept(REFUELLING_BRIDGE_CONSOLE.get());
                         output.accept(EQUIPMENT_PAD.get());
+                        output.accept(CRANE_RUNWAY_RAIL.get());
+                        output.accept(BUILDING_CRANE_CONSOLE.get());
+                        output.accept(HEAD_STAND.get());
+                        output.accept(STUD_TENSIONER.get());
                         output.accept(SUPPRESSION_POOL_CONTROLLER.get());
                         output.accept(SUPPRESSION_POOL_WALL.get());
                         output.accept(SUPPRESSION_POOL_SUCTION.get());

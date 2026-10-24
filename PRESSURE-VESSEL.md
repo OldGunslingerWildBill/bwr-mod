@@ -9,7 +9,7 @@ sources ([RPV-REFERENCE.md](RPV-REFERENCE.md)):
   shroud support plate, core plate and top-guide rim, six feedwater spargers, the core-spray lines, LPCI couplings, guide rods,
   the shroud head with up to 225 steam separators, and the steam dryer.
 
-The dryer and the separator assembly lift out with the refuelling bridge ([REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#the-steam-dryer-and-the-separator-assembly-alpha53)).
+The head, the dryer and the separator assembly lift out with the reactor building crane, after a stud tensioner has detensioned the closure studs ([BUILDING-CRANE.md](BUILDING-CRANE.md), [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#the-steam-dryer-and-the-separator-assembly-alpha53-lifted-by-the-crane)).
 Its dimensions follow the existing reactor envelope: 7 to 23 blocks across, including rectangular builds; a rectangular footprint
 gives elliptical sections. This is game artwork drawn to real proportions, not a manufacturer CAD model.
 
@@ -42,7 +42,8 @@ install new visible fuel models or change the refuelling controls.
 - **What it keeps on purpose:** the dome height of the head (the thrown head, the open-head cells and the flange lip `rim` that
   the cavity seal and the well use hang on it), the shell radii, the core, the jet pumps' seat and the spray rings' construction rows.
 - **Studs:** the real pitch, 74 at every size. They stay in the flange with the head off, as at a real plant; the nuts and
-  washers go with the head.
+  washers come off first (the stud tensioner) and are not on the head the crane lifts. The vessel holds pressure only with every stud
+  at load.
 - **Drawing:** one controller renderer draws the assembly from cached meshes (`MachineMeshCache`). The outside is one mesh. The
   internals are three: the fixed internals, the separator assembly and the dryer, so lifting one rebuilds nothing else. Shell
   blocks gain no block entities or tickers. A client appearance index hides the cube models only while their assembled

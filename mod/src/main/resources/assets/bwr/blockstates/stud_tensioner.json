@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/stud_tensioner"
+    },
+    "facing=east": {
+      "model": "bwr:block/stud_tensioner",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/stud_tensioner",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/stud_tensioner",
+      "y": 270
+    }
+  }
+}

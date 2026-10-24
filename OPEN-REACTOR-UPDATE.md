@@ -1,18 +1,33 @@
 # Open reactor access and sparger corners — alpha.23
 
-## Entering an open vessel
+## Opening the vessel: studs, then the crane
 
-Click **HEAD OFF** in the reactor GUI to enter the existing **Refuelling** vessel
-state after depressurising to 25 psig or less. The roof and upper construction cells belonging
-to the removed head become passable and stop intercepting your crosshair, on both
-client and server. You can enter through the top. Closing the head restores its
-collision; a pressure-blown head is also open. The lower vessel walls stay solid.
+The head no longer comes off with a button. As at a real plant it takes two machines, in this order
+([BUILDING-CRANE.md](BUILDING-CRANE.md) has the full rules and numbers):
+
+1. **Depressurise** to 25 psig or less.
+2. **Detension the studs.** A **Stud Tensioner** on the refuel floor beside the well, powered with FE, goes round the closure flange one
+   stud at a time (4 s and 3,000 FE each: 296 s and 222,000 FE for the 74 studs of the reference vessel). The nuts and washers come off;
+   the studs stay in the flange. The vessel cannot hold pressure from the first stud on.
+3. **Lift the head.** The **reactor building crane** lifts the head on its strongback onto a **Head Stand** on the refuel floor. Only now is the
+   vessel in the existing **Refuelling** state: the roof and upper construction cells belonging to the removed head become passable and
+   stop intercepting your crosshair, on both client and server, and you can enter through the top.
+4. **Reverse** it after refuelling: the crane sets the head back on the flange (the dryer and the separators must be in), then the tensioner
+   brings the studs to load (6 s and 6,000 FE each) and the vessel can hold pressure again.
+
+The reactor panel's head button now explains this procedure instead of lifting the head. The server option **`instantHeadRemoval`**
+(`bwr-gameplay.toml`, default **off**) gives the old button back for casual play: on, it lifts and seats the head at once, with every
+stud bare or at load, as before.
+
+**Old worlds.** A world whose head is already off stays off. The head counts as laid down clear of the vessel (no stand block needed) and
+the crane, or the option, puts it back. A world with the head on has every stud at load. The new saved keys (`StudsOff`, `HeadAt`) are written only
+while they are not the default.
 
 The saved construction blocks remain in place for structure validation and
 reassembly. No blocks are deleted or dropped by moving the head. Chunk reloads
 restore access from the saved vessel state. Unforming the vessel restores normal
 construction-block collision. Other equipment or pipes placed over the opening
-still have their own collision.
+still have their own collision. A pressure-blown head is also open; the lower vessel walls stay solid.
 
 ## Cherenkov-style light
 
