@@ -492,19 +492,22 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * stamped on every tick of normal operation.
      */
     private void applyVesselSteamDischarge(Level level) {
-        double head = headSealed()
-                ? 0.0
-                // Flow stops when the vessel reaches containment pressure, which
-                // is where an open vessel sits. Keying on gauge pressure is what
-                // keeps this from dragging the dome down to the pressure model's
-                // numerical floor, some 14 psi below atmospheric.
-                : OPEN_HEAD_DISCHARGE_KG_PER_S_PER_PSI * Math.max(0.0, core.getPressurePsig());
+        double head = headDischargeKgPerS();
         double discharge = head + gatherSteamOutletFlow(level);
         if (discharge == 0.0 && lastVesselDischargeKgPerS == 0.0) {
             return;
         }
         core.setSteamLeakKgPerS(discharge);
         lastVesselDischargeKgPerS = discharge;
+    }
+
+    /**
+     * What the closure leaks, kg/s: nothing with the head on and every stud at load, and otherwise (head off, or any stud bare) the open-head
+     * discharge. Flow stops when the vessel reaches containment pressure, which is where an open vessel sits: keying on gauge pressure is what
+     * keeps this from dragging the dome down to the pressure model's numerical floor, some 14 psi below atmospheric.
+     */
+    public double headDischargeKgPerS() {
+        return headSealed() || core == null ? 0.0 : OPEN_HEAD_DISCHARGE_KG_PER_S_PER_PSI * Math.max(0.0, core.getPressurePsig());
     }
 
     /**

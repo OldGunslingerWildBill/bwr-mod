@@ -264,16 +264,15 @@ public final class BuildingCraneTests {
         try {
             ReactorControllerBlockEntity r = f.reactor();
             r.core().getPressureVessel().restorePressurePsig(20);
-            ReactorControllerBlockEntity.serverTick(f.level, r.getBlockPos(), r.getBlockState(), r);
-            h.assertTrue(r.headSealed() && r.core().getSteamLeakKgPerS() == 0.0, "head on, every stud at load: no leak: " + r.core().getSteamLeakKgPerS());
+            h.assertTrue(r.headSealed() && r.headDischargeKgPerS() == 0.0, "head on, every stud at load: no leak: " + r.headDischargeKgPerS());
             r.setStudsOff(1);
             h.assertTrue(r.vesselState().canHoldPressure() && !r.headSealed(), "the head is on but one stud is bare");
-            ReactorControllerBlockEntity.serverTick(f.level, r.getBlockPos(), r.getBlockState(), r);
-            double leak = r.core().getSteamLeakKgPerS();
+            double leak = r.headDischargeKgPerS();
             h.assertTrue(leak > 1000.0, "one bare stud and the flange leaks like an open head (350 kg/s per psi): " + leak);
             r.setStudsOff(0);
-            ReactorControllerBlockEntity.serverTick(f.level, r.getBlockPos(), r.getBlockState(), r);
-            h.assertTrue(r.core().getSteamLeakKgPerS() == 0.0, "every stud back at load: sealed again: " + r.core().getSteamLeakKgPerS());
+            h.assertTrue(r.headDischargeKgPerS() == 0.0, "every stud back at load: sealed again: " + r.headDischargeKgPerS());
+            r.setVesselState(VesselState.REFUELING);
+            h.assertTrue(r.headDischargeKgPerS() == leak, "the head off leaks the same: " + r.headDischargeKgPerS());
         } finally {
             f.dispose();
         }
