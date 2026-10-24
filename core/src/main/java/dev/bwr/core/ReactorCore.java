@@ -20,6 +20,8 @@ import dev.bwr.core.thermal.DecayHeat;
 import dev.bwr.core.thermal.FuelThermal;
 import dev.bwr.core.thermal.PressureVessel;
 import dev.bwr.core.thermal.Saturation;
+import dev.bwr.core.thermal.SteamSeparation;
+import dev.bwr.core.thermal.VesselBuild;
 import dev.bwr.core.thermal.VoidModel;
 
 import java.util.ArrayList;
@@ -293,6 +295,9 @@ public final class ReactorCore {
     private double recirculationFlowFractionDemand = 1.0;
     private double coreFlowFraction = 1.0;
     private boolean naturalCirculationEnabled = true;
+    /** The height of the vessel this core sits in; null for a bare core. See {@link #applyVesselBuild}. */
+    private VesselBuild vesselBuild;
+    private boolean domeFollowsBuild;
     private double lastNaturalCirculationFlowFraction;
 
     private double turbineSteamFlowKgPerS;
@@ -897,6 +902,9 @@ public final class ReactorCore {
         //        power. Together with step 6 this is the timescale separation the
         //        class comment insists on.
         double previousTotalPower = getTotalPowerFractionOfRated();
+        if (vesselBuild != null) {
+            voidModel.setSubcoolingAdjustmentKJPerKg(carryunderSubcoolingAdjustmentKJPerKg(previousTotalPower));
+        }
         voidModel.update(previousTotalPower, coreFlowFraction, vessel.getPressurePsig(), dtSeconds);
 
         // --- 3. Close the reactivity balance once. One scalar rho for this tick.
@@ -1229,7 +1237,159 @@ public final class ReactorCore {
         // instead of turning up through the core. SPEC 7: the recirculation
         // break loses core flow and inventory together.
         double path = severeAccident.isLowerHeadFailed() ? 0.0 : boundary.coreFlowDeliveredFraction();
-        return NATURAL_CIRCULATION_COEFFICIENT * Math.cbrt(power) * levelFactor * geometry * path;
+        double flow = NATURAL_CIRCULATION_COEFFICIENT * Math.cbrt(power) * levelFactor * geometry * path;
+        if (vesselBuild != null) {
+            flow *= getChimneyFactor() * carryunderDriveFactor();
+        }
+        return flow;
+    }
+
+    // ---------------------------------------------------------------
+    // Vessel height: separators, carryover, carryunder, chimney (VESSEL-HEIGHT.md)
+    // ---------------------------------------------------------------
+
+    /**
+     * Tells the core how tall the vessel it sits in is built, in the terms the physics needs ({@link VesselBuild}), or
+     * {@code null} for a bare core with no build, which keeps every calibrated behaviour exactly (a core in a unit test
+     * is the reference vessel with a design-quality separator at its design level).
+     *
+     * <p>With a build installed: the steam dome and the water inventory scale to it (at the same level, so no level
+     * moves), natural circulation follows the chimney and the carryunder, and core inlet subcooling loses what the
+     * carryunder carries. The steam moisture is read by the turbine side ({@link #getSteamMoistureFraction()}). Calling
+     * it again with an equal build does nothing; with a different one it rescales in place and conserves the level.
+     */
+    public void applyVesselBuild(VesselBuild build) {
+        installBuild(build, false);
+    }
+
+    /**
+     * The vessel is rebuilt while it runs: its dome and its capacity change to the new build's, and the water in it stays
+     * the water in it (none is made or lost), so the level moves to where that water now stands. A taller vessel with the
+     * same water reads lower.
+     */
+    public void resizeVesselBuild(VesselBuild build) {
+        installBuild(build, true);
+    }
+
+    private void installBuild(VesselBuild build, boolean keepWater) {
+        this.vesselBuild = build;
+        double wantedScale = build == null ? 1.0 : build.waterMassFactor();
+        vessel.rescaleInventory(wantedScale / vessel.getInventoryScale(), keepWater);
+        vessel.setSteamDomeVolumeM3(config.steamDomeVolumeM3
+                * (build == null || !domeFollowsBuild ? 1.0 : build.domeRatio()));
+        if (build == null) {
+            voidModel.setSubcoolingAdjustmentKJPerKg(0.0);
+        }
+    }
+
+    /**
+     * Whether the steam dome follows the build ({@link VesselBuild#domeRatio()}). Off by default: the calibrated dome (180 m3)
+     * is what the head missile and its tests were calibrated on in every size of vessel, and moving it moves them (see
+     * VESSEL-HEIGHT.md). The pressure vessel responds to whatever dome it is given (see {@code PressureVessel}).
+     */
+    public void setDomeFollowsBuild(boolean follows) {
+        this.domeFollowsBuild = follows;
+        installBuild(vesselBuild, true);
+    }
+
+    public boolean isDomeFollowingBuild() {
+        return domeFollowsBuild;
+    }
+
+    /** The build installed by {@link #applyVesselBuild}, or null. */
+    public VesselBuild getVesselBuild() {
+        return vesselBuild;
+    }
+
+    /** Separator height over true scale, 0..1; 1 with no build. */
+    public double getSeparatorHeightRatio() {
+        return vesselBuild == null ? 1.0 : vesselBuild.separatorRatio();
+    }
+
+    /** The physical water level the separators see, inches above vessel zero. */
+    public double getSeparatorLevelVesselIn() {
+        return SteamSeparation.vesselInchesFromInstrument(vessel.getTwoPhaseLevelIn());
+    }
+
+    /**
+     * Where the water stands in the separators' band: 0 at L3 (540.5 in), 1 at L8 (582 in). Below 0 the separators
+     * carry steam under; above 1 they carry water over.
+     */
+    public double getSeparatorBandPosition() {
+        return SteamSeparation.bandPosition(getSeparatorLevelVesselIn());
+    }
+
+    /**
+     * Mass fraction of liquid in the steam leaving the vessel (carryover): 0.001 at true scale in the band, more for a
+     * squashed vessel, sharply more above L8.
+     */
+    public double getSteamMoistureFraction() {
+        return SteamSeparation.moisture(getSeparatorHeightRatio(), getSeparatorLevelVesselIn());
+    }
+
+    /** Mass fraction of steam in the water the separators return to the downcomer. */
+    public double getCarryunderFraction() {
+        return SteamSeparation.carryunder(getSeparatorHeightRatio(), getSeparatorLevelVesselIn());
+    }
+
+    /** Natural circulation flow over its calibrated value for this chimney: 1 at the reference build and with none. */
+    public double getChimneyFactor() {
+        return vesselBuild == null ? 1.0 : SteamSeparation.chimneyFactor(vesselBuild.chimneyRatio());
+    }
+
+    /**
+     * Carryunder over the reference build's, mass fraction, signed. The reactor side of the model (rated core inlet
+     * subcooling, the natural circulation line) is calibrated with the reference vessel's separators, so what acts on it
+     * is the difference from them: zero at the reference build at any level inside the band, positive for a more
+     * squashed vessel or a low level, negative (a benefit) for a taller one.
+     */
+    public double getCarryunderOverReference() {
+        return getCarryunderFraction() - SteamSeparation.bandCarryunder(VesselBuild.REFERENCE.separatorRatio());
+    }
+
+    /**
+     * Flow factor from the head carryunder adds to or takes off the downcomer, relative to the reference build: exactly
+     * 1 at the reference. Scaled by the separators' loading (power), because carryunder is a share of the steam made.
+     */
+    public double carryunderDriveFactor() {
+        double psia = vessel.getPressurePsia();
+        return SteamSeparation.carryunderDriveFactor(
+                getCarryunderOverReference() * Math.min(1.0, Math.max(0.0, getTotalPowerFractionOfRated())),
+                Saturation.vapourDensityKgPerM3(psia) / Saturation.liquidDensityKgPerM3(psia));
+    }
+
+    /**
+     * Core inlet subcooling the carryunder (over the reference build's) takes away, kJ/kg: zero at the reference,
+     * negative for more carryunder, positive for less. The steam arrives at the inlet as enthalpy the feedwater must
+     * condense: {@code x * h_fg}, scaled by the separators' loading.
+     */
+    private double carryunderSubcoolingAdjustmentKJPerKg(double powerFraction) {
+        double delta = getCarryunderOverReference() * Math.min(1.0, Math.max(0.0, powerFraction));
+        if (delta == 0.0) {
+            return 0.0;
+        }
+        return -delta * Saturation.latentHeatKJPerKg(vessel.getPressurePsia());
+    }
+
+    /**
+     * Pressure the water above the core adds at the foot of the fuel, psi: {@code rho g h} for the water standing from
+     * the physical level down to the bottom of active fuel, with the build's stretched or squashed column taken in
+     * equivalent real inches. Read-out only.
+     */
+    public double getCoreInletHydrostaticRisePsi() {
+        double levelAboveBaf = getSeparatorLevelVesselIn() - (PhysicalConstants.TAF_ABOVE_VESSEL_ZERO_IN - PressureVessel.ACTIVE_FUEL_HEIGHT_IN);
+        double columnChange = vesselBuild == null ? 0.0
+                : vesselBuild.waterColumnIn() - SteamSeparation.NORMAL_VESSEL_IN
+                        + PhysicalConstants.TAF_ABOVE_VESSEL_ZERO_IN;
+        return SteamSeparation.hydrostaticRisePsi(Math.max(0.0, levelAboveBaf + columnChange),
+                Saturation.liquidDensityKgPerM3(vessel.getPressurePsia()));
+    }
+
+    /** The saturation temperature at the foot of the core over the dome's, kelvin. */
+    public double getCoreInletSaturationRiseK() {
+        double psig = vessel.getPressurePsig();
+        return Saturation.temperatureCelsiusFromPsig(psig + getCoreInletHydrostaticRisePsi())
+                - Saturation.temperatureCelsiusFromPsig(psig);
     }
 
     /** The natural circulation flow the last tick established, fraction of rated. */

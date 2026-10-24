@@ -97,7 +97,7 @@ public final class GuiScreenCheck {
     }
 
     /** Screens also photographed at the smallest GUI sizes (laid out for 320 x 240 or 427 x 240, drawn at scale 2 in the corner). */
-    private static final Set<String> FLOOR_PICTURES = Set.of("reactor-flux", "reactor-info", "pump-rhr", "terry", "condenser", "refuelling-burnup", "fabricator", "fabricator-mox", "reprocessor", "pool-spray", "guide-contents", "guide-page-long", "guide-page-icons", "guide-page-image-last", "guide-page-book-end");
+    private static final Set<String> FLOOR_PICTURES = Set.of("reactor-flux", "reactor-info", "reactor-info-steam", "pump-rhr", "terry", "condenser", "refuelling-burnup", "fabricator", "fabricator-mox", "reprocessor", "pool-spray", "guide-contents", "guide-page-long", "guide-page-icons", "guide-page-image-last", "guide-page-book-end");
 
     private static boolean started, built, finished;
     private static int age, joined, stage, scaleIndex, wait;
@@ -756,6 +756,16 @@ public final class GuiScreenCheck {
         }, screen -> {
             click(screen, "INFO");
         }, screen -> screen.mouseScrolled(screen.width / 2.0, screen.height / 2.0, 0, -6), true));
+        // The "Steam quality and vessel height" section of the INFO tab, scrolled into view, with the 17 x 17 x 28 reference's numbers.
+        s.add(new Scenario("reactor-info-steam", i -> {
+            var m = new ReactorPanelMenu(99, i, P);
+            reactorLive(m, false);
+            m.configuration = new ReactorConfigurationInfo(3293, 3300, 1612, 0.85, 12100, 51.7, 20, 0, 4, 0, 14000, 20, 4, 14000,
+                    0.0086, 0.0044, 0.544, 1.0, 0.54, 0.44);
+            return new ReactorPanelScreen(m, i, t("Reactor Control Panel"));
+        }, screen -> {
+            click(screen, "INFO");
+        }, screen -> screen.mouseScrolled(screen.width / 2.0, screen.height / 2.0, 0, -6.5), true));
         s.add(new Scenario("refuelling-selection", i -> {
             var m = new RefuellingMenu(99, i, P);
             refuel(m);

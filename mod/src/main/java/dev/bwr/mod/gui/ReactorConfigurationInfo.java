@@ -2,6 +2,7 @@ package dev.bwr.mod.gui;
 
 import dev.bwr.mod.flow.RecirculationNetwork;
 import dev.bwr.core.thermal.Saturation;
+import dev.bwr.core.thermal.SteamSeparation;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -9,7 +10,18 @@ import net.minecraft.network.FriendlyByteBuf;
 public record ReactorConfigurationInfo(double fuelLoadedRatingMW,double flowSupportedMW,double steamEquivalentKgPerS,
                                        double flowCeilingFraction,double flowCeilingKgPerS,double inletSubcoolingKJPerKg,
                                        int matchedJetAssemblies,int unmatchedJetAssemblies,int externalPumps,int internalPumps,
-                                       long interiorVolume,int requiredJets,int requiredExternalPumps,double requiredFlowKgPerS) {
+                                       long interiorVolume,int requiredJets,int requiredExternalPumps,double requiredFlowKgPerS,
+                                       double steamMoisture,double carryunder,double separatorRatio,double chimneyFactor,
+                                       double levelBandPosition,double coreInletSaturationRiseK) {
+    /** A design-quality separator at true scale, in the middle of its band: what a vessel without the new fields reads as. */
+    public ReactorConfigurationInfo(double fuelLoadedRatingMW,double flowSupportedMW,double steamEquivalentKgPerS,
+                                    double flowCeilingFraction,double flowCeilingKgPerS,double inletSubcoolingKJPerKg,
+                                    int matchedJetAssemblies,int unmatchedJetAssemblies,int externalPumps,int internalPumps,
+                                    long interiorVolume,int requiredJets,int requiredExternalPumps,double requiredFlowKgPerS) {
+        this(fuelLoadedRatingMW,flowSupportedMW,steamEquivalentKgPerS,flowCeilingFraction,flowCeilingKgPerS,inletSubcoolingKJPerKg,
+                matchedJetAssemblies,unmatchedJetAssemblies,externalPumps,internalPumps,interiorVolume,requiredJets,
+                requiredExternalPumps,requiredFlowKgPerS,SteamSeparation.DESIGN_MOISTURE,SteamSeparation.DESIGN_CARRYUNDER,1,1,0.5,0.4);
+    }
     public static final ReactorConfigurationInfo EMPTY=new ReactorConfigurationInfo(0,0,0,0,0,0,0,0,0,0,0,0,0,0);
     public static ReactorConfigurationInfo capture(ReactorControllerBlockEntity be) {
         if(be==null || !be.isFormed() || be.core()==null)return EMPTY;
@@ -26,15 +38,19 @@ public record ReactorConfigurationInfo(double fuelLoadedRatingMW,double flowSupp
                 flow*core.getVoidModel().getRatedCoreFlowKgPerS(),
                 core.getVoidModel().getCoreInletSubcoolingKJPerKg(),be.getConnectedJetPairs(),be.getUnmatchedJets(),
                 be.getConnectedExternalPumps(),be.getInstalledInternalPumps(),sizing.interiorVolume(),
-                sizing.requiredJets(),sizing.requiredExternalPumps(),sizing.ratedFlowKgPerS());
+                sizing.requiredJets(),sizing.requiredExternalPumps(),sizing.ratedFlowKgPerS(),
+                core.getSteamMoistureFraction(),core.getCarryunderFraction(),core.getSeparatorHeightRatio(),core.getChimneyFactor(),
+                core.getSeparatorBandPosition(),core.getCoreInletSaturationRiseK());
     }
     public void write(FriendlyByteBuf b) {
         for(double v:new double[]{fuelLoadedRatingMW,flowSupportedMW,steamEquivalentKgPerS,flowCeilingFraction,flowCeilingKgPerS,inletSubcoolingKJPerKg})b.writeDouble(v);
         b.writeVarInt(matchedJetAssemblies);b.writeVarInt(unmatchedJetAssemblies);b.writeVarInt(externalPumps);b.writeVarInt(internalPumps);
         b.writeVarLong(interiorVolume);b.writeVarInt(requiredJets);b.writeVarInt(requiredExternalPumps);b.writeDouble(requiredFlowKgPerS);
+        for(double v:new double[]{steamMoisture,carryunder,separatorRatio,chimneyFactor,levelBandPosition,coreInletSaturationRiseK})b.writeDouble(v);
     }
     public static ReactorConfigurationInfo read(FriendlyByteBuf b) {
         return new ReactorConfigurationInfo(b.readDouble(),b.readDouble(),b.readDouble(),b.readDouble(),b.readDouble(),b.readDouble(),
-                b.readVarInt(),b.readVarInt(),b.readVarInt(),b.readVarInt(),b.readVarLong(),b.readVarInt(),b.readVarInt(),b.readDouble());
+                b.readVarInt(),b.readVarInt(),b.readVarInt(),b.readVarInt(),b.readVarLong(),b.readVarInt(),b.readVarInt(),b.readDouble(),
+                b.readDouble(),b.readDouble(),b.readDouble(),b.readDouble(),b.readDouble(),b.readDouble());
     }
 }

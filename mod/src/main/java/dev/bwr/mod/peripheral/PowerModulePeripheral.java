@@ -25,7 +25,7 @@ public final class PowerModulePeripheral implements IPeripheral {
         m.put("sampleTicks",module.delivered().sampleTicks());m.put("windowReady1s",module.delivered().sampleTicks()>=20);
         m.put("windowReady1min",module.delivered().sampleTicks()>=1200);m.put("counterSaturated",module.delivered().saturated());
         m.put("flowKgPerS",module.flowKgPerS);m.put("shaftMW",module.shaftMW);m.put("electricMW",module.electricMW);m.put("trainMW",module.trainMW);
-        m.put("inletPsia",module.inletPsia);m.put("outletPsia",module.outletPsia);m.put("inletC",module.inletC);m.put("outletC",module.outletC);
+        m.put("inletPsia",module.inletPsia);m.put("inletMoisturePercent",module.inletMoisturePercent);m.put("outletPsia",module.outletPsia);m.put("inletC",module.inletC);m.put("outletC",module.outletC);
         m.put("waterKg",module.waterStored());m.put("storedFE",module.energyStored());m.put("hpSections",module.hpCount);m.put("lpSections",module.lpCount);m.put("generators",module.generatorCount);m.put("status",module.status);return m;
     }
 }

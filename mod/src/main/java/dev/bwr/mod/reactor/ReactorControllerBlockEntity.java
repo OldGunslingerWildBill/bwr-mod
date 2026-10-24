@@ -168,6 +168,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private CavitySeal.Survey cavitySurvey;
     /** Liquid inventory saved with water over the flange, applied once the well is surveyed so the level reads as it was. */
     private double pendingWellMassKg = -1;
+    /** The inventory scale that mass was taken at; a save with no key predates the vessel's height setting its inventory: 1. */
+    private double pendingWellScale = 1.0;
     private VesselAppearance.Envelope clientVesselEnvelope;
     private VesselCoreAppearance clientCoreAppearance;
     private double[] clientBladeInsertion=new double[0];
@@ -699,6 +701,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 // and the world in front of us is the only authority.
                 pendingRestore = core.toState();
                 pendingWellMassKg = core.getPressureVessel().getWellWaterM3() > 0 ? core.getPressureVessel().getLiquidMassKg() : -1;
+                pendingWellScale = core.getPressureVessel().getInventoryScale();
                 pendingRatedCoreFlowKgPerS = core.getVoidModel().getRatedCoreFlowKgPerS();
                 pendingFuelRestore = writeCoreFuel();
                 pendingBoundaryRestore = BoundaryDamageNbt.write(core.getBoundaryStress());
@@ -716,7 +719,14 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             if (core != null) core.discardPendingNodalRefresh();
             core = new ReactorCore(config, new dev.bwr.core.fuel.CoreLoading(found.latticeWidth()));
             core.setNodalRefresh(NODAL_REFRESH);
+            // The steam space of the build is the dome the pressure responds to, the blowdown fills and the head missile is thrown by.
+            core.setDomeFollowsBuild(true);
             core.seedRodColletFailures(getBlockPos().asLong() ^ 0x43ad3672b16f0e95L);
+            // Before the fill and before any restore: the height of the vessel sets its water inventory, and a saved level is
+            // restored (to the last bit) against the inventory it is read in. The save holds the level, not the mass, so
+            // saves taken before this model existed keep their level in any vessel.
+            core.applyVesselBuild(VesselHeightBuild.ofEnvelope(width + 2, depth + 2,
+                    found.interiorMax().getY() - found.interiorMin().getY() + 3));
             // Install before restoring: fromState re-solves the saved rod pattern.
             installRodLatticeMap(found);
             if (pendingRestore != null) core.getVoidModel().setRatedCoreFlowKgPerS(pendingRatedCoreFlowKgPerS);
@@ -784,6 +794,13 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
 
         savedDriveCells=nextDriveCells;
+        // The height of the vessel is physics: the steam dome and the water in it, the chimney that drives natural
+        // circulation, and how well the separators dry the steam (VESSEL-HEIGHT.md). Every validation, because it is an equal build
+        // most of the time and a rescale at constant level when it is not.
+        var heightBuild = VesselHeightBuild.ofEnvelope(width + 2, depth + 2,
+                found.interiorMax().getY() - found.interiorMin().getY() + 3);
+        // A vessel rebuilt around a running core keeps the water it has (none is made), so its level moves.
+        if (!heightBuild.equals(core.getVesselBuild())) core.resizeVesselBuild(heightBuild);
         double ratedFlow=dev.bwr.mod.flow.RecirculationNetwork.sizing(found).ratedFlowKgPerS();
         if (ratedFlow != core.getVoidModel().getRatedCoreFlowKgPerS()) {
             core.setRatedCoreFlowKgPerS(ratedFlow);
@@ -915,8 +932,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         var vessel = core.getPressureVessel();
         vessel.setWell(survey.profile() != null ? survey.profile().toWell() : dev.bwr.core.thermal.PressureVessel.Well.none());
         if (pendingWellMassKg > 0) {
-            vessel.restoreLiquidMassKg(pendingWellMassKg);
+            vessel.restoreLiquidMassKg(pendingWellMassKg * (vessel.getInventoryScale() / pendingWellScale));
             pendingWellMassKg = -1;
+            pendingWellScale = 1.0;
         }
     }
 
@@ -1685,8 +1703,13 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             tag.put("Core", ReactorStateNbt.write(core.toState()));
             // Water over the flange: the level alone does not say how much sits in the annulus, so the inventory is kept too.
             // Absent (and so default) while the vessel holds nothing above its flange, as in every older save.
-            if (pendingWellMassKg > 0) tag.putDouble("WellInventoryKg", pendingWellMassKg);
-            else if (core.getPressureVessel().getWellWaterM3() > 0) tag.putDouble("WellInventoryKg", core.getPressureVessel().getLiquidMassKg());
+            if (pendingWellMassKg > 0) {
+                tag.putDouble("WellInventoryKg", pendingWellMassKg);
+                if (pendingWellScale != 1.0) tag.putDouble("WellInventoryScale", pendingWellScale);
+            } else if (core.getPressureVessel().getWellWaterM3() > 0) {
+                tag.putDouble("WellInventoryKg", core.getPressureVessel().getLiquidMassKg());
+                if (core.getPressureVessel().getInventoryScale() != 1.0) tag.putDouble("WellInventoryScale", core.getPressureVessel().getInventoryScale());
+            }
             // Overpressure damage is not part of ReactorState — it is a
             // property of the plant's metal rather than of its operating point
             // — so it is saved alongside rather than inside it.
@@ -1703,7 +1726,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             // of an accident that had been in progress.
             if (pendingRestore != null) {
                 tag.put("Core", ReactorStateNbt.write(pendingRestore));
-                if (pendingWellMassKg > 0) tag.putDouble("WellInventoryKg", pendingWellMassKg);
+                if (pendingWellMassKg > 0) {
+                    tag.putDouble("WellInventoryKg", pendingWellMassKg);
+                    if (pendingWellScale != 1.0) tag.putDouble("WellInventoryScale", pendingWellScale);
+                }
             }
             if (pendingBoundaryRestore != null) {
                 tag.put(BoundaryDamageNbt.KEY, pendingBoundaryRestore);
@@ -1782,6 +1808,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 : null;
         pendingRodDemand = tag.contains("RodDemand") ? tag.getIntArray("RodDemand") : null;
         pendingWellMassKg = tag.contains("WellInventoryKg") ? tag.getDouble("WellInventoryKg") : -1;
+        double savedWellScale = tag.contains("WellInventoryScale") ? tag.getDouble("WellInventoryScale") : 1.0;
+        pendingWellScale = Double.isFinite(savedWellScale) && savedWellScale > 0.0 ? savedWellScale : 1.0;
         pendingSelectedRod = Math.max(0, tag.getInt("SelectedRod"));
         rodSelection.clear();
         structureDirty = true;

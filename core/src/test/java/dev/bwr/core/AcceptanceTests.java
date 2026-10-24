@@ -128,6 +128,7 @@ public final class AcceptanceTests {
             dev.bwr.core.accident.HeadMissileTest.class,
             dev.bwr.core.accident.SevereAccidentIntegrationTest.class,
             NaturalCirculationTest.class,
+            VesselHeightTest.class,
             NodalFluxSolverTest.class,
             FuelTypeSpecTest.class,
             EnrichmentMassBalanceTest.class,
