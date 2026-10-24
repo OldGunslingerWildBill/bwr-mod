@@ -163,7 +163,7 @@ Also in the set: `tensioner-screen.png` and `studs-detensioned-nuts-off.png`. Th
 * **Saves.** A lift saved on the hook finishes the same job after the world loads; so does a pass of the tensioner (at the same stud, mid-stud included).
   Breaking the console under a hanging load sets a dryer or separator assembly back in its vessel and lays a hanging head down on the floor (nothing is lost);
   removing a stand that holds the head does the same.
-* **The bridge.** The bridge's own internal lifts are behind the legacy server option `bridgeLiftsInternals` (default **true** for now, see below).
+* **The bridge.** The refuelling bridge moves fuel only and refuses the head, dryer and separator lifts (see below).
 
 ## Computers
 
@@ -185,21 +185,22 @@ while tensioner.getStatus().running do sleep(5) end
 print(crane.queueHeadOut().ok)
 ```
 
-## The legacy option and the old tests (read this)
+## The bridge moves fuel only
 
-The alpha.53 GameTests `VesselInternalsTests` (and `VesselInternalsCcChecks`) assert that the **refuelling bridge** lifts the dryer and the separators
-(`f.bridge.queueInternal(VesselInternal.DRYER, true) == null, "the high rails lift it"` and many like it, and `queueInternalOut("dryer")` returning `ok`).
-They may not be edited here, so the rule "the bridge refuses internal lifts, with a message pointing to the crane" is built but gated: the server option
-**`bridgeLiftsInternals`** (default **true**) leaves the bridge's old lifts working; with it **false** the bridge refuses them ("The refuelling bridge moves fuel only. The reactor building crane
-lifts the vessel head, the steam dryer and the separator assembly."), the screen's buttons go dark and the peripheral returns `ok = false`. The
-crane does all of those lifts either way. To finish the change: edit those tests to use the crane, then flip the option's default to false.
+In alpha.53 the refuelling bridge lifted the dryer and the separators. The crane now does, and the bridge refuses: `queueInternal` (the console's
+buttons, the peripheral's `queueInternalOut` / `queueInternalIn`) and a raw internal move return "The refuelling bridge moves fuel only. The reactor building
+crane lifts the vessel head, the steam dryer and the separator assembly." There is no option for the old behaviour. The one exception is a load already on
+the bridge's hoist (a world saved mid-lift in alpha.53, never released): the bridge still sets it down on a free pad (or back into the vessel), whatever the
+height of its rails, and the console's DRYER DOWN / SEPS DOWN buttons (lit only while the hoist holds that assembly) and the same peripheral calls do it. A
+lift already in flight when such a world loads finishes. The alpha.53 tests of the bridge's lift (`VesselInternalsTests`, `VesselInternalsCcChecks`) now do the same
+lifts with the crane and assert that the bridge refuses.
 
 ## Tests
 
 Core (`:core:acceptance`): `CraneMotionTest` (legs, the 74-stud pass's time and energy, when the head is liftable and sealed).
 GameTests (`BuildingCraneTests`, namespace `bwrcrane`, `-PbwrOnlyCrane`): the full sequence (refuse while tensioned, detension 296 s and 222,000 FE, the crane lifts the head to the stand,
 dryer then separators to the pads, fuel to the pool and back by the bridge, then the separators in, the dryer in, the head on, retension 444 s and 444,000 FE, sealed); the head will
-not lift with even one stud tensioned and the studs wait for 25 psig; the tensioner's time, energy and out-of-power stop; the bridge refuses the lifts with the option off; the instant option on and off
+not lift with even one stud tensioned and the studs wait for 25 psig; the tensioner's time, energy and out-of-power stop; the bridge refuses the lifts; the instant option on and off
 (the button's message, the old behaviour); a lift saved on the hook and a pass saved half way; an old world with the head off and one with it on, and that new keys are written only when not
 the default; the stand's placement rules and a stand removed under the head; low rails; a console broken under a hanging load; a head on with a bare stud leaks like an open head; no idle ticking and a
 working crane or tensioner ticking once a tick on the real scheduler; the computer faces. Client check `-PbwrBuildingCraneCheck` (`BuildingCraneClientCheck`) saves the pictures in `art/building-crane/`;

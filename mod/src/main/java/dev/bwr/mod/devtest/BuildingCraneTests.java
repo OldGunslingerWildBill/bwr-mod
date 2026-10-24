@@ -286,7 +286,6 @@ public final class BuildingCraneTests {
     @GameTest(template = "empty", templateNamespace = "bwrcrane", timeoutTicks = 200)
     public static void theBridgeRefusesTheInternalLiftsAndPointsToTheCrane(GameTestHelper h) throws Exception {
         CraneFixture f = CraneFixture.build(h.getLevel(), at(3));
-        boolean before = GameplayConfig.BRIDGE_LIFTS_INTERNALS.get();
         try {
             ReactorControllerBlockEntity r = f.reactor();
             r.setStudsOff(74);
@@ -294,7 +293,6 @@ public final class BuildingCraneTests {
             run(h, f);
             var bridge = f.base.bridge;
             bridge.refreshSite();
-            GameplayConfig.BRIDGE_LIFTS_INTERNALS.set(false);
             Component why = bridge.queueInternal(VesselInternal.DRYER, true);
             h.assertTrue(why != null && english(why).contains("crane") && english(why).contains("fuel only"), "the bridge refuses and points to the crane: " + english(why));
             why = bridge.queue(new RefuellingBridgeBlockEntity.Move(RefuellingBridgeBlockEntity.Loc.internal(VesselInternal.DRYER),
@@ -303,11 +301,7 @@ public final class BuildingCraneTests {
             h.assertTrue(r.internalInstalled(VesselInternal.DRYER) && !bridge.busy(), "nothing moved");
             h.assertTrue(f.crane.queueInternal(VesselInternal.DRYER, true) == null, "the crane takes it");
             f.crane.abort();
-            // the legacy option brings the bridge's lift back
-            GameplayConfig.BRIDGE_LIFTS_INTERNALS.set(true);
-            h.assertTrue(GameplayConfig.BRIDGE_LIFTS_INTERNALS.getDefault(), "the legacy option defaults to on, until the owner decides");
         } finally {
-            GameplayConfig.BRIDGE_LIFTS_INTERNALS.set(before);
             f.dispose();
         }
         h.succeed();

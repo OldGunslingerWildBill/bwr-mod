@@ -239,14 +239,18 @@ public class RefuellingBridgePeripheral implements IPeripheral {
         return which;
     }
 
-    /** Queue lifting the steam dryer ("dryer") or the separator assembly ("separator") out of the open, flooded vessel to the nearest free equipment pad. */
+    /**
+     * Refused (the reactor building crane lifts the dryer and the separators; the bridge moves fuel only), with a message saying so. The one thing it
+     * still does: with the dryer ("dryer") or the separator assembly ("separator") already on the hoist (a world saved mid-lift in alpha.53), it sets
+     * it down on the nearest free equipment pad.
+     */
     @LuaFunction(mainThread = true)
     public final Map<String, Object> queueInternalOut(String name) throws LuaException {
         Component why = be.queueInternal(internal(name), true);
         return result(why == null, why);
     }
 
-    /** Queue setting the steam dryer or the separator assembly back into the vessel from the pad that holds it. */
+    /** Refused like {@link #queueInternalOut}; with the assembly on the hoist it sets it back into the vessel. */
     @LuaFunction(mainThread = true)
     public final Map<String, Object> queueInternalIn(String name) throws LuaException {
         Component why = be.queueInternal(internal(name), false);

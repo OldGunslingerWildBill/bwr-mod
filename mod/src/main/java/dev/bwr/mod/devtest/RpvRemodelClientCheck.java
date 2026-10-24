@@ -7,8 +7,8 @@ import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
 import dev.bwr.mod.reactor.VesselInternal;
 import dev.bwr.mod.reactor.VesselState;
 import dev.bwr.mod.refuelling.EquipmentPadBlockEntity;
-import dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity;
-import dev.bwr.mod.refuelling.RefuellingRailBlock;
+import dev.bwr.mod.refuelling.BuildingCraneBlockEntity;
+import dev.bwr.mod.refuelling.CraneRunwayRailBlock;
 import dev.bwr.mod.registry.BwrBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -35,8 +35,8 @@ import java.nio.file.Files;
 /**
  * Disposable real-client pictures of the v2 reactor vessel ({@code -PbwrRpvRemodelCheck} through run-mc.ps1), 1920 x 1080, in
  * {@code run/turbineModelCheck/rpv-remodel-check/}: the 17 x 17 x 28 reference vessel outside, head off on the dryer, the dryer
- * lifted by the refuelling bridge and set on its equipment pad in a flooded pit, the separators on the core, the separators lifted
- * and on their pad, the core with both out, and the smallest, largest and a rectangular vessel. The lifts are the bridge's own
+ * lifted by the reactor building crane and set on its equipment pad in a flooded pit, the separators on the core, the separators lifted
+ * and on their pad, the core with both out, and the smallest, largest and a rectangular vessel. The lifts are the crane's own
  * moves, stepped from the server thread and held with {@code devHold} where the picture is wanted. Not shipped.
  */
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
@@ -73,7 +73,7 @@ public final class RpvRemodelClientCheck {
     private static volatile Vec3 aim;
     private static int age, joined, stage, shown;
     private static ReactorControllerBlockEntity main, small, large, rectangular;
-    private static RefuellingBridgeBlockEntity bridge;
+    private static BuildingCraneBlockEntity bridge;
 
     private RpvRemodelClientCheck() {
     }
@@ -185,17 +185,17 @@ public final class RpvRemodelClientCheck {
         rectangular = reactor(level, O.offset(-40, 0, -34), 13, 9, 20);
         // the refuel floor: rails high enough over the 17 x 17 x 28 vessel that a hanging dryer clears its lip, a console, and a
         // flooded pit (the dryer/separator storage pool) with two equipment pads east of the vessel
-        int ry = O.getY() + 32;
+        int ry = O.getY() + 34;
         for (int x = -3; x <= 57; x++) {
             for (int z : new int[]{-3, 17}) {
-                level.setBlock(new BlockPos(O.getX() + x, ry, O.getZ() + z), BwrBlocks.REFUELLING_RAIL.get().defaultBlockState()
-                        .setValue(RefuellingRailBlock.AXIS, Direction.Axis.X), 2);
+                level.setBlock(new BlockPos(O.getX() + x, ry, O.getZ() + z), BwrBlocks.CRANE_RUNWAY_RAIL.get().defaultBlockState()
+                        .setValue(CraneRunwayRailBlock.AXIS, Direction.Axis.X), 2);
                 for (int dz = -1; dz <= 1; dz++) level.setBlock(new BlockPos(O.getX() + x, ry - 1, O.getZ() + z + dz), Blocks.SMOOTH_STONE.defaultBlockState(), 2);
             }
         }
         BlockPos console = new BlockPos(O.getX() - 3, ry, O.getZ() - 4);
-        level.setBlock(console, BwrBlocks.REFUELLING_BRIDGE_CONSOLE.get().defaultBlockState(), 2);
-        bridge = (RefuellingBridgeBlockEntity) level.getBlockEntity(console);
+        level.setBlock(console, BwrBlocks.BUILDING_CRANE_CONSOLE.get().defaultBlockState(), 2);
+        bridge = (BuildingCraneBlockEntity) level.getBlockEntity(console);
         for (int x = 20; x <= 57; x++) {
             for (int z = -2; z <= 16; z++) {
                 for (int y = 8; y <= 19; y++) {
@@ -205,7 +205,7 @@ public final class RpvRemodelClientCheck {
             }
         }
         for (int x : new int[]{30, 48}) level.setBlock(O.offset(x, 9, 7), BwrBlocks.EQUIPMENT_PAD.get().defaultBlockState(), 3);
-        check(bridge.refreshSite().ok() && bridge.site().reactor(level) == main, "the bridge finds the reactor");
+        check(bridge.refreshSite().ok() && bridge.site().reactor(level) == main, "the crane finds the reactor");
     }
 
     private static void level(ReactorControllerBlockEntity be, double inches) {
