@@ -158,6 +158,21 @@ public final class BwrBlockEntities {
             () -> BlockEntityType.Builder.of(dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity::new,
                     BwrBlocks.REFUELLING_BRIDGE_CONSOLE.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.refuelling.BuildingCraneBlockEntity>>
+            BUILDING_CRANE = BLOCK_ENTITIES.register("building_crane",
+            () -> BlockEntityType.Builder.of(dev.bwr.mod.refuelling.BuildingCraneBlockEntity::new,
+                    BwrBlocks.BUILDING_CRANE_CONSOLE.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.refuelling.HeadStandBlockEntity>>
+            HEAD_STAND = BLOCK_ENTITIES.register("head_stand",
+            () -> BlockEntityType.Builder.of(dev.bwr.mod.refuelling.HeadStandBlockEntity::new,
+                    BwrBlocks.HEAD_STAND.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.reactor.StudTensionerBlockEntity>>
+            STUD_TENSIONER = BLOCK_ENTITIES.register("stud_tensioner",
+            () -> BlockEntityType.Builder.of(dev.bwr.mod.reactor.StudTensionerBlockEntity::new,
+                    BwrBlocks.STUD_TENSIONER.get()).build(null));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.refuelling.EquipmentPadBlockEntity>>
             EQUIPMENT_PAD = BLOCK_ENTITIES.register("equipment_pad",
             () -> BlockEntityType.Builder.of(dev.bwr.mod.refuelling.EquipmentPadBlockEntity::new,

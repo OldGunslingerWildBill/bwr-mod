@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "bwr:block/crane_runway_rail"
+    },
+    "axis=z": {
+      "model": "bwr:block/crane_runway_rail",
+      "y": 90
+    }
+  }
+}

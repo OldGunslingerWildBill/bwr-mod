@@ -355,11 +355,14 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
         boolean free = room && !menu.bridgeBusy && (!menu.bridgeHolding || menu.bridgeCarriedInternal >= 0);
         dryer.setMessage(Component.literal(dryerOut ? "DRYER IN" : "DRYER OUT"));
         separators.setMessage(Component.literal(sepsOut ? "SEPS IN" : "SEPS OUT"));
-        dryer.active = free && (!dryerOut || !sepsOut) && (menu.bridgeCarriedInternal < 0 || menu.bridgeCarriedInternal == 0);
-        separators.active = free && (sepsOut || dryerOut) && (menu.bridgeCarriedInternal < 0 || menu.bridgeCarriedInternal == 1);
-        dryer.setTooltipText(dryerOut ? "Set the steam dryer back into the vessel from its pad (the separator assembly must be in first)."
+        boolean lifts = menu.bridgeLiftsInternals;
+        dryer.active = lifts && free && (!dryerOut || !sepsOut) && (menu.bridgeCarriedInternal < 0 || menu.bridgeCarriedInternal == 0);
+        separators.active = lifts && free && (sepsOut || dryerOut) && (menu.bridgeCarriedInternal < 0 || menu.bridgeCarriedInternal == 1);
+        dryer.setTooltipText(!lifts ? "The refuelling bridge moves fuel only. The reactor building crane lifts the steam dryer."
+                : dryerOut ? "Set the steam dryer back into the vessel from its pad (the separator assembly must be in first)."
                 : "Lift the steam dryer out of the open, flooded vessel to the nearest free equipment pad (it comes out first and goes back in last).");
-        separators.setTooltipText(sepsOut ? "Set the shroud head and separator assembly back onto the core from its pad (before the dryer)."
+        separators.setTooltipText(!lifts ? "The refuelling bridge moves fuel only. The reactor building crane lifts the separator assembly."
+                : sepsOut ? "Set the shroud head and separator assembly back onto the core from its pad (before the dryer)."
                 : dryerOut ? "Lift the shroud head and steam separator assembly out to the nearest free equipment pad."
                 : "The steam dryer sits over the separators: lift it out first.");
         abort.active = menu.bridgeBusy || menu.bridgeHalted || menu.bridgeQueued > 0;

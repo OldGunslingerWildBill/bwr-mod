@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "P": {
+      "item": "minecraft:glass_pane"
+    },
+    "C": {
+      "item": "minecraft:comparator"
+    },
+    "Y": {
+      "item": "minecraft:yellow_dye"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "ICI",
+    "IYI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:building_crane_console"
+  }
+}

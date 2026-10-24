@@ -119,6 +119,8 @@ public class RefuellingMenu extends BwrMenu {
     public int bridgeInternalsOut;
     /** The assembly on the hoist (VesselInternal ordinal), or -1. */
     public int bridgeCarriedInternal = -1;
+    /** Whether the bridge still lifts the dryer and the separators (the legacy option); false means the crane does, and those buttons go dark. */
+    public boolean bridgeLiftsInternals = true;
     /** One entry per rack of the bridge's pool: occupancy bits (cell k = bit k) and decay kW of each cell. */
     public java.util.List<BridgeRack> bridgeRacks = new java.util.ArrayList<>();
 
@@ -252,6 +254,7 @@ public class RefuellingMenu extends BwrMenu {
         buf.writeUtf(bridge.carriedSummary());
         buf.writeVarInt(reactor.internalsOutMask());
         buf.writeVarInt(bridge.carriedInternal() == null ? -1 : bridge.carriedInternal().ordinal());
+        buf.writeBoolean(GameplayConfig.bridgeLiftsInternals());
         Component halt = site.ok() ? bridge.haltMessage() : site.problem;
         buf.writeUtf(halt == null ? "" : BwrText.english(halt));
         buf.writeUtf(bridge.chute().state().name());
@@ -319,6 +322,7 @@ public class RefuellingMenu extends BwrMenu {
         bridgeCarried = buf.readUtf();
         bridgeInternalsOut = buf.readVarInt();
         bridgeCarriedInternal = buf.readVarInt();
+        bridgeLiftsInternals = buf.readBoolean();
         bridgeMessage = buf.readUtf();
         bridgeChute = buf.readUtf();
         bridgeCavityWaterM = buf.readDouble();

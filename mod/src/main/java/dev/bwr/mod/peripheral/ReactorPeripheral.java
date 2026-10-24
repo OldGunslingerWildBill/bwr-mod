@@ -1216,6 +1216,28 @@ public class ReactorPeripheral implements IPeripheral {
      * {@code separatorAt} ({x, y, z}: the equipment pad, or the bridge console holding it) while out; {@code operable} (both in;
      * the head cannot go on otherwise); {@code summary} (English, as the INFO tab).
      */
+    /**
+     * The vessel head and its closure studs. {@code headOn}; {@code studTotal} (74 on the reference vessel), {@code studsTensioned} (at load) and
+     * {@code studsDetensioned} (nuts off); {@code sealed} (head on and every stud at load: the only state that holds pressure); {@code liftable} (head on,
+     * every nut off and the pressure low enough); {@code headAt} ({x, y, z}: the crane console or the head stand holding it while it is off; absent when it
+     * is laid down or on); {@code summary} (English, as the INFO tab). The head is lifted by the reactor building crane and the studs by a stud tensioner.
+     */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> getHead() throws LuaException {
+        core();
+        Map<String, Object> out = new HashMap<>();
+        out.put("headOn", be.vesselState() != dev.bwr.mod.reactor.VesselState.REFUELING);
+        out.put("studTotal", be.studTotal());
+        out.put("studsTensioned", be.studsTensioned());
+        out.put("studsDetensioned", be.studsOff());
+        out.put("sealed", be.headSealed());
+        out.put("liftable", be.headLiftBlocked() == null);
+        var at = be.headLocation();
+        if (at != null) out.put("headAt", Map.of("x", at.getX(), "y", at.getY(), "z", at.getZ()));
+        out.put("summary", dev.bwr.mod.text.BwrText.english(be.headSummary()));
+        return out;
+    }
+
     @LuaFunction(mainThread = true)
     public final Map<String, Object> getInternals() throws LuaException {
         core();

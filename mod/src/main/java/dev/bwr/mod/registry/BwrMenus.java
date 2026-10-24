@@ -61,6 +61,13 @@ public final class BwrMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.SpentFuelPoolMenu>> SPENT_FUEL_POOL =
             MENUS.register("spent_fuel_pool", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.SpentFuelPoolMenu::new));
 
+    /** The reactor building crane's pendant: the crane's state, the head, the dryer and the separators, and the lifts. */
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.CraneMenu>> BUILDING_CRANE =
+            MENUS.register("building_crane", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.CraneMenu::new));
+    /** The stud tensioner: the closure studs at load, the tool, the pack's power, and detension, retension and stop. */
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.StudTensionerMenu>> STUD_TENSIONER =
+            MENUS.register("stud_tensioner", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.StudTensionerMenu::new));
+
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.PumpControlMenu>> PUMP_CONTROL =
             MENUS.register("pump_control", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.PumpControlMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.TerryTurbineMenu>> TERRY_TURBINE =

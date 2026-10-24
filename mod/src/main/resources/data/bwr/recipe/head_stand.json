@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "G": {
+      "item": "minecraft:gray_concrete"
+    }
+  },
+  "pattern": [
+    "GGG",
+    "I I",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:head_stand"
+  }
+}
