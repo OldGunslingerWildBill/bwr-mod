@@ -57,18 +57,23 @@ public final class HeadMissileTests {
         final double ax, az;
 
         Site(GameTestHelper h, BlockPos min) throws Exception {
+            this(h, min, H);
+        }
+
+        /** A fixture vessel of this interior height: the steam space (and so the head's energy) follows the build. */
+        Site(GameTestHelper h, BlockPos min, int height) throws Exception {
             this.level = h.getLevel();
             this.min = min;
             this.lo = min.offset(-14, -14, -14);
-            this.hi = min.offset(W + 14, H + 50, D + 14);
+            this.hi = min.offset(W + 14, height + 50, D + 14);
             load(lo, hi);
             for (BlockPos p : BlockPos.betweenClosed(lo, hi)) level.setBlock(p, Blocks.AIR.defaultBlockState(), 2);
             BlockPos floorLo = min.offset(-44, -13, -44), floorHi = min.offset(W + 44, -9, D + 44);
             load(floorLo, floorHi);
             for (BlockPos p : BlockPos.betweenClosed(floorLo, floorHi)) level.setBlock(p, Blocks.STONE.defaultBlockState(), 2);
-            reactor = CompactCoreRegressionTests.build(level, min, W, D, H, false);
+            reactor = CompactCoreRegressionTests.build(level, min, W, D, height, false);
             h.assertTrue(reactor.isFormed(), "fixture reactor did not form: " + reactor.statusLines());
-            top = min.getY() + H + 1; // the first row above the shell
+            top = min.getY() + height + 1; // the first row above the shell
             ax = min.getX() + W / 2.0;
             az = min.getZ() + D / 2.0;
         }
@@ -293,8 +298,12 @@ public final class HeadMissileTests {
      * fewer of it (or, if one row holds it, by one row of the next weaker tier).
      */
     private static void tierHolds(GameTestHelper h, Block tier, double resistance, Block weaker, BlockPos heldAt, BlockPos looseAt) throws Exception {
-        var held = new Site(h, heldAt);
-        var loose = new Site(h, looseAt);
+        tierHolds(h, tier, resistance, weaker, heldAt, looseAt, H);
+    }
+
+    private static void tierHolds(GameTestHelper h, Block tier, double resistance, Block weaker, BlockPos heldAt, BlockPos looseAt, int height) throws Exception {
+        var held = new Site(h, heldAt, height);
+        var loose = new Site(h, looseAt, height);
         double rating = 5.8 * Math.sqrt(resistance);
         h.assertTrue(Math.abs(ContainmentStrength.contribution(held.level, held.min, tier.defaultBlockState()) - rating) < TIER_RATING_TOLERANCE_PSI,
                 "the tier is not rated 5.8 * sqrt(" + resistance + ") = " + rating + " psi: "
@@ -340,10 +349,17 @@ public final class HeadMissileTests {
                 new BlockPos(715_200, 190, 700_000), new BlockPos(715_600, 190, 700_000));
     }
 
+    /**
+     * The steam space of the fixture follows its build now, so the 9 x 9 x 12 fixture's head carries less than it did (180 MJ at
+     * 1,400 psig, not 250) and the heavily reinforced tier alone holds it. The ultra tier's test needs a failure that still
+     * separates it from the tier below: a taller vessel, with a bigger dome and so a bigger failure.
+     */
+    private static final int ULTRA_FIXTURE_HEIGHT = 16;
+
     @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "headmissile", timeoutTicks = 900)
     public static void ultraReinforcedShieldPlugConcreteHoldsTheHeadInOneRow(GameTestHelper h) throws Exception {
         tierHolds(h, BwrBlocks.ULTRA_REINFORCED_SHIELD_PLUG_CONCRETE.get(), 7200.0, BwrBlocks.HEAVILY_REINFORCED_SHIELD_PLUG_CONCRETE.get(),
-                new BlockPos(716_000, 190, 700_000), new BlockPos(716_400, 190, 700_000));
+                new BlockPos(716_000, 190, 700_000), new BlockPos(716_400, 190, 700_000), ULTRA_FIXTURE_HEIGHT);
     }
 
     @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "headmissile", timeoutTicks = 200)

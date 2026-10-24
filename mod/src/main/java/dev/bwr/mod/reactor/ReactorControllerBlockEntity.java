@@ -719,6 +719,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             if (core != null) core.discardPendingNodalRefresh();
             core = new ReactorCore(config, new dev.bwr.core.fuel.CoreLoading(found.latticeWidth()));
             core.setNodalRefresh(NODAL_REFRESH);
+            // The steam space of the build is the dome the pressure responds to, the blowdown fills and the head missile is thrown by.
+            core.setDomeFollowsBuild(true);
             core.seedRodColletFailures(getBlockPos().asLong() ^ 0x43ad3672b16f0e95L);
             // Before the fill and before any restore: the height of the vessel sets its water inventory, and a saved level is
             // restored (to the last bit) against the inventory it is read in. The save holds the level, not the mass, so

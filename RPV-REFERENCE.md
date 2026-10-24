@@ -86,13 +86,12 @@ envelope floor for the **17x17x28** reference: footprint 17, `e.height()` 27, pl
 | Core spray | 2 lines split into 4 half-rings, LPCS and HPCS at different heights, inside the upper shroud | §3.9.5.1.9 | rings at 0.40 W, inside the upper shroud | ring radius unchanged (CoreSpargerGeometry) |
 | Jet pumps | 20, two per riser; throat 6.4 in, diffuser 19 in; inlet near 2/3 core height | T 5.4-2, NRC Issue 12 | 10 risers x 2 at r 0.4115 W, 1.72 to 2 + 0.72 x core height | same placement rule as VesselJetGeometry |
 
-The vertical scale above the core, s_up = (top − TAF) / (875 − 363) in, is 0.031 block/in at 17x17x28. That is
-half the horizontal scale (0.061), because the game vessel is twice as squat as a real one (H/D 1.7 against 3.5).
-Every part above the core is compressed by the same factor, so the relative order and spacing stay real. A
-23x23x40 envelope gets 0.056, close to true proportions.
-
-Correction (vessel height physics): the code's `sUp` is `(flangeFace - coreTop) / 392 in`, 0.033 at 17x17x28, and it reaches `sH` (true scale) at
-17x17x39, not 43. See [VESSEL-HEIGHT.md](VESSEL-HEIGHT.md).
+The vertical scale above the core, s_up = (flange face − core top) / (755 − 363) in (`VesselProfile.sUp`, capped at the horizontal scale), is
+0.033 block/in at 17x17x28 (a 27 high envelope), 0.54 of the horizontal scale (0.061), because the game vessel is squatter than a
+real one (H/D 1.7 against 3.5). Every part above the core is compressed by the same factor, so the relative order and spacing stay real.
+**The drawn vessel reaches true proportions (s_up = the horizontal scale) at 17x17x39**, a 38 high envelope; an earlier version of this
+note said about 43, and 0.031 and 0.056 for 17x17x28 and 23x23x40 (the latter is 0.74 of true scale). Above 39 the standpipes lengthen and
+nothing else changes. See [VESSEL-HEIGHT.md](VESSEL-HEIGHT.md), where this sets the steam moisture, the chimney and the water inventory.
 
 ## 3. What is wrong with the current model (alpha.52)
 

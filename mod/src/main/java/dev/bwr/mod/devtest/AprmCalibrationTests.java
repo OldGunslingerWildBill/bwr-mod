@@ -129,7 +129,11 @@ public final class AprmCalibrationTests {
                 SignalProvider p = SignalProviders.of(run.be);
                 double hb = read(p, "heat_balance_percent");
                 h.assertTrue(read(p, "aprm_3_heat_balance_error") < -0.2 * hb, "APRM 3 should read well low, error " + read(p, "aprm_3_heat_balance_error"));
-                h.assertTrue(read(p, "aprm_5_heat_balance_error") > 0.2 * hb, "APRM 5 should read well high, error " + read(p, "aprm_5_heat_balance_error"));
+                // Re-baselined (vessel height physics): the margin follows the plant's actual power. It was "error > 0.2 x heat balance",
+                // which only holds when the fixture's natural-circulation power is high enough (21.4 % then, 15.4 % now: 3.014 against
+                // 3.108). The gain adds 45 % of what the channel read at baseline, so the error must have risen from its baseline
+                // value by at least half of that.
+                h.assertTrue(read(p, "aprm_5_heat_balance_error") > (baseline[4] - hb) + 0.5 * 0.45 * baseline[4], "APRM 5 should read well high, error " + read(p, "aprm_5_heat_balance_error"));
                 // The procedure, by hand: new gain = gain * heat balance / indicated.
                 double gain = read(p, "aprm_3_gain") * hb / read(p, "aprm_3_percent");
                 h.assertTrue(p.command("aprm_3_gain", gain), "computed calibration " + gain + " refused");
@@ -142,7 +146,7 @@ public final class AprmCalibrationTests {
                 double error = read(p, "aprm_3_heat_balance_error");
                 h.assertTrue(Math.abs(error) < 0.5, "recalibrated APRM 3 still " + error + " points from the heat balance");
                 // Nothing recalibrated the other miscalibrated channel; the untouched ones did not move.
-                h.assertTrue(read(p, "aprm_5_heat_balance_error") > 0.2 * hb, "APRM 5 was recalibrated by something other than the player");
+                h.assertTrue(read(p, "aprm_5_heat_balance_error") > (baseline[4] - hb) + 0.5 * 0.45 * baseline[4], "APRM 5 was recalibrated by something other than the player");
                 h.assertTrue(read(p, "aprm_5_gain") == 1.45, "APRM 5 gain changed without a command");
                 for (int n : new int[]{1, 2, 4, 6}) {
                     h.assertTrue(read(p, "aprm_" + n + "_gain") == 1.0, "APRM " + n + " gain changed");

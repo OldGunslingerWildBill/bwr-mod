@@ -8,7 +8,7 @@ Until this change the height of a built vessel changed how many jets and pumps i
 of the volume) and what it looked like, and nothing else. In particular the physics did **not** see the vessel's size at all:
 `CoreConfig.steamDomeVolumeM3` (180 m3) and `coolantMassKg` (220 t) were never set from the build, so a 20 high and a 60 high
 vessel had the same dome and the same water, natural circulation was `0.366 P^(1/3)` in both, and steam left every vessel
-perfectly dry. Now it matters, in the ways a real vessel's height does (all but the dome, section 6).
+perfectly dry. Now it matters, in the ways a real vessel's height does.
 
 ## 1. Height, in the terms the physics needs
 
@@ -29,7 +29,7 @@ the reference):
 | 43 | 1.000 | 245.4 | 269.0 | 225.1 |
 | 60 | 1.000 | 525.5 | 549.1 | 225.1 |
 
-**True scale for a 17 wide vessel is 39 high, not 43.** The owner's brief said about 43; the v2 geometry reaches
+**True scale for a 17 wide vessel is 39 high, not 43.** The brief's figure of about 43 was an estimate (RPV-REFERENCE.md is corrected); the v2 geometry reaches
 `sUp = sH` at an envelope height of 38 (a 37 high envelope is 0.964 of true scale), because the closure flange stands 3.06
 blocks below the roof and the core takes 9 of the first 11. Real Columbia is 179.5 in from the top of the fuel to the
 separators' inlet (540 - 363 = 177 in plus the mod's 2.5 in) and 200.55 in to the normal level; the 39 high vessel draws exactly
@@ -122,14 +122,12 @@ bit** (`VesselHeightTest.test07`). Carryunder takes head off it as well (section
   **13 %** of the capacity at the reference. The water is the rest. (Test: a 60 / 180 / 400 m3 dome swings 90 / 83 / 72 psi in
   two seconds of full-power steam with no outlet, `test10`.) The mod never set the dome from the build, so in the game every
   vessel has had the same 180 m3.
-- **The dome does not follow the build, on purpose, pending the owner.** `VesselBuild.domeRatio()` and
-  `ReactorCore#setDomeFollowsBuild(true)` do it (96 / 180 / 294 m3 at 20 / 28 / 39 and up, from the steam space between the normal
-  water level and the flange plus two thirds of the head's rise; tested, `test11`) but the controller leaves it off. Turned on it
-  moves the head missile's energy, which reads the vessel's dome (`ReactorBoundaryEffects.headFailureEnergyJ`, clamped 50 to 600
-  m3) and which `HeadMissileTests.ultraReinforcedShieldPlugConcreteHoldsTheHeadInOneRow` was calibrated on at 180 m3 in a small
-  fixture vessel: with the dome at about 55 m3 the heavily reinforced tier holds the head in one row, which that test says it must
-  not ("1 row(s) of block.bwr.heavily_reinforced_shield_plug_concrete held the head"). Existing assertions are not edited; the
-  owner decides whether to move that calibration.
+- **The dome follows the build** (owner decision 2026-10-24; `ReactorCore#setDomeFollowsBuild(true)`, set by the controller on every core it
+  builds). Dome = 180 m3 x (steam space of the build / the reference's): 96 / 180 / 294 m3 at 20 / 28 / 39 and up (test `test11`). It
+  moves the head missile's energy, which reads the vessel's dome (`ReactorBoundaryEffects.headFailureEnergyJ`, clamped 50 to 600 m3):
+  the head-missile tests and the shield-plug layer table in SEVERE-ACCIDENT-UPDATE.md were re-baselined (`HeadMissileTests`: the 9 x 9 x 12
+  fixture now throws 180 MJ at 1,400 psig, not 250, so the ultra tier's test uses a 16 high interior, 249 MJ, where the heavily
+  reinforced tier still needs two rows; the ladder test's lined concrete went from 11 rows to 8).
 - **Water** = 220 t x `(1 + (water column - 109.1 in) / 538 in)`: the stretched or squashed part of the column above the fuel holds
   water, and the level does not move (the level area, the two-phase region and the fill scale together,
   `PressureVessel#rescaleInventory`; the metal heat capacity with them, as more shell). Bounds 0.5 to 3 times. Above true scale
@@ -140,8 +138,8 @@ bit** (`VesselHeightTest.test07`). Carryunder takes head off it as well (section
   reference, 74.9 at 60 (`test12`). It was always proportional to the water in the vessel; it was not tied to the build.
 - **Stored energy**: the blowdown volume (`getOccupiedVolumeM3`, dome plus water) comes from the vessel and now sees the build's
   water (190 GJ of sensible energy in the water at the reference, 345 GJ at 60 high, `test14`); containment pressure follows the
-  blowdown. With the dome held the head missile's energy does not change with height; with it released it would (above). Nothing is
-  scaled twice anywhere.
+  blowdown. The head missile's energy follows the dome, so a taller vessel throws a harder head (215 MJ at 1,025 psig for 23 x 23 x 39 against
+  178 MJ for the 17 x 17 x 27 reference). Nothing is scaled twice anywhere.
 - **Hydrostatic head** at the foot of the core: `rho g H` over the water above the fuel, 6.8 psi at the reference (0.44 K of
   saturation temperature), 18.4 psi at 60 high (1.2 K). Read-out only (INFO "Core foot sat. rise", CC `coreInletSaturationRiseK`): the rated
   subcooling the model reproduces already contains the real column.
@@ -162,11 +160,11 @@ The rated output is the model's own turbine (`PowerTurbine`, 850 kJ/kg x 0.985, 
 1,190 MWe); the point is the relative loss: 0.6 % at the reference, 3.1 % at 20 high.
 
 Other numbers per height: water 192 / 220 / 258 / 285 / 400 t; chimney factor 0.89 / 1.00 / 1.09 / 1.14 / 1.25; steam dome
-if it followed the build 96 / 180 / 294 / 294 / 294 m3 (held at 180 for now, section 6).
+96 / 180 / 294 / 294 / 294 m3.
 
 ## 8. What it does to the 17 x 17 x 28 default
 
-Reactor side: nothing (water, natural circulation, subcooling are the calibrated values). Turbine side: the steam is 0.86 % wet,
+Reactor side: nothing (dome, water, natural circulation, subcooling are the calibrated values). Turbine side: the steam is 0.86 % wet,
 so the rated turbine work is 0.6 % lower and the blades wear about 0.7 % of their life per rated hour (150 hours to failure).
 That is the intended price of the squashed default; a vessel 39 or more high pays nothing.
 

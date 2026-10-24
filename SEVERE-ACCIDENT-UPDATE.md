@@ -302,9 +302,9 @@ A failure at a lower pressure has less stored energy and less force, so a weaker
 | 400 psig | 1.3 GJ | 64 MJ | 38 m/s | 73 blocks |
 | 100 psig | 0.27 GJ | 13 MJ | 17 m/s | 15 blocks |
 
-The stored energy follows the steam dome the core model tracks (bounded to 50 to 600 m3), not the vessel's footprint, while the
-head's mass and the stack's capacity follow the footprint. A small vessel therefore throws a lighter head just as fast, over fewer
-blocks, and needs a thicker stack: an 11 x 11 vessel at the code limit needs 11 rows of lined concrete where the table below
+The stored energy follows the steam dome the core model tracks (bounded to 50 to 600 m3), which follows the vessel's height (VESSEL-HEIGHT.md),
+while the head's mass and the stack's capacity follow the footprint. A small vessel therefore throws a lighter head just as fast, over fewer
+blocks, and needs a thicker stack: an 11 x 11 x 17 vessel at the code limit needs 10 rows of lined concrete where the table below
 gives 5 for the 17 x 17 reference.
 
 **Height.** Free of everything the head would rise `E / (m g)`, which is hundreds of blocks. A flight never climbs
@@ -332,20 +332,24 @@ absorbs 0.25 MJ; obsidian, 200.9 psi, 1.39 MJ); a row absorbs the sum over its b
 So any block can be the stack, including another mod's reinforced concrete through whatever blast resistance it
 reports, and thickness is what matters. Rows (one metre each) that hold the head, for a failure at the rated dome
 pressure (1,025 psig) and at the 1,375 psig code limit, by vessel outside size (square footprints; the stored energy
-follows the steam dome, not the footprint, while the head and the rows follow it, so small vessels need the most):
+follows the steam dome, which follows the height, while the head and the rows follow the footprint, so small vessels need the most):
 
-| Blocks (blast resistance, rating) | 7 x 7 | 11 x 11 | 17 x 17 (ref.) | 23 x 23 |
+| Blocks (blast resistance, rating) | 7 x 7 x 10 | 11 x 11 x 17 | 17 x 17 x 27 (ref.) | 23 x 23 x 39 |
 | --- | --- | --- | --- | --- |
-| *Head mass, launch energy at 1,025 / 1,375 psig* | *15 t, 95 / 128 MJ* | *38 t, 181 / 250 MJ* | *90 t, 181 / 250 MJ* | *165 t, 181 / 250 MJ* |
-| Vanilla concrete (1.8, 7.8 psi) | over 40 / over 40 | 33 / over 40 | 15 / 20 | 8 / 11 |
-| Lined concrete (40, 36.7 psi) | 11 / 14 | 8 / 11 | 4 / 5 | 2 / 3 |
+| *Steam dome; head mass, launch energy at 1,025 / 1,375 psig* | *127 m3; 15 t, 95 / 128 MJ* | *163 m3; 38 t, 165 / 227 MJ* | *180 m3; 90 t, 178 / 245 MJ* | *229 m3; 165 t, 215 / 296 MJ* |
+| Vanilla concrete (1.8, 7.8 psi) | over 40 / over 40 | 30 / over 40 | 14 / 19 | 9 / 13 |
+| Lined concrete (40, 36.7 psi) | 11 / 14 | 7 / 10 | 4 / 5 | 3 / 3 |
 | Obsidian, reinforced deepslate, Immersive Engineering reinforced concrete (about 1,200, 200.9 psi) | 2 / 3 | 2 / 2 | 1 / 1 | 1 / 1 |
 | Shield Plug Concrete (1,800, 246.1 psi) | 2 / 3 | 2 / 2 | 1 / 1 | 1 / 1 |
-| Heavily Reinforced Shield Plug Concrete (3,600, 348.0 psi) | 2 / 2 | 1 / 2 | 1 / 1 | 1 / 1 |
+| Heavily Reinforced Shield Plug Concrete (3,600, 348.0 psi) | 2 / 2 | 1 / 1 | 1 / 1 | 1 / 1 |
 | Ultra-Reinforced Shield Plug Concrete (7,200, 492.1 psi) | 1 / 2 | 1 / 1 | 1 / 1 | 1 / 1 |
 
-(Rows of the minimum that hold; the first figure is at 1,025 psig, the second at 1,375. Dome 185 m3 as in the core model's
-default. `HeadMissileTests` logs the same ladder for the 11 x 11 test vessel at 1,400 psig.)
+(Rows of the minimum that hold; the first figure is at 1,025 psig, the second at 1,375. The vessels are the sizes from RPV-REFERENCE.md, drawn
+to the mod's height rules, so the steam dome follows the build (the vessel height update, VESSEL-HEIGHT.md): 127 m3 at the smallest, the calibrated
+180 m3 at the 17 x 17 x 27 envelope (28 as the player counts it), 229 m3 at the largest. Before it every size had the core's 185 m3, and the 11 x 11
+column read 181 / 250 MJ and 8 / 11 rows of lined concrete. `HeadMissileTests` logs the same ladder for its 9 x 9 x 12 test vessel at 1,400 psig, where the
+dome is the 127 m3 or less of a 14 high envelope and the launch is 180 MJ; the ultra tier's test uses a 16 high interior (249 MJ) so that it still holds the
+head in one row where the heavily reinforced tier does not.)
 
 A head that is stopped within a row of the vessel top (a strong plug directly on the vessel) stays **lodged** under
 it, tilted a few degrees. One stopped higher rises that far and comes back down onto the flange it left, tilted and

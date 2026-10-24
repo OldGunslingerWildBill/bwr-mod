@@ -115,7 +115,8 @@ public final class VesselHeightTests {
             h.assertTrue(rc.getPressureVessel().getInventoryScale() == 1.0, "reference water is the calibrated inventory");
             VesselBuild b43 = tc.getVesselBuild();
             near(h, BUILDS[3][1], b43.separatorRatio(), 1e-8, "tall separator scale");
-            near(h, 180.0, tc.getPressureVessel().getSteamDomeVolumeM3(), 1e-12, "the dome stays the calibrated 180 m3 (the head missile is calibrated on it)");
+            near(h, 180.0, rc.getPressureVessel().getSteamDomeVolumeM3(), 1e-12, "the reference dome is the calibrated 180 m3");
+            near(h, 180.0 * b43.domeRatio(), tc.getPressureVessel().getSteamDomeVolumeM3(), 1e-9, "the tall dome follows the build");
             near(h, b43.waterMassFactor(), tc.getPressureVessel().getInventoryScale(), 1e-12, "tall water");
             h.assertTrue(tc.getPressureVessel().getInventoryScale() > 1.25, "43 high holds well over a quarter more water");
             // Same level, more water.
