@@ -13,12 +13,13 @@ public final class VesselDriveGeometry {
     private VesselDriveGeometry(){}
     public static List<Mount> layout(VesselAppearance.Envelope e,VesselCoreAppearance core) {
         var grid=ReactorCoreGeometry.layout(e,core);
+        var profile=VesselProfile.of(e,core.internalPumps());
         float scale=Math.min(.9f,Math.min(grid.pitchX(),grid.pitchZ())*1.65f);
         List<Mount> mounts=new ArrayList<>();
         for(var drive:core.drives()) {
             double x=ReactorCoreGeometry.driveX(e,core,grid,drive),z=ReactorCoreGeometry.driveZ(e,core,grid,drive);
             double radial=x*x/Math.pow(.46*e.width(),2)+z*z/Math.pow(.46*e.depth(),2);
-            double head=1.2-1.02*Math.sqrt(Math.max(0,1-radial));
+            double head=profile.bottomOuterY(Math.sqrt(Math.min(1,radial)));
             mounts.add(new Mount(x,z,scale,head+.10));
         }
         return List.copyOf(mounts);

@@ -190,6 +190,19 @@ public final class RefuellingBridgeRenderer implements BlockEntityRenderer<Refue
         }
         pose.popPose();
 
+        // the steam dryer or the separator assembly hangs from the hoist by its lifting eyes, drawn as it was in its vessel
+        var internal = be.carriedInternal();
+        var vessel = be.carriedProfile();
+        if (internal != null && vessel != null) {
+            double lift = internal == dev.bwr.mod.reactor.VesselInternal.DRYER ? vessel.dryerLift() : vessel.separatorLift();
+            pose.pushPose();
+            pose.translate(tip.x(), tip.y() - lift, tip.z());
+            int lit = LevelRenderer.getLightColor(level, BlockPos.containing(tip.x(), tip.y() - 1, tip.z()));
+            if (internal == dev.bwr.mod.reactor.VesselInternal.DRYER) dev.bwr.mod.reactor.client.ReactorVesselRenderer.drawDryer(vessel, pose, buffers, lit, overlay);
+            else dev.bwr.mod.reactor.client.ReactorVesselRenderer.drawSeparators(vessel, pose, buffers, lit, overlay);
+            pose.popPose();
+        }
+
         // hot fuel under water glows blue (the reactor's own Cherenkov strength, from the decay heat), until it is lifted out
         if (!be.carried().isEmpty() && be.glow() > 0 && tip.y() < be.surfaceSeen()) {
             TextureAtlasSprite fuel = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(FUEL);
@@ -267,7 +280,7 @@ public final class RefuellingBridgeRenderer implements BlockEntityRenderer<Refue
         if (phase == Phase.RELEASE) {
             return open * be.progress();
         }
-        return be.carried().isEmpty() ? open : 0.0;
+        return be.holding() ? 0.0 : open;
     }
 
     /** The mast carries its own work lights: never darker than a lit room, so it can be seen inside a closed vessel. */

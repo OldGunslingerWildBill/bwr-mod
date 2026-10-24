@@ -27,11 +27,17 @@ import java.util.*;
 /** One renderer per reactor. Blender pieces scale to the existing construction envelope. */
 @EventBusSubscriber(modid=BwrMod.MOD_ID,value=Dist.CLIENT)
 public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorControllerBlockEntity> {
-    public static final String[] PARTS={"barrel","bottom","flange","head","weld","stud","spool","collar","steam_nozzle","water_nozzle","controller_panel","failed_head"};
+    /** Every vessel part: the RVU port ends and panel, and the v2 vessel's unit parts. */
+    public static final String[] PARTS=java.util.stream.Stream.concat(java.util.stream.Stream.of("spool","steam_nozzle","water_nozzle","controller_panel"),
+            java.util.Arrays.stream(VesselModel.PARTS)).toArray(String[]::new);
     private static final ModelProperty<Boolean> HIDDEN=new ModelProperty<>();
     private record Shape(VesselAppearance.Envelope envelope,boolean closed,boolean failed){}
     private record CoreShape(int width,int depth,int height,VesselCoreAppearance core){}
     private record JetShape(VesselAppearance.Envelope envelope,boolean internalPumps){}
+    /** The v2 internals' three meshes: the fixed ones, the separator assembly and the dryer (size and variant only). */
+    public record InternalsShape(int width,int depth,int height,boolean internalPumps){}
+    public record SeparatorShape(int width,int depth,int height,boolean internalPumps){}
+    public record DryerShape(int width,int depth,int height,boolean internalPumps){}
     private record DriveShape(int width,int depth,int height,int version,int latticeWidth,
                               List<VesselCoreAppearance.Drive> drives,boolean internalPumps){}
     public static ModelResourceLocation model(String part) {
@@ -83,6 +89,10 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
         boolean interiorVisible=!closed||getRenderBoundingBox(be).contains(camera);
         if(core!=null&&interiorVisible) {
             MachineMeshCache.draw(new CoreShape(e.width(),e.depth(),e.height(),core),b->ReactorCoreGeometry.build(b,e,core),pose,buffers,light,overlay);
+            var profile=VesselProfile.of(e,core.internalPumps());
+            MachineMeshCache.draw(new InternalsShape(e.width(),e.depth(),e.height(),core.internalPumps()),b->VesselInternalsModel.buildFixed(b,profile),pose,buffers,light,overlay);
+            if(be.clientSeparatorInstalled())drawSeparators(profile,pose,buffers,light,overlay);
+            if(be.clientDryerInstalled())drawDryer(profile,pose,buffers,light,overlay);
             MachineMeshCache.draw(new JetShape(e,core.internalPumps()),b->VesselJetGeometry.build(b,e,core),pose,buffers,light,overlay);
             var layout=ReactorCoreGeometry.layout(e,core);
             for(int i=0;i<core.drives().size();i++) {
@@ -120,67 +130,18 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
     }
     private static void build(MachineMeshCache.Builder b,VesselAppearance.Envelope e,boolean closed,boolean failed){
         CoreSpargerGeometry.build(b,e);
-        var pose=b.pose;
-        float w=e.width(),d=e.depth(),h=e.height();
-        float headHeight=Math.min(h*.22f,Math.min(w,d)*.18f);
-        float flangeY=h-headHeight-.40f;
-        double cx=e.min().getX()+w/2,cz=e.min().getZ()+d/2;
-        b.part(model("bottom"),0,0,0,w,1,d);
-        // Positive overlap at both joints prevents sub-pixel cracks at every size.
-        b.part(model("barrel"),0,1.16,0,w,flangeY-1.10f,d);
-        b.part(model("flange"),0,flangeY,0,w,1,d);
+        VesselModel.buildShell(b,e,closed,failed);
         CavitySealGeometry.build(b,e);
-        if(failed)b.part(model("failed_head"),0,flangeY,0,w,headHeight/1.65f,d);
-        if(closed) {
-            b.part(model("head"),0,h-headHeight,0,w,headHeight/1.65f,d);
-            int studs=Math.min(80,Math.max(24,Math.round((w+d)*2)));
-            for(int i=0;i<studs;i++) {double a=i*Math.PI*2/studs;
-                b.part(model("stud"),.472*w*Math.cos(a),flangeY,.472*d*Math.sin(a),1,1,1);
-            }
-        }
-        for(double y=4;y<flangeY-.5;y+=4)b.part(model("weld"),0,y,0,w,1,d);
-        // Adapt the curved barrel to actual player-selected wall blocks. Interfaces stay put.
-        for(var port:e.ports()) {
-            double x=port.getX()+.5-cx,z=port.getZ()+.5-cz,y=port.getY()+.5-e.min().getY();
-            Direction face=e.face(port);
-            double radiusX=.46*w,radiusZ=.46*d;
-            double startX=x,startY=y,startZ=z;
-            double r=Math.sqrt(x*x/(radiusX*radiusX)+z*z/(radiusZ*radiusZ));
-            if(face.getAxis().isHorizontal()) {
-                // Include the dished heads and off-centre/corner ports. Project
-                // radially onto the ellipse, then angle the Blender spool to the interface.
-                double section=y<1.2?Math.sqrt(Math.max(.04,1-Math.pow((1.2-y)/1.02,2)))
-                        :y>h-headHeight?Math.sqrt(Math.max(.04,1-Math.pow((y-(h-headHeight))/headHeight,2))):1;
-                startX=x*section*.98/Math.max(.01,r);startZ=z*section*.98/Math.max(.01,r);
-            } else {
-                double scale=Math.min(1,.94/Math.max(.01,r));startX*=scale;startZ*=scale;r*=scale;
-                startY=face==Direction.UP?h-headHeight+headHeight*Math.sqrt(1-r*r)-.08
-                        :1.2-1.02*Math.sqrt(1-r*r)+.08;
-            }
-            var kind=e.kind(port);
-            boolean integrated=kind!=VesselAppearance.PortKind.LEGACY;
-            boolean panel=kind==VesselAppearance.PortKind.CONTROLLER;
-            double tip=integrated?(panel?.30:.50):-.45;
-            double endX=x+face.getStepX()*tip,endY=y+face.getStepY()*tip,endZ=z+face.getStepZ()*tip;
-            double neck=integrated?(panel?.14:.60):0;
-            var vector=new org.joml.Vector3f((float)(endX-face.getStepX()*neck-startX),
-                    (float)(endY-face.getStepY()*neck-startY),(float)(endZ-face.getStepZ()*neck-startZ));
-            float length=vector.length();
-            if(length>.02) {
-                pose.pushPose();pose.translate(startX,startY,startZ);
-                pose.mulPose(new org.joml.Quaternionf().rotationTo(new org.joml.Vector3f(0,0,1),vector.normalize()));
-                b.part(model("spool"),0,0,0,1,1,length);
-                b.part(model("collar"),0,0,.04,1,1,1);
-                pose.popPose();
-            }
-            if(integrated) {
-                pose.pushPose();pose.translate(endX,endY,endZ);
-                pose.mulPose(new org.joml.Quaternionf().rotationTo(new org.joml.Vector3f(0,0,1),
-                        new org.joml.Vector3f(face.getStepX(),face.getStepY(),face.getStepZ())));
-                b.part(model(panel?"controller_panel":kind==VesselAppearance.PortKind.WATER?"water_nozzle":"steam_nozzle"),0,0,0,1,1,1);
-                pose.popPose();
-            }
-        }
+        // Adapt the curved shell to the player's own wall blocks. Interfaces stay put.
+        VesselModel.buildPorts(b,e);
+    }
+    /** The separator assembly (shroud head, standpipes, separators) at its place in a vessel of this profile. Also drawn on the hoist and on a pad. */
+    public static void drawSeparators(VesselProfile p,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
+        MachineMeshCache.draw(new SeparatorShape(p.width,p.depth,p.height,p.internalPumps),b->VesselInternalsModel.buildSeparators(b,p),pose,buffers,light,overlay);
+    }
+    /** The steam dryer at its place in a vessel of this profile. Also drawn on the hoist and on a pad. */
+    public static void drawDryer(VesselProfile p,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
+        MachineMeshCache.draw(new DryerShape(p.width,p.depth,p.height,p.internalPumps),b->VesselInternalsModel.buildDryer(b,p),pose,buffers,light,overlay);
     }
     @Override public AABB getRenderBoundingBox(ReactorControllerBlockEntity be) {
         var e=be.clientVesselEnvelope();return e==null?new AABB(be.getBlockPos()):new AABB(Vec3.atLowerCornerOf(e.min().below()),Vec3.atLowerCornerOf(e.max().offset(1,1,1)));

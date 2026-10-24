@@ -259,6 +259,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.TRANSFER_CANAL);
     public static final DeferredItem<BlockItem> CANAL_GATE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CANAL_GATE);
+    public static final DeferredItem<BlockItem> EQUIPMENT_PAD =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.EQUIPMENT_PAD);
     public static final DeferredItem<BlockItem> REFUELLING_BRIDGE_CONSOLE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.REFUELLING_BRIDGE_CONSOLE);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_CONTROLLER =
@@ -495,6 +497,7 @@ public final class BwrItems {
                         output.accept(TRANSFER_CANAL.get());
                         output.accept(CANAL_GATE.get());
                         output.accept(REFUELLING_BRIDGE_CONSOLE.get());
+                        output.accept(EQUIPMENT_PAD.get());
                         output.accept(SUPPRESSION_POOL_CONTROLLER.get());
                         output.accept(SUPPRESSION_POOL_WALL.get());
                         output.accept(SUPPRESSION_POOL_SUCTION.get());

@@ -1,10 +1,17 @@
 # Pressure vessel appearance
 
-A formed reactor displays a Blender-built steel pressure vessel with a curved
-barrel, dished lower head, support skirt, circumferential welds, bolted flange
-and removable domed head. Its dimensions follow the existing reactor envelope:
-7–23 blocks across, including rectangular builds. A rectangular footprint gives
-an elliptical barrel. This is game artwork, not a manufacturer CAD model.
+A formed reactor displays a model of a BWR/5 pressure vessel (v2, alpha.53), drawn from the Columbia FSAR and other public
+sources ([RPV-REFERENCE.md](RPV-REFERENCE.md)):
+- **Outside:** a support skirt with its base ring and anchor nuts, a dished bottom head, and the cylinder with Columbia's course
+  seams. Then the closure flange with its studs and nuts, the top head with its crown nozzles (head spray, vent, spare) and four
+  lifting lugs, a forging and stainless safe end on every port you build, and small instrument nozzles.
+- **Inside, drawn only when the inside can be seen:** the core shroud stepping out to the upper shroud at the top guide, the
+  shroud support plate, core plate and top-guide rim, six feedwater spargers, the core-spray lines, LPCI couplings, guide rods,
+  the shroud head with up to 225 steam separators, and the steam dryer.
+
+The dryer and the separator assembly lift out with the refuelling bridge ([REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#the-steam-dryer-and-the-separator-assembly-alpha53)).
+Its dimensions follow the existing reactor envelope: 7 to 23 blocks across, including rectangular builds; a rectangular footprint
+gives elliptical sections. This is game artwork drawn to real proportions, not a manufacturer CAD model.
 
 ## Building and connecting
 
@@ -26,17 +33,25 @@ install new visible fuel models or change the refuelling controls.
 
 ## Rendering and source
 
-- Editable Blender source: `art/models/reactor_vessel/reactor_vessel.blend`.
-- Reproducible Blender script: `art/models/reactor_vessel/build_models.py`.
-- Export: `python tools-export-reactor-vessel.py`; verify with `--check`.
-- One controller renderer draws the assembly. Shell blocks gain no block
-  entities or tickers. A client appearance index hides the cube models only
-  while their assembled controller is present.
-- Shape and port data are synchronized on the existing controller channel.
-  Changed geometry rebuilds affected render sections; routine readout packets
-  do not rebuild them. Resource reload clears cached component meshes.
-- Chunk arrival and live update packets use the same client-state handler.
-  Controller unload/removal clears the appearance entry.
+- Unit parts: `art/models/reactor_vessel_v2/build_parts.py` (headless Blender), exported by `python tools-export-reactor-vessel.py`
+  (`--check` verifies them); `python tools-check-vessel-geometry.py` checks that every part is a closed, outward-facing solid and
+  that the shell joints overlap at every size. The approved concept and its renders are `art/models/reactor_vessel_v2/build_concept.py`
+  and `concept/`.
+- **One shape:** `VesselProfile` works out the heads, flange, internals' elevations and the water's inner wall for every
+  envelope. The renderer, the CRD necks, the water surface, the port spools, the failed head's steam and the thrown head all read it.
+- **What it keeps on purpose:** the dome height of the head (the thrown head, the open-head cells and the flange lip `rim` that
+  the cavity seal and the well use hang on it), the shell radii, the core, the jet pumps' seat and the spray rings' construction rows.
+- **Studs:** the real pitch, 74 at every size. They stay in the flange with the head off, as at a real plant; the nuts and
+  washers go with the head.
+- **Drawing:** one controller renderer draws the assembly from cached meshes (`MachineMeshCache`). The outside is one mesh. The
+  internals are three: the fixed internals, the separator assembly and the dryer, so lifting one rebuilds nothing else. Shell
+  blocks gain no block entities or tickers. A client appearance index hides the cube models only while their assembled
+  controller is present.
+- **Visible water:** true to the drawn internals' scale up to +30 in (the operating level sits on the separators and the dryer
+  skirt dips into it). The physics keeps the lip at +60 in (`PressureVessel.FLANGE_LEVEL_IN`), so +30 to +60 in is stretched up
+  to the lip.
+- **Sync:** shape and port data are synchronized on the existing controller channel. Changed geometry rebuilds affected render
+  sections; routine readout packets do not rebuild them. Resource reload clears cached component meshes.
 
 ## Pipe updates
 

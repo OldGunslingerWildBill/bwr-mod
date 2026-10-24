@@ -44,7 +44,7 @@ final class VesselGpuVisuals {
         if (!available(VisualEffectsMode.Effect.WATER, buffers)) return false;
         double level = be.clientWaterLevelIn(partial);
         double y = VesselWaterGeometry.height(e, level);
-        double radius = VesselWaterGeometry.radiusFraction(y);
+        double radius = VesselWaterGeometry.radiusFraction(e, y);
         long tick = be.getLevel() == null ? 0 : be.getLevel().getGameTime();
         Sample old = LEVELS.get(be);
         double falling = old == null ? 0 : old.tick == tick ? old.falling

@@ -233,3 +233,92 @@ Parts that must keep working:
   the head missile).
 - GameTests with and without CC.
 - Save compatibility, if the removable-assembly state is added.
+
+## 6. Phase 2: the model in the game (alpha.53)
+
+### Owner decisions
+
+These came from the owner on 2026-10-23:
+- Build the look as rendered.
+- Draw only real ports plus the small nozzles nothing connects to.
+- Water line option (b): a visual stretch only. `FLANGE_LEVEL_IN` and the physics are unchanged.
+- Make the dryer and the separators removable.
+
+### Where the game differs from the concept, and why
+
+- **Head rise.** The concept's head rose 0.25 D at 17 x 17 x 28. In the game it keeps the old dome height,
+  `min(0.22 H, 0.18 W)` (0.196 D). The thrown head's size, the head access cells (`VesselHeadAccess`) and the flange lip `rim`
+  hang on it, and the lip is the cavity seal's row and the well's start. Moving it would move existing players' seal rows. The
+  drawn flange face is therefore the old head base, and the internals above the core are scaled to fit between the fuel top and
+  that flange (`VesselProfile`).
+- **Wall.** The wall stays 0.012 of the width (the real wall is 5.4 % of the radius), so the jet-pump and spray-ring fits stay
+  valid.
+- **Bottom head.** It is as deep as the jet-pump seat allows: an ellipsoid of about 0.13 D at 17 wide, hemispherical at 7 wide.
+- **Studs.** Their positions follow the real pitch (74). They are drawn with the head off; the nuts and washers go with the head.
+
+### What changed in the code
+
+**`VesselProfile`** (new) is the one shape. The five places that hard-coded the old dish now read it:
+- the port projection;
+- `VesselDriveGeometry`'s CRD necks;
+- `VesselWaterGeometry`, through a new `radiusFraction(e, y)` (the old one-argument method is kept for its callers);
+- `VesselAccidentEffects`' steam from a failed head;
+- `VesselInternalsGeometry.spargerHeight`. The rings are now drawn inside the upper shroud; the construction rows are unchanged.
+
+**Parts.** The unit parts come from `art/models/reactor_vessel_v2/build_parts.py` and are placed by:
+- `VesselModel`: the outside, the shared head and the ports;
+- `VesselInternalsModel`: the fixed internals, the separators and the dryer.
+
+The old `barrel`, `bottom`, `flange`, `head`, `weld`, `stud`, `collar` and `failed_head` models are gone. The failed head is
+rebuilt on the new dome: torn rim, peeled segment, sheared studs.
+
+**Thrown head.** `ReactorHeadRenderer` draws the thrown head with `VesselModel.buildHead`: the same flange, dome, crown nozzles,
+lugs and nuts, at the entity's saved width, depth and dome height.
+
+**Variants.** The jet-pump vessel's old `shroud` is replaced by the v2 shroud. The internal-pump (ABWR) vessel keeps
+`abwr_shroud`, and the v2 upper shroud, shroud head, separators and dryer carry on above it at its radius.
+
+**Water (option b).** The surface is true to the drawn scale up to +30 in. +30 to +60 in is stretched to the lip; overfill stays
+at the lip, and the well is unchanged. `levelAtHeight` is the exact inverse.
+
+### Removable dryer and separators: the rules chosen
+
+- **Lifting.** The refuelling bridge does it (no new hoist: it is the smaller change).
+- **Storage.** An Equipment Storage Pad block on the floor of a player-built pit of vanilla water is the dryer/separator storage
+  pool. A pool multiblock would have been more work for no extra realism here.
+- **Consequences.**
+  - Fuel moves are refused while either assembly is in.
+  - The head cannot go back on while either is out, so the vessel cannot hold pressure.
+  - The INFO tab and `getInternals()` say "Not operable".
+  - Control rods are not interlocked. Real plants do refuelling criticality checks with the internals out.
+- **Doses.** Dryer 0.2 W and separator assembly 10 W of equivalent gamma (game-scale estimates).
+
+### In-game pictures (1920 x 1080, `art/rpv-remodel/`)
+
+From `-PbwrRpvRemodelCheck`:
+1. the 17 x 17 x 28 vessel outside;
+2. head off, looking down on the dryer;
+3. the dryer hanging from the bridge;
+4. the dryer on its pad in the flooded pit;
+5. the separators on the core;
+6. the separators lifted;
+7. the core with both out;
+8. both on their pads;
+9. 7 x 7 x 10;
+10. 23 x 23 x 40;
+11. 15 x 11 x 22;
+12. 23 x 23 x 40 head off;
+13. 7 x 7 x 10 head off.
+
+From the other checks:
+14. the thrown head in flight (`-PbwrAccidentBlastCheck`);
+15. the thrown head landed (`-PbwrAccidentBlastCheck`);
+16. the vessel after the head missile (`-PbwrAccidentBlastCheck`);
+17. the damaged head (`-PbwrRvuCheck`);
+18. head off with water (`-PbwrRvuCheck`);
+19. the vessel check's reference vessel (`-PbwrVesselModelCheck`).
+
+Old against new, in game: `references/rpv/compare-ingame-exterior.png`.
+
+In game the flat tints read darker than in the Workbench concept: the entity lighting darkens them, and the part colours were
+already raised to the old vessel's brightness.

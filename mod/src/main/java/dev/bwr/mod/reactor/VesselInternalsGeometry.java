@@ -19,9 +19,10 @@ public final class VesselInternalsGeometry {
         return Math.min(max.getY()-ReactorStructure.DOME_BLOCKS_ABOVE_ACTIVE_FUEL,
                 min.getY()-1+(int)Math.floor(CORE_BOTTOM+coreHeight(w,d,h)));
     }
+    /** Where a formed ring is drawn: inside the upper shroud, LPCS below HPCS (VesselProfile). The construction rows that
+     * validate a ring are {@link #constructionFuelTop} and ReactorStructure's, and do not move. */
     public static double spargerHeight(VesselAppearance.Envelope e,CoreSpraySpargerBlock.Loop loop) {
-        double top=coreTop(e),space=Math.max(0,VesselWaterGeometry.rim(e)-.45-top-.52);
-        return top+.52+loop.blocksAboveTaf()*Math.min(1,space/4);
+        return VesselProfile.of(e,false).sprayRingHeight(loop==CoreSpraySpargerBlock.Loop.HPCS);
     }
     private VesselInternalsGeometry(){}
 }
