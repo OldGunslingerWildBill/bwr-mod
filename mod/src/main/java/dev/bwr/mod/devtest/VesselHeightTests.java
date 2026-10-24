@@ -115,7 +115,7 @@ public final class VesselHeightTests {
             h.assertTrue(rc.getPressureVessel().getInventoryScale() == 1.0, "reference water is the calibrated inventory");
             VesselBuild b43 = tc.getVesselBuild();
             near(h, BUILDS[3][1], b43.separatorRatio(), 1e-8, "tall separator scale");
-            near(h, 180.0 * b43.domeRatio(), tc.getPressureVessel().getSteamDomeVolumeM3(), 1e-9, "tall dome");
+            near(h, 180.0, tc.getPressureVessel().getSteamDomeVolumeM3(), 1e-12, "the dome stays the calibrated 180 m3 (the head missile is calibrated on it)");
             near(h, b43.waterMassFactor(), tc.getPressureVessel().getInventoryScale(), 1e-12, "tall water");
             h.assertTrue(tc.getPressureVessel().getInventoryScale() > 1.25, "43 high holds well over a quarter more water");
             // Same level, more water.
@@ -125,7 +125,7 @@ public final class VesselHeightTests {
             near(h, SteamSeparation.DESIGN_MOISTURE, SteamSeparation.bandMoisture(tc.getSeparatorHeightRatio()), 1e-12, "tall steam moisture");
             h.assertTrue(rc.getSteamMoistureFraction() > 0.008 && rc.getSteamMoistureFraction() < 0.009,
                     "the reference reads 0.86 % moisture: " + rc.getSteamMoistureFraction());
-            h.assertTrue(tc.getChimneyFactor() > 1.15 && rc.getChimneyFactor() == 1.0, "chimney factor, tall and reference");
+            h.assertTrue(tc.getChimneyFactor() > 1.1 && rc.getChimneyFactor() == 1.0, "chimney factor, tall and reference");
         } finally {
             clear(l, refMin.offset(-2, -3, -2), refMin.offset(18, 28, 18));
             clear(l, tallMin.offset(-2, -3, -2), tallMin.offset(18, 43, 18));
@@ -219,9 +219,13 @@ public final class VesselHeightTests {
         return new Run(kj / kg, hp.damage() - before, hp.inletMoisturePercent);
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrheight", timeoutTicks = 400)
+    // These two move the world's game clock a tick at a time to drive a turbine (as the turbine runtime checks do), so they run
+    // in a batch of their own, alone, and put the clock back: anything timed by game time (cooling fuel, recorder dots) would
+    // otherwise run fast beside them.
+    @GameTest(template = "empty", templateNamespace = "bwrheight", batch = "heightclock", timeoutTicks = 400)
     public static void wetSteamLowersTurbineOutputAndWearsTheBlades(GameTestHelper h) {
         var l = h.getLevel();
+        long clock = l.getGameTime();
         BlockPos base = new BlockPos(81400, 150, 81000);
         try {
             var hp = PowerModuleRuntimeCheck.place(l, BwrBlocks.HP_TURBINE.get(), base, Direction.EAST);
@@ -242,13 +246,15 @@ public final class VesselHeightTests {
             h.assertTrue(!hp.failed(), "and it has not failed");
         } finally {
             clear(l, base.offset(-5, -8, -8), base.offset(25, 8, 12));
+            ((net.minecraft.world.level.storage.ServerLevelData) l.getLevelData()).setGameTime(clock);
         }
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrheight", timeoutTicks = 600)
+    @GameTest(template = "empty", templateNamespace = "bwrheight", batch = "heightclock", timeoutTicks = 600)
     public static void steamFromAHighLevelArrivesWetAtTheTurbine(GameTestHelper h) throws Exception {
         var l = h.getLevel();
+        long clock = l.getGameTime();
         BlockPos min = new BlockPos(81600, 150, 81000);
         try {
             var reactor = vessel(l, min, 28);
@@ -301,6 +307,7 @@ public final class VesselHeightTests {
             h.assertTrue(hp.damage() > 0, "and the blades are wearing");
         } finally {
             clear(l, min.offset(-2, -3, -4), min.offset(30, 60, 20));
+            ((net.minecraft.world.level.storage.ServerLevelData) l.getLevelData()).setGameTime(clock);
         }
         h.succeed();
     }

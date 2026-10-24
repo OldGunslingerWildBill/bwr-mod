@@ -327,12 +327,16 @@ public final class VesselHeightTest {
         double level0 = reference.getCollapsedLevelIn();
         double indicated0 = reference.getIndicatedLevelIn();
         reference.applyVesselBuild(H43);
+        Check.exactly(dome0, reference.getPressureVessel().getSteamDomeVolumeM3(),
+                "the dome stays the calibrated one unless the core is told to follow the build");
+        reference.setDomeFollowsBuild(true);
         Check.relative(dome0 * H43.domeRatio(), reference.getPressureVessel().getSteamDomeVolumeM3(), 1e-12, "dome");
         Check.relative(mass0 * H43.waterMassFactor(), reference.getLiquidMassKg(), 1e-12, "water");
         Check.relative(level0, reference.getCollapsedLevelIn(), 1e-9, "collapsed level does not move");
         Check.relative(indicated0, reference.getIndicatedLevelIn(), 1e-9, "indicated level does not move");
         reference.applyVesselBuild(null);
         Check.relative(dome0, reference.getPressureVessel().getSteamDomeVolumeM3(), 1e-12, "dome back");
+        reference.setDomeFollowsBuild(false);
         Check.relative(mass0, reference.getLiquidMassKg(), 1e-9, "water back");
         Check.exactly(1.0, reference.getPressureVessel().getInventoryScale(), "inventory scale back");
         // A reference build changes nothing at all.
@@ -346,6 +350,19 @@ public final class VesselHeightTest {
         Check.exactly(1.0, H28.domeRatio(), "reference dome factor");
         Check.exactly(1.0, H28.chimneyRatio(), "reference chimney factor");
         Check.exactly(H43.domeRatio(), H60.domeRatio(), "above true scale the extra height is water column, not steam space");
+    }
+
+    public static void test11b_aVesselResizedWhileRunningKeepsItsWaterAndItsLevelMoves() {
+        ReactorCore core = ratedCore(H28);
+        double mass = core.getLiquidMassKg();
+        double level = core.getCollapsedLevelIn();
+        core.resizeVesselBuild(H43);
+        Check.exactly(mass, core.getLiquidMassKg(), "no water made by building the vessel taller");
+        Check.relative(H43.waterMassFactor(), core.getPressureVessel().getInventoryScale(), 1e-12, "the vessel holds more");
+        Check.lessThan(level - 50.0, core.getCollapsedLevelIn(), "so the same water stands lower");
+        core.resizeVesselBuild(H28);
+        Check.relative(mass, core.getLiquidMassKg(), 1e-12, "and back");
+        Check.relative(level, core.getCollapsedLevelIn(), 1e-9, "to the same level");
     }
 
     /** Minutes for 100 MW into a cold vessel (no steam out) to reach 1000 psig. */

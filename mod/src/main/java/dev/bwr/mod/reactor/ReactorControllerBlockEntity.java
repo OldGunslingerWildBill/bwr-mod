@@ -783,8 +783,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         // The height of the vessel is physics: the steam dome and the water in it, the chimney that drives natural
         // circulation, and how well the separators dry the steam (VESSEL-HEIGHT.md). Every validation, because it is an equal build
         // most of the time and a rescale at constant level when it is not.
-        core.applyVesselBuild(VesselHeightBuild.ofEnvelope(width + 2, depth + 2,
-                found.interiorMax().getY() - found.interiorMin().getY() + 3));
+        var heightBuild = VesselHeightBuild.ofEnvelope(width + 2, depth + 2,
+                found.interiorMax().getY() - found.interiorMin().getY() + 3);
+        // A vessel rebuilt around a running core keeps the water it has (none is made), so its level moves.
+        if (!heightBuild.equals(core.getVesselBuild())) core.resizeVesselBuild(heightBuild);
         double ratedFlow=dev.bwr.mod.flow.RecirculationNetwork.sizing(found).ratedFlowKgPerS();
         if (ratedFlow != core.getVoidModel().getRatedCoreFlowKgPerS()) {
             core.setRatedCoreFlowKgPerS(ratedFlow);

@@ -314,13 +314,24 @@ public final class PressureVessel {
      * A ratio of exactly 1 does nothing.
      */
     public void rescaleInventory(double ratio) {
+        rescaleInventory(ratio, false);
+    }
+
+    /**
+     * As {@link #rescaleInventory(double)}, but with {@code keepWater} the water in the vessel is left alone: the vessel is
+     * rebuilt around the water it holds, no water is made or lost, and the level moves to where that water now stands.
+     * This is a vessel resized while it is running.
+     */
+    public void rescaleInventory(double ratio, boolean keepWater) {
         if (!(ratio > 0.0) || !Double.isFinite(ratio) || ratio == 1.0) {
             return;
         }
         inventoryScale *= ratio;
         levelAreaM2 *= ratio;
         twoPhaseRegionVolumeM3 *= ratio;
-        liquidMassKg *= ratio;
+        if (!keepWater) {
+            liquidMassKg *= ratio;
+        }
         recomputeLevels();
     }
 

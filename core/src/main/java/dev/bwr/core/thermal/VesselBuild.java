@@ -52,9 +52,17 @@ public record VesselBuild(double separatorRatio, double chimneyColumnIn, double 
         separatorRatio = Math.min(1.0, separatorRatio);
     }
 
-    /** The chimney column over the reference build's: 1 at the reference. */
+    /**
+     * Equivalent inches of chimney the core's own boiling column is worth to natural circulation. The driving head is the
+     * density difference over the whole two-phase column, the core's 150 in of fuel (a mean void of about 0.4, against the
+     * chimney's 0.7 or so, so about half as buoyant per inch) as well as the chimney above it. A vessel with no chimney still
+     * has its core.
+     */
+    public static final double CORE_HEAD_EQUIVALENT_IN = 75.0;
+
+    /** The two-phase column (core plus chimney) over the reference build's: 1 at the reference. */
     public double chimneyRatio() {
-        return snap(chimneyColumnIn / REFERENCE.chimneyColumnIn);
+        return snap((chimneyColumnIn + CORE_HEAD_EQUIVALENT_IN) / (REFERENCE.chimneyColumnIn + CORE_HEAD_EQUIVALENT_IN));
     }
 
     /** The steam dome over the reference build's, for scaling the calibrated dome volume. 1 at the reference. */

@@ -297,6 +297,7 @@ public final class ReactorCore {
     private boolean naturalCirculationEnabled = true;
     /** The height of the vessel this core sits in; null for a bare core. See {@link #applyVesselBuild}. */
     private VesselBuild vesselBuild;
+    private boolean domeFollowsBuild;
     private double lastNaturalCirculationFlowFraction;
 
     private double turbineSteamFlowKgPerS;
@@ -1258,13 +1259,41 @@ public final class ReactorCore {
      * it again with an equal build does nothing; with a different one it rescales in place and conserves the level.
      */
     public void applyVesselBuild(VesselBuild build) {
+        installBuild(build, false);
+    }
+
+    /**
+     * The vessel is rebuilt while it runs: its dome and its capacity change to the new build's, and the water in it stays
+     * the water in it (none is made or lost), so the level moves to where that water now stands. A taller vessel with the
+     * same water reads lower.
+     */
+    public void resizeVesselBuild(VesselBuild build) {
+        installBuild(build, true);
+    }
+
+    private void installBuild(VesselBuild build, boolean keepWater) {
         this.vesselBuild = build;
         double wantedScale = build == null ? 1.0 : build.waterMassFactor();
-        vessel.rescaleInventory(wantedScale / vessel.getInventoryScale());
-        vessel.setSteamDomeVolumeM3(config.steamDomeVolumeM3 * (build == null ? 1.0 : build.domeRatio()));
+        vessel.rescaleInventory(wantedScale / vessel.getInventoryScale(), keepWater);
+        vessel.setSteamDomeVolumeM3(config.steamDomeVolumeM3
+                * (build == null || !domeFollowsBuild ? 1.0 : build.domeRatio()));
         if (build == null) {
             voidModel.setSubcoolingAdjustmentKJPerKg(0.0);
         }
+    }
+
+    /**
+     * Whether the steam dome follows the build ({@link VesselBuild#domeRatio()}). Off by default: the calibrated dome (180 m3)
+     * is what the head missile and its tests were calibrated on in every size of vessel, and moving it moves them (see
+     * VESSEL-HEIGHT.md). The pressure vessel responds to whatever dome it is given (see {@code PressureVessel}).
+     */
+    public void setDomeFollowsBuild(boolean follows) {
+        this.domeFollowsBuild = follows;
+        installBuild(vesselBuild, true);
+    }
+
+    public boolean isDomeFollowingBuild() {
+        return domeFollowsBuild;
     }
 
     /** The build installed by {@link #applyVesselBuild}, or null. */
