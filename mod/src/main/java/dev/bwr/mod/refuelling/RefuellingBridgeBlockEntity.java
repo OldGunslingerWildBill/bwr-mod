@@ -463,9 +463,9 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
             return BwrText.tr("status.bwr.refuelling_bridge.same_place", "That move starts and ends in the same place.");
         }
         if (internalMove(m)) {
-            // The reactor building crane lifts the head, the dryer and the separators; the bridge moves fuel only (unless the legacy option is on).
-            // A load already on the hoist can still be set down.
-            if (m.from().kind() != Kind.HELD && !dev.bwr.mod.config.GameplayConfig.bridgeLiftsInternals()) {
+            // The reactor building crane lifts the head, the dryer and the separators; the bridge moves fuel only.
+            // A load already on the hoist (a world saved mid-lift in alpha.53) can still be set down.
+            if (m.from().kind() != Kind.HELD) {
                 return craneMessage();
             }
             return refuseInternal(m);
@@ -629,6 +629,9 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         if (a == null || b == null || !site.reaches(a.x(), a.z()) || !site.reaches(b.x(), b.z())) {
             return BwrText.tr("status.bwr.refuelling_bridge.out_of_reach", "That position is outside the reach of the bridge.");
         }
+        if (from.kind() == Kind.HELD) {
+            return null; // already hanging from the hoist: it only has to be set down
+        }
         // Hanging from the retracted hoist, the assembly must clear the vessel's lip before it moves sideways.
         VesselProfile vp = profileOf(r);
         double clear = r.vesselEnvelope().min().getY() + vp.rim + 0.25;
@@ -650,7 +653,7 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         if (level == null || level.isClientSide()) {
             return null;
         }
-        if (!(carriedInternal == which && move == null) && !dev.bwr.mod.config.GameplayConfig.bridgeLiftsInternals()) {
+        if (!(carriedInternal == which && move == null)) {
             return craneMessage();
         }
         refreshSite();

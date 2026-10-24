@@ -68,7 +68,7 @@ public class RefuellingMenu extends BwrMenu {
     public static final int CMD_BRIDGE_OVERRIDE = 14;
     /** Bridge: a = pool cell index. Set the assembly on the grapple down in that cell. */
     public static final int CMD_BRIDGE_SET_DOWN = 15;
-    /** Bridge: a = the assembly (0 the steam dryer, 1 the separator assembly), b = 1 lift it out to a free pad, 0 set it back in. */
+    /** Bridge: a = the assembly (0 the steam dryer, 1 the separator assembly), b = 1 set the one on the hoist down on a free pad, 0 back into the vessel. Only a load already on the hoist; the crane does the lifting. */
     public static final int CMD_BRIDGE_INTERNAL = 16;
 
     private static final int INVENTORY_X = 48;
@@ -119,8 +119,6 @@ public class RefuellingMenu extends BwrMenu {
     public int bridgeInternalsOut;
     /** The assembly on the hoist (VesselInternal ordinal), or -1. */
     public int bridgeCarriedInternal = -1;
-    /** Whether the bridge still lifts the dryer and the separators (the legacy option); false means the crane does, and those buttons go dark. */
-    public boolean bridgeLiftsInternals = true;
     /** One entry per rack of the bridge's pool: occupancy bits (cell k = bit k) and decay kW of each cell. */
     public java.util.List<BridgeRack> bridgeRacks = new java.util.ArrayList<>();
 
@@ -254,7 +252,6 @@ public class RefuellingMenu extends BwrMenu {
         buf.writeUtf(bridge.carriedSummary());
         buf.writeVarInt(reactor.internalsOutMask());
         buf.writeVarInt(bridge.carriedInternal() == null ? -1 : bridge.carriedInternal().ordinal());
-        buf.writeBoolean(GameplayConfig.bridgeLiftsInternals());
         Component halt = site.ok() ? bridge.haltMessage() : site.problem;
         buf.writeUtf(halt == null ? "" : BwrText.english(halt));
         buf.writeUtf(bridge.chute().state().name());
@@ -322,7 +319,6 @@ public class RefuellingMenu extends BwrMenu {
         bridgeCarried = buf.readUtf();
         bridgeInternalsOut = buf.readVarInt();
         bridgeCarriedInternal = buf.readVarInt();
-        bridgeLiftsInternals = buf.readBoolean();
         bridgeMessage = buf.readUtf();
         bridgeChute = buf.readUtf();
         bridgeCavityWaterM = buf.readDouble();

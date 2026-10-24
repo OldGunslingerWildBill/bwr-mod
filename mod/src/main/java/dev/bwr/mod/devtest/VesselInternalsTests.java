@@ -7,11 +7,10 @@ import dev.bwr.mod.reactor.VesselProfile;
 import dev.bwr.mod.reactor.VesselState;
 import dev.bwr.mod.reactor.VesselWaterGeometry;
 import dev.bwr.mod.refuelling.EquipmentPadBlockEntity;
-import dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity.Loc;
-import dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity.Move;
 import dev.bwr.mod.registry.BwrBlocks;
 import dev.bwr.mod.text.BwrText;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
@@ -26,7 +25,8 @@ import java.util.List;
  * The removable steam dryer and separator assembly (RPV-REFERENCE.md): fuel waits for both to be out, the dryer comes out first
  * and goes back last, both come out only from a vessel flooded to its flange, the head waits for both to be back, a lifted
  * assembly is a radiation source that water on its pad shields, the saves stay as they were while both are in, and the drawn
- * vessel's profile and water keep their promises. On the refuelling bridge fixture (a 7 x 7 x 10 vessel), with two
+ * vessel's profile and water keep their promises. The lifts are the reactor building crane's (the refuelling bridge moves fuel
+ * only and refuses them, and still sets down a load already on its hoist). On the crane fixture (a 7 x 7 x 10 vessel), with two
  * equipment pads in a pit between the reactor and the pool.
  */
 @GameTestHolder("bwrinternals")
@@ -43,135 +43,118 @@ public final class VesselInternalsTests {
         return c == null ? "(none)" : BwrText.english(c);
     }
 
-    /** The fixture with both assemblies back in the vessel, the vessel flooded to its flange and two empty pads in a pit. */
-    static RefuellingBridgeFixture build(GameTestHelper h, int i) throws Exception {
-        RefuellingBridgeFixture f = RefuellingBridgeFixture.build(h.getLevel(), at(i), 2);
-        f.reactor.internalIn(VesselInternal.DRYER);
-        f.reactor.internalIn(VesselInternal.SEPARATOR);
-        f.reactor.core().getPressureVessel().setCollapsedLevelIn(60.0);
-        for (BlockPos pad : pads(f)) {
-            for (int y = 1; y <= 8; y++) f.level.setBlock(pad.above(y), Blocks.AIR.defaultBlockState(), 2);
-            f.level.setBlock(pad, BwrBlocks.EQUIPMENT_PAD.get().defaultBlockState(), 3);
-        }
-        // The fixture's rails stand one block over the small vessel's roof: too low to lift a dryer clear of its lip. A second pair four
-        // blocks higher, over the same reactor and pads, with its own console: the bridge of these tests.
-        for (int x = -1; x <= 18; x++) {
-            for (int z : new int[]{-3, 7}) {
-                f.level.setBlock(f.o.offset(x, 13, z), BwrBlocks.REFUELLING_RAIL.get().defaultBlockState()
-                        .setValue(dev.bwr.mod.refuelling.RefuellingRailBlock.AXIS, net.minecraft.core.Direction.Axis.X), 2);
-            }
-        }
-        BlockPos console = f.o.offset(-1, 13, -4);
-        f.level.setBlock(console, BwrBlocks.REFUELLING_BRIDGE_CONSOLE.get().defaultBlockState(), 2);
-        f.bridge = (dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity) f.level.getBlockEntity(console);
-        f.bridge.refreshSite();
+    /**
+     * The crane fixture with the head OFF (lifted the instant way: the dryer's and the separators' tests start with the vessel open), both
+     * assemblies back in the vessel, the vessel flooded to its flange and two empty pads in a pit. The crane's rails are 14 blocks over the
+     * reactor's floor, high enough to lift a dryer clear of the 7 x 7 x 10 vessel's lip.
+     */
+    static CraneFixture build(GameTestHelper h, int i) throws Exception {
+        CraneFixture f = CraneFixture.build(h.getLevel(), at(i));
+        f.reactor().setVesselState(VesselState.REFUELING);
+        f.reactor().core().getPressureVessel().setCollapsedLevelIn(60.0);
         return f;
     }
 
-    /** The rails of the fixture, one block over the roof, are too low for the dryer: the lift is refused with the height to build to. */
-    @GameTest(template = "empty", templateNamespace = "bwrinternals", timeoutTicks = 200)
-    public static void railsTooLowToClearTheVesselRefuseTheLift(GameTestHelper h) throws Exception {
-        RefuellingBridgeFixture f = build(h, 6);
-        try {
-            var low = (dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity) f.level.getBlockEntity(f.console);
-            low.refreshSite();
-            Component why = low.queueInternal(VesselInternal.DRYER, true);
-            h.assertTrue(why != null && english(why).contains("too low"), "the low rails refuse: " + english(why));
-            h.assertTrue(f.bridge.queueInternal(VesselInternal.DRYER, true) == null, "the high rails lift it");
-            f.bridge.abort();
-        } finally {
-            clearHigh(f);
-            f.dispose();
-        }
-        h.succeed();
+    private static List<BlockPos> pads(CraneFixture f) {
+        return f.pads;
     }
 
-    private static void clearHigh(RefuellingBridgeFixture f) {
-        f.bridge.removalDrops();
-        for (int x = -2; x <= 20; x++) for (int z = -5; z <= 8; z++) for (int y = 12; y <= 14; y++)
-            f.level.setBlock(f.o.offset(x, y, z), Blocks.AIR.defaultBlockState(), 2);
-    }
-
-    private static List<BlockPos> pads(RefuellingBridgeFixture f) {
-        return List.of(f.o.offset(6, 1, 5), f.o.offset(6, 1, -1));
-    }
-
-    private static EquipmentPadBlockEntity pad(RefuellingBridgeFixture f, BlockPos p) {
+    private static EquipmentPadBlockEntity pad(CraneFixture f, BlockPos p) {
         return (EquipmentPadBlockEntity) f.level.getBlockEntity(p);
     }
 
-    private static int run(GameTestHelper h, RefuellingBridgeFixture f) {
-        int n = f.runUntilStill(40_000);
-        h.assertTrue(!f.bridge.busy(), "the bridge never finished: " + f.bridge.phase() + " " + english(f.bridge.haltMessage()));
-        h.assertTrue(f.bridge.phase() == Phase.IDLE, "the bridge halted: " + english(f.bridge.haltMessage()));
+    private static int run(GameTestHelper h, CraneFixture f) {
+        int n = f.runCrane(60_000);
+        h.assertTrue(!f.crane.busy(), "the crane never finished: " + f.crane.phase() + " " + english(f.crane.haltMessage()));
+        h.assertTrue(f.crane.phase() == Phase.IDLE, "the crane halted: " + english(f.crane.haltMessage()));
         return n;
+    }
+
+    /** The runway of the fixture's first crane is too low for the dryer: the lift is refused with the height to build to, and rails 14 blocks over the floor lift it. */
+    @GameTest(template = "empty", templateNamespace = "bwrinternals", timeoutTicks = 200)
+    public static void railsTooLowToClearTheVesselRefuseTheLift(GameTestHelper h) throws Exception {
+        CraneFixture low = CraneFixture.build(h.getLevel(), at(6), 9);
+        CraneFixture high = null;
+        try {
+            low.reactor().setVesselState(VesselState.REFUELING);
+            Component why = low.crane.queueInternal(VesselInternal.DRYER, true);
+            h.assertTrue(why != null && english(why).contains("too low"), "the low rails refuse: " + english(why));
+            high = build(h, 14);
+            h.assertTrue(high.crane.queueInternal(VesselInternal.DRYER, true) == null, "the high rails lift it");
+            high.crane.abort();
+        } finally {
+            if (high != null) {
+                high.dispose();
+            }
+            low.dispose();
+        }
+        h.succeed();
     }
 
     @GameTest(template = "empty", templateNamespace = "bwrinternals", timeoutTicks = 200)
     public static void fuelWaitsForTheDryerAndTheSeparatorsToBeOut(GameTestHelper h) throws Exception {
-        RefuellingBridgeFixture f = build(h, 0);
+        CraneFixture f = build(h, 0);
         try {
-            // fuel goes through the cattle chute, which only the fixture's own (low) rails reach
-            var high = f.bridge;
-            f.bridge = (dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity) f.level.getBlockEntity(f.console);
-            f.bridge.refreshSite();
-            high.refreshSite();
-            f.fillPool(7.0);
-            h.assertTrue(f.reactor.loadAssembly(f.corePosition(0), RefuellingBridgeFixture.fresh(20000.0)), "load");
-            Move move = new Move(Loc.core(f.corePosition(0)), Loc.rack(f.pool.racks.get(0), 0));
-            Component why = f.bridge.queue(move);
+            // fuel goes through the cattle chute, which only the refuelling bridge's own rails reach
+            var bridge = f.base.bridge;
+            bridge.refreshSite();
+            f.base.fillPool(7.0);
+            f.reactor().core().getPressureVessel().setCollapsedLevelIn(60.0);
+            h.assertTrue(f.reactor().loadAssembly(f.base.corePosition(0), RefuellingBridgeFixture.fresh(20000.0)), "load");
+            dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity.Move move = new dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity.Move(
+                    dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity.Loc.core(f.base.corePosition(0)),
+                    dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity.Loc.rack(f.base.pool.racks.get(0), 0));
+            Component why = bridge.queue(move);
             h.assertTrue(why != null && english(why).contains("steam dryer"), "a fuel move is refused while the dryer is in: " + english(why));
-            h.assertTrue(f.reactor.refuellingBlockedMessage() != null, "the reactor says why");
-            f.reactor.internalOut(VesselInternal.DRYER, pads(f).get(0));
-            why = f.bridge.queue(move);
+            h.assertTrue(f.reactor().refuellingBlockedMessage() != null, "the reactor says why");
+            f.reactor().internalOut(VesselInternal.DRYER, pads(f).get(0));
+            why = bridge.queue(move);
             h.assertTrue(why != null && english(why).contains("separator"), "and while the separator assembly is in: " + english(why));
-            f.reactor.internalOut(VesselInternal.SEPARATOR, pads(f).get(1));
-            why = f.bridge.queue(move);
+            f.reactor().internalOut(VesselInternal.SEPARATOR, pads(f).get(1));
+            why = bridge.queue(move);
             h.assertTrue(why == null, "with both out the move is queued: " + english(why));
-            f.bridge.abort();
+            bridge.abort();
         } finally {
-            clearHigh(f);
             f.dispose();
         }
         h.succeed();
     }
 
     @GameTest(template = "empty", templateNamespace = "bwrinternals", timeoutTicks = 200)
-    public static void theDryerComesOutFirstAndGoesBackLastOnTheBridge(GameTestHelper h) throws Exception {
-        RefuellingBridgeFixture f = build(h, 1);
+    public static void theDryerComesOutFirstAndGoesBackLastOnTheCrane(GameTestHelper h) throws Exception {
+        CraneFixture f = build(h, 1);
         try {
-            Component why = f.bridge.queueInternal(VesselInternal.SEPARATOR, true);
+            Component why = f.crane.queueInternal(VesselInternal.SEPARATOR, true);
             h.assertTrue(why != null && english(why).contains("dryer"), "the separators cannot come out under the dryer: " + english(why));
-            why = f.bridge.queueInternal(VesselInternal.DRYER, true);
+            why = f.crane.queueInternal(VesselInternal.DRYER, true);
             h.assertTrue(why == null, "the dryer lift is queued: " + english(why));
             f.phases.clear();
             int ticks = run(h, f);
-            BlockPos first = f.reactor.internalLocation(VesselInternal.DRYER);
+            BlockPos first = f.reactor().internalLocation(VesselInternal.DRYER);
             h.assertTrue(first != null && pad(f, first) != null && pad(f, first).stored() == VesselInternal.DRYER,
                     "the dryer stands on a pad and the reactor knows where: " + first);
             h.assertTrue(f.phases.equals(List.of(Phase.TRAVEL, Phase.LOWER_EMPTY, Phase.LATCH, Phase.RAISE_LOADED, Phase.TRANSIT, Phase.LOWER_LOADED,
-                    Phase.RELEASE, Phase.RAISE_EMPTY, Phase.IDLE)), "the lift is the bridge's own sequence: " + f.phases);
+                    Phase.RELEASE, Phase.RAISE_EMPTY, Phase.IDLE)), "the lift is the crane's own sequence: " + f.phases);
             h.assertTrue(ticks > 20 * 15, "a lift takes real time, not a click: " + ticks + " ticks");
-            h.assertTrue(f.reactor.setVesselStateMessage(VesselState.SHUTDOWN) != null, "the head cannot go on with the dryer out");
+            h.assertTrue(f.reactor().setVesselStateMessage(VesselState.SHUTDOWN) != null, "the head cannot go on with the dryer out");
 
-            h.assertTrue(f.bridge.queueInternal(VesselInternal.SEPARATOR, true) == null, "now the separators come out");
+            h.assertTrue(f.crane.queueInternal(VesselInternal.SEPARATOR, true) == null, "now the separators come out");
             run(h, f);
-            BlockPos second = f.reactor.internalLocation(VesselInternal.SEPARATOR);
+            BlockPos second = f.reactor().internalLocation(VesselInternal.SEPARATOR);
             h.assertTrue(second != null && !second.equals(first) && pad(f, second).stored() == VesselInternal.SEPARATOR, "on the other pad: " + second);
-            h.assertTrue(f.reactor.refuellingBlockedMessage() == null, "fuel can move now");
+            h.assertTrue(f.reactor().refuellingBlockedMessage() == null, "fuel can move now");
 
-            why = f.bridge.queueInternal(VesselInternal.DRYER, false);
+            why = f.crane.queueInternal(VesselInternal.DRYER, false);
             h.assertTrue(why != null && english(why).contains("separator"), "the dryer cannot go back before the separators: " + english(why));
-            h.assertTrue(f.bridge.queueInternal(VesselInternal.SEPARATOR, false) == null, "the separators go back");
+            h.assertTrue(f.crane.queueInternal(VesselInternal.SEPARATOR, false) == null, "the separators go back");
             run(h, f);
-            h.assertTrue(f.reactor.internalInstalled(VesselInternal.SEPARATOR) && pad(f, second).stored() == null, "the separators are in, the pad empty");
-            h.assertTrue(f.bridge.queueInternal(VesselInternal.DRYER, false) == null, "then the dryer");
+            h.assertTrue(f.reactor().internalInstalled(VesselInternal.SEPARATOR) && pad(f, second).stored() == null, "the separators are in, the pad empty");
+            h.assertTrue(f.crane.queueInternal(VesselInternal.DRYER, false) == null, "then the dryer");
             run(h, f);
-            h.assertTrue(f.reactor.internalInstalled(VesselInternal.DRYER) && pad(f, first).stored() == null, "the dryer is in, the pad empty");
-            h.assertTrue(f.reactor.setVesselStateMessage(VesselState.SHUTDOWN) == null, "and the head goes back on");
+            h.assertTrue(f.reactor().internalInstalled(VesselInternal.DRYER) && pad(f, first).stored() == null, "the dryer is in, the pad empty");
+            h.assertTrue(f.reactor().setVesselStateMessage(VesselState.SHUTDOWN) == null, "and the head goes back on");
             System.out.println("VESSEL INTERNALS: dryer out " + ticks + " ticks (" + ticks / 20 + " s) on the 7 x 7 x 10 fixture");
         } finally {
-            clearHigh(f);
             f.dispose();
         }
         h.succeed();
@@ -179,18 +162,17 @@ public final class VesselInternalsTests {
 
     @GameTest(template = "empty", templateNamespace = "bwrinternals", timeoutTicks = 200)
     public static void theAssembliesComeOutOnlyFromAVesselFloodedToItsFlange(GameTestHelper h) throws Exception {
-        RefuellingBridgeFixture f = build(h, 2);
+        CraneFixture f = build(h, 2);
         try {
             f.floodCavity(3.0);
-            Component why = f.bridge.queueInternal(VesselInternal.DRYER, true);
+            Component why = f.crane.queueInternal(VesselInternal.DRYER, true);
             h.assertTrue(why != null && english(why).contains("flood"), "a lift from a vessel not flooded to its flange is refused: " + english(why));
-            f.reactor.core().getPressureVessel().setCollapsedLevelIn(60.0);
-            h.assertTrue(f.bridge.queueInternal(VesselInternal.DRYER, true) == null, "flooded, it is queued");
-            f.bridge.abort();
-            f.reactor.setVesselState(VesselState.SHUTDOWN);
-            h.assertTrue(f.reactor.internalLiftBlocked(VesselInternal.DRYER) != null, "and never with the head on");
+            f.reactor().core().getPressureVessel().setCollapsedLevelIn(60.0);
+            h.assertTrue(f.crane.queueInternal(VesselInternal.DRYER, true) == null, "flooded, it is queued");
+            f.crane.abort();
+            f.reactor().setVesselState(VesselState.SHUTDOWN);
+            h.assertTrue(f.reactor().internalLiftBlocked(VesselInternal.DRYER) != null, "and never with the head on");
         } finally {
-            clearHigh(f);
             f.dispose();
         }
         h.succeed();
@@ -198,19 +180,19 @@ public final class VesselInternalsTests {
 
     @GameTest(template = "empty", templateNamespace = "bwrinternals", timeoutTicks = 200)
     public static void aLiftedAssemblySpikesTheDoseAndWaterOnItsPadShieldsIt(GameTestHelper h) throws Exception {
-        RefuellingBridgeFixture f = build(h, 3);
+        CraneFixture f = build(h, 3);
         try {
             BlockPos padPos = pads(f).get(0);
             Vec3 observer = Vec3.atCenterOf(f.o.offset(2, 10, -2));
             double before = RadiationSources.doseRateMsvPerHour(f.level, observer);
-            h.assertTrue(f.bridge.queueInternal(VesselInternal.SEPARATOR, true) != null, "dryer first");
-            f.reactor.internalOut(VesselInternal.DRYER, f.console); // the dryer is elsewhere: this test is about the separators
-            h.assertTrue(f.bridge.queueInternal(VesselInternal.SEPARATOR, true) == null, "the separator lift is queued");
-            f.runUntil(Phase.TRANSIT, 40_000);
+            h.assertTrue(f.crane.queueInternal(VesselInternal.SEPARATOR, true) != null, "dryer first");
+            f.reactor().internalOut(VesselInternal.DRYER, f.console); // the dryer is elsewhere: this test is about the separators
+            h.assertTrue(f.crane.queueInternal(VesselInternal.SEPARATOR, true) == null, "the separator lift is queued");
+            f.runCraneUntil(Phase.TRANSIT, 40_000);
             double lifted = RadiationSources.doseRateMsvPerHour(f.level, observer);
             h.assertTrue(lifted > 1.0 && lifted > before * 100 + 1.0, "lifted out of the water the dose spikes: " + before + " -> " + lifted + " mSv/h");
             run(h, f);
-            BlockPos on = f.reactor.internalLocation(VesselInternal.SEPARATOR);
+            BlockPos on = f.reactor().internalLocation(VesselInternal.SEPARATOR);
             h.assertTrue(on != null && pad(f, on).stored() == VesselInternal.SEPARATOR, "it stands on a pad");
             double dry = RadiationSources.doseRateMsvPerHour(f.level, observer);
             h.assertTrue(dry > 1.0, "on a dry pad it is still a source: " + dry + " mSv/h");
@@ -221,9 +203,8 @@ public final class VesselInternalsTests {
             // leave the floor as found: no water, the separators back in the vessel
             for (int y = 1; y <= 8; y++) f.level.setBlock(on.above(y), Blocks.AIR.defaultBlockState(), 2);
             pad(f, on).take();
-            f.reactor.internalIn(VesselInternal.SEPARATOR);
+            f.reactor().internalIn(VesselInternal.SEPARATOR);
         } finally {
-            clearHigh(f);
             f.dispose();
         }
         h.succeed();
@@ -231,27 +212,26 @@ public final class VesselInternalsTests {
 
     @GameTest(template = "empty", templateNamespace = "bwrinternals", timeoutTicks = 200)
     public static void savesKeepNoNewKeysWhileBothAreInAndRememberWhereTheyAre(GameTestHelper h) throws Exception {
-        RefuellingBridgeFixture f = build(h, 4);
+        CraneFixture f = build(h, 4);
         try {
-            var tag = f.reactor.saveWithFullMetadata(f.level.registryAccess());
+            var tag = f.reactor().saveWithFullMetadata(f.level.registryAccess());
             h.assertTrue(!tag.contains("InternalsOut"), "with both installed the reactor writes no new key");
             var padTag = pad(f, pads(f).get(0)).saveWithFullMetadata(f.level.registryAccess());
             h.assertTrue(!padTag.contains("Stored"), "an empty pad writes nothing");
-            f.reactor.internalOut(VesselInternal.DRYER, pads(f).get(0));
-            tag = f.reactor.saveWithFullMetadata(f.level.registryAccess());
+            f.reactor().internalOut(VesselInternal.DRYER, pads(f).get(0));
+            tag = f.reactor().saveWithFullMetadata(f.level.registryAccess());
             h.assertTrue(tag.contains("InternalsOut") && tag.getCompound("InternalsOut").getLong("dryer") == pads(f).get(0).asLong(),
                     "out, it is saved with where it is: " + tag.get("InternalsOut"));
-            var state = f.reactor.getBlockState();
+            var state = f.reactor().getBlockState();
             var copy = (dev.bwr.mod.reactor.ReactorControllerBlockEntity) net.minecraft.world.level.block.entity.BlockEntity.loadStatic(
-                    f.reactor.getBlockPos(), state, tag, f.level.registryAccess());
+                    f.reactor().getBlockPos(), state, tag, f.level.registryAccess());
             h.assertTrue(copy != null && !copy.internalInstalled(VesselInternal.DRYER) && copy.internalInstalled(VesselInternal.SEPARATOR)
                     && pads(f).get(0).equals(copy.internalLocation(VesselInternal.DRYER)), "and loads the same");
             tag.remove("InternalsOut");
             copy = (dev.bwr.mod.reactor.ReactorControllerBlockEntity) net.minecraft.world.level.block.entity.BlockEntity.loadStatic(
-                    f.reactor.getBlockPos(), state, tag, f.level.registryAccess());
+                    f.reactor().getBlockPos(), state, tag, f.level.registryAccess());
             h.assertTrue(copy != null && copy.internalsOutMask() == 0, "an old save (no key) loads with both installed");
         } finally {
-            clearHigh(f);
             f.dispose();
         }
         h.succeed();
@@ -259,16 +239,79 @@ public final class VesselInternalsTests {
 
     @GameTest(template = "empty", templateNamespace = "bwrinternals", timeoutTicks = 200)
     public static void breakingTheConsoleUnderAHangingDryerSetsItBack(GameTestHelper h) throws Exception {
-        RefuellingBridgeFixture f = build(h, 5);
+        CraneFixture f = build(h, 5);
         try {
-            h.assertTrue(f.bridge.queueInternal(VesselInternal.DRYER, true) == null, "queued");
-            f.runUntil(Phase.TRANSIT, 40_000);
-            h.assertTrue(f.bridge.carriedInternal() == VesselInternal.DRYER && !f.reactor.internalInstalled(VesselInternal.DRYER), "the hoist holds the dryer");
-            h.assertTrue(f.bridge.getBlockPos().equals(f.reactor.internalLocation(VesselInternal.DRYER)), "the reactor knows the bridge holds it");
-            f.bridge.dropCarried(f.level);
-            h.assertTrue(f.reactor.internalInstalled(VesselInternal.DRYER) && f.bridge.carriedInternal() == null, "it is back in its vessel, not lost");
+            h.assertTrue(f.crane.queueInternal(VesselInternal.DRYER, true) == null, "queued");
+            f.runCraneUntil(Phase.TRANSIT, 40_000);
+            h.assertTrue(f.crane.carriedInternal() == VesselInternal.DRYER && !f.reactor().internalInstalled(VesselInternal.DRYER), "the hook holds the dryer");
+            h.assertTrue(f.crane.getBlockPos().equals(f.reactor().internalLocation(VesselInternal.DRYER)), "the reactor knows the crane holds it");
+            f.crane.dropCarried(f.level);
+            h.assertTrue(f.reactor().internalInstalled(VesselInternal.DRYER) && f.crane.carriedInternal() == null, "it is back in its vessel, not lost");
         } finally {
-            clearHigh(f);
+            f.dispose();
+        }
+        h.succeed();
+    }
+
+    /** The bridge moves fuel only: it refuses both lifts with a message pointing to the crane, and nothing moves. */
+    @GameTest(template = "empty", templateNamespace = "bwrinternals", timeoutTicks = 200)
+    public static void theRefuellingBridgeRefusesTheLiftsAndPointsToTheCrane(GameTestHelper h) throws Exception {
+        CraneFixture f = build(h, 8);
+        try {
+            var bridge = f.base.bridge;
+            bridge.refreshSite();
+            for (VesselInternal which : VesselInternal.values()) {
+                Component why = bridge.queueInternal(which, true);
+                h.assertTrue(why != null && english(why).contains("crane") && english(why).contains("fuel only"), "the bridge refuses the " + which.title + ": " + english(why));
+            }
+            Component why = bridge.queue(new dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity.Move(
+                    dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity.Loc.internal(VesselInternal.DRYER),
+                    dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity.Loc.pad(pads(f).get(0), VesselInternal.DRYER)));
+            h.assertTrue(why != null && english(why).contains("crane"), "and the raw move: " + english(why));
+            h.assertTrue(f.reactor().internalsOutMask() == 0 && !bridge.busy(), "nothing moved");
+            h.assertTrue(f.crane.queueInternal(VesselInternal.DRYER, true) == null, "the crane takes it");
+            f.crane.abort();
+        } finally {
+            f.dispose();
+        }
+        h.succeed();
+    }
+
+    /** A world saved in alpha.53 with the dryer on the bridge's hoist: the bridge still sets it down on a pad, and then it is the crane's. */
+    @GameTest(template = "empty", templateNamespace = "bwrinternals", timeoutTicks = 200)
+    public static void aLoadAlreadyOnTheBridgeHoistCanStillBeSetDown(GameTestHelper h) throws Exception {
+        CraneFixture f = build(h, 9);
+        try {
+            var bridge = f.base.bridge;
+            var reg = f.level.registryAccess();
+            bridge.refreshSite();
+            // the saved state of a bridge holding the dryer over the pad column, as the alpha.53 bridge saved it
+            CompoundTag tag = bridge.saveWithFullMetadata(reg);
+            CompoundTag pos = new CompoundTag();
+            BlockPos over = pads(f).get(0);
+            pos.putDouble("X", over.getX() + 0.5);
+            pos.putDouble("Y", bridge.site().homeY());
+            pos.putDouble("Z", over.getZ() + 0.5);
+            tag.put("Pos", pos);
+            tag.putString("CarriedInternal", VesselInternal.DRYER.id);
+            var vp = dev.bwr.mod.reactor.VesselProfile.of(f.reactor().vesselEnvelope(), false);
+            tag.putIntArray("CarriedVessel", new int[]{vp.width, vp.depth, vp.height, 0});
+            bridge.loadWithComponents(tag, reg);
+            f.reactor().internalOut(VesselInternal.DRYER, bridge.getBlockPos());
+            bridge.refreshSite();
+            h.assertTrue(bridge.carriedInternal() == VesselInternal.DRYER, "the hoist holds the dryer");
+            Component why = bridge.queueInternal(VesselInternal.SEPARATOR, true);
+            h.assertTrue(why != null && english(why).contains("crane"), "anything else is refused: " + english(why));
+            why = bridge.queueInternal(VesselInternal.DRYER, true);
+            h.assertTrue(why == null, "but the dryer on the hoist is set down on a pad: " + english(why));
+            f.base.runUntilStill(40_000);
+            h.assertTrue(bridge.phase() == Phase.IDLE && bridge.carriedInternal() == null, "the bridge finished: " + english(bridge.haltMessage()));
+            BlockPos on = f.reactor().internalLocation(VesselInternal.DRYER);
+            h.assertTrue(on != null && pads(f).contains(on) && pad(f, on).stored() == VesselInternal.DRYER, "the dryer is on a pad, and the reactor knows which: " + on);
+            // from there it is the crane's: it takes it back into the vessel
+            h.assertTrue(f.crane.queueInternal(VesselInternal.DRYER, false) == null, "the crane takes the dryer back in from its pad");
+            f.crane.abort();
+        } finally {
             f.dispose();
         }
         h.succeed();
@@ -306,14 +349,13 @@ public final class VesselInternalsTests {
             h.succeed();
             return;
         }
-        RefuellingBridgeFixture f = build(h, 7);
+        CraneFixture f = build(h, 7);
         try {
             VesselInternalsCcChecks.run(h, f);
         } finally {
-            clearHigh(f);
             f.dispose();
         }
-        System.out.println("VESSEL INTERNALS CC: getInternals, queueInternalOut and queueInternalIn agree with the block entities");
+        System.out.println("VESSEL INTERNALS CC: getInternals, the crane's queueInternalOut and queueInternalIn agree with the block entities; the bridge refuses");
         h.succeed();
     }
 }

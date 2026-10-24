@@ -192,10 +192,10 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                 b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_RESUME));
         override = BwrButton.secondary("OVERRIDE", "Override the hoist-limit interlock: the bridge lifts the whole 4.5 m of the assembly whatever the water over it.",
                 b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_OVERRIDE, menu.bridgeOverride ? 0 : 1));
-        dryer = BwrButton.secondary("DRYER OUT", "Lift the steam dryer out of the open, flooded vessel to the nearest free equipment pad (it comes out first and goes back in last).",
-                b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_INTERNAL, 0, (menu.bridgeInternalsOut & 1) == 0 ? 1 : 0));
-        separators = BwrButton.secondary("SEPS OUT", "Lift the shroud head and steam separator assembly out to the nearest free equipment pad (after the dryer).",
-                b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_INTERNAL, 1, (menu.bridgeInternalsOut & 2) == 0 ? 1 : 0));
+        dryer = BwrButton.secondary("DRYER DOWN", "The bridge moves fuel only; the reactor building crane lifts the dryer. This sets a dryer already on the bridge's hoist down on the nearest free equipment pad.",
+                b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_INTERNAL, 0, 1));
+        separators = BwrButton.secondary("SEPS DOWN", "The bridge moves fuel only; the reactor building crane lifts the separator assembly. This sets one already on the bridge's hoist down on the nearest free equipment pad.",
+                b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_INTERNAL, 1, 1));
     }
 
     private int cellCount() {
@@ -351,20 +351,9 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
         toCore.active = room && valid && !coreFull && cellFull && !menu.bridgeHolding;
         boolean fuelHeld = menu.bridgeHolding && menu.bridgeCarriedInternal < 0;
         setDown.active = room && fuelHeld && cell && !cellFull && !menu.bridgeBusy;
-        boolean dryerOut = (menu.bridgeInternalsOut & 1) != 0, sepsOut = (menu.bridgeInternalsOut & 2) != 0;
-        boolean free = room && !menu.bridgeBusy && (!menu.bridgeHolding || menu.bridgeCarriedInternal >= 0);
-        dryer.setMessage(Component.literal(dryerOut ? "DRYER IN" : "DRYER OUT"));
-        separators.setMessage(Component.literal(sepsOut ? "SEPS IN" : "SEPS OUT"));
-        boolean lifts = menu.bridgeLiftsInternals;
-        dryer.active = lifts && free && (!dryerOut || !sepsOut) && (menu.bridgeCarriedInternal < 0 || menu.bridgeCarriedInternal == 0);
-        separators.active = lifts && free && (sepsOut || dryerOut) && (menu.bridgeCarriedInternal < 0 || menu.bridgeCarriedInternal == 1);
-        dryer.setTooltipText(!lifts ? "The refuelling bridge moves fuel only. The reactor building crane lifts the steam dryer."
-                : dryerOut ? "Set the steam dryer back into the vessel from its pad (the separator assembly must be in first)."
-                : "Lift the steam dryer out of the open, flooded vessel to the nearest free equipment pad (it comes out first and goes back in last).");
-        separators.setTooltipText(!lifts ? "The refuelling bridge moves fuel only. The reactor building crane lifts the separator assembly."
-                : sepsOut ? "Set the shroud head and separator assembly back onto the core from its pad (before the dryer)."
-                : dryerOut ? "Lift the shroud head and steam separator assembly out to the nearest free equipment pad."
-                : "The steam dryer sits over the separators: lift it out first.");
+        boolean free = room && !menu.bridgeBusy;
+        dryer.active = free && menu.bridgeCarriedInternal == 0;
+        separators.active = free && menu.bridgeCarriedInternal == 1;
         abort.active = menu.bridgeBusy || menu.bridgeHalted || menu.bridgeQueued > 0;
         resume.active = menu.bridgeHalted;
         override.setMessage(Component.literal(menu.bridgeOverride ? "OVERRIDE ON" : "OVERRIDE"));

@@ -283,7 +283,7 @@ at the lip, and the well is unchanged. `levelAtHeight` is the exact inverse.
 
 ### Removable dryer and separators: the rules chosen
 
-- **Lifting.** The refuelling bridge did it in alpha.53 (no new hoist: the smaller change). Since the building crane (BUILDING-CRANE.md) the reactor building crane lifts the head first, then the dryer and the separators; the bridge moves fuel only (the option `bridgeLiftsInternals` keeps the alpha.53 bridge lift while the old tests need it).
+- **Lifting.** The refuelling bridge did it in alpha.53 (no new hoist: the smaller change). Since the building crane (BUILDING-CRANE.md) the reactor building crane lifts the head first, then the dryer and the separators; the bridge moves fuel only and refuses these lifts.
 - **Storage.** An Equipment Storage Pad block on the floor of a player-built pit of vanilla water is the dryer/separator storage
   pool. A pool multiblock would have been more work for no extra realism here.
 - **Consequences.**
