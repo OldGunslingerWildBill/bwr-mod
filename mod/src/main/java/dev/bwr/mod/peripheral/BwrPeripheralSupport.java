@@ -86,6 +86,12 @@ public final class BwrPeripheralSupport {
         if(be instanceof ContainmentControllerBlockEntity b)return new ContainmentPeripheral(b);
         if(be instanceof dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity b)return new SpentFuelPoolPeripheral(b);
         if(be instanceof dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity b)return new RefuellingBridgePeripheral(b);
+        if(be instanceof dev.bwr.mod.refuelling.BuildingCraneBlockEntity b)return new BuildingCranePeripheral(b);
+        if(be instanceof StudTensionerBlockEntity b)return new StudTensionerPeripheral(b);
+        if(be instanceof dev.bwr.mod.refuelling.HeadStandBlockEntity b)return new HardwarePeripheral("bwr_head_stand",()->{
+            var m=new LinkedHashMap<String,Object>();m.put("holdingHead",b.holdsHead());
+            if(b.holdsHead())m.put("reactor",Map.of("x",b.reactorPos().getX(),"y",b.reactorPos().getY(),"z",b.reactorPos().getZ()));
+            return m;});
         if(be instanceof SuppressionPoolBlockEntity b)return new SuppressionPoolPeripheral(b);
         if(be instanceof SuppressionPoolPortBlockEntity)return new SuppressionPoolPeripheral(null);
         if(be instanceof TurbineSteamOutletBlockEntity b)return new TurbineSteamOutletPeripheral(b);

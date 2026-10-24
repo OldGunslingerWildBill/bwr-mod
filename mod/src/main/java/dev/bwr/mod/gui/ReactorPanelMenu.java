@@ -391,7 +391,9 @@ public class ReactorPanelMenu extends BwrMenu {
             case CMD_SET_VESSEL_STATE -> {
                 VesselState[] states = VesselState.values();
                 if (a >= 0 && a < states.length) {
-                    Component refusal = be.setVesselStateMessage(states[a]);
+                    // The head does not come off with a button unless the server says so (instantHeadRemoval): the button explains the procedure.
+                    Component refusal = dev.bwr.mod.config.GameplayConfig.instantHeadRemoval() ? be.setVesselStateMessage(states[a])
+                            : headProcedure(states[a].canHoldPressure());
                     if (refusal != null) {
                         refuse(sender, refusal);
                     }
@@ -413,6 +415,15 @@ public class ReactorPanelMenu extends BwrMenu {
             }
         }
         markSnapshotDirty();
+    }
+
+    /** What the head button says when the head is not moved by a button: the real procedure. */
+    public static Component headProcedure(boolean seating) {
+        return seating
+                ? BwrText.tr("status.bwr.reactor_panel_menu.head_procedure_on",
+                "The head is not set on with a button. Lift it from its head stand with the reactor building crane, then bring the closure studs to load with a Stud Tensioner. (The server option instantHeadRemoval brings this button back.)")
+                : BwrText.tr("status.bwr.reactor_panel_menu.head_procedure_off",
+                "The head does not come off with a button. Depressurise to 25 psig or less, detension the closure studs with a Stud Tensioner beside the reactor, then lift the head onto a Head Stand with the reactor building crane. (The server option instantHeadRemoval brings this button back.)");
     }
 
     /**

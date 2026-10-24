@@ -97,6 +97,7 @@ public final class BwrMod {
         modBus.addListener(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent.class,
                 dev.bwr.mod.condenser.CondenserCapabilities::register);
         modBus.addListener(dev.bwr.mod.cooling.CoolingCapabilities::register);
+        modBus.addListener(dev.bwr.mod.reactor.StudTensionerCapabilities::register);
         modBus.addListener(dev.bwr.mod.suppression.SuppressionWaterCapabilities::register);
         modBus.addListener(dev.bwr.mod.spentfuel.SpentFuelPoolCapabilities::register);
         modBus.addListener(dev.bwr.mod.containment.ContainmentPenetrationCapabilities::register);

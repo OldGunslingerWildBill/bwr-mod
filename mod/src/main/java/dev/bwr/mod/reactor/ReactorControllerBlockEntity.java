@@ -187,6 +187,15 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      *  console whose hoist holds it). Empty, and not saved, while both are installed, as in every older save. */
     private final java.util.EnumMap<VesselInternal, BlockPos> internalsOut = new java.util.EnumMap<>(VesselInternal.class);
     private int clientInternalsOut;
+    /**
+     * Closure studs whose nuts are off (0: every stud at load, the default and not saved), counted while the head is on. With the head
+     * off every stud is bare. The reactor building crane lifts the head only when this equals the stud count; the vessel holds pressure
+     * only when it is zero.
+     */
+    private int studsOff;
+    /** Where the head is while it is off: the console of the crane whose hook holds it, or a head stand. Null with the head off means it is laid down somewhere (older worlds, or the instant button). Not saved while null. */
+    private BlockPos headAt;
+    private int clientStudsOff;
 
     /** Satellite recirculation pumps that have announced themselves. */
     private final Set<BlockPos> pumpPositions = new LinkedHashSet<>();
@@ -309,7 +318,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         gatherPumpFlow(level);
         applyVesselSteamDischarge(level);
         // The head is off: water the well cannot hold goes over the flange (see PressureVessel.Well). A fact about the hardware.
-        core.getPressureVessel().setWellSpilling(!vesselState.canHoldPressure());
+        core.getPressureVessel().setWellSpilling(!headSealed());
         drainCavity(level);
         dev.bwr.mod.TickProbe.stop("  Reactor.pumps+nozzles", probe);
 
@@ -485,19 +494,22 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * stamped on every tick of normal operation.
      */
     private void applyVesselSteamDischarge(Level level) {
-        double head = vesselState.canHoldPressure()
-                ? 0.0
-                // Flow stops when the vessel reaches containment pressure, which
-                // is where an open vessel sits. Keying on gauge pressure is what
-                // keeps this from dragging the dome down to the pressure model's
-                // numerical floor, some 14 psi below atmospheric.
-                : OPEN_HEAD_DISCHARGE_KG_PER_S_PER_PSI * Math.max(0.0, core.getPressurePsig());
+        double head = headDischargeKgPerS();
         double discharge = head + gatherSteamOutletFlow(level);
         if (discharge == 0.0 && lastVesselDischargeKgPerS == 0.0) {
             return;
         }
         core.setSteamLeakKgPerS(discharge);
         lastVesselDischargeKgPerS = discharge;
+    }
+
+    /**
+     * What the closure leaks, kg/s: nothing with the head on and every stud at load, and otherwise (head off, or any stud bare) the open-head
+     * discharge. Flow stops when the vessel reaches containment pressure, which is where an open vessel sits: keying on gauge pressure is what
+     * keeps this from dragging the dome down to the pressure model's numerical floor, some 14 psi below atmospheric.
+     */
+    public double headDischargeKgPerS() {
+        return headSealed() || core == null ? 0.0 : OPEN_HEAD_DISCHARGE_KG_PER_S_PER_PSI * Math.max(0.0, core.getPressurePsig());
     }
 
     /**
@@ -1132,13 +1144,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     }
 
     public Component setVesselStateMessage(VesselState next) {
-        if (next.canHoldPressure() && !internalsOut.isEmpty())
-            return BwrText.tr("status.bwr.reactor_controller.internals_out_head",
-                    "The head cannot go back on: the %s is out of the vessel. Set the separator assembly and then the dryer back in with the refuelling bridge first.",
-                    (internalsOut.containsKey(VesselInternal.SEPARATOR) ? VesselInternal.SEPARATOR : VesselInternal.DRYER).title);
-        if (next.canHoldPressure() && core != null && core.getBoundaryStress().isBroken(dev.bwr.core.boundary.BoundaryComponent.REACTOR_VESSEL_HEAD))
-            return BwrText.tr("status.bwr.reactor_controller.head_failed",
-                    "The vessel head has failed; changing the refuelling state cannot repair pressure-boundary damage.");
+        if (next.canHoldPressure()) {
+            Component why = headSeatRefusal();
+            if (why != null) return why;
+        }
         if (next == VesselState.REFUELING && core != null) {
             double psig = core.getPressurePsig();
             if (psig > 25.0) {
@@ -1147,10 +1156,165 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             }
         }
         vesselState = next;
+        // The instant way (the panel button with instantHeadRemoval on, a program, a test): the head is on and tight, or off and laid down somewhere.
+        headAt = null;
+        studsOff = 0;
         refreshHeadAccess();
         setChanged();
         syncToClients();
         return null;
+    }
+
+    /** What stops the head from going back on, from the dryer or the separators being out or from a failed head; null if nothing does. */
+    private Component headSeatRefusal() {
+        if (!internalsOut.isEmpty())
+            return BwrText.tr("status.bwr.reactor_controller.internals_out_head",
+                    "The head cannot go back on: the %s is out of the vessel. Set the separator assembly and then the dryer back in with the reactor building crane first.",
+                    (internalsOut.containsKey(VesselInternal.SEPARATOR) ? VesselInternal.SEPARATOR : VesselInternal.DRYER).title);
+        if (core != null && core.getBoundaryStress().isBroken(dev.bwr.core.boundary.BoundaryComponent.REACTOR_VESSEL_HEAD))
+            return BwrText.tr("status.bwr.reactor_controller.head_failed",
+                    "The vessel head has failed; changing the refuelling state cannot repair pressure-boundary damage.");
+        return null;
+    }
+
+    // -----------------------------------------------------------------
+    // The closure studs and the head's place (BUILDING-CRANE.md)
+    // -----------------------------------------------------------------
+
+    /** Studs in the closure flange of this vessel (the drawn count, 24..92; 74 on the reference vessel); 0 before it is formed. */
+    public int studTotal() {
+        var e = vesselEnvelope != null ? vesselEnvelope : clientVesselEnvelope;
+        return e == null ? 0 : VesselProfile.of(e, false).studCount();
+    }
+
+    /** Studs whose nuts are off: all of them with the head off, otherwise the count the tensioner has reached. */
+    public int studsOff() {
+        int total = studTotal();
+        return vesselState == VesselState.REFUELING ? total : Math.min(studsOff, total);
+    }
+
+    /** Client side of {@link #studsOff()}, from the synced state. */
+    public int clientStudsOff() {
+        int total = studTotal();
+        return vesselState == VesselState.REFUELING ? total : Math.min(clientStudsOff, total);
+    }
+
+    /** Studs at load. */
+    public int studsTensioned() {
+        return studTotal() - studsOff();
+    }
+
+    /** The head is on the flange with every stud at load: the only state in which the vessel holds pressure. */
+    public boolean headSealed() {
+        return vesselState.canHoldPressure() && studsOff <= 0;
+    }
+
+    /** Where the head is while it is off (a crane console or a head stand), or null (laid down, or the head is on). */
+    public BlockPos headLocation() {
+        return vesselState == VesselState.REFUELING ? headAt : null;
+    }
+
+    /** Why the studs cannot be backed off now, or null. */
+    public Component studLoosenBlocked() {
+        if (!isFormed()) return BwrText.tr("status.bwr.reactor_controller.internals_not_formed", "the reactor is not formed");
+        if (vesselState == VesselState.REFUELING)
+            return BwrText.tr("status.bwr.reactor_controller.studs_head_off", "the head is off: the studs are already bare");
+        double psig = core.getPressurePsig();
+        if (psig > 25.0)
+            return BwrText.tr("status.bwr.reactor_controller.studs_pressure",
+                    "cannot detension the studs at %s psig; the vessel must be depressurised to 25 psig or less first", Math.round(psig));
+        if (studsOff() >= studTotal())
+            return BwrText.tr("status.bwr.reactor_controller.studs_all_off", "all %s studs are already detensioned", studTotal());
+        return null;
+    }
+
+    /** Why the studs cannot be brought to load now, or null. */
+    public Component studTightenBlocked() {
+        if (!isFormed()) return BwrText.tr("status.bwr.reactor_controller.internals_not_formed", "the reactor is not formed");
+        if (vesselState == VesselState.REFUELING)
+            return BwrText.tr("status.bwr.reactor_controller.studs_set_head", "the head is off: set it back on the flange with the crane before the studs can be tensioned");
+        if (studsOff() <= 0)
+            return BwrText.tr("status.bwr.reactor_controller.studs_all_on", "all %s studs are already at load", studTotal());
+        return null;
+    }
+
+    /** The tensioner has backed one more stud off or brought one more to load: {@code count} studs are now off. */
+    public void setStudsOff(int count) {
+        int next = Math.max(0, Math.min(studTotal(), count));
+        if (next != studsOff) {
+            studsOff = next;
+            setChanged();
+            syncToClients();
+        }
+    }
+
+    /** Why the crane cannot lift the head now, or null. */
+    public Component headLiftBlocked() {
+        if (!isFormed()) return BwrText.tr("status.bwr.reactor_controller.internals_not_formed", "the reactor is not formed");
+        if (vesselState == VesselState.REFUELING)
+            return BwrText.tr("status.bwr.reactor_controller.head_already_off", "the head is already off the vessel");
+        if (!dev.bwr.core.refuelling.CraneMotion.headLiftable(studsOff, studTotal()))
+            return BwrText.tr("status.bwr.reactor_controller.studs_tensioned",
+                    "%s of the %s closure studs are still tensioned: detension them with a stud tensioner first", studsTensioned(), studTotal());
+        if (core.getPressurePsig() > 25.0)
+            return BwrText.tr("status.bwr.reactor_controller.the_vessel_head_is_on_and_it_cannot",
+                    "the vessel head is on, and it cannot be removed at %s psig; depressurise below 25 psig first", Math.round(core.getPressurePsig()));
+        if (core.getBoundaryStress().isBroken(dev.bwr.core.boundary.BoundaryComponent.REACTOR_VESSEL_HEAD))
+            return BwrText.tr("status.bwr.reactor_controller.head_failed",
+                    "The vessel head has failed; changing the refuelling state cannot repair pressure-boundary damage.");
+        return null;
+    }
+
+    /** Why the crane cannot set the head on the flange now, or null. */
+    public Component headSeatBlocked() {
+        if (!isFormed()) return BwrText.tr("status.bwr.reactor_controller.internals_not_formed", "the reactor is not formed");
+        if (vesselState != VesselState.REFUELING)
+            return BwrText.tr("status.bwr.reactor_controller.head_already_on", "the head is already on the vessel");
+        return headSeatRefusal();
+    }
+
+    /** The crane has taken the head off the flange: the vessel is open, and the head is on the hook of the crane at {@code at}. */
+    public void headLifted(BlockPos at) {
+        vesselState = VesselState.REFUELING;
+        headAt = at.immutable();
+        studsOff = 0;
+        refreshHeadAccess();
+        setChanged();
+        syncToClients();
+    }
+
+    /** The head has moved: onto a head stand at {@code at}, or (null) it is laid down somewhere. */
+    public void headMoved(BlockPos at) {
+        if (vesselState == VesselState.REFUELING && !java.util.Objects.equals(headAt, at)) {
+            headAt = at == null ? null : at.immutable();
+            setChanged();
+            syncToClients();
+        }
+    }
+
+    /** The crane has set the head on the flange: it is on, with every nut off until the tensioner brings the studs to load. */
+    public void headSeated() {
+        vesselState = VesselState.SHUTDOWN;
+        headAt = null;
+        studsOff = studTotal();
+        refreshHeadAccess();
+        setChanged();
+        syncToClients();
+    }
+
+    /** What the INFO tab and the computer say about the head and its studs. */
+    public Component headSummary() {
+        int total = studTotal();
+        if (vesselState == VesselState.REFUELING) {
+            if (headAt == null)
+                return BwrText.tr("status.bwr.reactor_controller.head_off_laid", "Head off, laid down clear of the vessel. The studs are bare. The crane can set it back on the flange.");
+            return BwrText.tr("status.bwr.reactor_controller.head_off_at", "Head off, at %s. The studs are bare. The crane can set it back on the flange.", headAt.toShortString());
+        }
+        if (studsOff <= 0)
+            return BwrText.tr("status.bwr.reactor_controller.head_on_tight", "Head on, all %s closure studs at load. To open the vessel: depressurise, detension the studs with a stud tensioner, then lift the head with the crane.", total);
+        if (studsOff >= total)
+            return BwrText.tr("status.bwr.reactor_controller.head_on_loose", "Head on, all %s studs detensioned (nuts off). The vessel cannot hold pressure. The crane can lift the head.", total);
+        return BwrText.tr("status.bwr.reactor_controller.head_on_partial", "Head on, %s of %s studs at load. The vessel cannot hold pressure until all are.", total - studsOff, total);
     }
 
     private void refreshHeadAccess() {
@@ -1288,9 +1452,13 @@ public class ReactorControllerBlockEntity extends BlockEntity {
 
     /** What the INFO tab and the computer say about the two assemblies. */
     public Component internalsSummary() {
+        return Component.empty().append(headSummary()).append(" ").append(internalsOnlySummary());
+    }
+
+    private Component internalsOnlySummary() {
         if (internalsOut.isEmpty()) {
             return BwrText.tr("status.bwr.reactor_controller.internals_installed",
-                    "Steam dryer and separator assembly installed. They come out with the head off and the vessel flooded to its flange, with the refuelling bridge.");
+                    "Steam dryer and separator assembly installed. They come out with the head off and the vessel flooded to its flange, with the reactor building crane.");
         }
         StringBuilder where = new StringBuilder();
         for (var entry : internalsOut.entrySet()) {
@@ -1587,6 +1755,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             internalsOut.forEach((which, at) -> out.putLong(which.id, at.asLong()));
             tag.put("InternalsOut", out);
         }
+        // Only while the head is on with some studs off, or off and on a stand or a hook; older saves have neither key (every stud at load, the head laid down).
+        if (studsOff > 0 && vesselState != VesselState.REFUELING) tag.putInt("StudsOff", studsOff);
+        if (headAt != null && vesselState == VesselState.REFUELING) tag.putLong("HeadAt", headAt.asLong());
     }
 
     @Override
@@ -1595,6 +1766,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         boundaryEffects.read(tag);
         severeEffects.read(tag);
         vesselState = VesselState.byName(tag.getString("VesselState"));
+        studsOff = vesselState == VesselState.REFUELING ? 0 : Math.max(0, tag.getInt("StudsOff"));
+        headAt = vesselState == VesselState.REFUELING && tag.contains("HeadAt") ? BlockPos.of(tag.getLong("HeadAt")) : null;
         internalsOut.clear();
         if (tag.contains("InternalsOut", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
             CompoundTag out = tag.getCompound("InternalsOut");
@@ -1714,6 +1887,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         if (vesselEnvelope != null) vesselEnvelope.write(tag);
         int internals = internalsOutMask();
         if (internals != 0) tag.putInt("VisualInternalsOut", internals);
+        if (studsOff > 0 && vesselState != VesselState.REFUELING) tag.putInt("VisualStudsOff", studsOff);
         var visualCore=VesselCoreAppearance.capture(this);
         if(visualCore!=null) {
             visualCore.write(tag);
@@ -1759,6 +1933,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         // to look — would have found default values on arrival.
         clientFormed = tag.getBoolean("Formed");
         clientInternalsOut = tag.getInt("VisualInternalsOut");
+        clientStudsOff = tag.getInt("VisualStudsOff");
         clientVesselEnvelope = VesselAppearance.read(tag);
         var nextCore=VesselCoreAppearance.read(tag,clientVesselEnvelope);
         // Preserve identity when only physics measurements change: no mesh rebuild.

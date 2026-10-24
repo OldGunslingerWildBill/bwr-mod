@@ -31,7 +31,11 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
     public static final String[] PARTS=java.util.stream.Stream.concat(java.util.stream.Stream.of("spool","steam_nozzle","water_nozzle","controller_panel"),
             java.util.Arrays.stream(VesselModel.PARTS)).toArray(String[]::new);
     private static final ModelProperty<Boolean> HIDDEN=new ModelProperty<>();
-    private record Shape(VesselAppearance.Envelope envelope,boolean closed,boolean failed){}
+    private record Shape(VesselAppearance.Envelope envelope,boolean closed,boolean failed,boolean nuts){}
+    /** One nut and washer of the closure, drawn singly while the stud tensioner is part way round the flange. */
+    private record NutShape(double studRadius){}
+    /** The vessel head by itself without its nuts (hanging from the crane, or lying on its stand): size only. */
+    private record BareHeadShape(int width,int depth){}
     private record CoreShape(int width,int depth,int height,VesselCoreAppearance core){}
     private record JetShape(VesselAppearance.Envelope envelope,boolean internalPumps){}
     /** The v2 internals' three meshes: the fixed ones, the separator assembly and the dryer (size and variant only). */
@@ -81,7 +85,10 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
         boolean closed=be.vesselState().canHoldPressure()&&!failed;
         VesselAccidentEffects.emit(be);
         pose.pushPose();pose.translate(cx-be.getBlockPos().getX(),e.min().getY()-be.getBlockPos().getY(),cz-be.getBlockPos().getZ());
-        MachineMeshCache.draw(new Shape(e,closed,failed),b->build(b,e,closed,failed),pose,buffers,light,overlay);
+        int studsOff=be.clientStudsOff();
+        boolean nuts=closed&&studsOff<=0;
+        MachineMeshCache.draw(new Shape(e,closed,failed,nuts),b->build(b,e,closed,failed,nuts),pose,buffers,light,overlay);
+        if(closed&&!failed&&studsOff>0&&studsOff<be.studTotal())drawLooseNuts(e,studsOff,pose,buffers,light,overlay);
         var core=be.clientCoreAppearance();
         if(core!=null)MachineMeshCache.draw(new DriveShape(e.width(),e.depth(),e.height(),core.layoutVersion(),core.latticeWidth(),core.drives(),core.internalPumps()),
                 b->VesselDriveGeometry.build(b,e,core),pose,buffers,light,overlay);
@@ -128,9 +135,23 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
             LevelRenderer.renderLineBox(pose,buffers.getBuffer(RenderType.lines()),box,.3f,.75f,1f,.65f);
         }
     }
-    private static void build(MachineMeshCache.Builder b,VesselAppearance.Envelope e,boolean closed,boolean failed){
+    /** The nuts still on while the tensioner works round the flange: the first {@code off} studs are bare, the rest keep theirs. At most one draw per stud, and only mid-pass. */
+    private static void drawLooseNuts(VesselAppearance.Envelope e,int off,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
+        var p=VesselProfile.of(e,false);int studs=p.studCount();double rs=p.studRadius(),fl=VesselProfile.flangeHeight(p.headRise);
+        for(int i=Math.max(0,off);i<studs;i++){
+            double a=(i+.5)*Math.PI*2/studs;
+            pose.pushPose();pose.translate(.472*e.width()*Math.cos(a),p.flangeFace+fl,.472*e.depth()*Math.sin(a));
+            MachineMeshCache.draw(new NutShape(rs),b->b.part(VesselModel.m("rpv_nut"),0,0,0,(float)(1.6*rs),(float)(1.9*rs),(float)(1.6*rs)),pose,buffers,light,overlay);
+            pose.popPose();
+        }
+    }
+    /** The vessel head by itself, mating face at the pose's origin and without nuts, at the size of a vessel of this profile. Hung from the crane's strongback and laid on a head stand. */
+    public static void drawHead(VesselProfile p,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
+        MachineMeshCache.draw(new BareHeadShape(p.width,p.depth),b->VesselModel.buildHead(b,p.width,p.depth,(float)p.headRise,false),pose,buffers,light,overlay);
+    }
+    private static void build(MachineMeshCache.Builder b,VesselAppearance.Envelope e,boolean closed,boolean failed,boolean nuts){
         CoreSpargerGeometry.build(b,e);
-        VesselModel.buildShell(b,e,closed,failed);
+        VesselModel.buildShell(b,e,closed,failed,nuts);
         CavitySealGeometry.build(b,e);
         // Adapt the curved shell to the player's own wall blocks. Interfaces stay put.
         VesselModel.buildPorts(b,e);

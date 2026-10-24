@@ -1,0 +1,138 @@
+package dev.bwr.mod.gui.client;
+
+import dev.bwr.mod.gui.CraneMenu;
+import dev.bwr.mod.gui.client.style.BwrButton;
+import dev.bwr.mod.gui.client.style.BwrStyle;
+import dev.bwr.mod.gui.client.style.BwrStyle.Status;
+import dev.bwr.mod.gui.client.style.Layout;
+import dev.bwr.mod.gui.client.style.UiElement;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+
+import java.util.List;
+import java.util.Locale;
+
+/**
+ * The reactor building crane's pendant: the crane's state and the load on the hook on the left, where the head, its studs and the
+ * dryer and the separators are on the right, and the lift buttons under them. A lift is a move a player queues; the colours are
+ * typography and nothing reads them.
+ */
+public class CraneScreen extends BwrScreen<CraneMenu> {
+
+    private BwrButton head;
+    private BwrButton dryer;
+    private BwrButton separators;
+    private BwrButton abort;
+    private BwrButton resume;
+
+    public CraneScreen(CraneMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title, 420, 214);
+    }
+
+    private static String phaseWord(String phase) {
+        return switch (phase) {
+            case "IDLE" -> "Idle";
+            case "TRAVEL" -> "Running to the load";
+            case "LOWER_EMPTY" -> "Lowering the hook";
+            case "LATCH" -> "Hooking on";
+            case "RAISE_LOADED" -> "Lifting the load";
+            case "TRANSIT" -> "Carrying the load";
+            case "LOWER_LOADED" -> "Setting the load down";
+            case "RELEASE" -> "Unhooking";
+            case "RAISE_EMPTY" -> "Raising the hook";
+            case "HALTED" -> "HALTED";
+            default -> phase;
+        };
+    }
+
+    private boolean headOn() {
+        return !menu.headOff;
+    }
+
+    private String headText() {
+        if (menu.headOff) {
+            return "off, " + menu.headWhere;
+        }
+        int tight = menu.studTotal - menu.studsOff;
+        return tight == menu.studTotal ? "on, studs at load" : menu.studsOff >= menu.studTotal ? "on, studs detensioned" : "on, " + tight + " studs at load";
+    }
+
+    private Status headStatus() {
+        if (menu.headOff) {
+            return Status.INFO;
+        }
+        return menu.studsOff >= menu.studTotal ? Status.CAUTION : Status.NONE;
+    }
+
+    @Override
+    protected UiElement buildUi() {
+        if (head == null) {
+            head = BwrButton.primary("LIFT HEAD", "Queue a lift: the crane carries the vessel head, slung on its strongback, to the nearest free head stand. Every closure stud must be detensioned.",
+                    b -> menu.sendCommand(CraneMenu.CMD_HEAD, menu.headOff ? 0 : 1));
+            dryer = BwrButton.secondary("DRYER OUT", "Lift the steam dryer out of the open, flooded vessel to the nearest free equipment pad (it comes out first and goes back last).",
+                    b -> menu.sendCommand(CraneMenu.CMD_INTERNAL, 0, (menu.internalsOut & 1) == 0 ? 1 : 0));
+            separators = BwrButton.secondary("SEPS OUT", "Lift the shroud head and steam separator assembly out to the nearest free equipment pad (after the dryer).",
+                    b -> menu.sendCommand(CraneMenu.CMD_INTERNAL, 1, (menu.internalsOut & 2) == 0 ? 1 : 0));
+            abort = BwrButton.danger("ABORT", "Stop the crane where it is and forget the queue. A load on the hook stays on it.",
+                    b -> menu.sendCommand(CraneMenu.CMD_ABORT));
+            resume = BwrButton.secondary("RESUME", "After a halt, try the step again.", b -> menu.sendCommand(CraneMenu.CMD_RESUME));
+        }
+        var state = Layout.card("Crane",
+                Layout.row("State", () -> phaseWord(menu.phase) + (menu.queued > 0 ? " (+" + menu.queued + ")" : "")).dense()
+                        .status(() -> menu.halted ? Status.ALARM : menu.busy ? Status.INFO : Status.NONE)
+                        .tip("What the crane is doing, and how many more lifts are queued behind it."),
+                Layout.meter("Phase", () -> menu.busy ? menu.progress : 0.0, () -> menu.halted ? Status.ALARM : Status.NONE,
+                        () -> menu.busy ? menu.secondsLeft + " s left" : "-"),
+                Layout.row("Hook", () -> menu.carried.isEmpty() ? "empty" : menu.carried).dense()
+                        .tip("What hangs from the hook block."),
+                Layout.row("Hook height", () -> String.format(Locale.ROOT, "%+.1f", menu.hookHeightM), "m").dense()
+                        .tip("The hook's height over the floor of the runway rails; its rest position is level with them."),
+                Layout.row("Runway", () -> menu.runwayBlocks + " x " + menu.spanBlocks, "m").dense()
+                        .tip(() -> List.of(Component.literal("The rails are " + menu.runwayBlocks + " m long along the runway and " + menu.spanBlocks
+                                + " m apart, at y " + menu.railY + ".")))).compact();
+        var plant = Layout.card("Reactor",
+                Layout.row("Head", this::headText).dense().status(this::headStatus)
+                        .tip("Where the vessel head is, and how many of its closure studs are at load."),
+                Layout.row("Studs at load", () -> menu.headOff ? "0 / " + menu.studTotal : (menu.studTotal - menu.studsOff) + " / " + menu.studTotal).dense()
+                        .tip("A stud tensioner backs the nuts off before the head lifts, and brings the studs back to load after the head is set."),
+                Layout.row("Dryer", () -> (menu.internalsOut & 1) == 0 ? "installed" : "out").dense()
+                        .status(() -> (menu.internalsOut & 1) == 0 ? Status.NONE : Status.CAUTION),
+                Layout.row("Separators", () -> (menu.internalsOut & 2) == 0 ? "installed" : "out").dense()
+                        .status(() -> (menu.internalsOut & 2) == 0 ? Status.NONE : Status.CAUTION),
+                Layout.note(() -> menu.message).maxLines(2).status(() -> menu.halted ? Status.ALARM : Status.NONE)
+                        .tip(() -> List.of(Component.literal(menu.message.isEmpty() ? menu.move : menu.message)))).compact();
+        var controls = Layout.card("",
+                Layout.controls(BwrStyle.SP1).add(head, 1).add(dryer, 1).add(separators, 1),
+                Layout.gap(1),
+                Layout.controls(BwrStyle.SP1).add(abort, 1).add(resume, 1)).compact();
+        return Layout.column(BwrStyle.SP2,
+                Layout.note("There is no crane console here.").body().status(() -> Status.ALARM).showIf(() -> !menu.present),
+                Layout.column(BwrStyle.SP1,
+                        Layout.note("The crane cannot see its runway.").body().status(() -> Status.ALARM),
+                        Layout.note(() -> menu.problem).body())
+                        .showIf(() -> menu.present && !menu.ready),
+                Layout.column(BwrStyle.SP2,
+                        Layout.note("No formed reactor lies between the crane's rails.").body().status(() -> Status.CAUTION).showIf(() -> !menu.reactorFound),
+                        Layout.split(BwrStyle.SP2, state, plant),
+                        controls)
+                        .showIf(() -> menu.present && menu.ready));
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        boolean go = menu.present && menu.ready && menu.reactorFound && !menu.busy && !menu.halted;
+        head.setMessage(Component.literal(menu.headOff ? "SET HEAD" : "LIFT HEAD"));
+        head.setTooltipText(menu.headOff
+                ? "Queue a lift: the crane takes the head from its stand and sets it on the vessel flange. Both the dryer and the separators must be back in. The studs are then tensioned with the stud tensioner."
+                : "Queue a lift: the crane carries the vessel head, slung on its strongback, to the nearest free head stand. Every closure stud must be detensioned first.");
+        head.active = go;
+        boolean dryerOut = (menu.internalsOut & 1) != 0, sepsOut = (menu.internalsOut & 2) != 0;
+        dryer.setMessage(Component.literal(dryerOut ? "DRYER IN" : "DRYER OUT"));
+        separators.setMessage(Component.literal(sepsOut ? "SEPS IN" : "SEPS OUT"));
+        dryer.active = go && menu.headOff;
+        separators.active = go && menu.headOff;
+        abort.active = menu.present && menu.ready && (menu.busy || menu.halted || menu.queued > 0 || !menu.carried.isEmpty());
+        resume.active = menu.present && menu.ready && menu.halted;
+    }
+}

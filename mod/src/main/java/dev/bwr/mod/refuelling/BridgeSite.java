@@ -18,6 +18,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -82,9 +83,17 @@ public final class BridgeSite {
     public final BlockPos reactorPos;
     @Nullable
     public final BlockPos poolPos;
+    /** True for the reactor building crane's runway (the hook rests at {@code CraneMotion.HOOK_HOME_ABOVE_RAIL_M}), false for the refuelling bridge's. */
+    public final boolean crane;
 
     private BridgeSite(@Nullable Component problem, Direction.Axis axis, int railY, int aLo, int aHi, int cLow, int cHigh,
                        @Nullable BlockPos reactorPos, @Nullable BlockPos poolPos) {
+        this(problem, axis, railY, aLo, aHi, cLow, cHigh, reactorPos, poolPos, false);
+    }
+
+    private BridgeSite(@Nullable Component problem, Direction.Axis axis, int railY, int aLo, int aHi, int cLow, int cHigh,
+                       @Nullable BlockPos reactorPos, @Nullable BlockPos poolPos, boolean crane) {
+        this.crane = crane;
         this.problem = problem;
         this.axis = axis;
         this.railY = railY;
@@ -145,30 +154,31 @@ public final class BridgeSite {
     }
 
     public double homeY() {
-        return railY + BridgeMotion.MAST_HOME_ABOVE_RAIL_M;
+        return railY + (crane ? dev.bwr.core.refuelling.CraneMotion.HOOK_HOME_ABOVE_RAIL_M : BridgeMotion.MAST_HOME_ABOVE_RAIL_M);
     }
 
     // ---------------------------------------------------------------
     // The survey
     // ---------------------------------------------------------------
 
-    private static boolean isRail(Level level, BlockPos p, Direction.Axis axis) {
+    private static boolean isRail(Level level, BlockPos p, Direction.Axis axis, boolean crane) {
         if (!level.isLoaded(p)) {
             return false;
         }
         BlockState s = level.getBlockState(p);
-        return s.getBlock() instanceof RefuellingRailBlock && s.getValue(RefuellingRailBlock.AXIS) == axis;
+        return crane ? s.getBlock() instanceof CraneRunwayRailBlock && s.getValue(CraneRunwayRailBlock.AXIS) == axis
+                : s.getBlock() instanceof RefuellingRailBlock && s.getValue(RefuellingRailBlock.AXIS) == axis;
     }
 
     /** {lo, hi} of the run of rails of {@code axis} through {@code from}, in the coordinate along the axis. */
-    private static int[] run(Level level, BlockPos from, Direction.Axis axis) {
+    private static int[] run(Level level, BlockPos from, Direction.Axis axis, boolean crane) {
         Direction plus = Direction.get(Direction.AxisDirection.POSITIVE, axis);
         int lo = 0;
         int hi = 0;
-        while (hi < MAX_RUN && isRail(level, from.relative(plus, hi + 1), axis)) {
+        while (hi < MAX_RUN && isRail(level, from.relative(plus, hi + 1), axis, crane)) {
             hi++;
         }
-        while (-lo < MAX_RUN && isRail(level, from.relative(plus, lo - 1), axis)) {
+        while (-lo < MAX_RUN && isRail(level, from.relative(plus, lo - 1), axis, crane)) {
             lo--;
         }
         int base = axis == Direction.Axis.X ? from.getX() : from.getZ();
@@ -176,29 +186,45 @@ public final class BridgeSite {
     }
 
     public static BridgeSite survey(Level level, BlockPos console) {
+        return survey(level, console, false);
+    }
+
+    /**
+     * What a reactor building crane console can see: two runs of {@link CraneRunwayRailBlock} (the same rules as the bridge's rails)
+     * and the formed reactor between them. A crane needs no pool; the head stand and the equipment pads are found when a move is queued.
+     */
+    public static BridgeSite surveyCrane(Level level, BlockPos console) {
+        return survey(level, console, true);
+    }
+
+    private static BridgeSite survey(Level level, BlockPos console, boolean crane) {
         BlockPos rail = null;
         for (Direction d : new Direction[]{Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.UP}) {
             BlockPos p = console.relative(d);
-            if (level.isLoaded(p) && level.getBlockState(p).getBlock() instanceof RefuellingRailBlock) {
+            if (level.isLoaded(p) && (crane ? level.getBlockState(p).getBlock() instanceof CraneRunwayRailBlock
+                    : level.getBlockState(p).getBlock() instanceof RefuellingRailBlock)) {
                 rail = p;
                 break;
             }
         }
         if (rail == null) {
-            return failure(BwrText.tr("status.bwr.refuelling_bridge.no_rail",
+            return failure(crane
+                    ? BwrText.tr("status.bwr.building_crane.no_rail",
+                    "Stand the console beside a crane runway rail. The crane rides two parallel runs of rails high on opposite walls.")
+                    : BwrText.tr("status.bwr.refuelling_bridge.no_rail",
                     "Stand the console beside a refuelling rail. The bridge rides two parallel runs of rails."));
         }
-        Direction.Axis axis = level.getBlockState(rail).getValue(RefuellingRailBlock.AXIS);
+        Direction.Axis axis = level.getBlockState(rail).getValue(BlockStateProperties.HORIZONTAL_AXIS);
         Direction.Axis cross = axis == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X;
-        int[] first = run(level, rail, axis);
+        int[] first = run(level, rail, axis, crane);
         int bestStep = Integer.MAX_VALUE;
         int[] bestRun = null;
         int bestSign = 0;
         for (int step = 1; step <= MAX_SPAN && bestRun == null; step++) {
             for (int sign : new int[]{1, -1}) {
                 BlockPos p = rail.relative(Direction.get(sign > 0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE, cross), step);
-                if (isRail(level, p, axis)) {
-                    int[] second = run(level, p, axis);
+                if (isRail(level, p, axis, crane)) {
+                    int[] second = run(level, p, axis, crane);
                     if (Math.min(first[1], second[1]) - Math.max(first[0], second[0]) >= 1) {
                         bestRun = second;
                         bestStep = step;
@@ -209,7 +235,10 @@ public final class BridgeSite {
             }
         }
         if (bestRun == null) {
-            return failure(BwrText.tr("status.bwr.refuelling_bridge.no_second_rail",
+            return failure(crane
+                    ? BwrText.tr("status.bwr.building_crane.no_second_rail",
+                    "The crane needs a second run of runway rails parallel to this one, within %s blocks, overlapping it by two blocks or more.", MAX_SPAN)
+                    : BwrText.tr("status.bwr.refuelling_bridge.no_second_rail",
                     "The bridge needs a second run of rails parallel to this one, within %s blocks, overlapping it by two blocks or more.", MAX_SPAN));
         }
         int railC = cross == Direction.Axis.X ? rail.getX() : rail.getZ();
@@ -218,7 +247,7 @@ public final class BridgeSite {
         int hi = Math.min(first[1], bestRun[1]);
         int cLow = Math.min(railC, otherC);
         int cHigh = Math.max(railC, otherC);
-        BridgeSite shell = new BridgeSite(null, axis, rail.getY(), lo, hi, cLow, cHigh, null, null);
+        BridgeSite shell = new BridgeSite(null, axis, rail.getY(), lo, hi, cLow, cHigh, null, null, crane);
         BlockPos reactor = null;
         double bestR = Double.MAX_VALUE;
         for (ReactorControllerBlockEntity r : FormedReactorRegistry.controllers(level)) {
@@ -236,7 +265,7 @@ public final class BridgeSite {
         }
         BlockPos pool = null;
         double bestP = Double.MAX_VALUE;
-        for (SpentFuelPoolBlockEntity p : SpentFuelPoolRegistry.controllers(level)) {
+        for (SpentFuelPoolBlockEntity p : crane ? List.<SpentFuelPoolBlockEntity>of() : SpentFuelPoolRegistry.controllers(level)) {
             var l = p.isFormed() ? p.layout() : null;
             if (l == null) {
                 continue;
@@ -249,7 +278,7 @@ public final class BridgeSite {
                 }
             }
         }
-        return new BridgeSite(null, axis, rail.getY(), lo, hi, cLow, cHigh, reactor, pool);
+        return new BridgeSite(null, axis, rail.getY(), lo, hi, cLow, cHigh, reactor, pool, crane);
     }
 
     // ---------------------------------------------------------------

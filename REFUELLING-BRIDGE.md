@@ -5,7 +5,8 @@ real plant does not do that. A **refuelling bridge** rides rails across the refu
 the spent fuel pool; a telescoping mast lowers a grapple, latches the handle of **one** assembly, lifts it, carries it, and
 sets it down in a core position or a pool rack. The whole way the fuel stays under water, and the cavity and the pool are
 joined by a water-filled slot with gates, the **cattle chute** (plant slang for the transfer canal). Nothing in it moves
-unless a player, or their program, says so.
+unless a player, or their program, says so. **The bridge moves fuel only.** The vessel head, the steam dryer and the separator assembly are
+lifted by the [reactor building crane](BUILDING-CRANE.md), a separate overhead crane on its own high rails.
 
 The old instant map is the server option `instantRefuelling` (`bwr-gameplay.toml`), **off by default**. With it off, the
 refuelling map still opens and still shows the whole core (burnup, k-inf), but its buttons stay dark and say how fuel moves
@@ -132,41 +133,49 @@ and the frame rate. The renderer's bounds reach 8 m above the rails.
 
 ![The operator platform and trolley](art/refuelling-bridge-model/model-trolley-closeup.png)
 
-## The steam dryer and the separator assembly (alpha.53)
+## The steam dryer and the separator assembly (alpha.53, lifted by the crane)
 
 Fuel sits under two big removable assemblies: the **steam dryer** (six vane banks on a support ring, a skirt down into the water)
 and, under it, the **shroud head with its standpipes and steam separators**. A real plant lifts both into the dryer/separator
-storage pool before it moves fuel. The mod does the same with the bridge you already have; nothing moves by itself.
+storage pool with the reactor building crane before it moves fuel; so does the mod. Nothing moves by itself. (In alpha.53 the
+refuelling bridge did these lifts; the crane has taken them over, see [BUILDING-CRANE.md](BUILDING-CRANE.md) and the legacy option below.)
 
 * **Fuel waits for both.** With the head off, a fuel move (the bridge, the instant map, a program) is refused while the dryer or
   the separator assembly is in the vessel, and says which. The server option `instantRefuelling` skips the machinery, these two included.
-* **Order.** The dryer comes out first (it sits over the separators) and goes back last. The separators go back first.
+* **Order.** The dryer comes out first (it sits over the separators) and goes back last. The separators go back first. The head goes on last of all.
 * **Only from a flooded vessel.** The head must be off and the vessel flooded to its flange (collapsed level at least +59 in; the
   physics' lip is +60 in). A sealed, flooded well above it is the usual way.
-* **Equipment Storage Pad** (new block, iron and gray concrete). One assembly per pad. Place two on the floor of a pit of water the
-  bridge reaches (between the rails): the plant's dryer/separator storage pool, built of vanilla water. A pad holding an assembly
+* **Equipment Storage Pad** (iron and gray concrete). One assembly per pad. Place two on the floor of a pit of water the
+  crane reaches (between its rails): the plant's dryer/separator storage pool, built of vanilla water. A pad holding an assembly
   cannot be broken by hand. Right-click it to see what it holds and the water over it.
-* **The lift.** Console buttons **DRYER OUT / DRYER IN** and **SEPS OUT / SEPS IN** (or `queueInternalOut("dryer")`,
-  `queueInternalIn("separator")` from a program) queue an ordinary bridge move: travel to the vessel's centre, lower the grapple
-  onto the lifting eyes, latch (4 s), raise out of the water to the mast's rest height at the loaded hoist speed, carry across in
-  the air, lower onto the nearest free pad (or back onto the seat), release, retract. About 55 s on the smallest vessel; the
-  bridge draws the assembly hanging from the grapple. ABORT leaves it on the hoist; the same button continues from there.
-* **The rails must be high enough.** Hanging from the retracted hoist, the assembly must clear the vessel's lip before it moves
-  sideways: the bridge refuses with the rail height to build to (for the 17 x 17 x 28 vessel, about 8 blocks above the flange).
+* **The lift.** The crane console's buttons **DRYER OUT / DRYER IN** and **SEPS OUT / SEPS IN** (or `queueInternalOut("dryer")`,
+  `queueInternalIn("separator")` on the crane's peripheral) queue an ordinary crane lift: run to the vessel's centre, lower the hook
+  onto the lifting eyes, hook on (5 s), raise out of the water to the hook's rest height, carry across in
+  the air, lower onto the nearest free pad (or back onto the seat), unhook, raise. The crane draws the assembly hanging from the hook.
+  ABORT leaves it on the hook; the same button continues from there.
+* **The runway must be high enough.** Hanging from the raised hook, the assembly must clear the vessel's lip before it moves
+  sideways: the crane refuses with the rail height to build to.
 * **Dose.** A lifted assembly is a gamma point source (`RadiationSources`): about 0.2 W for the dryer and 10 W for the separator
   assembly (game-scale estimates, roughly 0.1 Sv/h and several Sv/h at 1 m in air). Over the vessel it is shielded by the water
   you see (the drawn vessel and well); lifted above it, the Survey Meter spikes. On its pad, the vanilla water standing on the pad
   shields it (`e^(-7.07 x depth)` over the assembly's middle): a full pit is quiet, a dry pad is not.
 * **Consequences.** With either assembly out the reactor is **not operable**: the head cannot go back on (so the vessel cannot
-  hold pressure) until the separators and then the dryer are back. The INFO tab ("Steam dryer and separators") and
+  hold pressure) until the separators and then the dryer are back. The INFO tab ("Head, studs, dryer and separators") and
   `reactor.getInternals()` say where each one is.
 * **Saves.** Old worlds load with both installed. The reactor writes `InternalsOut` (where each is) only while one is out, the
-  pad writes what it holds only while it holds something, the console what its hoist holds only while it holds it. Breaking the
+  pad writes what it holds only while it holds something, the crane console what its hook holds only while it holds it. Breaking the
   console under a hanging assembly sets it back in its vessel rather than losing it.
+* **Legacy option `bridgeLiftsInternals`** (`bwr-gameplay.toml`, default **true** until the owner decides): while it is on, the
+  refuelling bridge can still do these two lifts as it did in alpha.53 (the console buttons DRYER OUT, SEPS OUT and the peripheral's
+  `queueInternalOut` / `queueInternalIn`). Turn it off and the bridge refuses them, saying that it moves fuel only and the crane lifts the head,
+  the dryer and the separators (a load already on its hoist can still be set down). The existing alpha.53 GameTests
+  (`VesselInternalsTests`, `VesselInternalsCcChecks`) assert the bridge's lift, so the default stays on until they are changed.
 
-CC:Tweaked: the bridge adds `queueInternalOut(name)` and `queueInternalIn(name)` (`"dryer"` or `"separator"`, returning
-`{ok, message}`); `getStatus()` adds `carriedInternal`, `dryerInstalled` and `separatorInstalled`. The reactor adds
-`getInternals()`: `dryerInstalled`, `separatorInstalled`, `dryerAt` / `separatorAt` ({x, y, z} while out), `operable`, `summary`. The pad has its own `bwr_equipment_pad` face: `getStatus()` gives `holding` (`"none"`, `"dryer"`, `"separator"`), `reactor` and `waterOverM`.
+CC:Tweaked: the crane's peripheral `bwr_building_crane` has `queueInternalOut(name)` and `queueInternalIn(name)` (`"dryer"` or `"separator"`,
+returning `{ok, message}`); `getStatus()` there adds `carried`, `dryerInstalled` and `separatorInstalled`. The reactor adds
+`getInternals()`: `dryerInstalled`, `separatorInstalled`, `dryerAt` / `separatorAt` ({x, y, z} while out), `operable`, `summary`. The pad has its own
+`bwr_equipment_pad` face: `getStatus()` gives `holding` (`"none"`, `"dryer"`, `"separator"`), `reactor` and `waterOverM`.
+The bridge's own peripheral keeps `queueInternalOut` / `queueInternalIn` only for the legacy option.
 
 ## The reactor well and the cavity seal
 

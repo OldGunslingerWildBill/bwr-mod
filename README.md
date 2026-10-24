@@ -76,6 +76,10 @@ and `c:ingots/steel`. Sodium and Iris also work, with or without a shader pack
   assembly and carries it under water through a gated cattle chute, in real time; lift fuel out of
   the water and the survey meter spikes. Instant refuelling is a server option, off by default.
   [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md)
+- **Reactor building crane.** A stud tensioner detensions the vessel head's 74 closure studs; an overhead
+  crane on high runway rails lifts the head onto a head stand, then the steam dryer and the separators into
+  their storage pool. The refuelling bridge moves fuel only. The old head button is the server option
+  `instantHeadRemoval`, off by default. [BUILDING-CRANE.md](BUILDING-CRANE.md)
 - **MOX.** The fabricator also makes MOX (4.50, 7.00 and 9.50 %) from plutonium and depleted uranium.
 - **Specialty rods.** Boron carbide and hafnium absorbers, three startup neutron sources, and cobalt,
   tritium and silicon irradiation targets. [FUELS-AND-RODS.md](FUELS-AND-RODS.md#specialty-rods)
@@ -190,7 +194,7 @@ its structure check says why in chat. Each step's detail is in the linked guide.
    tab asks for. [RECIRCULATION.md](RECIRCULATION.md)
 4. **Fuel.** Make assemblies in a Fuel Fabricator, or craft them with Mekanism yellow cake. Natural
    uranium will not sustain a chain reaction here, so choose 3.50 % (the selector's default) or higher.
-   Lift the head, flood the well (wall it in so the cavity seal forms, then run the feed pumps until the water stands over the flange; [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#the-reactor-well-and-the-cavity-seal)), and move the assemblies in with the refuelling bridge
+   Open the vessel (detension the studs with a Stud Tensioner, then lift the head with the reactor building crane; [BUILDING-CRANE.md](BUILDING-CRANE.md), or turn on `instantHeadRemoval`), flood the well (wall it in so the cavity seal forms, then run the feed pumps until the water stands over the flange; [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#the-reactor-well-and-the-cavity-seal)), and move the assemblies in with the refuelling bridge
    ([REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md)), or turn on the server option `instantRefuelling`
    and load the core from the refuelling map.
 5. **Steam.** Pipe the steam outlet through a stop valve and a control valve to the HP turbines, then the

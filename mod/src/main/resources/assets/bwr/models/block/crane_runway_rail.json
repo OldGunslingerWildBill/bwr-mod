@@ -1,0 +1,137 @@
+{
+  "textures": {
+    "beam": "bwr:block/crane_runway_beam",
+    "head": "bwr:block/crane_runway_head",
+    "particle": "bwr:block/crane_runway_beam"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        3
+      ],
+      "to": [
+        16,
+        2,
+        13
+      ],
+      "faces": {
+        "north": {
+          "texture": "#beam"
+        },
+        "south": {
+          "texture": "#beam"
+        },
+        "east": {
+          "texture": "#beam"
+        },
+        "west": {
+          "texture": "#beam"
+        },
+        "down": {
+          "texture": "#beam"
+        },
+        "up": {
+          "texture": "#beam"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        2,
+        6
+      ],
+      "to": [
+        16,
+        10,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#beam"
+        },
+        "south": {
+          "texture": "#beam"
+        },
+        "east": {
+          "texture": "#beam"
+        },
+        "west": {
+          "texture": "#beam"
+        },
+        "down": {
+          "texture": "#beam"
+        },
+        "up": {
+          "texture": "#beam"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        10,
+        3
+      ],
+      "to": [
+        16,
+        12,
+        13
+      ],
+      "faces": {
+        "north": {
+          "texture": "#beam"
+        },
+        "south": {
+          "texture": "#beam"
+        },
+        "east": {
+          "texture": "#beam"
+        },
+        "west": {
+          "texture": "#beam"
+        },
+        "down": {
+          "texture": "#beam"
+        },
+        "up": {
+          "texture": "#beam"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        12,
+        6
+      ],
+      "to": [
+        16,
+        13,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#head"
+        },
+        "south": {
+          "texture": "#head"
+        },
+        "east": {
+          "texture": "#head"
+        },
+        "west": {
+          "texture": "#head"
+        },
+        "down": {
+          "texture": "#head"
+        },
+        "up": {
+          "texture": "#head"
+        }
+      }
+    }
+  ]
+}
