@@ -92,6 +92,9 @@ public class RefuellingBridgePeripheral implements IPeripheral {
         m.put("holding", !be.carried().isEmpty());
         m.put("carried", be.carriedSummary());
         m.put("carriedCoverM", be.carriedCoverM());
+        if (be.carriedInternal() != null) {
+            m.put("carriedInternal", be.carriedInternal().id);
+        }
         m.put("grapple", point(be.tip()));
         if (be.haltMessage() != null) {
             m.put("haltReason", BwrText.english(be.haltMessage()));
@@ -106,6 +109,8 @@ public class RefuellingBridgePeripheral implements IPeripheral {
                 m.put("cavityWaterM", BridgeSite.cavityWaterM(r));
                 m.put("coreSlots", r.corePositions().length);
                 m.put("coreReady", r.refuellingBlockedMessage() == null);
+                m.put("dryerInstalled", r.internalInstalled(dev.bwr.mod.reactor.VesselInternal.DRYER));
+                m.put("separatorInstalled", r.internalInstalled(dev.bwr.mod.reactor.VesselInternal.SEPARATOR));
             }
             if (p != null) {
                 m.put("poolWaterOverRacksM", BridgeSite.poolSurfaceY(p) - BridgeSite.rackSeatY(p.layout().racks().isEmpty()
@@ -223,6 +228,28 @@ public class RefuellingBridgePeripheral implements IPeripheral {
             throw new LuaException("cell index out of range 0.." + (racks.size() * 4 - 1));
         }
         Component why = be.queue(new Move(Loc.HELD, Loc.rack(racks.get(cellIndex / 4), cellIndex % 4)));
+        return result(why == null, why);
+    }
+
+    private static dev.bwr.mod.reactor.VesselInternal internal(String name) throws LuaException {
+        var which = dev.bwr.mod.reactor.VesselInternal.byId(name);
+        if (which == null) {
+            throw new LuaException("expected \"dryer\" or \"separator\"");
+        }
+        return which;
+    }
+
+    /** Queue lifting the steam dryer ("dryer") or the separator assembly ("separator") out of the open, flooded vessel to the nearest free equipment pad. */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> queueInternalOut(String name) throws LuaException {
+        Component why = be.queueInternal(internal(name), true);
+        return result(why == null, why);
+    }
+
+    /** Queue setting the steam dryer or the separator assembly back into the vessel from the pad that holds it. */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> queueInternalIn(String name) throws LuaException {
+        Component why = be.queueInternal(internal(name), false);
         return result(why == null, why);
     }
 

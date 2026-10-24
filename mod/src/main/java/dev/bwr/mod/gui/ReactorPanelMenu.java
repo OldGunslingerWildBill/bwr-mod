@@ -135,6 +135,9 @@ public class ReactorPanelMenu extends BwrMenu {
     public ReactorConfigurationInfo configuration=ReactorConfigurationInfo.EMPTY;
     /** The cavity seal survey and the water over the flange. */
     public CavityInfo cavity=CavityInfo.EMPTY;
+    /** The steam dryer (bit 0) and separator assembly (bit 1) out of the vessel, and what the INFO tab says about them. */
+    public int internalsOut;
+    public net.minecraft.network.chat.Component internalsSummary=net.minecraft.network.chat.Component.empty();
     /** Pressure-boundary breaks and recent seals, one line each, with 2 for an open break and 1 for an isolated one. */
     public List<Component> boundaryLines = List.of();
     public int[] boundaryLineStates = new int[0];
@@ -257,6 +260,8 @@ public class ReactorPanelMenu extends BwrMenu {
         }
         ReactorConfigurationInfo.capture(be).write(buf);
         CavityInfo.capture(be).write(buf, level().registryAccess());
+        buf.writeVarInt(be.isFormed()?be.internalsOutMask():0);
+        buf.writeUtf(net.minecraft.network.chat.Component.Serializer.toJson(be.isFormed()?be.internalsSummary():net.minecraft.network.chat.Component.empty(),level().registryAccess()));
         var breaks = be.boundaryEffects().breaks();
         var lines = dev.bwr.mod.damage.BoundaryDamageReadout.breakComponents(be.boundaryEffects(), level().getGameTime());
         int count = Math.min(lines.size(), MAX_BOUNDARY_LINES);
@@ -342,6 +347,9 @@ public class ReactorPanelMenu extends BwrMenu {
         }
         configuration=ReactorConfigurationInfo.read(buf);
         cavity=CavityInfo.read(buf, level().registryAccess());
+        internalsOut=buf.readVarInt();
+        var summary=net.minecraft.network.chat.Component.Serializer.fromJson(buf.readUtf(),level().registryAccess());
+        internalsSummary=summary==null?net.minecraft.network.chat.Component.empty():summary;
         int count = Math.min(buf.readVarInt(), MAX_BOUNDARY_LINES);
         List<Component> lines = new ArrayList<>(count);
         int[] states = new int[count];

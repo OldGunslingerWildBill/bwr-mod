@@ -1,6 +1,7 @@
 package dev.bwr.mod.reactor.client;
 
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
+import dev.bwr.mod.reactor.VesselProfile;
 import dev.bwr.mod.registry.BwrParticles;
 import net.minecraft.core.BlockPos;
 import java.util.*;
@@ -32,7 +33,7 @@ public final class VesselAccidentEffects {
         }
         if(be.clientHeadFailed()){
             var e=be.clientVesselEnvelope();double cx=e.min().getX()+e.width()/2.0,cz=e.min().getZ()+e.depth()/2.0;
-            double mouth=e.min().getY()+e.height()-Math.min(e.height()*.22,Math.min(e.width(),e.depth())*.18)-.15;
+            double mouth=e.min().getY()+VesselProfile.of(e,false).flangeFace-.15;
             for(int i=0;i<5;i++){
                 double angle=l.random.nextDouble()*Math.PI*2,r=l.random.nextDouble()*e.width()*.22;
                 l.addParticle(BwrParticles.ACCIDENT_STEAM.get(),true,cx+Math.cos(angle)*r,mouth,cz+Math.sin(angle)*r,

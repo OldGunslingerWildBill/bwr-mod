@@ -289,6 +289,11 @@ public final class BwrBlocks {
             BLOCKS.register("canal_gate", () -> new dev.bwr.mod.refuelling.CanalGateBlock(
                     BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(4.0F, 40.0F)
                             .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
+    /** Where the bridge sets the steam dryer or the separator assembly down while the vessel is open. */
+    public static final DeferredBlock<dev.bwr.mod.refuelling.EquipmentPadBlock> EQUIPMENT_PAD =
+            BLOCKS.register("equipment_pad", () -> new dev.bwr.mod.refuelling.EquipmentPadBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(4.0F, 40.0F)
+                            .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
     /** The bridge's controls; the block entity is the bridge. */
     public static final DeferredBlock<dev.bwr.mod.refuelling.RefuellingBridgeConsoleBlock> REFUELLING_BRIDGE_CONSOLE =
             BLOCKS.register("refuelling_bridge_console", () -> new dev.bwr.mod.refuelling.RefuellingBridgeConsoleBlock(machine().noOcclusion()));

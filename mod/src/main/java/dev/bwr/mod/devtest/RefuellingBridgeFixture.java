@@ -79,6 +79,10 @@ final class RefuellingBridgeFixture {
         }
         f.reactor = CompactCoreRegressionTests.build(level, o, 5, 5, 8, false);
         f.reactor.setVesselState(VesselState.REFUELING);
+        // These tests are about fuel: the steam dryer and the separator assembly are already out of the vessel, on the bridge's
+        // console as far as the reactor knows (VesselInternalsTests sets them back and lifts them with the bridge).
+        f.reactor.internalOut(dev.bwr.mod.reactor.VesselInternal.DRYER, f.console);
+        f.reactor.internalOut(dev.bwr.mod.reactor.VesselInternal.SEPARATOR, f.console);
         f.floodCavity(3.0);
         f.pool = SpentFuelPoolFixture.build(level, o.offset(9, 1, -2), 9, 9, 8, racks);
         for (int x = -1; x <= 18; x++) {

@@ -62,6 +62,13 @@ public class ReactorControllerBlockEntity extends BlockEntity {
      * Height of the water in the well and its annulus above the bottom of the vessel, blocks: 0 while the vessel holds nothing
      * above the flange or there is no usable well. It is what the clients draw and what the bridge's chute meets.
      */
+    /** World y of the water the player sees over this open vessel: the drawn surface in the vessel, or the flooded well's above it. */
+    public double drawnWaterSurfaceY() {
+        if (vesselEnvelope == null || core == null) return Double.NaN;
+        double inVessel = VesselWaterGeometry.height(vesselEnvelope, core.getTwoPhaseLevelIn());
+        return vesselEnvelope.min().getY() + Math.max(inVessel, wellSurfaceLocal());
+    }
+
     public double wellSurfaceLocal() {
         if (cavity == null || cavity.profile() == null || core == null) return 0;
         var vessel = core.getPressureVessel();
@@ -174,6 +181,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private boolean structureDirty = true;
     private int sinceRevalidate;
     private VesselState vesselState = VesselState.SHUTDOWN;
+    /** The steam dryer and the separator assembly that are out of the vessel, and where each is (a storage pad, or the bridge
+     *  console whose hoist holds it). Empty, and not saved, while both are installed, as in every older save. */
+    private final java.util.EnumMap<VesselInternal, BlockPos> internalsOut = new java.util.EnumMap<>(VesselInternal.class);
+    private int clientInternalsOut;
 
     /** Satellite recirculation pumps that have announced themselves. */
     private final Set<BlockPos> pumpPositions = new LinkedHashSet<>();
@@ -1105,6 +1116,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     }
 
     public Component setVesselStateMessage(VesselState next) {
+        if (next.canHoldPressure() && !internalsOut.isEmpty())
+            return BwrText.tr("status.bwr.reactor_controller.internals_out_head",
+                    "The head cannot go back on: the %s is out of the vessel. Set the separator assembly and then the dryer back in with the refuelling bridge first.",
+                    (internalsOut.containsKey(VesselInternal.SEPARATOR) ? VesselInternal.SEPARATOR : VesselInternal.DRYER).title);
         if (next.canHoldPressure() && core != null && core.getBoundaryStress().isBroken(dev.bwr.core.boundary.BoundaryComponent.REACTOR_VESSEL_HEAD))
             return BwrText.tr("status.bwr.reactor_controller.head_failed",
                     "The vessel head has failed; changing the refuelling state cannot repair pressure-boundary damage.");
@@ -1168,6 +1183,18 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                     "the reactor is not formed, so there is no core to refuel");
         }
         if (vesselState == VesselState.REFUELING) {
+            // instantRefuelling is the shortcut that skips the machinery: the dryer and the separators are not in the fuel's way then.
+            if (dev.bwr.mod.config.GameplayConfig.instantRefuelling()) {
+                return null;
+            }
+            if (internalInstalled(VesselInternal.DRYER)) {
+                return BwrText.tr("status.bwr.reactor_controller.dryer_installed",
+                        "the steam dryer is still in the vessel: lift it to a storage pad with the refuelling bridge, then the steam separator assembly");
+            }
+            if (internalInstalled(VesselInternal.SEPARATOR)) {
+                return BwrText.tr("status.bwr.reactor_controller.separator_installed",
+                        "the steam separator assembly is still on the core: lift it to a storage pad with the refuelling bridge");
+            }
             return null;
         }
         double psig = core.getPressurePsig();
@@ -1177,6 +1204,94 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
         return BwrText.tr("status.bwr.reactor_controller.head_can_be_removed",
                 "the vessel head is on; the vessel is at %s psig so the head can be removed, but nobody has removed it yet", Math.round(psig));
+    }
+
+    // -----------------------------------------------------------------
+    // The steam dryer and the separator assembly (RPV-REFERENCE.md)
+    // -----------------------------------------------------------------
+
+    public boolean internalInstalled(VesselInternal which) {
+        return !internalsOut.containsKey(which);
+    }
+
+    /** Where an assembly that is out of the vessel is (a storage pad, or the console of the bridge holding it); null while installed. */
+    public BlockPos internalLocation(VesselInternal which) {
+        return internalsOut.get(which);
+    }
+
+    public int internalsOutMask() {
+        int mask = 0;
+        for (VesselInternal v : internalsOut.keySet()) mask |= v.bit();
+        return mask;
+    }
+
+    private Component internalsAccess() {
+        if (!isFormed()) return BwrText.tr("status.bwr.reactor_controller.internals_not_formed", "the reactor is not formed");
+        if (vesselState != VesselState.REFUELING) return BwrText.tr("status.bwr.reactor_controller.internals_head_on", "the vessel head is on");
+        return null;
+    }
+
+    /** Why this assembly cannot be lifted out now, or null. The dryer comes out first, and both only with the vessel flooded to its flange. */
+    public Component internalLiftBlocked(VesselInternal which) {
+        Component access = internalsAccess();
+        if (access != null) return access;
+        if (!internalInstalled(which)) return BwrText.tr("status.bwr.reactor_controller.internal_already_out", "the %s is already out of the vessel", which.title);
+        if (which == VesselInternal.SEPARATOR && internalInstalled(VesselInternal.DRYER))
+            return BwrText.tr("status.bwr.reactor_controller.dryer_first", "the steam dryer sits over the separators and must come out first");
+        if (core.getCollapsedLevelIn() < dev.bwr.core.thermal.PressureVessel.FLANGE_LEVEL_IN - 1.0)
+            return BwrText.tr("status.bwr.reactor_controller.internals_flood_first",
+                    "flood the vessel to its flange first (the level is %s in; the flange is at +%s in): the assemblies are lifted out of a full vessel into the flooded well",
+                    Math.round(core.getCollapsedLevelIn()), Math.round(dev.bwr.core.thermal.PressureVessel.FLANGE_LEVEL_IN));
+        return null;
+    }
+
+    /** Why this assembly cannot be set back now, or null. The separator assembly goes in first. */
+    public Component internalInstallBlocked(VesselInternal which) {
+        Component access = internalsAccess();
+        if (access != null) return access;
+        if (internalInstalled(which)) return BwrText.tr("status.bwr.reactor_controller.internal_already_in", "the %s is already in the vessel", which.title);
+        if (which == VesselInternal.DRYER && !internalInstalled(VesselInternal.SEPARATOR))
+            return BwrText.tr("status.bwr.reactor_controller.separator_first", "the separator assembly goes back in before the dryer");
+        return null;
+    }
+
+    /** The assembly has left its seat (latched by the bridge) or moved on (set on a pad): {@code at} is where it is now. */
+    public void internalOut(VesselInternal which, BlockPos at) {
+        internalsOut.put(which, at.immutable());
+        setChanged();
+        syncToClients();
+    }
+
+    /** The assembly is back in the vessel. */
+    public void internalIn(VesselInternal which) {
+        if (internalsOut.remove(which) != null) {
+            setChanged();
+            syncToClients();
+        }
+    }
+
+    /** What the INFO tab and the computer say about the two assemblies. */
+    public Component internalsSummary() {
+        if (internalsOut.isEmpty()) {
+            return BwrText.tr("status.bwr.reactor_controller.internals_installed",
+                    "Steam dryer and separator assembly installed. They come out with the head off and the vessel flooded to its flange, with the refuelling bridge.");
+        }
+        StringBuilder where = new StringBuilder();
+        for (var entry : internalsOut.entrySet()) {
+            if (where.length() > 0) where.append("; ");
+            BlockPos p = entry.getValue();
+            where.append(entry.getKey().title).append(" at ").append(p.getX()).append(", ").append(p.getY()).append(", ").append(p.getZ());
+        }
+        return BwrText.tr("status.bwr.reactor_controller.internals_out",
+                "Not operable: the %s. The head cannot go on until both are back in the vessel (separator assembly first, then the dryer).", where.toString());
+    }
+
+    public boolean clientDryerInstalled() {
+        return (clientInternalsOut & VesselInternal.DRYER.bit()) == 0;
+    }
+
+    public boolean clientSeparatorInstalled() {
+        return (clientInternalsOut & VesselInternal.SEPARATOR.bit()) == 0;
     }
 
     /**
@@ -1442,6 +1557,12 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         if (selection > 0) {
             tag.putInt("SelectedRod", selection);
         }
+        // Only while an assembly is out of the vessel; older saves have no key and load as both installed.
+        if (!internalsOut.isEmpty()) {
+            CompoundTag out = new CompoundTag();
+            internalsOut.forEach((which, at) -> out.putLong(which.id, at.asLong()));
+            tag.put("InternalsOut", out);
+        }
     }
 
     @Override
@@ -1450,6 +1571,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         boundaryEffects.read(tag);
         severeEffects.read(tag);
         vesselState = VesselState.byName(tag.getString("VesselState"));
+        internalsOut.clear();
+        if (tag.contains("InternalsOut", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+            CompoundTag out = tag.getCompound("InternalsOut");
+            for (VesselInternal v : VesselInternal.values()) if (out.contains(v.id)) internalsOut.put(v, BlockPos.of(out.getLong(v.id)));
+        }
         // Missing key is an old save, including a temporarily broken vessel.
         coreLayoutVersion = tag.contains("CoreLayoutVersion") ? tag.getInt("CoreLayoutVersion") : 1;
         savedInteriorWidth = tag.getInt("CoreInteriorWidth");
@@ -1560,6 +1686,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         tag.putString("VesselState", vesselState.getSerializedName());
         tag.putBoolean("Formed", isFormed());
         if (vesselEnvelope != null) vesselEnvelope.write(tag);
+        int internals = internalsOutMask();
+        if (internals != 0) tag.putInt("VisualInternalsOut", internals);
         var visualCore=VesselCoreAppearance.capture(this);
         if(visualCore!=null) {
             visualCore.write(tag);
@@ -1604,6 +1732,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         // renderer or tooltip written against getUpdateTag — the natural place
         // to look — would have found default values on arrival.
         clientFormed = tag.getBoolean("Formed");
+        clientInternalsOut = tag.getInt("VisualInternalsOut");
         clientVesselEnvelope = VesselAppearance.read(tag);
         var nextCore=VesselCoreAppearance.read(tag,clientVesselEnvelope);
         // Preserve identity when only physics measurements change: no mesh rebuild.

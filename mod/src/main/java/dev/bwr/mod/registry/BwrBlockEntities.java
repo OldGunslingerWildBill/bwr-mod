@@ -158,6 +158,11 @@ public final class BwrBlockEntities {
             () -> BlockEntityType.Builder.of(dev.bwr.mod.refuelling.RefuellingBridgeBlockEntity::new,
                     BwrBlocks.REFUELLING_BRIDGE_CONSOLE.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.refuelling.EquipmentPadBlockEntity>>
+            EQUIPMENT_PAD = BLOCK_ENTITIES.register("equipment_pad",
+            () -> BlockEntityType.Builder.of(dev.bwr.mod.refuelling.EquipmentPadBlockEntity::new,
+                    BwrBlocks.EQUIPMENT_PAD.get()).build(null));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SuppressionPoolBlockEntity>>
             SUPPRESSION_POOL = BLOCK_ENTITIES.register("suppression_pool",
             () -> BlockEntityType.Builder.of(SuppressionPoolBlockEntity::new,

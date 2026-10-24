@@ -7,6 +7,8 @@ import dev.bwr.mod.fuel.FuelAssemblies;
 import dev.bwr.mod.fuel.SpentFuelHeat;
 import dev.bwr.mod.radiation.RadiationSources;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
+import dev.bwr.mod.reactor.VesselInternal;
+import dev.bwr.mod.reactor.VesselProfile;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.registry.BwrItems;
 import dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity;
@@ -56,6 +58,12 @@ import java.util.Locale;
  * state of a move (phase, ticks done, the leg, the route, the queue, the carried assembly) is saved; ticks elapse only
  * while it ticks, so a world closed mid-move continues from the same place. Old worlds have none of these keys.
  *
+ * <h2>The steam dryer and the separator assembly</h2>
+ * The same machine lifts the two removable assemblies out of the open, flooded vessel to an {@link EquipmentPadBlockEntity
+ * equipment pad} and back (dryer out first, separators in first; the reactor says what is allowed). Such a move goes up out of
+ * the water to the mast's rest height, across in the air and down onto the pad: the dose spikes while it is lifted. While the
+ * bridge holds one, the reactor records the console as where it is; breaking the console sets it back in its vessel.
+ *
  * <h2>Radiation</h2>
  * While an assembly is carried, it is a point source registered with {@link RadiationSources}: its decay heat's gamma,
  * through the water over its handle (zero cover in air). Nothing is registered when nothing is carried.
@@ -75,7 +83,7 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
     // Moves
     // ---------------------------------------------------------------
 
-    public enum Kind { CORE, RACK, HELD }
+    public enum Kind { CORE, RACK, HELD, INTERNAL, PAD }
 
     /** A place: a lattice position of the core, a cell of a rack, or the grapple itself. */
     public record Loc(Kind kind, int lattice, BlockPos rack, int cell) {
@@ -89,13 +97,30 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
 
         public static final Loc HELD = new Loc(Kind.HELD, 0, BlockPos.ZERO, 0);
 
+        /** The vessel's seat of the dryer or the separator assembly. */
+        public static Loc internal(VesselInternal which) {
+            return new Loc(Kind.INTERNAL, 0, BlockPos.ZERO, which.ordinal());
+        }
+
+        /** An equipment pad, for (or holding) the dryer or the separator assembly. */
+        public static Loc pad(BlockPos pad, VesselInternal which) {
+            return new Loc(Kind.PAD, 0, pad.immutable(), which.ordinal());
+        }
+
+        /** Which assembly an INTERNAL or PAD place is about. */
+        public VesselInternal internal() {
+            return VesselInternal.values()[Math.clamp(cell, 0, VesselInternal.values().length - 1)];
+        }
+
         CompoundTag save() {
             CompoundTag t = new CompoundTag();
             t.putString("K", kind.name());
             if (kind == Kind.CORE) {
                 t.putInt("L", lattice);
-            } else if (kind == Kind.RACK) {
+            } else if (kind == Kind.RACK || kind == Kind.PAD) {
                 t.putLong("R", rack.asLong());
+                t.putByte("C", (byte) cell);
+            } else if (kind == Kind.INTERNAL) {
                 t.putByte("C", (byte) cell);
             }
             return t;
@@ -111,6 +136,8 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
             return switch (k) {
                 case CORE -> core(t.getInt("L"));
                 case RACK -> rack(BlockPos.of(t.getLong("R")), t.getByte("C"));
+                case INTERNAL -> new Loc(Kind.INTERNAL, 0, BlockPos.ZERO, t.getByte("C"));
+                case PAD -> new Loc(Kind.PAD, 0, BlockPos.of(t.getLong("R")), t.getByte("C"));
                 default -> HELD;
             };
         }
@@ -120,6 +147,8 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
                 case CORE -> "core position " + lattice;
                 case RACK -> String.format(Locale.ROOT, "rack %d,%d,%d cell %d", rack.getX(), rack.getY(), rack.getZ(), cell + 1);
                 case HELD -> "the grapple";
+                case INTERNAL -> "the " + internal().title + "'s seat in the vessel";
+                case PAD -> String.format(Locale.ROOT, "the equipment pad at %d,%d,%d", rack.getX(), rack.getY(), rack.getZ());
             };
         }
     }
@@ -153,6 +182,10 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
     private Move move;
     private final ArrayDeque<Move> queue = new ArrayDeque<>();
     private ItemStack carried = ItemStack.EMPTY;
+    /** The dryer or the separator assembly on the hoist (null: none), and the size of the vessel it belongs to (w, d, h, internal pumps). */
+    @Nullable
+    private VesselInternal carriedInternal;
+    private int[] carriedVessel = new int[0];
     private boolean override;
     private Phase resumeAt = Phase.IDLE;
     private Component haltMessage;
@@ -194,7 +227,7 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
             } else if (pos == null) {
                 schedule(server); // one tick to survey the rails and take the rest position
             }
-            if (!carried.isEmpty()) {
+            if (holding()) {
                 updateDose(server);
             }
         } else if (level != null) {
@@ -280,6 +313,24 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
 
     public ItemStack carried() {
         return carried;
+    }
+
+    /** The dryer or the separator assembly the hoist holds, or null. */
+    @Nullable
+    public VesselInternal carriedInternal() {
+        return carriedInternal;
+    }
+
+    /** The vessel the carried assembly belongs to (for drawing it), or null. */
+    @Nullable
+    public VesselProfile carriedProfile() {
+        return carriedInternal == null || carriedVessel.length < 4 ? null
+                : VesselProfile.of(carriedVessel[0], carriedVessel[1], carriedVessel[2], carriedVessel[3] != 0);
+    }
+
+    /** True while the grapple holds a fuel assembly or the hoist the dryer or the separator assembly. */
+    public boolean holding() {
+        return !carried.isEmpty() || carriedInternal != null;
     }
 
     public boolean override() {
@@ -411,6 +462,9 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         if (m.from().equals(m.to())) {
             return BwrText.tr("status.bwr.refuelling_bridge.same_place", "That move starts and ends in the same place.");
         }
+        if (internalMove(m)) {
+            return refuseInternal(m);
+        }
         ReactorControllerBlockEntity r = reactor();
         SpentFuelPoolBlockEntity p = pool();
         boolean needsCore = m.from().kind() == Kind.CORE || m.to().kind() == Kind.CORE;
@@ -499,6 +553,135 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         return null;
     }
 
+    /** A move of the dryer or the separator assembly rather than of fuel. */
+    private boolean internalMove(Move m) {
+        Kind a = m.from().kind(), b = m.to().kind();
+        return a == Kind.INTERNAL || a == Kind.PAD || b == Kind.INTERNAL || b == Kind.PAD || (a == Kind.HELD && carriedInternal != null);
+    }
+
+    /** The vessel's profile at this reactor (for the assemblies' heights). */
+    static VesselProfile profileOf(ReactorControllerBlockEntity r) {
+        var e = r.vesselEnvelope();
+        var s = r.structure();
+        boolean rip = s != null && r.coreLayoutVersion() != 1 && !s.internalPumpPositions().isEmpty();
+        return VesselProfile.of(e, rip);
+    }
+
+    @Nullable
+    private EquipmentPadBlockEntity padAt(BlockPos p) {
+        return level != null && level.isLoaded(p) && level.getBlockEntity(p) instanceof EquipmentPadBlockEntity pad ? pad : null;
+    }
+
+    @Nullable
+    private Component refuseInternal(Move m) {
+        ReactorControllerBlockEntity r = reactor();
+        if (r == null || r.vesselEnvelope() == null) {
+            return BwrText.tr("status.bwr.refuelling_bridge.no_reactor", "No formed reactor lies between the bridge's rails.");
+        }
+        Loc from = m.from(), to = m.to();
+        VesselInternal which = from.kind() == Kind.HELD ? carriedInternal : from.kind() == Kind.CORE || from.kind() == Kind.RACK ? null : from.internal();
+        if (which == null || (to.kind() != Kind.INTERNAL && to.kind() != Kind.PAD) || (to.kind() == Kind.INTERNAL || to.kind() == Kind.PAD) && to.internal() != which
+                || from.kind() == to.kind()) {
+            return BwrText.tr("status.bwr.refuelling_bridge.bad_internal_move", "The dryer and the separator assembly go between the vessel and an equipment pad.");
+        }
+        if (from.kind() == Kind.HELD && carriedInternal != which) {
+            return BwrText.tr("status.bwr.refuelling_bridge.nothing_held", "The grapple is not holding anything.");
+        }
+        if (from.kind() == Kind.INTERNAL) {
+            Component why = r.internalLiftBlocked(which);
+            if (why != null) {
+                return BwrText.tr("status.bwr.refuelling_bridge.cannot_lift_internal", "The %s cannot be lifted out: %s.", which.title, why);
+            }
+        }
+        if (to.kind() == Kind.INTERNAL && !(from.kind() == Kind.HELD && move != null)) {
+            Component why = r.internalInstallBlocked(which);
+            if (why != null) {
+                return BwrText.tr("status.bwr.refuelling_bridge.cannot_set_internal", "The %s cannot be set back: %s.", which.title, why);
+            }
+        }
+        if (from.kind() == Kind.PAD) {
+            EquipmentPadBlockEntity pad = padAt(from.rack());
+            if (pad == null || pad.stored() != which || !pad.reactorPos().equals(r.getBlockPos())) {
+                return BwrText.tr("status.bwr.refuelling_bridge.pad_empty", "That equipment pad does not hold this reactor's %s.", which.title);
+            }
+        }
+        if (to.kind() == Kind.PAD) {
+            EquipmentPadBlockEntity pad = padAt(to.rack());
+            if (pad == null) {
+                return BwrText.tr("status.bwr.refuelling_bridge.no_pad", "There is no equipment pad there: place one on the floor of a pool of water the bridge reaches.");
+            }
+            if (pad.stored() != null) {
+                return BwrText.tr("status.bwr.refuelling_bridge.pad_taken", "That equipment pad already holds the %s.", pad.stored().title);
+            }
+        }
+        Point a = columnOf(from), b = columnOf(to);
+        if (a == null || b == null || !site.reaches(a.x(), a.z()) || !site.reaches(b.x(), b.z())) {
+            return BwrText.tr("status.bwr.refuelling_bridge.out_of_reach", "That position is outside the reach of the bridge.");
+        }
+        // Hanging from the retracted hoist, the assembly must clear the vessel's lip before it moves sideways.
+        VesselProfile vp = profileOf(r);
+        double clear = r.vesselEnvelope().min().getY() + vp.rim + 0.25;
+        double hanging = EquipmentPads.liftAboveBottom(which, vp);
+        if (site.homeY() - hanging < clear) {
+            return BwrText.tr("status.bwr.refuelling_bridge.rails_too_low",
+                    "The rails are too low to lift the %s clear of the vessel: it hangs %s blocks below the hoist. Raise the rails to y %s or higher.",
+                    which.title, String.format(Locale.ROOT, "%.1f", hanging), (int) Math.ceil(clear + hanging - BridgeMotion.MAST_HOME_ABOVE_RAIL_M));
+        }
+        return null;
+    }
+
+    /**
+     * Queues lifting the dryer or the separator assembly out to the nearest free equipment pad ({@code out}), or setting it back
+     * in from the pad that holds it. If the hoist already holds it (after an abort), the move starts from the hoist.
+     */
+    @Nullable
+    public Component queueInternal(VesselInternal which, boolean out) {
+        if (level == null || level.isClientSide()) {
+            return null;
+        }
+        refreshSite();
+        if (site == null || !site.ok()) {
+            return site == null ? BwrText.tr("status.bwr.refuelling_bridge.not_surveyed", "The bridge has not surveyed its rails yet.") : site.problem;
+        }
+        ReactorControllerBlockEntity r = reactor();
+        if (r == null || r.vesselEnvelope() == null) {
+            return BwrText.tr("status.bwr.refuelling_bridge.no_reactor", "No formed reactor lies between the bridge's rails.");
+        }
+        Loc from;
+        if (carriedInternal == which && move == null) {
+            from = Loc.HELD;
+        } else if (out) {
+            from = Loc.internal(which);
+        } else {
+            BlockPos at = r.internalLocation(which);
+            if (at == null || padAt(at) == null) {
+                return r.internalInstalled(which)
+                        ? BwrText.tr("status.bwr.reactor_controller.internal_already_in", "the %s is already in the vessel", which.title)
+                        : BwrText.tr("status.bwr.refuelling_bridge.pad_empty", "That equipment pad does not hold this reactor's %s.", which.title);
+            }
+            from = Loc.pad(at, which);
+        }
+        if (out && from.kind() == Kind.INTERNAL) {
+            Component why = r.internalLiftBlocked(which);
+            if (why != null) {
+                return BwrText.tr("status.bwr.refuelling_bridge.cannot_lift_internal", "The %s cannot be lifted out: %s.", which.title, why);
+            }
+        }
+        Loc to;
+        if (out) {
+            Point c = columnOf(Loc.internal(which));
+            BlockPos pad = c == null ? null : EquipmentPads.nearestFree(level, site, c.x(), c.z());
+            if (pad == null) {
+                return BwrText.tr("status.bwr.refuelling_bridge.no_free_pad",
+                        "No free equipment pad between the rails: place one on the floor of a pool of water the bridge reaches.");
+            }
+            to = Loc.pad(pad, which);
+        } else {
+            to = Loc.internal(which);
+        }
+        return queue(new Move(from, to));
+    }
+
     private static boolean validLattice(ReactorControllerBlockEntity r, int lattice) {
         for (int p : r.corePositions()) {
             if (p == lattice) {
@@ -521,6 +704,14 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
                 double[] c = BridgeSite.cellColumn(loc.rack(), loc.cell());
                 return new Point(c[0], 0, c[1]);
             }
+            case INTERNAL -> {
+                ReactorControllerBlockEntity r = reactor();
+                var e = r == null ? null : r.vesselEnvelope();
+                return e == null ? null : new Point(e.min().getX() + e.width() / 2.0, 0, e.min().getZ() + e.depth() / 2.0);
+            }
+            case PAD -> {
+                return new Point(loc.rack().getX() + 0.5, 0, loc.rack().getZ() + 0.5);
+            }
             default -> {
                 return pos == null ? null : new Point(pos.x(), 0, pos.z());
             }
@@ -537,7 +728,7 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
             return null;
         }
         refreshSite();
-        if (!carried.isEmpty() && move == null && m.from().kind() != Kind.HELD) {
+        if (holding() && move == null && m.from().kind() != Kind.HELD) {
             return BwrText.tr("status.bwr.refuelling_bridge.holding", "The grapple still holds an assembly: set it down first.");
         }
         Component why = refuse(m);
@@ -665,6 +856,21 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
                 double[] c = BridgeSite.cellColumn(loc.rack(), loc.cell());
                 return new BridgeMotion.Stop(c[0], c[1], BridgeSite.rackSeatY(loc.rack()), BridgeSite.poolSurfaceY(p));
             }
+            case INTERNAL -> {
+                // the lifting eyes of the assembly in its seat
+                ReactorControllerBlockEntity r = reactor();
+                VesselProfile vp = profileOf(r);
+                Point c = columnOf(loc);
+                double lift = loc.internal() == VesselInternal.DRYER ? vp.dryerLift() : vp.separatorLift();
+                return new BridgeMotion.Stop(c.x(), c.z(), r.vesselEnvelope().min().getY() + lift, BridgeSite.cavitySurfaceY(r));
+            }
+            case PAD -> {
+                // the lifting eyes of the assembly standing on the pad
+                ReactorControllerBlockEntity r = reactor();
+                VesselProfile vp = carriedProfile() != null ? carriedProfile() : profileOf(r);
+                return new BridgeMotion.Stop(loc.rack().getX() + 0.5, loc.rack().getZ() + 0.5,
+                        loc.rack().getY() + EquipmentPadBlockEntity.TOP + EquipmentPads.liftAboveBottom(loc.internal(), vp), Double.NaN);
+            }
             default -> {
                 Point at = pos;
                 return new BridgeMotion.Stop(at.x(), at.z(), at.y() - BridgeMotion.lift(override), site.surfaceAt(level, at.x(), at.z(), chute));
@@ -680,6 +886,20 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         // the source is still occupied (not yet latched), so a refusal other than a closed gate is a real change
         if (why != null) {
             fault(server, Phase.LATCH, why);
+            return;
+        }
+        if (internalMove(move)) {
+            // up out of the water to the mast's rest height, across in the air, down onto the destination: no hoist limit, the dose spikes
+            Point dest = columnOf(move.to());
+            route.clear();
+            route.add(new Point(pos.x(), site.homeY(), pos.z()));
+            route.add(new Point(dest.x(), site.homeY(), dest.z()));
+            routeIndex = 1;
+            if (move.from().kind() == Kind.HELD) {
+                begin(server, Phase.RAISE_LOADED, route.get(0), BridgeMotion.legTicks(pos, route.get(0), site.runwayAlongX(), true));
+                return;
+            }
+            begin(server, Phase.LATCH, pos, BridgeMotion.LATCH_TICKS);
             return;
         }
         BridgeMotion.Stop from = stopOf(move.from());
@@ -794,8 +1014,33 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
     }
 
     private void latch(ServerLevel server) {
-        ItemStack taken = ItemStack.EMPTY;
         Loc from = move.from();
+        if (from.kind() == Kind.INTERNAL || from.kind() == Kind.PAD) {
+            ReactorControllerBlockEntity r = reactor();
+            VesselInternal which = from.internal();
+            boolean taken = false;
+            if (r != null && from.kind() == Kind.INTERNAL && r.internalLiftBlocked(which) == null) {
+                taken = true;
+            } else if (r != null && from.kind() == Kind.PAD) {
+                EquipmentPadBlockEntity pad = padAt(from.rack());
+                taken = pad != null && pad.stored() == which && pad.take() == which;
+            }
+            if (!taken) {
+                move = null;
+                queue.clear();
+                fault(server, Phase.IDLE, BwrText.tr("status.bwr.refuelling_bridge.nothing_to_latch",
+                        "Stopped: the grapple closed on nothing; the assembly is no longer there."));
+                return;
+            }
+            VesselProfile vp = profileOf(r);
+            r.internalOut(which, worldPosition);
+            carriedInternal = which;
+            carriedVessel = new int[]{vp.width, vp.depth, vp.height, vp.internalPumps ? 1 : 0};
+            Point up = new Point(pos.x(), route.get(0).y(), pos.z());
+            begin(server, Phase.RAISE_LOADED, up, BridgeMotion.legTicks(pos, up, site.runwayAlongX(), true));
+            return;
+        }
+        ItemStack taken = ItemStack.EMPTY;
         if (from.kind() == Kind.CORE) {
             ReactorControllerBlockEntity r = reactor();
             if (r != null && r.refuellingBlockedMessage() == null) {
@@ -822,6 +1067,36 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
 
     private void finishRelease(ServerLevel server) {
         Loc to = move.to();
+        if (carriedInternal != null) {
+            ReactorControllerBlockEntity r = reactor();
+            VesselInternal which = carriedInternal;
+            boolean placed = false;
+            if (r != null && to.kind() == Kind.INTERNAL && to.internal() == which) {
+                Component why = r.internalInstallBlocked(which);
+                if (why == null) {
+                    r.internalIn(which);
+                    placed = true;
+                }
+            } else if (r != null && to.kind() == Kind.PAD && to.internal() == which) {
+                EquipmentPadBlockEntity pad = padAt(to.rack());
+                if (pad != null && pad.stored() == null) {
+                    pad.store(which, r, carriedProfile() != null ? carriedProfile() : profileOf(r));
+                    r.internalOut(which, to.rack());
+                    placed = true;
+                }
+            }
+            if (!placed) {
+                fault(server, Phase.RELEASE, BwrText.tr("status.bwr.refuelling_bridge.cannot_release",
+                        "Stopped: the assembly cannot be set down at %s (occupied, or the reactor or pool is no longer ready). It stays on the grapple.", to.describe()));
+                return;
+            }
+            carriedInternal = null;
+            carriedVessel = new int[0];
+            updateDose(server);
+            Point up = pos.withY(site.homeY());
+            begin(server, Phase.RAISE_EMPTY, up, BridgeMotion.legTicks(pos, up, site.runwayAlongX(), false));
+            return;
+        }
         boolean placed = false;
         if (to.kind() == Kind.CORE) {
             ReactorControllerBlockEntity r = reactor();
@@ -870,7 +1145,7 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         if (elapsed >= duration) {
             complete(server);
         }
-        if (!carried.isEmpty() && busy()) {
+        if (holding() && busy()) {
             if (server.getGameTime() % 20 == 0 && site != null && site.ok()) {
                 chute = site.chute(server);
             }
@@ -887,6 +1162,25 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
     }
 
     private void updateDose(ServerLevel server) {
+        if (carriedInternal != null && pos != null) {
+            // the dryer or the separator assembly: a point at its middle, below the hoist, behind the water over that point
+            Point at = busy() ? tip() : pos;
+            VesselProfile vp = carriedProfile();
+            double middle = at.y() - (vp == null ? 2.0 : EquipmentPads.liftAboveBottom(carriedInternal, vp) / 2.0);
+            // Over the vessel: the water the player sees (the drawn vessel and well), so the assembly is out of the water when it
+            // hangs above that surface. Elsewhere: the pit an equipment pad stands in, or the pool's own surface.
+            ReactorControllerBlockEntity r = reactor();
+            var e = r == null ? null : r.vesselEnvelope();
+            boolean overVessel = e != null && at.x() >= e.min().getX() && at.x() <= e.max().getX() + 1 && at.z() >= e.min().getZ() && at.z() <= e.max().getZ() + 1;
+            double surface = overVessel ? r.drawnWaterSurfaceY() : site != null && site.ok() ? site.surfaceAt(server, at.x(), at.z(), chute) : Double.NaN;
+            if (!Double.isFinite(surface)) {
+                surface = waterSurface(server, at.x(), at.z(), at.y() + 1, middle - 1);
+            }
+            carriedCover = BridgeMotion.cover(surface, middle);
+            carriedWatts = carriedInternal.gammaWatts;
+            RadiationSources.emit(server, this, new Vec3(at.x(), middle, at.z()), carriedInternal.gammaWatts, BridgeMotion.transmission(carriedCover));
+            return;
+        }
         if (carried.isEmpty() || pos == null) {
             RadiationSources.clear(server, this);
             carriedCover = 0.0;
@@ -903,6 +1197,21 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         carriedCover = BridgeMotion.cover(surface, at.y());
         RadiationSources.emit(server, this, new Vec3(at.x(), at.y(), at.z()), BridgeMotion.gammaWatts(carriedWatts),
                 BridgeMotion.transmission(carriedCover));
+    }
+
+    /** The top of the highest water block in a column between two heights (the pit an equipment pad stands in), or NaN. */
+    private static double waterSurface(ServerLevel server, double x, double z, double fromY, double downToY) {
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+        for (int y = (int) Math.floor(fromY); y >= Math.floor(downToY) && y > server.getMinBuildHeight(); y--) {
+            p.set(Math.floor(x), y, Math.floor(z));
+            if (!server.isLoaded(p)) {
+                return Double.NaN;
+            }
+            if (server.getFluidState(p).is(net.minecraft.tags.FluidTags.WATER)) {
+                return y + 1.0;
+            }
+        }
+        return Double.NaN;
     }
 
     private void refreshGlow() {
@@ -945,6 +1254,19 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
     }
 
     public void dropCarried(ServerLevel server) {
+        if (carriedInternal != null) {
+            // A console broken under a hanging dryer or separator assembly: it is set back in its vessel rather than lost.
+            ReactorControllerBlockEntity r = site == null ? null : site.reactor(server);
+            if (r == null) {
+                BridgeSite s = BridgeSite.survey(server, worldPosition);
+                r = s.ok() ? s.reactor(server) : null;
+            }
+            if (r != null) {
+                r.internalIn(carriedInternal);
+            }
+            carriedInternal = null;
+            carriedVessel = new int[0];
+        }
         for (ItemStack drop : removalDrops()) {
             Containers.dropItemStack(server, worldPosition.getX() + 0.5, worldPosition.getY() + 1.0, worldPosition.getZ() + 0.5, drop);
         }
@@ -956,6 +1278,9 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
     // ---------------------------------------------------------------
 
     public String carriedSummary() {
+        if (carriedInternal != null) {
+            return "the " + carriedInternal.title;
+        }
         if (carried.isEmpty()) {
             return "";
         }
@@ -1023,6 +1348,10 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         if (!carried.isEmpty()) {
             tag.put("Carried", carried.save(registries));
         }
+        if (carriedInternal != null) {
+            tag.putString("CarriedInternal", carriedInternal.id);
+            tag.putIntArray("CarriedVessel", carriedVessel);
+        }
         if (override) {
             tag.putBoolean("Override", true);
         }
@@ -1069,6 +1398,8 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         routeIndex = tag.getInt("RouteIndex");
         raisingForMove = tag.getBoolean("RaisingForMove");
         carried = tag.contains("Carried") ? ItemStack.parse(registries, tag.get("Carried")).orElse(ItemStack.EMPTY) : ItemStack.EMPTY;
+        carriedInternal = tag.contains("CarriedInternal") ? VesselInternal.byId(tag.getString("CarriedInternal")) : null;
+        carriedVessel = carriedInternal == null ? new int[0] : tag.getIntArray("CarriedVessel");
         override = tag.getBoolean("Override");
         paused = tag.getBoolean("Paused");
         glow = tag.getInt("Glow");

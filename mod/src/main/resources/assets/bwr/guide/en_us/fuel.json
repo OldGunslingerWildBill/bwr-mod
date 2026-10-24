@@ -78,24 +78,37 @@
       ]
     },
     {
-        "title": "Flood the well",
-        "text": [
-          "With the head off, raise the water over the flange with your own feed, condensate or residual heat removal pumps. Nothing floods by itself.",
-          "",
-          "A cavity seal, a steel plate round the flange, keeps the water above the drywell. It forms where full blocks touch the vessel or stand one block off, all round, in the top third of the vessel. Without it the water leaks into the drywell. The INFO tab says why.",
-          "",
-          "To lower the well, set a Cavity Drain Port in its wall or floor, pipe it through a Motor-Operated Water Valve to a Condensate Storage Tank, and open the valve."
-        ],
-        "icons": [
-          "bwr:reactor_vessel",
-          "bwr:cavity_drain_port",
-          "bwr:motor_operated_water_valve"
-        ]
-      },
+      "title": "Flood the well",
+      "text": [
+        "With the head off, raise the water over the flange with your own feed, condensate or residual heat removal pumps. Nothing floods by itself.",
+        "",
+        "A cavity seal, a steel plate round the flange, keeps the water above the drywell. It forms where full blocks touch the vessel or stand one block off, all round, in the top third of the vessel. Without it the water leaks into the drywell. The INFO tab says why.",
+        "",
+        "To lower the well, set a Cavity Drain Port in its wall or floor, pipe it through a Motor-Operated Water Valve to a Condensate Storage Tank, and open the valve."
+      ],
+      "icons": [
+        "bwr:reactor_vessel",
+        "bwr:cavity_drain_port",
+        "bwr:motor_operated_water_valve"
+      ]
+    },
+    {
+      "title": "Dryer and separators out",
+      "text": [
+        "Fuel is under the steam dryer and the shroud head with its steam separators. Flood the vessel to its flange, then lift both out with the bridge: dryer first. Place an Equipment Storage Pad for each on the floor of a pit of water the bridge reaches and press DRYER OUT, then SEPS OUT, in the console.",
+        "",
+        "Both come up out of the water, so the survey meter spikes; keep the pit full. After refuelling: SEPS IN, then DRYER IN. The head will not go on until both are back."
+      ],
+      "icons": [
+        "bwr:equipment_pad",
+        "bwr:refuelling_bridge_console",
+        "bwr:survey_meter"
+      ]
+    },
     {
       "title": "Moving fuel with the bridge",
       "text": [
-        "The vessel head must be off and the well flooded first. In the console's map pick a core position and a rack cell, then TO POOL or TO CORE. A move takes about 50 seconds on the smallest plant.",
+        "The vessel head must be off, the well flooded and the dryer and separators out first. In the console's map pick a core position and a rack cell, then TO POOL or TO CORE. A move takes about 50 seconds on the smallest plant.",
         "",
         "The bridge will not lift an assembly higher than leaves 1.5 m of water over it unless you override. An assembly lifted out of the water makes the survey meter spike."
       ],

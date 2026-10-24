@@ -1211,6 +1211,25 @@ public class ReactorPeripheral implements IPeripheral {
      * {@code wellTopY}; {@code waterOverFlangeM3}, {@code levelOverFlangeM}, {@code wellCapacityM3}; {@code spillKgPerS} and
      * {@code drainCount}, {@code drainKgPerS} and {@code drains} (one table each cavity drain port: x, y, z, state, flowKgPerS, depthOverSillM, headM, valveOpening, valves, totalKg), {@code spillTo} ("drywell" with no usable well, "refuel floor" over the top of one, "none").
      */
+    /**
+     * The steam dryer and the separator assembly. {@code dryerInstalled}, {@code separatorInstalled}; {@code dryerAt} and
+     * {@code separatorAt} ({x, y, z}: the equipment pad, or the bridge console holding it) while out; {@code operable} (both in;
+     * the head cannot go on otherwise); {@code summary} (English, as the INFO tab).
+     */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> getInternals() throws LuaException {
+        core();
+        Map<String, Object> out = new HashMap<>();
+        for (var which : dev.bwr.mod.reactor.VesselInternal.values()) {
+            out.put(which.id + "Installed", be.internalInstalled(which));
+            var at = be.internalLocation(which);
+            if (at != null) out.put(which.id + "At", Map.of("x", at.getX(), "y", at.getY(), "z", at.getZ()));
+        }
+        out.put("operable", be.internalsOutMask() == 0);
+        out.put("summary", dev.bwr.mod.text.BwrText.english(be.internalsSummary()));
+        return out;
+    }
+
     @LuaFunction(mainThread = true)
     public final Map<String, Object> getCavity() throws LuaException {
         var core = core();

@@ -1,0 +1,218 @@
+{
+ "size": [
+  17,
+  17,
+  27
+ ],
+ "frame": {
+  "ey": 1.0,
+  "Ro": 7.82,
+  "Ri": 7.616,
+  "t": 0.204,
+  "baf": 2.0,
+  "taf": 11.0,
+  "s_h": 0.061,
+  "top_in": 26.796,
+  "s_up": 0.031,
+  "y0o": 0.15,
+  "y0i": 0.354,
+  "Hb_i": 1.899,
+  "Hb_o": 2.103,
+  "zk": 2.253,
+  "z_f": 23.094,
+  "fl_h": 0.802,
+  "fl_w": 0.425,
+  "Hh_i": 3.702,
+  "Hh_o": 3.906,
+  "r_cs": 6.375,
+  "r_us": 7.106,
+  "r_sp": 6.8,
+  "r_jp": 6.995,
+  "y_jet0": 1.72,
+  "y_jet1": 8.48
+ },
+ "counts": {
+  "crd_housings": 169,
+  "incore_housings": 49,
+  "bundles": 756,
+  "separators": 223,
+  "studs": 74,
+  "separator_pitch": 0.821
+ },
+ "triangles": {
+  "shell": {
+   "group": "exterior",
+   "tris": 6912
+  },
+  "weld seams": {
+   "group": "exterior",
+   "tris": 3984
+  },
+  "support skirt": {
+   "group": "exterior",
+   "tris": 1536
+  },
+  "skirt anchor nuts": {
+   "group": "exterior",
+   "tris": 1280
+  },
+  "skirt openings": {
+   "group": "exterior",
+   "tris": 24
+  },
+  "CRD housings": {
+   "group": "exterior",
+   "tris": 2056
+  },
+  "in-core housings": {
+   "group": "exterior",
+   "tris": 490
+  },
+  "nozzle forgings": {
+   "group": "exterior",
+   "tris": 2240
+  },
+  "nozzle safe ends": {
+   "group": "exterior",
+   "tris": 4480
+  },
+  "safe-end welds": {
+   "group": "exterior",
+   "tris": 1120
+  },
+  "closure studs": {
+   "group": "studs",
+   "tris": 2072
+  },
+  "closure nuts and washers": {
+   "group": "head",
+   "tris": 1480
+  },
+  "closure washers": {
+   "group": "head",
+   "tris": 2664
+  },
+  "top head": {
+   "group": "head",
+   "tris": 6720
+  },
+  "head seams": {
+   "group": "head",
+   "tris": 576
+  },
+  "head nozzles": {
+   "group": "head",
+   "tris": 432
+  },
+  "head nozzle bolting": {
+   "group": "head",
+   "tris": 656
+  },
+  "head lifting lugs": {
+   "group": "head",
+   "tris": 48
+  },
+  "shroud support plate": {
+   "group": "internals",
+   "tris": 768
+  },
+  "core shroud": {
+   "group": "internals",
+   "tris": 1920
+  },
+  "core plate": {
+   "group": "internals",
+   "tris": 384
+  },
+  "top guide": {
+   "group": "internals",
+   "tris": 1152
+  },
+  "fuel (existing core, simplified)": {
+   "group": "core",
+   "tris": 9072
+  },
+  "bundle handles": {
+   "group": "core",
+   "tris": 9072
+  },
+  "jet pumps": {
+   "group": "internals",
+   "tris": 2720
+  },
+  "jet pump restrainers": {
+   "group": "internals",
+   "tris": 1480
+  },
+  "core spray spargers": {
+   "group": "internals",
+   "tris": 5344
+  },
+  "core spray lines": {
+   "group": "internals",
+   "tris": 1380
+  },
+  "feedwater spargers": {
+   "group": "internals",
+   "tris": 1776
+  },
+  "guide rods and brackets": {
+   "group": "internals",
+   "tris": 104
+  },
+  "shroud head": {
+   "group": "separators",
+   "tris": 5184
+  },
+  "standpipes": {
+   "group": "separators",
+   "tris": 3568
+  },
+  "steam separators": {
+   "group": "separators",
+   "tris": 10704
+  },
+  "separator caps": {
+   "group": "separators",
+   "tris": 7136
+  },
+  "shroud head bolts and lugs": {
+   "group": "separators",
+   "tris": 1808
+  },
+  "dryer support ring": {
+   "group": "dryer",
+   "tris": 1456
+  },
+  "dryer skirt": {
+   "group": "dryer",
+   "tris": 1632
+  },
+  "dryer vane banks": {
+   "group": "dryer",
+   "tris": 72
+  },
+  "dryer hoods and covers": {
+   "group": "dryer",
+   "tris": 10
+  },
+  "dryer troughs and end plates": {
+   "group": "dryer",
+   "tris": 6516
+  },
+  "normal water level": {
+   "group": "water",
+   "tris": 384
+  }
+ },
+ "triangles_by_group": {
+  "exterior": 24122,
+  "studs": 2072,
+  "head": 12576,
+  "internals": 17028,
+  "core": 18144,
+  "separators": 28400,
+  "dryer": 9686,
+  "water": 384
+ }
+}

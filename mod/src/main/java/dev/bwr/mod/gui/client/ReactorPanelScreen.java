@@ -219,6 +219,9 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.row("Flow ceiling", () -> pct(c.get().flowCeilingFraction()), "%").tip(this::jetTooltip),
                 Layout.row("Flow ceiling mass flow", () -> big(c.get().flowCeilingKgPerS()), "kg/s").tip(this::jetTooltip),
                 Layout.row("Vessel interior volume", () -> String.valueOf(c.get().interiorVolume()), "blocks^3").tip(this::volumeTooltip),
+                Layout.section("Steam dryer and separators"),
+                Layout.note(() -> menu.internalsSummary.getString()).body()
+                        .status(() -> menu.internalsOut == 0 ? Status.NORMAL : Status.CAUTION),
                 Layout.section("Cavity seal and well"),
                 Layout.note(() -> menu.cavity.known() ? menu.cavity.seal().getString() : "The seal has not been surveyed yet.")
                         .body().status(() -> !menu.cavity.known() ? Status.NONE : menu.cavity.present() ? Status.NORMAL : Status.CAUTION),

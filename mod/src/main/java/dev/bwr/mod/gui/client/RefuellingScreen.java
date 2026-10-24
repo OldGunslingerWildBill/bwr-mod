@@ -65,6 +65,8 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
     private BwrButton abort;
     private BwrButton resume;
     private BwrButton override;
+    private BwrButton dryer;
+    private BwrButton separators;
     private int cellIndex;
 
     public RefuellingScreen(RefuellingMenu menu, Inventory inventory, Component title) {
@@ -154,9 +156,9 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                     Layout.controls(BwrStyle.SP1).label(this::cellText, 128).fixed(cellPrev, 22).fixed(cellNext, 22)
                             .fixed(cellEmpty, 48).fixed(cellFuel, 42),
                     Layout.gap(1),
-                    Layout.controls(BwrStyle.SP1).add(toPool, 1).add(toCore, 1).add(setDown, 1),
+                    Layout.controls(BwrStyle.SP1).add(toPool, 1).add(toCore, 1).add(setDown, 1).add(dryer, 1),
                     Layout.gap(1),
-                    Layout.controls(BwrStyle.SP1).add(abort, 1).add(resume, 1).add(override, 1))
+                    Layout.controls(BwrStyle.SP1).add(abort, 1).add(resume, 1).add(override, 1).add(separators, 1))
                     .compact();
             return Layout.column(BwrStyle.SP1,
                     Layout.note("Waiting for the core to report").body().status(() -> Status.INFO).showIf(() -> !ready()),
@@ -190,6 +192,10 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
                 b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_RESUME));
         override = BwrButton.secondary("OVERRIDE", "Override the hoist-limit interlock: the bridge lifts the whole 4.5 m of the assembly whatever the water over it.",
                 b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_OVERRIDE, menu.bridgeOverride ? 0 : 1));
+        dryer = BwrButton.secondary("DRYER OUT", "Lift the steam dryer out of the open, flooded vessel to the nearest free equipment pad (it comes out first and goes back in last).",
+                b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_INTERNAL, 0, (menu.bridgeInternalsOut & 1) == 0 ? 1 : 0));
+        separators = BwrButton.secondary("SEPS OUT", "Lift the shroud head and steam separator assembly out to the nearest free equipment pad (after the dryer).",
+                b -> menu.sendCommand(RefuellingMenu.CMD_BRIDGE_INTERNAL, 1, (menu.bridgeInternalsOut & 2) == 0 ? 1 : 0));
     }
 
     private int cellCount() {
@@ -343,7 +349,19 @@ public class RefuellingScreen extends BwrScreen<RefuellingMenu> {
         cellFuel.active = cell;
         toPool.active = room && coreFull && cell && !cellFull && !menu.bridgeHolding;
         toCore.active = room && valid && !coreFull && cellFull && !menu.bridgeHolding;
-        setDown.active = room && menu.bridgeHolding && cell && !cellFull && !menu.bridgeBusy;
+        boolean fuelHeld = menu.bridgeHolding && menu.bridgeCarriedInternal < 0;
+        setDown.active = room && fuelHeld && cell && !cellFull && !menu.bridgeBusy;
+        boolean dryerOut = (menu.bridgeInternalsOut & 1) != 0, sepsOut = (menu.bridgeInternalsOut & 2) != 0;
+        boolean free = room && !menu.bridgeBusy && (!menu.bridgeHolding || menu.bridgeCarriedInternal >= 0);
+        dryer.setMessage(Component.literal(dryerOut ? "DRYER IN" : "DRYER OUT"));
+        separators.setMessage(Component.literal(sepsOut ? "SEPS IN" : "SEPS OUT"));
+        dryer.active = free && (!dryerOut || !sepsOut) && (menu.bridgeCarriedInternal < 0 || menu.bridgeCarriedInternal == 0);
+        separators.active = free && (sepsOut || dryerOut) && (menu.bridgeCarriedInternal < 0 || menu.bridgeCarriedInternal == 1);
+        dryer.setTooltipText(dryerOut ? "Set the steam dryer back into the vessel from its pad (the separator assembly must be in first)."
+                : "Lift the steam dryer out of the open, flooded vessel to the nearest free equipment pad (it comes out first and goes back in last).");
+        separators.setTooltipText(sepsOut ? "Set the shroud head and separator assembly back onto the core from its pad (before the dryer)."
+                : dryerOut ? "Lift the shroud head and steam separator assembly out to the nearest free equipment pad."
+                : "The steam dryer sits over the separators: lift it out first.");
         abort.active = menu.bridgeBusy || menu.bridgeHalted || menu.bridgeQueued > 0;
         resume.active = menu.bridgeHalted;
         override.setMessage(Component.literal(menu.bridgeOverride ? "OVERRIDE ON" : "OVERRIDE"));

@@ -72,6 +72,7 @@
     "bwr:spent_fuel_pool_cooling_in",
     "bwr:spent_fuel_pool_cooling_out",
     "bwr:refuelling_rail",
+    "bwr:equipment_pad",
     "bwr:transfer_canal",
     "bwr:canal_gate",
     "bwr:refuelling_bridge_console",

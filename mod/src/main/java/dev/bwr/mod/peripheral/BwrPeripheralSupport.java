@@ -95,6 +95,10 @@ public final class BwrPeripheralSupport {
         if(be instanceof MainSteamIsolationValveBlockEntity b)return new MainSteamIsolationValvePeripheral(b);
         if(be instanceof TurbineValveBlockEntity b)return new TurbineValvePeripheral(b);
         if(be instanceof dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity b)return new MotorOperatedWaterValvePeripheral(b);
+        if(be instanceof dev.bwr.mod.refuelling.EquipmentPadBlockEntity b)return new HardwarePeripheral("bwr_equipment_pad",()->{
+            var m=new LinkedHashMap<String,Object>();var held=b.stored();m.put("holding",held==null?"none":held.id);
+            if(held!=null){m.put("reactor",Map.of("x",b.reactorPos().getX(),"y",b.reactorPos().getY(),"z",b.reactorPos().getZ()));m.put("waterOverM",b.coverM());}
+            return m;});
         if(be instanceof CavityDrainPortBlockEntity b)return new HardwarePeripheral("bwr_cavity_drain_port",()->{
             var m=new LinkedHashMap<String,Object>();m.put("state",b.state().key());m.put("flowKgPerS",b.flowKgPerS());m.put("depthM",b.depthM());
             m.put("headM",b.headM());m.put("valveOpening",b.lineOpening());m.put("valves",b.valveCount());m.put("totalKg",b.totalKg());return m;});

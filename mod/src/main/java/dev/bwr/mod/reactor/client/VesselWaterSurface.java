@@ -12,7 +12,7 @@ final class VesselWaterSurface {
     private static final ResourceLocation WATER=ResourceLocation.withDefaultNamespace("block/water_still");
     private static final int SEGMENTS=64;
     static void render(VesselAppearance.Envelope e,double level,PoseStack pose,MultiBufferSource buffers,int light,int overlay) {
-        double y=VesselWaterGeometry.height(e,level),r=VesselWaterGeometry.radiusFraction(y);
+        double y=VesselWaterGeometry.height(e,level),r=VesselWaterGeometry.radiusFraction(e,y);
         var sprite=Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(WATER);
         var out=buffers.getBuffer(RenderType.entityTranslucent(TextureAtlas.LOCATION_BLOCKS));
         var matrix=pose.last();

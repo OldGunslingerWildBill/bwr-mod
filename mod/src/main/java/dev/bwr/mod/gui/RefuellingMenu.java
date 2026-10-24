@@ -68,6 +68,8 @@ public class RefuellingMenu extends BwrMenu {
     public static final int CMD_BRIDGE_OVERRIDE = 14;
     /** Bridge: a = pool cell index. Set the assembly on the grapple down in that cell. */
     public static final int CMD_BRIDGE_SET_DOWN = 15;
+    /** Bridge: a = the assembly (0 the steam dryer, 1 the separator assembly), b = 1 lift it out to a free pad, 0 set it back in. */
+    public static final int CMD_BRIDGE_INTERNAL = 16;
 
     private static final int INVENTORY_X = 48;
     private static final int INVENTORY_Y = 148;
@@ -113,6 +115,10 @@ public class RefuellingMenu extends BwrMenu {
     public double bridgePoolCoverM = Double.NaN;
     public double bridgeCarriedCoverM;
     public boolean bridgePool;
+    /** Which of the dryer (bit 0) and the separator assembly (bit 1) are out of the vessel. */
+    public int bridgeInternalsOut;
+    /** The assembly on the hoist (VesselInternal ordinal), or -1. */
+    public int bridgeCarriedInternal = -1;
     /** One entry per rack of the bridge's pool: occupancy bits (cell k = bit k) and decay kW of each cell. */
     public java.util.List<BridgeRack> bridgeRacks = new java.util.ArrayList<>();
 
@@ -242,8 +248,10 @@ public class RefuellingMenu extends BwrMenu {
         buf.writeVarInt((bridge.phaseTicksLeft() + 19) / 20);
         buf.writeVarInt(bridge.queued());
         buf.writeBoolean(bridge.override());
-        buf.writeBoolean(!bridge.carried().isEmpty());
+        buf.writeBoolean(bridge.holding());
         buf.writeUtf(bridge.carriedSummary());
+        buf.writeVarInt(reactor.internalsOutMask());
+        buf.writeVarInt(bridge.carriedInternal() == null ? -1 : bridge.carriedInternal().ordinal());
         Component halt = site.ok() ? bridge.haltMessage() : site.problem;
         buf.writeUtf(halt == null ? "" : BwrText.english(halt));
         buf.writeUtf(bridge.chute().state().name());
@@ -309,6 +317,8 @@ public class RefuellingMenu extends BwrMenu {
         bridgeOverride = buf.readBoolean();
         bridgeHolding = buf.readBoolean();
         bridgeCarried = buf.readUtf();
+        bridgeInternalsOut = buf.readVarInt();
+        bridgeCarriedInternal = buf.readVarInt();
         bridgeMessage = buf.readUtf();
         bridgeChute = buf.readUtf();
         bridgeCavityWaterM = buf.readDouble();
@@ -389,6 +399,19 @@ public class RefuellingMenu extends BwrMenu {
             case CMD_BRIDGE_ABORT -> bridge.abort();
             case CMD_BRIDGE_RESUME -> bridge.resume();
             case CMD_BRIDGE_OVERRIDE -> bridge.setOverride(a != 0);
+            case CMD_BRIDGE_INTERNAL -> {
+                if (a < 0 || a >= dev.bwr.mod.reactor.VesselInternal.values().length) {
+                    return;
+                }
+                var which = dev.bwr.mod.reactor.VesselInternal.values()[a];
+                Component why = bridge.queueInternal(which, b != 0);
+                if (why != null) {
+                    refuse(sender, why);
+                } else {
+                    sender.displayClientMessage(BwrText.tr("status.bwr.refuelling_bridge.internal_queued", "Queued: the %s %s.", which.title,
+                            b != 0 ? "out to an equipment pad" : "back into the vessel"), true);
+                }
+            }
             case CMD_BRIDGE_TO_POOL, CMD_BRIDGE_TO_CORE, CMD_BRIDGE_SET_DOWN -> {
                 BridgeSite site = bridge.refreshSite();
                 SpentFuelPoolBlockEntity pool = site.ok() ? site.pool(level()) : null;

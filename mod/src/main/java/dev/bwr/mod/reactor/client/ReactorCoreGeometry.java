@@ -60,11 +60,13 @@ public final class ReactorCoreGeometry {
             }
         }
         for(var drive:core.drives())b.part(model("guide_tube"),driveX(e,core,l,drive),1.28,driveZ(e,core,l,drive),px,.55f,pz);
-        String shroud=core.internalPumps()?"abwr_shroud":"shroud";
-        String rim=core.internalPumps()?"abwr_shroud_rim":"shroud_rim";
-        b.part(model(shroud),0,1.7,0,e.width(),l.top()-1.55f,e.depth());
-        b.part(model(rim),0,1.7,0,e.width(),1,e.depth());
-        b.part(model(rim),0,l.top()+.15,0,e.width(),1,e.depth());
+        // A jet-pump vessel's shroud is the v2 model's (VesselInternalsModel: core shroud, step and upper shroud); the
+        // internal-pump (ABWR) variant keeps its own straight shroud here and the v2 model carries it on to the shroud head.
+        if(core.internalPumps()) {
+            b.part(model("abwr_shroud"),0,1.7,0,e.width(),l.top()-1.55f,e.depth());
+            b.part(model("abwr_shroud_rim"),0,1.7,0,e.width(),1,e.depth());
+            b.part(model("abwr_shroud_rim"),0,l.top()+.15,0,e.width(),1,e.depth());
+        }
     }
     public static double driveX(VesselAppearance.Envelope e,VesselCoreAppearance c,Layout l,VesselCoreAppearance.Drive d){
         if(c.layoutVersion()==1)return (d.x()+(c.latticeWidth()-(e.width()-2))/2-c.latticeWidth()/2.0)*l.pitchX();

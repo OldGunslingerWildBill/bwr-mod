@@ -112,6 +112,7 @@ public final class BwrMod {
                 event -> event.addListener(new dev.bwr.mod.panel.board.BoardTemplates.Loader()));
 
         dev.bwr.mod.refuelling.PoolRadiation.register();
+        dev.bwr.mod.refuelling.EquipmentPadBlockEntity.registerRadiation();
         computerCraftPresent = ModList.get().isLoaded(CC_MOD_ID);
         mekanismPresent = ModList.get().isLoaded(MEKANISM_MOD_ID);
 
