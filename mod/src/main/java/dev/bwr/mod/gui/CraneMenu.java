@@ -109,7 +109,7 @@ public class CraneMenu extends BwrMenu {
         buf.writeVarInt(r == null ? 0 : r.studTotal());
         buf.writeVarInt(r == null ? 0 : r.studsOff());
         BlockPos at = r == null ? null : r.headLocation();
-        buf.writeUtf(r == null || r.vesselState() != VesselState.REFUELING ? "" : at == null ? "laid down" : at.equals(be.getBlockPos()) ? "on the hook" : "on the stand at " + at.toShortString(), 80);
+        buf.writeUtf(r == null || r.vesselState() != VesselState.REFUELING ? "" : at == null ? "laid down" : at.equals(be.getBlockPos()) ? "on the hook" : "on its stand", 80);
         buf.writeVarInt(r == null ? 0 : r.internalsOutMask());
         var tip = be.tip();
         buf.writeDouble(tip == null ? 0.0 : tip.y() - site.railY);

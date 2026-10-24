@@ -258,6 +258,28 @@ public final class BuildingCraneTests {
         h.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = "bwrcrane", timeoutTicks = 200)
+    public static void aHeadOnWithAnyStudBareLeaksSteamLikeAnOpenHeadAndSealsOnlyWithEveryStudAtLoad(GameTestHelper h) throws Exception {
+        CraneFixture f = CraneFixture.build(h.getLevel(), at(13));
+        try {
+            ReactorControllerBlockEntity r = f.reactor();
+            r.core().getPressureVessel().restorePressurePsig(20);
+            ReactorControllerBlockEntity.serverTick(f.level, r.getBlockPos(), r.getBlockState(), r);
+            h.assertTrue(r.headSealed() && r.core().getSteamLeakKgPerS() == 0.0, "head on, every stud at load: no leak: " + r.core().getSteamLeakKgPerS());
+            r.setStudsOff(1);
+            h.assertTrue(r.vesselState().canHoldPressure() && !r.headSealed(), "the head is on but one stud is bare");
+            ReactorControllerBlockEntity.serverTick(f.level, r.getBlockPos(), r.getBlockState(), r);
+            double leak = r.core().getSteamLeakKgPerS();
+            h.assertTrue(leak > 1000.0, "one bare stud and the flange leaks like an open head (350 kg/s per psi): " + leak);
+            r.setStudsOff(0);
+            ReactorControllerBlockEntity.serverTick(f.level, r.getBlockPos(), r.getBlockState(), r);
+            h.assertTrue(r.core().getSteamLeakKgPerS() == 0.0, "every stud back at load: sealed again: " + r.core().getSteamLeakKgPerS());
+        } finally {
+            f.dispose();
+        }
+        h.succeed();
+    }
+
     // ------------------------------------------------------------------------------------------------------------
     // The bridge moves fuel only
     // ------------------------------------------------------------------------------------------------------------

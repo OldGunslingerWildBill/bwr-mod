@@ -146,9 +146,10 @@ public final class BuildingCraneRenderer implements BlockEntityRenderer<Building
         } else if (vessel != null && be.carriedInternal() != null) {
             var internal = be.carriedInternal();
             double lift = internal == VesselInternal.DRYER ? vessel.dryerLift() : vessel.separatorLift();
+            int lit = work(LevelRenderer.getLightColor(level, BlockPos.containing(tip.x(), tip.y() - 1, tip.z())));
+            hangRig(pose, buffers, tip, vessel, internal == VesselInternal.DRYER ? vessel.dryerEyeRing() : vessel.separatorEyeRing(), lit, overlay);
             pose.pushPose();
-            pose.translate(tip.x(), tip.y() - lift, tip.z());
-            int lit = LevelRenderer.getLightColor(level, BlockPos.containing(tip.x(), tip.y() - 1, tip.z()));
+            pose.translate(tip.x(), tip.y() - lift - BuildingCraneBlockEntity.RIG_M, tip.z());
             if (internal == VesselInternal.DRYER) {
                 ReactorVesselRenderer.drawDryer(vessel, pose, buffers, lit, overlay);
             } else {
@@ -157,6 +158,29 @@ public final class BuildingCraneRenderer implements BlockEntityRenderer<Building
             pose.popPose();
         }
         pose.popPose();
+    }
+
+    /** The hook's ring, a spreader over the ring of the four lifting eyes and four slings down to them (the eyes are RIG_M under the hook). */
+    private static void hangRig(PoseStack pose, MultiBufferSource buffers, Point tip, VesselProfile v, double ring, int lit, int overlay) {
+        pose.pushPose();
+        pose.translate(tip.x(), tip.y(), tip.z());
+        part(pose, buffers, "strongback_hook", lit, overlay);
+        double rx = ring, rz = ring * v.ey;
+        scaled(pose, 0.0, 0.0, rx, 1.0, rz);
+        part(pose, buffers, "spreader", lit, overlay);
+        pose.popPose();
+        pose.popPose();
+        double top = -SHACKLE_DROP;
+        double bottom = -BuildingCraneBlockEntity.RIG_M;
+        for (int i = 0; i < 4; i++) {
+            double ang = Math.toRadians(45 + 90 * i);
+            double length = top - bottom;
+            if (length > 0.02) {
+                scaled(pose, tip.x() + rx * Math.cos(ang), tip.y() + bottom, 0.04, length, 0.04, tip.z() + rz * Math.sin(ang));
+                part(pose, buffers, "sling", lit, overlay);
+                pose.popPose();
+            }
+        }
     }
 
     /** The head, hung on the strongback: the lifting ring on the hook, the spreader over the lug ring, four slings down to the lugs. */

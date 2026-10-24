@@ -23,9 +23,9 @@ import java.util.List;
  * corner:
  * <pre>
  *   crane runway rails  x O.x-3..O.x+22  z O.z-14 and O.z+9   y O.y+railDy (default 14), console beside the first rail
- *   head stand          O.x+2, O.y+8, O.z-9   (the middle of a 7 x 7 head, clear of the 7 x 7 vessel and between the rails)
+ *   head stand          O.x+2, O.y+9, O.z-9   (the middle of a 7 x 7 head, clear of the 7 x 7 vessel and between the rails)
  *   equipment pads      O.x+6, O.y+1, O.z+5 and O.z-1  (in the pit beside the cattle chute)
- *   stud tensioner      O.x-3, O.y+8, O.z+2   (on the refuel floor beside the well)
+ *   stud tensioner      O.x-3, O.y+9, O.z+2   (on the refuel floor beside the well)
  * </pre>
  * The head starts ON the vessel with every stud at load, the dryer and the separator assembly in, and the vessel flooded to its flange.
  * No CC types here, so a {@code @GameTestHolder} class may use it.
@@ -53,8 +53,8 @@ final class CraneFixture {
         this.o = base.o;
         this.railDy = railDy;
         this.console = o.offset(-4, railDy, -14);
-        this.stand = o.offset(2, 8, -9);
-        this.tensionerPos = o.offset(-3, 8, 2);
+        this.stand = o.offset(2, 9, -9);
+        this.tensionerPos = o.offset(-3, 9, 2);
         pads.add(o.offset(6, 1, 5));
         pads.add(o.offset(6, 1, -1));
     }

@@ -57,6 +57,8 @@ import java.util.Locale;
 public class BuildingCraneBlockEntity extends BlockEntity {
 
     public static final int MAX_QUEUE = 8;
+    /** The lifting rig (the hook's ring, the spreader and four slings) hangs this far over the top of the lifting eyes of the dryer and the separators, m. */
+    public static final double RIG_M = 1.3;
 
     // ---------------------------------------------------------------
     // Moves
@@ -603,7 +605,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         // Hanging from the raised hook, the assembly must clear the vessel's lip before it moves sideways.
         VesselProfile vp = profileOf(r);
         double clear = r.vesselEnvelope().min().getY() + vp.rim + 0.25;
-        double hanging = EquipmentPads.liftAboveBottom(which, vp);
+        double hanging = EquipmentPads.liftAboveBottom(which, vp) + RIG_M;
         if (site.homeY() - hanging < clear) {
             return BwrText.tr("status.bwr.building_crane.rails_too_low",
                     "The runway is too low to lift the %s clear of the vessel: it hangs %s blocks below the hook. Raise the rails to y %s or higher.",
@@ -885,11 +887,11 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             case INTERNAL -> {
                 Point c = columnOf(loc);
                 double lift = loc.internal() == VesselInternal.DRYER ? vp.dryerLift() : vp.separatorLift();
-                return new BridgeMotion.Stop(c.x(), c.z(), baseY + lift, Double.NaN);
+                return new BridgeMotion.Stop(c.x(), c.z(), baseY + lift + RIG_M, Double.NaN);
             }
             case PAD -> {
                 return new BridgeMotion.Stop(loc.at().getX() + 0.5, loc.at().getZ() + 0.5,
-                        loc.at().getY() + EquipmentPadBlockEntity.TOP + EquipmentPads.liftAboveBottom(loc.internal(), vp), Double.NaN);
+                        loc.at().getY() + EquipmentPadBlockEntity.TOP + EquipmentPads.liftAboveBottom(loc.internal(), vp) + RIG_M, Double.NaN);
             }
             default -> {
                 return new BridgeMotion.Stop(pos.x(), pos.z(), pos.y(), Double.NaN);
@@ -1153,7 +1155,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         }
         Point at = busy() ? tip() : pos;
         VesselProfile vp = carriedProfile();
-        double middle = at.y() - (vp == null ? 2.0 : EquipmentPads.liftAboveBottom(carriedInternal, vp) / 2.0);
+        double middle = at.y() - RIG_M - (vp == null ? 2.0 : EquipmentPads.liftAboveBottom(carriedInternal, vp) / 2.0);
         // Over the vessel: the water the player sees (the drawn vessel and well). Elsewhere: the water standing in the pit of a pad.
         ReactorControllerBlockEntity r = reactor();
         var e = r == null ? null : r.vesselEnvelope();

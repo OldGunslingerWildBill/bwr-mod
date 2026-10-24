@@ -54,14 +54,15 @@ public final class BuildingCraneClientCheck {
     }
 
     private static final Shot[] SHOTS = {
-            new Shot(v(-13.0, 21.0, -24.0), v(3.0, 11.0, -3.0), 70),
-            new Shot(v(-1.3, 11.0, 8.6), v(0.65, 8.3, 5.24), 70),
+            new Shot(v(-7.0, 15.5, -15.0), v(5.0, 11.5, -2.0), 72),
+            new Shot(v(-0.3, 9.8, 6.9), v(0.65, 8.35, 5.24), 55),
             new Shot(v(0.0, 12.0, 8.0), v(0.65, 8.3, 5.24), 70),
-            new Shot(v(-0.2, 10.4, 7.6), v(0.65, 8.1, 5.2), 70),
-            new Shot(v(-11.0, 15.0, -4.0), v(2.5, 12.0, -3.0), 70),
-            new Shot(v(-9.0, 14.0, -13.0), v(2.5, 9.5, -8.5), 70),
-            new Shot(v(-6.0, 16.0, 1.0), v(4.5, 12.0, 3.0), 70),
-            new Shot(v(0.0, 12.0, 8.0), v(2.5, 11.0, 2.5), 70)};
+            new Shot(v(-0.1, 10.0, 6.7), v(0.65, 8.2, 5.2), 55),
+            new Shot(v(-10.0, 15.0, -3.5), v(2.5, 12.0, -3.5), 72),
+            new Shot(v(-6.0, 12.5, -14.0), v(2.5, 10.0, -8.5), 70),
+            new Shot(v(-7.0, 16.5, 9.0), v(4.0, 12.5, 3.0), 70),
+            // the pendant is used from beside the console (a menu closes when the player is more than 8 blocks from its block)
+            new Shot(v(-3.0, 15.5, -10.5), v(-4.0, 14.0, -14.0), 70)};
 
     private static long uploadsAtStart;
     private static boolean started, requested, standing, built;
@@ -215,15 +216,20 @@ public final class BuildingCraneClientCheck {
             level.setBlock(at, Blocks.SMOOTH_STONE.defaultBlockState(), 3);
         }
         fixture = CraneFixture.build(level, O);
+        // the refuelling bridge of the fixture is not wanted in these pictures: its rails and console go
+        for (int x = -1; x <= 18; x++) {
+            for (int z : new int[]{-3, 7}) {
+                level.setBlock(O.offset(x, 9, z), Blocks.AIR.defaultBlockState(), 2);
+            }
+        }
+        level.setBlock(fixture.base.console, Blocks.AIR.defaultBlockState(), 2);
         // the refuel floor: deck wherever the reactor roof, the pool and the chute do not already stand (the pool stays open)
         for (var at : BlockPos.betweenClosed(new BlockPos(O.getX() - 8, O.getY() + 8, O.getZ() - 14), new BlockPos(O.getX() + 22, O.getY() + 8, O.getZ() + 9))) {
             int dx = at.getX() - O.getX();
             int dz = at.getZ() - O.getZ();
             boolean poolWater = dx >= 9 && dx <= 17 && dz >= -2 && dz <= 6;
             boolean pit = dx >= 5 && dx <= 7 && dz >= -2 && dz <= 6;
-            boolean tensioner = dx == -3 && dz == 2;
-            boolean stand = dx == 2 && dz == -9;
-            if (!poolWater && !pit && !tensioner && !stand && level.getBlockState(at).isAir()) {
+            if (!poolWater && !pit && level.getBlockState(at).isAir()) {
                 level.setBlock(at, Blocks.SMOOTH_STONE.defaultBlockState(), 3);
             }
         }
@@ -270,6 +276,7 @@ public final class BuildingCraneClientCheck {
                 check(r.studsOff() == 25 && f.tensioner.running(), "25 studs off and the tool still working: " + r.studsOff());
             }
             case 2 -> {
+                f.tensioner.fill(dev.bwr.mod.reactor.StudTensionerBlockEntity.FE_CAPACITY);
                 dev.bwr.mod.gui.StudTensionerMenu.open(player, f.tensioner);
             }
             case 3 -> {

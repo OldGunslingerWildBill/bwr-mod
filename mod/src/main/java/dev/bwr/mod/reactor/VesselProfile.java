@@ -216,4 +216,14 @@ public final class VesselProfile {
     public double dryerLift() {
         return dryerEyeY() + 2 * dryerEyeRadius() + .04;
     }
+
+    /** Radius of the ring of the dryer's four lifting eyes along x, blocks (they stand at 45, 135, 225 and 315 degrees; along z it is this times {@link #ey}). */
+    public double dryerEyeRing() {
+        return .427 * width - .15;
+    }
+
+    /** Radius of the ring of the separator assembly's four lifting eyes along x, blocks. */
+    public double separatorEyeRing() {
+        return .55 * upperShroud * width;
+    }
 }

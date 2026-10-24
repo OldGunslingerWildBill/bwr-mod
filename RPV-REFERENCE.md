@@ -254,7 +254,7 @@ These came from the owner on 2026-10-23:
 - **Wall.** The wall stays 0.012 of the width (the real wall is 5.4 % of the radius), so the jet-pump and spray-ring fits stay
   valid.
 - **Bottom head.** It is as deep as the jet-pump seat allows: an ellipsoid of about 0.13 D at 17 wide, hemispherical at 7 wide.
-- **Studs.** Their positions follow the real pitch (74). They are drawn with the head off; the nuts and washers go with the head.
+- **Studs.** Their positions follow the real pitch (74). They are drawn with the head off; the nuts and washers go with the head, until the stud tensioner takes them off (BUILDING-CRANE.md): then the head the crane lifts has none.
 
 ### What changed in the code
 
@@ -283,7 +283,7 @@ at the lip, and the well is unchanged. `levelAtHeight` is the exact inverse.
 
 ### Removable dryer and separators: the rules chosen
 
-- **Lifting.** The refuelling bridge does it (no new hoist: it is the smaller change).
+- **Lifting.** The refuelling bridge did it in alpha.53 (no new hoist: the smaller change). Since the building crane (BUILDING-CRANE.md) the reactor building crane lifts the head first, then the dryer and the separators; the bridge moves fuel only (the option `bridgeLiftsInternals` keeps the alpha.53 bridge lift while the old tests need it).
 - **Storage.** An Equipment Storage Pad block on the floor of a player-built pit of vanilla water is the dryer/separator storage
   pool. A pool multiblock would have been more work for no extra realism here.
 - **Consequences.**
