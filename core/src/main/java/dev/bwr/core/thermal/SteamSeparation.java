@@ -97,7 +97,7 @@ public final class SteamSeparation {
      * the band. The separator top section is 50 in above L8, the steam nozzle 66, so the level that floods the separators
      * (about 25 in over L8) turns a design-quality train into a mostly-water steam line. Game calibration.
      */
-    public static final double HIGH_LEVEL_E_FOLD_IN = 6.0;
+    public static final double CARRYOVER_E_FOLD_IN = 6.0;
 
     /**
      * Total steam moisture at a water level, mass fraction. Flat in the band, then {@code exp((L - L8) / 6 in)} above L8,
@@ -108,7 +108,7 @@ public final class SteamSeparation {
     public static double moisture(double separatorRatio, double levelVesselIn) {
         double w = bandMoisture(separatorRatio);
         if (levelVesselIn > L8_VESSEL_IN) {
-            w *= Math.exp(Math.min(60.0, (levelVesselIn - L8_VESSEL_IN) / HIGH_LEVEL_E_FOLD_IN));
+            w *= Math.exp(Math.min(60.0, (levelVesselIn - L8_VESSEL_IN) / CARRYOVER_E_FOLD_IN));
         }
         return Math.min(INLET_MOISTURE, w);
     }
@@ -129,7 +129,7 @@ public final class SteamSeparation {
     public static final double SQUASHED_CARRYUNDER_MULTIPLE = 6.0;
 
     /** The e-fold depth of carryunder below L3, inches: it rises to its ceiling over about 24 in. */
-    public static final double LOW_LEVEL_E_FOLD_IN = 12.0;
+    public static final double CARRYUNDER_E_FOLD_IN = 12.0;
 
     /** Most steam the return flow can carry: 10 % of its mass (a separator whose return annuli have run dry). */
     public static final double MAX_CARRYUNDER = 0.10;
@@ -151,7 +151,7 @@ public final class SteamSeparation {
     public static double carryunder(double separatorRatio, double levelVesselIn) {
         double base = bandCarryunder(separatorRatio);
         if (levelVesselIn < L3_VESSEL_IN) {
-            double rise = 1.0 - Math.exp(-(L3_VESSEL_IN - levelVesselIn) / LOW_LEVEL_E_FOLD_IN);
+            double rise = 1.0 - Math.exp(-(L3_VESSEL_IN - levelVesselIn) / CARRYUNDER_E_FOLD_IN);
             base += (MAX_CARRYUNDER - base) * rise;
         }
         return Math.min(MAX_CARRYUNDER, base);
