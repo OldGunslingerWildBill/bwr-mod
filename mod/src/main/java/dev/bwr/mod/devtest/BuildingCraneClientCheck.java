@@ -59,7 +59,7 @@ public final class BuildingCraneClientCheck {
             new Shot(v(0.0, 12.0, 8.0), v(0.65, 8.3, 5.24), 70),
             new Shot(v(-0.1, 10.0, 6.7), v(0.65, 8.2, 5.2), 55),
             new Shot(v(-10.0, 15.0, -3.5), v(2.5, 12.0, -3.5), 72),
-            new Shot(v(-6.0, 12.5, -14.0), v(2.5, 10.0, -8.5), 70),
+            new Shot(v(-4.3, 9.2, -12.2), v(2.5, 9.9, -8.5), 70),
             new Shot(v(-7.0, 16.5, 9.0), v(4.0, 12.5, 3.0), 70),
             // the pendant is used from beside the console (a menu closes when the player is more than 8 blocks from its block)
             new Shot(v(-3.0, 15.5, -10.5), v(-4.0, 14.0, -14.0), 70)};

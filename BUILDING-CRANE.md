@@ -22,8 +22,9 @@ All blocks are in the Realistic BWR creative tab (iron, gray concrete, a compara
    overlapping along their length by at least two blocks. A rail has an axis (the way you face when you place it); the crane runs along it. The
    reactor's vessel must lie between the rails (inside their overlap and between them). The rail block is a runway beam with the crane rail on its top;
    it needs a wall or posts of your own under it. The crane hangs its hook level with the *floor* of the rail block at rest, and the load hangs below
-   that, so the rails must be high enough for the head to clear the vessel: the console says how high (for the 7 x 7 x 10 test vessel, 5 blocks above its
-   roof; for the 17 x 17 x 28 vessel about 9 blocks above the flange).
+   that, so the rails must be high enough for the load to clear the vessel's lip: the crane refuses with the height to build to. For the 7 x 7 x 10 test
+   vessel the rail block must stand at least 2 blocks over the top of its shell for the head (it hangs 2.4 blocks under the hook) and 4 blocks over it for
+   the dryer (4.2 blocks: the lifting rig adds 1.3 m over the lifting eyes); a taller vessel needs more.
 2. **The console.** A **Reactor Building Crane Console** beside any rail block. Right-click opens the pendant screen; sneak-click prints what the crane sees
    (rails, reactor, head stands, pads) and the state of the head.
 3. **A head stand.** A **Head Stand** on clear floor between the rails beside the well. The block is the **middle** of the place the head lies, and the
@@ -134,6 +135,24 @@ one draw each, while the tensioner is part way round. The stud tensioner's tool 
 
 **Drawing.** Every part is a cached vertex buffer; nothing is rebuilt per frame (the client check `-PbwrBuildingCraneCheck` fails if a mesh is uploaded
 again while a picture stands still). The pose is the leg the server started advanced by the client clock, so a moving crane costs one packet per phase.
+
+## Pictures (1920 x 1080, `art/building-crane/`)
+
+From `-PbwrBuildingCraneCheck` (`BuildingCraneClientCheck`), a real client, the moves run by the block entities' own logic:
+
+![The crane over the refuel floor](art/building-crane/crane-over-the-refuel-floor.png)
+
+![The tensioner's tool on the flange, nuts off on one side of it](art/building-crane/tensioner-on-the-flange.png)
+
+![The head hanging from the hook on its strongback](art/building-crane/head-on-the-hook.png)
+
+![The head on its stand](art/building-crane/head-on-its-stand.png)
+
+![The dryer on the hook, on its lifting rig](art/building-crane/dryer-on-the-hook.png)
+
+![The pendant screen](art/building-crane/crane-pendant-screen.png)
+
+Also in the set: `tensioner-screen.png` and `studs-detensioned-nuts-off.png`. The Workbench review renders of the Blender parts are in `art/models/building_crane/`.
 
 ## Performance, chunks, saves
 
