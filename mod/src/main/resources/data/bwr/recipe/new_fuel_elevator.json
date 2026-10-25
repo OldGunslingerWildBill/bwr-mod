@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "P": {
+      "item": "bwr:spent_fuel_pool_wall"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    "IHI",
+    "IPI",
+    "IRI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:new_fuel_elevator"
+  }
+}

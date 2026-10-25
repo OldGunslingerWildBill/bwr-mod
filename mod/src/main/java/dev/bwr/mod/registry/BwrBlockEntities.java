@@ -178,6 +178,11 @@ public final class BwrBlockEntities {
             () -> BlockEntityType.Builder.of(dev.bwr.mod.reactor.StudTensionerBlockEntity::new,
                     BwrBlocks.STUD_TENSIONER.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.spentfuel.NewFuelElevatorBlockEntity>>
+            NEW_FUEL_ELEVATOR = BLOCK_ENTITIES.register("new_fuel_elevator",
+            () -> BlockEntityType.Builder.of(dev.bwr.mod.spentfuel.NewFuelElevatorBlockEntity::new,
+                    BwrBlocks.NEW_FUEL_ELEVATOR.get()).build(null));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.refuelling.EquipmentPadBlockEntity>>
             EQUIPMENT_PAD = BLOCK_ENTITIES.register("equipment_pad",
             () -> BlockEntityType.Builder.of(dev.bwr.mod.refuelling.EquipmentPadBlockEntity::new,

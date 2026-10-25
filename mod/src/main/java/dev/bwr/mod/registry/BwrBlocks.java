@@ -305,6 +305,11 @@ public final class BwrBlocks {
             BLOCKS.register("equipment_pad", () -> new dev.bwr.mod.refuelling.EquipmentPadBlock(
                     BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(4.0F, 40.0F)
                             .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
+    /** The new fuel elevator: stood on the rim of a spent fuel pool wall, it lowers fresh fuel down a guide under the water into the racks. */
+    public static final DeferredBlock<dev.bwr.mod.spentfuel.NewFuelElevatorBlock> NEW_FUEL_ELEVATOR =
+            BLOCKS.register("new_fuel_elevator", () -> new dev.bwr.mod.spentfuel.NewFuelElevatorBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(4.0F, 40.0F)
+                            .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
     /** The reactor building crane's pendant console; the block entity is the crane. */
     public static final DeferredBlock<dev.bwr.mod.refuelling.BuildingCraneConsoleBlock> BUILDING_CRANE_CONSOLE =
             BLOCKS.register("building_crane_console", () -> new dev.bwr.mod.refuelling.BuildingCraneConsoleBlock(machine().noOcclusion()));

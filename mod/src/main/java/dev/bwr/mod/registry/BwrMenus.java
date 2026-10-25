@@ -61,6 +61,10 @@ public final class BwrMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.SpentFuelPoolMenu>> SPENT_FUEL_POOL =
             MENUS.register("spent_fuel_pool", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.SpentFuelPoolMenu::new));
 
+    /** The new fuel elevator: its pool, the carriage, the waiting assemblies, the water it needs, and raise, try again and take. */
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.NewFuelElevatorMenu>> NEW_FUEL_ELEVATOR =
+            MENUS.register("new_fuel_elevator", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.NewFuelElevatorMenu::new));
+
     /** The reactor building crane's pendant: the crane's state, the head, the dryer and the separators, and the lifts. */
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.CraneMenu>> BUILDING_CRANE =
             MENUS.register("building_crane", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.CraneMenu::new));

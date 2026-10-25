@@ -38,6 +38,8 @@ rack tops. "Uncovered" means the water is below the rack top (4 m).
 ## Moving fuel
 
 - **The refuelling bridge** moves assemblies between the core and the racks, through the cattle chute and under water, one at a time, and is the normal way (see [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md)); the pool's stored fuel is also a registered radiation source behind the water over the racks.
+- **The new fuel elevator** puts fresh fuel into the pool through the water: a hoist on the rim with a guide frame down the inside of the wall
+  (see [the elevator](#the-new-fuel-elevator)).
 - **Carrying it.** Right-click a rack with an assembly (the cell under the cursor on the top face if it is free, else
   the first free cell; click the top of the column). Sneak with an empty hand takes one out (the cell under the cursor if it holds one, else the one
   that has cooled longest). A plain right-click reports the rack's cells. Right-click the controller with an assembly
@@ -53,6 +55,80 @@ rack tops. "Uncovered" means the water is below the rack top (4 m).
   chest. **An assembly with no stamp (an old save, or one that never left a core) counts as long-cooled**: five years,
   which the decay curve turns into a few kilowatts at most. Time spent in the vessel after shutdown before the
   assembly is lifted out is not credited, which errs on the hot side.
+
+## The new fuel elevator
+
+A real plant receives new fuel on the refuel floor, examines it, and lowers it into the spent fuel pool with a **new fuel elevator**: the U.S. EPR's
+safety report describes new assemblies being loaded into the new fuel elevator basket, which "lowers the fuel assembly into the spent fuel storage pool for
+underwater storage" (NRC, U.S. EPR FSAR Chapter 9, fuel handling: ML14209A587 and ML13220A776), and the APR1400 fuel handling paper (KNS, 17S-060) describes the same
+elevator taking fuel from the new fuel racks into the pool. The same documents say administrative controls keep a new assembly from moving over the spent fuel racks
+while it is out of the water, and NRC asked about the drop of one onto the pool (Information Notice 80-01 records a new assembly dropped at Pilgrim in 1979). The mod's
+elevator does what the elevator does and nothing else: the assembly goes down a guide against the wall and only crosses the rack tops under water.
+
+**Block**: `bwr:new_fuel_elevator` (iron ingots, a hopper, a pool lining block and redstone). It is drawn by its renderer: a yellow stand with a deck, a handrail,
+a gantry with a hoist motor and cable drum, a control cabinet with a screen and a beacon, a guide frame (two rails with lips, cross ties and diagonals) down the
+inside face of the wall to the floor, a blue carriage on a rope with jaws round the handle of the assembly (Blender, headless:
+`art/models/new_fuel_elevator/build_models.py`, exported by `tools-export-new-fuel-elevator.py`; 1,376 triangles in four parts, the guide tiled once a metre).
+
+**Where it goes, and how it finds its pool.** Stand it **on top of the rim of a pool wall**: the block under it is a lining block on the top row of a straight run
+of wall, not a corner. The pool is looked for when it is asked (loading, a command, the screen, and once a second after the block is placed or loaded), never
+scanned for: among the pool controllers of the level (the registry's) the one whose top row the block stands on, and which is formed, is its pool. The guide hangs in the
+interior column against the inside face of that wall, from the rim to the floor (keep that column clear of racks: the carriage passes through them). An elevator
+that is not on a formed pool says so ("Not on a pool ..." or "The pool is not formed ..." with the pool's own reason) and does nothing.
+
+**Loading**: right-click it with an assembly, or feed its hatch from a hopper, a pipe or a computer's `pushItems` (an item handler on every face: slots 0 to 3
+are the hatch, insert only, slot 4 is the landing, take only). Up to four wait; one goes down at a time.
+
+**Lowering.** The carriage rides down the guide with the assembly to one metre over the rack seat, the assembly leaves the carriage and runs over the rack tops to the
+first free cell (racks in the pool's order, cells in order), is lowered onto its seat, and the empty carriage returns. Speeds (game scale, as the bridge's):
+0.5 m/s on the guide loaded, 1.0 empty, 0.6 m/s across the racks, 0.3 m/s onto the seat. In the 9 x 9 x 8 pool a trip to the first rack takes about 22 s and the cell is
+filled at about 18 s. **The assembly enters its cell at the end of the seating leg**, and the cell is the one the trip was started for unless it was taken
+meanwhile (then the next free one, then, if there is none, the landing slot, then the ground: fuel is never lost).
+
+**Refusals, with the reason** (action bar for a right-click, the screen's "Last refusal", `getStatus().lastRefusal`, and a hopper simply waits):
+
+| Refusal | When |
+|---|---|
+| Not on a pool / The pool is not formed | not on a straight run of the rim of a formed pool |
+| Every rack cell is taken (or promised to an assembly already waiting) | the free cells are fewer than the assemblies waiting plus this one |
+| The water is too low | less than **1.5 m of water over the handle** of an assembly at the height it crosses the racks (1 m over the seat), the refuelling bridge's hoist limit: a pool 6.5 m deep over 4 m racks |
+| Only fuel assemblies go in the hatch / The hatch is full | |
+
+**Raising**: a command, the player's own (the screen's RAISE COOLEST, or `raise()` and `raiseCell(n)` from a computer). The empty carriage goes down; **when it arrives**
+the assembly that has cooled longest is taken out of its cell, lifted a metre, slid to the guide and ridden up to the hatch, where it waits (the landing slot) for a hopper, a pipe,
+the screen's TAKE FROM HATCH, or a sneaking bare hand. It is refused while the carriage is busy, while one already waits, or when there is nothing to raise.
+
+**Dose.** An assembly out of the water is a radiation source exactly as the bridge's grapple is (`RadiationSources`, a point source at the handle with the gamma half of its
+decay heat, `e^(-7.07 x water over the handle)`, nothing in air): the one on the carriage is evaluated from its pose when an instrument asks (the clock is the
+same one that draws it), the ones waiting in the hatch and at the landing sit with their handles 1.3 m over the foot of the block, over the water of a full pool.
+A just-discharged 45 GWd/t assembly (315 kW) reads about 36 Sv/h 2 m from the hatch and a few mSv/h at the same distance under 2 m of water
+(`aHotAssemblyOutOfTheWaterIsARadiationSourceAndUnderItIsNot`). **A hot assembly raised to the hatch is lethal to stand next to**: the screen shows the decay
+heat of the one RAISE would bring (amber above 50 kW) and the hatch's decay heat in red. Fresh fuel makes no gamma and is never a source.
+
+**No ticker.** The block has none. A trip schedules two ordinary block ticks (the moment the assembly changes hands with the rack, and the carriage coming home);
+the client draws the carriage and the assembly from the trip's start tick and legs, the same numbers `FuelElevatorMotion` (core, pure Java) gives the server,
+so a moving elevator costs one packet when it starts and one when it changes hands, and an idle or blocked one nothing. A trip saved with the world resumes where the
+clock says it is. Saves: `Hatch`, `Landing` and `Trip` only while there is something in them, `Inward` and `FloorY` once it has found its pool; an old world has none.
+
+**Screen**: the pool it is on, the free cells, the water level and the water over the handle against the 1.5 m needed, the carriage's state, leg and time left, the
+assemblies waiting, the one at the hatch, the coolest in the pool, and the last refusal; buttons RAISE COOLEST, TRY AGAIN (a blocked hatch) and TAKE FROM HATCH.
+**Computer**: peripheral `bwr_new_fuel_elevator`, `isLinked()`, `getStatus()` (`linked`, `problem`, `state` = idle, waiting, lowering, raising or unlinked, `leg`, `progress`,
+`secondsLeft`, `queued`, `landing`, `landingDecayHeatKW`, `inFlightDecayHeatKW`, `freeCells`, `cells`, `waterOverTransferM`, `minCoverM`, `poolLevelM`,
+`coolestDecayHeatKW`, `lastRefusal`), `raise()`, `raiseCell(cell)` (rack * 4 + cell from 0, as the bridge numbers them) and `retry()`, each returning `{ok, reason, message}`.
+
+```lua
+local lift = peripheral.find("bwr_new_fuel_elevator")
+local r = lift.raise()                       -- the program's choice: bring the coolest assembly up
+if not r.ok then print(r.reason, r.message) end
+```
+
+Honest limits: the carriage cannot be blocked by what is in its way (no collision: it crosses rack tops as the bridge does and passes through racks standing in the guide's
+column); one assembly travels at a time; the elevator is not a crane (it cannot lift out of a pool anything but assemblies); a raised assembly is the player's to deal with.
+
+## Swimming in the pool
+
+See [RADIATION.md](RADIATION.md#water-between-you-and-the-source-and-swimming): the shielding is the water **along the line** between a point in the water and the
+fuel, and a person in the water of a formed pool takes the dose the meter reads and the mod's effects for it.
 
 ## Decay heat
 
@@ -214,12 +290,12 @@ assemblies; breaking the controller drops all of them (the water is lost).
 
 ## Tests
 
-Core (`:core:acceptance`): `AssemblyDecayHeatTest` (reference points, the reactor's group solution, Way-Wigner, shape, scale, time to cool),
+Core (`:core:acceptance`): `FuelElevatorMotionTest` (the legs and their timings, the pose at each moment, when the assembly changes hands, the water rule, the dose in air and under water), `AssemblyDecayHeatTest` (reference points, the reactor's group solution, Way-Wigner, shape, scale, time to cool),
 `SpentFuelPoolTest` (steam tables, evaporation, boil-off rate, heat-up, energy conservation, cooling loop, uncovered fuel, makeup, estimates, quench).
 GameTests (`SpentFuelPoolTests`, namespace `bwrpool`, `-PbwrOnlyPool` runs just these): formation and refusals, boil-off rate and level fall, cooling
 holds and no cooling does not, uncovered fuel heats bursts and burns and is quenched, covered fuel stays at the water temperature, the stamp at unload and
 through saves and the pool, the plant refusing hot fuel and starting once it has cooled, items and water connections and breakage, save and reload (and old
-saves), and the computer face. Client check: `:mod:runTurbineModelCheck -PbwrSpentFuelPoolCheck` (pictures in `spent-fuel-pool-check/`), and the screens in
+saves), and the computer face; `NewFuelElevatorTests` (the elevator: lowering into the first free cell, the real scheduler with its two ticks, a right-click, a hopper, the refusals, raising, the dose along the trip, a save and reload, the old rack and controller paths, the computer face) and `ImmersionDoseTests` (diver and surface swimmer, effects and dose with no meter, creative exempt, the flooded well, readings above the water unchanged). Client check: `:mod:runTurbineModelCheck -PbwrSpentFuelPoolCheck` (pictures in `spent-fuel-pool-check/`), and the screens in
 `-PbwrGuiScreenCheck`.
 
 ## Pictures (1920 x 1080, `art/spent-fuel-pool/`)

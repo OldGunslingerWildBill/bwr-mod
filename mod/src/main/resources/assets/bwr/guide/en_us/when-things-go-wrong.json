@@ -79,6 +79,18 @@
         "textureSize": 16,
         "size": 24
       }
+    },
+    {
+      "title": "Swimming in the pool",
+      "text": [
+        "The water between you and spent fuel is its shield. Float at the surface of a deep pool and the reading is a trifle. Go down beside fresh fuel and every metre lost multiplies the dose a thousandfold: lethal in minutes.",
+        "",
+        "Anyone in the water of a pool, or of a flooded well over an open vessel, takes the dose the survey meter reads, with or without one, and the contamination effects for it. You are told when it gets high. Creative players are exempt."
+      ],
+      "icons": [
+        "bwr:survey_meter",
+        "bwr:spent_fuel_pool_wall"
+      ]
     }
   ]
 }
