@@ -178,9 +178,14 @@ public class RtgBlockEntity extends BlockEntity {
             return;
         }
         long now = level.getGameTime();
+        if (now <= lastSettle) {
+            // The same tick again, or a clock that went backwards (a test or a command rewinding the game time): ticks
+            // already banked are never banked twice, so the clock can be moved but energy cannot be made by moving it.
+            return;
+        }
         long elapsed = now - lastSettle;
         lastSettle = now;
-        if (elapsed <= 0 || !fuelled) {
+        if (!fuelled) {
             return;
         }
         double rate = readout().fePerTick();
