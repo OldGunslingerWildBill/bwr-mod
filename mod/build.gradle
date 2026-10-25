@@ -146,6 +146,7 @@ neoForge {
             // Turbine-driven pump pictures (feed pump turbine, RCIC, HPCI) with piped ports: -PbwrTurbinePumpShots=<label> saves run/turbineModelCheck/turbine-pump-shots/<label>/ (TurbinePumpShots).
             if (project.hasProperty('bwrTurbinePumpShots')) jvmArguments.add('-Dbwr.turbinePumpShots=' + project.property('bwrTurbinePumpShots'))
             if (project.hasProperty('bwrShellExchangerCheck')) jvmArguments.add('-Dbwr.shellExchangerCheck=true')
+            if (project.hasProperty('bwrHxMultiblockCheck')) jvmArguments.add('-Dbwr.hxMultiblockCheck=true')
             if (project.hasProperty('bwrSpargerCheck')) jvmArguments.add('-Dbwr.spargerCheck=true')
             if (project.hasProperty('bwrCoreModelCheck')) jvmArguments.add('-Dbwr.coreModelCheck=true')
             if (project.hasProperty('bwrRipModelCheck')) jvmArguments.add('-Dbwr.ripModelCheck=true')
