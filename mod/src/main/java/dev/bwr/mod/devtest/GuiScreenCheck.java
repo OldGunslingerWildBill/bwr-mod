@@ -961,6 +961,10 @@ public final class GuiScreenCheck {
         s.add(new Scenario("guide-page-options", i -> guideAt(i, "server-options", 4)));
         s.add(new Scenario("guide-page-first", i -> guideAt(i, "what-this-is", 0)));
         s.add(new Scenario("guide-page-book-end", i -> guideLast(i)));
+        // The Breeding and decay chapter (BREEDING-TARGETS.md): its first page, a route with icons and arrows, and a decay series page.
+        s.add(new Scenario("guide-breeding-first", i -> guideAt(i, "breeding-and-decay", 0)));
+        s.add(new Scenario("guide-breeding-route", i -> guideAt(i, "breeding-and-decay", 5)));
+        s.add(new Scenario("guide-breeding-series", i -> guideAt(i, "breeding-and-decay", 9)));
         return s;
     }
 
