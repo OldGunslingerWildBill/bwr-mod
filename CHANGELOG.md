@@ -15,6 +15,26 @@ Three redstone lamps that light an area: the **Xenon Floodlight** (`bwr:xenon_fl
 - **Tests.** `FloodlightTests` (namespace `bwrfloodlight`), 16 tests: exact cleanup on power loss, re-aim, breaking and explosions; a player's lights surviving every cleanup; walls, flowing and still water; save and reload; a real chunk unload and load of a lit lamp; the queued removal in an unloaded chunk running exactly once and loading nothing; the HPS warm-up. Every fixture waits for its forced chunks before building and lets the light engine settle before releasing them (see the fixed shutdown hang below).
 - **Fixed: GameTest server hanging on shutdown.** The first version's fixtures forced their chunks, built into them at once (a synchronous load with the neighbours half generated), placed up to 256 level-15 lights and released the chunks, all in one tick. The light updates queued behind the half-generated neighbours' light steps; with the tickets gone those generation tasks never finished, their chunks kept a generation reference, and `MinecraftServer.stopServer` waited for them to unload for ever.
 - **Not in this change.** No FE draw (redstone only); no hot restrike for the HPS panel; the floodlight item shows only the base.
+## Unreleased: industrial lamps
+
+Six redstone-controlled plant lamps: three lamp types (low-pressure sodium, high-pressure sodium, mercury vapour), each as a high-bay pendant and a wall pack. Lit, they warm through light 4, 8, 12 and 15 over 20 to 40 seconds of game time; the high-pressure and mercury lamps cool for about 15 seconds before a restrike.
+
+- **Blocks (`bwr:lps_high_bay`, `bwr:lps_wall_pack`, `bwr:hps_high_bay`, `bwr:hps_wall_pack`, `bwr:mercury_high_bay`, `bwr:mercury_wall_pack`).** Light level 15 when full. A high bay hangs under a solid block; a wall pack mounts on a wall. Each drops itself and breaks with a pickaxe.
+- **Warm-up and restrike on scheduled ticks.** No per-block ticker. Old saves load: the lamps are new blocks.
+- **Shaders.** Each lit lens ships a labPBR `_s` specular map with emission in its alpha channel, so a labPBR shader pack (Complementary) reads the lens as lit. The shader path was not run in this change; see LIGHTING.md.
+- **Models and textures.** Headless Blender (`art/models/industrial_lamps/build_lamps.py`), `tools-export-lamps.py`, `tools-make-lamp-textures.py`.
+- **Recipes.** Distinct per type: orange stained glass, glowstone or light blue stained glass as the lens, with iron and redstone.
+- **Guide.** "Industrial lamps" page in the control-room chapter. Design and the shader notes in LIGHTING.md.
+
+## Unreleased: pool shader look
+
+The spent fuel pool's water and Cherenkov glow now look like water and light under Iris with Complementary Reimagined. Vanilla is unchanged in what it draws.
+
+- **Pool water under a shader pack.** The surface is replayed after the translucent terrain (new `client/DeferredLiquids`, after `AFTER_TRANSLUCENT_BLOCKS`), not in the block entity pass. Iris gives translucent terrain its water program, which is where a pack does reflections, ripples and water tint; the block entity pass only reached the block translucent program. The water uses `DeferredLiquids.WATER`: the translucent shader, blend and texture of vanilla translucent terrain, but colour-only writes, so the glow beneath the surface is not hidden. Vanilla draws the same quads in the same order.
+- **Pool glow under a shader pack.** The glow is written straight, not premultiplied, when a pack is active (`DeferredLiquids.glowStraight()`, read once per replay through `VisualEffectsMode.shaderPackInUse()`). The pack's glow program blends with the alpha, which squared the premultiplied colour and left the glow almost invisible. Vanilla keeps the premultiplied colour.
+- **Client check.** `-PbwrSpentFuelPoolCheck` saves two more pictures, `pool-underwater` and `pool-night-glow`, and asserts that the replay ran (the pool stage fails with "the pool water and glow were not replayed after the translucent terrain" if it did not).
+- **Not changed.** The flooded well and the open vessel's water still draw in the block entity pass. Moving them to the replay removed the core glow under Complementary, so they were put back; this is open. No pool lamps were added: the lamps and floodlights branches own underwater and pool light.
+- **Optional mods.** Nothing new is required. Iris is still only asked through the existing reflection in `VisualEffectsMode`.
 
 ## Unreleased: large RTG and RTG heat
 

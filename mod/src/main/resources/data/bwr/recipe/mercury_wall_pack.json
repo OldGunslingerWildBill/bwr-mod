@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "IRI",
+    "GBG"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "B": {
+      "item": "minecraft:light_blue_stained_glass"
+    }
+  },
+  "result": {
+    "id": "bwr:mercury_wall_pack",
+    "count": 1
+  }
+}

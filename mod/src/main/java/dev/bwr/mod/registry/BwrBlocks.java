@@ -704,6 +704,36 @@ public final class BwrBlocks {
             BLOCKS.register("control_stand",
                     () -> new dev.bwr.mod.furniture.ControlStandBlock(furniture()));
 
+    // --- Industrial lamps (LIGHTING.md): redstone-controlled HID lamps, warm-up and restrike on scheduled ticks ---
+    /** Lamp housing: painted steel that does not take the panel finish. The light is the lens. */
+    private static BlockBehaviour.Properties lamp() {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(2.0F, 6.0F)
+                .sound(SoundType.METAL)
+                .noOcclusion()
+                .lightLevel(dev.bwr.mod.lighting.IndustrialLampBlock::emission);
+    }
+
+    public static final DeferredBlock<dev.bwr.mod.lighting.HighBayLampBlock> LPS_HIGH_BAY =
+            BLOCKS.register("lps_high_bay",
+                    () -> new dev.bwr.mod.lighting.HighBayLampBlock(lamp(), dev.bwr.mod.lighting.LampType.LOW_PRESSURE_SODIUM));
+    public static final DeferredBlock<dev.bwr.mod.lighting.WallPackLampBlock> LPS_WALL_PACK =
+            BLOCKS.register("lps_wall_pack",
+                    () -> new dev.bwr.mod.lighting.WallPackLampBlock(lamp(), dev.bwr.mod.lighting.LampType.LOW_PRESSURE_SODIUM));
+    public static final DeferredBlock<dev.bwr.mod.lighting.HighBayLampBlock> HPS_HIGH_BAY =
+            BLOCKS.register("hps_high_bay",
+                    () -> new dev.bwr.mod.lighting.HighBayLampBlock(lamp(), dev.bwr.mod.lighting.LampType.HIGH_PRESSURE_SODIUM));
+    public static final DeferredBlock<dev.bwr.mod.lighting.WallPackLampBlock> HPS_WALL_PACK =
+            BLOCKS.register("hps_wall_pack",
+                    () -> new dev.bwr.mod.lighting.WallPackLampBlock(lamp(), dev.bwr.mod.lighting.LampType.HIGH_PRESSURE_SODIUM));
+    public static final DeferredBlock<dev.bwr.mod.lighting.HighBayLampBlock> MERCURY_HIGH_BAY =
+            BLOCKS.register("mercury_high_bay",
+                    () -> new dev.bwr.mod.lighting.HighBayLampBlock(lamp(), dev.bwr.mod.lighting.LampType.MERCURY));
+    public static final DeferredBlock<dev.bwr.mod.lighting.WallPackLampBlock> MERCURY_WALL_PACK =
+            BLOCKS.register("mercury_wall_pack",
+                    () -> new dev.bwr.mod.lighting.WallPackLampBlock(lamp(), dev.bwr.mod.lighting.LampType.MERCURY));
+
     // --- Control panel trim (decoration, except the header strip, canopy and chamfers: MountableTrimBlock) ----
     public static final DeferredBlock<dev.bwr.mod.panel.trim.PanelEndCapBlock> CONTROL_PANEL_END_CAP_FLAT =
             BLOCKS.register("control_panel_end_cap_flat",
