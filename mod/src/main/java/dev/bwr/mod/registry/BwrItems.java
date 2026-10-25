@@ -272,6 +272,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.TRANSFER_CANAL);
     public static final DeferredItem<BlockItem> CANAL_GATE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CANAL_GATE);
+    public static final DeferredItem<BlockItem> NEW_FUEL_ELEVATOR =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.NEW_FUEL_ELEVATOR);
     public static final DeferredItem<BlockItem> EQUIPMENT_PAD =
             ITEMS.registerSimpleBlockItem(BwrBlocks.EQUIPMENT_PAD);
     public static final DeferredItem<BlockItem> REFUELLING_BRIDGE_CONSOLE =
@@ -564,6 +566,7 @@ public final class BwrItems {
                         output.accept(SPENT_FUEL_POOL_WALL.get());
                         output.accept(SPENT_FUEL_POOL_CONTROLLER.get());
                         output.accept(SPENT_FUEL_RACK.get());
+                        output.accept(NEW_FUEL_ELEVATOR.get());
                         output.accept(SPENT_FUEL_POOL_MAKEUP_PORT.get());
                         output.accept(SPENT_FUEL_POOL_COOLING_IN.get());
                         output.accept(SPENT_FUEL_POOL_COOLING_OUT.get());

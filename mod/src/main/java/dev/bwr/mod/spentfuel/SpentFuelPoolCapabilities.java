@@ -21,6 +21,8 @@ public final class SpentFuelPoolCapabilities {
                 (be, side) -> be.itemHandler());
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, BwrBlockEntities.SPENT_FUEL_POOL.get(),
                 (be, side) -> be.energy());
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, BwrBlockEntities.NEW_FUEL_ELEVATOR.get(),
+                (be, side) -> be.itemHandler());
         for (SpentFuelPoolPortBlock block : new SpentFuelPoolPortBlock[] {
                 BwrBlocks.SPENT_FUEL_POOL_MAKEUP_PORT.get(), BwrBlocks.SPENT_FUEL_POOL_COOLING_IN.get(),
                 BwrBlocks.SPENT_FUEL_POOL_COOLING_OUT.get()}) {

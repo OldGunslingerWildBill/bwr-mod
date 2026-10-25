@@ -1594,5 +1594,22 @@
   "tooltip.bwr.generator_cooling_skid.2": "Without cooling the winding heats with load; nothing trips. Cut the load.",
   "status.bwr.turbine_aux.tank_full": "The tank has no room for a whole drum.",
   "status.bwr.turbine_aux.h2_full": "The casing has no room for a whole cylinder.",
-  "component.bwr.option.Measures.VIBRATION": "Vibration"
+  "component.bwr.option.Measures.VIBRATION": "Vibration",
+  "status.bwr.new_fuel_elevator.not_on_pool": "Not on a pool: stand the elevator on top of the rim of a formed spent fuel pool wall, on a straight run, not a corner.",
+  "status.bwr.new_fuel_elevator.pool_unformed": "The pool is not formed. %s",
+  "status.bwr.new_fuel_elevator.pool_full": "Every rack cell is taken (or promised to an assembly already waiting).",
+  "status.bwr.new_fuel_elevator.water_too_low": "The water is too low: %s",
+  "status.bwr.new_fuel_elevator.not_an_assembly": "Only fuel assemblies go in the hatch.",
+  "status.bwr.new_fuel_elevator.hatch_full": "The hatch is full: %s assemblies are waiting.",
+  "status.bwr.new_fuel_elevator.busy": "The carriage is busy: wait for it to finish.",
+  "status.bwr.new_fuel_elevator.nothing_to_raise": "There is no assembly in the pool to raise.",
+  "status.bwr.new_fuel_elevator.landing_occupied": "An assembly is waiting at the hatch: take it out first.",
+  "status.bwr.new_fuel_elevator.state": "New fuel elevator: %s; %s waiting; %s of %s rack cells free; %s m of water over an assembly at the transfer height (%s m needed).",
+  "status.bwr.new_fuel_elevator.trip": "On its way: %s, %s s to go.",
+  "status.bwr.new_fuel_elevator.landing": "An assembly waits at the hatch (%s kW decay heat). Take it out.",
+  "status.bwr.new_fuel_elevator.loaded": "Loaded into the hatch.",
+  "message.bwr.immersion.burning_warmth": "You feel a burning warmth on your skin. The water here is not safe: get out. Dose rate %s, your dose so far %s.",
+  "block.bwr.new_fuel_elevator": "New Fuel Elevator",
+  "item.bwr.new_fuel_elevator": "New Fuel Elevator",
+  "menu.bwr.new_fuel_elevator": "New Fuel Elevator"
 }

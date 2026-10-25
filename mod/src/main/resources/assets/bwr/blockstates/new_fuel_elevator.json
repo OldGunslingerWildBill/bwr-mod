@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/pumps/empty"
+    },
+    "facing=east": {
+      "model": "bwr:block/pumps/empty"
+    },
+    "facing=south": {
+      "model": "bwr:block/pumps/empty"
+    },
+    "facing=west": {
+      "model": "bwr:block/pumps/empty"
+    }
+  }
+}

@@ -31,6 +31,7 @@
     "bwr:spent_fuel_pool_wall",
     "bwr:spent_fuel_pool_controller",
     "bwr:spent_fuel_rack",
+    "bwr:new_fuel_elevator",
     "bwr:spent_fuel_pool_makeup_port",
     "bwr:spent_fuel_pool_cooling_in",
     "bwr:spent_fuel_pool_cooling_out",

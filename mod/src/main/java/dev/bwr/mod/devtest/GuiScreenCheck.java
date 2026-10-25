@@ -171,6 +171,28 @@ public final class GuiScreenCheck {
         return m;
     }
 
+    /** The new fuel elevator on a formed pool: idle, lowering, refused for low water, or with a hot assembly at the hatch. */
+    private static dev.bwr.mod.gui.NewFuelElevatorMenu elevator(String state, boolean lowWater, boolean landing, int free) {
+        var m = new dev.bwr.mod.gui.NewFuelElevatorMenu(99, Minecraft.getInstance().player.getInventory(), P);
+        m.present = true;
+        m.linked = true;
+        m.state = state;
+        m.leg = state.equals("lowering") ? "slide" : state.equals("raising") ? "ascend" : "";
+        m.progress = state.equals("idle") ? 0.0 : 0.46;
+        m.secondsLeft = state.equals("idle") ? 0.0 : 11.0;
+        m.queued = state.equals("idle") ? 0 : 3;
+        m.landing = landing;
+        m.landingKw = landing ? 52.0 : 0.0;
+        m.freeCells = free;
+        m.cells = 40;
+        m.levelM = lowWater ? 6.0 : 7.0;
+        m.waterOverM = m.levelM - 5.0;
+        m.minCoverM = 1.5;
+        m.coolestKw = 22.8;
+        m.lastRefusal = lowWater ? "The water is too low: 1.0 m of water over an assembly at the transfer height, 1.5 m needed (the pool level is 6.00 m, the racks are 4 m tall)." : "";
+        return m;
+    }
+
     /** A formed pool of {@code racks} racks; {@code uncovered} lowers the water under the fuel and lights the alarms. */
     private static SpentFuelPoolMenu pool(boolean uncovered, int racks) {
         var m = new SpentFuelPoolMenu(99, Minecraft.getInstance().player.getInventory(), P);
@@ -772,6 +794,19 @@ public final class GuiScreenCheck {
             m.problem = "Complete the floor and the four walls up to the rim; missing at 3, 70, 12";
             return new SpentFuelPoolScreen(m, i, t("Spent Fuel Pool"));
         }));
+        s.add(new Scenario("new-fuel-elevator-idle", i -> new dev.bwr.mod.gui.client.NewFuelElevatorScreen(elevator("idle", false, false, 31), i, t("New Fuel Elevator"))));
+        s.add(new Scenario("new-fuel-elevator-lowering", i -> new dev.bwr.mod.gui.client.NewFuelElevatorScreen(elevator("lowering", false, false, 31), i, t("New Fuel Elevator"))));
+        s.add(new Scenario("new-fuel-elevator-water-low", i -> new dev.bwr.mod.gui.client.NewFuelElevatorScreen(elevator("waiting", true, false, 31), i, t("New Fuel Elevator"))));
+        s.add(new Scenario("new-fuel-elevator-landing", i -> new dev.bwr.mod.gui.client.NewFuelElevatorScreen(elevator("idle", false, true, 0), i, t("New Fuel Elevator"))));
+        s.add(new Scenario("new-fuel-elevator-unlinked", i -> {
+            var m = new dev.bwr.mod.gui.NewFuelElevatorMenu(99, i, P);
+            m.present = true;
+            m.linked = false;
+            m.state = "unlinked";
+            m.problem = "Not on a pool: stand the elevator on top of the rim of a formed spent fuel pool wall, on a straight run, not a corner.";
+            return new dev.bwr.mod.gui.client.NewFuelElevatorScreen(m, i, t("New Fuel Elevator"));
+        }));
+        s.add(new Scenario("new-fuel-elevator-absent", i -> new dev.bwr.mod.gui.client.NewFuelElevatorScreen(new dev.bwr.mod.gui.NewFuelElevatorMenu(99, i, P), i, t("New Fuel Elevator"))));
         s.add(new Scenario("spent-fuel-pool-absent", i -> new SpentFuelPoolScreen(new SpentFuelPoolMenu(99, i, P), i, t("Spent Fuel Pool"))));
         s.add(new Scenario("reprocessor-absent", i -> new ReprocessingPlantScreen(new ReprocessingPlantMenu(99, i, P), i, t("Reprocessing Plant"))));
         s.add(new Scenario("crane-lifting-head", i -> new CraneScreen(crane("TRANSIT", false, true, 0), i, t("Reactor Building Crane"))));

@@ -36,10 +36,14 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 public final class SpentFuelPoolClientCheck {
 
     private static final BlockPos ORIGIN = new BlockPos(140, 210, 140);
-    private static final String[] NAMES = {"pool-built", "pool-racks-glow", "pool-ports", "pool-panel", "pool-uncovered", "pool-panel-uncovered"};
+    private static final String[] NAMES = {"pool-built", "pool-racks-glow", "pool-ports", "pool-panel", "pool-uncovered", "pool-panel-uncovered",
+            "elevator-on-pool", "elevator-lowering", "elevator-carriage-low", "elevator-screen"};
     private static final double[][] CAMERAS = {
             {156, 226, 125, 32, 27}, {144.5, 224, 135, 0, 52}, {144.5, 217.5, 131, 0, 6},
-            {137, 216, 140, -59, 19}, {156, 226, 125, 32, 27}, {137, 216, 140, -59, 19}};
+            {137, 216, 140, -59, 19}, {156, 226, 125, 32, 27}, {137, 216, 140, -59, 19},
+            {153, 222.5, 139, 42, 24}, {141.5, 224.5, 139.5, -57, 55}, {141.5, 224.5, 139.5, -57, 55}, {150.5, 219.5, 140.5, 30, 10}};
+    /** The elevator stands on the middle of the east wall of the pool: ORIGIN + (8, 8, 4). The screen camera is within 8 blocks of it (a menu closes beyond that). */
+    private static final BlockPos ELEVATOR = ORIGIN.offset(8, 8, 4);
     private static boolean started;
     private static boolean requested;
     private static int age;
@@ -116,6 +120,39 @@ public final class SpentFuelPoolClientCheck {
                     l.getCapability(Capabilities.FluidHandler.BLOCK, f.coolingIn, Direction.NORTH)
                             .fill(ThermalWater.atTemperature(8000, 13.0), IFluidHandler.FluidAction.EXECUTE);
                 }
+                if (selected == 6) {
+                    // a full pool (the elevator needs 6.5 m over the 4 m racks to lower) and the elevator on the rim of its east wall
+                    var be = (SpentFuelPoolBlockEntity) l.getBlockEntity(ORIGIN.offset(0, 2, 4));
+                    be.pool().restore(343_000.0, 25.0);
+                    be.setCoolingEnabled(false);
+                    be.simulateSeconds(1, l.getGameTime());
+                    l.setBlock(ELEVATOR, dev.bwr.mod.registry.BwrBlocks.NEW_FUEL_ELEVATOR.get().defaultBlockState(), 3);
+                }
+                if (selected == 7) {
+                    var elevator = dev.bwr.mod.spentfuel.NewFuelElevatorBlockEntity.at(l, ELEVATOR);
+                    var why = elevator.offer(dev.bwr.mod.fuel.FuelAssemblyItem.stackOf(dev.bwr.mod.registry.BwrItems.FUEL_ASSEMBLY.get(),
+                            new dev.bwr.mod.fuel.FuelAssemblyData("leu", 0.035, 180.0, 0.0, 1.0)), false);
+                    if (why != null) {
+                        throw new AssertionError("the elevator refused: " + why.english());
+                    }
+                    LogUtils.getLogger().info("NEW FUEL ELEVATOR CLIENT CHECK server: lowering, trip {} ticks", elevator.currentTrip().totalTicks());
+                }
+                if (selected == 8) {
+                    // the carriage is far down its guide: let it run on until it is at the transfer height
+                    var elevator = dev.bwr.mod.spentfuel.NewFuelElevatorBlockEntity.at(l, ELEVATOR);
+                    if (elevator.currentTrip() != null) {
+                        // half way across the racks, at the transfer height
+                        long want = elevator.currentTrip().legTicks()[0] + elevator.currentTrip().legTicks()[1] / 2;
+                        elevator.advanceForTest(l, want - (l.getGameTime() - elevator.tripStart()));
+                    }
+                }
+                if (selected == 9) {
+                    var elevator = dev.bwr.mod.spentfuel.NewFuelElevatorBlockEntity.at(l, ELEVATOR);
+                    elevator.advanceForTest(l, 100_000);
+                    elevator.raise(null);
+                    elevator.advanceForTest(l, elevator.currentTrip() == null ? 0 : elevator.currentTrip().handoffTicks() + elevator.currentTrip().legTicks()[1] + 30);
+                    dev.bwr.mod.gui.NewFuelElevatorMenu.open(p, elevator);
+                }
                 if (selected == 3 || selected == 5) {
                     var be = (SpentFuelPoolBlockEntity) l.getBlockEntity(ORIGIN.offset(0, 2, 4));
                     p.connection.teleport(CAMERAS[selected][0], CAMERAS[selected][1], CAMERAS[selected][2], (float) CAMERAS[selected][3], (float) CAMERAS[selected][4]);
@@ -143,8 +180,9 @@ public final class SpentFuelPoolClientCheck {
             }
             return;
         }
-        boolean panel = stage == 3 || stage == 5;
-        if (panel ? !(mc.player.containerMenu instanceof SpentFuelPoolMenu m && m.present && m.formed) : mc.screen != null) {
+        boolean panel = stage == 3 || stage == 5 || stage == 9;
+        if (stage == 9 ? !(mc.player.containerMenu instanceof dev.bwr.mod.gui.NewFuelElevatorMenu em && em.present && em.linked)
+                : panel ? !(mc.player.containerMenu instanceof SpentFuelPoolMenu m && m.present && m.formed) : mc.screen != null) {
             return;
         }
         var c = CAMERAS[stage];

@@ -116,6 +116,7 @@ public final class BwrMod {
                 event -> event.addListener(new dev.bwr.mod.panel.board.BoardTemplates.Loader()));
 
         dev.bwr.mod.refuelling.PoolRadiation.register();
+        dev.bwr.mod.spentfuel.NewFuelElevatorBlockEntity.registerRadiation();
         dev.bwr.mod.rwcu.SpentResinItem.register();
         dev.bwr.mod.radiation.RadiumItem.register();
         dev.bwr.mod.isotope.CarriedIsotopes.register();

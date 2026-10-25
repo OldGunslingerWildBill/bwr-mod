@@ -83,6 +83,19 @@
       ]
     },
     {
+      "title": "The new fuel elevator",
+      "text": [
+        "Stand a New Fuel Elevator on top of the rim of a formed pool wall, on a straight run. Its guide frame hangs down the inside of the wall under the water. Put an assembly in its hatch by right-click, hopper or pipe and the carriage takes it down, over the racks, into the first free cell.",
+        "",
+        "It says why when it refuses: not on a pool, every cell taken, or under 1.5 m of water over the handle. RAISE COOLEST on its screen brings the coolest assembly back up. A hot one out of the water is a radiation source."
+      ],
+      "icons": [
+        "bwr:new_fuel_elevator",
+        "bwr:spent_fuel_rack",
+        "bwr:fuel_assembly"
+      ]
+    },
+    {
       "title": "The refuelling bridge",
       "text": [
         "Fuel moves on a refuelling bridge, one assembly at a time and always under water. Build two parallel runs of Refuelling Rail over the open reactor and the pool, a straight row of Transfer Canal blocks (the cattle chute) between the reactor and the pool with a Canal Gate in it, and a Refuelling Bridge Console beside a rail.",
