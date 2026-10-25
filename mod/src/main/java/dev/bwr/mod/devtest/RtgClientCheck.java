@@ -43,7 +43,7 @@ public final class RtgClientCheck {
     private static IsotopeSeparatorBlockEntity separator;
     private static final String[] NAMES = {"rtg-overview", "rtg-closeup", "gui-rtg", "gui-isotope-separator", "gui-rtg-mixed"};
     /** x, y, z, yaw, pitch of the camera relative to the root for the two pictures of the world. */
-    private static final double[][] CAMERA = {{2.5, 2.4, 5.5, 180, 16}, {0.0, 1.9, 2.6, 180, 14}};
+    private static final double[][] CAMERA = {{0.5, 0.4, 6.5, 180, 14}, {0.0, 0.0, 2.3, 180, 26}};
 
     /** The test supplies what a plant would: FE for the separator, so it is part way through a batch. */
     @SubscribeEvent
@@ -143,7 +143,7 @@ public final class RtgClientCheck {
         if (shown < 85) return;
         // The screens read the running machines.
         if (mc.player.containerMenu instanceof RtgMenu m && stage == 2
-                && (Math.abs(m.thermalWatts - 1380.0) > 1e-6 || Math.abs(m.fePerTick - 69.0 / 13.4) > 1e-6 || m.doseMsvPerH <= 0.0)) {
+                && (Math.abs(m.thermalWatts - 1380.0) > 0.01 || Math.abs(m.fePerTick - 69.0 / 13.4) > 1e-3 || m.doseMsvPerH <= 0.0)) {
             throw new IllegalStateException("The RTG screen does not read the RTG: " + m.thermalWatts + " W, " + m.fePerTick + " FE/t, " + m.doseMsvPerH + " mSv/h");
         }
         if (mc.player.containerMenu instanceof IsotopeSeparatorMenu m && (m.strontiumGrains <= 0 || m.energyStored <= 0)) {

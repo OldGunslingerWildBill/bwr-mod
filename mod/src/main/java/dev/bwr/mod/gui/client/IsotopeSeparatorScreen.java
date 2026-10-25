@@ -41,7 +41,7 @@ public class IsotopeSeparatorScreen extends BwrScreen<IsotopeSeparatorMenu> {
 
     @Override
     protected UiElement buildUi() {
-        var line = Layout.line(() -> "Fission product waste in; capsules and stripped waste out", Type.CAPTION)
+        var line = Layout.line(() -> "Waste in, capsules out", Type.CAPTION)
                 .tip("Takes fission-product waste from the reprocessing plant. Stripped waste cannot be put back in: its isotopes are gone.");
         var slots = Layout.card("Waste", line, Layout.gap(20), new SlotCaptions(), Layout.gap(2), Layout.gap(18));
         var left = Layout.column(BwrStyle.SP2, slots, Layout.flex());
@@ -74,7 +74,7 @@ public class IsotopeSeparatorScreen extends BwrScreen<IsotopeSeparatorMenu> {
     }
 
     private final class SlotCaptions extends UiElement {
-        private static final String[] NAMES = {"Waste", "Sr-90", "Cs-137", "Am-241", "Stripped"};
+        private static final String[] NAMES = {"Waste", "Sr", "Cs", "Am", "Strip"};
         private static final String[] HELP = {
                 "Fission-product waste, from the reprocessing plant. Hoppers and pipes may fill this slot.",
                 "Strontium-90 capsules, 250 g each: the best RTG fuel here, 0.92 W/g and a 28.9 year half-life.",
