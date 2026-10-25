@@ -93,7 +93,7 @@
       "isotope": "Co-60",
       "specific_power_w_per_g": 18.9,
       "half_life_years": 5.2714,
-      "grams_per_item": 100,
+      "grams_per_item": 474,
       "gamma_w_per_g": 16.8,
       "capsule_transmission": 0.9,
       "lead_hvl_cm": 1.2
@@ -102,7 +102,7 @@
       "isotope": "Co-60",
       "specific_power_w_per_g": 18.9,
       "half_life_years": 5.2714,
-      "grams_per_item": 900,
+      "grams_per_item": 4266,
       "gamma_w_per_g": 16.8,
       "capsule_transmission": 0.9,
       "lead_hvl_cm": 1.2
@@ -111,10 +111,74 @@
       "isotope": "Co-60",
       "specific_power_w_per_g": 18.9,
       "half_life_years": 5.2714,
-      "grams_per_item": 100,
+      "grams_per_item": 474,
       "gamma_w_per_g": 16.8,
       "capsule_transmission": 0.9,
       "lead_hvl_cm": 1.2
+    },
+    "bwr:polonium_210_ingot": {
+      "isotope": "Po-210",
+      "specific_power_w_per_g": 140.0,
+      "half_life_years": 0.3789,
+      "grams_per_item": 0.082,
+      "gamma_w_per_g": 0.0002,
+      "capsule_transmission": 1.0
+    },
+    "bwr:polonium_210_block": {
+      "isotope": "Po-210",
+      "specific_power_w_per_g": 140.0,
+      "half_life_years": 0.3789,
+      "grams_per_item": 0.738,
+      "gamma_w_per_g": 0.0002,
+      "capsule_transmission": 1.0
+    },
+    "bwr:plutonium_238_ingot": {
+      "isotope": "Pu-238",
+      "specific_power_w_per_g": 0.5674,
+      "half_life_years": 87.7,
+      "grams_per_item": 0.28,
+      "gamma_w_per_g": 0.0002,
+      "capsule_transmission": 0.05
+    },
+    "bwr:plutonium_238_block": {
+      "isotope": "Pu-238",
+      "specific_power_w_per_g": 0.5674,
+      "half_life_years": 87.7,
+      "grams_per_item": 2.52,
+      "gamma_w_per_g": 0.0002,
+      "capsule_transmission": 0.05
+    },
+    "bwr:actinium_227_ingot": {
+      "isotope": "Ac-227 with daughters",
+      "specific_power_w_per_g": 14.6,
+      "half_life_years": 21.772,
+      "grams_per_item": 0.00103,
+      "gamma_w_per_g": 0.13,
+      "capsule_transmission": 1.0
+    },
+    "bwr:actinium_227_block": {
+      "isotope": "Ac-227 with daughters",
+      "specific_power_w_per_g": 14.6,
+      "half_life_years": 21.772,
+      "grams_per_item": 0.00927,
+      "gamma_w_per_g": 0.13,
+      "capsule_transmission": 1.0
+    },
+    "bwr:thulium_170_ingot": {
+      "isotope": "Tm-170",
+      "specific_power_w_per_g": 11.5,
+      "half_life_years": 0.3521,
+      "grams_per_item": 19.0,
+      "gamma_w_per_g": 0.08,
+      "capsule_transmission": 1.0
+    },
+    "bwr:thulium_170_block": {
+      "isotope": "Tm-170",
+      "specific_power_w_per_g": 11.5,
+      "half_life_years": 0.3521,
+      "grams_per_item": 171.0,
+      "gamma_w_per_g": 0.08,
+      "capsule_transmission": 1.0
     }
   }
 }

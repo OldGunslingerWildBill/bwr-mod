@@ -82,7 +82,7 @@
       "text": [
         "A capsule crafts one to one into an ingot of the same mass. Nine ingots make a block, and a block makes nine back.",
         "",
-        "Cobalt-60 is made in the reactor, not by the separator: a cobalt target makes a sealed 100 g sample, which has the same ingot and block. Carried, an ingot or block is a strong gamma source, cobalt far stronger than caesium."
+        "Cobalt-60 is made in the reactor, not by the separator: a finished cobalt target makes a 474 g sample, which has the same ingot and block. Carried, an ingot or block is a strong gamma source, cobalt far stronger than caesium."
       ],
       "icons": [
         "bwr:strontium_90_block",

@@ -1,0 +1,238 @@
+{
+  "title": "Breeding and decay",
+  "docs": [
+    "BREEDING-TARGETS.md",
+    "FUELS-AND-RODS.md",
+    "RTG.md",
+    "THORIUM.md",
+    "URANIUM-ORE.md"
+  ],
+  "pages": [
+    {
+      "title": "Reading the chains",
+      "text": [
+        "Every isotope in the mod is found or made in one of four ways:",
+        "MINE: dig it up.",
+        "CORE: irradiate it in the reactor, as fuel or in a target rod.",
+        "PLANT: reprocess or separate it in a machine.",
+        "WAIT: it decays by itself.",
+        "",
+        "A chain reads down: each arrow is one step, the half-life after a name is how long half of it takes to turn into the next. Y = years, d = days, h = hours, m = minutes, s = seconds."
+      ],
+      "icons": [
+        "bwr:uranium_ore",
+        "bwr:reactor_controller",
+        "bwr:reprocessing_plant",
+        "bwr:isotope_separator",
+        "bwr:rtg"
+      ]
+    },
+    {
+      "title": "Uranium to plutonium",
+      "text": [
+        "U-238 + n  (CORE)",
+        "-> U-239 (23.5 m)",
+        "-> Np-239 (2.36 d)",
+        "-> Pu-239 (24,100 Y)",
+        "+ n -> Pu-240 + n",
+        "-> Pu-241 (14.3 Y)",
+        "-> Am-241 (433 Y)",
+        "",
+        "Burnt fuel and depleted uranium blankets breed plutonium. PLANT: the reprocessing plant gives plutonium nuggets; with depleted uranium they make MOX. Pu-241 decays (WAIT) into Am-241, which the isotope separator takes out as a capsule."
+      ],
+      "icons": [
+        "bwr:fuel_assembly",
+        "bwr:depleted_uranium",
+        "bwr:plutonium_nugget",
+        "bwr:reprocessing_plant",
+        "bwr:americium_241_capsule"
+      ]
+    },
+    {
+      "title": "Fission products",
+      "text": [
+        "Fission  (CORE)",
+        "Sr-90 (28.9 Y)",
+        "-> Y-90 (64 h)",
+        "-> Zr-90 stable",
+        "Cs-137 (30.0 Y)",
+        "-> Ba-137m (2.55 m)",
+        "-> Ba-137 stable",
+        "",
+        "PLANT: the isotope separator takes Sr-90 and Cs-137 out of fission-product waste into capsules. They WAIT in the capsule: the decay is the heat an RTG turns into power. The caesium capsule is a strong gamma source; carry neither."
+      ],
+      "icons": [
+        "bwr:fission_product_waste",
+        "bwr:isotope_separator",
+        "bwr:strontium_90_capsule",
+        "bwr:caesium_137_capsule",
+        "bwr:rtg"
+      ]
+    },
+    {
+      "title": "Cobalt, lithium, silicon",
+      "text": [
+        "Co-59 + n  (CORE)",
+        "-> Co-60 (5.27 Y)",
+        "-> Ni-60 stable",
+        "Li-6 + n  (CORE)",
+        "-> H-3 (12.3 Y) + He-4",
+        "-> He-3 stable",
+        "Si-30 + n  (CORE)",
+        "-> Si-31 (2.62 h)",
+        "-> P-31 stable",
+        "",
+        "Target rods: cobalt 72 h, lithium 168 h, silicon 24 h. Use the finished rod in your hand: a cobalt-60 sample, 1,250 tritium samples or neutron-doped silicon, and an empty casing back."
+      ],
+      "icons": [
+        "bwr:irradiation_casing",
+        "bwr:cobalt_charge",
+        "bwr:cobalt_sample",
+        "bwr:lithium_charge",
+        "bwr:tritium_sample",
+        "bwr:doped_silicon"
+      ]
+    },
+    {
+      "title": "Thorium to U-233",
+      "text": [
+        "Th-232 + n  (CORE)",
+        "-> Th-233 (21.8 m)",
+        "-> Pa-233 (27.0 d)",
+        "-> U-233 (159,200 Y)",
+        "",
+        "In thorium fuel this happens inside the assembly. In a thorium rod (casing + 1 thorium ingot, 168 h) it makes one U-233 Ingot, 480 g: fissile fuel, the driver of thorium fuel in place of enriched uranium. In the fabricator, 8, 12 or 19 U-233 and 4 thorium make a 2, 3 or 5 % assembly."
+      ],
+      "icons": [
+        "bwr:thorium_ingot",
+        "bwr:irradiation_casing",
+        "bwr:uranium_233_ingot",
+        "bwr:fuel_fabricator"
+      ]
+    },
+    {
+      "title": "Bismuth to polonium",
+      "text": [
+        "Bi-209  (MINE)",
+        "+ n  (CORE, 96 h)",
+        "-> Bi-210 (5.0 d)",
+        "-> Po-210 (138 d)",
+        "-> Pb-206 stable",
+        "",
+        "Bismuth comes from uranium ore. Casing + 2 bismuth nuggets make the rod. The ingot is 82 mg of Po-210: 140 W per gram, an alpha emitter with almost no gamma, so it is safe to carry and good RTG fuel. It saturates: more time in the core adds nothing, and it halves every 138 days."
+      ],
+      "icons": [
+        "bwr:bismuth_nugget",
+        "bwr:polonium_210_ingot",
+        "bwr:polonium_210_block",
+        "bwr:rtg"
+      ]
+    },
+    {
+      "title": "Neptunium to plutonium-238",
+      "text": [
+        "U-235 + n  (CORE)",
+        "-> U-236 + n",
+        "-> U-237 (6.75 d)",
+        "-> Np-237 (2.14 MY)",
+        "+ n  (CORE)",
+        "-> Np-238 (2.1 d)",
+        "-> Pu-238 (87.7 Y)",
+        "-> U-234 (245,500 Y)",
+        "",
+        "Depleted uranium rod, 240 h: 0.2 g of Np-237, at low yield. Casing + 8 neptunium ingots, 120 h: 0.28 g of Pu-238, 0.57 W per gram. Real Pu-238 starts from kilograms of reprocessed neptunium, so this route is slow."
+      ],
+      "icons": [
+        "bwr:depleted_uranium",
+        "bwr:neptunium_237_ingot",
+        "bwr:plutonium_238_ingot",
+        "bwr:plutonium_238_block",
+        "bwr:rtg"
+      ]
+    },
+    {
+      "title": "Radium to actinium",
+      "text": [
+        "Ra-226  (MINE)",
+        "+ n  (CORE, 168 h)",
+        "-> Ra-227 (42 m)",
+        "-> Ac-227 (21.8 Y)",
+        "-> Th-227 (18.7 d)",
+        "-> Ra-223 (11.4 d)",
+        "-> ... Pb-207 stable",
+        "",
+        "Casing + 8 radium. One rod gives 1 mg of Ac-227: 14.6 W per gram with its daughters, which are strong gamma sources. A tiny, hot, dangerous fuel."
+      ],
+      "icons": [
+        "bwr:radium",
+        "bwr:actinium_227_ingot",
+        "bwr:actinium_227_block",
+        "bwr:rtg"
+      ]
+    },
+    {
+      "title": "Thulium-170",
+      "text": [
+        "Tm-169  (MINE)",
+        "+ n  (CORE, 48 h)",
+        "-> Tm-170 (128.6 d)",
+        "-> Yb-170 stable",
+        "",
+        "Thulium is in the rare earths: casing + 8 rare earth concentrate. 19 g of Tm-170 per rod, 11.5 W per gram: the most power of any ingot, and gone in a year. Its beta particles make bremsstrahlung, so it reads strongly when carried."
+      ],
+      "icons": [
+        "bwr:rare_earth_concentrate",
+        "bwr:thulium_170_ingot",
+        "bwr:thulium_170_block",
+        "bwr:rtg"
+      ]
+    },
+    {
+      "title": "The uranium series",
+      "text": [
+        "U-238 (4.46 bn Y)",
+        "-> Th-234 (24 d)",
+        "-> U-234 (245,500 Y)",
+        "-> Th-230 (75,400 Y)",
+        "-> Ra-226 (1,600 Y)",
+        "-> Rn-222 (3.8 d) gas",
+        "-> ... minutes",
+        "-> Pb-210 (22.2 Y)",
+        "-> Bi-210 (5.0 d)",
+        "-> Po-210 (138 d)",
+        "-> Pb-206 stable",
+        "",
+        "MINE it, then WAIT. This is why uranium ore gives radium (Ra-226) and lead (Pb-206). Bismuth is only a companion in the veins."
+      ],
+      "icons": [
+        "bwr:uranium_ore",
+        "bwr:radium",
+        "bwr:lead_nugget",
+        "bwr:bismuth_nugget"
+      ]
+    },
+    {
+      "title": "The thorium series",
+      "text": [
+        "Th-232 (14 bn Y)",
+        "-> Ra-228 (5.75 Y)",
+        "-> Ac-228 (6.15 h)",
+        "-> Th-228 (1.91 Y)",
+        "-> Ra-224 (3.63 d)",
+        "-> Rn-220 (56 s) gas",
+        "-> ... minutes",
+        "-> Pb-212 (10.6 h)",
+        "-> Bi-212 (60.6 m)",
+        "-> Pb-208 stable",
+        "",
+        "MINE it, then WAIT. This is why thorium ore gives lead (Pb-208) and a little radium."
+      ],
+      "icons": [
+        "bwr:thorium_ore",
+        "bwr:monazite_sand",
+        "bwr:radium",
+        "bwr:lead_nugget"
+      ]
+    }
+  ]
+}

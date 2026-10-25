@@ -21,7 +21,8 @@ Thorium and uranium veins share host rock, so where they cross the feature that 
 - **Drops.** The ores drop one raw uranium; Fortune adds the vanilla ore bonus (Fortune III averages 2.2, one to four); Silk Touch drops the
   ore block and nothing else. The two storage blocks drop themselves. Real uranium ore comes with other elements, so a mined ore (not with Silk Touch) also has
   small chances of **lead nuggets** (10 % rising to 20 % with Fortune III), **radium** (1 % to 2.5 %), **raw copper** (4 % to 8 %) and, from any mod that tags
-  one `c:raw_materials/vanadium`, raw vanadium (4 % to 8 %); the table, the reasons and the sources are in [THORIUM.md](THORIUM.md#byproducts-of-mining-uranium-ore).
+  one `c:raw_materials/vanadium`, raw vanadium (4 % to 8 %); the table, the reasons and the sources are in [THORIUM.md](THORIUM.md#byproducts-of-mining-uranium-ore). **Bismuth** (a nugget, 5 / 6.5 / 8 / 10 %, one or two, skipped by Silk Touch) comes with it as the companion of
+  pitchblende in the Bi-Co-Ni-Ag-U veins; it is the target of the polonium-210 rod ([BREEDING-TARGETS.md](BREEDING-TARGETS.md)).
 - **Recipes.** Raw uranium, uranium ore and deepslate uranium ore smelt (200 ticks) or blast (100) to one ingot; nine raw uranium make a raw
   block, nine ingots a block, and each block makes the nine back. The two ores have no recipe (the world makes them; silk touch gives
   them back), which `tools-audit-assets.py` and `tools-audit-recipes.py` list with the reason.

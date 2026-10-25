@@ -103,14 +103,14 @@ public final class LargeRtgClientCheck {
                     }
                     mixed = (LargeRtgBlockEntity) l.getBlockEntity(MIXED);
                     cobalt = (LargeRtgBlockEntity) l.getBlockEntity(COBALT);
-                    // a mixed 1,000 kg: 400 kg Sr-90 (177 blocks and 7 ingots), 300 kg Cs-137, 200 kg Am-241, 100 kg Co-60
+                    // a mixed load: 400 kg Sr-90 (177 blocks and 7 ingots), 300 kg Cs-137, 200 kg Am-241, 99.5 kg Co-60 (210 ingots)
                     load(mixed, BwrItems.STRONTIUM_90_BLOCK.get(), 177);
                     load(mixed, BwrItems.STRONTIUM_90_INGOT.get(), 7);
                     load(mixed, BwrItems.CAESIUM_137_INGOT.get(), 1200);
                     load(mixed, BwrItems.AMERICIUM_241_INGOT.get(), 800);
-                    load(mixed, BwrItems.COBALT_60_INGOT.get(), 1000);
-                    // 1,000 kg of cobalt-60, heat only
-                    load(cobalt, BwrItems.COBALT_60_INGOT.get(), 10_000);
+                    load(mixed, BwrItems.COBALT_60_INGOT.get(), 210);
+                    // 1,000 kg of cobalt-60 (2,109 ingots of 474 g), heat only
+                    load(cobalt, BwrItems.COBALT_60_INGOT.get(), 2_109);
                     cobalt.setHeatOnly(true);
                     l.setDayTime(6000);
                     l.setWeatherParameters(6000, 0, false, false);
@@ -147,8 +147,9 @@ public final class LargeRtgClientCheck {
         if (shown < 85) return;
         // The screens read the running blocks.
         if (mc.player.containerMenu instanceof LargeRtgMenu m) {
-            double thermal = stage == 2 ? 400_000 * 0.92 + 300_000 * 0.42 + 200_000 * 0.1147 + 100_000 * 18.9 : 1_000_000 * 18.9;
-            if (Math.abs(m.thermalWatts - thermal) > 1e-3 * thermal || Math.abs(m.massGrams - 1_000_000.0) > 1e-6 || m.doseMsvPerH < 0.0
+            double mass = stage == 2 ? 999_540.0 : 2_109 * 474.0;
+            double thermal = stage == 2 ? 400_000 * 0.92 + 300_000 * 0.42 + 200_000 * 0.1147 + 99_540 * 18.9 : mass * 18.9;
+            if (Math.abs(m.thermalWatts - thermal) > 1e-3 * thermal || Math.abs(m.massGrams - mass) > 1e-6 || m.doseMsvPerH < 0.0
                     || (stage == 3 && (m.electricWatts != 0.0 || m.fePerTick != 0.0)) || (stage == 2 && m.fePerTick <= 0.0)) {
                 throw new IllegalStateException("The Large RTG screen does not read the block: " + m.thermalWatts + " W of " + thermal + ", " + m.massGrams + " g, "
                         + m.fePerTick + " FE/t, " + m.doseMsvPerH + " mSv/h, heat-only " + m.heatOnly);

@@ -101,6 +101,26 @@ public final class BwrBlocks {
             BLOCKS.register("thorium_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_GRAY)
                     .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.IRON_XYLOPHONE)
                     .requiresCorrectToolForDrops().strength(5.0f, 6.0f).sound(SoundType.METAL)));
+    /** A block of nine ingots of a reactor-bred heat-source isotope (BREEDING-TARGETS.md). */
+    public static final DeferredBlock<Block> POLONIUM_210_BLOCK =
+            BLOCKS.register("polonium_210_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_GRAY)
+                    .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.IRON_XYLOPHONE)
+                    .requiresCorrectToolForDrops().strength(5.0f, 6.0f).sound(SoundType.METAL)));
+    /** A block of nine ingots of a reactor-bred heat-source isotope (BREEDING-TARGETS.md). */
+    public static final DeferredBlock<Block> PLUTONIUM_238_BLOCK =
+            BLOCKS.register("plutonium_238_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_GRAY)
+                    .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.IRON_XYLOPHONE)
+                    .requiresCorrectToolForDrops().strength(5.0f, 6.0f).sound(SoundType.METAL)));
+    /** A block of nine ingots of a reactor-bred heat-source isotope (BREEDING-TARGETS.md). */
+    public static final DeferredBlock<Block> ACTINIUM_227_BLOCK =
+            BLOCKS.register("actinium_227_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_GRAY)
+                    .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.IRON_XYLOPHONE)
+                    .requiresCorrectToolForDrops().strength(5.0f, 6.0f).sound(SoundType.METAL)));
+    /** A block of nine ingots of a reactor-bred heat-source isotope (BREEDING-TARGETS.md). */
+    public static final DeferredBlock<Block> THULIUM_170_BLOCK =
+            BLOCKS.register("thulium_170_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_GRAY)
+                    .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.IRON_XYLOPHONE)
+                    .requiresCorrectToolForDrops().strength(5.0f, 6.0f).sound(SoundType.METAL)));
     public static final DeferredBlock<dev.bwr.mod.grid.GridTieBlock> GRID_TIE=BLOCKS.register("grid_tie",()->new dev.bwr.mod.grid.GridTieBlock(vesselSteel()));
 
     /** Wall-mounted area radiation monitor (a reading, a lamp, two booleans); it never acts on the plant. */

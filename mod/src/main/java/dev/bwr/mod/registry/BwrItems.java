@@ -414,6 +414,21 @@ public final class BwrItems {
     public static final DeferredItem<BlockItem> MONAZITE_SAND = ITEMS.registerSimpleBlockItem(BwrBlocks.MONAZITE_SAND);
     public static final DeferredItem<BlockItem> RAW_THORIUM_BLOCK = ITEMS.registerSimpleBlockItem(BwrBlocks.RAW_THORIUM_BLOCK);
     public static final DeferredItem<BlockItem> THORIUM_BLOCK = ITEMS.registerSimpleBlockItem(BwrBlocks.THORIUM_BLOCK);
+    // --- Reactor-bred isotopes (BREEDING-TARGETS.md): what a finished irradiation target yields. Their power, half-life and dose are the RTG fuel list's. ---
+    /** Bismuth, a byproduct of mining uranium ore (the Erzgebirge Bi-Co-Ni-Ag-U veins): 5 kg of bismuth, a ninth of an ingot-unit. */
+    public static final DeferredItem<Item> BISMUTH_NUGGET = ITEMS.registerSimpleItem("bismuth_nugget");
+    public static final DeferredItem<Item> POLONIUM_210_INGOT = ITEMS.register("polonium_210_ingot", () -> new dev.bwr.mod.isotope.BredIsotopeItem(new Item.Properties()));
+    public static final DeferredItem<Item> PLUTONIUM_238_INGOT = ITEMS.register("plutonium_238_ingot", () -> new dev.bwr.mod.isotope.BredIsotopeItem(new Item.Properties()));
+    public static final DeferredItem<Item> ACTINIUM_227_INGOT = ITEMS.register("actinium_227_ingot", () -> new dev.bwr.mod.isotope.BredIsotopeItem(new Item.Properties()));
+    public static final DeferredItem<Item> THULIUM_170_INGOT = ITEMS.register("thulium_170_ingot", () -> new dev.bwr.mod.isotope.BredIsotopeItem(new Item.Properties()));
+    /** Fissile fuel bred from thorium, 480 g: the driver of a thorium assembly in place of enriched uranium (a heat source it is not). */
+    public static final DeferredItem<Item> URANIUM_233_INGOT = ITEMS.registerSimpleItem("uranium_233_ingot");
+    /** What a depleted uranium target makes at low yield, 0.2 g: the target of the plutonium-238 route. */
+    public static final DeferredItem<Item> NEPTUNIUM_237_INGOT = ITEMS.registerSimpleItem("neptunium_237_ingot");
+    public static final DeferredItem<BlockItem> POLONIUM_210_BLOCK = ITEMS.register("polonium_210_block", () -> new dev.bwr.mod.isotope.BredIsotopeBlockItem(BwrBlocks.POLONIUM_210_BLOCK.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> PLUTONIUM_238_BLOCK = ITEMS.register("plutonium_238_block", () -> new dev.bwr.mod.isotope.BredIsotopeBlockItem(BwrBlocks.PLUTONIUM_238_BLOCK.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> ACTINIUM_227_BLOCK = ITEMS.register("actinium_227_block", () -> new dev.bwr.mod.isotope.BredIsotopeBlockItem(BwrBlocks.ACTINIUM_227_BLOCK.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> THULIUM_170_BLOCK = ITEMS.register("thulium_170_block", () -> new dev.bwr.mod.isotope.BredIsotopeBlockItem(BwrBlocks.THULIUM_170_BLOCK.get(), new Item.Properties()));
     public static final DeferredItem<Item> PLUTONIUM_NUGGET = ITEMS.registerSimpleItem("plutonium_nugget");
     public static final DeferredItem<Item> PLUTONIUM_INGOT = ITEMS.registerSimpleItem("plutonium_ingot");
     /**
@@ -438,21 +453,21 @@ public final class BwrItems {
     // --- RTG isotope ingots and storage blocks (RTG.md, "The ingot and block pattern") ---
     // <isotope>_ingot is the form the RTGs take; <isotope>_block is nine of them. Their numbers are the RTG fuel list's.
     public static final DeferredItem<Item> STRONTIUM_90_INGOT = ITEMS.register("strontium_90_ingot",
-            () -> new dev.bwr.mod.isotope.IsotopeCapsuleItem(new Item.Properties()));
+            () -> new dev.bwr.mod.isotope.BredIsotopeItem(new Item.Properties()));
     public static final DeferredItem<Item> CAESIUM_137_INGOT = ITEMS.register("caesium_137_ingot",
-            () -> new dev.bwr.mod.isotope.IsotopeCapsuleItem(new Item.Properties()));
+            () -> new dev.bwr.mod.isotope.BredIsotopeItem(new Item.Properties()));
     public static final DeferredItem<Item> AMERICIUM_241_INGOT = ITEMS.register("americium_241_ingot",
-            () -> new dev.bwr.mod.isotope.IsotopeCapsuleItem(new Item.Properties()));
+            () -> new dev.bwr.mod.isotope.BredIsotopeItem(new Item.Properties()));
     public static final DeferredItem<Item> COBALT_60_INGOT = ITEMS.register("cobalt_60_ingot",
-            () -> new dev.bwr.mod.isotope.IsotopeCapsuleItem(new Item.Properties()));
+            () -> new dev.bwr.mod.isotope.BredIsotopeItem(new Item.Properties()));
     public static final DeferredItem<BlockItem> STRONTIUM_90_BLOCK = ITEMS.register("strontium_90_block",
-            () -> new dev.bwr.mod.isotope.IsotopeBlockItem(BwrBlocks.STRONTIUM_90_BLOCK.get(), new Item.Properties()));
+            () -> new dev.bwr.mod.isotope.BredIsotopeBlockItem(BwrBlocks.STRONTIUM_90_BLOCK.get(), new Item.Properties()));
     public static final DeferredItem<BlockItem> CAESIUM_137_BLOCK = ITEMS.register("caesium_137_block",
-            () -> new dev.bwr.mod.isotope.IsotopeBlockItem(BwrBlocks.CAESIUM_137_BLOCK.get(), new Item.Properties()));
+            () -> new dev.bwr.mod.isotope.BredIsotopeBlockItem(BwrBlocks.CAESIUM_137_BLOCK.get(), new Item.Properties()));
     public static final DeferredItem<BlockItem> AMERICIUM_241_BLOCK = ITEMS.register("americium_241_block",
-            () -> new dev.bwr.mod.isotope.IsotopeBlockItem(BwrBlocks.AMERICIUM_241_BLOCK.get(), new Item.Properties()));
+            () -> new dev.bwr.mod.isotope.BredIsotopeBlockItem(BwrBlocks.AMERICIUM_241_BLOCK.get(), new Item.Properties()));
     public static final DeferredItem<BlockItem> COBALT_60_BLOCK = ITEMS.register("cobalt_60_block",
-            () -> new dev.bwr.mod.isotope.IsotopeBlockItem(BwrBlocks.COBALT_60_BLOCK.get(), new Item.Properties()));
+            () -> new dev.bwr.mod.isotope.BredIsotopeBlockItem(BwrBlocks.COBALT_60_BLOCK.get(), new Item.Properties()));
 
     // --- Control-room furniture (ROOM-FURNITURE.md) ---
     public static final DeferredItem<BlockItem> RELAY_CABINET =
@@ -520,7 +535,7 @@ public final class BwrItems {
                     .icon(() -> FUEL_ASSEMBLY.get().getDefaultInstance()).displayItems((parameters, output) -> {
                         for (var type : FuelTypes.catalogue()) output.accept(FuelAssemblyItem.stackOf(FUEL_ASSEMBLY.get(), FuelAssemblyData.fresh(type)));
                         for (var kind : dev.bwr.core.fuel.CoreInsert.Kind.values()) output.accept(dev.bwr.mod.fuel.SpecialtyRodItem.stack(new dev.bwr.mod.fuel.CoreInsertData(kind, 0)));
-                        for (var item : java.util.List.<net.neoforged.neoforge.registries.DeferredItem<? extends Item>>of(URANIUM_ORE, DEEPSLATE_URANIUM_ORE, RAW_URANIUM, RAW_URANIUM_BLOCK, URANIUM_INGOT, URANIUM_BLOCK, THORIUM_ORE, DEEPSLATE_THORIUM_ORE, MONAZITE_SAND, RAW_THORIUM, RAW_THORIUM_BLOCK, THORIUM_INGOT, THORIUM_NUGGET, THORIUM_BLOCK, RARE_EARTH_CONCENTRATE, LEAD_NUGGET, LEAD_INGOT, RADIUM, IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM, PLUTONIUM_NUGGET, PLUTONIUM_INGOT, FISSION_PRODUCT_WASTE, STRIPPED_WASTE, STRONTIUM_90_INGOT, STRONTIUM_90_BLOCK, CAESIUM_137_INGOT, CAESIUM_137_BLOCK, AMERICIUM_241_INGOT, AMERICIUM_241_BLOCK, COBALT_60_INGOT, COBALT_60_BLOCK)) output.accept(item.get());
+                        for (var item : java.util.List.<net.neoforged.neoforge.registries.DeferredItem<? extends Item>>of(URANIUM_ORE, DEEPSLATE_URANIUM_ORE, RAW_URANIUM, RAW_URANIUM_BLOCK, URANIUM_INGOT, URANIUM_BLOCK, THORIUM_ORE, DEEPSLATE_THORIUM_ORE, MONAZITE_SAND, RAW_THORIUM, RAW_THORIUM_BLOCK, THORIUM_INGOT, THORIUM_NUGGET, THORIUM_BLOCK, RARE_EARTH_CONCENTRATE, LEAD_NUGGET, LEAD_INGOT, RADIUM, IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM, PLUTONIUM_NUGGET, PLUTONIUM_INGOT, FISSION_PRODUCT_WASTE, STRIPPED_WASTE, STRONTIUM_90_INGOT, STRONTIUM_90_BLOCK, CAESIUM_137_INGOT, CAESIUM_137_BLOCK, AMERICIUM_241_INGOT, AMERICIUM_241_BLOCK, COBALT_60_INGOT, COBALT_60_BLOCK, BISMUTH_NUGGET, POLONIUM_210_INGOT, POLONIUM_210_BLOCK, PLUTONIUM_238_INGOT, PLUTONIUM_238_BLOCK, ACTINIUM_227_INGOT, ACTINIUM_227_BLOCK, THULIUM_170_INGOT, THULIUM_170_BLOCK, URANIUM_233_INGOT, NEPTUNIUM_237_INGOT)) output.accept(item.get());
                     }).build());
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB =

@@ -70,6 +70,10 @@ NO_RECIPE = {
     "strontium_90_capsule": "made by the isotope separator from fission-product waste",
     "caesium_137_capsule": "made by the isotope separator from fission-product waste",
     "americium_241_capsule": "made by the isotope separator from fission-product waste",
+    # Made by irradiating a target in a reactor core (BREEDING-TARGETS.md); a recipe for any of them would make isotopes out of nothing.
+    "uranium_233_ingot": "product of irradiating a thorium target; the driver of a thorium assembly",
+    "neptunium_237_ingot": "product of irradiating a depleted uranium target at low yield; the target of the plutonium-238 route",
+    "bismuth_nugget": "byproduct of mining uranium ore (the Bi-Co-Ni-Ag-U veins); made by the mining, a recipe for it would make bismuth out of nothing",
     "stripped_waste": "what the isotope separator leaves of waste; it cannot be separated again, and a recipe for it would make waste out of nothing",
 }
 

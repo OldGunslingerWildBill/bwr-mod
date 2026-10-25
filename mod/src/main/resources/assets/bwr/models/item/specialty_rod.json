@@ -51,6 +51,42 @@
         "bwr:rod_variant": 7
       },
       "model": "bwr:item/fuel/silicon_target"
+    },
+    {
+      "predicate": {
+        "bwr:rod_variant": 8
+      },
+      "model": "bwr:item/fuel/bismuth_target"
+    },
+    {
+      "predicate": {
+        "bwr:rod_variant": 9
+      },
+      "model": "bwr:item/fuel/thorium_target"
+    },
+    {
+      "predicate": {
+        "bwr:rod_variant": 10
+      },
+      "model": "bwr:item/fuel/uranium_target"
+    },
+    {
+      "predicate": {
+        "bwr:rod_variant": 11
+      },
+      "model": "bwr:item/fuel/neptunium_target"
+    },
+    {
+      "predicate": {
+        "bwr:rod_variant": 12
+      },
+      "model": "bwr:item/fuel/radium_target"
+    },
+    {
+      "predicate": {
+        "bwr:rod_variant": 13
+      },
+      "model": "bwr:item/fuel/thulium_target"
     }
   ]
 }

@@ -435,6 +435,7 @@ metal inventory or fuel burnup.
 | Cobalt target | Produces one sealed cobalt-60 sample |
 | Tritium target | Produces 1,250 sealed tritium samples per completed rod; experimental BWR option |
 | Silicon target | Produces one neutron-doped silicon item |
+| Bismuth, thorium, depleted uranium, neptunium, radium and thulium targets | Reactor-bred polonium-210, uranium-233, neptunium-237, plutonium-238, actinium-227 and thulium-170 ingots: [BREEDING-TARGETS.md](BREEDING-TARGETS.md) |
 
 Absorbers add local absorption to the spatial solve and a geometry-weighted
 fixed absorption term to the whole-core balance. Source rods add to the
@@ -465,6 +466,7 @@ At local flux equal to the rated core average:
 | Silicon target | 24 hours |
 | Cobalt target | 72 hours |
 | Tritium target | 168 hours / 7 days |
+| Bismuth / thorium / depleted uranium / neptunium / radium / thulium target | 96 / 168 / 240 / 120 / 168 / 48 hours (what each makes: BREEDING-TARGETS.md) |
 
 These are **real running hours at 20 TPS**, not Minecraft day/night cycles or
 offline elapsed time. They are gameplay settings matched to long fuel cycles,

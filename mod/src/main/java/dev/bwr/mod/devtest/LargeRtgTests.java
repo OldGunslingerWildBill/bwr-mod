@@ -468,15 +468,15 @@ public final class LargeRtgTests {
         Vec3 centre = Vec3.atCenterOf(root).add(0.5, 1.0, 0.5); // the middle of the 2 x 3 x 2
         Vec3 metre = centre.add(1.0, 0.0, 0.0);
         h.assertTrue(RadiationSources.doseRateMsvPerHour(l, metre) == 0.0, "an empty unit reads a dose");
-        // 1,000 kg of Co-60 is 10,000 ingots of 100 g: 156 stacks of 64 and a remainder
-        int left = 10_000;
+        // 1,000 kg of Co-60 is 2,109 ingots of 474 g (999,666 g: the 2,110th would pass the cap): 32 stacks of 64 and a remainder
+        int left = 2_109;
         while (left > 0) {
             int n = Math.min(64, left);
             left -= rtg.loadFrom(n, new ItemStack(BwrItems.COBALT_60_INGOT.get(), n));
         }
         var r = rtg.output();
-        h.assertTrue(Math.abs(r.massGrams() - 1_000_000.0) < 1e-6, "cobalt mass " + r.massGrams());
-        double photonsW = 1_000_000.0 * 16.8 * 0.9;
+        h.assertTrue(Math.abs(r.massGrams() - 2_109 * 474.0) < 1e-6, "cobalt mass " + r.massGrams());
+        double photonsW = r.massGrams() * 16.8 * 0.9;
         double hvlTransmission = Math.pow(0.5, LargeRtgStore.LEAD_EQUIVALENT_CM / 1.2);
         double expected = dev.bwr.core.radiation.DoseModel.pointSourceMsvPerH(photonsW * hvlTransmission, 1.0, 1.0);
         h.assertTrue(Math.abs(r.doseAtOneMetreMsvPerH() / expected - 1.0) < 1e-9, "dose " + r.doseAtOneMetreMsvPerH() + " vs " + expected);
@@ -521,7 +521,7 @@ public final class LargeRtgTests {
         var reborn = new LargeRtgBlockEntity(rtg.getBlockPos(), rtg.getBlockState());
         reborn.setLevel(l);
         reborn.loadWithComponents(tag, l.registryAccess());
-        h.assertTrue(reborn.heatOnly() && reborn.store().itemCount() == 47 && Math.abs(reborn.output().massGrams() - (30 * 2250.0 + 7 * 250.0 + 10 * 100.0)) < 1e-6,
+        h.assertTrue(reborn.heatOnly() && reborn.store().itemCount() == 47 && Math.abs(reborn.output().massGrams() - (30 * 2250.0 + 7 * 250.0 + 10 * 474.0)) < 1e-6,
                 "reloaded " + reborn.store().itemCount() + " items, " + reborn.output().massGrams() + " g, heat-only " + reborn.heatOnly());
         h.assertTrue(Math.abs(reborn.output().thermalWatts() - rtg.output().thermalWatts()) < 1e-6, "thermal power changed over a reload");
         // hand-edited: more than the cap, an unknown item, a negative count
@@ -639,10 +639,10 @@ public final class LargeRtgTests {
                     && fi.capsuleTransmission() == fb.capsuleTransmission() && fi.leadHvlCm() == fb.leadHvlCm()
                     && fi.specificPowerWPerG() == fo.specificPowerWPerG() && fi.leadHvlCm() == fo.leadHvlCm(), iso + ": the lines differ beyond the mass");
         }
-        // the separator's capsule is 250 g (its grain accounting is untouched), the cobalt sample 100 g
+        // the separator's capsule is 250 g (its grain accounting is untouched), the cobalt sample 474 g (a finished cobalt target, BREEDING-TARGETS.md)
         h.assertTrue(RtgFuels.of(new ItemStack(BwrItems.STRONTIUM_90_CAPSULE.get())).gramsPerItem() == dev.bwr.mod.isotope.Isotopes.CAPSULE_GRAMS, "the capsule's grams moved");
         RtgFuel co = RtgFuels.of(new ItemStack(BwrItems.COBALT_SAMPLE.get()));
-        h.assertTrue(co.gramsPerItem() == 100.0 && co.halfLifeYears() == 5.2714 && co.specificPowerWPerG() == 18.9, "cobalt " + co);
+        h.assertTrue(co.gramsPerItem() == 474.0 && co.halfLifeYears() == 5.2714 && co.specificPowerWPerG() == 18.9, "cobalt " + co);
         // the cobalt sample's existing use still works: a comparator from a sample, redstone and quartz
         var comparator = manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", "cobalt_sample_detector"));
         h.assertTrue(comparator.isPresent(), "the cobalt sample's own recipe is gone");
@@ -659,6 +659,47 @@ public final class LargeRtgTests {
         lg.set(8, new ItemStack(net.minecraft.world.item.Items.IRON_BLOCK));
         lg.set(7, new ItemStack(net.minecraft.world.item.Items.HOPPER));
         h.assertTrue(lr.matches(CraftingInput.of(3, 3, lg), h.getLevel()) && lr.assemble(CraftingInput.of(3, 3, lg), h.getLevel().registryAccess()).is(BwrItems.LARGE_RTG.get()), "the Large RTG recipe does not craft");
+        h.succeed();
+    }
+
+    /** Every item with an entry in the RTG fuel list goes into the Large RTG, the reactor-bred isotopes (polonium, plutonium-238, actinium, thulium) included, with its own grams and heat; breaking returns each. */
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void everyFuelInTheListGoesInTheLargeRtg(GameTestHelper h) {
+        ServerLevel l = h.getLevel();
+        BlockPos root = h.absolutePos(new BlockPos(3, 2, 3));
+        var rtg = assembled(l, root, Direction.NORTH);
+        int kinds = 0;
+        boolean[] named = new boolean[4];
+        String[] bred = {"polonium_210_ingot", "plutonium_238_block", "actinium_227_ingot", "thulium_170_block"};
+        for (var item : net.minecraft.core.registries.BuiltInRegistries.ITEM) {
+            ItemStack one = new ItemStack(item);
+            RtgFuel fuel = RtgFuels.of(one);
+            if (fuel == null) {
+                continue;
+            }
+            double massBefore = rtg.output().massGrams();
+            double thermalBefore = rtg.output().thermalWatts();
+            h.assertTrue(rtg.loadFrom(1, one) == 1, item + " did not go into the Large RTG");
+            double massAfter = rtg.output().massGrams();
+            h.assertTrue(Math.abs(massAfter - massBefore - fuel.gramsPerItem()) < 1e-9, item + " added " + (massAfter - massBefore) + " g, the list says " + fuel.gramsPerItem());
+            h.assertTrue(Math.abs(rtg.output().thermalWatts() - thermalBefore - fuel.thermalWattsPerItem()) < 1e-6 * Math.max(1.0, fuel.thermalWattsPerItem()),
+                    item + " added " + (rtg.output().thermalWatts() - thermalBefore) + " W, the list says " + fuel.thermalWattsPerItem());
+            kinds++;
+            String path = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item).getPath();
+            for (int i = 0; i < bred.length; i++) {
+                named[i] |= path.equals(bred[i]);
+            }
+        }
+        h.assertTrue(kinds >= 21, "only " + kinds + " fuels in the list");
+        for (int i = 0; i < bred.length; i++) {
+            h.assertTrue(named[i], bred[i] + " is not RTG fuel the Large RTG takes");
+        }
+        long returned = rtg.removalDrops().stream().mapToLong(ItemStack::getCount).sum();
+        h.assertTrue(returned == kinds, "breaking returned " + returned + " items for " + kinds + " loaded");
+        // a milligram-scale ingot (polonium, 0.082 g) is counted, not rounded away: room for 12.19 million of them in an empty unit
+        long room = rtg.store().room(0.082);
+        h.assertTrue(room == 12_195_121L, "room for polonium ingots " + room);
+        l.removeBlock(root, false);
         h.succeed();
     }
 

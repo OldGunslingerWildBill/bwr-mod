@@ -787,8 +787,8 @@ public final class GuiScreenCheck {
             // a mixed 1,000 kg: the figures the Large RTG tests assert
             var m = new dev.bwr.mod.gui.LargeRtgMenu(99, i, P);
             m.present = true;
-            m.massGrams = 1_000_000.0;
-            m.items = 4_977;
+            m.massGrams = 999_540.0;
+            m.items = 3_184;
             m.thermalWatts = 2_406_940.0;
             m.electricWatts = 120_347.0;
             m.fePerTick = 8_981.1;
@@ -806,13 +806,13 @@ public final class GuiScreenCheck {
             var m = new dev.bwr.mod.gui.LargeRtgMenu(99, i, P);
             m.present = true;
             m.heatOnly = true;
-            m.massGrams = 1_000_000.0;
-            m.items = 10_000;
-            m.thermalWatts = 18_900_000.0;
+            m.items = 2_109;
+            m.massGrams = 999_666.0;
+            m.thermalWatts = 18_893_700.0;
             m.doseMsvPerH = 1.231;
             m.bareDoseMsvPerH = 1.33e10;
             m.shortestHalfLifeYears = 5.2714;
-            m.kinds = java.util.List.of(new dev.bwr.mod.gui.LargeRtgMenu.Kind("Co-60", 1_000_000.0, 18_900_000.0));
+            m.kinds = java.util.List.of(new dev.bwr.mod.gui.LargeRtgMenu.Kind("Co-60", 999_666.0, 18_893_700.0));
             return new dev.bwr.mod.gui.client.LargeRtgScreen(m, i, t("Large Radioisotope Thermoelectric Generator"));
         }));
         s.add(new Scenario("large-rtg-empty", i -> {
@@ -1000,6 +1000,10 @@ public final class GuiScreenCheck {
         s.add(new Scenario("guide-page-options", i -> guideAt(i, "server-options", 4)));
         s.add(new Scenario("guide-page-first", i -> guideAt(i, "what-this-is", 0)));
         s.add(new Scenario("guide-page-book-end", i -> guideLast(i)));
+        // The Breeding and decay chapter (BREEDING-TARGETS.md): its first page, a route with icons and arrows, and a decay series page.
+        s.add(new Scenario("guide-breeding-first", i -> guideAt(i, "breeding-and-decay", 0)));
+        s.add(new Scenario("guide-breeding-route", i -> guideAt(i, "breeding-and-decay", 5)));
+        s.add(new Scenario("guide-breeding-series", i -> guideAt(i, "breeding-and-decay", 9)));
         return s;
     }
 

@@ -81,6 +81,8 @@ leaves the plant exactly as it was (`oldReprocessingSavesLoad`).
 
 ### Plutonium-238 is left out, and why
 
+*Update: a slow Pu-238 route now exists, from a depleted-uranium target that makes neptunium-237 at low yield and a neptunium target that makes the Pu-238, with neither the plant's outputs nor its tests changed ([BREEDING-TARGETS.md](BREEDING-TARGETS.md)). The reasoning below is why the plant still makes no neptunium.*
+
 Pu-238 (0.568 W/g, 87.7 y) is the best RTG fuel there is, and it does not come out of spent fuel in useful amounts: the 1 to 2
 % of Pu-238 in LWR plutonium is not separable economically. It is made by irradiating **neptunium-237** targets (10 to 15 %
 convert per cycle, a few months each, ORNL's HFIR makes about 400 g a year). An honest path would need Np-237 recovered in
@@ -138,7 +140,8 @@ Every RTG isotope comes in two forms the RTGs take: an **ingot** and a **storage
 | Sr-90 | `strontium_90_ingot` | 250 | `strontium_90_block` | 2,250 | Isotope Separator (capsule) |
 | Cs-137 | `caesium_137_ingot` | 250 | `caesium_137_block` | 2,250 | Isotope Separator (capsule) |
 | Am-241 | `americium_241_ingot` | 250 | `americium_241_block` | 2,250 | Isotope Separator (capsule) |
-| Co-60 | `cobalt_60_ingot` | 100 | `cobalt_60_block` | 900 | a cobalt target in the reactor (`cobalt_sample`) |
+| Co-60 | `cobalt_60_ingot` | 474 | `cobalt_60_block` | 4,266 | a cobalt target in the reactor (`cobalt_sample`) |
+| Po-210, Pu-238, Ac-227, Tm-170 | `polonium_210_ingot` ... | milligrams to tens of grams | `..._block` | nine times | the reactor-bred targets ([BREEDING-TARGETS.md](BREEDING-TARGETS.md)), which follow this pattern; the Large RTG takes them too |
 
 **Why new ingot items and not renamed capsules.** The separator makes `bwr:strontium_90_capsule`, `bwr:caesium_137_capsule` and
 `bwr:americium_241_capsule`, and a cobalt target makes `bwr:cobalt_sample`. Those ids are in saves, in inventories, in the separator's
@@ -155,15 +158,15 @@ creative tab; the ingots and blocks are in it.
 2. **Data map** `data/bwr/data_maps/item/rtg_fuel.json`: one line per item, the block's `grams_per_item` exactly nine times the ingot's and every other
    field the same:
    ```json
-   "bwr:plutonium_238_ingot": { "isotope": "Pu-238", "specific_power_w_per_g": 0.568, "half_life_years": 87.7, "grams_per_item": 100,
-       "gamma_w_per_g": 0.0001, "capsule_transmission": 0.5, "lead_hvl_cm": 0.05 },
-   "bwr:plutonium_238_block": { "isotope": "Pu-238", "specific_power_w_per_g": 0.568, "half_life_years": 87.7, "grams_per_item": 900,
-       "gamma_w_per_g": 0.0001, "capsule_transmission": 0.5, "lead_hvl_cm": 0.05 }
+   "bwr:plutonium_238_ingot": { "isotope": "Pu-238", "specific_power_w_per_g": 0.5674, "half_life_years": 87.7, "grams_per_item": 0.28,
+       "gamma_w_per_g": 0.0002, "capsule_transmission": 0.05 },
+   "bwr:plutonium_238_block": { "isotope": "Pu-238", "specific_power_w_per_g": 0.5674, "half_life_years": 87.7, "grams_per_item": 2.52,
+       "gamma_w_per_g": 0.0002, "capsule_transmission": 0.05 }
    ```
    `lead_hvl_cm` (new, optional, default 1.0) is the half-value layer of lead for the isotope's photons, what the Large RTG's housing uses
-   (see below). The tooltips, the carried dose, both RTGs' screens, the signals and the Cold Sweat heat all read this one line; nothing else needs a number.
-3. **Items and blocks** (Java, `BwrItems` and `BwrBlocks`): the ingot is `new IsotopeCapsuleItem(new Item.Properties())`; the block is
-   `new Block(isotopeBlock(MapColor...))` with item `new IsotopeBlockItem(block, new Item.Properties())`. Add both to the fuel tab's list in
+   (see below; the bred isotopes left it at the default 1 cm, which for their low-energy photons is less shielding than real lead gives, so the Large RTG reads them on the high side). The tooltips, the carried dose, both RTGs' screens, the signals and the Cold Sweat heat all read this one line; nothing else needs a number.
+3. **Items and blocks** (Java, `BwrItems` and `BwrBlocks`): the ingot is `new BredIsotopeItem(new Item.Properties())`; the block is
+   `new Block(isotopeBlock(MapColor...))` with item `new BredIsotopeBlockItem(block, new Item.Properties())` (both print `BredIsotopeTooltip`, which writes a milligram ingot as milligrams; the separator capsules and the cobalt sample use the same tooltip through `IsotopeCapsuleItem`). Add both to the fuel tab's list in
    `BwrItems`.
 4. **Assets.** One entry in `ISOTOPE_COLOURS` in `tools-make-isotope-assets.py` makes the ingot icon, the block texture, models, blockstate and loot table.
    Add `block.bwr.<id>`, `item.bwr.<id>` for both to the language file, and the block to `mineable/pickaxe` and `needs_iron_tool`.
@@ -194,12 +197,12 @@ target rod, which after 72 operating hours makes one sealed `bwr:cobalt_sample`;
 | Wall | 0.90 | 3 mm of 316L at 1.25 MeV |
 | Lead half-value layer | 1.2 cm | broad beam at 1.25 MeV |
 
-**Grams per sample: 100 g, a stated assumption.** The target-rod documentation gives no mass. A back-of-envelope for the real rod (figures recalled, not looked up: a 4 m, 1 cm rod holds about 2.8 kg of cobalt-59, the capture cross-section is about 37 b, a BWR's thermal flux
-about 3e13 /cm2/s) says 72 hours at rated flux makes about 1 g of Co-60, because real cobalt is irradiated for years: 100 g is a deliberate game-scale figure, one sample
-the heat of eight strontium capsules, so a cobalt campaign is an RTG fuel and not a curiosity. It is one line in the data map (`bwr:cobalt_sample`, `bwr:cobalt_60_ingot`,
-`bwr:cobalt_60_block`); a datapack retunes it. One sample is 1,890 W of heat and **carried reads about 1,330 Sv/h at 1 m**: far worse than a caesium capsule (54 Sv/h),
-and the honest cost of the choice. The sample's other uses are unchanged (the comparator recipe `cobalt_sample_detector` still takes it, tested), but anyone who carries one now
-has a dose.
+**Grams per sample: 474 g, the calibration of the reactor-bred targets.** BREEDING-TARGETS.md gives the existing 72-hour cobalt target a meaning: 72 game hours stand for an 18-month cycle at a
+thermal flux of 3e13 n/cm2/s, which converts 4.7 % of a cassette's 10 kg of cobalt-59 (sigma 37.2 b): **474 g of cobalt-60, about 0.5 MCi, the size of an industrial source batch**. One finished target is one
+`bwr:cobalt_sample`, so a sample, an ingot and a block of nine are 474 g, 474 g and 4,266 g (one line each in the data map; a datapack retunes them). One sample is **8.96 kW of heat** (47 strontium
+capsules' worth) and **carried reads about 6,300 Sv/h at 1 m** (a caesium capsule 54 Sv/h): the honest reading of half a megacurie, and a change to every player who harvests a cobalt target,
+who now carries a lethal source until it is inside an RTG. The sample's other uses are unchanged (the comparator recipe `cobalt_sample_detector` still takes it, tested). 1,000 kg of cobalt-60
+is 2,109 ingots (999,666 g): about two thousand finished targets.
 
 ## RTG heat, and the heat-only switch
 
@@ -252,7 +255,7 @@ A 2 x 2 footprint, **3 high**, one item (`bwr:large_rtg`), for a very large remo
   | Sr-90 | 920 kW | 46 kW | **3,432.8** |
   | Cs-137 | 420 kW | 21 kW | 1,567.2 |
   | Am-241 | 114.7 kW | 5.74 kW | 428.0 |
-  | Co-60 (10,000 ingots) | 18.9 MW | 945 kW | 70,522 |
+  | Co-60 (2,109 ingots of 474 g) | 18.9 MW | 945 kW | 70,522 |
 
 * **Radiation: heavy shielding, and the number is always shown.** The housing is **40 cm of lead-equivalent** (a lead, tungsten and steel sandwich in the 2 m body). What gets through is
   `2^(-40 cm / half-value layer)` for the isotope, the half-value layer of lead in the fuel line (`lead_hvl_cm`): Sr-90 0.6 cm, Cs-137 0.65, Am-241 0.02, Co-60 1.2. The result is the unit's point source
@@ -281,7 +284,7 @@ A 2 x 2 footprint, **3 high**, one item (`bwr:large_rtg`), for a very large remo
 ### The supply is the problem, honestly
 
 Nothing here makes isotope from nothing. **Strontium-90, caesium-137 and americium-241 come from reprocessing waste**: the separator gives about 0.11 kg of Sr-90 per waste item (109.7 g of the 5 kg item), 0.18 kg of Cs-137
-and 0.075 kg of Am-241. 1,000 kg of strontium-90 is 9,100 waste items, the waste of about 5,400 assemblies burned to 45 GWd/t, and 91 million FE of separator work; that is a very long-term goal, and the separator's yields are unchanged. **Cobalt-60 comes from irradiating cobalt targets in the reactor** (72 operating hours a rod, one 100 g sample each): 10,000 samples (1,000 kg, a full cobalt unit) is ten thousand rod-harvests, still a campaign, but the only one of the four materials a reactor makes in bulk (the others are fission products and only come from fuel).
+and 0.075 kg of Am-241. 1,000 kg of strontium-90 is 9,100 waste items, the waste of about 5,400 assemblies burned to 45 GWd/t, and 91 million FE of separator work; that is a very long-term goal, and the separator's yields are unchanged. **Cobalt-60 comes from irradiating cobalt targets in the reactor** (72 operating hours a rod, one 474 g sample each): 2,109 samples (999.7 kg, a full cobalt unit) is two thousand rod-harvests, still a campaign, but the only one of the four materials a reactor makes in bulk (the others are fission products and only come from fuel).
 Real cobalt sources are far smaller: Wikipedia gives India's capacity as over 6 MCi (about 5 t of Co-60 at 1,100 Ci/g) in 2021, and a disused teletherapy source stolen in 2013 was about 3,000 Ci (2.7 g). The cap is a limit, not a typical load.
 
 ## Carried capsules
@@ -347,6 +350,19 @@ gamma of radium, which a real Ra-Be source carries, is not modelled on the rod):
 ```
 
 A distinct Ra-Be rod with its own strength would need a `CoreInsert.Kind`, which is Java, and is not added.
+
+## Reactor-bred fuels (BREEDING-TARGETS.md)
+
+Four more isotopes, bred in target rods, are RTG fuel with the same data-map fields, each as an ingot and a block of nine (the block's `grams_per_item` nine times the ingot's):
+
+| Item | Isotope | W/g | Half-life | Grams in an ingot | Photons W/g | Wall |
+|---|---|---|---|---|---|---|
+| `polonium_210_ingot` | Po-210 | 140 | 138.4 d | 0.082 | 0.0002 | 1 |
+| `plutonium_238_ingot` | Pu-238 | 0.5674 | 87.7 y | 0.28 | 0.0002 | 0.05 |
+| `actinium_227_ingot` | Ac-227 with daughters | 14.6 | 21.77 y | 0.00103 | 0.13 | 1 |
+| `thulium_170_ingot` | Tm-170 | 11.5 | 128.6 d | 19.0 | 0.08 | 1 |
+
+Six ingots make 69 W (polonium), 0.95 W (plutonium-238), 0.09 W (actinium-227) and 1,310 W (thulium-170) of heat. The photon powers are derived (BREEDING-TARGETS.md says how); polonium has about none, actinium-227's daughters and thulium-170's bremsstrahlung are strong. Uranium-233 and neptunium-237 are not on the list.
 
 ## The Am-Be startup rod
 

@@ -14,7 +14,7 @@ public final class LargeRtgStoreTest {
     private static final Fuel SR_BLOCK = new Fuel("Sr-90", 0.92, 28.9, 2250.0, 0.0057, 1.0, 0.6);
     private static final Fuel CS_INGOT = new Fuel("Cs-137", 0.42, 30.04, 250.0, 0.29, 0.85, 0.65);
     private static final Fuel AM_INGOT = new Fuel("Am-241", 0.1147, 432.6, 250.0, 0.00063, 0.05, 0.02);
-    private static final Fuel CO_INGOT = new Fuel("Co-60", 18.9, 5.2714, 100.0, 16.8, 0.9, 1.2);
+    private static final Fuel CO_INGOT = new Fuel("Co-60", 18.9, 5.2714, 474.0, 16.8, 0.9, 1.2);
     private static final double YEAR = RadioisotopePower.SECONDS_PER_YEAR;
 
     /** 1,000 kg of strontium-90: 920 kW thermal, 46 kW electric, 3,432.8 FE/t, the figures the docs give. */
@@ -30,15 +30,15 @@ public final class LargeRtgStoreTest {
         Check.note("1,000 kg Sr-90: %.0f W thermal, %.0f W electric, %.1f FE/t", o.thermalWatts(), o.electricWatts(), o.fePerTick());
     }
 
-    /** Mixed isotopes add: the power is the sum of the kinds, the mass the sum of the masses. */
+    /** Mixed isotopes add: the power is the sum of the kinds, the mass the sum of the masses (the cobalt ingot is the game's 474 g). */
     public static void test02_mixedIsotopesAdd() {
         var s = new LargeRtgStore();
         s.insert("sr", SR_INGOT, 1600, 0.0);    // 400 kg
         s.insert("cs", CS_INGOT, 1200, 0.0);    // 300 kg
         s.insert("am", AM_INGOT, 800, 0.0);     // 200 kg
-        s.insert("co", CO_INGOT, 1000, 0.0);    // 100 kg
-        Check.exactly(1_000_000.0, s.massGrams(), "the mixed mass");
-        double expected = 400_000 * 0.92 + 300_000 * 0.42 + 200_000 * 0.1147 + 100_000 * 18.9;
+        s.insert("co", CO_INGOT, 210, 0.0);     // 99.54 kg
+        Check.exactly(999_540.0, s.massGrams(), "the mixed mass");
+        double expected = 400_000 * 0.92 + 300_000 * 0.42 + 200_000 * 0.1147 + 99_540 * 18.9;
         var o = s.output(0.0, false, 1.0);
         Check.relative(expected, o.thermalWatts(), 1e-12, "thermal of the mix");
         Check.relative(expected * 0.05, o.electricWatts(), 1e-12, "electric of the mix");
@@ -84,7 +84,7 @@ public final class LargeRtgStoreTest {
         // cobalt-60 really does decay in a session of years: five years leave 51.8 %
         var c = new LargeRtgStore();
         c.insert("co", CO_INGOT, 10, 0.0);
-        Check.relative(Math.pow(0.5, 5.0 / 5.2714), c.output(5.0 * YEAR, false, 1.0).thermalWatts() / (10 * 1890.0), 1e-12, "cobalt after five years");
+        Check.relative(Math.pow(0.5, 5.0 / 5.2714), c.output(5.0 * YEAR, false, 1.0).thermalWatts() / (10 * 474.0 * 18.9), 1e-12, "cobalt after five years");
     }
 
     /** Heat-only mode: no FE and no electric watts, the full thermal power. */
@@ -111,9 +111,10 @@ public final class LargeRtgStoreTest {
         Check.greaterThan(1.0e8, c.bareDoseAtOneMetreMsvPerH(), "bare caesium reads over 100 kSv/h at a metre");
         Check.lessThan(1.0e-6, c.doseAtOneMetreMsvPerH(), "40 cm of lead stops caesium-137");
         var co = new LargeRtgStore();
-        co.insert("co", CO_INGOT, 10_000, 0.0);
+        co.insert("co", CO_INGOT, 2_109, 0.0);   // 999,666 g: the 2,110th would pass the cap
         var k = co.output(0.0, false, 1.0);
         Check.greaterThan(1.0e9, k.bareDoseAtOneMetreMsvPerH(), "bare cobalt-60 reads over a MSv/h");
+        Check.exactly(0L, co.insert("co", CO_INGOT, 1, 0.0), "the 2,110th cobalt ingot is refused");
         double t = LargeRtgStore.shieldTransmission(1.2);
         Check.relative(Math.pow(0.5, 40.0 / 1.2), t, 1e-12, "transmission is 2^(-thickness / half-value layer)");
         Check.relative(k.bareGammaWatts() * t * dev.bwr.core.radiation.DoseModel.pointSourceMsvPerH(1.0, 1.0, 1.0), k.doseAtOneMetreMsvPerH(), 1e-9, "the shielded cobalt dose");

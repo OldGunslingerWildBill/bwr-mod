@@ -137,6 +137,9 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
     /** Thorium route store, taken out of the input slot: thorium ingots (raw thorium counts as one). */
     private int thoriumIngots;
 
+    /** Thorium route, U-233 alternative (BREEDING-TARGETS.md): bred U-233 ingots taken out of the input slot. Saved only when it holds some. */
+    private int u233Ingots;
+
     /** Ticks of work done on the current item assembly; 0 when none is under way. */
     private int workTicks;
 
@@ -334,7 +337,7 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
             absorbUranium(cost);
         }
         if (workTicks == 0) {
-            if (!canMake(cost)) {
+            if (!canMake(cost) && !viaU233(cost)) {
                 itemDirty = false;
                 return false;
             }
@@ -342,10 +345,13 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         }
         energy.drain(ENERGY_PER_TICK);
         workTicks++;
-        if (workTicks >= cost.workTicks()) {
+        boolean bred = viaU233(cost);
+        if (workTicks >= (bred ? FuelItemRoute.u233Cost(target).workTicks() : cost.workTicks())) {
             workTicks = 0;
             if (canMake(cost)) {
                 makeAssembly(cost);
+            } else if (bred) {
+                makeAssemblyFromU233(FuelItemRoute.u233Cost(target));
             } else {
                 itemDirty = false; // something was taken away while it ran; nothing was consumed
             }
@@ -440,7 +446,7 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
     /** True for a uranium or thorium item while a thorium target is selected. */
     private boolean isThoriumFeed(ItemStack stack) {
         return FuelItemRoute.isThoriumTarget(target)
-                && (FuelItemRoute.thoriumIngots(stack) > 0 || FuelItemRoute.uraniumUnits(stack) > 0);
+                && (FuelItemRoute.thoriumIngots(stack) > 0 || FuelItemRoute.uraniumUnits(stack) > 0 || FuelItemRoute.isUranium233(stack));
     }
 
     /**
@@ -460,6 +466,11 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         if (!held.isEmpty() && !ItemStack.isSameItemSameComponents(held, stack)) {
             return 0;
         }
+        if (FuelItemRoute.isUranium233(stack)) {
+            FuelItemRoute.U233Cost alt = FuelItemRoute.u233Cost(target);
+            int roomU233 = alt == null ? 0 : 2 * alt.u233Ingots() - u233Ingots - held.getCount();
+            return Math.max(0, roomU233);
+        }
         int thorium = FuelItemRoute.thoriumIngots(stack);
         int unit = thorium > 0 ? 1 : FuelItemRoute.uraniumUnits(stack);
         int stored = thorium > 0 ? thoriumIngots : uraniumUnits;
@@ -472,6 +483,16 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
     private void absorbThoriumFeed(FuelItemRoute.Cost cost) {
         ItemStack held = uraniumIn.getStackInSlot(0);
         if (held.isEmpty()) {
+            return;
+        }
+        if (FuelItemRoute.isUranium233(held)) {
+            FuelItemRoute.U233Cost alt = FuelItemRoute.u233Cost(target);
+            int takenU233 = alt == null ? 0 : Math.min(2 * alt.u233Ingots() - u233Ingots, held.getCount());
+            if (takenU233 > 0) {
+                uraniumIn.extractItem(0, takenU233, false);
+                u233Ingots += takenU233;
+                setChanged();
+            }
             return;
         }
         int thorium = FuelItemRoute.thoriumIngots(held);
@@ -493,6 +514,30 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
             uraniumUnits += taken * unit;
         }
         setChanged();
+    }
+
+    /** True when a thorium assembly cannot be made the usual way but the U-233 alternative has what it needs (the usual way is tried first). */
+    private boolean viaU233(FuelItemRoute.Cost cost) {
+        if (!cost.isThorium() || u233Ingots <= 0 || canMake(cost)) {
+            return false;
+        }
+        FuelItemRoute.U233Cost alt = FuelItemRoute.u233Cost(target);
+        return alt != null
+                && batchHeavyMetalKg <= 0.0
+                && output.getStackInSlot(OUTPUT_SLOT).isEmpty()
+                && u233Ingots >= alt.u233Ingots()
+                && thoriumIngots >= alt.thoriumIngots()
+                && steelIn.getStackInSlot(0).getCount() >= alt.steel();
+    }
+
+    /** A thorium assembly whose driver is bred U-233: nothing is enriched, so no depleted uranium comes back. */
+    private void makeAssemblyFromU233(FuelItemRoute.U233Cost alt) {
+        FuelType type = FuelTypes.byNameOrPreset(alt.fuelType());
+        steelIn.extractItem(0, alt.steel(), false);
+        u233Ingots -= alt.u233Ingots();
+        thoriumIngots -= alt.thoriumIngots();
+        output.setStackInSlot(OUTPUT_SLOT, FuelAssemblyItem.stackOf(BwrItems.FUEL_ASSEMBLY.get(),
+                FuelAssemblyData.fresh(type != null ? type : FuelTypes.fallback())));
     }
 
     private boolean canMake(FuelItemRoute.Cost cost) {
@@ -631,6 +676,11 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         return thoriumIngots;
     }
 
+    /** U-233 ingots the machine holds for a thorium assembly (the alternative to enriched uranium). */
+    public int u233HeldIngots() {
+        return u233Ingots;
+    }
+
     /** True while the selected target makes thorium fuel. */
     public boolean isThoriumTarget() {
         return FuelItemRoute.isThoriumTarget(target);
@@ -679,6 +729,10 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
             drops.add(new ItemStack(BwrItems.THORIUM_INGOT.get(), Math.min(TAILS_STACK, left)));
         }
         thoriumIngots = 0;
+        for (int left = u233Ingots; left > 0; left -= TAILS_STACK) {
+            drops.add(new ItemStack(BwrItems.URANIUM_233_INGOT.get(), Math.min(TAILS_STACK, left)));
+        }
+        u233Ingots = 0;
         int ingots = uraniumUnits / FuelItemRoute.UNITS_PER_INGOT;
         uraniumUnits = 0;
         if (ingots > 0) {
@@ -752,6 +806,13 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
                     thoriumIngots, cost.thoriumIngots(),
                     String.format(java.util.Locale.ROOT, "%.1f", uraniumUnits / (double) FuelItemRoute.UNITS_PER_INGOT), cost.ingots(),
                     String.format(java.util.Locale.ROOT, "%.0f", 100.0 * workTicks / cost.workTicks())));
+            FuelItemRoute.U233Cost alt = FuelItemRoute.u233Cost(target);
+            if (alt != null) {
+                out.add(BwrText.tr(
+                        "status.bwr.fuel_fabricator.thorium_u233_route",
+                        "Or with bred U-233: %s takes %s U-233, %s thorium and %s steel, and returns nothing (taken in %s of %s U-233)",
+                        alt.fuelType(), alt.u233Ingots(), alt.thoriumIngots(), alt.steel(), u233Ingots, alt.u233Ingots()));
+            }
         } else if (cost != null) {
             out.add(BwrText.tr(
                     "status.bwr.fuel_fabricator.item_route",
@@ -810,6 +871,9 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         if (thoriumIngots > 0) {
             tag.putInt("ThoriumIngots", thoriumIngots);
         }
+        if (u233Ingots > 0) {
+            tag.putInt("U233Ingots", u233Ingots);
+        }
         if (workTicks > 0) {
             tag.putInt("WorkTicks", workTicks);
         }
@@ -851,6 +915,7 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         plutoniumNuggets = Math.max(0, Math.min(1_000_000, tag.getInt("PlutoniumNuggets")));
         matrixIngots = Math.max(0, Math.min(1_000_000, tag.getInt("MatrixIngots")));
         thoriumIngots = Math.max(0, Math.min(1_000_000, tag.getInt("ThoriumIngots")));
+        u233Ingots = Math.max(0, Math.min(1_000_000, tag.getInt("U233Ingots")));
         workTicks = Math.max(0, Math.min(1_000_000, tag.getInt("WorkTicks")));
         loadSlot(uraniumIn, tag, "UraniumIn", registries);
         loadSlot(steelIn, tag, "SteelIn", registries);
