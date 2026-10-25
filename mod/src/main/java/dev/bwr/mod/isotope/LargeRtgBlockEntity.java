@@ -401,7 +401,16 @@ public class LargeRtgBlockEntity extends BlockEntity {
         if (!(msvPerH > 0.0)) {
             return "0 mSv/h";
         }
-        return msvPerH < 5.0e-6 ? String.format(Locale.ROOT, "%.2e mSv/h", msvPerH) : DoseModel.formatRate(msvPerH);
+        if (msvPerH < 5.0e-6) {
+            return String.format(Locale.ROOT, "%.2e mSv/h", msvPerH);
+        }
+        if (msvPerH >= 1.0e9) {
+            return String.format(Locale.ROOT, "%.3g MSv/h", msvPerH / 1.0e9);
+        }
+        if (msvPerH >= 1.0e6) {
+            return String.format(Locale.ROOT, "%.3g kSv/h", msvPerH / 1.0e6);
+        }
+        return DoseModel.formatRate(msvPerH);
     }
 
     public List<Component> statusComponents() {

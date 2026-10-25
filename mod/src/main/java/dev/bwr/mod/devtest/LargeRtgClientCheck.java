@@ -40,7 +40,7 @@ public final class LargeRtgClientCheck {
 
     private static boolean started, requested;
     private static int age, stage, shown, joined;
-    private static final BlockPos ROOT = new BlockPos(200, 200, 200);
+    private static final BlockPos ROOT = new BlockPos(200, -60, 200); // on the flat world's own surface: its light is computed with the chunk
     /** The Large RTGs face south (their front toward a viewer standing south of them) and extend west and north of the root. */
     private static final BlockPos MIXED = ROOT.offset(4, 0, 1);
     private static final BlockPos COBALT = ROOT.offset(9, 0, 1);
@@ -161,7 +161,9 @@ public final class LargeRtgClientCheck {
         } catch (java.io.IOException e) {
             throw new IllegalStateException(e);
         }
-        LogUtils.getLogger().info("LARGE RTG CLIENT CHECK: rendered {}", NAMES[stage]);
+        LogUtils.getLogger().info("LARGE RTG CLIENT CHECK: rendered {} (sky light above the floor {}, block light {}, day time {}, raining {})", NAMES[stage],
+                mc.level.getBrightness(net.minecraft.world.level.LightLayer.SKY, ROOT.above()), mc.level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, ROOT.above()),
+                mc.level.getDayTime(), mc.level.isRaining());
         mc.player.closeContainer();
         requested = false;
         mc.options.hideGui = false;

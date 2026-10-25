@@ -89,7 +89,9 @@ public class LargeRtgMenu extends BwrMenu {
         double now = be.getLevel() == null ? 0.0 : be.getLevel().getGameTime() / 20.0;
         Map<String, double[]> byLabel = new LinkedHashMap<>();
         for (LargeRtgStore.Bucket b : be.store().buckets()) {
-            String label = b.fuel().label().isEmpty() ? b.key() : b.fuel().label();
+            // "Sr-90 with Y-90" is one row, "Sr-90": the daughter is in the heat, not in the name
+            String full = b.fuel().label().isEmpty() ? b.key() : b.fuel().label();
+            String label = full.contains(" with ") ? full.substring(0, full.indexOf(" with ")) : full;
             double[] acc = byLabel.computeIfAbsent(label, k -> new double[2]);
             acc[0] += b.grams();
             acc[1] += b.count() * b.fuel().gramsPerItem() * b.fuel().specificPowerWPerG() * b.decay(now);

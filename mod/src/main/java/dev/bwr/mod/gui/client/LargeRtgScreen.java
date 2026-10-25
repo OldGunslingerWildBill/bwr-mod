@@ -92,12 +92,12 @@ public class LargeRtgScreen extends BwrScreen<LargeRtgMenu> {
                 Layout.row("Dose at 1 m", () -> dev.bwr.mod.isotope.LargeRtgBlockEntity.doseText(menu.doseMsvPerH), "")
                         .status(() -> menu.doseMsvPerH > 1.0 ? Status.ALARM : menu.doseMsvPerH > 0.01 ? Status.CAUTION : Status.NONE)
                         .tip("What a person a metre from the block reads, through 40 cm of lead-equivalent housing. This is the real number: it is not hidden when the housing stops everything."),
-                Layout.row("Bare core at 1 m", () -> dev.bwr.mod.isotope.LargeRtgBlockEntity.doseText(menu.bareDoseMsvPerH), "")
+                Layout.row("Bare core, 1 m", () -> dev.bwr.mod.isotope.LargeRtgBlockEntity.doseText(menu.bareDoseMsvPerH), "")
                         .tip("For scale: the same material with no housing."),
                 Layout.meter("Buffer", () -> menu.bufferFe / 1_000_000.0, () -> Status.NONE,
                         () -> String.format(Locale.ROOT, "%,.0f FE", menu.bufferFe)).label("Energy")).compact();
 
-        var controls = Layout.controls(BwrStyle.SP1).add(heat, 1).add(load, 1);
+        var controls = Layout.column(BwrStyle.SP1, Layout.controls(BwrStyle.SP1).add(heat, 1), Layout.controls(BwrStyle.SP1).add(load, 1));
         var split = Layout.split(BwrStyle.SP1);
         split.fixed(Layout.column(BwrStyle.SP2, stored, Layout.flex()), 168);
         split.add(Layout.column(BwrStyle.SP1, power, safety, controls), 1);
