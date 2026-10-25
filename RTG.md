@@ -156,28 +156,26 @@ well filter, the screen, the tooltip, the carried dose and the signals all read 
 | `capsule_transmission` | Optional, what the item's wall lets through, 0 to 1, default 1 |
 | `isotope` | Optional label for the tooltip |
 
-### The line to add when the thorium branch's `bwr:radium` is merged
+### Radium (added with the thorium merge)
 
 Ra-226 with its daughters in equilibrium (radon retained): about 0.16 W/g (27 MeV a chain, 1600 y; historic calorimetry gave
 0.12 to 0.16 W/g), half-life 1,600 years, 0.99 Ci/g, 0.825 R m2/(Ci h) with a 0.5 mm platinum filter, which is about 8.2 mSv/h per
 gram at 1 m and 0.0093 W/g of photons in the dose model's unit. A radium item is a poor RTG fuel (a gram makes 0.16 W of
-heat against strontium's 0.92) but it lasts and it is mined. Add inside `"values"` of `rtg_fuel.json`, with `grams_per_item`
-set to the mass of one `bwr:radium` (10 g shown):
+heat against strontium's 0.92) but it lasts and it is mined. `rtg_fuel.json` has this entry. One `bwr:radium` is a sealed source of
+about 10 mg of Ra-226 (THORIUM.md), so `grams_per_item` is 0.01 and a radium item makes 1.6 mW of heat: an honest, tiny
+RTG fuel. `capsule_transmission` is 0 because the radium item already carries its own gamma source (`RadiumItem`, through
+`RadiationSources`); a non-zero value here would count its dose twice.
 
 ```json
-"bwr:radium": { "isotope": "Ra-226 with daughters", "specific_power_w_per_g": 0.16, "half_life_years": 1600, "grams_per_item": 10, "gamma_w_per_g": 0.0093, "capsule_transmission": 0.5 }
+"bwr:radium": { "isotope": "Ra-226 with daughters", "specific_power_w_per_g": 0.16, "half_life_years": 1600, "grams_per_item": 0.01, "gamma_w_per_g": 0.0093, "capsule_transmission": 0.0 }
 ```
 
-Do not add it before `bwr:radium` exists: a data-map line for an item that is not registered is dropped with a warning at
-best. Nothing in the Java names radium; `theFuelListIsDataAndAnotherLineParses` checks that this exact value parses with
-the real codec.
-
-### Radium-beryllium neutron source (not added)
+### Radium-beryllium neutron source (added with the thorium merge)
 
 Historically real: Ra-226 alphas on beryllium, about 30 neutrons per million alphas, or about 1.5e7 n/s per gram of radium
 (one source gives 4 to 15e6; this is the weakest-sourced figure here), against about 7.6e6 n/s per gram of Am-241 in an Am-Be
-source. The same order, so the existing Am-Be startup rod stands in for it. To make radium usable for one without Java,
-add `data/bwr/recipe/americium_beryllium_source_from_radium.json` (a radium-fuelled Ra-Be rod is the Am-Be rod's data; the
+source. The same order, so the existing Am-Be startup rod stands in for it. Radium is usable for one without Java:
+`data/bwr/recipe/americium_beryllium_source_from_radium.json` (a radium-fuelled Ra-Be rod is the Am-Be rod's data; the
 gamma of radium, which a real Ra-Be source carries, is not modelled on the rod):
 
 ```json

@@ -23,6 +23,14 @@
       "grams_per_item": 250,
       "gamma_w_per_g": 0.00063,
       "capsule_transmission": 0.05
+    },
+    "bwr:radium": {
+      "isotope": "Ra-226 with daughters",
+      "specific_power_w_per_g": 0.16,
+      "half_life_years": 1600,
+      "grams_per_item": 0.01,
+      "gamma_w_per_g": 0.0093,
+      "capsule_transmission": 0.0
     }
   }
 }

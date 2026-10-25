@@ -63,7 +63,7 @@ NO_RECIPE = {
     # A byproduct of mining: monazite carries rare earths. It is used (an iron ingot and one make a flint and steel) but made only by mining.
     "rare_earth_concentrate": "byproduct of mining thorium ore and monazite sand; made by the mining, a recipe for it would make rare earths out of nothing",
     # Radium: a rare byproduct of mining thorium ore, a radioactive source material. This mod gives it no use; other things are built on it.
-    "radium": "byproduct of mining thorium ore; made by the mining, a recipe for it would make a radioactive source out of nothing",
+    "radium": "byproduct of mining thorium and uranium ore; made by the mining, a recipe for it would make a radioactive source out of nothing (it goes into the Ra-Be source rod and the RTG)",
     # Made by the reprocessing plant.
     "fission_product_waste": "what burning fuel leaves, the reprocessing plant's byproduct: only the isotope separator uses it, and a recipe would make fuel waste out of nothing",
     # Made by the isotope separator from fission-product waste (RTG.md); a recipe for any of them would make isotopes out of nothing.
