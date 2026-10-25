@@ -705,6 +705,63 @@ public final class GuiScreenCheck {
             m.getSlot(ReprocessingPlantMenu.SLOT_INPUT).set(hot);
             return new ReprocessingPlantScreen(m, i, t("Reprocessing Plant"));
         }));
+        s.add(new Scenario("isotope-separator", i -> {
+            // part way through a waste item, with fractions of each isotope held and capsules waiting
+            var m = new dev.bwr.mod.gui.IsotopeSeparatorMenu(99, i, P);
+            m.present = true;
+            m.energyStored = 26_000;
+            m.energyCapacity = 40_000;
+            m.workTicks = 45;
+            m.strontiumGrains = 31_000;
+            m.caesiumGrains = 12_500;
+            m.americiumGrains = 44_000;
+            m.strippedGrains = 640_000;
+            m.getSlot(dev.bwr.mod.gui.IsotopeSeparatorMenu.SLOT_INPUT).set(new ItemStack(BwrItems.FISSION_PRODUCT_WASTE.get(), 9));
+            m.getSlot(dev.bwr.mod.gui.IsotopeSeparatorMenu.SLOT_STRONTIUM).set(new ItemStack(BwrItems.STRONTIUM_90_CAPSULE.get(), 3));
+            m.getSlot(dev.bwr.mod.gui.IsotopeSeparatorMenu.SLOT_CAESIUM).set(new ItemStack(BwrItems.CAESIUM_137_CAPSULE.get(), 5));
+            m.getSlot(dev.bwr.mod.gui.IsotopeSeparatorMenu.SLOT_AMERICIUM).set(new ItemStack(BwrItems.AMERICIUM_241_CAPSULE.get(), 2));
+            m.getSlot(dev.bwr.mod.gui.IsotopeSeparatorMenu.SLOT_STRIPPED).set(new ItemStack(BwrItems.STRIPPED_WASTE.get(), 22));
+            return new dev.bwr.mod.gui.client.IsotopeSeparatorScreen(m, i, t("Isotope Separator"));
+        }));
+        s.add(new Scenario("isotope-separator-absent", i -> new dev.bwr.mod.gui.client.IsotopeSeparatorScreen(
+                new dev.bwr.mod.gui.IsotopeSeparatorMenu(99, i, P), i, t("Isotope Separator"))));
+        s.add(new Scenario("rtg", i -> {
+            // six strontium-90 capsules: 1,380 W of heat, 69 W of electricity, 5.15 FE/t
+            var m = new dev.bwr.mod.gui.RtgMenu(99, i, P);
+            m.present = true;
+            m.capsules = 6;
+            m.thermalWatts = 1380.0;
+            m.electricWatts = 69.0;
+            m.fePerTick = 69.0 / 13.4;
+            m.doseMsvPerH = 0.754;
+            m.shortestHalfLifeYears = 28.9;
+            m.bufferFe = 412.0;
+            for (int k = 0; k < 6; k++) {
+                m.getSlot(k).set(new ItemStack(BwrItems.STRONTIUM_90_CAPSULE.get()));
+            }
+            return new dev.bwr.mod.gui.client.RtgScreen(m, i, t("Radioisotope Thermoelectric Generator"));
+        }));
+        s.add(new Scenario("rtg-mixed", i -> {
+            var m = new dev.bwr.mod.gui.RtgMenu(99, i, P);
+            m.present = true;
+            m.capsules = 3;
+            m.thermalWatts = 438.0;
+            m.electricWatts = 21.9;
+            m.fePerTick = 21.9 / 13.4;
+            m.doseMsvPerH = 6.1;
+            m.shortestHalfLifeYears = 28.9;
+            m.bufferFe = 12.0;
+            m.getSlot(0).set(new ItemStack(BwrItems.STRONTIUM_90_CAPSULE.get()));
+            m.getSlot(2).set(new ItemStack(BwrItems.CAESIUM_137_CAPSULE.get()));
+            m.getSlot(4).set(new ItemStack(BwrItems.AMERICIUM_241_CAPSULE.get()));
+            return new dev.bwr.mod.gui.client.RtgScreen(m, i, t("Radioisotope Thermoelectric Generator"));
+        }));
+        s.add(new Scenario("rtg-empty", i -> {
+            var m = new dev.bwr.mod.gui.RtgMenu(99, i, P);
+            m.present = true;
+            return new dev.bwr.mod.gui.client.RtgScreen(m, i, t("Radioisotope Thermoelectric Generator"));
+        }));
+        s.add(new Scenario("rtg-absent", i -> new dev.bwr.mod.gui.client.RtgScreen(new dev.bwr.mod.gui.RtgMenu(99, i, P), i, t("Radioisotope Thermoelectric Generator"))));
         s.add(new Scenario("spent-fuel-pool", i -> new SpentFuelPoolScreen(pool(false, 8), i, t("Spent Fuel Pool"))));
         s.add(new Scenario("spent-fuel-pool-many", i -> new SpentFuelPoolScreen(pool(false, 40), i, t("Spent Fuel Pool"))));
         s.add(new Scenario("spent-fuel-pool-uncovered", i -> new SpentFuelPoolScreen(pool(true, 8), i, t("Spent Fuel Pool"))));

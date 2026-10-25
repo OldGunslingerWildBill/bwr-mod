@@ -242,7 +242,8 @@ purpose:
 | `depleted_uranium` | The fuel fabricator's byproduct |
 | `thorium_ore`, `deepslate_thorium_ore`, `monazite_sand` | Found in the ground, as the uranium ores are (THORIUM.md) |
 | `rare_earth_concentrate`, `radium` | Byproducts of mining thorium ore (THORIUM.md); made by the mining, not at a bench |
-| `fission_product_waste` | What burning fuel leaves, the reprocessing plant's byproduct: nothing uses it, and a recipe would make waste out of nothing |
+| `fission_product_waste` | What burning fuel leaves, the reprocessing plant's byproduct: only the isotope separator takes it ([RTG.md](RTG.md)), and a recipe would make waste out of nothing |
+| `strontium_90_capsule`, `caesium_137_capsule`, `americium_241_capsule`, `stripped_waste` | Made by the isotope separator from fission-product waste ([RTG.md](RTG.md)); a recipe would make isotopes out of nothing |
 | `rcic_turbine_pump`, `hpci_turbine_pump`, `suppression_pool_quencher` | Retired blocks kept so old worlds load (the Terry-style `rcic_twl` and `hpci_turbine` and the suppression pool steam inlet replaced them); `tools-audit-assets.py` fails any recipe that produces or uses them |
 
 ## Depleted uranium as a fuel (blanket)
@@ -294,7 +295,7 @@ thorium fuel, and returning its U-233 as an uranium item would mislabel it). It 
 |---|---|---|---|
 | Plutonium | `bwr:plutonium_nugget` (nine make a `bwr:plutonium_ingot`, crafted both ways) | a ninth of an ingot | The plutonium left in the assembly, bred or the MOX's own that survived. Tags `c:nuggets/plutonium`, `c:ingots/plutonium`. The fabricator's MOX route takes it. |
 | Recovered uranium | `bwr:depleted_uranium` | an ingot | The uranium that is left, whatever its enrichment (see below). |
-| Fission products | `bwr:fission_product_waste` | a ninth of an ingot | The heavy metal that was fissioned. Nothing uses it and nothing crafts it (it is in `tools-audit-recipes.py`'s exception list with that reason). |
+| Fission products | `bwr:fission_product_waste` | a ninth of an ingot | The heavy metal that was fissioned. Nothing crafts it (it is in `tools-audit-recipes.py`'s exception list with that reason); the **isotope separator** ([RTG.md](RTG.md)) takes strontium-90, caesium-137 and americium-241 out of it, for the RTG. |
 
 **Plutonium is counted in nuggets, not ingots,** because a spent assembly holds a fraction of one nugget of it (about
 a quarter at 45 GWd/t). The plant keeps every product as a fraction in the block (a fixed-point count of grains, a
@@ -429,7 +430,7 @@ metal inventory or fuel burnup.
 | Boron carbide absorber | Fixed neutron absorption |
 | Hafnium absorber | A second fixed absorber option |
 | Californium-252 source | Adds a small startup neutron source |
-| Americium-beryllium source | Adds a weaker startup neutron source |
+| Americium-beryllium source | Adds a weaker startup neutron source. Crafted from an irradiation casing and an echo shard (the original stand-in), or from a casing and an **Am-241 capsule** ([RTG.md](RTG.md)) |
 | Antimony-beryllium source | Builds up source strength while irradiated |
 | Cobalt target | Produces one sealed cobalt-60 sample |
 | Tritium target | Produces 1,250 sealed tritium samples per completed rod; experimental BWR option |

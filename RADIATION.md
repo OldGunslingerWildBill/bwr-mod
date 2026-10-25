@@ -184,6 +184,8 @@ RadiationSources.clear(level, blockEntity);
 
 The spent fuel pool's racks (a provider, `PoolRadiation`) and an assembly on the refuelling bridge's grapple (a point source) are registered this way, behind the water over them: see [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#water-depth-and-dose).
 
+ Carried isotope capsules (`CarriedIsotopes`) and the RTG block (`RtgBlockEntity`) are sources added this way: see [RTG.md](RTG.md).
+
 `DoseModel.INVENTORY_GAMMA_WATTS` (9.4 MW) is the scale of a whole core inventory a day after shutdown. A provider that
 throws is skipped and logged once. Sources beyond 256 m read zero. Both instruments and the CC `other` term pick sources up
 with no further work.

@@ -145,6 +145,8 @@ public final class AcceptanceTests {
             FeedwaterPumpTest.class,
             dev.bwr.core.eccs.PipedTurbineTest.class,
             dev.bwr.core.radiation.DoseModelTest.class,
+            dev.bwr.core.isotope.RadioisotopePowerTest.class,
+            dev.bwr.core.isotope.IsotopeExtractionTest.class,
     };
 
     public static final Class<?>[] LONG_TEST_CLASSES = {LoadFollowingLongTest.class};
