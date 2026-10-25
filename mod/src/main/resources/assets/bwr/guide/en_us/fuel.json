@@ -11,33 +11,19 @@
   ],
   "pages": [
     {
-      "title": "Uranium ore",
+      "title": "Uranium and thorium ore",
       "text": [
-        "The mod has its own uranium: Uranium Ore and Deepslate Uranium Ore, mined with an iron pickaxe or better. They drop raw uranium. Smelt or blast raw uranium or the ore into an ingot. Mekanism's uranium works the same way.",
+        "Uranium Ore and Thorium Ore (iron pickaxe) drop raw metal to smelt; Monazite Sand (any shovel, in beaches and rivers) drops raw thorium. Veins are long ribbons found by digging: uranium is richest in deserts, thorium in granite mountains and rarer. Mining also gives lead, rare earths, radium and more. Only new chunks have ore. Mekanism's uranium works the same.",
         "",
-        "Veins are long ribbons of altered rock, found by digging and in caves, never lying on the ground. They are richest in deserts and badlands, then highlands and savanna. Plains and forests have few, and oceans and rivers almost none. Only newly generated chunks have ore, so an old world gets it only in ground you have not explored yet."
+        "Thorium is fertile, not fissile, so its fuel needs a fissile driver. In the fabricator, step past MOX to Th 2, 3 or 5 %: thorium, natural uranium (enriched to 19.75 % inside) and 4 steel."
       ],
       "icons": [
         "bwr:uranium_ore",
-        "bwr:deepslate_uranium_ore",
-        "bwr:raw_uranium",
-        "bwr:uranium_ingot"
-      ]
-    },
-    {
-      "title": "Thorium",
-      "text": [
-        "Thorium Ore (iron pickaxe) and Monazite Sand (any shovel, in beaches and rivers) drop raw thorium; smelt it to an ingot. Veins are rarer than uranium's, richest in granite mountains. Mining also gives rare earth concentrate (with an iron ingot, a flint and steel), bone meal and sometimes uranium.",
-        "",
-        "Thorium is fertile, not fissile, so fuel needs a fissile driver. In the fabricator, step past MOX to Th 2, 3 or 5 %: thorium, natural uranium (enriched to 19.75 % inside) and 4 steel. 3 %: 4 thorium, 26 uranium."
-      ],
-      "icons": [
         "bwr:thorium_ore",
         "bwr:monazite_sand",
+        "bwr:raw_uranium",
         "bwr:raw_thorium",
-        "bwr:thorium_ingot",
-        "bwr:rare_earth_concentrate",
-        "bwr:fuel_fabricator"
+        "bwr:radium"
       ]
     },
     {
