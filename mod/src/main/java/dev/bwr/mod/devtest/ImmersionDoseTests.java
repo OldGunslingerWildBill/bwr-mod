@@ -80,7 +80,7 @@ public final class ImmersionDoseTests {
     // The pool
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 300)
     public static void aDiverNearFreshFuelIsHurtAndASwimmerAtTheSurfaceIsNot(GameTestHelper h) {
         Pool pool = new Pool(h, 0, 4);
         ServerLevel level = h.getLevel();
@@ -131,7 +131,7 @@ public final class ImmersionDoseTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 300)
     public static void theHarmFollowsTheDoseRateThroughTheModsThresholdsAndAMeterIsNotCountedTwice(GameTestHelper h) {
         Pool pool = new Pool(h, 1, 1);
         ServerLevel level = h.getLevel();
@@ -179,7 +179,7 @@ public final class ImmersionDoseTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 300)
     public static void creativeAndSpectatorPlayersAreExemptAndNobodyOutsideTheWaterIsSampled(GameTestHelper h) {
         Pool pool = new Pool(h, 2, 4);
         ServerLevel level = h.getLevel();
@@ -208,7 +208,7 @@ public final class ImmersionDoseTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 300)
     public static void readingsAboveTheWaterAreExactlyWhatTheyAlwaysWere(GameTestHelper h) {
         Pool pool = new Pool(h, 3, 4);
         ServerLevel level = h.getLevel();
@@ -233,7 +233,7 @@ public final class ImmersionDoseTests {
     // The flooded well
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 4000)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 4000)
     public static void aDiverInAFloodedWellOverAnOpenVesselIsHurtAndOneAtTheSurfaceIsNot(GameTestHelper h) throws Exception {
         CavitySealTests.Site s = new CavitySealTests.Site(h.getLevel(), new BlockPos(72000, 190, 72000), 5, 5, 8);
         ServerLevel level = h.getLevel();

@@ -116,7 +116,7 @@ public final class NewFuelElevatorTests {
     // Lowering
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 300)
     public static void aFreshAssemblyIsLoweredDownTheGuideIntoTheFirstFreeCellUnderWater(GameTestHelper h) {
         Site s = new Site(h, 0, 2, 7.0);
         try {
@@ -154,7 +154,7 @@ public final class NewFuelElevatorTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 900)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 900)
     public static void aTripRunsOnTheBlockSchedulerWithOnlyItsTwoMomentsScheduled(GameTestHelper h) {
         Site s = new Site(h, 1, 2, 7.0);
         var state = s.level.getBlockState(s.rim);
@@ -185,7 +185,7 @@ public final class NewFuelElevatorTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 200)
     public static void aRightClickLoadsTheHatchAndShowsTheReasonWhenItRefuses(GameTestHelper h) {
         Site s = new Site(h, 2, 1, 7.0);
         try {
@@ -219,7 +219,7 @@ public final class NewFuelElevatorTests {
     // Refusals
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 200)
     public static void itRefusesWhenTheRacksAreFullCountingWhatIsAlreadyWaiting(GameTestHelper h) {
         Site s = new Site(h, 3, 1, 7.0);
         try {
@@ -244,7 +244,7 @@ public final class NewFuelElevatorTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 200)
     public static void itRefusesWhenTheWaterIsTooLowForTheHoistAndAcceptsOnceItIsDeepEnough(GameTestHelper h) {
         Site s = new Site(h, 4, 2, 6.4);
         try {
@@ -265,7 +265,7 @@ public final class NewFuelElevatorTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 200)
     public static void itRefusesWhenItIsNotOnTheRimOfAFormedPool(GameTestHelper h) {
         Site s = new Site(h, 5, 2, 7.0);
         BlockPos corner = s.pool.min.offset(8, 8, 8);
@@ -312,7 +312,7 @@ public final class NewFuelElevatorTests {
     // Hopper and handler
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 400)
     public static void aHopperFeedsTheHatchAndTheHandlerTakesOneAtATime(GameTestHelper h) {
         Site s = new Site(h, 6, 2, 7.0);
         BlockPos hopperAt = s.rim.above();
@@ -350,7 +350,7 @@ public final class NewFuelElevatorTests {
     // Raising and the dose
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 300)
     public static void anAssemblyIsRaisedToTheHatchOnCommandAndOnlyThenTakenOutOfItsCell(GameTestHelper h) {
         Site s = new Site(h, 7, 2, 7.0);
         try {
@@ -385,7 +385,7 @@ public final class NewFuelElevatorTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 300)
     public static void aHotAssemblyOutOfTheWaterIsARadiationSourceAndUnderItIsNot(GameTestHelper h) {
         Site s = new Site(h, 8, 2, 7.0);
         try {
@@ -431,7 +431,7 @@ public final class NewFuelElevatorTests {
     // Saves and the old paths
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 300)
     public static void aTripSurvivesASaveAndReloadAndAnOldElevatorLoadsEmpty(GameTestHelper h) {
         Site s = new Site(h, 9, 2, 7.0);
         try {
@@ -463,7 +463,7 @@ public final class NewFuelElevatorTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 200)
     public static void theExistingRackAndControllerPathsStillWork(GameTestHelper h) {
         Site s = new Site(h, 10, 2, 7.0);
         try {
@@ -496,7 +496,7 @@ public final class NewFuelElevatorTests {
     }
 
     /** The computer face of the elevator, when CC:Tweaked is present. */
-    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwrpool", batch = "bwrelevator", timeoutTicks = 300)
     public static void theComputerFaceOfTheElevatorReadsAndRaises(GameTestHelper h) throws Exception {
         if (!net.neoforged.fml.ModList.get().isLoaded("computercraft")) {
             System.out.println("NEW FUEL ELEVATOR CC: skipped, CC:Tweaked is not loaded");
