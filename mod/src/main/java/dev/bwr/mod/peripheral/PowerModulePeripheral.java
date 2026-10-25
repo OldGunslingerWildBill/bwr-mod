@@ -42,7 +42,7 @@ public final class PowerModulePeripheral implements IPeripheral {
             if(!module.block().generator()){m.put("rotorTempC",module.rotorC);m.put("rotorBow",module.bow());}
         }
         if(module.block().generator()){
-            m.put("turningGear",module.turningGear());m.put("turningGearRolling",a.gearRolling);m.put("turningGearFE",module.gearFe());
+            m.put("turningGear",module.turningGear());m.put("turningGearRolling",a.gearRolling);m.put("turningGearPowered",a.gearFed);
             if(a.genGoverned){
                 m.put("windingTempC",module.windingC);m.put("statorFlow",a.statorFlow);m.put("h2PressurePsig",a.h2Psig);m.put("coolantTempC",a.coolantC);
                 m.put("windingAlarm",a.windingAlarm);m.put("h2Alarm",a.h2Alarm);

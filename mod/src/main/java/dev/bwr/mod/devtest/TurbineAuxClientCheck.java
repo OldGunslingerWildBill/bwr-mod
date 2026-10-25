@@ -54,7 +54,6 @@ public final class TurbineAuxClientCheck {
         tank.acEnergy.receiveEnergy(100_000, false);
         tank.dcEnergy.receiveEnergy(1_000_000, false);
         skid.acEnergy.receiveEnergy(100_000, false);
-        gen.gearEnergy.receiveEnergy(200_000, false);
         for (var s : new TurbineAuxBlockEntity[] {tank, skid}) s.coldInlet().fill(ThermalWater.atTemperature(30, 13), IFluidHandler.FluidAction.EXECUTE);
         if (stage < 9) {
             gen.rpm = 1500;

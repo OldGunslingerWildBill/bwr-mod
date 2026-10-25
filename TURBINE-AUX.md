@@ -58,8 +58,8 @@ delivered flow over the need, 0 to 1.
 
 The turning gear is a motor-and-gear on the generator: **a switch** on the generator's screen (button **Turning gear**), the signal
 and command `turning_gear` (a panel switch through the Networking Wrench, or `setTurningGear` over CC). It draws 1,119 FE/t (15 kW)
-while it rolls the shaft, from its own supply on the generator's **left wall** (the mirror of the copper terminal, 200,000 FE buffer;
-the terminal is the output).
+while it rolls the shaft. The motor is on the **AC bus of the Main Oil Tank** (the same FE input as the AC oil pump, side and bottom
+faces), so the generator keeps its one FE face, the copper terminal. With nothing on the bus the gear does not turn.
 
 - It **rolls the shaft at 3 rpm** and never lets a shaft at or under its overrun speed stop. **It cannot be engaged above 10 rpm** (the
   switch refuses and says why). Above 10 rpm, with steam on, the clutch overruns: it neither turns the shaft nor draws power, and the
@@ -99,13 +99,13 @@ Damage goes into the generator's shaft damage, so a destroyed winding fails the 
 - **Skid screens** show their own pumps, buses, inventories and cooling water, with the pump switches.
 - **Signals** (panels, gauges, annunciators, through the Networking Wrench; see [SIGNALS.md](SIGNALS.md)): on every power module
   `oil_pressure`, `oil_temp`, `oil_level`, `oil_film`, `bearing_temp`, `vibration`, `rotor_temp`, `rotor_bow`, `turning_gear`,
-  `turning_gear_rolling`, `turning_gear_fe`, `winding_temp`, `stator_flow`, `h2_pressure`, `coolant_temp` and the alarms
+  `turning_gear_rolling`, `winding_temp`, `stator_flow`, `h2_pressure`, `coolant_temp` and the alarms
   `oil_pressure_alarm`, `oil_level_alarm`, `oil_temp_alarm`, `bearing_alarm`, `vibration_alarm`, `winding_alarm`, `h2_alarm`
   (a system the train does not have reads "no signal"); the command `turning_gear`. On the skids their switches (`ac_pump`,
   `dc_pump`, `stator_pumps`) and readings. A new quantity, **VIBRATION** (mm/s), is appended for gauges; the rest use PRESSURE,
   TEMPERATURE, LEVEL, PERCENT and BOOLEAN.
 - **ComputerCraft:** `bwr_generator`, `bwr_hp_turbine` and `bwr_lp_turbine` `getStatus()` carry the same readings as `oilPressurePsig`,
-  `bearingTempC`, `rotorBow`, `windingTempC` ... and `setTurningGear(bool)` / `getTurningGear()` (the generator; engaging above 10 rpm
+  `bearingTempC`, `rotorBow`, `windingTempC`, `turningGearPowered` ... and `setTurningGear(bool)` / `getTurningGear()` (the generator; engaging above 10 rpm
   raises an error). The skids are `bwr_main_oil_tank` (`setAcPump`, `setDcPump`), `bwr_shaft_oil_pump` and
   `bwr_generator_cooling_skid` (`setStatorPumps`), each with `getStatus()`.
 
@@ -125,7 +125,7 @@ The rule is per system, and the simplest fair one: **a train runs as it always d
 
 ## Saves
 
-Every new key is written only when it is not its default: `AuxLinks`, `AuxRequired`, `TurningGear`, `GearFe`, `Bow`, `BearingC`,
+Every new key is written only when it is not its default: `AuxLinks`, `AuxRequired`, `TurningGear`, `Bow`, `BearingC`,
 `RotorC`, `WindingC` on a power module; `Host`, `AcOn`, `DcOn`, `StatorOn`, `AcFe`, `DcFe`, `OilL`, `OilC`, `H2Kg`, `CoolantC`,
 `StatorFlow` and the two cooling-water tanks on a skid. A skid or link in an unloaded chunk is kept, never loaded to look at.
 

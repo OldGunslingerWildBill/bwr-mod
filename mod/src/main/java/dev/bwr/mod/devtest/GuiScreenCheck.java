@@ -938,7 +938,6 @@ public final class GuiScreenCheck {
         m.shaftPump = true;
         m.gearOn = alarms;
         m.gearFed = true;
-        m.gearFe = 150_000;
         m.oilPsig = alarms ? 9.5 : 25.0;
         m.oilC = alarms ? 71.0 : 49.5;
         m.oilLevel = alarms ? 0.22 : 0.68;

@@ -132,7 +132,6 @@ final class PlantSignals {
             .number("rotor_bow", "Rotor bow", "fraction", 0, 1, be -> be.aux().bowGoverned && !be.block().generator() ? be.bow() : Double.NaN)
             .boolOrNone("turning_gear", "Turning gear engaged", be -> be.block().generator() ? (be.turningGear() ? 1 : 0) : Double.NaN)
             .boolOrNone("turning_gear_rolling", "Turning gear rolling the shaft", be -> be.block().generator() ? (be.aux().gearRolling ? 1 : 0) : Double.NaN)
-            .number("turning_gear_fe", "Turning gear supply", "FE", 0, TurbineAuxTrain.GEAR_CAPACITY_FE, be -> be.block().generator() ? be.gearFe() : Double.NaN)
             .number("winding_temp", "Generator winding temperature", "degC", 0, 250, be -> be.block().generator() && be.aux().genGoverned ? be.windingC : Double.NaN)
             .number("stator_flow", "Stator water flow", "fraction", 0, 1, be -> be.block().generator() && be.aux().genGoverned ? be.aux().statorFlow : Double.NaN)
             .number("h2_pressure", "Hydrogen pressure", "psig", 0, 40, be -> be.block().generator() && be.aux().genGoverned ? be.aux().h2Psig : Double.NaN)

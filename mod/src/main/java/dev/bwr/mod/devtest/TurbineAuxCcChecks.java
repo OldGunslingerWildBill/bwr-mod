@@ -17,7 +17,7 @@ final class TurbineAuxCcChecks {
         h.assertTrue(gen != null && gen.getType().equals("bwr_generator"), "the generator has a peripheral");
         var status = (Map<?, ?>) PeripheralTestCalls.call(gen, "getStatus")[0];
         for (String key : new String[] {"auxGoverned", "oilPressurePsig", "oilTempC", "oilLevel", "oilFilm", "bearingTempC", "oilPressureAlarm", "oilLevelAlarm",
-                "oilTempAlarm", "bearingAlarm", "vibrationMmPerS", "vibrationAlarm", "turningGear", "turningGearRolling", "turningGearFE", "windingTempC",
+                "oilTempAlarm", "bearingAlarm", "vibrationMmPerS", "vibrationAlarm", "turningGear", "turningGearRolling", "turningGearPowered", "windingTempC",
                 "statorFlow", "h2PressurePsig", "coolantTempC", "windingAlarm", "h2Alarm"}) {
             h.assertTrue(status.containsKey(key), "the generator status lacks " + key + ": " + status.keySet());
         }

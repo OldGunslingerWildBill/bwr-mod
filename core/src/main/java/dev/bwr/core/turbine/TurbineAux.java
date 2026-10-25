@@ -53,7 +53,7 @@ public final class TurbineAux {
     }
 
     public static final double BEARING_TAU_S = 90, BEARING_RISE_RATED_K = 28;
-    public static final double BEARING_ALARM_C = 100, BEARING_DAMAGE_C = 115;
+    public static final double BEARING_DAMAGE_C = 115;
 
     /** The temperature a bearing settles at: oil temperature plus the friction rise, which a missing film multiplies. */
     public static double bearingTargetC(double film, double oilC, double rpm) {
@@ -79,7 +79,6 @@ public final class TurbineAux {
     }
 
     public static final double OIL_KJ_PER_KG_K = 2.0, OIL_KG_PER_L = 0.87, OIL_AMBIENT_KW_PER_K = 15;
-    public static final double OIL_ALARM_C = 65, OIL_LEVEL_ALARM = 0.30, OIL_PRESSURE_ALARM_PSIG = 15;
     public static final double OIL_COOLER_UA_KW_PER_K = 150, OIL_COOLER_WATER_KG_PER_S = 20;
 
     /** The oil's new temperature after dt seconds of bearing heat, cooler duty and loss to the hall. A floor of 1,000 L of thermal mass. */
@@ -119,7 +118,8 @@ public final class TurbineAux {
     public static final double STANDSTILL_RPM = 1;
     public static final double ROTOR_HEAT_TAU_S = 300, ROTOR_COOL_TAU_S = 14_400;
     public static final double BOW_HOT_C = 120, BOW_FULL_S = 900, BOW_RECOVER_S = 1800;
-    public static final double VIBRATION_ALARM_MM_S = 7.1;
+    /** Vibration velocity above which a section starts to take damage, mm/s. */
+    public static final double VIBRATION_DAMAGE_MM_S = 7.1;
 
     /** The speed the gear leaves the shaft at: it takes a shaft at or below its overrun speed down to its roll speed and never lets it stop. */
     public static double gearSpeed(double rpm) {
@@ -156,20 +156,20 @@ public final class TurbineAux {
         return 1.5 * Math.min(1.5, s) + 14 * Math.max(0, Math.min(1, bow)) * band * turning;
     }
 
-    /** Damage vibration adds in dt seconds: nothing under the alarm level, 0.6 %/s for every 7 mm/s over it. */
+    /** Damage vibration adds in dt seconds: nothing under its onset level, 0.6 %/s for every 7 mm/s over it. */
     public static double vibrationDamage(double mmPerS, double dt) {
-        return 0.006 * Math.max(0, mmPerS - VIBRATION_ALARM_MM_S) / 7 * dt;
+        return 0.006 * Math.max(0, mmPerS - VIBRATION_DAMAGE_MM_S) / 7 * dt;
     }
 
     // ------------------------------------------------- generator winding and cooling
 
-    public static final double WINDING_LIMIT_C = 130, WINDING_ALARM_C = 120;
+    public static final double WINDING_LIMIT_C = 130;
     public static final double WINDING_LOSS_RATED_KW = 22_000, FIELD_LOSS_RATED_KW = 1_500;
     public static final double WINDING_KJ_PER_K = 33_000, COOLANT_KJ_PER_K = 80_000;
     public static final double WINDING_UA_FULL_KW_PER_K = 340, WINDING_UA_NATURAL_KW_PER_K = 40;
     public static final double GEN_COOLER_UA_KW_PER_K = 800, GEN_COOLER_WATER_KG_PER_S = 500;
     public static final double STATOR_FLOW_TAU_S = 3;
-    public static final double H2_FULL_KG = 20, H2_FULL_PSIG = 30, H2_ALARM_PSIG = 20, H2_CYLINDER_KG = 5;
+    public static final double H2_FULL_KG = 20, H2_FULL_PSIG = 30, H2_CYLINDER_KG = 5;
     public static final double H2_LEAK_KG_PER_S = 0.1 / 60;
 
     /** First-order approach of a fraction (the stator water flow) to its target. */

@@ -26,8 +26,10 @@ public final class TurbineAuxTrain {
     private TurbineAuxTrain() {}
 
     public static final double DT = 0.05;
+    /** The readings that raise an alarm flag. They are facts for a panel or a program; nothing acts on them. */
+    public static final double ALARM_BEARING_C = 100, ALARM_OIL_C = 65, ALARM_OIL_LEVEL = 0.30, ALARM_OIL_PSIG = 15, ALARM_VIBRATION_MM_S = 7.1,
+            ALARM_WINDING_C = 120, ALARM_H2_PSIG = 20;
     public static final int GEAR_FE_PER_TICK = EccsPower.fePerTickFromWatts(TurbineAux.GEAR_MOTOR_W);
-    public static final int GEAR_CAPACITY_FE = 200_000;
 
     /** What a section reports about the train's auxiliaries; written every tick by {@link #step}. All zero and ungoverned for a legacy train. */
     public static final class Readout {
@@ -35,12 +37,12 @@ public final class TurbineAuxTrain {
         public boolean oilTank, shaftPump, acRunning, dcRunning;
         public double oilPsig, oilFilm, oilC = Double.NaN, oilLevel = Double.NaN, pumpFlow;
         public double vibration;
-        public boolean gearOn, gearRolling;
+        public boolean gearOn, gearRolling, gearFed;
         public boolean coolingSkid, statorRunning;
         public double statorFlow, h2Psig = Double.NaN, coolantC = Double.NaN;
         public boolean oilPressureAlarm, oilLevelAlarm, oilTempAlarm, bearingAlarm, vibrationAlarm, windingAlarm, h2Alarm;
         void clear() {
-            lubeGoverned = bowGoverned = genGoverned = oilTank = shaftPump = acRunning = dcRunning = gearOn = gearRolling = coolingSkid = statorRunning = false;
+            lubeGoverned = bowGoverned = genGoverned = oilTank = shaftPump = acRunning = dcRunning = gearOn = gearRolling = gearFed = coolingSkid = statorRunning = false;
             oilPsig = oilFilm = pumpFlow = vibration = statorFlow = 0;
             oilC = oilLevel = h2Psig = coolantC = Double.NaN;
             oilPressureAlarm = oilLevelAlarm = oilTempAlarm = bearingAlarm = vibrationAlarm = windingAlarm = h2Alarm = false;
@@ -82,9 +84,17 @@ public final class TurbineAuxTrain {
         }
 
         // The turning gear: engaged and fed, on a shaft at or under its overrun speed, it rolls the train at its own speed.
-        boolean rolling = false;
+        // Its motor is on the AC bus of the Main Oil Tank, with the AC oil pump.
+        boolean rolling = false, gearFed = false;
         for (var g : train) {
-            if (g.block().generator() && g.turningGear() && rpm <= TurbineAux.GEAR_MAX_RPM && g.drawGear()) rolling = true;
+            if (!g.block().generator() || !g.turningGear()) continue;
+            boolean fed = false;
+            for (var t : lube) if (!fed && t.acFe() >= GEAR_FE_PER_TICK) fed = true;
+            gearFed |= fed;
+            if (fed && rpm <= TurbineAux.GEAR_MAX_RPM) {
+                for (var t : lube) if (t.drawAc(GEAR_FE_PER_TICK)) break;
+                rolling = true;
+            }
         }
         if (rolling) {
             rpm = TurbineAux.gearSpeed(rpm);
@@ -97,6 +107,7 @@ public final class TurbineAuxTrain {
         r.genGoverned = genGov;
         r.gearOn = gearOn;
         r.gearRolling = rolling;
+        r.gearFed = gearFed;
         double bearingFilm = 1;
 
         if (lubeGov) {
@@ -133,9 +144,9 @@ public final class TurbineAuxTrain {
             r.oilFilm = bearingFilm;
             r.oilC = lube.isEmpty() ? TurbineAux.AMBIENT_C : oilSum / lube.size();
             r.oilLevel = lube.isEmpty() ? Double.NaN : minLevel;
-            r.oilPressureAlarm = rpm >= TurbineAux.STANDSTILL_RPM && psig < TurbineAux.OIL_PRESSURE_ALARM_PSIG;
-            r.oilLevelAlarm = lube.isEmpty() || minLevel < TurbineAux.OIL_LEVEL_ALARM;
-            r.oilTempAlarm = r.oilC > TurbineAux.OIL_ALARM_C;
+            r.oilPressureAlarm = rpm >= TurbineAux.STANDSTILL_RPM && psig < ALARM_OIL_PSIG;
+            r.oilLevelAlarm = lube.isEmpty() || minLevel < ALARM_OIL_LEVEL;
+            r.oilTempAlarm = r.oilC > ALARM_OIL_C;
         }
 
         double maxVibration = 0;
@@ -158,8 +169,8 @@ public final class TurbineAuxTrain {
         }
         for (var m : active) if (m.block().generator()) m.vibration = bowGov ? maxVibration : 0;
         r.vibration = maxVibration;
-        r.vibrationAlarm = maxVibration > TurbineAux.VIBRATION_ALARM_MM_S;
-        for (var m : active) r.bearingAlarm |= lubeGov && m.bearingC > TurbineAux.BEARING_ALARM_C;
+        r.vibrationAlarm = maxVibration > ALARM_VIBRATION_MM_S;
+        for (var m : active) r.bearingAlarm |= lubeGov && m.bearingC > ALARM_BEARING_C;
 
         // Per generator: its winding, and the skids set against it.
         for (var m : active) {
@@ -194,15 +205,15 @@ public final class TurbineAuxTrain {
         out.statorFlow = flow;
         out.h2Psig = skids.isEmpty() ? 0 : h2;
         out.coolantC = coolant;
-        out.windingAlarm = g.windingC > TurbineAux.WINDING_ALARM_C;
-        out.h2Alarm = skids.isEmpty() || h2 < TurbineAux.H2_ALARM_PSIG;
+        out.windingAlarm = g.windingC > ALARM_WINDING_C;
+        out.h2Alarm = skids.isEmpty() || h2 < ALARM_H2_PSIG;
     }
 
     private static void copy(Readout a, Readout b) {
         b.lubeGoverned = a.lubeGoverned; b.bowGoverned = a.bowGoverned; b.genGoverned = a.genGoverned;
         b.oilTank = a.oilTank; b.shaftPump = a.shaftPump; b.acRunning = a.acRunning; b.dcRunning = a.dcRunning;
         b.oilPsig = a.oilPsig; b.oilFilm = a.oilFilm; b.oilC = a.oilC; b.oilLevel = a.oilLevel; b.pumpFlow = a.pumpFlow;
-        b.vibration = a.vibration; b.gearOn = a.gearOn; b.gearRolling = a.gearRolling;
+        b.vibration = a.vibration; b.gearOn = a.gearOn; b.gearRolling = a.gearRolling; b.gearFed = a.gearFed;
         b.oilPressureAlarm = a.oilPressureAlarm; b.oilLevelAlarm = a.oilLevelAlarm; b.oilTempAlarm = a.oilTempAlarm;
         b.bearingAlarm = a.bearingAlarm; b.vibrationAlarm = a.vibrationAlarm;
     }

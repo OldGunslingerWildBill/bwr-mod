@@ -639,7 +639,6 @@ Block entity `PowerModuleBlockEntity`; CC peripheral `bwr_hp_turbine / bwr_lp_tu
 | `rotor_bow` | Rotor bow (turbine sections) | fraction | 0 to 1 | NUMBER |
 | `turning_gear` | Turning gear engaged (generator) |  | 0 to 1 | BOOLEAN |
 | `turning_gear_rolling` | Turning gear rolling the shaft (generator) |  | 0 to 1 | BOOLEAN |
-| `turning_gear_fe` | Turning gear supply (generator) | FE | 0 to 200000 | NUMBER |
 | `winding_temp` | Generator winding temperature | degC | 0 to 250 | NUMBER |
 | `stator_flow` | Stator water flow | fraction | 0 to 1 | NUMBER |
 | `h2_pressure` | Hydrogen pressure | psig | 0 to 40 | NUMBER |

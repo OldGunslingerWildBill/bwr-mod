@@ -18,7 +18,7 @@ public class PowerModuleMenu extends BwrMenu {
     public int hpCount,lpCount,generatorCount;
     /** The turbine auxiliaries (TURBINE-AUX.md): which systems this section's train is governed by, and their readings. */
     public boolean lubeGov,bowGov,genGov,oilTank,shaftPump,gearOn,gearRolling,gearFed;
-    public double oilPsig,oilC,oilLevel,oilFilm,bearingC,vibration,bow,rotorC,windingC,statorFlow,h2Psig,coolantC,gearFe;
+    public double oilPsig,oilC,oilLevel,oilFilm,bearingC,vibration,bow,rotorC,windingC,statorFlow,h2Psig,coolantC;
     public int alarms;
     public String status="Waiting for server";
     public PowerModuleMenu(int id,Inventory inv,RegistryFriendlyByteBuf b){this(id,inv,b.readBlockPos(),b.readBlockPos());}
@@ -40,7 +40,7 @@ public class PowerModuleMenu extends BwrMenu {
         inletC=m.inletC;outletC=m.outletC;water=m.waterStored();energy=m.energyStored();hpCount=m.hpCount;lpCount=m.lpCount;generatorCount=m.generatorCount;status=m.status;
         var a=m.aux();
         lubeGov=a.lubeGoverned;bowGov=a.bowGoverned;genGov=a.genGoverned;oilTank=a.oilTank;shaftPump=a.shaftPump;gearOn=m.turningGear();gearRolling=a.gearRolling;
-        gearFe=m.gearFe();gearFed=gearFe>=dev.bwr.mod.power.TurbineAuxTrain.GEAR_FE_PER_TICK;
+        gearFed=a.gearFed;
         oilPsig=a.oilPsig;oilC=a.oilC;oilLevel=a.oilLevel;oilFilm=a.oilFilm;bearingC=m.bearingC;vibration=m.vibration;bow=m.bow();rotorC=m.rotorC;
         windingC=m.windingC;statorFlow=a.statorFlow;h2Psig=a.h2Psig;coolantC=a.coolantC;
         alarms=(a.oilPressureAlarm?1:0)|(a.oilLevelAlarm?2:0)|(a.oilTempAlarm?4:0)|(a.bearingAlarm?8:0)|(a.vibrationAlarm?16:0)|(a.windingAlarm?32:0)|(a.h2Alarm?64:0);
@@ -52,7 +52,7 @@ public class PowerModuleMenu extends BwrMenu {
         b.writeInt(hpCount);b.writeInt(lpCount);b.writeInt(generatorCount);b.writeUtf(status);
         b.writeInt(alarms);
         for(boolean v:new boolean[]{lubeGov,bowGov,genGov,oilTank,shaftPump,gearOn,gearRolling,gearFed})b.writeBoolean(v);
-        for(double v:new double[]{oilPsig,oilC,oilLevel,oilFilm,bearingC,vibration,bow,rotorC,windingC,statorFlow,h2Psig,coolantC,gearFe})b.writeDouble(v);
+        for(double v:new double[]{oilPsig,oilC,oilLevel,oilFilm,bearingC,vibration,bow,rotorC,windingC,statorFlow,h2Psig,coolantC})b.writeDouble(v);
     }
     @Override protected void readSnapshot(FriendlyByteBuf b){
         present=b.readBoolean();if(!present)return;running=b.readBoolean();generator=b.readBoolean();hp=b.readBoolean();
@@ -61,7 +61,7 @@ public class PowerModuleMenu extends BwrMenu {
         alarms=b.readInt();
         lubeGov=b.readBoolean();bowGov=b.readBoolean();genGov=b.readBoolean();oilTank=b.readBoolean();shaftPump=b.readBoolean();gearOn=b.readBoolean();gearRolling=b.readBoolean();gearFed=b.readBoolean();
         oilPsig=b.readDouble();oilC=b.readDouble();oilLevel=b.readDouble();oilFilm=b.readDouble();bearingC=b.readDouble();vibration=b.readDouble();bow=b.readDouble();rotorC=b.readDouble();
-        windingC=b.readDouble();statorFlow=b.readDouble();h2Psig=b.readDouble();coolantC=b.readDouble();gearFe=b.readDouble();
+        windingC=b.readDouble();statorFlow=b.readDouble();h2Psig=b.readDouble();coolantC=b.readDouble();
     }
     @Override public void handleCommand(ServerPlayer sender,int command,int a,int unused){
         // Turbine sections have no local steam actuator; use the upstream steam valve. The generator's turning gear is the one switch here.

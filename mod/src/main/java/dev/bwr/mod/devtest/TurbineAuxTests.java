@@ -220,7 +220,7 @@ public final class TurbineAuxTests {
             f.gen.rpm = 1500;
             f.tick(f.gen, 2400);
             var a = f.gen.aux();
-            h.assertTrue(f.gen.damage() == 0 && f.gen.bearingC < TurbineAux.BEARING_ALARM_C && !a.bearingAlarm && !a.oilPressureAlarm && !a.oilLevelAlarm && !a.oilTempAlarm,
+            h.assertTrue(f.gen.damage() == 0 && f.gen.bearingC < TurbineAuxTrain.ALARM_BEARING_C && !a.bearingAlarm && !a.oilPressureAlarm && !a.oilLevelAlarm && !a.oilTempAlarm,
                     "with oil the bearing is fine: " + f.gen.bearingC + " / " + f.gen.damage());
         });
     }
@@ -287,6 +287,34 @@ public final class TurbineAuxTests {
         });
     }
 
+    @GameTest(template = "empty", templateNamespace = "bwraux", timeoutTicks = 200)
+    public static void coolingWaterTravelsThroughPipesIntoTheFlangesAndOutAgain(GameTestHelper h) {
+        run(h, new BlockPos(79700, 245, 78000), f -> {
+            var a = f.tank(10_000);
+            f.shaftPump();
+            f.gen.rpm = 1500;
+            var at = a.getBlockPos();
+            var pipes = BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get();
+            // Supply pipe on the cold (left, west) flange; a pipe run from the hot (right, east) flange into a second tank's cold flange.
+            f.l.setBlock(at.west(), pipes.defaultBlockState(), 3);
+            for (int d = 1; d <= 5; d++) f.l.setBlock(at.east(d), pipes.defaultBlockState(), 3);
+            // The second tank stands clear of the generator, so only water reaches it.
+            var b = f.skid(BwrBlocks.MAIN_OIL_TANK.get(), at.east(6), Direction.NORTH);
+            for (var p : new BlockPos[] {at.west(), at.east(1), at.east(2), at.east(3), at.east(4), at.east(5)}) f.l.setBlock(p, pipes.stateWithConnections(f.l, p), 3);
+            var supply = dev.bwr.mod.water.WaterLineNetwork.inlet(f.l, at.west());
+            int in = supply.fill(ThermalWater.atTemperature(40, 13), net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+            h.assertTrue(in == 40 && a.coldKg() == 40, "a pipe delivers cooling water to the cold flange: " + in + " / " + a.coldKg());
+            f.tick(f.gen, 30);
+            h.assertTrue(a.coldKg() < 40 && b.coldKg() > 0, "the warmed water leaves the hot flange through the pipes into the next flange: " + a.coldKg() + " / " + b.coldKg());
+            h.assertTrue(b.coldC() > 13.5, "and it is warmer than it came: " + b.coldC());
+            // The wrong flanges take nothing: the hot flange does not fill, the sides have no port.
+            var east = a.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK, at, Direction.EAST);
+            var north = a.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK, at, Direction.NORTH);
+            h.assertTrue(east != null && east.fill(ThermalWater.atTemperature(10, 13), net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE) == 0 && north == null,
+                    "the hot flange takes no water and the sides have no port");
+        });
+    }
+
     // ------------------------------------------------------------------------------- turning gear, rotor bow
 
     @GameTest(template = "empty", templateNamespace = "bwraux", timeoutTicks = 200)
@@ -294,6 +322,7 @@ public final class TurbineAuxTests {
         run(h, G, f -> {
             var hp = f.addHp();
             hp.markAuxRequired();
+            var tank = f.tank(10_000);
             f.gen.rpm = 0;
             hp.rpm = 0;
             f.edit(hp, t -> t.putDouble("RotorC", 285));
@@ -303,11 +332,11 @@ public final class TurbineAuxTests {
             double bowed = hp.bow();
             h.assertTrue(f.gen.setTurningGear(true), "engaged at standstill");
             f.edit(hp, t -> { t.putDouble("Bow", 0.8); t.putDouble("RotorC", 285); });
-            f.gen.gearEnergy.receiveEnergy(200_000, false);
-            double before = f.gen.gearFe();
+            tank.acEnergy.receiveEnergy(TurbineAuxBlockEntity.AC_CAPACITY_FE, false);
+            int before = tank.acFe();
             f.tick(f.gen, 1);
-            h.assertTrue(before - f.gen.gearFe() == TurbineAuxTrain.GEAR_FE_PER_TICK, "the gear draws " + TurbineAuxTrain.GEAR_FE_PER_TICK + " FE a tick: " + (before - f.gen.gearFe()));
-            f.tick(f.gen, 6000, () -> f.gen.gearEnergy.receiveEnergy(200_000, false));
+            h.assertTrue(before - tank.acFe() == TurbineAuxTrain.GEAR_FE_PER_TICK, "the gear draws " + TurbineAuxTrain.GEAR_FE_PER_TICK + " FE a tick from the tank's AC bus: " + (before - tank.acFe()));
+            f.tick(f.gen, 6000, () -> tank.acEnergy.receiveEnergy(TurbineAuxBlockEntity.AC_CAPACITY_FE, false));
             h.assertTrue(hp.bow() < 0.8 - 0.1, "five minutes on the gear straightens it: " + hp.bow());
             h.assertTrue(f.gen.rpm > 2.9 && f.gen.rpm < 3.1 && f.gen.aux().gearRolling, "the gear rolls the shaft at 3 rpm: " + f.gen.rpm);
             h.assertTrue(bowed > 0.2, "(control) the bow without it was " + bowed);
@@ -332,7 +361,7 @@ public final class TurbineAuxTests {
                 worst = Math.max(worst, hp.vibration);
                 // The tick's coupling and loss move the speed a hair; the roll-up here is set speed by speed.
             }
-            h.assertTrue(worst > TurbineAux.VIBRATION_ALARM_MM_S, "a fully bowed rotor shakes through the critical band: " + worst + " mm/s");
+            h.assertTrue(worst > TurbineAuxTrain.ALARM_VIBRATION_MM_S, "a fully bowed rotor shakes through the critical band: " + worst + " mm/s");
             h.assertTrue(hp.damage() > 0.03, "the roll-up damaged it: " + hp.damage());
             // A straight rotor takes none.
             f.edit(hp, t -> { t.putDouble("Bow", 0.0); t.putDouble("ShaftDamage", 0.0); });
@@ -349,19 +378,22 @@ public final class TurbineAuxTests {
     @GameTest(template = "empty", templateNamespace = "bwraux", timeoutTicks = 200)
     public static void theTurningGearSwitchEngagesOnlyAtLowSpeedAndTheSignalSwitchWorks(GameTestHelper h) {
         run(h, I, f -> {
+            var tank = f.tank(1000);
             f.gen.rpm = 100;
             h.assertTrue(!f.gen.setTurningGear(true) && !f.gen.turningGear(), "refused at 100 rpm");
             f.gen.rpm = 5;
             h.assertTrue(f.gen.setTurningGear(true) && f.gen.turningGear(), "accepted at 5 rpm");
-            f.edit(f.gen, t -> t.putDouble("GearFe", 100_000));
             f.gen.rpm = 5;
             f.tick(f.gen, 2);
-            h.assertTrue(f.gen.aux().gearRolling && Math.abs(f.gen.rpm - 3) < 0.01, "the gear rolls a slow shaft at 3 rpm: " + f.gen.rpm);
+            h.assertTrue(!f.gen.aux().gearRolling && f.gen.rpm > 4.5, "with nothing on the tank's AC bus the gear does not turn the shaft: " + f.gen.rpm);
+            tank.acEnergy.receiveEnergy(100_000, false);
+            f.tick(f.gen, 2);
+            h.assertTrue(f.gen.aux().gearRolling && Math.abs(f.gen.rpm - 3) < 0.01, "fed, the gear rolls a slow shaft at 3 rpm: " + f.gen.rpm);
             // Steam spins it past the overrun speed: the gear does nothing and draws nothing.
             f.gen.rpm = 400;
-            double fe = f.gen.gearFe();
+            int fe = tank.acFe();
             f.tick(f.gen, 2);
-            h.assertTrue(!f.gen.aux().gearRolling && f.gen.gearFe() == fe && f.gen.rpm > 390, "above the overrun speed it neither turns nor draws: " + f.gen.rpm);
+            h.assertTrue(!f.gen.aux().gearRolling && tank.acFe() == fe && f.gen.rpm > 390, "above the overrun speed it neither turns nor draws: " + f.gen.rpm);
             h.assertTrue(f.gen.turningGear(), "(the switch stays where the player left it)");
             h.assertTrue(f.gen.setTurningGear(false) && !f.gen.turningGear(), "off always works");
             // Panel / wrench signal: the same switch, the same refusal.
@@ -399,7 +431,7 @@ public final class TurbineAuxTests {
             // Powered: the supply is topped up every tick.
             f.tickAux(f.gen, 9000, 1500, () -> { water.run(); skid.acEnergy.receiveEnergy(100_000, false); });
             double powered = f.gen.windingC;
-            h.assertTrue(powered < TurbineAux.WINDING_ALARM_C && f.gen.damage() == 0, "full cooling holds the winding at rated load: " + powered);
+            h.assertTrue(powered < TurbineAuxTrain.ALARM_WINDING_C && f.gen.damage() == 0, "full cooling holds the winding at rated load: " + powered);
             // Unpowered: the same load and water, the pumps switched on but with no FE.
             f.edit(skid, t -> { t.putInt("AcFe", 0); t.putDouble("StatorFlow", 1); t.putDouble("CoolantC", 46); });
             f.edit(f.gen, t -> t.putDouble("WindingC", 102));
@@ -463,7 +495,7 @@ public final class TurbineAuxTests {
             var gs = SignalProviders.of(f.gen);
             var hs = SignalProviders.of(hp);
             String[] genKeys = {"aux_governed", "oil_pressure", "oil_temp", "oil_level", "oil_film", "bearing_temp", "vibration", "turning_gear", "turning_gear_rolling",
-                    "turning_gear_fe", "winding_temp", "stator_flow", "h2_pressure", "coolant_temp", "oil_pressure_alarm", "oil_level_alarm", "oil_temp_alarm",
+                    "winding_temp", "stator_flow", "h2_pressure", "coolant_temp", "oil_pressure_alarm", "oil_level_alarm", "oil_temp_alarm",
                     "bearing_alarm", "vibration_alarm", "winding_alarm", "h2_alarm"};
             for (String k : genKeys) h.assertTrue(gs.read(k).isPresent(), "the generator reads " + k);
             h.assertTrue(gs.read("oil_pressure").getAsDouble() > 15 && gs.read("oil_level").getAsDouble() > 0.4, "oil pressure and level read");

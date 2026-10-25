@@ -212,6 +212,13 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
         setChanged();
     }
 
+    /** Takes {@code fe} off the AC bus (the turning gear motor's supply), if the bus holds that much. */
+    boolean drawAc(int fe) {
+        if (acFe < fe) return false;
+        acFe -= fe;
+        return true;
+    }
+
     // ---- FE: the AC bus (and, on the generator cooling skid, its pump supply) and the DC bus
 
     public final IEnergyStorage acEnergy = new Buffer(true);

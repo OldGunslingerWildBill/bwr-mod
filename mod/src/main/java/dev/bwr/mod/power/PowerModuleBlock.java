@@ -31,10 +31,6 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
     public Direction shaftFace(BlockState s,boolean front) { return front?s.getValue(FACING):s.getValue(FACING).getOpposite(); }
     public BlockPos terminal(BlockPos root,BlockState s) { return root.offset(TurbineAssemblyBlock.turn(new BlockPos(2,1,0),s.getValue(FACING))); }
     public Direction terminalFace(BlockState s) { return TurbineAssemblyBlock.turn(Direction.EAST,s.getValue(FACING)); }
-    /** The turning gear motor's supply: the mirror of the copper terminal, on the generator's left wall. */
-    public BlockPos gearTerminal(BlockPos root,BlockState s) { return root.offset(TurbineAssemblyBlock.turn(new BlockPos(-2,1,0),s.getValue(FACING))); }
-    public Direction gearFace(BlockState s) { return TurbineAssemblyBlock.turn(Direction.WEST,s.getValue(FACING)); }
-    public boolean gearEnergyFace(BlockPos pos,BlockState s,Direction side) { return generator() && side==gearFace(s) && pos.equals(gearTerminal(origin(pos,s),s)); }
     public boolean energyFace(BlockPos pos,BlockState s,Direction side) { return generator() && side==terminalFace(s) && pos.equals(terminal(origin(pos,s),s)); }
     @Override public BlockEntity newBlockEntity(BlockPos pos,BlockState s) { return s.getValue(CELL)==controllerCell(s)?new PowerModuleBlockEntity(pos,s):null; }
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level,BlockState s,BlockEntityType<T> type) {

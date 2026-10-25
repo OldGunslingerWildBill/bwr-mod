@@ -54,7 +54,7 @@ public final class TurbineAuxTest {
         Check.greaterThan(TurbineAux.BEARING_DAMAGE_C, noOil[0], "bearing temperature after 2 min at speed without oil");
         Check.greaterThan(0.2, noOil[1], "damage after 2 min at speed without oil");
         double[] oiled = roll(75, 1500, 1.5, 50, 600);
-        Check.lessThan(TurbineAux.BEARING_ALARM_C, oiled[0], "an oiled bearing at rated speed is under the alarm: " + oiled[0]);
+        Check.lessThan(100.0, oiled[0], "an oiled bearing at rated speed is under 100 C: " + oiled[0]);
         Check.exactly(0.0, oiled[1], "and takes no damage");
         double[] slow = roll(30, 15, 0, 50, 600);
         Check.exactly(0.0, slow[1], "a shaft barely turning needs no film to survive");
@@ -123,9 +123,9 @@ public final class TurbineAuxTest {
 
     public static void test10_aBowedRotorShakesMostThroughTheCriticalSpeedBand() {
         double clean = TurbineAux.vibrationMmPerS(0, 525), bowed = TurbineAux.vibrationMmPerS(1, 525);
-        Check.lessThan(TurbineAux.VIBRATION_ALARM_MM_S, clean, "a straight rotor in the band is quiet");
-        Check.greaterThan(TurbineAux.VIBRATION_ALARM_MM_S * 1.5, bowed, "a bowed rotor in the band");
-        Check.lessThan(TurbineAux.VIBRATION_ALARM_MM_S, TurbineAux.vibrationMmPerS(1, 1500), "a bowed rotor at rated speed is past the worst of it");
+        Check.lessThan(TurbineAux.VIBRATION_DAMAGE_MM_S, clean, "a straight rotor in the band is quiet");
+        Check.greaterThan(TurbineAux.VIBRATION_DAMAGE_MM_S * 1.5, bowed, "a bowed rotor in the band");
+        Check.lessThan(TurbineAux.VIBRATION_DAMAGE_MM_S, TurbineAux.vibrationMmPerS(1, 1500), "a bowed rotor at rated speed is past the worst of it");
         Check.exactly(0.0, TurbineAux.vibrationMmPerS(1, 0), "a stopped rotor does not vibrate");
         double damageBowed = 0, damageClean = 0;
         for (double rpm = 150; rpm < 900; rpm += 1) {
@@ -145,7 +145,7 @@ public final class TurbineAuxTest {
             w = TurbineAux.windingStepC(w, TurbineAux.windingLossKw(1, 1500), toCoolant, DT);
             c = TurbineAux.coolantStepC(c, toCoolant, TurbineAux.coolerKw(c, TurbineAux.GEN_COOLER_UA_KW_PER_K, 13, TurbineAux.GEN_COOLER_WATER_KG_PER_S), DT);
         }
-        Check.inRange(80, TurbineAux.WINDING_ALARM_C, w, "winding at rated load with full cooling");
+        Check.inRange(80, 120.0, w, "winding at rated load with full cooling");
         double[] noPumps = windingAfter(1.0, 0, 20 * 600, true);
         Check.greaterThan(TurbineAux.WINDING_LIMIT_C, noPumps[0], "winding at rated load with the stator water stopped");
         Check.greaterThan(0, noPumps[1], "damage when the stator water is stopped at rated load");

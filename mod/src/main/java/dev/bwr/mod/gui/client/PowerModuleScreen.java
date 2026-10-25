@@ -56,7 +56,7 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
                         .showIf(() -> !menu.generator));
         if (gear == null) {
             gear = dev.bwr.mod.gui.client.style.BwrButton.secondary("Turning gear",
-                    "Engage or release the turning gear. It rolls the shaft at 3 rpm to keep a hot rotor straight, draws FE on the generator's left wall, and cannot be engaged above 10 rpm. Nothing engages it for you.",
+                    "Engage or release the turning gear. It rolls the shaft at 3 rpm to keep a hot rotor straight, draws FE from the Main Oil Tank's AC bus, and cannot be engaged above 10 rpm. Nothing engages it for you.",
                     b -> menu.sendCommand(PowerModuleMenu.CMD_TURNING_GEAR, menu.gearOn ? 0 : 1));
         }
         var auxiliaries = Layout.card("Turbine auxiliaries",
@@ -69,9 +69,8 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
                 Layout.row("Shaft vibration", () -> num(menu.vibration, 1), "mm/s").showIf(() -> menu.bowGov),
                 Layout.row("Rotor temperature", () -> num(menu.rotorC, 0), "C").showIf(() -> menu.bowGov && !menu.generator),
                 Layout.row("Rotor bow", () -> pct(menu.bow), "%").showIf(() -> menu.bowGov && !menu.generator),
-                Layout.row("Turning gear", () -> menu.gearRolling ? "rolling the shaft" : menu.gearOn ? (menu.gearFed ? "engaged, shaft above 10 rpm" : "engaged, no power") : "off")
+                Layout.row("Turning gear", () -> menu.gearRolling ? "rolling the shaft" : menu.gearOn ? (menu.gearFed ? "engaged, shaft above 10 rpm" : "engaged, no power on the oil tank bus") : "off")
                         .showIf(() -> menu.generator),
-                Layout.row("Gear supply", () -> big(menu.gearFe), "FE").showIf(() -> menu.generator),
                 Layout.controls(BwrStyle.SP1).add(gear, 1).showIf(() -> menu.generator),
                 Layout.row("Winding temperature", () -> num(menu.windingC, 1), "C").showIf(() -> menu.generator && menu.genGov),
                 Layout.row("Stator water flow", () -> pct(menu.statorFlow), "%").showIf(() -> menu.generator && menu.genGov),

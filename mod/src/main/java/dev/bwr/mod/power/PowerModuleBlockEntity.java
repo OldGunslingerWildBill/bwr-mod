@@ -44,7 +44,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
     // ---- turbine auxiliaries (TURBINE-AUX.md). Everything here is absent from an old save and written only when it is not its default.
     private final LinkedHashSet<BlockPos> auxLinks=new LinkedHashSet<>();
     private boolean auxRequired,turningGear;
-    private double gearFe,bow;
+    private double bow;
     /** Bearing metal, rotor metal and winding temperatures, C; the shaft vibration of the last tick, mm/s. */
     public double bearingC=dev.bwr.core.turbine.TurbineAux.AMBIENT_C,rotorC=dev.bwr.core.turbine.TurbineAux.AMBIENT_C,windingC=dev.bwr.core.turbine.TurbineAux.AMBIENT_C,vibration;
     private TurbineAuxTrain.Readout aux=new TurbineAuxTrain.Readout();
@@ -95,17 +95,12 @@ public class PowerModuleBlockEntity extends BlockEntity {
     public void markAuxRequired(){if(!auxRequired){auxRequired=true;setChanged();}}
     public boolean turningGear(){return turningGear;}
     public double bow(){return bow;}
-    public double gearFe(){return gearFe;}
     /** Switches the turning gear on a generator. On is refused above the gear's overrun speed; off always works. Nothing else ever calls this. */
     public boolean setTurningGear(boolean on){
         if(!block().generator())return false;
         if(on&&rpm>dev.bwr.core.turbine.TurbineAux.GEAR_MAX_RPM)return false;
         if(turningGear!=on){turningGear=on;setChanged();}
         return true;
-    }
-    boolean drawGear(){
-        if(gearFe<TurbineAuxTrain.GEAR_FE_PER_TICK)return false;
-        gearFe-=TurbineAuxTrain.GEAR_FE_PER_TICK;return true;
     }
     void advanceRotor(double steamC){rotorC=dev.bwr.core.turbine.TurbineAux.rotorStepC(rotorC,steamC,TurbineAuxTrain.DT);}
     void advanceBow(double rpm,boolean rolling){bow=dev.bwr.core.turbine.TurbineAux.bowStep(bow,rotorC,rpm,rolling,TurbineAuxTrain.DT);}
@@ -129,19 +124,6 @@ public class PowerModuleBlockEntity extends BlockEntity {
         var all=auxEntities();if(all.isEmpty())return all;
         return all.stream().filter(a->a.kind()==TurbineAuxBlock.Kind.GEN_COOLING).toList();
     }
-    /** FE for the turning gear motor, taken on the generator's left wall. Receive-only. */
-    public final IEnergyStorage gearEnergy=new IEnergyStorage(){
-        public int receiveEnergy(int max,boolean simulate){
-            if(!live()||!block().generator())return 0;
-            int n=(int)Math.min(Math.max(0,max),TurbineAuxTrain.GEAR_CAPACITY_FE-gearFe);
-            if(!simulate&&n>0){gearFe+=n;setChanged();}return n;
-        }
-        public int extractEnergy(int max,boolean simulate){return 0;}
-        public int getEnergyStored(){return (int)gearFe;}
-        public int getMaxEnergyStored(){return TurbineAuxTrain.GEAR_CAPACITY_FE;}
-        public boolean canExtract(){return false;}
-        public boolean canReceive(){return true;}
-    };
     public double speedPercent() { return rpm/ShaftDynamics.RATED_RPM*100; }
     public boolean overspeed() { return rpm>ShaftDynamics.OVERSPEED_RPM; }
     public void addShaftDamage(double amount) {
@@ -297,7 +279,6 @@ public class PowerModuleBlockEntity extends BlockEntity {
         if(!auxLinks.isEmpty())t.putLongArray("AuxLinks",auxLinks.stream().mapToLong(BlockPos::asLong).toArray());
         if(auxRequired)t.putBoolean("AuxRequired",true);
         if(turningGear)t.putBoolean("TurningGear",true);
-        if(gearFe>0)t.putDouble("GearFe",gearFe);
         if(bow>0)t.putDouble("Bow",bow);
         double ambient=dev.bwr.core.turbine.TurbineAux.AMBIENT_C;
         if(bearingC>ambient+.01)t.putDouble("BearingC",bearingC);
@@ -308,7 +289,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
         auxLinks.clear();for(long l:t.getLongArray("AuxLinks"))auxLinks.add(BlockPos.of(l));
         auxRequired=t.getBoolean("AuxRequired");turningGear=t.getBoolean("TurningGear");
         double ambient=dev.bwr.core.turbine.TurbineAux.AMBIENT_C;
-        gearFe=finite(t.getDouble("GearFe"),TurbineAuxTrain.GEAR_CAPACITY_FE);bow=finite(t.getDouble("Bow"),1);
+        bow=finite(t.getDouble("Bow"),1);
         bearingC=t.contains("BearingC")?Math.max(ambient,finite(t.getDouble("BearingC"),1000)):ambient;
         rotorC=t.contains("RotorC")?Math.max(ambient,finite(t.getDouble("RotorC"),1000)):ambient;
         windingC=t.contains("WindingC")?Math.max(ambient,finite(t.getDouble("WindingC"),1000)):ambient;
