@@ -19,7 +19,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import java.util.List;
 
-/** The filter-demineraliser: a consumable resin bed in line. Right-click with Demineralizer Resin to change the bed; the old bed comes out as radioactive Spent Resin. */
+/**
+ * The RWCU stainless steel nanofilter (id {@code rwcu_filter_demineralizer}, the unit that was the resin filter-demineraliser): a
+ * consumable element in line that takes crud and dissolved ions at any water temperature. Right-click with the Stainless Steel
+ * Nanofilter Element (item id {@code demineralizer_resin}) to change it; the old element comes out as a radioactive Spent
+ * Nanofilter Element (id {@code spent_resin}).
+ */
 public class RwcuDeminBlock extends RwcuUnitBlock {
     public static final MapCodec<RwcuDeminBlock> CODEC = simpleCodec(RwcuDeminBlock::new);
     public RwcuDeminBlock(Properties properties) { super(properties); }
@@ -46,8 +51,8 @@ public class RwcuDeminBlock extends RwcuUnitBlock {
         return InteractionResult.sidedSuccess(l.isClientSide());
     }
     @Override public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> lines, TooltipFlag flag) {
-        lines.add(BwrText.tr("tooltip.bwr.rwcu_demin.line1", "Inlet in front, outlet at the back. Holds 100 g of ionic impurity and 200 g of crud."));
-        lines.add(BwrText.tr("tooltip.bwr.rwcu_demin.line2", "Resin is destroyed above 140 F. Change the bed with Demineralizer Resin."));
+        lines.add(BwrText.tr("tooltip.bwr.rwcu_demin.line1", "Inlet in front, outlet at the back. Holds 100 g of dissolved ions and 200 g of crud."));
+        lines.add(BwrText.tr("tooltip.bwr.rwcu_demin.line2", "Works at reactor temperature. Change the element with a Stainless Steel Nanofilter Element."));
         super.appendHoverText(stack, context, lines, flag);
     }
 }

@@ -16,6 +16,24 @@ public final class RwcuPumpDesign implements PumpDesign {
 
     private RwcuPumpDesign() {}
 
+    /**
+     * The loop's system-curve coefficient, psid per (kg/s)^2, with {@code extraPsiAtRated} psid more at rated flow than the
+     * skid's own (a loaded high-temperature filter, say).
+     */
+    public static double systemCoefficient(double extraPsiAtRated) {
+        double rated = INSTANCE.ratedFlowKgPerS();
+        return (LOOP_DIFFERENTIAL_PSI + Math.max(0, extraPsiAtRated)) / (rated * rated);
+    }
+
+    /** The flow the pump settles at, kg/s, at speed fraction {@code speed} against the skid plus {@code extraPsiAtRated}. */
+    public static double loopFlowKgPerS(double speed, double extraPsiAtRated) {
+        double rated = INSTANCE.ratedFlowKgPerS();
+        double shutoff = INSTANCE.curve().shutoffHeadPsi();
+        double k = (shutoff - LOOP_DIFFERENTIAL_PSI) / (rated * rated);
+        double s = Math.min(1.0, Math.max(0.0, speed));
+        return s * Math.sqrt(shutoff / (k + systemCoefficient(extraPsiAtRated)));
+    }
+
     @Override public String id() { return "rwcu"; }
     @Override public String displayName() { return "RWCU pump"; }
     @Override public Drive drive() { return Drive.ELECTRIC_MOTOR; }

@@ -21,8 +21,8 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 /**
- * Spent demineraliser resin: radioactive waste. The bed that came out of a filter-demineraliser carries the activity of
- * the crud it caught (becquerels, per item) and the survey meter reads it: through {@link #register} every spent resin a
+ * Spent Nanofilter Element (item id {@code spent_resin}, the id it had as spent resin): radioactive waste. The element that
+ * came out of a stainless steel nanofilter carries the activity of the crud it caught (becquerels, per item) and the survey meter reads it: through {@link #register} every spent resin a
  * nearby player carries is a point source at the player (the packaging passes {@link #TRANSMISSION} of the gamma).
  * Nothing disposes of it for the player; that is the player's waste handling.
  */
@@ -79,7 +79,7 @@ public class SpentResinItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
-        lines.add(BwrText.tr("tooltip.bwr.spent_resin", "Radioactive waste from a filter-demineraliser. Handle it as such."));
+        lines.add(BwrText.tr("tooltip.bwr.spent_resin", "Radioactive waste from a stainless steel nanofilter. Handle it as such."));
         double bq = activityBq(stack);
         if (bq > 0) lines.add(Component.literal(String.format(java.util.Locale.ROOT, "%.2e Bq, %.3f W gamma each", bq,
                 bq * CoolantChemistry.GAMMA_WATTS_PER_BQ)));

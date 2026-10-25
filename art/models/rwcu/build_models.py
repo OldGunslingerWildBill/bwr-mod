@@ -12,7 +12,7 @@ Flange map (facing=north):
   rwcu_pump                              north = discharge,        south = suction
   rwcu_regenerative_heat_exchanger       north = hot in,           south = hot out,     west = cold in,    east = cold out
   rwcu_nonregenerative_heat_exchanger    north = process in,       south = process out, west = cooling in, east = cooling out
-  rwcu_filter_demineralizer              north = inlet,            south = outlet
+  rwcu_filter_demineralizer              north = inlet,            south = outlet     (the stainless steel nanofilter)
   rpv_bottom_drain_port                  north = drain flange (faces OUT along facing)
 """
 import json
@@ -63,6 +63,11 @@ GLASS = material('sight glass', (.45, .72, .78))
 SHELL = material('vessel wall', (.30, .34, .37), .6)
 VESSEL = material('resin vessel steel', (.36, .42, .46), .55)
 BASE = material('painted base', (.09, .11, .12), .4)
+STAINLESS = material('brushed stainless steel', (.66, .70, .72), .85)
+BANDBLUE = material('nanofilter identification blue', (.10, .36, .62))
+DIAL = material('gauge dial', (.92, .93, .90))
+NEEDLE = material('gauge needle', (.80, .05, .04))
+PLATE = material('nameplate', (.80, .82, .84), .9)
 
 
 def mesh_object(scene, name, vs, fs, mat):
@@ -305,45 +310,69 @@ sleeve(scene, 'vent cap', (.5, .80, .38), (.5, .82, .38), .036, 0, DARK)
 sleeve(scene, 'drain stub', (.5, .06, .62), (.5, .26, .62), .024, 0, STEEL)
 export_scene(scene, 'rwcu_nonregenerative_heat_exchanger.json', META)
 
-# ---- 4. filter-demineralizer: tall vertical resin vessel, inlet north, outlet south ----
+# ---- 4. stainless steel nanofilter (id rwcu_filter_demineralizer): vertical filter housing, bolted top closure, inlet north, outlet south ----
 scene = new_scene('BWR | RWCU filter-demineralizer')
 lathe(scene, 'bottom head', (.5, 0, .5), (0, 1, 0),
-      [(.12, .14), (.14, .21), (.17, .255), (.20, .27)], VESSEL, 28)
-sleeve(scene, 'vessel shell', (.5, .20, .5), (.5, .78, .5), .27, 0, VESSEL, 32)
-lathe(scene, 'top dome', (.5, 0, .5), (0, 1, 0),
-      [(.78, .27), (.815, .257), (.85, .215), (.87, .165), (.885, .12)], VESSEL, 32)
-for y in (.20, .78):
-    sleeve(scene, 'shell weld ring', (.5, y - .008, .5), (.5, y + .008, .5), .276, 0, STEEL, 32)
-sleeve(scene, 'identification band', (.5, .27, .5), (.5, .36, .5), .277, 0, GREEN, 32)
-sleeve(scene, 'sight glass frame lower', (.5, .565, .5), (.5, .585, .5), .28, 0, STEEL, 32)
-sleeve(scene, 'sight glass band', (.5, .585, .5), (.5, .665, .5), .276, 0, GLASS, 32)
-sleeve(scene, 'sight glass frame upper', (.5, .665, .5), (.5, .685, .5), .28, 0, STEEL, 32)
+      [(.12, .13), (.14, .19), (.17, .225), (.20, .24)], STAINLESS, 28)
+sleeve(scene, 'vessel shell', (.5, .20, .5), (.5, .73, .5), .24, 0, STAINLESS, 32)
+sleeve(scene, 'shell weld ring', (.5, .192, .5), (.5, .208, .5), .246, 0, STEEL, 32)
+sleeve(scene, 'nanofilter identification band', (.5, .27, .5), (.5, .35, .5), .246, 0, BANDBLUE, 32)
+sleeve(scene, 'element guide band', (.5, .62, .5), (.5, .64, .5), .244, 0, STEEL, 32)
+# bolted top closure: shell flange, gasket, cover flange, twelve studs with nuts, dished cover, lifting eye and vent
+sleeve(scene, 'shell closure flange', (.5, .73, .5), (.5, .765, .5), .325, 0, STEEL, 36)
+sleeve(scene, 'closure gasket', (.5, .765, .5), (.5, .775, .5), .30, 0, DARK, 36)
+sleeve(scene, 'cover flange', (.5, .775, .5), (.5, .81, .5), .325, 0, STEEL, 36)
+lathe(scene, 'closure dome', (.5, 0, .5), (0, 1, 0),
+      [(.81, .26), (.835, .245), (.86, .21), (.88, .16), (.895, .10), (.90, .05)], STAINLESS, 32)
+for i in range(12):
+    ang = i * math.tau / 12
+    cx, cz = .5 + .285 * math.cos(ang), .5 + .285 * math.sin(ang)
+    bolt(scene, 'closure stud', (cx, .725, cz), (cx, .835, cz), .016, STEEL)
+    sleeve(scene, 'closure nut', (cx, .812, cz), (cx, .835, cz), .028, 0, DARK, 6)
+box(scene, 'lifting eye', (.46, .90, .485), (.54, .93, .515), STEEL)
+sleeve(scene, 'lifting eye hole', (.5, .90, .47), (.5, .935, .53), .008, 0, DARK, 8)
+sleeve(scene, 'vent stub', (.62, .87, .5), (.62, .93, .5), .02, 0, STEEL)
+sleeve(scene, 'vent cap', (.62, .93, .5), (.62, .95, .5), .03, 0, DARK)
 for sx in (-1, 1):
     for sz in (-1, 1):
-        x, z = .5 + sx * .19, .5 + sz * .19
+        x, z = .5 + sx * .185, .5 + sz * .185
         box(scene, 'support leg', (x - .03, .02, z - .03), (x + .03, .19, z + .03), BASE)
         box(scene, 'foot plate', (x - .06, 0, z - .06), (x + .06, .02, z + .06), BASE)
-box(scene, 'leg brace west', (.28, .10, .31), (.31, .125, .69), BASE)
-box(scene, 'leg brace east', (.69, .10, .31), (.72, .125, .69), BASE)
-sleeve(scene, 'hatch neck', (.5, .875, .5), (.5, .905, .5), .105, 0, STEEL, 28)
-sleeve(scene, 'hatch flange', (.5, .905, .5), (.5, .93, .5), .165, 0, STEEL, 28)
-sleeve(scene, 'hatch gasket', (.5, .93, .5), (.5, .936, .5), .15, 0, DARK, 28)
-sleeve(scene, 'hatch cover', (.5, .936, .5), (.5, .955, .5), .155, 0, VESSEL, 28)
-bolt_ring(scene, 'hatch bolt', (.5, .955, .5), (0, 1, 0), .13, 8, 0, .022, .02)
-box(scene, 'lifting eye', (.46, .955, .485), (.54, .985, .515), STEEL)
+box(scene, 'leg brace west', (.29, .10, .31), (.32, .125, .69), BASE)
+box(scene, 'leg brace east', (.68, .10, .31), (.71, .125, .69), BASE)
 for d, role in ((N, 'inlet'), (S, 'outlet')):
     p = Vector(face_point(d))
     inward = Vector((0, 0, 1 if d == N else -1))
-    sleeve(scene, role + ' neck', p + inward * .12, p + inward * .30, .225, .205, BODY)
+    sleeve(scene, role + ' neck', p + inward * .12, p + inward * .29, .225, .205, STAINLESS)
     sleeve(scene, role + ' band', p + inward * .16, p + inward * .20, .233, .205, TEAL)
     sleeve(scene, role + ' dark bore', p + inward * .115, p + inward * .122, .2, 0, DARK)
     flange(scene, role, tuple(p), d)
-sleeve(scene, 'gauge stub', (.12, .70, .5), (.24, .70, .5), .02, 0, STEEL)
-sleeve(scene, 'pressure gauge', (.07, .70, .5), (.12, .70, .5), .06, 0, STEEL)
-sleeve(scene, 'gauge face', (.065, .70, .5), (.07, .70, .5), .05, 0, DARK)
-sleeve(scene, 'vent nozzle', (.76, .7, .5), (.88, .7, .5), .02, 0, STEEL)
-sleeve(scene, 'vent nozzle cap', (.88, .7, .5), (.905, .7, .5), .032, 0, DARK)
-sleeve(scene, 'drain nozzle', (.5, .14, .5), (.5, .01, .5), .022, 0, STEEL)
+# differential-pressure gauge, west side: two impulse lines from taps above and below the element to a manifold and a dial
+sleeve(scene, 'upper tap', (.30, .66, .5), (.19, .66, .5), .013, 0, STEEL, 10)
+sleeve(scene, 'lower tap', (.30, .34, .5), (.19, .34, .5), .013, 0, STEEL, 10)
+sleeve(scene, 'upper impulse line', (.19, .52, .5), (.19, .66, .5), .013, 0, STEEL, 10)
+sleeve(scene, 'lower impulse line', (.19, .34, .5), (.19, .52, .5), .013, 0, STEEL, 10)
+box(scene, 'gauge manifold', (.16, .46, .465), (.22, .58, .535), STEEL)
+sleeve(scene, 'gauge stem', (.10, .52, .5), (.16, .52, .5), .022, 0, STEEL, 12)
+sleeve(scene, 'gauge case', (.05, .52, .5), (.10, .52, .5), .075, 0, STEEL, 24)
+sleeve(scene, 'gauge dial', (.045, .52, .5), (.05, .52, .5), .062, 0, DIAL, 24)
+bolt(scene, 'gauge needle', (.042, .52, .5), (.042, .565, .53), .006, NEEDLE)
+sleeve(scene, 'gauge hub', (.04, .52, .5), (.046, .52, .5), .01, 0, DARK, 8)
+for k in range(7):  # dial ticks
+    a = math.radians(-120 + k * 40)
+    bolt(scene, 'dial tick', (.043, .52 + .05 * math.cos(a), .5 + .05 * math.sin(a)), (.043, .52 + .058 * math.cos(a), .5 + .058 * math.sin(a)), .004, DARK)
+# nameplate, east side: bracket, plate, engraved lines, rivets
+box(scene, 'nameplate bracket', (.715, .38, .40), (.76, .60, .60), STEEL)
+box(scene, 'nameplate', (.76, .41, .42), (.775, .57, .58), PLATE)
+for k, y in enumerate((.54, .505, .47, .435)):
+    box(scene, 'nameplate line', (.775, y, .44 if k else .45), (.779, y + .014, .56 if k else .55), DARK)
+for y in (.425, .555):
+    for z in (.435, .565):
+        sleeve(scene, 'nameplate rivet', (.775, y, z), (.782, y, z), .008, 0, STEEL, 8)
+# capped drain and backwash connection at the bottom
+sleeve(scene, 'drain nozzle', (.5, .13, .5), (.5, .045, .5), .035, 0, STEEL, 16)
+sleeve(scene, 'drain blind flange', (.5, .045, .5), (.5, .02, .5), .06, 0, DARK, 16)
+sleeve(scene, 'drain flange', (.5, .08, .5), (.5, .06, .5), .055, 0, STEEL, 16)
 export_scene(scene, 'rwcu_filter_demineralizer.json', META)
 
 # ---- 5. RPV bottom-head drain port: vessel-wall block, flange north, little manual gate-valve handwheel ----

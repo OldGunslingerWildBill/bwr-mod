@@ -28,7 +28,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The reactor water cleanup system: the chemistry in the core, the skid (pump, regenerative and non-regenerative exchangers,
- * filter-demineraliser) piped to the vessel and to the feedwater line, the reject path and the bottom drain, the radiation,
+ * stainless steel nanofilter, the exchangers optional) piped to the vessel and to the feedwater line, the reject path and the bottom drain, the radiation,
  * the pressure-boundary lines and the saves. Every test drives the pump and the reactor synchronously, so nothing interleaves
  * with its readings. No CC types here.
  *
@@ -258,39 +258,32 @@ public final class RwcuTests {
     }
 
     @GameTest(template = "empty", templateNamespace = "bwrrwcu", timeoutTicks = 3000)
-    public static void aHotDeminineraliserDamagesTheResinAndNothingStopsIt(GameTestHelper h) throws Exception {
+    public static void aNanofilterOnHotWaterWorksAndNothingDamagesIt(GameTestHelper h) throws Exception {
         var s = skid(h, 131_200, false, false);
         s.core().getPressureVessel().restorePressurePsig(1000);
         double vesselC = s.core().getCoolantTemperatureC();
         h.assertTrue(vesselC > 250, "a hot vessel: " + vesselC);
-        // Load some impurity into the bed first, with cold water.
-        s.core().getPressureVessel().restorePressurePsig(5);
+        // The cooler loses its cooling water: the nanofilter sees reactor-hot water, and that is no harm to it.
         dirty(s, 40);
-        s.start();
-        s.tick(600);
-        double held = s.demin.bed().ionLoadG();
-        h.assertTrue(held > 1 && s.demin.bed().damage() == 0, "a cooled bed in service holds impurity and is undamaged: " + held);
-        // Now hot, and the cooler loses its cooling water.
-        s.core().getPressureVessel().restorePressurePsig(1000);
         s.coolingWater = false;
         s.cooler.plant().restore(0, 0, 0, 0);
         double before = kappa(s);
-        s.tick(200);
-        h.assertTrue(s.pump.getFlowKgPerS() > 20, "the pump kept running; nothing isolated it: " + s.pump.getFlowKgPerS());
-        h.assertTrue(s.pump.getDemineraliserC() > 150, "the demineraliser sees hot water: " + s.pump.getDemineraliserC());
-        h.assertTrue(s.demin.bed().damage() > 0.05, "the resin is damaged: " + s.demin.bed().damage());
-        h.assertTrue(s.demin.overTemperature(), "and reads over temperature");
-        h.assertTrue(s.pump.connectionStatus().contains("140 F"), "the pump status says so: " + s.pump.connectionStatus());
-        h.assertTrue(s.demin.bed().ionLoadG() < held, "it released what it held: " + held + " -> " + s.demin.bed().ionLoadG());
-        h.assertTrue(s.demin.readout().headlineStatus() == 3, "an alarm line on the readout");
-        // A properly cooled bed at the same vessel temperature takes no damage.
-        s.coolingWater = true;
+        s.start();
+        s.tick(600);
+        h.assertTrue(s.pump.getFlowKgPerS() > 20, "the pump runs: " + s.pump.getFlowKgPerS());
+        h.assertTrue(s.pump.getDemineraliserC() > 150, "the nanofilter sees hot water: " + s.pump.getDemineraliserC());
+        h.assertTrue(s.demin.bed().ionLoadG() > 1, "and takes dissolved impurity out of it: " + s.demin.bed().ionLoadG());
+        h.assertTrue(kappa(s) < before - 0.02, "so the conductivity falls: " + before + " -> " + kappa(s));
+        h.assertTrue(s.demin.bed().exhaustion() < 1.0 && s.demin.readout().headlineStatus() != 3, "no alarm on the readout");
+        h.assertTrue(!s.pump.connectionStatus().contains("140 F"), "the pump status has no resin warning: " + s.pump.connectionStatus());
+        // The same element in a loop with full cooling water removes the same: temperature plays no part.
         var cold = skid(h, 131_600, false, false);
         cold.core().getPressureVessel().restorePressurePsig(1000);
+        dirty(cold, 40);
         cold.start();
-        cold.tick(200);
-        h.assertTrue(cold.demin.bed().damage() == 0, "with cooling water the same bed is untouched: " + cold.demin.bed().damage());
+        cold.tick(600);
         h.assertTrue(cold.pump.getDemineraliserC() < 60, "at " + cold.pump.getDemineraliserC());
+        near(h, s.demin.bed().ionLoadG(), cold.demin.bed().ionLoadG(), 0.12 * cold.demin.bed().ionLoadG() + 0.1, "the hot and the cooled element took about the same");
         h.succeed();
     }
 
@@ -496,6 +489,188 @@ public final class RwcuTests {
         h.assertTrue(fresh.hasBed() && fresh.bed().exhaustion() == 0, "a new demineraliser has a fresh bed");
         var tag = fresh.saveWithFullMetadata(s.l.registryAccess());
         h.assertTrue(!tag.contains("Bed"), "and a fresh bed writes nothing");
+        h.succeed();
+    }
+
+    // ------------------------------------------------------------------------------------------------ the nanofilter, optional exchangers
+
+    /**
+     * The standard skid with the regenerative exchanger and/or the cooler taken out (pipe in their places). Without the
+     * regenerator the return goes round the west side to the feedwater port instead of through the exchanger's cold side.
+     */
+    static Skid variant(ServerLevel level, int x0, boolean regen, boolean cooler, boolean withReject) throws Exception {
+        var s = skid(level, x0, false, withReject);
+        var l = s.l;
+        int y = 6;
+        if (!cooler) {
+            l.removeBlock(s.at(5, y, -7), false);
+            pipe(l, s.at(5, y, -7));
+            s.cooler = null;
+            s.coolingWater = false;
+        }
+        if (!regen) {
+            l.removeBlock(s.at(5, y, -6), false);
+            pipe(l, s.at(5, y, -6));
+            s.regen = null;
+            for (var p : new int[][]{{6, 0, -10}, {6, 1, -10}, {6, 1, -9}, {6, 1, -8}, {6, 1, -7}, {6, 1, -6}, {6, 0, -6},
+                    {4, 0, -6}, {3, 0, -6}, {2, 0, -6}, {2, 0, -5}, {2, 0, -4}, {2, 0, -3}}) l.removeBlock(s.at(p[0], y + p[1], p[2]), false);
+            for (int x = 4; x >= 0; x--) pipe(l, s.at(x, y, -10));
+            for (int z = -9; z <= -2; z++) pipe(l, s.at(0, y, z));
+            pipe(l, s.at(1, y, -2));
+        }
+        SpargerRegressionTests.validate(s.be);
+        tickReactor(s.be);
+        return s;
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwrrwcu", timeoutTicks = 3000)
+    public static void theLoopRunsHotWithoutTheExchangersAndTheNanofilterCleansReactorWater(GameTestHelper h) throws Exception {
+        var s = variant(h.getLevel(), 140_000, false, false, false);
+        s.core().getPressureVessel().restorePressurePsig(1000);
+        double vesselC = s.core().getCoolantTemperatureC();
+        s.core().getChemistry().fromArray(new double[]{s.core().getChemistry().getIonicG(), 40, 40 * 1e12 * 0.5, 0, 0});
+        dirty(s, 40);
+        // The same plant with the pump never started is the control: the water also changes with the vessel's own mass.
+        var control = variant(h.getLevel(), 143_600, false, false, false);
+        control.core().getPressureVessel().restorePressurePsig(1000);
+        control.core().getChemistry().fromArray(new double[]{control.core().getChemistry().getIonicG(), 40, 40 * 1e12 * 0.5, 0, 0});
+        dirty(control, 40);
+        control.tick(600);
+        s.start();
+        s.tick(600);
+        h.assertTrue(s.pump.circuitValid(), "pump, pipes, nanofilter, feedwater port: no exchangers needed: " + s.pump.connectionStatus());
+        h.assertTrue(s.pump.getFlowKgPerS() > 20, "the pump moves water: " + s.pump.getFlowKgPerS());
+        near(h, s.pump.getDemineraliserC(), vesselC, 3.0, "the nanofilter sees reactor water");
+        near(h, s.pump.getReturnC(), vesselC, 3.0, "and it returns as hot");
+        h.assertTrue(s.pump.getHeatLossMW() < 0.01 && s.pump.getCoolerDutyMW() == 0, "the vessel loses no heat: " + s.pump.getHeatLossMW());
+        h.assertTrue(s.demin.bed().ionLoadG() > 1, "it holds dissolved impurity: " + s.demin.bed().ionLoadG());
+        h.assertTrue(s.demin.bed().crudLoadG() > 0.1 && s.demin.bed().activityBq() > 0, "and radioactive crud: " + s.demin.bed().crudLoadG());
+        h.assertTrue(kappa(s) < kappa(control) - 0.05, "the conductivity ends below that of the plant with no cleanup: " + kappa(control) + " vs " + kappa(s));
+        h.assertTrue(s.pump.connectionStatus().contains("circuit complete"), s.pump.connectionStatus());
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwrrwcu", timeoutTicks = 3000)
+    public static void eachExchangerIsOptionalAndTheHeatLossFollowsWhatTheLoopHas(GameTestHelper h) throws Exception {
+        var both = variant(h.getLevel(), 140_400, true, true, false);
+        var regenOnly = variant(h.getLevel(), 140_800, true, false, false);
+        var coolerOnly = variant(h.getLevel(), 141_200, false, true, false);
+        for (var s : new Skid[]{both, regenOnly, coolerOnly}) {
+            s.core().getPressureVessel().restorePressurePsig(1000);
+            s.start();
+            s.tick(400);
+            h.assertTrue(s.pump.circuitValid() && s.pump.getFlowKgPerS() > 20, "a valid loop: " + s.pump.connectionStatus());
+        }
+        double vesselC = both.core().getCoolantTemperatureC();
+        h.assertTrue(both.pump.getHeatLossMW() > 2 && both.pump.getDemineraliserC() < 60, "both: the regenerated, cooled loop of before: "
+                + both.pump.getHeatLossMW() + " MW, " + both.pump.getDemineraliserC() + " C");
+        h.assertTrue(regenOnly.pump.getHeatLossMW() < 0.01, "a regenerator with no cooler has nothing to recover and loses nothing: " + regenOnly.pump.getHeatLossMW());
+        near(h, regenOnly.pump.getDemineraliserC(), vesselC, 3.0, "and the nanofilter is on hot water");
+        h.assertTrue(coolerOnly.pump.getHeatLossMW() > 0.5, "a cooler with no regenerator takes its duty from the vessel: " + coolerOnly.pump.getHeatLossMW());
+        near(h, coolerOnly.pump.getCoolerDutyMW(), coolerOnly.pump.getHeatLossMW(), 0.01 * coolerOnly.pump.getHeatLossMW() + 1e-3, "all of it to the cooling water");
+        h.assertTrue(coolerOnly.pump.getDemineraliserC() < vesselC - 20, "the cooler cools what it can: " + coolerOnly.pump.getDemineraliserC());
+        h.assertTrue(coolerOnly.pump.getHeatLossMW() > both.pump.getHeatLossMW(), "without the regenerator the loss is larger");
+        // A regenerator used on its hot side must be used on its cold side: a nanofilter outlet that bypasses it is no circuit.
+        var broken = skid(h, 141_600, false, false);
+        broken.l.removeBlock(broken.at(6, 6, -6), false);
+        broken.start();
+        broken.tick(60);
+        h.assertTrue(!broken.pump.circuitValid() && broken.pump.getFlowKgPerS() == 0, "no cold-side return, no circuit: " + broken.pump.connectionStatus());
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwrrwcu", timeoutTicks = 4000)
+    public static void blowdownFromAHotLoopFillsTheTankWithHotWater(GameTestHelper h) throws Exception {
+        var s = variant(h.getLevel(), 142_000, false, false, true);
+        s.core().getPressureVessel().restorePressurePsig(1000);
+        double vesselC = s.core().getCoolantTemperatureC();
+        openValve(s.l, s.rejectValve);
+        s.start();
+        s.tick(800);
+        h.assertTrue(s.pump.circuitValid(), s.pump.connectionStatus());
+        h.assertTrue(s.pump.getRejectKgPerS() > 5, "the reject takes a share: " + s.pump.getRejectKgPerS());
+        h.assertTrue(s.cst.storedKg() > 100, "the tank gained water: " + s.cst.storedKg());
+        h.assertTrue(s.cst.temperatureC() > vesselC - 15, "at the temperature the water had at the tee (the tank does not flash it): " + s.cst.temperatureC() + " of " + vesselC);
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwrrwcu", timeoutTicks = 3000)
+    public static void aLoadedNanofilterRaisesItsPressureDropAndLowersTheLoopFlow(GameTestHelper h) throws Exception {
+        var s = skid(h, 142_400, false, false);
+        s.start();
+        s.tick(300);
+        double flowNew = s.pump.getFlowKgPerS();
+        double dpNew = s.demin.bed().pressureDropPsi(s.pump.getDemineraliserKgPerS());
+        h.assertTrue(flowNew > 50, "a new element, a free loop: " + flowNew);
+        h.assertTrue(dpNew < 10, "a new element costs little: " + dpNew);
+        s.demin.bed().fromArray(new double[]{1, 0, FilterDemineralizer.CRUD_CAPACITY_G * 0.95, 1.0e13, 0});
+        s.tick(300);
+        double flowLoaded = s.pump.getFlowKgPerS();
+        h.assertTrue(flowLoaded < 0.9 * flowNew, "a crud-loaded element lowers the flow through the pump curve: " + flowNew + " -> " + flowLoaded);
+        h.assertTrue(flowLoaded > 0.6 * flowNew, "without stopping the loop: " + flowLoaded);
+        h.assertTrue(s.pump.getFilterPressureDropPsi() > 4 * dpNew, "the pressure drop rose: " + dpNew + " -> " + s.pump.getFilterPressureDropPsi());
+        boolean line = false;
+        for (var l : s.demin.readout().lines()) if (l.label().equals("Pressure drop") && Double.parseDouble(l.value()) > 30) line = true;
+        h.assertTrue(line, "and the screen shows it");
+        // Ions load no cake: an element full of dissolved impurity but clean of crud costs no more pressure.
+        s.demin.bed().fromArray(new double[]{1, 60, 0, 0, 0});
+        s.tick(300);
+        near(h, s.pump.getFlowKgPerS(), flowNew, 0.04 * flowNew, "a clean-of-crud element lets the flow come back");
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwrrwcu", timeoutTicks = 3000)
+    public static void aSpentNanofilterElementIsRadioactiveWasteAndTheNewItemReplacesIt(GameTestHelper h) throws Exception {
+        var s = variant(h.getLevel(), 142_800, false, false, false);
+        s.core().getPressureVessel().restorePressurePsig(1000);
+        s.core().getChemistry().fromArray(new double[]{s.core().getChemistry().getIonicG(), 60, 60 * 1e12 * 0.5, 0, 0});
+        dirty(s, 40);
+        s.start();
+        s.tick(600);
+        var held = s.demin.bed().toArray();
+        h.assertTrue(held[2] > 0.1 && held[3] > 0, "the hot element caught crud and its activity");
+        var around = Vec3.atCenterOf(s.demin.getBlockPos().east(2));
+        h.assertTrue(RadiationSources.doseRateMsvPerHour(s.l, around) > 0, "a gamma source in service, read by the survey meter");
+        var player = h.makeMockPlayer(GameType.SURVIVAL);
+        var item = new ItemStack(BwrItems.DEMINERALIZER_RESIN.get(), 1);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, item);
+        s.demin.changeBed(player, item);
+        h.assertTrue(item.getCount() == 0, "the Stainless Steel Nanofilter Element is used up");
+        h.assertTrue(s.demin.bed().exhaustion() == 0 && s.demin.bed().crudLoadG() == 0, "a new element");
+        ItemStack spent = ItemStack.EMPTY;
+        for (var stack : player.getInventory().items) if (stack.is(BwrItems.SPENT_RESIN.get())) spent = stack;
+        h.assertTrue(!spent.isEmpty() && SpentResinItem.activityBq(spent) > 0, "the old element came out as a radioactive Spent Nanofilter Element");
+        near(h, SpentResinItem.activityBq(spent), held[3], 1e-6 * held[3], "carrying the activity it held");
+        h.assertTrue(SpentResinItem.doseRateOf(player, player.position().add(1, 1, 0)) > 0, "which the survey meter reads on its carrier");
+        // A new element is not changed for another: the item stays.
+        var again = new ItemStack(BwrItems.DEMINERALIZER_RESIN.get(), 1);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, again);
+        s.demin.changeBed(player, again);
+        h.assertTrue(again.getCount() == 1, "a new element is left alone");
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwrrwcu", timeoutTicks = 800)
+    public static void aSavedResinBedLoadsAsANanofilterElementWithTheSameLoadingAndALoadedOneRoundTrips(GameTestHelper h) throws Exception {
+        var s = skid(h, 143_200, false, false);
+        // What the alpha.54 resin filter-demineraliser wrote: five numbers, the last the resin's heat damage.
+        var tag = s.demin.saveWithFullMetadata(s.l.registryAccess());
+        dev.bwr.mod.reactor.ReactorStateNbt.putDoubles(tag, "Bed", new double[]{1, 62.5, 91.0, 2.5e13, 0.4});
+        var old = new RwcuDeminBlockEntity(s.demin.getBlockPos(), s.demin.getBlockState());
+        old.loadWithComponents(tag, s.l.registryAccess());
+        near(h, old.bed().ionLoadG(), 62.5, 0, "ions kept");
+        near(h, old.bed().crudLoadG(), 91.0, 0, "crud kept");
+        near(h, old.bed().activityBq(), 2.5e13, 0, "activity kept");
+        near(h, old.bed().ionCapacityLeftG(), 37.5, 1e-9, "the old heat damage is not charged to the new element");
+        h.assertTrue(old.bed().pressureDropAtRatedPsi() > FilterDemineralizer.DP_CLEAN_PSI + 30, "and its crud shows as pressure drop: " + old.bed().pressureDropAtRatedPsi());
+        var resaved = old.saveWithFullMetadata(s.l.registryAccess());
+        h.assertTrue(resaved.contains("Bed") && dev.bwr.mod.reactor.ReactorStateNbt.getDoubles(resaved, "Bed")[4] == 0, "it writes the same key with no damage");
+        // A used element in a running loop round-trips with its pressure drop.
+        s.demin.bed().fromArray(new double[]{1, 20, 120, 3.0e12, 0});
+        double dp = s.demin.bed().pressureDropAtRatedPsi();
+        var copy = new RwcuDeminBlockEntity(s.demin.getBlockPos(), s.demin.getBlockState());
+        copy.loadWithComponents(s.demin.saveWithFullMetadata(s.l.registryAccess()), s.l.registryAccess());
+        near(h, copy.bed().pressureDropAtRatedPsi(), dp, 1e-12, "the loaded element round-trips");
         h.succeed();
     }
 }

@@ -150,8 +150,9 @@ public final class BwrPeripheralSupport {
             var readout=unit.readout();var m=new LinkedHashMap<String,Object>();m.put("headline",readout.headline());
             for(var line:readout.lines())m.put(line.label(),line.value()+" "+line.unit());
             if(unit instanceof dev.bwr.mod.rwcu.RwcuDeminBlockEntity d) {
-                var bed=d.bed();m.put("bedPresent",bed.bedPresent());m.put("resinUsed",bed.exhaustion());m.put("ionicLoadG",bed.ionLoadG());
-                m.put("crudLoadG",bed.crudLoadG());m.put("heatDamage",bed.damage());m.put("overTemperature",d.overTemperature());m.put("activityBq",bed.activityBq());
+                var bed=d.bed();m.put("elementPresent",bed.bedPresent());m.put("elementUsed",bed.exhaustion());m.put("ionicLoadG",bed.ionLoadG());
+                m.put("crudLoadG",bed.crudLoadG());m.put("pressureDropPsid",bed.pressureDropAtRatedPsi());m.put("activityBq",bed.activityBq());
+                m.put("gammaWatts",bed.gammaWatts());m.put("flowing",d.flowing());
             } else if(unit instanceof dev.bwr.mod.rwcu.RwcuRegenBlockEntity r) {
                 m.put("hotInC",r.hotInC());m.put("hotOutC",r.hotOutC());m.put("coldInC",r.coldInC());m.put("returnC",r.coldOutC());m.put("heatRecoveredMW",r.dutyMW());
             } else if(unit instanceof dev.bwr.mod.rwcu.RwcuCoolerBlockEntity c) {

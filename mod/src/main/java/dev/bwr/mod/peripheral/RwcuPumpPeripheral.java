@@ -55,6 +55,7 @@ public class RwcuPumpPeripheral implements IPeripheral {
         m.put("vesselHeatLossMW", be.getHeatLossMW());
         m.put("coolerDutyMW", be.getCoolerDutyMW());
         m.put("regenHeatRecoveredMW", be.getRegenDutyMW());
+        m.put("filterPressureDropPsid", be.getFilterPressureDropPsi());
         m.put("energyFE", be.energy().getEnergyStored());
         m.put("drawFEPerTick", EccsPower.fePerTickFromWatts(be.pump().getElectricalDemandWatts()));
         m.put("computerControlled", be.isComputerControlled());

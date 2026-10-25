@@ -230,7 +230,7 @@ public final class BwrItems {
     public static final DeferredItem<BlockItem> RWCU_REGENERATIVE_HEAT_EXCHANGER = ITEMS.registerSimpleBlockItem(BwrBlocks.RWCU_REGENERATIVE_HEAT_EXCHANGER);
     public static final DeferredItem<BlockItem> RWCU_NONREGENERATIVE_HEAT_EXCHANGER = ITEMS.registerSimpleBlockItem(BwrBlocks.RWCU_NONREGENERATIVE_HEAT_EXCHANGER);
     public static final DeferredItem<BlockItem> RWCU_FILTER_DEMINERALIZER = ITEMS.registerSimpleBlockItem(BwrBlocks.RWCU_FILTER_DEMINERALIZER);
-    /** A fresh resin bed for the RWCU filter-demineraliser. */
+    /** A new element for the RWCU stainless steel nanofilter (the id is the old resin bed's, kept so recipes and worlds load). */
     public static final DeferredItem<Item> DEMINERALIZER_RESIN = ITEMS.registerSimpleItem("demineralizer_resin");
     /** Radioactive waste: what a bed that has been in service is. Carries its activity. */
     public static final DeferredItem<Item> SPENT_RESIN = ITEMS.register("spent_resin", () -> new dev.bwr.mod.rwcu.SpentResinItem(new Item.Properties().stacksTo(16)));

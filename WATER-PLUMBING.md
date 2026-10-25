@@ -139,7 +139,7 @@ Colors persist through saves and do not change fluid compatibility. See
 | RHR pool-cooling discharge → selected pool | High-Pressure Water Pipe |
 | Vessel recirculation ports ↔ RCP | High-Pressure Water Pipe |
 | Isolating or throttling any of the above | Motor-Operated Water Valve inline |
-| Reactor water cleanup: vessel outlet or bottom drain port → RWCU pump → exchangers → demineraliser → feedwater port (blowdown to a tank through a valve) | High-Pressure Water Pipe, see [RWCU.md](RWCU.md) |
+| Reactor water cleanup: vessel outlet or bottom drain port → RWCU pump → (optional exchangers) → stainless steel nanofilter → feedwater port (blowdown to a tank through a valve) | High-Pressure Water Pipe, see [RWCU.md](RWCU.md) |
 | Reactor well drain → condensate tank | Cavity Drain Port, High-Pressure Water Pipe, Motor-Operated Water Valve, Condensate Storage Tank |
 | RPV steam nozzle → main turbine or turbine-driven pump | High-Pressure Steam Pipe |
 | RCIC/HPCI exhaust → submerged pool quencher | High-Pressure Steam Pipe |

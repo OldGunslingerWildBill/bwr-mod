@@ -87,6 +87,7 @@ public final class AcceptanceTests {
             CoolingWaterUnitTest.class,
             RhrHeatExchangerTest.class,
             ReactorWaterCleanupTest.class,
+            NanofilterTest.class,
             ShutdownCoolingTest.class,
             RecirculationSizingTest.class,
             ContinuousRodMotionTest.class,
