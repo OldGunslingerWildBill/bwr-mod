@@ -103,8 +103,9 @@ and `c:ingots/steel`. Sodium and Iris also work, with or without a shader pack
 
 ### Safety systems and accidents
 - Emergency cooling hardware: HPCS, LPCS, RHR/LPCI with heat exchangers, RCIC and HPCI Terry turbine
-  pumps, SLC boron injection, safety/relief valves and an ADS bank, with core spray rings inside the
-  vessel. [TERRY-TURBINES.md](TERRY-TURBINES.md), [ALPHA-HARDWARE.md](ALPHA-HARDWARE.md),
+  pumps, SLC boron injection, safety relief valves (opened on command to depressurise the vessel), with core spray
+  rings inside the vessel. [TERRY-TURBINES.md](TERRY-TURBINES.md), [ALPHA-HARDWARE.md](ALPHA-HARDWARE.md),
+  [MAIN-STEAM-VALVES.md](MAIN-STEAM-VALVES.md),
   [CORE-SPARGERS.md](CORE-SPARGERS.md)
 - Suppression pools, including player-built concrete basins with spray and passive cooling.
   [SUPPRESSION-BASIN.md](SUPPRESSION-BASIN.md)

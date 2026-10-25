@@ -3,8 +3,8 @@
   "category": "misc",
   "pattern": [
     " R ",
-    "PVP",
-    " I "
+    "PKP",
+    " V "
   ],
   "key": {
     "R": {
@@ -13,11 +13,11 @@
     "P": {
       "item": "bwr:pressurised_tube"
     },
-    "V": {
-      "item": "bwr:safety_relief_valve"
+    "K": {
+      "item": "minecraft:piston"
     },
-    "I": {
-      "item": "minecraft:iron_ingot"
+    "V": {
+      "item": "bwr:reactor_vessel"
     }
   },
   "result": {

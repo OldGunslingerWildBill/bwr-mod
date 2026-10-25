@@ -42,6 +42,7 @@ NO_RECIPE = {
     "rcic_turbine_pump": "retired block, replaced by rcic_twl",
     "hpci_turbine_pump": "retired block, replaced by hpci_turbine",
     "suppression_pool_quencher": "retired block, a tank has an internal steam distributor",
+    "safety_relief_valve": "retired plain-cube relief valve (owner, 2026-10-25); ads_relief_valve is the one Safety Relief Valve",
     # Made by the reactor, not at a bench.
     "cobalt_sample": "product of irradiating a cobalt target",
     "tritium_sample": "product of irradiating a lithium target",

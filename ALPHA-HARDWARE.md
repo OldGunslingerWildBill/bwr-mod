@@ -42,17 +42,17 @@ The borate item recipe and the 0.183 elemental-boron equivalent are gameplay
 calibrations. There is no water-chemistry, solubility, tank-heater or enrichment
 simulation in this alpha. The recipe does not represent real chemical manufacture.
 
-## Division and Pressure Relief Valve
+## Division and Safety Relief Valve
 
-The **Division** cabinet (formerly ADS Division Controller) keeps its existing
-model and registry ID. The **Pressure Relief Valve** (formerly ADS Relief Valve) has a side steam inlet and
-a downward relief outlet. For the default north-facing valve, the inlet is
+The **Division** cabinet keeps its existing model and registry ID. The **Safety Relief Valve**
+(`bwr:ads_relief_valve`; the mod's one relief valve since the main steam valve remodel) has a side steam inlet and
+a downward relief outlet. Opening relief valves is how you depressurise the reactor. For the default north-facing valve, the inlet is
 the west flange. It is a branch valve, not a straight-through header segment.
 
 - Pipe the inlet to an open RPV steam nozzle with BWR steam pipe. Inlet routing
   respects intervening valve positions and requires one live reactor source.
-- Pipe the downward outlet to a submerged suppression-pool quencher. The
-  existing open-water discharge fallback also remains available.
+- Pipe the downward outlet to a suppression tank's steam inlet (or, in an older open basin, a submerged
+  quencher). The existing open-water discharge fallback also remains available.
 - Set controller and valves to the same **division, 1–4**, in their panels or
   through CC. New hardware defaults to 1; the panel cycles 1, 2, 3, 4, 1.
   Saved division 0 and CC commands for 0 remain supported for existing plants.
@@ -61,12 +61,17 @@ the west flange. It is a branch valve, not a straight-through header segment.
 - Command Open/Close locally, through redstone, or with a computer. Controller
   nitrogen charge and powered compressor behavior remain in place.
 - An open valve draws from the nozzle's shared steam allowance. The nozzle
-  already debits the vessel, so reporting the ADS/pool flow does not debit it
+  already debits the vessel, so reporting the relief/pool flow does not debit it
   again. Other turbines and steam consumers share that same finite allowance.
 
 There are **no automatic pressure/level trips or plant control programs**.
 Players choose the commands and write their own automation. A relief valve
 must be metered by a Division cabinet or a suppression-pool controller.
+
+The valve's model is the Columbia-style direct-acting spring safety relief valve described in
+[MAIN-STEAM-VALVES.md](MAIN-STEAM-VALVES.md). An open valve shows a raised lever, lifted spindle and extended
+actuator rod. The old plain-cube **Safety Relief Valve (old)** (`bwr:safety_relief_valve`) is no longer crafted
+or offered in the creative tab; placed cubes and stored items still load and work as before.
 
 ## Water discharge port
 
@@ -92,7 +97,7 @@ standalone computers.
 | Boron tank | `bwr_slc_tank` | `getStatus()` |
 | SLC pump | `bwr_slc` | `start()`, `stop()`, `setSpeed(0..1)`, `getStatus()`; status includes actual boron delivery |
 | Division | `bwr_ads` (retained for existing programs) | `setDivision(0..4)`, `getDivision()`, `start()`, `stop()`, `setFlow(0..1)`, `getStatus()` |
-| Pressure Relief Valve | `bwr_safety_relief_valve` | `setDivision(0..4)`, `getDivision()`, `open()`, `close()`, `setOpen(boolean)`, `getStatus()` |
+| Safety Relief Valve | `bwr_safety_relief_valve` | `setDivision(0..4)`, `getDivision()`, `open()`, `close()`, `setOpen(boolean)`, `getStatus()` |
 | Water outfall | `bwr_water_discharge` | `setEnabled(boolean)`, `getStatus()` |
 | Water outlet chute | `bwr_water_outlet_chute` | `setEnabled(boolean)`, `getStatus()`: `facingWater`, `waterState`, returned water, temperature, heat to river (see [COOLING-WATER.md](COOLING-WATER.md)) |
 

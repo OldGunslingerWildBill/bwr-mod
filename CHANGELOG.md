@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased: main steam valve remodel, one relief valve
+
+The MSIV and the relief valve have new models, drawn from Columbia's FSAR figures. There is now one relief valve. Write-up and references: [MAIN-STEAM-VALVES.md](MAIN-STEAM-VALVES.md).
+
+- **MSIV (`bwr:msiv`).** The model follows FSAR Fig 5.4-9: a Y-pattern globe body, a bolted bonnet and packing, four spring guide shafts with closing springs, a hydraulic dashpot with speed control valves, an air cylinder with the accumulator on top, a solenoid pilot control unit, two position switches and an OPEN/SHUT stem scale. **The model now shows the valve's position:** open (or stroking), the stem, spring seat member and pointer are raised and the springs compressed. Same footprint, ports, flanges and behaviour. It has fewer triangles than before. One-block legacy MSIVs keep their cube models.
+- **One relief valve.** `bwr:ads_relief_valve` is now named **Safety Relief Valve** and is the only relief valve: the piped one, with a side steam inlet, a downward discharge, divisions, redstone and CC. Its ID, saved data, ports, `bwr_safety_relief_valve` CC type and steam flow are unchanged. Its new model follows FSAR Fig 5.2-8, Columbia's direct-acting spring safety relief valve: a body with an outlet angled down to the tailpipe, a spring bonnet, a set pressure head and LVDT, a lever and pneumatic actuator, solenoid valves A, B and C, and an accumulator. **Open, its lever and actuator rod are raised.** The inlet flange is now centred on the face where the pipe meets it; the old one sat 0.15 block low.
+- **The old cube is retired.** `bwr:safety_relief_valve` is renamed **Safety Relief Valve (old)**. Its recipe and creative-tab entry are removed (owner, 2026-10-25). Placed cubes and stored items still load and work, and its models are untouched. The two recipes that used the cube now use its ingredients: the Safety Relief Valve takes a piston and a reactor vessel, and the Division cabinet takes two pistons.
+- **Wording.** The guide page "Relief valves and ADS" is now "Safety relief valves", and it says plainly that opening relief valves is how you depressurise. ALPHA-HARDWARE.md and the README were updated to match. The Division cabinet, the `bwr_ads` CC type and the registry IDs are unchanged.
+- **Data lists changed for the retired cube (owner-approved):** `NO_RECIPE` in tools-audit-recipes.py, `RETIRED_BLOCKS` in tools-audit-assets.py, and the "not crafted" list of `FuelFabricatorItemRouteTests.everyCraftableItemHasARecipeAndTheRestDoNot`.
+- **Checks.** New GameTests in `ReliefValveMergeTests`:
+  - `oldCubeReliefValveStillLoadsAndWorks`: saved state, six steam faces, redstone, discharge, and no recipe;
+  - `safetyReliefValveStillRelievesToThePool`: reactor steam through the side inlet into a suppression tank;
+  - `msivUpperCellsShowTheStroke`.
+
+  New in-game pictures with the pipes attached: `-PbwrSteamValveShots=<label>` (SteamValveShots). The inventory icons are re-rendered.
+
 ## Unreleased: RWCU stainless steel nanofilter
 
 The RWCU filter-demineralizer is now the **RWCU Stainless Steel Nanofilter**, and it works at full reactor temperature. Write-up, the numbers and the references: [RWCU.md](RWCU.md).

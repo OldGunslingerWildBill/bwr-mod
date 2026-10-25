@@ -359,7 +359,7 @@ for orphan in sorted(textures_on_disk - referenced_textures):
 
 # ---------- 3. per-block coverage ----------
 missing = {"blockstate": [], "blockmodel": [], "itemmodel": [], "loot": [], "recipe": []}
-RETIRED_BLOCKS = {"rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_quencher"}
+RETIRED_BLOCKS = {"rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_quencher", "safety_relief_valve"}
 # Made by the world, not the player: corium exists only where a core melted
 # through a vessel, so a recipe for it would be the bug.
 # The two uranium ores are placed by world generation and mined (silk touch gives the block back); the raw uranium and
