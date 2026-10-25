@@ -84,12 +84,12 @@ public final class BreedingClientCheck {
                             for (int x = 8; x <= 17; x++) for (int z = 8; z <= 17; z++) { l.setChunkForced(x, z, true); l.getChunk(x, z); }
                             for (var p : BlockPos.betweenClosed(ROOT.offset(-8, -1, -8), ROOT.offset(10, -1, 8))) l.setBlock(p, net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState(), 3);
                             var blocks = new net.minecraft.world.level.block.Block[] {BwrBlocks.POLONIUM_210_BLOCK.get(), BwrBlocks.PLUTONIUM_238_BLOCK.get(), BwrBlocks.ACTINIUM_227_BLOCK.get(), BwrBlocks.THULIUM_170_BLOCK.get()};
-                            for (int i = 0; i < blocks.length; i++) l.setBlock(ROOT.offset(i - 1, 0, 0), blocks[i].defaultBlockState(), 3);
+                            for (int i = 0; i < blocks.length; i++) l.setBlock(ROOT.offset(i, 0, 0), blocks[i].defaultBlockState(), 3);
                             l.setBlock(ROOT.offset(0, 1, 0), BwrBlocks.POLONIUM_210_BLOCK.get().defaultBlockState(), 3);
-                            l.setBlock(ROOT.offset(1, 1, 0), BwrBlocks.THULIUM_170_BLOCK.get().defaultBlockState(), 3);
+                            l.setBlock(ROOT.offset(3, 1, 0), BwrBlocks.THULIUM_170_BLOCK.get().defaultBlockState(), 3);
                             l.setDayTime(6000);
                             l.setWeatherParameters(6000, 0, false, false);
-                            player.connection.teleport(ROOT.getX() + .5, ROOT.getY() + 1.6, ROOT.getZ() + 5.5, 180, 12);
+                            player.connection.teleport(ROOT.getX() + 2.0, ROOT.getY() + 1.6, ROOT.getZ() + 5.5, 180, 12);
                         }
                         case 1 -> {
                             var chest = ROOT.offset(0, 0, -4);
