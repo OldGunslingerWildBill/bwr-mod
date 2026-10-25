@@ -76,7 +76,9 @@ public final class AssemblyPlumbing {
             var node=route.node();if(node.kind()!=dev.bwr.mod.piping.PipeTopology.Kind.END||route.opening()<=0)continue;
             var next=node.pos();var s=node.state();
             if(s.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock) {
-                if(role==AssemblyPort.WATER_DISCHARGE&&node.face()==dev.bwr.mod.suppression.RhrHeatExchangerBlock.primaryIn(s))ends.add(next);
+                // The exchanger's tube inlet; the end is its controller, the cell that holds the block entity.
+                if(role==AssemblyPort.WATER_DISCHARGE&&dev.bwr.mod.suppression.RhrHeatExchangerBlock.portOf(s,node.face())==dev.bwr.mod.suppression.RhrHeatExchangerBlock.HxPort.TUBE_IN)
+                    ends.add(dev.bwr.mod.suppression.RhrHeatExchangerBlock.rootOf(next,s));
                 else valid=false;
                 continue;
             }

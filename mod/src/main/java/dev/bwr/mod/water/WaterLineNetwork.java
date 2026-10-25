@@ -48,7 +48,7 @@ public final class WaterLineNetwork {
         if(state.getBlock() instanceof WaterDischargeBlock)return face==state.getValue(WaterDischargeBlock.FACING).getOpposite();
         if(state.getBlock() instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlock)return face==state.getValue(dev.bwr.mod.suppression.SuppressionPoolPortBlock.FACING);
         if(state.getBlock() instanceof dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock)return face==state.getValue(dev.bwr.mod.spentfuel.SpentFuelPoolPortBlock.FACING);
-        if(state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock)return face.getAxis().isHorizontal();
+        if(state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock)return dev.bwr.mod.suppression.RhrHeatExchangerBlock.acceptsWaterLineOn(state,face);
         if(state.getBlock() instanceof dev.bwr.mod.containment.ContainmentSprayHeaderBlock)return true;
         if(state.getBlock() instanceof CondensateStorageTankBlock)return CondensateStorageTankBlock.acceptsWater(state,face);
         if(state.getBlock() instanceof dev.bwr.mod.cooling.CoolingBlock)return dev.bwr.mod.cooling.CoolingBlock.acceptsWater(state,face);
@@ -111,7 +111,7 @@ public final class WaterLineNetwork {
                             || state.is(BwrBlocks.SPENT_FUEL_POOL_MAKEUP_PORT.get())
                             || state.is(BwrBlocks.SPENT_FUEL_POOL_COOLING_IN.get())
                             || state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock
-                            && face==dev.bwr.mod.suppression.RhrHeatExchangerBlock.coldIn(state)
+                            && dev.bwr.mod.suppression.RhrHeatExchangerBlock.portOf(state,face)==dev.bwr.mod.suppression.RhrHeatExchangerBlock.HxPort.SHELL_IN
                             || state.getBlock() instanceof dev.bwr.mod.cooling.CoolingBlock
                             && (state.getValue(dev.bwr.mod.cooling.CoolingBlock.PORT)==dev.bwr.mod.cooling.CoolingBlock.Port.INLET
                                 ||state.getValue(dev.bwr.mod.cooling.CoolingBlock.PORT)==dev.bwr.mod.cooling.CoolingBlock.Port.MAKEUP)

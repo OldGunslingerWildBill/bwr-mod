@@ -16,12 +16,13 @@ public final class SuppressionWaterCapabilities {
             },block);
         }
         event.registerBlock(Capabilities.FluidHandler.BLOCK,(l,p,s,be,face)->{
-            if(face==null||face!=RhrHeatExchangerBlock.coldIn(s)&&face!=RhrHeatExchangerBlock.hotOut(s))return null;
+            // Only the two shell-side flanges expose water: a single block's side faces, or the two flange cells of a full-size unit.
+            var port=RhrHeatExchangerBlock.portOf(s,face);
+            if(port!=RhrHeatExchangerBlock.HxPort.SHELL_IN&&port!=RhrHeatExchangerBlock.HxPort.SHELL_OUT)return null;
             return LiveCapabilities.fluid(l,p,s.getBlock(),current->{
-                if(!(l.getBlockEntity(p) instanceof RhrHeatExchangerBlockEntity hx))return null;
-                if(face==RhrHeatExchangerBlock.coldIn(current))return hx.secondary(true);
-                if(face==RhrHeatExchangerBlock.hotOut(current))return hx.secondary(false);
-                return null;
+                if(RhrHeatExchangerBlock.portOf(current,face)!=port)return null;
+                var hx=RhrHeatExchangerBlock.controller(l,p,current);
+                return hx==null?null:hx.secondary(port==RhrHeatExchangerBlock.HxPort.SHELL_IN);
             });
         },BwrBlocks.RHR_HEAT_EXCHANGER.get());
         event.registerBlock(Capabilities.FluidHandler.BLOCK, (l,p,s,be,face) ->
