@@ -28,7 +28,7 @@ final class AdsSignals {
             .number("valves", "Relief valves available", "valves", 0, 64, AdsControllerBlockEntity::getValveCount)
             .number("valves_open", "Relief valves held open", "valves", 0, 64, AdsControllerBlockEntity::getHeldOpenCount)
             .number("nitrogen", "Nitrogen charge", "fraction", 0, 1, AdsControllerBlockEntity::getNitrogenCharge)
-            .toggle("ads_allow", "Allow ADS to open", (be, v) -> {
+            .toggle("ads_allow", "Allow the bank to open", (be, v) -> {
                 be.setAllowed(v >= 0.5);
                 return true;
             })
