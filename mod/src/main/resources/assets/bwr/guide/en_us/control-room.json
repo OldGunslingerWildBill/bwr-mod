@@ -4,7 +4,8 @@
     "CONTROL-PANELS.md",
     "ROOM-FURNITURE.md",
     "PLANT-COMPUTER.md",
-    "SIGNALS.md"
+    "SIGNALS.md",
+    "LIGHTING.md"
   ],
   "pages": [
     {
@@ -131,6 +132,18 @@
       ],
       "icons": [
         "bwr:plant_computer"
+      ]
+    },
+    {
+      "title": "Industrial lamps",
+      "text": [
+        "Industrial lamps light a turbine hall or reactor building. High bays hang under a ceiling; wall packs mount on a wall. Low-pressure sodium is deep orange, high-pressure sodium golden-white, mercury cold bluish-white. Redstone switches them on.",
+        "Lit, a lamp warms through four stages (light 4, 8, 12, then 15) over 20 to 40 seconds. A hot high-pressure or mercury lamp waits about 15 seconds to cool before it restrikes. Low-pressure sodium restarts at once. A pickaxe breaks them."
+      ],
+      "icons": [
+        "bwr:lps_high_bay",
+        "bwr:hps_wall_pack",
+        "bwr:mercury_high_bay"
       ]
     }
   ]

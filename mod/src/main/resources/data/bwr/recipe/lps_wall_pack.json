@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "IRI",
+    "OGO"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "O": {
+      "item": "minecraft:orange_stained_glass"
+    }
+  },
+  "result": {
+    "id": "bwr:lps_wall_pack",
+    "count": 1
+  }
+}

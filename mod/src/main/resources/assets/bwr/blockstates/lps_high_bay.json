@@ -1,0 +1,48 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "bwr:block/lamp/high_bay_housing"
+      }
+    },
+    {
+      "when": {
+        "lit": "false",
+        "cooling": "0|1|2|3"
+      },
+      "apply": {
+        "model": "bwr:block/lamp/lps_high_bay_lens_off"
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "warmup": "0",
+        "cooling": "0|1|2|3"
+      },
+      "apply": {
+        "model": "bwr:block/lamp/lps_high_bay_lens_w0"
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "warmup": "1",
+        "cooling": "0|1|2|3"
+      },
+      "apply": {
+        "model": "bwr:block/lamp/lps_high_bay_lens_w1"
+      }
+    },
+    {
+      "when": {
+        "lit": "true",
+        "warmup": "2|3",
+        "cooling": "0|1|2|3"
+      },
+      "apply": {
+        "model": "bwr:block/lamp/lps_high_bay_lens_on"
+      }
+    }
+  ]
+}

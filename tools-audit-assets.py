@@ -351,7 +351,13 @@ for base, _, files in os.walk(textures_root):
         if f.endswith(".png"):
             rel = os.path.relpath(os.path.join(base, f), textures_root).replace("\\", "/")
             textures_on_disk.add(rel[:-len(".png")])
-for orphan in sorted(textures_on_disk - referenced_textures):
+def labpbr_companion(name):
+    # A labPBR map (<texture>_n.png normal, <texture>_s.png specular) is loaded by its suffix next to the colour texture
+    # the models name (Iris reads it), so no model names it. It counts as referenced when its colour texture is.
+    return name.endswith(("_n", "_s")) and name[:-2] in referenced_textures
+
+
+for orphan in sorted(x for x in textures_on_disk - referenced_textures if not labpbr_companion(x)):
     bad("ORPHAN-TEXTURE", f"assets/bwr/textures/{orphan}.png is referenced by no model, particle or "
                           f"Java source; either something that should point at it does not "
                           f"(look for a MISSING-TEXTURE above naming a similar path) or it is "

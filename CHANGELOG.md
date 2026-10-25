@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased: industrial lamps
+
+Six redstone-controlled plant lamps: three lamp types (low-pressure sodium, high-pressure sodium, mercury vapour), each as a high-bay pendant and a wall pack. Lit, they warm through light 4, 8, 12 and 15 over 20 to 40 seconds of game time; the high-pressure and mercury lamps cool for about 15 seconds before a restrike.
+
+- **Blocks (`bwr:lps_high_bay`, `bwr:lps_wall_pack`, `bwr:hps_high_bay`, `bwr:hps_wall_pack`, `bwr:mercury_high_bay`, `bwr:mercury_wall_pack`).** Light level 15 when full. A high bay hangs under a solid block; a wall pack mounts on a wall. Each drops itself and breaks with a pickaxe.
+- **Warm-up and restrike on scheduled ticks.** No per-block ticker. Old saves load: the lamps are new blocks.
+- **Shaders.** Each lit lens ships a labPBR `_s` specular map with emission in its alpha channel, so a labPBR shader pack (Complementary) reads the lens as lit. The shader path was not run in this change; see LIGHTING.md.
+- **Models and textures.** Headless Blender (`art/models/industrial_lamps/build_lamps.py`), `tools-export-lamps.py`, `tools-make-lamp-textures.py`.
+- **Recipes.** Distinct per type: orange stained glass, glowstone or light blue stained glass as the lens, with iron and redstone.
+- **Guide.** "Industrial lamps" page in the control-room chapter. Design and the shader notes in LIGHTING.md.
+
 ## Unreleased: large RTG and RTG heat
 
 A 2 x 2 Large RTG for up to 1,000 kg of isotope material, RTGs as heat sources (Cold Sweat, a heat-only switch), ingots and blocks as the form the RTGs take, and cobalt-60 as the reactor-bred bulk fuel. Write-up, numbers and the pattern for new isotopes: [RTG.md](RTG.md).
