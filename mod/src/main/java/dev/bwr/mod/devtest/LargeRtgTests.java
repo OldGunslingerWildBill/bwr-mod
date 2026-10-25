@@ -111,7 +111,7 @@ public final class LargeRtgTests {
     // The multiblock
 
     /** One item places 12 cells in all four facings; only the controller has a block entity; breaking any part clears it and drops one item and the contents. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 800)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 800)
     public static void assemblyPlacesAndBreaksInAllFacings(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos o = new BlockPos(7200, 190, 7200);
@@ -269,7 +269,7 @@ public final class LargeRtgTests {
     // Loading
 
     /** A hopper loads it by the item capability; at the cap it refuses and keeps the rest; a stack that does not fit whole is split at the cap. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 400)
     public static void hopperLoadsUpToTheCapThenRefuses(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos root = h.absolutePos(new BlockPos(3, 2, 3));
@@ -314,7 +314,7 @@ public final class LargeRtgTests {
     }
 
     /** A block goes in whole and counts nine times an ingot; by hand (right click) a stack loads as much as fits. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void blocksAndIngotsAddUpAndByHandLoadingStopsAtTheCap(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos root = h.absolutePos(new BlockPos(3, 2, 3));
@@ -351,7 +351,7 @@ public final class LargeRtgTests {
     // Power
 
     /** FE to a real adjacent consumer, and heat-only: the same heat, no FE. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 400)
     public static void largeRtgPowersANeighbourAndHeatOnlyStopsTheFe(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos root = h.absolutePos(new BlockPos(3, 2, 3));
@@ -400,7 +400,7 @@ public final class LargeRtgTests {
     }
 
     /** 1,000 kg of strontium in the block: 920 kW, 46 kW, 3,432.8 FE/t; the output multiplier scales the electricity only. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void aThousandKilogramsOfStrontiumReadsTheDocumentedFigures(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos root = h.absolutePos(new BlockPos(3, 2, 3));
@@ -425,7 +425,7 @@ public final class LargeRtgTests {
     }
 
     /** Decay in the block: one half-life later (the epoch moved back, as a save would carry it) the power is half. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void decayFollowsTheHalfLifeInTheBlock(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos root = h.absolutePos(new BlockPos(3, 2, 3));
@@ -460,7 +460,7 @@ public final class LargeRtgTests {
     // Dose
 
     /** The dose at 1 m is the DoseModel's number through the housing, the block is the point source of exactly that, and it clears with the contents. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void theDoseReadoutIsHonestAndTheBlockIsASource(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos root = new BlockPos(7300, 200, 7300);
@@ -504,7 +504,7 @@ public final class LargeRtgTests {
     // Saves
 
     /** Contents, epochs, the switch and the buffer save and load; an empty unit writes nothing; a hand-edited save cannot mint mass. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void largeRtgSavesAndReloads(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos root = h.absolutePos(new BlockPos(3, 2, 3));
@@ -548,7 +548,7 @@ public final class LargeRtgTests {
     }
 
     /** A small RTG saved by the build before the Large RTG (no HeatOnly key) loads and reads exactly as it did; the new key appears only when set. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void anOldSmallRtgSaveLoads(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos p = h.absolutePos(new BlockPos(1, 2, 1));
@@ -585,7 +585,7 @@ public final class LargeRtgTests {
     // Signals, recipes, the data
 
     /** Networking signals read the Large RTG and the heat-only command switches it. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void signalsReadAndSwitchTheLargeRtg(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos root = h.absolutePos(new BlockPos(3, 2, 3));
@@ -606,7 +606,7 @@ public final class LargeRtgTests {
     }
 
     /** Ingots and blocks: nine to one and back, the capsules and the cobalt sample convert 1:1, mass conserved; the data lines agree. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void ingotAndBlockRecipesConserveMassAndTheDataAgrees(GameTestHelper h) {
         var manager = h.getLevel().getServer().getRecipeManager();
         String[][] pairs = {{"strontium_90", "strontium_90_capsule"}, {"caesium_137", "caesium_137_capsule"}, {"americium_241", "americium_241_capsule"}, {"cobalt_60", "cobalt_sample"}};
@@ -667,7 +667,7 @@ public final class LargeRtgTests {
     }
 
     /** The small RTG accepts an ingot or a block in a well (a block is nine ingots of heat). */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void theSmallRtgTakesIngotsAndBlocks(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos p = h.absolutePos(new BlockPos(1, 2, 1));
@@ -686,7 +686,7 @@ public final class LargeRtgTests {
     // Heat, and Cold Sweat
 
     /** The heat an RTG gives a room is proportional to its thermal watts, shared across the Large RTG's cells, zero when empty; heat-only changes nothing. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
     public static void rtgHeatIsProportionalToThermalWatts(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos p = h.absolutePos(new BlockPos(1, 2, 1));
@@ -726,7 +726,7 @@ public final class LargeRtgTests {
      * The mod runs with Cold Sweat absent (every ordinary run, including the gates): nothing of Cold Sweat is loaded. With
      * {@code -PbwrColdSweat} Cold Sweat is on the dev runtime and {@code RtgColdSweatChecks} exercises its real registry.
      */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 200)
     public static void theModRunsWithColdSweatAbsentOrRegistersItsHeatSources(GameTestHelper h) throws Exception {
         boolean present = ModList.get().isLoaded("cold_sweat");
         if (!present) {
@@ -748,7 +748,7 @@ public final class LargeRtgTests {
     }
 
     /** The computer face (CC:Tweaked) of the Large RTG and the small RTG's switch; says it was skipped without CC:Tweaked. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 200)
     public static void computerFaces(GameTestHelper h) throws Exception {
         if (!ModList.get().isLoaded("computercraft")) {
             System.out.println("LARGE RTG CC: skipped, CC:Tweaked is not loaded");
