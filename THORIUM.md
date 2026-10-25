@@ -109,7 +109,7 @@ uranium's everywhere; blobs a little more common. All in datapack JSON (`data/bw
 | Group | Biomes | Real setting | Vein chance (uranium's, same kind) | Grade | Raw blocks | Blobs a chunk | Placers |
 |---|---|---|---|---|---|---|---|
 | `highland` | windswept hills, gravelly hills, windswept forest, meadow, grove, snowy slopes, frozen, jagged and stony peaks, cherry grove, stony shore | **granite, pegmatite and syenite-hosted** thorite and monazite (also the source rock of placers) | 30 % (50 %) | 26 % | 6 % | 1 (size 6) | none |
-| `placer` | rivers, frozen rivers, beaches, snowy beaches | **heavy-mineral beach and river placers** (India, Brazil, Australia), with the crystalline rock they shed from | 12 % (2 % aquatic) | 18 % | 4 % | one in 4 chunks (size 5) | **3 a chunk**, size 12 |
+| `placer` | rivers, frozen rivers, beaches, snowy beaches | **heavy-mineral beach and river placers** (India, Brazil, Australia), with the crystalline rock they shed from | 12 % (2 % aquatic) | 18 % | 4 % | one in 2 chunks (size 5) | **3 a chunk**, size 12 |
 | `lowland` | all other land biomes (plains, forests, taigas, jungles, swamps, savannas, desert, badlands, mushroom fields) | ordinary crust: thin and scattered | 6 % (12 %) | 15 % | 3 % | one in 3 chunks (size 5) | none |
 | `ocean` | every ocean | almost none | 1 % (2 %) | 10 % | 2 % | one in 16 chunks (size 4) | none |
 
@@ -139,10 +139,24 @@ items follow them: raw thorium, ingots and the ores are as inert as the uranium 
 
 ## Measured
 
-`:mod:runWorldgenCheck` (the same server, seed 20261022 and the same 64 x 64 chunks per dimension as the uranium half): see the table in the changelog of the run; the
-numbers below are from `mod/run/worldgenCheck/logs/latest.log`.
+`:mod:runWorldgenCheck` (a dedicated server, world seed 20261022, the datapack `bwr_check` with one flat dimension per thorium group: bedrock, 63 deepslate, 80 stone and 3 dirt, or 3 sand in the placer one, the group's biome, normal biome decoration with the biome modifiers applied, the same seed in each) generates the same 64 x 64 chunks (a square 1,024 blocks on a side, nearly three vein cells each way) in each dimension and counts the thorium blocks. Because only the biome differs, the difference is the biome table's alone.
 
-MEASURED_PLACEHOLDER
+| Group | Thorium blocks a chunk (ore and raw) | Chunks with any | Monazite sand blocks | Vein body placed |
+|---|---|---|---|---|
+| `highland` | **5.29** (21,294 ore, 357 raw) | 3,948 of 4,096 | 0 | 26,156 (570 slices; 5,458 ore) |
+| `placer` | 1.56 | 4,082 | **70,489** (17.2 a chunk of flat sand) | 0 |
+| `lowland` | 1.04 | 1,386 | 0 | 0 |
+| `ocean` | 0.14 | 235 | 0 | 0 |
+
+The ordering is asserted (`highland > placer > lowland >= ocean`, highland at least 3 times lowland), as is that the monazite sand is only in the placer group (at least 500 blocks there, none elsewhere) and that the thorium vein chance in the highland group (0.30) is below uranium's (0.50). The highland square had
+26,156 blocks of vein body; the other three groups had **no vein at all** in this square (nine cells at 12, 6 and 1 per cent): thorium veins are rare, and the numbers for those groups are blobs and sand. The shipped thorium veins are as rare as the table says by construction (a cell has a vein when its roll is below the chance, and the same roll serves every group, so a higher chance only adds veins).
+The measured highland figure (5.29) lands near uranium's highland (5.39 in URANIUM-ORE.md) because this seed's highland veins happened to be generous; the veins are the rarer ones (30 % of cells against 50 %), the blobs the commoner (thorium lowland 1.04 against uranium's 0.93).
+
+**Old chunks.** With `thoriumOreGeneration` off, an 8 x 8 block of chunks over a thorium vein (cell 6) was generated: **0 thorium blocks and 0 vein body blocks** (the option works on live generation, blobs included). With it on again, the 80 chunks round it were generated: 518 thorium blocks (2,141 of vein body), and **0 of the 64 first chunks changed** (every block state of each was hashed before and after).
+
+**Uranium is not disturbed, but it moves a little.** Thorium and uranium veins share host rock, so where a thorium vein and a uranium vein cross, whichever feature runs first takes the block: the uranium numbers in this run differ from URANIUM-ORE.md's by a few blocks (arid vein body 44,227 against 44,215, arid ore 50,693 and 1,009 raw). Both are new-chunk effects; nothing existing changes.
+
+The numbers above are from `mod/run/worldgenCheck/logs/latest.log` of one run; the world and the seed are fixed, so a run on the same code gives the same lines (only the timings move).
 
 ## Checks
 
