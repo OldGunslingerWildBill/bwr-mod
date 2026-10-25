@@ -1,0 +1,12 @@
+newmtl dish
+Kd 1.0000 1.0000 1.0000
+map_Kd minecraft:block/iron_block
+
+newmtl dark
+Kd 0.5500 0.5600 0.5800
+map_Kd minecraft:block/gray_concrete
+
+newmtl lens
+Kd 1.0000 1.0000 1.0000
+map_Kd bwr:block/xenon_lens_off
+

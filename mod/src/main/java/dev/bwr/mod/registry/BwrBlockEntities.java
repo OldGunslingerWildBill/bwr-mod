@@ -168,6 +168,12 @@ public final class BwrBlockEntities {
             () -> BlockEntityType.Builder.of(dev.bwr.mod.isotope.LargeRtgBlockEntity::new,
                     BwrBlocks.LARGE_RTG.get()).build(null));
 
+    /** The beam lamps (xenon floodlight, xenon high-bay, HPS flat panel): the aim and the list of light blocks placed. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.floodlight.BeamLampBlockEntity>>
+            BEAM_LAMP = BLOCK_ENTITIES.register("beam_lamp",
+            () -> BlockEntityType.Builder.of(dev.bwr.mod.floodlight.BeamLampBlockEntity::new,
+                    BwrBlocks.XENON_FLOODLIGHT.get(), BwrBlocks.XENON_HIGH_BAY.get(), BwrBlocks.HPS_FLAT_PANEL.get()).build(null));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity>>
             SPENT_FUEL_POOL = BLOCK_ENTITIES.register("spent_fuel_pool",
             () -> BlockEntityType.Builder.of(dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity::new,
