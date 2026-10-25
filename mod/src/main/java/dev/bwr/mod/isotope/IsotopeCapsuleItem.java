@@ -23,6 +23,12 @@ public class IsotopeCapsuleItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
+        appendIsotopeTooltip(stack, lines);
+        super.appendHoverText(stack, context, lines, flag);
+    }
+
+    /** The fuel list's numbers for any isotope item (capsule, ingot or storage block), as tooltip lines. */
+    static void appendIsotopeTooltip(ItemStack stack, List<Component> lines) {
         RtgFuel fuel = RtgFuels.of(stack);
         if (fuel == null) {
             return;
@@ -37,6 +43,5 @@ public class IsotopeCapsuleItem extends Item {
         double msv = CarriedIsotopes.doseRateAtOneMetre(stack);
         lines.add(BwrText.tr("tooltip.bwr.capsule.dose", "Carried: %s at 1 m. Keep it in an RTG.",
                 dev.bwr.core.radiation.DoseModel.formatRate(msv)));
-        super.appendHoverText(stack, context, lines, flag);
     }
 }

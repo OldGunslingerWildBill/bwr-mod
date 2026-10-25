@@ -31,6 +31,7 @@ public final class DeviceResolver {
         if (state.getBlock() instanceof ContainmentVaultDoorBlock vault) be = vault.owner(level, pos, state);
         else if (state.getBlock() instanceof ContainmentAirlockBlock airlock) be = airlock.owner(level, pos, state);
         else if (state.getBlock() instanceof ProcessAssembly) be = PumpAssemblyCapabilities.controller(level, pos, state);
+        else if (state.getBlock() instanceof dev.bwr.mod.isotope.LargeRtgBlock) be = dev.bwr.mod.isotope.LargeRtgBlock.controller(level, pos, state);
         else if (state.getBlock() instanceof MainSteamIsolationValveBlock msiv) be = msiv.controller(level, pos, state);
         else be = dev.bwr.mod.world.LoadedWorld.blockEntity(level, pos);
         if (be == null || be.isRemoved()) return null;

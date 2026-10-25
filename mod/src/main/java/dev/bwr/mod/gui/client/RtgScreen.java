@@ -24,6 +24,8 @@ public class RtgScreen extends BwrScreen<RtgMenu> {
 
     private static final int LEFT_COLUMN = 164;
 
+    private dev.bwr.mod.gui.client.style.BwrButton heat;
+
     public RtgScreen(RtgMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 336, 224);
     }
@@ -34,7 +36,7 @@ public class RtgScreen extends BwrScreen<RtgMenu> {
     }
 
     private String loadedLine() {
-        return menu.capsules == 0 ? "Put isotope capsules in the wells"
+        return menu.capsules == 0 ? "Put isotope ingots in the wells"
                 : String.format(Locale.ROOT, "%d of 6 wells loaded", menu.capsules);
     }
 
@@ -48,10 +50,16 @@ public class RtgScreen extends BwrScreen<RtgMenu> {
 
     @Override
     protected UiElement buildUi() {
+        if (heat == null) {
+            heat = dev.bwr.mod.gui.client.style.BwrButton.secondary("Heat only",
+                    "Stops the electricity and nothing else. The thermocouples turn only 5 % of the heat into FE, so the RTG makes its full thermal power either way; "
+                            + "with this on none of it leaves as FE (use it as a heater). Nothing switches it for you.",
+                    b -> menu.sendCommand(RtgMenu.CMD_HEAT_ONLY, menu.heatOnly ? 0 : 1));
+        }
         var loaded = Layout.line(this::loadedLine, Type.CAPTION)
-                .tip("Each well takes one sealed isotope capsule from the separator: strontium-90, caesium-137 or americium-241. "
+                .tip("Each well takes one isotope ingot (or block, or a separator capsule): strontium-90, caesium-137, americium-241 or cobalt-60. "
                         + "Anything with an entry in the RTG fuel list is accepted.");
-        var wells = Layout.card("Capsules", loaded, Layout.gap(20), new WellCaptions(), Layout.gap(2), Layout.gap(18));
+        var wells = Layout.card("Isotopes", loaded, Layout.gap(20), new WellCaptions(), Layout.gap(2), Layout.gap(18));
         var left = Layout.column(BwrStyle.SP2, wells, Layout.flex());
 
         var power = Layout.card("Output",
@@ -73,10 +81,19 @@ public class RtgScreen extends BwrScreen<RtgMenu> {
 
         var split = Layout.split(BwrStyle.SP1);
         split.fixed(left, LEFT_COLUMN);
-        split.add(Layout.column(BwrStyle.SP1, power, safety), 1);
+        split.add(Layout.column(BwrStyle.SP1, power, safety, Layout.controls(BwrStyle.SP1).add(heat, 1)), 1);
         return Layout.column(BwrStyle.SP2,
                 Layout.note("There is no RTG here.").body().status(() -> Status.ALARM).showIf(() -> !menu.present),
                 split.showIf(() -> menu.present));
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        if (heat != null) {
+            heat.setMessage(Component.literal(menu.heatOnly ? "Heat only: ON" : "Heat only: off"));
+            heat.active = menu.present;
+        }
     }
 
     /** Numbers over the six wells, each centred on its slot. */
@@ -101,7 +118,7 @@ public class RtgScreen extends BwrScreen<RtgMenu> {
         @Override
         public List<Component> tooltipAt(int mouseX, int mouseY) {
             return contains(mouseX, mouseY)
-                    ? List.of(Component.literal("Six wells, one capsule each. Power is the sum of the capsules."))
+                    ? List.of(Component.literal("Six wells, one item each. Power is the sum of what is loaded."))
                     : List.of();
         }
 

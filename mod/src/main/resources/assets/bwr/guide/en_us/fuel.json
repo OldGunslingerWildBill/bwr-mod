@@ -67,15 +67,51 @@
     {
       "title": "Isotopes and the RTG",
       "text": [
-        "The Isotope Separator takes fission product waste from the plant and makes sealed 250 g capsules of strontium-90, caesium-137 and americium-241, and stripped waste that cannot be separated again. 10,000 FE and 5 seconds an item.",
+        "The Isotope Separator takes fission product waste from the plant and makes sealed 250 g capsules of strontium-90, caesium-137 and americium-241, and stripped waste that cannot be separated again.",
         "",
-        "An RTG holds six capsules and makes 5 % of their heat as FE: six strontium capsules give 69 W, about 5 FE/t. It is small, steady and lasts decades. Caesium capsules are lethal to carry: keep them in the RTG, and put a wall round a caesium RTG."
+        "An RTG holds six ingots and makes 5 % of their heat as FE: six strontium ingots give 69 W, about 5 FE/t. It is small, steady and lasts decades. Caesium and cobalt are lethal to carry: keep them in an RTG."
       ],
       "icons": [
         "bwr:isotope_separator",
         "bwr:rtg",
-        "bwr:strontium_90_capsule",
-        "bwr:americium_241_capsule"
+        "bwr:strontium_90_ingot"
+      ]
+    },
+    {
+      "title": "Ingots, blocks and cobalt-60",
+      "text": [
+        "A capsule crafts one to one into an ingot of the same mass. Nine ingots make a block, and a block makes nine back.",
+        "",
+        "Cobalt-60 is made in the reactor, not by the separator: a cobalt target makes a sealed 100 g sample, which has the same ingot and block. Carried, an ingot or block is a strong gamma source, cobalt far stronger than caesium."
+      ],
+      "icons": [
+        "bwr:strontium_90_block",
+        "bwr:cobalt_60_ingot",
+        "bwr:cobalt_60_block"
+      ]
+    },
+    {
+      "title": "RTG heat",
+      "text": [
+        "An RTG always makes its full heat. The Heat only switch on its screen, a signal and the computer face stops the FE and keeps the heat, so it can be a heater.",
+        "",
+        "With Cold Sweat installed an RTG warms players near it in proportion to its thermal watts, less with distance. An empty one gives nothing."
+      ],
+      "icons": [
+        "bwr:rtg",
+        "bwr:large_rtg"
+      ]
+    },
+    {
+      "title": "The Large RTG",
+      "text": [
+        "2 x 2, 3 high, placed with one item. It holds up to 1,000 kg of ingots and blocks, mixed, loaded by right-click, the Load my fuel button, hopper or pipe. 1,000 kg of strontium-90 makes 920 kW of heat, 46 kW electric, about 3,430 FE/t.",
+        "",
+        "40 cm of lead stops caesium and strontium, but 1,000 kg of cobalt-60 still reads about 1.2 mSv/h at a metre, and its screen says so. Supply is slow: the separator gives about 0.11 kg of strontium-90 per waste item."
+      ],
+      "icons": [
+        "bwr:large_rtg",
+        "bwr:caesium_137_block"
       ]
     }
   ]

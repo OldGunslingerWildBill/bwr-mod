@@ -162,6 +162,11 @@ public final class BwrBlockEntities {
             RTG = BLOCK_ENTITIES.register("rtg",
             () -> BlockEntityType.Builder.of(dev.bwr.mod.isotope.RtgBlockEntity::new,
                     BwrBlocks.RTG.get()).build(null));
+    /** The Large RTG's controller cell: the only cell with a block entity. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.isotope.LargeRtgBlockEntity>>
+            LARGE_RTG = BLOCK_ENTITIES.register("large_rtg",
+            () -> BlockEntityType.Builder.of(dev.bwr.mod.isotope.LargeRtgBlockEntity::new,
+                    BwrBlocks.LARGE_RTG.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity>>
             SPENT_FUEL_POOL = BLOCK_ENTITIES.register("spent_fuel_pool",

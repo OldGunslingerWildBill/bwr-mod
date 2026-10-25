@@ -248,6 +248,9 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.ISOTOPE_SEPARATOR);
     public static final DeferredItem<BlockItem> RTG =
             ITEMS.registerSimpleBlockItem(BwrBlocks.RTG);
+    /** The Large RTG: one item places the whole 2 x 2 x 3 assembly (RTG.md). */
+    public static final DeferredItem<BlockItem> LARGE_RTG =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.LARGE_RTG);
     public static final DeferredItem<BlockItem> SHIELD_PLUG_CONCRETE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.SHIELD_PLUG_CONCRETE);
     public static final DeferredItem<BlockItem> HEAVILY_REINFORCED_SHIELD_PLUG_CONCRETE =
@@ -365,7 +368,9 @@ public final class BwrItems {
     public static final DeferredItem<Item> IRRADIATION_CASING = ITEMS.registerSimpleItem("irradiation_casing");
     public static final DeferredItem<Item> COBALT_CHARGE = ITEMS.registerSimpleItem("cobalt_charge");
     public static final DeferredItem<Item> LITHIUM_CHARGE = ITEMS.registerSimpleItem("lithium_charge");
-    public static final DeferredItem<Item> COBALT_SAMPLE = ITEMS.registerSimpleItem("cobalt_sample");
+    /** The sealed Co-60 a cobalt target makes: 100 g, an RTG fuel (its line is in the fuel list). Crafts 1:1 into a cobalt-60 ingot (RTG.md). */
+    public static final DeferredItem<Item> COBALT_SAMPLE = ITEMS.register("cobalt_sample",
+            () -> new dev.bwr.mod.isotope.IsotopeCapsuleItem(new Item.Properties()));
     public static final DeferredItem<Item> TRITIUM_SAMPLE = ITEMS.register("tritium_sample", () -> new dev.bwr.mod.fuel.TritiumSampleItem(new Item.Properties()));
     public static final DeferredItem<Item> DOPED_SILICON = ITEMS.registerSimpleItem("doped_silicon");
     /**
@@ -429,6 +434,25 @@ public final class BwrItems {
             () -> new dev.bwr.mod.isotope.IsotopeCapsuleItem(new Item.Properties().stacksTo(16)));
     /** What the isotope separator leaves of waste: the same mass without its strontium, caesium and americium. It is not separated again. */
     public static final DeferredItem<Item> STRIPPED_WASTE = ITEMS.registerSimpleItem("stripped_waste");
+
+    // --- RTG isotope ingots and storage blocks (RTG.md, "The ingot and block pattern") ---
+    // <isotope>_ingot is the form the RTGs take; <isotope>_block is nine of them. Their numbers are the RTG fuel list's.
+    public static final DeferredItem<Item> STRONTIUM_90_INGOT = ITEMS.register("strontium_90_ingot",
+            () -> new dev.bwr.mod.isotope.IsotopeCapsuleItem(new Item.Properties()));
+    public static final DeferredItem<Item> CAESIUM_137_INGOT = ITEMS.register("caesium_137_ingot",
+            () -> new dev.bwr.mod.isotope.IsotopeCapsuleItem(new Item.Properties()));
+    public static final DeferredItem<Item> AMERICIUM_241_INGOT = ITEMS.register("americium_241_ingot",
+            () -> new dev.bwr.mod.isotope.IsotopeCapsuleItem(new Item.Properties()));
+    public static final DeferredItem<Item> COBALT_60_INGOT = ITEMS.register("cobalt_60_ingot",
+            () -> new dev.bwr.mod.isotope.IsotopeCapsuleItem(new Item.Properties()));
+    public static final DeferredItem<BlockItem> STRONTIUM_90_BLOCK = ITEMS.register("strontium_90_block",
+            () -> new dev.bwr.mod.isotope.IsotopeBlockItem(BwrBlocks.STRONTIUM_90_BLOCK.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> CAESIUM_137_BLOCK = ITEMS.register("caesium_137_block",
+            () -> new dev.bwr.mod.isotope.IsotopeBlockItem(BwrBlocks.CAESIUM_137_BLOCK.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> AMERICIUM_241_BLOCK = ITEMS.register("americium_241_block",
+            () -> new dev.bwr.mod.isotope.IsotopeBlockItem(BwrBlocks.AMERICIUM_241_BLOCK.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> COBALT_60_BLOCK = ITEMS.register("cobalt_60_block",
+            () -> new dev.bwr.mod.isotope.IsotopeBlockItem(BwrBlocks.COBALT_60_BLOCK.get(), new Item.Properties()));
 
     // --- Control-room furniture (ROOM-FURNITURE.md) ---
     public static final DeferredItem<BlockItem> RELAY_CABINET =
@@ -496,7 +520,7 @@ public final class BwrItems {
                     .icon(() -> FUEL_ASSEMBLY.get().getDefaultInstance()).displayItems((parameters, output) -> {
                         for (var type : FuelTypes.catalogue()) output.accept(FuelAssemblyItem.stackOf(FUEL_ASSEMBLY.get(), FuelAssemblyData.fresh(type)));
                         for (var kind : dev.bwr.core.fuel.CoreInsert.Kind.values()) output.accept(dev.bwr.mod.fuel.SpecialtyRodItem.stack(new dev.bwr.mod.fuel.CoreInsertData(kind, 0)));
-                        for (var item : java.util.List.<net.neoforged.neoforge.registries.DeferredItem<? extends Item>>of(URANIUM_ORE, DEEPSLATE_URANIUM_ORE, RAW_URANIUM, RAW_URANIUM_BLOCK, URANIUM_INGOT, URANIUM_BLOCK, THORIUM_ORE, DEEPSLATE_THORIUM_ORE, MONAZITE_SAND, RAW_THORIUM, RAW_THORIUM_BLOCK, THORIUM_INGOT, THORIUM_NUGGET, THORIUM_BLOCK, RARE_EARTH_CONCENTRATE, LEAD_NUGGET, LEAD_INGOT, RADIUM, IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, COBALT_SAMPLE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM, PLUTONIUM_NUGGET, PLUTONIUM_INGOT, FISSION_PRODUCT_WASTE, STRIPPED_WASTE, STRONTIUM_90_CAPSULE, CAESIUM_137_CAPSULE, AMERICIUM_241_CAPSULE)) output.accept(item.get());
+                        for (var item : java.util.List.<net.neoforged.neoforge.registries.DeferredItem<? extends Item>>of(URANIUM_ORE, DEEPSLATE_URANIUM_ORE, RAW_URANIUM, RAW_URANIUM_BLOCK, URANIUM_INGOT, URANIUM_BLOCK, THORIUM_ORE, DEEPSLATE_THORIUM_ORE, MONAZITE_SAND, RAW_THORIUM, RAW_THORIUM_BLOCK, THORIUM_INGOT, THORIUM_NUGGET, THORIUM_BLOCK, RARE_EARTH_CONCENTRATE, LEAD_NUGGET, LEAD_INGOT, RADIUM, IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM, PLUTONIUM_NUGGET, PLUTONIUM_INGOT, FISSION_PRODUCT_WASTE, STRIPPED_WASTE, STRONTIUM_90_INGOT, STRONTIUM_90_BLOCK, CAESIUM_137_INGOT, CAESIUM_137_BLOCK, AMERICIUM_241_INGOT, AMERICIUM_241_BLOCK, COBALT_60_INGOT, COBALT_60_BLOCK)) output.accept(item.get());
                     }).build());
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB =
@@ -560,6 +584,7 @@ public final class BwrItems {
                         output.accept(REPROCESSING_PLANT.get());
                         output.accept(ISOTOPE_SEPARATOR.get());
                         output.accept(RTG.get());
+                        output.accept(LARGE_RTG.get());
                         output.accept(SHIELD_PLUG_CONCRETE.get());
                         output.accept(HEAVILY_REINFORCED_SHIELD_PLUG_CONCRETE.get());
                         output.accept(ULTRA_REINFORCED_SHIELD_PLUG_CONCRETE.get());

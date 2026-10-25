@@ -52,6 +52,14 @@ versionRange = "[10.7,)"
 ordering = "AFTER"
 side = "BOTH"
 
+# Cold Sweat is optional: the RTGs are its heat sources (RTG.md). Without it they simply are not.
+[[dependencies.${modId}]]
+modId = "cold_sweat"
+type = "optional"
+versionRange = "[2.4.3,)"
+ordering = "AFTER"
+side = "BOTH"
+
 # CC:Tweaked is optional: without it the plant still runs. You control it from the
 # machine screens, with redstone, and from control panels you wire with the linker.
 # The API is compileOnly and never bundled.

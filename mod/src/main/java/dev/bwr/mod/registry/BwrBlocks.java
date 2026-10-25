@@ -294,6 +294,21 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.isotope.RtgBlock> RTG =
             BLOCKS.register("rtg", () -> new dev.bwr.mod.isotope.RtgBlock(machine().noOcclusion()));
 
+    /** The Large RTG: a 2 x 2 x 3 multiblock that holds up to 1,000 kg of isotope material (see RTG.md). One item places it. */
+    public static final DeferredBlock<dev.bwr.mod.isotope.LargeRtgBlock> LARGE_RTG =
+            BLOCKS.register("large_rtg", () -> new dev.bwr.mod.isotope.LargeRtgBlock(machine().noOcclusion()));
+
+    // RTG isotope storage blocks: nine ingots each, 2,250 g (RTG.md). Carried like the ingots; placed they are inert storage.
+    private static BlockBehaviour.Properties isotopeBlock(MapColor colour) {
+        return BlockBehaviour.Properties.of().mapColor(colour)
+                .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.IRON_XYLOPHONE)
+                .requiresCorrectToolForDrops().strength(5.0f, 6.0f).sound(SoundType.METAL);
+    }
+    public static final DeferredBlock<Block> STRONTIUM_90_BLOCK = BLOCKS.register("strontium_90_block", () -> new Block(isotopeBlock(MapColor.COLOR_RED)));
+    public static final DeferredBlock<Block> CAESIUM_137_BLOCK = BLOCKS.register("caesium_137_block", () -> new Block(isotopeBlock(MapColor.COLOR_BLUE)));
+    public static final DeferredBlock<Block> AMERICIUM_241_BLOCK = BLOCKS.register("americium_241_block", () -> new Block(isotopeBlock(MapColor.COLOR_GREEN)));
+    public static final DeferredBlock<Block> COBALT_60_BLOCK = BLOCKS.register("cobalt_60_block", () -> new Block(isotopeBlock(MapColor.COLOR_PURPLE)));
+
     // --- Spent fuel pool (the fuel cycle: fabricator, reactor, pool, reprocessing plant) ----------
 
     /** Lined concrete floor and walls of a spent fuel pool. */

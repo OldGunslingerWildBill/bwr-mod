@@ -102,6 +102,10 @@
     "bwr:rpv_bottom_drain_port",
     "bwr:main_oil_tank",
     "bwr:shaft_oil_pump",
-    "bwr:generator_cooling_skid"
+    "bwr:generator_cooling_skid",
+    "bwr:strontium_90_block",
+    "bwr:caesium_137_block",
+    "bwr:americium_241_block",
+    "bwr:cobalt_60_block"
   ]
 }

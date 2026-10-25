@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:caesium_137_capsule"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:caesium_137_ingot"
+  }
+}

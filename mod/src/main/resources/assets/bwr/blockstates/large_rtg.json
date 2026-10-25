@@ -1,0 +1,196 @@
+{
+  "variants": {
+    "cell=0,facing=north": {
+      "model": "bwr:block/rtg/large/cell_0",
+      "y": 0
+    },
+    "cell=1,facing=north": {
+      "model": "bwr:block/rtg/large/cell_1",
+      "y": 0
+    },
+    "cell=2,facing=north": {
+      "model": "bwr:block/rtg/large/cell_2",
+      "y": 0
+    },
+    "cell=3,facing=north": {
+      "model": "bwr:block/rtg/large/cell_3",
+      "y": 0
+    },
+    "cell=4,facing=north": {
+      "model": "bwr:block/rtg/large/cell_4",
+      "y": 0
+    },
+    "cell=5,facing=north": {
+      "model": "bwr:block/rtg/large/cell_5",
+      "y": 0
+    },
+    "cell=6,facing=north": {
+      "model": "bwr:block/rtg/large/cell_6",
+      "y": 0
+    },
+    "cell=7,facing=north": {
+      "model": "bwr:block/rtg/large/cell_7",
+      "y": 0
+    },
+    "cell=8,facing=north": {
+      "model": "bwr:block/rtg/large/cell_8",
+      "y": 0
+    },
+    "cell=9,facing=north": {
+      "model": "bwr:block/rtg/large/cell_9",
+      "y": 0
+    },
+    "cell=10,facing=north": {
+      "model": "bwr:block/rtg/large/cell_10",
+      "y": 0
+    },
+    "cell=11,facing=north": {
+      "model": "bwr:block/rtg/large/cell_11",
+      "y": 0
+    },
+    "cell=0,facing=east": {
+      "model": "bwr:block/rtg/large/cell_0",
+      "y": 90
+    },
+    "cell=1,facing=east": {
+      "model": "bwr:block/rtg/large/cell_1",
+      "y": 90
+    },
+    "cell=2,facing=east": {
+      "model": "bwr:block/rtg/large/cell_2",
+      "y": 90
+    },
+    "cell=3,facing=east": {
+      "model": "bwr:block/rtg/large/cell_3",
+      "y": 90
+    },
+    "cell=4,facing=east": {
+      "model": "bwr:block/rtg/large/cell_4",
+      "y": 90
+    },
+    "cell=5,facing=east": {
+      "model": "bwr:block/rtg/large/cell_5",
+      "y": 90
+    },
+    "cell=6,facing=east": {
+      "model": "bwr:block/rtg/large/cell_6",
+      "y": 90
+    },
+    "cell=7,facing=east": {
+      "model": "bwr:block/rtg/large/cell_7",
+      "y": 90
+    },
+    "cell=8,facing=east": {
+      "model": "bwr:block/rtg/large/cell_8",
+      "y": 90
+    },
+    "cell=9,facing=east": {
+      "model": "bwr:block/rtg/large/cell_9",
+      "y": 90
+    },
+    "cell=10,facing=east": {
+      "model": "bwr:block/rtg/large/cell_10",
+      "y": 90
+    },
+    "cell=11,facing=east": {
+      "model": "bwr:block/rtg/large/cell_11",
+      "y": 90
+    },
+    "cell=0,facing=south": {
+      "model": "bwr:block/rtg/large/cell_0",
+      "y": 180
+    },
+    "cell=1,facing=south": {
+      "model": "bwr:block/rtg/large/cell_1",
+      "y": 180
+    },
+    "cell=2,facing=south": {
+      "model": "bwr:block/rtg/large/cell_2",
+      "y": 180
+    },
+    "cell=3,facing=south": {
+      "model": "bwr:block/rtg/large/cell_3",
+      "y": 180
+    },
+    "cell=4,facing=south": {
+      "model": "bwr:block/rtg/large/cell_4",
+      "y": 180
+    },
+    "cell=5,facing=south": {
+      "model": "bwr:block/rtg/large/cell_5",
+      "y": 180
+    },
+    "cell=6,facing=south": {
+      "model": "bwr:block/rtg/large/cell_6",
+      "y": 180
+    },
+    "cell=7,facing=south": {
+      "model": "bwr:block/rtg/large/cell_7",
+      "y": 180
+    },
+    "cell=8,facing=south": {
+      "model": "bwr:block/rtg/large/cell_8",
+      "y": 180
+    },
+    "cell=9,facing=south": {
+      "model": "bwr:block/rtg/large/cell_9",
+      "y": 180
+    },
+    "cell=10,facing=south": {
+      "model": "bwr:block/rtg/large/cell_10",
+      "y": 180
+    },
+    "cell=11,facing=south": {
+      "model": "bwr:block/rtg/large/cell_11",
+      "y": 180
+    },
+    "cell=0,facing=west": {
+      "model": "bwr:block/rtg/large/cell_0",
+      "y": 270
+    },
+    "cell=1,facing=west": {
+      "model": "bwr:block/rtg/large/cell_1",
+      "y": 270
+    },
+    "cell=2,facing=west": {
+      "model": "bwr:block/rtg/large/cell_2",
+      "y": 270
+    },
+    "cell=3,facing=west": {
+      "model": "bwr:block/rtg/large/cell_3",
+      "y": 270
+    },
+    "cell=4,facing=west": {
+      "model": "bwr:block/rtg/large/cell_4",
+      "y": 270
+    },
+    "cell=5,facing=west": {
+      "model": "bwr:block/rtg/large/cell_5",
+      "y": 270
+    },
+    "cell=6,facing=west": {
+      "model": "bwr:block/rtg/large/cell_6",
+      "y": 270
+    },
+    "cell=7,facing=west": {
+      "model": "bwr:block/rtg/large/cell_7",
+      "y": 270
+    },
+    "cell=8,facing=west": {
+      "model": "bwr:block/rtg/large/cell_8",
+      "y": 270
+    },
+    "cell=9,facing=west": {
+      "model": "bwr:block/rtg/large/cell_9",
+      "y": 270
+    },
+    "cell=10,facing=west": {
+      "model": "bwr:block/rtg/large/cell_10",
+      "y": 270
+    },
+    "cell=11,facing=west": {
+      "model": "bwr:block/rtg/large/cell_11",
+      "y": 270
+    }
+  }
+}

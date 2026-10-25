@@ -6,7 +6,8 @@
       "half_life_years": 28.9,
       "grams_per_item": 250,
       "gamma_w_per_g": 0.0057,
-      "capsule_transmission": 1.0
+      "capsule_transmission": 1.0,
+      "lead_hvl_cm": 0.6
     },
     "bwr:caesium_137_capsule": {
       "isotope": "Cs-137 with Ba-137m",
@@ -14,7 +15,8 @@
       "half_life_years": 30.04,
       "grams_per_item": 250,
       "gamma_w_per_g": 0.29,
-      "capsule_transmission": 0.85
+      "capsule_transmission": 0.85,
+      "lead_hvl_cm": 0.65
     },
     "bwr:americium_241_capsule": {
       "isotope": "Am-241",
@@ -22,7 +24,8 @@
       "half_life_years": 432.6,
       "grams_per_item": 250,
       "gamma_w_per_g": 0.00063,
-      "capsule_transmission": 0.05
+      "capsule_transmission": 0.05,
+      "lead_hvl_cm": 0.02
     },
     "bwr:radium": {
       "isotope": "Ra-226 with daughters",
@@ -31,6 +34,87 @@
       "grams_per_item": 0.01,
       "gamma_w_per_g": 0.0093,
       "capsule_transmission": 0.0
+    },
+    "bwr:strontium_90_ingot": {
+      "isotope": "Sr-90 with Y-90",
+      "specific_power_w_per_g": 0.92,
+      "half_life_years": 28.9,
+      "grams_per_item": 250,
+      "gamma_w_per_g": 0.0057,
+      "capsule_transmission": 1.0,
+      "lead_hvl_cm": 0.6
+    },
+    "bwr:strontium_90_block": {
+      "isotope": "Sr-90 with Y-90",
+      "specific_power_w_per_g": 0.92,
+      "half_life_years": 28.9,
+      "grams_per_item": 2250,
+      "gamma_w_per_g": 0.0057,
+      "capsule_transmission": 1.0,
+      "lead_hvl_cm": 0.6
+    },
+    "bwr:caesium_137_ingot": {
+      "isotope": "Cs-137 with Ba-137m",
+      "specific_power_w_per_g": 0.42,
+      "half_life_years": 30.04,
+      "grams_per_item": 250,
+      "gamma_w_per_g": 0.29,
+      "capsule_transmission": 0.85,
+      "lead_hvl_cm": 0.65
+    },
+    "bwr:caesium_137_block": {
+      "isotope": "Cs-137 with Ba-137m",
+      "specific_power_w_per_g": 0.42,
+      "half_life_years": 30.04,
+      "grams_per_item": 2250,
+      "gamma_w_per_g": 0.29,
+      "capsule_transmission": 0.85,
+      "lead_hvl_cm": 0.65
+    },
+    "bwr:americium_241_ingot": {
+      "isotope": "Am-241",
+      "specific_power_w_per_g": 0.1147,
+      "half_life_years": 432.6,
+      "grams_per_item": 250,
+      "gamma_w_per_g": 0.00063,
+      "capsule_transmission": 0.05,
+      "lead_hvl_cm": 0.02
+    },
+    "bwr:americium_241_block": {
+      "isotope": "Am-241",
+      "specific_power_w_per_g": 0.1147,
+      "half_life_years": 432.6,
+      "grams_per_item": 2250,
+      "gamma_w_per_g": 0.00063,
+      "capsule_transmission": 0.05,
+      "lead_hvl_cm": 0.02
+    },
+    "bwr:cobalt_60_ingot": {
+      "isotope": "Co-60",
+      "specific_power_w_per_g": 18.9,
+      "half_life_years": 5.2714,
+      "grams_per_item": 100,
+      "gamma_w_per_g": 16.8,
+      "capsule_transmission": 0.9,
+      "lead_hvl_cm": 1.2
+    },
+    "bwr:cobalt_60_block": {
+      "isotope": "Co-60",
+      "specific_power_w_per_g": 18.9,
+      "half_life_years": 5.2714,
+      "grams_per_item": 900,
+      "gamma_w_per_g": 16.8,
+      "capsule_transmission": 0.9,
+      "lead_hvl_cm": 1.2
+    },
+    "bwr:cobalt_sample": {
+      "isotope": "Co-60",
+      "specific_power_w_per_g": 18.9,
+      "half_life_years": 5.2714,
+      "grams_per_item": 100,
+      "gamma_w_per_g": 16.8,
+      "capsule_transmission": 0.9,
+      "lead_hvl_cm": 1.2
     }
   }
 }

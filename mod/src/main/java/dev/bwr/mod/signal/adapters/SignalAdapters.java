@@ -58,6 +58,7 @@ public final class SignalAdapters {
         SignalProviders.register(dev.bwr.mod.radiation.AreaRadiationMonitorBlockEntity.class, RadiationSignals.MONITOR::bind);
         SignalProviders.register(dev.bwr.mod.rwcu.RwcuDeminBlockEntity.class, RwcuSignals.NANOFILTER::bind);
         SignalProviders.register(dev.bwr.mod.isotope.RtgBlockEntity.class, IsotopeSignals.RTG::bind);
+        SignalProviders.register(dev.bwr.mod.isotope.LargeRtgBlockEntity.class, IsotopeSignals.LARGE_RTG::bind);
         SignalProviders.register(dev.bwr.mod.spentfuel.NewFuelElevatorBlockEntity.class, ElevatorSignals.ELEVATOR::bind);
     }
 }
