@@ -269,6 +269,8 @@ def save_library():
 
 if __name__ == '__main__':
     for id in CONFIG:
-        build_pump(id)
+        # turbine_feed_pump.json now comes from art/models/turbine_pumps/build_models.py.
+        if id != 'turbine_feed_pump':
+            build_pump(id)
     build_pipes()
     save_library()

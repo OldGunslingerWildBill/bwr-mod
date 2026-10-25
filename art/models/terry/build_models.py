@@ -179,5 +179,6 @@ def build(id):
 
 
 if __name__=='__main__':
-    build('rcic_twl')
-    build('hpci_turbine')
+    # Superseded (2026-10): rcic_twl.json and hpci_turbine.json now come from
+    # art/models/turbine_pumps/build_models.py. Kept for history; running it would restore the old skids.
+    raise SystemExit('Use art/models/turbine_pumps/build_models.py (see TURBINE-DRIVEN-PUMPS.md)')

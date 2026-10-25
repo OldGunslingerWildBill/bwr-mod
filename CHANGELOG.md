@@ -12,6 +12,18 @@ A visual remodel of both cooling towers. Same blocks, sizes, footprints, ports, 
 - **Checks.** `CoolingModelCheck` also asserts the LOD mesh (present, under a sixth of the full quads, inside the bounds) and when it is chosen. New client check `-PbwrCoolingTowerShots` (CoolingTowerShotsCheck): 1920 x 1080 pictures of both towers with plume, the fans, the louvers, the legs, the rim and the distant LOD, asserting the LOD is drawn only far away.
 - **Rectangular cell tower:** not added (the existing tower was already round; a rectangular one needs a new footprint).
 
+## Unreleased: turbine-driven pump remodel
+
+The feed pump turbine (`bwr:turbine_feed_pump`), RCIC (`bwr:rcic_twl`) and HPCI (`bwr:hpci_turbine`) have new models. They were built in Blender from reference photographs of real equipment, and replace the earlier models. Only the appearance changed:
+
+- **Unchanged.** Block IDs, footprints (9 x 3 x 3, 5 x 4 x 5 and 7 x 5 x 5), controller cells, and the steam and water port cells, faces and flange centres. Pipes connect exactly where they did. Old-save layouts (`modern=false` Terry cells, the non-modern and compact feed-pump models, the retired single blocks) are untouched.
+- **Feed pump turbine.** A condensing turbine with a bolted horizontal joint and an exhaust hood with a side exhaust nozzle. The steam inlet is insulated and feeds a main stop valve with a hydraulic actuator, then bar-lift control valves with a servomotor. There is a front standard with a hand trip. A coupling guard leads to a barrel feed pump with a studded end cover, centreline feet and conical top nozzles. The skid also has a lube oil console, oil risers to every bearing, a gauge board and nameplates.
+- **RCIC.** A Terry turbine with a split drum casing and bolted side covers. Steam passes a trip and throttle valve with a handwheel and trip latch, then a spring-opened governor valve linked to the hydraulic actuator, with a mechanical overspeed trip. The exhaust has a check valve and a rupture-diaphragm branch. A multistage ring-section pump has a tangential discharge, a minimum-flow bypass and an oil cooler. The skid also has a barometric condenser with vacuum and condensate pumps, and a local panel where the CC modem goes.
+- **HPCI.** An insulated Terry turbine with a hydraulic stop valve, a main pump with a booster-style suction casing, a gland seal condenser with an exhauster, an oil console, and a valve platform with handrails and a ladder.
+- **Textures.** Generic gauge, nameplate, panel and warning textures (`tdp_*`), with no brand names. The inventory icons were re-rendered.
+- **Pictures.** `:mod:runTurbineModelCheck -PbwrTurbinePumpShots=<label>` builds all three machines with pipes on every port and saves nine pictures. It fails if a pipe does not join its flange.
+- **More.** Details, sizes and the REFERENCES are in [TURBINE-DRIVEN-PUMPS.md](TURBINE-DRIVEN-PUMPS.md).
+
 ## Unreleased: vessel height matters (separators, carryover, chimney, inventory)
 
 Until now the physics did not see the height of a built vessel at all: the steam dome (180 m3) and the water (220 t) were never set from the build, natural circulation was `0.366 P^(1/3)` in every vessel, and every vessel made perfectly dry steam. Now the height of the drawn vessel (`VesselProfile`) sets how well the separators dry the steam, how strong natural circulation is, and how much steam space and water the vessel holds. The 17 x 17 x 28 default keeps its calibrated reactor behaviour exactly; its steam is 0.86 % wet. Nothing acts automatically. Full write-up, sources and the table: [VESSEL-HEIGHT.md](VESSEL-HEIGHT.md).
