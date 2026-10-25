@@ -20,6 +20,15 @@ for folder_name,names in (('art/models/reactor_vessel',RVU),('art/models/reactor
         # Entity rendering already applies directional lighting; do not bake it twice.
         model['shade_quads']=False
         m.put(folder/'body.json',model)
+# The unformed recirculation port blocks (art/models/reactor_vessel_v2/build_recirc_nozzles.py): the shell cube with its nozzle.
+m.SOURCE=ROOT/'art/models/reactor_vessel_v2/port_blocks'
+for name in ('recirculation_inlet','recirculation_outlet'):
+    source=m.read(name+'.json');folder=m.RES/'assets/bwr/models/block/recirculation_port'/name.split('_')[1]
+    mats=m.materials(source,folder)
+    m.put(folder/'body.obj',m.obj(source['faces'],mats))
+    model={'parent':'minecraft:block/block',**m.model(f'bwr:models/block/recirculation_port/{name.split("_")[1]}/body.obj')}
+    model['textures']={'particle':'bwr:block/reactor_vessel'}
+    m.put(m.RES/'assets/bwr/models/block'/(name+'.json'),model)
 for path,data in m.OUTPUTS.items():
     if '--check' in sys.argv:
         assert path.is_file() and path.read_bytes()==data,'Stale RPV asset '+str(path)

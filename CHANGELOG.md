@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased: condensate tank and recirc nozzle remodel
+
+A visual remodel of the condensate storage tank and of the vessel's recirculation outlet and inlet nozzles. Block ids, box sizes and scaling (3 to 15 across, 3 to 24 high), cells, collision, controller, capacity, port cells, faces and flange centres are unchanged, so pipes join exactly where they did and old saves load as before. Write-ups and references: CONDENSATE-TANK.md ("Remodel") and RECIRC-REMODEL.md ("The vessel's recirculation nozzles").
+
+- **Condensate storage tank.** Drawn after an outdoor welded steel CST (Columbia: two 400,000 gal carbon-steel tanks with heaters, inside a concrete dike on a reinforced mat, FSAR 9.2.6 and 3.8.5.1.5). The model has:
+  - a concrete dike mat and curb, and a ringwall;
+  - shell courses with girth and staggered vertical seams, and a top angle;
+  - a cone roof with radial laps, a gooseneck vent and a roof manway;
+  - a perimeter handrail, and a caged ladder with a grating roof landing;
+  - weld-neck nozzles on reinforcing pads, a bolted shell manway, an immersion heater, a float-and-tape gauge board and an overflow downcomer;
+  - anchor bolt chairs, the stencilled name, a tank plate and a radiological posting.
+  Parts that should keep their real size stay full size on any tank. The tank uses one texture atlas (`make_cst_atlas.py`) and headless Blender (`build_cst.py`). The largest tank is 25,970 triangles (was 12,854), one cached mesh per size as before. The plain casing block that old single-block tanks use is unchanged.
+- **Recirculation nozzles on the formed v2 vessel.** The outlet is a broad set-in forging with a big blend radius (FSAR Fig 5.3-5). The inlet has the Fig 5.3-6 fillet and taper. Each has an Inconel butter band, a stainless safe end tapering to the pipe, and the safe-end weld, with a structural weld overlay on the outlet. The pipe bends from the nozzle's radial line onto the port face. The flange face is where the old water nozzle's was, banded blue (outlet, to the pump suction) or teal (inlet, from the discharge). An inlet's thermal sleeve stands in from the inner wall. The vessel now tells the client which ports are recirculation ports: two kinds are added to the end of `VesselAppearance.PortKind`, so the older codes keep their numbers. Wrongly faced ports still show as plain blocks.
+- **Unformed port blocks.** `recirculation_outlet` and `recirculation_inlet` are now the vessel shell cube with the nozzle set flush into its face: forging, butter, safe end, a bolted flange and the port colour band. They replace the flat decal.
+- **Checks.**
+  - New GameTest `recirculationportsaretypedonthewire` (RecircNozzleTests).
+  - New picture check `-PbwrTankNozzleShots=<label>` (TankNozzleShots): the 3 x 3, 5 x 6 and 15 x 24 tanks with piped flanges, a formed 17 x 17 x 28 vessel with piped recirculation nozzles, and a loose wall of the port blocks.
+  - Blender previews: `art/models/condensate_tank/preview_cst.py` and `art/models/reactor_vessel_v2/preview_recirc_nozzles.py`.
+
 ## Unreleased: RWCU stainless steel nanofilter
 
 The RWCU filter-demineralizer is now the **RWCU Stainless Steel Nanofilter**, and it works at full reactor temperature. Write-up, the numbers and the references: [RWCU.md](RWCU.md).

@@ -831,10 +831,11 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             if(level.isLoaded(p)) {
                 var s=level.getBlockState(p);
                 var kind=s.getBlock() instanceof ReactorControllerBlock?VesselAppearance.PortKind.CONTROLLER
+                        :s.getBlock() instanceof RecirculationPortBlock r?(r.isOutlet()?VesselAppearance.PortKind.RECIRC_OUTLET:VesselAppearance.PortKind.RECIRC_INLET)
                         :s.getBlock() instanceof RpvWaterInjectionPortBlock?VesselAppearance.PortKind.WATER
                         :s.getBlock() instanceof RpvSteamOutletBlock?VesselAppearance.PortKind.STEAM:VesselAppearance.PortKind.LEGACY;
                 // Do not disguise an incorrectly oriented water block as a working outward nozzle.
-                if(kind==VesselAppearance.PortKind.WATER&&s.getValue(RpvWaterInjectionPortBlock.FACING)!=VesselAppearance.outwardFace(p,min,max))
+                if(kind.isWater()&&s.getValue(RpvWaterInjectionPortBlock.FACING)!=VesselAppearance.outwardFace(p,min,max))
                     kind=VesselAppearance.PortKind.LEGACY;
                 if(kind!=VesselAppearance.PortKind.LEGACY)visualKinds.put(p.immutable(),kind);
                 if(!s.isAir() && !s.is(dev.bwr.mod.registry.BwrBlocks.REACTOR_VESSEL.get())

@@ -145,6 +145,8 @@ neoForge {
             if (project.hasProperty('bwrMachineRenderCheck')) jvmArguments.add('-Dbwr.machineRenderCheck=true')
             // Turbine-driven pump pictures (feed pump turbine, RCIC, HPCI) with piped ports: -PbwrTurbinePumpShots=<label> saves run/turbineModelCheck/turbine-pump-shots/<label>/ (TurbinePumpShots).
             if (project.hasProperty('bwrTurbinePumpShots')) jvmArguments.add('-Dbwr.turbinePumpShots=' + project.property('bwrTurbinePumpShots'))
+            // Condensate tank and recirculation nozzle pictures: -PbwrTankNozzleShots=<label> saves run/turbineModelCheck/tank-nozzle-shots/<label>/ (TankNozzleShots).
+            if (project.hasProperty('bwrTankNozzleShots')) jvmArguments.add('-Dbwr.tankNozzleShots=' + project.property('bwrTankNozzleShots'))
             if (project.hasProperty('bwrShellExchangerCheck')) jvmArguments.add('-Dbwr.shellExchangerCheck=true')
             if (project.hasProperty('bwrHxMultiblockCheck')) jvmArguments.add('-Dbwr.hxMultiblockCheck=true')
             if (project.hasProperty('bwrSpargerCheck')) jvmArguments.add('-Dbwr.spargerCheck=true')

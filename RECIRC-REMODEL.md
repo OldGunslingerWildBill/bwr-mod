@@ -142,3 +142,97 @@ Viewed online or in the local FSAR copy. Nothing is bundled or redistributed, an
 
 Proportions are a game-scale approximation (about 0.9 m per block), not manufacturer drawings. The plate data (flow, horse
 power, voltage) are rounded Columbia-class figures on generic plates.
+
+## 5. The vessel's recirculation nozzles
+
+The recirculation outlet and inlet port blocks (`bwr:recirculation_outlet`, `bwr:recirculation_inlet`) used to be a shell
+cube with a flat square decal. On the formed v2 vessel they got the same thin spool, generic forging, safe end and water
+nozzle as every water port. Now both have their own nozzles.
+
+Only the look changes. The ids, the cells, the faces that must point outward, the loop rules and the flange centres are as
+before. On the formed vessel the flange face is where the old water nozzle's face was, so a pipe joins exactly as it did.
+
+### What the real nozzles look like (Columbia, BWR/5)
+
+- **Outlet.** The outlet nozzles (2 x 24 in, 172.5 in above vessel zero) are big, short forgings low on the shell. They blend
+  into the plate with a large radius. (FSAR Fig 5.3-3, Fig 5.3-5.)
+- **Inlet.** The inlet (riser) nozzles (10 x 12 in, 181 in) are slimmer and have **thermal sleeves**. The jet-pump riser is
+  welded to that sleeve inside the vessel. (§5.3.3.1.4.5, §3.9.5.)
+- **Nozzle detail.** The detail drawing in the FSAR is the feedwater nozzle (Fig 5.3-6). It has the same family of parts:
+  - the low-alloy forging, with a fillet radius off the shell and a conical taper;
+  - an Inconel overlay (buttering) where the safe end is welded on;
+  - the thermal sleeve and its extension welded at the safe end;
+  - the safe end tapering down to the pipe weld.
+- **Safe ends.** The safe ends are stainless. They were welded on after the vessel's heat treatment, to avoid sensitizing
+  them. Columbia replaced its recirculation inlet safe ends in type 316L. (§5.3.3.1.4.5, §5.2 text on IGSCC; Table 5.2-7
+  materials.)
+- **Weld overlays.** Cracked stainless weldments in BWR recirculation piping are commonly reinforced with a weld overlay.
+  GL 88-01 accepts that repair. The outlet model shows one over its safe-end weld.
+
+### What the models show (`art/models/reactor_vessel_v2/build_recirc_nozzles.py`)
+
+- **Outlet** (`VesselModel.recircNozzle`):
+  - a broad boss flaring to 1.8 times the forging radius, set radially into the shell, in the shell's colour;
+  - the Inconel butter band with weld ripples;
+  - the stainless safe end, straight and then tapered;
+  - the safe-end weld under a structural weld overlay;
+  - the stainless pipe, bent in a smooth curve from the nozzle's radial line onto the port face;
+  - the flange at the face: a weld-neck hub, a raised face, a gasket, 12 nuts and a blue band (it feeds the pump's blue
+    suction).
+- **Inlet.** The fillet-and-taper forging (Fig 5.3-6), butter, safe end, weld, the bent pipe and a teal band (fed from the
+  pump's teal discharge). Inside the vessel its thermal sleeve stands in from the inner wall.
+- **How the sizes work.** The forging radii are 0.56 and 0.42 blocks, the same on every vessel, because the game pipe is one
+  block whatever the vessel's size. Where the shell is close to the face (the centre column of a wall) the pieces shorten in
+  proportion, and they never cross the face.
+- **Wrong facing.** A wrongly faced or top/bottom recirculation port keeps the generic kit, or shows as a plain block, as
+  before.
+- **Unformed blocks** (`port_blocks/`, exported to `models/block/recirculation_port/` by `tools-export-reactor-vessel.py`):
+  - the vessel shell cube with a counterbore in its face;
+  - the nozzle set flush into it: forging, butter, safe end and a bolted flange (12 studs on the outlet, 8 on the inlet);
+  - the port's colour band.
+  Nothing sticks out of the block, so a pipe joins as before.
+
+**The vessel tells the client the kind.** `VesselAppearance.PortKind` gains `RECIRC_OUTLET` and `RECIRC_INLET` at the end,
+so `WATER` (2) and `STEAM` (3) keep their wire codes. The envelope is sent on the controller's update tag and not saved.
+`PortKind.isWater()` keeps both treated as water interfaces, and the outward-facing check applies to them as to water
+ports. GameTest `RecircNozzleTests` checks the typed kinds, the wrongly faced port and the old codes.
+
+**Triangles per nozzle.**
+
+| Nozzle | Triangles |
+| --- | ---: |
+| Old generic water kit | 2,124 |
+| Outlet, with an 8-piece bend | 3,060 |
+| Inlet, with an 8-piece bend and its sleeve | 3,124 |
+
+A vessel with 2 outlets and 10 inlets adds about 12,000 triangles to its exterior mesh (about 39,000), once, in the cached
+mesh.
+
+**Pictures.**
+- Blender: `preview_recirc_nozzles.py`, before and after, in `art/models/reactor_vessel_v2/recirc_review/`.
+- In-game: `-PbwrTankNozzleShots=<label>` (TankNozzleShots), with copies in `art/cst-recirc-remodel/`:
+  - four inlets and a low outlet on the north wall of a formed 17 x 17 x 28 vessel, plus an outlet in the upper half where
+    the loop rule wants one, all piped;
+  - a loose wall with the unformed blocks.
+
+### REFERENCES (nozzles)
+
+- **Columbia Generating Station FSAR, Amendment 67** (ML23346A215), local copy `../references/columbia/Columbia FSAR.pdf`.
+  Pages (1-based PDF):
+  - Fig 5.3-5, page 2158: the vessel cutaway with the recirculating water outlet and inlet nozzles;
+  - Fig 5.3-6, page 2159: the feedwater nozzle detail (nozzle SA-508, Inconel safe end, thermal sleeve and extension, Inconel
+    overlay, fillet radii, taper);
+  - Fig 5.3-3, page 2156: the nozzle elevations;
+  - §5.3.3.1.4.5, pages 2131-2132: which nozzles have thermal sleeves, and the stainless safe ends welded after heat treatment;
+  - §5.2 text, page 2077: the recirculation inlet safe ends replaced in 316L;
+  - Table 5.2-7, page 2101: the nozzle and safe-end materials;
+  - §3.9.5, page 1406: the riser welded to the inlet nozzle's thermal sleeve;
+  - Table 3.9-2a, page 1427: the usage factor at the thermal sleeve to safe end.
+- **NRC Generic Letter 88-01**, IGSCC in BWR austenitic stainless steel piping (viewed): cracked weldments reinforced with a
+  weld overlay are acceptable. Scope: all BWR austenitic stainless piping of 4 in and larger.
+  https://www.nrc.gov/reading-rm/doc-collections/gen-comm/gen-letters/1988/gl88001.html
+- [S] Seen in search results only. The PDFs are scanned images, so their text could not be read:
+  - Susquehanna relief request for a full structural weld overlay on a recirculation outlet nozzle (stainless safe end on a
+    low-alloy nozzle, Alloy 182 buttering): https://www.nrc.gov/docs/ML0409/ML040960442.pdf
+  - an NRC presentation with recirculation nozzle overlays: https://www.nrc.gov/docs/ML1621/ML16210A491.pdf
+
