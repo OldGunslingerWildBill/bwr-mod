@@ -427,7 +427,7 @@ public class NewFuelElevatorBlockEntity extends BlockEntity {
         tCellZ = column[1];
         tRack = rack.immutable();
         tCell = cell;
-        trip = FuelElevatorMotion.trip(kind, tGuideX, tGuideZ, tHatchY, tSeatY, tCellX, tCellZ);
+        trip = FuelElevatorMotion.plan(kind, tGuideX, tGuideZ, tHatchY, tSeatY, tCellX, tCellZ);
         tLegs = trip.legTicks().clone();
         schedule(server, trip.handoffTicks());
         setChanged();

@@ -16,11 +16,11 @@ public final class FuelElevatorMotionTest {
 
     /** A pool whose rim top is at y = 108, rack seat at 105 (floor 101 + 4), guide at x = 1.5, cell at x = 6.25. */
     private static FuelElevatorMotion.Trip down() {
-        return FuelElevatorMotion.trip(Kind.LOWER, 1.5, 3.5, 109.0, 105.0, 6.25, 3.75);
+        return FuelElevatorMotion.plan(Kind.LOWER, 1.5, 3.5, 109.0, 105.0, 6.25, 3.75);
     }
 
     private static FuelElevatorMotion.Trip up() {
-        return FuelElevatorMotion.trip(Kind.RAISE, 1.5, 3.5, 109.0, 105.0, 6.25, 3.75);
+        return FuelElevatorMotion.plan(Kind.RAISE, 1.5, 3.5, 109.0, 105.0, 6.25, 3.75);
     }
 
     public static void test01_aTripDownIsDescendSlideSeatReturnInThatOrder() {
@@ -73,7 +73,7 @@ public final class FuelElevatorMotionTest {
         Check.exactly((int) Math.ceil(Math.hypot(4.75, 0.25) / 0.6 * 20.0 - 1e-9), t.legTicks()[1], "slide");
         Check.exactly((int) Math.ceil(1.0 / 0.3 * 20.0 - 1e-9), t.legTicks()[2], "seat");
         Check.exactly(60, t.legTicks()[3], "empty carriage at 1 m/s");
-        var same = FuelElevatorMotion.trip(Kind.LOWER, 2.0, 2.0, 108.0, 107.0, 2.0, 2.0);
+        var same = FuelElevatorMotion.plan(Kind.LOWER, 2.0, 2.0, 108.0, 107.0, 2.0, 2.0);
         for (int n : same.legTicks()) {
             Check.isTrue(n >= 1, "every leg takes at least a tick: %s", n);
         }

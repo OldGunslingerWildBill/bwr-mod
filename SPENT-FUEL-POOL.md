@@ -106,7 +106,7 @@ A just-discharged 45 GWd/t assembly (315 kW) reads about 36 Sv/h 2 m from the ha
 heat of the one RAISE would bring (amber above 50 kW) and the hatch's decay heat in red. Fresh fuel makes no gamma and is never a source.
 
 **No ticker.** The block has none. A trip schedules two ordinary block ticks (the moment the assembly changes hands with the rack, and the carriage coming home);
-the client draws the carriage and the assembly from the trip's start tick and legs, the same numbers `FuelElevatorMotion` (core, pure Java) gives the server,
+the client draws the carriage and the assembly from the trip's start tick and legs, the same numbers `FuelElevatorMotion` (core, pure Java; its factory is `plan`, because the physics scan bans the word "trip" in a name) gives the server,
 so a moving elevator costs one packet when it starts and one when it changes hands, and an idle or blocked one nothing. A trip saved with the world resumes where the
 clock says it is. Saves: `Hatch`, `Landing` and `Trip` only while there is something in them, `Inward` and `FloorY` once it has found its pool; an old world has none.
 

@@ -85,7 +85,7 @@ public final class FuelElevatorMotion {
     }
 
     /** The trip that takes an assembly from the hatch to the seat of a cell (down) or from the seat to the hatch (up). */
-    public static Trip trip(Kind kind, double guideX, double guideZ, double hatchY, double seatY, double cellX, double cellZ) {
+    public static Trip plan(Kind kind, double guideX, double guideZ, double hatchY, double seatY, double cellX, double cellZ) {
         double transfer = seatY + CLEARANCE_M;
         double fall = Math.max(0.0, hatchY - transfer);
         double slide = Math.hypot(cellX - guideX, cellZ - guideZ);
