@@ -111,31 +111,50 @@ public final class LargeRtgTests {
     // The multiblock
 
     /** One item places 12 cells in all four facings; only the controller has a block entity; breaking any part clears it and drops one item and the contents. */
-    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 200)
+    @GameTest(batch = "largertg", template = "empty", templateNamespace = NS, timeoutTicks = 800)
     public static void assemblyPlacesAndBreaksInAllFacings(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos o = new BlockPos(7200, 190, 7200);
         l.getChunk(o);
         // hold the chunks so item entities exist for the drop counts
+        java.util.List<long[]> held = new java.util.ArrayList<>();
         for (int cx = (o.getX() - 40) >> 4; cx <= (o.getX() + 60) >> 4; cx++) {
             for (int cz = (o.getZ() - 8) >> 4; cz <= (o.getZ() + 8) >> 4; cz++) {
                 l.getChunk(cx, cz);
-                l.setChunkForced(cx, cz, true);
+                if (l.setChunkForced(cx, cz, true)) {
+                    held.add(new long[] {cx, cz});
+                }
             }
         }
-        // the tickets take effect between ticks and entities load a little after the chunk: wait before the checks
-        h.runAfterDelay(20, () -> {
+        // The tickets take effect between ticks and a chunk's entities load a little after the chunk, longer on a busy server:
+        // wait until every chunk says so (or give up with a message).
+        awaitEntities(h, l, held, 300, () -> {
             try {
                 placementChecks(h, l, o);
             } finally {
-                for (int cx = (o.getX() - 40) >> 4; cx <= (o.getX() + 60) >> 4; cx++) {
-                    for (int cz = (o.getZ() - 8) >> 4; cz <= (o.getZ() + 8) >> 4; cz++) {
-                        l.setChunkForced(cx, cz, false);
-                    }
+                for (long[] c : held) {
+                    l.setChunkForced((int) c[0], (int) c[1], false);
                 }
             }
             h.succeed();
         });
+    }
+
+    private static void awaitEntities(GameTestHelper h, ServerLevel l, java.util.List<long[]> chunks, int tries, Runnable then) {
+        boolean ready = true;
+        for (long[] c : chunks) {
+            ready &= l.areEntitiesLoaded(net.minecraft.world.level.ChunkPos.asLong((int) c[0], (int) c[1]));
+        }
+        if (ready) {
+            then.run();
+        } else if (tries <= 0) {
+            for (long[] c : chunks) {
+                l.setChunkForced((int) c[0], (int) c[1], false);
+            }
+            h.fail("the chunks' entities never loaded");
+        } else {
+            h.runAfterDelay(2, () -> awaitEntities(h, l, chunks, tries - 1, then));
+        }
     }
 
     private static void placementChecks(GameTestHelper h, ServerLevel l, BlockPos o) {
