@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased: multiblock RHR heat exchanger
+
+The RHR heat exchanger is now a full-size machine. One `bwr:rhr_heat_exchanger` item places a vertical shell-and-tube unit 3 wide, 8 high and 3 deep (controller at the centre of the base), one model and one block entity, the way the pumps work. Write-up, port table and references: SUPPRESSION-BASIN.md, "Full-size exchanger".
+
+- **Real form.** Columbia's RHR exchangers are vertical inverted U-tube units (FSAR Table 6.2-2), 7,641 ft2 of tubes each in a 30 ft bay. The model: a 1.5 m lagged shell on four lugs and a braced steel frame, the channel head and bonnet at the bottom with a bolted tubesheet joint (32 studs), an ellipsoidal top head with a vent valve and lifting padeyes, a relief valve on the shell, drain valves, thermometers and pressure gauges on every nozzle, a generic nameplate. Headless Blender (`art/models/suppression/build_hx_multiblock.py`), cell-split by `tools-export-hx-multiblock.py` with the pump exporter's clipping.
+- **Ports.** The same colours and faces as before (red tube inlet on the front, amber behind, blue shell inlet to the left, cyan shell outlet to the right), now on four flange cells: red and amber on the channel head one block up, blue low on the west cell, cyan six blocks up on the east cell. Right-click, CC and the Networking Wrench work on any cell and address the controller. Placement refuses a blocked footprint; breaking any cell removes the unit and returns one item.
+- **Saves.** Exchangers already placed stay working single blocks: same id, model, flange faces and saved data, never expanded into neighbours. Pick one up and place it again to build the full-size unit.
+- **Physics unchanged.** Same model, readouts and 27.1 MW rating for both forms; Columbia's FSAR figures (24.4 MW per loop for containment cooling, 12.2 MW shutdown cooling at 20 h) give no reason to raise it. The river loop and the Water Outlet Chute work through the full-size unit.
+- **Checks.** GameTests `bwrhx` (HxMultiblockTests, 4 tests); client pictures `-PbwrHxMultiblockCheck` (HxMultiblockClientCheck). The inventory icon is re-rendered.
+
 ## Unreleased: cooling-tower remodel (hyperbolic tower and Columbia-style round tower)
 
 A visual remodel of both cooling towers. Same blocks, sizes, footprints, ports, rotor pivots, physics and saves; the collision cells are the alpha.53 cells (the exported layout agrees with the old one to within 5e-6 block, and the same ports and 4,670 / 1,824 cells), so towers placed in any earlier version load and fit exactly.

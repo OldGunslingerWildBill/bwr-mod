@@ -136,6 +136,14 @@ River/lake -> Screened Water Intake -> Makeup Water Pump -> pipe -> exchanger BL
    is the water inlet (a pipe may touch only that face, and so may the exchanger); place it facing the river.
 4. Run the RHR pump as usual. Nothing starts by itself: the pump, the RHR pump and the chute are all commanded by the player.
 
+**Full-size exchanger (alpha.55).** New placements build the 3 x 8 x 3 vertical unit (SUPPRESSION-BASIN.md, "Full-size
+exchanger"). Its blue flange is low on the west cell (one block up), its cyan flange high on the east cell (six blocks up),
+facing north. Pipe the makeup pump to the blue flange as above. For the cyan flange either set the chute straight against it
+over water at most four blocks below the lip, or run a pipe down from the flange to a chute at the water's edge. The water
+balance, temperatures and readouts are the same as for the single block, which keeps working where it already stands.
+
+![River loop through the full-size exchanger](art/models/suppression/hx-multiblock/river-loop.png)
+
 **Water Outlet Chute.** A concrete outfall: back flange, headwall, a trough with baffle blocks and a lip. It returns water to
 the river or lake and refuses to work unless it really faces open water:
 

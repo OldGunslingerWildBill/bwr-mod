@@ -127,7 +127,7 @@ either touching it directly or using High-Pressure Water Pipe.
 
 ## Shell-and-tube heat exchanger (four flanges)
 
-The RHR heat exchanger is one block drawn as a horizontal shell-and-tube exchanger: a cladded shell on two saddles, a
+The single-block RHR heat exchanger (every exchanger placed before alpha.55; new placements build the [full-size unit](#full-size-exchanger-3-x-8-x-3-multiblock)) is drawn as a horizontal shell-and-tube exchanger: a cladded shell on two saddles, a
 bolted channel head (bonnet) at each end, a flanged nozzle on every circuit, a vent on top, a drain underneath, lifting
 lugs and a plain nameplate. It keeps the registry id `bwr:rhr_heat_exchanger`, the same four flange faces and the same
 saved data as the plate exchanger it replaced, so exchangers already standing in a world take the new model and keep
@@ -175,9 +175,108 @@ abstract cooling-duty slider. Existing pump local and CC controls still apply.
 ![River-cooled loop](art/models/suppression/shell-exchanger/river-loop.png)
 ![Live exchanger panel](art/models/suppression/shell-exchanger/exchanger-screen.png)
 
+## Full-size exchanger (3 x 8 x 3 multiblock)
+
+From alpha.55 one **RHR Heat Exchanger** item places a full-size machine: a vertical shell-and-tube unit **3 wide, 8 high
+and 3 deep**, one model, one block entity, the same way the pumps work. The clicked block becomes the **centre of the
+base** (the controller), so leave the whole 3 x 8 x 3 box clear, including the space around the clicked block. Placement is
+refused, with nothing changed, if any cell is occupied, unloaded, outside the world or protected. Breaking any cell removes
+the whole unit and returns one item. Pistons cannot push it.
+
+What it looks like: a lagged shell (1.5 m, aluminium cladding with bands and lap joints) on four lugs that bear on a braced
+steel frame; at the bottom the painted channel head and bonnet with the bolted tubesheet joint (channel flange, tubesheet
+rim, shell flange, 32 through-studs); an ellipsoidal top head with a vent valve and two lifting padeyes; a spring relief
+valve high on the shell; drain valves on the bonnet and the shell; a bimetal thermometer and a pressure gauge on every
+nozzle; a plain nameplate. The four nozzles keep the alpha.54 colour bands and end in bolted flanges centred on a block face.
+
+| Band | Side | Cell (offset from the controller, machine facing north) | Outward face |
+| --- | --- | --- | --- |
+| Red, RHR water IN | Tube side, channel head | (0, 1, -1) | North (front) |
+| Amber, RHR water OUT | Tube side, channel head | (0, 1, 1) | South (back) |
+| Blue, cooling water IN | Shell side, low | (-1, 2, 0) | West |
+| Cyan, cooling water OUT | Shell side, high | (1, 6, 0) | East |
+
++x is east, +y up, +z south; offsets and faces turn with the machine. The faces are the same as a single block's (red on the
+front, amber behind, blue counter-clockwise, cyan clockwise); only the flanges have moved onto those four cells. Put the
+first pipe directly outside the listed face. No other face of the unit takes a pipe, and only blue and cyan expose water.
+
+The circuits work exactly as for the single block: the RHR pump's discharge to red, amber back to the same basin (or vessel
+for shutdown cooling); cooling water into blue, heated water pushed out of cyan into a pipe, a tank, a cooling tower or a
+**Water Outlet Chute**. The cyan flange is six blocks up: a chute set straight against it needs open water at most four
+blocks under its lip, or run a pipe down to a chute at the water's edge. Right-click **any** cell for the exchanger panel;
+CC:Tweaked computers and the Networking Wrench may also use any cell, and all of them address the controller. The unit works
+only while all 72 cells are loaded and standing.
+
+**Saved exchangers.** Every exchanger placed before alpha.55 stays a working single block: the same id, model, four flange
+faces and saved data, and it is never expanded into its neighbours (its saved state has no `assembled` property and loads as
+the single block). Pick it up and place it again to get the full-size unit, then reconnect its pipes at the new flanges.
+
+**Rating.** The full-size unit keeps the same physics, readouts and **27.1 MW** rating as the single block (92.5 million
+Btu/h, the representative BWR RHR exchanger in EPRI 1012129). Columbia's FSAR gives **83.23 million Btu/h (24.4 MW) per
+loop** of containment heat removal with 85 F service water and a 165 F pool, and **41.6 million Btu/h (12.2 MW)** of
+shutdown-cooling duty per exchanger 20 hours after shutdown. Those figures do not justify a higher rating for the bigger
+model, so neither form changed. Columbia's design flows are 7,450 gpm of RHR water and 7,400 gpm of service water per
+exchanger, about 470 kg/s each; the game's RHR pump delivers about 445 kg/s through it.
+
+**Why this size and shape.** Columbia's RHR exchangers are vertical, inverted U-tube units with a single-pass shell and
+multi-pass tubes, 7,641 ft2 (710 m2) of tube surface each, standing in a bay from el. 559 ft to el. 589 ft of the reactor
+building (FSAR, REFERENCES). The FSAR gives no dimensions, so the size is an estimate: 710 m2 of 3/4 in tubes is about 12 km
+of tube, roughly 900 U-tubes with 6 m legs, which fit a tubesheet of about 1.3 m inside a 1.5 m shell. Six metres of tube legs
+plus the channel head, the top head and the support frame make about 8 m, inside the 9 m (30 ft) bay. At one block per metre
+that is the 3 x 8 x 3 box: a convincing height next to the 7 x 3 x 3 RHR pump, and still a footprint a player can fit in a
+pump room. The channel head is at the bottom because the U-bends are at the top; the shell stands on lugs and a frame, the
+arrangement BWR RHR exchangers use (seismic studies of 1100 MWe BWR units model them that way). In the real plant RHR water
+is on the shell side and service water in the tubes; the game keeps RHR water on the tube side and cooling water on the shell
+side, as alpha.54 did, so saved exchangers and the existing colour code mean the same thing.
+
+![Full-size exchanger, front: red tube inlet and blue shell inlet](art/models/suppression/hx-multiblock/hx-front.png)
+![Back: amber tube outlet and cyan shell outlet](art/models/suppression/hx-multiblock/hx-back.png)
+![Channel head, tubesheet joint, frame and lugs](art/models/suppression/hx-multiblock/hx-channel-head.png)
+![Top head, vent valve, padeyes and relief valve](art/models/suppression/hx-multiblock/hx-top.png)
+![River loop through the full-size exchanger](art/models/suppression/hx-multiblock/river-loop.png)
+![Outlet chute on the cyan flange, discharging into the river](art/models/suppression/hx-multiblock/river-loop-chute.png)
+![Panel opened from a top cell](art/models/suppression/hx-multiblock/hx-screen.png)
+
+Authoring: `blender.exe --background --factory-startup --python art/models/suppression/build_hx_multiblock.py` writes
+`art/models/suppression/rhr_hx_assembly.json` (26,636 triangles) and `rhr_hx_assembly.blend`; `python tools-export-hx-multiblock.py`
+cell-splits it with the pump exporter's clipping (UVs and surface area preserved) into
+`models/block/suppression/hx_assembly/cell_<i>`, the footprint manifest `data/bwr/exchanger_models/rhr_heat_exchanger.json`,
+the blockstate, the item model and the loot table; `--check` is read-only. 69 of the 72 cells draw geometry; the three in
+the middle of the shell are its hollow inside.
+
+Verification: GameTests in namespace `bwrhx` (HxMultiblockTests): placement and breaking in all four facings, a blocked
+footprint refused, every cell addressing the controller, flange faces, pipes and capabilities, both water circuits, the
+river loop through the full-size unit, and a single block loading from an alpha.54 save. Pictures: `:mod:runTurbineModelCheck
+-PbwrHxMultiblockCheck` (HxMultiblockClientCheck).
+
+### REFERENCES
+
+- Columbia Generating Station FSAR, Chapter 6, Amendment 59, Table 6.2-2 item C.3 ("RHR system-inverted U-tube, single pass
+  shell, multi-pass tubes, vertical mounting"; 2 exchangers, 7,641 ft2 each, U 195 Btu/h ft2 F, 7,400 gpm service water,
+  83.23 x 10^6 Btu/h per loop), Table 6.1-1 (shell SA-516 Gr 70, U-tubes SA-249 304L, tubesheet SA-105) and section
+  6.2.4.3.2.2.1.3 (vent lines with motor-operated globe valves, relief valve discharge to the suppression pool):
+  <https://www.nrc.gov/docs/ML1201/ML12011A160.pdf>
+- Columbia FSAR, Chapter 1, Table 1.3-3 (RHR shutdown cooling: 41.6 x 10^6 Btu/h per exchanger at 20 h, 7,450 gpm RHR,
+  7,400 gpm service water): <https://www.nrc.gov/docs/ML1201/ML12011A152.pdf>
+- Columbia FSAR, Chapter 12, Amendment 62, section 12.2.1.2.2.5 (the exchangers occupy el. 559 ft to 589 ft on the west
+  side of the reactor building): <https://www.nrc.gov/docs/ML1535/ML15355A511.pdf>
+- Columbia license renewal application, section 2.3.2.1 and Table 3.2.2-1 (RHR-HX-1A/B: channel, shell, tubes, tubesheet
+  and tube plugs; raw water inside the tubes, treated water in the shell):
+  <https://www.nrc.gov/reactors/operating/licensing/renewal/applications/columbia/columbia-lra.pdf>
+- LaSalle (BWR/5) UFSAR, Chapter 5, section 5.4.7.2.2 (drains on both sides, a shell-side vent, relief valves):
+  <https://www.nrc.gov/docs/ML2211/ML22111A234.pdf>
+- NRC GE BWR/4 Systems Technology Manual, Chapter 10.4 (vertical U-tube RHR exchangers, shell-side and tube-side relief
+  valves, vents and drains): <https://www.nrc.gov/docs/ML1125/ML11258A369.pdf>
+- NUREG-0933 Item C-9, RHR heat exchanger tube failures (tube-and-shell units, about 10,000 gpm of service water):
+  <https://www.nrc.gov/sr0933/section-2-task-action-plan-items/item-c-9-rhr-heat-exchanger-tube-failures>
+- Seismic fragility of vertical U-tube heat exchangers on lugs and support frames at 1100 MWe BWRs (abstract only):
+  <https://www.sciencedirect.com/science/article/abs/pii/S0029549305002268>
+
+These documents were read online; the geometry is original game work, and the nameplate and markings are generic.
+
 ## Current thermal model
 
-- Maximum exchanger duty: **100 MW**, limited by actual primary flow, pool
+- Maximum exchanger duty: **27.1 MW** (both forms), limited by actual primary flow, pool
   temperature and secondary-water availability.
 - Separate cold and hot buffers: **12,000 kg each**; secondary flow up to
   **2,400 kg/s**. These are gameplay ratings, not a vendor-certified design.

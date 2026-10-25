@@ -44,7 +44,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  */
 public class RhrHeatExchangerBlock extends BaseEntityBlock implements ProcessAssembly {
     public enum HxPort { TUBE_IN, TUBE_OUT, SHELL_IN, SHELL_OUT }
-    public static final DirectionProperty FACING=HorizontalDirectionalBlock.FACING;
+    public static final DirectionProperty FACING=net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING; // the same property as HorizontalDirectionalBlock.FACING
     // A state saved without these properties loads with their defaults: the single block, in its own (controller) cell.
     public static final BooleanProperty ASSEMBLED=BooleanProperty.create("assembled");
     public static final IntegerProperty CELL=IntegerProperty.create("cell",0,71);
