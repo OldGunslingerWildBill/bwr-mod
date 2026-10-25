@@ -19,10 +19,14 @@ for id in ('slc_pump','slc_boron_tank'):
 for id in ('ads_controller','ads_relief_valve','water_discharge_port','borate_charge'):
     source=m.read(id+'.json');folder=m.RES/f'assets/bwr/models/block/alpha/{id}'
     mats=m.materials(source,folder);m.put(folder/'body.obj',m.obj(source['faces'],mats));m.put(folder/'body.json',m.model(f'bwr:models/block/alpha/{id}/body.obj'))
+    if id=='ads_relief_valve':
+        # The open relief valve (art/models/main_steam_valves/build_valves.py): lifted spindle, raised lever and actuator rod.
+        opened=m.read(id+'_open.json');assert opened['materials']==source['materials'],'open/shut relief valve materials differ'
+        m.put(folder/'body_open.obj',m.obj(opened['faces'],mats));m.put(folder/'body_open.json',m.model(f'bwr:models/block/alpha/{id}/body_open.obj'))
     variants={}
     for facing,angle in zip(('north','east','south','west'),(0,90,180,270)):
         if id=='ads_relief_valve':
-            for opened in (False,True):variants[f'facing={facing},open={str(opened).lower()}']={'model':f'bwr:block/alpha/{id}/body','y':angle}
+            for opened in (False,True):variants[f'facing={facing},open={str(opened).lower()}']={'model':f'bwr:block/alpha/{id}/body'+('_open' if opened else ''),'y':angle}
         else:variants['facing='+facing]={'model':f'bwr:block/alpha/{id}/body','y':angle}
     if id!='borate_charge':m.put(m.RES/f'assets/bwr/blockstates/{id}.json',{'variants':variants})
     m.put(m.RES/f'assets/bwr/models/item/{id}.json',{'parent':f'bwr:block/alpha/{id}/body','display':{'gui':{'rotation':[25,225,0],'scale':[.85,.85,.85]}}})

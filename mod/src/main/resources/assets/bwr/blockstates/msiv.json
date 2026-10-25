@@ -29,7 +29,7 @@
       "y": 0
     },
     "assembled=true,facing=north,open=true,part=0": {
-      "model": "bwr:block/pumps/msiv/cell_0",
+      "model": "bwr:block/pumps/msiv_open/cell_0",
       "y": 0
     },
     "assembled=true,facing=north,open=false,part=1": {
@@ -37,7 +37,7 @@
       "y": 0
     },
     "assembled=true,facing=north,open=true,part=1": {
-      "model": "bwr:block/pumps/msiv/cell_1",
+      "model": "bwr:block/pumps/msiv_open/cell_1",
       "y": 0
     },
     "assembled=true,facing=north,open=false,part=2": {
@@ -45,7 +45,7 @@
       "y": 0
     },
     "assembled=true,facing=north,open=true,part=2": {
-      "model": "bwr:block/pumps/msiv/cell_2",
+      "model": "bwr:block/pumps/msiv_open/cell_2",
       "y": 0
     },
     "assembled=false,facing=east,open=false,part=0": {
@@ -77,7 +77,7 @@
       "y": 90
     },
     "assembled=true,facing=east,open=true,part=0": {
-      "model": "bwr:block/pumps/msiv/cell_0",
+      "model": "bwr:block/pumps/msiv_open/cell_0",
       "y": 90
     },
     "assembled=true,facing=east,open=false,part=1": {
@@ -85,7 +85,7 @@
       "y": 90
     },
     "assembled=true,facing=east,open=true,part=1": {
-      "model": "bwr:block/pumps/msiv/cell_1",
+      "model": "bwr:block/pumps/msiv_open/cell_1",
       "y": 90
     },
     "assembled=true,facing=east,open=false,part=2": {
@@ -93,7 +93,7 @@
       "y": 90
     },
     "assembled=true,facing=east,open=true,part=2": {
-      "model": "bwr:block/pumps/msiv/cell_2",
+      "model": "bwr:block/pumps/msiv_open/cell_2",
       "y": 90
     },
     "assembled=false,facing=south,open=false,part=0": {
@@ -125,7 +125,7 @@
       "y": 180
     },
     "assembled=true,facing=south,open=true,part=0": {
-      "model": "bwr:block/pumps/msiv/cell_0",
+      "model": "bwr:block/pumps/msiv_open/cell_0",
       "y": 180
     },
     "assembled=true,facing=south,open=false,part=1": {
@@ -133,7 +133,7 @@
       "y": 180
     },
     "assembled=true,facing=south,open=true,part=1": {
-      "model": "bwr:block/pumps/msiv/cell_1",
+      "model": "bwr:block/pumps/msiv_open/cell_1",
       "y": 180
     },
     "assembled=true,facing=south,open=false,part=2": {
@@ -141,7 +141,7 @@
       "y": 180
     },
     "assembled=true,facing=south,open=true,part=2": {
-      "model": "bwr:block/pumps/msiv/cell_2",
+      "model": "bwr:block/pumps/msiv_open/cell_2",
       "y": 180
     },
     "assembled=false,facing=west,open=false,part=0": {
@@ -173,7 +173,7 @@
       "y": 270
     },
     "assembled=true,facing=west,open=true,part=0": {
-      "model": "bwr:block/pumps/msiv/cell_0",
+      "model": "bwr:block/pumps/msiv_open/cell_0",
       "y": 270
     },
     "assembled=true,facing=west,open=false,part=1": {
@@ -181,7 +181,7 @@
       "y": 270
     },
     "assembled=true,facing=west,open=true,part=1": {
-      "model": "bwr:block/pumps/msiv/cell_1",
+      "model": "bwr:block/pumps/msiv_open/cell_1",
       "y": 270
     },
     "assembled=true,facing=west,open=false,part=2": {
@@ -189,7 +189,7 @@
       "y": 270
     },
     "assembled=true,facing=west,open=true,part=2": {
-      "model": "bwr:block/pumps/msiv/cell_2",
+      "model": "bwr:block/pumps/msiv_open/cell_2",
       "y": 270
     }
   }

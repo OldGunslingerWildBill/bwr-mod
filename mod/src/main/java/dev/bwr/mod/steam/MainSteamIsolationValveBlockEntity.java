@@ -102,6 +102,16 @@ public class MainSteamIsolationValveBlockEntity extends BlockEntity {
     private void syncOpenState(){
         if(level!=null && !level.isClientSide() && getBlockState().getValue(MainSteamIsolationValveBlock.OPEN)!=(position>0))
             level.setBlock(worldPosition,getBlockState().setValue(MainSteamIsolationValveBlock.OPEN,position>0),net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+        // The stem, springs and position pointer are drawn in the two upper cells, so they carry the same flag.
+        // Appearance only: nothing reads OPEN from the upper cells.
+        if(level!=null && !level.isClientSide() && getBlockState().getValue(MainSteamIsolationValveBlock.ASSEMBLED))
+            for(int part=1;part<3;part++){
+                var p=worldPosition.above(part);var s=level.getBlockState(p);
+                if(s.is(getBlockState().getBlock()) && s.getValue(MainSteamIsolationValveBlock.PART)==part && s.getValue(MainSteamIsolationValveBlock.ASSEMBLED)
+                        && s.getValue(MainSteamIsolationValveBlock.FACING)==getBlockState().getValue(MainSteamIsolationValveBlock.FACING)
+                        && s.getValue(MainSteamIsolationValveBlock.OPEN)!=(position>0))
+                    level.setBlock(p,s.setValue(MainSteamIsolationValveBlock.OPEN,position>0),net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+            }
     }
 
     public net.neoforged.neoforge.energy.IEnergyStorage energy(){return energy;}
