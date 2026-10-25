@@ -59,22 +59,25 @@ public final class ReactorWaterCleanupTest {
         Check.greaterThan(0.1, bed.process(60, 49, 0.05, 0, 0, 1.0).removedIonG(), "a replaced bed removes again");
     }
 
-    public static void test04_aHotBedLosesCapacityAndReleasesWhatItHeld() {
+    public static void test04_theElementWorksAtReactorTemperatureAndIsNotDamagedByIt() {
         var bed = new FilterDemineralizer();
-        for (int i = 0; i < 600; i++) bed.process(60, 49, 0.02, 0, 0, 1.0);
+        for (int i = 0; i < 600; i++) bed.process(60, 49, 0.0005, 0, 0, 1.0);
         double held = bed.ionLoadG();
-        Check.greaterThan(10, held, "the bed holds impurity");
-        double released = 0;
-        for (int i = 0; i < 60; i++) released += bed.process(60, 100, 0.0, 0, 0, 1.0).releasedIonG();
-        Check.greaterThan(0, released, "heat releases captured impurity");
-        Check.greaterThan(0.05, bed.damage(), "and destroys resin");
-        Check.isTrue(bed.overTemperature(), "the bed reports the over temperature");
-        Check.lessThan(held, bed.ionLoadG(), "the load fell");
-        Check.lessThan(FilterDemineralizer.ION_CAPACITY_G, bed.ionCapacityLeftG() + 1e-9 + FilterDemineralizer.ION_CAPACITY_G * bed.damage() - 1e-9 + 1e-6,
-                "capacity left is what damage has not taken");
+        Check.greaterThan(10, held, "the element holds impurity");
+        double hotRemoved = 0;
+        for (int i = 0; i < 600; i++) hotRemoved += bed.process(60, 285.0, 0.0005, 0.001, 1.0e12, 1.0).removedIonG();
+        Check.greaterThan(1, hotRemoved, "at 285 C it goes on removing ions");
+        Check.greaterThan(held, bed.ionLoadG(), "and nothing it held is let go (the load only rose)");
+        Check.greaterThan(0, bed.crudLoadG(), "crud too");
+        Check.absolute(100 - bed.ionLoadG(), bed.ionCapacityLeftG(), 1e-9, "capacity left is what it has not taken: nothing is lost to heat");
         var cool = new FilterDemineralizer();
-        for (int i = 0; i < 600; i++) cool.process(60, 59, 0.02, 0, 0, 1.0);
-        Check.absolute(0, cool.damage(), 0, "below 140 F there is no damage");
+        var hot = new FilterDemineralizer();
+        for (int i = 0; i < 600; i++) {
+            cool.process(60, 49, 0.0005, 0.001, 1.0e12, 1.0);
+            hot.process(60, 285, 0.0005, 0.001, 1.0e12, 1.0);
+        }
+        Check.absolute(cool.ionLoadG(), hot.ionLoadG(), 0, "water temperature makes no difference to what it removes");
+        Check.absolute(cool.crudLoadG(), hot.crudLoadG(), 0, "to crud either");
     }
 
     public static void test05_regenerativeExchangerRecoversTheHeat() {
@@ -100,13 +103,16 @@ public final class ReactorWaterCleanupTest {
         Check.absolute((flow - reject) * (hv - hr) / 1000, r.vesselHeatLossMW(), 1e-6, "vessel heat loss is for the returned part only");
     }
 
-    public static void test07_lostCoolingMakesTheDemineraliserWaterHot() {
+    public static void test07_lostCoolingMakesTheFilterWaterHotAndThatIsHarmless() {
         var full = RwcuLoop.solve(285, 60, 0, 8.0);
         var none = RwcuLoop.solve(285, 60, 0, 0.0);
         var part = RwcuLoop.solve(285, 60, 0, 2.0);
-        Check.greaterThan(140, none.demineraliserC(), "no cooling water leaves the resin at vessel temperature");
-        Check.greaterThan(FilterDemineralizer.TEMPERATURE_LIMIT_C, part.demineraliserC(), "short cooling is over the resin limit");
-        Check.lessThan(FilterDemineralizer.TEMPERATURE_LIMIT_C, full.demineraliserC(), "full cooling is under it");
+        Check.greaterThan(140, none.demineraliserC(), "no cooling water leaves the filter at vessel temperature");
+        Check.greaterThan(60.0, part.demineraliserC(), "short cooling leaves it warm");
+        Check.lessThan(60.0, full.demineraliserC(), "full cooling leaves it cool");
+        var element = new FilterDemineralizer();
+        for (int i = 0; i < 100; i++) element.process(60, none.demineraliserC(), 0.0005, 0.001, 1.0e12, 1.0);
+        Check.greaterThan(1, element.ionLoadG(), "and the element works in it all the same");
     }
 
     public static void test08_coolerCoolingWaterIsFinite() {
