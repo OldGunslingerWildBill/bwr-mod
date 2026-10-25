@@ -22,5 +22,16 @@ public final class PowerModuleCapabilities {
                 return identity[0].equals(m.deviceId())?m.energy:null;
             });
         },blocks());
+        // The turning gear motor's supply on the generator's left wall (TURBINE-AUX.md): receive-only, and a separate buffer from the output.
+        event.registerBlock(Capabilities.EnergyStorage.BLOCK,(level,pos,initial,unused,side)-> {
+            if(!(initial.getBlock() instanceof PowerModuleBlock original)||!original.gearEnergyFace(pos,initial,side))return null;
+            java.util.UUID[] identity={PumpAssemblyCapabilities.controller(level,pos,initial) instanceof PowerModuleBlockEntity m&&m.identityReady()?m.deviceId():null};
+            return LiveCapabilities.energy(level,pos,initial.getBlock(),state -> {
+                if(!(state.getBlock() instanceof PowerModuleBlock b)||!b.gearEnergyFace(pos,state,side)
+                        ||!(PumpAssemblyCapabilities.controller(level,pos,state) instanceof PowerModuleBlockEntity m)||!m.identityReady())return null;
+                if(identity[0]==null)identity[0]=m.deviceId();
+                return identity[0].equals(m.deviceId())?m.gearEnergy:null;
+            });
+        },BwrBlocks.NUCLEAR_GENERATOR.get());
     }
 }

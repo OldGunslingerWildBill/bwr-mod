@@ -42,6 +42,7 @@ public final class WaterLineNetwork {
         if (state.getBlock() instanceof dev.bwr.mod.containment.ContainmentPenetrationBlock penetration)
             return penetration.acceptsWaterLineOn(state, face);
         if(state.getBlock() instanceof MotorOperatedWaterValveBlock valve)return valve.acceptsWaterLineOn(state,face);
+        if(state.getBlock() instanceof dev.bwr.mod.power.TurbineAuxBlock aux)return aux.acceptsWaterLineOn(state,face);
         if(state.getBlock() instanceof dev.bwr.mod.reactor.CavityDrainPortBlock)return face==state.getValue(dev.bwr.mod.reactor.CavityDrainPortBlock.FACING);
         if(state.getBlock() instanceof dev.bwr.mod.rods.ControlRodDriveBlock)return true;
         if(state.getBlock() instanceof WaterDischargeBlock)return face==state.getValue(WaterDischargeBlock.FACING).getOpposite();
@@ -114,6 +115,7 @@ public final class WaterLineNetwork {
                             || state.getBlock() instanceof dev.bwr.mod.cooling.CoolingBlock
                             && (state.getValue(dev.bwr.mod.cooling.CoolingBlock.PORT)==dev.bwr.mod.cooling.CoolingBlock.Port.INLET
                                 ||state.getValue(dev.bwr.mod.cooling.CoolingBlock.PORT)==dev.bwr.mod.cooling.CoolingBlock.Port.MAKEUP)
+                            || state.getBlock() instanceof dev.bwr.mod.power.TurbineAuxBlock aux&&aux.hasWater()&&face==aux.coldInFace(state)
                             || state.getBlock() instanceof dev.bwr.mod.condenser.CondenserBlock
                             && state.getValue(dev.bwr.mod.condenser.CondenserBlock.PORT).inlet()
                             || state.getBlock() instanceof ProcessAssembly assembly&&assembly.portAt(state,face)==AssemblyPort.WATER_SUCTION;

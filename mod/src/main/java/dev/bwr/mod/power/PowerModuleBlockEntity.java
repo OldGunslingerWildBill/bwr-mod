@@ -41,6 +41,13 @@ public class PowerModuleBlockEntity extends BlockEntity {
     private long accountingTick=Long.MIN_VALUE;
     private double startingFE,generatedFE,generatedCarry,lastGeneratedFE,lastBufferDelta,reservedFE;
     public double trainLossKJ;
+    // ---- turbine auxiliaries (TURBINE-AUX.md). Everything here is absent from an old save and written only when it is not its default.
+    private final LinkedHashSet<BlockPos> auxLinks=new LinkedHashSet<>();
+    private boolean auxRequired,turningGear;
+    private double gearFe,bow;
+    /** Bearing metal, rotor metal and winding temperatures, C; the shaft vibration of the last tick, mm/s. */
+    public double bearingC=dev.bwr.core.turbine.TurbineAux.AMBIENT_C,rotorC=dev.bwr.core.turbine.TurbineAux.AMBIENT_C,windingC=dev.bwr.core.turbine.TurbineAux.AMBIENT_C,vibration;
+    private TurbineAuxTrain.Readout aux=new TurbineAuxTrain.Readout();
     public PowerModuleBlockEntity(BlockPos pos,BlockState state) { super(BwrBlockEntities.POWER_MODULE.get(),pos,state); }
     public PowerModuleBlock block() { return (PowerModuleBlock)getBlockState().getBlock(); }
     public double energyStored() { return energyFe; }
@@ -72,14 +79,69 @@ public class PowerModuleBlockEntity extends BlockEntity {
         dev.bwr.mod.advancement.PlantMilestones.energyDelivered(this,n);
     }
     public CompoundTag retainedCondition(){
-        var t=new CompoundTag();t.putDouble("ShaftDamage",damage);
+        var t=new CompoundTag();t.putDouble("ShaftDamage",damage);if(auxRequired)t.putBoolean("AuxRequired",true);
         t.putLong("DeliveredFE",delivered.totalFE());t.putBoolean("CounterSaturated",delivered.saturated());return t;
     }
     public void restoreCondition(CompoundTag t){
-        damage=finite(t.getDouble("ShaftDamage"),1);
+        damage=finite(t.getDouble("ShaftDamage"),1);auxRequired=t.getBoolean("AuxRequired");
         delivered.restore(t.getLong("DeliveredFE"),t.getBoolean("CounterSaturated"));setChanged();
     }
     public boolean failed() { return damage>=1; }
+    // ---- auxiliaries
+    public TurbineAuxTrain.Readout aux(){return aux;}
+    void setAux(TurbineAuxTrain.Readout r){aux=r;}
+    /** Whether the player placed this module new, so its train needs the auxiliaries from the start (the server option turbineAuxRequired). */
+    public boolean auxRequired(){return auxRequired;}
+    public void markAuxRequired(){if(!auxRequired){auxRequired=true;setChanged();}}
+    public boolean turningGear(){return turningGear;}
+    public double bow(){return bow;}
+    public double gearFe(){return gearFe;}
+    /** Switches the turning gear on a generator. On is refused above the gear's overrun speed; off always works. Nothing else ever calls this. */
+    public boolean setTurningGear(boolean on){
+        if(!block().generator())return false;
+        if(on&&rpm>dev.bwr.core.turbine.TurbineAux.GEAR_MAX_RPM)return false;
+        if(turningGear!=on){turningGear=on;setChanged();}
+        return true;
+    }
+    boolean drawGear(){
+        if(gearFe<TurbineAuxTrain.GEAR_FE_PER_TICK)return false;
+        gearFe-=TurbineAuxTrain.GEAR_FE_PER_TICK;return true;
+    }
+    void advanceRotor(double steamC){rotorC=dev.bwr.core.turbine.TurbineAux.rotorStepC(rotorC,steamC,TurbineAuxTrain.DT);}
+    void advanceBow(double rpm,boolean rolling){bow=dev.bwr.core.turbine.TurbineAux.bowStep(bow,rotorC,rpm,rolling,TurbineAuxTrain.DT);}
+    public boolean hasAux(BlockPos pos){return auxLinks.contains(pos);}
+    void attachAux(BlockPos pos){if(auxLinks.add(pos.immutable()))setChanged();}
+    void detachAux(BlockPos pos){if(auxLinks.remove(pos))setChanged();}
+    /** The skids attached and loaded; a link whose skid is gone (or now serves another module) is dropped. */
+    public List<TurbineAuxBlockEntity> auxEntities(){
+        if(auxLinks.isEmpty()||level==null)return List.of();
+        var out=new ArrayList<TurbineAuxBlockEntity>(auxLinks.size());
+        for(var it=auxLinks.iterator();it.hasNext();){
+            var p=it.next();
+            if(!dev.bwr.mod.world.LoadedWorld.available(level,p))continue;
+            if(dev.bwr.mod.world.LoadedWorld.blockEntity(level,p) instanceof TurbineAuxBlockEntity a&&!a.isRemoved()&&worldPosition.equals(a.host()))out.add(a);
+            else{it.remove();setChanged();}
+        }
+        return out;
+    }
+    public List<TurbineAuxBlockEntity> genCoolingSkids(){
+        if(!block().generator())return List.of();
+        var all=auxEntities();if(all.isEmpty())return all;
+        return all.stream().filter(a->a.kind()==TurbineAuxBlock.Kind.GEN_COOLING).toList();
+    }
+    /** FE for the turning gear motor, taken on the generator's left wall. Receive-only. */
+    public final IEnergyStorage gearEnergy=new IEnergyStorage(){
+        public int receiveEnergy(int max,boolean simulate){
+            if(!live()||!block().generator())return 0;
+            int n=(int)Math.min(Math.max(0,max),TurbineAuxTrain.GEAR_CAPACITY_FE-gearFe);
+            if(!simulate&&n>0){gearFe+=n;setChanged();}return n;
+        }
+        public int extractEnergy(int max,boolean simulate){return 0;}
+        public int getEnergyStored(){return (int)gearFe;}
+        public int getMaxEnergyStored(){return TurbineAuxTrain.GEAR_CAPACITY_FE;}
+        public boolean canExtract(){return false;}
+        public boolean canReceive(){return true;}
+    };
     public double speedPercent() { return rpm/ShaftDynamics.RATED_RPM*100; }
     public boolean overspeed() { return rpm>ShaftDynamics.OVERSPEED_RPM; }
     public void addShaftDamage(double amount) {
@@ -229,6 +291,28 @@ public class PowerModuleBlockEntity extends BlockEntity {
         t.putLong("DeliveredFE",delivered.totalFE());t.putBoolean("CounterSaturated",delivered.saturated());
         t.putDouble("Energy",energyFe);t.putDouble("Water",waterKg);
         saveSteam(t,"Inlet",inlet);saveSteam(t,"Exhaust",exhaust);
+        saveAux(t);
+    }
+    private void saveAux(CompoundTag t){
+        if(!auxLinks.isEmpty())t.putLongArray("AuxLinks",auxLinks.stream().mapToLong(BlockPos::asLong).toArray());
+        if(auxRequired)t.putBoolean("AuxRequired",true);
+        if(turningGear)t.putBoolean("TurningGear",true);
+        if(gearFe>0)t.putDouble("GearFe",gearFe);
+        if(bow>0)t.putDouble("Bow",bow);
+        double ambient=dev.bwr.core.turbine.TurbineAux.AMBIENT_C;
+        if(bearingC>ambient+.01)t.putDouble("BearingC",bearingC);
+        if(rotorC>ambient+.01)t.putDouble("RotorC",rotorC);
+        if(windingC>ambient+.01)t.putDouble("WindingC",windingC);
+    }
+    private void loadAux(CompoundTag t){
+        auxLinks.clear();for(long l:t.getLongArray("AuxLinks"))auxLinks.add(BlockPos.of(l));
+        auxRequired=t.getBoolean("AuxRequired");turningGear=t.getBoolean("TurningGear");
+        double ambient=dev.bwr.core.turbine.TurbineAux.AMBIENT_C;
+        gearFe=finite(t.getDouble("GearFe"),TurbineAuxTrain.GEAR_CAPACITY_FE);bow=finite(t.getDouble("Bow"),1);
+        bearingC=t.contains("BearingC")?Math.max(ambient,finite(t.getDouble("BearingC"),1000)):ambient;
+        rotorC=t.contains("RotorC")?Math.max(ambient,finite(t.getDouble("RotorC"),1000)):ambient;
+        windingC=t.contains("WindingC")?Math.max(ambient,finite(t.getDouble("WindingC"),1000)):ambient;
+        vibration=0;aux=new TurbineAuxTrain.Readout();
     }
     private static void saveSteam(CompoundTag t,String key,SteamInventory s){var p=new CompoundTag();p.putDouble("Mass",s.mass());p.putDouble("Enthalpy",s.enthalpy());p.putDouble("Pressure",s.pressure());if(s.moisture()>0)p.putDouble("Moisture",s.moisture());t.put(key,p);}
     @Override protected void loadAdditional(CompoundTag t,HolderLookup.Provider registries) {
@@ -241,6 +325,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
         accountingTick=Long.MIN_VALUE;startingFE=generatedFE=generatedCarry=lastGeneratedFE=lastBufferDelta=reservedFE=0;
         energyFe=finite(t.getDouble("Energy"),ENERGY_CAPACITY);waterKg=finite(t.getDouble("Water"),WATER_CAPACITY);
         loadSteam(t,"Inlet",inlet);loadSteam(t,"Exhaust",exhaust);lastTick=Long.MIN_VALUE;exhaustLedgerTick=Long.MIN_VALUE;exhaustClaims.clear();hasWorkLoad=false;
+        loadAux(t);
     }
     private static void loadSteam(CompoundTag t,String key,SteamInventory s){var p=t.getCompound(key);s.restore(p.getDouble("Mass"),p.getDouble("Enthalpy"),p.getDouble("Pressure"),p.getDouble("Moisture"));}
     private static double finite(double v,double max){return Double.isFinite(v)?Math.max(0,Math.min(max,v)):0;}

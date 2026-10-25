@@ -46,6 +46,7 @@ public final class SignalAdapters {
         SignalProviders.register(CondensateStorageTankBlockEntity.class, PlantSignals.CONDENSATE_TANK::bind);
         SignalProviders.register(CoolingBlockEntity.class, PlantSignals.COOLING::bind);
         SignalProviders.register(PowerModuleBlockEntity.class, PlantSignals.POWER_MODULE::bind);
+        SignalProviders.register(dev.bwr.mod.power.TurbineAuxBlockEntity.class, PlantSignals::aux);
         SignalProviders.register(ContainmentControllerBlockEntity.class, ContainmentSignals.CONTROLLER::bind);
         SignalProviders.register(ContainmentSprayHeaderBlockEntity.class, ContainmentSignals.SPRAY_HEADER::bind);
         SignalProviders.register(ContainmentPenetrationBlockEntity.class, ContainmentSignals.PENETRATION::bind);

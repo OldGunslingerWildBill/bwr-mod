@@ -78,6 +78,9 @@ public final class BwrMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.PowerModuleMenu>> POWER_MODULE =
             MENUS.register("power_module", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.PowerModuleMenu::new));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.TurbineAuxMenu>> TURBINE_AUX =
+            MENUS.register("turbine_aux", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.TurbineAuxMenu::new));
+
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.TurbineValveMenu>> TURBINE_VALVE =
             MENUS.register("turbine_valve", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.TurbineValveMenu::new));
 

@@ -12,9 +12,14 @@ import net.minecraft.world.entity.player.Inventory;
 /** Readouts for any part of a large shaft module: an HP turbine, an LP turbine or the generator. */
 public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
 
+    private dev.bwr.mod.gui.client.style.BwrButton gear;
+
     public PowerModuleScreen(PowerModuleMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 400, 184);
+        super(menu, inventory, title, 400, 296);
     }
+
+    private boolean aux() { return menu.lubeGov || menu.bowGov || menu.genGov; }
+    private static Status alarm(boolean on) { return on ? Status.ALARM : Status.NORMAL; }
 
     @Override
     protected UiElement buildUi() {
@@ -49,9 +54,42 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
                 Layout.note("The high-pressure exhaust feeds the low-pressure sections.").showIf(() -> !menu.generator),
                 Layout.note(() -> menu.hp ? "Pipe the high-pressure exhaust to the low-pressure inlets." : "The condenser goes six blocks below, facing the same way.")
                         .showIf(() -> !menu.generator));
+        if (gear == null) {
+            gear = dev.bwr.mod.gui.client.style.BwrButton.secondary("Turning gear",
+                    "Engage or release the turning gear. It rolls the shaft at 3 rpm to keep a hot rotor straight, draws FE on the generator's left wall, and cannot be engaged above 10 rpm. Nothing engages it for you.",
+                    b -> menu.sendCommand(PowerModuleMenu.CMD_TURNING_GEAR, menu.gearOn ? 0 : 1));
+        }
+        var auxiliaries = Layout.card("Turbine auxiliaries",
+                Layout.statusLine(() -> alarm((menu.alarms & 3) != 0), () -> menu.lubeGov ? (menu.oilTank ? "Lube oil" : "No oil tank on this train") : "Lube oil not fitted",
+                        () -> menu.lubeGov ? num(menu.oilPsig, 1) + " psig" : ""),
+                Layout.row("Oil temperature", () -> Double.isNaN(menu.oilC) ? "-" : num(menu.oilC, 1), "C").showIf(() -> menu.lubeGov),
+                Layout.row("Oil level", () -> Double.isNaN(menu.oilLevel) ? "-" : pct(menu.oilLevel), "%").showIf(() -> menu.lubeGov),
+                Layout.row("Oil film", () -> pct(menu.oilFilm), "%").showIf(() -> menu.lubeGov),
+                Layout.row("Bearing temperature", () -> num(menu.bearingC, 1), "C").showIf(() -> menu.lubeGov),
+                Layout.row("Shaft vibration", () -> num(menu.vibration, 1), "mm/s").showIf(() -> menu.bowGov),
+                Layout.row("Rotor temperature", () -> num(menu.rotorC, 0), "C").showIf(() -> menu.bowGov && !menu.generator),
+                Layout.row("Rotor bow", () -> pct(menu.bow), "%").showIf(() -> menu.bowGov && !menu.generator),
+                Layout.row("Turning gear", () -> menu.gearRolling ? "rolling the shaft" : menu.gearOn ? (menu.gearFed ? "engaged, shaft above 10 rpm" : "engaged, no power") : "off")
+                        .showIf(() -> menu.generator),
+                Layout.row("Gear supply", () -> big(menu.gearFe), "FE").showIf(() -> menu.generator),
+                Layout.controls(BwrStyle.SP1).add(gear, 1).showIf(() -> menu.generator),
+                Layout.row("Winding temperature", () -> num(menu.windingC, 1), "C").showIf(() -> menu.generator && menu.genGov),
+                Layout.row("Stator water flow", () -> pct(menu.statorFlow), "%").showIf(() -> menu.generator && menu.genGov),
+                Layout.row("Hydrogen pressure", () -> Double.isNaN(menu.h2Psig) ? "-" : num(menu.h2Psig, 1), "psig").showIf(() -> menu.generator && menu.genGov),
+                Layout.note("Alarms are readings. Nothing trips the turbine.").showIf(() -> aux())).showIf(() -> aux() || menu.generator);
         return Layout.column(BwrStyle.SP2,
                 Layout.split(BwrStyle.SP2).add(readouts, 3).add(connections, 2).stackBelow(360),
+                auxiliaries,
                 Layout.note(() -> Words.sentence(menu.status)).body());
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        if (gear != null) {
+            gear.setMessage(Component.literal(menu.gearOn ? "Turning gear: ON" : "Turning gear: off"));
+            gear.active = menu.present && menu.generator;
+        }
     }
 
     @Override

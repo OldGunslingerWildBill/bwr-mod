@@ -46,6 +46,7 @@ when nothing is there or the chunk is not loaded. It never loads a chunk and nev
   | BOOLEAN | the BOOLEAN kind |
   | TEXT | the TEXT kind |
   | DOSE_RATE | mSv/h, uSv/h, Sv/h (appended after TEXT: no earlier quantity's number moved) |
+  | VIBRATION | mm/s (appended after DOSE_RATE: shaft vibration velocity) |
 
 * Units fixed to say what the key says: `generated_fe_tick`, `delivered_fe_tick` and `buffer_delta_fe_tick` are per-tick
   rates and now read `FE/t` (they said `FE`).
@@ -627,8 +628,31 @@ Block entity `PowerModuleBlockEntity`; CC peripheral `bwr_hp_turbine / bwr_lp_tu
 | `window_ready_1min` | One-minute history ready | | 0 to 1 | BOOLEAN |
 | `counter_saturated` | Lifetime counter saturated | | 0 to 1 | BOOLEAN |
 | `status` | Status |  | text | TEXT |
+| `aux_governed` | Auxiliaries govern this train |  | 0 to 1 | BOOLEAN |
+| `oil_pressure` | Lube oil pressure | psig | 0 to 40 | NUMBER |
+| `oil_temp` | Lube oil temperature | degC | 0 to 120 | NUMBER |
+| `oil_level` | Lube oil level | fraction | 0 to 1 | NUMBER |
+| `oil_film` | Bearing oil film | fraction | 0 to 1 | NUMBER |
+| `bearing_temp` | Bearing temperature | degC | 0 to 200 | NUMBER |
+| `vibration` | Shaft vibration | mm/s | 0 to 30 | NUMBER |
+| `rotor_temp` | Rotor temperature (turbine sections) | degC | 0 to 400 | NUMBER |
+| `rotor_bow` | Rotor bow (turbine sections) | fraction | 0 to 1 | NUMBER |
+| `turning_gear` | Turning gear engaged (generator) |  | 0 to 1 | BOOLEAN |
+| `turning_gear_rolling` | Turning gear rolling the shaft (generator) |  | 0 to 1 | BOOLEAN |
+| `turning_gear_fe` | Turning gear supply (generator) | FE | 0 to 200000 | NUMBER |
+| `winding_temp` | Generator winding temperature | degC | 0 to 250 | NUMBER |
+| `stator_flow` | Stator water flow | fraction | 0 to 1 | NUMBER |
+| `h2_pressure` | Hydrogen pressure | psig | 0 to 40 | NUMBER |
+| `coolant_temp` | Generator coolant temperature | degC | 0 to 150 | NUMBER |
+| `oil_pressure_alarm`, `oil_level_alarm`, `oil_temp_alarm`, `bearing_alarm` | Oil system alarms |  | 0 to 1 | BOOLEAN |
+| `vibration_alarm`, `winding_alarm`, `h2_alarm` | Vibration, winding and hydrogen alarms |  | 0 to 1 | BOOLEAN |
 
-No commands (read only).
+| Command key | Label | Kind | Range |
+| --- | --- | --- | --- |
+| `turning_gear` | Turning gear on / off (generator; refused above 10 rpm) | BOOLEAN | 0 to 1 |
+
+The turbine auxiliaries (TURBINE-AUX.md) read "no signal" on a train that does not have the system, and on the section kinds that have
+no such part (a winding on a turbine, a rotor bow on the generator). The alarms are readings; nothing operates on them.
 
 Shaft additions in `getStatus()` are `speedPercent`, `overspeed`,
 `kineticEnergyMJ`, `shaftLossMW`, `damage`, and `failed`. Kinetic energy belongs
@@ -645,6 +669,17 @@ item drops. A new placement has a new world UUID. Cached capabilities reconnect 
 the same saved machine but cannot extract from its replacement. Generated energy
 minus delivered energy equals buffer change, including fractional FE precision.
 Buffer discharge can exceed current generation; delivered MW is not rating-capped.
+
+## Turbine auxiliary skids (Main Oil Tank, Shaft-Driven Main Oil Pump, Generator Cooling Skid)
+
+Block entity `TurbineAuxBlockEntity`; CC peripherals `bwr_main_oil_tank`, `bwr_shaft_oil_pump`, `bwr_generator_cooling_skid`. Each kind
+has its own list. The train steps a skid; none has a ticker.
+
+Main Oil Tank: `attached`, `ac_pump`, `dc_pump` (switches), `ac_running`, `dc_running`, `oil_level` (fraction), `oil_litres` (L),
+`oil_temp` (degC), `oil_pressure` (psig), `oil_film`, `cooler_duty` (kW), `cold_water`, `hot_water` (kg), `ac_fe`, `dc_fe` (FE);
+commands `ac_pump`, `dc_pump` (BOOLEAN). Shaft-Driven Main Oil Pump: `attached`, `delivery` (fraction); no commands. Generator
+Cooling Skid: `attached`, `stator_pumps` (switch), `stator_running`, `stator_flow`, `h2_pressure` (psig), `h2_kg` (kg), `coolant_temp`,
+`winding_temp` (degC), `cooler_duty` (kW), `cold_water`, `hot_water` (kg), `supply_fe` (FE); command `stator_pumps` (BOOLEAN).
 
 ## Grid tie
 

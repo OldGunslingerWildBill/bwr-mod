@@ -24,12 +24,15 @@ import java.util.Locale;
  *   <tr><td>BOOLEAN</td><td>the BOOLEAN kind</td></tr>
  *   <tr><td>TEXT</td><td>the TEXT kind</td></tr>
  *   <tr><td>DOSE_RATE</td><td>mSv/h, uSv/h, Sv/h</td></tr>
+ *   <tr><td>VIBRATION</td><td>mm/s</td></tr>
  * </table>
  */
 public enum Quantity {
     LEVEL, PRESSURE, TEMPERATURE, RATE, FLOW, POWER, ENERGY, POSITION, PERCENT, SPEED, CHEMISTRY, COUNT, BOOLEAN, TEXT,
     /** Radiation dose rate (mSv/h). Last, so every existing ordinal (the wire form) keeps its meaning. */
-    DOSE_RATE;
+    DOSE_RATE,
+    /** Shaft vibration velocity (mm/s). Appended after DOSE_RATE, so no earlier ordinal moved. */
+    VIBRATION;
 
     /** The quantity of a signal. */
     public static Quantity of(SignalSpec spec) {
@@ -71,6 +74,8 @@ public enum Quantity {
                 return CHEMISTRY;
             case "mSv/h", "uSv/h", "µSv/h", "Sv/h":
                 return DOSE_RATE;
+            case "mm/s":
+                return VIBRATION;
             default:
                 return COUNT;
         }

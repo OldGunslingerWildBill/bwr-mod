@@ -31,6 +31,10 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
     public Direction shaftFace(BlockState s,boolean front) { return front?s.getValue(FACING):s.getValue(FACING).getOpposite(); }
     public BlockPos terminal(BlockPos root,BlockState s) { return root.offset(TurbineAssemblyBlock.turn(new BlockPos(2,1,0),s.getValue(FACING))); }
     public Direction terminalFace(BlockState s) { return TurbineAssemblyBlock.turn(Direction.EAST,s.getValue(FACING)); }
+    /** The turning gear motor's supply: the mirror of the copper terminal, on the generator's left wall. */
+    public BlockPos gearTerminal(BlockPos root,BlockState s) { return root.offset(TurbineAssemblyBlock.turn(new BlockPos(-2,1,0),s.getValue(FACING))); }
+    public Direction gearFace(BlockState s) { return TurbineAssemblyBlock.turn(Direction.WEST,s.getValue(FACING)); }
+    public boolean gearEnergyFace(BlockPos pos,BlockState s,Direction side) { return generator() && side==gearFace(s) && pos.equals(gearTerminal(origin(pos,s),s)); }
     public boolean energyFace(BlockPos pos,BlockState s,Direction side) { return generator() && side==terminalFace(s) && pos.equals(terminal(origin(pos,s),s)); }
     @Override public BlockEntity newBlockEntity(BlockPos pos,BlockState s) { return s.getValue(CELL)==controllerCell(s)?new PowerModuleBlockEntity(pos,s):null; }
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level,BlockState s,BlockEntityType<T> type) {
@@ -55,7 +59,16 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
             module.establishIdentity();
             var data=stack.getOrDefault(net.minecraft.core.component.DataComponents.CUSTOM_DATA,net.minecraft.world.item.component.CustomData.EMPTY).copyTag();
             if(data.contains("BwrPowerCondition"))module.restoreCondition(data.getCompound("BwrPowerCondition"));
+            // A module a player places from a fresh item starts a train that needs its auxiliaries; one that comes from a
+            // dismantled module keeps whatever that one was, so an old plant moved piece by piece stays an old plant.
+            else if(placer instanceof Player&&dev.bwr.mod.config.GameplayConfig.turbineAuxRequired())module.markAuxRequired();
+            adoptSkids(level,origin(pos,state));
         }
+    }
+    /** Skids that were waiting for this module (their neighbour updates came before its controller existed) attach now. */
+    private static void adoptSkids(Level level,BlockPos root){
+        for(var p:BlockPos.betweenClosed(root.offset(-6,-1,-6),root.offset(6,6,6)))
+            if(level.getBlockState(p).getBlock() instanceof TurbineAuxBlock)TurbineAuxBlock.attach(level,p.immutable());
     }
     @Override protected java.util.List<net.minecraft.world.item.ItemStack> getDrops(BlockState state,net.minecraft.world.level.storage.loot.LootParams.Builder params) {
         var drops=super.getDrops(state,params);

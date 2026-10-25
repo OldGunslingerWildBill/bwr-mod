@@ -465,6 +465,13 @@ public final class BwrBlocks {
     /** A drain through the wall or floor of the reactor well, piped to the Condensate Storage Tank through a valve. */
     public static final DeferredBlock<dev.bwr.mod.reactor.CavityDrainPortBlock> CAVITY_DRAIN_PORT =
             BLOCKS.register("cavity_drain_port", () -> new dev.bwr.mod.reactor.CavityDrainPortBlock(vesselSteel()));
+    /** Turbine auxiliaries (TURBINE-AUX.md): the oil tank with its pumps and cooler, the shaft-driven oil pump, the generator cooling skid. */
+    public static final DeferredBlock<dev.bwr.mod.power.TurbineAuxBlock> MAIN_OIL_TANK =
+            BLOCKS.register("main_oil_tank", () -> new dev.bwr.mod.power.TurbineAuxBlock(machine(), dev.bwr.mod.power.TurbineAuxBlock.Kind.LUBE_OIL));
+    public static final DeferredBlock<dev.bwr.mod.power.TurbineAuxBlock> SHAFT_OIL_PUMP =
+            BLOCKS.register("shaft_oil_pump", () -> new dev.bwr.mod.power.TurbineAuxBlock(machine(), dev.bwr.mod.power.TurbineAuxBlock.Kind.SHAFT_PUMP));
+    public static final DeferredBlock<dev.bwr.mod.power.TurbineAuxBlock> GENERATOR_COOLING_SKID =
+            BLOCKS.register("generator_cooling_skid", () -> new dev.bwr.mod.power.TurbineAuxBlock(machine(), dev.bwr.mod.power.TurbineAuxBlock.Kind.GEN_COOLING));
     public static final DeferredBlock<CondenserBlock> ARABELLE_CONDENSER =
             BLOCKS.register("arabelle_condenser", () -> new CondenserBlock(machine()));
 

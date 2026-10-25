@@ -1522,5 +1522,18 @@
   "status.bwr.building_crane.goes_out": "goes out to a pad",
   "status.bwr.building_crane.goes_in": "goes back in the vessel",
   "status.bwr.reactor_panel_menu.head_procedure_on": "The head is not set on with a button. Lift it from its head stand with the reactor building crane, then bring the closure studs to load with a Stud Tensioner. (The server option instantHeadRemoval brings this button back.)",
-  "status.bwr.reactor_panel_menu.head_procedure_off": "The head does not come off with a button. Depressurise to 25 psig or less, detension the closure studs with a Stud Tensioner beside the reactor, then lift the head onto a Head Stand with the reactor building crane. (The server option instantHeadRemoval brings this button back.)"
+  "status.bwr.reactor_panel_menu.head_procedure_off": "The head does not come off with a button. Depressurise to 25 psig or less, detension the closure studs with a Stud Tensioner beside the reactor, then lift the head onto a Head Stand with the reactor building crane. (The server option instantHeadRemoval brings this button back.)",
+  "block.bwr.main_oil_tank": "Turbine Main Oil Tank",
+  "block.bwr.shaft_oil_pump": "Turbine Shaft-Driven Main Oil Pump",
+  "block.bwr.generator_cooling_skid": "Generator Cooling Skid",
+  "item.bwr.turbine_oil_drum": "Turbine Oil Drum",
+  "item.bwr.hydrogen_cylinder": "Hydrogen Cylinder",
+  "tooltip.bwr.main_oil_tank.1": "Set against any section of the shaft train. Holds 20,000 L of turbine oil (right-click with Turbine Oil Drums).",
+  "tooltip.bwr.main_oil_tank.2": "AC auxiliary pump on the side and bottom faces, emergency DC pump on the top face (wire a battery). Cooling water on the two flanges.",
+  "tooltip.bwr.shaft_oil_pump": "Bolts on the free shaft end of the generator, coupling toward it. Pumps oil in proportion to shaft speed.",
+  "tooltip.bwr.generator_cooling_skid.1": "Set against the generator. Stator water pumps (FE on any face but the flanges), a hydrogen charge (Hydrogen Cylinders) and coolers on cooling water.",
+  "tooltip.bwr.generator_cooling_skid.2": "Without cooling the winding heats with load; nothing trips. Cut the load.",
+  "status.bwr.turbine_aux.tank_full": "The tank has no room for a whole drum.",
+  "status.bwr.turbine_aux.h2_full": "The casing has no room for a whole cylinder.",
+  "component.bwr.option.Measures.VIBRATION": "Vibration"
 }

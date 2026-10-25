@@ -312,6 +312,13 @@ public final class BwrItems {
     public static final DeferredItem<BlockItem> TURBINE_CONTROL_VALVE = ITEMS.registerSimpleBlockItem(BwrBlocks.TURBINE_CONTROL_VALVE);
     public static final DeferredItem<BlockItem> BYPASS_STEAM_VALVE = ITEMS.registerSimpleBlockItem(BwrBlocks.BYPASS_STEAM_VALVE);
     public static final DeferredItem<BlockItem> MOTOR_OPERATED_WATER_VALVE = ITEMS.registerSimpleBlockItem(BwrBlocks.MOTOR_OPERATED_WATER_VALVE);
+    public static final DeferredItem<BlockItem> MAIN_OIL_TANK = ITEMS.registerSimpleBlockItem(BwrBlocks.MAIN_OIL_TANK);
+    public static final DeferredItem<BlockItem> SHAFT_OIL_PUMP = ITEMS.registerSimpleBlockItem(BwrBlocks.SHAFT_OIL_PUMP);
+    public static final DeferredItem<BlockItem> GENERATOR_COOLING_SKID = ITEMS.registerSimpleBlockItem(BwrBlocks.GENERATOR_COOLING_SKID);
+    /** Refills a Main Oil Tank: 1,000 L of turbine oil. */
+    public static final DeferredItem<Item> TURBINE_OIL_DRUM = ITEMS.registerSimpleItem("turbine_oil_drum", new Item.Properties().stacksTo(16));
+    /** Recharges a Generator Cooling Skid with 5 kg of hydrogen. */
+    public static final DeferredItem<Item> HYDROGEN_CYLINDER = ITEMS.registerSimpleItem("hydrogen_cylinder", new Item.Properties().stacksTo(16));
     public static final DeferredItem<BlockItem> CAVITY_DRAIN_PORT = ITEMS.registerSimpleBlockItem(BwrBlocks.CAVITY_DRAIN_PORT);
     public static final DeferredItem<BlockItem> ARABELLE_CONDENSER = ITEMS.register("arabelle_condenser",
             () -> new dev.bwr.mod.condenser.CondenserItem(BwrBlocks.ARABELLE_CONDENSER.get(), new Item.Properties()));
@@ -477,6 +484,11 @@ public final class BwrItems {
                         output.accept(BYPASS_STEAM_VALVE.get());
                         output.accept(MOTOR_OPERATED_WATER_VALVE.get());
                         output.accept(CAVITY_DRAIN_PORT.get());
+                        output.accept(MAIN_OIL_TANK.get());
+                        output.accept(SHAFT_OIL_PUMP.get());
+                        output.accept(GENERATOR_COOLING_SKID.get());
+                        output.accept(TURBINE_OIL_DRUM.get());
+                        output.accept(HYDROGEN_CYLINDER.get());
                         output.accept(ARABELLE_CONDENSER.get());
                         output.accept(NATURAL_DRAFT_TOWER.get());
                         output.accept(MECHANICAL_DRAFT_TOWER.get());

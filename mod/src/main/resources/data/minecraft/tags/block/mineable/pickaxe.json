@@ -88,6 +88,9 @@
     "bwr:heavily_reinforced_shield_plug_concrete",
     "bwr:ultra_reinforced_shield_plug_concrete",
     "bwr:motor_operated_water_valve",
-    "bwr:cavity_drain_port"
+    "bwr:cavity_drain_port",
+    "bwr:main_oil_tank",
+    "bwr:shaft_oil_pump",
+    "bwr:generator_cooling_skid"
   ]
 }

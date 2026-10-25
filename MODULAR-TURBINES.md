@@ -46,6 +46,11 @@ height mismatch or sideways offset separates trains. Up to 32 modules can join
 one train; unloaded/incomplete assemblies cannot supply work. Searches never
 load chunks. Arrange chunk loading for the complete plant when operating it.
 
+## Auxiliaries
+
+A turbine section placed new also needs its lube oil system, a turning gear and generator cooling, or it wears out and overheats:
+see [TURBINE-AUX.md](TURBINE-AUX.md). Sections already in a world are not changed.
+
 ## Power and water accounting
 
 - HP and LP sections have finite steam inventories. Multiple consumers share

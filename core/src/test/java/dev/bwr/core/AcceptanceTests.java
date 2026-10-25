@@ -113,6 +113,7 @@ public final class AcceptanceTests {
             dev.bwr.core.thermal.PressureVesselWellTest.class,
             dev.bwr.core.refuelling.BridgeMotionTest.class,
             dev.bwr.core.refuelling.CraneMotionTest.class,
+            dev.bwr.core.turbine.TurbineAuxTest.class,
             BoundaryStressTest.class,
             dev.bwr.core.boundary.PortLocaTest.class,
             SevereAccidentEscalationTest.class,
