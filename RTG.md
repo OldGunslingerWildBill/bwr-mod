@@ -256,7 +256,7 @@ A 2 x 2 footprint, **3 high**, one item (`bwr:large_rtg`), for a very large remo
 
 * **Radiation: heavy shielding, and the number is always shown.** The housing is **40 cm of lead-equivalent** (a lead, tungsten and steel sandwich in the 2 m body). What gets through is
   `2^(-40 cm / half-value layer)` for the isotope, the half-value layer of lead in the fuel line (`lead_hvl_cm`): Sr-90 0.6 cm, Cs-137 0.65, Am-241 0.02, Co-60 1.2. The result is the unit's point source
-  (`RadiationSources`, set when the contents change and when the chunk loads, cleared when it is removed or unloaded) and the screen's **Dose at 1 m**. For scale the screen also shows what the **bare core** would read.
+  (`RadiationSources`, set when the contents change and when the chunk loads, cleared when it is removed or unloaded; below a nanowatt of photons, about a nanosievert an hour at a metre, no source is registered, and the screen and the signal still print the true number) and the screen's **Dose at 1 m**. For scale the screen also shows what the **bare core** would read.
 
   | 1,000 kg of | Bare core at 1 m | Through the housing |
   |---|---|---|

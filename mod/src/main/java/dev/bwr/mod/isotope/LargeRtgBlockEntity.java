@@ -63,6 +63,8 @@ public class LargeRtgBlockEntity extends BlockEntity {
     private static final int STRUCTURE_INTERVAL = 100;
     /** Energy the block can hold, FE: about 14 ticks of a full cobalt unit, five minutes of a small strontium load. */
     public static final int BUFFER_FE = 1_000_000;
+    /** Photon power below which the block registers no point source in the world, W (see {@link #updateRadiation}). */
+    public static final double MIN_SOURCE_WATTS = 1.0e-9;
 
     private final LargeRtgStore store = new LargeRtgStore();
     private boolean heatOnly;
@@ -323,7 +325,10 @@ public class LargeRtgBlockEntity extends BlockEntity {
             return;
         }
         double outside = output().outsideGammaWatts();
-        if (outside > 0.0) {
+        // Behind 40 cm of lead, strontium and caesium leave e-19 W of photons: a world source of that is a reading of zero to any
+        // instrument and only costs the dose model a source to sum. Below a nanowatt (about 1e-6 mSv/h at a metre) none is registered;
+        // the screen and the signal still print the true number.
+        if (outside > MIN_SOURCE_WATTS) {
             RadiationSources.emit(level, this, centre(), outside, 1.0);
             registeredSource = true;
         } else if (registeredSource) {
