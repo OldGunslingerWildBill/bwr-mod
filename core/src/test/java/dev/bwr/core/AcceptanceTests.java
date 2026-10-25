@@ -140,6 +140,7 @@ public final class AcceptanceTests {
             SpentFuelTest.class,
             MoxMassBalanceTest.class,
             ThoriumMassBalanceTest.class,
+            dev.bwr.core.fuel.BreedingTargetsTest.class,
             MixedCoreTest.class,
             HeatPerFissionTest.class,
             FeedwaterPumpTest.class,

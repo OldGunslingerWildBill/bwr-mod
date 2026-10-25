@@ -132,6 +132,8 @@ the same mass balance as the uranium route, and gives back the depleted uranium.
 | `thorium` (selector step `thorium_standard`) | 3 % | 4 | 26 | 25 |
 | `thorium_rich` | 5 % | 3 | 43 | 41 |
 
+**A bred U-233 driver.** A thorium target in a reactor core makes U-233 ingots ([BREEDING-TARGETS.md](BREEDING-TARGETS.md)); the fabricator's thorium grades take them in place of natural uranium: 8, 12 or 19 U-233 ingots with 4 thorium and 4 steel for the 2, 3 and 5 % grades, no enrichment and no depleted uranium back. The costs above are unchanged; the U-233 route runs only when the player has put the U-233 in.
+
 The driver is uranium and not plutonium on purpose: it is the mod's existing enrichment arithmetic, it needs no reactor run first, and a plutonium driver in whole nuggets
 could not tell the standard grade from the rich one (36 nuggets to an assembly: 1.08 and 1.8 round to 2 and 2). The selector keeps `FuelItemRoute.LADDER` (the uranium ladder and
 the MOX grades, ten steps, same indexes) and adds the thorium steps in `FuelItemRoute.SELECTOR`; the reprocessing plant still refuses thorium assemblies.

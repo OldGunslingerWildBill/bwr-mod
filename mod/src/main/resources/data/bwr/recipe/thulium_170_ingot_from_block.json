@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:thulium_170_block"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "bwr:thulium_170_ingot"
+  }
+}

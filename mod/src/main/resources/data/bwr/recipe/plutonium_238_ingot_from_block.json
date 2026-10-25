@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:plutonium_238_block"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "bwr:plutonium_238_ingot"
+  }
+}

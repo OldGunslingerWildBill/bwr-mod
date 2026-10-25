@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased: reactor-bred isotopes
+
+Six new irradiation targets breed the isotopes of the elements that lie with uranium and thorium ore, from neutron cross sections, with a place for each in the RTG and the thorium fuel route. Write-up,
+numbers and references: [BREEDING-TARGETS.md](BREEDING-TARGETS.md).
+
+- **New target rods** (new `CoreInsert.Kind`s, appended so the item picture and saves keep their ordinals): bismuth (96 h), thorium (168 h), depleted uranium (240 h), neptunium (120 h), radium (168 h) and thulium (48 h), made
+  from a casing and the ore element (no charge item). They are used in the hand like the cobalt, lithium and silicon rods and give one product and the casing.
+- **Products.** Polonium-210, plutonium-238, actinium-227 and thulium-170 as `<isotope>_ingot` and `<isotope>_block` (nine to one), each with entries for the ingot and the block in the RTG fuel data map `bwr:rtg_fuel`;
+  `uranium_233_ingot` (fuel) and `neptunium_237_ingot` (the plutonium-238 route's feed) without. Carried, each is a gamma source by its own photon power: polonium hardly at all, actinium-227's daughters and thulium-170's
+  bremsstrahlung strongly.
+- **Physics.** `dev.bwr.core.fuel.BreedingTargets` gives the existing 72-hour cobalt target a meaning (one 18-month cycle, so a game hour is 182.5 hours at 3e13 n/cm2/s) and works every product's mass from the capture
+  and burn-up chain with a matrix exponential. Each ingot is one finished rod's yield, kept within 3 % by a core test and a GameTest.
+- **Thorium fuel.** A bred U-233 ingot can stand in for the enriched-uranium driver in the fuel fabricator's thorium targets (8, 12 or 19 ingots and 4 thorium for the 2, 3 and 5 % grades, no depleted uranium back), as an
+  alternative inside the existing three steps; the existing costs, selector and saves are unchanged. The U-233 store is saved as `U233Ingots` only when it holds some.
+- **Ore.** Uranium ore and deepslate uranium ore drop a bismuth nugget (5 / 6.5 / 8 / 10 %, one or two, skipped by Silk Touch), the Bi-Co-Ni-Ag-U vein companion. A polonium trace in the ore was left out and why is in the write-up.
+- **Guide.** A new chapter, **Breeding and decay**, shows the path from what you put in to what you get, with half-lives and item icons, for every isotope route in the mod and the uranium and thorium decay series.
+- **Data lists extended** (new non-craftable items): `NO_RECIPE` in tools-audit-recipes.py (`uranium_233_ingot`, `neptunium_237_ingot`, `bismuth_nugget`); `UraniumOreTests.onlyListedByproducts` (the bismuth nugget).
+- **Checks.** Core `BreedingTargetsTest`; GameTests `bwrbreeding` (`BreedingTargetTests`, batch `breeding`).
+
 ## Unreleased: uranium ore byproducts
 
 Mining uranium ore now gives the byproducts real uranium ore comes with, the way thorium ore does ([THORIUM.md](THORIUM.md#byproducts-of-mining-uranium-ore), owner-approved).

@@ -1,0 +1,43 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:irradiation_casing"
+    },
+    {
+      "item": "bwr:neptunium_237_ingot"
+    },
+    {
+      "item": "bwr:neptunium_237_ingot"
+    },
+    {
+      "item": "bwr:neptunium_237_ingot"
+    },
+    {
+      "item": "bwr:neptunium_237_ingot"
+    },
+    {
+      "item": "bwr:neptunium_237_ingot"
+    },
+    {
+      "item": "bwr:neptunium_237_ingot"
+    },
+    {
+      "item": "bwr:neptunium_237_ingot"
+    },
+    {
+      "item": "bwr:neptunium_237_ingot"
+    }
+  ],
+  "result": {
+    "id": "bwr:specialty_rod",
+    "count": 1,
+    "components": {
+      "bwr:core_insert": {
+        "kind": "neptunium_target",
+        "exposure_seconds": 0
+      }
+    }
+  }
+}

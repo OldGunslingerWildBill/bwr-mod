@@ -7,19 +7,26 @@ public final class CoreInsert {
         CALIFORNIUM_SOURCE(0.02, 2.0e-11, 0), AMERICIUM_BERYLLIUM_SOURCE(0.02, 8.0e-12, 0),
         // Multi-day gameplay batches, aligned with long fuel cycles rather than real isotope kinetics.
         ANTIMONY_BERYLLIUM_SOURCE(0.04, 1.2e-11, 48 * 3600.0),
-        COBALT_TARGET(0.3, 0, 72 * 3600.0), TRITIUM_TARGET(0.5, 0, 168 * 3600.0),
-        SILICON_TARGET(0.05, 0, 24 * 3600.0);
+        COBALT_TARGET(0.3, 0, 72 * 3600.0, true), TRITIUM_TARGET(0.5, 0, 168 * 3600.0, true),
+        SILICON_TARGET(0.05, 0, 24 * 3600.0, true),
+        // Reactor-bred isotopes (BREEDING-TARGETS.md). New kinds go last: the item model picks its picture by ordinal.
+        // The hours are gameplay time at rated local flux; what a cassette makes is BreedingTargets' physics.
+        BISMUTH_TARGET(0.02, 0, 96 * 3600.0, true), THORIUM_TARGET(0.08, 0, 168 * 3600.0, true),
+        URANIUM_TARGET(0.05, 0, 240 * 3600.0, true), NEPTUNIUM_TARGET(0.05, 0, 120 * 3600.0, true),
+        RADIUM_TARGET(0.02, 0, 168 * 3600.0, true), THULIUM_TARGET(0.1, 0, 48 * 3600.0, true);
 
         public final double absorptionRatio, sourcePerSecond;
+        public final boolean target;
         public volatile double exposureSeconds;
-        Kind(double absorption, double source, double exposure) {
-            absorptionRatio = absorption; sourcePerSecond = source; exposureSeconds = exposure;
+        Kind(double absorption, double source, double exposure) { this(absorption, source, exposure, false); }
+        Kind(double absorption, double source, double exposure, boolean target) {
+            absorptionRatio = absorption; sourcePerSecond = source; exposureSeconds = exposure; this.target = target;
         }
         public String id() { return name().toLowerCase(java.util.Locale.ROOT); }
         public void setExposureSeconds(double seconds) {
             if (Double.isFinite(seconds) && seconds > 0 && exposureSeconds > 0) exposureSeconds = seconds;
         }
-        public boolean target() { return this == COBALT_TARGET || this == TRITIUM_TARGET || this == SILICON_TARGET; }
+        public boolean target() { return target; }
     }
 
     private final Kind kind;

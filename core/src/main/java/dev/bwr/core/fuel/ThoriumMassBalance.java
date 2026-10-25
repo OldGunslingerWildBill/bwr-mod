@@ -75,4 +75,34 @@ public final class ThoriumMassBalance {
         long numerator = (long) productIngots * (ad - f);
         return Math.toIntExact(Math.floorDiv(numerator + ad - 1, ad));
     }
+
+    // --- the U-233 driver (BREEDING-TARGETS.md): the driver made in the reactor from thorium instead of enriched from uranium ---
+
+    /** Grams in one U-233 ingot: what one finished thorium target makes ({@link BreedingTargets#U233_INGOT_GRAMS}). */
+    public static final long U233_INGOT_GRAMS = Math.round(BreedingTargets.U233_INGOT_GRAMS);
+
+    /** Grams of heavy metal in one ingot-unit: an assembly is {@value SpentFuel#INGOTS_PER_ASSEMBLY} of them and 180 kg. */
+    public static final long GRAMS_PER_INGOT_UNIT = 45_000L;
+
+    /**
+     * Whole U-233 ingots that make the driver of {@code productIngots} of thorium fuel when the driver is bred U-233 and not
+     * enriched uranium: the driver fraction of the heavy metal's mass, in whole ingots, rounded up. Nothing is enriched, so there is
+     * no depleted uranium back.
+     */
+    public static int u233Ingots(int productIngots, double driverFraction) {
+        long f = grid(driverFraction);
+        if (!(f > 0 && f < grid(DRIVER_ASSAY))) {
+            throw new IllegalArgumentException("driver fraction " + driverFraction + " must be above 0 and below the driver assay " + DRIVER_ASSAY);
+        }
+        long numerator = (long) productIngots * GRAMS_PER_INGOT_UNIT * f;
+        long denominator = U233_INGOT_GRAMS * GRID;
+        return Math.toIntExact(Math.floorDiv(numerator + denominator - 1, denominator));
+    }
+
+    /** Whole thorium ingots of an assembly whose driver is U-233: the heavy metal less the driver's few percent, rounded up. */
+    public static int thoriumIngotsWithU233(int productIngots, double driverFraction) {
+        long f = grid(driverFraction);
+        long numerator = (long) productIngots * (GRID - f);
+        return Math.toIntExact(Math.floorDiv(numerator + GRID - 1, GRID));
+    }
 }
