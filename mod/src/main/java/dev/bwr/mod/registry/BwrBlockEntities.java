@@ -153,6 +153,16 @@ public final class BwrBlockEntities {
             () -> BlockEntityType.Builder.of(ReprocessingPlantBlockEntity::new,
                     BwrBlocks.REPROCESSING_PLANT.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.isotope.IsotopeSeparatorBlockEntity>>
+            ISOTOPE_SEPARATOR = BLOCK_ENTITIES.register("isotope_separator",
+            () -> BlockEntityType.Builder.of(dev.bwr.mod.isotope.IsotopeSeparatorBlockEntity::new,
+                    BwrBlocks.ISOTOPE_SEPARATOR.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.isotope.RtgBlockEntity>>
+            RTG = BLOCK_ENTITIES.register("rtg",
+            () -> BlockEntityType.Builder.of(dev.bwr.mod.isotope.RtgBlockEntity::new,
+                    BwrBlocks.RTG.get()).build(null));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity>>
             SPENT_FUEL_POOL = BLOCK_ENTITIES.register("spent_fuel_pool",
             () -> BlockEntityType.Builder.of(dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity::new,

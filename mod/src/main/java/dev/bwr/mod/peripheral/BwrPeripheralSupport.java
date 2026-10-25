@@ -126,6 +126,19 @@ public final class BwrPeripheralSupport {
                 "batchHeavyMetalKg",b.batchHeavyMetalKg(),"enrichment",b.batchEnrichmentWeightFraction(),"energyFE",b.energy().getEnergyStored(),"outputCount",b.output().getStackInSlot(0).getCount(),
                 "target",b.target(),"uraniumHeldIngots",b.uraniumHeldUnits()/(double)dev.bwr.mod.fuel.FuelItemRoute.UNITS_PER_INGOT,"depletedUranium",b.tailsHeld(),
                 "plutoniumHeldNuggets",b.plutoniumHeldNuggets(),"matrixHeldIngots",b.matrixHeldIngots()));
+        if(be instanceof dev.bwr.mod.isotope.RtgBlockEntity b)return new HardwarePeripheral("bwr_rtg",()->{
+            var r=b.readout();var m=new LinkedHashMap<String,Object>();
+            m.put("capsules",r.capsules());m.put("thermalW",r.thermalWatts());m.put("electricW",r.electricWatts());m.put("fePerTick",r.fePerTick());
+            m.put("halfLifeYears",r.shortestHalfLifeYears());m.put("doseAt1mMsvPerH",r.doseAtOneMetreMsvPerH());m.put("bufferFE",b.bufferFe());
+            m.put("efficiency",dev.bwr.core.isotope.RadioisotopePower.THERMOCOUPLE_EFFICIENCY);m.put("outputMultiplier",dev.bwr.mod.config.GameplayConfig.rtgOutputMultiplier());return m;});
+        if(be instanceof dev.bwr.mod.isotope.IsotopeSeparatorBlockEntity b)return new HardwarePeripheral("bwr_isotope_separator",()->{
+            var m=new LinkedHashMap<String,Object>();var in=b.items().getStackInSlot(0);
+            m.put("energyFE",b.energy().getEnergyStored());m.put("working",b.workTicks()>0);m.put("progress",b.workTicks()/(double)dev.bwr.mod.isotope.Isotopes.WORK_TICKS);
+            m.put("wasteIn",in.getCount());m.put("strontiumHeldG",dev.bwr.core.isotope.IsotopeExtraction.grams(b.strontiumGrains()));
+            m.put("caesiumHeldG",dev.bwr.core.isotope.IsotopeExtraction.grams(b.caesiumGrains()));m.put("americiumHeldG",dev.bwr.core.isotope.IsotopeExtraction.grams(b.americiumGrains()));
+            m.put("strippedHeldItems",b.strippedGrains()/(double)dev.bwr.mod.isotope.Isotopes.GRAINS_PER_WASTE_ITEM);
+            m.put("strontiumOut",b.items().getStackInSlot(1).getCount());m.put("caesiumOut",b.items().getStackInSlot(2).getCount());
+            m.put("americiumOut",b.items().getStackInSlot(3).getCount());m.put("strippedOut",b.items().getStackInSlot(4).getCount());return m;});
         if(be instanceof dev.bwr.mod.fuel.ReprocessingPlantBlockEntity b)return new HardwarePeripheral("bwr_reprocessing_plant",()->{
             var m=new LinkedHashMap<String,Object>();var held=b.input().getStackInSlot(0);
             m.put("energyFE",b.energy().getEnergyStored());m.put("working",b.workTicks()>0);m.put("progress",b.workTicks()/(double)dev.bwr.mod.fuel.Reprocessing.WORK_TICKS);

@@ -258,6 +258,17 @@ public final class BwrBlocks {
     public static final DeferredBlock<ReprocessingPlantBlock> REPROCESSING_PLANT =
             BLOCKS.register("reprocessing_plant", () -> new ReprocessingPlantBlock(machine()));
 
+    /**
+     * The next stage after the reprocessing plant: fission-product waste in, strontium-90, caesium-137 and americium-241
+     * capsules and stripped waste out (see RTG.md).
+     */
+    public static final DeferredBlock<dev.bwr.mod.isotope.IsotopeSeparatorBlock> ISOTOPE_SEPARATOR =
+            BLOCKS.register("isotope_separator", () -> new dev.bwr.mod.isotope.IsotopeSeparatorBlock(machine()));
+
+    /** The radioisotope thermoelectric generator: sealed isotope capsules in, a small steady FE supply out (see RTG.md). */
+    public static final DeferredBlock<dev.bwr.mod.isotope.RtgBlock> RTG =
+            BLOCKS.register("rtg", () -> new dev.bwr.mod.isotope.RtgBlock(machine()));
+
     // --- Spent fuel pool (the fuel cycle: fabricator, reactor, pool, reprocessing plant) ----------
 
     /** Lined concrete floor and walls of a spent fuel pool. */

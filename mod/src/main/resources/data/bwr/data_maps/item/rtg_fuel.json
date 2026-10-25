@@ -1,0 +1,28 @@
+{
+  "values": {
+    "bwr:strontium_90_capsule": {
+      "isotope": "Sr-90 with Y-90",
+      "specific_power_w_per_g": 0.92,
+      "half_life_years": 28.9,
+      "grams_per_item": 250,
+      "gamma_w_per_g": 0.0057,
+      "capsule_transmission": 1.0
+    },
+    "bwr:caesium_137_capsule": {
+      "isotope": "Cs-137 with Ba-137m",
+      "specific_power_w_per_g": 0.42,
+      "half_life_years": 30.04,
+      "grams_per_item": 250,
+      "gamma_w_per_g": 0.29,
+      "capsule_transmission": 0.85
+    },
+    "bwr:americium_241_capsule": {
+      "isotope": "Am-241",
+      "specific_power_w_per_g": 0.1147,
+      "half_life_years": 432.6,
+      "grams_per_item": 250,
+      "gamma_w_per_g": 0.00063,
+      "capsule_transmission": 0.05
+    }
+  }
+}

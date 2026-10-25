@@ -244,6 +244,10 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.FUEL_FABRICATOR);
     public static final DeferredItem<BlockItem> REPROCESSING_PLANT =
             ITEMS.registerSimpleBlockItem(BwrBlocks.REPROCESSING_PLANT);
+    public static final DeferredItem<BlockItem> ISOTOPE_SEPARATOR =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.ISOTOPE_SEPARATOR);
+    public static final DeferredItem<BlockItem> RTG =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.RTG);
     public static final DeferredItem<BlockItem> SHIELD_PLUG_CONCRETE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.SHIELD_PLUG_CONCRETE);
     public static final DeferredItem<BlockItem> HEAVILY_REINFORCED_SHIELD_PLUG_CONCRETE =
@@ -392,6 +396,18 @@ public final class BwrItems {
      * somewhere to put it instead of deleting it.
      */
     public static final DeferredItem<Item> FISSION_PRODUCT_WASTE = ITEMS.registerSimpleItem("fission_product_waste");
+    /**
+     * The isotope separator's capsules, 250 g of the isotope each, sealed (see RTG.md). Their power, half-life and
+     * dose are the RTG fuel list's ({@code data/bwr/data_maps/item/rtg_fuel.json}), not fields of the item.
+     */
+    public static final DeferredItem<Item> STRONTIUM_90_CAPSULE = ITEMS.register("strontium_90_capsule",
+            () -> new dev.bwr.mod.isotope.IsotopeCapsuleItem(new Item.Properties().stacksTo(16)));
+    public static final DeferredItem<Item> CAESIUM_137_CAPSULE = ITEMS.register("caesium_137_capsule",
+            () -> new dev.bwr.mod.isotope.IsotopeCapsuleItem(new Item.Properties().stacksTo(16)));
+    public static final DeferredItem<Item> AMERICIUM_241_CAPSULE = ITEMS.register("americium_241_capsule",
+            () -> new dev.bwr.mod.isotope.IsotopeCapsuleItem(new Item.Properties().stacksTo(16)));
+    /** What the isotope separator leaves of waste: the same mass without its strontium, caesium and americium. It is not separated again. */
+    public static final DeferredItem<Item> STRIPPED_WASTE = ITEMS.registerSimpleItem("stripped_waste");
 
     // --- Control-room furniture (ROOM-FURNITURE.md) ---
     public static final DeferredItem<BlockItem> RELAY_CABINET =
@@ -459,7 +475,7 @@ public final class BwrItems {
                     .icon(() -> FUEL_ASSEMBLY.get().getDefaultInstance()).displayItems((parameters, output) -> {
                         for (var type : FuelTypes.catalogue()) output.accept(FuelAssemblyItem.stackOf(FUEL_ASSEMBLY.get(), FuelAssemblyData.fresh(type)));
                         for (var kind : dev.bwr.core.fuel.CoreInsert.Kind.values()) output.accept(dev.bwr.mod.fuel.SpecialtyRodItem.stack(new dev.bwr.mod.fuel.CoreInsertData(kind, 0)));
-                        for (var item : java.util.List.<net.neoforged.neoforge.registries.DeferredItem<? extends Item>>of(URANIUM_ORE, DEEPSLATE_URANIUM_ORE, RAW_URANIUM, RAW_URANIUM_BLOCK, URANIUM_INGOT, URANIUM_BLOCK, IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, COBALT_SAMPLE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM, PLUTONIUM_NUGGET, PLUTONIUM_INGOT, FISSION_PRODUCT_WASTE)) output.accept(item.get());
+                        for (var item : java.util.List.<net.neoforged.neoforge.registries.DeferredItem<? extends Item>>of(URANIUM_ORE, DEEPSLATE_URANIUM_ORE, RAW_URANIUM, RAW_URANIUM_BLOCK, URANIUM_INGOT, URANIUM_BLOCK, IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, COBALT_SAMPLE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM, PLUTONIUM_NUGGET, PLUTONIUM_INGOT, FISSION_PRODUCT_WASTE, STRIPPED_WASTE, STRONTIUM_90_CAPSULE, CAESIUM_137_CAPSULE, AMERICIUM_241_CAPSULE)) output.accept(item.get());
                     }).build());
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB =
@@ -521,6 +537,8 @@ public final class BwrItems {
                         output.accept(TURBINE_STEAM_OUTLET.get());
                         output.accept(FUEL_FABRICATOR.get());
                         output.accept(REPROCESSING_PLANT.get());
+                        output.accept(ISOTOPE_SEPARATOR.get());
+                        output.accept(RTG.get());
                         output.accept(SHIELD_PLUG_CONCRETE.get());
                         output.accept(HEAVILY_REINFORCED_SHIELD_PLUG_CONCRETE.get());
                         output.accept(ULTRA_REINFORCED_SHIELD_PLUG_CONCRETE.get());

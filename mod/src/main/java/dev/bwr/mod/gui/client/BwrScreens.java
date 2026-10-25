@@ -33,6 +33,8 @@ public final class BwrScreens {
         event.register(BwrMenus.SUPPRESSION_POOL.get(), SuppressionPoolScreen::new);
         event.register(BwrMenus.FUEL_FABRICATOR.get(), FuelFabricatorScreen::new);
         event.register(BwrMenus.REPROCESSING_PLANT.get(), ReprocessingPlantScreen::new);
+        event.register(BwrMenus.ISOTOPE_SEPARATOR.get(), IsotopeSeparatorScreen::new);
+        event.register(BwrMenus.RTG.get(), RtgScreen::new);
         event.register(BwrMenus.SPENT_FUEL_POOL.get(), SpentFuelPoolScreen::new);
         event.register(BwrMenus.BUILDING_CRANE.get(), CraneScreen::new);
         event.register(BwrMenus.STUD_TENSIONER.get(), StudTensionerScreen::new);

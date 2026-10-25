@@ -100,6 +100,8 @@ public final class BwrMod {
         modBus.addListener(dev.bwr.mod.reactor.StudTensionerCapabilities::register);
         modBus.addListener(dev.bwr.mod.suppression.SuppressionWaterCapabilities::register);
         modBus.addListener(dev.bwr.mod.rwcu.RwcuCapabilities::register);
+        modBus.addListener(dev.bwr.mod.isotope.IsotopeCapabilities::register);
+        modBus.addListener(dev.bwr.mod.isotope.RtgFuels::register);
         modBus.addListener(dev.bwr.mod.spentfuel.SpentFuelPoolCapabilities::register);
         modBus.addListener(dev.bwr.mod.containment.ContainmentPenetrationCapabilities::register);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
@@ -115,6 +117,7 @@ public final class BwrMod {
 
         dev.bwr.mod.refuelling.PoolRadiation.register();
         dev.bwr.mod.rwcu.SpentResinItem.register();
+        dev.bwr.mod.isotope.CarriedIsotopes.register();
         dev.bwr.mod.rwcu.CoolantCrudRadiation.register();
         dev.bwr.mod.refuelling.EquipmentPadBlockEntity.registerRadiation();
         computerCraftPresent = ModList.get().isLoaded(CC_MOD_ID);

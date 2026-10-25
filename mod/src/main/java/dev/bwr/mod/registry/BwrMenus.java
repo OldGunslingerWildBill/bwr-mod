@@ -57,6 +57,16 @@ public final class BwrMenus {
             MENUS.register("reprocessing_plant",
                     () -> IMenuTypeExtension.create(ReprocessingPlantMenu::new));
 
+    /** Isotope separator: the waste slot, four product slots, what one waste item yields, progress and energy. */
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.IsotopeSeparatorMenu>> ISOTOPE_SEPARATOR =
+            MENUS.register("isotope_separator",
+                    () -> IMenuTypeExtension.create(dev.bwr.mod.gui.IsotopeSeparatorMenu::new));
+
+    /** RTG: six capsule wells and what they make. */
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.RtgMenu>> RTG =
+            MENUS.register("rtg",
+                    () -> IMenuTypeExtension.create(dev.bwr.mod.gui.RtgMenu::new));
+
     /** Spent fuel pool: per-rack heat, water level and temperature, time to boil and to uncover, the cooling pump. */
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.SpentFuelPoolMenu>> SPENT_FUEL_POOL =
             MENUS.register("spent_fuel_pool", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.SpentFuelPoolMenu::new));

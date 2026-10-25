@@ -55,7 +55,12 @@ NO_RECIPE = {
     "uranium_ore": "natural ore, placed by world generation; mined for raw uranium (silk touch gives the block)",
     "deepslate_uranium_ore": "natural ore in deepslate, placed by world generation; mined for raw uranium (silk touch gives the block)",
     # Made by the reprocessing plant.
-    "fission_product_waste": "what burning fuel leaves, the reprocessing plant's byproduct: nothing uses it, and a recipe would make fuel waste out of nothing",
+    "fission_product_waste": "what burning fuel leaves, the reprocessing plant's byproduct: only the isotope separator uses it, and a recipe would make fuel waste out of nothing",
+    # Made by the isotope separator from fission-product waste (RTG.md); a recipe for any of them would make isotopes out of nothing.
+    "strontium_90_capsule": "made by the isotope separator from fission-product waste",
+    "caesium_137_capsule": "made by the isotope separator from fission-product waste",
+    "americium_241_capsule": "made by the isotope separator from fission-product waste",
+    "stripped_waste": "what the isotope separator leaves of waste; it cannot be separated again, and a recipe for it would make waste out of nothing",
 }
 
 # The installs the audit evaluates recipe conditions for. Every craftable item needs a live recipe in each.

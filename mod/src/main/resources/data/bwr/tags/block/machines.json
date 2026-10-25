@@ -16,6 +16,8 @@
       "required": false
     },
     "bwr:reprocessing_plant",
+    "bwr:isotope_separator",
+    "bwr:rtg",
     "bwr:rcic_turbine_pump",
     "bwr:hpci_turbine_pump",
     "bwr:hpcs_pump",

@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased: RTG and isotope extraction
+
+Fission-product waste is no longer a dead end. An **Isotope Separator** makes sealed strontium-90, caesium-137 and americium-241 capsules from it, and an **RTG** turns capsules into a small steady supply of FE. Write-up, the numbers, the sources and the radium hook: [RTG.md](RTG.md).
+
+- **Isotope Separator** (`bwr:isotope_separator`). A machine of its own, so the reprocessing plant, its slots, screen, peripheral and saves are untouched. One waste item (5 kg) in 5 seconds and 10,000 FE; out come 109.7 g of Sr-90, 181.3 g of Cs-137 and 75 g of Am-241 (as fixed-point grains, released as 250 g capsules) and the rest as `bwr:stripped_waste`, which it refuses to take again. Mass is conserved to the grain.
+- **RTG** (`bwr:rtg`). Six wells; thermal power is the sum of grams x specific power x 2^(-t / half-life), electricity is 5 % of that, FE per tick is watts over 13.4 (the mod's one conversion) times `rtgOutputMultiplier` (default 1: no hidden boost). Six strontium capsules make 69 W, 5.15 FE/t. Decay is real and negligible in game time (0.027 % per 100 hours for Sr-90). Pushes to loaded neighbours every 5 ticks and answers a pull; nothing is produced for unloaded time.
+- **The fuel list is data.** The item data map `bwr:rtg_fuel` (`data/bwr/data_maps/item/rtg_fuel.json`) holds each item's specific power, half-life, grams, photon power and wall; an item is RTG fuel exactly when it has an entry. RTG.md has the one line that adds radium when the thorium branch is merged.
+- **Dose.** A carried capsule is a gamma source at the player (Cs-137 about 54 Sv/h at 1 m, Sr-90 1.3 Sv/h, Am-241 7 mSv/h); the RTG is a point source behind its housing (1e-4).
+- **Items and recipes.** Four new items (`strontium_90_capsule`, `caesium_137_capsule`, `americium_241_capsule`, `stripped_waste`), recipes for both blocks, and a second route to the Am-Be startup rod: an irradiation casing and an Am-241 capsule (the echo shard recipe stays). `tools-audit-recipes.py`'s no-recipe list gains the four items and its reason for `fission_product_waste` no longer says nothing uses it.
+- **Readouts.** A screen for each machine, Networking Wrench / panel signals for the RTG (`thermal_power`, `electric_power`, `dose_rate`, `capsules`, `buffer`, `fuelled`), CC peripherals `bwr_rtg` and `bwr_isotope_separator`, a guide page, a new server option `rtgOutputMultiplier`.
+- **Not added:** Pu-238 (it needs neptunium-237 from reprocessing and a target rod; RTG.md says why) and a radium-beryllium rod (documented, not built).
+- **Saves.** New blocks only; the plant is unchanged and loads as before. New NBT keys are written only when non-empty.
+- **Checks.** `:core:acceptance` (`RadioisotopePowerTest`, `IsotopeExtractionTest`); GameTests `bwrrtg` (`RtgTests`); client pictures `-PbwrRtgClientCheck` (`RtgClientCheck`).
+
 ## Unreleased: RWCU stainless steel nanofilter
 
 The RWCU filter-demineralizer is now the **RWCU Stainless Steel Nanofilter**, and it works at full reactor temperature. Write-up, the numbers and the references: [RWCU.md](RWCU.md).

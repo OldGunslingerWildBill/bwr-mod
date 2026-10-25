@@ -59,6 +59,12 @@ public final class GameplayConfig {
                     + "A fresh discharge is 100 to 300 kW; the default is reached in about one to two hours of cooling. "
                     + "Zero turns the check off. Assemblies with no recorded discharge time count as long-cooled")
             .defineInRange("reprocessingMaxDecayHeatKw", 50.0, 0.0, 100_000.0);
+    public static final ModConfigSpec.DoubleValue RTG_OUTPUT_MULTIPLIER = BUILDER
+            .comment("Multiplier on the electricity an RTG makes: 1 is the physical figure (5 % of the capsules' thermal power, 13.4 W per FE/t); "
+                    + "it scales nothing else (not the heat, the dose or the decay). A real radioisotope unit is small by the plant's standards: "
+                    + "six strontium-90 capsules make about 5 FE/t. Raise it to taste; the default adds no hidden boost")
+            .defineInRange("rtgOutputMultiplier", 1.0, 0.0, 1000.0);
+
     public static final ModConfigSpec.BooleanValue URANIUM_ORE_GENERATION = BUILDER
             .comment("Generate this mod's uranium ore (small blobs and the large veins) in newly generated chunks. Never touches chunks that already exist. "
                     + "Read when the server starts: changing it needs a restart to take effect on the biome lists (the vein feature itself re-reads it for every chunk). "
@@ -99,6 +105,7 @@ public final class GameplayConfig {
     public static double wallStrengthK() { return read(WALL_STRENGTH_K); }
     public static double wallStrengthCapPsig() { return read(WALL_STRENGTH_CAP_PSIG); }
     public static double reprocessingMaxDecayHeatKw() { return read(REPROCESSING_MAX_DECAY_HEAT_KW); }
+    public static double rtgOutputMultiplier() { return read(RTG_OUTPUT_MULTIPLIER); }
     /** Whether the refuelling map may move fuel instantly. False until the server config says otherwise (and before it is loaded). */
     public static boolean instantRefuelling() {
         return SPEC.isLoaded() ? INSTANT_REFUELLING.get() : INSTANT_REFUELLING.getDefault();
