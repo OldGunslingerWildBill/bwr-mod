@@ -286,7 +286,12 @@ public class RtgBlockEntity extends BlockEntity {
     public void onLoad() {
         super.onLoad();
         if (level != null && !level.isClientSide()) {
-            // Nothing is produced for the time the chunk was away: the clock restarts here.
+            // Nothing is produced for the time the chunk was away: the clock restarts here. A block entity that is loaded
+            // fresh has no clock yet (lastSettle 0). One that is already running (onLoad is called again when the block
+            // entity is re-attached to its chunk) first banks what it has made since its last settle, so no tick is dropped.
+            if (lastSettle != 0L) {
+                settle();
+            }
             lastSettle = level.getGameTime();
             for (int slot = 0; slot < SLOTS; slot++) {
                 if (!fuel.getStackInSlot(slot).isEmpty() && loadedAt[slot] == NOT_LOADED) {

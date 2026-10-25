@@ -267,7 +267,7 @@ public final class BwrBlocks {
 
     /** The radioisotope thermoelectric generator: sealed isotope capsules in, a small steady FE supply out (see RTG.md). */
     public static final DeferredBlock<dev.bwr.mod.isotope.RtgBlock> RTG =
-            BLOCKS.register("rtg", () -> new dev.bwr.mod.isotope.RtgBlock(machine()));
+            BLOCKS.register("rtg", () -> new dev.bwr.mod.isotope.RtgBlock(machine().noOcclusion()));
 
     // --- Spent fuel pool (the fuel cycle: fabricator, reactor, pool, reprocessing plant) ----------
 

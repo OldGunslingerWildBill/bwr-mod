@@ -243,7 +243,7 @@ public final class RtgTests {
             int delivered = plant.energy().getEnergyStored();
             double waiting = rtg.bufferFe();
             h.assertTrue(delivered > 0.8 * made, "the neighbour got " + delivered + " FE of " + made);
-            h.assertTrue(Math.abs(delivered + waiting - made) < 1.5 * rate, "accounting: delivered " + delivered + " + waiting " + waiting + " vs made " + made);
+            h.assertTrue(Math.abs(delivered + waiting - made) < 1e-6 * made, "accounting: delivered " + delivered + " + waiting " + waiting + " vs made " + made);
             System.out.println("RTG power: " + elapsed + " ticks, 6 Sr-90 capsules, " + delivered + " FE delivered to a plant, " + String.format("%.2f", waiting) + " FE waiting; " + String.format("%.4f", rate) + " FE/t");
             h.succeed();
         });
