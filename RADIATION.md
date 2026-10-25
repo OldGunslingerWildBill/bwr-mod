@@ -81,13 +81,55 @@ transmission of what is in the way:
 | Vessel wall, 15 cm of steel | 8.5e-4 |
 | Water around the core, 1 m, scaled by how much of the fuel is covered | 8.5e-4 covered, 1 uncovered |
 | Biological shield and building | 1e-4 |
-| (Looking down an **open head**, over the vessel opening) only the water above the fuel | `e^(-7.07 x depth)` |
+| (Looking down an **open head**, over the vessel opening) only the water above the fuel; from a point in the water, the water on the line to the fuel above its top | `e^(-7.07 x depth)` |
 | (After the **lower head fails**) the vessel wall and its water are gone | |
 
 So a shielded vessel at power reads a couple of tenths of a mSv/h at 10 m and a hundredth of that a day after shutdown; an
 uncovered core inside a closed vessel reads about 1200 times higher; looking down an open vessel with the fuel under 1.2 m of
 water reads hundreds of Sv/h, and under 3 m of water 0.1 mSv/h. Beside an open vessel the walls still shield. Positions are
 the middle of the interior and the top of active fuel. The core term, like the others, stops at 256 blocks.
+
+## Water between you and the source, and swimming
+
+Water shields at `e^(-7.07 x depth)`, and the depth is **the water on the line between the dose point and the source**. Two cases, one function
+(`DoseModel.waterPathM`), used by the spent fuel pool's racks (`PoolRadiation`) and by the open reactor (`RadiationField.coreDoseRate`):
+
+* **A point at or above the surface** (a person on the deck, the rim, the refuel floor, a meter on a bridge): as it has always been, the water straight over the
+  source, `surface - top of the rack` (or `surface - top of the active fuel` over an open vessel), however the point is placed beside it. Nothing about these
+  readings changed (`readingsAboveTheWaterAreExactlyWhatTheyAlwaysWere`, and the existing bridge, crane and cavity dose tests).
+* **A point in the water** (inside the pool's interior and under its surface, or inside an open vessel's footprint or its flooded well and under the water): the length
+  of the straight line from the source to the point that lies in the water. It gets no credit for the water above it. Straight over the source that is the depth between
+  the point and the rack top; beside or level with it, the whole distance. Over an open vessel only the part of the line above the top of the fuel counts, since the fuel
+  is not shielding.
+
+The difference is large and it is the point. A diver 1 m over a rack of four just-discharged assemblies is under 1 m of water, not under the 3 m over the rack tops that the
+old rule gave a person who is in fact above the surface: **about 480 Sv/h** against 0.3 mSv/h. A swimmer at the surface over 3 m of water reads about 2 mSv/h
+(`aDiverNearFreshFuelIsHurtAndASwimmerAtTheSurfaceIsNot`, `IMMERSION POOL` in its log). In the well the same: a metre over the fuel of a just-scrammed core under 4.5 m of water reads
+hundreds of Sv/h, at the surface a trifle (`aDiverInAFloodedWellOverAnOpenVesselIsHurtAndOneAtTheSurfaceIsNot`).
+
+The pool's water is a body in the pool's model, drawn as a surface; "in the water" is geometric (the middle of the body, where the meter measures, below that surface and inside
+the interior), so it holds with or without vanilla water blocks in the pool, which the pool allows. The well's is the physical level over the fuel, or the drawn surface where that
+is higher (the two can differ by a metre or two, REFUELLING-BRIDGE.md), so a player in the water they can see is in it. A point in the shaft over an open vessel (the cells of the surveyed
+well, outside the vessel's own footprint) reads as looking down the open head, as the footprint does, instead of through the vessel wall.
+
+### Swimming hurts
+
+`dev.bwr.mod.radiation.ImmersionDose` makes it hurt. A player in the water of a **formed pool** or of an **open reactor with water over the fuel and its well** is sampled **every 10
+ticks**, staggered by player (a player not in such water costs one integer test a tick). The sample reads exactly what the survey meter reads (`RadiationTracker.read`, the same
+`RadiationField`), so the meter and the harm cannot disagree, and then:
+
+* **adds the dose** of the interval to the personal dose, **whether or not a meter is carried**. A person in the water is exposed whether or not they can measure it, so the
+  dose is recorded and a meter picked up afterwards shows it. With a meter carried the meter's own sampler records it and it is not added twice;
+* **applies the effects** of the contamination model for the hazard that dose rate stands for (`DoseModel.hazardFromDoseRate`, the inverse of the table above): hunger from
+  about 150 mSv/h, weakness and poison from 1.5 Sv/h, wither from 15 Sv/h, wither III from 150 Sv/h. A diver beside fresh fuel is dead in seconds to a minute; a swimmer at
+  the surface of a deep pool has no effect and a dose of microsieverts. The contamination multiplier of `bwr-gameplay.toml` is not applied (it scales the plant's airborne activity,
+  and the reading has to equal the harm);
+* **tells the player once** when the rate first reaches the hunger threshold: "You feel a burning warmth on your skin. The water here is not safe: get out. Dose rate ..., your
+  dose so far ...", and again after they have been out of it or below it.
+
+Creative and spectator players are exempt (nothing is recorded, no effects, no message). The effects are keyed to the dose **rate**, as the contamination effects are; the dose
+accumulates and is on the meter, but nothing is done to a person for the total (acute radiation sickness is not modelled). A player in a **dry** pool beside the fuel, or on the rim, is
+not sampled: the uncovered-fuel accident's own contamination (`SPENT-FUEL-POOL.md`) and the meter cover them.
 
 ## The Survey Meter
 
@@ -182,7 +224,7 @@ RadiationSources.emit(level, blockEntity, Vec3.atCenterOf(pos), gammaWatts, tran
 RadiationSources.clear(level, blockEntity);
 ```
 
-The spent fuel pool's racks (a provider, `PoolRadiation`) and an assembly on the refuelling bridge's grapple (a point source) are registered this way, behind the water over them: see [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#water-depth-and-dose).
+The new fuel elevator's assemblies (a provider evaluated from the trip's clock, `NewFuelElevatorBlockEntity.registerRadiation`), the spent fuel pool's racks (a provider, `PoolRadiation`) and an assembly on the refuelling bridge's grapple (a point source) are registered this way, behind the water over them: see [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#water-depth-and-dose).
 
 `DoseModel.INVENTORY_GAMMA_WATTS` (9.4 MW) is the scale of a whole core inventory a day after shutdown. A provider that
 throws is skipped and logged once. Sources beyond 256 m read zero. Both instruments and the CC `other` term pick sources up
@@ -191,7 +233,7 @@ with no further work.
 ## Tests
 
 * `:core:acceptance` runs `DoseModelTest`: the inventory scale, the effect thresholds, shielding, open head, inverse square,
-  the click rate, formatting.
+  the click rate, formatting, the water path along the line (above and in the water, the open head's fuel top, continuity), and the hazard a dose rate stands for.
 * GameTests (`RadiationToolsTests`, `RadiationCcTests`): the meter reads 0 at background; non-zero and rising near a
   contaminated plant; falls with distance exactly as the effects model does, term by term, and reads nothing past 256
   blocks; a closed vessel reads low outside and an open head high looking down; the dose accumulates, persists in the

@@ -107,4 +107,54 @@ public final class DoseModelTest {
         Check.isTrue(DoseModel.formatDose(0.5).equals("500 µSv"), "dose: %s", DoseModel.formatDose(0.5));
         Check.isTrue(DoseModel.formatDose(Double.NaN).equals("0.00 µSv"), "NaN dose: %s", DoseModel.formatDose(Double.NaN));
     }
+
+    // ---- water on the line between the source and the dose point (swimmers)
+
+    public static void test09_aPointAboveTheSurfaceKeepsTheOldVerticalRule() {
+        // surface at 7, source (a rack top) at 4: the old figure is the 3 m straight over the source, however far aside the point is
+        Check.exactly(3.0, DoseModel.waterPathM(4.5, 4.0, 8.5, 7.0, Double.NEGATIVE_INFINITY), "directly over");
+        Check.exactly(3.0, DoseModel.waterPathM(9.0, 4.0, 8.5, 7.0, Double.NEGATIVE_INFINITY), "far aside, still the vertical water");
+        Check.exactly(3.0, DoseModel.waterPathM(9.0, 4.0, 7.0, 7.0, Double.NEGATIVE_INFINITY), "a point exactly at the surface is above it");
+        Check.exactly(0.0, DoseModel.waterPathM(2.0, 8.0, 9.0, 7.0, Double.NEGATIVE_INFINITY), "a source out of the water has none over it");
+        // the open head: the source is the middle of the fuel, the water counts from the top of the fuel
+        Check.relative(4.4, DoseModel.waterPathM(6.0, 2.0, 9.0, 8.4, 4.0), 1e-12, "open head, 4.4 m over the fuel");
+    }
+
+    public static void test10_aPointInTheWaterGetsOnlyTheWaterBetweenItAndTheSource() {
+        // straight over the source: the depth from the point down to the source, not the water above the point
+        Check.relative(1.0, DoseModel.waterPathM(1.0, 4.0, 5.0, 7.0, Double.NEGATIVE_INFINITY), 1e-12, "1 m over the rack top, 2 m of water above the diver");
+        Check.relative(2.0, DoseModel.waterPathM(2.0, 4.0, 6.0, 7.0, Double.NEGATIVE_INFINITY), 1e-12, "2 m over");
+        // beside it and level with it: the whole line is water
+        Check.relative(3.0, DoseModel.waterPathM(3.0, 4.0, 4.0, 7.0, Double.NEGATIVE_INFINITY), 1e-12, "level, 3 m away");
+        Check.relative(5.0, DoseModel.waterPathM(5.0, 4.0, 3.0, 7.0, Double.NEGATIVE_INFINITY), 1e-12, "below the source's level");
+        // slanted: the whole line is under the surface, so the whole distance
+        Check.relative(5.0, DoseModel.waterPathM(5.0, 4.0, 7.0 - 1e-9 - 2.0, 7.0, Double.NEGATIVE_INFINITY), 1e-12, "a slanted line is all water");
+        // less than the old figure would give a point above: swimming near the fuel is worse than the deck over it
+        double deck = DoseModel.waterPathM(4.5, 4.0, 8.5, 7.0, Double.NEGATIVE_INFINITY);
+        double swimmer = DoseModel.waterPathM(1.0, 4.0, 5.0, 7.0, Double.NEGATIVE_INFINITY);
+        Check.lessThan(deck, swimmer, "a swimmer 1 m over the fuel has 1 m of water, the deck has 3");
+        // more water means less dose, along the line
+        double near = DoseModel.pointSourceMsvPerH(1.0e5, 1.0, DoseModel.waterTransmission(1.0));
+        double far = DoseModel.pointSourceMsvPerH(1.0e5, 2.0, DoseModel.waterTransmission(2.0));
+        Check.greaterThan(far * 100.0, near, "a metre of water is a factor of about a thousand");
+    }
+
+    public static void test11_theOpenHeadCountsOnlyTheWaterAboveTheFuelOnTheLineToItsMiddle() {
+        // fuel 2 m high, top at 4, middle at 3; surface 8.4; a diver 1 m over the top (y = 5), straight over the middle: 4 m from it
+        Check.relative(1.0, DoseModel.waterPathM(2.0, 3.0, 5.0, 8.4, 4.0), 1e-12, "1 m of water above the fuel, the 1 m inside the fuel does not count");
+        // beside the fuel's top, level with it: no water over the fuel on the line, the line is inside the fuel
+        Check.exactly(0.0, DoseModel.waterPathM(2.0, 3.0, 3.0, 8.4, 4.0), "level with the middle of the fuel");
+        // continuous at the top of the fuel and at the surface (straight over)
+        Check.relative(4.4, DoseModel.waterPathM(5.4, 3.0, 8.399999, 8.4, 4.0), 1e-5, "just under the surface");
+        Check.relative(4.4, DoseModel.waterPathM(5.4, 3.0, 8.4, 8.4, 4.0), 1e-9, "at the surface");
+        Check.exactly(0.0, DoseModel.waterPathM(1.0, 3.0, 3.99, 8.4, 4.0), "below the top of the fuel there is no water over it");
+        Check.exactly(0.0, DoseModel.waterPathM(Double.NaN, 3.0, 5.0, 8.4, 4.0), "NaN distance is no path");
+    }
+
+    public static void test12_hazardFromDoseRateInvertsTheConversion() {
+        Check.relative(1.0e-3, DoseModel.hazardFromDoseRate(DoseModel.doseRateFromHazard(1.0e-3)), 1e-12, "round trip");
+        Check.exactly(0.0, DoseModel.hazardFromDoseRate(0.0), "zero");
+        Check.exactly(0.0, DoseModel.hazardFromDoseRate(Double.NaN), "NaN");
+        Check.exactly(0.0, DoseModel.hazardFromDoseRate(-5.0), "negative");
+    }
 }

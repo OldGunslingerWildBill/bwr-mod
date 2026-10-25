@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
  * The spent fuel pool's stored fuel as a radiation source ({@link RadiationSources}): each rack that holds fuel is a point
  * source at the middle of its top, with the gamma share of the decay heat of the assemblies in it, behind the water over the
  * rack top ({@link BridgeMotion#transmission}: the reactor model's {@code e^(-7.07 x depth)}; no shielding when the rack
- * is uncovered). One provider for every pool in the level, called a few times a second by an instrument and never per tick:
+ * is uncovered); a point inside the pool's water is shielded by the water along the line to the rack top instead. One provider for every pool in the level, called a few times a second by an instrument and never per tick:
  * its work is the racks of the pools within range.
  *
  * <p>The numbers are the ones the pool already keeps: {@code SpentFuelPoolBlockEntity} refreshes each assembly's decay heat
@@ -47,9 +47,15 @@ public final class PoolRadiation {
             if (dx > DoseModel.MAX_RANGE_M || dz > DoseModel.MAX_RANGE_M) {
                 continue;
             }
+            // A point in the pool's water is shielded by the water on the line between it and the rack top, with no credit for the water
+            // above it (DoseModel.waterPathM); a point out of the water keeps the old rule, the water straight over the rack top.
+            final boolean swimming = pool.inWater(at.x, at.y, at.z);
+            final double surface = pool.surfaceY();
             pool.forEachRackSource((x, topY, z, decayW, cover) -> {
                 double gamma = BridgeMotion.gammaWatts(decayW);
-                total[0] += DoseModel.pointSourceMsvPerH(gamma, at.distanceTo(new Vec3(x, topY, z)), BridgeMotion.transmission(cover));
+                double distance = at.distanceTo(new Vec3(x, topY, z));
+                double water = swimming ? DoseModel.waterPathM(distance, topY, at.y, surface, Double.NEGATIVE_INFINITY) : cover;
+                total[0] += DoseModel.pointSourceMsvPerH(gamma, distance, BridgeMotion.transmission(water));
             });
         }
         return total[0];

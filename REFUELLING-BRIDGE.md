@@ -305,6 +305,7 @@ For a just-discharged 45 GWd/t assembly (315 kW, 157 kW gamma) seen from the dec
 seated under 3 m of water, **8.0 mSv/h** lifted a metre (2 m over the handle), and **2.8e8 mSv/h** with the handle out of the water a few metres from the observer (the survey meter picture reads
 906 Sv/h from 9 m away). Each metre of water is a factor of 1,200.
 Looking down is the conservative case: the model has the point source at the handle and counts only the water straight above it.
+A person **in** the water of the pool or of a flooded well is a different case: the shielding is the water on the line between them and the fuel, with no credit for the water above them, and it hurts ([RADIATION.md](RADIATION.md#water-between-you-and-the-source-and-swimming)). The new fuel elevator ([SPENT-FUEL-POOL.md](SPENT-FUEL-POOL.md#the-new-fuel-elevator)) puts fuel into the pool with the same water rules and the same hoist limit.
 
 ### The hoist limit
 

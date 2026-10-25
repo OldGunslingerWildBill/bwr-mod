@@ -577,6 +577,52 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         return racks.size() * SpentFuelPool.ASSEMBLIES_PER_RACK;
     }
 
+    /** A cell of a rack: the bottom block of the rack, and the cell number 0 to 3. */
+    public record CellRef(BlockPos rack, int cell) {
+    }
+
+    /** The first free cell, racks in the pool's order and cells in order (what a plain insert takes), or null when every cell is taken or the pool is not formed. */
+    public CellRef firstFreeCell() {
+        if (!formed) {
+            return null;
+        }
+        for (Rack rack : rackList) {
+            for (int k = 0; k < rack.stacks.length; k++) {
+                if (rack.stacks[k].isEmpty()) {
+                    return new CellRef(rack.pos, k);
+                }
+            }
+        }
+        return null;
+    }
+
+    /** How many cells are free (0 while the pool is not formed). */
+    public int freeCells() {
+        return formed ? cellCount() - assemblyCount() : 0;
+    }
+
+    /** The cell of the assembly that has cooled longest (the least decay heat), or null when the pool holds none. */
+    public CellRef coolestCell() {
+        if (!formed) {
+            return null;
+        }
+        long now = level == null ? 0L : level.getGameTime();
+        CellRef best = null;
+        double bestWatts = Double.MAX_VALUE;
+        for (Rack rack : rackList) {
+            for (int k = 0; k < rack.stacks.length; k++) {
+                if (!rack.stacks[k].isEmpty()) {
+                    double watts = SpentFuelHeat.decayWatts(rack.stacks[k], now);
+                    if (watts < bestWatts) {
+                        bestWatts = watts;
+                        best = new CellRef(rack.pos, k);
+                    }
+                }
+            }
+        }
+        return best;
+    }
+
     /** The stack in cell {@code cell} of the rack at {@code pos} (empty if none). For tests and tools. */
     public ItemStack stackAt(BlockPos pos, int cell) {
         Rack rack = racks.get(pos);
@@ -1027,6 +1073,25 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
          * @param coverM  metres of water over the rack top (zero or less: uncovered)
          */
         void accept(double x, double topY, double z, double decayW, double coverM);
+    }
+
+    /** World Y of the pool's water surface (the interior floor plus the level); NaN while the pool is not formed. */
+    public double surfaceY() {
+        return formed && layout != null ? layout.min().getY() + 1 + pool.levelM() : Double.NaN;
+    }
+
+    /**
+     * Whether the point is in the pool's water: inside the interior, above the floor and below the surface (the pool's water is a
+     * body in the model, drawn as a surface; vanilla water blocks in it make no difference). False while the pool is not formed or empty.
+     */
+    public boolean inWater(double x, double y, double z) {
+        if (!formed || layout == null || !(pool.massKg() > 0.0)) {
+            return false;
+        }
+        BlockPos lo = layout.min();
+        BlockPos hi = layout.max();
+        return x >= lo.getX() + 1 && x <= hi.getX() && z >= lo.getZ() + 1 && z <= hi.getZ()
+                && y >= lo.getY() + 1 && y < surfaceY();
     }
 
     /** Calls {@code visitor} for every rack that holds fuel with decay heat (read from the last second's numbers; no allocation). */

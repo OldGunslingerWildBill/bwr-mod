@@ -95,6 +95,8 @@ public final class RadiationField {
         Vec3 centre;
         boolean overOpening = false;
         double waterAboveFuel = 0.0;
+        double surfaceY = Double.NaN;
+        double fuelTopY = Double.NaN;
         if (structure != null) {
             BlockPos min = structure.interiorMin();
             BlockPos max = structure.interiorMax();
@@ -103,18 +105,68 @@ public final class RadiationField {
             centre = new Vec3((min.getX() + max.getX() + 1) / 2.0, top - height / 2.0, (min.getZ() + max.getZ() + 1) / 2.0);
             boolean headOpen = !reactor.vesselState().canHoldPressure()
                     || core.getBoundaryStress().isBroken(BoundaryComponent.REACTOR_VESSEL_HEAD);
-            overOpening = headOpen && at.x >= min.getX() && at.x <= max.getX() + 1 && at.z >= min.getZ()
-                    && at.z <= max.getZ() + 1 && at.y > top;
+            overOpening = headOpen && at.y > top && (at.x >= min.getX() && at.x <= max.getX() + 1 && at.z >= min.getZ()
+                    && at.z <= max.getZ() + 1 || inWellShaft(reactor, at));
             waterAboveFuel = Math.max(0.0,
                     (core.getCollapsedLevelIn() - PhysicalConstants.TAF_ON_INSTRUMENT_SCALE_IN) * 0.0254);
+            surfaceY = top + waterAboveFuel;
+            fuelTopY = top;
         } else {
             BlockPos pos = reactor.getBlockPos();
             centre = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
         }
         double covered = 1.0 - core.getUncoveredFuelFraction();
+        double distance = at.distanceTo(centre);
+        // Looking down an open head the shielding is the water between the dose point and the fuel. Above the water that is the
+        // water straight over the fuel (the old figure); a point in the flooded vessel or well gets only the water on the line
+        // down to the fuel, with no credit for the water above it (DoseModel.waterPathM).
         double transmission = overOpening
-                ? DoseModel.openHeadTransmission(waterAboveFuel)
+                ? DoseModel.openHeadTransmission(DoseModel.waterPathM(distance, centre.y, at.y, surfaceY, fuelTopY))
                 : DoseModel.lateralTransmission(covered, core.getSevereAccident().isLowerHeadFailed());
-        return DoseModel.pointSourceMsvPerH(gamma, at.distanceTo(centre), transmission);
+        return DoseModel.pointSourceMsvPerH(gamma, distance, transmission);
+    }
+
+    /**
+     * Whether {@code at} is in the water of a reactor with its head off: over the top of the fuel, inside the vessel's footprint or the
+     * surveyed well shaft over it, and under the water (the physical surface the dose uses, or the drawn one when that is higher, so a
+     * player in the water they can see is in it). False for a closed vessel and for a vessel with no water over the fuel.
+     */
+    public static boolean inOpenWater(ReactorControllerBlockEntity reactor, Vec3 at) {
+        ReactorCore core = reactor.core();
+        ReactorStructure structure = reactor.structure();
+        if (core == null || structure == null || at == null) {
+            return false;
+        }
+        boolean headOpen = !reactor.vesselState().canHoldPressure()
+                || core.getBoundaryStress().isBroken(BoundaryComponent.REACTOR_VESSEL_HEAD);
+        if (!headOpen) {
+            return false;
+        }
+        double top = structure.topOfActiveFuelY() + 1.0;
+        double water = Math.max(0.0, (core.getCollapsedLevelIn() - PhysicalConstants.TAF_ON_INSTRUMENT_SCALE_IN) * 0.0254);
+        if (!(water > 0.0) || at.y <= top) {
+            return false;
+        }
+        double surface = top + water;
+        double drawn = reactor.drawnWaterSurfaceY();
+        if (Double.isFinite(drawn)) {
+            surface = Math.max(surface, drawn);
+        }
+        if (at.y >= surface) {
+            return false;
+        }
+        BlockPos min = structure.interiorMin();
+        BlockPos max = structure.interiorMax();
+        return at.x >= min.getX() && at.x <= max.getX() + 1 && at.z >= min.getZ() && at.z <= max.getZ() + 1
+                || inWellShaft(reactor, at);
+    }
+
+    /** Whether {@code at} is in a cell of the surveyed reactor well (the shaft over the vessel, outside the vessel's own footprint). */
+    private static boolean inWellShaft(ReactorControllerBlockEntity reactor, Vec3 at) {
+        var cavity = reactor.cavity();
+        if (cavity == null || !cavity.wellUsable() || cavity.visual() == null || cavity.visual().well() == null) {
+            return false;
+        }
+        return cavity.visual().well().cell((int) Math.floor(at.y), (int) Math.floor(at.x), (int) Math.floor(at.z));
     }
 }

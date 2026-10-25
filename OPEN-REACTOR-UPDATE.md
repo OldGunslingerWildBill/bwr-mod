@@ -57,6 +57,9 @@ water above the drywell; the INFO tab and `getCavity()` say whether it is presen
 the vessel's), is drawn as one translucent surface in the well and the annulus, and is what the refuelling bridge reads as the water over the fuel. Nothing floods by itself: your feed,
 condensate and residual heat removal pumps do it. Full rules, volumes and tests: [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#the-reactor-well-and-the-cavity-seal).
 
+A person in that water is in the dose field too: over the open vessel the shielding is the water on the line between them and the fuel, and a diver near the fuel takes the dose the
+survey meter reads and the contamination effects for it ([RADIATION.md](RADIATION.md#water-between-you-and-the-source-and-swimming)).
+
 ## Placing spargers
 
 Use the same **Core Spray Sparger** item. Two perpendicular neighboring segments

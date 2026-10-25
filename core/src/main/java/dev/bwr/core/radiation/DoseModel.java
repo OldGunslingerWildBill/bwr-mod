@@ -135,6 +135,45 @@ public final class DoseModel {
         return hazard > 0.0 && Double.isFinite(hazard) ? hazard * MSV_PER_H_PER_INVENTORY : 0.0;
     }
 
+    /** The inverse of {@link #doseRateFromHazard}: the hazard (fraction of the core inventory) a dose rate stands for. The effects on a player are keyed to it. */
+    public static double hazardFromDoseRate(double msvPerH) {
+        return msvPerH > 0.0 && Double.isFinite(msvPerH) ? msvPerH / MSV_PER_H_PER_INVENTORY : 0.0;
+    }
+
+    /**
+     * Metres of water on the line between a gamma source and a dose point, for a body of water with its surface at
+     * {@code surfaceY} (world Y) standing on {@code waterBaseY} (use {@link Double#NEGATIVE_INFINITY} when the water goes all the way down).
+     *
+     * <ul>
+     *   <li><b>Dose point at or above the surface</b> (the old rule, unchanged): only the water straight over the source,
+     *       {@code surface - max(source, base)}, never negative. This is the conservative figure for a point seen from the deck,
+     *       and it is what every reading above the water has always used.</li>
+     *   <li><b>Dose point below the surface</b> (a swimmer): the length of the straight line from the source to the point that lies in
+     *       the water between {@code base} and the surface. A point in the pool water gets the water between itself and the
+     *       source and no credit for the water above it; straight over the source that is the depth from the point down to the
+     *       source, and level with it or beside it that is the whole distance.</li>
+     * </ul>
+     *
+     * @param distanceM the straight distance from the source to the dose point
+     */
+    public static double waterPathM(double distanceM, double sourceY, double pointY, double surfaceY, double waterBaseY) {
+        if (!Double.isFinite(surfaceY) || !Double.isFinite(sourceY) || !Double.isFinite(pointY) || !(distanceM >= 0.0)) {
+            return 0.0;
+        }
+        double base = Double.isNaN(waterBaseY) ? Double.NEGATIVE_INFINITY : waterBaseY;
+        if (pointY >= surfaceY) {
+            return Math.max(0.0, surfaceY - Math.max(sourceY, base));
+        }
+        double lo = Math.min(sourceY, pointY);
+        double hi = Math.max(sourceY, pointY);
+        double span = hi - lo;
+        if (span < 1.0e-9) {
+            return lo >= base && lo <= surfaceY ? distanceM : 0.0;
+        }
+        double overlap = Math.min(hi, surfaceY) - Math.max(lo, base);
+        return overlap <= 0.0 ? 0.0 : distanceM * Math.min(1.0, overlap / span);
+    }
+
     /** A core making less gamma than this (a cold core's numerical residue is about 1e-6 W) emits nothing, watts. */
     public static final double MIN_CORE_GAMMA_WATTS = 1.0;
 
