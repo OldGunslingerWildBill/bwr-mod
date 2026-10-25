@@ -1,5 +1,5 @@
 {
-  "parent": "bwr:block/pumps/slc_boron_tank/compact",
+  "parent": "bwr:block/pumps/slc_boron_tank/inventory",
   "display": {
     "gui": {
       "rotation": [

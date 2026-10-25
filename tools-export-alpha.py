@@ -12,7 +12,8 @@ for id in ('slc_pump','slc_boron_tank'):
                 model=f'pumps/{id}/cell_{cell}' if full and cell<w*h*d else 'pumps/empty' if full else f'pumps/{id}/compact'
                 variants[f'assembled={str(full).lower()},cell={cell},facing={face}']={'model':'bwr:block/'+model,'y':angle}
     m.put(m.RES/f'assets/bwr/blockstates/{id}.json',{'variants':variants})
-    m.put(m.RES/f'assets/bwr/models/item/{id}.json',{'parent':f'bwr:block/pumps/{id}/compact','display':{'gui':{'rotation':[25,225,0],'scale':[.85,.85,.85]}}})
+    item='inventory' if source.get('frozen_compact') else 'compact'
+    m.put(m.RES/f'assets/bwr/models/item/{id}.json',{'parent':f'bwr:block/pumps/{id}/{item}','display':{'gui':{'rotation':[25,225,0],'scale':[.85,.85,.85]}}})
     m.put(m.RES/f'data/bwr/loot_table/blocks/{id}.json',{'type':'minecraft:block','pools':[{'rolls':1,'entries':[{'type':'minecraft:item','name':'bwr:'+id}],
       'conditions':[{'condition':'minecraft:block_state_property','block':'bwr:'+id,'properties':{'cell':str(index)}},{'condition':'minecraft:survives_explosion'}]}]})
 for id in ('ads_controller','ads_relief_valve','water_discharge_port','borate_charge'):

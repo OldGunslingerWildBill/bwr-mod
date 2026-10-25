@@ -1,5 +1,5 @@
 {
-  "parent": "bwr:block/pumps/motor_feed_pump_modern/compact",
+  "parent": "bwr:block/pumps/motor_feed_pump_modern/inventory",
   "display": {
     "gui": {
       "rotation": [

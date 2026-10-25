@@ -100,6 +100,8 @@ neoForge {
             if (project.hasProperty('bwrCavityCheck')) jvmArguments.add('-Dbwr.cavityCheck=true')
             // The reactor building crane, the stud tensioner and the head stand: pictures in run/turbineModelCheck/building-crane-check (BuildingCraneClientCheck).
             if (project.hasProperty('bwrBuildingCraneCheck')) jvmArguments.add('-Dbwr.buildingCraneCheck=true')
+            // The remodelled motor-driven pumps (LPCS, HPCS, RHR, motor feed, SLC pump and tank), three angles each: run/turbineModelCheck/motor-pump-shots (MotorPumpShots).
+            if (project.hasProperty('bwrMotorPumpShots')) jvmArguments.add('-Dbwr.motorPumpShots=true')
             if (project.hasProperty('bwrAlphaClientCheck')) jvmArguments.add('-Dbwr.alphaClientCheck=true')
             if (project.hasProperty('bwrGridClientCheck')) jvmArguments.add('-Dbwr.gridClientCheck=true')
             if (project.hasProperty('bwrMimicClientCheck')) jvmArguments.add('-Dbwr.mimicClientCheck=true')

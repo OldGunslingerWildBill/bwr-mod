@@ -24,6 +24,15 @@ The feed pump turbine (`bwr:turbine_feed_pump`), RCIC (`bwr:rcic_twl`) and HPCI 
 - **Pictures.** `:mod:runTurbineModelCheck -PbwrTurbinePumpShots=<label>` builds all three machines with pipes on every port and saves nine pictures. It fails if a pipe does not join its flange.
 - **More.** Details, sizes and the REFERENCES are in [TURBINE-DRIVEN-PUMPS.md](TURBINE-DRIVEN-PUMPS.md).
 
+## Unreleased: motor-driven pump remodel
+
+The LPCS, HPCS, RHR/LPCI, motor feedwater and SLC pumps and the SLC boron tank have new Blender models that look like the real equipment. Same block IDs, footprints, controller cells, port cells, faces and flange centres: placed pipes still meet the flanges. No behaviour change. Write-up and references: [MOTOR-PUMP-REMODEL.md](MOTOR-PUMP-REMODEL.md).
+
+- **ECCS pumps (LPCS, RHR, HPCS).** Vertical can pumps as at Columbia: a weather-protected vertical motor (finned frame, louvred top hat, drip cap, lifting eyes, terminal box and conduit, nameplate) on a guarded motor stand (shaft, spacer coupling, seal) and a cast discharge head on a sole plate, the can implied below the floor. RHR and HPCS drop their suction to a low can nozzle and send the discharge through a swing check valve up to the top flange; seal cooler, instrument rack, gauges, and an HPCS minimum-flow valve.
+- **Motor feedwater pump.** Horizontal barrel pump with a bolted discharge cover, centreline feet and top nozzles on bolted spools; coupling guards, a variable-speed fluid coupling with oil cooler, and a ribbed motor with fan cowl.
+- **SLC.** A triplex plunger pump (fluid end, three plungers, power frame, gear reducer, motor, Y-strainer, pulsation dampener, relief valve) and a heated tank with mixer, sparger, heater, level gauge and placard.
+- **Old saves.** The one-block compact models and the older assembled cell sets are untouched; the held item and inventory icons show the new models.
+
 ## Unreleased: vessel height matters (separators, carryover, chimney, inventory)
 
 Until now the physics did not see the height of a built vessel at all: the steam dome (180 m3) and the water (220 t) were never set from the build, natural circulation was `0.366 P^(1/3)` in every vessel, and every vessel made perfectly dry steam. Now the height of the drawn vessel (`VesselProfile`) sets how well the separators dry the steam, how strong natural circulation is, and how much steam space and water the vessel holds. The 17 x 17 x 28 default keeps its calibrated reactor behaviour exactly; its steam is 0.86 % wet. Nothing acts automatically. Full write-up, sources and the table: [VESSEL-HEIGHT.md](VESSEL-HEIGHT.md).

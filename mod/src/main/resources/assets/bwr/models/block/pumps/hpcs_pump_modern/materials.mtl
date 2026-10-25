@@ -61,3 +61,67 @@ map_Kd minecraft:block/white_concrete
 newmtl mat_15
 Kd 0.17184408839511128 0.701410709184914 0.601243396864941
 map_Kd minecraft:block/white_concrete
+
+newmtl mat_16
+Kd 0.5529411756436519 0.5490196119891921 0.5254901906525217
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_17
+Kd 0.23137255388019295 0.25490196180239805 0.2784313658030324
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_18
+Kd 0.5568627525499812 0.5921568646460975 0.6117646941864742
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_19
+Kd 0.3647058808810406 0.3999999974259806 0.42745097380382335
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_20
+Kd 0.8470588297034736 0.6313725394171017 0.11372548796372917
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_21
+Kd 0.7372549125291734 0.7647058762018639 0.7803921704164768
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_22
+Kd 0.5490196119891921 0.23137255388019295 0.17254901751446353
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_23
+Kd 1 1 1
+map_Kd bwr:block/modern/motor_pump_details
+
+newmtl mat_24
+Kd 0.14117646889981897 0.1568627415931254 0.17254901751446353
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_25
+Kd 0.48627450606506534 0.5215686256292013 0.5490196119891921
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_26
+Kd 0.6627450888283748 0.6941176524973346 0.7098039161494702
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_27
+Kd 0.188235296286246 0.2078431350468649 0.22745098242306322
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_28
+Kd 0.6901960856231945 0.5529411756436519 0.2431372587187131
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_29
+Kd 0.6392156906560604 0.15294117367545168 0.12156862923218678
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_30
+Kd 0.1803921567897035 0.5450980397374134 0.23921568891566358
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_31
+Kd 0.7019607864653749 0.14901960944706816 0.11764705971039388
+map_Kd minecraft:block/white_concrete

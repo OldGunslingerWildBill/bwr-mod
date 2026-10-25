@@ -121,7 +121,10 @@ def bake_assembly_cells(id, suffix='_modern'):
     assert all(b[a]>=-EPS and b[a+3]<=source['size'][a]+EPS for a in range(3)),(id,b)
     scale=.9/max(b[a+3]-b[a] for a in range(3))
     compact=[dict(f,vertices=[[(p[a]-(b[a]+b[a+3])/2)*scale+.5 for a in range(3)]+p[3:] for p in f['vertices']]) for f in faces]
-    put(folder/'compact.obj',obj(compact,mats));put(folder/'compact.json',model(f'bwr:models/block/pumps/{id}{suffix}/compact.obj'))
+    # A remodelled source keeps the old saves' compact.* frozen (its first materials are that model's) and gives the
+    # held item its own scaled copy of the new mesh instead.
+    small='inventory' if source.get('frozen_compact') else 'compact'
+    put(folder/f'{small}.obj',obj(compact,mats));put(folder/f'{small}.json',model(f'bwr:models/block/pumps/{id}{suffix}/{small}.obj'))
     put(RES/f'data/bwr/pump_models/{id}{suffix}.json',{'width':w,'height':h,'depth':d,'controller_cell':source['controller'],
                                                    'game_ports':source['ports'],'cells':cells})
     return source
@@ -139,7 +142,8 @@ def bake_pump(id):
                     resource=f'pumps/{id}'+('_modern' if modern else '')+f'/cell_{i}' if full and i<n else 'pumps/empty' if full else f'pumps/{id}_modern/compact'
                     variants[f'assembled={str(full).lower()},cell={i},facing={facing},modern={str(modern).lower()}']={'model':'bwr:block/'+resource,'y':angle}
     put(RES/f'assets/bwr/blockstates/{id}.json',{'variants':variants})
-    put(RES/f'assets/bwr/models/item/{id}.json',{'parent':f'bwr:block/pumps/{id}_modern/compact','display':{'gui':{'rotation':[25,225,0],'scale':[.85,.85,.85]}}})
+    item='inventory' if source.get('frozen_compact') else 'compact'
+    put(RES/f'assets/bwr/models/item/{id}.json',{'parent':f'bwr:block/pumps/{id}_modern/{item}','display':{'gui':{'rotation':[25,225,0],'scale':[.85,.85,.85]}}})
     terms=[{'condition':'minecraft:block_state_property','block':'bwr:'+id,'properties':{'cell':str(index),'modern':str(modern).lower()}}
            for modern,index in ((False,old_index),(True,new_index))]
     put(RES/f'data/bwr/loot_table/blocks/{id}.json',{'type':'minecraft:block','pools':[{'rolls':1,'entries':[{'type':'minecraft:item','name':'bwr:'+id}],

@@ -1,5 +1,5 @@
 {
-  "parent": "bwr:block/pumps/slc_pump/compact",
+  "parent": "bwr:block/pumps/slc_pump/inventory",
   "display": {
     "gui": {
       "rotation": [
