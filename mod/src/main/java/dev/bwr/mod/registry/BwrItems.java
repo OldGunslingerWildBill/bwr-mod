@@ -492,6 +492,19 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.WALL_DISPLAY_WIDE);
     public static final DeferredItem<BlockItem> CONTROL_STAND =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_STAND);
+    // Industrial lamps (LIGHTING.md).
+    public static final DeferredItem<BlockItem> LPS_HIGH_BAY =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.LPS_HIGH_BAY);
+    public static final DeferredItem<BlockItem> LPS_WALL_PACK =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.LPS_WALL_PACK);
+    public static final DeferredItem<BlockItem> HPS_HIGH_BAY =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.HPS_HIGH_BAY);
+    public static final DeferredItem<BlockItem> HPS_WALL_PACK =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.HPS_WALL_PACK);
+    public static final DeferredItem<BlockItem> MERCURY_HIGH_BAY =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.MERCURY_HIGH_BAY);
+    public static final DeferredItem<BlockItem> MERCURY_WALL_PACK =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.MERCURY_WALL_PACK);
 
     // Control panel trim (the blocks of BwrBlocks, listed after the component items).
     public static final DeferredItem<BlockItem> CONTROL_PANEL_END_CAP_FLAT =
@@ -709,6 +722,12 @@ public final class BwrItems {
                         output.accept(WALL_DISPLAY.get());
                         output.accept(WALL_DISPLAY_WIDE.get());
                         output.accept(CONTROL_STAND.get());
+                        output.accept(LPS_HIGH_BAY.get());
+                        output.accept(LPS_WALL_PACK.get());
+                        output.accept(HPS_HIGH_BAY.get());
+                        output.accept(HPS_WALL_PACK.get());
+                        output.accept(MERCURY_HIGH_BAY.get());
+                        output.accept(MERCURY_WALL_PACK.get());
 
                         output.accept(CONTROL_PANEL_END_CAP_FLAT.get());
                         output.accept(CONTROL_PANEL_END_CAP_BENCH.get());

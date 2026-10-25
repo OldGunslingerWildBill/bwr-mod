@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "bwr:block/lamp/mercury_high_bay_off"
+    },
+    "lit=true": {
+      "model": "bwr:block/lamp/mercury_high_bay_on"
+    }
+  }
+}
