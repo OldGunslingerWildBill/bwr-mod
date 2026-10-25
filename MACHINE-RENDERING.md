@@ -106,3 +106,15 @@ resource-reload) against 52.3 ms for the uncached comparison stage, offscreen 0 
 stand-in (uploads constant at 8); the top-only camera is 23 blocks away, draws the full mesh and uploads it once (9),
 then nothing more; the real resource reload rebuilds them (17). Sodium/Iris: see TESTING.md; the documented `offscreen` limitation with Sodium is unchanged.
 
+### Condensate tank and recirculation nozzles, remodel
+
+The tank is still one cached mesh per diameter and height, and the vessel's recirculation nozzles are part of the vessel's
+cached exterior mesh. Neither is rebuilt per frame. Sizes from the Blender parts (CONDENSATE-TANK.md, RECIRC-REMODEL.md):
+
+| Cached mesh | Old triangles | New triangles | New vertex bytes |
+| --- | ---: | ---: | ---: |
+| Tank 3 x 3 | 8,738 | 11,160 | 1,607,040 |
+| Tank 7 x 8 | 9,718 | 14,914 | 2,147,616 |
+| Tank 15 x 24 (largest) | 12,854 | 25,970 | 3,739,680 |
+| One recirculation nozzle on the vessel (was the generic water kit) | 2,124 | 3,060 to 3,124 | about 450,000 |
+

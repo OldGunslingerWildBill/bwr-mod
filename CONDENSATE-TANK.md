@@ -84,9 +84,9 @@ restoration across unloaded chunks. The opt-in client check is
 `:mod:runTurbineModelCheck -PbwrTankPanelCheck`; it also captures the recovered
 casings after breaking the middle tank.
 
-![Blender tank model](art/models/condensate_tank/condensate_tank.png)
+![Blender tank model (three sizes)](art/models/condensate_tank/review/after-sizes.jpg)
 
-![Assembled tank and connected water flanges in Minecraft](art/models/condensate_tank/tank-ports.png)
+![Assembled tanks and connected water flanges in Minecraft](art/cst-recirc-remodel/after/cst-small-nw.jpg)
 
 ![Tank storage status in Minecraft](art/models/condensate_tank/tank-status.png)
 
