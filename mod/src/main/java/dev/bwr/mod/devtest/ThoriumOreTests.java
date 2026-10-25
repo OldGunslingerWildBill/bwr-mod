@@ -335,6 +335,10 @@ public final class ThoriumOreTests {
         // farther away it reads less (inverse square), and it is a point source the survey meter sees through the registered provider
         h.assertTrue(dev.bwr.mod.radiation.RadiumItem.doseRateOf(player, player.position().add(6, 1, 0)) < one, "radium does not fall with distance");
         h.assertTrue(dev.bwr.mod.radiation.RadiumItem.doseRateOf(player, beside) > 0.01 && one < 100, "the reading is not plausible: " + one + " mSv/h at one block");
+        System.out.println("RADIUM: one capsule reads " + one + " mSv/h at one block, " + four + " mSv/h for four");
+        // the mock player stays in the test level, and with it a source: take the radium out so no other test reads it
+        player.getInventory().clearContent();
+        h.assertTrue(dev.bwr.mod.radiation.RadiumItem.carriedGammaWatts(player) == 0, "the radium is still carried");
         // lead: a nugget and an ingot, tagged the way other mods look for them, and not radioactive
         for (String[] t : new String[][] {{"lead_nugget", "nuggets/lead"}, {"lead_ingot", "ingots/lead"}}) {
             h.assertTrue(new ItemStack(BuiltInRegistries.ITEM.get(bwr(t[0]))).is(itemTag("c", t[1])), t[0] + " is not c:" + t[1]);
@@ -544,6 +548,51 @@ public final class ThoriumOreTests {
         } finally {
             FuelItemRoute.overrideInputsForTest(null, null);
         }
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void theThoriumCommandIsRangeCheckedAndTheLadderCommandsKeepTheirRange(GameTestHelper h) {
+        ServerLevel l = h.getLevel();
+        BlockPos p = FAB.offset(8, 0, 0);
+        var be = place(l, p);
+        var player = net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(l);
+        var menu = new dev.bwr.mod.gui.FuelFabricatorMenu(8, player.getInventory(), p);
+        for (int i = 0; i < FuelItemRoute.THORIUM_TARGETS.size(); i++) {
+            menu.handleCommand(player, dev.bwr.mod.gui.FuelFabricatorMenu.CMD_SELECT_THORIUM, i, 0);
+            h.assertTrue(be.target().equals(FuelItemRoute.THORIUM_TARGETS.get(i)), "CMD_SELECT_THORIUM " + i + " selected " + be.target());
+        }
+        // the thorium command refuses what is out of its range, and the ladder commands refuse the thorium indexes (10, 11, 12) as ever
+        for (int bad : new int[] {-1, 3, 10, Integer.MAX_VALUE, Integer.MIN_VALUE}) {
+            menu.handleCommand(player, dev.bwr.mod.gui.FuelFabricatorMenu.CMD_SELECT_THORIUM, bad, 0);
+            h.assertTrue(be.target().equals("thorium_rich"), "forged thorium select " + bad + " changed the target to " + be.target());
+        }
+        for (int bad : new int[] {10, 11, 12}) {
+            menu.handleCommand(player, dev.bwr.mod.gui.FuelFabricatorMenu.CMD_SELECT, bad, 0);
+            h.assertTrue(be.target().equals("thorium_rich"), "CMD_SELECT " + bad + " changed the target to " + be.target());
+            menu.handleCommand(player, dev.bwr.mod.gui.FuelFabricatorMenu.CMD_TARGET, bad, 0);
+            h.assertTrue(be.target().equals("thorium_rich"), "CMD_TARGET " + bad + " changed the target to " + be.target());
+        }
+        menu.handleCommand(player, dev.bwr.mod.gui.FuelFabricatorMenu.CMD_SELECT, 2, 0);
+        h.assertTrue(be.target().equals("leu"), "CMD_SELECT 2 selected " + be.target());
+        // the snapshot carries the thorium state to the client menu, and the index counts in the selector
+        be.setTarget("thorium_standard");
+        try {
+            var method = dev.bwr.mod.gui.FuelFabricatorMenu.class.getDeclaredMethod("writeSnapshot", net.minecraft.network.FriendlyByteBuf.class);
+            method.setAccessible(true);
+            var buf = new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+            method.invoke(menu, buf);
+            byte[] bytes = new byte[buf.readableBytes()];
+            buf.readBytes(bytes);
+            var client = new dev.bwr.mod.gui.FuelFabricatorMenu(9, player.getInventory(), p);
+            client.acceptSnapshot(bytes);
+            h.assertTrue(client.present && client.thoriumTarget && !client.moxTarget && client.thoriumCost == 4 && client.costIngots == 26
+                    && client.targetIndex == FuelItemRoute.SELECTOR.indexOf("thorium_standard"), "snapshot: " + client.thoriumTarget + " " + client.thoriumCost + " " + client.targetIndex);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+        be.removalDrops();
+        l.removeBlock(p, false);
+        h.succeed();
     }
 
     // ------------------------------------------------------------------------------------------------------------

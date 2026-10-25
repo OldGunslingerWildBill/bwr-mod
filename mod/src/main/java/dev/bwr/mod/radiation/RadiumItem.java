@@ -20,15 +20,15 @@ import java.util.List;
 /**
  * Radium (item id {@code radium}): a small sealed capsule of radium salt, a radioactive source material. It is the same kind of
  * thing as {@code SpentResinItem} (a carried item that is a gamma point source at its carrier, read by the survey meter, adding
- * to the dose of a player who carries a meter), with a fixed activity: one item is {@link #ACTIVITY_BQ} becquerels, about a
- * millicurie, which is about a milligram of radium-226. Radium is a rare byproduct of mining thorium ore (the thorium decay series
+ * to the dose of a player who carries a meter), with a fixed activity: one item is {@link #ACTIVITY_BQ} becquerels, about ten
+ * millicuries, which is about ten milligrams of radium-226. Radium is a rare byproduct of mining thorium ore (the thorium decay series
  * passes through radium-228); it is not made any other way. This mod gives it no use: it is source material for other things to be
  * built on (see THORIUM.md).
  */
 public class RadiumItem extends Item {
     public static final ResourceLocation RADIATION_ID = ResourceLocation.fromNamespaceAndPath("bwr", "radium");
-    /** About a millicurie, a milligram of radium-226, in each item. */
-    public static final double ACTIVITY_BQ = 3.7e7;
+    /** About ten millicuries, ten milligrams of radium-226 (a luminous-paint or needle source), in each item. */
+    public static final double ACTIVITY_BQ = 3.7e8;
     /** What the glass and the capsule let through. */
     public static final double TRANSMISSION = 0.5;
 

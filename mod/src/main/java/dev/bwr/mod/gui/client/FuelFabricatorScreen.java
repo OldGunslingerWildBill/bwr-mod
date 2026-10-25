@@ -60,7 +60,12 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
 
     private void step(int direction) {
         int index = Math.floorMod(menu.targetIndex + direction, count());
-        menu.sendCommand(FuelFabricatorMenu.CMD_SELECT, index);
+        int ladder = FuelItemRoute.LADDER.size();
+        if (index < ladder) {
+            menu.sendCommand(FuelFabricatorMenu.CMD_SELECT, index);
+        } else {
+            menu.sendCommand(FuelFabricatorMenu.CMD_SELECT_THORIUM, index - ladder);
+        }
     }
 
     /** The assembly the selector is on: its fuel type, which the client has from the fuel sync, or null. */

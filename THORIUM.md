@@ -60,9 +60,9 @@ Real ore comes with other elements, and the ore drops them. The main drop is unc
 
 - **Lead** is the mod's own `bwr:lead_nugget` and `bwr:lead_ingot`, tagged `c:nuggets/lead` and `c:ingots/lead`, so any mod whose recipes read those tags (Mekanism,
   Immersive Engineering) accepts it, with or without that mod installed; nothing here names another mod. This mod has no use for lead.
-- **Radium** is a sealed capsule of about a milligram of radium-226 (3.7e7 Bq, about a millicurie) and is **clearly radioactive**: carried in the inventory or the off
+- **Radium** is a sealed capsule of about ten milligrams of radium-226 (3.7e8 Bq, about ten millicuries) and is **clearly radioactive**: carried in the inventory or the off
   hand it is a gamma point source at the player (the same provider pattern as `SpentResinItem`, through `RadiationSources`), so the survey meter reads it and a player
-  carrying a meter accumulates dose. One capsule reads about 0.07 mSv/h at a block's distance; sixteen in a stack, sixteen times that. Its tooltip says so. It is a
+  carrying a meter accumulates dose. One capsule reads about 0.065 mSv/h at a metre (the GameTest prints it: 0.0065 mSv/h for a tenth of this activity), sixteen in a stack sixteen times that, and a carrier's own body is at half a metre. Its tooltip says so. It is a
   **source material only**: this mod gives it no use and no recipe; it is on the not-crafted list. Radium is hazardous (it behaves like calcium in the body and its
   decay product radon is a lung carcinogen: EPA, Wikipedia), which is why it is rare and why nothing here makes it casually.
 - **Not included:** vanadium, copper and the like are real uranium-ore companions, not thorium's; see "Proposed for uranium ore" below.

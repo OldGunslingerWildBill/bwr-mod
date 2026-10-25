@@ -45,11 +45,18 @@ public class FuelFabricatorMenu extends BwrMenu {
     public static final int CMD_TARGET = 1;
 
     /**
-     * Command: select any of the selector's steps, argument a = index into {@link FuelItemRoute#SELECTOR} (the uranium
-     * ladder, then the MOX grades, then the thorium grades; the first ten are {@link FuelItemRoute#LADDER}, unchanged).
-     * {@link #CMD_TARGET} keeps its meaning and its range.
+     * Command: select any of the ladder's steps, argument a = index into {@link FuelItemRoute#LADDER} (the uranium
+     * ladder, then the MOX grades). {@link #CMD_TARGET} keeps its meaning and its range, and so does this one: an index of
+     * ten or more is out of its range, as it always was.
      */
     public static final int CMD_SELECT = 2;
+
+    /**
+     * Command: select one of the thorium grades, argument a = index into {@link FuelItemRoute#THORIUM_TARGETS}. A command of its own,
+     * so that {@link #CMD_SELECT} keeps exactly the range it had (the ladder, ten steps); the screen counts in
+     * {@link FuelItemRoute#SELECTOR} (the ladder, then the thorium grades) and sends whichever command the step belongs to.
+     */
+    public static final int CMD_SELECT_THORIUM = 3;
 
     /**
      * The four machine slots, in the order they were added to this menu (which
@@ -313,7 +320,8 @@ public class FuelFabricatorMenu extends BwrMenu {
         // selector, which adds the MOX grades). There is no mode and no start button; the machine runs when it
         // has feed and power.
         java.util.List<String> steps = command == CMD_TARGET ? FuelItemRoute.TARGETS
-                : command == CMD_SELECT ? FuelItemRoute.SELECTOR : null;
+                : command == CMD_SELECT ? FuelItemRoute.LADDER
+                : command == CMD_SELECT_THORIUM ? FuelItemRoute.THORIUM_TARGETS : null;
         if (steps == null || a < 0 || a >= steps.size()) {
             return;
         }

@@ -196,7 +196,9 @@ is saved only when it is not the default, as before. An old fabricator loads exa
 
 Three more steps on the selector, after the MOX grades, make thorium fuel (`Th 2.00 %`, `Th 3.00 %` and `Th 5.00 %`). The
 selector now has 13 steps: the first ten are the uranium ladder and the MOX grades exactly as before (`FuelItemRoute.LADDER`, same
-indexes, saves and commands), then `thorium_lean`, `thorium_standard` and `thorium_rich` (`FuelItemRoute.SELECTOR`).
+indexes, saves and commands, and `CMD_SELECT` still refuses an index of ten or more), then `thorium_lean`, `thorium_standard` and
+`thorium_rich` (`FuelItemRoute.SELECTOR`, which the screen counts in; it picks a thorium step with its own menu command `CMD_SELECT_THORIUM`,
+an index into `FuelItemRoute.THORIUM_TARGETS`, range-checked the same way).
 Thorium-232 is fertile, not fissile, so the assembly needs a **fissile driver** until uranium-233 breeds in. The driver here is
 uranium enriched to 19.75 % (HALEU, the `uranium_1975` grade) and the machine makes it itself, by the uranium route's own mass
 balance. The driver fraction is the thorium fuel type's `nominal_enrichment` (2, 3 and 5 % of the heavy metal, unchanged), and
