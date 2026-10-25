@@ -165,6 +165,8 @@ public final class ShellExchangerClientCheck {
                     + " hxCold=" + loop.hx().plant().cold() + " heat=" + loop.hx().plant().heatMW()));
         for (var block : new net.minecraft.world.level.block.Block[]{BwrBlocks.RHR_HEAT_EXCHANGER.get(), BwrBlocks.WATER_OUTLET_CHUTE.get()})
             for (var state : block.getStateDefinition().getPossibleStates()) {
+                // Owner-approved 2026-10-25: the full-size unit's cell states are checked by HxMultiblockClientCheck; single blocks as before.
+                if (state.getBlock() instanceof RhrHeatExchangerBlock && RhrHeatExchangerBlock.isAssembled(state)) continue;
                 var model = mc.getModelManager().getModel(BlockModelShaper.stateToModelLocation(state));
                 int count = 0;
                 for (int i = 0; i < 7; i++) {

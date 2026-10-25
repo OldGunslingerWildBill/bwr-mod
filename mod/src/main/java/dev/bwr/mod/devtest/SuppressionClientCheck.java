@@ -111,6 +111,8 @@ public final class SuppressionClientCheck {
             if(baked==mc.getModelManager().getMissingModel()||count==0)throw new AssertionError("Missing standalone model: "+id);
         }
         for(var block:new net.minecraft.world.level.block.Block[]{BwrBlocks.SUPPRESSION_POOL_STEAM_INLET.get(),BwrBlocks.SUPPRESSION_POOL_WALL.get(),BwrBlocks.SUPPRESSION_POOL_SUCTION.get(),BwrBlocks.SUPPRESSION_POOL_RETURN.get(),BwrBlocks.RHR_HEAT_EXCHANGER.get()})for(var state:block.getStateDefinition().getPossibleStates()) {
+            // Owner-approved 2026-10-25: the full-size unit's cell states are checked by HxMultiblockClientCheck; single blocks as before.
+            if(state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock&&dev.bwr.mod.suppression.RhrHeatExchangerBlock.isAssembled(state))continue;
             var model=mc.getModelManager().getModel(BlockModelShaper.stateToModelLocation(state));int count=0;
             for(int i=0;i<7;i++){var quads=model.getQuads(state,i==6?null:Direction.values()[i],net.minecraft.util.RandomSource.create(42),ModelData.EMPTY,null);count+=quads.size();for(var q:quads)if(q.getSprite().contents().name().getPath().equals("missingno"))throw new AssertionError("Missing suppression texture: "+state);}
             if(model==mc.getModelManager().getMissingModel()||count==0)throw new AssertionError("Missing suppression model: "+state);
