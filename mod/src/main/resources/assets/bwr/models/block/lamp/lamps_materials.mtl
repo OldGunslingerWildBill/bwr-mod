@@ -3,27 +3,63 @@ newmtl housing
 Kd 0.560000 0.588000 0.612000
 map_Kd minecraft:block/white_concrete
 
-newmtl lens_lps_on
-Kd 1.000000 1.000000 1.000000
-map_Kd bwr:block/lamp/lps_lens_on
-
 newmtl lens_lps_off
 Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/lamp/lps_lens_off
 
-newmtl lens_hps_on
+newmtl lens_lps_w0
 Kd 1.000000 1.000000 1.000000
-map_Kd bwr:block/lamp/hps_lens_on
+Ka 0.280000 0.280000 0.280000
+map_Kd bwr:block/lamp/lps_lens_w0
+
+newmtl lens_lps_w1
+Kd 1.000000 1.000000 1.000000
+Ka 0.546667 0.546667 0.546667
+map_Kd bwr:block/lamp/lps_lens_w1
+
+newmtl lens_lps_on
+Kd 1.000000 1.000000 1.000000
+Ka 1.000000 1.000000 1.000000
+map_Kd bwr:block/lamp/lps_lens_on
 
 newmtl lens_hps_off
 Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/lamp/hps_lens_off
 
-newmtl lens_mercury_on
+newmtl lens_hps_w0
 Kd 1.000000 1.000000 1.000000
-map_Kd bwr:block/lamp/mercury_lens_on
+Ka 0.280000 0.280000 0.280000
+map_Kd bwr:block/lamp/hps_lens_w0
+
+newmtl lens_hps_w1
+Kd 1.000000 1.000000 1.000000
+Ka 0.546667 0.546667 0.546667
+map_Kd bwr:block/lamp/hps_lens_w1
+
+newmtl lens_hps_on
+Kd 1.000000 1.000000 1.000000
+Ka 1.000000 1.000000 1.000000
+map_Kd bwr:block/lamp/hps_lens_on
 
 newmtl lens_mercury_off
 Kd 1.000000 1.000000 1.000000
+Ka 0.000000 0.000000 0.000000
 map_Kd bwr:block/lamp/mercury_lens_off
+
+newmtl lens_mercury_w0
+Kd 1.000000 1.000000 1.000000
+Ka 0.280000 0.280000 0.280000
+map_Kd bwr:block/lamp/mercury_lens_w0
+
+newmtl lens_mercury_w1
+Kd 1.000000 1.000000 1.000000
+Ka 0.546667 0.546667 0.546667
+map_Kd bwr:block/lamp/mercury_lens_w1
+
+newmtl lens_mercury_on
+Kd 1.000000 1.000000 1.000000
+Ka 1.000000 1.000000 1.000000
+map_Kd bwr:block/lamp/mercury_lens_on
 

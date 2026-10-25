@@ -6,9 +6,9 @@ They are decorative and redstone-controlled; they never act on the plant and nee
 
 | Block | Lamp | Colour (lit lens) | Warm-up (game) | Restrike wait |
 |---|---|---|---|---|
-| `bwr:lps_high_bay`, `bwr:lps_wall_pack` | Low-pressure sodium (589 nm) | `#FFA01E`, deep orange-yellow | 40 s (real 7 to 10 min) | none, restarts at once |
-| `bwr:hps_high_bay`, `bwr:hps_wall_pack` | High-pressure sodium | `#FFCE80`, golden-white | 20 s (real 3 to 5 min) | 15 s |
-| `bwr:mercury_high_bay`, `bwr:mercury_wall_pack` | Mercury vapour | `#BEECE2`, cold bluish-white, greenish | 27 s (real 4 to 7 min) | 15 s |
+| `bwr:lps_high_bay`, `bwr:lps_wall_pack` | Low-pressure sodium (589 nm) | `#FF8C00`, deep orange | 40 s (real 7 to 10 min) | none, restarts at once |
+| `bwr:hps_high_bay`, `bwr:hps_wall_pack` | High-pressure sodium | `#FFC85A`, golden | 20 s (real 3 to 5 min) | 15 s |
+| `bwr:mercury_high_bay`, `bwr:mercury_wall_pack` | Mercury vapour | `#AADCFF`, blue-white | 27 s (real 4 to 7 min) | 15 s |
 
 Low-pressure sodium is monochrome: its light renders almost everything in orange, which is the point of it. The lens
 colour above is the colour of the light the lamp is meant to give.
@@ -26,14 +26,26 @@ colour above is the colour of the light the lamp is meant to give.
   have the hot restrike delay of the high-intensity types.
 - **Mounts.** A high bay hangs under a solid block (its support is the block above). A wall pack mounts on a solid block
   behind it; it is placed by clicking that wall. Either one drops itself if its support goes.
-- **Warm-up is shown by light, not colour.** The lens looks the same while the lamp warms; only the light level ramps.
-  Vanilla cannot change a lamp's light colour by stage, so the warm-up's dim red-pink glow is not shown.
+- **Warm-up shows in the lens.** The lens has three lit looks: warm-up stage 1 is dim and pushed towards red-pink
+  (light 4, `<type>_lens_w0`), stage 2 is dimmer and paler (light 8, `<type>_lens_w1`), and full is the lamp colour at
+  light 15 (`<type>_lens_on`). Unlit, the lens is dark glass (`<type>_lens_off`).
 
 ## Blocks and state
 
-State: `lit` (`BlockStateProperties.LIT`), `warmup` 0 to 3 (the light stage), `cooling` 0 to 3 (restrike units still
-to run), and `facing` on the wall pack. The lit and unlit models differ only in the lens texture. A new save format
-adds nothing to old saves: the lamps are new blocks.
+State: `lit`, `warmup` 0 to 3 (the light stage), `cooling` 0 to 3 (restrike units still to run), and `facing` on the wall
+pack. The blockstates are multipart: the housing always, and one lens part chosen by `lit` and `warmup` (`lit=false`:
+off; `lit=true` with `warmup` 0, 1, and 2 or 3: w0, w1, on). Wall packs add the facing to every part and turn it with `y`.
+A new save format adds nothing to old saves: the lamps are new blocks.
+
+## Lit lens (fullbright)
+
+The lens is its own model part, separate from the housing. The lit lens parts set `emissive_ambient: true`. In NeoForge's
+OBJ loader that flag takes each quad's light level from its material's ambient colour `Ka` (`light = mean(Ka) * 15`), not
+from the world, so the lens is fullbright and the housing still takes world light. The `Ka` values are 4.2/15 (w0),
+8.2/15 (w1) and 1.0 (on). The lit lens parts have no shading, so their colour is flat. The unlit lens part has
+`emissive_ambient: false` and world light.
+
+The item model is one whole-lamp OBJ (the housing plus the lit lens), so the inventory icon shows the lamp lit.
 
 ## Shaders (Iris and labPBR)
 
@@ -54,6 +66,7 @@ labPBR setting) reads the emission from the map's alpha channel and makes the le
   texture therefore gets the right colour. Shader packs that tint by block ID need their own `block.properties`
   entry; the mod does not ship one.
 - **Unlit lens** (`<type>_lens_off`): dark glass, no `_s` map, so it does not glow.
+- **Warm-up lenses** (`w0`, `w1`) carry `_s` maps too, with emission 120 and 180, so they glow less.
 - **Render type.** Solid. The lenses are opaque discs and faces, so no cutout or translucent layer is needed.
 
 ## Files
@@ -61,12 +74,12 @@ labPBR setting) reads the emission from the map's alpha channel and makes the le
 - Code: `mod/src/main/java/dev/bwr/mod/lighting/` (`LampType`, `IndustrialLampBlock`, `HighBayLampBlock`,
   `WallPackLampBlock`); registration in `BwrBlocks` (the `lamp()` helper and the six blocks) and `BwrItems`.
 - Models: Blender, headless, `art/models/industrial_lamps/build_lamps.py`
-  (`blender --background --factory-startup --python art/models/industrial_lamps/build_lamps.py`). It writes twelve OBJ
-  files (three types, two fixtures, lit and unlit) and `lamps_materials.mtl` into
+  (`blender --background --factory-startup --python art/models/industrial_lamps/build_lamps.py`). It writes two housing
+  OBJ files, 24 lens OBJ files (three types, two fixtures, four stages), six item OBJ files and `lamps_materials.mtl` into
   `mod/src/main/resources/assets/bwr/models/block/lamp/`. The geometry is in block units; the script checks each file's
   bounds. Every model is under 100 faces.
-- JSON (models, blockstates, item models, loot tables, recipes): `tools-export-lamps.py`.
-- Textures: `tools-make-lamp-textures.py` writes the lenses and the labPBR maps into
+- JSON (models, multipart blockstates, item models, loot tables, recipes): `tools-export-lamps.py`.
+- Textures: `tools-make-lamp-textures.py` writes the four lens looks and the labPBR maps into
   `mod/src/main/resources/assets/bwr/textures/block/lamp/`. The housing uses `minecraft:block/white_concrete`, tinted
   grey by the material, as the furniture does.
 - Pickaxe tag: all six blocks. Lang: `block.bwr.*` keys. Guide: "Industrial lamps", in the control-room chapter.
@@ -86,6 +99,13 @@ Each lamp type has its own lens glass, with iron, redstone and glass in common.
 
 I iron ingot, R redstone dust, G glass.
 
+## Showroom
+
+`LampClientCheck` (`-PbwrLampClientCheck`, optionally `-PbwrRenderMods=newest -PbwrShaderPack=...`) builds a 20 x 8 x 20
+hall with a dark floor and walls: six high bays in two rows, three wall packs on the west wall. Each lamp is switched by a
+lever beside it (on the ceiling for a high bay, on the wall above a wall pack), so no bright redstone block shows. It takes
+six pictures and logs the light at each lamp.
+
 ## Tests
 
 `IndustrialLampTests`, batch `industriallamps`, run with `-PbwrGameTestNamespaces=bwrlamps`:
@@ -97,11 +117,14 @@ I iron ingot, R redstone dust, G glass.
 - a low-pressure lamp restrikes at once;
 - a mid-warm-up lamp has its step scheduled and its state round-trips;
 - a high bay needs a ceiling and a wall pack needs a wall; the wall pack's lens turns with its facing.
+- the lit lens model is fullbright (`emissive_ambient`) and the housing is not: checked on the showroom pictures, not by
+  a GameTest.
 
 ## Not tested, and limits
 
-- **Shaders were not run here.** The Iris and Complementary path (`-PbwrRenderMods=newest` with a shader pack) was not
-  exercised for these lamps. The labPBR emission convention above is from secondary sources.
+- **Shaders.** Iris 1.8.14-beta.1 with Sodium 0.8.13 and Complementary Reimagined r5.9.3 were run on the showroom. The
+  pictures are lit and differ from vanilla. Whether the labPBR `_s` emission, rather than block light, is what makes the
+  lens glow was **not isolated**. The labPBR emission convention above is from secondary sources.
 - **Save and reload** of a mid-warm-up lamp is covered by the state round-trip and the scheduled-tick check. A real
   save-and-reload of a world was not run for these blocks.
 - **Warm-up colour** is not shown (see Behaviour).

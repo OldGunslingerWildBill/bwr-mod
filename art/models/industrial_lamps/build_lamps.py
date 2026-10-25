@@ -2,14 +2,18 @@
 
     blender --background --factory-startup --python art/models/industrial_lamps/build_lamps.py
 
-Twelve OBJ files go to mod/src/main/resources/assets/bwr/models/block/lamp/: a high-bay pendant and a wall pack for each
-of the three lamp types (low-pressure sodium, high-pressure sodium, mercury), each lit (`_on`, the lens carries the
-emissive texture) and unlit (`_off`). The wall packs are authored facing north (lens at the north, wall to the south); the
-blockstate turns them. The shared materials go to lamps_materials.mtl.
+Each lamp is split into parts, so that the lens can be fullbright without lighting the housing:
+  * <fixture>_housing.obj              the body, the canopy or the wall box (world light)
+  * <type>_<fixture>_lens_<stage>.obj  the lens alone, one file per stage: off (dark glass, world light),
+                                       w0 and w1 (warm-up, dimmer) and on (full). The lit stages set emissive_ambient,
+                                       which the OBJ loader turns into a light level from the material's ambient colour Ka.
+  * <type>_<fixture>_item.obj          the whole lamp, for the inventory icon.
+Types: lps, hps, mercury. Fixtures: high_bay (ceiling pendant) and wall_pack (authored facing north, the lens at the
+north, the wall to the south; the blockstate turns it). The shared materials go to lamps_materials.mtl.
 
-The geometry is written here in block units (0 to 1, north at z = 0, up at y = 1, the way the models are read by
-Minecraft). Blender is driven with (x, -z, y), and the OBJ exporter writes it back as (x, y, z), so the OBJ coordinates
-are the block coordinates again. The script checks the bounds of each file after export.
+The geometry is written in block units (0 to 1, north at z = 0, up at y = 1). Blender is driven with (x, -z, y), and the
+OBJ exporter writes it back as (x, y, z), so the OBJ coordinates are the block coordinates again. The bounds of each file
+are checked after export.
 """
 import math
 import os
@@ -123,13 +127,44 @@ def wall_pack(lens_name):
     return m
 
 
-def build_mesh(name, m):
+STAGES = ("off", "w0", "w1", "on")
+# Lit lens colours, saturated. The first warm-up stage is dimmer (the light level falls); the texture for it is pushed
+# towards red-pink, as a sodium lamp starts red.
+TYPES = {"lps": (255, 140, 0), "hps": (255, 200, 90), "mercury": (170, 220, 255)}
+FIXTURES = (("high_bay", high_bay), ("wall_pack", wall_pack))
+# Ambient colour per lit stage. The OBJ loader's light level is mean(Ka) * 15, so Ka = (level + 0.2) / 15.
+KA = {"w0": 4.2 / 15.0, "w1": 8.2 / 15.0, "on": 1.0}
+
+
+def retarget(polys, keep):
+    """The polygons whose material keep() maps to a new name (None drops the polygon)."""
+    out = []
+    for pts, material, uv in polys:
+        new = keep(material)
+        if new is not None:
+            out.append((pts, new, uv))
+    return out
+
+
+def housing_only(material):
+    return material if material == "housing" else None
+
+
+def lens_as(state, t):
+    return lambda material: ("lens_%s_%s" % (t, state)) if material.startswith("lens") else None
+
+
+def item_of(t):
+    return lambda material: "housing" if material == "housing" else "lens_%s_on" % t
+
+
+def build_mesh(name, polys):
     verts = []
     index = {}
     faces = []
     uvs = []
     mats = []
-    for pts, material, uv in m.polys:
+    for pts, material, uv in polys:
         idx = []
         for p in pts:
             key = tuple(round(c, 6) for c in p)
@@ -149,9 +184,10 @@ def build_mesh(name, m):
             uv_layer.data[loop_index].uv = uv[k]
     obj = bpy.data.objects.new(name, mesh)
     bpy.context.scene.collection.objects.link(obj)
-    for mat_name in sorted(set(mats)):
+    names = sorted(set(mats))
+    for mat_name in names:
         mesh.materials.append(bpy.data.materials.get(mat_name) or bpy.data.materials.new(mat_name))
-    slot = {mat_name: i for i, mat_name in enumerate(sorted(set(mats)))}
+    slot = {mat_name: i for i, mat_name in enumerate(names)}
     for poly, mat_name in zip(mesh.polygons, mats):
         poly.material_index = slot[mat_name]
     return obj
@@ -183,44 +219,50 @@ def check_bounds(path):
     return lo, hi
 
 
+def write_obj(name, polys):
+    obj = build_mesh(name, polys)
+    path = os.path.join(OUT, name + ".obj")
+    export(obj, path)
+    with open(path, encoding="utf-8") as fh:
+        text = fh.read()
+    text = re.sub(r"^mtllib .*$", "mtllib lamps_materials.mtl", text, flags=re.M)
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+    lo, hi = check_bounds(path)
+    print("%s: bounds %s .. %s, polygons %d" % (name, [round(v, 3) for v in lo], [round(v, 3) for v in hi],
+                                              text.count("\nf ")))
+    bpy.data.objects.remove(obj)
+    # The exporter also writes its own .mtl next to the OBJ; the shared one replaces it.
+    generated = os.path.join(OUT, name + ".mtl")
+    if os.path.exists(generated):
+        os.remove(generated)
+
+
 def write_materials():
-    types = {"lps": (255, 160, 30), "hps": (255, 206, 128), "mercury": (190, 236, 226)}
     lines = [
         "# Generated by art/models/industrial_lamps/build_lamps.py",
         "newmtl housing", "Kd 0.560000 0.588000 0.612000", "map_Kd minecraft:block/white_concrete", "",
     ]
-    for t in types:
-        lines += ["newmtl lens_%s_on" % t, "Kd 1.000000 1.000000 1.000000",
-                  "map_Kd bwr:block/lamp/%s_lens_on" % t, ""]
-        lines += ["newmtl lens_%s_off" % t, "Kd 1.000000 1.000000 1.000000",
-                  "map_Kd bwr:block/lamp/%s_lens_off" % t, ""]
+    for t in TYPES:
+        for state in STAGES:
+            ka = KA.get(state, 0.0)
+            lines += ["newmtl lens_%s_%s" % (t, state), "Kd 1.000000 1.000000 1.000000",
+                      "Ka %.6f %.6f %.6f" % (ka, ka, ka),
+                      "map_Kd bwr:block/lamp/%s_lens_%s" % (t, state), ""]
     with open(os.path.join(OUT, "lamps_materials.mtl"), "w", encoding="utf-8", newline="\n") as fh:
         fh.write("\n".join(lines) + "\n")
 
 
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for t in ("lps", "hps", "mercury"):
-        for state in ("on", "off"):
-            lens = "lens_%s_%s" % (t, state)
-            for fixture, factory in (("high_bay", high_bay), ("wall_pack", wall_pack)):
-                name = "%s_%s_%s" % (t, fixture, state)
-                obj = build_mesh(name, factory(lens))
-                path = os.path.join(OUT, name + ".obj")
-                export(obj, path)
-                with open(path, encoding="utf-8") as fh:
-                    text = fh.read()
-                text = re.sub(r"^mtllib .*$", "mtllib lamps_materials.mtl", text, flags=re.M)
-                with open(path, "w", encoding="utf-8", newline="\n") as fh:
-                    fh.write(text)
-                lo, hi = check_bounds(path)
-                print("%s: bounds %s .. %s, faces %d" % (name, [round(v, 3) for v in lo],
-                                                       [round(v, 3) for v in hi], text.count("\nf ")))
-                bpy.data.objects.remove(obj)
-                # The exporter also writes its own .mtl next to the OBJ; the shared one replaces it.
-                generated = os.path.join(OUT, name + ".mtl")
-                if os.path.exists(generated):
-                    os.remove(generated)
+    for fixture, factory in FIXTURES:
+        base = factory("lens_lps_on").polys
+        write_obj("%s_housing" % fixture, retarget(base, housing_only))
+        for t in TYPES:
+            polys = factory("lens_%s_on" % t).polys
+            for state in STAGES:
+                write_obj("%s_%s_lens_%s" % (t, fixture, state), retarget(polys, lens_as(state, t)))
+            write_obj("%s_%s_item" % (t, fixture), retarget(polys, item_of(t)))
     write_materials()
     print("lamp models written to", OUT)
 
