@@ -45,6 +45,7 @@ NO_RECIPE = {
     # Made by the reactor, not at a bench.
     "cobalt_sample": "product of irradiating a cobalt target",
     "tritium_sample": "product of irradiating a lithium target",
+    "spent_resin": "what a filter-demineralizer bed becomes when it is replaced; radioactive waste, and a recipe for it would make waste out of nothing",
     "doped_silicon": "product of irradiating a silicon target",
     "corium": "made by a core melting through its vessel; a recipe for it would be the bug",
     # Made by the fuel fabricator.

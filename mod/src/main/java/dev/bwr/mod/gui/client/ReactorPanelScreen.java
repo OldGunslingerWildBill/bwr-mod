@@ -259,6 +259,19 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.row("Uncovered fuel", () -> pct(menu.uncoveredFuelFraction), "%")
                         .status(() -> menu.uncoveredFuelFraction > 0 ? Status.CAUTION : Status.NONE),
                 Layout.row("Spray ring complete", () -> pct(menu.sprayRingCompleteness), "%"),
+                Layout.section("Water chemistry"),
+                Layout.row("Conductivity", () -> num(menu.conductivity, 3), "uS/cm")
+                        .status(() -> menu.conductivity > 10 ? Status.ALARM : menu.conductivity > 1 ? Status.CAUTION : Status.NONE).tip(this::chemistryTooltip),
+                Layout.row("Crud in the coolant", () -> num(menu.crudG, 2), "g").tip(this::chemistryTooltip),
+                Layout.row("Crud activity", () -> String.format(java.util.Locale.ROOT, "%.2e", menu.crudBq), "Bq")
+                        .status(() -> menu.crudGammaW > 5 ? Status.CAUTION : Status.NONE).tip(this::chemistryTooltip),
+                Layout.row("Crud gamma power", () -> num(menu.crudGammaW, 3), "W").tip(this::chemistryTooltip),
+                Layout.row("Structural corrosion wear", () -> num(100 * menu.structuralWear, 3), "% of life")
+                        .status(() -> menu.structuralWear > 0 ? Status.CAUTION : Status.NONE).tip(this::chemistryTooltip),
+                Layout.row("Cladding corrosion wear", () -> num(100 * menu.claddingWear, 3), "% of life")
+                        .status(() -> menu.claddingWear > 0 ? Status.CAUTION : Status.NONE).tip(this::chemistryTooltip),
+                Layout.row("Cleanup heat loss", () -> num(menu.cleanupHeatMW, 2), "MW").tip(this::chemistryTooltip),
+                Layout.row("Cleanup blowdown", () -> num(menu.cleanupBlowdown, 1), "kg/s").tip(this::chemistryTooltip),
                 Layout.section("Pressure boundary"),
                 Layout.note("No pipe breaks.").body().showIf(() -> menu.boundaryLines.isEmpty()),
                 boundaryLine(0), boundaryLine(1), boundaryLine(2), boundaryLine(3),
@@ -267,6 +280,14 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.row("Heat output / steam flow", () -> big(menu.thermalMW) + " / " + big(menu.steamKgPerS)),
                 Layout.note("* These are planning estimates. Hover over a row to see how it is worked out."));
         return Layout.card("", Layout.scrollArea(60, content));
+    }
+
+    private List<Component> chemistryTooltip() {
+        return List.of(
+                Component.literal("Conductivity rises slowly with feedwater impurity, condenser in-leakage and corrosion, and falls only as the reactor water cleanup system removes impurity through its resin bed."),
+                Component.literal("Above 1 uS/cm (the action level) it adds slow structural and fuel-cladding corrosion wear; above 10 uS/cm is the usual shutdown limit. Nothing here trips or isolates anything."),
+                Component.literal("Crud is corrosion product circulating with the water. In the core it picks up activity, and that activity is a radiation source around the coolant lines."),
+                Component.literal("Cleanup removes crud with the resin bed and takes heat from the vessel net of its regenerative exchanger; blowdown takes water out of the vessel to a tank or condenser."));
     }
 
     /** One cavity drain port: where it is, what its line is doing now, and what it passes. */

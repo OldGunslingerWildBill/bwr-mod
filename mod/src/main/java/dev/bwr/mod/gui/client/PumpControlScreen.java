@@ -73,7 +73,7 @@ public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
                         () -> Double.isFinite(menu.temperature) ? "C" : ""),
                 Layout.row("Drive", () -> menu.present ? menu.drive : "-"),
                 Layout.row("Stored energy", () -> big(menu.energy), "FE").showIf(() -> !menu.turbine),
-                Layout.row("Inlet buffer", () -> big(menu.buffer) + " / 2,000", "kg").showIf(() -> !menu.rhr && !menu.slc && !menu.recirculation),
+                Layout.row("Inlet buffer", () -> big(menu.buffer) + " / 2,000", "kg").showIf(() -> !menu.rhr && !menu.slc && !menu.recirculation && !menu.drive.contains("RWCU")),
                 Layout.gap(BwrStyle.SP1),
                 Layout.line(() -> Words.sentence(menu.connection), Type.CAPTION));
         var controls = Layout.card("Controls",
@@ -89,6 +89,7 @@ public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
                 Layout.controls(BwrStyle.SP1).add(mode, 1).showIf(() -> menu.rhr),
                 Layout.note("Water comes from the finite boron tank.").showIf(() -> menu.slc),
                 Layout.note(() -> menu.recirculation ? "The speed sets how much water the pump circulates."
+                        : menu.drive.contains("RWCU") ? "Draws reactor water through the cleanup skid and back."
                         : "Water comes from the tank or the piped supply.")
                         .showIf(() -> !menu.eccs),
                 Layout.note("A computer is in control.").status(() -> Status.INFO)

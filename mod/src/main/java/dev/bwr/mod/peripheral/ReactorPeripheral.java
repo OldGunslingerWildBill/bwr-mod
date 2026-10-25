@@ -1187,6 +1187,29 @@ public class ReactorPeripheral implements IPeripheral {
     // =================================================================
 
     /** The whole damage model as one table. See {@code BoundaryDamageReadout}. */
+    /**
+     * Coolant chemistry and the reactor water cleanup loop: {@code conductivityUsPerCm}, {@code ionicImpurityG},
+     * {@code crudG}, {@code crudActivityBq}, {@code crudGammaWatts}, {@code structuralWear} and {@code claddingWear} (counters, 1 is one life),
+     * {@code cleanupHeatLossMW} and {@code cleanupBlowdownKgPerS} (what the loop took from the vessel on the last tick).
+     * Nothing here acts on the plant; see {@code RWCU.md}.
+     */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> getCoolantChemistry() throws LuaException {
+        var c = core();
+        var chem = c.getChemistry();
+        var m = new HashMap<String, Object>();
+        m.put("conductivityUsPerCm", c.getConductivityUsPerCm());
+        m.put("ionicImpurityG", chem.getIonicG());
+        m.put("crudG", chem.getCrudG());
+        m.put("crudActivityBq", chem.getActivityBq());
+        m.put("crudGammaWatts", chem.crudGammaWatts());
+        m.put("structuralWear", chem.getStructuralWear());
+        m.put("claddingWear", chem.getCladdingWear());
+        m.put("cleanupHeatLossMW", c.getCleanupHeatLossMW());
+        m.put("cleanupBlowdownKgPerS", c.getCleanupBlowdownKgPerS());
+        return m;
+    }
+
     @LuaFunction(mainThread = true)
     public final Map<String, Object> getBoundaryDamage() throws LuaException {
         var out = BoundaryDamageReadout.toLua(core().getBoundaryStress());

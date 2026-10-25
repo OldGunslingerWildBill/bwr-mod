@@ -321,6 +321,12 @@ public final class ReactorCore {
     private double lastBreakLiquidFlowKgPerS;
     private double lastBreakSteamFlowKgPerS;
     private double pendingShutdownCoolingMW;
+    /** The reactor water cleanup loop: heat it takes net of its own regeneration, and the water it rejects, per tick. */
+    private final dev.bwr.core.chemistry.CoolantChemistry chemistry = new dev.bwr.core.chemistry.CoolantChemistry();
+    private double pendingCleanupHeatMW;
+    private double pendingCleanupBlowdownKgPerS;
+    private double lastCleanupBlowdownKgPerS;
+    private double lastCleanupHeatMW;
     private double lastShutdownCoolingMW;
 
     private double boronInjectionPpmPerMinute;
@@ -667,6 +673,10 @@ public final class ReactorCore {
         vessel.setLiquidLeakKgPerS(0.0);
         vessel.setSteamLeakKgPerS(0.0);
         boundary.reset();
+        chemistry.reset(vessel.getLiquidMassKg());
+        pendingCleanupHeatMW = 0.0;
+        pendingCleanupBlowdownKgPerS = 0.0;
+        lastCleanupBlowdownKgPerS = 0.0;
 
         refreshNodalShape();
         double rho = closeReactivityBalance();
@@ -758,6 +768,10 @@ public final class ReactorCore {
         vessel.setLiquidLeakKgPerS(0.0);
         vessel.setSteamLeakKgPerS(0.0);
         boundary.reset();
+        chemistry.reset(vessel.getLiquidMassKg());
+        pendingCleanupHeatMW = 0.0;
+        pendingCleanupBlowdownKgPerS = 0.0;
+        lastCleanupBlowdownKgPerS = 0.0;
         applyFeedwaterTemperature();
 
         // Two passes over the shape and the rod pattern. Solve the flux for the
@@ -1011,7 +1025,13 @@ public final class ReactorCore {
             boundary.initialiseRuptureVolume(vessel.getOccupiedVolumeM3());
         }
         vessel.setBoundaryOpenings(activeVesselOpenings(), boundary.getRuptureVolumeM3());
-        vessel.setLiquidLeakKgPerS(manualLiquidLeakKgPerS);
+        // Water the cleanup loop rejects leaves as saturated liquid, like any other liquid sink; it is not water on the
+        // drywell floor, so the severe-accident floor term above does not see it.
+        lastCleanupBlowdownKgPerS = pendingCleanupBlowdownKgPerS;
+        lastCleanupHeatMW = pendingCleanupHeatMW;
+        pendingCleanupBlowdownKgPerS = 0.0;
+        pendingCleanupHeatMW = 0.0;
+        vessel.setLiquidLeakKgPerS(manualLiquidLeakKgPerS + lastCleanupBlowdownKgPerS);
         // Steam the zirconium-water reaction eats never reaches a valve, but it
         // does leave the steam space, so it belongs with the other sinks. The
         // reaction is limited by the steam available to it (FuelThermal caps its
@@ -1031,7 +1051,7 @@ public final class ReactorCore {
         // bed gives it up; corium outside the vessel heats the floor, not the vessel.
         lastShutdownCoolingMW = pendingShutdownCoolingMW;
         pendingShutdownCoolingMW = 0.0;
-        vessel.setShutdownCoolingMW(lastShutdownCoolingMW);
+        vessel.setShutdownCoolingMW(lastShutdownCoolingMW + lastCleanupHeatMW);
         vessel.step(totalPower * config.ratedThermalMW * inCoreFraction
                         + fuelThermal.getZirconiumReactionPowerMW()
                         + severeAccident.getDebrisHeatToVesselMW(),
@@ -1044,6 +1064,11 @@ public final class ReactorCore {
         lastBreakLiquidFlowKgPerS = vessel.getBoundaryLiquidFlowKgPerS();
         lastBreakSteamFlowKgPerS = vessel.getBoundarySteamFlowKgPerS();
         vessel.setShutdownCoolingMW(0.0);
+        // Coolant chemistry: what feedwater, the condenser and corrosion add, and what cleanup took out (the loop acts
+        // on it directly). Conductivity above the action level wears the pipe a little; nothing acts on the plant.
+        chemistry.step(vessel.getLiquidMassKg(), getDeliveredFeedwaterFlowKgPerS(),
+                turbineSteamFlowKgPerS + bypassSteamFlowKgPerS, fissionHeatFraction, dtSeconds);
+        boundary.addCorrosionStress(chemistry.lastStructuralWearIncrement());
 
         // --- 7. Slow states and instruments. Both take the RAW fission rate:
         //        xenon is bred per fission and a fission chamber measures flux, so
@@ -1274,7 +1299,10 @@ public final class ReactorCore {
     private void installBuild(VesselBuild build, boolean keepWater) {
         this.vesselBuild = build;
         double wantedScale = build == null ? 1.0 : build.waterMassFactor();
+        double liquidBefore = vessel.getLiquidMassKg();
         vessel.rescaleInventory(wantedScale / vessel.getInventoryScale(), keepWater);
+        // A vessel made larger or smaller around fresh water holds the same concentration of what is in it.
+        if (!keepWater && liquidBefore > 0.0) chemistry.scale(vessel.getLiquidMassKg() / liquidBefore);
         vessel.setSteamDomeVolumeM3(config.steamDomeVolumeM3
                 * (build == null || !domeFollowsBuild ? 1.0 : build.domeRatio()));
         if (build == null) {
@@ -2682,6 +2710,26 @@ public final class ReactorCore {
     public double getShutdownCoolingMW() { return lastShutdownCoolingMW; }
 
     /**
+     * The reactor water cleanup loop's effect on the vessel for the next tick: the heat it takes from the vessel net of
+     * what its regenerative exchanger returns (MW, a sink like shutdown cooling), and the water it rejects (kg/s, a liquid
+     * sink at the vessel's own enthalpy). Both accumulate over callers until the step consumes them. The water that
+     * is drawn and returned is not a flow here: it leaves and comes back.
+     */
+    public void addCleanupLoop(double heatLossMW, double blowdownKgPerS) {
+        if (Double.isFinite(heatLossMW) && heatLossMW > 0.0) pendingCleanupHeatMW += heatLossMW;
+        if (Double.isFinite(blowdownKgPerS) && blowdownKgPerS > 0.0) pendingCleanupBlowdownKgPerS += blowdownKgPerS;
+    }
+
+    public double getCleanupBlowdownKgPerS() { return lastCleanupBlowdownKgPerS; }
+    public double getCleanupHeatLossMW() { return lastCleanupHeatMW; }
+
+    /** Coolant chemistry: conductivity, crud and the corrosion wear they cause. */
+    public dev.bwr.core.chemistry.CoolantChemistry getChemistry() { return chemistry; }
+
+    /** Conductivity of the reactor water, uS/cm. */
+    public double getConductivityUsPerCm() { return chemistry.conductivityUsPerCm(vessel.getLiquidMassKg()); }
+
+    /**
      * Feedwater actually reaching the vessel, kg/s. Differs from
      * {@link #getFeedwaterFlowKgPerS()} — which is what was commanded — once
      * the feedwater line has broken.
@@ -3267,6 +3315,9 @@ public final class ReactorCore {
         vessel.restorePressurePsig(state.pressurePsig());
         vessel.restoreMetalTemperatureC(state.metalTemperatureC());
         restoreCollapsedLevelExactly(state.waterLevelIn());
+        // Chemistry is not part of ReactorState: an old save, or a state restored with no chemistry record beside it,
+        // comes back clean for the water it holds (the mod then reads its own record over this).
+        chemistry.reset(vessel.getLiquidMassKg());
 
         // Core inlet enthalpy is the void model's other lagged state and it comes
         // back verbatim, exactly like the void fraction below. It used to be

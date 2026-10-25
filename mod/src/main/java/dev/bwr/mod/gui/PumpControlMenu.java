@@ -5,6 +5,7 @@ import dev.bwr.mod.eccs.*;
 import dev.bwr.mod.feedwater.FeedwaterPumpBlockEntity;
 import dev.bwr.mod.flow.RecirculationPumpBlockEntity;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
+import dev.bwr.mod.rwcu.RwcuPumpBlockEntity;
 import dev.bwr.mod.registry.BwrMenus;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.*;
@@ -34,7 +35,7 @@ public class PumpControlMenu extends BwrMenu {
     }
     public static void open(ServerPlayer player, BlockPos root, BlockPos anchor) {
         var be=player.level().getBlockEntity(root);
-        if (!(be instanceof EccsPumpBlockEntity || be instanceof FeedwaterPumpBlockEntity || be instanceof RecirculationPumpBlockEntity)) return;
+        if (!(be instanceof EccsPumpBlockEntity || be instanceof FeedwaterPumpBlockEntity || be instanceof RecirculationPumpBlockEntity || be instanceof RwcuPumpBlockEntity)) return;
         if(be.getBlockState().getBlock() instanceof TurbineAssemblyBlock) { TerryTurbineMenu.open(player,root,anchor); return; }
         player.openMenu(new SimpleMenuProvider((id,inv,who)->new PumpControlMenu(id,inv,root,anchor),
                 be.getBlockState().getBlock().getName()),data->{data.writeBlockPos(root);data.writeBlockPos(anchor);});
@@ -48,7 +49,7 @@ public class PumpControlMenu extends BwrMenu {
     public void sample() {
         BlockEntity be=level().getBlockEntity(pos);
         eccs=be instanceof EccsPumpBlockEntity; recirculation=be instanceof RecirculationPumpBlockEntity;
-        present=eccs || recirculation || be instanceof FeedwaterPumpBlockEntity;
+        present=eccs || recirculation || be instanceof FeedwaterPumpBlockEntity || be instanceof RwcuPumpBlockEntity;
         if(!present)return;
         if(be instanceof RecirculationPumpBlockEntity p) {
             turbine=false;rhr=false;poolSuction=false;poolCooling=false;shutdownCooling=false;buffer=0;
@@ -64,7 +65,7 @@ public class PumpControlMenu extends BwrMenu {
                 connection=c==null?"RIP mount invalid / incomplete":"Mounted inside reactor vessel";
             }
         } else {
-            var p=eccs?((EccsPumpBlockEntity)be).pump():((FeedwaterPumpBlockEntity)be).pump();
+            var p=eccs?((EccsPumpBlockEntity)be).pump():be instanceof RwcuPumpBlockEntity r?r.pump():((FeedwaterPumpBlockEntity)be).pump();
             turbine=p.design().drive()==PumpDesign.Drive.STEAM_TURBINE;
             drive=turbine?"Steam turbine":"Electric motor";
             target=p.getSpeedDemandFraction();actual=p.getSpeedFraction();running=p.isRunning();
@@ -79,6 +80,12 @@ public class PumpControlMenu extends BwrMenu {
                 flow=e.getDeliveredFlowKgPerS(); energy=e.energy().getEnergyStored();capacity=e.energy().getMaxEnergyStored();
                 buffer=e.waterInlet().getFluidInTank(0).getAmount();
                 connection=e.connectionStatus();
+            } else if(be instanceof RwcuPumpBlockEntity r) {
+                control=r.isComputerControlled()?2:r.isPanelControlled()?0:1;
+                rhr=false;poolSuction=false;poolCooling=false;shutdownCooling=false;
+                drive="Electric motor (RWCU)";
+                flow=r.getFlowKgPerS();energy=r.energy().getEnergyStored();capacity=r.energy().getMaxEnergyStored();buffer=0;
+                connection=r.connectionStatus();
             } else {
                 var f=(FeedwaterPumpBlockEntity)be;
                 control=f.isComputerControlled()?2:f.isPanelControlled()?0:1;
@@ -117,6 +124,13 @@ public class PumpControlMenu extends BwrMenu {
                 case RUN -> {p.setPanelControlled(true);p.setRunning(a!=0);}
                 case SUCTION -> {p.setPanelControlled(true);p.setSuctionSource(a==0?SuctionSource.CONDENSATE_TANK:SuctionSource.SUPPRESSION_POOL);}
                 case MODE -> {if(rhr && a>=0 && a<=2){p.setPanelControlled(true);p.setMode(EccsPumpBlockEntity.Mode.values()[a]);}}
+                default -> {return;}
+            }
+        } else if(be instanceof RwcuPumpBlockEntity p) {
+            switch(command) {
+                case CONTROL -> {p.setPanelControlled(a==0);p.setComputerControlled(a==2);if(a==1)p.setRunning(level().hasNeighborSignal(pos));}
+                case SPEED -> {p.setPanelControlled(true);p.setSpeedDemandFraction(fromPerMille(a));}
+                case RUN -> {p.setPanelControlled(true);p.setRunning(a!=0);}
                 default -> {return;}
             }
         } else if(be instanceof FeedwaterPumpBlockEntity p) {

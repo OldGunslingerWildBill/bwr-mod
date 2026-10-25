@@ -179,6 +179,17 @@ public final class BwrBlocks {
     public static final DeferredBlock<RpvWaterInjectionPortBlock> RPV_WATER_INJECTION_PORT =
             BLOCKS.register("rpv_water_injection_port", () -> new RpvWaterInjectionPortBlock(vesselSteel()));
 
+    /** The bottom head drain: a small vessel port in the lowest wall row, the RWCU pump's second suction. */
+    public static final DeferredBlock<dev.bwr.mod.reactor.RpvBottomDrainPortBlock> RPV_BOTTOM_DRAIN_PORT =
+            BLOCKS.register("rpv_bottom_drain_port", () -> new dev.bwr.mod.reactor.RpvBottomDrainPortBlock(vesselSteel()));
+    public static final DeferredBlock<dev.bwr.mod.rwcu.RwcuPumpBlock> RWCU_PUMP =
+            BLOCKS.register("rwcu_pump", () -> new dev.bwr.mod.rwcu.RwcuPumpBlock(machine()));
+    public static final DeferredBlock<dev.bwr.mod.rwcu.RwcuRegenBlock> RWCU_REGENERATIVE_HEAT_EXCHANGER =
+            BLOCKS.register("rwcu_regenerative_heat_exchanger", () -> new dev.bwr.mod.rwcu.RwcuRegenBlock(machine()));
+    public static final DeferredBlock<dev.bwr.mod.rwcu.RwcuCoolerBlock> RWCU_NONREGENERATIVE_HEAT_EXCHANGER =
+            BLOCKS.register("rwcu_nonregenerative_heat_exchanger", () -> new dev.bwr.mod.rwcu.RwcuCoolerBlock(machine()));
+    public static final DeferredBlock<dev.bwr.mod.rwcu.RwcuDeminBlock> RWCU_FILTER_DEMINERALIZER =
+            BLOCKS.register("rwcu_filter_demineralizer", () -> new dev.bwr.mod.rwcu.RwcuDeminBlock(machine()));
     public static final DeferredBlock<RecirculationPortBlock> RECIRCULATION_OUTLET =
             BLOCKS.register("recirculation_outlet", () -> new RecirculationPortBlock(vesselSteel(),true));
     public static final DeferredBlock<RecirculationPortBlock> RECIRCULATION_INLET =

@@ -88,6 +88,8 @@ public final class BwrMenus {
     public static final DeferredHolder<MenuType<?>,MenuType<dev.bwr.mod.gui.RhrHeatExchangerMenu>> RHR_HEAT_EXCHANGER =
             MENUS.register("rhr_heat_exchanger",()->IMenuTypeExtension.create(dev.bwr.mod.gui.RhrHeatExchangerMenu::new));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.RwcuUnitMenu>> RWCU_UNIT =
+            MENUS.register("rwcu_unit", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.RwcuUnitMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.CondenserMenu>> CONDENSER =
             MENUS.register("condenser", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.CondenserMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.CoolingMenu>> COOLING =

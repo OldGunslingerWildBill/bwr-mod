@@ -97,7 +97,8 @@ public final class BwrBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity>>
             RPV_WATER_INJECTION_PORT = BLOCK_ENTITIES.register("rpv_water_injection_port",
             () -> BlockEntityType.Builder.of(dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity::new,
-                    BwrBlocks.RPV_WATER_INJECTION_PORT.get(), BwrBlocks.RECIRCULATION_OUTLET.get(), BwrBlocks.RECIRCULATION_INLET.get()).build(null));
+                    BwrBlocks.RPV_WATER_INJECTION_PORT.get(), BwrBlocks.RECIRCULATION_OUTLET.get(), BwrBlocks.RECIRCULATION_INLET.get(),
+                    BwrBlocks.RPV_BOTTOM_DRAIN_PORT.get()).build(null));
 
     /**
      * The RPV main steam nozzle. It carries a stop position, so it needs state;
@@ -189,6 +190,14 @@ public final class BwrBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.suppression.RhrHeatExchangerBlockEntity>> RHR_HEAT_EXCHANGER =
             BLOCK_ENTITIES.register("rhr_heat_exchanger",()->BlockEntityType.Builder.of(dev.bwr.mod.suppression.RhrHeatExchangerBlockEntity::new,
                     BwrBlocks.RHR_HEAT_EXCHANGER.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.rwcu.RwcuPumpBlockEntity>> RWCU_PUMP =
+            BLOCK_ENTITIES.register("rwcu_pump",()->BlockEntityType.Builder.of(dev.bwr.mod.rwcu.RwcuPumpBlockEntity::new,BwrBlocks.RWCU_PUMP.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.rwcu.RwcuRegenBlockEntity>> RWCU_REGEN =
+            BLOCK_ENTITIES.register("rwcu_regenerative_heat_exchanger",()->BlockEntityType.Builder.of(dev.bwr.mod.rwcu.RwcuRegenBlockEntity::new,BwrBlocks.RWCU_REGENERATIVE_HEAT_EXCHANGER.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.rwcu.RwcuCoolerBlockEntity>> RWCU_COOLER =
+            BLOCK_ENTITIES.register("rwcu_nonregenerative_heat_exchanger",()->BlockEntityType.Builder.of(dev.bwr.mod.rwcu.RwcuCoolerBlockEntity::new,BwrBlocks.RWCU_NONREGENERATIVE_HEAT_EXCHANGER.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.rwcu.RwcuDeminBlockEntity>> RWCU_DEMIN =
+            BLOCK_ENTITIES.register("rwcu_filter_demineralizer",()->BlockEntityType.Builder.of(dev.bwr.mod.rwcu.RwcuDeminBlockEntity::new,BwrBlocks.RWCU_FILTER_DEMINERALIZER.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.containment.ContainmentSprayHeaderBlockEntity>> CONTAINMENT_SPRAY_HEADER =
             BLOCK_ENTITIES.register("containment_spray_header", () -> BlockEntityType.Builder.of(
                     dev.bwr.mod.containment.ContainmentSprayHeaderBlockEntity::new,

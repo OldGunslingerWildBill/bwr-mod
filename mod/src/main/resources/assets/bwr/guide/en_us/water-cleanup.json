@@ -1,0 +1,73 @@
+{
+  "title": "Reactor water cleanup",
+  "docs": [
+    "RWCU.md",
+    "WATER-PLUMBING.md"
+  ],
+  "pages": [
+    {
+      "title": "Why clean the reactor water",
+      "text": [
+        "Reactor water picks up impurity: feedwater carries a little, a condenser can leak, and the circuit corrodes. Conductivity (uS/cm) measures the dissolved part and crud is the corrosion product that circulates and picks up activity in the core.",
+        "",
+        "Both are on the reactor screen's INFO tab (Water chemistry) and in the computer's getCoolantChemistry(). Above 1 uS/cm the pipes and fuel cladding wear a little faster. Activated crud makes the coolant lines radioactive. Nothing trips for you."
+      ],
+      "icons": [
+        "bwr:rwcu_filter_demineralizer",
+        "bwr:survey_meter"
+      ]
+    },
+    {
+      "title": "Build the RWCU skid",
+      "text": [
+        "Run water pipe from a recirculation outlet (or the bottom drain port) to the RWCU pump's back flange. The pump's front goes to the regenerative exchanger's hot inlet (front), its back to the cooler's front, and the cooler's back to the demineraliser's front.",
+        "",
+        "The demineraliser's back returns to the regenerator's cold inlet (its left side as you face the front) and the regenerator's cold outlet (its right) goes to a feedwater water-injection port. The cooler's side flanges take cooling water; give the pump FE and start it."
+      ],
+      "icons": [
+        "bwr:rwcu_pump",
+        "bwr:rwcu_regenerative_heat_exchanger",
+        "bwr:rwcu_nonregenerative_heat_exchanger",
+        "bwr:rwcu_filter_demineralizer"
+      ]
+    },
+    {
+      "title": "The resin bed",
+      "text": [
+        "The bed holds 100 g of ionic impurity and 200 g of crud, then it is spent and removes no ions. Right-click the demineraliser with Demineralizer Resin to change the bed.",
+        "",
+        "The old bed comes out as Spent Demineralizer Resin: radioactive waste that the survey meter reads, as does the bed while it is in service. Resin is destroyed above 140 F, which is what a cooler without cooling water does to it."
+      ],
+      "icons": [
+        "bwr:demineralizer_resin",
+        "bwr:spent_resin",
+        "bwr:survey_meter"
+      ]
+    },
+    {
+      "title": "Blowdown and the bottom drain",
+      "text": [
+        "Pipe a tee off the cooler's outlet through a Motor-Operated Water Valve to a Condensate Storage Tank or a condenser: that is the blowdown. The valve's opening against the demineraliser's sets how much of the flow is rejected, which lowers the vessel level for startup control.",
+        "",
+        "The bottom head drain port sits in the lowest two rows of a vessel wall. With it as the pump's suction, the vessel can be drained to the port's height. It draws nothing once the water is down to the port."
+      ],
+      "icons": [
+        "bwr:rpv_bottom_drain_port",
+        "bwr:motor_operated_water_valve",
+        "bwr:condensate_storage_tank"
+      ]
+    },
+    {
+      "title": "Pipe breaks on the skid",
+      "text": [
+        "The suction line from the vessel to the pump and the return line to feedwater are pressure boundary: a pipe taken out of either is a loss of coolant up to the nearest closed isolation valve. Put a Motor-Operated Water Valve near the vessel on each and close it to isolate a break.",
+        "",
+        "Nothing closes it for you, and nothing stops the pump if the resin overheats or the water falls."
+      ],
+      "icons": [
+        "bwr:motor_operated_water_valve",
+        "bwr:rwcu_pump"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IBI",
+    "PRP",
+    "III"
+  ],
+  "key": {
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "B": {
+      "item": "minecraft:iron_bars"
+    },
+    "R": {
+      "item": "bwr:demineralizer_resin"
+    }
+  },
+  "result": {
+    "id": "bwr:rwcu_filter_demineralizer",
+    "count": 1
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PCP",
+    "IGI",
+    "PCP"
+  ],
+  "key": {
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    },
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "G": {
+      "item": "minecraft:glass_pane"
+    }
+  },
+  "result": {
+    "id": "bwr:rwcu_nonregenerative_heat_exchanger",
+    "count": 1
+  }
+}

@@ -51,7 +51,7 @@ neoForge {
             // 'bwrheight' holds the vessel height tests (VesselHeightTests); -PbwrGameTestNamespaces=bwrheight runs just those.
             // 'bwrcavity' holds the cavity seal and reactor well tests (CavitySealTests, CavityDrainTests, WaterValveTests); -PbwrOnlyCavity runs just those.
             // 'bwrcrane' holds the reactor building crane, stud tensioner and head stand tests (BuildingCraneTests); -PbwrOnlyCrane runs just those.
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyPool') ? 'bwrpool' : project.hasProperty('bwrOnlyUranium') ? 'bwruranium' : project.hasProperty('bwrOnlyBlast') ? 'bwrblast' : project.hasProperty('bwrOnlyBridge') ? 'bwrbridge' : project.hasProperty('bwrOnlyCavity') ? 'bwrcavity' : project.hasProperty('bwrOnlyCrane') ? 'bwrcrane' : 'bwr,bwrtick,bwrplant,bwrpool,bwruranium,bwrblast,bwrbridge,bwrcavity,bwrinternals,bwrcrane,bwrheight')
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyPool') ? 'bwrpool' : project.hasProperty('bwrOnlyUranium') ? 'bwruranium' : project.hasProperty('bwrOnlyBlast') ? 'bwrblast' : project.hasProperty('bwrOnlyBridge') ? 'bwrbridge' : project.hasProperty('bwrOnlyCavity') ? 'bwrcavity' : project.hasProperty('bwrOnlyCrane') ? 'bwrcrane' : 'bwr,bwrtick,bwrplant,bwrpool,bwruranium,bwrblast,bwrbridge,bwrcavity,bwrinternals,bwrcrane,bwrheight,bwrrwcu')
             // Developer-only tick profiler (dev.bwr.mod.TickProbe): per-system microseconds per server tick, printed by
             // the TickBudgetTests plant profile as "TICK PROBE" lines. Off (and costless) without this property.
             if (project.hasProperty('bwrTickProbe')) jvmArguments.add('-Dbwr.tickProbe=true')
@@ -145,6 +145,7 @@ neoForge {
             if (project.hasProperty('bwrCoreModelCheck')) jvmArguments.add('-Dbwr.coreModelCheck=true')
             if (project.hasProperty('bwrRipModelCheck')) jvmArguments.add('-Dbwr.ripModelCheck=true')
             if (project.hasProperty('bwrNetworkingClientCheck')) jvmArguments.add('-Dbwr.networkingClientCheck=true')
+            if (project.hasProperty('bwrRwcuClientCheck')) jvmArguments.add('-Dbwr.rwcuClientCheck=true')
             if (project.hasProperty('bwrRadiationClientCheck')) jvmArguments.add('-Dbwr.radiationClientCheck=true')
             if (project.hasProperty('bwrFurnitureClientCheck')) jvmArguments.add('-Dbwr.furnitureClientCheck=true')
             if (project.hasProperty('bwrBoardClientCheck')) jvmArguments.add('-Dbwr.boardClientCheck=true')
@@ -718,6 +719,11 @@ tasks.named('jar', Jar).configure {
     exclude 'data/bwrpool/**'
     exclude 'data/bwruranium/**'
     exclude 'data/bwrbridge/**'
+    exclude 'data/bwrcavity/**'
+    exclude 'data/bwrcrane/**'
+    exclude 'data/bwrheight/**'
+    exclude 'data/bwrinternals/**'
+    exclude 'data/bwrrwcu/**'
     from(rootProject.file('LICENSE')) { into 'META-INF' }
     from(rootProject.file('NOTICE')) { into 'META-INF' }
     from(rootProject.file('THIRD-PARTY-NOTICES.md')) { into 'META-INF' }

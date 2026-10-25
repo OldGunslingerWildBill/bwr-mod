@@ -20,6 +20,11 @@ public class RpvWaterInjectionPortBlockEntity extends BlockEntity {
             if (!direction.getAxis().isHorizontal()) return null;
             if (port.isOutlet() ? getBlockPos().getY() < (low+high+1)/2 : getBlockPos().getY() > low+1) return null;
         }
+        if (getBlockState().getBlock() instanceof RpvBottomDrainPortBlock) {
+            // The bottom head drain: a side-wall port in the lowest two rows, like the recirculation inlet.
+            if (!getBlockState().getValue(RpvWaterInjectionPortBlock.FACING).getAxis().isHorizontal()
+                    || getBlockPos().getY() > c.structure().interiorMin().getY() + 1) return null;
+        }
         BlockPos inside = getBlockPos().relative(getBlockState().getValue(RpvWaterInjectionPortBlock.FACING).getOpposite());
         BlockPos min = c.structure().interiorMin(), max = c.structure().interiorMax();
         return inside.getX() >= min.getX() && inside.getX() <= max.getX()

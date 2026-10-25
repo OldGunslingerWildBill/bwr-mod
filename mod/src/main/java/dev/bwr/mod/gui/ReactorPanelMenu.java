@@ -142,6 +142,8 @@ public class ReactorPanelMenu extends BwrMenu {
     public List<Component> boundaryLines = List.of();
     public int[] boundaryLineStates = new int[0];
     public static final int MAX_BOUNDARY_LINES = 8;
+    /** Coolant chemistry (the reactor water cleanup system): conductivity uS/cm, crud g, its activity Bq and gamma W, wear 0..1, cleanup heat MW and blowdown kg/s. */
+    public double conductivity, crudG, crudBq, crudGammaW, structuralWear, claddingWear, cleanupHeatMW, cleanupBlowdown;
 
     // -----------------------------------------------------------------
 
@@ -270,6 +272,15 @@ public class ReactorPanelMenu extends BwrMenu {
             buf.writeUtf(Component.Serializer.toJson(lines.get(i), level().registryAccess()), 8192);
             buf.writeByte(i < breaks.size() ? (breaks.get(i).open() ? 2 : 1) : 0);
         }
+        var chemistry = core.getChemistry();
+        buf.writeDouble(core.getConductivityUsPerCm());
+        buf.writeDouble(chemistry.getCrudG());
+        buf.writeDouble(chemistry.getActivityBq());
+        buf.writeDouble(chemistry.crudGammaWatts());
+        buf.writeDouble(chemistry.getStructuralWear());
+        buf.writeDouble(chemistry.getCladdingWear());
+        buf.writeDouble(core.getCleanupHeatLossMW());
+        buf.writeDouble(core.getCleanupBlowdownKgPerS());
     }
 
     @Override
@@ -359,6 +370,14 @@ public class ReactorPanelMenu extends BwrMenu {
         }
         boundaryLines = lines;
         boundaryLineStates = states;
+        conductivity = buf.readDouble();
+        crudG = buf.readDouble();
+        crudBq = buf.readDouble();
+        crudGammaW = buf.readDouble();
+        structuralWear = buf.readDouble();
+        claddingWear = buf.readDouble();
+        cleanupHeatMW = buf.readDouble();
+        cleanupBlowdown = buf.readDouble();
     }
 
     // -----------------------------------------------------------------

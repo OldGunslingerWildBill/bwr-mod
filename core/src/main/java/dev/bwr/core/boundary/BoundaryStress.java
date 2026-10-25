@@ -293,6 +293,24 @@ public final class BoundaryStress {
     }
 
     /**
+     * Corrosion wear from conductive coolant ({@code CoolantChemistry}), added to every unbroken exposed component in the
+     * same units as overpressure stress and weighted like it. It is small and slow, and below the failure stress it
+     * breaks nothing; it only uses up margin that overpressure would otherwise find intact.
+     */
+    public void addCorrosionStress(double units) {
+        if (!(units > 0.0) || !Double.isFinite(units)) {
+            return;
+        }
+        for (BoundaryComponent component : COMPONENTS) {
+            int i = component.ordinal();
+            if (broken[i] || !configuration.exposes(component)) {
+                continue;
+            }
+            stress[i] += component.exposureWeight() * units;
+        }
+    }
+
+    /**
      * Stress accumulated per second by a component of unit exposure weight at
      * the given pressure. Zero at or below design pressure; one over
      * {@link #SECONDS_TO_UNIT_STRESS_AT_CODE_PRESSURE} at the code limit.
