@@ -547,7 +547,7 @@ public final class LargeRtgTests {
         old.loadWithComponents(tag, l.registryAccess());
         var r = old.readout();
         h.assertTrue(r.capsules() == 2 && Math.abs(r.thermalWatts() - (230.0 + 105.0)) < 1e-6 && Math.abs(r.electricWatts() - (335.0 * 0.05)) < 1e-6, "old save reads " + r);
-        h.assertTrue(!old.heatOnly() && old.bufferFe() >= 12.5 && old.bufferFe() < 400.0, "old save: heat-only " + old.heatOnly() + ", buffer " + old.bufferFe());
+        h.assertTrue(!old.heatOnly() && old.bufferFe() >= 12.5 && old.bufferFe() <= RtgBlockEntity.BUFFER_FE, "old save: heat-only " + old.heatOnly() + ", buffer " + old.bufferFe());
         h.assertTrue(!save(l, old).contains("HeatOnly"), "the new key is written by default");
         old.setHeatOnly(true);
         var heat = old.readout();
