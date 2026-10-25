@@ -128,6 +128,8 @@ neoForge {
             if (project.hasProperty('bwrFcdLegendsPerFrame')) jvmArguments.add('-Dbwr.fcdLegendCache=false')
             if (project.hasProperty('bwrFcdProcedural')) jvmArguments.add('-Dbwr.fcdKits=false')
             if (project.hasProperty('bwrMachineRenderCheck')) jvmArguments.add('-Dbwr.machineRenderCheck=true')
+            // Turbine-driven pump pictures (feed pump turbine, RCIC, HPCI) with piped ports: -PbwrTurbinePumpShots=<label> saves run/turbineModelCheck/turbine-pump-shots/<label>/ (TurbinePumpShots).
+            if (project.hasProperty('bwrTurbinePumpShots')) jvmArguments.add('-Dbwr.turbinePumpShots=' + project.property('bwrTurbinePumpShots'))
             if (project.hasProperty('bwrSpargerCheck')) jvmArguments.add('-Dbwr.spargerCheck=true')
             if (project.hasProperty('bwrCoreModelCheck')) jvmArguments.add('-Dbwr.coreModelCheck=true')
             if (project.hasProperty('bwrRipModelCheck')) jvmArguments.add('-Dbwr.ripModelCheck=true')

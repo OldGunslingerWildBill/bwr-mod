@@ -11,12 +11,13 @@ are reserved for assembly integrity; allow the full volume when placing it.
 
 | Item | Width × height × depth | Exterior |
 | --- | --- | --- |
-| RCIC Terry Turbine Pump | 5 × 4 × 5 | Compact GS-inspired casing, governor, oil system, gauges and pump |
-| HPCI Terry Turbine Pump | 7 × 5 × 5 | Larger C-frame-inspired insulated turbine, pipework and service platform |
+| RCIC Terry Turbine Pump | 5 × 4 × 5 | Split-casing Terry turbine, trip-throttle and governor valves, multistage pump, barometric condenser, local panel |
+| HPCI Terry Turbine Pump | 7 × 5 × 5 | Insulated Terry turbine, hydraulic stop valve, main/booster pump, gland seal condenser, oil console, valve platform |
 
 These are original game-scale exterior models informed by published references
-and the supplied HPCI photograph, not vendor CAD or dimensionally certified replicas.
-Blender sources and reproducible build scripts are in `art/models/terry/`.
+and photographs, not vendor CAD or dimensionally certified replicas. The current
+models (2026-10) and their references are described in [TURBINE-DRIVEN-PUMPS.md](TURBINE-DRIVEN-PUMPS.md);
+the Blender source is `art/models/turbine_pumps/`.
 No vendor drawings or meshes are redistributed.
 
 ## Four separate ports
@@ -87,9 +88,10 @@ Do not set individual part states manually to change a built machine's version.
 
 ## Rebuild assets
 
-1. Run Blender in background mode with `art/models/terry/build_models.py`.
+1. Run Blender in background mode with `art/models/turbine_pumps/build_models.py`
+   (after `python art/models/turbine_pumps/make_textures.py`); see [TURBINE-DRIVEN-PUMPS.md](TURBINE-DRIVEN-PUMPS.md).
 2. Run `python tools-export-terry.py` to clip meshes and write layout manifests.
-3. Run Blender with `art/models/terry/render_icons.py` for the two inventory icons.
+3. Run Blender with `art/models/turbine_pumps/render_icons.py` for the inventory icons.
 4. Run `python tools-export-terry.py --check` to verify generated assets.
 
 The Blender JSON preserves material colors, UVs and mesh geometry. Export checks

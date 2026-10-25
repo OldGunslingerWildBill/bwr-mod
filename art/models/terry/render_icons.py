@@ -1,8 +1,4 @@
-"""Blender inventory icons use the actual clipped-model compact OBJ export."""
-import importlib.util
+"""Superseded: run art/models/turbine_pumps/render_icons.py (all three turbine-driven pumps)."""
+import runpy
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[3]
-spec=importlib.util.spec_from_file_location('icons',ROOT/'art/models/inventory/render_icons.py')
-icons=importlib.util.module_from_spec(spec);spec.loader.exec_module(icons)
-for id in ('rcic_twl','hpci_turbine'):
-    icons.render(id,icons.ASSETS/f'models/block/pumps/{id}_terry/compact.obj')
+runpy.run_path(str(Path(__file__).resolve().parents[1] / 'turbine_pumps/render_icons.py'), run_name='__main__')

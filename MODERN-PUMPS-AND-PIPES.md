@@ -71,6 +71,9 @@ python tools-export-modern.py --check
 python tools-audit-assets.py
 ```
 
+The turbine feedwater model is now built by `art/models/turbine_pumps/build_models.py`
+(see [TURBINE-DRIVEN-PUMPS.md](TURBINE-DRIVEN-PUMPS.md)), not by this script.
+
 The exporter reads Blender mesh/UV snapshots, clips pumps into block cells and
 checks surface-area conservation. It retains the old layouts for saved worlds.
 Pipe material tint index 0 marks the dye bands; the remaining metal is untinted.
