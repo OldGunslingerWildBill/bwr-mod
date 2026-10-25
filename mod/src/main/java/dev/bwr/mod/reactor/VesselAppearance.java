@@ -10,7 +10,11 @@ import java.util.concurrent.ConcurrentHashMap;
 /** Client-only appearance index, with no world writes, block entities or pipe ticking.
  * The rectangular construction boundary remains the interaction/collision boundary. */
 public final class VesselAppearance {
-    public enum PortKind { LEGACY, CONTROLLER, WATER, STEAM }
+    /** Appended kinds keep the earlier ordinals on the wire. RECIRC_* are the recirculation outlet and inlet (drawn with their own
+     *  nozzle forgings); everything that treats a water interface as connectable treats them the same, see {@link #isWater()}. */
+    public enum PortKind { LEGACY, CONTROLLER, WATER, STEAM, RECIRC_OUTLET, RECIRC_INLET;
+        public boolean isWater() { return this==WATER || this==RECIRC_OUTLET || this==RECIRC_INLET; }
+    }
     public record Sparger(BlockPos pos, CoreSpraySpargerBlock.Loop loop) {}
     public record Jet(BlockPos root, Direction facing, boolean narrow) {
         public List<BlockPos> cells() {

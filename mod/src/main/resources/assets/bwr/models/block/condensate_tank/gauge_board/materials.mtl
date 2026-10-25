@@ -1,0 +1,7 @@
+newmtl mat_0
+Kd 1.0 1.0 1.0
+map_Kd bwr:block/condensate_tank/cst_atlas
+
+newmtl mat_1
+Kd 0.95 0.975 1.0
+map_Kd bwr:block/condensate_tank/cst_atlas

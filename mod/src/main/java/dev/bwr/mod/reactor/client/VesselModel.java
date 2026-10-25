@@ -21,7 +21,10 @@ public final class VesselModel {
             "rpv_crown_neck", "rpv_crown_flange", "rpv_lug", "rpv_core_shroud", "rpv_shroud_step", "rpv_upper_shroud", "rpv_shroud_flange",
             "rpv_support_plate", "rpv_top_guide_rim", "rpv_core_plate", "rpv_shroud_head", "rpv_standpipe", "rpv_separator", "rpv_eye", "rpv_rod",
             "rpv_pipe", "rpv_dryer_ring", "rpv_dryer_skirt", "rpv_dryer_skirt_ring", "rpv_dryer_band", "rpv_dryer_bank", "rpv_dryer_hood",
-            "rpv_cube_dark", "rpv_cube_ss", "rpv_cube_bolt", "rpv_cube_skirt", "failed_head"};
+            "rpv_cube_dark", "rpv_cube_ss", "rpv_cube_bolt", "rpv_cube_skirt", "failed_head",
+            // the recirculation nozzles (build_recirc_nozzles.py)
+            "rpv_recirc_outlet_boss", "rpv_recirc_inlet_boss", "rpv_recirc_butter", "rpv_recirc_overlay", "rpv_recirc_safe_end", "rpv_recirc_pipe",
+            "rpv_thermal_sleeve", "rpv_recirc_flange_outlet", "rpv_recirc_flange_inlet"};
 
     private VesselModel() {
     }
@@ -228,6 +231,11 @@ public final class VesselModel {
                 startY = face == Direction.UP ? p.headOuterY(r) - .08 : p.bottomOuterY(r) + .08;
             }
             var kind = e.kind(port);
+            if ((kind == VesselAppearance.PortKind.RECIRC_OUTLET || kind == VesselAppearance.PortKind.RECIRC_INLET) && face.getAxis().isHorizontal()) {
+                // on the outer surface itself (the spools start 2 % inside it)
+                recircNozzle(b, p, kind == VesselAppearance.PortKind.RECIRC_OUTLET, startX / .98, startY, startZ / .98, radiusX, radiusZ, x, y, z, face);
+                continue;
+            }
             boolean integrated = kind != VesselAppearance.PortKind.LEGACY;
             boolean panel = kind == VesselAppearance.PortKind.CONTROLLER;
             double tip = integrated ? (panel ? .30 : .50) : -.45;
@@ -254,9 +262,77 @@ public final class VesselModel {
                 pose.translate(endX, endY, endZ);
                 pose.mulPose(new Quaternionf().rotationTo(new Vector3f(0, 0, 1),
                         new Vector3f(face.getStepX(), face.getStepY(), face.getStepZ())));
-                b.part(m(panel ? "controller_panel" : kind == VesselAppearance.PortKind.WATER ? "water_nozzle" : "steam_nozzle"), 0, 0, 0, 1, 1, 1);
+                b.part(m(panel ? "controller_panel" : kind.isWater() ? "water_nozzle" : "steam_nozzle"), 0, 0, 0, 1, 1, 1);
                 pose.popPose();
             }
         }
+    }
+
+    // ---------------------------------------------------------------
+    // Recirculation nozzles (RECIRC-REMODEL.md, "The vessel's recirculation nozzles")
+    // ---------------------------------------------------------------
+
+    /** Forging barrel radius of the recirculation outlet and inlet nozzles (blocks); the outlet's boss flares to 1.8 times that. */
+    static final double OUTLET_FORGING = .56, INLET_FORGING = .42;
+
+    /**
+     * A recirculation nozzle on a side wall, from the shell to the port face: the forging set radially into the shell (the outlet's
+     * broad rounded boss; the inlet's fillet and taper), the Inconel butter, the stainless safe end, the weld (overlaid on the
+     * outlet), then the pipe, bent from the nozzle's radial line onto the face, and the flange whose face is the port face, where
+     * the old water nozzle's was (so a pipe joins exactly as before). An inlet also shows its thermal sleeve standing in from the
+     * inner wall. The forging keeps its size; when the shell is close to the face the pieces shorten in proportion.
+     */
+    static void recircNozzle(MachineMeshCache.Builder b, VesselProfile p, boolean outlet, double sx, double sy, double sz,
+                             double radiusX, double radiusZ, double px, double py, double pz, Direction face) {
+        double rf = outlet ? OUTLET_FORGING : INLET_FORGING, rs = .8 * rf, rp = .78 * rs;
+        // outward normal of the (elliptical) section at the start point
+        var n = new Vector3f((float) (sx / (radiusX * radiusX)), 0, (float) (sz / (radiusZ * radiusZ)));
+        if (n.lengthSquared() < 1e-9) n.set(face.getStepX(), 0, face.getStepZ());
+        n.normalize();
+        var f = new Vector3f(face.getStepX(), 0, face.getStepZ());
+        double tx = px + face.getStepX() * .5, tz = pz + face.getStepZ() * .5;          // the port face centre
+        double flangeScale = outlet ? 1.15 : .85, hub = .42;                              // flange part: z -0.42 .. 0
+        double fx = tx - f.x * hub, fz = tz - f.z * hub;                               // where the pipe meets the flange hub
+        double dist = Math.max(.2, (fx - sx) * n.x + (fz - sz) * n.z);                 // room along the nozzle's own line
+        double lb = Math.max(.24, rf * .95), lbu = .06, ls = Math.max(.20, rf * .62), lov = outlet ? .09 : .05;
+        double kit = lb + lbu + ls + lov, k = Math.min(1, Math.max(.35, dist) * .85 / kit);
+        lb *= k; lbu *= k; ls *= k; lov *= k;
+        var pose = b.pose;
+        pose.pushPose();
+        pose.translate(sx, sy, sz);
+        pose.mulPose(new Quaternionf().rotationTo(new Vector3f(0, 0, 1), n));
+        double z0 = -.06;   // sunk a little so the boss's foot meets the curved shell all round
+        b.part(m(outlet ? "rpv_recirc_outlet_boss" : "rpv_recirc_inlet_boss"), 0, 0, z0, (float) rf, (float) rf, (float) lb);
+        double z = z0 + lb;
+        b.part(m("rpv_recirc_butter"), 0, 0, z - .005, (float) rs, (float) rs, (float) (lbu + .01));
+        z += lbu;
+        b.part(m("rpv_recirc_safe_end"), 0, 0, z, (float) rs, (float) rs, (float) ls);
+        z += ls;
+        b.part(m("rpv_recirc_overlay"), 0, 0, z - .005, (float) (rp * (outlet ? 1.10 : 1.0)), (float) (rp * (outlet ? 1.10 : 1.0)), (float) (lov + .01));
+        z += lov;
+        if (!outlet) b.part(m("rpv_thermal_sleeve"), 0, 0, -(p.wall + .02) - .45, (float) (rp * .92), (float) (rp * .92), .45f);
+        pose.popPose();
+        // the pipe from the end of the kit (along n) to the flange hub (along the face normal), a smooth bend in short straight pieces
+        double ex = sx + n.x * z, ez = sz + n.z * z;
+        double len = Math.hypot(fx - ex, fz - ez);
+        if (len > .02) {
+            double c0x = ex + n.x * len * .5, c0z = ez + n.z * len * .5, c1x = fx - f.x * len * .5, c1z = fz - f.z * len * .5;
+            int segs = n.dot(f) > .999f ? 1 : 8;
+            double lx = ex, lz = ez;
+            for (int i = 1; i <= segs; i++) {
+                double t = (double) i / segs, u = 1 - t;
+                double qx = u * u * u * ex + 3 * u * u * t * c0x + 3 * u * t * t * c1x + t * t * t * fx;
+                double qz = u * u * u * ez + 3 * u * u * t * c0z + 3 * u * t * t * c1z + t * t * t * fz;
+                // each piece runs a little past its ends so the joints of the bend stay closed
+                double dx = qx - lx, dz = qz - lz, l = Math.hypot(dx, dz), over = segs == 1 ? .01 : rp * .18;
+                if (l > 1e-4) along(b, "rpv_recirc_pipe", lx - dx / l * over, sy, lz - dz / l * over, qx + dx / l * over, sy, qz + dz / l * over, rp);
+                lx = qx; lz = qz;
+            }
+        }
+        pose.pushPose();
+        pose.translate(tx, sy, tz);
+        pose.mulPose(new Quaternionf().rotationTo(new Vector3f(0, 0, 1), f));
+        b.part(m(outlet ? "rpv_recirc_flange_outlet" : "rpv_recirc_flange_inlet"), 0, 0, 0, (float) flangeScale, (float) flangeScale, 1);
+        pose.popPose();
     }
 }
