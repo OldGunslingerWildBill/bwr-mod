@@ -1,5 +1,5 @@
 {
-  "parent": "bwr:block/pumps/rip_pump/compact",
+  "parent": "bwr:block/pumps/rip_pump/inventory",
   "display": {
     "gui": {
       "rotation": [

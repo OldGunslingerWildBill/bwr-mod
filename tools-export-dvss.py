@@ -1,4 +1,8 @@
-"""Bake current and legacy Blender DVSS meshes into NeoForge OBJ cells. --check is read-only."""
+"""Bake the legacy Blender DVSS meshes into NeoForge OBJ cells. --check is read-only.
+
+Since the recirculation remodel the full-size 5x10x5 cells, their manifest and the item model come from
+tools-export-recirc.py (art/models/recirc). This script still owns what old saves use: the 3x6x3 legacy cells
+(enlarged=false), the one-cell compact model (assembled=false) with its materials.mtl, the blockstate and the loot table."""
 import importlib.util,sys,json,math
 from pathlib import Path
 sys.dont_write_bytecode=True
@@ -9,7 +13,7 @@ CLIP_EPS=mesh.EPS
 outputs={};resources=ROOT/'mod/src/main/resources'
 def put(path,data):outputs[path]=json.dumps(data,indent=2)+'\n' if isinstance(data,dict) else data
 
-def bake(filename,id):
+def bake(filename,id,cells_and_manifest=True):
     source=json.loads((ROOT/'art/models/dvss'/filename).read_text())
     faces=[]
     for f in source['faces']:
@@ -25,7 +29,7 @@ def bake(filename,id):
     for color,name in mats.items():
         mtl += ['newmtl '+name,'Kd '+' '.join(str(c) for c in color),'map_Kd minecraft:block/white_concrete','']
     put(folder/'materials.mtl','\n'.join(mtl))
-    for c in cells:
+    for c in (cells if cells_and_manifest else []):
         text=mesh.obj_text(c['faces'],mats,'materials.mtl')
         mesh.verify_obj(text,mats,True);put(folder/f"cell_{c['index']}.obj",text)
         put(folder/f"cell_{c['index']}.json",mesh.obj_model(f"bwr:models/block/pumps/{id}/cell_{c['index']}.obj"))
@@ -35,15 +39,13 @@ def bake(filename,id):
     text=mesh.obj_text(compact,mats,'materials.mtl');mesh.verify_obj(text,mats,True)
     put(folder/'compact.obj',text);put(folder/'compact.json',mesh.obj_model(f'bwr:models/block/pumps/{id}/compact.obj'))
     ctrl=source['controller'];idx=ctrl[0]+size[0]*(ctrl[2]+size[2]*ctrl[1])
-    put(resources/f'data/bwr/pump_models/{id}.json',{'width':size[0],'height':size[1],'depth':size[2],
+    if cells_and_manifest:put(resources/f'data/bwr/pump_models/{id}.json',{'width':size[0],'height':size[1],'depth':size[2],
         'controller_cell':ctrl,'game_ports':source['ports'],'cells':[{k:v for k,v in c.items() if k!='faces'} for c in cells]})
     print(f'{id}: {len(faces)} triangles, {len(cells)} cells; surface area conserved ({area:.3f}).')
     return len(cells),idx
 
-current=bake('dvss_mesh.json','recirculation_pump')
+current=bake('dvss_mesh.json','recirculation_pump',cells_and_manifest=False)
 legacy=bake('dvss_legacy_mesh.json','recirculation_pump_legacy')
-put(resources/'assets/bwr/models/item/recirculation_pump.json',{'parent':'bwr:block/pumps/recirculation_pump/compact',
-    'display':{'gui':{'rotation':[20,225,0],'scale':[.9,.9,.9]},'ground':{'scale':[.3,.3,.3]},'fixed':{'scale':[.7,.7,.7]}}})
 put(resources/'assets/bwr/models/block/recirculation_pump.json',{'parent':'bwr:block/pumps/recirculation_pump/compact'})
 variants={}
 for enlarged,(count,controller) in ((False,legacy),(True,current)):

@@ -128,6 +128,8 @@ def import_pack(archive):
     # Keep the source-size layout for saves and regenerate the one-column jet.
     import runpy
     runpy.run_path(str(Path(__file__).with_name('tools-narrow-jet.py')))['narrow_jet'](ROOT,refresh_legacy=True)
+    # The full-size recirculation pump, one-column jet and RIP cells are the Blender remodel (art/models/recirc).
+    runpy.run_path(str(Path(__file__).with_name('tools-export-recirc.py')))
     # Reapply the Blender-authored modern layouts; source pack remains the legacy layout.
     runpy.run_path(str(Path(__file__).with_name('tools-export-modern.py')))['run']()
     print('Imported seven pump assemblies; source SHA256:',hashlib.sha256(Path(archive).read_bytes()).hexdigest())

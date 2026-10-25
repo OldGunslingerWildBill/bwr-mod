@@ -4,7 +4,7 @@
 
 The **DVSS Recirculation Pump** replaces the RCP cube for new placements. Reserve
 a **5 Ã— 5 footprint and 10 blocks of height**. Place the item at the centre of its
-base. It faces the player; the DVSS nameplate and discharge flange are at the front.
+base. It faces the player; the nameplates and the discharge flange are at the front.
 
 1. Put an **RPV Recirculation Top Outlet** in the upper half of a vessel side wall,
    facing outward. This is separate from the steam outlet and water injection port.
@@ -159,6 +159,12 @@ No conversion overwrites neighbouring blocks. Existing unmatched jets must be
 rearranged into opposing sets to regain their full flow capacity.
 
 ## Model source
+
+Since the recirculation remodel the full-size 5 × 10 × 5 pump (and the jet pump and RIP) are a new headless-Blender model
+of a BWR/5 recirculation pump: a cast casing with a big-stud cover, a seal cartridge, an open motor stand with a spacer
+coupling behind mesh guards and an air-water-cooled vertical motor. Sources, pipeline and budgets are in
+[RECIRC-REMODEL.md](RECIRC-REMODEL.md). Ports, footprint and controller are unchanged. The paragraphs below describe the
+earlier DVSS meshes, which are still the models of the legacy 3 × 6 × 3 and one-cell compact saves.
 
 The original Blender model is in [art/models/dvss/dvss_recirculation_pump.blend](art/models/dvss/dvss_recirculation_pump.blend).
 It was built through the connected Blender instance, using the

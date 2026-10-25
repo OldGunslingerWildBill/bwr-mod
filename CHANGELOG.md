@@ -33,6 +33,23 @@ The LPCS, HPCS, RHR/LPCI, motor feedwater and SLC pumps and the SLC boron tank h
 - **SLC.** A triplex plunger pump (fluid end, three plungers, power frame, gear reducer, motor, Y-strainer, pulsation dampener, relief valve) and a heated tank with mixer, sparger, heater, level gauge and placard.
 - **Old saves.** The one-block compact models and the older assembled cell sets are untouched; the held item and inventory icons show the new models.
 
+## Unreleased: recirculation remodel
+
+The external recirculation pump, the paired jet pump and the reactor internal pump have new models, built in headless Blender from the Columbia FSAR (BWR/5) and the NRC recirculation manual. They replace the earlier "DVSS" exterior and the supplied pack meshes. **Only the look changes:** same block IDs, footprints (5 x 10 x 5, 1 x 6 x 1, 2 x 5 x 2), controller cells, port cells, faces and flange centres, so existing pipes still meet the flanges. Sources, pipeline and budgets: [RECIRC-REMODEL.md](RECIRC-REMODEL.md).
+
+- **Recirculation pump.** The model has these parts:
+  - a long-radius suction elbow with flow taps, and a cast stainless casing on lugs, columns and two snubbers;
+  - a 20-stud bolted cover with the two-stage seal cartridge housing, its stage pressure tubing and two local gauge racks;
+  - an open motor stand with yellow expanded-metal coupling guards; the shaft and three-piece spacer coupling show through the holes;
+  - an air-water-cooled vertical motor with cooling ribs, louvered coolers with cooling-water nozzles, a terminal box with conduit, an upper bearing housing, lifting lugs, a vibration probe, an oil sight glass and a rotation arrow;
+  - generic nameplates and the blue suction and teal discharge bands.
+- **Jet pump pair.** It follows the BWR/5 jet pump in FSAR Fig 3.9-4. The riser rises from a thermal-sleeve elbow toward the vessel wall into the transition piece, and two elbows run down into the drive nozzles. The two inlet mixers have suction bells, slip-joint clamps and tapered diffusers. A hold-down beam with bolt and lifting eyes, restrainer brackets, a riser brace and sensing lines complete it, all in bare stainless. The formed-reactor installed jets are unchanged.
+- **RIP.** A diffuser wet end with impeller vanes, the stretch-tube stub, a 16-bolt mounting flange at the bottom-shell level, the hanging wet-motor casing with its bolted cover, cable entry, cooling-water nozzles and purge line.
+- **Textures and budget.** One procedural 256 x 256 atlas, `textures/block/pumps/recirc_atlas.png`. The models are smaller than the ones they replace: 8,199 / 1,648 / 1,933 baked faces against 13,612 / 14,242 / 4,120. The recirculation pump cells render as cutout for the guard mesh.
+- **Old saves.** The legacy 3 x 6 x 3 DVSS, the two-column jets and every one-cell compact model are untouched. Items show the new models.
+- **Tools.** `art/models/recirc/` (`make_atlas.py`, `build_recirc.py`, `preview_cells.py`, `.blend` and source JSON) and `python tools-export-recirc.py [--check]`. `tools-export-dvss.py` and `tools-narrow-jet.py` now generate only the legacy and compact assets. The new client pictures are `:mod:runRecircRemodelCheck` (`RecircRemodelClientCheck`, 10 pictures at 1920 x 1080).
+
+
 ## Unreleased: vessel height matters (separators, carryover, chimney, inventory)
 
 Until now the physics did not see the height of a built vessel at all: the steam dome (180 m3) and the water (220 t) were never set from the build, natural circulation was `0.366 P^(1/3)` in every vessel, and every vessel made perfectly dry steam. Now the height of the drawn vessel (`VesselProfile`) sets how well the separators dry the steam, how strong natural circulation is, and how much steam space and water the vessel holds. The 17 x 17 x 28 default keeps its calibrated reactor behaviour exactly; its steam is 0.86 % wet. Nothing acts automatically. Full write-up, sources and the table: [VESSEL-HEIGHT.md](VESSEL-HEIGHT.md).

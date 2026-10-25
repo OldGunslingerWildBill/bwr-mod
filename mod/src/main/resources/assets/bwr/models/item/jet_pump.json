@@ -1,5 +1,5 @@
 {
-  "parent": "bwr:block/pumps/jet_pump/compact",
+  "parent": "bwr:block/pumps/jet_pump/inventory",
   "display": {
     "gui": {
       "rotation": [

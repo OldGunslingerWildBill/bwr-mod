@@ -52,9 +52,7 @@ def narrow_jet(root=ROOT,refresh_legacy=False,check=False):
         points=[list(map(float,line.split()[1:4])) for line in text.splitlines() if line.startswith('v ')]
         bounds=[min(p[a] for p in points) for a in range(3)]+[max(p[a] for p in points) for a in range(3)]
         assert all(-1e-7<=v<=1+1e-7 for v in bounds),bounds
-        put(current/f'cell_{y}.obj',text)
-        model=json.loads((source/'cell_0.json').read_text());model['model']=f'bwr:models/block/pumps/jet_pump/cell_{y}.obj'
-        put(current/f'cell_{y}.json',model)
+        # The one-column cells are now the remodel's (tools-export-recirc.py); only legacy/compact assets are written here.
         cells.append(dict(index=y,offset=[0,y,0],bounds=bounds,triangles=sum(line.startswith('f ') for line in text.splitlines())))
     for name,center,out in [('compact',.5,.5),('assembled',0,0)]:
         text,_=transform((source/f'{name}.obj').read_text(),center=center,out_center=out)
@@ -62,7 +60,7 @@ def narrow_jet(root=ROOT,refresh_legacy=False,check=False):
     put(current/'materials.mtl',(source/'materials.mtl').read_text())
     manifest={**original,'width':1,'status':'Installed one-column jet assembly; no external ports',
               'cells':cells,'game_ports':[],'anchor_in_assembly_grid':[.5,0,.725],'anchor_from_controller':[.5,0,.725]}
-    put(root/'data/bwr/pump_models/jet_pump.json',manifest)
+    # data/bwr/pump_models/jet_pump.json (cells) is written by tools-export-recirc.py.
     variants={}
     for narrow in (False,True):
         id='jet_pump' if narrow else 'jet_pump_legacy';count=6 if narrow else 12

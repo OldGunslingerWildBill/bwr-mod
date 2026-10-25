@@ -3,7 +3,7 @@
 The seven models in `BWR_Pump_Assets_Scale_Review.zip` are implemented. Existing
 LPCS, HPCS, RHR/LPCI, motor feedwater, turbine feedwater and jet-pump IDs now use
 the supplied textured geometry. `bwr:rip_pump` adds the reactor internal pump.
-The external recirculation pump now uses a Blender-built DVSS exterior; see [RECIRCULATION.md](RECIRCULATION.md).
+The external recirculation pump, the paired jet pump and the RIP use the headless-Blender recirculation remodel; see [RECIRC-REMODEL.md](RECIRC-REMODEL.md) and [RECIRCULATION.md](RECIRCULATION.md).
 All powered pumps now open a simple numerical speed panel.
 
 ## Placement and saved worlds
