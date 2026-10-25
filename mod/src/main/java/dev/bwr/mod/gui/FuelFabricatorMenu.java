@@ -45,8 +45,9 @@ public class FuelFabricatorMenu extends BwrMenu {
     public static final int CMD_TARGET = 1;
 
     /**
-     * Command: select any of the selector's steps, argument a = index into {@link FuelItemRoute#LADDER} (the uranium
-     * ladder, then the MOX grades). {@link #CMD_TARGET} keeps its meaning and its range.
+     * Command: select any of the selector's steps, argument a = index into {@link FuelItemRoute#SELECTOR} (the uranium
+     * ladder, then the MOX grades, then the thorium grades; the first ten are {@link FuelItemRoute#LADDER}, unchanged).
+     * {@link #CMD_TARGET} keeps its meaning and its range.
      */
     public static final int CMD_SELECT = 2;
 
@@ -106,6 +107,11 @@ public class FuelFabricatorMenu extends BwrMenu {
     public int moxMatrix;
     public int moxPlutoniumHeld;
     public int moxMatrixHeld;
+
+    /** Thorium route: the selected target makes thorium fuel; what it costs in thorium ingots (the uranium is {@link #costIngots}) and what the machine holds. */
+    public boolean thoriumTarget;
+    public int thoriumCost;
+    public int thoriumHeld;
 
     private static final int TARGET_DEFAULT_INDEX = Math.max(0, FuelItemRoute.TARGETS.indexOf(FuelItemRoute.DEFAULT_TARGET));
 
@@ -174,7 +180,7 @@ public class FuelFabricatorMenu extends BwrMenu {
 
         buf.writeUtf(wouldFabricate(be), 64);
 
-        buf.writeVarInt(Math.max(0, FuelItemRoute.LADDER.indexOf(be.target())));
+        buf.writeVarInt(Math.max(0, FuelItemRoute.SELECTOR.indexOf(be.target())));
         FuelItemRoute.Cost cost = be.itemCost();
         buf.writeBoolean(cost != null);
         if (cost != null) {
@@ -192,6 +198,11 @@ public class FuelFabricatorMenu extends BwrMenu {
             buf.writeVarInt(cost.matrix());
             buf.writeVarInt(be.plutoniumHeldNuggets());
             buf.writeVarInt(be.matrixHeldIngots());
+        }
+        buf.writeBoolean(cost != null && cost.isThorium());
+        if (cost != null && cost.isThorium()) {
+            buf.writeVarInt(cost.thoriumIngots());
+            buf.writeVarInt(be.thoriumHeldIngots());
         }
 
         List<String> lines = be.feed().statusLines();
@@ -251,7 +262,7 @@ public class FuelFabricatorMenu extends BwrMenu {
         energyCapacity = buf.readVarInt();
         wouldFabricate = buf.readUtf(64);
 
-        targetIndex = Math.max(0, Math.min(FuelItemRoute.LADDER.size() - 1, buf.readVarInt()));
+        targetIndex = Math.max(0, Math.min(FuelItemRoute.SELECTOR.size() - 1, buf.readVarInt()));
         hasCost = buf.readBoolean();
         if (hasCost) {
             costIngots = buf.readVarInt();
@@ -279,6 +290,14 @@ public class FuelFabricatorMenu extends BwrMenu {
             moxPlutoniumHeld = 0;
             moxMatrixHeld = 0;
         }
+        thoriumTarget = buf.readBoolean();
+        if (thoriumTarget) {
+            thoriumCost = buf.readVarInt();
+            thoriumHeld = buf.readVarInt();
+        } else {
+            thoriumCost = 0;
+            thoriumHeld = 0;
+        }
 
         int count = buf.readVarInt();
         List<String> lines = new ArrayList<>(count);
@@ -294,7 +313,7 @@ public class FuelFabricatorMenu extends BwrMenu {
         // selector, which adds the MOX grades). There is no mode and no start button; the machine runs when it
         // has feed and power.
         java.util.List<String> steps = command == CMD_TARGET ? FuelItemRoute.TARGETS
-                : command == CMD_SELECT ? FuelItemRoute.LADDER : null;
+                : command == CMD_SELECT ? FuelItemRoute.SELECTOR : null;
         if (steps == null || a < 0 || a >= steps.size()) {
             return;
         }

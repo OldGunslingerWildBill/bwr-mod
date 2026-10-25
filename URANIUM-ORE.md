@@ -1,5 +1,10 @@
 # Uranium ore (the mod's own uranium)
 
+The mod's thorium ore (veins, blobs, a placer sand, the fuel route) is built the same way and is written up in [THORIUM.md](THORIUM.md). It is a second,
+independent set of veins (its own `salt`), with its own server option `thoriumOreGeneration`; this page's numbers and options are untouched by it.
+Uranium ore still drops only raw uranium (and itself with Silk Touch): the byproducts of real uranium ore (lead, radium) are proposed in THORIUM.md
+and not yet applied here.
+
 The fuel fabricator's item route used to need another mod for uranium (`c:ingots/uranium`). The mod now has its own ore, so a world with
 only this mod can mine, smelt and enrich uranium. Mekanism's uranium keeps working beside it: both are the same tags.
 

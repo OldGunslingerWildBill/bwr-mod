@@ -384,6 +384,25 @@ public final class BwrItems {
      * fractional accounting and the fabricator's MOX route both count in. Tagged {@code c:nuggets/plutonium} and
      * {@code c:ingots/plutonium}; nine nuggets and an ingot are crafted into each other.
      */
+    /** The mod's own thorium (THORIUM.md): raw monazite concentrate from the ore, an ingot (smelted), a nugget (a ninth). The tags the fabricator reads are on them. */
+    public static final DeferredItem<Item> RAW_THORIUM = ITEMS.registerSimpleItem("raw_thorium");
+    public static final DeferredItem<Item> THORIUM_INGOT = ITEMS.registerSimpleItem("thorium_ingot");
+    public static final DeferredItem<Item> THORIUM_NUGGET = ITEMS.registerSimpleItem("thorium_nugget");
+    /** What monazite carries besides thorium (cerium, lanthanum, neodymium phosphate): a byproduct of mining thorium ore and monazite sand. Makes a flint and steel. */
+    public static final DeferredItem<Item> RARE_EARTH_CONCENTRATE = ITEMS.registerSimpleItem("rare_earth_concentrate");
+    /**
+     * Lead, the end of both decay chains: a byproduct of mining thorium ore. Tagged {@code c:nuggets/lead} and {@code c:ingots/lead}, so any mod
+     * whose recipes use those tags (Mekanism, Immersive Engineering) takes it, with or without that mod installed. This mod has no use for it.
+     */
+    public static final DeferredItem<Item> LEAD_NUGGET = ITEMS.registerSimpleItem("lead_nugget");
+    public static final DeferredItem<Item> LEAD_INGOT = ITEMS.registerSimpleItem("lead_ingot");
+    /** Radium: a rare byproduct of mining thorium ore, clearly radioactive (a gamma source when carried, see RadiumItem). */
+    public static final DeferredItem<Item> RADIUM = ITEMS.register("radium", () -> new dev.bwr.mod.radiation.RadiumItem(new Item.Properties().stacksTo(16)));
+    public static final DeferredItem<BlockItem> THORIUM_ORE = ITEMS.registerSimpleBlockItem(BwrBlocks.THORIUM_ORE);
+    public static final DeferredItem<BlockItem> DEEPSLATE_THORIUM_ORE = ITEMS.registerSimpleBlockItem(BwrBlocks.DEEPSLATE_THORIUM_ORE);
+    public static final DeferredItem<BlockItem> MONAZITE_SAND = ITEMS.registerSimpleBlockItem(BwrBlocks.MONAZITE_SAND);
+    public static final DeferredItem<BlockItem> RAW_THORIUM_BLOCK = ITEMS.registerSimpleBlockItem(BwrBlocks.RAW_THORIUM_BLOCK);
+    public static final DeferredItem<BlockItem> THORIUM_BLOCK = ITEMS.registerSimpleBlockItem(BwrBlocks.THORIUM_BLOCK);
     public static final DeferredItem<Item> PLUTONIUM_NUGGET = ITEMS.registerSimpleItem("plutonium_nugget");
     public static final DeferredItem<Item> PLUTONIUM_INGOT = ITEMS.registerSimpleItem("plutonium_ingot");
     /**
@@ -459,7 +478,7 @@ public final class BwrItems {
                     .icon(() -> FUEL_ASSEMBLY.get().getDefaultInstance()).displayItems((parameters, output) -> {
                         for (var type : FuelTypes.catalogue()) output.accept(FuelAssemblyItem.stackOf(FUEL_ASSEMBLY.get(), FuelAssemblyData.fresh(type)));
                         for (var kind : dev.bwr.core.fuel.CoreInsert.Kind.values()) output.accept(dev.bwr.mod.fuel.SpecialtyRodItem.stack(new dev.bwr.mod.fuel.CoreInsertData(kind, 0)));
-                        for (var item : java.util.List.<net.neoforged.neoforge.registries.DeferredItem<? extends Item>>of(URANIUM_ORE, DEEPSLATE_URANIUM_ORE, RAW_URANIUM, RAW_URANIUM_BLOCK, URANIUM_INGOT, URANIUM_BLOCK, IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, COBALT_SAMPLE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM, PLUTONIUM_NUGGET, PLUTONIUM_INGOT, FISSION_PRODUCT_WASTE)) output.accept(item.get());
+                        for (var item : java.util.List.<net.neoforged.neoforge.registries.DeferredItem<? extends Item>>of(URANIUM_ORE, DEEPSLATE_URANIUM_ORE, RAW_URANIUM, RAW_URANIUM_BLOCK, URANIUM_INGOT, URANIUM_BLOCK, THORIUM_ORE, DEEPSLATE_THORIUM_ORE, MONAZITE_SAND, RAW_THORIUM, RAW_THORIUM_BLOCK, THORIUM_INGOT, THORIUM_NUGGET, THORIUM_BLOCK, RARE_EARTH_CONCENTRATE, LEAD_NUGGET, LEAD_INGOT, RADIUM, IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, COBALT_SAMPLE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM, PLUTONIUM_NUGGET, PLUTONIUM_INGOT, FISSION_PRODUCT_WASTE)) output.accept(item.get());
                     }).build());
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB =

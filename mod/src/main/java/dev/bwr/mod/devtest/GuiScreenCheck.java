@@ -644,6 +644,29 @@ public final class GuiScreenCheck {
             m.getSlot(FuelFabricatorMenu.SLOT_TAILS).set(new ItemStack(BwrItems.DEPLETED_URANIUM.get(), 12));
             return new FuelFabricatorScreen(m, i, t("Fuel Fabricator"));
         }));
+        s.add(new Scenario("fabricator-thorium", i -> {
+            // a thorium grade (standard, 3 % driver): 4 thorium, 26 uranium (enriched to the driver inside) and 4 steel, part way through
+            var m = new FuelFabricatorMenu(99, i, P);
+            m.present = true;
+            m.energyStored = 74_000;
+            m.energyCapacity = 100_000;
+            m.targetIndex = FuelItemRoute.SELECTOR.indexOf("thorium_standard");
+            m.hasCost = true;
+            m.costIngots = 26;
+            m.costSteel = 4;
+            m.costTails = 25;
+            m.costWorkTicks = 178;
+            m.thoriumTarget = true;
+            m.thoriumCost = 4;
+            m.thoriumHeld = 4;
+            m.uraniumHeldUnits = 38;
+            m.workTicks = 60;
+            m.tailsHeld = 25;
+            m.getSlot(FuelFabricatorMenu.SLOT_URANIUM).set(new ItemStack(BwrItems.THORIUM_INGOT.get(), 3));
+            m.getSlot(FuelFabricatorMenu.SLOT_STEEL).set(new ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 6));
+            m.getSlot(FuelFabricatorMenu.SLOT_TAILS).set(new ItemStack(BwrItems.DEPLETED_URANIUM.get(), 25));
+            return new FuelFabricatorScreen(m, i, t("Fuel Fabricator"));
+        }));
         s.add(new Scenario("reprocessor", i -> {
             // spent LEU at 45 GWd/t in the slot, part way through, with some of each product held
             var m = new ReprocessingPlantMenu(99, i, P);

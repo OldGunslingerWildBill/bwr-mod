@@ -44,7 +44,7 @@ neoForge {
             // 'bwrtick' holds the tick-cost and chunk-boundary tests (TickBudgetTests, ChunkLinkTests, ...); -PbwrOnlyTick
             // runs just those, in about a minute, while they are being developed. The default runs everything.
             // 'bwrblast' holds the accident blast tests (AccidentBlastTests); -PbwrOnlyBlast runs just those.
-            // 'bwruranium' is the uranium ore tests (UraniumOreTests); -PbwrOnlyUranium runs just those.
+            // 'bwruranium' is the uranium ore tests (UraniumOreTests); -PbwrOnlyUranium runs just those. 'bwrthorium' is ThoriumOreTests (-PbwrOnlyThorium).
             // 'bwrplant' holds the plant computer tests (PlantComputerTests); -PbwrOnlyPlant runs just those.
             // 'bwrbridge' holds the refuelling bridge tests (RefuellingBridgeTests); -PbwrOnlyBridge runs just those.
             // 'bwrinternals' holds the steam dryer and separator tests (VesselInternalsTests); -PbwrGameTestNamespaces=bwrinternals runs just those.
@@ -54,7 +54,7 @@ neoForge {
             // 'bwrshell' holds the shell-and-tube exchanger and outlet chute tests (ShellExchangerTests); -PbwrGameTestNamespaces=bwrshell runs just those.
             // 'bwrhx' holds the full-size multiblock RHR heat exchanger tests (HxMultiblockTests); -PbwrGameTestNamespaces=bwrhx runs just those.
             // 'bwrcrane' holds the reactor building crane, stud tensioner and head stand tests (BuildingCraneTests); -PbwrOnlyCrane runs just those.
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyPool') ? 'bwrpool' : project.hasProperty('bwrOnlyUranium') ? 'bwruranium' : project.hasProperty('bwrOnlyBlast') ? 'bwrblast' : project.hasProperty('bwrOnlyBridge') ? 'bwrbridge' : project.hasProperty('bwrOnlyCavity') ? 'bwrcavity' : project.hasProperty('bwrOnlyCrane') ? 'bwrcrane' : 'bwr,bwrtick,bwrplant,bwrpool,bwruranium,bwrblast,bwrbridge,bwrcavity,bwrinternals,bwrcrane,bwrheight,bwrrwcu,bwrshell,bwraux,bwrhx')
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyPool') ? 'bwrpool' : project.hasProperty('bwrOnlyUranium') ? 'bwruranium' : project.hasProperty('bwrOnlyThorium') ? 'bwrthorium' : project.hasProperty('bwrOnlyBlast') ? 'bwrblast' : project.hasProperty('bwrOnlyBridge') ? 'bwrbridge' : project.hasProperty('bwrOnlyCavity') ? 'bwrcavity' : project.hasProperty('bwrOnlyCrane') ? 'bwrcrane' : 'bwr,bwrtick,bwrplant,bwrpool,bwruranium,bwrthorium,bwrblast,bwrbridge,bwrcavity,bwrinternals,bwrcrane,bwrheight,bwrrwcu,bwrshell,bwraux,bwrhx')
             // Developer-only tick profiler (dev.bwr.mod.TickProbe): per-system microseconds per server tick, printed by
             // the TickBudgetTests plant profile as "TICK PROBE" lines. Off (and costless) without this property.
             if (project.hasProperty('bwrTickProbe')) jvmArguments.add('-Dbwr.tickProbe=true')
@@ -157,6 +157,7 @@ neoForge {
             if (project.hasProperty('bwrBoardClientCheck')) jvmArguments.add('-Dbwr.boardClientCheck=true')
             if (project.hasProperty('bwrBoardClientStages')) jvmArguments.add('-Dbwr.boardClientStages=' + project.property('bwrBoardClientStages'))
             if (project.hasProperty('bwrUraniumClientCheck')) jvmArguments.add('-Dbwr.uraniumClientCheck=true')
+            if (project.hasProperty('bwrThoriumClientCheck')) jvmArguments.add('-Dbwr.thoriumClientCheck=true')
             if (project.hasProperty('bwrGuiScreenCheck')) jvmArguments.add('-Dbwr.guiScreenCheck=true')
             if (project.hasProperty('bwrGuiCheckLenient')) jvmArguments.add('-Dbwr.guiCheckLenient=true')
         }
@@ -724,6 +725,7 @@ tasks.named('jar', Jar).configure {
     exclude 'data/bwrplant/**'
     exclude 'data/bwrpool/**'
     exclude 'data/bwruranium/**'
+    exclude 'data/bwrthorium/**'
     exclude 'data/bwrbridge/**'
     exclude 'data/bwrcavity/**'
     exclude 'data/bwrcrane/**'

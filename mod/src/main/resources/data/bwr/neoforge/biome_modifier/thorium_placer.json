@@ -1,0 +1,10 @@
+{
+  "type": "bwr:add_thorium_features",
+  "biomes": "#bwr:has_thorium/placer",
+  "features": [
+    "bwr:thorium_vein_placer",
+    "bwr:thorium_blob_placer",
+    "bwr:monazite_sand_placer"
+  ],
+  "step": "underground_ores"
+}

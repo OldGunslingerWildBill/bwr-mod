@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "bwr:thorium_ore",
+    "bwr:deepslate_thorium_ore",
+    "bwr:monazite_sand"
+  ]
+}

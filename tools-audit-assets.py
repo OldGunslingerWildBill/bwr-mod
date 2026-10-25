@@ -364,7 +364,8 @@ RETIRED_BLOCKS = {"rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_qu
 # through a vessel, so a recipe for it would be the bug.
 # The two uranium ores are placed by world generation and mined (silk touch gives the block back); the raw uranium and
 # ingot recipes are what a player crafts with them.
-WORLD_MADE_BLOCKS = {"corium", "uranium_ore", "deepslate_uranium_ore"}
+# The thorium ores and the monazite sand are the same (THORIUM.md).
+WORLD_MADE_BLOCKS = {"corium", "uranium_ore", "deepslate_uranium_ore", "thorium_ore", "deepslate_thorium_ore", "monazite_sand"}
 
 # What each per-block gap actually costs in game. These strings go into the
 # bad() message so the report says why it matters and not just that a file is

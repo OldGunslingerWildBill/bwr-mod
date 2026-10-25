@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "bwr:thorium_ingot" }
+  ],
+  "result": {
+    "count": 9,
+    "id": "bwr:thorium_nugget"
+  }
+}

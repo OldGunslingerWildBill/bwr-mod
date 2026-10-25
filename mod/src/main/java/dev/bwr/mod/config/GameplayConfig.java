@@ -64,6 +64,11 @@ public final class GameplayConfig {
                     + "Read when the server starts: changing it needs a restart to take effect on the biome lists (the vein feature itself re-reads it for every chunk). "
                     + "To turn off Mekanism's uranium instead, use Mekanism's own world config.")
             .define("uraniumOreGeneration", true);
+    public static final ModConfigSpec.BooleanValue THORIUM_ORE_GENERATION = BUILDER
+            .comment("Generate this mod's thorium ore (small blobs, the monazite sand placers and the large veins) in newly generated chunks. Never touches chunks that already exist. "
+                    + "Read when the server starts: changing it needs a restart to take effect on the biome lists (the vein feature itself re-reads it for every chunk). "
+                    + "Independent of uraniumOreGeneration. See THORIUM.md.")
+            .define("thoriumOreGeneration", true);
 
     public static final ModConfigSpec.BooleanValue INSTANT_REFUELLING = BUILDER
             .comment("Old behaviour: load, unload and swap fuel instantly by clicking the refuelling map on the reactor panel. "
@@ -126,6 +131,11 @@ public final class GameplayConfig {
     /** Whether new chunks get uranium ore. True until the server config says otherwise (and before it is loaded). */
     public static boolean uraniumOreGeneration() {
         return SPEC.isLoaded() ? URANIUM_ORE_GENERATION.get() : URANIUM_ORE_GENERATION.getDefault();
+    }
+
+    /** Whether new chunks get thorium ore. True until the server config says otherwise (and before it is loaded). */
+    public static boolean thoriumOreGeneration() {
+        return SPEC.isLoaded() ? THORIUM_ORE_GENERATION.get() : THORIUM_ORE_GENERATION.getDefault();
     }
 
     private static double read(ModConfigSpec.DoubleValue value) {

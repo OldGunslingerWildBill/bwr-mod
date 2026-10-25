@@ -28,8 +28,11 @@ subcritical experimental loading in this BWR model.
 The fuel fabricator's chemical route selects uranium, MOX and plutonium grades
 from the actual incoming enrichment, without granting additional fissile
 inventory (its item route, below, makes the uranium grade the player picks). The
-gadolinia variant and thorium grades are available from the creative tab or
-datapack recipes; there is no new thorium processing chain. Existing fuel
+gadolinia variant is available from the creative tab or datapack recipes. The
+thorium grades are made by the fabricator's item route from the mod's own
+thorium and natural uranium (see "Thorium targets" below and
+[THORIUM.md](THORIUM.md)); there is still no thorium reprocessing chain, and the
+reprocessing plant still refuses thorium assemblies. Existing fuel
 crafting remains compatible. Every fuel definition remains datapack editable
 under `data/bwr/fuel_type/`.
 
@@ -189,6 +192,41 @@ steel`, and the item assembly card shows both stores against their cost. The CC 
 **Saves.** Two new keys, `PlutoniumNuggets` and `MatrixIngots`, are written only when they hold something; the target
 is saved only when it is not the default, as before. An old fabricator loads exactly as it did.
 
+### Thorium targets: thorium, natural uranium and steel in
+
+Three more steps on the selector, after the MOX grades, make thorium fuel (`Th 2.00 %`, `Th 3.00 %` and `Th 5.00 %`). The
+selector now has 13 steps: the first ten are the uranium ladder and the MOX grades exactly as before (`FuelItemRoute.LADDER`, same
+indexes, saves and commands), then `thorium_lean`, `thorium_standard` and `thorium_rich` (`FuelItemRoute.SELECTOR`).
+Thorium-232 is fertile, not fissile, so the assembly needs a **fissile driver** until uranium-233 breeds in. The driver here is
+uranium enriched to 19.75 % (HALEU, the `uranium_1975` grade) and the machine makes it itself, by the uranium route's own mass
+balance. The driver fraction is the thorium fuel type's `nominal_enrichment` (2, 3 and 5 % of the heavy metal, unchanged), and
+`dev.bwr.core.fuel.ThoriumMassBalance` is the only place the arithmetic lives (unit test `ThoriumMassBalanceTest`):
+
+    driver product  D = 4 x f / 0.1975                      ingots of 19.75 % uranium
+    natural uranium   = D x (0.1975 - 0.0025) / (0.00711 - 0.0025)    rounded up
+    depleted uranium  = natural uranium - D                  rounded down
+    thorium           = 4 - D                                rounded up to whole ingots
+
+| Selector step | Fuel type made | Driver | Driver uranium (19.75 %) | Natural uranium | Thorium | Steel | Depleted uranium back | Time | Energy |
+|---|---|---|---|---|---|---|---|---|---|
+| Th 2.00 % | `thorium_lean` | 2 % | 0.405 ingots | 18 | 4 | 4 | 16 | 154 ticks (7.7 s) | 30,800 FE |
+| Th 3.00 % | `thorium` | 3 % | 0.608 ingots | 26 | 4 | 4 | 25 | 178 ticks (8.9 s) | 35,600 FE |
+| Th 5.00 % | `thorium_rich` | 5 % | 1.013 ingots | 43 | 3 | 4 | 41 | 229 ticks (11.5 s) | 45,800 FE |
+
+Like the other routes it can lose to rounding and never gain: the uranium and the thorium are rounded up, the depleted uranium
+down. Thorium is monoisotopic Th-232, so there is no thorium enrichment, only the driver. Time is 100 ticks plus 3 per natural
+uranium ingot, 200 FE a tick. The id of the standard grade is `thorium_standard` and not `thorium` on purpose (the fuel's name
+is not a target, as with `mox`).
+
+**What counts as thorium:** `c:ingots/thorium` and `c:raw_materials/thorium` (raw thorium smelts to one ingot), one each.
+**The slots** are the same four, in the same order, with the same sides. On a thorium step the slot that takes uranium takes
+**uranium and thorium**, each into its own store (held up to twice what an assembly needs, so the slot is not left holding one
+when the other is wanted; the slot takes only what the stores have room for and refuses everything else, plutonium and depleted
+uranium included). On the uranium and MOX steps it refuses thorium. The screen's caption reads `U, Th`, the cost line `Costs 26
+thorium, ...`, the item assembly card shows both stores. Breaking the block drops the thorium as ingots. **Saves:** one new key,
+`ThoriumIngots`, written only when it holds something; an old fabricator loads exactly as it did. The CC peripheral adds
+`thoriumHeldIngots`.
+
 ## Recipes: what is craftable
 
 `python tools-audit-recipes.py` checks every recipe parses and every registered
@@ -200,6 +238,8 @@ purpose:
 | `cobalt_sample`, `tritium_sample`, `doped_silicon` | Products of irradiating a target in a reactor |
 | `corium` | Made by a core melting through its vessel |
 | `depleted_uranium` | The fuel fabricator's byproduct |
+| `thorium_ore`, `deepslate_thorium_ore`, `monazite_sand` | Found in the ground, as the uranium ores are (THORIUM.md) |
+| `rare_earth_concentrate`, `radium` | Byproducts of mining thorium ore (THORIUM.md); made by the mining, not at a bench |
 | `fission_product_waste` | What burning fuel leaves, the reprocessing plant's byproduct: nothing uses it, and a recipe would make waste out of nothing |
 | `rcic_turbine_pump`, `hpci_turbine_pump`, `suppression_pool_quencher` | Retired blocks kept so old worlds load (the Terry-style `rcic_twl` and `hpci_turbine` and the suppression pool steam inlet replaced them); `tools-audit-assets.py` fails any recipe that produces or uses them |
 

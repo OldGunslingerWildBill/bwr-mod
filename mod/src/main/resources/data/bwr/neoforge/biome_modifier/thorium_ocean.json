@@ -1,0 +1,9 @@
+{
+  "type": "bwr:add_thorium_features",
+  "biomes": "#bwr:has_thorium/ocean",
+  "features": [
+    "bwr:thorium_vein_ocean",
+    "bwr:thorium_blob_ocean"
+  ],
+  "step": "underground_ores"
+}

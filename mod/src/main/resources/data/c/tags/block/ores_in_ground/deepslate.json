@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "bwr:deepslate_uranium_ore"
+    "bwr:deepslate_uranium_ore",
+    "bwr:deepslate_thorium_ore"
   ]
 }

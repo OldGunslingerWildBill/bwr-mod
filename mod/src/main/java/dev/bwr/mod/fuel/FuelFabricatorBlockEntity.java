@@ -73,6 +73,13 @@ import java.util.Locale;
  * four slots of the uranium route needs nothing new), each into its own store, held up to twice what an assembly needs
  * so the slot is not left holding one when the other is wanted. The slot refuses what the stores have no room for.
  *
+ * <h2>Thorium</h2>
+ * Three more targets ({@link FuelItemRoute#THORIUM_TARGETS}) make thorium fuel: thorium ingots, natural uranium (the machine
+ * enriches the driver, the fissile 2, 3 or 5 % of the assembly, to 19.75 % by the uranium route's mass balance) and steel in; a
+ * fresh thorium assembly and the depleted uranium out. As on a MOX grade the input slot that takes uranium takes two kinds, here
+ * uranium and thorium, each into its own store held up to twice what an assembly needs, and refuses what the stores have no
+ * room for. The thorium store is its own number ({@link #thoriumIngots}), saved only when it holds something.
+ *
  * <h2>What it does not do</h2>
  * It does not refuse to build anything. There is no interlock on enrichment, no
  * criticality check on the batch, no cap on how much plutonium a player may
@@ -126,6 +133,9 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
     /** MOX route stores, taken out of the input slot: plutonium in nuggets and depleted uranium matrix in ingots. */
     private int plutoniumNuggets;
     private int matrixIngots;
+
+    /** Thorium route store, taken out of the input slot: thorium ingots (raw thorium counts as one). */
+    private int thoriumIngots;
 
     /** Ticks of work done on the current item assembly; 0 when none is under way. */
     private int workTicks;
@@ -202,15 +212,19 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            // plutonium and depleted uranium on a MOX grade, uranium on the others: never the wrong one, which would jam the slot
+            // plutonium and depleted uranium on a MOX grade, uranium and thorium on a thorium grade, uranium on the others:
+            // never the wrong one, which would jam the slot
+            if (FuelItemRoute.isThoriumTarget(target)) {
+                return thoriumFeedRoom(stack) > 0;
+            }
             return FuelItemRoute.isMoxTarget(target) ? moxFeedRoom(stack) > 0 : FuelItemRoute.uraniumUnits(stack) > 0;
         }
 
         /** On a MOX target a pipe may only fill what the stores have room for, so the slot cannot jam on the wrong item. */
         @Override
         public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            if (isMoxFeed(stack)) {
-                int allowed = moxFeedRoom(stack);
+            if (isMoxFeed(stack) || isThoriumFeed(stack)) {
+                int allowed = isThoriumFeed(stack) ? thoriumFeedRoom(stack) : moxFeedRoom(stack);
                 if (allowed <= 0) {
                     return stack;
                 }
@@ -314,6 +328,8 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         }
         if (cost.isMox()) {
             absorbMoxFeed(cost);
+        } else if (cost.isThorium()) {
+            absorbThoriumFeed(cost);
         } else {
             absorbUranium(cost);
         }
@@ -421,12 +437,71 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         setChanged();
     }
 
+    /** True for a uranium or thorium item while a thorium target is selected. */
+    private boolean isThoriumFeed(ItemStack stack) {
+        return FuelItemRoute.isThoriumTarget(target)
+                && (FuelItemRoute.thoriumIngots(stack) > 0 || FuelItemRoute.uraniumUnits(stack) > 0);
+    }
+
+    /**
+     * How many of this item the input slot may take now, on a thorium target: what its store (thorium ingots, or uranium in half
+     * ingots) has room for, up to twice an assembly's worth, less what already sits in the slot; 0 for anything else, off a thorium
+     * target, or when the slot holds another kind of item.
+     */
+    private int thoriumFeedRoom(ItemStack stack) {
+        if (!isThoriumFeed(stack)) {
+            return 0;
+        }
+        FuelItemRoute.Cost cost = currentCost();
+        if (cost == null || !cost.isThorium()) {
+            return 0;
+        }
+        ItemStack held = uraniumIn.getStackInSlot(0);
+        if (!held.isEmpty() && !ItemStack.isSameItemSameComponents(held, stack)) {
+            return 0;
+        }
+        int thorium = FuelItemRoute.thoriumIngots(stack);
+        int unit = thorium > 0 ? 1 : FuelItemRoute.uraniumUnits(stack);
+        int stored = thorium > 0 ? thoriumIngots : uraniumUnits;
+        int cap = thorium > 0 ? 2 * cost.thoriumIngots() : 2 * cost.units();
+        int room = cap - stored - held.getCount() * unit;
+        return room <= 0 ? 0 : (room + unit - 1) / unit;
+    }
+
+    /** Moves uranium or thorium from the input slot into its store, as far as the store is held up to. */
+    private void absorbThoriumFeed(FuelItemRoute.Cost cost) {
+        ItemStack held = uraniumIn.getStackInSlot(0);
+        if (held.isEmpty()) {
+            return;
+        }
+        int thorium = FuelItemRoute.thoriumIngots(held);
+        int unit = thorium > 0 ? 1 : FuelItemRoute.uraniumUnits(held);
+        if (unit <= 0) {
+            return;
+        }
+        int stored = thorium > 0 ? thoriumIngots : uraniumUnits;
+        int cap = thorium > 0 ? 2 * cost.thoriumIngots() : 2 * cost.units();
+        int wanted = (cap - stored + unit - 1) / unit;
+        int taken = Math.min(wanted, held.getCount());
+        if (taken <= 0) {
+            return;
+        }
+        uraniumIn.extractItem(0, taken, false);
+        if (thorium > 0) {
+            thoriumIngots += taken;
+        } else {
+            uraniumUnits += taken * unit;
+        }
+        setChanged();
+    }
+
     private boolean canMake(FuelItemRoute.Cost cost) {
         return batchHeavyMetalKg <= 0.0
                 && output.getStackInSlot(OUTPUT_SLOT).isEmpty()
                 && uraniumUnits >= cost.units()
                 && plutoniumNuggets >= cost.plutoniumNuggets()
                 && matrixIngots >= cost.matrix()
+                && thoriumIngots >= cost.thoriumIngots()
                 && steelIn.getStackInSlot(0).getCount() >= cost.steel()
                 && tailsHeld() + cost.tails() <= TAILS_CAPACITY;
     }
@@ -437,6 +512,7 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         uraniumUnits -= cost.units();
         plutoniumNuggets -= cost.plutoniumNuggets();
         matrixIngots -= cost.matrix();
+        thoriumIngots -= cost.thoriumIngots();
         tailsPending += cost.tails();
         output.setStackInSlot(OUTPUT_SLOT, FuelAssemblyItem.stackOf(BwrItems.FUEL_ASSEMBLY.get(),
                 FuelAssemblyData.fresh(type != null ? type : FuelTypes.fallback())));
@@ -550,6 +626,16 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         return matrixIngots;
     }
 
+    /** Thorium ingots the machine holds for a thorium assembly. */
+    public int thoriumHeldIngots() {
+        return thoriumIngots;
+    }
+
+    /** True while the selected target makes thorium fuel. */
+    public boolean isThoriumTarget() {
+        return FuelItemRoute.isThoriumTarget(target);
+    }
+
     /** True while the selected target makes MOX. */
     public boolean isMoxTarget() {
         return FuelItemRoute.isMoxTarget(target);
@@ -589,6 +675,10 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
             drops.add(new ItemStack(BwrItems.DEPLETED_URANIUM.get(), Math.min(TAILS_STACK, left)));
         }
         matrixIngots = 0;
+        for (int left = thoriumIngots; left > 0; left -= TAILS_STACK) {
+            drops.add(new ItemStack(BwrItems.THORIUM_INGOT.get(), Math.min(TAILS_STACK, left)));
+        }
+        thoriumIngots = 0;
         int ingots = uraniumUnits / FuelItemRoute.UNITS_PER_INGOT;
         uraniumUnits = 0;
         if (ingots > 0) {
@@ -651,6 +741,17 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
                     "Taken in %s of %s plutonium and %s of %s depleted uranium, %s%% of the work done",
                     plutoniumNuggets, cost.plutoniumNuggets(), matrixIngots, cost.matrix(),
                     String.format(java.util.Locale.ROOT, "%.0f", 100.0 * workTicks / cost.workTicks())));
+        } else if (cost != null && cost.isThorium()) {
+            out.add(BwrText.tr(
+                    "status.bwr.fuel_fabricator.thorium_route",
+                    "Thorium route: %s takes %s thorium, %s uranium (enriched to the driver) and %s steel and returns %s depleted uranium",
+                    cost.fuelType(), cost.thoriumIngots(), cost.ingots(), cost.steel(), cost.tails()));
+            out.add(BwrText.tr(
+                    "status.bwr.fuel_fabricator.thorium_route_progress",
+                    "Taken in %s of %s thorium and %s of %s uranium, %s%% of the work done",
+                    thoriumIngots, cost.thoriumIngots(),
+                    String.format(java.util.Locale.ROOT, "%.1f", uraniumUnits / (double) FuelItemRoute.UNITS_PER_INGOT), cost.ingots(),
+                    String.format(java.util.Locale.ROOT, "%.0f", 100.0 * workTicks / cost.workTicks())));
         } else if (cost != null) {
             out.add(BwrText.tr(
                     "status.bwr.fuel_fabricator.item_route",
@@ -706,6 +807,9 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         if (matrixIngots > 0) {
             tag.putInt("MatrixIngots", matrixIngots);
         }
+        if (thoriumIngots > 0) {
+            tag.putInt("ThoriumIngots", thoriumIngots);
+        }
         if (workTicks > 0) {
             tag.putInt("WorkTicks", workTicks);
         }
@@ -746,6 +850,7 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
         tailsPending = Math.max(0, Math.min(1_000_000, tag.getInt("TailsPending")));
         plutoniumNuggets = Math.max(0, Math.min(1_000_000, tag.getInt("PlutoniumNuggets")));
         matrixIngots = Math.max(0, Math.min(1_000_000, tag.getInt("MatrixIngots")));
+        thoriumIngots = Math.max(0, Math.min(1_000_000, tag.getInt("ThoriumIngots")));
         workTicks = Math.max(0, Math.min(1_000_000, tag.getInt("WorkTicks")));
         loadSlot(uraniumIn, tag, "UraniumIn", registries);
         loadSlot(steelIn, tag, "SteelIn", registries);
