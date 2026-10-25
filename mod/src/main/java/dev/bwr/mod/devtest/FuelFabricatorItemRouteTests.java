@@ -554,7 +554,9 @@ public final class FuelFabricatorItemRouteTests {
                 // thorium (THORIUM.md): the ores and the placer sand are found in the ground; rare earths and radium are byproducts of mining them
                 "thorium_ore", "deepslate_thorium_ore", "monazite_sand", "rare_earth_concentrate", "radium",
 
-                "strontium_90_capsule", "caesium_137_capsule", "americium_241_capsule", "stripped_waste"));
+                "strontium_90_capsule", "caesium_137_capsule", "americium_241_capsule", "stripped_waste",
+                // reactor-bred (BREEDING-TARGETS.md): made by irradiating a target; bismuth is a byproduct of mining uranium ore
+                "uranium_233_ingot", "neptunium_237_ingot", "bismuth_nugget"));
         for (var id : BuiltInRegistries.ITEM.keySet()) {
             if (!id.getNamespace().equals("bwr")) {
                 continue;

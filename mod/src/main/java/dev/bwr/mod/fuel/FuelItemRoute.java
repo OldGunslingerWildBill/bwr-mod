@@ -297,4 +297,39 @@ public final class FuelItemRoute {
         Predicate<ItemStack> override = steelOverride;
         return override != null ? override.test(stack) : stack.is(STEEL_INGOTS);
     }
+
+    /**
+     * The U-233 alternative of a thorium target (BREEDING-TARGETS.md): the driver is bred U-233 ingots, not natural uranium enriched
+     * inside the machine, so nothing is enriched and no depleted uranium comes back. The other route and its costs are untouched; this one
+     * is used only when the player has put the U-233 in.
+     *
+     * @param u233Ingots   U-233 ingots consumed ({@link ThoriumMassBalance#u233Ingots})
+     * @param thoriumIngots thorium ingots consumed
+     */
+    public record U233Cost(String fuelType, int u233Ingots, int thoriumIngots, int steel, int workTicks) {
+    }
+
+    /** The U-233 cost of a thorium target, or null for any other name (or a fuel that cannot be made). */
+    public static U233Cost u233Cost(String targetName) {
+        if (!isThoriumTarget(targetName)) {
+            return null;
+        }
+        FuelType type = FuelTypes.byNameOrPreset(THORIUM_FUELS.get(THORIUM_TARGETS.indexOf(targetName)));
+        if (type == null) {
+            return null;
+        }
+        try {
+            double driver = type.nominalEnrichmentWeightFraction();
+            int u233 = ThoriumMassBalance.u233Ingots(PRODUCT_INGOTS, driver);
+            int thorium = ThoriumMassBalance.thoriumIngotsWithU233(PRODUCT_INGOTS, driver);
+            return new U233Cost(type.name(), u233, thorium, STEEL_PER_ASSEMBLY, BASE_WORK_TICKS + TICKS_PER_INGOT * u233);
+        } catch (IllegalArgumentException cannotMake) {
+            return null;
+        }
+    }
+
+    /** True for a bred uranium-233 ingot. */
+    public static boolean isUranium233(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(dev.bwr.mod.registry.BwrItems.URANIUM_233_INGOT.get());
+    }
 }

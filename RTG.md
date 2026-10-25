@@ -79,6 +79,8 @@ leaves the plant exactly as it was (`oldReprocessingSavesLoad`).
 
 ### Plutonium-238 is left out, and why
 
+*Update: a slow Pu-238 route now exists, from a depleted-uranium target that makes neptunium-237 at low yield and a neptunium target that makes the Pu-238, with neither the plant's outputs nor its tests changed ([BREEDING-TARGETS.md](BREEDING-TARGETS.md)). The reasoning below is why the plant still makes no neptunium.*
+
 Pu-238 (0.568 W/g, 87.7 y) is the best RTG fuel there is, and it does not come out of spent fuel in useful amounts: the 1 to 2
 % of Pu-238 in LWR plutonium is not separable economically. It is made by irradiating **neptunium-237** targets (10 to 15 %
 convert per cycle, a few months each, ORNL's HFIR makes about 400 g a year). An honest path would need Np-237 recovered in
@@ -189,6 +191,19 @@ gamma of radium, which a real Ra-Be source carries, is not modelled on the rod):
 ```
 
 A distinct Ra-Be rod with its own strength would need a `CoreInsert.Kind`, which is Java, and is not added.
+
+## Reactor-bred fuels (BREEDING-TARGETS.md)
+
+Four more isotopes, bred in target rods, are RTG fuel with the same data-map fields, each as an ingot and a block of nine (the block's `grams_per_item` nine times the ingot's):
+
+| Item | Isotope | W/g | Half-life | Grams in an ingot | Photons W/g | Wall |
+|---|---|---|---|---|---|---|
+| `polonium_210_ingot` | Po-210 | 140 | 138.4 d | 0.082 | 0.0002 | 1 |
+| `plutonium_238_ingot` | Pu-238 | 0.5674 | 87.7 y | 0.28 | 0.0002 | 0.05 |
+| `actinium_227_ingot` | Ac-227 with daughters | 14.6 | 21.77 y | 0.00103 | 0.13 | 1 |
+| `thulium_170_ingot` | Tm-170 | 11.5 | 128.6 d | 19.0 | 0.08 | 1 |
+
+Six ingots make 69 W (polonium), 0.95 W (plutonium-238), 0.09 W (actinium-227) and 1,310 W (thulium-170) of heat. The photon powers are derived (BREEDING-TARGETS.md says how); polonium has about none, actinium-227's daughters and thulium-170's bremsstrahlung are strong. Uranium-233 and neptunium-237 are not on the list.
 
 ## The Am-Be startup rod
 

@@ -62,6 +62,11 @@ public final class SpecialtyRodItem extends Item {
                     "status.bwr.specialty_rod_item.experimental_bwr_target_adapted_for_gameplay",
                     "Experimental BWR target, adapted for gameplay.").withStyle(ChatFormatting.GRAY));
         }
+        if (insert.kind().ordinal() >= CoreInsert.Kind.BISMUTH_TARGET.ordinal() && insert.kind().target()) {
+            lines.add(BwrText.tr(
+                    "status.bwr.specialty_rod_item.harvest_bred_isotope",
+                    "Harvest: one %s + empty rod.", new ItemStack(productOf(insert.kind())).getHoverName()).withStyle(ChatFormatting.AQUA));
+        }
         if (insert.complete()) lines.add(BwrText.tr(
                 "status.bwr.specialty_rod_item.use_in_hand_to_harvest_the_sample_and",
                 "Use in hand to harvest the sample and recover the empty rod.").withStyle(ChatFormatting.GREEN));
@@ -71,18 +76,29 @@ public final class SpecialtyRodItem extends Item {
         var insert = data(held).toCore();
         if (!insert.complete()) return InteractionResultHolder.pass(held);
         if (!level.isClientSide()) {
-            Item product = switch (insert.kind()) {
-                case COBALT_TARGET -> BwrItems.COBALT_SAMPLE.get();
-                case TRITIUM_TARGET -> BwrItems.TRITIUM_SAMPLE.get();
-                case SILICON_TARGET -> BwrItems.DOPED_SILICON.get();
-                default -> throw new IllegalStateException("Not a harvestable target");
-            };
+            Item product = productOf(insert.kind());
+            if (product == null) throw new IllegalStateException("Not a harvestable target");
             held.shrink(1);
             give(player, product, insert.kind() == CoreInsert.Kind.TRITIUM_TARGET
                     ? dev.bwr.mod.config.GameplayConfig.tritiumSamplesPerRod() : 1);
             give(player, BwrItems.IRRADIATION_CASING.get(), 1);
         }
         return InteractionResultHolder.sidedSuccess(held, level.isClientSide());
+    }
+    /** What a finished target of this kind is harvested into, or null for a kind that is not a target (BREEDING-TARGETS.md for the reactor-bred ones). */
+    public static Item productOf(CoreInsert.Kind kind) {
+        return switch (kind) {
+            case COBALT_TARGET -> BwrItems.COBALT_SAMPLE.get();
+            case TRITIUM_TARGET -> BwrItems.TRITIUM_SAMPLE.get();
+            case SILICON_TARGET -> BwrItems.DOPED_SILICON.get();
+            case BISMUTH_TARGET -> BwrItems.POLONIUM_210_INGOT.get();
+            case THORIUM_TARGET -> BwrItems.URANIUM_233_INGOT.get();
+            case URANIUM_TARGET -> BwrItems.NEPTUNIUM_237_INGOT.get();
+            case NEPTUNIUM_TARGET -> BwrItems.PLUTONIUM_238_INGOT.get();
+            case RADIUM_TARGET -> BwrItems.ACTINIUM_227_INGOT.get();
+            case THULIUM_TARGET -> BwrItems.THULIUM_170_INGOT.get();
+            default -> null;
+        };
     }
     private static void give(Player player, Item item, int count) {
         // Large harvests must use legal stack sizes, including any inventory overflow drops.

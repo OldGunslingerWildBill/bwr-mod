@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:irradiation_casing"
+    },
+    {
+      "item": "bwr:bismuth_nugget"
+    },
+    {
+      "item": "bwr:bismuth_nugget"
+    }
+  ],
+  "result": {
+    "id": "bwr:specialty_rod",
+    "count": 1,
+    "components": {
+      "bwr:core_insert": {
+        "kind": "bismuth_target",
+        "exposure_seconds": 0
+      }
+    }
+  }
+}

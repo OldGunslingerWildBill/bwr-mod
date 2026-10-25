@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:actinium_227_block"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "bwr:actinium_227_ingot"
+  }
+}

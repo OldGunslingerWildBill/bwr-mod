@@ -197,10 +197,10 @@ public final class UraniumOreTests {
         return drops.stream().filter(s -> s.is(BwrItems.RAW_URANIUM.get())).mapToInt(ItemStack::getCount).sum();
     }
 
-    /** True when every drop is raw uranium or one of the byproducts of uranium ore: lead, radium, raw copper, or anything a mod tags as raw vanadium. */
+    /** True when every drop is raw uranium or one of the byproducts of uranium ore: lead, radium, bismuth, raw copper, or anything a mod tags as raw vanadium. */
     private static boolean onlyListedByproducts(List<ItemStack> drops) {
         for (ItemStack s : drops) {
-            if (!(s.is(BwrItems.RAW_URANIUM.get()) || s.is(BwrItems.LEAD_NUGGET.get()) || s.is(BwrItems.RADIUM.get()) || s.is(Items.RAW_COPPER)
+            if (!(s.is(BwrItems.RAW_URANIUM.get()) || s.is(BwrItems.LEAD_NUGGET.get()) || s.is(BwrItems.RADIUM.get()) || s.is(BwrItems.BISMUTH_NUGGET.get()) || s.is(Items.RAW_COPPER)
                     || s.is(itemTag("c", "raw_materials/vanadium")))) {
                 return false;
             }
