@@ -210,19 +210,19 @@ monitor changes nothing in the plant; any trip or isolation on high radiation is
 
 The reactor peripheral has `getCoolantChemistry()` (conductivity in uS/cm, crud, its activity and gamma power, the corrosion wear counters, and
 what the cleanup loop took last tick). The RWCU pump is `bwr_rwcu_pump` and the three passive units are
-`bwr_rwcu_regenerative_heat_exchanger`, `bwr_rwcu_nonregenerative_heat_exchanger` and `bwr_rwcu_filter_demineralizer` (see
+`bwr_rwcu_regenerative_heat_exchanger`, `bwr_rwcu_nonregenerative_heat_exchanger` (both optional) and `bwr_rwcu_filter_demineralizer`, the stainless steel nanofilter (see
 [RWCU.md](../../RWCU.md)):
 
 ```lua
 local reactor = peripheral.wrap("bwr_reactor_0")          -- your own names, see the listing above
 local pump = peripheral.wrap("bwr_rwcu_pump_0")
-local demin = peripheral.wrap("bwr_rwcu_filter_demineralizer_0")
+local nanofilter = peripheral.wrap("bwr_rwcu_filter_demineralizer_0")
 local chem = reactor.getCoolantChemistry()
 print(chem.conductivityUsPerCm, chem.crudG, chem.crudGammaWatts)
 pump.setSpeed(0.8)
 pump.start()                                              -- nothing starts it for you, and nothing stops it
 local s = pump.getStatus()
 print(s.status, s.flowKgPerS, s.demineraliserC, s.vesselHeatLossMW)
-local d = demin.getStatus()
-print(d.headline, d.resinUsed, d.overTemperature)         -- changing the bed is a player action with Demineralizer Resin
+local d = nanofilter.getStatus()
+print(d.headline, d.elementUsed, d.pressureDropPsid)      -- changing the element is a player action with a Stainless Steel Nanofilter Element
 ```

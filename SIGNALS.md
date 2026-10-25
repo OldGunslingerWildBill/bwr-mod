@@ -54,7 +54,7 @@ when nothing is there or the chunk is not loaded. It never loads a chunk and nev
 This file is generated from the adapter sources in `dev.bwr.mod.signal.adapters`; keep it in step when a
 signal is added. Coverage: reactor controller, MSIV, SRV, turbine valves, motor-operated water valve, turbine steam outlet, RPV steam
 outlet, feedwater pump, recirculation pump, ECCS pumps, suppression pool, RHR heat exchanger, condenser,
-condensate tank, cooling, power module, containment controller, penetrations, vault door, airlock, and
+condensate tank, cooling, power module, RWCU stainless steel nanofilter (below), containment controller, penetrations, vault door, airlock, and
 containment atmosphere equipment, and the ADS controller (its three switch inputs, below). The SLC tank, water
 discharge and other passive hardware have CC peripherals but are not in v1 coverage.
 
@@ -813,6 +813,25 @@ Block entity `AreaRadiationMonitorBlockEntity`; CC peripheral `bwr_radiation_mon
 Command: `alarm_setpoint` (0.001 to 1,000,000 mSv/h), the writable half of the signal of the same key. CC methods:
 `getDoseRate`, `isHighRadiation`, `isAlert`, `getAlarmSetpoint`, `getAlertSetpoint`, `setAlarmSetpoint(mSvPerHour)` and
 `getStatus` (which also splits the dose rate into `airborne`, `deposited`, `release`, `core` and `other`).
+
+## RWCU stainless steel nanofilter
+
+Block entity `RwcuDeminBlockEntity` (block id `rwcu_filter_demineralizer`); CC peripheral `bwr_rwcu_filter_demineralizer`. Read only: the
+pump starts the water and a player changes the element ([RWCU.md](RWCU.md)). Flow and temperature read 0 when no water is moving.
+
+| Signal key | CC status key | Unit | Range | Kind |
+| --- | --- | --- | --- | --- |
+| `element_used` | `elementUsed` (fraction) | % | 0 to 100 | NUMBER |
+| `crud_held` | `crudLoadG` | g | 0 to 200 | NUMBER |
+| `ions_held` | `ionicLoadG` | g | 0 to 100 | NUMBER |
+| `pressure_drop` | `pressureDropPsid` (rated flow) | psi | 0 to 150 | NUMBER, at the flow now |
+| `flow` | | kg/s | 0 to 100 | NUMBER |
+| `water_temperature` | | degC | 0 to 350 | NUMBER |
+| `activity` | `activityBq` | Bq | 0 to 1e15 | NUMBER |
+| `gamma_power` | `gammaWatts` | W | 0 to 100 | NUMBER |
+| `element_present` | `elementPresent` | | | BOOLEAN |
+| `spent` | | | | BOOLEAN, an element that is full |
+| `filtering` | `flowing` | | | BOOLEAN, the pump is moving water through it |
 
 ## Containment controller
 
