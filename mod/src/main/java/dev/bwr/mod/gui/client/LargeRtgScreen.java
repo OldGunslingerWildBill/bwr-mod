@@ -35,7 +35,8 @@ public class LargeRtgScreen extends BwrScreen<LargeRtgMenu> {
 
     private static String kg(double grams) {
         double kg = grams / 1000.0;
-        return kg >= 100 ? String.format(Locale.ROOT, "%.0f", kg) : String.format(Locale.ROOT, "%.2f", kg);
+        // 999.7 kg must not read 1000: the cap is exactly 1,000 kg and the meter says so only at it
+        return kg >= 100 ? String.format(Locale.ROOT, "%.1f", kg) : String.format(Locale.ROOT, "%.2f", kg);
     }
 
     private static String watts(double w) {
