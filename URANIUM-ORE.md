@@ -2,12 +2,8 @@
 
 The mod's thorium ore (veins, blobs, a placer sand, the fuel route) is built the same way and is written up in [THORIUM.md](THORIUM.md). It is a second,
 independent set of veins (its own `salt`), with its own server option `thoriumOreGeneration`; this page's numbers and options are untouched by it.
-Uranium ore still drops only raw uranium (and itself with Silk Touch): the byproducts of real uranium ore (lead, radium) are proposed in THORIUM.md
-and not yet applied here (the existing test `oresDropRawUraniumWithFortuneAndThemselvesWithSilkTouch` asserts a single drop). Thorium and uranium veins share host rock, so where they cross
-the feature that runs first takes the block: in a worldgen check run with the thorium features present the arid vein body is 44,227 blocks and not 44,215, a few blocks in new chunks only.
-
-The fuel fabricator's item route used to need another mod for uranium (`c:ingots/uranium`). The mod now has its own ore, so a world with
-only this mod can mine, smelt and enrich uranium. Mekanism's uranium keeps working beside it: both are the same tags.
+Thorium and uranium veins share host rock, so where they cross the feature that runs first takes the block: in a worldgen check run with the thorium features present the arid vein body is
+44,227 blocks and not 44,215, a few blocks in new chunks only.
 
 ## Blocks and items
 
@@ -23,7 +19,9 @@ only this mod can mine, smelt and enrich uranium. Mekanism's uranium keeps worki
 - **Mining level: iron pickaxe** for all four blocks (`minecraft:mineable/pickaxe`, `minecraft:needs_iron_tool`, and they drop nothing to a
   stone or wooden pickaxe).
 - **Drops.** The ores drop one raw uranium; Fortune adds the vanilla ore bonus (Fortune III averages 2.2, one to four); Silk Touch drops the
-  ore block. The two storage blocks drop themselves.
+  ore block and nothing else. The two storage blocks drop themselves. Real uranium ore comes with other elements, so a mined ore (not with Silk Touch) also has
+  small chances of **lead nuggets** (10 % rising to 20 % with Fortune III), **radium** (1 % to 2.5 %), **raw copper** (4 % to 8 %) and, from any mod that tags
+  one `c:raw_materials/vanadium`, raw vanadium (4 % to 8 %); the table, the reasons and the sources are in [THORIUM.md](THORIUM.md#byproducts-of-mining-uranium-ore).
 - **Recipes.** Raw uranium, uranium ore and deepslate uranium ore smelt (200 ticks) or blast (100) to one ingot; nine raw uranium make a raw
   block, nine ingots a block, and each block makes the nine back. The two ores have no recipe (the world makes them; silk touch gives
   them back), which `tools-audit-assets.py` and `tools-audit-recipes.py` list with the reason.

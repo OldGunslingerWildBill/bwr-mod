@@ -192,6 +192,73 @@ public final class UraniumOreTests {
         return stack;
     }
 
+    /** Raw uranium in a set of drops. */
+    private static int rawUranium(List<ItemStack> drops) {
+        return drops.stream().filter(s -> s.is(BwrItems.RAW_URANIUM.get())).mapToInt(ItemStack::getCount).sum();
+    }
+
+    /** True when every drop is raw uranium or one of the byproducts of uranium ore: lead, radium, raw copper, or anything a mod tags as raw vanadium. */
+    private static boolean onlyListedByproducts(List<ItemStack> drops) {
+        for (ItemStack s : drops) {
+            if (!(s.is(BwrItems.RAW_URANIUM.get()) || s.is(BwrItems.LEAD_NUGGET.get()) || s.is(BwrItems.RADIUM.get()) || s.is(Items.RAW_COPPER)
+                    || s.is(itemTag("c", "raw_materials/vanadium")))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static int count(List<ItemStack> drops, Item item) {
+        return drops.stream().filter(s -> s.is(item)).mapToInt(ItemStack::getCount).sum();
+    }
+
+    /** The share of {@code draws} mines that gave at least one of {@code item}. */
+    private static double share(ServerLevel l, BlockState s, ItemStack tool, Item item, int draws) {
+        int hits = 0;
+        for (int i = 0; i < draws; i++) {
+            if (count(mine(l, s, tool), item) > 0) hits++;
+        }
+        return hits / (double) draws;
+    }
+
+    /**
+     * What real uranium ore comes with: lead (the end of the uranium-238 series), radium (in the series), raw copper (deposits such as Olympic Dam)
+     * and, from any mod that has it, vanadium (carnotite). Each is its own chance, raised by Fortune and skipped with Silk Touch, and the
+     * main drop (one raw uranium, the vanilla ore bonus with Fortune) is untouched.
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void uraniumByproductsAreChanceBasedFortuneHelpsAndSilkTouchSkipsThem(GameTestHelper h) {
+        ServerLevel l = h.getLevel();
+        ItemStack iron = new ItemStack(Items.IRON_PICKAXE);
+        ItemStack silk = enchanted(l, Items.IRON_PICKAXE, Enchantments.SILK_TOUCH, 1);
+        ItemStack fortune = enchanted(l, Items.IRON_PICKAXE, Enchantments.FORTUNE, 3);
+        int draws = 6000;
+        Object[][] rows = {
+                // item, chance without Fortune, with Fortune III
+                {BwrItems.LEAD_NUGGET.get(), 0.10, 0.20}, {BwrItems.RADIUM.get(), 0.01, 0.025}, {Items.RAW_COPPER, 0.04, 0.08}};
+        for (Block ore : new Block[] {BwrBlocks.URANIUM_ORE.get(), BwrBlocks.DEEPSLATE_URANIUM_ORE.get()}) {
+            BlockState s = ore.defaultBlockState();
+            for (Object[] row : rows) {
+                Item item = (Item) row[0];
+                double plain = share(l, s, iron, item, draws), fort = share(l, s, fortune, item, draws);
+                double tol = item == BwrItems.RADIUM.get() ? 0.012 : 0.035;
+                h.assertTrue(Math.abs(plain - (double) row[1]) < tol, ore + ": " + item + " drops " + plain + " of the time, not about " + row[1]);
+                h.assertTrue(Math.abs(fort - (double) row[2]) < tol, ore + ": with Fortune III " + item + " drops " + fort + " of the time, not about " + row[2]);
+                h.assertTrue(fort > plain, ore + ": Fortune did not raise the chance of " + item);
+                for (int i = 0; i < 500; i++) {
+                    h.assertTrue(count(mine(l, s, silk), item) == 0, ore + ": Silk Touch gave " + item);
+                }
+            }
+            // nothing but the main drop and the listed byproducts ever comes out, with any tool, and Silk Touch gives the block alone
+            for (int i = 0; i < 2000; i++) {
+                h.assertTrue(onlyListedByproducts(mine(l, s, fortune)) && onlyListedByproducts(mine(l, s, iron)), ore + " gave something that is not listed");
+                var sk = mine(l, s, silk);
+                h.assertTrue(sk.size() == 1 && sk.get(0).is(ore.asItem()), ore + " with Silk Touch gave " + sk);
+            }
+        }
+        h.succeed();
+    }
+
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void oresDropRawUraniumWithFortuneAndThemselvesWithSilkTouch(GameTestHelper h) {
         ServerLevel l = h.getLevel();
@@ -202,16 +269,17 @@ public final class UraniumOreTests {
             BlockState s = ore.defaultBlockState();
             for (int i = 0; i < 40; i++) {
                 var plain = mine(l, s, iron);
-                h.assertTrue(plain.size() == 1 && plain.get(0).is(BwrItems.RAW_URANIUM.get()) && plain.get(0).getCount() == 1, ore + " without Fortune gave " + plain);
+                h.assertTrue(rawUranium(plain) == 1 && onlyListedByproducts(plain), ore + " without Fortune gave " + plain);
                 var sk = mine(l, s, silk);
                 h.assertTrue(sk.size() == 1 && sk.get(0).is(ore.asItem()) && sk.get(0).getCount() == 1, ore + " with Silk Touch gave " + sk);
             }
             int total = 0, most = 0, draws = 3000;
             for (int i = 0; i < draws; i++) {
                 var f = mine(l, s, fortune);
-                h.assertTrue(f.size() == 1 && f.get(0).is(BwrItems.RAW_URANIUM.get()), ore + " with Fortune gave " + f);
-                total += f.get(0).getCount();
-                most = Math.max(most, f.get(0).getCount());
+                int raw = rawUranium(f);
+                h.assertTrue(raw >= 1 && onlyListedByproducts(f), ore + " with Fortune gave " + f);
+                total += raw;
+                most = Math.max(most, raw);
             }
             double mean = total / (double) draws;
             // Fortune III is the vanilla ore bonus: 1 + (0 + 0 + 1 + 2 + 3) / 5 = 2.2 on average, 1 to 4 each

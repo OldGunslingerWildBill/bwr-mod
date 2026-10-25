@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased: uranium ore byproducts
+
+Mining uranium ore now gives the byproducts real uranium ore comes with, the way thorium ore does ([THORIUM.md](THORIUM.md#byproducts-of-mining-uranium-ore), owner-approved).
+
+- **Drops.** On `bwr:uranium_ore` and `bwr:deepslate_uranium_ore`, each its own chance for Fortune 0 / I / II / III, skipped with Silk Touch: Lead Nugget (1 to 2; 10 / 13 / 16 / 20 %), Radium (1 / 1.5 / 2 / 2.5 %), raw copper (4 / 5 / 6 / 8 %) and any item a mod tags `c:raw_materials/vanadium` (4 / 5 / 6 / 8 %; nothing drops while no mod has one). The main drop (one raw uranium, the vanilla Fortune bonus) and Silk Touch giving the block alone are unchanged.
+- **Test changed, with the owner's approval.** In `UraniumOreTests.oresDropRawUraniumWithFortuneAndThemselvesWithSilkTouch` the two single-drop assertions now say the raw uranium is there with the same counts and that any other drop is one of the listed byproducts; Silk Touch is still exactly the ore block. New: `uraniumByproductsAreChanceBasedFortuneHelpsAndSilkTouchSkipsThem` (6,000 mines for each chance, with and without Fortune III, and with Silk Touch).
+- **Radium** is now a byproduct of both ores (the RTG and the Ra-Be source use it, from the isotope work).
+
 ## Unreleased: main steam valve remodel, one relief valve
 
 The MSIV and the relief valve have new models, drawn from Columbia's FSAR figures. There is now one relief valve. Write-up and references: [MAIN-STEAM-VALVES.md](MAIN-STEAM-VALVES.md).
@@ -48,7 +56,7 @@ The mod has its own thorium now, mined the way its uranium is, and a survival ro
 - **Radiation.** Thorium items are weakly radioactive in life, but the mod gives uranium items no dose, so thorium items have none either; radium is the one new radioactive item.
 - **Checks.** Core `ThoriumMassBalanceTest`; GameTests `bwrthorium` (`ThoriumOreTests`, `-PbwrOnlyThorium`); `:mod:runWorldgenCheck` now also generates the thorium dimensions (`bwr_check:flat_th_*`) and proves old chunks are untouched with the option off and on; client pictures `-PbwrThoriumClientCheck` (`ThoriumClientCheck`) and the GUI check's `fabricator-thorium` scenario.
 - **Data lists edited.** `tools-audit-recipes.py` NO_RECIPE (`thorium_ore`, `deepslate_thorium_ore`, `monazite_sand`, `rare_earth_concentrate`, `radium`), `tools-audit-assets.py` WORLD_MADE_BLOCKS (the three blocks) and the `notCrafted` list of `FuelFabricatorItemRouteTests.everyCraftableItemHasARecipeAndTheRestDoNot` (the same five items), for the same reasons as the uranium ores. No existing assertion was changed or weakened.
-- **Not done.** Byproducts on uranium ore (lead, radium): the existing test `UraniumOreTests.oresDropRawUraniumWithFortuneAndThemselvesWithSilkTouch` asserts a single drop (lines 205 and 212). The pools are written up in THORIUM.md.
+- **Uranium-ore byproducts** were first held back by an existing single-drop assertion and then added with the owner's approval: see "Unreleased: uranium ore byproducts".
 
 ## Unreleased: RTG and isotope extraction
 
