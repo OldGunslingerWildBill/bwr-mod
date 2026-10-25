@@ -28,14 +28,14 @@
         0
       ],
       "bounds": [
-        0.575,
-        0.75,
-        0.575,
+        0.08,
+        0.0837142,
+        0.08,
         1,
         1,
         1
       ],
-      "triangles": 83
+      "triangles": 75
     },
     {
       "index": 1,
@@ -46,13 +46,13 @@
       ],
       "bounds": [
         0,
-        0.75,
-        0.575,
-        0.4376516,
+        0.0837142,
+        0.0037302,
+        0.9200001,
         1,
         1
       ],
-      "triangles": 129
+      "triangles": 151
     },
     {
       "index": 2,
@@ -62,14 +62,14 @@
         1
       ],
       "bounds": [
-        0.575,
-        0.75,
+        0.08,
+        0.045,
         0,
         1,
         1,
-        0.425
+        0.98
       ],
-      "triangles": 83
+      "triangles": 88
     },
     {
       "index": 3,
@@ -80,13 +80,13 @@
       ],
       "bounds": [
         0,
-        0.75,
+        0.045,
         0,
-        0.425,
+        0.9200001,
         1,
-        0.425
+        0.98
       ],
-      "triangles": 83
+      "triangles": 88
     },
     {
       "index": 4,
@@ -96,14 +96,14 @@
         0
       ],
       "bounds": [
-        0.575,
+        0.08,
         0,
-        0.575,
+        0.08,
         1,
         1,
         1
       ],
-      "triangles": 200
+      "triangles": 25
     },
     {
       "index": 5,
@@ -115,12 +115,12 @@
       "bounds": [
         0,
         0,
-        0.575,
-        0.4619084,
+        0.0086039,
+        0.9200001,
         1,
         1
       ],
-      "triangles": 302
+      "triangles": 60
     },
     {
       "index": 6,
@@ -130,14 +130,14 @@
         1
       ],
       "bounds": [
-        0.575,
+        0.08,
         0,
         0,
         1,
         1,
-        0.425
+        0.98
       ],
-      "triangles": 162
+      "triangles": 44
     },
     {
       "index": 7,
@@ -150,11 +150,11 @@
         0,
         0,
         0,
-        0.425,
+        0.9200001,
         1,
-        0.425
+        0.9200001
       ],
-      "triangles": 162
+      "triangles": 20
     },
     {
       "index": 8,
@@ -164,14 +164,14 @@
         0
       ],
       "bounds": [
-        0.45,
+        0.08,
         0,
-        0.45,
+        0.08,
         1,
         1,
         1
       ],
-      "triangles": 224
+      "triangles": 107
     },
     {
       "index": 9,
@@ -183,12 +183,12 @@
       "bounds": [
         0,
         0,
-        0.45,
-        0.55,
+        0.0037302,
+        0.9200001,
         1,
         1
       ],
-      "triangles": 224
+      "triangles": 181
     },
     {
       "index": 10,
@@ -198,14 +198,14 @@
         1
       ],
       "bounds": [
-        0.45,
+        0.08,
         0,
         0,
         1,
         1,
-        0.55
+        0.9200001
       ],
-      "triangles": 224
+      "triangles": 129
     },
     {
       "index": 11,
@@ -218,11 +218,11 @@
         0,
         0,
         0,
-        0.55,
+        0.9200001,
         1,
-        0.55
+        0.9200001
       ],
-      "triangles": 224
+      "triangles": 107
     },
     {
       "index": 12,
@@ -232,14 +232,14 @@
         0
       ],
       "bounds": [
-        0.45,
+        0.08,
         0,
-        0.45,
+        0.08,
         1,
         1,
         1
       ],
-      "triangles": 372
+      "triangles": 149
     },
     {
       "index": 13,
@@ -251,12 +251,12 @@
       "bounds": [
         0,
         0,
-        0.45,
-        0.55,
+        0.08,
+        0.9200001,
         1,
         1
       ],
-      "triangles": 372
+      "triangles": 149
     },
     {
       "index": 14,
@@ -266,14 +266,14 @@
         1
       ],
       "bounds": [
-        0.45,
+        0.08,
         0,
         0,
         1,
         1,
-        0.55
+        0.9200001
       ],
-      "triangles": 372
+      "triangles": 149
     },
     {
       "index": 15,
@@ -286,11 +286,11 @@
         0,
         0,
         0,
-        0.55,
+        0.9200001,
         1,
-        0.55
+        0.9200001
       ],
-      "triangles": 372
+      "triangles": 149
     },
     {
       "index": 16,
@@ -300,14 +300,14 @@
         0
       ],
       "bounds": [
-        0.63,
+        0.4822992,
         0,
-        0.63,
+        0.4822992,
         1,
-        0.13,
+        0.9499998,
         1
       ],
-      "triangles": 133
+      "triangles": 66
     },
     {
       "index": 17,
@@ -319,12 +319,12 @@
       "bounds": [
         0,
         0,
-        0.63,
-        0.37,
-        0.13,
+        0.4822992,
+        0.5177008,
+        0.9499998,
         1
       ],
-      "triangles": 133
+      "triangles": 65
     },
     {
       "index": 18,
@@ -334,14 +334,14 @@
         1
       ],
       "bounds": [
-        0.63,
+        0.4822992,
         0,
         0,
         1,
-        0.13,
-        0.37
+        0.9499998,
+        0.5177008
       ],
-      "triangles": 133
+      "triangles": 66
     },
     {
       "index": 19,
@@ -354,11 +354,11 @@
         0,
         0,
         0,
-        0.37,
-        0.13,
-        0.37
+        0.5177008,
+        0.9499998,
+        0.5177008
       ],
-      "triangles": 133
+      "triangles": 65
     }
   ],
   "ports": [
@@ -448,12 +448,12 @@
   "maintenance_clearance_m": 1.0,
   "culling": "Per-cell OBJ geometry is clipped within its own block; chunk baking can use normal bounds.",
   "validation": {
-    "source_triangles": 2764,
-    "clipped_triangles": 4120,
-    "source_surface_area_m2": 17.25487850016682,
-    "clipped_surface_area_m2": 17.254878500166832,
-    "area_error_m2": 1.0658141036401503e-14,
+    "source_triangles": 1678,
+    "clipped_triangles": 1933,
+    "source_surface_area_m2": 29.867821,
+    "clipped_surface_area_m2": 29.867821,
     "cell_bounds_pass": true
   },
-  "game_ports": []
+  "game_ports": [],
+  "model_source": "art/models/recirc/build_recirc.py (headless Blender); tools-export-recirc.py"
 }

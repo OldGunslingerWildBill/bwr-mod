@@ -69,6 +69,13 @@ neoForge {
             gameDirectory = file('run/soundClientCheck')
             jvmArguments.add('-Dbwr.soundClientCheck=true')
         }
+        // Pictures of the recirculation pump, jet pumps and RIP (RecircRemodelClientCheck), saved in run/turbineModelCheck/recirc-remodel-check.
+        recircRemodelCheck {
+            client()
+            gameDirectory = file('run/turbineModelCheck')
+            programArguments.addAll('--width', '1920', '--height', '1080')
+            jvmArguments.add('-Dbwr.recircRemodelCheck=true')
+        }
         turbineModelCheck {
             client()
             gameDirectory = file('run/turbineModelCheck')

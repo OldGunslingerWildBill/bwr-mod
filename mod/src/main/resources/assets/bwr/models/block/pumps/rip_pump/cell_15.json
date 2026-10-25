@@ -6,8 +6,8 @@
   "flip_v": true,
   "emissive_ambient": false,
   "ambientocclusion": false,
-  "render_type": "minecraft:solid",
   "textures": {
-    "particle": "bwr:block/pumps/pump_atlas"
-  }
+    "particle": "minecraft:block/iron_block"
+  },
+  "render_type": "minecraft:solid"
 }
