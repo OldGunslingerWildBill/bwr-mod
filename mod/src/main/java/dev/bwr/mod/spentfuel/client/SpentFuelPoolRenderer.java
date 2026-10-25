@@ -3,6 +3,7 @@ package dev.bwr.mod.spentfuel.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.bwr.mod.BwrMod;
+import dev.bwr.mod.client.DeferredLiquids;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity;
 import net.minecraft.client.Minecraft;
@@ -10,7 +11,6 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -51,22 +51,28 @@ public final class SpentFuelPoolRenderer implements BlockEntityRenderer<SpentFue
         if (!be.visFormed || be.visMin == null || be.visMax == null || be.getLevel() == null) {
             return;
         }
-        BlockPos min = be.visMin;
-        BlockPos max = be.visMax;
-        BlockPos root = be.getBlockPos();
         double depth = be.visLevelQ / 8.0;
         if (depth <= 0.0) {
             return;
         }
-        double surface = min.getY() + 1 + depth;
-        int surfaceLight = LevelRenderer.getLightColor(be.getLevel(), new BlockPos(root.getX(), max.getY() + 1, root.getZ()));
+        BlockPos root = be.getBlockPos();
+        double surface = be.visMin.getY() + 1 + depth;
+        int surfaceLight = LevelRenderer.getLightColor(be.getLevel(), new BlockPos(root.getX(), be.visMax.getY() + 1, root.getZ()));
+        // Replayed after the translucent terrain, where a shader pack draws water with its water program (see DeferredLiquids).
+        DeferredLiquids.add(pose, (p, src) -> draw(be, p, src, surface, surfaceLight));
+    }
+
+    private static void draw(SpentFuelPoolBlockEntity be, PoseStack pose, MultiBufferSource buffers, double surface, int surfaceLight) {
+        BlockPos min = be.visMin;
+        BlockPos max = be.visMax;
+        BlockPos root = be.getBlockPos();
         TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(WATER);
 
         pose.pushPose();
         pose.translate(-root.getX(), -root.getY(), -root.getZ());
         PoseStack.Pose p = pose.last();
 
-        VertexConsumer water = buffers.getBuffer(Sheets.translucentCullBlockSheet());
+        VertexConsumer water = buffers.getBuffer(DeferredLiquids.WATER);
         double x0 = min.getX() + 1;
         double x1 = max.getX();
         double z0 = min.getZ() + 1;
@@ -133,7 +139,8 @@ public final class SpentFuelPoolRenderer implements BlockEntityRenderer<SpentFue
 
     private static void emit(VertexConsumer out, PoseStack.Pose p, TextureAtlasSprite sprite, double x, double y, double z, float alpha) {
         // The additive shader blends ONE/ONE: premultiply so the fade and the strength really extinguish the light.
-        out.addVertex(p, (float) x, (float) y, (float) z).setColor(0.04f * alpha, 0.6f * alpha, alpha, alpha)
+        float k = DeferredLiquids.glowStraight() ? 1f : alpha;
+        out.addVertex(p, (float) x, (float) y, (float) z).setColor(0.04f * k, 0.6f * k, k, alpha)
                 .setUv(sprite.getU(0.5f), sprite.getV(0.5f)).setOverlay(OverlayTexture.NO_OVERLAY)
                 .setLight(LightTexture.FULL_BRIGHT).setNormal(p, 0, 1, 0);
     }

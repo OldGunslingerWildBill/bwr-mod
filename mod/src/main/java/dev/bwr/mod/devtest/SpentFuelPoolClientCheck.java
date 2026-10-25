@@ -37,11 +37,12 @@ public final class SpentFuelPoolClientCheck {
 
     private static final BlockPos ORIGIN = new BlockPos(140, 210, 140);
     private static final String[] NAMES = {"pool-built", "pool-racks-glow", "pool-ports", "pool-panel", "pool-uncovered", "pool-panel-uncovered",
-            "elevator-on-pool", "elevator-lowering", "elevator-carriage-low", "elevator-screen"};
+            "elevator-on-pool", "elevator-lowering", "elevator-carriage-low", "elevator-screen", "pool-underwater", "pool-night-glow"};
     private static final double[][] CAMERAS = {
             {156, 226, 125, 32, 27}, {144.5, 224, 135, 0, 52}, {144.5, 217.5, 131, 0, 6},
             {137, 216, 140, -59, 19}, {156, 226, 125, 32, 27}, {137, 216, 140, -59, 19},
-            {153, 222.5, 139, 42, 24}, {141.5, 224.5, 139.5, -57, 55}, {141.5, 224.5, 139.5, -57, 55}, {150.5, 219.5, 140.5, 30, 10}};
+            {153, 222.5, 139, 42, 24}, {141.5, 224.5, 139.5, -57, 55}, {141.5, 224.5, 139.5, -57, 55}, {150.5, 219.5, 140.5, 30, 10},
+            {141.6, 216.4, 141.6, -45, 6}, {144.5, 224, 135, 0, 52}};
     /** The elevator stands on the middle of the east wall of the pool: ORIGIN + (8, 8, 4). The screen camera is within 8 blocks of it (a menu closes beyond that). */
     private static final BlockPos ELEVATOR = ORIGIN.offset(8, 8, 4);
     private static boolean started;
@@ -166,7 +167,7 @@ public final class SpentFuelPoolClientCheck {
                     be.simulateSeconds(1, l.getGameTime());
                     be.simulateSeconds(300, l.getGameTime());
                 }
-                l.setDayTime(6000);
+                l.setDayTime(selected == 11 ? 18000 : 6000);
                 l.setWeatherParameters(6000, 0, false, false);
             });
         }
@@ -200,6 +201,10 @@ public final class SpentFuelPoolClientCheck {
             if (!glowing) {
                 throw new AssertionError("no cell glows in the picture the controller sent: " + java.util.Arrays.toString(be.visGlow));
             }
+        }
+        if (stage == 1 && shown == 5 && dev.bwr.mod.client.DeferredLiquids.replayedLastFrame() < 1) {
+            // the water and the glow are replayed after the translucent terrain (shader packs route that pass to their water program)
+            throw new AssertionError("the pool water and glow were not replayed after the translucent terrain");
         }
         if (shown < 100) {
             return;
