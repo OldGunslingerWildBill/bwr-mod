@@ -44,7 +44,20 @@ final class PlantSignals {
             .number("cold_water_temp", "Cold side temperature", "degC", 0, 200, be -> be.plant().coldTemperatureC())
             .number("primary_flow", "Primary flow", "kg/s", 0, 2000, be -> be.plant().primaryFlow())
             .number("secondary_flow", "Secondary flow", "kg/s", 0, 2000, be -> be.plant().secondaryFlow())
-            .number("primary_outlet_temp", "Primary outlet temperature", "degC", 0, 200, be -> be.plant().primaryOutC());
+            .number("primary_outlet_temp", "Primary outlet temperature", "degC", 0, 200, be -> be.plant().primaryOutC())
+            .number("primary_inlet_temp", "Tube side inlet temperature", "degC", 0, 200, be -> be.plant().primaryInC())
+            .number("secondary_inlet_temp", "Shell side inlet temperature", "degC", 0, 200, be -> be.plant().secondaryInC())
+            .number("secondary_outlet_temp", "Shell side outlet temperature", "degC", 0, 200, be -> be.plant().secondaryOutC())
+            .bool("shell_outlet_backed_up", "Shell outlet backed up", be -> be.plant().hotFill() >= 0.95);
+
+    static final Schema<dev.bwr.mod.water.WaterOutletChuteBlockEntity> WATER_OUTLET_CHUTE = new Schema<dev.bwr.mod.water.WaterOutletChuteBlockEntity>()
+            .bool("facing_water", "Facing open water", dev.bwr.mod.water.WaterOutletChuteBlockEntity::clearMouth)
+            .bool("enabled", "Chute open", dev.bwr.mod.water.WaterOutletChuteBlockEntity::enabled)
+            .number("flow", "Discharge flow", "kg/s", 0, 60000, dev.bwr.mod.water.WaterOutletChuteBlockEntity::flowKgPerS)
+            .number("discharge_temp", "Discharge temperature", "degC", 0, 200, dev.bwr.mod.water.WaterOutletChuteBlockEntity::temperatureC)
+            .number("heat_to_river", "Heat returned to the river", "MW", 0, 500, dev.bwr.mod.water.WaterOutletChuteBlockEntity::heatToRiverMW)
+            .number("returned", "Water returned", "kg", 0, 1e12, dev.bwr.mod.water.WaterOutletChuteBlockEntity::totalKg)
+            .toggle("enabled", "Chute open", (be, v) -> { be.setEnabled(v >= 0.5); return true; });
 
     static final Schema<CondenserBlockEntity> CONDENSER = new Schema<CondenserBlockEntity>()
             .bool("ready", "Ready", CondenserBlockEntity::ready)

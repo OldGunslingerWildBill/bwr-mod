@@ -87,6 +87,11 @@ linked pools (one pool is the wetwell, spec CONTAINMENT-SPEC §2.3):
 Verify that the existing RHR heat exchanger cooling the pool now visibly
 bounds containment pressure through §2.
 
+*Update:* the exchanger is a shell-and-tube block (tube side: pool or vessel water, shell side: cooling water). Its
+shell side can take raw water from a screened river or lake intake through a makeup pump and discharge it through the
+Water Outlet Chute; the same exchanger serves pool cooling (§3.1) and shutdown cooling (§3.2). See COOLING-WATER.md,
+"River cooling for the RHR heat exchanger".
+
 ### 3.2 Shutdown cooling (add if missing)
 Reactor water → RHR pump → RHR heat exchanger → back to the vessel, for
 cooldown to cold shutdown after a scram. Reuse the existing water-line,

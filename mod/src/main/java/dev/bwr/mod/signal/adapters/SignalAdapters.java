@@ -42,6 +42,7 @@ public final class SignalAdapters {
         SignalProviders.register(EccsPumpBlockEntity.class, PumpSignals.ECCS::bind);
         SignalProviders.register(SuppressionPoolBlockEntity.class, PlantSignals.POOL::bind);
         SignalProviders.register(RhrHeatExchangerBlockEntity.class, PlantSignals.HEAT_EXCHANGER::bind);
+        SignalProviders.register(dev.bwr.mod.water.WaterOutletChuteBlockEntity.class, PlantSignals.WATER_OUTLET_CHUTE::bind);
         SignalProviders.register(CondenserBlockEntity.class, PlantSignals.CONDENSER::bind);
         SignalProviders.register(CondensateStorageTankBlockEntity.class, PlantSignals.CONDENSATE_TANK::bind);
         SignalProviders.register(CoolingBlockEntity.class, PlantSignals.COOLING::bind);

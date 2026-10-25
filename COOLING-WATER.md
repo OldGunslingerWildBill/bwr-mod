@@ -118,6 +118,52 @@ print(textutils.serialize(pump.getStatus()))
 `flowKgPerS`, `ratedKgPerS`, `makeupKgPerS`, `heatRejectedMW`, `energyFE`, and
 `drawFEPerTick`, `inletC` and `outletC`. Control logic and interlocks remain the player's responsibility.
 
+## River cooling for the RHR heat exchanger
+
+The RHR heat exchanger (a shell-and-tube block, see [SUPPRESSION-BASIN.md](SUPPRESSION-BASIN.md)) can reject its heat
+into a river or lake with the same machines that make up a cooling-tower loop, plus one new block, the **Water Outlet
+Chute**:
+
+```text
+River/lake -> Screened Water Intake -> Makeup Water Pump -> pipe -> exchanger BLUE shell inlet
+                                                   exchanger CYAN shell outlet -> Water Outlet Chute -> River/lake
+```
+
+1. Build the intake and the makeup pump as above. Supply FE to the pump and set its speed above zero: **shell flow comes
+   from the pump**, up to its 1,500 kg/s rating (the exchanger takes at most 2,400 kg/s).
+2. Pipe the pump outlet to the exchanger's blue (shell inlet) flange.
+3. Put a **Water Outlet Chute** against the cyan (shell outlet) flange, or at the end of a pipe from it. Its back flange
+   is the water inlet (a pipe may touch only that face, and so may the exchanger); place it facing the river.
+4. Run the RHR pump as usual. Nothing starts by itself: the pump, the RHR pump and the chute are all commanded by the player.
+
+**Water Outlet Chute.** A concrete outfall: back flange, headwall, a trough with baffle blocks and a lip. It returns water to
+the river or lake and refuses to work unless it really faces open water:
+
+- the cell in front of the lip is water, or air above water at most four blocks down (the chute drops onto the surface);
+- that water has at least **four source blocks** within one block of the receiving cell, on its layer or the one below. A
+  puddle, a single bucket, a waterfall of flowing water alone, lava and a solid block in the mouth all fail the test.
+
+A chute that fails the test accepts no water at all: the heated water stays in the exchanger, its 12,000 kg hot buffer
+fills and cooling stops, exactly as for a blocked outlet. The panel (right-click) says why: "Chute blocked: no water in
+front of the mouth", "too little water", "blocked by a solid block". Placing a chute that does not face water shows a warning on the action bar.
+A chute can be switched off from its panel, a program or the Networking Wrench; a switched-off chute refuses water too.
+While water flows it sends a falling stream from the lip and a splash and bubbles where it meets the river; no ticker runs.
+
+**Water balance.** The intake draws ordinary river water at river temperature (13 C, the mod's one ambient figure) and
+the chute puts the same kilograms back, warmer. It creates no source blocks and removes none (the lake is a renewable
+abstraction, as for the tower loop), and the chute counts the water and heat it returns. A discharge at 27.1 MW through
+75 kg per tick (1,500 kg/s) leaves the exchanger about 4.3 C above the river; the full 2,400 kg/s gives 2.7 C. The heat goes
+into the river and is only reported: the world is not heated.
+
+**Readouts.** The exchanger panel shows tube-side and shell-side inlet and outlet temperatures, both flows, the duty in
+MW and the water held on each side, with a warning when the shell outlet is backing up. The chute panel shows whether it
+faces open water, water returned (kg), flow, discharge temperature, its rise over the river and the heat it returns in MW.
+
+**CC:Tweaked.** `bwr_rhr_heat_exchanger.getStatus()` adds `primaryInletC`, `secondaryInletC`, `secondaryOutletC`, `dutyMW` and
+`shellOutletBackedUp` to its existing fields. The chute is `bwr_water_outlet_chute`: `setEnabled(boolean)` and `getStatus()`
+(`enabled`, `facingWater`, `waterState`, `dischargedKg`, `flowKgPerS`, `temperatureC`, `riverTemperatureC`, `heatToRiverMW`).
+Networking Wrench signals for both are in [SIGNALS.md](SIGNALS.md).
+
 ## Models and references
 
 All five meshes, the separate fan rotor, Blender files, renders and authoring script

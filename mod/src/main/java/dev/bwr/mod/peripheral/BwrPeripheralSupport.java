@@ -78,6 +78,7 @@ public final class BwrPeripheralSupport {
         if(be instanceof dev.bwr.mod.grid.GridTieBlockEntity b)return new GridTiePeripheral(b);
         if(be instanceof SlcTankBlockEntity b)return new HardwarePeripheral("bwr_slc_tank",()->Map.of(
                 "connected",b.ready(),"solutionKg",b.solution().massKg(),"borateKg",b.solution().borateKg(),"boronPpm",b.solution().boronFraction()*1e6,"temperatureC",b.solution().temperatureC(),"capacityKg",dev.bwr.core.eccs.BoronSolution.CAPACITY_KG));
+        if(be instanceof dev.bwr.mod.water.WaterOutletChuteBlockEntity b)return new WaterOutletChutePeripheral(b);
         if(be instanceof dev.bwr.mod.water.WaterDischargeBlockEntity b)return new WaterDischargePeripheral(b);
         if(be instanceof EccsPumpBlockEntity b)return new EccsPumpPeripheral(b);
         if(be instanceof FeedwaterPumpBlockEntity b)return new FeedwaterPumpPeripheral(b);

@@ -234,6 +234,8 @@ public final class BwrBlockEntities {
             BLOCK_ENTITIES.register("slc_boron_tank", () -> BlockEntityType.Builder.of(dev.bwr.mod.eccs.SlcTankBlockEntity::new,BwrBlocks.SLC_BORON_TANK.get()).build(null));
     public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.water.WaterDischargeBlockEntity>> WATER_DISCHARGE =
             BLOCK_ENTITIES.register("water_discharge_port", () -> BlockEntityType.Builder.of(dev.bwr.mod.water.WaterDischargeBlockEntity::new,BwrBlocks.WATER_DISCHARGE_PORT.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<dev.bwr.mod.water.WaterOutletChuteBlockEntity>> WATER_OUTLET_CHUTE =
+            BLOCK_ENTITIES.register("water_outlet_chute", () -> BlockEntityType.Builder.of(dev.bwr.mod.water.WaterOutletChuteBlockEntity::new,BwrBlocks.WATER_OUTLET_CHUTE.get()).build(null));
 
     /**
      * One type for both reactor feed pumps. They differ only in the

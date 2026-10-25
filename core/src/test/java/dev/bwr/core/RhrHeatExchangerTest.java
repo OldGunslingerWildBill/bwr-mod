@@ -34,6 +34,22 @@ public final class RhrHeatExchangerTest {
         near(copy.cold()+copy.hot()+1.25,123.75);
         copy.restore(Double.NaN,Double.POSITIVE_INFINITY,-3);near(copy.cold()+copy.hot()+copy.hotEnergyKJ(),0);
     }
+    public static void test06_inletAndOutletReadoutsOnBothSides(){
+        var p=new SuppressionPool(64_000,80);var h=new RhrHeatExchanger();
+        near(h.primaryInC(),0);near(h.secondaryInC(),13);
+        h.fillCold(12_000,false);h.step(p,448,.05);
+        near(h.primaryInC(),80);near(h.secondaryInC(),13);
+        if(h.primaryOutC()>=h.primaryInC()||h.secondaryOutC()<=h.secondaryInC())throw new AssertionError("Tube side must cool and shell side must warm");
+        // Each side's heat balance (flow x cp x temperature change) is the duty, within the constant-cp approximation.
+        if(Math.abs(h.primaryFlow()*4.184*(h.primaryInC()-h.primaryOutC())/1000-h.heatMW())>.01*h.heatMW())throw new AssertionError("Tube side balance");
+        if(Math.abs(h.secondaryFlow()*4.184*(h.secondaryOutC()-h.secondaryInC())/1000-h.heatMW())>.02*h.heatMW())throw new AssertionError("Shell side balance");
+        h.step(p,0,.05);near(h.primaryInC(),0);near(h.heatMW(),0);
+        // The shell outlet reports backing up before cooling stops.
+        h.restore(12_000,11_900,0);if(h.hotFill()<.99)throw new AssertionError("hot buffer fill");
+        // Vessel loop: the same readouts, mass untouched.
+        var r=new RhrHeatExchanger();r.fillCold(12_000,false);r.stepReactor(120,50_000,448,.05);
+        near(r.primaryInC(),120);near(r.secondaryInC(),13);if(r.primaryOutC()>=120||r.heatMW()<=0)throw new AssertionError("Shutdown cooling readouts");
+    }
     public static void test05_basinSurveyPreservesCondensedWater(){
         var p=new SuppressionPool(64_000,32);p.condenseSteam(100,1000,1);
         double water=p.getMassKg(),temperature=p.getTemperatureC();

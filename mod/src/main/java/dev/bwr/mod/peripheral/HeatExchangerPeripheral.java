@@ -10,6 +10,9 @@ public final class HeatExchangerPeripheral implements IPeripheral {
     public boolean equals(IPeripheral other){return other instanceof HeatExchangerPeripheral p&&p.be==be;}
     @LuaFunction(mainThread=true) public Map<String,Object> getStatus(){
         var p=be.plant();var m=new LinkedHashMap<String,Object>();m.put("poolConnected",be.returnPool()!=null);
-        m.put("coldWaterKg",p.cold());m.put("hotWaterKg",p.hot());m.put("heatRejectedMW",p.heatMW());m.put("hotWaterC",p.hotTemperatureC());m.put("coldWaterC",p.coldTemperatureC());m.put("primaryFlowKgPerS",p.primaryFlow());m.put("secondaryFlowKgPerS",p.secondaryFlow());m.put("primaryOutletC",p.primaryOutC());return m;
+        m.put("coldWaterKg",p.cold());m.put("hotWaterKg",p.hot());m.put("heatRejectedMW",p.heatMW());m.put("hotWaterC",p.hotTemperatureC());m.put("coldWaterC",p.coldTemperatureC());m.put("primaryFlowKgPerS",p.primaryFlow());m.put("secondaryFlowKgPerS",p.secondaryFlow());m.put("primaryOutletC",p.primaryOutC());
+        // Shell-and-tube names: the tube side is the RHR water, the shell side is the cooling water.
+        m.put("primaryInletC",p.primaryInC());m.put("secondaryInletC",p.secondaryInC());m.put("secondaryOutletC",p.secondaryOutC());
+        m.put("dutyMW",p.heatMW());m.put("shellOutletBackedUp",p.hotFill()>=.95);return m;
     }
 }

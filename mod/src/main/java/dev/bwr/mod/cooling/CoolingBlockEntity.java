@@ -28,6 +28,8 @@ public class CoolingBlockEntity extends BlockEntity {
     public int connectedSources;
     public float fanAngle,previousFanAngle;
     private double vaporActivity;
+    /** Cumulative water an intake has drawn from its river or lake (kg); the outlet chute's returned total answers it. */
+    private double drawnKg;
     private long vaporUpdated=Long.MIN_VALUE;
     public CoolingBlockEntity(BlockPos p,BlockState s){
         super(BwrBlockEntities.COOLING.get(),p,s);root=p.immutable();cell=layout().controllerIndex();
@@ -42,6 +44,7 @@ public class CoolingBlockEntity extends BlockEntity {
     public double target(){return target;}public double actual(){return actual;}public int draw(){return draw;}
     public int storedFE(){return energy==null?0:energy.getEnergyStored();}
     public double vaporActivity(){return vaporActivity;}
+    public double riverDrawnKg(){return drawnKg;}
     public void setTarget(double n){if(Double.isFinite(n)&&n>=0&&n<=1&&design().watts>0){target=n;setChanged();}}
     public void bind(CoolingBlockEntity owner,int index){root=owner.worldPosition;assembly=owner.assembly;cell=index;layoutVersion=owner.layoutVersion;setChanged();}
     public boolean matches(CoolingBlockEntity owner){return root.equals(owner.worldPosition)&&assembly.equals(owner.assembly)&&getBlockState().getBlock()==owner.getBlockState().getBlock()&&getBlockState().getValue(CoolingBlock.FACING)==owner.getBlockState().getValue(CoolingBlock.FACING);}
@@ -110,7 +113,7 @@ public class CoolingBlockEntity extends BlockEntity {
             be.actual=rating==0?1:Math.min(be.target,Math.cbrt((double)be.energy.getEnergyStored()/rating));
             be.draw=rating==0?0:Math.min(be.energy.getEnergyStored(),(int)Math.ceil(rating*Math.pow(be.actual,3)));
             be.energy.drain(be.draw);
-            if(be.design()==Design.INTAKE){if(be.submerged())be.unit.fillInput(be.design().flow/20,false);else be.actual=0;}
+            if(be.design()==Design.INTAKE){if(be.submerged())be.drawnKg+=be.unit.fillInput(be.design().flow/20,false);else be.actual=0;}
             else if(!be.design().tower&&be.actual>0)CoolingWaterTransfer.pull(be);
             be.unit.tick(.05,be.actual);
             // Towers are basins: the circulation pump must draw their cooled output.
@@ -164,13 +167,13 @@ public class CoolingBlockEntity extends BlockEntity {
     @Override public ClientboundBlockEntityDataPacket getUpdatePacket(){return ClientboundBlockEntityDataPacket.create(this);}
     @Override protected void saveAdditional(CompoundTag t,HolderLookup.Provider r){
         super.saveAdditional(t,r);t.putLong("Root",root.asLong());t.putUUID("Assembly",assembly);t.putInt("Cell",cell);t.putInt("LayoutVersion",layoutVersion);
-        if(unit!=null){t.putDouble("InputH",unit.inputH());t.putDouble("OutputH",unit.outputH());t.putDouble("Input",unit.input());t.putDouble("Output",unit.output());t.putDouble("Loss",unit.totalLoss());t.putDouble("Target",target);t.putDouble("Actual",actual);t.putInt("Energy",energy.getEnergyStored());}
+        if(unit!=null){t.putDouble("InputH",unit.inputH());t.putDouble("OutputH",unit.outputH());t.putDouble("Input",unit.input());t.putDouble("Output",unit.output());t.putDouble("Loss",unit.totalLoss());t.putDouble("Target",target);t.putDouble("Actual",actual);t.putInt("Energy",energy.getEnergyStored());if(drawnKg>0)t.putDouble("DrawnKg",drawnKg);}
     }
     @Override protected void loadAdditional(CompoundTag t,HolderLookup.Provider r){
         super.loadAdditional(t,r);layoutVersion=Math.clamp(t.getInt("LayoutVersion"),1,3);root=t.contains("Root")?BlockPos.of(t.getLong("Root")):worldPosition;if(t.hasUUID("Assembly"))assembly=t.getUUID("Assembly");cell=t.contains("Cell")?t.getInt("Cell"):layout().controllerIndex();
         if(unit!=null){unit.restore(t.getDouble("Input"),t.getDouble("Output"),t.getDouble("Loss"),
                 t.contains("InputH")?t.getDouble("InputH"):dev.bwr.core.thermal.Saturation.subcooledLiquidEnthalpyKJPerKg(design().tower?24:13),
-                t.contains("OutputH")?t.getDouble("OutputH"):dev.bwr.core.thermal.Saturation.subcooledLiquidEnthalpyKJPerKg(13));energy.setStored(t.getInt("Energy"));
+                t.contains("OutputH")?t.getDouble("OutputH"):dev.bwr.core.thermal.Saturation.subcooledLiquidEnthalpyKJPerKg(13));energy.setStored(t.getInt("Energy"));{double d=t.getDouble("DrawnKg");drawnKg=Double.isFinite(d)&&d>0?d:0;}
             if(t.contains("Target"))setTarget(t.getDouble("Target"));double a=t.getDouble("Actual");actual=Double.isFinite(a)?Math.clamp(a,0,1):0;}
         structureDirty=true;checkedAt=drainTick=Long.MIN_VALUE;drained=0;
         double vapor=t.getDouble("VaporActivity");vaporActivity=Double.isFinite(vapor)?Math.clamp(vapor,0,1):0;
