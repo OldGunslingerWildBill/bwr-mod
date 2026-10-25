@@ -147,6 +147,7 @@ public final class AcceptanceTests {
             dev.bwr.core.radiation.DoseModelTest.class,
             dev.bwr.core.isotope.RadioisotopePowerTest.class,
             dev.bwr.core.isotope.IsotopeExtractionTest.class,
+            dev.bwr.core.isotope.LargeRtgStoreTest.class,
             dev.bwr.core.refuelling.FuelElevatorMotionTest.class,
     };
 
