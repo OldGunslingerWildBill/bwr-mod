@@ -1,5 +1,5 @@
 {
-  "parent": "bwr:block/pumps/rhr_pump_modern/compact",
+  "parent": "bwr:block/pumps/rhr_pump_modern/inventory",
   "display": {
     "gui": {
       "rotation": [
