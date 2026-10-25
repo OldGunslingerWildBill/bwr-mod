@@ -1,0 +1,39 @@
+newmtl mat_0
+Kd 0.7 0.71 0.69
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_1
+Kd 0.72 0.728 0.708
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_2
+Kd 0.575 0.6 0.6
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_3
+Kd 0.65 0.66 0.64
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_4
+Kd 0.684 0.694 0.676
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_5
+Kd 0.708 0.716 0.7
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_6
+Kd 0.692 0.702 0.684
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_7
+Kd 0.52 0.53 0.52
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_8
+Kd 0.15 0.18 0.17
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_9
+Kd 0.17 0.485 0.556
+map_Kd minecraft:block/white_concrete

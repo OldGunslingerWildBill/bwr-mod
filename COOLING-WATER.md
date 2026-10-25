@@ -14,10 +14,9 @@ circulating-water circuit; it does not replace the reactor's DVSS recirculation 
 These are game design ratings, not manufacturer-certified pump curves. Dimensions
 are scaled for Minecraft. One natural tower or six circular towers can process the
 condenser's 60,000 kg/s design flow; two large circulating pumps provide that flow.
-Use fewer machines for smaller loads. The revised circular tower has 19 animated fans. Its louvers, fan stacks,
-service deck, safety rails and ladder are modeled in Blender from real tower
-photographs. The natural tower now has concrete pour lines, varied panels,
-braced supports, a service walkway and distribution piping. Ratings are unchanged.
+Use fewer machines for smaller loads. The circular tower has **six** animated fans in a ring, as Columbia's
+towers do (alpha.54 remodel; see [Tower models](#tower-models-alpha54)). The natural tower is a hyperbolic
+concrete shell on diagonal X legs. Ratings are unchanged.
 
 ## Connect the loop
 
@@ -135,8 +134,8 @@ Photo references for this revision:
 - [SPIG cooling-tower brochure](https://spig-gmab.com/wp-content/uploads/2024/11/SPIG_001_Cooling_Towers.pdf): fan decks, railings, air intakes and natural-draft structures.
 - [USGS natural-draft cooling tower photograph](https://www.usgs.gov/media/images/natural-draft-cooling-tower): hyperbolic concrete shell.
 
-These references inform original, scaled game geometry; the 19-fan model is an
-artistic adaptation, not a certified Columbia construction drawing.
+These references inform original, scaled game geometry. (The alpha.9 to alpha.53 model showed 19 fans; the
+photographs show six per tower, and alpha.54 corrected it. See [COOLING-TOWERS-REFERENCE.md](COOLING-TOWERS-REFERENCE.md).)
 
 - [Flowserve VCT circulating-water pump](https://www.flowserve.com/products/products-catalog/pumps/vertical-pumps/wet-pit-pumps/flowserve-vct-wet-pit-pump/): large wet-pit pump reference for the motor, column and discharge arrangement.
 - [Flowserve VTP vertical turbine pump](https://www.flowserve.com/products/products-catalog/pumps/vertical-pumps/wet-pit-pumps/flowserve-vtp-wet-pit-pump/): smaller general water-pump reference.
@@ -194,6 +193,51 @@ Supplied water retains its enthalpy and mixes with the hotwell inventory.
 It does not enter the cold/hot circulating-water inventories. Water chemistry
 and purification are not simulated. Older placed condensers must be drained
 and replaced to receive these new physical ports.
+
+## Tower models (alpha.54)
+
+![Natural-draft tower, Blender studio render](art/models/cooling/natural_draft_tower.png)
+![Columbia-style round tower, Blender studio render](art/models/cooling/mechanical_draft_tower.png)
+
+Both towers were rebuilt in headless Blender (`art/models/cooling/build_towers_v2.py`, with the geometry kit
+`tower_kit.py`; run `blender --background --python art/models/cooling/build_towers_v2.py -- all`, then
+`python tools-export-cooling.py`). Flat concrete and steel colours, no textures, no brand names. This is a visual
+remodel: blocks, sizes, footprints, ports, rotor pivots, physics and saves are unchanged. The collision cells are the
+alpha.53 cells (the `boxes` live in `art/models/cooling/occupancy_alpha53.json`; the exported layout JSON agrees with
+the old one to within 5e-6 block), so a tower placed in any earlier version loads and fits exactly.
+
+**What Columbia's towers are.** Six round, precast-concrete, mechanical-draft towers, **induced draft**, six fans in a
+ring on each (36 cells in all). The owner's brief said "forced draft"; the photographs and the sources show fans on the
+deck pulling air up through louvered drums, which is induced draft. The model follows what they show.
+
+| | Triangles before | Triangles now |
+| --- | ---: | ---: |
+| Natural-draft tower | 60,140 | 35,604 (distant LOD: 5,264) |
+| Round induced-draft tower | 48,200 | 23,506 |
+| Fan rotor (one of six, separate and animated) | 84 | 224 |
+
+- **Natural draft** (25 x 36 x 25): hyperbolic shell in 28 pour lifts with stepped joints and five concrete tones; a
+  thick ring beam on 80 diagonal legs (crossing X) standing on pedestals; fill packs, spray mains and drift
+  eliminators seen through the legs; a cold-water basin; a caged ladder with three landings up the shell; a rim
+  handrail; red aviation lamps at the rim and at mid height. The outside curve is the old one.
+- **Round induced draft** (17 x 8 x 17): four louver tiers between precast columns, a pale concrete deck with six
+  flared fan stacks, a dark hot-water distribution ring with panel seams, motors and drive shafts on the deck, a
+  stair tower with a walkway bridge. The six fans turn exactly as before (same pivots, same speed rule); the
+  blades are eight twisted blades whose leading edge is the lower one, so they pitch air upward as an induced-draft fan
+  must (the rotation direction itself is unchanged).
+- **LOD.** Beyond 80 blocks from the tower's bounds the renderer draws a 5,264-triangle stand-in for the big
+  shell (same silhouette and colours). Both meshes are built once into the cached GPU buffers; switching is a
+  distance test per frame, with no rebuilding. The vapor and plume behaviour is untouched.
+- **Rectangular cell tower.** Not added (see COOLING-TOWERS-REFERENCE.md for the reason).
+
+In-game pictures from `-PbwrCoolingTowerShots` (1920 x 1080, `art/models/cooling/shots/`):
+
+![Both towers running](art/models/cooling/shots/both-towers.png)
+![Round tower, the six fans and deck](art/models/cooling/shots/round-fan-stack-closeup.png)
+![Round tower louvers and ports](art/models/cooling/shots/round-louvers-and-ports.png)
+![Natural-draft base legs](art/models/cooling/shots/natural-base-legs.png)
+![Natural-draft rim, ladder and lamps](art/models/cooling/shots/natural-rim-and-ladder.png)
+![Distant view, LOD shell](art/models/cooling/shots/natural-lod-far.png)
 
 ## Tower vapor (alpha.12)
 

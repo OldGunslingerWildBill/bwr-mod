@@ -36,8 +36,13 @@ for id in IDS:
     m.put(m.RES/f'assets/bwr/blockstates/{id}.json',{'variants':{'':{'model':f'bwr:block/{id}'}}})
     m.put(m.RES/f'assets/bwr/models/item/{id}.json',{'parent':f'bwr:block/cooling/{id}/compact','display':{'gui':{'rotation':[20,225,0],'scale':[1,1,1]}}})
     m.put(m.RES/f'data/bwr/loot_table/blocks/{id}.json',{'type':'minecraft:block','pools':[{'rolls':1,'entries':[{'type':'minecraft:item','name':'bwr:'+id}],'conditions':[{'condition':'minecraft:block_state_property','block':'bwr:'+id,'properties':{'controller':'true'}},{'condition':'minecraft:survives_explosion'}]}]})
-    m.put(m.RES/f'data/bwr/recipe/{id}.json',{'type':'minecraft:crafting_shaped','pattern':['IPI','ICI','III'],'key':{'I':{'item':'minecraft:iron_block' if 'tower' not in id else 'minecraft:smooth_stone'},'P':{'item':'bwr:high_pressure_water_pipe'},'C':{'item':'minecraft:comparator' if id!='screened_water_intake' else 'minecraft:iron_bars'}},'result':{'id':'bwr:'+id,'count':1}})
+    if not (m.RES/f'data/bwr/recipe/{id}.json').exists():m.put(m.RES/f'data/bwr/recipe/{id}.json',{'type':'minecraft:crafting_shaped','pattern':['IPI','ICI','III'],'key':{'I':{'item':'minecraft:iron_block' if 'tower' not in id else 'minecraft:smooth_stone'},'P':{'item':'bwr:high_pressure_water_pipe'},'C':{'item':'minecraft:comparator' if id!='screened_water_intake' else 'minecraft:iron_bars'}},'result':{'id':'bwr:'+id,'count':1}})
     print(id,len(s['faces']),'triangles',len(cells),'cells',len(s['ports']),'ports')
+if (m.SOURCE/'natural_draft_tower_lod.json').is_file():
+    # Distant version of the big hyperbolic shell: same colours, far fewer triangles (chosen by CoolingRenderer.useLod).
+    s=m.read('natural_draft_tower_lod.json');folder=m.RES/'assets/bwr/models/block/cooling/natural_draft_tower_lod';mats=m.materials(s,folder)
+    m.put(folder/'body.obj',m.obj(s['faces'],mats));m.put(folder/'body.json',m.model('bwr:models/block/cooling/natural_draft_tower_lod/body.obj'))
+    print('natural_draft_tower_lod',len(s['faces']),'triangles')
 s=m.read('cooling_fan.json');folder=m.RES/'assets/bwr/models/block/cooling/fan';mats=m.materials(s,folder)
 m.put(folder/'body.obj',m.obj(s['faces'],mats));m.put(folder/'body.json',m.model('bwr:models/block/cooling/fan/body.obj'))
 for p,data in m.OUTPUTS.items():
