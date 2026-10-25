@@ -1,0 +1,116 @@
+{
+  "title": "Refuelling",
+  "docs": [
+    "SPENT-FUEL-POOL.md",
+    "REFUELLING-BRIDGE.md",
+    "BUILDING-CRANE.md"
+  ],
+  "pages": [
+    {
+      "title": "Spent fuel and the pool",
+      "text": [
+        "A discharged assembly keeps its decay heat: 315 kW at discharge for a 45 GWd/t assembly, 63 kW after an hour and 23 kW after a day. It waits in the spent fuel pool.",
+        "",
+        "Build a lined box of Spent Fuel Pool Lining (outside 5 to 25 blocks wide and deep, 8 to 16 high) with one Spent Fuel Pool Controller and racks: exactly four rack blocks stacked on the floor make one rack of four assemblies. Fit a makeup port and the cooling ports. You run the cooling and supply the makeup water. Let it go and the water boils off and the fuel uncovers."
+      ],
+      "icons": [
+        "bwr:spent_fuel_pool_controller",
+        "bwr:spent_fuel_pool_wall",
+        "bwr:spent_fuel_rack",
+        "bwr:spent_fuel_pool_makeup_port"
+      ]
+    },
+    {
+      "title": "The new fuel elevator",
+      "text": [
+        "Stand a New Fuel Elevator on top of the rim of a formed pool wall, on a straight run. Its guide frame hangs down the inside of the wall under the water. Put an assembly in its hatch by right-click, hopper or pipe and the carriage takes it down, over the racks, into the first free cell.",
+        "",
+        "It says why when it refuses: not on a pool, every cell taken, or under 1.5 m of water over the handle. RAISE COOLEST on its screen brings the coolest assembly back up. A hot one out of the water is a radiation source."
+      ],
+      "icons": [
+        "bwr:new_fuel_elevator",
+        "bwr:spent_fuel_rack",
+        "bwr:fuel_assembly"
+      ]
+    },
+    {
+      "title": "The refuelling bridge",
+      "text": [
+        "Fuel moves on a refuelling bridge, one assembly at a time and always under water. Build two parallel runs of Refuelling Rail over the open reactor and the pool, a straight row of Transfer Canal blocks (the cattle chute) between the reactor and the pool with a Canal Gate in it, and a Refuelling Bridge Console beside a rail.",
+        "",
+        "The bridge moves fuel only. The head, the dryer and the separators are lifted by the reactor building crane (the next pages). Instant refuelling by clicking the refuelling map is a server option, off by default."
+      ],
+      "icons": [
+        "bwr:refuelling_rail",
+        "bwr:transfer_canal",
+        "bwr:canal_gate",
+        "bwr:refuelling_bridge_console"
+      ]
+    },
+    {
+      "title": "Opening the vessel",
+      "text": [
+        "The head does not come off with a button. Depressurise to 25 psig or less, stand a Stud Tensioner on the refuel floor beside the well, give it power and press DETENSION. The tool goes round the flange stud by stud, 4 seconds and 3,000 FE each: 296 seconds and 222,000 FE for 74 studs. The nuts come off; the studs stay in the flange.",
+        "",
+        "After the crane has set the head back, RETENSION brings the studs to load, 6 seconds and 6,000 FE each. The vessel holds pressure only with every stud at load."
+      ],
+      "icons": [
+        "bwr:stud_tensioner",
+        "bwr:reactor_vessel"
+      ]
+    },
+    {
+      "title": "The reactor building crane",
+      "text": [
+        "The crane lifts the head, the dryer and the separators. Build two parallel runs of Crane Runway Rail high on opposite walls of the hall, up to 40 blocks apart, over the reactor, and a Crane Console beside a rail. Place a Head Stand on clear floor between the rails beside the well, as much room round it as the vessel is wide.",
+        "",
+        "In the console, LIFT HEAD carries the head on its strongback to the stand. The head lifts only with every stud detensioned. If the rails are too low the console says how high to build them."
+      ],
+      "icons": [
+        "bwr:crane_runway_rail",
+        "bwr:building_crane_console",
+        "bwr:head_stand"
+      ]
+    },
+    {
+      "title": "Flood the well",
+      "text": [
+        "With the head off, raise the water over the flange with your own feed, condensate or residual heat removal pumps. Nothing floods by itself.",
+        "",
+        "A cavity seal, a steel plate round the flange, keeps the water above the drywell. It forms where full blocks touch the vessel or stand one block off, all round, in the top third of the vessel. Without it the water leaks into the drywell. The INFO tab says why.",
+        "",
+        "To lower the well, set a Cavity Drain Port in its wall or floor, pipe it through a Motor-Operated Water Valve to a Condensate Storage Tank, and open the valve."
+      ],
+      "icons": [
+        "bwr:reactor_vessel",
+        "bwr:cavity_drain_port",
+        "bwr:motor_operated_water_valve"
+      ]
+    },
+    {
+      "title": "Dryer and separators out",
+      "text": [
+        "With the head off and the vessel flooded to its flange, the crane lifts the dryer, then the separators. Place an Equipment Storage Pad for each on the floor of a pit of water between the rails and press DRYER OUT, then SEPS OUT, in the crane console.",
+        "",
+        "Both come up out of the water, so the survey meter spikes; keep the pit full. To close up: SEPS IN, DRYER IN, then SET HEAD, and retension the studs. The head will not go on until both are back."
+      ],
+      "icons": [
+        "bwr:equipment_pad",
+        "bwr:building_crane_console",
+        "bwr:survey_meter"
+      ]
+    },
+    {
+      "title": "Moving fuel with the bridge",
+      "text": [
+        "The vessel head must be off, the well flooded and the dryer and separators out first (all with the crane). In the bridge console's map pick a core position and a rack cell, then TO POOL or TO CORE. A move takes about 50 seconds on the smallest plant.",
+        "",
+        "The bridge will not lift an assembly higher than leaves 1.5 m of water over it unless you override. An assembly lifted out of the water makes the survey meter spike."
+      ],
+      "icons": [
+        "bwr:refuelling_bridge_console",
+        "bwr:survey_meter"
+      ]
+    }
+  ]
+}
