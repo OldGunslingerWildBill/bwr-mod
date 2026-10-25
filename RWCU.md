@@ -82,7 +82,7 @@ F h_v = (F - B) h_ret + B h_x + Q_c          (energy closes)
 
 **What the vessel is charged** (no double counting): the water drawn and returned is not a flow; the blowdown `B` leaves as saturated
 liquid like any other liquid sink (it is a separate input, `ReactorCore.addCleanupLoop`, and is not water on the drywell floor); the heat is
-`(F - B)(h_v - h_ret)`, the same sink channel the RHR loop uses. At the rated 285 C and 57 kg/s, a cooler that can supply its duty
+`(F - B)(h_v - h_ret)`, the same sink channel the RHR loop uses. At 285 C and the pump's rated 60 kg/s, a cooler that can supply its duty
 returns the water at 267 C and the vessel loses **4.96 MW** (62 MW without the regenerator); all of it goes to the cooling water.
 If cooling water is short `h_x` rises: with 2 MW of cooling the resin sees about 190 C, with none, vessel temperature.
 
