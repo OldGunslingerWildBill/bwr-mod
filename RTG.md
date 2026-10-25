@@ -205,7 +205,7 @@ world or advancement loses its route; the owner may retire it.
 dose) and `IsotopeExtractionTest` (mass conserved to the grain over 20,000 random inputs and 500 items, the documented
 masses). GameTests, namespace `bwrrtg` (`RtgTests`): extraction from real spent fuel through the real plant with mass
 accounted; the separator's fractions and saves; old reprocessing saves load; an RTG powers a real neighbour (delivered plus
-waiting is rate times ticks to within 1 FE) and gives zero with no fuel; decay in the block; the RTG's save; the carried
+waiting is rate times ticks to within one and a half ticks of output; the measured sum is one tick of output short, never over) and gives zero with no fuel; decay in the block; the RTG's save; the carried
 dose and the block's point source; the fuel list as data and a parsing radium line; the recipes; the signals; the computer
 faces. `-PbwrRtgClientCheck` takes the pictures.
 
