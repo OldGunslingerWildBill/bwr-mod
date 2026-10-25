@@ -14,7 +14,7 @@ from a control room you build yourself.
 
 ## Status
 
-**Early alpha preview. Current version: `0.1.0-alpha.54`.** Expect rough edges and changes between
+**Early alpha preview. Current version: `0.1.0-alpha.55`.** Expect rough edges and changes between
 releases. **Back up your worlds before updating.** History is in [CHANGELOG.md](CHANGELOG.md).
 
 Source is publicly readable under the custom
