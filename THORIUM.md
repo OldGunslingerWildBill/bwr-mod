@@ -35,8 +35,8 @@ their numbers and their 2, 3 and 5 % driver fractions are the existing fuel type
 | Thorium Nugget | `bwr:thorium_nugget` | nine to an ingot, both ways |
 | Block of Thorium | `bwr:thorium_block` | nine ingots, both ways |
 | Rare Earth Concentrate | `bwr:rare_earth_concentrate` | byproduct (below); with an iron ingot it makes a flint and steel (ferrocerium is a cerium alloy) |
-| Lead Nugget, Lead Ingot | `bwr:lead_nugget`, `bwr:lead_ingot` | byproduct (below); nine to one both ways; no use in this mod, tagged for others |
-| Radium | `bwr:radium` | rare byproduct (below); a radioactive source material |
+| Lead Nugget, Lead Ingot | `bwr:lead_nugget`, `bwr:lead_ingot` | byproduct of thorium and uranium ore (below); nine to one both ways; no use in this mod, tagged for others |
+| Radium | `bwr:radium` | rare byproduct of thorium and uranium ore (below); a radioactive source material |
 
 Drops and tags follow the uranium blocks: the ores and the sand drop one raw thorium, Fortune adds the vanilla ore bonus (Fortune III averages 2.2), Silk Touch drops the
 block and **none of the byproducts**; the storage blocks drop themselves. Tags: `c:ores/thorium` (both ores and the sand), `c:ores_in_ground/stone` and `/deepslate`,
@@ -65,17 +65,21 @@ Real ore comes with other elements, and the ore drops them. The main drop is unc
   carrying a meter accumulates dose. One capsule reads about 0.065 mSv/h at a metre (the GameTest prints it: 0.0065 mSv/h for a tenth of this activity), sixteen in a stack sixteen times that, and a carrier's own body is at half a metre. Its tooltip says so. It is a
   **source material only**: this mod gives it no use and no recipe; it is on the not-crafted list. Radium is hazardous (it behaves like calcium in the body and its
   decay product radon is a lung carcinogen: EPA, Wikipedia), which is why it is rare and why nothing here makes it casually.
-- **Not included:** vanadium, copper and the like are real uranium-ore companions, not thorium's; see "Proposed for uranium ore" below.
+- **Not on thorium ore:** vanadium and copper are real uranium-ore companions; they are on uranium ore, see "Byproducts of mining uranium ore" below.
 
-### Proposed for uranium ore (not applied: an existing assertion blocks it)
+### Byproducts of mining uranium ore
 
-The owner asked for the same kind of byproducts on **uranium ore** (lead from the decay chain, radium, and companions such as vanadium in carnotite). That edit is **not made**:
-the existing GameTest `UraniumOreTests.oresDropRawUraniumWithFortuneAndThemselvesWithSilkTouch` asserts that a mined uranium ore gives exactly one item
-(`plain.size() == 1`, line 205, and `f.size() == 1`, line 212, with Fortune III), which any byproduct pool breaks. The pools are ready (the same `pool(...)` shape as
-`data/bwr/loot_table/blocks/thorium_ore.json`): `bwr:lead_nugget` 10 / 13 / 16 / 20 % (uranium-238 ends as lead-206), `bwr:radium` 1 / 1.5 / 2 / 2.5 % (radium-226 is in
-secular equilibrium with the uranium: about a third of a gram per tonne of uranium, which is why it is rare), optionally `c:raw_materials/vanadium` as a tag entry
-(carnotite; nothing drops when no mod provides one) and `minecraft:raw_copper`. Applying them needs the owner to relax those two assertions to "the first drop is raw
-uranium" and says nothing else.
+The same kind of extra drops are on `bwr:uranium_ore` and `bwr:deepslate_uranium_ore` (loot tables in `data/bwr/loot_table/blocks`; the main drop, one raw uranium with the
+vanilla Fortune bonus, and Silk Touch giving the block alone, are unchanged). Each is its own chance for Fortune 0 / I / II / III, skipped on Silk Touch:
+
+| Byproduct | Chances | Why |
+|---|---|---|
+| Lead Nugget (1 to 2) | 10 / 13 / 16 / 20 % | lead-206 is the stable end of the uranium-238 series (uranium-lead dating) |
+| Radium | 1 / 1.5 / 2 / 2.5 % | radium-226 is in the series; about a third of a gram per tonne of uranium at equilibrium, which is why it is rare |
+| Raw Vanadium, **whatever a mod tags `c:raw_materials/vanadium`** | 4 / 5 / 6 / 8 % | carnotite, the uranium-vanadium mineral of the Colorado Plateau, was mined for both; this mod has no vanadium, so nothing drops unless another mod provides it (a loot tag entry, no mod name in the file) |
+| Raw Copper (vanilla) | 4 / 5 / 6 / 8 % | copper is recovered with uranium at deposits such as Olympic Dam |
+
+Lead and radium are the same items as thorium ore's (`bwr:lead_nugget`, `bwr:radium`), so both ores feed the same lead and the same radium.
 
 ## World generation
 
