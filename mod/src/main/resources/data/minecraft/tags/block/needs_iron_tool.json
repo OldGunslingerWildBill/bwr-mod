@@ -54,6 +54,9 @@
     "bwr:rwcu_regenerative_heat_exchanger",
     "bwr:rwcu_nonregenerative_heat_exchanger",
     "bwr:rwcu_filter_demineralizer",
-    "bwr:rpv_bottom_drain_port"
+    "bwr:rpv_bottom_drain_port",
+    "bwr:main_oil_tank",
+    "bwr:shaft_oil_pump",
+    "bwr:generator_cooling_skid"
   ]
 }

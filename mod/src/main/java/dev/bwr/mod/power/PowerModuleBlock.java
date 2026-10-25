@@ -55,7 +55,16 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
             module.establishIdentity();
             var data=stack.getOrDefault(net.minecraft.core.component.DataComponents.CUSTOM_DATA,net.minecraft.world.item.component.CustomData.EMPTY).copyTag();
             if(data.contains("BwrPowerCondition"))module.restoreCondition(data.getCompound("BwrPowerCondition"));
+            // A module a player places from a fresh item starts a train that needs its auxiliaries; one that comes from a
+            // dismantled module keeps whatever that one was, so an old plant moved piece by piece stays an old plant.
+            else if(placer instanceof Player&&dev.bwr.mod.config.GameplayConfig.turbineAuxRequired())module.markAuxRequired();
+            adoptSkids(level,origin(pos,state));
         }
+    }
+    /** Skids that were waiting for this module (their neighbour updates came before its controller existed) attach now. */
+    private static void adoptSkids(Level level,BlockPos root){
+        for(var p:BlockPos.betweenClosed(root.offset(-6,-1,-6),root.offset(6,6,6)))
+            if(level.getBlockState(p).getBlock() instanceof TurbineAuxBlock)TurbineAuxBlock.attach(level,p.immutable());
     }
     @Override protected java.util.List<net.minecraft.world.item.ItemStack> getDrops(BlockState state,net.minecraft.world.level.storage.loot.LootParams.Builder params) {
         var drops=super.getDrops(state,params);

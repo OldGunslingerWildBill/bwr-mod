@@ -77,6 +77,13 @@ public final class GameplayConfig {
                     + "(see BUILDING-CRANE.md); the button then explains the procedure. A head that is already off in an existing world stays off either way")
             .define("instantHeadRemoval", false);
 
+    public static final ModConfigSpec.BooleanValue TURBINE_AUX_REQUIRED = BUILDER
+            .comment("A turbine or generator section that a player places new starts a train that needs its auxiliaries: a Main Oil Tank with oil pumped, "
+                    + "bearing temperature and bow, and a Generator Cooling Skid for the winding (see TURBINE-AUX.md). Default on. "
+                    + "Sections already in a world, and sections picked up and set down again, are not changed by this: a train that has no auxiliaries "
+                    + "runs as it always did until its player builds them. Off: new sections are as the old ones")
+            .define("turbineAuxRequired", true);
+
     public static final ModConfigSpec.BooleanValue GIVE_GUIDE_ON_FIRST_JOIN = BUILDER
             .comment("Give each player one Operator's Guide (the in-game guide book) the first time they join this world, once only. "
                     + "A player who has had one is never given another, whether or not they still have it; craft it with a book and a nameplate. "
@@ -100,6 +107,11 @@ public final class GameplayConfig {
     /** Whether the reactor panel's head button lifts and seats the head at once (no stud tensioner, no crane). False until the server config says otherwise. */
     public static boolean instantHeadRemoval() {
         return SPEC.isLoaded() ? INSTANT_HEAD_REMOVAL.get() : INSTANT_HEAD_REMOVAL.getDefault();
+    }
+
+    /** Whether a turbine section a player places new starts a train that needs its auxiliaries. True until the server config says otherwise. */
+    public static boolean turbineAuxRequired() {
+        return SPEC.isLoaded() ? TURBINE_AUX_REQUIRED.get() : TURBINE_AUX_REQUIRED.getDefault();
     }
 
     /** Whether a player's first join gives them the guide book. True until the server config says otherwise (and before it is loaded). */

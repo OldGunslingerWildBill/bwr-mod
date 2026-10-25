@@ -3,7 +3,7 @@
 Run: blender --background --python art/models/inventory/render_icons.py
 Only GUI models are replaced; held items and placed machines retain their mesh.
 """
-import bpy, json, math
+import bpy, json, math, sys
 from pathlib import Path
 from mathutils import Vector
 
@@ -93,14 +93,20 @@ def main():
             if name not in listed: listed.append(name)
         (ASSETS / 'inventory_icons.json').write_text(json.dumps(sorted(listed), indent=2) + chr(10))
         return
+    # Optional ids after "--" restrict the run to those items and merge them into inventory_icons.json.
+    only = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
     items = []
     for path in sorted((ASSETS / 'models/item').glob('*.json')):
         # Painted pipes retain their live tint, and their small meshes are inexpensive.
         if path.stem in ('pressurised_tube','high_pressure_water_pipe'): continue
+        if only and path.stem not in only: continue
         obj = resolve(json.loads(path.read_text()))
         if obj is None or not obj.exists(): continue
         items.append(path.stem)
         render(path.stem,obj)
+    if only:
+        listed = json.loads((ASSETS / 'inventory_icons.json').read_text())
+        items = sorted(set(listed) | set(items))
     (ASSETS / 'inventory_icons.json').write_text(json.dumps(items,indent=2)+'\n')
 
 if __name__ == '__main__': main()

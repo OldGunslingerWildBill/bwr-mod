@@ -73,6 +73,7 @@ public final class BwrPeripheralSupport {
         if(be instanceof ContainmentAirlockBlockEntity b)return new ContainmentAirlockPeripheral(b);
         if(be instanceof ContainmentPenetrationBlockEntity b)return new ContainmentPenetrationPeripheral(b);
         if(be instanceof PowerModuleBlockEntity b)return new PowerModulePeripheral(b);
+        if(be instanceof dev.bwr.mod.power.TurbineAuxBlockEntity b)return new TurbineAuxPeripheral(b);
         if(be instanceof dev.bwr.mod.grid.FeMeterBlockEntity b)return new FeMeterPeripheral(b);
         if(be instanceof dev.bwr.mod.radiation.AreaRadiationMonitorBlockEntity b)return new AreaRadiationMonitorPeripheral(b);
         if(be instanceof dev.bwr.mod.grid.GridTieBlockEntity b)return new GridTiePeripheral(b);

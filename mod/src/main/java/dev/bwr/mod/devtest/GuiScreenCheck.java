@@ -539,6 +539,15 @@ public final class GuiScreenCheck {
         s.add(new Scenario("power-hp", i -> new PowerModuleScreen(power(i, 0), i, t("TX-10 Style HP Turbine"))));
         s.add(new Scenario("power-lp", i -> new PowerModuleScreen(power(i, 1), i, t("TX-10 Style LP Turbine"))));
         s.add(new Scenario("power-generator", i -> new PowerModuleScreen(power(i, 2), i, t("Turbine Generator"))));
+        s.add(new Scenario("power-generator-legacy-aux-tab", i -> new PowerModuleScreen(power(i, 2), i, t("Turbine Generator")), screen -> click(screen, "AUXILIARIES")));
+        s.add(new Scenario("power-generator-aux", i -> new PowerModuleScreen(powerAux(i, 2, false), i, t("Turbine Generator")), screen -> click(screen, "AUXILIARIES")));
+        s.add(new Scenario("power-generator-aux-alarms", i -> new PowerModuleScreen(powerAux(i, 2, true), i, t("Turbine Generator")), screen -> click(screen, "AUXILIARIES")));
+        s.add(new Scenario("power-hp-aux", i -> new PowerModuleScreen(powerAux(i, 0, false), i, t("TX-10 Style HP Turbine")), screen -> click(screen, "AUXILIARIES")));
+        s.add(new Scenario("aux-oil-tank", i -> new TurbineAuxScreen(auxMenu(i, 0, false), i, t("Turbine Main Oil Tank"))));
+        s.add(new Scenario("aux-oil-tank-unpowered", i -> new TurbineAuxScreen(auxMenu(i, 0, true), i, t("Turbine Main Oil Tank"))));
+        s.add(new Scenario("aux-shaft-pump", i -> new TurbineAuxScreen(auxMenu(i, 1, false), i, t("Turbine Shaft-Driven Main Oil Pump"))));
+        s.add(new Scenario("aux-cooling-skid", i -> new TurbineAuxScreen(auxMenu(i, 2, false), i, t("Generator Cooling Skid"))));
+        s.add(new Scenario("aux-cooling-skid-unpowered", i -> new TurbineAuxScreen(auxMenu(i, 2, true), i, t("Generator Cooling Skid"))));
         s.add(new Scenario("valve-control", i -> new TurbineValveScreen(valve(i, false), i, t("Turbine Control Valve"))));
         s.add(new Scenario("valve-stop", i -> new TurbineValveScreen(valve(i, true), i, t("Turbine Stop Valve"))));
         s.add(new Scenario("fabricator", i -> {
@@ -952,6 +961,66 @@ public final class GuiScreenCheck {
         m.lpCount = 4;
         m.generatorCount = 1;
         m.status = "Train coupled; steam admission steady; no cross-tie faults reported";
+        return m;
+    }
+
+    /** A power module of a train governed by the auxiliaries: running normally, or with the alarms reading. */
+    private static PowerModuleMenu powerAux(Inventory i, int kind, boolean alarms) {
+        var m = power(i, kind);
+        m.lubeGov = m.bowGov = m.genGov = true;
+        m.oilTank = true;
+        m.shaftPump = true;
+        m.gearOn = alarms;
+        m.gearFed = true;
+        m.oilPsig = alarms ? 9.5 : 25.0;
+        m.oilC = alarms ? 71.0 : 49.5;
+        m.oilLevel = alarms ? 0.22 : 0.68;
+        m.oilFilm = alarms ? 0.61 : 1.0;
+        m.bearingC = alarms ? 104.2 : 76.3;
+        m.vibration = alarms ? 9.4 : 2.1;
+        m.bow = alarms ? 0.35 : 0.0;
+        m.rotorC = alarms ? 212 : 268;
+        m.windingC = alarms ? 134.5 : 101.8;
+        m.statorFlow = alarms ? 0.0 : 1.0;
+        m.h2Psig = alarms ? 17.5 : 30.0;
+        m.coolantC = alarms ? 83 : 46;
+        m.alarms = alarms ? 1 | 2 | 4 | 8 | 16 | 32 | 64 : 0;
+        return m;
+    }
+
+    /** A turbine auxiliary skid screen: 0 the oil tank, 1 the shaft-driven pump, 2 the generator cooling skid. */
+    private static TurbineAuxMenu auxMenu(Inventory i, int kind, boolean unpowered) {
+        var m = new TurbineAuxMenu(99, i, P);
+        m.present = true;
+        m.attached = true;
+        m.kind = kind;
+        m.rpm = 1500;
+        m.psig = unpowered ? 12.5 : 25;
+        m.film = unpowered ? 0.82 : 1;
+        m.oilC = 49.6;
+        m.oilFraction = 0.64;
+        m.coolerKw = kind == 0 ? 2850 : 21_400;
+        m.coldKg = 4200;
+        m.hotKg = 380;
+        m.coldC = 13;
+        m.hotC = kind == 0 ? 33.8 : 55.2;
+        m.acOn = true;
+        m.acRun = !unpowered;
+        m.dcOn = unpowered;
+        m.dcRun = unpowered;
+        m.acFe = unpowered ? 0 : 82_000;
+        m.dcFe = 640_000;
+        m.statorOn = true;
+        m.statorRun = !unpowered;
+        m.statorFlow = unpowered ? 0.03 : 1;
+        m.h2Psig = 30;
+        m.h2Kg = 20;
+        m.coolantC = unpowered ? 88 : 46;
+        m.windingC = unpowered ? 134.8 : 101.7;
+        m.bearingC = 76.3;
+        m.electricMW = 1500;
+        m.shaftFlow = 1;
+        m.status = kind == 1 ? "On the generator shaft end" : "Attached";
         return m;
     }
 

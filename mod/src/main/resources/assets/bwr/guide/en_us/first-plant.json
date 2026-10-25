@@ -7,6 +7,7 @@
     "COMPACT-CORE.md",
     "RECIRCULATION.md",
     "MODULAR-TURBINES.md",
+    "TURBINE-AUX.md",
     "docs/grid-wiring.md"
   ],
   "pages": [
@@ -90,6 +91,16 @@
         "bwr:hp_turbine",
         "bwr:lp_turbine",
         "bwr:arabelle_condenser"
+      ]
+    },
+    {
+      "title": "4b. Turbine auxiliaries",
+      "text": [
+        "A turbine you place new needs its auxiliaries. Set a Main Oil Tank against the train and fill it with Turbine Oil Drums. Bolt a Shaft-Driven Oil Pump on the generator's free shaft end. Pipe cooling water through the tank's two flanges.",
+        "",
+        "Run the AC pump (FE) until the shaft is near speed; keep a battery on the tank's top face for the DC pump if AC is lost. Add a Generator Cooling Skid: stator pump FE, hydrogen, cooling water.",
+        "",
+        "After shutdown, engage the turning gear on the generator screen (below 10 rpm) until the rotor is cold. Alarms only read; nothing trips."
       ]
     },
     {

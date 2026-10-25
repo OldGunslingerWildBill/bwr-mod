@@ -95,6 +95,8 @@ and `c:ingots/steel`. Sodium and Iris also work, with or without a shader pack
   [CONDENSER-AND-MSIV.md](CONDENSER-AND-MSIV.md)
 - Modular HP and LP turbines and a generator of up to 1,500 MW. LP exhaust goes to a condenser fitted
   under it. [MODULAR-TURBINES.md](MODULAR-TURBINES.md)
+- Turbine auxiliaries: a lube oil system (main oil tank, AC and DC pumps, a shaft-driven pump, oil coolers), the
+  generator's turning gear and a generator cooling skid that needs power. [TURBINE-AUX.md](TURBINE-AUX.md)
 - Cooling towers (natural-draft and circular mechanical-draft), circulating and makeup pumps, a lake
   or river intake, and scalable cylindrical condensate tanks. [COOLING-WATER.md](COOLING-WATER.md),
   [CONDENSATE-TANK.md](CONDENSATE-TANK.md)
@@ -285,7 +287,7 @@ developer handoff, and [BUILD-STATUS.md](BUILD-STATUS.md) records results. Repor
 
 **Water and steam:** [WATER-PLUMBING.md](WATER-PLUMBING.md), [PUMP-MODELS.md](PUMP-MODELS.md),
 [MODERN-PUMPS-AND-PIPES.md](MODERN-PUMPS-AND-PIPES.md), [TERRY-TURBINES.md](TERRY-TURBINES.md),
-[STEAM-VALVES.md](STEAM-VALVES.md), [MODULAR-TURBINES.md](MODULAR-TURBINES.md),
+[STEAM-VALVES.md](STEAM-VALVES.md), [MODULAR-TURBINES.md](MODULAR-TURBINES.md), [TURBINE-AUX.md](TURBINE-AUX.md),
 [CONDENSER-AND-MSIV.md](CONDENSER-AND-MSIV.md), [COOLING-WATER.md](COOLING-WATER.md),
 [CONDENSATE-TANK.md](CONDENSATE-TANK.md), [PLANT-TRANSPORT.md](PLANT-TRANSPORT.md)
 

@@ -57,6 +57,7 @@ public final class PowerTrain {
         for(var m:active){m.rpm=step.rpm();m.trainMW=work*20/1000;
             m.trainLossKJ=step.lossKJ()+coupling.lossKJ();
             m.addShaftDamage(ShaftDynamics.damage(m.damage(),m.rpm,.05)-m.damage());}
+        TurbineAuxTrain.step(train,active,now);
         // A mid-tick connection can include a half already processed. Couple it
         // once after the new half's step; never repeat steam or electrical work.
         if(active.size()!=train.size()) {

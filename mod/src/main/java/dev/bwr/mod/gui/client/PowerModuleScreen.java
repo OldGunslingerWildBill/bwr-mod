@@ -12,9 +12,15 @@ import net.minecraft.world.entity.player.Inventory;
 /** Readouts for any part of a large shaft module: an HP turbine, an LP turbine or the generator. */
 public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
 
+    private dev.bwr.mod.gui.client.style.BwrButton gear;
+    private int tab;
+
     public PowerModuleScreen(PowerModuleMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 400, 184);
     }
+
+    private boolean aux() { return menu.lubeGov || menu.bowGov || menu.genGov; }
+    private static Status alarm(boolean on) { return on ? Status.ALARM : Status.NORMAL; }
 
     @Override
     protected UiElement buildUi() {
@@ -49,13 +55,51 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
                 Layout.note("The high-pressure exhaust feeds the low-pressure sections.").showIf(() -> !menu.generator),
                 Layout.note(() -> menu.hp ? "Pipe the high-pressure exhaust to the low-pressure inlets." : "The condenser goes six blocks below, facing the same way.")
                         .showIf(() -> !menu.generator));
-        return Layout.column(BwrStyle.SP2,
-                Layout.split(BwrStyle.SP2).add(readouts, 3).add(connections, 2).stackBelow(360),
-                Layout.note(() -> Words.sentence(menu.status)).body());
+        if (gear == null) {
+            gear = dev.bwr.mod.gui.client.style.BwrButton.secondary("Turning gear",
+                    "Engage or release the turning gear. It rolls the shaft at 3 rpm to keep a hot rotor straight, draws FE from the Main Oil Tank's AC bus, and cannot be engaged above 10 rpm. Nothing engages it for you.",
+                    b -> menu.sendCommand(PowerModuleMenu.CMD_TURNING_GEAR, menu.gearOn ? 0 : 1));
+        }
+        var left = Layout.card("Lube oil and bearings",
+                Layout.statusLine(() -> alarm((menu.alarms & 3) != 0), () -> menu.lubeGov ? (menu.oilTank ? "Lube oil" : "No oil tank on this train") : "Not fitted",
+                        () -> menu.lubeGov ? num(menu.oilPsig, 1) + " psig" : ""),
+                Layout.row("Oil temperature", () -> Double.isNaN(menu.oilC) ? "-" : num(menu.oilC, 1), "C").showIf(() -> menu.lubeGov),
+                Layout.row("Oil level", () -> Double.isNaN(menu.oilLevel) ? "-" : pct(menu.oilLevel), "%").showIf(() -> menu.lubeGov),
+                Layout.row("Oil film", () -> pct(menu.oilFilm), "%").showIf(() -> menu.lubeGov),
+                Layout.row("Bearing temperature", () -> num(menu.bearingC, 1), "C").showIf(() -> menu.lubeGov),
+                Layout.row("Shaft vibration", () -> num(menu.vibration, 1), "mm/s").showIf(() -> menu.bowGov),
+                Layout.row("Rotor temperature", () -> num(menu.rotorC, 0), "C").showIf(() -> menu.bowGov && !menu.generator),
+                Layout.row("Rotor bow", () -> pct(menu.bow), "%").showIf(() -> menu.bowGov && !menu.generator),
+                Layout.note("Nothing here is fitted to this train.").showIf(() -> !aux()));
+        var right = Layout.card("Gear and generator",
+                Layout.row("Turning gear", () -> menu.gearRolling ? "rolling" : menu.gearOn ? (menu.gearFed ? "engaged, over 10 rpm" : "engaged, no power") : "off")
+                        .showIf(() -> menu.generator),
+                Layout.controls(BwrStyle.SP1).add(gear, 1).showIf(() -> menu.generator),
+                Layout.row("Winding", () -> num(menu.windingC, 1), "C").showIf(() -> menu.generator && menu.genGov),
+                Layout.row("Stator flow", () -> pct(menu.statorFlow), "%").showIf(() -> menu.generator && menu.genGov),
+                Layout.row("Hydrogen", () -> Double.isNaN(menu.h2Psig) ? "-" : num(menu.h2Psig, 1), "psig").showIf(() -> menu.generator && menu.genGov),
+                Layout.note("Rolls the shaft at 3 rpm below 10 rpm, on the oil tank's AC bus.").body().showIf(() -> menu.generator),
+                Layout.note("The turning gear and the winding are on the generator's screen.").body().showIf(() -> !menu.generator),
+                Layout.note("Alarms are readings. Nothing trips the turbine.").showIf(this::aux));
+        var main = Layout.split(BwrStyle.SP2).add(readouts, 3).add(connections, 2).stackBelow(360).showIf(() -> tab == 0);
+        var auxTab = Layout.split(BwrStyle.SP2).add(left, 1).add(right, 1).stackBelow(360).showIf(() -> tab == 1);
+        return Layout.column(BwrStyle.SP2, main, auxTab, Layout.note(() -> Words.sentence(menu.status)).body());
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        if (gear != null) {
+            gear.setMessage(Component.literal(menu.gearOn ? "Turning gear: ON" : "Turning gear: off"));
+            gear.active = menu.present && menu.generator;
+        }
     }
 
     @Override
     protected UiElement buildTitleItems() {
-        return Layout.titleItems(Layout.chip(() -> menu.running ? Status.NORMAL : Status.OFF, () -> menu.running ? "Running" : "Stopped"));
+        return Layout.titleItems(Layout.chip(() -> menu.running ? Status.NORMAL : Status.OFF, () -> menu.running ? "Running" : "Stopped"),
+                Layout.tabs(new String[]{"READINGS", "AUXILIARIES"},
+                        new String[]{"The steam, speed and power readings.", "Lube oil, bearings, rotor bow, the turning gear and the generator's cooling."},
+                        () -> tab, i -> tab = i));
     }
 }

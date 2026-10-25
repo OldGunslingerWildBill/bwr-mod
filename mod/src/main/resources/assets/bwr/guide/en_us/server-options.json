@@ -40,7 +40,8 @@
         "tritiumExposureHours = 168.0",
         "siliconExposureHours = 24.0",
         "tritiumSamplesPerRod = 1250",
-        "instantHeadRemoval = false (the head button lifts and seats the head at once, with no tensioner or crane)"
+        "instantHeadRemoval = false (the head button lifts and seats the head at once, with no tensioner or crane)",
+        "turbineAuxRequired = true (a turbine section a player places new needs oil, a turning gear and generator cooling; sections already placed are not changed)"
       ]
     },
     {

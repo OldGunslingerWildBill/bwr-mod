@@ -5,6 +5,8 @@ import dev.bwr.mod.condenser.CondenserBlockEntity;
 import dev.bwr.mod.cooling.CoolingBlockEntity;
 import dev.bwr.mod.eccs.CondensateStorageTankBlockEntity;
 import dev.bwr.mod.power.PowerModuleBlockEntity;
+import dev.bwr.mod.power.TurbineAuxBlockEntity;
+import dev.bwr.mod.power.TurbineAuxTrain;
 import dev.bwr.mod.signal.DeviceCommands;
 import dev.bwr.mod.signal.Kind;
 import dev.bwr.mod.signal.Schema;
@@ -130,5 +132,78 @@ final class PlantSignals {
             .number("outlet_temp", "Outlet temperature", "degC", 0, 350, be -> be.outletC)
             .number("water", "Water stored", "kg", 0, PowerModuleBlockEntity.WATER_CAPACITY, PowerModuleBlockEntity::waterStored)
             .number("stored_fe", "Stored energy", "FE", 0, PowerModuleBlockEntity.ENERGY_CAPACITY, PowerModuleBlockEntity::energyStored)
-            .text("status", "Status", be -> be.status);
+            .text("status", "Status", be -> be.status)
+            // Turbine auxiliaries (TURBINE-AUX.md). A system the train does not have reads "no signal"; the alarms are readings, nothing trips.
+            .bool("aux_governed", "Auxiliaries govern this train", be -> be.aux().lubeGoverned || be.aux().bowGoverned || be.aux().genGoverned)
+            .number("oil_pressure", "Lube oil pressure", "psig", 0, 40, be -> be.aux().lubeGoverned ? be.aux().oilPsig : Double.NaN)
+            .number("oil_temp", "Lube oil temperature", "degC", 0, 120, be -> be.aux().lubeGoverned ? be.aux().oilC : Double.NaN)
+            .number("oil_level", "Lube oil level", "fraction", 0, 1, be -> be.aux().lubeGoverned ? be.aux().oilLevel : Double.NaN)
+            .number("oil_film", "Bearing oil film", "fraction", 0, 1, be -> be.aux().lubeGoverned ? be.aux().oilFilm : Double.NaN)
+            .number("bearing_temp", "Bearing temperature", "degC", 0, 200, be -> be.aux().lubeGoverned ? be.bearingC : Double.NaN)
+            .number("vibration", "Shaft vibration", "mm/s", 0, 30, be -> be.aux().bowGoverned ? be.vibration : Double.NaN)
+            .number("rotor_temp", "Rotor temperature", "degC", 0, 400, be -> be.aux().bowGoverned && !be.block().generator() ? be.rotorC : Double.NaN)
+            .number("rotor_bow", "Rotor bow", "fraction", 0, 1, be -> be.aux().bowGoverned && !be.block().generator() ? be.bow() : Double.NaN)
+            .boolOrNone("turning_gear", "Turning gear engaged", be -> be.block().generator() ? (be.turningGear() ? 1 : 0) : Double.NaN)
+            .boolOrNone("turning_gear_rolling", "Turning gear rolling the shaft", be -> be.block().generator() ? (be.aux().gearRolling ? 1 : 0) : Double.NaN)
+            .number("winding_temp", "Generator winding temperature", "degC", 0, 250, be -> be.block().generator() && be.aux().genGoverned ? be.windingC : Double.NaN)
+            .number("stator_flow", "Stator water flow", "fraction", 0, 1, be -> be.block().generator() && be.aux().genGoverned ? be.aux().statorFlow : Double.NaN)
+            .number("h2_pressure", "Hydrogen pressure", "psig", 0, 40, be -> be.block().generator() && be.aux().genGoverned ? be.aux().h2Psig : Double.NaN)
+            .number("coolant_temp", "Generator coolant temperature", "degC", 0, 150, be -> be.block().generator() && be.aux().genGoverned ? be.aux().coolantC : Double.NaN)
+            .boolOrNone("oil_pressure_alarm", "Oil pressure alarm", be -> be.aux().lubeGoverned ? (be.aux().oilPressureAlarm ? 1 : 0) : Double.NaN)
+            .boolOrNone("oil_level_alarm", "Oil level alarm", be -> be.aux().lubeGoverned ? (be.aux().oilLevelAlarm ? 1 : 0) : Double.NaN)
+            .boolOrNone("oil_temp_alarm", "Oil temperature alarm", be -> be.aux().lubeGoverned ? (be.aux().oilTempAlarm ? 1 : 0) : Double.NaN)
+            .boolOrNone("bearing_alarm", "Bearing temperature alarm", be -> be.aux().lubeGoverned ? (be.aux().bearingAlarm ? 1 : 0) : Double.NaN)
+            .boolOrNone("vibration_alarm", "Vibration alarm", be -> be.aux().bowGoverned ? (be.aux().vibrationAlarm ? 1 : 0) : Double.NaN)
+            .boolOrNone("winding_alarm", "Winding temperature alarm", be -> be.block().generator() && be.aux().genGoverned ? (be.aux().windingAlarm ? 1 : 0) : Double.NaN)
+            .boolOrNone("h2_alarm", "Hydrogen pressure alarm", be -> be.block().generator() && be.aux().genGoverned ? (be.aux().h2Alarm ? 1 : 0) : Double.NaN)
+            .toggle("turning_gear", "Turning gear on / off", (be, v) -> be.setTurningGear(v >= 0.5));
+
+    /** The Main Oil Tank. Its pumps are the player's switches. */
+    static final Schema<TurbineAuxBlockEntity> OIL_TANK = new Schema<TurbineAuxBlockEntity>()
+            .bool("attached", "Attached to a train", be -> be.module() != null)
+            .bool("ac_pump", "AC pump switched on", TurbineAuxBlockEntity::acPumpOn)
+            .bool("dc_pump", "DC pump switched on", TurbineAuxBlockEntity::dcPumpOn)
+            .bool("ac_running", "AC pump running", TurbineAuxBlockEntity::acRunning)
+            .bool("dc_running", "DC pump running", TurbineAuxBlockEntity::dcRunning)
+            .number("oil_level", "Oil level", "fraction", 0, 1, TurbineAuxBlockEntity::oilFraction)
+            .number("oil_litres", "Oil in the tank", "L", 0, dev.bwr.core.turbine.TurbineAux.OIL_TANK_L, TurbineAuxBlockEntity::oilLitres)
+            .number("oil_temp", "Oil temperature", "degC", 0, 120, TurbineAuxBlockEntity::oilC)
+            .number("oil_pressure", "Header pressure", "psig", 0, 40, TurbineAuxBlockEntity::psig)
+            .number("oil_film", "Bearing oil film", "fraction", 0, 1, TurbineAuxBlockEntity::film)
+            .number("cooler_duty", "Oil cooler duty", "kW", 0, 5000, TurbineAuxBlockEntity::coolerKw)
+            .number("cold_water", "Cold cooling water", "kg", 0, TurbineAuxBlockEntity.WATER_CAPACITY, TurbineAuxBlockEntity::coldKg)
+            .number("hot_water", "Warmed cooling water", "kg", 0, TurbineAuxBlockEntity.WATER_CAPACITY, TurbineAuxBlockEntity::hotKg)
+            .number("ac_fe", "AC bus stored", "FE", 0, TurbineAuxBlockEntity.AC_CAPACITY_FE, TurbineAuxBlockEntity::acFe)
+            .number("dc_fe", "DC bus stored", "FE", 0, TurbineAuxBlockEntity.DC_CAPACITY_FE, TurbineAuxBlockEntity::dcFe)
+            .toggle("ac_pump", "AC pump on / off", (be, v) -> { be.setAcPump(v >= 0.5); return true; })
+            .toggle("dc_pump", "DC pump on / off", (be, v) -> { be.setDcPump(v >= 0.5); return true; });
+
+    /** The Shaft-Driven Main Oil Pump: no switch, it turns with the shaft. */
+    static final Schema<TurbineAuxBlockEntity> SHAFT_PUMP = new Schema<TurbineAuxBlockEntity>()
+            .bool("attached", "On a generator shaft end", be -> be.module() != null)
+            .number("delivery", "Delivery", "fraction", 0, 1, be -> be.module() == null ? 0 : dev.bwr.core.turbine.TurbineAux.shaftPumpFlow(be.module().rpm));
+
+    /** The Generator Cooling Skid. */
+    static final Schema<TurbineAuxBlockEntity> GEN_COOLING = new Schema<TurbineAuxBlockEntity>()
+            .bool("attached", "Attached to a generator", be -> be.module() != null)
+            .bool("stator_pumps", "Stator pumps switched on", TurbineAuxBlockEntity::statorPumpsOn)
+            .bool("stator_running", "Stator pumps running", TurbineAuxBlockEntity::statorRunning)
+            .number("stator_flow", "Stator water flow", "fraction", 0, 1, TurbineAuxBlockEntity::statorFlow)
+            .number("h2_pressure", "Hydrogen pressure", "psig", 0, 40, TurbineAuxBlockEntity::h2Psig)
+            .number("h2_kg", "Hydrogen in the casing", "kg", 0, dev.bwr.core.turbine.TurbineAux.H2_FULL_KG, TurbineAuxBlockEntity::h2Kg)
+            .number("coolant_temp", "Coolant temperature", "degC", 0, 150, TurbineAuxBlockEntity::coolantC)
+            .number("winding_temp", "Winding temperature", "degC", 0, 250, be -> be.module() == null ? Double.NaN : be.module().windingC)
+            .number("cooler_duty", "Cooler duty", "kW", 0, 30000, TurbineAuxBlockEntity::coolerKw)
+            .number("cold_water", "Cold cooling water", "kg", 0, TurbineAuxBlockEntity.WATER_CAPACITY, TurbineAuxBlockEntity::coldKg)
+            .number("hot_water", "Warmed cooling water", "kg", 0, TurbineAuxBlockEntity.WATER_CAPACITY, TurbineAuxBlockEntity::hotKg)
+            .number("supply_fe", "Pump supply stored", "FE", 0, TurbineAuxBlockEntity.AC_CAPACITY_FE, TurbineAuxBlockEntity::acFe)
+            .toggle("stator_pumps", "Stator pumps on / off", (be, v) -> { be.setStatorPumps(v >= 0.5); return true; });
+
+    static dev.bwr.mod.signal.SignalProvider aux(TurbineAuxBlockEntity be) {
+        return switch (be.kind()) {
+            case LUBE_OIL -> OIL_TANK.bind(be);
+            case SHAFT_PUMP -> SHAFT_PUMP.bind(be);
+            case GEN_COOLING -> GEN_COOLING.bind(be);
+        };
+    }
 }

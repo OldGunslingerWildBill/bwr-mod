@@ -26,6 +26,33 @@ public final class PowerModulePeripheral implements IPeripheral {
         m.put("windowReady1min",module.delivered().sampleTicks()>=1200);m.put("counterSaturated",module.delivered().saturated());
         m.put("flowKgPerS",module.flowKgPerS);m.put("shaftMW",module.shaftMW);m.put("electricMW",module.electricMW);m.put("trainMW",module.trainMW);
         m.put("inletPsia",module.inletPsia);m.put("inletMoisturePercent",module.inletMoisturePercent);m.put("outletPsia",module.outletPsia);m.put("inletC",module.inletC);m.put("outletC",module.outletC);
-        m.put("waterKg",module.waterStored());m.put("storedFE",module.energyStored());m.put("hpSections",module.hpCount);m.put("lpSections",module.lpCount);m.put("generators",module.generatorCount);m.put("status",module.status);return m;
+        m.put("waterKg",module.waterStored());m.put("storedFE",module.energyStored());m.put("hpSections",module.hpCount);m.put("lpSections",module.lpCount);m.put("generators",module.generatorCount);m.put("status",module.status);
+        auxiliaries(m);return m;
     }
+    /** The turbine auxiliaries (TURBINE-AUX.md): fields of a system the train does not have are absent. Alarms are readings; nothing trips. */
+    private void auxiliaries(Map<String,Object> m){
+        var a=module.aux();m.put("auxGoverned",a.lubeGoverned||a.bowGoverned||a.genGoverned);
+        if(a.lubeGoverned){
+            m.put("oilPressurePsig",a.oilPsig);m.put("oilTempC",a.oilC);m.put("oilLevel",a.oilLevel);m.put("oilFilm",a.oilFilm);
+            m.put("bearingTempC",module.bearingC);m.put("oilPressureAlarm",a.oilPressureAlarm);m.put("oilLevelAlarm",a.oilLevelAlarm);
+            m.put("oilTempAlarm",a.oilTempAlarm);m.put("bearingAlarm",a.bearingAlarm);m.put("oilTank",a.oilTank);m.put("shaftOilPump",a.shaftPump);
+        }
+        if(a.bowGoverned){
+            m.put("vibrationMmPerS",module.vibration);m.put("vibrationAlarm",a.vibrationAlarm);
+            if(!module.block().generator()){m.put("rotorTempC",module.rotorC);m.put("rotorBow",module.bow());}
+        }
+        if(module.block().generator()){
+            m.put("turningGear",module.turningGear());m.put("turningGearRolling",a.gearRolling);m.put("turningGearPowered",a.gearFed);
+            if(a.genGoverned){
+                m.put("windingTempC",module.windingC);m.put("statorFlow",a.statorFlow);m.put("h2PressurePsig",a.h2Psig);m.put("coolantTempC",a.coolantC);
+                m.put("windingAlarm",a.windingAlarm);m.put("h2Alarm",a.h2Alarm);
+            }
+        }
+    }
+    /** Engages or releases the generator's turning gear. Engaging above the gear's overrun speed raises an error. */
+    @LuaFunction(mainThread=true) public void setTurningGear(boolean on) throws dan200.computercraft.api.lua.LuaException {
+        if(!module.setTurningGear(on))throw new dan200.computercraft.api.lua.LuaException(module.block().generator()
+                ?"The turning gear cannot be engaged above "+(int)dev.bwr.core.turbine.TurbineAux.GEAR_MAX_RPM+" rpm":"Only the generator has a turning gear");
+    }
+    @LuaFunction(mainThread=true) public boolean getTurningGear(){return module.turningGear();}
 }
