@@ -47,7 +47,7 @@ public final class RwcuTests {
     }
 
     private static void pipe(ServerLevel l, BlockPos p) {
-        l.setBlock(p, BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get().defaultBlockState(), 3);
+        l.setBlock(p, BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get().stateWithConnections(l, p), 3);
     }
 
     private static void tickReactor(ReactorControllerBlockEntity be) {

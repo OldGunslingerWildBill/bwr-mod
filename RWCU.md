@@ -125,4 +125,12 @@ demineraliser has a fresh bed. No existing block, ID or NBT key changed.
 * GameTests `RwcuTests`: the whole skid on a real vessel, each behaviour above, the line breaks and isolation, saves and old saves.
 * Models: `art/models/rwcu/build_models.py` (headless Blender) and `python tools-export-rwcu.py [--check]`.
 
-![The RWCU skid](art/models/rwcu/skid-preview.png)
+![The RWCU skid, Blender preview](art/models/rwcu/skid-preview.png)
+
+In the game (client check `:mod:runTurbineModelCheck -PbwrRwcuClientCheck`, 1920 x 1080): the skid piped to the vessel and to its feedwater port, with the reject valve and tank; the pump's screen with the loop running; the demineraliser's screen with a loaded bed; the INFO tab's water chemistry.
+
+![The skid in the game](art/models/rwcu/ingame-skid-closeup.png)
+![The skid from the vessel](art/models/rwcu/ingame-skid.png)
+![The pump screen](art/models/rwcu/ingame-pump-screen.png)
+![The demineraliser screen](art/models/rwcu/ingame-demineralizer-screen.png)
+![INFO tab, water chemistry](art/models/rwcu/ingame-info-tab-chemistry.png)

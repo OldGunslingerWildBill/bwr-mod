@@ -44,8 +44,8 @@ public final class RwcuClientCheck {
 
     // The vessel's interior is 9 x 9 x 12 from (200,190,200); the skid runs north (z falls) at y 196 (outlet row 6).
     private static final Shot[] SHOTS = {
-            new Shot(v(214.0, 203.0, 187.5), v(205.5, 196.5, 193.0)),
-            new Shot(v(209.5, 199.5, 195.5), v(205.5, 196.5, 192.5)),
+            new Shot(v(211.0, 205.0, 187.0), v(205.5, 196.0, 192.0)),
+            new Shot(v(200.5, 202.0, 188.5), v(205.5, 196.3, 192.5)),
             new Shot(v(209.0, 197.5, 195.5), v(205.5, 196.5, 195.5)),
             new Shot(v(209.0, 197.5, 191.0), v(205.5, 196.5, 191.0)),
             new Shot(v(192.0, 195.0, 204.5), v(199.5, 193.5, 204.5))};
@@ -78,7 +78,7 @@ public final class RwcuClientCheck {
             mc.options.pauseOnLostFocus = false;
             mc.options.cloudStatus().set(net.minecraft.client.CloudStatus.OFF);
             mc.options.renderDistance().set(10);
-            mc.options.fov().set(70);
+            mc.options.fov().set(60);
             mc.options.guiScale().set(3);
             mc.createWorldOpenFlows().createFreshLevel("bwr-rwcu-check-" + System.currentTimeMillis(),
                     new LevelSettings("RWCU check", GameType.CREATIVE, false, Difficulty.PEACEFUL, true, new GameRules(), WorldDataConfiguration.DEFAULT),
@@ -130,6 +130,8 @@ public final class RwcuClientCheck {
                 }
             });
         }
+        // the pump's FE: the same 9,000 FE/t it draws, every tick, so it stays at speed
+        if (skid != null) server.execute(() -> skid.pump.energy().receiveEnergy(100_000, false));
         if (!standing || aim == null) return;
         Shot shot = SHOTS[stage];
         mc.player.setPos(shot.stand.x, shot.stand.y, shot.stand.z);
@@ -146,6 +148,7 @@ public final class RwcuClientCheck {
                 default -> mc.screen instanceof dev.bwr.mod.gui.client.ReactorPanelScreen && mc.player.containerMenu instanceof ReactorPanelMenu m && m.formed && m.crudG > 0;
             };
             if (!ready) return;
+            if (stage != 4 && shown == 8) mouseTo(mc, 2, 2); // no tooltip over the rows
             if (stage == 4 && mc.screen instanceof dev.bwr.mod.gui.client.ReactorPanelScreen screen) {
                 var w = mc.getWindow();
                 double midX = w.getGuiScaledWidth() / 2.0, midY = w.getGuiScaledHeight() / 2.0;
@@ -153,7 +156,7 @@ public final class RwcuClientCheck {
                     setInfo(screen);
                     mouseTo(mc, midX, midY);
                 } else if (shown == 3) {
-                    screen.mouseScrolled(midX, midY, 0, -Integer.getInteger("bwr.rwcuScroll", 20));
+                    screen.mouseScrolled(midX, midY, 0, -Integer.getInteger("bwr.rwcuScroll", 32));
                 } else if (shown == 8) {
                     mouseTo(mc, 2, 2);
                 }
