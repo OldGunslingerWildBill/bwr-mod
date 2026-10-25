@@ -36,6 +36,15 @@ public final class ServiceMenu extends BwrMenu {
             k=3;d=v.getDivision();on=v.isOpen();rows.add("Division: "+d+" | "+(on?"Open":"Closed"));
             rows.add("Commands: "+(v.isComputerControlled()?"Panel / computer / division":"Redstone"));rows.add("Relief outlet: downward to suppression pool");
             rows.add("Steam inlet: left-side flange");
+        }else if(be instanceof dev.bwr.mod.water.WaterOutletChuteBlockEntity c){
+            k=4;on=c.enabled();var ws=c.waterState();
+            rows.add(ws==dev.bwr.mod.water.WaterOutletChuteBlockEntity.WaterState.OPEN?"Chute faces open water":"Chute blocked: "+ws.text);
+            rows.add("Water returned: "+number(c.totalKg())+" kg");rows.add("Flow: "+number(c.flowKgPerS())+" / 60,000 kg/s");
+            rows.add("Discharge temperature: "+number(c.temperatureC())+" C");
+            rows.add("Rise over river: "+number(Math.max(0,c.temperatureC()-dev.bwr.mod.water.WaterOutletChuteBlockEntity.RIVER_C))+" C");
+            rows.add("Heat to river: "+number(c.heatToRiverMW())+" MW");
+            rows.add("Water goes back into the river or lake; no source blocks are made or removed.");
+            rows.add("Without open water in front, the chute refuses water and the line backs up.");
         }else if(be instanceof WaterDischargeBlockEntity w){
             k=4;on=w.enabled();rows.add(w.clearMouth()?"Outfall mouth clear":"Outfall blocked or unloaded");
             rows.add("Water discharged: "+number(w.totalKg())+" kg");rows.add("Flow: "+number(w.flowKgPerS())+" / 60,000 kg/s");

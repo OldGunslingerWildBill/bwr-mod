@@ -11,13 +11,15 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 /** Counts discharged mass/heat, never creates an infinite source-water block. */
-public final class WaterDischargeBlockEntity extends BlockEntity {
+public class WaterDischargeBlockEntity extends BlockEntity {
     public static final int KG_PER_TICK=3000;
     private boolean enabled=true;
     private long lastTick=Long.MIN_VALUE;
     private int used;
     private double totalKg,totalHeatKJ,lastTemperature=13;
     public WaterDischargeBlockEntity(BlockPos p,BlockState s){super(BwrBlockEntities.WATER_DISCHARGE.get(),p,s);}
+    /** For the outlet chute, which is this outfall with a stricter mouth test. */
+    protected WaterDischargeBlockEntity(net.minecraft.world.level.block.entity.BlockEntityType<?> type,BlockPos p,BlockState s){super(type,p,s);}
     public boolean enabled(){return enabled;}
     public void setEnabled(boolean value){enabled=value;setChanged();}
     public boolean clearMouth(){
@@ -46,14 +48,16 @@ public final class WaterDischargeBlockEntity extends BlockEntity {
             if(action.execute()&&amount>0){
                 if(lastTick!=now){lastTick=now;used=0;}
                 used+=amount;totalKg+=amount;totalHeatKJ+=amount*ThermalWater.enthalpy(f);lastTemperature=ThermalWater.temperature(f,13);setChanged();
-                if(level instanceof net.minecraft.server.level.ServerLevel server && now%5==0){
-                    var d=getBlockState().getValue(WaterDischargeBlock.FACING);
-                    server.sendParticles(net.minecraft.core.particles.ParticleTypes.SPLASH,worldPosition.getX()+.5+d.getStepX()*.7,worldPosition.getY()+.45,worldPosition.getZ()+.5+d.getStepZ()*.7,4,.08,.03,.08,.02);
-                }
+                if(level instanceof net.minecraft.server.level.ServerLevel server && now%5==0)emit(server);
             }
             return amount;
         }
     };
+    /** Particles while water runs out of the mouth; sent on the fill that carries the water, never from a ticker. */
+    protected void emit(net.minecraft.server.level.ServerLevel server){
+        var d=getBlockState().getValue(WaterDischargeBlock.FACING);
+        server.sendParticles(net.minecraft.core.particles.ParticleTypes.SPLASH,worldPosition.getX()+.5+d.getStepX()*.7,worldPosition.getY()+.45,worldPosition.getZ()+.5+d.getStepZ()*.7,4,.08,.03,.08,.02);
+    }
     public IFluidHandler inlet(){return sink;}
     @Override protected void saveAdditional(CompoundTag n,HolderLookup.Provider p){super.saveAdditional(n,p);n.putBoolean("Enabled",enabled);n.putDouble("DischargedKg",totalKg);n.putDouble("DischargedHeatKJ",totalHeatKJ);n.putDouble("TemperatureC",lastTemperature);}
     @Override protected void loadAdditional(CompoundTag n,HolderLookup.Provider p){super.loadAdditional(n,p);enabled=!n.contains("Enabled")||n.getBoolean("Enabled");totalKg=finite(n.getDouble("DischargedKg"));totalHeatKJ=finite(n.getDouble("DischargedHeatKJ"));lastTemperature=finite(n.getDouble("TemperatureC"));lastTick=Long.MIN_VALUE;used=0;}

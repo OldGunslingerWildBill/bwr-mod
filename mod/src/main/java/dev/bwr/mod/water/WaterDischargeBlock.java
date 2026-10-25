@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.BlockHitResult;
 
 /** Passive, directional outfall. Transfers occur on fill requests; this block has no ticker. */
-public final class WaterDischargeBlock extends BaseEntityBlock {
+public class WaterDischargeBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING=BlockStateProperties.HORIZONTAL_FACING;
     public static final MapCodec<WaterDischargeBlock> CODEC=simpleCodec(WaterDischargeBlock::new);
     public WaterDischargeBlock(Properties p){super(p.noOcclusion());registerDefaultState(defaultBlockState().setValue(FACING,Direction.NORTH));}

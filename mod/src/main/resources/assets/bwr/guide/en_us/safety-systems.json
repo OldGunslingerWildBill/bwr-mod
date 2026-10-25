@@ -49,6 +49,20 @@
       ]
     },
     {
+      "title": "River-cooled RHR exchanger",
+      "text": [
+        "The RHR heat exchanger is a shell-and-tube block: RHR water runs through the tube side (red pipe in, amber out) and cooling water through the shell side (blue in, cyan out).",
+        "",
+        "To cool it from a river or lake, pipe a Screened Water Intake through a powered Makeup Water Pump to the blue flange, and put a Water Outlet Chute on the cyan flange, facing open river or lake water. The chute returns the warmed water, makes and removes no source blocks, and refuses to work, so cooling stops, if it does not face open water."
+      ],
+      "icons": [
+        "bwr:rhr_heat_exchanger",
+        "bwr:water_outlet_chute",
+        "bwr:screened_water_intake",
+        "bwr:makeup_water_pump"
+      ]
+    },
+    {
       "title": "RCIC, HPCI and SLC",
       "text": [
         "RCIC and HPCI are steam-driven Terry turbine pumps that need no electric power: steam in from a reactor steam outlet, exhaust to the suppression pool, water suction from the condensate tank or the pool, and discharge to an RPV Water Injection Port. Right-click either to set its speed and start it.",

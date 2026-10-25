@@ -526,8 +526,29 @@ Block entity `RhrHeatExchangerBlockEntity`; CC peripheral `bwr_rhr_heat_exchange
 | `primary_flow` | Primary flow | kg/s | 0 to 2000 | NUMBER |
 | `secondary_flow` | Secondary flow | kg/s | 0 to 2000 | NUMBER |
 | `primary_outlet_temp` | Primary outlet temperature | degC | 0 to 200 | NUMBER |
+| `primary_inlet_temp` | Tube side inlet temperature | degC | 0 to 200 | NUMBER |
+| `secondary_inlet_temp` | Shell side inlet temperature | degC | 0 to 200 | NUMBER |
+| `secondary_outlet_temp` | Shell side outlet temperature | degC | 0 to 200 | NUMBER |
+| `shell_outlet_backed_up` | Shell outlet backed up |  | 0 to 1 | BOOLEAN |
 
-No commands (read only).
+No commands (read only). "Primary" is the tube side (RHR water), "secondary" the shell side (cooling water).
+
+## Water outlet chute
+
+Block entity `WaterOutletChuteBlockEntity`; CC peripheral `bwr_water_outlet_chute`.
+
+| Signal key | Label | Unit | Range | Kind |
+| --- | --- | --- | --- | --- |
+| `facing_water` | Facing open water |  | 0 to 1 | BOOLEAN |
+| `enabled` | Chute open |  | 0 to 1 | BOOLEAN |
+| `flow` | Discharge flow | kg/s | 0 to 60000 | NUMBER |
+| `discharge_temp` | Discharge temperature | degC | 0 to 200 | NUMBER |
+| `heat_to_river` | Heat returned to the river | MW | 0 to 500 | NUMBER |
+| `returned` | Water returned | kg | 0 to 1e12 | NUMBER |
+
+| Command key | Label | Kind | Range |
+| --- | --- | --- | --- |
+| `enabled` | Chute open | BOOLEAN | 0 to 1 |
 
 ## Condenser
 

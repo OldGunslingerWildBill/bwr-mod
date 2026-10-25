@@ -25,6 +25,7 @@
     "bwr:slc_boron_tank",
     "bwr:ads_relief_valve",
     "bwr:water_discharge_port",
+    "bwr:water_outlet_chute",
     "bwr:suppression_pool_steam_inlet",
     "bwr:suppression_pool_drain",
     "bwr:spent_fuel_pool_wall",

@@ -408,6 +408,9 @@ public final class BwrBlocks {
             BLOCKS.register("ads_relief_valve", () -> new dev.bwr.mod.steam.AdsReliefValveBlock(machine()));
     public static final DeferredBlock<dev.bwr.mod.water.WaterDischargeBlock> WATER_DISCHARGE_PORT =
             BLOCKS.register("water_discharge_port", () -> new dev.bwr.mod.water.WaterDischargeBlock(machine()));
+    /** Concrete outfall for the heat exchanger's river cooling water; discharges only over or into open water. */
+    public static final DeferredBlock<dev.bwr.mod.water.WaterOutletChuteBlock> WATER_OUTLET_CHUTE =
+            BLOCKS.register("water_outlet_chute", () -> new dev.bwr.mod.water.WaterOutletChuteBlock(machine().noOcclusion()));
 
     // --- Feedwater (SPEC section 15) ------------------------------------
     //

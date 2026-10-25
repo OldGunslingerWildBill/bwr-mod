@@ -22,6 +22,6 @@ public final class AlphaCapabilities {
             if(side!=state.getValue(WaterDischargeBlock.FACING).getOpposite())return null;
             return LiveCapabilities.fluid(level,pos,state.getBlock(),current->side==current.getValue(WaterDischargeBlock.FACING).getOpposite()
                     &&level.getBlockEntity(pos) instanceof WaterDischargeBlockEntity out?out.inlet():null);
-        },BwrBlocks.WATER_DISCHARGE_PORT.get());
+        },BwrBlocks.WATER_DISCHARGE_PORT.get(),BwrBlocks.WATER_OUTLET_CHUTE.get());
     }
 }

@@ -83,6 +83,16 @@ def render(item, obj):
     print('BWR INVENTORY ICON:',item,flush=True)
 
 def main():
+    import os
+    only = [n for n in os.environ.get('BWR_ICON_ONLY', '').split(',') if n]
+    if only:
+        # Re-render just these items (BWR_ICON_ONLY=a,b) and merge them into the existing icon list.
+        listed = json.loads((ASSETS / 'inventory_icons.json').read_text())
+        for name in only:
+            render(name, resolve(json.loads((ASSETS / 'models/item' / (name + '.json')).read_text())))
+            if name not in listed: listed.append(name)
+        (ASSETS / 'inventory_icons.json').write_text(json.dumps(sorted(listed), indent=2) + chr(10))
+        return
     items = []
     for path in sorted((ASSETS / 'models/item').glob('*.json')):
         # Painted pipes retain their live tint, and their small meshes are inexpensive.

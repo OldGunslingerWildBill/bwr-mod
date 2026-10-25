@@ -94,6 +94,7 @@ standalone computers.
 | Division | `bwr_ads` (retained for existing programs) | `setDivision(0..4)`, `getDivision()`, `start()`, `stop()`, `setFlow(0..1)`, `getStatus()` |
 | Pressure Relief Valve | `bwr_safety_relief_valve` | `setDivision(0..4)`, `getDivision()`, `open()`, `close()`, `setOpen(boolean)`, `getStatus()` |
 | Water outfall | `bwr_water_discharge` | `setEnabled(boolean)`, `getStatus()` |
+| Water outlet chute | `bwr_water_outlet_chute` | `setEnabled(boolean)`, `getStatus()`: `facingWater`, `waterState`, returned water, temperature, heat to river (see [COOLING-WATER.md](COOLING-WATER.md)) |
 
 `releaseControl()` hands supported actuators back to redstone. Panel buttons
 also offer **Use Redstone**. Optional integrations are installed separately.

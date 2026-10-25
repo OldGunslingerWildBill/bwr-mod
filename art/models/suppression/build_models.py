@@ -1,5 +1,7 @@
 """Original Blender-authored concrete basin panels and four-port RHR exchanger.
 Game coordinates X/Y/Z; one unit per block. Existing Blender scenes are retained.
+NOTE: the RHR exchanger below is the retired plate exchanger. The shell-and-tube exchanger that ships is built by
+build_shell_hx.py (headless Blender), which also writes heat_exchanger.json; do not re-run the exchanger part of this file.
 """
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[3]

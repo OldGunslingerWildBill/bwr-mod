@@ -723,6 +723,39 @@ public final class GuiScreenCheck {
             return new RhrHeatExchangerScreen(m, i, t("RHR Heat Exchanger"));
         }));
         s.add(new Scenario("rhr-hx-idle", i -> new RhrHeatExchangerScreen(new RhrHeatExchangerMenu(99, i, P), i, t("RHR Heat Exchanger"))));
+        s.add(new Scenario("rhr-hx-river", i -> {
+            var m = new RhrHeatExchangerMenu(99, i, P);
+            m.present = true;
+            m.connected = true;
+            m.cold = 120;
+            m.hot = 300;
+            m.primaryFlow = 2000;
+            m.secondaryFlow = 1500;
+            m.heat = 27.1;
+            m.primaryIn = 80;
+            m.primaryOut = 76.76;
+            m.coldTemperature = 13;
+            m.hotTemperature = 17.3;
+            return new RhrHeatExchangerScreen(m, i, t("RHR Heat Exchanger"));
+        }));
+        s.add(new Scenario("rhr-hx-outlet-backed-up", i -> {
+            var m = new RhrHeatExchangerMenu(99, i, P);
+            m.present = true;
+            m.connected = true;
+            m.cold = 800;
+            m.hot = 11990;
+            m.coldTemperature = 13;
+            m.hotTemperature = 17.3;
+            return new RhrHeatExchangerScreen(m, i, t("RHR Heat Exchanger"));
+        }));
+        s.add(new Scenario("service-outlet-chute", i -> service(i, 4, 0, true, "Chute faces open water", "Water returned: 86,400.00 kg",
+                "Flow: 1,500.00 / 60,000 kg/s", "Discharge temperature: 17.30 C", "Rise over river: 4.30 C", "Heat to river: 27.10 MW",
+                "Water goes back into the river or lake; no source blocks are made or removed.",
+                "Without open water in front, the chute refuses water and the line backs up.")));
+        s.add(new Scenario("service-outlet-chute-blocked", i -> service(i, 4, 0, true, "Chute blocked: No water in front of the mouth",
+                "Water returned: 0.00 kg", "Flow: 0.00 / 60,000 kg/s", "Discharge temperature: 13.00 C", "Rise over river: 0.00 C",
+                "Heat to river: 0.00 MW", "Water goes back into the river or lake; no source blocks are made or removed.",
+                "Without open water in front, the chute refuses water and the line backs up.")));
         s.add(new Scenario("pool-spray", i -> new SuppressionPoolScreen(pool(i, true, true), i, t("Suppression Tank"))));
         s.add(new Scenario("pool-legacy", i -> new SuppressionPoolScreen(pool(i, false, false), i, t("Suppression Tank"))));
         s.add(new Scenario("pool-unformed", i -> {

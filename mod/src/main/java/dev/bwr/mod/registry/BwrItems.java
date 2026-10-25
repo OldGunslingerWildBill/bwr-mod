@@ -295,6 +295,7 @@ public final class BwrItems {
     public static final DeferredItem<BlockItem> SLC_BORON_TANK = ITEMS.registerSimpleBlockItem(BwrBlocks.SLC_BORON_TANK);
     public static final DeferredItem<BlockItem> ADS_RELIEF_VALVE = ITEMS.registerSimpleBlockItem(BwrBlocks.ADS_RELIEF_VALVE);
     public static final DeferredItem<BlockItem> WATER_DISCHARGE_PORT = ITEMS.registerSimpleBlockItem(BwrBlocks.WATER_DISCHARGE_PORT);
+    public static final DeferredItem<BlockItem> WATER_OUTLET_CHUTE = ITEMS.registerSimpleBlockItem(BwrBlocks.WATER_OUTLET_CHUTE);
     public static final DeferredItem<Item> BORATE_CHARGE = ITEMS.registerSimpleItem("borate_charge",new Item.Properties());
     public static final DeferredItem<BlockItem> SLC_PUMP =
             ITEMS.registerSimpleBlockItem(BwrBlocks.SLC_PUMP);
@@ -526,6 +527,7 @@ public final class BwrItems {
                         output.accept(BORATE_CHARGE.get());
                         output.accept(ADS_RELIEF_VALVE.get());
                         output.accept(WATER_DISCHARGE_PORT.get());
+                        output.accept(WATER_OUTLET_CHUTE.get());
                         output.accept(RCIC_TWL.get());
                         output.accept(HPCI_TURBINE.get());
                         output.accept(ADS_CONTROLLER.get());

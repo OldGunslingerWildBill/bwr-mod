@@ -5,7 +5,7 @@ ROOT=Path(__file__).resolve().parent
 spec=importlib.util.spec_from_file_location('modern',ROOT/'tools-export-modern.py')
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 m.SOURCE=ROOT/'art/models/suppression'
-for name in ('wall','rim','suction','return','steam_inlet','heat_exchanger','water_surface','spray_rail','spray_riser'):
+for name in ('wall','rim','suction','return','steam_inlet','heat_exchanger','water_surface','spray_rail','spray_riser','water_outlet_chute'):
     s=m.read(name+'.json');folder=m.RES/'assets/bwr/models/block/suppression'/name
     mats=m.materials(s,folder);m.put(folder/'body.obj',m.obj(s['faces'],mats))
     model=m.model(f'bwr:models/block/suppression/{name}/body.obj')

@@ -125,24 +125,28 @@ either touching it directly or using High-Pressure Water Pipe.
   extraction above the pool's existing suction floor. Both expose directional
   NeoForge water capabilities, including for Mekanism Mechanical Pipes.
 
-## Four-port heat exchanger
+## Shell-and-tube heat exchanger (four flanges)
 
-One block has **four total horizontal flanges**, two for each independent circuit:
+The RHR heat exchanger is one block drawn as a horizontal shell-and-tube exchanger: a cladded shell on two saddles, a
+bolted channel head (bonnet) at each end, a flanged nozzle on every circuit, a vent on top, a drain underneath, lifting
+lugs and a plain nameplate. It keeps the registry id `bwr:rhr_heat_exchanger`, the same four flange faces and the same
+saved data as the plate exchanger it replaced, so exchangers already standing in a world take the new model and keep
+every pipe connected to them.
 
-| Identification band | Circuit | Connection |
-| --- | --- | --- |
-| Red | Pool water IN | RHR pump discharge |
-| Amber | Pool water OUT | Return to the same suppression basin |
-| Blue | Cooling water IN | Cooling-water pump / cold supply |
-| Cyan | Cooling water OUT | Heated water back to cooling tower |
+| Identification band | Side | Circuit | Connection |
+| --- | --- | --- | --- |
+| Red | Tube side, channel head nozzle | Pool or vessel water IN | RHR pump discharge |
+| Amber | Tube side, channel head nozzle | Pool or vessel water OUT | Return to the same suppression basin (or vessel) |
+| Blue | Shell side, shell nozzle | Cooling water IN | Makeup pump from the screened intake, or any cold supply |
+| Cyan | Shell side, shell nozzle | Cooling water OUT | **Water Outlet Chute** back to the river or lake, or a line to a cooling tower |
 
-When its red flange faces north, amber faces south, blue west and cyan east.
-Placement rotates all four together. Top and bottom are not water connections.
+When its red flange faces north, amber faces south, blue west and cyan east. Placement rotates all four together. Top and
+bottom are not water connections (the vent and drain are only drawn).
 
 ```text
-pool suction -> powered RHR pump -> RED [heat exchanger] AMBER -> pool return
-                                            || heat
-cold water / cooling pump -------> BLUE [separate circuit] CYAN -> cooling tower
+pool suction -> powered RHR pump -> RED [tube side] AMBER -> pool return
+                                            || heat (shell and tube wall)
+river -> screened intake -> makeup pump -> BLUE [shell side] CYAN -> water outlet chute -> river
 ```
 
 Use **BWR High-Pressure Water Pipe for the complete primary pool loop**. The
@@ -151,7 +155,7 @@ its primary circuit circulates pool water without creating another copy of the
 pool inventory. Primary exchanger flanges do not expose generic fluid tanks.
 Use one RHR pump per exchanger; parallel cooling trains can share the basin.
 
-The secondary flanges accept BWR water pipes or NeoForge-compatible fluid pipes,
+The shell-side flanges accept BWR water pipes or NeoForge-compatible fluid pipes,
 including Mekanism. Supply cold water to blue and drain heated water at cyan.
 The exchanger pushes its hot outlet into an adjacent accepting pipe or tank;
 it does not pull water from an unpumped remote source. Keep the two circuits
@@ -160,12 +164,16 @@ delivery. No water crosses between the circuits.
 
 The exchanger is passive and needs no FE of its own. RHR pumping and any
 cooling-water pump/fan still require their usual energy and player commands.
-Right-click the exchanger for live flow, transferred heat, inventories and
-temperature estimates. Right-click a basin water port to open its pool panel.
+Right-click the exchanger for the tube-side and shell-side inlet and outlet
+temperatures, both flows, the duty in MW, the water held on each side and a
+warning when the heated cooling water is backing up. Right-click a basin water port to open its pool panel.
 The concrete pool panel displays physical exchanger cooling instead of the old
 abstract cooling-duty slider. Existing pump local and CC controls still apply.
 
-![Live exchanger panel](art/models/suppression/exchanger-panel.png)
+![Shell-and-tube exchanger](art/models/suppression/shell-exchanger/exchanger.png)
+![Nozzles and saddles](art/models/suppression/shell-exchanger/nozzles-and-saddles.png)
+![River-cooled loop](art/models/suppression/shell-exchanger/river-loop.png)
+![Live exchanger panel](art/models/suppression/shell-exchanger/exchanger-screen.png)
 
 ## Current thermal model
 

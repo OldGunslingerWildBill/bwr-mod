@@ -105,7 +105,7 @@ public final class WaterLineNetwork {
                     var end=route.node();
                     if(end.kind()!=dev.bwr.mod.piping.PipeTopology.Kind.END || route.opening()<=0)continue;
                     var p=end.pos();var state=dev.bwr.mod.world.LoadedWorld.state(level,p);if(state==null)continue;var face=end.face();
-                    boolean receiver=state.is(BwrBlocks.CONTROL_ROD_DRIVE.get())||state.is(BwrBlocks.WATER_DISCHARGE_PORT.get())||state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())
+                    boolean receiver=state.is(BwrBlocks.CONTROL_ROD_DRIVE.get())||state.is(BwrBlocks.WATER_DISCHARGE_PORT.get())||state.is(BwrBlocks.WATER_OUTLET_CHUTE.get())||state.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())
                             || state.is(BwrBlocks.SUPPRESSION_POOL_RETURN.get())
                             || state.is(BwrBlocks.SPENT_FUEL_POOL_MAKEUP_PORT.get())
                             || state.is(BwrBlocks.SPENT_FUEL_POOL_COOLING_IN.get())

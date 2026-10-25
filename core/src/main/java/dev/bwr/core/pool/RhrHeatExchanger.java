@@ -8,18 +8,24 @@ public final class RhrHeatExchanger {
     public static final double COLD_C=13,HOT_DESIGN_C=24,SECONDARY_FLOW=2400,RATING_MW=27.1;
     private static final double CP=4.184;
     private final WaterInventory cold=new WaterInventory(CAPACITY_KG,COLD_C),hot=new WaterInventory(CAPACITY_KG,COLD_C);
-    private double primaryFlow,secondaryFlow,heatMW,primaryOutC,secondaryOutC;
+    private double primaryFlow,secondaryFlow,heatMW,primaryOutC,secondaryOutC,primaryInC,secondaryInC;
     public double cold(){return cold.mass();}public double hot(){return hot.mass();}
     public double coldH(){return cold.enthalpy();}public double hotH(){return hot.enthalpy();}
     public double coldTemperatureC(){return cold.temperatureC();}public double hotTemperatureC(){return hot.temperatureC();}
     public double primaryFlow(){return primaryFlow;}public double secondaryFlow(){return secondaryFlow;}
     public double secondaryOutC(){return secondaryFlow>0?secondaryOutC:coldTemperatureC();}
     public double primaryOutC(){return primaryOutC;}public double heatMW(){return heatMW;}
+    /** Tube-side (RHR) water temperature entering the exchanger on the last working step, 0 when nothing flowed. */
+    public double primaryInC(){return primaryFlow>0?primaryInC:0;}
+    /** Shell-side (cooling) water temperature entering on the last working step, or the cold buffer's when nothing flowed. */
+    public double secondaryInC(){return secondaryFlow>0?secondaryInC:coldTemperatureC();}
+    /** Fraction of the hot buffer that is full: near 1 means the shell outlet is backed up and cooling is about to stop. */
+    public double hotFill(){return hot.mass()/CAPACITY_KG;}
     public double hotEnergyKJ(){return hot.energyKJ()-hot.mass()*Saturation.subcooledLiquidEnthalpyKJPerKg(COLD_C);}
     public double fillCold(double kg,boolean simulate){return fillCold(kg,Saturation.subcooledLiquidEnthalpyKJPerKg(COLD_C),simulate);}
     public double fillCold(double kg,double h,boolean simulate){return cold.fill(kg,h,simulate);}
     public double drainHot(double kg,boolean simulate){return hot.drain(kg,simulate);}
-    public void clearReadouts(){primaryFlow=secondaryFlow=heatMW=primaryOutC=0;}
+    public void clearReadouts(){primaryFlow=secondaryFlow=heatMW=primaryOutC=primaryInC=secondaryInC=0;}
     public void step(SuppressionPool pool,double flow,double seconds) {
         clearReadouts();if(pool==null||!Double.isFinite(flow)||flow<=0||!Double.isFinite(seconds)||seconds<=0)return;
         double primaryKg=Math.min(flow*seconds,pool.getAvailableSuctionKg());
@@ -32,7 +38,7 @@ public final class RhrHeatExchanger {
         double removed=pool.removeHeatMJ(requested,coldC);
         double outH=inH+removed*1000/secondaryKg;
         cold.drain(secondaryKg,false);hot.fill(secondaryKg,outH,false);
-        primaryFlow=primaryKg/seconds;secondaryFlow=secondaryKg/seconds;heatMW=removed/seconds;
+        primaryFlow=primaryKg/seconds;secondaryFlow=secondaryKg/seconds;heatMW=removed/seconds;primaryInC=inlet;secondaryInC=coldC;
         primaryOutC=inlet-removed*1000/(primaryKg*CP);secondaryOutC=WaterInventory.temperature(outH);
     }
     /** Closed reactor-water primary loop. Mass returns to the vessel; only heat leaves. */
@@ -57,6 +63,8 @@ public final class RhrHeatExchanger {
         primaryFlow = primaryKg / seconds;
         secondaryFlow = secondaryKg / seconds;
         heatMW = requested / seconds;
+        primaryInC = vesselC;
+        secondaryInC = coldC;
         primaryOutC = vesselC - requested * 1000 / (primaryKg * CP);
         secondaryOutC = WaterInventory.temperature(outH);
         return heatMW;

@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
-/** Four physically separate flanges: primary front/back, secondary left/right. */
+/** Shell-and-tube exchanger, four physically separate flanges: tube side (RHR) front/back, shell side (cooling water) left/right. */
 public class RhrHeatExchangerBlock extends BaseEntityBlock implements ProcessAssembly {
     public static final DirectionProperty FACING=HorizontalDirectionalBlock.FACING;
     public RhrHeatExchangerBlock(Properties p){super(p);registerDefaultState(stateDefinition.any().setValue(FACING,Direction.NORTH));}
@@ -49,10 +49,10 @@ public class RhrHeatExchangerBlock extends BaseEntityBlock implements ProcessAss
     @Override public void appendHoverText(net.minecraft.world.item.ItemStack stack,net.minecraft.world.item.Item.TooltipContext context,java.util.List<net.minecraft.network.chat.Component> lines,net.minecraft.world.item.TooltipFlag flag){
         lines.add(BwrText.tr(
                 "status.bwr.rhr_heat_exchanger.pool_water_red_in_amber_out_use_an",
-                "Pool water: red IN / amber OUT. Use an RHR pump."));
+                "Tube side (RHR pool water): red IN / amber OUT. Use an RHR pump."));
         lines.add(BwrText.tr(
                 "status.bwr.rhr_heat_exchanger.cooling_water_blue_in_cyan_out_separate_circuit",
-                "Cooling water: blue IN / cyan OUT. Separate circuit."));
+                "Shell side (river cooling water): blue IN / cyan OUT. Separate circuit."));
         lines.add(BwrText.tr("status.bwr.rhr_heat_exchanger.up_to_27_1_mw_requires_both_water", "Up to 27.1 MW; requires both water circuits."));
         super.appendHoverText(stack,context,lines,flag);
     }
