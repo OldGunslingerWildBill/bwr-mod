@@ -895,6 +895,7 @@
   "status.bwr.rhr_heat_exchanger.up_to_27_1_mw_requires_both_water": "Up to 27.1 MW; requires both water circuits.",
   "status.bwr.rhr_heat_exchanger.cooling_water_blue_in_cyan_out_separate_circuit": "Shell side (river cooling water): blue IN / cyan OUT. Separate circuit.",
   "status.bwr.rhr_heat_exchanger.pool_water_red_in_amber_out_use_an": "Tube side (RHR pool water): red IN / amber OUT. Use an RHR pump.",
+  "status.bwr.rhr_heat_exchanger.full_size_footprint": "Places a full-size vertical unit, 3 wide x 8 high x 3 deep, centred on the clicked block. Leave it all clear.",
   "status.bwr.suppression_pool_drain.can_empty_the_tank_below_rhr_suction_level": "Can empty the tank below RHR suction level. Sneak-click: pool screen.",
   "status.bwr.suppression_pool_drain.drains_to_clear_air_water_or_a_connected": "Drains to clear air/water or a connected water line, up to 1,000 kg/s.",
   "status.bwr.suppression_pool_drain.water_drain_out_click_or_redstone_to_open": "Water drain OUT: click or redstone to open. Closed on placement.",

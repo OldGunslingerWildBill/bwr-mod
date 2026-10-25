@@ -23,7 +23,19 @@ public class RhrHeatExchangerBlockEntity extends BlockEntity {
     public RhrHeatExchangerBlockEntity(BlockPos p,BlockState s){super(BwrBlockEntities.RHR_HEAT_EXCHANGER.get(),p,s);}
     public RhrHeatExchanger plant(){return exchanger;}
     public IFluidHandler secondary(boolean input){return input?inlet:outlet;}
-    private boolean live(){return level!=null&&!level.isClientSide()&&!isRemoved()&&level.isLoaded(worldPosition)&&level.getBlockEntity(worldPosition)==this;}
+    private boolean live(){return level!=null&&!level.isClientSide()&&!isRemoved()&&level.isLoaded(worldPosition)&&level.getBlockEntity(worldPosition)==this&&whole();}
+    /** A full-size unit works only while every one of its cells is loaded and standing; a single block is always whole. */
+    private boolean whole(){
+        var s=getBlockState();
+        if(!RhrHeatExchangerBlock.isAssembled(s))return true;
+        // Asked several times a tick by the flanges; the footprint is read once per tick.
+        long now=level.getGameTime();
+        if(wholeTick!=now){wholeTick=now;wholeNow=s.getBlock() instanceof RhrHeatExchangerBlock b&&b.complete(level,worldPosition,s);}
+        return wholeNow;
+    }
+    private long wholeTick=Long.MIN_VALUE;private boolean wholeNow;
+    /** True for the full-size unit (the controller of a 3 x 8 x 3 assembly), false for a single block placed before it. */
+    public boolean assembled(){return RhrHeatExchangerBlock.isAssembled(getBlockState());}
     private void resetReadouts(){if(level!=null&&readoutTick!=level.getGameTime()){readoutTick=level.getGameTime();exchanger.clearReadouts();}}
     public SuppressionPoolBlockEntity returnPool(){
         if(!live())return null;
@@ -56,7 +68,8 @@ public class RhrHeatExchangerBlockEntity extends BlockEntity {
     }
     public static void serverTick(Level l,BlockPos p,BlockState s,RhrHeatExchangerBlockEntity be){
         be.resetReadouts();
-        Direction face=RhrHeatExchangerBlock.hotOut(s);var next=p.relative(face);
+        // The heated cooling water leaves through the cyan flange: the block's own face, or the shell-outlet cell of a full-size unit.
+        Direction face=RhrHeatExchangerBlock.hotOut(s);var next=RhrHeatExchangerBlock.portCell(p,s,RhrHeatExchangerBlock.HxPort.SHELL_OUT).relative(face);
         if(!l.isLoaded(next))return;
         var available=be.outlet.drain((int)(RhrHeatExchanger.SECONDARY_FLOW/20),IFluidHandler.FluidAction.SIMULATE);
         if(available.isEmpty())return;

@@ -11,6 +11,26 @@
       ],
       "conditions": [
         {
+          "condition": "minecraft:any_of",
+          "terms": [
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "bwr:rhr_heat_exchanger",
+              "properties": {
+                "assembled": "false"
+              }
+            },
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "bwr:rhr_heat_exchanger",
+              "properties": {
+                "assembled": "true",
+                "cell": "4"
+              }
+            }
+          ]
+        },
+        {
           "condition": "minecraft:survives_explosion"
         }
       ]
