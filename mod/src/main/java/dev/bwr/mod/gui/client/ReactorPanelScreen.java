@@ -284,10 +284,10 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
 
     private List<Component> chemistryTooltip() {
         return List.of(
-                Component.literal("Conductivity rises slowly with feedwater impurity, condenser in-leakage and corrosion, and falls only as the reactor water cleanup system removes impurity through its resin bed."),
+                Component.literal("Conductivity rises slowly with feedwater impurity, condenser in-leakage and corrosion, and falls only as the reactor water cleanup system removes impurity through its stainless steel nanofilter."),
                 Component.literal("Above 1 uS/cm (the action level) it adds slow structural and fuel-cladding corrosion wear; above 10 uS/cm is the usual shutdown limit. Nothing here trips or isolates anything."),
                 Component.literal("Crud is corrosion product circulating with the water. In the core it picks up activity, and that activity is a radiation source around the coolant lines."),
-                Component.literal("Cleanup removes crud with the resin bed and takes heat from the vessel net of its regenerative exchanger; blowdown takes water out of the vessel to a tank or condenser."));
+                Component.literal("Cleanup removes crud and dissolved ions with the nanofilter and (if the loop has exchangers) takes heat from the vessel net of its regenerative exchanger; blowdown takes water out of the vessel to a tank or condenser."));
     }
 
     /** One cavity drain port: where it is, what its line is doing now, and what it passes. */

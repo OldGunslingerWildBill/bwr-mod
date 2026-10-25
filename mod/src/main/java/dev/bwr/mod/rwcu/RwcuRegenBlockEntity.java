@@ -37,8 +37,8 @@ public class RwcuRegenBlockEntity extends BlockEntity implements RwcuUnit {
         boolean on = active();
         return new Readout(on ? "Recovering heat" : "No flow", on ? 1 : 0, List.of(
                 new Line("Reactor water in (hot side)", on ? n(hotInC, 1) : "-", "C", 0),
-                new Line("Reactor water out (to cooler)", on ? n(hotOutC, 1) : "-", "C", 0),
-                new Line("Cleaned water in (from resin)", on ? n(coldInC, 1) : "-", "C", 0),
+                new Line("Reactor water out (onward)", on ? n(hotOutC, 1) : "-", "C", 0),
+                new Line("Cleaned water in (from the nanofilter)", on ? n(coldInC, 1) : "-", "C", 0),
                 new Line("Water back to feedwater", on ? n(coldOutC, 1) : "-", "C", on ? 1 : 0),
                 new Line("Heat recovered", on ? n(dutyMW, 2) : "-", "MW", 0)));
     }

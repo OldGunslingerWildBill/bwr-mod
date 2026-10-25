@@ -20,23 +20,21 @@
     {
       "title": "Build the RWCU skid",
       "text": [
-        "Run water pipe from a recirculation outlet (or the bottom drain port) to the RWCU pump's back flange. The pump's front goes to the regenerative exchanger's hot inlet (front), its back to the cooler's front, and the cooler's back to the demineraliser's front.",
+        "Run water pipe from a recirculation outlet (or the bottom drain port) to the RWCU pump's back flange. The pump's front goes to the Stainless Steel Nanofilter's front and its back to a feedwater water-injection port of the same vessel. That is the whole loop: it runs at reactor temperature. Give the pump FE and start it.",
         "",
-        "The demineraliser's back returns to the regenerator's cold inlet (its left side as you face the front) and the regenerator's cold outlet (its right) goes to a feedwater water-injection port. The cooler's side flanges take cooling water; give the pump FE and start it."
+        "The two heat exchangers are optional. See the next page for what they add."
       ],
       "icons": [
         "bwr:rwcu_pump",
-        "bwr:rwcu_regenerative_heat_exchanger",
-        "bwr:rwcu_nonregenerative_heat_exchanger",
         "bwr:rwcu_filter_demineralizer"
       ]
     },
     {
-      "title": "The resin bed",
+      "title": "The nanofilter element",
       "text": [
-        "The bed holds 100 g of ionic impurity and 200 g of crud, then it is spent and removes no ions. Right-click the demineraliser with Demineralizer Resin to change the bed.",
+        "The element holds 100 g of dissolved ions and 200 g of crud, then it is spent. It works at any water temperature and nothing damages it. Crud loads it and costs pressure drop (the gauge on its screen), which lowers the loop flow; a full element costs about a fifth of it.",
         "",
-        "The old bed comes out as Spent Demineralizer Resin: radioactive waste that the survey meter reads, as does the bed while it is in service. Resin is destroyed above 140 F, which is what a cooler without cooling water does to it."
+        "Right-click the nanofilter with a Stainless Steel Nanofilter Element to change it. The old one comes out as a Spent Nanofilter Element: radioactive waste the survey meter reads. In real plants dissolved ions need ion exchange; this nanofilter does both for simplicity."
       ],
       "icons": [
         "bwr:demineralizer_resin",
@@ -45,9 +43,21 @@
       ]
     },
     {
+      "title": "With or without the exchangers",
+      "text": [
+        "Put the Regenerative Heat Exchanger (hot side, front to back) and then the Non-Regenerative Heat Exchanger between the pump and the nanofilter. The nanofilter's back then goes into the regenerator's cold inlet (its left side) and its cold outlet (right) to the feedwater port. The cooler's side flanges take cooling water.",
+        "",
+        "With both, the cleanup takes about 5 MW from the vessel at full flow. With neither it takes none: the water returns as hot as it left. A cooler alone takes up to 8 MW; a regenerator alone has nothing to recover."
+      ],
+      "icons": [
+        "bwr:rwcu_regenerative_heat_exchanger",
+        "bwr:rwcu_nonregenerative_heat_exchanger"
+      ]
+    },
+    {
       "title": "Blowdown and the bottom drain",
       "text": [
-        "Pipe a tee off the cooler's outlet through a Motor-Operated Water Valve to a Condensate Storage Tank or a condenser: that is the blowdown. The valve's opening against the demineraliser's sets how much of the flow is rejected, which lowers the vessel level for startup control.",
+        "Pipe a tee off the line ahead of the nanofilter through a Motor-Operated Water Valve to a Condensate Storage Tank or a condenser: that is the blowdown. The valve's opening against the nanofilter's sets how much is rejected, which lowers the vessel level. The water arrives at the temperature it has at the tee; with no cooler that is hot, and the tank does not flash it.",
         "",
         "The bottom head drain port sits in the lowest two rows of a vessel wall. With it as the pump's suction, the vessel can be drained to the port's height. It draws nothing once the water is down to the port."
       ],
@@ -62,7 +72,7 @@
       "text": [
         "The suction line from the vessel to the pump and the return line to feedwater are pressure boundary: a pipe taken out of either is a loss of coolant up to the nearest closed isolation valve. Put a Motor-Operated Water Valve near the vessel on each and close it to isolate a break.",
         "",
-        "Nothing closes it for you, and nothing stops the pump if the resin overheats or the water falls."
+        "Nothing closes it for you, and nothing stops the pump if the element is spent or the water falls."
       ],
       "icons": [
         "bwr:motor_operated_water_valve",

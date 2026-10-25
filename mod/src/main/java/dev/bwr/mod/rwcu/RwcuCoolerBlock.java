@@ -50,7 +50,7 @@ public class RwcuCoolerBlock extends RwcuUnitBlock {
     }
     @Override public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> lines, TooltipFlag flag) {
         lines.add(BwrText.tr("tooltip.bwr.rwcu_cooler.line1", "Process water: in front, out back. Cooling water: blue in on the left, cyan out on the right."));
-        lines.add(BwrText.tr("tooltip.bwr.rwcu_cooler.line2", "Up to 8 MW. With no cooling water the demineraliser sees hot water."));
+        lines.add(BwrText.tr("tooltip.bwr.rwcu_cooler.line2", "Up to 8 MW. Optional: without it, or without cooling water, the nanofilter works on hot reactor water."));
         super.appendHoverText(stack, context, lines, flag);
     }
 }

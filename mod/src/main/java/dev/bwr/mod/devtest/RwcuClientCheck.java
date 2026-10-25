@@ -28,15 +28,16 @@ import java.nio.file.Files;
 
 /**
  * Disposable real-client check of the reactor water cleanup skid (run with {@code -PbwrRwcuClientCheck} through run-mc.ps1): the
- * pump, regenerative exchanger, cooler and demineraliser piped to the vessel and to its feedwater port, the pump's screen with the
- * loop running, the demineraliser's screen with a loaded bed, and the reactor screen's INFO tab with its water chemistry section.
+ * pump, regenerative exchanger, cooler and stainless steel nanofilter piped to the vessel and to its feedwater port, the pump's screen
+ * with the loop running, the nanofilter's screen with a loaded element, the reactor screen's INFO tab with its water chemistry section,
+ * and a second, hot loop with no exchangers (the nanofilter on reactor-hot water) with its screen.
  * Pictures go to {@code run/turbineModelCheck/rwcu-check/}. Not shipped: the devtest package is stripped from the release jar.
  */
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
 public final class RwcuClientCheck {
     private static final int X0 = 200;
-    private static final String[] NAMES = {"skid", "skid-closeup", "pump-screen", "demineralizer-screen", "info-tab-chemistry"};
-    private static final boolean[] SCREEN = {false, false, true, true, true};
+    private static final String[] NAMES = {"skid", "skid-closeup", "pump-screen", "nanofilter-screen", "info-tab-chemistry", "hot-loop-nanofilter", "hot-loop-nanofilter-screen"};
+    private static final boolean[] SCREEN = {false, false, true, true, true, false, true};
 
     private record Shot(Vec3 stand, Vec3 target) {}
 
@@ -48,13 +49,15 @@ public final class RwcuClientCheck {
             new Shot(v(200.5, 202.0, 188.5), v(205.5, 196.3, 192.5)),
             new Shot(v(209.0, 197.5, 195.5), v(205.5, 196.5, 195.5)),
             new Shot(v(209.0, 197.5, 191.0), v(205.5, 196.5, 191.0)),
-            new Shot(v(192.0, 195.0, 204.5), v(199.5, 193.5, 204.5))};
+            new Shot(v(192.0, 195.0, 204.5), v(199.5, 193.5, 204.5)),
+            new Shot(v(309.0, 199.0, 288.5), v(305.5, 196.5, 291.5)),
+            new Shot(v(309.0, 197.5, 291.0), v(305.5, 196.5, 291.0))};
 
     private static boolean started, requested, standing, built;
     private static volatile Throwable failure;
     private static volatile Vec3 aim;
     private static int age, joined, stage, shown;
-    private static RwcuTests.Skid skid;
+    private static RwcuTests.Skid skid, hot;
 
     private RwcuClientCheck() {}
 
@@ -112,6 +115,14 @@ public final class RwcuClientCheck {
                         RwcuTests.openForCheck(level, skid);
                         built = true;
                     }
+                    if (current >= 5 && hot == null) {
+                        // a second loop for the last pictures: no exchangers, so the nanofilter works on reactor-hot water
+                        hot = RwcuTests.variant(level, 300, false, false, true);
+                        hot.core().getPressureVessel().restorePressurePsig(1000);
+                        var chemistry = hot.core().getChemistry();
+                        chemistry.fromArray(new double[]{CoolantChemistry.ionicGramsFor(2.2, hot.core().getLiquidMassKg()), 6.0, 6.0 * 0.4e12, 0.0004, 0.0001});
+                        hot.pump.setRunning(true);
+                    }
                     act(player, current);
                     Shot shot = SHOTS[current];
                     Vec3 delta = shot.target.subtract(shot.stand.add(0, player.getEyeHeight(), 0));
@@ -132,6 +143,7 @@ public final class RwcuClientCheck {
         }
         // the pump's FE: the same 9,000 FE/t it draws, every tick, so it stays at speed
         if (skid != null) server.execute(() -> skid.pump.energy().receiveEnergy(100_000, false));
+        if (hot != null) server.execute(() -> hot.pump.energy().receiveEnergy(100_000, false));
         if (!standing || aim == null) return;
         Shot shot = SHOTS[stage];
         mc.player.setPos(shot.stand.x, shot.stand.y, shot.stand.z);
@@ -144,7 +156,7 @@ public final class RwcuClientCheck {
         if (SCREEN[stage]) {
             boolean ready = switch (stage) {
                 case 2 -> mc.screen instanceof dev.bwr.mod.gui.client.PumpControlScreen && mc.player.containerMenu instanceof PumpControlMenu m && m.present && m.actual > 0.2;
-                case 3 -> mc.screen instanceof dev.bwr.mod.gui.client.RwcuUnitScreen && mc.player.containerMenu instanceof RwcuUnitMenu m && !m.lines.isEmpty();
+                case 3, 6 -> mc.screen instanceof dev.bwr.mod.gui.client.RwcuUnitScreen && mc.player.containerMenu instanceof RwcuUnitMenu m && !m.lines.isEmpty();
                 default -> mc.screen instanceof dev.bwr.mod.gui.client.ReactorPanelScreen && mc.player.containerMenu instanceof ReactorPanelMenu m && m.formed && m.crudG > 0;
             };
             if (!ready) return;
@@ -187,6 +199,10 @@ public final class RwcuClientCheck {
                 RwcuUnitMenu.open(player, s.demin.getBlockPos());
             }
             case 4 -> ReactorPanelMenu.open(player, s.be);
+            case 6 -> {
+                hot.demin.bed().fromArray(new double[]{1, 40.0, 70.0, 1.8e13, 0});
+                RwcuUnitMenu.open(player, hot.demin.getBlockPos());
+            }
             default -> {
             }
         }

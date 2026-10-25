@@ -548,6 +548,8 @@ public final class GuiScreenCheck {
         s.add(new Scenario("aux-shaft-pump", i -> new TurbineAuxScreen(auxMenu(i, 1, false), i, t("Turbine Shaft-Driven Main Oil Pump"))));
         s.add(new Scenario("aux-cooling-skid", i -> new TurbineAuxScreen(auxMenu(i, 2, false), i, t("Generator Cooling Skid"))));
         s.add(new Scenario("aux-cooling-skid-unpowered", i -> new TurbineAuxScreen(auxMenu(i, 2, true), i, t("Generator Cooling Skid"))));
+        s.add(new Scenario("rwcu-nanofilter", i -> new RwcuUnitScreen(nanofilterMenu(i, false), i, t("RWCU Stainless Steel Nanofilter"))));
+        s.add(new Scenario("rwcu-nanofilter-spent", i -> new RwcuUnitScreen(nanofilterMenu(i, true), i, t("RWCU Stainless Steel Nanofilter"))));
         s.add(new Scenario("valve-control", i -> new TurbineValveScreen(valve(i, false), i, t("Turbine Control Valve"))));
         s.add(new Scenario("valve-stop", i -> new TurbineValveScreen(valve(i, true), i, t("Turbine Stop Valve"))));
         s.add(new Scenario("fabricator", i -> {
@@ -985,6 +987,24 @@ public final class GuiScreenCheck {
         m.h2Psig = alarms ? 17.5 : 30.0;
         m.coolantC = alarms ? 83 : 46;
         m.alarms = alarms ? 1 | 2 | 4 | 8 | 16 | 32 | 64 : 0;
+        return m;
+    }
+
+    /** The RWCU stainless steel nanofilter's readout, as the block entity builds it (a working element, or a spent one). */
+    private static RwcuUnitMenu nanofilterMenu(Inventory i, boolean spent) {
+        var m = new RwcuUnitMenu(99, i, P);
+        m.headline = spent ? "Element spent: replace it" : "Filtering";
+        m.headlineStatus = spent ? 3 : 1;
+        m.lines = java.util.List.of(
+                new dev.bwr.mod.rwcu.RwcuUnit.Line("Element used", spent ? "100.0" : "62.5", "%", spent ? 2 : 0),
+                new dev.bwr.mod.rwcu.RwcuUnit.Line("Crud held", spent ? "200.00" : "91.00", "g of 200", 0),
+                new dev.bwr.mod.rwcu.RwcuUnit.Line("Ionic impurity held", spent ? "99.80" : "62.50", "g of 100", 0),
+                new dev.bwr.mod.rwcu.RwcuUnit.Line("Pressure drop", spent ? "100.0" : "46.3", "psid", 2),
+                new dev.bwr.mod.rwcu.RwcuUnit.Line("Water through the element", "49.0", "kg/s", 0),
+                new dev.bwr.mod.rwcu.RwcuUnit.Line("Water temperature", "285.0", "C", 0),
+                new dev.bwr.mod.rwcu.RwcuUnit.Line("Removal efficiency", spent ? "0" : "95", "%", 0),
+                new dev.bwr.mod.rwcu.RwcuUnit.Line("Radioactivity held", "2.50e+13", "Bq", 2),
+                new dev.bwr.mod.rwcu.RwcuUnit.Line("Gamma power", "10.000", "W", 0));
         return m;
     }
 

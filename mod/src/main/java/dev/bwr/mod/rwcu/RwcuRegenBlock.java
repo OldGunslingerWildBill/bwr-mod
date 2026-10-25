@@ -48,7 +48,7 @@ public class RwcuRegenBlock extends RwcuUnitBlock {
     }
     @Override public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> lines, TooltipFlag flag) {
         lines.add(BwrText.tr("tooltip.bwr.rwcu_regen.line1", "Hot side: reactor water in front, out back. Cold side: cleaned water in on the left, out on the right."));
-        lines.add(BwrText.tr("tooltip.bwr.rwcu_regen.line2", "Returns about 92 percent of the heat to the water going back to feedwater."));
+        lines.add(BwrText.tr("tooltip.bwr.rwcu_regen.line2", "Returns about 92 percent of the heat to the water going back to feedwater. Optional."));
         super.appendHoverText(stack, context, lines, flag);
     }
 }

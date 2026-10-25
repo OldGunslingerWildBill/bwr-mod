@@ -18,9 +18,11 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * The filter-demineraliser: the resin bed ({@link FilterDemineralizer}) and its radiation. The pump pushes water through
- * it; the bed fills with what it removes. What it holds is a gamma source (the survey meter reads it) and, replaced, it
- * comes out as {@link SpentResinItem}. No ticker: the pump's tick steps it.
+ * The stainless steel nanofilter (registry id {@code rwcu_filter_demineralizer}, kept so saves load): the element
+ * ({@link FilterDemineralizer}, still called the bed in the code) and its radiation. The pump pushes water through it, at any
+ * temperature; the element fills with what it removes, crud and dissolved ions, and its pressure drop rises with the crud.
+ * What it holds is a gamma source (the survey meter reads it) and, replaced, it comes out as {@link SpentResinItem} (a
+ * Spent Nanofilter Element; the item id is the old one). No ticker: the pump's tick steps it.
  */
 public class RwcuDeminBlockEntity extends BlockEntity implements RwcuUnit {
     /** What the vessel wall and the water in it let through of the captured crud's gamma. */
@@ -36,7 +38,10 @@ public class RwcuDeminBlockEntity extends BlockEntity implements RwcuUnit {
 
     public FilterDemineralizer bed() { return bed; }
     public boolean hasBed() { return bed.bedPresent(); }
-    public boolean overTemperature() { return level != null && level.getGameTime() - processedTick <= 2 && bed.overTemperature(); }
+    /** Water through the element now, kg/s (zero when the pump is not moving water through it). */
+    public double flowKgPerS() { return flowing() ? flowKgPerS : 0; }
+    /** Temperature of the water at the element now, C (zero when nothing flows). */
+    public double inletC() { return flowing() ? inletC : 0; }
     public boolean flowing() { return level != null && level.getGameTime() - processedTick <= 2 && flowKgPerS > 0; }
 
     public FilterDemineralizer.Result process(double flowKgPerS, double inletC, double ionGPerKg, double crudGPerKg, double bqPerG, double dt) {
@@ -54,8 +59,8 @@ public class RwcuDeminBlockEntity extends BlockEntity implements RwcuUnit {
 
     /** Puts a fresh bed in: the old one comes out as spent resin. A bed that has taken nothing is left alone. */
     public void changeBed(Player player, ItemStack resin) {
-        if (bed.bedPresent() && bed.ionLoadG() <= 0 && bed.crudLoadG() <= 0 && bed.damage() <= 0) {
-            player.displayClientMessage(Component.literal("The resin bed is still fresh."), true);
+        if (bed.bedPresent() && bed.ionLoadG() <= 0 && bed.crudLoadG() <= 0) {
+            player.displayClientMessage(Component.literal("The nanofilter element is still new."), true);
             return;
         }
         if (bed.bedPresent()) {
@@ -67,7 +72,7 @@ public class RwcuDeminBlockEntity extends BlockEntity implements RwcuUnit {
         if (!player.getAbilities().instabuild) resin.shrink(1);
         refreshRadiation(true);
         setChanged();
-        player.displayClientMessage(Component.literal("Resin bed replaced."), true);
+        player.displayClientMessage(Component.literal("Nanofilter element replaced."), true);
     }
 
     /** Re-rates the gamma source when it has moved by more than a few per cent (never per tick). */
@@ -97,18 +102,18 @@ public class RwcuDeminBlockEntity extends BlockEntity implements RwcuUnit {
     private static String n(double v, int d) { return String.format(Locale.ROOT, "%." + d + "f", v); }
 
     @Override public Readout readout() {
-        boolean hot = overTemperature();
         boolean on = flowing();
-        int headStatus = !bed.bedPresent() ? 3 : hot ? 3 : bed.exhaustion() >= 1.0 ? 3 : bed.exhaustion() > 0.8 ? 2 : on ? 1 : 0;
-        String head = !bed.bedPresent() ? "No resin bed" : hot ? "Resin over 140 F: being destroyed"
-                : bed.exhaustion() >= 1.0 ? "Resin exhausted: replace the bed" : on ? "Cleaning" : "Idle";
+        double used = bed.exhaustion();
+        int headStatus = !bed.bedPresent() ? 3 : used >= 1.0 ? 3 : used > 0.8 ? 2 : on ? 1 : 0;
+        String head = !bed.bedPresent() ? "No filter element" : used >= 1.0 ? "Element spent: replace it" : on ? "Filtering" : "Idle";
+        double dp = bed.pressureDropAtRatedPsi();
         return new Readout(head, headStatus, List.of(
-                new Line("Resin used", n(100 * bed.exhaustion(), 1), "%", bed.exhaustion() > 0.8 ? 2 : 0),
-                new Line("Ionic impurity held", n(bed.ionLoadG(), 2), "g of " + (int) FilterDemineralizer.ION_CAPACITY_G, 0),
+                new Line("Element used", n(100 * used, 1), "%", used > 0.8 ? 2 : 0),
                 new Line("Crud held", n(bed.crudLoadG(), 2), "g of " + (int) FilterDemineralizer.CRUD_CAPACITY_G, 0),
-                new Line("Heat damage", n(100 * bed.damage(), 1), "%", bed.damage() > 0 ? 3 : 0),
-                new Line("Water through the bed", on ? n(flowKgPerS, 1) : "-", "kg/s", 0),
-                new Line("Water at the bed", on ? n(inletC, 1) : "-", "C", hot ? 3 : 0),
+                new Line("Ionic impurity held", n(bed.ionLoadG(), 2), "g of " + (int) FilterDemineralizer.ION_CAPACITY_G, 0),
+                new Line("Pressure drop", n(on ? bed.pressureDropPsi(flowKgPerS) : 0, 1), "psid", dp > 0.6 * FilterDemineralizer.DP_SPENT_PSI ? 2 : 0),
+                new Line("Water through the element", on ? n(flowKgPerS, 1) : "-", "kg/s", 0),
+                new Line("Water temperature", on ? n(inletC, 1) : "-", "C", 0),
                 new Line("Removal efficiency", on ? n(100 * bed.lastEfficiency(), 0) : "-", "%", 0),
                 new Line("Radioactivity held", String.format(Locale.ROOT, "%.2e", bed.activityBq()), "Bq", bed.activityBq() > 0 ? 2 : 0),
                 new Line("Gamma power", n(bed.gammaWatts(), 3), "W", 0)));
