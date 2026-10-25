@@ -39,13 +39,13 @@ public final class TurbineAuxClientCheck {
 
     private static boolean started, requested;
     private static int age, stage, shown, joined;
-    private static final BlockPos ROOT = new BlockPos(260, 215, 260);
+    private static final BlockPos ROOT = new BlockPos(200, 200, 200);
     private static PowerModuleBlockEntity gen, hp;
     private static TurbineAuxBlockEntity tank, skid, pump;
     private static final String[] NAMES = {"aux-overview", "aux-oil-tank", "aux-shaft-pump", "aux-cooling-skid", "gui-generator-aux", "gui-hp-aux",
             "gui-oil-tank", "gui-cooling-skid", "gui-shaft-pump", "gui-generator-turning-gear"};
     /** x, y, z, yaw, pitch of the camera relative to the root for the four pictures of the world. */
-    private static final double[][] CAMERA = {{15, 7, 15, 135, 16}, {7, 3, 10, 140, 12}, {11, 3, 6, 125, 10}, {7, 3, -10, 40, 12}};
+    private static final double[][] CAMERA = {{13, 6, 13, 135, 18}, {4, 2.5, 7.5, 142, 16}, {8.5, 2.5, 3.5, 135, 14}, {4, 2.5, -7.5, 38, 16}};
 
     /** The test supplies what a plant would: FE on the buses and water at the flanges, and holds the train at the speed of the stage. */
     @SubscribeEvent
@@ -92,7 +92,7 @@ public final class TurbineAuxClientCheck {
                 player.setNoGravity(true);
                 player.onUpdateAbilities();
                 if (selected == 0) {
-                    for (int x = 12; x <= 19; x++) for (int z = 12; z <= 19; z++) { l.setChunkForced(x, z, true); l.getChunk(x, z); }
+                    for (int x = 8; x <= 17; x++) for (int z = 8; z <= 17; z++) { l.setChunkForced(x, z, true); l.getChunk(x, z); }
                     for (var p : BlockPos.betweenClosed(ROOT.offset(-20, -1, -16), ROOT.offset(20, -1, 16))) l.setBlock(p, net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState(), 3);
                     gen = PowerModuleRuntimeCheck.place(l, BwrBlocks.NUCLEAR_GENERATOR.get(), ROOT, Direction.EAST);
                     hp = PowerModuleRuntimeCheck.place(l, BwrBlocks.HP_TURBINE.get(), ROOT.offset(-9, 0, 0), Direction.EAST);
@@ -146,9 +146,9 @@ public final class TurbineAuxClientCheck {
                 switch (selected) {
                     case 4, 9 -> { player.connection.teleport(ROOT.getX() + 5.5, ROOT.getY() + 3, ROOT.getZ() - 4.5, 0, 12); PowerModuleMenu.open(player, ROOT, ROOT); }
                     case 5 -> { player.connection.teleport(ROOT.getX() - 8.5, ROOT.getY() + 3, ROOT.getZ() - 4.5, 0, 12); PowerModuleMenu.open(player, ROOT.offset(-9, 0, 0), ROOT.offset(-9, 0, 0)); }
-                    case 6 -> TurbineAuxMenu.open(player, tank.getBlockPos());
-                    case 7 -> TurbineAuxMenu.open(player, skid.getBlockPos());
-                    default -> TurbineAuxMenu.open(player, pump.getBlockPos());
+                    case 6 -> { player.connection.teleport(ROOT.getX() + .5, ROOT.getY() + 3, ROOT.getZ() + 8.5, 180, 12); TurbineAuxMenu.open(player, tank.getBlockPos()); }
+                    case 7 -> { player.connection.teleport(ROOT.getX() + .5, ROOT.getY() + 3, ROOT.getZ() - 7.5, 0, 12); TurbineAuxMenu.open(player, skid.getBlockPos()); }
+                    default -> { player.connection.teleport(ROOT.getX() + 9.5, ROOT.getY() + 3, ROOT.getZ() + .5, 90, 12); TurbineAuxMenu.open(player, pump.getBlockPos()); }
                 }
             });
         }
@@ -168,10 +168,14 @@ public final class TurbineAuxClientCheck {
             ready = mc.screen instanceof PowerModuleScreen && mc.player.containerMenu instanceof PowerModuleMenu m && m.present && m.lubeGov
                     && (stage == 9 ? m.gearRolling : m.oilPsig > 20 && (stage != 4 || m.statorFlow > 0.9));
         } else {
-            ready = mc.screen instanceof TurbineAuxScreen && mc.player.containerMenu instanceof TurbineAuxMenu m && m.present && m.attached && m.psig > 20
-                    && (stage != 7 || m.statorFlow > 0.9);
+            ready = mc.screen instanceof TurbineAuxScreen && mc.player.containerMenu instanceof TurbineAuxMenu m && m.present && m.attached
+                    && (stage == 6 ? m.psig > 20 : stage == 7 ? m.statorFlow > 0.9 : m.shaftFlow > 0.9);
         }
         if (!ready && age % 200 == 0) LogUtils.getLogger().info("AUX CLIENT waiting: stage={} screen={}", stage, mc.screen == null ? "world" : mc.screen.getClass().getSimpleName());
+        if (ready && shown == 2 && mc.screen instanceof PowerModuleScreen) {
+            for (var c : mc.screen.children())
+                if (c instanceof net.minecraft.client.gui.components.Button b && b.getMessage().getString().equals("AUXILIARIES")) b.onPress();
+        }
         if (!ready || ++shown < 80) return;
         mc.options.hideGui = world;
         mc.getToasts().clear();

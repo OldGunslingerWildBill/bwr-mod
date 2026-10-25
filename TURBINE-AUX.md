@@ -129,6 +129,12 @@ Every new key is written only when it is not its default: `AuxLinks`, `AuxRequir
 `RotorC`, `WindingC` on a power module; `Host`, `AcOn`, `DcOn`, `StatorOn`, `AcFe`, `DcFe`, `OilL`, `OilC`, `H2Kg`, `CoolantC`,
 `StatorFlow` and the two cooling-water tanks on a skid. A skid or link in an unloaded chunk is kept, never loaded to look at.
 
+## Pictures
+
+1920 x 1080, from `-PbwrTurbineAuxCheck` (`TurbineAuxClientCheck`) and the GUI check, in `art/models/turbine_aux/screens/`: `aux-overview`, `aux-oil-tank`,
+`aux-shaft-pump`, `aux-cooling-skid` (the world), `gui-generator-aux`, `gui-hp-aux`, `gui-oil-tank`, `gui-cooling-skid`, `gui-shaft-pump`,
+`gui-generator-turning-gear` (the screens, the last with the turning gear on and rolling the shaft).
+
 ## Models and sources
 
 Three Blender models (headless): the oil tank (3,892 triangles), the generator cooling skid (5,628) and the shaft-driven pump
@@ -137,7 +143,7 @@ bakes them (`--check` verifies); `python tools-make-turbine-aux-assets.py` makes
 
 ## Tests
 
-Core `TurbineAuxTest` (12 tests). GameTests `bwraux` (`TurbineAuxTests`, `TurbineAuxCcChecks`): the shaft pump makes oil only with
+Core `TurbineAuxTest` (12 tests). GameTests `bwraux` (18 tests) (`TurbineAuxTests`, `TurbineAuxCcChecks`): the shaft pump makes oil only with
 speed; start-up needs the AC pump; no oil while rolling wrecks the bearings, and oil does not; the DC pump holds the oil on loss of
 AC power; the cooler and the oil's leak and the drums; a hot shaft bows without the gear and the gear recovers it; a bowed
 roll-up shakes and damages; the gear switch engages only at low speed (screen, signal, CC); an unpowered cooling skid lets the

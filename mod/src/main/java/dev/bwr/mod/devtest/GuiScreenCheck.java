@@ -539,9 +539,10 @@ public final class GuiScreenCheck {
         s.add(new Scenario("power-hp", i -> new PowerModuleScreen(power(i, 0), i, t("TX-10 Style HP Turbine"))));
         s.add(new Scenario("power-lp", i -> new PowerModuleScreen(power(i, 1), i, t("TX-10 Style LP Turbine"))));
         s.add(new Scenario("power-generator", i -> new PowerModuleScreen(power(i, 2), i, t("Turbine Generator"))));
-        s.add(new Scenario("power-generator-aux", i -> new PowerModuleScreen(powerAux(i, 2, false), i, t("Turbine Generator"))));
-        s.add(new Scenario("power-generator-aux-alarms", i -> new PowerModuleScreen(powerAux(i, 2, true), i, t("Turbine Generator"))));
-        s.add(new Scenario("power-hp-aux", i -> new PowerModuleScreen(powerAux(i, 0, false), i, t("TX-10 Style HP Turbine"))));
+        s.add(new Scenario("power-generator-legacy-aux-tab", i -> new PowerModuleScreen(power(i, 2), i, t("Turbine Generator")), screen -> click(screen, "AUXILIARIES")));
+        s.add(new Scenario("power-generator-aux", i -> new PowerModuleScreen(powerAux(i, 2, false), i, t("Turbine Generator")), screen -> click(screen, "AUXILIARIES")));
+        s.add(new Scenario("power-generator-aux-alarms", i -> new PowerModuleScreen(powerAux(i, 2, true), i, t("Turbine Generator")), screen -> click(screen, "AUXILIARIES")));
+        s.add(new Scenario("power-hp-aux", i -> new PowerModuleScreen(powerAux(i, 0, false), i, t("TX-10 Style HP Turbine")), screen -> click(screen, "AUXILIARIES")));
         s.add(new Scenario("aux-oil-tank", i -> new TurbineAuxScreen(auxMenu(i, 0, false), i, t("Turbine Main Oil Tank"))));
         s.add(new Scenario("aux-oil-tank-unpowered", i -> new TurbineAuxScreen(auxMenu(i, 0, true), i, t("Turbine Main Oil Tank"))));
         s.add(new Scenario("aux-shaft-pump", i -> new TurbineAuxScreen(auxMenu(i, 1, false), i, t("Turbine Shaft-Driven Main Oil Pump"))));

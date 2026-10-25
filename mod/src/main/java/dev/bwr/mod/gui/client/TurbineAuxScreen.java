@@ -7,6 +7,7 @@ import dev.bwr.mod.gui.client.style.BwrStyle;
 import dev.bwr.mod.gui.client.style.BwrStyle.Status;
 import dev.bwr.mod.gui.client.style.Layout;
 import dev.bwr.mod.gui.client.style.UiElement;
+import dev.bwr.mod.power.TurbineAuxTrain;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -15,12 +16,16 @@ public class TurbineAuxScreen extends BwrScreen<TurbineAuxMenu> {
     private BwrButton acPump, dcPump, statorPumps;
 
     public TurbineAuxScreen(TurbineAuxMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 400, 210);
+        super(menu, inventory, title, 400, 150);
     }
 
     private boolean tank() { return menu.kind == 0; }
     private boolean shaftPump() { return menu.kind == 1; }
     private boolean cooling() { return menu.kind == 2; }
+
+    private static String pump(boolean running, boolean on, double fe) {
+        return (running ? "running" : on ? "no power" : "off") + ", " + big(fe) + " FE";
+    }
 
     @Override
     protected UiElement buildUi() {
@@ -35,44 +40,33 @@ public class TurbineAuxScreen extends BwrScreen<TurbineAuxMenu> {
         var oil = Layout.card("Lube oil",
                 Layout.row("Oil pressure", () -> num(menu.psig, 1), "psig"),
                 Layout.row("Oil film", () -> pct(menu.film), "%"),
-                Layout.row("Oil in the tank", () -> grouped(menu.oilFraction * TurbineAux.OIL_TANK_L, 0), "L").showIf(this::tank),
-                Layout.meter("Oil level", () -> menu.oilFraction, () -> menu.oilFraction < dev.bwr.mod.power.TurbineAuxTrain.ALARM_OIL_LEVEL ? Status.CAUTION : Status.NORMAL,
-                        () -> pct(menu.oilFraction) + "%").showIf(this::tank),
-                Layout.row("Oil temperature", () -> num(menu.oilC, 1), "C").showIf(this::tank),
-                Layout.row("Bearing temperature", () -> num(menu.bearingC, 1), "C"),
-                Layout.row("Shaft speed", () -> num(menu.rpm, 0), "rpm"),
-                Layout.row("Shaft pump delivery", () -> pct(menu.shaftFlow), "%").showIf(this::shaftPump)
-                        .tip("The shaft-driven pump delivers nothing at standstill and its full flow near 90% of rated speed."),
-                Layout.row("AC pump", () -> menu.acRun ? "running" : menu.acOn ? "no power" : "off").showIf(this::tank),
-                Layout.row("DC pump", () -> menu.dcRun ? "running" : menu.dcOn ? "no power" : "off").showIf(this::tank),
-                Layout.row("AC bus", () -> big(menu.acFe), "FE").showIf(this::tank),
-                Layout.row("DC bus", () -> big(menu.dcFe), "FE").showIf(this::tank),
-                Layout.row("Cooler duty", () -> num(menu.coolerKw, 0), "kW").showIf(this::tank)).showIf(() -> !cooling());
+                Layout.meter("Oil level", () -> menu.oilFraction, () -> menu.oilFraction < TurbineAuxTrain.ALARM_OIL_LEVEL ? Status.CAUTION : Status.NORMAL,
+                        () -> grouped(menu.oilFraction * TurbineAux.OIL_TANK_L, 0) + " L"),
+                Layout.row("Oil temperature", () -> num(menu.oilC, 1), "C"),
+                Layout.row("AC pump", () -> pump(menu.acRun, menu.acOn, menu.acFe)),
+                Layout.row("DC pump", () -> pump(menu.dcRun, menu.dcOn, menu.dcFe)),
+                Layout.row("Cooler duty", () -> num(menu.coolerKw, 0), "kW")).showIf(this::tank);
         var gen = Layout.card("Generator cooling",
                 Layout.row("Winding temperature", () -> num(menu.windingC, 1), "C"),
                 Layout.meter("Winding against its 130 C limit", () -> menu.windingC / TurbineAux.WINDING_LIMIT_C,
-                        () -> menu.windingC > TurbineAux.WINDING_LIMIT_C ? Status.ALARM : menu.windingC > dev.bwr.mod.power.TurbineAuxTrain.ALARM_WINDING_C ? Status.CAUTION : Status.NORMAL, () -> ""),
-                Layout.row("Electrical output", () -> num(menu.electricMW, 1), "MW"),
+                        () -> menu.windingC > TurbineAux.WINDING_LIMIT_C ? Status.ALARM : menu.windingC > TurbineAuxTrain.ALARM_WINDING_C ? Status.CAUTION : Status.NORMAL, () -> ""),
                 Layout.row("Stator water flow", () -> pct(menu.statorFlow), "%"),
-                Layout.row("Stator pumps", () -> menu.statorRun ? "running" : menu.statorOn ? "no power" : "off"),
-                Layout.row("Hydrogen pressure", () -> num(menu.h2Psig, 1), "psig"),
-                Layout.row("Hydrogen in the casing", () -> num(menu.h2Kg, 1), "kg"),
-                Layout.row("Coolant temperature", () -> num(menu.coolantC, 1), "C"),
-                Layout.row("Cooler duty", () -> num(menu.coolerKw, 0), "kW"),
-                Layout.row("Supply bus", () -> big(menu.acFe), "FE")).showIf(this::cooling);
-        var shaftNote = Layout.card("Shaft-driven pump",
+                Layout.row("Stator pumps", () -> pump(menu.statorRun, menu.statorOn, menu.acFe)),
+                Layout.row("Hydrogen", () -> num(menu.h2Psig, 1) + " psig, " + num(menu.h2Kg, 1) + " kg"),
+                Layout.row("Coolant temperature", () -> num(menu.coolantC, 1), "C")).showIf(this::cooling);
+        var shaftCard = Layout.card("Shaft-driven pump",
+                Layout.row("Shaft speed", () -> num(menu.rpm, 0), "rpm"),
+                Layout.row("Delivery", () -> pct(menu.shaftFlow), "%").tip("The shaft-driven pump delivers nothing at standstill and its full flow near 90% of rated speed."),
                 Layout.note("Bolted on the free shaft end of the generator and driven by the shaft. Its oil comes from the Main Oil Tank on the same train.").body(),
                 Layout.note("The AC pump carries the shaft below about 90% of rated speed; this pump carries it above.")).showIf(this::shaftPump);
-        var water = Layout.card("Cooling water",
-                Layout.row("Cold side", () -> grouped(menu.coldKg, 0) + " kg at " + num(menu.coldC, 1), "C"),
-                Layout.row("Hot side", () -> grouped(menu.hotKg, 0) + " kg at " + num(menu.hotC, 1), "C"),
-                Layout.note("Cold water in on the left flange, warmed water out on the right, seen from the front.").body()).showIf(() -> !shaftPump());
-        var controls = Layout.card("Switches",
+        var right = Layout.card("Cooling water and switches",
+                Layout.row("Cold side", () -> grouped(menu.coldKg, 0) + " kg, " + num(menu.coldC, 1) + " C"),
+                Layout.row("Warm side", () -> grouped(menu.hotKg, 0) + " kg, " + num(menu.hotC, 1) + " C"),
                 Layout.controls(BwrStyle.SP1).add(acPump, 1).add(dcPump, 1).showIf(this::tank),
                 Layout.controls(BwrStyle.SP1).add(statorPumps, 1).showIf(this::cooling),
-                Layout.note("Pumps run when you switch them on. Nothing switches them, or stops the turbine, for you.")).showIf(() -> !shaftPump());
+                Layout.note("Cold water in on the left flange, warm out on the right, seen from the front.")).showIf(() -> !shaftPump());
         return Layout.column(BwrStyle.SP2,
-                Layout.split(BwrStyle.SP2).add(oil, 3).add(gen, 3).add(shaftNote, 3).add(Layout.column(BwrStyle.SP2, water, controls), 2).stackBelow(360),
+                Layout.split(BwrStyle.SP2).add(oil, 3).add(gen, 3).add(shaftCard, 3).add(right, 2).stackBelow(360),
                 Layout.note(() -> menu.status).body());
     }
 
@@ -85,8 +79,8 @@ public class TurbineAuxScreen extends BwrScreen<TurbineAuxMenu> {
     protected void containerTick() {
         super.containerTick();
         if (acPump == null) return;
-        acPump.setMessage(Component.literal(menu.acOn ? "AC pump: ON" : "AC pump: off"));
-        dcPump.setMessage(Component.literal(menu.dcOn ? "DC pump: ON" : "DC pump: off"));
+        acPump.setMessage(Component.literal(menu.acOn ? "AC pump on" : "AC pump off"));
+        dcPump.setMessage(Component.literal(menu.dcOn ? "DC pump on" : "DC pump off"));
         statorPumps.setMessage(Component.literal(menu.statorOn ? "Stator pumps: ON" : "Stator pumps: off"));
         acPump.active = dcPump.active = statorPumps.active = menu.present;
     }
