@@ -170,7 +170,7 @@ each connection reaches its selected block face.
 Newly placed **Main Steam Isolation Valves** use the Blender model below.
 The item, recipe and saved registry ID remain `bwr:msiv`.
 
-![MSIV model](art/models/condenser_msiv/msiv-preview.png)
+![MSIV model (original, before the main steam valve remodel)](art/models/condenser_msiv/msiv-preview.png)
 
 - Footprint: **1 block wide, 3 high, 1 deep**. Place the bottom valve body with
   two free blocks above it; placement refuses obstructions.
@@ -196,8 +196,9 @@ The item, recipe and saved registry ID remain `bwr:msiv`.
 - Breaking a part removes the whole assembly. A survival player with a suitable
   pickaxe receives one valve item. There is only one actuator simulation.
 
-The exterior is static geometry in this patch; the timed stroke is functional
-steam-flow behavior, not an animated spring or stem.
+Since the main steam valve remodel the model shows two positions: shut, and open (any position above 0, so a
+stroking valve shows open). Open, the stem, spring seat member and position pointer are raised and the closing
+springs are compressed. See [MAIN-STEAM-VALVES.md](MAIN-STEAM-VALVES.md).
 
 ### Existing worlds
 
@@ -265,11 +266,12 @@ not endorsement.
 Everything is in [`art/models/condenser_msiv/`](art/models/condenser_msiv/):
 
 - `arabelle_1700_condenser.blend`: full exterior and cutaway scenes.
-- `msiv.blend`: valve source and studio scene; **10,804 triangles** in the valve.
+- `msiv.blend`: the original valve source and studio scene (10,804 triangles). The shipped valve is now built by
+  `art/models/main_steam_valves/build_valves.py` (see [MAIN-STEAM-VALVES.md](MAIN-STEAM-VALVES.md)).
 - `build_models.py`: procedural Blender authoring source. Load its definitions
-  in Blender, then call `build_msiv()` or `build_condenser()`. It creates isolated
+  in Blender, then call `build_condenser()` (its `build_msiv()` would restore the old valve). It creates isolated
   scenes and does not clear other work.
-- `msiv.json`: triangle/material export consumed by `tools-export-msiv.py`.
+- `msiv.json`, `msiv_open.json`: shut and open triangle/material exports consumed by `tools-export-msiv.py`.
 - `condenser-exterior.png`, `condenser-cutaway.png`, `msiv-preview.png`: renders.
 
 `python tools-export-msiv.py` clips the valve mesh into three block-local cells

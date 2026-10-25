@@ -21,11 +21,11 @@
       ]
     },
     {
-      "title": "Relief valves and ADS",
+      "title": "Safety relief valves",
       "text": [
-        "Pressure Relief Valves let steam out of the vessel. Pipe a valve's side steam inlet to an open RPV steam outlet and its downward outlet to a submerged suppression pool quencher. A relief valve must be metered by a Division cabinet (the ADS controller) or by a suppression pool controller.",
+        "A Safety Relief Valve lets steam out of the vessel into the suppression pool. Pipe its side inlet to an open RPV steam outlet and its downward outlet to a suppression tank's steam inlet (or an old basin's submerged quencher). A Division cabinet or a suppression pool controller must meter it.",
         "",
-        "Set the cabinet and its valves to the same division, 1 to 4: divisions work independently. Open valves locally, with redstone or from a program. Nothing opens them automatically."
+        "To depressurise the reactor, open relief valves: locally, by redstone, from a Division cabinet or a program. Give the cabinet and its valves the same division, 1 to 4. Nothing opens them automatically. A raised lever shows an open valve."
       ],
       "icons": [
         "bwr:ads_relief_valve",

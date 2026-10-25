@@ -487,7 +487,7 @@ public final class BwrItems {
                         output.accept(RECIRCULATION_PUMP.get());
                         output.accept(JET_PUMP.get());
                         output.accept(RIP_PUMP.get());
-                        output.accept(SAFETY_RELIEF_VALVE.get());
+                        // SAFETY_RELIEF_VALVE (the old cube) stays registered for saves but is no longer offered.
                         output.accept(MSIV.get());
                         output.accept(STEAM_STOP_VALVE.get());
                         output.accept(TURBINE_CONTROL_VALVE.get());

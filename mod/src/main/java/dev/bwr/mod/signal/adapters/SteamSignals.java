@@ -28,15 +28,15 @@ final class SteamSignals {
             .bool("computer_controlled", "Computer controlled", SafetyReliefValveBlockEntity::isComputerControlled)
             .bool("discharge_submerged", "Discharge submerged", SafetyReliefValveBlockEntity::isDischargeSubmerged)
             .number("flow", "Relief flow", "kg/s", 0, SafetyReliefValveBlockEntity.CAPACITY_KG_PER_S, DeviceReadouts::srvFlow)
-            .level("division", "ADS division", "division", 0, 4, SafetyReliefValveBlockEntity::getDivision)
+            .level("division", "Division", "division", 0, 4, SafetyReliefValveBlockEntity::getDivision)
             .toggle("open", "Open / close", (be, v) -> { DeviceCommands.srvOpen(be, v >= 0.5); return true; })
-            .command("division", "ADS division", Kind.LEVEL, 0, 4, (be, v) -> {
+            .command("division", "Division", Kind.LEVEL, 0, 4, (be, v) -> {
                 if (v != Math.rint(v)) return false;
                 be.setDivision((int) v);
                 return true;
             })
-            .bool("ads_allowed", "ADS may open this valve", SafetyReliefValveBlockEntity::isAdsAllowed)
-            .toggle("ads_allow", "ADS may open this valve", (be, v) -> {
+            .bool("ads_allowed", "Cabinet may open valve", SafetyReliefValveBlockEntity::isAdsAllowed)
+            .toggle("ads_allow", "Cabinet may open valve", (be, v) -> {
                 be.setAdsAllowed(v >= 0.5);
                 return true;
             });

@@ -7,6 +7,11 @@ spec=importlib.util.spec_from_file_location('modern',ROOT/'tools-export-modern.p
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 m.SOURCE=ROOT/'art/models/condenser_msiv'
 m.bake_assembly_cells('msiv',suffix='')
+# The open valve (art/models/main_steam_valves/build_valves.py) differs only in its moving parts: stem, spring seat
+# member, springs and position pointer. It shares the shut valve's manifest (ports, collision) and item model.
+m.bake_assembly_cells('msiv_open',suffix='')
+for extra in (m.RES/'data/bwr/pump_models/msiv_open.json',m.RES/'assets/bwr/models/block/pumps/msiv_open/compact.obj',
+              m.RES/'assets/bwr/models/block/pumps/msiv_open/compact.json'):m.OUTPUTS.pop(extra)
 variants={}
 for direction,angle in zip(('north','east','south','west'),(0,90,180,270)):
     for assembled in (False,True):
@@ -14,7 +19,7 @@ for direction,angle in zip(('north','east','south','west'),(0,90,180,270)):
             for opened in (False,True):
                 # Saved one-block valves keep their cube and omnidirectional geometry
                 # until replaced. Newly placed valves always use the full Blender model.
-                mesh=f'pumps/msiv/cell_{part}' if assembled else ('msiv_open' if opened else 'msiv_closed')
+                mesh=(f'pumps/msiv_open/cell_{part}' if opened else f'pumps/msiv/cell_{part}') if assembled else ('msiv_open' if opened else 'msiv_closed')
                 key=f'assembled={str(assembled).lower()},facing={direction},open={str(opened).lower()},part={part}'
                 variants[key]={'model':'bwr:block/'+mesh,'y':angle}
 m.put(m.RES/'assets/bwr/blockstates/msiv.json',{'variants':variants})
