@@ -1,0 +1,9 @@
+{
+  "type": "bwr:add_thorium_features",
+  "biomes": "#bwr:has_thorium/lowland",
+  "features": [
+    "bwr:thorium_vein_lowland",
+    "bwr:thorium_blob_lowland"
+  ],
+  "step": "underground_ores"
+}

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "bwr:thorium_nugget" }, { "item": "bwr:thorium_nugget" }, { "item": "bwr:thorium_nugget" },
+    { "item": "bwr:thorium_nugget" }, { "item": "bwr:thorium_nugget" }, { "item": "bwr:thorium_nugget" },
+    { "item": "bwr:thorium_nugget" }, { "item": "bwr:thorium_nugget" }, { "item": "bwr:thorium_nugget" }
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:thorium_ingot"
+  }
+}

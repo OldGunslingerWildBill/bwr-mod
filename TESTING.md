@@ -46,6 +46,17 @@ GameTest run and prints `SYNC LOAD AUDIT` lines for any chunk our code loaded sy
 
 **The two spikes it found.** The containment survey reads at most `scanCellsPerTick` = 4,000 cells a tick, its completion tick rates faces with what is left of that budget and later ticks rate 1,333 faces each (`Containment.survey`, `Containment.complete`, `Containment.strength` in the probe). The reactor's 1 Hz nodal flux solve is assembled on the server thread (`Reactor.flux start (assemble)`, about 2 ms) and iterated on the `bwr-flux-N` pool; its answer is applied 20 ticks (one refresh interval) later, waiting for the worker only if it is not done (`Reactor.flux wait for worker`). The GameTest server runs the plant unthrottled, about 1 ms a tick, so 20 ticks there are shorter than one solve and the probe shows the wait; at 20 ticks a second there is none (a core stepped at that pace: worst step 23.6 ms immediate, 2.4 ms on the pool). `FluxAsyncTests` (batch `fluxasync`) runs the plant fixture's reactor for 30 s with `DEFERRED_ASYNC_CHECKED`: every solve is iterated on the pool and again on the server thread from the same assembled problem, and the apply counts any difference in any bit; it asserts there were none, on at least 28 solves. Two runs of the whole plant fixture are not comparable for this: with both inline they already differ by about 0.01 % of power after 30 s, which is the fixture, not the solve. In the core, `DeferredNodalRefreshTest` checks that the split solve equals `solve()`, that a pool core and an inline core give identical records after 60 s of burnup, flow and rod motion, and that a refresh in flight survives a save and a discard. `-Dbwr.fluxAsync=false` runs the mod's reactors inline (same results, the solve on the server thread); the core acceptance suite runs `NodalRefresh.IMMEDIATE`, the old behaviour, because it calls `ReactorCore.step` directly.
 
+## Thorium ore, its byproducts and the thorium fuel route (THORIUM.md)
+
+- **GameTests** `ThoriumOreTests` live in the namespace `bwrthorium` (with its own `empty` template in `data/bwrthorium/structure`); `-PbwrOnlyThorium` runs just them. They cover the
+  blocks and tools, tags, recipes, the drops (raw thorium with and without Silk Touch and Fortune, and the byproducts' chances), the radium capsule as a carried gamma source, the
+  fabricator's thorium costs, a real fabricator making all three grades, its slot, its save and an old save, the biome table read back from the datapack and the server option.
+  Core `ThoriumMassBalanceTest` works the three grades by hand.
+- **`:mod:runWorldgenCheck`** runs the thorium half after the uranium half, on the same server: the same 64 x 64 chunks in one flat dimension per thorium group
+  (`bwr_check:flat_th_highland`, `_placer`, `_lowland`, `_ocean`), then the old-chunk proof with `thoriumOreGeneration` off and on again.
+- **`:mod:runTurbineModelCheck -PbwrThoriumClientCheck`**: 1920 x 1080 pictures of a thorium vein cut, the ore in the wall of a gallery, the blocks and the items
+  (`run/turbineModelCheck/thorium-check/`); the fabricator's thorium screen is the GUI check's `fabricator-thorium` scenario.
+
 ## Uranium ore and its world generation (URANIUM-ORE.md)
 
 - **GameTests** `UraniumOreTests` live in the namespace `bwruranium` (with its own `empty` template in `data/bwruranium/structure`); `-PbwrOnlyUranium` runs just

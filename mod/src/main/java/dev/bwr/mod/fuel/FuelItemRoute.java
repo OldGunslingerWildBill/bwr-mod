@@ -3,6 +3,7 @@ package dev.bwr.mod.fuel;
 import dev.bwr.core.fuel.EnrichmentMassBalance;
 import dev.bwr.core.fuel.FuelType;
 import dev.bwr.core.fuel.MoxMassBalance;
+import dev.bwr.core.fuel.ThoriumMassBalance;
 import dev.bwr.mod.BwrMod;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
@@ -53,6 +54,14 @@ import java.util.function.ToIntFunction;
  * the saves know, and a MOX target is selected by its own id ({@code mox_lean}, {@code mox_standard}, {@code mox_rich};
  * the middle one makes the fuel type {@code mox}). On a MOX target the machine's input slot takes plutonium and depleted
  * uranium instead of uranium.
+ *
+ * <h2>The thorium targets</h2>
+ * Three more make thorium fuel ({@link #THORIUM_TARGETS}): thorium ingots (or raw thorium), natural uranium that the machine
+ * enriches to the driver's 19.75 % by the same mass balance as the uranium route, and steel; depleted uranium comes back.
+ * The driver fraction (2, 3 and 5 %) is the thorium fuel type's own nominal enrichment; the numbers are
+ * {@link ThoriumMassBalance}. Like the MOX targets they are not on {@link #TARGETS}, and they are on {@link #SELECTOR}, which
+ * is {@link #LADDER} followed by them, so every index the ladder had is unchanged. On a thorium target the input slot takes
+ * uranium and thorium, each into its own store.
  */
 public final class FuelItemRoute {
 
@@ -94,6 +103,19 @@ public final class FuelItemRoute {
     /** Every target the selector offers, the uranium ladder first, then the MOX grades: the index the screen counts in. */
     public static final List<String> LADDER = java.util.stream.Stream.concat(TARGETS.stream(), MOX_TARGETS.stream()).toList();
 
+    /**
+     * The thorium targets, by id, lowest driver fraction first, and the fuel type each makes. As with MOX the id of the standard grade is
+     * not its fuel type's name ({@code thorium} is not a target; the uranium ladder's tests rely on that, and so do saves).
+     */
+    public static final List<String> THORIUM_TARGETS = List.of("thorium_lean", "thorium_standard", "thorium_rich");
+    private static final List<String> THORIUM_FUELS = List.of("thorium_lean", "thorium", "thorium_rich");
+
+    /** Every step the selector offers: {@link #LADDER} (its indexes unchanged), then the thorium grades. The screen and the menu count in this. */
+    public static final List<String> SELECTOR = java.util.stream.Stream.concat(LADDER.stream(), THORIUM_TARGETS.stream()).toList();
+
+    public static final TagKey<Item> THORIUM_INGOTS = tag("c", "ingots/thorium");
+    public static final TagKey<Item> RAW_THORIUM = tag("c", "raw_materials/thorium");
+
     public static final TagKey<Item> URANIUM_INGOTS = tag("c", "ingots/uranium");
     /** The matrix of a MOX assembly, and what the uranium route returns. */
     public static final TagKey<Item> DEPLETED_INGOTS = tag("c", "ingots/depleted_uranium");
@@ -115,8 +137,20 @@ public final class FuelItemRoute {
      * @param workTicks ticks of work at full power
      * @param plutoniumNuggets plutonium nuggets consumed (a MOX target; 0 for a uranium one)
      * @param matrix    depleted uranium ingots consumed as the matrix (a MOX target; 0 for a uranium one)
+     * @param thoriumIngots thorium ingots consumed (a thorium target; 0 for the others). On a thorium target {@code ingots}
+     *                  is the natural uranium the driver's enrichment takes and {@code tails} what it leaves
      */
-    public record Cost(String fuelType, int ingots, int steel, int tails, int workTicks, int plutoniumNuggets, int matrix) {
+    public record Cost(String fuelType, int ingots, int steel, int tails, int workTicks, int plutoniumNuggets, int matrix, int thoriumIngots) {
+
+        /** A MOX or uranium target's cost. */
+        public Cost(String fuelType, int ingots, int steel, int tails, int workTicks, int plutoniumNuggets, int matrix) {
+            this(fuelType, ingots, steel, tails, workTicks, plutoniumNuggets, matrix, 0);
+        }
+
+        /** True for a thorium target, whose inputs are natural uranium (for the driver) and thorium. */
+        public boolean isThorium() {
+            return thoriumIngots > 0;
+        }
 
         /** A uranium target's cost. */
         public Cost(String fuelType, int ingots, int steel, int tails, int workTicks) {
@@ -134,9 +168,14 @@ public final class FuelItemRoute {
         }
     }
 
-    /** True for a name the selector offers: on the uranium ladder or one of the MOX grades. */
+    /** True for a name the selector offers: on the uranium ladder, one of the MOX grades or one of the thorium grades. */
     public static boolean isTarget(String name) {
-        return name != null && (TARGETS.contains(name) || MOX_TARGETS.contains(name));
+        return name != null && (TARGETS.contains(name) || MOX_TARGETS.contains(name) || THORIUM_TARGETS.contains(name));
+    }
+
+    /** True for one of the thorium targets. */
+    public static boolean isThoriumTarget(String name) {
+        return name != null && THORIUM_TARGETS.contains(name);
     }
 
     /** True for one of the MOX targets. */
@@ -155,6 +194,9 @@ public final class FuelItemRoute {
         }
         if (isMoxTarget(targetName)) {
             return moxCost(targetName);
+        }
+        if (isThoriumTarget(targetName)) {
+            return thoriumCost(targetName);
         }
         FuelType type = FuelTypes.byNameOrPreset(targetName);
         if (type == null) {
@@ -184,6 +226,28 @@ public final class FuelItemRoute {
         } catch (IllegalArgumentException cannotMake) {
             return null;
         }
+    }
+
+    /** The cost of a thorium target: the fuel type's own driver fraction through {@link ThoriumMassBalance}; null if it cannot be made. */
+    private static Cost thoriumCost(String targetName) {
+        FuelType type = FuelTypes.byNameOrPreset(THORIUM_FUELS.get(THORIUM_TARGETS.indexOf(targetName)));
+        if (type == null) {
+            return null;
+        }
+        try {
+            double driver = type.nominalEnrichmentWeightFraction();
+            int uranium = ThoriumMassBalance.feedIngots(PRODUCT_INGOTS, driver);
+            int tails = ThoriumMassBalance.tailsIngots(PRODUCT_INGOTS, driver);
+            int thorium = ThoriumMassBalance.thoriumIngots(PRODUCT_INGOTS, driver);
+            return new Cost(type.name(), uranium, STEEL_PER_ASSEMBLY, tails, BASE_WORK_TICKS + TICKS_PER_INGOT * uranium, 0, 0, thorium);
+        } catch (IllegalArgumentException cannotMake) {
+            return null;
+        }
+    }
+
+    /** Thorium ingots one item of this stack is worth: an ingot or raw thorium (which smelts to one), by tag; 0 when it is not thorium. */
+    public static int thoriumIngots(ItemStack stack) {
+        return !stack.isEmpty() && (stack.is(THORIUM_INGOTS) || stack.is(RAW_THORIUM)) ? 1 : 0;
     }
 
     /** Plutonium nuggets one item of this stack is worth (an ingot is nine); 0 when it is not plutonium. */

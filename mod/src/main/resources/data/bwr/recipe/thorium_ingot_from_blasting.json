@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "cookingtime": 100,
+  "experience": 0.7,
+  "ingredient": [
+    {
+      "item": "bwr:raw_thorium"
+    },
+    {
+      "item": "bwr:thorium_ore"
+    },
+    {
+      "item": "bwr:deepslate_thorium_ore"
+    }
+  ],
+  "result": {
+    "id": "bwr:thorium_ingot"
+  }
+}

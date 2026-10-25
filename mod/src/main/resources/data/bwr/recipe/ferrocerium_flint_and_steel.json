@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "item": "bwr:rare_earth_concentrate"
+    }
+  ],
+  "result": {
+    "id": "minecraft:flint_and_steel",
+    "count": 1
+  }
+}

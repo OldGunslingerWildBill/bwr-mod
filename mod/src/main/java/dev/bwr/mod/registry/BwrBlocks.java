@@ -76,6 +76,31 @@ public final class BwrBlocks {
             BLOCKS.register("uranium_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY)
                     .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.IRON_XYLOPHONE)
                     .requiresCorrectToolForDrops().strength(5.0f, 6.0f).sound(SoundType.METAL)));
+    // Thorium: the mod's own thorium, for the thorium fuel route. Monazite and thorite in rock (the two ores and the veins),
+    // and monazite sand, a placer in beach and river sand. Same mining level as the uranium blocks. See THORIUM.md.
+    public static final DeferredBlock<Block> THORIUM_ORE =
+            BLOCKS.register("thorium_ore", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.STONE)
+                    .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.BASEDRUM)
+                    .requiresCorrectToolForDrops().strength(3.0f, 3.0f)));
+    public static final DeferredBlock<Block> DEEPSLATE_THORIUM_ORE =
+            BLOCKS.register("deepslate_thorium_ore", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.DEEPSLATE)
+                    .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.BASEDRUM)
+                    .requiresCorrectToolForDrops().strength(4.5f, 3.0f).sound(SoundType.DEEPSLATE)));
+    /** Heavy-mineral sand rich in monazite. Falls like sand, is dug with a shovel (any), drops raw thorium. */
+    public static final DeferredBlock<net.minecraft.world.level.block.ColoredFallingBlock> MONAZITE_SAND =
+            BLOCKS.register("monazite_sand", () -> new net.minecraft.world.level.block.ColoredFallingBlock(
+                    new net.minecraft.util.ColorRGBA(0xA98462),
+                    BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_ORANGE)
+                            .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.SNARE)
+                            .strength(0.6f).sound(SoundType.SAND)));
+    public static final DeferredBlock<Block> RAW_THORIUM_BLOCK =
+            BLOCKS.register("raw_thorium_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_BROWN)
+                    .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.BASEDRUM)
+                    .requiresCorrectToolForDrops().strength(5.0f, 6.0f)));
+    public static final DeferredBlock<Block> THORIUM_BLOCK =
+            BLOCKS.register("thorium_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_GRAY)
+                    .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.IRON_XYLOPHONE)
+                    .requiresCorrectToolForDrops().strength(5.0f, 6.0f).sound(SoundType.METAL)));
     public static final DeferredBlock<dev.bwr.mod.grid.GridTieBlock> GRID_TIE=BLOCKS.register("grid_tie",()->new dev.bwr.mod.grid.GridTieBlock(vesselSteel()));
 
     /** Wall-mounted area radiation monitor (a reading, a lamp, two booleans); it never acts on the plant. */

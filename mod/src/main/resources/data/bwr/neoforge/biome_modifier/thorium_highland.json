@@ -1,0 +1,9 @@
+{
+  "type": "bwr:add_thorium_features",
+  "biomes": "#bwr:has_thorium/highland",
+  "features": [
+    "bwr:thorium_vein_highland",
+    "bwr:thorium_blob_highland"
+  ],
+  "step": "underground_ores"
+}

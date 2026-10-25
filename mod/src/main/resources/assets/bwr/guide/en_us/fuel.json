@@ -3,6 +3,7 @@
   "docs": [
     "FUELS-AND-RODS.md",
     "URANIUM-ORE.md",
+    "THORIUM.md",
     "SPENT-FUEL-POOL.md",
     "BUILDING-CRANE.md",
     "REFUELLING-BRIDGE.md"
@@ -20,6 +21,22 @@
         "bwr:deepslate_uranium_ore",
         "bwr:raw_uranium",
         "bwr:uranium_ingot"
+      ]
+    },
+    {
+      "title": "Thorium",
+      "text": [
+        "Thorium Ore (iron pickaxe) and Monazite Sand (any shovel, in beaches and rivers) drop raw thorium; smelt it to an ingot. Veins are rarer than uranium's, richest in granite mountains. Mining also gives rare earth concentrate (with an iron ingot, a flint and steel), bone meal and sometimes uranium.",
+        "",
+        "Thorium is fertile, not fissile, so fuel needs a fissile driver. In the fabricator, step past MOX to Th 2, 3 or 5 %: thorium, natural uranium (enriched to 19.75 % inside) and 4 steel. 3 %: 4 thorium, 26 uranium."
+      ],
+      "icons": [
+        "bwr:thorium_ore",
+        "bwr:monazite_sand",
+        "bwr:raw_thorium",
+        "bwr:thorium_ingot",
+        "bwr:rare_earth_concentrate",
+        "bwr:fuel_fabricator"
       ]
     },
     {

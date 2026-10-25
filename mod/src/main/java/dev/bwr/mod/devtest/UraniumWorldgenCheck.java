@@ -63,7 +63,7 @@ public final class UraniumWorldgenCheck {
 
     private static final Deque<Runnable> WORK = new ArrayDeque<>();
     private static final List<String> FAILURES = new ArrayList<>();
-    private static boolean started, finished;
+    private static boolean started, finished, thoriumPlanned;
 
     private UraniumWorldgenCheck() {}
 
@@ -88,6 +88,11 @@ public final class UraniumWorldgenCheck {
                 FAILURES.add("a step threw: " + t);
                 WORK.clear();
             }
+        }
+        if (WORK.isEmpty() && !thoriumPlanned) {
+            // the thorium half of the check (ThoriumWorldgenCheck) runs after the uranium steps, on the same server
+            thoriumPlanned = true;
+            ThoriumWorldgenCheck.plan(event.getServer(), WORK, FAILURES, LOGGER, TAG);
         }
         if (WORK.isEmpty()) {
             finished = true;

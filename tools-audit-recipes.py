@@ -55,6 +55,15 @@ NO_RECIPE = {
     # Their drops (raw uranium, with Fortune and Silk Touch) are in data/bwr/loot_table/blocks.
     "uranium_ore": "natural ore, placed by world generation; mined for raw uranium (silk touch gives the block)",
     "deepslate_uranium_ore": "natural ore in deepslate, placed by world generation; mined for raw uranium (silk touch gives the block)",
+    # Found in the ground, as the uranium ores are: thorium ore (monazite and thorite in rock) and monazite sand (a beach and river placer).
+    # Their drops are in data/bwr/loot_table/blocks (raw thorium, with Fortune and Silk Touch, and the byproducts); see THORIUM.md.
+    "thorium_ore": "natural ore, placed by world generation; mined for raw thorium (silk touch gives the block)",
+    "deepslate_thorium_ore": "natural ore in deepslate, placed by world generation; mined for raw thorium (silk touch gives the block)",
+    "monazite_sand": "natural placer sand in beaches and rivers, placed by world generation; dug for raw thorium (silk touch gives the block)",
+    # A byproduct of mining: monazite carries rare earths. It is used (an iron ingot and one make a flint and steel) but made only by mining.
+    "rare_earth_concentrate": "byproduct of mining thorium ore and monazite sand; made by the mining, a recipe for it would make rare earths out of nothing",
+    # Radium: a rare byproduct of mining thorium ore, a radioactive source material. This mod gives it no use; other things are built on it.
+    "radium": "byproduct of mining thorium ore; made by the mining, a recipe for it would make a radioactive source out of nothing",
     # Made by the reprocessing plant.
     "fission_product_waste": "what burning fuel leaves, the reprocessing plant's byproduct: nothing uses it, and a recipe would make fuel waste out of nothing",
 }

@@ -4,6 +4,7 @@
     "README.md",
     "PHASE-L1-REVIEW.md",
     "URANIUM-ORE.md",
+    "THORIUM.md",
     "REFUELLING-BRIDGE.md"
   ],
   "pages": [
@@ -21,6 +22,7 @@
         "giveGuideOnFirstJoin = true",
         "instantRefuelling = false (the refuelling map moves fuel instantly)",
         "uraniumOreGeneration = true (new chunks only)",
+        "thoriumOreGeneration = true (new chunks only)",
         "reprocessingMaxDecayHeatKw = 50.0 (0 turns the check off)",
         "accidentProgressionMultiplier = 1.0",
         "failureHazardPerSecond = 0.02 (random pipe boundary failure; 0 = off)",

@@ -125,7 +125,7 @@ public final class BwrPeripheralSupport {
         if(be instanceof dev.bwr.mod.fuel.FuelFabricatorBlockEntity b)return new HardwarePeripheral("bwr_fuel_fabricator",()->Map.of(
                 "batchHeavyMetalKg",b.batchHeavyMetalKg(),"enrichment",b.batchEnrichmentWeightFraction(),"energyFE",b.energy().getEnergyStored(),"outputCount",b.output().getStackInSlot(0).getCount(),
                 "target",b.target(),"uraniumHeldIngots",b.uraniumHeldUnits()/(double)dev.bwr.mod.fuel.FuelItemRoute.UNITS_PER_INGOT,"depletedUranium",b.tailsHeld(),
-                "plutoniumHeldNuggets",b.plutoniumHeldNuggets(),"matrixHeldIngots",b.matrixHeldIngots()));
+                "plutoniumHeldNuggets",b.plutoniumHeldNuggets(),"matrixHeldIngots",b.matrixHeldIngots(),"thoriumHeldIngots",b.thoriumHeldIngots()));
         if(be instanceof dev.bwr.mod.fuel.ReprocessingPlantBlockEntity b)return new HardwarePeripheral("bwr_reprocessing_plant",()->{
             var m=new LinkedHashMap<String,Object>();var held=b.input().getStackInSlot(0);
             m.put("energyFE",b.energy().getEnergyStored());m.put("working",b.workTicks()>0);m.put("progress",b.workTicks()/(double)dev.bwr.mod.fuel.Reprocessing.WORK_TICKS);

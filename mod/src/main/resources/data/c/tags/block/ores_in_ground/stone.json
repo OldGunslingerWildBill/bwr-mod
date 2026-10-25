@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "bwr:uranium_ore"
+    "bwr:uranium_ore",
+    "bwr:thorium_ore"
   ]
 }

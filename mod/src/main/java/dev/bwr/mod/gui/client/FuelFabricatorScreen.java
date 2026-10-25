@@ -55,17 +55,22 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
     }
 
     private int count() {
-        return FuelItemRoute.LADDER.size();
+        return FuelItemRoute.SELECTOR.size();
     }
 
     private void step(int direction) {
         int index = Math.floorMod(menu.targetIndex + direction, count());
-        menu.sendCommand(FuelFabricatorMenu.CMD_SELECT, index);
+        int ladder = FuelItemRoute.LADDER.size();
+        if (index < ladder) {
+            menu.sendCommand(FuelFabricatorMenu.CMD_SELECT, index);
+        } else {
+            menu.sendCommand(FuelFabricatorMenu.CMD_SELECT_THORIUM, index - ladder);
+        }
     }
 
     /** The assembly the selector is on: its fuel type, which the client has from the fuel sync, or null. */
     private FuelType targetType() {
-        String name = FuelItemRoute.LADDER.get(Math.max(0, Math.min(count() - 1, menu.targetIndex)));
+        String name = FuelItemRoute.SELECTOR.get(Math.max(0, Math.min(count() - 1, menu.targetIndex)));
         FuelItemRoute.Cost cost = FuelItemRoute.cost(name);
         return FuelTypes.byNameOrPreset(cost != null ? cost.fuelType() : name);
     }
@@ -73,6 +78,9 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
     private String targetLabel() {
         FuelType type = targetType();
         String percent = type == null ? "?" : String.format(Locale.ROOT, "%.2f %%", type.nominalEnrichmentWeightFraction() * 100.0);
+        if (menu.targetIndex >= FuelItemRoute.LADDER.size()) {
+            return "Th " + percent;
+        }
         return menu.targetIndex >= FuelItemRoute.TARGETS.size() ? "MOX " + percent : percent;
     }
 
@@ -111,6 +119,13 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
         if (!menu.hasCost) {
             return firstThatFits(LEFT_TEXT, "This enrichment cannot be made", "Cannot be made");
         }
+        if (menu.thoriumTarget) {
+            // thorium grades: the uranium is enriched to the driver inside the machine
+            return firstThatFits(LEFT_TEXT,
+                    "Costs " + menu.thoriumCost + " thorium, " + menu.costIngots + " uranium, " + menu.costSteel + " steel",
+                    menu.thoriumCost + " Th, " + menu.costIngots + " U, " + menu.costSteel + " steel",
+                    menu.thoriumCost + " Th, " + menu.costIngots + " U, " + menu.costSteel + " st");
+        }
         return firstThatFits(LEFT_TEXT,
                 "Costs " + menu.costIngots + " uranium, " + menu.costSteel + " steel",
                 menu.costIngots + " uranium, " + menu.costSteel + " steel",
@@ -132,7 +147,11 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
 
         var selector = Layout.controls(BwrStyle.SP1).fixed(previous, 24).add(pick, 1).fixed(next, 24);
         var cost = Layout.line(this::costText, Type.CAPTION)
-                .tip(() -> menu.hasCost
+                .tip(() -> menu.thoriumTarget
+                        ? List.of(Component.literal("One thorium assembly takes " + menu.thoriumCost + " thorium ingots, " + menu.costIngots + " natural uranium ingots and "
+                                        + menu.costSteel + " steel ingots, and returns " + menu.costTails + " depleted uranium."),
+                                Component.literal("Thorium is fertile, not fissile: the uranium is the fissile driver, enriched to 19.75 % inside the machine (the same mass balance as the uranium grades) and sized to the fuel's own driver fraction. Raw thorium counts as an ingot."))
+                        : menu.hasCost
                         ? List.of(Component.literal("One assembly takes " + menu.costIngots + " uranium ingots and " + menu.costSteel
                                         + " steel ingots and returns " + menu.costTails + " depleted uranium."),
                                 Component.literal("The uranium grows with enrichment: it is the feed an enrichment plant needs for that product."))
@@ -163,6 +182,9 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
                 Layout.row("Uranium in", () -> ingots(menu.uraniumHeldUnits) + " / " + menu.costIngots, "ingots").dense()
                         .tip("The machine takes uranium out of its slot until it holds enough for one assembly.")
                         .showIf(() -> !menu.moxTarget),
+                Layout.row("Thorium in", () -> menu.thoriumHeld + " / " + menu.thoriumCost, "ingots").dense()
+                        .tip("The machine takes thorium ingots (or raw thorium) out of the same slot until it holds enough for one assembly.")
+                        .showIf(() -> menu.thoriumTarget),
                 Layout.row("Steel in", () -> steelLoaded() + " / " + menu.costSteel, "ingots").dense(),
                 Layout.row("Depleted U held", () -> String.valueOf(menu.tailsHeld), "ingots").dense()
                         .tip("What did not become enriched product. It comes out of the depleted uranium slot, a stack at a time."),
@@ -214,7 +236,7 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
         @Override
         public void render(GuiGraphics g, int mouseX, int mouseY) {
             for (int i = 0; i < NAMES.length; i++) {
-                Ui.textCentred(g, i == 0 && menu.moxTarget ? "Pu, DU" : NAMES[i], centre(i), y + 1, Type.CAPTION, BwrStyle.TEXT_SECONDARY);
+                Ui.textCentred(g, i == 0 && menu.moxTarget ? "Pu, DU" : i == 0 && menu.thoriumTarget ? "U, Th" : NAMES[i], centre(i), y + 1, Type.CAPTION, BwrStyle.TEXT_SECONDARY);
             }
         }
 
@@ -227,6 +249,8 @@ public class FuelFabricatorScreen extends BwrScreen<FuelFabricatorMenu> {
                 if (Math.abs(mouseX - centre(i)) <= 18) {
                     return List.of(Component.literal(i == 0 && menu.moxTarget
                             ? "Plutonium nuggets or ingots and depleted uranium ingots, for the MOX grades. Hoppers and pipes may fill this slot."
+                            : i == 0 && menu.thoriumTarget
+                            ? "Uranium (for the driver) and thorium ingots or raw thorium, for the thorium grades. Hoppers and pipes may fill this slot."
                             : HELP[i]));
                 }
             }
