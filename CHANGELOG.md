@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased: pool shader look
+
+The spent fuel pool's water and Cherenkov glow now look like water and light under Iris with Complementary Reimagined. Vanilla is unchanged in what it draws.
+
+- **Pool water under a shader pack.** The surface is replayed after the translucent terrain (new `client/DeferredLiquids`, after `AFTER_TRANSLUCENT_BLOCKS`), not in the block entity pass. Iris gives translucent terrain its water program, which is where a pack does reflections, ripples and water tint; the block entity pass only reached the block translucent program. The water uses `DeferredLiquids.WATER`: the translucent shader, blend and texture of vanilla translucent terrain, but colour-only writes, so the glow beneath the surface is not hidden. Vanilla draws the same quads in the same order.
+- **Pool glow under a shader pack.** The glow is written straight, not premultiplied, when a pack is active (`DeferredLiquids.glowStraight()`, read once per replay through `VisualEffectsMode.shaderPackInUse()`). The pack's glow program blends with the alpha, which squared the premultiplied colour and left the glow almost invisible. Vanilla keeps the premultiplied colour.
+- **Client check.** `-PbwrSpentFuelPoolCheck` saves two more pictures, `pool-underwater` and `pool-night-glow`, and asserts that the replay ran (the pool stage fails with "the pool water and glow were not replayed after the translucent terrain" if it did not).
+- **Not changed.** The flooded well and the open vessel's water still draw in the block entity pass. Moving them to the replay removed the core glow under Complementary, so they were put back; this is open. No pool lamps were added: the lamps and floodlights branches own underwater and pool light.
+- **Optional mods.** Nothing new is required. Iris is still only asked through the existing reflection in `VisualEffectsMode`.
+
 ## Unreleased: large RTG and RTG heat
 
 A 2 x 2 Large RTG for up to 1,000 kg of isotope material, RTGs as heat sources (Cold Sweat, a heat-only switch), ingots and blocks as the form the RTGs take, and cobalt-60 as the reactor-bred bulk fuel. Write-up, numbers and the pattern for new isotopes: [RTG.md](RTG.md).

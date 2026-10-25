@@ -271,6 +271,14 @@ glow strength per cell, sent only when the level or a glow step changes). The Ch
 assembly's decay power as a fraction of its operating power: strong for fresh fuel (0.9 at discharge), a third of that after an hour, nearly nothing after
 years, and none for uncovered fuel. Each occupied rack cell shows an assembly head in the block's model (the controller sets `cell_a` to `cell_d`).
 
+Under a shader pack the water and the glow are replayed after the translucent terrain (`dev.bwr.mod.client.DeferredLiquids`, after
+`AFTER_TRANSLUCENT_BLOCKS`), not in the block entity pass: Iris gives translucent terrain its water program (where a pack does its
+reflections and ripples) and block entities a different one. The water uses `DeferredLiquids.WATER`, a colour-only translucent render
+type with the same shader, blend and texture as vanilla translucent terrain. Vanilla draws the same quads in the same order. Under a
+pack the glow is written straight, not premultiplied (`DeferredLiquids.glowStraight()`), because the pack's glow program blends with
+the alpha and squared a premultiplied colour until almost nothing showed. No optional mod is referenced. The flooded well and the open
+vessel still draw their water in the block entity pass (see the changelog).
+
 ## Saves
 
 Controller: `WaterKg` and `WaterC` (when there is water), `Racks` (each assembly as its full item with stamp, plus `FuelC`, `Damaged`, `Ignited`, `Zr` only when
