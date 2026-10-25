@@ -6,8 +6,10 @@ has always made now has a use.
 | Piece | What it is |
 |---|---|
 | **Isotope Separator** (`bwr:isotope_separator`) | Fission-product waste in; sealed capsules of strontium-90, caesium-137 and americium-241, and stripped waste, out. |
-| **RTG** (`bwr:rtg`) | A radioisotope thermoelectric generator. Six wells take capsules; it makes a small steady supply of FE for decades. |
-| `bwr:strontium_90_capsule`, `bwr:caesium_137_capsule`, `bwr:americium_241_capsule` | 250 g of the isotope each, sealed. Radioactive when carried. |
+| **RTG** (`bwr:rtg`) | A radioisotope thermoelectric generator. Six wells take isotope ingots, blocks or capsules; it makes a small steady supply of FE for decades, and heat. |
+| **Large RTG** (`bwr:large_rtg`) | A 2 x 2 x 3 multiblock that holds up to 1,000 kg of ingots and blocks, mixed: a very large remote power source and heater, behind 40 cm of lead. |
+| `<isotope>_ingot`, `<isotope>_block` | The form the RTGs take (nine ingots a block), for strontium-90, caesium-137, americium-241 and cobalt-60: see "Ingots and blocks". |
+| `bwr:strontium_90_capsule`, `bwr:caesium_137_capsule`, `bwr:americium_241_capsule` | 250 g of the isotope each, sealed: what the separator makes. Radioactive when carried. They craft one to one into ingots. |
 | `bwr:stripped_waste` | What the separator leaves. It cannot be separated again. |
 
 Nothing here acts on the plant. Both machines do what the player feeds them; nothing is automatic, and nothing is produced
@@ -90,7 +92,7 @@ model, and the plant's tests are the owner's. The fuel list is data, so Pu-238 c
 
 ## The RTG
 
-* **Fuel:** six wells, one item each. Anything with an entry in the fuel list (below) is accepted, by hand, hopper or pipe
+* **Fuel:** six wells, one item each. Anything with an entry in the fuel list (below) is accepted: an isotope ingot, a storage block (nine ingots), a separator capsule or a cobalt sample, by hand, hopper or pipe
   through the screen; the block exposes no item capability.
 * **Power:** `thermal W` = the sum over the wells of `grams x specific power x 2^(-t / half-life)`; `electric W` = thermal x
   **5 %**; `FE/t` = electric / 13.4 x `rtgOutputMultiplier` (default 1). 5 % sits between the Beta-M's 4.3 %
@@ -104,7 +106,7 @@ model, and the plant's tests are the owner's. The fuel list is data, so Pu-238 c
   neighbours that are loaded and can receive, every 5 ticks, and to anything that pulls (the energy capability is
   extract-only, on every face). Nothing is produced while the chunk is unloaded.
 * **Heat:** the body always runs at its capsules' thermal power; the buffer being full only stops the electricity (a sealed
-  RTG has no off switch). There is no heat effect on the world.
+  RTG has no off switch). Its heat warms players through Cold Sweat if that is installed (see "RTG heat" below); there is no other heat effect on the world.
 * **Why a ticker:** a generator has to push, so the RTG has a server ticker, as the turbine generator (`PowerModuleBlockEntity`,
   `pushOutputs`) has. It is as cheap as one gets: an RTG with no capsule and no stored energy returns after one boolean test;
   a fuelled one does one modulo a tick and, every 5 ticks, a settle and up to six capability lookups on loaded neighbours.
@@ -127,6 +129,163 @@ model, and the plant's tests are the owner's. The fuel list is data, so Pu-238 c
   `doseAt1mMsvPerH`, `bufferFE`, `efficiency`, `outputMultiplier`.
 * **Config** (`bwr-gameplay.toml`): `rtgOutputMultiplier`, default **1.0**, range 0 to 1000. It scales the electricity only,
   not the heat, the dose or the decay. The default adds no hidden boost; six strontium capsules make 5.15 FE/t.
+
+## Ingots and blocks: the pattern for an RTG isotope
+
+Every RTG isotope comes in two forms the RTGs take: an **ingot** and a **storage block** of nine ingots. The small RTG takes either in a well
+(one item per well, six wells; a block is nine ingots of heat in one well). The Large RTG takes both, by the thousand.
+
+| Isotope | Ingot (`bwr:<id>`) | Grams | Block (`bwr:<id>`) | Grams | Made by |
+|---|---|---|---|---|---|
+| Sr-90 | `strontium_90_ingot` | 250 | `strontium_90_block` | 2,250 | Isotope Separator (capsule) |
+| Cs-137 | `caesium_137_ingot` | 250 | `caesium_137_block` | 2,250 | Isotope Separator (capsule) |
+| Am-241 | `americium_241_ingot` | 250 | `americium_241_block` | 2,250 | Isotope Separator (capsule) |
+| Co-60 | `cobalt_60_ingot` | 474 | `cobalt_60_block` | 4,266 | a cobalt target in the reactor (`cobalt_sample`) |
+| Po-210, Pu-238, Ac-227, Tm-170 | `polonium_210_ingot` ... | milligrams to tens of grams | `..._block` | nine times | the reactor-bred targets ([BREEDING-TARGETS.md](BREEDING-TARGETS.md)), which follow this pattern; the Large RTG takes them too |
+
+**Why new ingot items and not renamed capsules.** The separator makes `bwr:strontium_90_capsule`, `bwr:caesium_137_capsule` and
+`bwr:americium_241_capsule`, and a cobalt target makes `bwr:cobalt_sample`. Those ids are in saves, in inventories, in the separator's
+and the rods' code and in tests that pin them (the separator's grain accounting is 250 g a capsule to the grain; the recipe tests list them as
+"not craftable"). Renaming and re-texturing them would have worked for the picture but left no way back from a block (a recipe that
+makes a capsule is a crafted capsule, which those pinned lists forbid). So the capsules stay exactly as they were, are still
+accepted by every RTG, and **craft one to one into the ingot** (`<isotope>_ingot_from_capsule`, `cobalt_60_ingot_from_sample`),
+the same mass. The ingot then packs and unpacks 9:1 with its block with no restriction. The capsules and the cobalt sample are out of the
+creative tab; the ingots and blocks are in it.
+
+**The pattern, for the next isotope** (polonium-210, plutonium-238, actinium-227, thulium-170 ...), all data except the Java list:
+
+1. **Names.** `bwr:<isotope>_<mass number>_ingot` and `bwr:<isotope>_<mass number>_block`, for example `plutonium_238_ingot`, `plutonium_238_block`.
+2. **Data map** `data/bwr/data_maps/item/rtg_fuel.json`: one line per item, the block's `grams_per_item` exactly nine times the ingot's and every other
+   field the same:
+   ```json
+   "bwr:plutonium_238_ingot": { "isotope": "Pu-238", "specific_power_w_per_g": 0.5674, "half_life_years": 87.7, "grams_per_item": 0.28,
+       "gamma_w_per_g": 0.0002, "capsule_transmission": 0.05 },
+   "bwr:plutonium_238_block": { "isotope": "Pu-238", "specific_power_w_per_g": 0.5674, "half_life_years": 87.7, "grams_per_item": 2.52,
+       "gamma_w_per_g": 0.0002, "capsule_transmission": 0.05 }
+   ```
+   `lead_hvl_cm` (new, optional, default 1.0) is the half-value layer of lead for the isotope's photons, what the Large RTG's housing uses
+   (see below; the bred isotopes left it at the default 1 cm, which for their low-energy photons is less shielding than real lead gives, so the Large RTG reads them on the high side). The tooltips, the carried dose, both RTGs' screens, the signals and the Cold Sweat heat all read this one line; nothing else needs a number.
+3. **Items and blocks** (Java, `BwrItems` and `BwrBlocks`): the ingot is `new BredIsotopeItem(new Item.Properties())`; the block is
+   `new Block(isotopeBlock(MapColor...))` with item `new BredIsotopeBlockItem(block, new Item.Properties())` (both print `BredIsotopeTooltip`, which writes a milligram ingot as milligrams; the separator capsules and the cobalt sample use the same tooltip through `IsotopeCapsuleItem`). Add both to the fuel tab's list in
+   `BwrItems`.
+4. **Assets.** One entry in `ISOTOPE_COLOURS` in `tools-make-isotope-assets.py` makes the ingot icon, the block texture, models, blockstate and loot table.
+   Add `block.bwr.<id>`, `item.bwr.<id>` for both to the language file, and the block to `mineable/pickaxe` and `needs_iron_tool`.
+5. **Recipes** (`data/bwr/recipe`, three files per isotope), the shapes the tests and the audit expect:
+   * `<id>_block.json`: `crafting_shaped`, pattern `###` / `###` / `###`, key `#` = `bwr:<id>_ingot`, result 1 `bwr:<id>_block`.
+   * `<id>_ingot_from_block.json`: `crafting_shapeless`, one `bwr:<id>_block`, result 9 `bwr:<id>_ingot`.
+   * for an ingot made by a machine from some other item, a one-to-one `<id>_ingot_from_<that item>.json`, the same mass.
+   A new ingot has a crafting recipe (from its block), so it is **not** added to the "not craftable" lists in `FuelFabricatorItemRouteTests` and
+   `tools-audit-recipes.py`; the block-and-ingot loop is the audit's accepted "storage pair". Mass is conserved at every step, and a recipe for the
+   *first* ingot out of nothing is the thing not to write.
+6. Carried, an ingot or block is a gamma source through the same data-map line (`CarriedIsotopes`); a **placed** block is inert storage, like the same ingots in a chest
+   (the mod's carried-source rule has never made a chest of capsules a source, and a block entity per storage block to change that was not worth its cost).
+
+## Cobalt-60: the reactor-bred bulk fuel
+
+Strontium-90, caesium-137 and americium-241 come from reprocessing waste and there is no way to make them in bulk: strontium-90 is a fission product and only
+comes out of fuel. What a reactor really makes in bulk is **cobalt-60**: neutron capture on cobalt-59 in target or adjuster rods. CANDU adjuster rods
+make most of the world's supply, and GE Hitachi announced cobalt-60 production in a BWR at Clinton in 2011 (FUELS-AND-RODS.md). The mod already had the cobalt
+target rod, which after 72 operating hours makes one sealed `bwr:cobalt_sample`; that is now the RTG fuel, with an ingot and a block of its own.
+
+| Number | Value | Where it comes from |
+|---|---|---|
+| Half-life | 5.2714 y | Co-60 decay data, <https://en.wikipedia.org/wiki/Cobalt-60> |
+| Specific activity | 4.19e13 Bq/g, 1,130 Ci/g | ln 2 / half-life x Avogadro / 59.93 u; Wikipedia says close to 42 TBq/g, about 1,100 Ci/g |
+| Decay energy per decay | 2.823 MeV | beta (mean 0.317 MeV) + gammas 1.173 + 1.332 MeV |
+| Thermal power | **18.9 W/g** | 4.19e13 Bq/g x 2.823 MeV x 1.602e-13 J/MeV, which agrees with the 17 to 19 W/g the owner quoted (Wikipedia's "about 26 W/g" does not follow from its own activity and energies, and is not used). A thick housing absorbs the gammas, so nearly all of it is heat |
+| Photon power | 16.8 W/g | 2.506 MeV a decay, in the dose model's unit: 14.8 Sv/h per gram at 1 m (the exposure constant 1.32 R m2/(Ci h) says 14 to 15) |
+| Wall | 0.90 | 3 mm of 316L at 1.25 MeV |
+| Lead half-value layer | 1.2 cm | broad beam at 1.25 MeV |
+
+**Grams per sample: 474 g, the calibration of the reactor-bred targets.** BREEDING-TARGETS.md gives the existing 72-hour cobalt target a meaning: 72 game hours stand for an 18-month cycle at a
+thermal flux of 3e13 n/cm2/s, which converts 4.7 % of a cassette's 10 kg of cobalt-59 (sigma 37.2 b): **474 g of cobalt-60, about 0.5 MCi, the size of an industrial source batch**. One finished target is one
+`bwr:cobalt_sample`, so a sample, an ingot and a block of nine are 474 g, 474 g and 4,266 g (one line each in the data map; a datapack retunes them). One sample is **8.96 kW of heat** (47 strontium
+capsules' worth) and **carried reads about 6,300 Sv/h at 1 m** (a caesium capsule 54 Sv/h): the honest reading of half a megacurie, and a change to every player who harvests a cobalt target,
+who now carries a lethal source until it is inside an RTG. The sample's other uses are unchanged (the comparator recipe `cobalt_sample_detector` still takes it, tested). 1,000 kg of cobalt-60
+is 2,109 ingots (999,666 g): about two thousand finished targets.
+
+## RTG heat, and the heat-only switch
+
+An RTG is a heater. The body always runs at its material's thermal power (a sealed RTG has no off switch), and 5 % of it can leave as FE.
+
+* **Heat-only switch** (small RTG and Large RTG): stops the FE and nothing else. The heat, the decay and the dose are unchanged; the buffer stops filling. It is a button on the
+  screen, a `heat_only` signal (read-only on the small RTG, whose signal list has never had a command; a `set_heat_only` toggle command on the Large RTG, for a panel or the wrench) and
+  `setHeatOnly(boolean)` on the computer face. The save key `HeatOnly` is written only when it is on, so an old RTG saves and loads exactly as before. Nothing switches it for you.
+* **Cold Sweat** (body temperature, an optional dependency): with it installed, each RTG cell is a Cold Sweat `BlockTemp` that adds **0.15 Cold Sweat units per kW** of the
+  RTG's thermal power at its own block (a unit is 25 C; so 1 kW is 3.75 C), faded by Cold Sweat with distance to nothing at its block range (7 blocks by default), capped at
+  1.5 units (37.5 C) in total however many RTGs there are. A small strontium RTG (1.38 kW) adds 0.21 units, 5 C, beside it; a furnace adds 0.33. The Large RTG's twelve cells share its watts.
+  **An empty RTG adds nothing** (its `BlockTemp` is not valid). The heat is the thermal watts, so heat-only mode changes nothing here.
+  * *API used:* Cold Sweat's Java API, `com.momosoftworks.coldsweat.api.temperature.block_temp.BlockTemp` registered on `BlockTempRegisterEvent` (NeoForge event bus), against Cold Sweat 2.4.4;
+    2.4.3 or later is needed (the dynamic `getMaxEffect`/`getRange` getters). The datapack/config route (`block_temperatures`) gives a block one fixed temperature and cannot read a
+    block entity, and an RTG's heat is what is loaded, so it was not an option.
+  * *Optional:* `cold_sweat` is `type = "optional"` in `neoforge.mods.toml`; `dev.bwr.mod.compat.coldsweat` is the only package that names a Cold Sweat type and `BwrMod` loads it
+    only when `ModList.isLoaded("cold_sweat")` (the same pattern as CC:Tweaked and Mekanism). Cold Sweat is `compileOnly` (never bundled; it is GPL-3) from Modrinth's maven by
+    version id (`coldSweatVersionId` in `gradle.properties`), and on the dev runtime only with `-PbwrColdSweat`, so no ordinary run, gate or jar has it. The registration is in a
+    try/catch, so a Cold Sweat whose API differs logs a warning and leaves the RTGs as plain blocks.
+  * *Tested, and not:* with `-PbwrColdSweat` (Cold Sweat 2.4.4 on the dev runtime) the GameTest drives Cold Sweat's own `BlockTempModifier`, the code that warms a player: an empty RTG warms by 0; one strontium ingot (230 W) by 0.0281 units at 2 m, two by exactly twice that, 0.0244 at 5 m, 0 at 20 m (out of range); heat-only changes nothing; a Large RTG with 8 ingots 0.1556 at 3 m and with 16 exactly twice. Cold Sweat itself logs that the RTGs registered. **Not tested:** any Cold Sweat other than 2.4.4 (2.4.3 is the floor by reading its source, not by running it), the on-screen temperature gauge, a real player's body temperature over time, and the client side. Without `-PbwrColdSweat` every run, including all the gates, is the mod with Cold Sweat absent (a test asserts none of its classes are visible).
+  * *Not modelled:* the client side. Cold Sweat computes the world temperature on the server, where the RTG's block entity has its contents; the client's copy of an RTG block
+    entity is empty (neither RTG sends its contents to clients), so a client-side prediction of the heat would read zero until the server's value arrives.
+* **Mekanism heat: skipped.** Mekanism's heat capability (`mekanism:heat_handler`) is not in the API jar this mod compiles against (it is in the full mod), and its model
+  is temperature and conductance between ticking machines: a faithful "this many watts" source would need a thermal resistance invented here and a
+  heat-capacity-and-dissipation model checked against Mekanism's own consumers, which could not be done honestly in this change. The thermal watts are on the screens, the signals and the
+  computer faces for anything that wants to use them.
+
+## The Large RTG
+
+A 2 x 2 footprint, **3 high**, one item (`bwr:large_rtg`), for a very large remote power source. Recipe: five lead ingots, an RTG, two iron blocks and a hopper (`LLL` / `LRL` / `SHS`).
+
+* **Height, and why 3.** The housing is 40 cm of lead-equivalent wall in a 2 m square, which leaves a core cavity about 1.2 m across; a two-block-high unit had room for that wall or
+  for the radiator stack that sheds up to 920 kW of strontium heat (and 18.9 MW of cobalt), not both. Three high is a shielded two-block body with a one-block finned radiator stack and lifting cap.
+* **Placement.** Like the pumps (PUMP-MODELS.md): leave the whole footprint clear; the clicked block is the corner (the controller, cell 0) and the unit extends east and south of it turned
+  to the player's facing, front (the hatch, placards, nameplate) toward the player. Placement checks every cell for permission, loaded chunk, build height, world border, replaceable block and
+  entities, and refuses the whole unit if any fails. Breaking any cell removes the whole assembly and returns the one item and **every item that was loaded**; pistons cannot move it. A part whose
+  controller is removed by other means removes itself, and the controller checks the footprint every 100 ticks.
+* **One ticker.** Only the controller cell has a block entity and the assembly's one server ticker (the small RTG's generator pattern: one boolean test when empty; one modulo a tick and, every 5 ticks,
+  a lazy settle and up to 12 capability lookups on what touches the bottom layer when running). No per-cell tickers, no scheduled ticks.
+* **Capacity: 1,000 kg**, tracked as a **mass**, not slots. The block keeps a count per item kind (ingots, blocks and capsules of each isotope; 4,000 ingots is a number); the mass is the sum
+  of counts times the fuel list's grams, and an item that would take it past 1,000,000 g is refused whole (a stack goes in as far as it fits). Mixed isotopes are fine.
+* **Loading.** Right-click with fuel in the hand; the screen's **Load my fuel** button (every fuel item in the inventory, up to the cap); a hopper or pipe into any face of any cell (item capability, insert only, one virtual slot);
+  nothing can be taken out except by breaking the block. A full unit refuses and the hopper keeps its items.
+* **Power.** The same physics as the small RTG, over the store: thermal W = the sum over kinds of count x grams x specific power x 2^(-age / half-life); electric = thermal x 5 %; FE/t = electric / 13.4 x `rtgOutputMultiplier`
+  (which scales the electricity only, as before). Decay: every item of a kind shares a half-life, so a kind has one *effective age*, merged exactly when a batch is added (`LargeRtgStore.mergedAgeSeconds`), tested to 1e-12 against summing the batches.
+  FE buffer 1,000,000 FE; it pushes to whatever touches its bottom layer and gives to anything that pulls (extract-only on every face of every cell).
+
+  | 1,000 kg of | Thermal | Electric | FE/t |
+  |---|---|---|---|
+  | Sr-90 | 920 kW | 46 kW | **3,432.8** |
+  | Cs-137 | 420 kW | 21 kW | 1,567.2 |
+  | Am-241 | 114.7 kW | 5.74 kW | 428.0 |
+  | Co-60 (2,109 ingots of 474 g) | 18.9 MW | 945 kW | 70,522 |
+
+* **Radiation: heavy shielding, and the number is always shown.** The housing is **40 cm of lead-equivalent** (a lead, tungsten and steel sandwich in the 2 m body). What gets through is
+  `2^(-40 cm / half-value layer)` for the isotope, the half-value layer of lead in the fuel line (`lead_hvl_cm`): Sr-90 0.6 cm, Cs-137 0.65, Am-241 0.02, Co-60 1.2. The result is the unit's point source
+  (`RadiationSources`, set when the contents change and when the chunk loads, cleared when it is removed or unloaded; below a nanowatt of photons, about a nanosievert an hour at a metre, no source is registered, and the screen and the signal still print the true number) and the screen's **Dose at 1 m**. For scale the screen also shows what the **bare core** would read.
+
+  | 1,000 kg of | Bare core at 1 m | Through the housing |
+  |---|---|---|
+  | Sr-90 | 5.0 kSv/h | 4e-14 mSv/h |
+  | Cs-137 | 217 kSv/h | 6e-11 mSv/h |
+  | Am-241 | 28 Sv/h | 0 |
+  | Co-60 | 13.3 MSv/h | **1.23 mSv/h** |
+
+  40 cm of lead stops caesium, strontium and americium completely: the model has only the direct beam, and a real cask is limited by streaming through its hatch, intake and terminals and by
+  scatter, which this does not model, so the reading for those is the true value of the model and not a promise about a real unit. **Cobalt-60 is the one that is still there**: a full cobalt unit reads 1.2 mSv/h at a metre (about a hundred times the public limit rate), which is exactly what
+  "a cobalt RTG needs heavy walls" means; thicker walls would be a different block. The small RTG's flat 1e-4 housing is unchanged: a small RTG of cobalt reads tens of mSv/h.
+* **Heat-only** and **Cold Sweat**: as above.
+* **Model.** Built headless in Blender (`art/models/rtg/build_large.py`, split into cells by `tools-export-large-rtg.py`): a plinth, an eight-sided shield jacket with bolted bands and a hazard stripe, a stack of fourteen
+  radiator fins on four posts, a lifting cap, copper FE terminals on the east and west faces, a hinged loading hatch with an intake funnel, hazard placards on the front and back, a plain nameplate and a service ladder.
+* **Screen, signals, computers.** The screen shows stored mass by isotope against the cap, thermal W, electric W, FE/t, half-life, the dose at 1 m and the bare core's, the buffer, the heat-only switch and Load my fuel.
+  Signals: `thermal_power` (W), `electric_power` (FE/t), `dose_rate` (mSv/h at 1 m), `mass` (kg), `buffer`, `fuelled`, `heat_only`, and the command `set_heat_only`.
+  Computer face `bwr_large_rtg` (on every cell): `getStatus()` (`massKg`, `capacityKg`, `items`, `thermalW`, `electricW`, `fePerTick`, `halfLifeYears`, `doseAt1mMsvPerH`, `bareDoseAt1mMsvPerH`, `bufferFE`, `efficiency`,
+  `outputMultiplier`, `heatOnly`, `kgByIsotope`) and `setHeatOnly(boolean)`. The small RTG's `getStatus()` gains `heatOnly` and its face gains `setHeatOnly`.
+* **Saves.** `Kinds` (a list of `Id`, `Count`, `Epoch`) only when something is loaded, `HeatOnly` only when on, `Buffer` only when it holds something; an empty unit saves nothing. A save cannot hold more than the cap
+  and an item that has left the data keeps its count (no power; it drops when the block breaks).
+
+### The supply is the problem, honestly
+
+Nothing here makes isotope from nothing. **Strontium-90, caesium-137 and americium-241 come from reprocessing waste**: the separator gives about 0.11 kg of Sr-90 per waste item (109.7 g of the 5 kg item), 0.18 kg of Cs-137
+and 0.075 kg of Am-241. 1,000 kg of strontium-90 is 9,100 waste items, the waste of about 5,400 assemblies burned to 45 GWd/t, and 91 million FE of separator work; that is a very long-term goal, and the separator's yields are unchanged. **Cobalt-60 comes from irradiating cobalt targets in the reactor** (72 operating hours a rod, one 474 g sample each): 2,109 samples (999.7 kg, a full cobalt unit) is two thousand rod-harvests, still a campaign, but the only one of the four materials a reactor makes in bulk (the others are fission products and only come from fuel).
+Real cobalt sources are far smaller: Wikipedia gives India's capacity as over 6 MCi (about 5 t of Co-60 at 1,100 Ci/g) in 2021, and a disused teletherapy source stolen in 2013 was about 3,000 Ci (2.7 g). The cap is a limit, not a typical load.
 
 ## Carried capsules
 
@@ -214,6 +373,12 @@ world or advancement loses its route; the owner may retire it.
 
 ## What is tested
 
+The Large RTG, RTG heat and the ingot and block pattern (namespace `bwrlargertg`, `LargeRtgTests`; `:core:acceptance` `LargeRtgStoreTest`): 1,000 kg of strontium reads 920 kW / 46 kW / 3,432.8 FE/t and a mixed 1,000 kg adds; the cap is exact (the 4,001st ingot and a block are refused);
+decay and the merged clock; heat-only gives no FE and the full heat; the dose readout is the DoseModel through the housing and the block is exactly that point source; placement and breaking in all four facings (one across a chunk boundary), a blocked footprint refused,
+one drop plus the contents; a hopper loads up to the cap and then keeps its items; FE reaches a real neighbour; saves, a hand-edited save, and an old small-RTG save; signals and the computer faces; the recipes and the data lines; the heat helpers and, with `-PbwrColdSweat`, the real Cold Sweat
+`BlockTempModifier`; and every ordinary run is the mod with Cold Sweat absent. `-PbwrLargeRtgClientCheck` takes the pictures.
+
+
 `:core:acceptance`: `RadioisotopePowerTest` (power from mass and specific power, half-life decay, efficiency and FE, photon
 dose) and `IsotopeExtractionTest` (mass conserved to the grain over 20,000 random inputs and 500 items, the documented
 masses). GameTests, namespace `bwrrtg` (`RtgTests`): extraction from real spent fuel through the real plant with mass
@@ -223,6 +388,11 @@ dose and the block's point source; the fuel list as data and a parsing radium li
 faces. `-PbwrRtgClientCheck` takes the pictures.
 
 ## References
+
+* Cobalt-60 and the Large RTG: Co-60 half-life, specific activity (about 1,100 Ci/g), gamma energies and CANDU and BWR production, <https://en.wikipedia.org/wiki/Cobalt-60>; GE Hitachi and Exelon on Co-60 at Clinton,
+  <https://www.ge.com/news/press-releases/ge-hitachi-nuclear-energy-and-exelon-announce-potential-production-critical-medical>; lead half-value layers (Cs-137 about 0.65 cm, Co-60 about 1.2 cm),
+  <https://open-exam-prep.com/study-guides/cih/ionizing-radiation-protection/radiation-shielding-physics>.
+* Cold Sweat's BlockTemp API (`BlockTemp`, `BlockTempRegistry`, `BlockTempRegisterEvent`, `BlockTempModifier`), read from its source, <https://github.com/Momo-Softworks/Cold-Sweat> (branch `1.21-FG`, version 2.4.4, GPL-3).
 
 * RTG efficiency, power and fuel: MMRTG, <https://www.energy.gov/ne/articles/powering-curiosity-multi-mission-radioisotope-thermoelectric-generators>,
   <https://www.jpl.nasa.gov/news/press_kits/mars_2020/launch/mission/spacecraft/power/>, <https://en.wikipedia.org/wiki/Multi-mission_radioisotope_thermoelectric_generator>;

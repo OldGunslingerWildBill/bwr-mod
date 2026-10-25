@@ -99,7 +99,8 @@ public final class ServerBootCheck {
                 || entry.startsWith("dev/bwr/mod/devtest/") || entry.endsWith("package-info.class")
                 || entry.endsWith("module-info.class")
                 || (entry.startsWith("dev/bwr/mod/peripheral/") && !ModList.get().isLoaded("computercraft"))
-                || (entry.startsWith("dev/bwr/mod/mekanism/") && !ModList.get().isLoaded("mekanism"))) {
+                || (entry.startsWith("dev/bwr/mod/mekanism/") && !ModList.get().isLoaded("mekanism"))
+                || (entry.startsWith("dev/bwr/mod/compat/coldsweat/") && !ModList.get().isLoaded("cold_sweat"))) {
             return; // the optional-mod packages are only ever touched behind an isLoaded check
         }
         names.add(entry.substring(0, entry.length() - ".class".length()).replace('/', '.'));

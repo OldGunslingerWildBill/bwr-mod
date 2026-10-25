@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:strontium_90_capsule"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:strontium_90_ingot"
+  }
+}

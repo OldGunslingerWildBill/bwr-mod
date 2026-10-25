@@ -66,6 +66,10 @@ public final class BwrMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.RtgMenu>> RTG =
             MENUS.register("rtg",
                     () -> IMenuTypeExtension.create(dev.bwr.mod.gui.RtgMenu::new));
+    /** Large RTG: stored mass by isotope, power, heat-only switch, dose. */
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.LargeRtgMenu>> LARGE_RTG =
+            MENUS.register("large_rtg",
+                    () -> IMenuTypeExtension.create(dev.bwr.mod.gui.LargeRtgMenu::new));
 
     /** Spent fuel pool: per-rack heat, water level and temperature, time to boil and to uncover, the cooling pump. */
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.SpentFuelPoolMenu>> SPENT_FUEL_POOL =

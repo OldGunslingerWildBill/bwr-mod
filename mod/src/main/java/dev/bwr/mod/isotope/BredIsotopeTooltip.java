@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * The tooltip of a reactor-bred heat-source isotope (polonium-210, plutonium-238, actinium-227, thulium-170: an ingot or a
- * block of nine, BREEDING-TARGETS.md). Every number is the RTG fuel list's ({@link RtgFuels}), read when the tooltip is drawn.
+ * The tooltip of an RTG heat-source isotope in any form: an ingot or a block of nine of polonium-210, plutonium-238, actinium-227,
+ * thulium-170 (BREEDING-TARGETS.md), strontium-90, caesium-137, americium-241 or cobalt-60 (RTG.md), or a separator capsule or a cobalt sample. Every number is the RTG fuel list's ({@link RtgFuels}), read when the tooltip is drawn.
  * Carried, the item is a gamma point source ({@link CarriedIsotopes}), whatever its class.
  */
 public final class BredIsotopeTooltip {
@@ -47,7 +47,7 @@ public final class BredIsotopeTooltip {
         }
         double thermal = fuel.thermalWattsPerItem();
         double electric = RadioisotopePower.electricWatts(thermal, RadioisotopePower.THERMOCOUPLE_EFFICIENCY);
-        lines.add(BwrText.tr("tooltip.bwr.bred.contents", "%s of %s, bred in a reactor. Fuel for an RTG.",
+        lines.add(BwrText.tr("tooltip.bwr.bred.contents", "%s of %s. Fuel for an RTG.",
                 mass(fuel.gramsPerItem()), fuel.isotope()));
         lines.add(BwrText.tr("tooltip.bwr.bred.power", "%s W thermal, %s W electric in an RTG; half-life %s",
                 String.format(Locale.ROOT, "%.3g", thermal), String.format(Locale.ROOT, "%.2g", electric), halfLife(fuel.halfLifeYears())));

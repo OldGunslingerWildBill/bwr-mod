@@ -5,6 +5,10 @@ Run from the repository root:  python tools-make-isotope-assets.py
 Standard library plus Pillow. Same 128 x 128 hand-drawn style as tools-make-reprocessing-assets.py: a sealed steel
 capsule with a coloured band per isotope (strontium red, caesium blue, americium green) and a hazard trefoil dot;
 the stripped waste is the waste canister without its hazard band.
+
+It also writes, for each isotope (strontium_90, caesium_137, americium_241, cobalt_60), a hand-drawn metal ingot icon
+with a colour band and trefoil dot, plus a 16 x 16 storage block texture (3 x 3 ingot tiles framed by dark steel with
+hazard-yellow corner rivets) with its block model, blockstate, item model and loot table.
 """
 import json
 import os
@@ -60,6 +64,153 @@ FONT = {  # 3 x 5 pixel letters
 }
 
 
+ISOTOPE_COLOURS = {
+    "strontium_90": (214, 66, 52, 255),
+    "caesium_137": (70, 120, 224, 255),
+    "americium_241": (84, 178, 92, 255),
+    "cobalt_60": (112, 92, 200, 255),
+}
+DATA = os.path.join(ROOT, "mod/src/main/resources/data/bwr")
+
+
+def shade(c, k):
+    return tuple(max(0, min(255, int(round(v * k)))) for v in c[:3]) + (255,)
+
+
+def fill_poly(img, pts, base, grad=0.0, x0=0, x1=128):
+    """Fill a polygon with a flat colour, optionally lighter on the left (grad > 0) than on the right."""
+    mask = Image.new("L", img.size, 0)
+    ImageDraw.Draw(mask).polygon(pts, fill=255)
+    px, mp = img.load(), mask.load()
+    for y in range(img.height):
+        for x in range(img.width):
+            if mp[x, y]:
+                px[x, y] = shade(base, 1 + grad * (0.5 - (x - x0) / (x1 - x0)))
+
+
+def trefoil_dot(d, cx, cy, r, band):
+    dark = (24, 24, 24, 255)
+    d.ellipse((cx - r * 0.5, cy - r * 0.5, cx + r * 0.5, cy + r * 0.5), fill=dark)
+    box = (cx - r, cy - r, cx + r, cy + r)
+    for a in (30, 150, 270):
+        d.pieslice(box, a, a + 60, fill=dark)
+    d.ellipse((cx - r * 0.28, cy - r * 0.28, cx + r * 0.28, cy + r * 0.28), fill=band)
+
+
+def ingot(img, band):
+    """A bevelled bar seen from front-right-above: trapezoid front, top and right faces, lit from the left, with a
+    coloured band wrapped round the middle and a small trefoil on the front."""
+    d = ImageDraw.Draw(img, "RGBA")
+    d.ellipse((6, 96, 122, 120), fill=(0, 0, 0, 60))
+    steel = (150, 158, 168, 255)
+    edge = (62, 70, 82, 255)
+    ft_l, ft_r, fb_l, fb_r = (20, 72), (92, 72), (10, 100), (100, 100)
+    off = (16, -14)
+    bt_l, bt_r = (ft_l[0] + off[0], ft_l[1] + off[1]), (ft_r[0] + off[0], ft_r[1] + off[1])
+    bb_r = (fb_r[0] + off[0], fb_r[1] + off[1])
+    front = [fb_l, fb_r, ft_r, ft_l]
+    top = [ft_l, ft_r, bt_r, bt_l]
+    right = [fb_r, bb_r, bt_r, ft_r]
+    fill_poly(img, right, shade(steel, 0.62))
+    fill_poly(img, top, shade(steel, 1.22), 0.35, 10, 108)
+    fill_poly(img, front, shade(steel, 0.98), 0.45, 10, 100)
+    # the colour band across the front, over the top and (darker) down the right end
+    bx0, bx1 = 40, 70
+    fill_poly(img, [(bx0, 100), (bx1, 100), (bx1, 72), (bx0, 72)], band, 0.45, 10, 100)
+    fill_poly(img, [(bx0, 72), (bx1, 72), (bx1 + off[0], 72 + off[1]), (bx0 + off[0], 72 + off[1])],
+              shade(band, 1.18), 0.3, 10, 108)
+    # the recessed stamp on the top face either side of the band
+    for a, b in ((26, 36), (74, 84)):
+        d.polygon([(a, 69), (b, 69), (b + 10, 61), (a + 10, 61)], fill=shade(steel, 0.9))
+    # bevel highlights on the near top edge and the left end, shadow along the bottom
+    d.line([ft_l, ft_r], fill=shade(steel, 1.5), width=2)
+    d.line([fb_l, ft_l], fill=shade(steel, 1.45), width=2)
+    d.line([bt_l, bt_r], fill=shade(steel, 1.35), width=1)
+    d.line([fb_l, fb_r], fill=(40, 46, 56, 255), width=2)
+    d.line([fb_r, bb_r], fill=(40, 46, 56, 255), width=2)
+    # outline
+    d.line([fb_l, fb_r, bb_r, bt_r, bt_l, ft_l, fb_l], fill=edge, width=2, joint="curve")
+    d.line([ft_r, bt_r], fill=edge, width=1)
+    d.line([ft_l, ft_r], fill=edge, width=1)
+    d.line([fb_r, ft_r], fill=edge, width=2)
+    trefoil_dot(d, 55, 86, 10, band)
+
+
+def block_tile(px, x0, y0, base, seed):
+    """One 4 x 4 ingot-like tile: lit top and left rows, shaded bottom and right, a bright specular pixel."""
+    for dy in range(4):
+        for dx in range(4):
+            k = 1.0
+            if dy == 0 or dx == 0:
+                k = 1.22
+            if dy == 3 or dx == 3:
+                k = 0.72
+            if (dx, dy) in ((0, 3), (3, 0)):
+                k = 0.95
+            if dx and dy and dx < 3 and dy < 3 and (dx * 7 + dy * 3 + seed) % 5 == 0:
+                k = 0.9
+            px[x0 + dx, y0 + dy] = shade(base, k)
+    px[x0, y0] = shade(base, 1.6)
+
+
+def isotope_block(band):
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 255))
+    px = img.load()
+    steel, steel_hi, steel_lo = (44, 50, 58, 255), (84, 92, 104, 255), (26, 30, 36, 255)
+    for y in range(16):
+        for x in range(16):
+            px[x, y] = steel
+    for i in range(16):
+        px[i, 0] = steel_hi
+        px[0, i] = steel_hi
+        px[i, 15] = steel_lo
+        px[15, i] = steel_lo
+    base = shade(band, 0.86)
+    for j in range(3):
+        for i in range(3):
+            block_tile(px, 1 + i * 5, 1 + j * 5, base, i + 3 * j)
+    # hazard-yellow rivets in the four corners, a black trefoil hub on the middle tile
+    yellow = (236, 178, 24, 255)
+    for x, y in ((0, 0), (15, 0), (0, 15), (15, 15)):
+        px[x, y] = yellow
+    dark = (18, 18, 20, 255)
+    for x, y in ((7, 7), (8, 7), (7, 8), (8, 8)):
+        px[x, y] = dark
+    for x, y in ((7, 6), (6, 8), (9, 8)):
+        px[x, y] = yellow
+    return img
+
+
+NL = chr(10)
+
+
+def write_json(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", newline=NL) as f:
+        json.dump(data, f, indent=2)
+        f.write(NL)
+
+
+def isotope_ingots_and_blocks():
+    for iso, band in ISOTOPE_COLOURS.items():
+        img = Image.new("RGBA", (128, 128), (0, 0, 0, 0))
+        ingot(img, band)
+        img.save(os.path.join(TEX, iso + "_ingot.png"))
+        write_json(os.path.join(MODELS, iso + "_ingot.json"),
+                   {"parent": "minecraft:item/generated", "textures": {"layer0": "bwr:item/fuel/" + iso + "_ingot"}})
+        name = iso + "_block"
+        isotope_block(band).save(os.path.join(RES, "textures/block", name + ".png"))
+        write_json(os.path.join(RES, "models/block", name + ".json"),
+                   {"parent": "minecraft:block/cube_all", "textures": {"all": "bwr:block/" + name}})
+        write_json(os.path.join(RES, "blockstates", name + ".json"), {"variants": {"": {"model": "bwr:block/" + name}}})
+        write_json(os.path.join(MODELS, name + ".json"), {"parent": "bwr:block/" + name})
+        write_json(os.path.join(DATA, "loot_table/blocks", name + ".json"), {
+            "type": "minecraft:block",
+            "pools": [{"bonus_rolls": 0.0, "conditions": [{"condition": "minecraft:survives_explosion"}],
+                       "entries": [{"type": "minecraft:item", "name": "bwr:" + name}], "rolls": 1.0}],
+            "random_sequence": "bwr:blocks/" + name})
+
+
 def block_textures():
     """The reprocessing plant's textures with the cyan swapped for amber and the REP lettering for ISO."""
     tex = os.path.join(RES, "textures/block")
@@ -99,4 +250,5 @@ if __name__ == "__main__":
         with open(os.path.join(MODELS, name + ".json"), "w", newline="\n") as f:
             json.dump({"parent": "minecraft:item/generated", "textures": {"layer0": "bwr:item/fuel/" + name}}, f, indent=2)
             f.write("\n")
+    isotope_ingots_and_blocks()
     print("written")

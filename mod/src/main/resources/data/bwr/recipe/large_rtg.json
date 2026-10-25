@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "L": {
+      "item": "bwr:lead_ingot"
+    },
+    "R": {
+      "item": "bwr:rtg"
+    },
+    "S": {
+      "item": "minecraft:iron_block"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    }
+  },
+  "pattern": [
+    "LLL",
+    "LRL",
+    "SHS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:large_rtg"
+  }
+}

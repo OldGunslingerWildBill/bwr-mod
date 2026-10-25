@@ -84,6 +84,8 @@ public class RtgBlockEntity extends BlockEntity {
     private long lastSettle;
     private boolean fuelled;
     private boolean registeredSource;
+    /** The heat-only switch: true stops the electricity (the heat is unchanged). Saved only when true. */
+    private boolean heatOnly;
 
     /** What the block is making now. */
     public record Readout(double thermalWatts, double electricWatts, double fePerTick, double gammaWatts,
@@ -210,6 +212,21 @@ public class RtgBlockEntity extends BlockEntity {
         updateRadiation();
     }
 
+    /** True when the unit is used as a heater only: it still runs at its full thermal power, and makes no FE. */
+    public boolean heatOnly() {
+        return heatOnly;
+    }
+
+    public void setHeatOnly(boolean value) {
+        if (heatOnly != value) {
+            if (level != null && !level.isClientSide()) {
+                settle();
+            }
+            heatOnly = value;
+            setChanged();
+        }
+    }
+
     public ItemStackHandler fuel() {
         return fuel;
     }
@@ -259,7 +276,7 @@ public class RtgBlockEntity extends BlockEntity {
                 halfLife = data.halfLifeYears();
             }
         }
-        double electric = RadioisotopePower.electricWatts(thermal, RadioisotopePower.THERMOCOUPLE_EFFICIENCY);
+        double electric = heatOnly ? 0.0 : RadioisotopePower.electricWatts(thermal, RadioisotopePower.THERMOCOUPLE_EFFICIENCY);
         double fe = RadioisotopePower.fePerTick(electric, GameplayConfig.rtgOutputMultiplier());
         double outside = gamma * RadioisotopePower.BODY_TRANSMISSION;
         return new Readout(thermal, electric, fe, outside, DoseModel.pointSourceMsvPerH(outside, 1.0, 1.0), halfLife, capsules);
@@ -348,6 +365,9 @@ public class RtgBlockEntity extends BlockEntity {
                 r.capsules(), String.format(Locale.ROOT, "%.1f", r.thermalWatts()),
                 String.format(Locale.ROOT, "%.2f", r.electricWatts()), String.format(Locale.ROOT, "%.3f", r.fePerTick())));
         out.add(BwrText.tr("status.bwr.rtg.dose", "Dose at 1 m: %s", DoseModel.formatRate(r.doseAtOneMetreMsvPerH())));
+        if (heatOnly) {
+            out.add(BwrText.tr("status.bwr.rtg.heat_only", "Heat only: no FE is made"));
+        }
         return out;
     }
 
@@ -363,6 +383,9 @@ public class RtgBlockEntity extends BlockEntity {
         }
         if (buffer >= 0.001) {
             tag.putDouble("Buffer", buffer);
+        }
+        if (heatOnly) {
+            tag.putBoolean("HeatOnly", true);
         }
     }
 
@@ -394,5 +417,6 @@ public class RtgBlockEntity extends BlockEntity {
         }
         fuelled = any;
         buffer = Math.max(0.0, Math.min(BUFFER_FE, tag.getDouble("Buffer")));
+        heatOnly = tag.getBoolean("HeatOnly");
     }
 }

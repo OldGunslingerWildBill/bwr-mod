@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:cobalt_sample"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:cobalt_60_ingot"
+  }
+}

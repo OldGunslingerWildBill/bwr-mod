@@ -137,6 +137,10 @@ public final class BwrMod {
         // Same treatment for the Mekanism steam boundary, and for the same
         // reason: dev.bwr.mod.mekanism is the only package that names a
         // Mekanism type, and nothing outside this branch mentions it.
+        // Cold Sweat (body temperature) is optional too: the RTGs are heat sources for it. Same rule, one package.
+        if (ModList.get().isLoaded("cold_sweat")) {
+            dev.bwr.mod.compat.coldsweat.ColdSweatCompat.register();
+        }
         if (mekanismPresent) {
             modBus.addListener(
                     net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent.class,

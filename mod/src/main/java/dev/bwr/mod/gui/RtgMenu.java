@@ -20,11 +20,13 @@ import net.neoforged.neoforge.items.SlotItemHandler;
 /**
  * The RTG's screen: the six capsule wells, and what the capsules make (thermal power, electric power, FE per tick),
  * the shortest half-life, the dose at 1 m, and the energy waiting in the buffer. There are no commands: an RTG has no
- * switch. The numbers are the block entity's own readout, sent four times a second.
+ * switch, but a heat-only switch that stops the FE (the heat is unchanged). The numbers are the block entity's own readout, sent four times a second.
  */
 public class RtgMenu extends BwrMenu {
 
     public static final int FIRST_SLOT = 0;
+    /** Command: a = 1 turns the electricity off (heat only), 0 turns it back on. */
+    public static final int CMD_HEAT_ONLY = 1;
     /** Slot positions, relative to the panel. */
     public static final int SLOT_Y = 100;
     public static final int SLOT_X = 24;
@@ -44,6 +46,7 @@ public class RtgMenu extends BwrMenu {
     public double doseMsvPerH;
     public double shortestHalfLifeYears;
     public double bufferFe;
+    public boolean heatOnly;
 
     /** Client constructor. */
     public RtgMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf extra) {
@@ -94,6 +97,7 @@ public class RtgMenu extends BwrMenu {
         buf.writeDouble(r.doseAtOneMetreMsvPerH());
         buf.writeDouble(r.shortestHalfLifeYears());
         buf.writeDouble(be.bufferFe());
+        buf.writeBoolean(be.heatOnly());
     }
 
     @Override
@@ -109,11 +113,16 @@ public class RtgMenu extends BwrMenu {
         doseMsvPerH = buf.readDouble();
         shortestHalfLifeYears = buf.readDouble();
         bufferFe = buf.readDouble();
+        heatOnly = buf.readBoolean();
     }
 
     @Override
     public void handleCommand(ServerPlayer sender, int command, int a, int b) {
-        // No commands: an RTG has no switch.
+        RtgBlockEntity be = rtg();
+        if (be != null && command == CMD_HEAT_ONLY && dev.bwr.mod.world.AssemblyAccess.mayOperate(sender)) {
+            be.setHeatOnly(a != 0);
+            markSnapshotDirty();
+        }
     }
 
     @Override

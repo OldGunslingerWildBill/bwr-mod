@@ -783,6 +783,45 @@ public final class GuiScreenCheck {
             m.present = true;
             return new dev.bwr.mod.gui.client.RtgScreen(m, i, t("Radioisotope Thermoelectric Generator"));
         }));
+        s.add(new Scenario("large-rtg", i -> {
+            // a mixed 1,000 kg: the figures the Large RTG tests assert
+            var m = new dev.bwr.mod.gui.LargeRtgMenu(99, i, P);
+            m.present = true;
+            m.massGrams = 999_540.0;
+            m.items = 3_184;
+            m.thermalWatts = 2_406_940.0;
+            m.electricWatts = 120_347.0;
+            m.fePerTick = 8_981.1;
+            m.doseMsvPerH = 0.1231;
+            m.bareDoseMsvPerH = 1.33e9;
+            m.shortestHalfLifeYears = 5.27;
+            m.bufferFe = 640_000.0;
+            m.kinds = java.util.List.of(new dev.bwr.mod.gui.LargeRtgMenu.Kind("Sr-90 with Y-90", 400_000.0, 368_000.0),
+                    new dev.bwr.mod.gui.LargeRtgMenu.Kind("Cs-137 with Ba-137m", 300_000.0, 126_000.0),
+                    new dev.bwr.mod.gui.LargeRtgMenu.Kind("Am-241", 200_000.0, 22_940.0),
+                    new dev.bwr.mod.gui.LargeRtgMenu.Kind("Co-60", 100_000.0, 1_890_000.0));
+            return new dev.bwr.mod.gui.client.LargeRtgScreen(m, i, t("Large Radioisotope Thermoelectric Generator"));
+        }));
+        s.add(new Scenario("large-rtg-heat-only", i -> {
+            var m = new dev.bwr.mod.gui.LargeRtgMenu(99, i, P);
+            m.present = true;
+            m.heatOnly = true;
+            m.items = 2_109;
+            m.massGrams = 999_666.0;
+            m.thermalWatts = 18_893_700.0;
+            m.doseMsvPerH = 1.231;
+            m.bareDoseMsvPerH = 1.33e10;
+            m.shortestHalfLifeYears = 5.2714;
+            m.kinds = java.util.List.of(new dev.bwr.mod.gui.LargeRtgMenu.Kind("Co-60", 999_666.0, 18_893_700.0));
+            return new dev.bwr.mod.gui.client.LargeRtgScreen(m, i, t("Large Radioisotope Thermoelectric Generator"));
+        }));
+        s.add(new Scenario("large-rtg-empty", i -> {
+            var m = new dev.bwr.mod.gui.LargeRtgMenu(99, i, P);
+            m.present = true;
+            return new dev.bwr.mod.gui.client.LargeRtgScreen(m, i, t("Large Radioisotope Thermoelectric Generator"));
+        }));
+        s.add(new Scenario("large-rtg-absent", i -> new dev.bwr.mod.gui.client.LargeRtgScreen(
+                new dev.bwr.mod.gui.LargeRtgMenu(99, i, P), i, t("Large Radioisotope Thermoelectric Generator"))));
         s.add(new Scenario("rtg-absent", i -> new dev.bwr.mod.gui.client.RtgScreen(new dev.bwr.mod.gui.RtgMenu(99, i, P), i, t("Radioisotope Thermoelectric Generator"))));
         s.add(new Scenario("spent-fuel-pool", i -> new SpentFuelPoolScreen(pool(false, 8), i, t("Spent Fuel Pool"))));
         s.add(new Scenario("spent-fuel-pool-many", i -> new SpentFuelPoolScreen(pool(false, 40), i, t("Spent Fuel Pool"))));

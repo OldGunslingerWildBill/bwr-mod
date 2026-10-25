@@ -127,11 +127,8 @@ public final class BwrPeripheralSupport {
                 "batchHeavyMetalKg",b.batchHeavyMetalKg(),"enrichment",b.batchEnrichmentWeightFraction(),"energyFE",b.energy().getEnergyStored(),"outputCount",b.output().getStackInSlot(0).getCount(),
                 "target",b.target(),"uraniumHeldIngots",b.uraniumHeldUnits()/(double)dev.bwr.mod.fuel.FuelItemRoute.UNITS_PER_INGOT,"depletedUranium",b.tailsHeld(),
                 "plutoniumHeldNuggets",b.plutoniumHeldNuggets(),"matrixHeldIngots",b.matrixHeldIngots(),"thoriumHeldIngots",b.thoriumHeldIngots()));
-        if(be instanceof dev.bwr.mod.isotope.RtgBlockEntity b)return new HardwarePeripheral("bwr_rtg",()->{
-            var r=b.readout();var m=new LinkedHashMap<String,Object>();
-            m.put("capsules",r.capsules());m.put("thermalW",r.thermalWatts());m.put("electricW",r.electricWatts());m.put("fePerTick",r.fePerTick());
-            m.put("halfLifeYears",r.shortestHalfLifeYears());m.put("doseAt1mMsvPerH",r.doseAtOneMetreMsvPerH());m.put("bufferFE",b.bufferFe());
-            m.put("efficiency",dev.bwr.core.isotope.RadioisotopePower.THERMOCOUPLE_EFFICIENCY);m.put("outputMultiplier",dev.bwr.mod.config.GameplayConfig.rtgOutputMultiplier());return m;});
+        if(be instanceof dev.bwr.mod.isotope.RtgBlockEntity b)return new RtgPeripheral(b);
+        if(be instanceof dev.bwr.mod.isotope.LargeRtgBlockEntity b)return new RtgPeripheral(b);
         if(be instanceof dev.bwr.mod.isotope.IsotopeSeparatorBlockEntity b)return new HardwarePeripheral("bwr_isotope_separator",()->{
             var m=new LinkedHashMap<String,Object>();var in=b.items().getStackInSlot(0);
             m.put("energyFE",b.energy().getEnergyStored());m.put("working",b.workTicks()>0);m.put("progress",b.workTicks()/(double)dev.bwr.mod.isotope.Isotopes.WORK_TICKS);
