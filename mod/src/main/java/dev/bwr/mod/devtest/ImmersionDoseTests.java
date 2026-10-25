@@ -111,6 +111,8 @@ public final class ImmersionDoseTests {
             double expectedDose = deepRate * (ImmersionDose.SAMPLE_TICKS / 20.0) / 3600.0;
             h.assertTrue(Math.abs(PlayerDoses.get(deep) - expectedDose) < 1e-9 * expectedDose, "the dose accumulated with no meter carried: " + PlayerDoses.get(deep) + " vs " + expectedDose);
             h.assertTrue(ImmersionDose.warned(deep), "and the player was told");
+            String told = dev.bwr.mod.text.BwrText.english(ImmersionDose.lastWarning(deep));
+            h.assertTrue(told.contains("burning warmth") && told.contains(DoseModel.formatRate(deepRate)), "with the reading: " + told);
 
             double surfaceSample = ImmersionDose.sample(top);
             h.assertTrue(surfaceSample > 0.0 && !top.hasEffect(MobEffects.WITHER) && !top.hasEffect(MobEffects.HUNGER) && !top.hasEffect(MobEffects.WEAKNESS),

@@ -8,6 +8,7 @@ import dev.bwr.mod.reactor.ReactorSevereAccidentEffects;
 import dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity;
 import dev.bwr.mod.spentfuel.SpentFuelPoolRegistry;
 import dev.bwr.mod.text.BwrText;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -16,8 +17,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -50,7 +51,7 @@ public final class ImmersionDose {
     /** The dose rate from which the player is told, mSv/h: the hunger threshold of the contamination effects (hazard 1e-4). */
     public static final double WARN_MSV_PER_H = DoseModel.doseRateFromHazard(1.0e-4);
 
-    private static final Set<UUID> WARNED = new HashSet<>();
+    private static final Map<UUID, Component> WARNED = new HashMap<>();
 
     private ImmersionDose() {
     }
@@ -104,17 +105,19 @@ public final class ImmersionDose {
         ReactorSevereAccidentEffects.dose(player, DoseModel.hazardFromDoseRate(rate));
         boolean high = rate >= WARN_MSV_PER_H;
         boolean first = false;
+        Component message = null;
         synchronized (WARNED) {
             if (high) {
-                first = WARNED.add(player.getUUID());
+                message = BwrText.tr("message.bwr.immersion.burning_warmth",
+                        "You feel a burning warmth on your skin. The water here is not safe: get out. Dose rate %s, your dose so far %s.",
+                        DoseModel.formatRate(rate), DoseModel.formatDose(PlayerDoses.get(player)));
+                first = WARNED.putIfAbsent(player.getUUID(), message) == null;
             } else {
                 WARNED.remove(player.getUUID());
             }
         }
         if (first) {
-            player.displayClientMessage(BwrText.tr("message.bwr.immersion.burning_warmth",
-                    "You feel a burning warmth on your skin. The water here is not safe: get out. Dose rate %s, your dose so far %s.",
-                    DoseModel.formatRate(rate), DoseModel.formatDose(PlayerDoses.get(player))), false);
+            player.displayClientMessage(message, false);
         }
         return rate;
     }
@@ -122,7 +125,14 @@ public final class ImmersionDose {
     /** Whether the player has been told about this stay in the water (tests). */
     public static boolean warned(ServerPlayer player) {
         synchronized (WARNED) {
-            return WARNED.contains(player.getUUID());
+            return WARNED.containsKey(player.getUUID());
+        }
+    }
+
+    /** The message this player was shown when it first got high, or null (tests). */
+    public static Component lastWarning(ServerPlayer player) {
+        synchronized (WARNED) {
+            return WARNED.get(player.getUUID());
         }
     }
 }
