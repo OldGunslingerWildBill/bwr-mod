@@ -1,1 +1,0 @@
-﻿gate-normal exit 1

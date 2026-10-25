@@ -287,8 +287,14 @@ public final class ThoriumClientCheck {
         t[1] /= l;
         int mid = (lo + hi) / 2;
         double fy = floorHeight(line, lo, hi, line[mid][0], line[mid][2]);
-        galleryCamera = new double[] {line[mid][0] - t[0] * 5, fy + 0.1, line[mid][2] - t[1] * 5};
-        galleryTarget = new double[] {line[mid][0] + t[0] * 7 - t[1] * 2.6, fy + 1.4, line[mid][2] + t[1] * 7 + t[0] * 2.6};
+        // on the centre line itself (inside the gallery), a little back along it, looking ahead and to the side at the wall
+        int back = Math.max(lo, mid - 1), ahead = Math.min(hi, mid + 2);
+        double fyBack = floorHeight(line, lo, hi, line[back][0], line[back][2]);
+        double ax = line[ahead][0] - line[back][0], az = line[ahead][2] - line[back][2], al = Math.hypot(ax, az);
+        ax /= al;
+        az /= al;
+        galleryCamera = new double[] {line[back][0], fyBack + 0.05, line[back][2]};
+        galleryTarget = new double[] {line[back][0] + ax * 7 - az * 2.2, fyBack + 1.3, line[back][2] + az * 7 + ax * 2.2};
     }
 
     private static volatile double[] galleryCamera, galleryTarget;
@@ -359,7 +365,8 @@ public final class ThoriumClientCheck {
             return above ? Blocks.STONE : null;      // the vein is only ever at or under the floor; blobs in the wall are hidden too
         }
         if (path.endsWith("_ore") || path.startsWith("raw_")) return deep ? Blocks.DEEPSLATE : Blocks.STONE;
-        if (state.is(Blocks.GRANITE) || state.is(Blocks.DIORITE) || state.is(Blocks.ANDESITE) || state.is(Blocks.DIRT) || state.is(Blocks.COARSE_DIRT)
+        // granite and diorite are the thorium veins' own filler: they stay, so the ribbon shows
+        if (state.is(Blocks.ANDESITE) || state.is(Blocks.DIRT) || state.is(Blocks.COARSE_DIRT)
                 || state.is(Blocks.GRAVEL) || state.is(Blocks.CLAY) || state.is(Blocks.INFESTED_STONE)) return Blocks.STONE;
         if (above && (state.is(Blocks.CALCITE) || state.is(Blocks.TUFF) || state.is(Blocks.AMETHYST_BLOCK) || state.is(Blocks.BUDDING_AMETHYST)
                 || state.is(Blocks.SMOOTH_BASALT) || state.is(Blocks.OBSIDIAN) || state.is(Blocks.CRYING_OBSIDIAN))) return Blocks.STONE;
