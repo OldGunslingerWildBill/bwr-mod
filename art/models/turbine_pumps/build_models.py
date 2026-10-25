@@ -964,5 +964,6 @@ if __name__ == '__main__':
     for sc in list(bpy.data.scenes):
         if sc not in SCENES:
             bpy.data.scenes.remove(sc)
+    bpy.context.preferences.filepaths.save_version = 0  # no .blend1 backup next to the source
     bpy.ops.wm.save_as_mainfile(filepath=str(HERE / 'turbine_pumps.blend'), compress=True)
     print('TDP BUILT', [(sc.name, len(sc.objects)) for sc in SCENES])

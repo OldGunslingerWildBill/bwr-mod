@@ -91,6 +91,12 @@ Columbia Generating Station (BWR/5) is the reference plant. It has RCIC and a mo
 | RCIC skid | 19,832 | 22,148 | 100 |
 | HPCI skid | 22,480 | 24,932 | 175 |
 
+Baked quads reported by the client model check, across all four rotations including the legacy layouts, old to new:
+
+- feed pump turbine: 103,192 to 136,728;
+- RCIC: 116,216 to 115,100;
+- HPCI: 141,240 to 143,352.
+
 These machines are ordinary chunk-baked block models. The machine mesh cache in [MACHINE-RENDERING.md](MACHINE-RENDERING.md) does not hold them. They cost chunk-mesh vertices only when a chunk section rebuilds. Hidden stud ends and the seated ends of fasteners are not modelled. Segment counts were reduced until the RCIC and HPCI skids were within about 10 % of the old models.
 
 ## Rebuilding
