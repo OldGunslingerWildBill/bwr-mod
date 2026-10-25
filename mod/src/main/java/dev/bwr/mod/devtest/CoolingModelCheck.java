@@ -14,6 +14,7 @@ public final class CoolingModelCheck {
     private static void check(boolean b,String m){if(!b)throw new AssertionError(m);}
     public static void run(ModelEvent.BakingCompleted e){
         var fan=e.getModels().get(CoolingRenderer.FAN);check(fan!=null,"missing fan");int fanQuads=fan.getQuads(null,null,RandomSource.create(0),ModelData.EMPTY,null).size();check(fanQuads>50,"empty fan");
+        CoolingRenderer.testForceFull=true; // the full-mesh quad counts below must not depend on where the camera is (the machine render check bakes models with the camera far away)
         int total=0;for(var d:Design.values()){
             var model=e.getModels().get(CoolingRenderer.model(d));check(model!=null&&model!=e.getModelManager().getMissingModel(),"missing body "+d);
             var quads=model.getQuads(null,null,RandomSource.create(0),ModelData.EMPTY,null);check(quads.size()>3000,"incomplete mesh "+d);total+=quads.size();
@@ -27,6 +28,21 @@ public final class CoolingModelCheck {
                 var child=new CoolingBlockEntity(BlockPos.ZERO,s.setValue(CoolingBlock.CONTROLLER,false));int before=capture.count;renderer.render(child,0,new PoseStack(),type->capture,15728880,0);check(capture.count==before,"child renders full model");
             }
         }
+        CoolingRenderer.testForceFull=false;
+        // The distant stand-in for the hyperbolic shell: present, a small fraction of the full mesh, inside the tower's bounds, and chosen only far away.
+        var lod=e.getModels().get(CoolingRenderer.lod(Design.NATURAL));check(lod!=null&&lod!=e.getModelManager().getMissingModel(),"missing natural-draft LOD");
+        var lodQuads=lod.getQuads(null,null,RandomSource.create(0),ModelData.EMPTY,null);
+        var fullQuads=e.getModels().get(CoolingRenderer.model(Design.NATURAL)).getQuads(null,null,RandomSource.create(0),ModelData.EMPTY,null);
+        check(lodQuads.size()>1000&&lodQuads.size()*6<fullQuads.size(),"LOD is not a much smaller mesh: "+lodQuads.size()+" vs "+fullQuads.size());
+        for(var q:lodQuads)for(int v=0;v<4;v++){float x=Float.intBitsToFloat(q.getVertices()[v*8]),y=Float.intBitsToFloat(q.getVertices()[v*8+1]),z=Float.intBitsToFloat(q.getVertices()[v*8+2]);check(x>=-.003&&x<=25.003&&y>=-.003&&y<=36.003&&z>=-.003&&z<=25.003,"LOD vertex outside the tower bounds");}
+        // Columbia's six round induced-draft towers each have six fans in a ring (photographs and the plant description); every pivot sits on that ring, six apart.
+        var rotors=CoolingLayout.get(Design.MECHANICAL).rotors;check(rotors.size()==6,"round tower must have six fans, has "+rotors.size());
+        var layoutCentre=CoolingLayout.get(Design.MECHANICAL).controller;for(var r:rotors)check(Math.abs(Math.hypot(r.x-layoutCentre.getX()-.5,r.z-layoutCentre.getZ()-.5)-4.9)<.01,"fan pivot off the ring");
+        var natural=CoolingLayout.get(Design.NATURAL).bounds(BlockPos.ZERO,Direction.NORTH);
+        check(!CoolingRenderer.useLod(Design.NATURAL,natural,natural.getCenter().add(30,0,0)),"LOD drawn up close");
+        check(CoolingRenderer.useLod(Design.NATURAL,natural,natural.getCenter().add(CoolingRenderer.LOD_DISTANCE+natural.getXsize()/2+20,0,0)),"full shell drawn far away");
+        check(!CoolingRenderer.useLod(Design.MECHANICAL,CoolingLayout.get(Design.MECHANICAL).bounds(BlockPos.ZERO,Direction.NORTH),new net.minecraft.world.phys.Vec3(1000,0,0)),"round tower got an LOD");
+        LogUtils.getLogger().info("COOLING MODEL CHECK LOD: {} distant quads against {} full quads",lodQuads.size(),fullQuads.size());
         LogUtils.getLogger().info("COOLING MODEL CHECK PASS: {} body quads, five inventory models, {} fan instances and all rotations",total,CoolingLayout.get(Design.MECHANICAL).rotors.size());
     }
     private static class Capture implements VertexConsumer {

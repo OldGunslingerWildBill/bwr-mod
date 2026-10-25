@@ -2,6 +2,7 @@ package dev.bwr.mod.cooling.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.bwr.mod.BwrMod;
+import net.minecraft.client.Minecraft;
 import dev.bwr.mod.client.MachineMeshCache;
 import dev.bwr.mod.cooling.*;
 import dev.bwr.core.turbine.CoolingWaterUnit.Design;
@@ -20,9 +21,19 @@ import net.neoforged.neoforge.client.event.*;
 public class CoolingRenderer implements BlockEntityRenderer<CoolingBlockEntity> {
     public static ModelResourceLocation model(Design d){return ModelResourceLocation.standalone(BwrMod.id("block/cooling/"+d.id+"/body"));}
     public static ModelResourceLocation previous(Design d){return ModelResourceLocation.standalone(BwrMod.id("block/cooling/"+d.id+"_v2/body"));}
+    /** Distant stand-in for the big hyperbolic shell: same colours and silhouette, about a tenth of the triangles. Both meshes are cached once. */
+    public static ModelResourceLocation lod(Design d){return ModelResourceLocation.standalone(BwrMod.id("block/cooling/"+d.id+"_lod/body"));}
+    public static boolean hasLod(Design d){return d==Design.NATURAL;}
+    /** Beyond this many blocks from the nearest point of the machine's bounds the LOD mesh is drawn. */
+    public static final int LOD_DISTANCE=80;
+    /** How many times the distant mesh has been drawn (for the client checks). */
+    public static long lodDraws;
+    /** Client checks that count the quads of the full mesh set this so the camera's position cannot swap in the distant mesh. */
+    public static volatile boolean testForceFull;
+    public static boolean useLod(Design d,AABB bounds,Vec3 camera){return hasLod(d)&&!MachineMeshCache.withinDistance(bounds,camera,LOD_DISTANCE);}
     public static final ModelResourceLocation FAN=ModelResourceLocation.standalone(BwrMod.id("block/cooling/fan/body"));
     public CoolingRenderer(BlockEntityRendererProvider.Context c){}
-    @SubscribeEvent public static void models(ModelEvent.RegisterAdditional e){for(var d:Design.values()){e.register(model(d));if(CoolingLayout.revisedPump(d))e.register(previous(d));}e.register(FAN);}
+    @SubscribeEvent public static void models(ModelEvent.RegisterAdditional e){for(var d:Design.values()){e.register(model(d));if(hasLod(d))e.register(lod(d));if(CoolingLayout.revisedPump(d))e.register(previous(d));}e.register(FAN);}
     @SubscribeEvent public static void renderers(EntityRenderersEvent.RegisterRenderers e){e.registerBlockEntityRenderer(BwrBlockEntities.COOLING.get(),CoolingRenderer::new);}
     @Override public void render(CoolingBlockEntity be,float partial,PoseStack pose,MultiBufferSource buffers,int light,int overlay){
         if(!be.getBlockState().getValue(CoolingBlock.CONTROLLER))return;var layout=be.layout();var c=layout.controller;
@@ -32,7 +43,10 @@ public class CoolingRenderer implements BlockEntityRenderer<CoolingBlockEntity> 
             light=LightTexture.pack(Math.max(l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,be.getBlockPos()),l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,top)),l.getBrightness(net.minecraft.world.level.LightLayer.SKY,top));}
         float angle=switch(be.getBlockState().getValue(CoolingBlock.FACING)){case EAST->90;case SOUTH->180;case WEST->270;default->0;};
         pose.pushPose();pose.translate(.5,0,.5);pose.mulPose(Axis.YP.rotationDegrees(-angle));pose.translate(-.5-c.getX(),-c.getY(),-.5-c.getZ());
-        draw(be.previousPumpModel()?previous(be.design()):model(be.design()),pose,buffers,light,overlay);
+        var camera=Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        boolean distant=!testForceFull&&!be.previousPumpModel()&&useLod(be.design(),be.layout().bounds(be.getBlockPos(),be.getBlockState().getValue(CoolingBlock.FACING)),camera);
+        if(distant)lodDraws++;
+        draw(be.previousPumpModel()?previous(be.design()):distant?lod(be.design()):model(be.design()),pose,buffers,light,overlay);
         for(var pivot:layout.rotors){
             pose.pushPose();pose.translate(pivot.x,pivot.y,pivot.z);
             pose.mulPose(Axis.YP.rotationDegrees(net.minecraft.util.Mth.lerp(partial,be.previousFanAngle,be.fanAngle)));draw(FAN,pose,buffers,light,overlay);pose.popPose();

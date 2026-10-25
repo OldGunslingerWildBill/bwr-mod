@@ -86,3 +86,23 @@ transparent-cloud overdraw still exist. No distance-based simplified models or
 new vapor budget are introduced. Measurements are controlled local comparisons,
 not FPS guarantees for a player's modpack. Third-party shader packs and render
 replacements require their own compatibility testing.
+
+### Cooling towers, alpha.54
+
+The towers were remodelled and the hyperbolic shell got a distance stand-in; nothing is rebuilt per frame.
+
+| Cached mesh | Triangles | Vertex bytes (36 per vertex, 4 per triangle) |
+| --- | ---: | ---: |
+| Natural-draft tower, full (was 60,140 triangles, 8,660,160 bytes) | 35,604 | 5,126,976 |
+| Natural-draft tower, distant stand-in | 5,264 | 758,016 |
+| Round induced-draft tower (was 48,200 triangles, 6,940,800 bytes) | 23,506 | 3,384,864 |
+| Fan rotor, shared by the six fans (was 84 triangles) | 224 | 32,256 |
+
+`CoolingRenderer` draws the stand-in when the camera is more than 80 blocks from the nearest point of the tower's bounds
+(`useLod`, one distance test per frame). Both meshes are uploaded once on first use and stay in the cache, so a camera
+crossing the threshold uploads nothing the second time. `-PbwrMachineRenderCheck` on this build (plain): 6 renderer
+calls per frame, `rendererCPUms` 0.120 / 0.104 / 0.096 / 0.098 in the cached stages (gpu-day, gpu-repeat, gpu-night,
+resource-reload) against 52.3 ms for the uncached comparison stage, offscreen 0 calls. The check's main camera is more than 95 blocks from the natural tower, so those stages draw the
+stand-in (uploads constant at 8); the top-only camera is 23 blocks away, draws the full mesh and uploads it once (9),
+then nothing more; the real resource reload rebuilds them (17). Sodium/Iris: see TESTING.md; the documented `offscreen` limitation with Sodium is unchanged.
+

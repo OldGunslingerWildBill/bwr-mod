@@ -1,4 +1,7 @@
-"""Detailed cooling exteriors, authored in Blender. Dimensions and flange locations retained.
+"""SUPERSEDED for the two towers by build_towers_v2.py (alpha.54, six-fan Columbia tower, hyperbolic tower with X legs, LOD).
+Kept as the record of the alpha.9 to alpha.53 models.
+
+Detailed cooling exteriors, authored in Blender. Dimensions and flange locations retained.
 Photo references: SPIG Cooling Towers (2024), pp. 2-4; Black & Veatch Columbia station photo.
 Run build_natural_revision() and build_mechanical_revision() independently in Blender MCP.
 """
