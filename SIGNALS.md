@@ -54,7 +54,7 @@ when nothing is there or the chunk is not loaded. It never loads a chunk and nev
 This file is generated from the adapter sources in `dev.bwr.mod.signal.adapters`; keep it in step when a
 signal is added. Coverage: reactor controller, MSIV, SRV, turbine valves, motor-operated water valve, turbine steam outlet, RPV steam
 outlet, feedwater pump, recirculation pump, ECCS pumps, suppression pool, RHR heat exchanger, condenser,
-condensate tank, cooling, power module, RWCU stainless steel nanofilter (below), containment controller, penetrations, vault door, airlock, and
+condensate tank, cooling, power module, RWCU stainless steel nanofilter (below), new fuel elevator (below), containment controller, penetrations, vault door, airlock, and
 containment atmosphere equipment, and the ADS controller (its three switch inputs, below). The SLC tank, water
 discharge and other passive hardware have CC peripherals but are not in v1 coverage.
 
@@ -832,6 +832,24 @@ pump starts the water and a player changes the element ([RWCU.md](RWCU.md)). Flo
 | `element_present` | `elementPresent` | | | BOOLEAN |
 | `spent` | | | | BOOLEAN, an element that is full |
 | `filtering` | `flowing` | | | BOOLEAN, the pump is moving water through it |
+
+## New fuel elevator
+
+Block entity `NewFuelElevatorBlockEntity`; CC peripheral `bwr_new_fuel_elevator` ([SPENT-FUEL-POOL.md](SPENT-FUEL-POOL.md#the-new-fuel-elevator)). Loading is items (the hatch); the one command is the
+player's or the program's own.
+
+| Signal key | CC status key | Unit | Range | Kind |
+| --- | --- | --- | --- | --- |
+| `linked` | `linked` | | | BOOLEAN, on the rim of a formed pool |
+| `busy` | | | | BOOLEAN, the carriage is on a trip |
+| `assembly_at_hatch` | `landing` | | | BOOLEAN, a raised assembly waits for someone to take it |
+| `water_ok` | | | | BOOLEAN, 1.5 m or more over an assembly's handle at the transfer height |
+| `waiting` | `queued` | | 0 to 5 | NUMBER, assemblies in the hatch and the one on its way down |
+| `free_cells` | `freeCells` | | 0 to 192 | NUMBER |
+| `water_over_handle` | `waterOverTransferM` | m | 0 to 12 | NUMBER |
+| `trip_progress` | `progress` | fraction | 0 to 1 | NUMBER |
+
+Command: `raise` (a pulse): bring the assembly that has cooled longest up to the hatch, the same as the screen's RAISE COOLEST and `raise()`.
 
 ## Containment controller
 

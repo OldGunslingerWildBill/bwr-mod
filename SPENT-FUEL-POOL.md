@@ -303,3 +303,8 @@ saves), and the computer face; `NewFuelElevatorTests` (the elevator: lowering in
 `pool-built.png` (the pool with its three ports), `pool-racks-glow.png` (the 4 m racks under 2 m of water over their tops; the fresh fuel's Cherenkov glow
 in the first racks, long-cooled fuel dark), `pool-ports.png`, `pool-panel.png` and `gui-pool.png` (the panel of a running pool), `pool-uncovered.png` and
 `gui-pool-uncovered.png` (the water below the rack tops: alarms), `gui-reprocessor-hot.png` (the plant waiting on a 302 kW assembly).
+
+The new fuel elevator: `elevator-on-pool.png` (on the rim of the east wall, guide frame hanging down inside, the pool full), `elevator-lowering.png` (the carriage with an assembly
+part way down the guide), `elevator-sliding-over-racks.png` (the carriage waiting at the transfer height while the assembly runs over the rack tops), `gui-new-fuel-elevator.png`
+(the screen of a raising carriage), `gui-new-fuel-elevator-water-low.png` (a refusal with its reason: 1.0 m over the handle, 1.5 m needed) and `gui-new-fuel-elevator-hot-at-hatch.png`
+(a 52 kW assembly waiting at the hatch, no free cells). Made by `:mod:runTurbineModelCheck -PbwrSpentFuelPoolCheck` and `-PbwrGuiScreenCheck`.
