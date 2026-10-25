@@ -49,6 +49,8 @@ public final class ReactorBoundaryEffects {
     private final Map<BlockPos,PortLine> portLines = new LinkedHashMap<>();
     private final Map<BlockPos,Character> letters = new HashMap<>();
     private final Set<BlockPos> inletPorts = new HashSet<>();
+    /** Bottom head drain ports (the RWCU suction): a small-bore feedwater-class penetration, rebuilt with the port survey. */
+    private final Set<BlockPos> drainPorts = new HashSet<>();
     private final Set<BlockPos> outsides = new HashSet<>();
     private final Map<BlockPos,Direction> faces = new HashMap<>();
     private final ArrayDeque<Sealed> sealed = new ArrayDeque<>();
@@ -103,7 +105,7 @@ public final class ReactorBoundaryEffects {
     private static BoundaryComponent component(BlockState s) {
         if(s.is(BwrBlocks.RPV_STEAM_OUTLET.get())) return BoundaryComponent.MAIN_STEAM_LINE;
         if(s.is(BwrBlocks.RECIRCULATION_INLET.get()) || s.is(BwrBlocks.RECIRCULATION_OUTLET.get())) return BoundaryComponent.RECIRCULATION_LINE;
-        if(s.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get())) return BoundaryComponent.FEEDWATER_LINE;
+        if(s.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get()) || s.is(BwrBlocks.RPV_BOTTOM_DRAIN_PORT.get())) return BoundaryComponent.FEEDWATER_LINE;
         return null;
     }
     private static boolean attached(ServerLevel l, BlockPos p, VesselAppearance.Envelope e, BoundaryComponent c) {
@@ -217,6 +219,7 @@ public final class ReactorBoundaryEffects {
                 if(e.ports().stream().anyMatch(p->!l.isLoaded(p)||!l.isLoaded(p.relative(e.face(p))))) continue;
                 var ports=e.ports().stream().filter(p->component(l.getBlockState(p))==c)
                         .sorted(Comparator.<BlockPos>comparingInt(p->connected.contains(p)?0:1)
+                                .thenComparingInt(p->drainPorts.contains(p)?1:0)
                                 .thenComparingInt(BlockPos::getY).thenComparingLong(BlockPos::asLong)).toList();
                 if(!ports.isEmpty()) {
                     var p=ports.getFirst(); var outside=p.relative(e.face(p)); var s=l.getBlockState(outside);
@@ -244,9 +247,9 @@ public final class ReactorBoundaryEffects {
         openingsCleared=false;
         var openings=new ArrayList<BoundaryOpening>();
         for(var entry:leaks.entrySet())
-            openings.add(opening(e,entry.getKey(),entry.getValue(),inletLeaks.contains(entry.getKey())));
+            openings.add(opening(e,entry.getKey(),entry.getValue(),inletLeaks.contains(entry.getKey()),drainPorts.contains(entry.getKey())));
         for(var b:lineBreaks.values())
-            if(b.live && e.ports().contains(b.port)) openings.add(opening(e,b.port,b.component,b.inlet));
+            if(b.live && e.ports().contains(b.port)) openings.add(opening(e,b.port,b.component,b.inlet,drainPorts.contains(b.port)));
         boundary.setOpenings(openings);
     }
     /**
@@ -296,16 +299,20 @@ public final class ReactorBoundaryEffects {
 
     /** The opening a break at port {@code p} drains through, wherever along its line the break is. */
     public static BoundaryOpening opening(VesselAppearance.Envelope e, BlockPos p, BoundaryComponent c, boolean inlet) {
+        return opening(e,p,c,inlet,false);
+    }
+    /** As above; the bottom head drain is a small-bore line: a quarter of the feedwater nozzle's opening. */
+    public static BoundaryOpening opening(VesselAppearance.Envelope e, BlockPos p, BoundaryComponent c, boolean inlet, boolean drain) {
         double elevation=VesselWaterGeometry.levelAtHeight(e,p.getY()+.5-e.min().getY());
         // Inlet is the larger lower-vessel break. An outlet is the medium break.
         double liquid=switch(c) {
             case RECIRCULATION_LINE -> inlet?.20:.075;
-            case FEEDWATER_LINE -> .02;
+            case FEEDWATER_LINE -> drain?.005:.02;
             default -> 0;
         };
         double steam=switch(c) {
             case RECIRCULATION_LINE -> inlet?1.5:.7;
-            case FEEDWATER_LINE -> .4;
+            case FEEDWATER_LINE -> drain?.1:.4;
             default -> 1;
         };
         return new BoundaryOpening(c,elevation,liquid*BoundaryStress.RATED_CORE_FLOW_KG_PER_S,
@@ -314,7 +321,7 @@ public final class ReactorBoundaryEffects {
 
     /** Port lines, labels and nozzle faces, after a nozzle rescan (an edit at a nozzle or a vessel revalidation). */
     private void refreshPorts(ServerLevel l, VesselAppearance.Envelope e) {
-        outsides.clear(); letters.clear(); inletPorts.clear(); faces.clear();
+        outsides.clear(); letters.clear(); inletPorts.clear(); drainPorts.clear(); faces.clear();
         Map<String,List<BlockPos>> kinds=new HashMap<>();
         var keep=new HashSet<BlockPos>();
         for(var p:e.ports()) {
@@ -322,8 +329,10 @@ public final class ReactorBoundaryEffects {
             if(!l.isLoaded(p)) { if(portLines.containsKey(p)) keep.add(p); continue; }
             var s=l.getBlockState(p); var c=component(s); if(c==null) continue;
             boolean inlet=s.is(BwrBlocks.RECIRCULATION_INLET.get());
+            boolean drain=s.is(BwrBlocks.RPV_BOTTOM_DRAIN_PORT.get());
             if(inlet) inletPorts.add(p.immutable());
-            kinds.computeIfAbsent(c.name()+(inlet?"/in":""),k->new ArrayList<>()).add(p.immutable());
+            if(drain) drainPorts.add(p.immutable());
+            kinds.computeIfAbsent(c.name()+(inlet?"/in":drain?"/drain":""),k->new ArrayList<>()).add(p.immutable());
             var line=portLines.get(p);
             var outside=p.relative(e.face(p)).immutable();
             if(line==null || line.component!=c || !line.outside.equals(outside))
@@ -498,7 +507,9 @@ public final class ReactorBoundaryEffects {
             case RECIRCULATION_LINE -> inletPorts.contains(port)
                     ? BwrText.tr("status.bwr.boundary_break.recirculation_discharge","Recirculation loop %s discharge",letter)
                     : BwrText.tr("status.bwr.boundary_break.recirculation_suction","Recirculation loop %s suction",letter);
-            case FEEDWATER_LINE -> BwrText.tr("status.bwr.boundary_break.feedwater","Feedwater line %s",letter);
+            case FEEDWATER_LINE -> drainPorts.contains(port)
+                    ? BwrText.tr("status.bwr.boundary_break.bottom_drain","RWCU bottom drain line %s",letter)
+                    : BwrText.tr("status.bwr.boundary_break.feedwater","Feedwater line %s",letter);
             case MAIN_STEAM_LINE -> BwrText.tr("status.bwr.boundary_break.main_steam","Main steam line %s",letter);
             default -> dev.bwr.mod.text.StatusNames.boundary(c);
         };

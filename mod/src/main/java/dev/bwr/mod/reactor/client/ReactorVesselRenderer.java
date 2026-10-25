@@ -55,7 +55,7 @@ public final class ReactorVesselRenderer implements BlockEntityRenderer<ReactorC
     @SubscribeEvent public static void baked(ModelEvent.ModifyBakingResult e) {
         for(var block:List.of(BwrBlocks.REACTOR_VESSEL.get(),BwrBlocks.CORE_SPRAY_SPARGER.get(),BwrBlocks.JET_PUMP.get(),
                 BwrBlocks.REACTOR_CONTROLLER.get(),BwrBlocks.RPV_WATER_INJECTION_PORT.get(),BwrBlocks.RPV_STEAM_OUTLET.get(),
-                BwrBlocks.RECIRCULATION_INLET.get(),BwrBlocks.RECIRCULATION_OUTLET.get(),BwrBlocks.CONTROL_ROD_DRIVE.get()))
+                BwrBlocks.RECIRCULATION_INLET.get(),BwrBlocks.RECIRCULATION_OUTLET.get(),BwrBlocks.RPV_BOTTOM_DRAIN_PORT.get(),BwrBlocks.CONTROL_ROD_DRIVE.get()))
         for(var state:block.getStateDefinition().getPossibleStates()) {
             var key=BlockModelShaper.stateToModelLocation(state);var original=e.getModels().get(key);
             if(original!=null)e.getModels().put(key,new ShellModel(original,block instanceof CoreSpraySpargerBlock,

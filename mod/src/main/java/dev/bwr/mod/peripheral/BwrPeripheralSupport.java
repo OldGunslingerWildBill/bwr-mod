@@ -111,6 +111,10 @@ public final class BwrPeripheralSupport {
         if(be instanceof CoolingBlockEntity b)return new CoolingPeripheral(b);
         if(be instanceof CondenserBlockEntity b)return new CondenserPeripheral(b);
         if(be instanceof RhrHeatExchangerBlockEntity b)return new HeatExchangerPeripheral(b);
+        if(be instanceof dev.bwr.mod.rwcu.RwcuPumpBlockEntity b)return new RwcuPumpPeripheral(b);
+        if(be instanceof dev.bwr.mod.rwcu.RwcuRegenBlockEntity b)return rwcuUnit("bwr_rwcu_regenerative_heat_exchanger",b);
+        if(be instanceof dev.bwr.mod.rwcu.RwcuCoolerBlockEntity b)return rwcuUnit("bwr_rwcu_nonregenerative_heat_exchanger",b);
+        if(be instanceof dev.bwr.mod.rwcu.RwcuDeminBlockEntity b)return rwcuUnit("bwr_rwcu_filter_demineralizer",b);
         if(be instanceof RpvSteamOutletBlockEntity b)return new RpvSteamOutletPeripheral(b);
         if(be instanceof RpvWaterInjectionPortBlockEntity b)return new HardwarePeripheral("bwr_rpv_water_port",()->{
             var c=b.controller();var m=new LinkedHashMap<String,Object>();m.put("connected",c!=null&&c.isFormed());
@@ -137,6 +141,22 @@ public final class BwrPeripheralSupport {
         if(be instanceof dev.bwr.mod.rods.ControlRodDriveBlockEntity b)return new HardwarePeripheral("bwr_control_rod_drive",()->Map.of(
                 "attached",b.isAttached(),"rodIndex",b.rodIndex(),"notch",b.notchLabel(),"accumulatorCharge",b.accumulatorCharge(),"energyFE",b.energyStoredFe(),"waterKg",b.waterStoredMb(),"health",b.health()));
         return null;
+    }
+    /** A passive RWCU unit reports its readout lines as a table: label to {value, unit}, plus the headline. */
+    private static IPeripheral rwcuUnit(String type,dev.bwr.mod.rwcu.RwcuUnit unit) {
+        return new HardwarePeripheral(type,()->{
+            var readout=unit.readout();var m=new LinkedHashMap<String,Object>();m.put("headline",readout.headline());
+            for(var line:readout.lines())m.put(line.label(),line.value()+" "+line.unit());
+            if(unit instanceof dev.bwr.mod.rwcu.RwcuDeminBlockEntity d) {
+                var bed=d.bed();m.put("bedPresent",bed.bedPresent());m.put("resinUsed",bed.exhaustion());m.put("ionicLoadG",bed.ionLoadG());
+                m.put("crudLoadG",bed.crudLoadG());m.put("heatDamage",bed.damage());m.put("overTemperature",d.overTemperature());m.put("activityBq",bed.activityBq());
+            } else if(unit instanceof dev.bwr.mod.rwcu.RwcuRegenBlockEntity r) {
+                m.put("hotInC",r.hotInC());m.put("hotOutC",r.hotOutC());m.put("coldInC",r.coldInC());m.put("returnC",r.coldOutC());m.put("heatRecoveredMW",r.dutyMW());
+            } else if(unit instanceof dev.bwr.mod.rwcu.RwcuCoolerBlockEntity c) {
+                var p=c.plant();m.put("dutyMW",c.dutyMW());m.put("coolingWaterKg",p.cold());m.put("heatedWaterKg",p.hot());m.put("coolingInletC",p.coldTemperatureC());m.put("coolingOutletC",p.outletC());
+            }
+            return m;
+        });
     }
     private static IPeripheral jet(Level level,BlockPos pos,BlockState state) {
         return new HardwarePeripheral("bwr_jet_pump",()->Map.of("passive",true,"size",state.getValue(JetPumpBlock.SIZE).getSerializedName(),

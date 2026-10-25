@@ -253,6 +253,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private net.minecraft.nbt.CompoundTag pendingBoundaryRestore;
     /** Core damage and containment gas awaiting a formed core; see SevereAccidentNbt. */
     private net.minecraft.nbt.CompoundTag pendingSevereRestore;
+    /** Coolant chemistry awaiting a formed core; see CoolantChemistryNbt. Null for a clean coolant. */
+    private net.minecraft.nbt.CompoundTag pendingChemistryRestore;
 
     /**
      * The core loading as it was saved, held until a structure exists to put it
@@ -706,6 +708,7 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 pendingFuelRestore = writeCoreFuel();
                 pendingBoundaryRestore = BoundaryDamageNbt.write(core.getBoundaryStress());
                 pendingSevereRestore = SevereAccidentNbt.write(core);
+                pendingChemistryRestore = dev.bwr.mod.rwcu.CoolantChemistryNbt.write(core);
                 pendingRodDemand = rodNetwork == null
                         ? null : rodNetwork.getCommandedNotchIndices();
             }
@@ -782,6 +785,10 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             if (pendingSevereRestore != null) {
                 SevereAccidentNbt.read(pendingSevereRestore, core);
                 pendingSevereRestore = null;
+            }
+            if (pendingChemistryRestore != null) {
+                dev.bwr.mod.rwcu.CoolantChemistryNbt.read(pendingChemistryRestore, core);
+                pendingChemistryRestore = null;
             }
             // After the restore, not before: the snapshot carries the
             // configuration the plant had when it was saved, and the structure
@@ -1715,6 +1722,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             // — so it is saved alongside rather than inside it.
             tag.put(BoundaryDamageNbt.KEY, BoundaryDamageNbt.write(core.getBoundaryStress()));
             tag.put(SevereAccidentNbt.KEY, SevereAccidentNbt.write(core));
+            var chemistry = dev.bwr.mod.rwcu.CoolantChemistryNbt.write(core);
+            if (chemistry != null) tag.put(dev.bwr.mod.rwcu.CoolantChemistryNbt.KEY, chemistry);
         } else {
             // Never formed since load: the structure is still broken, so the
             // snapshot is sitting in the pending fields with nothing to apply it
@@ -1736,6 +1745,9 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             }
             if (pendingSevereRestore != null) {
                 tag.put(SevereAccidentNbt.KEY, pendingSevereRestore);
+            }
+            if (pendingChemistryRestore != null) {
+                tag.put(dev.bwr.mod.rwcu.CoolantChemistryNbt.KEY, pendingChemistryRestore);
             }
         }
 
@@ -1803,6 +1815,8 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         if (tag.contains(SevereAccidentNbt.KEY)) {
             pendingSevereRestore = tag.getCompound(SevereAccidentNbt.KEY);
         }
+        pendingChemistryRestore = tag.contains(dev.bwr.mod.rwcu.CoolantChemistryNbt.KEY)
+                ? tag.getCompound(dev.bwr.mod.rwcu.CoolantChemistryNbt.KEY) : null;
         pendingFuelRestore = tag.contains("CoreFuel")
                 ? tag.getList("CoreFuel", net.minecraft.nbt.Tag.TAG_COMPOUND)
                 : null;

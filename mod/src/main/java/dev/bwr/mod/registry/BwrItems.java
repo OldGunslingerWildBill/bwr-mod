@@ -225,6 +225,15 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.HIGH_PRESSURE_WATER_PIPE);
     public static final DeferredItem<BlockItem> RPV_WATER_INJECTION_PORT =
             ITEMS.registerSimpleBlockItem(BwrBlocks.RPV_WATER_INJECTION_PORT);
+    public static final DeferredItem<BlockItem> RPV_BOTTOM_DRAIN_PORT = ITEMS.registerSimpleBlockItem(BwrBlocks.RPV_BOTTOM_DRAIN_PORT);
+    public static final DeferredItem<BlockItem> RWCU_PUMP = ITEMS.registerSimpleBlockItem(BwrBlocks.RWCU_PUMP);
+    public static final DeferredItem<BlockItem> RWCU_REGENERATIVE_HEAT_EXCHANGER = ITEMS.registerSimpleBlockItem(BwrBlocks.RWCU_REGENERATIVE_HEAT_EXCHANGER);
+    public static final DeferredItem<BlockItem> RWCU_NONREGENERATIVE_HEAT_EXCHANGER = ITEMS.registerSimpleBlockItem(BwrBlocks.RWCU_NONREGENERATIVE_HEAT_EXCHANGER);
+    public static final DeferredItem<BlockItem> RWCU_FILTER_DEMINERALIZER = ITEMS.registerSimpleBlockItem(BwrBlocks.RWCU_FILTER_DEMINERALIZER);
+    /** A fresh resin bed for the RWCU filter-demineraliser. */
+    public static final DeferredItem<Item> DEMINERALIZER_RESIN = ITEMS.registerSimpleItem("demineralizer_resin");
+    /** Radioactive waste: what a bed that has been in service is. Carries its activity. */
+    public static final DeferredItem<Item> SPENT_RESIN = ITEMS.register("spent_resin", () -> new dev.bwr.mod.rwcu.SpentResinItem(new Item.Properties().stacksTo(16)));
     public static final DeferredItem<BlockItem> RECIRCULATION_OUTLET = ITEMS.registerSimpleBlockItem(BwrBlocks.RECIRCULATION_OUTLET);
     public static final DeferredItem<BlockItem> RECIRCULATION_INLET = ITEMS.registerSimpleBlockItem(BwrBlocks.RECIRCULATION_INLET);
     public static final DeferredItem<BlockItem> RPV_STEAM_OUTLET =
@@ -488,6 +497,13 @@ public final class BwrItems {
                         output.accept(RPV_WATER_INJECTION_PORT.get());
                         output.accept(RECIRCULATION_OUTLET.get());
                         output.accept(RECIRCULATION_INLET.get());
+                        output.accept(RPV_BOTTOM_DRAIN_PORT.get());
+                        output.accept(RWCU_PUMP.get());
+                        output.accept(RWCU_REGENERATIVE_HEAT_EXCHANGER.get());
+                        output.accept(RWCU_NONREGENERATIVE_HEAT_EXCHANGER.get());
+                        output.accept(RWCU_FILTER_DEMINERALIZER.get());
+                        output.accept(DEMINERALIZER_RESIN.get());
+                        output.accept(SPENT_RESIN.get());
                         output.accept(RPV_STEAM_OUTLET.get());
                         output.accept(TURBINE_STEAM_OUTLET.get());
                         output.accept(FUEL_FABRICATOR.get());
