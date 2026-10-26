@@ -66,7 +66,7 @@ with or without a shader pack ([notes](docs/shader-packs.md)).
 
 ![The separators standing over the core inside the open vessel](docs/images/vessel-separators.jpg)
 
-![The inside of a 17 x 17 reactor vessel with the head removed, showing fuel channels, shroud and spray rings](docs/images/reactor-core.jpg)
+![The open vessel with the dryer and separators out: the flange studs, the shroud, the core spray rings and the fuel in the core](docs/images/reactor-core.jpg)
 
 ### Opening the vessel and refuelling
 
@@ -87,6 +87,8 @@ with or without a shader pack ([notes](docs/shader-packs.md)).
   and makeup water, and if you neglect it the water boils off and the fuel uncovers. A **new fuel
   elevator** on the pool rim lowers fresh assemblies down into the racks.
   [SPENT-FUEL-POOL.md](SPENT-FUEL-POOL.md)
+
+![The flooded reactor well over the open vessel, with the core glowing blue under the water](docs/images/flooded-well.jpg)
 
 ![A section of shield plug concrete hanging from the reactor building crane on four slings](docs/images/crane-shield-plug.jpg)
 
