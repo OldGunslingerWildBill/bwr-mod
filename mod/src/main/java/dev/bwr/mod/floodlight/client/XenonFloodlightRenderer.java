@@ -7,7 +7,13 @@ import dev.bwr.mod.client.MachineMeshCache;
 import dev.bwr.mod.floodlight.BeamLampBlockEntity;
 import dev.bwr.mod.floodlight.XenonFloodlightBlock;
 import dev.bwr.mod.registry.BwrBlockEntities;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -29,6 +35,7 @@ import net.neoforged.neoforge.client.event.ModelEvent;
  */
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
 public final class XenonFloodlightRenderer implements BlockEntityRenderer<BeamLampBlockEntity> {
+    private static final Direction[] SIDES = {Direction.DOWN, Direction.UP, Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST, null};
     public static final ModelResourceLocation HEAD_BODY = head("head_body");
     public static final ModelResourceLocation LENS_ON = head("head_lens_on");
     public static final ModelResourceLocation LENS_OFF = head("head_lens_off");
@@ -64,7 +71,20 @@ public final class XenonFloodlightRenderer implements BlockEntityRenderer<BeamLa
         pose.mulPose(Axis.YP.rotationDegrees(-lamp.yawDegrees()));
         pose.mulPose(Axis.XP.rotationDegrees(lamp.pitchDegrees()));
         MachineMeshCache.model(HEAD_BODY, pose, buffers, light, overlay);
-        if (lit) {
+        if (lit && buffers instanceof MultiBufferSource.BufferSource) {
+            // Vanilla: the machine mesh program shades by the normal (a lens tilted down came out at about 40 %), so the lit
+            // lens goes into the terrain cutout layer, whose program has no diffuse shading (the light map at full bright only).
+            var vertices = buffers.getBuffer(RenderType.cutout());
+            var model = Minecraft.getInstance().getModelManager().getModel(LENS_ON);
+            RandomSource random = RandomSource.create(42);
+            for (Direction side : SIDES) {
+                random.setSeed(42);
+                for (BakedQuad quad : model.getQuads(null, side, random, ModelData.EMPTY, RenderType.solid())) {
+                    vertices.putBulkData(pose.last(), quad, 1f, 1f, 1f, 1f, LightTexture.FULL_BRIGHT, overlay);
+                }
+            }
+        } else if (lit) {
+            // A shader pack's wrapper: the pack's program shades it, and the lens's labPBR _s map makes it emissive.
             MachineMeshCache.model(LENS_ON, pose, buffers, LightTexture.FULL_BRIGHT, overlay);
         } else {
             MachineMeshCache.model(LENS_OFF, pose, buffers, light, overlay);

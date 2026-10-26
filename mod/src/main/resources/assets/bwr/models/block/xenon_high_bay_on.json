@@ -413,6 +413,7 @@
         13.5,
         8.75
       ],
+      "shade": false,
       "faces": {
         "north": {
           "texture": "#lens",
@@ -422,7 +423,6 @@
             16,
             16
           ],
-          "shade": false,
           "neoforge_data": {
             "block_light": 15,
             "sky_light": 15,
