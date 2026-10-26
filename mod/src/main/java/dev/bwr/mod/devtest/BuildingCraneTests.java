@@ -36,6 +36,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder("bwrcrane")
 @PrefixGameTestTemplate(false)
 public final class BuildingCraneTests {
+    /** Ticks a timing test waits for its fixture chunks to tick before it measures anything. */
+    private static final int SETTLE = 20;
+
 
     private BuildingCraneTests() {
     }
@@ -601,21 +604,25 @@ public final class BuildingCraneTests {
         CraneFixture f = CraneFixture.build(h.getLevel(), at(11));
         int[] marks = new int[3];
         var tensioner = f.tensioner;
-        try {
-            tensioner.fill(StudTensionerBlockEntity.FE_CAPACITY);
-            marks[0] = tensioner.ticksRun();
-            h.assertTrue(tensioner.start(true) == null, "started");
-        } catch (Throwable t) {
-            f.dispose();
-            throw t;
-        }
-        h.runAtTickTime(100, () -> {
+        // Start only once the fixture's freshly forced chunks are ticking: started at tick 0, a loaded machine lost the
+        // first few block ticks ("93 in 100") or refused the start. The checks below are unchanged, 100 ticks after the start.
+        h.runAtTickTime(SETTLE, () -> {
+            try {
+                tensioner.fill(StudTensionerBlockEntity.FE_CAPACITY);
+                marks[0] = tensioner.ticksRun();
+                h.assertTrue(tensioner.start(true) == null, "started");
+            } catch (Throwable t) {
+                f.dispose();
+                throw t;
+            }
+        });
+        h.runAtTickTime(SETTLE + 100, () -> {
             int ran = tensioner.ticksRun() - marks[0];
             h.assertTrue(tensioner.running() && ran >= 95 && ran <= 101, "a working tensioner ticks once a tick: " + ran + " in 100");
             tensioner.stop();
             marks[1] = tensioner.ticksRun();
         });
-        h.runAtTickTime(200, () -> {
+        h.runAtTickTime(SETTLE + 200, () -> {
             h.assertTrue(tensioner.ticksRun() <= marks[1] + 1, "stopped: no more ticks: " + marks[1] + " -> " + tensioner.ticksRun());
             h.assertTrue(!f.level.getBlockTicks().hasScheduledTick(f.tensionerPos, f.level.getBlockState(f.tensionerPos).getBlock()), "nothing scheduled");
             f.dispose();
