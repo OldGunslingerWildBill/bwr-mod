@@ -175,7 +175,14 @@ public final class PlugSections {
             maxY = Math.max(maxY, a.getY());
         }
         anchors.sort(BOTTOM_UP);
-        double mass = PlugLift.massTonnes(tiers[0], tiers[1], tiers[2]);
+        // the mass is the sum of the blocks' own masses (the data map bwr:plug_mass) and the anchors'
+        double mass = 0.0;
+        for (BlockPos p : blocks) {
+            mass += PlugMass.tonnes(level.getBlockState(p));
+        }
+        for (BlockPos a : anchors) {
+            mass += PlugMass.tonnes(level.getBlockState(a));
+        }
         return new Survey(new Section(new BlockPos(minX, minY, minZ), new BlockPos(maxX, maxY, maxZ), List.copyOf(blocks), List.copyOf(anchors), tiers, mass), null);
     }
 

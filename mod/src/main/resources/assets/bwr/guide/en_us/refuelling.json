@@ -52,7 +52,7 @@
       "text": [
         "The shield plug over the well comes off first. Cut it into pieces with the Plug Seam Marker: right-click a plug block near the edge for the cut. A groove marks the seam; click again to undo, sneak-click to clear a block.",
         "",
-        "Bolt exactly four Crane Anchors on the top of a piece, then press PLUG OFF in the crane console: the nearest rigged piece goes to clear floor. Over 125 t (a block is 2.4 to 3.5 t) it is refused: add a seam. PLUG ON puts the last piece back. The head will not lift with a plug over the well."
+        "Bolt exactly four Crane Anchors on the top of a piece, then press PLUG OFF in the crane console: the nearest rigged piece goes to clear floor. Over 125 t (a block is 2.4, 3.2 or 4.0 t by tier) it is refused: add a seam. PLUG ON puts the last piece back. The head will not lift with a plug over the well."
       ],
       "icons": [
         "bwr:plug_seam_marker",

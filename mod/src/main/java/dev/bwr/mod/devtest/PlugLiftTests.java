@@ -13,6 +13,7 @@ import dev.bwr.mod.reactor.VesselState;
 import dev.bwr.mod.refuelling.BuildingCraneBlockEntity;
 import dev.bwr.mod.refuelling.CraneAnchorBlock;
 import dev.bwr.mod.refuelling.PlugSectionEntity;
+import dev.bwr.mod.refuelling.PlugMass;
 import dev.bwr.mod.refuelling.PlugSeamMarkerItem;
 import dev.bwr.mod.refuelling.PlugSections;
 import dev.bwr.mod.registry.BwrBlocks;
@@ -227,9 +228,12 @@ public final class PlugLiftTests {
                 throw new IllegalStateException(e);
             }
             disposeAll(rigs);
-            h.succeed();
+            // let the chunks the fixtures forced unload before the server stops
+            h.runAfterDelay(SETTLE_TICKS, h::succeed);
         });
     }
+
+    private static final int SETTLE_TICKS = 60;
 
     private static void disposeAll(Rig... rigs) {
         for (Rig r : rigs) {
@@ -326,7 +330,7 @@ public final class PlugLiftTests {
             h.assertTrue(one.section() != null && one.section().blockCount() == 36 && one.section().anchors().size() == 8,
                     "one section of 36 blocks and eight anchors: " + (one.section() == null ? english(one.problem()) : one.section().blockCount()));
             h.assertTrue(one.section().tiers()[0] == 18 && one.section().tiers()[1] == 18 && one.section().tiers()[2] == 0, "18 of tier 1 and 18 of tier 2");
-            h.assertTrue(Math.abs(one.section().massT() - (18 * 2.4 + 18 * 2.9)) < 1e-9, "mass 95.4 t: " + one.section().massT());
+            h.assertTrue(Math.abs(one.section().massT() - (18 * 2.4 + 18 * 3.2 + 8 * 0.05)) < 1e-9, "mass 101.2 t (18 blocks of 2.4, 18 of 3.2, eight anchors of 0.05): " + one.section().massT());
             // the marker: a click near the east edge of the top face of a block of A marks the joint with B
             Direction edge = PlugSeamMarkerItem.edgeOf(Direction.UP, new Vec3(0.93, 1.0, 0.5));
             h.assertTrue(edge == Direction.EAST, "near the east edge: " + edge);
@@ -396,7 +400,7 @@ public final class PlugLiftTests {
             Component why = crane.queuePlug(true, null);
             h.assertTrue(why == null, "PLUG OFF queued: " + english(why));
             var plan = crane.plugPlan();
-            h.assertTrue(plan != null && plan.homeMin().equals(a) && plan.blocks() == 18 && Math.abs(plan.massT() - 18 * 2.4) < 1e-9,
+            h.assertTrue(plan != null && plan.homeMin().equals(a) && plan.blocks() == 18 && Math.abs(plan.massT() - (18 * 2.4 + 4 * 0.05)) < 1e-9,
                     "the section nearest the well's middle is taken: " + (plan == null ? "no plan" : plan.homeMin() + " " + plan.blocks()));
             BlockPos lay = plan.layMin();
             h.assertTrue(!PlugSections.coversWell(r.env, new ArrayList<>(List.of(lay, lay.offset(2, 0, 2))), BlockPos.ZERO), "the laydown is not over the well");
@@ -414,7 +418,7 @@ public final class PlugLiftTests {
             var tip = crane.tip();
             h.assertTrue(Math.abs(e.getX() - tip.x()) < 1e-9 && Math.abs(e.getZ() - tip.z()) < 1e-9 && Math.abs(e.getY() - (tip.y() - plan.hookAboveBase())) < 1e-9,
                     "the entity hangs under the hook: " + e.position() + " vs " + tip);
-            h.assertTrue(crane.carriedSummary().contains("18 blocks") && crane.carriedSummary().contains("43.2 t"), crane.carriedSummary());
+            h.assertTrue(crane.carriedSummary().contains("18 blocks") && crane.carriedSummary().contains("43.4 t"), crane.carriedSummary());
             // the head cannot be lifted away from the hook's load, and nothing else is queued meanwhile
             h.assertTrue(crane.queueHead(true) != null, "the crane is busy");
             // it moves with the crane: a hundred ticks later it is still under the hook
@@ -481,7 +485,7 @@ public final class PlugLiftTests {
             var crane = r.crane();
             Component why = crane.queuePlug(true, null);
             String text = english(why);
-            h.assertTrue(why != null && text.contains("153.6 t") && text.contains("125 t") && text.contains("seam"), "refused over capacity, with the reason and a seam: " + text);
+            h.assertTrue(why != null && text.contains("153.8 t") && text.contains("125 t") && text.contains("seam"), "refused over capacity, with the reason and a seam: " + text);
             h.assertTrue(!crane.busy() && crane.plugPlan() == null && r.entities().isEmpty() && PlugSections.survey(r.level, min).section().blockCount() == 64,
                     "nothing moved");
             // a seam cuts it into two halves of 32 blocks (76.8 t); each half is given its four anchors
@@ -494,8 +498,8 @@ public final class PlugLiftTests {
             }
             var west = PlugSections.survey(r.level, min).section();
             var east = PlugSections.survey(r.level, min.offset(7, 0, 7)).section();
-            h.assertTrue(west != null && east != null && west.blockCount() == 32 && east.blockCount() == 32 && Math.abs(west.massT() - 76.8) < 1e-9
-                    && west.anchors().size() == 4 && east.anchors().size() == 4, "two halves of 32 blocks, 76.8 t, four anchors each");
+            h.assertTrue(west != null && east != null && west.blockCount() == 32 && east.blockCount() == 32 && Math.abs(west.massT() - 77.0) < 1e-9
+                    && west.anchors().size() == 4 && east.anchors().size() == 4, "two halves of 32 blocks, 77.0 t, four anchors each");
             Component ok = crane.queuePlug(true, null);
             h.assertTrue(ok == null, "a half under the rating is taken: " + english(ok));
             r.run(h);
@@ -504,22 +508,74 @@ public final class PlugLiftTests {
     }
 
     @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
-    public static void thirtySixBlocksOfTheHeaviestTierAreOverTheRatingAndThirtyFiveAreNot(GameTestHelper h) throws Exception {
+    public static void aTierThreeSectionOverTheRatingIsRefusedWhereTheSameSizeInTierOneIsTaken(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(16));
+        Rig t = new Rig(h.getLevel(), at(17));
         later(h, () -> {
-            BlockPos min = r.o.offset(8, 9, -12);
-            r.plug(min, 6, 1, 6, 3);
-            r.fourAnchors(min, 6, 1, 6);
+            // the same 6 x 1 x 6 piece with its four anchors, in the heaviest tier and in the lightest
+            BlockPos heavy = r.o.offset(8, 9, -12), light = t.o.offset(8, 9, -12);
+            r.plug(heavy, 6, 1, 6, 3);
+            r.fourAnchors(heavy, 6, 1, 6);
+            t.plug(light, 6, 1, 6, 1);
+            t.fourAnchors(light, 6, 1, 6);
+            var hs = PlugSections.survey(r.level, heavy).section();
+            var ls = PlugSections.survey(t.level, light).section();
+            h.assertTrue(hs.blockCount() == 36 && ls.blockCount() == 36, "the same size");
+            h.assertTrue(Math.abs(hs.massT() - (36 * 4.0 + 4 * 0.05)) < 1e-9 && Math.abs(ls.massT() - (36 * 2.4 + 4 * 0.05)) < 1e-9,
+                    "tier 3 weighs 144.2 t and tier 1 86.6 t: " + hs.massT() + " and " + ls.massT());
             Component why = r.crane().queuePlug(true, null);
-            h.assertTrue(why != null && english(why).contains("126.0 t"), "36 tier 3 blocks are 126 t, over the 125 t rating: " + english(why));
-            // taking one block off the corner (and its anchor) leaves 35 blocks, 122.5 t, and a section the crane takes
-            r.level.setBlock(min.offset(5, 1, 5), Blocks.AIR.defaultBlockState(), 2);
-            r.level.setBlock(min.offset(5, 0, 5), Blocks.AIR.defaultBlockState(), 2);
-            r.anchor(min.offset(5, 1, 4));
-            var s = PlugSections.survey(r.level, min).section();
-            h.assertTrue(s != null && s.blockCount() == 35 && Math.abs(s.massT() - 122.5) < 1e-9 && s.anchors().size() == 4, "35 blocks, 122.5 t, four anchors");
-            Component ok = r.crane().queuePlug(true, null);
-            h.assertTrue(ok == null, "122.5 t is under the rating: " + english(ok));
+            h.assertTrue(why != null && english(why).contains("144.2 t") && english(why).contains("125 t") && english(why).contains("seam"),
+                    "tier 3 is over the 125 t rating, with the reason and a seam: " + english(why));
+            h.assertTrue(r.crane().plugPreview() != null && r.crane().plugPreview().over(), "the preview says it is over the rating");
+            Component ok = t.crane().queuePlug(true, null);
+            h.assertTrue(ok == null, "the same size in tier 1 is taken: " + english(ok));
+            t.run(h);
+            h.assertTrue(t.crane().plugsLaid() == 1, "and set down");
+        }, r, t);
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    public static void sectionsOfTheSameSizeWeighDifferentlyByTierAndTheMassIsShownBeforeTheLift(GameTestHelper h) throws Exception {
+        Rig r = new Rig(h.getLevel(), at(18));
+        later(h, () -> {
+            // three 3 x 1 x 3 pieces on the floor, one per tier, each with its four anchors
+            BlockPos[] at = {r.o.offset(8, 9, -12), r.o.offset(12, 9, -12), r.o.offset(16, 9, -12)};
+            for (int tier = 1; tier <= 3; tier++) {
+                r.plug(at[tier - 1], 3, 1, 3, tier);
+                r.fourAnchors(at[tier - 1], 3, 1, 3);
+            }
+            double[] expected = {9 * 2.4 + 0.2, 9 * 3.2 + 0.2, 9 * 4.0 + 0.2};
+            double[] seen = new double[3];
+            for (int i = 0; i < 3; i++) {
+                var s = PlugSections.survey(r.level, at[i]).section();
+                seen[i] = s.massT();
+                h.assertTrue(s.blockCount() == 9 && Math.abs(s.massT() - expected[i]) < 1e-9, "tier " + (i + 1) + ": 9 blocks weigh " + expected[i] + " t, not " + s.massT());
+            }
+            h.assertTrue(seen[0] < seen[1] && seen[1] < seen[2], "the same size weighs more in a heavier tier: " + seen[0] + " < " + seen[1] + " < " + seen[2]);
+            // the masses are data: the block data map says what the code used
+            h.assertTrue(PlugMass.tonnes(BwrBlocks.SHIELD_PLUG_CONCRETE.get().defaultBlockState()) == 2.4
+                    && PlugMass.tonnes(BwrBlocks.HEAVILY_REINFORCED_SHIELD_PLUG_CONCRETE.get().defaultBlockState()) == 3.2
+                    && PlugMass.tonnes(BwrBlocks.ULTRA_REINFORCED_SHIELD_PLUG_CONCRETE.get().defaultBlockState()) == 4.0
+                    && PlugMass.tonnes(BwrBlocks.CRANE_ANCHOR.get().defaultBlockState()) == 0.05
+                    && PlugMass.tonnes(Blocks.STONE.defaultBlockState()) == 0.0, "the data map's masses");
+            h.assertTrue(BwrBlocks.SHIELD_PLUG_CONCRETE.get().defaultBlockState().getBlockHolder().getData(PlugMass.MASS) != null, "the entry is in the data map, not a default");
+            // the crane shows the mass of the section it would take before it takes it, and the computer is told the same
+            var crane = r.crane();
+            crane.refreshSite();
+            var list = crane.plugSections();
+            h.assertTrue(list.size() == 3, "the crane sees three sections: " + list.size());
+            var preview = crane.plugPreview();
+            h.assertTrue(preview != null && preview.blocks() == 9 && preview.rigged() && !preview.over() && !preview.carried()
+                    && (Math.abs(preview.massT() - expected[0]) < 1e-9 || Math.abs(preview.massT() - expected[1]) < 1e-9 || Math.abs(preview.massT() - expected[2]) < 1e-9),
+                    "a preview of one of them: " + preview);
+            h.assertTrue(preview.text().contains(" t of 125 t") && preview.text().contains("4 anchors"), "the pendant's text: " + preview.text());
+            // lifting the heaviest one, the preview becomes the hook's load
+            Component why = crane.queuePlug(true, at[2].offset(0, 1, 0));
+            h.assertTrue(why == null, "the tier 3 piece is taken by naming an anchor: " + english(why));
+            r.f.runCraneUntil(Phase.TRANSIT, 120_000);
+            var carried = crane.plugPreview();
+            h.assertTrue(carried != null && carried.carried() && Math.abs(carried.massT() - expected[2]) < 1e-9, "on the hook it is 36.2 t: " + carried);
+            h.assertTrue(crane.carriedSummary().contains("36.2 t"), crane.carriedSummary());
             r.run(h);
         }, r);
     }

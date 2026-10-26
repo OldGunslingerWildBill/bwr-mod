@@ -1679,7 +1679,7 @@
   "status.bwr.building_crane.plug_over_well": "The head cannot move: a shield plug still covers the reactor well (%s plug blocks, the nearest at %s). Lift it off with PLUG OFF first.",
   "status.bwr.building_crane.plug_busy": "The crane is busy with a shield plug section: set it down first.",
   "status.bwr.plug.anchors": "The shield plug section at %s needs 4 anchors, has %s. Bolt exactly four Crane Anchors on the tops of its blocks.",
-  "status.bwr.plug.over_capacity": "The shield plug section at %s weighs %s t (%s blocks), over the crane's rated %s t. Mark a seam with the Plug Seam Marker to cut it into smaller sections (the crane takes about %s blocks of that tier).",
+  "status.bwr.plug.over_capacity": "The shield plug section at %s weighs %s t (%s blocks), over the crane's rated %s t. Mark a seam with the Plug Seam Marker to cut it into smaller sections (the crane takes about %s blocks of the heaviest tier in it, %s t each).",
   "status.bwr.building_crane.rails_too_low_plug": "The runway is too low to carry the shield plug section clear of the floor: it hangs %s blocks below the hook. Raise the rails to y %s or higher.",
   "status.bwr.building_crane.plug_busy_now": "The crane is busy: wait for it to finish, or ABORT.",
   "status.bwr.plug.not_an_anchor": "There is no crane anchor at %s.",

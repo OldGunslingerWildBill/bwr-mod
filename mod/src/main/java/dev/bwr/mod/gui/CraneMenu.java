@@ -59,6 +59,9 @@ public class CraneMenu extends BwrMenu {
     public int plugsLaid;
     /** A shield plug section hangs from the hook. */
     public boolean plugHeld;
+    /** What PLUG OFF would take next: blocks, mass against the rating, anchors ("" when there is none), and whether that is a problem. */
+    public String plugNext = "";
+    public boolean plugNextBad;
 
     /** Client constructor. */
     public CraneMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf extra) {
@@ -124,6 +127,9 @@ public class CraneMenu extends BwrMenu {
         buf.writeVarInt(site.railY);
         buf.writeVarInt(be.plugsLaid());
         buf.writeBoolean(be.carriedPlug());
+        var next = be.plugPreview();
+        buf.writeUtf(next == null ? "" : next.text(), 120);
+        buf.writeBoolean(next != null && (next.over() || !next.rigged()) && !next.carried());
     }
 
     @Override
@@ -158,6 +164,8 @@ public class CraneMenu extends BwrMenu {
         railY = buf.readVarInt();
         plugsLaid = buf.readVarInt();
         plugHeld = buf.readBoolean();
+        plugNext = buf.readUtf(120);
+        plugNextBad = buf.readBoolean();
     }
 
     @Override

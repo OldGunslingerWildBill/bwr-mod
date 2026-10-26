@@ -1278,10 +1278,11 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         }
         if (PlugLift.overCapacity(s.massT())) {
             int tier = s.tiers()[2] > 0 ? 3 : s.tiers()[1] > 0 ? 2 : 1;
+            double each = PlugMass.tierTonnes(tier);
             return BwrText.tr("status.bwr.plug.over_capacity",
-                    "The shield plug section at %s weighs %s t (%s blocks), over the crane's rated %s t. Mark a seam with the Plug Seam Marker to cut it into smaller sections (the crane takes about %s blocks of that tier).",
+                    "The shield plug section at %s weighs %s t (%s blocks), over the crane's rated %s t. Mark a seam with the Plug Seam Marker to cut it into smaller sections (the crane takes about %s blocks of the heaviest tier in it, %s t each).",
                     s.min().toShortString(), String.format(Locale.ROOT, "%.1f", s.massT()), s.blockCount(),
-                    String.format(Locale.ROOT, "%.0f", PlugLift.RATED_CAPACITY_T), PlugLift.maxBlocks(tier));
+                    String.format(Locale.ROOT, "%.0f", PlugLift.RATED_CAPACITY_T), PlugLift.maxBlocks(each), String.format(Locale.ROOT, "%.1f", each));
         }
         return null;
     }
@@ -1424,6 +1425,67 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             plan = null;
         }
         return q;
+    }
+
+    /** What PLUG OFF would take next (or what hangs on the hook): its size, anchors and mass against the rating, shown on the pendant and to computers before any lift. */
+    public record PlugPreview(int blocks, int anchors, double massT, boolean rigged, boolean over, boolean carried, BlockPos min) {
+        public String text() {
+            return String.format(Locale.ROOT, "%d blocks, %.1f t of %.0f t, %d anchors%s", blocks, massT, PlugLift.RATED_CAPACITY_T, anchors,
+                    carried ? ", on the hook" : over ? ", over the rating" : !rigged ? ", needs 4" : "");
+        }
+    }
+
+    private PlugPreview preview;
+    private long previewAt = Long.MIN_VALUE;
+
+    /** The section PLUG OFF would take next, or the one on the hook; null when there is none. Cached for a second (a screen asks twice a second). */
+    @Nullable
+    public PlugPreview plugPreview() {
+        if (!(level instanceof ServerLevel server)) {
+            return null;
+        }
+        if (plugEntity != null && plan != null) {
+            return new PlugPreview(plan.blocks(), plan.anchors().length / 3, plan.massT(), true, PlugLift.overCapacity(plan.massT()), true, plan.homeMin());
+        }
+        if (previewAt != Long.MIN_VALUE && server.getGameTime() - previewAt < 20 && server.getGameTime() >= previewAt) {
+            return preview;
+        }
+        previewAt = server.getGameTime();
+        preview = null;
+        if (site == null || !site.ok()) {
+            return null;
+        }
+        var r = reactor();
+        var env = r == null ? null : r.vesselEnvelope();
+        if (env == null) {
+            return null;
+        }
+        var list = plugSections();
+        PlugSections.Section pick = null;
+        for (var s : list) {
+            if (s.rigged()) {
+                pick = s;
+                break;
+            }
+        }
+        if (pick == null && !list.isEmpty()) {
+            pick = list.get(0);
+        }
+        if (pick != null) {
+            preview = new PlugPreview(pick.blockCount(), pick.anchors().size(), pick.massT(), pick.rigged(), PlugLift.overCapacity(pick.massT()), false, pick.min());
+        }
+        return preview;
+    }
+
+    /** Every anchored shield plug section in the crane's reach, nearest the well first (a scan on demand: a click, a computer's call, a screen's snapshot). */
+    public List<PlugSections.Section> plugSections() {
+        var r = site == null ? null : reactor();
+        var env = r == null ? null : r.vesselEnvelope();
+        if (level == null || site == null || !site.ok() || env == null) {
+            return List.of();
+        }
+        double wx = env.min().getX() + env.width() / 2.0, wz = env.min().getZ() + env.depth() / 2.0;
+        return PlugSections.scan(level, site, env.min().getY(), site.railY - 1, wx, wz).sections();
     }
 
     /** Surveys the section standing at {@code min} for the lift in the plan and checks it is the section the plan was made for. */

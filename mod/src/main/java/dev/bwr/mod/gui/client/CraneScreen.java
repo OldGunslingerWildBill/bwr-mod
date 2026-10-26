@@ -98,6 +98,9 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
                         .tip("Where the vessel head is, and how many of its closure studs are at load."),
                 Layout.row("Studs at load", () -> menu.headOff ? "0 / " + menu.studTotal : (menu.studTotal - menu.studsOff) + " / " + menu.studTotal).dense()
                         .tip("A stud tensioner backs the nuts off before the head lifts, and brings the studs back to load after the head is set."),
+                Layout.row("Next plug", () -> menu.plugNext.isEmpty() ? "none in reach" : menu.plugNext).dense()
+                        .status(() -> menu.plugNextBad ? Status.CAUTION : Status.NONE)
+                        .tip("The shield plug section PLUG OFF would take next (or the one on the hook): its blocks, its mass against the crane's rating, and its crane anchors. It needs exactly four anchors and must be under the rating; mark a seam to split a section that is too heavy."),
                 Layout.row("Dryer", () -> (menu.internalsOut & 1) == 0 ? "installed" : "out").dense()
                         .status(() -> (menu.internalsOut & 1) == 0 ? Status.NONE : Status.CAUTION),
                 Layout.row("Separators", () -> (menu.internalsOut & 2) == 0 ? "installed" : "out").dense()

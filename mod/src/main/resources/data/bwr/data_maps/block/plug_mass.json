@@ -1,0 +1,16 @@
+{
+  "values": {
+    "bwr:shield_plug_concrete": {
+      "tonnes": 2.4
+    },
+    "bwr:heavily_reinforced_shield_plug_concrete": {
+      "tonnes": 3.2
+    },
+    "bwr:ultra_reinforced_shield_plug_concrete": {
+      "tonnes": 4.0
+    },
+    "bwr:crane_anchor": {
+      "tonnes": 0.05
+    }
+  }
+}

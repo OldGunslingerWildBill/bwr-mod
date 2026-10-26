@@ -8,24 +8,28 @@ public final class PlugLiftTest {
     private PlugLiftTest() {
     }
 
-    public static void test01_aSectionWeighsItsBlocksTimesTheirDensity() {
+    public static void test01_aSectionWeighsItsBlocksTimesTheirMass() {
         Check.relative(24.0, PlugLift.massTonnes(10, 0, 0), 1e-9, "ten tier 1 blocks are 24 t");
-        Check.relative(29.0, PlugLift.massTonnes(0, 10, 0), 1e-9, "ten tier 2 blocks are 29 t");
-        Check.relative(35.0, PlugLift.massTonnes(0, 0, 10), 1e-9, "ten tier 3 blocks are 35 t");
-        Check.relative(24.0 + 29.0 + 35.0, PlugLift.massTonnes(10, 10, 10), 1e-9, "tiers add");
+        Check.relative(32.0, PlugLift.massTonnes(0, 10, 0), 1e-9, "ten tier 2 blocks are 32 t");
+        Check.relative(40.0, PlugLift.massTonnes(0, 0, 10), 1e-9, "ten tier 3 blocks are 40 t");
+        Check.relative(24.0 + 32.0 + 40.0, PlugLift.massTonnes(10, 10, 10), 1e-9, "tiers add");
         Check.exactly(0.0, PlugLift.massTonnes(-3, 0, 0), "no negative blocks");
-        Check.isTrue(PlugLift.DENSITY_TIER_1 < PlugLift.DENSITY_TIER_2 && PlugLift.DENSITY_TIER_2 < PlugLift.DENSITY_TIER_3, "the stronger the tier the heavier");
-        Check.isTrue(PlugLift.DENSITY_TIER_1 >= 2.4 && PlugLift.DENSITY_TIER_3 <= 3.5, "between 2.4 and 3.5 t/m3");
+        Check.isTrue(PlugLift.TONNES_TIER_1 < PlugLift.TONNES_TIER_2 && PlugLift.TONNES_TIER_2 < PlugLift.TONNES_TIER_3, "the stronger the tier the heavier");
+        Check.isTrue(PlugLift.TONNES_TIER_1 >= 2.4 && PlugLift.TONNES_TIER_3 <= 4.0, "from ordinary concrete to the top of the heavyweight range");
+        Check.exactly(PlugLift.TONNES_TIER_2, PlugLift.defaultTonnes(2), "the tier's default");
     }
 
     public static void test02_theCraneRefusesWhatIsOverItsRating() {
-        Check.exactly(52, PlugLift.maxBlocks(1), "52 tier 1 blocks are 124.8 t");
-        Check.exactly(43, PlugLift.maxBlocks(2), "43 tier 2 blocks are 124.7 t");
-        Check.exactly(35, PlugLift.maxBlocks(3), "35 tier 3 blocks are 122.5 t");
+        Check.exactly(52, PlugLift.maxBlocks(PlugLift.TONNES_TIER_1), "52 tier 1 blocks are 124.8 t");
+        Check.exactly(39, PlugLift.maxBlocks(PlugLift.TONNES_TIER_2), "39 tier 2 blocks are 124.8 t");
+        Check.exactly(31, PlugLift.maxBlocks(PlugLift.TONNES_TIER_3), "31 tier 3 blocks are 124 t");
         Check.isFalse(PlugLift.overCapacity(PlugLift.massTonnes(52, 0, 0)), "52 tier 1 blocks lift");
         Check.isTrue(PlugLift.overCapacity(PlugLift.massTonnes(53, 0, 0)), "53 do not: 127.2 t");
+        Check.isFalse(PlugLift.overCapacity(PlugLift.massTonnes(0, 0, 31)), "31 tier 3 blocks lift");
+        Check.isTrue(PlugLift.overCapacity(PlugLift.massTonnes(0, 0, 32)), "32 do not: 128 t");
         Check.isFalse(PlugLift.overCapacity(PlugLift.RATED_CAPACITY_T), "exactly the rating lifts");
         Check.isTrue(PlugLift.overCapacity(PlugLift.RATED_CAPACITY_T + 0.1), "a hundred kilograms over does not");
+        Check.exactly(Integer.MAX_VALUE, PlugLift.maxBlocks(0.0), "a weightless block has no limit");
     }
 
     public static void test03_aSectionIsRiggedOnExactlyFourAnchors() {

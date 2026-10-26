@@ -93,6 +93,10 @@ public class BuildingCranePeripheral implements IPeripheral {
         m.put("carried", be.carriedSummary());
         m.put("hook", point(be.tip()));
         m.put("plugsLaid", be.plugsLaid());
+        var next = be.plugPreview();
+        if (next != null) {
+            m.put("plugNext", previewMap(next));
+        }
         if (be.haltMessage() != null) {
             m.put("haltReason", BwrText.english(be.haltMessage()));
         }
@@ -140,6 +144,36 @@ public class BuildingCranePeripheral implements IPeripheral {
     public final Map<String, Object> queueInternalIn(String name) throws LuaException {
         Component why = be.queueInternal(internal(name), false);
         return result(why == null, why);
+    }
+
+    private static Map<String, Object> previewMap(BuildingCraneBlockEntity.PlugPreview p) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("blocks", p.blocks());
+        m.put("anchors", p.anchors());
+        m.put("massT", p.massT());
+        m.put("ratedT", dev.bwr.core.refuelling.PlugLift.RATED_CAPACITY_T);
+        m.put("rigged", p.rigged());
+        m.put("overCapacity", p.over());
+        m.put("onHook", p.carried());
+        m.put("x", p.min().getX());
+        m.put("y", p.min().getY());
+        m.put("z", p.min().getZ());
+        return m;
+    }
+
+    /**
+     * Every shield plug section in the crane's reach that has a crane anchor, nearest the well first: its minimum corner, blocks, anchors, mass in
+     * tonnes against the rated load, and whether PLUG OFF would take it (four anchors, under the rating). Nothing moves.
+     */
+    @LuaFunction(mainThread = true)
+    public final java.util.List<Map<String, Object>> getPlugSections() {
+        be.refreshSite();
+        java.util.List<Map<String, Object>> out = new java.util.ArrayList<>();
+        for (var s : be.plugSections()) {
+            out.add(previewMap(new BuildingCraneBlockEntity.PlugPreview(s.blockCount(), s.anchors().size(), s.massT(), s.rigged(),
+                    dev.bwr.core.refuelling.PlugLift.overCapacity(s.massT()), false, s.min())));
+        }
+        return out;
     }
 
     /**

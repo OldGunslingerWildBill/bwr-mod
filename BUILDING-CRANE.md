@@ -95,7 +95,7 @@ Nothing acts by itself: every lift is a button on the pendant (or a computer's c
 
 * **Shield plug concrete** over the well, in any shape and any of the three tiers (see SEVERE-ACCIDENT-UPDATE.md). These are the blocks that stop a thrown head and shield by
   half-value layer; nothing about them changed except that they can now carry **seams**.
-* **Crane Anchors** (`bwr:crane_anchor`, two iron ingots make four): a steel lifting eye bolted to the **top face of a plug block**. It can be placed on nothing else, and breaks
+* **Crane Anchors** (`bwr:crane_anchor`, two iron ingots make four; 0.05 t each): a steel lifting eye bolted to the **top face of a plug block**. It can be placed on nothing else, and breaks
   if the plug block under it goes. Four anchors on the tops of the blocks of a piece make it a four-point lift. An anchor marks the whole piece under it as liftable.
 * **The Plug Seam Marker** (`bwr:plug_seam_marker`, an iron ingot on a stick): cuts the plug into pieces.
 * The crane, its rails and console as before, a **refuel floor** to set the pieces on (any solid blocks), and enough height: the load hangs from the hook on its slings, and the
@@ -128,9 +128,21 @@ The pendant has **PLUG OFF** and **PLUG ON** beside ABORT and RESUME (PLUG OFF r
   a whole number of blocks away in x and z and up to 8 up or 4 down, where **every cell is air** (the crane never replaces a block, not even water or a plant), the lowest layer
   rests on **solid floor** (a block with a sturdy top), the whole piece lies within the crane's reach in loaded chunks, off the reactor well and the square (as wide as the vessel)
   round every **head stand** in reach, so a later head lift is not blocked. No such place: the lift is refused and nothing moves.
-* **Capacity.** Mass is **blocks x density x 1 m3**: 2.4 t for shield plug concrete, **2.9 t** for heavily reinforced, **3.5 t** for ultra-reinforced (anchors not counted).
-  The crane is rated **125 t** (a reactor building polar crane's main hook; there was no figure in the crane code). That is at most 52, 43 or 35 blocks of a tier. Over it the lift is
-  refused, with the mass, the rating and "mark a seam with the Plug Seam Marker to cut it into smaller sections".
+* **Capacity.** A section weighs the **sum of its blocks' masses plus its anchors'**, and the masses are **data**: the block data map `bwr:plug_mass`
+  (`data/bwr/data_maps/block/plug_mass.json`, tonnes for one block of one cubic metre; a datapack overrides or adds an entry). The defaults, roughly real densities x 1 m3:
+
+  | Block | Mass | Basis |
+  |---|---:|---|
+  | Shield Plug Concrete (tier 1) | **2.4 t** | ordinary reinforced concrete, about 2.4 t/m3 |
+  | Heavily Reinforced Shield Plug Concrete (tier 2) | **3.2 t** | a heavyweight-aggregate mix with heavy rebar (heavyweight shielding concrete of barite, magnetite or steel punchings runs about 3.5 to 4.0 t/m3, IAEA and ACI 304) |
+  | Ultra-Reinforced Shield Plug Concrete (tier 3) | **4.0 t** | magnetite or barite heavy concrete with steel, the top of that range; **the figure is a game value** (the tier is netherite-loaded, which no real concrete is) |
+  | Crane Anchor | 0.05 t | a forged eye on its plate |
+
+  The crane is rated **125 t** (a reactor building polar crane's main hook; there was no figure in the crane code). That is at most 52, 39 or 31 whole blocks of a tier, so a
+  heavier tier needs more seams to stay under the rating. Over it the lift is refused, with the mass, the rating and "mark a seam with the Plug Seam Marker to cut it into smaller
+  sections". **The mass is shown before anything is lifted:** the pendant's *Next plug* row reads, for the section PLUG OFF would take, "28 blocks, 112.2 t of 125 t, 4 anchors"
+  (or "over the rating", or "needs 4"), a computer's `getStatus().plugNext` and `getPlugSections()` give the same numbers for every section in reach, and on the hook the
+  crane's *Hook* row reads "a shield plug section (28 blocks, 112.2 t)".
 * **Four anchors.** Exactly four anchors rig a section (the four slings of the rig). Fewer, or more, is refused with "needs 4 anchors, has N".
 * **Head interlock.** LIFT HEAD (and SET HEAD) are **refused while any shield plug block stands over the reactor well**, with the count and the nearest block. "Over the well" is read
   from the reactor's own survey: any column inside the vessel's footprint, or a cell of the well that the cavity survey found (`CavitySeal`), from the first row above the vessel
@@ -163,7 +175,7 @@ ordinary blocks again.
 ### Computers
 
 `bwr_building_crane`: `queuePlugOff([x, y, z])` (no arguments: the nearest rigged section; with the position of one of its anchors: that section) and `queuePlugOn()`, each returning
-`{ok, message}`; `getStatus()` adds `plugsLaid`, and `carried` reads "a shield plug section (N blocks, T t)" while one hangs.
+`{ok, message}`; `getStatus()` adds `plugsLaid` and `plugNext` (`blocks`, `anchors`, `massT`, `ratedT`, `rigged`, `overCapacity`, `onHook`, `x`, `y`, `z` of the section PLUG OFF would take), `getPlugSections()` lists every anchored section in reach the same way (nothing moves), and `carried` reads "a shield plug section (N blocks, T t)" while one hangs.
 
 ```lua
 local crane = peripheral.find("bwr_building_crane")
@@ -253,6 +265,7 @@ Also in the set: `tensioner-screen.png` and `studs-detensioned-nuts-off.png`. Th
   Breaking the console under a hanging load sets a dryer or separator assembly back in its vessel and lays a hanging head down on the floor (nothing is lost);
   removing a stand that holds the head does the same.
 * **The bridge.** The refuelling bridge moves fuel only and refuses the head, dryer and separator lifts (see below).
+* **Shield plug lifts.** A plug lift saved on the hook finishes the same job after the world loads (the crane's `Plug` plan and `PlugEntity` id, and the entity in its chunk); the laydown book (`Laid`) is written only while a section is set down. Breaking the console under a hanging section puts it back where it was taken from, or drops its blocks as items (see "Lifting the shield plugs").
 
 ## Computers
 
@@ -295,11 +308,21 @@ the default; the stand's placement rules and a stand removed under the head; low
 working crane or tensioner ticking once a tick on the real scheduler; the computer faces. Client check `-PbwrBuildingCraneCheck` (`BuildingCraneClientCheck`) saves the pictures in `art/building-crane/`;
 the two screens are in `-PbwrGuiScreenCheck`.
 
+Shield plug lifting: core `PlugLiftTest` (mass, the 125 t rating, the four-anchor rule); GameTests `PlugLiftTests` (namespace `bwrplug`, batch `plugs`, `-PbwrOnlyPlug`, 15 tests): anchors on plug tops only; a seam
+splits a plug in two and the marker toggles and clears it; PLUG OFF takes exactly one section, its blocks leave the well and land exactly at the laydown, the entity hangs under the hook and moves with it; PLUG ON restores state
+for state (tier, seams, anchors); an over-capacity refusal; a tier 3 section over the rating refused where the same size in tier 1 is taken; the same size weighing differently by tier and the mass shown before the lift; the four-anchor rule (3 and 5 refused); LIFT HEAD and SET HEAD refused with a plug over the well and allowed after; a laydown that is not
+clear refuses the lift, stops a lift that was queued, and stops a set-down without replacing the block; a save and reload mid-lift with one entity and every block once; a console broken under a hanging section (put back, or dropped as items when its place
+is built over), a runway broken (the entity's own check) and `/kill`; the head missile and the shielding with the plug off and on; an old crane with no plug data. The client check's four plug pictures are in `art/building-crane/` (`plug-*.png`).
+
 ## Honest limits
 
 * The cab is a picture: the operator does not ride it, the console is beside the rails. Nothing can stand on the walkway.
 * One reactor and one crane per console (the nearest reactor between the rails). Two consoles on the same rails are two independent cranes that do not know each other.
 * One head, one stand at a time per lift; a second stand is not used for the same head. A head carried on the hook has no radiation source (the dryer and the separators do).
 * The rails are the player's: the crane does not check that anything holds them up, nor what the head would sweep through on its way to the stand.
+* A shield plug section hangs from four slings to its anchors; the crane does not check what else it would sweep through on the way (other plug sections, equipment). It checks only that the rails are high enough to carry it over its own height above the floor.
+* The crane takes one section at a time, nearest the well first. It does not order the sections for you: the plug's real lifting sequence is the player's.
+* PLUG OFF is not tied to the reactor's state: a plug can be lifted off a running reactor, as nothing in the game depends on the plug being there except the head interlock, the shielding and the head missile.
+* Anchors are whole blocks on the tops of plug blocks (one per block), not points anywhere on a face; a section needs a plug block with open air above it for each of its four anchors.
 * The stud tensioner works round the flange in index order, not the star pattern of a real tightening; the stage count is one.
 * The nuts of the studs are drawn off the head; the nuts of a detensioned head are not stacked anywhere (they are gone with the studs' load).
