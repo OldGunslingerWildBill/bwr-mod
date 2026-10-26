@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
+    "bwr:crane_anchor",
     "#bwr:reactor_blocks",
     "bwr:rip_pump",
     "bwr:high_pressure_water_pipe",

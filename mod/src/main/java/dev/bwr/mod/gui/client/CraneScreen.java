@@ -24,6 +24,7 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
     private BwrButton separators;
     private BwrButton abort;
     private BwrButton resume;
+    private BwrButton plug;
 
     public CraneScreen(CraneMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 420, 214);
@@ -76,6 +77,8 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
             abort = BwrButton.danger("ABORT", "Stop the crane where it is and forget the queue. A load on the hook stays on it.",
                     b -> menu.sendCommand(CraneMenu.CMD_ABORT));
             resume = BwrButton.secondary("RESUME", "After a halt, try the step again.", b -> menu.sendCommand(CraneMenu.CMD_RESUME));
+            plug = BwrButton.secondary("PLUG OFF", "Lift the shield plug section nearest the well that has its four crane anchors off the plug, and set it down on the nearest clear spot of the refuel floor.",
+                    b -> menu.sendCommand(CraneMenu.CMD_PLUG, menu.plugsLaid > 0 && !menu.plugHeld ? 0 : 1));
         }
         var state = Layout.card("Crane",
                 Layout.row("State", () -> phaseWord(menu.phase) + (menu.queued > 0 ? " (+" + menu.queued + ")" : "")).dense()
@@ -95,6 +98,9 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
                         .tip("Where the vessel head is, and how many of its closure studs are at load."),
                 Layout.row("Studs at load", () -> menu.headOff ? "0 / " + menu.studTotal : (menu.studTotal - menu.studsOff) + " / " + menu.studTotal).dense()
                         .tip("A stud tensioner backs the nuts off before the head lifts, and brings the studs back to load after the head is set."),
+                Layout.row("Next plug", () -> menu.plugNext.isEmpty() ? "none in reach" : menu.plugNext).dense()
+                        .status(() -> menu.plugNextBad ? Status.CAUTION : Status.NONE)
+                        .tip("The shield plug section PLUG OFF would take next (or the one on the hook): its blocks, its mass against the crane's rating, and its crane anchors. It needs exactly four anchors and must be under the rating; mark a seam to split a section that is too heavy."),
                 Layout.row("Dryer", () -> (menu.internalsOut & 1) == 0 ? "installed" : "out").dense()
                         .status(() -> (menu.internalsOut & 1) == 0 ? Status.NONE : Status.CAUTION),
                 Layout.row("Separators", () -> (menu.internalsOut & 2) == 0 ? "installed" : "out").dense()
@@ -104,7 +110,7 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
         var controls = Layout.card("",
                 Layout.controls(BwrStyle.SP1).add(head, 1).add(dryer, 1).add(separators, 1),
                 Layout.gap(1),
-                Layout.controls(BwrStyle.SP1).add(abort, 1).add(resume, 1)).compact();
+                Layout.controls(BwrStyle.SP1).add(plug, 1).add(abort, 1).add(resume, 1)).compact();
         return Layout.column(BwrStyle.SP2,
                 Layout.note("There is no crane console here.").body().status(() -> Status.ALARM).showIf(() -> !menu.present),
                 Layout.column(BwrStyle.SP1,
@@ -132,6 +138,12 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
         separators.setMessage(Component.literal(sepsOut ? "SEPS IN" : "SEPS OUT"));
         dryer.active = go && menu.headOff;
         separators.active = go && menu.headOff;
+        boolean laid = menu.plugsLaid > 0 && !menu.plugHeld;
+        plug.setMessage(Component.literal(laid ? "PLUG ON" : "PLUG OFF"));
+        plug.setTooltipText(laid
+                ? "Queue a lift: the crane sets the shield plug section it last laid down back exactly where it came from. The head must be on the vessel."
+                : "Queue a lift: the crane takes the shield plug section nearest the well that has its four crane anchors off the plug, and sets it down on the nearest clear spot of the refuel floor.");
+        plug.active = go || (menu.present && menu.ready && menu.reactorFound && !menu.busy && menu.plugHeld);
         abort.active = menu.present && menu.ready && (menu.busy || menu.halted || menu.queued > 0 || !menu.carried.isEmpty());
         resume.active = menu.present && menu.ready && menu.halted;
     }

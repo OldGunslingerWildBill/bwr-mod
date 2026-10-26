@@ -44,7 +44,8 @@ public final class BuildingCraneClientCheck {
 
     private static final BlockPos O = new BlockPos(200, 200, 200);
     private static final String[] NAMES = {"crane-over-the-refuel-floor", "tensioner-on-the-flange", "tensioner-screen", "studs-detensioned-nuts-off",
-            "head-on-the-hook", "head-on-its-stand", "dryer-on-the-hook", "crane-pendant-screen"};
+            "head-on-the-hook", "head-on-its-stand", "dryer-on-the-hook", "crane-pendant-screen",
+            "plug-stepped-with-anchors-and-seams", "plug-section-on-the-hook", "plug-section-set-down", "plug-open-well"};
 
     private record Shot(Vec3 stand, Vec3 target, int fov) {
     }
@@ -62,7 +63,12 @@ public final class BuildingCraneClientCheck {
             new Shot(v(-4.3, 9.2, -12.2), v(2.5, 9.9, -8.5), 70),
             new Shot(v(-7.0, 16.5, 9.0), v(4.0, 12.5, 3.0), 70),
             // the pendant is used from beside the console (a menu closes when the player is more than 8 blocks from its block)
-            new Shot(v(-3.0, 15.5, -10.5), v(-4.0, 14.0, -14.0), 70)};
+            new Shot(v(-3.0, 15.5, -10.5), v(-4.0, 14.0, -14.0), 70),
+            // the shield plug (stages 8 to 11; the last two are aimed at the laydown once it is known)
+            new Shot(v(-6.5, 14.0, -7.5), v(2.0, 10.5, 2.0), 70),
+            new Shot(v(-12.0, 21.0, -6.0), v(2.0, 17.5, 2.0), 70),
+            new Shot(v(-6.5, 14.0, -7.5), v(2.0, 10.5, 2.0), 70),
+            new Shot(v(-6.5, 14.0, -7.5), v(2.0, 10.0, 2.0), 70)};
 
     private static long uploadsAtStart;
     private static boolean started, requested, standing, built;
@@ -308,8 +314,92 @@ public final class BuildingCraneClientCheck {
             case 7 -> {
                 CraneMenu.open(player, crane);
             }
+            case 8 -> plugStage8(level, f);
+            case 9 -> {
+                // the first section (the stepped top) is on the hook, halfway across
+                check(crane.queuePlug(true, null) == null, "queue PLUG OFF");
+                stepUntil(level, () -> crane.phase() == Phase.TRANSIT && crane.progress() > 0.5);
+                check(crane.carriedPlug(), "the hook holds the section");
+                crane.devHold(true);
+            }
+            case 10 -> {
+                crane.devHold(false);
+                stepUntil(level, () -> false);
+                check(!crane.holding() && crane.plugsLaid() == 1, "the section is set down");
+                var lay = crane.laidSections().get(0).lay();
+                SHOTS[10] = new Shot(v(lay.getX() - O.getX() - 5.5, 12.5, lay.getZ() - O.getZ() - 5.5), v(lay.getX() - O.getX() + 2.5, 10.2, lay.getZ() - O.getZ() + 2.5), 70);
+            }
+            case 11 -> {
+                // the two slabs come off too: the well is open (the head is on its stand, the dryer on its pad)
+                for (int i = 0; i < 2; i++) {
+                    check(crane.queuePlug(true, null) == null, "queue PLUG OFF " + i);
+                    stepUntil(level, () -> false);
+                    check(!crane.holding(), "set down " + i);
+                }
+                check(dev.bwr.mod.refuelling.PlugSections.plugOverWell(level, r.vesselEnvelope(), crane.site().railY).isEmpty(), "no plug over the well");
+            }
             default -> {
             }
+        }
+    }
+
+    /**
+     * A stepped shield plug over the well, rails raised so that it can be carried: a 7 x 7 slab of tier 1 (cut by a seam into a west and an east
+     * piece, each with four anchors), and on it a 5 x 5 layer of tier 2 and a 3 x 3 layer of tier 3 as one stepped section with four anchors, cut
+     * from the slab by a seam. The refuel floor lies around it.
+     */
+    private static void plugStage8(ServerLevel level, CraneFixture f) {
+        var crane = f.crane;
+        crane.devHold(false);
+        stepUntil(level, () -> false);
+        // the dryer is on a pad now. The runway goes up six blocks so that the sections clear the floor
+        for (int x = -3; x <= 22; x++) {
+            for (int z : new int[]{-14, 9}) {
+                level.setBlock(O.offset(x, f.railDy, z), Blocks.AIR.defaultBlockState(), 2);
+                level.setBlock(O.offset(x, 20, z), BwrBlocks.CRANE_RUNWAY_RAIL.get().defaultBlockState()
+                        .setValue(dev.bwr.mod.refuelling.CraneRunwayRailBlock.AXIS, net.minecraft.core.Direction.Axis.X), 2);
+            }
+        }
+        crane.abort();
+        level.setBlock(f.console, Blocks.AIR.defaultBlockState(), 2);
+        BlockPos console = O.offset(-4, 20, -14);
+        level.setBlock(console, BwrBlocks.BUILDING_CRANE_CONSOLE.get().defaultBlockState(), 2);
+        f.crane = (dev.bwr.mod.refuelling.BuildingCraneBlockEntity) level.getBlockEntity(console);
+        f.crane.refreshSite();
+        var env = f.reactor().vesselEnvelope();
+        BlockPos base = new BlockPos(env.min().getX(), env.max().getY() + 1, env.min().getZ());
+        var t1 = BwrBlocks.SHIELD_PLUG_CONCRETE.get().defaultBlockState();
+        var t2 = BwrBlocks.HEAVILY_REINFORCED_SHIELD_PLUG_CONCRETE.get().defaultBlockState();
+        var t3 = BwrBlocks.ULTRA_REINFORCED_SHIELD_PLUG_CONCRETE.get().defaultBlockState();
+        for (int x = 0; x < 7; x++) {
+            for (int z = 0; z < 7; z++) {
+                level.setBlock(base.offset(x, 0, z), t1, 2);
+                if (x >= 1 && x <= 5 && z >= 1 && z <= 5) {
+                    level.setBlock(base.offset(x, 1, z), t2, 2);
+                }
+                if (x >= 2 && x <= 4 && z >= 2 && z <= 4) {
+                    level.setBlock(base.offset(x, 2, z), t3, 2);
+                }
+            }
+        }
+        // seams: between the slab's west and east pieces (x 3 | 4, all of its layer), and under the stepped top (the slab's layer | the 5 x 5 layer)
+        for (int z = 0; z < 7; z++) {
+            check(dev.bwr.mod.refuelling.PlugSeamMarkerItem.toggle(level, base.offset(3, 0, z), net.minecraft.core.Direction.EAST) == Boolean.TRUE, "slab seam");
+        }
+        for (int x = 1; x <= 5; x++) {
+            for (int z = 1; z <= 5; z++) {
+                check(dev.bwr.mod.refuelling.PlugSeamMarkerItem.toggle(level, base.offset(x, 0, z), net.minecraft.core.Direction.UP) == Boolean.TRUE, "step seam");
+            }
+        }
+        var anchor = BwrBlocks.CRANE_ANCHOR.get().defaultBlockState();
+        for (int[] a : new int[][]{{0, 0}, {3, 0}, {0, 6}, {3, 6}, {4, 0}, {6, 0}, {4, 6}, {6, 6}}) {
+            level.setBlock(base.offset(a[0], 1, a[1]), anchor, 2);
+        }
+        for (int[] a : new int[][]{{1, 1}, {5, 1}, {1, 5}, {5, 5}}) {
+            level.setBlock(base.offset(a[0], 2, a[1]), anchor, 2);
+        }
+        for (var sec : dev.bwr.mod.refuelling.PlugSections.scan(level, f.crane.refreshSite(), env.min().getY(), 19, 2.0, 2.0).sections()) {
+            LogUtils.getLogger().info("BUILDING CRANE CLIENT CHECK plug section {} blocks {} anchors {} t at {}", sec.blockCount(), sec.anchors().size(), sec.massT(), sec.min());
         }
     }
 

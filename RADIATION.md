@@ -151,7 +151,7 @@ instruments, the CC `other` term and the swimming dose read the shielded value w
 | Steel (`steel`) | **2.5 cm** | 1.47 cm (iron, 0.0600 x 7.87) | iron, gold, copper, netherite and steel blocks, iron bars, doors, trapdoors, anvils, chains, cauldrons, hoppers |
 | Concrete (`concrete`) | **6.0 cm** | 4.6 cm (ordinary concrete, 0.0650 x 2.30) | vanilla concrete, stone, deepslate, cobblestone, ores, obsidian, bricks, terracotta, sandstone, end stone, netherrack; Immersive Engineering concrete (optional tag entries) |
 | Leaded concrete (`leaded_concrete`) | 3.5 cm | | Immersive Engineering leaded concrete (optional tag entries) |
-| Shield plug concrete, tiers 1 / 2 / 3 | 5.0 / 3.5 / 2.5 cm | | the mod's three shield plug concrete blocks, progressively stronger (more steel, then netherite) |
+| Shield plug concrete, tiers 1 / 2 / 3 | 5.0 / 3.5 / 2.5 cm | | the mod's three shield plug concrete blocks, progressively stronger (more steel, then netherite); a section lifted off by the reactor building crane is not in the world while it hangs, so it shields nothing until it is set down (BUILDING-CRANE.md) |
 | Water | **9.8 cm** | 9.8 cm | water blocks and the water of waterlogged blocks: the dose model's own 7.07 per m |
 | Earth (`earth`) | 9 cm | | dirt and its kin, sand, gravel, clay, concrete powder, soul sand |
 | Wood (`wood`) | 23 cm | | logs, planks, wooden slabs and stairs |

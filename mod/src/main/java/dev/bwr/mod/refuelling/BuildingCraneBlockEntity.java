@@ -4,8 +4,10 @@ import dev.bwr.core.refuelling.BridgeMotion;
 import dev.bwr.core.refuelling.BridgeMotion.Phase;
 import dev.bwr.core.refuelling.BridgeMotion.Point;
 import dev.bwr.core.refuelling.CraneMotion;
+import dev.bwr.core.refuelling.PlugLift;
 import dev.bwr.mod.radiation.RadiationSources;
 import dev.bwr.mod.reactor.ReactorControllerBlockEntity;
+import dev.bwr.mod.reactor.VesselAppearance;
 import dev.bwr.mod.reactor.VesselInternal;
 import dev.bwr.mod.reactor.VesselProfile;
 import dev.bwr.mod.reactor.VesselState;
@@ -15,6 +17,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -30,6 +33,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 /**
  * The reactor building crane, one console block and the machine it stands for: an overhead bridge crane on two runs of
@@ -64,7 +68,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     // Moves
     // ---------------------------------------------------------------
 
-    public enum Kind { HEAD_SEAT, HEAD_STAND, HEAD_LAID, INTERNAL, PAD, HELD }
+    public enum Kind { HEAD_SEAT, HEAD_STAND, HEAD_LAID, INTERNAL, PAD, HELD, PLUG }
 
     /** A place: the head's seat on the flange, a head stand, the head laid down (older worlds), the dryer's or separators' seat, a pad, or the hook itself. */
     public record Loc(Kind kind, BlockPos at, int which) {
@@ -84,6 +88,11 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             return new Loc(Kind.PAD, pad.immutable(), which.ordinal());
         }
 
+        /** A shield plug section whose minimum corner is at {@code min} (where it stands, or where it is to be set down). */
+        public static Loc plug(BlockPos min) {
+            return new Loc(Kind.PLUG, min.immutable(), 0);
+        }
+
         public VesselInternal internal() {
             return VesselInternal.values()[Math.clamp(which, 0, VesselInternal.values().length - 1)];
         }
@@ -95,7 +104,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         CompoundTag save() {
             CompoundTag t = new CompoundTag();
             t.putString("K", kind.name());
-            if (kind == Kind.HEAD_STAND || kind == Kind.PAD) {
+            if (kind == Kind.HEAD_STAND || kind == Kind.PAD || kind == Kind.PLUG) {
                 t.putLong("R", at.asLong());
             }
             if (kind == Kind.INTERNAL || kind == Kind.PAD) {
@@ -117,6 +126,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
                 case HEAD_STAND -> new Loc(Kind.HEAD_STAND, BlockPos.of(t.getLong("R")), 0);
                 case INTERNAL -> new Loc(Kind.INTERNAL, BlockPos.ZERO, t.getByte("C"));
                 case PAD -> new Loc(Kind.PAD, BlockPos.of(t.getLong("R")), t.getByte("C"));
+                case PLUG -> new Loc(Kind.PLUG, BlockPos.of(t.getLong("R")), 0);
                 default -> HELD;
             };
         }
@@ -129,6 +139,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
                 case INTERNAL -> "the " + internal().title + "'s seat in the vessel";
                 case PAD -> String.format(Locale.ROOT, "the equipment pad at %d,%d,%d", at.getX(), at.getY(), at.getZ());
                 case HELD -> "the hook";
+                case PLUG -> String.format(Locale.ROOT, "the shield plug section at %d,%d,%d", at.getX(), at.getY(), at.getZ());
             };
         }
     }
@@ -149,6 +160,54 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     /** The rails' geometry as the client's renderer needs it. */
     public record Geom(boolean alongX, int railY, int aLo, int aHi, int cLow, int cHigh) {
     }
+
+    /**
+     * A shield plug lift in progress: where the section belongs ({@code homeMin}, its minimum corner in the plug) and where it is set down
+     * ({@code layMin}), its size in blocks, the pick point (the middle of its four anchors, relative to the minimum corner), the height of the
+     * hook over the section's top, the four anchors (x, y, z in cells from the minimum corner, twelve numbers), its mass, its block count and
+     * whether the move goes from home to the laydown ({@code fromHome}, PLUG OFF) or back (PLUG ON). Saved while a lift is under way.
+     */
+    public record PlugPlan(BlockPos homeMin, BlockPos layMin, int sx, int sy, int sz, double px, double pz, double rig, int[] anchors,
+                           double massT, int blocks, boolean fromHome) {
+        CompoundTag save() {
+            CompoundTag t = new CompoundTag();
+            t.putLong("Home", homeMin.asLong());
+            t.putLong("Lay", layMin.asLong());
+            t.putIntArray("Size", new int[]{sx, sy, sz, blocks});
+            t.putDouble("PX", px);
+            t.putDouble("PZ", pz);
+            t.putDouble("Rig", rig);
+            t.putIntArray("Anchors", anchors);
+            t.putDouble("Mass", massT);
+            t.putBoolean("FromHome", fromHome);
+            return t;
+        }
+
+        static PlugPlan load(CompoundTag t) {
+            int[] size = t.getIntArray("Size");
+            if (size.length < 4) {
+                return null;
+            }
+            return new PlugPlan(BlockPos.of(t.getLong("Home")), BlockPos.of(t.getLong("Lay")), size[0], size[1], size[2], t.getDouble("PX"),
+                    t.getDouble("PZ"), t.getDouble("Rig"), t.getIntArray("Anchors"), t.getDouble("Mass"), size[3], t.getBoolean("FromHome"));
+        }
+
+        /** The hook's height over the section's lowest block. */
+        public double hookAboveBase() {
+            return sy + rig;
+        }
+
+        BlockPos anchorAt(BlockPos min, int i) {
+            return min.offset(anchors[3 * i], anchors[3 * i + 1], anchors[3 * i + 2]);
+        }
+    }
+
+    /** A section set down on the laydown: where, where it came from, and an anchor to find it by. */
+    public record Laid(BlockPos lay, BlockPos home, BlockPos seed) {
+    }
+
+    /** The most a section's hook may hang over its top, so a long slung section's slings stay steep. */
+    public static final double RIG_ANGLE_FACTOR = 1.2;
 
     // ---------------------------------------------------------------
     // State
@@ -174,6 +233,14 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     private int routeIndex;
     private boolean raisingForMove;
     private Geom geom;
+    /** The shield plug lift in progress, or null. */
+    @Nullable
+    private PlugPlan plan;
+    /** The entity that holds the section on the hook, or null. */
+    @Nullable
+    private UUID plugEntity;
+    /** Sections set down on the laydown by PLUG OFF, oldest first; PLUG ON takes the newest. */
+    private final List<Laid> laid = new ArrayList<>();
 
     // transient
     private BridgeSite site;
@@ -305,7 +372,36 @@ public class BuildingCraneBlockEntity extends BlockEntity {
 
     /** True while the hook holds the head, the dryer or the separator assembly. */
     public boolean holding() {
-        return carriedHead || carriedInternal != null;
+        return carriedHead || carriedInternal != null || plugEntity != null;
+    }
+
+    /** The shield plug lift in progress (the client draws its slings from this), or null. */
+    @Nullable
+    public PlugPlan plugPlan() {
+        return plan;
+    }
+
+    /** True while a shield plug section hangs from the hook. */
+    public boolean carriedPlug() {
+        return plugEntity != null;
+    }
+
+    @Nullable
+    public UUID plugEntityId() {
+        return plugEntity;
+    }
+
+    /** How many sections stand on the laydown, taken off the plug and waiting for PLUG ON. */
+    public int plugsLaid() {
+        return laid.size();
+    }
+
+    public List<Laid> laidSections() {
+        return List.copyOf(laid);
+    }
+
+    public boolean ownsPlugEntity(UUID id) {
+        return id.equals(plugEntity);
     }
 
     @Nullable
@@ -503,6 +599,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             return BwrText.tr("status.bwr.building_crane.no_reactor", "No formed reactor lies between the crane's rails.");
         }
         Loc from = m.from(), to = m.to();
+        if (isPlugMove(m)) {
+            return refusePlug(m, r);
+        }
         boolean head = from.isHead() || to.isHead() || (from.kind() == Kind.HELD && carriedHead);
         return head ? refuseHead(m, r) : refuseInternal(m, r);
     }
@@ -515,6 +614,15 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             return from.kind() == Kind.HELD && !carriedHead
                     ? BwrText.tr("status.bwr.building_crane.nothing_held", "The hook is not holding anything.")
                     : BwrText.tr("status.bwr.building_crane.bad_head_move", "The vessel head goes between the vessel flange and a head stand.");
+        }
+        if (from.kind() == Kind.HEAD_SEAT || to.kind() == Kind.HEAD_SEAT) {
+            // the head goes up and down the well: no shield plug may stand over it
+            var over = PlugSections.plugOverWell(level, r.vesselEnvelope(), site.railY);
+            if (!over.isEmpty()) {
+                return BwrText.tr("status.bwr.building_crane.plug_over_well",
+                        "The head cannot move: a shield plug still covers the reactor well (%s plug blocks, the nearest at %s). Lift it off with PLUG OFF first.",
+                        over.size(), over.get(0).toShortString());
+            }
         }
         if (from.kind() == Kind.HEAD_SEAT) {
             Component why = r.headLiftBlocked();
@@ -730,6 +838,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             case HEAD_STAND, PAD -> {
                 return new Point(loc.at().getX() + 0.5, 0, loc.at().getZ() + 0.5);
             }
+            case PLUG -> {
+                return plan == null ? null : new Point(loc.at().getX() + plan.px(), 0, loc.at().getZ() + plan.pz());
+            }
             default -> {
                 return pos == null ? null : new Point(pos.x(), 0, pos.z());
             }
@@ -748,6 +859,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         refreshSite();
         if (holding() && move == null && m.from().kind() != Kind.HELD) {
             return BwrText.tr("status.bwr.building_crane.holding", "The hook still holds a load: set it down first.");
+        }
+        if (plan != null && !isPlugMove(m)) {
+            return BwrText.tr("status.bwr.building_crane.plug_busy", "The crane is busy with a shield plug section: set it down first.");
         }
         Component why = refuse(m);
         if (why != null) {
@@ -776,6 +890,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         }
         queue.clear();
         move = null;
+        if (plugEntity == null) {
+            plan = null; // a plug lift stopped before the hook took the section has nothing to remember
+        }
         route.clear();
         routeIndex = 0;
         raisingForMove = false;
@@ -852,6 +969,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             return;
         }
         move = null;
+        if (plugEntity == null) {
+            plan = null;
+        }
         phase = Phase.IDLE;
         legTo = null;
         elapsed = 0;
@@ -892,6 +1012,10 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             case PAD -> {
                 return new BridgeMotion.Stop(loc.at().getX() + 0.5, loc.at().getZ() + 0.5,
                         loc.at().getY() + EquipmentPadBlockEntity.TOP + EquipmentPads.liftAboveBottom(loc.internal(), vp) + RIG_M, Double.NaN);
+            }
+            case PLUG -> {
+                Point c = columnOf(loc);
+                return new BridgeMotion.Stop(c.x(), c.z(), loc.at().getY() + plan.hookAboveBase(), Double.NaN);
             }
             default -> {
                 return new BridgeMotion.Stop(pos.x(), pos.z(), pos.y(), Double.NaN);
@@ -1034,6 +1158,14 @@ public class BuildingCraneBlockEntity extends BlockEntity {
                         taken = true;
                     }
                 }
+                case PLUG -> {
+                    Component why = takePlug(server, from.at());
+                    if (why == null) {
+                        taken = true;
+                    } else {
+                        reason = why;
+                    }
+                }
                 default -> {
                 }
             }
@@ -1055,6 +1187,16 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         Loc to = move.to();
         ReactorControllerBlockEntity r = reactor();
         boolean placed = false;
+        if (plugEntity != null) {
+            Component why = setDownPlug(server, to);
+            if (why != null) {
+                fault(server, Phase.RELEASE, why);
+                return;
+            }
+            Point up = pos.withY(site.homeY());
+            begin(server, Phase.RAISE_EMPTY, up, ticks(pos, up, false));
+            return;
+        }
         if (carriedHead) {
             VesselProfile vp = carriedProfile() != null ? carriedProfile() : r == null ? null : profileOf(r);
             if (r != null && to.kind() == Kind.HEAD_SEAT && r.headSeatBlocked() == null) {
@@ -1098,6 +1240,458 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     }
 
     // ---------------------------------------------------------------
+    // Shield plug sections (PLUG OFF / PLUG ON)
+    // ---------------------------------------------------------------
+
+    private static boolean isPlugMove(Move m) {
+        return m.from().kind() == Kind.PLUG || m.to().kind() == Kind.PLUG;
+    }
+
+    private BlockPos plugSource(PlugPlan p) {
+        return p.fromHome() ? p.homeMin() : p.layMin();
+    }
+
+    /** The plan for lifting {@code s} (standing with its minimum corner at {@code from}) to {@code to}. */
+    private static PlugPlan planOf(PlugSections.Section s, BlockPos home, BlockPos lay, boolean fromHome) {
+        double[] pick = s.pick();
+        double px = pick[0] - s.min().getX(), pz = pick[1] - s.min().getZ();
+        int[] anchors = new int[3 * s.anchors().size()];
+        double spread = 0;
+        for (int i = 0; i < s.anchors().size(); i++) {
+            BlockPos a = s.anchors().get(i);
+            anchors[3 * i] = a.getX() - s.min().getX();
+            anchors[3 * i + 1] = a.getY() - s.min().getY();
+            anchors[3 * i + 2] = a.getZ() - s.min().getZ();
+            spread = Math.max(spread, Math.hypot(a.getX() + 0.5 - pick[0], a.getZ() + 0.5 - pick[1]));
+        }
+        double rig = Math.max(RIG_M, RIG_ANGLE_FACTOR * spread);
+        return new PlugPlan(home.immutable(), lay.immutable(), s.sizeX(), s.sizeY(), s.sizeZ(), px, pz, rig, anchors, s.massT(), s.blockCount(), fromHome);
+    }
+
+    /** Why a surveyed section cannot be lifted by the four-point rig, or null: the number of anchors, and the crane's rating. */
+    @Nullable
+    private static Component sectionProblem(PlugSections.Section s) {
+        if (!s.rigged()) {
+            return BwrText.tr("status.bwr.plug.anchors",
+                    "The shield plug section at %s needs 4 anchors, has %s. Bolt exactly four Crane Anchors on the tops of its blocks.",
+                    s.min().toShortString(), s.anchors().size());
+        }
+        if (PlugLift.overCapacity(s.massT())) {
+            int tier = s.tiers()[2] > 0 ? 3 : s.tiers()[1] > 0 ? 2 : 1;
+            double each = PlugMass.tierTonnes(tier);
+            return BwrText.tr("status.bwr.plug.over_capacity",
+                    "The shield plug section at %s weighs %s t (%s blocks), over the crane's rated %s t. Mark a seam with the Plug Seam Marker to cut it into smaller sections (the crane takes about %s blocks of the heaviest tier in it, %s t each).",
+                    s.min().toShortString(), String.format(Locale.ROOT, "%.1f", s.massT()), s.blockCount(),
+                    String.format(Locale.ROOT, "%.0f", PlugLift.RATED_CAPACITY_T), PlugLift.maxBlocks(each), String.format(Locale.ROOT, "%.1f", each));
+        }
+        return null;
+    }
+
+    /** Why the runway is too low for this section (it hangs from the hook over its top), or null. */
+    @Nullable
+    private Component plugRailsProblem(PlugPlan p) {
+        double top = Math.max(p.homeMin().getY(), p.layMin().getY()) + p.sy();
+        double clear = top + 0.25;
+        double hanging = p.hookAboveBase();
+        if (site.homeY() - hanging < clear) {
+            return BwrText.tr("status.bwr.building_crane.rails_too_low_plug",
+                    "The runway is too low to carry the shield plug section clear of the floor: it hangs %s blocks below the hook. Raise the rails to y %s or higher.",
+                    String.format(Locale.ROOT, "%.1f", hanging), (int) Math.ceil(clear + hanging - CraneMotion.HOOK_HOME_ABOVE_RAIL_M));
+        }
+        return null;
+    }
+
+    /** The squares of floor the laydown stays off: where a head lies on a head stand, as wide as the vessel (every stand in reach, holding the head or not). */
+    private List<PlugSections.Keep> keepClear(VesselAppearance.Envelope env) {
+        List<PlugSections.Keep> keep = new ArrayList<>();
+        int half = (int) Math.ceil(Math.max(env.width(), env.depth()) / 2.0);
+        for (BlockPos p : HeadStandBlockEntity.stands(level)) {
+            HeadStandBlockEntity stand = standAt(p);
+            if (stand != null && site.reaches(p.getX() + 0.5, p.getZ() + 0.5)) {
+                keep.add(new PlugSections.Keep(p.getX(), p.getZ(), half));
+            }
+        }
+        return keep;
+    }
+
+    /**
+     * PLUG OFF ({@code out}): takes the shield plug section the crane is told of (the one hooked by {@code anchor}, or the nearest to the well that has its
+     * four anchors) off the plug and sets it down on the nearest clear spot of the refuel floor. PLUG ON: sets the section most recently laid down back
+     * exactly where it came from. With a section already on the hook (after an abort) the lift continues to the laydown (out) or home (in).
+     * Returns null when queued, or the reason it was not.
+     */
+    @Nullable
+    public Component queuePlug(boolean out, @Nullable BlockPos anchor) {
+        if (!(level instanceof ServerLevel server)) {
+            return null;
+        }
+        refreshSite();
+        if (site == null || !site.ok()) {
+            return site == null ? BwrText.tr("status.bwr.building_crane.not_surveyed", "The crane has not surveyed its rails yet.") : site.problem;
+        }
+        ReactorControllerBlockEntity r = reactor();
+        VesselAppearance.Envelope env = r == null ? null : r.vesselEnvelope();
+        if (r == null || env == null) {
+            return BwrText.tr("status.bwr.building_crane.no_reactor", "No formed reactor lies between the crane's rails.");
+        }
+        if (plugEntity != null && plan != null && move == null) {
+            return queue(new Move(Loc.HELD, Loc.plug(out ? plan.layMin() : plan.homeMin())));
+        }
+        if (holding()) {
+            return BwrText.tr("status.bwr.building_crane.holding", "The hook still holds a load: set it down first.");
+        }
+        if (plan != null || move != null || !queue.isEmpty() || busy()) {
+            return BwrText.tr("status.bwr.building_crane.plug_busy_now", "The crane is busy: wait for it to finish, or ABORT.");
+        }
+        if (out) {
+            double wx = env.min().getX() + env.width() / 2.0, wz = env.min().getZ() + env.depth() / 2.0;
+            PlugSections.Section chosen = null;
+            if (anchor != null) {
+                if (!(level.getBlockState(anchor).getBlock() instanceof CraneAnchorBlock)) {
+                    return BwrText.tr("status.bwr.plug.not_an_anchor", "There is no crane anchor at %s.", anchor.toShortString());
+                }
+                var sv = PlugSections.survey(level, anchor.below());
+                if (sv.section() == null) {
+                    return sv.problem();
+                }
+                chosen = sv.section();
+            } else {
+                var scan = PlugSections.scan(level, site, env.min().getY(), site.railY - 1, wx, wz);
+                for (var s : scan.sections()) {
+                    if (s.rigged()) {
+                        chosen = s;
+                        break;
+                    }
+                }
+                if (chosen == null && !scan.sections().isEmpty()) {
+                    chosen = scan.sections().get(0);
+                }
+                if (chosen == null) {
+                    return scan.problem() != null ? scan.problem() : BwrText.tr("status.bwr.plug.no_anchors",
+                            "The crane sees no shield plug section to lift: bolt four Crane Anchors on the top of a plug piece, between the rails.");
+                }
+            }
+            if (!site.reaches(chosen.pick()[0], chosen.pick()[1])) {
+                return BwrText.tr("status.bwr.building_crane.out_of_reach", "That position is outside the reach of the crane.");
+            }
+            Component why = sectionProblem(chosen);
+            if (why != null) {
+                return why;
+            }
+            Component[] reason = new Component[1];
+            BlockPos delta = PlugSections.findLaydown(level, site, chosen, env, keepClear(env), reason);
+            if (delta == null) {
+                return reason[0];
+            }
+            PlugPlan p = planOf(chosen, chosen.min(), chosen.min().offset(delta), true);
+            plan = p;
+            Component q = plugRailsProblem(p);
+            if (q == null) {
+                q = queue(new Move(Loc.plug(p.homeMin()), Loc.plug(p.layMin())));
+            }
+            if (q != null) {
+                plan = null;
+            }
+            return q;
+        }
+        // PLUG ON: the newest section on the laydown goes home
+        if (laid.isEmpty()) {
+            return BwrText.tr("status.bwr.plug.nothing_laid", "No shield plug section is set down: PLUG ON puts back what PLUG OFF took off.");
+        }
+        Laid rec = laid.get(laid.size() - 1);
+        var sv = PlugSections.survey(level, rec.seed().below());
+        if (sv.section() == null && sv.problem() != null && !level.isLoaded(rec.seed())) {
+            return sv.problem();
+        }
+        if (sv.section() == null || !sv.section().min().equals(rec.lay())) {
+            laid.remove(laid.size() - 1);
+            setChanged();
+            sync();
+            return BwrText.tr("status.bwr.plug.laid_gone",
+                    "The section that was set down at %s is no longer there as it was (it was broken or changed); its record is cleared. Press PLUG ON again for the one before it.",
+                    rec.lay().toShortString());
+        }
+        Component why = sectionProblem(sv.section());
+        if (why != null) {
+            return why;
+        }
+        PlugPlan p = planOf(sv.section(), rec.home(), rec.lay(), false);
+        plan = p;
+        Component q = plugRailsProblem(p);
+        if (q == null) {
+            q = queue(new Move(Loc.plug(p.layMin()), Loc.plug(p.homeMin())));
+        }
+        if (q != null) {
+            plan = null;
+        }
+        return q;
+    }
+
+    /** What PLUG OFF would take next (or what hangs on the hook): its size, anchors and mass against the rating, shown on the pendant and to computers before any lift. */
+    public record PlugPreview(int blocks, int anchors, double massT, boolean rigged, boolean over, boolean carried, BlockPos min) {
+        public String text() {
+            return String.format(Locale.ROOT, "%d blocks, %.1f t of %.0f t, %d anchors%s", blocks, massT, PlugLift.RATED_CAPACITY_T, anchors,
+                    carried ? ", on the hook" : over ? ", over the rating" : !rigged ? ", needs 4" : "");
+        }
+    }
+
+    private PlugPreview preview;
+    private long previewAt = Long.MIN_VALUE;
+
+    /** The section PLUG OFF would take next, or the one on the hook; null when there is none. Cached for a second (a screen asks twice a second). */
+    @Nullable
+    public PlugPreview plugPreview() {
+        if (!(level instanceof ServerLevel server)) {
+            return null;
+        }
+        if (plugEntity != null && plan != null) {
+            return new PlugPreview(plan.blocks(), plan.anchors().length / 3, plan.massT(), true, PlugLift.overCapacity(plan.massT()), true, plan.homeMin());
+        }
+        if (previewAt != Long.MIN_VALUE && server.getGameTime() - previewAt < 20 && server.getGameTime() >= previewAt) {
+            return preview;
+        }
+        previewAt = server.getGameTime();
+        preview = null;
+        if (site == null || !site.ok()) {
+            return null;
+        }
+        var r = reactor();
+        var env = r == null ? null : r.vesselEnvelope();
+        if (env == null) {
+            return null;
+        }
+        var list = plugSections();
+        PlugSections.Section pick = null;
+        for (var s : list) {
+            if (s.rigged()) {
+                pick = s;
+                break;
+            }
+        }
+        if (pick == null && !list.isEmpty()) {
+            pick = list.get(0);
+        }
+        if (pick != null) {
+            preview = new PlugPreview(pick.blockCount(), pick.anchors().size(), pick.massT(), pick.rigged(), PlugLift.overCapacity(pick.massT()), false, pick.min());
+        }
+        return preview;
+    }
+
+    /** Every anchored shield plug section in the crane's reach, nearest the well first (a scan on demand: a click, a computer's call, a screen's snapshot). */
+    public List<PlugSections.Section> plugSections() {
+        var r = site == null ? null : reactor();
+        var env = r == null ? null : r.vesselEnvelope();
+        if (level == null || site == null || !site.ok() || env == null) {
+            return List.of();
+        }
+        double wx = env.min().getX() + env.width() / 2.0, wz = env.min().getZ() + env.depth() / 2.0;
+        return PlugSections.scan(level, site, env.min().getY(), site.railY - 1, wx, wz).sections();
+    }
+
+    /** Surveys the section standing at {@code min} for the lift in the plan and checks it is the section the plan was made for. */
+    @Nullable
+    private Component surveyPlan(BlockPos min, @Nullable PlugSections.Section[] out) {
+        var sv = PlugSections.survey(level, plan.anchorAt(min, 0).below());
+        if (sv.section() == null) {
+            return sv.problem();
+        }
+        var s = sv.section();
+        if (!s.min().equals(min) || s.blockCount() != plan.blocks() || s.anchors().size() != plan.anchors().length / 3) {
+            return BwrText.tr("status.bwr.plug.changed", "The shield plug section at %s is not as it was when the lift was queued.", min.toShortString());
+        }
+        Component why = sectionProblem(s);
+        if (why != null) {
+            return why;
+        }
+        if (out != null) {
+            out[0] = s;
+        }
+        return null;
+    }
+
+    @Nullable
+    private Component refusePlug(Move m, ReactorControllerBlockEntity r) {
+        Loc from = m.from(), to = m.to();
+        boolean held = from.kind() == Kind.HELD;
+        if (plan == null || to.kind() != Kind.PLUG || (!held && from.kind() != Kind.PLUG)) {
+            return BwrText.tr("status.bwr.building_crane.bad_plug_move", "A shield plug section goes between the plug and the laydown on the refuel floor.");
+        }
+        if (held && plugEntity == null) {
+            return BwrText.tr("status.bwr.building_crane.nothing_held", "The hook is not holding anything.");
+        }
+        BlockPos dst = to.at();
+        if (!dst.equals(plan.homeMin()) && !dst.equals(plan.layMin())) {
+            return BwrText.tr("status.bwr.building_crane.bad_plug_move", "A shield plug section goes between the plug and the laydown on the refuel floor.");
+        }
+        VesselAppearance.Envelope env = r.vesselEnvelope();
+        PlugSections.Section[] sec = new PlugSections.Section[1];
+        List<BlockPos> blocks;
+        Component why;
+        if (!held) {
+            if (!from.at().equals(plugSource(plan)) || dst.equals(from.at())) {
+                return BwrText.tr("status.bwr.building_crane.bad_plug_move", "A shield plug section goes between the plug and the laydown on the refuel floor.");
+            }
+            why = surveyPlan(from.at(), sec);
+            if (why != null) {
+                return why;
+            }
+            blocks = sec[0].blocks();
+            BlockPos delta = dst.subtract(from.at());
+            if (!dst.equals(plan.homeMin())) {
+                why = PlugSections.placeProblem(level, sec[0].cells(), sec[0].min().getY(), delta);
+            } else {
+                why = PlugSections.placeProblem(level, sec[0].cells(), Integer.MIN_VALUE, delta);
+            }
+            if (why != null) {
+                return why;
+            }
+            if (PlugSections.coversWell(env, blocks, delta) && (!dst.equals(plan.homeMin()) || r.vesselState() == VesselState.REFUELING)) {
+                return dst.equals(plan.homeMin())
+                        ? BwrText.tr("status.bwr.plug.head_off", "The plug goes over the reactor well, and the head is off: set the head back on the vessel first.")
+                        : BwrText.tr("status.bwr.plug.laydown_on_well", "That laydown is over the reactor well.");
+            }
+        } else {
+            if (!(level instanceof ServerLevel server) || !(server.getEntity(plugEntity) instanceof PlugSectionEntity e)) {
+                return null; // not loaded: the crane waits, and the set-down checks again
+            }
+            boolean home = dst.equals(plan.homeMin());
+            why = e.placeProblem(level, dst, !home);
+            if (why != null) {
+                return why;
+            }
+            List<BlockPos> abs = new ArrayList<>();
+            for (var c : e.cells()) {
+                if (!(c.state().getBlock() instanceof CraneAnchorBlock)) {
+                    abs.add(new BlockPos(c.x(), c.y(), c.z()));
+                }
+            }
+            if (PlugSections.coversWell(env, abs, dst) && (!home || r.vesselState() == VesselState.REFUELING)) {
+                return home ? BwrText.tr("status.bwr.plug.head_off", "The plug goes over the reactor well, and the head is off: set the head back on the vessel first.")
+                        : BwrText.tr("status.bwr.plug.laydown_on_well", "That laydown is over the reactor well.");
+            }
+        }
+        Point a = columnOf(from.kind() == Kind.HELD ? Loc.plug(plugSource(plan)) : from), b = columnOf(to);
+        if (a == null || b == null || !site.reaches(a.x(), a.z()) || !site.reaches(b.x(), b.z())) {
+            return BwrText.tr("status.bwr.building_crane.out_of_reach", "That position is outside the reach of the crane.");
+        }
+        return plugRailsProblem(plan);
+    }
+
+    /** The hook-on of a plug lift: the blocks leave the world and the section becomes the entity on the hook. Returns null, or why not. */
+    @Nullable
+    private Component takePlug(ServerLevel server, BlockPos min) {
+        if (plan == null) {
+            return BwrText.tr("status.bwr.plug.changed", "The shield plug section at %s is not as it was when the lift was queued.", min.toShortString());
+        }
+        PlugSections.Section[] sec = new PlugSections.Section[1];
+        Component why = surveyPlan(min, sec);
+        if (why != null) {
+            return why;
+        }
+        net.minecraft.world.phys.Vec3 at = new net.minecraft.world.phys.Vec3(pos.x(), pos.y() - plan.hookAboveBase(), pos.z());
+        PlugSectionEntity e = PlugSectionEntity.take(server, worldPosition, sec[0], at);
+        if (e == null) {
+            return BwrText.tr("status.bwr.plug.no_entity", "The shield plug section could not be hooked on: its place in the world would not take the load.");
+        }
+        plugEntity = e.getUUID();
+        setChanged();
+        return null;
+    }
+
+    /** The set-down of a plug lift: puts every block back exactly, removes the entity, and keeps the laydown book. Returns null, or why not. */
+    @Nullable
+    private Component setDownPlug(ServerLevel server, Loc to) {
+        if (plan == null) {
+            return BwrText.tr("status.bwr.building_crane.cannot_release", "Stopped: the load cannot be set down at %s (occupied, or the reactor is no longer ready). It stays on the hook.", to.describe());
+        }
+        if (!(server.getEntity(plugEntity) instanceof PlugSectionEntity e)) {
+            return BwrText.tr("status.bwr.plug.entity_not_loaded", "Stopped: the section on the hook is in a chunk that is not loaded. It stays on the hook.");
+        }
+        BlockPos dst = to.at();
+        boolean home = dst.equals(plan.homeMin());
+        ReactorControllerBlockEntity r = reactor();
+        VesselAppearance.Envelope env = r == null ? null : r.vesselEnvelope();
+        if (home && env != null && r.vesselState() == VesselState.REFUELING) {
+            List<BlockPos> abs = new ArrayList<>();
+            for (var c : e.cells()) {
+                if (!(c.state().getBlock() instanceof CraneAnchorBlock)) {
+                    abs.add(new BlockPos(c.x(), c.y(), c.z()));
+                }
+            }
+            if (PlugSections.coversWell(env, abs, dst)) {
+                return BwrText.tr("status.bwr.plug.head_off", "The plug goes over the reactor well, and the head is off: set the head back on the vessel first.");
+            }
+        }
+        Component why = e.settle(server, dst, !home);
+        if (why != null) {
+            return BwrText.tr("status.bwr.plug.cannot_set_down", "Stopped: %s The section stays on the hook.", why);
+        }
+        e.discard();
+        if (!home) {
+            // set down on the laydown: remember where it belongs
+            laid.add(new Laid(dst.immutable(), plan.homeMin(), plan.anchorAt(dst, 0)));
+        } else {
+            laid.removeIf(l -> l.lay().equals(plan.layMin()));
+        }
+        plugEntity = null;
+        plan = null;
+        setChanged();
+        return null;
+    }
+
+    /** Puts the hanging section's entity under the hook. */
+    private void followPlug(ServerLevel server) {
+        if (plugEntity == null || plan == null || pos == null) {
+            return;
+        }
+        if (server.getEntity(plugEntity) instanceof PlugSectionEntity e) {
+            Point t = tip();
+            e.follow(t.x(), t.y() - plan.hookAboveBase(), t.z());
+        }
+    }
+
+    /** True while the console's rails still make a runway (the section's entity checks once a second). */
+    public boolean runwayStillStands() {
+        return level != null && BridgeSite.surveyCrane(level, worldPosition).ok();
+    }
+
+    private void clearPlugState() {
+        plugEntity = null;
+        plan = null;
+        move = null;
+        queue.clear();
+        route.clear();
+        routeIndex = 0;
+        raisingForMove = false;
+        haltMessage = null;
+        phase = Phase.IDLE;
+        elapsed = 0;
+        legTo = null;
+        setChanged();
+        sync();
+    }
+
+    /** The section's entity has put its blocks back (or dropped them) by itself and gone: the hook is empty. */
+    public void plugReleased(ServerLevel server, UUID id) {
+        if (!id.equals(plugEntity)) {
+            return;
+        }
+        clearPlugState();
+        notifyNearby(server, BwrText.tr("status.bwr.plug.released",
+                "The shield plug section is no longer on the hook: it was put back where it was taken from, or its blocks dropped."));
+    }
+
+    /** The runway no longer stands under a hanging section: the entity has set it back or dropped it. */
+    public void plugLost(ServerLevel server, UUID id) {
+        if (!id.equals(plugEntity)) {
+            return;
+        }
+        clearPlugState();
+        notifyNearby(server, BwrText.tr("status.bwr.plug.runway_lost",
+                "The runway is broken: the shield plug section was put back where it was taken from, or its blocks dropped."));
+    }
+
+    // ---------------------------------------------------------------
     // Ticking
     // ---------------------------------------------------------------
 
@@ -1122,6 +1716,12 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             schedule(server);
             return;
         }
+        if (plugEntity != null && !(server.getEntity(plugEntity) instanceof PlugSectionEntity)) {
+            // worldReady waits while the entity may merely be unloaded; so it is gone, and released its blocks as it went
+            pos = tip();
+            plugReleased(server, plugEntity);
+            return;
+        }
         if (reactor() == null) {
             // the reactor under the crane is gone (broken, unformed): stop where it is; a load stays on the hook
             pos = tip();
@@ -1137,6 +1737,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         if (carriedInternal != null && busy()) {
             updateDose(server);
         }
+        followPlug(server);
         if (busy()) {
             setChanged();
             schedule(server);
@@ -1144,7 +1745,26 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     }
 
     private boolean worldReady(ServerLevel server) {
-        return site == null || site.reactorPos == null || server.isLoaded(site.reactorPos);
+        if (site != null && site.reactorPos != null && !server.isLoaded(site.reactorPos)) {
+            return false;
+        }
+        if (plugEntity != null && plan != null) {
+            // the section's entity must be loaded, and the hook may only carry it into loaded chunks
+            Point here = tip();
+            BlockPos at = here == null ? worldPosition : BlockPos.containing(here.x(), here.y() - plan.hookAboveBase(), here.z());
+            if (!(server.getEntity(plugEntity) instanceof PlugSectionEntity)) {
+                // wait while its chunk or its entities are not loaded; with both loaded it is gone (handled by the tick)
+                return server.isLoaded(at) && server.areEntitiesLoaded(net.minecraft.world.level.ChunkPos.asLong(at));
+            }
+            if (busy() && legTo != null) {
+                Point next = BridgeMotion.lerp(pos, legTo, elapsed + 1, duration);
+                if (!server.isLoaded(BlockPos.containing(next.x(), next.y() - plan.hookAboveBase(), next.z()))
+                        || !server.isLoaded(BlockPos.containing(next.x(), next.y(), next.z()))) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /** The dryer or the separator assembly in the air is a gamma point source at its middle; the head and an empty hook are none. */
@@ -1191,6 +1811,15 @@ public class BuildingCraneBlockEntity extends BlockEntity {
 
     /** A console broken under a hanging load: a dryer or separator assembly goes back in its vessel, a hanging head is laid down on the floor. */
     public void dropCarried(ServerLevel server) {
+        if (plugEntity != null) {
+            // a section on the hook goes back where it was taken from, or its blocks drop as items: never lost
+            if (server.getEntity(plugEntity) instanceof PlugSectionEntity e) {
+                e.releaseSafely(server, true);
+                e.discard();
+            }
+            plugEntity = null;
+            plan = null;
+        }
         if (holding()) {
             ReactorControllerBlockEntity r = site == null ? null : site.reactor(server);
             if (r == null) {
@@ -1217,6 +1846,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     // ---------------------------------------------------------------
 
     public String carriedSummary() {
+        if (plugEntity != null && plan != null) {
+            return String.format(Locale.ROOT, "a shield plug section (%d blocks, %.1f t)", plan.blocks(), plan.massT());
+        }
         if (carriedHead) {
             return "the vessel head";
         }
@@ -1289,6 +1921,23 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         if (holding()) {
             tag.putIntArray("CarriedVessel", carriedVessel);
         }
+        if (plan != null) {
+            tag.put("Plug", plan.save());
+        }
+        if (plugEntity != null) {
+            tag.put("PlugEntity", NbtUtils.createUUID(plugEntity));
+        }
+        if (!laid.isEmpty()) {
+            ListTag list = new ListTag();
+            for (Laid l : laid) {
+                CompoundTag t = new CompoundTag();
+                t.putLong("Lay", l.lay().asLong());
+                t.putLong("Home", l.home().asLong());
+                t.putLong("Seed", l.seed().asLong());
+                list.add(t);
+            }
+            tag.put("Laid", list);
+        }
         if (geom != null) {
             CompoundTag g = new CompoundTag();
             g.putBoolean("AlongX", geom.alongX());
@@ -1334,6 +1983,16 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         carriedHead = tag.getBoolean("CarriedHead");
         carriedInternal = tag.contains("CarriedInternal") ? VesselInternal.byId(tag.getString("CarriedInternal")) : null;
         carriedVessel = holding() ? tag.getIntArray("CarriedVessel") : new int[0];
+        plan = tag.contains("Plug", Tag.TAG_COMPOUND) ? PlugPlan.load(tag.getCompound("Plug")) : null;
+        plugEntity = plan != null && tag.contains("PlugEntity", Tag.TAG_INT_ARRAY) ? NbtUtils.loadUUID(tag.get("PlugEntity")) : null;
+        laid.clear();
+        if (tag.contains("Laid", Tag.TAG_LIST)) {
+            ListTag list = tag.getList("Laid", Tag.TAG_COMPOUND);
+            for (int i = 0; i < list.size(); i++) {
+                CompoundTag t = list.getCompound(i);
+                laid.add(new Laid(BlockPos.of(t.getLong("Lay")), BlockPos.of(t.getLong("Home")), BlockPos.of(t.getLong("Seed"))));
+            }
+        }
         paused = tag.getBoolean("Paused");
         if (tag.contains("Geom", Tag.TAG_COMPOUND)) {
             CompoundTag g = tag.getCompound("Geom");

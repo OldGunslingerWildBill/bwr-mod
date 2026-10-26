@@ -10,12 +10,14 @@ import dev.bwr.mod.reactor.VesselState;
 import dev.bwr.mod.refuelling.BridgeSite;
 import dev.bwr.mod.refuelling.BuildingCraneBlockEntity;
 import dev.bwr.mod.text.BwrText;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 
 import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * CC:Tweaked peripheral for the reactor building crane console: queue the head's lift or return, queue the dryer's or the separator
@@ -90,6 +92,11 @@ public class BuildingCranePeripheral implements IPeripheral {
         m.put("holding", be.holding());
         m.put("carried", be.carriedSummary());
         m.put("hook", point(be.tip()));
+        m.put("plugsLaid", be.plugsLaid());
+        var next = be.plugPreview();
+        if (next != null) {
+            m.put("plugNext", previewMap(next));
+        }
         if (be.haltMessage() != null) {
             m.put("haltReason", BwrText.english(be.haltMessage()));
         }
@@ -136,6 +143,57 @@ public class BuildingCranePeripheral implements IPeripheral {
     @LuaFunction(mainThread = true)
     public final Map<String, Object> queueInternalIn(String name) throws LuaException {
         Component why = be.queueInternal(internal(name), false);
+        return result(why == null, why);
+    }
+
+    private static Map<String, Object> previewMap(BuildingCraneBlockEntity.PlugPreview p) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("blocks", p.blocks());
+        m.put("anchors", p.anchors());
+        m.put("massT", p.massT());
+        m.put("ratedT", dev.bwr.core.refuelling.PlugLift.RATED_CAPACITY_T);
+        m.put("rigged", p.rigged());
+        m.put("overCapacity", p.over());
+        m.put("onHook", p.carried());
+        m.put("x", p.min().getX());
+        m.put("y", p.min().getY());
+        m.put("z", p.min().getZ());
+        return m;
+    }
+
+    /**
+     * Every shield plug section in the crane's reach that has a crane anchor, nearest the well first: its minimum corner, blocks, anchors, mass in
+     * tonnes against the rated load, and whether PLUG OFF would take it (four anchors, under the rating). Nothing moves.
+     */
+    @LuaFunction(mainThread = true)
+    public final java.util.List<Map<String, Object>> getPlugSections() {
+        be.refreshSite();
+        java.util.List<Map<String, Object>> out = new java.util.ArrayList<>();
+        for (var s : be.plugSections()) {
+            out.add(previewMap(new BuildingCraneBlockEntity.PlugPreview(s.blockCount(), s.anchors().size(), s.massT(), s.rigged(),
+                    dev.bwr.core.refuelling.PlugLift.overCapacity(s.massT()), false, s.min())));
+        }
+        return out;
+    }
+
+    /**
+     * Queue lifting a shield plug section off the plug and setting it down on the nearest clear spot of the refuel floor. With no argument the section
+     * nearest the well that has its four crane anchors; with the position of one of its anchors (x, y, z), the section that anchor is on.
+     */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> queuePlugOff(Optional<Double> x, Optional<Double> y, Optional<Double> z) throws LuaException {
+        if (x.isPresent() != y.isPresent() || y.isPresent() != z.isPresent()) {
+            throw new LuaException("expected no arguments, or the x, y and z of a crane anchor");
+        }
+        BlockPos anchor = x.isPresent() ? BlockPos.containing(x.get(), y.get(), z.get()) : null;
+        Component why = be.queuePlug(true, anchor);
+        return result(why == null, why);
+    }
+
+    /** Queue setting the shield plug section that was last laid down back exactly where it came from. */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> queuePlugOn() {
+        Component why = be.queuePlug(false, null);
         return result(why == null, why);
     }
 

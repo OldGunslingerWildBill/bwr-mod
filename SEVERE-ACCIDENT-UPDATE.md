@@ -405,6 +405,10 @@ The containment wall rule caps one block at 250 psi, which would give the two up
 exact ratings are carried by the mod's own data pack override, `data/bwr/bwr_containment/strength.json`, so they are also
 worth that much in a containment wall. Regenerate the assets with `python tools-make-shield-plug-assets.py`.
 
+The blocks can be cut into liftable sections with **seams** (a block state, no effect on the rating) and lifted off the well by the reactor building crane,
+four **Crane Anchors** to a section: see [BUILDING-CRANE.md](BUILDING-CRANE.md), "Lifting the shield plugs". A lifted section's blocks are not in the well, so they
+stop no head and shield nothing until they are put back.
+
 ### What survives, exactly
 
 - **Never broken, whatever the pressure:** air and pure fluid; any block with `destroySpeed < 0` (bedrock, end

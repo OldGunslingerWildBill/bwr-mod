@@ -851,6 +851,19 @@ public final class GuiScreenCheck {
         s.add(new Scenario("crane-lifting-head", i -> new CraneScreen(crane("TRANSIT", false, true, 0), i, t("Reactor Building Crane"))));
         s.add(new Scenario("crane-halted", i -> new CraneScreen(crane("HALTED", true, false, 3), i, t("Reactor Building Crane"))));
         s.add(new Scenario("crane-idle-head-on", i -> new CraneScreen(crane("IDLE", false, false, 0), i, t("Reactor Building Crane"))));
+        s.add(new Scenario("crane-plug-laid-down", i -> {
+            var m = crane("IDLE", false, false, 0);
+            m.plugsLaid = 2;
+            return new CraneScreen(m, i, t("Reactor Building Crane"));
+        }));
+        s.add(new Scenario("crane-lifting-plug", i -> {
+            var m = crane("TRANSIT", false, false, 0);
+            m.carried = "a shield plug section (28 blocks, 110.7 t)";
+            m.plugHeld = true;
+            m.plugsLaid = 1;
+            m.move = "the shield plug section at 199,209,199 to the shield plug section at 207,209,191";
+            return new CraneScreen(m, i, t("Reactor Building Crane"));
+        }));
         s.add(new Scenario("crane-no-runway", i -> {
             var m = new CraneMenu(99, i, P);
             m.present = true;

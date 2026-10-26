@@ -294,6 +294,11 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.CRANE_RUNWAY_RAIL);
     public static final DeferredItem<BlockItem> HEAD_STAND =
             ITEMS.registerSimpleBlockItem(BwrBlocks.HEAD_STAND);
+    public static final DeferredItem<BlockItem> CRANE_ANCHOR =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CRANE_ANCHOR);
+    /** Marks the joints that cut a shield plug into sections the crane lifts one at a time. */
+    public static final DeferredItem<Item> PLUG_SEAM_MARKER =
+            ITEMS.register("plug_seam_marker", () -> new dev.bwr.mod.refuelling.PlugSeamMarkerItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<BlockItem> STUD_TENSIONER =
             ITEMS.registerSimpleBlockItem(BwrBlocks.STUD_TENSIONER);
     public static final DeferredItem<BlockItem> SUPPRESSION_POOL_CONTROLLER =
@@ -639,6 +644,8 @@ public final class BwrItems {
                         output.accept(CRANE_RUNWAY_RAIL.get());
                         output.accept(BUILDING_CRANE_CONSOLE.get());
                         output.accept(HEAD_STAND.get());
+                        output.accept(CRANE_ANCHOR.get());
+                        output.accept(PLUG_SEAM_MARKER.get());
                         output.accept(STUD_TENSIONER.get());
                         output.accept(SUPPRESSION_POOL_CONTROLLER.get());
                         output.accept(SUPPRESSION_POOL_WALL.get());

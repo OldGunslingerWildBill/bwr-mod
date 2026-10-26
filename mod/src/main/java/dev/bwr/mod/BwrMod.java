@@ -103,6 +103,7 @@ public final class BwrMod {
         modBus.addListener(dev.bwr.mod.isotope.IsotopeCapabilities::register);
         modBus.addListener(dev.bwr.mod.isotope.RtgFuels::register);
         modBus.addListener(dev.bwr.mod.radiation.BlockShielding::register);
+        modBus.addListener(dev.bwr.mod.refuelling.PlugMass::register);
         modBus.addListener(dev.bwr.mod.spentfuel.SpentFuelPoolCapabilities::register);
         modBus.addListener(dev.bwr.mod.containment.ContainmentPenetrationCapabilities::register);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(

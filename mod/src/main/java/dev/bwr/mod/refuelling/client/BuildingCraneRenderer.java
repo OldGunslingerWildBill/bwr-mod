@@ -141,7 +141,9 @@ public final class BuildingCraneRenderer implements BlockEntityRenderer<Building
 
         // what hangs from the hook, drawn in world coordinates as it sat in its vessel: the head with its strongback, or the dryer or separators
         VesselProfile vessel = be.carriedProfile();
-        if (vessel != null && be.carriedHead()) {
+        if (be.carriedPlug() && be.plugPlan() != null) {
+            hangPlugRig(pose, buffers, tip, be.plugPlan(), level, overlay);
+        } else if (vessel != null && be.carriedHead()) {
             hangHead(pose, buffers, tip, vessel, level, overlay);
         } else if (vessel != null && be.carriedInternal() != null) {
             var internal = be.carriedInternal();
@@ -157,6 +159,44 @@ public final class BuildingCraneRenderer implements BlockEntityRenderer<Building
             }
             pose.popPose();
         }
+        pose.popPose();
+    }
+
+    /**
+     * A shield plug section on its four-point rig: the hook's ring and one sling from its shackle to each of the four crane anchors on the section
+     * (the section itself is the {@code PlugSectionEntity}, drawn under the hook by {@code PlugSectionRenderer}).
+     */
+    private static void hangPlugRig(PoseStack pose, MultiBufferSource buffers, Point tip, BuildingCraneBlockEntity.PlugPlan plan,
+                                    net.minecraft.world.level.Level level, int overlay) {
+        int lit = work(LevelRenderer.getLightColor(level, BlockPos.containing(tip.x(), tip.y() - 1, tip.z())));
+        pose.pushPose();
+        pose.translate(tip.x(), tip.y(), tip.z());
+        part(pose, buffers, "strongback_hook", lit, overlay);
+        pose.popPose();
+        double baseY = tip.y() - plan.hookAboveBase();
+        for (int i = 0; i + 2 < plan.anchors().length; i += 3) {
+            double ax = tip.x() + plan.anchors()[i] + 0.5 - plan.px();
+            double ay = baseY + plan.anchors()[i + 1] + 0.42;
+            double az = tip.z() + plan.anchors()[i + 2] + 0.5 - plan.pz();
+            slingBetween(pose, buffers, tip.x(), tip.y() - SHACKLE_DROP, tip.z(), ax, ay, az, lit, overlay);
+        }
+    }
+
+    /** A sling between two points: the unit vertical rope turned and stretched to join them. */
+    private static void slingBetween(PoseStack pose, MultiBufferSource buffers, double x0, double y0, double z0, double x1, double y1, double z1, int lit, int overlay) {
+        // the unit rope runs up from its origin: start it at the lower end (the anchor) and turn it towards the shackle
+        double dx = x0 - x1, dy = y0 - y1, dz = z0 - z1;
+        double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (length < 0.02) {
+            return;
+        }
+        pose.pushPose();
+        pose.translate(x1, y1, z1);
+        pose.mulPose(new org.joml.Quaternionf().rotationTo(0f, 1f, 0f, (float) (dx / length), (float) (dy / length), (float) (dz / length)));
+        Matrix3f normal = new Matrix3f(pose.last().normal());
+        pose.scale(0.04f, (float) length, 0.04f);
+        pose.last().normal().set(normal);
+        part(pose, buffers, "sling", lit, overlay);
         pose.popPose();
     }
 
