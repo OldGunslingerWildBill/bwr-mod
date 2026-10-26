@@ -253,6 +253,16 @@ From `-PbwrBuildingCraneCheck` (`BuildingCraneClientCheck`), a real client, the 
 
 ![The pendant screen](art/building-crane/crane-pendant-screen.png)
 
+Shield plug lifting (the same check):
+
+![A stepped plug over the well with its crane anchors, seamed into a west and east slab and a stepped top](art/building-crane/plug-stepped-with-anchors-and-seams.png)
+
+![The stepped top section hanging from the hook on four slings, a plug section entity](art/building-crane/plug-section-on-the-hook.png)
+
+![The section set down on the refuel floor, the slabs still on the well](art/building-crane/plug-section-set-down.png)
+
+![The well open, every section off](art/building-crane/plug-open-well.png)
+
 Also in the set: `tensioner-screen.png` and `studs-detensioned-nuts-off.png`. The Workbench review renders of the Blender parts are in `art/models/building_crane/`.
 
 ## Performance, chunks, saves
