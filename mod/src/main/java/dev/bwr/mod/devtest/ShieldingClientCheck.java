@@ -177,6 +177,12 @@ public final class ShieldingClientCheck {
         l.setBlock(ROOT.offset(-2, 1, -2), Blocks.LANTERN.defaultBlockState(), 3);
         l.setBlock(ROOT.offset(2, 1, -2), Blocks.LANTERN.defaultBlockState(), 3);
         l.setBlock(ROOT.offset(-2, 1, 2), Blocks.LANTERN.defaultBlockState(), 3);
+        // invisible light blocks under the lid (they shield nothing, as air), so the inside picture is not dark
+        for (int x = -2; x <= 2; x += 2) {
+            for (int z = -2; z <= 0; z += 2) {
+                l.setBlock(ROOT.offset(x, 3, z), Blocks.LIGHT.defaultBlockState(), 3);
+            }
+        }
         l.setDayTime(6000);
         l.setWeatherParameters(6000, 0, false, false);
     }
