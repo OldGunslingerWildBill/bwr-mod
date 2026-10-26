@@ -207,6 +207,36 @@ public final class PlugLiftTests {
         }
     }
 
+    private interface Body {
+        void run() throws Exception;
+    }
+
+    /**
+     * Runs {@code body} ten ticks after the fixtures were built, then disposes them and succeeds. The wait matters: an entity added to a chunk that has only
+     * just been forced is not visible to the level until the chunk is entity-ticking, and the crane (rightly) waits for its section's entity.
+     */
+    private static void later(GameTestHelper h, Body body, Rig... rigs) {
+        h.runAfterDelay(10, () -> {
+            try {
+                body.run();
+            } catch (RuntimeException | Error e) {
+                disposeAll(rigs);
+                throw e;
+            } catch (Exception e) {
+                disposeAll(rigs);
+                throw new IllegalStateException(e);
+            }
+            disposeAll(rigs);
+            h.succeed();
+        });
+    }
+
+    private static void disposeAll(Rig... rigs) {
+        for (Rig r : rigs) {
+            r.dispose();
+        }
+    }
+
     private static boolean allAir(ServerLevel level, BlockPos min, Map<BlockPos, BlockState> shape) {
         for (var e : shape.entrySet()) {
             if (!e.getValue().isAir() && !level.getBlockState(min.offset(e.getKey())).isAir()) {
@@ -356,7 +386,7 @@ public final class PlugLiftTests {
     @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
     public static void plugOffLiftsExactlyOneSectionOffTheWellAndSetsItDownExactlyOnTheFloor(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(2));
-        try {
+        later(h, () -> {
             BlockPos[] sec = r.twoSections();
             BlockPos a = sec[0], b = sec[1];
             var shapeA = r.snapshot(a, 3, 3, 3);
@@ -407,16 +437,13 @@ public final class PlugLiftTests {
             h.assertTrue(crane.queuePlug(true, null) == null, "the next PLUG OFF queued: ");
             r.run(h);
             h.assertTrue(allAir(r.level, b, shapeB) && crane.plugsLaid() == 2, "the second section is off too");
-        } finally {
-            r.dispose();
-        }
-        h.succeed();
+        }, r);
     }
 
     @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
     public static void plugOnPutsTheSectionBackExactlyStateForState(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(3));
-        try {
+        later(h, () -> {
             BlockPos[] sec = r.twoSections();
             BlockPos a = sec[0];
             // make the section interesting: a tier mix and a seam on its own top
@@ -437,10 +464,7 @@ public final class PlugLiftTests {
             h.assertTrue(allAir(r.level, lay, before), "the laydown is empty again");
             h.assertTrue(crane.plugsLaid() == 0 && r.entities().isEmpty() && crane.plugPlan() == null, "nothing laid, no entity, no plan");
             h.assertTrue(PlugSections.survey(r.level, a).section().blockCount() == 18, "the section is whole and seamed as before");
-        } finally {
-            r.dispose();
-        }
-        h.succeed();
+        }, r);
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -450,7 +474,7 @@ public final class PlugLiftTests {
     @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
     public static void aSectionOverTheCranesRatingIsRefusedAndASeamBringsItUnderIt(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(4));
-        try {
+        later(h, () -> {
             BlockPos min = r.o.offset(8, 9, -12);
             r.plug(min, 8, 1, 8, 1);
             r.fourAnchors(min, 8, 1, 8);
@@ -476,16 +500,13 @@ public final class PlugLiftTests {
             h.assertTrue(ok == null, "a half under the rating is taken: " + english(ok));
             r.run(h);
             h.assertTrue(crane.plugsLaid() == 1 && r.entities().isEmpty(), "and set down");
-        } finally {
-            r.dispose();
-        }
-        h.succeed();
+        }, r);
     }
 
     @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
     public static void thirtySixBlocksOfTheHeaviestTierAreOverTheRatingAndThirtyFiveAreNot(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(16));
-        try {
+        later(h, () -> {
             BlockPos min = r.o.offset(8, 9, -12);
             r.plug(min, 6, 1, 6, 3);
             r.fourAnchors(min, 6, 1, 6);
@@ -500,16 +521,13 @@ public final class PlugLiftTests {
             Component ok = r.crane().queuePlug(true, null);
             h.assertTrue(ok == null, "122.5 t is under the rating: " + english(ok));
             r.run(h);
-        } finally {
-            r.dispose();
-        }
-        h.succeed();
+        }, r);
     }
 
     @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
     public static void aSectionNeedsExactlyFourAnchorsToBeLifted(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(5));
-        try {
+        later(h, () -> {
             BlockPos min = r.wellBase();
             r.plug(min, 3, 2, 3, 1);
             var crane = r.crane();
@@ -538,10 +556,7 @@ public final class PlugLiftTests {
             r.run(h);
             h.assertTrue(crane.queuePlug(true, min.offset(1, 2, 2)) != null && english(crane.queuePlug(true, min.offset(1, 2, 2))).contains("no crane anchor"),
                     "an anchor that is not there");
-        } finally {
-            r.dispose();
-        }
-        h.succeed();
+        }, r);
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -551,7 +566,7 @@ public final class PlugLiftTests {
     @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
     public static void liftHeadIsRefusedWhileAPlugCoversTheWellAndAllowedOnceItIsOff(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(6));
-        try {
+        later(h, () -> {
             BlockPos min = r.wellBase();
             r.plug(min, 3, 2, 3, 2);
             r.fourAnchors(min, 3, 2, 3);
@@ -583,10 +598,7 @@ public final class PlugLiftTests {
             h.assertTrue(crane.queuePlug(false, null) == null, "PLUG ON allowed once the head is back");
             r.run(h);
             h.assertTrue(PlugSections.plugOverWell(r.level, r.env, crane.site().railY).size() == 18, "the plug is over the well again");
-        } finally {
-            r.dispose();
-        }
-        h.succeed();
+        }, r);
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -596,7 +608,7 @@ public final class PlugLiftTests {
     @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
     public static void aLaydownThatIsNotClearIsRefusedAndNoBlockIsEverReplaced(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(7));
-        try {
+        later(h, () -> {
             BlockPos[] sec = r.twoSections();
             var crane = r.crane();
             // 1. no floor at all: no place to set it down
@@ -640,10 +652,7 @@ public final class PlugLiftTests {
             crane.resume();
             r.run(h);
             h.assertTrue(sameStates(r.level, lay, shapeA) && r.entities().isEmpty(), "with the way clear the set-down finishes exactly");
-        } finally {
-            r.dispose();
-        }
-        h.succeed();
+        }, r);
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -653,7 +662,7 @@ public final class PlugLiftTests {
     @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
     public static void aSectionHangingFromTheHookSavesAndLoadsOnceWithEveryBlock(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(8));
-        try {
+        later(h, () -> {
             BlockPos[] sec = r.twoSections();
             var shapeA = r.snapshot(sec[0], 3, 3, 3);
             var shapeB = r.snapshot(sec[1], 3, 3, 3);
@@ -703,10 +712,7 @@ public final class PlugLiftTests {
             // a saved crane that finished writes no plug data
             CompoundTag done = r.crane().saveWithoutMetadata(regs);
             h.assertTrue(!done.contains("PlugEntity") && !done.contains("Plug") && done.contains("Laid"), "only the laydown book remains");
-        } finally {
-            r.dispose();
-        }
-        h.succeed();
+        }, r);
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -715,9 +721,12 @@ public final class PlugLiftTests {
 
     @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
     public static void aCraneOrRunwayBrokenUnderAHangingSectionLosesNoBlocks(GameTestHelper h) throws Exception {
-        // (a) the console is broken: the section goes back where it came from, state for state
         Rig r = new Rig(h.getLevel(), at(9));
-        try {
+        Rig q = new Rig(h.getLevel(), at(10));
+        Rig s = new Rig(h.getLevel(), at(11));
+        Rig k = new Rig(h.getLevel(), at(12));
+        later(h, () -> {
+            // (a) the console is broken: the section goes back where it came from, state for state
             BlockPos[] sec = r.twoSections();
             var shapeA = r.snapshot(sec[0], 3, 3, 3);
             h.assertTrue(r.crane().queuePlug(true, null) == null, "queued");
@@ -726,71 +735,53 @@ public final class PlugLiftTests {
             r.level.setBlock(r.f.console, Blocks.AIR.defaultBlockState(), 3);
             h.assertTrue(r.entities().isEmpty(), "the entity is gone");
             h.assertTrue(sameStates(r.level, sec[0], shapeA), "the section is back where it was taken from, exactly");
-        } finally {
-            r.dispose();
-        }
-        // (b) the console is broken and the place it came from has been built over: the blocks drop as items, all of them
-        Rig q = new Rig(h.getLevel(), at(10));
-        try {
-            BlockPos[] sec = q.twoSections();
-            var shapeA = q.snapshot(sec[0], 3, 3, 3);
+            // (b) the console is broken and the place it came from has been built over: the blocks drop as items, all of them
+            BlockPos[] secQ = q.twoSections();
+            var shapeAQ = q.snapshot(secQ[0], 3, 3, 3);
             h.assertTrue(q.crane().queuePlug(true, null) == null, "queued");
             q.f.runCraneUntil(Phase.TRANSIT, 120_000);
-            q.level.setBlock(sec[0].offset(1, 0, 1), Blocks.OBSIDIAN.defaultBlockState(), 2);
+            q.level.setBlock(secQ[0].offset(1, 0, 1), Blocks.OBSIDIAN.defaultBlockState(), 2);
             q.level.setBlock(q.f.console, Blocks.AIR.defaultBlockState(), 3);
             h.assertTrue(q.entities().isEmpty(), "the entity is gone");
-            h.assertTrue(q.level.getBlockState(sec[0].offset(1, 0, 1)).is(Blocks.OBSIDIAN) && solid(q.snapshot(sec[0], 3, 3, 3)) == 1,
+            h.assertTrue(q.level.getBlockState(secQ[0].offset(1, 0, 1)).is(Blocks.OBSIDIAN) && solid(q.snapshot(secQ[0], 3, 3, 3)) == 1,
                     "nothing was replaced at the origin, and nothing was put there");
-            h.assertTrue(shapeA.size() == 27, "fixture");
-            int plugItems = 0, anchorItems = 0;
-            for (ItemEntity item : q.level.getEntitiesOfClass(ItemEntity.class, new AABB(q.o.getCenter().add(-60, -20, -60), q.o.getCenter().add(80, 60, 60)))) {
-                if (item.getItem().is(BwrItems.SHIELD_PLUG_CONCRETE.get())) {
-                    plugItems += item.getItem().getCount();
-                } else if (item.getItem().is(BwrItems.CRANE_ANCHOR.get())) {
-                    anchorItems += item.getItem().getCount();
+            h.assertTrue(shapeAQ.size() == 27, "fixture");
+            int plugItemsQ = 0, anchorItemsQ = 0;
+            for (ItemEntity itemQ : q.level.getEntitiesOfClass(ItemEntity.class, new AABB(q.o.getCenter().add(-60, -20, -60), q.o.getCenter().add(80, 60, 60)))) {
+                if (itemQ.getItem().is(BwrItems.SHIELD_PLUG_CONCRETE.get())) {
+                    plugItemsQ += itemQ.getItem().getCount();
+                } else if (itemQ.getItem().is(BwrItems.CRANE_ANCHOR.get())) {
+                    anchorItemsQ += itemQ.getItem().getCount();
                 }
             }
-            h.assertTrue(plugItems == 18 && anchorItems == 4, "every block dropped as an item: " + plugItems + " plug blocks and " + anchorItems + " anchors");
-        } finally {
-            q.dispose();
-        }
-        // (c) the runway is broken: the section's own once-a-second check puts it back, and the crane lets go of it
-        Rig s = new Rig(h.getLevel(), at(11));
-        try {
-            BlockPos[] sec = s.twoSections();
-            var shapeA = s.snapshot(sec[0], 3, 3, 3);
+            h.assertTrue(plugItemsQ == 18 && anchorItemsQ == 4, "every block dropped as an itemQ: " + plugItemsQ + " plug blocks and " + anchorItemsQ + " anchors");
+            // (c) the runway is broken: the section's own once-a-second check puts it back, and the crane lets go of it
+            BlockPos[] secS = s.twoSections();
+            var shapeAS = s.snapshot(secS[0], 3, 3, 3);
             h.assertTrue(s.crane().queuePlug(true, null) == null, "queued");
             s.f.runCraneUntil(Phase.TRANSIT, 120_000);
-            PlugSectionEntity e = s.entities().get(0);
+            PlugSectionEntity eS = s.entities().get(0);
             // while the runway stands, its checks change nothing
-            e.tickCount = 20;
-            e.tick();
+            eS.tickCount = 20;
+            eS.tick();
             h.assertTrue(s.entities().size() == 1 && s.crane().carriedPlug(), "a healthy crane keeps its load");
             for (int x = -3; x <= 22; x++) {
                 s.level.setBlock(s.o.offset(x, RAIL_DY, 9), Blocks.AIR.defaultBlockState(), 2);
             }
-            e.tickCount = 40;
-            e.tick();
-            h.assertTrue(s.entities().isEmpty() && !s.crane().carriedPlug() && sameStates(s.level, sec[0], shapeA), "the section was put back exactly and the hook let go");
-        } finally {
-            s.dispose();
-        }
-        // (d) /kill on the entity does not lose the blocks either
-        Rig k = new Rig(h.getLevel(), at(12));
-        try {
-            BlockPos[] sec = k.twoSections();
-            var shapeA = k.snapshot(sec[0], 3, 3, 3);
+            eS.tickCount = 40;
+            eS.tick();
+            h.assertTrue(s.entities().isEmpty() && !s.crane().carriedPlug() && sameStates(s.level, secS[0], shapeAS), "the section was put back exactly and the hook let go");
+            // (d) /kill on the entity does not lose the blocks either
+            BlockPos[] secK = k.twoSections();
+            var shapeAK = k.snapshot(secK[0], 3, 3, 3);
             h.assertTrue(k.crane().queuePlug(true, null) == null, "queued");
             k.f.runCraneUntil(Phase.TRANSIT, 120_000);
             k.entities().get(0).kill();
-            h.assertTrue(k.entities().isEmpty() && sameStates(k.level, sec[0], shapeA), "a killed section went back where it came from");
+            h.assertTrue(k.entities().isEmpty() && sameStates(k.level, secK[0], shapeAK), "a killed section went back where it came from");
             h.assertTrue(k.crane().carriedPlug(), "the crane still thinks it holds it until it ticks");
             k.crane().scheduledTick(k.level);
             h.assertTrue(!k.crane().carriedPlug() && !k.crane().busy() && k.crane().plugPlan() == null, "the crane then lets go of it: the hook is empty");
-        } finally {
-            k.dispose();
-        }
-        h.succeed();
+        }, r, q, s, k);
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -800,7 +791,7 @@ public final class PlugLiftTests {
     @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 400)
     public static void theHeadMissileAndTheShieldingSeeThePlugOnlyWhileItIsOnTheWell(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(13));
-        try {
+        later(h, () -> {
             // a plug of one layer of the heaviest tier over the whole well and its margin, cut by a seam into a 4 x 7 and a 3 x 7 piece
             BlockPos min = new BlockPos(r.env.min().getX(), r.env.max().getY() + 1, r.env.min().getZ());
             r.plug(min, 7, 1, 7, 3);
@@ -859,16 +850,13 @@ public final class PlugLiftTests {
             h.assertTrue(sameStates(r.level, min, whole), "the plug is whole again, state for state");
             var launch3 = HeadMissileLauncher.launch(r.level, r.env.min(), r.env.max(), stored, psig);
             h.assertTrue(launch3 != null && launch3.stopRow() == 0 && launch3.ceilingY() == row, "the plug put back stops the head at its first row again");
-        } finally {
-            r.dispose();
-        }
-        h.succeed();
+        }, r);
     }
 
     @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
     public static void aRadiationSourceBelowThePlugIsShieldedOnlyWhileTheSectionIsOnTheWell(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(14));
-        try {
+        later(h, () -> {
             BlockPos[] sec = r.twoSections();
             var crane = r.crane();
             Vec3 source = new Vec3(sec[0].getX() + 1.5, sec[0].getY() - 3.5, sec[0].getZ() + 1.5);
@@ -892,10 +880,7 @@ public final class PlugLiftTests {
             } finally {
                 RadiationSources.clear(r.level, owner);
             }
-        } finally {
-            r.dispose();
-        }
-        h.succeed();
+        }, r);
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -905,7 +890,7 @@ public final class PlugLiftTests {
     @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
     public static void anOldCraneWithNoPlugDataLoadsAndAnIdleCraneWithAPlugWritesNoneAndTicksNothing(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(15));
-        try {
+        later(h, () -> {
             var regs = r.level.registryAccess();
             BlockPos[] sec = r.twoSections();
             var shape = r.snapshot(sec[0], 3, 3, 3);
@@ -937,14 +922,10 @@ public final class PlugLiftTests {
             BlockState fromOld = net.minecraft.nbt.NbtUtils.readBlockState(net.minecraft.core.registries.BuiltInRegistries.BLOCK.asLookup(), oldBlock);
             h.assertTrue(fromOld == BwrBlocks.SHIELD_PLUG_CONCRETE.get().defaultBlockState() && !ShieldPlugConcreteBlock.hasSeam(fromOld),
                     "an old plug block (no properties saved) is the plain block with no seams");
-            h.assertTrue(!r.level.getBlockTicks().hasScheduledTick(r.f.console, r.level.getBlockState(r.f.console).getBlock()) && !loaded.busy(),
-                    "idle again: no tick is scheduled");
+            h.assertTrue(!loaded.busy() && loaded.phase() == Phase.IDLE && loaded.plugPlan() == null, "idle again, with nothing to tick");
             h.assertTrue(PlugLift.RATED_CAPACITY_T == 125.0 && shape != null, "the crane is rated 125 t");
             BlockEntity be = r.level.getBlockEntity(r.f.console);
             h.assertTrue(be == loaded, "fixture sanity");
-        } finally {
-            r.dispose();
-        }
-        h.succeed();
+        }, r);
     }
 }

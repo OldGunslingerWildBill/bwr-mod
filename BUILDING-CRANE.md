@@ -11,6 +11,8 @@ dryer/separator storage pool. The **refuelling bridge moves fuel only**. Nothing
 4. The refuelling bridge moves the fuel ([REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md)).
 5. Then the reverse: separators in, dryer in, head on the flange, and the tensioner brings the studs back to load.
 
+Before any of that, the same crane lifts the **shield plugs** off the well, section by section (PLUG OFF / PLUG ON, see "Lifting the shield plugs" below).
+
 The old HEAD OFF button is the server option **`instantHeadRemoval`** (`bwr-gameplay.toml`), **off by default**. Off, the panel's head button explains
 this procedure. On, it lifts and seats the head at once, as it always did, for casual play.
 
@@ -58,7 +60,7 @@ While any stud is bare the head is **not sealed**: with the head on but one nut 
 
 ### The crane
 
-The pendant screen has LIFT HEAD / SET HEAD, DRYER OUT / DRYER IN, SEPS OUT / SEPS IN, ABORT and RESUME, the phase and its time, what hangs from
+The pendant screen has LIFT HEAD / SET HEAD, DRYER OUT / DRYER IN, SEPS OUT / SEPS IN, PLUG OFF / PLUG ON, ABORT and RESUME, the phase and its time, what hangs from
 the hook, where the head and the studs are and the reason for a halt.
 
 * **LIFT HEAD** needs every stud detensioned, the pressure at 25 psig or less and the head not failed; it takes the head to the nearest free stand that
@@ -82,6 +84,93 @@ A lift, phase by phase (the same phases as the bridge, with a crane's numbers):
 | raise | the empty hook goes back up | 0.5 m/s |
 
 Measured in the GameTests with the 7 x 7 x 10 vessel, the stand 11 m from its middle and the rails 14 blocks above the floor: **head to the stand 108 s, dryer out 121 s, separators out 111 s, head back on 98 s** (each a whole lift: travel, lower, hook on, lift, carry, set down, unhook, raise).
+
+## Lifting the shield plugs (PLUG OFF / PLUG ON)
+
+In a real plant the first step of an outage is lifting the **shield plugs**, the huge stepped concrete sections over the reactor well, off with this same crane onto the
+refuel floor. Before this change the mod had no such step: a player mined plug blocks by hand (hardness 4, 8 or 16). Now the crane does it, one section at a time, by command.
+Nothing acts by itself: every lift is a button on the pendant (or a computer's call), and ABORT and RESUME work as for the other lifts.
+
+### What you build
+
+* **Shield plug concrete** over the well, in any shape and any of the three tiers (see SEVERE-ACCIDENT-UPDATE.md). These are the blocks that stop a thrown head and shield by
+  half-value layer; nothing about them changed except that they can now carry **seams**.
+* **Crane Anchors** (`bwr:crane_anchor`, two iron ingots make four): a steel lifting eye bolted to the **top face of a plug block**. It can be placed on nothing else, and breaks
+  if the plug block under it goes. Four anchors on the tops of the blocks of a piece make it a four-point lift. An anchor marks the whole piece under it as liftable.
+* **The Plug Seam Marker** (`bwr:plug_seam_marker`, an iron ingot on a stick): cuts the plug into pieces.
+* The crane, its rails and console as before, a **refuel floor** to set the pieces on (any solid blocks), and enough height: the load hangs from the hook on its slings, and the
+  rails must be higher than the section's own height plus its slings above the floor (the crane says "raise the rails to y ..." when they are not).
+
+### Splitting a plug: seams
+
+A plug is cut into sections by **seams**. A seam is a marked **joint between two touching plug blocks**. A **section** is the set of plug blocks connected, face to face, to a
+block that carries an anchor, flood-filled, **stopping at a seam and at any block that is not shield plug concrete**; the anchors standing on those blocks belong to it.
+
+* **To mark a seam:** right-click a plug block with the Plug Seam Marker **near the edge where you want the cut**. The click picks the nearest edge of the face you hit, and the
+  joint between that block and the plug block beyond that edge becomes a seam. A seam is drawn as a **dark groove** one pixel wide round the four faces at the joint (so two
+  blocks give a two pixel line), and it shows on both blocks. To cut a whole plane, click along it.
+* **To undo it:** click the same place again; the seam is removed. **Sneak-click** a block to clear every seam on it. Nothing else about a block changes: the marker does not
+  move or break blocks, is not used up, and does not change blast resistance, shielding or mining.
+* A seam must lie between two plug blocks (the marker tells you when the other side is not plug). It is stored as one boolean property on each of the two blocks for the face it is on
+  (`seam_north`, `seam_up`, and so on), all false by default, so it is part of the block's state: it saves with the world, survives every lift exactly, and old worlds are unchanged.
+  One block carrying the seam is enough to split the joint.
+
+### The procedure
+
+The pendant has **PLUG OFF** and **PLUG ON** beside ABORT and RESUME (PLUG OFF reads PLUG ON while a section is set down and the hook is empty).
+
+* **PLUG OFF** surveys the crane's reach and takes the section **nearest the middle of the well that has exactly four anchors** (a computer may name any anchor). If no section has
+  four it names the nearest section it saw and says "needs 4 anchors, has N". It then refuses, with the reason, if the section is **over the rated capacity** or the rails are too low
+  or the section is not reachable. The crane runs out, lowers, hooks on (5 s), lifts (0.25 m/s), carries and sets it down on the **laydown**, then unhooks and raises.
+* **PLUG ON** sets the section most recently set down back **exactly where it came from** (last off, first on). It is refused while the vessel head is off and the section would
+  cover the well; a section that has since been broken or changed is dropped from the book with a message.
+* **The laydown rule.** The crane sets the section on the clear spot **nearest to where it stood** (distance between the pick points, then the smaller drop, then x, then z):
+  a whole number of blocks away in x and z and up to 8 up or 4 down, where **every cell is air** (the crane never replaces a block, not even water or a plant), the lowest layer
+  rests on **solid floor** (a block with a sturdy top), the whole piece lies within the crane's reach in loaded chunks, off the reactor well and the square (as wide as the vessel)
+  round every **head stand** in reach, so a later head lift is not blocked. No such place: the lift is refused and nothing moves.
+* **Capacity.** Mass is **blocks x density x 1 m3**: 2.4 t for shield plug concrete, **2.9 t** for heavily reinforced, **3.5 t** for ultra-reinforced (anchors not counted).
+  The crane is rated **125 t** (a reactor building polar crane's main hook; there was no figure in the crane code). That is at most 52, 43 or 35 blocks of a tier. Over it the lift is
+  refused, with the mass, the rating and "mark a seam with the Plug Seam Marker to cut it into smaller sections".
+* **Four anchors.** Exactly four anchors rig a section (the four slings of the rig). Fewer, or more, is refused with "needs 4 anchors, has N".
+* **Head interlock.** LIFT HEAD (and SET HEAD) are **refused while any shield plug block stands over the reactor well**, with the count and the nearest block. "Over the well" is read
+  from the reactor's own survey: any column inside the vessel's footprint, or a cell of the well that the cavity survey found (`CavitySeal`), from the first row above the vessel
+  up to the rails. After PLUG OFF has taken the last piece off the head lifts as before.
+* **Order of an outage:** PLUG OFF (every piece), detension the studs, LIFT HEAD, DRYER OUT, SEPS OUT, fuel; then the reverse: SEPS IN, DRYER IN, SET HEAD, retension, PLUG ON (every
+  piece, last off first).
+
+### A lifted section is an entity
+
+When the hook closes on a section its blocks **leave the world**, every block state (tier, seams, the anchors) written into **one entity**, `bwr:plug_section`, **hanging from the hook**
+(four slings from the hook ring to the four anchors) and moving with the bridge and the trolley exactly as the head does. Because the blocks are gone from the well, a lifted section
+**stops no head missile and shields nothing** while it hangs or lies as an entity; put back, the same blocks do both again (the tests measure it). A section set down on the laydown is
+ordinary blocks again.
+
+#### Nothing is ever lost
+
+* **Exact.** A section is taken and set down state for state; nothing is regenerated, so seams, tiers and anchors come back as they were.
+* **Never replaces.** A set-down checks every cell first (air, loaded chunk); one block in the way and nothing is placed: the crane halts at RELEASE with the section still on the
+  hook, and RESUME tries again. The same check is made before the hook closes, so a blocked laydown stops the lift before the section is touched.
+* **Saves.** The entity is saved with its chunk and loaded with it, never despawns, is never duplicated (the crane keeps only its id, the plan and the laydown book; the blocks live
+  in the entity alone). A world saved mid-lift loads the same section on the same hook and the crane carries on. If the entity's chunk is not loaded the crane waits where it is.
+* **Chunks.** The crane never loads a chunk: it moves the entity only into chunks that are loaded, and the set-down and the survey read only loaded blocks.
+* **Can't be touched.** The entity cannot be hurt, pushed, picked, ridden or collided with, and `/summon` cannot make one. A destroying removal (`/kill`, a discard) puts the blocks back
+  at the place they were taken from, or drops them as items if that place is no longer clear.
+* **The crane or the runway broken** while a section hangs: breaking the console puts the section **back where it was taken from** (state for state) if every one of those places is still
+  clear and loaded, and otherwise **drops every block as an item** (plug blocks and anchors) where the section hangs. The entity also checks once a second, while it is loaded, that its
+  crane is loaded, still has a runway and still holds it; if the **runway** is broken, or the crane is gone or does not claim it (an orphan), it does the same and the crane lets go.
+  Putting back is preferred because it is exact and loses nothing; dropping is the fallback when the old place is built over (it never replaces a block).
+
+### Computers
+
+`bwr_building_crane`: `queuePlugOff([x, y, z])` (no arguments: the nearest rigged section; with the position of one of its anchors: that section) and `queuePlugOn()`, each returning
+`{ok, message}`; `getStatus()` adds `plugsLaid`, and `carried` reads "a shield plug section (N blocks, T t)" while one hangs.
+
+```lua
+local crane = peripheral.find("bwr_building_crane")
+local r = crane.queuePlugOff()        -- the program's choice; nothing else starts a lift
+if not r.ok then print(r.message) end
+while crane.getStatus().busy do sleep(5) end
+```
 
 ## The head's states
 
