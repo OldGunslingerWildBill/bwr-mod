@@ -48,6 +48,20 @@
       ]
     },
     {
+      "title": "Lifting the shield plugs",
+      "text": [
+        "The shield plug over the well comes off first. Cut it into pieces with the Plug Seam Marker: right-click a plug block near the edge for the cut. A groove marks the seam; click again to undo, sneak-click to clear a block.",
+        "",
+        "Bolt exactly four Crane Anchors on the top of a piece, then press PLUG OFF in the crane console: the nearest rigged piece goes to clear floor. Over 125 t (a block is 2.4 to 3.5 t) it is refused: add a seam. PLUG ON puts the last piece back. The head will not lift with a plug over the well."
+      ],
+      "icons": [
+        "bwr:plug_seam_marker",
+        "bwr:crane_anchor",
+        "bwr:shield_plug_concrete",
+        "bwr:building_crane_console"
+      ]
+    },
+    {
       "title": "Opening the vessel",
       "text": [
         "The head does not come off with a button. Depressurise to 25 psig or less, stand a Stud Tensioner on the refuel floor beside the well, give it power and press DETENSION. The tool goes round the flange stud by stud, 4 seconds and 3,000 FE each: 296 seconds and 222,000 FE for 74 studs. The nuts come off; the studs stay in the flange.",

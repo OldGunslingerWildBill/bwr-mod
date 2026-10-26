@@ -28,6 +28,8 @@ public class CraneMenu extends BwrMenu {
     public static final int CMD_INTERNAL = 1;
     public static final int CMD_ABORT = 2;
     public static final int CMD_RESUME = 3;
+    /** a = 1 takes the best-rigged shield plug section off to the laydown (PLUG OFF), 0 sets the last one back (PLUG ON). */
+    public static final int CMD_PLUG = 4;
 
     // --- client-visible snapshot -------------------------------------
 
@@ -53,6 +55,10 @@ public class CraneMenu extends BwrMenu {
     public int spanBlocks;
     public int runwayBlocks;
     public int railY;
+    /** Sections set down on the laydown (what PLUG ON would put back). */
+    public int plugsLaid;
+    /** A shield plug section hangs from the hook. */
+    public boolean plugHeld;
 
     /** Client constructor. */
     public CraneMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf extra) {
@@ -116,6 +122,8 @@ public class CraneMenu extends BwrMenu {
         buf.writeVarInt(site.cHigh - site.cLow);
         buf.writeVarInt(site.aHi - site.aLo + 1);
         buf.writeVarInt(site.railY);
+        buf.writeVarInt(be.plugsLaid());
+        buf.writeBoolean(be.carriedPlug());
     }
 
     @Override
@@ -148,6 +156,8 @@ public class CraneMenu extends BwrMenu {
         spanBlocks = buf.readVarInt();
         runwayBlocks = buf.readVarInt();
         railY = buf.readVarInt();
+        plugsLaid = buf.readVarInt();
+        plugHeld = buf.readBoolean();
     }
 
     @Override
@@ -178,6 +188,16 @@ public class CraneMenu extends BwrMenu {
                 } else {
                     sender.displayClientMessage(BwrText.tr("status.bwr.building_crane.internal_queued", "Queued: the %s %s.", which.title,
                             b != 0 ? BwrText.tr("status.bwr.building_crane.goes_out", "goes out to a pad") : BwrText.tr("status.bwr.building_crane.goes_in", "goes back in the vessel")), true);
+                }
+            }
+            case CMD_PLUG -> {
+                Component why = be.queuePlug(a != 0, null);
+                if (why != null) {
+                    refuse(sender, why);
+                } else {
+                    sender.displayClientMessage(a != 0
+                            ? BwrText.tr("status.bwr.building_crane.plug_out_queued", "Queued: the crane lifts a shield plug section off to the laydown.")
+                            : BwrText.tr("status.bwr.building_crane.plug_in_queued", "Queued: the crane sets the shield plug section back where it came from."), true);
                 }
             }
             case CMD_ABORT -> be.abort();

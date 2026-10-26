@@ -10,12 +10,14 @@ import dev.bwr.mod.reactor.VesselState;
 import dev.bwr.mod.refuelling.BridgeSite;
 import dev.bwr.mod.refuelling.BuildingCraneBlockEntity;
 import dev.bwr.mod.text.BwrText;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 
 import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * CC:Tweaked peripheral for the reactor building crane console: queue the head's lift or return, queue the dryer's or the separator
@@ -90,6 +92,7 @@ public class BuildingCranePeripheral implements IPeripheral {
         m.put("holding", be.holding());
         m.put("carried", be.carriedSummary());
         m.put("hook", point(be.tip()));
+        m.put("plugsLaid", be.plugsLaid());
         if (be.haltMessage() != null) {
             m.put("haltReason", BwrText.english(be.haltMessage()));
         }
@@ -136,6 +139,27 @@ public class BuildingCranePeripheral implements IPeripheral {
     @LuaFunction(mainThread = true)
     public final Map<String, Object> queueInternalIn(String name) throws LuaException {
         Component why = be.queueInternal(internal(name), false);
+        return result(why == null, why);
+    }
+
+    /**
+     * Queue lifting a shield plug section off the plug and setting it down on the nearest clear spot of the refuel floor. With no argument the section
+     * nearest the well that has its four crane anchors; with the position of one of its anchors (x, y, z), the section that anchor is on.
+     */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> queuePlugOff(Optional<Double> x, Optional<Double> y, Optional<Double> z) throws LuaException {
+        if (x.isPresent() != y.isPresent() || y.isPresent() != z.isPresent()) {
+            throw new LuaException("expected no arguments, or the x, y and z of a crane anchor");
+        }
+        BlockPos anchor = x.isPresent() ? BlockPos.containing(x.get(), y.get(), z.get()) : null;
+        Component why = be.queuePlug(true, anchor);
+        return result(why == null, why);
+    }
+
+    /** Queue setting the shield plug section that was last laid down back exactly where it came from. */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> queuePlugOn() {
+        Component why = be.queuePlug(false, null);
         return result(why == null, why);
     }
 

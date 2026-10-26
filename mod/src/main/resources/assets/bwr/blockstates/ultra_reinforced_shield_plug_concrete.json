@@ -1,7 +1,57 @@
 {
-  "variants": {
-    "": {
-      "model": "bwr:block/ultra_reinforced_shield_plug_concrete"
+  "multipart": [
+    {
+      "apply": {
+        "model": "bwr:block/ultra_reinforced_shield_plug_concrete"
+      }
+    },
+    {
+      "when": {
+        "seam_down": "true"
+      },
+      "apply": {
+        "model": "bwr:block/plug_seam_down"
+      }
+    },
+    {
+      "when": {
+        "seam_up": "true"
+      },
+      "apply": {
+        "model": "bwr:block/plug_seam_up"
+      }
+    },
+    {
+      "when": {
+        "seam_north": "true"
+      },
+      "apply": {
+        "model": "bwr:block/plug_seam_north"
+      }
+    },
+    {
+      "when": {
+        "seam_south": "true"
+      },
+      "apply": {
+        "model": "bwr:block/plug_seam_south"
+      }
+    },
+    {
+      "when": {
+        "seam_west": "true"
+      },
+      "apply": {
+        "model": "bwr:block/plug_seam_west"
+      }
+    },
+    {
+      "when": {
+        "seam_east": "true"
+      },
+      "apply": {
+        "model": "bwr:block/plug_seam_east"
+      }
     }
-  }
+  ]
 }

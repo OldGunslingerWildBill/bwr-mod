@@ -421,6 +421,12 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.refuelling.RefuellingBridgeConsoleBlock> REFUELLING_BRIDGE_CONSOLE =
             BLOCKS.register("refuelling_bridge_console", () -> new dev.bwr.mod.refuelling.RefuellingBridgeConsoleBlock(machine().noOcclusion()));
 
+    /** A steel lifting eye bolted to the top of a shield plug block; four of them rig a section for the crane. */
+    public static final DeferredBlock<dev.bwr.mod.refuelling.CraneAnchorBlock> CRANE_ANCHOR =
+            BLOCKS.register("crane_anchor", () -> new dev.bwr.mod.refuelling.CraneAnchorBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(2.0F, 20.0F)
+                            .sound(SoundType.METAL).noOcclusion().pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY)));
+
     // --- Shield plug concrete (stops a thrown vessel head; see SEVERE-ACCIDENT-UPDATE.md) ------------
 
     /** Concrete and steel; blast resistance 1,800, stronger than Immersive Engineering's reinforced concrete (about 1,200). */

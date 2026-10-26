@@ -24,6 +24,7 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
     private BwrButton separators;
     private BwrButton abort;
     private BwrButton resume;
+    private BwrButton plug;
 
     public CraneScreen(CraneMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 420, 214);
@@ -76,6 +77,8 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
             abort = BwrButton.danger("ABORT", "Stop the crane where it is and forget the queue. A load on the hook stays on it.",
                     b -> menu.sendCommand(CraneMenu.CMD_ABORT));
             resume = BwrButton.secondary("RESUME", "After a halt, try the step again.", b -> menu.sendCommand(CraneMenu.CMD_RESUME));
+            plug = BwrButton.secondary("PLUG OFF", "Lift the shield plug section nearest the well that has its four crane anchors off the plug, and set it down on the nearest clear spot of the refuel floor.",
+                    b -> menu.sendCommand(CraneMenu.CMD_PLUG, menu.plugsLaid > 0 && !menu.plugHeld ? 0 : 1));
         }
         var state = Layout.card("Crane",
                 Layout.row("State", () -> phaseWord(menu.phase) + (menu.queued > 0 ? " (+" + menu.queued + ")" : "")).dense()
@@ -104,7 +107,7 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
         var controls = Layout.card("",
                 Layout.controls(BwrStyle.SP1).add(head, 1).add(dryer, 1).add(separators, 1),
                 Layout.gap(1),
-                Layout.controls(BwrStyle.SP1).add(abort, 1).add(resume, 1)).compact();
+                Layout.controls(BwrStyle.SP1).add(plug, 1).add(abort, 1).add(resume, 1)).compact();
         return Layout.column(BwrStyle.SP2,
                 Layout.note("There is no crane console here.").body().status(() -> Status.ALARM).showIf(() -> !menu.present),
                 Layout.column(BwrStyle.SP1,
@@ -132,6 +135,12 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
         separators.setMessage(Component.literal(sepsOut ? "SEPS IN" : "SEPS OUT"));
         dryer.active = go && menu.headOff;
         separators.active = go && menu.headOff;
+        boolean laid = menu.plugsLaid > 0 && !menu.plugHeld;
+        plug.setMessage(Component.literal(laid ? "PLUG ON" : "PLUG OFF"));
+        plug.setTooltipText(laid
+                ? "Queue a lift: the crane sets the shield plug section it last laid down back exactly where it came from. The head must be on the vessel."
+                : "Queue a lift: the crane takes the shield plug section nearest the well that has its four crane anchors off the plug, and sets it down on the nearest clear spot of the refuel floor.");
+        plug.active = go || (menu.present && menu.ready && menu.reactorFound && !menu.busy && menu.plugHeld);
         abort.active = menu.present && menu.ready && (menu.busy || menu.halted || menu.queued > 0 || !menu.carried.isEmpty());
         resume.active = menu.present && menu.ready && menu.halted;
     }

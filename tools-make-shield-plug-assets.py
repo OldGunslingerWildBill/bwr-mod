@@ -10,6 +10,10 @@ regenerated and tweaked.
   heavily_reinforced_shield_plug_concrete       darker concrete, a denser steel mesh and a riveted frame
   ultra_reinforced_shield_plug_concrete         near-black concrete, a dense double mesh and a netherite-brown plate frame
 
+Plug lifting (BUILDING-CRANE.md): each tier's blockstate is multipart, with a groove overlay for every face a seam can be on
+(`plug_seam_<dir>` models and the `plug_seam` texture), the Plug Seam Marker's item texture and model, and the recipes of the
+Crane Anchor and the marker.
+
 Blast resistance 1,800 / 3,600 / 7,200; ratings 5.8 * sqrt(R) = 246.1 / 348.0 / 492.1 psi (see SEVERE-ACCIDENT-UPDATE.md).
 """
 import json
@@ -99,6 +103,57 @@ def tier3():
     return img
 
 
+DIRS = ("down", "up", "north", "south", "west", "east")
+# direction -> (axis index, sign)
+DIR_AXIS = {"down": (1, -1), "up": (1, 1), "north": (2, -1), "south": (2, 1), "west": (0, -1), "east": (0, 1)}
+
+
+def seam_texture():
+    """A narrow dark joint: near-black with a faint lighter lip."""
+    img = Image.new("RGBA", (16, 16), (22, 24, 26, 255))
+    noisy(img, 44, 5)
+    d = ImageDraw.Draw(img)
+    d.line((0, 0, 15, 0), fill=(54, 56, 60, 255))
+    return img
+
+
+def seam_model(direction):
+    """The groove on the four faces round a joint on side `direction`: a one pixel strip along the edge touching that side."""
+    axis, sign = DIR_AXIS[direction]
+    elements = []
+    for g in DIRS:
+        gaxis, gsign = DIR_AXIS[g]
+        if gaxis == axis:
+            continue
+        plane = 16.02 if gsign > 0 else -0.02
+        lo, hi = [0.0, 0.0, 0.0], [16.0, 16.0, 16.0]
+        lo[gaxis] = hi[gaxis] = plane
+        if sign > 0:
+            lo[axis], hi[axis] = 15.0, 16.0
+        else:
+            lo[axis], hi[axis] = 0.0, 1.0
+        elements.append({"from": lo, "to": hi, "faces": {g: {"uv": [0, 0, 16, 1], "texture": "#seam"}}})
+    return {"textures": {"seam": "bwr:block/plug_seam", "particle": "bwr:block/plug_seam"}, "elements": elements}
+
+
+def marker_texture():
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    # a flat chisel-ended marker: orange grip, steel ferrule, black tip
+    for i in range(9):
+        d.point((3 + i, 12 - i), fill=(224, 126, 28, 255))
+        d.point((4 + i, 12 - i), fill=(188, 98, 18, 255))
+        d.point((3 + i, 13 - i), fill=(240, 150, 48, 255))
+    for i in range(2):
+        d.point((11 + i, 4 - i), fill=(170, 176, 184, 255))
+        d.point((12 + i, 4 - i), fill=(126, 132, 140, 255))
+    d.point((13, 3), fill=(20, 20, 22, 255))
+    d.point((14, 2), fill=(20, 20, 22, 255))
+    d.point((2, 13), fill=(120, 60, 12, 255))
+    d.line((1, 15, 5, 15), fill=(30, 32, 34, 255))   # the joint line it draws
+    return img
+
+
 def write(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
@@ -110,7 +165,11 @@ def main():
     for (name, _), make in zip(TIERS, (tier1, tier2, tier3)):
         os.makedirs(TEX, exist_ok=True)
         make().save(os.path.join(TEX, name + ".png"))
-        write(os.path.join(STATES, name + ".json"), {"variants": {"": {"model": "bwr:block/" + name}}})
+        # a multipart state: the block itself, and a groove on the four faces round every joint marked as a seam
+        parts = [{"apply": {"model": "bwr:block/" + name}}]
+        for dname in DIRS:
+            parts.append({"when": {"seam_" + dname: "true"}, "apply": {"model": "bwr:block/plug_seam_" + dname}})
+        write(os.path.join(STATES, name + ".json"), {"multipart": parts})
         write(os.path.join(MODELS, "block", name + ".json"), {"parent": "minecraft:block/cube_all", "textures": {"all": "bwr:block/" + name}})
         write(os.path.join(MODELS, "item", name + ".json"), {"parent": "bwr:block/" + name})
         write(os.path.join(LOOT, name + ".json"), {
@@ -123,6 +182,27 @@ def main():
             }],
             "random_sequence": "bwr:blocks/" + name,
         })
+
+    seam_texture().save(os.path.join(TEX, "plug_seam.png"))
+    for dname in DIRS:
+        write(os.path.join(MODELS, "block", "plug_seam_" + dname + ".json"), seam_model(dname))
+    item_tex = os.path.join(RES, "assets/bwr/textures/item")
+    os.makedirs(item_tex, exist_ok=True)
+    marker_texture().save(os.path.join(item_tex, "plug_seam_marker.png"))
+    write(os.path.join(MODELS, "item", "plug_seam_marker.json"),
+          {"parent": "minecraft:item/handheld", "textures": {"layer0": "bwr:item/plug_seam_marker"}})
+    # The Plug Seam Marker: an iron ingot over a stick. The Crane Anchor: two iron ingots make four lifting eyes.
+    write(os.path.join(RECIPES, "plug_seam_marker.json"), {
+        "type": "minecraft:crafting_shaped", "category": "equipment",
+        "key": {"I": {"item": "minecraft:iron_ingot"}, "S": {"item": "minecraft:stick"}},
+        "pattern": ["I", "S"],
+        "result": {"count": 1, "id": "bwr:plug_seam_marker"},
+    })
+    write(os.path.join(RECIPES, "crane_anchor.json"), {
+        "type": "minecraft:crafting_shapeless", "category": "building",
+        "ingredients": [{"item": "minecraft:iron_ingot"}, {"item": "minecraft:iron_ingot"}],
+        "result": {"count": 4, "id": "bwr:crane_anchor"},
+    })
 
     base = {"tag": "bwr:shield_plug_concrete_base"}
     steel = {"tag": "c:ingots/steel"}

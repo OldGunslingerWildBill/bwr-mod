@@ -138,6 +138,10 @@ public class BuildingCraneConsoleBlock extends BaseEntityBlock {
             }
         }
         lines.add(BwrText.tr("status.bwr.building_crane.report_places", "Head stands in reach: %s. Equipment pads in reach: %s.", stands, pads));
+        int laid = be.plugsLaid();
+        if (laid > 0) {
+            lines.add(BwrText.tr("status.bwr.building_crane.report_plugs", "Shield plug sections set down on the refuel floor: %s.", laid));
+        }
         lines.add(BwrText.tr("status.bwr.building_crane.report_state", "Crane: %s, %s queued%s.",
                 be.phase().name().toLowerCase(Locale.ROOT), be.queued(), be.holding() ? ", holding " + be.carriedSummary() : ""));
         ReactorControllerBlockEntity r = site.reactor(level);
