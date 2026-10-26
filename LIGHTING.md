@@ -130,3 +130,29 @@ six pictures and logs the light at each lamp.
 - **Warm-up colour** is not shown (see Behaviour).
 - **Time scale.** Warm-up and cooling are game-time compressions of the real times, chosen to sit in the 20 to 40 second
   range the design asked for.
+
+# Beam lamps (xenon floodlight, xenon high-bay, HPS flat panel)
+
+Three redstone lamps that throw light where their beam lands, by placing invisible vanilla `minecraft:light` blocks. Code
+is in `dev.bwr.mod.floodlight`, the tests are `FloodlightTests` (namespace `bwrfloodlight`, run with
+`-PbwrGameTestNamespaces=bwrfloodlight`), the pictures `FloodlightClientCheck` (`-PbwrFloodlightClientCheck`).
+
+| Block | Mount | Range | Cone (full angle) | Light |
+|---|---|---|---|---|
+| `bwr:xenon_floodlight` | stands on any block; aimable (45-degree yaw, pitch -75 to +30 in 15-degree steps) | 32 | 30 degrees | cold white, at once |
+| `bwr:xenon_high_bay` | ceiling | 24 | 110 degrees | cold white, at once |
+| `bwr:hps_flat_panel` | ceiling or wall | 24 | 120 degrees | golden `#FFCE80`, warms 4/8/12/15 over about 20 s |
+
+- **Projection.** A fan of rays (at most 2048) over the cone walks the grid to the first opaque block; the last free cell
+  in front of it (within 2.5 blocks) gets a light. Cells are thinned to one per 2-block lattice box, widening up to 6, so
+  a lamp places at most **256** lights.
+- **What may be replaced.** Plain air, cave air, or a still water source (the light is waterlogged). Nothing else, and
+  never a light block the lamp did not place itself.
+- **Cleanup.** The block entity lists every cell it changed and what it held. Off, re-aimed, broken (any path, explosions
+  included) or replaced: each listed cell is put back only while it still holds a light. A cell in an unloaded chunk goes
+  to a level save queue (`PendingLights`) and is put back once, when its chunk is loaded again. Nothing loads a chunk;
+  writes skip neighbour shape updates; nothing runs on a chunk unload, a save or a shutdown.
+- **Timing.** No ticker: redstone re-plans at once; a lit lamp re-plans on its own scheduled tick every 5 s.
+- **Lenses.** Separate lens parts, full bright in vanilla (NeoForge face light data; the floodlight's head lens through its
+  renderer), with labPBR `_s` maps (alpha 254 on the lit lenses) for shader packs.
+- **Computers.** A read-only `bwr_beam_lamp` peripheral (`getStatus()`); redstone is the only switch.
