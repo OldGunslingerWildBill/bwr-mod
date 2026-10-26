@@ -325,7 +325,9 @@ public final class RadiationToolsTests {
 
     // ---- the extension API
 
-    @GameTest(template = "empty", timeoutTicks = 200)
+    // Its own batch: it asserts the level holds no point source at all, which any emitter running alongside it in a
+    // shared batch (bridge, elevator, RWCU filter, RTG) breaks. The assertions are unchanged.
+    @GameTest(template = "empty", timeoutTicks = 200, batch = "radiationapi")
     public static void otherSourcesAddToTheReadingThroughTheApi(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Vec3 spot = new Vec3(63_200.5, 120.5, 63_000.5);
