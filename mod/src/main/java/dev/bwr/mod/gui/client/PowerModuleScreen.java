@@ -1,5 +1,7 @@
 package dev.bwr.mod.gui.client;
 
+import dev.bwr.core.display.DisplayUnits.Quantity;
+import dev.bwr.mod.client.DisplayUnitReadouts;
 import dev.bwr.mod.eccs.EccsPower;
 import dev.bwr.mod.gui.PowerModuleMenu;
 import dev.bwr.mod.gui.client.style.BwrStyle;
@@ -31,20 +33,26 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
                 Layout.row("Shaft speed", () -> num(menu.rpm, 0), "rpm"),
                 Layout.row("Train shaft power", () -> num(menu.trainMW, 2), "MW"),
                 // generator
-                Layout.row("Electrical output", () -> num(menu.electricMW, 2), "MW").showIf(() -> menu.generator),
-                Layout.meter("Electrical output against the 1,500 MW rating", () -> menu.electricMW / 1500.0, null, () -> "of 1,500 MW")
+                Layout.row("Electrical output", () -> num(menu.electricMW, 2), () -> DisplayUnitReadouts.unit(Quantity.POWER_ELECTRIC))
+                        .showIf(() -> menu.generator),
+                Layout.meter("Electrical output against the 1,500 MW rating", () -> menu.electricMW / 1500.0, null,
+                        () -> "of 1,500 " + DisplayUnitReadouts.unit(Quantity.POWER_ELECTRIC))
                         .showIf(() -> menu.generator),
                 Layout.row("Power generated", () -> big(menu.electricMW * 1e6 / EccsPower.WATTS_PER_FE_PER_TICK), "FE/t").showIf(() -> menu.generator),
                 Layout.row("Stored energy", () -> big(menu.energy), "FE").showIf(() -> menu.generator),
                 Layout.meter("Stored energy", () -> menu.energy / 2e9, null, () -> pct(menu.energy / 2e9) + "%").showIf(() -> menu.generator),
                 // turbine section
                 Layout.row("Section shaft power", () -> num(menu.shaftMW, 2), "MW").showIf(() -> !menu.generator),
-                Layout.row("Section steam flow", () -> num(menu.flow, 1), "kg/s").showIf(() -> !menu.generator),
-                Layout.row("Steam pressure in", () -> num(menu.inletP, 1), "psia").showIf(() -> !menu.generator),
-                Layout.row("Steam pressure out", () -> num(menu.outletP, 1), "psia").showIf(() -> !menu.generator),
-                Layout.row("Inlet temperature", () -> num(menu.inletC, 1), "C").showIf(() -> !menu.generator),
-                Layout.row("Exhaust temperature", () -> num(menu.outletC, 1), "C").showIf(() -> !menu.generator),
-                Layout.row("Legacy water", () -> big(menu.water), "kg").tip("Old-style water that is waiting to be transferred.")
+                Layout.row("Section steam flow", () -> num(DisplayUnitReadouts.value(Quantity.MASS_FLOW, menu.flow), 1),
+                        () -> DisplayUnitReadouts.unit(Quantity.MASS_FLOW)).showIf(() -> !menu.generator),
+                Layout.row("Steam pressure in", () -> DisplayUnitReadouts.pressure(Quantity.PRESSURE_ABS, menu.inletP, 1, false), () -> DisplayUnitReadouts.pressureUnit(Quantity.PRESSURE_ABS, menu.inletP)).showIf(() -> !menu.generator),
+                Layout.row("Steam pressure out", () -> DisplayUnitReadouts.pressure(Quantity.PRESSURE_ABS, menu.outletP, 1, false), () -> DisplayUnitReadouts.pressureUnit(Quantity.PRESSURE_ABS, menu.outletP)).showIf(() -> !menu.generator),
+                Layout.row("Inlet temperature", () -> num(DisplayUnitReadouts.value(Quantity.TEMPERATURE, menu.inletC), 1),
+                        () -> DisplayUnitReadouts.unit(Quantity.TEMPERATURE)).showIf(() -> !menu.generator),
+                Layout.row("Exhaust temperature", () -> num(DisplayUnitReadouts.value(Quantity.TEMPERATURE, menu.outletC), 1),
+                        () -> DisplayUnitReadouts.unit(Quantity.TEMPERATURE)).showIf(() -> !menu.generator),
+                Layout.row("Legacy water", () -> big(DisplayUnitReadouts.value(Quantity.MASS, menu.water)),
+                        () -> DisplayUnitReadouts.unit(Quantity.MASS)).tip("Old-style water that is waiting to be transferred.")
                         .showIf(() -> !menu.generator && !menu.hp && menu.water > 0));
         var connections = Layout.card("Connections",
                 Layout.note("The FE output is the copper terminal on the right side.").body().showIf(() -> menu.generator),
@@ -62,22 +70,26 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
         }
         var left = Layout.card("Lube oil and bearings",
                 Layout.statusLine(() -> alarm((menu.alarms & 3) != 0), () -> menu.lubeGov ? (menu.oilTank ? "Lube oil" : "No oil tank on this train") : "Not fitted",
-                        () -> menu.lubeGov ? num(menu.oilPsig, 1) + " psig" : ""),
-                Layout.row("Oil temperature", () -> Double.isNaN(menu.oilC) ? "-" : num(menu.oilC, 1), "C").showIf(() -> menu.lubeGov),
+                        () -> menu.lubeGov ? DisplayUnitReadouts.pressure(Quantity.PRESSURE_GAUGE, menu.oilPsig, 1, false) + " " + DisplayUnitReadouts.pressureUnit(Quantity.PRESSURE_GAUGE, menu.oilPsig) : ""),
+                Layout.row("Oil temperature", () -> Double.isNaN(menu.oilC) ? "-" : num(DisplayUnitReadouts.value(Quantity.TEMPERATURE, menu.oilC), 1),
+                        () -> DisplayUnitReadouts.unit(Quantity.TEMPERATURE)).showIf(() -> menu.lubeGov),
                 Layout.row("Oil level", () -> Double.isNaN(menu.oilLevel) ? "-" : pct(menu.oilLevel), "%").showIf(() -> menu.lubeGov),
                 Layout.row("Oil film", () -> pct(menu.oilFilm), "%").showIf(() -> menu.lubeGov),
-                Layout.row("Bearing temperature", () -> num(menu.bearingC, 1), "C").showIf(() -> menu.lubeGov),
+                Layout.row("Bearing temperature", () -> num(DisplayUnitReadouts.value(Quantity.TEMPERATURE, menu.bearingC), 1),
+                        () -> DisplayUnitReadouts.unit(Quantity.TEMPERATURE)).showIf(() -> menu.lubeGov),
                 Layout.row("Shaft vibration", () -> num(menu.vibration, 1), "mm/s").showIf(() -> menu.bowGov),
-                Layout.row("Rotor temperature", () -> num(menu.rotorC, 0), "C").showIf(() -> menu.bowGov && !menu.generator),
+                Layout.row("Rotor temperature", () -> num(DisplayUnitReadouts.value(Quantity.TEMPERATURE, menu.rotorC), 0),
+                        () -> DisplayUnitReadouts.unit(Quantity.TEMPERATURE)).showIf(() -> menu.bowGov && !menu.generator),
                 Layout.row("Rotor bow", () -> pct(menu.bow), "%").showIf(() -> menu.bowGov && !menu.generator),
                 Layout.note("Nothing here is fitted to this train.").showIf(() -> !aux()));
         var right = Layout.card("Gear and generator",
                 Layout.row("Turning gear", () -> menu.gearRolling ? "rolling" : menu.gearOn ? (menu.gearFed ? "engaged, over 10 rpm" : "engaged, no power") : "off")
                         .showIf(() -> menu.generator),
                 Layout.controls(BwrStyle.SP1).add(gear, 1).showIf(() -> menu.generator),
-                Layout.row("Winding", () -> num(menu.windingC, 1), "C").showIf(() -> menu.generator && menu.genGov),
+                Layout.row("Winding", () -> num(DisplayUnitReadouts.value(Quantity.TEMPERATURE, menu.windingC), 1),
+                        () -> DisplayUnitReadouts.unit(Quantity.TEMPERATURE)).showIf(() -> menu.generator && menu.genGov),
                 Layout.row("Stator flow", () -> pct(menu.statorFlow), "%").showIf(() -> menu.generator && menu.genGov),
-                Layout.row("Hydrogen", () -> Double.isNaN(menu.h2Psig) ? "-" : num(menu.h2Psig, 1), "psig").showIf(() -> menu.generator && menu.genGov),
+                Layout.row("Hydrogen", () -> Double.isNaN(menu.h2Psig) ? "-" : DisplayUnitReadouts.pressure(Quantity.PRESSURE_GAUGE, menu.h2Psig, 1, false), () -> DisplayUnitReadouts.pressureUnit(Quantity.PRESSURE_GAUGE, menu.h2Psig)).showIf(() -> menu.generator && menu.genGov),
                 Layout.note("Rolls the shaft at 3 rpm below 10 rpm, on the oil tank's AC bus.").body().showIf(() -> menu.generator),
                 Layout.note("The turning gear and the winding are on the generator's screen.").body().showIf(() -> !menu.generator),
                 Layout.note("Alarms are readings. Nothing trips the turbine.").showIf(this::aux));

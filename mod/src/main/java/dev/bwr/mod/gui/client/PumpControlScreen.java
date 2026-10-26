@@ -1,5 +1,7 @@
 package dev.bwr.mod.gui.client;
 
+import dev.bwr.core.display.DisplayUnits.Quantity;
+import dev.bwr.mod.client.DisplayUnitReadouts;
 import dev.bwr.mod.gui.PumpControlMenu;
 import dev.bwr.mod.gui.client.style.BwrButton;
 import dev.bwr.mod.gui.client.style.BwrEditBox;
@@ -61,19 +63,26 @@ public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
                 Layout.row("Target speed", () -> pct(menu.target), "%"),
                 Layout.row("Actual speed", () -> pct(menu.actual), "%"),
                 Layout.meter("Actual speed", () -> menu.actual, null, () -> ""),
-                Layout.row(() -> menu.recirculation ? "Share of core flow" : "Water flow", () -> num(menu.flow, 1), "kg/s")
+                Layout.row(() -> menu.recirculation ? "Share of core flow" : "Water flow",
+                        () -> num(DisplayUnitReadouts.waterFlow(menu.flow, menu.temperature), 1),
+                        () -> DisplayUnitReadouts.unit(Quantity.WATER_FLOW))
                         .tip(() -> java.util.List.of(Component.literal(menu.recirculation
                                 ? "How much of the core's circulation this pump supplies."
                                 : "How much water the pump is delivering."))),
-                Layout.row(() -> menu.recirculation ? "Vessel pressure" : "Pressure rise", () -> num(menu.pressure, 1), "psi")
+                Layout.row(() -> menu.recirculation ? "Vessel pressure" : "Pressure rise",
+                        () -> DisplayUnitReadouts.pressure(menu.recirculation ? Quantity.PRESSURE_VESSEL : Quantity.PRESSURE_DIFF, menu.pressure, 1, false),
+                        () -> DisplayUnitReadouts.pressureUnit(menu.recirculation ? Quantity.PRESSURE_VESSEL : Quantity.PRESSURE_DIFF, menu.pressure))
                         .tip(() -> java.util.List.of(Component.literal(menu.recirculation
                                 ? "The pressure in the reactor vessel."
                                 : "How much pressure the pump adds between its suction and its discharge."))),
-                Layout.row("Water temperature", () -> Double.isFinite(menu.temperature) ? num(menu.temperature, 1) : "Unavailable",
-                        () -> Double.isFinite(menu.temperature) ? "C" : ""),
+                Layout.row("Water temperature",
+                        () -> Double.isFinite(menu.temperature) ? num(DisplayUnitReadouts.value(Quantity.TEMPERATURE, menu.temperature), 1) : "Unavailable",
+                        () -> Double.isFinite(menu.temperature) ? DisplayUnitReadouts.unit(Quantity.TEMPERATURE) : ""),
                 Layout.row("Drive", () -> menu.present ? menu.drive : "-"),
                 Layout.row("Stored energy", () -> big(menu.energy), "FE").showIf(() -> !menu.turbine),
-                Layout.row("Inlet buffer", () -> big(menu.buffer) + " / 2,000", "kg").showIf(() -> !menu.rhr && !menu.slc && !menu.recirculation && !menu.drive.contains("RWCU")),
+                Layout.row("Inlet buffer",
+                        () -> big(DisplayUnitReadouts.value(Quantity.MASS, menu.buffer)) + " / " + big(DisplayUnitReadouts.value(Quantity.MASS, 2000.0)),
+                        () -> DisplayUnitReadouts.unit(Quantity.MASS)).showIf(() -> !menu.rhr && !menu.slc && !menu.recirculation && !menu.drive.contains("RWCU")),
                 Layout.gap(BwrStyle.SP1),
                 Layout.line(() -> Words.sentence(menu.connection), Type.CAPTION));
         var controls = Layout.card("Controls",

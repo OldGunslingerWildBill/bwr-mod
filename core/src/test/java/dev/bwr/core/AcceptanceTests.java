@@ -152,6 +152,7 @@ public final class AcceptanceTests {
             dev.bwr.core.isotope.IsotopeExtractionTest.class,
             dev.bwr.core.isotope.LargeRtgStoreTest.class,
             dev.bwr.core.refuelling.FuelElevatorMotionTest.class,
+            dev.bwr.core.display.DisplayUnitsTest.class,
     };
 
     public static final Class<?>[] LONG_TEST_CLASSES = {LoadFollowingLongTest.class};
