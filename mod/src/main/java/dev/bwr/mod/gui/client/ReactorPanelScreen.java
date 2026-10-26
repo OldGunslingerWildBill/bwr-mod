@@ -1,5 +1,8 @@
 package dev.bwr.mod.gui.client;
 
+import dev.bwr.core.display.DisplayUnits;
+import dev.bwr.core.display.DisplayUnits.Quantity;
+import dev.bwr.mod.client.DisplayUnitReadouts;
 import dev.bwr.mod.gui.CoreMapSnapshot;
 import dev.bwr.mod.gui.ReactorPanelMenu;
 import dev.bwr.mod.gui.client.style.BwrButton;
@@ -160,18 +163,18 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.row("Power", () -> pct(menu.powerFractionOfRated), "%").dense()
                         .status(() -> fractionStatus(menu.powerFractionOfRated, 1.05, 1.20))
                         .tip("The reactor's total power as a share of its rated power. It turns amber from 105% and red from 120%. That is only a colour and a shape; nothing trips."),
-                Layout.row("Heat output", () -> big(menu.thermalMW), "MWth").dense()
+                Layout.row("Heat output", () -> big(menu.thermalMW), () -> DisplayUnitReadouts.unit(Quantity.POWER_THERMAL)).dense()
                         .tip("The heat the core is producing, in megawatts thermal."),
                 Layout.gap(BwrStyle.SP1),
                 // pressure and level
                 Layout.row("Pressure", () -> big(menu.pressurePsig), "psig").dense().status(() -> pressureStatus(menu.pressurePsig))
                         .tip("The pressure in the steam dome. It turns amber from the 1,250 psig design limit and red from the 1,375 psig code limit. That is only a colour and a shape."),
                 Layout.row("dP/dt", () -> num(menu.pressureRatePsiPerS, 1), "psi/s").dense().tip("How fast the dome pressure is rising or falling, in psi per second."),
-                Layout.row("Level", () -> num(menu.indicatedLevelIn, 1), "in").dense()
+                Layout.row("Level", () -> num(DisplayUnitReadouts.value(Quantity.LEVEL, menu.indicatedLevelIn), 1), () -> DisplayUnitReadouts.unit(Quantity.LEVEL)).dense()
                         .status(() -> menu.uncoveredFuelFraction > 0.0 ? Status.ALARM : Status.NONE)
                         .tip("The water level the instruments show. It is red while any fuel is uncovered."),
                 Layout.row("Core flow", () -> pct(menu.coreFlowFraction), "%").dense().tip("The flow of water through the core as a share of its rated flow."),
-                Layout.row("Steam flow", () -> big(menu.steamKgPerS), "kg/s").dense().tip("How much steam the reactor is making."),
+                Layout.row("Steam flow", () -> DisplayUnitReadouts.massFlow(menu.steamKgPerS), () -> DisplayUnitReadouts.unit(Quantity.MASS_FLOW)).dense().tip("How much steam the reactor is making."),
                 Layout.gap(BwrStyle.SP1),
                 // neutronics: the instrument ladder. The count rate is what reads anything at all on a shutdown core, and the
                 // two period indications are what the player cross-checks. Neither is coloured: deciding which channel to
@@ -186,9 +189,9 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                         .tip("The period on the intermediate range monitor (IRM). Check it against the source range channel."),
                 Layout.gap(BwrStyle.SP1),
                 // fuel
-                Layout.row("Fuel temp", () -> big(menu.fuelTemperatureC), "C").dense().tip("The average temperature of the fuel."),
-                Layout.row("Peak cladding", () -> big(menu.peakCladTemperatureC), "C").dense().status(() -> cladStatus(menu.peakCladTemperatureC))
-                        .tip("The hottest fuel cladding temperature. It turns amber from 1,000 C and red from 1,200 C, where the zirconium-water reaction starts."),
+                Layout.row("Fuel temp", () -> big(DisplayUnitReadouts.value(Quantity.TEMPERATURE, menu.fuelTemperatureC)), () -> DisplayUnitReadouts.unit(Quantity.TEMPERATURE)).dense().tip("The average temperature of the fuel."),
+                Layout.row("Peak cladding", () -> big(DisplayUnitReadouts.value(Quantity.TEMPERATURE, menu.peakCladTemperatureC)), () -> DisplayUnitReadouts.unit(Quantity.TEMPERATURE)).dense().status(() -> cladStatus(menu.peakCladTemperatureC))
+                        .tip(() -> List.of(Component.literal("The hottest fuel cladding temperature. It turns amber from " + DisplayUnitReadouts.withUnit(Quantity.TEMPERATURE, 1000.0) + " and red from " + DisplayUnitReadouts.withUnit(Quantity.TEMPERATURE, 1200.0) + ", where the zirconium-water reaction starts."))),
                 Layout.row("Void", () -> pct(menu.voidFraction), "%").dense().tip("The share of the core's volume that is steam rather than water."),
                 Layout.row("Accum.", () -> menu.chargedAccumulators + "/" + menu.rodCount).dense()
                         .status(() -> menu.chargedAccumulators < menu.rodCount ? Status.CAUTION : Status.NORMAL)
@@ -208,16 +211,16 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.section("Fuel and configuration"),
                 Layout.row("Fuel bundles", () -> menu.loadedAssemblies + " / " + menu.assemblyCount)
                         .tip(this::fuelTypeTooltip),
-                Layout.row("Fuel-loaded rating*", () -> big(c.get().fuelLoadedRatingMW()), "MWth").tip(() -> planning),
-                Layout.row("Flow-supported power*", () -> big(c.get().flowSupportedMW()), "MWth").tip(() -> planning),
-                Layout.row("Steam equivalent*", () -> big(c.get().steamEquivalentKgPerS()), "kg/s").tip(() -> planning),
+                Layout.row("Fuel-loaded rating*", () -> big(c.get().fuelLoadedRatingMW()), () -> DisplayUnitReadouts.unit(Quantity.POWER_THERMAL)).tip(() -> planning),
+                Layout.row("Flow-supported power*", () -> big(c.get().flowSupportedMW()), () -> DisplayUnitReadouts.unit(Quantity.POWER_THERMAL)).tip(() -> planning),
+                Layout.row("Steam equivalent*", () -> DisplayUnitReadouts.massFlow(c.get().steamEquivalentKgPerS()), () -> DisplayUnitReadouts.unit(Quantity.MASS_FLOW)).tip(() -> planning),
                 Layout.row("k-inf", () -> num(menu.aggregateKInf, 4)),
                 Layout.row("Decay heat", () -> pct(menu.decayHeatFraction), "%"),
                 Layout.section("Recirculation"),
                 Layout.row("Jets matched / needed", () -> c.get().matchedJetAssemblies() + " / " + c.get().requiredJets()).tip(this::jetTooltip),
                 Layout.row("External / internal pumps installed", () -> c.get().externalPumps() + " / " + c.get().internalPumps()).tip(this::jetTooltip),
                 Layout.row("Flow ceiling", () -> pct(c.get().flowCeilingFraction()), "%").tip(this::jetTooltip),
-                Layout.row("Flow ceiling mass flow", () -> big(c.get().flowCeilingKgPerS()), "kg/s").tip(this::jetTooltip),
+                Layout.row("Flow ceiling mass flow", () -> DisplayUnitReadouts.massFlow(c.get().flowCeilingKgPerS()), () -> DisplayUnitReadouts.unit(Quantity.MASS_FLOW)).tip(this::jetTooltip),
                 Layout.row("Vessel interior volume", () -> String.valueOf(c.get().interiorVolume()), "blocks^3").tip(this::volumeTooltip),
                 Layout.section("Steam quality and vessel height"),
                 Layout.row("Steam moisture", () -> num(100.0 * c.get().steamMoisture(), 2), "%")
@@ -235,12 +238,12 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.section("Cavity seal and well"),
                 Layout.note(() -> menu.cavity.known() ? menu.cavity.seal().getString() : "The seal has not been surveyed yet.")
                         .body().status(() -> !menu.cavity.known() ? Status.NONE : menu.cavity.present() ? Status.NORMAL : Status.CAUTION),
-                Layout.row("Water over the flange", () -> num(menu.cavity.wellWaterM3(), 1), "m3").tip(() -> cavityTooltip()),
-                Layout.row("Level over the flange", () -> num(menu.cavity.riseM(), 2), "m").tip(() -> cavityTooltip()),
-                Layout.row("Well capacity", () -> num(menu.cavity.wellCapacityM3(), 1), "m3").tip(() -> cavityTooltip()),
-                Layout.row(() -> menu.cavity.spillsToDrywell() ? "Leak to the drywell" : "Overflow onto the floor", () -> big(menu.cavity.spillKgPerS()), "kg/s")
+                Layout.row("Water over the flange", () -> num(DisplayUnitReadouts.value(Quantity.VOLUME, menu.cavity.wellWaterM3()), 1), () -> DisplayUnitReadouts.unit(Quantity.VOLUME)).tip(() -> cavityTooltip()),
+                Layout.row("Level over the flange", () -> num(DisplayUnitReadouts.value(Quantity.LENGTH, menu.cavity.riseM()), 2), () -> DisplayUnitReadouts.unit(Quantity.LENGTH)).tip(() -> cavityTooltip()),
+                Layout.row("Well capacity", () -> num(DisplayUnitReadouts.value(Quantity.VOLUME, menu.cavity.wellCapacityM3()), 1), () -> DisplayUnitReadouts.unit(Quantity.VOLUME)).tip(() -> cavityTooltip()),
+                Layout.row(() -> menu.cavity.spillsToDrywell() ? "Leak to the drywell" : "Overflow onto the floor", () -> DisplayUnitReadouts.massFlow(menu.cavity.spillKgPerS()), () -> DisplayUnitReadouts.unit(Quantity.MASS_FLOW))
                         .status(() -> menu.cavity.spillKgPerS() > 0 ? Status.CAUTION : Status.NONE).tip(() -> cavityTooltip()),
-                Layout.row("Cavity drain flow", () -> big(menu.cavity.drainFlowKgPerS()), "kg/s")
+                Layout.row("Cavity drain flow", () -> DisplayUnitReadouts.massFlow(menu.cavity.drainFlowKgPerS()), () -> DisplayUnitReadouts.unit(Quantity.MASS_FLOW))
                         .status(() -> menu.cavity.drainFlowKgPerS() > 0 ? Status.NORMAL : Status.NONE).tip(() -> cavityTooltip())
                         .showIf(() -> !menu.cavity.drains().isEmpty()),
                 drainLine(0), drainLine(1), drainLine(2), drainLine(3),
@@ -255,7 +258,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.row("APRM average power", () -> num(menu.aprmPercent, 1), "%"),
                 Layout.row("Oxidation", () -> pct(menu.oxidationFraction), "%")
                         .status(() -> menu.oxidationFraction > 0 ? Status.CAUTION : Status.NONE),
-                Layout.row("Hydrogen", () -> num(menu.hydrogenKg, 1), "kg"),
+                Layout.row("Hydrogen", () -> num(DisplayUnitReadouts.value(Quantity.MASS, menu.hydrogenKg), 1), () -> DisplayUnitReadouts.unit(Quantity.MASS)),
                 Layout.row("Uncovered fuel", () -> pct(menu.uncoveredFuelFraction), "%")
                         .status(() -> menu.uncoveredFuelFraction > 0 ? Status.CAUTION : Status.NONE),
                 Layout.row("Spray ring complete", () -> pct(menu.sprayRingCompleteness), "%"),
@@ -271,13 +274,14 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Layout.row("Cladding corrosion wear", () -> num(100 * menu.claddingWear, 3), "% of life")
                         .status(() -> menu.claddingWear > 0 ? Status.CAUTION : Status.NONE).tip(this::chemistryTooltip),
                 Layout.row("Cleanup heat loss", () -> num(menu.cleanupHeatMW, 2), "MW").tip(this::chemistryTooltip),
-                Layout.row("Cleanup blowdown", () -> num(menu.cleanupBlowdown, 1), "kg/s").tip(this::chemistryTooltip),
+                Layout.row("Cleanup blowdown", () -> num(DisplayUnitReadouts.value(Quantity.MASS_FLOW, menu.cleanupBlowdown), 1), () -> DisplayUnitReadouts.unit(Quantity.MASS_FLOW)).tip(this::chemistryTooltip),
                 Layout.section("Pressure boundary"),
                 Layout.note("No pipe breaks.").body().showIf(() -> menu.boundaryLines.isEmpty()),
                 boundaryLine(0), boundaryLine(1), boundaryLine(2), boundaryLine(3),
                 boundaryLine(4), boundaryLine(5), boundaryLine(6), boundaryLine(7),
                 Layout.section("Live output"),
-                Layout.row("Heat output / steam flow", () -> big(menu.thermalMW) + " / " + big(menu.steamKgPerS)),
+                Layout.row("Heat output / steam flow", () -> big(menu.thermalMW) + " / " + DisplayUnitReadouts.massFlow(menu.steamKgPerS)
+                        + (DisplayUnitReadouts.mode() == DisplayUnits.Mode.METRIC ? "" : " " + DisplayUnitReadouts.unit(Quantity.MASS_FLOW))),
                 Layout.note("* These are planning estimates. Hover over a row to see how it is worked out."));
         return Layout.card("", Layout.scrollArea(60, content));
     }
@@ -297,7 +301,7 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                     var d = menu.cavity.drains().get(index);
                     String head = "Drain port at " + d.x() + ", " + d.y() + ", " + d.z() + ": " + d.stateText().getString();
                     return d.flowKgPerS() > 0 || d.headM() > 0
-                            ? head + " " + num(d.flowKgPerS(), 0) + " kg/s, " + num(d.depthM(), 2) + " m over the sill, valve " + num(d.opening() * 100.0, 0) + "% open."
+                            ? head + " " + num(DisplayUnitReadouts.value(Quantity.MASS_FLOW, d.flowKgPerS()), 0) + " " + DisplayUnitReadouts.unit(Quantity.MASS_FLOW) + ", " + num(DisplayUnitReadouts.value(Quantity.LENGTH, d.depthM()), 2) + " " + DisplayUnitReadouts.unit(Quantity.LENGTH) + " over the sill, valve " + num(d.opening() * 100.0, 0) + "% open."
                             : head;
                 })
                 .body()
