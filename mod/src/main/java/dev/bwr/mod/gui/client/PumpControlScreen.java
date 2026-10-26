@@ -69,7 +69,9 @@ public class PumpControlScreen extends BwrScreen<PumpControlMenu> {
                         .tip(() -> java.util.List.of(Component.literal(menu.recirculation
                                 ? "How much of the core's circulation this pump supplies."
                                 : "How much water the pump is delivering."))),
-                Layout.row(() -> menu.recirculation ? "Vessel pressure" : "Pressure rise", () -> num(menu.pressure, 1), "psi")
+                Layout.row(() -> menu.recirculation ? "Vessel pressure" : "Pressure rise",
+                        () -> DisplayUnitReadouts.pressure(menu.recirculation ? Quantity.PRESSURE_VESSEL : Quantity.PRESSURE_DIFF, menu.pressure, 1, false),
+                        () -> DisplayUnitReadouts.pressureUnit(menu.recirculation ? Quantity.PRESSURE_VESSEL : Quantity.PRESSURE_DIFF, menu.pressure))
                         .tip(() -> java.util.List.of(Component.literal(menu.recirculation
                                 ? "The pressure in the reactor vessel."
                                 : "How much pressure the pump adds between its suction and its discharge."))),

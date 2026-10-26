@@ -83,9 +83,13 @@ public final class DisplayUnitsTest {
         Check.isTrue(refused, "convert(WATER_FLOW) must refuse: it needs a density");
     }
 
-    /** Pressure and power are never converted, in any mode, so the numbers the screens print do not move. */
+    /**
+     * Pressure and power keep their numbers in the non-SI modes, so the numbers the screens print do not move. (SI
+     * pressure is converted; it has its own tests below. This loop used to cover SI too; it was narrowed when SI came
+     * in, because SI pressure is now converted by design.)
+     */
     public static void test09_pressureAndPowerNumbersNeverChange() {
-        for (Mode mode : Mode.values()) {
+        for (Mode mode : new Mode[]{Mode.METRIC, Mode.IMPERIAL, Mode.PLANT}) {
             for (Quantity q : new Quantity[]{Quantity.PRESSURE_GAUGE, Quantity.PRESSURE_ABS, Quantity.PRESSURE_DIFF,
                     Quantity.POWER_THERMAL, Quantity.POWER_ELECTRIC}) {
                 Check.absolute(1250.0, DisplayUnits.convert(mode, q, 1250.0), 0.0, mode + " " + q + " keeps its number");
@@ -131,6 +135,106 @@ public final class DisplayUnitsTest {
         Check.isTrue("1832 F".equals(text), "1000 C in plant mode reads '1832 F', got '" + text + "'");
         String metric = DisplayUnits.format(Mode.METRIC, Quantity.TEMPERATURE, 1000.0, 0);
         Check.isTrue("1000 C".equals(metric), "METRIC reads '1000 C', got '" + metric + "'");
+    }
+
+    /** SI temperature: degrees Celsius with the degree sign, and no conversion. */
+    public static void test12_siTemperatureIsCelsiusWithDegreeSign() {
+        Check.absolute(287.4, DisplayUnits.convert(Mode.SI, Quantity.TEMPERATURE, 287.4), 0.0, "SI keeps C");
+        expectLabel(Mode.SI, Quantity.TEMPERATURE, "°C");
+    }
+
+    /** SI pressure: psi to kPa by the exact factor 6.894757, with the gauge and absolute labels. */
+    public static void test13_siPressureIsKpaByExactFactor() {
+        Check.absolute(6.894757, DisplayUnits.pressureKpa(1.0), 1e-12, "1 psi in kPa");
+        Check.absolute(689.4757, DisplayUnits.pressureSi(Quantity.PRESSURE_GAUGE, 100.0), 1e-9, "100 psi in kPa");
+        Check.absolute(101.3, DisplayUnits.pressureSi(Quantity.PRESSURE_ABS, 14.696), 0.05, "atmosphere in kPa(a)");
+        expectSiUnit(Quantity.PRESSURE_GAUGE, 100.0, "kPa(g)");
+        expectSiUnit(Quantity.PRESSURE_ABS, 14.696, "kPa(a)");
+        expectSiUnit(Quantity.PRESSURE_VESSEL, 100.0, "kPa(g)");
+        expectSiUnit(Quantity.PRESSURE_DIFF, 100.0, "kPa");
+    }
+
+    /** SI pressure switches to MPa just above 1,000 kPa, and not before. */
+    public static void test14_siPressureSwitchesToMpaAboveOneThousandKpa() {
+        // 145 psi is 999.74 kPa: still kPa. 146 psi is 1006.63 kPa: MPa.
+        expectSiUnit(Quantity.PRESSURE_GAUGE, 145.0, "kPa(g)");
+        Check.absolute(145.0 * 6.894757, DisplayUnits.pressureSi(Quantity.PRESSURE_GAUGE, 145.0), 1e-9, "145 psi in kPa");
+        expectSiUnit(Quantity.PRESSURE_GAUGE, 146.0, "MPa(g)");
+        Check.absolute(146.0 * 6.894757 / 1000.0, DisplayUnits.pressureSi(Quantity.PRESSURE_GAUGE, 146.0), 1e-12,
+                "146 psi in MPa");
+        // The rated dome pressure, 1025 psig, is 7.06662593 MPa(g).
+        Check.absolute(1025.0 * 6.894757 / 1000.0, DisplayUnits.pressureSi(Quantity.PRESSURE_GAUGE, 1025.0), 1e-12,
+                "1025 psig in MPa");
+    }
+
+    /** SI water level: inches to metres by the exact factor 0.0254; METRIC keeps inches. */
+    public static void test15_siLevelIsMetresByExactFactor() {
+        Check.absolute(0.0254, DisplayUnits.convert(Mode.SI, Quantity.LEVEL, 1.0), 1e-12, "1 inch in m");
+        Check.absolute(0.3048, DisplayUnits.convert(Mode.SI, Quantity.LEVEL, 12.0), 1e-12, "12 inches in m (one foot)");
+        Check.absolute(12.0, DisplayUnits.convert(Mode.METRIC, Quantity.LEVEL, 12.0), 0.0, "METRIC keeps inches");
+        expectLabel(Mode.SI, Quantity.LEVEL, "m");
+    }
+
+    /** SI water flow: cubic metres per hour from kg/s over density. */
+    public static void test16_siWaterFlowIsCubicMetresPerHour() {
+        // 1000 kg/s of water at 1000 kg/m3 is 1 m3/s = 3600 m3/h; twice the density halves it.
+        Check.absolute(3600.0, DisplayUnits.waterFlow(Mode.SI, 1000.0, 1000.0), 1e-9, "1 m3/s in m3/h");
+        Check.absolute(1800.0, DisplayUnits.waterFlow(Mode.SI, 1000.0, 2000.0), 1e-9, "density doubles, flow halves");
+        Check.absolute(1000.0, DisplayUnits.waterFlow(Mode.METRIC, 1000.0, 740.0), 0.0, "METRIC keeps kg/s");
+        expectLabel(Mode.SI, Quantity.WATER_FLOW, "m³/h");
+    }
+
+    /** SI mass flow, length, volume, mass and power are the mod's own SI units, unchanged. */
+    public static void test17_siSiUnitsAreUnchanged() {
+        Check.absolute(1000.0, DisplayUnits.convert(Mode.SI, Quantity.MASS_FLOW, 1000.0), 0.0, "kg/s stays kg/s");
+        Check.absolute(3.5, DisplayUnits.convert(Mode.SI, Quantity.LENGTH, 3.5), 0.0, "m stays m");
+        Check.absolute(2.5, DisplayUnits.convert(Mode.SI, Quantity.VOLUME, 2.5), 0.0, "m3 stays m3");
+        Check.absolute(7.0, DisplayUnits.convert(Mode.SI, Quantity.MASS, 7.0), 0.0, "kg stays kg");
+        Check.absolute(1250.0, DisplayUnits.convert(Mode.SI, Quantity.POWER_THERMAL, 1250.0), 0.0, "MW stays MW");
+        expectLabel(Mode.SI, Quantity.MASS_FLOW, "kg/s");
+        expectLabel(Mode.SI, Quantity.LENGTH, "m");
+        expectLabel(Mode.SI, Quantity.VOLUME, "m³");
+        expectLabel(Mode.SI, Quantity.MASS, "kg");
+        expectLabel(Mode.SI, Quantity.POWER_THERMAL, "MWth");
+        expectLabel(Mode.SI, Quantity.POWER_ELECTRIC, "MW");
+    }
+
+    /** SI rate of pressure change: psi per second to kPa per second, with no MPa switch. */
+    public static void test18_siPressureRateIsKpaPerSecond() {
+        Check.absolute(6.894757, DisplayUnits.convert(Mode.SI, Quantity.PRESSURE_RATE, 1.0), 1e-12, "1 psi/s in kPa/s");
+        expectLabel(Mode.SI, Quantity.PRESSURE_RATE, "kPa/s");
+        Check.absolute(1.0, DisplayUnits.convert(Mode.METRIC, Quantity.PRESSURE_RATE, 1.0), 0.0, "METRIC keeps psi/s");
+    }
+
+    /** SI pressure has no single label, so the plain label and conversion calls refuse it. */
+    public static void test19_siPressureNeedsItsValueAwareCalls() {
+        boolean convertRefused = false;
+        boolean unitRefused = false;
+        try {
+            DisplayUnits.convert(Mode.SI, Quantity.PRESSURE_GAUGE, 100.0);
+        } catch (IllegalArgumentException expected) {
+            convertRefused = true;
+        }
+        try {
+            DisplayUnits.unit(Mode.SI, Quantity.PRESSURE_GAUGE);
+        } catch (IllegalArgumentException expected) {
+            unitRefused = true;
+        }
+        Check.isTrue(convertRefused, "convert(SI, PRESSURE_GAUGE) must refuse: use pressureSi()");
+        Check.isTrue(unitRefused, "unit(SI, PRESSURE_GAUGE) must refuse: use pressureSiUnit()");
+    }
+
+    /** The pump's vessel pressure row: "psi" in METRIC as always, psig in the other modes. */
+    public static void test20_vesselPressureLabelPerMode() {
+        expectLabel(Mode.METRIC, Quantity.PRESSURE_VESSEL, "psi");
+        expectLabel(Mode.IMPERIAL, Quantity.PRESSURE_VESSEL, "psig");
+        expectLabel(Mode.PLANT, Quantity.PRESSURE_VESSEL, "psig");
+    }
+
+    private static void expectSiUnit(Quantity quantity, double psi, String expected) {
+        String actual = DisplayUnits.pressureSiUnit(quantity, psi);
+        Check.isTrue(expected.equals(actual), "SI " + quantity + " at " + psi + " psi should be '" + expected
+                + "', got '" + actual + "'");
     }
 
     private static void expectLabel(Mode mode, Quantity quantity, String expected) {

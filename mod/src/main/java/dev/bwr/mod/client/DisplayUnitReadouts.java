@@ -50,6 +50,38 @@ public final class DisplayUnitReadouts {
     }
 
     /**
+     * A pressure of {@code psi} as the number on a row. Outside SI the number is {@code psi} itself, written with
+     * {@code decimals} places (grouped when asked), exactly as the row always wrote it. SI converts to kPa, or MPa above
+     * 1,000 kPa (two places), and writes kPa with one place.
+     */
+    public static String pressure(Quantity quantity, double psi, int decimals, boolean grouped) {
+        DisplayUnits.Mode mode = mode();
+        if (mode != DisplayUnits.Mode.SI) {
+            return String.format(java.util.Locale.ROOT, (grouped ? "%,." : "%.") + decimals + "f",
+                    DisplayUnits.convert(mode, quantity, psi));
+        }
+        return String.format(java.util.Locale.ROOT, DisplayUnits.pressureUsesMpa(psi) ? "%.2f" : "%.1f",
+                DisplayUnits.pressureSi(quantity, psi));
+    }
+
+    /** The unit label beside {@link #pressure}: the mode's own, or kPa(g) / MPa(g) and the like in SI. */
+    public static String pressureUnit(Quantity quantity, double psi) {
+        DisplayUnits.Mode mode = mode();
+        return mode == DisplayUnits.Mode.SI ? DisplayUnits.pressureSiUnit(quantity, psi) : DisplayUnits.unit(mode, quantity);
+    }
+
+    /** A pressure with thousands separators and its unit, for a tooltip: "1,250 psig" outside SI, "8.62 MPa(g)" in SI. */
+    public static String withPressure(Quantity quantity, double psi) {
+        return pressure(quantity, psi, 0, true) + " " + pressureUnit(quantity, psi);
+    }
+
+    /** A rate of pressure change (psi per second in the mod) as a number in the current mode, with {@code decimals} places. */
+    public static String pressureRate(double psiPerS, int decimals) {
+        return String.format(java.util.Locale.ROOT, "%." + decimals + "f",
+                value(Quantity.PRESSURE_RATE, psiPerS));
+    }
+
+    /**
      * Water flow of {@code kgPerS} in the current mode. The volume flow needs the water's density at its temperature
      * ({@code waterTemperatureC}; NaN falls back to water at 20 C).
      */

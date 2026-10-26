@@ -88,7 +88,7 @@
         "bwr-visuals.toml (client only):",
         "visualEffects = \"AUTO\", panelGpuCache = true",
         "networkLineViewDistance = 32, panelTextFade = true",
-          "displayUnits = \"METRIC\" (METRIC, IMPERIAL or PLANT; the readouts' units only)"
+          "displayUnits = \"METRIC\" (METRIC, IMPERIAL, PLANT or SI; the readouts' units only)"
       ]
     }
   ]

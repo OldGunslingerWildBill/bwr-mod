@@ -167,9 +167,14 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                         .tip("The heat the core is producing, in megawatts thermal."),
                 Layout.gap(BwrStyle.SP1),
                 // pressure and level
-                Layout.row("Pressure", () -> big(menu.pressurePsig), "psig").dense().status(() -> pressureStatus(menu.pressurePsig))
-                        .tip("The pressure in the steam dome. It turns amber from the 1,250 psig design limit and red from the 1,375 psig code limit. That is only a colour and a shape."),
-                Layout.row("dP/dt", () -> num(menu.pressureRatePsiPerS, 1), "psi/s").dense().tip("How fast the dome pressure is rising or falling, in psi per second."),
+                Layout.row("Pressure", () -> DisplayUnitReadouts.pressure(Quantity.PRESSURE_GAUGE, menu.pressurePsig, 0, true),
+                        () -> DisplayUnitReadouts.pressureUnit(Quantity.PRESSURE_GAUGE, menu.pressurePsig)).dense().status(() -> pressureStatus(menu.pressurePsig))
+                        .tip(() -> List.of(Component.literal("The pressure in the steam dome. It turns amber from the " + DisplayUnitReadouts.withPressure(Quantity.PRESSURE_GAUGE, 1250.0)
+                                + " design limit and red from the " + DisplayUnitReadouts.withPressure(Quantity.PRESSURE_GAUGE, 1375.0) + " code limit. That is only a colour and a shape."))),
+                Layout.row("dP/dt", () -> DisplayUnitReadouts.pressureRate(menu.pressureRatePsiPerS, 1), () -> DisplayUnitReadouts.unit(Quantity.PRESSURE_RATE)).dense()
+                        .tip(() -> List.of(Component.literal(DisplayUnitReadouts.mode() == DisplayUnits.Mode.SI
+                                ? "How fast the dome pressure is rising or falling, in kilopascals per second."
+                                : "How fast the dome pressure is rising or falling, in psi per second."))),
                 Layout.row("Level", () -> num(DisplayUnitReadouts.value(Quantity.LEVEL, menu.indicatedLevelIn), 1), () -> DisplayUnitReadouts.unit(Quantity.LEVEL)).dense()
                         .status(() -> menu.uncoveredFuelFraction > 0.0 ? Status.ALARM : Status.NONE)
                         .tip("The water level the instruments show. It is red while any fuel is uncovered."),

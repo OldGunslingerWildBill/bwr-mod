@@ -20,7 +20,7 @@ public final class VisualEffectsConfig {
             .comment("Printed text on control panels fades out with distance: once a glyph is only a few screen pixels tall it turns to speckle, so it is replaced by a soft strip in the text's colour, like ink seen from afar. Turn off to always draw the text, however small.")
             .define("panelTextFade", true);
     public static final ModConfigSpec.EnumValue<dev.bwr.core.display.DisplayUnits.Mode> DISPLAY_UNITS = BUILDER
-            .comment("Units on the screens' readouts (display only: the physics, saved data, network and computer values never change). METRIC is what the screens have always shown, and is the default. IMPERIAL: F, lb/s, gpm for water, ft, gal, lb. PLANT: the US control-room convention, F, Mlb/hr for steam and feed flow, gpm for pumps, inches for water level, MWt and MWe. Control panel gauges keep their own scales.")
+            .comment("Units on the screens' readouts (display only: the physics, saved data, network and computer values never change). METRIC is what the screens have always shown, and is the default. IMPERIAL: F, lb/s, gpm for water, ft, gal, lb. PLANT: the US control-room convention, F, Mlb/hr for steam and feed flow, gpm for pumps, inches for water level, MWt and MWe. SI: degrees C, kPa(g) and kPa(a) (MPa above 1,000 kPa), metres, kg/s, m3/h for water. Control panel gauges keep their own scales.")
             .defineEnum("displayUnits", dev.bwr.core.display.DisplayUnits.Mode.METRIC);
     public static final ModConfigSpec SPEC = BUILDER.build();
 
