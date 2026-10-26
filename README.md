@@ -64,9 +64,7 @@ with or without a shader pack ([notes](docs/shader-packs.md)).
 
 ![The vessel with its head off, showing the steam dryer inside the flange and its 74 studs](docs/images/vessel-head-off-dryer.jpg)
 
-![The separators standing over the core inside the open vessel](docs/images/vessel-separators.jpg)
-
-![The open vessel with the dryer and separators out: the flange studs, the shroud, the core spray rings and the fuel in the core](docs/images/reactor-core.jpg)
+![The open vessel with the head and dryer off: the flange studs and the separator standpipes over the core](docs/images/reactor-core.jpg)
 
 ### Opening the vessel and refuelling
 
