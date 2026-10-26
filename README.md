@@ -325,9 +325,9 @@ Found a bug? Put it on the [issue tracker](https://github.com/OldGunslingerWildB
 
 ## Credits
 
-- **nectariich** made the CAD models I sent in for the control room: the control panel, the back panel,
-  the 1 m and 2 m control desks, the selector and control switches, the bar gauge, the pushbutton and the
-  RPS trip assembly. Thank you!
+- **nectariich** made the CAD models for the control room parts: the selector and control switches, the
+  bar gauge, the pushbutton and the RPS trip assembly. Thank you!
+- I made the control panel, the back panel and the 1 m and 2 m control desks myself.
 - Reference data comes from the public Columbia Generating Station FSAR and NRC documents, cited in each
   doc. Manufacturer names are only there to show what inspired a model and don't mean anyone endorses
   this mod. More in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

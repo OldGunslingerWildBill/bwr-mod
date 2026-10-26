@@ -75,10 +75,10 @@ are gameplay choices, not a manufacturer-specific or certified nuclear design.
 
 ## Control room CAD models
 
-The control panel (`Control Panel_.obj`), back panel (`BWR Backpannel.obj`), 1 m and 2 m control desks
-(`Control Desk 1m.obj`, `Control Desk.obj`), WL-2 selector, rotary control switches, bar gauge, pushbutton
-(`button-1.obj`) and RPS trip assembly models used in `art/models/panel/imported` and
-`art/models/control_desk` were made by **nectariich** and supplied by the project owner.
+The WL-2 selector, rotary control switches, bar gauge, pushbutton (`button-1.obj`) and RPS trip assembly
+models used in `art/models/panel/imported` were made by **nectariich** and supplied by the project owner.
+The control panel (`Control Panel_.obj`), back panel (`BWR Backpannel.obj`) and the 1 m and 2 m control
+desks (`Control Desk 1m.obj`, `Control Desk.obj`) were made by the project owner.
 
 ## Previously published versions
 
