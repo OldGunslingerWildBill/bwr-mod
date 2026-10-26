@@ -1165,7 +1165,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             surface = waterSurface(server, at.x(), at.z(), at.y() + 1, middle - 1);
         }
         double cover = BridgeMotion.cover(surface, middle);
-        RadiationSources.emit(server, this, new Vec3(at.x(), middle, at.z()), carriedInternal.gammaWatts, BridgeMotion.transmission(cover));
+        RadiationSources.emit(server, this, new Vec3(at.x(), middle, at.z()), carriedInternal.gammaWatts, BridgeMotion.transmission(cover), true);
     }
 
     /** The top of the highest water block in a column between two heights (the pit an equipment pad stands in), or NaN. */

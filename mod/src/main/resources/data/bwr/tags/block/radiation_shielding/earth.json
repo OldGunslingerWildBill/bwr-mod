@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:dirt",
+    "#c:sands",
+    "#c:gravels",
+    "#minecraft:concrete_powder",
+    "minecraft:clay",
+    "minecraft:farmland",
+    "minecraft:dirt_path",
+    "minecraft:soul_sand",
+    "minecraft:soul_soil",
+    "minecraft:packed_mud"
+  ]
+}

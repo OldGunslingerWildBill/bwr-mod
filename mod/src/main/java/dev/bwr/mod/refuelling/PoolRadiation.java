@@ -2,6 +2,7 @@ package dev.bwr.mod.refuelling;
 
 import dev.bwr.core.radiation.DoseModel;
 import dev.bwr.core.refuelling.BridgeMotion;
+import dev.bwr.mod.radiation.BlockShielding;
 import dev.bwr.mod.radiation.RadiationSources;
 import dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity;
 import dev.bwr.mod.spentfuel.SpentFuelPoolRegistry;
@@ -51,11 +52,15 @@ public final class PoolRadiation {
             // above it (DoseModel.waterPathM); a point out of the water keeps the old rule, the water straight over the rack top.
             final boolean swimming = pool.inWater(at.x, at.y, at.z);
             final double surface = pool.surfaceY();
+            // the pool's own walls and everything inside them are in the pool's numbers: not counted on the line
+            final BlockShielding.Box own = BlockShielding.Box.of(l.min(), l.max());
             pool.forEachRackSource((x, topY, z, decayW, cover) -> {
                 double gamma = BridgeMotion.gammaWatts(decayW);
-                double distance = at.distanceTo(new Vec3(x, topY, z));
+                Vec3 source = new Vec3(x, topY, z);
+                double distance = at.distanceTo(source);
                 double water = swimming ? DoseModel.waterPathM(distance, topY, at.y, surface, Double.NEGATIVE_INFINITY) : cover;
-                total[0] += DoseModel.pointSourceMsvPerH(gamma, distance, BridgeMotion.transmission(water));
+                // the pool's water is in the transmission already; other blocks on the line, outside the pool, still shield (BlockShielding)
+                total[0] += BlockShielding.pointSource(level, source, at, gamma, BridgeMotion.transmission(water), true, own);
             });
         }
         return total[0];

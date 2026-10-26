@@ -1,0 +1,20 @@
+{
+  "replace": false,
+  "values": [
+    "#c:storage_blocks/iron",
+    "#c:storage_blocks/gold",
+    "#c:storage_blocks/copper",
+    "#c:storage_blocks/netherite",
+    {
+      "id": "#c:storage_blocks/steel",
+      "required": false
+    },
+    "minecraft:iron_bars",
+    "minecraft:iron_door",
+    "minecraft:iron_trapdoor",
+    "#minecraft:anvil",
+    "minecraft:chain",
+    "minecraft:cauldron",
+    "minecraft:hopper"
+  ]
+}

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased: block radiation shielding
+
+Blocks a player places between a radiation source and a person now shield it. Write-up, the half-value layer table and its sources: [RADIATION.md](RADIATION.md), "Shielding".
+
+- **Line of sight per point source.** The line from each point source (the RTGs, the pool's racks, assemblies on the bridge, crane, elevator and pads, coolant crud, the RWCU demineraliser, carried capsules, resin and radium) to the dose point is marched through the block grid (3D DDA) with the true path length through each block; `T = product of 2^(-path_cm / HVL)`. The survey meter, the area monitor, the CC `other` term and the swimming dose read the shielded value.
+- **Half-value layers at about 1 MeV** (broad beam): lead 1 cm, steel 2.5 cm, concrete 6 cm, water 9.8 cm (the dose model's own), earth 9 cm, wood 23 cm, glass 5.5 cm counted as a 1 cm panel per block. One energy for every source; the choice and the narrow-beam NIST figures are in RADIATION.md.
+- **Data-driven.** New block data map `bwr:radiation_shielding` (`hvl_cm`, optional `fill`) over family tags `bwr:radiation_shielding/lead|steel|concrete|leaded_concrete|earth|wood|glass`: stone, deepslate and ores count as concrete, iron and metal blocks as steel; the three shield plug concrete tiers 5 / 3.5 / 2.5 cm; Immersive Engineering concrete and leaded concrete as optional tag entries only. Slabs count by their collision shape; waterlogged blocks add their water.
+- **Block of Lead (`bwr:lead_block`).** Nine lead ingots, and back; stone pickaxe; `c:storage_blocks/lead`.
+- **No double counting.** Blocks of formed structures (`bwr:radiation_shielding_exempt`: the reactor and its machines, the spent fuel pool, the elevator, the RTG and the Large RTG) never count; the pool's racks skip the pool's own box and the Large RTG its footprint; sources whose transmission already holds the water on the line do not count water blocks again; the reactor core term is not marched (its calibrated biological shield and building factor already holds it). Every existing reading is unchanged.
+- **Cost.** No ticker, no scan: marched only when an instrument samples, only through loaded chunks (a chunk that is not loaded counts as unshielded and is never loaded), capped at the dose model's 256 m; cached per source and dose-point block, dropped on a block update in a crossed chunk or after 40 ticks.
+- **Tests.** `ShieldingTest` in `:core:acceptance`; GameTests `ShieldingTests` (namespace `bwrshield`, batch `shielding`); client check `-PbwrShieldingClientCheck` (a lead cask around an RTG, the meter inside and outside). Guide page "Shielding" in "When things go wrong".
+- **Saves.** Nothing new is saved; old worlds load unchanged.
+
 ## Unreleased: industrial lamps
 
 Six redstone-controlled plant lamps: three lamp types (low-pressure sodium, high-pressure sodium, mercury vapour), each as a high-bay pendant and a wall pack. Lit, they warm through light 4, 8, 12 and 15 over 20 to 40 seconds of game time; the high-pressure and mercury lamps cool for about 15 seconds before a restrike.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates the thorium textures: five 16 x 16 block textures and seven 128 x 128 item icons (the rare earth concentrate, the lead ingot and nugget, the radium capsule among them).
+"""Generates the thorium textures: six 16 x 16 block textures (the lead block among them) and seven 128 x 128 item icons (the rare earth concentrate, the lead ingot and nugget, the radium capsule among them).
 
 Run from the repository root:  python tools-make-thorium-assets.py
 Standard library plus Pillow. Reuses the helpers of tools-make-uranium-assets.py, so the two ores look related but not alike.
@@ -115,6 +115,40 @@ def metal_block(seed=12):
             px[ox + i, oy + 5] = U.shade(base, -22) + (255,)
             px[ox + 5, oy + i] = U.shade(base, -22) + (255,)
         px[ox + 1, oy + 1] = (232, 232, 236, 255)
+    return img
+
+
+def lead_block(seed=21):
+    """A block of cast lead: dull blue-grey, softer and darker than the thorium plates, nine ingots stacked in three rows."""
+    rng = random.Random(seed)
+    base = (96, 102, 116)
+    img = Image.new("RGBA", (16, 16), base + (255,))
+    px = img.load()
+    for y in range(16):
+        for x in range(16):
+            px[x, y] = U.shade(base, rng.randrange(-4, 5)) + (255,)
+    hi, lo, groove = (150, 158, 176, 255), (58, 62, 74, 255), (50, 54, 64, 255)
+    for i in range(16):
+        px[i, 0] = hi
+        px[0, i] = hi
+        px[i, 15] = lo
+        px[15, i] = lo
+    # three rows of ingots, the middle row offset by half an ingot like laid bricks
+    for row, y0 in enumerate((1, 6, 11)):
+        for i in range(1, 15):
+            if y0 + 4 <= 14:
+                px[i, y0 + 4] = groove
+        cuts = (5, 10) if row != 1 else (3, 8, 13)
+        for cx in cuts:
+            for dy in range(4):
+                if y0 + dy <= 14:
+                    px[cx, y0 + dy] = groove
+        for i in range(1, 15):
+            if px[i, y0][:3] != groove[:3]:
+                px[i, y0] = U.shade(base, 16) + (255,)
+    for _ in range(5):
+        x, y = rng.randrange(2, 14), rng.randrange(2, 14)
+        px[x, y] = U.shade(base, 30) + (255,)
     return img
 
 
@@ -282,6 +316,7 @@ def main():
     raw_block().save(os.path.join(block, "raw_thorium_block.png"))
     metal_block().save(os.path.join(block, "thorium_block.png"))
     monazite_sand().save(os.path.join(block, "monazite_sand.png"))
+    lead_block().save(os.path.join(block, "lead_block.png"))
     item = os.path.join(TEX, "item/fuel")
     thorium_ingot().save(os.path.join(item, "thorium_ingot.png"))
     thorium_nugget().save(os.path.join(item, "thorium_nugget.png"))
@@ -290,7 +325,7 @@ def main():
     lead_ingot().save(os.path.join(item, "lead_ingot.png"))
     lead_nugget().save(os.path.join(item, "lead_nugget.png"))
     radium().save(os.path.join(item, "radium.png"))
-    print("wrote 5 block textures and 7 item icons")
+    print("wrote 6 block textures and 7 item icons")
 
 
 if __name__ == "__main__":

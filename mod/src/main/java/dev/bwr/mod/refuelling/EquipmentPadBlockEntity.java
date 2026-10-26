@@ -173,7 +173,7 @@ public class EquipmentPadBlockEntity extends BlockEntity {
             Vec3 middle = new Vec3(p.getX() + .5, p.getY() + TOP + pad.assemblyHeight() / 2, p.getZ() + .5);
             double distance = at.distanceTo(middle);
             if (distance > DoseModel.MAX_RANGE_M) continue;
-            total += DoseModel.pointSourceMsvPerH(pad.stored.gammaWatts, distance, BridgeMotion.transmission(pad.coverM()));
+            total += dev.bwr.mod.radiation.BlockShielding.pointSource(level, middle, at, pad.stored.gammaWatts, BridgeMotion.transmission(pad.coverM()), true);
         }
         return total;
     }

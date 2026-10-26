@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "#bwr:reactor_blocks",
+    "bwr:spent_fuel_pool_wall",
+    "bwr:spent_fuel_pool_controller",
+    "bwr:spent_fuel_rack",
+    "bwr:spent_fuel_pool_makeup_port",
+    "bwr:spent_fuel_pool_cooling_in",
+    "bwr:spent_fuel_pool_cooling_out",
+    "bwr:new_fuel_elevator",
+    "bwr:rtg",
+    "bwr:large_rtg"
+  ]
+}

@@ -57,8 +57,9 @@ neoForge {
             // 'bwrrtg' holds the RTG and isotope separator tests (RtgTests); -PbwrGameTestNamespaces=bwrrtg runs just those.
             // 'bwrlargertg' holds the Large RTG, RTG heat and isotope ingot tests (LargeRtgTests); -PbwrGameTestNamespaces=bwrlargertg runs just those. Add -PbwrColdSweat to run them with Cold Sweat on the dev runtime.
             // 'bwrlamps' holds the industrial lamp tests (IndustrialLampTests): warm-up, restrike, redstone, saving, loot; -PbwrGameTestNamespaces=bwrlamps runs just those.
+            // 'bwrshield' holds the block radiation shielding tests (ShieldingTests, batch shielding); -PbwrGameTestNamespaces=bwrshield runs just those.
             // 'bwrbreeding' holds the reactor-bred isotope tests (BreedingTargetTests); -PbwrGameTestNamespaces=bwrbreeding runs just those.
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyPool') ? 'bwrpool' : project.hasProperty('bwrOnlyUranium') ? 'bwruranium' : project.hasProperty('bwrOnlyThorium') ? 'bwrthorium' : project.hasProperty('bwrOnlyBlast') ? 'bwrblast' : project.hasProperty('bwrOnlyBridge') ? 'bwrbridge' : project.hasProperty('bwrOnlyCavity') ? 'bwrcavity' : project.hasProperty('bwrOnlyCrane') ? 'bwrcrane' : 'bwr,bwrtick,bwrplant,bwrpool,bwruranium,bwrthorium,bwrblast,bwrbridge,bwrcavity,bwrinternals,bwrcrane,bwrheight,bwrrwcu,bwrshell,bwraux,bwrhx,bwrrtg,bwrbreeding,bwrlargertg,bwrlamps')
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyPool') ? 'bwrpool' : project.hasProperty('bwrOnlyUranium') ? 'bwruranium' : project.hasProperty('bwrOnlyThorium') ? 'bwrthorium' : project.hasProperty('bwrOnlyBlast') ? 'bwrblast' : project.hasProperty('bwrOnlyBridge') ? 'bwrbridge' : project.hasProperty('bwrOnlyCavity') ? 'bwrcavity' : project.hasProperty('bwrOnlyCrane') ? 'bwrcrane' : 'bwr,bwrtick,bwrplant,bwrpool,bwruranium,bwrthorium,bwrblast,bwrbridge,bwrcavity,bwrinternals,bwrcrane,bwrheight,bwrrwcu,bwrshell,bwraux,bwrhx,bwrrtg,bwrbreeding,bwrlargertg,bwrlamps,bwrshield')
             // Developer-only tick profiler (dev.bwr.mod.TickProbe): per-system microseconds per server tick, printed by
             // the TickBudgetTests plant profile as "TICK PROBE" lines. Off (and costless) without this property.
             if (project.hasProperty('bwrTickProbe')) jvmArguments.add('-Dbwr.tickProbe=true')
@@ -99,6 +100,8 @@ neoForge {
             if (project.hasProperty('bwrRtgClientCheck')) jvmArguments.add('-Dbwr.rtgClientCheck=true')
             // The Large RTG beside a small one, its front and its screens (LargeRtgClientCheck): pictures in run/turbineModelCheck/large-rtg-check.
             if (project.hasProperty('bwrLargeRtgClientCheck')) jvmArguments.add('-Dbwr.largeRtgClientCheck=true')
+            // A lead-block cask around an RTG with the survey meter inside and outside it (ShieldingClientCheck): pictures in run/turbineModelCheck/shielding-check.
+            if (project.hasProperty('bwrShieldingClientCheck')) jvmArguments.add('-Dbwr.shieldingClientCheck=true')
             // The reactor-bred isotopes: the blocks, every new item and rod, the RTG on polonium and a core's refuelling map with the new targets (BreedingClientCheck): run/turbineModelCheck/breeding-check.
             if (project.hasProperty('bwrBreedingClientCheck')) jvmArguments.add('-Dbwr.breedingClientCheck=true')
             if (project.hasProperty('bwrCondenserPanelCheck')) jvmArguments.add('-Dbwr.condenserPanelCheck=true')

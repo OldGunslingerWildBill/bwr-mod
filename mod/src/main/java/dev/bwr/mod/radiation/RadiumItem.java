@@ -65,7 +65,7 @@ public class RadiumItem extends Item {
     /** What the radium a player carries reads at {@code at}, mSv/h. */
     public static double doseRateOf(Player player, Vec3 at) {
         double w = carriedGammaWatts(player);
-        return w > 0 ? DoseModel.pointSourceMsvPerH(w, player.position().add(0, 1, 0).distanceTo(at), TRANSMISSION) : 0;
+        return w > 0 ? BlockShielding.pointSource(player.level(), player.position().add(0, 1, 0), at, w, TRANSMISSION, false) : 0;
     }
 
     @Override

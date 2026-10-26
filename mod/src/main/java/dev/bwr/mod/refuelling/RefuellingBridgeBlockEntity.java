@@ -1195,7 +1195,7 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
             }
             carriedCover = BridgeMotion.cover(surface, middle);
             carriedWatts = carriedInternal.gammaWatts;
-            RadiationSources.emit(server, this, new Vec3(at.x(), middle, at.z()), carriedInternal.gammaWatts, BridgeMotion.transmission(carriedCover));
+            RadiationSources.emit(server, this, new Vec3(at.x(), middle, at.z()), carriedInternal.gammaWatts, BridgeMotion.transmission(carriedCover), true);
             return;
         }
         if (carried.isEmpty() || pos == null) {
@@ -1213,7 +1213,7 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
         double surface = site != null && site.ok() ? site.surfaceAt(server, at.x(), at.z(), chute) : Double.NaN;
         carriedCover = BridgeMotion.cover(surface, at.y());
         RadiationSources.emit(server, this, new Vec3(at.x(), at.y(), at.z()), BridgeMotion.gammaWatts(carriedWatts),
-                BridgeMotion.transmission(carriedCover));
+                BridgeMotion.transmission(carriedCover), true);
     }
 
     /** The top of the highest water block in a column between two heights (the pit an equipment pad stands in), or NaN. */

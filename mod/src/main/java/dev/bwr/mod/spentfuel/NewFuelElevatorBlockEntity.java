@@ -756,14 +756,14 @@ public class NewFuelElevatorBlockEntity extends BlockEntity {
         double total = 0.0;
         // assemblies waiting in the hatch or at the landing: handle at the hatch
         for (ItemStack stack : inbound) {
-            total += oneSource(stack, now, hatchX, hatchY, hatchZ, surface, at);
+            total += oneSource(level, stack, now, hatchX, hatchY, hatchZ, surface, at);
         }
-        total += oneSource(landing, now, hatchX, hatchY, hatchZ, surface, at);
+        total += oneSource(level, landing, now, hatchX, hatchY, hatchZ, surface, at);
         // the assembly on its way
         if (tripKind != null && trip != null && !flying.isEmpty()) {
             var pose = FuelElevatorMotion.poseAt(trip, Math.max(0L, now - tripStart));
             if (pose.hasAssembly()) {
-                total += oneSource(flying, now, pose.ax(), pose.ay(), pose.az(), surface, at);
+                total += oneSource(level, flying, now, pose.ax(), pose.ay(), pose.az(), surface, at);
             }
         }
         return total;
@@ -783,7 +783,7 @@ public class NewFuelElevatorBlockEntity extends BlockEntity {
         return Double.NaN;
     }
 
-    private static double oneSource(ItemStack stack, long now, double x, double y, double z, double surface, Vec3 at) {
+    private static double oneSource(Level level, ItemStack stack, long now, double x, double y, double z, double surface, Vec3 at) {
         if (stack.isEmpty()) {
             return 0.0;
         }
@@ -791,7 +791,10 @@ public class NewFuelElevatorBlockEntity extends BlockEntity {
         if (!(gamma > 0.0)) {
             return 0.0;
         }
-        return FuelElevatorMotion.doseRateMsvPerH(gamma, at.distanceTo(new Vec3(x, y, z)), surface, y);
+        Vec3 source = new Vec3(x, y, z);
+        double bare = FuelElevatorMotion.doseRateMsvPerH(gamma, at.distanceTo(source), surface, y);
+        // the pool's water over the handle is in the bare figure; other blocks on the line shield it (BlockShielding)
+        return bare > 0.0 ? bare * dev.bwr.mod.radiation.BlockShielding.transmission(level, source, at, true, null) : 0.0;
     }
 
     // ---------------------------------------------------------------

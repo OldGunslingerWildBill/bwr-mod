@@ -407,6 +407,7 @@ public final class BwrItems {
      */
     public static final DeferredItem<Item> LEAD_NUGGET = ITEMS.registerSimpleItem("lead_nugget");
     public static final DeferredItem<Item> LEAD_INGOT = ITEMS.registerSimpleItem("lead_ingot");
+    public static final DeferredItem<BlockItem> LEAD_BLOCK = ITEMS.registerSimpleBlockItem(BwrBlocks.LEAD_BLOCK);
     /** Radium: a rare byproduct of mining thorium ore, clearly radioactive (a gamma source when carried, see RadiumItem). */
     public static final DeferredItem<Item> RADIUM = ITEMS.register("radium", () -> new dev.bwr.mod.radiation.RadiumItem(new Item.Properties().stacksTo(16)));
     public static final DeferredItem<BlockItem> THORIUM_ORE = ITEMS.registerSimpleBlockItem(BwrBlocks.THORIUM_ORE);
@@ -548,7 +549,7 @@ public final class BwrItems {
                     .icon(() -> FUEL_ASSEMBLY.get().getDefaultInstance()).displayItems((parameters, output) -> {
                         for (var type : FuelTypes.catalogue()) output.accept(FuelAssemblyItem.stackOf(FUEL_ASSEMBLY.get(), FuelAssemblyData.fresh(type)));
                         for (var kind : dev.bwr.core.fuel.CoreInsert.Kind.values()) output.accept(dev.bwr.mod.fuel.SpecialtyRodItem.stack(new dev.bwr.mod.fuel.CoreInsertData(kind, 0)));
-                        for (var item : java.util.List.<net.neoforged.neoforge.registries.DeferredItem<? extends Item>>of(URANIUM_ORE, DEEPSLATE_URANIUM_ORE, RAW_URANIUM, RAW_URANIUM_BLOCK, URANIUM_INGOT, URANIUM_BLOCK, THORIUM_ORE, DEEPSLATE_THORIUM_ORE, MONAZITE_SAND, RAW_THORIUM, RAW_THORIUM_BLOCK, THORIUM_INGOT, THORIUM_NUGGET, THORIUM_BLOCK, RARE_EARTH_CONCENTRATE, LEAD_NUGGET, LEAD_INGOT, RADIUM, IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM, PLUTONIUM_NUGGET, PLUTONIUM_INGOT, FISSION_PRODUCT_WASTE, STRIPPED_WASTE, STRONTIUM_90_INGOT, STRONTIUM_90_BLOCK, CAESIUM_137_INGOT, CAESIUM_137_BLOCK, AMERICIUM_241_INGOT, AMERICIUM_241_BLOCK, COBALT_60_INGOT, COBALT_60_BLOCK, BISMUTH_NUGGET, POLONIUM_210_INGOT, POLONIUM_210_BLOCK, PLUTONIUM_238_INGOT, PLUTONIUM_238_BLOCK, ACTINIUM_227_INGOT, ACTINIUM_227_BLOCK, THULIUM_170_INGOT, THULIUM_170_BLOCK, URANIUM_233_INGOT, NEPTUNIUM_237_INGOT)) output.accept(item.get());
+                        for (var item : java.util.List.<net.neoforged.neoforge.registries.DeferredItem<? extends Item>>of(URANIUM_ORE, DEEPSLATE_URANIUM_ORE, RAW_URANIUM, RAW_URANIUM_BLOCK, URANIUM_INGOT, URANIUM_BLOCK, THORIUM_ORE, DEEPSLATE_THORIUM_ORE, MONAZITE_SAND, RAW_THORIUM, RAW_THORIUM_BLOCK, THORIUM_INGOT, THORIUM_NUGGET, THORIUM_BLOCK, RARE_EARTH_CONCENTRATE, LEAD_NUGGET, LEAD_INGOT, LEAD_BLOCK, RADIUM, IRRADIATION_CASING, COBALT_CHARGE, LITHIUM_CHARGE, TRITIUM_SAMPLE, DOPED_SILICON, DEPLETED_URANIUM, PLUTONIUM_NUGGET, PLUTONIUM_INGOT, FISSION_PRODUCT_WASTE, STRIPPED_WASTE, STRONTIUM_90_INGOT, STRONTIUM_90_BLOCK, CAESIUM_137_INGOT, CAESIUM_137_BLOCK, AMERICIUM_241_INGOT, AMERICIUM_241_BLOCK, COBALT_60_INGOT, COBALT_60_BLOCK, BISMUTH_NUGGET, POLONIUM_210_INGOT, POLONIUM_210_BLOCK, PLUTONIUM_238_INGOT, PLUTONIUM_238_BLOCK, ACTINIUM_227_INGOT, ACTINIUM_227_BLOCK, THULIUM_170_INGOT, THULIUM_170_BLOCK, URANIUM_233_INGOT, NEPTUNIUM_237_INGOT)) output.accept(item.get());
                     }).build());
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB =
