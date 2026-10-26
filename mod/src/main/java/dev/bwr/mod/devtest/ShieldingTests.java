@@ -227,6 +227,16 @@ public final class ShieldingTests {
             l.setBlock(o.offset(2, 0, 0), Blocks.TORCH.defaultBlockState(), 3);
             l.setBlock(o.offset(3, 0, 0), Blocks.SHORT_GRASS.defaultBlockState(), 3);
             h.assertTrue(RadiationSources.doseRateMsvPerHour(l, meter) == bare, "a torch and grass shield the source");
+            // the floodlights' light blocks are air; a waterlogged one is the water it was placed in, so a lamp never changes a reading
+            l.setBlock(o.offset(2, 0, 0), Blocks.LIGHT.defaultBlockState(), 3);
+            h.assertTrue(BlockShielding.effectiveHvlCm(Blocks.LIGHT.defaultBlockState()) == Double.POSITIVE_INFINITY
+                    && BlockShielding.trace(l, source, meter, false, null).opticalDepth() == 0.0
+                    && RadiationSources.doseRateMsvPerHour(l, meter) == bare, "a minecraft:light block shields the source");
+            l.setBlock(o.offset(2, 0, 0), Blocks.LIGHT.defaultBlockState().setValue(BlockStateProperties.WATERLOGGED, true), 2);
+            double lightInWater = BlockShielding.trace(l, source, meter, false, null).opticalDepth();
+            l.setBlock(o.offset(2, 0, 0), Blocks.WATER.defaultBlockState(), 2);
+            double water0 = BlockShielding.trace(l, source, meter, false, null).opticalDepth();
+            h.assertTrue(lightInWater == water0 && water0 > 0.0, "a waterlogged light block is not the water it stands in: " + lightInWater + " vs " + water0);
             l.setBlock(o.offset(2, 0, 0), Blocks.AIR.defaultBlockState(), 3);
             l.setBlock(o.offset(3, 0, 0), Blocks.AIR.defaultBlockState(), 3);
 

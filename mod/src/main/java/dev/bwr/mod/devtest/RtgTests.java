@@ -46,6 +46,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 public final class RtgTests {
 
     private static final String NS = "bwrrtg";
+    /** Their own batch: they register radiation sources and the shared game clock is moved by other tests, so they do not run beside them. */
+    private static final String BATCH = "bwrrtg";
 
     private static ItemStack spent(String fuel, double enrichment, double burnup) {
         return FuelAssemblyItem.stackOf(BwrItems.FUEL_ASSEMBLY.get(), new FuelAssemblyData(fuel, enrichment, 180.0, burnup, 1.0));
@@ -81,7 +83,7 @@ public final class RtgTests {
     // Extraction
 
     /** Real spent LEU through the real plant; its waste through the separator; the mass adds up to the grain. */
-    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = NS, batch = BATCH, timeoutTicks = 200)
     public static void extractionFromRealSpentFuelYieldsCapsulesAndConservesMass(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos pp = new BlockPos(16000, 210, 16000);
@@ -141,7 +143,7 @@ public final class RtgTests {
     }
 
     /** The fractions carry from item to item and survive a save; empty saves write nothing extra. */
-    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = NS, batch = BATCH, timeoutTicks = 200)
     public static void separatorFractionsCarryAndSave(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos sp = new BlockPos(16020, 210, 16000);
@@ -179,7 +181,7 @@ public final class RtgTests {
     }
 
     /** A reprocessing plant saved before this change loads and works exactly as it did: four slots, three products, no stripped waste. */
-    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = NS, batch = BATCH, timeoutTicks = 200)
     public static void oldReprocessingSavesLoad(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos pp = new BlockPos(16030, 210, 16000);
@@ -221,7 +223,7 @@ public final class RtgTests {
     // The RTG
 
     /** Six strontium capsules beside a real consumer: what is delivered plus what waits is exactly rate times the ticks. */
-    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = NS, batch = BATCH, timeoutTicks = 300)
     public static void anRtgPowersAnAdjacentConsumer(GameTestHelper h) {
         BlockPos rtgPos = new BlockPos(1, 2, 1);
         BlockPos plantPos = new BlockPos(2, 2, 1);
@@ -238,19 +240,70 @@ public final class RtgTests {
                 "readout " + r);
         long t0 = h.getLevel().getGameTime();
         h.runAfterDelay(100, () -> {
-            long elapsed = h.getLevel().getGameTime() - t0;
-            double made = rate * elapsed;
-            int delivered = plant.energy().getEnergyStored();
-            double waiting = rtg.bufferFe();
-            h.assertTrue(delivered > 0.8 * made, "the neighbour got " + delivered + " FE of " + made);
-            h.assertTrue(Math.abs(delivered + waiting - made) < 1e-6 * made, "accounting: delivered " + delivered + " + waiting " + waiting + " vs made " + made);
-            System.out.println("RTG power: " + elapsed + " ticks, 6 Sr-90 capsules, " + delivered + " FE delivered to a plant, " + String.format("%.2f", waiting) + " FE waiting; " + String.format("%.4f", rate) + " FE/t");
+            try {
+                long elapsed = h.getLevel().getGameTime() - t0;
+                double made = rate * elapsed;
+                int delivered = plant.energy().getEnergyStored();
+                double waiting = rtg.bufferFe();
+                h.assertTrue(delivered > 0.8 * made, "the neighbour got " + delivered + " FE of " + made);
+                h.assertTrue(Math.abs(delivered + waiting - made) < 1e-6 * made, "accounting: delivered " + delivered + " + waiting " + waiting + " vs made " + made);
+                System.out.println("RTG power: " + elapsed + " ticks, 6 Sr-90 capsules, " + delivered + " FE delivered to a plant, " + String.format("%.2f", waiting) + " FE waiting; " + String.format("%.4f", rate) + " FE/t");
+            } finally {
+                tidy(h, rtgPos, plantPos);
+            }
+            // the RTG's point source went with its block: nothing is left in the shared level for other tests to count
+            h.assertTrue(RadiationSources.doseRateMsvPerHour(h.getLevel(), Vec3.atCenterOf(h.absolutePos(rtgPos)).add(1.0, 0.0, 0.0)) == 0.0,
+                    "the RTG's radiation source outlived its test");
             h.succeed();
         });
     }
 
+    /** Takes the capsules out and removes the blocks a test placed: the point sources and the block entities must not outlive it. */
+    private static void tidy(GameTestHelper h, BlockPos... rel) {
+        for (BlockPos p : rel) {
+            if (h.getBlockEntity(p) instanceof RtgBlockEntity rtg) {
+                rtg.removalDrops();
+            }
+            h.setBlock(p, net.minecraft.world.level.block.Blocks.AIR);
+        }
+    }
+
+    /**
+     * The RTG's clock only moves forward. Other tests move the shared game clock (and put it back); a rewind must not make
+     * the RTG bank the same ticks again when the clock returns. Done in one synchronous stretch, so no real tick runs between.
+     */
+    @GameTest(template = "empty", templateNamespace = NS, batch = BATCH, timeoutTicks = 100)
+    public static void aRewoundClockDoesNotMakeEnergy(GameTestHelper h) {
+        ServerLevel l = h.getLevel();
+        BlockPos p = new BlockPos(1, 2, 1);
+        h.setBlock(p, BwrBlocks.RTG.get());
+        var rtg = (RtgBlockEntity) h.getBlockEntity(p);
+        var data = (net.minecraft.world.level.storage.ServerLevelData) l.getLevelData();
+        long original = l.getGameTime();
+        try {
+            for (int i = 0; i < RtgBlockEntity.SLOTS; i++) {
+                rtg.fuel().setStackInSlot(i, new ItemStack(BwrItems.STRONTIUM_90_CAPSULE.get()));
+            }
+            double rate = 69.0 / 13.4;
+            double before = rtg.bufferFe();
+            data.setGameTime(original + 10);
+            double afterForward = rtg.bufferFe();
+            h.assertTrue(Math.abs(afterForward - before - 10 * rate) < 1e-6, "ten ticks made " + (afterForward - before));
+            data.setGameTime(original + 5);
+            h.assertTrue(rtg.bufferFe() == afterForward, "a rewound clock changed the buffer: " + rtg.bufferFe() + " vs " + afterForward);
+            data.setGameTime(original + 10);
+            h.assertTrue(Math.abs(rtg.bufferFe() - afterForward) < 1e-9, "the same ten ticks were banked twice: " + rtg.bufferFe() + " vs " + afterForward);
+            data.setGameTime(original + 15);
+            h.assertTrue(Math.abs(rtg.bufferFe() - afterForward - 5 * rate) < 1e-6, "five more ticks made " + (rtg.bufferFe() - afterForward));
+        } finally {
+            data.setGameTime(original);
+            tidy(h, p);
+        }
+        h.succeed();
+    }
+
     /** No capsules, no power: nothing reaches the neighbour and nothing can be extracted. */
-    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = NS, batch = BATCH, timeoutTicks = 300)
     public static void anRtgWithNoFuelGivesZero(GameTestHelper h) {
         BlockPos rtgPos = new BlockPos(1, 2, 1);
         BlockPos plantPos = new BlockPos(2, 2, 1);
@@ -260,16 +313,20 @@ public final class RtgTests {
         var plant = (ReprocessingPlantBlockEntity) h.getBlockEntity(plantPos);
         h.assertTrue(rtg.readout().equals(RtgBlockEntity.Readout.NONE), "an empty RTG reads " + rtg.readout());
         h.runAfterDelay(80, () -> {
-            h.assertTrue(plant.energy().getEnergyStored() == 0, "an unfuelled RTG gave " + plant.energy().getEnergyStored() + " FE");
-            h.assertTrue(rtg.energy().extractEnergy(1000, true) == 0 && rtg.energy().getEnergyStored() == 0 && rtg.bufferFe() == 0.0, "an unfuelled RTG held energy");
-            // a stripped waste item or plain waste is not fuel: it is refused by the well's own filter
-            h.assertTrue(!rtg.fuel().isItemValid(0, new ItemStack(BwrItems.FISSION_PRODUCT_WASTE.get())) && !rtg.fuel().isItemValid(0, new ItemStack(Items.COAL)), "a non-fuel was accepted");
+            try {
+                h.assertTrue(plant.energy().getEnergyStored() == 0, "an unfuelled RTG gave " + plant.energy().getEnergyStored() + " FE");
+                h.assertTrue(rtg.energy().extractEnergy(1000, true) == 0 && rtg.energy().getEnergyStored() == 0 && rtg.bufferFe() == 0.0, "an unfuelled RTG held energy");
+                // a stripped waste item or plain waste is not fuel: it is refused by the well's own filter
+                h.assertTrue(!rtg.fuel().isItemValid(0, new ItemStack(BwrItems.FISSION_PRODUCT_WASTE.get())) && !rtg.fuel().isItemValid(0, new ItemStack(Items.COAL)), "a non-fuel was accepted");
+            } finally {
+                tidy(h, rtgPos, plantPos);
+            }
             h.succeed();
         });
     }
 
     /** The decay clock is world time and the half-life is the data map's: one half-life later the power is half. */
-    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, batch = BATCH, timeoutTicks = 100)
     public static void decayFollowsTheHalfLifeInTheBlock(GameTestHelper h) {
         BlockPos p = new BlockPos(1, 2, 1);
         h.setBlock(p, BwrBlocks.RTG.get());
@@ -288,11 +345,12 @@ public final class RtgTests {
         rtg.setLoadedAt(0, now - 100L * 3600L * 20L);
         h.assertTrue(rtg.readout().thermalWatts() > 0.9997 * fresh, "100 hours cost more than 0.03 %");
         rtg.removalDrops();
+        tidy(h, p);
         h.succeed();
     }
 
     /** Contents, clocks and the buffer save and load; an empty RTG writes nothing; a hand-edited save cannot mint. */
-    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, batch = BATCH, timeoutTicks = 100)
     public static void rtgSavesAndReloads(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         BlockPos p = new BlockPos(1, 2, 1);
@@ -319,6 +377,7 @@ public final class RtgTests {
         h.assertTrue(oddRtg.readout().equals(RtgBlockEntity.Readout.NONE), "an unfuelled loaded RTG makes something");
         h.assertTrue(before.capsules() == 2, "readout capsules " + before.capsules());
         rtg.removalDrops();
+        tidy(h, p);
         h.succeed();
     }
 
@@ -326,7 +385,7 @@ public final class RtgTests {
     // Dose
 
     /** A carried capsule is a gamma source scaled by isotope, grams and count; the block is one too, behind its housing. */
-    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, batch = BATCH, timeoutTicks = 100)
     public static void capsulesDoseACarrierAndTheBlockIsASource(GameTestHelper h) {
         ServerLevel l = h.getLevel();
         var player = h.makeMockPlayer(GameType.SURVIVAL);
@@ -378,7 +437,7 @@ public final class RtgTests {
     // The fuel list, the recipes, the signals
 
     /** The list is data: the capsules' numbers are what the docs say, they match the constants, and a radium line parses. */
-    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, batch = BATCH, timeoutTicks = 100)
     public static void theFuelListIsDataAndAnotherLineParses(GameTestHelper h) {
         RtgFuel sr = RtgFuels.of(new ItemStack(BwrItems.STRONTIUM_90_CAPSULE.get()));
         RtgFuel cs = RtgFuels.of(new ItemStack(BwrItems.CAESIUM_137_CAPSULE.get()));
@@ -402,7 +461,7 @@ public final class RtgTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, batch = BATCH, timeoutTicks = 100)
     public static void recipesCraftTheBlocksAndTheAmBeRodFromACapsule(GameTestHelper h) {
         var manager = h.getLevel().getServer().getRecipeManager();
         for (String id : new String[] {"rtg", "isotope_separator", "americium_beryllium_source_from_capsule", "americium_beryllium_source"}) {
@@ -424,7 +483,7 @@ public final class RtgTests {
     }
 
     /** The signal layer: a Networking Wrench sees the RTG's power. */
-    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = NS, batch = BATCH, timeoutTicks = 100)
     public static void theNetworkingSignalsReadTheRtg(GameTestHelper h) {
         BlockPos p = new BlockPos(1, 2, 1);
         h.setBlock(p, BwrBlocks.RTG.get());
@@ -440,11 +499,12 @@ public final class RtgTests {
         h.assertTrue(provider.read("capsules").orElse(-1) == 3.0 && provider.read("fuelled").orElse(-1) == 1.0 && provider.read("dose_rate").orElse(-1) > 0.0, "capsules, fuelled or dose_rate wrong");
         h.assertTrue(provider.commands().isEmpty(), "the RTG has a command");
         rtg.removalDrops();
+        tidy(h, p);
         h.succeed();
     }
 
     /** The computer face (CC:Tweaked) of the RTG and the separator; says it was skipped without CC:Tweaked. */
-    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = NS, batch = BATCH, timeoutTicks = 200)
     public static void computerFaces(GameTestHelper h) throws Exception {
         if (!net.neoforged.fml.ModList.get().isLoaded("computercraft")) {
             System.out.println("RTG CC: skipped, CC:Tweaked is not loaded");

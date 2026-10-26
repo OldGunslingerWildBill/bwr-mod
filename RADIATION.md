@@ -174,7 +174,8 @@ RTG fuels carry one (`lead_hvl_cm`), the plant's sources (fuel, crud, resin) are
 can learn. For a low-energy emitter (americium-241, 60 keV) the shielding is therefore conservative; for cobalt-60 behind a thick wall it is close.
 
 **Partial blocks.** A block's share of its cell is its collision shape (a slab is half a block of its material); a data map entry can give a fixed
-`fill` instead (glass). A waterlogged block adds water in the part of the cell it does not fill.
+`fill` instead (glass). A waterlogged block adds water in the part of the cell it does not fill. The light blocks the floodlights place
+(`minecraft:light`) are air; a waterlogged one is the water source it was placed in, so switching a lamp on or off never changes a reading.
 
 ### Materials are data
 

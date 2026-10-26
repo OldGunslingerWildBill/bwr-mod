@@ -251,6 +251,13 @@ public final class BwrItems {
     /** The Large RTG: one item places the whole 2 x 2 x 3 assembly (RTG.md). */
     public static final DeferredItem<BlockItem> LARGE_RTG =
             ITEMS.registerSimpleBlockItem(BwrBlocks.LARGE_RTG);
+    /** The xenon floodlight and high-bay items. */
+    public static final DeferredItem<BlockItem> XENON_FLOODLIGHT =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.XENON_FLOODLIGHT);
+    public static final DeferredItem<BlockItem> XENON_HIGH_BAY =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.XENON_HIGH_BAY);
+    public static final DeferredItem<BlockItem> HPS_FLAT_PANEL =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.HPS_FLAT_PANEL);
     public static final DeferredItem<BlockItem> SHIELD_PLUG_CONCRETE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.SHIELD_PLUG_CONCRETE);
     public static final DeferredItem<BlockItem> HEAVILY_REINFORCED_SHIELD_PLUG_CONCRETE =
@@ -663,6 +670,9 @@ public final class BwrItems {
                         output.accept(SURVEY_METER.get());
                         output.accept(GUIDE_BOOK.get());
                         output.accept(AREA_RADIATION_MONITOR.get());
+                        output.accept(XENON_FLOODLIGHT.get());
+                        output.accept(XENON_HIGH_BAY.get());
+                        output.accept(HPS_FLAT_PANEL.get());
                         output.accept(TURBINE_FEED_PUMP.get());
                         output.accept(CORIUM.get());
                         output.accept(CONTROL_PANEL_VERTICAL.get());

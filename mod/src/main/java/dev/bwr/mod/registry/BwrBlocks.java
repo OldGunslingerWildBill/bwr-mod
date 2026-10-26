@@ -323,6 +323,21 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.isotope.LargeRtgBlock> LARGE_RTG =
             BLOCKS.register("large_rtg", () -> new dev.bwr.mod.isotope.LargeRtgBlock(machine().noOcclusion()));
 
+    /** The xenon floodlight: an aimable fixture that lights the area its beam points at while it has a redstone signal. */
+    public static final DeferredBlock<dev.bwr.mod.floodlight.XenonFloodlightBlock> XENON_FLOODLIGHT =
+            BLOCKS.register("xenon_floodlight", () -> new dev.bwr.mod.floodlight.XenonFloodlightBlock(
+                    dev.bwr.mod.floodlight.XenonFloodlightBlock.lampProperties()));
+
+    /** The xenon high-bay: a ceiling fixture that lights a large room while it has a redstone signal. */
+    public static final DeferredBlock<dev.bwr.mod.floodlight.XenonHighBayBlock> XENON_HIGH_BAY =
+            BLOCKS.register("xenon_high_bay", () -> new dev.bwr.mod.floodlight.XenonHighBayBlock(
+                    dev.bwr.mod.floodlight.XenonHighBayBlock.lampProperties()));
+
+    /** The high-pressure sodium flat panel: a flat golden-white ceiling or wall fixture that floods an area while powered. */
+    public static final DeferredBlock<dev.bwr.mod.floodlight.HpsFlatPanelBlock> HPS_FLAT_PANEL =
+            BLOCKS.register("hps_flat_panel", () -> new dev.bwr.mod.floodlight.HpsFlatPanelBlock(
+                    dev.bwr.mod.floodlight.HpsFlatPanelBlock.lampProperties()));
+
     // RTG isotope storage blocks: nine ingots each, 2,250 g (RTG.md). Carried like the ingots; placed they are inert storage.
     private static BlockBehaviour.Properties isotopeBlock(MapColor colour) {
         return BlockBehaviour.Properties.of().mapColor(colour)

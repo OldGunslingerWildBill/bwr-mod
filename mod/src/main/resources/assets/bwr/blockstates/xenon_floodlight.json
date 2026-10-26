@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,lit=false": {"model": "bwr:block/xenon_floodlight_body"},
+    "facing=north,lit=true": {"model": "bwr:block/xenon_floodlight_body"},
+    "facing=east,lit=false": {"model": "bwr:block/xenon_floodlight_body", "y": 90},
+    "facing=east,lit=true": {"model": "bwr:block/xenon_floodlight_body", "y": 90},
+    "facing=south,lit=false": {"model": "bwr:block/xenon_floodlight_body", "y": 180},
+    "facing=south,lit=true": {"model": "bwr:block/xenon_floodlight_body", "y": 180},
+    "facing=west,lit=false": {"model": "bwr:block/xenon_floodlight_body", "y": 270},
+    "facing=west,lit=true": {"model": "bwr:block/xenon_floodlight_body", "y": 270}
+  }
+}
