@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "immersiveengineering:concrete_leaded",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:slab_concrete_leaded",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:stairs_concrete_leaded",
+      "required": false
+    }
+  ]
+}

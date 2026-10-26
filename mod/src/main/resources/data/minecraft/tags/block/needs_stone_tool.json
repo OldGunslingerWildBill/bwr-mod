@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "#bwr:pressure_boundary"
+    "#bwr:pressure_boundary",
+    "bwr:lead_block"
   ]
 }

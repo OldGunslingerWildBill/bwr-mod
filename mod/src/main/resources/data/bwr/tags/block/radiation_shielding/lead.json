@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "bwr:lead_block",
+    {
+      "id": "#c:storage_blocks/lead",
+      "required": false
+    }
+  ]
+}

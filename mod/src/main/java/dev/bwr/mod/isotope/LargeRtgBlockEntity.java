@@ -329,7 +329,10 @@ public class LargeRtgBlockEntity extends BlockEntity {
         // instrument and only costs the dose model a source to sum. Below a nanowatt (about 1e-6 mSv/h at a metre) none is registered;
         // the screen and the signal still print the true number.
         if (outside > MIN_SOURCE_WATTS) {
-            RadiationSources.emit(level, this, centre(), outside, 1.0);
+            // the housing is the whole footprint, in the 40 cm lead figure already: its cells are not counted again on the line
+            Direction facing = getBlockState().getValue(LargeRtgBlock.FACING);
+            RadiationSources.emit(level, this, centre(), outside, 1.0, false, dev.bwr.mod.radiation.BlockShielding.Box.of(
+                    LargeRtgBlock.cellPos(worldPosition, facing, 0), LargeRtgBlock.cellPos(worldPosition, facing, LargeRtgBlock.CELLS - 1)));
             registeredSource = true;
         } else if (registeredSource) {
             RadiationSources.clear(level, this);

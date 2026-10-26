@@ -131,6 +131,93 @@ Creative and spectator players are exempt (nothing is recorded, no effects, no m
 accumulates and is on the meter, but nothing is done to a person for the total (acute radiation sickness is not modelled). A player in a **dry** pool beside the fuel, or on the rim, is
 not sampled: the uncovered-fuel accident's own contamination (`SPENT-FUEL-POOL.md`) and the meter cover them.
 
+## Shielding: blocks between you and a source
+
+Blocks a player places between a **point source** and the dose point shield it (`dev.bwr.mod.radiation.BlockShielding`, arithmetic in
+`dev.bwr.core.radiation.Shielding`). The straight line from the source to the point is marched through the block grid (a 3D DDA, Amanatides and
+Woo), each block gets the true length of the line inside it, and what gets through is
+
+`T = product over the blocks crossed of 2^(-path_cm / HVL) = e^(-sum mu x path)`,
+
+times the source's own transmission and the inverse square and air of `DoseModel.pointSourceMsvPerH`. A slanted line through a wall goes
+through more of it than a straight one; a line that clips a corner of a block gets the few centimetres it crosses, not a whole block. Both
+instruments, the CC `other` term and the swimming dose read the shielded value with no change of their own.
+
+### Half-value layers (one energy, about 1 MeV)
+
+| Material (family tag `bwr:radiation_shielding/...`) | HVL used | Narrow beam, NIST XCOM 1 MeV | What counts |
+| --- | --- | --- | --- |
+| Lead (`lead`) | **1.0 cm** | 0.86 cm (mu/rho 0.0710 cm2/g x 11.35 g/cm3) | `bwr:lead_block`, `#c:storage_blocks/lead` (other mods' lead blocks) |
+| Steel (`steel`) | **2.5 cm** | 1.47 cm (iron, 0.0600 x 7.87) | iron, gold, copper, netherite and steel blocks, iron bars, doors, trapdoors, anvils, chains, cauldrons, hoppers |
+| Concrete (`concrete`) | **6.0 cm** | 4.6 cm (ordinary concrete, 0.0650 x 2.30) | vanilla concrete, stone, deepslate, cobblestone, ores, obsidian, bricks, terracotta, sandstone, end stone, netherrack; Immersive Engineering concrete (optional tag entries) |
+| Leaded concrete (`leaded_concrete`) | 3.5 cm | | Immersive Engineering leaded concrete (optional tag entries) |
+| Shield plug concrete, tiers 1 / 2 / 3 | 5.0 / 3.5 / 2.5 cm | | the mod's three shield plug concrete blocks, progressively stronger (more steel, then netherite) |
+| Water | **9.8 cm** | 9.8 cm | water blocks and the water of waterlogged blocks: the dose model's own 7.07 per m |
+| Earth (`earth`) | 9 cm | | dirt and its kin, sand, gravel, clay, concrete powder, soul sand |
+| Wood (`wood`) | 23 cm | | logs, planks, wooden slabs and stairs |
+| Glass (`glass`) | 5.5 cm at **1 % fill** | | glass blocks and panes count as a 1 cm glazed panel: about 12 % off per block |
+| Air, and every block with no entry | none | | torches, plants, machines, and the mod's formed structures (below) |
+
+**Why these numbers.** Lead, steel and concrete use the rounded **broad-beam** half-value layers of shielding practice, which include the build-up of
+scattered photons in a thick wall: typical health physics tables (for example Cember and Johnson, *Introduction to Health Physics*) give about 1.2,
+2.1 and 6.2 cm for cobalt-60 and 0.65, 1.6 and 4.8 cm for caesium-137. A wall a player builds is a thick broad-beam shield, and the broad-beam value
+is the conservative one (more gets through than the narrow-beam figure says); the narrow-beam NIST values are in the table for comparison. Lead's
+1 cm is also the default `lead_hvl_cm` of the RTG fuel list ([RTG.md](RTG.md)), so a lead block and the Large RTG's housing agree. **Water** keeps the
+dose model's own coefficient, so a water block and the pool's water are one number. Earth, wood and glass scale concrete's mass half-value layer
+(13.8 g/cm2; at 1 MeV the mass attenuation of light materials is nearly the same) by their density (1.5, 0.6 and 2.5 g/cm3).
+
+At block scale this is decisive: one block of lead is 100 half-value layers (2^-100, nothing measurable gets through), one block of concrete about 17
+(a hundred-thousandth), one block of steel 40, one of earth 11, one of wood about 4, one of glass an eighth off.
+
+**One energy.** Every source is shielded as a 1 MeV emitter, the energy the dose model uses for everything. Per-source energy was left out: only the
+RTG fuels carry one (`lead_hvl_cm`), the plant's sources (fuel, crud, resin) are broad fission and activation spectra, and one table is what a player
+can learn. For a low-energy emitter (americium-241, 60 keV) the shielding is therefore conservative; for cobalt-60 behind a thick wall it is close.
+
+**Partial blocks.** A block's share of its cell is its collision shape (a slab is half a block of its material); a data map entry can give a fixed
+`fill` instead (glass). A waterlogged block adds water in the part of the cell it does not fill. The light blocks the floodlights place
+(`minecraft:light`) are air; a waterlogged one is the water source it was placed in, so switching a lamp on or off never changes a reading.
+
+### Materials are data
+
+The block data map `bwr:radiation_shielding` (`data/<namespace>/data_maps/block/radiation_shielding.json`) gives a block or a block tag
+`{"hvl_cm": <cm>, "fill": <0..1, optional>}`. The mod's file maps the family tags above and the shield plug tiers; a pack adds a block to a family
+tag, or gives it its own entry. Immersive Engineering is never a dependency: its blocks are optional (`"required": false`) entries of the family tags.
+A datapack reload recomputes every block and drops every cached ray. **Block of Lead** (`bwr:lead_block`): nine lead ingots, and back; a stone
+pickaxe or better; `c:storage_blocks/lead`.
+
+### Nothing is counted twice
+
+* **Formed structures.** The blocks in `bwr:radiation_shielding_exempt` never count, whatever the data map says: the reactor and its machines
+  (`#bwr:reactor_blocks`), the spent fuel pool's lining, racks, ports and controller, the new fuel elevator, the RTG and the Large RTG. Their shielding
+  is in their sources' calibrated numbers.
+* **A source's own housing.** The cell the source is in is not counted, nor the source's own box: the spent fuel pool's racks skip the pool's whole
+  walls-and-interior box (lead dropped into the pool does not shield its own racks; the pool's water already does), the Large RTG its footprint (its
+  40 cm lead-equivalent housing is in its number).
+* **Water.** A source whose transmission already holds the water on the line (the pool's racks, an assembly on the bridge, the crane, the elevator, the
+  equipment pads) does not count water blocks again, so a pool full of vanilla water reads exactly what it did, and swimming (`ImmersionDose`,
+  `DoseModel.waterPathM`) is unchanged. Any other source behind a water block gets the dose model's water for it.
+* **The reactor core term is not marched.** Its calibrated 1e-4 "biological shield and building" is the shielding around the reactor, the containment
+  the player built among it. The contamination terms (airborne, deposited, release) are spread through containment and the site, not point sources,
+  and are not marched either.
+
+Every reading the existing tests pin (the pool above and in the water, the bridge, the crane, the cavity, the RTGs, the radiation tools) is unchanged.
+
+### Cost and limits
+
+Nothing ticks and nothing scans. A ray is marched only when an instrument samples (a held meter every 5 ticks, a monitor at most every 5 ticks, a
+swimmer every 10), only for a source within the dose model's 256 m (the ray length cap; beyond it the source reads zero anyway), and stops once the
+transmission is zero. Only **loaded** chunks are read (`getChunkNow`): a chunk that is not loaded is never loaded or asked for, and the part of the
+line inside it counts as **no shielding** (a meter can over-read across the edge of the loaded world; it never under-reads). A ray is cached per
+source position, dose-point block and options for 40 ticks; a block change that notifies its neighbours (a player placing or breaking, a fluid, an
+explosion, `/setblock`) in a chunk the ray crossed, or that chunk loading or unloading, drops it at once, and a silent change (a piston's move) is
+seen when it expires. A ray through an unloaded chunk is not cached. The meter shows the shielded reading; it does not show a lead-equivalent
+thickness (`BlockShielding.trace(...).leadEquivalentCm()` has it for code). Cost measured in `ShieldingTests.aSampleInADensePoolStaysCheap`
+(`SHIELDING PERF` in the log), on the
+owner's PC with other games running: a 25 x 25 pool with 46 loaded racks (184 assemblies) under a concrete floor, 40 sample points, **310 to 490 us a sample cold
+(46 marches, 7 cells read each) and 35 to 107 us warm** (all cache hits) over two runs; 400 free point sources behind lead walls, one meter, 3.3 to 6.4 ms
+cold and 0.09 to 0.32 ms warm.
+A held meter samples 4 times a second.
+
 ## The Survey Meter
 
 * **Hold it** (either hand): the server samples the dose rate at you four times a second (every 5 ticks, staggered by player)
@@ -212,7 +299,8 @@ end
 ## Adding a source of your own (spent fuel pool, irradiated assemblies, a hot sample)
 
 `dev.bwr.mod.radiation.RadiationSources` is the extension point. Everything is server thread, in mSv/h; the arithmetic of a
-point source behind shielding is `DoseModel.pointSourceMsvPerH(gammaWatts, distanceMetres, transmission)`.
+point source behind shielding is `DoseModel.pointSourceMsvPerH(gammaWatts, distanceMetres, transmission)`. A point source set with `emit` is also shielded by the blocks on the line (see Shielding); a provider that wants the same calls
+`BlockShielding.pointSource(level, source, at, gammaWatts, transmission, waterModelled)`.
 
 ```java
 // 1. A provider for a whole kind of source, registered once. Called with the level and the point asked about.
@@ -236,6 +324,13 @@ with no further work.
 
 * `:core:acceptance` runs `DoseModelTest`: the inventory scale, the effect thresholds, shielding, open head, inverse square,
   the click rate, formatting, the water path along the line (above and in the water, the open head's fuel top, continuity), and the hazard a dose rate stands for.
+* `:core:acceptance` runs `ShieldingTest`: one, two and three half-value layers give a half, a quarter and an eighth; the march gives each block its
+  true length (straight, diagonal, a clipped corner, along a face, through an edge); water counted once and as the dose model's water.
+* GameTests `ShieldingTests` (namespace `bwrshield`, batch `shielding`): the materials table as data, a lead wall between an RTG (and a carried
+  caesium capsule) and the meter, a concrete bunker and the shield plug tiers, glass, air and non-solid blocks, formed structures and the pool's water
+  not counted twice (the pool's readings unchanged with water blocks and lead in it, the immersion dose unchanged), an unloaded chunk on the line, the
+  cache on placing, breaking and expiry, and the cost in a dense pool. Client check `-PbwrShieldingClientCheck`: a lead cask around an RTG, the meter
+  inside and outside.
 * GameTests (`RadiationToolsTests`, `RadiationCcTests`): the meter reads 0 at background; non-zero and rising near a
   contaminated plant; falls with distance exactly as the effects model does, term by term, and reads nothing past 256
   blocks; a closed vessel reads low outside and an open head high looking down; the dose accumulates, persists in the

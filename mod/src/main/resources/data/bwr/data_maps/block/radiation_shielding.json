@@ -1,0 +1,35 @@
+{
+  "values": {
+    "#bwr:radiation_shielding/lead": {
+      "hvl_cm": 1.0
+    },
+    "#bwr:radiation_shielding/steel": {
+      "hvl_cm": 2.5
+    },
+    "#bwr:radiation_shielding/concrete": {
+      "hvl_cm": 6.0
+    },
+    "#bwr:radiation_shielding/leaded_concrete": {
+      "hvl_cm": 3.5
+    },
+    "#bwr:radiation_shielding/earth": {
+      "hvl_cm": 9.0
+    },
+    "#bwr:radiation_shielding/wood": {
+      "hvl_cm": 23.0
+    },
+    "#bwr:radiation_shielding/glass": {
+      "hvl_cm": 5.5,
+      "fill": 0.01
+    },
+    "bwr:shield_plug_concrete": {
+      "hvl_cm": 5.0
+    },
+    "bwr:heavily_reinforced_shield_plug_concrete": {
+      "hvl_cm": 3.5
+    },
+    "bwr:ultra_reinforced_shield_plug_concrete": {
+      "hvl_cm": 2.5
+    }
+  }
+}

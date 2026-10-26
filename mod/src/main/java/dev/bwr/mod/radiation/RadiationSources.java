@@ -37,7 +37,7 @@ public final class RadiationSources {
     private RadiationSources() {
     }
 
-    private record Point(Vec3 at, double gammaWatts, double transmission) {
+    private record Point(Vec3 at, double gammaWatts, double transmission, boolean waterModelled, BlockShielding.Box exclude) {
     }
 
     private static final Map<ResourceLocation, RadiationSource> PROVIDERS = new LinkedHashMap<>();
@@ -54,8 +54,25 @@ public final class RadiationSources {
         PROVIDERS.remove(id);
     }
 
-    /** Sets the point source owned by {@code owner} in {@code level}: gamma watts and the share that gets out. */
+    /** Sets the point source owned by {@code owner} in {@code level}: gamma watts and the share that gets out. Blocks on the line shield it ({@link BlockShielding}). */
     public static synchronized void emit(Level level, Object owner, Vec3 at, double gammaWatts, double transmission) {
+        emit(level, owner, at, gammaWatts, transmission, false);
+    }
+
+    /**
+     * As {@link #emit(Level, Object, Vec3, double, double)}, for a source whose {@code transmission} already holds the water on the line to the
+     * dose point (an assembly under the pool's water): water blocks on the line are then not counted a second time.
+     */
+    public static synchronized void emit(Level level, Object owner, Vec3 at, double gammaWatts, double transmission, boolean waterModelled) {
+        emit(level, owner, at, gammaWatts, transmission, waterModelled, null);
+    }
+
+    /**
+     * As {@link #emit(Level, Object, Vec3, double, double, boolean)}, for a source with a housing of more than its own block: the blocks in
+     * {@code exclude} (the Large RTG's footprint) are its own transmission and are not counted on the line ({@link BlockShielding}).
+     */
+    public static synchronized void emit(Level level, Object owner, Vec3 at, double gammaWatts, double transmission, boolean waterModelled,
+                                         BlockShielding.Box exclude) {
         if (level == null || level.isClientSide() || owner == null) {
             return;
         }
@@ -63,7 +80,7 @@ public final class RadiationSources {
             clear(level, owner);
             return;
         }
-        POINTS.computeIfAbsent(level, ignored -> new LinkedHashMap<>()).put(owner, new Point(at, gammaWatts, transmission));
+        POINTS.computeIfAbsent(level, ignored -> new LinkedHashMap<>()).put(owner, new Point(at, gammaWatts, transmission, waterModelled, exclude));
     }
 
     /** Removes the point source owned by {@code owner}. */
@@ -103,7 +120,8 @@ public final class RadiationSources {
         Map<Object, Point> points = POINTS.get(level);
         if (points != null) {
             for (Point point : points.values()) {
-                total += DoseModel.pointSourceMsvPerH(point.gammaWatts(), at.distanceTo(point.at()), point.transmission());
+                total += BlockShielding.pointSource(level, point.at(), at, point.gammaWatts(), point.transmission(), point.waterModelled(),
+                        point.exclude());
             }
         }
         return total;

@@ -91,6 +91,18 @@
         "bwr:survey_meter",
         "bwr:spent_fuel_pool_wall"
       ]
+    },
+    {
+      "title": "Shielding",
+      "text": [
+        "Blocks between you and a source shield it, by the length of the line through each one. One block of lead (nine ingots) stops everything, concrete or stone cuts a hundred-thousandfold, steel more, earth and wood less; glass barely matters and air not at all. A slant through a wall counts more than straight on.",
+        "",
+        "A cask of lead blocks around an RTG reads nothing outside. The reactor, the pool walls and the RTG casings are already counted. A line through an unloaded chunk counts as unshielded."
+      ],
+      "icons": [
+        "bwr:lead_block",
+        "bwr:survey_meter"
+      ]
     }
   ]
 }

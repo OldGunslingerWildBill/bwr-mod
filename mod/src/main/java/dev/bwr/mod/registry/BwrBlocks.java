@@ -101,6 +101,11 @@ public final class BwrBlocks {
             BLOCKS.register("thorium_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_GRAY)
                     .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.IRON_XYLOPHONE)
                     .requiresCorrectToolForDrops().strength(5.0f, 6.0f).sound(SoundType.METAL)));
+    /** Nine lead ingots: the best radiation shield per block (RADIATION.md, "Shielding": a half-value layer of 1 cm). */
+    public static final DeferredBlock<Block> LEAD_BLOCK =
+            BLOCKS.register("lead_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY)
+                    .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.BASEDRUM)
+                    .requiresCorrectToolForDrops().strength(5.0f, 6.0f).sound(SoundType.METAL)));
     /** A block of nine ingots of a reactor-bred heat-source isotope (BREEDING-TARGETS.md). */
     public static final DeferredBlock<Block> POLONIUM_210_BLOCK =
             BLOCKS.register("polonium_210_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_GRAY)

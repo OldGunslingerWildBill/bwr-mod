@@ -1,0 +1,108 @@
+{
+  "replace": false,
+  "values": [
+    "#c:concretes",
+    "#c:stones",
+    "#c:cobblestones",
+    "#minecraft:base_stone_overworld",
+    "#minecraft:base_stone_nether",
+    "#c:ores",
+    "#c:obsidians",
+    "#c:end_stones",
+    "#c:sandstone/blocks",
+    "#minecraft:stone_bricks",
+    "#minecraft:terracotta",
+    "#c:glazed_terracottas",
+    "minecraft:smooth_stone",
+    "minecraft:smooth_stone_slab",
+    "minecraft:stone_slab",
+    "minecraft:stone_brick_slab",
+    "minecraft:cobblestone_slab",
+    "minecraft:stone_stairs",
+    "minecraft:stone_brick_stairs",
+    "minecraft:cobblestone_stairs",
+    "minecraft:bricks",
+    "minecraft:polished_andesite",
+    "minecraft:polished_diorite",
+    "minecraft:polished_granite",
+    "minecraft:polished_deepslate",
+    "minecraft:cobbled_deepslate",
+    "minecraft:deepslate_bricks",
+    "minecraft:deepslate_tiles",
+    "minecraft:cracked_deepslate_bricks",
+    "minecraft:cracked_deepslate_tiles",
+    "minecraft:chiseled_deepslate",
+    "minecraft:reinforced_deepslate",
+    "minecraft:polished_tuff",
+    "minecraft:tuff_bricks",
+    "minecraft:mud_bricks",
+    {
+      "id": "immersiveengineering:concrete",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:concrete_tile",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:concrete_brick",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:concrete_brick_cracked",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:concrete_chiseled",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:concrete_pillar",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:concrete_reinforced",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:concrete_reinforced_tile",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:concrete_sheet",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:concrete_quarter",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:concrete_three_quarter",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:slab_concrete",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:slab_concrete_tile",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:slab_concrete_brick",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:stairs_concrete",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:stairs_concrete_tile",
+      "required": false
+    },
+    {
+      "id": "immersiveengineering:stairs_concrete_brick",
+      "required": false
+    }
+  ]
+}

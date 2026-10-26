@@ -35,7 +35,7 @@ public final class CoolantCrudRadiation {
             var ports = structure.waterInjectionPositions();
             if (ports.isEmpty()) continue;
             double share = watts / ports.size();
-            for (BlockPos port : ports) total += DoseModel.pointSourceMsvPerH(share, at.distanceTo(Vec3.atCenterOf(port)), TRANSMISSION);
+            for (BlockPos port : ports) total += dev.bwr.mod.radiation.BlockShielding.pointSource(level, Vec3.atCenterOf(port), at, share, TRANSMISSION, false);
         }
         return total;
     }

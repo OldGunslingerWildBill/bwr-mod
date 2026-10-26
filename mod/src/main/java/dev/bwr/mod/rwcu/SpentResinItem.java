@@ -74,7 +74,7 @@ public class SpentResinItem extends Item {
     /** What the spent resin a player carries reads at {@code at}, mSv/h. */
     public static double doseRateOf(Player player, Vec3 at) {
         double w = carriedGammaWatts(player);
-        return w > 0 ? DoseModel.pointSourceMsvPerH(w, player.position().add(0, 1, 0).distanceTo(at), TRANSMISSION) : 0;
+        return w > 0 ? dev.bwr.mod.radiation.BlockShielding.pointSource(player.level(), player.position().add(0, 1, 0), at, w, TRANSMISSION, false) : 0;
     }
 
     @Override
