@@ -1,4 +1,6 @@
-"""Export Blender power modules using the shared area-preserving cell clipper."""
+"""Export Blender power modules using the shared area-preserving cell clipper.
+
+Sources come from art/models/power_turbines/build_models.py (headless Blender). --check is read-only."""
 import importlib.util
 import json
 import sys
@@ -7,6 +9,8 @@ ROOT=Path(__file__).resolve().parent
 spec=importlib.util.spec_from_file_location('modern',ROOT/'tools-export-modern.py')
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 m.SOURCE=ROOT/'art/models/power_turbines'
+# PowerModuleBlock.HOOD_FROM_Y: LP cells at or above this height are the crane-lifted hood.
+HOOD_FROM_Y=3
 for id in ('hp_turbine','lp_turbine','nuclear_generator'):
     m.bake_assembly_cells(id, suffix='')
     data=json.loads((m.SOURCE/(id+'.json')).read_text());w,h,d=data['size'];c=data['controller'];ctrl=c[0]+w*(c[2]+d*c[1])
@@ -15,7 +19,13 @@ for id in ('hp_turbine','lp_turbine','nuclear_generator'):
         for full in (False,True):
             for i in range(256):
                 model=f'pumps/{id}/cell_{i}' if full and i<w*h*d else 'pumps/empty' if full else f'pumps/{id}/compact'
-                variants[f'assembled={str(full).lower()},cell={i},facing={f}']={'model':'bwr:block/'+model,'y':angle}
+                key=f'assembled={str(full).lower()},cell={i},facing={f}'
+                if full and id=='lp_turbine' and i>=HOOD_FROM_Y*w*d:
+                    # PowerModuleBlock.OPEN: with the hood off (crane-lifted) the hood cells draw nothing.
+                    variants[key+',open=false']={'model':'bwr:block/'+model,'y':angle}
+                    variants[key+',open=true']={'model':'bwr:block/pumps/empty','y':angle}
+                else:
+                    variants[key]={'model':'bwr:block/'+model,'y':angle}
     res=m.RES
     m.put(res/f'assets/bwr/blockstates/{id}.json',{'variants':variants})
     m.put(res/f'assets/bwr/models/item/{id}.json',{'parent':f'bwr:block/pumps/{id}/compact','display':{'gui':{'rotation':[25,225,0],'scale':[.85,.85,.85]}}})

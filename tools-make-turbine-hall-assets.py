@@ -6,7 +6,7 @@ Standard library plus Pillow. Everything is drawn procedurally; no external art,
 
   lp_blade_section          a bladed rotor section seen end-on: grey disc, pale blades with a stellite tip band
   damaged_lp_blade_section  the same, rust-dark, blades missing and broken short
-  lp_turbine_hood           (recipe: five iron blocks, a spare hood) the half-cylinder upper casing of an LP turbine, green-grey, with lifting lugs
+  lp_turbine_hood           (recipe: five iron blocks, a spare hood) the upper casing (exhaust hood) of an LP turbine, green-grey, with lifting lugs
   lp_blade_stand            a dark steel base with a yellow saddle (the two saddles are drawn by the block entity)
   casing_laydown_stand      a low grey plinth with two yellow cradle beams
 """
@@ -78,18 +78,24 @@ def hood_icon():
     dark = (70, 84, 76, 255)
     light = (150, 168, 156, 255)
     lug = (230, 180, 40, 255)
-    for y in range(3, 14):
+    rib = (124, 132, 134, 255)
+    for y in range(2, 14):
         for x in range(1, 15):
-            # a half cylinder seen from the side, a flange along the bottom
-            r = math.hypot((x - 7.5) / 7.0, (y - 13.5) / 10.0)
-            if r <= 1.0:
+            # a fabricated exhaust hood seen from the side: vertical walls, sloped shoulders, a flat roof, the joint flange along the bottom
+            shoulder = 7 - min(x - 1, 14 - x)
+            if y >= max(3, shoulder):
                 px[x, y] = light if y < 7 else body
     for x in range(0, 16):
         px[x, 13] = dark
         px[x, 14] = dark
-    for x in (4, 11):
+    for x in (5, 10):
+        for y in range(4, 13):
+            px[x, y] = rib
+    for x in (6, 7, 8, 9):
+        px[x, 2] = dark
+    for x in (3, 12):
+        px[x, 4] = lug
         px[x, 3] = lug
-        px[x, 2] = lug
     for x in (2, 6, 10, 14):
         px[x, 12] = dark
     return img

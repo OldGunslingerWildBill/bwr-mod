@@ -174,6 +174,8 @@ neoForge {
             if (project.hasProperty('bwrMachineRenderCheck')) jvmArguments.add('-Dbwr.machineRenderCheck=true')
             // Turbine-driven pump pictures (feed pump turbine, RCIC, HPCI) with piped ports: -PbwrTurbinePumpShots=<label> saves run/turbineModelCheck/turbine-pump-shots/<label>/ (TurbinePumpShots).
             if (project.hasProperty('bwrTurbinePumpShots')) jvmArguments.add('-Dbwr.turbinePumpShots=' + project.property('bwrTurbinePumpShots'))
+            // Main turbine train pictures (HP, LP, generator; the LP closed and open): -PbwrMainTurbineShots=<label> saves run/turbineModelCheck/main-turbine-shots/<label>/ (MainTurbineShots).
+            if (project.hasProperty('bwrMainTurbineShots')) jvmArguments.add('-Dbwr.mainTurbineShots=' + project.property('bwrMainTurbineShots'))
             // Main steam valve pictures (MSIV and safety relief valve, shut and open, piped): -PbwrSteamValveShots=<label> saves run/turbineModelCheck/steam-valve-shots/<label>/ (SteamValveShots).
             if (project.hasProperty('bwrSteamValveShots')) jvmArguments.add('-Dbwr.steamValveShots=' + project.property('bwrSteamValveShots'))
             // Condensate tank and recirculation nozzle pictures: -PbwrTankNozzleShots=<label> saves run/turbineModelCheck/tank-nozzle-shots/<label>/ (TankNozzleShots).

@@ -1,5 +1,36 @@
 # Changelog
 
+## Unreleased: the HP and LP turbines remodelled
+
+The TX-10 Style HP and LP Turbines were a plain cylinder with rings on a slab. They now read as the casings of a large nuclear
+tandem-compound unit (a 1,100-1,350 MWe BWR train: one double-flow HP and double-flow LPs on their condensers). Generic and brand-free;
+names, footprints, cells, ports, shaft line and blockstates are unchanged, and the generator is untouched. Write-up:
+[MODULAR-TURBINES.md](MODULAR-TURBINES.md), "Models and references"; pictures in `art/turbine-remodel/` (before, after, side by side).
+
+- **HP turbine** (5 x 5 x 9): the double-flow outer casing, its inlet belt in the middle and exhaust cones at both ends, split at the shaft
+  by a heavy bolted horizontal joint flange that follows the casing; the main steam inlet chamber on top under the port, four steam leads
+  into the upper half and four lower leads up through the foundation; an exhaust nozzle at each end into a crossaround header that leaves on
+  the left port face; bearing pedestals with split bearing caps at both ends, the shaft and couplings showing, casing paws, lagging bands,
+  drains, on a foundation table with sole plates.
+- **LP turbine** (7 x 5 x 7): a fabricated box exhaust hood (vertical walls, sloped shoulders, flat roof) over a lower exhaust casing that
+  opens down to the condenser; the crossover inlet on the roof between two atmospheric relief diaphragms; the bolted horizontal joint flange
+  at exactly y = 3 (everything above is the crane-lifted hood, everything below stays); stiffened end walls, ribs and walers, manways in the
+  hood sides and end walls, outboard bearings, lifting lugs where the crane's slings go, and the condensate return on the left face.
+- **Hood off**: the lower half is a real open casing: the inner casing's lower half the blade sections sit in (it clears their first two
+  stages; the last stage runs in the open exhaust), its joint and support paws, the inlet chamber between the flows, gland saddles in the
+  end walls, a dark exhaust opening to the condenser. The hood carries the inner casing's upper half and is seen from below on the hook
+  and on the laydown stand. The drawn last-stage wheels moved from 2.55 to 2.5 blocks from the LP's middle, where turbine missiles leave.
+- **Couplings and shaft** are the generator's own geometry (shaft at y 2.5 on the module's middle, couplings 0.04 to 0.28 from each end), so
+  every module meets face to face. Compact models (item icons, old saves) are scaled miniatures of the new ones. The LP Turbine Hood item
+  icon is the new box hood.
+- **Tooling**: `art/models/power_turbines/build_models.py` runs headless (`blender --background --factory-startup --python ...`) and is
+  the only source; `tools-export-power-turbines.py` now writes the LP's `open` blockstate variants itself (`--check` passes on the
+  committed assets); `render_previews.py` draws review pictures without the game; `-PbwrMainTurbineShots=<label>` (`MainTurbineShots`)
+  takes nine in-game pictures of the train, the LP open, with pipes on every port (it fails if a pipe does not join its flange).
+- **Triangles** (source / all cells / largest cell): HP 4,964 / 8,972 / 812 before, 7,872 / 18,028 / 1,028 now; LP 2,288 / 6,656 / 848
+  before, 7,400 / 15,788 / 838 now (the generator: 1,684 / 6,536 / 474).
+- Saves: nothing new is saved; the block states and cell numbering are the same, so old worlds load as they were.
+
 ## Unreleased: canal gates the crane lifts, and flooding the well made plain
 
 Two requests from the owner: "the gate should open as one big block that can be pulled out with the crane like they do in real life", and "the reactor cavity
