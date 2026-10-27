@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: held panel controls are let go when they are removed, and a relaunched player's controls work
+
+Two bugs in the control-room panels, both found by review.
+
+- **A held control was never RELEASEd when its component was removed (safety).** A player holding a pushbutton wired to `selected_rod_withdraw_continuous` while the panel block was broken, or while another player wrenched the button off, left the rods withdrawing for good: every removal path took the component out of the panel first, and `releaseHeldControls` (which runs on chunk unload and `setRemoved`) only lets go of what is still on the panel. `PanelBlockEntity.removeComponent` now calls the new `releaseHeld(component)` first (cancels the fail-safe timer and sends RELEASE if the control is holdable and an output is non-zero), which covers a broken block (`releaseEverything`), the wrench, `verifyConsistency` repairs and a straddling component lost with a neighbour. Rewiring a held output with bind kind `NONE` or `REMOVE_SINK` lets go before the sinks are removed, so the RELEASE still reaches the plant. New tests in `PanelHeldControlTests`: panel broken, component wrenched off, sink removed and output cleared while held.
+- **Press and release stamps were never reset, so a control went dead for a player after a client restart.** The client counts its PRESS/RELEASE stamps from 1 on each game launch, but the panel remembered the player's last stamp for as long as its chunk stayed loaded, so after a relaunch every new press (stamp 1) looked like a late copy of an old click and was ignored until the new counter passed the old one. Stamps are now stored with the player's login session (`PanelPlayerSessions`, a number that is new at every login and dropped at logout, handled in `PanelPlayerCleanup`); stamps of another session never compare, and the anti-reorder rule within a session is unchanged. New test `stampsOfAnEarlierLoginSessionDoNotBlockANewPress`.
+
 ## Unreleased: flaky GameTests round 3 (the level clock, and a release angle)
 
 Test-only; no game behaviour changed. Two tests failed now and then.

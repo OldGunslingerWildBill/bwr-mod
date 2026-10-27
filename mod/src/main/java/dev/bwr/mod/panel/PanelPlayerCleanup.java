@@ -16,12 +16,18 @@ public final class PanelPlayerCleanup {
     }
 
     @SubscribeEvent
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        PanelPlayerSessions.begin(event.getEntity().getUUID());
+    }
+
+    @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         forget(event.getEntity().getUUID());
     }
 
     /** The cleanup itself, for tests. */
     public static void forget(UUID player) {
+        PanelPlayerSessions.end(player);
         PanelRateLimit.forget(player);
         NetworkShare.forget(player);
         NetworkingOps.forget(player);

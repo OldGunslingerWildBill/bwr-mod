@@ -267,8 +267,14 @@ public final class WiringOps {
                                      PanelComponent component, BindKind kind, PanelPayloads.Bind request) {
         int port = request.port();
         switch (kind) {
-            case NONE -> component.clearSinks(port);
+            case NONE -> {
+                owner.releaseHeld(component); // a held control lets go before its sinks vanish, or the RELEASE reaches nothing
+                component.clearSinks(port);
+            }
             case REMOVE_SINK -> {
+                if (request.refOutput() >= 0 && request.refOutput() < component.sinks(port).size()) {
+                    owner.releaseHeld(component);
+                }
                 if (!component.removeSink(port, request.refOutput())) {
                     return Result.BAD_PORT;
                 }
