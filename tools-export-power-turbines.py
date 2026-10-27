@@ -9,7 +9,7 @@ ROOT=Path(__file__).resolve().parent
 spec=importlib.util.spec_from_file_location('modern',ROOT/'tools-export-modern.py')
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 m.SOURCE=ROOT/'art/models/power_turbines'
-# PowerModuleBlock.HOOD_FROM_Y: LP cells at or above this height are the crane-lifted hood.
+# PowerModuleBlock.HOOD_FROM_Y: LP cells at or above this height are the crane-lifted hood; LP and HP cells there open when burst.
 HOOD_FROM_Y=3
 for id in ('hp_turbine','lp_turbine','nuclear_generator'):
     m.bake_assembly_cells(id, suffix='')
@@ -20,8 +20,9 @@ for id in ('hp_turbine','lp_turbine','nuclear_generator'):
             for i in range(256):
                 model=f'pumps/{id}/cell_{i}' if full and i<w*h*d else 'pumps/empty' if full else f'pumps/{id}/compact'
                 key=f'assembled={str(full).lower()},cell={i},facing={f}'
-                if full and id=='lp_turbine' and i>=HOOD_FROM_Y*w*d:
-                    # PowerModuleBlock.OPEN: with the hood off (crane-lifted) the hood cells draw nothing.
+                if full and id in ('lp_turbine','hp_turbine') and i>=HOOD_FROM_Y*w*d:
+                    # PowerModuleBlock.OPEN: with the LP's hood off (crane-lifted), or an LP or HP casing burst open, the upper cells
+                    # draw nothing (TurbineHallRenderers draws the open casing or the torn remains).
                     variants[key+',open=false']={'model':'bwr:block/'+model,'y':angle}
                     variants[key+',open=true']={'model':'bwr:block/pumps/empty','y':angle}
                 else:

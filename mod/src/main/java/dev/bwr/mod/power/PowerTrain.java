@@ -179,7 +179,7 @@ public final class PowerTrain {
         }
         lp.takeBladeSection(flow); // it is the piece on the floor now
         lp.addShaftDamage(1);
-        lp.wreckAtLeast(PowerModuleBlockEntity.WRECK_SHAFT_OUT);
+        lp.shaftOut(flow);
         for(var m:train){
             if(m!=lp){
                 m.addShaftDamage(1);

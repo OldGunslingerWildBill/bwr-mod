@@ -24,7 +24,7 @@ public class TurbineRebuildKitItem extends Item {
     }
 
     /** The player used a kit on the section: rebuilt and one kit taken, or told why not. Server side. */
-    static void use(PowerModuleBlockEntity module, Player player, ItemStack stack) {
+    public static void use(PowerModuleBlockEntity module, Player player, ItemStack stack) {
         Component why = module.rebuildProblem();
         if (why != null) {
             player.displayClientMessage(why, true);

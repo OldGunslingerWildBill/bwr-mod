@@ -55,7 +55,8 @@ public final class TurbineMissile {
     /** Energy an entity takes out of the piece, J. */
     private static final double ENTITY_J = 5_000;
 
-    public enum Stop { STOPPED_IN_BLOCK, UNBREAKABLE, PROTECTED, CASING, UNLOADED, OUT_OF_WORLD, RANGE }
+    /** Why a piece stopped where it did; {@code REST} is a shaft excursion's rotor half that ran out of energy sliding along the floor. */
+    public enum Stop { STOPPED_IN_BLOCK, UNBREAKABLE, PROTECTED, CASING, UNLOADED, OUT_OF_WORLD, RANGE, REST }
 
     /** What a flight did. {@code angle} is the release angle it flew at (radians in the plane of the wheel, as {@link #direction}). */
     public record Result(Vec3 origin, Vec3 direction, Vec3 end, double energyJ, double leftJ, List<BlockPos> broken, Stop stop,
@@ -206,13 +207,18 @@ public final class TurbineMissile {
     }
 
     static double hitEntities(ServerLevel level, Vec3 at, double left, Set<Entity> hit) {
-        return hitEntities(level, at, 1.0, left, hit);
+        return hitEntities(level, at, 1.0, left, hit, false);
     }
 
-    /** Hurts what is within {@code reach} of the piece by what it carries (a few MJ kill anything), each once; returns the energy left. */
-    static double hitEntities(ServerLevel level, Vec3 at, double reach, double left, Set<Entity> hit) {
+    /**
+     * Hurts what is within {@code reach} of the piece by what it carries (a few MJ kill anything), each once; returns the energy left.
+     * {@code spareDrops}: the items of the blocks it broke on its way are left lying (a rotor half ploughing on over them does not
+     * destroy what it just knocked loose).
+     */
+    static double hitEntities(ServerLevel level, Vec3 at, double reach, double left, Set<Entity> hit, boolean spareDrops) {
         AABB box = new AABB(at.x - reach, at.y - reach, at.z - reach, at.x + reach, at.y + reach, at.z + reach);
-        for (Entity e : level.getEntities((Entity) null, box, e -> e.isAlive() && !e.isSpectator())) {
+        for (Entity e : level.getEntities((Entity) null, box, e -> e.isAlive() && !e.isSpectator()
+                && !(spareDrops && e instanceof net.minecraft.world.entity.item.ItemEntity))) {
             if (hit.add(e) && left > 0) {
                 e.hurt(level.damageSources().explosion(null, null), (float) Math.min(1000.0, left / 2000.0));
                 left = Math.max(0, left - ENTITY_J);

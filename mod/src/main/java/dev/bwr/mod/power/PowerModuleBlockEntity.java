@@ -64,6 +64,8 @@ public class PowerModuleBlockEntity extends BlockEntity {
     /** How badly a turbine section is wrecked: a blade torn out through its casing, a burst casing, a rotor half broken loose. */
     public static final int WRECK_NONE=0,WRECK_HOLED=1,WRECK_BURST=2,WRECK_SHAFT_OUT=3;
     private int wreck;
+    /** The flow whose rotor half broke loose (with {@link #WRECK_SHAFT_OUT}): where the casing is blown out. */
+    private int brokenFlow;
     /** This LP's own disc burst (not just a casing split by the train coming apart): its rotor carries the lost third's unbalance. */
     private boolean discBurst;
     /** Per flow, the release angle of the blade that tore out of the casing (radians in the plane of the wheel), NaN for none. */
@@ -137,6 +139,9 @@ public class PowerModuleBlockEntity extends BlockEntity {
         wreck=w;setChanged();refreshOpen();syncMaintenance();
     }
     void markDiscBurst(){discBurst=true;setChanged();}
+    /** The rotor half of {@code flow} broke loose: the coupling is sheared and the casing blown out at that end. */
+    void shaftOut(int flow){if(!lp())return;brokenFlow=flow;wreckAtLeast(WRECK_SHAFT_OUT);}
+    public int brokenFlow(){return brokenFlow;}
     /** A thrown blade tore out of the casing at this release angle. */
     void markHole(int flow,double angle){
         if(!lp()||!Double.isFinite(angle))return;
@@ -185,7 +190,8 @@ public class PowerModuleBlockEntity extends BlockEntity {
         return fresh;
     }
     void setFireFuel(double fuel){fireFuel=Math.max(0,fuel);setChanged();}
-    void extinguish(){if(burning()){fire=TurbineFire.Kind.NONE;fireFuel=0;setChanged();}}
+    /** The fire goes out: water reached it or its fuel ran out ({@link TurbineFires}); public for a check that stages a scene. */
+    public void extinguish(){if(burning()){fire=TurbineFire.Kind.NONE;fireFuel=0;setChanged();}}
     /** A blade section lifted out by the crane: its condition (1 if it threw a blade), which this flow then no longer has. NaN if it is not there. */
     public double takeBladeSection(int flow){
         if(!lp()||!bladeIn(flow))return Double.NaN;
@@ -464,11 +470,12 @@ public class PowerModuleBlockEntity extends BlockEntity {
     /** The wreck, the disc burst and the holes, only when not the default (TURBINE-MAINTENANCE.md). */
     private void saveWreck(CompoundTag t){
         if(wreck!=WRECK_NONE)t.putByte("Wreck",(byte)wreck);
+        if(wreck==WRECK_SHAFT_OUT&&brokenFlow!=0)t.putByte("BrokenFlow",(byte)brokenFlow);
         if(discBurst)t.putBoolean("DiscBurst",true);
         if(anyHole())t.put("Holes",doubles(holes));
     }
     private void loadWreck(CompoundTag t){
-        wreck=Math.max(WRECK_NONE,Math.min(WRECK_SHAFT_OUT,t.getByte("Wreck")));discBurst=t.getBoolean("DiscBurst");
+        wreck=Math.max(WRECK_NONE,Math.min(WRECK_SHAFT_OUT,t.getByte("Wreck")));discBurst=t.getBoolean("DiscBurst");brokenFlow=t.getByte("BrokenFlow")&1;
         java.util.Arrays.fill(holes,Double.NaN);
         var l=t.getList("Holes",6);for(int f=0;f<holes.length&&f<l.size();f++){double a=l.getDouble(f);holes[f]=Double.isFinite(a)?a:Double.NaN;}
     }

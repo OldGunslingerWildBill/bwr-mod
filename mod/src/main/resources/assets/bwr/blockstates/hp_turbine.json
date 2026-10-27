@@ -1564,487 +1564,971 @@
       "model": "bwr:block/pumps/hp_turbine/cell_134",
       "y": 0
     },
-    "assembled=true,cell=135,facing=north": {
+    "assembled=true,cell=135,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_135",
       "y": 0
     },
-    "assembled=true,cell=136,facing=north": {
+    "assembled=true,cell=135,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=136,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_136",
       "y": 0
     },
-    "assembled=true,cell=137,facing=north": {
+    "assembled=true,cell=136,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=137,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_137",
       "y": 0
     },
-    "assembled=true,cell=138,facing=north": {
+    "assembled=true,cell=137,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=138,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_138",
       "y": 0
     },
-    "assembled=true,cell=139,facing=north": {
+    "assembled=true,cell=138,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=139,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_139",
       "y": 0
     },
-    "assembled=true,cell=140,facing=north": {
+    "assembled=true,cell=139,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=140,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_140",
       "y": 0
     },
-    "assembled=true,cell=141,facing=north": {
+    "assembled=true,cell=140,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=141,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_141",
       "y": 0
     },
-    "assembled=true,cell=142,facing=north": {
+    "assembled=true,cell=141,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=142,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_142",
       "y": 0
     },
-    "assembled=true,cell=143,facing=north": {
+    "assembled=true,cell=142,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=143,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_143",
       "y": 0
     },
-    "assembled=true,cell=144,facing=north": {
+    "assembled=true,cell=143,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=144,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_144",
       "y": 0
     },
-    "assembled=true,cell=145,facing=north": {
+    "assembled=true,cell=144,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=145,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_145",
       "y": 0
     },
-    "assembled=true,cell=146,facing=north": {
+    "assembled=true,cell=145,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=146,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_146",
       "y": 0
     },
-    "assembled=true,cell=147,facing=north": {
+    "assembled=true,cell=146,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=147,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_147",
       "y": 0
     },
-    "assembled=true,cell=148,facing=north": {
+    "assembled=true,cell=147,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=148,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_148",
       "y": 0
     },
-    "assembled=true,cell=149,facing=north": {
+    "assembled=true,cell=148,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=149,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_149",
       "y": 0
     },
-    "assembled=true,cell=150,facing=north": {
+    "assembled=true,cell=149,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=150,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_150",
       "y": 0
     },
-    "assembled=true,cell=151,facing=north": {
+    "assembled=true,cell=150,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=151,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_151",
       "y": 0
     },
-    "assembled=true,cell=152,facing=north": {
+    "assembled=true,cell=151,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=152,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_152",
       "y": 0
     },
-    "assembled=true,cell=153,facing=north": {
+    "assembled=true,cell=152,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=153,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_153",
       "y": 0
     },
-    "assembled=true,cell=154,facing=north": {
+    "assembled=true,cell=153,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=154,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_154",
       "y": 0
     },
-    "assembled=true,cell=155,facing=north": {
+    "assembled=true,cell=154,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=155,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_155",
       "y": 0
     },
-    "assembled=true,cell=156,facing=north": {
+    "assembled=true,cell=155,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=156,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_156",
       "y": 0
     },
-    "assembled=true,cell=157,facing=north": {
+    "assembled=true,cell=156,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=157,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_157",
       "y": 0
     },
-    "assembled=true,cell=158,facing=north": {
+    "assembled=true,cell=157,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=158,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_158",
       "y": 0
     },
-    "assembled=true,cell=159,facing=north": {
+    "assembled=true,cell=158,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=159,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_159",
       "y": 0
     },
-    "assembled=true,cell=160,facing=north": {
+    "assembled=true,cell=159,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=160,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_160",
       "y": 0
     },
-    "assembled=true,cell=161,facing=north": {
+    "assembled=true,cell=160,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=161,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_161",
       "y": 0
     },
-    "assembled=true,cell=162,facing=north": {
+    "assembled=true,cell=161,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=162,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_162",
       "y": 0
     },
-    "assembled=true,cell=163,facing=north": {
+    "assembled=true,cell=162,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=163,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_163",
       "y": 0
     },
-    "assembled=true,cell=164,facing=north": {
+    "assembled=true,cell=163,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=164,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_164",
       "y": 0
     },
-    "assembled=true,cell=165,facing=north": {
+    "assembled=true,cell=164,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=165,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_165",
       "y": 0
     },
-    "assembled=true,cell=166,facing=north": {
+    "assembled=true,cell=165,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=166,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_166",
       "y": 0
     },
-    "assembled=true,cell=167,facing=north": {
+    "assembled=true,cell=166,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=167,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_167",
       "y": 0
     },
-    "assembled=true,cell=168,facing=north": {
+    "assembled=true,cell=167,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=168,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_168",
       "y": 0
     },
-    "assembled=true,cell=169,facing=north": {
+    "assembled=true,cell=168,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=169,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_169",
       "y": 0
     },
-    "assembled=true,cell=170,facing=north": {
+    "assembled=true,cell=169,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=170,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_170",
       "y": 0
     },
-    "assembled=true,cell=171,facing=north": {
+    "assembled=true,cell=170,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=171,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_171",
       "y": 0
     },
-    "assembled=true,cell=172,facing=north": {
+    "assembled=true,cell=171,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=172,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_172",
       "y": 0
     },
-    "assembled=true,cell=173,facing=north": {
+    "assembled=true,cell=172,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=173,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_173",
       "y": 0
     },
-    "assembled=true,cell=174,facing=north": {
+    "assembled=true,cell=173,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=174,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_174",
       "y": 0
     },
-    "assembled=true,cell=175,facing=north": {
+    "assembled=true,cell=174,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=175,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_175",
       "y": 0
     },
-    "assembled=true,cell=176,facing=north": {
+    "assembled=true,cell=175,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=176,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_176",
       "y": 0
     },
-    "assembled=true,cell=177,facing=north": {
+    "assembled=true,cell=176,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=177,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_177",
       "y": 0
     },
-    "assembled=true,cell=178,facing=north": {
+    "assembled=true,cell=177,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=178,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_178",
       "y": 0
     },
-    "assembled=true,cell=179,facing=north": {
+    "assembled=true,cell=178,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=179,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_179",
       "y": 0
     },
-    "assembled=true,cell=180,facing=north": {
+    "assembled=true,cell=179,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=180,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_180",
       "y": 0
     },
-    "assembled=true,cell=181,facing=north": {
+    "assembled=true,cell=180,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=181,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_181",
       "y": 0
     },
-    "assembled=true,cell=182,facing=north": {
+    "assembled=true,cell=181,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=182,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_182",
       "y": 0
     },
-    "assembled=true,cell=183,facing=north": {
+    "assembled=true,cell=182,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=183,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_183",
       "y": 0
     },
-    "assembled=true,cell=184,facing=north": {
+    "assembled=true,cell=183,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=184,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_184",
       "y": 0
     },
-    "assembled=true,cell=185,facing=north": {
+    "assembled=true,cell=184,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=185,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_185",
       "y": 0
     },
-    "assembled=true,cell=186,facing=north": {
+    "assembled=true,cell=185,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=186,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_186",
       "y": 0
     },
-    "assembled=true,cell=187,facing=north": {
+    "assembled=true,cell=186,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=187,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_187",
       "y": 0
     },
-    "assembled=true,cell=188,facing=north": {
+    "assembled=true,cell=187,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=188,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_188",
       "y": 0
     },
-    "assembled=true,cell=189,facing=north": {
+    "assembled=true,cell=188,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=189,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_189",
       "y": 0
     },
-    "assembled=true,cell=190,facing=north": {
+    "assembled=true,cell=189,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=190,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_190",
       "y": 0
     },
-    "assembled=true,cell=191,facing=north": {
+    "assembled=true,cell=190,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=191,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_191",
       "y": 0
     },
-    "assembled=true,cell=192,facing=north": {
+    "assembled=true,cell=191,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=192,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_192",
       "y": 0
     },
-    "assembled=true,cell=193,facing=north": {
+    "assembled=true,cell=192,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=193,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_193",
       "y": 0
     },
-    "assembled=true,cell=194,facing=north": {
+    "assembled=true,cell=193,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=194,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_194",
       "y": 0
     },
-    "assembled=true,cell=195,facing=north": {
+    "assembled=true,cell=194,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=195,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_195",
       "y": 0
     },
-    "assembled=true,cell=196,facing=north": {
+    "assembled=true,cell=195,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=196,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_196",
       "y": 0
     },
-    "assembled=true,cell=197,facing=north": {
+    "assembled=true,cell=196,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=197,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_197",
       "y": 0
     },
-    "assembled=true,cell=198,facing=north": {
+    "assembled=true,cell=197,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=198,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_198",
       "y": 0
     },
-    "assembled=true,cell=199,facing=north": {
+    "assembled=true,cell=198,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=199,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_199",
       "y": 0
     },
-    "assembled=true,cell=200,facing=north": {
+    "assembled=true,cell=199,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=200,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_200",
       "y": 0
     },
-    "assembled=true,cell=201,facing=north": {
+    "assembled=true,cell=200,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=201,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_201",
       "y": 0
     },
-    "assembled=true,cell=202,facing=north": {
+    "assembled=true,cell=201,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=202,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_202",
       "y": 0
     },
-    "assembled=true,cell=203,facing=north": {
+    "assembled=true,cell=202,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=203,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_203",
       "y": 0
     },
-    "assembled=true,cell=204,facing=north": {
+    "assembled=true,cell=203,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=204,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_204",
       "y": 0
     },
-    "assembled=true,cell=205,facing=north": {
+    "assembled=true,cell=204,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=205,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_205",
       "y": 0
     },
-    "assembled=true,cell=206,facing=north": {
+    "assembled=true,cell=205,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=206,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_206",
       "y": 0
     },
-    "assembled=true,cell=207,facing=north": {
+    "assembled=true,cell=206,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=207,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_207",
       "y": 0
     },
-    "assembled=true,cell=208,facing=north": {
+    "assembled=true,cell=207,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=208,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_208",
       "y": 0
     },
-    "assembled=true,cell=209,facing=north": {
+    "assembled=true,cell=208,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=209,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_209",
       "y": 0
     },
-    "assembled=true,cell=210,facing=north": {
+    "assembled=true,cell=209,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=210,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_210",
       "y": 0
     },
-    "assembled=true,cell=211,facing=north": {
+    "assembled=true,cell=210,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=211,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_211",
       "y": 0
     },
-    "assembled=true,cell=212,facing=north": {
+    "assembled=true,cell=211,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=212,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_212",
       "y": 0
     },
-    "assembled=true,cell=213,facing=north": {
+    "assembled=true,cell=212,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=213,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_213",
       "y": 0
     },
-    "assembled=true,cell=214,facing=north": {
+    "assembled=true,cell=213,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=214,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_214",
       "y": 0
     },
-    "assembled=true,cell=215,facing=north": {
+    "assembled=true,cell=214,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=215,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_215",
       "y": 0
     },
-    "assembled=true,cell=216,facing=north": {
+    "assembled=true,cell=215,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=216,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_216",
       "y": 0
     },
-    "assembled=true,cell=217,facing=north": {
+    "assembled=true,cell=216,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=217,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_217",
       "y": 0
     },
-    "assembled=true,cell=218,facing=north": {
+    "assembled=true,cell=217,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=218,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_218",
       "y": 0
     },
-    "assembled=true,cell=219,facing=north": {
+    "assembled=true,cell=218,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=219,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_219",
       "y": 0
     },
-    "assembled=true,cell=220,facing=north": {
+    "assembled=true,cell=219,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=220,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_220",
       "y": 0
     },
-    "assembled=true,cell=221,facing=north": {
+    "assembled=true,cell=220,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=221,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_221",
       "y": 0
     },
-    "assembled=true,cell=222,facing=north": {
+    "assembled=true,cell=221,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=222,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_222",
       "y": 0
     },
-    "assembled=true,cell=223,facing=north": {
+    "assembled=true,cell=222,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=223,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_223",
       "y": 0
     },
-    "assembled=true,cell=224,facing=north": {
+    "assembled=true,cell=223,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=224,facing=north,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_224",
       "y": 0
     },
-    "assembled=true,cell=225,facing=north": {
+    "assembled=true,cell=224,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=226,facing=north": {
+    "assembled=true,cell=225,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=227,facing=north": {
+    "assembled=true,cell=225,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=228,facing=north": {
+    "assembled=true,cell=226,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=229,facing=north": {
+    "assembled=true,cell=226,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=230,facing=north": {
+    "assembled=true,cell=227,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=231,facing=north": {
+    "assembled=true,cell=227,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=232,facing=north": {
+    "assembled=true,cell=228,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=233,facing=north": {
+    "assembled=true,cell=228,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=234,facing=north": {
+    "assembled=true,cell=229,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=235,facing=north": {
+    "assembled=true,cell=229,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=236,facing=north": {
+    "assembled=true,cell=230,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=237,facing=north": {
+    "assembled=true,cell=230,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=238,facing=north": {
+    "assembled=true,cell=231,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=239,facing=north": {
+    "assembled=true,cell=231,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=240,facing=north": {
+    "assembled=true,cell=232,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=241,facing=north": {
+    "assembled=true,cell=232,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=242,facing=north": {
+    "assembled=true,cell=233,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=243,facing=north": {
+    "assembled=true,cell=233,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=244,facing=north": {
+    "assembled=true,cell=234,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=245,facing=north": {
+    "assembled=true,cell=234,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=246,facing=north": {
+    "assembled=true,cell=235,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=247,facing=north": {
+    "assembled=true,cell=235,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=248,facing=north": {
+    "assembled=true,cell=236,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=249,facing=north": {
+    "assembled=true,cell=236,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=250,facing=north": {
+    "assembled=true,cell=237,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=251,facing=north": {
+    "assembled=true,cell=237,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=252,facing=north": {
+    "assembled=true,cell=238,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=253,facing=north": {
+    "assembled=true,cell=238,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=254,facing=north": {
+    "assembled=true,cell=239,facing=north,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
-    "assembled=true,cell=255,facing=north": {
+    "assembled=true,cell=239,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=240,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=240,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=241,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=241,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=242,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=242,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=243,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=243,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=244,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=244,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=245,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=245,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=246,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=246,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=247,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=247,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=248,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=248,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=249,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=249,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=250,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=250,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=251,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=251,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=252,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=252,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=253,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=253,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=254,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=254,facing=north,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=255,facing=north,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 0
+    },
+    "assembled=true,cell=255,facing=north,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 0
     },
@@ -3612,487 +4096,971 @@
       "model": "bwr:block/pumps/hp_turbine/cell_134",
       "y": 90
     },
-    "assembled=true,cell=135,facing=east": {
+    "assembled=true,cell=135,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_135",
       "y": 90
     },
-    "assembled=true,cell=136,facing=east": {
+    "assembled=true,cell=135,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=136,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_136",
       "y": 90
     },
-    "assembled=true,cell=137,facing=east": {
+    "assembled=true,cell=136,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=137,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_137",
       "y": 90
     },
-    "assembled=true,cell=138,facing=east": {
+    "assembled=true,cell=137,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=138,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_138",
       "y": 90
     },
-    "assembled=true,cell=139,facing=east": {
+    "assembled=true,cell=138,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=139,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_139",
       "y": 90
     },
-    "assembled=true,cell=140,facing=east": {
+    "assembled=true,cell=139,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=140,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_140",
       "y": 90
     },
-    "assembled=true,cell=141,facing=east": {
+    "assembled=true,cell=140,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=141,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_141",
       "y": 90
     },
-    "assembled=true,cell=142,facing=east": {
+    "assembled=true,cell=141,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=142,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_142",
       "y": 90
     },
-    "assembled=true,cell=143,facing=east": {
+    "assembled=true,cell=142,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=143,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_143",
       "y": 90
     },
-    "assembled=true,cell=144,facing=east": {
+    "assembled=true,cell=143,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=144,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_144",
       "y": 90
     },
-    "assembled=true,cell=145,facing=east": {
+    "assembled=true,cell=144,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=145,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_145",
       "y": 90
     },
-    "assembled=true,cell=146,facing=east": {
+    "assembled=true,cell=145,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=146,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_146",
       "y": 90
     },
-    "assembled=true,cell=147,facing=east": {
+    "assembled=true,cell=146,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=147,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_147",
       "y": 90
     },
-    "assembled=true,cell=148,facing=east": {
+    "assembled=true,cell=147,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=148,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_148",
       "y": 90
     },
-    "assembled=true,cell=149,facing=east": {
+    "assembled=true,cell=148,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=149,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_149",
       "y": 90
     },
-    "assembled=true,cell=150,facing=east": {
+    "assembled=true,cell=149,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=150,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_150",
       "y": 90
     },
-    "assembled=true,cell=151,facing=east": {
+    "assembled=true,cell=150,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=151,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_151",
       "y": 90
     },
-    "assembled=true,cell=152,facing=east": {
+    "assembled=true,cell=151,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=152,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_152",
       "y": 90
     },
-    "assembled=true,cell=153,facing=east": {
+    "assembled=true,cell=152,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=153,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_153",
       "y": 90
     },
-    "assembled=true,cell=154,facing=east": {
+    "assembled=true,cell=153,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=154,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_154",
       "y": 90
     },
-    "assembled=true,cell=155,facing=east": {
+    "assembled=true,cell=154,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=155,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_155",
       "y": 90
     },
-    "assembled=true,cell=156,facing=east": {
+    "assembled=true,cell=155,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=156,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_156",
       "y": 90
     },
-    "assembled=true,cell=157,facing=east": {
+    "assembled=true,cell=156,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=157,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_157",
       "y": 90
     },
-    "assembled=true,cell=158,facing=east": {
+    "assembled=true,cell=157,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=158,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_158",
       "y": 90
     },
-    "assembled=true,cell=159,facing=east": {
+    "assembled=true,cell=158,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=159,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_159",
       "y": 90
     },
-    "assembled=true,cell=160,facing=east": {
+    "assembled=true,cell=159,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=160,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_160",
       "y": 90
     },
-    "assembled=true,cell=161,facing=east": {
+    "assembled=true,cell=160,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=161,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_161",
       "y": 90
     },
-    "assembled=true,cell=162,facing=east": {
+    "assembled=true,cell=161,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=162,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_162",
       "y": 90
     },
-    "assembled=true,cell=163,facing=east": {
+    "assembled=true,cell=162,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=163,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_163",
       "y": 90
     },
-    "assembled=true,cell=164,facing=east": {
+    "assembled=true,cell=163,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=164,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_164",
       "y": 90
     },
-    "assembled=true,cell=165,facing=east": {
+    "assembled=true,cell=164,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=165,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_165",
       "y": 90
     },
-    "assembled=true,cell=166,facing=east": {
+    "assembled=true,cell=165,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=166,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_166",
       "y": 90
     },
-    "assembled=true,cell=167,facing=east": {
+    "assembled=true,cell=166,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=167,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_167",
       "y": 90
     },
-    "assembled=true,cell=168,facing=east": {
+    "assembled=true,cell=167,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=168,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_168",
       "y": 90
     },
-    "assembled=true,cell=169,facing=east": {
+    "assembled=true,cell=168,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=169,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_169",
       "y": 90
     },
-    "assembled=true,cell=170,facing=east": {
+    "assembled=true,cell=169,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=170,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_170",
       "y": 90
     },
-    "assembled=true,cell=171,facing=east": {
+    "assembled=true,cell=170,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=171,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_171",
       "y": 90
     },
-    "assembled=true,cell=172,facing=east": {
+    "assembled=true,cell=171,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=172,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_172",
       "y": 90
     },
-    "assembled=true,cell=173,facing=east": {
+    "assembled=true,cell=172,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=173,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_173",
       "y": 90
     },
-    "assembled=true,cell=174,facing=east": {
+    "assembled=true,cell=173,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=174,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_174",
       "y": 90
     },
-    "assembled=true,cell=175,facing=east": {
+    "assembled=true,cell=174,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=175,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_175",
       "y": 90
     },
-    "assembled=true,cell=176,facing=east": {
+    "assembled=true,cell=175,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=176,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_176",
       "y": 90
     },
-    "assembled=true,cell=177,facing=east": {
+    "assembled=true,cell=176,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=177,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_177",
       "y": 90
     },
-    "assembled=true,cell=178,facing=east": {
+    "assembled=true,cell=177,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=178,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_178",
       "y": 90
     },
-    "assembled=true,cell=179,facing=east": {
+    "assembled=true,cell=178,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=179,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_179",
       "y": 90
     },
-    "assembled=true,cell=180,facing=east": {
+    "assembled=true,cell=179,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=180,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_180",
       "y": 90
     },
-    "assembled=true,cell=181,facing=east": {
+    "assembled=true,cell=180,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=181,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_181",
       "y": 90
     },
-    "assembled=true,cell=182,facing=east": {
+    "assembled=true,cell=181,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=182,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_182",
       "y": 90
     },
-    "assembled=true,cell=183,facing=east": {
+    "assembled=true,cell=182,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=183,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_183",
       "y": 90
     },
-    "assembled=true,cell=184,facing=east": {
+    "assembled=true,cell=183,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=184,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_184",
       "y": 90
     },
-    "assembled=true,cell=185,facing=east": {
+    "assembled=true,cell=184,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=185,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_185",
       "y": 90
     },
-    "assembled=true,cell=186,facing=east": {
+    "assembled=true,cell=185,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=186,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_186",
       "y": 90
     },
-    "assembled=true,cell=187,facing=east": {
+    "assembled=true,cell=186,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=187,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_187",
       "y": 90
     },
-    "assembled=true,cell=188,facing=east": {
+    "assembled=true,cell=187,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=188,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_188",
       "y": 90
     },
-    "assembled=true,cell=189,facing=east": {
+    "assembled=true,cell=188,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=189,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_189",
       "y": 90
     },
-    "assembled=true,cell=190,facing=east": {
+    "assembled=true,cell=189,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=190,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_190",
       "y": 90
     },
-    "assembled=true,cell=191,facing=east": {
+    "assembled=true,cell=190,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=191,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_191",
       "y": 90
     },
-    "assembled=true,cell=192,facing=east": {
+    "assembled=true,cell=191,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=192,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_192",
       "y": 90
     },
-    "assembled=true,cell=193,facing=east": {
+    "assembled=true,cell=192,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=193,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_193",
       "y": 90
     },
-    "assembled=true,cell=194,facing=east": {
+    "assembled=true,cell=193,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=194,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_194",
       "y": 90
     },
-    "assembled=true,cell=195,facing=east": {
+    "assembled=true,cell=194,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=195,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_195",
       "y": 90
     },
-    "assembled=true,cell=196,facing=east": {
+    "assembled=true,cell=195,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=196,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_196",
       "y": 90
     },
-    "assembled=true,cell=197,facing=east": {
+    "assembled=true,cell=196,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=197,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_197",
       "y": 90
     },
-    "assembled=true,cell=198,facing=east": {
+    "assembled=true,cell=197,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=198,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_198",
       "y": 90
     },
-    "assembled=true,cell=199,facing=east": {
+    "assembled=true,cell=198,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=199,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_199",
       "y": 90
     },
-    "assembled=true,cell=200,facing=east": {
+    "assembled=true,cell=199,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=200,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_200",
       "y": 90
     },
-    "assembled=true,cell=201,facing=east": {
+    "assembled=true,cell=200,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=201,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_201",
       "y": 90
     },
-    "assembled=true,cell=202,facing=east": {
+    "assembled=true,cell=201,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=202,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_202",
       "y": 90
     },
-    "assembled=true,cell=203,facing=east": {
+    "assembled=true,cell=202,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=203,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_203",
       "y": 90
     },
-    "assembled=true,cell=204,facing=east": {
+    "assembled=true,cell=203,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=204,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_204",
       "y": 90
     },
-    "assembled=true,cell=205,facing=east": {
+    "assembled=true,cell=204,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=205,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_205",
       "y": 90
     },
-    "assembled=true,cell=206,facing=east": {
+    "assembled=true,cell=205,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=206,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_206",
       "y": 90
     },
-    "assembled=true,cell=207,facing=east": {
+    "assembled=true,cell=206,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=207,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_207",
       "y": 90
     },
-    "assembled=true,cell=208,facing=east": {
+    "assembled=true,cell=207,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=208,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_208",
       "y": 90
     },
-    "assembled=true,cell=209,facing=east": {
+    "assembled=true,cell=208,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=209,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_209",
       "y": 90
     },
-    "assembled=true,cell=210,facing=east": {
+    "assembled=true,cell=209,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=210,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_210",
       "y": 90
     },
-    "assembled=true,cell=211,facing=east": {
+    "assembled=true,cell=210,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=211,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_211",
       "y": 90
     },
-    "assembled=true,cell=212,facing=east": {
+    "assembled=true,cell=211,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=212,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_212",
       "y": 90
     },
-    "assembled=true,cell=213,facing=east": {
+    "assembled=true,cell=212,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=213,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_213",
       "y": 90
     },
-    "assembled=true,cell=214,facing=east": {
+    "assembled=true,cell=213,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=214,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_214",
       "y": 90
     },
-    "assembled=true,cell=215,facing=east": {
+    "assembled=true,cell=214,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=215,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_215",
       "y": 90
     },
-    "assembled=true,cell=216,facing=east": {
+    "assembled=true,cell=215,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=216,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_216",
       "y": 90
     },
-    "assembled=true,cell=217,facing=east": {
+    "assembled=true,cell=216,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=217,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_217",
       "y": 90
     },
-    "assembled=true,cell=218,facing=east": {
+    "assembled=true,cell=217,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=218,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_218",
       "y": 90
     },
-    "assembled=true,cell=219,facing=east": {
+    "assembled=true,cell=218,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=219,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_219",
       "y": 90
     },
-    "assembled=true,cell=220,facing=east": {
+    "assembled=true,cell=219,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=220,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_220",
       "y": 90
     },
-    "assembled=true,cell=221,facing=east": {
+    "assembled=true,cell=220,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=221,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_221",
       "y": 90
     },
-    "assembled=true,cell=222,facing=east": {
+    "assembled=true,cell=221,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=222,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_222",
       "y": 90
     },
-    "assembled=true,cell=223,facing=east": {
+    "assembled=true,cell=222,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=223,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_223",
       "y": 90
     },
-    "assembled=true,cell=224,facing=east": {
+    "assembled=true,cell=223,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=224,facing=east,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_224",
       "y": 90
     },
-    "assembled=true,cell=225,facing=east": {
+    "assembled=true,cell=224,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=226,facing=east": {
+    "assembled=true,cell=225,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=227,facing=east": {
+    "assembled=true,cell=225,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=228,facing=east": {
+    "assembled=true,cell=226,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=229,facing=east": {
+    "assembled=true,cell=226,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=230,facing=east": {
+    "assembled=true,cell=227,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=231,facing=east": {
+    "assembled=true,cell=227,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=232,facing=east": {
+    "assembled=true,cell=228,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=233,facing=east": {
+    "assembled=true,cell=228,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=234,facing=east": {
+    "assembled=true,cell=229,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=235,facing=east": {
+    "assembled=true,cell=229,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=236,facing=east": {
+    "assembled=true,cell=230,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=237,facing=east": {
+    "assembled=true,cell=230,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=238,facing=east": {
+    "assembled=true,cell=231,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=239,facing=east": {
+    "assembled=true,cell=231,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=240,facing=east": {
+    "assembled=true,cell=232,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=241,facing=east": {
+    "assembled=true,cell=232,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=242,facing=east": {
+    "assembled=true,cell=233,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=243,facing=east": {
+    "assembled=true,cell=233,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=244,facing=east": {
+    "assembled=true,cell=234,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=245,facing=east": {
+    "assembled=true,cell=234,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=246,facing=east": {
+    "assembled=true,cell=235,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=247,facing=east": {
+    "assembled=true,cell=235,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=248,facing=east": {
+    "assembled=true,cell=236,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=249,facing=east": {
+    "assembled=true,cell=236,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=250,facing=east": {
+    "assembled=true,cell=237,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=251,facing=east": {
+    "assembled=true,cell=237,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=252,facing=east": {
+    "assembled=true,cell=238,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=253,facing=east": {
+    "assembled=true,cell=238,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=254,facing=east": {
+    "assembled=true,cell=239,facing=east,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
-    "assembled=true,cell=255,facing=east": {
+    "assembled=true,cell=239,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=240,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=240,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=241,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=241,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=242,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=242,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=243,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=243,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=244,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=244,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=245,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=245,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=246,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=246,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=247,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=247,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=248,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=248,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=249,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=249,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=250,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=250,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=251,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=251,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=252,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=252,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=253,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=253,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=254,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=254,facing=east,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=255,facing=east,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 90
+    },
+    "assembled=true,cell=255,facing=east,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 90
     },
@@ -5660,487 +6628,971 @@
       "model": "bwr:block/pumps/hp_turbine/cell_134",
       "y": 180
     },
-    "assembled=true,cell=135,facing=south": {
+    "assembled=true,cell=135,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_135",
       "y": 180
     },
-    "assembled=true,cell=136,facing=south": {
+    "assembled=true,cell=135,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=136,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_136",
       "y": 180
     },
-    "assembled=true,cell=137,facing=south": {
+    "assembled=true,cell=136,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=137,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_137",
       "y": 180
     },
-    "assembled=true,cell=138,facing=south": {
+    "assembled=true,cell=137,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=138,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_138",
       "y": 180
     },
-    "assembled=true,cell=139,facing=south": {
+    "assembled=true,cell=138,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=139,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_139",
       "y": 180
     },
-    "assembled=true,cell=140,facing=south": {
+    "assembled=true,cell=139,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=140,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_140",
       "y": 180
     },
-    "assembled=true,cell=141,facing=south": {
+    "assembled=true,cell=140,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=141,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_141",
       "y": 180
     },
-    "assembled=true,cell=142,facing=south": {
+    "assembled=true,cell=141,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=142,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_142",
       "y": 180
     },
-    "assembled=true,cell=143,facing=south": {
+    "assembled=true,cell=142,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=143,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_143",
       "y": 180
     },
-    "assembled=true,cell=144,facing=south": {
+    "assembled=true,cell=143,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=144,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_144",
       "y": 180
     },
-    "assembled=true,cell=145,facing=south": {
+    "assembled=true,cell=144,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=145,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_145",
       "y": 180
     },
-    "assembled=true,cell=146,facing=south": {
+    "assembled=true,cell=145,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=146,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_146",
       "y": 180
     },
-    "assembled=true,cell=147,facing=south": {
+    "assembled=true,cell=146,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=147,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_147",
       "y": 180
     },
-    "assembled=true,cell=148,facing=south": {
+    "assembled=true,cell=147,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=148,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_148",
       "y": 180
     },
-    "assembled=true,cell=149,facing=south": {
+    "assembled=true,cell=148,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=149,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_149",
       "y": 180
     },
-    "assembled=true,cell=150,facing=south": {
+    "assembled=true,cell=149,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=150,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_150",
       "y": 180
     },
-    "assembled=true,cell=151,facing=south": {
+    "assembled=true,cell=150,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=151,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_151",
       "y": 180
     },
-    "assembled=true,cell=152,facing=south": {
+    "assembled=true,cell=151,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=152,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_152",
       "y": 180
     },
-    "assembled=true,cell=153,facing=south": {
+    "assembled=true,cell=152,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=153,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_153",
       "y": 180
     },
-    "assembled=true,cell=154,facing=south": {
+    "assembled=true,cell=153,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=154,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_154",
       "y": 180
     },
-    "assembled=true,cell=155,facing=south": {
+    "assembled=true,cell=154,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=155,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_155",
       "y": 180
     },
-    "assembled=true,cell=156,facing=south": {
+    "assembled=true,cell=155,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=156,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_156",
       "y": 180
     },
-    "assembled=true,cell=157,facing=south": {
+    "assembled=true,cell=156,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=157,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_157",
       "y": 180
     },
-    "assembled=true,cell=158,facing=south": {
+    "assembled=true,cell=157,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=158,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_158",
       "y": 180
     },
-    "assembled=true,cell=159,facing=south": {
+    "assembled=true,cell=158,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=159,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_159",
       "y": 180
     },
-    "assembled=true,cell=160,facing=south": {
+    "assembled=true,cell=159,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=160,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_160",
       "y": 180
     },
-    "assembled=true,cell=161,facing=south": {
+    "assembled=true,cell=160,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=161,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_161",
       "y": 180
     },
-    "assembled=true,cell=162,facing=south": {
+    "assembled=true,cell=161,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=162,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_162",
       "y": 180
     },
-    "assembled=true,cell=163,facing=south": {
+    "assembled=true,cell=162,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=163,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_163",
       "y": 180
     },
-    "assembled=true,cell=164,facing=south": {
+    "assembled=true,cell=163,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=164,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_164",
       "y": 180
     },
-    "assembled=true,cell=165,facing=south": {
+    "assembled=true,cell=164,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=165,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_165",
       "y": 180
     },
-    "assembled=true,cell=166,facing=south": {
+    "assembled=true,cell=165,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=166,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_166",
       "y": 180
     },
-    "assembled=true,cell=167,facing=south": {
+    "assembled=true,cell=166,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=167,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_167",
       "y": 180
     },
-    "assembled=true,cell=168,facing=south": {
+    "assembled=true,cell=167,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=168,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_168",
       "y": 180
     },
-    "assembled=true,cell=169,facing=south": {
+    "assembled=true,cell=168,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=169,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_169",
       "y": 180
     },
-    "assembled=true,cell=170,facing=south": {
+    "assembled=true,cell=169,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=170,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_170",
       "y": 180
     },
-    "assembled=true,cell=171,facing=south": {
+    "assembled=true,cell=170,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=171,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_171",
       "y": 180
     },
-    "assembled=true,cell=172,facing=south": {
+    "assembled=true,cell=171,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=172,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_172",
       "y": 180
     },
-    "assembled=true,cell=173,facing=south": {
+    "assembled=true,cell=172,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=173,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_173",
       "y": 180
     },
-    "assembled=true,cell=174,facing=south": {
+    "assembled=true,cell=173,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=174,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_174",
       "y": 180
     },
-    "assembled=true,cell=175,facing=south": {
+    "assembled=true,cell=174,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=175,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_175",
       "y": 180
     },
-    "assembled=true,cell=176,facing=south": {
+    "assembled=true,cell=175,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=176,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_176",
       "y": 180
     },
-    "assembled=true,cell=177,facing=south": {
+    "assembled=true,cell=176,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=177,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_177",
       "y": 180
     },
-    "assembled=true,cell=178,facing=south": {
+    "assembled=true,cell=177,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=178,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_178",
       "y": 180
     },
-    "assembled=true,cell=179,facing=south": {
+    "assembled=true,cell=178,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=179,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_179",
       "y": 180
     },
-    "assembled=true,cell=180,facing=south": {
+    "assembled=true,cell=179,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=180,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_180",
       "y": 180
     },
-    "assembled=true,cell=181,facing=south": {
+    "assembled=true,cell=180,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=181,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_181",
       "y": 180
     },
-    "assembled=true,cell=182,facing=south": {
+    "assembled=true,cell=181,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=182,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_182",
       "y": 180
     },
-    "assembled=true,cell=183,facing=south": {
+    "assembled=true,cell=182,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=183,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_183",
       "y": 180
     },
-    "assembled=true,cell=184,facing=south": {
+    "assembled=true,cell=183,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=184,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_184",
       "y": 180
     },
-    "assembled=true,cell=185,facing=south": {
+    "assembled=true,cell=184,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=185,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_185",
       "y": 180
     },
-    "assembled=true,cell=186,facing=south": {
+    "assembled=true,cell=185,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=186,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_186",
       "y": 180
     },
-    "assembled=true,cell=187,facing=south": {
+    "assembled=true,cell=186,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=187,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_187",
       "y": 180
     },
-    "assembled=true,cell=188,facing=south": {
+    "assembled=true,cell=187,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=188,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_188",
       "y": 180
     },
-    "assembled=true,cell=189,facing=south": {
+    "assembled=true,cell=188,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=189,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_189",
       "y": 180
     },
-    "assembled=true,cell=190,facing=south": {
+    "assembled=true,cell=189,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=190,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_190",
       "y": 180
     },
-    "assembled=true,cell=191,facing=south": {
+    "assembled=true,cell=190,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=191,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_191",
       "y": 180
     },
-    "assembled=true,cell=192,facing=south": {
+    "assembled=true,cell=191,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=192,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_192",
       "y": 180
     },
-    "assembled=true,cell=193,facing=south": {
+    "assembled=true,cell=192,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=193,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_193",
       "y": 180
     },
-    "assembled=true,cell=194,facing=south": {
+    "assembled=true,cell=193,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=194,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_194",
       "y": 180
     },
-    "assembled=true,cell=195,facing=south": {
+    "assembled=true,cell=194,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=195,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_195",
       "y": 180
     },
-    "assembled=true,cell=196,facing=south": {
+    "assembled=true,cell=195,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=196,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_196",
       "y": 180
     },
-    "assembled=true,cell=197,facing=south": {
+    "assembled=true,cell=196,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=197,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_197",
       "y": 180
     },
-    "assembled=true,cell=198,facing=south": {
+    "assembled=true,cell=197,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=198,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_198",
       "y": 180
     },
-    "assembled=true,cell=199,facing=south": {
+    "assembled=true,cell=198,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=199,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_199",
       "y": 180
     },
-    "assembled=true,cell=200,facing=south": {
+    "assembled=true,cell=199,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=200,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_200",
       "y": 180
     },
-    "assembled=true,cell=201,facing=south": {
+    "assembled=true,cell=200,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=201,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_201",
       "y": 180
     },
-    "assembled=true,cell=202,facing=south": {
+    "assembled=true,cell=201,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=202,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_202",
       "y": 180
     },
-    "assembled=true,cell=203,facing=south": {
+    "assembled=true,cell=202,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=203,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_203",
       "y": 180
     },
-    "assembled=true,cell=204,facing=south": {
+    "assembled=true,cell=203,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=204,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_204",
       "y": 180
     },
-    "assembled=true,cell=205,facing=south": {
+    "assembled=true,cell=204,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=205,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_205",
       "y": 180
     },
-    "assembled=true,cell=206,facing=south": {
+    "assembled=true,cell=205,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=206,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_206",
       "y": 180
     },
-    "assembled=true,cell=207,facing=south": {
+    "assembled=true,cell=206,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=207,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_207",
       "y": 180
     },
-    "assembled=true,cell=208,facing=south": {
+    "assembled=true,cell=207,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=208,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_208",
       "y": 180
     },
-    "assembled=true,cell=209,facing=south": {
+    "assembled=true,cell=208,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=209,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_209",
       "y": 180
     },
-    "assembled=true,cell=210,facing=south": {
+    "assembled=true,cell=209,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=210,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_210",
       "y": 180
     },
-    "assembled=true,cell=211,facing=south": {
+    "assembled=true,cell=210,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=211,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_211",
       "y": 180
     },
-    "assembled=true,cell=212,facing=south": {
+    "assembled=true,cell=211,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=212,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_212",
       "y": 180
     },
-    "assembled=true,cell=213,facing=south": {
+    "assembled=true,cell=212,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=213,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_213",
       "y": 180
     },
-    "assembled=true,cell=214,facing=south": {
+    "assembled=true,cell=213,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=214,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_214",
       "y": 180
     },
-    "assembled=true,cell=215,facing=south": {
+    "assembled=true,cell=214,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=215,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_215",
       "y": 180
     },
-    "assembled=true,cell=216,facing=south": {
+    "assembled=true,cell=215,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=216,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_216",
       "y": 180
     },
-    "assembled=true,cell=217,facing=south": {
+    "assembled=true,cell=216,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=217,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_217",
       "y": 180
     },
-    "assembled=true,cell=218,facing=south": {
+    "assembled=true,cell=217,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=218,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_218",
       "y": 180
     },
-    "assembled=true,cell=219,facing=south": {
+    "assembled=true,cell=218,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=219,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_219",
       "y": 180
     },
-    "assembled=true,cell=220,facing=south": {
+    "assembled=true,cell=219,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=220,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_220",
       "y": 180
     },
-    "assembled=true,cell=221,facing=south": {
+    "assembled=true,cell=220,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=221,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_221",
       "y": 180
     },
-    "assembled=true,cell=222,facing=south": {
+    "assembled=true,cell=221,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=222,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_222",
       "y": 180
     },
-    "assembled=true,cell=223,facing=south": {
+    "assembled=true,cell=222,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=223,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_223",
       "y": 180
     },
-    "assembled=true,cell=224,facing=south": {
+    "assembled=true,cell=223,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=224,facing=south,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_224",
       "y": 180
     },
-    "assembled=true,cell=225,facing=south": {
+    "assembled=true,cell=224,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=226,facing=south": {
+    "assembled=true,cell=225,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=227,facing=south": {
+    "assembled=true,cell=225,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=228,facing=south": {
+    "assembled=true,cell=226,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=229,facing=south": {
+    "assembled=true,cell=226,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=230,facing=south": {
+    "assembled=true,cell=227,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=231,facing=south": {
+    "assembled=true,cell=227,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=232,facing=south": {
+    "assembled=true,cell=228,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=233,facing=south": {
+    "assembled=true,cell=228,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=234,facing=south": {
+    "assembled=true,cell=229,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=235,facing=south": {
+    "assembled=true,cell=229,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=236,facing=south": {
+    "assembled=true,cell=230,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=237,facing=south": {
+    "assembled=true,cell=230,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=238,facing=south": {
+    "assembled=true,cell=231,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=239,facing=south": {
+    "assembled=true,cell=231,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=240,facing=south": {
+    "assembled=true,cell=232,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=241,facing=south": {
+    "assembled=true,cell=232,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=242,facing=south": {
+    "assembled=true,cell=233,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=243,facing=south": {
+    "assembled=true,cell=233,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=244,facing=south": {
+    "assembled=true,cell=234,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=245,facing=south": {
+    "assembled=true,cell=234,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=246,facing=south": {
+    "assembled=true,cell=235,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=247,facing=south": {
+    "assembled=true,cell=235,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=248,facing=south": {
+    "assembled=true,cell=236,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=249,facing=south": {
+    "assembled=true,cell=236,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=250,facing=south": {
+    "assembled=true,cell=237,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=251,facing=south": {
+    "assembled=true,cell=237,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=252,facing=south": {
+    "assembled=true,cell=238,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=253,facing=south": {
+    "assembled=true,cell=238,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=254,facing=south": {
+    "assembled=true,cell=239,facing=south,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
-    "assembled=true,cell=255,facing=south": {
+    "assembled=true,cell=239,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=240,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=240,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=241,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=241,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=242,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=242,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=243,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=243,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=244,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=244,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=245,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=245,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=246,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=246,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=247,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=247,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=248,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=248,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=249,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=249,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=250,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=250,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=251,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=251,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=252,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=252,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=253,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=253,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=254,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=254,facing=south,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=255,facing=south,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 180
+    },
+    "assembled=true,cell=255,facing=south,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 180
     },
@@ -7708,487 +9160,971 @@
       "model": "bwr:block/pumps/hp_turbine/cell_134",
       "y": 270
     },
-    "assembled=true,cell=135,facing=west": {
+    "assembled=true,cell=135,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_135",
       "y": 270
     },
-    "assembled=true,cell=136,facing=west": {
+    "assembled=true,cell=135,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=136,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_136",
       "y": 270
     },
-    "assembled=true,cell=137,facing=west": {
+    "assembled=true,cell=136,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=137,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_137",
       "y": 270
     },
-    "assembled=true,cell=138,facing=west": {
+    "assembled=true,cell=137,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=138,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_138",
       "y": 270
     },
-    "assembled=true,cell=139,facing=west": {
+    "assembled=true,cell=138,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=139,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_139",
       "y": 270
     },
-    "assembled=true,cell=140,facing=west": {
+    "assembled=true,cell=139,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=140,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_140",
       "y": 270
     },
-    "assembled=true,cell=141,facing=west": {
+    "assembled=true,cell=140,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=141,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_141",
       "y": 270
     },
-    "assembled=true,cell=142,facing=west": {
+    "assembled=true,cell=141,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=142,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_142",
       "y": 270
     },
-    "assembled=true,cell=143,facing=west": {
+    "assembled=true,cell=142,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=143,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_143",
       "y": 270
     },
-    "assembled=true,cell=144,facing=west": {
+    "assembled=true,cell=143,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=144,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_144",
       "y": 270
     },
-    "assembled=true,cell=145,facing=west": {
+    "assembled=true,cell=144,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=145,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_145",
       "y": 270
     },
-    "assembled=true,cell=146,facing=west": {
+    "assembled=true,cell=145,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=146,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_146",
       "y": 270
     },
-    "assembled=true,cell=147,facing=west": {
+    "assembled=true,cell=146,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=147,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_147",
       "y": 270
     },
-    "assembled=true,cell=148,facing=west": {
+    "assembled=true,cell=147,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=148,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_148",
       "y": 270
     },
-    "assembled=true,cell=149,facing=west": {
+    "assembled=true,cell=148,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=149,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_149",
       "y": 270
     },
-    "assembled=true,cell=150,facing=west": {
+    "assembled=true,cell=149,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=150,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_150",
       "y": 270
     },
-    "assembled=true,cell=151,facing=west": {
+    "assembled=true,cell=150,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=151,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_151",
       "y": 270
     },
-    "assembled=true,cell=152,facing=west": {
+    "assembled=true,cell=151,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=152,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_152",
       "y": 270
     },
-    "assembled=true,cell=153,facing=west": {
+    "assembled=true,cell=152,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=153,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_153",
       "y": 270
     },
-    "assembled=true,cell=154,facing=west": {
+    "assembled=true,cell=153,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=154,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_154",
       "y": 270
     },
-    "assembled=true,cell=155,facing=west": {
+    "assembled=true,cell=154,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=155,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_155",
       "y": 270
     },
-    "assembled=true,cell=156,facing=west": {
+    "assembled=true,cell=155,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=156,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_156",
       "y": 270
     },
-    "assembled=true,cell=157,facing=west": {
+    "assembled=true,cell=156,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=157,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_157",
       "y": 270
     },
-    "assembled=true,cell=158,facing=west": {
+    "assembled=true,cell=157,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=158,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_158",
       "y": 270
     },
-    "assembled=true,cell=159,facing=west": {
+    "assembled=true,cell=158,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=159,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_159",
       "y": 270
     },
-    "assembled=true,cell=160,facing=west": {
+    "assembled=true,cell=159,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=160,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_160",
       "y": 270
     },
-    "assembled=true,cell=161,facing=west": {
+    "assembled=true,cell=160,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=161,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_161",
       "y": 270
     },
-    "assembled=true,cell=162,facing=west": {
+    "assembled=true,cell=161,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=162,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_162",
       "y": 270
     },
-    "assembled=true,cell=163,facing=west": {
+    "assembled=true,cell=162,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=163,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_163",
       "y": 270
     },
-    "assembled=true,cell=164,facing=west": {
+    "assembled=true,cell=163,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=164,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_164",
       "y": 270
     },
-    "assembled=true,cell=165,facing=west": {
+    "assembled=true,cell=164,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=165,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_165",
       "y": 270
     },
-    "assembled=true,cell=166,facing=west": {
+    "assembled=true,cell=165,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=166,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_166",
       "y": 270
     },
-    "assembled=true,cell=167,facing=west": {
+    "assembled=true,cell=166,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=167,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_167",
       "y": 270
     },
-    "assembled=true,cell=168,facing=west": {
+    "assembled=true,cell=167,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=168,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_168",
       "y": 270
     },
-    "assembled=true,cell=169,facing=west": {
+    "assembled=true,cell=168,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=169,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_169",
       "y": 270
     },
-    "assembled=true,cell=170,facing=west": {
+    "assembled=true,cell=169,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=170,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_170",
       "y": 270
     },
-    "assembled=true,cell=171,facing=west": {
+    "assembled=true,cell=170,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=171,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_171",
       "y": 270
     },
-    "assembled=true,cell=172,facing=west": {
+    "assembled=true,cell=171,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=172,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_172",
       "y": 270
     },
-    "assembled=true,cell=173,facing=west": {
+    "assembled=true,cell=172,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=173,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_173",
       "y": 270
     },
-    "assembled=true,cell=174,facing=west": {
+    "assembled=true,cell=173,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=174,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_174",
       "y": 270
     },
-    "assembled=true,cell=175,facing=west": {
+    "assembled=true,cell=174,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=175,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_175",
       "y": 270
     },
-    "assembled=true,cell=176,facing=west": {
+    "assembled=true,cell=175,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=176,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_176",
       "y": 270
     },
-    "assembled=true,cell=177,facing=west": {
+    "assembled=true,cell=176,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=177,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_177",
       "y": 270
     },
-    "assembled=true,cell=178,facing=west": {
+    "assembled=true,cell=177,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=178,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_178",
       "y": 270
     },
-    "assembled=true,cell=179,facing=west": {
+    "assembled=true,cell=178,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=179,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_179",
       "y": 270
     },
-    "assembled=true,cell=180,facing=west": {
+    "assembled=true,cell=179,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=180,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_180",
       "y": 270
     },
-    "assembled=true,cell=181,facing=west": {
+    "assembled=true,cell=180,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=181,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_181",
       "y": 270
     },
-    "assembled=true,cell=182,facing=west": {
+    "assembled=true,cell=181,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=182,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_182",
       "y": 270
     },
-    "assembled=true,cell=183,facing=west": {
+    "assembled=true,cell=182,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=183,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_183",
       "y": 270
     },
-    "assembled=true,cell=184,facing=west": {
+    "assembled=true,cell=183,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=184,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_184",
       "y": 270
     },
-    "assembled=true,cell=185,facing=west": {
+    "assembled=true,cell=184,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=185,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_185",
       "y": 270
     },
-    "assembled=true,cell=186,facing=west": {
+    "assembled=true,cell=185,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=186,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_186",
       "y": 270
     },
-    "assembled=true,cell=187,facing=west": {
+    "assembled=true,cell=186,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=187,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_187",
       "y": 270
     },
-    "assembled=true,cell=188,facing=west": {
+    "assembled=true,cell=187,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=188,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_188",
       "y": 270
     },
-    "assembled=true,cell=189,facing=west": {
+    "assembled=true,cell=188,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=189,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_189",
       "y": 270
     },
-    "assembled=true,cell=190,facing=west": {
+    "assembled=true,cell=189,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=190,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_190",
       "y": 270
     },
-    "assembled=true,cell=191,facing=west": {
+    "assembled=true,cell=190,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=191,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_191",
       "y": 270
     },
-    "assembled=true,cell=192,facing=west": {
+    "assembled=true,cell=191,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=192,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_192",
       "y": 270
     },
-    "assembled=true,cell=193,facing=west": {
+    "assembled=true,cell=192,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=193,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_193",
       "y": 270
     },
-    "assembled=true,cell=194,facing=west": {
+    "assembled=true,cell=193,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=194,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_194",
       "y": 270
     },
-    "assembled=true,cell=195,facing=west": {
+    "assembled=true,cell=194,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=195,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_195",
       "y": 270
     },
-    "assembled=true,cell=196,facing=west": {
+    "assembled=true,cell=195,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=196,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_196",
       "y": 270
     },
-    "assembled=true,cell=197,facing=west": {
+    "assembled=true,cell=196,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=197,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_197",
       "y": 270
     },
-    "assembled=true,cell=198,facing=west": {
+    "assembled=true,cell=197,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=198,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_198",
       "y": 270
     },
-    "assembled=true,cell=199,facing=west": {
+    "assembled=true,cell=198,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=199,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_199",
       "y": 270
     },
-    "assembled=true,cell=200,facing=west": {
+    "assembled=true,cell=199,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=200,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_200",
       "y": 270
     },
-    "assembled=true,cell=201,facing=west": {
+    "assembled=true,cell=200,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=201,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_201",
       "y": 270
     },
-    "assembled=true,cell=202,facing=west": {
+    "assembled=true,cell=201,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=202,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_202",
       "y": 270
     },
-    "assembled=true,cell=203,facing=west": {
+    "assembled=true,cell=202,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=203,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_203",
       "y": 270
     },
-    "assembled=true,cell=204,facing=west": {
+    "assembled=true,cell=203,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=204,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_204",
       "y": 270
     },
-    "assembled=true,cell=205,facing=west": {
+    "assembled=true,cell=204,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=205,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_205",
       "y": 270
     },
-    "assembled=true,cell=206,facing=west": {
+    "assembled=true,cell=205,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=206,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_206",
       "y": 270
     },
-    "assembled=true,cell=207,facing=west": {
+    "assembled=true,cell=206,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=207,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_207",
       "y": 270
     },
-    "assembled=true,cell=208,facing=west": {
+    "assembled=true,cell=207,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=208,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_208",
       "y": 270
     },
-    "assembled=true,cell=209,facing=west": {
+    "assembled=true,cell=208,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=209,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_209",
       "y": 270
     },
-    "assembled=true,cell=210,facing=west": {
+    "assembled=true,cell=209,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=210,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_210",
       "y": 270
     },
-    "assembled=true,cell=211,facing=west": {
+    "assembled=true,cell=210,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=211,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_211",
       "y": 270
     },
-    "assembled=true,cell=212,facing=west": {
+    "assembled=true,cell=211,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=212,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_212",
       "y": 270
     },
-    "assembled=true,cell=213,facing=west": {
+    "assembled=true,cell=212,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=213,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_213",
       "y": 270
     },
-    "assembled=true,cell=214,facing=west": {
+    "assembled=true,cell=213,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=214,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_214",
       "y": 270
     },
-    "assembled=true,cell=215,facing=west": {
+    "assembled=true,cell=214,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=215,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_215",
       "y": 270
     },
-    "assembled=true,cell=216,facing=west": {
+    "assembled=true,cell=215,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=216,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_216",
       "y": 270
     },
-    "assembled=true,cell=217,facing=west": {
+    "assembled=true,cell=216,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=217,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_217",
       "y": 270
     },
-    "assembled=true,cell=218,facing=west": {
+    "assembled=true,cell=217,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=218,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_218",
       "y": 270
     },
-    "assembled=true,cell=219,facing=west": {
+    "assembled=true,cell=218,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=219,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_219",
       "y": 270
     },
-    "assembled=true,cell=220,facing=west": {
+    "assembled=true,cell=219,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=220,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_220",
       "y": 270
     },
-    "assembled=true,cell=221,facing=west": {
+    "assembled=true,cell=220,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=221,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_221",
       "y": 270
     },
-    "assembled=true,cell=222,facing=west": {
+    "assembled=true,cell=221,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=222,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_222",
       "y": 270
     },
-    "assembled=true,cell=223,facing=west": {
+    "assembled=true,cell=222,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=223,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_223",
       "y": 270
     },
-    "assembled=true,cell=224,facing=west": {
+    "assembled=true,cell=223,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=224,facing=west,open=false": {
       "model": "bwr:block/pumps/hp_turbine/cell_224",
       "y": 270
     },
-    "assembled=true,cell=225,facing=west": {
+    "assembled=true,cell=224,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=226,facing=west": {
+    "assembled=true,cell=225,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=227,facing=west": {
+    "assembled=true,cell=225,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=228,facing=west": {
+    "assembled=true,cell=226,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=229,facing=west": {
+    "assembled=true,cell=226,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=230,facing=west": {
+    "assembled=true,cell=227,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=231,facing=west": {
+    "assembled=true,cell=227,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=232,facing=west": {
+    "assembled=true,cell=228,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=233,facing=west": {
+    "assembled=true,cell=228,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=234,facing=west": {
+    "assembled=true,cell=229,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=235,facing=west": {
+    "assembled=true,cell=229,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=236,facing=west": {
+    "assembled=true,cell=230,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=237,facing=west": {
+    "assembled=true,cell=230,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=238,facing=west": {
+    "assembled=true,cell=231,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=239,facing=west": {
+    "assembled=true,cell=231,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=240,facing=west": {
+    "assembled=true,cell=232,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=241,facing=west": {
+    "assembled=true,cell=232,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=242,facing=west": {
+    "assembled=true,cell=233,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=243,facing=west": {
+    "assembled=true,cell=233,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=244,facing=west": {
+    "assembled=true,cell=234,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=245,facing=west": {
+    "assembled=true,cell=234,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=246,facing=west": {
+    "assembled=true,cell=235,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=247,facing=west": {
+    "assembled=true,cell=235,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=248,facing=west": {
+    "assembled=true,cell=236,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=249,facing=west": {
+    "assembled=true,cell=236,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=250,facing=west": {
+    "assembled=true,cell=237,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=251,facing=west": {
+    "assembled=true,cell=237,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=252,facing=west": {
+    "assembled=true,cell=238,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=253,facing=west": {
+    "assembled=true,cell=238,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=254,facing=west": {
+    "assembled=true,cell=239,facing=west,open=false": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     },
-    "assembled=true,cell=255,facing=west": {
+    "assembled=true,cell=239,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=240,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=240,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=241,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=241,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=242,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=242,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=243,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=243,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=244,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=244,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=245,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=245,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=246,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=246,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=247,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=247,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=248,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=248,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=249,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=249,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=250,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=250,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=251,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=251,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=252,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=252,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=253,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=253,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=254,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=254,facing=west,open=true": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=255,facing=west,open=false": {
+      "model": "bwr:block/pumps/empty",
+      "y": 270
+    },
+    "assembled=true,cell=255,facing=west,open=true": {
       "model": "bwr:block/pumps/empty",
       "y": 270
     }

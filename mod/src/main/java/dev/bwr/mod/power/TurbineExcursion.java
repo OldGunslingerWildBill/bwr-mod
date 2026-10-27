@@ -104,7 +104,7 @@ public final class TurbineExcursion {
             Vec3 next = origin.add(dir.scale(travelled));
             left -= perM * STEP;
             if (left <= 0) {
-                stop = TurbineMissile.Stop.STOPPED_IN_BLOCK;
+                stop = TurbineMissile.Stop.REST;
                 break;
             }
             for (double w : new double[]{0, -HALF_WIDTH, HALF_WIDTH}) {
@@ -154,7 +154,7 @@ public final class TurbineExcursion {
             }
             at = next;
             if (Mth.floor(travelled) != Mth.floor(travelled - STEP)) {
-                left = TurbineMissile.hitEntities(level, at, 1.6, left, hit);
+                left = TurbineMissile.hitEntities(level, at, 1.6, left, hit, true);
             }
             BlockPos centre = BlockPos.containing(at.x, floorY, at.z);
             if (free(level, centre, root)) {

@@ -35,9 +35,9 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
     private static Status alarm(boolean on) { return on ? Status.ALARM : Status.NORMAL; }
     private String casing() {
         return switch (menu.wreck) {
-            case 1 -> "holed by a blade";
-            case 2 -> "BURST OPEN";
-            case 3 -> "SHAFT BROKE LOOSE";
+            case 1 -> "holed";
+            case 2 -> "BURST";
+            case 3 -> "SHAFT OUT";
             default -> "sound";
         };
     }
