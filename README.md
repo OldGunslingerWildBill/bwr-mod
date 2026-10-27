@@ -17,7 +17,7 @@ scram, no auto ECCS. If you want protection you wire it yourself from a control 
 
 ## Status
 
-**Early alpha. Current version: `0.1.0-alpha.57`.** Stuff will change between versions and there will be
+**Early alpha. Current version: `0.1.0-alpha.58`.** Stuff will change between versions and there will be
 bugs. **Back up your worlds before you update.** Everything that changed is in [CHANGELOG.md](CHANGELOG.md).
 
 The source is public under my own [Realistic BWR Source-Available License](LICENSE). You can read it,
