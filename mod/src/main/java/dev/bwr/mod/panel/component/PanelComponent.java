@@ -60,37 +60,49 @@ public final class PanelComponent {
     /** Per output index, where that output goes (fan-out); see {@link OutputSink}. */
     private final List<List<OutputSink>> sinks = new ArrayList<>();
 
-    /** Server-only, never saved: who let go of this control last and the stamp of that RELEASE (see {@link #staleHold}). */
+    /**
+     * Server-only, never saved: who let go of this control last, the stamp of that RELEASE (see {@link #staleHold}) and the
+     * login session of that player ({@link dev.bwr.mod.panel.PanelPlayerSessions}) it was sent in. The client restarts its
+     * stamps at 1 on every game launch, so a stamp is only ever compared with one from the same session.
+     */
     private java.util.UUID releasedBy;
     private int releasedSeq;
-    /** ...and who pressed it last and the stamp of that PRESS (see {@link #staleRelease}). */
+    private int releasedSession;
+    /** ...and who pressed it last, the stamp of that PRESS (see {@link #staleRelease}) and the session it was sent in. */
     private java.util.UUID pressedBy;
     private int pressedSeq;
+    private int pressedSession;
 
     /** Remembers the PRESS that {@code player} sent with stamp {@code seq}. */
     public void notePress(java.util.UUID player, int seq) {
-        if (!player.equals(pressedBy) || seq - pressedSeq > 0) {
+        int session = dev.bwr.mod.panel.PanelPlayerSessions.of(player);
+        if (!player.equals(pressedBy) || session != pressedSession || seq - pressedSeq > 0) {
             pressedBy = player;
             pressedSeq = seq;
+            pressedSession = session;
         }
     }
 
     /** Whether a RELEASE stamped {@code seq} by {@code player} was made before that player's last PRESS (it arrived late). */
     public boolean staleRelease(java.util.UUID player, int seq) {
-        return player.equals(pressedBy) && seq - pressedSeq < 0;
+        return player.equals(pressedBy) && pressedSession == dev.bwr.mod.panel.PanelPlayerSessions.of(player)
+                && seq - pressedSeq < 0;
     }
 
     /** Remembers the RELEASE that {@code player} sent with stamp {@code seq}. */
     public void noteRelease(java.util.UUID player, int seq) {
-        if (!player.equals(releasedBy) || seq - releasedSeq > 0) {
+        int session = dev.bwr.mod.panel.PanelPlayerSessions.of(player);
+        if (!player.equals(releasedBy) || session != releasedSession || seq - releasedSeq > 0) {
             releasedBy = player;
             releasedSeq = seq;
+            releasedSession = session;
         }
     }
 
     /** Whether a PRESS stamped {@code seq} by {@code player} was made before that player's last RELEASE (it arrived late). */
     public boolean staleHold(java.util.UUID player, int seq) {
-        return player.equals(releasedBy) && seq - releasedSeq <= 0;
+        return player.equals(releasedBy) && releasedSession == dev.bwr.mod.panel.PanelPlayerSessions.of(player)
+                && seq - releasedSeq <= 0;
     }
 
     /** Client-only render cache (static mesh), dropped whenever {@link #revision()} changes. */

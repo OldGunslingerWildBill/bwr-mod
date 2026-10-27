@@ -320,6 +320,9 @@ public final class PanelBlockEntity extends BlockEntity {
         }
         dev.bwr.mod.advancement.PlantMilestones.beginPanelEdit();
         try {
+            // A control somebody is holding must be let go BEFORE it leaves `owned` (and before its sinks are lost with it):
+            // the command it holds lives in the plant device and would otherwise never be released.
+            releaseHeld(component);
             owned.remove(component);
             structureChanged();
             for (BlockPos pos : coverage(component)) {
@@ -1145,23 +1148,35 @@ public final class PanelBlockEntity extends BlockEntity {
      * still held, the way the timer would have, and the release reaches the plant. Server only; never loads a chunk.
      */
     private void releaseHeldControls() {
-        if (!(level instanceof ServerLevel server) || owned.isEmpty()) {
+        if (!(level instanceof ServerLevel) || owned.isEmpty()) {
             return;
         }
         for (PanelComponent component : new ArrayList<>(owned)) {
-            ComponentType type = component.type();
-            if (type == null || !type.holdable()) {
-                continue;
-            }
-            boolean held = false;
-            for (int i = 0; i < component.outputCount(); i++) {
-                held |= component.output(i) != 0.0;
-            }
-            if (held) {
-                PanelTimers.cancel(server, worldPosition, component.id());
-                type.operate(new ComponentType.OperateContext(server, null, this, component),
-                        dev.bwr.mod.panel.component.OperateAction.RELEASE, 0.0);
-            }
+            releaseHeld(component);
+        }
+    }
+
+    /**
+     * Lets go of one component if it is a held control with a non-zero output: cancels its fail-safe timer and sends it
+     * RELEASE, so what it commanded (through its sinks) is released too. Call it before the component leaves the panel
+     * or loses its sinks, since a RELEASE sent afterwards reaches nothing. Server only; a no-op for anything else.
+     */
+    public void releaseHeld(PanelComponent component) {
+        if (!(level instanceof ServerLevel server)) {
+            return;
+        }
+        ComponentType type = component.type();
+        if (type == null || !type.holdable()) {
+            return;
+        }
+        boolean held = false;
+        for (int i = 0; i < component.outputCount(); i++) {
+            held |= component.output(i) != 0.0;
+        }
+        if (held) {
+            PanelTimers.cancel(server, worldPosition, component.id());
+            type.operate(new ComponentType.OperateContext(server, null, this, component),
+                    dev.bwr.mod.panel.component.OperateAction.RELEASE, 0.0);
         }
     }
 
