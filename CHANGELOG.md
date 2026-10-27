@@ -24,6 +24,13 @@ Two bugs in the control-room panels, both found by review.
   bound last time and no longer binds, and a drive checks its binding when read (a rod of the core, and while the structure is formed the
   slot the structure gives this very position), reading notch 0 otherwise.
 
+## Unreleased: every tool-gated block can be mined for its drop, and a Large RTG hit at a part cell still drops
+
+Two things that cost a player an item without any message.
+
+- **16 blocks dropped nothing when mined in survival** (fixed in a23d0459): the containment airlock, controller, vault doors (both sizes), vent valve, spray header and the penetrations (data, nitrogen supply, pass-through, power, steam, water), the suppression pool quencher, and the xenon floodlight, xenon high-bay and HPS flat panel were registered with `requiresCorrectToolForDrops()` but were in no `minecraft:mineable/*` tag, so no tool was ever the correct one and the loot table never ran. They are now in `mineable/pickaxe` and `needs_iron_tool`. New `MiningDropTests` (`bwrmining`, `-PbwrGameTestNamespaces=bwrmining`) reads the registry and fails with the ids if any `bwr` block that requires the correct tool is in no mineable tag, if the tool of the tier its `needs_*_tool` tag asks for is not correct for it, or if a tool one tier lower still is; and it checks that every block with no `noLootTable()` and no `getDrops` override has its loot table in the loaded data. No exemptions were needed.
+- **Large RTG lost its item when an explosion hit only part cells.** Only the controller cell's loot table gives the Large RTG item. An explosion (or a command, or another mod) that removed a part cell (cells 1 to 11) but not the controller dropped the isotope contents, then removed the controller without loot, so the unit itself vanished. Removing any part cell by anything other than a player now drops the item once (`LargeRtgBlock.onRemove`); a player mining a part cell still gets exactly one in survival and none in creative, the controller's own loot is unchanged, and an explosion that hits the controller as well still gives one. `LargeRtgTests.exactlyOneUnitDropsHoweverItIsRemoved` covers destroy, remove, setBlock, explosions in every order, and survival and creative players.
+
 ## Unreleased: flaky GameTests round 3 (the level clock, and a release angle)
 
 Test-only; no game behaviour changed. Two tests failed now and then.

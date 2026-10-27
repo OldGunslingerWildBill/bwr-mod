@@ -64,6 +64,8 @@ public class LargeRtgBlock extends BaseEntityBlock {
     public static final int CONTROLLER = 0;
 
     private static final ThreadLocal<Boolean> REMOVING = ThreadLocal.withInitial(() -> false);
+    /** {cell position, game time} of a part cell a player is breaking right now: playerWillDestroy has already decided what that player gets, so onRemove must not drop the unit again. */
+    private static final ThreadLocal<long[]> PLAYER_BREAKING = new ThreadLocal<>();
 
     public static final MapCodec<LargeRtgBlock> CODEC = simpleCodec(LargeRtgBlock::new);
 
@@ -211,6 +213,9 @@ public class LargeRtgBlock extends BaseEntityBlock {
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState s, Player player) {
         // A part cell hands out the controller's one drop, so breaking any cell returns the item.
+        if (!level.isClientSide() && !isController(s)) {
+            PLAYER_BREAKING.set(new long[] {pos.asLong(), level.getGameTime()});
+        }
         if (!level.isClientSide() && !isController(s) && !player.isCreative() && player.hasCorrectToolForDrops(s)) {
             BlockPos root = rootOf(pos, s);
             if (level.isLoaded(root) && owned(level.getBlockState(root), s, CONTROLLER)) {
@@ -227,6 +232,15 @@ public class LargeRtgBlock extends BaseEntityBlock {
             BlockPos root = rootOf(pos, s);
             if (level.isLoaded(root) && level.getBlockEntity(root) instanceof LargeRtgBlockEntity be) {
                 be.dropContents();
+            }
+            // Only the controller's loot table drops the unit, so a part cell removed by anything but a player (an explosion, a
+            // command, another mod) would lose it when the controller goes with it below. Hand it out here, once:
+            // the controller's own removal never gets here, and a player breaking a part cell already settled its drop.
+            long[] playerBreak = PLAYER_BREAKING.get();
+            PLAYER_BREAKING.remove();
+            boolean byPlayer = playerBreak != null && playerBreak[0] == pos.asLong() && playerBreak[1] == level.getGameTime();
+            if (!isController(s) && !byPlayer && level.isLoaded(root) && owned(level.getBlockState(root), s, CONTROLLER)) {
+                Block.dropResources(level.getBlockState(root), level, root, level.getBlockEntity(root));
             }
         }
         super.onRemove(s, level, pos, replacement, moving);
