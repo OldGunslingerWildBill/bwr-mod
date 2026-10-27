@@ -105,6 +105,11 @@ public final class BwrPeripheralSupport {
                 e.put("slot",i+1);e.put("load",s.isEmpty()?"":dev.bwr.mod.power.TurbineLoadItem.isHood(s)?"hood":dev.bwr.mod.power.TurbineLoadItem.isGoodSection(s)?"blade_section":"damaged_blade_section");
                 if(dev.bwr.mod.power.TurbineLoadItem.isBladeSection(s))e.put("damage",dev.bwr.mod.power.TurbineLoadItem.condition(s));list.add(e);}
             m.put("slots",list);m.put("count",b.count());return m;});
+        // the rotor half a shaft excursion left on the floor: where it came from (TURBINE-MAINTENANCE.md)
+        if(be instanceof dev.bwr.mod.power.TurbineWreckBlockEntity b)return new HardwarePeripheral("bwr_turbine_shaft_wreck",()->{
+            var m=new LinkedHashMap<String,Object>();m.put("axis",b.axis().getName());m.put("massT",dev.bwr.mod.config.GameplayConfig.lpBladeSectionMassT());
+            if(b.source()!=null){m.put("turbine",Map.of("x",b.source().getX(),"y",b.source().getY(),"z",b.source().getZ()));m.put("flow",b.flow()==0?"A":"B");}
+            return m;});
         if(be instanceof SuppressionPoolBlockEntity b)return new SuppressionPoolPeripheral(b);
         if(be instanceof SuppressionPoolPortBlockEntity)return new SuppressionPoolPeripheral(null);
         if(be instanceof TurbineSteamOutletBlockEntity b)return new TurbineSteamOutletPeripheral(b);
