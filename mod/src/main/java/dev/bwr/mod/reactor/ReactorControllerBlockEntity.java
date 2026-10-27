@@ -301,8 +301,12 @@ public class ReactorControllerBlockEntity extends BlockEntity {
             dev.bwr.mod.TickProbe.stop("  Reactor.revalidate", probe);
             structureDirty = false;
         }
-        if (core == null || structure == null) {
+        if (core == null) {
             dev.bwr.mod.advancement.PlantMilestones.reactorUnavailable(this);
+            return;
+        }
+        if (structure == null) {
+            tickWithoutStructure(level);
             return;
         }
 
@@ -333,6 +337,33 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         rodNetwork.preStep(config.tickSeconds);
         boundaryEffects.apply(this,vesselEnvelope);
         dev.bwr.mod.TickProbe.stop("  Reactor.rods+boundary", probe);
+        applyContainmentInputs(level);
+        probe = dev.bwr.mod.TickProbe.start();
+        core.step();
+        dev.bwr.mod.TickProbe.stop("  Reactor.core.step", probe);
+        dev.bwr.mod.TickProbe.add("    Reactor.flux start (assemble)", core.getLastStepNodalBeginNanos());
+        dev.bwr.mod.TickProbe.add("    Reactor.flux wait for worker", core.getLastStepNodalWaitNanos());
+        probe = dev.bwr.mod.TickProbe.start();
+        rodNetwork.postStep();
+        severeEffects.afterStep(this);
+        dev.bwr.mod.advancement.PlantMilestones.afterReactorStep(this);
+        refreshHeadAccess();
+        dev.bwr.mod.TickProbe.stop("  Reactor.post", probe);
+
+        if (++sinceSync >= SYNC_INTERVAL_TICKS) {
+            sinceSync = 0;
+            probe = dev.bwr.mod.TickProbe.start();
+            syncToClients();
+            dev.bwr.mod.TickProbe.stop("  Reactor.syncToClients", probe);
+        }
+        setChanged();
+    }
+
+    /**
+     * The containment room's answer to the core, written before the core steps: leak area, failure pressure, free volume, bypass
+     * flow, and the equipment and steam coupling that read the linked room. Needs no vessel structure.
+     */
+    private void applyContainmentInputs(Level level) {
         var containmentController = dev.bwr.mod.containment.ContainmentControllerRegistry
                 .linkedReactor(level, getBlockPos());
         if (containmentController == null) {
@@ -354,23 +385,43 @@ public class ReactorControllerBlockEntity extends BlockEntity {
         }
         dev.bwr.mod.containment.ContainmentEquipmentRegistry.apply(this, containmentController);
         dev.bwr.mod.containment.ContainmentSteamCoupling.beforeReactorStep(this, containmentController);
-        probe = dev.bwr.mod.TickProbe.start();
+    }
+
+    /**
+     * A tick of a controller that has a core but no formed vessel structure (a shell block was mined, a boundary chunk
+     * unloaded, the footprint is being rebuilt).
+     *
+     * <p>Ordinary operation is held exactly as before: nothing steps, nothing is written, and a transient resumes where it
+     * stopped when the vessel re-forms. A <b>severe accident</b> is different. Its effects on the world (doses to players,
+     * queued blasts, the corium pool) are the accident's, not the vessel's, so they run on whether or not the vessel can
+     * be validated at the moment; otherwise mining one shell block, or standing on a chunk border, paused a melt. See
+     * {@link ReactorSevereAccidentEffects#accidentInProgress}.
+     *
+     * <p>The core steps too, rather than only the world effects running against frozen numbers. Contamination decays, decay
+     * heat melts the core on, and the lower head creeps in the core's own clock; a frozen core under live effects would dose
+     * players at a constant rate for ever. What is skipped is everything that is derived from the structure: the cavity
+     * survey, the pump and steam-nozzle sweeps and the cavity ports. Those inputs keep the last value the core was given,
+     * which is what the hardware was doing when the vessel stopped being validated. Rods keep moving (the drives are bound
+     * and the network does not read the structure), and the containment room is read as usual. No chunk is loaded: every
+     * world read on this path is a loaded-only read.
+     */
+    private void tickWithoutStructure(Level level) {
+        dev.bwr.mod.advancement.PlantMilestones.reactorUnavailable(this);
+        if (!severeEffects.accidentInProgress(core)) {
+            return;
+        }
+        dev.bwr.mod.config.GameplayConfig.applyTo(core);
+        rodSelection.tick(rodNetwork, core);
+        rodNetwork.preStep(config.tickSeconds);
+        boundaryEffects.apply(this, vesselEnvelope);
+        applyContainmentInputs(level);
         core.step();
-        dev.bwr.mod.TickProbe.stop("  Reactor.core.step", probe);
-        dev.bwr.mod.TickProbe.add("    Reactor.flux start (assemble)", core.getLastStepNodalBeginNanos());
-        dev.bwr.mod.TickProbe.add("    Reactor.flux wait for worker", core.getLastStepNodalWaitNanos());
-        probe = dev.bwr.mod.TickProbe.start();
         rodNetwork.postStep();
         severeEffects.afterStep(this);
-        dev.bwr.mod.advancement.PlantMilestones.afterReactorStep(this);
         refreshHeadAccess();
-        dev.bwr.mod.TickProbe.stop("  Reactor.post", probe);
-
         if (++sinceSync >= SYNC_INTERVAL_TICKS) {
             sinceSync = 0;
-            probe = dev.bwr.mod.TickProbe.start();
             syncToClients();
-            dev.bwr.mod.TickProbe.stop("  Reactor.syncToClients", probe);
         }
         setChanged();
     }
@@ -1042,13 +1093,27 @@ public class ReactorControllerBlockEntity extends BlockEntity {
     private void bindDrives(Level level) {
         rodNetwork.unbindAll();
         List<BlockPos> crds = structure.crdPositions();
+        java.util.Set<BlockPos> bound = new java.util.HashSet<>();
         for (int i = 0; i < crds.size(); i++) {
             if (level.getBlockEntity(crds.get(i)) instanceof ControlRodDriveBlockEntity drive) {
                 drive.attach(this, i);
                 rodNetwork.bind(i, drive.hardware());
+                bound.add(crds.get(i).immutable());
             }
         }
+        // A drive this controller bound last time and does not bind now (the vessel shrank, or the drive is outside
+        // the new footprint) keeps no rod number: it would read another rod's notch or an index past the end. Only
+        // loaded drives are touched; one in an unloaded chunk is guarded on its own side (ControlRodDriveBlockEntity.boundRod).
+        for (BlockPos old : boundDrivePositions) {
+            if (bound.contains(old) || !dev.bwr.mod.world.LoadedWorld.available(level, old)) continue;
+            if (dev.bwr.mod.world.LoadedWorld.blockEntity(level, old) instanceof ControlRodDriveBlockEntity drive)
+                drive.detach(getBlockPos());
+        }
+        boundDrivePositions = bound;
     }
+
+    /** The drives bindDrives bound on its last run; not saved (a drive checks its own binding when read). */
+    private java.util.Set<BlockPos> boundDrivePositions = java.util.Set.of();
 
     /** Register a satellite pump. Called by the pump when it is placed. */
     public void addPump(BlockPos pos) {

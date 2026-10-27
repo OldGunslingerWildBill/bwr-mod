@@ -145,4 +145,46 @@ public final class CompactCoreRegressionTests {
         h.assertTrue(da.hardware().canPerformNormalMotion()&&db.hardware().canPerformNormalMotion(),"touching compact drives cannot share bottom-face supplies");
         FixtureCleanup.drainAt(level,be.getBlockPos());level.removeBlock(be.getBlockPos(),false);h.succeed();
     }
+
+    /** A drive the vessel no longer binds (it shrank) keeps no rod number, and reading one never throws. */
+    @GameTest(template="empty",timeoutTicks=400)
+    public static void driveLeftOutOfAShrunkVesselIsUnboundAndReadsSafely(GameTestHelper h) throws Exception {
+        var level=h.getLevel();var min=new BlockPos(4800,190,4800);
+        // A legacy (pre-compact) core may be resized in place; a compact one is refused a new footprint.
+        var be=build(level,min,9,9,true);
+        h.assertTrue(be.isFormed(),"9x9 legacy reference failed: "+be.statusLines());
+        int oldRods=be.core().getControlRodCount();
+        var oldDrives=new java.util.ArrayList<>(be.structure().crdPositions());
+        // Move the east wall in by two: columns x=7..8 are no longer interior, x=9 is no longer wall.
+        for(int z=-1;z<=9;z++)for(int y=-1;y<=8;y++) {
+            level.setBlock(min.offset(7,y,z),BwrBlocks.REACTOR_VESSEL.get().defaultBlockState(),2);
+            level.setBlock(min.offset(8,y,z),Blocks.AIR.defaultBlockState(),2);
+            level.setBlock(min.offset(9,y,z),Blocks.AIR.defaultBlockState(),2);
+        }
+        be.markStructureDirty();validate(be);
+        h.assertTrue(be.isFormed(),"7x9 vessel failed to form: "+be.statusLines());
+        int newRods=be.core().getControlRodCount();
+        h.assertTrue(newRods<oldRods,"the vessel did not shrink: "+oldRods+" -> "+newRods);
+        var current=new java.util.HashSet<>(be.structure().crdPositions());
+        int checked=0;
+        for(int i=0;i<oldDrives.size();i++) {
+            if(current.contains(oldDrives.get(i)))continue;
+            var drive=(ControlRodDriveBlockEntity)level.getBlockEntity(oldDrives.get(i));
+            if(drive==null)continue;
+            checked++;
+            h.assertTrue(!drive.isAttached()&&drive.rodIndex()==-1,"a drive outside the new vessel kept rod "+drive.rodIndex());
+            h.assertTrue(drive.notchIndex()==0&&drive.notchLabel()==0,"an unbound drive reads a notch");
+            // The binding as an old save, or an unloaded chunk, would have left it: out of range, then in range but another rod's.
+            drive.attach(be,newRods+10);
+            h.assertTrue(drive.notchIndex()==0&&drive.notchLabel()==0,"a drive bound past the end of the core threw or read a rod");
+            drive.attach(be,0);
+            h.assertTrue(drive.notchIndex()==0,"a drive at the wrong slot reports another rod's notch");
+            drive.statusLines();
+        }
+        h.assertTrue(checked>0,"the fixture left no drive outside the new vessel");
+        // A drive that is still bound reads its own rod.
+        var kept=(ControlRodDriveBlockEntity)level.getBlockEntity(be.structure().crdPositions().get(0));
+        h.assertTrue(kept.isAttached()&&kept.rodIndex()==0,"a drive in the new vessel lost its rod");
+        FixtureCleanup.drainAt(level,be.getBlockPos());level.removeBlock(be.getBlockPos(),false);h.succeed();
+    }
 }

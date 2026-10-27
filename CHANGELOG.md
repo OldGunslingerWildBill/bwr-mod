@@ -7,6 +7,23 @@ Two bugs in the control-room panels, both found by review.
 - **A held control was never RELEASEd when its component was removed (safety).** A player holding a pushbutton wired to `selected_rod_withdraw_continuous` while the panel block was broken, or while another player wrenched the button off, left the rods withdrawing for good: every removal path took the component out of the panel first, and `releaseHeldControls` (which runs on chunk unload and `setRemoved`) only lets go of what is still on the panel. `PanelBlockEntity.removeComponent` now calls the new `releaseHeld(component)` first (cancels the fail-safe timer and sends RELEASE if the control is holdable and an output is non-zero), which covers a broken block (`releaseEverything`), the wrench, `verifyConsistency` repairs and a straddling component lost with a neighbour. Rewiring a held output with bind kind `NONE` or `REMOVE_SINK` lets go before the sinks are removed, so the RELEASE still reaches the plant. New tests in `PanelHeldControlTests`: panel broken, component wrenched off, sink removed and output cleared while held.
 - **Press and release stamps were never reset, so a control went dead for a player after a client restart.** The client counts its PRESS/RELEASE stamps from 1 on each game launch, but the panel remembered the player's last stamp for as long as its chunk stayed loaded, so after a relaunch every new press (stamp 1) looked like a late copy of an old click and was ignored until the new counter passed the old one. Stamps are now stored with the player's login session (`PanelPlayerSessions`, a number that is new at every login and dropped at logout, handled in `PanelPlayerCleanup`); stamps of another session never compare, and the anti-reorder rule within a session is unchanged. New test `stampsOfAnEarlierLoginSessionDoNotBlockANewPress`.
 
+## Unreleased: a running accident keeps going when the vessel is broken; stale control rod drives
+
+- **A severe accident no longer pauses when the vessel structure is lost.** With a core but no formed structure the reactor
+  controller returned before stepping the core and before the accident effects, so after a melt, mining one shell block (or a chunk
+  border unforming the vessel at the next revalidation) froze contamination doses, queued blasts and the corium pool until the vessel
+  was re-formed. Now, while any core damage, a failed lower head, a queued blast or contamination exists, the controller keeps stepping
+  the core and running `ReactorSevereAccidentEffects` on an unformed vessel. The structure-derived inputs (cavity survey, pump and
+  steam nozzle sweeps, cavity ports) are skipped and keep their last value; rods, the boundary and the containment room are read as
+  usual and every world read is loaded-only. The vessel box is remembered (saved as `AccidentVesselMin`/`AccidentVesselMax` only when
+  set; old saves load unchanged) so the pedestal blast, corium anchoring and blast protection still work. A healthy unformed reactor is
+  held as before. See SEVERE-ACCIDENT-UPDATE.md.
+- **Control rod drives left out of a structure no longer throw on right-click.** After a vessel shrank (say 177 to 150 rods) a drive
+  outside the new structure kept `rodIndex=160`, and right-click (and the CC `bwr_control_rod_drive` peripheral) called
+  `core.getRodNotchIndex(160)`, which threw; a stale index inside the new range read another rod. `bindDrives` now detaches drives it
+  bound last time and no longer binds, and a drive checks its binding when read (a rod of the core, and while the structure is formed the
+  slot the structure gives this very position), reading notch 0 otherwise.
+
 ## Unreleased: flaky GameTests round 3 (the level clock, and a release angle)
 
 Test-only; no game behaviour changed. Two tests failed now and then.

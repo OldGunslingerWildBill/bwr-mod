@@ -798,6 +798,137 @@ public final class AccidentBlastTests {
         h.succeed();
     }
 
+    // ------------------------------------------------------------------
+    // 8. An accident does not stop because the vessel is no longer formed
+    // ------------------------------------------------------------------
+
+    /** Core damage and contamination in the snapshot, as a melt that has begun. */
+    private static void melt(ReactorControllerBlockEntity reactor) {
+        var accident = reactor.core().getSevereAccident();
+        double[] a = accident.toArray();
+        a[1] = 1.0;                    // failed cladding
+        a[2] = 0.5;                    // molten in the core
+        a[13] = dev.bwr.core.accident.SevereAccident.Stage.FUEL_MELT.ordinal();
+        a[14] = 1;                     // melt event already fired: nothing to replay
+        accident.fromArray(a);
+        reactor.core().getContainment().releaseDirectToEnvironment(0.5);
+    }
+
+    private static void tick(ReactorControllerBlockEntity reactor, int ticks) {
+        for (int i = 0; i < ticks; i++)
+            ReactorControllerBlockEntity.serverTick(reactor.getLevel(), reactor.getBlockPos(), reactor.getBlockState(), reactor);
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 800)
+    public static void aMeltKeepsDosingAndBlastingWhenAShellBlockIsMined(GameTestHelper h) throws Exception {
+        var plant = new Plant(h, new BlockPos(703_000, 190, 700_000), false, Blocks.AIR);
+        var level = plant.level;
+        var reactor = plant.reactor;
+        BlockPos glassLo = plant.min.offset(-8, HEIGHT + 8, -8);
+        // Every chunk the blast can reach is loaded here: a blast waits for an unloaded chunk and never loads it.
+        load(level, glassLo.offset(-48, 0, -48), glassLo.offset(72, 0, 72));
+        clear(level, glassLo, glassLo.offset(24, 3, 24));
+        for (int x = 0; x <= 24; x++) for (int z = 0; z <= 24; z++) for (int y = 0; y <= 3; y++)
+            level.setBlock(glassLo.offset(x, y, z), Blocks.GLASS.defaultBlockState(), 2);
+        var player = NewFuelElevatorTests.player(level, "meltdown-unformed",
+                new net.minecraft.world.phys.Vec3(plant.min.getX() - 4, plant.min.getY() + 2, plant.min.getZ() + 4));
+        level.addNewPlayer(player);
+        try {
+            melt(reactor);
+            h.assertTrue(reactor.severeEffects().accidentInProgress(reactor.core()), "a melting core is not an accident in progress");
+            double cx = glassLo.getX() + 12.5, cy = glassLo.getY() + 1.5, cz = glassLo.getZ() + 12.5;
+            reactor.severeEffects().blasts().add(AccidentBlast.interior(level, cx, cy, cz, 50.0, 20.0, 4.0f, null));
+            player.removeAllEffects();
+
+            // Formed: the first tick starts the blast.
+            tick(reactor, 1);
+            int left = glassLeft(level, glassLo);
+            h.assertTrue(left > 0 && left < 2_500, "the first tick should have broken some but not all: " + left + " left");
+            h.assertTrue(!reactor.severeEffects().blasts().isEmpty(), "the blast finished in one tick");
+
+            // Mine one block of the shell.
+            BlockPos shell = plant.min.offset(WIDTH, 4, 4);
+            h.assertTrue(level.getBlockState(shell).is(BwrBlocks.REACTOR_VESSEL.get()), "fixture: no shell block at " + shell.toShortString());
+            level.destroyBlock(shell, false);
+            reactor.markStructureDirty();
+            tick(reactor, 1);
+            h.assertTrue(reactor.structure() == null && !reactor.isFormed(), "the vessel is still formed with a hole in the shell");
+            h.assertTrue(reactor.core() != null, "the core was discarded with the structure");
+
+            double clock = reactor.core().getElapsedSeconds();
+            int before = glassLeft(level, glassLo);
+            player.removeAllEffects();
+            tick(reactor, 45);
+            h.assertTrue(reactor.structure() == null, "the vessel re-formed on its own");
+            h.assertTrue(reactor.core().getElapsedSeconds() > clock, "the core froze with the structure");
+            h.assertTrue(glassLeft(level, glassLo) < before,
+                    "the queued blast stopped when the shell block was mined: " + before + " -> " + glassLeft(level, glassLo));
+            h.assertTrue(player.hasEffect(net.minecraft.world.effect.MobEffects.HUNGER) && player.hasEffect(net.minecraft.world.effect.MobEffects.WITHER),
+                    "contamination stopped dosing when the shell block was mined: " + player.getActiveEffects());
+            tick(reactor, 60);
+            h.assertTrue(reactor.severeEffects().blasts().isEmpty(), "the blast never finished with the vessel unformed");
+            h.succeed();
+        } finally {
+            level.removePlayerImmediately(player, net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+            level.removeBlock(reactor.getBlockPos(), false);
+        }
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 400)
+    public static void anUndamagedUnformedReactorStaysFrozenAsBefore(GameTestHelper h) throws Exception {
+        var plant = new Plant(h, new BlockPos(703_400, 190, 700_000), false, Blocks.AIR);
+        var level = plant.level;
+        var reactor = plant.reactor;
+        try {
+            tick(reactor, 2);
+            h.assertTrue(!reactor.severeEffects().accidentInProgress(reactor.core()), "a healthy core counts as an accident");
+            level.destroyBlock(plant.min.offset(WIDTH, 4, 4), false);
+            reactor.markStructureDirty();
+            tick(reactor, 1);
+            h.assertTrue(reactor.structure() == null, "the vessel is still formed with a hole in the shell");
+            double clock = reactor.core().getElapsedSeconds();
+            tick(reactor, 20);
+            h.assertTrue(reactor.core().getElapsedSeconds() == clock, "a healthy unformed reactor stepped: " + clock + " -> " + reactor.core().getElapsedSeconds());
+            h.succeed();
+        } finally {
+            level.removeBlock(reactor.getBlockPos(), false);
+        }
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwrblast", batch = "accidentblast", timeoutTicks = 400)
+    public static void theLowerHeadStillBreaksThePedestalWithTheVesselUnformed(GameTestHelper h) throws Exception {
+        var plant = new Plant(h, new BlockPos(703_800, 190, 700_000), false, Blocks.AIR);
+        var level = plant.level;
+        var reactor = plant.reactor;
+        int floorTop = plant.min.getY() - 5;
+        BlockPos floorLo = plant.min.offset(-6, -12, -6), floorHi = new BlockPos(plant.min.getX() + 14, floorTop, plant.min.getZ() + 14);
+        load(level, floorLo, floorHi);
+        for (BlockPos p : BlockPos.betweenClosed(floorLo, floorHi)) level.setBlock(p, Blocks.GRAY_CONCRETE.defaultBlockState(), 2);
+        try {
+            tick(reactor, 1); // remembers the vessel box while it is formed
+            level.destroyBlock(plant.min.offset(WIDTH, 4, 4), false);
+            reactor.markStructureDirty();
+            tick(reactor, 1);
+            h.assertTrue(reactor.structure() == null, "the vessel is still formed with a hole in the shell");
+            var accident = reactor.core().getSevereAccident();
+            double[] a = accident.toArray();
+            a[4] = 0.6;
+            a[7] = 1;
+            accident.fromArray(a);
+            reactor.severeEffects().lowerHeadFailed(reactor);
+            h.assertTrue(reactor.severeEffects().blasts().has(AccidentBlast.Kind.PEDESTAL), "no pedestal blast was queued with the vessel unformed");
+            reactor.severeEffects().blasts().runToCompletion(level, 200);
+            BlockPos under = new BlockPos(plant.min.getX() + 4, floorTop, plant.min.getZ() + 4);
+            h.assertTrue(level.getBlockState(under).isAir(), "the floor under the unformed vessel stands");
+            // and the box survives a save: it is not lost to a chunk unload
+            var saved = reactor.saveWithFullMetadata(level.registryAccess());
+            h.assertTrue(saved.contains("AccidentVesselMin") && saved.contains("AccidentVesselMax"), "the vessel box was not saved");
+            h.succeed();
+        } finally {
+            level.removeBlock(reactor.getBlockPos(), false);
+        }
+    }
+
     private static double sq(double v) {
         return v * v;
     }
