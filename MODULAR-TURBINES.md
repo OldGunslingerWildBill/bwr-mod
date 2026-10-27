@@ -117,11 +117,21 @@ command wins. Local turbine `setAdmission` and `setRunning` are removed.
 
 ## Models and references
 
-- Updated LP Blender scene: `art/models/power_turbines/lp_turbine.blend`
-- Original HP/generator scenes: `art/models/power_turbines/power_turbines.blend`
-- Blender authoring script: `art/models/power_turbines/build_models.py`
-- Resource exporter: `python tools-export-power-turbines.py`
+- Blender authoring script: `art/models/power_turbines/build_models.py`, headless:
+  `blender --background --factory-startup --python art/models/power_turbines/build_models.py`. It writes the HP, LP and
+  generator sources (`*.json`) and `art/models/power_turbines/power_turbines.blend` (the three modules and a train review scene).
+  `lp_turbine.blend` is the superseded first LP scene, kept for reference.
+- Resource exporter: `python tools-export-power-turbines.py` (cells, compact models, blockstates with the LP's `open` variants)
 - Reproducibility check: `python tools-export-power-turbines.py --check`
+- Review pictures without the game: `blender --background --factory-startup --python art/models/power_turbines/render_previews.py -- <dir>`;
+  in game: `:mod:runTurbineModelCheck -PbwrMainTurbineShots=<label>` (`MainTurbineShots`) and `-PbwrTurbineHallCheck`.
+- The HP and LP were remodelled in 2026-10 after large nuclear tandem-compound practice (one double-flow HP and double-flow LPs on
+  their condensers, half speed): the HP's horizontally split casing with its bolted joint flange, inlet chamber and four upper and four
+  lower steam leads, the exhaust nozzles at both ends into a crossaround header, bearing pedestals, couplings and lagging bands on a
+  foundation table; the LP's fabricated box exhaust hood with the crossover inlet and the atmospheric relief diaphragms on its roof,
+  stiffened end walls, bolted joint at exactly y = 3 (the crane-lifted hood is everything above), manways, outboard bearings, and an
+  inner casing lower half that the drawn blade sections sit in when the hood is off. Generic and brand-free; the generator is unchanged.
+  Before and after pictures: `art/turbine-remodel/`.
 - [Toshiba Steam Turbines and Generators catalogue](https://www.global.toshiba/content/dam/toshiba/jp/products-solutions/thermal/products-technical-services/generation-technologies/STGcatalogue2024_web.pdf):
   PDF page 6 shows TX-10 nuclear turbine casings and the multi-cylinder train;
   PDF page 13 shows the TX-NLCH generator exterior and cutaways. The catalogue's

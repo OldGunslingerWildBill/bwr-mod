@@ -44,8 +44,12 @@ public final class TurbineHallRenderers {
     private static final ResourceLocation TEXTURE = ResourceLocation.withDefaultNamespace("block/white_concrete");
     private static final float[] DRUM = {0.42f, 0.44f, 0.47f}, DISC = {0.55f, 0.57f, 0.60f}, BLADE = {0.78f, 0.80f, 0.83f},
             SHIELD = {0.90f, 0.86f, 0.62f}, RUST = {0.45f, 0.30f, 0.20f}, SADDLE = {0.85f, 0.65f, 0.10f}, FRAME = {0.30f, 0.32f, 0.35f};
-    /** Stage axial positions (from the section's middle, the last stage at +), disc radius, blade tip radius, blade count. */
-    private static final double[][] STAGES = {{-0.95, 0.85, 1.55, 28}, {0.05, 0.85, 1.90, 24}, {1.05, 0.85, 2.30, 20}};
+    /**
+     * Stage axial positions (from the section's middle, the last stage at +), disc radius, blade tip radius, blade count. A section sits
+     * 1.5 from the LP's middle, so its last-stage wheel is 2.5 from it, where {@link dev.bwr.mod.power.TurbineMissile#wheel} throws from;
+     * the LP model's inner casing (art/models/power_turbines/build_models.py) clears the first two stages, the last runs in the open hood.
+     */
+    private static final double[][] STAGES = {{-0.95, 0.85, 1.55, 28}, {0.05, 0.85, 1.90, 24}, {1.00, 0.85, 2.30, 20}};
     private static final double HALF_LENGTH = 1.5, DRUM_R = 0.55;
 
     private record SectionKey(boolean damaged) {
