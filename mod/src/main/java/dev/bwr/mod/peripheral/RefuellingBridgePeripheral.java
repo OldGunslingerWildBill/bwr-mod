@@ -156,7 +156,7 @@ public class RefuellingBridgePeripheral implements IPeripheral {
                 cell.put("cell", index * 4 + k);
                 cell.put("occupied", !stack.isEmpty());
                 if (!stack.isEmpty()) {
-                    cell.put("decayHeatKW", dev.bwr.mod.fuel.SpentFuelHeat.decayWatts(stack, now) / 1000.0);
+                    cell.put("decayHeatKW", pool.cellCurve(rack, k).watts(now) / 1000.0);
                 }
                 cells.add(cell);
             }

@@ -122,6 +122,7 @@ public class RefuellingMenu extends BwrMenu {
     /** One entry per rack of the bridge's pool: occupancy bits (cell k = bit k) and decay kW of each cell. */
     public java.util.List<BridgeRack> bridgeRacks = new java.util.ArrayList<>();
 
+    /** One rack of the bridge's pool. {@code pos} is null on the client: the snapshot names racks by index ({@link #writePoolCells}). */
     public record BridgeRack(BlockPos pos, int mask, float[] decayKw) {
     }
 
@@ -263,11 +264,19 @@ public class RefuellingMenu extends BwrMenu {
         }
         buf.writeDouble(BridgeSite.poolSurfaceY(pool) - (pool.layout().min().getY() + 1 + dev.bwr.mod.spentfuel.SpentFuelPoolLayout.RACK_HEIGHT));
         buf.writeDouble(bridge.carriedCoverM());
+        writePoolCells(buf, pool);
+    }
+
+    /**
+     * The racks of the bridge's pool, in the survey's order (the order a command's cell index counts in): for each, one byte of occupancy bits and, for each assembly, its decay
+     * heat in tenths of a kilowatt (a varint; the screen shows one decimal), as the pool last worked it out. No positions: a
+     * command names a cell by its index and the server looks the rack up. A full 2,048-rack pool of fresh fuel is about
+     * 18 kB, beside a core map of up to 15 kB, inside the 64 kB a snapshot may carry.
+     */
+    public static void writePoolCells(FriendlyByteBuf buf, SpentFuelPoolBlockEntity pool) {
         var racks = pool.layout().racks();
-        long now = level().getGameTime();
         buf.writeVarInt(racks.size());
         for (BlockPos rack : racks) {
-            buf.writeBlockPos(rack);
             int mask = 0;
             for (int k = 0; k < 4; k++) {
                 if (!pool.stackAt(rack, k).isEmpty()) {
@@ -277,7 +286,7 @@ public class RefuellingMenu extends BwrMenu {
             buf.writeByte(mask);
             for (int k = 0; k < 4; k++) {
                 if ((mask & (1 << k)) != 0) {
-                    buf.writeFloat((float) (dev.bwr.mod.fuel.SpentFuelHeat.decayWatts(pool.stackAt(rack, k), now) / 1000.0));
+                    buf.writeVarInt((int) Math.max(0L, Math.min(Integer.MAX_VALUE, Math.round(pool.cellDecayW(rack, k) / 100.0))));
                 }
             }
         }
@@ -329,17 +338,16 @@ public class RefuellingMenu extends BwrMenu {
         }
         bridgePoolCoverM = buf.readDouble();
         bridgeCarriedCoverM = buf.readDouble();
-        int racks = buf.readVarInt();
-        for (int i = 0; i < racks && i < 64; i++) {
-            BlockPos at = buf.readBlockPos();
+        int racks = Math.min(buf.readVarInt(), dev.bwr.mod.spentfuel.SpentFuelPoolLayout.MAX_RACKS);
+        for (int i = 0; i < racks; i++) {
             int mask = buf.readByte();
             float[] kw = new float[4];
             for (int k = 0; k < 4; k++) {
                 if ((mask & (1 << k)) != 0) {
-                    kw[k] = buf.readFloat();
+                    kw[k] = buf.readVarInt() / 10.0f;
                 }
             }
-            bridgeRacks.add(new BridgeRack(at, mask, kw));
+            bridgeRacks.add(new BridgeRack(null, mask, kw));
         }
     }
 

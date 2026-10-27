@@ -92,12 +92,12 @@ public class NewFuelElevatorPeripheral implements IPeripheral {
         if (link == null) {
             return result(be.raise(null));
         }
-        var racks = link.pool().view().racks();
+        var pool = link.pool();
         int rack = cell / 4;
-        if (cell < 0 || rack >= racks.size()) {
-            return result(be.raise(new SpentFuelPoolBlockEntity.CellRef(link.pool().getBlockPos(), 0)));
+        if (cell < 0 || rack >= pool.rackCount()) {
+            return result(be.raise(new SpentFuelPoolBlockEntity.CellRef(pool.getBlockPos(), 0)));
         }
-        return result(be.raise(new SpentFuelPoolBlockEntity.CellRef(racks.get(rack).pos(), cell % 4)));
+        return result(be.raise(new SpentFuelPoolBlockEntity.CellRef(pool.rackPos(rack), cell % 4)));
     }
 
     /** Tries again to lower an assembly that was blocked in the hatch. */

@@ -114,4 +114,28 @@ public final class AssemblyDecayHeatTest {
                 "a limit below what the slowest group leaves is never reached");
         Check.note("45 GWd/t assembly cools below 50 kW after %.0f min", AssemblyDecayHeat.secondsToCoolBelow(burnup, 180.0, 5.0e4) / 60.0);
     }
+
+    /**
+     * The pool's per-assembly curve (worked out once, evaluated every second) gives the very same number as the plain formula,
+     * to the last bit, for every burnup, mass and age a pool meets, including the degenerate ones.
+     */
+    public static void test07_aPrecomputedCurveIsBitForBitThePlainFormula() {
+        double[] burnups = {0.0, -5.0, 1.0, 10.0, 950.0, 12_345.6, 45_000.0, 60_000.0, 1.0e9, Double.NaN};
+        double[] masses = {0.0, -1.0, 1.0, 150.0, 180.0, 212.7, Double.POSITIVE_INFINITY};
+        double[] ages = {-50.0, 0.0, 0.05, 1.0, 59.95, 3600.0, 86_400.0, 2.6e6, 3.156e7, AssemblyDecayHeat.LONG_COOLED_SECONDS, 1.0e10, Double.NaN};
+        int compared = 0;
+        for (double burnup : burnups) {
+            for (double mass : masses) {
+                AssemblyDecayHeat.Curve curve = new AssemblyDecayHeat.Curve(burnup, mass);
+                for (double age : ages) {
+                    double plain = AssemblyDecayHeat.powerWatts(burnup, mass, age);
+                    double fast = curve.powerWatts(age);
+                    Check.isTrue(Double.doubleToLongBits(plain) == Double.doubleToLongBits(fast),
+                            "burnup %s, %s kg, %s s: the curve gives %s W, the formula %s W", burnup, mass, age, fast, plain);
+                    compared++;
+                }
+            }
+        }
+        Check.note("%d burnup, mass and age combinations agree to the bit", compared);
+    }
 }

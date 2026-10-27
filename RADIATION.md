@@ -216,6 +216,10 @@ thickness (`BlockShielding.trace(...).leadEquivalentCm()` has it for code). Cost
 owner's PC with other games running: a 25 x 25 pool with 46 loaded racks (184 assemblies) under a concrete floor, 40 sample points, **310 to 490 us a sample cold
 (46 marches, 7 cells read each) and 35 to 107 us warm** (all cache hits) over two runs; 400 free point sources behind lead walls, one meter, 3.3 to 6.4 ms
 cold and 0.09 to 0.32 ms warm.
+A pool with more than 64 racks holding fuel (up to 2,048) is not marched rack by rack: its far racks are lumped by region
+(`SpentFuelPoolBlockEntity.forEachDoseSource`, a quadtree over the floor, a region taken as one source at its heat-weighted centre once
+its side is under 0.3 of its distance). Over a full 2,048-rack pool a reading uses 8 to 270 sources, is within about 1 % of the
+rack-by-rack sum, and costs about 0.5 ms cold and 0.1 ms warm (`SpentFuelPoolScaleTests`, `POOL SCALE` in the log).
 A held meter samples 4 times a second.
 
 ## The Survey Meter

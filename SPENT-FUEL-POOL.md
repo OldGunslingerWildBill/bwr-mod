@@ -8,13 +8,14 @@ itself.
 
 ## Building one
 
-1. A floor and four walls of **Spent Fuel Pool Lining**, up to the rim. Outside 5 to 25 blocks wide and deep and **8 to 16
+1. A floor and four walls of **Spent Fuel Pool Lining**, up to the rim. Outside 5 to 64 blocks wide and deep and **8 to 24
    high**. It is open at the top (a pool, not a tank). The minimum height is the racks and the shielding water over them:
    a rack is **4 m** tall and the pool must be deep enough for **3 m of water over the rack tops** (an interior at least
    7 m deep, 8 high outside). The real figure is about 7 m of water over the fuel; 3 is that scaled to the game's block height.
    This is a shape rule: a pool forms empty, and how much water is in it is the player's business (the panel shows the metres over the fuel).
 2. One **Spent Fuel Pool Controller** in the shell. It is the pool's only ticker.
-3. **Spent Fuel Racks** on the floor inside, up to 48. A rack is **one single tier, 4 m tall** (assemblies are about 4.5 m and stand
+3. **Spent Fuel Racks** on the floor inside, up to 2,048 (8,192 assemblies: a real plant's pool holds thousands; a
+   2,048-rack pool needs at least 2,048 m2 of floor, e.g. 48 x 48 outside, and the largest, 64 x 64, has room for 3,844). A rack is **one single tier, 4 m tall** (assemblies are about 4.5 m and stand
    upright): a column of **exactly four** Spent Fuel Rack blocks standing on the pool floor, holding four assemblies. A rack never
    stands on another rack, and a column that is three or five blocks tall, or does not start on the floor, stops the pool forming
    with the reason ("A rack is one tier of exactly 4 blocks standing on the pool floor, never on another rack"). The rack top is
@@ -28,7 +29,8 @@ itself.
 | Cooling Outlet | cyan | warmed cooling water out of the cooling train, pushed into whatever accepts it |
 
 5. Nothing else in the interior (air, racks and vanilla water sources only). The pool surveys itself when a block of it
-   is placed or broken, and every five seconds while it is not formed; sneak-click the controller for the reason it is
+   is placed or broken, and every five seconds while it is not formed (once the block that stopped the last survey has
+   changed); sneak-click the controller for the reason it is
    not. Only the controller ticks: the lining, racks and ports are plain blocks, found through a hash map the
    controller fills when it surveys.
 
@@ -244,7 +246,7 @@ The item tooltip shows an assembly's decay heat and cooling time once it has a s
 
 The panel (right-click the controller or any port) shows: water level, water above the fuel, fill, temperature, evaporation and boil-off, assemblies and
 cells, total heat and the part heating the water and the part in air, time to boil and to uncover, the cooling train (pump state, heat
-removed, water held, power), and one line per rack (assemblies, decay heat, hottest fuel; amber when uncovered or failed, red when burning).
+removed, water held, power), and the racks eight lines at a time, paged with `<<` `<` `>` `>>` (assemblies, decay heat, hottest fuel; amber when uncovered or failed, red when burning).
 The only control is the pump switch.
 
 CC:Tweaked peripheral `bwr_spent_fuel_pool` (every method on the server thread):
@@ -253,8 +255,8 @@ CC:Tweaked peripheral `bwr_spent_fuel_pool` (every method on the server thread):
 |---|---|
 | `isFormed()` | boolean |
 | `getStatus()` | `waterKg`, `capacityKg`, `levelM`, `levelFraction`, `temperatureC`, `waterAboveFuelM`, `highestFuelTopM`, `assemblies`, `cells`, `racks`, `decayHeatKW`, `coveredDecayHeatKW`, `uncoveredDecayHeatKW`, `evaporationKgPerS`, `boilOffKgPerS`, `passiveLossKW`, `coolingKW`, `secondsToBoil`, `secondsToUncover` (-1 for never), `boiling`, `fuelUncovered`, `coolingEnabled`, `coolingRunning`, `energyFE`, the cooler's cold and warm water, `damagedAssemblies`, `burningAssemblies`, `releaseHazard`; an unformed pool gives `formed = false` and `problem` |
-| `getRacks()` | one table per rack: position, `topM`, `assemblies`, `decayHeatKW`, `hottestFuelC`, `uncovered`, `damaged`, `burning` |
-| `getAssemblies()` | one table per stored assembly: rack, cell, fuel, burnup, `decayHeatKW`, `coolingSeconds`, `dischargeRecorded`, `secondsUntilReprocessable`, `fuelC`, `covered`, `damaged`, `burning` |
+| `getRacks([first, count])` | one table per rack: `index`, position, `topM`, `assemblies`, `decayHeatKW`, `hottestFuelC`, `uncovered`, `damaged`, `burning`; every rack, or racks `first` (from 1) to `first + count - 1` |
+| `getAssemblies([first, count])` | one table per stored assembly: rack, cell, fuel, burnup, `decayHeatKW`, `coolingSeconds`, `dischargeRecorded`, `secondsUntilReprocessable`, `fuelC`, `covered`, `damaged`, `burning`; every assembly, or those in racks `first` to `first + count - 1` |
 | `setCooling(bool)`, `getCooling()` | the pump switch |
 
 ```lua
@@ -305,6 +307,21 @@ holds and no cooling does not, uncovered fuel heats bursts and burns and is quen
 through saves and the pool, the plant refusing hot fuel and starting once it has cooled, items and water connections and breakage, save and reload (and old
 saves), and the computer face; `NewFuelElevatorTests` (the elevator: lowering into the first free cell, the real scheduler with its two ticks, a right-click, a hopper, the refusals, raising, the dose along the trip, a save and reload, the old rack and controller paths, the computer face) and `ImmersionDoseTests` (diver and surface swimmer, effects and dose with no meter, creative exempt, the flooded well, readings above the water unchanged). Client check: `:mod:runTurbineModelCheck -PbwrSpentFuelPoolCheck` (pictures in `spent-fuel-pool-check/`), and the screens in
 `-PbwrGuiScreenCheck`.
+
+## Scale
+
+A pool holds up to 2,048 racks (8,192 assemblies) in a shell up to 64 x 64 x 24. What that costs, measured by
+`SpentFuelPoolScaleTests` on a full 2,048-rack pool with the cooling train running:
+
+| | |
+|---|---|
+| Tick | 0.10 ms on average, 0.6 ms on the step tick (decay curves kept per assembly, next step's heat worked out a twentieth of the racks a tick, the step's numbers exactly the plain formula's) |
+| Survey of the largest pool | about 5 ms (chunk sections read directly, never a chunk loaded); only on a change of a pool block, and while unformed every 5 s once the block that stopped it has changed |
+| Client picture | 4.7 kB: a bitmap of the floor and four bits of glow a cell |
+| Panel snapshot | under 0.5 kB: the pool's numbers and one page of 8 rack lines |
+| Bridge console | 13.5 kB for the pool's cells |
+| Dose reading | 0.5 ms cold, 0.1 ms warm; far racks lumped by region (quadtree, opening 0.3) above 64 racks with fuel, within about 1 % of rack by rack |
+| Save | 2.5 ms (each assembly's saved form kept, written a few a tick) |
 
 ## Pictures (1920 x 1080, `art/spent-fuel-pool/`)
 

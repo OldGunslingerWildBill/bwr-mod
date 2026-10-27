@@ -97,8 +97,56 @@ public final class AssemblyDecayHeat {
         if (!(heavyMetalKg > 0.0) || !Double.isFinite(heavyMetalKg)) {
             return 0.0;
         }
-        double operatingPowerW = SPECIFIC_POWER_MW_PER_TONNE * 1.0e6 * heavyMetalKg / 1000.0;
-        return operatingPowerW * fractionOfOperatingPower(operatingSeconds(burnupMwdPerTonne), coolingSeconds);
+        return operatingPowerWatts(heavyMetalKg) * fractionOfOperatingPower(operatingSeconds(burnupMwdPerTonne), coolingSeconds);
+    }
+
+    /** The power the assembly is taken to have run at, W: the core-average specific power times its heavy metal. */
+    private static double operatingPowerWatts(double heavyMetalKg) {
+        return SPECIFIC_POWER_MW_PER_TONNE * 1.0e6 * heavyMetalKg / 1000.0;
+    }
+
+    /**
+     * One assembly's decay curve with the part that depends only on its history worked out once: the filled fraction of each
+     * group, {@code a_i (1 - exp(-lambda_i T))}. {@link #powerWatts(double)} then costs one exponential per group instead of
+     * two, and returns exactly (to the last bit) what {@link AssemblyDecayHeat#powerWatts(double, double, double)} returns for
+     * the same burnup, heavy metal and age: the products and the sum are done in the same order. A spent fuel pool keeps one
+     * per stored assembly so that thousands of them can be re-evaluated every second.
+     */
+    public static final class Curve {
+        private final double[] filled;
+        private final double operatingPowerW;
+
+        public Curve(double burnupMwdPerTonne, double heavyMetalKg) {
+            if (!(heavyMetalKg > 0.0) || !Double.isFinite(heavyMetalKg)) {
+                filled = null;
+                operatingPowerW = 0.0;
+                return;
+            }
+            operatingPowerW = operatingPowerWatts(heavyMetalKg);
+            double operating = operatingSeconds(burnupMwdPerTonne);
+            if (!(operating > 0.0) || !Double.isFinite(operating)) {
+                filled = null;
+                return;
+            }
+            filled = new double[DecayHeat.GROUP_COUNT];
+            for (int i = 0; i < DecayHeat.GROUP_COUNT; i++) {
+                filled[i] = DecayHeat.AMPLITUDE_FRACTION_OF_RATED[i]
+                        * (1.0 - Math.exp(-DecayHeat.DECAY_CONSTANT_PER_SECOND[i] * operating));
+            }
+        }
+
+        /** Decay power after {@code coolingSeconds} of cooling, W; negative is taken as zero. */
+        public double powerWatts(double coolingSeconds) {
+            if (filled == null) {
+                return operatingPowerW * 0.0;
+            }
+            double t = (coolingSeconds > 0.0 && Double.isFinite(coolingSeconds)) ? coolingSeconds : 0.0;
+            double sum = 0.0;
+            for (int i = 0; i < DecayHeat.GROUP_COUNT; i++) {
+                sum += filled[i] * Math.exp(-DecayHeat.DECAY_CONSTANT_PER_SECOND[i] * t);
+            }
+            return operatingPowerW * sum;
+        }
     }
 
     /**

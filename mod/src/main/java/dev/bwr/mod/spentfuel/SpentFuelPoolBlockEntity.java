@@ -52,10 +52,16 @@ import java.util.Set;
  * structure. Racks, walls and ports are plain blocks; the racks' contents live here.
  *
  * <h2>Cost</h2>
- * Nothing is done on an idle tick except a counter. Once a second a formed pool computes the decay power of each
- * stored assembly (eighteen exponentials each), steps its heat balance and, if the cooling pump is on and powered,
- * the exchanger. A structure survey (a few thousand block reads) happens when a block of the pool is placed or
- * broken near it, and once every five seconds while the pool is not formed.
+ * A pool holds up to {@value SpentFuelPoolLayout#MAX_RACKS} racks, 8,192 assemblies. Each stored assembly keeps its decay
+ * curve with the history part worked out once ({@link SpentFuelHeat.Curve}: eighteen exponentials an evaluation, the same
+ * number to the last bit as the plain formula). The decay power every assembly will have at the next one-second step is
+ * worked out a twentieth of the racks per tick ahead of it, so no tick does all of them; the step itself only sums them,
+ * steps the heat balance (one pass over the cells) and, if the cooling pump is on and powered, the exchanger. A rack whose
+ * contents changed since its share was worked out is worked out again at the step, so the step's numbers are exactly
+ * those of computing everything at that tick. A structure survey (up to about 100,000 block reads for the largest pool,
+ * straight from the chunk sections) happens when a block of the pool is placed or broken near it, and, while the pool is
+ * not formed, every five seconds once the block that stopped the last survey has changed. The client gets the racks as a
+ * bitmap of the floor and the glow as four bits a cell (under 5 kB for the largest pool), and only when the picture changed.
  *
  * <h2>No automatic actions</h2>
  * Cooling runs only while the player (or their computer) has switched the pump on; makeup water arrives only through
@@ -83,6 +89,44 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         double topM = 1.0;
         final ItemStack[] stacks = {ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY};
         SpentFuelPool.Slot[] slots = new SpentFuelPool.Slot[SpentFuelPool.ASSEMBLIES_PER_RACK];
+        /** Each cell's decay curve, made from its stack the first time it is needed and dropped when the stack changes. */
+        private final SpentFuelHeat.Curve[] curves = new SpentFuelHeat.Curve[SpentFuelPool.ASSEMBLIES_PER_RACK];
+        /** Each cell's item as last saved: the stack does not change while it is in the rack, so it is written once. */
+        private final CompoundTag[] savedItems = new CompoundTag[SpentFuelPool.ASSEMBLIES_PER_RACK];
+        /** Decay power and release weight of each cell at game time {@link #nextAt}, worked out ahead of that step. */
+        final double[] nextW = new double[SpentFuelPool.ASSEMBLIES_PER_RACK];
+        final double[] nextRelease = new double[SpentFuelPool.ASSEMBLIES_PER_RACK];
+        long nextAt = Long.MIN_VALUE;
+        /** The slots' decay power has been set since the rack was loaded (by a step or an insertion). */
+        boolean heated;
+        /** Index in the pool's rack list. */
+        int index;
+
+        /** Puts {@code stack} in cell {@code k} (or empties it): its curve and saved form are made again when needed. */
+        void set(int k, ItemStack stack) {
+            stacks[k] = stack;
+            curves[k] = null;
+            savedItems[k] = null;
+            nextAt = Long.MIN_VALUE;
+        }
+
+        SpentFuelHeat.Curve curve(int k) {
+            SpentFuelHeat.Curve c = curves[k];
+            if (c == null) {
+                c = new SpentFuelHeat.Curve(stacks[k]);
+                curves[k] = c;
+            }
+            return c;
+        }
+
+        CompoundTag savedItem(int k, HolderLookup.Provider registries) {
+            CompoundTag t = savedItems[k];
+            if (t == null) {
+                t = (CompoundTag) stacks[k].save(registries);
+                savedItems[k] = t;
+            }
+            return t;
+        }
 
         Rack(BlockPos pos, double topM) {
             this.pos = pos.immutable();
@@ -134,6 +178,11 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
                            int uncovered, int damaged, int burning) {
     }
 
+    /**
+     * The pool's numbers. {@code rackCount} is the number of racks; {@code racks} holds a line for each of them from
+     * {@link #view()} and is empty from {@link #summary()} (a panel or a computer asks for the racks it shows,
+     * {@link #rackViews}).
+     */
     public record PoolView(boolean formed, double massKg, double capacityKg, double levelM, double temperatureC,
                            double waterAboveFuelM, double highestRackTopM, int assemblies, int cells,
                            double decayW, double coveredDecayW, double uncoveredDecayW,
@@ -141,7 +190,7 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
                            double secondsToBoil, double secondsToUncover,
                            boolean coolingEnabled, boolean coolingRunning, int energyFE,
                            double coolerColdKg, double coolerHotKg, double coolerColdC, double coolerHotC,
-                           double hazard, int damaged, int burning, List<RackView> racks) {
+                           double hazard, int damaged, int burning, int rackCount, List<RackView> racks) {
     }
 
     private final SpentFuelPool pool = new SpentFuelPool();
@@ -150,6 +199,8 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
     private final List<Rack> rackList = new ArrayList<>();
     private SpentFuelPool.Slot[] flat = new SpentFuelPool.Slot[0];
     private final Set<BlockPos> owned = new HashSet<>();
+    /** The racks of {@link #layout}, as a set. */
+    private final Set<BlockPos> surveyedRacks = new HashSet<>();
     private final List<BlockPos> coolingOutPorts = new ArrayList<>();
 
     private SpentFuelPoolLayout.Layout layout;
@@ -167,6 +218,11 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
     private int sinceStep;
     private double totalDecayW;
     private boolean registered;
+    /** The last survey that failed at one block, while the pool is not formed: a retry first looks at that block. */
+    private SpentFuelPoolLayout.Layout lastFailure;
+    /** Surveys made, and the game time of the last one-second step: for the tests and tools. */
+    private int surveys;
+    private long lastStepAt = Long.MIN_VALUE;
 
     // client-side picture, filled from the update tag
     public boolean visFormed;
@@ -175,7 +231,14 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
     public int visLevelQ;
     public long[] visRacks = new long[0];
     public byte[] visGlow = new byte[0];
-    private int visualHash = Integer.MIN_VALUE;
+    /** The glow strength (0 to 15) of each cell, rack by rack in {@link #rackList} order; kept up to date on the server. */
+    private byte[] glow = new byte[0];
+    private boolean glowChanged;
+    private int sentLevelQ = Integer.MIN_VALUE;
+    private boolean sentFormed;
+    /** Bumped whenever a rack's decay heat or contents change: the radiation picture is rebuilt from it when asked. */
+    private int heatVersion;
+    private DoseSources doseSources;
     /** The picture changed and the client has not been told yet; it is sent from the ticker, where the chunk is known to be ticking. */
     private boolean visualPending;
 
@@ -286,16 +349,34 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
     }
 
     private void tick() {
-        if (!(level instanceof ServerLevel serverLevel)) {
-            return;
+        if (level instanceof ServerLevel serverLevel) {
+            tick(serverLevel, serverLevel.getGameTime());
         }
-        long now = serverLevel.getGameTime();
+    }
+
+    /** Test hook: one tick of the controller as if the game time were {@code now} (the cost tests time it). */
+    public void tickForTest(long now) {
+        if (level instanceof ServerLevel serverLevel) {
+            tick(serverLevel, now);
+        }
+    }
+
+    private void tick(ServerLevel serverLevel, long now) {
         if (!registered) {
             SpentFuelPoolRegistry.register(this);
             registered = true;
         }
         if (structureDirty ? now >= dirtyAt + SCAN_DEBOUNCE_TICKS : (!formed && now >= nextScan)) {
-            scan();
+            if (!structureDirty && SpentFuelPoolLayout.stillBlocked(serverLevel, lastFailure)) {
+                // the block that stopped the last survey is still there, so the pool cannot form yet: no survey
+                nextScan = now + SCAN_RETRY_TICKS;
+            } else {
+                scan();
+            }
+        }
+        if (formed) {
+            prepareHeat(now);
+            prepareSave(serverLevel);
         }
         if (formed && ++sinceStep >= STEP_TICKS) {
             sinceStep = 0;
@@ -326,10 +407,12 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         }
         structureDirty = false;
         long now = level.getGameTime();
+        surveys++;
         SpentFuelPoolLayout.Layout found = SpentFuelPoolLayout.inspect(level, worldPosition);
         if (!found.ok()) {
             nextScan = now + SCAN_RETRY_TICKS;
             problem = found.problem();
+            lastFailure = found;
             layout = null;
             if (formed) {
                 formed = false;
@@ -341,6 +424,9 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
             return;
         }
         layout = found;
+        surveyedRacks.clear();
+        surveyedRacks.addAll(found.racks());
+        lastFailure = null;
         problem = null;
         pool.configure(found.footprintCells(), found.heightCells());
         if (!Double.isNaN(pendingMass)) {
@@ -382,8 +468,16 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         rackList.addAll(racks.values());
         flat = new SpentFuelPool.Slot[rackList.size() * SpentFuelPool.ASSEMBLIES_PER_RACK];
         for (int r = 0; r < rackList.size(); r++) {
+            rackList.get(r).index = r;
             System.arraycopy(rackList.get(r).slots, 0, flat, r * SpentFuelPool.ASSEMBLIES_PER_RACK, SpentFuelPool.ASSEMBLIES_PER_RACK);
         }
+        glow = new byte[flat.length];
+        for (Rack rack : rackList) {
+            for (int k = 0; k < SpentFuelPool.ASSEMBLIES_PER_RACK; k++) {
+                glow[rack.index * SpentFuelPool.ASSEMBLIES_PER_RACK + k] = (byte) glowOf(rack, k);
+            }
+        }
+        heatVersion++;
     }
 
     private List<ItemStack> dropAll(Rack rack, BlockPos at) {
@@ -392,10 +486,11 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
             if (!rack.stacks[k].isEmpty()) {
                 dropped.add(rack.stacks[k].copy());
                 Containers.dropItemStack(level, at.getX() + 0.5, at.getY() + 0.5, at.getZ() + 0.5, rack.stacks[k]);
-                rack.stacks[k] = ItemStack.EMPTY;
+                rack.set(k, ItemStack.EMPTY);
                 rack.slots[k].occupied = false;
             }
         }
+        heatVersion++;
         return dropped;
     }
 
@@ -456,7 +551,7 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
     // ---------------------------------------------------------------
 
     private void place(Rack rack, int cell, ItemStack one) {
-        rack.stacks[cell] = one;
+        rack.set(cell, one);
         SpentFuelPool.Slot slot = rack.slots[cell];
         slot.occupied = true;
         boolean covered = pool.massKg() > 0.0 && pool.levelM() >= rack.topM - 1.0e-9;
@@ -465,20 +560,25 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         slot.ignited = false;
         slot.zirconiumLeft = 1.0;
         slot.covered = covered;
-        slot.decayW = level == null ? 0.0 : SpentFuelHeat.decayWatts(one, level.getGameTime());
+        slot.decayW = level == null ? 0.0 : rack.curve(cell).watts(level.getGameTime());
+        rack.heated = true;
+        heatVersion++;
         syncRackState(rack);
         setChanged();
+        updateGlow(rack, cell);
         markVisual(false);
     }
 
     private ItemStack take(Rack rack, int cell) {
         ItemStack out = rack.stacks[cell];
-        rack.stacks[cell] = ItemStack.EMPTY;
+        rack.set(cell, ItemStack.EMPTY);
         SpentFuelPool.Slot slot = rack.slots[cell];
         slot.occupied = false;
         slot.decayW = 0.0;
+        heatVersion++;
         syncRackState(rack);
         setChanged();
+        updateGlow(rack, cell);
         markVisual(false);
         return out;
     }
@@ -516,8 +616,11 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
             return false;
         }
         for (Rack rack : rackList) {
-            if (insertAt(rack.pos, -1, one)) {
-                return true;
+            for (int k = 0; k < rack.stacks.length; k++) {
+                if (rack.stacks[k].isEmpty()) {
+                    place(rack, k, one.copyWithCount(1));
+                    return true;
+                }
             }
         }
         return false;
@@ -537,7 +640,7 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         double bestWatts = Double.MAX_VALUE;
         for (int k = 0; k < rack.stacks.length; k++) {
             if (!rack.stacks[k].isEmpty()) {
-                double watts = SpentFuelHeat.decayWatts(rack.stacks[k], now);
+                double watts = rack.curve(k).watts(now);
                 if (watts < bestWatts) {
                     bestWatts = watts;
                     best = k;
@@ -554,11 +657,12 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
             for (int k = 0; k < rack.stacks.length; k++) {
                 if (!rack.stacks[k].isEmpty()) {
                     drops.add(rack.stacks[k]);
-                    rack.stacks[k] = ItemStack.EMPTY;
+                    rack.set(k, ItemStack.EMPTY);
                     rack.slots[k].occupied = false;
                 }
             }
         }
+        heatVersion++;
         for (Rack rack : racks.values()) {
             syncRackState(rack);
         }
@@ -601,7 +705,11 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         return formed ? cellCount() - assemblyCount() : 0;
     }
 
-    /** The cell of the assembly that has cooled longest (the least decay heat), or null when the pool holds none. */
+    /**
+     * The cell of the assembly that has cooled longest (the least decay heat), or null when the pool holds none. Ranked by the
+     * decay heat the pool refreshes every second (an assembly put in since then by its heat when it went in): a panel asks
+     * this several times a second, and working out 8,192 curves each time would cost more than a millisecond.
+     */
     public CellRef coolestCell() {
         if (!formed) {
             return null;
@@ -612,7 +720,7 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         for (Rack rack : rackList) {
             for (int k = 0; k < rack.stacks.length; k++) {
                 if (!rack.stacks[k].isEmpty()) {
-                    double watts = SpentFuelHeat.decayWatts(rack.stacks[k], now);
+                    double watts = rack.heated ? rack.slots[k].decayW : rack.curve(k).watts(now);
                     if (watts < bestWatts) {
                         bestWatts = watts;
                         best = new CellRef(rack.pos, k);
@@ -633,6 +741,28 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
     public SpentFuelPool.Slot slotAt(BlockPos pos, int cell) {
         Rack rack = racks.get(pos);
         return rack == null || cell < 0 || cell >= rack.slots.length ? null : rack.slots[cell];
+    }
+
+    /**
+     * The kept decay curve of the assembly in a cell (null if the cell is empty): {@link SpentFuelHeat.Curve#watts} is exactly
+     * {@link SpentFuelHeat#decayWatts} of the stack, without reading the item again. For computers and panels that list
+     * thousands of assemblies.
+     */
+    public SpentFuelHeat.Curve cellCurve(BlockPos pos, int cell) {
+        Rack rack = racks.get(pos);
+        return rack == null || cell < 0 || cell >= rack.stacks.length || rack.stacks[cell].isEmpty() ? null : rack.curve(cell);
+    }
+
+    /**
+     * The decay power of the assembly in a cell as the pool last worked it out (at its one-second step, or when the assembly
+     * went in), W; 0 for an empty cell. For panels refreshed several times a second over thousands of cells.
+     */
+    public double cellDecayW(BlockPos pos, int cell) {
+        Rack rack = racks.get(pos);
+        if (rack == null || cell < 0 || cell >= rack.stacks.length || rack.stacks[cell].isEmpty()) {
+            return 0.0;
+        }
+        return rack.heated ? rack.slots[cell].decayW : rack.curve(cell).watts(level == null ? 0L : level.getGameTime());
     }
 
     /** The rack's cells as lines for a chat report. */
@@ -942,23 +1072,83 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         }
     }
 
+    /**
+     * Works out, for this tick's twentieth of the racks, the decay power each assembly will have at the next step (the tick
+     * on which {@link #sinceStep} reaches {@link #STEP_TICKS}). Nothing the pool shows or does changes here: the step takes
+     * these numbers over only if they were made for its own game time and the rack has not changed since.
+     */
+    private void prepareHeat(long now) {
+        int n = rackList.size();
+        int part = sinceStep;
+        if (n == 0 || part < 0 || part >= STEP_TICKS) {
+            return;
+        }
+        long stepAt = now + (STEP_TICKS - 1 - part);
+        int to = (int) ((long) (part + 1) * n / STEP_TICKS);
+        for (int r = (int) ((long) part * n / STEP_TICKS); r < to; r++) {
+            Rack rack = rackList.get(r);
+            if (rack.nextAt == stepAt) {
+                continue;
+            }
+            for (int k = 0; k < rack.stacks.length; k++) {
+                if (!rack.stacks[k].isEmpty()) {
+                    SpentFuelHeat.Curve curve = rack.curve(k);
+                    rack.nextW[k] = curve.watts(stepAt);
+                    rack.nextRelease[k] = Math.min(1.0, curve.burnupMwdPerTonne / 10_000.0);
+                }
+            }
+            rack.nextAt = stepAt;
+        }
+    }
+
+    /** Racks looked at per tick for an assembly whose saved form is not written yet. */
+    private static final int SAVE_PREPARE_RACKS = 2;
+    private int saveCursor;
+
+    /**
+     * Writes the saved form of a few stored assemblies a tick ({@link Rack#savedItem}), so the first save after a load or a big
+     * delivery does not encode 8,192 items at once (about 80 ms); a save then only copies references. Each stack is written once.
+     */
+    private void prepareSave(ServerLevel l) {
+        int n = rackList.size();
+        for (int i = 0; i < SAVE_PREPARE_RACKS && n > 0; i++) {
+            saveCursor = saveCursor >= n - 1 ? 0 : saveCursor + 1;
+            Rack rack = rackList.get(saveCursor);
+            for (int k = 0; k < rack.stacks.length; k++) {
+                if (!rack.stacks[k].isEmpty()) {
+                    rack.savedItem(k, l.registryAccess());
+                }
+            }
+        }
+    }
+
     /** One second of physics at game time {@code now}. */
     private void step(ServerLevel l, long now) {
+        lastStepAt = now;
         double total = 0.0;
         for (Rack rack : rackList) {
+            boolean ready = rack.nextAt == now;
             for (int k = 0; k < rack.stacks.length; k++) {
                 SpentFuelPool.Slot slot = rack.slots[k];
                 ItemStack stack = rack.stacks[k];
                 slot.occupied = !stack.isEmpty();
                 if (slot.occupied) {
-                    slot.decayW = SpentFuelHeat.decayWatts(stack, now);
-                    slot.releaseWeight = Math.min(1.0, FuelAssemblies.dataOf(stack).burnupMwdPerTonne() / 10_000.0);
+                    if (ready) {
+                        slot.decayW = rack.nextW[k];
+                        slot.releaseWeight = rack.nextRelease[k];
+                    } else {
+                        SpentFuelHeat.Curve curve = rack.curve(k);
+                        slot.decayW = curve.watts(now);
+                        slot.releaseWeight = Math.min(1.0, curve.burnupMwdPerTonne / 10_000.0);
+                    }
                     total += slot.decayW;
                 } else {
                     slot.decayW = 0.0;
                 }
             }
+            rack.heated = true;
         }
+        heatVersion++;
         totalDecayW = total;
         coolingRunning = false;
         if (coolingEnabled) {
@@ -979,6 +1169,11 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         hazard = (hazard + report.hazardAdded) * Math.exp(-Math.log(2.0) / halfLife);
         if (hazard < 1.0e-9) {
             hazard = 0.0;
+        }
+        for (Rack rack : rackList) {
+            for (int k = 0; k < SpentFuelPool.ASSEMBLIES_PER_RACK; k++) {
+                updateGlow(rack, k);
+            }
         }
         markVisual(false);
         setChanged();
@@ -1008,6 +1203,16 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         return hazard;
     }
 
+    /** How many structure surveys this controller has made (tests: a retry that found the same block in the way makes none). */
+    public int surveyCount() {
+        return surveys;
+    }
+
+    /** Game time of the last one-second step ({@code Long.MIN_VALUE} before the first). */
+    public long lastStepAt() {
+        return lastStepAt;
+    }
+
     /** The highest rack top that holds fuel, metres above the floor (0 if none does). */
     private double highestOccupiedTop() {
         double top = 0.0;
@@ -1019,36 +1224,61 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         return top;
     }
 
+    private static RackView rackView(Rack rack) {
+        double decay = 0.0;
+        double hottest = 0.0;
+        int uncovered = 0;
+        int rackDamaged = 0;
+        int rackBurning = 0;
+        for (int k = 0; k < rack.stacks.length; k++) {
+            if (rack.stacks[k].isEmpty()) {
+                continue;
+            }
+            SpentFuelPool.Slot slot = rack.slots[k];
+            decay += slot.decayW;
+            hottest = Math.max(hottest, slot.fuelC);
+            if (!slot.covered) {
+                uncovered++;
+            }
+            if (slot.damaged) {
+                rackDamaged++;
+            }
+            if (slot.ignited) {
+                rackBurning++;
+            }
+        }
+        return new RackView(rack.pos, rack.topM, rack.count(), decay, hottest, uncovered, rackDamaged, rackBurning);
+    }
+
+    /** Every number of the pool with a line for every rack (up to 2,048 of them: for tests and tools, not for a panel's 4 Hz). */
     public PoolView view() {
         List<RackView> rackViews = new ArrayList<>(rackList.size());
+        for (Rack rack : rackList) {
+            rackViews.add(rackView(rack));
+        }
+        return view(rackViews);
+    }
+
+    /** Every number of the pool without the rack lines ({@link PoolView#racks()} is empty; {@link #rackViews} gives the ones shown). */
+    public PoolView summary() {
+        return view(List.of());
+    }
+
+    private PoolView view(List<RackView> rackViews) {
         int damaged = 0;
         int burning = 0;
+        // only stored assemblies count: an emptied cell's slot keeps the flags of what was in it
         for (Rack rack : rackList) {
-            double decay = 0.0;
-            double hottest = 0.0;
-            int uncovered = 0;
-            int rackDamaged = 0;
-            int rackBurning = 0;
             for (int k = 0; k < rack.stacks.length; k++) {
-                if (rack.stacks[k].isEmpty()) {
-                    continue;
-                }
-                SpentFuelPool.Slot slot = rack.slots[k];
-                decay += slot.decayW;
-                hottest = Math.max(hottest, slot.fuelC);
-                if (!slot.covered) {
-                    uncovered++;
-                }
-                if (slot.damaged) {
-                    rackDamaged++;
-                }
-                if (slot.ignited) {
-                    rackBurning++;
+                if (!rack.stacks[k].isEmpty()) {
+                    if (rack.slots[k].damaged) {
+                        damaged++;
+                    }
+                    if (rack.slots[k].ignited) {
+                        burning++;
+                    }
                 }
             }
-            damaged += rackDamaged;
-            burning += rackBurning;
-            rackViews.add(new RackView(rack.pos, rack.topM, rack.count(), decay, hottest, uncovered, rackDamaged, rackBurning));
         }
         double top = highestOccupiedTop();
         double level = pool.levelM();
@@ -1059,7 +1289,33 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
                 pool.secondsToBoil(), pool.secondsToUncover(top),
                 coolingEnabled, coolingRunning, energy.getEnergyStored(),
                 cooler.coldKg(), cooler.hotKg(), cooler.coldTemperatureC(), cooler.hotTemperatureC(),
-                hazard, damaged, burning, rackViews);
+                hazard, damaged, burning, rackList.size(), rackViews);
+    }
+
+    /** Racks in the pool, as last surveyed. */
+    public int rackCount() {
+        return rackList.size();
+    }
+
+    /** The bottom block of rack {@code index} (0-based, the pool's order: the order of {@link SpentFuelPoolLayout.Layout#racks()}). */
+    public BlockPos rackPos(int index) {
+        return index >= 0 && index < rackList.size() ? rackList.get(index).pos : null;
+    }
+
+    /** Whether {@code pos} is the bottom block of one of the racks of the last survey ({@link SpentFuelPoolLayout.Layout#racks()}, without its list search). */
+    public boolean surveyedRack(BlockPos pos) {
+        return layout != null && surveyedRacks.contains(pos);
+    }
+
+    /** Lines for racks {@code first} to {@code first + count - 1} (clamped to the racks there are). */
+    public List<RackView> rackViews(int first, int count) {
+        int from = Math.max(0, first);
+        int to = (int) Math.min(rackList.size(), (long) from + Math.max(0, count));
+        List<RackView> list = new ArrayList<>(Math.max(0, to - from));
+        for (int r = from; r < to; r++) {
+            list.add(rackView(rackList.get(r)));
+        }
+        return list;
     }
 
     /** One rack's contribution to the radiation field: where the heads of its assemblies are, and their decay heat. */
@@ -1109,6 +1365,164 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
             }
             if (watts > 0.0) {
                 visitor.accept(rack.pos.getX() + 0.5, rack.pos.getY() + rack.topM, rack.pos.getZ() + 0.5, watts, level - rack.topM);
+            }
+        }
+    }
+
+    /** Up to this many racks with fuel, a dose point sees every rack on its own ({@link #forEachRackSource}, exactly as always). */
+    public static final int EXACT_DOSE_SOURCES = 64;
+
+    /**
+     * A region is taken as one source at its heat-weighted centre once it is this small against its distance: side under
+     * {@value} times the distance. The error of the lumped 1/r^2 is second order in that ratio, a few per cent at worst, and the
+     * water and the blocks on the one line stand for those of its racks' lines.
+     */
+    public static final double DOSE_REGION_OPENING = 0.3;
+
+    /**
+     * The pool's fuel as dose sources for a point at ({@code x}, {@code y}, {@code z}). A pool with up to
+     * {@value #EXACT_DOSE_SOURCES} racks holding fuel gives every rack, as {@link #forEachRackSource}. A larger one is a
+     * quadtree over its floor: a near rack is its own source, a region of racks far enough away against its size
+     * ({@link #DOSE_REGION_OPENING}) is one source of their summed heat at their heat-weighted centre (rounded to a sixteenth
+     * of a block, so a shielding ray cached for it stays valid from one second to the next). A meter over the middle of a full
+     * 2,048-rack pool sees a few hundred sources, not 2,048. Same visitor, same rack-top height and water cover.
+     */
+    public void forEachDoseSource(double x, double y, double z, RackSourceVisitor visitor) {
+        if (!formed || layout == null) {
+            return;
+        }
+        DoseSources tree = doseSources();
+        if (tree == null || tree.fuelled <= EXACT_DOSE_SOURCES) {
+            forEachRackSource(visitor);
+            return;
+        }
+        tree.visit(tree.levels - 1, 0, 0, x, y, z, pool.levelM() - tree.topM, visitor);
+    }
+
+    private DoseSources doseSources() {
+        if (doseSources == null || doseSources.version != heatVersion) {
+            doseSources = DoseSources.build(this);
+        }
+        return doseSources;
+    }
+
+    /** The racks' decay heat summed over the squares of a quadtree of the pool's floor, rebuilt when the heat changes. */
+    private static final class DoseSources {
+        int version;
+        int fuelled;
+        int x0;
+        int z0;
+        int levels;
+        int size;
+        double topY;
+        double topM;
+        double[][] w;
+        double[][] wx;
+        double[][] wz;
+
+        /** Null when the racks do not all share one rack-top height (never for a surveyed pool); the caller then goes rack by rack. */
+        static DoseSources build(SpentFuelPoolBlockEntity be) {
+            DoseSources t = new DoseSources();
+            t.version = be.heatVersion;
+            SpentFuelPoolLayout.Layout l = be.layout;
+            t.x0 = l.min().getX() + 1;
+            t.z0 = l.min().getZ() + 1;
+            int span = Math.max(Math.max(1, l.max().getX() - t.x0), l.max().getZ() - t.z0);
+            t.size = 1;
+            t.levels = 1;
+            while (t.size < span) {
+                t.size <<= 1;
+                t.levels++;
+            }
+            t.w = new double[t.levels][];
+            t.wx = new double[t.levels][];
+            t.wz = new double[t.levels][];
+            for (int lv = 0; lv < t.levels; lv++) {
+                int n = t.size >> lv;
+                t.w[lv] = new double[n * n];
+                t.wx[lv] = new double[n * n];
+                t.wz[lv] = new double[n * n];
+            }
+            boolean first = true;
+            for (Rack rack : be.rackList) {
+                double watts = 0.0;
+                for (int k = 0; k < rack.stacks.length; k++) {
+                    if (!rack.stacks[k].isEmpty()) {
+                        watts += rack.slots[k].decayW;
+                    }
+                }
+                if (!(watts > 0.0)) {
+                    continue;
+                }
+                double topY = rack.pos.getY() + rack.topM;
+                int i = rack.pos.getX() - t.x0;
+                int j = rack.pos.getZ() - t.z0;
+                if (first) {
+                    t.topY = topY;
+                    t.topM = rack.topM;
+                    first = false;
+                } else if (topY != t.topY || rack.topM != t.topM) {
+                    return null;
+                }
+                if (i < 0 || j < 0 || i >= t.size || j >= t.size) {
+                    return null;
+                }
+                int index = i * t.size + j;
+                t.w[0][index] = watts;
+                t.wx[0][index] = watts * (rack.pos.getX() + 0.5);
+                t.wz[0][index] = watts * (rack.pos.getZ() + 0.5);
+                t.fuelled++;
+            }
+            for (int lv = 1; lv < t.levels; lv++) {
+                int n = t.size >> lv;
+                int below = n * 2;
+                for (int i = 0; i < n; i++) {
+                    for (int j = 0; j < n; j++) {
+                        double sw = 0.0;
+                        double sx = 0.0;
+                        double sz = 0.0;
+                        for (int a = 0; a < 2; a++) {
+                            for (int b = 0; b < 2; b++) {
+                                int c = (2 * i + a) * below + 2 * j + b;
+                                sw += t.w[lv - 1][c];
+                                sx += t.wx[lv - 1][c];
+                                sz += t.wz[lv - 1][c];
+                            }
+                        }
+                        t.w[lv][i * n + j] = sw;
+                        t.wx[lv][i * n + j] = sx;
+                        t.wz[lv][i * n + j] = sz;
+                    }
+                }
+            }
+            return t;
+        }
+
+        void visit(int lv, int i, int j, double x, double y, double z, double cover, RackSourceVisitor visitor) {
+            int n = size >> lv;
+            int index = i * n + j;
+            double watts = w[lv][index];
+            if (!(watts > 0.0)) {
+                return;
+            }
+            if (lv == 0) {
+                visitor.accept(x0 + i + 0.5, topY, z0 + j + 0.5, watts, cover);
+                return;
+            }
+            double cx = Math.round(wx[lv][index] / watts * 16.0) / 16.0;
+            double cz = Math.round(wz[lv][index] / watts * 16.0) / 16.0;
+            double dx = cx - x;
+            double dy = topY - y;
+            double dz = cz - z;
+            double side = 1 << lv;
+            if (side * side < DOSE_REGION_OPENING * DOSE_REGION_OPENING * (dx * dx + dy * dy + dz * dz)) {
+                visitor.accept(cx, topY, cz, watts, cover);
+                return;
+            }
+            for (int a = 0; a < 2; a++) {
+                for (int b = 0; b < 2; b++) {
+                    visit(lv - 1, 2 * i + a, 2 * j + b, x, y, z, cover, visitor);
+                }
             }
         }
     }
@@ -1175,17 +1589,26 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         if (level == null || level.isClientSide()) {
             return;
         }
-        int hash = formed ? 1 : 0;
-        hash = 31 * hash + (int) Math.round(pool.levelM() * 8.0);
-        for (Rack rack : rackList) {
-            hash = 31 * hash + Long.hashCode(rack.pos.asLong());
-            for (int k = 0; k < rack.stacks.length; k++) {
-                hash = 31 * hash + glowOf(rack, k);
-            }
-        }
-        if (force || hash != visualHash) {
-            visualHash = hash;
+        // the racks themselves only change with a survey or a broken rack, which force; the glow keeps its own record of changes
+        int levelQ = (int) Math.round(pool.levelM() * 8.0);
+        if (force || glowChanged || levelQ != sentLevelQ || formed != sentFormed) {
+            glowChanged = false;
+            sentLevelQ = levelQ;
+            sentFormed = formed;
             visualPending = true;
+        }
+    }
+
+    /** Brings the glow byte of one cell up to date and notes whether the picture changed. */
+    private void updateGlow(Rack rack, int k) {
+        int i = rack.index * SpentFuelPool.ASSEMBLIES_PER_RACK + k;
+        if (i < 0 || i >= glow.length || rack.index >= rackList.size() || rackList.get(rack.index) != rack) {
+            return;
+        }
+        byte g = (byte) glowOf(rack, k);
+        if (glow[i] != g) {
+            glow[i] = g;
+            glowChanged = true;
         }
     }
 
@@ -1207,18 +1630,66 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
             tag.putLong("VisMin", layout.min().asLong());
             tag.putLong("VisMax", layout.max().asLong());
             tag.putInt("VisLevel", (int) Math.round(pool.levelM() * 8.0));
-            long[] positions = new long[rackList.size()];
-            byte[] glow = new byte[rackList.size() * SpentFuelPool.ASSEMBLIES_PER_RACK];
-            for (int r = 0; r < rackList.size(); r++) {
-                positions[r] = rackList.get(r).pos.asLong();
-                for (int k = 0; k < SpentFuelPool.ASSEMBLIES_PER_RACK; k++) {
-                    glow[r * SpentFuelPool.ASSEMBLIES_PER_RACK + k] = (byte) glowOf(rackList.get(r), k);
-                }
-            }
-            tag.putLongArray("VisRacks", positions);
-            tag.putByteArray("VisGlow", glow);
+            writeRackPicture(tag);
         }
         return tag;
+    }
+
+    /**
+     * The racks as a bitmap of the interior floor (one bit a square, x-major: bit {@code ix * depth + iz}) and their cells' glow
+     * as four bits each, two bytes a rack, in the bitmap's order. Every rack stands on the floor, one block above the shell's
+     * bottom. For the largest pool that is 481 bytes of bitmap and 4,096 of glow, against 24 kB as positions and bytes.
+     */
+    private void writeRackPicture(CompoundTag tag) {
+        int x0 = layout.min().getX() + 1;
+        int z0 = layout.min().getZ() + 1;
+        int iw = Math.max(0, layout.max().getX() - x0);
+        int id = Math.max(0, layout.max().getZ() - z0);
+        int[] rackAt = new int[iw * id];
+        Arrays.fill(rackAt, -1);
+        for (int r = 0; r < rackList.size(); r++) {
+            BlockPos p = rackList.get(r).pos;
+            int ix = p.getX() - x0;
+            int iz = p.getZ() - z0;
+            if (ix >= 0 && iz >= 0 && ix < iw && iz < id) {
+                rackAt[ix * id + iz] = r;
+            }
+        }
+        byte[] map = new byte[(rackAt.length + 7) / 8];
+        int count = 0;
+        for (int i = 0; i < rackAt.length; i++) {
+            if (rackAt[i] >= 0) {
+                map[i >> 3] |= (byte) (1 << (i & 7));
+                count++;
+            }
+        }
+        byte[] cells = new byte[count * 2];
+        int n = 0;
+        for (int r : rackAt) {
+            if (r < 0) {
+                continue;
+            }
+            int g = r * SpentFuelPool.ASSEMBLIES_PER_RACK;
+            int g0 = g < glow.length ? glow[g] & 15 : 0;
+            int g1 = g + 1 < glow.length ? glow[g + 1] & 15 : 0;
+            int g2 = g + 2 < glow.length ? glow[g + 2] & 15 : 0;
+            int g3 = g + 3 < glow.length ? glow[g + 3] & 15 : 0;
+            cells[n++] = (byte) (g0 | g1 << 4);
+            cells[n++] = (byte) (g2 | g3 << 4);
+        }
+        tag.putByteArray("VisRackMap", map);
+        tag.putByteArray("VisRackGlow", cells);
+    }
+
+    /** Size in bytes of the picture the controller sends a client now (the update tag, written out): the cost tests read it. */
+    public int updateTagBytes(HolderLookup.Provider registries) {
+        var out = new java.io.ByteArrayOutputStream();
+        try {
+            net.minecraft.nbt.NbtIo.writeAnyTag(getUpdateTag(registries), new java.io.DataOutputStream(out));
+        } catch (java.io.IOException e) {
+            throw new java.io.UncheckedIOException(e);
+        }
+        return out.size();
     }
 
     @Override
@@ -1238,14 +1709,46 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
             visMin = BlockPos.of(tag.getLong("VisMin"));
             visMax = BlockPos.of(tag.getLong("VisMax"));
             visLevelQ = tag.getInt("VisLevel");
-            visRacks = tag.getLongArray("VisRacks");
-            visGlow = tag.getByteArray("VisGlow");
+            readRackPicture(tag.getByteArray("VisRackMap"), tag.getByteArray("VisRackGlow"));
         } else {
             visMin = null;
             visMax = null;
             visRacks = new long[0];
             visGlow = new byte[0];
         }
+    }
+
+    /** Unpacks {@link #writeRackPicture} into {@link #visRacks} (bottom blocks) and {@link #visGlow} (one byte a cell). */
+    private void readRackPicture(byte[] map, byte[] cells) {
+        int x0 = visMin.getX() + 1;
+        int z0 = visMin.getZ() + 1;
+        int y = visMin.getY() + 1;
+        int id = Math.max(0, visMax.getZ() - z0);
+        int squares = Math.max(0, visMax.getX() - x0) * id;
+        int count = 0;
+        for (int i = 0; i < squares && (i >> 3) < map.length; i++) {
+            if ((map[i >> 3] & (1 << (i & 7))) != 0) {
+                count++;
+            }
+        }
+        long[] positions = new long[count];
+        byte[] strengths = new byte[count * SpentFuelPool.ASSEMBLIES_PER_RACK];
+        int r = 0;
+        for (int i = 0; i < squares && (i >> 3) < map.length; i++) {
+            if ((map[i >> 3] & (1 << (i & 7))) == 0) {
+                continue;
+            }
+            positions[r] = BlockPos.asLong(x0 + i / id, y, z0 + i % id);
+            if (2 * r + 1 < cells.length) {
+                strengths[4 * r] = (byte) (cells[2 * r] & 15);
+                strengths[4 * r + 1] = (byte) ((cells[2 * r] >> 4) & 15);
+                strengths[4 * r + 2] = (byte) (cells[2 * r + 1] & 15);
+                strengths[4 * r + 3] = (byte) ((cells[2 * r + 1] >> 4) & 15);
+            }
+            r++;
+        }
+        visRacks = positions;
+        visGlow = strengths;
     }
 
     // ---------------------------------------------------------------
@@ -1292,7 +1795,7 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
                 }
                 CompoundTag cell = new CompoundTag();
                 cell.putByte("I", (byte) k);
-                cell.put("Item", rack.stacks[k].save(registries));
+                cell.put("Item", rack.savedItem(k, registries));
                 SpentFuelPool.Slot slot = rack.slots[k];
                 if (!slot.covered) {
                     cell.putDouble("FuelC", slot.fuelC);
@@ -1359,7 +1862,7 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
                     if (stack.isEmpty()) {
                         continue;
                     }
-                    rack.stacks[k] = stack;
+                    rack.set(k, stack);
                     SpentFuelPool.Slot slot = rack.slots[k];
                     slot.occupied = true;
                     slot.covered = !cell.contains("FuelC");

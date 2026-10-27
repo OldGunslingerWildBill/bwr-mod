@@ -826,6 +826,23 @@ public final class GuiScreenCheck {
         s.add(new Scenario("spent-fuel-pool", i -> new SpentFuelPoolScreen(pool(false, 8), i, t("Spent Fuel Pool"))));
         s.add(new Scenario("spent-fuel-pool-many", i -> new SpentFuelPoolScreen(pool(false, 40), i, t("Spent Fuel Pool"))));
         s.add(new Scenario("spent-fuel-pool-uncovered", i -> new SpentFuelPoolScreen(pool(true, 8), i, t("Spent Fuel Pool"))));
+        s.add(new Scenario("spent-fuel-pool-2048-racks", i -> {
+            // the largest pool: 2,048 racks, a page of them from the middle, the pager's buttons both ways active
+            var m = pool(false, SpentFuelPoolMenu.PAGE_RACKS);
+            m.footprint = 3844;
+            m.depth = 23;
+            m.capacityKg = 88_412_000;
+            m.massKg = 80_000_000;
+            m.levelM = m.massKg / 3_844_000.0;
+            m.waterAboveFuelM = m.levelM - m.highestTopM;
+            m.rackCount = 2048;
+            m.rackFirst = 1016;
+            m.cells = 8192;
+            m.assemblies = 8191;
+            m.decayW = 61_400_000;
+            m.coveredDecayW = m.decayW;
+            return new SpentFuelPoolScreen(m, i, t("Spent Fuel Pool"));
+        }));
         s.add(new Scenario("spent-fuel-pool-unformed", i -> {
             var m = new SpentFuelPoolMenu(99, i, P);
             m.present = true;

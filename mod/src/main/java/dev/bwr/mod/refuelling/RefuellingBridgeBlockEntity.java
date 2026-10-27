@@ -450,7 +450,7 @@ public class RefuellingBridgeBlockEntity extends BlockEntity {
     }
 
     private boolean isRack(SpentFuelPoolBlockEntity p, BlockPos rack) {
-        return p.layout().racks().contains(rack);
+        return p.surveyedRack(rack);
     }
 
     /** Why a move cannot be done now, or null if it can. Uses the current survey. */
