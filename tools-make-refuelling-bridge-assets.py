@@ -276,24 +276,55 @@ def canal_models():
                     if wet:
                         gate["render_type"] = "minecraft:translucent"
                     write(os.path.join(MODELS, "block", "canal_gate_%s_%s.json" % (openness, suffix)), gate)
-    variants = {}
-    gate_variants = {}
-    for axis, rot in (("x", 0), ("z", 90)):
-        for floor in ("false", "true"):
-            for top in ("false", "true"):
-                for water in ("false", "true"):
-                    suffix = "%s_%s_%s" % ("floor" if floor == "true" else "nofloor", "top" if top == "true" else "mid", "wet" if water == "true" else "dry")
-                    v = {"model": "bwr:block/transfer_canal_" + suffix}
-                    if rot:
-                        v["y"] = rot
-                    variants["axis=%s,floor=%s,top=%s,water=%s" % (axis, floor, top, water)] = v
-                    for op in ("false", "true"):
-                        g = {"model": "bwr:block/canal_gate_%s_%s" % ("open" if op == "true" else "closed", suffix)}
-                        if rot:
-                            g["y"] = rot
-                        gate_variants["axis=%s,floor=%s,open=%s,top=%s,water=%s" % (axis, floor, op, top, water)] = g
-    write(os.path.join(STATES, "transfer_canal.json"), {"variants": variants})
-    write(os.path.join(STATES, "canal_gate.json"), {"variants": gate_variants})
+    # The blocks are drawn from parts (multipart): the trough (walls, and the floor in the lowest block), the gate's plate, and the
+    # water. fill=0 is the canal's own water as it always was (to 13/16 in the top block, to the top in the ones under it); fill=1..15
+    # is a slot joined to a pool and a reactor well, the surface at fill/16 in this block (the connected level); fill=16 is full with
+    # the water going on into the block above (no surface face, so translucent layers never stack up inside the column).
+    for floor in (False, True):
+        name = "transfer_canal_trough_floor" if floor else "transfer_canal_trough"
+        elements = [element([0, 0, 0], [16, 16, 2], "canal"), element([0, 0, 14], [16, 16, 16], "canal")]
+        if floor:
+            elements.append(element([0, 0, 0], [16, 2, 16], "canal"))
+        write(os.path.join(MODELS, "block", name + ".json"), {"textures": tex, "elements": elements})
+        y0 = 2 if floor else 0
+        fl = "floor" if floor else "nofloor"
+        for top in (False, True):
+            write(os.path.join(MODELS, "block", "transfer_canal_water_%s_%s.json" % (fl, "top" if top else "mid")), {
+                "textures": tex, "render_type": "minecraft:translucent",
+                "elements": [element([0, y0, 2], [16, 13 if top else 16, 14], "water", ("north", "south", "up") if top else ("north", "south"))]})
+            for openness, plate in (("closed", ([7, y0, 2], [9, 20 if top else 16, 14])), ("open", ([7, y0, 2], [9, y0 + 1, 14]))):
+                write(os.path.join(MODELS, "block", "canal_gate_plate_%s_%s_%s.json" % (openness, fl, "top" if top else "mid")), {
+                    "textures": tex, "elements": [element(plate[0], plate[1], "plate")]})
+        for n in range(y0 + 1, 17):
+            write(os.path.join(MODELS, "block", "transfer_canal_water_%s_%d.json" % (fl, n)), {
+                "textures": tex, "render_type": "minecraft:translucent",
+                "elements": [element([0, y0, 2], [16, n, 14], "water", ("north", "south") if n == 16 else ("north", "south", "up"))]})
+
+    def parts(gate):
+        out = []
+        for axis, rot in (("x", 0), ("z", 90)):
+            def part(when, model):
+                apply = {"model": "bwr:block/" + model}
+                if rot:
+                    apply["y"] = rot
+                w = {"axis": axis}
+                w.update(when)
+                out.append({"when": w, "apply": apply})
+            for floor in ("false", "true"):
+                fl = "floor" if floor == "true" else "nofloor"
+                part({"floor": floor}, "transfer_canal_trough_floor" if floor == "true" else "transfer_canal_trough")
+                for top in ("false", "true"):
+                    part({"floor": floor, "top": top, "water": "true", "fill": "0"}, "transfer_canal_water_%s_%s" % (fl, "top" if top == "true" else "mid"))
+                    if gate:
+                        for op in ("false", "true"):
+                            part({"floor": floor, "top": top, "open": op},
+                                 "canal_gate_plate_%s_%s_%s" % ("open" if op == "true" else "closed", fl, "top" if top == "true" else "mid"))
+                for n in range((2 if floor == "true" else 0) + 1, 17):
+                    part({"floor": floor, "water": "true", "fill": str(n)}, "transfer_canal_water_%s_%d" % (fl, n))
+        return out
+
+    write(os.path.join(STATES, "transfer_canal.json"), {"multipart": parts(False)})
+    write(os.path.join(STATES, "canal_gate.json"), {"multipart": parts(True)})
     write(os.path.join(MODELS, "item", "transfer_canal.json"), {"parent": "bwr:block/transfer_canal_floor_top_wet"})
     write(os.path.join(MODELS, "item", "canal_gate.json"), {"parent": "bwr:block/canal_gate_closed_floor_top_wet"})
 
@@ -364,6 +395,11 @@ def tags():
 
 
 def main():
+    import sys
+    if "--canal" in sys.argv:
+        canal_models()
+        print("canal models and block states written")
+        return
     textures()
     rail_models()
     canal_models()

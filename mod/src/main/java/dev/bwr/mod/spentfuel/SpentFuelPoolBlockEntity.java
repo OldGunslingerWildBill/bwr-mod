@@ -195,6 +195,7 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
 
     private final SpentFuelPool pool = new SpentFuelPool();
     private final SpentFuelPoolCooler cooler = new SpentFuelPoolCooler();
+    private final dev.bwr.mod.refuelling.CanalExchange canalExchange = new dev.bwr.mod.refuelling.CanalExchange();
     private final LinkedHashMap<BlockPos, Rack> racks = new LinkedHashMap<>();
     private final List<Rack> rackList = new ArrayList<>();
     private SpentFuelPool.Slot[] flat = new SpentFuelPool.Slot[0];
@@ -319,6 +320,11 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         return cooler;
     }
 
+    /** The water through a cattle chute slot in this pool's wall (idle for a pool without one). Server side. */
+    public dev.bwr.mod.refuelling.CanalExchange canalExchange() {
+        return canalExchange;
+    }
+
     public EnergyStorage energy() {
         return energy;
     }
@@ -381,6 +387,10 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
         if (formed && ++sinceStep >= STEP_TICKS) {
             sinceStep = 0;
             step(serverLevel, now);
+        }
+        // the water through a cattle chute slot, if the wall has one (a pool without one returns at once)
+        if (formed && canalExchange.step(serverLevel, this, 1.0 / 20.0)) {
+            markVisual(false);
         }
         // Told from here and not where the change was made: a block update for a chunk that is not ticking yet is dropped.
         if (visualPending) {
@@ -1558,6 +1568,12 @@ public class SpentFuelPoolBlockEntity extends BlockEntity {
                 "Cooling pump %s, %s MW removed, %s FE stored.",
                 v.coolingRunning() ? "running" : v.coolingEnabled() ? "on but without power or cold water" : "off",
                 String.format(Locale.ROOT, "%.2f", v.coolingW() / 1.0e6), String.format(Locale.ROOT, "%,d", v.energyFE())));
+        for (SpentFuelPoolLayout.Slot slot : layout.slots()) {
+            lines.add(BwrText.tr("status.bwr.spent_fuel_pool.slot",
+                    "Cattle chute slot in the wall at x %s, z %s: y %s to the rim at y %s, sill y %s.",
+                    slot.x(), slot.z(), slot.bottomY(), slot.topY(), String.format(Locale.ROOT, "%.2f", slot.sillY())));
+        }
+        lines.addAll(canalExchange.statusComponents());
         return lines;
     }
 

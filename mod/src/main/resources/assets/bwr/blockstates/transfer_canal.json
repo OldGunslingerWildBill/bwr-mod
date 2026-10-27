@@ -1,60 +1,832 @@
 {
-  "variants": {
-    "axis=x,floor=false,top=false,water=false": {
-      "model": "bwr:block/transfer_canal_nofloor_mid_dry"
+  "multipart": [
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_trough"
+      }
     },
-    "axis=x,floor=false,top=false,water=true": {
-      "model": "bwr:block/transfer_canal_nofloor_mid_wet"
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "top": "false",
+        "water": "true",
+        "fill": "0"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_mid"
+      }
     },
-    "axis=x,floor=false,top=true,water=false": {
-      "model": "bwr:block/transfer_canal_nofloor_top_dry"
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "top": "true",
+        "water": "true",
+        "fill": "0"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_top"
+      }
     },
-    "axis=x,floor=false,top=true,water=true": {
-      "model": "bwr:block/transfer_canal_nofloor_top_wet"
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "1"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_1"
+      }
     },
-    "axis=x,floor=true,top=false,water=false": {
-      "model": "bwr:block/transfer_canal_floor_mid_dry"
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "2"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_2"
+      }
     },
-    "axis=x,floor=true,top=false,water=true": {
-      "model": "bwr:block/transfer_canal_floor_mid_wet"
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "3"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_3"
+      }
     },
-    "axis=x,floor=true,top=true,water=false": {
-      "model": "bwr:block/transfer_canal_floor_top_dry"
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "4"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_4"
+      }
     },
-    "axis=x,floor=true,top=true,water=true": {
-      "model": "bwr:block/transfer_canal_floor_top_wet"
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "5"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_5"
+      }
     },
-    "axis=z,floor=false,top=false,water=false": {
-      "model": "bwr:block/transfer_canal_nofloor_mid_dry",
-      "y": 90
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "6"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_6"
+      }
     },
-    "axis=z,floor=false,top=false,water=true": {
-      "model": "bwr:block/transfer_canal_nofloor_mid_wet",
-      "y": 90
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "7"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_7"
+      }
     },
-    "axis=z,floor=false,top=true,water=false": {
-      "model": "bwr:block/transfer_canal_nofloor_top_dry",
-      "y": 90
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "8"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_8"
+      }
     },
-    "axis=z,floor=false,top=true,water=true": {
-      "model": "bwr:block/transfer_canal_nofloor_top_wet",
-      "y": 90
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "9"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_9"
+      }
     },
-    "axis=z,floor=true,top=false,water=false": {
-      "model": "bwr:block/transfer_canal_floor_mid_dry",
-      "y": 90
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "10"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_10"
+      }
     },
-    "axis=z,floor=true,top=false,water=true": {
-      "model": "bwr:block/transfer_canal_floor_mid_wet",
-      "y": 90
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "11"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_11"
+      }
     },
-    "axis=z,floor=true,top=true,water=false": {
-      "model": "bwr:block/transfer_canal_floor_top_dry",
-      "y": 90
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "12"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_12"
+      }
     },
-    "axis=z,floor=true,top=true,water=true": {
-      "model": "bwr:block/transfer_canal_floor_top_wet",
-      "y": 90
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "13"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_13"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "14"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_14"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "15"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_15"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "false",
+        "water": "true",
+        "fill": "16"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_16"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_trough_floor"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "top": "false",
+        "water": "true",
+        "fill": "0"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_mid"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "top": "true",
+        "water": "true",
+        "fill": "0"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_top"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "3"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_3"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "4"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_4"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "5"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_5"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "6"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_6"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "7"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_7"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "8"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_8"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "9"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_9"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "10"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_10"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "11"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_11"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "12"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_12"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "13"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_13"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "14"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_14"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "15"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_15"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "floor": "true",
+        "water": "true",
+        "fill": "16"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_16"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_trough",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "top": "false",
+        "water": "true",
+        "fill": "0"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_mid",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "top": "true",
+        "water": "true",
+        "fill": "0"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_top",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "1"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_1",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "2"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_2",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "3"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_3",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "4"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_4",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "5"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_5",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "6"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_6",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "7"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_7",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "8"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_8",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "9"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_9",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "10"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_10",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "11"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_11",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "12"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_12",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "13"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_13",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "14"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_14",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "15"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_15",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "false",
+        "water": "true",
+        "fill": "16"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_nofloor_16",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_trough_floor",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "top": "false",
+        "water": "true",
+        "fill": "0"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_mid",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "top": "true",
+        "water": "true",
+        "fill": "0"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_top",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "3"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_3",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "4"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_4",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "5"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_5",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "6"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_6",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "7"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_7",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "8"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_8",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "9"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_9",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "10"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_10",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "11"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_11",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "12"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_12",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "13"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_13",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "14"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_14",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "15"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_15",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "floor": "true",
+        "water": "true",
+        "fill": "16"
+      },
+      "apply": {
+        "model": "bwr:block/transfer_canal_water_floor_16",
+        "y": 90
+      }
     }
-  }
+  ]
 }

@@ -1,5 +1,33 @@
 # Changelog
 
+## Unreleased: the cattle chute as a slot
+
+The cattle chute used to be a free-standing trench between the reactor and the pool with water of its own, the pool's lining and the well's wall
+solid, and the bridge carried the assembly through them as if they were not there. It can now be built as a real plant's transfer canal: a gated
+slot cut through the pool wall and the well wall, and with the gate open the pool, the canal and the flooded well are one body of water. Write-up:
+[REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md), "The cattle chute as a slot"; [SPENT-FUEL-POOL.md](SPENT-FUEL-POOL.md), "The cattle chute's slot"; the
+guide's Refuelling chapter has a page (The cattle chute).
+
+- **The slot.** Transfer Canal and Canal Gate stacks may stand in a pool's side wall in place of lining: one straight stack from the rim down, turned
+  through the wall, not at a corner, never in the floor, its lowest block at least one block over the top of the racks. The pool forms with it and
+  reports it; a bad slot is refused with the reason. Canal blocks placed or broken ask the pools nearby to survey again.
+- **The well.** The canal row runs on through the well's wall to the vessel's footprint. Canal blocks have always been wall for the cavity seal and
+  the well survey, so neither changes; the slot's floor must be at or above the seal row.
+- **One body of water.** With every gate in the row open, the pool's controller passes the water over the slot's floor from the higher surface to the
+  lower once a tick: `Q = 0.6 x A x 1000 x sqrt(2 g H)`, `A` = 0.75 m x the slot's height, capped at 20,000 kg/s (1.5 m of head through a 1.875 m slot:
+  4,577 kg/s). Whole kilograms leave the pool's water and enter the vessel's `liquidMassKg` (or the other way): the sum is exact. It stops level,
+  never moves water under the sill, never overfills the pool or the well. A closed gate holds the levels apart. Nothing opens or closes a gate but a
+  player or a program.
+- **The canal shows the level.** The canal blocks' new `fill` state (0 to 16; 0, the default, is the old look) draws the water at the connected level;
+  a column is drained only when the side it is open to is under its floor, and a bucket-drained column refills from a side over it. The canal's block
+  states are now multipart (trough, gate plate and water as parts; `tools-make-refuelling-bridge-assets.py --canal`).
+- **The bridge through the slot.** The slot column is part of the bridge's chute: its gates, its floor (the too-shallow check) and the connected level
+  as the chute's surface. Every refusal stays. Old chutes (the row between solid walls) are unchanged and couple no water.
+- **Saves.** Nothing new is saved; old worlds load with every canal block at `fill=0`, as before.
+- **Tests.** `ChuteSlotTests` (namespace `bwrbridge`, 11 tests: the law, the slot rules, levelling both ways with exact mass, a closed gate, the sill,
+  a drained canal refilling, a slot below the seal, save and reload mid-exchange, the bridge through the slot, an old chute unchanged). Client check
+  `-PbwrChuteSlotCheck` (`ChuteSlotClientCheck`): four pictures in `art/refuelling-bridge/`.
+
 ## Unreleased: spent fuel pools of plant size
 
 A real plant's pool holds thousands of assemblies. A pool now holds **up to 2,048 racks (8,192 assemblies)**, and the shell may be **5 to 64 blocks wide and deep and 8 to 24 high** outside (was 48 racks in 5 to 25 by 8 to 16). A 2,048-rack pool needs 2,048 m2 of floor (48 x 48 outside will do); the largest, 64 x 64, has room for 3,844 rack positions. Write-up: [SPENT-FUEL-POOL.md](SPENT-FUEL-POOL.md), "Building one" and "Scale"; the guide's pool page and the size message give the new limits.

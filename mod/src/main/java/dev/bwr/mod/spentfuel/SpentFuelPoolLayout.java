@@ -40,6 +40,13 @@ import java.util.Set;
  * the blocks straight from the chunk sections it has already found loaded (never through a chunk lookup per block, never
  * loading one), and the controller surveys only when a block of a pool changes near it, or, while it is not formed, every
  * five seconds once the block that stopped the last survey has changed ({@link Layout#blocker()}).
+ *
+ * <h2>The cattle chute's slot</h2>
+ * Transfer Canal and Canal Gate blocks may stand in a side wall in place of lining, as a slot for the cattle chute: one straight
+ * column from the rim down, turned to run through the wall, not at a corner, never in the floor, and its lowest block at least
+ * {@value #SLOT_SILL_ABOVE_RACKS} above the top of the racks ({@link #slotProblem}). The slot is part of the shell; the flood that
+ * finds the shell does not run through canal blocks (it would follow the chute to the reactor), it goes round the slot through the
+ * lining beside and under it.
  */
 public final class SpentFuelPoolLayout {
 
@@ -78,15 +85,60 @@ public final class SpentFuelPoolLayout {
     public static final int MAX_SHELL_BLOCKS = 16_384;
 
     /**
+     * The slot's lowest block must stand at least this many blocks above the top of the racks (a rack is {@value #RACK_HEIGHT}
+     * blocks on the floor): with the gate open and the other side drained, the pool can lose only the water over the slot's
+     * floor, so the racks keep a metre of water over them. A real plant's transfer canal sill sits above the fuel for the same
+     * reason (a failed gate seal or a drained canal cannot uncover it).
+     */
+    public static final int SLOT_SILL_ABOVE_RACKS = 1;
+
+    /**
+     * A slot cut through a side wall for the cattle chute: a straight stack of Transfer Canal (or Canal Gate) blocks in one
+     * column of the wall, from the rim ({@code topY}, the wall's top row) down to {@code bottomY}, running through the wall
+     * ({@code outward} is the way out of the pool). Below it the wall is lining.
+     */
+    public record Slot(int x, int z, int bottomY, int topY, Direction outward) {
+        /** World y of the top of the slot's floor: the sill. */
+        public double sillY() {
+            return bottomY + dev.bwr.mod.refuelling.TransferCanalBlock.FLOOR_THICKNESS;
+        }
+
+        public BlockPos bottom() {
+            return new BlockPos(x, bottomY, z);
+        }
+
+        public BlockPos top() {
+            return new BlockPos(x, topY, z);
+        }
+    }
+
+    /**
      * What a survey found. {@code problem} is null for a pool that can form. {@code footprintCells} is the interior
-     * area in square metres and {@code heightCells} the interior depth, floor to rim, in metres.
+     * area in square metres and {@code heightCells} the interior depth, floor to rim, in metres. {@code slots} are the
+     * cattle chute slots cut through its walls (none for most pools).
      */
     public record Layout(BlockPos min, BlockPos max, int footprintCells, int heightCells, List<BlockPos> racks,
                          List<BlockPos> makeupPorts, List<BlockPos> coolingIn, List<BlockPos> coolingOut,
-                         Component problem, BlockPos blocker, Kind blockerKind) {
+                         Component problem, BlockPos blocker, Kind blockerKind, List<Slot> slots) {
         public Layout(BlockPos min, BlockPos max, int footprintCells, int heightCells, List<BlockPos> racks,
                       List<BlockPos> makeupPorts, List<BlockPos> coolingIn, List<BlockPos> coolingOut, Component problem) {
-            this(min, max, footprintCells, heightCells, racks, makeupPorts, coolingIn, coolingOut, problem, null, null);
+            this(min, max, footprintCells, heightCells, racks, makeupPorts, coolingIn, coolingOut, problem, null, null, List.of());
+        }
+
+        public Layout(BlockPos min, BlockPos max, int footprintCells, int heightCells, List<BlockPos> racks,
+                      List<BlockPos> makeupPorts, List<BlockPos> coolingIn, List<BlockPos> coolingOut,
+                      Component problem, BlockPos blocker, Kind blockerKind) {
+            this(min, max, footprintCells, heightCells, racks, makeupPorts, coolingIn, coolingOut, problem, blocker, blockerKind, List.of());
+        }
+
+        /** The slot in the wall column at {@code x, z}, or null. */
+        public Slot slotAt(int x, int z) {
+            for (Slot s : slots) {
+                if (s.x() == x && s.z() == z) {
+                    return s;
+                }
+            }
+            return null;
         }
 
         public boolean ok() {
@@ -97,6 +149,11 @@ public final class SpentFuelPoolLayout {
         public double rackTopM(BlockPos rack) {
             return RACK_HEIGHT;
         }
+    }
+
+    /** True for a block of the cattle chute (a Transfer Canal or a Canal Gate): in a side wall, a slot. */
+    public static boolean canal(BlockState state) {
+        return state.getBlock() instanceof dev.bwr.mod.refuelling.TransferCanalBlock;
     }
 
     /** True for a block that may be part of the shell. */
@@ -134,7 +191,8 @@ public final class SpentFuelPoolLayout {
             return false;
         }
         BlockState s = level.getBlockState(last.blocker());
-        return last.blockerKind() == Kind.SHELL_GAP ? !shell(s) : !interiorOk(s);
+        // a canal block where the gap was may be a slot: survey again
+        return last.blockerKind() == Kind.SHELL_GAP ? !shell(s) && !canal(s) : !interiorOk(s);
     }
 
     /** A chunk-section view of the level that remembers the last section, for the sweep. Never loads a chunk. */
@@ -219,6 +277,7 @@ public final class SpentFuelPoolLayout {
         List<BlockPos> makeup = new ArrayList<>();
         List<BlockPos> coolingIn = new ArrayList<>();
         List<BlockPos> coolingOut = new ArrayList<>();
+        List<Slot> slots = new ArrayList<>();
         int controllers = 0;
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         // the order of BlockPos.betweenClosed: x fastest, then y, then z (the first problem found is the one reported)
@@ -233,6 +292,14 @@ public final class SpentFuelPoolLayout {
                                 "The pool is waiting for its chunks to load."));
                     }
                     boolean wall = x == minX || x == maxX || z == minZ || z == maxZ;
+                    if ((wall || y == minY) && canal(s)) {
+                        // the cattle chute's slot: checked once, from its lowest block (the sweep meets a column bottom up)
+                        Component bad = slotProblem(sections, x, y, z, minX, maxX, minY, maxY, minZ, maxZ, wall, slots);
+                        if (bad != null) {
+                            return failure(min, max, bad);
+                        }
+                        continue;
+                    }
                     if (wall || y == minY) {
                         if (!shell(s)) {
                             return failure(min, max, BwrText.tr("status.bwr.spent_fuel_pool.shell_gap",
@@ -299,7 +366,54 @@ public final class SpentFuelPoolLayout {
         }
         racks.sort(Comparator.<BlockPos>comparingInt(BlockPos::getY).thenComparingInt(BlockPos::getX).thenComparingInt(BlockPos::getZ));
         return new Layout(min, max, (w - 2) * (d - 2), h - 1, List.copyOf(racks), List.copyOf(makeup), List.copyOf(coolingIn),
-                List.copyOf(coolingOut), null);
+                List.copyOf(coolingOut), null, null, null, List.copyOf(slots));
+    }
+
+    /**
+     * The rules of a slot, for a canal block met in the shell at {@code x, y, z}: in a side wall (not the floor, not a corner),
+     * turned to run through the wall, one straight stack from the rim down, its lowest block {@link #SLOT_SILL_ABOVE_RACKS} or more
+     * above the top of the racks. Null when it is a good slot (added to {@code slots} at its lowest block) or a block of one
+     * already checked; otherwise the reason.
+     */
+    private static Component slotProblem(Sections sections, int x, int y, int z, int minX, int maxX, int minY,
+                                         int maxY, int minZ, int maxZ, boolean wall, List<Slot> slots) {
+        String where = x + ", " + y + ", " + z;
+        for (Slot slot : slots) {
+            if (slot.x() == x && slot.z() == z && y > slot.bottomY() && y <= slot.topY()) {
+                return null;
+            }
+        }
+        if (y == minY || !wall) {
+            return BwrText.tr("status.bwr.spent_fuel_pool.slot_floor",
+                    "A cattle chute slot is cut through a side wall, never the floor; check %s", where);
+        }
+        boolean xWall = x == minX || x == maxX;
+        boolean zWall = z == minZ || z == maxZ;
+        if (xWall && zWall) {
+            return BwrText.tr("status.bwr.spent_fuel_pool.slot_corner",
+                    "A cattle chute slot cannot be cut at a corner of the pool; move it along the wall, check %s", where);
+        }
+        Direction.Axis through = xWall ? Direction.Axis.X : Direction.Axis.Z;
+        for (int k = y; k <= maxY; k++) {
+            BlockState above = sections.get(x, k, z);
+            if (above == null || !canal(above)) {
+                return BwrText.tr("status.bwr.spent_fuel_pool.slot_stack",
+                        "A cattle chute slot is one straight stack of canal blocks from the rim down; the column at %s has a gap at y %s", where, k);
+            }
+            if (above.getValue(dev.bwr.mod.refuelling.TransferCanalBlock.AXIS) != through) {
+                return BwrText.tr("status.bwr.spent_fuel_pool.slot_axis",
+                        "Turn the canal block at %s, %s, %s to run through the wall (place it facing the wall)", x, k, z);
+            }
+        }
+        int lowest = minY + 1 + RACK_HEIGHT + SLOT_SILL_ABOVE_RACKS;
+        if (y < lowest) {
+            return BwrText.tr("status.bwr.spent_fuel_pool.slot_deep",
+                    "The slot at %s goes too deep: its floor must stay at least %s m above the top of the racks, so its lowest canal block at y %s or higher",
+                    where, SLOT_SILL_ABOVE_RACKS, lowest);
+        }
+        Direction out = xWall ? (x == minX ? Direction.WEST : Direction.EAST) : (z == minZ ? Direction.NORTH : Direction.SOUTH);
+        slots.add(new Slot(x, z, y, maxY, out));
+        return null;
     }
 
     /** Positions the pool claims in the registry: its racks and its ports. */

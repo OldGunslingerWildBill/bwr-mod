@@ -20,15 +20,19 @@ All blocks are in the Realistic BWR creative tab (iron and gray concrete; the co
    along their length by at least two blocks. A rail has an axis (the way you face when you place it); the bridge runs along it.
    The reactor's interior and the pool's interior must both lie between the rails (inside their overlap, along the rails, and
    between them, across). The reactor needs its head off (the refuelling vessel state); the pool needs to be formed.
-2. **The cattle chute.** A straight row of **Transfer Canal** blocks from the reactor shell to the pool wall, in a row that both
-   interiors share, filling every column between the two shells. It is a **trench**: a 4.5 m assembly stands upright in it, so the
+2. **The cattle chute.** Build it as a real plant's transfer canal: a **slot** cut through the pool wall and the well wall in a row both
+   interiors share, Transfer Canal stacks in it from the rim down, and canal stacks in every column between, with a gate stack in the
+   pool-wall slot. Flood the well to the pool's level, then open the gate: the pool, the canal and the well are one body of water (see
+   [the slot](#the-cattle-chute-as-a-slot-one-body-of-water)). The old chute still works exactly as before: a straight row of **Transfer Canal**
+   blocks from the reactor shell to the pool wall, in a row that both interiors share, filling every column between the two shells, the pool's
+   lining left solid. It is a **trench**: a 4.5 m assembly stands upright in it, so the
    canal blocks are stacked (the lowest has the floor, the highest the water surface; the model joins them as you place them). The
    top block is at the height of the rails or up to four blocks below them, and the trench must be deep enough for the assembly
    to hang clear of its floor (in the test world, 9 blocks; the bridge halts with the figures if it is not). One or more **Canal Gate**
    blocks stand in the row (a gate is a canal block with a plate across it, raised when closed and sunk when open; stack gates to
    make a gate the full depth: the bridge counts the row closed if any gate block in it is). A bucket fills or drains the whole stack it is used on.
-   The chute meets the cavity and the pool at their walls; the model takes the assembly through the wall at that depth (the real slot
-   is gated, and the vessel's shell is not something a player can cut).
+   An old chute meets the cavity and the pool at their walls, and the model takes the assembly through the pool's lining at that depth;
+   a slot chute takes it through the slot.
 3. **The console.** A **Refuelling Bridge Console** beside any rail block. Right-click it for the control screen; sneak-click for
    what the bridge sees (rails, reactor, pool, chute, state).
 
@@ -291,7 +295,7 @@ over it, `cover = surface - handle`, at every tick of a move, in whichever body 
   below says so when the water is too shallow. Water over the vessel flange in a sealed well is part of that level (see
   [the reactor well and the cavity seal](#the-reactor-well-and-the-cavity-seal)), so a flooded well adds its rise to the cover metre for metre;
 * **pool**: its own level, `floor + levelM`, so a boiled-down pool shows up at once;
-* **chute**: the surface of its top canal block (13/16 of the block); none if any block of its row is drained.
+* **chute**: the surface of its top canal block (13/16 of the block) for an old chute, the connected level the canal shows for a slot chute; none if any column of its row is drained.
 
 **Registered radiation sources** (`RadiationSources`, so the Survey Meter and the Area Radiation Monitor read them):
 
@@ -321,13 +325,80 @@ surfaces (cavity, pool, canal). With a 3 m full pool the cover is 2 m over a rac
 can only raise the grapple as high as its rest position (1 m over the rails), so even an overridden lift stops there: the handle then hangs in air
 if the surface is lower than that.
 
-### The cattle chute, and how it couples the water
+### The cattle chute as a slot: one body of water
 
-**Decision: it does not.** An open gate is a path, not a pipe. The cavity's water is the reactor vessel's inventory (level from the collapsed level
-of the pressure vessel model, with its own pressure and temperature) and the pool's is a separate lumped body (mass and temperature, evaporation,
-boil-off, a cooling train). Joining them for level would need a flow law between two plant models and would make an open gate drain the pool into the
-vessel (or the reverse) by itself, an automatic action on the plant. Neither is cheap and the second is not allowed; and nothing a player sees needs it, because
-both bodies already have levels the bridge reads. So:
+A real plant's transfer canal (Columbia's, for one) is a gated slot through the walls: with the gates open, the fuel pool, the canal and
+the flooded reactor well are one connected body of water. Build it that way and the mod makes it so.
+
+**The slot through the pool wall.** Transfer Canal and Canal Gate blocks may stand **in a side wall of the pool**, in place of the lining:
+
+* one straight stack in one column, **from the rim down** (the wall's top row), turned to run **through** the wall (place the blocks facing the wall);
+* in a side wall, **never the floor**, and **not at a corner**;
+* its lowest block **at least one block above the top of the racks** (a rack is 4 blocks on the floor, so the sixth row above the floor block or higher;
+  `SpentFuelPoolLayout.SLOT_SILL_ABOVE_RACKS`). With the gate open and the well drained, the pool can only lose the water over the slot's floor, so
+  the racks keep more than a metre of water over them: a real plant's gate sill sits above the fuel for the same reason.
+
+The pool forms with the slot (it is part of its shell), and the controller's report lists it: column, rows, sill. A slot that breaks a rule stops
+the pool forming and says which rule: *cut through a side wall, never the floor*, *cannot be cut at a corner*, *one straight stack from the rim down;
+the column has a gap at y*, *turn the canal block to run through the wall*, *goes too deep: ... its lowest canal block at y N or higher*.
+
+**The slot through the well wall.** The canal row from the slot runs on to the vessel: every column between the pool's wall and the vessel's
+footprint is a canal stack, and the last of them stands **in the well's wall**. Canal and gate blocks have always counted as wall for the cavity
+seal and the well survey, so the seal and the well are surveyed as before: a canal is a lined, watertight trough, not a hole to the drywell. The
+slot's floor must stand **at or above the cavity seal row** (a canal below the seal would open the well under the plate: refused, `below_seal`),
+and at or below the top of the well.
+
+**The water.** With **every gate in the row open**, the pool's controller passes water through the slot once a tick (`CanalExchange`; no canal block
+ticks, a pool without a slot does nothing). The **sill** is the top of the canal's highest floor (the slot's, normally). Only water **over the sill**
+moves, from the higher surface to the lower, by the drain port's gravity law with the slot's cross-section (`CanalFlow`):
+
+`Q = Cd A rho sqrt(2 g H)`, `Cd = 0.6`, `A = 0.75 m x` the slot's height from the sill to the top of the lowest-topped canal column (the trough is 12/16 of a
+block wide inside), `rho = 1000 kg/m3`, `H` = the high surface less the low one, or less the sill when the low side is under it (the water falls over
+the sill), capped at **20,000 kg/s**. Through a slot 1.875 m high (the GameTest's) 1.5 m of head passes **4,577 kg/s**; 0.5 m through a 2 m slot about
+2,800 kg/s; 1 m through 7 m about 14,000. The test's pool (25 m2) at its rim and a well (49 m2) 1.5 m lower are level in **10.4 s**.
+
+* **Mass is exact.** What leaves one inventory enters the other, in whole kilograms: the pool's water (`SpentFuelPool`) and the vessel's
+  `liquidMassKg` (the well's water over the flange is part of it) add up to the same before and after every step. Water from the well goes into the
+  pool at the coolant's temperature (at most 100 C) and mixes; water from the pool joins the vessel's inventory (the vessel's own model gives it its
+  temperature).
+* **Never past level, never under the sill, never over the rim.** A step never moves more than brings the two surfaces level (the two bodies'
+  real shapes: the pool's floor area, the well's layers and annulus), never more than stands over the sill, and never more than the lower side has room
+  for (the pool's rim, the well's top). Within 1 mm the surfaces count as level and the water over the sill as gone.
+* **A closed gate is no flow.** Any closed gate block in the row isolates the pool from the well; the levels stay where they are.
+* **The canal's water follows.** Each canal column holds water to the level of the side it is open to (with the gates open, the higher of the pool
+  and the well; with a gate shut, the slot and the gate's column the pool's, the columns behind it the well's), drawn at that height in sixteenths
+  of a block (the blocks' `fill` state). A column is drained only when that level is under its floor: with the gates open, **both** sides under it.
+  Drain a column with a bucket and it refills on the next tick from whichever side stands over its floor; pour a bucket into a column whose sides
+  are both under its floor and it runs out again. (The canal's own few cubic metres are not counted in either inventory.)
+* **Nothing acts by itself.** This is physics: nothing opens or closes a gate (a player's empty hand does, or a program through the bridge's
+  `setGate`), nothing reacts to a level. The head must be off (`head_on`) and the reactor needs a usable well (`no_well`); a chunk that is not
+  loaded moves nothing and changes no block (`waiting`), and no chunk is ever loaded for it.
+* **What it says.** The pool controller's report (sneak-click) has a line per slot and the exchange's state (`no_slot`, `no_row`, `no_reactor`,
+  `head_on`, `no_well`, `below_seal`, `above_well`, `waiting`, `gate_closed`, `below_sill`, `level`, `to_well`, `to_pool`, `full`), the sill, both
+  surfaces and the flow. The bridge console's report says when the chute runs through a slot, with its water surface and floor.
+* **Saves.** Nothing new is saved: the pool's water and the vessel's inventory are saved as they always were, so a world saved mid-exchange carries
+  on where it was. The canal blocks' `fill` state defaults to 0, which is the old look (13/16 in the top block), so old worlds and old chutes are
+  unchanged.
+
+**The bridge through the slot.** The bridge finds the chute as before (the columns between the vessel and the pool's wall); when the pool's wall
+column in that row is a slot, it is part of the chute: its gates count (a closed gate in the slot closes the chute), its floor is the chute's floor
+(the too-shallow check uses it), and the chute's surface is the connected level the canal shows. The route goes through the slot at the chute's
+depth (2 m under the lowest surface). All the refusals stay: a closed gate, a drained chute, a chute too shallow for the assembly to hang clear of its
+floor, the hoist limit. A slot that keeps a metre over the racks and a 4.5 m assembly hanging 2 m under the water need a deep pool: the surface at least
+6.5 m over the sill, so 12 m or more of water over the pool's floor (13 blocks of wall), as in the GameTest's pool of 15.
+
+![The slot from the refuel floor, the gate open, the pool and the well level](art/refuelling-bridge/slot-open-from-floor.png)
+
+![The slot through the pool wall, from over the pool](art/refuelling-bridge/slot-open-from-pool.png)
+
+![The gate in the slot closed: the pool above the well](art/refuelling-bridge/slot-gate-closed.png)
+
+### The old chute, and why it couples nothing
+
+An old chute (the canal row between the walls, the pool's lining left solid) is unchanged: an open gate is a path, not a pipe. Nothing joins the
+pool's water to the well's through it: the pool's lining is in the way, so there is no opening for the water to pass, and the mod does not invent one.
+The cavity's water stays the reactor vessel's inventory and the pool's its own lumped body, each with the level the bridge reads. (Water does pass
+through a slot: that is the pool's wall cut open, physics, not something the gate does by itself.) So, for an old chute:
 
 * a **closed gate** isolates the pool from the cavity for the bridge: the move is refused (and a gate shut during a move stops the bridge in front of it,
   with the assembly on the grapple, until a player opens it and resumes);
@@ -376,10 +447,17 @@ The model's own set is in `art/refuelling-bridge-model/`: `model-over-pool.png`,
 `bridge-span.png` (the gantry over the chute between the cavity and the pool), `mast-in-core.png` (the mast lowered into the core), `assembly-through-chute.png` (a hot assembly glowing
 in the water of the chute, seen from inside the trench), `assembly-in-rack.png` (just set into a rack), `control-screen.png` (the map as the bridge's control, mid move),
 `survey-meter-spike.png` (the Survey Meter HUD at 906 Sv/h with the handle out of the water), and the four screens of the GUI check (`gui-*.png`).
+The slot (`-PbwrChuteSlotCheck`): `slot-open-from-floor.png`, `slot-open-from-pool.png`, `slot-open-from-well.png` (the gate open, the pool and the well level through it) and `slot-gate-closed.png` (the gate's plate raised in the slot, the pool above the well).
 
 ## Tests
 
 Core (`:core:acceptance`): `BridgeMotionTest` (legs take as long as the slowest axis, the water over the handle and the dose law against `DoseModel`, routes and the least cover, the chute floor margin).
+GameTests (`ChuteSlotTests`, same namespace, 11 tests): the flow law; a pool forms with a slot in its wall and the well keeps its seal; slots in the floor, at a corner, not from the
+rim, turned along the wall and too deep are refused with the reason; an open gate levels the pool and the well both ways with the mass exact at every step;
+a closed gate holds the levels apart and the pool's own tick runs the water once it opens; water under the sill does not move and a pool over the sill drains
+to it and no further; a drained canal refills and a canal whose sides are both under its floor drains; a slot below the seal row is refused; an exchange saved
+half way carries on after the pool and the reactor are reloaded; the bridge carries an assembly from the core through the slot to a rack (and a closed gate
+in the slot refuses); an old chute is left as it was and still carries fuel. Client check `-PbwrChuteSlotCheck` (`ChuteSlotClientCheck`) saves four pictures of the slot.
 GameTests (`RefuellingBridgeTests`, namespace `bwrbridge`, `-PbwrOnlyBridge`): a full move from the core to the pool and back (phases in order, fuel conserved every tick, burnup and discharge stamp kept, minutes of
 travel); a closed gate refuses a move, stops a move in progress and resumes once opened; the hoist limit halts with the assembly still on its seat and an override continues; the dose rises when lifted and spikes out of the water;
 a drained chute halts and, overridden, spikes in the chute; a destination that fills up halts holding the assembly (set down elsewhere, abort); a move saved halfway and loaded again finishes the same job; an idle bridge has nothing scheduled
@@ -398,4 +476,7 @@ and a moving one ticks once a tick on the real scheduler; the instant option on 
 * One reactor and one pool per bridge (the nearest of each to the console between the rails). A pool-to-pool move works; a bridge with no reactor has no screen (the peripheral works).
 * Specialty inserts (rods, sources) move between core positions; the pool racks take fuel assemblies only.
 * Two consoles on the same rails are two independent bridges; the second does not know where the first is (nothing stops them sharing a column).
-* The assembly crosses the vessel's shell and the pool wall at the depth of the chute (see the build notes); nothing is cut in either.
+* In an old chute the assembly crosses the pool's lining at the depth of the chute (see the build notes); a slot chute has the cut. The vessel's shell
+  is never cut: the canal ends at the vessel's footprint, in the well.
+* The slot's flow is one lumped law per tick: no waves, no slope along the canal (each column shows the level of the side it is open to), and the
+  canal's own water is a flag, not counted in either inventory. Water put into the vessel from the pool takes the vessel's own temperature.

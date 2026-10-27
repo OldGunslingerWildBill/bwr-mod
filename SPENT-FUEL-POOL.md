@@ -37,6 +37,19 @@ itself.
 Capacity is 1,000 kg a cell: the smallest pool, 9 x 9 x 8 outside, holds 7 x 7 x 7 = 343,000 kg and a level of 7 m, which is 3 m over the
 rack tops. "Uncovered" means the water is below the rack top (4 m).
 
+## The cattle chute's slot
+
+A side wall may have a **slot** for the cattle chute: Transfer Canal (and Canal Gate) blocks in place of the lining, one straight stack in one
+column from the rim down, turned to run through the wall, not at a corner and never in the floor, its lowest block at least **one block above the top
+of the racks** (the sixth row over the floor block or higher), so that the pool can never lose more than the water over the slot's floor and the racks
+keep over a metre of it. The pool forms with it and its report lists it. A slot that breaks a rule stops the pool forming with the reason. The
+survey's flood does not run through canal blocks (it would follow the chute to the reactor); it goes round the slot through the lining beside and
+under it.
+
+With the canal row from the slot reaching a reactor's well and every gate open, the pool and the well are one body of water: the controller passes
+the water over the slot's floor by gravity once a tick, the mass exact between the pool's water and the vessel's inventory. The whole law, the numbers
+and the bridge through the slot: [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#the-cattle-chute-as-a-slot-one-body-of-water).
+
 ## Moving fuel
 
 - **The refuelling bridge** moves assemblies between the core and the racks, through the cattle chute and under water, one at a time, and is the normal way (see [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md)); the pool's stored fuel is also a registered radiation source behind the water over the racks.
@@ -305,7 +318,7 @@ Core (`:core:acceptance`): `FuelElevatorMotionTest` (the legs and their timings,
 GameTests (`SpentFuelPoolTests`, namespace `bwrpool`, `-PbwrOnlyPool` runs just these): formation and refusals, boil-off rate and level fall, cooling
 holds and no cooling does not, uncovered fuel heats bursts and burns and is quenched, covered fuel stays at the water temperature, the stamp at unload and
 through saves and the pool, the plant refusing hot fuel and starting once it has cooled, items and water connections and breakage, save and reload (and old
-saves), and the computer face; `NewFuelElevatorTests` (the elevator: lowering into the first free cell, the real scheduler with its two ticks, a right-click, a hopper, the refusals, raising, the dose along the trip, a save and reload, the old rack and controller paths, the computer face) and `ImmersionDoseTests` (diver and surface swimmer, effects and dose with no meter, creative exempt, the flooded well, readings above the water unchanged). Client check: `:mod:runTurbineModelCheck -PbwrSpentFuelPoolCheck` (pictures in `spent-fuel-pool-check/`), and the screens in
+saves), and the computer face; `NewFuelElevatorTests` (the elevator: lowering into the first free cell, the real scheduler with its two ticks, a right-click, a hopper, the refusals, raising, the dose along the trip, a save and reload, the old rack and controller paths, the computer face) and `ImmersionDoseTests` (diver and surface swimmer, effects and dose with no meter, creative exempt, the flooded well, readings above the water unchanged). The slot in the wall and the water through it: `ChuteSlotTests` (namespace `bwrbridge`, see [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#tests)). Client check: `:mod:runTurbineModelCheck -PbwrSpentFuelPoolCheck` (pictures in `spent-fuel-pool-check/`), and the screens in
 `-PbwrGuiScreenCheck`.
 
 ## Scale

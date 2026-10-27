@@ -36,7 +36,7 @@
     {
       "title": "The refuelling bridge",
       "text": [
-        "Fuel moves on a refuelling bridge, one assembly at a time and always under water. Build two parallel runs of Refuelling Rail over the open reactor and the pool, a straight row of Transfer Canal blocks (the cattle chute) between the reactor and the pool with a Canal Gate in it, and a Refuelling Bridge Console beside a rail.",
+        "Fuel moves on a refuelling bridge, one assembly at a time and always under water. Build two parallel runs of Refuelling Rail over the open reactor and the pool, the cattle chute (a slot, see the page after Flood the well) between them, and a Refuelling Bridge Console beside a rail.",
         "",
         "The bridge moves fuel only. The head, the dryer and the separators are lifted by the reactor building crane (the next pages). Instant refuelling by clicking the refuelling map is a server option, off by default."
       ],
@@ -99,6 +99,19 @@
         "bwr:reactor_vessel",
         "bwr:cavity_drain_port",
         "bwr:motor_operated_water_valve"
+      ]
+    },
+    {
+      "title": "The cattle chute",
+      "text": [
+        "Cut a slot through the pool wall and the well wall in a row both share. Put Transfer Canal stacks in it from the rim down, facing the wall, a Canal Gate stack in the pool-wall slot, and canal stacks between the walls. The slot's lowest block stands at least one block above the rack tops.",
+        "",
+        "Flood the well to the pool's level, then open the gate. Open, the pool, the canal and the well are one water: the higher side runs into the lower over the slot's floor. A closed gate holds them apart. Nothing opens it but you or your program."
+      ],
+      "icons": [
+        "bwr:transfer_canal",
+        "bwr:canal_gate",
+        "bwr:spent_fuel_pool_wall"
       ]
     },
     {
