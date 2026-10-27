@@ -160,6 +160,7 @@ neoForge {
             if (project.hasProperty('bwrAccidentBlastCheck')) jvmArguments.add('-Dbwr.accidentBlastClientCheck=true')
             // One session with whatever else is in the run's mods/ folder (Essential, Effortless ...): builds and uses the new hardware.
             if (project.hasProperty('bwrCompatSessionCheck')) jvmArguments.add('-Dbwr.compatSessionCheck=true')
+            if (project.hasProperty('bwrEffortlessRepro')) jvmArguments.add('-Dbwr.effortlessRepro=true')
             // Door pictures for the old/new comparison: -PbwrContainmentDoorShots=<label> saves run/turbineModelCheck/containment-door-shots/<label>/.
             if (project.hasProperty('bwrContainmentDoorShots')) jvmArguments.add('-Dbwr.containmentDoorShots=' + project.property('bwrContainmentDoorShots'))
             if (project.hasProperty('bwrPanelPerformanceCheck')) jvmArguments.add('-Dbwr.panelPerformanceCheck=true')
@@ -889,4 +890,60 @@ tasks.register('checkNoProtectionLogic') {
 
 tasks.named('check') {
     dependsOn 'checkNoProtectionLogic'
+}
+
+// Effortless Structure on a dedicated server with one remote client (dev.bwr.mod.devtest.EffortlessMpRepro): a dev reproduction,
+// not a gate. -PeffJar=<path to an Effortless jar already on disk>; the jar is copied into the two run folders only, never a dependency.
+tasks.register('runEffortlessMp') {
+    ['runMpServer', 'runMpClientA'].each { n -> dependsOn({ tasks.getByName(n).taskDependencies }) }
+    doLast {
+        def mpDir = file('run/eff-mp')
+        def serverDir = file('run/mpServer')
+        def clientDir = file('run/mpClientA')
+        project.delete(mpDir, serverDir)
+        mpDir.mkdirs(); serverDir.mkdirs()
+        new File(serverDir, 'eula.txt').text = 'eula=true\n'
+        new File(serverDir, 'server.properties').text = [
+                'online-mode=false', 'server-ip=127.0.0.1', 'server-port=25599', 'spawn-protection=0',
+                'gamemode=creative', 'difficulty=peaceful', 'level-type=minecraft:flat',
+                'generate-structures=false', 'spawn-monsters=false', 'spawn-animals=false', 'spawn-npcs=false',
+                'allow-flight=true', 'max-tick-time=-1', 'view-distance=8', 'simulation-distance=8',
+                'enforce-secure-profile=false', 'player-idle-timeout=0'].join('\n') + '\n'
+        def jar = file(project.property('effJar'))
+        [serverDir, clientDir].each { d -> new File(d, 'mods').mkdirs(); copy { from jar; into new File(d, 'mods') } }
+        prepareRenderMods(clientDir)
+        def launch = { String runName, String tag, String mode ->
+            def t = tasks.getByName('run' + runName.capitalize())
+            def gameDir = neoForge.runs.getByName(runName).gameDirectory.get().asFile
+            gameDir.mkdirs()
+            t.environment.putAll(t.environmentProperty.get())
+            t.classpath(t.classpathProvider)
+            def log = new File(mpDir, tag + '.log')
+            def command = [t.javaLauncher.get().executablePath.asFile.absolutePath]
+            command.addAll(t.jvmArgs.findAll { !it.startsWith('-Dbwr.mp') })
+            t.allJvmArgs.each { if (!command.contains(it) && !it.startsWith('-Dbwr.mp')) command.add(it) }
+            command.addAll(['-Dbwr.effortlessMp=' + mode, '-Dbwr.effortlessMp.dir=' + mpDir.absolutePath])
+            command.addAll(['-cp', t.classpath.asPath, t.mainClass.get()])
+            command.addAll(t.args)
+            def pb = new ProcessBuilder(command).directory(gameDir).redirectErrorStream(true).redirectOutput(log)
+            t.environment.each { k, v -> pb.environment().put(k.toString(), v.toString()) }
+            logger.lifecycle("effortless mp: starting ${tag} (log ${log})")
+            [process: pb.start(), log: log]
+        }
+        def procs = []
+        try {
+            def server = launch('mpServer', 'server', 'server'); procs << server
+            long until = System.currentTimeMillis() + 400000
+            while (!(server.log.isFile() && server.log.text.contains('Done ('))) {
+                if (!server.process.isAlive() || System.currentTimeMillis() > until) throw new GradleException('server did not start')
+                Thread.sleep(500)
+            }
+            def client = launch('mpClientA', 'client', 'client'); procs << client
+            until = System.currentTimeMillis() + 1200000
+            while (server.process.isAlive() || client.process.isAlive()) {
+                if (System.currentTimeMillis() > until) throw new GradleException('effortless mp: timed out')
+                Thread.sleep(1000)
+            }
+        } finally { procs.each { if (it.process.isAlive()) it.process.destroyForcibly() } }
+    }
 }
