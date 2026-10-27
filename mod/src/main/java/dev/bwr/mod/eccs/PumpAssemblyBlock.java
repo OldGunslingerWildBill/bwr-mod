@@ -196,14 +196,32 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
     }
     @Override public BlockState getStateForPlacement(BlockPlaceContext ctx) {
         BlockState s=placementState().setValue(FACING,ctx.getHorizontalDirection().getOpposite());
+        return fits(ctx.getLevel(),ctx.getPlayer(),ctx.getClickedPos(),s,false)?s:null;
+    }
+    /** Whether the full footprint of {@code s} rooted at {@code root} is free to build; {@code ownRoot}: the root cell is already ours. */
+    private boolean fits(Level level,LivingEntity actor,BlockPos root,BlockState s,boolean ownRoot) {
         for(int i=0;i<cellCount(s);i++) {
-            BlockPos p=ctx.getClickedPos().offset(TurbineAssemblyBlock.turn(cellOffset(s,i),s.getValue(FACING)));
-            if(!dev.bwr.mod.world.AssemblyAccess.permitted(ctx.getLevel(),ctx.getPlayer(),p)||!ctx.getLevel().isLoaded(p) || ctx.getLevel().isOutsideBuildHeight(p) || !ctx.getLevel().getWorldBorder().isWithinBounds(p)
-                    || !ctx.getLevel().getBlockState(p).canBeReplaced() || !ctx.getLevel().isUnobstructed(s.setValue(CELL,i),p,CollisionContext.empty())) return null;
+            if(ownRoot && i==controllerCell(s)) continue;
+            BlockPos p=root.offset(TurbineAssemblyBlock.turn(cellOffset(s,i),s.getValue(FACING)));
+            if(!dev.bwr.mod.world.AssemblyAccess.permitted(level,actor,p)||!level.isLoaded(p) || level.isOutsideBuildHeight(p) || !level.getWorldBorder().isWithinBounds(p)
+                    || !level.getBlockState(p).canBeReplaced() || !level.isUnobstructed(s.setValue(CELL,i),p,CollisionContext.empty())) return false;
         }
-        return s;
+        return true;
     }
     @Override public void setPlacedBy(Level level,BlockPos root,BlockState s,LivingEntity placer,ItemStack stack) {
+        if(!isFull(s) && !level.isClientSide()) {
+            // Building mods (Effortless and the like) can place the block's default state, the one-cell compact form old saves
+            // keep, without asking getStateForPlacement. They still call this: build the full assembly, or give the item back.
+            BlockState full=placementState().setValue(FACING,placer!=null?placer.getDirection().getOpposite():s.getValue(FACING));
+            if(!fits(level,placer,root,full,true)) {
+                level.removeBlock(root,false);
+                if(!(placer instanceof Player p && p.getAbilities().instabuild)) Block.popResource(level,root,stack.copyWithCount(1));
+                if(placer instanceof Player p) p.displayClientMessage(dev.bwr.mod.text.BwrText.tr("status.bwr.pump_assembly.no_room_for_the_full_assembly","Not enough room for the full assembly here"),true);
+                return;
+            }
+            level.setBlock(root,full,3);
+            s=full;
+        }
         if(!isFull(s) || s.getValue(CELL)!=controllerCell(s)) return;
         for(int i=0;i<cellCount(s);i++) if(i!=controllerCell(s)) {
             BlockPos p=root.offset(TurbineAssemblyBlock.turn(cellOffset(s,i),s.getValue(FACING)));

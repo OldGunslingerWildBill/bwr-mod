@@ -901,6 +901,7 @@
   "status.bwr.refuelling_menu.loaded": "Loaded ",
   "status.bwr.refuelling_menu.unloaded": "Unloaded ",
   "status.bwr.refuelling_menu.of_selected_positions": "%s%s of %s selected positions.",
+  "status.bwr.pump_assembly.no_room_for_the_full_assembly": "Not enough room for the full assembly here",
   "status.bwr.power_module_item.control_steam_with_an_upstream_stop_control_valve": "Control steam with an upstream stop/control valve.",
   "status.bwr.power_module_item.place_a_condenser_six_blocks_directly_below_facing": "Place a condenser six blocks directly below, facing the same way.",
   "status.bwr.power_module_item.fe_output_copper_terminal_on_right_up_to": "FE output: copper terminal on right; up to 1,500 MW",

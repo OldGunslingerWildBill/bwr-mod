@@ -82,7 +82,7 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
             // A module a player places from a fresh item starts a train that needs its auxiliaries; one that comes from a
             // dismantled module keeps whatever that one was, so an old plant moved piece by piece stays an old plant.
             else if(placer instanceof Player&&dev.bwr.mod.config.GameplayConfig.turbineAuxRequired())module.markAuxRequired();
-            adoptSkids(level,origin(pos,state));
+            adoptSkids(level,origin(pos,level.getBlockState(pos)));
         }
     }
     /** Skids that were waiting for this module (their neighbour updates came before its controller existed) attach now. */

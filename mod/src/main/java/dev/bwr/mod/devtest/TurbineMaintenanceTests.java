@@ -682,4 +682,28 @@ public final class TurbineMaintenanceTests {
                     "a section under 5 % wear is a spare, over it a damaged one");
         });
     }
+
+    // ------------------------------------------------------------------------------------------------ placement by building mods
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aCompactPlacementByABuildingModBuildsTheFullTurbineOrGivesTheItemBack(GameTestHelper h) {
+        run(h, at(14), f -> {
+            // Effortless and the like place the default (compact) state and then call setPlacedBy
+            var hp = BwrBlocks.HP_TURBINE.get();
+            BlockPos p = f.root.offset(-20, 0, 0);
+            f.l.setBlock(p, hp.defaultBlockState(), 3);
+            hp.setPlacedBy(f.l, p, hp.defaultBlockState(), null, new ItemStack(hp));
+            var s = f.l.getBlockState(p);
+            h.assertTrue(hp.isFull(s) && hp.complete(f.l, hp.origin(p, s), s), "the full turbine was built, not the one-block miniature: " + s);
+            var full = hp.placementState();
+            int k = hp.controllerCell(full) == 0 ? 1 : 0;
+            BlockPos q = p.above(12);
+            BlockPos blocker = q.offset(dev.bwr.mod.eccs.TurbineAssemblyBlock.turn(hp.cellOffset(full, k), full.getValue(dev.bwr.mod.eccs.PumpAssemblyBlock.FACING)));
+            f.l.setBlock(blocker, Blocks.STONE.defaultBlockState(), 3);
+            f.l.setBlock(q, hp.defaultBlockState(), 3);
+            hp.setPlacedBy(f.l, q, hp.defaultBlockState(), null, new ItemStack(hp));
+            h.assertTrue(f.l.getBlockState(q).isAir() && f.l.getBlockState(blocker).is(Blocks.STONE), "no room: nothing is left there and the blocker stands");
+            h.assertTrue(f.l.getEntitiesOfClass(ItemEntity.class, new AABB(q).inflate(2), e -> e.getItem().is(hp.asItem())).size() == 1, "and the item came back");
+        });
+    }
 }
