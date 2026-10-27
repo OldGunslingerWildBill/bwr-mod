@@ -22,6 +22,22 @@ public final class AssemblyAccess {
         return !(actor instanceof Player player) || level.mayInteract(player,pos);
     }
     /**
+     * A multi-cell placement was refused after its root block was set (a cell is taken, not loaded, not permitted, or would not
+     * set): the root goes and the placer gets the item back. Vanilla and the building mods take the item once {@code setPlacedBy}
+     * returns, so it is given back here, not through {@code popResource}, which the doTileDrops rule silences: into a player's
+     * inventory (a building mod reaches far), as a dropped item with no placer, and not at all for a creative player, who was
+     * not charged. Clients only remove the root.
+     */
+    public static void refusePlacement(Level level, BlockPos root, LivingEntity placer, net.minecraft.world.item.ItemStack stack) {
+        level.removeBlock(root,false);
+        if(level.isClientSide()) return;
+        if(placer instanceof Player p) p.displayClientMessage(dev.bwr.mod.text.BwrText.tr("status.bwr.pump_assembly.no_room_for_the_full_assembly","Not enough room for the full assembly here"),true);
+        if(stack.isEmpty() || placer instanceof Player p && p.getAbilities().instabuild) return;
+        net.minecraft.world.item.ItemStack back=stack.copyWithCount(1);
+        if(placer instanceof Player p) p.getInventory().placeItemBackInInventory(back);
+        else level.addFreshEntity(new net.minecraft.world.entity.item.ItemEntity(level,root.getX()+.5,root.getY()+.5,root.getZ()+.5,back));
+    }
+    /**
      * Operating a control (press, turn, hold, recorder text): everyone but a spectator, so adventure maps work. The
      * custom panel packets bypass the vanilla game-mode gates, so they ask here.
      */

@@ -80,11 +80,11 @@ public class CoolingBlock extends BaseEntityBlock implements SimpleWaterloggedBl
         var layout=layout();
         // Recheck before any writes; a failed placement never removes another block.
         for(var cell:layout.cells){var p=layout.world(root,state.getValue(FACING),cell);
-            if(!dev.bwr.mod.world.AssemblyAccess.permitted(l,who,p)||!p.equals(root)&&(!l.isLoaded(p)||!l.getBlockState(p).canBeReplaced())){l.removeBlock(root,false);return;}}
+            if(!dev.bwr.mod.world.AssemblyAccess.permitted(l,who,p)||!p.equals(root)&&(!l.isLoaded(p)||!l.getBlockState(p).canBeReplaced())){dev.bwr.mod.world.AssemblyAccess.refusePlacement(l,root,who,stack);return;}}
         owner.forming=true;
         for(var cell:layout.cells){var p=layout.world(root,state.getValue(FACING),cell);if(p.equals(root))continue;
             var placed=cellState(state,cell).setValue(WATERLOGGED,design==dev.bwr.core.turbine.CoolingWaterUnit.Design.INTAKE&&l.getFluidState(p).is(net.minecraft.world.level.material.Fluids.WATER));
-            if(!l.setBlock(p,placed,Block.UPDATE_CLIENTS)||!(l.getBlockEntity(p) instanceof CoolingBlockEntity part)){l.removeBlock(root,false);return;}
+            if(!l.setBlock(p,placed,Block.UPDATE_CLIENTS)||!(l.getBlockEntity(p) instanceof CoolingBlockEntity part)){dev.bwr.mod.world.AssemblyAccess.refusePlacement(l,root,who,stack);return;}
             part.bind(owner,cell.index());l.sendBlockUpdated(p,l.getBlockState(p),l.getBlockState(p),Block.UPDATE_CLIENTS);
         }
         owner.forming=false;owner.structureDirty=true;owner.setChanged();

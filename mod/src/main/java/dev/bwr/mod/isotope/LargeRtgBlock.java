@@ -193,13 +193,13 @@ public class LargeRtgBlock extends BaseEntityBlock {
         for (int i = 1; i < CELLS; i++) {
             BlockPos p = cellPos(root, s.getValue(FACING), i);
             if (!dev.bwr.mod.world.AssemblyAccess.permitted(level, placer, p) || !level.isLoaded(p) || !level.getBlockState(p).canBeReplaced()) {
-                level.removeBlock(root, false);
+                dev.bwr.mod.world.AssemblyAccess.refusePlacement(level, root, placer, stack);
                 return;
             }
         }
         for (int i = 1; i < CELLS; i++) {
             if (!level.setBlock(cellPos(root, s.getValue(FACING), i), s.setValue(CELL, i), 3)) {
-                level.removeBlock(root, false);
+                dev.bwr.mod.world.AssemblyAccess.refusePlacement(level, root, placer, stack);
                 return;
             }
         }
