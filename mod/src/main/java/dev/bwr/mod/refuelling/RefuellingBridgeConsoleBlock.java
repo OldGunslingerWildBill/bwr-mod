@@ -132,6 +132,11 @@ public class RefuellingBridgeConsoleBlock extends BaseEntityBlock {
                 ? BwrText.tr("status.bwr.refuelling_bridge.report_no_pool", "Pool: none between the rails.")
                 : BwrText.tr("status.bwr.refuelling_bridge.report_pool", "Pool: controller at %s.", site.poolPos.toShortString()));
         lines.add(BwrText.tr("status.bwr.refuelling_bridge.report_chute", "Cattle chute: %s.", be.chute().state().name().toLowerCase(java.util.Locale.ROOT)));
+        if (be.chute().slot()) {
+            lines.add(BwrText.tr("status.bwr.refuelling_bridge.report_slot",
+                    "The chute runs through a slot in the pool wall: water surface y %s, floor y %s.",
+                    String.format(java.util.Locale.ROOT, "%.2f", be.chute().surfaceY()), String.format(java.util.Locale.ROOT, "%.2f", be.chute().floorY())));
+        }
         lines.add(BwrText.tr("status.bwr.refuelling_bridge.report_state", "Bridge: %s, %s queued%s.",
                 be.phase().name().toLowerCase(java.util.Locale.ROOT), be.queued(), be.carried().isEmpty() ? "" : ", holding an assembly"));
         return lines;

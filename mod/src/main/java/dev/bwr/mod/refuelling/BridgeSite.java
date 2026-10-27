@@ -48,7 +48,11 @@ import java.util.List;
  * same number {@code RadiationField} uses for an open head). The reactor model's level includes the reactor well: water raised over the
  * vessel flange into a sealed well adds its rise to the cover metre for metre (see {@code CavitySeal}). The chute's is the lower of
  * the two, or none when drained.
- * The two bodies are not coupled: an open gate is a path, not a pipe (see REFUELLING-BRIDGE.md).
+ * An old chute (the row between the walls, the pool's lining and the well's wall left solid) couples nothing: an open gate is a path, not a
+ * pipe. A chute whose row runs on through a slot cut in the pool's wall ({@link SpentFuelPoolLayout.Slot}) is one body of water with the
+ * pool and the well when its gates are open: the pool's controller passes the water through it ({@link CanalExchange}) and sets the canal
+ * blocks' water to the connected level, which is what this survey then reads as the chute's surface. The slot's column is part of the
+ * chute: its gates count, its floor (the sill) is the chute's floor at the highest. See REFUELLING-BRIDGE.md.
  */
 public final class BridgeSite {
     public static final int MAX_SPAN = 40;
@@ -67,8 +71,69 @@ public final class BridgeSite {
      * highest-floored one (world Y): the chute is a trench with a level of its own.
      */
     public record Chute(ChuteState state, int row, int gapLo, int gapHi, double entryA, double exitA, @Nullable BlockPos closedGate,
-                        List<BlockPos> gates, double surfaceY, double floorY) {
-        public static final Chute NONE = new Chute(ChuteState.ABSENT, 0, 0, -1, 0, 0, null, List.of(), Double.NaN, Double.NaN);
+                        List<BlockPos> gates, double surfaceY, double floorY, boolean slot) {
+        public static final Chute NONE = new Chute(ChuteState.ABSENT, 0, 0, -1, 0, 0, null, List.of(), Double.NaN, Double.NaN, false);
+
+        /** An old-style chute: the row between the walls, both walls solid. */
+        public Chute(ChuteState state, int row, int gapLo, int gapHi, double entryA, double exitA, @Nullable BlockPos closedGate,
+                     List<BlockPos> gates, double surfaceY, double floorY) {
+            this(state, row, gapLo, gapHi, entryA, exitA, closedGate, gates, surfaceY, floorY, false);
+        }
+    }
+
+    /** What one stacked column of canal blocks says: added into the row's totals. */
+    private static final class Reading {
+        boolean wet = true;
+        BlockPos closed;
+        final List<BlockPos> gates = new ArrayList<>();
+        double surface = Double.MAX_VALUE;
+        double floor = -Double.MAX_VALUE;
+
+        /**
+         * Reads the stack from {@code top} down. An old column's water is its flags (every block wet, the surface 13/16 up the top
+         * block). A column whose water a slot sets ({@link TransferCanalBlock#FILL} above 0 in some block, {@link CanalExchange})
+         * holds water over its floor when its lowest block does, with the surface where the fill puts it. False if a block is not loaded.
+         */
+        boolean column(Level level, int x, int z, int top) {
+            int bottom = top;
+            boolean allWet = true;
+            boolean levelled = false;
+            boolean bottomWet = false;
+            double levelSurface = -Double.MAX_VALUE;
+            for (int y = top; y > top - MAX_DEPTH; y--) {
+                BlockPos at = new BlockPos(x, y, z);
+                if (!level.isLoaded(at)) {
+                    return false;
+                }
+                BlockState st = level.getBlockState(at);
+                if (!(st.getBlock() instanceof TransferCanalBlock)) {
+                    break;
+                }
+                bottom = y;
+                boolean w = st.getValue(TransferCanalBlock.WATER);
+                allWet &= w;
+                bottomWet = w;
+                int fill = st.getValue(TransferCanalBlock.FILL);
+                if (fill > 0) {
+                    levelled = true;
+                    if (w) {
+                        levelSurface = Math.max(levelSurface, y + (fill >= 16 ? 1.0 : fill / 16.0));
+                    }
+                }
+                if (st.getBlock() instanceof CanalGateBlock) {
+                    gates.add(at);
+                    if (!st.getValue(CanalGateBlock.OPEN) && closed == null) {
+                        closed = at;
+                    }
+                }
+            }
+            boolean columnWet = levelled ? bottomWet && levelSurface > -Double.MAX_VALUE : allWet;
+            wet &= columnWet;
+            surface = Math.min(surface, levelled ? (columnWet ? levelSurface : bottom + TransferCanalBlock.FLOOR_THICKNESS)
+                    : top + TransferCanalBlock.SURFACE_IN_BLOCK);
+            floor = Math.max(floor, bottom + TransferCanalBlock.FLOOR_THICKNESS);
+            return true;
+        }
     }
 
     @Nullable
@@ -427,16 +492,13 @@ public final class BridgeSite {
             rows.add(row);
         }
         rows.sort((u, v) -> Double.compare(Math.abs(u - centre), Math.abs(v - centre)));
+        // the pool's wall column on the chute's side: a slot there is part of the chute (the old chute leaves it lining)
+        int wallA = rHi + 1 < pLo - 1 ? pLo - 1 : pHi + 1;
         for (int row : rows) {
             boolean complete = true;
-            boolean wet = true;
-            BlockPos closed = null;
-            List<BlockPos> gates = new ArrayList<>();
-            double surface = Double.MAX_VALUE;
-            double floor = -Double.MAX_VALUE;
+            Reading reading = new Reading();
             for (int a = gapLo; a <= gapHi && complete; a++) {
                 int top = Integer.MIN_VALUE;
-                int bottom = Integer.MIN_VALUE;
                 for (int y = railY - 1; y >= railY - 4 && top == Integer.MIN_VALUE; y--) {
                     BlockPos at = new BlockPos((int) x(a, row), y, (int) z(a, row));
                     if (!level.isLoaded(at)) {
@@ -452,31 +514,20 @@ public final class BridgeSite {
                     break;
                 }
                 // the trench: the canal blocks stacked down from the top
-                for (int y = top; y > top - MAX_DEPTH; y--) {
-                    BlockPos at = new BlockPos((int) x(a, row), y, (int) z(a, row));
-                    if (!level.isLoaded(at)) {
-                        complete = false;
-                        break;
-                    }
-                    BlockState st = level.getBlockState(at);
-                    if (!(st.getBlock() instanceof TransferCanalBlock)) {
-                        break;
-                    }
-                    bottom = y;
-                    wet &= st.getValue(TransferCanalBlock.WATER);
-                    if (st.getBlock() instanceof CanalGateBlock) {
-                        gates.add(at);
-                        if (!st.getValue(CanalGateBlock.OPEN) && closed == null) {
-                            closed = at;
-                        }
-                    }
+                if (!reading.column(level, (int) x(a, row), (int) z(a, row), top)) {
+                    complete = false;
                 }
-                surface = Math.min(surface, top + TransferCanalBlock.SURFACE_IN_BLOCK);
-                floor = Math.max(floor, bottom + TransferCanalBlock.FLOOR_THICKNESS);
             }
             if (complete) {
-                ChuteState state = closed != null ? ChuteState.CLOSED : !wet ? ChuteState.DRAINED : ChuteState.OPEN;
-                return new Chute(state, row, gapLo, gapHi, entryA, exitA, closed, List.copyOf(gates), surface, floor);
+                int sx = (int) x(wallA, row);
+                int sz = (int) z(wallA, row);
+                boolean slot = l.slotAt(sx, sz) != null;
+                if (slot && !reading.column(level, sx, sz, l.max().getY())) {
+                    continue;
+                }
+                ChuteState state = reading.closed != null ? ChuteState.CLOSED : !reading.wet ? ChuteState.DRAINED : ChuteState.OPEN;
+                return new Chute(state, row, gapLo, gapHi, entryA, exitA, reading.closed, List.copyOf(reading.gates), reading.surface,
+                        reading.floor, slot);
             }
         }
         return none;

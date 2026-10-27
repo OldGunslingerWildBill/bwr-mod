@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -32,7 +33,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * another (the lowest has the floor, the highest the water surface, the ones between are open channel). Its {@code water}
  * flag says whether the trench holds water; a bucket fills or drains the whole stack it is used on, and a drained chute is a
  * thing a player can do and the survey meter notices when a fuel assembly goes through one. Nothing here ticks or flows:
- * the flag is the water. See {@link BridgeSite} for how the row is found and {@link CanalGateBlock} for the gates.
+ * the flag is the water. A canal cut as a slot through a spent fuel pool's wall and joined to a reactor well is different: the
+ * pool's controller steps the water through it ({@link CanalExchange}) and sets the flags and the {@link #FILL} of the row to
+ * the connected level. See {@link BridgeSite} for how the row is found and {@link CanalGateBlock} for the gates.
  */
 public class TransferCanalBlock extends Block {
 
@@ -42,6 +45,12 @@ public class TransferCanalBlock extends Block {
     public static final BooleanProperty FLOOR = BooleanProperty.create("floor");
     /** No canal block above: this one has the water surface. */
     public static final BooleanProperty TOP = BooleanProperty.create("top");
+    /**
+     * Where the water surface stands in this block, in sixteenths, when the canal is a slot joined to a pool and a reactor well
+     * ({@link CanalExchange} sets it from the connected level): 1 to 16. 0, the default and every old block, is the canal's own
+     * water as before: to {@link #SURFACE_IN_BLOCK} in the top block, to the full height in the ones under it.
+     */
+    public static final IntegerProperty FILL = IntegerProperty.create("fill", 0, 16);
 
     /** Height of the water surface in the top block, blocks. */
     public static final double SURFACE_IN_BLOCK = 13.0 / 16.0;
@@ -55,12 +64,12 @@ public class TransferCanalBlock extends Block {
     public TransferCanalBlock(Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any().setValue(AXIS, Direction.Axis.X).setValue(WATER, true)
-                .setValue(FLOOR, true).setValue(TOP, true));
+                .setValue(FLOOR, true).setValue(TOP, true).setValue(FILL, 0));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(AXIS, WATER, FLOOR, TOP);
+        builder.add(AXIS, WATER, FLOOR, TOP, FILL);
     }
 
     @Override
@@ -89,6 +98,23 @@ public class TransferCanalBlock extends Block {
     }
 
     @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState old, boolean moved) {
+        super.onPlace(state, level, pos, old, moved);
+        if (!(old.getBlock() instanceof TransferCanalBlock)) {
+            // a canal block can be a slot in a pool's wall: the pools around it look at their structure again
+            dev.bwr.mod.spentfuel.SpentFuelPoolRegistry.changed(level, pos);
+        }
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState next, boolean moved) {
+        if (!(next.getBlock() instanceof TransferCanalBlock)) {
+            dev.bwr.mod.spentfuel.SpentFuelPoolRegistry.changed(level, pos);
+        }
+        super.onRemove(state, level, pos, next, moved);
+    }
+
+    @Override
     protected BlockState rotate(BlockState state, Rotation rotation) {
         return rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90
                 ? state.setValue(AXIS, state.getValue(AXIS) == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X) : state;
@@ -111,7 +137,7 @@ public class TransferCanalBlock extends Block {
             at = at.above();
         }
         for (int n = 0; n < 32 && level.getBlockState(at).getBlock() instanceof TransferCanalBlock; n++) {
-            level.setBlock(at, level.getBlockState(at).setValue(WATER, wet), 3);
+            level.setBlock(at, level.getBlockState(at).setValue(WATER, wet).setValue(FILL, 0), 3);
             at = at.below();
         }
     }

@@ -1,0 +1,31 @@
+{
+  "textures": {
+    "canal": "bwr:block/transfer_canal",
+    "water": "bwr:block/transfer_canal_water",
+    "plate": "bwr:block/canal_gate",
+    "particle": "bwr:block/transfer_canal"
+  },
+  "render_type": "minecraft:translucent",
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        2
+      ],
+      "to": [
+        16,
+        16,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#water"
+        },
+        "south": {
+          "texture": "#water"
+        }
+      }
+    }
+  ]
+}

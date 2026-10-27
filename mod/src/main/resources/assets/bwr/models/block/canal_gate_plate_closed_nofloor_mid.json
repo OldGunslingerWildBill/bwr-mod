@@ -1,0 +1,42 @@
+{
+  "textures": {
+    "canal": "bwr:block/transfer_canal",
+    "water": "bwr:block/transfer_canal_water",
+    "plate": "bwr:block/canal_gate",
+    "particle": "bwr:block/transfer_canal"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        0,
+        2
+      ],
+      "to": [
+        9,
+        16,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#plate"
+        },
+        "south": {
+          "texture": "#plate"
+        },
+        "east": {
+          "texture": "#plate"
+        },
+        "west": {
+          "texture": "#plate"
+        },
+        "up": {
+          "texture": "#plate"
+        },
+        "down": {
+          "texture": "#plate"
+        }
+      }
+    }
+  ]
+}
