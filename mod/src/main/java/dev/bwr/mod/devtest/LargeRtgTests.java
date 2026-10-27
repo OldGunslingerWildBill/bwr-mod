@@ -800,4 +800,140 @@ public final class LargeRtgTests {
         System.out.println("LARGE RTG CC: bwr_large_rtg and bwr_rtg read through getStatus and switch through setHeatOnly");
         h.succeed();
     }
+
+    // ------------------------------------------------------------------------------------------------------------
+    // The one drop
+
+    private static long unitsDropped(ServerLevel l, BlockPos root) {
+        long n = 0;
+        for (ItemEntity e : l.getEntitiesOfClass(ItemEntity.class, new AABB(root).inflate(6, 6, 6))) {
+            if (e.getItem().is(BwrItems.LARGE_RTG.get())) {
+                n += e.getItem().getCount();
+            }
+        }
+        return n;
+    }
+
+    private static long ingotsDropped(ServerLevel l, BlockPos root) {
+        long n = 0;
+        for (ItemEntity e : l.getEntitiesOfClass(ItemEntity.class, new AABB(root).inflate(6, 6, 6))) {
+            if (e.getItem().is(BwrItems.STRONTIUM_90_INGOT.get())) {
+                n += e.getItem().getCount();
+            }
+        }
+        return n;
+    }
+
+    private static void clearItems(ServerLevel l, BlockPos root) {
+        for (ItemEntity e : l.getEntitiesOfClass(ItemEntity.class, new AABB(root).inflate(6, 6, 6))) {
+            e.discard();
+        }
+    }
+
+    private static boolean anyCellLeft(ServerLevel l, BlockPos root) {
+        for (BlockPos p : BlockPos.betweenClosed(root.offset(-2, 0, -2), root.offset(2, 2, 2))) {
+            if (l.getBlockState(p).is(BwrBlocks.LARGE_RTG.get())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** A player in the given game mode (survival or creative) breaks one cell with a diamond pickaxe, as {@link #breakAsPlayer} does for survival. */
+    private static void breakAs(ServerLevel l, BlockPos p, net.minecraft.world.level.GameType type) {
+        var player = net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(l);
+        var held = player.getMainHandItem().copy();
+        var mode = player.gameMode.getGameModeForPlayer();
+        try {
+            player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(net.minecraft.world.item.Items.DIAMOND_PICKAXE));
+            player.gameMode.changeGameModeForPlayer(type);
+            player.setPos(p.getX() + 2.5, p.getY(), p.getZ() + .5);
+            player.gameMode.destroyBlock(p);
+        } finally {
+            player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, held);
+            player.gameMode.changeGameModeForPlayer(mode);
+        }
+    }
+
+    private static net.minecraft.world.level.Explosion explosion(ServerLevel l, BlockPos root, java.util.List<BlockPos> hit) {
+        return new net.minecraft.world.level.Explosion(l, null, root.getX() + .5, root.getY() + .5, root.getZ() + .5, 4F, false,
+                net.minecraft.world.level.Explosion.BlockInteraction.DESTROY, hit);
+    }
+
+    /**
+     * The unit drops exactly one item however it goes. The loot table only gives it from the controller cell, so a removal that
+     * starts at a part cell (an explosion that misses the controller, a command, another mod) used to lose it while the contents
+     * still dropped. Not twice either: a player mining a part cell, the controller itself, an explosion that hits the controller
+     * and other cells. Creative gets nothing.
+     */
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = 100)
+    public static void exactlyOneUnitDropsHoweverItIsRemoved(GameTestHelper h) {
+        ServerLevel l = h.getLevel();
+        BlockPos root = h.absolutePos(new BlockPos(3, 2, 3));
+        var facing = Direction.NORTH;
+        int[] bx = box(facing);
+        BlockPos topCorner = root.offset(bx[1], 2, bx[3]), middle = root.offset(bx[1], 1, bx[2]), foot = root.offset(bx[1], 0, bx[3]);
+        // non-player removals of one part cell: destroyBlock with loot, removeBlock, setBlock to air; the contents drop once too
+        for (BlockPos part : new BlockPos[] {topCorner, middle, foot}) {
+            for (int how = 0; how < 3; how++) {
+                var be = assembled(l, root, facing);
+                be.loadFrom(2, new ItemStack(BwrItems.STRONTIUM_90_INGOT.get(), 2));
+                clearItems(l, root);
+                switch (how) {
+                    case 0 -> l.destroyBlock(part, true);
+                    case 1 -> l.removeBlock(part, false);
+                    default -> l.setBlock(part, Blocks.AIR.defaultBlockState(), 3);
+                }
+                h.assertTrue(!anyCellLeft(l, root), "cells left after removing " + part + " (mode " + how + ")");
+                h.assertTrue(unitsDropped(l, root) == 1, "removing part cell " + part + " (mode " + how + ") dropped " + unitsDropped(l, root) + " units, not 1");
+                h.assertTrue(ingotsDropped(l, root) == 2, "the contents did not drop once (mode " + how + "): " + ingotsDropped(l, root));
+            }
+        }
+        // explosions that hit only part cells
+        for (java.util.List<BlockPos> hit : java.util.List.of(java.util.List.of(topCorner), java.util.List.of(foot, middle),
+                java.util.List.of(root.offset(bx[0], 2, bx[2]), topCorner, foot))) {
+            assembled(l, root, facing);
+            clearItems(l, root);
+            explosion(l, root, hit).finalizeExplosion(false);
+            h.assertTrue(!anyCellLeft(l, root), "cells left after an explosion hit " + hit);
+            h.assertTrue(unitsDropped(l, root) == 1, "an explosion hitting only part cells " + hit + " dropped " + unitsDropped(l, root) + " units, not 1");
+        }
+        // an explosion that hits the controller and part cells: one, whichever is processed first (the explosion shuffles, so also by hand)
+        for (java.util.List<BlockPos> order : java.util.List.of(java.util.List.of(root, topCorner, middle), java.util.List.of(topCorner, middle, root), java.util.List.of(middle, root, topCorner))) {
+            assembled(l, root, facing);
+            clearItems(l, root);
+            for (BlockPos c : order) {
+                explosion(l, root, java.util.List.of(c)).finalizeExplosion(false);
+            }
+            h.assertTrue(!anyCellLeft(l, root), "cells left after the explosion in order " + order);
+            h.assertTrue(unitsDropped(l, root) == 1, "an explosion hitting the controller and part cells in order " + order + " dropped " + unitsDropped(l, root) + " units, not 1");
+        }
+        for (int i = 0; i < 6; i++) {
+            assembled(l, root, facing);
+            clearItems(l, root);
+            explosion(l, root, java.util.List.of(root, topCorner, middle, foot)).finalizeExplosion(false);
+            h.assertTrue(!anyCellLeft(l, root) && unitsDropped(l, root) == 1, "one explosion on the controller and part cells dropped " + unitsDropped(l, root) + " units, not 1 (try " + i + ")");
+        }
+        // a player: survival mining a part cell or the controller gives one, creative none, whichever cell
+        for (BlockPos cell : new BlockPos[] {topCorner, foot, root}) {
+            assembled(l, root, facing);
+            clearItems(l, root);
+            breakAs(l, cell, net.minecraft.world.level.GameType.SURVIVAL);
+            h.assertTrue(!anyCellLeft(l, root), "cells left after a survival player mined " + cell);
+            h.assertTrue(unitsDropped(l, root) == 1, "a survival player mining " + cell + " got " + unitsDropped(l, root) + " units, not 1");
+            assembled(l, root, facing);
+            clearItems(l, root);
+            breakAs(l, cell, net.minecraft.world.level.GameType.CREATIVE);
+            h.assertTrue(!anyCellLeft(l, root), "cells left after a creative player broke " + cell);
+            h.assertTrue(unitsDropped(l, root) == 0, "a creative player breaking " + cell + " got " + unitsDropped(l, root) + " units, not 0");
+        }
+        // the controller removed with no loot (a command) does not hand out the unit from the cells it takes with it
+        assembled(l, root, facing);
+        clearItems(l, root);
+        l.setBlock(root, Blocks.AIR.defaultBlockState(), 3);
+        h.assertTrue(!anyCellLeft(l, root), "cells left after the controller was removed");
+        h.assertTrue(unitsDropped(l, root) == 0, "removing the controller with no loot dropped " + unitsDropped(l, root) + " units");
+        clearItems(l, root);
+        h.succeed();
+    }
 }
