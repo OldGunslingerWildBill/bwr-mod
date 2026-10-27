@@ -112,6 +112,18 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
     }
 
     /**
+     * Forget a binding to {@code controller}: its structure no longer binds this drive. A binding to some other controller is
+     * left alone.
+     */
+    public void detach(BlockPos controller) {
+        if (!controller.equals(controllerPos) || rodIndex < 0) {
+            return;
+        }
+        this.rodIndex = -1;
+        setChanged();
+    }
+
+    /**
      * Tell the controller its structure changed, because nothing else will.
      *
      * <p>Vanilla only fires {@code neighborChanged} on the six blocks touching
@@ -272,11 +284,31 @@ public class ControlRodDriveBlockEntity extends BlockEntity implements ControlRo
         if (!level.isLoaded(controllerPos)) {
             return 0;
         }
-        if (level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity c
-                && c.core() != null) {
-            return c.core().getRodNotchIndex(rodIndex);
+        if (level.getBlockEntity(controllerPos) instanceof ReactorControllerBlockEntity c) {
+            int rod = boundRod(c);
+            return rod < 0 ? 0 : c.core().getRodNotchIndex(rod);
         }
         return 0;
+    }
+
+    /**
+     * The rod this drive really drives in {@code c}'s core, or -1. A drive left outside a structure that shrank keeps
+     * the number it was given (160 of a core that now has 150 rods), and a stale number inside the new range names
+     * another rod; so the number must be a rod of the core, and while the structure is formed it must be the slot the
+     * structure gives this very position.
+     */
+    private int boundRod(ReactorControllerBlockEntity c) {
+        if (rodIndex < 0 || c.core() == null || rodIndex >= c.core().getControlRodCount()) {
+            return -1;
+        }
+        var structure = c.structure();
+        if (structure != null) {
+            var crds = structure.crdPositions();
+            if (rodIndex >= crds.size() || !crds.get(rodIndex).equals(worldPosition)) {
+                return -1;
+            }
+        }
+        return rodIndex;
     }
 
     // --- Readout ------------------------------------------------------

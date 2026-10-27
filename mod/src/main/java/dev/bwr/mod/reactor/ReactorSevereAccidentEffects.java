@@ -81,6 +81,15 @@ public final class ReactorSevereAccidentEffects {
     private BlockPos roomMin;
     private BlockPos roomMax;
 
+    /**
+     * The vessel interior box the last time this reactor had a formed structure. An accident does not stop because a
+     * shell block was mined or a chunk border unformed the vessel (see {@link #accidentInProgress}), and the pedestal
+     * blast, the corium pool's anchoring, the hydrogen ignition point and the vessel protection all need a box to work
+     * from. Saved only when set.
+     */
+    private BlockPos vesselMin;
+    private BlockPos vesselMax;
+
     private final CoriumPool corium = new CoriumPool();
 
     private final AccidentBlast.Queue blasts = new AccidentBlast.Queue();
@@ -94,6 +103,26 @@ public final class ReactorSevereAccidentEffects {
         return blasts;
     }
 
+    /**
+     * Whether the world side of an accident is still going: any stage of core damage, a failed lower head, queued blasts,
+     * or contamination in the plant or on the site. The reactor keeps stepping its core and calling {@link #afterStep}
+     * while this is true even if the vessel structure is not formed, so mining one shell block cannot pause an accident.
+     */
+    public boolean accidentInProgress(ReactorCore core) {
+        var accident = core.getSevereAccident();
+        var containment = core.getContainment();
+        return accident.getStage() != SevereAccident.Stage.INTACT || accident.isPermanentDamage()
+                || accident.isLowerHeadFailed() || !blasts.isEmpty()
+                || containment.getPlantContaminationIndex() > 0.0 || containment.getSiteContaminationIndex() > 0.0;
+    }
+
+    private void rememberVessel(ReactorStructure structure) {
+        if (structure != null) {
+            vesselMin = structure.interiorMin().immutable();
+            vesselMax = structure.interiorMax().immutable();
+        }
+    }
+
     public void afterStep(ReactorControllerBlockEntity reactor) {
         if (!(reactor.getLevel() instanceof ServerLevel level)) {
             return;
@@ -104,6 +133,7 @@ public final class ReactorSevereAccidentEffects {
         }
         BlockPos pos = reactor.getBlockPos();
         ReactorStructure structure = reactor.structure();
+        rememberVessel(structure);
         for (SevereAccident.Event event : core.getSevereAccident().drainEvents()) {
             onCoreEvent(level, reactor, structure, event);
         }
@@ -132,8 +162,7 @@ public final class ReactorSevereAccidentEffects {
         boolean pedestal = blasts.has(AccidentBlast.Kind.PEDESTAL);
         pedestalWaitTicks = pedestal ? pedestalWaitTicks + 1 : 0;
         if (!pedestal || pedestalWaitTicks > PEDESTAL_WAIT_TICKS) {
-            corium.update(level, structure == null ? null : structure.interiorMin(),
-                    structure == null ? null : structure.interiorMax(), core.getSevereAccident(),
+            corium.update(level, vesselMin, vesselMax, core.getSevereAccident(),
                     CoriumConfig.alterWorld(), CoriumConfig.blocksPerTick());
         }
         if (++sinceDose >= DOSE_INTERVAL_TICKS) {
@@ -143,11 +172,11 @@ public final class ReactorSevereAccidentEffects {
     }
 
     /** Where hydrogen burns: the middle of the vessel top, where the release and the relief valves are. */
-    private static Vec3 ignition(BlockPos controller, ReactorStructure structure) {
-        if (structure == null) {
+    private Vec3 ignition(BlockPos controller) {
+        if (vesselMin == null || vesselMax == null) {
             return new Vec3(controller.getX() + 0.5, controller.getY() + 2.0, controller.getZ() + 0.5);
         }
-        BlockPos lo = structure.interiorMin(), hi = structure.interiorMax();
+        BlockPos lo = vesselMin, hi = vesselMax;
         return new Vec3((lo.getX() + hi.getX() + 1) / 2.0, hi.getY() + 0.5, (lo.getZ() + hi.getZ() + 1) / 2.0);
     }
 
@@ -185,6 +214,10 @@ public final class ReactorSevereAccidentEffects {
             tag.putLong("AccidentRoomMin", roomMin.asLong());
             tag.putLong("AccidentRoomMax", roomMax.asLong());
         }
+        if (vesselMin != null && vesselMax != null) {
+            tag.putLong("AccidentVesselMin", vesselMin.asLong());
+            tag.putLong("AccidentVesselMax", vesselMax.asLong());
+        }
     }
 
     public void read(CompoundTag tag) {
@@ -195,6 +228,12 @@ public final class ReactorSevereAccidentEffects {
                 && tag.contains("AccidentRoomMax", net.minecraft.nbt.Tag.TAG_LONG)) {
             roomMin = BlockPos.of(tag.getLong("AccidentRoomMin"));
             roomMax = BlockPos.of(tag.getLong("AccidentRoomMax"));
+        }
+        vesselMin = vesselMax = null;
+        if (tag.contains("AccidentVesselMin", net.minecraft.nbt.Tag.TAG_LONG)
+                && tag.contains("AccidentVesselMax", net.minecraft.nbt.Tag.TAG_LONG)) {
+            vesselMin = BlockPos.of(tag.getLong("AccidentVesselMin"));
+            vesselMax = BlockPos.of(tag.getLong("AccidentVesselMax"));
         }
     }
 
@@ -234,21 +273,21 @@ public final class ReactorSevereAccidentEffects {
      * footprint of the vessel. Queued once, from the core event.
      */
     public void lowerHeadFailed(ReactorControllerBlockEntity reactor) {
-        ReactorStructure structure = reactor.structure();
-        if (!(reactor.getLevel() instanceof ServerLevel level) || structure == null || reactor.core() == null) {
+        rememberVessel(reactor.structure());
+        if (!(reactor.getLevel() instanceof ServerLevel level) || vesselMin == null || reactor.core() == null) {
             return;
         }
         var accident = reactor.core().getSevereAccident();
         double tnt = BlastPhysics.lowerHeadTntKg(
                 accident.getLowerPlenumDebrisFraction() + accident.getExVesselFraction(), accident.getSizeScale());
-        blasts.add(AccidentBlast.pedestal(level, structure.interiorMin(), structure.interiorMax(), tnt, 4.0f));
+        blasts.add(AccidentBlast.pedestal(level, vesselMin, vesselMax, tnt, 4.0f));
     }
 
     private void onContainmentEvent(ServerLevel level, ReactorControllerBlockEntity reactor, ReactorStructure structure,
                                     ContainmentControllerBlockEntity room, BlockPos pos,
                                     ContainmentAtmosphere.EventDetail detail) {
         double x = pos.getX() + 0.5, y = pos.getY() + 2.0, z = pos.getZ() + 0.5;
-        Vec3 fire = ignition(reactor.getBlockPos(), structure);
+        Vec3 fire = ignition(reactor.getBlockPos());
         BlockPos[] box = roomMin == null || roomMax == null ? null : new BlockPos[] {roomMin, roomMax};
         switch (detail.event()) {
             case HYDROGEN_FLAMMABLE -> notice(level, pos, BwrText.tr(
@@ -291,8 +330,8 @@ public final class ReactorSevereAccidentEffects {
         }
     }
 
-    private static AccidentBlast.Job protect(AccidentBlast.Job job, ReactorStructure structure) {
-        return structure == null ? job : job.protect(structure.interiorMin(), structure.interiorMax());
+    private AccidentBlast.Job protect(AccidentBlast.Job job, ReactorStructure structure) {
+        return vesselMin == null || vesselMax == null ? job : job.protect(vesselMin, vesselMax);
     }
 
     private static void notice(ServerLevel level, BlockPos pos, Component text) {

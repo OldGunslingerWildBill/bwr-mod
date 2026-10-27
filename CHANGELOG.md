@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased: a running accident keeps going when the vessel is broken; stale control rod drives
+
+- **A severe accident no longer pauses when the vessel structure is lost.** With a core but no formed structure the reactor
+  controller returned before stepping the core and before the accident effects, so after a melt, mining one shell block (or a chunk
+  border unforming the vessel at the next revalidation) froze contamination doses, queued blasts and the corium pool until the vessel
+  was re-formed. Now, while any core damage, a failed lower head, a queued blast or contamination exists, the controller keeps stepping
+  the core and running `ReactorSevereAccidentEffects` on an unformed vessel. The structure-derived inputs (cavity survey, pump and
+  steam nozzle sweeps, cavity ports) are skipped and keep their last value; rods, the boundary and the containment room are read as
+  usual and every world read is loaded-only. The vessel box is remembered (saved as `AccidentVesselMin`/`AccidentVesselMax` only when
+  set; old saves load unchanged) so the pedestal blast, corium anchoring and blast protection still work. A healthy unformed reactor is
+  held as before. See SEVERE-ACCIDENT-UPDATE.md.
+- **Control rod drives left out of a structure no longer throw on right-click.** After a vessel shrank (say 177 to 150 rods) a drive
+  outside the new structure kept `rodIndex=160`, and right-click (and the CC `bwr_control_rod_drive` peripheral) called
+  `core.getRodNotchIndex(160)`, which threw; a stale index inside the new range read another rod. `bindDrives` now detaches drives it
+  bound last time and no longer binds, and a drive checks its binding when read (a rod of the core, and while the structure is formed the
+  slot the structure gives this very position), reading notch 0 otherwise.
+
 ## Unreleased: flaky GameTests round 3 (the level clock, and a release angle)
 
 Test-only; no game behaviour changed. Two tests failed now and then.

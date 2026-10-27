@@ -171,6 +171,17 @@ stays formed. Section "Accident blasts" has the mechanism, the numbers and the e
 and are never replayed after a reload; a blast still working through its blocks when the world saves resumes
 and finishes, once.
 
+**An accident does not need a formed vessel.** The effects above (doses, queued blasts, the corium pool) belong to the
+accident, not to the vessel's validation. While any core damage, a failed lower head, queued blasts or contamination
+exists, the reactor controller keeps stepping its core and running these effects even when the vessel is not formed:
+a shell block mined, a boundary chunk unloaded, a footprint being rebuilt. Mining a block cannot pause a melt. What the
+unformed tick leaves out is everything derived from the structure itself (the cavity survey, pumps, steam nozzles and
+cavity ports): those inputs keep the last value the core was given. The vessel box is remembered (saved as
+`AccidentVesselMin`/`AccidentVesselMax`, only when set) so the pedestal blast, the corium pool's anchoring, the burn point and
+the vessel's blast protection still know where the vessel was. An undamaged, uncontaminated core with no blast queued is
+held exactly as before and resumes when the vessel re-forms. A chunk unload of the controller itself stops everything, as
+before: a block entity that is not loaded does not tick.
+
 ## Accident blasts
 
 Before the accident blast update the explosions here were entity-only (`ExplosionInteraction.NONE`) and the endpoint was
