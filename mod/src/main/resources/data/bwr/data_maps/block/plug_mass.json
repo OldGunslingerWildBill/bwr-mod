@@ -11,6 +11,9 @@
     },
     "bwr:crane_anchor": {
       "tonnes": 0.05
+    },
+    "bwr:canal_gate_plug": {
+      "tonnes": 0.6
     }
   }
 }

@@ -129,6 +129,9 @@ public final class BwrBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.reactor.CavityDrainPortBlockEntity>> CAVITY_DRAIN_PORT =
             BLOCK_ENTITIES.register("cavity_drain_port", () -> BlockEntityType.Builder.of(dev.bwr.mod.reactor.CavityDrainPortBlockEntity::new,
                     BwrBlocks.CAVITY_DRAIN_PORT.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.reactor.CavityFillPortBlockEntity>> CAVITY_FILL_PORT =
+            BLOCK_ENTITIES.register("cavity_fill_port", () -> BlockEntityType.Builder.of(dev.bwr.mod.reactor.CavityFillPortBlockEntity::new,
+                    BwrBlocks.CAVITY_FILL_PORT.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.condenser.CondenserBlockEntity>> CONDENSER =
             BLOCK_ENTITIES.register("condenser", () -> BlockEntityType.Builder.of(dev.bwr.mod.condenser.CondenserBlockEntity::new,

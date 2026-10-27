@@ -905,13 +905,25 @@ public class ReactorControllerBlockEntity extends BlockEntity {
                 : CavityDrains.near(level, vesselEnvelope.min(), vesselEnvelope.max(), CavitySeal.WELL_EXTENT + 1);
     }
 
-    /** Steps the drain ports in the well. No ports: one comparison and a return. */
+    /** The loaded cavity fill ports in this reactor's well area, for the INFO tab, the flood checklist and the computers. Server side. */
+    public java.util.List<CavityFillPortBlockEntity> cavityFills() {
+        if (level == null || level.isClientSide()) return java.util.List.of();
+        refreshDrainPorts();
+        var out = new java.util.ArrayList<CavityFillPortBlockEntity>();
+        for (BlockPos p : drainPorts)
+            if (dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof CavityFillPortBlockEntity port && !port.isRemoved()) out.add(port);
+        return out;
+    }
+
+    /** Steps the drain and fill ports in the well. No ports: one comparison and a return. */
     private void drainCavity(Level level) {
         refreshDrainPorts();
         if (drainPorts.isEmpty()) return;
-        for (BlockPos p : drainPorts)
-            if (dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof CavityDrainPortBlockEntity port && !port.isRemoved())
-                port.step(this, config.tickSeconds);
+        for (BlockPos p : drainPorts) {
+            var port = dev.bwr.mod.world.LoadedWorld.blockEntity(level, p);
+            if (port instanceof CavityDrainPortBlockEntity drain && !drain.isRemoved()) drain.step(this, config.tickSeconds);
+            else if (port instanceof CavityFillPortBlockEntity fill && !fill.isRemoved()) fill.step(this, config.tickSeconds);
+        }
     }
 
     /** True when a survey has been made and none is running. */

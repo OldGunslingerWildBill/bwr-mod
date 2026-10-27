@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "B": {
+      "item": "minecraft:iron_bars"
+    }
+  },
+  "pattern": [
+    "I I",
+    "BBB",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:gate_laydown_stand"
+  }
+}

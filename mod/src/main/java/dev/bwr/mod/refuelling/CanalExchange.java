@@ -184,7 +184,7 @@ public final class CanalExchange {
         }
         for (int y = bottom; y <= top; y++) {
             BlockState s = level.getBlockState(new BlockPos(x, y, z));
-            if (s.getBlock() instanceof CanalGateBlock && !s.getValue(CanalGateBlock.OPEN)) {
+            if (CanalGateBlock.closes(s)) {
                 closed = true;
             }
         }

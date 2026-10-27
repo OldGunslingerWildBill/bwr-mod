@@ -432,6 +432,30 @@ public final class GuiScreenCheck {
         }, screen -> {
             click(screen, "INFO");
         }, screen -> screen.mouseScrolled(screen.width / 2.0, screen.height / 2.0, 0, -40), true));
+        // The "Flooding the well" checklist with failures named (no seal, the feed leaking into the drywell), scrolled into view.
+        s.add(new Scenario("reactor-info-flood-checklist", i -> {
+            var m = new ReactorPanelMenu(99, i, P);
+            reactorLive(m, false);
+            var F = dev.bwr.mod.reactor.FloodReadiness.Mark.FAIL.ordinal();
+            var OK = dev.bwr.mod.reactor.FloodReadiness.Mark.PASS.ordinal();
+            var INFO = dev.bwr.mod.reactor.FloodReadiness.Mark.INFO.ordinal();
+            m.cavity = new dev.bwr.mod.gui.CavityInfo(true, false,
+                    t("Absent: no row from y 212 down to y 207 (deepest allowed: 5 blocks below the top, a third of H = 16) has a wall within one block all round. Closest row y 212: the west side is 2 blocks from the vessel at x 197, z 204 (13 columns open)."),
+                    false, 0, 0, 0, 1500, true, List.of(), List.of(
+                    new dev.bwr.mod.gui.CavityInfo.Check(OK, t("Head off the vessel (at 202, 208, 191).")),
+                    new dev.bwr.mod.gui.CavityInfo.Check(OK, t("All 74 closure studs detensioned.")),
+                    new dev.bwr.mod.gui.CavityInfo.Check(F, t("No cavity seal: the wall must touch the vessel or stand one block off all round, at some row from the flange (y 212) down to y 207. Closest is row y 212: on the west side the wall is 2 blocks from the vessel at x 197, z 204 (13 columns open). The water would run into the drywell.")),
+                    new dev.bwr.mod.gui.CavityInfo.Check(F, t("No well without a cavity seal.")),
+                    new dev.bwr.mod.gui.CavityInfo.Check(OK, t("Water going in: 1,500 kg/s (feedwater 1,500).")),
+                    new dev.bwr.mod.gui.CavityInfo.Check(INFO, t("Fill port at 197, 215, 204: The reactor has no usable well (no cavity seal, or the wall opens below the flange).")),
+                    new dev.bwr.mod.gui.CavityInfo.Check(F, t("Water leaving: 1,500 kg/s (into the drywell 1,500 (no usable well)).")),
+                    new dev.bwr.mod.gui.CavityInfo.Check(OK, t("Flooded: 0.00 m over the flange, 0 m3 in the well and its annulus; the well's top is 0.00 m over the flange.")),
+                    new dev.bwr.mod.gui.CavityInfo.Check(INFO, t("4.24 m of water over the top of the fuel, 0.00 m over the flange."))),
+                    List.of(new dev.bwr.mod.gui.CavityInfo.Fill(197, 215, 204, dev.bwr.mod.reactor.CavityFillPortBlockEntity.State.NO_WELL.ordinal(), 0, 0, 0)));
+            return new ReactorPanelScreen(m, i, t("Reactor Control Panel"));
+        }, screen -> {
+            click(screen, "INFO");
+        }, screen -> screen.mouseScrolled(screen.width / 2.0, screen.height / 2.0, 0, -12), true));
         s.add(new Scenario("reactor-unformed", i -> {
             var m = new ReactorPanelMenu(99, i, P);
             m.formed = false;
@@ -868,6 +892,21 @@ public final class GuiScreenCheck {
         s.add(new Scenario("crane-lifting-head", i -> new CraneScreen(crane("TRANSIT", false, true, 0), i, t("Reactor Building Crane"))));
         s.add(new Scenario("crane-halted", i -> new CraneScreen(crane("HALTED", true, false, 3), i, t("Reactor Building Crane"))));
         s.add(new Scenario("crane-idle-head-on", i -> new CraneScreen(crane("IDLE", false, false, 0), i, t("Reactor Building Crane"))));
+        s.add(new Scenario("crane-gate-on-hook", i -> {
+            var m = crane("TRANSIT", false, true, 3);
+            m.carried = "a canal gate (2 blocks, 1.2 t)";
+            m.gateHeld = true;
+            m.gateNext = "2 blocks, 1.2 t, hooked";
+            m.move = "the canal gate at 410,104,404 to the canal gate at 409,107,399";
+            return new CraneScreen(m, i, t("Reactor Building Crane"));
+        }));
+        s.add(new Scenario("crane-gate-laid", i -> {
+            var m = crane("IDLE", false, true, 3);
+            m.gatesLaid = 1;
+            m.gateNext = "";
+            m.plugNext = "28 blocks, 112.2 t of 125 t, 4 anchors";
+            return new CraneScreen(m, i, t("Reactor Building Crane"));
+        }));
         s.add(new Scenario("crane-plug-laid-down", i -> {
             var m = crane("IDLE", false, false, 0);
             m.plugsLaid = 2;

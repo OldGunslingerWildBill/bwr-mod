@@ -48,10 +48,13 @@ public final class PlugSectionRenderer extends EntityRenderer<PlugSectionEntity>
         pose.pushPose();
         Vec3 here = e.getPosition(partial);
         var level = e.level();
-        if (level.getBlockEntity(e.cranePos()) instanceof BuildingCraneBlockEntity crane && crane.ownsPlugEntity(e.getUUID()) && crane.plugPlan() != null) {
+        if (level.getBlockEntity(e.cranePos()) instanceof BuildingCraneBlockEntity crane && crane.ownsPlugEntity(e.getUUID())
+                && (crane.plugPlan() != null || crane.gateLift().plan() != null)) {
             Point tip = crane.tip(partial);
             if (tip != null) {
-                pose.translate(tip.x() - here.x, tip.y() - crane.plugPlan().hookAboveBase() - here.y, tip.z() - here.z);
+                // a shield plug section, or a canal gate (CanalGateLift) on the same entity
+                double hang = crane.plugPlan() != null ? crane.plugPlan().hookAboveBase() : crane.gateLift().plan().hookAboveBase();
+                pose.translate(tip.x() - here.x, tip.y() - hang - here.y, tip.z() - here.z);
             }
         }
         // the crane carries its own work lights: never darker than a lit room

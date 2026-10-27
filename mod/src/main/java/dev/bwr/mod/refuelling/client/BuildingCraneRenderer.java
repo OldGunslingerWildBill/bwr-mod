@@ -143,6 +143,8 @@ public final class BuildingCraneRenderer implements BlockEntityRenderer<Building
         VesselProfile vessel = be.carriedProfile();
         if (be.carriedPlug() && be.plugPlan() != null) {
             hangPlugRig(pose, buffers, tip, be.plugPlan(), level, overlay);
+        } else if (be.carriedGate() && be.gateLift().plan() != null) {
+            hangGateRig(pose, buffers, tip, be.gateLift().plan(), level, overlay);
         } else if (vessel != null && be.carriedHead()) {
             hangHead(pose, buffers, tip, vessel, level, overlay);
         } else if (vessel != null && be.carriedInternal() != null) {
@@ -179,6 +181,22 @@ public final class BuildingCraneRenderer implements BlockEntityRenderer<Building
             double ay = baseY + plan.anchors()[i + 1] + 0.42;
             double az = tip.z() + plan.anchors()[i + 2] + 0.5 - plan.pz();
             slingBetween(pose, buffers, tip.x(), tip.y() - SHACKLE_DROP, tip.z(), ax, ay, az, lit, overlay);
+        }
+    }
+
+    /** A canal gate on its two-leg sling: the hook's ring and a sling from its shackle to each of the two lifting eyes on the gate's top. */
+    private static void hangGateRig(PoseStack pose, MultiBufferSource buffers, Point tip, dev.bwr.mod.refuelling.CanalGateLift.Plan plan,
+                                    net.minecraft.world.level.Level level, int overlay) {
+        int lit = work(LevelRenderer.getLightColor(level, BlockPos.containing(tip.x(), tip.y() - 1, tip.z())));
+        pose.pushPose();
+        pose.translate(tip.x(), tip.y(), tip.z());
+        part(pose, buffers, "strongback_hook", lit, overlay);
+        pose.popPose();
+        double eyeY = tip.y() - plan.hookAboveBase() + plan.height() + 0.30;
+        // the eyes stand a quarter of a block either side of the middle, across the canal
+        for (int side = -1; side <= 1; side += 2) {
+            double ax = tip.x() + (plan.alongX() ? 0.0 : side * 0.25), az = tip.z() + (plan.alongX() ? side * 0.25 : 0.0);
+            slingBetween(pose, buffers, tip.x(), tip.y() - SHACKLE_DROP, tip.z(), ax, eyeY, az, lit, overlay);
         }
     }
 

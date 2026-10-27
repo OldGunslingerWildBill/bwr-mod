@@ -35,7 +35,8 @@ import java.nio.file.Files;
 public final class ChuteSlotClientCheck {
 
     private static final BlockPos O = new BlockPos(400, 100, 400);
-    private static final String[] NAMES = {"slot-open-from-floor", "slot-open-from-pool", "slot-open-from-well", "slot-gate-closed"};
+    private static final String[] NAMES = {"slot-open-from-floor", "slot-open-from-pool", "slot-open-from-well", "slot-gate-closed",
+            "crane-lifting-gate-plug", "gate-on-laydown-stand"};
 
     private static boolean started, requested, standing, built;
     private static volatile Throwable failure;
@@ -151,6 +152,13 @@ public final class ChuteSlotClientCheck {
         if (stage == 3 && ex.state() != CanalExchange.State.GATE_CLOSED) {
             throw new AssertionError("the closed gate does not hold: " + ex.state());
         }
+        if (stage == 4 && (crane == null || !crane.carriedGate())) {
+            throw new AssertionError("the crane does not hold the gate plug");
+        }
+        if (stage == 5 && (!(mc.level.getBlockState(gateStand.above()).getBlock() instanceof dev.bwr.mod.refuelling.CanalGatePlugBlock)
+                || ex.state() == CanalExchange.State.GATE_CLOSED)) {
+            throw new AssertionError("the gate is not on its stand, or the slot is still closed: " + ex.state());
+        }
         var dir = mc.gameDirectory.toPath().resolve("chute-slot-check");
         Files.createDirectories(dir);
         CheckShots.save(mc, dir.resolve(NAMES[stage] + ".png"));
@@ -166,6 +174,8 @@ public final class ChuteSlotClientCheck {
         return switch (stage) {
             case 0, 3 -> new Vec3[]{new Vec3(x + 1.6, t + 4.0, z + 3.4), new Vec3(x + 2.5, t - 0.4, z + 0.5)};
             case 1 -> new Vec3[]{new Vec3(x + 8.2, t + 2.2, z + 0.5), new Vec3(x + 2.5, t - 0.8, z + 0.5)};
+            case 4 -> new Vec3[]{new Vec3(x - 4.0, t + 7.5, z + 11.0), new Vec3(x + 3.5, t + 6.0, z + 0.5)};
+            case 5 -> new Vec3[]{new Vec3(x + 8.0, t + 6.0, z + 3.5), new Vec3(x + 2.5, t + 3.0, z - 4.0)};
             default -> new Vec3[]{new Vec3(x - 3.0, t + 3.2, z + 0.5), new Vec3(x + 3.0, t - 0.6, z + 0.5)};
         };
     }
@@ -190,8 +200,67 @@ public final class ChuteSlotClientCheck {
                 rig.pool.be.layout() == null ? 0 : rig.pool.be.layout().slots().size(), rig.s.seal() == null ? "none" : rig.s.seal().english());
     }
 
+    private static dev.bwr.mod.refuelling.BuildingCraneBlockEntity crane;
+    private static BlockPos gateStand;
+
+    /**
+     * The crane over the hall (two runs of runway rails fourteen blocks over the floor, the console beside the first), the slot's gate made a two-block plug
+     * (the plug the crane lifts), a Gate Laydown Stand on the floor beside the canal, and the pool and the well level: GATE OUT lifts the plug.
+     */
+    private static void craneAndPlug(ServerLevel level) {
+        var env = rig.s.env();
+        for (int y = rig.slotBottom; y <= rig.top; y++) {
+            level.setBlock(new BlockPos(rig.columnsX[0], y, rig.zc), dev.bwr.mod.registry.BwrBlocks.CANAL_GATE_PLUG.get().defaultBlockState()
+                    .setValue(dev.bwr.mod.refuelling.TransferCanalBlock.AXIS, net.minecraft.core.Direction.Axis.X)
+                    .setValue(dev.bwr.mod.refuelling.TransferCanalBlock.TOP, y == rig.top)
+                    .setValue(dev.bwr.mod.refuelling.TransferCanalBlock.FLOOR, y == rig.slotBottom), 3);
+        }
+        int railY = rig.top + 14;
+        int lo = env.min().getX() - 4, hi = rig.x1 + 12;
+        for (int x = lo; x <= hi; x++) {
+            for (int z : new int[]{rig.zc - 9, rig.zc + 9}) {
+                level.setBlock(new BlockPos(x, railY, z), dev.bwr.mod.registry.BwrBlocks.CRANE_RUNWAY_RAIL.get().defaultBlockState()
+                        .setValue(dev.bwr.mod.refuelling.CraneRunwayRailBlock.AXIS, net.minecraft.core.Direction.Axis.X), 2);
+            }
+        }
+        BlockPos console = new BlockPos(lo - 1, railY, rig.zc - 9);
+        level.setBlock(console, dev.bwr.mod.registry.BwrBlocks.BUILDING_CRANE_CONSOLE.get().defaultBlockState(), 2);
+        crane = (dev.bwr.mod.refuelling.BuildingCraneBlockEntity) level.getBlockEntity(console);
+        gateStand = new BlockPos(rig.x1 + 2, rig.top + 1, rig.zc - 5);
+        level.setBlock(gateStand, dev.bwr.mod.registry.BwrBlocks.GATE_LAYDOWN_STAND.get().defaultBlockState(), 2);
+        crane.refreshSite();
+        rig.poolAt(rig.top + 0.7);
+        rig.wellAt(rig.top + 0.6);
+    }
+
     private static void act(int stage) {
         switch (stage) {
+            case 4 -> {
+                var level = rig.l;
+                craneAndPlug(level);
+                var why = crane.queueGate(true, null);
+                if (why != null) {
+                    throw new IllegalStateException("GATE OUT refused: " + net.minecraft.network.chat.Component.Serializer.toJson(why, level.registryAccess()));
+                }
+                int n = 0;
+                while (crane.busy() && crane.phase() != dev.bwr.core.refuelling.BridgeMotion.Phase.RAISE_LOADED && n++ < 100_000) {
+                    crane.scheduledTick(level);
+                }
+                // half way up out of the slot
+                for (int i = 0; i < Math.max(1, crane.phaseTicksLeft() * 2 / 3) && crane.busy(); i++) {
+                    crane.scheduledTick(level);
+                }
+                crane.devHold(true);
+                LogUtils.getLogger().info("CHUTE SLOT CLIENT CHECK crane: {} holding {} ({})", crane.phase(), crane.carriedGate(), crane.carriedSummary());
+            }
+            case 5 -> {
+                crane.devHold(false);
+                int n = 0;
+                while (crane.busy() && n++ < 200_000) {
+                    crane.scheduledTick(rig.l);
+                }
+                LogUtils.getLogger().info("CHUTE SLOT CLIENT CHECK crane: {} laid {}", crane.phase(), crane.gateLift().laid());
+            }
             case 0 -> {
                 rig.gate(true);
                 rig.poolAt(rig.top + 0.8);

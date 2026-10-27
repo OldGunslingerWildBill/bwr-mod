@@ -1,5 +1,35 @@
 # Changelog
 
+## Unreleased: canal gates the crane lifts, and flooding the well made plain
+
+Two requests from the owner: "the gate should open as one big block that can be pulled out with the crane like they do in real life", and "the reactor cavity
+wasn't flooding with water when I was trying to flood it. Have the flooding be easier with checks showing why it won't flood." Write-ups:
+[BUILDING-CRANE.md](BUILDING-CRANE.md), "Pulling the canal gates"; [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md), "Flooding the well" and "The canal gate plug"; the
+guide's Refuelling chapter (Flood the well, The cavity fill port, Pulling a canal gate).
+
+- **Canal Gate Plug.** A stack of Canal Gate Plug blocks in one canal column, from the rim down, is one steel gate with two lifting eyes on its top. It is a
+  canal block for every survey (the pool's slot, the seal, the well, the bridge), so a plug in the slot keeps the pool formed, and it closes the canal while it
+  stands in it. No hand, redstone or program opens it.
+- **GATE OUT / GATE IN** on the crane console (and `queueGateOut([x, y, z])`, `queueGateIn()`, `getGates()`, `getStatus().gateNext` on the crane's computer face):
+  the crane hooks the gate's eyes, lifts it out whole (an entity on a two-leg sling while it hangs, the shield plug's entity), and lays it on the nearest free
+  **Gate Laydown Stand** or the clear floor nearest it; the column it leaves is open canal and the pool and the well are one water. GATE IN sets it back exactly.
+  0.6 t a block (a whole gate is a few tonnes, within the 125 t rating). Refused, with the reason and nothing moved: out of reach, no gate, its eyes covered,
+  over the rating, **more than 0.3 m of water across it** (checked again as the hook closes), no laydown, rails too low, its place in the canal built over.
+  ABORT and RESUME, saves mid-lift, a broken console (the gate goes back in its canal) all lose and duplicate nothing. A lift kind of its own (`CanalGateLift`);
+  the head, internals and plug lifts are unchanged.
+- The old hand-worked **Canal Gate** keeps working for old builds and saves; its tooltip points to the plug and the crane.
+- **Flood checklist.** The reactor's INFO tab has a "Flooding the well" section and `reactor.getFloodReadiness()` the same: head off, studs bare, the cavity seal
+  (or which side is how far off, and where), the well reaching the flange (or the row and block where its wall opens), water going in now by source, water
+  leaving and where to (drywell, over the top, the pool, the drains, RWCU blowdown, boil-off, a break), the level against the flange and the well's top with
+  the time to each at the net flow, and the depth over the fuel. PASS, FAIL or INFO, in plain words. It reads only.
+- **Cavity Fill Port.** The drain port's mirror: in the well wall at or above the seal, flange out. A feed, condensate, RHR or core spray pump's discharge piped to
+  it delivers straight into the well; or, through a Motor-Operated Water Valve, a higher Condensate Storage Tank fills the well by gravity (the drain port's law,
+  at most 1,500 kg/s), the mass exact. Nothing automatic: the valve moves only when the player moves it.
+- **Fix: a well wider than the vessel would not hold water.** The well survey let the water spread only three blocks from the vessel; a well a few blocks wider,
+  or a shelf beside it, counted as open, so with the seal at the flange the well ended at the flange and the water went over the "top" as fast as it came in.
+  It now spreads up to eight blocks (an open refuel floor still ends the well). Regression test `aWellWiderThanTheVesselAndAShelfBesideItStillHoldWater`.
+- Tests: `CanalGateLiftTests` (5, `bwrplug`), `CavityFloodTests` (5, `bwrcavity`), CC faces in `CavityFloodCcChecks`; pictures in `art/cavity-flood/`.
+
 ## Unreleased: the cattle chute as a slot
 
 The cattle chute used to be a free-standing trench between the reactor and the pool with water of its own, the pool's lining and the well's wall

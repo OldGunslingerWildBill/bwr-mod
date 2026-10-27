@@ -36,6 +36,14 @@ public class CanalGateBlock extends TransferCanalBlock {
         registerDefaultState(defaultBlockState().setValue(OPEN, false));
     }
 
+    /**
+     * True when this block shuts the canal it stands in: a closed gate, or a {@link CanalGatePlugBlock} (a gate plug is closed while it is in the
+     * canal; it opens the canal only by being lifted out by the crane).
+     */
+    public static boolean closes(BlockState state) {
+        return state.getBlock() instanceof CanalGatePlugBlock || state.getBlock() instanceof CanalGateBlock && !state.getValue(OPEN);
+    }
+
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
@@ -62,5 +70,13 @@ public class CanalGateBlock extends TransferCanalBlock {
                     : BwrText.tr("status.bwr.refuelling_bridge.gate_closed", "Gate closed: the pool is isolated from the cavity."), true);
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
+    }
+
+    @Override
+    public void appendHoverText(net.minecraft.world.item.ItemStack stack, net.minecraft.world.item.Item.TooltipContext context,
+                                java.util.List<net.minecraft.network.chat.Component> lines, net.minecraft.world.item.TooltipFlag flag) {
+        lines.add(BwrText.tr("tooltip.bwr.canal_gate.plug_hint",
+                "The old hand-worked gate. A real canal gate is a steel plug the crane lifts out: build a Canal Gate Plug stack and use GATE OUT / GATE IN on the crane console."));
+        super.appendHoverText(stack, context, lines, flag);
     }
 }

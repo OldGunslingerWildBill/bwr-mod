@@ -30,6 +30,8 @@ public class CraneMenu extends BwrMenu {
     public static final int CMD_RESUME = 3;
     /** a = 1 takes the best-rigged shield plug section off to the laydown (PLUG OFF), 0 sets the last one back (PLUG ON). */
     public static final int CMD_PLUG = 4;
+    /** a = 1 lifts the nearest rigged canal gate out of its canal (GATE OUT), 0 puts the last one laid down back (GATE IN). */
+    public static final int CMD_GATE = 20;
 
     // --- client-visible snapshot -------------------------------------
 
@@ -62,6 +64,11 @@ public class CraneMenu extends BwrMenu {
     /** What PLUG OFF would take next: blocks, mass against the rating, anchors ("" when there is none), and whether that is a problem. */
     public String plugNext = "";
     public boolean plugNextBad;
+    /** Canal gates laid down (what GATE IN would put back), a gate on the hook, and what GATE OUT would take next. */
+    public int gatesLaid;
+    public boolean gateHeld;
+    public String gateNext = "";
+    public boolean gateNextBad;
 
     /** Client constructor. */
     public CraneMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf extra) {
@@ -130,6 +137,11 @@ public class CraneMenu extends BwrMenu {
         var next = be.plugPreview();
         buf.writeUtf(next == null ? "" : next.text(), 120);
         buf.writeBoolean(next != null && (next.over() || !next.rigged()) && !next.carried());
+        buf.writeVarInt(be.gateLift().laid().size());
+        buf.writeBoolean(be.carriedGate());
+        var gate = be.gatePreview();
+        buf.writeUtf(gate == null ? "" : gate.text(), 120);
+        buf.writeBoolean(gate != null && gate.bad());
     }
 
     @Override
@@ -166,6 +178,10 @@ public class CraneMenu extends BwrMenu {
         plugHeld = buf.readBoolean();
         plugNext = buf.readUtf(120);
         plugNextBad = buf.readBoolean();
+        gatesLaid = buf.readVarInt();
+        gateHeld = buf.readBoolean();
+        gateNext = buf.readUtf(120);
+        gateNextBad = buf.readBoolean();
     }
 
     @Override
@@ -206,6 +222,16 @@ public class CraneMenu extends BwrMenu {
                     sender.displayClientMessage(a != 0
                             ? BwrText.tr("status.bwr.building_crane.plug_out_queued", "Queued: the crane lifts a shield plug section off to the laydown.")
                             : BwrText.tr("status.bwr.building_crane.plug_in_queued", "Queued: the crane sets the shield plug section back where it came from."), true);
+                }
+            }
+            case CMD_GATE -> {
+                Component why = be.queueGate(a != 0, null);
+                if (why != null) {
+                    refuse(sender, why);
+                } else {
+                    sender.displayClientMessage(a != 0
+                            ? BwrText.tr("status.bwr.canal_gate_lift.out_queued", "Queued: the crane lifts the canal gate out onto its laydown.")
+                            : BwrText.tr("status.bwr.canal_gate_lift.in_queued", "Queued: the crane sets the canal gate back in its canal."), true);
                 }
             }
             case CMD_ABORT -> be.abort();

@@ -122,9 +122,9 @@ public final class BridgeSite {
                 }
                 if (st.getBlock() instanceof CanalGateBlock) {
                     gates.add(at);
-                    if (!st.getValue(CanalGateBlock.OPEN) && closed == null) {
-                        closed = at;
-                    }
+                }
+                if (CanalGateBlock.closes(st) && closed == null) {
+                    closed = at;
                 }
             }
             boolean columnWet = levelled ? bottomWet && levelSurface > -Double.MAX_VALUE : allWet;

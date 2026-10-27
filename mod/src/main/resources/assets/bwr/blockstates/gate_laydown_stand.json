@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "bwr:block/gate_laydown_stand"
+    },
+    "axis=z": {
+      "model": "bwr:block/gate_laydown_stand",
+      "y": 90
+    }
+  }
+}

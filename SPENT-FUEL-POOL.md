@@ -50,6 +50,10 @@ With the canal row from the slot reaching a reactor's well and every gate open, 
 the water over the slot's floor by gravity once a tick, the mass exact between the pool's water and the vessel's inventory. The whole law, the numbers
 and the bridge through the slot: [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#the-cattle-chute-as-a-slot-one-body-of-water).
 
+The slot's gate is best a **Canal Gate Plug** stack (a canal block too, so the slot survey takes it): the reactor building crane lifts it out whole (GATE OUT) onto a Gate
+Laydown Stand and sets it back (GATE IN), only with the pool and the well within 0.3 m of each other
+([BUILDING-CRANE.md](BUILDING-CRANE.md#pulling-the-canal-gates-gate-out--gate-in)). The old hand-worked Canal Gate still works.
+
 ## Moving fuel
 
 - **The refuelling bridge** moves assemblies between the core and the racks, through the cattle chute and under water, one at a time, and is the normal way (see [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md)); the pool's stored fuel is also a registered radiation source behind the water over the racks.

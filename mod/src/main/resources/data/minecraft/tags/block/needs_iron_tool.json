@@ -70,6 +70,9 @@
     "bwr:polonium_210_block",
     "bwr:plutonium_238_block",
     "bwr:actinium_227_block",
-    "bwr:thulium_170_block"
+    "bwr:thulium_170_block",
+    "bwr:cavity_fill_port",
+    "bwr:canal_gate_plug",
+    "bwr:gate_laydown_stand"
   ]
 }

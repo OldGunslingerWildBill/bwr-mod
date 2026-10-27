@@ -89,29 +89,58 @@
     {
       "title": "Flood the well",
       "text": [
-        "With the head off, raise the water over the flange with your own feed, condensate or residual heat removal pumps. Nothing floods by itself.",
+        "With the head off, raise the water over the flange: your feed, condensate or RHR (LPCI) pumps, or a Cavity Fill Port. Nothing floods by itself.",
         "",
-        "A cavity seal, a steel plate round the flange, keeps the water above the drywell. It forms where full blocks touch the vessel or stand one block off, all round, in the top third of the vessel. Without it the water leaks into the drywell. The INFO tab says why.",
+        "The INFO tab's \"Flooding the well\" checklist marks each need PASS or FAIL and says where: the head off, the studs bare, a cavity seal (full blocks touching the vessel or one block off, all round), the well's wall closed up to the flange, water going in, and water leaving (into the drywell: no usable well; over the top: it is full).",
         "",
-        "To lower the well, set a Cavity Drain Port in its wall or floor, pipe it through a Motor-Operated Water Valve to a Condensate Storage Tank, and open the valve."
+        "A Cavity Drain Port lowers it again."
       ],
       "icons": [
         "bwr:reactor_vessel",
+        "bwr:cavity_fill_port",
         "bwr:cavity_drain_port",
         "bwr:motor_operated_water_valve"
       ]
     },
     {
+      "title": "The cavity fill port",
+      "text": [
+        "Set a Cavity Fill Port in the well's wall or floor at or above the seal, its flange out of the well (place it looking out).",
+        "",
+        "Pipe a pump's discharge to it (feed, condensate, RHR or core spray): the water goes straight into the well. Or pipe it through a Motor-Operated Water Valve to a Condensate Storage Tank higher than the water: open the valve and the tank fills the well by gravity, up to 1,500 kg/s. Right-click the port to see what its line is doing."
+      ],
+      "icons": [
+        "bwr:cavity_fill_port",
+        "bwr:motor_operated_water_valve",
+        "bwr:condensate_storage_tank",
+        "bwr:high_pressure_water_pipe"
+      ]
+    },
+    {
       "title": "The cattle chute",
       "text": [
-        "Cut a slot through the pool wall and the well wall in a row both share. Put Transfer Canal stacks in it from the rim down, facing the wall, a Canal Gate stack in the pool-wall slot, and canal stacks between the walls. The slot's lowest block stands at least one block above the rack tops.",
+        "Cut a slot through the pool wall and the well wall in a row both share. Put Transfer Canal stacks in it from the rim down, facing the wall, a Canal Gate Plug stack in the pool-wall slot (the gate), and canal stacks between the walls. The slot's lowest block stands at least one block above the rack tops.",
         "",
-        "Flood the well to the pool's level, then open the gate. Open, the pool, the canal and the well are one water: the higher side runs into the lower over the slot's floor. A closed gate holds them apart. Nothing opens it but you or your program."
+        "Flood the well to the pool's level, then pull the gate with the crane. Open, the pool, the canal and the well are one water: the higher side runs into the lower over the slot's floor. A gate in the canal holds them apart."
       ],
       "icons": [
         "bwr:transfer_canal",
-        "bwr:canal_gate",
+        "bwr:canal_gate_plug",
         "bwr:spent_fuel_pool_wall"
+      ]
+    },
+    {
+      "title": "Pulling a canal gate",
+      "text": [
+        "A real canal gate is a steel plug the crane lifts out. Stack Canal Gate Plug blocks in a canal column from the rim down: the stack is one gate, and the canal is shut. Put a Gate Laydown Stand on the floor in the crane's reach.",
+        "",
+        "Flood the well to the pool's level first: a gate is pulled only with both sides within 0.3 m. GATE OUT on the crane console hooks the eyes on its top and lays it on the stand; the pool, the canal and the well are then one water. GATE IN puts it back exactly."
+      ],
+      "icons": [
+        "bwr:canal_gate_plug",
+        "bwr:gate_laydown_stand",
+        "bwr:building_crane_console",
+        "bwr:transfer_canal"
       ]
     },
     {
