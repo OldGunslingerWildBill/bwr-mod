@@ -139,6 +139,7 @@
     "bwr:casing_laydown_stand",
     "bwr:cavity_fill_port",
     "bwr:canal_gate_plug",
-    "bwr:gate_laydown_stand"
+    "bwr:gate_laydown_stand",
+    "bwr:turbine_shaft_wreck"
   ]
 }

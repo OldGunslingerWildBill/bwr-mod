@@ -172,6 +172,12 @@ public final class TurbineAuxTrain {
         dev.bwr.mod.rumble.RumbleSources.turbine(active, maxVibration, rpm, now);
         r.vibrationAlarm = maxVibration > ALARM_VIBRATION_MM_S;
         for (var m : active) r.bearingAlarm |= lubeGov && m.bearingC > ALARM_BEARING_C;
+        // A bearing run dry past the ignition point lights the oil left in its housing, if the train's tanks hold any (TURBINE-MAINTENANCE.md).
+        if (lubeGov && !lube.isEmpty() && !active.isEmpty() && active.get(0).getLevel() instanceof net.minecraft.server.level.ServerLevel server) {
+            for (var m : active) {
+                if (!m.burning() && dev.bwr.core.turbine.TurbineFire.bearingIgnites(m.bearingC, rpm)) TurbineFires.bearing(server, m, lube);
+            }
+        }
 
         // Per generator: its winding, and the skids set against it.
         for (var m : active) {

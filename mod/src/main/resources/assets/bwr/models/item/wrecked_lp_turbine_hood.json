@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "bwr:item/wrecked_lp_turbine_hood"
+  }
+}

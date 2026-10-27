@@ -5,6 +5,7 @@ import dev.bwr.core.turbine.*;
 import dev.bwr.mod.eccs.*;
 import dev.bwr.mod.reactor.*;
 import dev.bwr.mod.registry.BwrBlockEntities;
+import dev.bwr.mod.text.BwrText;
 import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
@@ -59,6 +60,17 @@ public class PowerModuleBlockEntity extends BlockEntity {
     private boolean hasCloseShock;
     private double closeAngle,closeTorquePu;
     long gridHeldTick=Long.MIN_VALUE;
+    // ---- a wrecked casing and a fire (TURBINE-MAINTENANCE.md). Absent from an old save; written only when not the default.
+    /** How badly a turbine section is wrecked: a blade torn out through its casing, a burst casing, a rotor half broken loose. */
+    public static final int WRECK_NONE=0,WRECK_HOLED=1,WRECK_BURST=2,WRECK_SHAFT_OUT=3;
+    private int wreck;
+    /** This LP's own disc burst (not just a casing split by the train coming apart): its rotor carries the lost third's unbalance. */
+    private boolean discBurst;
+    /** Per flow, the release angle of the blade that tore out of the casing (radians in the plane of the wheel), NaN for none. */
+    private final double[] holes={Double.NaN,Double.NaN};
+    private TurbineFire.Kind fire=TurbineFire.Kind.NONE;
+    /** What the fire has left to burn: the oil pool, L, or the hydrogen, kg. */
+    private double fireFuel;
     private static final Map<Level,Set<BlockPos>> LP_SECTIONS=new WeakHashMap<>();
     public PowerModuleBlockEntity(BlockPos pos,BlockState state) { super(BwrBlockEntities.POWER_MODULE.get(),pos,state); }
     public PowerModuleBlock block() { return (PowerModuleBlock)getBlockState().getBlock(); }
@@ -99,9 +111,81 @@ public class PowerModuleBlockEntity extends BlockEntity {
     /** The cover (the upper casing half) is lifted off by the crane, or set back. Only the turbine hall crane calls this. */
     public void setCoverOff(boolean off){
         if(!lp()||coverOff==off)return;coverOff=off;setChanged();
-        if(level!=null&&!level.isClientSide())PowerModuleBlock.setOpen(level,worldPosition,getBlockState(),off);
+        refreshOpen();
         syncMaintenance();
     }
+    /** The upper cells are open while the hood is off or the casing is burst (an HP's only by a burst); loaded cells only. */
+    private void refreshOpen(){
+        if(level!=null&&!level.isClientSide())PowerModuleBlock.setOpen(level,worldPosition,getBlockState(),coverOff()||wrecked());
+    }
+    // ---- a wrecked casing (TURBINE-MAINTENANCE.md)
+    /** {@link #WRECK_NONE} to {@link #WRECK_SHAFT_OUT}; always none for a generator. */
+    public int wreck(){return block().generator()?WRECK_NONE:wreck;}
+    /** The casing is burst open or its rotor broke loose: it holds no steam and does no work until it is rebuilt. */
+    public boolean wrecked(){return wreck()>=WRECK_BURST;}
+    /** The rotor broke loose and its coupling sheared: the section is coupled to nothing. */
+    public boolean sheared(){return wreck()==WRECK_SHAFT_OUT;}
+    public boolean discBurst(){return discBurst&&lp();}
+    /** The release angle of the blade torn out of flow {@code flow}'s casing, or NaN. */
+    public double hole(int flow){return flow>=0&&flow<holes.length?holes[flow]:Double.NaN;}
+    public boolean anyHole(){for(double h:holes)if(Double.isFinite(h))return true;return false;}
+    /** Raises the wreck to at least {@code level} (it never lowers; only a rebuild or a new hood does). An HP is burst at worst. */
+    void wreckAtLeast(int level){
+        if(block().generator())return;
+        int w=lp()?level:Math.min(level,WRECK_BURST);
+        if(w<=wreck)return;
+        wreck=w;setChanged();refreshOpen();syncMaintenance();
+    }
+    void markDiscBurst(){discBurst=true;setChanged();}
+    /** A thrown blade tore out of the casing at this release angle. */
+    void markHole(int flow,double angle){
+        if(!lp()||!Double.isFinite(angle))return;
+        holes[flow]=angle;setChanged();wreckAtLeast(WRECK_HOLED);syncMaintenance();
+    }
+    /** A good hood is back on (the crane's COVER ON): the holes a blade tore were patched with the casing open, and a holed casing is whole. */
+    public void fitHood(){
+        if(!lp())return;
+        java.util.Arrays.fill(holes,Double.NaN);if(wreck==WRECK_HOLED)wreck=WRECK_NONE;setChanged();syncMaintenance();
+    }
+    /** Why the section cannot be rebuilt with a Turbine Rebuild Kit now, or null. */
+    public net.minecraft.network.chat.Component rebuildProblem(){
+        if(wreck()==WRECK_NONE&&damage<=0&&bow<=0)
+            return BwrText.tr("status.bwr.turbine_rebuild.nothing","This section's shaft, bearings and casing are sound: there is nothing to rebuild.");
+        if(burning())return BwrText.tr("status.bwr.turbine_rebuild.burning","The section is on fire: put it out first.");
+        if(rpm>TurbineBlades.OPEN_MAX_RPM)
+            return BwrText.tr("status.bwr.turbine_rebuild.turning","The shaft is turning (%s rpm): stop it first, with the turning gear off.",String.format(java.util.Locale.ROOT,"%.1f",rpm));
+        for(var m:PowerTrain.members(this))if(m.block().generator()&&m.turningGear())
+            return BwrText.tr("status.bwr.turbine_rebuild.turning_gear","The turning gear is engaged: switch it off on the generator's screen first.");
+        if(lp()){
+            if(!coverOff())return BwrText.tr("status.bwr.turbine_rebuild.cover_on","Take the hood off first (the crane's COVER OFF): an LP is rebuilt open, with its rotor out.");
+            if(bladeIn(0)||bladeIn(1))
+                return BwrText.tr("status.bwr.turbine_rebuild.rotor_in","Lift both blade sections out first (BLADES OUT): the bearings, couplings and glands are rebuilt with the rotor out.");
+        }else{
+            if(flowKgPerS>0||inlet.mass()>1)return BwrText.tr("status.bwr.turbine_rebuild.steam","Steam is in the casing: close the valves and let it clear first.");
+            if(rotorC>TurbineBlades.OPEN_MAX_C)return BwrText.tr("status.bwr.turbine_rebuild.hot","The casing is too hot to work on: %s C, it must be at %s C or less.",
+                    String.format(java.util.Locale.ROOT,"%.0f",rotorC),String.format(java.util.Locale.ROOT,"%.0f",TurbineBlades.OPEN_MAX_C));
+        }
+        return null;
+    }
+    /** Rebuilds the section with a kit (the caller checked {@link #rebuildProblem}): casing, bearings, couplings and glands as new; the blade sections are the crane's. */
+    public void rebuild(){
+        wreck=WRECK_NONE;discBurst=false;java.util.Arrays.fill(holes,Double.NaN);
+        damage=0;bow=0;bearingC=TurbineAux.AMBIENT_C;
+        setChanged();refreshOpen();syncMaintenance();
+    }
+    // ---- a fire (TURBINE-MAINTENANCE.md)
+    public TurbineFire.Kind fire(){return fire;}
+    public boolean burning(){return fire!=TurbineFire.Kind.NONE;}
+    public double fireFuel(){return fireFuel;}
+    /** Lights a fire, or adds fuel to the one of the same kind burning; an oil fire does not replace a hydrogen one. True if it is a new fire. */
+    boolean ignite(TurbineFire.Kind kind,double fuel){
+        if(kind==TurbineFire.Kind.NONE||!Double.isFinite(fuel)||fuel<=0)return false;
+        boolean fresh=!burning();
+        if(fresh||fire==kind){fire=kind;fireFuel+=fuel;setChanged();}
+        return fresh;
+    }
+    void setFireFuel(double fuel){fireFuel=Math.max(0,fuel);setChanged();}
+    void extinguish(){if(burning()){fire=TurbineFire.Kind.NONE;fireFuel=0;setChanged();}}
     /** A blade section lifted out by the crane: its condition (1 if it threw a blade), which this flow then no longer has. NaN if it is not there. */
     public double takeBladeSection(int flow){
         if(!lp()||!bladeIn(flow))return Double.NaN;
@@ -142,12 +226,14 @@ public class PowerModuleBlockEntity extends BlockEntity {
     public CompoundTag retainedCondition(){
         var t=new CompoundTag();t.putDouble("ShaftDamage",damage);if(auxRequired)t.putBoolean("AuxRequired",true);
         if(lp())saveBlades(t);
+        saveWreck(t);
         t.putLong("DeliveredFE",delivered.totalFE());t.putBoolean("CounterSaturated",delivered.saturated());return t;
     }
     public void restoreCondition(CompoundTag t){
         damage=finite(t.getDouble("ShaftDamage"),1);auxRequired=t.getBoolean("AuxRequired");
         loadBlades(t);
-        if(coverOff&&level!=null&&!level.isClientSide())PowerModuleBlock.setOpen(level,worldPosition,getBlockState(),true);
+        loadWreck(t);
+        if((coverOff()||wrecked())&&level!=null&&!level.isClientSide())PowerModuleBlock.setOpen(level,worldPosition,getBlockState(),true);
         delivered.restore(t.getLong("DeliveredFE"),t.getBoolean("CounterSaturated"));setChanged();
     }
     public boolean failed() { return damage()>=1; }
@@ -207,7 +293,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
     void resetReadouts() { running=false;flowKgPerS=shaftMW=electricMW=trainMW=rejectedMW=trainLossKJ=inletMoisturePercent=0;inletPsia=outletPsia=inletC=outletC=0; }
     double headerDemandKg() {
         if(!hasWorkLoad||block().generator())return 0;
-        double room=coverOff()?admissionCapacityKgPerS()/20:outletRoom();
+        double room=coverOff()||wrecked()?admissionCapacityKgPerS()/20:outletRoom();
         double rate=admissionCapacityKgPerS()/20;
         return Math.max(0,Math.min(room,rate)-inlet.mass());
     }
@@ -245,7 +331,8 @@ public class PowerModuleBlockEntity extends BlockEntity {
         var stage=block().highPressure()?PowerTurbine.Stage.HP:PowerTurbine.Stage.LP;
         var condenser=condenser();
         // An open casing (the crane has its hood off) holds no steam: what the valves admit vents into the hall, doing no work.
-        boolean open=coverOff();
+        // Nor does a wrecked one (burst open, or its rotor broken loose), until it is rebuilt.
+        boolean open=coverOff()||wrecked();
         double room=open?admissionCapacityKgPerS()/20:outletRoom();
         if(room<1e-9){status=block().highPressure()?"HP exhaust buffer full":condenser==null?"Fit a condenser six blocks below, same facing":"Condenser steam buffer full";return 0;}
         double rate=admissionCapacityKgPerS();
@@ -281,7 +368,8 @@ public class PowerModuleBlockEntity extends BlockEntity {
         if(open){
             var vented=inlet.take(Math.min(inlet.mass(),wanted));
             flowKgPerS=vented.mass()*20;shaftMW=0;outletPsia=0;outletC=0;running=false;setChanged();
-            status=flowKgPerS>0?"Casing open: the steam vents into the hall":"Casing open (cover off)";
+            status=wrecked()?(flowKgPerS>0?"Wrecked: the burst casing vents the steam into the hall":"Wrecked: the casing is burst open")
+                    :flowKgPerS>0?"Casing open: the steam vents into the hall":"Casing open (cover off)";
             return 0;
         }
         double inletMoisture=inlet.moisture();
@@ -344,16 +432,18 @@ public class PowerModuleBlockEntity extends BlockEntity {
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries){
         var t=new CompoundTag();if(lp()){if(coverOff)t.putBoolean("CoverOff",true);if(bladesOut!=0)t.putByte("BladesOut",(byte)bladesOut);
             if(bladesThrown!=0)t.putByte("Thrown",(byte)bladesThrown);t.put("Blades",doubles(blades));}
+        saveWreck(t);
         return t;
     }
     @Override public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener> getUpdatePacket(){
-        return lp()?net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this):null;
+        return !block().generator()?net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this):null;
     }
     @Override public void handleUpdateTag(CompoundTag t,HolderLookup.Provider registries){readMaintenance(t);}
     @Override public void onDataPacket(net.minecraft.network.Connection net,net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket pkt,HolderLookup.Provider registries){readMaintenance(pkt.getTag());}
     private void readMaintenance(CompoundTag t){
         coverOff=t.getBoolean("CoverOff");bladesOut=t.getByte("BladesOut")&3;bladesThrown=t.getByte("Thrown")&3;
         var l=t.getList("Blades",6);for(int f=0;f<blades.length;f++)blades[f]=f<l.size()?finite(l.getDouble(f),1):0;
+        loadWreck(t);
     }
     @Override protected void saveAdditional(CompoundTag t,HolderLookup.Provider registries) {
         super.saveAdditional(t,registries);t.putDouble("RPM",rpm);
@@ -368,6 +458,19 @@ public class PowerModuleBlockEntity extends BlockEntity {
         double ambient=dev.bwr.core.turbine.TurbineAux.AMBIENT_C;
         if(hoodC>ambient+.01)t.putDouble("HoodC",hoodC);
         if(hasCloseShock){t.putDouble("CloseAngle",closeAngle);t.putDouble("ClosePu",closeTorquePu);}
+        saveWreck(t);
+        if(burning()){t.putString("Fire",fire.name());t.putDouble("FireFuel",fireFuel);}
+    }
+    /** The wreck, the disc burst and the holes, only when not the default (TURBINE-MAINTENANCE.md). */
+    private void saveWreck(CompoundTag t){
+        if(wreck!=WRECK_NONE)t.putByte("Wreck",(byte)wreck);
+        if(discBurst)t.putBoolean("DiscBurst",true);
+        if(anyHole())t.put("Holes",doubles(holes));
+    }
+    private void loadWreck(CompoundTag t){
+        wreck=Math.max(WRECK_NONE,Math.min(WRECK_SHAFT_OUT,t.getByte("Wreck")));discBurst=t.getBoolean("DiscBurst");
+        java.util.Arrays.fill(holes,Double.NaN);
+        var l=t.getList("Holes",6);for(int f=0;f<holes.length&&f<l.size();f++){double a=l.getDouble(f);holes[f]=Double.isFinite(a)?a:Double.NaN;}
     }
     private static net.minecraft.nbt.ListTag doubles(double[] v){var l=new net.minecraft.nbt.ListTag();for(double d:v)l.add(net.minecraft.nbt.DoubleTag.valueOf(d));return l;}
     /** An LP always writes its Blades (the mark of a save made since the blade sections exist); the rest only when not the default. */
@@ -428,6 +531,13 @@ public class PowerModuleBlockEntity extends BlockEntity {
         double ambient=dev.bwr.core.turbine.TurbineAux.AMBIENT_C;
         hoodC=t.contains("HoodC")?Math.max(ambient,finite(t.getDouble("HoodC"),1000)):ambient;reverseMW=0;motoring=false;gridHeldTick=Long.MIN_VALUE;
         hasCloseShock=t.contains("CloseAngle");closeAngle=hasCloseShock?wrapped(t.getDouble("CloseAngle")):0;closeTorquePu=hasCloseShock?finite(t.getDouble("ClosePu"),100):0;
+        loadWreck(t);
+        fire=TurbineFire.Kind.NONE;fireFuel=0;
+        if(t.contains("Fire")){
+            try{fire=TurbineFire.Kind.valueOf(t.getString("Fire"));}catch(IllegalArgumentException e){fire=TurbineFire.Kind.NONE;}
+            fireFuel=finite(t.getDouble("FireFuel"),1e6);
+            if(fireFuel<=0)fire=TurbineFire.Kind.NONE;
+        }
     }
     private static void loadSteam(CompoundTag t,String key,SteamInventory s){var p=t.getCompound(key);s.restore(p.getDouble("Mass"),p.getDouble("Enthalpy"),p.getDouble("Pressure"),p.getDouble("Moisture"));}
     private static double wrapped(double v){return Double.isFinite(v)?dev.bwr.core.grid.Synchronizer.wrap(v):0;}

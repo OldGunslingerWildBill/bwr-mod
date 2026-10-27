@@ -7,8 +7,11 @@ Standard library plus Pillow. Everything is drawn procedurally; no external art,
   lp_blade_section          a bladed rotor section seen end-on: grey disc, pale blades with a stellite tip band
   damaged_lp_blade_section  the same, rust-dark, blades missing and broken short
   lp_turbine_hood           (recipe: five iron blocks, a spare hood) the upper casing (exhaust hood) of an LP turbine, green-grey, with lifting lugs
+  wrecked_lp_turbine_hood   the same hood torn open, scorched and rust-streaked (scrapped alone for three iron blocks)
+  turbine_rebuild_kit       a steel crate of bearing shells and coupling bolts (recipe: iron blocks, copper, an anvil)
   lp_blade_stand            a dark steel base with a yellow saddle (the two saddles are drawn by the block entity)
   casing_laydown_stand      a low grey plinth with two yellow cradle beams
+  turbine_shaft_wreck       no texture of its own: the block entity draws the rotor half; its model is only the break particle
 """
 import io
 import json
@@ -101,6 +104,56 @@ def hood_icon():
     return img
 
 
+def wrecked_hood_icon():
+    img = hood_icon()
+    px = img.load()
+    hole = (28, 26, 24, 255)
+    scorch = (58, 52, 46, 255)
+    rust = (132, 78, 44, 255)
+    # a ragged tear through the roof and the left shoulder, scorched round its edge, plates bent up out of it
+    for y in range(2, 13):
+        for x in range(1, 15):
+            if not px[x, y][3]:
+                continue
+            d = math.hypot((x - 6.5) * 0.9, (y - 5.5) * 1.2)
+            if d < 2.6 + 0.8 * math.sin(3 * x + y):
+                px[x, y] = hole
+            elif d < 4.2:
+                px[x, y] = scorch
+            elif (x * 7 + y * 3) % 11 == 0:
+                px[x, y] = rust
+    for x, y in ((4, 1), (5, 2), (9, 1), (8, 2), (3, 3)):
+        px[x, y] = (150, 160, 152, 255)
+    return img
+
+
+def rebuild_kit_icon():
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    px = img.load()
+    crate = (96, 104, 112, 255)
+    edge = (60, 66, 72, 255)
+    copper = (190, 110, 60, 255)
+    bolt = (200, 204, 210, 255)
+    for y in range(5, 15):
+        for x in range(1, 15):
+            px[x, y] = edge if x in (1, 14) or y in (5, 14) else crate
+    for x in range(5, 11):
+        px[x, 3] = edge
+    for y in (3, 4):
+        px[5, y] = edge
+        px[10, y] = edge
+    # two bearing half shells (copper) and a row of coupling bolts
+    for x in range(3, 8):
+        px[x, 8] = copper
+        px[x, 9] = copper if x in (3, 7) else crate
+    for x in range(8, 13):
+        px[x, 8] = copper
+        px[x, 9] = copper if x in (8, 12) else crate
+    for x in (3, 5, 7, 9, 11):
+        px[x, 12] = bolt
+    return img
+
+
 def cuboid(f, t, tex):
     return {"from": f, "to": t, "faces": {d: {"texture": tex} for d in ("north", "south", "east", "west", "up", "down")}}
 
@@ -110,7 +163,9 @@ def main():
     put_png(os.path.join(A, "textures/item/lp_blade_section.png"), section_icon(False))
     put_png(os.path.join(A, "textures/item/damaged_lp_blade_section.png"), section_icon(True))
     put_png(os.path.join(A, "textures/item/lp_turbine_hood.png"), hood_icon())
-    for item in ("lp_blade_section", "damaged_lp_blade_section", "lp_turbine_hood"):
+    put_png(os.path.join(A, "textures/item/wrecked_lp_turbine_hood.png"), wrecked_hood_icon())
+    put_png(os.path.join(A, "textures/item/turbine_rebuild_kit.png"), rebuild_kit_icon())
+    for item in ("lp_blade_section", "damaged_lp_blade_section", "lp_turbine_hood", "wrecked_lp_turbine_hood", "turbine_rebuild_kit"):
         put_json(os.path.join(A, f"models/item/{item}.json"), {"parent": "minecraft:item/generated", "textures": {"layer0": f"bwr:item/{item}"}})
     put_json(os.path.join(A, "models/block/lp_blade_stand.json"), {
         "parent": "minecraft:block/block",
@@ -131,6 +186,26 @@ def main():
             "pools": [{"bonus_rolls": 0.0, "conditions": [{"condition": "minecraft:survives_explosion"}],
                        "entries": [{"type": "minecraft:item", "name": f"bwr:{block}"}], "rolls": 1.0}],
             "random_sequence": f"bwr:blocks/{block}"})
+    # The rotor half a shaft excursion leaves on the floor: drawn by its block entity; broken up, it is a damaged section.
+    put_json(os.path.join(A, "models/block/turbine_shaft_wreck.json"), {"textures": {"particle": "minecraft:block/iron_block"}})
+    put_json(os.path.join(A, "blockstates/turbine_shaft_wreck.json"),
+             {"variants": {f"axis={a}": {"model": "bwr:block/turbine_shaft_wreck"} for a in ("x", "z")}})
+    put_json(os.path.join(D, "loot_table/blocks/turbine_shaft_wreck.json"), {
+        "type": "minecraft:block",
+        "pools": [{"bonus_rolls": 0.0, "conditions": [{"condition": "minecraft:survives_explosion"}],
+                   "entries": [{"type": "minecraft:item", "name": "bwr:damaged_lp_blade_section"}], "rolls": 1.0}],
+        "random_sequence": "bwr:blocks/turbine_shaft_wreck"})
+    # A rebuild kit: casing plate (iron blocks), bearing shells (copper), coupling bolts (iron), machined true on an anvil.
+    put_json(os.path.join(D, "recipe/turbine_rebuild_kit.json"), {
+        "type": "minecraft:crafting_shaped", "category": "misc",
+        "pattern": ["BCB", "IAI", "BCB"],
+        "key": {"B": {"item": "minecraft:iron_block"}, "C": {"item": "minecraft:copper_ingot"}, "I": {"item": "minecraft:iron_ingot"},
+                "A": {"item": "minecraft:anvil"}},
+        "result": {"id": "bwr:turbine_rebuild_kit", "count": 1}})
+    put_json(os.path.join(D, "recipe/wrecked_lp_turbine_hood_scrap.json"), {
+        "type": "minecraft:crafting_shapeless", "category": "misc",
+        "ingredients": [{"item": "bwr:wrecked_lp_turbine_hood"}],
+        "result": {"id": "minecraft:iron_block", "count": 3}})
     # An LP blade section: steel discs and blades (iron), the stellite erosion shields on the last-stage tips (a diamond).
     put_json(os.path.join(D, "recipe/lp_blade_section.json"), {
         "type": "minecraft:crafting_shaped", "category": "misc",
@@ -160,7 +235,7 @@ def main():
     for tag in ("data/minecraft/tags/block/mineable/pickaxe.json", "data/minecraft/tags/block/needs_iron_tool.json"):
         path = os.path.join(RES, tag)
         data = json.load(open(path, encoding="utf-8"))
-        for block in ("bwr:lp_blade_stand", "bwr:casing_laydown_stand"):
+        for block in ("bwr:lp_blade_stand", "bwr:casing_laydown_stand", "bwr:turbine_shaft_wreck"):
             if block not in data["values"]:
                 data["values"].append(block)
         put_json(path, data)

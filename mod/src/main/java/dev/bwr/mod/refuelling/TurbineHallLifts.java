@@ -43,6 +43,12 @@ import java.util.Map;
  * {@value PlugLift#RATED_CAPACITY_T} t rating; the rails high enough to carry the load over the top of the turbine train. A refusal moves
  * nothing.
  *
+ * <h2>Wrecks (TURBINE-MAINTENANCE.md)</h2>
+ * A hood a blade tore through, or a burst one, comes off as a Wrecked LP Turbine Hood and never goes back on: COVER ON takes a good hood
+ * from a stand. A burst casing takes no blade section and no hood until it is rebuilt (a Turbine Rebuild Kit, with the rotor out).
+ * BLADES OUT also lifts the rotor half a shaft excursion left on the floor (a Turbine Shaft Wreck) onto a blade stand, when no open LP
+ * under the crane has a section to lift or when it is given that block.
+ *
  * <h2>One place at a time</h2>
  * The load is a {@link TurbineLoadItem}: the hood leaves the LP (it is then open) when the hook latches, hangs on the crane as that item,
  * and is put on the stand (or the LP) when the hook releases; a blade section the same. Nothing is created or lost: the crane's save holds
@@ -60,11 +66,14 @@ final class TurbineHallLifts {
     static final double SECTION_RADIUS = 2.3, SECTION_HANG = 3.6, SADDLE_AXIS = 2.7;
     /** The shaft axis over the LP's floor, and the middle of a flow's section from the LP's middle along the shaft. */
     static final double AXIS = 2.5, FLOW_OFFSET = 1.5;
+    /** A shaft wreck's axis over its block (it lies on its stripped discs). */
+    static final double WRECK_AXIS = 0.9;
     /** The top of a turbine train over its floor (every section is 5 blocks tall). */
     static final double TRAIN_TOP = 5.0;
 
     static boolean isTurbineLoc(Loc l) {
-        return l.kind() == Kind.TURBINE_COVER || l.kind() == Kind.CASING_STAND || l.kind() == Kind.TURBINE_BLADES || l.kind() == Kind.BLADE_STAND;
+        return l.kind() == Kind.TURBINE_COVER || l.kind() == Kind.CASING_STAND || l.kind() == Kind.TURBINE_BLADES || l.kind() == Kind.BLADE_STAND
+                || l.kind() == Kind.SHAFT_WRECK;
     }
 
     static boolean isTurbineMove(BuildingCraneBlockEntity c, Move m) {
@@ -84,6 +93,11 @@ final class TurbineHallLifts {
         return level != null && level.isLoaded(at) && level.getBlockEntity(at) instanceof TurbineStandBlockEntity s && s.kind() == kind && !s.isRemoved() ? s : null;
     }
 
+    @Nullable
+    static dev.bwr.mod.power.TurbineWreckBlockEntity wreck(Level level, BlockPos at) {
+        return level != null && level.isLoaded(at) && level.getBlockEntity(at) instanceof dev.bwr.mod.power.TurbineWreckBlockEntity w && !w.isRemoved() ? w : null;
+    }
+
     private static Direction facing(PowerModuleBlockEntity lp) {
         return lp.getBlockState().getValue(PumpAssemblyBlock.FACING);
     }
@@ -94,7 +108,7 @@ final class TurbineHallLifts {
         Level level = c.getLevel();
         BlockPos at = loc.at();
         switch (loc.kind()) {
-            case TURBINE_COVER, CASING_STAND -> {
+            case TURBINE_COVER, CASING_STAND, SHAFT_WRECK -> {
                 return new Point(at.getX() + 0.5, 0, at.getZ() + 0.5);
             }
             case TURBINE_BLADES -> {
@@ -125,6 +139,7 @@ final class TurbineHallLifts {
             case TURBINE_COVER -> at.getY() + HOOD_JOINT + HOOD_HANG;
             case CASING_STAND -> at.getY() + CRADLE_TOP + HOOD_HANG;
             case TURBINE_BLADES -> at.getY() + AXIS + SECTION_HANG;
+            case SHAFT_WRECK -> at.getY() + WRECK_AXIS + SECTION_HANG;
             default -> at.getY() + SADDLE_AXIS + SECTION_HANG;
         };
         return new BridgeMotion.Stop(col.x(), col.z(), y, Double.NaN);
@@ -254,6 +269,14 @@ final class TurbineHallLifts {
                         return tr("no_blade_stand", "There is no LP Blade Storage Stand at %s.", l.at().toShortString());
                     }
                 }
+                case SHAFT_WRECK -> {
+                    if (l == to) {
+                        return tr("bad_move", "The hood goes between an LP turbine and a Casing Laydown Stand; a blade section between an LP turbine's open casing and an LP Blade Storage Stand.");
+                    }
+                    if (wreck(level, l.at()) == null) {
+                        return tr("no_wreck", "There is no turbine shaft wreck at %s.", l.at().toShortString());
+                    }
+                }
                 default -> {
                 }
             }
@@ -296,11 +319,18 @@ final class TurbineHallLifts {
         if (held && !hood && to.kind() == Kind.TURBINE_BLADES && !TurbineLoadItem.isGoodSection(carried)) {
             return tr("damaged_section", "That blade section is damaged: it can be scrapped, not installed.");
         }
+        if (to.kind() == Kind.TURBINE_COVER && (held ? !TurbineLoadItem.isGoodHood(carried)
+                : from.kind() == Kind.CASING_STAND && !TurbineLoadItem.isGoodHood(stand(level, from.at(), TurbineStandBlock.Kind.CASING).items().getStackInSlot(0)))) {
+            return tr("wrecked_hood", "That hood is wrecked: it cannot go back on. Scrap it and set a spare LP Turbine Hood on a Casing Laydown Stand.");
+        }
         switch (to.kind()) {
             case TURBINE_COVER -> {
                 PowerModuleBlockEntity dst = lp(level, to.at());
                 if (!dst.coverOff()) {
                     return tr("cover_already_on", "The LP turbine at %s has its cover on.", to.at().toShortString());
+                }
+                if (dst.wrecked()) {
+                    return casingWrecked(to.at());
                 }
                 if (!dst.allBladesIn()) {
                     return tr("blades_out", "A blade section of the LP turbine at %s is out: BLADES IN before the cover goes back.", to.at().toShortString());
@@ -319,6 +349,9 @@ final class TurbineHallLifts {
                 }
                 if (dst.bladeIn(to.which())) {
                     return tr("section_in", "Blade section %s of the LP turbine at %s is in place: BLADES OUT first.", flow(to.which()), to.at().toShortString());
+                }
+                if (dst.wrecked()) {
+                    return casingWrecked(to.at());
                 }
             }
             case BLADE_STAND -> {
@@ -364,8 +397,8 @@ final class TurbineHallLifts {
             case TURBINE_COVER -> {
                 PowerModuleBlockEntity lp = lp(level, from.at());
                 if (lp != null && !lp.coverOff() && shaftProblem(lp) == null && casingProblem(lp) == null) {
+                    load = hoodOf(lp);
                     lp.setCoverOff(true);
-                    load = TurbineLoadItem.hood(lp.getBlockPos(), facing(lp));
                 }
             }
             case CASING_STAND -> {
@@ -387,6 +420,13 @@ final class TurbineHallLifts {
                     load = s.items().extractItem(from.which(), 1, false);
                 }
             }
+            case SHAFT_WRECK -> {
+                if (wreck(level, from.at()) != null) {
+                    // lifted, not broken: the block leaves the world as the load on the hook, nothing drops
+                    level.setBlock(from.at(), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), net.minecraft.world.level.block.Block.UPDATE_ALL);
+                    load = TurbineLoadItem.section(1.0);
+                }
+            }
             default -> {
             }
         }
@@ -406,8 +446,9 @@ final class TurbineHallLifts {
         switch (to.kind()) {
             case TURBINE_COVER -> {
                 PowerModuleBlockEntity lp = lp(level, to.at());
-                if (lp != null && TurbineLoadItem.isHood(load) && lp.coverOff() && lp.allBladesIn()) {
+                if (lp != null && TurbineLoadItem.isGoodHood(load) && lp.coverOff() && lp.allBladesIn() && !lp.wrecked()) {
                     lp.setCoverOff(false);
+                    lp.fitHood();
                     placed = true;
                 }
             }
@@ -417,8 +458,15 @@ final class TurbineHallLifts {
             }
             case TURBINE_BLADES -> {
                 PowerModuleBlockEntity lp = lp(level, to.at());
-                placed = lp != null && TurbineLoadItem.isGoodSection(load) && lp.coverOff()
+                placed = lp != null && TurbineLoadItem.isGoodSection(load) && lp.coverOff() && !lp.wrecked()
                         && lp.installBladeSection(to.which(), TurbineLoadItem.condition(load));
+            }
+            case SHAFT_WRECK -> {
+                // only ever back where it lay (the console broken under it)
+                net.minecraft.world.level.block.state.BlockState here = dev.bwr.mod.world.LoadedWorld.state(level, to.at());
+                if (TurbineLoadItem.isBladeSection(load) && here != null && here.isAir()) {
+                    placed = level.setBlock(to.at(), dev.bwr.mod.registry.BwrBlocks.TURBINE_SHAFT_WRECK.get().defaultBlockState(), net.minecraft.world.level.block.Block.UPDATE_ALL);
+                }
             }
             case BLADE_STAND -> {
                 TurbineStandBlockEntity s = stand(level, to.at(), TurbineStandBlock.Kind.BLADES);
@@ -551,7 +599,7 @@ final class TurbineHallLifts {
             if (!TurbineLoadItem.isHood(carried)) {
                 return BwrText.tr("status.bwr.building_crane.holding", "The hook still holds a load: set it down first.");
             }
-            if (off) {
+            if (off || !TurbineLoadItem.isGoodHood(carried)) {
                 TurbineStandBlockEntity s = firstFreeCasingStand(c, c.getBlockPos());
                 return s == null ? noCasingStand() : c.queue(new Move(Loc.HELD, Loc.casing(s.getBlockPos())));
             }
@@ -574,10 +622,13 @@ final class TurbineHallLifts {
         if (lp == null) {
             return noOpenLp();
         }
+        if (lp.wrecked()) {
+            return casingWrecked(lp.getBlockPos());
+        }
         TurbineStandBlockEntity from = null;
         for (TurbineStandBlockEntity s : stands(c, TurbineStandBlock.Kind.CASING, lp.getBlockPos())) {
             ItemStack h = s.items().getStackInSlot(0);
-            if (TurbineLoadItem.isHood(h) && (from == null || lp.getBlockPos().equals(TurbineLoadItem.hoodOrigin(h)))) {
+            if (TurbineLoadItem.isGoodHood(h) && (from == null || lp.getBlockPos().equals(TurbineLoadItem.hoodOrigin(h)))) {
                 from = s;
                 if (lp.getBlockPos().equals(TurbineLoadItem.hoodOrigin(h))) {
                     break;
@@ -622,6 +673,10 @@ final class TurbineHallLifts {
         if (lpAt != null && dev.bwr.mod.world.LoadedWorld.state(c.getLevel(), lpAt) == null) {
             return unloadedAt(lpAt);
         }
+        if (out && lpAt != null && wreck(c.getLevel(), lpAt) != null && c.carriedTurbine().isEmpty()) {
+            Loc to = freeSaddle(c, lpAt);
+            return to == null ? noSaddle() : c.queue(new Move(Loc.shaftWreck(lpAt), to));
+        }
         ItemStack carried = c.carriedTurbine();
         if (!carried.isEmpty() && c.currentMove() == null) {
             if (!TurbineLoadItem.isBladeSection(carried)) {
@@ -636,6 +691,13 @@ final class TurbineHallLifts {
         }
         if (out) {
             PowerModuleBlockEntity lp = pick(c, lpAt, m -> m.coverOff() && m.worstFlow() >= 0);
+            if (lp == null && lpAt == null) {
+                BlockPos w = nearestWreck(c);
+                if (w != null) {
+                    Loc to = freeSaddle(c, w);
+                    return to == null ? noSaddle() : c.queue(new Move(Loc.shaftWreck(w), to));
+                }
+            }
             if (lp == null) {
                 return tr("no_section_to_lift", "No LP turbine under the crane has its cover off and a blade section in it: COVER OFF first.");
             }
@@ -654,6 +716,37 @@ final class TurbineHallLifts {
             }
         }
         return tr("no_spare", "No spare LP blade section lies on an LP Blade Storage Stand under the crane.");
+    }
+
+    private static Component casingWrecked(BlockPos at) {
+        return tr("casing_wrecked", "The casing of the LP turbine at %s is wrecked: rebuild it first (a Turbine Rebuild Kit, with both blade sections out).", at.toShortString());
+    }
+
+    /** The shaft wreck under the crane nearest the hook, or null. */
+    @Nullable
+    private static BlockPos nearestWreck(BuildingCraneBlockEntity c) {
+        BlockPos best = null;
+        Point hook = c.tip();
+        for (BlockPos p : dev.bwr.mod.power.TurbineWreckBlockEntity.wrecks(c.getLevel())) {
+            if (wreck(c.getLevel(), p) != null && c.site().reaches(p.getX() + 0.5, p.getZ() + 0.5) && (best == null || dist(hook, p) < dist(hook, best))) {
+                best = p;
+            }
+        }
+        return best;
+    }
+
+    /** The hood the crane lifts off this LP: its own, or a wrecked one if a blade tore through it or the casing burst. */
+    private static ItemStack hoodOf(PowerModuleBlockEntity lp) {
+        boolean holed = false;
+        double[] holes = {Double.NaN, Double.NaN};
+        for (int f = 0; f < TurbineBlades.FLOWS; f++) {
+            dev.bwr.mod.power.TurbineMissile.Exit e = Double.isFinite(lp.hole(f)) ? dev.bwr.mod.power.TurbineMissile.casingExit(lp.hole(f)) : null;
+            if (e != null && e.hood()) {
+                holes[f] = lp.hole(f);
+                holed = true;
+            }
+        }
+        return lp.wrecked() || holed ? TurbineLoadItem.wreckedHood(lp.getBlockPos(), facing(lp), lp.wrecked(), holes) : TurbineLoadItem.hood(lp.getBlockPos(), facing(lp));
     }
 
     private static int firstOut(PowerModuleBlockEntity lp) {

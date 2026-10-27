@@ -34,6 +34,11 @@ public final class PowerModulePeripheral implements IPeripheral {
         m.put("shaftDamage",module.shaftDamage());
         m.put("reversePowerMW",module.reverseMW);m.put("motoring",module.motoring);
         if(module.hasCloseShock()){m.put("lastCloseAngleDegrees",module.closeAngle());m.put("lastCloseTorquePu",module.closeTorquePu());}
+        // A wrecked casing and a fire (TURBINE-MAINTENANCE.md): readings only.
+        m.put("wreck",switch(module.wreck()){case 1->"holed";case 2->"burst";case 3->"shaft_out";default->"none";});
+        m.put("wrecked",module.wrecked());
+        m.put("fire",module.burning());
+        if(module.burning()){m.put("fireKind",module.fire()==dev.bwr.core.turbine.TurbineFire.Kind.HYDROGEN?"hydrogen":"oil");m.put("fireFuel",module.fireFuel());}
         if(!module.lp())return;
         m.put("coverOff",module.coverOff());m.put("hoodTempC",module.hoodC);
         var list=new ArrayList<Map<String,Object>>();

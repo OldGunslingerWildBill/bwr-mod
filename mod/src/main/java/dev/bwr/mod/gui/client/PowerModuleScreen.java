@@ -33,6 +33,18 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
         return d >= 1 || (menu.thrown & (1 << flow)) != 0 ? Status.ALARM : d > 0.5 ? Status.CAUTION : Status.NONE;
     }
     private static Status alarm(boolean on) { return on ? Status.ALARM : Status.NORMAL; }
+    private String casing() {
+        return switch (menu.wreck) {
+            case 1 -> "holed by a blade";
+            case 2 -> "BURST OPEN";
+            case 3 -> "SHAFT BROKE LOOSE";
+            default -> "sound";
+        };
+    }
+    private String fire() {
+        if (menu.fire == 0) return "none";
+        return (menu.fire == 2 ? "HYDROGEN FIRE " : "OIL FIRE ") + num(menu.fireFuel, menu.fire == 2 ? 1 : 0);
+    }
 
     @Override
     protected UiElement buildUi() {
@@ -112,6 +124,12 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
                 Layout.row("Exhaust hood", () -> num(DisplayUnitReadouts.value(Quantity.TEMPERATURE, menu.hoodC), 0),
                         () -> DisplayUnitReadouts.unit(Quantity.TEMPERATURE)).status(() -> menu.hoodC > 120 ? Status.ALARM : menu.hoodC > 80 ? Status.CAUTION : Status.NONE).showIf(() -> menu.lp)
                         .tip("Windage heats the last stages when the grid drives a turbine with no steam doing the work. Over 120 C the blades are damaged."),
+                Layout.row("Casing", this::casing, "").status(() -> menu.wreck >= 2 ? Status.ALARM : menu.wreck == 1 ? Status.CAUTION : Status.NONE)
+                        .showIf(() -> !menu.generator)
+                        .tip("A thrown blade tears a hole; a burst disc bursts the casing open and it holds no steam; past 180 % speed a burst rotor breaks loose. Rebuild with a Turbine Rebuild Kit."),
+                Layout.row("Fire", this::fire, () -> menu.fire == 0 ? "" : menu.fire == 2 ? "kg H2" : "L oil")
+                        .status(() -> menu.fire != 0 ? Status.ALARM : Status.NONE)
+                        .tip("Lube oil on a wiped bearing or from a cut line, or the generator's hydrogen. Water on the fire puts it out; running oil pumps feed it."),
                 Layout.row("Shaft condition", () -> pct(menu.shaftDamage), "% worn").showIf(() -> true),
                 Layout.row("Section condition", () -> pct(menu.damage), "% worn").showIf(() -> !menu.lp));
         var gridCard = Layout.card("Grid",

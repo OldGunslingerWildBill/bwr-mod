@@ -111,6 +111,22 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
         return Math.max(0, n);
     }
 
+    /** Oil lost out of the system to a fire (a cut line, a wiped bearing), up to {@code litres}; returns what there was. */
+    public double drainOil(double litres) {
+        if (kind() != TurbineAuxBlock.Kind.LUBE_OIL || !(litres > 0)) return 0;
+        double n = Math.min(litres, oilL);
+        if (n > 0) { oilL -= n; setChanged(); }
+        return Math.max(0, n);
+    }
+
+    /** The hydrogen charge escaping at broken seals, up to {@code kg}; returns what there was. */
+    public double ventHydrogen(double kg) {
+        if (kind() != TurbineAuxBlock.Kind.GEN_COOLING || !(kg > 0)) return 0;
+        double n = Math.min(kg, h2Kg);
+        if (n > 0) { h2Kg -= n; setChanged(); }
+        return Math.max(0, n);
+    }
+
     // ---- the water ports (oil cooler, generator coolers): cold in on one flange, hot out on the other
 
     public IFluidHandler coldInlet() { return port(cold, true); }

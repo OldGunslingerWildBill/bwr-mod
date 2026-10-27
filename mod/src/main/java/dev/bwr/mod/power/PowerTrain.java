@@ -6,7 +6,7 @@ import dev.bwr.core.turbine.TurbineBlades;
 import net.minecraft.core.BlockPos;
 import java.util.*;
 
-/** Coaxial end-to-end modules share work once per server tick. No block/chunk is loaded by a search. */
+/** Coaxial end-to-end modules share work once per server tick. No block/chunk is loaded by a search. A section whose rotor broke loose (its coupling sheared) is a train of its own. */
 public final class PowerTrain {
     public static final int MAX_MODULES=32;
     private PowerTrain() {}
@@ -15,8 +15,10 @@ public final class PowerTrain {
         var queue=new ArrayDeque<PowerModuleBlockEntity>();queue.add(start);
         while(!queue.isEmpty()) {
             var m=queue.remove();if(found.containsKey(m.getBlockPos()))continue;
+            if(m!=start&&m.sheared())continue; // its coupling sheared in a shaft excursion: it joins nothing (TURBINE-MAINTENANCE.md)
             if(!m.block().complete(level,m.getBlockPos(),m.getBlockState()))return List.of();
             found.put(m.getBlockPos(),m);if(found.size()>MAX_MODULES)return List.of();
+            if(m.sheared())continue;
             for(boolean front:new boolean[]{true,false}) {
                 var shaft=m.block().shaft(m.getBlockPos(),m.getBlockState(),front);
                 var face=m.block().shaftFace(m.getBlockState(),front);var next=shaft.relative(face);
@@ -72,6 +74,7 @@ public final class PowerTrain {
         if(motorKJ>0)for(var g:generators)g.status=String.format(java.util.Locale.ROOT,"Motoring: the grid drives the shaft, %.1f MW reverse power",motorKJ*20/1000);
         TurbineAuxTrain.step(train,active,now);
         thrownAndShaking(train,active,now);
+        if(now%20==0&&start.getLevel() instanceof net.minecraft.server.level.ServerLevel server)TurbineFires.second(server,train,active);
         // A mid-tick connection can include a half already processed. Couple it
         // once after the new half's step; never repeat steam or electrical work.
         if(active.size()!=train.size()) {
@@ -97,6 +100,10 @@ public final class PowerTrain {
         if(!(level instanceof net.minecraft.server.level.ServerLevel server))return;
         for(var m:active){
             if(!m.lp())continue;
+            // The worst case: a burst rotor driven on far past the burst speed breaks loose (TurbineBlades.excursion).
+            if(!m.sheared()&&TurbineBlades.excursion(m.discBurst(),m.rpm)&&(m.bladeIn(0)||m.bladeIn(1))){
+                excursion(server,m,-1);return;
+            }
             if(m.rpm>=TurbineBlades.BURST_RPM&&unburstSectionIn(m)){
                 burst(server,m,m.worstFlow(),Double.NaN);continue;
             }
@@ -128,19 +135,64 @@ public final class PowerTrain {
         return false;
     }
 
-    /** A failed section throws one of its last-stage blades at the shaft's speed. {@code angle} NaN picks one. */
+    /**
+     * A failed section throws one of its last-stage blades at the shaft's speed. {@code angle} NaN picks one. The blade tears a hole in
+     * the casing where it leaves; one thrown downwards, through the lower casing where the oil lines run, cuts a line and lights the oil.
+     */
     public static TurbineMissile.Result throwBlade(net.minecraft.server.level.ServerLevel server,PowerModuleBlockEntity m,int flow,double angle){
         m.markThrown(flow);
         m.status="A blade was thrown from LP flow "+(flow==0?"A":"B");
-        return TurbineMissile.launch(server,m,flow,TurbineBlades.Missile.BLADE,m.rpm,angle);
+        var r=TurbineMissile.launch(server,m,flow,TurbineBlades.Missile.BLADE,m.rpm,angle);
+        m.markHole(flow,r.angle());
+        if(Math.sin(r.angle())<TurbineFires.OIL_LINES_BELOW_SIN)TurbineFires.lineCut(server,m,members(m));
+        return r;
     }
 
-    /** A last-stage disc bursts (150 % speed, or a close far out of phase): a disc fragment flies, both sections and the shaft are wrecked. */
+    /**
+     * A last-stage disc bursts (150 % speed, or a close far out of phase): a disc fragment flies, both sections and the shaft are wrecked,
+     * the casing is burst open (it holds no steam until rebuilt), and the fragment cuts the oil lines on its way out.
+     */
     public static TurbineMissile.Result burst(net.minecraft.server.level.ServerLevel server,PowerModuleBlockEntity m,int flow,double angle){
         for(int f=0;f<TurbineBlades.FLOWS;f++)if(m.bladeIn(f))m.markThrown(f);
         m.addShaftDamage(1);
+        m.markDiscBurst();
+        m.wreckAtLeast(PowerModuleBlockEntity.WRECK_BURST);
         m.status="An LP disc burst: the section is wrecked";
-        return TurbineMissile.launch(server,m,flow,TurbineBlades.Missile.DISC,m.rpm,angle);
+        var r=TurbineMissile.launch(server,m,flow,TurbineBlades.Missile.DISC,m.rpm,angle);
+        TurbineFires.lineCut(server,m,members(m));
+        return r;
+    }
+
+    /**
+     * The shaft excursion (TURBINE-MAINTENANCE.md), the worst case: the burst rotor's coupling shears and one flow's rotor half breaks out
+     * through the end of the casing and ploughs across the floor ({@link TurbineExcursion}). The LP is left with that flow empty and its
+     * coupling sheared (a train of its own); every other section of the train is wrecked as the train comes apart, and it grinds to a
+     * stop, its rotors seized in their split casings. The rotor half cuts the oil lines, and a generator's hydrogen escapes at its broken
+     * seals and burns. {@code flow} -1 picks the flow from the position and the time.
+     */
+    public static TurbineExcursion.Result excursion(net.minecraft.server.level.ServerLevel server,PowerModuleBlockEntity lp,int flow){
+        var train=members(lp);
+        double rpm=lp.rpm;
+        if(flow<0||!lp.bladeIn(flow)){
+            int pick=(int)((net.minecraft.util.Mth.getSeed(lp.getBlockPos())^server.getGameTime())&1);
+            flow=lp.bladeIn(pick)?pick:1-pick;
+        }
+        lp.takeBladeSection(flow); // it is the piece on the floor now
+        lp.addShaftDamage(1);
+        lp.wreckAtLeast(PowerModuleBlockEntity.WRECK_SHAFT_OUT);
+        for(var m:train){
+            if(m!=lp){
+                m.addShaftDamage(1);
+                m.wreckAtLeast(PowerModuleBlockEntity.WRECK_BURST);
+                for(int f=0;f<TurbineBlades.FLOWS;f++)if(m.lp()&&m.bladeIn(f)&&!m.bladeThrown(f))m.markThrown(f);
+            }
+            m.rpm=0;m.setChanged();
+        }
+        lp.status="The shaft broke loose: the coupling sheared and a rotor half left the casing";
+        var r=TurbineExcursion.launch(server,lp,flow,rpm);
+        TurbineFires.lineCut(server,lp,train);
+        for(var m:train)if(m.block().generator())TurbineFires.hydrogen(server,m);
+        return r;
     }
 
     /**

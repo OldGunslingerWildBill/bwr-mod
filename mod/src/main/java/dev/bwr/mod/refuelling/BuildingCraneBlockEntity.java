@@ -68,7 +68,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     // Moves
     // ---------------------------------------------------------------
 
-    public enum Kind { HEAD_SEAT, HEAD_STAND, HEAD_LAID, INTERNAL, PAD, HELD, PLUG, TURBINE_COVER, CASING_STAND, TURBINE_BLADES, BLADE_STAND, GATE }
+    public enum Kind { HEAD_SEAT, HEAD_STAND, HEAD_LAID, INTERNAL, PAD, HELD, PLUG, TURBINE_COVER, CASING_STAND, TURBINE_BLADES, BLADE_STAND, GATE, SHAFT_WRECK }
 
     /** A place: the head's seat on the flange, a head stand, the head laid down (older worlds), the dryer's or separators' seat, a pad, or the hook itself. */
     public record Loc(Kind kind, BlockPos at, int which) {
@@ -110,6 +110,11 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         /** A saddle (0 or 1) of an LP Blade Storage Stand. */
         public static Loc bladeStand(BlockPos stand, int slot) {
             return new Loc(Kind.BLADE_STAND, stand.immutable(), slot);
+        }
+
+        /** The rotor half a shaft excursion left on the floor, the Turbine Shaft Wreck block at {@code wreck} (TURBINE-MAINTENANCE.md). */
+        public static Loc shaftWreck(BlockPos wreck) {
+            return new Loc(Kind.SHAFT_WRECK, wreck.immutable(), 0);
         }
 
         /** A canal gate whose bottom block is at {@code bottom} (in its canal column, or on its laydown); see {@link CanalGateLift}. */
@@ -154,6 +159,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
                 case TURBINE_COVER, CASING_STAND -> new Loc(k, BlockPos.of(t.getLong("R")), 0);
                 case TURBINE_BLADES, BLADE_STAND -> new Loc(k, BlockPos.of(t.getLong("R")), Math.clamp(t.getByte("C"), 0, 1));
                 case GATE -> new Loc(Kind.GATE, BlockPos.of(t.getLong("R")), 0);
+                case SHAFT_WRECK -> new Loc(Kind.SHAFT_WRECK, BlockPos.of(t.getLong("R")), 0);
                 default -> HELD;
             };
         }
@@ -172,6 +178,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
                 case TURBINE_BLADES -> String.format(Locale.ROOT, "flow %s of the LP turbine at %d,%d,%d", which == 0 ? "A" : "B", at.getX(), at.getY(), at.getZ());
                 case BLADE_STAND -> String.format(Locale.ROOT, "saddle %d of the LP blade stand at %d,%d,%d", which + 1, at.getX(), at.getY(), at.getZ());
                 case GATE -> String.format(Locale.ROOT, "the canal gate at %d,%d,%d", at.getX(), at.getY(), at.getZ());
+                case SHAFT_WRECK -> String.format(Locale.ROOT, "the turbine shaft wreck at %d,%d,%d", at.getX(), at.getY(), at.getZ());
             };
         }
     }
@@ -942,7 +949,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             case PLUG -> {
                 return plan == null ? null : new Point(loc.at().getX() + plan.px(), 0, loc.at().getZ() + plan.pz());
             }
-            case TURBINE_COVER, CASING_STAND, TURBINE_BLADES, BLADE_STAND -> {
+            case TURBINE_COVER, CASING_STAND, TURBINE_BLADES, BLADE_STAND, SHAFT_WRECK -> {
                 return TurbineHallLifts.column(this, loc);
             }
             case GATE -> {

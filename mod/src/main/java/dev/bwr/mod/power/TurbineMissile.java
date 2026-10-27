@@ -57,8 +57,9 @@ public final class TurbineMissile {
 
     public enum Stop { STOPPED_IN_BLOCK, UNBREAKABLE, PROTECTED, CASING, UNLOADED, OUT_OF_WORLD, RANGE }
 
+    /** What a flight did. {@code angle} is the release angle it flew at (radians in the plane of the wheel, as {@link #direction}). */
     public record Result(Vec3 origin, Vec3 direction, Vec3 end, double energyJ, double leftJ, List<BlockPos> broken, Stop stop,
-                         TurbineBlades.Missile kind, int entitiesHit) {
+                         TurbineBlades.Missile kind, int entitiesHit, double angle) {
     }
 
     /** The middle of the wheel of {@code flow} of the LP at {@code root}: 2.5 blocks from its middle along the shaft, at the shaft. */
@@ -73,6 +74,38 @@ public final class TurbineMissile {
     public static Vec3 direction(PowerModuleBlockEntity lp, double angle) {
         Direction side = lp.getBlockState().getValue(PumpAssemblyBlock.FACING).getClockWise();
         return new Vec3(side.getStepX() * Math.cos(angle), Math.sin(angle), side.getStepZ() * Math.cos(angle));
+    }
+
+    /**
+     * Where a piece released at {@code angle} tears out of an LP's casing, in the plane of its wheel: {@code u} across the shaft (to the
+     * right of the facing), {@code v} over the LP's floor, the outward normal of the wall there, and whether that is the hood (at or above
+     * the joint). Null when it leaves downwards through the exhaust opening into the condenser, where there is no wall.
+     */
+    public record Exit(double u, double v, double nu, double nv, boolean hood) {
+    }
+
+    /** The LP casing's outline across the shaft (art/models/power_turbines/build_models.py: the side walls, the hood's shoulders and roof). */
+    private static final double[][] OUTLINE = {{3.2, 0.28}, {3.2, 4.15}, {1.95, 4.9}, {-1.95, 4.9}, {-3.2, 4.15}, {-3.2, 0.28}};
+
+    public static Exit casingExit(double angle) {
+        double du = Math.cos(angle), dv = Math.sin(angle), best = Double.MAX_VALUE;
+        Exit out = null;
+        for (int i = 0; i + 1 < OUTLINE.length; i++) {
+            double ax = OUTLINE[i][0], ay = OUTLINE[i][1], ex = OUTLINE[i + 1][0] - ax, ey = OUTLINE[i + 1][1] - ay;
+            double den = du * ey - dv * ex;
+            if (Math.abs(den) < 1e-12) {
+                continue;
+            }
+            // the ray (0, 2.5) + t (du, dv) meets the segment a + s e
+            double t = ((ax) * ey - (ay - 2.5) * ex) / den, s = ((ax) * dv - (ay - 2.5) * du) / den;
+            if (t > 0 && s >= 0 && s <= 1 && t < best) {
+                best = t;
+                double nu = ey, nv = -ex, n = Math.hypot(nu, nv);
+                double u = t * du, v = 2.5 + t * dv;
+                out = new Exit(u, v, nu / n, nv / n, v >= PowerModuleBlock.HOOD_FROM_Y);
+            }
+        }
+        return out;
     }
 
     /** The release angle picked from the position and the time. */
@@ -163,7 +196,7 @@ public final class TurbineMissile {
             left -= cost;
         }
         trail(level, origin, at);
-        Result result = new Result(origin, dir, at, energy, Math.max(0, left), List.copyOf(broken), stop, kind, hit.size());
+        Result result = new Result(origin, dir, at, energy, Math.max(0, left), List.copyOf(broken), stop, kind, hit.size(), a);
         LogUtils.getLogger().info("Turbine missile from {} flow {}: {} {} kg at {} m/s ({} MJ), {} blocks broken, {} entities hit, stopped ({}) at {}",
                 root.toShortString(), flow, kind, Math.round(mass), Math.round(speed), Math.round(energy / 1e5) / 10.0, broken.size(), hit.size(),
                 stop, BlockPos.containing(at).toShortString());
@@ -172,8 +205,13 @@ public final class TurbineMissile {
         return result;
     }
 
-    private static double hitEntities(ServerLevel level, Vec3 at, double left, Set<Entity> hit) {
-        AABB box = new AABB(at.x - 0.6, at.y - 0.6, at.z - 0.6, at.x + 0.6, at.y + 0.6, at.z + 0.6).inflate(0.4);
+    static double hitEntities(ServerLevel level, Vec3 at, double left, Set<Entity> hit) {
+        return hitEntities(level, at, 1.0, left, hit);
+    }
+
+    /** Hurts what is within {@code reach} of the piece by what it carries (a few MJ kill anything), each once; returns the energy left. */
+    static double hitEntities(ServerLevel level, Vec3 at, double reach, double left, Set<Entity> hit) {
+        AABB box = new AABB(at.x - reach, at.y - reach, at.z - reach, at.x + reach, at.y + reach, at.z + reach);
         for (Entity e : level.getEntities((Entity) null, box, e -> e.isAlive() && !e.isSpectator())) {
             if (hit.add(e) && left > 0) {
                 e.hurt(level.damageSources().explosion(null, null), (float) Math.min(1000.0, left / 2000.0));
@@ -183,7 +221,7 @@ public final class TurbineMissile {
         return left;
     }
 
-    private static void trail(ServerLevel level, Vec3 from, Vec3 to) {
+    static void trail(ServerLevel level, Vec3 from, Vec3 to) {
         Vec3 d = to.subtract(from);
         int n = Math.min(64, Math.max(1, (int) (d.length() / 2)));
         for (int i = 0; i <= n; i++) {

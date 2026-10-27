@@ -18,13 +18,14 @@ import java.util.Locale;
 
 /**
  * The turbine hall's crane loads as items (TURBINE-MAINTENANCE.md): an LP turbine blade section (new or with a little wear), a
- * damaged one, and an LP turbine's hood (its upper casing half). An item is the one place such a load is while it is not in a turbine:
- * on a stand, on the crane's hook, or dropped. A blade section carries its condition; a hood the LP it came off and that LP's facing.
+ * damaged one, an LP turbine's hood (its upper casing half) and a wrecked hood (one a blade tore through, or a burst one). An item is the
+ * one place such a load is while it is not in a turbine: on a stand, on the crane's hook, or dropped. A blade section carries its
+ * condition; a hood the LP it came off and that LP's facing, a wrecked hood also whether it burst and where blades tore through it.
  */
 public class TurbineLoadItem extends Item {
-    public enum Kind { BLADE_SECTION, DAMAGED_BLADE_SECTION, HOOD }
+    public enum Kind { BLADE_SECTION, DAMAGED_BLADE_SECTION, HOOD, WRECKED_HOOD }
 
-    private static final String CONDITION = "BladeCondition", ORIGIN = "Origin", FACING = "Facing";
+    private static final String CONDITION = "BladeCondition", ORIGIN = "Origin", FACING = "Facing", BURST = "Burst", HOLES = "Holes";
     private final Kind kind;
 
     public TurbineLoadItem(Properties properties, Kind kind) {
@@ -37,7 +38,7 @@ public class TurbineLoadItem extends Item {
     }
 
     public static boolean isBladeSection(ItemStack s) {
-        return s.getItem() instanceof TurbineLoadItem t && t.kind != Kind.HOOD;
+        return s.getItem() instanceof TurbineLoadItem t && (t.kind == Kind.BLADE_SECTION || t.kind == Kind.DAMAGED_BLADE_SECTION);
     }
 
     /** A section that may go into a turbine: a new or lightly worn section, not a damaged one. */
@@ -45,8 +46,30 @@ public class TurbineLoadItem extends Item {
         return s.getItem() instanceof TurbineLoadItem t && t.kind == Kind.BLADE_SECTION;
     }
 
+    /** A hood, whole or wrecked: the crane carries it and a casing laydown stand holds it the same. */
     public static boolean isHood(ItemStack s) {
+        return s.getItem() instanceof TurbineLoadItem t && (t.kind == Kind.HOOD || t.kind == Kind.WRECKED_HOOD);
+    }
+
+    /** A hood that may go back on a turbine: not a wrecked one. */
+    public static boolean isGoodHood(ItemStack s) {
         return s.getItem() instanceof TurbineLoadItem t && t.kind == Kind.HOOD;
+    }
+
+    /** A wrecked hood that burst (drawn torn open), not one a blade only tore through. */
+    public static boolean hoodBurst(ItemStack s) {
+        return s.getItem() instanceof TurbineLoadItem t && t.kind == Kind.WRECKED_HOOD && data(s).getBoolean(BURST);
+    }
+
+    /** The release angles of the blades that tore through a wrecked hood, per flow (NaN for none). */
+    public static double[] hoodHoles(ItemStack s) {
+        double[] out = {Double.NaN, Double.NaN};
+        var l = data(s).getList(HOLES, 6);
+        for (int i = 0; i < out.length && i < l.size(); i++) {
+            double a = l.getDouble(i);
+            out[i] = Double.isFinite(a) ? a : Double.NaN;
+        }
+        return out;
     }
 
     private static CompoundTag data(ItemStack s) {
@@ -85,6 +108,24 @@ public class TurbineLoadItem extends Item {
         return s;
     }
 
+    /** The hood of a wrecked LP: burst, or with the holes blades tore through it (release angles per flow, NaN for none). */
+    public static ItemStack wreckedHood(BlockPos origin, Direction facing, boolean burst, double[] holes) {
+        ItemStack s = new ItemStack(BwrItems.WRECKED_LP_TURBINE_HOOD.get());
+        var t = new CompoundTag();
+        t.putLong(ORIGIN, origin.asLong());
+        t.putString(FACING, facing.getName());
+        if (burst) {
+            t.putBoolean(BURST, true);
+        }
+        var l = new net.minecraft.nbt.ListTag();
+        for (double a : holes) {
+            l.add(net.minecraft.nbt.DoubleTag.valueOf(a));
+        }
+        t.put(HOLES, l);
+        s.set(DataComponents.CUSTOM_DATA, CustomData.of(t));
+        return s;
+    }
+
     /** The LP a hood came off, or null. */
     public static BlockPos hoodOrigin(ItemStack s) {
         var t = data(s);
@@ -107,6 +148,7 @@ public class TurbineLoadItem extends Item {
         String mass = String.format(Locale.ROOT, "%.0f t", massT(stack));
         switch (kind) {
             case HOOD -> lines.add(Component.translatable("tooltip.bwr.lp_turbine_hood", mass).withStyle(ChatFormatting.GRAY));
+            case WRECKED_HOOD -> lines.add(Component.translatable("tooltip.bwr.wrecked_lp_turbine_hood", mass).withStyle(ChatFormatting.GRAY));
             default -> lines.add(Component.translatable("tooltip.bwr.lp_blade_section", String.format(Locale.ROOT, "%.0f%%", 100 * condition(stack)), mass)
                     .withStyle(ChatFormatting.GRAY));
         }
