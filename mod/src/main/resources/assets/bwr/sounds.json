@@ -62,5 +62,13 @@
   "geiger_click": {
     "subtitle": "subtitle.bwr.geiger_click",
     "sounds": [{"name": "bwr:geiger_click", "stream": false}]
+  },
+  "rumble_pool": {
+    "subtitle": "subtitle.bwr.rumble_pool",
+    "sounds": [{"name": "bwr:rumble_pool", "stream": false}]
+  },
+  "rumble_turbine": {
+    "subtitle": "subtitle.bwr.rumble_turbine",
+    "sounds": [{"name": "bwr:rumble_turbine", "stream": false}]
   }
 }

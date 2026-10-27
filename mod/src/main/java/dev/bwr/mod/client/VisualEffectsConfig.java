@@ -22,7 +22,23 @@ public final class VisualEffectsConfig {
     public static final ModConfigSpec.EnumValue<dev.bwr.core.display.DisplayUnits.Mode> DISPLAY_UNITS = BUILDER
             .comment("Units on the screens' readouts (display only: the physics, saved data, network and computer values never change). METRIC is what the screens have always shown, and is the default. IMPERIAL: F, lb/s, gpm for water, ft, gal, lb. PLANT: the US control-room convention, F, Mlb/hr for steam and feed flow, gpm for pumps, inches for water level, MWt and MWe. SI: degrees C, kPa(g) and kPa(a) (MPa above 1,000 kPa), metres, kg/s, m3/h for water. Control panel gauges keep their own scales.")
             .defineEnum("displayUnits", dev.bwr.core.display.DisplayUnits.Mode.METRIC);
+    public static final ModConfigSpec.DoubleValue SCREEN_SHAKE = BUILDER
+            .comment("How hard the view shakes for the rumble of the plant (relief valves discharging into the suppression pool, a turbine shaking on its bearings, blasts), 0.0 to 1.0. 1.0 is full strength: beside a discharging relief valve bank the camera rolls and bobs hard. 0.0 turns the shaking off (for motion sensitivity). It moves only the drawn camera, never your aim.")
+            .defineInRange("screenShake", 1.0, 0.0, 1.0);
+    public static final ModConfigSpec.DoubleValue RUMBLE_VOLUME = BUILDER
+            .comment("Volume of the deep rumble sound of the plant, 0.0 to 1.0, on top of the game's Ambient sound slider. 0.0 turns the rumble sound off.")
+            .defineInRange("rumbleVolume", 1.0, 0.0, 1.0);
     public static final ModConfigSpec SPEC = BUILDER.build();
+
+    /** Strength of the rumble camera shake, 0..1; full until the file is loaded. */
+    public static double screenShake() {
+        return SPEC.isLoaded() ? SCREEN_SHAKE.get() : SCREEN_SHAKE.getDefault();
+    }
+
+    /** Volume of the rumble sound, 0..1; full until the file is loaded. */
+    public static double rumbleVolume() {
+        return SPEC.isLoaded() ? RUMBLE_VOLUME.get() : RUMBLE_VOLUME.getDefault();
+    }
 
     /** The units the readouts show; METRIC (today's text) until the file is loaded. */
     public static dev.bwr.core.display.DisplayUnits.Mode displayUnits() {

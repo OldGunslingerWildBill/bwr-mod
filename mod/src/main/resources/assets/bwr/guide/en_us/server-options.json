@@ -88,7 +88,8 @@
         "bwr-visuals.toml (client only):",
         "visualEffects = \"AUTO\", panelGpuCache = true",
         "networkLineViewDistance = 32, panelTextFade = true",
-          "displayUnits = \"METRIC\" (METRIC, IMPERIAL, PLANT or SI; the readouts' units only)"
+        "displayUnits = \"METRIC\" (METRIC, IMPERIAL, PLANT or SI; the readouts' units only)",
+        "screenShake = 1.0, rumbleVolume = 1.0 (0 to 1; the rumble's camera shake and sound)"
       ]
     }
   ]

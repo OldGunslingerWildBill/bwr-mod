@@ -169,6 +169,7 @@ public final class TurbineAuxTrain {
         }
         for (var m : active) if (m.block().generator()) m.vibration = bowGov ? maxVibration : 0;
         r.vibration = maxVibration;
+        dev.bwr.mod.rumble.RumbleSources.turbine(active, maxVibration, rpm, now);
         r.vibrationAlarm = maxVibration > ALARM_VIBRATION_MM_S;
         for (var m : active) r.bearingAlarm |= lubeGov && m.bearingC > ALARM_BEARING_C;
 

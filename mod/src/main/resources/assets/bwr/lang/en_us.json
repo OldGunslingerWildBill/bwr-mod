@@ -1105,6 +1105,8 @@
   "subtitle.bwr.edg_start": "Emergency diesel generator starts",
   "subtitle.bwr.edg_run": "Emergency diesel generator runs",
   "subtitle.bwr.geiger_click": "Geiger counter clicks",
+  "subtitle.bwr.rumble_pool": "Deep rumbling of condensing steam",
+  "subtitle.bwr.rumble_turbine": "Deep rumbling of a shaking turbine",
   "item.bwr.full_core_display": "Full Core Display",
   "component.bwr.full_core_display": "Full Core Display",
   "item.bwr.rod_select_matrix": "Rod Select Matrix",

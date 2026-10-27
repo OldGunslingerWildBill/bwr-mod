@@ -88,6 +88,9 @@ public final class HeadMissileLauncher {
                     Math.round(launch.massKg() / 100.0) / 10.0, Math.round(launch.kineticJ() / 1.0e5) / 10.0,
                     launch.contained() ? "held" : "free", launch.contained() && launch.stopRow() >= 0 ? "by row " + launch.stopRow() : "",
                     Math.round(launch.riseBlocks() * 10.0) / 10.0, launch.rowsBroken());
+            dev.bwr.mod.rumble.Rumble.impulse(level, net.minecraft.world.phys.Vec3.atCenterOf(shellMin).add(
+                    (shellMax.getX() - shellMin.getX()) / 2.0, shellMax.getY() - shellMin.getY(), (shellMax.getZ() - shellMin.getZ()) / 2.0),
+                    launch.kineticJ());
         }
         return launch;
     }

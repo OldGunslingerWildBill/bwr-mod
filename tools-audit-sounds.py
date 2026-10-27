@@ -17,6 +17,9 @@ EXPECTED = frozenset((
     "turbine_whine", "steam_flow", "srv_lift", "msiv_slam", "scram_buzzer",
     "edg_start", "edg_run", "geiger_click",
 ))
+# Real (not silent) looping sounds, synthesised by tools-make-rumble-sounds.py (RUMBLE.md). They are audited apart from the silent
+# placeholders: the event, the subtitle and the file must exist, and the file must be a well-formed mono 48 kHz Vorbis stream.
+SYNTHESISED = frozenset(("rumble_pool", "rumble_turbine"))
 SAMPLE_RATE = 48_000
 PCM_FRAMES = 12_000
 
@@ -267,7 +270,23 @@ def main():
         files = {p.relative_to(assets / "sounds").as_posix(): p.read_bytes()
                  for p in (assets / "sounds").rglob("*.ogg")}
         credits = (args.credits or args.repo / "SOUND-CREDITS.md").read_text(encoding="utf-8-sig")
+        synthesised = []
+        for name in sorted(SYNTHESISED):
+            entry = definitions.pop(name, None)
+            data = files.pop(name + ".ogg", None)
+            if not isinstance(entry, dict) or entry.get("subtitle") != "subtitle.bwr." + name or not language.get("subtitle.bwr." + name):
+                synthesised.append(f"{name}: missing event or subtitle")
+            elif data is None:
+                synthesised.append(f"{name}: missing {name}.ogg")
+            else:
+                try:
+                    info = inspect_ogg(data)
+                    if info["channels"] != 1 or info["sample_rate"] != SAMPLE_RATE or not 3 * SAMPLE_RATE <= info["frames"] <= 8 * SAMPLE_RATE or len(data) > 150_000:
+                        synthesised.append(f"{name}.ogg: expected a mono 48 kHz loop of 3 to 8 s under 150 kB, got {info}, {len(data)} bytes")
+                except (ValueError, struct.error, UnicodeError) as error:
+                    synthesised.append(f"{name}.ogg: {error}")
         problems, metadata = validate(definitions, language, files, credits)
+        problems += synthesised
         if args.self_test and not problems:
             print(f"Audit negative checks: {negative_checks(definitions, language, files, credits)} corruptions detected")
         for problem in problems:
