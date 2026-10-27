@@ -26,6 +26,8 @@ public final class Alpha31ContainmentPeripheralTests {
         }
         var level = helper.getLevel();
         BlockPos origin = new BlockPos(46012, 190, 46012);
+        forceRoom(level, origin, true); // the peripheral never loads a chunk to look, so the fixture keeps its own loaded
+        try {
         for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++)
             for (int y = -4; y <= 4; y++) {
                 boolean wall = Math.abs(x) == 4 || Math.abs(z) == 4 || Math.abs(y) == 4;
@@ -58,6 +60,9 @@ public final class Alpha31ContainmentPeripheralTests {
         helper.assertTrue(cc.getLinkedReactors().isEmpty() && cc.getBypassFlow() == 0.0,
                 "unlinked containment CC invented reactor flow");
         helper.succeed();
+        } finally {
+            forceRoom(level, origin, false);
+        }
     }
 
     /**
@@ -72,6 +77,8 @@ public final class Alpha31ContainmentPeripheralTests {
         }
         var level = helper.getLevel();
         BlockPos origin = new BlockPos(46212, 190, 46012);
+        forceRoom(level, origin, true); // the peripheral never loads a chunk to look, so the fixture keeps its own loaded
+        try {
         for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++)
             for (int y = -4; y <= 4; y++) {
                 boolean wall = Math.abs(x) == 4 || Math.abs(z) == 4 || Math.abs(y) == 4;
@@ -100,5 +107,14 @@ public final class Alpha31ContainmentPeripheralTests {
                 "the power came back and the valve is still held closed by the demand");
         helper.assertTrue(cc.setIsolation(sleeve.getX(), sleeve.getY(), sleeve.getZ(), false) && valve.demandOpen(), "with power it opens on request");
         helper.succeed();
+        } finally {
+            forceRoom(level, origin, false);
+        }
+    }
+
+    private static void forceRoom(net.minecraft.server.level.ServerLevel level, BlockPos origin, boolean on) {
+        for (int cx = (origin.getX() - 4) >> 4; cx <= (origin.getX() + 4) >> 4; cx++)
+            for (int cz = (origin.getZ() - 4) >> 4; cz <= (origin.getZ() + 4) >> 4; cz++)
+                FixtureChunks.force(level, cx, cz, on);
     }
 }
