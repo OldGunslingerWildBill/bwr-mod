@@ -89,7 +89,10 @@ public final class PlugSections {
     }
 
     /** A survey: the section, or why there is none. */
-    public record Survey(@Nullable Section section, @Nullable Component problem) {
+    public record Survey(@Nullable Section section, @Nullable Component problem, boolean unloaded) {
+        public Survey(@Nullable Section section, @Nullable Component problem) {
+            this(section, problem, false);
+        }
     }
 
     /** Which tier a state is (1..3), or 0 for anything that is not shield plug concrete. */
@@ -117,10 +120,15 @@ public final class PlugSections {
         return level.getBlockState(plug.above()).getBlock() instanceof CraneAnchorBlock;
     }
 
+    /** The refusal for a section (or a coordinate) that lies in a chunk that is not loaded. */
+    public static Component unloadedProblem() {
+        return BwrText.tr("status.bwr.plug.unloaded", "Part of the shield plug lies in a chunk that is not loaded; the crane does not load chunks.");
+    }
+
     /** Flood-fills the section that contains the plug block {@code seed}. */
     public static Survey survey(Level level, BlockPos seed) {
         if (!level.isLoaded(seed)) {
-            return new Survey(null, BwrText.tr("status.bwr.plug.unloaded", "Part of the shield plug lies in a chunk that is not loaded; the crane does not load chunks."));
+            return new Survey(null, unloadedProblem(), true);
         }
         if (tierOf(level.getBlockState(seed)) == 0) {
             return new Survey(null, BwrText.tr("status.bwr.plug.not_plug", "There is no shield plug concrete there."));
@@ -144,8 +152,7 @@ public final class PlugSections {
                     continue;
                 }
                 if (!level.isLoaded(n)) {
-                    return new Survey(null, BwrText.tr("status.bwr.plug.unloaded",
-                            "Part of the shield plug lies in a chunk that is not loaded; the crane does not load chunks."));
+                    return new Survey(null, unloadedProblem(), true);
                 }
                 if (joined(state, d, level.getBlockState(n))) {
                     seen.add(n);

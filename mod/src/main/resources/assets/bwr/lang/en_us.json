@@ -1771,6 +1771,7 @@
   "status.bwr.turbine_crane.no_closed_lp": "No LP turbine section with its cover on lies under the crane.",
   "status.bwr.turbine_crane.no_hood_in_reach": "No LP turbine hood lies on a Casing Laydown Stand under the crane.",
   "status.bwr.turbine_crane.no_casing_stand_free": "No free Casing Laydown Stand under the crane: place one on clear floor beside the turbines, with 7 x 7 of room round it.",
+  "status.bwr.turbine_crane.unloaded": "The position %s is in a chunk that is not loaded; the crane does not load chunks.",
   "status.bwr.turbine_crane.no_open_lp": "No LP turbine section under the crane has its cover off (with all its blade sections in, for COVER ON).",
   "status.bwr.turbine_crane.no_section_to_lift": "No LP turbine under the crane has its cover off and a blade section in it: COVER OFF first.",
   "status.bwr.turbine_crane.no_spare": "No spare LP blade section lies on an LP Blade Storage Stand under the crane.",

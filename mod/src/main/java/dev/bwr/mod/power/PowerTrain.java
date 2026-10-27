@@ -97,7 +97,7 @@ public final class PowerTrain {
         if(!(level instanceof net.minecraft.server.level.ServerLevel server))return;
         for(var m:active){
             if(!m.lp())continue;
-            if(m.rpm>=TurbineBlades.BURST_RPM&&m.bladesThrownCount()<TurbineBlades.FLOWS&&m.worstFlow()>=0){
+            if(m.rpm>=TurbineBlades.BURST_RPM&&unburstSectionIn(m)){
                 burst(server,m,m.worstFlow(),Double.NaN);continue;
             }
             for(int f=0;f<TurbineBlades.FLOWS;f++)
@@ -120,6 +120,12 @@ public final class PowerTrain {
             if(rpm>1||worst>.1)TurbineEvents.post(new TurbineEvents.Vibration(server,at.getBlockPos(),
                     new net.minecraft.world.phys.Vec3(x/train.size(),y/train.size(),z/train.size()),worst,rpm,train.size()));
         }
+    }
+
+    /** Whether a blade section sits in the casing that no disc has burst from yet: a burst marks every installed section, so a section left out must not make the same disc burst every tick. */
+    private static boolean unburstSectionIn(PowerModuleBlockEntity m){
+        for(int f=0;f<TurbineBlades.FLOWS;f++)if(m.bladeIn(f)&&!m.bladeThrown(f))return true;
+        return false;
     }
 
     /** A failed section throws one of its last-stage blades at the shaft's speed. {@code angle} NaN picks one. */

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased: computer, crane and turbine fixes (a freezing Lua call, chunk loads, blades, valves)
+
+- **`bwr_spent_fuel_pool.getAssemblies(2147483647)` froze the server.** The rack range `first, count` was clamped at the start but not at the end, so a `first` past the last rack looped about two billion times on the server thread (a watchdog crash from one Lua line), and `first - 1` overflowed for the smallest int. Both ends are now clamped to the racks there are, in long arithmetic; `getRacks` had the same range.
+- **A coordinate from a program no longer makes the server load or generate chunks.** `queuePlugOff(x, y, z)`, `queueCoverOff/On` and `queueBladesOut/In` read the block at the position they are given with a plain `getBlockState`, so `crane.queuePlugOff(2.5e7, 64, 2.5e7)` generated terrain synchronously. They now answer "not loaded" for a position in a chunk that is not loaded (the way `queueGateOut` always did), and the LP lookup reads only chunks that are there.
+- **PLUG ON no longer forgets a laid-down section when part of it is in an unloaded chunk.** A section that reached into a chunk that was not loaded could not be surveyed, and that was taken for "the section is gone": its record was cleared. The record is now kept and the crane says the chunk is not loaded, so the player can press PLUG ON again. The canal gate (GATE IN) had the same fault and is fixed the same way.
+- **A computer can close an unpowered containment valve.** `bwr_containment.setIsolation(x, y, z, true)` needed power like opening does, so with the power lost the close was refused and the spring-return valve opened again when power came back. Power is needed only to open, as for the other devices.
+- **`getStatus().failed` of an LP turbine now reports a failed blade section.** It looked at the shaft counter only; it is the worse of the shaft and the blades, as `damage` already was and as TURBINE-MAINTENANCE.md says.
+- **An LP disc burst once per rotor, not 20 times a second.** With one blade section lifted out (cover off) and steam admitted past 150 % speed, the burst marked only the section that was in, the "all thrown" test never held, and a 2,500 kg disc was launched every tick. A rotor with nothing left to burst no longer bursts again; a new section set in is a new disc.
+- Placing a turbine module no longer reads the 13 x 8 x 13 box round it with a block read that could load a chunk near the edge of the loaded world.
+- Tests added for all of these.
+
 ## Unreleased: flaky GameTests round 3 (the level clock, and a release angle)
 
 Test-only; no game behaviour changed. Two tests failed now and then.

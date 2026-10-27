@@ -93,7 +93,7 @@ public final class ContainmentPeripheral implements IPeripheral {
                 || !(level().getBlockState(at).getBlock() instanceof ContainmentPenetrationBlock penetration)
                 || !penetration.hasValve() || level().getBlockState(at).getValue(ContainmentPenetrationBlock.RUPTURED)
                 || !(level().getBlockEntity(at) instanceof ContainmentPenetrationBlockEntity valve)
-                || !valve.hasPowerToOpen()) return false;
+                || (!closed && !valve.hasPowerToOpen())) return false; // power is needed to open, never to close (a spring-return valve)
         valve.setComputerControlled(true);
         valve.setDemandOpen(!closed);
         return true;

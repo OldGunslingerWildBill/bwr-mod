@@ -85,10 +85,14 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
             adoptSkids(level,origin(pos,level.getBlockState(pos)));
         }
     }
+    private static boolean isAuxIfLoaded(Level level,BlockPos p){
+        var st=dev.bwr.mod.world.LoadedWorld.state(level,p);
+        return st!=null&&st.getBlock() instanceof TurbineAuxBlock;
+    }
     /** Skids that were waiting for this module (their neighbour updates came before its controller existed) attach now. */
     private static void adoptSkids(Level level,BlockPos root){
         for(var p:BlockPos.betweenClosed(root.offset(-6,-1,-6),root.offset(6,6,6)))
-            if(level.getBlockState(p).getBlock() instanceof TurbineAuxBlock)TurbineAuxBlock.attach(level,p.immutable());
+            if(isAuxIfLoaded(level,p))TurbineAuxBlock.attach(level,p.immutable());
     }
     @Override protected java.util.List<net.minecraft.world.item.ItemStack> getDrops(BlockState state,net.minecraft.world.level.storage.loot.LootParams.Builder params) {
         var drops=super.getDrops(state,params);

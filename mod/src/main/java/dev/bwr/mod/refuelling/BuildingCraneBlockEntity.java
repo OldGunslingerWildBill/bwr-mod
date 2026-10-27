@@ -1540,7 +1540,11 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             double wx = env.min().getX() + env.width() / 2.0, wz = env.min().getZ() + env.depth() / 2.0;
             PlugSections.Section chosen = null;
             if (anchor != null) {
-                if (!(level.getBlockState(anchor).getBlock() instanceof CraneAnchorBlock)) {
+                BlockState anchorState = dev.bwr.mod.world.LoadedWorld.state(level, anchor);
+                if (anchorState == null) {
+                    return PlugSections.unloadedProblem();
+                }
+                if (!(anchorState.getBlock() instanceof CraneAnchorBlock)) {
                     return BwrText.tr("status.bwr.plug.not_an_anchor", "There is no crane anchor at %s.", anchor.toShortString());
                 }
                 var sv = PlugSections.survey(level, anchor.below());
@@ -1593,7 +1597,8 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         }
         Laid rec = laid.get(laid.size() - 1);
         var sv = PlugSections.survey(level, rec.seed().below());
-        if (sv.section() == null && sv.problem() != null && !level.isLoaded(rec.seed())) {
+        if (sv.section() == null && sv.unloaded()) {
+            // part of the section (or all of it) lies in a chunk that is not loaded: nothing is known, so the record stays and the player can retry
             return sv.problem();
         }
         if (sv.section() == null || !sv.section().min().equals(rec.lay())) {

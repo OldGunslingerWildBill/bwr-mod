@@ -667,4 +667,16 @@ public final class SpentFuelPoolTests {
         System.out.println("SPENT FUEL POOL CC: bwr_spent_fuel_pool getStatus, getRacks, getAssemblies and setCooling agree with the block entity");
         h.succeed();
     }
+
+    /** A rack range far outside the pool is answered at once and empty; it used to loop about two billion times on the server thread. */
+    @GameTest(template = "empty", templateNamespace = "bwrpool", timeoutTicks = 300)
+    public static void aRackRangeFarOutsideThePoolReturnsAtOnce(GameTestHelper h) throws Exception {
+        if (!net.neoforged.fml.ModList.get().isLoaded("computercraft")) {
+            System.out.println("CC-ABSENT SKIP: aRackRangeFarOutsideThePoolReturnsAtOnce");
+            h.succeed();
+            return;
+        }
+        SpentFuelPoolCcChecks.runRanges(h, RELOAD.offset(0, 0, 160));
+        h.succeed();
+    }
 }

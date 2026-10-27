@@ -940,6 +940,84 @@ public final class PlugLiftTests {
     }
 
     // ------------------------------------------------------------------------------------------------------------
+    // 13. Chunks that are not loaded
+    // ------------------------------------------------------------------------------------------------------------
+
+    /** A position a program names in a chunk that is not loaded is refused as such; the crane never makes the server load or generate it. */
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    public static void aPositionInAChunkThatIsNotLoadedIsRefusedAndNeverGenerated(GameTestHelper h) throws Exception {
+        Rig r = new Rig(h.getLevel(), at(19));
+        later(h, () -> {
+            try (ChunkLab lab = new ChunkLab(r.level)) {
+                BlockPos far = new BlockPos(25_000_000, 64, 25_000_000);
+                h.assertTrue(!lab.loaded(far), "the far chunk starts unloaded");
+                Component why = r.crane().queuePlug(true, far);
+                h.assertTrue(why != null && english(why).contains("not loaded"), "PLUG OFF at an anchor in an unloaded chunk: " + english(why));
+                why = r.crane().queueGate(true, far);
+                h.assertTrue(why != null && english(why).contains("not loaded"), "GATE OUT at a gate in an unloaded chunk: " + english(why));
+                why = r.crane().queueCover(true, far);
+                h.assertTrue(why != null && english(why).contains("not loaded"), "COVER OFF at an LP in an unloaded chunk: " + english(why));
+                h.assertTrue(!lab.loaded(far) && lab.syncLoads.isEmpty(), "no chunk was loaded or generated: " + lab.syncLoads);
+                h.assertTrue(r.crane().plugsLaid() == 0 && !r.crane().busy(), "and nothing was queued");
+                if (net.neoforged.fml.ModList.get().isLoaded("computercraft")) {
+                    CcFixChecks.craneFarCoordinatesRefuse(h, r.level, r.f.console, lab);
+                }
+            }
+        }, r);
+    }
+
+    /**
+     * A laid-down section that reaches into a chunk that is not loaded cannot be surveyed, and that says nothing about whether it is still
+     * there: PLUG ON refuses and keeps the record so the player can try again. A record whose section is really gone is still cleared.
+     */
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    public static void plugOnKeepsTheRecordWhenPartOfTheSectionIsInAChunkThatIsNotLoaded(GameTestHelper h) throws Exception {
+        Rig r = new Rig(h.getLevel(), at(20));
+        later(h, () -> {
+            BlockPos edge = null;
+            try (ChunkLab lab = new ChunkLab(r.level)) {
+                int cz = r.o.getZ() >> 4;
+                int cx = (r.o.getX() + 40) >> 4;
+                while (lab.loaded(cx + 1, cz) && cx < ((r.o.getX() + 40) >> 4) + 8) {
+                    cx++;
+                }
+                h.assertTrue(lab.loaded(cx, cz) && !lab.loaded(cx + 1, cz), "the last loaded chunk east of the fixture has an unloaded neighbour: " + cx);
+                // the east-most column of the last loaded chunk: its east neighbour is in the chunk that is not loaded
+                edge = new BlockPos((cx << 4) + 15, r.o.getY() + 9, r.o.getZ());
+                // without shape updates (16): those read the neighbour in the next chunk and would load it
+                r.level.setBlock(edge, BwrBlocks.SHIELD_PLUG_CONCRETE.get().defaultBlockState(), 2 | 16);
+                var crane = r.crane();
+                var regs = r.level.registryAccess();
+                CompoundTag tag = crane.saveWithFullMetadata(regs);
+                var list = new net.minecraft.nbt.ListTag();
+                CompoundTag rec = new CompoundTag();
+                rec.putLong("Lay", edge.asLong());
+                rec.putLong("Home", r.wellBase().asLong());
+                rec.putLong("Seed", edge.above().asLong());
+                list.add(rec);
+                tag.put("Laid", list);
+                crane.loadWithComponents(tag, regs);
+                crane.refreshSite();
+                h.assertTrue(crane.plugsLaid() == 1, "a record of a laid section is on the crane");
+                var sv = PlugSections.survey(r.level, edge);
+                h.assertTrue(sv.section() == null && sv.unloaded(), "the section reaches into the chunk that is not loaded: " + english(sv.problem()));
+                Component why = crane.queuePlug(false, null);
+                h.assertTrue(why != null && english(why).contains("not loaded"), "PLUG ON says why it cannot look: " + english(why));
+                h.assertTrue(crane.plugsLaid() == 1 && crane.laidSections().get(0).lay().equals(edge), "the record is kept so the player can try again");
+                h.assertTrue(!lab.loaded(cx + 1, cz) && lab.syncLoads.isEmpty(), "and no chunk was loaded: " + lab.syncLoads);
+                // the same record with the section really gone (nothing there, in a loaded place) is cleared, as before
+                r.level.setBlock(edge, Blocks.AIR.defaultBlockState(), 2 | 16);
+                why = crane.queuePlug(false, null);
+                h.assertTrue(why != null && english(why).contains("no longer there") && crane.plugsLaid() == 0, "a section that is gone clears its record: " + english(why));
+            } finally {
+                if (edge != null) {
+                    r.level.setBlock(edge, Blocks.AIR.defaultBlockState(), 2 | 16);
+                }
+            }
+        }, r);
+    }
+
+    // ------------------------------------------------------------------------------------------------------------
     // 12. Old saves
     // ------------------------------------------------------------------------------------------------------------
 

@@ -516,6 +516,70 @@ public final class TurbineMaintenanceTests {
         });
     }
 
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void failedIsTheWorseOfTheShaftAndTheBladeSections(GameTestHelper h) {
+        run(h, at(15), f -> {
+            boolean cc = net.neoforged.fml.ModList.get().isLoaded("computercraft");
+            f.blades(0.4, 0.4);
+            h.assertTrue(!f.lp.failed() && f.lp.damage() == 0.4, "worn blades have not failed the section");
+            if (cc) CcFixChecks.lpStatusReportsBladeFailure(h, f.lp, false);
+            f.blades(1.0, 0.2);
+            h.assertTrue(f.lp.shaftDamage() == 0 && f.lp.damage() == 1.0, "a failed blade section is the section's damage; the shaft is sound");
+            h.assertTrue(f.lp.failed(), "a failed blade section fails the LP section");
+            if (cc) CcFixChecks.lpStatusReportsBladeFailure(h, f.lp, true);
+            h.assertTrue(!f.gen.failed(), "the generator on the same shaft has not failed");
+            f.blades(0, 0);
+            f.edit(f.lp, t -> t.putDouble("ShaftDamage", 1.0));
+            h.assertTrue(f.lp.failed(), "a failed shaft still fails the section");
+            if (cc) CcFixChecks.lpStatusReportsBladeFailure(h, f.lp, true);
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aDiscBurstsOncePerRotorWhileABladeSectionIsOut(GameTestHelper h) {
+        run(h, at(16), f -> {
+            var listener = new Listener();
+            NeoForge.EVENT_BUS.register(listener);
+            try {
+                h.assertTrue(!Double.isNaN(f.lp.takeBladeSection(0)) && !f.lp.bladeIn(0), "blade section A lifted out");
+                f.rpm(TurbineBlades.BURST_RPM + 10);
+                f.tick(1);
+                h.assertTrue(f.lp.bladeThrown(1) && f.lp.shaftDamage() == 1, "the disc of the section left in burst");
+                h.assertTrue(listener.missiles.size() == 1 && listener.missiles.get(0).kind() == TurbineBlades.Missile.DISC,
+                        "one disc fragment flew: " + listener.missiles.size());
+                // the shaft is still fast: nothing may launch another disc from a rotor that has already burst
+                f.rpm(TurbineBlades.BURST_RPM + 10);
+                f.tick(40);
+                h.assertTrue(listener.missiles.size() == 1, "a rotor bursts once, not once a tick: " + listener.missiles.size() + " missiles");
+                // a new section set into the empty flow is a new disc
+                h.assertTrue(f.lp.installBladeSection(0, 0.0), "a spare section set into flow A");
+                f.rpm(TurbineBlades.BURST_RPM + 10);
+                f.tick(1);
+                h.assertTrue(listener.missiles.size() == 2, "the new section bursts once more: " + listener.missiles.size());
+            } finally {
+                NeoForge.EVENT_BUS.unregister(listener);
+            }
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 600)
+    public static void theCranesTurbineLiftsRefuseAPositionInAChunkThatIsNotLoaded(GameTestHelper h) {
+        run(h, at(17), f -> {
+            f.crane(16);
+            BlockPos far = new BlockPos(25_000_000, 64, 25_000_000);
+            try (ChunkLab lab = new ChunkLab(f.l)) {
+                h.assertTrue(!lab.loaded(far), "the far chunk starts unloaded");
+                for (boolean on : new boolean[] {true, false}) {
+                    String why = english(f.crane.queueCover(on, far));
+                    h.assertTrue(why.contains("not loaded"), "COVER " + (on ? "OFF" : "ON") + " at an unloaded position: " + why);
+                    why = english(f.crane.queueBlades(on, far));
+                    h.assertTrue(why.contains("not loaded"), "BLADES " + (on ? "OUT" : "IN") + " at an unloaded position: " + why);
+                }
+                h.assertTrue(!lab.loaded(far) && lab.syncLoads.isEmpty(), "no chunk was loaded or generated: " + lab.syncLoads);
+            }
+        });
+    }
+
     // ------------------------------------------------------------------------------------------------ the crane
 
     @GameTest(template = "empty", timeoutTicks = 600)
