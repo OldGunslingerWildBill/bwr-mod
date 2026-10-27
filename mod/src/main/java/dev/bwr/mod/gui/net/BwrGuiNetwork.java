@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class BwrGuiNetwork {
 
     /** Bumped when required menu payloads or their wire formats change. */
-    private static final String VERSION = "25";
+    private static final String VERSION = "26";
 
     private BwrGuiNetwork() {
     }
@@ -29,6 +29,9 @@ public final class BwrGuiNetwork {
 
         // Control panel packets share this registrar, so they ride this version.
         dev.bwr.mod.panel.net.PanelNetwork.register(registrar);
+        // The rumble state of the player (RUMBLE.md): server to client only.
+        registrar.playToClient(dev.bwr.mod.rumble.RumblePayload.TYPE, dev.bwr.mod.rumble.RumblePayload.STREAM_CODEC,
+                (payload, context) -> dev.bwr.mod.rumble.client.RumbleClient.accept(payload));
 
         registrar.playToClient(MenuSyncPayload.TYPE, MenuSyncPayload.STREAM_CODEC,
                 BwrGuiNetwork::handleSync);

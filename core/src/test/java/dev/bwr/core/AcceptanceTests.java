@@ -81,6 +81,7 @@ public final class AcceptanceTests {
             CompactCoreLayoutTest.class,
             PowerTurbineTest.class,
             ShaftDynamicsTest.class,
+            RumbleLawTest.class,
             GridArithmeticTest.class,
             SurfaceCondenserTest.class,
             WaterSegmentTest.class,

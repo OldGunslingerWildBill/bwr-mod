@@ -4,7 +4,8 @@
     "ALPHA-HARDWARE.md",
     "TERRY-TURBINES.md",
     "SUPPRESSION-BASIN.md",
-    "CONTAINMENT-UPDATE.md"
+    "CONTAINMENT-UPDATE.md",
+    "RUMBLE.md"
   ],
   "pages": [
     {
@@ -118,6 +119,21 @@
         "bwr:containment_nitrogen_supply",
         "bwr:containment_vent_valve",
         "bwr:nitrogen_canister"
+      ]
+    },
+    {
+      "title": "Rumble and shaking",
+      "text": [
+        "Steam collapsing in the suppression pool shakes the ground, and a bowed or unbalanced turbine shakes its hall. You hear a deep rumble and the view shakes; the more power and the nearer, the harder.",
+        "",
+        "One open relief valve is felt out to about 500 blocks, all 18 of a large plant out to 8,000. A turbine at the vibration limit is felt for 70 blocks.",
+        "",
+        "It is an effect only; nothing reacts to it. In bwr-visuals.toml, screenShake (0 to 1, 0 = off) and rumbleVolume (0 to 1) tone it down."
+      ],
+      "icons": [
+        "bwr:suppression_pool_controller",
+        "bwr:ads_relief_valve",
+        "bwr:suppression_pool_quencher"
       ]
     }
   ]

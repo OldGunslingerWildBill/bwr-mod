@@ -60,8 +60,9 @@ neoForge {
             // 'bwrlamps' holds the industrial lamp tests (IndustrialLampTests): warm-up, restrike, redstone, saving, loot; -PbwrGameTestNamespaces=bwrlamps runs just those.
             // 'bwrshield' holds the block radiation shielding tests (ShieldingTests, batch shielding); -PbwrGameTestNamespaces=bwrshield runs just those.
             // 'bwrbreeding' holds the reactor-bred isotope tests (BreedingTargetTests); -PbwrGameTestNamespaces=bwrbreeding runs just those.
+            // 'bwrrumble' holds the rumble tests (RumbleTests): the distance law and its 8,000-block calibration, delivery, packet rate, the pool and turbine hooks; -PbwrGameTestNamespaces=bwrrumble runs just those.
             // 'bwrfloodlight' holds the beam lamp tests (FloodlightTests: xenon floodlight, high-bay, HPS flat panel; exact light cleanup, unloaded chunks, water); -PbwrGameTestNamespaces=bwrfloodlight runs just those.
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyPool') ? 'bwrpool' : project.hasProperty('bwrOnlyUranium') ? 'bwruranium' : project.hasProperty('bwrOnlyThorium') ? 'bwrthorium' : project.hasProperty('bwrOnlyBlast') ? 'bwrblast' : project.hasProperty('bwrOnlyBridge') ? 'bwrbridge' : project.hasProperty('bwrOnlyCavity') ? 'bwrcavity' : project.hasProperty('bwrOnlyCrane') ? 'bwrcrane' : project.hasProperty('bwrOnlyPlug') ? 'bwrplug' : 'bwr,bwrtick,bwrplant,bwrpool,bwruranium,bwrthorium,bwrblast,bwrbridge,bwrcavity,bwrinternals,bwrcrane,bwrplug,bwrheight,bwrrwcu,bwrshell,bwraux,bwrhx,bwrrtg,bwrbreeding,bwrlargertg,bwrlamps,bwrfloodlight,bwrshield')
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.hasProperty('bwrGameTestNamespaces') ? project.property('bwrGameTestNamespaces') : (project.hasProperty('bwrOnlyTick') ? 'bwrtick' : project.hasProperty('bwrOnlyPlant') ? 'bwrplant' : project.hasProperty('bwrOnlyPool') ? 'bwrpool' : project.hasProperty('bwrOnlyUranium') ? 'bwruranium' : project.hasProperty('bwrOnlyThorium') ? 'bwrthorium' : project.hasProperty('bwrOnlyBlast') ? 'bwrblast' : project.hasProperty('bwrOnlyBridge') ? 'bwrbridge' : project.hasProperty('bwrOnlyCavity') ? 'bwrcavity' : project.hasProperty('bwrOnlyCrane') ? 'bwrcrane' : project.hasProperty('bwrOnlyPlug') ? 'bwrplug' : 'bwr,bwrtick,bwrplant,bwrpool,bwruranium,bwrthorium,bwrblast,bwrbridge,bwrcavity,bwrinternals,bwrcrane,bwrplug,bwrheight,bwrrwcu,bwrshell,bwraux,bwrhx,bwrrtg,bwrbreeding,bwrlargertg,bwrlamps,bwrfloodlight,bwrshield,bwrrumble')
             // Developer-only tick profiler (dev.bwr.mod.TickProbe): per-system microseconds per server tick, printed by
             // the TickBudgetTests plant profile as "TICK PROBE" lines. Off (and costless) without this property.
             if (project.hasProperty('bwrTickProbe')) jvmArguments.add('-Dbwr.tickProbe=true')
@@ -73,6 +74,12 @@ neoForge {
             gameDirectory = file('run/advancementClientCheck')
             programArguments.addAll('--width', '1280', '--height', '900')
             jvmArguments.add('-Dbwr.advancementClientCheck=true')
+        }
+        // The rumble sound loops, camera shake and options (RumbleClientCheck); needs no world.
+        rumbleClientCheck {
+            client()
+            gameDirectory = file('run/rumbleClientCheck')
+            jvmArguments.add('-Dbwr.rumbleClientCheck=true')
         }
         soundClientCheck {
             client()
@@ -778,6 +785,7 @@ tasks.named('jar', Jar).configure {
     exclude 'data/bwrbreeding/**'
     exclude 'data/bwrfloodlight/**'
     exclude 'data/bwrshield/**'
+    exclude 'data/bwrrumble/**'
     from(rootProject.file('LICENSE')) { into 'META-INF' }
     from(rootProject.file('NOTICE')) { into 'META-INF' }
     from(rootProject.file('THIRD-PARTY-NOTICES.md')) { into 'META-INF' }

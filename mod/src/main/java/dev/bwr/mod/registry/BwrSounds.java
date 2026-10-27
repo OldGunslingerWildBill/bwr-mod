@@ -26,6 +26,9 @@ public final class BwrSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> EDG_START = register("edg_start");
     public static final DeferredHolder<SoundEvent, SoundEvent> EDG_RUN = register("edg_run");
     public static final DeferredHolder<SoundEvent, SoundEvent> GEIGER_CLICK = register("geiger_click");
+    /** Looping deep rumbles of the plant (RUMBLE.md): steam condensing in the pool, and a shaking turbine train. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> RUMBLE_POOL = register("rumble_pool");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RUMBLE_TURBINE = register("rumble_turbine");
 
     private static DeferredHolder<SoundEvent, SoundEvent> register(String path) {
         return SOUNDS.register(path, () -> SoundEvent.createVariableRangeEvent(BwrMod.id(path)));

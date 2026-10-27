@@ -638,6 +638,7 @@ public class SuppressionPoolBlockEntity extends BlockEntity {
             pressureMoment+=packet.mass()/dt*dev.bwr.core.thermal.Saturation.psigFromPsia(packet.pressurePsia());
         }
         steamInKgPerS=total;
+        dev.bwr.mod.rumble.RumbleSources.pool(level, getBlockPos(), gameTime, energyRate);
         double meanPsig = total > 0.0 ? pressureMoment / total : 0.0;
         pool.condenseSteamAtEnthalpy(total,total>0?energyRate/total:0,dt);
         double bulkEscaped=pool.getUncondensedSteamKgPerS();
