@@ -125,8 +125,11 @@ public final class TurbineAuxTests {
 
     private static void run(GameTestHelper h, BlockPos root, Body body) {
         var l = h.getLevel();
-        long time = l.getGameTime();
         EntityLookupProbe.runWhenLive(h, Fx.bounds(root), () -> {
+            // The clock is restored to what it is now, when the body starts: the wait for the chunks has gone by on the real clock,
+            // and putting back the time from before it would turn the level clock back by that many ticks for every other GameTest
+            // of the batch (their delays and waits run on it, and items they dropped keep falling on the real ticks).
+            long time = l.getGameTime();
             Fx f = null;
             try {
                 f = new Fx(l, root);

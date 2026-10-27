@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: flaky GameTests round 3 (the level clock, and a release angle)
+
+Test-only; no game behaviour changed. Two tests failed now and then.
+
+- **`PanelDesyncTests.staleOwnerComponentIsRemovedOnVerify`** ("air: exactly one item dropped, got 0", "Index 0 out of bounds for length 0", also "stone/console/missing claim: one item"). A GameTest's clock is the level's game time (`GameTestInfo.tickCount = level.getGameTime() - startTick`), and `TurbineMaintenanceTests.run`, `TurbineAuxTests.run` and `RumbleTests.aBowedRotorMakesItsTrainRumbleAndAStraightOneOnlyHums` read the game time **before** the wait for their chunks (`EntityLookupProbe.runWhenLive`) and put it back when the body was done. The body is synchronous and moves the clock freely, but the wait had gone by on the real clock, so every such test turned the level clock back by the length of its wait (tens to hundreds of ticks). The other tests of the batch stood still on their own clock for that long while the world went on: the nameplate the panel test counts two or three steps after it dropped (8 ticks a step on its clock) kept falling on the real ticks, out of the fixture box, and the count read 0. Not a bug in the panels. The three tests now read the time when the body starts, so the clock is put back to where it is, not to where it was. With the old read, 42 of 50 runs of the panel test failed beside five turbine tests in one batch; with the new one, none of 50.
+- **`TurbineMaintenanceTests.aDiscBurstsAt150PercentSpeedAndWrecksTheSection`** ("a disc fragment goes through more of the shell than a blade: 1"). The burst picks its release angle from the position and the game time (`TurbineMissile.pickAngle`), and the game time a test starts at is wherever the server has got to. The test's stone shell is 1.5 blocks thick on a block grid, so a fragment flying along some diagonals threads a single block of it (8 of 40 runs, about one angle in five). The test now moves its own clock on, never back, to the first tick at which the burst picks an angle along an axis of the wheel (where the shell is two blocks deep whatever the grid), then runs the same assertions. The game picks its angle as before.
+
 ## Unreleased: the HP and LP turbines remodelled
 
 The TX-10 Style HP and LP Turbines were a plain cylinder with rings on a slab. They now read as the casings of a large nuclear
