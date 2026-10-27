@@ -22,6 +22,16 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
     }
 
     private boolean aux() { return menu.lubeGov || menu.bowGov || menu.genGov; }
+    private String section(int flow) {
+        if ((menu.sectionsIn & (1 << flow)) == 0) return "lifted out";
+        String worn = pct(flow == 0 ? menu.bladeA : menu.bladeB) + "% worn";
+        return (menu.thrown & (1 << flow)) != 0 ? "blade thrown" : worn;
+    }
+    private Status sectionStatus(int flow) {
+        if ((menu.sectionsIn & (1 << flow)) == 0) return Status.INFO;
+        double d = flow == 0 ? menu.bladeA : menu.bladeB;
+        return d >= 1 || (menu.thrown & (1 << flow)) != 0 ? Status.ALARM : d > 0.5 ? Status.CAUTION : Status.NONE;
+    }
     private static Status alarm(boolean on) { return on ? Status.ALARM : Status.NORMAL; }
 
     @Override
@@ -93,9 +103,30 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
                 Layout.note("Rolls the shaft at 3 rpm below 10 rpm, on the oil tank's AC bus.").body().showIf(() -> menu.generator),
                 Layout.note("The turning gear and the winding are on the generator's screen.").body().showIf(() -> !menu.generator),
                 Layout.note("Alarms are readings. Nothing trips the turbine.").showIf(this::aux));
+        var bladeCard = Layout.card("Blades and casing",
+                Layout.row("Section A", () -> section(0), "").status(() -> sectionStatus(0)).showIf(() -> menu.lp)
+                        .tip("One flow's bladed rotor section. Wet steam, a bad breaker close, motoring and overspeed wear it; at 100 % it fails, and a failed section turning over half speed throws a blade."),
+                Layout.row("Section B", () -> section(1), "").status(() -> sectionStatus(1)).showIf(() -> menu.lp),
+                Layout.row("Cover", () -> menu.coverOff ? "OFF" : "on").status(() -> menu.coverOff ? Status.CAUTION : Status.NONE).showIf(() -> menu.lp)
+                        .tip("The turbine hall crane lifts the hood (the upper casing half) off with COVER OFF. Steam admitted to an open casing vents into the hall."),
+                Layout.row("Exhaust hood", () -> num(DisplayUnitReadouts.value(Quantity.TEMPERATURE, menu.hoodC), 0),
+                        () -> DisplayUnitReadouts.unit(Quantity.TEMPERATURE)).status(() -> menu.hoodC > 120 ? Status.ALARM : menu.hoodC > 80 ? Status.CAUTION : Status.NONE).showIf(() -> menu.lp)
+                        .tip("Windage heats the last stages when the grid drives a turbine with no steam doing the work. Over 120 C the blades are damaged."),
+                Layout.row("Shaft condition", () -> pct(menu.shaftDamage), "% worn").showIf(() -> true),
+                Layout.row("Section condition", () -> pct(menu.damage), "% worn").showIf(() -> !menu.lp));
+        var gridCard = Layout.card("Grid",
+                Layout.row("Reverse power", () -> menu.motoring ? num(menu.reverseMW, 1) : "none", () -> menu.motoring ? "MW" : "")
+                        .status(() -> menu.motoring ? Status.ALARM : Status.NONE)
+                        .tip("Power the grid drives the train with when the steam does less work than its windage: the generator is motoring. Nothing opens the breaker for you."),
+                Layout.row("Last breaker close", () -> menu.hasClose ? num(menu.closeAngle, 1) + " deg" : "-", "")
+                        .tip("The phase angle (or the slip's equivalent) at the last close of the generator breaker, and the torque it put through the shaft train."),
+                Layout.row("Closing torque", () -> menu.hasClose ? num(menu.closePu, 2) : "-", () -> menu.hasClose ? "x rated" : "")
+                        .status(() -> menu.hasClose && menu.closePu > 2 ? Status.CAUTION : Status.NONE),
+                Layout.note("Readings only. Nothing trips the turbine or opens the breaker.").body());
         var main = Layout.split(BwrStyle.SP2).add(readouts, 3).add(connections, 2).stackBelow(360).showIf(() -> tab == 0);
         var auxTab = Layout.split(BwrStyle.SP2).add(left, 1).add(right, 1).stackBelow(360).showIf(() -> tab == 1);
-        return Layout.column(BwrStyle.SP2, main, auxTab, Layout.note(() -> Words.sentence(menu.status)).body());
+        var bladeTab = Layout.split(BwrStyle.SP2).add(bladeCard, 1).add(gridCard, 1).stackBelow(360).showIf(() -> tab == 2);
+        return Layout.column(BwrStyle.SP2, main, auxTab, bladeTab, Layout.note(() -> Words.sentence(menu.status)).body());
     }
 
     @Override
@@ -110,8 +141,9 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
     @Override
     protected UiElement buildTitleItems() {
         return Layout.titleItems(Layout.chip(() -> menu.running ? Status.NORMAL : Status.OFF, () -> menu.running ? "Running" : "Stopped"),
-                Layout.tabs(new String[]{"READINGS", "AUXILIARIES"},
-                        new String[]{"The steam, speed and power readings.", "Lube oil, bearings, rotor bow, the turning gear and the generator's cooling."},
+                Layout.tabs(new String[]{"READINGS", "AUXILIARIES", "BLADES"},
+                        new String[]{"The steam, speed and power readings.", "Lube oil, bearings, rotor bow, the turning gear and the generator's cooling.",
+                                "The LP blade sections, the casing cover, the exhaust hood, reverse power and the last breaker close."},
                         () -> tab, i -> tab = i));
     }
 }

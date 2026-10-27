@@ -13,6 +13,9 @@ public final class TurbineAuxCapabilities {
 
     @SubscribeEvent
     public static void register(RegisterCapabilitiesEvent event) {
+        // The LP Blade Storage Stand stocks blade sections from hoppers and pipes on any face (TURBINE-MAINTENANCE.md); the casing cradle does not.
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, BwrBlockEntities.TURBINE_STAND.get(),
+                (be, side) -> be.kind() == TurbineStandBlock.Kind.BLADES ? be.items() : null);
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, BwrBlockEntities.TURBINE_AUX.get(), (be, side) -> {
             if (side == null) return null;
             var state = be.getBlockState();

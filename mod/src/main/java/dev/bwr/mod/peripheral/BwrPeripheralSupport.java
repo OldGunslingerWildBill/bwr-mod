@@ -98,6 +98,13 @@ public final class BwrPeripheralSupport {
             var m=new LinkedHashMap<String,Object>();m.put("holdingHead",b.holdsHead());
             if(b.holdsHead())m.put("reactor",Map.of("x",b.reactorPos().getX(),"y",b.reactorPos().getY(),"z",b.reactorPos().getZ()));
             return m;});
+        // the turbine hall stands (TURBINE-MAINTENANCE.md): what each saddle or the cradle holds
+        if(be instanceof dev.bwr.mod.power.TurbineStandBlockEntity b)return new HardwarePeripheral(b.kind()==dev.bwr.mod.power.TurbineStandBlock.Kind.BLADES?"bwr_lp_blade_stand":"bwr_casing_laydown_stand",()->{
+            var m=new LinkedHashMap<String,Object>();var list=new java.util.ArrayList<Map<String,Object>>();
+            for(int i=0;i<b.items().getSlots();i++){var s=b.items().getStackInSlot(i);var e=new LinkedHashMap<String,Object>();
+                e.put("slot",i+1);e.put("load",s.isEmpty()?"":dev.bwr.mod.power.TurbineLoadItem.isHood(s)?"hood":dev.bwr.mod.power.TurbineLoadItem.isGoodSection(s)?"blade_section":"damaged_blade_section");
+                if(dev.bwr.mod.power.TurbineLoadItem.isBladeSection(s))e.put("damage",dev.bwr.mod.power.TurbineLoadItem.condition(s));list.add(e);}
+            m.put("slots",list);m.put("count",b.count());return m;});
         if(be instanceof SuppressionPoolBlockEntity b)return new SuppressionPoolPeripheral(b);
         if(be instanceof SuppressionPoolPortBlockEntity)return new SuppressionPoolPeripheral(null);
         if(be instanceof TurbineSteamOutletBlockEntity b)return new TurbineSteamOutletPeripheral(b);

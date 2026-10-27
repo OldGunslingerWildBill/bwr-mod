@@ -1,0 +1,82 @@
+{
+  "title": "The turbine hall",
+  "docs": [
+    "TURBINE-MAINTENANCE.md",
+    "MODULAR-TURBINES.md",
+    "BUILDING-CRANE.md"
+  ],
+  "pages": [
+    {
+      "title": "What wears LP blades",
+      "text": [
+        "An LP turbine's rotor is two blade sections, A and B, one per flow. Each wears from 0 to 100 %. The BLADES tab of the turbine screen shows them.",
+        "",
+        "Wet steam erodes them, as before. Closing the generator breaker out of phase twists the shaft: about 4 times rated torque at 90 degrees, 5 at 120. Over 110 % speed the blades stretch, and at 150 % a disc bursts. Nothing trips the turbine for you."
+      ],
+      "icons": [
+        "bwr:lp_turbine",
+        "bwr:grid_tie"
+      ]
+    },
+    {
+      "title": "Reverse power",
+      "text": [
+        "A generator left on the grid with too little steam is driven by the grid as a motor. The screen shows reverse power in MW.",
+        "",
+        "With no steam doing the work, windage heats the LP's last stages. The exhaust hood passes 120 C in about a minute and a half, and the blades fail after about nine minutes. Open the breaker yourself: nothing does it for you."
+      ],
+      "icons": [
+        "bwr:nuclear_generator"
+      ]
+    },
+    {
+      "title": "Turbine missiles",
+      "text": [
+        "A failed blade section on a shaft over half speed throws a blade: 45 kg at about 400 m/s, nearly 4 MJ. It flies across the shaft in the plane of the wheel and breaks through blocks while its energy lasts, about four of stone. A burst disc throws far more.",
+        "",
+        "It stops in unbreakable blocks, another machine casing, or a chunk that is not loaded. The section is wrecked and the whole train shakes until you stop it."
+      ],
+      "icons": [
+        "bwr:damaged_lp_blade_section"
+      ]
+    },
+    {
+      "title": "The turbine hall crane",
+      "text": [
+        "The building crane works over turbines too: the same runway rails, console and pendant, no reactor needed. Put rails at least 12 blocks above the turbine floor.",
+        "",
+        "Add a Casing Laydown Stand with 7 x 7 of clear floor, and an LP Blade Storage Stand. Both must lie between the rails. The pendant gains COVER OFF / ON and BLADES OUT / IN."
+      ],
+      "icons": [
+        "bwr:building_crane_console",
+        "bwr:casing_laydown_stand",
+        "bwr:lp_blade_stand"
+      ]
+    },
+    {
+      "title": "Changing a blade section",
+      "text": [
+        "Close the valves, open the breaker and let the shaft stop. Roll it cold on the turning gear, then switch the gear off. The casing must be under 100 C with no steam in it.",
+        "",
+        "COVER OFF puts the 110 t hood on its stand. BLADES OUT lifts the worse 62 t section onto a saddle. BLADES IN sets a spare in, as new. COVER ON closes it. Steam into an open casing just vents."
+      ],
+      "icons": [
+        "bwr:lp_turbine_hood",
+        "bwr:lp_blade_section"
+      ]
+    },
+    {
+      "title": "Blade sections and stands",
+      "text": [
+        "Craft an LP Turbine Blade Section from four iron blocks, four iron ingots and a diamond. A section over 5 % worn comes out of a turbine as a Damaged LP Blade Section; craft that alone to scrap it for iron.",
+        "",
+        "The blade stand holds two sections. Hoppers and pipes can stock or empty it, and you can right-click one on or sneak-click one off. Breaking a stand drops what it holds."
+      ],
+      "icons": [
+        "bwr:lp_blade_section",
+        "bwr:damaged_lp_blade_section",
+        "bwr:lp_blade_stand"
+      ]
+    }
+  ]
+}

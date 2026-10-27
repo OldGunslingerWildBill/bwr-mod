@@ -95,6 +95,16 @@ public final class GameplayConfig {
                     + "runs as it always did until its player builds them. Off: new sections are as the old ones")
             .define("turbineAuxRequired", true);
 
+    public static final ModConfigSpec.DoubleValue TURBINE_HOOD_MASS_T = BUILDER
+            .comment("Mass of an LP turbine's hood (its upper outer and inner casing halves) as the turbine hall crane lifts it, tonnes. "
+                    + "Over the crane's 125 t rating the crane refuses COVER OFF (see TURBINE-MAINTENANCE.md)")
+            .defineInRange("turbineHoodMassT", 110.0, 1.0, 1000.0);
+
+    public static final ModConfigSpec.DoubleValue LP_BLADE_SECTION_MASS_T = BUILDER
+            .comment("Mass of one LP turbine blade section (one flow's bladed rotor section) as the crane lifts it, tonnes. "
+                    + "Over the crane's 125 t rating the crane refuses BLADES OUT and BLADES IN")
+            .defineInRange("lpBladeSectionMassT", 62.0, 1.0, 1000.0);
+
     public static final ModConfigSpec.BooleanValue GIVE_GUIDE_ON_FIRST_JOIN = BUILDER
             .comment("Give each player one Operator's Guide (the in-game guide book) the first time they join this world, once only. "
                     + "A player who has had one is never given another, whether or not they still have it; craft it with a book and a nameplate. "
@@ -124,6 +134,14 @@ public final class GameplayConfig {
     /** Whether a turbine section a player places new starts a train that needs its auxiliaries. True until the server config says otherwise. */
     public static boolean turbineAuxRequired() {
         return SPEC.isLoaded() ? TURBINE_AUX_REQUIRED.get() : TURBINE_AUX_REQUIRED.getDefault();
+    }
+
+    public static double turbineHoodMassT() {
+        return SPEC.isLoaded() ? TURBINE_HOOD_MASS_T.get() : TURBINE_HOOD_MASS_T.getDefault();
+    }
+
+    public static double lpBladeSectionMassT() {
+        return SPEC.isLoaded() ? LP_BLADE_SECTION_MASS_T.get() : LP_BLADE_SECTION_MASS_T.getDefault();
     }
 
     /** Whether a player's first join gives them the guide book. True until the server config says otherwise (and before it is loaded). */

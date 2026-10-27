@@ -556,7 +556,9 @@ public final class FuelFabricatorItemRouteTests {
 
                 "strontium_90_capsule", "caesium_137_capsule", "americium_241_capsule", "stripped_waste",
                 // reactor-bred (BREEDING-TARGETS.md): made by irradiating a target; bismuth is a byproduct of mining uranium ore
-                "uranium_233_ingot", "neptunium_237_ingot", "bismuth_nugget"));
+                "uranium_233_ingot", "neptunium_237_ingot", "bismuth_nugget",
+                // the turbine hall (TURBINE-MAINTENANCE.md): a damaged blade section only comes out of a turbine
+                "damaged_lp_blade_section"));
         for (var id : BuiltInRegistries.ITEM.keySet()) {
             if (!id.getNamespace().equals("bwr")) {
                 continue;

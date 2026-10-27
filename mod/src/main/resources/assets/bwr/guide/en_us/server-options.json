@@ -28,7 +28,9 @@
         "accidentProgressionMultiplier = 1.0",
         "failureHazardPerSecond = 0.02 (random pipe boundary failure; 0 = off)",
         "contaminationHalfLifeSeconds = 86400.0",
-        "contaminationDoseMultiplier = 1.0 (0 = no dose effects)"
+        "contaminationDoseMultiplier = 1.0 (0 = no dose effects)",
+        "turbineHoodMassT = 110.0 (t)",
+        "lpBladeSectionMassT = 62.0 (t)"
       ]
     },
     {

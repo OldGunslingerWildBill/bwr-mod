@@ -141,7 +141,16 @@ public final class BuildingCraneRenderer implements BlockEntityRenderer<Building
 
         // what hangs from the hook, drawn in world coordinates as it sat in its vessel: the head with its strongback, or the dryer or separators
         VesselProfile vessel = be.carriedProfile();
-        if (be.carriedPlug() && be.plugPlan() != null) {
+        if (!be.carriedTurbine().isEmpty()) {
+            // the turbine hall: an LP hood on four slings to its lugs, or a blade section slung round its two journals
+            int lit = work(LevelRenderer.getLightColor(level, BlockPos.containing(tip.x(), tip.y() - 2, tip.z())));
+            pose.pushPose();
+            pose.translate(tip.x(), tip.y(), tip.z());
+            part(pose, buffers, "strongback_hook", lit, overlay);
+            pose.popPose();
+            dev.bwr.mod.power.client.TurbineHallRenderers.drawHanging(pose, buffers, be.carriedTurbine(), tip.x(), tip.y(), tip.z(), lit, overlay,
+                    (x0, y0, z0, x1, y1, z1) -> slingBetween(pose, buffers, x0, y0, z0, x1, y1, z1, lit, overlay));
+        } else if (be.carriedPlug() && be.plugPlan() != null) {
             hangPlugRig(pose, buffers, tip, be.plugPlan(), level, overlay);
         } else if (vessel != null && be.carriedHead()) {
             hangHead(pose, buffers, tip, vessel, level, overlay);

@@ -184,6 +184,15 @@ if not r.ok then print(r.message) end
 while crane.getStatus().busy do sleep(5) end
 ```
 
+## The turbine hall (COVER OFF / ON, BLADES OUT / IN)
+
+The same crane, built over a turbine train, lifts an LP turbine's hood (110 t) off onto a **Casing Laydown Stand** and back, and its two
+bladed rotor sections (62 t each) out onto an **LP Blade Storage Stand** and spares in. It needs no reactor between its rails for these;
+the pendant gains COVER OFF / ON and BLADES OUT / IN, the computer `queueCoverOff`, `queueCoverOn`, `queueBladesOut`, `queueBladesIn` and
+`getTurbineSections`. The refusals (shaft turning or the turning gear on, steam in the casing, a casing over 100 C, the cover on, not under
+the crane, rails too low, over the 125 t rating), the weights, the save and the console-broken rules are in
+[TURBINE-MAINTENANCE.md](TURBINE-MAINTENANCE.md). A turbine load hangs on the hook as an item the crane holds (`CarriedTurbine` in its save).
+
 ## The head's states
 
 | State | Where the head is | Studs | Holds pressure |

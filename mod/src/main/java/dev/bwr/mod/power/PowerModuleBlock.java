@@ -20,7 +20,31 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
     public static final MapCodec<PowerModuleBlock> CODEC=RecordCodecBuilder.mapCodec(i->i.group(
             propertiesCodec(),Codec.STRING.fieldOf("kind").forGetter(b->b.kind().name()))
             .apply(i,(p,k)->new PowerModuleBlock(p,Kind.valueOf(k))));
-    public PowerModuleBlock(Properties properties,Kind kind) { super(properties,kind); }
+    /**
+     * An LP turbine's upper casing half is off (the turbine hall crane lifted the hood): its upper cells draw nothing and are walked
+     * through, and the open casing's blades are drawn by the section's renderer. Default false, so saved states are unchanged; only LP
+     * cells are ever set open.
+     */
+    public static final net.minecraft.world.level.block.state.properties.BooleanProperty OPEN=net.minecraft.world.level.block.state.properties.BooleanProperty.create("open");
+    /** Cells at or above this height over an LP's floor are the hood. */
+    public static final int HOOD_FROM_Y=3;
+    public PowerModuleBlock(Properties properties,Kind kind) { super(properties,kind); registerDefaultState(defaultBlockState().setValue(OPEN,false)); }
+    @Override protected void createBlockStateDefinition(net.minecraft.world.level.block.state.StateDefinition.Builder<net.minecraft.world.level.block.Block,BlockState> b) { super.createBlockStateDefinition(b); b.add(OPEN); }
+    /** True for an LP cell that is part of the hood. */
+    public boolean hoodCell(BlockState s){return kind()==Kind.LP_TURBINE&&isFull(s)&&cellOffset(s,s.getValue(CELL)).getY()>=HOOD_FROM_Y;}
+    /** Marks every cell of the LP at {@code root} open or closed (the hood off or on). Loaded cells only; flags 2, no neighbour updates. */
+    public static void setOpen(Level level,BlockPos root,BlockState s,boolean open){
+        if(!(s.getBlock() instanceof PowerModuleBlock b)||b.kind()!=Kind.LP_TURBINE||!b.isFull(s))return;
+        for(int i=0;i<b.cellCount(s);i++){
+            BlockPos p=root.offset(TurbineAssemblyBlock.turn(b.cellOffset(s,i),s.getValue(FACING)));
+            if(!level.isLoaded(p))continue;
+            BlockState c=level.getBlockState(p);
+            if(c.getBlock()==b&&c.getValue(OPEN)!=open)level.setBlock(p,c.setValue(OPEN,open),2);
+        }
+    }
+    @Override protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState s,net.minecraft.world.level.BlockGetter level,BlockPos pos,net.minecraft.world.phys.shapes.CollisionContext c) {
+        return s.getValue(OPEN)&&hoodCell(s)?net.minecraft.world.phys.shapes.Shapes.empty():super.getShape(s,level,pos,c);
+    }
     @Override protected MapCodec<PowerModuleBlock> codec() { return CODEC; }
     public boolean generator() { return kind()==Kind.GENERATOR; }
     public boolean highPressure() { return kind()==Kind.HP_TURBINE; }

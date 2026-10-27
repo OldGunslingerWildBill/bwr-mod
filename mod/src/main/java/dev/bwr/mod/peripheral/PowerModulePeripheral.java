@@ -27,7 +27,22 @@ public final class PowerModulePeripheral implements IPeripheral {
         m.put("flowKgPerS",module.flowKgPerS);m.put("shaftMW",module.shaftMW);m.put("electricMW",module.electricMW);m.put("trainMW",module.trainMW);
         m.put("inletPsia",module.inletPsia);m.put("inletMoisturePercent",module.inletMoisturePercent);m.put("outletPsia",module.outletPsia);m.put("inletC",module.inletC);m.put("outletC",module.outletC);
         m.put("waterKg",module.waterStored());m.put("storedFE",module.energyStored());m.put("hpSections",module.hpCount);m.put("lpSections",module.lpCount);m.put("generators",module.generatorCount);m.put("status",module.status);
-        auxiliaries(m);return m;
+        auxiliaries(m);blades(m);return m;
+    }
+    /** The blade sections, the casing, reverse power and the last breaker close (TURBINE-MAINTENANCE.md). Readings only; nothing trips. */
+    private void blades(Map<String,Object> m){
+        m.put("shaftDamage",module.shaftDamage());
+        m.put("reversePowerMW",module.reverseMW);m.put("motoring",module.motoring);
+        if(module.hasCloseShock()){m.put("lastCloseAngleDegrees",module.closeAngle());m.put("lastCloseTorquePu",module.closeTorquePu());}
+        if(!module.lp())return;
+        m.put("coverOff",module.coverOff());m.put("hoodTempC",module.hoodC);
+        var list=new ArrayList<Map<String,Object>>();
+        for(int f=0;f<dev.bwr.core.turbine.TurbineBlades.FLOWS;f++){
+            var s=new LinkedHashMap<String,Object>();s.put("flow",f==0?"A":"B");s.put("installed",module.bladeIn(f));
+            s.put("damage",module.blade(f));s.put("bladeThrown",module.bladeThrown(f));list.add(s);
+        }
+        m.put("bladeSections",list);
+        m.put("bladeDamageA",module.blade(0));m.put("bladeDamageB",module.blade(1));
     }
     /** The turbine auxiliaries (TURBINE-AUX.md): fields of a system the train does not have are absent. Alarms are readings; nothing trips. */
     private void auxiliaries(Map<String,Object> m){

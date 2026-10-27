@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:damaged_lp_blade_section"
+    }
+  ],
+  "result": {
+    "id": "minecraft:iron_block",
+    "count": 2
+  }
+}

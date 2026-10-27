@@ -30,6 +30,10 @@ public class CraneMenu extends BwrMenu {
     public static final int CMD_RESUME = 3;
     /** a = 1 takes the best-rigged shield plug section off to the laydown (PLUG OFF), 0 sets the last one back (PLUG ON). */
     public static final int CMD_PLUG = 4;
+    /** a = 1 takes the nearest LP turbine's hood off to a casing laydown stand (COVER OFF), 0 sets a hood back (COVER ON). */
+    public static final int CMD_COVER = 5;
+    /** a = 1 lifts an open LP's worst blade section out to a blade stand (BLADES OUT), 0 sets a spare in (BLADES IN). */
+    public static final int CMD_BLADES = 6;
 
     // --- client-visible snapshot -------------------------------------
 
@@ -62,6 +66,12 @@ public class CraneMenu extends BwrMenu {
     /** What PLUG OFF would take next: blocks, mass against the rating, anchors ("" when there is none), and whether that is a problem. */
     public String plugNext = "";
     public boolean plugNextBad;
+    /** The turbine hall (TURBINE-MAINTENANCE.md): an LP turbine under the crane, the nearest one in a line, its cover and sections, and what kind of turbine load hangs (0 none, 1 hood, 2 blade section). */
+    public boolean turbineFound;
+    public String turbineLine = "";
+    public boolean nearestCoverOff;
+    public int nearestSectionsIn;
+    public int turbineLoad;
 
     /** Client constructor. */
     public CraneMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf extra) {
@@ -130,6 +140,13 @@ public class CraneMenu extends BwrMenu {
         var next = be.plugPreview();
         buf.writeUtf(next == null ? "" : next.text(), 120);
         buf.writeBoolean(next != null && (next.over() || !next.rigged()) && !next.carried());
+        var sections = be.turbineSections();
+        buf.writeBoolean(!sections.isEmpty());
+        buf.writeUtf(be.turbineSummary(), 120);
+        buf.writeBoolean(!sections.isEmpty() && Boolean.TRUE.equals(sections.get(0).get("coverOff")));
+        buf.writeVarInt(sections.isEmpty() ? 3 : (Boolean.TRUE.equals(sections.get(0).get("sectionAIn")) ? 1 : 0) | (Boolean.TRUE.equals(sections.get(0).get("sectionBIn")) ? 2 : 0));
+        var load = be.carriedTurbine();
+        buf.writeVarInt(load.isEmpty() ? 0 : dev.bwr.mod.power.TurbineLoadItem.isHood(load) ? 1 : 2);
     }
 
     @Override
@@ -166,6 +183,11 @@ public class CraneMenu extends BwrMenu {
         plugHeld = buf.readBoolean();
         plugNext = buf.readUtf(120);
         plugNextBad = buf.readBoolean();
+        turbineFound = buf.readBoolean();
+        turbineLine = buf.readUtf(120);
+        nearestCoverOff = buf.readBoolean();
+        nearestSectionsIn = buf.readVarInt();
+        turbineLoad = buf.readVarInt();
     }
 
     @Override
@@ -206,6 +228,26 @@ public class CraneMenu extends BwrMenu {
                     sender.displayClientMessage(a != 0
                             ? BwrText.tr("status.bwr.building_crane.plug_out_queued", "Queued: the crane lifts a shield plug section off to the laydown.")
                             : BwrText.tr("status.bwr.building_crane.plug_in_queued", "Queued: the crane sets the shield plug section back where it came from."), true);
+                }
+            }
+            case CMD_COVER -> {
+                Component why = be.queueCover(a != 0, null);
+                if (why != null) {
+                    refuse(sender, why);
+                } else {
+                    sender.displayClientMessage(a != 0
+                            ? BwrText.tr("status.bwr.turbine_crane.cover_off_queued", "Queued: the crane lifts the LP turbine's hood off onto a casing laydown stand.")
+                            : BwrText.tr("status.bwr.turbine_crane.cover_on_queued", "Queued: the crane sets the hood back on the LP turbine."), true);
+                }
+            }
+            case CMD_BLADES -> {
+                Component why = be.queueBlades(a != 0, null);
+                if (why != null) {
+                    refuse(sender, why);
+                } else {
+                    sender.displayClientMessage(a != 0
+                            ? BwrText.tr("status.bwr.turbine_crane.blades_out_queued", "Queued: the crane lifts the LP blade section out of the open casing onto a blade stand.")
+                            : BwrText.tr("status.bwr.turbine_crane.blades_in_queued", "Queued: the crane sets a spare LP blade section into the open casing."), true);
                 }
             }
             case CMD_ABORT -> be.abort();

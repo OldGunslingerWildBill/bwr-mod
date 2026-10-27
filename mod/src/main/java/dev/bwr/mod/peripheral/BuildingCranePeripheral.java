@@ -93,6 +93,11 @@ public class BuildingCranePeripheral implements IPeripheral {
         m.put("carried", be.carriedSummary());
         m.put("hook", point(be.tip()));
         m.put("plugsLaid", be.plugsLaid());
+        var load = be.carriedTurbine();
+        m.put("turbineLoad", load.isEmpty() ? "" : dev.bwr.mod.power.TurbineLoadItem.isHood(load) ? "hood" : dev.bwr.mod.power.TurbineLoadItem.isGoodSection(load) ? "blade_section" : "damaged_blade_section");
+        if (!load.isEmpty()) {
+            m.put("turbineLoadMassT", dev.bwr.mod.power.TurbineLoadItem.massT(load));
+        }
         var next = be.plugPreview();
         if (next != null) {
             m.put("plugNext", previewMap(next));
@@ -195,6 +200,51 @@ public class BuildingCranePeripheral implements IPeripheral {
     public final Map<String, Object> queuePlugOn() {
         Component why = be.queuePlug(false, null);
         return result(why == null, why);
+    }
+
+    // ---- the turbine hall (TURBINE-MAINTENANCE.md)
+
+    @Nullable
+    private static BlockPos at(Optional<Double> x, Optional<Double> y, Optional<Double> z) throws LuaException {
+        if (x.isPresent() != y.isPresent() || y.isPresent() != z.isPresent()) {
+            throw new LuaException("expected no arguments, or the x, y and z of a block of an LP turbine section");
+        }
+        return x.isPresent() ? BlockPos.containing(x.get(), y.get(), z.get()) : null;
+    }
+
+    /** COVER OFF: the hood of the LP turbine with a block at x, y, z (or the nearest under the crane) to a free casing laydown stand. */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> queueCoverOff(Optional<Double> x, Optional<Double> y, Optional<Double> z) throws LuaException {
+        Component why = be.queueCover(true, at(x, y, z));
+        return result(why == null, why);
+    }
+
+    /** COVER ON: a hood from a casing laydown stand back onto the open LP turbine at x, y, z (or the nearest open one). */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> queueCoverOn(Optional<Double> x, Optional<Double> y, Optional<Double> z) throws LuaException {
+        Component why = be.queueCover(false, at(x, y, z));
+        return result(why == null, why);
+    }
+
+    /** BLADES OUT: the worst blade section of the open LP turbine at x, y, z (or the nearest) to a free saddle of a blade stand. */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> queueBladesOut(Optional<Double> x, Optional<Double> y, Optional<Double> z) throws LuaException {
+        Component why = be.queueBlades(true, at(x, y, z));
+        return result(why == null, why);
+    }
+
+    /** BLADES IN: a spare blade section from a blade stand into the empty flow of the open LP turbine at x, y, z (or the nearest). */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> queueBladesIn(Optional<Double> x, Optional<Double> y, Optional<Double> z) throws LuaException {
+        Component why = be.queueBlades(false, at(x, y, z));
+        return result(why == null, why);
+    }
+
+    /** The LP turbine sections under the crane, nearest the hook first: position, cover, blade sections, and whether the casing may be worked now (and why not). */
+    @LuaFunction(mainThread = true)
+    public final java.util.List<Map<String, Object>> getTurbineSections() {
+        be.refreshSite();
+        return be.turbineSections();
     }
 
     @LuaFunction(mainThread = true)

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/lp_blade_stand"
+    },
+    "facing=east": {
+      "model": "bwr:block/lp_blade_stand",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/lp_blade_stand",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/lp_blade_stand",
+      "y": 270
+    }
+  }
+}
