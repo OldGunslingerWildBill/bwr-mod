@@ -24,8 +24,8 @@ public final class SpentFuelPoolRegistry {
     private SpentFuelPoolRegistry() {
     }
 
-    /** How far from a controller a changed block can matter: the largest pool is 25 blocks across. */
-    private static final int REACH = 26;
+    /** How far from a controller a changed block can matter: the largest pool is 64 blocks across. */
+    private static final int REACH = SpentFuelPoolLayout.MAX_OUTSIDE_SIDE + 1;
 
     private static final class Entry {
         final Set<BlockPos> controllers = new HashSet<>();

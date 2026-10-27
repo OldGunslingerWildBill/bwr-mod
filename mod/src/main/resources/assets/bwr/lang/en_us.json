@@ -755,7 +755,7 @@
   "menu.bwr.spent_fuel_pool": "Spent Fuel Pool",
   "status.bwr.spent_fuel_pool.too_large": "The pool shell is too large.",
   "status.bwr.spent_fuel_pool.waiting_for_chunks": "The pool is waiting for its chunks to load.",
-  "status.bwr.spent_fuel_pool.size": "Build a pool 5 to 25 blocks wide and deep and 8 to 16 high, outside: racks are 4 m tall and need 3 m of water over them.",
+  "status.bwr.spent_fuel_pool.size": "Build a pool 5 to 64 blocks wide and deep and 8 to 24 high, outside: racks are 4 m tall and need 3 m of water over them.",
   "status.bwr.spent_fuel_pool.shell_gap": "Complete the floor and the four walls up to the rim; missing at %s",
   "status.bwr.spent_fuel_pool.port_placement": "Ports go in a side wall above the floor, facing outward; check %s",
   "status.bwr.spent_fuel_pool.rack_support": "A rack is one tier of exactly %s blocks standing on the pool floor, never on another rack; check %s",

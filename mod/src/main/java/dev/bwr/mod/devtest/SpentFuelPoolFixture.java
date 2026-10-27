@@ -54,13 +54,20 @@ final class SpentFuelPoolFixture {
      * south wall first and then the next row (so up to {@code 2 * (w - 2)} on a pool of the usual size).
      */
     static SpentFuelPoolFixture build(ServerLevel level, BlockPos min, int w, int d, int h, int rackCount) {
+        return build(level, min, w, d, h, rackCount, false);
+    }
+
+    /**
+     * As {@link #build(ServerLevel, BlockPos, int, int, int, int)}, but the racks fill the whole floor row by row (from the
+     * south wall northward, west to east in each row) instead of the two southern rows: for the 2,048-rack pools.
+     */
+    static SpentFuelPoolFixture buildFull(ServerLevel level, BlockPos min, int w, int d, int h, int rackCount) {
+        return build(level, min, w, d, h, rackCount, true);
+    }
+
+    private static SpentFuelPoolFixture build(ServerLevel level, BlockPos min, int w, int d, int h, int rackCount, boolean everyRow) {
         SpentFuelPoolFixture f = new SpentFuelPoolFixture(level, min, w, d, h);
-        for (int cx = (min.getX() - 16) >> 4; cx <= (min.getX() + w + 16) >> 4; cx++) {
-            for (int cz = (min.getZ() - 16) >> 4; cz <= (min.getZ() + d + 16) >> 4; cz++) {
-                FixtureChunks.force(level, min, cx, cz, true);
-                level.getChunk(cx, cz);
-            }
-        }
+        f.forceChunks();
         f.clearBox();
         for (int x = 0; x < w; x++) {
             for (int z = 0; z < d; z++) {
@@ -80,7 +87,7 @@ final class SpentFuelPoolFixture {
         level.setBlock(f.coolingOut, BwrBlocks.SPENT_FUEL_POOL_COOLING_OUT.get().defaultBlockState()
                 .setValue(SpentFuelPoolPortBlock.FACING, Direction.NORTH), 2);
         int placed = 0;
-        for (int row = 0; row < 2 && placed < rackCount; row++) {
+        for (int row = 0; row < (everyRow ? d - 2 : 2) && placed < rackCount; row++) {
             for (int x = 1; x < w - 1 && placed < rackCount; x++) {
                 BlockPos at = min.offset(x, 1, d - 2 - row);
                 for (int k = 0; k < SpentFuelPoolLayout.RACK_HEIGHT; k++) {
@@ -110,17 +117,32 @@ final class SpentFuelPoolFixture {
         FixtureCleanup.discardItems(level, min.offset(-2, -2, -2), min.offset(w + 2, h + 3, d + 2));
     }
 
+    /** Forces (and loads) the chunks of the pool and 16 blocks round it. */
+    void forceChunks() {
+        for (int cx = (min.getX() - 16) >> 4; cx <= (min.getX() + w + 16) >> 4; cx++) {
+            for (int cz = (min.getZ() - 16) >> 4; cz <= (min.getZ() + d + 16) >> 4; cz++) {
+                FixtureChunks.force(level, min, cx, cz, true);
+                level.getChunk(cx, cz);
+            }
+        }
+    }
+
+    /** Lets go of the chunks {@link #forceChunks} forced (they unload unless something else wants them). */
+    void releaseChunks() {
+        for (int cx = (min.getX() - 16) >> 4; cx <= (min.getX() + w + 16) >> 4; cx++) {
+            for (int cz = (min.getZ() - 16) >> 4; cz <= (min.getZ() + d + 16) >> 4; cz++) {
+                FixtureChunks.force(level, min, cx, cz, false);
+            }
+        }
+    }
+
     /** Empties the pool and takes it down. */
     void dispose() {
         if (be != null) {
             be.removalDrops();
         }
         clearBox();
-        for (int cx = (min.getX() - 16) >> 4; cx <= (min.getX() + w + 16) >> 4; cx++) {
-            for (int cz = (min.getZ() - 16) >> 4; cz <= (min.getZ() + d + 16) >> 4; cz++) {
-                FixtureChunks.force(level, min, cx, cz, false);
-            }
-        }
+        releaseChunks();
     }
 
     /** A spent assembly stamped as discharged {@code ageSeconds} before {@code now} (a game tick, not necessarily the level's). */

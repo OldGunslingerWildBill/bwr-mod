@@ -17,13 +17,23 @@ import java.util.List;
 
 /**
  * The spent fuel pool's panel: per-rack heat, the pool's total heat, water level and temperature, the time to boil
- * and to uncover the fuel, and the cooling pump. Read only apart from one command, the cooling pump's switch,
- * which the player presses; nothing here starts anything by itself.
+ * and to uncover the fuel, and the cooling pump. Read only apart from the cooling pump's switch, which the player
+ * presses, and the page of the rack list being looked at; nothing here starts anything by itself.
+ *
+ * <p>A pool holds up to 2,048 racks, and one line each would be about 74 kB, more than a snapshot may carry
+ * ({@code MenuSyncPayload.MAX_BYTES}). So the snapshot carries the pool's numbers, the number of racks and one page of
+ * {@value #PAGE_RACKS} rack lines (under 2 kB in all); the screen asks for another page with {@link #CMD_RACK_PAGE}.
  */
 public class SpentFuelPoolMenu extends BwrMenu {
 
     /** a = 1 switches the cooling pump on, 0 off. */
     public static final int CMD_COOLING = 0;
+
+    /** a = index of the first rack to show (rounded down to a page). Changes only what this player's screen lists. */
+    public static final int CMD_RACK_PAGE = 1;
+
+    /** Rack lines a snapshot carries. */
+    public static final int PAGE_RACKS = 8;
 
     /** One rack's line on the screen. */
     public record Rack(BlockPos pos, double topM, int assemblies, double decayW, double hottestC, int uncovered,
@@ -64,7 +74,15 @@ public class SpentFuelPoolMenu extends BwrMenu {
     public double hazard;
     public int damagedAssemblies;
     public int burningAssemblies;
+    /** The page of rack lines: racks {@link #rackFirst} to {@code rackFirst + racks.size() - 1} of {@link #rackCount}. */
     public List<Rack> racks = List.of();
+    /** Racks in the pool. */
+    public int rackCount;
+    /** Index (from 0) of the first rack in {@link #racks}. */
+    public int rackFirst;
+
+    /** Server side: the first rack of the page this player looks at. */
+    private int pageFirst;
 
     /** Client constructor. */
     public SpentFuelPoolMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf extra) {
@@ -98,7 +116,7 @@ public class SpentFuelPoolMenu extends BwrMenu {
             buf.writeUtf(be.problem() == null ? "" : BwrText.english(be.problem()), 256);
             return;
         }
-        var v = be.view();
+        var v = be.summary();
         buf.writeVarInt(be.layout().footprintCells());
         buf.writeVarInt(be.layout().heightCells());
         for (double d : new double[] {v.massKg(), v.capacityKg(), v.levelM(), v.temperatureC(), v.waterAboveFuelM(),
@@ -114,8 +132,13 @@ public class SpentFuelPoolMenu extends BwrMenu {
         buf.writeVarInt(v.energyFE());
         buf.writeVarInt(v.damaged());
         buf.writeVarInt(v.burning());
-        buf.writeVarInt(v.racks().size());
-        for (var r : v.racks()) {
+        int count = v.rackCount();
+        int first = pageFirst >= count ? Math.max(0, (count - 1) / PAGE_RACKS * PAGE_RACKS) : pageFirst;
+        buf.writeVarInt(count);
+        buf.writeVarInt(first);
+        var page = be.rackViews(first, PAGE_RACKS);
+        buf.writeVarInt(page.size());
+        for (var r : page) {
             buf.writeBlockPos(r.pos());
             buf.writeDouble(r.topM());
             buf.writeVarInt(r.assemblies());
@@ -167,7 +190,9 @@ public class SpentFuelPoolMenu extends BwrMenu {
         energyFE = buf.readVarInt();
         damagedAssemblies = buf.readVarInt();
         burningAssemblies = buf.readVarInt();
-        int n = buf.readVarInt();
+        rackCount = buf.readVarInt();
+        rackFirst = buf.readVarInt();
+        int n = Math.min(buf.readVarInt(), PAGE_RACKS);
         List<Rack> list = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             list.add(new Rack(buf.readBlockPos(), buf.readDouble(), buf.readVarInt(), buf.readDouble(), buf.readDouble(),
@@ -181,6 +206,9 @@ public class SpentFuelPoolMenu extends BwrMenu {
         SpentFuelPoolBlockEntity be = pool();
         if (be != null && command == CMD_COOLING) {
             be.setCoolingEnabled(a != 0);
+            markSnapshotDirty();
+        } else if (command == CMD_RACK_PAGE) {
+            pageFirst = Math.max(0, a) / PAGE_RACKS * PAGE_RACKS;
             markSnapshotDirty();
         }
     }

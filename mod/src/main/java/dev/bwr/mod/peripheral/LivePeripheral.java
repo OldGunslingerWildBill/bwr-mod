@@ -58,6 +58,8 @@ public final class LivePeripheral implements IDynamicPeripheral {
             else if(types[i]==Map.class&&method.getDeclaringClass()==GridTiePeripheral.class&&method.getName().equals("setMeters"))converted[i]=meterPositions(args.getTableUnsafe(i));
             else if(types[i]==Map.class&&method.getDeclaringClass()==PanelPeripheral.class)converted[i]=plainTable(args.getTable(i));
             else if(types[i]==Object.class&&method.getDeclaringClass()==PanelPeripheral.class)converted[i]=plainValue(args.get(i));
+            else if(types[i]==java.util.Optional.class&&optionalOf(method,i)==Integer.class)converted[i]=args.optInt(i);
+            else if(types[i]==java.util.Optional.class&&optionalOf(method,i)==Double.class)converted[i]=args.optDouble(i);
             else throw new LuaException("Unsupported machine method argument");
         }
         // Resolve after scheduling, not while still on the computer thread.
@@ -68,6 +70,10 @@ public final class LivePeripheral implements IDynamicPeripheral {
      * tag and its CC port (0 to 9999; nil when none). A name or a port is only ever set by the program's own call; nothing
      * here names or numbers machines in bulk.
      */
+    /** The type an {@code Optional} parameter holds ({@code Optional<Integer>}: an optional whole-number argument), or null. */
+    private static java.lang.reflect.Type optionalOf(Method method,int i){
+        return method.getGenericParameterTypes()[i] instanceof java.lang.reflect.ParameterizedType p?p.getActualTypeArguments()[0]:null;
+    }
     private MethodResult machineMethod(int which,ILuaContext context,IArguments args)throws LuaException {
         String text=which==1?args.getString(0):null;
         int port=which==3?args.getInt(0):0;

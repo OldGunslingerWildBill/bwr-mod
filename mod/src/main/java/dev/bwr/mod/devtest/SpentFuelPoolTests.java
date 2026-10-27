@@ -162,7 +162,7 @@ public final class SpentFuelPoolTests {
         // too shallow for the 4 m racks and the 3 m of shielding water over them: 7 high outside is one short, 8 is enough
         SpentFuelPoolFixture shallow = SpentFuelPoolFixture.build(h.getLevel(), FORM, 9, 9, 7, 0);
         try {
-            h.assertTrue(!shallow.be.isFormed() && problem(shallow).contains("8 to 16 high"), "a 7-high box formed: " + problem(shallow));
+            h.assertTrue(!shallow.be.isFormed() && problem(shallow).contains("8 to 24 high"), "a 7-high box formed: " + problem(shallow));
         } finally {
             shallow.dispose();
         }

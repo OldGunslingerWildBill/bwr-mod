@@ -117,14 +117,20 @@ public abstract class BwrMenu extends AbstractContainerMenu {
     }
 
     private void sendSnapshot(ServerPlayer viewer) {
+        byte[] data = encodeSnapshot();
+        if (data.length <= MenuSyncPayload.MAX_BYTES) {
+            PacketDistributor.sendToPlayer(viewer, new MenuSyncPayload(containerId, data));
+        }
+    }
+
+    /** The snapshot as it would be sent now (server side). Tests read its size against {@link MenuSyncPayload#MAX_BYTES}. */
+    public final byte[] encodeSnapshot() {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         try {
             writeSnapshot(buf);
             byte[] data = new byte[buf.readableBytes()];
             buf.readBytes(data);
-            if (data.length <= MenuSyncPayload.MAX_BYTES) {
-                PacketDistributor.sendToPlayer(viewer, new MenuSyncPayload(containerId, data));
-            }
+            return data;
         } finally {
             buf.release();
         }

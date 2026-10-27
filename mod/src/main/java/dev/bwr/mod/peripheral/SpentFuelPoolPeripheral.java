@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * CC:Tweaked peripheral for a spent fuel pool: the same numbers as the panel, per rack and per assembly, and the
@@ -56,7 +57,7 @@ public class SpentFuelPoolPeripheral implements IPeripheral {
     @LuaFunction(mainThread = true)
     public final Map<String, Object> getStatus() {
         Map<String, Object> m = new LinkedHashMap<>();
-        var v = be.view();
+        var v = be.summary();
         m.put("formed", v.formed());
         if (!v.formed()) {
             m.put("problem", be.problem() == null ? "" : dev.bwr.mod.text.BwrText.english(be.problem()));
@@ -71,7 +72,7 @@ public class SpentFuelPoolPeripheral implements IPeripheral {
         m.put("highestFuelTopM", v.highestRackTopM());
         m.put("assemblies", v.assemblies());
         m.put("cells", v.cells());
-        m.put("racks", v.racks().size());
+        m.put("racks", v.rackCount());
         m.put("decayHeatKW", v.decayW() / 1000.0);
         m.put("coveredDecayHeatKW", v.coveredDecayW() / 1000.0);
         m.put("uncoveredDecayHeatKW", v.uncoveredDecayW() / 1000.0);
@@ -96,12 +97,24 @@ public class SpentFuelPoolPeripheral implements IPeripheral {
         return m;
     }
 
-    /** One entry per rack: position, height, assemblies, decay heat, hottest fuel, uncovered and failed counts. */
+    /** Racks {@code first} to {@code first + count - 1} as 0-based indices into the pool's racks, clamped; all of them when no range is given. */
+    private int[] range(Optional<Integer> first, Optional<Integer> count) {
+        int n = be.rackCount();
+        int from = Math.max(0, first.orElse(1) - 1);
+        long to = count.isPresent() ? Math.min(n, (long) from + Math.max(0, count.get())) : n;
+        return new int[] {Math.min(from, n), (int) Math.max(from, to)};
+    }
+
+    /**
+     * One entry per rack: position, height, assemblies, decay heat, hottest fuel, uncovered and failed counts. With no arguments
+     * every rack (up to 2,048); {@code getRacks(first, count)} gives racks {@code first} (from 1) to {@code first + count - 1}.
+     */
     @LuaFunction(mainThread = true)
-    public final List<Map<String, Object>> getRacks() {
+    public final List<Map<String, Object>> getRacks(Optional<Integer> first, Optional<Integer> count) {
         List<Map<String, Object>> list = new ArrayList<>();
-        int index = 1;
-        for (var r : be.view().racks()) {
+        int[] r0 = range(first, count);
+        int index = r0[0] + 1;
+        for (var r : be.rackViews(r0[0], r0[1] - r0[0])) {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("index", index++);
             m.put("x", r.pos().getX());
@@ -119,39 +132,43 @@ public class SpentFuelPoolPeripheral implements IPeripheral {
         return list;
     }
 
-    /** One entry per stored assembly: where it is, what it is and how hot it is. */
+    /**
+     * One entry per stored assembly: where it is, what it is and how hot it is. With no arguments every assembly (up to 8,192);
+     * {@code getAssemblies(first, count)} gives those in racks {@code first} (from 1) to {@code first + count - 1}.
+     */
     @LuaFunction(mainThread = true)
-    public final List<Map<String, Object>> getAssemblies() {
+    public final List<Map<String, Object>> getAssemblies(Optional<Integer> first, Optional<Integer> count) {
         List<Map<String, Object>> list = new ArrayList<>();
         if (be.getLevel() == null) {
             return list;
         }
         long now = be.getLevel().getGameTime();
-        int rackIndex = 1;
-        for (var r : be.view().racks()) {
+        int[] r0 = range(first, count);
+        for (int rackIndex = r0[0]; rackIndex < r0[1]; rackIndex++) {
+            BlockPos pos = be.rackPos(rackIndex);
             for (int cell = 0; cell < 4; cell++) {
-                ItemStack stack = be.stackAt(r.pos(), cell);
+                ItemStack stack = be.stackAt(pos, cell);
                 if (stack.isEmpty()) {
                     continue;
                 }
                 var data = FuelAssemblies.dataOf(stack);
-                var slot = be.slotAt(r.pos(), cell);
+                var slot = be.slotAt(pos, cell);
+                SpentFuelHeat.Curve curve = be.cellCurve(pos, cell);
                 Map<String, Object> m = new LinkedHashMap<>();
-                m.put("rack", rackIndex);
+                m.put("rack", rackIndex + 1);
                 m.put("cell", cell + 1);
                 m.put("fuel", data.fuelTypeName());
                 m.put("burnupMwdPerTonne", data.burnupMwdPerTonne());
-                m.put("decayHeatKW", SpentFuelHeat.decayWatts(stack, now) / 1000.0);
-                m.put("coolingSeconds", SpentFuelHeat.coolingSeconds(stack, now));
-                m.put("dischargeRecorded", SpentFuelHeat.dischargeTime(stack) >= 0L);
-                m.put("secondsUntilReprocessable", seconds(SpentFuelHeat.secondsUntilReprocessable(stack, now)));
+                m.put("decayHeatKW", curve.watts(now) / 1000.0);
+                m.put("coolingSeconds", curve.coolingSeconds(now));
+                m.put("dischargeRecorded", curve.stamped());
+                m.put("secondsUntilReprocessable", seconds(curve.secondsUntilReprocessable(now)));
                 m.put("fuelC", slot == null ? 0.0 : slot.fuelC);
                 m.put("covered", slot == null || slot.covered);
                 m.put("damaged", slot != null && slot.damaged);
                 m.put("burning", slot != null && slot.ignited);
                 list.add(m);
             }
-            rackIndex++;
         }
         return list;
     }

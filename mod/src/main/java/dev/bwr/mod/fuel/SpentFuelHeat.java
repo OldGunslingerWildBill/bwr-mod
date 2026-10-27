@@ -52,6 +52,67 @@ public final class SpentFuelHeat {
         return AssemblyDecayHeat.powerWatts(data.burnupMwdPerTonne(), data.heavyMetalMassKg(), coolingSeconds(stack, gameTime));
     }
 
+    /**
+     * What a store of many assemblies keeps for each one: its decay curve with the history part worked out once
+     * ({@link AssemblyDecayHeat.Curve}) and its discharge stamp, read off the stack once. {@link #watts(long)} is then exactly
+     * {@link #decayWatts(ItemStack, long)} for the same stack (to the last bit) at half the cost and without reading the
+     * item's components again. Valid as long as the stack it was made from is not changed.
+     */
+    public static final class Curve {
+        private final AssemblyDecayHeat.Curve curve;
+        private final long stamp;
+        private final boolean assembly;
+        /** The assembly's burnup, MWd/t. */
+        public final double burnupMwdPerTonne;
+        /** Heavy metal, kg. */
+        public final double heavyMetalKg;
+        private double reprocessLimitW = Double.NaN;
+        private double reprocessCoolS;
+
+        public Curve(ItemStack stack) {
+            assembly = !stack.isEmpty() && stack.is(BwrItems.FUEL_ASSEMBLY.get());
+            stamp = dischargeTime(stack);
+            FuelAssemblyData data = assembly ? FuelAssemblies.dataOf(stack) : null;
+            burnupMwdPerTonne = data == null ? 0.0 : data.burnupMwdPerTonne();
+            heavyMetalKg = data == null ? 0.0 : data.heavyMetalMassKg();
+            curve = assembly ? new AssemblyDecayHeat.Curve(burnupMwdPerTonne, heavyMetalKg) : null;
+        }
+
+        /** Seconds since discharge at {@code gameTime}, as {@link SpentFuelHeat#coolingSeconds}. */
+        public double coolingSeconds(long gameTime) {
+            if (stamp < 0L) {
+                return AssemblyDecayHeat.LONG_COOLED_SECONDS;
+            }
+            return Math.max(0L, gameTime - stamp) / (double) TICKS_PER_SECOND;
+        }
+
+        /** Decay power at {@code gameTime}, W: what {@link SpentFuelHeat#decayWatts} gives for the stack. */
+        public double watts(long gameTime) {
+            return assembly ? curve.powerWatts(coolingSeconds(gameTime)) : 0.0;
+        }
+
+        /** Whether the stack carried a discharge stamp. */
+        public boolean stamped() {
+            return stamp >= 0L;
+        }
+
+        /** As {@link SpentFuelHeat#secondsUntilReprocessable}; the search for the cool-down time is done once per limit. */
+        public double secondsUntilReprocessable(long gameTime) {
+            double limit = reprocessingLimitWatts();
+            if (!(limit > 0.0) || !assembly) {
+                return 0.0;
+            }
+            if (limit != reprocessLimitW) {
+                reprocessLimitW = limit;
+                reprocessCoolS = AssemblyDecayHeat.secondsToCoolBelow(burnupMwdPerTonne, heavyMetalKg, limit);
+            }
+            if (Double.isInfinite(reprocessCoolS)) {
+                return reprocessCoolS;
+            }
+            return Math.max(0.0, reprocessCoolS - coolingSeconds(gameTime));
+        }
+    }
+
     /** The reprocessing plant's limit, W per assembly; zero or less means the plant does not check. */
     public static double reprocessingLimitWatts() {
         return GameplayConfig.reprocessingMaxDecayHeatKw() * 1000.0;

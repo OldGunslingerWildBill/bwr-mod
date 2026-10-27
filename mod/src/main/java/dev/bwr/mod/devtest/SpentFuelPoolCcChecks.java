@@ -52,6 +52,15 @@ final class SpentFuelPoolCcChecks {
             }
             h.assertTrue(Math.abs(sum - v.decayW() / 1000.0) < 1e-6, "rack heat sums to the total: " + sum + " against " + v.decayW() / 1000.0);
 
+            // a range of racks, for a pool of thousands: racks 2 and 3, and the assemblies in them
+            List<?> page = (List<?>) PeripheralTestCalls.call(face, "getRacks", 2, 2)[0];
+            h.assertTrue(page.size() == 2 && num((Map<?, ?>) page.get(0), "index") == 2 && num((Map<?, ?>) page.get(1), "index") == 3, "getRacks(2, 2): " + page);
+            List<?> pageAssemblies = (List<?>) PeripheralTestCalls.call(face, "getAssemblies", 2, 2)[0];
+            for (Object o : pageAssemblies) {
+                double rack = num((Map<?, ?>) o, "rack");
+                h.assertTrue(rack == 2 || rack == 3, "getAssemblies(2, 2) gave an assembly of rack " + rack);
+            }
+
             List<?> assemblies = (List<?>) PeripheralTestCalls.call(face, "getAssemblies")[0];
             h.assertTrue(assemblies.size() == 5, "assemblies " + assemblies.size());
             Map<?, ?> first = (Map<?, ?>) assemblies.get(0);

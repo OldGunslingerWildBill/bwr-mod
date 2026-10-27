@@ -15,7 +15,9 @@ import net.minecraft.world.phys.Vec3;
  * source at the middle of its top, with the gamma share of the decay heat of the assemblies in it, behind the water over the
  * rack top ({@link BridgeMotion#transmission}: the reactor model's {@code e^(-7.07 x depth)}; no shielding when the rack
  * is uncovered); a point inside the pool's water is shielded by the water along the line to the rack top instead. One provider for every pool in the level, called a few times a second by an instrument and never per tick:
- * its work is the racks of the pools within range.
+ * its work is the racks of the pools within range. A pool with more than {@value SpentFuelPoolBlockEntity#EXACT_DOSE_SOURCES} racks
+ * holding fuel (up to 2,048) gives its far racks lumped by region ({@link SpentFuelPoolBlockEntity#forEachDoseSource}), so a reading
+ * marches a few hundred rays at most, not one per rack.
  *
  * <p>The numbers are the ones the pool already keeps: {@code SpentFuelPoolBlockEntity} refreshes each assembly's decay heat
  * once a second, so a reading follows the cooling, and a pool that has boiled down to the rack tops reads thousands of times
@@ -42,7 +44,7 @@ public final class PoolRadiation {
                 continue;
             }
             var l = pool.layout();
-            // out of reach of the whole pool: skip its racks (the pool is at most 25 blocks across)
+            // out of reach of the whole pool: skip its racks (the pool is at most 64 blocks across)
             double dx = Math.max(Math.max(l.min().getX() - at.x, at.x - l.max().getX() - 1), 0.0);
             double dz = Math.max(Math.max(l.min().getZ() - at.z, at.z - l.max().getZ() - 1), 0.0);
             if (dx > DoseModel.MAX_RANGE_M || dz > DoseModel.MAX_RANGE_M) {
@@ -54,7 +56,7 @@ public final class PoolRadiation {
             final double surface = pool.surfaceY();
             // the pool's own walls and everything inside them are in the pool's numbers: not counted on the line
             final BlockShielding.Box own = BlockShielding.Box.of(l.min(), l.max());
-            pool.forEachRackSource((x, topY, z, decayW, cover) -> {
+            pool.forEachDoseSource(at.x, at.y, at.z, (x, topY, z, decayW, cover) -> {
                 double gamma = BridgeMotion.gammaWatts(decayW);
                 Vec3 source = new Vec3(x, topY, z);
                 double distance = at.distanceTo(source);

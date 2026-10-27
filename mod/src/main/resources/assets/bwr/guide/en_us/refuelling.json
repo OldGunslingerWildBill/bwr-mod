@@ -11,7 +11,7 @@
       "text": [
         "A discharged assembly keeps its decay heat: 315 kW at discharge for a 45 GWd/t assembly, 63 kW after an hour and 23 kW after a day. It waits in the spent fuel pool.",
         "",
-        "Build a lined box of Spent Fuel Pool Lining (outside 5 to 25 blocks wide and deep, 8 to 16 high) with one Spent Fuel Pool Controller and racks: exactly four rack blocks stacked on the floor make one rack of four assemblies. Fit a makeup port and the cooling ports. You run the cooling and supply the makeup water. Let it go and the water boils off and the fuel uncovers."
+        "Build a lined box of Spent Fuel Pool Lining (outside 5 to 64 blocks wide and deep, 8 to 24 high) with one Spent Fuel Pool Controller and racks: exactly four rack blocks stacked on the floor make one rack of four assemblies, up to 2,048 racks (8,192 assemblies) in one pool. Fit a makeup port and the cooling ports. You run the cooling and supply the makeup water. Let it go and the water boils off and the fuel uncovers."
       ],
       "icons": [
         "bwr:spent_fuel_pool_controller",

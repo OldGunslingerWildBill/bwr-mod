@@ -32,11 +32,24 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
  * reactor's own {@code CherenkovAppearance} fed with the assembly's decay power as a fraction of its operating power,
  * so a freshly discharged assembly glows strongly and an old one barely. No particles, no light blocks, no mesh
  * rebuilds; a pool that is not formed draws nothing.
+ *
+ * <p>A pool can hold 8,192 assemblies. Only glowing cells cost anything; a cell more than {@value #NEAR_GLOW_M} m from the
+ * eye gets its cap alone (one quad, not five), so even a pool full of fresh fuel stays at about 33,000 vertices seen from
+ * across the hall. The surface is cut into squares of at most {@value #SURFACE_TILE} blocks, each with the whole water
+ * texture, so a 62 m pool does not stretch one tile of it across the hall.
  */
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
 public final class SpentFuelPoolRenderer implements BlockEntityRenderer<SpentFuelPoolBlockEntity> {
 
     private static final ResourceLocation WATER = ResourceLocation.withDefaultNamespace("block/water_still");
+
+    /** Within this distance of the eye a glowing cell gets its fading column as well as its cap, m. */
+    static final double NEAR_GLOW_M = 24.0;
+
+    /** Largest square of the water surface drawn with one copy of the texture, blocks. */
+    static final int SURFACE_TILE = 8;
+
+    private static final double[][] CORNERS = {{-0.2, -0.2}, {-0.2, 0.2}, {0.2, 0.2}, {0.2, -0.2}};
 
     public SpentFuelPoolRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -78,45 +91,71 @@ public final class SpentFuelPoolRenderer implements BlockEntityRenderer<SpentFue
         double z0 = min.getZ() + 1;
         double z1 = max.getZ();
         float s = (float) (surface - 0.06);   // the surface sits a little under the rim, as water does
-        quad(water, p, sprite, x0, s, z0, x1, s, z1, 0.18f, 0.42f, 0.95f, 0.62f, surfaceLight, 1f);
-        quad(water, p, sprite, x0, s, z1, x1, s, z0, 0.18f, 0.42f, 0.95f, 0.62f, surfaceLight, -1f);
+        int tilesX = Math.max(1, (int) Math.ceil((x1 - x0) / SURFACE_TILE));
+        int tilesZ = Math.max(1, (int) Math.ceil((z1 - z0) / SURFACE_TILE));
+        for (int i = 0; i < tilesX; i++) {
+            double ax = x0 + (x1 - x0) * i / tilesX;
+            double bx = x0 + (x1 - x0) * (i + 1) / tilesX;
+            for (int j = 0; j < tilesZ; j++) {
+                double az = z0 + (z1 - z0) * j / tilesZ;
+                double bz = z0 + (z1 - z0) * (j + 1) / tilesZ;
+                quad(water, p, sprite, ax, s, az, bx, s, bz, 0.18f, 0.42f, 0.95f, 0.62f, surfaceLight, 1f);
+                quad(water, p, sprite, ax, s, bz, bx, s, az, 0.18f, 0.42f, 0.95f, 0.62f, surfaceLight, -1f);
+            }
+        }
 
-        VertexConsumer glow = buffers.getBuffer(RenderType.eyes(TextureAtlas.LOCATION_BLOCKS));
         long[] racks = be.visRacks;
         byte[] strengths = be.visGlow;
-        for (int r = 0; r < racks.length; r++) {
-            BlockPos rack = BlockPos.of(racks[r]);
-            double top = rack.getY() + dev.bwr.mod.spentfuel.SpentFuelPoolLayout.RACK_HEIGHT;
-            if (top + 0.05 >= s) {
-                continue;
-            }
-            for (int k = 0; k < 4; k++) {
-                int index = r * 4 + k;
-                if (index >= strengths.length || strengths[index] <= 0) {
+        boolean any = false;
+        for (int i = 0; i < strengths.length && !any; i++) {
+            any = strengths[i] > 0;
+        }
+        if (any) {
+            VertexConsumer glow = buffers.getBuffer(RenderType.eyes(TextureAtlas.LOCATION_BLOCKS));
+            Vec3 eye = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+            double near2 = NEAR_GLOW_M * NEAR_GLOW_M;
+            for (int r = 0; r < racks.length; r++) {
+                long packed = racks[r];
+                int rx = BlockPos.getX(packed);
+                int rz = BlockPos.getZ(packed);
+                double top = BlockPos.getY(packed) + dev.bwr.mod.spentfuel.SpentFuelPoolLayout.RACK_HEIGHT;
+                if (top + 0.05 >= s) {
                     continue;
                 }
-                float strength = strengths[index] / 15f;
-                double cx = rack.getX() + 0.25 + 0.5 * (k & 1);
-                double cz = rack.getZ() + 0.25 + 0.5 * (k >> 1);
-                cell(glow, p, sprite, cx, top, cz, Math.min(s - 0.03, top + 0.25 + 0.9 * strength), strength);
+                for (int k = 0; k < 4; k++) {
+                    int index = r * 4 + k;
+                    if (index >= strengths.length || strengths[index] <= 0) {
+                        continue;
+                    }
+                    float strength = strengths[index] / 15f;
+                    double cx = rx + 0.25 + 0.5 * (k & 1);
+                    double cz = rz + 0.25 + 0.5 * (k >> 1);
+                    double dx = cx - eye.x;
+                    double dy = top - eye.y;
+                    double dz = cz - eye.z;
+                    boolean near = dx * dx + dy * dy + dz * dz < near2;
+                    cell(glow, p, sprite, cx, top, cz, Math.min(s - 0.03, top + 0.25 + 0.9 * strength), strength, near);
+                }
             }
         }
         pose.popPose();
     }
 
-    /** The glow of one cell: a cap on the head of the assembly and four faces that fade as they rise. */
+    /** The glow of one cell: a cap on the head of the assembly and, near the eye, four faces that fade as they rise. */
     private static void cell(VertexConsumer out, PoseStack.Pose p, TextureAtlasSprite sprite, double cx, double base, double cz,
-                             double top, float strength) {
+                             double top, float strength, boolean column) {
         double h = 0.2;
         double y = base + 0.02;
         emit(out, p, sprite, cx - h, y, cz - h, strength);
         emit(out, p, sprite, cx - h, y, cz + h, strength);
         emit(out, p, sprite, cx + h, y, cz + h, strength);
         emit(out, p, sprite, cx + h, y, cz - h, strength);
-        double[][] corners = {{-h, -h}, {-h, h}, {h, h}, {h, -h}};
+        if (!column) {
+            return;
+        }
         for (int i = 0; i < 4; i++) {
-            double[] a = corners[i];
-            double[] b = corners[(i + 1) % 4];
+            double[] a = CORNERS[i];
+            double[] b = CORNERS[(i + 1) % 4];
             emit(out, p, sprite, cx + a[0], y, cz + a[1], 0.45f * strength);
             emit(out, p, sprite, cx + b[0], y, cz + b[1], 0.45f * strength);
             emit(out, p, sprite, cx + b[0], top, cz + b[1], 0f);
