@@ -132,17 +132,34 @@ public class FuelAssemblyItem extends Item {
         // Decay heat is a measurement of the bundle in hand, like its burnup: from the burnup and the tick it left a core.
         if (data.isIrradiated() && context.level() != null) {
             long now = context.level().getGameTime();
+            double eachW = SpentFuelHeat.decayWattsEach(stack, now);
             if (SpentFuelHeat.dischargeTime(stack) >= 0L) {
                 tooltip.add(line(BwrText.tr(
                         "status.bwr.fuel_assembly_item.decay_heat",
                         "Decay heat %s kW, out of a core for %s",
-                        String.format(java.util.Locale.ROOT, "%,.1f", SpentFuelHeat.decayWatts(stack, now) / 1000.0),
+                        String.format(java.util.Locale.ROOT, "%,.1f", eachW / 1000.0),
                         dev.bwr.mod.spentfuel.SpentFuelPoolBlockEntity.duration(SpentFuelHeat.coolingSeconds(stack, now)))));
             } else {
                 tooltip.add(line(BwrText.tr(
                         "status.bwr.fuel_assembly_item.decay_heat_unrecorded",
                         "No discharge time recorded: long-cooled, %s kW decay heat",
-                        String.format(java.util.Locale.ROOT, "%,.1f", SpentFuelHeat.decayWatts(stack, now) / 1000.0))));
+                        String.format(java.util.Locale.ROOT, "%,.1f", eachW / 1000.0))));
+            }
+            // Assemblies stack as items and every bundle in the stack is a whole bundle: the heat and the dose of a
+            // stack are the count times those of one. The warning is the one measurement that is advice: a spent
+            // bundle in a pocket is not a thing to get used to.
+            if (stack.getCount() > 1) {
+                tooltip.add(line(BwrText.tr(
+                        "status.bwr.fuel_assembly_item.stack_decay_heat",
+                        "Stack of %s: %s kW of decay heat in all",
+                        String.format(java.util.Locale.ROOT, "%,d", stack.getCount()),
+                        String.format(java.util.Locale.ROOT, "%,.1f", eachW * stack.getCount() / 1000.0))));
+            }
+            if (eachW > CarriedFuel.WARNING_DECAY_WATTS) {
+                tooltip.add(BwrText.tr(
+                        "status.bwr.fuel_assembly_item.lethal_to_carry",
+                        "Lethal to carry in the open; a stack gives off the dose and heat of every assembly in it.")
+                        .withStyle(ChatFormatting.RED));
             }
         }
 

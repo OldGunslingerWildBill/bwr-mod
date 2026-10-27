@@ -66,6 +66,10 @@ public class ReprocessingPlantBlockEntity extends BlockEntity {
     /** The assembly in the slot is above the decay heat limit: look again once a second until it has cooled. */
     private boolean waitingHot;
 
+    /**
+     * The one assembly being taken apart. Assemblies stack as items, so the slot says it holds one: a pipe or a
+     * shift-click offering a stack leaves one here and keeps the rest, and {@link #commit} consumes exactly one.
+     */
     private final ItemStackHandler input = new ItemStackHandler(1) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -76,6 +80,11 @@ public class ReprocessingPlantBlockEntity extends BlockEntity {
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
             return Reprocessing.accepts(stack);
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return 1;
         }
     };
 
@@ -183,7 +192,8 @@ public class ReprocessingPlantBlockEntity extends BlockEntity {
     /** Consumes the assembly and adds what it held to the stores. */
     private void commit(ItemStack assembly) {
         SpentFuel.Split split = Reprocessing.split(FuelAssemblies.dataOf(assembly));
-        input.setStackInSlot(0, ItemStack.EMPTY);
+        // One assembly was split, so one leaves the slot (never the whole stack, whatever it holds).
+        input.extractItem(0, 1, false);
         plutoniumGrains += split.plutonium();
         uraniumGrains += split.uranium();
         wasteGrains += split.fissionProducts();
