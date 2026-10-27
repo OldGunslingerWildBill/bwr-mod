@@ -1,6 +1,14 @@
 {
   "replace": false,
   "values": [
+    "bwr:containment_airlock",
+    "bwr:containment_vault_door",
+    "bwr:containment_vault_door_4x4",
+    "bwr:containment_steam_penetration",
+    "bwr:containment_water_penetration",
+    "bwr:containment_power_penetration",
+    "bwr:containment_data_penetration",
+    "bwr:containment_pass_through",
     "#bwr:machines",
     "bwr:rip_pump",
     "bwr:high_pressure_water_pipe",
