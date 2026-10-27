@@ -391,6 +391,16 @@ public final class BwrBlocks {
             BLOCKS.register("canal_gate", () -> new dev.bwr.mod.refuelling.CanalGateBlock(
                     BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(4.0F, 40.0F)
                             .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
+    /** One block of a canal gate plug: a stack of them in a canal column is a gate the building crane lifts out whole (GATE OUT / GATE IN). */
+    public static final DeferredBlock<dev.bwr.mod.refuelling.CanalGatePlugBlock> CANAL_GATE_PLUG =
+            BLOCKS.register("canal_gate_plug", () -> new dev.bwr.mod.refuelling.CanalGatePlugBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(4.0F, 40.0F)
+                            .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
+    /** The rack on the refuel floor a canal gate is laid in. */
+    public static final DeferredBlock<dev.bwr.mod.refuelling.GateLaydownStandBlock> GATE_LAYDOWN_STAND =
+            BLOCKS.register("gate_laydown_stand", () -> new dev.bwr.mod.refuelling.GateLaydownStandBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 30.0F)
+                            .sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
     /** Where the bridge sets the steam dryer or the separator assembly down while the vessel is open. */
     public static final DeferredBlock<dev.bwr.mod.refuelling.EquipmentPadBlock> EQUIPMENT_PAD =
             BLOCKS.register("equipment_pad", () -> new dev.bwr.mod.refuelling.EquipmentPadBlock(
@@ -581,6 +591,9 @@ public final class BwrBlocks {
     /** A drain through the wall or floor of the reactor well, piped to the Condensate Storage Tank through a valve. */
     public static final DeferredBlock<dev.bwr.mod.reactor.CavityDrainPortBlock> CAVITY_DRAIN_PORT =
             BLOCKS.register("cavity_drain_port", () -> new dev.bwr.mod.reactor.CavityDrainPortBlock(vesselSteel()));
+    /** A fill line into the reactor well: a pump's discharge, or a higher Condensate Storage Tank through a valve, floods the well through it. */
+    public static final DeferredBlock<dev.bwr.mod.reactor.CavityFillPortBlock> CAVITY_FILL_PORT =
+            BLOCKS.register("cavity_fill_port", () -> new dev.bwr.mod.reactor.CavityFillPortBlock(vesselSteel()));
     /** Turbine auxiliaries (TURBINE-AUX.md): the oil tank with its pumps and cooler, the shaft-driven oil pump, the generator cooling skid. */
     public static final DeferredBlock<dev.bwr.mod.power.TurbineAuxBlock> MAIN_OIL_TANK =
             BLOCKS.register("main_oil_tank", () -> new dev.bwr.mod.power.TurbineAuxBlock(machine(), dev.bwr.mod.power.TurbineAuxBlock.Kind.LUBE_OIL));

@@ -34,6 +34,8 @@ public class CraneMenu extends BwrMenu {
     public static final int CMD_COVER = 5;
     /** a = 1 lifts an open LP's worst blade section out to a blade stand (BLADES OUT), 0 sets a spare in (BLADES IN). */
     public static final int CMD_BLADES = 6;
+    /** a = 1 lifts the nearest rigged canal gate out of its canal (GATE OUT), 0 puts the last one laid down back (GATE IN). */
+    public static final int CMD_GATE = 20;
 
     // --- client-visible snapshot -------------------------------------
 
@@ -72,6 +74,11 @@ public class CraneMenu extends BwrMenu {
     public boolean nearestCoverOff;
     public int nearestSectionsIn;
     public int turbineLoad;
+    /** Canal gates laid down (what GATE IN would put back), a gate on the hook, and what GATE OUT would take next. */
+    public int gatesLaid;
+    public boolean gateHeld;
+    public String gateNext = "";
+    public boolean gateNextBad;
 
     /** Client constructor. */
     public CraneMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf extra) {
@@ -147,6 +154,11 @@ public class CraneMenu extends BwrMenu {
         buf.writeVarInt(sections.isEmpty() ? 3 : (Boolean.TRUE.equals(sections.get(0).get("sectionAIn")) ? 1 : 0) | (Boolean.TRUE.equals(sections.get(0).get("sectionBIn")) ? 2 : 0));
         var load = be.carriedTurbine();
         buf.writeVarInt(load.isEmpty() ? 0 : dev.bwr.mod.power.TurbineLoadItem.isHood(load) ? 1 : 2);
+        buf.writeVarInt(be.gateLift().laid().size());
+        buf.writeBoolean(be.carriedGate());
+        var gate = be.gatePreview();
+        buf.writeUtf(gate == null ? "" : gate.text(), 120);
+        buf.writeBoolean(gate != null && gate.bad());
     }
 
     @Override
@@ -188,6 +200,10 @@ public class CraneMenu extends BwrMenu {
         nearestCoverOff = buf.readBoolean();
         nearestSectionsIn = buf.readVarInt();
         turbineLoad = buf.readVarInt();
+        gatesLaid = buf.readVarInt();
+        gateHeld = buf.readBoolean();
+        gateNext = buf.readUtf(120);
+        gateNextBad = buf.readBoolean();
     }
 
     @Override
@@ -248,6 +264,16 @@ public class CraneMenu extends BwrMenu {
                     sender.displayClientMessage(a != 0
                             ? BwrText.tr("status.bwr.turbine_crane.blades_out_queued", "Queued: the crane lifts the LP blade section out of the open casing onto a blade stand.")
                             : BwrText.tr("status.bwr.turbine_crane.blades_in_queued", "Queued: the crane sets a spare LP blade section into the open casing."), true);
+                }
+            }
+            case CMD_GATE -> {
+                Component why = be.queueGate(a != 0, null);
+                if (why != null) {
+                    refuse(sender, why);
+                } else {
+                    sender.displayClientMessage(a != 0
+                            ? BwrText.tr("status.bwr.canal_gate_lift.out_queued", "Queued: the crane lifts the canal gate out onto its laydown.")
+                            : BwrText.tr("status.bwr.canal_gate_lift.in_queued", "Queued: the crane sets the canal gate back in its canal."), true);
                 }
             }
             case CMD_ABORT -> be.abort();

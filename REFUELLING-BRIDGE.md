@@ -225,8 +225,14 @@ vessel's picture, only when there is a seal.
 ### The well
 
 From the seal row up, layer by layer: the vessel's footprint (the shell is gone with the head, and above the vessel a block over the footprint is
-a ceiling that ends the well) and every open cell joined to it within three blocks. A layer that leaks ends the well; its top is the top of the last closed
+a ceiling that ends the well) and every open cell joined to it within **eight** blocks (`CavitySeal.WELL_EXTENT`). A layer that leaks ends the well; its top is the top of the last closed
 layer, where the refuel floor is. The well is usable only if it reaches the flange.
+
+*Eight, not three (the flooding rework).* Until then the cells could spread only three blocks from the footprint. A well four blocks wider than the vessel, or a shelf or
+pit beside it one block under the floor, then counted as open although its walls were closed: with the seal at the flange the well ended at the flange and could not be
+flooded at all (the water went over the "top" onto the refuel floor at the rate it came in). Eight takes any reasonable well; a layer whose water reaches farther than that (the
+open refuel floor) still ends it, and the survey says where (`CavitySeal.WellEnd`: the row, and the block where the water would spread out, or the ceiling over the vessel).
+No existing assertion changed: every test well is a shaft one to three blocks off the vessel.
 
 * **Water over the flange.** The model's flange lip stands at collapsed level **+60 in** (the top of the narrow range band, where the drawn vessel's lip has
   always been). Below it the inventory and the level are exactly what they were. Above it the inventory first fills the **annulus** (outside the vessel
@@ -272,12 +278,69 @@ well (water) | Cavity Drain Port | High-Pressure Water Pipe | Motor-Operated Wat
 
 ![The INFO tab during a drain](art/cavity-drain/info-tab-during-drain.png)
 
+### Flooding the well: the checklist and the Cavity Fill Port
+
+The owner's report: "the reactor cavity wasn't flooding with water when I was trying to flood it". The world was not to hand, so the likely causes were reproduced
+in GameTests, and the checklist below now names each one: the well ended at the flange because its wall stood more than three blocks off the vessel above the seal (fixed: the survey's spread is now eight blocks, see
+above); no seal (a gap of two blocks somewhere round the ring, often one side only); the head or a stud still on; nothing actually putting water in (pumps that
+deliver to another reactor or none, valves shut); the water leaving faster than it came (into the drywell without a usable well, over the top of a short well, to the
+pool through an open canal, through a drain port or the cleanup system's blowdown); and the time it takes (the default vessel holds hundreds of tonnes between a cold
+level and its flange, so a 1,000 kg/s pump takes many minutes; the checklist says how long).
+
+**The checklist** (INFO tab, section "Flooding the well"; `reactor.getFloodReadiness()`). One line each, **PASS**, **FAIL** or **INFO**, with the reason in plain words and
+the coordinates of what is wrong. It reads only; nothing acts on it.
+
+| Line | PASS | FAIL says |
+|---|---|---|
+| `head` | the head is off the vessel (and where it is) | the head is on: water over the flange stays inside the closed vessel; detension, then LIFT HEAD |
+| `studs` | every closure stud is detensioned | how many studs are still at load |
+| `seal` | the seal's row | no seal: the rows it looked at, the closest row, which side is how many blocks off and at which x, z, how many columns are open; the water would run into the drywell |
+| `well` | the well's top and its capacity over the flange, and what ends it above (the refuel floor at x, z; a ceiling over the vessel) | the well does not reach the flange: the row where its wall opens and the x, z where the water would spread more than eight blocks |
+| `inflow` | the water going in now, kg/s, by source: feedwater, the injection pumps, core spray, the fill ports by gravity, the pool through the canal | nothing is putting water in, and what would |
+| `fill_port` (INFO) | | one line per fill port that cannot pass water now, with its reason |
+| `outflow` | nothing is leaving | water leaving into the drywell (no usable well) or over the top onto the refuel floor (the well is full) or through a break; INFO for the leaving the player chose: to the pool through the canal, the drain ports, the RWCU blowdown, boiling off |
+| `level` | flooded: metres over the flange, the water in the well, the well's top, and at the net flow how long until it is full | metres below the flange (the narrow-range inches against the +60 in flange; the dryer and the separators come out only flooded to it), and how long to the flange at the net flow |
+| `depth` (INFO) | the water over the top of the fuel and over the flange | |
+
+`canFlood` is true when `head`, `studs`, `seal` and `well` pass. The flows are the model's own numbers: the core's delivered feedwater, injection and spray, the fill ports'
+gravity flow, the canal exchange's flow, the vessel's spill, the drain ports, `getCleanupBlowdownKgPerS`, the net steam generation while the head is off, and the
+boundary and staged liquid leaks.
+
+**The Cavity Fill Port** (`bwr:cavity_fill_port`, the drain port's mirror; a strainer port with a blue flange). Real plants flood the cavity with RHR in LPCI mode or
+with condensate transfer; this is the condensate transfer line into the cavity. Set it in the well's wall or floor **at or above the seal row**, its flange (`FACING`)
+out of the well, the cell behind it a cell of the well (the same placement rules and the same wall as the drain port). Two ways in, both the player's:
+
+* **A pump.** Pipe a pump's discharge to the flange: the feed, condensate (motor feed), RHR (LPCI) or core spray pumps whose discharge line ends at it deliver into
+  this reactor exactly as through a vessel injection nozzle, with their own law, suction and power, and their water joins the vessel's inventory through the pump's
+  own report (`AssemblyPlumbing.waterReceiver` takes a fill port in the well of a formed reactor with its head off as that reactor). With the head on, or the port
+  outside a usable well, the pump has nowhere to send its water, as with an unconnected discharge.
+* **Gravity from a higher tank.** Pipe it through a **Motor-Operated Water Valve** to a Condensate Storage Tank whose outlet flange (its block centre) stands higher
+  than the water at the port (the well's surface, or the port's sill while the water is under it). The drain port's law: `Q = 0.6 x 0.2 m2 x 1000 x sqrt(2 g H) x opening`,
+  H the flange's height less the water's, capped at 1,500 kg/s. What leaves the tank enters the vessel's `liquidMassKg` to the kilogram (the tank's own sub-kilogram
+  bookkeeping, `drawKg`); the vessel model gives it its temperature, as it does the canal's water. A line with no valve, a shut valve, a tank at or under the water, or
+  an empty tank passes nothing, and the port says which.
+
+States (right-click, the INFO tab, `getCavity().fills`, the port's own `bwr_cavity_fill_port` face with `getStatus()`): `no_reactor`, `no_well`, `not_in_well`,
+`below_seal`, `head_on`, `pump_line` (ready for a pump, no tank on the line), `no_valve`, `valve_closed`, `no_head`, `tank_empty`, `filling`. The port has no ticker:
+the formed reactor steps it with the drain ports (the same list, the same once-a-tick pass, no chunk loaded). Nothing of it is saved. Water filled over the top of the
+well spills onto the refuel floor like any other: nothing stops a fill by itself.
+
+![The checklist on the INFO tab with a failure named](art/cavity-flood/info-checklist-failure.png)
+
+![A well flooded through a fill port from a higher tank](art/cavity-flood/well-flooded-by-fill-port.png)
+
 ### What the screen and the computers say
 
 INFO tab, "Cavity seal and well": the survey's verdict (present at y, row, H and the lowest allowed row, touching or with a gap; or absent, with the closest row and which side is
 how many blocks from the vessel at which x, z), the water over the flange, the level over the flange, the well's capacity and the leak (or overflow). With drain ports in the well it adds the **cavity drain flow** and a line per port: where it is, what its line is doing (draining, no valve, valve closed, no tank, tank full, down to the sill ...), the flow, the metres over the sill and the valve's opening. CC:Tweaked
 `reactor.getCavity()` returns the same as a table (`sealPresent`, `sealReason`, `vesselHeight`, `lowestSealRowY`, `flangeRowY`, `sealRowY`, `gapSides`, `tooWideSide`,
-`tooWideGapBlocks`, `wellUsable`, `waterOverFlangeM3`, `levelOverFlangeM`, `wellCapacityM3`, `spillKgPerS`, `spillTo`, and the drain ports: `drainCount`, `drainKgPerS`, `drains`, one table per port with `x`, `y`, `z`, `state` (`draining`, `no_valve`, `valve_closed`, `no_receiver`, `receiver_full`, `at_sill`, `no_water`, `no_head`, `not_in_well`, `below_seal`, `no_well`, `no_reactor`), `flowKgPerS`, `depthOverSillM`, `headM`, `valveOpening`, `valves`, `totalKg`). The port has its own `bwr_cavity_drain_port` face with `getStatus()`.
+`tooWideGapBlocks`, `wellUsable`, `waterOverFlangeM3`, `levelOverFlangeM`, `wellCapacityM3`, `spillKgPerS`, `spillTo`, and the drain ports: `drainCount`, `drainKgPerS`, `drains`, one table per port with `x`, `y`, `z`, `state` (`draining`, `no_valve`, `valve_closed`, `no_receiver`, `receiver_full`, `at_sill`, `no_water`, `no_head`, `not_in_well`, `below_seal`, `no_well`, `no_reactor`), `flowKgPerS`, `depthOverSillM`, `headM`, `valveOpening`, `valves`, `totalKg`). The port has its own `bwr_cavity_drain_port` face with `getStatus()`. The fill ports follow: `fillCount`, `fillKgPerS`, `fills` (`x`, `y`, `z`, `state`, `flowKgPerS`,
+`headM`, `valveOpening`, `valves`, `totalKg`), and each has its own `bwr_cavity_fill_port` face.
+
+INFO tab, "Flooding the well" (after the seal and the drain ports): a headline (every check passes, or how many fail), the checklist's lines marked PASS, FAIL or INFO, and a line per
+fill port. `reactor.getFloodReadiness()` returns `canFlood`, `items` (one table per line: `id`, `mark`, `pass`, `text`), and the flows now: `inKgPerS`, `outKgPerS`,
+`feedwaterKgPerS`, `injectionKgPerS`, `sprayKgPerS`, `fillPortKgPerS`, `fromPoolKgPerS`, `spillKgPerS`, `spillTo`, `toPoolKgPerS`, `drainKgPerS`, `cleanupKgPerS`,
+`boilOffKgPerS`, `breakKgPerS`.
 
 ### Drawing
 
@@ -370,8 +433,8 @@ the sill), capped at **20,000 kg/s**. Through a slot 1.875 m high (the GameTest'
   of a block (the blocks' `fill` state). A column is drained only when that level is under its floor: with the gates open, **both** sides under it.
   Drain a column with a bucket and it refills on the next tick from whichever side stands over its floor; pour a bucket into a column whose sides
   are both under its floor and it runs out again. (The canal's own few cubic metres are not counted in either inventory.)
-* **Nothing acts by itself.** This is physics: nothing opens or closes a gate (a player's empty hand does, or a program through the bridge's
-  `setGate`), nothing reacts to a level. The head must be off (`head_on`) and the reactor needs a usable well (`no_well`); a chunk that is not
+* **Nothing acts by itself.** This is physics: nothing opens or closes a gate (a player's empty hand does an old Canal Gate, or a program through the bridge's
+  `setGate`; a Canal Gate Plug only the building crane, by the player's GATE OUT / GATE IN), nothing reacts to a level. The head must be off (`head_on`) and the reactor needs a usable well (`no_well`); a chunk that is not
   loaded moves nothing and changes no block (`waiting`), and no chunk is ever loaded for it.
 * **What it says.** The pool controller's report (sneak-click) has a line per slot and the exchange's state (`no_slot`, `no_row`, `no_reactor`,
   `head_on`, `no_well`, `below_seal`, `above_well`, `waiting`, `gate_closed`, `below_sill`, `level`, `to_well`, `to_pool`, `full`), the sill, both
@@ -392,6 +455,27 @@ floor, the hoist limit. A slot that keeps a metre over the racks and a 4.5 m ass
 ![The slot through the pool wall, from over the pool](art/refuelling-bridge/slot-open-from-pool.png)
 
 ![The gate in the slot closed: the pool above the well](art/refuelling-bridge/slot-gate-closed.png)
+
+#### The canal gate plug: lifted out by the crane
+
+A real plant's canal gates are not doors: each is a tall steel plug with seals down its edges that drops into guides in the slot. With the well flooded to the pool's
+level the reactor building crane hooks the lifting eyes on its top, pulls it straight up out of the slot and lays it in a rack beside the pool; with the gates out, the
+pool, the canal and the well are one body of water. The mod does the same.
+
+* **The gate.** Stack **Canal Gate Plug** blocks in one canal column from the rim down (placed like canal blocks, turned along the canal): the whole stack is one gate,
+  and its top block carries the two lifting eyes. A plug is a canal block for every survey (the pool's slot, the cavity seal, the well, the bridge's chute), so a plug in
+  the slot keeps the pool formed; while it stands in the canal the canal is closed (`gate_closed`, the bridge does not pass). No hand, redstone or program opens it; the
+  bridge's `setGate` leaves it alone.
+* **GATE OUT / GATE IN** on the crane console (`queueGateOut([x, y, z])`, `queueGateIn()`): see [BUILDING-CRANE.md](BUILDING-CRANE.md#pulling-the-canal-gates-gate-out--gate-in).
+  The column the gate leaves is open canal (the same canal block, with its water, floor and top), so the exchange's next step passes water; GATE IN puts the plug back into
+  exactly that column, which closes it again.
+* **No pull against a head.** A gate holding back water is not pulled: the pool's surface and the well's (each counted down to the slot's floor at the lowest) must be within
+  **0.3 m**. With the head on, or no usable well, the well's side counts as dry.
+* **The old hand gate** (Canal Gate, empty hand to open and close) keeps working in old builds and saves; its tooltip points to the plug and the crane.
+
+![The crane lifting the gate plug out of the slot](art/cavity-flood/crane-lifting-gate-plug.png)
+
+![The gate plug on its laydown stand, the slot open](art/cavity-flood/gate-on-laydown-stand.png)
 
 ### The old chute, and why it couples nothing
 
@@ -447,9 +531,20 @@ The model's own set is in `art/refuelling-bridge-model/`: `model-over-pool.png`,
 `bridge-span.png` (the gantry over the chute between the cavity and the pool), `mast-in-core.png` (the mast lowered into the core), `assembly-through-chute.png` (a hot assembly glowing
 in the water of the chute, seen from inside the trench), `assembly-in-rack.png` (just set into a rack), `control-screen.png` (the map as the bridge's control, mid move),
 `survey-meter-spike.png` (the Survey Meter HUD at 906 Sv/h with the handle out of the water), and the four screens of the GUI check (`gui-*.png`).
-The slot (`-PbwrChuteSlotCheck`): `slot-open-from-floor.png`, `slot-open-from-pool.png`, `slot-open-from-well.png` (the gate open, the pool and the well level through it) and `slot-gate-closed.png` (the gate's plate raised in the slot, the pool above the well).
+The slot (`-PbwrChuteSlotCheck`): `slot-open-from-floor.png`, `slot-open-from-pool.png`, `slot-open-from-well.png` (the gate open, the pool and the well level through it) and `slot-gate-closed.png` (the gate's plate raised in the slot, the pool above the well); the
+same check then builds the crane over the hall and saves `crane-lifting-gate-plug.png` (GATE OUT, the plug half way out of the slot on its sling) and `gate-on-laydown-stand.png`
+(the plug on its stand, the slot open), copied to `art/cavity-flood/`. The cavity check (`-PbwrCavityCheck`) adds `info-checklist-failure.png` (the INFO tab's checklist for a vessel with no
+seal, the feed leaking into the drywell) and `well-flooded-by-fill-port.png` (a fill port in the well wall, its valve, and the tank on the refuel floor flooding the well).
 
 ## Tests
+
+Flooding (`CavityFloodTests`, namespace `bwrcavity`, 5 tests): the checklist names each cause (the head on, studs at load, no seal and the side and distance, a seal under a wall
+open at the flange with the row and the block, nothing going in, the level under the flange and the time to it, the feed going in, flooded over the flange, the INFO tab
+carrying the same lines); water leaving into the drywell and over the top of a full well; a well four blocks wider than the vessel and a shelf beside it one block under the
+floor hold water (the regression for the survey's old three-block spread); a fill port fills the well from a higher tank through a valve by the law with the mass exact (what
+left the tank is what the port passed and the vessel gained), a shut valve passes nothing, no head above the tank, the head on; a fill port takes a pump's discharge into
+its reactor (the pumps' `waterReceiver`) and refuses with the head on, turned backward or outside the well. CC faces in `CavityFloodCcChecks`.
+Canal gates (`CanalGateLiftTests`, namespace `bwrplug`): see [BUILDING-CRANE.md](BUILDING-CRANE.md#tests).
 
 Core (`:core:acceptance`): `BridgeMotionTest` (legs take as long as the slowest axis, the water over the handle and the dose law against `DoseModel`, routes and the least cover, the chute floor margin).
 GameTests (`ChuteSlotTests`, same namespace, 11 tests): the flow law; a pool forms with a slot in its wall and the well keeps its seal; slots in the floor, at a corner, not from the

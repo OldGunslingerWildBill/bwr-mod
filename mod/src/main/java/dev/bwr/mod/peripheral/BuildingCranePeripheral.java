@@ -102,6 +102,21 @@ public class BuildingCranePeripheral implements IPeripheral {
         if (next != null) {
             m.put("plugNext", previewMap(next));
         }
+        m.put("gatesLaid", be.gateLift().laid().size());
+        var gate = be.gatePreview();
+        if (gate != null) {
+            Map<String, Object> g = new LinkedHashMap<>();
+            g.put("blocks", gate.blocks());
+            g.put("massT", gate.massT());
+            g.put("rigged", gate.rigged());
+            g.put("overCapacity", gate.over());
+            g.put("headM", gate.headM());
+            g.put("onHook", gate.carried());
+            g.put("x", gate.bottom().getX());
+            g.put("y", gate.bottom().getY());
+            g.put("z", gate.bottom().getZ());
+            m.put("gateNext", g);
+        }
         if (be.haltMessage() != null) {
             m.put("haltReason", BwrText.english(be.haltMessage()));
         }
@@ -245,6 +260,50 @@ public class BuildingCranePeripheral implements IPeripheral {
     public final java.util.List<Map<String, Object>> getTurbineSections() {
         be.refreshSite();
         return be.turbineSections();
+    }
+
+    /**
+     * Every canal gate in the crane's reach (in a canal or laid down): its bottom block, blocks, mass in tonnes, whether its lifting eyes are clear, whether it
+     * stands on a laydown stand, and the water it holds back (m; it is pulled only within 0.3 m). Nothing moves.
+     */
+    @LuaFunction(mainThread = true)
+    public final java.util.List<Map<String, Object>> getGates() {
+        be.refreshSite();
+        java.util.List<Map<String, Object>> out = new java.util.ArrayList<>();
+        for (var g : be.canalGates()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("x", g.bottom().getX());
+            m.put("y", g.bottom().getY());
+            m.put("z", g.bottom().getZ());
+            m.put("blocks", g.height());
+            m.put("massT", g.massT());
+            m.put("rigged", g.rigged());
+            m.put("onStand", g.onStand());
+            m.put("headM", dev.bwr.mod.refuelling.CanalGateLift.headAcross(be.getLevel(), g, null));
+            out.add(m);
+        }
+        return out;
+    }
+
+    /**
+     * Queue lifting a canal gate out of its canal onto a Gate Laydown Stand (or clear floor). With no argument the rigged gate nearest the well; with the
+     * position of any of its blocks (x, y, z), that gate. Refused while the water on its two sides differs by more than 0.3 m.
+     */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> queueGateOut(Optional<Double> x, Optional<Double> y, Optional<Double> z) throws LuaException {
+        if (x.isPresent() != y.isPresent() || y.isPresent() != z.isPresent()) {
+            throw new LuaException("expected no arguments, or the x, y and z of a block of the gate");
+        }
+        BlockPos at = x.isPresent() ? BlockPos.containing(x.get(), y.get(), z.get()) : null;
+        Component why = be.queueGate(true, at);
+        return result(why == null, why);
+    }
+
+    /** Queue setting the canal gate that was last laid down back exactly in its canal column. */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> queueGateIn() {
+        Component why = be.queueGate(false, null);
+        return result(why == null, why);
     }
 
     @LuaFunction(mainThread = true)

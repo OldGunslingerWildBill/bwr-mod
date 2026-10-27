@@ -12,7 +12,35 @@ import net.minecraft.network.chat.Component;
  * far), the water over the flange and the water leaving the open vessel. Read-only; it commands nothing.
  */
 public record CavityInfo(boolean known, boolean present, Component seal, boolean wellUsable, double wellWaterM3, double wellCapacityM3,
-                         double riseM, double spillKgPerS, boolean spillsToDrywell, java.util.List<Drain> drains) {
+                         double riseM, double spillKgPerS, boolean spillsToDrywell, java.util.List<Drain> drains,
+                         java.util.List<Check> flood, java.util.List<Fill> fills) {
+    /** One line of the flood checklist ({@link dev.bwr.mod.reactor.FloodReadiness}): PASS, FAIL or INFO, and the reason. */
+    public record Check(int mark, Component text) {
+        public dev.bwr.mod.reactor.FloodReadiness.Mark markEnum() {
+            var all = dev.bwr.mod.reactor.FloodReadiness.Mark.values();
+            return mark >= 0 && mark < all.length ? all[mark] : dev.bwr.mod.reactor.FloodReadiness.Mark.INFO;
+        }
+    }
+
+    /** One cavity fill port: where it is, what its line is doing, and what it passes by gravity. */
+    public record Fill(int x, int y, int z, int state, double flowKgPerS, double headM, double opening) {
+        public Component stateText() {
+            return dev.bwr.mod.reactor.CavityFillPortBlockEntity.State.byOrdinal(state).text();
+        }
+    }
+
+    /** The checklist lines and fill ports that fit on the screen. */
+    public static final int MAX_CHECKS = 14;
+    public static final int MAX_FILLS = 4;
+
+    public double fillFlowKgPerS() {
+        double sum = 0;
+        for (Fill f : fills) {
+            sum += f.flowKgPerS();
+        }
+        return sum;
+    }
+
     /** One cavity drain port: where it is, what its line is doing, and what it passes. */
     public record Drain(int x, int y, int z, int state, double flowKgPerS, double depthM, double headM, double opening, int valves) {
         public Component stateText() {
@@ -20,7 +48,8 @@ public record CavityInfo(boolean known, boolean present, Component seal, boolean
         }
     }
 
-    public static final CavityInfo EMPTY = new CavityInfo(false, false, Component.empty(), false, 0, 0, 0, 0, false, java.util.List.of());
+    public static final CavityInfo EMPTY = new CavityInfo(false, false, Component.empty(), false, 0, 0, 0, 0, false, java.util.List.of(),
+            java.util.List.of(), java.util.List.of());
 
     /** The drain ports that fit on the screen. */
     public static final int MAX_DRAINS = 4;
@@ -50,8 +79,23 @@ public record CavityInfo(boolean known, boolean present, Component seal, boolean
             drains.add(new Drain(p.getX(), p.getY(), p.getZ(), port.state().ordinal(), port.flowKgPerS(), port.depthM(), port.headM(),
                     port.lineOpening(), port.valveCount()));
         }
+        var checks = new java.util.ArrayList<Check>();
+        for (var item : dev.bwr.mod.reactor.FloodReadiness.of(be)) {
+            if (checks.size() >= MAX_CHECKS) {
+                break;
+            }
+            checks.add(new Check(item.mark().ordinal(), item.text()));
+        }
+        var fills = new java.util.ArrayList<Fill>();
+        for (var port : be.cavityFills()) {
+            if (fills.size() >= MAX_FILLS) {
+                break;
+            }
+            var p = port.getBlockPos();
+            fills.add(new Fill(p.getX(), p.getY(), p.getZ(), port.state().ordinal(), port.flowKgPerS(), port.headM(), port.lineOpening()));
+        }
         return new CavityInfo(true, c.present(), c.describe(), c.wellUsable(), vessel.getWellWaterM3(), capacity, rise,
-                vessel.getWellSpillKgPerS(), !c.wellUsable(), java.util.List.copyOf(drains));
+                vessel.getWellSpillKgPerS(), !c.wellUsable(), java.util.List.copyOf(drains), java.util.List.copyOf(checks), java.util.List.copyOf(fills));
     }
 
     public void write(FriendlyByteBuf b, HolderLookup.Provider registries) {
@@ -79,6 +123,21 @@ public record CavityInfo(boolean known, boolean present, Component seal, boolean
             b.writeDouble(d.opening());
             b.writeVarInt(d.valves());
         }
+        b.writeVarInt(flood.size());
+        for (Check c : flood) {
+            b.writeVarInt(c.mark());
+            b.writeUtf(Component.Serializer.toJson(c.text(), registries), 8192);
+        }
+        b.writeVarInt(fills.size());
+        for (Fill f : fills) {
+            b.writeInt(f.x());
+            b.writeInt(f.y());
+            b.writeInt(f.z());
+            b.writeVarInt(f.state());
+            b.writeDouble(f.flowKgPerS());
+            b.writeDouble(f.headM());
+            b.writeDouble(f.opening());
+        }
     }
 
     public static CavityInfo read(FriendlyByteBuf b, HolderLookup.Provider registries) {
@@ -99,7 +158,19 @@ public record CavityInfo(boolean known, boolean present, Component seal, boolean
             drains.add(new Drain(b.readInt(), b.readInt(), b.readInt(), b.readVarInt(), b.readDouble(), b.readDouble(), b.readDouble(),
                     b.readDouble(), b.readVarInt()));
         }
+        int nc = Math.min(b.readVarInt(), MAX_CHECKS);
+        var checks = new java.util.ArrayList<Check>();
+        for (int i = 0; i < nc; i++) {
+            int mark = b.readVarInt();
+            Component text = Component.Serializer.fromJson(b.readUtf(8192), registries);
+            checks.add(new Check(mark, text == null ? Component.empty() : text));
+        }
+        int nf = Math.min(b.readVarInt(), MAX_FILLS);
+        var fills = new java.util.ArrayList<Fill>();
+        for (int i = 0; i < nf; i++) {
+            fills.add(new Fill(b.readInt(), b.readInt(), b.readInt(), b.readVarInt(), b.readDouble(), b.readDouble(), b.readDouble()));
+        }
         return new CavityInfo(true, present, seal == null ? Component.empty() : seal, usable, water, capacity, rise, spill, drywell,
-                java.util.List.copyOf(drains));
+                java.util.List.copyOf(drains), java.util.List.copyOf(checks), java.util.List.copyOf(fills));
     }
 }

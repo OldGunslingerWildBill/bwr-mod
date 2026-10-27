@@ -53,8 +53,13 @@ import java.util.Objects;
 public final class CavitySeal {
     /** The most a wall may stand off the vessel footprint and still close the ring: one block of air. */
     public static final int MAX_GAP = 1;
-    /** How far from the footprint the well's cells may spread before the layer counts as open. */
-    public static final int WELL_EXTENT = 3;
+    /**
+     * How far from the footprint the well's cells may spread before the layer counts as open. It was 3 until the cavity flooding rework:
+     * a well a few blocks wider than the vessel, or a shelf or pit beside it, then ended the well below it although its walls were
+     * closed, and with the seal at the flange the well could not be flooded at all. 8 takes any reasonable well; a layer whose water
+     * reaches farther than that (the open refuel floor) still ends it.
+     */
+    public static final int WELL_EXTENT = 8;
     public static final int MAX_WELL_LAYERS = 48;
     /** Outer radius of the barrel, fraction of the footprint (the Blender barrel's), for the annulus area. */
     static final double BARREL_RADIUS_FRACTION = 0.46;
@@ -66,6 +71,15 @@ public final class CavitySeal {
 
     /** Why the ring did not close at the best row. */
     public enum Failure { NONE, WALL_TOO_FAR, VESSEL_TOO_SHORT }
+
+    /**
+     * Why the well ends where it does, for the flood checklist: the layer above its top ({@code row}) leaks at {@code at} (water there would
+     * spread more than {@link #WELL_EXTENT} blocks from the vessel: the wall is open, or it is the refuel floor), or is closed over the vessel
+     * by a ceiling, or the survey reached {@link #MAX_WELL_LAYERS}.
+     */
+    public record WellEnd(Kind kind, int row, @Nullable BlockPos at) {
+        public enum Kind { LEAK, CEILING, LAYER_LIMIT }
+    }
 
     /**
      * What the clients draw: the seal plate and the shape of the well. Compares by value so an unchanged survey does not
@@ -270,7 +284,7 @@ public final class CavitySeal {
     /** The outcome of one survey. */
     public record Result(boolean present, int height, int bottomY, int lowestRow, int flangeRow, int sealRow, int gapMask,
                          Failure failure, int bestRow, @Nullable Direction badSide, @Nullable BlockPos badPos, int badGap, int badColumns,
-                         boolean wellUsable, int wellTopRow, @Nullable Profile profile, @Nullable Visual visual) {
+                         boolean wellUsable, int wellTopRow, @Nullable Profile profile, @Nullable Visual visual, @Nullable WellEnd wellEnd) {
 
         /** What the screen and the computers say: present, or absent and where the wall is too far. */
         public Component describe() {
@@ -381,6 +395,10 @@ public final class CavitySeal {
         private int tail;
         private boolean seeded;
         private boolean escaped;
+        @Nullable
+        private BlockPos escapedAt;
+        @Nullable
+        private BlockPos ceilingAt;
         private Result result;
 
         public Survey(Level level, VesselAppearance.Envelope e) {
@@ -397,7 +415,7 @@ public final class CavitySeal {
             this.ringRow = flange;
             this.bestRow = flange;
             if (lowest > flange) {
-                result = new Result(false, height, bottom, lowest, flange, 0, 0, Failure.VESSEL_TOO_SHORT, 0, null, null, 0, 0, false, 0, null, null);
+                result = new Result(false, height, bottom, lowest, flange, 0, 0, Failure.VESSEL_TOO_SHORT, 0, null, null, 0, 0, false, 0, null, null, null);
                 phase = Phase.DONE;
             }
         }
@@ -468,7 +486,7 @@ public final class CavitySeal {
             }
             if (--ringRow < lowest) {
                 result = new Result(false, height, bottom, lowest, flange, 0, 0, Failure.WALL_TOO_FAR, bestRow, best.badSide(), best.bad(),
-                        best.badGap(), best.open(), false, 0, null, null);
+                        best.badGap(), best.open(), false, 0, null, null, null);
                 phase = Phase.DONE;
             }
         }
@@ -529,6 +547,8 @@ public final class CavitySeal {
             tail = 0;
             seeded = false;
             escaped = false;
+            escapedAt = null;
+            ceilingAt = null;
         }
 
         private void wellStep(long limit) {
@@ -541,6 +561,9 @@ public final class CavitySeal {
                     seed++;
                     // Inside the vessel's own height the shell is the vessel; above it a block over the footprint is a ceiling.
                     boolean open = layerY <= e.max().getY() || !wall(new BlockPos(x, layerY, z));
+                    if (!open && ceilingAt == null) {
+                        ceilingAt = new BlockPos(x, layerY, z);
+                    }
                     if (open) {
                         int cell = (z - well.gridMinZ) * well.sizeX + (x - well.gridMinX);
                         cells.set(cell);
@@ -552,7 +575,7 @@ public final class CavitySeal {
                 }
                 seeded = true;
                 if (tail == 0) {
-                    finishWell();
+                    finishWell(new WellEnd(WellEnd.Kind.CEILING, layerY, ceilingAt));
                     return;
                 }
             }
@@ -568,6 +591,7 @@ public final class CavitySeal {
                     }
                     if (nx < 0 || nz < 0 || nx >= well.sizeX || nz >= well.sizeZ) {
                         escaped = true;
+                        escapedAt = new BlockPos(well.gridMinX + nx, layerY, well.gridMinZ + nz);
                         continue;
                     }
                     int next = nz * well.sizeX + nx;
@@ -581,27 +605,27 @@ public final class CavitySeal {
                 return;
             }
             if (escaped) {
-                finishWell();
+                finishWell(new WellEnd(WellEnd.Kind.LEAK, layerY, escapedAt));
                 return;
             }
             well.layers.add(cells);
             well.counts.add(cells.cardinality());
             well.lastRow = layerY;
             if (++layerY >= sealRow + MAX_WELL_LAYERS) {
-                finishWell();
+                finishWell(new WellEnd(WellEnd.Kind.LAYER_LIMIT, layerY, null));
                 return;
             }
             newLayer();
         }
 
-        private void finishWell() {
+        private void finishWell(WellEnd end) {
             Well w = well.layers.isEmpty() ? null : well;
             boolean usable = w != null && w.lastRow >= flange;
             Profile profile = usable ? profile(e, sealRow, flange, w) : null;
             double plateTop = profile != null ? profile.plateTop() : plateTop(e, sealRow, flange);
             Visual visual = new Visual(sealRow, sealMask, plateTop, sealRow == flange, usable ? w.shape(e, sealRow) : null);
             result = new Result(true, height, bottom, lowest, flange, sealRow, sealMask, Failure.NONE, sealRow, null, null, 0, 0, usable,
-                    usable ? w.lastRow : (w == null ? sealRow : w.lastRow), profile, visual);
+                    usable ? w.lastRow : (w == null ? sealRow : w.lastRow), profile, visual, end);
             phase = Phase.DONE;
         }
     }

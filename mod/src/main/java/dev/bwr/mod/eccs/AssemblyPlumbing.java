@@ -92,7 +92,7 @@ public final class AssemblyPlumbing {
                 case WATER_SUCTION -> jet?s.is(BwrBlocks.RECIRCULATION_PUMP.get()):s.is(BwrBlocks.CONDENSATE_STORAGE_TANK.get())||s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get())||s.is(BwrBlocks.SUPPRESSION_POOL_SUCTION.get())
                         || s.getBlock() instanceof dev.bwr.mod.reactor.RecirculationPortBlock port && port.isOutlet();
                 case WATER_DISCHARGE -> s.is(BwrBlocks.RPV_WATER_INJECTION_PORT.get())||s.is(BwrBlocks.SUPPRESSION_POOL_CONTROLLER.get())||s.is(BwrBlocks.SUPPRESSION_POOL_RETURN.get())
-                        || s.is(BwrBlocks.CONTAINMENT_SPRAY_HEADER.get());
+                        || s.is(BwrBlocks.CONTAINMENT_SPRAY_HEADER.get()) || s.is(BwrBlocks.CAVITY_FILL_PORT.get());
             };
             if(accepted){ends.add(next);opening=Math.max(opening,route.opening());}
             else if(s.is(BwrBlocks.RECIRCULATION_PUMP.get())||isWaterEndpoint(s)||s.is(BwrBlocks.RPV_STEAM_OUTLET.get())||dev.bwr.mod.steam.SteamLineNetwork.isQuencher(s)
@@ -120,6 +120,13 @@ public final class AssemblyPlumbing {
         if (!line.valid()) return null;
         ReactorControllerBlockEntity found = null;
         for (BlockPos p : line.ends()) {
+            if (dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof dev.bwr.mod.reactor.CavityFillPortBlockEntity fill) {
+                // a fill line into the reactor's flooded well: the pump delivers into that reactor (see CavityFillPortBlockEntity)
+                var next = fill.pumpReactor();
+                if (next == null || found != null && found != next) return null;
+                found = next;
+                continue;
+            }
             if (!(dev.bwr.mod.world.LoadedWorld.blockEntity(level, p) instanceof dev.bwr.mod.reactor.RpvWaterInjectionPortBlockEntity port)) return null;
             if (level.getBlockState(p).getBlock() instanceof dev.bwr.mod.reactor.RecirculationPortBlock) return null;
             var next = port.controller();

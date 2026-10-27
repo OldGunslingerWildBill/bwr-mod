@@ -72,6 +72,9 @@
     "bwr:actinium_227_block",
     "bwr:thulium_170_block",
     "bwr:lp_blade_stand",
-    "bwr:casing_laydown_stand"
+    "bwr:casing_laydown_stand",
+    "bwr:cavity_fill_port",
+    "bwr:canal_gate_plug",
+    "bwr:gate_laydown_stand"
   ]
 }

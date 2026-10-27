@@ -1328,6 +1328,65 @@ public class ReactorPeripheral implements IPeripheral {
         out.put("drainCount", drains.size());
         out.put("drainKgPerS", drainFlow);
         out.put("drains", drains);
+        var fills = new java.util.ArrayList<Map<String, Object>>();
+        double fillFlow = 0;
+        for (var port : be.cavityFills()) {
+            Map<String, Object> d = new HashMap<>();
+            d.put("x", port.getBlockPos().getX());
+            d.put("y", port.getBlockPos().getY());
+            d.put("z", port.getBlockPos().getZ());
+            d.put("state", port.state().key());
+            d.put("flowKgPerS", port.flowKgPerS());
+            d.put("headM", port.headM());
+            d.put("valveOpening", port.lineOpening());
+            d.put("valves", port.valveCount());
+            d.put("totalKg", port.totalKg());
+            fills.add(d);
+            fillFlow += port.flowKgPerS();
+        }
+        out.put("fillCount", fills.size());
+        out.put("fillKgPerS", fillFlow);
+        out.put("fills", fills);
+        return out;
+    }
+
+    /**
+     * The flood checklist (the INFO tab's "Flooding the well"): {@code canFlood} (the head off, the studs bare, a seal and a well to the flange),
+     * {@code items}, one table per line with {@code id} (head, studs, seal, well, inflow, fill_port, outflow, level, depth), {@code mark}
+     * (PASS, FAIL or INFO), {@code pass} and {@code text}; and the flows now, kg/s: {@code inKgPerS}, {@code outKgPerS} and each path. Reads only.
+     */
+    @LuaFunction(mainThread = true)
+    public final Map<String, Object> getFloodReadiness() throws LuaException {
+        core();
+        if (be.cavity() == null) throw new LuaException("the cavity seal has not been surveyed yet");
+        var items = dev.bwr.mod.reactor.FloodReadiness.of(be);
+        var list = new java.util.ArrayList<Map<String, Object>>();
+        for (var item : items) {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", item.id());
+            m.put("mark", item.mark().name());
+            m.put("pass", item.mark() != dev.bwr.mod.reactor.FloodReadiness.Mark.FAIL);
+            m.put("text", item.english());
+            list.add(m);
+        }
+        var f = dev.bwr.mod.reactor.FloodReadiness.flows(be);
+        Map<String, Object> out = new HashMap<>();
+        out.put("canFlood", dev.bwr.mod.reactor.FloodReadiness.canFlood(items));
+        out.put("items", list);
+        out.put("inKgPerS", f.in());
+        out.put("outKgPerS", f.out());
+        out.put("feedwaterKgPerS", f.feedwater());
+        out.put("injectionKgPerS", f.injection());
+        out.put("sprayKgPerS", f.spray());
+        out.put("fillPortKgPerS", f.fillPorts());
+        out.put("fromPoolKgPerS", f.fromPool());
+        out.put("spillKgPerS", f.spill());
+        out.put("spillTo", f.spill() <= 0 ? "none" : f.spillToDrywell() ? "drywell" : "refuel floor");
+        out.put("toPoolKgPerS", f.toPool());
+        out.put("drainKgPerS", f.drains());
+        out.put("cleanupKgPerS", f.cleanup());
+        out.put("boilOffKgPerS", f.steam());
+        out.put("breakKgPerS", f.breaks());
         return out;
     }
 

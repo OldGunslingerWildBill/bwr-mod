@@ -27,6 +27,7 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
     private BwrButton plug;
     private BwrButton cover;
     private BwrButton blades;
+    private BwrButton gate;
 
     public CraneScreen(CraneMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 420, 214);
@@ -95,6 +96,8 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
                     b -> menu.sendCommand(CraneMenu.CMD_COVER, coverOff() ? 0 : 1));
             blades = BwrButton.secondary("BLADES OUT", "Lift the worst blade section out of the open LP casing onto a free saddle of an LP Blade Storage Stand.",
                     b -> menu.sendCommand(CraneMenu.CMD_BLADES, bladesOut() ? 1 : 0));
+            gate = BwrButton.secondary("GATE OUT", "Lift the canal gate nearest the well out of its canal, by the lifting eyes on its top, onto a Gate Laydown Stand (or clear floor).",
+                    b -> menu.sendCommand(CraneMenu.CMD_GATE, menu.gatesLaid > 0 && !menu.gateHeld ? 0 : 1));
         }
         var state = Layout.card("Crane",
                 Layout.row("State", () -> phaseWord(menu.phase) + (menu.queued > 0 ? " (+" + menu.queued + ")" : "")).dense()
@@ -122,6 +125,9 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
                 Layout.row("Next plug", () -> menu.plugNext.isEmpty() ? "none in reach" : menu.plugNext).dense()
                         .status(() -> menu.plugNextBad ? Status.CAUTION : Status.NONE)
                         .tip("The shield plug section PLUG OFF would take next (or the one on the hook): its blocks, its mass against the crane's rating, and its crane anchors. It needs exactly four anchors and must be under the rating; mark a seam to split a section that is too heavy."),
+                Layout.row("Next gate", () -> menu.gateNext.isEmpty() ? (menu.gatesLaid > 0 ? menu.gatesLaid + " laid down" : "none in reach") : menu.gateNext).dense()
+                        .status(() -> menu.gateNextBad ? Status.CAUTION : Status.NONE)
+                        .tip("The canal gate GATE OUT would take next (or the one on the hook): its blocks and mass. It is pulled only with its lifting eyes clear and the water on both sides within 0.3 m."),
                 Layout.row("Dryer", () -> (menu.internalsOut & 1) == 0 ? "installed" : "out").dense()
                         .status(() -> (menu.internalsOut & 1) == 0 ? Status.NONE : Status.CAUTION),
                 Layout.row("Separators", () -> (menu.internalsOut & 2) == 0 ? "installed" : "out").dense()
@@ -131,7 +137,9 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
         var controls = Layout.card("",
                 Layout.controls(BwrStyle.SP1).add(head, 1).add(dryer, 1).add(separators, 1).add(plug, 1),
                 Layout.gap(1),
-                Layout.controls(BwrStyle.SP1).add(cover, 1).add(blades, 1).add(abort, 1).add(resume, 1)).compact();
+                Layout.controls(BwrStyle.SP1).add(cover, 1).add(blades, 1).add(gate, 1),
+                Layout.gap(1),
+                Layout.controls(BwrStyle.SP1).add(abort, 1).add(resume, 1)).compact();
         return Layout.column(BwrStyle.SP2,
                 Layout.note("There is no crane console here.").body().status(() -> Status.ALARM).showIf(() -> !menu.present),
                 Layout.column(BwrStyle.SP1,
@@ -176,6 +184,12 @@ public class CraneScreen extends BwrScreen<CraneMenu> {
                 ? "Queue a lift: the crane lifts the worst blade section out of the open LP casing onto a free saddle of an LP Blade Storage Stand."
                 : "Queue a lift: the crane takes a spare LP blade section from a blade stand and sets it into the empty flow of the open casing.");
         blades.active = idle && (menu.nearestCoverOff || menu.turbineLoad == 2) && menu.turbineLoad != 1;
+        boolean gatesLaid = menu.gatesLaid > 0 && !menu.gateHeld;
+        gate.setMessage(Component.literal(gatesLaid ? "GATE IN" : "GATE OUT"));
+        gate.setTooltipText(gatesLaid
+                ? "Queue a lift: the crane sets the canal gate it last laid down back exactly in its canal column, closing the canal."
+                : "Queue a lift: the crane lifts the canal gate nearest the well out of its canal by the eyes on its top and lays it on a Gate Laydown Stand (or clear floor). The water on both sides must be within 0.3 m.");
+        gate.active = go || (menu.present && menu.ready && menu.reactorFound && !menu.busy && menu.gateHeld);
         abort.active = menu.present && menu.ready && (menu.busy || menu.halted || menu.queued > 0 || !menu.carried.isEmpty());
         resume.active = menu.present && menu.ready && menu.halted;
     }

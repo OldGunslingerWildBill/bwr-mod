@@ -68,7 +68,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     // Moves
     // ---------------------------------------------------------------
 
-    public enum Kind { HEAD_SEAT, HEAD_STAND, HEAD_LAID, INTERNAL, PAD, HELD, PLUG, TURBINE_COVER, CASING_STAND, TURBINE_BLADES, BLADE_STAND }
+    public enum Kind { HEAD_SEAT, HEAD_STAND, HEAD_LAID, INTERNAL, PAD, HELD, PLUG, TURBINE_COVER, CASING_STAND, TURBINE_BLADES, BLADE_STAND, GATE }
 
     /** A place: the head's seat on the flange, a head stand, the head laid down (older worlds), the dryer's or separators' seat, a pad, or the hook itself. */
     public record Loc(Kind kind, BlockPos at, int which) {
@@ -112,6 +112,11 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             return new Loc(Kind.BLADE_STAND, stand.immutable(), slot);
         }
 
+        /** A canal gate whose bottom block is at {@code bottom} (in its canal column, or on its laydown); see {@link CanalGateLift}. */
+        public static Loc gate(BlockPos bottom) {
+            return new Loc(Kind.GATE, bottom.immutable(), 0);
+        }
+
         public VesselInternal internal() {
             return VesselInternal.values()[Math.clamp(which, 0, VesselInternal.values().length - 1)];
         }
@@ -123,7 +128,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         CompoundTag save() {
             CompoundTag t = new CompoundTag();
             t.putString("K", kind.name());
-            if (kind == Kind.HEAD_STAND || kind == Kind.PAD || kind == Kind.PLUG || TurbineHallLifts.isTurbineLoc(this)) {
+            if (kind == Kind.HEAD_STAND || kind == Kind.PAD || kind == Kind.PLUG || TurbineHallLifts.isTurbineLoc(this) || kind == Kind.GATE) {
                 t.putLong("R", at.asLong());
             }
             if (kind == Kind.INTERNAL || kind == Kind.PAD || kind == Kind.TURBINE_BLADES || kind == Kind.BLADE_STAND) {
@@ -148,6 +153,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
                 case PLUG -> new Loc(Kind.PLUG, BlockPos.of(t.getLong("R")), 0);
                 case TURBINE_COVER, CASING_STAND -> new Loc(k, BlockPos.of(t.getLong("R")), 0);
                 case TURBINE_BLADES, BLADE_STAND -> new Loc(k, BlockPos.of(t.getLong("R")), Math.clamp(t.getByte("C"), 0, 1));
+                case GATE -> new Loc(Kind.GATE, BlockPos.of(t.getLong("R")), 0);
                 default -> HELD;
             };
         }
@@ -165,6 +171,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
                 case CASING_STAND -> String.format(Locale.ROOT, "the casing laydown stand at %d,%d,%d", at.getX(), at.getY(), at.getZ());
                 case TURBINE_BLADES -> String.format(Locale.ROOT, "flow %s of the LP turbine at %d,%d,%d", which == 0 ? "A" : "B", at.getX(), at.getY(), at.getZ());
                 case BLADE_STAND -> String.format(Locale.ROOT, "saddle %d of the LP blade stand at %d,%d,%d", which + 1, at.getX(), at.getY(), at.getZ());
+                case GATE -> String.format(Locale.ROOT, "the canal gate at %d,%d,%d", at.getX(), at.getY(), at.getZ());
             };
         }
     }
@@ -268,6 +275,8 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     private final List<Laid> laid = new ArrayList<>();
     /** The turbine hall load on the hook (TURBINE-MAINTENANCE.md): an LP hood or blade section, as its item; empty with none. */
     private net.minecraft.world.item.ItemStack carriedTurbine = net.minecraft.world.item.ItemStack.EMPTY;
+    /** The canal gate lift (GATE OUT / GATE IN), a lift kind of its own. */
+    private final CanalGateLift gates = new CanalGateLift();
 
     // transient
     private BridgeSite site;
@@ -399,7 +408,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
 
     /** True while the hook holds the head, the dryer or the separator assembly, a shield plug section or a turbine hall load. */
     public boolean holding() {
-        return carriedHead || carriedInternal != null || plugEntity != null || !carriedTurbine.isEmpty();
+        return carriedHead || carriedInternal != null || plugEntity != null || !carriedTurbine.isEmpty() || gates.holding();
     }
 
     // ---------------------------------------------------------------
@@ -477,7 +486,17 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     }
 
     public boolean ownsPlugEntity(UUID id) {
-        return id.equals(plugEntity);
+        return id.equals(plugEntity) || gates.owns(id);
+    }
+
+    /** The canal gate lift: its plan, the gate on the hook, the gates laid down. */
+    public CanalGateLift gateLift() {
+        return gates;
+    }
+
+    /** True while a canal gate hangs from the hook. */
+    public boolean carriedGate() {
+        return gates.holding();
     }
 
     @Nullable
@@ -562,7 +581,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         return s;
     }
 
-    private ReactorControllerBlockEntity reactor() {
+    ReactorControllerBlockEntity reactor() {
         return site == null ? null : site.reactor(level);
     }
 
@@ -680,6 +699,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         Loc from = m.from(), to = m.to();
         if (isPlugMove(m)) {
             return refusePlug(m, r);
+        }
+        if (isGateMove(m)) {
+            return gates.refuse(this, m, r);
         }
         boolean head = from.isHead() || to.isHead() || (from.kind() == Kind.HELD && carriedHead);
         return head ? refuseHead(m, r) : refuseInternal(m, r);
@@ -923,6 +945,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             case TURBINE_COVER, CASING_STAND, TURBINE_BLADES, BLADE_STAND -> {
                 return TurbineHallLifts.column(this, loc);
             }
+            case GATE -> {
+                return gates.column(loc);
+            }
             default -> {
                 return pos == null ? null : new Point(pos.x(), 0, pos.z());
             }
@@ -944,6 +969,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         }
         if (plan != null && !isPlugMove(m)) {
             return BwrText.tr("status.bwr.building_crane.plug_busy", "The crane is busy with a shield plug section: set it down first.");
+        }
+        if (gates.plan() != null && !isGateMove(m)) {
+            return BwrText.tr("status.bwr.canal_gate_lift.busy", "The crane is busy with a canal gate: set it down first.");
         }
         Component why = refuse(m);
         if (why != null) {
@@ -975,6 +1003,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         if (plugEntity == null) {
             plan = null; // a plug lift stopped before the hook took the section has nothing to remember
         }
+        gates.forgetPlanIfEmpty();
         route.clear();
         routeIndex = 0;
         raisingForMove = false;
@@ -1054,6 +1083,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         if (plugEntity == null) {
             plan = null;
         }
+        gates.forgetPlanIfEmpty();
         phase = Phase.IDLE;
         legTo = null;
         elapsed = 0;
@@ -1104,6 +1134,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             case PLUG -> {
                 Point c = columnOf(loc);
                 return new BridgeMotion.Stop(c.x(), c.z(), loc.at().getY() + plan.hookAboveBase(), Double.NaN);
+            }
+            case GATE -> {
+                return gates.stop(loc);
             }
             default -> {
                 return new BridgeMotion.Stop(pos.x(), pos.z(), pos.y(), Double.NaN);
@@ -1266,6 +1299,14 @@ public class BuildingCraneBlockEntity extends BlockEntity {
                         reason = why;
                     }
                 }
+                case GATE -> {
+                    Component why = gates.take(server, this, from.at(), pos);
+                    if (why == null) {
+                        taken = true;
+                    } else {
+                        reason = why;
+                    }
+                }
                 default -> {
                 }
             }
@@ -1297,8 +1338,8 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         }
         ReactorControllerBlockEntity r = reactor();
         boolean placed = false;
-        if (plugEntity != null) {
-            Component why = setDownPlug(server, to);
+        if (plugEntity != null || gates.holding()) {
+            Component why = plugEntity != null ? setDownPlug(server, to) : gates.setDown(server, this, to);
             if (why != null) {
                 fault(server, Phase.RELEASE, why);
                 return;
@@ -1357,6 +1398,48 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         return m.from().kind() == Kind.PLUG || m.to().kind() == Kind.PLUG;
     }
 
+    private static boolean isGateMove(Move m) {
+        return m.from().kind() == Kind.GATE || m.to().kind() == Kind.GATE;
+    }
+
+    /**
+     * GATE OUT ({@code out}): lifts the canal gate (the one through {@code at}, or the nearest rigged one in reach) out of its canal column onto a
+     * Gate Laydown Stand or the floor; GATE IN puts the last one laid down back. See {@link CanalGateLift}. Returns null when queued, or why not.
+     */
+    @Nullable
+    public Component queueGate(boolean out, @Nullable BlockPos at) {
+        if (!(level instanceof ServerLevel)) {
+            return null;
+        }
+        refreshSite();
+        if (site == null || !site.ok()) {
+            return site == null ? BwrText.tr("status.bwr.building_crane.not_surveyed", "The crane has not surveyed its rails yet.") : site.problem;
+        }
+        return gates.queue(this, out, at);
+    }
+
+    private CanalGateLift.Preview gatePreview;
+    private long gatePreviewAt = Long.MIN_VALUE;
+
+    /** The gate GATE OUT would take next, or the one on the hook; null when there is none. Cached for a second. */
+    @Nullable
+    public CanalGateLift.Preview gatePreview() {
+        if (!(level instanceof ServerLevel server)) {
+            return null;
+        }
+        if (gatePreviewAt != Long.MIN_VALUE && server.getGameTime() - gatePreviewAt < 20 && server.getGameTime() >= gatePreviewAt && !gates.holding()) {
+            return gatePreview;
+        }
+        gatePreviewAt = server.getGameTime();
+        gatePreview = site == null || !site.ok() ? null : gates.preview(this);
+        return gatePreview;
+    }
+
+    /** Every canal gate in the crane's reach (a scan on demand). */
+    public List<CanalGateLift.Gate> canalGates() {
+        return gates.gates(this);
+    }
+
     private BlockPos plugSource(PlugPlan p) {
         return p.fromHome() ? p.homeMin() : p.layMin();
     }
@@ -1412,7 +1495,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     }
 
     /** The squares of floor the laydown stays off: where a head lies on a head stand, as wide as the vessel (every stand in reach, holding the head or not). */
-    private List<PlugSections.Keep> keepClear(VesselAppearance.Envelope env) {
+    List<PlugSections.Keep> keepClear(VesselAppearance.Envelope env) {
         List<PlugSections.Keep> keep = new ArrayList<>();
         int half = (int) Math.ceil(Math.max(env.width(), env.depth()) / 2.0);
         for (BlockPos p : HeadStandBlockEntity.stands(level)) {
@@ -1783,6 +1866,12 @@ public class BuildingCraneBlockEntity extends BlockEntity {
 
     /** The section's entity has put its blocks back (or dropped them) by itself and gone: the hook is empty. */
     public void plugReleased(ServerLevel server, UUID id) {
+        if (gates.owns(id)) {
+            gates.clear();
+            clearPlugState();
+            notifyNearby(server, BwrText.tr("status.bwr.canal_gate_lift.released", "The canal gate is no longer on the hook: its blocks were put back or dropped."));
+            return;
+        }
         if (!id.equals(plugEntity)) {
             return;
         }
@@ -1793,6 +1882,12 @@ public class BuildingCraneBlockEntity extends BlockEntity {
 
     /** The runway no longer stands under a hanging section: the entity has set it back or dropped it. */
     public void plugLost(ServerLevel server, UUID id) {
+        if (gates.owns(id)) {
+            gates.clear();
+            clearPlugState();
+            notifyNearby(server, BwrText.tr("status.bwr.canal_gate_lift.runway_lost", "The runway is broken: the canal gate's blocks were put back or dropped."));
+            return;
+        }
         if (!id.equals(plugEntity)) {
             return;
         }
@@ -1832,6 +1927,11 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             plugReleased(server, plugEntity);
             return;
         }
+        if (gates.entityGone(server, tip())) {
+            pos = tip();
+            plugReleased(server, gates.entityId());
+            return;
+        }
         if (reactor() == null && !turbineWork()) {
             // the reactor under the crane is gone (broken, unformed): stop where it is; a load stays on the hook
             pos = tip();
@@ -1848,6 +1948,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             updateDose(server);
         }
         followPlug(server);
+        gates.follow(server, tip());
         if (busy()) {
             setChanged();
             schedule(server);
@@ -1859,6 +1960,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             return TurbineHallLifts.ready(this, server, move);
         }
         if (site != null && site.reactorPos != null && !server.isLoaded(site.reactorPos)) {
+            return false;
+        }
+        if (gates.holding() && !gates.worldReady(server, tip(), busy() && legTo != null ? BridgeMotion.lerp(pos, legTo, elapsed + 1, duration) : null)) {
             return false;
         }
         if (plugEntity != null && plan != null) {
@@ -1928,6 +2032,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             // a hood or a blade section goes back where it was taken from, or drops as its item: never lost
             TurbineHallLifts.release(this, server, move);
         }
+        gates.dropCarried(server);
         if (plugEntity != null) {
             // a section on the hook goes back where it was taken from, or its blocks drop as items: never lost
             if (server.getEntity(plugEntity) instanceof PlugSectionEntity e) {
@@ -1968,6 +2073,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
                     ? String.format(Locale.ROOT, "an LP turbine hood (%.0f t)", dev.bwr.mod.power.TurbineLoadItem.massT(carriedTurbine))
                     : String.format(Locale.ROOT, "%s LP blade section (%.0f t, %.0f%% worn)", dev.bwr.mod.power.TurbineLoadItem.isGoodSection(carriedTurbine) ? "a" : "a damaged",
                     dev.bwr.mod.power.TurbineLoadItem.massT(carriedTurbine), 100 * dev.bwr.mod.power.TurbineLoadItem.condition(carriedTurbine));
+        }
+        if (gates.holding()) {
+            return gates.summary();
         }
         if (plugEntity != null && plan != null) {
             return String.format(Locale.ROOT, "a shield plug section (%d blocks, %.1f t)", plan.blocks(), plan.massT());
@@ -2064,6 +2172,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             }
             tag.put("Laid", list);
         }
+        gates.save(tag);
         if (geom != null) {
             CompoundTag g = new CompoundTag();
             g.putBoolean("AlongX", geom.alongX());
@@ -2121,6 +2230,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
                 laid.add(new Laid(BlockPos.of(t.getLong("Lay")), BlockPos.of(t.getLong("Home")), BlockPos.of(t.getLong("Seed"))));
             }
         }
+        gates.load(tag);
         paused = tag.getBoolean("Paused");
         if (tag.contains("Geom", Tag.TAG_COMPOUND)) {
             CompoundTag g = tag.getCompound("Geom");

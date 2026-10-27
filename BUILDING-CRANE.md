@@ -193,6 +193,57 @@ the pendant gains COVER OFF / ON and BLADES OUT / IN, the computer `queueCoverOf
 the crane, rails too low, over the 125 t rating), the weights, the save and the console-broken rules are in
 [TURBINE-MAINTENANCE.md](TURBINE-MAINTENANCE.md). A turbine load hangs on the hook as an item the crane holds (`CarriedTurbine` in its save).
 
+## Pulling the canal gates (GATE OUT / GATE IN)
+
+A real plant's transfer canal is closed by steel gates, tall plugs with seals down their edges that drop into guides in the slot. With the reactor well flooded to
+the pool's level the building crane hooks a gate by its lifting eyes, pulls it straight up out of the slot and lays it in a rack beside the pool; the pool, the canal
+and the well are then one body of water ([REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#the-canal-gate-plug-lifted-out-by-the-crane)). The crane does the same, as a lift of its
+own kind (`CanalGateLift`, the move kind `GATE`): nothing in it changes how the head, the internals or the shield plug are lifted.
+
+### What you build
+
+* **Canal Gate Plug** (`bwr:canal_gate_plug`): stacked in one canal column from the rim down, the whole stack is **one gate**; the top block carries two lifting eyes.
+  It is a canal block for every survey, and closes the canal while it stands in it.
+* **Gate Laydown Stand** (`bwr:gate_laydown_stand`): a steel rack on the refuel floor within the crane's reach, with clear air over it as tall as the gate. A gate is
+  set upright on top of it. Without a free stand the crane lays the gate on the clear floor nearest it (the shield plug's laydown rule, searched from the floor round
+  the top of the slot: every cell air, solid floor under it, off the well and the head stands' squares).
+
+### The procedure
+
+The pendant has a **GATE OUT** button (it reads **GATE IN** while a gate is laid down and the hook is empty) and a *Next gate* row: "2 blocks, 1.2 t, ready", or why not
+("eyes covered", "over the rating", "0.85 m of head").
+
+* **GATE OUT** takes the gate in reach nearest the middle of the well whose eyes are clear, that stands in a canal (not on a stand, not one the crane laid down). The
+  crane runs out, lowers to the eyes, hooks on (5 s), lifts it straight out of the slot (0.25 m/s), carries it at the hook's rest height and sets it on the stand,
+  unhooks and raises. The column it leaves is open canal: the same canal block with its water, floor and top.
+* **GATE IN** takes the gate most recently laid down back into exactly the column it came from (last out, first in), if that column is still open canal or air.
+* **Weight.** A gate weighs its blocks' masses from the block data map `bwr:plug_mass`: the mod's entry is **0.6 t a block** (a welded stainless gate 0.75 m wide
+  and a metre tall, two 12 mm skins on stiffeners with its seals), so a whole gate is a few tonnes (a 2-block test gate 1.2 t, a 15-block one 9 t), far within the crane's
+  **125 t**. Over the rating is refused (a datapack can make a gate that heavy).
+* **Refusals, with the reason, nothing moved:** not under the crane ("outside the reach"); nothing to lift ("sees no canal gate"); the eyes covered (a block on top of the
+  gate, and where); over the rating; **a head across the gate**: the pool's surface and the well's (each counted down to the slot's floor at the lowest; the well's side
+  dry while the head is on or there is no usable well) must be within **0.3 m**, otherwise "The gate at ... holds back 1.42 m of water: the pool stands at y ... and the
+  well at ... A gate is pulled only with both sides within 0.3 m"; no laydown (no free stand and no clear floor); the rails too low to lift the gate clear of the slot's top
+  ("raise the rails to y ..."); for GATE IN, its place in the canal built over. The head across the gate is checked again when the hook closes: levels that part while
+  the hook comes down stop the lift there (HALTED, the gate in its slot); level them and press GATE OUT again.
+* ABORT leaves a hanging gate on the hook; GATE OUT (or GATE IN) then carries on from the hook to the laydown (or home). RESUME after a halt at the release tries the
+  set-down again.
+
+### A hanging gate
+
+The hanging gate is the shield plug's entity (`bwr:plug_section`) holding the gate's block states, hung from a two-leg sling to its eyes: everything said of a hanging
+plug section holds (saved with its chunk, never despawns, never duplicated; the crane keeps only its id, its plan and its laydown book, under the `Gate` key, written only
+when there is one; the crane waits while its chunk is not loaded and moves it only into loaded chunks). A console broken under a hanging gate puts it **back into its
+canal column** when that column is still open canal, otherwise its blocks drop as items; a broken runway or `/kill` drops them (the column is canal, not air, so the
+entity's own put-back does not apply). Nothing is lost.
+
+### Computers
+
+`bwr_building_crane`: `queueGateOut([x, y, z])` (no arguments: the rigged gate nearest the well; with the position of any block of a gate: that gate), `queueGateIn()`, each
+`{ok, message}`; `getGates()` lists every gate in reach (in a canal or laid down) with `x, y, z` (its bottom block), `blocks`, `massT`, `rigged`, `onStand` and `headM` (the
+water it holds back); `getStatus()` adds `gatesLaid` and `gateNext` (`blocks`, `massT`, `rigged`, `overCapacity`, `headM`, `onHook`, `x, y, z`), and `carried` reads
+"a canal gate (N blocks, T t)" while one hangs.
+
 ## The head's states
 
 | State | Where the head is | Studs | Holds pressure |
@@ -327,6 +378,13 @@ the default; the stand's placement rules and a stand removed under the head; low
 working crane or tensioner ticking once a tick on the real scheduler; the computer faces. Client check `-PbwrBuildingCraneCheck` (`BuildingCraneClientCheck`) saves the pictures in `art/building-crane/`;
 the two screens are in `-PbwrGuiScreenCheck`.
 
+Canal gates: GameTests `CanalGateLiftTests` (namespace `bwrplug`, batch `gates`, 5 tests): GATE OUT lifts the whole gate onto its stand (one entity while it hangs, the column
+open canal behind it), the pool and the well then exchange water with the mass exact and level, and GATE IN puts it back block for block and the canal is closed again;
+the refusals (a head across the gate, the eyes covered, over the rating, out of reach, nothing in reach, nothing laid down, no laydown) with nothing moved; GATE IN refused
+while the slot is built over, and a head that appears while the hook comes down halts the lift with the gate in its slot; a gate saved and loaded mid-lift (one entity,
+the crane carries on), ABORT with the gate on the hook and GATE OUT finishing from the hook, an old crane with no gate data; a console broken under a hanging gate puts it
+back in its canal. The CC faces are checked in `CavityFloodCcChecks`.
+
 Shield plug lifting: core `PlugLiftTest` (mass, the 125 t rating, the four-anchor rule); GameTests `PlugLiftTests` (namespace `bwrplug`, batch `plugs`, `-PbwrOnlyPlug`, 15 tests): anchors on plug tops only; a seam
 splits a plug in two and the marker toggles and clears it; PLUG OFF takes exactly one section, its blocks leave the well and land exactly at the laydown, the entity hangs under the hook and moves with it; PLUG ON restores state
 for state (tier, seams, anchors); an over-capacity refusal; a tier 3 section over the rating refused where the same size in tier 1 is taken; the same size weighing differently by tier and the mass shown before the lift; the four-anchor rule (3 and 5 refused); LIFT HEAD and SET HEAD refused with a plug over the well and allowed after; a laydown that is not
@@ -343,5 +401,8 @@ is built over), a runway broken (the entity's own check) and `/kill`; the head m
 * The crane takes one section at a time, nearest the well first. It does not order the sections for you: the plug's real lifting sequence is the player's.
 * PLUG OFF is not tied to the reactor's state: a plug can be lifted off a running reactor, as nothing in the game depends on the plug being there except the head interlock, the shielding and the head missile.
 * Anchors are whole blocks on the tops of plug blocks (one per block), not points anywhere on a face; a section needs a plug block with open air above it for each of its four anchors.
+* A canal gate is lifted from its column only: the crane does not check what the gate or its sling would sweep through on the way, only that the rails lift it clear of
+  the slot's top and of its laydown. Its eyes are part of the top block's model; the two-leg sling is drawn to them.
+* The head across a gate is the pool against the well; a gate between two other gates (a canal with a gate at each end) holds the same head in this model.
 * The stud tensioner works round the flange in index order, not the star pattern of a real tightening; the stage count is one.
 * The nuts of the studs are drawn off the head; the nuts of a detensioned head are not stacked anywhere (they are gone with the studs' load).

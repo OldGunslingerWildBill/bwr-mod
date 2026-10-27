@@ -44,6 +44,7 @@ public final class WaterLineNetwork {
         if(state.getBlock() instanceof MotorOperatedWaterValveBlock valve)return valve.acceptsWaterLineOn(state,face);
         if(state.getBlock() instanceof dev.bwr.mod.power.TurbineAuxBlock aux)return aux.acceptsWaterLineOn(state,face);
         if(state.getBlock() instanceof dev.bwr.mod.reactor.CavityDrainPortBlock)return face==state.getValue(dev.bwr.mod.reactor.CavityDrainPortBlock.FACING);
+        if(state.getBlock() instanceof dev.bwr.mod.reactor.CavityFillPortBlock)return face==state.getValue(dev.bwr.mod.reactor.CavityFillPortBlock.FACING);
         if(state.getBlock() instanceof dev.bwr.mod.rods.ControlRodDriveBlock)return true;
         if(state.getBlock() instanceof WaterDischargeBlock)return face==state.getValue(WaterDischargeBlock.FACING).getOpposite();
         if(state.getBlock() instanceof dev.bwr.mod.suppression.SuppressionPoolPortBlock)return face==state.getValue(dev.bwr.mod.suppression.SuppressionPoolPortBlock.FACING);

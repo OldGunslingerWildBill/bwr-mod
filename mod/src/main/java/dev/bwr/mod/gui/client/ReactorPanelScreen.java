@@ -252,6 +252,12 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                         .status(() -> menu.cavity.drainFlowKgPerS() > 0 ? Status.NORMAL : Status.NONE).tip(() -> cavityTooltip())
                         .showIf(() -> !menu.cavity.drains().isEmpty()),
                 drainLine(0), drainLine(1), drainLine(2), drainLine(3),
+                Layout.section("Flooding the well"),
+                Layout.note(() -> menu.cavity.known() ? floodHeadline() : "The seal has not been surveyed yet.").body()
+                        .status(() -> !menu.cavity.known() ? Status.NONE : floodReady() ? Status.NORMAL : Status.CAUTION).tip(() -> floodTooltip()),
+                floodLine(0), floodLine(1), floodLine(2), floodLine(3), floodLine(4), floodLine(5), floodLine(6),
+                floodLine(7), floodLine(8), floodLine(9), floodLine(10), floodLine(11), floodLine(12), floodLine(13),
+                fillLine(0), fillLine(1), fillLine(2), fillLine(3),
                 Layout.section("Drives and pumps"),
                 Layout.row("Drives powered", () -> String.valueOf(menu.poweredDrives)),
                 Layout.row("Drives with water", () -> String.valueOf(menu.waterSuppliedDrives)),
@@ -297,6 +303,63 @@ public class ReactorPanelScreen extends BwrScreen<ReactorPanelMenu> {
                 Component.literal("Above 1 uS/cm (the action level) it adds slow structural and fuel-cladding corrosion wear; above 10 uS/cm is the usual shutdown limit. Nothing here trips or isolates anything."),
                 Component.literal("Crud is corrosion product circulating with the water. In the core it picks up activity, and that activity is a radiation source around the coolant lines."),
                 Component.literal("Cleanup removes crud and dissolved ions with the nanofilter and (if the loop has exchangers) takes heat from the vessel net of its regenerative exchanger; blowdown takes water out of the vessel to a tank or condenser."));
+    }
+
+    private boolean floodReady() {
+        for (var c : menu.cavity.flood()) {
+            if (c.markEnum() == dev.bwr.mod.reactor.FloodReadiness.Mark.FAIL) return false;
+        }
+        return !menu.cavity.flood().isEmpty();
+    }
+
+    private String floodHeadline() {
+        int fails = 0;
+        for (var c : menu.cavity.flood()) {
+            if (c.markEnum() == dev.bwr.mod.reactor.FloodReadiness.Mark.FAIL) fails++;
+        }
+        return fails == 0 ? "Every check passes: the well floods as you put water in."
+                : fails + (fails == 1 ? " check fails" : " checks fail") + ": the lines marked FAIL say why and where.";
+    }
+
+    /** One line of the flood checklist: PASS, FAIL or INFO, and the reason in the player's words. */
+    private UiElement floodLine(int index) {
+        return Layout.note(() -> {
+                    if (index >= menu.cavity.flood().size()) return "";
+                    var c = menu.cavity.flood().get(index);
+                    return c.markEnum().name() + "  " + c.text().getString();
+                })
+                .body()
+                .status(() -> index >= menu.cavity.flood().size() ? Status.NONE
+                        : switch (menu.cavity.flood().get(index).markEnum()) {
+                            case PASS -> Status.NORMAL;
+                            case FAIL -> Status.CAUTION;
+                            case INFO -> Status.INFO;
+                        })
+                .tip(() -> floodTooltip())
+                .showIf(() -> index < menu.cavity.flood().size());
+    }
+
+    /** One cavity fill port: where it is and what its line is doing. */
+    private UiElement fillLine(int index) {
+        return Layout.note(() -> {
+                    if (index >= menu.cavity.fills().size()) return "";
+                    var f = menu.cavity.fills().get(index);
+                    String head = "Fill port at " + f.x() + ", " + f.y() + ", " + f.z() + ": " + f.stateText().getString();
+                    return f.flowKgPerS() > 0 || f.headM() > 0
+                            ? head + " " + num(DisplayUnitReadouts.value(Quantity.MASS_FLOW, f.flowKgPerS()), 0) + " " + DisplayUnitReadouts.unit(Quantity.MASS_FLOW) + ", head " + num(DisplayUnitReadouts.value(Quantity.LENGTH, f.headM()), 2) + " " + DisplayUnitReadouts.unit(Quantity.LENGTH) + ", valve " + num(f.opening() * 100.0, 0) + "% open."
+                            : head;
+                })
+                .body()
+                .status(() -> index >= menu.cavity.fills().size() ? Status.NONE
+                        : menu.cavity.fills().get(index).flowKgPerS() > 0 ? Status.NORMAL : Status.INFO)
+                .showIf(() -> index < menu.cavity.fills().size());
+    }
+
+    private List<Component> floodTooltip() {
+        return List.of(
+                Component.literal("What flooding the well needs, checked now: the head off, the studs bare, a cavity seal round the vessel and a well whose wall is closed up to the flange."),
+                Component.literal("Then water going in faster than it leaves: your feed, condensate or RHR (LPCI) pumps, or a Cavity Fill Port in the well wall fed by a pump or by gravity from a higher Condensate Storage Tank through a Motor-Operated Water Valve."),
+                Component.literal("Water leaving into the drywell means there is no usable well; over the top means the well is full. Nothing here acts: it only says what is so."));
     }
 
     /** One cavity drain port: where it is, what its line is doing now, and what it passes. */

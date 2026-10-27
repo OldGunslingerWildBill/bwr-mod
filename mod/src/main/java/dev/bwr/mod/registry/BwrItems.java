@@ -282,6 +282,10 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.TRANSFER_CANAL);
     public static final DeferredItem<BlockItem> CANAL_GATE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CANAL_GATE);
+    public static final DeferredItem<BlockItem> CANAL_GATE_PLUG =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CANAL_GATE_PLUG);
+    public static final DeferredItem<BlockItem> GATE_LAYDOWN_STAND =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.GATE_LAYDOWN_STAND);
     public static final DeferredItem<BlockItem> NEW_FUEL_ELEVATOR =
             ITEMS.registerSimpleBlockItem(BwrBlocks.NEW_FUEL_ELEVATOR);
     public static final DeferredItem<BlockItem> EQUIPMENT_PAD =
@@ -360,6 +364,7 @@ public final class BwrItems {
     public static final DeferredItem<BlockItem> LP_BLADE_STAND = ITEMS.registerSimpleBlockItem(BwrBlocks.LP_BLADE_STAND);
     public static final DeferredItem<BlockItem> CASING_LAYDOWN_STAND = ITEMS.registerSimpleBlockItem(BwrBlocks.CASING_LAYDOWN_STAND);
     public static final DeferredItem<BlockItem> CAVITY_DRAIN_PORT = ITEMS.registerSimpleBlockItem(BwrBlocks.CAVITY_DRAIN_PORT);
+    public static final DeferredItem<BlockItem> CAVITY_FILL_PORT = ITEMS.registerSimpleBlockItem(BwrBlocks.CAVITY_FILL_PORT);
     public static final DeferredItem<BlockItem> ARABELLE_CONDENSER = ITEMS.register("arabelle_condenser",
             () -> new dev.bwr.mod.condenser.CondenserItem(BwrBlocks.ARABELLE_CONDENSER.get(), new Item.Properties()));
     public static final DeferredItem<BlockItem> NATURAL_DRAFT_TOWER = ITEMS.register("natural_draft_tower",()->new dev.bwr.mod.cooling.CoolingItem(BwrBlocks.NATURAL_DRAFT_TOWER.get(),new Item.Properties()));
@@ -605,6 +610,7 @@ public final class BwrItems {
                         output.accept(BYPASS_STEAM_VALVE.get());
                         output.accept(MOTOR_OPERATED_WATER_VALVE.get());
                         output.accept(CAVITY_DRAIN_PORT.get());
+                        output.accept(CAVITY_FILL_PORT.get());
                         output.accept(MAIN_OIL_TANK.get());
                         output.accept(SHAFT_OIL_PUMP.get());
                         output.accept(GENERATOR_COOLING_SKID.get());
@@ -653,6 +659,8 @@ public final class BwrItems {
                         output.accept(REFUELLING_RAIL.get());
                         output.accept(TRANSFER_CANAL.get());
                         output.accept(CANAL_GATE.get());
+                        output.accept(CANAL_GATE_PLUG.get());
+                        output.accept(GATE_LAYDOWN_STAND.get());
                         output.accept(REFUELLING_BRIDGE_CONSOLE.get());
                         output.accept(EQUIPMENT_PAD.get());
                         output.accept(CRANE_RUNWAY_RAIL.get());
